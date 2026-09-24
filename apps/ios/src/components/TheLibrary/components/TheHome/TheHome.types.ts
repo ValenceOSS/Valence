@@ -12,6 +12,8 @@ type TheHomeProps = {
   onShowing: (media: MediaSummary | null) => void;
   onClip: (player: VideoPlayer | null) => void;
   onScrolled?: (isScrolled: boolean) => void;
+  onScrolledTo?: (y: number) => void;
+  isOnScreen?: boolean;
 };
 
 export type { TheHomeProps };

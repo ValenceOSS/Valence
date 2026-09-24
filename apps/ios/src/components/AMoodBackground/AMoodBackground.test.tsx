@@ -14,4 +14,14 @@ describe('AMoodBackground', () => {
 
     expect(theDrawnRoot().props.shouldRasterizeIOS).toBe(true);
   });
+
+  it('is not kept as a picture while its colours crossfade', async () => {
+    const drawn = await render(
+      <AMoodBackground palette={[{ colour: '#ff0000', at: '10% 10%' }]} />,
+    );
+
+    await drawn.rerender(<AMoodBackground palette={[{ colour: '#00ff00', at: '10% 10%' }]} />);
+
+    expect(theDrawnRoot().props.shouldRasterizeIOS).toBe(false);
+  });
 });

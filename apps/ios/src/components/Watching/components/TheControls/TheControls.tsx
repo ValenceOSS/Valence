@@ -6,7 +6,7 @@ import {
   RotateCw,
   Settings,
   X,
-} from '@keyline-icons/react-native';
+} from '@keyline-icons/react-native/fill';
 import { useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -38,7 +38,7 @@ const FRAME_WIDE = 224;
 const styles = StyleSheet.create({
   clock: {
     color: OVER_THE_PICTURE,
-    fontFamily: FONTS.sans.regular,
+    fontFamily: FONTS.sans.semibold,
     fontSize: 13,
     fontVariant: ['tabular-nums'],
   },
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   times: { flexDirection: 'row', justifyContent: 'space-between' },
   said: { alignItems: 'baseline', flex: 1, flexDirection: 'row', gap: 7 },
   title: { color: OVER_THE_PICTURE, fontSize: 15, fontFamily: FONTS.sans.semibold },
-  year: { color: QUIETLY, fontFamily: FONTS.sans.regular, fontSize: 13 },
+  year: { color: QUIETLY, fontFamily: FONTS.sans.semibold, fontSize: 13 },
   whole: {
     backgroundColor: SCRIM,
     bottom: 0,

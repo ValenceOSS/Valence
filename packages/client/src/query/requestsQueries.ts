@@ -25,7 +25,7 @@ import {
 } from '@ValenceClient/requests/fetchAskable';
 import type { CatalogueBrowse, CatalogueFilters } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
-import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
+import type { MediaRequestKind, MediaRequestState } from '@ValenceContracts/schemas/MediaRequest';
 
 const REQUESTS = ['requests'] as const;
 
@@ -33,7 +33,14 @@ const OVERVIEW_EVERY_MS = 30_000;
 
 const MEDIA_REQUESTS_EVERY_MS = 5000;
 
-const PROGRESS_EVERY_MS = 2000;
+const PROGRESS_EVERY_MS = 5000;
+
+const STILL_MOVING: ReadonlySet<MediaRequestState> = new Set([
+  'searching',
+  'chosen',
+  'downloading',
+  'filing',
+]);
 
 const DISCOVER_KEPT_MS = 10 * 60 * 1000;
 
@@ -167,8 +174,8 @@ const profilesOnOffer = (kind: MediaRequestKind, isEnabled = true) =>
   });
 
 /**
- * The requests for films and series somebody may see, asked again every few seconds while they are
- * on screen, so a request can be watched moving from being searched for to being ready.
+ * The requests for films and series somebody may see, asked again every few seconds while any of
+ * them is on its way, so a request can be watched moving from being searched for to being ready.
  *
  * @returns The query.
  */
@@ -176,7 +183,10 @@ const mediaRequests = () =>
   queryOptions({
     queryKey: [...REQUESTS, 'media'],
     queryFn: () => fetchMediaRequests(),
-    refetchInterval: MEDIA_REQUESTS_EVERY_MS,
+    refetchInterval: (query) =>
+      (query.state.data ?? []).some((request) => STILL_MOVING.has(request.state))
+        ? MEDIA_REQUESTS_EVERY_MS
+        : false,
   });
 
 /**
@@ -332,7 +342,7 @@ const askable = (kind: MediaRequestKind, id: string | null) =>
   });
 
 /**
- * How your downloads are going, asked every couple of seconds while they are on screen.
+ * How your downloads are going, asked every few seconds while they are on screen.
  *
  * @param isEnabled - Whether to ask at all.
  * @returns The query.

@@ -8,7 +8,7 @@ import type { ButtonProps } from './Button.types';
 const styles = StyleSheet.create({
   bare: {},
   bright: { alignItems: 'center', borderRadius: 12, paddingHorizontal: 18, paddingVertical: 12 },
-  brightWord: { fontSize: 16, fontFamily: FONTS.sans.medium },
+  brightWord: { fontSize: 16, fontFamily: FONTS.sans.semibold },
   fills: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
   ghost: {
     alignItems: 'center',
@@ -18,10 +18,10 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
   },
   ghostWide: { borderRadius: 12, paddingVertical: 12 },
-  ghostWord: { fontSize: 15, fontFamily: FONTS.sans.medium },
+  ghostWord: { fontSize: 15, fontFamily: FONTS.sans.semibold },
   pressed: { opacity: 0.75 },
   quiet: { alignItems: 'center', paddingVertical: 12 },
-  quietWord: { fontSize: 15, fontFamily: FONTS.sans.medium },
+  quietWord: { fontSize: 15, fontFamily: FONTS.sans.semibold },
   said: { alignItems: 'center', flexDirection: 'row', gap: 8 },
   wide: { alignSelf: 'stretch' },
 });
@@ -51,6 +51,7 @@ const styles = StyleSheet.create({
  * @param isBusy - Whether what it started is still going.
  * @param isDisabled - Whether it can be pressed at all.
  * @param isChosen - Whether this is the one currently picked, where it is one of several.
+ * @param isDestructive - Whether it takes something away, which draws it in the danger colour.
  * @param label - What it is called, where what it says is not enough.
  */
 const Button = ({
@@ -63,6 +64,7 @@ const Button = ({
   isBusy = false,
   isDisabled = false,
   isChosen,
+  isDestructive = false,
   label,
 }: ButtonProps) => {
   const colours = useTheColours();
@@ -71,13 +73,15 @@ const Button = ({
   const isGhost = tone === 'ghost';
   const isBare = tone === 'bare';
   const filled = isBold ? colours.text : '#ffffff';
-  const said = isGhost
-    ? colours.text
-    : isBold
-      ? colours.surface
-      : isBright
-        ? '#000000'
-        : colours.accent;
+  const said = isDestructive
+    ? colours.danger
+    : isGhost
+      ? colours.text
+      : isBold
+        ? colours.surface
+        : isBright
+          ? '#000000'
+          : colours.accent;
 
   return (
     <Pressable
@@ -97,7 +101,9 @@ const Button = ({
         isWide && styles.wide,
         isWide && isGhost && styles.ghostWide,
         isBright && { backgroundColor: filled },
-        isGhost && { backgroundColor: withAlpha(colours.text, 0.1) },
+        isGhost && {
+          backgroundColor: withAlpha(isDestructive ? colours.danger : colours.text, 0.1),
+        },
         pressed && styles.pressed,
         isDisabled && styles.pressed,
       ]}

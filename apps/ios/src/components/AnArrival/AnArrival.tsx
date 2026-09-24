@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext, useMemo } from 'react';
 import { Animated, View } from 'react-native';
 import { ARRIVING } from '@ValencePhone/components/AnArrival/ARRIVING';
 import { usePrefersStillness } from '@ValencePhone/hooks/usePrefersStillness';
@@ -20,26 +20,34 @@ const AnArrival = ({ children, style }: AnArrivalProps) => {
   const arriving = useContext(ARRIVING);
   const isStill = usePrefersStillness();
 
-  if (arriving === null) {
+  const moving = useMemo(
+    () =>
+      arriving === null
+        ? null
+        : {
+            opacity: arriving.interpolate({
+              inputRange: [-1, 0, 1],
+              outputRange: [0, 1, 0],
+              extrapolate: 'clamp',
+            }),
+            transform: [
+              {
+                translateX: arriving.interpolate({
+                  inputRange: [-1, 1],
+                  outputRange: isStill ? [0, 0] : [-COMES_FROM, COMES_FROM],
+                  extrapolate: 'clamp',
+                }),
+              },
+            ],
+          },
+    [arriving, isStill],
+  );
+
+  if (moving === null) {
     return <View style={style}>{children}</View>;
   }
 
-  const opacity = arriving.interpolate({
-    inputRange: [-1, 0, 1],
-    outputRange: [0, 1, 0],
-    extrapolate: 'clamp',
-  });
-  const translateX = arriving.interpolate({
-    inputRange: [-1, 1],
-    outputRange: isStill ? [0, 0] : [-COMES_FROM, COMES_FROM],
-    extrapolate: 'clamp',
-  });
-
-  return (
-    <Animated.View style={[style, { opacity, transform: [{ translateX }] }]}>
-      {children}
-    </Animated.View>
-  );
+  return <Animated.View style={[style, moving]}>{children}</Animated.View>;
 };
 
 AnArrival.displayName = 'AnArrival';

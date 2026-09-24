@@ -1,4 +1,4 @@
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryObserver } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { requestsQueries } from './requestsQueries';
 
@@ -158,5 +158,34 @@ describe('requestsQueries', () => {
 
     expect(requestsQueries.mediaRequestLog(null).enabled).toBe(false);
     await expect(aCache().fetchQuery(requestsQueries.mediaRequestLog('dune'))).resolves.toEqual([]);
+  });
+
+  it('asks for the requests again only while one of them is on its way', async () => {
+    vi.useFakeTimers();
+
+    const asksOverAMinute = async (requests: { state: string }[]): Promise<number> => {
+      fetchMediaRequests.mockClear().mockResolvedValue(requests);
+
+      const stop = new QueryObserver(aCache(), requestsQueries.mediaRequests()).subscribe(
+        () => undefined,
+      );
+
+      await vi.advanceTimersByTimeAsync(60_000);
+      stop();
+
+      return fetchMediaRequests.mock.calls.length;
+    };
+
+    expect(await asksOverAMinute([{ state: 'filed' }, { state: 'wanted' }])).toBe(1);
+    expect(await asksOverAMinute([{ state: 'filed' }, { state: 'downloading' }])).toBeGreaterThan(
+      1,
+    );
+
+    vi.useRealTimers();
+  });
+
+  it('asks how downloads are going every few seconds, and only while asked to', () => {
+    expect(requestsQueries.requestProgress().refetchInterval).toBe(5000);
+    expect(requestsQueries.requestProgress(false).enabled).toBe(false);
   });
 });

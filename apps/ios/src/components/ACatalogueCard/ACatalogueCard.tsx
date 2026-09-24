@@ -9,8 +9,9 @@ import type { ACatalogueCardProps } from './ACatalogueCard.types';
  *
  * @param title - What it is.
  * @param onAsk - Told it was pressed, to open the page where it can be asked for.
+ * @param wide - How wide to draw it, where it fills a cell of a grid.
  */
-const ACatalogueCard = ({ title, onAsk }: ACatalogueCardProps) => {
+const ACatalogueCard = ({ title, onAsk, wide }: ACatalogueCardProps) => {
   const { kind } = title;
 
   if (!whatAPhoneAsksFor(kind)) {
@@ -30,6 +31,7 @@ const ACatalogueCard = ({ title, onAsk }: ACatalogueCardProps) => {
         year={title.year}
         artwork={title.posterUrl}
         note={describeStanding(title.standing)?.label ?? null}
+        {...(wide === undefined ? {} : { wide })}
       />
     </Button>
   );

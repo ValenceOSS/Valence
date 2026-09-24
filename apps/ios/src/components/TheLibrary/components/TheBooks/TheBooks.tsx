@@ -30,8 +30,16 @@ const styles = StyleSheet.create({
  * @param onBook - Told to open a book's page.
  * @param onRead - Told to carry on reading a book.
  * @param onScrolled - Told whether it has been scrolled from its top.
+ * @param onScrolledTo - Told how far down it has been scrolled, as it scrolls.
  */
-const TheBooks = ({ header, libraryIds, onBook, onRead, onScrolled }: TheBooksProps) => {
+const TheBooks = ({
+  header,
+  libraryIds,
+  onBook,
+  onRead,
+  onScrolled,
+  onScrolledTo,
+}: TheBooksProps) => {
   const colours = useTheColours();
   const reading = useQuery(bookQueries.reading());
   const shelves = useQueries({ queries: libraryIds.map((id) => bookQueries.inLibrary(id)) });
@@ -92,7 +100,7 @@ const TheBooks = ({ header, libraryIds, onBook, onRead, onScrolled }: TheBooksPr
       }
       items={books}
       keyOf={(book) => book.id}
-      drawn={(book) => (
+      drawn={(book, width) => (
         <Button
           tone="bare"
           label={book.title}
@@ -105,10 +113,12 @@ const TheBooks = ({ header, libraryIds, onBook, onRead, onScrolled }: TheBooksPr
             year={book.year}
             artwork={coverOf(book)}
             note={book.authors?.[0] ?? null}
+            wide={width}
           />
         </Button>
       )}
       {...(onScrolled === undefined ? {} : { onScrolled })}
+      {...(onScrolledTo === undefined ? {} : { onScrolledTo })}
     />
   );
 };

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
@@ -6,17 +6,14 @@ import { byMediaId } from '@ValenceClient/playback/watchProgress';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { SegmentedRow } from '@ValencePhone/components/SegmentedRow/SegmentedRow';
-import { TextField } from '@ValencePhone/components/TextField/TextField';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { Asked } from '@ValencePhone/components/TheSearch/components/Asked/Asked';
 import { Discovered } from '@ValencePhone/components/TheSearch/components/Discovered/Discovered';
 import { TheResults } from '@ValencePhone/components/TheSearch/components/TheResults/TheResults';
-import { useSettled } from '@ValenceClient/timing/useSettled';
+import { TheSearchBox } from '@ValencePhone/components/TheSearch/components/TheSearchBox/TheSearchBox';
 import { TheBookResults } from '@ValencePhone/components/TheSearch/components/TheBookResults/TheBookResults';
 import { TheMusicResults } from '@ValencePhone/components/TheSearch/components/TheMusicResults/TheMusicResults';
 import type { TheSearchProps } from './TheSearch.types';
-
-const HOLD_STILL_FOR = 250;
 
 const KINDS = [
   { id: 'everything', label: 'Everything' },
@@ -49,6 +46,11 @@ const SIDES = [
  * @param onArtist - Told which artist to open.
  * @param onPlaylist - Told which playlist to open.
  * @param onBook - Told which book to open, from what books matched.
+ * @param searchingFor - What to look for, where the field it is typed in lives in a bar above rather
+ *   than here — which leaves out this page's own title and field, and draws it over the page behind.
+ * @param header - What goes above the results, such as room for that bar.
+ * @param onScrolled - Told whether it has been scrolled from its top.
+ * @param onSeeAll - Told somebody wants the whole of one of Discover's lists.
  */
 const TheSearch = ({
   onLookAt,
@@ -58,35 +60,59 @@ const TheSearch = ({
   onArtist,
   onPlaylist,
   onBook,
+  searchingFor: typedAbove,
+  header,
+  onScrolled,
+  onSeeAll,
 }: TheSearchProps) => {
   const libraries = useQuery(libraryQueries.all());
   const watched = useQuery(viewingQueries.progress());
-  const [typed, setTyped] = useState('');
+  const [typedHere, setSearchingFor] = useState('');
+  const isTypedAbove = typedAbove !== undefined;
+  const searchingFor = typedAbove ?? typedHere;
   const [kind, setKind] = useState<string>('everything');
   const [side, setSide] = useState<string>('discover');
-  const searchingFor = useSettled(typed.trim(), HOLD_STILL_FOR);
-  const howFar = byMediaId(watched.data ?? []);
-  const watchable = (libraries.data ?? [])
-    .filter((library) => library.kind === 'movies' || library.kind === 'shows')
-    .map((library) => library.id);
+  const howFarThrough = useMemo(() => {
+    const howFar = byMediaId(watched.data ?? []);
+
+    return (mediaId: string) => {
+      const known = howFar.get(mediaId);
+
+      return known === undefined ? 0 : watchedFraction(known);
+    };
+  }, [watched.data]);
+  const watchable = useMemo(
+    () =>
+      (libraries.data ?? [])
+        .filter((library) => library.kind === 'movies' || library.kind === 'shows')
+        .map((library) => library.id),
+    [libraries.data],
+  );
   const hasMusic = (libraries.data ?? []).some((library) => library.kind === 'music');
   const hasBooks = (libraries.data ?? []).some((library) => library.kind === 'books');
 
   return (
-    <Screen scrolls>
-      <Words size="title">Search</Words>
+    <Screen
+      scrolls
+      isSeeThrough={isTypedAbove}
+      {...(onScrolled === undefined ? {} : { onScrolled })}
+    >
+      {header}
 
-      <TextField
-        label="Search"
-        value={typed}
-        onValueChange={setTyped}
-        placeholder={[
-          'Films, programmes, people',
-          ...(hasMusic ? ['music'] : []),
-          ...(hasBooks ? ['books'] : []),
-        ].join(', ')}
-        keyboard="search"
-      />
+      {isTypedAbove ? null : (
+        <>
+          <Words size="title">Search</Words>
+
+          <TheSearchBox
+            placeholder={[
+              'Films, programmes, people',
+              ...(hasMusic ? ['music'] : []),
+              ...(hasBooks ? ['books'] : []),
+            ].join(', ')}
+            onSettle={setSearchingFor}
+          />
+        </>
+      )}
 
       {searchingFor === '' ? (
         onAsk === null ? (
@@ -95,13 +121,18 @@ const TheSearch = ({
           <>
             <SegmentedRow label="What to show" items={SIDES} value={side} onSelect={setSide} />
 
-            {side === 'asked' ? <Asked onAsk={onAsk} /> : <Discovered onAsk={onAsk} />}
+            {side === 'asked' ? (
+              <Asked onAsk={onAsk} />
+            ) : (
+              <Discovered onAsk={onAsk} {...(onSeeAll === undefined ? {} : { onSeeAll })} />
+            )}
           </>
         )
       ) : (
         <>
           <SegmentedRow
             label="What to look for"
+            fills
             items={[...KINDS, ...(hasMusic ? [MUSIC] : []), ...(hasBooks ? [BOOKS] : [])]}
             value={kind}
             onSelect={setKind}
@@ -112,11 +143,7 @@ const TheSearch = ({
               asked={searchingFor}
               kind={kind === 'films' || kind === 'shows' ? kind : null}
               libraryIds={watchable}
-              howFarThrough={(mediaId) => {
-                const known = howFar.get(mediaId);
-
-                return known === undefined ? 0 : watchedFraction(known);
-              }}
+              howFarThrough={howFarThrough}
               onLookAt={onLookAt}
               onLookAtShow={onLookAtShow}
               onAsk={onAsk}

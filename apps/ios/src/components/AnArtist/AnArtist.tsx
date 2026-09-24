@@ -8,6 +8,7 @@ import {
   setArtistFollowed,
 } from '@ValenceClient/music/fetchMusic';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
+import { AMoodBackground } from '@ValencePhone/components/AMoodBackground/AMoodBackground';
 import { AMusicHead } from '@ValencePhone/components/AMusicHead/AMusicHead';
 import { AMusicTile } from '@ValencePhone/components/AMusicTile/AMusicTile';
 import { AShelf } from '@ValencePhone/components/AShelf/AShelf';
@@ -15,7 +16,8 @@ import { ATrackList } from '@ValencePhone/components/ATrackList/ATrackList';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { Words } from '@ValencePhone/components/Words/Words';
-import { useTheMusic } from '@ValencePhone/hooks/useTheMusic';
+import { usePictureLights } from '@ValencePhone/hooks/usePictureLights';
+import { thePhonesMusicPlayer } from '@ValencePhone/music/thePhonesMusicPlayer';
 import { onThisServer } from '@ValencePhone/platform/onThisServer';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { MusicAlbum } from '@ValenceContracts/schemas/Music';
@@ -26,7 +28,8 @@ const POPULAR_AT_FIRST = 5;
 /**
  * One artist, as the web's artist page draws them: their picture, a way to follow them, their
  * most-played tracks — a handful, and the rest on asking — and their albums and the albums they
- * appear on. Playing them plays their popular tracks.
+ * appear on, lit from behind in the colours of their picture. Playing them plays their popular
+ * tracks.
  *
  * @param artistId - Which artist.
  * @param onAlbum - Told to open an album.
@@ -38,7 +41,10 @@ const AnArtist = ({ artistId, onAlbum, onArtist, onPlaylist, onBack }: AnArtistP
   const colours = useTheColours();
   const cache = useQueryClient();
   const read = useQuery(musicQueries.artist(artistId));
-  const { player } = useTheMusic();
+  const player = thePhonesMusicPlayer();
+  const lights = usePictureLights(
+    read.data?.artist.hasImage === true ? onThisServer(artistImageUrl(read.data.artist.id)) : null,
+  );
   const [isAllOfIt, setIsAllOfIt] = useState(false);
 
   if (read.isPending) {
@@ -86,7 +92,7 @@ const AnArtist = ({ artistId, onAlbum, onArtist, onPlaylist, onBack }: AnArtistP
     );
 
   return (
-    <Screen scrolls onBack={onBack}>
+    <Screen scrolls onBack={onBack} behind={<AMoodBackground palette={lights} />}>
       <AMusicHead
         kind="Artist"
         title={artist.name}

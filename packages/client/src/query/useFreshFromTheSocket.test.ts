@@ -116,7 +116,7 @@ describe('useFreshFromTheSocket', () => {
     listening(socket);
     socket.reconnect();
 
-    expect(invalidate).toHaveBeenCalledWith();
+    expect(invalidate).toHaveBeenCalledWith(undefined, { cancelRefetch: false });
   });
 
   it('stops listening once it is gone', () => {

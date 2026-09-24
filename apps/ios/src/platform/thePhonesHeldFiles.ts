@@ -7,6 +7,7 @@ import {
   makeDirectoryAsync,
 } from 'expo-file-system/legacy';
 import { HeldFileListSchema } from '@ValenceContracts/schemas/HeldFile';
+import { HELD_RESUMES } from '@ValencePhone/platform/HELD_RESUMES';
 import { onThisServer } from '@ValencePhone/platform/onThisServer';
 import { theCookiesThisPhoneHolds } from '@ValencePhone/platform/theCookiesThisPhoneHolds';
 import type { DownloadResumable } from 'expo-file-system/legacy';
@@ -15,11 +16,9 @@ import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 
 const INDEX = 'valence.held';
 
-const RESUMING = 'valence.held.resume.';
-
 const FOLDER = `${documentDirectory ?? ''}held/`;
 
-const TELL_AT_MOST_EVERY = 1000;
+const SAVE_PROGRESS_AT_MOST_EVERY = 1000;
 
 /**
  * Where a kept film is, on this phone.
@@ -43,30 +42,41 @@ const posterOf = (downloadId: string): string => `${FOLDER}${downloadId}.jpg`;
  * phone's store so they are known again after the app has closed.
  *
  * A fetch can be paused and picked up again, and one the app closed partway through is picked up
- * where it stopped the next time the app starts. Each carries this phone's session, which the
- * server asks for before it hands a file over.
+ * where it stopped once the app has started. Each carries this phone's session, which the server
+ * asks for before it hands a file over. How far a fetch has got is written down and told about at
+ * most once a second, and every change of state at once.
  *
  * @param store - Where the list of them is kept.
+ * @param readAside - Reads what a paused fetch left to pick up from, which is kept out of the store.
+ * @param whenSettled - Runs what was left fetching once the app has started.
  * @returns What the platform keeps files through.
  */
-const thePhonesHeldFiles = (store: DeviceStore): HeldFiles => {
+const thePhonesHeldFiles = (
+  store: DeviceStore,
+  readAside: (key: string) => Promise<string | null> = (key) => Promise.resolve(store.read(key)),
+  whenSettled: (run: () => void) => void = (run) => {
+    run();
+  },
+): HeldFiles => {
   const read = HeldFileListSchema.safeParse(JSON.parse(store.read(INDEX) ?? '{"held":[]}'));
   let rows: HeldFile[] = read.success ? read.data.held : [];
   const transfers = new Map<string, DownloadResumable>();
   const listeners = new Set<(held: HeldFile[]) => void>();
-  let lastTold = 0;
+  const alreadyStarted = new Set<string>();
+  let lastSaved = 0;
 
   const save = (isForced = true) => {
-    store.write(INDEX, JSON.stringify({ held: rows }));
-
     const now = Date.now();
 
-    if (isForced || now - lastTold >= TELL_AT_MOST_EVERY) {
-      lastTold = now;
+    if (!isForced && now - lastSaved < SAVE_PROGRESS_AT_MOST_EVERY) {
+      return;
+    }
 
-      for (const listener of listeners) {
-        listener(rows);
-      }
+    lastSaved = now;
+    store.write(INDEX, JSON.stringify({ held: rows }));
+
+    for (const listener of listeners) {
+      listener(rows);
     }
   };
 
@@ -86,11 +96,14 @@ const thePhonesHeldFiles = (store: DeviceStore): HeldFiles => {
   };
 
   const fetchTheFilm = async (row: HeldFile) => {
+    alreadyStarted.add(row.downloadId);
     await makeDirectoryAsync(FOLDER, { intermediates: true }).catch(() => undefined);
 
     const address = onThisServer(`/api/downloads/${row.downloadId}/file`);
     const cookie = await theCookiesThisPhoneHolds(address);
-    const resumeData = store.read(`${RESUMING}${row.downloadId}`);
+    const resumeData =
+      store.read(`${HELD_RESUMES}${row.downloadId}`) ??
+      (await readAside(`${HELD_RESUMES}${row.downloadId}`).catch(() => null));
     let lastAt = Date.now();
     let lastBytes = row.bytes;
 
@@ -145,15 +158,25 @@ const thePhonesHeldFiles = (store: DeviceStore): HeldFiles => {
       return;
     }
 
-    store.forget(`${RESUMING}${row.downloadId}`);
+    store.forget(`${HELD_RESUMES}${row.downloadId}`);
     change(row.downloadId, { state: 'here', bytesPerSecond: null, failure: null });
     await fetchThePoster(now, cookie);
   };
 
-  for (const row of rows) {
-    if (row.state === 'fetching') {
-      void fetchTheFilm(row);
-    }
+  const leftFetching = rows.filter((row) => row.state === 'fetching').map((row) => row.downloadId);
+
+  if (leftFetching.length > 0) {
+    whenSettled(() => {
+      for (const row of rows) {
+        if (
+          leftFetching.includes(row.downloadId) &&
+          row.state === 'fetching' &&
+          !alreadyStarted.has(row.downloadId)
+        ) {
+          void fetchTheFilm(row);
+        }
+      }
+    });
   }
 
   return {
@@ -198,7 +221,7 @@ const thePhonesHeldFiles = (store: DeviceStore): HeldFiles => {
 
       transfers.delete(downloadId);
       rows = rows.filter((row) => row.downloadId !== downloadId);
-      store.forget(`${RESUMING}${downloadId}`);
+      store.forget(`${HELD_RESUMES}${downloadId}`);
       save();
 
       await transfer?.pauseAsync().catch(() => undefined);
@@ -221,7 +244,7 @@ const thePhonesHeldFiles = (store: DeviceStore): HeldFiles => {
         const paused = await transfer?.pauseAsync().catch(() => null);
 
         if (paused?.resumeData !== undefined) {
-          store.write(`${RESUMING}${downloadId}`, paused.resumeData);
+          store.write(`${HELD_RESUMES}${downloadId}`, paused.resumeData);
         }
 
         return;

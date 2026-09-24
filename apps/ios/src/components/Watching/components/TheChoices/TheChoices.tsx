@@ -1,4 +1,5 @@
-import { Check, X } from '@keyline-icons/react-native';
+import { Check, X } from '@keyline-icons/react-native/fill';
+import { memo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValencePhone/components/Button/Button';
@@ -17,7 +18,7 @@ const EDGE = 24;
 const styles = StyleSheet.create({
   behind: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
   chosenRow: { backgroundColor: 'rgba(255, 255, 255, 0.08)' },
-  detail: { color: QUIETLY, fontFamily: FONTS.sans.regular, fontSize: 12 },
+  detail: { color: QUIETLY, fontFamily: FONTS.sans.semibold, fontSize: 12 },
   heading: {
     color: QUIETLY,
     fontSize: 12,
@@ -27,7 +28,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   inside: { gap: 22, paddingBottom: EDGE },
-  label: { color: OVER_THE_PICTURE, flex: 1, fontFamily: FONTS.sans.regular, fontSize: 15 },
+  label: { color: OVER_THE_PICTURE, flex: 1, fontFamily: FONTS.sans.semibold, fontSize: 15 },
   panel: {
     backgroundColor: PANEL,
     bottom: 0,
@@ -61,7 +62,7 @@ const styles = StyleSheet.create({
  * @param sets - What there is to choose, in the order it should be read.
  * @param onClose - Told they are done choosing.
  */
-const TheChoices = ({ sets, onClose }: TheChoicesProps) => {
+const TheChoicesPanel = ({ sets, onClose }: TheChoicesProps) => {
   const room = useSafeAreaInsets();
 
   return (
@@ -118,6 +119,8 @@ const TheChoices = ({ sets, onClose }: TheChoicesProps) => {
     </View>
   );
 };
+
+const TheChoices = memo(TheChoicesPanel);
 
 TheChoices.displayName = 'TheChoices';
 

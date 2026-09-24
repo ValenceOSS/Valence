@@ -15,7 +15,7 @@ import {
   SkipBack as SkipBackFilled,
   SkipForward as SkipForwardFilled,
 } from '@keyline-icons/react-native/fill';
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { Alert, Animated, Image, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { howTheFileSounds } from '@ValenceClient/music/howTheFileSounds';
@@ -33,11 +33,10 @@ import { Button } from '@ValencePhone/components/Button/Button';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { SCREEN_EDGE } from '@ValencePhone/components/Screen/SCREEN_EDGE';
-import { Slider } from '@ValencePhone/components/Slider/Slider';
 import { TheLyrics } from '@ValencePhone/components/TheMusicPlayer/components/TheLyrics/TheLyrics';
+import { ThePlaceInTheSong } from '@ValencePhone/components/TheMusicPlayer/components/ThePlaceInTheSong/ThePlaceInTheSong';
 import { TheUpNext } from '@ValencePhone/components/TheMusicPlayer/components/TheUpNext/TheUpNext';
 import { Words } from '@ValencePhone/components/Words/Words';
-import { asAClock } from '@ValencePhone/components/Watching/asAClock';
 import { useTheMusic } from '@ValencePhone/hooks/useTheMusic';
 import { usePictureLights } from '@ValencePhone/hooks/usePictureLights';
 import { usePrefersStillness } from '@ValencePhone/hooks/usePrefersStillness';
@@ -83,9 +82,6 @@ const styles = StyleSheet.create({
   head: { alignItems: 'center', flexDirection: 'row', gap: 12 },
   reach: { padding: 10 },
   said: { flex: 1, gap: 2 },
-  lasts: { alignItems: 'flex-end' },
-  time: { flex: 1 },
-  times: { alignItems: 'center', flexDirection: 'row' },
   top: { flex: 1, gap: 20 },
 });
 
@@ -113,7 +109,6 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
   const { width } = useWindowDimensions();
   const { player, state } = useTheMusic();
   const whatIsPlaying = useWhatIsPlaying(state);
-  const position = whatIsPlaying?.positionSeconds ?? state.positionSeconds;
   const isPlaying = whatIsPlaying?.isPlaying ?? state.isPlaying;
   const [isChoosingDevice, setIsChoosingDevice] = useState(false);
   const favourites = useFavourites(useWatchingProfile());
@@ -143,6 +138,55 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
   const [besideShown, setBesideShown] = useState(beside);
   const [besideLeaving, setBesideLeaving] = useState<'queue' | 'lyrics' | null>(null);
   const [switching] = useState(() => new Animated.Value(1));
+  const shift = isStill ? 0 : SWITCH_SHIFT * (besideShown === 'queue' ? 1 : -1);
+  const way = leaving?.way ?? 1;
+  const besideComesIn = useMemo(
+    () =>
+      folding.interpolate({
+        inputRange: [0.4, 1],
+        outputRange: [0, 1],
+        extrapolate: 'clamp',
+      }),
+    [folding],
+  );
+  const switchedAway = useMemo(
+    () => switching.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
+    [switching],
+  );
+  const switchLeaves = useMemo(
+    () => switching.interpolate({ inputRange: [0, 1], outputRange: [0, -shift] }),
+    [switching, shift],
+  );
+  const switchArrives = useMemo(
+    () => switching.interpolate({ inputRange: [0, 1], outputRange: [shift, 0] }),
+    [switching, shift],
+  );
+  const coverAcross = useMemo(
+    () => folding.interpolate({ inputRange: [0, 1], outputRange: [(across - side) / 2, 0] }),
+    [folding, across, side],
+  );
+  const coverScale = useMemo(
+    () => folding.interpolate({ inputRange: [0, 1], outputRange: [1, SMALL / side] }),
+    [folding, side],
+  );
+  const swappedAway = useMemo(
+    () => swapping.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
+    [swapping],
+  );
+  const swapLeaves = useMemo(
+    () => swapping.interpolate({ inputRange: [0, 1], outputRange: [0, -way * width] }),
+    [swapping, way, width],
+  );
+  const swapArrives = useMemo(
+    () => swapping.interpolate({ inputRange: [0, 1], outputRange: [way * width, 0] }),
+    [swapping, way, width],
+  );
+  const seek = useCallback(
+    (to: number) => {
+      player.seek(to);
+    },
+    [player],
+  );
 
   if (besideShown !== beside) {
     if (besideShown !== 'nothing' && beside !== 'nothing') {
@@ -235,7 +279,6 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
   const isShuffled = state.queue?.isShuffled ?? false;
   const sounds = howTheFileSounds(track, (state.playingQuality ?? state.quality) === 'lossless');
   const firstArtist = track.artists[0];
-  const way = leaving?.way ?? 1;
 
   /**
    * Draws a cover, or a note where there is none.
@@ -323,21 +366,9 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
               {naming}
               {liking}
             </View>
-            <Animated.View
-              style={[
-                styles.beside,
-                {
-                  opacity: folding.interpolate({
-                    inputRange: [0.4, 1],
-                    outputRange: [0, 1],
-                    extrapolate: 'clamp',
-                  }),
-                },
-              ]}
-            >
+            <Animated.View style={[styles.beside, { opacity: besideComesIn }]}>
               {[...(besideLeaving === null ? [] : [besideLeaving]), besideShown].map((which) => {
                 const isLeaving = which === besideLeaving;
-                const shift = isStill ? 0 : SWITCH_SHIFT * (besideShown === 'queue' ? 1 : -1);
 
                 return (
                   <Animated.View
@@ -346,30 +377,15 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
                     style={[
                       isLeaving ? StyleSheet.absoluteFill : styles.beside,
                       {
-                        opacity: isLeaving
-                          ? switching.interpolate({ inputRange: [0, 1], outputRange: [1, 0] })
-                          : switching,
-                        transform: [
-                          {
-                            translateX: switching.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: isLeaving ? [0, -shift] : [shift, 0],
-                            }),
-                          },
-                        ],
+                        opacity: isLeaving ? switchedAway : switching,
+                        transform: [{ translateX: isLeaving ? switchLeaves : switchArrives }],
                       },
                     ]}
                   >
                     {which === 'queue' ? (
                       <TheUpNext />
                     ) : (
-                      <TheLyrics
-                        trackId={track.id}
-                        atSeconds={position}
-                        onSeek={(to) => {
-                          player.seek(to);
-                        }}
-                      />
+                      <TheLyrics trackId={track.id} onSeek={seek} />
                     )}
                   </Animated.View>
                 );
@@ -400,20 +416,7 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
             style={[
               styles.cover,
               {
-                transform: [
-                  {
-                    translateX: folding.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [(across - side) / 2, 0],
-                    }),
-                  },
-                  {
-                    scale: folding.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [1, SMALL / side],
-                    }),
-                  },
-                ],
+                transform: [{ translateX: coverAcross }, { scale: coverScale }],
               },
             ]}
           >
@@ -423,22 +426,8 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
                   style={[
                     StyleSheet.absoluteFill,
                     isFolded
-                      ? {
-                          opacity: swapping.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [1, 0],
-                          }),
-                        }
-                      : {
-                          transform: [
-                            {
-                              translateX: swapping.interpolate({
-                                inputRange: [0, 1],
-                                outputRange: [0, -way * width],
-                              }),
-                            },
-                          ],
-                        },
+                      ? { opacity: swappedAway }
+                      : { transform: [{ translateX: swapLeaves }] },
                   ]}
                 >
                   {drawCover(leaving.cover)}
@@ -446,18 +435,7 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
               )}
               <Animated.View
                 style={
-                  isFolded
-                    ? { opacity: swapping }
-                    : {
-                        transform: [
-                          {
-                            translateX: swapping.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [way * width, 0],
-                            }),
-                          },
-                        ],
-                      }
+                  isFolded ? { opacity: swapping } : { transform: [{ translateX: swapArrives }] }
                 }
               >
                 {drawCover(cover)}
@@ -468,46 +446,23 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
       </View>
 
       <View style={styles.foot}>
-        <View>
-          <Slider
-            label={`Move through ${track.title}`}
-            value={position}
-            furthest={state.durationSeconds}
-            colour={colours.text}
-            restColour={withAlpha(colours.text, 0.2)}
-            aheadColour={withAlpha(colours.text, 0.35)}
-            onScrubbed={(to) => {
-              player.seek(to);
-            }}
-          />
-          <View style={styles.times}>
-            <View style={styles.time}>
-              <Words size="small" tone="muted">
-                {asAClock(position)}
-              </Words>
-            </View>
-            {sounds === null ? null : (
-              <Button
-                tone="bare"
-                label={`${sounds}, what it is`}
-                onPress={() => {
-                  Alert.alert(sounds, whatTheFileHolds(track));
-                }}
-              >
-                <View style={[styles.badge, { borderColor: withAlpha(colours.text, 0.35) }]}>
-                  <Words size="small" tone="muted">
-                    {sounds}
-                  </Words>
-                </View>
-              </Button>
-            )}
-            <View style={[styles.time, styles.lasts]}>
-              <Words size="small" tone="muted">
-                {`−${asAClock(Math.max(state.durationSeconds - position, 0))}`}
-              </Words>
-            </View>
-          </View>
-        </View>
+        <ThePlaceInTheSong title={track.title}>
+          {sounds === null ? null : (
+            <Button
+              tone="bare"
+              label={`${sounds}, what it is`}
+              onPress={() => {
+                Alert.alert(sounds, whatTheFileHolds(track));
+              }}
+            >
+              <View style={[styles.badge, { borderColor: withAlpha(colours.text, 0.35) }]}>
+                <Words size="small" tone="muted">
+                  {sounds}
+                </Words>
+              </View>
+            </Button>
+          )}
+        </ThePlaceInTheSong>
 
         <View style={styles.controls}>
           <Button

@@ -4,7 +4,8 @@ import type { ARectOnScreen } from '@ValencePhone/hooks/useArrivingFrom.types';
 type AskForThePasswordProps = {
   profile: ViewerProfile;
   from?: ARectOnScreen | null;
-  onIn: () => void;
+  onIn: (at: ARectOnScreen | null) => void;
+  isGoing?: boolean;
   onBack: (at: ARectOnScreen | null) => void;
 };
 

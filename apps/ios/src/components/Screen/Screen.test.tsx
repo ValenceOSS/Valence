@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { useColorScheme } from 'react-native';
 import { theColours } from '@ValencePhone/theme/theColours';
@@ -43,5 +43,22 @@ describe('Screen', () => {
     );
 
     expect(drawn.getByText('Long')).toBeTruthy();
+  });
+
+  it('tells whoever asked only when the page leaves its top or comes back to it', async () => {
+    const onScrolled = jest.fn();
+    const drawn = await render(
+      <Screen scrolls onScrolled={onScrolled}>
+        <Words>Long</Words>
+      </Screen>,
+      { wrapper: CacheScope },
+    );
+    const scrolledTo = (y: number) => ({ nativeEvent: { contentOffset: { y } } });
+
+    await fireEvent.scroll(drawn.getByText('Long'), scrolledTo(10));
+    await fireEvent.scroll(drawn.getByText('Long'), scrolledTo(40));
+    await fireEvent.scroll(drawn.getByText('Long'), scrolledTo(0));
+
+    expect(onScrolled.mock.calls).toEqual([[true], [false]]);
   });
 });

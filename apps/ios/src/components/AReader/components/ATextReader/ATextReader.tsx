@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   ActivityIndicator,
@@ -299,6 +299,19 @@ const ATextReader = ({
     }
   };
 
+  const [links] = useState(() => new Map<'follow', (href: string) => void>());
+
+  useLayoutEffect(() => {
+    links.set('follow', follow);
+  });
+
+  const followLink = useCallback(
+    (href: string) => {
+      links.get('follow')?.(href);
+    },
+    [links],
+  );
+
   /**
    * Keeps a new choice of how the text is shown.
    *
@@ -415,7 +428,7 @@ const ATextReader = ({
                     size={size}
                     leading={TEXT_LOOK.leading[settings.spacing]}
                     ink={colours.ink}
-                    onLink={follow}
+                    onLink={followLink}
                     onAnchors={setAnchors}
                   />
                 </Button>

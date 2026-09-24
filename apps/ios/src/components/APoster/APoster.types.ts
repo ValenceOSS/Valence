@@ -4,6 +4,7 @@ type APosterProps = {
   artwork: string | null;
   watched?: number;
   note?: string | null;
+  wide?: number;
 };
 
 export type { APosterProps };

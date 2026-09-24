@@ -1,4 +1,4 @@
-import { Film, Monitor, SearchX } from '@keyline-icons/react-native';
+import { Film, Monitor, ScanQrCode, SearchX } from '@keyline-icons/react-native';
 import {
   Film as FilmFilled,
   Home as HomeFilled,
@@ -6,9 +6,16 @@ import {
   BookOpen as BookOpenFilled,
   MusicNote as MusicNoteFilled,
 } from '@keyline-icons/react-native/fill';
-import { useCallback, useLayoutEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, Animated, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Animated,
+  Easing,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
@@ -23,7 +30,9 @@ import { Button } from '@ValencePhone/components/Button/Button';
 import { SegmentedRow } from '@ValencePhone/components/SegmentedRow/SegmentedRow';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { ACard } from '@ValencePhone/components/ACard/ACard';
+import { AGlassCircle } from '@ValencePhone/components/AGlassCircle/AGlassCircle';
 import { AMoodBackground } from '@ValencePhone/components/AMoodBackground/AMoodBackground';
+import { TheSearchBox } from '@ValencePhone/components/TheSearch/components/TheSearchBox/TheSearchBox';
 import { TheBell } from '@ValencePhone/components/TheBell/TheBell';
 import { ACarriedMark } from '@ValencePhone/components/ACarriedMark/ACarriedMark';
 import { TheFilters } from '@ValencePhone/components/TheLibrary/components/TheFilters/TheFilters';
@@ -46,7 +55,7 @@ import { theColours } from '@ValencePhone/theme/theColours';
 import type { ReactNode } from 'react';
 import type { VideoPlayer } from 'expo-video';
 import type { ALight } from '@ValencePhone/components/AMoodBackground/AMoodBackground.types';
-import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ShowSummary } from '@ValenceContracts/schemas/Show';
 import type { TheLibraryProps } from './TheLibrary.types';
 
@@ -62,20 +71,78 @@ const UNDER_THE_BAR = 10;
 
 const ARRIVES = { ...SPRINGS.rise, overshootClamping: true, useNativeDriver: true } as const;
 
+const NO_LIBRARIES: readonly Library[] = [];
+
+/**
+ * Keeps only what the grid reads from the programme lists — each list, and whether any is still
+ * being read — so it stays the same object until one of those changes.
+ *
+ * @param results - The lists, as asked for.
+ * @returns Each list, and whether any is still being read.
+ */
+const programmesOf = (
+  results: readonly { data: ShowSummary[] | undefined; isPending: boolean }[],
+): { lists: (ShowSummary[] | undefined)[]; isPending: boolean } => ({
+  lists: results.map(({ data }) => data),
+  isPending: results.some(({ isPending }) => isPending),
+});
+
+const SEARCH = 'search';
+
+/**
+ * Notes whether a part has been scrolled from its top, which is what brings the bar's blur in.
+ *
+ * @param was - What was noted of every part.
+ * @param which - The part.
+ * @param isScrolled - Whether it has been scrolled from its top.
+ * @returns What is noted now, the same record where nothing changed.
+ */
+const noteScrolled = (
+  was: Readonly<Record<string, boolean>>,
+  which: string,
+  isScrolled: boolean,
+): Readonly<Record<string, boolean>> =>
+  was[which] === isScrolled ? was : { ...was, [which]: isScrolled };
+
+/**
+ * What a cell of the grid is known by.
+ *
+ * @param cell - The cell.
+ * @returns Its key.
+ */
+const keyOfCell = (cell: Cell): string =>
+  cell.kind === 'media' ? cell.media.id : cell.programme.id;
+
+const BAR_MOVES_OVER = 260;
+
+const BAR_TURNS_AFTER = 10;
+
+const BAR_LIFTS_BY = 24;
+
+const PARTS_BELOW_BY = 12;
+
 const styles = StyleSheet.create({
+  dimmed: { backgroundColor: 'rgba(0, 0, 0, 0.28)' },
   arriving: { gap: 20 },
-  hidden: { display: 'none' },
+  hidden: { opacity: 0 },
+  aside: { alignItems: 'center', flexDirection: 'row', gap: 10 },
   bar: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 10,
+    gap: PARTS_BELOW_BY,
     paddingBottom: UNDER_THE_BAR,
     paddingHorizontal: SCREEN_EDGE,
   },
+  topRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   edge: { bottom: 0, height: StyleSheet.hairlineWidth, left: 0, position: 'absolute', right: 0 },
   fixed: { left: 0, position: 'absolute', right: 0, top: 0 },
   lit: { flex: 1 },
-  parts: { flex: 1, paddingLeft: 6 },
+  parts: { alignSelf: 'stretch' },
+  searchInstead: {
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
 });
 
 /**
@@ -96,6 +163,7 @@ const styles = StyleSheet.create({
  * @param onLookAt - Told which title somebody wants to see more of.
  * @param onLookAtShow - Told which programme, in which library.
  * @param onNotifications - Told somebody wants to see what the server has told them.
+ * @param onScan - Told somebody wants to scan a television's code to sign it in.
  * @param onAlbum - Told to open an album.
  * @param onArtist - Told to open an artist.
  * @param onPlaylist - Told to open a playlist.
@@ -110,6 +178,7 @@ const TheLibrary = ({
   onLookAt,
   onLookAtShow,
   onNotifications,
+  onScan,
   onAlbum,
   onArtist,
   onPlaylist,
@@ -118,22 +187,104 @@ const TheLibrary = ({
   onAllArtists,
   onBook,
   onRead,
+  isSearching = false,
+  searchPage,
 }: TheLibraryProps) => {
   const colours = useTheColours();
+  const told = useRef({ onWatch, onLookAt, onLookAtShow });
   const libraries = useQuery(libraryQueries.all());
   const watched = useQuery(viewingQueries.progress());
   const filters = useLibraryFilters();
   const [part, setPart] = useState('home');
   const [barTall, setBarTall] = useState(BAR_TALL);
+  const [barAway] = useState(() => new Animated.Value(0));
+  const [isBarAway, setIsBarAway] = useState(false);
+  const [partsTall, setPartsTall] = useState(0);
+  const [searchingFor, setSearchingFor] = useState('');
+  const [hasSearched, setHasSearched] = useState(isSearching);
+  const { width: wide } = useWindowDimensions();
+
+  useEffect(() => {
+    if (isSearching) {
+      setHasSearched(true);
+    }
+  }, [isSearching]);
+  const [searchness] = useState(() => new Animated.Value(isSearching ? 1 : 0));
+
+  useEffect(() => {
+    setIsBarAway(false);
+    Animated.timing(searchness, {
+      toValue: isSearching ? 1 : 0,
+      duration: BAR_MOVES_OVER,
+      easing: Easing.inOut(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [isSearching, searchness]);
+  const turnedAt = useRef(0);
+  const isAway = isBarAway && !isSearching;
+  const searching = useRef(isSearching);
+
+  useLayoutEffect(() => {
+    searching.current = isSearching;
+  }, [isSearching]);
+
+  useEffect(() => {
+    Animated.timing(barAway, {
+      toValue: isAway ? 1 : 0,
+      duration: BAR_MOVES_OVER,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [isAway, barAway]);
+
+  const followScroll = useCallback(
+    (y: number) => {
+      if (searching.current) {
+        return;
+      }
+
+      if (y < barTall) {
+        turnedAt.current = y;
+        setIsBarAway(false);
+
+        return;
+      }
+
+      if (y - turnedAt.current > BAR_TURNS_AFTER) {
+        turnedAt.current = y;
+        setIsBarAway(true);
+      } else if (turnedAt.current - y > BAR_TURNS_AFTER) {
+        turnedAt.current = y;
+        setIsBarAway(false);
+      } else if (isBarAway ? y > turnedAt.current : y < turnedAt.current) {
+        turnedAt.current = y;
+      }
+    },
+    [barTall, isBarAway],
+  );
   const [scrolled, setScrolled] = useState<Readonly<Record<string, boolean>>>({});
-  const isPast = scrolled[part] === true;
+  const isPast = scrolled[isSearching ? SEARCH : part] === true;
   const room = useSafeAreaInsets();
   const [arriving] = useState(() => new Animated.Value(0));
   const isOnTop = useIsOnTop();
 
   useLayoutEffect(() => {
+    told.current = { onWatch, onLookAt, onLookAtShow };
+  });
+
+  useLayoutEffect(() => {
     Animated.spring(arriving, { ...ARRIVES, toValue: 0 }).start();
   }, [part, arriving]);
+
+  const watch = useCallback((mediaId: string, startSeconds: number) => {
+    told.current.onWatch(mediaId, startSeconds);
+  }, []);
+  const lookAt = useCallback((mediaId: string) => {
+    told.current.onLookAt(mediaId);
+  }, []);
+  const lookAtShow = useCallback((libraryId: string, showId: string) => {
+    told.current.onLookAtShow(libraryId, showId);
+  }, []);
   const [chosen, setChosen] = useState(EVERY);
   const [heroic, setHeroic] = useState<string | null>(null);
   const [clip, setClip] = useState<VideoPlayer | null>(null);
@@ -142,16 +293,27 @@ const TheLibrary = ({
   const onShowing = useCallback((media: MediaSummary | null) => {
     setHeroic(media !== null && media.hasBackdrop ? media.id : null);
   }, []);
-  const howFar = byMediaId(watched.data ?? []);
-  const films = (libraries.data ?? []).filter((library) => library.kind === 'movies');
-  const programmes = (libraries.data ?? []).filter((library) => library.kind === 'shows');
-  const hasMusic = (libraries.data ?? []).some((library) => library.kind === 'music');
-  const bookLibraries = (libraries.data ?? [])
-    .filter((library) => library.kind === 'books')
-    .map((library) => library.id);
+  const howFar = useMemo(() => byMediaId(watched.data ?? []), [watched.data]);
+  const { films, programmes, hasMusic, bookLibraries, watchable } = useMemo(() => {
+    const every = libraries.data ?? NO_LIBRARIES;
+    const filmLibraries = every.filter((library) => library.kind === 'movies');
+    const programmeLibraries = every.filter((library) => library.kind === 'shows');
+
+    return {
+      films: filmLibraries,
+      programmes: programmeLibraries,
+      hasMusic: every.some((library) => library.kind === 'music'),
+      bookLibraries: every
+        .filter((library) => library.kind === 'books')
+        .map((library) => library.id),
+      watchable: [...filmLibraries, ...programmeLibraries].map((library) => library.id),
+    };
+  }, [libraries.data]);
   const drawsItsOwn = part === 'home' || part === 'music' || part === 'books';
-  const watchable = [...films, ...programmes].map((library) => library.id);
-  const ofThisKind = part === 'films' ? films : part === 'shows' ? programmes : [];
+  const ofThisKind = useMemo(
+    () => (part === 'films' ? films : part === 'shows' ? programmes : NO_LIBRARIES),
+    [part, films, programmes],
+  );
   const reading = chosen === EVERY ? ofThisKind.map((library) => library.id) : [chosen];
   const isFiltered = filters.selected.size > 0;
   const parts = [
@@ -174,22 +336,27 @@ const TheLibrary = ({
       ...libraryQueries.shows(libraryId),
       enabled: part === 'shows' && !isFiltered,
     })),
+    combine: programmesOf,
   });
 
-  const cells: readonly Cell[] =
-    part === 'home'
-      ? []
-      : part === 'shows' && !isFiltered
-        ? programmeLists
-            .flatMap((list) => list.data ?? [])
-            .sort((left, right) => left.title.localeCompare(right.title))
-            .map((programme) => ({ kind: 'programme', programme }))
-        : (part === 'shows' ? collapseToShows(everything.data ?? []) : (everything.data ?? [])).map(
-            (media) => ({ kind: 'media', media }),
-          );
+  const cells = useMemo(
+    (): readonly Cell[] =>
+      part === 'home'
+        ? []
+        : part === 'shows' && !isFiltered
+          ? programmeLists.lists
+              .flatMap((list) => list ?? [])
+              .sort((left, right) => left.title.localeCompare(right.title))
+              .map((programme) => ({ kind: 'programme', programme }))
+          : (part === 'shows'
+              ? collapseToShows(everything.data ?? [])
+              : (everything.data ?? [])
+            ).map((media) => ({ kind: 'media', media })),
+    [part, isFiltered, programmeLists.lists, everything.data],
+  );
   const isWaiting =
     part === 'shows' && !isFiltered
-      ? programmeLists.some((list) => list.isPending)
+      ? programmeLists.isPending
       : everything.isPending && everything.fetchStatus !== 'idle';
 
   /**
@@ -205,123 +372,246 @@ const TheLibrary = ({
       <TheClipBehind player={part === 'home' ? clip : null}>
         <AMoodBackground palette={palette} />
       </TheClipBehind>
+      <View style={[StyleSheet.absoluteFill, styles.dimmed]} pointerEvents="none" />
       <ARRIVING.Provider value={arriving}>{drawn}</ARRIVING.Provider>
       {bar}
     </View>
   );
 
   const bar = (
-    <View style={[styles.fixed, { paddingTop: room.top + SCREEN_EDGE }]}>
-      <ABlur isDark={colours.surface === theColours.dark.surface} isOn={isPast} changesOver={250} />
-      <View style={[styles.edge, { backgroundColor: colours.border, opacity: isPast ? 1 : 0 }]} />
+    <View style={[styles.fixed, { paddingTop: room.top + SCREEN_EDGE }]} pointerEvents="box-none">
+      <Animated.View
+        collapsable={false}
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            transform: [
+              {
+                translateY: barAway.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, -partsTall],
+                }),
+              },
+            ],
+          },
+        ]}
+      >
+        <ABlur
+          isDark={colours.surface === theColours.dark.surface}
+          isOn={isPast}
+          changesOver={250}
+        />
+        <View style={[styles.edge, { backgroundColor: colours.border, opacity: isPast ? 1 : 0 }]} />
+      </Animated.View>
       <View
         style={styles.bar}
+        pointerEvents="box-none"
         onLayout={({ nativeEvent }) => {
           setBarTall(nativeEvent.layout.height);
         }}
       >
-        <ACarriedMark isHandedOn={false} />
-        <View style={styles.parts}>
-          <SegmentedRow
-            label="What to show"
-            isGlass
-            scrolls
-            items={parts}
-            value={part}
-            onSelect={(next) => {
-              if (next === part) {
-                return;
-              }
-
-              const from = parts.findIndex((one) => one.id === part);
-              const to = parts.findIndex((one) => one.id === next);
-
-              arriving.setValue(to > from ? 1 : -1);
-              setPart(next);
-              setChosen(EVERY);
-              filters.clear();
-            }}
-          />
+        <View style={styles.topRow}>
+          <ACarriedMark isHandedOn={false} />
+          <View style={styles.aside}>
+            <AGlassCircle of={ScanQrCode} label="Sign in a television" onPress={onScan} />
+            <TheBell onPress={onNotifications} />
+          </View>
         </View>
-        <TheBell onPress={onNotifications} />
+        <Animated.View
+          collapsable={false}
+          pointerEvents={isAway ? 'none' : 'auto'}
+          onLayout={({ nativeEvent }) => {
+            setPartsTall(nativeEvent.layout.height + PARTS_BELOW_BY);
+          }}
+          style={[
+            styles.parts,
+            {
+              transform: [
+                {
+                  translateY: barAway.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, -BAR_LIFTS_BY],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          <View pointerEvents={isSearching ? 'none' : 'auto'}>
+            <SegmentedRow
+              label="What to show"
+              fills
+              isShown={!isSearching && !isBarAway}
+              items={parts}
+              value={part}
+              onSelect={(next) => {
+                if (next === part) {
+                  return;
+                }
+
+                const from = parts.findIndex((one) => one.id === part);
+                const to = parts.findIndex((one) => one.id === next);
+
+                arriving.setValue(to > from ? 1 : -1);
+                setIsBarAway(false);
+                turnedAt.current = 0;
+                setPart(next);
+                setChosen(EVERY);
+                filters.clear();
+              }}
+            />
+          </View>
+          <View pointerEvents={isSearching ? 'auto' : 'none'} style={styles.searchInstead}>
+            <TheSearchBox
+              placeholder="Films, programmes, people"
+              onSettle={setSearchingFor}
+              isCapsule
+              isShown={isSearching}
+            />
+          </View>
+        </Animated.View>
       </View>
     </View>
   );
 
-  /**
-   * Notes whether a part has been scrolled from its top, which is what brings the bar's blur in.
-   *
-   * @param which - The part.
-   * @returns What to tell the part to call as it scrolls.
-   */
-  const noteScrolling = (which: string) => (isScrolled: boolean) => {
-    setScrolled((was) => (was[which] === isScrolled ? was : { ...was, [which]: isScrolled }));
-  };
+  const searchScrolled = useCallback((isScrolled: boolean) => {
+    setScrolled((was) => noteScrolled(was, SEARCH, isScrolled));
+  }, []);
 
-  const header = (
-    <>
-      <View style={{ height: barTall - UNDER_THE_BAR }} />
-
-      {!libraries.isError && !isWaiting && drawsItsOwn ? null : (
-        <AnArrival style={styles.arriving}>
-          {libraries.isError ? <Words tone="danger">Those could not be read.</Words> : null}
-
-          {ofThisKind.length > 1 ? (
-            <SegmentedRow
-              label="Which library"
-              items={[
-                { id: EVERY, label: 'All' },
-                ...ofThisKind.map((library) => ({ id: library.id, label: library.name })),
-              ]}
-              value={chosen}
-              onSelect={setChosen}
-            />
-          ) : null}
-
-          {drawsItsOwn ? null : (
-            <TheFilters
-              groups={filters.groups}
-              selected={filters.selected}
-              onChange={filters.change}
-              onClear={filters.clear}
-            />
-          )}
-
-          {isWaiting ? <ActivityIndicator color={colours.textMuted} /> : null}
-
-          {!drawsItsOwn && !isWaiting && cells.length === 0 ? (
-            isFiltered ? (
-              <ANothingHere
-                of={SearchX}
-                title="Nothing matches those"
-                detail="Try fewer filters, or clear them."
-              />
-            ) : (
-              <ANothingHere
-                of={part === 'films' ? Film : Monitor}
-                title={part === 'films' ? 'No films yet' : 'No shows yet'}
-                detail={howToFillIt(
-                  chosen === EVERY && ofThisKind.length > 1 ? 'every library' : 'one library',
-                  false,
-                )}
-              />
-            )
-          ) : null}
-        </AnArrival>
-      )}
-    </>
+  const homeScrolled = useCallback((isScrolled: boolean) => {
+    setScrolled((was) => noteScrolled(was, 'home', isScrolled));
+  }, []);
+  const partScrolled = useCallback(
+    (isScrolled: boolean) => {
+      setScrolled((was) => noteScrolled(was, part, isScrolled));
+    },
+    [part],
   );
+
+  const header = useMemo(
+    () => (
+      <>
+        <View style={{ height: barTall - UNDER_THE_BAR }} />
+
+        {!libraries.isError && !isWaiting && drawsItsOwn ? null : (
+          <AnArrival style={styles.arriving}>
+            {libraries.isError ? <Words tone="danger">Those could not be read.</Words> : null}
+
+            {ofThisKind.length > 1 ? (
+              <SegmentedRow
+                label="Which library"
+                items={[
+                  { id: EVERY, label: 'All' },
+                  ...ofThisKind.map((library) => ({ id: library.id, label: library.name })),
+                ]}
+                value={chosen}
+                onSelect={setChosen}
+              />
+            ) : null}
+
+            {drawsItsOwn ? null : (
+              <TheFilters
+                groups={filters.groups}
+                selected={filters.selected}
+                onChange={filters.change}
+                onClear={filters.clear}
+              />
+            )}
+
+            {isWaiting ? <ActivityIndicator color={colours.textMuted} /> : null}
+
+            {!drawsItsOwn && !isWaiting && cells.length === 0 ? (
+              isFiltered ? (
+                <ANothingHere
+                  of={SearchX}
+                  title="Nothing matches those"
+                  detail="Try fewer filters, or clear them."
+                />
+              ) : (
+                <ANothingHere
+                  of={part === 'films' ? Film : Monitor}
+                  title={part === 'films' ? 'No films yet' : 'No shows yet'}
+                  detail={howToFillIt(
+                    chosen === EVERY && ofThisKind.length > 1 ? 'every library' : 'one library',
+                    false,
+                  )}
+                />
+              )
+            ) : null}
+          </AnArrival>
+        )}
+      </>
+    ),
+    [
+      barTall,
+      libraries.isError,
+      isWaiting,
+      drawsItsOwn,
+      ofThisKind,
+      chosen,
+      filters.groups,
+      filters.selected,
+      filters.change,
+      filters.clear,
+      colours.textMuted,
+      cells.length,
+      isFiltered,
+      part,
+    ],
+  );
+
+  const drawn = useCallback(
+    (cell: Cell, wide: number) => {
+      if (cell.kind === 'programme') {
+        return (
+          <Button
+            tone="bare"
+            label={cell.programme.title}
+            onPress={() => {
+              lookAtShow(cell.programme.libraryId, cell.programme.id);
+            }}
+          >
+            <APoster
+              title={cell.programme.title}
+              year={cell.programme.year ?? null}
+              artwork={onThisServer(`/api/media/${cell.programme.coverMediaId}/image/poster`)}
+              wide={wide}
+            />
+          </Button>
+        );
+      }
+
+      const known = howFar.get(cell.media.id);
+
+      return (
+        <ACard
+          media={cell.media}
+          asProgramme={part === 'shows'}
+          watched={known === undefined ? 0 : watchedFraction(known)}
+          wide={wide}
+          onLookAt={lookAt}
+          onLookAtShow={lookAtShow}
+        />
+      );
+    },
+    [howFar, part, lookAt, lookAtShow],
+  );
+
+  const isHomeSeen = part === 'home';
 
   const home = (
     <View
-      style={[StyleSheet.absoluteFill, part === 'home' ? null : styles.hidden]}
-      pointerEvents={part === 'home' ? 'auto' : 'none'}
-      accessibilityElementsHidden={part !== 'home'}
-      importantForAccessibility={part === 'home' ? 'auto' : 'no-hide-descendants'}
+      collapsable={false}
+      style={[StyleSheet.absoluteFill, isHomeSeen ? null : styles.hidden]}
+      pointerEvents={isHomeSeen ? 'auto' : 'none'}
+      accessibilityElementsHidden={!isHomeSeen || isSearching}
+      importantForAccessibility={isHomeSeen && !isSearching ? 'auto' : 'no-hide-descendants'}
     >
       <IS_ON_TOP.Provider value={isOnTop && part === 'home'}>
         <TheHome
           header={header}
+          isOnScreen={part === 'home'}
           watchable={watchable}
           librariesAre={
             libraries.data === undefined
@@ -330,12 +620,13 @@ const TheLibrary = ({
                 ? 'missing'
                 : 'there'
           }
-          onWatch={onWatch}
-          onLookAt={onLookAt}
-          onLookAtShow={onLookAtShow}
+          onWatch={watch}
+          onLookAt={lookAt}
+          onLookAtShow={lookAtShow}
           onShowing={onShowing}
           onClip={setClip}
-          onScrolled={noteScrolling('home')}
+          onScrolled={homeScrolled}
+          onScrolledTo={followScroll}
         />
       </IS_ON_TOP.Provider>
     </View>
@@ -343,65 +634,80 @@ const TheLibrary = ({
 
   return lit(
     <>
-      {home}
-      {part === 'home' ? null : part === 'books' ? (
-        <TheBooks
-          header={header}
-          libraryIds={bookLibraries}
-          onBook={onBook}
-          onRead={onRead}
-          onScrolled={noteScrolling('books')}
-        />
-      ) : part === 'music' ? (
-        <TheMusic
-          header={header}
-          onAlbum={onAlbum}
-          onArtist={onArtist}
-          onPlaylist={onPlaylist}
-          onLiked={onLiked}
-          onAllAlbums={onAllAlbums}
-          onAllArtists={onAllArtists}
-          onScrolled={noteScrolling('music')}
-        />
-      ) : (
-        <APosterGrid
-          header={header}
-          items={cells}
-          onScrolled={noteScrolling(part)}
-          keyOf={(cell) => (cell.kind === 'media' ? cell.media.id : cell.programme.id)}
-          drawn={(cell) => {
-            if (cell.kind === 'programme') {
-              return (
-                <Button
-                  tone="bare"
-                  label={cell.programme.title}
-                  onPress={() => {
-                    onLookAtShow(cell.programme.libraryId, cell.programme.id);
-                  }}
-                >
-                  <APoster
-                    title={cell.programme.title}
-                    year={cell.programme.year ?? null}
-                    artwork={onThisServer(`/api/media/${cell.programme.coverMediaId}/image/poster`)}
-                  />
-                </Button>
-              );
-            }
+      <Animated.View
+        collapsable={false}
+        pointerEvents={isSearching ? 'none' : 'box-none'}
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            transform: [
+              {
+                translateX: searchness.interpolate({ inputRange: [0, 1], outputRange: [0, -wide] }),
+              },
+            ],
+          },
+        ]}
+      >
+        {home}
+        {part === 'home' ? null : part === 'books' ? (
+          <TheBooks
+            header={header}
+            libraryIds={bookLibraries}
+            onBook={onBook}
+            onRead={onRead}
+            onScrolled={partScrolled}
+            onScrolledTo={followScroll}
+          />
+        ) : part === 'music' ? (
+          <TheMusic
+            header={header}
+            onAlbum={onAlbum}
+            onArtist={onArtist}
+            onPlaylist={onPlaylist}
+            onLiked={onLiked}
+            onAllAlbums={onAllAlbums}
+            onAllArtists={onAllArtists}
+            onScrolled={partScrolled}
+          />
+        ) : (
+          <APosterGrid
+            header={header}
+            items={cells}
+            onScrolled={partScrolled}
+            onScrolledTo={followScroll}
+            keyOf={keyOfCell}
+            drawn={drawn}
+          />
+        )}
+      </Animated.View>
 
-            const known = howFar.get(cell.media.id);
-
-            return (
-              <ACard
-                media={cell.media}
-                asProgramme={part === 'shows'}
-                watched={known === undefined ? 0 : watchedFraction(known)}
-                onLookAt={onLookAt}
-                onLookAtShow={onLookAtShow}
-              />
-            );
-          }}
-        />
-      )}
+      {hasSearched ? (
+        <Animated.View
+          collapsable={false}
+          pointerEvents={isSearching ? 'box-none' : 'none'}
+          accessibilityElementsHidden={!isSearching}
+          importantForAccessibility={isSearching ? 'auto' : 'no-hide-descendants'}
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              transform: [
+                {
+                  translateX: searchness.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [wide, 0],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          {searchPage?.(
+            <View style={{ height: barTall - UNDER_THE_BAR }} />,
+            searchingFor,
+            searchScrolled,
+          )}
+        </Animated.View>
+      ) : null}
     </>,
   );
 };

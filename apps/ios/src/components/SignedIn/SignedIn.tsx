@@ -5,6 +5,8 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
+import { profileInitial } from '@ValenceContracts/schemas/ViewerProfile';
+import { thePictureFor } from '@ValencePhone/components/AFace/thePictureFor';
 import { decideWhatFollows } from '@ValenceClient/playback/decideWhatFollows';
 import { nextEpisode } from '@ValenceClient/library/pickFeatured';
 import {
@@ -18,6 +20,8 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { signOut } from '@ValenceClient/session/auth';
 import { watchPresence } from '@ValenceClient/presence/watchPresence';
+import { allowRealtimeClientToStart } from '@ValenceClient/realtime/getRealtimeClient';
+import { useFreshFromTheSocket } from '@ValenceClient/query/useFreshFromTheSocket';
 import { AnAskable } from '@ValencePhone/components/AnAskable/AnAskable';
 import { APerson } from '@ValencePhone/components/APerson/APerson';
 import { AShow } from '@ValencePhone/components/AShow/AShow';
@@ -33,6 +37,11 @@ import { TheMusicPlayer } from '@ValencePhone/components/TheMusicPlayer/TheMusic
 import { ABook } from '@ValencePhone/components/ABook/ABook';
 import { AReader } from '@ValencePhone/components/AReader/AReader';
 import { TheNowPlayingBar } from '@ValencePhone/components/TheNowPlayingBar/TheNowPlayingBar';
+import { ACatalogueList } from '@ValencePhone/components/ACatalogueList/ACatalogueList';
+import { forgetTheMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
+import { theCodeInAScan } from '@ValenceClient/session/theCodeInAScan';
+import { scanACode } from '@ValencePhone/platform/scanACode';
+import { ATabPage } from '@ValencePhone/components/SignedIn/components/ATabPage/ATabPage';
 import { TheAccount } from '@ValencePhone/components/TheAccount/TheAccount';
 import { TheDownloads } from '@ValencePhone/components/TheDownloads/TheDownloads';
 import { TheLibrary } from '@ValencePhone/components/TheLibrary/TheLibrary';
@@ -40,6 +49,7 @@ import { TheNotifications } from '@ValencePhone/components/TheNotifications/TheN
 import { TheSearch } from '@ValencePhone/components/TheSearch/TheSearch';
 import { TheTabs } from '@ValencePhone/components/TheTabs/TheTabs';
 import { AProgrammeBySeries } from '@ValencePhone/components/SignedIn/components/AProgrammeBySeries/AProgrammeBySeries';
+import { UnderThePlayer } from '@ValencePhone/components/SignedIn/components/UnderThePlayer/UnderThePlayer';
 import { APageStack } from '@ValencePhone/components/APageStack/APageStack';
 import { useTheProgrammeOfEpisode } from '@ValencePhone/hooks/useTheProgrammeOfEpisode';
 import { Watching } from '@ValencePhone/components/Watching/Watching';
@@ -58,6 +68,8 @@ import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { APage, SignedInProps } from './SignedIn.types';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
+const A_SERVER = /^[a-z][a-z0-9+.-]*:\/\/[^/?#\s]+/iu;
+
 const MUSIC_PAGES: ReadonlySet<APage['kind']> = new Set([
   'album',
   'artist',
@@ -68,6 +80,7 @@ const MUSIC_PAGES: ReadonlySet<APage['kind']> = new Set([
 ]);
 
 const styles = StyleSheet.create({
+  over: { ...StyleSheet.absoluteFill },
   whole: { flex: 1 },
 });
 
@@ -84,6 +97,11 @@ const styles = StyleSheet.create({
  * Something asked for that has arrived opens in the library from its page, and a programme is
  * found by the series it became, since that is all a request knows of it.
  *
+ * The player is laid over everything else rather than drawn instead of it, so what was open
+ * underneath — the library, its answers and how far down it somebody had scrolled — is still there
+ * when they come out, however long the film was. Nothing beneath it can be touched, read aloud or
+ * left playing while it is up.
+ *
  * Coming out of the player throws away what was known about how far through everything is, because
  * the thing they just watched is the one entry that is now wrong.
  *
@@ -95,17 +113,31 @@ const styles = StyleSheet.create({
  * It joins presence as soon as somebody is through, which is what puts this phone in the list of
  * open sessions an operator watches and what carries an instruction to stop or pause back to it.
  * Presence is the socket rather than something kept beside one, so a phone that never opened one
- * was a phone the server could see asking for films and never see watching them.
+ * was a phone the server could see asking for films and never see watching them. The same socket
+ * says when anything this phone has asked for has changed, and it is closed once they sign out.
  *
  * Waits for the session before drawing any of it, because every request they make depends on being
  * signed in and a library drawn first would ask a question it cannot have the answer to.
  *
+ * @param onElsewhere - Told that somebody wants to point this phone at a different server.
  * @param onOut - Told once they have signed out.
+ * @param onFaceAt - Told where the account tab shows their face, for it to fly to on the way in.
+ * @param isFaceArriving - Whether their face is still flying in, so the tab leaves its place empty.
  */
-const SignedIn = ({ onOut }: SignedInProps) => {
+const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: SignedInProps) => {
   const session = useQuery(sessionQueries.who());
 
-  useEffect(() => watchPresence(), []);
+  useEffect(() => {
+    allowRealtimeClientToStart(true);
+
+    const stopWatching = watchPresence();
+
+    return () => {
+      stopWatching();
+      allowRealtimeClientToStart(false);
+    };
+  }, []);
+  useFreshFromTheSocket();
   useEffect(() => {
     void sendWatchedOffline();
   }, []);
@@ -118,6 +150,19 @@ const SignedIn = ({ onOut }: SignedInProps) => {
   const [watchingHeld, setWatchingHeld] = useState<HeldFile | null>(null);
   const [askingAbout, setAskingAbout] = useState<MediaSummary | null>(null);
   const [part, setPart] = useState('home');
+  const kept = part === 'search' ? 'home' : part;
+  const [libraryLeftOn, setLibraryLeftOn] = useState(part);
+
+  useEffect(() => {
+    if (part === 'home' || part === 'search') {
+      setLibraryLeftOn(part);
+    }
+  }, [part]);
+  const [visited, setVisited] = useState<ReadonlySet<string>>(() => new Set([kept]));
+
+  useEffect(() => {
+    setVisited((was) => (was.has(kept) ? was : new Set([...was, kept])));
+  }, [kept]);
   const holding = useTheProgrammeOfEpisode(watching?.mediaId ?? null);
   const series = useQuery(libraryQueries.show(holding?.libraryId ?? null, holding?.id ?? null));
   const watcher = useQuery(profileQueries.watching());
@@ -130,7 +175,21 @@ const SignedIn = ({ onOut }: SignedInProps) => {
     { id: 'home', label: 'Home', icon: Home, symbol: 'house' },
     { id: 'search', label: 'Search', icon: Search, symbol: 'magnifyingglass' },
     { id: 'downloads', label: 'Downloads', icon: Download, symbol: 'arrow.down.circle' },
-    { id: 'account', label: 'Account', icon: CircleUser, symbol: 'person.crop.circle' },
+    {
+      id: 'account',
+      label: 'Account',
+      icon: CircleUser,
+      symbol: 'person.crop.circle',
+      ...(watcher.data === null || watcher.data === undefined
+        ? {}
+        : {
+            face: {
+              picture: thePictureFor(watcher.data),
+              backdrop: watcher.data.colour,
+              initial: profileInitial(watcher.data.name),
+            },
+          }),
+    },
   ];
 
   const open = (page: APage) => {
@@ -155,8 +214,31 @@ const SignedIn = ({ onOut }: SignedInProps) => {
     }
   });
 
+  useEffect(
+    () => () => {
+      forgetTheMusicPlayer();
+    },
+    [],
+  );
+
   const back = () => {
     setPages((was) => was.slice(0, -1));
+  };
+
+  const scanATelevision = async () => {
+    const scanned = await scanACode();
+
+    if (scanned.kind === 'closed') {
+      return;
+    }
+
+    const said = scanned.kind === 'read' ? scanned.text.trim() : '';
+
+    open({
+      kind: 'television',
+      code: theCodeInAScan(said) ?? '',
+      askedFrom: A_SERVER.exec(said)?.[0] ?? null,
+    });
   };
 
   const lookAt = (mediaId: string) => {
@@ -207,51 +289,6 @@ const SignedIn = ({ onOut }: SignedInProps) => {
       <Screen centres>
         <ActivityIndicator />
       </Screen>
-    );
-  }
-
-  if (askingAbout !== null) {
-    return (
-      <StillWatching
-        upNext={askingAbout.title}
-        secondsToAnswer={STILL_WATCHING_ANSWER_SECONDS}
-        onCarryOn={() => {
-          const next = askingAbout;
-
-          setAskingAbout(null);
-          choose(next.id, 0);
-        }}
-        onStop={() => {
-          setAskingAbout(null);
-        }}
-      />
-    );
-  }
-
-  if (watchingHeld !== null) {
-    return (
-      <WatchingHeld
-        file={watchingHeld}
-        onDone={() => {
-          setWatchingHeld(null);
-        }}
-      />
-    );
-  }
-
-  if (watching !== null) {
-    return (
-      <Watching
-        key={watching.mediaId}
-        mediaId={watching.mediaId}
-        startSeconds={watching.startSeconds}
-        onDone={stopWatchingIt}
-        onEnded={whenItEnds}
-        seasons={series.data?.seasons ?? []}
-        onChooseEpisode={(chosen) => {
-          choose(chosen, resumeFor(byMediaId(watched.data ?? []), chosen) ?? 0);
-        }}
-      />
     );
   }
 
@@ -314,6 +351,17 @@ const SignedIn = ({ onOut }: SignedInProps) => {
                   ? { kind: 'title', mediaId }
                   : { kind: 'series', seriesId: mediaId },
               );
+            }}
+            onBack={back}
+          />
+        );
+      case 'browsing':
+        return (
+          <ACatalogueList
+            browsing={page.browsing}
+            title={page.title}
+            onAsk={(about, id) => {
+              open({ kind: 'asking', about, id });
             }}
             onBack={back}
           />
@@ -388,71 +436,135 @@ const SignedIn = ({ onOut }: SignedInProps) => {
     }
   };
 
-  const showing =
-    part === 'downloads' ? (
-      <TheDownloads onWatch={setWatchingHeld} />
-    ) : part === 'account' ? (
-      <TheAccount
-        onOut={() => {
-          void signOut().then(onOut);
+  const showing = (
+    <>
+      {visited.has('home') ? (
+        <ATabPage isShowing={kept === 'home'}>
+          <TheLibrary
+            isSearching={part === 'search' || (part !== 'home' && libraryLeftOn === 'search')}
+            searchPage={(header, searchingFor, onScrolled) => (
+              <TheSearch
+                header={header}
+                searchingFor={searchingFor}
+                onScrolled={onScrolled}
+                onSeeAll={(browsing, title) => {
+                  open({ kind: 'browsing', browsing, title });
+                }}
+                onLookAt={lookAt}
+                onLookAtShow={lookAtShow}
+                onAlbum={toAlbum}
+                onArtist={toArtist}
+                onPlaylist={(playlistId) => {
+                  open({ kind: 'playlist', playlistId });
+                }}
+                onBook={(bookId) => {
+                  open({ kind: 'book', bookId });
+                }}
+                onAsk={
+                  mayRequest
+                    ? (about, id) => {
+                        open({ kind: 'asking', about, id });
+                      }
+                    : null
+                }
+              />
+            )}
+            onWatch={choose}
+            onLookAt={lookAt}
+            onLookAtShow={lookAtShow}
+            onNotifications={() => {
+              open({ kind: 'notifications' });
+            }}
+            onScan={() => {
+              void scanATelevision();
+            }}
+            onAlbum={toAlbum}
+            onArtist={toArtist}
+            onPlaylist={(playlistId) => {
+              open({ kind: 'playlist', playlistId });
+            }}
+            onLiked={() => {
+              open({ kind: 'liked' });
+            }}
+            onAllAlbums={() => {
+              open({ kind: 'albums' });
+            }}
+            onAllArtists={() => {
+              open({ kind: 'artists' });
+            }}
+            onBook={(bookId) => {
+              open({ kind: 'book', bookId });
+            }}
+            onRead={(bookId) => {
+              open({ kind: 'reading', bookId, chapterId: null, isFromTheStart: false });
+            }}
+          />
+        </ATabPage>
+      ) : null}
+
+      {visited.has('downloads') ? (
+        <ATabPage isShowing={kept === 'downloads'}>
+          <TheDownloads onWatch={setWatchingHeld} />
+        </ATabPage>
+      ) : null}
+
+      {visited.has('account') ? (
+        <ATabPage isShowing={kept === 'account'}>
+          <TheAccount
+            onOut={() => {
+              void signOut().then(onOut);
+            }}
+            onElsewhere={onElsewhere}
+          />
+        </ATabPage>
+      ) : null}
+    </>
+  );
+
+  const covering =
+    askingAbout !== null ? (
+      <StillWatching
+        upNext={askingAbout.title}
+        secondsToAnswer={STILL_WATCHING_ANSWER_SECONDS}
+        onCarryOn={() => {
+          const next = askingAbout;
+
+          setAskingAbout(null);
+          choose(next.id, 0);
+        }}
+        onStop={() => {
+          setAskingAbout(null);
         }}
       />
-    ) : part === 'search' ? (
-      <TheSearch
-        onLookAt={lookAt}
-        onLookAtShow={lookAtShow}
-        onAlbum={toAlbum}
-        onArtist={toArtist}
-        onPlaylist={(playlistId) => {
-          open({ kind: 'playlist', playlistId });
-        }}
-        onBook={(bookId) => {
-          open({ kind: 'book', bookId });
-        }}
-        onAsk={
-          mayRequest
-            ? (about, id) => {
-                open({ kind: 'asking', about, id });
-              }
-            : null
-        }
-      />
-    ) : (
-      <TheLibrary
-        onWatch={choose}
-        onLookAt={lookAt}
-        onLookAtShow={lookAtShow}
-        onNotifications={() => {
-          open({ kind: 'notifications' });
-        }}
-        onAlbum={toAlbum}
-        onArtist={toArtist}
-        onPlaylist={(playlistId) => {
-          open({ kind: 'playlist', playlistId });
-        }}
-        onLiked={() => {
-          open({ kind: 'liked' });
-        }}
-        onAllAlbums={() => {
-          open({ kind: 'albums' });
-        }}
-        onAllArtists={() => {
-          open({ kind: 'artists' });
-        }}
-        onBook={(bookId) => {
-          open({ kind: 'book', bookId });
-        }}
-        onRead={(bookId) => {
-          open({ kind: 'reading', bookId, chapterId: null, isFromTheStart: false });
+    ) : watchingHeld !== null ? (
+      <WatchingHeld
+        file={watchingHeld}
+        onDone={() => {
+          setWatchingHeld(null);
         }}
       />
-    );
+    ) : watching !== null ? (
+      <Watching
+        key={watching.mediaId}
+        mediaId={watching.mediaId}
+        startSeconds={watching.startSeconds}
+        onDone={stopWatchingIt}
+        onEnded={whenItEnds}
+        seasons={series.data?.seasons ?? []}
+        onChooseEpisode={(chosen) => {
+          choose(chosen, resumeFor(byMediaId(watched.data ?? []), chosen) ?? 0);
+        }}
+      />
+    ) : null;
+  const isCovered = covering !== null;
 
   const tabbed = (
     <TheTabs
       tabs={tabs}
       value={part}
       onSelect={setPart}
+      {...(onFaceAt === undefined ? {} : { onFaceAt })}
+      isFaceArriving={isFaceArriving}
       above={
         <TheNowPlayingBar
           onOpen={() => {
@@ -467,29 +579,49 @@ const SignedIn = ({ onOut }: SignedInProps) => {
 
   return (
     <View style={styles.whole}>
-      <APageStack
-        pages={[
-          { key: 'tabs', page: tabbed },
-          ...pages.map((page, index) => ({
-            key: `${index.toString()}:${JSON.stringify(page)}`,
-            page: MUSIC_PAGES.has(page.kind) ? (
-              <AMusicPage>{drawPage(page)}</AMusicPage>
-            ) : (
-              drawPage(page)
-            ),
-            rises: page.kind === 'playing',
-            holdsTheEdge: page.kind === 'reading',
-          })),
-        ]}
-        onBack={back}
-      />
-      <TheMusicRemote />
-      <TheFloatingPlayer
-        isShown={MUSIC_PAGES.has(pages.at(-1)?.kind ?? 'playing')}
-        onOpen={() => {
-          open({ kind: 'playing' });
-        }}
-      />
+      <View
+        style={styles.whole}
+        collapsable={false}
+        pointerEvents={isCovered ? 'none' : 'auto'}
+        accessibilityElementsHidden={isCovered}
+        importantForAccessibility={isCovered ? 'no-hide-descendants' : 'auto'}
+      >
+        <APageStack
+          pages={[
+            {
+              key: 'tabs',
+              page: <UnderThePlayer isCovered={isCovered}>{tabbed}</UnderThePlayer>,
+            },
+            ...pages.map((page, index) => ({
+              key: `${index.toString()}:${JSON.stringify(page)}`,
+              page: (
+                <UnderThePlayer isCovered={isCovered}>
+                  {MUSIC_PAGES.has(page.kind) ? (
+                    <AMusicPage>{drawPage(page)}</AMusicPage>
+                  ) : (
+                    drawPage(page)
+                  )}
+                </UnderThePlayer>
+              ),
+              rises: page.kind === 'playing',
+              holdsTheEdge: page.kind === 'reading',
+            })),
+          ]}
+          onBack={back}
+        />
+        <TheMusicRemote />
+        <TheFloatingPlayer
+          isShown={MUSIC_PAGES.has(pages.at(-1)?.kind ?? 'playing')}
+          onOpen={() => {
+            open({ kind: 'playing' });
+          }}
+        />
+      </View>
+      {covering === null ? null : (
+        <View style={styles.over} collapsable={false}>
+          {covering}
+        </View>
+      )}
     </View>
   );
 };

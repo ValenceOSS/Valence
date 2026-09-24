@@ -1,4 +1,5 @@
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import type { Animated } from 'react-native';
 import type { VideoPlayer } from 'expo-video';
 
 type AFeatureProps = {
@@ -10,6 +11,7 @@ type AFeatureProps = {
   onPlay: () => void;
   onMoreInfo: () => void;
   onClip?: (player: VideoPlayer | null) => void;
+  nearness?: Animated.AnimatedInterpolation<number>;
 };
 
 export type { AFeatureProps };

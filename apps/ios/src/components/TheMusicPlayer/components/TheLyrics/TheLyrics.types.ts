@@ -1,6 +1,5 @@
 type TheLyricsProps = {
   trackId: string;
-  atSeconds: number;
   onSeek: (seconds: number) => void;
 };
 

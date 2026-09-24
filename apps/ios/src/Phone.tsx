@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -10,21 +9,14 @@ import { installPhonePlatform } from '@ValencePhone/platform/installPhonePlatfor
 import { whatThePhoneRemembers } from '@ValencePhone/platform/whatThePhoneRemembers';
 import { holdThisPhoneUpright } from '@ValencePhone/platform/holdThisPhoneUpright';
 import { refetchWhenThePhoneWakes } from '@ValencePhone/platform/refetchWhenThePhoneWakes';
-import { theColours } from '@ValencePhone/theme/theColours';
+import { ASplash } from '@ValencePhone/components/ASplash/ASplash';
+import { THE_FIRST_SCREEN_IS_READY } from '@ValencePhone/components/ASplash/THE_FIRST_SCREEN_IS_READY';
+import { TheFirstScreenWatch } from '@ValencePhone/components/ASplash/components/TheFirstScreenWatch/TheFirstScreenWatch';
 import { TheFlyingMark } from '@ValencePhone/components/TheFlyingMark/TheFlyingMark';
 import { TheHousehold } from '@ValencePhone/components/TheHousehold/TheHousehold';
 import { WhereIsYourValence } from '@ValencePhone/components/WhereIsYourValence/WhereIsYourValence';
 
 const answers = buildQueryClient();
-
-const styles = StyleSheet.create({
-  beforeAnybodyKnows: {
-    alignItems: 'center',
-    backgroundColor: theColours.dark.surface,
-    flex: 1,
-    justifyContent: 'center',
-  },
-});
 
 /**
  * Valence on a phone.
@@ -49,6 +41,21 @@ const Phone = () => {
   const [isReady, setIsReady] = useState(false);
   const [address, setAddress] = useState<string | null>(null);
   const [isAsking, setIsAsking] = useState(false);
+  const [isHomeReady, setIsHomeReady] = useState(false);
+  const [isSplashDone, setIsSplashDone] = useState(false);
+  const [isSplashGone, setIsSplashGone] = useState(false);
+
+  const homeIsReady = useCallback(() => {
+    setIsHomeReady(true);
+  }, []);
+
+  const splashDone = useCallback(() => {
+    setIsSplashDone(true);
+  }, []);
+
+  const splashGone = useCallback(() => {
+    setIsSplashGone(true);
+  }, []);
 
   useEffect(() => {
     void holdThisPhoneUpright();
@@ -67,37 +74,39 @@ const Phone = () => {
     });
   }, []);
 
-  if (!isReady) {
-    return (
-      <View style={styles.beforeAnybodyKnows}>
-        <ActivityIndicator color={theColours.dark.textMuted} />
-        <StatusBar style="light" />
-      </View>
-    );
-  }
-
   return (
     <SafeAreaProvider>
-      <QueryClientProvider client={answers}>
-        {address === null || isAsking ? (
-          <WhereIsYourValence
-            onChosen={(chosen) => {
-              rememberServerAddress(chosen);
-              setAddress(chosen);
-              setIsAsking(false);
-              void answers.invalidateQueries();
-            }}
-          />
-        ) : (
-          <TheHousehold
-            onElsewhere={() => {
-              setIsAsking(true);
-            }}
-          />
-        )}
-        <TheFlyingMark />
-        <StatusBar style="auto" />
-      </QueryClientProvider>
+      {isReady ? (
+        <QueryClientProvider client={answers}>
+          <THE_FIRST_SCREEN_IS_READY.Provider value={homeIsReady}>
+            {address === null || isAsking ? (
+              <WhereIsYourValence
+                onChosen={(chosen) => {
+                  rememberServerAddress(chosen);
+                  setAddress(chosen);
+                  setIsAsking(false);
+                  void answers.invalidateQueries();
+                }}
+              />
+            ) : (
+              <TheHousehold
+                onElsewhere={() => {
+                  setIsAsking(true);
+                }}
+              />
+            )}
+            <TheFlyingMark />
+            <StatusBar style={isSplashGone ? 'auto' : 'light'} />
+            <TheFirstScreenWatch
+              hasServer={address !== null && !isAsking}
+              isHomeReady={isHomeReady}
+              onReady={splashDone}
+            />
+          </THE_FIRST_SCREEN_IS_READY.Provider>
+        </QueryClientProvider>
+      ) : null}
+
+      {isSplashGone ? null : <ASplash isDone={isSplashDone} onGone={splashGone} />}
     </SafeAreaProvider>
   );
 };

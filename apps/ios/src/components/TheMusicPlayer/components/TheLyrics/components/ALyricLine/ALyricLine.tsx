@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { Animated, Easing } from 'react-native';
 import { ASoftFocus } from '@ValencePhone/components/ASoftFocus/ASoftFocus';
 import { Words } from '@ValencePhone/components/Words/Words';
@@ -17,13 +17,15 @@ const FROM_THE_LEFT = { transformOrigin: 'left center' } as const;
  * One line of a song's words, standing as the web's immersive words do: the line being sung full
  * size, bright and sharp, and the rest eased back, dimmed, and further out of focus the further
  * they are from it — half as far out as the web's, whose words are twice the size. It moves from one standing to the next rather than jumping; somebody who has
- * asked for less movement sees it brighten and dim with nothing growing or blurring.
+ * asked for less movement sees it brighten and dim with nothing growing or blurring. It is drawn
+ * again only when how it stands changes, so the lines far from the one being sung, which all stand
+ * the same, are left alone as the song moves on.
  *
  * @param words - What the line says.
  * @param standing - How it stands against the line being sung.
  * @param isStill - Whether somebody has asked for less movement.
  */
-const ALyricLine = ({ words, standing, isStill }: ALyricLineProps) => {
+const OneLine = ({ words, standing, isStill }: ALyricLineProps) => {
   const [opacity] = useState(() => new Animated.Value(standing.opacity));
   const [scale] = useState(() => new Animated.Value(isStill ? 1 : standing.scale));
 
@@ -47,6 +49,16 @@ const ALyricLine = ({ words, standing, isStill }: ALyricLineProps) => {
     </Animated.View>
   );
 };
+
+const ALyricLine = memo(
+  OneLine,
+  (was, now) =>
+    was.words === now.words &&
+    was.isStill === now.isStill &&
+    was.standing.opacity === now.standing.opacity &&
+    was.standing.scale === now.standing.scale &&
+    was.standing.blur === now.standing.blur,
+);
 
 ALyricLine.displayName = 'ALyricLine';
 

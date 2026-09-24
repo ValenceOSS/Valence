@@ -13,8 +13,6 @@ const ROUND = 40;
 
 const DOT = 10;
 
-const LOOK_AGAIN_EVERY = 60_000;
-
 const styles = StyleSheet.create({
   dot: { borderRadius: DOT / 2, height: DOT, position: 'absolute', right: 7, top: 7, width: DOT },
   whole: { alignItems: 'center', height: ROUND, justifyContent: 'center', width: ROUND },
@@ -22,13 +20,14 @@ const styles = StyleSheet.create({
 
 /**
  * The bell that opens what the server has told this account, with a dot on it while any of it is
- * unread. On glass where the phone has it, as the AirPlay button beside it is.
+ * unread. On glass where the phone has it, as the AirPlay button beside it is. The socket says when
+ * something new arrives, so the inbox is not asked for on a timer.
  *
  * @param onPress - Told somebody wants to see them.
  */
 const TheBell = ({ onPress }: TheBellProps) => {
   const colours = useTheColours();
-  const inbox = useQuery({ ...notificationQueries.inbox(), refetchInterval: LOOK_AGAIN_EVERY });
+  const inbox = useQuery(notificationQueries.inbox());
   const unread = inbox.data?.unread ?? 0;
 
   return (

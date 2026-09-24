@@ -1,15 +1,33 @@
-import { deleteAsync, downloadAsync, getInfoAsync } from 'expo-file-system/legacy';
+import {
+  createDownloadResumable,
+  deleteAsync,
+  downloadAsync,
+  getInfoAsync,
+} from 'expo-file-system/legacy';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { thePhonesHeldFiles } from './thePhonesHeldFiles';
+import type { DeviceStore } from '@ValenceClient/platform/Platform.types';
+
+type Progress = { totalBytesWritten: number; totalBytesExpectedToWrite: number };
+
+let mockHeard: ((progress: Progress) => void) | null = null;
+
+let mockFinishing: Promise<{ status: number }> | null = null;
 
 jest.mock('expo-file-system/legacy', () => ({
   documentDirectory: 'file:///phone/',
-  createDownloadResumable: jest.fn(() => ({
-    downloadAsync: () => Promise.resolve({ status: 200 }),
-    resumeAsync: () => Promise.resolve({ status: 206 }),
-    pauseAsync: () => Promise.resolve({ resumeData: 'resume' }),
-  })),
+  createDownloadResumable: jest.fn(
+    (_from: string, _to: string, _options: object, heard?: (progress: Progress) => void) => {
+      mockHeard = heard ?? null;
+
+      return {
+        downloadAsync: () => mockFinishing ?? Promise.resolve({ status: 200 }),
+        resumeAsync: () => Promise.resolve({ status: 206 }),
+        pauseAsync: () => Promise.resolve({ resumeData: 'resume' }),
+      };
+    },
+  ),
   deleteAsync: jest.fn(() => Promise.resolve()),
   downloadAsync: jest.fn(() => Promise.resolve({ status: 200 })),
   getInfoAsync: jest.fn(() => Promise.resolve({ exists: true })),
@@ -25,6 +43,23 @@ const ARRIVAL = {
   quality: 'original' as const,
   durationSeconds: 6960,
   ofBytes: null,
+};
+
+const aStoreThatCounts = (): DeviceStore & { writes: string[] } => {
+  const kept = new Map<string, string>();
+  const writes: string[] = [];
+
+  return {
+    writes,
+    read: (key) => kept.get(key) ?? null,
+    write: (key, value) => {
+      writes.push(key);
+      kept.set(key, value);
+    },
+    forget: (key) => {
+      kept.delete(key);
+    },
+  };
 };
 
 beforeEach(() => {
@@ -78,5 +113,84 @@ describe('thePhonesHeldFiles', () => {
     expect(deleteAsync).toHaveBeenCalledWith(held.sourceFor(ARRIVAL.downloadId), {
       idempotent: true,
     });
+  });
+
+  it('writes down how far a fetch has got at most once a second, and every change of state', async () => {
+    const store = aStoreThatCounts();
+    let finish: (done: { status: number }) => void = () => undefined;
+
+    mockFinishing = new Promise((resolve) => {
+      finish = resolve;
+    });
+
+    const held = thePhonesHeldFiles(store);
+    const keeping = held.keep(ARRIVAL);
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0);
+    });
+
+    const before = store.writes.length;
+
+    mockHeard?.({ totalBytesWritten: 10, totalBytesExpectedToWrite: 100 });
+    mockHeard?.({ totalBytesWritten: 20, totalBytesExpectedToWrite: 100 });
+    mockHeard?.({ totalBytesWritten: 30, totalBytesExpectedToWrite: 100 });
+
+    expect(store.writes.length - before).toBeLessThanOrEqual(1);
+
+    finish({ status: 200 });
+    await keeping;
+    mockFinishing = null;
+
+    const [row] = await held.all();
+
+    expect(row).toMatchObject({ state: 'here', bytes: 30 });
+  });
+
+  it('picks up what was left fetching once the app has settled, from what it left aside', async () => {
+    const store = aStoreThatCounts();
+
+    store.write(
+      'valence.held',
+      JSON.stringify({
+        held: [
+          {
+            ...ARRIVAL,
+            state: 'fetching',
+            bytes: 5,
+            bytesPerSecond: null,
+            failure: null,
+            keptAt: '2026-09-24T00:00:00.000Z',
+            hasPoster: false,
+          },
+        ],
+      }),
+    );
+
+    const settle: (() => void)[] = [];
+    const readAside = jest.fn(() => Promise.resolve('left'));
+
+    thePhonesHeldFiles(store, readAside, (run) => {
+      settle.push(run);
+    });
+
+    expect(createDownloadResumable).not.toHaveBeenCalled();
+
+    settle.forEach((run) => {
+      run();
+    });
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0);
+    });
+
+    expect(readAside).toHaveBeenCalledWith(`valence.held.resume.${ARRIVAL.downloadId}`);
+    expect(createDownloadResumable).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+      {},
+      expect.any(Function),
+      'left',
+    );
   });
 });

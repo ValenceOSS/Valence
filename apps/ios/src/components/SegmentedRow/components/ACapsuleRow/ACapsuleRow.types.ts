@@ -5,6 +5,8 @@ type ACapsuleRowProps = {
   items: readonly Segment[];
   value: string | null;
   onSelect: (id: string) => void;
+  fills?: boolean;
+  isShown?: boolean;
 };
 
 export type { ACapsuleRowProps };

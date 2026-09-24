@@ -8,11 +8,11 @@ const ON_ARTWORK = '#ffffff';
 const ON_BRIGHT = '#000000';
 
 const styles = StyleSheet.create({
-  body: { fontFamily: FONTS.sans.regular, fontSize: 15 },
+  body: { fontFamily: FONTS.sans.semibold, fontSize: 15 },
   centred: { textAlign: 'center' },
   heading: { fontFamily: FONTS.sans.semibold, fontSize: 19, letterSpacing: -0.2 },
-  prose: { fontFamily: FONTS.body.regular, letterSpacing: 0.08 },
-  small: { fontFamily: FONTS.sans.regular, fontSize: 12 },
+  prose: { fontFamily: FONTS.body.semibold, letterSpacing: 0.08 },
+  small: { fontFamily: FONTS.sans.semibold, fontSize: 12 },
   strong: { fontFamily: FONTS.sans.bold },
   title: { fontFamily: FONTS.sans.bold, fontSize: 30, letterSpacing: -0.9 },
 });

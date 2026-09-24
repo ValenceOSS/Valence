@@ -16,6 +16,16 @@ describe('whatThePhoneRemembers', () => {
     expect(held.get('valence.theme')).toBe('dark');
   });
 
+  it('leaves out what a paused download left to pick up from', async () => {
+    await AsyncStorage.setItem('valence.theme', 'dark');
+    await AsyncStorage.setItem('valence.held.resume.arrival', 'a great deal');
+
+    const held = await whatThePhoneRemembers();
+
+    expect(held.get('valence.theme')).toBe('dark');
+    expect(held.has('valence.held.resume.arrival')).toBe(false);
+  });
+
   it('starts empty on a phone that has been told nothing', async () => {
     await expect(whatThePhoneRemembers()).resolves.toEqual(new Map());
   });

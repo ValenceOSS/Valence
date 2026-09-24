@@ -3,8 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import { StyleSheet, View } from 'react-native';
 import { saidWhen } from '@ValenceClient/format/saidWhen';
 import { useHidden } from '@ValenceClient/library/useHidden';
+import { librariesToHide } from '@ValenceClient/library/librariesToHide';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { AGroup } from '@ValencePhone/components/AGroup/AGroup';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
 import { Toggle } from '@ValencePhone/components/Toggle/Toggle';
@@ -13,9 +15,15 @@ import { useConfirmHiding } from '@ValencePhone/hooks/useConfirmHiding';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 
 const styles = StyleSheet.create({
-  bringBack: { padding: 10 },
-  row: { alignItems: 'center', flexDirection: 'row', gap: 12 },
-  section: { gap: 10 },
+  bringBack: { padding: 6 },
+  row: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+    minHeight: 52,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
   words: { flex: 1, gap: 2 },
 });
 
@@ -27,7 +35,7 @@ const TheHidden = () => {
   const colours = useTheColours();
   const watching = useWatchingProfile();
   const hiding = useHidden(watching);
-  const libraries = useQuery(libraryQueries.all());
+  const libraries = librariesToHide(useQuery(libraryQueries.all()).data ?? [], hiding.entries);
   const titles = hiding.entries.filter((entry) => entry.kind !== 'library');
 
   useConfirmHiding(hiding);
@@ -38,10 +46,8 @@ const TheHidden = () => {
         Things you have taken out of your own browsing. Anything here can be brought back.
       </Words>
 
-      <View style={styles.section}>
-        <Words size="heading">Whole libraries</Words>
-
-        {(libraries.data ?? []).map((library) => {
+      <AGroup title="Whole libraries">
+        {libraries.map((library) => {
           const isHidden = hiding.isHidden({ kind: 'library', subjectId: library.id });
 
           return (
@@ -64,13 +70,13 @@ const TheHidden = () => {
             </View>
           );
         })}
-      </View>
+      </AGroup>
 
-      <View style={styles.section}>
-        <Words size="heading">Titles and programmes</Words>
-
+      <AGroup title="Titles and programmes">
         {titles.length === 0 ? (
-          <Words tone="muted">Nothing hidden.</Words>
+          <View style={styles.row}>
+            <Words tone="muted">Nothing hidden.</Words>
+          </View>
         ) : (
           titles.map((entry) => (
             <View key={`${entry.kind}:${entry.subjectId}`} style={styles.row}>
@@ -95,7 +101,7 @@ const TheHidden = () => {
             </View>
           ))
         )}
-      </View>
+      </AGroup>
     </>
   );
 };

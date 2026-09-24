@@ -1,6 +1,6 @@
 import { Info } from '@keyline-icons/react-native';
 import { Play as PlayFilled } from '@keyline-icons/react-native/fill';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -28,6 +28,10 @@ const LOGO_AT_MOST = 0.7;
 
 const ARRIVES_FROM = 1.06;
 
+const LEAVES_OVER = 700;
+
+const WORDS_LEAVE_OVER = 180;
+
 const ARRIVES_OVER = 1100;
 
 const RISES_BY = 14;
@@ -40,10 +44,21 @@ const FOLDS_OVER = 600;
 
 const PARTS = 4;
 
+const ROUNDED = 20;
+
 const styles = StyleSheet.create({
-  buttons: { flexDirection: 'row', gap: 10, marginTop: 8 },
+  buttons: { flexDirection: 'row', gap: 10, justifyContent: 'space-between', marginTop: 8 },
+  half: { flex: 1 },
   facts: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  fills: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
+  fills: {
+    borderRadius: ROUNDED,
+    bottom: 0,
+    left: 0,
+    overflow: 'hidden',
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
   folds: { overflow: 'hidden' },
   unfolded: { left: 0, position: 'absolute', right: 0, top: 0 },
   foot: {
@@ -62,11 +77,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexGrow: 1,
     gap: 8,
+    justifyContent: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
   sound: { position: 'absolute', right: 6, top: 6 },
-  whole: { borderRadius: 20, overflow: 'hidden' },
+  lifted: {
+    borderRadius: ROUNDED,
+    shadowColor: '#000000',
+    shadowOffset: { height: 12, width: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+  },
+  whole: { borderRadius: ROUNDED, overflow: 'hidden' },
 });
 
 /**
@@ -78,6 +101,11 @@ const styles = StyleSheet.create({
  *
  * The clip plays only while the title is the one showing, silent unless somebody turned the sound
  * on, which is remembered for the next.
+ *
+ * The backdrop and its clip are rounded and clipped by themselves as well as by the card around
+ * them: as one title gives way to the next, the card's own clipping was dropped for the length of
+ * the move and the picture showed square corners, so the picture keeps its corners whatever the
+ * card does.
  *
  * @param media - The title.
  * @param width - How wide to draw it.
@@ -97,6 +125,7 @@ const AFeature = ({
   onPlay,
   onMoreInfo,
   onClip,
+  nearness,
 }: AFeatureProps) => {
   const colours = useTheColours();
   const detail = useQuery(libraryQueries.detail(media.id));
@@ -112,10 +141,22 @@ const AFeature = ({
 
   useEffect(() => {
     if (!isShowing) {
-      arriving.setValue(ARRIVES_FROM);
-      rising.forEach((part) => {
-        part.setValue(0);
-      });
+      Animated.parallel([
+        Animated.timing(arriving, {
+          toValue: ARRIVES_FROM,
+          duration: LEAVES_OVER,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        ...rising.map((part) =>
+          Animated.timing(part, {
+            toValue: 0,
+            duration: WORDS_LEAVE_OVER,
+            easing: Easing.inOut(Easing.quad),
+            useNativeDriver: true,
+          }),
+        ),
+      ]).start();
 
       return;
     }
@@ -159,22 +200,27 @@ const AFeature = ({
     };
   }, [isShowing, media.id, arriving, rising, telling]);
 
-  /**
-   * How one part of the foot rises into view, in its turn.
-   *
-   * @param part - Which part, counting up from the logo.
-   * @returns Its fade and rise.
-   */
-  const risingOf = (part: number) => {
-    const value = rising[part] ?? telling;
+  const risings = useMemo(
+    () =>
+      rising.map((value) => ({
+        opacity: value,
+        transform: [
+          { translateY: value.interpolate({ inputRange: [0, 1], outputRange: [RISES_BY, 0] }) },
+        ],
+      })),
+    [rising],
+  );
 
-    return {
-      opacity: value,
-      transform: [
-        { translateY: value.interpolate({ inputRange: [0, 1], outputRange: [RISES_BY, 0] }) },
-      ],
-    };
-  };
+  const folds = useMemo(
+    () =>
+      toldHigh === null
+        ? { opacity: telling }
+        : {
+            opacity: telling,
+            height: telling.interpolate({ inputRange: [0, 1], outputRange: [0, toldHigh] }),
+          },
+    [telling, toldHigh],
+  );
 
   const facts = [
     media.rating === null || media.rating === undefined ? null : `★ ${media.rating.toFixed(1)}`,
@@ -188,105 +234,108 @@ const AFeature = ({
   return (
     <Button tone="bare" label={title} onPress={onMoreInfo}>
       <View
+        collapsable={false}
         style={[
-          styles.whole,
+          styles.lifted,
           { backgroundColor: colours.surfaceRaised, height: width * TALL, width },
         ]}
       >
-        <Animated.View style={[styles.fills, { transform: [{ scale: arriving }] }]}>
-          <APreview
-            mediaId={media.id}
-            hasBackdrop={media.hasBackdrop}
-            isShowing={isShowing}
-            isMuted={isMuted}
-            onEnded={onEnded}
-            onPlaying={setIsPlaying}
-            {...(onClip === undefined ? {} : { onClip })}
-          />
-        </Animated.View>
-
-        <AScrim />
-
-        {isPlaying ? (
-          <View style={styles.sound}>
-            <ASoundSwitch isMuted={isMuted} onToggle={toggle} />
-          </View>
-        ) : null}
-
-        <View style={styles.foot}>
-          <Animated.View style={risingOf(0)}>
-            <ATitleLogo
-              mediaId={media.hasLogo ? media.id : null}
-              title={title}
-              high={LOGO_HIGH}
-              widest={width * LOGO_AT_MOST}
-              isOnArtwork
+        <View
+          collapsable={false}
+          style={[
+            styles.whole,
+            { backgroundColor: colours.surfaceRaised, height: width * TALL, width },
+          ]}
+        >
+          <Animated.View
+            collapsable={false}
+            style={[styles.fills, { transform: [{ scale: arriving }] }]}
+          >
+            <APreview
+              mediaId={media.id}
+              hasBackdrop={media.hasBackdrop}
+              isShowing={isShowing}
+              isMuted={isMuted}
+              onEnded={onEnded}
+              onPlaying={setIsPlaying}
+              {...(onClip === undefined ? {} : { onClip })}
             />
           </Animated.View>
 
-          <Animated.View style={[styles.facts, risingOf(1)]}>
-            <Words size="small" tone="onArtwork">
-              {facts.join(' · ')}
-            </Words>
-            <TheBadges
-              isOnArtwork
-              isShort
-              badges={qualityBadges({
-                width: media.width,
-                height: media.height,
-                videoRange: media.videoRange,
-                audioStreams: detail.data?.audioStreams,
-              })}
-            />
-          </Animated.View>
+          <AScrim />
 
-          {overview === null || overview === '' || !isTelling ? null : (
-            <Animated.View
-              style={[
-                styles.folds,
-                {
-                  opacity: telling,
-                  ...(toldHigh === null
-                    ? {}
-                    : {
-                        height: telling.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0, toldHigh],
-                        }),
-                      }),
-                },
-              ]}
-            >
-              <View
-                style={styles.unfolded}
-                onLayout={(event) => {
-                  const { height } = event.nativeEvent.layout;
+          {isPlaying ? (
+            <View style={styles.sound}>
+              <ASoundSwitch isMuted={isMuted} onToggle={toggle} />
+            </View>
+          ) : null}
 
-                  if (height > 0 && toldHigh !== height) {
-                    setToldHigh(height);
-                  }
-                }}
-              >
-                <Animated.View style={risingOf(2)}>
-                  <Words tone="onArtwork" lines={3} isProse>
-                    {overview}
-                  </Words>
-                </Animated.View>
+          <Animated.View
+            style={[styles.foot, nearness === undefined ? null : { opacity: nearness }]}
+          >
+            <Animated.View style={risings[0]}>
+              <ATitleLogo
+                mediaId={media.hasLogo ? media.id : null}
+                title={title}
+                high={LOGO_HIGH}
+                widest={width * LOGO_AT_MOST}
+                isOnArtwork
+              />
+            </Animated.View>
+
+            <Animated.View style={[styles.facts, risings[1]]}>
+              <Words size="small" tone="onArtwork">
+                {facts.join(' · ')}
+              </Words>
+              <TheBadges
+                isOnArtwork
+                isShort
+                badges={qualityBadges({
+                  width: media.width,
+                  height: media.height,
+                  videoRange: media.videoRange,
+                  audioStreams: detail.data?.audioStreams,
+                })}
+              />
+            </Animated.View>
+
+            {overview === null || overview === '' || !isTelling ? null : (
+              <Animated.View style={[styles.folds, folds]}>
+                <View
+                  style={styles.unfolded}
+                  onLayout={(event) => {
+                    const { height } = event.nativeEvent.layout;
+
+                    if (height > 0 && toldHigh !== height) {
+                      setToldHigh(height);
+                    }
+                  }}
+                >
+                  <Animated.View style={risings[2]}>
+                    <Words tone="onArtwork" lines={3} isProse>
+                      {overview}
+                    </Words>
+                  </Animated.View>
+                </View>
+              </Animated.View>
+            )}
+
+            <Animated.View style={[styles.buttons, risings[3]]}>
+              <View style={styles.half}>
+                <Button tone="bright" icon={PlayFilled} isWide onPress={onPlay}>
+                  {resumeAt === null ? 'Play' : `Resume ${howLongItRuns(resumeAt)}`}
+                </Button>
+              </View>
+
+              <View style={styles.half}>
+                <Button tone="bare" label="More info" onPress={onMoreInfo}>
+                  <View style={styles.moreInfo}>
+                    <Icon of={Info} size={18} colour="#ffffff" />
+                    <Words tone="onArtwork">More info</Words>
+                  </View>
+                </Button>
               </View>
             </Animated.View>
-          )}
-
-          <Animated.View style={[styles.buttons, risingOf(3)]}>
-            <Button tone="bright" icon={PlayFilled} onPress={onPlay}>
-              {resumeAt === null ? 'Play' : `Resume ${howLongItRuns(resumeAt)}`}
-            </Button>
-
-            <Button tone="bare" label="More info" onPress={onMoreInfo}>
-              <View style={styles.moreInfo}>
-                <Icon of={Info} size={18} colour="#ffffff" />
-                <Words tone="onArtwork">More info</Words>
-              </View>
-            </Button>
           </Animated.View>
         </View>
       </View>

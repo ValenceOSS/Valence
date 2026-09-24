@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -5,15 +6,17 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { collapseToShows } from '@ValenceClient/library/pickFeatured';
 import { ACard } from '@ValencePhone/components/ACard/ACard';
 import { ACatalogueCard } from '@ValencePhone/components/ACatalogueCard/ACatalogueCard';
+import { GRID_GAP } from '@ValencePhone/components/APosterGrid/GRID_GAP';
 import { AShelf } from '@ValencePhone/components/AShelf/AShelf';
 import { Words } from '@ValencePhone/components/Words/Words';
+import { useGridCells } from '@ValencePhone/hooks/useGridCells';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { TheResultsProps } from './TheResults.types';
 
 const AS_MANY_AS_ARE_WORTH_SHOWING = 60;
 
 const styles = StyleSheet.create({
-  shelf: { flexDirection: 'row', flexWrap: 'wrap', gap: 18 },
+  shelf: { flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP },
 });
 
 /**
@@ -29,7 +32,7 @@ const styles = StyleSheet.create({
  * @param onLookAtShow - Told to open a programme.
  * @param onAsk - Told to open something to ask for, or null for somebody who may not.
  */
-const TheResults = ({
+const TheResultsSection = ({
   asked,
   kind,
   libraryIds,
@@ -39,6 +42,7 @@ const TheResults = ({
   onAsk,
 }: TheResultsProps) => {
   const colours = useTheColours();
+  const { cell } = useGridCells();
   const found = useQuery(
     libraryQueries.across(libraryIds, {
       search: asked,
@@ -75,6 +79,7 @@ const TheResults = ({
               media={media}
               asProgramme
               watched={howFarThrough(media.id)}
+              wide={cell}
               onLookAt={onLookAt}
               onLookAtShow={onLookAtShow}
             />
@@ -92,6 +97,8 @@ const TheResults = ({
     </>
   );
 };
+
+const TheResults = memo(TheResultsSection);
 
 TheResults.displayName = 'TheResults';
 

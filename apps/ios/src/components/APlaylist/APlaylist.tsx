@@ -11,12 +11,14 @@ import {
 import { whereAnEntryLands } from '@ValenceClient/music/whereAnEntryLands';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
+import { AMoodBackground } from '@ValencePhone/components/AMoodBackground/AMoodBackground';
 import { AMusicHead } from '@ValencePhone/components/AMusicHead/AMusicHead';
 import { ATrackList } from '@ValencePhone/components/ATrackList/ATrackList';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { howLongItRuns } from '@ValencePhone/components/ATitle/howLongItRuns';
-import { useTheMusic } from '@ValencePhone/hooks/useTheMusic';
+import { usePictureLights } from '@ValencePhone/hooks/usePictureLights';
+import { thePhonesMusicPlayer } from '@ValencePhone/music/thePhonesMusicPlayer';
 import { onThisServer } from '@ValencePhone/platform/onThisServer';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import { ANothingHere } from '@ValencePhone/components/ANothingHere/ANothingHere';
@@ -26,7 +28,8 @@ import type { APlaylistProps } from './APlaylist.types';
 
 /**
  * One playlist, as the web's playlist page draws it: the cover of its first album, whose it is and
- * how long it runs, a way to play it, and its tracks in its order. A track whose file has gone
+ * how long it runs, a way to play it, and its tracks in its order, lit from behind in the colours
+ * of that cover. A track whose file has gone
  * from the library is left out, as the web leaves it out, rather than listed and refusing to play.
  *
  * One of somebody's own can be changed from here as on the web: shared with the household or kept
@@ -42,7 +45,11 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
   const colours = useTheColours();
   const cache = useQueryClient();
   const read = useQuery(musicQueries.playlist(playlistId));
-  const { player } = useTheMusic();
+  const player = thePhonesMusicPlayer();
+  const coverAlbumId = read.data?.playlist.artworkAlbumIds[0] ?? null;
+  const lights = usePictureLights(
+    coverAlbumId === null ? null : onThisServer(albumArtworkUrl(coverAlbumId)),
+  );
   const [isEditing, setIsEditing] = useState(false);
 
   const refresh = () => cache.invalidateQueries({ queryKey: musicQueries.key });
@@ -133,7 +140,7 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
   ].filter((part) => part !== null);
 
   return (
-    <Screen scrolls onBack={onBack}>
+    <Screen scrolls onBack={onBack} behind={<AMoodBackground palette={lights} />}>
       <AMusicHead
         kind="Playlist"
         title={playlist.name}

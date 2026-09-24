@@ -1,3 +1,4 @@
+import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { View } from 'react-native';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
@@ -39,8 +40,87 @@ const ATrackList = ({
   const { player, state } = useTheMusic();
   const favourites = useFavourites(useWatchingProfile());
   const cache = useQueryClient();
-  const mine = (useQuery(musicQueries.playlists()).data ?? []).filter(
-    (playlist) => playlist.isMine,
+  const playlists = useQuery(musicQueries.playlists()).data;
+  const mine = useMemo(() => (playlists ?? []).filter((playlist) => playlist.isMine), [playlists]);
+  const currentId = state.current?.id ?? null;
+  const latest = useRef({
+    tracks,
+    source,
+    isOrdered,
+    favourites,
+    mine,
+    onAlbum,
+    onArtist,
+    onPlaylist,
+    editing,
+  });
+
+  useLayoutEffect(() => {
+    latest.current = {
+      tracks,
+      source,
+      isOrdered,
+      favourites,
+      mine,
+      onAlbum,
+      onArtist,
+      onPlaylist,
+      editing,
+    };
+  });
+
+  const play = useCallback(
+    (at: number) => {
+      const now = latest.current;
+
+      player.play(now.tracks, at, { source: now.source, isOrdered: now.isOrdered });
+    },
+    [player],
+  );
+
+  const askAbout = useCallback(
+    (at: number) => {
+      const now = latest.current;
+      const track = now.tracks[at];
+      const { editing: changing } = now;
+
+      if (track === undefined) {
+        return;
+      }
+
+      askAboutATrack({
+        track,
+        player,
+        isLiked: now.favourites.isKept(track.id),
+        onLike: () => {
+          now.favourites.toggle(track.id);
+        },
+        onAlbum: now.onAlbum,
+        onArtist: now.onArtist,
+        playlists: now.mine,
+        onPlaylistsChanged: () => {
+          void cache.invalidateQueries({ queryKey: musicQueries.key });
+        },
+        onPlaylist: now.onPlaylist,
+        inAPlaylist:
+          changing === undefined
+            ? undefined
+            : {
+                canMoveUp: at > 0,
+                canMoveDown: at < now.tracks.length - 1,
+                onMoveUp: () => {
+                  changing.onMove(at, at - 1);
+                },
+                onMoveDown: () => {
+                  changing.onMove(at, at + 1);
+                },
+                onRemove: () => {
+                  changing.onRemove(at);
+                },
+              },
+      });
+    },
+    [player, cache],
   );
 
   return (
@@ -49,50 +129,17 @@ const ATrackList = ({
         <ATrackRow
           key={`${track.id}:${at.toString()}`}
           track={track}
+          at={at}
           number={isAnAlbum ? (track.trackNumber ?? at + 1) : null}
           artwork={
             isAnAlbum || !track.album.hasArtwork
               ? null
               : onThisServer(albumArtworkUrl(track.album.id))
           }
-          isCurrent={state.current?.id === track.id}
+          isCurrent={currentId === track.id}
           isLiked={favourites.isKept(track.id)}
-          onPlay={() => {
-            player.play(tracks, at, { source, isOrdered });
-          }}
-          onMenu={() => {
-            askAboutATrack({
-              track,
-              player,
-              isLiked: favourites.isKept(track.id),
-              onLike: () => {
-                favourites.toggle(track.id);
-              },
-              onAlbum,
-              onArtist,
-              playlists: mine,
-              onPlaylistsChanged: () => {
-                void cache.invalidateQueries({ queryKey: musicQueries.key });
-              },
-              onPlaylist,
-              inAPlaylist:
-                editing === undefined
-                  ? undefined
-                  : {
-                      canMoveUp: at > 0,
-                      canMoveDown: at < tracks.length - 1,
-                      onMoveUp: () => {
-                        editing.onMove(at, at - 1);
-                      },
-                      onMoveDown: () => {
-                        editing.onMove(at, at + 1);
-                      },
-                      onRemove: () => {
-                        editing.onRemove(at);
-                      },
-                    },
-            });
-          }}
+          onPlay={play}
+          onMenu={askAbout}
         />
       ))}
     </View>

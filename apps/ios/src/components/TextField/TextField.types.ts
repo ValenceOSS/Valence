@@ -15,6 +15,7 @@ type TextFieldProps = {
   keyboard?: 'default' | 'url' | 'search' | 'code';
   onSubmit?: () => void;
   action?: TextFieldAction;
+  isBare?: boolean;
 };
 
 export type { TextFieldAction, TextFieldProps };
