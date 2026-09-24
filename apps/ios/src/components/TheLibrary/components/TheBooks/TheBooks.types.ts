@@ -6,6 +6,7 @@ type TheBooksProps = {
   onBook: (bookId: string) => void;
   onRead: (bookId: string) => void;
   onScrolled?: (isScrolled: boolean) => void;
+  onScrolledTo?: (y: number) => void;
 };
 
 export type { TheBooksProps };

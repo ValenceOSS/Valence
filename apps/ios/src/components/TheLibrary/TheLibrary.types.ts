@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 type TheLibraryProps = {
   onWatch: (mediaId: string, startSeconds: number) => void;
   onLookAt: (mediaId: string) => void;
@@ -11,6 +13,12 @@ type TheLibraryProps = {
   onAllArtists: () => void;
   onBook: (bookId: string) => void;
   onRead: (bookId: string) => void;
+  isSearching?: boolean;
+  searchPage?: (
+    header: ReactNode,
+    searchingFor: string,
+    onScrolled: (isScrolled: boolean) => void,
+  ) => ReactNode;
 };
 
 export type { TheLibraryProps };

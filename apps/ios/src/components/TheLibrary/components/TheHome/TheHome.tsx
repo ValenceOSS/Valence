@@ -67,6 +67,7 @@ const keyOfShelf = (shelf: AShelfOf): string =>
  * @param onShowing - Told which title the hero is showing, so the page can take its colours.
  * @param onClip - Told the hero's clip while it plays.
  * @param onScrolled - Told whether the page has been scrolled from its top.
+ * @param onScrolledTo - Told how far down it has been scrolled, as it scrolls.
  * @param isOnScreen - Whether home is the part showing, rather than kept hidden behind another.
  */
 const TheHomePage = ({
@@ -79,6 +80,7 @@ const TheHomePage = ({
   onShowing,
   onClip,
   onScrolled,
+  onScrolledTo,
   isOnScreen = true,
 }: TheHomeProps) => {
   const colours = useTheColours();
@@ -136,6 +138,8 @@ const TheHomePage = ({
   const onScroll = useCallback(
     ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>) => {
       const isScrolled = nativeEvent.contentOffset.y > SCROLLED;
+
+      onScrolledTo?.(nativeEvent.contentOffset.y);
       const isHeroSeen =
         heroEnds.current === null || nativeEvent.contentOffset.y < heroEnds.current - STILL_SEEN_BY;
 
@@ -146,7 +150,7 @@ const TheHomePage = ({
         onScrolled?.(isScrolled);
       }
     },
-    [onScrolled],
+    [onScrolled, onScrolledTo],
   );
 
   useEffect(() => {

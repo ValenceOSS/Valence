@@ -46,6 +46,11 @@ const SIDES = [
  * @param onArtist - Told which artist to open.
  * @param onPlaylist - Told which playlist to open.
  * @param onBook - Told which book to open, from what books matched.
+ * @param searchingFor - What to look for, where the field it is typed in lives in a bar above rather
+ *   than here — which leaves out this page's own title and field, and draws it over the page behind.
+ * @param header - What goes above the results, such as room for that bar.
+ * @param onScrolled - Told whether it has been scrolled from its top.
+ * @param onSeeAll - Told somebody wants the whole of one of Discover's lists.
  */
 const TheSearch = ({
   onLookAt,
@@ -55,10 +60,16 @@ const TheSearch = ({
   onArtist,
   onPlaylist,
   onBook,
+  searchingFor: typedAbove,
+  header,
+  onScrolled,
+  onSeeAll,
 }: TheSearchProps) => {
   const libraries = useQuery(libraryQueries.all());
   const watched = useQuery(viewingQueries.progress());
-  const [searchingFor, setSearchingFor] = useState('');
+  const [typedHere, setSearchingFor] = useState('');
+  const isTypedAbove = typedAbove !== undefined;
+  const searchingFor = typedAbove ?? typedHere;
   const [kind, setKind] = useState<string>('everything');
   const [side, setSide] = useState<string>('discover');
   const howFarThrough = useMemo(() => {
@@ -81,17 +92,27 @@ const TheSearch = ({
   const hasBooks = (libraries.data ?? []).some((library) => library.kind === 'books');
 
   return (
-    <Screen scrolls>
-      <Words size="title">Search</Words>
+    <Screen
+      scrolls
+      isSeeThrough={isTypedAbove}
+      {...(onScrolled === undefined ? {} : { onScrolled })}
+    >
+      {header}
 
-      <TheSearchBox
-        placeholder={[
-          'Films, programmes, people',
-          ...(hasMusic ? ['music'] : []),
-          ...(hasBooks ? ['books'] : []),
-        ].join(', ')}
-        onSettle={setSearchingFor}
-      />
+      {isTypedAbove ? null : (
+        <>
+          <Words size="title">Search</Words>
+
+          <TheSearchBox
+            placeholder={[
+              'Films, programmes, people',
+              ...(hasMusic ? ['music'] : []),
+              ...(hasBooks ? ['books'] : []),
+            ].join(', ')}
+            onSettle={setSearchingFor}
+          />
+        </>
+      )}
 
       {searchingFor === '' ? (
         onAsk === null ? (
@@ -100,13 +121,18 @@ const TheSearch = ({
           <>
             <SegmentedRow label="What to show" items={SIDES} value={side} onSelect={setSide} />
 
-            {side === 'asked' ? <Asked onAsk={onAsk} /> : <Discovered onAsk={onAsk} />}
+            {side === 'asked' ? (
+              <Asked onAsk={onAsk} />
+            ) : (
+              <Discovered onAsk={onAsk} {...(onSeeAll === undefined ? {} : { onSeeAll })} />
+            )}
           </>
         )
       ) : (
         <>
           <SegmentedRow
             label="What to look for"
+            fills
             items={[...KINDS, ...(hasMusic ? [MUSIC] : []), ...(hasBooks ? [BOOKS] : [])]}
             value={kind}
             onSelect={setKind}

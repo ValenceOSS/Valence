@@ -6,9 +6,16 @@ import {
   BookOpen as BookOpenFilled,
   MusicNote as MusicNoteFilled,
 } from '@keyline-icons/react-native/fill';
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, Animated, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Animated,
+  Easing,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
@@ -23,7 +30,9 @@ import { Button } from '@ValencePhone/components/Button/Button';
 import { SegmentedRow } from '@ValencePhone/components/SegmentedRow/SegmentedRow';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { ACard } from '@ValencePhone/components/ACard/ACard';
+import { AirPlayButton } from '@ValencePhone/components/AirPlayButton/AirPlayButton';
 import { AMoodBackground } from '@ValencePhone/components/AMoodBackground/AMoodBackground';
+import { TheSearchBox } from '@ValencePhone/components/TheSearch/components/TheSearchBox/TheSearchBox';
 import { TheBell } from '@ValencePhone/components/TheBell/TheBell';
 import { ACarriedMark } from '@ValencePhone/components/ACarriedMark/ACarriedMark';
 import { TheFilters } from '@ValencePhone/components/TheLibrary/components/TheFilters/TheFilters';
@@ -78,6 +87,8 @@ const programmesOf = (
   isPending: results.some(({ isPending }) => isPending),
 });
 
+const SEARCH = 'search';
+
 /**
  * Notes whether a part has been scrolled from its top, which is what brings the bar's blur in.
  *
@@ -102,21 +113,36 @@ const noteScrolled = (
 const keyOfCell = (cell: Cell): string =>
   cell.kind === 'media' ? cell.media.id : cell.programme.id;
 
+const BAR_MOVES_OVER = 260;
+
+const BAR_TURNS_AFTER = 10;
+
+const BAR_LIFTS_BY = 24;
+
+const PARTS_BELOW_BY = 12;
+
 const styles = StyleSheet.create({
   dimmed: { backgroundColor: 'rgba(0, 0, 0, 0.28)' },
   arriving: { gap: 20 },
   hidden: { opacity: 0 },
+  aside: { alignItems: 'center', flexDirection: 'row', gap: 10 },
   bar: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 10,
+    gap: PARTS_BELOW_BY,
     paddingBottom: UNDER_THE_BAR,
     paddingHorizontal: SCREEN_EDGE,
   },
+  topRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   edge: { bottom: 0, height: StyleSheet.hairlineWidth, left: 0, position: 'absolute', right: 0 },
   fixed: { left: 0, position: 'absolute', right: 0, top: 0 },
   lit: { flex: 1 },
-  parts: { flex: 1, paddingLeft: 6 },
+  parts: { alignSelf: 'stretch' },
+  searchInstead: {
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
 });
 
 /**
@@ -159,6 +185,8 @@ const TheLibrary = ({
   onAllArtists,
   onBook,
   onRead,
+  isSearching = false,
+  searchPage,
 }: TheLibraryProps) => {
   const colours = useTheColours();
   const told = useRef({ onWatch, onLookAt, onLookAtShow });
@@ -167,8 +195,71 @@ const TheLibrary = ({
   const filters = useLibraryFilters();
   const [part, setPart] = useState('home');
   const [barTall, setBarTall] = useState(BAR_TALL);
+  const [barAway] = useState(() => new Animated.Value(0));
+  const [isBarAway, setIsBarAway] = useState(false);
+  const [partsTall, setPartsTall] = useState(0);
+  const [searchingFor, setSearchingFor] = useState('');
+  const [hasSearched, setHasSearched] = useState(isSearching);
+  const { width: wide } = useWindowDimensions();
+
+  useEffect(() => {
+    if (isSearching) {
+      setHasSearched(true);
+    }
+  }, [isSearching]);
+  const [searchness] = useState(() => new Animated.Value(isSearching ? 1 : 0));
+
+  useEffect(() => {
+    setIsBarAway(false);
+    Animated.timing(searchness, {
+      toValue: isSearching ? 1 : 0,
+      duration: BAR_MOVES_OVER,
+      easing: Easing.inOut(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [isSearching, searchness]);
+  const turnedAt = useRef(0);
+  const isAway = isBarAway && !isSearching;
+  const searching = useRef(isSearching);
+
+  searching.current = isSearching;
+
+  useEffect(() => {
+    Animated.timing(barAway, {
+      toValue: isAway ? 1 : 0,
+      duration: BAR_MOVES_OVER,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [isAway, barAway]);
+
+  const followScroll = useCallback(
+    (y: number) => {
+      if (searching.current) {
+        return;
+      }
+
+      if (y < barTall) {
+        turnedAt.current = y;
+        setIsBarAway(false);
+
+        return;
+      }
+
+      if (y - turnedAt.current > BAR_TURNS_AFTER) {
+        turnedAt.current = y;
+        setIsBarAway(true);
+      } else if (turnedAt.current - y > BAR_TURNS_AFTER) {
+        turnedAt.current = y;
+        setIsBarAway(false);
+      } else if (isBarAway ? y > turnedAt.current : y < turnedAt.current) {
+        turnedAt.current = y;
+      }
+    },
+    [barTall, isBarAway],
+  );
   const [scrolled, setScrolled] = useState<Readonly<Record<string, boolean>>>({});
-  const isPast = scrolled[part] === true;
+  const isPast = scrolled[isSearching ? SEARCH : part] === true;
   const room = useSafeAreaInsets();
   const [arriving] = useState(() => new Animated.Value(0));
   const isOnTop = useIsOnTop();
@@ -281,40 +372,105 @@ const TheLibrary = ({
   );
 
   const bar = (
-    <View style={[styles.fixed, { paddingTop: room.top + SCREEN_EDGE }]}>
-      <ABlur isDark={colours.surface === theColours.dark.surface} isOn={isPast} changesOver={250} />
-      <View style={[styles.edge, { backgroundColor: colours.border, opacity: isPast ? 1 : 0 }]} />
+    <View style={[styles.fixed, { paddingTop: room.top + SCREEN_EDGE }]} pointerEvents="box-none">
+      <Animated.View
+        collapsable={false}
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            transform: [
+              {
+                translateY: barAway.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, -partsTall],
+                }),
+              },
+            ],
+          },
+        ]}
+      >
+        <ABlur
+          isDark={colours.surface === theColours.dark.surface}
+          isOn={isPast}
+          changesOver={250}
+        />
+        <View style={[styles.edge, { backgroundColor: colours.border, opacity: isPast ? 1 : 0 }]} />
+      </Animated.View>
       <View
         style={styles.bar}
+        pointerEvents="box-none"
         onLayout={({ nativeEvent }) => {
           setBarTall(nativeEvent.layout.height);
         }}
       >
-        <ACarriedMark isHandedOn={false} />
-        <View style={styles.parts}>
-          <SegmentedRow
-            label="What to show"
-            items={parts}
-            value={part}
-            onSelect={(next) => {
-              if (next === part) {
-                return;
-              }
-
-              const from = parts.findIndex((one) => one.id === part);
-              const to = parts.findIndex((one) => one.id === next);
-
-              arriving.setValue(to > from ? 1 : -1);
-              setPart(next);
-              setChosen(EVERY);
-              filters.clear();
-            }}
-          />
+        <View style={styles.topRow}>
+          <ACarriedMark isHandedOn={false} />
+          <View style={styles.aside}>
+            <AirPlayButton />
+            <TheBell onPress={onNotifications} />
+          </View>
         </View>
-        <TheBell onPress={onNotifications} />
+        <Animated.View
+          collapsable={false}
+          pointerEvents={isAway ? 'none' : 'auto'}
+          onLayout={({ nativeEvent }) => {
+            setPartsTall(nativeEvent.layout.height + PARTS_BELOW_BY);
+          }}
+          style={[
+            styles.parts,
+            {
+              transform: [
+                {
+                  translateY: barAway.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, -BAR_LIFTS_BY],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          <View pointerEvents={isSearching ? 'none' : 'auto'}>
+            <SegmentedRow
+              label="What to show"
+              fills
+              isShown={!isSearching && !isBarAway}
+              items={parts}
+              value={part}
+              onSelect={(next) => {
+                if (next === part) {
+                  return;
+                }
+
+                const from = parts.findIndex((one) => one.id === part);
+                const to = parts.findIndex((one) => one.id === next);
+
+                arriving.setValue(to > from ? 1 : -1);
+                setIsBarAway(false);
+                turnedAt.current = 0;
+                setPart(next);
+                setChosen(EVERY);
+                filters.clear();
+              }}
+            />
+          </View>
+          <View pointerEvents={isSearching ? 'auto' : 'none'} style={styles.searchInstead}>
+            <TheSearchBox
+              placeholder="Films, programmes, people"
+              onSettle={setSearchingFor}
+              isCapsule
+              isShown={isSearching}
+            />
+          </View>
+        </Animated.View>
       </View>
     </View>
   );
+
+  const searchScrolled = useCallback((isScrolled: boolean) => {
+    setScrolled((was) => noteScrolled(was, SEARCH, isScrolled));
+  }, []);
 
   const homeScrolled = useCallback((isScrolled: boolean) => {
     setScrolled((was) => noteScrolled(was, 'home', isScrolled));
@@ -435,13 +591,15 @@ const TheLibrary = ({
     [howFar, part, lookAt, lookAtShow],
   );
 
+  const isHomeSeen = part === 'home';
+
   const home = (
     <View
       collapsable={false}
-      style={[StyleSheet.absoluteFill, part === 'home' ? null : styles.hidden]}
-      pointerEvents={part === 'home' ? 'auto' : 'none'}
-      accessibilityElementsHidden={part !== 'home'}
-      importantForAccessibility={part === 'home' ? 'auto' : 'no-hide-descendants'}
+      style={[StyleSheet.absoluteFill, isHomeSeen ? null : styles.hidden]}
+      pointerEvents={isHomeSeen ? 'auto' : 'none'}
+      accessibilityElementsHidden={!isHomeSeen || isSearching}
+      importantForAccessibility={isHomeSeen && !isSearching ? 'auto' : 'no-hide-descendants'}
     >
       <IS_ON_TOP.Provider value={isOnTop && part === 'home'}>
         <TheHome
@@ -461,6 +619,7 @@ const TheLibrary = ({
           onShowing={onShowing}
           onClip={setClip}
           onScrolled={homeScrolled}
+          onScrolledTo={followScroll}
         />
       </IS_ON_TOP.Provider>
     </View>
@@ -468,35 +627,80 @@ const TheLibrary = ({
 
   return lit(
     <>
-      {home}
-      {part === 'home' ? null : part === 'books' ? (
-        <TheBooks
-          header={header}
-          libraryIds={bookLibraries}
-          onBook={onBook}
-          onRead={onRead}
-          onScrolled={partScrolled}
-        />
-      ) : part === 'music' ? (
-        <TheMusic
-          header={header}
-          onAlbum={onAlbum}
-          onArtist={onArtist}
-          onPlaylist={onPlaylist}
-          onLiked={onLiked}
-          onAllAlbums={onAllAlbums}
-          onAllArtists={onAllArtists}
-          onScrolled={partScrolled}
-        />
-      ) : (
-        <APosterGrid
-          header={header}
-          items={cells}
-          onScrolled={partScrolled}
-          keyOf={keyOfCell}
-          drawn={drawn}
-        />
-      )}
+      <Animated.View
+        collapsable={false}
+        pointerEvents={isSearching ? 'none' : 'box-none'}
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            transform: [
+              {
+                translateX: searchness.interpolate({ inputRange: [0, 1], outputRange: [0, -wide] }),
+              },
+            ],
+          },
+        ]}
+      >
+        {home}
+        {part === 'home' ? null : part === 'books' ? (
+          <TheBooks
+            header={header}
+            libraryIds={bookLibraries}
+            onBook={onBook}
+            onRead={onRead}
+            onScrolled={partScrolled}
+            onScrolledTo={followScroll}
+          />
+        ) : part === 'music' ? (
+          <TheMusic
+            header={header}
+            onAlbum={onAlbum}
+            onArtist={onArtist}
+            onPlaylist={onPlaylist}
+            onLiked={onLiked}
+            onAllAlbums={onAllAlbums}
+            onAllArtists={onAllArtists}
+            onScrolled={partScrolled}
+          />
+        ) : (
+          <APosterGrid
+            header={header}
+            items={cells}
+            onScrolled={partScrolled}
+            onScrolledTo={followScroll}
+            keyOf={keyOfCell}
+            drawn={drawn}
+          />
+        )}
+      </Animated.View>
+
+      {hasSearched ? (
+        <Animated.View
+          collapsable={false}
+          pointerEvents={isSearching ? 'box-none' : 'none'}
+          accessibilityElementsHidden={!isSearching}
+          importantForAccessibility={isSearching ? 'auto' : 'no-hide-descendants'}
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              transform: [
+                {
+                  translateX: searchness.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [wide, 0],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          {searchPage?.(
+            <View style={{ height: barTall - UNDER_THE_BAR }} />,
+            searchingFor,
+            searchScrolled,
+          )}
+        </Animated.View>
+      ) : null}
     </>,
   );
 };
