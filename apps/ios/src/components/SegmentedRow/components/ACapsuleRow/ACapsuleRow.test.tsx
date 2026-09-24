@@ -38,9 +38,7 @@ describe('ACapsuleRow, as a choice changes', () => {
 
     await userEvent.press(drawn.getByText('Home'));
 
-    expect(configureNext).toHaveBeenCalledWith(
-      expect.objectContaining({ update: expect.objectContaining({ type: 'spring' }) }),
-    );
+    expect(configureNext.mock.calls[0]?.[0].update?.type).toBe('spring');
     configureNext.mockRestore();
   });
 
