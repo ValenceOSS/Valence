@@ -170,7 +170,8 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   const episodes = series.data?.seasons.flatMap((season) => season.episodes) ?? [];
   const requesting = useQuery(requestsQueries.availability());
   const { may } = useWhatIMayDo();
-  const mayRequest = requesting.data?.isEnabled === true && may('requests.ask');
+  const mayRequest =
+    requesting.data?.isEnabled === true && (may('requests.ask') || may('requests.askMusic'));
   const tabs = [
     { id: 'home', label: 'Home', icon: Home, symbol: 'house' },
     { id: 'search', label: 'Search', icon: Search, symbol: 'magnifyingglass' },

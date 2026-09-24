@@ -44,9 +44,13 @@ const STILL_MOVING: ReadonlySet<MediaRequestState> = new Set([
 
 const DISCOVER_KEPT_MS = 10 * 60 * 1000;
 
+const AVAILABILITY_KEPT_MS = 5 * 60 * 1000;
+
 /**
- * Whether this server takes requests, which only changes when the server is restarted with or
- * without the requests service, so it is read once and kept.
+ * Whether this server takes requests. It seldom changes, but it is read again every few minutes
+ * rather than kept for good, since an answer kept for good outlives the server and the account it
+ * came from — a phone that moves between servers, or signs in as somebody else, would go on
+ * believing the first answer it was given.
  *
  * @returns The query.
  */
@@ -54,7 +58,7 @@ const availability = () =>
   queryOptions({
     queryKey: [...REQUESTS, 'availability'],
     queryFn: () => fetchRequestsAvailability(),
-    staleTime: Infinity,
+    staleTime: AVAILABILITY_KEPT_MS,
   });
 
 /**
