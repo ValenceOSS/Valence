@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
@@ -28,6 +28,10 @@ const styles = StyleSheet.create({
  * ended somewhere else — signed out on another device, expired, revoked by an administrator —
  * puts the wall of faces back rather than showing a screen that cannot load anything.
  *
+ * Signing out says so to the cache at once rather than asking again, and throws away everything
+ * that was asked while somebody was in once nothing is showing it, so nothing is asked again of a
+ * session that has gone and the way in is read afresh.
+ *
  * It keeps an eye on whether the server is answering at all, so that one which went quiet — while
  * somebody was signed in or before they could — picks everything up again once it is back, and
  * that while it is gone, what this phone keeps can still be watched.
@@ -49,8 +53,18 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
   const [returning, setReturning] = useState<{ profileId: string; at: ARectOnScreen } | null>(null);
   const [isOffline, setIsOffline] = useState(false);
   const [watchingHeld, setWatchingHeld] = useState<HeldFile | null>(null);
+  const isSignedIn = session.data !== null && session.data !== undefined;
+  const wasSignedIn = useRef(isSignedIn);
 
-  useTheServer();
+  useTheServer(isSignedIn ? 'beside the socket' : 'here');
+
+  useEffect(() => {
+    if (wasSignedIn.current && !isSignedIn) {
+      answers.removeQueries({ type: 'inactive' });
+    }
+
+    wasSignedIn.current = isSignedIn;
+  }, [isSignedIn, answers]);
 
   if (session.isPending) {
     return (
@@ -60,12 +74,12 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
     );
   }
 
-  if (session.data !== null && session.data !== undefined) {
+  if (isSignedIn) {
     return (
       <View style={styles.whole}>
         <SignedIn
           onOut={() => {
-            void answers.invalidateQueries();
+            answers.setQueryData(sessionQueries.who().queryKey, null);
           }}
           onElsewhere={onElsewhere}
         />

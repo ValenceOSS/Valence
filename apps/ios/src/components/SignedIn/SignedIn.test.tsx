@@ -14,6 +14,7 @@ import { fetchProfiles } from '@ValenceClient/profiles/fetchProfiles';
 import { ShowDetailSchema } from '@ValenceContracts/schemas/Show';
 import { PROFILE_COLOURS, ViewerProfileSchema } from '@ValenceContracts/schemas/ViewerProfile';
 import { theFakePlayer } from '@ValencePhone/testing/theFakePlayer';
+import { allowRealtimeClientToStart } from '@ValenceClient/realtime/getRealtimeClient';
 import {
   LibrarySchema,
   MediaDetailSchema,
@@ -27,6 +28,10 @@ jest.mock('@ValenceClient/library/fetchLibrary');
 jest.mock('@ValenceClient/playback/startPlaybackSession');
 jest.mock('@ValenceClient/library/fetchShows');
 jest.mock('@ValenceClient/profiles/fetchProfiles');
+jest.mock('@ValenceClient/realtime/getRealtimeClient', () => ({
+  ...jest.requireActual<object>('@ValenceClient/realtime/getRealtimeClient'),
+  allowRealtimeClientToStart: jest.fn(),
+}));
 
 const A_SESSION = {
   id: 'MllMpJgdqC9rKsdlZjN23KwuRYubAfQF',
@@ -135,6 +140,42 @@ describe('SignedIn', () => {
       expect(signOut).toHaveBeenCalled();
       expect(onOut).toHaveBeenCalled();
     });
+  });
+
+  it('opens the socket while somebody is signed in, and closes it once they are not', async () => {
+    jest.mocked(allowRealtimeClientToStart).mockClear();
+
+    const drawn = await render(around(<SignedIn onOut={jest.fn()} onElsewhere={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(allowRealtimeClientToStart).toHaveBeenLastCalledWith(true);
+    });
+
+    await drawn.unmount();
+
+    expect(allowRealtimeClientToStart).toHaveBeenLastCalledWith(false);
+  });
+
+  it('keeps the title beneath the player, so coming out finds it as it was', async () => {
+    withOneTitle();
+
+    const drawn = await render(around(<SignedIn onOut={jest.fn()} onElsewhere={jest.fn()} />));
+
+    await userEvent.press(await drawn.findByText('Films'));
+    await userEvent.press(await drawn.findByLabelText('Arrival'));
+    await userEvent.press(await drawn.findByText('Play'));
+
+    await waitFor(() => {
+      expect(startPlaybackSession).toHaveBeenCalled();
+    });
+    expect(drawn.queryAllByText('Linguists meet a ship.')).toEqual([]);
+    expect(
+      drawn.getAllByText('Linguists meet a ship.', { includeHiddenElements: true }).length,
+    ).toBeGreaterThan(0);
+
+    await userEvent.press(drawn.getByLabelText('Back'));
+
+    expect((await drawn.findAllByText('Linguists meet a ship.')).length).toBeGreaterThan(0);
   });
 
   it('opens a title when somebody presses its poster', async () => {

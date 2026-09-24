@@ -20,6 +20,8 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { signOut } from '@ValenceClient/session/auth';
 import { watchPresence } from '@ValenceClient/presence/watchPresence';
+import { allowRealtimeClientToStart } from '@ValenceClient/realtime/getRealtimeClient';
+import { useFreshFromTheSocket } from '@ValenceClient/query/useFreshFromTheSocket';
 import { AnAskable } from '@ValencePhone/components/AnAskable/AnAskable';
 import { APerson } from '@ValencePhone/components/APerson/APerson';
 import { AShow } from '@ValencePhone/components/AShow/AShow';
@@ -42,6 +44,7 @@ import { TheNotifications } from '@ValencePhone/components/TheNotifications/TheN
 import { TheSearch } from '@ValencePhone/components/TheSearch/TheSearch';
 import { TheTabs } from '@ValencePhone/components/TheTabs/TheTabs';
 import { AProgrammeBySeries } from '@ValencePhone/components/SignedIn/components/AProgrammeBySeries/AProgrammeBySeries';
+import { UnderThePlayer } from '@ValencePhone/components/SignedIn/components/UnderThePlayer/UnderThePlayer';
 import { APageStack } from '@ValencePhone/components/APageStack/APageStack';
 import { useTheProgrammeOfEpisode } from '@ValencePhone/hooks/useTheProgrammeOfEpisode';
 import { Watching } from '@ValencePhone/components/Watching/Watching';
@@ -70,6 +73,7 @@ const MUSIC_PAGES: ReadonlySet<APage['kind']> = new Set([
 ]);
 
 const styles = StyleSheet.create({
+  over: { ...StyleSheet.absoluteFill },
   whole: { flex: 1 },
 });
 
@@ -86,6 +90,11 @@ const styles = StyleSheet.create({
  * Something asked for that has arrived opens in the library from its page, and a programme is
  * found by the series it became, since that is all a request knows of it.
  *
+ * The player is laid over everything else rather than drawn instead of it, so what was open
+ * underneath — the library, its answers and how far down it somebody had scrolled — is still there
+ * when they come out, however long the film was. Nothing beneath it can be touched, read aloud or
+ * left playing while it is up.
+ *
  * Coming out of the player throws away what was known about how far through everything is, because
  * the thing they just watched is the one entry that is now wrong.
  *
@@ -97,7 +106,8 @@ const styles = StyleSheet.create({
  * It joins presence as soon as somebody is through, which is what puts this phone in the list of
  * open sessions an operator watches and what carries an instruction to stop or pause back to it.
  * Presence is the socket rather than something kept beside one, so a phone that never opened one
- * was a phone the server could see asking for films and never see watching them.
+ * was a phone the server could see asking for films and never see watching them. The same socket
+ * says when anything this phone has asked for has changed, and it is closed once they sign out.
  *
  * Waits for the session before drawing any of it, because every request they make depends on being
  * signed in and a library drawn first would ask a question it cannot have the answer to.
@@ -108,7 +118,17 @@ const styles = StyleSheet.create({
 const SignedIn = ({ onOut, onElsewhere }: SignedInProps) => {
   const session = useQuery(sessionQueries.who());
 
-  useEffect(() => watchPresence(), []);
+  useEffect(() => {
+    allowRealtimeClientToStart(true);
+
+    const stopWatching = watchPresence();
+
+    return () => {
+      stopWatching();
+      allowRealtimeClientToStart(false);
+    };
+  }, []);
+  useFreshFromTheSocket();
   useEffect(() => {
     void sendWatchedOffline();
   }, []);
@@ -224,51 +244,6 @@ const SignedIn = ({ onOut, onElsewhere }: SignedInProps) => {
       <Screen centres>
         <ActivityIndicator />
       </Screen>
-    );
-  }
-
-  if (askingAbout !== null) {
-    return (
-      <StillWatching
-        upNext={askingAbout.title}
-        secondsToAnswer={STILL_WATCHING_ANSWER_SECONDS}
-        onCarryOn={() => {
-          const next = askingAbout;
-
-          setAskingAbout(null);
-          choose(next.id, 0);
-        }}
-        onStop={() => {
-          setAskingAbout(null);
-        }}
-      />
-    );
-  }
-
-  if (watchingHeld !== null) {
-    return (
-      <WatchingHeld
-        file={watchingHeld}
-        onDone={() => {
-          setWatchingHeld(null);
-        }}
-      />
-    );
-  }
-
-  if (watching !== null) {
-    return (
-      <Watching
-        key={watching.mediaId}
-        mediaId={watching.mediaId}
-        startSeconds={watching.startSeconds}
-        onDone={stopWatchingIt}
-        onEnded={whenItEnds}
-        seasons={series.data?.seasons ?? []}
-        onChooseEpisode={(chosen) => {
-          choose(chosen, resumeFor(byMediaId(watched.data ?? []), chosen) ?? 0);
-        }}
-      />
     );
   }
 
@@ -466,6 +441,43 @@ const SignedIn = ({ onOut, onElsewhere }: SignedInProps) => {
       />
     );
 
+  const covering =
+    askingAbout !== null ? (
+      <StillWatching
+        upNext={askingAbout.title}
+        secondsToAnswer={STILL_WATCHING_ANSWER_SECONDS}
+        onCarryOn={() => {
+          const next = askingAbout;
+
+          setAskingAbout(null);
+          choose(next.id, 0);
+        }}
+        onStop={() => {
+          setAskingAbout(null);
+        }}
+      />
+    ) : watchingHeld !== null ? (
+      <WatchingHeld
+        file={watchingHeld}
+        onDone={() => {
+          setWatchingHeld(null);
+        }}
+      />
+    ) : watching !== null ? (
+      <Watching
+        key={watching.mediaId}
+        mediaId={watching.mediaId}
+        startSeconds={watching.startSeconds}
+        onDone={stopWatchingIt}
+        onEnded={whenItEnds}
+        seasons={series.data?.seasons ?? []}
+        onChooseEpisode={(chosen) => {
+          choose(chosen, resumeFor(byMediaId(watched.data ?? []), chosen) ?? 0);
+        }}
+      />
+    ) : null;
+  const isCovered = covering !== null;
+
   const tabbed = (
     <TheTabs
       tabs={tabs}
@@ -485,29 +497,49 @@ const SignedIn = ({ onOut, onElsewhere }: SignedInProps) => {
 
   return (
     <View style={styles.whole}>
-      <APageStack
-        pages={[
-          { key: 'tabs', page: tabbed },
-          ...pages.map((page, index) => ({
-            key: `${index.toString()}:${JSON.stringify(page)}`,
-            page: MUSIC_PAGES.has(page.kind) ? (
-              <AMusicPage>{drawPage(page)}</AMusicPage>
-            ) : (
-              drawPage(page)
-            ),
-            rises: page.kind === 'playing',
-            holdsTheEdge: page.kind === 'reading',
-          })),
-        ]}
-        onBack={back}
-      />
-      <TheMusicRemote />
-      <TheFloatingPlayer
-        isShown={MUSIC_PAGES.has(pages.at(-1)?.kind ?? 'playing')}
-        onOpen={() => {
-          open({ kind: 'playing' });
-        }}
-      />
+      <View
+        style={styles.whole}
+        collapsable={false}
+        pointerEvents={isCovered ? 'none' : 'auto'}
+        accessibilityElementsHidden={isCovered}
+        importantForAccessibility={isCovered ? 'no-hide-descendants' : 'auto'}
+      >
+        <APageStack
+          pages={[
+            {
+              key: 'tabs',
+              page: <UnderThePlayer isCovered={isCovered}>{tabbed}</UnderThePlayer>,
+            },
+            ...pages.map((page, index) => ({
+              key: `${index.toString()}:${JSON.stringify(page)}`,
+              page: (
+                <UnderThePlayer isCovered={isCovered}>
+                  {MUSIC_PAGES.has(page.kind) ? (
+                    <AMusicPage>{drawPage(page)}</AMusicPage>
+                  ) : (
+                    drawPage(page)
+                  )}
+                </UnderThePlayer>
+              ),
+              rises: page.kind === 'playing',
+              holdsTheEdge: page.kind === 'reading',
+            })),
+          ]}
+          onBack={back}
+        />
+        <TheMusicRemote />
+        <TheFloatingPlayer
+          isShown={MUSIC_PAGES.has(pages.at(-1)?.kind ?? 'playing')}
+          onOpen={() => {
+            open({ kind: 'playing' });
+          }}
+        />
+      </View>
+      {covering === null ? null : (
+        <View style={styles.over} collapsable={false}>
+          {covering}
+        </View>
+      )}
     </View>
   );
 };

@@ -21,7 +21,8 @@ type SaysWhatChanged = Pick<RealtimeClient, 'subscribe' | 'onResumed'>;
  * polling intervals go.
  *
  * A reconnection invalidates everything, because a tab that was asleep missed whatever happened
- * while it was gone and has no way to find out what.
+ * while it was gone and has no way to find out what. What is already being asked for again is left
+ * to finish rather than asked for a second time.
  *
  * Nothing here is worth knowing before somebody is signed in — a socket opened to watch for changes
  * nobody may see yet is a connection with nothing to say, held open against a server that has
@@ -64,7 +65,7 @@ const useFreshFromTheSocket = (client: SaysWhatChanged | null = getRealtimeClien
       }),
 
       client.onResumed(() => {
-        void cache.invalidateQueries();
+        void cache.invalidateQueries(undefined, { cancelRefetch: false });
       }),
     ];
 

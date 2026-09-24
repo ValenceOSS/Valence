@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { thePhonesMusicOut } from '@ValencePhone/music/thePhonesMusicOut';
 import { describeThisPhone } from '@ValencePhone/platform/describeThisPhone';
@@ -11,6 +12,8 @@ import { thePhonesHeldFiles } from '@ValencePhone/platform/thePhonesHeldFiles';
 import { theServerThisPhoneWatches } from '@ValencePhone/platform/theServerThisPhoneWatches';
 import { thisPhonesId } from '@ValencePhone/platform/thisPhonesId';
 
+const PICK_UP_DOWNLOADS_AFTER = 3000;
+
 /**
  * Tells the application it is running on a phone, which is the first thing that has to happen —
  * before anything reads a preference or says who is watching.
@@ -19,9 +22,8 @@ import { thisPhonesId } from '@ValencePhone/platform/thisPhonesId';
  * asynchronous and everything above here expects an answer at once. Whoever starts the application
  * does the waiting, once.
  *
- * Keeping files is answered no for now. A phone is the client that most wants downloads and it
- * will have them, but claiming the ability before it exists offers somebody a button that does
- * nothing.
+ * Downloads the app closed partway through are picked up a few seconds later, once the first
+ * screen is up, rather than competing with it.
  *
  * @param held - What the phone remembered, read at startup.
  */
@@ -38,7 +40,13 @@ const installPhonePlatform = (held: Map<string, string>): void => {
     thisClientId: () => thisPhonesId(store),
     thisClientKind: () => 'phone',
     canKeepFiles: () => true,
-    held: thePhonesHeldFiles(store),
+    held: thePhonesHeldFiles(
+      store,
+      (key) => AsyncStorage.getItem(key),
+      (run) => {
+        setTimeout(run, PICK_UP_DOWNLOADS_AFTER);
+      },
+    ),
     reachability: thePhonesReach(),
     openSocket: thePhonesSocket(store),
     buildInfo: thePhonesBuild,
