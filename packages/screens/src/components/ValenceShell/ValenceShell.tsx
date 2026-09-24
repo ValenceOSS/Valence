@@ -26,6 +26,10 @@ import {
 } from '@ValenceScreens/notifications/subscribeToPush';
 import { notificationQueries } from '@ValenceClient/query/notificationQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { viewingQueries } from '@ValenceClient/query/viewingQueries';
+import { failureOfThrown } from '@ValenceScreens/admin/failureOf';
+import { notify } from '@ValenceUI/notify';
+import { markWatched } from '@ValenceClient/playback/markWatched';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { useHidden } from '@ValenceClient/library/useHidden';
@@ -98,6 +102,7 @@ const ValenceShell = () => {
     known,
     rememberItems,
     progress,
+    forgetReported,
     moodLights,
     setStartOverride,
     askingAbout,
@@ -375,6 +380,22 @@ const ValenceShell = () => {
           if ((show.seriesId ?? null) !== null) {
             rate({ seriesId: show.seriesId ?? '' }, stars);
           }
+        }}
+        onMarkWatched={(episodes, isWatched) => {
+          void failureOfThrown(() => markWatched(episodes, isWatched)).then(async (failure) => {
+            if (failure !== null) {
+              notify.failed(failure);
+
+              return;
+            }
+
+            forgetReported(episodes.map((episode) => episode.id));
+
+            await Promise.all([
+              cache.invalidateQueries({ queryKey: viewingQueries.progress().queryKey }),
+              cache.invalidateQueries({ queryKey: libraryQueries.key }),
+            ]);
+          });
         }}
       />
 

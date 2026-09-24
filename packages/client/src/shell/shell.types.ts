@@ -22,6 +22,7 @@ type Shell = {
   isProgressReady: boolean;
   reportProgress: (entry: WatchProgress) => void;
   readProgress: () => Promise<void>;
+  forgetReported: (mediaIds: readonly string[]) => void;
   startOverride: StartOverride;
   setStartOverride: (asked: StartOverride) => void;
   moodLights: MoodLight[];

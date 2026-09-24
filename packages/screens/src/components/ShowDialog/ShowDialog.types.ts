@@ -11,6 +11,7 @@ type ShowDialogProps = {
   resumeFor?: (mediaId: string) => number | null;
   isFinished?: (mediaId: string) => boolean;
   onRate?: (show: ShowSummary, stars: number | null) => void;
+  onMarkWatched?: (episodes: readonly MediaSummary[], isWatched: boolean) => void;
 };
 
 export type { ShowDialogProps };

@@ -120,6 +120,99 @@ describe('ShowDialog', () => {
     expect(screen.queryByRole('button', { name: 'Share' })).not.toBeInTheDocument();
   });
 
+  describe('marking episodes watched', () => {
+    it('marks one episode watched from its row', async () => {
+      const onMarkWatched = vi.fn();
+
+      fetchShowMock.mockResolvedValue(detail([{ seasonNumber: 1, episodes: [1, 2] }]));
+      renderInAnAddress(
+        <ShowDialog
+          show={summary}
+          onClose={vi.fn()}
+          onPlay={vi.fn()}
+          onMarkWatched={onMarkWatched}
+        />,
+      );
+
+      await userEvent.click(
+        await screen.findByRole('button', { name: 'Mark Episode 2 as watched' }),
+      );
+
+      expect(onMarkWatched).toHaveBeenCalledWith([expect.objectContaining({ id: '1-2' })], true);
+    });
+
+    it('marks a watched one unwatched again', async () => {
+      const onMarkWatched = vi.fn();
+
+      fetchShowMock.mockResolvedValue(detail([{ seasonNumber: 1, episodes: [1] }]));
+      renderInAnAddress(
+        <ShowDialog
+          show={summary}
+          onClose={vi.fn()}
+          onPlay={vi.fn()}
+          watchedFractionFor={() => 1}
+          isFinished={() => true}
+          onMarkWatched={onMarkWatched}
+        />,
+      );
+
+      await userEvent.click(
+        await screen.findByRole('button', { name: 'Mark Episode 1 as unwatched' }),
+      );
+
+      expect(onMarkWatched).toHaveBeenCalledWith([expect.objectContaining({ id: '1-1' })], false);
+    });
+
+    it('marks the whole season shown at once, and offers to take it back once all are watched', async () => {
+      const onMarkWatched = vi.fn();
+
+      fetchShowMock.mockResolvedValue(
+        detail([
+          { seasonNumber: 1, episodes: [1, 2] },
+          { seasonNumber: 2, episodes: [1] },
+        ]),
+      );
+      const { rerender } = renderInAnAddress(
+        <ShowDialog
+          show={summary}
+          onClose={vi.fn()}
+          onPlay={vi.fn()}
+          onMarkWatched={onMarkWatched}
+        />,
+      );
+
+      await userEvent.click(await screen.findByRole('button', { name: /Mark season watched/ }));
+
+      expect(onMarkWatched).toHaveBeenCalledWith(
+        [expect.objectContaining({ id: '1-1' }), expect.objectContaining({ id: '1-2' })],
+        true,
+      );
+
+      rerender(
+        <ShowDialog
+          show={summary}
+          onClose={vi.fn()}
+          onPlay={vi.fn()}
+          isFinished={() => true}
+          onMarkWatched={onMarkWatched}
+        />,
+      );
+
+      expect(
+        await screen.findByRole('button', { name: /Mark season unwatched/ }),
+      ).toBeInTheDocument();
+    });
+
+    it('offers no marking where it is not asked for', async () => {
+      fetchShowMock.mockResolvedValue(detail([{ seasonNumber: 1, episodes: [1] }]));
+      renderInAnAddress(<ShowDialog show={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+      await screen.findByText('Episode 1');
+
+      expect(screen.queryByRole('button', { name: /as watched/ })).not.toBeInTheDocument();
+    });
+  });
+
   describe('downloading', () => {
     const PROGRAMME = { ...summary, seriesId: '5d3e2c1b-0a9f-4e8d-9c7b-6a5f4e3d2c1b' };
 
