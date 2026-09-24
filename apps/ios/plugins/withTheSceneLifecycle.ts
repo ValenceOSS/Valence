@@ -72,5 +72,4 @@ const withTheSceneLifecycle: ConfigPlugin = (config) => {
   });
 };
 
-// oxlint-disable-next-line import/no-default-export -- Expo resolves a config plugin by taking the module's default export; a named one is never looked at.
-export default withTheSceneLifecycle;
+export { withTheSceneLifecycle };

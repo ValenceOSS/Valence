@@ -1,4 +1,5 @@
 import type { ExpoConfig } from 'expo/config';
+import { withTheSceneLifecycle } from './plugins/withTheSceneLifecycle.ts';
 import { releaseVersion } from '@valence/core/src/functions/releaseVersion.ts';
 
 const version = releaseVersion();
@@ -6,6 +7,7 @@ const version = releaseVersion();
 const config: ExpoConfig = {
   name: 'Valence',
   slug: 'valence',
+  owner: 'valence-oss',
   scheme: 'valence',
   version: version === 'unknown' ? '0.0.0' : version,
   orientation: 'default',
@@ -47,9 +49,9 @@ const config: ExpoConfig = {
         'Valence uses the camera to read the code a television shows, so it can be signed in without typing.',
     },
   },
+  extra: { eas: { projectId: '11620f0a-1d3a-449d-9812-2afe80b14ecc' } },
   plugins: [
     ['expo-build-properties', { ios: { deploymentTarget: '18.0' } }],
-    './plugins/withTheSceneLifecycle',
     [
       'expo-font',
       {
@@ -71,4 +73,4 @@ const config: ExpoConfig = {
   ],
 };
 
-export default config;
+export default withTheSceneLifecycle(config);
