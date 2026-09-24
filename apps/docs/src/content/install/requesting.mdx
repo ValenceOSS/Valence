@@ -257,6 +257,8 @@ Left empty, the requests service takes a release name at its word, which is righ
 
 See [Troubleshooting](/reference/troubleshooting) for more.
 
+The steps below run `docker compose up -d` with the profiles in `COMPOSE_PROFILES` in your `.env`, as [Switching it on](#switching-it-on) sets out. If you give the profiles on the command line instead, give them each time, for example `COMPOSE_PROFILES=requests,vpn docker compose up -d`, or a service outside them is left as it was.
+
 ### The requests service cannot be reached
 
 1. Check it is running: `docker compose ps requests`. If it is not, `docker compose logs requests` says why. Most often `REQUESTS_SECRET` is missing or shorter than 32 characters.
@@ -302,7 +304,7 @@ The download client and the requests service see the download folder under diffe
 The site's Cloudflare has refused the address your requests leave from. No browser gets past that, so the only fix is another address.
 
 1. Open the site in a browser on the same network. If it refuses you there too, the site refuses your address, or your country.
-2. Where you use a VPN, pick an exit in another country and test the indexer again.
+2. Where the machine running Valence goes out through a VPN, pick an exit in another country and test the indexer again. The [VPN for the download client](#a-vpn-for-the-download-client) does not help here: the requests service does not go through it.
 3. Where it still refuses, switch the indexer off, or use another site.
 
 ### The VPN is down
