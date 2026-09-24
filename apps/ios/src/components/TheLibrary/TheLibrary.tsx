@@ -580,6 +580,7 @@ const TheLibrary = ({
               title={cell.programme.title}
               year={cell.programme.year ?? null}
               artwork={onThisServer(`/api/media/${cell.programme.coverMediaId}/image/poster`)}
+              count={cell.programme.unwatchedCount ?? 0}
               wide={wide}
             />
           </Button>

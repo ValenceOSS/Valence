@@ -45,6 +45,23 @@ describe('APoster', () => {
     expect(drawn.getAllByText('Arrival').length).toBeGreaterThan(0);
   });
 
+  it('says how many episodes are left, and nothing for none', async () => {
+    const drawn = await render(<APoster {...asDrawn(aTitle())} count={3} />);
+
+    expect(drawn.getByLabelText('3 episodes left')).toBeTruthy();
+    expect(drawn.getByText('3')).toBeTruthy();
+
+    const none = await render(<APoster {...asDrawn(aTitle())} count={0} />);
+
+    expect(none.queryByLabelText(/left/)).toBeNull();
+  });
+
+  it('ticks what has been watched through', async () => {
+    const drawn = await render(<APoster {...asDrawn(aTitle())} watched={1} />);
+
+    expect(drawn.getByLabelText('Watched')).toBeTruthy();
+  });
+
   it('says what year it is from', async () => {
     const drawn = await render(<APoster {...asDrawn(aTitle())} />);
 
