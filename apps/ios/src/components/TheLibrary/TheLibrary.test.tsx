@@ -78,6 +78,7 @@ const theLibrary = (overrides: Partial<TheLibraryProps> = {}) =>
       onWatch={jest.fn()}
       onLookAt={jest.fn()}
       onLookAtShow={jest.fn()}
+      onScan={jest.fn()}
       onNotifications={jest.fn()}
       onAlbum={jest.fn()}
       onArtist={jest.fn()}
@@ -112,6 +113,18 @@ afterEach(() => {
 });
 
 describe('TheLibrary', () => {
+  it('asks to scan a television in from the bar', async () => {
+    jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
+    jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [], total: 0 });
+    const onScan = jest.fn();
+
+    const drawn = await theLibrary({ onScan });
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Sign in a television' }));
+
+    expect(onScan).toHaveBeenCalled();
+  });
+
   it('opens on home, drawing what the libraries hold without asking which', async () => {
     jest
       .mocked(fetchLibraries)

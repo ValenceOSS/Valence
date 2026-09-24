@@ -1,4 +1,4 @@
-import { Film, Monitor, SearchX } from '@keyline-icons/react-native';
+import { Film, Monitor, ScanQrCode, SearchX } from '@keyline-icons/react-native';
 import {
   Film as FilmFilled,
   Home as HomeFilled,
@@ -30,7 +30,7 @@ import { Button } from '@ValencePhone/components/Button/Button';
 import { SegmentedRow } from '@ValencePhone/components/SegmentedRow/SegmentedRow';
 import { Words } from '@ValencePhone/components/Words/Words';
 import { ACard } from '@ValencePhone/components/ACard/ACard';
-import { AirPlayButton } from '@ValencePhone/components/AirPlayButton/AirPlayButton';
+import { AGlassCircle } from '@ValencePhone/components/AGlassCircle/AGlassCircle';
 import { AMoodBackground } from '@ValencePhone/components/AMoodBackground/AMoodBackground';
 import { TheSearchBox } from '@ValencePhone/components/TheSearch/components/TheSearchBox/TheSearchBox';
 import { TheBell } from '@ValencePhone/components/TheBell/TheBell';
@@ -163,6 +163,7 @@ const styles = StyleSheet.create({
  * @param onLookAt - Told which title somebody wants to see more of.
  * @param onLookAtShow - Told which programme, in which library.
  * @param onNotifications - Told somebody wants to see what the server has told them.
+ * @param onScan - Told somebody wants to scan a television's code to sign it in.
  * @param onAlbum - Told to open an album.
  * @param onArtist - Told to open an artist.
  * @param onPlaylist - Told to open a playlist.
@@ -177,6 +178,7 @@ const TheLibrary = ({
   onLookAt,
   onLookAtShow,
   onNotifications,
+  onScan,
   onAlbum,
   onArtist,
   onPlaylist,
@@ -412,7 +414,7 @@ const TheLibrary = ({
         <View style={styles.topRow}>
           <ACarriedMark isHandedOn={false} />
           <View style={styles.aside}>
-            <AirPlayButton />
+            <AGlassCircle of={ScanQrCode} label="Sign in a television" onPress={onScan} />
             <TheBell onPress={onNotifications} />
           </View>
         </View>

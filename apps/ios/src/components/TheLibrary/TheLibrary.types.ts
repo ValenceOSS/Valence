@@ -5,6 +5,7 @@ type TheLibraryProps = {
   onLookAt: (mediaId: string) => void;
   onLookAtShow: (libraryId: string, showId: string) => void;
   onNotifications: () => void;
+  onScan: () => void;
   onAlbum: (albumId: string) => void;
   onArtist: (artistId: string) => void;
   onPlaylist: (playlistId: string) => void;

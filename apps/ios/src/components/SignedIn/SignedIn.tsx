@@ -38,6 +38,8 @@ import { ABook } from '@ValencePhone/components/ABook/ABook';
 import { AReader } from '@ValencePhone/components/AReader/AReader';
 import { TheNowPlayingBar } from '@ValencePhone/components/TheNowPlayingBar/TheNowPlayingBar';
 import { ACatalogueList } from '@ValencePhone/components/ACatalogueList/ACatalogueList';
+import { theCodeInAScan } from '@ValenceClient/session/theCodeInAScan';
+import { scanACode } from '@ValencePhone/platform/scanACode';
 import { ATabPage } from '@ValencePhone/components/SignedIn/components/ATabPage/ATabPage';
 import { TheAccount } from '@ValencePhone/components/TheAccount/TheAccount';
 import { TheDownloads } from '@ValencePhone/components/TheDownloads/TheDownloads';
@@ -211,6 +213,20 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
 
   const back = () => {
     setPages((was) => was.slice(0, -1));
+  };
+
+  const scanATelevision = async () => {
+    const scanned = await scanACode();
+
+    if (scanned.kind === 'closed') {
+      return;
+    }
+
+    open({
+      kind: 'television',
+      code: scanned.kind === 'read' ? (theCodeInAScan(scanned.text) ?? '') : '',
+      askedFrom: null,
+    });
   };
 
   const lookAt = (mediaId: string) => {
@@ -446,6 +462,9 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
             onLookAtShow={lookAtShow}
             onNotifications={() => {
               open({ kind: 'notifications' });
+            }}
+            onScan={() => {
+              void scanATelevision();
             }}
             onAlbum={toAlbum}
             onArtist={toArtist}
