@@ -1,14 +1,41 @@
 import type { ExpoConfig } from 'expo/config';
+import { releaseVersion } from '@valence/core/src/functions/releaseVersion.ts';
+
+const version = releaseVersion();
 
 const config: ExpoConfig = {
   name: 'Valence',
   slug: 'valence',
   scheme: 'valence',
-  version: '0.0.0',
+  version: version === 'unknown' ? '0.0.0' : version,
   orientation: 'default',
   userInterfaceStyle: 'automatic',
   ios: {
     bundleIdentifier: 'app.valence.phone',
+    config: { usesNonExemptEncryption: false },
+    privacyManifests: {
+      NSPrivacyTracking: false,
+      NSPrivacyTrackingDomains: [],
+      NSPrivacyCollectedDataTypes: [],
+      NSPrivacyAccessedAPITypes: [
+        {
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryUserDefaults',
+          NSPrivacyAccessedAPITypeReasons: ['CA92.1'],
+        },
+        {
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryFileTimestamp',
+          NSPrivacyAccessedAPITypeReasons: ['C617.1'],
+        },
+        {
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategorySystemBootTime',
+          NSPrivacyAccessedAPITypeReasons: ['35F9.1'],
+        },
+        {
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryDiskSpace',
+          NSPrivacyAccessedAPITypeReasons: ['E174.1'],
+        },
+      ],
+    },
     icon: '../../design/valence-icon.icon',
     supportsTablet: false,
     infoPlist: {

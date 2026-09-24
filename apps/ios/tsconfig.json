@@ -2,6 +2,7 @@
   "extends": ["../../tsconfig.base.json", "../../tsconfig.paths.json"],
   "compilerOptions": {
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
     "lib": ["ES2023"],
     "types": ["react-native", "jest"]
