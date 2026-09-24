@@ -198,8 +198,10 @@ const theTracksArtworkFor = (artwork: string | null): string | undefined => {
  * internet — sending a URL to one would either fail or publish somebody's server address. The Valence
  * logo is what is left, and it is the honest answer rather than a compromise.
  *
- * Somebody who has Valence open but is not watching anything gets the top line and the logo and nothing
- * else. No clock, because there is nothing to count towards, and no button, because there is nothing
+ * Somebody who has Valence open but is not watching anything gets the top line, the logo, and a clock
+ * counting from when Valence opened. Discord draws a clock whether it is given a start or not, and
+ * without one it counts from whenever it last heard the status, which starts it again after every
+ * reconnection, such as the machine waking from sleep. There is no button, because there is nothing
  * in particular to send anybody to.
  *
  * The poster is drawn where the catalogue has one, because it is what somebody would recognise from
@@ -223,9 +225,13 @@ const theTracksArtworkFor = (artwork: string | null): string | undefined => {
  * given, and the honest header for a song is who is singing it, not which application is playing it.
  *
  * @param playing - What is happening, or nothing where the status should come down.
+ * @param openedAt - When Valence opened, in milliseconds, which browsing counts from.
  * @returns The activity to send, or nothing to clear it.
  */
-const aDiscordActivity = (playing: WhatIsPlaying | null): DiscordActivity | null => {
+const aDiscordActivity = (
+  playing: WhatIsPlaying | null,
+  openedAt: number,
+): DiscordActivity | null => {
   if (playing === null) {
     return null;
   }
@@ -234,6 +240,7 @@ const aDiscordActivity = (playing: WhatIsPlaying | null): DiscordActivity | null
     return {
       type: WATCHING,
       details: BROWSING,
+      timestamps: { start: Math.floor(openedAt / A_SECOND) },
       assets: { large_image: LOGO, large_text: VALENCE },
     };
   }
