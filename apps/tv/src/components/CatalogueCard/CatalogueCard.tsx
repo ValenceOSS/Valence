@@ -1,3 +1,5 @@
+import { useProgress } from '@ValenceTv/library/useProgress';
+import { isTitleWatched } from '@ValenceClient/requests/isTitleWatched';
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { nameTheStanding } from '@ValenceClient/requests/nameTheStanding';
@@ -12,8 +14,8 @@ import type { CatalogueCardProps } from './CatalogueCard.types';
 /**
  * A film or show from the film database rather than the library: its poster, named beneath while
  * the remote is on it, with where it stands — in the library already, asked for, on its way —
- * written under it, so a wall of them says at a glance which are still to be asked for. One the
- * library already has carries a tick in its corner instead of any words.
+ * written under it, so a wall of them says at a glance which are still to be asked for. A tick in the
+ * corner means watched, as it does everywhere else — a film this profile has seen to the end.
  *
  * @param title - The film or show.
  * @param onPress - Told when it is chosen.
@@ -28,26 +30,29 @@ const CatalogueCard = ({ title, onPress, width }: CatalogueCardProps) => {
       : { width, height: Math.round((width * natural.height) / natural.width) };
   }, [width]);
   const standing = nameTheStanding(title.standing);
-  const isHad = title.standing.status === 'library';
+  const { progress } = useProgress();
+  const isWatched = isTitleWatched(title, progress);
 
   const poster = useMemo(
     () => (
       <View style={[styles.poster, size]}>
         <Artwork path={title.posterUrl} style={StyleSheet.absoluteFill} />
 
-        {isHad ? (
-          <View style={styles.had}>
+        {isWatched ? (
+          <View style={styles.had} accessible accessibilityLabel="Watched">
             <Icon of={Check} size={26} colour={tokens.colours.onWhite} />
           </View>
         ) : null}
       </View>
     ),
-    [title.posterUrl, size, isHad],
+    [title.posterUrl, size, isWatched],
   );
 
   return (
     <Focusable
-      label={standing === null ? title.title : `${title.title}, ${standing.label}`}
+      label={[title.title, standing?.label ?? null, isWatched ? 'watched' : null]
+        .filter((part) => part !== null)
+        .join(', ')}
       shadow={{ height: size.height, cornerRadius: tokens.radii.xl }}
       scale={1.1}
       onPress={() => {
@@ -62,7 +67,7 @@ const CatalogueCard = ({ title, onPress, width }: CatalogueCardProps) => {
             {title.title}
           </Text>
 
-          {standing === null || isHad ? null : (
+          {standing === null ? null : (
             <Text numberOfLines={1} style={styles.standing}>
               {standing.label}
             </Text>

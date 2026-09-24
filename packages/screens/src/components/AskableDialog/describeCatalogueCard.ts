@@ -5,20 +5,23 @@ import type { MediaCardCorner } from '@ValenceUI/MediaCard.types';
 import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 
 /**
- * Says how a title to ask for is drawn on a card: the kind of thing it is and how far its request
- * has got as badges, and that it is already in the library as a mark in the corner, which is a fact
- * to glance at rather than to read.
+ * Says how a title to ask for is drawn on a card: the kind of thing it is, how far its request has
+ * got, and that it is already in the library, as badges — and, where whoever is watching has seen
+ * it through, a tick in the corner. The tick means watched everywhere in Valence, so being in the
+ * library is said in words beside the kind rather than with it.
  *
  * @param title - The title.
- * @returns The badges and, where it is already held, the corner mark.
+ * @param isWatched - Whether whoever is watching has seen it to the end.
+ * @returns The badges and, where it is watched, the corner mark.
  */
 const describeCatalogueCard = (
   title: CatalogueTitle,
+  isWatched = false,
 ): { badges: string[]; corner?: MediaCardCorner } => {
   if (title.standing.status === 'library') {
     return {
-      badges: [REQUEST_KIND_NAMES[title.kind]],
-      corner: { icon: CheckIcon, label: 'In your library' },
+      badges: [REQUEST_KIND_NAMES[title.kind], 'In library'],
+      ...(isWatched ? { corner: { icon: CheckIcon, label: 'Watched' } } : {}),
     };
   }
 

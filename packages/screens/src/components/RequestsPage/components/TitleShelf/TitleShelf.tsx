@@ -4,6 +4,7 @@ import { RevealItem } from '@ValenceUI/RevealItem';
 import { askingOf } from '@ValenceScreens/requests/askingOf';
 import { ShelfMoreCard } from '@ValenceScreens/components/RequestsPage/components/ShelfMoreCard/ShelfMoreCard';
 import type { TitleShelfProps } from './TitleShelf.types';
+import { useIsTitleWatched } from '@ValenceScreens/requests/useIsTitleWatched';
 import { describeCatalogueCard } from '@ValenceScreens/components/AskableDialog/describeCatalogueCard';
 
 const BEHIND_MORE = 4;
@@ -17,6 +18,7 @@ const BEHIND_MORE = 4;
  * @param onBrowse - Called with the whole list to show.
  */
 const TitleShelf = ({ shelf, onAsk, onBrowse }: TitleShelfProps) => {
+  const isWatched = useIsTitleWatched();
   const { browse } = shelf;
 
   const openAll =
@@ -37,7 +39,7 @@ const TitleShelf = ({ shelf, onAsk, onBrowse }: TitleShelfProps) => {
           <MediaCard
             title={title.title}
             subtitle={title.year?.toString() ?? ''}
-            {...describeCatalogueCard(title)}
+            {...describeCatalogueCard(title, isWatched(title))}
             {...(title.posterUrl === null ? {} : { imageUrl: title.posterUrl })}
             onSelect={() => {
               onAsk(askingOf(title));

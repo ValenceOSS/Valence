@@ -1,8 +1,19 @@
-import { render, screen } from '@testing-library/react';
+import { render as drawn, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { TitleShelf } from './TitleShelf';
 import type { CatalogueShelf } from '@ValenceContracts/schemas/CatalogueTitle';
+
+/**
+ * Draws with a cache of its own, since a card asks what has been watched.
+ *
+ * @param children - What to draw.
+ * @returns What was drawn.
+ */
+const render = (children: ReactNode) =>
+  drawn(<QueryClientProvider client={new QueryClient()}>{children}</QueryClientProvider>);
 
 const ASKABLE = { status: 'askable', mediaId: null, requestId: null, requestState: null } as const;
 
@@ -35,13 +46,13 @@ const SHELF: CatalogueShelf = {
 };
 
 describe('TitleShelf', () => {
-  it('marks what is in the library already with an icon, and opens what is chosen', async () => {
+  it('says what is in the library already, and opens what is chosen', async () => {
     const onAsk = vi.fn();
 
     render(<TitleShelf shelf={SHELF} onAsk={onAsk} onBrowse={vi.fn()} />);
 
-    expect(screen.getByRole('img', { name: 'In your library' })).toBeInTheDocument();
-    expect(screen.queryByText('In your library')).not.toBeInTheDocument();
+    expect(screen.getByText('In library')).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'Watched' })).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: /Dune/ }));
 
