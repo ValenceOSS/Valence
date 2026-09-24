@@ -13,7 +13,7 @@ const config: ExpoConfig = {
   orientation: 'default',
   userInterfaceStyle: 'automatic',
   ios: {
-    bundleIdentifier: 'app.valence.phone',
+    bundleIdentifier: 'app.valence.ios',
     config: { usesNonExemptEncryption: false },
     privacyManifests: {
       NSPrivacyTracking: false,
