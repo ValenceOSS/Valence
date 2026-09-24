@@ -1196,7 +1196,9 @@ const createApp = ({
         return context.json({ error: 'There is no such folder.' }, 404);
       case 'outside':
         return context.json({ error: 'That is not inside a library.' }, 403);
-      default:
+      case 'readOnly':
+      case 'denied':
+      case 'failed':
         return context.json({ error: 'Valence is not allowed to read that folder.' }, 403);
     }
   });

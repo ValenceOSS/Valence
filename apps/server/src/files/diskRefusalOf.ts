@@ -21,6 +21,7 @@ const diskRefusalOf = (error: Error | null): DiskRefusal => {
     case 'EACCES':
     case 'EPERM':
       return { kind: 'denied' };
+    case null:
     default:
       return { kind: 'failed' };
   }

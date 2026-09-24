@@ -1086,7 +1086,10 @@ const uploadSession = pgTable(
     bytes: bigint('bytes', { mode: 'number' }).notNull(),
     pieceBytes: integer('pieceBytes').notNull(),
     pieces: integer('pieces').notNull(),
-    received: integer('received').array().notNull().default(sql`'{}'::integer[]`),
+    received: integer('received')
+      .array()
+      .notNull()
+      .default(sql`'{}'::integer[]`),
     touchedAt: timestamp('touchedAt').notNull().defaultNow(),
   },
   (table) => [index('upload_session_touched_idx').on(table.touchedAt)],
