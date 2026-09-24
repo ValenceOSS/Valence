@@ -105,7 +105,7 @@ const keyOfCell = (cell: Cell): string =>
 const styles = StyleSheet.create({
   dimmed: { backgroundColor: 'rgba(0, 0, 0, 0.28)' },
   arriving: { gap: 20 },
-  hidden: { display: 'none' },
+  hidden: { opacity: 0 },
   bar: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -437,6 +437,7 @@ const TheLibrary = ({
 
   const home = (
     <View
+      collapsable={false}
       style={[StyleSheet.absoluteFill, part === 'home' ? null : styles.hidden]}
       pointerEvents={part === 'home' ? 'auto' : 'none'}
       accessibilityElementsHidden={part !== 'home'}
