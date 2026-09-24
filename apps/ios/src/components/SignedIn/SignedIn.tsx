@@ -38,6 +38,7 @@ import { ABook } from '@ValencePhone/components/ABook/ABook';
 import { AReader } from '@ValencePhone/components/AReader/AReader';
 import { TheNowPlayingBar } from '@ValencePhone/components/TheNowPlayingBar/TheNowPlayingBar';
 import { ACatalogueList } from '@ValencePhone/components/ACatalogueList/ACatalogueList';
+import { forgetTheMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
 import { theCodeInAScan } from '@ValenceClient/session/theCodeInAScan';
 import { scanACode } from '@ValencePhone/platform/scanACode';
 import { ATabPage } from '@ValencePhone/components/SignedIn/components/ATabPage/ATabPage';
@@ -66,6 +67,8 @@ import type { ReactNode } from 'react';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { APage, SignedInProps } from './SignedIn.types';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+
+const A_SERVER = /^[a-z][a-z0-9+.-]*:\/\/[^/?#\s]+/iu;
 
 const MUSIC_PAGES: ReadonlySet<APage['kind']> = new Set([
   'album',
@@ -211,6 +214,13 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
     }
   });
 
+  useEffect(
+    () => () => {
+      forgetTheMusicPlayer();
+    },
+    [],
+  );
+
   const back = () => {
     setPages((was) => was.slice(0, -1));
   };
@@ -222,10 +232,12 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
       return;
     }
 
+    const said = scanned.kind === 'read' ? scanned.text.trim() : '';
+
     open({
       kind: 'television',
-      code: scanned.kind === 'read' ? (theCodeInAScan(scanned.text) ?? '') : '',
-      askedFrom: null,
+      code: theCodeInAScan(said) ?? '',
+      askedFrom: A_SERVER.exec(said)?.[0] ?? null,
     });
   };
 
