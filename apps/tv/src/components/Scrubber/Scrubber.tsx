@@ -5,23 +5,24 @@ import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { useRemoteRing } from '@ValenceTv/remote/useRemoteRing';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { HWEvent } from 'react-native';
-import type { MusicProgressProps } from './MusicProgress.types';
+import type { ScrubberProps } from './Scrubber.types';
 
 const MOVES_BY = 10;
 
 const A_TURN_MOVES = 60;
 
 /**
- * How far through the song it is: a bar filling as it plays, with the time gone at its left and the
- * time left at its right. The remote can land on it, which thickens it; left and right then move the
- * song on or back ten seconds, and turning a thumb round the remote's ring moves it smoothly.
+ * How far through a song or a chapter it is: a bar filling as it plays, with the time gone at its
+ * left and the time left at its right. The remote can land on it, which thickens it; left and right
+ * then move it on or back ten seconds, and turning a thumb round the remote's ring moves it
+ * smoothly.
  *
- * @param position - How far through the song it is, in seconds.
- * @param duration - How long the song is, in seconds.
+ * @param position - How far through it is, in seconds.
+ * @param duration - How long it is, in seconds.
  * @param onSeek - Told where to go, in seconds.
  * @param onFocus - Told when the remote lands on it.
  */
-const MusicProgress = ({ position, duration, onSeek, onFocus }: MusicProgressProps) => {
+const Scrubber = ({ position, duration, onSeek, onFocus }: ScrubberProps) => {
   const [isFocused, setIsFocused] = useState(false);
   const through = duration > 0 ? Math.min(Math.max(position / duration, 0), 1) : 0;
 
@@ -83,7 +84,7 @@ const MusicProgress = ({ position, duration, onSeek, onFocus }: MusicProgressPro
   );
 };
 
-MusicProgress.displayName = 'MusicProgress';
+Scrubber.displayName = 'Scrubber';
 
 const styles = StyleSheet.create({
   bar: { gap: tokens.space.xs, paddingVertical: tokens.space.xs },
@@ -104,4 +105,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export { MusicProgress };
+export { Scrubber };

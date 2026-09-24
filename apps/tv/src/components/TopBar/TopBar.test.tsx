@@ -24,6 +24,7 @@ const aBar = (overrides: Partial<TopBarProps> = {}): TopBarProps => ({
   onFaceAt: jest.fn(),
   onMarkAt: jest.fn(),
   hasMusic: false,
+  hasBooks: false,
   ...overrides,
 });
 
@@ -47,6 +48,17 @@ describe('TopBar', () => {
     const withMusic = await render(<TopBar {...aBar({ hasMusic: true })} />);
 
     expect(withMusic.getByRole('button', { name: 'Music' })).toBeOnTheScreen();
+  });
+
+  it('adds books only where there are audiobooks to listen to', async () => {
+    const without = await render(<TopBar {...aBar()} />);
+
+    expect(without.queryByRole('button', { name: 'Books' })).toBeNull();
+
+    const withBooks = await render(<TopBar {...aBar({ hasBooks: true })} />);
+
+    expect(withBooks.getByRole('button', { name: 'Books' })).toBeOnTheScreen();
+    expect(withBooks.queryByRole('button', { name: 'Music' })).toBeNull();
   });
 
   it('has no face where nobody is watching', async () => {

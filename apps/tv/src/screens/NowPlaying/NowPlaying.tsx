@@ -38,7 +38,7 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
 import { DevicesPanel } from './components/DevicesPanel/DevicesPanel';
 import { LyricLines } from './components/LyricLines/LyricLines';
-import { MusicProgress } from './components/MusicProgress/MusicProgress';
+import { Scrubber } from '@ValenceTv/components/Scrubber/Scrubber';
 import { QueuePanel } from './components/QueuePanel/QueuePanel';
 import type { HWEvent } from 'react-native';
 import type { NowPlayingProps } from './NowPlaying.types';
@@ -287,7 +287,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
               setControlsHeight(event.nativeEvent.layout.height);
             }}
           >
-            <MusicProgress
+            <Scrubber
               position={shown.positionSeconds}
               duration={shown.durationSeconds}
               onSeek={player.seek}

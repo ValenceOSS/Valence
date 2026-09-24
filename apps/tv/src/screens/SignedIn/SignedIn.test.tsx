@@ -3,14 +3,17 @@ import { BackHandler, Linking, Text as mockText, View as mockView } from 'react-
 import { act, render, userEvent } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { emitPresenceEvent } from '@ValenceClient/presence/presenceEvents';
 import { LibrarySchema, MediaDetailSchema } from '@ValenceContracts/schemas/Library';
 import { MusicAlbumSchema } from '@ValenceContracts/schemas/Music';
 import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
+import { anAudiobook } from '@ValenceClient/testing/anAudiobook';
 import { Button as mockButton } from '@ValenceTv/components/Button/Button';
 import { SignedIn } from '@ValenceTv/screens/SignedIn/SignedIn';
+import type { Book } from '@ValenceContracts/schemas/Book';
 import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
@@ -32,6 +35,16 @@ const mockMusic = {
   toggle: jest.fn(),
   read: () => ({ current: null, remote: null }),
 };
+
+const mockBook = {
+  close: jest.fn(),
+  pause: jest.fn(),
+  toggle: jest.fn(),
+};
+
+const mockHeard: { now: 'music' | 'book' | null } = { now: null };
+
+const mockRedRising = anAudiobook().book;
 
 const LIBRARY = '00000000-0000-4000-8000-0000000000aa';
 
@@ -102,6 +115,18 @@ jest.mock('@ValenceTv/music/useSystemNowPlaying', () => ({
   useSystemNowPlaying: () => undefined,
 }));
 
+jest.mock('@ValenceClient/books/theAudiobookPlayer', () => ({
+  theAudiobookPlayer: () => mockBook,
+}));
+
+jest.mock('@ValenceClient/books/useWhatIsHeard', () => ({
+  useWhatIsHeard: () => mockHeard.now,
+}));
+
+jest.mock('@ValenceTv/books/useSystemNowPlayingABook', () => ({
+  useSystemNowPlayingABook: () => undefined,
+}));
+
 jest.mock('@ValenceTv/notifications/useArrivals', () => ({
   useArrivals: () => ({ arrival: null, dismiss: () => undefined }),
 }));
@@ -111,13 +136,28 @@ jest.mock('@ValenceTv/components/MoodBackdrop/MoodBackdrop', () => ({
 }));
 
 jest.mock('@ValenceTv/components/NowPlayingChip/NowPlayingChip', () => ({
-  NowPlayingChip: ({ onOpen }: { onOpen: () => void }) =>
-    mockStandIn('Chip', { 'Open what is playing': onOpen }),
+  NowPlayingChip: ({ onOpen }: { onOpen: (heard: 'music' | 'book') => void }) =>
+    mockStandIn('Chip', {
+      'Open what is playing': () => {
+        onOpen(mockHeard.now ?? 'music');
+      },
+    }),
 }));
 
 jest.mock('@ValenceTv/components/TopBar/TopBar', () => ({
-  TopBar: ({ onChoose, hasMusic }: { onChoose: (tab: Tab) => void; hasMusic: boolean }) =>
-    mockStandIn(hasMusic ? 'Bar with music' : 'Bar', {
+  TopBar: ({
+    onChoose,
+    hasMusic,
+    hasBooks,
+  }: {
+    onChoose: (tab: Tab) => void;
+    hasMusic: boolean;
+    hasBooks: boolean;
+  }) =>
+    mockStandIn(`${hasMusic ? 'Bar with music' : 'Bar'}${hasBooks ? ' and books' : ''}`, {
+      'Go to Books': () => {
+        onChoose('books');
+      },
       'Go to Films': () => {
         onChoose('films');
       },
@@ -223,6 +263,24 @@ jest.mock('@ValenceTv/screens/RequestsPage/RequestsPage', () => ({
 
 jest.mock('@ValenceTv/screens/Music/Music', () => ({ Music: () => mockStandIn('Music') }));
 
+jest.mock('@ValenceTv/screens/Books/Books', () => ({
+  Books: ({ onOpen }: { onOpen: (book: Book) => void }) =>
+    mockStandIn('Books', {
+      'Open Red Rising': () => {
+        onOpen(mockRedRising);
+      },
+    }),
+}));
+
+jest.mock('@ValenceTv/screens/BookPage/BookPage', () => ({
+  BookPage: ({ bookId, onListen }: { bookId: string; onListen: () => void }) =>
+    mockStandIn(`Book ${bookId}`, { Listen: onListen }),
+}));
+
+jest.mock('@ValenceTv/screens/Listening/Listening', () => ({
+  Listening: () => mockStandIn('Listening'),
+}));
+
 jest.mock('@ValenceTv/screens/MusicCollection/MusicCollection', () => ({
   MusicCollection: () => mockStandIn('Music collection'),
 }));
@@ -246,7 +304,7 @@ jest.mock('@ValenceTv/screens/Player/Player', () => ({
 
 const USER = { id: 'me', name: 'Marques', email: 'marques@example.com', emailVerified: true };
 
-const aLibrary = (id: string, kind: 'movies' | 'shows' | 'music') =>
+const aLibrary = (id: string, kind: 'movies' | 'shows' | 'music' | 'books') =>
   LibrarySchema.parse({
     id,
     name: kind,
@@ -264,6 +322,8 @@ const SHOWS = '00000000-0000-4000-8000-0000000000f2';
 
 const SONGS = '00000000-0000-4000-8000-0000000000f3';
 
+const BOOKS = '00000000-0000-4000-8000-0000000000f4';
+
 const AN_ALBUM = MusicAlbumSchema.parse({
   id: '00000000-0000-4000-8000-0000000000b1',
   libraryId: SONGS,
@@ -280,7 +340,10 @@ const AN_ALBUM = MusicAlbumSchema.parse({
   addedAt: '2026-09-23T00:00:00.000Z',
 });
 
-const aCache = ({ withMusic = false }: { withMusic?: boolean } = {}): QueryClient => {
+const aCache = ({
+  withMusic = false,
+  withBooks = false,
+}: { withMusic?: boolean; withBooks?: boolean } = {}): QueryClient => {
   const cache = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity, gcTime: Infinity } },
   });
@@ -289,7 +352,9 @@ const aCache = ({ withMusic = false }: { withMusic?: boolean } = {}): QueryClien
     aLibrary(FILMS, 'movies'),
     aLibrary(SHOWS, 'shows'),
     ...(withMusic ? [aLibrary(SONGS, 'music')] : []),
+    ...(withBooks ? [aLibrary(BOOKS, 'books')] : []),
   ]);
+  cache.setQueryData(bookQueries.inLibrary(BOOKS).queryKey, [mockRedRising]);
   cache.setQueryData(profileQueries.watching().queryKey, null);
   cache.setQueryData(musicQueries.albums('recent').queryKey, withMusic ? [AN_ALBUM] : []);
 
@@ -323,6 +388,9 @@ beforeEach(() => {
   });
   mockMusic.leave.mockClear();
   mockMusic.pause.mockClear();
+  mockBook.close.mockClear();
+  mockBook.pause.mockClear();
+  mockHeard.now = null;
 });
 
 afterEach(() => {
@@ -386,6 +454,7 @@ describe('SignedIn', () => {
     expect(drawn.getByText(`Playing ${mockArrival.id} from 0`)).toBeTruthy();
     expect(drawn.queryByRole('button', { name: 'Open what is playing' })).toBeNull();
     expect(mockMusic.pause).toHaveBeenCalled();
+    expect(mockBook.pause).toHaveBeenCalled();
 
     await userEvent.press(drawn.getByRole('button', { name: 'Stop playing' }));
 
@@ -509,11 +578,51 @@ describe('SignedIn', () => {
     expect(drawn.getByText('Now playing')).toBeTruthy();
   });
 
-  it('stops the music as somebody leaves', async () => {
+  it('stops the music and the book as somebody leaves', async () => {
     const drawn = await drawSignedIn();
 
     await drawn.unmount();
 
     expect(mockMusic.leave).toHaveBeenCalled();
+    expect(mockBook.close).toHaveBeenCalled();
+  });
+
+  it('offers books only where there is an audiobook to listen to', async () => {
+    const without = await drawSignedIn(aCache());
+
+    expect(without.getByText('Bar')).toBeTruthy();
+
+    await without.unmount();
+
+    const drawn = await drawSignedIn(aCache({ withBooks: true }));
+
+    expect(drawn.getByText('Bar and books')).toBeTruthy();
+  });
+
+  it('opens a book’s page from the books part, then the player, going back with Menu', async () => {
+    const drawn = await drawSignedIn(aCache({ withBooks: true }));
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Go to Books' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Open Red Rising' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Listen' }));
+
+    expect(drawn.getByText('Listening')).toBeTruthy();
+
+    await act(() => {
+      pressMenu();
+    });
+
+    expect(drawn.getByText(`Book ${mockRedRising.id}`)).toBeTruthy();
+  });
+
+  it('opens the book playing from its chip, where a book is the one heard', async () => {
+    mockHeard.now = 'book';
+
+    const drawn = await drawSignedIn(aCache({ withBooks: true }));
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Open what is playing' }));
+
+    expect(drawn.getByText('Listening')).toBeTruthy();
+    expect(drawn.queryByText('Now playing')).toBeNull();
   });
 });

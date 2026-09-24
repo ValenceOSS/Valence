@@ -8,12 +8,14 @@ import { theTvsMusicPlayer } from '@ValenceTv/music/theTvsMusicAudio';
  * in the Control Centre, when the screen dims, when the song changes — and its own play, pause and
  * scrubbing reach the song. It is told once each time the song changes rather than as it plays,
  * and forgets it once nothing plays here, including while this television is only a remote for
- * another device, or once the app stops listening for it.
+ * another device, while a book is the one being heard, or once the app stops listening for it.
+ *
+ * @param isHeard - Whether the music, rather than a book, is the one being heard.
  */
-const useSystemNowPlaying = (): void => {
+const useSystemNowPlaying = (isHeard: boolean): void => {
   const { state } = useMusicPlayer(theMusicPlayer());
   const { current, remote } = state;
-  const isHere = remote === null;
+  const isHere = remote === null && isHeard;
 
   useEffect(() => {
     const system = theTvsMusicPlayer();

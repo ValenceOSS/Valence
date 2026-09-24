@@ -9,6 +9,7 @@ import { theTvsStore } from '@ValenceTv/platform/theTvsStore';
 import { thisTvsId } from '@ValenceTv/platform/thisTvsId';
 import { theServersOrigin } from '@ValenceTv/platform/theServersOrigin';
 import { theTvsMusicAudio } from '@ValenceTv/music/theTvsMusicAudio';
+import { theTvsListeningAudio } from '@ValenceTv/books/theTvsListeningAudio';
 
 /**
  * Tells the application it is running on a television, which is the first thing that has to happen.
@@ -36,6 +37,7 @@ const installTvPlatform = (): void => {
     notifyLocally: () => undefined,
     setUnreadBadge: () => undefined,
     musicAudio: theTvsMusicAudio,
+    listeningAudio: theTvsListeningAudio,
   });
 };
 
