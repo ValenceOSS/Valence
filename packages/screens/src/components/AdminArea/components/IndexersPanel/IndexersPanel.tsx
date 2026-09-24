@@ -79,11 +79,12 @@ const IndexersPanel = () => {
   const toTest = whichToTest(asked.data ?? []);
 
   const testAll = () => {
-    setTesting(new Set(toTest.map(({ id }) => id)));
     setIsTestingAll(true);
     setProblem(null);
 
     void mapWithLimit(toTest, TESTED_AT_ONCE, async (indexer) => {
+      setTesting((before) => new Set([...before, indexer.id]));
+
       const failure = await testAndSayWhy(indexer);
 
       setTesting((before) => new Set([...before].filter((one) => one !== indexer.id)));

@@ -301,6 +301,27 @@ describe('IndexersPanel', () => {
     expect(screen.queryByLabelText(/^Testing /)).not.toBeInTheDocument();
   });
 
+  it('shows a spinner only for the indexers being tested, not those waiting their turn', async () => {
+    fetchIndexers.mockResolvedValue(
+      ['a', 'b', 'c', 'd', 'e'].map((letter) =>
+        anIndexer({ id: letter, name: `Indexer ${letter}` }),
+      ),
+    );
+    testIndexer.mockImplementation(() => new Promise(() => undefined));
+
+    const user = userEvent.setup();
+
+    renderInAnAddress(<IndexersPanel />);
+
+    await screen.findByText('Indexer a');
+    await user.click(screen.getByRole('button', { name: /Test all/ }));
+
+    await waitFor(() => {
+      expect(screen.getAllByLabelText(/^Testing Indexer/)).toHaveLength(4);
+    });
+    expect(screen.queryByLabelText('Testing Indexer e')).not.toBeInTheDocument();
+  });
+
   it('has nothing to test where every indexer was switched off', async () => {
     fetchIndexers.mockResolvedValue([anIndexer({ isEnabled: false })]);
 
