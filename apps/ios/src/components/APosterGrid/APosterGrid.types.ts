@@ -7,6 +7,9 @@ type APosterGridProps<Item> = {
   drawn: (item: Item, width: number) => ReactNode;
   across?: number;
   onScrolled?: (isScrolled: boolean) => void;
+  onScrolledTo?: (y: number) => void;
+  onNearTheEnd?: () => void;
+  footer?: ReactNode;
   onBack?: () => void;
 };
 

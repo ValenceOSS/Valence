@@ -3,9 +3,11 @@ import type {
   CatalogueBrowseKind,
 } from '@ValenceContracts/schemas/CatalogueTitle';
 
-type DiscoveredProps = {
+type ACatalogueListProps = {
+  browsing: CatalogueBrowse;
+  title: string;
   onAsk: (kind: CatalogueBrowseKind, id: string) => void;
-  onSeeAll?: (browsing: CatalogueBrowse, title: string) => void;
+  onBack: () => void;
 };
 
-export type { DiscoveredProps };
+export type { ACatalogueListProps };
