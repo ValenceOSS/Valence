@@ -14,9 +14,10 @@ reference, not a substitute for reading it.
 
 1. **TypeScript and Rust only.** No JavaScript files, including config. The
    phone and TV clients are React Native under Expo, TypeScript like the rest.
-   The one carve-out is Swift inside an Apple-platform client's native modules,
-   `apps/<client>/modules/<module>/ios/`, wrapping a system control for
-   TypeScript to use — see the standard for its limits.
+   The carve-outs are Swift inside an Apple-platform client's native modules,
+   `apps/<client>/modules/<module>/ios/`, and Kotlin inside an Android client's,
+   `apps/<client>/modules/<module>/android/`, each wrapping a system control or
+   capability for TypeScript to use — see the standard for their limits.
 2. **No duplication across modules.** Needed twice means extracted and shared.
 3. **No `../` imports.** Use `@ValenceUI/*`, `@ValenceClient/*`, `@ValenceContracts/*`,
    `@ValenceCore/*`, `@ValenceSDK/*`.
