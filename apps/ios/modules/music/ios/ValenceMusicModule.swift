@@ -123,6 +123,7 @@ public class ValenceMusicModule: Module {
       queue: .main
     ) { [weak self] _ in
       self?.send("timeupdate")
+      self?.keepTheSession()
     }
 
     playerWatches = [
@@ -240,8 +241,32 @@ public class ValenceMusicModule: Module {
     }
   }
 
+  /// Takes the audio session back while music plays, where a video elsewhere in the app has since
+  /// set it to mix with other audio: an app that mixes is not the one the lock screen answers to, so
+  /// its skip buttons go grey.
+  private func keepTheSession() {
+    guard player.timeControlStatus != .paused else {
+      return
+    }
+
+    let session = AVAudioSession.sharedInstance()
+
+    guard session.categoryOptions.contains(.mixWithOthers) || session.routeSharingPolicy != .longFormAudio else {
+      return
+    }
+
+    try? session.setCategory(.playback, mode: .default, policy: .longFormAudio)
+    try? session.setActive(true)
+
+    let commands = MPRemoteCommandCenter.shared()
+
+    commands.nextTrackCommand.isEnabled = true
+    commands.previousTrackCommand.isEnabled = true
+  }
+
   /// Puts what is playing, and where it has got to, on the lock screen.
   private func tellTheLockScreen() {
+    keepTheSession()
     var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
     let duration = player.currentItem?.duration.seconds ?? .nan
     let at = player.currentTime().seconds
