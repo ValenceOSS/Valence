@@ -30,6 +30,8 @@ const ARRIVES_FROM = 1.06;
 
 const LEAVES_OVER = 700;
 
+const WORDS_LEAVE_OVER = 180;
+
 const ARRIVES_OVER = 1100;
 
 const RISES_BY = 14;
@@ -149,7 +151,7 @@ const AFeature = ({
         ...rising.map((part) =>
           Animated.timing(part, {
             toValue: 0,
-            duration: LEAVES_OVER,
+            duration: WORDS_LEAVE_OVER,
             easing: Easing.inOut(Easing.quad),
             useNativeDriver: true,
           }),
