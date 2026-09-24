@@ -6,7 +6,7 @@ import {
   RotateCw,
   Settings,
   X,
-} from '@keyline-icons/react-native';
+} from '@keyline-icons/react-native/fill';
 import { useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

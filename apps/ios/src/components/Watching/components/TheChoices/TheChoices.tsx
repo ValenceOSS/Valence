@@ -1,4 +1,4 @@
-import { Check, X } from '@keyline-icons/react-native';
+import { Check, X } from '@keyline-icons/react-native/fill';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValencePhone/components/Button/Button';
