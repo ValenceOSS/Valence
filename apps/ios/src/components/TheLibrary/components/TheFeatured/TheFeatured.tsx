@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Animated, Easing, StyleSheet, View, useWindowDimensions } from 'react-native';
-import type { ScrollView } from 'react-native';
+import type { NativeScrollEvent, NativeSyntheticEvent, ScrollView } from 'react-native';
 import { showIdOf } from '@ValenceClient/library/showIdOf';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
@@ -102,10 +102,16 @@ const TheFeaturedTitles = ({
   const across = width - (PEEK + GAP) * 2;
   const step = across + GAP;
   const [scrolled] = useState(() => new Animated.Value(0));
+  const [pointedAt, setPointedAt] = useState<number | null>(null);
   const followScrolling = useMemo(
     () =>
       Animated.event([{ nativeEvent: { contentOffset: { x: scrolled } } }], {
         useNativeDriver: true,
+        listener: ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>) => {
+          const { count: many, lead: before, step: apart } = latest.current;
+
+          setPointedAt(roundTo(Math.round(nativeEvent.contentOffset.x / apart) - before, many));
+        },
       }),
     [scrolled],
   );
@@ -299,7 +305,7 @@ const TheFeaturedTitles = ({
         })}
       </Animated.ScrollView>
 
-      <TheDots count={count} at={at} filled={filled} />
+      <TheDots count={count} at={pointedAt ?? at} filled={filled} />
     </View>
   );
 };
