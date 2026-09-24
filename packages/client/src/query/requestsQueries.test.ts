@@ -59,11 +59,11 @@ beforeEach(() => {
 });
 
 describe('requestsQueries', () => {
-  it('asks whether requesting is on, and keeps the answer', async () => {
+  it('asks whether requesting is on, and asks again once the answer is a few minutes old', async () => {
     await expect(aCache().fetchQuery(requestsQueries.availability())).resolves.toEqual({
       isEnabled: true,
     });
-    expect(requestsQueries.availability().staleTime).toBe(Infinity);
+    expect(requestsQueries.availability().staleTime).toBe(5 * 60 * 1000);
   });
 
   it('asks what the server last heard from the service', async () => {
