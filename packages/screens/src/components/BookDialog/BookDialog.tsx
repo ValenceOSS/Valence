@@ -1,4 +1,8 @@
+import { useMemo } from 'react';
+import { isAudiobookFormat } from '@ValenceContracts/schemas/Book';
 import { useQuery } from '@tanstack/react-query';
+import { chapterProgress } from '@ValenceClient/books/chapterProgress';
+import { ChapterList } from './components/ChapterList/ChapterList';
 import {
   BookOpen as BookOpenIcon,
   Headphones as HeadphonesIcon,
@@ -57,6 +61,7 @@ const kindOf = (book: Book): string =>
  * @param isKept - Whether this profile has kept it.
  * @param onClose - Told when it is dismissed.
  * @param onRead - Told to open the book in its reader.
+ * @param onReadChapter - Told to open the book at a chapter chosen from its list.
  * @param onListen - Told to start listening to the book, where it can be heard.
  * @param onToggleKept - Told to keep it, or stop.
  * @param onRate - Told what somebody gave it, or null to take their rating back.
@@ -67,6 +72,7 @@ const BookDialog = ({
   isKept,
   onClose,
   onRead,
+  onReadChapter,
   onListen,
   onToggleKept,
   onRate,
@@ -75,6 +81,15 @@ const BookDialog = ({
   const asked = useQuery({ ...bookQueries.one(bookId ?? ''), enabled: bookId !== null });
   const reading = useQuery({ ...bookQueries.reading(), enabled: bookId !== null });
   const book = asked.data?.book ?? null;
+  const progress = useQuery({ ...bookQueries.progress(bookId ?? ''), enabled: bookId !== null });
+  const readable = useMemo(
+    () => (asked.data?.chapters ?? []).filter((chapter) => !isAudiobookFormat(chapter.format)),
+    [asked.data],
+  );
+  const read = useMemo(
+    () => chapterProgress(readable, progress.data ?? []),
+    [readable, progress.data],
+  );
   const where = (reading.data ?? []).find((one) => one.book.id === bookId) ?? null;
   const isStarted = where !== null && !where.isFinished;
   const mayListen = onListen !== undefined && book?.hasAudio === true;
@@ -235,6 +250,22 @@ const BookDialog = ({
                 </div>
               )}
             </section>
+
+            {readable.length < 2 || onReadChapter === undefined ? null : (
+              <section className="flex flex-col gap-3">
+                <h3 className="text-sm font-medium uppercase tracking-[0.18em] text-text-muted">
+                  Chapters
+                </h3>
+
+                <ChapterList
+                  chapters={readable}
+                  read={read}
+                  onOpen={(chapterId) => {
+                    onReadChapter(book, chapterId);
+                  }}
+                />
+              </section>
+            )}
           </>
         )}
       </DialogContent>

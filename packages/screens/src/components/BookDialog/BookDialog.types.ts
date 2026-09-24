@@ -5,6 +5,7 @@ type BookDialogProps = {
   isKept: boolean;
   onClose: () => void;
   onRead: (book: Book) => void;
+  onReadChapter?: (book: Book, chapterId: string) => void;
   onListen?: (detail: BookDetail) => void;
   onToggleKept: (book: Book) => void;
   onRate: (book: Book, stars: number | null) => void;

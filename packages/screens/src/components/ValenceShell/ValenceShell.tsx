@@ -511,6 +511,13 @@ const ValenceShell = () => {
         onRead={(book) => {
           void navigate({ to: '/read/$bookId', params: { bookId: book.id } });
         }}
+        onReadChapter={(book, chapterId) => {
+          void navigate({
+            to: '/read/$bookId',
+            params: { bookId: book.id },
+            search: { chapter: chapterId },
+          });
+        }}
         onListen={(detail) => {
           go({ book: null });
           void startListening(detail, theAudiobookPlayer());
