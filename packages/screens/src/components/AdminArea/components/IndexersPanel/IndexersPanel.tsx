@@ -19,8 +19,9 @@ import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { DataTable } from '@ValenceUI/DataTable';
 import { Icon } from '@ValenceUI/Icon';
 import { Spinner } from '@ValenceUI/Spinner';
+import { mapWithLimit } from '@ValenceCore/functions/mapWithLimit';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
-import { changeIndexer, removeIndexer, testIndexer } from '@ValenceClient/requests/fetchIndexers';
+import { changeIndexer, removeIndexer } from '@ValenceClient/requests/fetchIndexers';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { IndexerDialog } from '@ValenceScreens/components/AdminArea/components/IndexerDialog/IndexerDialog';
 import { IndexerCatalogueDialog } from '@ValenceScreens/components/AdminArea/components/IndexerCatalogueDialog/IndexerCatalogueDialog';
@@ -28,6 +29,9 @@ import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import type { IndexerStart } from '@ValenceScreens/components/AdminArea/IndexerStart';
 import { describeIndexerSearches } from './describeIndexerSearches';
 import { describeIndexerState } from './describeIndexerState';
+import { describeTestRound } from './describeTestRound';
+import { testAndSayWhy } from './testAndSayWhy';
+import { whichToTest } from './whichToTest';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Indexer } from '@ValenceContracts/schemas/Indexer';
 
@@ -40,9 +44,14 @@ const KIND_LABELS: Readonly<Record<string, string>> = {
   private: 'Private site',
 };
 
+const TESTED_AT_ONCE = 4;
+
+const NONE_TESTING: ReadonlySet<string> = new Set();
+
 /**
  * Every indexer requesting searches: how each is doing, what it can be searched for, and the
  * things that can be done to it — changing it, testing it, switching it on or off, and removing it.
+ * Testing them all asks every one that is on, or that Valence turned off, a few at a time.
  *
  * Whatever the server said went wrong is shown above the table rather than swallowed, and the list
  * is read again after anything is done so what it shows is what the service now holds.
@@ -54,7 +63,8 @@ const IndexersPanel = () => {
   const [isChoosing, setIsChoosing] = useState(false);
   const [start, setStart] = useState<IndexerStart | null>(null);
   const [removing, setRemoving] = useState<Indexer | null>(null);
-  const [testingId, setTestingId] = useState<string | null>(null);
+  const [testing, setTesting] = useState<ReadonlySet<string>>(NONE_TESTING);
+  const [isTestingAll, setIsTestingAll] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
 
   const reread = useCallback(
@@ -66,25 +76,47 @@ const IndexersPanel = () => {
     [cache],
   );
 
+  const toTest = whichToTest(asked.data ?? []);
+
+  const testAll = () => {
+    setIsTestingAll(true);
+    setProblem(null);
+
+    void mapWithLimit(toTest, TESTED_AT_ONCE, async (indexer) => {
+      setTesting((before) => new Set([...before, indexer.id]));
+
+      const failure = await testAndSayWhy(indexer);
+
+      setTesting((before) => new Set([...before].filter((one) => one !== indexer.id)));
+
+      return { name: indexer.name, failure };
+    })
+      .then((outcomes) => {
+        const { done, failure } = describeTestRound(outcomes);
+
+        tellOutcome(done, failure);
+        setProblem(failure);
+      })
+      .then(reread)
+      .finally(() => {
+        setTesting(NONE_TESTING);
+        setIsTestingAll(false);
+      });
+  };
+
   const columns = useMemo<DataTableColumn<Indexer>[]>(() => {
     const test = (indexer: Indexer) => {
-      setTestingId(indexer.id);
+      setTesting(new Set([indexer.id]));
       setProblem(null);
 
-      void testIndexer(indexer.id)
-        .then(({ value, refusal }) => {
-          const failure =
-            refusal?.message ??
-            (value?.isWorking === false
-              ? `${indexer.name}: ${value.problem ?? 'did not answer'}`
-              : null);
-
+      void testAndSayWhy(indexer)
+        .then((failure) => {
           tellOutcome(`${indexer.name} answered.`, failure);
           setProblem(failure);
         })
         .then(reread)
         .finally(() => {
-          setTestingId(null);
+          setTesting(NONE_TESTING);
         });
     };
 
@@ -139,7 +171,7 @@ const IndexersPanel = () => {
         cell: ({ row }) => {
           const state = describeIndexerState(row.original);
 
-          return testingId === row.original.id ? (
+          return testing.has(row.original.id) ? (
             <Spinner size="sm" label={`Testing ${row.original.name}`} />
           ) : (
             <span className="flex min-w-0 flex-col items-start gap-1">
@@ -181,7 +213,7 @@ const IndexersPanel = () => {
                       label: 'Test',
                       detail: 'Asks it what it can search, and clears its failures if it answers.',
                       icon: <Icon of={PlugIcon} size={15} />,
-                      isDisabled: testingId !== null,
+                      isDisabled: testing.size > 0 || isTestingAll,
                       onChoose: () => {
                         test(row.original);
                       },
@@ -220,21 +252,32 @@ const IndexersPanel = () => {
         ),
       },
     ];
-  }, [reread, testingId]);
+  }, [isTestingAll, reread, testing]);
 
   return (
     <PanelCard
       title="Indexers"
       isFlush
       actions={
-        <PanelCardAction
-          icon={PlusIcon}
-          onClick={() => {
-            setIsChoosing(true);
-          }}
-        >
-          Add an indexer
-        </PanelCardAction>
+        <>
+          <PanelCardAction
+            icon={PlugIcon}
+            isLoading={isTestingAll}
+            isDisabled={toTest.length === 0 || testing.size > 0}
+            onClick={testAll}
+          >
+            Test all
+          </PanelCardAction>
+
+          <PanelCardAction
+            icon={PlusIcon}
+            onClick={() => {
+              setIsChoosing(true);
+            }}
+          >
+            Add an indexer
+          </PanelCardAction>
+        </>
       }
     >
       <IndexerCatalogueDialog
