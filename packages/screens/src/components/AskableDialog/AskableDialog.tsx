@@ -67,16 +67,14 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const [askedAlbums, setAskedAlbums] = useState<ReadonlySet<string>>(new Set());
   const [problem, setProblem] = useState<string | null>(null);
   const title = found.data ?? null;
-  const heldAs =
-    title !== null && title.standing.status === 'library' && title.standing.mediaId !== null
-      ? { kind: title.kind, mediaId: title.standing.mediaId }
-      : null;
+  const heldKind = title?.kind ?? null;
+  const heldId = title?.standing.status === 'library' ? title.standing.mediaId : null;
 
   useEffect(() => {
-    if (heldAs !== null) {
-      onOpen(heldAs.kind, heldAs.mediaId);
+    if (heldKind !== null && heldId !== null) {
+      onOpen(heldKind, heldId);
     }
-  }, [heldAs?.kind, heldAs?.mediaId, onOpen]);
+  }, [heldKind, heldId, onOpen]);
   const sample = useSample();
   const requestId = title?.standing.requestId ?? null;
   const requests = useQuery({ ...requestsQueries.mediaRequests(), enabled: requestId !== null });
@@ -136,7 +134,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   return (
     <Dialog
       label={title?.title ?? 'Something to ask for'}
-      isOpen={named !== null && heldAs === null && (title !== null || !found.isPending)}
+      isOpen={named !== null && heldId === null && (title !== null || !found.isPending)}
       onClose={onClose}
       size="stage"
     >

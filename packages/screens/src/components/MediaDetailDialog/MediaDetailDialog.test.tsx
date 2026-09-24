@@ -135,6 +135,22 @@ const openTheMenu = async (): Promise<void> => {
   }
 };
 
+/**
+ * Presses an action in the dialog's bar. The bar draws each action both whole and folded, leaving
+ * CSS to hide one, so the first drawn is the one pressed.
+ *
+ * @param label - What the action says.
+ */
+const pressAction = async (label: string): Promise<void> => {
+  const [shown] = await screen.findAllByText(label);
+
+  expect(shown).toBeDefined();
+
+  if (shown !== undefined) {
+    await userEvent.setup().click(shown);
+  }
+};
+
 describe('choosing where the preview is cut from', () => {
   it('offers it to somebody allowed to correct media', async () => {
     permissions.mayOverride = true;
@@ -771,10 +787,10 @@ describe('the extras a film carries', () => {
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={onPlay} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Watch the trailer')).toBeInTheDocument();
+      expect(screen.getAllByText('Watch the trailer')).not.toHaveLength(0);
     });
 
-    await userEvent.setup().click(screen.getByText('Watch the trailer'));
+    await pressAction('Watch the trailer');
 
     expect(onPlay).toHaveBeenCalledWith(expect.objectContaining({ id: 'extra-trailer' }), 0);
   });
@@ -785,7 +801,7 @@ describe('the extras a film carries', () => {
 
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={onPlay} />);
 
-    await userEvent.setup().click(await screen.findByText('Watch the trailer'));
+    await pressAction('Watch the trailer');
 
     expect(onPlay).not.toHaveBeenCalled();
     expect(screen.getByTitle(/the trailer/)).toHaveAttribute(
@@ -804,7 +820,7 @@ describe('the extras a film carries', () => {
 
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={onPlay} />);
 
-    await userEvent.setup().click(await screen.findByText('Watch the trailer'));
+    await pressAction('Watch the trailer');
 
     expect(onPlay).toHaveBeenCalledWith(expect.objectContaining({ id: 'extra-trailer' }), 0);
     expect(screen.queryByTitle(/the trailer/)).not.toBeInTheDocument();
@@ -911,7 +927,7 @@ describe('playing it on a television', () => {
       />,
     );
 
-    await userEvent.setup().click(await screen.findByText('Play on TV'));
+    await pressAction('Play on TV');
 
     expect(onPlayOn).toHaveBeenCalledWith(summary, 754);
   });
@@ -923,7 +939,7 @@ describe('playing it on a television', () => {
       <MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} onPlayOn={onPlayOn} />,
     );
 
-    await userEvent.setup().click(await screen.findByText('Play on TV'));
+    await pressAction('Play on TV');
 
     expect(onPlayOn).toHaveBeenCalledWith(summary, 0);
   });
