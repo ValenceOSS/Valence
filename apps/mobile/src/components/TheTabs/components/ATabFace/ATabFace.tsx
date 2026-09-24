@@ -19,11 +19,21 @@ const styles = StyleSheet.create({
     width: SIDE,
   },
   initial: { color: '#ffffff', fontFamily: FONTS.sans.bold, fontSize: 12 },
-  ring: { borderRadius: SIDE / 2 + RING * 2, borderWidth: RING, padding: RING },
+  ring: {
+    borderRadius: SIDE / 2 + RING * 2,
+    borderWidth: RING,
+    bottom: -RING * 2,
+    left: -RING * 2,
+    position: 'absolute',
+    right: -RING * 2,
+    top: -RING * 2,
+  },
+  whole: { height: SIDE, width: SIDE },
 });
 
 /**
- * The viewer's face in place of a tab's icon, ringed while that tab is showing.
+ * The viewer's face in place of a tab's icon, ringed while that tab is showing. It takes the same
+ * room as an icon, the ring drawn around it rather than beside it, so its label lines up with theirs.
  *
  * @param face - Their picture, or the initial and colour to draw instead.
  * @param isShowing - Whether the tab is the one showing.
@@ -33,7 +43,11 @@ const ATabFace = ({ face, isShowing }: ATabFaceProps) => {
   const [isMissing, setIsMissing] = useState(false);
 
   return (
-    <View style={[styles.ring, { borderColor: isShowing ? colours.accent : 'transparent' }]}>
+    <View style={styles.whole}>
+      <View
+        style={[styles.ring, { borderColor: isShowing ? colours.accent : 'transparent' }]}
+        pointerEvents="none"
+      />
       <View style={[styles.face, { backgroundColor: face.backdrop }]}>
         {face.picture === null || isMissing ? (
           <Text style={styles.initial}>{face.initial}</Text>

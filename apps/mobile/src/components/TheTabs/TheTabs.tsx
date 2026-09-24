@@ -17,7 +17,7 @@ const ABOVE_THE_BAR = 8;
 const styles = StyleSheet.create({
   above: { left: 12, position: 'absolute', right: 12 },
   bar: { borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', paddingTop: 8 },
-  beforeTheBar: { paddingBottom: ABOVE_THE_BAR, paddingHorizontal: 12 },
+  beforeTheBar: { paddingHorizontal: 12 },
   system: { bottom: 0, left: 0, position: 'absolute', right: 0 },
   tab: { alignItems: 'center', gap: 3, paddingVertical: 2 },
   leftOut: { opacity: 0 },
@@ -30,7 +30,8 @@ const styles = StyleSheet.create({
  * Where the phone has liquid glass the tabs are the system's own bar, floating over the screen with
  * the lens that can be held and slid between them, and the screen runs on underneath with room at
  * its foot to scroll clear. Anywhere older they are a bar of our own beneath it. Anything kept above
- * the tabs is given room the same way, so the screen scrolls clear of that too.
+ * the tabs is given room the same way, so the screen scrolls clear of that too, and is only spaced
+ * off the tabs while it shows anything.
  *
  * @param tabs - The parts there are.
  * @param value - Which one is showing.
@@ -99,12 +100,22 @@ const TheTabs = ({
   }
 
   return (
-    <View style={styles.whole}>
+    <View style={[styles.whole, { backgroundColor: colours.surface }]}>
       <SafeAreaInsetsContext.Provider value={{ ...room, bottom: 0 }}>
         <View style={styles.whole}>{children}</View>
       </SafeAreaInsetsContext.Provider>
 
-      {above === undefined ? null : <View style={styles.beforeTheBar}>{above}</View>}
+      {above === undefined ? null : (
+        <View style={[styles.beforeTheBar, { paddingBottom: aboveHigh > 0 ? ABOVE_THE_BAR : 0 }]}>
+          <View
+            onLayout={(event) => {
+              setAboveHigh(event.nativeEvent.layout.height);
+            }}
+          >
+            {above}
+          </View>
+        </View>
+      )}
 
       <View
         style={[
