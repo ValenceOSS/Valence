@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useEvent, useEventListener } from 'expo';
 import { Animated, Easing, Image, StyleSheet, View } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
@@ -8,7 +8,7 @@ import { onThisServer } from '@ValencePhone/platform/onThisServer';
 import { theCookiesThisPhoneHolds } from '@ValencePhone/platform/theCookiesThisPhoneHolds';
 import { useIsOnTop } from '@ValencePhone/hooks/useIsOnTop';
 import { useIsOnMobileData } from '@ValencePhone/components/APreview/useIsOnMobileData';
-import type { VideoSource } from 'expo-video';
+import type { VideoPlayer, VideoSource } from 'expo-video';
 import type { APreviewProps } from './APreview.types';
 
 const SETTLE_FOR = 2500;
@@ -98,6 +98,15 @@ const APreview = ({
   });
   const moving = useEvent(player, 'playingChange', { isPlaying: player.playing });
   const isPlaying = clip !== null && moving.isPlaying;
+  const livePlayer = useRef<VideoPlayer | null>(null);
+
+  useEffect(() => {
+    livePlayer.current = player;
+
+    return () => {
+      livePlayer.current = null;
+    };
+  }, [player]);
 
   useEffect(() => {
     if (!isOnTop) {
@@ -121,7 +130,7 @@ const APreview = ({
       easing: Easing.inOut(Easing.quad),
       useNativeDriver: true,
     }).start(({ finished }) => {
-      if (finished && !isShowing) {
+      if (finished && !isShowing && livePlayer.current === player) {
         player.pause();
       }
     });
