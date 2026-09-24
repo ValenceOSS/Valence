@@ -276,7 +276,7 @@ The steps below run `docker compose up -d` with the profiles in `COMPOSE_PROFILE
 
 The requests service runs as the user and group in `PUID` and `PGID`, and that user may not write to the library folder named in the message. The request waits at **Filing** and is filed once this is put right.
 
-1. Find who owns your media folders: `ls -ln /path/to/media` shows the owner's user and group ids.
+1. Find who owns your media folder: `ls -ldn /path/to/media` shows its owner's user and group ids.
 2. Set `PUID` and `PGID` to those ids, or to `0` to run as root, and run `docker compose up -d`.
 3. Folders the service filed into as root before this belong to root. Hand them over with `sudo chown -R 1000:1000 /path/to/media`, using your own ids.
 
