@@ -3,6 +3,7 @@ import {
   CreateFolderRequestSchema,
   FolderListingSchema,
   FolderSchema,
+  FolderSearchSchema,
 } from '@ValenceContracts/schemas/Folder';
 
 const FolderError = z.object({ error: z.string() }).openapi('FolderError');
@@ -30,6 +31,31 @@ const listFoldersRoute = createRoute({
     },
     404: {
       description: 'No such folder',
+      content: { 'application/json': { schema: FolderError } },
+    },
+  },
+});
+
+const searchFoldersRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/folders/search',
+  tags: ['Admin'],
+  summary:
+    'Find folders on the server by name, a few levels below a folder, to choose where a library lives',
+  request: {
+    query: z.object({ words: z.string().min(1).max(255), within: z.string().optional() }),
+  },
+  responses: {
+    200: {
+      description: 'The folders whose names hold the words, nearest first',
+      content: { 'application/json': { schema: FolderSearchSchema.openapi('FolderSearch') } },
+    },
+    400: {
+      description: 'A folder to look below that does not start from the root',
+      content: { 'application/json': { schema: FolderError } },
+    },
+    403: {
+      description: 'Not somebody who may add a library',
       content: { 'application/json': { schema: FolderError } },
     },
   },
@@ -72,4 +98,4 @@ const createFolderRoute = createRoute({
   },
 });
 
-export { createFolderRoute, listFoldersRoute };
+export { createFolderRoute, listFoldersRoute, searchFoldersRoute };

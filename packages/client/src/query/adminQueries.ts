@@ -17,6 +17,7 @@ import { fetchLogs } from '@ValenceClient/admin/fetchLogs';
 import { fetchAccounts } from '@ValenceClient/admin/fetchAccounts';
 import { fetchAccountSessions } from '@ValenceClient/admin/fetchAccountSessions';
 import { fetchFolders } from '@ValenceClient/admin/fetchFolders';
+import { searchFolders } from '@ValenceClient/admin/searchFolders';
 import { fetchResourceHistory } from '@ValenceClient/admin/fetchResourceHistory';
 import {
   fetchRoles,
@@ -386,6 +387,21 @@ const folders = (path: string | null) =>
   });
 
 /**
+ * The folders whose names hold some words, below one on the machine running Valence. Not retried,
+ * for the reason the listing is not: a search that found nothing has answered.
+ *
+ * @param words - What the names should hold.
+ * @param within - The folder to look below, or nothing for the places to start from.
+ * @returns The query.
+ */
+const folderSearch = (words: string, within: string | null) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'folders', within, 'search', words],
+    queryFn: () => searchFolders(words, within),
+    retry: false,
+  });
+
+/**
  * Everywhere one account is signed in, for the admin dialog's Devices tab.
  *
  * @param accountId - The account being looked at, or null where none is open.
@@ -451,6 +467,7 @@ const adminQueries = {
   exceptionsOn,
   libraryAccess,
   folders,
+  folderSearch,
   overview,
   scans,
   monitor,
