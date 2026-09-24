@@ -1,5 +1,6 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
+  Bin as BinIcon,
   Film as FilmIcon,
   MoreHorizontal as MoreHorizontalIcon,
   RefreshCw as RefreshCwIcon,
@@ -40,7 +41,9 @@ const isSeries = (item: MediaSummary): boolean =>
 /**
  * Everything the libraries hold, searchable, with the corrections an administrator can make to any
  * of it: saying what a mismatched file really is, choosing the moment its hover preview is cut
- * from, and rebuilding the previews and thumbnails made from it.
+ * from, rebuilding the previews and thumbnails made from it, and — for whoever may — deleting it
+ * outright, which is asked twice since it cannot be undone. A series stands in the list as one row,
+ * so deleting it deletes every episode rather than whichever one happened to stand for it.
  *
  * @param isUnreachable - Whether the service is not answering.
  * @param media - Everything the libraries hold.
@@ -49,6 +52,8 @@ const isSeries = (item: MediaSummary): boolean =>
  * @param onRebuildArtefacts - Called with the item whose previews and thumbnails are to be remade,
  *   answering whether the request was accepted.
  * @param onReencode - Called with the item to be re-encoded, where re-encoding is offered at all.
+ * @param onDelete - Called with the item to be deleted — the whole series, for an episode — where
+ *   deleting is offered at all, answering whether it went.
  */
 const MediaPanel = ({
   isUnreachable = false,
@@ -57,11 +62,14 @@ const MediaPanel = ({
   onChooseMoment,
   onRebuildArtefacts,
   onReencode,
+  onDelete,
 }: MediaPanelProps) => {
   const [search, setSearch] = useState('');
   const [rebuilding, setRebuilding] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<MediaSummary | null>(null);
   const [rebuilt, setRebuilt] = useState<ReadonlySet<string>>(new Set());
+  const [condemned, setCondemned] = useState<MediaSummary | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const rebuild = useCallback(
     async (item: MediaSummary) => {
@@ -206,13 +214,32 @@ const MediaPanel = ({
                         ]),
                   ],
                 },
+                ...(onDelete === undefined
+                  ? []
+                  : [
+                      {
+                        items: [
+                          {
+                            id: 'delete',
+                            label: isSeries(row.original)
+                              ? 'Delete series\u2026'
+                              : 'Delete file\u2026',
+                            icon: <Icon of={BinIcon} size={15} />,
+                            isDestructive: true,
+                            onChoose: () => {
+                              setCondemned(row.original);
+                            },
+                          },
+                        ],
+                      },
+                    ]),
               ]}
             />
           </span>
         ),
       },
     ],
-    [ask, rebuilt, onCorrect, onReencode, onChooseMoment, rebuilding],
+    [ask, rebuilt, onCorrect, onReencode, onChooseMoment, onDelete, rebuilding],
   );
 
   return (
@@ -267,6 +294,42 @@ const MediaPanel = ({
           });
         }}
       />
+      {onDelete === undefined ? null : (
+        <ConfirmDialog
+          isOpen={condemned !== null}
+          title={
+            condemned !== null && isSeries(condemned)
+              ? `Delete every episode of ${nameOf(condemned)}?`
+              : `Delete ${condemned === null ? 'this file' : nameOf(condemned)}?`
+          }
+          detail={
+            condemned !== null && isSeries(condemned)
+              ? 'Every episode’s file is deleted from the disk, along with the subtitles and artwork kept beside each, and Valence forgets the series. This cannot be undone.'
+              : 'The file is deleted from the disk, along with the subtitles and artwork kept beside it for it, and Valence forgets it. This cannot be undone.'
+          }
+          confirmLabel={condemned !== null && isSeries(condemned) ? 'Delete series' : 'Delete file'}
+          isDestructive
+          isBusy={isDeleting}
+          onClose={() => {
+            setCondemned(null);
+          }}
+          onConfirm={() => {
+            if (condemned === null) {
+              return;
+            }
+
+            setIsDeleting(true);
+
+            void onDelete(condemned).then((isGone) => {
+              setIsDeleting(false);
+
+              if (isGone) {
+                setCondemned(null);
+              }
+            });
+          }}
+        />
+      )}
     </PanelCard>
   );
 };

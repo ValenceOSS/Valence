@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createApp } from '@ValenceServer/App';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { signedInApp } from '@ValenceServer/auth/signUpForTest';
@@ -15,6 +15,8 @@ import { MediaSummarySchema } from '@ValenceContracts/schemas/Library';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { MediaDetail } from '@ValenceContracts/schemas/Library';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
+
+const ErrorSchema = z.object({ error: z.string() });
 
 const BASE = 'http://localhost:8420';
 const LIBRARY_ID = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
@@ -65,7 +67,11 @@ const episodeOf = ({
     },
   });
 
-const build = (media: MediaDetail[] = [], isAdministrator = true) => {
+const build = (
+  media: MediaDetail[] = [],
+  isAdministrator = true,
+  series: { id: string; title: string }[] = [],
+) => {
   const { auth, settings, store } = createMemoryAuth();
   const library = createMemoryLibraryService({
     libraries: [
@@ -84,6 +90,7 @@ const build = (media: MediaDetail[] = [], isAdministrator = true) => {
       },
     ],
     media,
+    series,
   });
 
   const permissions = createMemoryPermissionService();
@@ -830,6 +837,103 @@ describe('rebuilding one item’s artefacts', () => {
     );
 
     expect(response.status).toBe(404);
+  });
+});
+
+describe('deleting one item', () => {
+  it('deletes it, and it is gone from the library afterwards', async () => {
+    const { app } = build([detail()]);
+
+    const response = await app.request(`${BASE}/api/media/${MEDIA_ID}`, { method: 'DELETE' });
+
+    expect(response.status).toBe(204);
+    expect((await app.request(`${BASE}/api/media/${MEDIA_ID}`)).status).toBe(404);
+  });
+
+  it('lets nobody delete who may not delete media', async () => {
+    const { app, library } = build([detail()], false);
+    const deleteMedia = vi.spyOn(library, 'deleteMedia');
+
+    const response = await app.request(`${BASE}/api/media/${MEDIA_ID}`, { method: 'DELETE' });
+
+    expect(response.status).toBe(404);
+    expect(deleteMedia).not.toHaveBeenCalled();
+  });
+
+  it('answers 404 for an item that does not exist', async () => {
+    const { app } = build([detail()]);
+
+    const response = await app.request(`${BASE}/api/media/${crypto.randomUUID()}`, {
+      method: 'DELETE',
+    });
+
+    expect(response.status).toBe(404);
+  });
+
+  it.each([
+    ['readOnly', 403, 'That disk is read-only to Valence.'],
+    ['denied', 403, 'Valence is not allowed to delete files there.'],
+    ['outside', 403, 'That file is not inside its library, so Valence will not delete it.'],
+    ['failed', 500, 'The file could not be deleted.'],
+  ] as const)('says why where the disk answered %s', async (kind, status, said) => {
+    const { app, library } = build([detail()]);
+
+    vi.spyOn(library, 'deleteMedia').mockResolvedValue({ kind });
+
+    const response = await app.request(`${BASE}/api/media/${MEDIA_ID}`, { method: 'DELETE' });
+
+    expect(response.status).toBe(status);
+    expect(ErrorSchema.parse(await response.json()).error).toContain(said);
+  });
+});
+
+describe('deleting a whole series', () => {
+  const SERIES_ID = '5b1c8f4e-2d6a-4c3b-9e7f-1a2b3c4d5e6f';
+  const SERIES = [{ id: SERIES_ID, title: 'A Sign of Affection' }];
+
+  it('deletes every episode, and says how many files went', async () => {
+    const { app } = build(
+      [episodeOf(), episodeOf({ id: crypto.randomUUID(), episodeNumber: 2 })],
+      true,
+      SERIES,
+    );
+
+    const response = await app.request(`${BASE}/api/series/${SERIES_ID}`, { method: 'DELETE' });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ files: 2 });
+    expect((await app.request(`${BASE}/api/media/${MEDIA_ID}`)).status).toBe(404);
+  });
+
+  it('lets nobody delete one who may not delete media', async () => {
+    const { app, library } = build([episodeOf()], false, SERIES);
+    const deleteSeries = vi.spyOn(library, 'deleteSeries');
+
+    const response = await app.request(`${BASE}/api/series/${SERIES_ID}`, { method: 'DELETE' });
+
+    expect(response.status).toBe(404);
+    expect(deleteSeries).not.toHaveBeenCalled();
+  });
+
+  it('answers 404 for a series that does not exist', async () => {
+    const { app } = build([episodeOf()], true, SERIES);
+
+    const response = await app.request(`${BASE}/api/series/${crypto.randomUUID()}`, {
+      method: 'DELETE',
+    });
+
+    expect(response.status).toBe(404);
+  });
+
+  it('says why where the disk would not give its files up', async () => {
+    const { app, library } = build([episodeOf()], true, SERIES);
+
+    vi.spyOn(library, 'deleteSeries').mockResolvedValue({ kind: 'readOnly' });
+
+    const response = await app.request(`${BASE}/api/series/${SERIES_ID}`, { method: 'DELETE' });
+
+    expect(response.status).toBe(403);
+    expect(ErrorSchema.parse(await response.json()).error).toContain('read-only');
   });
 });
 

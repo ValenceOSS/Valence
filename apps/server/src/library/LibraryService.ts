@@ -9,6 +9,12 @@ import type { ComingUp, ShowDetail, ShowSummary } from '@ValenceContracts/schema
 import type { Person } from '@ValenceContracts/schemas/Person';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
+import type { MediaFileDeletion } from '@ValenceServer/library/deleteMediaFile';
+
+type MediaDeletion = MediaFileDeletion | { kind: 'absent' };
+
+type SeriesDeletion =
+  { kind: 'deleted'; files: number } | Exclude<MediaDeletion, { kind: 'deleted' }>;
 
 type ListItemsOptions = {
   search?: string;
@@ -118,6 +124,8 @@ type LibraryService = ShowService & {
   ) => Promise<{ jobId: string; state: string } | null>;
   reset: (libraryId: string) => Promise<{ jobId: string; state: string } | null>;
   remove: (libraryId: string) => Promise<boolean>;
+  deleteMedia: (mediaId: string) => Promise<MediaDeletion>;
+  deleteSeries: (seriesId: string) => Promise<SeriesDeletion>;
   correctMatch: (
     mediaId: string,
     reference: { externalId: string; externalKind: 'tv' | 'movie' },
@@ -160,6 +168,8 @@ export type {
   CreateLibraryInput,
   LibraryService,
   ListItemsOptions,
+  MediaDeletion,
+  SeriesDeletion,
   PreviewMomentOutcome,
   UpdateLibraryInput,
 };

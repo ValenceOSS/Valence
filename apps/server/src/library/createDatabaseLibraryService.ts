@@ -18,6 +18,7 @@ import {
   or,
   sql,
 } from 'drizzle-orm';
+import type { SQL } from 'drizzle-orm';
 import {
   ageCeiling,
   ageException,
@@ -66,6 +67,8 @@ import { nextEpisodeOf } from '@ValenceServer/library/nextEpisodeOf';
 import { regeneratePreviews } from './regeneratePreviews';
 import { generateTrickplay } from './generateTrickplay';
 import { rebuildItemArtefacts } from './rebuildItemArtefacts';
+import { deleteMediaFile } from '@ValenceServer/library/deleteMediaFile';
+import type { MediaFileDeletion } from '@ValenceServer/library/deleteMediaFile';
 import { clearLibraryParts } from './clearLibraryParts';
 import { createClearableLibrary } from './createClearableLibrary';
 import { readsAgainAfterClearing } from '@ValenceCore/functions/readsAgainAfterClearing';
@@ -97,7 +100,12 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import { librariesVisibleToViewer } from '@ValenceServer/visibility/librariesVisibleToViewer';
 import { reachableByViewer } from '@ValenceServer/visibility/reachableByViewer';
 import { visibleToViewer } from '@ValenceServer/visibility/visibleToViewer';
-import type { AgeExceptionEntry, LibraryService, ListItemsOptions } from './LibraryService';
+import type {
+  AgeExceptionEntry,
+  LibraryService,
+  ListItemsOptions,
+  SeriesDeletion,
+} from './LibraryService';
 import {
   SCAN_LIBRARY_JOB,
   READ_AGAIN_JOB,
@@ -589,6 +597,72 @@ const createDatabaseLibraryService = ({
     const rows = await db.select().from(library).where(eq(library.id, id)).limit(1);
 
     return rows[0] ?? null;
+  };
+
+  /**
+   * Deletes the files of the items that match, one library at a time, and forgets each as a scan
+   * would on finding it gone: the rows go, a series left with nothing goes with them, whoever
+   * listens hears they departed, and the cache is swept of what was made from them.
+   *
+   * Stops at the first file the disk will not give up, having forgotten the ones already deleted,
+   * so the catalogue never holds a row for a file that is no longer there.
+   *
+   * @param which - The items whose files go.
+   * @returns How many went, or why they stopped.
+   */
+  const deleteFilesWhere = async (which: SQL): Promise<SeriesDeletion> => {
+    const items = await db
+      .select({ path: mediaItem.path, libraryId: mediaItem.libraryId })
+      .from(mediaItem)
+      .where(which);
+
+    if (items.length === 0) {
+      return { kind: 'absent' };
+    }
+
+    let files = 0;
+
+    for (const libraryId of new Set(items.map((item) => item.libraryId))) {
+      const found = await findLibrary(libraryId);
+
+      if (found === null) {
+        continue;
+      }
+
+      const deletedPaths: string[] = [];
+      let refusal: Exclude<MediaFileDeletion, { kind: 'deleted' }> | null = null;
+
+      for (const item of items.filter((one) => one.libraryId === libraryId)) {
+        const deleted = await deleteMediaFile(found.path, item.path);
+
+        if (deleted.kind !== 'deleted') {
+          refusal = deleted;
+          break;
+        }
+
+        deletedPaths.push(item.path);
+      }
+
+      const gone = await store.removeByPaths(found.id, deletedPaths);
+
+      await store.forgetEmptySeries?.(found.id);
+
+      if (gone.length > 0) {
+        onDeparted?.(found.id, gone);
+      }
+
+      files += deletedPaths.length;
+
+      if (refusal !== null) {
+        await jobs.enqueue(CLEANUP_ARTEFACT_CACHE_JOB, {}, CLEANUP_ARTEFACT_CACHE_JOB);
+
+        return refusal;
+      }
+    }
+
+    await jobs.enqueue(CLEANUP_ARTEFACT_CACHE_JOB, {}, CLEANUP_ARTEFACT_CACHE_JOB);
+
+    return { kind: 'deleted', files };
   };
 
   /**
@@ -1710,6 +1784,14 @@ const createDatabaseLibraryService = ({
 
       return true;
     },
+
+    deleteMedia: async (mediaId) => {
+      const deleted = await deleteFilesWhere(eq(mediaItem.id, mediaId));
+
+      return deleted.kind === 'deleted' ? { kind: 'deleted' } : deleted;
+    },
+
+    deleteSeries: (seriesId) => deleteFilesWhere(eq(mediaItem.seriesId, seriesId)),
 
     regeneratePreviews: async (libraryId) => {
       const found = await findLibrary(libraryId);

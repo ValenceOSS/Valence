@@ -85,13 +85,20 @@ import {
   correctMatchRoute,
   forgetCorrectionRoute,
   rebuildArtefactsRoute,
+  deleteMediaRoute,
+  deleteSeriesRoute,
   setPreviewMomentRoute,
   clearPreviewMomentRoute,
   resetLibraryRoute,
   deleteLibraryRoute,
   regeneratePreviewsRoute,
 } from './routes/LibraryRoute';
-import { createFolderRoute, listFoldersRoute } from '@ValenceServer/routes/FolderRoute';
+import {
+  createFolderRoute,
+  listFoldersRoute,
+  searchFoldersRoute,
+} from '@ValenceServer/routes/FolderRoute';
+import { searchFolders } from '@ValenceServer/folders/searchFolders';
 import { createFolder } from '@ValenceServer/folders/createFolder';
 import {
   cancelUploadRoute,
@@ -1095,6 +1102,19 @@ const createApp = ({
     return context.json(created, 201);
   });
 
+  app.openapi(searchFoldersRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'library.create'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    const { words, within } = context.req.valid('query');
+    const found = await searchFolders(folderDisk, words, within);
+
+    return found.kind === 'found'
+      ? context.json(found.search, 200)
+      : context.json({ error: 'Give the whole path, starting from the root.' }, 400);
+  });
+
   app.openapi(listFoldersRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'library.create'))) {
       return context.json({ error: 'That is for administrators.' }, 403);
@@ -1660,6 +1680,72 @@ const createApp = ({
     return rebuilt === null
       ? context.json({ error: 'No such item.' }, 404)
       : context.json(rebuilt, 200);
+  });
+
+  /**
+   * What to say where the disk would not give up a file, and with which status.
+   *
+   * @param refusal - Why it would not.
+   * @returns The words and the status.
+   */
+  const sayWhyNotDeleted = (refusal: { kind: 'outside' | 'readOnly' | 'denied' | 'failed' }) => {
+    switch (refusal.kind) {
+      case 'outside':
+        return {
+          error: 'That file is not inside its library, so Valence will not delete it.',
+          status: 403,
+        } as const;
+      case 'readOnly':
+        return {
+          error:
+            'That disk is read-only to Valence. Give it read-write access to delete media there.',
+          status: 403,
+        } as const;
+      case 'denied':
+        return { error: 'Valence is not allowed to delete files there.', status: 403 } as const;
+      case 'failed':
+        return { error: 'The file could not be deleted.', status: 500 } as const;
+    }
+  };
+
+  app.openapi(deleteMediaRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.delete'))) {
+      return context.json({ error: 'That is for administrators.' }, 404);
+    }
+
+    const deleted = await library.deleteMedia(context.req.valid('param').id);
+
+    if (deleted.kind === 'deleted') {
+      return context.body(null, 204);
+    }
+
+    if (deleted.kind === 'absent') {
+      return context.json({ error: 'No such item.' }, 404);
+    }
+
+    const said = sayWhyNotDeleted(deleted);
+
+    return context.json({ error: said.error }, said.status);
+  });
+
+  app.openapi(deleteSeriesRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.delete'))) {
+      return context.json({ error: 'That is for administrators.' }, 404);
+    }
+
+    const deleted = await library.deleteSeries(context.req.valid('param').seriesId);
+
+    if (deleted.kind === 'deleted') {
+      return context.json({ files: deleted.files }, 200);
+    }
+
+    if (deleted.kind === 'absent') {
+      return context.json({ error: 'No such series.' }, 404);
+    }
+
+    const said = sayWhyNotDeleted(deleted);
+
+    return context.json({ error: said.error }, said.status);
   });
 
   app.openapi(setPreviewMomentRoute, async (context) => {
