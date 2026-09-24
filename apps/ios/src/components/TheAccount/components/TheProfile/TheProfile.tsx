@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
-import { launchImageLibraryAsync } from 'expo-image-picker';
+import {
+  UIImagePickerPreferredAssetRepresentationMode,
+  launchImageLibraryAsync,
+} from 'expo-image-picker';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
-import { saveProfile, uploadProfilePhoto } from '@ValenceClient/profiles/fetchProfiles';
+import { saveProfile } from '@ValenceClient/profiles/fetchProfiles';
 import { STILL_WATCHING_CHOICES } from '@ValenceClient/profiles/STILL_WATCHING_CHOICES';
 import { AVATAR_STYLES, PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
 import { STILL_WATCHING_OFF } from '@ValenceContracts/schemas/StillWatching';
@@ -17,6 +20,7 @@ import { Button } from '@ValencePhone/components/Button/Button';
 import { SegmentedRow } from '@ValencePhone/components/SegmentedRow/SegmentedRow';
 import { TextField } from '@ValencePhone/components/TextField/TextField';
 import { Words } from '@ValencePhone/components/Words/Words';
+import { sendAPhoto } from '@ValencePhone/platform/sendAPhoto';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { Avatar, ProfileColour } from '@ValenceContracts/schemas/ViewerProfile';
 
@@ -57,7 +61,7 @@ const TheProfile = () => {
   const [colour, setColour] = useState<ProfileColour | null>(null);
   const [avatar, setAvatar] = useState<Avatar | null>(null);
   const [askAfter, setAskAfter] = useState<number | null>(null);
-  const [picked, setPicked] = useState<{ uri: string; type: string } | null>(null);
+  const [picked, setPicked] = useState<{ uri: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [refusal, setRefusal] = useState<string | null>(null);
 
@@ -88,6 +92,7 @@ const TheProfile = () => {
       mediaTypes: ['images'],
       allowsEditing: true,
       quality: 0.85,
+      preferredAssetRepresentationMode: UIImagePickerPreferredAssetRepresentationMode.Compatible,
     });
     const asset = chosen.assets?.[0];
 
@@ -95,7 +100,7 @@ const TheProfile = () => {
       return;
     }
 
-    setPicked({ uri: asset.uri, type: asset.mimeType ?? 'image/jpeg' });
+    setPicked({ uri: asset.uri });
     setAvatar({ kind: 'photo', isVideo: false });
   };
 
@@ -103,18 +108,23 @@ const TheProfile = () => {
     setIsSaving(true);
     setRefusal(null);
 
-    const sent =
-      picked === null ||
-      (await uploadProfilePhoto(profile.id, await (await fetch(picked.uri)).blob(), picked.type));
-    const saved =
-      sent &&
-      (await saveProfile(
-        profile.id,
-        draft.name.trim() === '' ? profile.name : draft.name.trim(),
-        draft.colour,
-        draft.avatar,
-        draft.askStillWatchingAfter,
-      ));
+    const turnedDown =
+      picked === null ? null : await sendAPhoto(`/api/profiles/${profile.id}/photo`, picked.uri);
+
+    if (turnedDown !== null) {
+      setIsSaving(false);
+      setRefusal(turnedDown);
+
+      return;
+    }
+
+    const saved = await saveProfile(
+      profile.id,
+      draft.name.trim() === '' ? profile.name : draft.name.trim(),
+      draft.colour,
+      draft.avatar,
+      draft.askStillWatchingAfter,
+    );
 
     setIsSaving(false);
 
