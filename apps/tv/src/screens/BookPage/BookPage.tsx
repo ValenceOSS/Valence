@@ -28,12 +28,15 @@ import type { BookPageProps } from './BookPage.types';
 
 const COLUMN = 900;
 
-const COVER = { width: 440, height: 660 };
+const COVER = { width: 400, height: 600 };
+
+const CLEAR_OF_THE_CHIP = 150;
 
 /**
  * An audiobook's own page: its title and who wrote it, how long it lasts and how many chapters it
  * has, what it is about, and its cover beside them — with a way to listen, or to carry on from where
- * this profile left off, or to start again. Listening opens the player over the page.
+ * this profile left off, or to start again. Listening opens the player over the page. The spread
+ * sits low enough to clear what is playing in the corner.
  *
  * @param bookId - The book.
  * @param onListen - Told once the book has started, to show the player.
@@ -138,7 +141,12 @@ BookPage.displayName = 'BookPage';
 
 const styles = StyleSheet.create({
   page: { flex: 1 },
-  inside: { flexGrow: 1, justifyContent: 'center', paddingVertical: tokens.space.xl },
+  inside: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingTop: CLEAR_OF_THE_CHIP,
+    paddingBottom: tokens.space.xl,
+  },
   waiting: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   problem: { color: tokens.colours.muted, fontSize: tokens.type.body },
   spread: {

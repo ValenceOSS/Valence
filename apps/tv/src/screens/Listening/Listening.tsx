@@ -25,6 +25,7 @@ import { ChoicePanel } from '@ValenceTv/components/ChoicePanel/ChoicePanel';
 import { CoverGlow } from '@ValenceTv/components/CoverGlow/CoverGlow';
 import { FocusFence } from '@ValenceTv/components/FocusFence/FocusFence';
 import { Scrubber } from '@ValenceTv/components/Scrubber/Scrubber';
+import { useHandOff } from '@ValenceTv/navigation/useHandOff';
 import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { AudiobookPlayerState } from '@ValenceClient/books/createAudiobookPlayer';
@@ -120,7 +121,8 @@ const TITLES: Record<ListeningPanel, string> = {
  * plays, a sleep timer and every chapter to go straight to.
  *
  * Menu closes whichever panel is open, and otherwise goes back to wherever this was opened from, the
- * book carrying on, as does the Back button at the top left.
+ * book carrying on, as does the Back button at the top left, which pressing up from the bar reaches
+ * though it sits away to the left.
  *
  * @param onEmpty - Told when no book is open any more, to close the screen.
  * @param onBack - Told when the button at the top left is pressed, to go back as Menu does.
@@ -129,6 +131,8 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
   const { state, player } = useAudiobookPlayer(theAudiobookPlayer(), { followsPosition: true });
   const [panel, setPanel] = useState<ListeningPanel | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const [backButton, setBackButton] = useState<View | null>(null);
+  const upToBack = useHandOff('up', backButton);
   const { book, sleep } = state;
 
   useEffect(() => {
@@ -190,11 +194,13 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
       <FocusFence isShut={panel !== null} style={styles.stage}>
         <View style={styles.back}>
           <Button
+            ref={setBackButton}
             label="Back"
             icon={ChevronLeft}
             variant="overlay"
             size="md"
             isPill
+            onFocus={upToBack.leave}
             onPress={onBack}
           />
         </View>
@@ -226,6 +232,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
             </View>
 
             <Scrubber
+              onFocus={upToBack.arrive}
               position={state.bookPositionSeconds - chapterStart}
               duration={chapterLength}
               onSeek={(seconds) => {
@@ -239,6 +246,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
 
             <View style={styles.transport}>
               <Button
+                onFocus={upToBack.leave}
                 label="Chapter before"
                 icon={SkipBack}
                 variant="ghost"
@@ -249,6 +257,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
                 }}
               />
               <Button
+                onFocus={upToBack.leave}
                 label={`Back ${LISTENING_CHOICES.backSeconds.toString()} seconds`}
                 icon={Rewind}
                 variant="ghost"
@@ -259,6 +268,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
                 }}
               />
               <Button
+                onFocus={upToBack.leave}
                 label={state.isPlaying ? 'Pause' : 'Play'}
                 icon={state.isPlaying ? Pause : Play}
                 variant="ghost"
@@ -269,6 +279,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
                 onPress={player.toggle}
               />
               <Button
+                onFocus={upToBack.leave}
                 label={`On ${LISTENING_CHOICES.forwardSeconds.toString()} seconds`}
                 icon={FastForward}
                 variant="ghost"
@@ -279,6 +290,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
                 }}
               />
               <Button
+                onFocus={upToBack.leave}
                 label="Next chapter"
                 icon={SkipForward}
                 variant="ghost"
@@ -292,6 +304,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
 
             <View style={styles.extras}>
               <Button
+                onFocus={upToBack.leave}
                 label={speedLabel(state.speed)}
                 icon={state.speed === 1 ? Gauge : GaugeFilled}
                 variant={state.speed === 1 ? 'ghost' : 'soft'}
@@ -301,6 +314,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
                 }}
               />
               <Button
+                onFocus={upToBack.leave}
                 label={sleeping ?? 'Sleep timer'}
                 icon={sleeping === null ? Moon : MoonFilled}
                 variant={sleeping === null ? 'ghost' : 'soft'}
@@ -310,6 +324,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
                 }}
               />
               <Button
+                onFocus={upToBack.leave}
                 label="Chapters"
                 icon={List}
                 variant="ghost"
