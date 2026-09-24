@@ -70,29 +70,30 @@ describe('untilLetGo', () => {
 
     expect(untilLetGo(empty, vi.fn())).toBe(empty);
   });
-});
 
-describe('untilLetGo', () => {
-  it('gives up on the server when the page stops reading', async () => {
-    const letGo = vi.fn();
-    const answer = untilLetGo(new Response(new ReadableStream()), letGo);
+  it('keeps the length of a slice, so a video element never takes it for a live stream', () => {
+    const answer = untilLetGo(
+      new Response('a film', {
+        status: 206,
+        headers: { 'content-length': '6', 'content-range': 'bytes 0-5/8293883774' },
+      }),
+      vi.fn(),
+    );
 
-    await answer.body?.cancel();
-
-    expect(letGo).toHaveBeenCalledOnce();
+    expect(answer.headers.get('content-length')).toBe('6');
+    expect(answer.headers.get('content-range')).toBe('bytes 0-5/8293883774');
   });
 
-  it('passes on everything the server sent', async () => {
-    const answer = untilLetGo(new Response('a film', { status: 206 }), vi.fn());
+  it('drops the length of an answer that was unpacked on the way, since it is the packed size', () => {
+    const answer = untilLetGo(
+      new Response('{"a":1}', {
+        headers: { 'content-encoding': 'gzip', 'content-length': '3' },
+      }),
+      vi.fn(),
+    );
 
-    expect(answer.status).toBe(206);
-    await expect(answer.text()).resolves.toBe('a film');
-  });
-
-  it('hands an answer with no body back as it came', () => {
-    const empty = new Response(null, { status: 204 });
-
-    expect(untilLetGo(empty, vi.fn())).toBe(empty);
+    expect(answer.headers.has('content-encoding')).toBe(false);
+    expect(answer.headers.has('content-length')).toBe(false);
   });
 });
 
