@@ -1,4 +1,5 @@
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
+import { inTime } from '@ValenceRequests/solver/inTime';
 import { solveRequest } from '@ValenceRequests/solver/solveRequest';
 import type { SiteRequest } from '@ValenceRequests/cardigann/SiteRequest';
 import type { SiteAgent } from '@ValenceRequests/solver/createSiteAgent';
@@ -30,37 +31,6 @@ const A_FORM = 'application/x-www-form-urlencoded';
 const THE_BROWSERS_OWN = new Set(['cookie', 'host', 'referer', 'user-agent']);
 
 /**
- * Gives up on a task that runs past its time, and says so to whatever it was using.
- *
- * @param task - The task.
- * @param ms - How long it has.
- * @param onLate - Called when its time runs out, to stop it where it stands.
- * @returns What it gave, if it gave it in time.
- */
-const inTime = async <T>(task: Promise<T>, ms: number, onLate: () => void): Promise<T> => {
-  let handle: NodeJS.Timeout | undefined;
-
-  try {
-    return await Promise.race([
-      task,
-      new Promise<never>((_, reject) => {
-        handle = setTimeout(() => {
-          onLate();
-          reject(
-            new IndexerFailure(
-              `Timed out after ${Math.round(ms / 1000).toString()} seconds getting past the site’s browser check`,
-              'CloudflareCheckFailed',
-            ),
-          );
-        }, ms);
-      }),
-    ]);
-  } finally {
-    clearTimeout(handle);
-  }
-};
-
-/**
  * Fetches a page past its site's browser check, in a browser of the service's own. Each site has an
  * agent for each session asking of it, so one indexer's requests share what the check left behind
  * for it, and never another indexer's login.
@@ -69,7 +39,7 @@ const inTime = async <T>(task: Promise<T>, ms: number, onLate: () => void): Prom
  * since a request claiming to be another browser is exactly what the check looks for.
  *
  * A request that runs out of time has its tab closed, so that a tab stuck at the check never holds
- * up the ones after it.
+ * up the ones after it, and one whose tab only came once its time had gone does nothing with it.
  *
  * @param pool - The agents, one to a site.
  * @param timeoutMs - How long a request may take, check and all.
@@ -81,6 +51,12 @@ const createSolver = <A extends Agent>({
   timeoutMs = 60_000,
   now = Date.now,
 }: CreateSolverOptions<A>) => {
+  const timedOut = (): IndexerFailure =>
+    new IndexerFailure(
+      `Timed out after ${Math.round(timeoutMs / 1000).toString()} seconds getting past the site’s browser check`,
+      'CloudflareCheckFailed',
+    );
+
   const fetch = (
     request: SiteRequest,
     cookies: Record<string, string>,
@@ -96,6 +72,10 @@ const createSolver = <A extends Agent>({
     return inTime(
       pool.use(`${hostname} ${session}`, (agent) =>
         agent.withPage(async (page) => {
+          if (now() >= deadline) {
+            throw timedOut();
+          }
+
           using = page;
           await agent.addCookies(
             Object.entries(cookies).map(([name, value]) => ({ name, value })),
@@ -129,8 +109,11 @@ const createSolver = <A extends Agent>({
         }),
       ),
       timeoutMs,
-      () => {
-        void using?.close().catch(() => {});
+      {
+        failure: timedOut,
+        onLate: () => {
+          void using?.close().catch(() => {});
+        },
       },
     );
   };

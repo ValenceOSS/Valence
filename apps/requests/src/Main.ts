@@ -17,6 +17,7 @@ import { createSiteClient } from '@ValenceRequests/cardigann/createSiteClient';
 import { createBrowserKeeper } from '@ValenceRequests/solver/createBrowserKeeper';
 import { createGate } from '@ValenceRequests/solver/createGate';
 import { createSiteAgent } from '@ValenceRequests/solver/createSiteAgent';
+import { openInTurn } from '@ValenceRequests/solver/openInTurn';
 import { createSitePool } from '@ValenceRequests/solver/createSitePool';
 import { createSolver } from '@ValenceRequests/solver/createSolver';
 import { createDatabaseDefinitionStore } from '@ValenceRequests/definitions/createDatabaseDefinitionStore';
@@ -129,7 +130,7 @@ const opening = createGate(1);
 const sites = createSitePool({
   open: async () =>
     createSiteAgent(
-      await opening.run(async () => (await browser.get()).newContext()),
+      await openInTurn(opening, async () => (await browser.get()).newContext()),
       PAGES_PER_SITE,
       opening,
     ),

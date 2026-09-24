@@ -126,6 +126,16 @@ describe('createSolver', () => {
     await failing;
   });
 
+  it('does nothing with a tab that only came once its time had gone', async () => {
+    const page = aSitePage();
+    const { pool } = aSolver(page);
+    const times = [0, 70_000];
+    const solver = createSolver({ pool, now: () => times.shift() ?? 70_000 });
+
+    await expect(solver.fetch(A_GET, {}, 'one')).rejects.toThrow('Timed out');
+    expect(page.visit).not.toHaveBeenCalled();
+  });
+
   it('closes the tab of a request that runs past its time, so it holds nothing up', async () => {
     const page = aSitePage();
 

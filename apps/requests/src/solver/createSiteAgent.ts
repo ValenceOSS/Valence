@@ -1,4 +1,5 @@
 import { createGate } from '@ValenceRequests/solver/createGate';
+import { openInTurn } from '@ValenceRequests/solver/openInTurn';
 import type { Gate } from '@ValenceRequests/solver/createGate';
 import { toSitePage } from '@ValenceRequests/solver/toSitePage';
 import type { PageLike, SitePage } from '@ValenceRequests/solver/toSitePage';
@@ -51,7 +52,7 @@ const createSiteAgent = <P extends PageLike>(
   const withPage = <T>(task: (page: SitePage) => Promise<T>): Promise<T> =>
     gate.run(async () => {
       const kept = idle.splice(0).filter((one) => !one.isClosed());
-      const page = kept.pop() ?? toSitePage(await opening.run(() => context.newPage()));
+      const page = kept.pop() ?? toSitePage(await openInTurn(opening, () => context.newPage()));
 
       idle.push(...kept);
 
