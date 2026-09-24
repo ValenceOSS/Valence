@@ -129,7 +129,7 @@ const ATextReader = ({
   const [anchors, setAnchors] = useState<ReadonlyMap<string, number>>(new Map());
   const [isShowingChrome, setIsShowingChrome] = useState(true);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [settings, setSettings] = useState(readTextPreferences);
+  const [settings, setSettings] = useState(() => readTextPreferences(book.id));
   const [sliding] = useState(() => new Animated.Value(0));
   const scrolling = useRef<ScrollView>(null);
   const colours = READING_PAGES[settings.page];
@@ -320,7 +320,7 @@ const ATextReader = ({
   const choose = (change: Partial<TextPreferences>) => {
     const chosen = { ...settings, ...change };
 
-    writeTextPreferences(chosen);
+    writeTextPreferences(chosen, book.id);
     setSettings(chosen);
     setLanding({ within: (page * step) / written });
   };

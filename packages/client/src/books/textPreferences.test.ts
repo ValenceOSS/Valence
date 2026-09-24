@@ -69,4 +69,14 @@ describe('textPreferences', () => {
 
     expect(readTextPreferences().size).toBe('medium');
   });
+
+  it('keeps each book its own, and starts a new one from however the last was left', () => {
+    const night = { ...readTextPreferences(), size: 'larger' as const, page: 'sepia' as const };
+
+    writeTextPreferences(night, 'novel');
+    writeTextPreferences({ ...night, size: 'small' }, 'poems');
+
+    expect(readTextPreferences('novel')).toEqual(night);
+    expect(readTextPreferences('new-book')).toEqual({ ...night, size: 'small' });
+  });
 });

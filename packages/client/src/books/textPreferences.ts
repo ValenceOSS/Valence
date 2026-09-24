@@ -35,10 +35,17 @@ const DEFAULTS: TextPreferences = {
  * can spoil the other, and for the same reason as those: it is a property of the screen. Anything
  * unreadable in what was kept falls back to the default for that one setting rather than all four.
  *
+ * Each book keeps its own, so the one read on a phone at night in large sepia type does not change
+ * the next; a book opened for the first time starts from however the last one was left.
+ *
+ * @param bookId - The book being read, where there is one.
  * @returns How to set text, saved or defaulted.
  */
-const readTextPreferences = (): TextPreferences => {
-  const held = platformInUse().store.read(STORAGE_KEY);
+const readTextPreferences = (bookId?: string): TextPreferences => {
+  const store = platformInUse().store;
+  const held =
+    (bookId === undefined ? null : store.read(`${STORAGE_KEY}.${bookId}`)) ??
+    store.read(STORAGE_KEY);
 
   try {
     const read = TextPreferencesSchema.safeParse(held === null ? {} : JSON.parse(held));
@@ -50,12 +57,19 @@ const readTextPreferences = (): TextPreferences => {
 };
 
 /**
- * Remembers how somebody likes text set.
+ * Remembers how somebody likes text set, for this book and as where the next new one starts.
  *
  * @param preferences - How they left it.
+ * @param bookId - The book being read, where there is one.
  */
-const writeTextPreferences = (preferences: TextPreferences): void => {
-  platformInUse().store.write(STORAGE_KEY, JSON.stringify(preferences));
+const writeTextPreferences = (preferences: TextPreferences, bookId?: string): void => {
+  const store = platformInUse().store;
+
+  store.write(STORAGE_KEY, JSON.stringify(preferences));
+
+  if (bookId !== undefined) {
+    store.write(`${STORAGE_KEY}.${bookId}`, JSON.stringify(preferences));
+  }
 };
 
 export type { TextPreferences };
