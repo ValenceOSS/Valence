@@ -10,6 +10,12 @@ name: Desktop app
 # It builds; it does not publish. release.yml takes what it produced and hangs it on the release, so
 # the one place that writes to a release stays the one that already does.
 #
+# What it hands over is more than the installers. The desktop app updates itself with
+# electron-updater, which finds a new version by reading latest.yml, latest-mac.yml or
+# latest-linux.yml off the release, downloads the file named there, and uses the .blockmap beside
+# it to fetch only what changed. On macOS what it installs is the .zip rather than the .dmg. Without
+# those, a release looks like no release at all to every copy already installed.
+#
 # Windows, macOS and Linux. None of them is signed or notarised: there are no certificates, so
 # Windows SmartScreen and macOS Gatekeeper will warn on first run until there are.
 
@@ -55,15 +61,25 @@ jobs:
           - name: Windows
             runner: windows-latest
             flags: --win --x64
-            files: apps/desktop/release/Valence-Setup-*.exe
+            files: |
+              apps/desktop/release/Valence-Setup-*.exe
+              apps/desktop/release/Valence-Setup-*.exe.blockmap
+              apps/desktop/release/latest.yml
           - name: macOS
             runner: macos-latest
             flags: --mac --arm64 --x64
-            files: apps/desktop/release/Valence-*.dmg
+            files: |
+              apps/desktop/release/Valence-*.dmg
+              apps/desktop/release/Valence-*.dmg.blockmap
+              apps/desktop/release/Valence-*-mac.zip
+              apps/desktop/release/Valence-*-mac.zip.blockmap
+              apps/desktop/release/latest-mac.yml
           - name: Linux
             runner: ubuntu-latest
             flags: --linux --x64
-            files: apps/desktop/release/Valence-*.AppImage
+            files: |
+              apps/desktop/release/Valence-*.AppImage
+              apps/desktop/release/latest-linux.yml
     steps:
       # The tag unless told otherwise. A release cut before the packaging was written cannot build
       # its own desktop app, and `ref` is how one is built from source that can, still stamped with
