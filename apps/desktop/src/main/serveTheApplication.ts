@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { app, net, protocol } from 'electron';
 import { theServerAddress } from '@ValenceDesktop/main/theServerAddress';
 import { aHeldFile } from '@ValenceDesktop/main/aHeldFile';
+import { stitchTheRest } from '@ValenceDesktop/main/stitchTheRest';
 import type { ServerReach } from '@ValenceDesktop/main/theServerReach';
 
 const SCHEME = 'valence';
@@ -102,8 +103,8 @@ const worthCarrying = (from: Headers): Record<string, string> => {
  * In a browser that ends the download. Here the download belongs to this process, which is not told
  * the page has moved on, so it carries on fetching a whole film nobody is reading — and a server
  * that speaks HTTP/1.1 gives each client six connections, so six of those leave nothing for anything
- * else. Asked for a slice, the server answers with a slice, the connection comes free, and the video
- * element asks for the next one when it wants it, which it already knows how to do.
+ * else. Asked for a slice, the server answers with a slice and the connection comes free; the page
+ * is still answered with the whole rest of the file, stitched from slices by `stitchTheRest`.
  *
  * @param range - The range the page asked for, if any.
  * @returns The range to ask the server for.
@@ -123,6 +124,11 @@ const aSliceOf = (range: string | undefined): string | undefined => {
 /**
  * Hands an answer on in a body that, when given up on, gives up on the server as well.
  *
+ * Its length goes with it unless the body was unpacked on the way. Electron's fetch undoes gzip and
+ * the like, so a packed answer's length is the packed size and would cut the page short; anything
+ * else keeps it, because a video element told nothing about length takes a slice of a film for a
+ * live stream, plays to the end of the slice, and stops there as if the film had ended.
+ *
  * @param answer - What the server said.
  * @param letGo - What to do when the page stops reading.
  * @returns The answer to give the page.
@@ -135,8 +141,10 @@ const untilLetGo = (answer: Response, letGo: () => void): Response => {
   const reader = answer.body.getReader();
   const headers = new Headers(answer.headers);
 
-  headers.delete('content-encoding');
-  headers.delete('content-length');
+  if (headers.has('content-encoding')) {
+    headers.delete('content-encoding');
+    headers.delete('content-length');
+  }
 
   const body = new ReadableStream<Uint8Array>({
     pull: async (controller) => {
@@ -313,9 +321,26 @@ const serveTheApplication = (reach: ServerReach, heldFolder: string): void => {
 
         reach.noteReached();
 
-        return untilLetGo(answer, () => {
+        const letGo = (): void => {
           upstream.abort();
-        });
+        };
+        const stitched = OPEN_ENDED.test(request.headers.get('range') ?? '')
+          ? stitchTheRest(
+              answer,
+              (start) =>
+                net.fetch(onward.toString(), {
+                  signal: upstream.signal,
+                  headers: {
+                    ...askingAs(request.headers, onward.origin),
+                    range: `bytes=${start.toString()}-${(start + SLICE_BYTES - 1).toString()}`,
+                  },
+                  credentials: 'include',
+                }),
+              letGo,
+            )
+          : null;
+
+        return stitched ?? untilLetGo(answer, letGo);
       } catch {
         if (upstream.signal.aborted) {
           return said(499, 'The page stopped waiting.');
