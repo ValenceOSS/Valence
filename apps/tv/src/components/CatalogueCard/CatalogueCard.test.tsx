@@ -1,4 +1,8 @@
-import { fireEvent, render, userEvent } from '@testing-library/react-native';
+import { fireEvent, render as drawIt, userEvent } from '@testing-library/react-native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { viewingQueries } from '@ValenceClient/query/viewingQueries';
+import type { ReactElement } from 'react';
+import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 import { CatalogueCard } from '@ValenceTv/components/CatalogueCard/CatalogueCard';
 import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 
@@ -28,6 +32,21 @@ const HAD: CatalogueTitle = {
   standing: { status: 'library', mediaId: 'media-1', requestId: null, requestState: null },
 };
 
+/**
+ * Draws with a cache holding what this viewer has watched.
+ *
+ * @param element - What to draw.
+ * @param progress - What has been watched.
+ * @returns What was drawn.
+ */
+const render = (element: ReactElement, progress: WatchProgress[] = []) => {
+  const cache = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity } } });
+
+  cache.setQueryData(viewingQueries.progress().queryKey, progress);
+
+  return drawIt(<QueryClientProvider client={cache}>{element}</QueryClientProvider>);
+};
+
 describe('CatalogueCard', () => {
   it('opens the title it shows', async () => {
     const onPress = jest.fn();
@@ -45,11 +64,27 @@ describe('CatalogueCard', () => {
     expect(drawn.getByText('Waiting for approval')).toBeTruthy();
   });
 
-  it('writes nothing under one the library already has', async () => {
+  it('says one the library already has is in it, in words, with no tick until it is watched', async () => {
     const drawn = await render(<CatalogueCard title={HAD} onPress={jest.fn()} />);
 
     expect(drawn.getByRole('button', { name: 'Dune, In your library' })).toBeTruthy();
-    expect(drawn.queryByText('In your library')).toBeNull();
+    expect(drawn.getByText('In your library')).toBeTruthy();
+    expect(drawn.queryByLabelText('Watched')).toBeNull();
+  });
+
+  it('ticks one this viewer has watched', async () => {
+    const drawn = await render(<CatalogueCard title={HAD} onPress={jest.fn()} />, [
+      {
+        mediaId: 'media-1',
+        positionSeconds: 60,
+        durationSeconds: 60,
+        isFinished: true,
+        updatedAt: '2026-09-24T00:00:00.000Z',
+      },
+    ]);
+
+    expect(drawn.getByRole('button', { name: 'Dune, In your library, watched' })).toBeTruthy();
+    expect(drawn.getByLabelText('Watched')).toBeTruthy();
   });
 
   it('names the title beneath its poster only while the remote is on it', async () => {

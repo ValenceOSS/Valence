@@ -3,13 +3,17 @@ import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { titleLogoUrl } from '@ValenceClient/library/titleLogoUrl';
 import { TitleLogo } from '@ValenceScreens/components/TitleLogo/TitleLogo';
 import {
+  CircleCheck as CircleCheckIcon,
   Download as DownloadIcon,
   Info as InfoIcon,
   Link as LinkIcon,
   Tape as TapeIcon,
   X as XIcon,
 } from '@keyline-icons/react';
-import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
+import {
+  CircleCheck as CircleCheckFilledIcon,
+  Play as PlayFilledIcon,
+} from '@keyline-icons/react/fill';
 import { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
@@ -45,6 +49,7 @@ import { MissingRow } from './components/MissingRow/MissingRow';
 import { ChooseEpisodes } from './components/ChooseEpisodes/ChooseEpisodes';
 import { laySeasonsOut } from '@ValenceClient/library/laySeasonsOut';
 import { describeAirDate } from '@ValenceCore/functions/describeAirDate';
+import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ShowDialogProps } from './ShowDialog.types';
 
 /**
@@ -59,6 +64,8 @@ import type { ShowDialogProps } from './ShowDialog.types';
  * @param watchedFractionFor - How far through each episode this viewer is.
  * @param resumeFor - Where they left each episode.
  * @param isFinished - Whether they have finished each episode.
+ * @param onMarkWatched - Told to mark episodes watched, or unwatched again, one at a time or a
+ *   season at once.
  * @param onRate - Told what they gave it, or null to take the rating back. Offered only for a
  *   programme the scanner resolved to a series of its own, since a rating is keyed on that.
  */
@@ -71,6 +78,7 @@ const ShowDialog = ({
   watchedFractionFor,
   resumeFor,
   isFinished,
+  onMarkWatched,
   onRate,
 }: ShowDialogProps) => {
   const [unlettered, setUnlettered] = useState<string | null>(null);
@@ -155,6 +163,9 @@ const ShowDialog = ({
   };
   const { showing } = laidOut;
   const inOrder = laidOut.rows;
+  const shownEpisodes = inOrder.flatMap(({ episode }) => (episode === null ? [] : [episode]));
+  const isSeasonWatched =
+    shownEpisodes.length > 0 && shownEpisodes.every((episode) => isFinished?.(episode.id) === true);
 
   const heldEpisodes = seasons.flatMap((one) => one.episodes);
 
@@ -288,9 +299,33 @@ const ShowDialog = ({
                 Episodes
               </h3>
 
-              {chooseFrom.length < 2 ? null : (
-                <SeasonPicker seasons={chooseFrom} value={showing} onChange={setChosenSeason} />
-              )}
+              <span className="flex flex-wrap items-center gap-2">
+                {onMarkWatched === undefined || shownEpisodes.length === 0 ? null : (
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    onClick={() => {
+                      onMarkWatched(shownEpisodes, !isSeasonWatched);
+                    }}
+                  >
+                    <Icon
+                      of={isSeasonWatched ? CircleCheckFilledIcon : CircleCheckIcon}
+                      size={14}
+                    />
+                    {isSeasonWatched
+                      ? chooseFrom.length < 2
+                        ? 'Mark all unwatched'
+                        : 'Mark season unwatched'
+                      : chooseFrom.length < 2
+                        ? 'Mark all watched'
+                        : 'Mark season watched'}
+                  </Button>
+                )}
+
+                {chooseFrom.length < 2 ? null : (
+                  <SeasonPicker seasons={chooseFrom} value={showing} onChange={setChosenSeason} />
+                )}
+              </span>
             </header>
 
             {show !== null && asked.isError ? (
@@ -326,6 +361,13 @@ const ShowDialog = ({
                         onPlay={onPlay}
                         {...(airs === '' ? {} : { airs })}
                         {...(onInspect === undefined ? {} : { onInspect })}
+                        {...(onMarkWatched === undefined
+                          ? {}
+                          : {
+                              onMarkWatched: (one: MediaSummary, isWatched: boolean) => {
+                                onMarkWatched([one], isWatched);
+                              },
+                            })}
                         {...(watchedFractionFor?.(episode.id) === undefined
                           ? {}
                           : { watchedFraction: watchedFractionFor(episode.id) ?? 0 })}

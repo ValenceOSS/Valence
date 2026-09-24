@@ -1,7 +1,14 @@
 import { Icon } from '@ValenceUI/Icon';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
-import { Info as InfoIcon, Check as CheckIcon } from '@keyline-icons/react';
-import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
+import {
+  Info as InfoIcon,
+  Check as CheckIcon,
+  CircleCheck as CircleCheckIcon,
+} from '@keyline-icons/react';
+import {
+  CircleCheck as CircleCheckFilledIcon,
+  Play as PlayFilledIcon,
+} from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import type { EpisodeRowProps } from './EpisodeRow.types';
@@ -13,6 +20,7 @@ import type { EpisodeRowProps } from './EpisodeRow.types';
  * @param episode - The episode to draw.
  * @param onPlay - Told to start it, and where from.
  * @param onInspect - Told to open the page about it.
+ * @param onMarkWatched - Told to mark it watched, or unwatched again where it already is.
  * @param watchedFraction - How far through it this viewer is.
  * @param resumeSeconds - Where they left it.
  * @param airs - When it aired, in words, where the catalogue dates it.
@@ -21,6 +29,7 @@ const EpisodeRow = ({
   episode,
   onPlay,
   onInspect,
+  onMarkWatched,
   watchedFraction,
   resumeSeconds,
   airs,
@@ -86,6 +95,28 @@ const EpisodeRow = ({
         </span>
       </span>
     </Button>
+
+    {onMarkWatched === undefined ? null : (
+      <Button
+        isIconOnly
+        variant="ghost"
+        size="sm"
+        label={
+          (watchedFraction ?? 0) >= 1
+            ? `Mark ${episode.title} as unwatched`
+            : `Mark ${episode.title} as watched`
+        }
+        isActive={(watchedFraction ?? 0) >= 1}
+        onClick={() => {
+          onMarkWatched(episode, (watchedFraction ?? 0) < 1);
+        }}
+      >
+        <Icon
+          of={(watchedFraction ?? 0) >= 1 ? CircleCheckFilledIcon : CircleCheckIcon}
+          size={18}
+        />
+      </Button>
+    )}
 
     {onInspect === undefined ? null : (
       <Button

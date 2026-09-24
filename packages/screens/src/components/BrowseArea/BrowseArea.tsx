@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { Spinner } from '@ValenceUI/Spinner';
 import { revealVariants, revealTransition, staggerVariants } from '@ValenceUI/animations/reveal';
@@ -15,6 +16,7 @@ import { Button } from '@ValenceUI/Button';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { howToFillIt } from '@ValenceClient/library/howToFillIt';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { unwatchedByShow } from '@ValenceClient/library/unwatchedByShow';
 import { collapseToShows } from '@ValenceClient/library/pickFeatured';
 import { MediaGrid } from '@ValenceScreens/components/MediaGrid/MediaGrid';
 import { GridSizeChooser } from '@ValenceScreens/components/GridSizeChooser/GridSizeChooser';
@@ -76,6 +78,8 @@ const PAGES: Record<
  * @param onInspect - Told to open the page about something.
  * @param onItemsLoaded - Told what it drew, so an address naming an item can be resolved.
  * @param watchedFractionFor - How far through each item this viewer is.
+ * @param isFinished - Whether this viewer has watched an item to the end, for how many episodes of
+ *   each programme are left.
  * @param resumeFor - Where they left each item.
  * @param favourites - What they have kept, for the page that lists them.
  * @param isKept - Whether each item is kept.
@@ -92,6 +96,7 @@ const BrowseArea = ({
   onInspect,
   onItemsLoaded,
   watchedFractionFor,
+  isFinished,
   resumeFor,
   favourites = [],
   keptBooks = [],
@@ -150,6 +155,13 @@ const BrowseArea = ({
   );
 
   const items = useMemo(() => collapseToShows(found.data ?? []), [found.data]);
+  const unwatched = useMemo(
+    () =>
+      kind === 'shows' && isFinished !== undefined
+        ? unwatchedByShow(found.data ?? [], isFinished)
+        : null,
+    [kind, found.data, isFinished],
+  );
 
   const bookIds = kind === 'favourites' ? keptBooks : [];
   const foundBooks = useQuery(bookQueries.find({ ids: bookIds }));
@@ -281,6 +293,12 @@ const BrowseArea = ({
                 onPlay={onPlay}
                 onInspect={onInspect}
                 {...(watchedFractionFor === undefined ? {} : { watchedFractionFor })}
+                {...(unwatched === null
+                  ? {}
+                  : {
+                      unwatchedFor: (media: MediaSummary) =>
+                        unwatched.get(media.seriesId ?? media.seriesTitle ?? ''),
+                    })}
                 {...(resumeFor === undefined ? {} : { resumeFor })}
                 {...(isKept === undefined ? {} : { isKept })}
                 {...(onToggleKept === undefined ? {} : { onToggleKept })}

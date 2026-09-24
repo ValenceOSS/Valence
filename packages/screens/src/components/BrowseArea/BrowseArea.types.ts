@@ -11,6 +11,7 @@ type BrowseAreaProps = {
   onOpenShow?: (media: MediaSummary) => void;
   onItemsLoaded?: (items: MediaSummary[]) => void;
   watchedFractionFor?: (mediaId: string) => number | undefined;
+  isFinished?: (mediaId: string) => boolean;
   resumeFor?: (mediaId: string) => number | null;
   favourites?: string[];
   keptBooks?: string[];

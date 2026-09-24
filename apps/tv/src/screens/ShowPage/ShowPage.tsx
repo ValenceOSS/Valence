@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
-import { RotateCcw } from '@keyline-icons/react-native';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { CircleCheck, RotateCcw } from '@keyline-icons/react-native';
 import { Play } from '@keyline-icons/react-native/fill';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
@@ -9,6 +9,8 @@ import { nameSeason } from '@ValenceClient/library/nameSeason';
 import { pickUpFrom } from '@ValenceClient/library/pickUpFrom';
 import { qualityBadges } from '@ValenceClient/library/qualityBadges';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
+import { markWatched } from '@ValenceClient/playback/markWatched';
+import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { ActionRow } from '@ValenceTv/components/ActionRow/ActionRow';
@@ -70,6 +72,7 @@ const ShowPage = ({ libraryId, showId, onPlay }: ShowPageProps) => {
   const show = asked.data ?? null;
   const cover = useQuery(libraryQueries.detail(show?.coverMediaId ?? null));
   const [chosen, setChosen] = useState<string | null>(null);
+  const cache = useQueryClient();
 
   if (show === null) {
     return (
@@ -106,6 +109,26 @@ const ShowPage = ({ libraryId, showId, onPlay }: ShowPageProps) => {
   const starring = (cover.data?.metadata.cast ?? []).slice(0, STARRING).map((one) => one.name);
   const genres = show.genres ?? [];
   const watched = carryingOn === null ? undefined : progress.get(carryingOn.episode.id);
+  const isSeasonWatched =
+    episodes.length > 0 && episodes.every((one) => progress.get(one.id)?.isFinished === true);
+
+  /**
+   * Marks episodes watched, or unwatched again, and reads progress and the shelves again so the
+   * cards and the count of what is left follow.
+   *
+   * @param which - The episodes.
+   * @param isWatched - Whether they are now watched.
+   */
+  const mark = (which: readonly MediaSummary[], isWatched: boolean) => {
+    void markWatched(which, isWatched)
+      .then(async () =>
+        Promise.all([
+          cache.invalidateQueries({ queryKey: viewingQueries.progress().queryKey }),
+          cache.invalidateQueries({ queryKey: libraryQueries.key }),
+        ]),
+      )
+      .catch(() => null);
+  };
 
   return (
     <TitleSpread
@@ -158,6 +181,9 @@ const ShowPage = ({ libraryId, showId, onPlay }: ShowPageProps) => {
                   onPress={(episode) => {
                     onPlay(episode, resumeFor(progress, episode.id) ?? 0);
                   }}
+                  onHold={(episode) => {
+                    mark([episode], progress.get(episode.id)?.isFinished !== true);
+                  }}
                   {...(seen === undefined ? {} : { watchedFraction: watchedFraction(seen) })}
                 />
               );
@@ -181,6 +207,24 @@ const ShowPage = ({ libraryId, showId, onPlay }: ShowPageProps) => {
           {...(carryingOn.isResuming && watched !== undefined
             ? { watchedFraction: watchedFraction(watched) }
             : {})}
+        />
+      )}
+
+      {episodes.length === 0 ? null : (
+        <ActionRow
+          label={
+            isSeasonWatched
+              ? seasons.length > 1
+                ? 'Mark this season unwatched'
+                : 'Mark every episode unwatched'
+              : seasons.length > 1
+                ? 'Mark this season watched'
+                : 'Mark every episode watched'
+          }
+          icon={CircleCheck}
+          onPress={() => {
+            mark(episodes, !isSeasonWatched);
+          }}
         />
       )}
 

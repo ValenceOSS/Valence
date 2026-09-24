@@ -14,13 +14,16 @@ const aTitle = (standing: CatalogueTitle['standing']): CatalogueTitle => ({
 });
 
 describe('describeCatalogueCard', () => {
-  it('marks a title already held with a corner mark, rather than a badge that says so', () => {
-    const drawn = describeCatalogueCard(
-      aTitle({ status: 'library', mediaId: 'media-1', requestId: null, requestState: null }),
-    );
+  it('says a title already held in words, and keeps the tick for one that has been watched', () => {
+    const held = aTitle({
+      status: 'library',
+      mediaId: 'media-1',
+      requestId: null,
+      requestState: null,
+    });
 
-    expect(drawn.corner?.label).toBe('In your library');
-    expect(drawn.badges).toEqual(['Film']);
+    expect(describeCatalogueCard(held)).toEqual({ badges: ['Film', 'In library'] });
+    expect(describeCatalogueCard(held, true).corner?.label).toBe('Watched');
   });
 
   it('says nothing of it for a title there is only to ask for', () => {

@@ -133,4 +133,18 @@ describe('MediaCard', () => {
 
     expect(drawn.getByText('Pilot')).toBeOnTheScreen();
   });
+
+  it('says how many episodes of a programme are left, and nothing for none', async () => {
+    const drawn = await render(
+      <MediaCard media={FILM} shape="poster" unwatchedCount={5} onPress={jest.fn()} />,
+    );
+
+    expect(drawn.getByLabelText('5 episodes left')).toBeTruthy();
+
+    const none = await render(
+      <MediaCard media={FILM} shape="poster" unwatchedCount={0} onPress={jest.fn()} />,
+    );
+
+    expect(none.queryByLabelText(/left/)).toBeNull();
+  });
 });

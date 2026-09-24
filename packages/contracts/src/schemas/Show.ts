@@ -13,6 +13,7 @@ const ShowSummarySchema = z.object({
   year: z.number().int().nullish(),
   rating: z.number().nullish(),
   genres: z.array(z.string()).nullish(),
+  unwatchedCount: z.number().int().nonnegative().nullish(),
 });
 
 const ShowSeasonSchema = z.object({

@@ -5,6 +5,7 @@ import {
   DoorOpen as DoorOpenIcon,
   MoreHorizontal as MoreHorizontalIcon,
 } from '@keyline-icons/react';
+import { DoorOpen as DoorOpenFilledIcon } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
@@ -85,7 +86,7 @@ const DeviceList = () => {
                       {
                         id: 'end',
                         label: 'Sign this out',
-                        icon: <Icon of={DoorOpenIcon} size={15} />,
+                        icon: <Icon of={DoorOpenFilledIcon} size={15} />,
                         isDestructive: true,
                         onChoose: () => {
                           setEnding(row.original);

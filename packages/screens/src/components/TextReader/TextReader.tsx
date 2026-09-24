@@ -97,7 +97,7 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
     () => (contents.data ?? { parts: [] }).parts.map((part) => part.size),
     [contents.data],
   );
-  const [settings, setSettings] = useState<TextPreferences>(readTextPreferences);
+  const [settings, setSettings] = useState<TextPreferences>(() => readTextPreferences(book.id));
   const { isShown, wake, keep } = useChromeThatHides();
   const [isPanelPinned, setIsPanelPinned] = useState(readPanelPinned);
   const [isPanelOpen, setIsPanelOpen] = useState(isPanelPinned);
@@ -293,7 +293,7 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
     const next = { ...settings, ...changed };
 
     setSettings(next);
-    writeTextPreferences(next);
+    writeTextPreferences(next, book.id);
     setLanding({ kind: 'within', within: page / pages });
     wake();
   };

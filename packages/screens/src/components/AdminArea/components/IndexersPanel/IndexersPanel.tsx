@@ -4,14 +4,17 @@ import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/Pane
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Bin as BinIcon,
   MoreHorizontal as MoreHorizontalIcon,
-  Pen as PenIcon,
   Plug as PlugIcon,
   Plus as PlusIcon,
   ToggleOff as ToggleOffIcon,
   ToggleOn as ToggleOnIcon,
 } from '@keyline-icons/react';
+import {
+  Bin as BinFilledIcon,
+  Pen as PenFilledIcon,
+  Plug as PlugFilledIcon,
+} from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
@@ -203,7 +206,7 @@ const IndexersPanel = () => {
                     {
                       id: 'edit',
                       label: 'Change',
-                      icon: <Icon of={PenIcon} size={15} />,
+                      icon: <Icon of={PenFilledIcon} size={15} />,
                       onChoose: () => {
                         setEditing(row.original);
                       },
@@ -212,7 +215,7 @@ const IndexersPanel = () => {
                       id: 'test',
                       label: 'Test',
                       detail: 'Asks it what it can search, and clears its failures if it answers.',
-                      icon: <Icon of={PlugIcon} size={15} />,
+                      icon: <Icon of={PlugFilledIcon} size={15} />,
                       isDisabled: testing.size > 0 || isTestingAll,
                       onChoose: () => {
                         test(row.original);
@@ -238,7 +241,7 @@ const IndexersPanel = () => {
                     {
                       id: 'remove',
                       label: 'Remove',
-                      icon: <Icon of={BinIcon} size={15} />,
+                      icon: <Icon of={BinFilledIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
                         setRemoving(row.original);

@@ -7,6 +7,7 @@ type AnEpisodeProps = {
   airs: string;
   onWatch: () => void;
   onLookAt: () => void;
+  onMarkWatched?: () => void;
 };
 
 export type { AnEpisodeProps };

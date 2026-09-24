@@ -7,6 +7,7 @@ type MediaCardProps = {
   onPress: (media: MediaSummary) => void;
   shape?: MediaCardShape;
   watchedFraction?: number;
+  unwatchedCount?: number;
   isEpisode?: boolean;
   hasPreferredFocus?: boolean;
   isUrgent?: boolean;

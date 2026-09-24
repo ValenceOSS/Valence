@@ -25,6 +25,9 @@ const SHAPE_CLASSES: Record<MediaCardShape, string> = {
  * @param badges - Short facts to show over the artwork, such as the format.
  * @param corner - A mark in the top right corner of the artwork, for one fact that is better shown as an
  *   icon than said, such as that it is already in the library.
+ * @param count - A number to show in the top right corner of the artwork, such as how many episodes
+ *   are left to watch; nothing is drawn for none.
+ * @param countLabel - What the number means, read out and shown on hover.
  * @param imageUrl - The artwork, where any has been fetched.
  * @param shape - Whether the artwork stands upright or lies flat.
  * @param emphasis - How much the card should draw the eye.
@@ -40,6 +43,8 @@ const MediaCard = ({
   subtitle,
   badges = [],
   corner,
+  count,
+  countLabel,
   imageUrl,
   shape = 'poster',
   emphasis = 'standard',
@@ -103,6 +108,20 @@ const MediaCard = ({
                 {badge}
               </Badge>
             ))}
+          </span>
+        )}
+
+        {count === undefined || count <= 0 || corner !== undefined ? null : (
+          <span className="absolute right-3 top-3">
+            <Tooltip label={countLabel ?? count.toString()}>
+              <span
+                role="img"
+                aria-label={countLabel ?? count.toString()}
+                className="flex h-7 min-w-7 items-center justify-center rounded-full bg-primary px-2 text-xs font-semibold tabular-nums text-primary-foreground shadow-sm"
+              >
+                {count > 99 ? '99+' : count.toString()}
+              </span>
+            </Tooltip>
           </span>
         )}
 

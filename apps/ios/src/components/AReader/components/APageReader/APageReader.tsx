@@ -104,7 +104,9 @@ const APageReader = ({
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isZoomed, setIsZoomed] = useState(false);
   const [wide, setWide] = useState<ReadonlySet<number>>(new Set());
-  const [preferences, setPreferences] = useState(() => readReaderPreferences(book.direction));
+  const [preferences, setPreferences] = useState(() =>
+    readReaderPreferences(book.direction, book.id),
+  );
   const isRightToLeft = preferences.direction === 'rightToLeft';
   const groups = spreadsFor({
     pageCount: count,
@@ -164,7 +166,7 @@ const APageReader = ({
   const choose = (change: Partial<ReaderPreferences>) => {
     const chosen = { ...preferences, ...change };
 
-    writeReaderPreferences(chosen);
+    writeReaderPreferences(chosen, book.id);
     setPreferences(chosen);
   };
 

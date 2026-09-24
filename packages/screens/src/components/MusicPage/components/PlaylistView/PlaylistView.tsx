@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Bin as BinIcon,
   ListMusic as ListMusicIcon,
   MoreHorizontal as MoreHorizontalIcon,
-  Share as ShareIcon,
   Shuffle as ShuffleIcon,
-  SquarePen as SquarePenIcon,
 } from '@keyline-icons/react';
-import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
+import {
+  Bin as BinFilledIcon,
+  Play as PlayFilledIcon,
+  Share as ShareFilledIcon,
+  SquarePen as SquarePenFilledIcon,
+} from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Button } from '@ValenceUI/Button';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
@@ -185,7 +187,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
                               label: playlist.isShared
                                 ? 'Stop sharing'
                                 : 'Share with the household',
-                              icon: <Icon of={ShareIcon} size={16} />,
+                              icon: <Icon of={ShareFilledIcon} size={16} />,
                               onChoose: () => {
                                 void updatePlaylist(playlist.id, {
                                   isShared: !playlist.isShared,
@@ -205,7 +207,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
                             {
                               id: 'edit',
                               label: 'Edit details',
-                              icon: <Icon of={SquarePenIcon} size={16} />,
+                              icon: <Icon of={SquarePenFilledIcon} size={16} />,
                               onChoose: () => {
                                 setIsEditing(true);
                               },
@@ -215,7 +217,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
                       {
                         id: 'delete',
                         label: 'Delete playlist',
-                        icon: <Icon of={BinIcon} size={16} />,
+                        icon: <Icon of={BinFilledIcon} size={16} />,
                         isDestructive: true,
                         onChoose: () => {
                           setIsRemoving(true);

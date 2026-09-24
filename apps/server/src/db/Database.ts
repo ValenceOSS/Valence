@@ -6,6 +6,8 @@ const schema = { ...authSchema, ...valenceSchema };
 
 type ValenceDatabase = ReturnType<typeof createDatabase>['db'];
 
+type ValenceSchema = typeof schema;
+
 /**
  * Opens the connection pool and binds the schema to it, which is the one place the server learns
  * where its database is.
@@ -20,6 +22,6 @@ const createDatabase = (databaseUrl: string) => {
   return { db, pool, schema };
 };
 
-export type { ValenceDatabase };
+export type { ValenceDatabase, ValenceSchema };
 
 export { createDatabase };

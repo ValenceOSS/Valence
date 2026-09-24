@@ -222,6 +222,58 @@ describe('MediaPanel', () => {
     expect(await screen.findByRole('menuitem', { name: /Rebuild previews/ })).toBeInTheDocument();
   });
 
+  it('offers no delete to whoever may not delete media', async () => {
+    const user = userEvent.setup();
+
+    render(<MediaPanel {...props} media={[item()]} />);
+
+    await user.click(screen.getByRole('button', { name: /Actions for/ }));
+
+    expect(screen.queryByRole('menuitem', { name: /Delete file/ })).not.toBeInTheDocument();
+  });
+
+  it('deletes a series only once it has been asked twice, as a whole', async () => {
+    const onDelete = vi.fn().mockResolvedValue(true);
+    const user = userEvent.setup();
+
+    render(
+      <MediaPanel
+        {...props}
+        media={[item({ title: 'Long Day', seriesId: 's', seriesTitle: 'From' })]}
+        onDelete={onDelete}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /Actions for/ }));
+    await user.click(screen.getByRole('menuitem', { name: /Delete series/ }));
+
+    expect(await screen.findByText('Delete every episode of From?')).toBeInTheDocument();
+    expect(onDelete).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Delete series' }));
+
+    expect(onDelete).toHaveBeenCalledWith(expect.objectContaining({ id: 'item-1' }));
+    await vi.waitFor(() => {
+      expect(screen.queryByText('Delete every episode of From?')).not.toBeInTheDocument();
+    });
+  });
+
+  it('keeps asking where the file could not be deleted, so it can be tried again', async () => {
+    const onDelete = vi.fn().mockResolvedValue(false);
+    const user = userEvent.setup();
+
+    render(<MediaPanel {...props} media={[item()]} onDelete={onDelete} />);
+
+    await user.click(screen.getByRole('button', { name: /Actions for/ }));
+    await user.click(screen.getByRole('menuitem', { name: /Delete file/ }));
+    await user.click(await screen.findByRole('button', { name: 'Delete file' }));
+
+    await vi.waitFor(() => {
+      expect(onDelete).toHaveBeenCalledTimes(1);
+    });
+    expect(screen.getByText('Delete Parasite?')).toBeInTheDocument();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(MediaPanel.displayName).toBe('MediaPanel');
   });

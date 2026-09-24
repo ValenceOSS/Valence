@@ -147,7 +147,7 @@ describe('AppShell', () => {
 
     await user.click(screen.getByRole('button', { name: 'Account' }));
 
-    expect(await screen.findByRole('menuitem', { name: 'Account' })).toBeInTheDocument();
+    expect(await screen.findByRole('menuitem', { name: 'My Account' })).toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: 'Admin' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Admin' })).not.toBeInTheDocument();
   });
@@ -160,6 +160,22 @@ describe('AppShell', () => {
     await user.click(await screen.findByRole('menuitem', { name: 'Admin' }));
 
     expect(props.onOpenAdmin).toHaveBeenCalledOnce();
+  });
+
+  it('keeps My Account and Admin together, apart from the rest of the menu', async () => {
+    const user = userEvent.setup();
+
+    draw({ isAdministrator: true });
+
+    await user.click(screen.getByRole('button', { name: 'Account' }));
+
+    const mine = (await screen.findByRole('menuitem', { name: 'My Account' })).closest(
+      '[role="group"]',
+    );
+
+    expect(mine).not.toBeNull();
+    expect(mine?.textContent).toContain('Admin');
+    expect(mine?.textContent).not.toContain('Favourites');
   });
 
   it('keeps administration off the bar itself, since it lives behind the face', () => {
@@ -193,7 +209,7 @@ describe('AppShell', () => {
     const { props } = draw();
 
     await user.click(screen.getByRole('button', { name: 'Account' }));
-    await user.click(await screen.findByRole('menuitem', { name: 'Account' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'My Account' }));
 
     expect(props.onOpenAccount).toHaveBeenCalledOnce();
     expect(props.onSectionChange).not.toHaveBeenCalled();
@@ -215,18 +231,21 @@ describe('AppShell', () => {
     ).not.toHaveClass('text-text');
   });
 
-  it('changes the theme from the menu on the face, marking the one in force', async () => {
+  it('changes the theme from a row of tabs in the menu on the face, marking the one in force', async () => {
     const user = userEvent.setup();
 
     draw();
 
     await user.click(screen.getByRole('button', { name: 'Account' }));
 
-    const [themeSystem] = await screen.findAllByRole('menuitem', { name: /System/ });
+    const theme = await screen.findByRole('group', { name: 'Theme' });
 
-    expect(themeSystem?.textContent).toContain('✓');
+    expect(within(theme).getByRole('button', { name: 'System' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
 
-    await user.click(screen.getByRole('menuitem', { name: /Dark/ }));
+    await user.click(within(theme).getByRole('button', { name: 'Dark' }));
 
     expect(chosenTheme()).toBe('dark');
   });
@@ -237,7 +256,10 @@ describe('AppShell', () => {
     draw();
 
     await user.click(screen.getByRole('button', { name: 'Account' }));
-    await user.click(await screen.findByRole('menuitem', { name: 'Reduced' }));
+
+    const movement = await screen.findByRole('group', { name: 'Movement' });
+
+    await user.click(within(movement).getByRole('button', { name: 'Reduced' }));
 
     expect(chosenMotion()).toBe('reduced');
   });
@@ -249,7 +271,7 @@ describe('AppShell', () => {
 
     await user.click(screen.getByRole('button', { name: 'Account' }));
 
-    expect(await screen.findAllByRole('menuitem', { name: /System/ })).toHaveLength(2);
+    expect(await screen.findAllByRole('button', { name: 'System' })).toHaveLength(2);
   });
 
   it('signs out from the menu on the face', async () => {
@@ -270,7 +292,7 @@ describe('AppShell', () => {
     draw();
 
     await user.click(screen.getByRole('button', { name: 'Account' }));
-    await screen.findByRole('menuitem', { name: 'Account' });
+    await screen.findByRole('menuitem', { name: 'My Account' });
 
     expect(screen.queryByRole('menuitem', { name: 'Sign out' })).not.toBeInTheDocument();
   });

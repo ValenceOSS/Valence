@@ -1,30 +1,25 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
-  Bell as BellIcon,
   BookOpen as BookOpenIcon,
   CircleUser as CircleUserIcon,
   Compass as CompassIcon,
   Dice5 as Dice5Icon,
-  DoorOpen as DoorOpenIcon,
-  Download as DownloadIcon,
   Film as FilmIcon,
   Flame as FlameIcon,
   Heart as HeartIcon,
   Home as HomeIcon,
   Monitor as MonitorIcon,
-  Moon as MoonIcon,
   MusicNote as MusicNoteIcon,
   Search as SearchIcon,
-  Settings as SettingsIcon,
-  Sun as SunIcon,
   X as XIcon,
-  Zap as ZapIcon,
-  ZapOff as ZapOffIcon,
 } from '@keyline-icons/react';
 import {
+  Bell as BellFilledIcon,
   BookOpen as BookOpenFilledIcon,
   CircleUser as CircleUserFilledIcon,
   Compass as CompassFilledIcon,
+  Dice5 as Dice5FilledIcon,
+  DoorOpen as DoorOpenFilledIcon,
   Download as DownloadFilledIcon,
   Film as FilmFilledIcon,
   Flame as FlameFilledIcon,
@@ -33,6 +28,7 @@ import {
   Monitor as MonitorFilledIcon,
   MusicNote as MusicNoteFilledIcon,
   Search as SearchFilledIcon,
+  Settings as SettingsFilledIcon,
 } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -46,6 +42,7 @@ import {
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
+import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { NavBar } from '@ValenceUI/NavBar';
 import { Logo } from '@ValenceUI/Logo';
 import { MoodBackground } from '@ValenceUI/MoodBackground';
@@ -63,13 +60,11 @@ import { useTheme } from '@ValenceClient/shell/useTheme';
 import { THEME_CHOICES } from '@ValenceScreens/theme/themeChoices';
 import { useMotion } from '@ValenceClient/shell/useMotion';
 import { MOTION_CHOICES } from '@ValenceScreens/motion/motionChoices';
-import type { Motion } from '@ValenceClient/shell/motion';
 import { BROWSE_SECTIONS } from './AppShell.types';
 import type { ReactNode } from 'react';
 import type { IconGesture } from '@ValenceUI/AnimatedIcon.types';
 import type { NavBarAction, NavBarItem } from '@ValenceUI/NavBar.types';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
-import type { Theme } from '@ValenceClient/shell/theme';
 import type { AppShellProps, ShellSection } from './AppShell.types';
 
 const FADING = 1.2;
@@ -104,18 +99,6 @@ const howSolid = (travelled: number): number => {
       : Math.max(meets.getBoundingClientRect().top + travelled - bar, SOLID_WITHIN);
 
   return Math.min(Math.max(travelled / reach, 0), 1);
-};
-
-const THEME_ICONS: Record<Theme, ReactNode> = {
-  system: <Icon of={MonitorIcon} size={16} />,
-  light: <Icon of={SunIcon} size={16} />,
-  dark: <Icon of={MoonIcon} size={16} />,
-};
-
-const MOTION_ICONS: Record<Motion, ReactNode> = {
-  system: <Icon of={MonitorIcon} size={16} />,
-  full: <Icon of={ZapIcon} size={16} />,
-  reduced: <Icon of={ZapOffIcon} size={16} />,
 };
 
 const STOCKED_ONLY: ReadonlySet<ShellSection> = new Set(['shows', 'films', 'read', 'music']);
@@ -359,7 +342,7 @@ const AppShell = ({
           {
             id: 'downloads',
             label: 'Downloads',
-            icon: <Icon of={DownloadIcon} size={20} />,
+            icon: <Icon of={DownloadFilledIcon} size={20} />,
             activeIcon: <Icon of={DownloadFilledIcon} size={20} />,
             gesture: 'settle' as const,
             isCurrent: isDownloadsOpen,
@@ -370,7 +353,7 @@ const AppShell = ({
     {
       id: 'search',
       label: 'Search',
-      icon: <Icon of={SearchIcon} size={20} />,
+      icon: <Icon of={SearchFilledIcon} size={20} />,
       activeIcon: <Icon of={SearchIcon} size={20} />,
       gesture: 'settle' as const,
       isCurrent: isSearchOpen,
@@ -382,7 +365,7 @@ const AppShell = ({
           {
             id: 'surprise',
             label: 'Randomiser',
-            icon: <Icon of={Dice5Icon} size={20} />,
+            icon: <Icon of={Dice5FilledIcon} size={20} />,
             gesture: 'tumble' as const,
             ...(kinds.length > 1
               ? {
@@ -428,7 +411,7 @@ const AppShell = ({
           {
             id: 'notifications',
             label: 'Notifications',
-            icon: <Icon of={BellIcon} size={20} />,
+            icon: <Icon of={BellFilledIcon} size={20} />,
             control: notifications,
           },
         ]),
@@ -445,21 +428,15 @@ const AppShell = ({
           look="face"
           trigger={face}
           groups={[
-            {
-              items: [
-                {
-                  id: 'account',
-                  label: 'Account',
-                  icon: <Icon of={CircleUserIcon} size={16} />,
-                  onChoose: onOpenAccount,
-                },
+            ...[
+              [
                 ...(onOpenFavourites === undefined
                   ? []
                   : [
                       {
                         id: 'favourites',
                         label: 'Favourites',
-                        icon: <Icon of={HeartIcon} size={16} />,
+                        icon: <Icon of={HeartFilledIcon} size={16} />,
                         onChoose: onOpenFavourites,
                       },
                     ]),
@@ -468,48 +445,72 @@ const AppShell = ({
                       {
                         id: 'my-requests',
                         label: 'My requests',
-                        icon: <Icon of={CompassIcon} size={16} />,
+                        icon: <Icon of={CompassFilledIcon} size={16} />,
                         onChoose: onOpenMyRequests,
                       },
                     ]
                   : []),
+              ],
+              [
+                {
+                  id: 'account',
+                  label: 'My Account',
+                  icon: <Icon of={CircleUserFilledIcon} size={16} />,
+                  onChoose: onOpenAccount,
+                },
                 ...(isAdministrator
                   ? [
                       {
                         id: 'admin',
                         label: 'Admin',
-                        icon: <Icon of={SettingsIcon} size={16} />,
+                        icon: <Icon of={SettingsFilledIcon} size={16} />,
                         onChoose: onOpenAdmin,
                       },
                     ]
                   : []),
               ],
-            },
+            ]
+              .filter((items) => items.length > 0)
+              .map((items) => ({ items })),
             {
               name: 'Theme',
-              items: THEME_CHOICES.map((choice) => ({
-                id: `theme-${choice.id}`,
-                label: choice.label,
-                icon: THEME_ICONS[choice.id],
-                keepsOpen: true,
-                ...(theme === choice.id ? { detail: '✓' } : {}),
-                onChoose: () => {
-                  choose(choice.id);
-                },
-              })),
+              items: [],
+              control: (
+                <SegmentedRow
+                  label="Theme"
+                  size="sm"
+                  items={THEME_CHOICES.map((choice) => ({ id: choice.id, label: choice.label }))}
+                  value={theme}
+                  onSelect={(id) => {
+                    const chosen = THEME_CHOICES.find((choice) => choice.id === id);
+
+                    if (chosen !== undefined) {
+                      choose(chosen.id);
+                    }
+                  }}
+                  className="w-full"
+                />
+              ),
             },
             {
               name: 'Movement',
-              items: MOTION_CHOICES.map((choice) => ({
-                id: `motion-${choice.id}`,
-                label: choice.label,
-                icon: MOTION_ICONS[choice.id],
-                keepsOpen: true,
-                ...(movement === choice.id ? { detail: '✓' } : {}),
-                onChoose: () => {
-                  chooseMovement(choice.id);
-                },
-              })),
+              items: [],
+              control: (
+                <SegmentedRow
+                  label="Movement"
+                  size="sm"
+                  items={MOTION_CHOICES.map((choice) => ({ id: choice.id, label: choice.label }))}
+                  value={movement}
+                  onSelect={(id) => {
+                    const chosen = MOTION_CHOICES.find((choice) => choice.id === id);
+
+                    if (chosen !== undefined) {
+                      chooseMovement(chosen.id);
+                    }
+                  }}
+                  className="w-full"
+                />
+              ),
             },
             ...(onSignOut === undefined
               ? []
@@ -519,7 +520,7 @@ const AppShell = ({
                       {
                         id: 'sign-out',
                         label: 'Sign out',
-                        icon: <Icon of={DoorOpenIcon} size={16} />,
+                        icon: <Icon of={DoorOpenFilledIcon} size={16} />,
                         isDestructive: true,
                         onChoose: onSignOut,
                       },

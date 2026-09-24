@@ -8,6 +8,7 @@ type MediaGridProps = {
   onPlay: (media: MediaSummary, startSeconds: number) => void;
   onInspect: (media: MediaSummary) => void;
   watchedFractionFor?: (mediaId: string) => number | undefined;
+  unwatchedFor?: (media: MediaSummary) => number | undefined;
   resumeFor?: (mediaId: string) => number | null;
   isKept?: (mediaId: string) => boolean;
   onToggleKept?: (media: MediaSummary) => void;

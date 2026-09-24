@@ -22,7 +22,8 @@ import type {
   SettingsRow,
 } from './SettingsMenu.types';
 
-const ROW = 'relative z-10 flex w-full items-center gap-4 rounded-sm px-3 py-2.5 text-left text-sm';
+const ROW =
+  'relative z-10 flex w-full items-center gap-4 rounded-sm px-3 py-2.5 text-left text-sm font-semibold';
 
 const SLIDE = 28;
 
@@ -230,10 +231,7 @@ const SettingsMenu = ({
                       variant="bare"
                       size="none"
                       onClick={close}
-                      className={cn(
-                        ROW,
-                        'shrink-0 border-b border-[var(--surface-line)] font-medium ',
-                      )}
+                      className={cn(ROW, 'shrink-0 border-b border-[var(--surface-line)]')}
                     >
                       <Icon of={ChevronLeftIcon} size={18} />
                       {opened.label}

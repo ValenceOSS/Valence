@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Stop as StopFilledIcon } from '@keyline-icons/react/fill';
+import { useSample } from '@ValenceScreens/requests/useSample';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { MusicNote as MusicNoteIcon, Tape as TapeIcon, X as XIcon } from '@keyline-icons/react';
 import { BackdropScrim } from '@ValenceUI/BackdropScrim';
@@ -48,7 +50,8 @@ type Choosing = { asked: MediaRequestAsk; onAsked: () => void };
  *
  * @param asking - The title the address names, as its kind and id, or nothing.
  * @param onClose - Called when it is dismissed.
- * @param onOpen - Called to open what is in the library already.
+ * @param onOpen - Called to open what is in the library already, in its place of asking — a title
+ *   the library holds is never asked about, but opened as it would be anywhere else.
  */
 const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const cache = useQueryClient();
@@ -64,6 +67,15 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const [askedAlbums, setAskedAlbums] = useState<ReadonlySet<string>>(new Set());
   const [problem, setProblem] = useState<string | null>(null);
   const title = found.data ?? null;
+  const heldKind = title?.kind ?? null;
+  const heldId = title?.standing.status === 'library' ? title.standing.mediaId : null;
+
+  useEffect(() => {
+    if (heldKind !== null && heldId !== null) {
+      onOpen(heldKind, heldId);
+    }
+  }, [heldKind, heldId, onOpen]);
+  const sample = useSample();
   const requestId = title?.standing.requestId ?? null;
   const requests = useQuery({ ...requestsQueries.mediaRequests(), enabled: requestId !== null });
   const request = requests.data?.find((one) => one.id === requestId) ?? null;
@@ -122,7 +134,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   return (
     <Dialog
       label={title?.title ?? 'Something to ask for'}
-      isOpen={named !== null}
+      isOpen={named !== null && heldId === null && (title !== null || !found.isPending)}
       onClose={onClose}
       size="stage"
     >
@@ -261,7 +273,28 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                         key={album.id}
                         className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-[var(--surface-hover)]"
                       >
-                        <Icon of={MusicNoteIcon} size={16} tone="muted" className="shrink-0" />
+                        <Button
+                          isIconOnly
+                          variant="ghost"
+                          size="xs"
+                          label={
+                            sample.heard === album.id
+                              ? `Stop the sample of ${album.title}`
+                              : `Play a sample of ${album.title}`
+                          }
+                          isActive={sample.heard === album.id}
+                          isLoading={sample.finding === album.id}
+                          onClick={() => {
+                            void sample.toggle(album.id, title.title, album.title);
+                          }}
+                          className="shrink-0"
+                        >
+                          <Icon
+                            of={sample.heard === album.id ? StopFilledIcon : MusicNoteIcon}
+                            size={16}
+                            tone={sample.heard === album.id ? 'inherit' : 'muted'}
+                          />
+                        </Button>
                         <span className="flex min-w-0 flex-1 flex-col">
                           <span className="truncate text-sm text-text">{album.title}</span>
                           <span className="text-xs text-text-muted">
@@ -302,23 +335,16 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
         confirm={
           title === null
             ? undefined
-            : title.standing.status === 'library' && title.standing.mediaId !== null
+            : title.standing.status === 'askable'
               ? {
-                  label: 'Open',
+                  label: title.kind === 'artist' ? 'Watch this artist' : 'Request',
+                  isDisabled: !isReady,
+                  isLoading: isAsking,
                   onChoose: () => {
-                    onOpen(title.kind, title.standing.mediaId ?? '');
+                    ask(askingFor(title, seasons, releaseTypes));
                   },
                 }
-              : title.standing.status === 'askable'
-                ? {
-                    label: title.kind === 'artist' ? 'Watch this artist' : 'Request',
-                    isDisabled: !isReady,
-                    isLoading: isAsking,
-                    onChoose: () => {
-                      ask(askingFor(title, seasons, releaseTypes));
-                    },
-                  }
-                : undefined
+              : undefined
         }
       >
         {mayCancel ? (

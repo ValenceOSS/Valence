@@ -1,12 +1,14 @@
 import { useMemo } from 'react';
 import {
-  Bin as BinIcon,
   MoreHorizontal as MoreHorizontalIcon,
-  Pen as PenIcon,
-  Plug as PlugIcon,
   ToggleOff as ToggleOffIcon,
   ToggleOn as ToggleOnIcon,
 } from '@keyline-icons/react';
+import {
+  Bin as BinFilledIcon,
+  Pen as PenFilledIcon,
+  Plug as PlugFilledIcon,
+} from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
@@ -131,7 +133,7 @@ const DownloadClientsTable = ({
                     {
                       id: 'change',
                       label: 'Change',
-                      icon: <Icon of={PenIcon} size={15} />,
+                      icon: <Icon of={PenFilledIcon} size={15} />,
                       onChoose: () => {
                         onChange(row.original);
                       },
@@ -140,7 +142,7 @@ const DownloadClientsTable = ({
                       id: 'test',
                       label: 'Test',
                       detail: 'Logs in and asks which version it is.',
-                      icon: <Icon of={PlugIcon} size={15} />,
+                      icon: <Icon of={PlugFilledIcon} size={15} />,
                       isDisabled: testingId !== null,
                       onChoose: () => {
                         onTest(row.original);
@@ -166,7 +168,7 @@ const DownloadClientsTable = ({
                     {
                       id: 'remove',
                       label: 'Remove',
-                      icon: <Icon of={BinIcon} size={15} />,
+                      icon: <Icon of={BinFilledIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
                         onRemove(row.original);

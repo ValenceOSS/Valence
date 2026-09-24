@@ -7,9 +7,12 @@ import { ReadPage } from './ReadPage';
 import type { Book, BookChapter } from '@ValenceContracts/schemas/Book';
 import type * as Router from '@tanstack/react-router';
 
+const address = vi.hoisted((): { chapter: string | undefined } => ({ chapter: undefined }));
+
 vi.mock('@tanstack/react-router', async (original) => ({
   ...(await original<typeof Router>()),
   useParams: () => ({ bookId: BOOK_ID }),
+  useSearch: () => (address.chapter === undefined ? {} : { chapter: address.chapter }),
 }));
 
 const BOOK_ID = '6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0001';
@@ -97,6 +100,26 @@ describe('ReadPage', () => {
     renderInAnAddress(<ReadPage />);
 
     expect(await screen.findByRole('img', { name: 'Page 1' })).toBeInTheDocument();
+  });
+
+  it('opens at the chapter the address names', async () => {
+    address.chapter = '6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0009';
+    serve({ ...A_BOOK, layout: 'fixed', direction: 'rightToLeft' }, [
+      { ...A_CHAPTER, format: 'cbz', pageCount: 12, title: 'One' },
+      {
+        ...A_CHAPTER,
+        id: '6f4e0c1a-8b0b-4c55-9d7d-6a6a7f0c0009',
+        number: 2,
+        format: 'cbz',
+        pageCount: 8,
+        title: 'Two',
+      },
+    ]);
+
+    renderInAnAddress(<ReadPage />);
+
+    expect(await screen.findByText(/Two/)).toBeInTheDocument();
+    address.chapter = undefined;
   });
 
   it('says there is nothing to read in a book that is only heard', async () => {

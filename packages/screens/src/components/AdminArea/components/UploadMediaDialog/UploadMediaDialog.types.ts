@@ -12,6 +12,7 @@ type QueuedUpload = {
 
 type UploadMediaDialogProps = {
   library: Library | null;
+  folder?: string;
   onClose: () => void;
   onUploaded: (library: Library) => void;
 };

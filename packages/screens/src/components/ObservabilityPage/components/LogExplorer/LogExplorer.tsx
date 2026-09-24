@@ -2,14 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import {
   ChevronDown as ChevronDownIcon,
-  Copy as CopyIcon,
-  Download as DownloadIcon,
   MoreHorizontal as MoreHorizontalIcon,
   Radio as RadioIcon,
   RefreshCw as RefreshCwIcon,
   Terminal as TerminalIcon,
   X as XIcon,
 } from '@keyline-icons/react';
+import { Copy as CopyFilledIcon, Download as DownloadFilledIcon } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { AppliedFilters } from '@ValenceUI/AppliedFilters';
@@ -446,14 +445,14 @@ const LogExplorer = ({
                 {
                   id: 'copy',
                   label: 'Copy these lines',
-                  icon: <Icon of={CopyIcon} size={15} />,
+                  icon: <Icon of={CopyFilledIcon} size={15} />,
                   isDisabled: records.length === 0,
                   onChoose: copyVisible,
                 },
                 {
                   id: 'download',
                   label: 'Download these lines',
-                  icon: <Icon of={DownloadIcon} size={15} />,
+                  icon: <Icon of={DownloadFilledIcon} size={15} />,
                   isDisabled: records.length === 0,
                   onChoose: () => {
                     download(

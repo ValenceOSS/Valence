@@ -9,6 +9,7 @@ import { ActivityPanel } from './components/ActivityPanel/ActivityPanel';
 import { ObservabilityPage } from '@ValenceScreens/components/ObservabilityPage/ObservabilityPage';
 import { LibrariesPanel } from './components/LibrariesPanel/LibrariesPanel';
 import { EncodingPanel } from './components/EncodingPanel/EncodingPanel';
+import { FilesPanel } from '@ValenceScreens/components/AdminArea/components/FilesPanel/FilesPanel';
 import { MediaPanel } from './components/MediaPanel/MediaPanel';
 import { ReencodeDialog } from '@ValenceScreens/components/ReencodeDialog/ReencodeDialog';
 import { ReencodeReview } from '@ValenceScreens/components/ReencodeReview/ReencodeReview';
@@ -46,6 +47,8 @@ import {
   removeJobTrigger,
 } from '@ValenceClient/admin/fetchAdmin';
 import { rebuildArtefacts } from '@ValenceClient/library/fetchLibrary';
+import { deleteMedia } from '@ValenceClient/library/deleteMedia';
+import { deleteSeries } from '@ValenceClient/library/deleteSeries';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { AnimatedBytes } from '@ValenceScreens/components/AnimatedBytes/AnimatedBytes';
@@ -98,6 +101,7 @@ import {
   failureOfAnswer,
   failureOfMissing,
   failureOfRefusal,
+  failureOfThrown,
 } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -191,9 +195,15 @@ const AdminArea = ({
 
   const libraries = useMemo(() => askedLibraries.data ?? [], [askedLibraries.data]);
 
+  const askedMediaKey = adminQueries.everything(libraries.map((library) => library.id)).queryKey;
   const askedMedia = useQuery(adminQueries.everything(libraries.map((library) => library.id)));
   const askedEveryFile = useQuery(adminQueries.everyFile(libraries.map((library) => library.id)));
   const askedReencodes = useQuery(adminQueries.reencodes());
+
+  const askedPermissions = useQuery(sessionQueries.permissions());
+  const mayDeleteMedia =
+    askedPermissions.data?.isAdministrator === true ||
+    (askedPermissions.data?.permissions.includes('media.delete') ?? false);
 
   const media = askedMedia.data ?? [];
   const everyFile = askedEveryFile.data ?? [];
@@ -954,6 +964,34 @@ const AdminArea = ({
                   ),
                 )
               }
+              {...(mayDeleteMedia
+                ? {
+                    onDelete: async (item: MediaSummary) => {
+                      const seriesId = item.seriesId ?? null;
+                      const name = item.seriesTitle ?? item.title;
+                      const isGone = tellOutcome(
+                        `Deleted ${name}.`,
+                        await failureOfThrown(async () => {
+                          await (seriesId === null ? deleteMedia(item.id) : deleteSeries(seriesId));
+                        }, `${name} could not be deleted.`),
+                      );
+
+                      if (isGone) {
+                        cache.setQueryData(askedMediaKey, (current: MediaSummary[] = []) =>
+                          current.filter(
+                            (entry) =>
+                              entry.id !== item.id &&
+                              (seriesId === null || entry.seriesId !== seriesId),
+                          ),
+                        );
+                        void cache.invalidateQueries({ queryKey: libraryQueries.key });
+                        void cache.invalidateQueries({ queryKey: adminQueries.key });
+                      }
+
+                      return isGone;
+                    },
+                  }
+                : {})}
               onReencode={(item) => {
                 setIsChoosingReencode(true);
                 void weighReencode([item.id], {
@@ -962,6 +1000,20 @@ const AdminArea = ({
                   videoCodec: 'hevc',
                   audio: 'keep',
                 });
+              }}
+            />
+          </TabPanel>
+
+          <TabPanel value="files" travel={travel}>
+            <FilesPanel
+              libraries={libraries}
+              mayDelete={mayDeleteMedia}
+              onChanged={() => {
+                void cache.invalidateQueries({ queryKey: libraryQueries.key });
+                void cache.invalidateQueries({ queryKey: adminQueries.key });
+              }}
+              onScan={(libraryId) => {
+                void rescan(libraryId);
               }}
             />
           </TabPanel>

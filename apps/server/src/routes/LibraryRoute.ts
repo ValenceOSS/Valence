@@ -283,6 +283,57 @@ const rebuildArtefactsRoute = createRoute({
   },
 });
 
+const deleteMediaRoute = createRoute({
+  method: 'delete',
+  path: '/api/media/{id}',
+  tags: ['Library'],
+  summary: 'Delete one file from its library’s disk, with what was kept beside it, and forget it',
+  request: { params: z.object({ id: z.string().uuid() }) },
+  responses: {
+    204: { description: 'The file is gone, and Valence has forgotten it' },
+    403: {
+      description: 'The disk would not let Valence delete it',
+      content: { 'application/json': { schema: Forbidden } },
+    },
+    404: {
+      description: 'No such item',
+      content: { 'application/json': { schema: NotFound } },
+    },
+    500: {
+      description: 'The file could not be deleted',
+      content: { 'application/json': { schema: z.object({ error: z.string() }) } },
+    },
+  },
+});
+
+const DeletedSeries = z.object({ files: z.number().int().nonnegative() }).openapi('DeletedSeries');
+
+const deleteSeriesRoute = createRoute({
+  method: 'delete',
+  path: '/api/series/{seriesId}',
+  tags: ['Library'],
+  summary: 'Delete every episode of a series from its library’s disk, and forget the series',
+  request: { params: z.object({ seriesId: z.string().uuid() }) },
+  responses: {
+    200: {
+      description: 'How many files went',
+      content: { 'application/json': { schema: DeletedSeries } },
+    },
+    403: {
+      description: 'The disk would not let Valence delete them, after any it already had',
+      content: { 'application/json': { schema: Forbidden } },
+    },
+    404: {
+      description: 'No such series',
+      content: { 'application/json': { schema: NotFound } },
+    },
+    500: {
+      description: 'The files could not be deleted',
+      content: { 'application/json': { schema: z.object({ error: z.string() }) } },
+    },
+  },
+});
+
 const forgetCorrectionRoute = createRoute({
   method: 'delete',
   path: '/api/media/{id}/match',
@@ -555,6 +606,8 @@ export {
   correctMatchRoute,
   forgetCorrectionRoute,
   rebuildArtefactsRoute,
+  deleteMediaRoute,
+  deleteSeriesRoute,
   setPreviewMomentRoute,
   clearPreviewMomentRoute,
   regeneratePreviewsRoute,

@@ -18,6 +18,7 @@ import {
   or,
   sql,
 } from 'drizzle-orm';
+import type { SQL } from 'drizzle-orm';
 import {
   ageCeiling,
   ageException,
@@ -26,6 +27,7 @@ import {
   library,
   libraryBlock,
   mediaItem,
+  watchProgress,
   mediaPreviewOverride,
   rating,
   series,
@@ -66,6 +68,8 @@ import { nextEpisodeOf } from '@ValenceServer/library/nextEpisodeOf';
 import { regeneratePreviews } from './regeneratePreviews';
 import { generateTrickplay } from './generateTrickplay';
 import { rebuildItemArtefacts } from './rebuildItemArtefacts';
+import { deleteMediaFile } from '@ValenceServer/library/deleteMediaFile';
+import type { MediaFileDeletion } from '@ValenceServer/library/deleteMediaFile';
 import { clearLibraryParts } from './clearLibraryParts';
 import { createClearableLibrary } from './createClearableLibrary';
 import { readsAgainAfterClearing } from '@ValenceCore/functions/readsAgainAfterClearing';
@@ -97,7 +101,12 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import { librariesVisibleToViewer } from '@ValenceServer/visibility/librariesVisibleToViewer';
 import { reachableByViewer } from '@ValenceServer/visibility/reachableByViewer';
 import { visibleToViewer } from '@ValenceServer/visibility/visibleToViewer';
-import type { AgeExceptionEntry, LibraryService, ListItemsOptions } from './LibraryService';
+import type {
+  AgeExceptionEntry,
+  LibraryService,
+  ListItemsOptions,
+  SeriesDeletion,
+} from './LibraryService';
 import {
   SCAN_LIBRARY_JOB,
   READ_AGAIN_JOB,
@@ -136,6 +145,7 @@ type CreateDatabaseLibraryServiceOptions = {
   certificationRegion?: () => Promise<string>;
   providers?: MetadataProvider[];
   books?: BookStore;
+  nameChapters?: (libraryId: string) => Promise<number>;
   images?: { forget: (url: string) => Promise<void> };
   music?: {
     store: MusicStore;
@@ -269,6 +279,7 @@ const createDatabaseLibraryService = ({
   jobs,
   providers,
   books,
+  nameChapters,
   images,
   music,
   atOnce = 1,
@@ -592,6 +603,94 @@ const createDatabaseLibraryService = ({
   };
 
   /**
+   * What the profile looking has watched to the end, for how many episodes of each programme they
+   * have left — nothing where nobody in particular is looking, since then there is no count to give.
+   *
+   * @param viewer - Who is looking.
+   * @returns The items finished, or nothing.
+   */
+  const finishedBy = async (viewer: Viewer): Promise<ReadonlySet<string> | undefined> => {
+    if (viewer.kind !== 'account' || viewer.profileId === null) {
+      return undefined;
+    }
+
+    const rows = await db
+      .select({ mediaItemId: watchProgress.mediaItemId })
+      .from(watchProgress)
+      .where(
+        and(eq(watchProgress.profileId, viewer.profileId), eq(watchProgress.isFinished, true)),
+      );
+
+    return new Set(rows.map((row) => row.mediaItemId));
+  };
+
+  /**
+   * Deletes the files of the items that match, one library at a time, and forgets each as a scan
+   * would on finding it gone: the rows go, a series left with nothing goes with them, whoever
+   * listens hears they departed, and the cache is swept of what was made from them.
+   *
+   * Stops at the first file the disk will not give up, having forgotten the ones already deleted,
+   * so the catalogue never holds a row for a file that is no longer there.
+   *
+   * @param which - The items whose files go.
+   * @returns How many went, or why they stopped.
+   */
+  const deleteFilesWhere = async (which: SQL): Promise<SeriesDeletion> => {
+    const items = await db
+      .select({ path: mediaItem.path, libraryId: mediaItem.libraryId })
+      .from(mediaItem)
+      .where(which);
+
+    if (items.length === 0) {
+      return { kind: 'absent' };
+    }
+
+    let files = 0;
+
+    for (const libraryId of new Set(items.map((item) => item.libraryId))) {
+      const found = await findLibrary(libraryId);
+
+      if (found === null) {
+        continue;
+      }
+
+      const deletedPaths: string[] = [];
+      let refusal: Exclude<MediaFileDeletion, { kind: 'deleted' }> | null = null;
+
+      for (const item of items.filter((one) => one.libraryId === libraryId)) {
+        const deleted = await deleteMediaFile(found.path, item.path);
+
+        if (deleted.kind !== 'deleted') {
+          refusal = deleted;
+          break;
+        }
+
+        deletedPaths.push(item.path);
+      }
+
+      const gone = await store.removeByPaths(found.id, deletedPaths);
+
+      await store.forgetEmptySeries?.(found.id);
+
+      if (gone.length > 0) {
+        onDeparted?.(found.id, gone);
+      }
+
+      files += deletedPaths.length;
+
+      if (refusal !== null) {
+        await jobs.enqueue(CLEANUP_ARTEFACT_CACHE_JOB, {}, CLEANUP_ARTEFACT_CACHE_JOB);
+
+        return refusal;
+      }
+    }
+
+    await jobs.enqueue(CLEANUP_ARTEFACT_CACHE_JOB, {}, CLEANUP_ARTEFACT_CACHE_JOB);
+
+    return { kind: 'deleted', files };
+  };
+
+  /**
    * Whether a library exists as far as this viewer is concerned.
    *
    * Asked before a library's contents are listed, so that one an account may not reach — or one the
@@ -691,7 +790,7 @@ const createDatabaseLibraryService = ({
       return { added: 0, updated: 0, removed: 0, failed: 0 };
     }
 
-    return scanBookLibrary({
+    const result = await scanBookLibrary({
       libraryId: found.id,
       root: found.path,
       files,
@@ -727,6 +826,12 @@ const createDatabaseLibraryService = ({
             isCancelled: () => jobs.isCancelled(jobId),
           }),
     });
+
+    void nameChapters?.(found.id).catch(() =>
+      onProblem?.(found.path, 'its chapter names could not be looked up'),
+    );
+
+    return result;
   };
 
   /**
@@ -1711,6 +1816,27 @@ const createDatabaseLibraryService = ({
       return true;
     },
 
+    deleteMedia: async (mediaId) => {
+      const deleted = await deleteFilesWhere(eq(mediaItem.id, mediaId));
+
+      return deleted.kind === 'deleted' ? { kind: 'deleted' } : deleted;
+    },
+
+    deleteSeries: (seriesId) => deleteFilesWhere(eq(mediaItem.seriesId, seriesId)),
+
+    mediaIdsAt: async (paths) => {
+      if (paths.length === 0) {
+        return {};
+      }
+
+      const rows = await db
+        .select({ id: mediaItem.id, path: mediaItem.path })
+        .from(mediaItem)
+        .where(inArray(mediaItem.path, paths));
+
+      return Object.fromEntries(rows.map((row) => [row.path, row.id]));
+    },
+
     regeneratePreviews: async (libraryId) => {
       const found = await findLibrary(libraryId);
 
@@ -2037,7 +2163,7 @@ const createDatabaseLibraryService = ({
           service.listItems(viewer, libraryId, { kind: 'shows', limit, offset }),
       });
 
-      return episodes === null ? null : groupIntoShows(episodes);
+      return episodes === null ? null : groupIntoShows(episodes, await finishedBy(viewer));
     },
 
     comingUp: async (viewer) => {
@@ -2113,7 +2239,8 @@ const createDatabaseLibraryService = ({
       const ofTheSeries = await readShow(true);
       const episodes =
         ofTheSeries !== null && ofTheSeries.length > 0 ? ofTheSeries : await readShow(false);
-      const detail = episodes === null ? null : buildShowDetail(episodes, showId);
+      const detail =
+        episodes === null ? null : buildShowDetail(episodes, showId, await finishedBy(viewer));
 
       if (detail === null) {
         return null;

@@ -90,7 +90,10 @@ const PageReader = ({
   const chapter = chapters.find((one) => one.id === chapterId) ?? null;
   const pageCount = chapter?.pageCount ?? 0;
 
-  const asLeft = useMemo(() => readReaderPreferences(book.direction), [book.direction]);
+  const asLeft = useMemo(
+    () => readReaderPreferences(book.direction, book.id),
+    [book.direction, book.id],
+  );
   const [settings, setSettings] = useState<ReaderPreferences>(asLeft);
   const [wide, setWide] = useState<ReadonlySet<number>>(new Set());
   const [at, setAt] = useState(() =>
@@ -204,7 +207,7 @@ const PageReader = ({
     const next = { ...settings, ...changed };
 
     setSettings(next);
-    writeReaderPreferences(next);
+    writeReaderPreferences(next, book.id);
     wake();
   };
 

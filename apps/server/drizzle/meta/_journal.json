@@ -568,6 +568,13 @@
       "when": 1790182766034,
       "tag": "0080_books_in_a_series",
       "breakpoints": true
+    },
+    {
+      "idx": 81,
+      "version": "7",
+      "when": 1790277467959,
+      "tag": "0081_uploads_that_outlive_a_restart",
+      "breakpoints": true
     }
   ]
 }

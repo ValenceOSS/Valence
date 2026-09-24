@@ -45,7 +45,11 @@ const gather = (items: MediaSummary[]): Map<string, MediaSummary[]> => {
  * @param episodes - Every episode of the one programme.
  * @returns What to show for the programme itself.
  */
-const describeShow = (id: string, episodes: MediaSummary[]): ShowSummary | null => {
+const describeShow = (
+  id: string,
+  episodes: MediaSummary[],
+  finished?: ReadonlySet<string>,
+): ShowSummary | null => {
   const inOrder = [...episodes].sort(inBroadcastOrder);
   const cover = inOrder[0];
 
@@ -69,6 +73,8 @@ const describeShow = (id: string, episodes: MediaSummary[]): ShowSummary | null 
     year: inOrder.find((episode) => episode.year !== null)?.year ?? null,
     rating: inOrder.find((episode) => (episode.rating ?? null) !== null)?.rating ?? null,
     genres: inOrder.find((episode) => (episode.genres ?? []).length > 0)?.genres ?? [],
+    unwatchedCount:
+      finished === undefined ? null : inOrder.filter((episode) => !finished.has(episode.id)).length,
   };
 };
 
@@ -78,11 +84,13 @@ const describeShow = (id: string, episodes: MediaSummary[]): ShowSummary | null 
  * programme with ninety episodes would otherwise report itself as having thirty.
  *
  * @param items - Every item in a library.
+ * @param finished - The items whoever is looking has watched to the end, where somebody is, for how
+ *   many episodes of each programme they have left.
  * @returns One entry per programme, most recently added first.
  */
-const groupIntoShows = (items: MediaSummary[]): ShowSummary[] =>
+const groupIntoShows = (items: MediaSummary[], finished?: ReadonlySet<string>): ShowSummary[] =>
   [...gather(items)]
-    .map(([id, episodes]) => describeShow(id, episodes))
+    .map(([id, episodes]) => describeShow(id, episodes, finished))
     .filter((show): show is ShowSummary => show !== null)
     .sort((left, right) => Date.parse(right.latestAddedAt) - Date.parse(left.latestAddedAt));
 
@@ -92,16 +100,21 @@ const groupIntoShows = (items: MediaSummary[]): ShowSummary[] =>
  *
  * @param items - Every item in the library, of which the programme's are picked out.
  * @param showId - Which programme to build.
+ * @param finished - The items whoever is looking has watched to the end, where somebody is.
  * @returns The programme and its episodes, or null where no item belongs to it.
  */
-const buildShowDetail = (items: MediaSummary[], showId: string): ShowDetail | null => {
+const buildShowDetail = (
+  items: MediaSummary[],
+  showId: string,
+  finished?: ReadonlySet<string>,
+): ShowDetail | null => {
   const episodes = gather(items).get(showId);
 
   if (episodes === undefined) {
     return null;
   }
 
-  const summary = describeShow(showId, episodes);
+  const summary = describeShow(showId, episodes, finished);
 
   if (summary === null) {
     return null;

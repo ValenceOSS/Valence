@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { RequestFailed } from '@ValenceClient/query/RequestFailed';
@@ -10,8 +10,11 @@ const fetchFoldersMock = vi.hoisted(() => vi.fn());
 
 const createFolderMock = vi.hoisted(() => vi.fn());
 
+const searchFoldersMock = vi.hoisted(() => vi.fn());
+
 vi.mock('@ValenceClient/admin/fetchFolders', () => ({ fetchFolders: fetchFoldersMock }));
 vi.mock('@ValenceClient/admin/createFolder', () => ({ createFolder: createFolderMock }));
+vi.mock('@ValenceClient/admin/searchFolders', () => ({ searchFolders: searchFoldersMock }));
 
 const LISTINGS: Record<string, FolderListing> = {
   places: {
@@ -37,6 +40,11 @@ const LISTINGS: Record<string, FolderListing> = {
 };
 
 beforeEach(() => {
+  searchFoldersMock.mockReset();
+  searchFoldersMock.mockResolvedValue({
+    folders: [{ name: 'films', path: '/media/films' }],
+    isTruncated: false,
+  });
   createFolderMock.mockReset();
   fetchFoldersMock.mockReset();
   fetchFoldersMock.mockImplementation((path: string | null) => {
@@ -219,5 +227,62 @@ describe('making a folder', () => {
     await actor.click(screen.getByRole('button', { name: 'Cancel the new folder' }));
 
     expect(screen.queryByLabelText('Folder name')).not.toBeInTheDocument();
+  });
+});
+
+describe('FolderBrowser, finding a folder', () => {
+  it('finds folders by name below the one it is in, and opens the one chosen', async () => {
+    const actor = userEvent.setup();
+    const { onChoose } = draw('/media');
+
+    await screen.findByRole('button', { name: 'films' });
+    await actor.type(screen.getByLabelText('Find a folder'), 'fil');
+
+    const found = await screen.findByRole('list', { name: 'Folders found' });
+
+    expect(searchFoldersMock).toHaveBeenLastCalledWith('fil', '/media');
+
+    await actor.click(within(found).getByRole('button', { name: /films/ }));
+
+    expect(await screen.findByText('No folders in here.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Find a folder')).toHaveValue('');
+
+    await actor.click(screen.getByRole('button', { name: 'Use this folder' }));
+
+    expect(onChoose).toHaveBeenCalledWith('/media/films');
+  });
+
+  it('says so where nothing here is called that', async () => {
+    const actor = userEvent.setup();
+
+    searchFoldersMock.mockResolvedValue({ folders: [], isTruncated: false });
+    draw('/media');
+
+    await actor.type(await screen.findByLabelText('Find a folder'), 'nothing');
+
+    expect(await screen.findByText('No folder here is called that.')).toBeInTheDocument();
+  });
+
+  it('goes straight to a path typed whole, without searching', async () => {
+    const actor = userEvent.setup();
+
+    draw();
+
+    await actor.type(await screen.findByLabelText('Find a folder'), '/media');
+    await actor.click(await screen.findByRole('button', { name: 'Go to /media' }));
+
+    expect(await screen.findByRole('button', { name: 'shows' })).toBeInTheDocument();
+    expect(searchFoldersMock).not.toHaveBeenCalled();
+  });
+
+  it('waits for a second letter before it searches', async () => {
+    const actor = userEvent.setup();
+
+    draw('/media');
+
+    await actor.type(await screen.findByLabelText('Find a folder'), 'f');
+
+    expect(screen.getByRole('button', { name: 'films' })).toBeInTheDocument();
+    expect(searchFoldersMock).not.toHaveBeenCalled();
   });
 });

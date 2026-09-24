@@ -25,13 +25,14 @@ const PLACES = [
  *
  * @param libraries - Every library there is.
  * @param selectedId - The library the address names, or null for all of them.
- * @param onSelect - Told which library was chosen, or null for all of them.
+ * @param onSelect - Told which library was chosen, or null for all of them, and the place it was
+ *   chosen for — which is where choosing one takes you, from anywhere.
  * @returns A choice for each place that has several libraries.
  */
 const libraryChoicesFor = (
   libraries: readonly Library[],
   selectedId: string | null,
-  onSelect: (libraryId: string | null) => void,
+  onSelect: (libraryId: string | null, place: 'films' | 'shows' | 'read') => void,
 ): Partial<Record<'films' | 'shows' | 'read', NavBarChoices>> =>
   Object.fromEntries(
     PLACES.flatMap(({ place, kind, everyLabel, label }) => {
@@ -54,7 +55,7 @@ const libraryChoicesFor = (
             ],
             selectedId: chosen?.id ?? EVERY,
             onSelect: (id: string) => {
-              onSelect(id === EVERY ? null : id);
+              onSelect(id === EVERY ? null : id, place);
             },
           },
         ],
