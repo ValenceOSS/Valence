@@ -13,6 +13,8 @@ const RemoteSchema = z.object({
 
 let made: MusicPlayer | null = null;
 
+let unwire: (() => void) | null = null;
+
 /**
  * The one music player this phone has, made the first time it is asked for and kept for as long
  * as the app runs, so music carries on from screen to screen and with the app closed.
@@ -21,12 +23,19 @@ let made: MusicPlayer | null = null;
  * the lock screen and in Control Centre with its album's cover, and their buttons — and a pair of
  * headphones' — do what the same buttons in the app do.
  *
+ * The client's player is let go on signing out, and a new one made for whoever signs in next, so
+ * this follows it: the old one's buttons are let go and the new one is wired in its place.
+ *
  * @returns The player.
  */
 const thePhonesMusicPlayer = (): MusicPlayer => {
-  if (made !== null) {
-    return made;
+  const player = theMusicPlayer();
+
+  if (player === made) {
+    return player;
   }
+
+  unwire?.();
 
   const speaker = requireOptionalNativeModule<NativeMusic>('ValenceMusic');
 
@@ -34,10 +43,9 @@ const thePhonesMusicPlayer = (): MusicPlayer => {
     throw new Error('This build of Valence cannot play music.');
   }
 
-  const player = theMusicPlayer();
   let described: string | null = null;
 
-  player.subscribe(() => {
+  const unsubscribe = player.subscribe(() => {
     const current = player.read().current;
 
     if (current === null || current.id === described) {
@@ -55,7 +63,7 @@ const thePhonesMusicPlayer = (): MusicPlayer => {
     });
   });
 
-  speaker.addListener('onRemote', (said) => {
+  const listening = speaker.addListener('onRemote', (said) => {
     const read = RemoteSchema.safeParse(said);
 
     if (!read.success) {
@@ -84,6 +92,10 @@ const thePhonesMusicPlayer = (): MusicPlayer => {
     }
   });
 
+  unwire = () => {
+    unsubscribe();
+    listening.remove();
+  };
   made = player;
 
   return player;

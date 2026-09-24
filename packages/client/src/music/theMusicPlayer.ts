@@ -29,7 +29,7 @@ const theMusicPlayer = (): MusicPlayer => {
     canPlay,
     fetchTracks,
     report: (nowPlaying) => {
-      void reportNowPlaying(nowPlaying);
+      void reportNowPlaying(nowPlaying).catch(() => false);
     },
     command: sendMusicCommand,
     preferences: { read: readMusicPreferences, save: saveMusicPreferences },
