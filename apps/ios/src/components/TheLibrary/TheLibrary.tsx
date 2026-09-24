@@ -172,6 +172,7 @@ const styles = StyleSheet.create({
  * @param onAllArtists - Told somebody wants every artist.
  * @param onBook - Told to open a book.
  * @param onRead - Told to carry on reading a book.
+ * @param onListen - Told to carry on listening to a book.
  */
 const TheLibrary = ({
   onWatch,
@@ -187,6 +188,7 @@ const TheLibrary = ({
   onAllArtists,
   onBook,
   onRead,
+  onListen,
   isSearching = false,
   searchPage,
 }: TheLibraryProps) => {
@@ -655,6 +657,7 @@ const TheLibrary = ({
             libraryIds={bookLibraries}
             onBook={onBook}
             onRead={onRead}
+            onListen={onListen}
             onScrolled={partScrolled}
             onScrolledTo={followScroll}
           />

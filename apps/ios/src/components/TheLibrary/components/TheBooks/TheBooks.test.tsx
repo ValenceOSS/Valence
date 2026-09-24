@@ -39,7 +39,13 @@ describe('TheBooks', () => {
     const onRead = jest.fn();
     const onBook = jest.fn();
     const drawn = await render(
-      <TheBooks header={null} libraryIds={['books']} onBook={onBook} onRead={onRead} />,
+      <TheBooks
+        header={null}
+        libraryIds={['books']}
+        onBook={onBook}
+        onRead={onRead}
+        onListen={jest.fn()}
+      />,
       { wrapper: CacheScope },
     );
 
@@ -54,7 +60,13 @@ describe('TheBooks', () => {
     jest.mocked(fetchBooks).mockResolvedValue([]);
     jest.mocked(fetchReading).mockResolvedValue([]);
     const drawn = await render(
-      <TheBooks header={null} libraryIds={['books']} onBook={jest.fn()} onRead={jest.fn()} />,
+      <TheBooks
+        header={null}
+        libraryIds={['books']}
+        onBook={jest.fn()}
+        onRead={jest.fn()}
+        onListen={jest.fn()}
+      />,
       { wrapper: CacheScope },
     );
 

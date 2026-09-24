@@ -1,21 +1,29 @@
+type Channel = 'music' | 'book';
+
 type NativeMusic = {
-  load: (url: string, cookie: string | null) => void;
-  play: () => void;
-  pause: () => void;
-  seek: (seconds: number) => void;
-  setVolume: (volume: number) => void;
-  setMuted: (isMuted: boolean) => void;
-  describe: (track: {
-    title: string;
-    artist: string;
-    album: string;
-    artwork: string | null;
-  }) => void;
-  stop: () => void;
+  load: (channel: Channel, url: string, cookie: string | null) => void;
+  play: (channel: Channel) => void;
+  pause: (channel: Channel) => void;
+  seek: (channel: Channel, seconds: number) => void;
+  setRate: (channel: Channel, rate: number) => void;
+  setVolume: (channel: Channel, volume: number) => void;
+  setMuted: (channel: Channel, isMuted: boolean) => void;
+  describe: (
+    channel: Channel,
+    track: {
+      title: string;
+      artist: string;
+      album: string;
+      artwork: string | null;
+      from: number | null;
+      lasts: number | null;
+    },
+  ) => void;
+  stop: (channel: Channel) => void;
   addListener: (
     event: 'onAudio' | 'onRemote',
     listener: (said: object) => void,
   ) => { remove: () => void };
 };
 
-export type { NativeMusic };
+export type { Channel, NativeMusic };

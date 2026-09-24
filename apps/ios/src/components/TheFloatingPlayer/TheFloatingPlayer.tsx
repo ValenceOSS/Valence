@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Animated, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useWhatIsHeard } from '@ValenceClient/books/useWhatIsHeard';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
+import { thePhonesAudiobookPlayer } from '@ValencePhone/books/thePhonesAudiobookPlayer';
+import { thePhonesMusicPlayer } from '@ValencePhone/music/thePhonesMusicPlayer';
 import { TheNowPlayingBar } from '@ValencePhone/components/TheNowPlayingBar/TheNowPlayingBar';
 import { usePrefersStillness } from '@ValencePhone/hooks/usePrefersStillness';
 import { usePictureLights } from '@ValencePhone/hooks/usePictureLights';
@@ -21,20 +24,21 @@ const styles = StyleSheet.create({
 });
 
 /**
- * What music is playing, kept at the foot of a page of the music library the way it sits above the
- * tabs on the library itself, so somebody browsing albums can see and stop what is playing without
+ * What music or book is playing, kept at the foot of a page of the music library the way it sits
+ * above the tabs on the library itself, so somebody browsing albums can see and stop what is playing without
  * going back. It rises into place when such a page is on top and sinks off the foot of the screen
  * when one is not — moved, never faded, since the glass it sits on draws wrongly while it fades.
  * It reads the colours of the cover of what is playing ahead of time, so the whole player rises
  * already lit in them rather than changing colour on the way up.
  *
  * @param isShown - Whether a page of the music library is on top.
- * @param onOpen - Told somebody wants the whole player.
+ * @param onOpen - Told which is being heard when somebody wants the whole player.
  */
 const TheFloatingPlayer = ({ isShown, onOpen }: TheFloatingPlayerProps) => {
   const room = useSafeAreaInsets();
   const isStill = usePrefersStillness();
   const { state } = useTheMusic();
+  const heard = useWhatIsHeard(thePhonesAudiobookPlayer(), thePhonesMusicPlayer());
   const track = state.current;
 
   usePictureLights(
@@ -42,7 +46,7 @@ const TheFloatingPlayer = ({ isShown, onOpen }: TheFloatingPlayerProps) => {
       ? null
       : onThisServer(albumArtworkUrl(track.album.id)),
   );
-  const isUp = isShown && state.current !== null;
+  const isUp = isShown && heard !== null;
   const [shown] = useState(() => new Animated.Value(isUp ? 1 : 0));
   const rising = useMemo(
     () =>

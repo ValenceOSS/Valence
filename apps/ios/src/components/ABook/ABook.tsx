@@ -1,10 +1,17 @@
 import { useState } from 'react';
 import { BookOpen, Share } from '@keyline-icons/react-native';
-import { BookOpen as BookOpenFilled } from '@keyline-icons/react-native/fill';
+import {
+  BookOpen as BookOpenFilled,
+  Headphones as HeadphonesFilled,
+} from '@keyline-icons/react-native/fill';
 import { useQuery } from '@tanstack/react-query';
 import { ActivityIndicator, Image, StyleSheet, View } from 'react-native';
 import { describeReadingPlace } from '@ValenceClient/books/describeReadingPlace';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
+import { listenLabel } from '@ValenceClient/books/listenLabel';
+import { startListening } from '@ValenceClient/books/startListening';
+import { stillListening } from '@ValenceClient/books/stillListening';
+import { thePhonesAudiobookPlayer } from '@ValencePhone/books/thePhonesAudiobookPlayer';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { AShareSheet } from '@ValencePhone/components/AShareSheet/AShareSheet';
 import { Button } from '@ValencePhone/components/Button/Button';
@@ -15,6 +22,7 @@ import { Words } from '@ValencePhone/components/Words/Words';
 import { onThisServer } from '@ValencePhone/platform/onThisServer';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
+import { isAudiobookFormat } from '@ValenceContracts/schemas/Book';
 import type { ReadingProgress } from '@ValenceContracts/schemas/Book';
 import type { ABookProps } from './ABook.types';
 
@@ -71,15 +79,22 @@ const howFarInto = (read: ReadingProgress | undefined, pageCount: number | null)
  * of several chapters, as a series of comics is, lists them, each saying how far into it somebody
  * has read, and any can be opened from its start.
  *
+ * A book there is to hear has a way to listen to it too, carrying on from where this profile left
+ * off, and saying where that was; it leads where the book has nothing to read.
+ *
  * @param bookId - Which book.
  * @param onRead - Told to open it, at a chapter somebody picked or where they left off.
+ * @param onListen - Told once the book has started playing, to show the player.
  * @param onBack - Told somebody is done with it.
  */
-const ABook = ({ bookId, onRead, onBack }: ABookProps) => {
+const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
   const colours = useTheColours();
   const read = useQuery(bookQueries.one(bookId));
   const progress = useQuery(bookQueries.progress(bookId));
   const reading = useQuery(bookQueries.reading());
+  const hasAudio = read.data?.book.hasAudio === true;
+  const heard = useQuery({ ...bookQueries.listeningPlace(bookId), enabled: hasAudio });
+  const listening = useQuery({ ...bookQueries.listening(), enabled: hasAudio });
   const [sharing, setSharing] = useState<ShareSubject | null>(null);
 
   if (read.isPending) {
@@ -98,12 +113,28 @@ const ABook = ({ bookId, onRead, onBack }: ABookProps) => {
     );
   }
 
-  const { book, chapters } = read.data;
+  const detail = read.data;
+  const { book, chapters } = detail;
   const held = new Map((progress.data ?? []).map((one) => [one.chapterId, one]));
   const where = (reading.data ?? []).find((one) => one.book.id === bookId) ?? null;
   const isStarted = where !== null && !where.isFinished;
   const isFinished = where?.isFinished === true;
-  const ordered = [...chapters].sort((one, other) => one.number - other.number);
+  const ordered = chapters
+    .filter((chapter) => !isAudiobookFormat(chapter.format))
+    .sort((one, other) => one.number - other.number);
+  const partway = stillListening(listening.data ?? []).find((one) => one.book.id === bookId);
+  const listen = (
+    <Button
+      tone={ordered.length === 0 ? 'bold' : 'quiet'}
+      icon={HeadphonesFilled}
+      isWide
+      onPress={() => {
+        void startListening(detail, thePhonesAudiobookPlayer()).then(onListen);
+      }}
+    >
+      {listenLabel(heard.data)}
+    </Button>
+  );
   const facts = [
     book.authors === null || book.authors.length === 0 ? null : book.authors.join(', '),
     book.year === null ? null : book.year.toString(),
@@ -130,11 +161,13 @@ const ABook = ({ bookId, onRead, onBack }: ABookProps) => {
         </View>
       </View>
 
-      {ordered.length === 0 ? (
+      {hasAudio && ordered.length === 0 ? listen : null}
+
+      {ordered.length === 0 && !hasAudio ? (
         <Words tone="muted">
           Nothing in this book yet. Scanning the library again may find it.
         </Words>
-      ) : (
+      ) : ordered.length === 0 ? null : (
         <Button
           tone="bold"
           icon={BookOpenFilled}
@@ -146,6 +179,8 @@ const ABook = ({ bookId, onRead, onBack }: ABookProps) => {
           {isStarted ? 'Continue reading' : isFinished ? 'Read again' : 'Read'}
         </Button>
       )}
+
+      {hasAudio && ordered.length > 0 ? listen : null}
 
       <Button
         tone="ghost"
@@ -161,6 +196,12 @@ const ABook = ({ bookId, onRead, onBack }: ABookProps) => {
       {where === null ? null : (
         <Words tone="muted" isCentred>
           {isFinished ? 'Finished' : describeReadingPlace(where)}
+        </Words>
+      )}
+
+      {partway === undefined ? null : (
+        <Words tone="muted" isCentred>
+          {partway.detail}
         </Words>
       )}
 

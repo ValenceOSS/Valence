@@ -4,6 +4,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { describeReadingPlace } from '@ValenceClient/books/describeReadingPlace';
 import { readingFractionOf } from '@ValenceClient/books/readingFractionOf';
+import { stillListening } from '@ValenceClient/books/stillListening';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { ANothingHere } from '@ValencePhone/components/ANothingHere/ANothingHere';
 import { APoster } from '@ValencePhone/components/APoster/APoster';
@@ -22,13 +23,14 @@ const styles = StyleSheet.create({
 
 /**
  * The books part of the library, as the web's books page lays it out: what this profile is part way
- * through first, carried on from where they stopped with a press, and then every book in the
- * household's book libraries.
+ * through reading and then listening to first, each carried on from where they stopped with a
+ * press, and then every book in the household's book libraries.
  *
  * @param header - What sits above it, which the library draws.
  * @param libraryIds - The household's libraries of books.
  * @param onBook - Told to open a book's page.
  * @param onRead - Told to carry on reading a book.
+ * @param onListen - Told to carry on listening to a book.
  * @param onScrolled - Told whether it has been scrolled from its top.
  * @param onScrolledTo - Told how far down it has been scrolled, as it scrolls.
  */
@@ -37,17 +39,20 @@ const TheBooks = ({
   libraryIds,
   onBook,
   onRead,
+  onListen,
   onScrolled,
   onScrolledTo,
 }: TheBooksProps) => {
   const colours = useTheColours();
   const reading = useQuery(bookQueries.reading());
+  const listening = useQuery(bookQueries.listening());
   const shelves = useQueries({ queries: libraryIds.map((id) => bookQueries.inLibrary(id)) });
   const isReading = shelves.some((shelf) => shelf.isPending);
   const books = shelves
     .flatMap((shelf) => shelf.data ?? [])
     .sort((one, other) => one.title.localeCompare(other.title));
   const carryingOn = (reading.data ?? []).filter((one) => !one.isFinished);
+  const stillHearing = stillListening(listening.data ?? []);
 
   /**
    * A book's cover, or nothing where it has none.
@@ -79,6 +84,28 @@ const TheBooks = ({
                     artwork={coverOf(one.book)}
                     watched={readingFractionOf(one)}
                     note={describeReadingPlace(one)}
+                  />
+                </Button>
+              ))}
+            </AShelf>
+          )}
+
+          {stillHearing.length === 0 ? null : (
+            <AShelf title="Continue listening">
+              {stillHearing.map((one) => (
+                <Button
+                  key={one.book.id}
+                  tone="bare"
+                  label={`Carry on listening to ${one.book.title}`}
+                  onPress={() => {
+                    onListen(one.book.id);
+                  }}
+                >
+                  <APoster
+                    title={one.book.title}
+                    artwork={coverOf(one.book)}
+                    watched={one.fraction}
+                    note={one.detail}
                   />
                 </Button>
               ))}

@@ -36,9 +36,12 @@ describe('ABook', () => {
     jest.mocked(fetchBook).mockResolvedValue({ book: aBook(), chapters: [aChapter(1)] });
     jest.mocked(fetchReading).mockResolvedValue([]);
     const onRead = jest.fn();
-    const drawn = await render(<ABook bookId={aBook().id} onRead={onRead} onBack={jest.fn()} />, {
-      wrapper: CacheScope,
-    });
+    const drawn = await render(
+      <ABook bookId={aBook().id} onRead={onRead} onListen={jest.fn()} onBack={jest.fn()} />,
+      {
+        wrapper: CacheScope,
+      },
+    );
 
     expect(await drawn.findByText('Dune')).toBeTruthy();
     expect(drawn.getByText('Frank Herbert · 1965')).toBeTruthy();
@@ -52,7 +55,7 @@ describe('ABook', () => {
     jest.mocked(fetchBook).mockResolvedValue({ book: aBook(), chapters: [aChapter(1)] });
     jest.mocked(fetchReading).mockResolvedValue([aReading(false)]);
     const drawn = await render(
-      <ABook bookId={aBook().id} onRead={jest.fn()} onBack={jest.fn()} />,
+      <ABook bookId={aBook().id} onRead={jest.fn()} onListen={jest.fn()} onBack={jest.fn()} />,
       {
         wrapper: CacheScope,
       },
@@ -66,9 +69,12 @@ describe('ABook', () => {
     jest.mocked(fetchBook).mockResolvedValue({ book: aBook(), chapters: [aChapter(1)] });
     jest.mocked(fetchReading).mockResolvedValue([aReading(true)]);
     const onRead = jest.fn();
-    const drawn = await render(<ABook bookId={aBook().id} onRead={onRead} onBack={jest.fn()} />, {
-      wrapper: CacheScope,
-    });
+    const drawn = await render(
+      <ABook bookId={aBook().id} onRead={onRead} onListen={jest.fn()} onBack={jest.fn()} />,
+      {
+        wrapper: CacheScope,
+      },
+    );
 
     await userEvent.press(await drawn.findByText('Read again'));
 
@@ -82,9 +88,12 @@ describe('ABook', () => {
     });
     jest.mocked(fetchReading).mockResolvedValue([]);
     const onRead = jest.fn();
-    const drawn = await render(<ABook bookId={aBook().id} onRead={onRead} onBack={jest.fn()} />, {
-      wrapper: CacheScope,
-    });
+    const drawn = await render(
+      <ABook bookId={aBook().id} onRead={onRead} onListen={jest.fn()} onBack={jest.fn()} />,
+      {
+        wrapper: CacheScope,
+      },
+    );
 
     await userEvent.press(await drawn.findByRole('button', { name: 'Read Chapter 2' }));
 
