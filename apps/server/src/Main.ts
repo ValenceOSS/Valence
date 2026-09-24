@@ -147,6 +147,8 @@ import { createSidecarSubtitleService } from '@ValenceServer/subtitles/createSid
 import { createDatabaseProfileService } from '@ValenceServer/profiles/createDatabaseProfileService';
 import { createDatabaseHouseholdService } from '@ValenceServer/household/createDatabaseHouseholdService';
 import { createFileSplashscreenStore } from '@ValenceServer/splashscreen/createFileSplashscreenStore';
+import { createChapterNamer } from '@ValenceServer/books/createChapterNamer';
+import { findChapterNames } from '@ValenceServer/books/findChapterNames';
 import { createDatabaseBookService } from '@ValenceServer/books/createDatabaseBookService';
 import { ViewerProfileSchema } from '@ValenceContracts/schemas/ViewerProfile';
 import { createEmbeddedSubtitleService } from '@ValenceServer/subtitles/createEmbeddedSubtitleService';
@@ -1992,6 +1994,16 @@ const libraryService = createDatabaseLibraryService({
     createFilenameMetadataProvider(),
   ],
   books: bookService,
+  nameChapters: createChapterNamer(bookService, (series) =>
+    findChapterNames(
+      (address) =>
+        fetch(address, {
+          headers: { 'User-Agent': 'Valence' },
+          signal: AbortSignal.timeout(10_000),
+        }),
+      series,
+    ),
+  ),
   images: { forget: (url) => images.forget(url) },
   music: {
     store: musicStore,

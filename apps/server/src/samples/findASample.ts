@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { plainly } from '@ValenceServer/text/plainly';
 
 const ITunesAnswerSchema = z.object({
   results: z.array(
@@ -11,20 +12,6 @@ const ITunesAnswerSchema = z.object({
 });
 
 const PREVIEWS_FROM = /^https:\/\/[a-z0-9.-]+\.(?:apple|mzstatic)\.com\//;
-
-/**
- * Reads a name for comparing, the way two catalogues spell the same album differently: in any case,
- * without what is in brackets — an edition, a remaster, a bonus disc — and without punctuation.
- *
- * @param name - The name.
- * @returns It, plainly.
- */
-const plainly = (name: string): string =>
-  name
-    .toLowerCase()
-    .replace(/\([^)]*\)|\[[^\]]*\]/g, '')
-    .replace(/[^\p{L}\p{N}]+/gu, ' ')
-    .trim();
 
 /**
  * Finds a short sample of an album — half a minute of one of its songs — from Apple's public music

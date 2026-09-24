@@ -145,6 +145,7 @@ type CreateDatabaseLibraryServiceOptions = {
   certificationRegion?: () => Promise<string>;
   providers?: MetadataProvider[];
   books?: BookStore;
+  nameChapters?: (libraryId: string) => Promise<number>;
   images?: { forget: (url: string) => Promise<void> };
   music?: {
     store: MusicStore;
@@ -278,6 +279,7 @@ const createDatabaseLibraryService = ({
   jobs,
   providers,
   books,
+  nameChapters,
   images,
   music,
   atOnce = 1,
@@ -788,7 +790,7 @@ const createDatabaseLibraryService = ({
       return { added: 0, updated: 0, removed: 0, failed: 0 };
     }
 
-    return scanBookLibrary({
+    const result = await scanBookLibrary({
       libraryId: found.id,
       root: found.path,
       files,
@@ -824,6 +826,12 @@ const createDatabaseLibraryService = ({
             isCancelled: () => jobs.isCancelled(jobId),
           }),
     });
+
+    void nameChapters?.(found.id).catch(() =>
+      onProblem?.(found.path, 'its chapter names could not be looked up'),
+    );
+
+    return result;
   };
 
   /**
