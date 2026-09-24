@@ -3,6 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UploadMediaDialog } from './UploadMediaDialog';
 import type { Library } from '@ValenceContracts/schemas/Library';
+import type { uploadMedia } from '@ValenceClient/library/uploadMedia';
+
+type UploadOptions = NonNullable<Parameters<typeof uploadMedia>[3]>;
 
 const uploadMediaMock = vi.hoisted(() => vi.fn());
 
@@ -194,8 +197,20 @@ describe('UploadMediaDialog', () => {
       expect(onUploaded).toHaveBeenCalledWith(FILMS);
     });
 
-    expect(uploadMediaMock).toHaveBeenNthCalledWith(1, FILMS.id, 'Arrival.mkv', expect.any(File));
-    expect(uploadMediaMock).toHaveBeenNthCalledWith(2, FILMS.id, 'Dune.mkv', expect.any(File));
+    expect(uploadMediaMock).toHaveBeenNthCalledWith(
+      1,
+      FILMS.id,
+      'Arrival.mkv',
+      expect.any(File),
+      expect.anything(),
+    );
+    expect(uploadMediaMock).toHaveBeenNthCalledWith(
+      2,
+      FILMS.id,
+      'Dune.mkv',
+      expect.any(File),
+      expect.anything(),
+    );
     expect(screen.getAllByText('Uploaded')).toHaveLength(2);
     expect(screen.getByRole('status')).toHaveTextContent('2 files uploaded');
     expect(onUploaded).toHaveBeenCalledTimes(1);
@@ -254,7 +269,58 @@ describe('UploadMediaDialog', () => {
       expect(uploadMediaMock).toHaveBeenCalledTimes(1);
     });
 
-    expect(uploadMediaMock).toHaveBeenCalledWith(FILMS.id, 'Arrival.mkv', expect.any(File));
+    expect(uploadMediaMock).toHaveBeenCalledWith(
+      FILMS.id,
+      'Arrival.mkv',
+      expect.any(File),
+      expect.anything(),
+    );
+  });
+
+  it('says how much of the file being sent has arrived', async () => {
+    const actor = userEvent.setup();
+
+    draw();
+
+    uploadMediaMock.mockImplementationOnce(
+      (_library: string, _path: string, _file: File, { onProgress }: UploadOptions) => {
+        onProgress?.(0.4);
+
+        return new Promise(() => undefined);
+      },
+    );
+
+    await actor.upload(screen.getByLabelText(/Choose files to upload/), [fileAt('Arrival.mkv')]);
+    await actor.click(screen.getByRole('button', { name: 'Upload' }));
+
+    expect(await screen.findByText('Uploading 40%')).toBeInTheDocument();
+  });
+
+  it('stops part of the way, cancelling the file being sent and sending no more', async () => {
+    const actor = userEvent.setup();
+    const { onUploaded } = draw();
+
+    uploadMediaMock.mockImplementationOnce(
+      (_library: string, _path: string, _file: File, { signal }: UploadOptions) =>
+        new Promise((_done, fail) => {
+          signal?.addEventListener('abort', () => {
+            fail(new Error('stopped'));
+          });
+        }),
+    );
+
+    await actor.upload(screen.getByLabelText(/Choose files to upload/), [
+      fileAt('Arrival.mkv'),
+      fileAt('Dune.mkv'),
+    ]);
+    await actor.click(screen.getByRole('button', { name: 'Upload' }));
+    await actor.click(await screen.findByRole('button', { name: 'Stop' }));
+
+    expect(await screen.findByRole('button', { name: 'Close' })).toBeInTheDocument();
+    expect(uploadMediaMock).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('stopped')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Waiting')).toHaveLength(2);
+    expect(onUploaded).not.toHaveBeenCalled();
   });
 
   it('closes and forgets what was chosen', async () => {
