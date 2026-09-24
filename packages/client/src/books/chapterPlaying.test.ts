@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { chapterPlaying } from '@ValenceScreens/listening/chapterPlaying';
-import { tracksOf } from '@ValenceScreens/listening/tracksOf';
-import { aFakeAudiobookPlayer } from '@ValenceScreens/testing/aFakeAudiobookPlayer';
-import { anAudiobook } from '@ValenceScreens/testing/anAudiobook';
+import { chapterPlaying } from '@ValenceClient/books/chapterPlaying';
+import { tracksOf } from '@ValenceClient/books/tracksOf';
+import { aFakeAudiobookPlayer } from '@ValenceClient/testing/aFakeAudiobookPlayer';
+import { anAudiobook } from '@ValenceClient/testing/anAudiobook';
 
 describe('chapterPlaying', () => {
   it('is the last chapter to have started', () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { takeTurns } from '@ValenceScreens/listening/takeTurns';
+import { takeTurns } from '@ValenceClient/books/takeTurns';
 
 /**
  * A player that only says whether it is playing, and can be told to.
@@ -59,5 +59,23 @@ describe('takeTurns', () => {
     book.set(true);
 
     expect(music.player.pause).not.toHaveBeenCalled();
+  });
+});
+
+describe('takeTurns, saying whose turn it is', () => {
+  it('says which started, each time one does', () => {
+    const book = aPlayable();
+    const music = aPlayable();
+    const turns: string[] = [];
+
+    takeTurns(book.player, music.player, (which) => {
+      turns.push(which);
+    });
+    book.set(true);
+    music.set(true);
+    music.set(false);
+    book.set(true);
+
+    expect(turns).toEqual(['one', 'other', 'one']);
   });
 });

@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { anAudiobook } from '@ValenceScreens/testing/anAudiobook';
+import { anAudiobook } from '@ValenceClient/testing/anAudiobook';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { SeriesDialog } from './SeriesDialog';
 

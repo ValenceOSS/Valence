@@ -1,4 +1,4 @@
-import { chapterPlaying } from './chapterPlaying';
+import { chapterPlaying } from '@ValenceClient/books/chapterPlaying';
 import type { AudiobookPlayer } from '@ValenceClient/books/createAudiobookPlayer';
 
 const RESTART_AFTER_SECONDS = 3;

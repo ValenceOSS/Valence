@@ -4,27 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { forgetPlatform } from '@ValenceClient/platform/installPlatform';
 import { installATestClient } from '@ValenceScreens/testing/installATestClient';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
-import { anAudiobook } from '@ValenceScreens/testing/anAudiobook';
+import { aListening } from '@ValenceClient/testing/aListening';
 import { ContinueListening } from './ContinueListening';
 import type { BookListening } from '@ValenceContracts/schemas/Book';
-
-/**
- * Somebody partway through the book.
- *
- * @param overrides - Anything about where they are that matters to the test.
- * @returns Where they are.
- */
-const heard = (overrides: Partial<BookListening> = {}): BookListening => ({
-  book: anAudiobook().book,
-  chapterId: anAudiobook().chapters[0]?.id ?? '',
-  chapterTitle: 'Part 2',
-  positionSeconds: 60,
-  heardSeconds: 660,
-  durationSeconds: 1200,
-  isFinished: false,
-  updatedAt: '2026-09-23T00:00:00.000Z',
-  ...overrides,
-});
 
 /**
  * Serves what somebody has been listening to.
@@ -47,7 +29,7 @@ afterEach(() => {
 
 describe('ContinueListening', () => {
   it('lists the audiobooks somebody is partway through, saying where and how long is left', async () => {
-    serve([heard()]);
+    serve([aListening()]);
 
     renderInAnAddress(<ContinueListening onOpen={vi.fn()} />);
 
@@ -56,7 +38,7 @@ describe('ContinueListening', () => {
   });
 
   it('draws nothing where everything was finished', async () => {
-    serve([heard({ isFinished: true })]);
+    serve([aListening({ isFinished: true })]);
 
     const { container } = renderInAnAddress(<ContinueListening onOpen={vi.fn()} />);
 
@@ -69,7 +51,7 @@ describe('ContinueListening', () => {
   it('opens the book chosen', async () => {
     const onOpen = vi.fn();
 
-    serve([heard()]);
+    serve([aListening()]);
 
     renderInAnAddress(<ContinueListening onOpen={onOpen} />);
 

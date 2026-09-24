@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { describeListeningPlace } from '@ValenceScreens/listening/describeListeningPlace';
-import { anAudiobook } from '@ValenceScreens/testing/anAudiobook';
+import { describeListeningPlace } from '@ValenceClient/books/describeListeningPlace';
+import { anAudiobook } from '@ValenceClient/testing/anAudiobook';
 import type { BookListening } from '@ValenceContracts/schemas/Book';
 
 /**

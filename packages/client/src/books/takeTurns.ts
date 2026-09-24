@@ -10,24 +10,33 @@ type Playable = {
  *
  * @param one - One player.
  * @param other - The other.
+ * @param onTurn - Told which of the two has just started.
  * @returns A way to stop.
  */
-const takeTurns = (one: Playable, other: Playable): (() => void) => {
-  const watch = (player: Playable, quieting: Playable) => {
+const takeTurns = (
+  one: Playable,
+  other: Playable,
+  onTurn: (which: 'one' | 'other') => void = () => {},
+): (() => void) => {
+  const watch = (player: Playable, quieting: Playable, which: 'one' | 'other') => {
     let wasPlaying = player.read().isPlaying;
 
     return player.subscribe(() => {
       const isPlaying = player.read().isPlaying;
 
-      if (isPlaying && !wasPlaying && quieting.read().isPlaying) {
-        quieting.pause();
+      if (isPlaying && !wasPlaying) {
+        onTurn(which);
+
+        if (quieting.read().isPlaying) {
+          quieting.pause();
+        }
       }
 
       wasPlaying = isPlaying;
     });
   };
 
-  const stops = [watch(one, other), watch(other, one)];
+  const stops = [watch(one, other, 'one'), watch(other, one, 'other')];
 
   return () => {
     stops.forEach((stop) => {

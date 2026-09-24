@@ -1,5 +1,5 @@
 import { fetchListeningProgress } from '@ValenceClient/books/fetchListening';
-import { tracksOf } from './tracksOf';
+import { tracksOf } from '@ValenceClient/books/tracksOf';
 import type { AudiobookPlayer } from '@ValenceClient/books/createAudiobookPlayer';
 import type { BookDetail } from '@ValenceContracts/schemas/Book';
 

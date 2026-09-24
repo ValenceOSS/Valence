@@ -47,6 +47,16 @@ const aFakePlatform = (overrides: Partial<Platform> = {}): Platform => {
       },
       canPlay: () => true,
     }),
+    listeningAudio: () => ({
+      src: '',
+      currentTime: 0,
+      duration: Number.NaN,
+      playbackRate: 1,
+      paused: true,
+      play: () => Promise.resolve(),
+      pause: () => {},
+      addEventListener: () => {},
+    }),
     ...overrides,
   };
 };

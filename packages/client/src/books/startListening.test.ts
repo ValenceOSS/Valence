@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { startListening } from '@ValenceScreens/listening/startListening';
-import { aFakeAudiobookPlayer } from '@ValenceScreens/testing/aFakeAudiobookPlayer';
-import { anAudiobook } from '@ValenceScreens/testing/anAudiobook';
+import { startListening } from '@ValenceClient/books/startListening';
+import { aFakeAudiobookPlayer } from '@ValenceClient/testing/aFakeAudiobookPlayer';
+import { anAudiobook } from '@ValenceClient/testing/anAudiobook';
 
 const PLACE = {
   bookId: anAudiobook().book.id,

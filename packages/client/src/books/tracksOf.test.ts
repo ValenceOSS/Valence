@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { tracksOf } from '@ValenceScreens/listening/tracksOf';
-import { anAudiobook } from '@ValenceScreens/testing/anAudiobook';
+import { tracksOf } from '@ValenceClient/books/tracksOf';
+import { anAudiobook } from '@ValenceClient/testing/anAudiobook';
 
 describe('tracksOf', () => {
   it('lists a book’s sound in the order it is numbered, with each track’s marks', () => {

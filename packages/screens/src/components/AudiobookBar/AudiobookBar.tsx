@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { ChevronUp as ChevronUpIcon, X as XIcon } from '@keyline-icons/react';
 import {
   Pause as PauseFilledIcon,
@@ -6,7 +5,6 @@ import {
   RotateCcw as RotateCcwFilledIcon,
   RotateCw as RotateCwFilledIcon,
 } from '@keyline-icons/react/fill';
-import { useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
@@ -14,17 +12,14 @@ import { PopoverPanel } from '@ValenceUI/PopoverPanel';
 import { Spinner } from '@ValenceUI/Spinner';
 import { fadeVariants, revealTransition } from '@ValenceUI/animations/reveal';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
-import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { BarButton } from '@ValenceScreens/components/BarButton/BarButton';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
-import { chapterPlaying } from '@ValenceScreens/listening/chapterPlaying';
-import { theAudiobookPlayer } from '@ValenceScreens/listening/theAudiobookPlayer';
-import { useAudiobookPlayer } from '@ValenceScreens/listening/useAudiobookPlayer';
-import {
-  BACK_SECONDS,
-  FORWARD_SECONDS,
-  useAudiobookSession,
-} from '@ValenceScreens/listening/useAudiobookSession';
+import { chapterPlaying } from '@ValenceClient/books/chapterPlaying';
+import { theAudiobookPlayer } from '@ValenceClient/books/theAudiobookPlayer';
+import { useAudiobookPlayer } from '@ValenceClient/books/useAudiobookPlayer';
+import { useListeningKeptFresh } from '@ValenceClient/books/useListeningKeptFresh';
+import { LISTENING_CHOICES } from '@ValenceClient/books/LISTENING_CHOICES';
+import { useAudiobookSession } from '@ValenceScreens/listening/useAudiobookSession';
 import { AudiobookPanel } from './components/AudiobookPanel/AudiobookPanel';
 import type { AudiobookBarProps } from './AudiobookBar.types';
 
@@ -47,26 +42,13 @@ const ARRIVING = {
  */
 const AudiobookBar = ({ player: given }: AudiobookBarProps) => {
   const { state, player } = useAudiobookPlayer(given ?? theAudiobookPlayer());
-  const queries = useQueryClient();
   const prefersReducedMotion = useReducedMotionConfig();
   const arriving = revealTransition(prefersReducedMotion, 'heavy');
   const { book } = state;
-  const bookId = book?.id ?? null;
   const chapter = state.chapters[chapterPlaying(state)];
 
   useAudiobookSession(state, player);
-
-  useEffect(() => {
-    if (bookId === null || !state.isPlaying) {
-      void queries.invalidateQueries({ queryKey: bookQueries.listening().queryKey });
-
-      if (bookId !== null) {
-        void queries.invalidateQueries({
-          queryKey: bookQueries.listeningPlace(bookId).queryKey,
-        });
-      }
-    }
-  }, [bookId, state.isPlaying, queries]);
+  useListeningKeptFresh();
 
   return (
     <AnimatePresence>
@@ -99,10 +81,10 @@ const AudiobookBar = ({ player: given }: AudiobookBarProps) => {
 
               <div className="flex shrink-0 items-center">
                 <BarButton
-                  label={`Back ${BACK_SECONDS.toString()} seconds`}
+                  label={`Back ${LISTENING_CHOICES.backSeconds.toString()} seconds`}
                   glyph={RotateCcwFilledIcon}
                   onClick={() => {
-                    player.skip(-BACK_SECONDS);
+                    player.skip(-LISTENING_CHOICES.backSeconds);
                   }}
                 />
 
@@ -124,10 +106,10 @@ const AudiobookBar = ({ player: given }: AudiobookBarProps) => {
                 </Button>
 
                 <BarButton
-                  label={`On ${FORWARD_SECONDS.toString()} seconds`}
+                  label={`On ${LISTENING_CHOICES.forwardSeconds.toString()} seconds`}
                   glyph={RotateCwFilledIcon}
                   onClick={() => {
-                    player.skip(FORWARD_SECONDS);
+                    player.skip(LISTENING_CHOICES.forwardSeconds);
                   }}
                 />
 

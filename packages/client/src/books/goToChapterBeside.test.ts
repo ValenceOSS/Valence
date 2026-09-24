@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { goToChapterBeside } from '@ValenceScreens/listening/goToChapterBeside';
-import { tracksOf } from '@ValenceScreens/listening/tracksOf';
-import { aFakeAudiobookPlayer } from '@ValenceScreens/testing/aFakeAudiobookPlayer';
-import { anAudiobook } from '@ValenceScreens/testing/anAudiobook';
+import { goToChapterBeside } from '@ValenceClient/books/goToChapterBeside';
+import { tracksOf } from '@ValenceClient/books/tracksOf';
+import { aFakeAudiobookPlayer } from '@ValenceClient/testing/aFakeAudiobookPlayer';
+import { anAudiobook } from '@ValenceClient/testing/anAudiobook';
 
 /**
  * A player partway into the book, ready to move.

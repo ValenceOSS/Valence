@@ -1,29 +1,28 @@
-import { vi } from 'vitest';
 import { createAudiobookPlayer } from '@ValenceClient/books/createAudiobookPlayer';
 import type { AudiobookPlayer, ListeningAudio } from '@ValenceClient/books/createAudiobookPlayer';
 
-type FakeAudio = ListeningAudio & { fire: (type: string) => void };
+type FakeAudio<Spy> = ListeningAudio & { pause: Spy; fire: (type: string) => void };
 
 /**
- * An audiobook player over an audio element that plays nothing, whose events a test fires by hand,
- * keeping somewhere the test can see.
+ * An audiobook player over audio that plays nothing, whose events a test fires by hand, keeping
+ * somewhere the test can see, whichever test runner is recording: Vitest on the web, Jest on a
+ * native client.
  *
+ * @param spy - Makes a function that remembers how it was called, such as `vi.fn` or `jest.fn`.
  * @returns The player, its audio, and what it was asked to keep.
  */
-const aFakeAudiobookPlayer = (): {
-  player: AudiobookPlayer;
-  audio: FakeAudio;
-  save: ReturnType<typeof vi.fn>;
-} => {
+const aFakeAudiobookPlayerWith = <Spy extends () => void>(
+  spy: () => Spy,
+): { player: AudiobookPlayer; audio: FakeAudio<Spy>; save: Spy } => {
   const listeners = new Map<string, Array<() => void>>();
-  const audio: FakeAudio = {
+  const audio: FakeAudio<Spy> = {
     src: '',
     currentTime: 0,
     duration: 0,
     playbackRate: 1,
     paused: true,
-    play: vi.fn(() => Promise.resolve()),
-    pause: vi.fn(),
+    play: () => Promise.resolve(),
+    pause: spy(),
     addEventListener: (type, listener) => {
       listeners.set(type, [...(listeners.get(type) ?? []), listener]);
     },
@@ -33,7 +32,7 @@ const aFakeAudiobookPlayer = (): {
       });
     },
   };
-  const save = vi.fn();
+  const save = spy();
   const player = createAudiobookPlayer({
     audio,
     addressOf: (bookId, trackId) => `/api/books/${bookId}/chapters/${trackId}/audio`,
@@ -44,4 +43,4 @@ const aFakeAudiobookPlayer = (): {
   return { player, audio, save };
 };
 
-export { aFakeAudiobookPlayer };
+export { aFakeAudiobookPlayerWith };
