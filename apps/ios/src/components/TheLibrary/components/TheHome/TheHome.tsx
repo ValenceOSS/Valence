@@ -1,5 +1,5 @@
 import { Film, FolderOpen } from '@keyline-icons/react-native';
-import { memo, useCallback, useMemo, useRef } from 'react';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -29,6 +29,8 @@ const FEATURED_FROM = 200;
 const RESUMING = 'resume';
 
 const SCROLLED = 4;
+
+const STILL_SEEN_BY = 96;
 
 const NOTHING_COMING: ComingUp['shows'] = [];
 
@@ -90,6 +92,8 @@ const TheHomePage = ({
   const today = new Date().toISOString().slice(0, 10);
   const upcoming = comingUp.data ?? NOTHING_COMING;
   const wasScrolled = useRef<boolean | null>(null);
+  const heroEnds = useRef<number | null>(null);
+  const [isHeroInView, setIsHeroInView] = useState(true);
 
   const withComingUp = useMemo(() => {
     const shelves = home.rails.flatMap((rail): AShelfOf[] =>
@@ -128,6 +132,10 @@ const TheHomePage = ({
   const onScroll = useCallback(
     ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>) => {
       const isScrolled = nativeEvent.contentOffset.y > SCROLLED;
+      const isHeroSeen =
+        heroEnds.current === null || nativeEvent.contentOffset.y < heroEnds.current - STILL_SEEN_BY;
+
+      setIsHeroInView(isHeroSeen);
 
       if (isScrolled !== wasScrolled.current) {
         wasScrolled.current = isScrolled;
@@ -148,16 +156,25 @@ const TheHomePage = ({
     () => (
       <View style={styles.header}>
         {header}
-        <AnArrival>
-          <TheFeatured
-            items={featured}
-            onShowing={onShowing}
-            onClip={onClip}
-            onWatch={onWatch}
-            onLookAt={onLookAt}
-            onLookAtShow={onLookAtShow}
-          />
-        </AnArrival>
+        <View
+          onLayout={(event) => {
+            const { y, height } = event.nativeEvent.layout;
+
+            heroEnds.current = y + height;
+          }}
+        >
+          <AnArrival>
+            <TheFeatured
+              items={featured}
+              isInView={isHeroInView}
+              onShowing={onShowing}
+              onClip={onClip}
+              onWatch={onWatch}
+              onLookAt={onLookAt}
+              onLookAtShow={onLookAtShow}
+            />
+          </AnArrival>
+        </View>
         {home.isReading ? <ActivityIndicator color={colours.textMuted} /> : null}
       </View>
     ),
@@ -171,6 +188,7 @@ const TheHomePage = ({
       onLookAtShow,
       home.isReading,
       colours.textMuted,
+      isHeroInView,
     ],
   );
 

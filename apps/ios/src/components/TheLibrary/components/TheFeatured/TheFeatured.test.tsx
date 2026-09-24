@@ -87,4 +87,31 @@ describe('TheFeatured', () => {
     expect(onShowing).toHaveBeenLastCalledWith(first);
     jest.useRealTimers();
   });
+
+  it('stays where it is while the page is scrolled away from it', async () => {
+    jest.useFakeTimers();
+    installPlatform(aFakePlatform());
+    const onShowing = jest.fn();
+    const first = aTitle();
+    const next = aTitle({ id: '3fa85f64-5717-4562-b3fc-2c963f66afb0', title: 'Dune' });
+
+    await render(
+      <TheFeatured
+        items={[first, next]}
+        onWatch={jest.fn()}
+        onLookAt={jest.fn()}
+        onLookAtShow={jest.fn()}
+        onShowing={onShowing}
+        isInView={false}
+      />,
+      { wrapper: CacheScope },
+    );
+
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(30_000);
+    });
+
+    expect(onShowing).not.toHaveBeenCalledWith(next);
+    jest.useRealTimers();
+  });
 });

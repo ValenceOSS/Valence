@@ -8,6 +8,7 @@ type TheFeaturedProps = {
   onLookAtShow: (libraryId: string, showId: string) => void;
   onShowing?: (media: MediaSummary | null) => void;
   onClip?: (player: VideoPlayer | null) => void;
+  isInView?: boolean;
 };
 
 export type { TheFeaturedProps };

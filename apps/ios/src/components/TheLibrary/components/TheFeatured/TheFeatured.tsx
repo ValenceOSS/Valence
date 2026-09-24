@@ -70,6 +70,7 @@ const fillOn = (filled: Animated.Value, from: number, overMs: number): void => {
  * @param onLookAtShow - Told to open a programme.
  * @param onShowing - Told which title is showing, whenever that changes.
  * @param onClip - Told the showing title's clip while it plays.
+ * @param isInView - Whether the page is scrolled to show it; away from it, nothing plays or moves on.
  *
  * Beneath them, the dots say which is showing and how long is left of it: through its clip while
  * one plays, and otherwise until it moves on by itself.
@@ -81,6 +82,7 @@ const TheFeaturedTitles = ({
   onLookAtShow,
   onShowing,
   onClip,
+  isInView = true,
 }: TheFeaturedProps) => {
   const { width } = useWindowDimensions();
   const isStill = usePrefersStillness();
@@ -156,9 +158,9 @@ const TheFeaturedTitles = ({
 
   const moving = useRef<ReturnType<typeof setTimeout> | null>(null);
   const heard = useRef<Parameters<NonNullable<typeof onClip>>[0]>(null);
-  const latest = useRef({ turn, count, lead, step, isStill, onClip });
+  const latest = useRef({ turn, count, lead, step, isStill, onClip, isInView });
 
-  latest.current = { turn, count, lead, step, isStill, onClip };
+  latest.current = { turn, count, lead, step, isStill, onClip, isInView };
 
   const settle = useCallback((reached: number) => {
     const { count: many, lead: before, step: apart } = latest.current;
@@ -204,6 +206,10 @@ const TheFeaturedTitles = ({
       }
 
       const runFrom = (from: number) => {
+        if (!latest.current.isInView) {
+          return;
+        }
+
         if (movesOnItself && latest.current.count > 1) {
           moving.current = setTimeout(showNext, Math.max(overMs(from), 0));
         }
@@ -239,6 +245,29 @@ const TheFeaturedTitles = ({
       filled.stopAnimation();
     };
   }, [at, filled, runOut]);
+
+  const wasInView = useRef(isInView);
+
+  useEffect(() => {
+    if (wasInView.current === isInView) {
+      return;
+    }
+
+    wasInView.current = isInView;
+
+    if (isInView) {
+      runOut((from) => (1 - from) * MOVE_ON_AFTER, true);
+
+      return;
+    }
+
+    if (moving.current !== null) {
+      clearTimeout(moving.current);
+      moving.current = null;
+    }
+
+    filled.stopAnimation();
+  }, [isInView, filled, runOut]);
 
   const heardClip = useCallback(
     (player: Parameters<NonNullable<typeof onClip>>[0]) => {
@@ -285,7 +314,7 @@ const TheFeaturedTitles = ({
       >
         {cards.map((media, index) => {
           const showId = showIdOf(media);
-          const isShowing = index === lead + turn;
+          const isShowing = isInView && index === lead + turn;
 
           return (
             <Animated.View
