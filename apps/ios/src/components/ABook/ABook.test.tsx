@@ -108,7 +108,7 @@ describe('ABook', () => {
     jest.mocked(fetchReading).mockResolvedValue([]);
 
     const drawn = await render(
-      <ABook bookId={aBook().id} onRead={jest.fn()} onBack={jest.fn()} />,
+      <ABook bookId={aBook().id} onRead={jest.fn()} onListen={jest.fn()} onBack={jest.fn()} />,
       {
         wrapper: CacheScope,
       },
