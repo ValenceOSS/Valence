@@ -1,4 +1,8 @@
+import { View } from 'react-native';
 import { requireNativeView } from 'expo';
+import { drawsNatively } from '@ValenceMobile/platform/drawsNatively';
+import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import type { AGlassProps, NativeGlassProps } from './AGlass.types';
 
 const TheGlass = requireNativeView<NativeGlassProps>('ValenceGlass');
@@ -19,15 +23,31 @@ const FILLS = {
  * @param tint - A colour to tint it, as a chosen control is.
  * @param isShown - Whether it is there, easing in and out when that changes.
  */
-const AGlass = ({ roundness, tint, isShown = true }: AGlassProps) => (
-  <TheGlass
-    roundness={roundness}
-    isShown={isShown}
-    {...(tint === undefined ? {} : { tint })}
-    style={FILLS}
-    pointerEvents="none"
-  />
-);
+const AGlass = ({ roundness, tint, isShown = true }: AGlassProps) => {
+  const colours = useTheColours();
+
+  return drawsNatively() ? (
+    <TheGlass
+      roundness={roundness}
+      isShown={isShown}
+      {...(tint === undefined ? {} : { tint })}
+      style={FILLS}
+      pointerEvents="none"
+    />
+  ) : (
+    <View
+      style={[
+        FILLS,
+        {
+          backgroundColor: tint ?? withAlpha(colours.surfaceRaised, 0.92),
+          borderRadius: roundness,
+          opacity: isShown ? 1 : 0,
+        },
+      ]}
+      pointerEvents="none"
+    />
+  );
+};
 
 AGlass.displayName = 'AGlass';
 

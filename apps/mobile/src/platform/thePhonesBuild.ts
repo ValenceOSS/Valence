@@ -5,7 +5,7 @@ import type { BuildInfo } from '@ValenceClient/platform/Platform.types';
 
 /**
  * What this phone's copy of Valence is, for the line somebody pastes into a bug report: the version
- * it was built from, and the iOS and the phone it is running on.
+ * it was built from, and the system and the phone it is running on.
  *
  * It cannot say which commit it came from, and so leaves that out rather than guessing.
  *
@@ -14,7 +14,10 @@ import type { BuildInfo } from '@ValenceClient/platform/Platform.types';
 const thePhonesBuild = (): BuildInfo => ({
   version: z.string().catch('0.0.0').parse(process.env.EXPO_PUBLIC_VALENCE_VERSION),
   commit: null,
-  runsOn: `iOS ${String(Platform.Version)} · ${modelName ?? 'iPhone'}`,
+  runsOn:
+    Platform.OS === 'ios'
+      ? `iOS ${String(Platform.Version)} · ${modelName ?? 'iPhone'}`
+      : `Android ${String(Platform.Version)} · ${modelName ?? 'Android phone'}`,
 });
 
 export { thePhonesBuild };

@@ -1,4 +1,6 @@
+import { View } from 'react-native';
 import { requireNativeView } from 'expo';
+import { drawsNatively } from '@ValenceMobile/platform/drawsNatively';
 import type { AScrimProps, NativeScrimProps } from './AScrim.types';
 
 const TheScrim = requireNativeView<NativeScrimProps>('ValenceScrim');
@@ -17,9 +19,12 @@ const FILLS = {
  *
  * @param blurReach - How far up the blur goes, as a fraction of the height.
  */
-const AScrim = ({ blurReach = 0.45 }: AScrimProps) => (
-  <TheScrim blurReach={blurReach} style={FILLS} pointerEvents="none" />
-);
+const AScrim = ({ blurReach = 0.45 }: AScrimProps) =>
+  drawsNatively() ? (
+    <TheScrim blurReach={blurReach} style={FILLS} pointerEvents="none" />
+  ) : (
+    <View style={[FILLS, { backgroundColor: 'rgba(0, 0, 0, 0.45)' }]} pointerEvents="none" />
+  );
 
 AScrim.displayName = 'AScrim';
 

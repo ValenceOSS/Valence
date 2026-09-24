@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { requireNativeView, requireOptionalNativeModule } from 'expo';
 import { z } from 'zod';
+import { drawsNatively } from '@ValenceMobile/platform/drawsNatively';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Slider } from '@ValenceMobile/components/Slider/Slider';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
@@ -61,7 +62,7 @@ const AVolumeSlider = () => {
 
   return (
     <View style={styles.row}>
-      <TheSystemSlider style={OUT_OF_SIGHT} />
+      {drawsNatively() ? <TheSystemSlider style={OUT_OF_SIGHT} /> : null}
       <Icon of={VolumeLow} size={16} colour={colours.textMuted} />
       <View style={styles.slider}>
         <Slider

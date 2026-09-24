@@ -24,3 +24,5 @@ packageExtensions:
   react-native-tvos:
     peerDependencies:
       react-native: '*'
+patchedDependencies:
+  '@react-native-cookies/cookies': patches/@react-native-cookies__cookies.patch

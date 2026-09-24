@@ -1,4 +1,6 @@
+import { View } from 'react-native';
 import { requireNativeView } from 'expo';
+import { drawsNatively } from '@ValenceMobile/platform/drawsNatively';
 import type { ASoftFocusProps } from './ASoftFocus.types';
 
 const TheFocus = requireNativeView<ASoftFocusProps>('ValenceSoftFocus');
@@ -10,9 +12,12 @@ const TheFocus = requireNativeView<ASoftFocusProps>('ValenceSoftFocus');
  * @param radius - How blurred, in points, as a CSS blur is measured; nothing is sharp.
  * @param children - What is blurred.
  */
-const ASoftFocus = ({ radius, children }: ASoftFocusProps) => (
-  <TheFocus radius={radius}>{children}</TheFocus>
-);
+const ASoftFocus = ({ radius, children }: ASoftFocusProps) =>
+  drawsNatively() ? (
+    <TheFocus radius={radius}>{children}</TheFocus>
+  ) : (
+    <View style={{ opacity: radius > 0 ? 0.5 : 1 }}>{children}</View>
+  );
 
 ASoftFocus.displayName = 'ASoftFocus';
 

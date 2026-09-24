@@ -49,9 +49,16 @@ const config: ExpoConfig = {
         'Valence uses the camera to read the code a television shows, so it can be signed in without typing.',
     },
   },
+  android: {
+    package: 'app.valence.android',
+    permissions: ['CAMERA', 'ACCESS_NETWORK_STATE', 'ACCESS_WIFI_STATE', 'FOREGROUND_SERVICE'],
+  },
   extra: { eas: { projectId: '11620f0a-1d3a-449d-9812-2afe80b14ecc' } },
   plugins: [
-    ['expo-build-properties', { ios: { deploymentTarget: '18.0' } }],
+    [
+      'expo-build-properties',
+      { ios: { deploymentTarget: '18.0' }, android: { usesCleartextTraffic: true } },
+    ],
     [
       'expo-font',
       {

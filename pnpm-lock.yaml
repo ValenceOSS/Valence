@@ -6,6 +6,11 @@ settings:
 
 packageExtensionsChecksum: sha256-YehLCjWGKHJqaLm7QyryINTNuccSVKtZUOVF+zfb5yU=
 
+patchedDependencies:
+  '@react-native-cookies/cookies':
+    hash: ec064f4a202698a202758abc5b5d8deafb70ffb31585c78608d257295d731b9a
+    path: patches/@react-native-cookies__cookies.patch
+
 importers:
   .:
     devDependencies:
@@ -332,7 +337,7 @@ importers:
         version: 2.2.0(react-native@0.86.3(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react@19.2.3))
       '@react-native-cookies/cookies':
         specifier: ^6.2.1
-        version: 6.2.1(react-native@0.86.3(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react@19.2.3))
+        version: 6.2.1(patch_hash=ec064f4a202698a202758abc5b5d8deafb70ffb31585c78608d257295d731b9a)(react-native@0.86.3(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react@19.2.3))
       '@tanstack/react-query':
         specifier: ^5.102.8
         version: 5.102.8(react@19.2.3)
@@ -20618,7 +20623,7 @@ snapshots:
       react: 19.2.3
       react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
 
-  '@react-native-cookies/cookies@6.2.1(react-native@0.86.3(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react@19.2.3))':
+  '@react-native-cookies/cookies@6.2.1(patch_hash=ec064f4a202698a202758abc5b5d8deafb70ffb31585c78608d257295d731b9a)(react-native@0.86.3(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react@19.2.3))':
     dependencies:
       invariant: 2.2.4
       react-native: 0.86.3(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react@19.2.3)

@@ -6,9 +6,10 @@
   "scripts": {
     "dev": "expo start",
     "ios": "expo run:ios",
-    "prebuild": "expo prebuild --platform ios --clean",
+    "prebuild": "expo prebuild --clean",
     "typecheck": "tsc --noEmit",
-    "test": "jest"
+    "test": "jest",
+    "android": "expo run:android"
   },
   "dependencies": {
     "@keyline-icons/react-native": "^1.1.0",

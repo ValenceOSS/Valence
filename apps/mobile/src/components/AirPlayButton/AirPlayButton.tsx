@@ -1,5 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 import { requireNativeView } from 'expo';
+import { drawsNatively } from '@ValenceMobile/platform/drawsNatively';
 import { AGlass } from '@ValenceMobile/components/AGlass/AGlass';
 import { hasLiquidGlass } from '@ValenceMobile/platform/hasLiquidGlass';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
@@ -24,6 +25,10 @@ const styles = StyleSheet.create({
  */
 const AirPlayButton = ({ isOverPicture = false }: AirPlayButtonProps) => {
   const colours = useTheColours();
+
+  if (!drawsNatively()) {
+    return null;
+  }
 
   return (
     <View style={styles.whole}>
