@@ -373,12 +373,12 @@ describe('formatWebhookBody', () => {
       event: 'requests.unreachable',
       data: {
         reason: 'http://requests:8421 did not answer',
-        docs: 'https://docs.getvalence.app/install/requesting#switching-it-on',
+        docs: 'https://docs.getvalence.app/install/requesting#the-requests-service-cannot-be-reached',
       },
     });
 
     expect(written.body).toBe(
-      'The requests service could not be reached — http://requests:8421 did not answer. How to fix it: https://docs.getvalence.app/install/requesting#switching-it-on',
+      'The requests service could not be reached — http://requests:8421 did not answer. How to fix it: https://docs.getvalence.app/install/requesting#the-requests-service-cannot-be-reached',
     );
   });
 
@@ -430,13 +430,13 @@ describe('formatWebhookBody', () => {
       event: 'requests.indexerFailing',
       data: {
         name: 'Jackett',
-        problem: 'The indexer refused the API key.',
-        docs: 'https://docs.getvalence.app/install/requesting#failing-indexers',
+        problem: 'The site’s Cloudflare refuses this address outright.',
+        docs: 'https://docs.getvalence.app/install/requesting#a-sites-cloudflare-refuses-your-address',
       },
     });
 
     expect(written.body).toBe(
-      'The indexer Jackett keeps failing — The indexer refused the API key. How to fix it: https://docs.getvalence.app/install/requesting#failing-indexers',
+      'The indexer Jackett keeps failing — The site’s Cloudflare refuses this address outright. How to fix it: https://docs.getvalence.app/install/requesting#a-sites-cloudflare-refuses-your-address',
     );
   });
 

@@ -140,7 +140,7 @@ describe('describeRequestBadge', () => {
       ),
     ).toMatchObject({
       label: 'Filing',
-      help: 'https://docs.getvalence.app/install/requesting#who-owns-what-it-files',
+      help: 'https://docs.getvalence.app/install/requesting#it-may-not-write-to-a-folder',
     });
     expect(
       describeRequestBadge(
@@ -150,7 +150,9 @@ describe('describeRequestBadge', () => {
           problemCode: 'CloudflareRefusesAddress',
         }),
       ).help,
-    ).toBe('https://docs.getvalence.app/install/requesting#indexers-behind-cloudflare');
+    ).toBe(
+      'https://docs.getvalence.app/install/requesting#a-sites-cloudflare-refuses-your-address',
+    );
     expect(describeRequestBadge(aMediaRequest({ state: 'wanted' })).help).toBeNull();
   });
 

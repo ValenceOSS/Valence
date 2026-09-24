@@ -94,7 +94,7 @@ describe('discordEmbedFor', () => {
       event: 'requests.vpnDown',
       data: {
         reason: 'The tunnel is stopped',
-        docs: 'https://docs.getvalence.app/install/requesting#a-vpn-for-the-download-client',
+        docs: 'https://docs.getvalence.app/install/requesting#the-vpn-is-down',
       },
     });
     const up = embed({
@@ -107,7 +107,7 @@ describe('discordEmbedFor', () => {
     expect(down.fields).toEqual([
       {
         name: 'How to fix it',
-        value: 'https://docs.getvalence.app/install/requesting#a-vpn-for-the-download-client',
+        value: 'https://docs.getvalence.app/install/requesting#the-vpn-is-down',
         inline: false,
       },
     ]);

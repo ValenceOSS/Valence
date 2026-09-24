@@ -92,7 +92,7 @@ describe('ARequest', () => {
     await userEvent.press(drawn.getByLabelText('How to fix this'));
 
     expect(open).toHaveBeenCalledWith(
-      'https://docs.getvalence.app/install/requesting#who-owns-what-it-files',
+      'https://docs.getvalence.app/install/requesting#it-may-not-write-to-a-folder',
     );
   });
 

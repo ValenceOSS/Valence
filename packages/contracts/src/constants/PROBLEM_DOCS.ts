@@ -1,17 +1,15 @@
 import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
 
-const PROBLEM_DOCS = {
-  MayNotWriteToLibrary: '/install/requesting#who-owns-what-it-files',
-  CannotSeeDownload: '/install/requesting#paths-must-line-up',
-  CloudflareRefusesAddress: '/install/requesting#indexers-behind-cloudflare',
-  CloudflareCheckFailed: '/install/requesting#indexers-behind-cloudflare',
-  IndexerFailing: '/install/requesting#failing-indexers',
-  VpnDown: '/install/requesting#a-vpn-for-the-download-client',
-  VpnKeyRefused: '/install/requesting#a-vpn-for-the-download-client',
-  RequestsUnreachable: '/install/requesting#switching-it-on',
-  RequestsSecretRefused: '/install/requesting#switching-it-on',
-  DownloadClientUnreachable: '/install/requesting#download-clients',
-  DownloadClientLoginRefused: '/install/requesting#download-clients',
-} as const satisfies Record<ProblemCode, `/${string}#${string}`>;
+const PROBLEM_DOCS: Readonly<Partial<Record<ProblemCode, `/${string}#${string}`>>> = {
+  MayNotWriteToLibrary: '/install/requesting#it-may-not-write-to-a-folder',
+  CannotSeeDownload: '/install/requesting#a-finished-download-cannot-be-found',
+  CloudflareRefusesAddress: '/install/requesting#a-sites-cloudflare-refuses-your-address',
+  VpnDown: '/install/requesting#the-vpn-is-down',
+  VpnKeyRefused: '/install/requesting#gluetun-refuses-the-key',
+  RequestsUnreachable: '/install/requesting#the-requests-service-cannot-be-reached',
+  RequestsSecretRefused: '/install/requesting#the-requests-service-refuses-the-secret',
+  DownloadClientUnreachable: '/install/requesting#a-download-client-cannot-be-reached',
+  DownloadClientLoginRefused: '/install/requesting#a-download-client-refuses-its-login',
+};
 
 export { PROBLEM_DOCS };

@@ -809,7 +809,7 @@ describe('collectConcerns', () => {
       ]);
       expect(concerns[0]?.detail).toContain('http://requests:8421');
       expect(concerns[0]?.help).toBe(
-        'https://docs.getvalence.app/install/requesting#switching-it-on',
+        'https://docs.getvalence.app/install/requesting#the-requests-service-cannot-be-reached',
       );
     });
 
@@ -840,7 +840,7 @@ describe('collectConcerns', () => {
         expect.objectContaining({ id: 'requests-vpn', detail: 'The tunnel is stopped' }),
       ]);
       expect(concerns[0]?.help).toBe(
-        'https://docs.getvalence.app/install/requesting#a-vpn-for-the-download-client',
+        'https://docs.getvalence.app/install/requesting#gluetun-refuses-the-key',
       );
     });
 
@@ -851,7 +851,7 @@ describe('collectConcerns', () => {
         'The requests service cannot reach the tunnel it downloads through.',
       );
       expect(concerns[0]?.help).toBe(
-        'https://docs.getvalence.app/install/requesting#a-vpn-for-the-download-client',
+        'https://docs.getvalence.app/install/requesting#the-vpn-is-down',
       );
     });
 
@@ -891,7 +891,7 @@ describe('collectConcerns', () => {
           title: 'The indexer Jackett keeps failing',
           detail: 'Timed out',
           panel: 'indexers',
-          help: 'https://docs.getvalence.app/install/requesting#failing-indexers',
+          help: null,
         },
       ]);
     });

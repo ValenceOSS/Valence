@@ -35,7 +35,7 @@ describe('ConcernsBanner', () => {
           concern({
             id: 'requests-vpn',
             title: 'The VPN is down',
-            help: 'https://docs.getvalence.app/install/requesting#a-vpn-for-the-download-client',
+            help: 'https://docs.getvalence.app/install/requesting#the-vpn-is-down',
           }),
           concern(),
         ]}

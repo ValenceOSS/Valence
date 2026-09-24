@@ -99,9 +99,7 @@ const collectConcerns = ({
           ? (first?.problem ?? '')
           : failingIndexers.map((indexer) => `${indexer.name}: ${indexer.problem}`).join(' · '),
       panel: 'indexers',
-      help: docsFor(
-        failingIndexers.length === 1 ? (first?.problemCode ?? 'IndexerFailing') : 'IndexerFailing',
-      ),
+      help: docsFor(failingIndexers.length === 1 ? first?.problemCode : null),
     });
   }
 
