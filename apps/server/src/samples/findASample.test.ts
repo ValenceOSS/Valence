@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { findASample } from './findASample';
 
 const answering = (results: object[], ok = true) =>
-  vi.fn((_url: string) =>
+  vi.fn<(url: string) => Promise<Response>>(() =>
     Promise.resolve(new Response(JSON.stringify({ results }), { status: ok ? 200 : 503 })),
   );
 

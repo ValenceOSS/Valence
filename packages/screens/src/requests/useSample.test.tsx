@@ -15,9 +15,6 @@ const played: string[] = [];
 
 const paused: string[] = [];
 
-/**
- * Stands in for the browser's audio, noting what it was asked to play and stop.
- */
 class FakeAudio {
   src: string;
 

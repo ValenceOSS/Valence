@@ -21,14 +21,14 @@ const ChapterList = ({ chapters, read, onOpen }: ChapterListProps) => (
       return (
         <li key={chapter.id}>
           <Button
-            variant="bare"
+            variant="row"
             size="none"
             label={`Read ${chapter.title}`}
             hasTooltip={false}
             onClick={() => {
               onOpen(chapter.id);
             }}
-            className="flex w-full items-center gap-4 rounded-md px-2 py-3 text-left hover:bg-[var(--surface-hover)]"
+            className="flex w-full items-center gap-4 px-2 py-3 text-left"
           >
             <span className="w-8 shrink-0 text-center text-sm tabular-nums text-text-muted">
               {Number.isInteger(chapter.number) ? chapter.number.toString() : chapter.number}
