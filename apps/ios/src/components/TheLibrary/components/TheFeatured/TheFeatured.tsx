@@ -20,13 +20,15 @@ const ASIDE = 0.9;
 
 const CLONES = 2;
 
+const ROOM_FOR_THE_SHADOW = 32;
+
 const SETTLES_AFTER = 600;
 
 const MOVE_ON_AFTER = 28_000;
 
 const styles = StyleSheet.create({
-  cards: { gap: GAP, paddingHorizontal: PEEK + GAP },
-  pager: { marginHorizontal: -SCREEN_EDGE },
+  cards: { gap: GAP, paddingHorizontal: PEEK + GAP, paddingVertical: ROOM_FOR_THE_SHADOW },
+  pager: { marginHorizontal: -SCREEN_EDGE, marginVertical: -ROOM_FOR_THE_SHADOW },
   whole: { gap: 10 },
 });
 

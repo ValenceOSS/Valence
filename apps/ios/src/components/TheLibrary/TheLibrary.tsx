@@ -103,6 +103,7 @@ const keyOfCell = (cell: Cell): string =>
   cell.kind === 'media' ? cell.media.id : cell.programme.id;
 
 const styles = StyleSheet.create({
+  dimmed: { backgroundColor: 'rgba(0, 0, 0, 0.28)' },
   arriving: { gap: 20 },
   hidden: { display: 'none' },
   bar: {
@@ -273,6 +274,7 @@ const TheLibrary = ({
       <TheClipBehind player={part === 'home' ? clip : null}>
         <AMoodBackground palette={palette} />
       </TheClipBehind>
+      <View style={[StyleSheet.absoluteFill, styles.dimmed]} pointerEvents="none" />
       <ARRIVING.Provider value={arriving}>{drawn}</ARRIVING.Provider>
       {bar}
     </View>
