@@ -8,8 +8,10 @@ import { saveProfile, uploadProfilePhoto } from '@ValenceClient/profiles/fetchPr
 import { STILL_WATCHING_CHOICES } from '@ValenceClient/profiles/STILL_WATCHING_CHOICES';
 import { AVATAR_STYLES, PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
 import { STILL_WATCHING_OFF } from '@ValenceContracts/schemas/StillWatching';
+import { CaseSensitive, ImagePlus } from '@keyline-icons/react-native';
 import { AFace } from '@ValencePhone/components/AFace/AFace';
 import { thePictureFor } from '@ValencePhone/components/AFace/thePictureFor';
+import { AGroup } from '@ValencePhone/components/AGroup/AGroup';
 import { APicture } from '@ValencePhone/components/APicture/APicture';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { SegmentedRow } from '@ValencePhone/components/SegmentedRow/SegmentedRow';
@@ -18,17 +20,24 @@ import { Words } from '@ValencePhone/components/Words/Words';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { Avatar, ProfileColour } from '@ValenceContracts/schemas/ViewerProfile';
 
-const FACE = 56;
+const FACE = 52;
 
-const SWATCH = 36;
+const SWATCH = 30;
+
+const RING = 2;
 
 const styles = StyleSheet.create({
-  centred: { alignItems: 'center' },
-  drawn: { borderRadius: 14, height: FACE, overflow: 'hidden', width: FACE },
-  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  section: { gap: 10 },
-  sideways: { gap: 10 },
-  swatch: { borderRadius: SWATCH / 2, borderWidth: 3, height: SWATCH, width: SWATCH },
+  asks: { gap: 4 },
+  drawn: { borderRadius: 12, height: FACE, overflow: 'hidden', width: FACE },
+  head: { alignItems: 'center', gap: 14 },
+  picks: { flexDirection: 'row', gap: 10 },
+  ring: { borderRadius: 14 + RING, borderWidth: RING, padding: RING },
+  row: { gap: 12, padding: 16 },
+  sideways: { gap: 10, paddingHorizontal: 16 },
+  sidewaysRow: { paddingVertical: 16 },
+  swatch: { borderRadius: SWATCH / 2, height: SWATCH, width: SWATCH },
+  swatchRing: { borderRadius: SWATCH / 2 + RING * 2, borderWidth: RING, padding: RING },
+  swatches: { flexDirection: 'row', justifyContent: 'space-between' },
 });
 
 /**
@@ -126,69 +135,74 @@ const TheProfile = () => {
 
   return (
     <>
-      <View style={styles.centred}>
-        <AFace profile={draft} picked={picked?.uri ?? null} />
+      <View style={styles.head}>
+        <AFace profile={draft} picked={picked?.uri ?? null} isLarge />
+
+        <View style={styles.picks}>
+          <Button
+            tone="ghost"
+            icon={ImagePlus}
+            onPress={() => {
+              void choosePhoto();
+            }}
+          >
+            Choose a photo
+          </Button>
+
+          <Button
+            tone="ghost"
+            icon={CaseSensitive}
+            isChosen={draft.avatar.kind === 'initial'}
+            onPress={() => {
+              setPicked(null);
+              setAvatar({ kind: 'initial' });
+            }}
+          >
+            Use my initial
+          </Button>
+        </View>
       </View>
 
       <TextField label="Name" value={draft.name} onValueChange={setName} placeholder="Your name" />
 
-      <View style={styles.section}>
-        <Words size="heading">Picture</Words>
-
+      <AGroup title="Picture">
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          style={styles.sidewaysRow}
           contentContainerStyle={styles.sideways}
         >
           {AVATAR_STYLES.map((style) => {
             const face: Avatar = { kind: 'drawn', style, seed: profile.id };
             const picture = thePictureFor({ ...profile, avatar: face });
+            const isChosen = draft.avatar.kind === 'drawn' && draft.avatar.style === style;
 
             return (
               <Button
                 key={style}
                 tone="bare"
                 label={`Use the ${style} face`}
-                isChosen={draft.avatar.kind === 'drawn' && draft.avatar.style === style}
+                isChosen={isChosen}
                 onPress={() => {
                   setPicked(null);
                   setAvatar(face);
                 }}
               >
-                <View style={[styles.drawn, { backgroundColor: draft.colour }]}>
-                  {picture === null ? null : (
-                    <APicture picture={picture} onMissing={() => undefined} />
-                  )}
+                <View
+                  style={[styles.ring, { borderColor: isChosen ? colours.accent : 'transparent' }]}
+                >
+                  <View style={[styles.drawn, { backgroundColor: draft.colour }]}>
+                    {picture === null ? null : (
+                      <APicture picture={picture} onMissing={() => undefined} />
+                    )}
+                  </View>
                 </View>
               </Button>
             );
           })}
         </ScrollView>
 
-        <Button
-          tone="quiet"
-          onPress={() => {
-            void choosePhoto();
-          }}
-        >
-          Choose a photo
-        </Button>
-
-        <Button
-          tone="quiet"
-          onPress={() => {
-            setPicked(null);
-            setAvatar({ kind: 'initial' });
-          }}
-        >
-          Use my initial
-        </Button>
-      </View>
-
-      <View style={styles.section}>
-        <Words size="heading">Colour</Words>
-
-        <View style={styles.row}>
+        <View style={[styles.row, styles.swatches]}>
           {PROFILE_COLOURS.map((option) => (
             <Button
               key={option}
@@ -201,37 +215,40 @@ const TheProfile = () => {
             >
               <View
                 style={[
-                  styles.swatch,
-                  {
-                    backgroundColor: option,
-                    borderColor: option === draft.colour ? colours.text : option,
-                  },
+                  styles.swatchRing,
+                  { borderColor: option === draft.colour ? colours.accent : 'transparent' },
                 ]}
-              />
+              >
+                <View style={[styles.swatch, { backgroundColor: option }]} />
+              </View>
             </Button>
           ))}
         </View>
-      </View>
+      </AGroup>
 
-      <View style={styles.section}>
-        <Words size="heading">Ask if you are still watching</Words>
-        <Words size="small" tone="muted">
-          After this many episodes play by themselves.
-        </Words>
+      <AGroup title="Still watching">
+        <View style={styles.row}>
+          <View style={styles.asks}>
+            <Words>Ask if you are still watching</Words>
+            <Words size="small" tone="muted">
+              After this many episodes play by themselves.
+            </Words>
+          </View>
 
-        <SegmentedRow
-          label="Ask if you are still watching"
-          items={STILL_WATCHING_CHOICES}
-          value={
-            draft.askStillWatchingAfter === STILL_WATCHING_OFF
-              ? 'off'
-              : draft.askStillWatchingAfter.toString()
-          }
-          onSelect={(chosen) => {
-            setAskAfter(chosen === 'off' ? STILL_WATCHING_OFF : Number(chosen));
-          }}
-        />
-      </View>
+          <SegmentedRow
+            label="Ask if you are still watching"
+            items={STILL_WATCHING_CHOICES}
+            value={
+              draft.askStillWatchingAfter === STILL_WATCHING_OFF
+                ? 'off'
+                : draft.askStillWatchingAfter.toString()
+            }
+            onSelect={(chosen) => {
+              setAskAfter(chosen === 'off' ? STILL_WATCHING_OFF : Number(chosen));
+            }}
+          />
+        </View>
+      </AGroup>
 
       {refusal === null ? null : <Words tone="danger">{refusal}</Words>}
 
