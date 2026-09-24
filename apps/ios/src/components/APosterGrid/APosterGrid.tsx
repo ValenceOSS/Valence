@@ -1,8 +1,9 @@
 import { useCallback, useMemo, useRef } from 'react';
-import { FlatList, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { POSTER_WIDTH } from '@ValencePhone/components/APoster/POSTER_WIDTH';
+import { GRID_GAP } from '@ValencePhone/components/APosterGrid/GRID_GAP';
 import { SCREEN_EDGE } from '@ValencePhone/components/Screen/SCREEN_EDGE';
+import { useGridCells } from '@ValencePhone/hooks/useGridCells';
 import { usePullToRefresh } from '@ValencePhone/hooks/usePullToRefresh';
 import { AnArrival } from '@ValencePhone/components/AnArrival/AnArrival';
 import { BackArrow } from '@ValencePhone/components/BackArrow/BackArrow';
@@ -10,15 +11,13 @@ import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import type { APosterGridProps } from './APosterGrid.types';
 
-const GAP = 18;
-
 const SCROLLED = 4;
 
 const CLEAR_OF_THE_ARROW = 56;
 
 const styles = StyleSheet.create({
   header: { gap: 20 },
-  row: { gap: GAP },
+  row: { gap: GRID_GAP },
   whole: { flex: 1 },
 });
 
@@ -51,10 +50,7 @@ const APosterGrid = <Item,>({
   const room = useSafeAreaInsets();
   const pulling = usePullToRefresh();
   const colours = useTheColours();
-  const { width } = useWindowDimensions();
-  const across =
-    asked ?? Math.max(1, Math.floor((width - SCREEN_EDGE * 2 + GAP) / (POSTER_WIDTH + GAP)));
-  const cell = (width - SCREEN_EDGE * 2 - GAP * (across - 1)) / across;
+  const { across, cell } = useGridCells(asked);
   const wasScrolled = useRef<boolean | null>(null);
 
   const renderItem = useCallback(
@@ -66,7 +62,7 @@ const APosterGrid = <Item,>({
 
   const spacing = useMemo(
     () => ({
-      gap: GAP,
+      gap: GRID_GAP,
       paddingBottom: room.bottom + SCREEN_EDGE,
       paddingHorizontal: SCREEN_EDGE,
       paddingTop: room.top + (onBack === undefined ? SCREEN_EDGE : CLEAR_OF_THE_ARROW),

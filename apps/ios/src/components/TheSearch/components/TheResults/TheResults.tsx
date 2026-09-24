@@ -6,15 +6,17 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { collapseToShows } from '@ValenceClient/library/pickFeatured';
 import { ACard } from '@ValencePhone/components/ACard/ACard';
 import { ACatalogueCard } from '@ValencePhone/components/ACatalogueCard/ACatalogueCard';
+import { GRID_GAP } from '@ValencePhone/components/APosterGrid/GRID_GAP';
 import { AShelf } from '@ValencePhone/components/AShelf/AShelf';
 import { Words } from '@ValencePhone/components/Words/Words';
+import { useGridCells } from '@ValencePhone/hooks/useGridCells';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { TheResultsProps } from './TheResults.types';
 
 const AS_MANY_AS_ARE_WORTH_SHOWING = 60;
 
 const styles = StyleSheet.create({
-  shelf: { flexDirection: 'row', flexWrap: 'wrap', gap: 18 },
+  shelf: { flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP },
 });
 
 /**
@@ -40,6 +42,7 @@ const TheResultsSection = ({
   onAsk,
 }: TheResultsProps) => {
   const colours = useTheColours();
+  const { cell } = useGridCells();
   const found = useQuery(
     libraryQueries.across(libraryIds, {
       search: asked,
@@ -76,6 +79,7 @@ const TheResultsSection = ({
               media={media}
               asProgramme
               watched={howFarThrough(media.id)}
+              wide={cell}
               onLookAt={onLookAt}
               onLookAtShow={onLookAtShow}
             />

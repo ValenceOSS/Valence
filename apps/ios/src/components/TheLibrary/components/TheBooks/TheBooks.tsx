@@ -92,7 +92,7 @@ const TheBooks = ({ header, libraryIds, onBook, onRead, onScrolled }: TheBooksPr
       }
       items={books}
       keyOf={(book) => book.id}
-      drawn={(book) => (
+      drawn={(book, width) => (
         <Button
           tone="bare"
           label={book.title}
@@ -105,6 +105,7 @@ const TheBooks = ({ header, libraryIds, onBook, onRead, onScrolled }: TheBooksPr
             year={book.year}
             artwork={coverOf(book)}
             note={book.authors?.[0] ?? null}
+            wide={width}
           />
         </Button>
       )}
