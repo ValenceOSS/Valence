@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { LayoutAnimation, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Animated, Easing, LayoutAnimation, StyleSheet, View } from 'react-native';
 import { AGlass } from '@ValencePhone/components/AGlass/AGlass';
 import { Button } from '@ValencePhone/components/Button/Button';
 import { Icon } from '@ValencePhone/components/Icon/Icon';
@@ -10,6 +10,8 @@ import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { ACapsuleRowProps } from './ACapsuleRow.types';
 
 const INSET = 4;
+
+const SHOWS_OVER = 260;
 
 const ICON = 18;
 
@@ -22,9 +24,11 @@ type Place = { x: number; width: number };
 
 const styles = StyleSheet.create({
   capsule: { borderRadius: 999, flexDirection: 'row', overflow: 'hidden', padding: INSET },
+  filling: { flexGrow: 1 },
   highlight: { borderRadius: 999, bottom: INSET, position: 'absolute', top: INSET },
   pill: {
     alignItems: 'center',
+    justifyContent: 'center',
     flexDirection: 'row',
     gap: 6,
     paddingHorizontal: 14,
@@ -48,28 +52,58 @@ const styles = StyleSheet.create({
  * @param items - What there is to choose from.
  * @param value - Which one is picked, or none yet.
  * @param onSelect - Told which one they picked.
+ * @param fills - Whether it stretches across the width it is given, its choices spread along it.
+ * @param isShown - Whether it is showing: its glass eases in and out on the native side and the rest
+ *   fades, since glass does not render under anything faded from outside it.
  */
-const ACapsuleRow = ({ label, items, value, onSelect }: ACapsuleRowProps) => {
+const ACapsuleRow = ({
+  label,
+  items,
+  value,
+  onSelect,
+  fills = false,
+  isShown = true,
+}: ACapsuleRowProps) => {
   const colours = useTheColours();
   const isStill = usePrefersStillness();
   const isGlass = hasLiquidGlass();
   const [places, setPlaces] = useState<ReadonlyMap<string, Place>>(new Map());
   const at = value === null ? undefined : places.get(value);
+  const [seen] = useState(() => new Animated.Value(isShown ? 1 : 0));
+
+  useEffect(() => {
+    Animated.timing(seen, {
+      toValue: isShown ? 1 : 0,
+      duration: SHOWS_OVER,
+      easing: Easing.inOut(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [isShown, seen]);
 
   return (
     <View
-      style={[styles.capsule, isGlass ? null : { backgroundColor: colours.surfaceRaised }]}
+      style={[styles.capsule, fills && styles.filling]}
       accessibilityRole="tablist"
       accessibilityLabel={label}
     >
-      {isGlass ? <AGlass roundness={999} /> : null}
+      {isGlass ? (
+        <AGlass roundness={999} isShown={isShown} />
+      ) : (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: colours.surfaceRaised, opacity: seen },
+          ]}
+        />
+      )}
 
       {at === undefined ? null : (
-        <View
+        <Animated.View
           pointerEvents="none"
           style={[
             styles.highlight,
-            { backgroundColor: colours.accent, left: at.x, width: at.width },
+            { backgroundColor: colours.accent, left: at.x, opacity: seen, width: at.width },
           ]}
         />
       )}
@@ -78,9 +112,10 @@ const ACapsuleRow = ({ label, items, value, onSelect }: ACapsuleRowProps) => {
         const isChosen = item.id === value;
 
         return (
-          <View
+          <Animated.View
             key={item.id}
             collapsable={false}
+            style={[fills ? styles.filling : null, { opacity: seen }]}
             onLayout={({ nativeEvent }) => {
               const { x, width } = nativeEvent.layout;
 
@@ -115,7 +150,7 @@ const ACapsuleRow = ({ label, items, value, onSelect }: ACapsuleRowProps) => {
                 </Words>
               </View>
             </Button>
-          </View>
+          </Animated.View>
         );
       })}
     </View>

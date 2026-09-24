@@ -7,6 +7,7 @@ import type { SegmentedRowProps } from './SegmentedRow.types';
 const FADE = 24;
 
 const styles = StyleSheet.create({
+  filling: { flexGrow: 1 },
   sideways: { paddingRight: FADE },
 });
 
@@ -25,9 +26,18 @@ const styles = StyleSheet.create({
  * @param items - What there is to choose from.
  * @param value - Which one is picked, or none yet.
  * @param onSelect - Told which one they picked, the one already picked too, so a choice such as a
+ * @param fills - Whether it stretches across the width it is given, its choices spread along it.
+ * @param isShown - Whether it is showing, fading in and out when that changes.
  *   filter can be put down again.
  */
-const SegmentedRow = ({ label, items, value, onSelect }: SegmentedRowProps) => {
+const SegmentedRow = ({
+  label,
+  items,
+  value,
+  onSelect,
+  fills = false,
+  isShown = true,
+}: SegmentedRowProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
 
   if (items.length === 0) {
@@ -35,17 +45,24 @@ const SegmentedRow = ({ label, items, value, onSelect }: SegmentedRowProps) => {
   }
 
   return (
-    <AFadedEdge leading={isScrolled ? FADE : 0} trailing={FADE}>
+    <AFadedEdge leading={isScrolled ? FADE : 0} trailing={fills ? 0 : FADE}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.sideways}
+        contentContainerStyle={fills ? styles.filling : styles.sideways}
         scrollEventThrottle={32}
         onScroll={(event) => {
           setIsScrolled(event.nativeEvent.contentOffset.x > 1);
         }}
       >
-        <ACapsuleRow label={label} items={items} value={value} onSelect={onSelect} />
+        <ACapsuleRow
+          label={label}
+          items={items}
+          value={value}
+          onSelect={onSelect}
+          fills={fills}
+          isShown={isShown}
+        />
       </ScrollView>
     </AFadedEdge>
   );

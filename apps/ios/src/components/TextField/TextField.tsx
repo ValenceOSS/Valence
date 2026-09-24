@@ -16,6 +16,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   holding: { alignItems: 'center', flexDirection: 'row', padding: 0 },
+  bare: { borderWidth: 0, flex: 1, paddingHorizontal: 0, paddingVertical: 12 },
   inside: { borderWidth: 0, flex: 1 },
 });
 
@@ -34,6 +35,7 @@ const styles = StyleSheet.create({
  * @param onSubmit - Told they pressed the key that means done.
  * @param action - Another way to fill it, offered at its end past a divider — a camera for a code
  *   that is on a screen across the room.
+ * @param isBare - Whether it is drawn without its own box, inside something that already is one.
  */
 const TextField = ({
   label,
@@ -44,6 +46,7 @@ const TextField = ({
   keyboard = 'default',
   onSubmit,
   action,
+  isBare = false,
 }: TextFieldProps) => {
   const colours = useTheColours();
   const ground = { backgroundColor: colours.surfaceRaised, borderColor: colours.border };
@@ -60,7 +63,12 @@ const TextField = ({
       onChangeText={onValueChange}
       placeholderTextColor={colours.textMuted}
       secureTextEntry={isSecret}
-      style={[styles.field, ground, { color: colours.text }, action !== undefined && styles.inside]}
+      style={[
+        styles.field,
+        isBare ? styles.bare : ground,
+        { color: colours.text },
+        action !== undefined && styles.inside,
+      ]}
       value={value}
       {...(placeholder === undefined ? {} : { placeholder })}
       {...(onSubmit === undefined ? {} : { onSubmitEditing: onSubmit })}

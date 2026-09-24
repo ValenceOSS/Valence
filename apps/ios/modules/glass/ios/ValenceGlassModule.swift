@@ -23,6 +23,10 @@ public class ValenceGlassModule: Module {
       Prop("roundness") { (view: ValenceGlassView, roundness: Double) in
         view.roundness = roundness
       }
+
+      Prop("isShown") { (view: ValenceGlassView, isShown: Bool?) in
+        view.isShown = isShown ?? true
+      }
     }
   }
 }
@@ -34,6 +38,20 @@ public class ValenceGlassView: ExpoView {
   var tint: UIColor? {
     didSet {
       applyTheGlass()
+    }
+  }
+
+  /// Whether the glass is there. It comes and goes by easing its own effect in and out, since glass
+  /// drawn under a layer that is being faded does not render at all.
+  var isShown = true {
+    didSet {
+      guard isShown != oldValue else {
+        return
+      }
+
+      UIView.animate(withDuration: 0.26) {
+        self.applyTheGlass()
+      }
     }
   }
 
@@ -60,6 +78,12 @@ public class ValenceGlassView: ExpoView {
   }
 
   private func applyTheGlass() {
+    guard isShown else {
+      surface.effect = nil
+
+      return
+    }
+
     if #available(iOS 26.0, *) {
       let glass = UIGlassEffect()
 

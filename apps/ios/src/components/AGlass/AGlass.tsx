@@ -17,10 +17,12 @@ const FILLS = {
  *
  * @param roundness - How round its corners are.
  * @param tint - A colour to tint it, as a chosen control is.
+ * @param isShown - Whether it is there, easing in and out when that changes.
  */
-const AGlass = ({ roundness, tint }: AGlassProps) => (
+const AGlass = ({ roundness, tint, isShown = true }: AGlassProps) => (
   <TheGlass
     roundness={roundness}
+    isShown={isShown}
     {...(tint === undefined ? {} : { tint })}
     style={FILLS}
     pointerEvents="none"
