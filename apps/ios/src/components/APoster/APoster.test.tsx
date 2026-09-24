@@ -1,4 +1,5 @@
 import { render } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { APoster } from './APoster';
@@ -80,5 +81,14 @@ describe('APoster', () => {
     expect(
       drawn.getByRole('progressbar', { name: 'How far through Arrival', value: { now: 60 } }),
     ).toBeTruthy();
+  });
+
+  it('fills the width it is given, as a cell of a grid does', async () => {
+    const drawn = await render(<APoster {...asDrawn(aTitle())} wide={150} />);
+    const whole = drawn.toJSON();
+
+    expect(
+      whole !== null && !Array.isArray(whole) && StyleSheet.flatten(whole.props.style),
+    ).toMatchObject({ width: 150 });
   });
 });

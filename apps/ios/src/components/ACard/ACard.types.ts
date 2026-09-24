@@ -4,6 +4,7 @@ type ACardProps = {
   media: MediaSummary;
   asProgramme: boolean;
   watched?: number;
+  wide?: number;
   onLookAt: (mediaId: string) => void;
   onLookAtShow: (libraryId: string, showId: string) => void;
 };

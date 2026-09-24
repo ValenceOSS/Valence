@@ -12,13 +12,8 @@ const styles = StyleSheet.create({
   howFar: { bottom: 0, left: 0, position: 'absolute', right: 0 },
   poster: { height: '100%', width: '100%' },
   standIn: { alignItems: 'center', justifyContent: 'center', padding: 8 },
-  tile: {
-    borderRadius: 12,
-    height: POSTER_WIDTH * RATIO,
-    overflow: 'hidden',
-    width: POSTER_WIDTH,
-  },
-  whole: { gap: 6, width: POSTER_WIDTH },
+  tile: { borderRadius: 12, overflow: 'hidden' },
+  whole: { gap: 6 },
 });
 
 /**
@@ -36,16 +31,25 @@ const styles = StyleSheet.create({
  * @param artwork - Where its picture is, or nothing where it has none.
  * @param watched - How much of it has been seen, as a fraction, where any of it has.
  * @param note - A word about where it stands, such as whether it is already here.
+ * @param wide - How wide to draw it, where it fills a cell rather than sitting on a shelf.
  */
-const APoster = ({ title, year = null, artwork, watched = 0, note = null }: APosterProps) => {
+const APoster = ({
+  title,
+  year = null,
+  artwork,
+  watched = 0,
+  note = null,
+  wide = POSTER_WIDTH,
+}: APosterProps) => {
   const [isMissing, setIsMissing] = useState(false);
   const colours = useTheColours();
+  const size = { height: wide * RATIO, width: wide };
 
   return (
-    <View style={styles.whole}>
-      <View style={[styles.tile, { backgroundColor: colours.surfaceRaised }]}>
+    <View style={[styles.whole, { width: wide }]}>
+      <View style={[styles.tile, size, { backgroundColor: colours.surfaceRaised }]}>
         {artwork === null || isMissing ? (
-          <View style={[styles.tile, styles.standIn]}>
+          <View style={[styles.tile, size, styles.standIn]}>
             <Words size="small" tone="muted" lines={4}>
               {title}
             </Words>

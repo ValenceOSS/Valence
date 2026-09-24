@@ -397,7 +397,7 @@ const TheLibrary = ({
   );
 
   const drawn = useCallback(
-    (cell: Cell) => {
+    (cell: Cell, wide: number) => {
       if (cell.kind === 'programme') {
         return (
           <Button
@@ -411,6 +411,7 @@ const TheLibrary = ({
               title={cell.programme.title}
               year={cell.programme.year ?? null}
               artwork={onThisServer(`/api/media/${cell.programme.coverMediaId}/image/poster`)}
+              wide={wide}
             />
           </Button>
         );
@@ -423,6 +424,7 @@ const TheLibrary = ({
           media={cell.media}
           asProgramme={part === 'shows'}
           watched={known === undefined ? 0 : watchedFraction(known)}
+          wide={wide}
           onLookAt={lookAt}
           onLookAtShow={lookAtShow}
         />
