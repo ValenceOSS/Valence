@@ -205,8 +205,17 @@ public class ValenceMusicModule: Module {
     ])
   }
 
-  /// Answers the lock screen, Control Centre and headphones by passing each on to the app.
+  /// Answers the lock screen, Control Centre and headphones by passing each on to the app, set up on
+  /// the main thread, since commands enabled from any other are not always honoured.
   private func takeTheLockScreen() {
+    guard Thread.isMainThread else {
+      DispatchQueue.main.async { [weak self] in
+        self?.takeTheLockScreen()
+      }
+
+      return
+    }
+
     guard !hasCommands else {
       return
     }
@@ -266,6 +275,14 @@ public class ValenceMusicModule: Module {
 
   /// Puts what is playing, and where it has got to, on the lock screen.
   private func tellTheLockScreen() {
+    guard Thread.isMainThread else {
+      DispatchQueue.main.async { [weak self] in
+        self?.tellTheLockScreen()
+      }
+
+      return
+    }
+
     keepTheSession()
     var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
     let duration = player.currentItem?.duration.seconds ?? .nan
