@@ -15,7 +15,9 @@ import { createIndexerService } from '@ValenceRequests/indexers/createIndexerSer
 import { createPacer } from '@ValenceRequests/indexers/createPacer';
 import { createSiteClient } from '@ValenceRequests/cardigann/createSiteClient';
 import { createBrowserKeeper } from '@ValenceRequests/solver/createBrowserKeeper';
+import { createGate } from '@ValenceRequests/solver/createGate';
 import { createSiteAgent } from '@ValenceRequests/solver/createSiteAgent';
+import { openInTurn } from '@ValenceRequests/solver/openInTurn';
 import { createSitePool } from '@ValenceRequests/solver/createSitePool';
 import { createSolver } from '@ValenceRequests/solver/createSolver';
 import { createDatabaseDefinitionStore } from '@ValenceRequests/definitions/createDatabaseDefinitionStore';
@@ -123,8 +125,15 @@ const browser = createBrowserKeeper({
   },
 });
 
+const opening = createGate(1);
+
 const sites = createSitePool({
-  open: async () => createSiteAgent(await (await browser.get()).newContext(), PAGES_PER_SITE),
+  open: async () =>
+    createSiteAgent(
+      await openInTurn(opening, async () => (await browser.get()).newContext()),
+      PAGES_PER_SITE,
+      opening,
+    ),
   most: SITES_AT_ONCE,
   idleMs: SITE_IDLE_MS,
   restartMs: BROWSER_RESTART_MS,

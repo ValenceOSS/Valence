@@ -130,12 +130,14 @@ describe('toSitePage', () => {
     ).rejects.toThrow();
   });
 
-  it('reads the browser’s user agent, and closes the tab', async () => {
+  it('reads the browser’s user agent, closes the tab, and knows it is closed', async () => {
     const { tab } = aFakeTab();
     const page = toSitePage(tab);
 
     expect(await page.userAgent()).toContain('Firefox');
+    expect(page.isClosed()).toBe(false);
     await page.close();
     expect(tab.close).toHaveBeenCalled();
+    expect(page.isClosed()).toBe(true);
   });
 });
