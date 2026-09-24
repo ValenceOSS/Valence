@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator, Alert, Image, StyleSheet } from 'react-native';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
@@ -37,7 +37,8 @@ const styles = StyleSheet.create({
  *
  * @param kind - Whether it is a film or a programme.
  * @param id - Its catalogue id.
- * @param onOpen - Told to open it in the library, once it is there.
+ * @param onOpen - Told to open it in the library, which a title already there is at once, in
+ *   place of this page — it is never asked about.
  * @param onBack - Told somebody is done with it.
  */
 const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
@@ -56,6 +57,14 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
   const [refusal, setRefusal] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const title = asking.data;
+  const heldAs =
+    title !== undefined && title.standing.status === 'library' ? title.standing.mediaId : null;
+
+  useEffect(() => {
+    if (heldAs !== null) {
+      onOpen(kind, heldAs);
+    }
+  }, [heldAs, kind, onOpen]);
   const request = (requests.data ?? []).find((one) => one.id === title?.standing.requestId) ?? null;
   const progress = useQuery(requestsQueries.requestProgress(request?.state === 'downloading'));
   const going = request === null ? null : progressOfRequest(request, progress.data ?? []);
@@ -111,7 +120,6 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
   }
 
   const standing = describeStanding(title.standing);
-  const { mediaId } = title.standing;
   const mayTakeBack =
     request !== null && request.requestedBy.id === who.data?.id && !HAS_ARRIVED.has(request.state);
 
@@ -136,16 +144,6 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
       {going === null ? null : (
         <HowFar fraction={going.progress} label={`How far ${title.title} has downloaded`} />
       )}
-
-      {title.standing.status === 'library' && mediaId !== null ? (
-        <Button
-          onPress={() => {
-            onOpen(kind, mediaId);
-          }}
-        >
-          Open
-        </Button>
-      ) : null}
 
       {title.standing.status === 'askable' ? (
         <>

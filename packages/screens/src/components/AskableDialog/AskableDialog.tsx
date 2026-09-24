@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Stop as StopFilledIcon } from '@keyline-icons/react/fill';
 import { useSample } from '@ValenceScreens/requests/useSample';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -50,7 +50,8 @@ type Choosing = { asked: MediaRequestAsk; onAsked: () => void };
  *
  * @param asking - The title the address names, as its kind and id, or nothing.
  * @param onClose - Called when it is dismissed.
- * @param onOpen - Called to open what is in the library already.
+ * @param onOpen - Called to open what is in the library already, in its place of asking — a title
+ *   the library holds is never asked about, but opened as it would be anywhere else.
  */
 const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const cache = useQueryClient();
@@ -66,6 +67,16 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   const [askedAlbums, setAskedAlbums] = useState<ReadonlySet<string>>(new Set());
   const [problem, setProblem] = useState<string | null>(null);
   const title = found.data ?? null;
+  const heldAs =
+    title !== null && title.standing.status === 'library' && title.standing.mediaId !== null
+      ? { kind: title.kind, mediaId: title.standing.mediaId }
+      : null;
+
+  useEffect(() => {
+    if (heldAs !== null) {
+      onOpen(heldAs.kind, heldAs.mediaId);
+    }
+  }, [heldAs?.kind, heldAs?.mediaId, onOpen]);
   const sample = useSample();
   const requestId = title?.standing.requestId ?? null;
   const requests = useQuery({ ...requestsQueries.mediaRequests(), enabled: requestId !== null });
@@ -125,7 +136,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
   return (
     <Dialog
       label={title?.title ?? 'Something to ask for'}
-      isOpen={named !== null}
+      isOpen={named !== null && heldAs === null && (title !== null || !found.isPending)}
       onClose={onClose}
       size="stage"
     >
@@ -326,23 +337,16 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
         confirm={
           title === null
             ? undefined
-            : title.standing.status === 'library' && title.standing.mediaId !== null
+            : title.standing.status === 'askable'
               ? {
-                  label: 'Open',
+                  label: title.kind === 'artist' ? 'Watch this artist' : 'Request',
+                  isDisabled: !isReady,
+                  isLoading: isAsking,
                   onChoose: () => {
-                    onOpen(title.kind, title.standing.mediaId ?? '');
+                    ask(askingFor(title, seasons, releaseTypes));
                   },
                 }
-              : title.standing.status === 'askable'
-                ? {
-                    label: title.kind === 'artist' ? 'Watch this artist' : 'Request',
-                    isDisabled: !isReady,
-                    isLoading: isAsking,
-                    onChoose: () => {
-                      ask(askingFor(title, seasons, releaseTypes));
-                    },
-                  }
-                : undefined
+              : undefined
         }
       >
         {mayCancel ? (

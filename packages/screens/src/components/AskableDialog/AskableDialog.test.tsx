@@ -313,7 +313,7 @@ describe('AskableDialog', () => {
     expect(await screen.findByText('Requested')).toBeInTheDocument();
   });
 
-  it('opens what is in the library already, rather than asking for it again', async () => {
+  it('opens what is in the library already in its own dialog, without showing this one', async () => {
     fetchAskable.mockResolvedValue(
       aTitle({
         standing: { status: 'library', mediaId: 'm1', requestId: null, requestState: null },
@@ -322,12 +322,11 @@ describe('AskableDialog', () => {
 
     const { onOpen } = open();
 
-    expect(await screen.findByText('In your library')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Request' })).not.toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole('button', { name: 'Open' }));
-
-    expect(onOpen).toHaveBeenCalledWith('film', 'm1');
+    await waitFor(() => {
+      expect(onOpen).toHaveBeenCalledWith('film', 'm1');
+    });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Open' })).not.toBeInTheDocument();
   });
 
   it('says why something could not be asked for', async () => {
