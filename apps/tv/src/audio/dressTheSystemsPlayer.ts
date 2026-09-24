@@ -14,7 +14,8 @@ type SystemsAudio = AudioLike & ListeningAudio;
  * A path is sent to the server with this television's session, since the system's player does not
  * go through `fetch`. What the system says as it plays is turned into the element's events —
  * loaded, playing, paused, waiting, moved on, finished, failed. A speed is played at without
- * lowering the voice, which is what a book read quickly needs.
+ * lowering the voice, which is what a book read quickly needs. Taking the file away stops the
+ * player where it is, since the system's player takes no file at all to mean nothing.
  *
  * @param system - The system's player.
  * @returns The audio.
@@ -82,9 +83,14 @@ const dressTheSystemsPlayer = (system: AudioPlayer): SystemsAudio => {
       hasLoaded = false;
       hasFailed = false;
       wasPlaying = false;
-      system.replace(
-        path === '' ? null : { uri: onTheServer(path), headers: signedHeadersFor(path) },
-      );
+
+      if (path === '') {
+        system.pause();
+
+        return;
+      }
+
+      system.replace({ uri: onTheServer(path), headers: signedHeadersFor(path) });
       tell('waiting');
     },
     get currentTime() {

@@ -12,7 +12,7 @@ import type { BookChapter } from '@ValenceContracts/schemas/Book';
 const tracksOf = (chapters: readonly BookChapter[]): AudiobookTrack[] =>
   chapters
     .filter((chapter) => isAudiobookFormat(chapter.format))
-    .toSorted((left, right) => left.number - right.number)
+    .sort((left, right) => left.number - right.number)
     .map((chapter) => ({
       id: chapter.id,
       title: chapter.title,

@@ -127,12 +127,14 @@ describe('dressTheSystemsPlayer', () => {
     expect(heard).toEqual(['waiting']);
   });
 
-  it('empties the player when the song is taken away', () => {
+  it('stops the player where it is when the file is taken away', () => {
     const { audio, system } = dressed();
 
     audio.src = '';
 
-    expect(system.replace).toHaveBeenCalledWith(null);
+    expect(audio.src).toBe('');
+    expect(system.pause).toHaveBeenCalled();
+    expect(system.replace).not.toHaveBeenCalled();
   });
 
   it('turns what the system says as it plays into the element’s events', () => {

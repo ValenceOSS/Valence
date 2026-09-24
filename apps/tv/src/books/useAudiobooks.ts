@@ -15,7 +15,7 @@ const gatherAudiobooks = (asked: UseQueryResult<Book[]>[]): Audiobooks => ({
   books: asked
     .flatMap((one) => one.data ?? [])
     .filter((book) => book.hasAudio)
-    .toSorted((left, right) => left.title.localeCompare(right.title)),
+    .sort((left, right) => left.title.localeCompare(right.title)),
   isPending: asked.some((one) => one.isPending),
 });
 
