@@ -1,5 +1,8 @@
 import type { ARectOnScreen } from '@ValencePhone/hooks/useArrivingFrom.types';
-import type { CatalogueBrowseKind } from '@ValenceContracts/schemas/CatalogueTitle';
+import type {
+  CatalogueBrowse,
+  CatalogueBrowseKind,
+} from '@ValenceContracts/schemas/CatalogueTitle';
 
 type SignedInProps = {
   onOut: () => void;
@@ -14,6 +17,7 @@ type APage =
   | { kind: 'series'; seriesId: string }
   | { kind: 'person'; personId: number }
   | { kind: 'asking'; about: CatalogueBrowseKind; id: string }
+  | { kind: 'browsing'; browsing: CatalogueBrowse; title: string }
   | { kind: 'notifications' }
   | { kind: 'album'; albumId: string }
   | { kind: 'artist'; artistId: string }
