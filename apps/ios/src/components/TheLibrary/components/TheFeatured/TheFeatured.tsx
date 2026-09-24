@@ -124,6 +124,11 @@ const TheFeaturedTitles = ({
       const inputRange = [(index - 1) * step, index * step, (index + 1) * step];
 
       return {
+        nearness: scrolled.interpolate({
+          inputRange,
+          outputRange: [0, 1, 0],
+          extrapolate: 'clamp',
+        }),
         transform: [
           {
             translateX: scrolled.interpolate({
@@ -283,11 +288,15 @@ const TheFeaturedTitles = ({
           const isShowing = index === lead + turn;
 
           return (
-            <Animated.View key={`${media.id}:${index.toString()}`} style={leaning[index]}>
+            <Animated.View
+              key={`${media.id}:${index.toString()}`}
+              style={{ transform: leaning[index]?.transform }}
+            >
               <AFeature
                 media={media}
                 width={across}
                 isShowing={isShowing}
+                {...(leaning[index] === undefined ? {} : { nearness: leaning[index].nearness })}
                 resumeAt={resumeFor(progress, media.id)}
                 onEnded={showNext}
                 {...(isShowing ? { onClip: heardClip } : {})}

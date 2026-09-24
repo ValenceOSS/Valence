@@ -123,6 +123,7 @@ const AFeature = ({
   onPlay,
   onMoreInfo,
   onClip,
+  nearness,
 }: AFeatureProps) => {
   const colours = useTheColours();
   const detail = useQuery(libraryQueries.detail(media.id));
@@ -267,7 +268,9 @@ const AFeature = ({
             </View>
           ) : null}
 
-          <View style={styles.foot}>
+          <Animated.View
+            style={[styles.foot, nearness === undefined ? null : { opacity: nearness }]}
+          >
             <Animated.View style={risings[0]}>
               <ATitleLogo
                 mediaId={media.hasLogo ? media.id : null}
@@ -331,7 +334,7 @@ const AFeature = ({
                 </Button>
               </View>
             </Animated.View>
-          </View>
+          </Animated.View>
         </View>
       </View>
     </Button>
