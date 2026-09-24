@@ -48,8 +48,13 @@ describe('stitchTheRest', () => {
     const reader = stitched?.body?.getReader();
 
     await reader?.read();
+    await Promise.resolve();
 
-    expect(askFrom.mock.calls.length).toBeLessThanOrEqual(1);
+    expect(askFrom).not.toHaveBeenCalled();
+
+    await reader?.read();
+
+    expect(askFrom).toHaveBeenCalledOnce();
   });
 
   it('lets the server go when the page stops reading', async () => {
@@ -65,6 +70,26 @@ describe('stitchTheRest', () => {
     const stitched = stitchTheRest(aSlice(0, 2), () => Promise.resolve(aSlice(5, 7)), vi.fn());
 
     await expect(stitched?.text()).rejects.toThrow();
+  });
+
+  it('fails the rest where a slice claims a different file', async () => {
+    const other = new Response('def', {
+      status: 206,
+      headers: { 'content-range': 'bytes 3-5/99' },
+    });
+    const stitched = stitchTheRest(aSlice(0, 2), () => Promise.resolve(other), vi.fn());
+
+    await expect(stitched?.text()).rejects.toThrow();
+  });
+
+  it('fails the rest where a slice is shorter than the range it claims', async () => {
+    const short = new Response('d', {
+      status: 206,
+      headers: { 'content-range': 'bytes 3-5/10' },
+    });
+    const stitched = stitchTheRest(aSlice(0, 2), () => Promise.resolve(short), vi.fn());
+
+    await expect(stitched?.text()).rejects.toThrow('less of the file');
   });
 
   it('passes on a slice that already reaches the end, and anything that is not a slice', () => {
