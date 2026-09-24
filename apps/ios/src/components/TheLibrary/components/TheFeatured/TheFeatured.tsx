@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Animated, Easing, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { showIdOf } from '@ValenceClient/library/showIdOf';
@@ -20,21 +20,21 @@ const styles = StyleSheet.create({
 });
 
 /**
- * Runs a dot's fill from where it is to full over some time, evenly, on the native side.
+ * Runs a dot's fill on from wherever it has reached to full, evenly, on the native side, so a
+ * change of pace never sends it backwards.
  *
  * @param filled - The fill.
- * @param from - Where it starts, from nothing to the whole of it.
- * @param overMs - How long until it is full.
+ * @param overMs - How long until it is full, given how far it has reached.
  */
-const fillOver = (filled: Animated.Value, from: number, overMs: number): void => {
-  filled.stopAnimation();
-  filled.setValue(from);
-  Animated.timing(filled, {
-    toValue: 1,
-    duration: Math.max(overMs, 0),
-    easing: Easing.linear,
-    useNativeDriver: true,
-  }).start();
+const fillOn = (filled: Animated.Value, overMs: (from: number) => number): void => {
+  filled.stopAnimation((from) => {
+    Animated.timing(filled, {
+      toValue: 1,
+      duration: Math.max(overMs(from), 0),
+      easing: Easing.linear,
+      useNativeDriver: true,
+    }).start();
+  });
 };
 
 /**
@@ -75,62 +75,75 @@ const TheFeaturedTitles = ({
     onShowing?.(showing);
   }, [showing, onShowing]);
 
-  const showNext = () => {
-    const next = items.length === 0 ? 0 : (at + 1) % items.length;
+  const moving = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const heard = useRef<Parameters<NonNullable<typeof onClip>>[0]>(null);
+  const latest = useRef({ at, count: items.length, step, isStill, onClip });
 
-    pager.current?.scrollTo({ x: next * step, animated: true });
+  latest.current = { at, count: items.length, step, isStill, onClip };
+
+  const showNext = useCallback(() => {
+    const { at: was, count, step: apart } = latest.current;
+    const next = count === 0 ? 0 : (was + 1) % count;
+
+    pager.current?.scrollTo({ x: next * apart, animated: true });
     setAt(next);
-  };
+  }, []);
 
-  useEffect(() => {
-    if (isStill) {
-      filled.setValue(0);
+  const runOut = useCallback(
+    (overMs: (from: number) => number, movesOnItself: boolean) => {
+      if (moving.current !== null) {
+        clearTimeout(moving.current);
+        moving.current = null;
+      }
 
-      return;
-    }
+      filled.stopAnimation((from) => {
+        if (movesOnItself && latest.current.count > 1) {
+          moving.current = setTimeout(showNext, Math.max(overMs(from), 0));
+        }
 
-    fillOver(filled, 0, MOVE_ON_AFTER);
+        if (!latest.current.isStill) {
+          fillOn(filled, () => overMs(from));
+        }
+      });
+    },
+    [filled, showNext],
+  );
+
+  useLayoutEffect(() => {
+    heard.current = null;
+    filled.setValue(0);
+    runOut(() => MOVE_ON_AFTER, true);
 
     return () => {
+      if (moving.current !== null) {
+        clearTimeout(moving.current);
+        moving.current = null;
+      }
+
       filled.stopAnimation();
     };
-  }, [at, filled, isStill]);
+  }, [at, filled, runOut]);
 
-  /**
-   * Hands the page the showing title's clip, and has its dot follow the clip's own time.
-   *
-   * @param player - The clip's player while it plays, or nothing once it stops.
-   */
-  const heardClip = (player: Parameters<NonNullable<typeof onClip>>[0]) => {
-    onClip?.(player);
+  const heardClip = useCallback(
+    (player: Parameters<NonNullable<typeof onClip>>[0]) => {
+      latest.current.onClip?.(player);
 
-    if (player === null || isStill || !(player.duration > 0)) {
-      return;
-    }
+      if (player === heard.current) {
+        return;
+      }
 
-    fillOver(
-      filled,
-      Math.min(player.currentTime / player.duration, 1),
-      (player.duration - player.currentTime) * 1000,
-    );
-  };
+      heard.current = player;
 
-  useEffect(() => {
-    if (items.length < 2) {
-      return;
-    }
+      if (player !== null && player.duration > 0) {
+        runOut(() => (player.duration - player.currentTime) * 1000, false);
 
-    const moving = setTimeout(() => {
-      const next = (at + 1) % items.length;
+        return;
+      }
 
-      pager.current?.scrollTo({ x: next * step, animated: true });
-      setAt(next);
-    }, MOVE_ON_AFTER);
-
-    return () => {
-      clearTimeout(moving);
-    };
-  }, [at, items.length, step]);
+      runOut((from) => (1 - from) * MOVE_ON_AFTER, true);
+    },
+    [runOut],
+  );
 
   if (items.length === 0) {
     return null;
