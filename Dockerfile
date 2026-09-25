@@ -17,6 +17,7 @@ FROM node:24-bookworm-slim AS web-build
 WORKDIR /build
 RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY patches ./patches
 COPY tsconfig.base.json tsconfig.json tsconfig.paths.json ./
 COPY packages ./packages
 COPY apps/web ./apps/web
@@ -98,6 +99,7 @@ WORKDIR /app
 RUN corepack enable
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches ./patches
 COPY packages ./packages
 COPY apps/server ./apps/server
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts
