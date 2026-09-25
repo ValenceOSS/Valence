@@ -1,4 +1,5 @@
 import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
+import type { ExternalIds } from '@ValenceServer/library/naming/ExternalIds.types';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
 import type { NextEpisode } from '@ValenceServer/library/nextEpisodeOf';
 import type { Person } from '@ValenceContracts/schemas/Person';
@@ -23,6 +24,10 @@ type MediaFacts = {
   };
   knownExternalId?: string | null;
   knownExternalKind?: 'tv' | 'movie';
+  title?: string;
+  year?: number | null;
+  ids?: ExternalIds;
+  rememberedExternalId?: string | null;
 };
 
 type CastMember = {

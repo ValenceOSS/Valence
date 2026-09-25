@@ -573,8 +573,12 @@ const createDatabaseLibraryService = ({
 
     await scanLibrary({
       libraryId,
+      kind: found.kind === 'shows' ? 'shows' : 'movies',
       root: found.path,
-      files: { listFiles: () => Promise.resolve({ files: rows, unreadable: [] }) },
+      files: {
+        listFiles: () => Promise.resolve({ files: rows, unreadable: [] }),
+        ...(files.readText === undefined ? {} : { readText: files.readText }),
+      },
       store,
       transcoder,
       providers: providers ?? [],
@@ -754,12 +758,13 @@ const createDatabaseLibraryService = ({
    * @returns What the scan changed.
    */
   const scanFilms = async (
-    found: { id: string; path: string },
+    found: { id: string; path: string; kind: string },
     force: boolean,
     jobId: string | undefined,
   ): Promise<ScanResult> =>
     scanLibrary({
       libraryId: found.id,
+      kind: found.kind === 'shows' ? 'shows' : 'movies',
       root: found.path,
       files,
       store,
@@ -1992,6 +1997,7 @@ const createDatabaseLibraryService = ({
 
       return scanLibrary({
         libraryId,
+        kind: found.kind,
         root: found.path,
         within: folder,
         files,

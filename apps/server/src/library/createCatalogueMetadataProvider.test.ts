@@ -5,9 +5,6 @@ import {
   readYear,
   imageUrl,
   normalizeTitle,
-  significantWords,
-  shareASignificantWord,
-  similarity,
 } from './createCatalogueMetadataProvider';
 import type { Fetcher } from './createCatalogueMetadataProvider';
 import type { MediaFacts } from './MetadataProvider';
@@ -444,7 +441,7 @@ describe('createCatalogueMetadataProvider', () => {
     expect(calls.some((call) => call.includes('/movie/42'))).toBe(true);
   });
 
-  it('refuses an episode whose title disagrees entirely with what the filename said', async () => {
+  it('reads an episode by its number within the programme, whatever its file calls it', async () => {
     const { instance } = provider({
       '/tv/5/season/1': { episodes: [{ episode_number: 2, name: 'Biscuits with the Boss' }] },
       '/search/tv': { results: [{ id: 5, name: 'Ted Lasso', first_air_date: '2020-08-14' }] },
@@ -452,15 +449,15 @@ describe('createCatalogueMetadataProvider', () => {
     });
 
     const found = await instance.describe(
-      facts('/media/Ted/Season 1/Ted - S01E02 - Pilot.mkv', {
-        seriesTitle: 'Ted',
+      facts('/media/Ted Lasso/Season 1/Ted Lasso - S01E02 - Pilot.mkv', {
+        seriesTitle: 'Ted Lasso',
         seasonNumber: 1,
         episodeNumber: 2,
         episodeTitle: 'Pilot',
       }),
     );
 
-    expect(found).toBeNull();
+    expect(found).toMatchObject({ externalId: '5', title: 'Biscuits with the Boss' });
   });
 
   it('accepts an episode title that only roughly agrees, not just an identical one', async () => {
@@ -506,25 +503,6 @@ describe('createCatalogueMetadataProvider', () => {
     expect(found?.title).toBe('To Affection');
     expect(found?.externalId).toBe('5');
     expect(found?.backdropUrl).not.toBeNull();
-  });
-
-  it('still refuses a disagreeing episode when the series was only the best guess', async () => {
-    const { instance } = provider({
-      '/tv/5/season/1': { episodes: [{ episode_number: 2, name: 'Biscuits with the Boss' }] },
-      '/search/tv': { results: [{ id: 5, name: 'Ted Lasso', first_air_date: '2020-08-14' }] },
-      '/tv/5': { id: 5, name: 'Ted Lasso', genres: [] },
-    });
-
-    const found = await instance.describe(
-      facts('/media/Ted/Season 1/Ted - S01E02 - Pilot.mkv', {
-        seriesTitle: 'Ted',
-        seasonNumber: 1,
-        episodeNumber: 2,
-        episodeTitle: 'Pilot',
-      }),
-    );
-
-    expect(found).toBeNull();
   });
 
   it('does not refuse a match when the filename named no episode title to check against', async () => {
@@ -1333,65 +1311,20 @@ describe('telling two titles apart, whatever they are written in', () => {
     expect(collisions).toEqual([]);
   });
 
-  it('never scores two different titles a perfect match', () => {
-    const perfect = CORPUS.flatMap(({ title }, at) =>
-      CORPUS.slice(at + 1)
-        .filter((other) => similarity(title, other.title) === 1)
-        .map((other) => `${title} ~ ${other.title}`),
-    );
+  it('keeps Ted apart from Ted Lasso, which is what the exact test is for', async () => {
+    const { instance } = provider({
+      '/search/movie': {
+        results: [
+          { id: 1, title: 'Ted Lasso', release_date: '2012-06-29' },
+          { id: 2, title: 'Ted', release_date: '2012-06-29' },
+        ],
+      },
+      '/movie/2': { id: 2, title: 'Ted', release_date: '2012-06-29' },
+    });
 
-    expect(perfect).toEqual([]);
-  });
-
-  it('still scores a title against itself a perfect match', () => {
-    for (const { title } of CORPUS) {
-      expect(similarity(title, title)).toBe(1);
-    }
-  });
-
-  it('scores two titles it cannot read at all as nothing alike, not identical', () => {
-    expect(similarity('!!!', '???')).toBe(0);
-  });
-
-  it('keeps Ted apart from Ted Lasso, which is what the exact test is for', () => {
-    expect(normalizeTitle('Ted')).not.toBe(normalizeTitle('Ted Lasso'));
-    expect(similarity('Ted', 'Ted Lasso')).toBeLessThan(1);
-  });
-});
-
-describe('significantWords', () => {
-  it('reads a word out of a script that writes with spaces', () => {
-    expect(significantWords("Marvel's Daredevil")).toEqual(new Set(['marvel', 'daredevil']));
-  });
-
-  it('leaves out a short word, which agrees by accident too often', () => {
-    expect(significantWords('War of the Worlds').has('the')).toBe(false);
-  });
-
-  it('reads words out of a script that does not write with spaces', () => {
-    expect(significantWords('千と千尋の神隠し').size).toBeGreaterThan(0);
-  });
-
-  it('counts a two-character word where two characters is a word', () => {
-    expect(significantWords('霸王别姬')).toEqual(new Set(['霸王']));
-  });
-});
-
-describe('shareASignificantWord', () => {
-  it('agrees when a release and a catalogue word a title differently', () => {
-    expect(shareASignificantWord("Marvel's Daredevil", 'Daredevil')).toBe(true);
-  });
-
-  it('disagrees about two unrelated titles', () => {
-    expect(shareASignificantWord('Arrival', 'Dune')).toBe(false);
-  });
-
-  it('lets a title it cannot read through rather than throwing the match away', () => {
-    expect(shareASignificantWord('君の名は', 'Your Name')).toBe(true);
-  });
-
-  it('agrees about one Cyrillic title said twice', () => {
-    expect(shareASignificantWord('Иди и смотри', 'Иди и смотри')).toBe(true);
+    expect(
+      (await instance.describe({ ...facts('/media/Ted.mkv'), title: 'Ted' }))?.externalId,
+    ).toBe('2');
   });
 });
 
@@ -1434,31 +1367,6 @@ describe('matching a library that is not named in Latin', () => {
 
     expect(found).not.toBeNull();
     expect(found?.externalId).toBe('5');
-  });
-
-  it('still throws away an episode that plainly belongs to something else', async () => {
-    const { instance } = provider({
-      '/search/tv': {
-        results: [{ id: 5, name: 'Some Other Programme', first_air_date: '2013-04-07' }],
-      },
-      '/tv/5': { id: 5, name: 'Some Other Programme' },
-      '/tv/5/season/1': {
-        episodes: [{ episode_number: 1, id: 50, name: 'Completely Different Episode' }],
-      },
-    });
-
-    const found = await instance.describe(
-      facts('/media/Some Show/S01E01.mkv', {
-        seriesTitle: 'Some Show',
-        seriesYear: null,
-        seriesFolder: '/media/Some Show',
-        seasonNumber: 1,
-        episodeNumber: 1,
-        episodeTitle: 'Nothing Alike Whatsoever',
-      }),
-    );
-
-    expect(found).toBeNull();
   });
 });
 
@@ -1820,5 +1728,129 @@ describe('two films that share a title and a year', () => {
     await instance.describe(aFileOf(73 * 60));
 
     expect(calls.filter((url) => url.includes('/movie/1487650'))).toHaveLength(1);
+  });
+});
+
+describe('finding the right entry the way Jellyfin does', () => {
+  it('takes the year a release date straddled over one twenty years out', async () => {
+    const { instance } = provider({
+      '/search/movie': {
+        results: [
+          { id: 1, title: 'Arrival', release_date: '1996-05-31' },
+          { id: 2, title: 'Arrival', release_date: '2016-11-10' },
+        ],
+      },
+      '/movie/2': { id: 2, title: 'Arrival', release_date: '2016-11-10' },
+    });
+
+    const found = await instance.describe({
+      ...facts('/media/Arrival.mkv'),
+      title: 'Arrival',
+      year: 2017,
+    });
+
+    expect(found?.externalId).toBe('2');
+  });
+
+  it('asks again without the year where the year found nothing', async () => {
+    const { instance, calls } = provider({
+      'first_air_date_year=1999': { results: [] },
+      '/search/tv': {
+        results: [{ id: 4546, name: 'Curb Your Enthusiasm', first_air_date: '2000-10-15' }],
+      },
+      '/tv/4546': { id: 4546, name: 'Curb Your Enthusiasm', poster_path: '/curb.jpg' },
+      '/tv/4546/season/1': { episodes: [{ episode_number: 1, name: 'The Pants Tent' }] },
+    });
+
+    const found = await instance.describe(
+      facts('/tv/Curb Your Enthusiasm (1999)/Season 1/Curb.S01E01.mkv', {
+        seriesTitle: 'Curb Your Enthusiasm',
+        seriesYear: 1999,
+        seasonNumber: 1,
+        episodeNumber: 1,
+      }),
+    );
+
+    expect(found).toMatchObject({ externalId: '4546', title: 'The Pants Tent' });
+    expect(found?.posterUrl).toContain('/curb.jpg');
+    expect(calls.filter((call) => call.includes('/search/tv'))).toHaveLength(2);
+  });
+
+  it('reads an entry straight from an identifier written into the names, without searching', async () => {
+    const { instance, calls } = provider({ '/movie/603': { id: 603, title: 'The Matrix' } });
+
+    const found = await instance.describe({
+      ...facts('/media/The Matrix [tmdbid-603]/The Matrix.mkv'),
+      title: 'The Matrix',
+      ids: { tmdb: '603', imdb: null, tvdb: null },
+    });
+
+    expect(found?.externalId).toBe('603');
+    expect(calls.some((call) => call.includes('/search/'))).toBe(false);
+  });
+
+  it('finds the entry for an IMDb identifier', async () => {
+    const { instance } = provider({
+      '/find/tt0133093': { movie_results: [{ id: 603 }], tv_results: [] },
+      '/movie/603': { id: 603, title: 'The Matrix' },
+    });
+
+    const found = await instance.describe({
+      ...facts('/media/The Matrix.mkv'),
+      title: 'The Matrix',
+      ids: { tmdb: null, imdb: 'tt0133093', tvdb: null },
+    });
+
+    expect(found?.externalId).toBe('603');
+  });
+
+  it('reads what a file was matched to before rather than searching again', async () => {
+    const { instance, calls } = provider({ '/movie/329': DETAIL });
+
+    const found = await instance.describe({
+      ...facts('/media/arrival.mkv'),
+      title: 'arrival',
+      rememberedExternalId: '329',
+    });
+
+    expect(found?.externalId).toBe('329');
+    expect(calls.some((call) => call.includes('/search/'))).toBe(false);
+  });
+
+  it('describes an episode it cannot number from its programme, named by its file', async () => {
+    const { instance, calls } = provider({
+      '/search/tv': { results: [{ id: 42, name: 'Severance', first_air_date: '2022-02-18' }] },
+      '/tv/42': { id: 42, name: 'Severance', poster_path: '/sev.jpg' },
+    });
+
+    const found = await instance.describe({
+      ...facts('/tv/Severance/Specials/Behind the Desk.mkv', {
+        seriesTitle: 'Severance',
+        seasonNumber: 0,
+        episodeNumber: null,
+      }),
+      title: 'Behind the Desk',
+    });
+
+    expect(found).toMatchObject({
+      externalId: '42',
+      title: 'Behind the Desk',
+      seriesTitle: 'Severance',
+    });
+    expect(calls.some((call) => call.includes('/season/'))).toBe(false);
+  });
+
+  it('searches with punctuation turned into spaces', async () => {
+    const { instance, calls } = provider({ '/search/movie': SEARCH, '/movie/329': DETAIL });
+
+    await instance.describe({
+      ...facts('/media/x.mkv'),
+      title: 'Arrival: Director.s-Cut',
+      year: null,
+    });
+
+    expect(calls.find((call) => call.includes('/search/movie'))).toContain(
+      'query=Arrival+Director+s+Cut',
+    );
   });
 });
