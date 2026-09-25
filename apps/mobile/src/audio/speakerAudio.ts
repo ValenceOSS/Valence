@@ -23,7 +23,8 @@ const AudioEventSchema = z.object({
  * what the speaker last said, so the player can read them without waiting on it. A file is asked
  * for from this phone's server with this phone's session, since the speaker is not the app and
  * would otherwise arrive at the server as nobody; anything the player asks of a file before it has
- * been handed over waits for it. Taking the file away stops the speaker.
+ * been handed over waits for it. Taking the file away stops the speaker, and a file asked for and
+ * then replaced before its session arrived is never loaded.
  *
  * @param speaker - The native music module.
  * @param channel - Which of its speakers.
@@ -39,6 +40,7 @@ const speakerAudio = (speaker: NativeMusic, channel: Channel): AudioLike & Liste
   let isMuted = false;
   let rate = 1;
   let handedOver: Promise<void> = Promise.resolve();
+  let asked = 0;
 
   speaker.addListener('onAudio', (said) => {
     const read = AudioEventSchema.safeParse(said);
@@ -63,6 +65,9 @@ const speakerAudio = (speaker: NativeMusic, channel: Channel): AudioLike & Liste
       source = to;
       at = 0;
       long = Number.NaN;
+      asked += 1;
+
+      const thisAsk = asked;
 
       if (to === '') {
         isPaused = true;
@@ -75,7 +80,9 @@ const speakerAudio = (speaker: NativeMusic, channel: Channel): AudioLike & Liste
       const whole = to.startsWith('/') ? onThisServer(to) : to;
 
       handedOver = theCookiesThisPhoneHolds(whole).then((cookie) => {
-        speaker.load(channel, whole, cookie);
+        if (thisAsk === asked) {
+          speaker.load(channel, whole, cookie);
+        }
       });
     },
     get currentTime() {

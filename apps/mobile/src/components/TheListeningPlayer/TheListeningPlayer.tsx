@@ -13,8 +13,6 @@ import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { goToChapterBeside } from '@ValenceClient/books/goToChapterBeside';
 import { LISTENING_CHOICES } from '@ValenceClient/books/LISTENING_CHOICES';
 import { useChapterPlaying } from '@ValenceClient/books/useChapterPlaying';
-import { askForASpeed } from '@ValenceMobile/books/askForASpeed';
-import { askWhenToSleep } from '@ValenceMobile/books/askWhenToSleep';
 import { thePhonesAudiobookPlayer } from '@ValenceMobile/books/thePhonesAudiobookPlayer';
 import { ALitCircle } from '@ValenceMobile/components/ALitCircle/ALitCircle';
 import { AirPlayButton } from '@ValenceMobile/components/AirPlayButton/AirPlayButton';
@@ -24,13 +22,14 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
-import { TheChapters } from '@ValenceMobile/components/TheListeningPlayer/components/TheChapters/TheChapters';
+import { TheChoices } from '@ValenceMobile/components/TheListeningPlayer/components/TheChoices/TheChoices';
 import { ThePlaceInTheChapter } from '@ValenceMobile/components/TheListeningPlayer/components/ThePlaceInTheChapter/ThePlaceInTheChapter';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheBook } from '@ValenceMobile/hooks/useTheBook';
 import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import type { ListeningPanel } from '@ValenceClient/books/listeningChoices';
 import type { TheListeningPlayerProps } from './TheListeningPlayer.types';
 
 const TALL = 1.5;
@@ -64,7 +63,7 @@ const styles = StyleSheet.create({
  * chapter playing, the book and who wrote it, and at the foot where the chapter has got to and how
  * long is left of the book, the buttons — the chapter before, fifteen seconds back, play, thirty
  * on, the next chapter — the phone's own volume slider, and ways to change the speed, set a sleep
- * timer, send it elsewhere and go straight to any chapter.
+ * timer, send it elsewhere and go straight to any chapter, each chosen from a sheet.
  *
  * It is lit in the colours of the cover, as the music player is.
  *
@@ -76,7 +75,7 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
   const { player, state } = useTheBook();
   const at = useChapterPlaying(thePhonesAudiobookPlayer());
   const [topHigh, setTopHigh] = useState(0);
-  const [isChoosingChapter, setIsChoosingChapter] = useState(false);
+  const [panel, setPanel] = useState<ListeningPanel | null>(null);
   const { book } = state;
   const cover = book?.hasCover === true ? onThisServer(bookCoverUrl(book.id)) : null;
   const lights = usePictureLights(cover);
@@ -214,7 +213,7 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
             label={`Speed, ${state.speed.toString()}×`}
             isChosen={isFaster}
             onPress={() => {
-              askForASpeed(state.speed, player.setSpeed);
+              setPanel('speed');
             }}
           >
             <ALitCircle of={Gauge} size={20} isLit={isFaster} />
@@ -225,7 +224,7 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
             label={isSleeping ? 'Sleep timer, on' : 'Sleep timer'}
             isChosen={isSleeping}
             onPress={() => {
-              askWhenToSleep(isSleeping, player.setSleep);
+              setPanel('sleep');
             }}
           >
             <ALitCircle of={Moon} size={20} isLit={isSleeping} />
@@ -236,12 +235,12 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
           <Button
             tone="bare"
             label="Chapters"
-            isChosen={isChoosingChapter}
+            isChosen={panel === 'chapters'}
             onPress={() => {
-              setIsChoosingChapter(true);
+              setPanel('chapters');
             }}
           >
-            <ALitCircle of={List} size={20} isLit={isChoosingChapter} />
+            <ALitCircle of={List} size={20} isLit={panel === 'chapters'} />
           </Button>
         </View>
 
@@ -262,10 +261,10 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
 
         {state.problem === null ? null : <Words tone="danger">{state.problem}</Words>}
 
-        <TheChapters
-          isOpen={isChoosingChapter}
+        <TheChoices
+          panel={panel}
           onClose={() => {
-            setIsChoosingChapter(false);
+            setPanel(null);
           }}
         />
       </View>

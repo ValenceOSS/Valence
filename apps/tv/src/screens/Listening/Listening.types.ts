@@ -3,6 +3,4 @@ type ListeningProps = {
   onBack: () => void;
 };
 
-type ListeningPanel = 'speed' | 'sleep' | 'chapters';
-
-export type { ListeningPanel, ListeningProps };
+export type { ListeningProps };

@@ -12,13 +12,15 @@ import {
   SkipForward,
 } from '@keyline-icons/react-native/fill';
 import { chapterPlaying } from '@ValenceClient/books/chapterPlaying';
+import { chooseListening } from '@ValenceClient/books/chooseListening';
 import { describeLength } from '@ValenceClient/books/describeLength';
+import { describeSpeed } from '@ValenceClient/books/describeSpeed';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { goToChapterBeside } from '@ValenceClient/books/goToChapterBeside';
+import { listeningChoices } from '@ValenceClient/books/listeningChoices';
 import { LISTENING_CHOICES } from '@ValenceClient/books/LISTENING_CHOICES';
 import { theAudiobookPlayer } from '@ValenceClient/books/theAudiobookPlayer';
 import { useAudiobookPlayer } from '@ValenceClient/books/useAudiobookPlayer';
-import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { Artwork } from '@ValenceTv/components/Artwork/Artwork';
 import { Button } from '@ValenceTv/components/Button/Button';
 import { ChoicePanel } from '@ValenceTv/components/ChoicePanel/ChoicePanel';
@@ -29,8 +31,8 @@ import { useHandOff } from '@ValenceTv/navigation/useHandOff';
 import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { AudiobookPlayerState } from '@ValenceClient/books/createAudiobookPlayer';
-import type { Choice } from '@ValenceTv/components/ChoicePanel/ChoicePanel.types';
-import type { ListeningPanel, ListeningProps } from './Listening.types';
+import type { ListeningPanel } from '@ValenceClient/books/listeningChoices';
+import type { ListeningProps } from './Listening.types';
 
 const COVER = { width: 400, height: 600 };
 
@@ -39,14 +41,6 @@ const CONTROLS = 820;
 const BACK_ROOM = 110;
 
 const SLEEP_TICKS_MS = 15_000;
-
-/**
- * Says how fast a book plays, the way the speeds are listed.
- *
- * @param speed - How much faster than read it plays.
- * @returns The words, such as "1.25×".
- */
-const speedLabel = (speed: number): string => `${speed.toString()}×`;
 
 /**
  * Says when the sleep timer will stop the book, where it is set.
@@ -63,48 +57,6 @@ const sleepLabel = ({ sleep }: AudiobookPlayerState, now: number): string | null
   return sleep.kind === 'endOfChapter'
     ? 'End of chapter'
     : `${Math.max(Math.ceil((sleep.endsAtMs - now) / 60_000), 1).toString()} min`;
-};
-
-/**
- * The choices each of the player's panels lists.
- *
- * @param panel - Which panel.
- * @param state - What the player is doing.
- * @returns What there is to choose from.
- */
-const choicesFor = (panel: ListeningPanel, state: AudiobookPlayerState): Choice[] => {
-  if (panel === 'speed') {
-    return LISTENING_CHOICES.speeds.map((speed) => ({
-      id: speed.toString(),
-      label: speedLabel(speed),
-      isCurrent: speed === state.speed,
-    }));
-  }
-
-  if (panel === 'sleep') {
-    return [
-      { id: 'off', label: 'Off', isCurrent: state.sleep.kind === 'off' },
-      ...LISTENING_CHOICES.sleepMinutes.map((minutes) => ({
-        id: minutes.toString(),
-        label: `${minutes.toString()} minutes`,
-        isCurrent: false,
-      })),
-      {
-        id: 'endOfChapter',
-        label: 'End of this chapter',
-        isCurrent: state.sleep.kind === 'endOfChapter',
-      },
-    ];
-  }
-
-  const at = chapterPlaying(state);
-
-  return state.chapters.map((chapter, index) => ({
-    id: index.toString(),
-    label: chapter.title,
-    detail: formatDuration(chapter.bookEndSeconds - chapter.bookStartSeconds),
-    isCurrent: index === at,
-  }));
 };
 
 const TITLES: Record<ListeningPanel, string> = {
@@ -193,12 +145,8 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
   const sleeping = sleepLabel(state, now);
 
   const choose = (id: string): void => {
-    if (panel === 'speed') {
-      player.setSpeed(Number(id));
-    } else if (panel === 'sleep') {
-      player.setSleep(id === 'off' || id === 'endOfChapter' ? id : Number(id));
-    } else {
-      player.goToChapter(Number(id));
+    if (panel !== null) {
+      chooseListening(player, panel, id);
     }
 
     closePanel();
@@ -323,7 +271,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
             <View style={styles.extras}>
               <Button
                 onFocus={awayFromTheEdges}
-                label={speedLabel(state.speed)}
+                label={describeSpeed(state.speed)}
                 icon={state.speed === 1 ? Gauge : GaugeFilled}
                 variant={state.speed === 1 ? 'ghost' : 'soft'}
                 size="md"
@@ -357,7 +305,11 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
       </FocusFence>
 
       {panel === null ? null : (
-        <ChoicePanel title={TITLES[panel]} choices={choicesFor(panel, state)} onChoose={choose} />
+        <ChoicePanel
+          title={TITLES[panel]}
+          choices={listeningChoices(panel, state)}
+          onChoose={choose}
+        />
       )}
     </View>
   );

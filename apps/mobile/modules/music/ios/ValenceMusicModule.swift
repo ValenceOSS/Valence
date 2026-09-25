@@ -42,56 +42,86 @@ public class ValenceMusicModule: Module {
     }
 
     OnDestroy {
-      self.speakers.values.forEach { $0.stop() }
-      MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+      self.onMain {
+        self.speakers.values.forEach { $0.stop() }
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+      }
     }
 
     Function("load") { (channel: String, url: String, cookie: String?) in
-      let speaker = self.speaker(channel)
+      self.onMain {
+        let speaker = self.speaker(channel)
 
-      speaker.load(url, cookie: cookie)
-      self.fetchTheArtwork(for: speaker)
+        speaker.load(url, cookie: cookie)
+        self.fetchTheArtwork(for: speaker)
+      }
     }
 
     Function("play") { (channel: String) in
-      self.play(channel)
+      self.onMain {
+        self.play(channel)
+      }
     }
 
     Function("pause") { (channel: String) in
-      self.speaker(channel).player.pause()
+      self.onMain {
+        self.speaker(channel).player.pause()
+      }
     }
 
     Function("seek") { (channel: String, seconds: Double) in
-      self.speaker(channel).seek(seconds)
+      self.onMain {
+        self.speaker(channel).seek(seconds)
+      }
     }
 
     Function("setRate") { (channel: String, rate: Double) in
-      self.speaker(channel).setRate(rate)
-      self.tellTheLockScreen(about: channel)
+      self.onMain {
+        self.speaker(channel).setRate(rate)
+        self.tellTheLockScreen(about: channel)
+      }
     }
 
     Function("setVolume") { (channel: String, volume: Double) in
-      self.speaker(channel).player.volume = Float(min(max(volume, 0), 1))
+      self.onMain {
+        self.speaker(channel).player.volume = Float(min(max(volume, 0), 1))
+      }
     }
 
     Function("setMuted") { (channel: String, isMuted: Bool) in
-      self.speaker(channel).player.isMuted = isMuted
+      self.onMain {
+        self.speaker(channel).player.isMuted = isMuted
+      }
     }
 
     Function("describe") { (channel: String, track: ATrackDescribed) in
-      let speaker = self.speaker(channel)
+      self.onMain {
+        let speaker = self.speaker(channel)
 
-      speaker.described = track
-      self.tellTheLockScreen(about: channel)
-      self.fetchTheArtwork(for: speaker)
+        speaker.described = track
+        self.tellTheLockScreen(about: channel)
+        self.fetchTheArtwork(for: speaker)
+      }
     }
 
     Function("stop") { (channel: String) in
-      self.speaker(channel).stop()
+      self.onMain {
+        self.speaker(channel).stop()
 
-      if channel == self.owner {
-        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+        if channel == self.owner {
+          MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+        }
       }
+    }
+  }
+
+  /// Runs what a call asks for on the main thread, where the speakers and the lock screen are only
+  /// ever touched, since a synchronous function is called on JavaScript's own.
+  private func onMain(_ run: @escaping () -> Void) {
+    if Thread.isMainThread {
+      run()
+    } else {
+      DispatchQueue.main.async(execute: run)
     }
   }
 

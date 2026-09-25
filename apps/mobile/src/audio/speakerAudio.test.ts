@@ -67,3 +67,33 @@ describe('speakerAudio', () => {
     expect(onTime).toHaveBeenCalled();
   });
 });
+
+describe('speakerAudio, changing its mind', () => {
+  it('never loads a file taken away before its session arrived', async () => {
+    const { speaker } = aFakeSpeaker();
+    const audio = speakerAudio(speaker, 'book');
+
+    audio.src = '/api/books/one/chapters/1/audio';
+    audio.src = '';
+    await new Promise(setImmediate);
+
+    expect(speaker.load).not.toHaveBeenCalled();
+    expect(speaker.stop).toHaveBeenCalledWith('book');
+  });
+
+  it('loads only the last of two files asked for quickly', async () => {
+    const { speaker } = aFakeSpeaker();
+    const audio = speakerAudio(speaker, 'music');
+
+    audio.src = '/api/music/tracks/one/stream';
+    audio.src = '/api/music/tracks/two/stream';
+    await audio.play();
+
+    expect(speaker.load).toHaveBeenCalledTimes(1);
+    expect(speaker.load).toHaveBeenCalledWith(
+      'music',
+      'http://one.local:8420/api/music/tracks/two/stream',
+      null,
+    );
+  });
+});

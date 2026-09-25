@@ -1,4 +1,3 @@
-import { ActionSheetIOS } from 'react-native';
 import { render, userEvent } from '@testing-library/react-native';
 import { tracksOf } from '@ValenceClient/books/tracksOf';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
@@ -20,17 +19,8 @@ const openTheBook = (): void => {
   mockFake.audio.fire('playing');
 };
 
-const pick = (at: number) =>
-  jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation((_, picked) => {
-    picked(at);
-  });
-
 beforeEach(() => {
   mockFake = aFakeAudiobookPlayer();
-});
-
-afterEach(() => {
-  jest.restoreAllMocks();
 });
 
 describe('TheListeningPlayer', () => {
@@ -72,10 +62,10 @@ describe('TheListeningPlayer', () => {
 
     const drawn = await render(<TheListeningPlayer onBack={jest.fn()} />, { wrapper: CacheScope });
 
-    pick(3);
     await userEvent.press(drawn.getByRole('button', { name: 'Speed, 1×' }));
-    pick(4);
+    await userEvent.press(drawn.getByRole('button', { name: '1.5×' }));
     await userEvent.press(drawn.getByRole('button', { name: 'Sleep timer' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'End of this chapter' }));
 
     expect(mockFake.player.read().speed).toBe(1.5);
     expect(mockFake.player.read().sleep.kind).toBe('endOfChapter');
