@@ -2512,7 +2512,7 @@ followTheDownloads({
     realtime.publish(
       'keeping',
       { changed: true },
-      { kind: 'profiles', profileIds: [...new Set(followed.map((one) => one.profileId))] },
+      { kind: 'accounts', accountIds: [...new Set(followed.map((one) => one.accountId))] },
     );
 
     for (const { download, problem } of followed) {
