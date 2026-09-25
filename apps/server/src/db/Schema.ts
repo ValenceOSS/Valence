@@ -414,6 +414,7 @@ const preparedDownload = pgTable(
     bytesPerSecond: bigint('bytesPerSecond', { mode: 'number' }),
     sizeBytes: bigint('sizeBytes', { mode: 'number' }),
     failure: text('failure'),
+    askedFromClientId: text('askedFromClientId'),
     askedAt: timestamp('askedAt').notNull().defaultNow(),
     readyAt: timestamp('readyAt'),
   },

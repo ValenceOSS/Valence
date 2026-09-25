@@ -18,6 +18,13 @@ type DownloadOffer = {
   options: DownloadOption[];
 };
 
+type FollowedDownload = {
+  profileId: string;
+  accountId: string;
+  download: Download;
+  isNowReady: boolean;
+};
+
 type DownloadService = {
   offer: (mediaId: string, deviceProfile: DeviceProfile) => Promise<DownloadOffer | null>;
   offerSeries: (
@@ -27,12 +34,14 @@ type DownloadService = {
   ) => Promise<DownloadOffer | null>;
   ask: (
     profileId: string,
+    clientId: string | null,
     mediaId: string,
     quality: DownloadQuality,
     audioLanguages: string[],
   ) => Promise<Download | null>;
   askForSeries: (
     profileId: string,
+    clientId: string | null,
     seriesId: string,
     quality: DownloadQuality,
     audioLanguages: string[],
@@ -41,13 +50,13 @@ type DownloadService = {
   pause: (profileId: string, id: string) => Promise<void>;
   resume: (profileId: string, id: string) => Promise<void>;
   list: (profileId: string) => Promise<Download[]>;
-  refresh: (profileId: string) => Promise<Download[]>;
+  follow: () => Promise<FollowedDownload[]>;
   forget: (profileId: string, id: string) => Promise<void>;
   readFile: (
     profileId: string,
     id: string,
     range: string | null,
-  ) => Promise<TranscoderStreamedFile | null>;
+  ) => Promise<{ file: TranscoderStreamedFile; title: string } | null>;
   hold: (
     profileId: string,
     clientId: string,
@@ -63,4 +72,4 @@ type DownloadService = {
   held: (profileId: string) => Promise<Holding[]>;
 };
 
-export type { DownloadOffer, DownloadOption, DownloadService };
+export type { DownloadOffer, DownloadOption, DownloadService, FollowedDownload };

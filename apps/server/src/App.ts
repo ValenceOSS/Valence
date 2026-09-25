@@ -10,6 +10,7 @@ import { serveUpload } from '@ValenceServer/api/serveUpload';
 import { serveAdmin } from '@ValenceServer/api/serveAdmin';
 import { serveHealth } from '@ValenceServer/api/serveHealth';
 import { servePlayback } from '@ValenceServer/api/servePlayback';
+import { serveDownloads } from '@ValenceServer/api/serveDownloads';
 import { serveApiKey } from '@ValenceServer/api/serveApiKey';
 import { serveWebhook } from '@ValenceServer/api/serveWebhook';
 import { serveNotification } from '@ValenceServer/api/serveNotification';
@@ -47,7 +48,7 @@ import type { CreateAppOptions } from '@ValenceServer/api/CreateAppOptions';
  */
 const createApp = (options: CreateAppOptions) => {
   const app = new OpenAPIHono();
-  const context = createAppContext(options, app);
+  const context = createAppContext(options);
 
   serveEveryRequest(app, context);
   serveAbout(app);
@@ -59,6 +60,7 @@ const createApp = (options: CreateAppOptions) => {
   serveAdmin(app, context);
   serveHealth(app, context);
   servePlayback(app, context);
+  serveDownloads(app, context);
   serveApiKey(app, context);
   serveWebhook(app, context);
   serveNotification(app, context);

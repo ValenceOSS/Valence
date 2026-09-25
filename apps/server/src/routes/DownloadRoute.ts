@@ -230,8 +230,16 @@ const readDownloadRoute = createRoute({
   method: 'get',
   path: '/api/downloads/{id}/file',
   tags: ['Downloads'],
-  summary: 'Fetch a prepared file',
-  request: { params: z.object({ id: z.string().uuid() }) },
+  summary: 'Fetch a prepared file, or save it where a browser saves files',
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+    query: z.object({
+      save: z
+        .enum(['1'])
+        .optional()
+        .openapi({ description: 'Send it as an attachment, named for what it is' }),
+    }),
+  },
   responses: {
     200: { description: 'The file' },
     401: {

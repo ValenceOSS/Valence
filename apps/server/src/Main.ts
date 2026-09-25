@@ -262,6 +262,7 @@ import { createDatabaseHistoryService } from '@ValenceServer/history/createDatab
 import { createDatabaseSignInStore } from '@ValenceServer/accounts/createDatabaseSignInStore';
 import { recordSignIn } from '@ValenceServer/accounts/recordSignIn';
 import { createDatabasePermissionService } from '@ValenceServer/auth/createDatabasePermissionService';
+import { followTheDownloads } from '@ValenceServer/downloads/followTheDownloads';
 import { createDownloadService } from '@ValenceServer/downloads/createDownloadService';
 import { createDatabaseReencodeService } from '@ValenceServer/reencode/createDatabaseReencodeService';
 import { keepingProfile } from '@ValenceServer/downloads/keepingProfile';
@@ -2486,6 +2487,42 @@ const downloadService = createDownloadService({
   transcoder,
   capabilities: async () => transcoder.capabilities(),
   forcedAccel: async () => (await settings.read()).hardwareAccel,
+});
+
+followTheDownloads({
+  follow: () => downloadService.follow(),
+  onFollowed: async (followed) => {
+    realtime.publish(
+      'keeping',
+      { changed: true },
+      { kind: 'profiles', profileIds: [...new Set(followed.map((one) => one.profileId))] },
+    );
+
+    for (const { accountId, download } of followed.filter((one) => one.isNowReady)) {
+      await notifyHousehold({
+        store: notifications,
+        event: 'downloads.ready',
+        title: `${download.title} is ready to keep`,
+        body: `${download.title} has been prepared, and the device you asked on is fetching it.`,
+        link: null,
+        vapid: await readPushKeys(),
+        only: [accountId],
+        onProblem: (reason) => {
+          log.error('playback', `saying ${download.title} is ready: ${reason}`);
+        },
+        announce: (userIds) => {
+          realtime.publish(
+            'notifications',
+            { event: 'downloads.ready' },
+            { kind: 'accounts', accountIds: [...userIds] },
+          );
+        },
+      });
+    }
+  },
+  onProblem: (reason) => {
+    log.error('playback', `following what is being prepared: ${reason}`);
+  },
 });
 
 const reencodeService = createDatabaseReencodeService({
