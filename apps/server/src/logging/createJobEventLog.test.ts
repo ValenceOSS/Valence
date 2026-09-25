@@ -147,6 +147,19 @@ describe('createJobEventLog', () => {
     });
   });
 
+  it('says a job that was asked to stop stopped, rather than that it finished', () => {
+    const { events, said, later } = build();
+
+    events.started({ kind: KIND, jobId: 'j1', subject: null });
+    later(4000);
+    events.finished({ kind: KIND, jobId: 'j1', reason: null, wasStopped: true });
+
+    expect(said.at(-1)).toMatchObject({
+      level: 'info',
+      message: 'Detect missing intros and outros stopped after 4 s',
+    });
+  });
+
   it('says why a job failed, as an error, and how long it went on for', () => {
     const { events, said, later } = build();
 

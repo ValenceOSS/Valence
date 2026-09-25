@@ -12,6 +12,7 @@ type FinishedJob = {
   jobId: string;
   subject: string | null;
   reason: string | null;
+  wasStopped: boolean;
 };
 
 type KindOptions = {
@@ -148,13 +149,20 @@ const createJobQueue = async ({
             try {
               await handler(job.id, payload);
 
-              onFinished?.({ kind, jobId: job.id, subject, reason: null });
+              onFinished?.({
+                kind,
+                jobId: job.id,
+                subject,
+                reason: null,
+                wasStopped: cancelled.has(job.id),
+              });
             } catch (error) {
               onFinished?.({
                 kind,
                 jobId: job.id,
                 subject,
                 reason: error instanceof Error ? error.message : 'The job failed.',
+                wasStopped: cancelled.has(job.id),
               });
 
               throw error;

@@ -9,7 +9,12 @@ type JobEventLog = {
     total: number;
     item: string | null;
   }) => void;
-  finished: (entry: { kind: string; jobId: string; reason: string | null }) => void;
+  finished: (entry: {
+    kind: string;
+    jobId: string;
+    reason: string | null;
+    wasStopped?: boolean;
+  }) => void;
 };
 
 type Run = { kind: string | null; startedAtMs: number; phase: string | null; step: number };
@@ -77,14 +82,16 @@ const createJobEventLog = (
       }
     },
 
-    finished: ({ kind, jobId, reason }) => {
+    finished: ({ kind, jobId, reason, wasStopped = false }) => {
       const run = runs.get(jobId);
       const took = run === undefined ? '' : ` after ${seconds(nowMs() - run.startedAtMs)}`;
       const context = { jobId, jobKind: kind };
 
       runs.delete(jobId);
 
-      if (reason === null) {
+      if (reason === null && wasStopped) {
+        log.info('jobs', `${labelFor(kind)} stopped${took}`, { context });
+      } else if (reason === null) {
         log.info('jobs', `${labelFor(kind)} finished${took}`, { context });
       } else {
         log.error('jobs', `${labelFor(kind)} failed${took}: ${reason}`, { context });

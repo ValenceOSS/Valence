@@ -1193,7 +1193,7 @@ const announceFinishedJob = (finished: FinishedJob): void => {
     return;
   }
 
-  if (reason === null && !announcesCompletion(kind)) {
+  if (reason === null && !announcesCompletion(kind) && !finished.wasStopped) {
     return;
   }
 
@@ -1205,6 +1205,12 @@ const announceFinishedJob = (finished: FinishedJob): void => {
       subject,
       subjectName: await nameOfLibrary(subject),
     };
+
+    if (reason === null && finished.wasStopped) {
+      realtime.publish('jobs', { event: 'stopped', ...about }, { kind: 'everyone' });
+
+      return;
+    }
 
     await events.publish(
       reason === null
@@ -1223,7 +1229,7 @@ const announceFinishedJob = (finished: FinishedJob): void => {
 };
 
 const interrupted = await jobHistory.interruptRunning(
-  'The server restarted while this was running, so it was stopped.',
+  'The server restarted while this was running. What it finished is kept, and the rest is picked up the next time it runs.',
 );
 
 if (interrupted > 0) {
@@ -1936,7 +1942,7 @@ const jobs = await createJobQueue({
     void jobHistory
       .recordFinished({
         id: finished.jobId,
-        status: finished.reason === null ? 'completed' : 'failed',
+        status: finished.reason !== null ? 'failed' : finished.wasStopped ? 'stopped' : 'completed',
         errorMessage: finished.reason,
       })
       .catch(() => {});

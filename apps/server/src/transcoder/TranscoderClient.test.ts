@@ -371,6 +371,14 @@ describe('every question the client asks the media service', () => {
     expect(asked[0]?.url).toContain('/fingerprint');
   });
 
+  it('says so when the service will not fingerprint a file', async () => {
+    const { client } = scripted({ ok: false, status: 500 });
+
+    await expect(
+      client.fingerprint({ inputPath: '/media/a.mkv', startSeconds: 0, durationSeconds: 90 }),
+    ).rejects.toThrow('The media service rejected /fingerprint.');
+  });
+
   it('reads a single frame as bytes rather than as words', async () => {
     const { client, asked } = scripted({ bytes: new ArrayBuffer(16) });
 
@@ -494,6 +502,14 @@ describe('every question the client asks the media service', () => {
     const missing = scripted({ ok: false, status: 404 });
 
     await expect(missing.client.controlQueue.runNow(7)).resolves.toBe(false);
+  });
+
+  it('stops every render one job asked for, and says how many there were', async () => {
+    const { client, asked } = scripted({ body: { stopped: 3 } });
+
+    await expect(client.controlQueue.stopJob('job-1')).resolves.toBe(3);
+    expect(asked[0]?.url).toContain('/renders/stop');
+    expect(asked[0]?.init?.body).toBe(JSON.stringify({ correlationId: 'job-1' }));
   });
 
   it('raises what the service refused, with the status it refused it with', async () => {

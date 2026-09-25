@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const JOB_RUN_STATUSES = ['queued', 'running', 'completed', 'failed'] as const;
+const JOB_RUN_STATUSES = ['queued', 'running', 'completed', 'failed', 'stopped'] as const;
 
 const JOB_RUN_KEPT_FOR_DAYS = 30;
 
@@ -50,6 +50,7 @@ const JobRunQuerySchema = z.object({
   sort: JobRunSortSchema.default('newest'),
   offset: z.number().int().nonnegative().default(0),
   limit: z.number().int().positive().max(1000).default(200),
+  runningFirst: z.boolean().default(false),
 });
 
 const JobKindStatsSchema = z.object({
@@ -93,6 +94,15 @@ const JobCompletedEventSchema = z.object({
   subjectName: z.string().nullable(),
 });
 
+const JobStoppedEventSchema = z.object({
+  event: z.literal('stopped'),
+  kind: z.string(),
+  label: z.string(),
+  jobId: z.string(),
+  subject: z.string().nullable(),
+  subjectName: z.string().nullable(),
+});
+
 const JobFailedEventSchema = z.object({
   event: z.literal('failed'),
   kind: z.string(),
@@ -108,6 +118,7 @@ const JobEventSchema = z.discriminatedUnion('event', [
   JobProgressEventSchema,
   JobCompletedEventSchema,
   JobFailedEventSchema,
+  JobStoppedEventSchema,
 ]);
 
 type JobRunStatus = z.infer<typeof JobRunStatusSchema>;

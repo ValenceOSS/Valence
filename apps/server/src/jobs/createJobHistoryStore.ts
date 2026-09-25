@@ -14,7 +14,6 @@ import type {
   JobRunProgress,
   JobRunQuery,
   JobRunRecord,
-  JobRunSort,
   JobRunStatus,
 } from '@ValenceContracts/schemas/JobRun';
 
@@ -24,7 +23,7 @@ type JobHistoryStore = {
   recordIssue: (entry: { jobRunId: string; path: string; reason: string }) => Promise<void>;
   recordFinished: (entry: {
     id: string;
-    status: Extract<JobRunStatus, 'completed' | 'failed'>;
+    status: Extract<JobRunStatus, 'completed' | 'failed' | 'stopped'>;
     errorMessage: string | null;
   }) => Promise<void>;
   read: (query: JobRunQuery) => Promise<{ records: JobRunRecord[]; total: number }>;
@@ -78,7 +77,11 @@ const whereFor = (query: JobRunQuery): SQL | undefined => {
           ilike(jobRun.subject, `%${query.search}%`),
           ilike(jobRun.errorMessage, `%${query.search}%`),
         ),
-    query.sinceMs === null ? undefined : gte(jobRun.createdAt, new Date(query.sinceMs)),
+    query.sinceMs === null
+      ? undefined
+      : query.runningFirst
+        ? or(gte(jobRun.createdAt, new Date(query.sinceMs)), eq(jobRun.status, 'running'))
+        : gte(jobRun.createdAt, new Date(query.sinceMs)),
     query.untilMs === null ? undefined : lte(jobRun.createdAt, new Date(query.untilMs)),
   ].filter((one) => one !== undefined);
 
@@ -87,20 +90,29 @@ const whereFor = (query: JobRunQuery): SQL | undefined => {
 
 const TOOK = sql`extract(epoch from (${jobRun.finishedAt} - ${jobRun.startedAt})) * 1000`;
 
+const RUNNING_FIRST = sql`case when ${jobRun.status} = 'running' then 0 else 1 end`;
+
 /**
  * What a page of runs is ordered by. Ties always fall to the newest first.
  *
- * @param sort - How the operator asked for the runs to be ordered.
+ * Where the history asks for it — as it does when it opens, before anybody has sorted or filtered it
+ * — a run still going comes first, so work that takes hours stays on the first page rather than
+ * sinking under every short run that finished since it began. Once an operator has sorted or
+ * filtered, the order is exactly what they asked for.
+ *
+ * @param query - How the operator asked for the runs to be ordered, and whether running ones lead.
  * @returns The ordering, from most to least significant.
  */
-const orderingFor = (sort: JobRunSort): SQL[] => {
-  switch (sort) {
+const orderingFor = (query: JobRunQuery): SQL[] => {
+  const leading = query.runningFirst ? [RUNNING_FIRST] : [];
+
+  switch (query.sort) {
     case 'oldest':
-      return [asc(jobRun.createdAt), asc(jobRun.id)];
+      return [...leading, asc(jobRun.createdAt), asc(jobRun.id)];
     case 'longest':
-      return [sql`${TOOK} desc nulls last`, desc(jobRun.createdAt), desc(jobRun.id)];
+      return [...leading, sql`${TOOK} desc nulls last`, desc(jobRun.createdAt), desc(jobRun.id)];
     case 'newest':
-      return [desc(jobRun.createdAt), desc(jobRun.id)];
+      return [...leading, desc(jobRun.createdAt), desc(jobRun.id)];
   }
 };
 
@@ -116,7 +128,7 @@ const buildReadQuery = (db: ValenceDatabase, query: JobRunQuery) =>
     .select()
     .from(jobRun)
     .where(whereFor(query))
-    .orderBy(...orderingFor(query.sort))
+    .orderBy(...orderingFor(query))
     .limit(query.limit)
     .offset(query.offset);
 
@@ -148,7 +160,7 @@ const asMilliseconds = (value: string | number | null): number | null => {
 const buildInterruptQuery = (db: ValenceDatabase, reason: string) =>
   db
     .update(jobRun)
-    .set({ status: 'failed', finishedAt: new Date(), errorMessage: reason })
+    .set({ status: 'stopped', finishedAt: new Date(), errorMessage: reason })
     .where(sql`${jobRun.status} in ('running', 'queued')`)
     .returning({ id: jobRun.id });
 

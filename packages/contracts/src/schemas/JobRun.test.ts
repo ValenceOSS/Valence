@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { JobKindStatsSchema, JobRunQuerySchema, JobStatsSchema } from './JobRun';
+import {
+  JobEventSchema,
+  JobKindStatsSchema,
+  JobRunQuerySchema,
+  JobRunStatusSchema,
+  JobStatsSchema,
+} from './JobRun';
 
 describe('JobRunQuerySchema ordering and paging', () => {
   it('starts at the newest and the first page, with no end to the time asked for', () => {
@@ -44,5 +50,24 @@ describe('JobKindStatsSchema', () => {
 
   it('reads a summary of every kind since a moment', () => {
     expect(JobStatsSchema.parse({ sinceMs: 10, kinds: [STATS] }).kinds).toHaveLength(1);
+  });
+});
+
+describe('a run that was stopped', () => {
+  it('is a status of its own, not a completion or a failure', () => {
+    expect(JobRunStatusSchema.parse('stopped')).toBe('stopped');
+  });
+
+  it('is announced as stopped', () => {
+    expect(
+      JobEventSchema.parse({
+        event: 'stopped',
+        kind: 'library.regeneratePreviews',
+        label: 'Generate missing previews',
+        jobId: 'job-1',
+        subject: 'films',
+        subjectName: 'Films',
+      }).event,
+    ).toBe('stopped');
   });
 });

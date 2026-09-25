@@ -6,6 +6,7 @@ const finished = (kind: string, reason: string | null) => ({
   jobId: 'job',
   subject: null,
   reason,
+  wasStopped: false,
 });
 
 describe('createJobHealthWatch', () => {

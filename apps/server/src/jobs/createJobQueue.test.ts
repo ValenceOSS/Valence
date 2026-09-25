@@ -133,7 +133,37 @@ describe('createJobQueue', () => {
       jobId: 'job-1',
       subject: null,
       reason: null,
+      wasStopped: false,
     });
+  });
+
+  it('says a job that ended because it was asked to stop was stopped, not that it finished', async () => {
+    const onFinished = vi.fn();
+    let finish: () => void = () => {};
+    const started = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+
+    const queue = await createJobQueue({
+      connectionString: 'postgres://flux',
+      handlers: { 'library.regeneratePreviews': () => started },
+      onFinished,
+    });
+
+    await queue.startWorking();
+
+    const running = deliver('library.regeneratePreviews', [
+      { id: 'job-previews', data: { libraryId: 'films' } },
+    ]);
+
+    await expect(queue.cancel('job-previews')).resolves.toBe(true);
+
+    finish();
+    await running;
+
+    expect(onFinished).toHaveBeenCalledWith(
+      expect.objectContaining({ jobId: 'job-previews', reason: null, wasStopped: true }),
+    );
   });
 
   it('still says what a job is about where its payload names something', async () => {
