@@ -1,6 +1,8 @@
 import { docsFor } from '@ValenceCore/functions/docsFor';
 import type { Indexer } from '@ValenceContracts/schemas/Indexer';
 import type { StateBadge } from '@ValenceClient/status/StateBadge';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * Says how an indexer is, as a badge and the line beneath it: turned off by Valence and why,
@@ -12,7 +14,7 @@ import type { StateBadge } from '@ValenceClient/status/StateBadge';
 const describeIndexerState = (indexer: Indexer): StateBadge => {
   if (indexer.turnedOffBecause !== null) {
     return {
-      label: 'Turned off',
+      label: say('admin.describeIndexerState.turnedOff'),
       tone: 'danger',
       detail: indexer.turnedOffBecause,
       help: docsFor(indexer.lastProblemCode),
@@ -20,12 +22,12 @@ const describeIndexerState = (indexer: Indexer): StateBadge => {
   }
 
   if (!indexer.isEnabled) {
-    return { label: 'Off', tone: 'quiet', detail: null };
+    return { label: say('admin.describeIndexerState.off'), tone: 'quiet', detail: null };
   }
 
   if (indexer.failures > 0) {
     return {
-      label: indexer.failures === 1 ? 'Failed once' : `Failed ${indexer.failures.toString()} times`,
+      label: sayCount('admin.describeIndexerState.failed', indexer.failures),
       tone: 'warning',
       detail: indexer.lastProblem,
       help: docsFor(indexer.lastProblemCode),
@@ -33,8 +35,8 @@ const describeIndexerState = (indexer: Indexer): StateBadge => {
   }
 
   return indexer.capabilities === null
-    ? { label: 'Not tried', tone: 'quiet', detail: null }
-    : { label: 'Working', tone: 'success', detail: null };
+    ? { label: say('admin.describeIndexerState.notTried'), tone: 'quiet', detail: null }
+    : { label: say('admin.describeIndexerState.working'), tone: 'success', detail: null };
 };
 
 export { describeIndexerState };

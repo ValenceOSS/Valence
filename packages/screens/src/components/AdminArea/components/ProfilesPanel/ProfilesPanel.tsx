@@ -21,16 +21,22 @@ import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { ProfileEditor } from '@ValenceScreens/components/AdminArea/components/ProfileEditor/ProfileEditor';
 import { describeAskers } from './describeAskers';
 import { describeProfile } from './describeProfile';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { ProfileKind, QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 
-const KINDS: readonly { id: ProfileKind; label: string; empty: string }[] = [
+const KINDS: readonly { id: ProfileKind; labelKey: StringKey; emptyKey: StringKey }[] = [
   {
     id: 'video',
-    label: 'Films and series',
-    empty: 'No profiles for films or series yet.',
+    labelKey: 'admin.profilesPanel.kinds.video',
+    emptyKey: 'admin.profilesPanel.kinds.videoEmpty',
   },
-  { id: 'music', label: 'Music', empty: 'No profiles for music yet.' },
+  {
+    id: 'music',
+    labelKey: 'admin.profilesPanel.kinds.music',
+    emptyKey: 'admin.profilesPanel.kinds.musicEmpty',
+  },
 ];
 
 /**
@@ -70,7 +76,7 @@ const ProfilesPanel = () => {
     () => [
       {
         id: 'name',
-        header: 'Profile',
+        header: say('admin.profilesPanel.columns.profile'),
         accessorFn: (profile) => profile.name,
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col gap-0.5">
@@ -84,7 +90,7 @@ const ProfilesPanel = () => {
       },
       {
         id: 'upgrades',
-        header: 'Upgrades',
+        header: say('admin.profilesPanel.columns.upgrades'),
         accessorFn: (profile) => describeProfile(profile).upgrades,
         cell: ({ row }) => (
           <span className="text-xs text-text-muted">{describeProfile(row.original).upgrades}</span>
@@ -92,7 +98,7 @@ const ProfilesPanel = () => {
       },
       {
         id: 'askers',
-        header: 'Who can use it',
+        header: say('admin.profilesPanel.columns.askers'),
         accessorFn: (profile) => describeAskers(profile),
         cell: ({ row }) => (
           <span className="text-xs text-text-muted">{describeAskers(row.original)}</span>
@@ -100,14 +106,14 @@ const ProfilesPanel = () => {
       },
       {
         id: 'libraries',
-        header: 'Used for',
+        header: say('admin.profilesPanel.columns.usedFor'),
         accessorFn: (profile) => profile.libraryIds.length,
         cell: ({ row }) => (
           <span className="text-xs text-text-muted">
             {row.original.libraryIds.length === 0
-              ? 'Every library'
+              ? say('admin.profilesPanel.everyLibrary')
               : row.original.libraryIds
-                  .map((id) => named.get(id) ?? 'A library that has gone')
+                  .map((id) => named.get(id) ?? say('admin.profilesPanel.goneLibrary'))
                   .join(', ')}
           </span>
         ),
@@ -119,14 +125,14 @@ const ProfilesPanel = () => {
         cell: ({ row }) => (
           <span className="flex justify-end">
             <ActionMenu
-              label={`Actions for ${row.original.name}`}
+              label={say('admin.profilesPanel.actionsFor', { name: row.original.name })}
               trigger={<Icon of={MoreHorizontalIcon} size={16} />}
               groups={[
                 {
                   items: [
                     {
                       id: 'change',
-                      label: 'Change',
+                      label: say('admin.profilesPanel.change'),
                       icon: <Icon of={PenFilledIcon} size={15} />,
                       onChoose: () => {
                         setEditing(row.original);
@@ -138,7 +144,7 @@ const ProfilesPanel = () => {
                   items: [
                     {
                       id: 'remove',
-                      label: 'Remove',
+                      label: say('admin.profilesPanel.remove'),
                       icon: <Icon of={BinFilledIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
@@ -166,7 +172,7 @@ const ProfilesPanel = () => {
       }}
     >
       <PanelCard
-        title="Profiles"
+        title={say('admin.profilesPanel.heading')}
         isFlush
         actions={
           <PanelCardAction
@@ -175,16 +181,16 @@ const ProfilesPanel = () => {
               setIsAdding(true);
             }}
           >
-            Add media profile
+            {say('admin.profilesPanel.add')}
           </PanelCardAction>
         }
         below={
           <TabRow
-            label="Which profiles to show"
+            label={say('admin.profilesPanel.tabsLabel')}
             tone="underlined"
             size="sm"
             value={shown}
-            groups={[{ items: KINDS.map(({ id, label }) => ({ id, label })) }]}
+            groups={[{ items: KINDS.map(({ id, labelKey }) => ({ id, label: say(labelKey) })) }]}
           />
         }
       >
@@ -201,9 +207,11 @@ const ProfilesPanel = () => {
         />
 
         <ConfirmDialog
-          title={`Remove ${removing?.name ?? 'this profile'}?`}
-          detail="Searches can no longer be judged against it, and the libraries it was for will have none."
-          confirmLabel="Remove"
+          title={say('admin.profilesPanel.removeTitle', {
+            name: removing?.name ?? say('admin.profilesPanel.thisProfile'),
+          })}
+          detail={say('admin.profilesPanel.removeDetail')}
+          confirmLabel={say('admin.profilesPanel.remove')}
           isDestructive
           isOpen={removing !== null}
           onClose={() => {
@@ -217,7 +225,10 @@ const ProfilesPanel = () => {
             if (gone !== null) {
               void removeProfile(gone.id)
                 .then((refusal) => {
-                  tellOutcome(`Removed ${gone.name}.`, failureOfRefusal(refusal));
+                  tellOutcome(
+                    say('admin.profilesPanel.removed', { name: gone.name }),
+                    failureOfRefusal(refusal),
+                  );
                   setProblem(refusal?.message ?? null);
                 })
                 .then(reread);
@@ -233,23 +244,23 @@ const ProfilesPanel = () => {
 
         {profiles.isError ? (
           <CouldNotRead
-            what="The profiles"
+            what={say('admin.profilesPanel.what')}
             isTryingAgain={profiles.isFetching}
             onTryAgain={() => {
               void profiles.refetch();
             }}
           />
         ) : profiles.isPending ? (
-          <Spinner isCentered label="Reading the profiles" size="sm" />
+          <Spinner isCentered label={say('admin.profilesPanel.reading')} size="sm" />
         ) : (
           KINDS.map((kind) => (
             <TabPanel key={kind.id} value={kind.id}>
               <DataTable
-                label={kind.label}
+                label={say(kind.labelKey)}
                 columns={columns}
                 rows={profiles.data.filter((profile) => profile.kind === kind.id)}
                 getRowId={(profile) => profile.id}
-                emptyMessage={kind.empty}
+                emptyMessage={say(kind.emptyKey)}
               />
             </TabPanel>
           ))

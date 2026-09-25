@@ -1,38 +1,60 @@
 import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
-const PARTS: Record<LibraryPart, { label: string; description: string }> = {
+const PARTS: Record<LibraryPart, { labelKey: StringKey; descriptionKey: StringKey }> = {
   descriptions: {
-    label: 'Descriptions',
-    description: 'Overviews, taglines, genres and the catalogue score',
+    labelKey: 'admin.describeLibraryPart.descriptions',
+    descriptionKey: 'admin.describeLibraryPart.descriptionsDescription',
   },
-  cast: { label: 'Cast', description: 'Who is in each film and episode, and who they play' },
+  cast: {
+    labelKey: 'admin.describeLibraryPart.cast',
+    descriptionKey: 'admin.describeLibraryPart.castDescription',
+  },
   ageRatings: {
-    label: 'Age ratings',
-    description:
-      'Certificates, and the ages they allow. Age-limited profiles treat a title as unrated until they are back',
+    labelKey: 'admin.describeLibraryPart.ageRatings',
+    descriptionKey: 'admin.describeLibraryPart.ageRatingsDescription',
   },
   trailers: {
-    label: 'Trailers',
-    description: 'Trailers found in the catalogue, not trailer files',
+    labelKey: 'admin.describeLibraryPart.trailers',
+    descriptionKey: 'admin.describeLibraryPart.trailersDescription',
   },
   artwork: {
-    label: 'Artwork',
-    description: 'Posters, backdrops and episode stills, and the copies kept on this server',
+    labelKey: 'admin.describeLibraryPart.artwork',
+    descriptionKey: 'admin.describeLibraryPart.artworkDescription',
   },
-  logos: { label: 'Logos', description: 'The lettering each title is written in' },
-  previews: { label: 'Preview clips', description: 'The clips that play when hovering a title' },
+  logos: {
+    labelKey: 'admin.describeLibraryPart.logos',
+    descriptionKey: 'admin.describeLibraryPart.logosDescription',
+  },
+  previews: {
+    labelKey: 'admin.describeLibraryPart.previews',
+    descriptionKey: 'admin.describeLibraryPart.previewsDescription',
+  },
   scrubPreviews: {
-    label: 'Scrub previews',
-    description: 'The pictures shown when dragging along the seek bar',
+    labelKey: 'admin.describeLibraryPart.scrubPreviews',
+    descriptionKey: 'admin.describeLibraryPart.scrubPreviewsDescription',
   },
   intros: {
-    label: 'Intros and outros',
-    description: 'Detected intros, recaps and credits. Seasons are listened to again',
+    labelKey: 'admin.describeLibraryPart.intros',
+    descriptionKey: 'admin.describeLibraryPart.introsDescription',
   },
-  albumCovers: { label: 'Album covers', description: 'Covers from tags, folders and the web' },
-  artistPictures: { label: 'Artist pictures', description: 'Pictures from folders and the web' },
-  lyrics: { label: 'Lyrics', description: 'Lyrics from tags, lyric files and the web' },
-  musicVideos: { label: 'Music videos', description: 'Videos found on the web for each song' },
+  albumCovers: {
+    labelKey: 'admin.describeLibraryPart.albumCovers',
+    descriptionKey: 'admin.describeLibraryPart.albumCoversDescription',
+  },
+  artistPictures: {
+    labelKey: 'admin.describeLibraryPart.artistPictures',
+    descriptionKey: 'admin.describeLibraryPart.artistPicturesDescription',
+  },
+  lyrics: {
+    labelKey: 'admin.describeLibraryPart.lyrics',
+    descriptionKey: 'admin.describeLibraryPart.lyricsDescription',
+  },
+  musicVideos: {
+    labelKey: 'admin.describeLibraryPart.musicVideos',
+    descriptionKey: 'admin.describeLibraryPart.musicVideosDescription',
+  },
 };
 
 /**
@@ -41,7 +63,9 @@ const PARTS: Record<LibraryPart, { label: string; description: string }> = {
  * @param part - The part.
  * @returns Its name, and a line on what it holds.
  */
-const describeLibraryPart = (part: LibraryPart): { label: string; description: string } =>
-  PARTS[part];
+const describeLibraryPart = (part: LibraryPart): { label: string; description: string } => ({
+  label: say(PARTS[part].labelKey),
+  description: say(PARTS[part].descriptionKey),
+});
 
 export { describeLibraryPart };

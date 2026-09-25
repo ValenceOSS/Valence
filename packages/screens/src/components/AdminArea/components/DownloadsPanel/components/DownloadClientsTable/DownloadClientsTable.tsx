@@ -21,9 +21,11 @@ import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { DownloadClient, DownloadClientKind } from '@ValenceContracts/schemas/DownloadClient';
 import type { DownloadClientsTableProps } from './DownloadClientsTable.types';
+import { say } from '@ValenceI18n/say';
 
 const KIND_LABELS: Readonly<Record<DownloadClientKind, string>> = {
   qbittorrent: 'qBittorrent',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a download client's product name, never translated
   transmission: 'Transmission',
   sabnzbd: 'SABnzbd',
   nzbget: 'NZBGet',
@@ -57,7 +59,7 @@ const DownloadClientsTable = ({
     () => [
       {
         id: 'name',
-        header: 'Client',
+        header: say('admin.downloadClientsTable.client'),
         accessorFn: (client) => client.name,
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col gap-0.5">
@@ -72,19 +74,22 @@ const DownloadClientsTable = ({
       },
       {
         id: 'priority',
-        header: 'Priority',
+        header: say('admin.downloadClientsTable.priority'),
         accessorFn: (client) => client.priority,
         cell: ({ row }) => <span className="text-sm text-text">{row.original.priority}</span>,
       },
       {
         id: 'state',
-        header: 'State',
+        header: say('admin.downloadClientsTable.state'),
         accessorFn: (client) => describeClientState(client.isEnabled, byId.get(client.id)).label,
         cell: ({ row }) => {
           const state = describeClientState(row.original.isEnabled, byId.get(row.original.id));
 
           return testingId === row.original.id ? (
-            <Spinner size="sm" label={`Testing ${row.original.name}`} />
+            <Spinner
+              size="sm"
+              label={say('admin.downloadClientsTable.testing', { name: row.original.name })}
+            />
           ) : (
             <span className="flex min-w-0 flex-col items-start gap-1">
               <Badge size="sm" tone={state.tone}>
@@ -102,7 +107,7 @@ const DownloadClientsTable = ({
       },
       {
         id: 'speed',
-        header: 'Speed',
+        header: say('admin.downloadClientsTable.speed'),
         accessorFn: (client) => byId.get(client.id)?.downloadBytesPerSecond ?? -1,
         cell: ({ row }) => {
           const reading = byId.get(row.original.id);
@@ -125,14 +130,14 @@ const DownloadClientsTable = ({
         cell: ({ row }) => (
           <span className="flex justify-end">
             <ActionMenu
-              label={`Actions for ${row.original.name}`}
+              label={say('admin.downloadClientsTable.actionsFor', { name: row.original.name })}
               trigger={<Icon of={MoreHorizontalIcon} size={16} />}
               groups={[
                 {
                   items: [
                     {
                       id: 'change',
-                      label: 'Change',
+                      label: say('admin.downloadClientsTable.change'),
                       icon: <Icon of={PenFilledIcon} size={15} />,
                       onChoose: () => {
                         onChange(row.original);
@@ -140,8 +145,8 @@ const DownloadClientsTable = ({
                     },
                     {
                       id: 'test',
-                      label: 'Test',
-                      detail: 'Logs in and asks which version it is.',
+                      label: say('admin.downloadClientsTable.test'),
+                      detail: say('admin.downloadClientsTable.testDetail'),
                       icon: <Icon of={PlugFilledIcon} size={15} />,
                       isDisabled: testingId !== null,
                       onChoose: () => {
@@ -150,7 +155,9 @@ const DownloadClientsTable = ({
                     },
                     {
                       id: 'switch',
-                      label: row.original.isEnabled ? 'Switch off' : 'Switch on',
+                      label: row.original.isEnabled
+                        ? say('admin.downloadClientsTable.switchOff')
+                        : say('admin.downloadClientsTable.switchOn'),
                       icon: (
                         <Icon
                           of={row.original.isEnabled ? ToggleOffIcon : ToggleOnIcon}
@@ -167,7 +174,7 @@ const DownloadClientsTable = ({
                   items: [
                     {
                       id: 'remove',
-                      label: 'Remove',
+                      label: say('admin.downloadClientsTable.remove'),
                       icon: <Icon of={BinFilledIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
@@ -187,11 +194,11 @@ const DownloadClientsTable = ({
 
   return (
     <DataTable
-      label="Download clients"
+      label={say('admin.downloadClientsTable.label')}
       columns={columns}
       rows={[...clients]}
       getRowId={(client) => client.id}
-      emptyMessage="No download clients yet. Add qBittorrent or Transmission for torrents, or SABnzbd or NZBGet for usenet, to send releases to."
+      emptyMessage={say('admin.downloadClientsTable.empty')}
     />
   );
 };

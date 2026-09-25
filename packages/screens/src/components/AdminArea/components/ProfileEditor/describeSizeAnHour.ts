@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+
 /**
  * A size an hour as a person reads it.
  *
@@ -6,7 +8,7 @@
  */
 const describeSizeAnHour = (megabytes: number): string =>
   megabytes < 1024
-    ? `${Math.round(megabytes).toString()} MB an hour`
-    : `${(megabytes / 1024).toFixed(1)} GB an hour`;
+    ? say('admin.describeSizeAnHour.megabytes', { size: Math.round(megabytes).toString() })
+    : say('admin.describeSizeAnHour.gigabytes', { size: (megabytes / 1024).toFixed(1) });
 
 export { describeSizeAnHour };

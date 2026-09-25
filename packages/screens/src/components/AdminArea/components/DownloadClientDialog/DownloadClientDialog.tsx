@@ -25,6 +25,7 @@ import {
 import type { TryVerdict } from '@ValenceScreens/components/AdminArea/components/TryItButton/TryItButton.types';
 import type { DownloadClientForm } from './readDownloadClientForm';
 import type { DownloadClientDialogProps } from './DownloadClientDialog.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Adds a download client, or changes one already kept: where it is, how to log in to it, and a
@@ -90,10 +91,10 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
         setVersion(value?.version ?? null);
         setProblem(
           value === null
-            ? (refusal?.message ?? 'It could not be tried.')
+            ? (refusal?.message ?? say('admin.downloadClientDialog.couldNotTry'))
             : value.isWorking
               ? null
-              : (value.problem ?? 'It did not answer.'),
+              : (value.problem ?? say('admin.downloadClientDialog.didNotAnswer')),
         );
       })
       .finally(() => {
@@ -114,12 +115,16 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
     void (client === null ? addDownloadClient(draft) : changeDownloadClient(client.id, draft))
       .then(({ value, refusal }) => {
         if (value === null) {
-          setProblem(refusal?.message ?? 'That could not be saved.');
+          setProblem(refusal?.message ?? say('admin.downloadClientDialog.couldNotSave'));
 
           return;
         }
 
-        notify.worked(client === null ? `Added ${value.name}.` : `Saved ${value.name}.`);
+        notify.worked(
+          client === null
+            ? say('admin.downloadClientDialog.added', { name: value.name })
+            : say('admin.downloadClientDialog.saved', { name: value.name }),
+        );
         onSaved(value);
         onClose();
       })
@@ -128,25 +133,20 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
       });
   };
 
-  const title = client === null ? 'Add a download client' : `Change ${client.name}`;
-  const secretDetail = (isKept: boolean, what: string) =>
-    isKept
-      ? `A ${what} is kept. Type a new one to replace it, or leave this empty to keep it.`
-      : `Leave this empty for a client that asks for no ${what}.`;
+  const title =
+    client === null
+      ? say('admin.downloadClientDialog.addTitle')
+      : say('admin.downloadClientDialog.changeTitle', { name: client.name });
 
   return (
     <DialogCompanion label={title} isOpen={isOpen} onClose={onClose}>
-      <DialogTitle
-        size="compact"
-        title={title}
-        detail="Valence hands torrents to qBittorrent or Transmission, and NZBs to SABnzbd or NZBGet, and follows each download there."
-      />
+      <DialogTitle size="compact" title={title} detail={say('admin.downloadClientDialog.lede')} />
 
       <DialogContent className="flex flex-col gap-4">
         {client === null ? (
-          <FormField label="Client">
+          <FormField label={say('admin.downloadClientDialog.client')}>
             <SegmentedRow
-              label="Client"
+              label={say('admin.downloadClientDialog.client')}
               size="sm"
               items={CLIENT_KINDS}
               value={form.kind}
@@ -162,7 +162,7 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
         ) : null}
 
         <TextField
-          label="Name"
+          label={say('admin.downloadClientDialog.name')}
           value={form.name}
           onValueChange={(name) => {
             change({ name });
@@ -172,32 +172,36 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
         />
 
         <TextField
-          label="Address"
+          label={say('admin.downloadClientDialog.address')}
           type="url"
           value={form.url}
           onValueChange={(url) => {
             change({ url });
           }}
           placeholder={kind?.address ?? ''}
-          description="Where the requests service reaches it, which inside Docker is the container’s name."
+          description={say('admin.downloadClientDialog.addressDetail')}
           required
         />
 
         {isSabnzbd ? (
           <TextField
-            label="API key"
+            label={say('admin.downloadClientDialog.apiKey')}
             type="password"
             value={form.apiKey}
             onValueChange={(apiKey) => {
               change({ apiKey });
             }}
-            description={`${secretDetail(client?.hasApiKey === true, 'key')} It is under Config, General.`}
+            description={
+              client?.hasApiKey === true
+                ? say('admin.downloadClientDialog.apiKeyKept')
+                : say('admin.downloadClientDialog.apiKeyNone')
+            }
             autoComplete="off"
           />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             <TextField
-              label="Username"
+              label={say('admin.downloadClientDialog.username')}
               value={form.username}
               onValueChange={(username) => {
                 change({ username });
@@ -206,31 +210,39 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
             />
 
             <TextField
-              label="Password"
+              label={say('admin.downloadClientDialog.password')}
               type="password"
               value={form.password}
               onValueChange={(password) => {
                 change({ password });
               }}
-              description={secretDetail(client?.hasPassword === true, 'password')}
+              description={
+                client?.hasPassword === true
+                  ? say('admin.downloadClientDialog.passwordKept')
+                  : say('admin.downloadClientDialog.passwordNone')
+              }
               autoComplete="new-password"
             />
           </div>
         )}
 
         <FormField
-          label={form.kind === 'transmission' ? 'Labels' : 'Categories'}
+          label={
+            form.kind === 'transmission'
+              ? say('admin.downloadClientDialog.labels')
+              : say('admin.downloadClientDialog.categories')
+          }
           description={
             form.kind === 'transmission'
-              ? 'The label Valence puts on what it sends for each kind of library, and the only torrents it looks at.'
-              : 'Where Valence files what it sends for each kind of library — give each its own folder in the client — and the only downloads it looks at.'
+              ? say('admin.downloadClientDialog.labelsDetail')
+              : say('admin.downloadClientDialog.categoriesDetail')
           }
         >
           <div className="grid gap-3 sm:grid-cols-2">
             {LIBRARY_KINDS.map((libraryKind) => (
               <TextField
                 key={libraryKind}
-                label={LIBRARY_KIND_NAMES[libraryKind].label}
+                label={say(LIBRARY_KIND_NAMES[libraryKind].labelKey)}
                 value={form.categories[libraryKind]}
                 onValueChange={(category) => {
                   change({ categories: { ...form.categories, [libraryKind]: category } });
@@ -242,12 +254,12 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
         </FormField>
 
         <FormField
-          label="Where it saves downloads"
-          description="Only where the client and Valence see the downloads folder by different names, as two containers mounting it in different places do. Valence files each finished download from here into its library."
+          label={say('admin.downloadClientDialog.savesTo')}
+          description={say('admin.downloadClientDialog.savesToDetail')}
         >
           <div className="grid gap-3 sm:grid-cols-2">
             <TextField
-              label="As the client sees it"
+              label={say('admin.downloadClientDialog.asClientSees')}
               value={form.remotePath}
               onValueChange={(remotePath) => {
                 change({ remotePath });
@@ -256,7 +268,7 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
             />
 
             <TextField
-              label="As Valence sees it"
+              label={say('admin.downloadClientDialog.asValenceSees')}
               value={form.localPath}
               onValueChange={(localPath) => {
                 change({ localPath });
@@ -267,7 +279,7 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
         </FormField>
 
         <TextField
-          label="Priority"
+          label={say('admin.downloadClientDialog.priority')}
           type="number"
           min={1}
           max={50}
@@ -275,11 +287,11 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
           onValueChange={(priority) => {
             change({ priority });
           }}
-          description="The lowest is sent releases first."
+          description={say('admin.downloadClientDialog.priorityDetail')}
         />
 
         <Switch
-          label="Send releases to this client"
+          label={say('admin.downloadClientDialog.enabled')}
           isOn={form.isEnabled}
           onToggle={() => {
             change({ isEnabled: !form.isEnabled });
@@ -287,7 +299,11 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
         />
 
         <p role="status" className="sr-only">
-          {verdict === 'working' ? `It answered, and is ${version ?? 'working'}.` : ''}
+          {verdict === 'working'
+            ? version === null
+              ? say('admin.downloadClientDialog.answeredWorking')
+              : say('admin.downloadClientDialog.answeredVersion', { version })
+            : ''}
         </p>
       </DialogContent>
 
@@ -295,7 +311,7 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
         note={problem}
         dismiss={{ onChoose: onClose }}
         confirm={{
-          label: client === null ? 'Add client' : 'Save',
+          label: client === null ? say('admin.downloadClientDialog.addClient') : say('common.save'),
           onChoose: save,
           isDisabled: isWorking,
         }}

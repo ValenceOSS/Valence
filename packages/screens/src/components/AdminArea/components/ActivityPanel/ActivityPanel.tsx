@@ -5,6 +5,7 @@ import { SessionMessageDialog } from '@ValenceScreens/components/AdminArea/compo
 import { groupSessionsByViewer } from '@ValenceScreens/components/AdminArea/groupSessionsByViewer';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import type { ActivityPanelProps } from './ActivityPanel.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Who has the app open, what they are watching, and how well it is going for them — grouped by viewer
@@ -34,17 +35,17 @@ const ActivityPanel = ({
 
   return (
     <PanelCard
-      title="Sessions"
+      title={say('admin.activityPanel.heading')}
       actions={
         <span className="flex items-center gap-1.5 text-xs text-text-muted">
           <span aria-hidden className="size-1.5 rounded-full bg-accent" />
-          Live
+          {say('admin.activityPanel.live')}
         </span>
       }
     >
       <div className="flex flex-col gap-4">
         {sessions.length === 0 ? (
-          <p className="text-sm text-text-muted">Nobody has the app open right now.</p>
+          <p className="text-sm text-text-muted">{say('admin.activityPanel.empty')}</p>
         ) : (
           groupSessionsByViewer(sessions).map((group) => (
             <div key={group.key} className="flex flex-col gap-2">
@@ -76,7 +77,9 @@ const ActivityPanel = ({
         )}
       </div>
       <SessionMessageDialog
-        watcher={watcher === undefined ? 'this screen' : nameOfSession(watcher)}
+        watcher={
+          watcher === undefined ? say('admin.activityPanel.thisScreen') : nameOfSession(watcher)
+        }
         isOpen={watcher !== undefined}
         onSend={async (text) => {
           if (watcher !== undefined) {

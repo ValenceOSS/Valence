@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { Icon } from '@ValenceUI/Icon';
 import { Info as InfoIcon, MoreHorizontal as MoreHorizontalIcon } from '@keyline-icons/react';
 import {
@@ -115,7 +116,7 @@ const JobRunner = ({
     () => [
       {
         id: 'job',
-        header: 'Job',
+        header: say('admin.jobRunner.jobHeader'),
         accessorFn: (definition) => definition.label,
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col gap-0.5">
@@ -126,15 +127,26 @@ const JobRunner = ({
       },
       {
         id: 'scope',
-        header: 'Scope',
-        accessorFn: (definition) => (definition.needsLibrary ? 'Libraries' : 'Server'),
+        header: say('admin.jobRunner.scopeHeader'),
+        accessorFn: (definition) =>
+          say(
+            definition.needsLibrary
+              ? 'admin.jobRunner.scopeLibraries'
+              : 'admin.jobRunner.scopeServer',
+          ),
         cell: ({ row }) => (
-          <Badge size="sm">{row.original.needsLibrary ? 'Libraries' : 'Server'}</Badge>
+          <Badge size="sm">
+            {say(
+              row.original.needsLibrary
+                ? 'admin.jobRunner.scopeLibraries'
+                : 'admin.jobRunner.scopeServer',
+            )}
+          </Badge>
         ),
       },
       {
         id: 'state',
-        header: 'State',
+        header: say('admin.jobRunner.stateHeader'),
         enableSorting: false,
         cell: ({ row }) => {
           const summary = summaryFor(row.original.kind);
@@ -142,7 +154,7 @@ const JobRunner = ({
           if (summary === null) {
             return (
               <Badge size="sm" tone="accent">
-                Idle
+                {say('admin.jobRunner.idle')}
               </Badge>
             );
           }
@@ -160,7 +172,7 @@ const JobRunner = ({
                 variant="subtle"
                 size="none"
                 isIconOnly
-                label={`What ${row.original.label} is doing`}
+                label={say('admin.jobRunner.whatItIsDoing', { job: row.original.label })}
                 onClick={() => {
                   setWatching(row.original);
                 }}
@@ -178,14 +190,14 @@ const JobRunner = ({
         cell: ({ row }) => (
           <span className="flex justify-end">
             <ActionMenu
-              label={`Actions for ${row.original.label}`}
+              label={say('admin.jobRunner.actionsFor', { job: row.original.label })}
               trigger={<Icon of={MoreHorizontalIcon} size={16} />}
               groups={[
                 {
                   items: [
                     {
                       id: 'run',
-                      label: 'Run now',
+                      label: say('admin.jobRunner.runNow'),
                       icon: <Icon of={PlayFilledIcon} size={15} />,
                       isDestructive: row.original.destructive,
                       isDisabled:
@@ -202,7 +214,7 @@ const JobRunner = ({
                       : [
                           {
                             id: 'stop',
-                            label: 'Stop it',
+                            label: say('admin.jobRunner.stopIt'),
                             icon: <Icon of={StopFilledIcon} size={15} />,
                             isDestructive: true,
                             onChoose: () => {
@@ -215,7 +227,7 @@ const JobRunner = ({
                       : [
                           {
                             id: 'schedule',
-                            label: 'Edit schedule',
+                            label: say('admin.jobRunner.editSchedule'),
                             icon: <Icon of={CalendarFilledIcon} size={15} />,
                             onChoose: () => {
                               onOpenSchedule(row.original.kind);
@@ -235,7 +247,7 @@ const JobRunner = ({
 
   return (
     <>
-      <DataTable label="Server jobs" columns={columns} rows={definitions} />
+      <DataTable label={say('admin.jobRunner.tableLabel')} columns={columns} rows={definitions} />
 
       <ClearLibraryPartsDialog
         definition={clearing}
@@ -282,9 +294,17 @@ const JobRunner = ({
 
       <ConfirmDialog
         isOpen={confirming !== null}
-        title={confirming === null ? 'Run this job?' : `${confirming.label}?`}
-        detail={confirming === null ? '' : `${confirming.description} This cannot be undone.`}
-        confirmLabel={confirming?.label ?? 'Run'}
+        title={
+          confirming === null
+            ? say('admin.jobRunner.confirmRunFallback')
+            : say('admin.jobRunner.confirmRunTitle', { job: confirming.label })
+        }
+        detail={
+          confirming === null
+            ? ''
+            : say('admin.jobRunner.confirmRunDetail', { description: confirming.description })
+        }
+        confirmLabel={confirming?.label ?? say('admin.jobRunner.run')}
         isDestructive
         onClose={() => {
           setConfirming(null);
@@ -301,9 +321,13 @@ const JobRunner = ({
 
       <ConfirmDialog
         isOpen={stopping !== null}
-        title={stopping === null ? 'Stop this job?' : `Stop ${stopping.label}?`}
-        detail="What it has done so far is kept, and the rest is left undone until it is run again."
-        confirmLabel="Stop it"
+        title={
+          stopping === null
+            ? say('admin.jobRunner.confirmStopFallback')
+            : say('admin.jobRunner.confirmStopTitle', { job: stopping.label })
+        }
+        detail={say('admin.jobRunner.confirmStopDetail')}
+        confirmLabel={say('admin.jobRunner.stopIt')}
         isDestructive
         onClose={() => {
           setStopping(null);

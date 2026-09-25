@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { say } from '@ValenceI18n/say';
 import { ADMIN_SECTIONS } from './adminSections';
 import { visibleAdminSections } from './visibleAdminSections';
 
 describe('visibleAdminSections', () => {
   it('shows every section where requesting is on', () => {
     expect(visibleAdminSections(true).map((section) => section.label)).toEqual(
-      ADMIN_SECTIONS.map((section) => section.label),
+      ADMIN_SECTIONS.map((section) => (section.labelKey === null ? null : say(section.labelKey))),
     );
   });
 

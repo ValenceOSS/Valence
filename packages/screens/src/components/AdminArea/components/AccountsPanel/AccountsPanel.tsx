@@ -62,6 +62,8 @@ import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { setCeiling, setLibraryAccess } from '@ValenceClient/admin/fetchLibraryAccess';
 import { describeCeiling } from '@ValenceContracts/schemas/LibraryAccess';
 import { AGE_CHOICES } from '@ValenceScreens/components/AdminArea/ageChoices';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 type Asked = { kind: 'ban' | 'remove'; account: Account };
 
@@ -340,7 +342,7 @@ const AccountsPanel = () => {
     }
 
     setRefusal(null);
-    tellOutcome('Changes saved.', null);
+    tellOutcome(say('admin.accountsPanel.changesSaved'), null);
     await reload();
   }, [
     picked,
@@ -381,7 +383,7 @@ const AccountsPanel = () => {
     () => [
       {
         id: 'name',
-        header: 'Account',
+        header: say('admin.accountsPanel.account'),
         accessorFn: (account) => account.name,
         cell: ({ row }) => (
           <span className="flex min-w-0 items-center gap-3">
@@ -391,7 +393,7 @@ const AccountsPanel = () => {
               <span className="truncate font-medium text-text">{row.original.name}</span>
               <span className="truncate text-xs text-text-muted">
                 {row.original.isBanned && row.original.banReason !== null
-                  ? `Banned — ${row.original.banReason}`
+                  ? say('admin.accountsPanel.bannedBecause', { reason: row.original.banReason })
                   : row.original.email}
               </span>
             </span>
@@ -400,11 +402,11 @@ const AccountsPanel = () => {
       },
       {
         id: 'roles',
-        header: 'Roles',
+        header: say('admin.accountsPanel.roles'),
         enableSorting: false,
         cell: ({ row }) =>
           row.original.roles.length === 0 ? (
-            <span className="text-xs text-text-muted">No roles</span>
+            <span className="text-xs text-text-muted">{say('admin.accountsPanel.noRoles')}</span>
           ) : (
             <span className="flex flex-wrap items-center gap-1.5">
               {row.original.roles.map((role) => (
@@ -417,15 +419,18 @@ const AccountsPanel = () => {
       },
       {
         id: 'state',
-        header: 'State',
-        accessorFn: (account) => (account.isBanned ? 'Banned' : 'Allowed'),
+        header: say('admin.accountsPanel.state'),
+        accessorFn: (account) =>
+          account.isBanned
+            ? say('admin.accountsPanel.bannedState')
+            : say('admin.accountsPanel.allowed'),
         cell: ({ row }) =>
           row.original.isBanned ? (
             <Badge size="sm" tone="solid">
-              banned
+              {say('admin.accountsPanel.bannedBadge')}
             </Badge>
           ) : (
-            <span className="text-xs text-text-muted">Allowed</span>
+            <span className="text-xs text-text-muted">{say('admin.accountsPanel.allowed')}</span>
           ),
       },
       {
@@ -435,14 +440,14 @@ const AccountsPanel = () => {
         cell: ({ row }) => (
           <span className="flex justify-end">
             <ActionMenu
-              label={`Actions for ${row.original.name}`}
+              label={say('admin.accountsPanel.actionsFor', { name: row.original.name })}
               trigger={<Icon of={MoreHorizontalIcon} size={16} />}
               groups={[
                 {
                   items: [
                     {
                       id: 'edit',
-                      label: 'Edit account',
+                      label: say('admin.accountsPanel.editAccount'),
                       icon: <Icon of={UserCheckFilledIcon} size={15} />,
                       onChoose: () => {
                         setAccountId(row.original.id);
@@ -452,11 +457,16 @@ const AccountsPanel = () => {
                     },
                     {
                       id: 'ban',
-                      label: row.original.isBanned ? 'Let back in' : 'Ban',
+                      label: row.original.isBanned
+                        ? say('admin.accountsPanel.letBackIn')
+                        : say('admin.accountsPanel.ban'),
                       icon: <Icon of={CircleXFilledIcon} size={15} />,
                       onChoose: () => {
                         if (row.original.isBanned) {
-                          void act(() => unbanAccount(row.original.id), 'Account unbanned.');
+                          void act(
+                            () => unbanAccount(row.original.id),
+                            say('admin.accountsPanel.unbanned'),
+                          );
 
                           return;
                         }
@@ -470,7 +480,7 @@ const AccountsPanel = () => {
                   items: [
                     {
                       id: 'remove',
-                      label: 'Delete account',
+                      label: say('admin.accountsPanel.deleteAccount'),
                       icon: <Icon of={BinFilledIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
@@ -500,24 +510,34 @@ const AccountsPanel = () => {
     void act(
       () =>
         kind === 'ban'
-          ? banAccount(account.id, 'Banned from the admin area')
+          ? banAccount(account.id, say('admin.accountsPanel.banReason'))
           : removeAccount(account.id),
-      kind === 'ban' ? `Banned ${account.name}.` : `Deleted ${account.name}.`,
+      kind === 'ban'
+        ? say('admin.accountsPanel.bannedWho', { name: account.name })
+        : say('admin.accountsPanel.deletedWho', { name: account.name }),
     );
   };
 
   return (
     <div className="flex flex-col gap-4">
       <ConfirmDialog
-        title={asking?.kind === 'remove' ? 'Delete this account?' : 'Ban this account?'}
+        title={
+          asking?.kind === 'remove'
+            ? say('admin.accountsPanel.deleteTitle')
+            : say('admin.accountsPanel.banTitle')
+        }
         detail={
           asking === null
             ? ''
             : asking.kind === 'remove'
-              ? `${asking.account.name} goes, and so does every profile on the account and everything those profiles were watching. Their API keys and share links are revoked at once, so anything using one stops working. Shared playlists stay, marked as a removed profile's. Nothing leaves the library, and this cannot be undone.`
-              : `${asking.account.name} will be signed out and refused entry until you let them back in.`
+              ? say('admin.accountsPanel.deleteBody', { name: asking.account.name })
+              : say('admin.accountsPanel.banBody', { name: asking.account.name })
         }
-        confirmLabel={asking?.kind === 'remove' ? 'Delete account' : 'Ban'}
+        confirmLabel={
+          asking?.kind === 'remove'
+            ? say('admin.accountsPanel.deleteAccount')
+            : say('admin.accountsPanel.ban')
+        }
         isDestructive
         isOpen={asking !== null}
         onClose={() => {
@@ -527,7 +547,7 @@ const AccountsPanel = () => {
       />
 
       <DialogCompanion
-        label="Add user"
+        label={say('admin.accountsPanel.addUser')}
         isOpen={isInviting}
         onClose={() => {
           setIsInviting(false);
@@ -535,29 +555,33 @@ const AccountsPanel = () => {
       >
         <DialogTitle
           size="compact"
-          title="Add user"
-          detail="They arrive able to watch and nothing more, until you give them a role."
+          title={say('admin.accountsPanel.addUser')}
+          detail={say('admin.accountsPanel.addUserDetail')}
         />
 
         <DialogContent className="flex flex-col gap-4">
-          <TextField label="Name" value={inviteName} onValueChange={setInviteName} />
+          <TextField
+            label={say('admin.accountsPanel.name')}
+            value={inviteName}
+            onValueChange={setInviteName}
+          />
 
           <TextField
-            label="Address"
+            label={say('admin.accountsPanel.address')}
             type="email"
             value={inviteEmail}
             onValueChange={setInviteEmail}
           />
 
           <TextField
-            label="Password"
+            label={say('admin.accountsPanel.password')}
             type="password"
             value={invitePassword}
             onValueChange={setInvitePassword}
           />
 
           <p className="text-center font-body text-xs text-text-muted">
-            Valence cannot send email, so tell them this password yourself.
+            {say('admin.accountsPanel.noEmail')}
           </p>
 
           {refusal === null ? null : (
@@ -574,7 +598,7 @@ const AccountsPanel = () => {
             },
           }}
           confirm={{
-            label: 'Add',
+            label: say('admin.accountsPanel.add'),
             onChoose: () => {
               void act(
                 () =>
@@ -583,7 +607,7 @@ const AccountsPanel = () => {
                     email: inviteEmail,
                     password: invitePassword,
                   }),
-                `Added ${inviteName}.`,
+                say('admin.accountsPanel.addedWho', { name: inviteName }),
               ).then((isAdded) => {
                 if (!isAdded) {
                   return;
@@ -611,16 +635,16 @@ const AccountsPanel = () => {
       )}
 
       <PanelCard
-        title="Accounts"
+        title={say('admin.accountsPanel.heading')}
         isFlush
         actions={
           <>
             <TextField
-              label="Find somebody"
+              label={say('admin.accountsPanel.find')}
               isLabelHidden
               size="sm"
               type="search"
-              placeholder="Find somebody"
+              placeholder={say('admin.accountsPanel.find')}
               value={search}
               onValueChange={setSearch}
               className="w-56 max-w-full"
@@ -632,14 +656,14 @@ const AccountsPanel = () => {
                 setIsInviting(true);
               }}
             >
-              Add user
+              {say('admin.accountsPanel.addUser')}
             </PanelCardAction>
           </>
         }
       >
         {askedAccounts.isError ? (
           <CouldNotRead
-            what="The accounts"
+            what={say('admin.accountsPanel.theAccounts')}
             isTryingAgain={askedAccounts.isFetching}
             onTryAgain={() => {
               void askedAccounts.refetch();
@@ -648,20 +672,26 @@ const AccountsPanel = () => {
           />
         ) : (
           <DataTable
-            label="Accounts"
+            label={say('admin.accountsPanel.heading')}
             columns={columns}
             rows={shown}
             pageSize={10}
             height="fill"
             emptyMessage={
-              accounts.length === 0 ? 'Nobody has an account yet.' : 'Nobody here matches that.'
+              accounts.length === 0
+                ? say('admin.accountsPanel.noAccounts')
+                : say('admin.accountsPanel.noMatches')
             }
           />
         )}
       </PanelCard>
 
       <DialogCompanion
-        label={picked === null ? 'Account' : `Edit ${picked.name}`}
+        label={
+          picked === null
+            ? say('admin.accountsPanel.account')
+            : say('admin.accountsPanel.editWho', { name: picked.name })
+        }
         isOpen={picked !== null && accountId !== null}
         onClose={() => {
           setAccountId(null);
@@ -679,22 +709,22 @@ const AccountsPanel = () => {
           >
             <DialogTitle
               size="compact"
-              title={`Edit ${picked.name}`}
-              detail="Changes to their name, picture, roles and libraries apply when you save. Resetting their password and ending sessions happen right away."
+              title={say('admin.accountsPanel.editWho', { name: picked.name })}
+              detail={say('admin.accountsPanel.editDetail')}
               below={
                 <TabRow
-                  label="What to change about this account"
+                  label={say('admin.accountsPanel.editTabs')}
                   tone="underlined"
                   size="sm"
                   value={editTab}
                   groups={[
                     {
                       items: [
-                        { id: 'display', label: 'Display' },
-                        { id: 'security', label: 'Security' },
-                        { id: 'devices', label: 'Devices' },
-                        { id: 'roles', label: 'Roles' },
-                        { id: 'libraries', label: 'Libraries' },
+                        { id: 'display', label: say('admin.accountsPanel.displayTab') },
+                        { id: 'security', label: say('admin.accountsPanel.securityTab') },
+                        { id: 'devices', label: say('admin.accountsPanel.devicesTab') },
+                        { id: 'roles', label: say('admin.accountsPanel.rolesTab') },
+                        { id: 'libraries', label: say('admin.accountsPanel.librariesTab') },
                       ],
                     },
                   ]}
@@ -722,14 +752,14 @@ const AccountsPanel = () => {
                 <div className="flex flex-col gap-5">
                   <div className="flex flex-wrap items-end gap-3">
                     <TextField
-                      label="Name"
+                      label={say('admin.accountsPanel.name')}
                       value={draftName}
                       onValueChange={setDraftName}
                       className="min-w-48 flex-1"
                     />
 
                     <TextField
-                      label="Address"
+                      label={say('admin.accountsPanel.address')}
                       type="email"
                       value={draftEmail}
                       onValueChange={setDraftEmail}
@@ -751,17 +781,17 @@ const AccountsPanel = () => {
               <TabPanel value="security" travel={travel}>
                 {!maySecureAccounts ? (
                   <p className="text-sm text-text-muted">
-                    You do not hold the permission to reset passwords or end sessions.
+                    {say('admin.accountsPanel.noSecurityPermission')}
                   </p>
                 ) : (
                   <div className="flex flex-col gap-6">
                     <FormField
-                      label="Reset password"
-                      description="Ends every session this account holds. Valence cannot send email, so tell them the new password yourself."
+                      label={say('admin.accountsPanel.resetPassword')}
+                      description={say('admin.accountsPanel.resetPasswordDescription')}
                     >
                       <div className="flex flex-wrap items-end gap-3">
                         <TextField
-                          label="New password"
+                          label={say('admin.accountsPanel.newPassword')}
                           type="password"
                           value={draftPassword}
                           onValueChange={setDraftPassword}
@@ -775,14 +805,14 @@ const AccountsPanel = () => {
                             setConfirmingPasswordReset(true);
                           }}
                         >
-                          Reset password
+                          {say('admin.accountsPanel.resetPassword')}
                         </Button>
                       </div>
                     </FormField>
 
                     <FormField
-                      label="Sign out everywhere"
-                      description="Ends every session this account holds, without changing its password."
+                      label={say('admin.accountsPanel.signOutEverywhere')}
+                      description={say('admin.accountsPanel.signOutEverywhereDescription')}
                     >
                       <Button
                         variant="danger"
@@ -790,7 +820,7 @@ const AccountsPanel = () => {
                           setConfirmingSignOutEverywhere(true);
                         }}
                       >
-                        Sign out everywhere
+                        {say('admin.accountsPanel.signOutEverywhere')}
                       </Button>
                     </FormField>
                   </div>
@@ -803,7 +833,7 @@ const AccountsPanel = () => {
 
               <TabPanel value="roles" travel={travel}>
                 {roles.length === 0 ? (
-                  <p className="text-sm text-text-muted">There are no roles yet.</p>
+                  <p className="text-sm text-text-muted">{say('admin.accountsPanel.noRolesYet')}</p>
                 ) : (
                   <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
                     {roles.map((role) => (
@@ -824,16 +854,20 @@ const AccountsPanel = () => {
                             </span>
                             <span className="truncate text-xs text-text-muted">
                               {role.permissions.includes('administrator')
-                                ? 'Everything'
-                                : role.permissions.length === 1
-                                  ? '1 permission'
-                                  : `${role.permissions.length.toString()} permissions`}
+                                ? say('admin.accountsPanel.everything')
+                                : sayCount(
+                                    'admin.accountsPanel.permissions',
+                                    role.permissions.length,
+                                  )}
                             </span>
                           </span>
                         </div>
 
                         <Switch
-                          label={`Whether ${picked.name} holds ${role.name}`}
+                          label={say('admin.accountsPanel.holdsRole', {
+                            name: picked.name,
+                            role: role.name,
+                          })}
                           isLabelHidden
                           isOn={draftRoleIds.has(role.id)}
                           onToggle={() => {
@@ -859,11 +893,13 @@ const AccountsPanel = () => {
 
               <TabPanel value="libraries" travel={travel}>
                 <FormField
-                  label="Libraries"
-                  description="What they may see, and how old it may be. Everything, until you say otherwise."
+                  label={say('admin.accountsPanel.libraries')}
+                  description={say('admin.accountsPanel.librariesDescription')}
                 >
                   {draftLibraryAccess.length === 0 ? (
-                    <p className="text-sm text-text-muted">There are no libraries yet.</p>
+                    <p className="text-sm text-text-muted">
+                      {say('admin.accountsPanel.noLibraries')}
+                    </p>
                   ) : (
                     <ul className="flex flex-col gap-2">
                       {draftLibraryAccess.map((shelf) => (
@@ -874,8 +910,14 @@ const AccountsPanel = () => {
                             aria-pressed={shelf.mayView}
                             label={
                               shelf.mayView
-                                ? `Keep ${shelf.name} from ${picked.name}`
-                                : `Let ${picked.name} see ${shelf.name}`
+                                ? say('admin.accountsPanel.keepFrom', {
+                                    library: shelf.name,
+                                    name: picked.name,
+                                  })
+                                : say('admin.accountsPanel.letSee', {
+                                    library: shelf.name,
+                                    name: picked.name,
+                                  })
                             }
                             onClick={() => {
                               updateShelf(shelf.id, { mayView: !shelf.mayView });
@@ -886,10 +928,13 @@ const AccountsPanel = () => {
 
                           {!shelf.mayView ? null : (
                             <OptionMenu
-                              label={`Age limit in ${shelf.name} for ${picked.name}`}
+                              label={say('admin.accountsPanel.ageLimit', {
+                                library: shelf.name,
+                                name: picked.name,
+                              })}
                               groups={[
                                 {
-                                  name: 'Nothing above',
+                                  name: say('admin.accountsPanel.nothingAbove'),
                                   selectedId:
                                     shelf.maximumAge === null ? 'none' : String(shelf.maximumAge),
                                   onSelect: (id) => {
@@ -897,7 +942,11 @@ const AccountsPanel = () => {
                                       maximumAge: id === 'none' ? null : Number.parseInt(id, 10),
                                     });
                                   },
-                                  options: AGE_CHOICES,
+                                  options: AGE_CHOICES.map((choice) => ({
+                                    id: choice.id,
+                                    label: say(choice.labelKey),
+                                    detail: say(choice.detailKey),
+                                  })),
                                 },
                               ]}
                               trigger={
@@ -920,7 +969,10 @@ const AccountsPanel = () => {
                               variant={shelf.allowsUnrated ? 'glossy' : 'ghost'}
                               size="sm"
                               aria-pressed={shelf.allowsUnrated}
-                              label={`Allow uncertificated things in ${shelf.name} for ${picked.name}`}
+                              label={say('admin.accountsPanel.allowUnratedFor', {
+                                library: shelf.name,
+                                name: picked.name,
+                              })}
                               onClick={() => {
                                 updateShelf(shelf.id, {
                                   allowsUnrated: !shelf.allowsUnrated,
@@ -928,7 +980,7 @@ const AccountsPanel = () => {
                                 });
                               }}
                             >
-                              Allow unrated
+                              {say('admin.accountsPanel.allowUnrated')}
                             </Button>
                           )}
                         </li>
@@ -939,16 +991,13 @@ const AccountsPanel = () => {
                   {draftLibraryAccess.length === 0 ||
                   draftLibraryAccess.some((shelf) => shelf.mayView) ? null : (
                     <p className="pt-2 text-xs text-text-muted">
-                      They can reach nothing at all, which looks broken rather than restricted to
-                      whoever signs in.
+                      {say('admin.accountsPanel.reachesNothing')}
                     </p>
                   )}
 
                   {draftLibraryAccess.every((shelf) => shelf.maximumAge === null) ? null : (
                     <p className="pt-2 text-xs text-text-muted">
-                      A limit applies to this account and so to every face on it. If a parent and a
-                      child share this one, give the child an account of their own and limit that
-                      instead.
+                      {say('admin.accountsPanel.limitWholeAccount')}
                     </p>
                   )}
                 </FormField>
@@ -957,13 +1006,13 @@ const AccountsPanel = () => {
 
             <DialogFooter
               dismiss={{
-                label: 'Close',
+                label: say('common.close'),
                 onChoose: () => {
                   setAccountId(null);
                 },
               }}
               confirm={{
-                label: 'Save changes',
+                label: say('admin.accountsPanel.saveChanges'),
                 onChoose: () => {
                   void saveChanges();
                 },
@@ -975,9 +1024,9 @@ const AccountsPanel = () => {
       </DialogCompanion>
 
       <ConfirmDialog
-        title="Reset this account's password?"
-        detail="Every session it holds will be ended, and it will need the new password to sign in again."
-        confirmLabel="Reset password"
+        title={say('admin.accountsPanel.resetTitle')}
+        detail={say('admin.accountsPanel.resetBody')}
+        confirmLabel={say('admin.accountsPanel.resetPassword')}
         isDestructive
         isOpen={confirmingPasswordReset}
         onClose={() => {
@@ -990,15 +1039,18 @@ const AccountsPanel = () => {
           setDraftPassword('');
 
           if (accountId !== null) {
-            void act(() => resetAccountPassword(accountId, password), 'Password reset.');
+            void act(
+              () => resetAccountPassword(accountId, password),
+              say('admin.accountsPanel.passwordReset'),
+            );
           }
         }}
       />
 
       <ConfirmDialog
-        title="Sign this account out everywhere?"
-        detail="Every session it holds will be ended. Its password is unchanged."
-        confirmLabel="Sign it out"
+        title={say('admin.accountsPanel.signOutTitle')}
+        detail={say('admin.accountsPanel.signOutBody')}
+        confirmLabel={say('admin.accountsPanel.signItOut')}
         isDestructive
         isOpen={confirmingSignOutEverywhere}
         onClose={() => {
@@ -1008,7 +1060,10 @@ const AccountsPanel = () => {
           setConfirmingSignOutEverywhere(false);
 
           if (accountId !== null) {
-            void act(() => endAccountSessions(accountId), 'Signed them out everywhere.');
+            void act(
+              () => endAccountSessions(accountId),
+              say('admin.accountsPanel.signedOutEverywhere'),
+            );
           }
         }}
       />

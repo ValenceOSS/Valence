@@ -1,6 +1,7 @@
 import { testIndexer } from '@ValenceClient/requests/fetchIndexers';
 import { failureOfTest } from './failureOfTest';
 import type { Indexer } from '@ValenceContracts/schemas/Indexer';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Tests an indexer and says why it failed, naming it, including where its answer could not even be
@@ -12,7 +13,7 @@ import type { Indexer } from '@ValenceContracts/schemas/Indexer';
 const testAndSayWhy = ({ id, name }: Pick<Indexer, 'id' | 'name'>): Promise<string | null> =>
   testIndexer(id).then(
     (sent) => failureOfTest(name, sent),
-    () => `${name}: its answer could not be read`,
+    () => say('admin.testAndSayWhy.unreadable', { name }),
   );
 
 export { testAndSayWhy };

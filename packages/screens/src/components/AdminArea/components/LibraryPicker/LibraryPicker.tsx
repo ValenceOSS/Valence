@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import { Checkbox } from '@ValenceUI/Checkbox';
 import type { LibraryPickerProps } from './LibraryPicker.types';
 
@@ -16,11 +18,11 @@ const LibraryPicker = ({ libraries, chosen, onChange }: LibraryPickerProps) => {
   return (
     <fieldset className="flex flex-col gap-3">
       <legend className="mb-3 text-xs uppercase tracking-[0.14em] text-text-muted">
-        Libraries
+        {say('admin.libraryPicker.legend')}
       </legend>
 
       <Checkbox
-        label="Every library"
+        label={say('admin.libraryPicker.everyLibrary')}
         checked={isEvery}
         onCheckedChange={(isChecked) => {
           onChange(new Set(isChecked ? libraries.map((library) => library.id) : []));
@@ -32,9 +34,7 @@ const LibraryPicker = ({ libraries, chosen, onChange }: LibraryPickerProps) => {
           <Checkbox
             key={library.id}
             label={library.name}
-            description={
-              library.itemCount === 1 ? '1 item' : `${library.itemCount.toLocaleString()} items`
-            }
+            description={sayCount('admin.libraryPicker.itemCount', library.itemCount)}
             checked={chosen.has(library.id)}
             onCheckedChange={(isChecked) => {
               const next = new Set(chosen);

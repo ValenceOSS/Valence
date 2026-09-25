@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import { useState } from 'react';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -37,17 +39,27 @@ const RunLibraryJobDialog = ({
 
   return (
     <Dialog
-      label={definition === null ? 'Run this job' : `Run ${definition.label}`}
+      label={
+        definition === null
+          ? say('admin.runLibraryJobDialog.fallbackLabel')
+          : say('admin.runLibraryJobDialog.label', { job: definition.label })
+      }
       isOpen={definition !== null}
       onClose={onClose}
     >
       {definition === null ? null : (
         <>
           <DialogTitle
-            title={definition.destructive ? `${definition.label}?` : definition.label}
+            title={
+              definition.destructive
+                ? say('admin.runLibraryJobDialog.destructiveTitle', { job: definition.label })
+                : definition.label
+            }
             detail={
               definition.destructive
-                ? `${definition.description} This cannot be undone.`
+                ? say('admin.runLibraryJobDialog.destructiveDetail', {
+                    description: definition.description,
+                  })
                 : definition.description
             }
           />
@@ -59,10 +71,15 @@ const RunLibraryJobDialog = ({
           <DialogFooter
             dismiss={{ onChoose: onClose }}
             confirm={{
-              label:
-                picked.length === libraries.length
-                  ? `${definition.destructive ? definition.label : 'Run'} on every library`
-                  : `${definition.destructive ? definition.label : 'Run'} on ${picked.length.toString()} ${picked.length === 1 ? 'library' : 'libraries'}`,
+              label: definition.destructive
+                ? picked.length === libraries.length
+                  ? say('admin.runLibraryJobDialog.doOnEvery', { job: definition.label })
+                  : sayCount('admin.runLibraryJobDialog.doOnSome', picked.length, {
+                      job: definition.label,
+                    })
+                : picked.length === libraries.length
+                  ? say('admin.runLibraryJobDialog.runOnEvery')
+                  : sayCount('admin.runLibraryJobDialog.runOnSome', picked.length),
               onChoose: () => {
                 onRun(definition.kind, picked);
               },

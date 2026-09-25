@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { Icon } from '@ValenceUI/Icon';
 import { Plus as PlusIcon, X as XIcon } from '@keyline-icons/react';
 import { useState } from 'react';
@@ -32,7 +33,9 @@ const JobSchedulePage = ({ triggers, onAdd, onRemove, timezone = null }: JobSche
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-xs uppercase tracking-[0.16em] text-text-muted">Triggers</h3>
+          <h3 className="text-xs uppercase tracking-[0.16em] text-text-muted">
+            {say('admin.jobSchedulePage.triggersHeading')}
+          </h3>
 
           <Button
             variant="ghost"
@@ -42,21 +45,21 @@ const JobSchedulePage = ({ triggers, onAdd, onRemove, timezone = null }: JobSche
             }}
           >
             <Icon of={PlusIcon} size={16} />
-            Add trigger
+            {say('admin.jobSchedulePage.addTrigger')}
           </Button>
         </div>
 
         {timezone === null ? null : (
           <p className="text-xs text-text-muted">
             {timezone === viewerZone
-              ? `Times are ${timezone}, the same clock you are reading this on.`
-              : `Times are ${timezone}. You are reading this in ${viewerZone}.`}
+              ? say('admin.jobSchedulePage.sameZone', { zone: timezone })
+              : say('admin.jobSchedulePage.otherZone', { zone: timezone, viewerZone })}
           </p>
         )}
 
         {triggers.length === 0 ? (
           <p className="rounded-lg border border-[var(--surface-line)] px-4 py-3 text-sm text-text-muted">
-            No triggers. This only runs when you press Run.
+            {say('admin.jobSchedulePage.noTriggers')}
           </p>
         ) : (
           <ul className="flex flex-col divide-y divide-[var(--surface-line)] overflow-hidden rounded-lg border border-[var(--surface-line)]">
@@ -84,7 +87,9 @@ const JobSchedulePage = ({ triggers, onAdd, onRemove, timezone = null }: JobSche
                   <Button
                     variant="ghost"
                     size="sm"
-                    aria-label={`Remove ${describeTrigger(entry.trigger)}`}
+                    aria-label={say('admin.jobSchedulePage.removeTrigger', {
+                      trigger: describeTrigger(entry.trigger),
+                    })}
                     onClick={() => {
                       onRemove(entry.id);
                     }}

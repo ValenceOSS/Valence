@@ -1,3 +1,6 @@
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
+
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
@@ -12,36 +15,30 @@ const DAY = 24 * HOUR;
  */
 const describeSince = (at: string | null, now: number): string => {
   if (at === null) {
-    return 'never';
+    return say('admin.describeSince.never');
   }
 
   const then = Date.parse(at);
 
   if (Number.isNaN(then)) {
-    return 'never';
+    return say('admin.describeSince.never');
   }
 
   const elapsed = now - then;
 
   if (elapsed < MINUTE) {
-    return 'just now';
+    return say('admin.describeSince.justNow');
   }
 
   if (elapsed < HOUR) {
-    const minutes = Math.floor(elapsed / MINUTE);
-
-    return minutes === 1 ? '1 minute ago' : `${minutes.toString()} minutes ago`;
+    return sayCount('admin.describeSince.minutesAgo', Math.floor(elapsed / MINUTE));
   }
 
   if (elapsed < DAY) {
-    const hours = Math.floor(elapsed / HOUR);
-
-    return hours === 1 ? '1 hour ago' : `${hours.toString()} hours ago`;
+    return sayCount('admin.describeSince.hoursAgo', Math.floor(elapsed / HOUR));
   }
 
-  const days = Math.floor(elapsed / DAY);
-
-  return days === 1 ? '1 day ago' : `${days.toString()} days ago`;
+  return sayCount('admin.describeSince.daysAgo', Math.floor(elapsed / DAY));
 };
 
 export { describeSince };

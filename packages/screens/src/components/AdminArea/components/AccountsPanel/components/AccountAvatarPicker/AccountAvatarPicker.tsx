@@ -6,6 +6,7 @@ import { FormField } from '@ValenceUI/FormField';
 import { AVATAR_STYLES, PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
 import { HouseholdFace } from '@ValenceScreens/components/HouseholdFace/HouseholdFace';
 import type { AccountAvatarPickerProps } from './AccountAvatarPicker.types';
+import { say } from '@ValenceI18n/say';
 
 const PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif,video/webm,video/mp4';
 
@@ -24,11 +25,11 @@ const AccountAvatarPicker = ({ accountId, face, draft, onDraft }: AccountAvatarP
   return (
     <div className="flex flex-col gap-4">
       <FormField
-        label="Picture"
+        label={say('admin.accountAvatarPicker.picture')}
         description={
           draft.photo === null
-            ? 'A photograph, one of the drawn faces, or the first letter of their name.'
-            : `${draft.photo.name} — saved when you save this dialog.`
+            ? say('admin.accountAvatarPicker.pictureDescription')
+            : say('admin.accountAvatarPicker.pictureChosen', { file: draft.photo.name })
         }
       >
         <div className="flex items-center gap-3">
@@ -46,7 +47,7 @@ const AccountAvatarPicker = ({ accountId, face, draft, onDraft }: AccountAvatarP
           />
 
           <FilePicker
-            label="Upload a picture"
+            label={say('admin.accountAvatarPicker.uploadLabel')}
             accept={PHOTO_TYPES}
             size="sm"
             onPick={(file) => {
@@ -57,14 +58,14 @@ const AccountAvatarPicker = ({ accountId, face, draft, onDraft }: AccountAvatarP
             }}
           >
             <Icon of={ImageIcon} size={15} />
-            Upload
+            {say('admin.accountAvatarPicker.upload')}
           </FilePicker>
         </div>
       </FormField>
 
       <FormField
-        label="Drawn face"
-        description="Where a photograph is not wanted, pick one of these."
+        label={say('admin.accountAvatarPicker.drawnFace')}
+        description={say('admin.accountAvatarPicker.drawnFaceDescription')}
       >
         <div className="flex flex-wrap items-center gap-2">
           {AVATAR_STYLES.map((style) => (
@@ -72,7 +73,7 @@ const AccountAvatarPicker = ({ accountId, face, draft, onDraft }: AccountAvatarP
               key={style}
               variant="bare"
               size="none"
-              label={`Use the ${style} face`}
+              label={say('admin.accountAvatarPicker.useFace', { style })}
               isActive={draft.avatar.kind === 'drawn' && draft.avatar.style === style}
               className={`size-8 overflow-hidden rounded-lg bg-subtle transition-transform ${
                 draft.avatar.kind === 'drawn' && draft.avatar.style === style
@@ -96,7 +97,7 @@ const AccountAvatarPicker = ({ accountId, face, draft, onDraft }: AccountAvatarP
             variant="ghost"
             size="sm"
             isIconOnly
-            label="Use their initial instead"
+            label={say('admin.accountAvatarPicker.useInitial')}
             onClick={() => {
               onDraft({ avatar: { kind: 'initial' }, photo: null });
             }}
@@ -107,8 +108,8 @@ const AccountAvatarPicker = ({ accountId, face, draft, onDraft }: AccountAvatarP
       </FormField>
 
       <FormField
-        label="Colour"
-        description="The background behind their initial, and the tint on their drawn face."
+        label={say('admin.accountAvatarPicker.colour')}
+        description={say('admin.accountAvatarPicker.colourDescription')}
       >
         <div className="flex flex-wrap items-center gap-2">
           {PROFILE_COLOURS.map((option) => (
@@ -116,7 +117,7 @@ const AccountAvatarPicker = ({ accountId, face, draft, onDraft }: AccountAvatarP
               key={option}
               variant="bare"
               size="none"
-              label={`Use ${option}`}
+              label={say('admin.accountAvatarPicker.useColour', { colour: option })}
               isActive={option === draft.colour}
               style={{ backgroundColor: option }}
               className={`size-6 rounded-full transition-transform ${

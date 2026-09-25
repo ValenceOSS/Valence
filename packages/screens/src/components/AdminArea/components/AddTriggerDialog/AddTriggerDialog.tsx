@@ -10,19 +10,21 @@ import { TextField } from '@ValenceUI/TextField';
 import { DAY_NAMES } from '@ValenceClient/admin/describeTrigger';
 import type { ScheduleTrigger } from '@ValenceClient/admin/fetchAdmin';
 import type { AddTriggerDialogProps } from './AddTriggerDialog.types';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
 const TRIGGER_TYPES = [
-  { id: 'daily', label: 'Daily' },
-  { id: 'weekly', label: 'Weekly' },
-  { id: 'interval', label: 'On an interval' },
-  { id: 'startup', label: 'On application startup' },
-] as const;
+  { id: 'daily', labelKey: 'admin.addTriggerDialog.daily' },
+  { id: 'weekly', labelKey: 'admin.addTriggerDialog.weekly' },
+  { id: 'interval', labelKey: 'admin.addTriggerDialog.interval' },
+  { id: 'startup', labelKey: 'admin.addTriggerDialog.startup' },
+] as const satisfies readonly { id: string; labelKey: StringKey }[];
 type TriggerType = (typeof TRIGGER_TYPES)[number]['id'];
 
 const INTERVAL_UNITS = [
-  { id: 'minutes', label: 'Minutes' },
-  { id: 'hours', label: 'Hours' },
-] as const;
+  { id: 'minutes', labelKey: 'admin.addTriggerDialog.minutes' },
+  { id: 'hours', labelKey: 'admin.addTriggerDialog.hours' },
+] as const satisfies readonly { id: string; labelKey: StringKey }[];
 type IntervalUnit = (typeof INTERVAL_UNITS)[number]['id'];
 
 /**
@@ -126,15 +128,18 @@ const AddTriggerDialog = ({ isOpen, onAdd, onClose, isSaving = false }: AddTrigg
   );
 
   return (
-    <DialogCompanion label="Add trigger" isOpen={isOpen} onClose={onClose}>
-      <DialogTitle size="compact" title="Add trigger" />
+    <DialogCompanion label={say('admin.addTriggerDialog.title')} isOpen={isOpen} onClose={onClose}>
+      <DialogTitle size="compact" title={say('admin.addTriggerDialog.title')} />
 
       <DialogContent className="flex flex-col gap-5">
         {select(
-          'Trigger type',
+          say('admin.addTriggerDialog.typeLabel'),
           type,
-          TRIGGER_TYPES.find((candidate) => candidate.id === type)?.label ?? '',
-          [...TRIGGER_TYPES],
+          say(
+            TRIGGER_TYPES.find((candidate) => candidate.id === type)?.labelKey ??
+              'admin.addTriggerDialog.daily',
+          ),
+          TRIGGER_TYPES.map((option) => ({ id: option.id, label: say(option.labelKey) })),
           (id) => {
             setType(TRIGGER_TYPES.find((candidate) => candidate.id === id)?.id ?? 'daily');
           },
@@ -142,7 +147,7 @@ const AddTriggerDialog = ({ isOpen, onAdd, onClose, isSaving = false }: AddTrigg
 
         {type === 'weekly'
           ? select(
-              'Day',
+              say('admin.addTriggerDialog.dayLabel'),
               dayOfWeek,
               DAY_NAMES[Number.parseInt(dayOfWeek, 10)] ?? '',
               DAY_NAMES.map((name, index) => ({ id: index.toString(), label: name })),
@@ -151,13 +156,18 @@ const AddTriggerDialog = ({ isOpen, onAdd, onClose, isSaving = false }: AddTrigg
           : null}
 
         {type === 'daily' || type === 'weekly' ? (
-          <TextField label="Time" type="time" value={time} onValueChange={setTime} />
+          <TextField
+            label={say('admin.addTriggerDialog.timeLabel')}
+            type="time"
+            value={time}
+            onValueChange={setTime}
+          />
         ) : null}
 
         {type === 'interval' ? (
           <div className="flex items-end gap-3">
             <TextField
-              label="Every"
+              label={say('admin.addTriggerDialog.everyLabel')}
               type="number"
               min={1}
               max={unit === 'minutes' ? 59 : 23}
@@ -167,10 +177,13 @@ const AddTriggerDialog = ({ isOpen, onAdd, onClose, isSaving = false }: AddTrigg
             />
 
             {select(
-              'Unit',
+              say('admin.addTriggerDialog.unitLabel'),
               unit,
-              INTERVAL_UNITS.find((candidate) => candidate.id === unit)?.label ?? '',
-              [...INTERVAL_UNITS],
+              say(
+                INTERVAL_UNITS.find((candidate) => candidate.id === unit)?.labelKey ??
+                  'admin.addTriggerDialog.hours',
+              ),
+              INTERVAL_UNITS.map((option) => ({ id: option.id, label: say(option.labelKey) })),
               (id) => {
                 setUnit(INTERVAL_UNITS.find((candidate) => candidate.id === id)?.id ?? 'hours');
               },
@@ -179,16 +192,14 @@ const AddTriggerDialog = ({ isOpen, onAdd, onClose, isSaving = false }: AddTrigg
         ) : null}
 
         {type === 'startup' ? (
-          <p className="text-sm text-text-muted">
-            Runs once every time the server starts, with nothing else to set.
-          </p>
+          <p className="text-sm text-text-muted">{say('admin.addTriggerDialog.startupDetail')}</p>
         ) : null}
       </DialogContent>
 
       <DialogFooter
         dismiss={{ onChoose: onClose, isDisabled: isSaving }}
         confirm={{
-          label: 'Add',
+          label: say('admin.addTriggerDialog.confirm'),
           onChoose: () => {
             if (built !== null) {
               onAdd(built);

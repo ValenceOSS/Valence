@@ -33,6 +33,8 @@ import {
   removeRole,
   updateRole,
 } from '@ValenceClient/admin/fetchRoles';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
@@ -226,7 +228,7 @@ const RolesPanel = () => {
     }
 
     setRefusal(null);
-    tellOutcome('Role saved.', null);
+    tellOutcome(say('admin.rolesPanel.saved'), null);
     await reload();
   }, [
     selected,
@@ -254,7 +256,7 @@ const RolesPanel = () => {
     () => [
       {
         id: 'name',
-        header: 'Role',
+        header: say('admin.rolesPanel.roleHeader'),
         accessorFn: (role) => role.name,
         cell: ({ row }) => (
           <span className="flex min-w-0 items-center gap-2.5">
@@ -268,10 +270,8 @@ const RolesPanel = () => {
               <span className="truncate font-medium text-text">{row.original.name}</span>
               <span className="truncate text-xs text-text-muted">
                 {row.original.permissions.includes('administrator')
-                  ? 'Everything'
-                  : row.original.permissions.length === 1
-                    ? '1 permission'
-                    : `${row.original.permissions.length.toString()} permissions`}
+                  ? say('admin.rolesPanel.everything')
+                  : sayCount('admin.rolesPanel.permissionCount', row.original.permissions.length)}
               </span>
             </span>
           </span>
@@ -279,7 +279,7 @@ const RolesPanel = () => {
       },
       {
         id: 'position',
-        header: 'Rank',
+        header: say('admin.rolesPanel.rankHeader'),
         accessorFn: (role) => role.position,
         cell: ({ row }) => <Badge size="sm">{row.original.position.toString()}</Badge>,
       },
@@ -290,14 +290,14 @@ const RolesPanel = () => {
         cell: ({ row }) => (
           <span className="flex justify-end">
             <ActionMenu
-              label={`Actions for ${row.original.name}`}
+              label={say('admin.rolesPanel.actionsFor', { name: row.original.name })}
               trigger={<Icon of={MoreHorizontalIcon} size={16} />}
               groups={[
                 {
                   items: [
                     {
                       id: 'edit',
-                      label: 'Edit role',
+                      label: say('admin.rolesPanel.editRole'),
                       icon: <Icon of={PenLineFilledIcon} size={15} />,
                       onChoose: () => {
                         live.current.onEdit(row.original.id);
@@ -309,7 +309,7 @@ const RolesPanel = () => {
                   items: [
                     {
                       id: 'delete',
-                      label: 'Delete role',
+                      label: say('admin.rolesPanel.deleteRole'),
                       icon: <Icon of={BinFilledIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
@@ -340,7 +340,7 @@ const RolesPanel = () => {
       )}
 
       <PanelCard
-        title="Roles"
+        title={say('admin.rolesPanel.heading')}
         isFlush
         actions={
           <PanelCardAction
@@ -349,13 +349,13 @@ const RolesPanel = () => {
               setIsCreating(true);
             }}
           >
-            Create role
+            {say('admin.rolesPanel.createRole')}
           </PanelCardAction>
         }
       >
         {couldNotRead ? (
           <CouldNotRead
-            what="The roles"
+            what={say('admin.rolesPanel.theRoles')}
             isTryingAgain={askedRoles.isFetching || askedCatalogue.isFetching}
             onTryAgain={() => {
               void askedRoles.refetch();
@@ -364,17 +364,17 @@ const RolesPanel = () => {
           />
         ) : (
           <DataTable
-            label="Roles"
+            label={say('admin.rolesPanel.heading')}
             columns={columns}
             rows={roles}
             height="fill"
-            emptyMessage="No roles yet."
+            emptyMessage={say('admin.rolesPanel.empty')}
           />
         )}
       </PanelCard>
 
       <DialogCompanion
-        label="Create a role"
+        label={say('admin.rolesPanel.createTitle')}
         isOpen={isCreating}
         onClose={() => {
           setIsCreating(false);
@@ -382,22 +382,22 @@ const RolesPanel = () => {
       >
         <DialogTitle
           size="compact"
-          title="Create a role"
-          detail="A role is a name and a set of permissions. Rank decides who may manage whom."
+          title={say('admin.rolesPanel.createTitle')}
+          detail={say('admin.rolesPanel.createDetail')}
         />
 
         <DialogContent className="flex flex-col gap-5">
           <div className="flex flex-wrap items-end gap-3">
             <TextField
-              label="Name"
+              label={say('admin.rolesPanel.name')}
               value={newRoleName}
               onValueChange={setNewRoleName}
-              placeholder="Housemate"
+              placeholder={say('admin.rolesPanel.namePlaceholder')}
               className="min-w-48 flex-1"
             />
 
             <TextField
-              label="Rank"
+              label={say('admin.rolesPanel.rank')}
               type="number"
               min={0}
               value={newRolePosition}
@@ -406,7 +406,10 @@ const RolesPanel = () => {
             />
           </div>
 
-          <FormField label="Colour" description="Shown wherever somebody holding this role is.">
+          <FormField
+            label={say('admin.rolesPanel.colour')}
+            description={say('admin.rolesPanel.colourDescription')}
+          >
             <ColorSwatchPicker value={newRoleColor} onChange={setNewRoleColor} />
           </FormField>
 
@@ -430,7 +433,7 @@ const RolesPanel = () => {
             },
           }}
           confirm={{
-            label: 'Create role',
+            label: say('admin.rolesPanel.createRole'),
             onChoose: () => {
               const position = Number.parseInt(newRolePosition, 10);
 
@@ -442,7 +445,7 @@ const RolesPanel = () => {
                     color: newRoleColor,
                     permissions: newRolePermissions,
                   }),
-                `Created the ${newRoleName} role.`,
+                say('admin.rolesPanel.created', { name: newRoleName }),
               ).then((made) => {
                 if (made !== null) {
                   return;
@@ -461,13 +464,11 @@ const RolesPanel = () => {
       </DialogCompanion>
 
       <ConfirmDialog
-        title="Delete this role?"
+        title={say('admin.rolesPanel.deleteTitle')}
         detail={
-          deleting === null
-            ? ''
-            : `${deleting.name} will be removed, and anybody holding it loses what it granted. This cannot be undone.`
+          deleting === null ? '' : say('admin.rolesPanel.deleteDetail', { name: deleting.name })
         }
-        confirmLabel="Delete role"
+        confirmLabel={say('admin.rolesPanel.deleteRole')}
         isDestructive
         isOpen={deleting !== null}
         onClose={() => {
@@ -479,13 +480,20 @@ const RolesPanel = () => {
           setDeleting(null);
 
           if (role !== null) {
-            void act(() => deleteRole(role.id), `Deleted the ${role.name} role.`);
+            void act(
+              () => deleteRole(role.id),
+              say('admin.rolesPanel.deleted', { name: role.name }),
+            );
           }
         }}
       />
 
       <DialogCompanion
-        label={selected === null ? 'Edit role' : `Edit ${selected.name}`}
+        label={
+          selected === null
+            ? say('admin.rolesPanel.editRole')
+            : say('admin.rolesPanel.editTitle', { name: selected.name })
+        }
         isOpen={selected !== null}
         onClose={() => {
           setSelectedRoleId(null);
@@ -502,20 +510,25 @@ const RolesPanel = () => {
           >
             <DialogTitle
               size="compact"
-              title={`Edit ${selected.name}`}
-              detail="A higher rank manages a lower one. Nobody may touch a role at or above their own."
+              title={say('admin.rolesPanel.editTitle', { name: selected.name })}
+              detail={say('admin.rolesPanel.editDetail')}
               below={
                 <TabRow
-                  label="What to change about this role"
+                  label={say('admin.rolesPanel.tabsLabel')}
                   tone="underlined"
                   size="sm"
                   value={editTab}
                   groups={[
                     {
                       items: [
-                        { id: 'display', label: 'Display' },
-                        { id: 'permissions', label: 'Permissions' },
-                        { id: 'members', label: `Manage members (${memberCount.toString()})` },
+                        { id: 'display', label: say('admin.rolesPanel.displayTab') },
+                        { id: 'permissions', label: say('admin.rolesPanel.permissionsTab') },
+                        {
+                          id: 'members',
+                          label: say('admin.rolesPanel.membersTab', {
+                            count: memberCount.toString(),
+                          }),
+                        },
                       ],
                     },
                   ]}
@@ -543,14 +556,14 @@ const RolesPanel = () => {
                 <div className="flex flex-col gap-5">
                   <div className="flex flex-wrap items-end gap-3">
                     <TextField
-                      label="Name"
+                      label={say('admin.rolesPanel.name')}
                       value={draftName}
                       onValueChange={setDraftName}
                       className="min-w-48 flex-1"
                     />
 
                     <TextField
-                      label="Rank"
+                      label={say('admin.rolesPanel.rank')}
                       type="number"
                       min={0}
                       value={draftPosition}
@@ -560,8 +573,8 @@ const RolesPanel = () => {
                   </div>
 
                   <FormField
-                    label="Colour"
-                    description="Shown wherever somebody holding this role is."
+                    label={say('admin.rolesPanel.colour')}
+                    description={say('admin.rolesPanel.colourDescription')}
                   >
                     <ColorSwatchPicker value={draftColor} onChange={setDraftColor} />
                   </FormField>
@@ -605,13 +618,13 @@ const RolesPanel = () => {
 
             <DialogFooter
               dismiss={{
-                label: 'Close',
+                label: say('common.close'),
                 onChoose: () => {
                   setSelectedRoleId(null);
                 },
               }}
               confirm={{
-                label: 'Save changes',
+                label: say('admin.rolesPanel.saveChanges'),
                 onChoose: () => {
                   void saveChanges();
                 },

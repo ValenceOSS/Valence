@@ -1,3 +1,6 @@
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
+import type { StringKey } from '@ValenceI18n/StringKey';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { useMemo, useRef, useState } from 'react';
 import { FileArrowUp as FileArrowUpIcon, Folder as FolderIcon } from '@keyline-icons/react';
@@ -19,11 +22,11 @@ import { queueUploads } from './queueUploads';
 import type { BadgeTone } from '@ValenceUI/Badge.types';
 import type { QueuedUpload, UploadMediaDialogProps, UploadStatus } from './UploadMediaDialog.types';
 
-const STATUS_WORDS: Record<UploadStatus, { label: string; tone: BadgeTone }> = {
-  waiting: { label: 'Waiting', tone: 'quiet' },
-  uploading: { label: 'Uploading', tone: 'busy' },
-  done: { label: 'Uploaded', tone: 'success' },
-  failed: { label: 'Failed', tone: 'danger' },
+const STATUS_WORDS: Record<UploadStatus, { labelKey: StringKey; tone: BadgeTone }> = {
+  waiting: { labelKey: 'admin.uploadMediaDialog.status.waiting', tone: 'quiet' },
+  uploading: { labelKey: 'admin.uploadMediaDialog.status.uploading', tone: 'busy' },
+  done: { labelKey: 'admin.uploadMediaDialog.status.done', tone: 'success' },
+  failed: { labelKey: 'admin.uploadMediaDialog.status.failed', tone: 'danger' },
 };
 
 /**
@@ -135,7 +138,8 @@ const UploadMediaDialog = ({
         const canCarryOn = readUnfinishedUploads(library.id).some(
           (one) => one.key === keyOfUpload(library.id, targetOf(item.path), item.file),
         );
-        const said = error instanceof Error ? error.message : 'The file could not be uploaded.';
+        const said =
+          error instanceof Error ? error.message : say('admin.uploadMediaDialog.couldNotUpload');
 
         if (isStopped()) {
           change(item.id, 'waiting');
@@ -143,7 +147,7 @@ const UploadMediaDialog = ({
           change(
             item.id,
             'failed',
-            canCarryOn ? `${said} Press Upload to carry on from where it stopped.` : said,
+            canCarryOn ? say('admin.uploadMediaDialog.carryOn', { error: said }) : said,
           );
         }
       }
@@ -157,10 +161,8 @@ const UploadMediaDialog = ({
     const failed = isStopped() ? 0 : items.filter((one) => one.status !== 'done').length - uploaded;
 
     tellOutcome(
-      `Uploaded ${uploaded.toString()} ${uploaded === 1 ? 'file' : 'files'} to ${library.name}.`,
-      uploaded === 0 || failed > 0
-        ? `${failed.toString()} ${failed === 1 ? 'file' : 'files'} could not be uploaded.`
-        : null,
+      sayCount('admin.uploadMediaDialog.uploadedTo', uploaded, { name: library.name }),
+      uploaded === 0 || failed > 0 ? sayCount('admin.uploadMediaDialog.failedCount', failed) : null,
     );
 
     if (uploaded > 0) {
@@ -173,16 +175,32 @@ const UploadMediaDialog = ({
   const isNothingToSend = items.every((item) => item.status === 'done');
 
   return (
-    <DialogCompanion label="Upload media" isOpen={library !== null} onClose={close}>
+    <DialogCompanion
+      label={say('admin.uploadMediaDialog.label')}
+      isOpen={library !== null}
+      onClose={close}
+    >
       <DialogTitle
         size="compact"
-        title={`Upload to ${into === '' ? (library?.name ?? 'a library') : (into.split('/').at(-1) ?? into)}`}
-        {...(into === '' ? {} : { detail: `In ${library?.name ?? 'the library'}, at ${into}` })}
+        title={say('admin.uploadMediaDialog.title', {
+          place:
+            into === ''
+              ? (library?.name ?? say('admin.uploadMediaDialog.aLibrary'))
+              : (into.split('/').at(-1) ?? into),
+        })}
+        {...(into === ''
+          ? {}
+          : {
+              detail: say('admin.uploadMediaDialog.detail', {
+                library: library?.name ?? say('admin.uploadMediaDialog.theLibrary'),
+                folder: into,
+              }),
+            })}
       />
 
       <DialogContent className="flex flex-col gap-5">
         <FilePicker
-          label="Choose files to upload"
+          label={say('admin.uploadMediaDialog.chooseFiles')}
           isDropZone
           disabled={isUploading}
           accept={accepted.map((extension) => `.${extension}`).join(',')}
@@ -190,22 +208,27 @@ const UploadMediaDialog = ({
         >
           <Icon of={FileArrowUpIcon} size={28} />
 
-          <span className="text-base font-medium text-text">Drop files or folders here</span>
+          <span className="text-base font-medium text-text">
+            {say('admin.uploadMediaDialog.dropHere')}
+          </span>
 
-          <span>or press to choose files</span>
+          <span>{say('admin.uploadMediaDialog.orPress')}</span>
 
           <span className="mt-1 max-w-full text-xs text-text-muted">
-            {`${library?.name ?? 'This library'} takes ${accepted.map((extension) => `.${extension}`).join(' ')}`}
+            {say('admin.uploadMediaDialog.takes', {
+              name: library?.name ?? say('admin.uploadMediaDialog.thisLibrary'),
+              extensions: accepted.map((extension) => `.${extension}`).join(' '),
+            })}
           </span>
         </FilePicker>
 
         <div className="flex items-center justify-between gap-3">
           <span className="text-xs text-text-muted">
-            Folders keep the folders they were in, and the library is scanned once they are there.
+            {say('admin.uploadMediaDialog.foldersNote')}
           </span>
 
           <FilePicker
-            label="Choose a folder to upload"
+            label={say('admin.uploadMediaDialog.chooseFolderLabel')}
             variant="ghost"
             size="sm"
             disabled={isUploading}
@@ -213,16 +236,17 @@ const UploadMediaDialog = ({
             onPickMany={add}
           >
             <Icon of={FolderIcon} size={14} />
-            Choose a folder
+            {say('admin.uploadMediaDialog.chooseFolder')}
           </FilePicker>
         </div>
 
         {unfinished.length === 0 || isUploading ? null : (
-          <section aria-label="Unfinished uploads" className="flex flex-col gap-1.5">
+          <section
+            aria-label={say('admin.uploadMediaDialog.unfinishedLabel')}
+            className="flex flex-col gap-1.5"
+          >
             <p className="text-xs text-text-muted">
-              {unfinished.length === 1
-                ? 'One upload was left unfinished. Choose the same file again to carry on from where it stopped.'
-                : `${unfinished.length.toString()} uploads were left unfinished. Choose the same files again to carry on from where they stopped.`}
+              {sayCount('admin.uploadMediaDialog.unfinished', unfinished.length)}
             </p>
 
             <ul className="flex flex-col gap-1">
@@ -241,14 +265,14 @@ const UploadMediaDialog = ({
                     <Button
                       variant="ghost"
                       size="xs"
-                      label={`Forget ${upload.path}`}
+                      label={say('admin.uploadMediaDialog.forgetLabel', { path: upload.path })}
                       onClick={() => {
                         void giveUpUpload(upload).then(() => {
                           setUnfinishedSeen((seen) => seen + 1);
                         });
                       }}
                     >
-                      Forget
+                      {say('admin.uploadMediaDialog.forget')}
                     </Button>
                   </span>
                 </li>
@@ -259,23 +283,24 @@ const UploadMediaDialog = ({
 
         {skipped.length === 0 ? null : (
           <p className="text-xs text-text-muted">
-            {skipped.length === 1
-              ? '1 file was left out because this library does not read it.'
-              : `${skipped.length.toString()} files were left out because this library does not read them.`}
+            {sayCount('admin.uploadMediaDialog.skipped', skipped.length)}
           </p>
         )}
 
         {items.length === 0 ? null : (
           <>
             <ProgressBar
-              label="Uploaded"
+              label={say('admin.uploadMediaDialog.progressLabel')}
               value={done}
               max={items.length}
-              readout={`${done.toString()} of ${items.length.toString()}`}
+              readout={say('admin.uploadMediaDialog.readout', {
+                done: done.toLocaleString('en'),
+                total: items.length.toLocaleString('en'),
+              })}
             />
 
             <ul
-              aria-label="Files to upload"
+              aria-label={say('admin.uploadMediaDialog.filesLabel')}
               className="valence-rail flex max-h-64 flex-col gap-1 overflow-y-auto"
             >
               {items.map((item) => (
@@ -285,8 +310,10 @@ const UploadMediaDialog = ({
 
                     <Badge size="sm" tone={STATUS_WORDS[item.status].tone}>
                       {item.status === 'uploading' && (arrived[item.id] ?? 0) > 0
-                        ? `${STATUS_WORDS[item.status].label} ${Math.round((arrived[item.id] ?? 0) * 100).toString()}%`
-                        : STATUS_WORDS[item.status].label}
+                        ? say('admin.uploadMediaDialog.uploadingPercent', {
+                            percent: Math.round((arrived[item.id] ?? 0) * 100),
+                          })
+                        : say(STATUS_WORDS[item.status].labelKey)}
                     </Badge>
                   </span>
 
@@ -303,8 +330,7 @@ const UploadMediaDialog = ({
 
         {hasFinished && done > 0 ? (
           <p role="status" className="text-sm text-text-muted">
-            {done === 1 ? '1 file' : `${done.toString()} files`} uploaded. The library is being
-            scanned.
+            {sayCount('admin.uploadMediaDialog.finished', done)}
           </p>
         ) : null}
       </DialogContent>
@@ -313,15 +339,15 @@ const UploadMediaDialog = ({
         dismiss={
           isUploading
             ? {
-                label: 'Stop',
+                label: say('admin.uploadMediaDialog.stop'),
                 onChoose: () => {
                   stopping.current?.abort();
                 },
               }
-            : { label: hasFinished ? 'Close' : 'Cancel', onChoose: close }
+            : { label: hasFinished ? say('common.close') : say('common.cancel'), onChoose: close }
         }
         confirm={{
-          label: 'Upload',
+          label: say('admin.uploadMediaDialog.upload'),
           onChoose: () => {
             void send();
           },

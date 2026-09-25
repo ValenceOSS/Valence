@@ -2,6 +2,7 @@ import { Check as CheckIcon, X as XIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import type { TryItButtonProps } from './TryItButton.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Tries something before it is kept, and says how it went on the button itself: a spinner while it
@@ -21,7 +22,7 @@ const TryItButton = ({ isTrying, verdict, isDisabled = false, onTry }: TryItButt
         className={verdict === 'working' ? 'text-success' : 'text-danger'}
       />
     )}
-    Try it
+    {say('admin.tryItButton.label')}
   </Button>
 );
 

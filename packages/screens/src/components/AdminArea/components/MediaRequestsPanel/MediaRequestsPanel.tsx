@@ -57,6 +57,8 @@ import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { RequestDetailTab } from '@ValenceScreens/components/AdminArea/components/RequestDetailDialog/RequestDetailDialog.types';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const IN_HAND = new Set<MediaRequest['state']>([
   'searching',
@@ -159,7 +161,7 @@ const MediaRequestsPanel = () => {
         .then(({ value, refusal }) => {
           if (value === null) {
             setSaid({
-              text: refusal?.message ?? 'They could not be decided.',
+              text: refusal?.message ?? say('admin.mediaRequestsPanel.couldNotDecide'),
               isProblem: true,
             });
 
@@ -170,8 +172,16 @@ const MediaRequestsPanel = () => {
           setSaid({
             text:
               value.refused.length === 0
-                ? `${value.decided.length.toString()} ${decision === 'approve' ? 'approved' : 'refused'}.`
-                : `${value.decided.length.toString()} done, ${value.refused.length.toString()} could not be.`,
+                ? sayCount(
+                    decision === 'approve'
+                      ? 'admin.mediaRequestsPanel.approvedCount'
+                      : 'admin.mediaRequestsPanel.refusedCount',
+                    value.decided.length,
+                  )
+                : say('admin.mediaRequestsPanel.someDecided', {
+                    done: value.decided.length,
+                    failed: value.refused.length,
+                  }),
             isProblem: value.refused.length > 0,
           });
         })
@@ -192,7 +202,7 @@ const MediaRequestsPanel = () => {
         cell: ({ row }) =>
           row.original.approval === 'awaiting' ? (
             <Checkbox
-              label={`Choose ${row.original.title}`}
+              label={say('admin.mediaRequestsPanel.choose', { title: row.original.title })}
               checked={chosen.has(row.original.id)}
               onCheckedChange={(isChosen) => {
                 choose(row.original.id, isChosen);
@@ -202,7 +212,7 @@ const MediaRequestsPanel = () => {
       },
       {
         id: 'title',
-        header: 'Asked for',
+        header: say('admin.mediaRequestsPanel.askedForHeader'),
         accessorFn: (request) => request.title,
         cell: ({ row }) => {
           const progress = describeRequestProgress(row.original);
@@ -212,7 +222,7 @@ const MediaRequestsPanel = () => {
               {isMusicRequest(row.original.kind) ? (
                 <MusicArtwork
                   src={row.original.posterUrl}
-                  label={`The cover of ${row.original.title}`}
+                  label={say('admin.mediaRequestsPanel.coverOf', { title: row.original.title })}
                   shape={row.original.kind === 'artist' ? 'round' : 'square'}
                   className="w-9"
                 />
@@ -232,8 +242,12 @@ const MediaRequestsPanel = () => {
               <span className="flex min-w-0 flex-col gap-0.5">
                 <span className="flex flex-wrap items-center gap-2">
                   <span className="truncate font-medium text-text">
-                    {row.original.title}
-                    {row.original.year === null ? '' : ` (${row.original.year.toString()})`}
+                    {row.original.year === null
+                      ? row.original.title
+                      : say('admin.mediaRequestsPanel.titleAndYear', {
+                          title: row.original.title,
+                          year: row.original.year,
+                        })}
                   </span>
                   <Badge size="sm">{REQUEST_KIND_NAMES[row.original.kind]}</Badge>
                 </span>
@@ -243,7 +257,9 @@ const MediaRequestsPanel = () => {
                 )}
 
                 <span className="truncate text-xs text-text-muted">
-                  Asked for by {row.original.requestedBy.name}
+                  {say('admin.mediaRequestsPanel.askedForBy', {
+                    name: row.original.requestedBy.name,
+                  })}
                 </span>
               </span>
             </span>
@@ -252,7 +268,7 @@ const MediaRequestsPanel = () => {
       },
       {
         id: 'state',
-        header: 'Where it is',
+        header: say('admin.mediaRequestsPanel.whereItIsHeader'),
         accessorFn: (request) => describeRequestBadge(request).label,
         cell: ({ row }) => {
           const badge = describeRequestBadge(row.original);
@@ -283,10 +299,13 @@ const MediaRequestsPanel = () => {
           return (
             <span className="flex justify-end">
               {busyId === request.id ? (
-                <Spinner label={`Working on ${request.title}`} size="sm" />
+                <Spinner
+                  label={say('admin.mediaRequestsPanel.workingOn', { title: request.title })}
+                  size="sm"
+                />
               ) : (
                 <ActionMenu
-                  label={`Actions for ${request.title}`}
+                  label={say('admin.mediaRequestsPanel.actionsFor', { title: request.title })}
                   trigger={<Icon of={MoreHorizontalIcon} size={16} />}
                   groups={[
                     {
@@ -296,8 +315,8 @@ const MediaRequestsPanel = () => {
                           : [
                               {
                                 id: 'approve',
-                                label: 'Approve',
-                                detail: 'Look it over, and change it first if you like.',
+                                label: say('admin.mediaRequestsPanel.approve'),
+                                detail: say('admin.mediaRequestsPanel.approveDetail'),
                                 icon: <Icon of={CheckFilledIcon} size={15} />,
                                 onChoose: () => {
                                   setApproving(request);
@@ -309,7 +328,7 @@ const MediaRequestsPanel = () => {
                           : [
                               {
                                 id: 'refuse',
-                                label: 'Refuse',
+                                label: say('admin.mediaRequestsPanel.refuse'),
                                 icon: <Icon of={XFilledIcon} size={15} />,
                                 onChoose: () => {
                                   setRefusing(request);
@@ -322,8 +341,8 @@ const MediaRequestsPanel = () => {
                       items: [
                         {
                           id: 'open',
-                          label: 'Open',
-                          detail: 'How it is going, what it found, and what it will not try.',
+                          label: say('admin.mediaRequestsPanel.open'),
+                          detail: say('admin.mediaRequestsPanel.openDetail'),
                           icon: <Icon of={ChevronRightFilledIcon} size={15} />,
                           onChoose: () => {
                             setReading({ request, tab: 'going' });
@@ -331,8 +350,8 @@ const MediaRequestsPanel = () => {
                         },
                         {
                           id: 'log',
-                          label: 'See what it has done',
-                          detail: 'Every search, what it found, and why.',
+                          label: say('admin.mediaRequestsPanel.log'),
+                          detail: say('admin.mediaRequestsPanel.logDetail'),
                           icon: <Icon of={ClockFilledIcon} size={15} />,
                           onChoose: () => {
                             setReading({ request, tab: 'history' });
@@ -340,8 +359,8 @@ const MediaRequestsPanel = () => {
                         },
                         {
                           id: 'retry',
-                          label: 'Search again now',
-                          detail: 'Tries again whatever failed, too.',
+                          label: say('admin.mediaRequestsPanel.retry'),
+                          detail: say('admin.mediaRequestsPanel.retryDetail'),
                           icon: <Icon of={RotateCwFilledIcon} size={15} />,
                           isDisabled:
                             !isApproved || IN_HAND.has(request.state) || request.kind === 'book',
@@ -349,28 +368,28 @@ const MediaRequestsPanel = () => {
                             act(
                               request,
                               () => retryMediaRequest(request.id),
-                              `Searching again for ${request.title}.`,
+                              say('admin.mediaRequestsPanel.retrying', { title: request.title }),
                             );
                           },
                         },
                         {
                           id: 'fulfil',
-                          label: 'Mark as added',
-                          detail: 'Say it has been met, such as a book you added to the library.',
+                          label: say('admin.mediaRequestsPanel.fulfil'),
+                          detail: say('admin.mediaRequestsPanel.fulfilDetail'),
                           icon: <Icon of={CheckFilledIcon} size={15} />,
                           isDisabled: !isApproved || request.state === 'available',
                           onChoose: () => {
                             act(
                               request,
                               () => fulfilMediaRequest(request.id),
-                              `Marked ${request.title} as added.`,
+                              say('admin.mediaRequestsPanel.fulfilled', { title: request.title }),
                             );
                           },
                         },
                         {
                           id: 'releases',
-                          label: 'Pick a release',
-                          detail: 'Search every indexer and choose what to fetch.',
+                          label: say('admin.mediaRequestsPanel.pick'),
+                          detail: say('admin.mediaRequestsPanel.pickDetail'),
                           icon: <Icon of={SearchFilledIcon} size={15} />,
                           onChoose: () => {
                             setReading({ request, tab: 'releases' });
@@ -379,11 +398,11 @@ const MediaRequestsPanel = () => {
                         {
                           id: 'picking',
                           label: request.isPickedByHand
-                            ? 'Fetch the best by itself'
-                            : 'Only fetch what I pick',
+                            ? say('admin.mediaRequestsPanel.fetchBest')
+                            : say('admin.mediaRequestsPanel.onlyPicked'),
                           detail: request.isPickedByHand
-                            ? 'Searches for it, and fetches the best by its quality.'
-                            : 'Stops searching for it by itself.',
+                            ? say('admin.mediaRequestsPanel.fetchBestDetail')
+                            : say('admin.mediaRequestsPanel.onlyPickedDetail'),
                           icon: <Icon of={HandPointerRightFilledIcon} size={15} />,
                           onChoose: () => {
                             act(
@@ -393,8 +412,12 @@ const MediaRequestsPanel = () => {
                                   isPickedByHand: !request.isPickedByHand,
                                 }),
                               request.isPickedByHand
-                                ? `${request.title} will be fetched automatically.`
-                                : `${request.title} will only be fetched when picked.`,
+                                ? say('admin.mediaRequestsPanel.willFetchBest', {
+                                    title: request.title,
+                                  })
+                                : say('admin.mediaRequestsPanel.willOnlyFetchPicked', {
+                                    title: request.title,
+                                  }),
                             );
                           },
                         },
@@ -404,7 +427,7 @@ const MediaRequestsPanel = () => {
                       items: [
                         {
                           id: 'remove',
-                          label: 'Forget',
+                          label: say('admin.mediaRequestsPanel.forget'),
                           icon: <Icon of={BinFilledIcon} size={15} />,
                           isDestructive: true,
                           onChoose: () => {
@@ -426,23 +449,23 @@ const MediaRequestsPanel = () => {
 
   return (
     <PanelCard
-      title="Requested"
+      title={say('admin.mediaRequestsPanel.heading')}
       isFlush
       actions={
         <>
           <FilterMenu
-            label="Filter the requests"
+            label={say('admin.mediaRequestsPanel.filterLabel')}
             groups={filterGroups}
             selected={filters}
             onChange={setFilters}
           />
 
           <TextField
-            label="Search the requests"
+            label={say('admin.mediaRequestsPanel.searchLabel')}
             isLabelHidden
             size="sm"
             type="search"
-            placeholder="A title, or who asked"
+            placeholder={say('admin.mediaRequestsPanel.searchPlaceholder')}
             value={search}
             onValueChange={setSearch}
             className="w-56 max-w-full"
@@ -453,13 +476,17 @@ const MediaRequestsPanel = () => {
             align="end"
             detail={
               <p className="max-w-xs text-xs leading-relaxed">
-                Every film, series, artist and album requested, and where each has got to.
-                Everything still wanted is searched for again every few hours by itself, and can be
-                searched for now with Refetch media.
+                {say('admin.mediaRequestsPanel.about')}
               </p>
             }
           >
-            <Button variant="ghost" size="xs" isIconOnly label="About this list" hasTooltip={false}>
+            <Button
+              variant="ghost"
+              size="xs"
+              isIconOnly
+              label={say('admin.mediaRequestsPanel.aboutLabel')}
+              hasTooltip={false}
+            >
               <Icon of={InfoIcon} size={16} />
             </Button>
           </HoverCard>
@@ -475,12 +502,15 @@ const MediaRequestsPanel = () => {
                 .then(({ value, refusal }) => {
                   setSaid(
                     value === null
-                      ? { text: refusal?.message ?? 'The search could not start.', isProblem: true }
+                      ? {
+                          text: refusal?.message ?? say('admin.mediaRequestsPanel.couldNotStart'),
+                          isProblem: true,
+                        }
                       : {
                           text:
                             value.searched === 0
-                              ? 'Nothing is missing.'
-                              : `Searched again for ${value.searched.toString()} request${value.searched === 1 ? '' : 's'}.`,
+                              ? say('admin.mediaRequestsPanel.nothingMissing')
+                              : sayCount('admin.mediaRequestsPanel.searchedAgain', value.searched),
                           isProblem: false,
                         },
                   );
@@ -491,7 +521,7 @@ const MediaRequestsPanel = () => {
                 });
             }}
           >
-            Refetch media
+            {say('admin.mediaRequestsPanel.refetch')}
           </PanelCardAction>
 
           <PanelCardAction
@@ -500,7 +530,7 @@ const MediaRequestsPanel = () => {
               setIsAsking(true);
             }}
           >
-            Request media
+            {say('admin.mediaRequestsPanel.requestMedia')}
           </PanelCardAction>
         </>
       }
@@ -562,9 +592,13 @@ const MediaRequestsPanel = () => {
       />
 
       <ConfirmDialog
-        title={`Forget ${removing?.title ?? 'this request'}?`}
-        detail="Nothing more is fetched for it. Whatever it already brought stays in the library."
-        confirmLabel="Forget"
+        title={
+          removing === null
+            ? say('admin.mediaRequestsPanel.forgetThis')
+            : say('admin.mediaRequestsPanel.forgetTitle', { title: removing.title })
+        }
+        detail={say('admin.mediaRequestsPanel.forgetDetail')}
+        confirmLabel={say('admin.mediaRequestsPanel.forget')}
         isDestructive
         isOpen={removing !== null}
         onClose={() => {
@@ -579,7 +613,7 @@ const MediaRequestsPanel = () => {
             act(
               gone,
               async () => ({ refusal: await removeMediaRequest(gone.id) }),
-              `Forgot ${gone.title}.`,
+              say('admin.mediaRequestsPanel.forgot', { title: gone.title }),
             );
           }
         }}
@@ -596,17 +630,17 @@ const MediaRequestsPanel = () => {
 
       {requests.isError ? (
         <CouldNotRead
-          what="The requests"
+          what={say('admin.mediaRequestsPanel.what')}
           isTryingAgain={requests.isFetching}
           onTryAgain={() => {
             void requests.refetch();
           }}
         />
       ) : requests.isPending ? (
-        <Spinner isCentered label="Reading the requests" size="sm" />
+        <Spinner isCentered label={say('admin.mediaRequestsPanel.reading')} size="sm" />
       ) : (
         <DataTable
-          label="Requests"
+          label={say('admin.mediaRequestsPanel.tableLabel')}
           columns={columns}
           rows={shown}
           getRowId={(request) => request.id}
@@ -614,7 +648,7 @@ const MediaRequestsPanel = () => {
             awaiting.length === 0 ? undefined : (
               <div className="mr-auto flex flex-wrap items-center gap-3">
                 <Checkbox
-                  label={`Choose all ${awaiting.length.toString()} waiting on approval`}
+                  label={sayCount('admin.mediaRequestsPanel.chooseAll', awaiting.length)}
                   checked={chosenAwaiting.length === awaiting.length}
                   onCheckedChange={(isChosen) => {
                     setChosen(isChosen ? new Set(awaiting.map((one) => one.id)) : new Set());
@@ -623,8 +657,8 @@ const MediaRequestsPanel = () => {
 
                 <span className="text-sm text-text-muted">
                   {chosen.size === 0
-                    ? `${awaiting.length.toString()} waiting on approval`
-                    : `${chosen.size.toString()} chosen`}
+                    ? sayCount('admin.mediaRequestsPanel.waiting', awaiting.length)
+                    : sayCount('admin.mediaRequestsPanel.chosenCount', chosen.size)}
                 </span>
 
                 {chosen.size === 0 ? null : (
@@ -637,7 +671,7 @@ const MediaRequestsPanel = () => {
                         decide('approve');
                       }}
                     >
-                      Approve them
+                      {say('admin.mediaRequestsPanel.approveThem')}
                     </Button>
 
                     <Button
@@ -648,7 +682,7 @@ const MediaRequestsPanel = () => {
                         setRefusingChosen(true);
                       }}
                     >
-                      Refuse them
+                      {say('admin.mediaRequestsPanel.refuseThem')}
                     </Button>
                   </>
                 )}
@@ -657,8 +691,8 @@ const MediaRequestsPanel = () => {
           }
           emptyMessage={
             requests.data.length === 0
-              ? 'Nothing has been requested yet. Request a film, a series, an artist or an album to have it fetched and filed into its library.'
-              : 'Nothing matches. Clear the filters or search for something else.'
+              ? say('admin.mediaRequestsPanel.emptyTitle')
+              : say('admin.mediaRequestsPanel.noMatch')
           }
         />
       )}

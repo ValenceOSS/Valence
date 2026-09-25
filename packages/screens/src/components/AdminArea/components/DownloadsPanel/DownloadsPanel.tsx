@@ -34,6 +34,7 @@ import { describeSpeeds } from './describeSpeeds';
 import type { DownloadClient } from '@ValenceContracts/schemas/DownloadClient';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { QueuedDownload } from '@ValenceContracts/schemas/DownloadQueue';
+import { say } from '@ValenceI18n/say';
 
 const DOWNLOADS_TABS = ['queue', 'clients'] as const;
 
@@ -117,21 +118,33 @@ const DownloadsPanel = () => {
 
   const pause = useCallback(
     (download: QueuedDownload) => {
-      act(download, pauseQueuedDownload, `Paused ${download.title}.`);
+      act(
+        download,
+        pauseQueuedDownload,
+        say('admin.downloadsPanel.paused', { title: download.title }),
+      );
     },
     [act],
   );
 
   const file = useCallback(
     (download: QueuedDownload, libraryId: string) => {
-      act(download, (id) => fileQueuedDownload(id, libraryId), `Filed ${download.title}.`);
+      act(
+        download,
+        (id) => fileQueuedDownload(id, libraryId),
+        say('admin.downloadsPanel.filed', { title: download.title }),
+      );
     },
     [act],
   );
 
   const resume = useCallback(
     (download: QueuedDownload) => {
-      act(download, resumeQueuedDownload, `Resumed ${download.title}.`);
+      act(
+        download,
+        resumeQueuedDownload,
+        say('admin.downloadsPanel.resumed', { title: download.title }),
+      );
     },
     [act],
   );
@@ -146,10 +159,12 @@ const DownloadsPanel = () => {
           const failure =
             refusal?.message ??
             (value?.isWorking === false
-              ? `${client.name}: ${value.problem ?? 'did not answer'}`
+              ? value.problem === null
+                ? say('admin.downloadsPanel.didNotAnswer', { name: client.name })
+                : `${client.name}: ${value.problem}`
               : null);
 
-          tellOutcome(`${client.name} answered.`, failure);
+          tellOutcome(say('admin.downloadsPanel.answered', { name: client.name }), failure);
           setProblem(failure);
         })
         .then(reread)
@@ -167,7 +182,9 @@ const DownloadsPanel = () => {
       void changeDownloadClient(client.id, { isEnabled: !client.isEnabled })
         .then(({ refusal }) => {
           tellOutcome(
-            client.isEnabled ? `Turned off ${client.name}.` : `Turned on ${client.name}.`,
+            client.isEnabled
+              ? say('admin.downloadsPanel.turnedOff', { name: client.name })
+              : say('admin.downloadsPanel.turnedOn', { name: client.name }),
             failureOfRefusal(refusal),
           );
           setProblem(refusal?.message ?? null);
@@ -200,7 +217,7 @@ const DownloadsPanel = () => {
       }}
     >
       <PanelCard
-        title="Downloads"
+        title={say('admin.downloadsPanel.heading')}
         isFlush
         actions={
           <>
@@ -214,21 +231,21 @@ const DownloadsPanel = () => {
                 setIsAdding(true);
               }}
             >
-              Add a download client
+              {say('admin.downloadsPanel.addClient')}
             </PanelCardAction>
           </>
         }
         below={
           <TabRow
-            label="What to show about downloads"
+            label={say('admin.downloadsPanel.tabsLabel')}
             tone="underlined"
             size="sm"
             value={tab}
             groups={[
               {
                 items: [
-                  { id: 'queue', label: 'Queue' },
-                  { id: 'clients', label: 'Clients' },
+                  { id: 'queue', label: say('admin.downloadsPanel.queueTab') },
+                  { id: 'clients', label: say('admin.downloadsPanel.clientsTab') },
                 ],
               },
             ]}
@@ -248,9 +265,13 @@ const DownloadsPanel = () => {
         />
 
         <ConfirmDialog
-          title={`Remove ${removingClient?.name ?? 'this client'}?`}
-          detail="Nothing will be sent to it again, and Valence stops following what it already sent there. What it is downloading carries on in the client."
-          confirmLabel="Remove"
+          title={
+            removingClient === null
+              ? say('admin.downloadsPanel.removeThisClient')
+              : say('admin.downloadsPanel.removeClient', { name: removingClient.name })
+          }
+          detail={say('admin.downloadsPanel.removeClientDetail')}
+          confirmLabel={say('admin.downloadsPanel.removeConfirm')}
           isDestructive
           isOpen={removingClient !== null}
           onClose={() => {
@@ -264,7 +285,10 @@ const DownloadsPanel = () => {
             if (gone !== null) {
               void removeDownloadClient(gone.id)
                 .then((refusal) => {
-                  tellOutcome(`Removed ${gone.name}.`, failureOfRefusal(refusal));
+                  tellOutcome(
+                    say('admin.downloadsPanel.removedClient', { name: gone.name }),
+                    failureOfRefusal(refusal),
+                  );
                   setProblem(refusal?.message ?? null);
                 })
                 .then(reread);
@@ -287,7 +311,7 @@ const DownloadsPanel = () => {
               act(
                 gone,
                 async (id) => ({ refusal: await removeQueuedDownload(id, deleteData) }),
-                `Removed ${gone.title}.`,
+                say('admin.downloadsPanel.removedDownload', { title: gone.title }),
               );
             }
           }}
@@ -302,14 +326,14 @@ const DownloadsPanel = () => {
         <TabPanel value="queue" travel={travel}>
           {queue.isError ? (
             <CouldNotRead
-              what="The downloads"
+              what={say('admin.downloadsPanel.theDownloads')}
               isTryingAgain={queue.isFetching}
               onTryAgain={() => {
                 void queue.refetch();
               }}
             />
           ) : queue.isPending ? (
-            <Spinner isCentered label="Reading the downloads" size="sm" />
+            <Spinner isCentered label={say('admin.downloadsPanel.readingDownloads')} size="sm" />
           ) : (
             <DownloadQueueTable
               downloads={queue.data.downloads}
@@ -326,14 +350,14 @@ const DownloadsPanel = () => {
         <TabPanel value="clients" travel={travel}>
           {clients.isError ? (
             <CouldNotRead
-              what="The download clients"
+              what={say('admin.downloadsPanel.theClients')}
               isTryingAgain={clients.isFetching}
               onTryAgain={() => {
                 void clients.refetch();
               }}
             />
           ) : clients.isPending ? (
-            <Spinner isCentered label="Reading the download clients" size="sm" />
+            <Spinner isCentered label={say('admin.downloadsPanel.readingClients')} size="sm" />
           ) : (
             <DownloadClientsTable
               clients={clients.data}

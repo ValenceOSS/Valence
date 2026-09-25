@@ -1,14 +1,21 @@
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { RESOURCE_SAMPLE_RANGES } from '@ValenceContracts/schemas/ResourceSample';
+import { say } from '@ValenceI18n/say';
 import type { SegmentedItem } from '@ValenceUI/SegmentedRow.types';
 import type { LoadRange, LoadRangeToggleProps } from './LoadRangeToggle.types';
 
 const VALID_RANGES: readonly LoadRange[] = ['minute', ...RESOURCE_SAMPLE_RANGES];
 
-const ITEMS: SegmentedItem[] = VALID_RANGES.map((range) => ({
-  id: range,
-  label: range === 'minute' ? 'Last minute' : range,
-}));
+/**
+ * The choices the segmented row offers, in words read at the moment they are drawn.
+ *
+ * @returns One item for each range.
+ */
+const loadRangeItems = (): SegmentedItem[] =>
+  VALID_RANGES.map((range) => ({
+    id: range,
+    label: range === 'minute' ? say('admin.loadRangeToggle.lastMinute') : range,
+  }));
 
 /**
  * Whether a string is one of the ranges the load card can show, so a choice from the segmented row
@@ -29,10 +36,10 @@ const isLoadRange = (value: string): value is LoadRange =>
  */
 const LoadRangeToggle = ({ value, onChange }: LoadRangeToggleProps) => (
   <SegmentedRow
-    label="How far back to show the load"
+    label={say('admin.loadRangeToggle.label')}
     size="xs"
     tone="accent"
-    items={ITEMS}
+    items={loadRangeItems()}
     value={value}
     onSelect={(id) => {
       if (isLoadRange(id)) {

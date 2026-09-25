@@ -4,6 +4,8 @@ import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Release } from '@ValenceContracts/schemas/Indexer';
 import type { Judgement } from '@ValenceContracts/schemas/QualityProfile';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 type ReleaseColumnsOptions = {
   judged: ReadonlyMap<string, Judgement>;
@@ -28,7 +30,7 @@ const releaseColumns = ({
 }: ReleaseColumnsOptions): DataTableColumn<Release>[] => [
   {
     id: 'title',
-    header: 'Release',
+    header: say('admin.releaseColumns.release'),
     accessorFn: (release) => release.title,
     cell: ({ row }) => (
       <span className="flex min-w-0 flex-col gap-0.5">
@@ -36,7 +38,11 @@ const releaseColumns = ({
 
         <span className="flex flex-wrap items-center gap-2 text-xs text-text-muted">
           {row.original.indexerName}
-          <Badge size="sm">{row.original.protocol === 'torrent' ? 'Torrent' : 'Usenet'}</Badge>
+          <Badge size="sm">
+            {row.original.protocol === 'torrent'
+              ? say('admin.releaseColumns.torrent')
+              : say('admin.releaseColumns.usenet')}
+          </Badge>
         </span>
       </span>
     ),
@@ -46,7 +52,7 @@ const releaseColumns = ({
     : [
         {
           id: 'verdict',
-          header: 'Verdict',
+          header: say('admin.releaseColumns.verdict'),
           enableSorting: false,
           cell: ({ row }: { row: { original: Release } }) => {
             const judgement = judged.get(row.original.id);
@@ -64,10 +70,10 @@ const releaseColumns = ({
                   tone={isPicked ? 'success' : judgement.isRejected ? 'danger' : 'quiet'}
                 >
                   {isPicked
-                    ? `Picked · ${judgement.score.toString()}`
+                    ? say('admin.releaseColumns.picked', { score: judgement.score })
                     : judgement.isRejected
-                      ? 'Refused'
-                      : `Scores ${judgement.score.toString()}`}
+                      ? say('admin.releaseColumns.refused')
+                      : say('admin.releaseColumns.scores', { score: judgement.score })}
                 </Badge>
 
                 <span className="text-xs text-text-muted">
@@ -80,7 +86,7 @@ const releaseColumns = ({
       ]),
   {
     id: 'size',
-    header: 'Size',
+    header: say('admin.releaseColumns.size'),
     accessorFn: (release) => release.sizeBytes ?? -1,
     cell: ({ row }) => (
       <span className="whitespace-nowrap text-sm text-text">
@@ -90,21 +96,21 @@ const releaseColumns = ({
   },
   {
     id: 'peers',
-    header: 'Peers',
+    header: say('admin.releaseColumns.peers'),
     accessorFn: (release) => release.seeders ?? release.grabs ?? -1,
     cell: ({ row }) => (
       <span className="whitespace-nowrap text-sm text-text">
         {row.original.protocol === 'usenet'
           ? row.original.grabs === null
             ? '—'
-            : `${row.original.grabs.toString()} grabs`
+            : sayCount('admin.releaseColumns.grabs', row.original.grabs)
           : `${row.original.seeders?.toString() ?? '?'} / ${row.original.leechers?.toString() ?? '?'}`}
       </span>
     ),
   },
   {
     id: 'age',
-    header: 'Age',
+    header: say('admin.releaseColumns.age'),
     accessorFn: (release) => (release.publishedAt === null ? 0 : Date.parse(release.publishedAt)),
     cell: ({ row }) => (
       <span className="whitespace-nowrap text-sm text-text-muted">

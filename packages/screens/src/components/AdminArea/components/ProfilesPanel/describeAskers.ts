@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 
 /**
@@ -9,17 +11,21 @@ import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
  */
 const describeAskers = (profile: QualityProfile): string => {
   if (profile.isDefault) {
-    return 'Everything';
+    return say('admin.describeAskers.everything');
   }
 
-  const counted = [
-    { many: profile.roleIds.length, one: 'role', more: 'roles' },
-    { many: profile.accountIds.length, one: 'person', more: 'people' },
-  ]
-    .filter(({ many }) => many > 0)
-    .map(({ many, one, more }) => `${many} ${many === 1 ? one : more}`);
+  const roles = sayCount('admin.describeAskers.roles', profile.roleIds.length);
+  const people = sayCount('admin.describeAskers.people', profile.accountIds.length);
 
-  return counted.length === 0 ? 'Anybody' : counted.join(' and ');
+  if (profile.roleIds.length > 0 && profile.accountIds.length > 0) {
+    return say('admin.describeAskers.rolesAndPeople', { roles, people });
+  }
+
+  if (profile.roleIds.length > 0) {
+    return roles;
+  }
+
+  return profile.accountIds.length > 0 ? people : say('admin.describeAskers.anybody');
 };
 
 export { describeAskers };

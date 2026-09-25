@@ -22,12 +22,14 @@ import { RequestProgressTab } from './components/RequestProgressTab/RequestProgr
 import { RequestReleasesTab } from './components/RequestReleasesTab/RequestReleasesTab';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
 import type { RequestDetailDialogProps, RequestDetailTab } from './RequestDetailDialog.types';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
-const TABS: readonly { id: RequestDetailTab; label: string }[] = [
-  { id: 'going', label: 'How it is going' },
-  { id: 'releases', label: 'Releases' },
-  { id: 'history', label: 'What it has done' },
-  { id: 'blocked', label: 'Never again' },
+const TABS: readonly { id: RequestDetailTab; labelKey: StringKey }[] = [
+  { id: 'going', labelKey: 'admin.requestDetailDialog.goingTab' },
+  { id: 'releases', labelKey: 'admin.requestDetailDialog.releasesTab' },
+  { id: 'history', labelKey: 'admin.requestDetailDialog.historyTab' },
+  { id: 'blocked', labelKey: 'admin.requestDetailDialog.blockedTab' },
 ];
 
 const TAB_IDS = TABS.map((tab) => tab.id);
@@ -85,7 +87,7 @@ const RequestDetailDialog = ({
     setTab(openOn);
   }
 
-  const title = request === null ? 'A request' : request.title;
+  const title = request === null ? say('admin.requestDetailDialog.aRequest') : request.title;
 
   return (
     <DialogCompanion label={title} isOpen={request !== null} size="stage" onClose={onClose}>
@@ -103,15 +105,18 @@ const RequestDetailDialog = ({
           {...(request === null
             ? {}
             : {
-                detail: `${REQUEST_KIND_NAMES[request.kind]} · requested by ${request.requestedBy.name}`,
+                detail: say('admin.requestDetailDialog.detail', {
+                  kind: REQUEST_KIND_NAMES[request.kind],
+                  name: request.requestedBy.name,
+                }),
               })}
           below={
             <TabRow
-              label="What to show about this request"
+              label={say('admin.requestDetailDialog.tabsLabel')}
               tone="underlined"
               size="sm"
               value={tab}
-              groups={[{ items: [...TABS] }]}
+              groups={[{ items: TABS.map((one) => ({ id: one.id, label: say(one.labelKey) })) }]}
             />
           }
         />

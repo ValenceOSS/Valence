@@ -40,6 +40,7 @@ import { trailInLibrary } from './trailInLibrary';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { LibraryEntry } from '@ValenceContracts/schemas/LibraryFiles';
 import type { FilesPanelProps } from './FilesPanel.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The file manager: what is in each library's folders, as it sits on the disk, with everything an
@@ -119,7 +120,7 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
     () => [
       {
         id: 'name',
-        header: 'Name',
+        header: say('admin.filesPanel.name'),
         accessorFn: (entry) => entry.name,
         cell: ({ row }) => (
           <span className="flex min-w-0 items-center gap-2.5">
@@ -139,7 +140,7 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
       },
       {
         id: 'size',
-        header: 'Size',
+        header: say('admin.filesPanel.size'),
         accessorFn: (entry) => entry.sizeBytes ?? -1,
         cell: ({ row }) => (
           <span className="tabular-nums text-text-muted">
@@ -149,7 +150,7 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
       },
       {
         id: 'modified',
-        header: 'Changed',
+        header: say('admin.filesPanel.changed'),
         accessorFn: (entry) => entry.modifiedAt ?? '',
         cell: ({ row }) => (
           <span className="tabular-nums text-text-muted">
@@ -161,12 +162,12 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
       },
       {
         id: 'catalogue',
-        header: 'Valence',
+        header: say('common.valence'),
         enableSorting: false,
         cell: ({ row }) =>
           row.original.mediaId === null ? null : (
             <Badge size="sm" tone="success">
-              In the catalogue
+              {say('admin.filesPanel.inCatalogue')}
             </Badge>
           ),
       },
@@ -178,7 +179,7 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
           at === null && !isSearching ? null : (
             <span className="flex justify-end">
               <ActionMenu
-                label={`Actions for ${row.original.name}`}
+                label={say('admin.filesPanel.actionsFor', { name: row.original.name })}
                 trigger={<Icon of={MoreHorizontalIcon} size={16} />}
                 groups={[
                   {
@@ -187,7 +188,7 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
                         ? [
                             {
                               id: 'open',
-                              label: 'Open',
+                              label: say('admin.filesPanel.open'),
                               icon: <Icon of={FolderOpenFilledIcon} size={15} />,
                               onChoose: () => {
                                 open(row.original.path);
@@ -197,7 +198,7 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
                         : []),
                       {
                         id: 'rename',
-                        label: 'Rename…',
+                        label: say('admin.filesPanel.renameItem'),
                         icon: <Icon of={PenLineFilledIcon} size={15} />,
                         onChoose: () => {
                           setRenaming(row.original);
@@ -205,7 +206,7 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
                       },
                       {
                         id: 'move',
-                        label: 'Move…',
+                        label: say('admin.filesPanel.moveItem'),
                         icon: <Icon of={MoveFilledIcon} size={15} />,
                         onChoose: () => {
                           setMoving(row.original);
@@ -219,7 +220,7 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
                           items: [
                             {
                               id: 'delete',
-                              label: 'Delete…',
+                              label: say('admin.filesPanel.deleteItem'),
                               icon: <Icon of={BinFilledIcon} size={15} />,
                               isDestructive: true,
                               onChoose: () => {
@@ -241,15 +242,17 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
 
   return (
     <PanelCard
-      title="Files"
+      title={say('admin.filesPanel.heading')}
       isFlush
       actions={
         <TextField
-          label="Find a file or folder"
+          label={say('admin.filesPanel.findLabel')}
           isLabelHidden
           size="sm"
           type="search"
-          placeholder={at === null ? 'Find in every library' : 'Find in this folder'}
+          placeholder={
+            at === null ? say('admin.filesPanel.findEverywhere') : say('admin.filesPanel.findHere')
+          }
           value={typed}
           onValueChange={setTyped}
           icon={<Icon of={SearchIcon} size={14} />}
@@ -262,7 +265,7 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
           isIconOnly
           variant="secondary"
           size="xs"
-          label="Up a folder"
+          label={say('admin.filesPanel.upAFolder')}
           disabled={at === null}
           onClick={() => {
             open(folder?.parent ?? null);
@@ -272,7 +275,7 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
         </Button>
 
         <nav
-          aria-label="Where you are"
+          aria-label={say('admin.filesPanel.whereYouAre')}
           className="valence-rail flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto"
         >
           <Button
@@ -282,7 +285,7 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
               open(null);
             }}
           >
-            Libraries
+            {say('admin.filesPanel.libraries')}
           </Button>
 
           {at === null || folder?.path === null || folder?.path === undefined || library === null
@@ -314,7 +317,7 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
               }}
             >
               <Icon of={FolderPlusFilledIcon} size={14} />
-              New folder
+              {say('admin.filesPanel.newFolder')}
             </Button>
 
             <Button
@@ -325,7 +328,7 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
               }}
             >
               <Icon of={FileArrowUpFilledIcon} size={14} />
-              Upload here
+              {say('admin.filesPanel.uploadHere')}
             </Button>
           </span>
         ) : null}
@@ -335,15 +338,19 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
         <Spinner
           isCentered
           size="sm"
-          label={isSearching ? 'Looking for files' : 'Reading the folder'}
+          label={
+            isSearching
+              ? say('admin.filesPanel.lookingForFiles')
+              : say('admin.filesPanel.readingFolder')
+          }
         />
       ) : !isSearching && status === 404 ? (
-        <p className="p-5 text-sm text-text-muted">That folder is not there any more.</p>
+        <p className="p-5 text-sm text-text-muted">{say('admin.filesPanel.folderGone')}</p>
       ) : !isSearching && status === 403 ? (
-        <p className="p-5 text-sm text-text-muted">Valence is not allowed to read that folder.</p>
+        <p className="p-5 text-sm text-text-muted">{say('admin.filesPanel.notAllowed')}</p>
       ) : (isSearching ? searched.isError : asked.isError) ? (
         <CouldNotRead
-          what={isSearching ? 'The search' : 'The folder'}
+          what={isSearching ? say('admin.filesPanel.theSearch') : say('admin.filesPanel.theFolder')}
           isTryingAgain={isSearching ? searched.isFetching : asked.isFetching}
           onTryAgain={() => {
             void (isSearching ? searched.refetch() : asked.refetch());
@@ -351,7 +358,7 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
         />
       ) : (
         <DataTable
-          label={isSearching ? 'Files found' : 'Files'}
+          label={isSearching ? say('admin.filesPanel.filesFound') : say('admin.filesPanel.heading')}
           columns={columns}
           rows={rows}
           pageSize={50}
@@ -363,10 +370,10 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
           }}
           emptyMessage={
             isSearching
-              ? 'Nothing here is called that.'
+              ? say('admin.filesPanel.noMatch')
               : at === null
-                ? 'There are no libraries yet.'
-                : 'This folder is empty.'
+                ? say('admin.filesPanel.noLibraries')
+                : say('admin.filesPanel.emptyFolder')
           }
         />
       )}
@@ -374,17 +381,17 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
       {(isSearching ? searched.data?.isTruncated : folder?.isTruncated) === true ? (
         <p className="px-5 pb-4 text-xs text-text-muted">
           {isSearching
-            ? 'Showing the nearest matches. Open a folder to look further down it.'
-            : 'Showing the first 2,000 things in this folder.'}
+            ? say('admin.filesPanel.nearestMatches')
+            : say('admin.filesPanel.firstTwoThousand')}
         </p>
       ) : null}
 
       <NameEntryDialog
         key={`rename-${renaming?.path ?? 'none'}`}
         isOpen={renaming !== null}
-        title={`Rename ${renaming?.name ?? ''}`}
+        title={say('admin.filesPanel.renameTitle', { name: renaming?.name ?? '' })}
         initialName={renaming?.name ?? ''}
-        confirmLabel="Rename"
+        confirmLabel={say('admin.filesPanel.rename')}
         onClose={() => {
           setRenaming(null);
         }}
@@ -393,7 +400,11 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
             return null;
           }
 
-          const failure = await change(renaming, { kind: 'rename', name }, `Renamed to ${name}.`);
+          const failure = await change(
+            renaming,
+            { kind: 'rename', name },
+            say('admin.filesPanel.renamed', { name }),
+          );
 
           if (failure === null) {
             setRenaming(null);
@@ -406,9 +417,9 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
       <NameEntryDialog
         key={`folder-${isNamingFolder.toString()}`}
         isOpen={isNamingFolder}
-        title="New folder"
+        title={say('admin.filesPanel.newFolder')}
         initialName=""
-        confirmLabel="Create"
+        confirmLabel={say('admin.filesPanel.create')}
         onClose={() => {
           setIsNamingFolder(false);
         }}
@@ -419,7 +430,7 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
 
           const failure = await failureOfThrown(() => createFolder(at, name));
 
-          tellOutcome(`Made the folder ${name}.`, failure);
+          tellOutcome(say('admin.filesPanel.madeFolder', { name }), failure);
 
           if (failure === null) {
             setIsNamingFolder(false);
@@ -441,7 +452,11 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
             return;
           }
 
-          void change(moving, { kind: 'move', into }, `Moved ${moving.name}.`).then((failure) => {
+          void change(
+            moving,
+            { kind: 'move', into },
+            say('admin.filesPanel.moved', { name: moving.name }),
+          ).then((failure) => {
             if (failure === null) {
               setMoving(null);
             }
@@ -451,13 +466,17 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
 
       <ConfirmDialog
         isOpen={condemned !== null}
-        title={`Delete ${condemned?.name ?? 'this'}?`}
+        title={
+          condemned === null
+            ? say('admin.filesPanel.deleteThis')
+            : say('admin.filesPanel.deleteTitle', { name: condemned.name })
+        }
         detail={
           condemned?.isFolder === true
-            ? 'The folder is deleted from the disk with everything in it, and the library is scanned so Valence forgets what was there. This cannot be undone.'
-            : 'The file is deleted from the disk, and the library is scanned so Valence forgets it. This cannot be undone.'
+            ? say('admin.filesPanel.deleteFolderDetail')
+            : say('admin.filesPanel.deleteFileDetail')
         }
-        confirmLabel="Delete"
+        confirmLabel={say('common.delete')}
         isDestructive
         isBusy={isDeleting}
         onClose={() => {
@@ -470,15 +489,17 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
 
           setIsDeleting(true);
 
-          void change(condemned, { kind: 'delete' }, `Deleted ${condemned.name}.`).then(
-            (failure) => {
-              setIsDeleting(false);
+          void change(
+            condemned,
+            { kind: 'delete' },
+            say('admin.filesPanel.deleted', { name: condemned.name }),
+          ).then((failure) => {
+            setIsDeleting(false);
 
-              if (failure === null) {
-                setCondemned(null);
-              }
-            },
-          );
+            if (failure === null) {
+              setCondemned(null);
+            }
+          });
         }}
       />
 

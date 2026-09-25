@@ -2,6 +2,7 @@ import { docsFor } from '@ValenceCore/functions/docsFor';
 import type { QueuedDownload } from '@ValenceContracts/schemas/DownloadQueue';
 import type { StateBadge } from '@ValenceClient/status/StateBadge';
 import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says how a download is, as a badge and the line beneath it, with the client's own reason
@@ -15,28 +16,41 @@ const describeDownloadState = (download: QueuedDownload): StateBadge => {
     case 'queued':
       return { ...STATUS_LOOK.queued, detail: download.problem };
     case 'downloading':
-      return { ...STATUS_LOOK.working, label: 'Downloading', detail: download.problem };
+      return {
+        ...STATUS_LOOK.working,
+        label: say('admin.describeDownloadState.downloading'),
+        detail: download.problem,
+      };
     case 'stalled':
       return {
         ...STATUS_LOOK.attention,
-        label: 'Stalled',
+        label: say('admin.describeDownloadState.stalled'),
         detail:
           download.problem ??
-          (download.protocol === 'torrent' ? 'Nobody is sending it.' : 'Nothing is arriving.'),
+          (download.protocol === 'torrent'
+            ? say('admin.describeDownloadState.nobodySending')
+            : say('admin.describeDownloadState.nothingArriving')),
       };
     case 'paused':
-      return { label: 'Paused', tone: 'quiet', detail: download.problem };
+      return {
+        label: say('admin.describeDownloadState.paused'),
+        tone: 'quiet',
+        detail: download.problem,
+      };
     case 'processing':
       return {
         ...STATUS_LOOK.working,
-        label: 'Finishing',
-        detail: download.protocol === 'usenet' ? 'Checking and unpacking.' : 'Checking.',
+        label: say('admin.describeDownloadState.finishing'),
+        detail:
+          download.protocol === 'usenet'
+            ? say('admin.describeDownloadState.checkingAndUnpacking')
+            : say('admin.describeDownloadState.checking'),
       };
     case 'done':
       if (download.filedInto !== null) {
         return {
           ...STATUS_LOOK.done,
-          detail: `Filed into ${download.filedInto}.`,
+          detail: say('admin.describeDownloadState.filedInto', { library: download.filedInto }),
         };
       }
 
@@ -44,14 +58,14 @@ const describeDownloadState = (download: QueuedDownload): StateBadge => {
         ? { ...STATUS_LOOK.done, detail: download.problem }
         : {
             ...STATUS_LOOK.attention,
-            label: 'Not filed',
+            label: say('admin.describeDownloadState.notFiled'),
             detail: download.filingProblem,
             help: docsFor(download.filingProblemCode),
           };
     case 'failed':
       return {
         ...STATUS_LOOK.failed,
-        detail: download.problem ?? 'It failed.',
+        detail: download.problem ?? say('admin.describeDownloadState.failed'),
         help: docsFor(download.problemCode),
       };
   }

@@ -1,4 +1,5 @@
 import type { Monitor } from '@ValenceClient/admin/fetchAdmin';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Names the card on the overview, and says in the same line what it would not tell us.
@@ -13,15 +14,15 @@ import type { Monitor } from '@ValenceClient/admin/fetchAdmin';
  */
 const describeCard = (graphics: Monitor['resources']['graphics']): string => {
   if (graphics === null) {
-    return 'None Valence can read';
+    return say('admin.describeCard.noneReadable');
   }
 
   if (graphics.measured === 'valenceOnly') {
-    return `${graphics.name} · Valence's own work only`;
+    return say('admin.describeCard.valenceOnly', { name: graphics.name });
   }
 
   return graphics.encoderPercent === null
-    ? `${graphics.name} · encoder not readable`
+    ? say('admin.describeCard.encoderUnreadable', { name: graphics.name })
     : graphics.name;
 };
 

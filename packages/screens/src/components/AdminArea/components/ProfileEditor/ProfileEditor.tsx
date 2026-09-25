@@ -32,12 +32,15 @@ import { QUALITY_NAMES } from '@ValenceScreens/components/AdminArea/QUALITY_NAME
 import { formFor, readProfileForm } from './readProfileForm';
 import type { ProfileKind, ReleaseWait } from '@ValenceContracts/schemas/QualityProfile';
 import type { ProfileForm, ProfileTab } from './readProfileForm';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
+import type { StringKey } from '@ValenceI18n/StringKey';
 import type { ProfileEditorProps } from './ProfileEditor.types';
 
-const TABS: readonly { id: ProfileTab; label: string }[] = [
-  { id: 'quality', label: 'Quality' },
-  { id: 'matching', label: 'Matching' },
-  { id: 'access', label: 'Access' },
+const TABS: readonly { id: ProfileTab; labelKey: StringKey }[] = [
+  { id: 'quality', labelKey: 'admin.profileEditor.tabs.quality' },
+  { id: 'matching', labelKey: 'admin.profileEditor.tabs.matching' },
+  { id: 'access', labelKey: 'admin.profileEditor.tabs.access' },
 ];
 
 /**
@@ -48,18 +51,18 @@ const TABS: readonly { id: ProfileTab; label: string }[] = [
  */
 const isProfileTab = (value: string): value is ProfileTab => TABS.some((tab) => tab.id === value);
 
-const KINDS: readonly { id: ProfileKind; label: string }[] = [
-  { id: 'video', label: 'Films and series' },
-  { id: 'music', label: 'Music' },
+const KINDS: readonly { id: ProfileKind; labelKey: StringKey }[] = [
+  { id: 'video', labelKey: 'admin.profileEditor.kinds.video' },
+  { id: 'music', labelKey: 'admin.profileEditor.kinds.music' },
 ];
 
 const LANGUAGES: readonly { id: string; label: string }[] = Object.entries(LANGUAGE_NAMES)
   .map(([id, label]) => ({ id, label }))
   .toSorted((left, right) => left.label.localeCompare(right.label));
 
-const WAITS: readonly { id: ReleaseWait; label: string }[] = [
-  { id: 'digital', label: 'Out digitally' },
-  { id: 'physical', label: 'Out on disc' },
+const WAITS: readonly { id: ReleaseWait; labelKey: StringKey }[] = [
+  { id: 'digital', labelKey: 'admin.profileEditor.waits.digital' },
+  { id: 'physical', labelKey: 'admin.profileEditor.waits.physical' },
 ];
 
 /**
@@ -116,7 +119,7 @@ const Choosing = <Value extends string>({
   value,
   options,
   onChoose,
-  anything = 'The best there is',
+  anything = say('admin.profileEditor.bestThereIs'),
 }: {
   label: string;
   value: Value | null;
@@ -207,12 +210,16 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
     void (profile === null ? addProfile(outcome.draft) : changeProfile(profile.id, outcome.draft))
       .then(({ value, refusal }) => {
         if (value === null) {
-          setProblem(refusal?.message ?? 'That could not be saved.');
+          setProblem(refusal?.message ?? say('admin.profileEditor.couldNotSave'));
 
           return;
         }
 
-        notify.worked(profile === null ? `Added ${value.name}.` : `Saved ${value.name}.`);
+        notify.worked(
+          profile === null
+            ? say('admin.profileEditor.added', { name: value.name })
+            : say('admin.profileEditor.saved', { name: value.name }),
+        );
         onSaved(value);
         onClose();
       })
@@ -221,7 +228,10 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
       });
   };
 
-  const title = profile === null ? 'Add media profile' : `Change ${profile.name}`;
+  const title =
+    profile === null
+      ? say('admin.profileEditor.addTitle')
+      : say('admin.profileEditor.changeTitle', { name: profile.name });
 
   return (
     <Dialog label={title} isOpen={isOpen} onClose={onClose} size="stage">
@@ -235,37 +245,41 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
       >
         <DialogTitle
           title={title}
-          detail="Every release a search finds is judged against a profile: what it may not be is refused, and the rest are ranked by how well they fit."
+          detail={say('admin.profileEditor.detail')}
           below={
             <TabRow
-              label="Which part of the profile to edit"
+              label={say('admin.profileEditor.tabsLabel')}
               tone="underlined"
               size="sm"
               value={tab}
-              groups={[{ items: TABS.map(({ id, label }) => ({ id, label })) }]}
+              groups={[{ items: TABS.map(({ id, labelKey }) => ({ id, label: say(labelKey) })) }]}
             />
           }
         />
 
         <DialogContent>
           <TabPanel value="quality" className="flex w-full flex-col gap-6">
-            <Section title="Profile">
+            <Section title={say('admin.profileEditor.profile.title')}>
               <div className="grid gap-4 sm:grid-cols-2">
                 <TextField
-                  label="Name"
+                  label={say('admin.profileEditor.profile.name')}
                   value={form.name}
                   onValueChange={(name) => {
                     change({ name });
                   }}
-                  placeholder={isVideo ? 'HD' : 'Lossless'}
+                  placeholder={
+                    isVideo
+                      ? say('admin.profileEditor.profile.videoPlaceholder')
+                      : say('admin.profileEditor.profile.musicPlaceholder')
+                  }
                   required
                 />
 
-                <FormField label="For">
+                <FormField label={say('admin.profileEditor.profile.for')}>
                   <SegmentedRow
-                    label="For"
+                    label={say('admin.profileEditor.profile.for')}
                     size="sm"
-                    items={KINDS}
+                    items={KINDS.map(({ id, labelKey }) => ({ id, label: say(labelKey) }))}
                     value={form.kind}
                     onSelect={(next) => {
                       const kind = KINDS.find((one) => one.id === next)?.id;
@@ -280,14 +294,14 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
             </Section>
 
             <Section
-              title="What it takes"
-              detail="Tick what may be taken, best first. The order is what ranks releases before anything else."
+              title={say('admin.profileEditor.takes.title')}
+              detail={say('admin.profileEditor.takes.detail')}
             >
               {isVideo ? (
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <FormField label="Resolutions">
+                  <FormField label={say('admin.profileEditor.takes.resolutions')}>
                     <RankedChoices
-                      label="Resolutions"
+                      label={say('admin.profileEditor.takes.resolutions')}
                       options={optionsOf(RESOLUTIONS)}
                       chosen={form.resolutions}
                       onChange={(resolutions) => {
@@ -297,11 +311,11 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
                   </FormField>
 
                   <FormField
-                    label="Sources"
-                    description="A release that does not say is let through."
+                    label={say('admin.profileEditor.takes.sources')}
+                    description={say('admin.profileEditor.takes.sourcesDescription')}
                   >
                     <RankedChoices
-                      label="Sources"
+                      label={say('admin.profileEditor.takes.sources')}
                       options={optionsOf(RELEASE_SOURCES)}
                       chosen={form.sources}
                       onChange={(sources) => {
@@ -311,9 +325,9 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
                   </FormField>
                 </div>
               ) : (
-                <FormField label="Formats">
+                <FormField label={say('admin.profileEditor.takes.formats')}>
                   <RankedChoices
-                    label="Formats"
+                    label={say('admin.profileEditor.takes.formats')}
                     options={optionsOf(MUSIC_QUALITIES)}
                     chosen={form.musicQualities}
                     onChange={(musicQualities) => {
@@ -325,11 +339,11 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
             </Section>
 
             <Section
-              title="Sizes"
+              title={say('admin.profileEditor.sizes.title')}
               detail={
                 isVideo
-                  ? 'How large a release of each quality may be, an hour of it, so a whole season is judged by its episodes. A handle at either end is no limit.'
-                  : 'How large an album may be.'
+                  ? say('admin.profileEditor.sizes.videoDetail')
+                  : say('admin.profileEditor.sizes.musicDetail')
               }
             >
               {isVideo ? (
@@ -344,25 +358,25 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2">
                   <TextField
-                    label="Smallest (MB an album)"
+                    label={say('admin.profileEditor.sizes.smallest')}
                     type="number"
                     min={0}
                     value={form.smallestMb}
                     onValueChange={(smallestMb) => {
                       change({ smallestMb });
                     }}
-                    placeholder="No limit"
+                    placeholder={say('admin.profileEditor.sizes.noLimit')}
                   />
 
                   <TextField
-                    label="Largest (MB an album)"
+                    label={say('admin.profileEditor.sizes.largest')}
                     type="number"
                     min={1}
                     value={form.largestMb}
                     onValueChange={(largestMb) => {
                       change({ largestMb });
                     }}
-                    placeholder="No limit"
+                    placeholder={say('admin.profileEditor.sizes.noLimit')}
                   />
                 </div>
               )}
@@ -372,14 +386,14 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
           <TabPanel value="matching" className="flex w-full flex-col gap-6">
             {isVideo ? (
               <Section
-                title="Films"
-                detail="A film is held until then before it is searched for, so nothing is fetched from cinemas."
+                title={say('admin.profileEditor.films.title')}
+                detail={say('admin.profileEditor.films.detail')}
               >
-                <FormField label="Search films once they are">
+                <FormField label={say('admin.profileEditor.films.waitLabel')}>
                   <SegmentedRow
-                    label="Search films once they are"
+                    label={say('admin.profileEditor.films.waitLabel')}
                     size="sm"
-                    items={WAITS}
+                    items={WAITS.map(({ id, labelKey }) => ({ id, label: say(labelKey) }))}
                     value={form.releaseWait}
                     onSelect={(next) => {
                       const releaseWait = WAITS.find((one) => one.id === next)?.id;
@@ -393,40 +407,40 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
               </Section>
             ) : null}
 
-            <Section title="Words">
+            <Section title={say('admin.profileEditor.words.title')}>
               <TextField
-                label="Preferred words"
+                label={say('admin.profileEditor.words.preferred')}
                 value={form.preferredWords}
                 onValueChange={(preferredWords) => {
                   change({ preferredWords });
                 }}
-                description="Each one a release has adds to its score. Separate them with commas; a word between slashes, such as /hdr10\+?/, is a pattern."
+                description={say('admin.profileEditor.words.preferredDescription')}
               />
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <TextField
-                  label="Required words"
+                  label={say('admin.profileEditor.words.required')}
                   value={form.requiredWords}
                   onValueChange={(requiredWords) => {
                     change({ requiredWords });
                   }}
-                  description="A release needs at least one."
+                  description={say('admin.profileEditor.words.requiredDescription')}
                 />
 
                 <TextField
-                  label="Banned words"
+                  label={say('admin.profileEditor.words.banned')}
                   value={form.bannedWords}
                   onValueChange={(bannedWords) => {
                     change({ bannedWords });
                   }}
-                  description="A release with any is refused."
+                  description={say('admin.profileEditor.words.bannedDescription')}
                 />
               </div>
             </Section>
 
-            <Section title="Upgrades">
+            <Section title={say('admin.profileEditor.upgrades.title')}>
               <Switch
-                label="Upgrade to a better release later"
+                label={say('admin.profileEditor.upgrades.switch')}
                 isOn={form.isUpgrading}
                 onToggle={() => {
                   change({ isUpgrading: !form.isUpgrading });
@@ -436,7 +450,7 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
               {!form.isUpgrading ? null : isVideo ? (
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Choosing
-                    label="Until the resolution is"
+                    label={say('admin.profileEditor.upgrades.untilResolution')}
                     value={form.upgradeUntilResolution}
                     options={optionsOf(form.resolutions)}
                     onChoose={(upgradeUntilResolution) => {
@@ -445,7 +459,7 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
                   />
 
                   <Choosing
-                    label="And the source is"
+                    label={say('admin.profileEditor.upgrades.andSource')}
                     value={form.upgradeUntilSource}
                     options={optionsOf(form.sources)}
                     onChoose={(upgradeUntilSource) => {
@@ -455,7 +469,7 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
                 </div>
               ) : (
                 <Choosing
-                  label="Until the format is"
+                  label={say('admin.profileEditor.upgrades.untilFormat')}
                   value={form.upgradeUntilMusicQuality}
                   options={optionsOf(form.musicQualities)}
                   onChoose={(upgradeUntilMusicQuality) => {
@@ -466,28 +480,28 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
             </Section>
 
             <Section
-              title="Language"
-              detail="Prefers releases that say they are in this language. Most releases say nothing, and those are left alone."
+              title={say('admin.profileEditor.language.title')}
+              detail={say('admin.profileEditor.language.detail')}
             >
               <Choosing
-                label="Preferred language"
+                label={say('admin.profileEditor.language.label')}
                 value={form.preferredLanguage}
                 options={LANGUAGES}
                 onChoose={(preferredLanguage) => {
                   change({ preferredLanguage });
                 }}
-                anything="Use the library’s language"
+                anything={say('admin.profileEditor.language.libraryLanguage')}
               />
             </Section>
           </TabPanel>
 
           <TabPanel value="access" className="flex w-full flex-col gap-6">
             <Section
-              title="Who can use it"
-              detail="Leave both empty and anyone can pick this profile. Tick roles or people to keep it to them."
+              title={say('admin.profileEditor.access.title')}
+              detail={say('admin.profileEditor.access.detail')}
             >
               <Switch
-                label="Always use this profile"
+                label={say('admin.profileEditor.access.always')}
                 isOn={form.isDefault}
                 onToggle={() => {
                   change({ isDefault: !form.isDefault });
@@ -496,15 +510,17 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
 
               <p className="font-body text-sm text-text-muted">
                 {form.isDefault
-                  ? `Every ${isVideo ? 'film and series' : 'music'} request uses this profile. Only one ${isVideo ? 'video' : 'music'} profile can do this.`
-                  : 'Leave off to let people pick a quality themselves.'}
+                  ? isVideo
+                    ? say('admin.profileEditor.access.alwaysVideo')
+                    : say('admin.profileEditor.access.alwaysMusic')
+                  : say('admin.profileEditor.access.leaveOff')}
               </p>
 
               {form.isDefault ? null : (
                 <div className="grid gap-6 sm:grid-cols-2">
                   <AskerPicker
-                    legend="Roles"
-                    everyLabel="Any role"
+                    legend={say('admin.profileEditor.access.roles')}
+                    everyLabel={say('admin.profileEditor.access.anyRole')}
                     askers={(roles.data ?? []).map((role) => ({ id: role.id, name: role.name }))}
                     chosen={new Set(form.roleIds)}
                     onChange={(chosen) => {
@@ -513,8 +529,8 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
                   />
 
                   <AskerPicker
-                    legend="People"
-                    everyLabel="Anybody"
+                    legend={say('admin.profileEditor.access.people')}
+                    everyLabel={say('admin.profileEditor.access.anybody')}
                     askers={(accounts.data ?? []).map((account) => ({
                       id: account.id,
                       name: account.name,
@@ -530,24 +546,23 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
             </Section>
 
             <Section
-              title="Used for"
+              title={say('admin.profileEditor.usedFor.title')}
               detail={
                 forKind.length === 0
-                  ? `There are no ${isVideo ? 'film or series' : 'music'} libraries yet.`
-                  : 'Which libraries offer this profile when somebody asks. Tick none and it is offered for all of them.'
+                  ? isVideo
+                    ? say('admin.profileEditor.usedFor.noVideoLibraries')
+                    : say('admin.profileEditor.usedFor.noMusicLibraries')
+                  : say('admin.profileEditor.usedFor.detail')
               }
             >
               {forKind.length === 0 ? null : (
                 <AskerPicker
-                  legend="Libraries"
-                  everyLabel="Every library"
+                  legend={say('admin.profileEditor.usedFor.libraries')}
+                  everyLabel={say('admin.profileEditor.usedFor.everyLibrary')}
                   askers={forKind.map((entry) => ({
                     id: entry.id,
                     name: entry.name,
-                    detail:
-                      entry.itemCount === 1
-                        ? '1 item'
-                        : `${entry.itemCount.toLocaleString()} items`,
+                    detail: sayCount('admin.profileEditor.usedFor.items', entry.itemCount),
                   }))}
                   chosen={new Set(form.libraryIds)}
                   onChange={(chosen) => {
@@ -563,7 +578,7 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
           note={problem}
           dismiss={{ onChoose: onClose }}
           confirm={{
-            label: profile === null ? 'Add profile' : 'Save',
+            label: profile === null ? say('admin.profileEditor.addProfile') : say('common.save'),
             onChoose: save,
             isLoading: isSaving,
           }}

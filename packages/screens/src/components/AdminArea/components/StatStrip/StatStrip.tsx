@@ -2,6 +2,7 @@ import { Info as InfoIcon } from '@keyline-icons/react';
 import { HoverCard } from '@ValenceUI/HoverCard';
 import { Icon } from '@ValenceUI/Icon';
 import { StatTile } from '@ValenceUI/StatTile';
+import { say } from '@ValenceI18n/say';
 import type { StatStripProps } from './StatStrip.types';
 
 const COLUMN_CLASSES: Record<number, string> = {
@@ -37,7 +38,11 @@ const StatStrip = ({ stats }: StatStripProps) => (
               icon: (
                 <HoverCard side="bottom" align="start" detail={stat.info}>
                   <span className="text-text-muted hover:text-text">
-                    <Icon of={InfoIcon} size={14} label={`About ${stat.label}`} />
+                    <Icon
+                      of={InfoIcon}
+                      size={14}
+                      label={say('admin.statStrip.aboutLabel', { label: stat.label })}
+                    />
                   </span>
                 </HoverCard>
               ),

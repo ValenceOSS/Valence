@@ -2,6 +2,7 @@ import { ChevronDown as ChevronDownIcon, ChevronUp as ChevronUpIcon } from '@key
 import { Button } from '@ValenceUI/Button';
 import { Checkbox } from '@ValenceUI/Checkbox';
 import { Icon } from '@ValenceUI/Icon';
+import { say } from '@ValenceI18n/say';
 import type { RankedChoicesProps } from './RankedChoices.types';
 
 /**
@@ -53,7 +54,7 @@ const RankedChoices = <Choice extends string>({
             variant="ghost"
             size="xs"
             isIconOnly
-            label={`Move ${labelOf(id)} up`}
+            label={say('admin.rankedChoices.moveUp', { choice: labelOf(id) })}
             disabled={place === 0}
             onClick={() => {
               move(place, place - 1);
@@ -66,7 +67,7 @@ const RankedChoices = <Choice extends string>({
             variant="ghost"
             size="xs"
             isIconOnly
-            label={`Move ${labelOf(id)} down`}
+            label={say('admin.rankedChoices.moveDown', { choice: labelOf(id) })}
             disabled={place === chosen.length - 1}
             onClick={() => {
               move(place, place + 1);

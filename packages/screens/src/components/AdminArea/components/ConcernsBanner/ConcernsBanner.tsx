@@ -10,6 +10,7 @@ import { Card } from '@ValenceUI/Card';
 import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import type { ConcernTone } from '@ValenceScreens/components/AdminArea/collectConcerns';
 import type { ConcernsBannerProps } from './ConcernsBanner.types';
+import { say } from '@ValenceI18n/say';
 
 const TONE_CLASSES: Record<ConcernTone, string> = {
   broken: 'text-danger',
@@ -66,7 +67,7 @@ const ConcernsBanner = ({ concerns, onOpenPanel, onDismiss }: ConcernsBannerProp
               variant="ghost"
               size="sm"
               isIconOnly
-              label={`Dismiss “${concern.title}”`}
+              label={say('admin.concernsBanner.dismiss', { title: concern.title })}
               onClick={() => {
                 onDismiss(concern);
               }}

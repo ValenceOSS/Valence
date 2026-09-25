@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { QualityProfileDraftSchema } from '@ValenceContracts/schemas/QualityProfile';
 import type {
   MusicQuality,
@@ -42,6 +43,7 @@ type ReadProfileForm =
   | { draft: QualityProfileDraft; problem: null; at: null }
   | { draft: null; problem: string; at: ProfileTab };
 
+// eslint-disable-next-line valence/no-hard-coded-strings -- a stand-in name the schema needs to give back its defaults; nobody reads it
 const DEFAULTS = QualityProfileDraftSchema.parse({ name: 'New', kind: 'video' });
 
 const A_NEW_PROFILE: ProfileForm = {
@@ -144,21 +146,21 @@ const readProfileForm = (form: ProfileForm): ReadProfileForm => {
   const largestMb = sizeOf(form.largestMb);
 
   if (name === '') {
-    return { draft: null, problem: 'Give the profile a name.', at: 'quality' };
+    return { draft: null, problem: say('admin.readProfileForm.noName'), at: 'quality' };
   }
 
   if (form.kind === 'video' && form.resolutions.length === 0) {
-    return { draft: null, problem: 'Allow at least one resolution.', at: 'quality' };
+    return { draft: null, problem: say('admin.readProfileForm.noResolution'), at: 'quality' };
   }
 
   if (form.kind === 'music' && form.musicQualities.length === 0) {
-    return { draft: null, problem: 'Allow at least one format.', at: 'quality' };
+    return { draft: null, problem: say('admin.readProfileForm.noFormat'), at: 'quality' };
   }
 
   const isMusic = form.kind === 'music';
 
   if (isMusic && (smallestMb === undefined || largestMb === undefined || largestMb === 0)) {
-    return { draft: null, problem: 'A size is a number of megabytes.', at: 'quality' };
+    return { draft: null, problem: say('admin.readProfileForm.notASize'), at: 'quality' };
   }
 
   if (
@@ -171,7 +173,7 @@ const readProfileForm = (form: ProfileForm): ReadProfileForm => {
   ) {
     return {
       draft: null,
-      problem: 'The largest size has to be more than the smallest.',
+      problem: say('admin.readProfileForm.largestTooSmall'),
       at: 'quality',
     };
   }

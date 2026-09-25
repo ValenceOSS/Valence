@@ -15,6 +15,8 @@ import { sortReencodes } from './sortReencodes';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { EncodingPanelProps } from './EncodingPanel.types';
 import type { Reencode } from '@ValenceContracts/schemas/Reencode';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * What an encode is called on a screen listing several, which is the programme rather than the
@@ -86,29 +88,29 @@ const EncodingPanel = ({
     () => [
       {
         id: 'title',
-        header: 'Title',
+        header: say('admin.encodingPanel.titleColumn'),
         accessorFn: nameOf,
         cell: ({ row }) => <span className="truncate text-text">{nameOf(row.original)}</span>,
       },
       {
         id: 'what',
-        header: 'What was asked for',
+        header: say('admin.encodingPanel.askedColumn'),
         enableSorting: false,
         accessorFn: (one) => one.mode,
         cell: ({ row }) => (
           <span className="font-body text-xs text-text-muted">
             {row.original.mode === 'keep'
-              ? 'Kept alongside'
+              ? say('admin.encodingPanel.keptAlongside')
               : row.original.mode === 'audioOnly'
-                ? 'Audio only'
-                : 'Replaced'}
+                ? say('admin.encodingPanel.audioOnly')
+                : say('admin.encodingPanel.replaced')}
             {row.original.quality === null ? '' : ` · ${row.original.quality}`}
           </span>
         ),
       },
       {
         id: 'state',
-        header: 'What happened',
+        header: say('admin.encodingPanel.stateColumn'),
         accessorFn: (one) => one.state,
         cell: ({ row }) => (
           <Badge
@@ -127,7 +129,7 @@ const EncodingPanel = ({
       },
       {
         id: 'failure',
-        header: 'Why',
+        header: say('admin.encodingPanel.whyColumn'),
         enableSorting: false,
         cell: ({ row }) => (
           <span className="font-body text-xs text-text-muted">{row.original.failure ?? '—'}</span>
@@ -139,11 +141,8 @@ const EncodingPanel = ({
 
   if (isUnreachable) {
     return (
-      <PanelCard title="Encoding">
-        <p className="text-sm text-text-muted">
-          The re-encoding queue could not be read from the server. This is not the same as it being
-          empty.
-        </p>
+      <PanelCard title={say('admin.encodingPanel.heading')}>
+        <p className="text-sm text-text-muted">{say('admin.encodingPanel.unreachable')}</p>
       </PanelCard>
     );
   }
@@ -151,28 +150,28 @@ const EncodingPanel = ({
   return (
     <div className="flex flex-col gap-5">
       <PanelCard
-        title="Waiting for you"
+        title={say('admin.encodingPanel.waitingHeading')}
         actions={
           <PanelCardAction icon={RefreshCwIcon} onClick={onChoose}>
-            Re-encode something
+            {say('admin.encodingPanel.reencodeSomething')}
           </PanelCardAction>
         }
       >
         {awaitingReview.length === 0 ? (
           <NothingHere
             of={TapeIcon}
-            title="Nothing is waiting"
-            detail="A replacement keeps both files until you have watched it and said it is fine. Nothing is discarded on a timer."
+            title={say('admin.encodingPanel.nothingWaiting')}
+            detail={say('admin.encodingPanel.nothingWaitingDetail')}
           />
         ) : (
           <div className="flex flex-col gap-3">
             <Callout
-              title={`${awaitingReview.length.toString()} ${awaitingReview.length === 1 ? 'encode is' : 'encodes are'} holding a film and its replacement`}
+              title={sayCount('admin.encodingPanel.holding', awaitingReview.length)}
               tone={awaitingReview.length >= awaitingReviewCap ? 'warning' : 'quiet'}
             >
               {awaitingReview.length >= awaitingReviewCap
-                ? `The queue has paused at ${awaitingReviewCap.toString()}, because every one of these is using disk until it is judged. Review some to let it carry on.`
-                : 'Nothing is thrown away until you have watched the result and confirmed it.'}
+                ? say('admin.encodingPanel.paused', { cap: awaitingReviewCap })
+                : say('admin.encodingPanel.nothingThrownAway')}
             </Callout>
 
             <ul className="flex flex-col gap-2">
@@ -184,9 +183,19 @@ const EncodingPanel = ({
                   <span className="flex min-w-0 flex-col">
                     <span className="truncate text-sm text-text">{nameOf(one)}</span>
                     <span className="font-body text-xs text-text-muted">
-                      {formatBytes(one.originalSizeBytes)} →{' '}
-                      {one.producedBytes === null ? 'unknown' : formatBytes(one.producedBytes)}
-                      {freedBy(one) === null ? '' : ` · frees ${freedBy(one) ?? ''}`}
+                      {say(
+                        freedBy(one) === null
+                          ? 'admin.encodingPanel.sizes'
+                          : 'admin.encodingPanel.sizesFreeing',
+                        {
+                          before: formatBytes(one.originalSizeBytes),
+                          after:
+                            one.producedBytes === null
+                              ? say('admin.encodingPanel.unknownSize')
+                              : formatBytes(one.producedBytes),
+                          freed: freedBy(one) ?? '',
+                        },
+                      )}
                     </span>
                   </span>
 
@@ -197,7 +206,7 @@ const EncodingPanel = ({
                       onReview(one);
                     }}
                   >
-                    Review
+                    {say('admin.encodingPanel.review')}
                   </Button>
                 </li>
               ))}
@@ -206,9 +215,9 @@ const EncodingPanel = ({
         )}
       </PanelCard>
 
-      <PanelCard title="Under way">
+      <PanelCard title={say('admin.encodingPanel.underWayHeading')}>
         {underWay.length === 0 ? (
-          <p className="text-sm text-text-muted">Nothing is being encoded.</p>
+          <p className="text-sm text-text-muted">{say('admin.encodingPanel.nothingUnderWay')}</p>
         ) : (
           <ul className="flex flex-col gap-3">
             {underWay.map((one) => (
@@ -239,7 +248,7 @@ const EncodingPanel = ({
                     void stop(one);
                   }}
                 >
-                  Stop
+                  {say('admin.encodingPanel.stop')}
                 </Button>
               </li>
             ))}
@@ -247,14 +256,14 @@ const EncodingPanel = ({
         )}
       </PanelCard>
 
-      <PanelCard title="Already done" isFlush>
+      <PanelCard title={say('admin.encodingPanel.doneHeading')} isFlush>
         <DataTable
-          label="Re-encodes that have finished"
+          label={say('admin.encodingPanel.doneLabel')}
           columns={columns}
           rows={settled}
           pageSize={10}
           getRowId={(row) => row.id}
-          emptyMessage="Nothing has been re-encoded yet."
+          emptyMessage={say('admin.encodingPanel.nothingDone')}
         />
       </PanelCard>
     </div>

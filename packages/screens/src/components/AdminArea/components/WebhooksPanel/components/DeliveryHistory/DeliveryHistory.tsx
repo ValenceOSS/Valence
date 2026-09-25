@@ -3,6 +3,8 @@ import { Button } from '@ValenceUI/Button';
 import { Spinner } from '@ValenceUI/Spinner';
 import { WEBHOOK_EVENT_LABELS } from '@ValenceContracts/schemas/Webhook';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import type { DeliveryHistoryProps } from './DeliveryHistory.types';
 import { useTicking } from '@ValenceScreens/clock/useTicking';
 import { A_CAPTION_AGES_EVERY } from '@ValenceScreens/clock/A_CAPTION_AGES_EVERY';
@@ -26,11 +28,11 @@ const DeliveryHistory = ({
   const now = useTicking(A_CAPTION_AGES_EVERY);
 
   if (isLoading) {
-    return <Spinner isCentered label="Reading what has been sent" />;
+    return <Spinner isCentered label={say('admin.deliveryHistory.reading')} />;
   }
 
   if (deliveries.length === 0) {
-    return <p className="py-2 text-xs text-text-muted">Nothing has been sent to this yet.</p>;
+    return <p className="py-2 text-xs text-text-muted">{say('admin.deliveryHistory.empty')}</p>;
   }
 
   return (
@@ -38,7 +40,9 @@ const DeliveryHistory = ({
       {deliveries.map((delivery) => (
         <li key={delivery.id} className="flex flex-wrap items-center gap-2 text-xs">
           <Badge tone={delivery.ok ? 'quiet' : 'danger'} size="sm">
-            {delivery.ok ? 'Delivered' : 'Failed'}
+            {delivery.ok
+              ? say('admin.deliveryHistory.delivered')
+              : say('admin.deliveryHistory.failed')}
           </Badge>
 
           <span className="text-text">{WEBHOOK_EVENT_LABELS[delivery.event]}</span>
@@ -46,7 +50,9 @@ const DeliveryHistory = ({
           <span className="text-text-muted">{describeSince(delivery.lastAttemptAt, now)}</span>
 
           {delivery.attempts === 1 ? null : (
-            <span className="text-text-muted">{delivery.attempts.toString()} tries</span>
+            <span className="text-text-muted">
+              {sayCount('admin.deliveryHistory.tries', delivery.attempts)}
+            </span>
           )}
 
           {delivery.error === null ? null : <span className="text-danger">{delivery.error}</span>}
@@ -60,7 +66,7 @@ const DeliveryHistory = ({
                 onRedeliver(delivery.id);
               }}
             >
-              Send again
+              {say('admin.deliveryHistory.sendAgain')}
             </Button>
           )}
         </li>

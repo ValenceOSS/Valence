@@ -8,6 +8,8 @@ import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { TextField } from '@ValenceUI/TextField';
 import { SESSION_MESSAGE_MAX_LENGTH } from '@ValenceContracts/schemas/SessionMessage';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import type { SessionMessageDialogProps } from './SessionMessageDialog.types';
 
 /**
@@ -46,9 +48,9 @@ const SessionMessageDialog = ({ watcher, isOpen, onSend, onClose }: SessionMessa
   };
 
   return (
-    <Dialog label="Send a message" isOpen={isOpen} onClose={onClose}>
-      <DialogTitle title={`Message ${watcher}`}>
-        <Button isIconOnly variant="ghost" label="Close" size="sm" onClick={onClose}>
+    <Dialog label={say('admin.sessionMessageDialog.label')} isOpen={isOpen} onClose={onClose}>
+      <DialogTitle title={say('admin.sessionMessageDialog.title', { watcher })}>
+        <Button isIconOnly variant="ghost" label={say('common.close')} size="sm" onClick={onClose}>
           <Icon of={XIcon} size={16} />
         </Button>
       </DialogTitle>
@@ -56,16 +58,18 @@ const SessionMessageDialog = ({ watcher, isOpen, onSend, onClose }: SessionMessa
       <DialogContent>
         <div className="flex flex-col gap-2">
           <TextField
-            label="What to tell them"
+            label={say('admin.sessionMessageDialog.fieldLabel')}
             value={text}
             onValueChange={setText}
-            placeholder="Restarting in five minutes"
+            placeholder={say('admin.sessionMessageDialog.placeholder')}
             hasFocusOnMount
-            {...(isTooLong ? { error: 'That is too long to fit on the banner.' } : {})}
+            {...(isTooLong ? { error: say('admin.sessionMessageDialog.tooLong') } : {})}
           />
 
           <p className="text-xs text-text-muted">
-            {`${trimmed.length.toString()} of ${SESSION_MESSAGE_MAX_LENGTH.toString()} characters. This will not pause what they are watching.`}
+            {sayCount('admin.sessionMessageDialog.length', SESSION_MESSAGE_MAX_LENGTH, {
+              length: trimmed.length.toString(),
+            })}
           </p>
         </div>
       </DialogContent>
@@ -73,7 +77,7 @@ const SessionMessageDialog = ({ watcher, isOpen, onSend, onClose }: SessionMessa
       <DialogFooter
         dismiss={{ onChoose: onClose }}
         confirm={{
-          label: 'Send',
+          label: say('admin.sessionMessageDialog.send'),
           onChoose: () => {
             void send();
           },

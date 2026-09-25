@@ -10,9 +10,10 @@ import { DEFAULT_WEBHOOK_FILTERS } from '@ValenceContracts/schemas/Webhook';
 import { WebhookFields } from '@ValenceScreens/components/AdminArea/components/WebhookFields/WebhookFields';
 import {
   WEBHOOK_PANES,
-  WEBHOOK_PANE_ITEMS,
+  webhookPaneItems,
   isWebhookPane,
 } from '@ValenceScreens/components/AdminArea/components/WebhookFields/webhookPanes';
+import { say } from '@ValenceI18n/say';
 import type { WebhookDraft } from '@ValenceScreens/components/AdminArea/components/WebhookFields/WebhookFields.types';
 import type { AddWebhookDialogProps } from './AddWebhookDialog.types';
 
@@ -85,7 +86,7 @@ const AddWebhookDialog = ({
   };
 
   return (
-    <DialogCompanion label="Create webhook" isOpen={isOpen} onClose={close}>
+    <DialogCompanion label={say('admin.addWebhookDialog.title')} isOpen={isOpen} onClose={close}>
       <Tabs
         value={pane}
         onValueChange={(next) => {
@@ -96,15 +97,15 @@ const AddWebhookDialog = ({
       >
         <DialogTitle
           size="compact"
-          title="Create webhook"
-          detail="Valence will post to this address when something you have chosen happens."
+          title={say('admin.addWebhookDialog.title')}
+          detail={say('admin.addWebhookDialog.detail')}
           below={
             <TabRow
-              label="What to change"
+              label={say('admin.webhookPanes.tabsLabel')}
               tone="underlined"
               size="sm"
               value={pane}
-              groups={[{ items: WEBHOOK_PANE_ITEMS }]}
+              groups={[{ items: webhookPaneItems() }]}
             />
           }
         />
@@ -124,7 +125,9 @@ const AddWebhookDialog = ({
           note={refusal}
           dismiss={{ onChoose: close }}
           confirm={{
-            label: isSaving ? 'Creating…' : 'Create webhook',
+            label: isSaving
+              ? say('admin.addWebhookDialog.creating')
+              : say('admin.addWebhookDialog.title'),
             onChoose: save,
             isDisabled: !isReady || isSaving,
           }}

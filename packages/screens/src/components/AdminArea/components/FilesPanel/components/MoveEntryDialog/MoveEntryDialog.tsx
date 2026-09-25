@@ -3,6 +3,7 @@ import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { FolderBrowser } from '@ValenceScreens/components/AdminArea/components/FolderBrowser/FolderBrowser';
 import type { MoveEntryDialogProps } from './MoveEntryDialog.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Chooses the folder to move a file or folder into, with the same folder browser a library's folder
@@ -15,11 +16,19 @@ import type { MoveEntryDialogProps } from './MoveEntryDialog.types';
  * @param onMove - Told the folder chosen.
  */
 const MoveEntryDialog = ({ entry, start, onClose, onMove }: MoveEntryDialogProps) => (
-  <DialogCompanion label="Move" isOpen={entry !== null} onClose={onClose}>
+  <DialogCompanion
+    label={say('admin.moveEntryDialog.label')}
+    isOpen={entry !== null}
+    onClose={onClose}
+  >
     <DialogTitle
       size="compact"
-      title={`Move ${entry?.name ?? 'this'}`}
-      detail="Choose the folder to put it in. It keeps its name."
+      title={
+        entry === null
+          ? say('admin.moveEntryDialog.moveThis')
+          : say('admin.moveEntryDialog.title', { name: entry.name })
+      }
+      detail={say('admin.moveEntryDialog.detail')}
     />
 
     <DialogContent>

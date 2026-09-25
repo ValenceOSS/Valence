@@ -18,6 +18,8 @@ import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { RequestFailed } from '@ValenceClient/query/RequestFailed';
 import { pathSegments } from '@ValenceScreens/components/AdminArea/components/FolderBrowser/pathSegments';
 import type { FolderBrowserProps } from './FolderBrowser.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * Walks the folders on the machine running Valence, so whoever adds a library can point at where it
@@ -93,11 +95,11 @@ const FolderBrowser = ({ start, onChoose, onCancel }: FolderBrowserProps) => {
       const made = await createFolder(chosen, newName);
 
       await cache.invalidateQueries({ queryKey: adminQueries.folders(chosen).queryKey });
-      tellOutcome(`Made the folder ${newName}.`, null);
+      tellOutcome(say('admin.folderBrowser.madeFolder', { name: newName }), null);
       stopNaming();
       setAt(made.path);
     } catch (error) {
-      const said = error instanceof Error ? error.message : 'The folder could not be made.';
+      const said = error instanceof Error ? error.message : say('admin.folderBrowser.couldNotMake');
 
       setProblem(said);
       tellOutcome('', said);
@@ -113,7 +115,7 @@ const FolderBrowser = ({ start, onChoose, onCancel }: FolderBrowserProps) => {
           isIconOnly
           variant="secondary"
           size="xs"
-          label="Up a folder"
+          label={say('admin.folderBrowser.upAFolder')}
           disabled={at === null}
           onClick={() => {
             stopNaming();
@@ -127,7 +129,7 @@ const FolderBrowser = ({ start, onChoose, onCancel }: FolderBrowserProps) => {
           isIconOnly
           variant="secondary"
           size="xs"
-          label="New folder"
+          label={say('admin.folderBrowser.newFolder')}
           disabled={chosen === null}
           isActive={isNaming}
           onClick={() => {
@@ -142,7 +144,7 @@ const FolderBrowser = ({ start, onChoose, onCancel }: FolderBrowserProps) => {
         </Button>
 
         <nav
-          aria-label="Where you are"
+          aria-label={say('admin.folderBrowser.whereYouAre')}
           className="valence-rail flex min-w-0 items-center gap-0.5 overflow-x-auto"
         >
           <Button
@@ -152,7 +154,7 @@ const FolderBrowser = ({ start, onChoose, onCancel }: FolderBrowserProps) => {
               setAt(null);
             }}
           >
-            Places
+            {say('admin.folderBrowser.places')}
           </Button>
 
           {at === null
@@ -176,12 +178,14 @@ const FolderBrowser = ({ start, onChoose, onCancel }: FolderBrowserProps) => {
       </div>
 
       <TextField
-        label="Find a folder"
+        label={say('admin.folderBrowser.findLabel')}
         isLabelHidden
         size="sm"
         type="search"
         placeholder={
-          at === null ? 'Find a folder, or type a path' : 'Find a folder in here, or type a path'
+          at === null
+            ? say('admin.folderBrowser.findEverywhere')
+            : say('admin.folderBrowser.findHere')
         }
         value={typed}
         onValueChange={setTyped}
@@ -193,10 +197,10 @@ const FolderBrowser = ({ start, onChoose, onCancel }: FolderBrowserProps) => {
           <div className="flex items-end gap-2">
             <div className="min-w-0 flex-1">
               <TextField
-                label="Folder name"
+                label={say('admin.folderBrowser.folderName')}
                 value={newName}
                 onValueChange={setNewName}
-                placeholder="anime"
+                placeholder={say('admin.folderBrowser.folderNameExample')}
                 size="sm"
                 {...(problem === null ? {} : { error: problem })}
               />
@@ -211,11 +215,16 @@ const FolderBrowser = ({ start, onChoose, onCancel }: FolderBrowserProps) => {
                 void make();
               }}
             >
-              Create
+              {say('admin.folderBrowser.create')}
             </Button>
 
-            <Button variant="ghost" size="sm" label="Cancel the new folder" onClick={stopNaming}>
-              Cancel
+            <Button
+              variant="ghost"
+              size="sm"
+              label={say('admin.folderBrowser.cancelNewFolder')}
+              onClick={stopNaming}
+            >
+              {say('common.cancel')}
             </Button>
           </div>
         </div>
@@ -232,23 +241,23 @@ const FolderBrowser = ({ start, onChoose, onCancel }: FolderBrowserProps) => {
             }}
           >
             <Icon of={FolderIcon} size={16} />
-            <span className="truncate">Go to {words}</span>
+            <span className="truncate">{say('admin.folderBrowser.goTo', { path: words })}</span>
           </Button>
         ) : isSearching ? (
           searched.isPending ? (
-            <Spinner isCentered size="sm" label="Looking for folders" />
+            <Spinner isCentered size="sm" label={say('admin.folderBrowser.lookingForFolders')} />
           ) : searched.isError ? (
             <CouldNotRead
-              what="The folders"
+              what={say('admin.folderBrowser.theFolders')}
               isTryingAgain={searched.isFetching}
               onTryAgain={() => {
                 void searched.refetch();
               }}
             />
           ) : searched.data.folders.length === 0 ? (
-            <p className="p-4 text-sm text-text-muted">No folder here is called that.</p>
+            <p className="p-4 text-sm text-text-muted">{say('admin.folderBrowser.noMatch')}</p>
           ) : (
-            <ul aria-label="Folders found" className="flex flex-col">
+            <ul aria-label={say('admin.folderBrowser.foldersFound')} className="flex flex-col">
               {searched.data.folders.map((folder) => (
                 <li key={folder.path}>
                   <Button
@@ -270,23 +279,23 @@ const FolderBrowser = ({ start, onChoose, onCancel }: FolderBrowserProps) => {
             </ul>
           )
         ) : asked.isPending ? (
-          <Spinner isCentered size="sm" label="Reading the folders" />
+          <Spinner isCentered size="sm" label={say('admin.folderBrowser.readingFolders')} />
         ) : status === 403 ? (
-          <p className="p-4 text-sm text-text-muted">Valence is not allowed to read that folder.</p>
+          <p className="p-4 text-sm text-text-muted">{say('admin.folderBrowser.notAllowed')}</p>
         ) : isGone ? (
-          <p className="p-4 text-sm text-text-muted">That folder is not there.</p>
+          <p className="p-4 text-sm text-text-muted">{say('admin.folderBrowser.folderGone')}</p>
         ) : asked.isError ? (
           <CouldNotRead
-            what="The folders"
+            what={say('admin.folderBrowser.theFolders')}
             isTryingAgain={asked.isFetching}
             onTryAgain={() => {
               void asked.refetch();
             }}
           />
         ) : folders.length === 0 ? (
-          <p className="p-4 text-sm text-text-muted">No folders in here.</p>
+          <p className="p-4 text-sm text-text-muted">{say('admin.folderBrowser.noFolders')}</p>
         ) : (
-          <ul aria-label="Folders" className="flex flex-col">
+          <ul aria-label={say('admin.folderBrowser.folders')} className="flex flex-col">
             {folders.map((folder) => (
               <li key={folder.path}>
                 <Button
@@ -309,25 +318,24 @@ const FolderBrowser = ({ start, onChoose, onCancel }: FolderBrowserProps) => {
 
       {isSearching && searched.data?.isTruncated === true ? (
         <p className="text-xs text-text-muted">
-          Showing the nearest {searched.data.folders.length.toString()}. Go into a folder to look
-          further down it.
+          {say('admin.folderBrowser.nearest', { count: searched.data.folders.length })}
         </p>
       ) : null}
 
       {!isSearching && listing?.isTruncated === true ? (
         <p className="text-xs text-text-muted">
-          Showing the first {folders.length.toString()} folders.
+          {sayCount('admin.folderBrowser.firstFolders', folders.length)}
         </p>
       ) : null}
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="min-w-0 truncate text-xs text-text-muted">
-          {chosen ?? 'Choose a place to start'}
+          {chosen ?? say('admin.folderBrowser.choosePlace')}
         </span>
 
         <div className="flex shrink-0 gap-2">
           <Button variant="secondary" size="sm" onClick={onCancel}>
-            Cancel
+            {say('common.cancel')}
           </Button>
 
           <Button
@@ -340,7 +348,7 @@ const FolderBrowser = ({ start, onChoose, onCancel }: FolderBrowserProps) => {
               }
             }}
           >
-            Use this folder
+            {say('admin.folderBrowser.useThisFolder')}
           </Button>
         </div>
       </div>

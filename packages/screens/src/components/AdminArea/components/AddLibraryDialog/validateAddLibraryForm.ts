@@ -1,4 +1,5 @@
 import type { AddLibraryFormErrors } from './AddLibraryDialog.types';
+import { say } from '@ValenceI18n/say';
 
 type AddLibraryFormValues = {
   name: string;
@@ -17,15 +18,15 @@ const validateAddLibraryForm = (values: AddLibraryFormValues): AddLibraryFormErr
   const errors: AddLibraryFormErrors = {};
 
   if (values.name.trim().length === 0) {
-    errors.name = 'Enter a name for this library.';
+    errors.name = say('admin.validateAddLibraryForm.nameMissing');
   }
 
   if (values.path.trim().length === 0) {
-    errors.path = 'Enter the path to this library on the machine running Valence.';
+    errors.path = say('admin.validateAddLibraryForm.pathMissing');
   }
 
   if (values.flavour !== undefined && values.flavour.trim().length === 0) {
-    errors.flavour = 'Say what kind of library this is.';
+    errors.flavour = say('admin.validateAddLibraryForm.flavourMissing');
   }
 
   return errors;

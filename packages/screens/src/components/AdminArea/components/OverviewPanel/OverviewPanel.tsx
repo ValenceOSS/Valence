@@ -23,6 +23,8 @@ import type { StorageCount } from '@ValenceClient/admin/fetchAdmin';
 import type { LoadRange } from '@ValenceScreens/components/AdminArea/components/OverviewPanel/components/LoadRangeToggle/LoadRangeToggle.types';
 import type { OverviewPanelProps } from './OverviewPanel.types';
 import { describeJobStatus } from '@ValenceScreens/status/describeJobStatus';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import { useTicking } from '@ValenceScreens/clock/useTicking';
 import { A_CAPTION_AGES_EVERY } from '@ValenceScreens/clock/A_CAPTION_AGES_EVERY';
 
@@ -138,8 +140,8 @@ const OverviewPanel = ({
       const measured = await measureStorage();
 
       tellOutcome(
-        'Counted the storage again.',
-        failureOfMissing(measured, 'The storage could not be counted.'),
+        say('admin.overviewPanel.counted'),
+        failureOfMissing(measured, say('admin.overviewPanel.couldNotCount')),
       );
 
       if (measured !== null) {
@@ -155,12 +157,15 @@ const OverviewPanel = ({
   const running = (monitor?.queue.jobs ?? []).filter((job) => job.state === 'running');
   const waiting = monitor?.queue.queued ?? 0;
   const resources = monitor?.resources ?? null;
+  const [beforeWaiting, afterWaiting] = say('admin.overviewPanel.nothingRunningWaiting').split(
+    '{waiting}',
+  );
 
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Region
-          title="Server load"
+          title={say('admin.overviewPanel.serverLoad')}
           className="sm:col-span-2 xl:col-span-4"
           actions={<LoadRangeToggle value={loadRange} onChange={setLoadRange} />}
         >
@@ -168,15 +173,21 @@ const OverviewPanel = ({
             <TrendChart
               values={history}
               ceiling={100}
-              label="Processor use over the last minute"
+              label={say('admin.overviewPanel.lastMinuteLabel')}
               caption={
                 resources === null ? (
-                  'Waiting for the first reading.'
+                  say('admin.overviewPanel.waitingForReading')
                 ) : (
                   <>
-                    Now <AnimatedNumber value={Math.round(resources.systemCpuPercent)} suffix="%" />{' '}
-                    · peak <AnimatedNumber value={Math.round(Math.max(0, ...history))} suffix="%" />{' '}
-                    · <AnimatedNumber value={resources.cpuCount} suffix=" processors" /> · load{' '}
+                    {say('admin.overviewPanel.now')}{' '}
+                    <AnimatedNumber value={Math.round(resources.systemCpuPercent)} suffix="%" /> ·{' '}
+                    {say('admin.overviewPanel.peakAfter')}{' '}
+                    <AnimatedNumber value={Math.round(Math.max(0, ...history))} suffix="%" /> ·{' '}
+                    <AnimatedNumber
+                      value={resources.cpuCount}
+                      suffix={` ${sayCount('admin.overviewPanel.processors', resources.cpuCount)}`}
+                    />{' '}
+                    · {say('admin.overviewPanel.load')}{' '}
                     <AnimatedNumber
                       value={resources.loadAverage}
                       format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }}
@@ -189,18 +200,18 @@ const OverviewPanel = ({
             <TrendChart
               values={rangeValues}
               ceiling={100}
-              label={`Processor use over the last ${loadRange}`}
+              label={say('admin.overviewPanel.lastRangeLabel', { range: loadRange })}
               {...(rangeValues.length === 0
                 ? {}
                 : {
                     caption: (
                       <>
-                        Peak{' '}
+                        {say('admin.overviewPanel.peak')}{' '}
                         <AnimatedNumber
                           value={Math.round(Math.max(0, ...rangeValues))}
                           suffix="%"
                         />{' '}
-                        · average{' '}
+                        · {say('admin.overviewPanel.average')}{' '}
                         <AnimatedNumber
                           value={Math.round(
                             rangeValues.reduce((sum, value) => sum + value, 0) / rangeValues.length,
@@ -213,7 +224,10 @@ const OverviewPanel = ({
                         ) : (
                           <AnimatedNumber value={latestRangeSample.cpuCount} />
                         )}{' '}
-                        processors
+                        {sayCount(
+                          'admin.overviewPanel.processors',
+                          latestRangeSample?.cpuCount ?? 0,
+                        )}
                       </>
                     ),
                   })}
@@ -222,14 +236,14 @@ const OverviewPanel = ({
         </Region>
 
         <Region
-          title="Watching now"
-          action="All sessions"
+          title={say('admin.overviewPanel.watchingNow')}
+          action={say('admin.overviewPanel.allSessions')}
           onAction={() => {
             onOpenPanel('activity');
           }}
         >
           {watching.length === 0 ? (
-            <p className="text-sm text-text-muted">Nobody is watching anything.</p>
+            <p className="text-sm text-text-muted">{say('admin.overviewPanel.nobodyWatching')}</p>
           ) : (
             <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
               {watching.map((session) => (
@@ -244,7 +258,9 @@ const OverviewPanel = ({
                   </span>
 
                   <Badge size="sm">
-                    {session.playback?.mode === 'direct' ? 'Direct' : 'Transcode'}
+                    {session.playback?.mode === 'direct'
+                      ? say('admin.overviewPanel.direct')
+                      : say('admin.overviewPanel.transcode')}
                   </Badge>
                 </li>
               ))}
@@ -253,8 +269,8 @@ const OverviewPanel = ({
         </Region>
 
         <Region
-          title="Running now"
-          action="All jobs"
+          title={say('admin.overviewPanel.runningNow')}
+          action={say('admin.overviewPanel.allJobs')}
           onAction={() => {
             onOpenPanel('jobs');
           }}
@@ -262,10 +278,15 @@ const OverviewPanel = ({
           {running.length === 0 ? (
             <p className="text-sm text-text-muted">
               {waiting === 0 ? (
-                'Nothing is running.'
+                say('admin.overviewPanel.nothingRunning')
               ) : (
                 <>
-                  Nothing running, <AnimatedNumber value={waiting} suffix=" waiting" />.
+                  {beforeWaiting}
+                  <AnimatedNumber
+                    value={waiting}
+                    suffix={` ${sayCount('admin.overviewPanel.waiting', waiting)}`}
+                  />
+                  {afterWaiting}
                 </>
               )}
             </p>
@@ -290,15 +311,15 @@ const OverviewPanel = ({
         </Region>
 
         <Region
-          title="Libraries"
+          title={say('admin.overviewPanel.libraries')}
           className="sm:col-span-2 xl:col-span-2"
-          action="Manage"
+          action={say('admin.overviewPanel.manage')}
           onAction={() => {
             onOpenPanel('libraries');
           }}
         >
           {libraries.length === 0 ? (
-            <p className="text-sm text-text-muted">No libraries yet.</p>
+            <p className="text-sm text-text-muted">{say('admin.overviewPanel.noLibraries')}</p>
           ) : (
             <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
               {libraries.map((library) => (
@@ -309,14 +330,16 @@ const OverviewPanel = ({
                       <Badge size="sm">{library.kind}</Badge>
                     </span>
                     <span className="text-xs text-text-muted">
-                      Scanned {describeSince(library.lastScannedAt, now)}
+                      {say('admin.overviewPanel.scanned', {
+                        when: describeSince(library.lastScannedAt, now),
+                      })}
                     </span>
                   </span>
 
                   <span className="shrink-0 text-sm tabular-nums text-text-muted">
                     <AnimatedNumber
                       value={library.itemCount}
-                      suffix={library.itemCount === 1 ? ' item' : ' items'}
+                      suffix={` ${sayCount('admin.overviewPanel.items', library.itemCount)}`}
                     />
                   </span>
                 </li>
@@ -326,9 +349,9 @@ const OverviewPanel = ({
         </Region>
 
         <Region
-          title="Storage Valence is using"
+          title={say('admin.overviewPanel.storage')}
           className="sm:col-span-2 xl:col-span-4"
-          action="Refresh"
+          action={say('admin.overviewPanel.refresh')}
           actionIcon={RefreshCwIcon}
           isActionBusy={isCounting}
           onAction={() => {
@@ -352,8 +375,8 @@ const OverviewPanel = ({
         </Region>
 
         <Region
-          title="Recent jobs"
-          action="All work"
+          title={say('admin.overviewPanel.recentJobs')}
+          action={say('admin.overviewPanel.allWork')}
           onAction={() => {
             onOpenPanel('jobs');
           }}

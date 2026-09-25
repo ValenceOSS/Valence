@@ -37,12 +37,30 @@ import type {
   ReleaseType,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type { AskForMediaDialogProps } from './AskForMediaDialog.types';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
-const KINDS: readonly { id: MediaRequestKind; label: string; one: string }[] = [
-  { id: 'film', label: 'A film', one: 'a film' },
-  { id: 'series', label: 'A series', one: 'a series' },
-  { id: 'artist', label: 'An artist', one: 'an artist' },
-  { id: 'album', label: 'An album', one: 'an album' },
+const KINDS: readonly { id: MediaRequestKind; labelKey: StringKey; searchKey: StringKey }[] = [
+  {
+    id: 'film',
+    labelKey: 'admin.askForMediaDialog.film',
+    searchKey: 'admin.askForMediaDialog.searchFilm',
+  },
+  {
+    id: 'series',
+    labelKey: 'admin.askForMediaDialog.series',
+    searchKey: 'admin.askForMediaDialog.searchSeries',
+  },
+  {
+    id: 'artist',
+    labelKey: 'admin.askForMediaDialog.artist',
+    searchKey: 'admin.askForMediaDialog.searchArtist',
+  },
+  {
+    id: 'album',
+    labelKey: 'admin.askForMediaDialog.album',
+    searchKey: 'admin.askForMediaDialog.searchAlbum',
+  },
 ];
 
 type Chosen = {
@@ -83,18 +101,18 @@ const chosenMusic = (match: MusicCatalogueHit): Chosen => ({
 
 const THE_LIBRARYS = 'library';
 
-const LATER_PICKS: Readonly<Record<MediaRequestKind, string>> = {
-  film: '',
-  series: ' Later episodes wait for a pick too.',
-  artist: ' Later albums wait for a pick too.',
-  album: '',
-  book: '',
+const PICKED_BY_HAND: Readonly<Record<MediaRequestKind, StringKey>> = {
+  film: 'admin.askForMediaDialog.pickedByHand',
+  series: 'admin.askForMediaDialog.pickedByHandSeries',
+  artist: 'admin.askForMediaDialog.pickedByHandArtist',
+  album: 'admin.askForMediaDialog.pickedByHand',
+  book: 'admin.askForMediaDialog.pickedByHand',
 };
 
 const PICKING = [
-  { id: 'best', label: 'The best by its quality' },
-  { id: 'hand', label: 'I will pick it' },
-] as const;
+  { id: 'best', labelKey: 'admin.askForMediaDialog.pickBest' },
+  { id: 'hand', labelKey: 'admin.askForMediaDialog.pickByHand' },
+] as const satisfies readonly { id: string; labelKey: StringKey }[];
 
 /**
  * Asks for a film, a series, an artist or an album: the catalogue — TMDB, or MusicBrainz for music
@@ -125,7 +143,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
   const profiles = useQuery({ ...requestsQueries.profiles(), enabled: isOpen });
   const isMusic = isMusicRequest(kind);
   const qualities = [
-    { id: THE_LIBRARYS, label: 'The library’s own profile' },
+    { id: THE_LIBRARYS, label: say('admin.askForMediaDialog.librarysProfile') },
     ...(profiles.data ?? [])
       .filter((profile) => profile.kind === (isMusic ? 'music' : 'video'))
       .map((profile) => ({ id: profile.id, label: profile.name })),
@@ -185,7 +203,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
     void findReleasesFor(asked)
       .then(({ value, refusal }) => {
         if (value === null) {
-          setProblem(refusal?.message ?? 'The indexers could not be asked.');
+          setProblem(refusal?.message ?? say('admin.askForMediaDialog.couldNotAskIndexers'));
 
           return;
         }
@@ -211,12 +229,12 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
     void askForMedia({ ...asked, ...(release === null ? {} : { release }) })
       .then(({ value, refusal }) => {
         if (value === null) {
-          setProblem(refusal?.message ?? 'That could not be requested.');
+          setProblem(refusal?.message ?? say('admin.askForMediaDialog.couldNotRequest'));
 
           return;
         }
 
-        notify.worked('Asked for it.');
+        notify.worked(say('admin.askForMediaDialog.asked'));
         onAsked(value);
         setChosen(null);
         setMatches(null);
@@ -232,11 +250,16 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
   };
 
   return (
-    <DialogCompanion label="Request media" isOpen={isOpen} onClose={onClose} size="stage">
+    <DialogCompanion
+      label={say('admin.askForMediaDialog.title')}
+      isOpen={isOpen}
+      onClose={onClose}
+      size="stage"
+    >
       <DialogTitle
         size="compact"
-        title="Request media"
-        detail="Find a film, a series, an artist or an album in the catalogue. Once it is approved, it is searched for, downloaded and filed into its library."
+        title={say('admin.askForMediaDialog.title')}
+        detail={say('admin.askForMediaDialog.detail')}
       />
 
       <DialogContent
@@ -250,18 +273,18 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
             found={found.outcome}
             foundAt={found.at}
             pickingId={pickingId}
-            emptyMessage="Nothing the indexers have is for this. Go back and fetch the best by itself, to wait for one."
+            emptyMessage={say('admin.askForMediaDialog.noReleases')}
             onPick={(release) => {
               ask(release);
             }}
           />
         ) : chosen === null ? (
           <>
-            <FormField label="What">
+            <FormField label={say('admin.askForMediaDialog.what')}>
               <SegmentedRow
-                label="What"
+                label={say('admin.askForMediaDialog.what')}
                 size="sm"
-                items={KINDS}
+                items={KINDS.map((one) => ({ id: one.id, label: say(one.labelKey) }))}
                 value={kind}
                 onSelect={(next) => {
                   const picked = KINDS.find((one) => one.id === next)?.id;
@@ -278,7 +301,10 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
 
             <div className="flex flex-wrap items-end gap-3">
               <TextField
-                label={`Search for ${KINDS.find((one) => one.id === kind)?.one ?? 'it'}`}
+                label={say(
+                  KINDS.find((one) => one.id === kind)?.searchKey ??
+                    'admin.askForMediaDialog.searchIt',
+                )}
                 value={query}
                 onValueChange={setQuery}
                 className="min-w-0 flex-1"
@@ -291,16 +317,18 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                 onClick={look}
               >
                 <Icon of={SearchIcon} size={16} />
-                Search
+                {say('admin.askForMediaDialog.search')}
               </Button>
             </div>
 
-            {isSearching ? <Spinner label="Asking the catalogue" size="sm" /> : null}
+            {isSearching ? (
+              <Spinner label={say('admin.askForMediaDialog.asking')} size="sm" />
+            ) : null}
 
             {isSearching ? null : isMusic ? (
               musicMatches === null ? null : musicMatches.length === 0 ? (
                 <p className="font-body text-sm text-text-muted">
-                  MusicBrainz knows nothing under that name.
+                  {say('admin.askForMediaDialog.noMusic')}
                 </p>
               ) : (
                 <MusicMatchList
@@ -312,7 +340,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
               )
             ) : matches === null ? null : matches.length === 0 ? (
               <p className="font-body text-sm text-text-muted">
-                Nothing came back under that name.
+                {say('admin.askForMediaDialog.noMatches')}
               </p>
             ) : (
               <CatalogueMatchList
@@ -332,7 +360,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                   {chosen.year === null ? '' : ` (${chosen.year.toString()})`}
                 </span>
                 <span className="line-clamp-3 font-body text-xs text-text-muted">
-                  {chosen.overview ?? (isMusic ? '' : 'No synopsis.')}
+                  {chosen.overview ?? (isMusic ? '' : say('admin.askForMediaDialog.noSynopsis'))}
                 </span>
               </span>
 
@@ -345,21 +373,21 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                   setFound(null);
                 }}
               >
-                Choose another
+                {say('admin.askForMediaDialog.chooseAnother')}
               </Button>
             </div>
 
             <FormField
-              label="Quality"
-              description="The profile its releases are judged by. Profiles are kept on the Profiles page."
+              label={say('admin.askForMediaDialog.quality')}
+              description={say('admin.askForMediaDialog.qualityDescription')}
             >
               <OptionMenu
-                label="Quality"
+                label={say('admin.askForMediaDialog.quality')}
                 triggerShape="field"
                 matchTriggerWidth
                 groups={[
                   {
-                    name: 'Quality',
+                    name: say('admin.askForMediaDialog.quality'),
                     selectedId: profileId ?? THE_LIBRARYS,
                     onSelect: (next) => {
                       setProfileId(next === THE_LIBRARYS ? null : next);
@@ -370,7 +398,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                 trigger={
                   <>
                     <span className="truncate">
-                      {quality?.label ?? 'The library’s own profile'}
+                      {quality?.label ?? say('admin.askForMediaDialog.librarysProfile')}
                     </span>
                     <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
                   </>
@@ -387,17 +415,17 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
             )}
 
             <FormField
-              label="Release"
+              label={say('admin.askForMediaDialog.release')}
               description={
                 isPickedByHand
-                  ? `You pick from what the indexers have before anything is requested.${LATER_PICKS[kind]}`
-                  : 'The best release by its quality is fetched as soon as one turns up.'
+                  ? say(PICKED_BY_HAND[kind])
+                  : say('admin.askForMediaDialog.pickedBest')
               }
             >
               <SegmentedRow
-                label="Release"
+                label={say('admin.askForMediaDialog.release')}
                 size="sm"
-                items={PICKING}
+                items={PICKING.map((one) => ({ id: one.id, label: say(one.labelKey) }))}
                 value={isPickedByHand ? 'hand' : 'best'}
                 onSelect={(next) => {
                   setIsPickedByHand(next === 'hand');
@@ -416,13 +444,13 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
             ? undefined
             : isPickedByHand
               ? {
-                  label: 'Find releases',
+                  label: say('admin.askForMediaDialog.findReleases'),
                   isDisabled: !isReady,
                   isLoading: isFinding,
                   onChoose: findReleases,
                 }
               : {
-                  label: 'Request it',
+                  label: say('admin.askForMediaDialog.requestIt'),
                   isDisabled: !isReady,
                   isLoading: isAsking,
                   onChoose: () => {
@@ -438,7 +466,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
               setFound(null);
             }}
           >
-            Back
+            {say('common.back')}
           </Button>
         )}
       </DialogFooter>

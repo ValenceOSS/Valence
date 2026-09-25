@@ -1,6 +1,7 @@
 import { docsFor } from '@ValenceCore/functions/docsFor';
 import type { DownloadClientState } from '@ValenceContracts/schemas/DownloadQueue';
 import type { StateBadge } from '@ValenceClient/status/StateBadge';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says how a download client is, as a badge and the line beneath it: switched off, not asked yet,
@@ -15,17 +16,17 @@ const describeClientState = (
   reading: DownloadClientState | undefined,
 ): StateBadge => {
   if (!isEnabled) {
-    return { label: 'Off', tone: 'quiet', detail: null };
+    return { label: say('admin.describeClientState.off'), tone: 'quiet', detail: null };
   }
 
   if (reading === undefined || reading.checkedAt === null) {
-    return { label: 'Not asked yet', tone: 'quiet', detail: null };
+    return { label: say('admin.describeClientState.notAskedYet'), tone: 'quiet', detail: null };
   }
 
   return reading.isReachable
-    ? { label: 'Answering', tone: 'success', detail: null }
+    ? { label: say('admin.describeClientState.answering'), tone: 'success', detail: null }
     : {
-        label: 'Unreachable',
+        label: say('admin.describeClientState.unreachable'),
         tone: 'danger',
         detail: reading.problem,
         help: docsFor(reading.problemCode),

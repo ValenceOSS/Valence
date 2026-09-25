@@ -6,6 +6,7 @@ import { IndexerReportList } from '@ValenceScreens/components/AdminArea/componen
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Release } from '@ValenceContracts/schemas/Indexer';
 import type { ReleasePickTableProps } from './ReleasePickTable.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The releases found for something asked for, judged and best first, with what each indexer said,
@@ -47,7 +48,7 @@ const ReleasePickTable = ({
                 onPick(row.original);
               }}
             >
-              Fetch this
+              {say('admin.releasePickTable.fetchThis')}
             </Button>
           </span>
         ),
@@ -61,7 +62,7 @@ const ReleasePickTable = ({
       <IndexerReportList reports={found.indexers} />
 
       <DataTable
-        label="Releases found"
+        label={say('admin.releasePickTable.label')}
         columns={columns}
         rows={found.releases}
         height="parent"

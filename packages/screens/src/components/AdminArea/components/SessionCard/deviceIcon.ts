@@ -8,6 +8,7 @@ import {
 import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
 
+// eslint-disable-next-line valence/no-hard-coded-strings -- browser names matched against a device label, not words shown
 const BROWSERS = ['Edge', 'Opera', 'Chromium', 'Chrome', 'Firefox'] as const;
 
 /**

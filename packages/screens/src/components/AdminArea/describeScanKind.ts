@@ -1,14 +1,17 @@
-const WORDS: Record<string, string> = {
-  scan: 'Scanning',
-  rescan: 'Reading every file in',
-  regeneratePreviews: 'Regenerating previews for',
-  'library.scan': 'Scanning',
-  'library.readAgain': 'Reading the corrected files in',
-  'library.regeneratePreviews': 'Regenerating previews for',
-  'library.regenerateTrickplay': 'Regenerating thumbnails for',
-  'library.detectSegments': 'Detecting intros in',
-  'library.reset': 'Rebuilding',
-  'library.clearParts': 'Clearing parts of',
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
+
+const WORDS: Partial<Record<string, StringKey>> = {
+  scan: 'admin.describeScanKind.scan',
+  rescan: 'admin.describeScanKind.rescan',
+  regeneratePreviews: 'admin.describeScanKind.regeneratePreviews',
+  'library.scan': 'admin.describeScanKind.scan',
+  'library.readAgain': 'admin.describeScanKind.readAgain',
+  'library.regeneratePreviews': 'admin.describeScanKind.regeneratePreviews',
+  'library.regenerateTrickplay': 'admin.describeScanKind.regenerateTrickplay',
+  'library.detectSegments': 'admin.describeScanKind.detectSegments',
+  'library.reset': 'admin.describeScanKind.reset',
+  'library.clearParts': 'admin.describeScanKind.clearParts',
 };
 
 /**
@@ -20,6 +23,6 @@ const WORDS: Record<string, string> = {
  * @returns The phrase to show.
  */
 const describeScanKind = (kind: string, libraryName: string): string =>
-  `${WORDS[kind] ?? 'Working on'} ${libraryName}`;
+  say(WORDS[kind] ?? 'admin.describeScanKind.other', { name: libraryName });
 
 export { describeScanKind };

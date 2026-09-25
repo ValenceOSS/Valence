@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { runQueuedJobNow } from '@ValenceClient/admin/fetchAdmin';
@@ -50,17 +51,17 @@ const RunningWorkDialog = ({ title, isOpen, progress, tasks, onClose }: RunningW
           <Button
             variant="ghost"
             size="xs"
-            label={`Run ${task.subject} now`}
+            label={say('admin.runningWorkDialog.runNowLabel', { subject: task.subject })}
             hasTooltip={false}
             onClick={() => {
               void runQueuedJobNow(task.id);
             }}
           >
-            Run now
+            {say('admin.runningWorkDialog.runNow')}
           </Button>
 
           <Badge size="sm" tone="quiet">
-            Waiting
+            {say('admin.runningWorkDialog.waitingBadge')}
           </Badge>
         </>
       ) : (
@@ -74,16 +75,27 @@ const RunningWorkDialog = ({ title, isOpen, progress, tasks, onClose }: RunningW
   const ordered = [...tasks].sort((left, right) => ORDER[left.state] - ORDER[right.state]);
 
   return (
-    <Dialog label={`What ${title} is doing`} isOpen={isOpen} onClose={onClose}>
+    <Dialog
+      label={say('admin.runningWorkDialog.label', { title })}
+      isOpen={isOpen}
+      onClose={onClose}
+    >
       <DialogTitle
         title={title}
         detail={
           tasks.length === 0 ? (
-            'Nothing in the queue is tied to it yet.'
+            say('admin.runningWorkDialog.nothingQueued')
           ) : (
             <>
-              <AnimatedNumber value={running} suffix=" running" /> ·{' '}
-              <AnimatedNumber value={waiting + notYetQueued} suffix=" waiting" />
+              <AnimatedNumber
+                value={running}
+                suffix={say('admin.runningWorkDialog.runningSuffix')}
+              />{' '}
+              ·{' '}
+              <AnimatedNumber
+                value={waiting + notYetQueued}
+                suffix={say('admin.runningWorkDialog.waitingSuffix')}
+              />
             </>
           )
         }
@@ -108,8 +120,7 @@ const RunningWorkDialog = ({ title, isOpen, progress, tasks, onClose }: RunningW
 
               {entry.isStopping === true ? (
                 <p className="text-xs text-text-muted">
-                  Finishing what it has already started, then it will stop. What is still queued
-                  behind it is left undone until it is run again.
+                  {say('admin.runningWorkDialog.stoppingNote')}
                 </p>
               ) : null}
             </div>
@@ -122,11 +133,14 @@ const RunningWorkDialog = ({ title, isOpen, progress, tasks, onClose }: RunningW
               {notYetQueued === 0 ? null : (
                 <li className="flex items-center gap-3 py-3">
                   <span className="min-w-0 flex-1 text-sm text-text-muted">
-                    <AnimatedNumber value={notYetQueued} suffix=" more not started yet" />
+                    <AnimatedNumber
+                      value={notYetQueued}
+                      suffix={say('admin.runningWorkDialog.notStartedSuffix')}
+                    />
                   </span>
 
                   <Badge size="sm" tone="quiet">
-                    Waiting
+                    {say('admin.runningWorkDialog.waitingBadge')}
                   </Badge>
                 </li>
               )}

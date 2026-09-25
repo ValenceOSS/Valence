@@ -10,7 +10,8 @@ import type { Connect, Handlers } from '@ValenceClient/realtime/createRealtimeCl
 import { useState } from 'react';
 import { TabRow } from '@ValenceUI/TabRow';
 import { Tabs } from '@ValenceUI/Tabs';
-import { ADMIN_PANELS, ADMIN_SECTIONS } from './adminSections';
+import { ADMIN_PANELS } from './adminSections';
+import { visibleAdminSections } from './visibleAdminSections';
 import { AdminArea } from './AdminArea';
 import type { AdminAreaProps } from './AdminArea.types';
 import { resetForTests as resetScanCoordinator } from './scanCoordinator';
@@ -473,7 +474,7 @@ const TheAdmin = ({
     <Tabs value={showing} onValueChange={move}>
       <TabRow
         tone="underlined"
-        groups={ADMIN_SECTIONS.map((section) => ({
+        groups={visibleAdminSections(true).map((section) => ({
           ...(section.label === null ? {} : { label: section.label }),
           items: section.items,
         }))}

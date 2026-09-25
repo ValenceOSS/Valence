@@ -5,6 +5,7 @@ import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Spinner } from '@ValenceUI/Spinner';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import type { RequestHistoryTabProps } from './RequestHistoryTab.types';
+import { say } from '@ValenceI18n/say';
 
 const WHEN = new Intl.DateTimeFormat('en-GB', {
   day: 'numeric',
@@ -28,7 +29,7 @@ const RequestHistoryTab = ({ request }: RequestHistoryTabProps) => {
   if (said.isError) {
     return (
       <CouldNotRead
-        what="What it has done"
+        what={say('admin.requestHistoryTab.what')}
         isTryingAgain={said.isFetching}
         onTryAgain={() => {
           void said.refetch();
@@ -38,15 +39,17 @@ const RequestHistoryTab = ({ request }: RequestHistoryTabProps) => {
   }
 
   if (said.data === undefined) {
-    return <Spinner isCentered label="Reading what it has done" size="sm" />;
+    return <Spinner isCentered label={say('admin.requestHistoryTab.reading')} size="sm" />;
   }
 
   if (said.data.length === 0) {
-    return <p className="font-body text-sm text-text-muted">Nothing yet.</p>;
+    return (
+      <p className="font-body text-sm text-text-muted">{say('admin.requestHistoryTab.empty')}</p>
+    );
   }
 
   return (
-    <ol aria-label="What it has done" className="flex flex-col gap-2">
+    <ol aria-label={say('admin.requestHistoryTab.what')} className="flex flex-col gap-2">
       {said.data.map((line) => (
         <li key={line.id} className="flex gap-3 text-sm">
           <time dateTime={line.at} className="shrink-0 tabular-nums text-xs text-text-muted">

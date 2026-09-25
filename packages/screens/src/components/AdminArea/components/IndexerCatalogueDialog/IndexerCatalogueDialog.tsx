@@ -29,28 +29,54 @@ import type {
 } from '@ValenceContracts/schemas/IndexerDefinition';
 import type { IndexerCatalogueDialogProps } from './IndexerCatalogueDialog.types';
 import { Card } from '@ValenceUI/Card';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
 const PRIVACIES = [
-  { id: 'any', label: 'Any' },
-  { id: 'public', label: 'Public' },
-  { id: 'semi-private', label: 'Semi-private' },
-  { id: 'private', label: 'Private' },
-] as const;
+  { id: 'any', labelKey: 'admin.indexerCatalogueDialog.anyPrivacy' },
+  { id: 'public', labelKey: 'admin.indexerCatalogueDialog.public' },
+  { id: 'semi-private', labelKey: 'admin.indexerCatalogueDialog.semiPrivate' },
+  { id: 'private', labelKey: 'admin.indexerCatalogueDialog.private' },
+] as const satisfies readonly { id: IndexerPrivacy | 'any'; labelKey: StringKey }[];
 
-const PRIVACY: Readonly<Record<IndexerPrivacy, { label: string; tone: BadgeTone }>> = {
-  public: { label: 'Public', tone: 'success' },
-  'semi-private': { label: 'Semi-private', tone: 'warning' },
-  private: { label: 'Private', tone: 'accent' },
+const PRIVACY: Readonly<Record<IndexerPrivacy, { labelKey: StringKey; tone: BadgeTone }>> = {
+  public: { labelKey: 'admin.indexerCatalogueDialog.public', tone: 'success' },
+  'semi-private': { labelKey: 'admin.indexerCatalogueDialog.semiPrivate', tone: 'warning' },
+  private: { labelKey: 'admin.indexerCatalogueDialog.private', tone: 'accent' },
 };
 
-const GENERIC: readonly { id: 'torznab' | 'newznab'; name: string; description: string }[] = [
+const GENERIC: readonly {
+  id: 'torznab' | 'newznab';
+  nameKey: StringKey;
+  descriptionKey: StringKey;
+}[] = [
   {
     id: 'torznab',
-    name: 'Generic Torznab',
-    description: 'Any torrent indexer with a Torznab feed, such as one from Jackett or Prowlarr.',
+    nameKey: 'admin.indexerCatalogueDialog.torznab',
+    descriptionKey: 'admin.indexerCatalogueDialog.torznabDetail',
   },
-  { id: 'newznab', name: 'Generic Newznab', description: 'Any usenet indexer with a Newznab API.' },
+  {
+    id: 'newznab',
+    nameKey: 'admin.indexerCatalogueDialog.newznab',
+    descriptionKey: 'admin.indexerCatalogueDialog.newznabDetail',
+  },
 ];
+
+const FILTERS = {
+  category: {
+    nameKey: 'admin.indexerCatalogueDialog.category',
+    filterKey: 'admin.indexerCatalogueDialog.filterByCategory',
+    anyKey: 'admin.indexerCatalogueDialog.anyCategory',
+  },
+  language: {
+    nameKey: 'admin.indexerCatalogueDialog.language',
+    filterKey: 'admin.indexerCatalogueDialog.filterByLanguage',
+    anyKey: 'admin.indexerCatalogueDialog.anyLanguage',
+  },
+} as const satisfies Record<
+  string,
+  { nameKey: StringKey; filterKey: StringKey; anyKey: StringKey }
+>;
 
 /**
  * Chooses what to add: a site from the catalogue of definitions, found by name, privacy, category or
@@ -89,7 +115,7 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
     () => [
       {
         id: 'name',
-        header: 'Site',
+        header: say('admin.indexerCatalogueDialog.site'),
         accessorFn: (definition) => definition.name,
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col gap-0.5">
@@ -100,23 +126,23 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
       },
       {
         id: 'language',
-        header: 'Language',
+        header: say('admin.indexerCatalogueDialog.language'),
         accessorFn: (definition) => definition.language,
         cell: ({ row }) => <span className="text-xs text-text-muted">{row.original.language}</span>,
       },
       {
         id: 'privacy',
-        header: 'Privacy',
+        header: say('admin.indexerCatalogueDialog.privacy'),
         accessorFn: (definition) => definition.privacy,
         cell: ({ row }) => (
           <Badge size="sm" tone={PRIVACY[row.original.privacy].tone}>
-            {PRIVACY[row.original.privacy].label}
+            {say(PRIVACY[row.original.privacy].labelKey)}
           </Badge>
         ),
       },
       {
         id: 'categories',
-        header: 'Has',
+        header: say('admin.indexerCatalogueDialog.has'),
         enableSorting: false,
         cell: ({ row }) => (
           <span className="flex flex-wrap gap-1">
@@ -139,11 +165,11 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
     void refreshCatalogue()
       .then((fresh) => {
         cache.setQueryData(requestsQueries.catalogue().queryKey, fresh);
-        notify.worked('Brought the catalogue up to date.');
+        notify.worked(say('admin.indexerCatalogueDialog.refreshed'));
       })
       .catch(() => {
-        notify.failed('The catalogue could not be brought up to date.');
-        setProblem('The catalogue could not be brought up to date.');
+        notify.failed(say('admin.indexerCatalogueDialog.couldNotRefresh'));
+        setProblem(say('admin.indexerCatalogueDialog.couldNotRefresh'));
       })
       .finally(() => {
         setIsRefreshing(false);
@@ -151,29 +177,29 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
   };
 
   const menu = (
-    label: string,
+    filter: (typeof FILTERS)[keyof typeof FILTERS],
     value: string,
     options: readonly string[],
     onSelect: (next: string) => void,
   ) => (
     <OptionMenu
-      label={`Filter by ${label.toLowerCase()}`}
+      label={say(filter.filterKey)}
       triggerShape="field"
       className="w-40"
       groups={[
         {
-          name: label,
+          name: say(filter.nameKey),
           selectedId: value,
           onSelect,
           options: [
-            { id: '', label: `Any ${label.toLowerCase()}` },
+            { id: '', label: say(filter.anyKey) },
             ...options.map((option) => ({ id: option, label: option })),
           ],
         },
       ]}
       trigger={
         <>
-          <span className="truncate">{value === '' ? `Any ${label.toLowerCase()}` : value}</span>
+          <span className="truncate">{value === '' ? say(filter.anyKey) : value}</span>
           <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
         </>
       }
@@ -181,11 +207,16 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
   );
 
   return (
-    <DialogCompanion label="Add an indexer" isOpen={isOpen} onClose={onClose} size="stage">
+    <DialogCompanion
+      label={say('admin.indexerCatalogueDialog.title')}
+      isOpen={isOpen}
+      onClose={onClose}
+      size="stage"
+    >
       <DialogTitle
         size="compact"
-        title="Add an indexer"
-        detail="Choose the site to search, or a generic Torznab or Newznab feed for one that is not listed."
+        title={say('admin.indexerCatalogueDialog.title')}
+        detail={say('admin.indexerCatalogueDialog.detail')}
       />
 
       <DialogContent className="flex min-h-0 flex-col gap-4 overflow-hidden">
@@ -200,30 +231,30 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
                 onChoose({ kind: generic.id });
               }}
             >
-              <span className="text-sm font-medium text-text">{generic.name}</span>
-              <span className="text-xs text-text-muted">{generic.description}</span>
+              <span className="text-sm font-medium text-text">{say(generic.nameKey)}</span>
+              <span className="text-xs text-text-muted">{say(generic.descriptionKey)}</span>
             </Button>
           ))}
         </div>
 
         <div className="flex shrink-0 flex-wrap items-end gap-3">
           <TextField
-            label="Find a site"
+            label={say('admin.indexerCatalogueDialog.findSite')}
             type="search"
             value={words}
             onValueChange={setWords}
-            placeholder="1337x, rutracker, anime…"
+            placeholder={say('admin.indexerCatalogueDialog.findSitePlaceholder')}
             className="min-w-[14rem] flex-1"
           />
-          {menu('Category', category, categories, setCategory)}
-          {menu('Language', language, languages, setLanguage)}
+          {menu(FILTERS.category, category, categories, setCategory)}
+          {menu(FILTERS.language, language, languages, setLanguage)}
         </div>
 
         <SegmentedRow
-          label="Privacy"
+          label={say('admin.indexerCatalogueDialog.privacy')}
           size="sm"
           className="shrink-0 self-start"
-          items={PRIVACIES}
+          items={PRIVACIES.map((one) => ({ id: one.id, label: say(one.labelKey) }))}
           value={privacy}
           onSelect={(next) => {
             const chosen = PRIVACIES.find((one) => one.id === next)?.id;
@@ -236,18 +267,18 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
 
         {asked.isError ? (
           <CouldNotRead
-            what="The catalogue"
+            what={say('admin.indexerCatalogueDialog.theCatalogue')}
             isTryingAgain={asked.isFetching}
             onTryAgain={() => {
               void asked.refetch();
             }}
           />
         ) : asked.isPending ? (
-          <Spinner isCentered label="Reading the catalogue" size="sm" />
+          <Spinner isCentered label={say('admin.indexerCatalogueDialog.reading')} size="sm" />
         ) : (
           <Card padding="none" className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <DataTable
-              label="Sites"
+              label={say('admin.indexerCatalogueDialog.sites')}
               columns={columns}
               rows={shown}
               height="parent"
@@ -259,8 +290,8 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
               }}
               emptyMessage={
                 asked.data.definitions.length === 0
-                  ? 'The catalogue is empty. Bring it up to date to fetch the sites Valence can search.'
-                  : 'No site matches. Try fewer words, or another category.'
+                  ? say('admin.indexerCatalogueDialog.empty')
+                  : say('admin.indexerCatalogueDialog.noMatch')
               }
             />
           </Card>
@@ -270,7 +301,7 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
       <DialogFooter note={problem ?? asked.data?.problem} dismiss={{ onChoose: onClose }}>
         <Button variant="secondary" isLoading={isRefreshing} onClick={refresh}>
           <Icon of={RefreshCwIcon} size={15} />
-          Bring up to date
+          {say('admin.indexerCatalogueDialog.refresh')}
         </Button>
       </DialogFooter>
     </DialogCompanion>

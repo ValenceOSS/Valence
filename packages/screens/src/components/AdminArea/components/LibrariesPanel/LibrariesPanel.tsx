@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { Icon } from '@ValenceUI/Icon';
 import { Info as InfoIcon, MoreHorizontal as MoreHorizontalIcon } from '@keyline-icons/react';
@@ -100,7 +102,7 @@ const LibrariesPanel = ({
     () => [
       {
         id: 'name',
-        header: 'Library',
+        header: say('admin.librariesPanel.libraryHeader'),
         accessorFn: (library) => library.name,
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col gap-0.5">
@@ -117,20 +119,20 @@ const LibrariesPanel = ({
       },
       {
         id: 'items',
-        header: 'Items',
+        header: say('admin.librariesPanel.itemsHeader'),
         accessorFn: (library) => library.itemCount,
         cell: ({ row }) => (
           <span className="whitespace-nowrap tabular-nums text-text-muted">
             <AnimatedNumber
               value={row.original.itemCount}
-              suffix={row.original.itemCount === 1 ? ' item' : ' items'}
+              suffix={sayCount('admin.librariesPanel.itemSuffix', row.original.itemCount)}
             />
           </span>
         ),
       },
       {
         id: 'scanned',
-        header: 'Last read',
+        header: say('admin.librariesPanel.lastReadHeader'),
         accessorFn: (library) => library.lastScannedAt ?? '',
         cell: ({ row }) => (
           <div className="flex flex-col gap-0.5">
@@ -153,7 +155,7 @@ const LibrariesPanel = ({
       },
       {
         id: 'state',
-        header: 'State',
+        header: say('admin.librariesPanel.stateHeader'),
         enableSorting: false,
         cell: ({ row }) => {
           const busy = workOf(progress, row.original.id);
@@ -161,7 +163,7 @@ const LibrariesPanel = ({
           if (busy.length === 0) {
             return (
               <Badge size="sm" tone="accent">
-                Idle
+                {say('admin.librariesPanel.idle')}
               </Badge>
             );
           }
@@ -171,14 +173,14 @@ const LibrariesPanel = ({
               <Badge size="sm" tone={STATUS_LOOK.working.tone}>
                 {readingOf(progress, row.original.id) === undefined
                   ? STATUS_LOOK.working.label
-                  : 'Reading'}
+                  : say('admin.librariesPanel.reading')}
               </Badge>
 
               <Button
                 variant="subtle"
                 size="none"
                 isIconOnly
-                label={`What ${row.original.name} is doing`}
+                label={say('admin.librariesPanel.whatItIsDoing', { name: row.original.name })}
                 onClick={() => {
                   setWatching(row.original);
                 }}
@@ -196,14 +198,14 @@ const LibrariesPanel = ({
         cell: ({ row }) => (
           <span className="flex justify-end">
             <ActionMenu
-              label={`Actions for ${row.original.name}`}
+              label={say('admin.librariesPanel.actionsFor', { name: row.original.name })}
               trigger={<Icon of={MoreHorizontalIcon} size={16} />}
               groups={[
                 {
                   items: [
                     {
                       id: 'scan',
-                      label: 'Scan for changes',
+                      label: say('admin.librariesPanel.scanForChanges'),
                       icon: <Icon of={RefreshCwFilledIcon} size={15} />,
                       isDisabled: readingOf(progress, row.original.id) !== undefined,
                       onChoose: () => {
@@ -212,7 +214,7 @@ const LibrariesPanel = ({
                     },
                     {
                       id: 'upload',
-                      label: 'Upload media',
+                      label: say('admin.librariesPanel.uploadMedia'),
                       icon: <Icon of={FileArrowUpFilledIcon} size={15} />,
                       onChoose: () => {
                         setUploadingTo(row.original);
@@ -220,7 +222,7 @@ const LibrariesPanel = ({
                     },
                     {
                       id: 'reread',
-                      label: 'Read every file again',
+                      label: say('admin.librariesPanel.rereadMenu'),
                       icon: <Icon of={RotateCwFilledIcon} size={15} />,
                       isDisabled: readingOf(progress, row.original.id) !== undefined,
                       onChoose: () => {
@@ -231,7 +233,7 @@ const LibrariesPanel = ({
                       ? [
                           {
                             id: 'previews',
-                            label: 'Generate missing previews',
+                            label: say('admin.librariesPanel.generatePreviews'),
                             icon: <Icon of={ImagesFilledIcon} size={15} />,
                             isDisabled: readingOf(progress, row.original.id) !== undefined,
                             onChoose: () => {
@@ -246,7 +248,7 @@ const LibrariesPanel = ({
                   items: [
                     {
                       id: 'settings',
-                      label: 'Library settings',
+                      label: say('admin.librariesPanel.librarySettings'),
                       icon: <Icon of={SettingsFilledIcon} size={15} />,
                       onChoose: () => {
                         setSettingsLibraryId(row.original.id);
@@ -258,7 +260,7 @@ const LibrariesPanel = ({
                   items: [
                     {
                       id: 'delete',
-                      label: 'Delete library',
+                      label: say('admin.librariesPanel.deleteLibraryMenu'),
                       icon: <Icon of={BinFilledIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
@@ -278,25 +280,29 @@ const LibrariesPanel = ({
 
   return (
     <PanelCard
-      title="Libraries"
+      title={say('admin.librariesPanel.heading')}
       isFlush
       actions={
         <ActionMenu
-          label="Library actions"
+          label={say('admin.librariesPanel.panelActions')}
           trigger={<Icon of={MoreHorizontalIcon} size={18} />}
           groups={[
             {
               items: [
                 {
                   id: 'scanAll',
-                  label: isScanningAll ? 'Scanning all libraries…' : 'Scan all libraries',
+                  label: isScanningAll
+                    ? say('admin.librariesPanel.scanningAll')
+                    : say('admin.librariesPanel.scanAll'),
                   icon: <Icon of={RotateCwFilledIcon} size={15} />,
                   isDisabled: isBusy || isScanningAll,
                   onChoose: onScanAll,
                 },
                 {
                   id: 'resetAll',
-                  label: isResettingAll ? 'Resetting and rebuilding…' : 'Reset and rebuild',
+                  label: isResettingAll
+                    ? say('admin.librariesPanel.resetting')
+                    : say('admin.librariesPanel.resetMenu'),
                   icon: <Icon of={BinFilledIcon} size={15} />,
                   isDestructive: true,
                   isDisabled: isBusy || isResettingAll,
@@ -310,7 +316,7 @@ const LibrariesPanel = ({
               items: [
                 {
                   id: 'add',
-                  label: 'Add library',
+                  label: say('admin.librariesPanel.addLibrary'),
                   icon: <Icon of={PlusFilledIcon} size={15} />,
                   onChoose: () => {
                     setIsAdding(true);
@@ -323,10 +329,7 @@ const LibrariesPanel = ({
       }
     >
       {isUnreachable ? (
-        <p className="p-6 text-sm text-text-muted">
-          The libraries could not be read from the server. This is not the same as having none — do
-          not add one until it answers again.
-        </p>
+        <p className="p-6 text-sm text-text-muted">{say('admin.librariesPanel.unreachable')}</p>
       ) : (
         <>
           {isSetupHidden || onOpenSettings === undefined || onHideSetup === undefined ? null : (
@@ -347,11 +350,13 @@ const LibrariesPanel = ({
           )}
 
           {libraries.length === 0 ? (
-            <p className="p-6 text-sm text-text-muted">
-              No libraries yet. Add one pointing at a folder of media.
-            </p>
+            <p className="p-6 text-sm text-text-muted">{say('admin.librariesPanel.empty')}</p>
           ) : (
-            <DataTable label="Library roots" columns={columns} rows={libraries} />
+            <DataTable
+              label={say('admin.librariesPanel.tableLabel')}
+              columns={columns}
+              rows={libraries}
+            />
           )}
         </>
       )}
@@ -378,9 +383,13 @@ const LibrariesPanel = ({
       />
 
       <ConfirmDialog
-        title={deleting === null ? 'Delete this library?' : `Delete ${deleting.name}?`}
-        detail="Valence forgets this library and everything it knows about what is in it — watch progress, ratings, favourites, previews and thumbnails. Playlists holding anything from it keep their place and say what they lost. The files on disk are not touched. Anything running for it now is stopped."
-        confirmLabel="Delete library"
+        title={
+          deleting === null
+            ? say('admin.librariesPanel.deleteFallback')
+            : say('admin.librariesPanel.deleteTitle', { name: deleting.name })
+        }
+        detail={say('admin.librariesPanel.deleteDetail')}
+        confirmLabel={say('admin.librariesPanel.deleteConfirm')}
         isDestructive
         isBusy={isDeleting}
         isOpen={deleting !== null}
@@ -398,11 +407,11 @@ const LibrariesPanel = ({
 
           void deleteLibrary(doomed.id)
             .then(() => {
-              tellOutcome(`Deleted ${doomed.name}.`, null);
+              tellOutcome(say('admin.librariesPanel.deleted', { name: doomed.name }), null);
               onLibraryDeleted(doomed.id);
             })
             .catch(() => {
-              notify.failed(`${doomed.name} could not be deleted.`);
+              notify.failed(say('admin.librariesPanel.couldNotDelete', { name: doomed.name }));
             })
             .finally(() => {
               setIsDeleting(false);
@@ -414,11 +423,11 @@ const LibrariesPanel = ({
       <ConfirmDialog
         title={
           rereading === null
-            ? 'Read every file again?'
-            : `Read every file in ${rereading.name} again?`
+            ? say('admin.librariesPanel.rereadFallback')
+            : say('admin.librariesPanel.rereadTitle', { name: rereading.name })
         }
-        detail="Every file is probed again rather than only the ones that changed. Nothing is deleted, but on a large library it can take a long while and keeps the server busy."
-        confirmLabel="Read every file again"
+        detail={say('admin.librariesPanel.rereadDetail')}
+        confirmLabel={say('admin.librariesPanel.rereadConfirm')}
         isOpen={rereading !== null}
         onClose={() => {
           setRereading(null);
@@ -445,9 +454,9 @@ const LibrariesPanel = ({
       />
 
       <ConfirmDialog
-        title="Reset and rebuild every library?"
-        detail="Every item in every library will be deleted, then probed and added again from scratch. Watch progress and marked intros for those items go with them. This cannot be undone."
-        confirmLabel="Reset and rebuild"
+        title={say('admin.librariesPanel.resetTitle')}
+        detail={say('admin.librariesPanel.resetDetail')}
+        confirmLabel={say('admin.librariesPanel.resetConfirm')}
         isDestructive
         isBusy={isResettingAll}
         isOpen={isConfirmingReset}

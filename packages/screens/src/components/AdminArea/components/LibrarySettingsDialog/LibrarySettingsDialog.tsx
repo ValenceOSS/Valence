@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { Icon } from '@ValenceUI/Icon';
 import { ChevronsUpDown as ChevronsUpDownIcon } from '@keyline-icons/react';
@@ -22,12 +24,30 @@ const SERVER_ID = 'server';
 const THE_BEST = 'the-best';
 type LanguageOption = { id: string; label: string; detail?: string };
 
-const AT_ONCE_OPTIONS = [
-  { id: SERVER_ID, label: 'However many the server allows', detail: 'Right for a local disk' },
-  { id: '1', label: 'One at a time', detail: 'Right for a network share' },
-  { id: '2', label: 'Two at a time' },
-  { id: '4', label: 'Four at a time' },
+const AT_ONCE_OPTIONS: readonly { id: string; labelKey: StringKey; detailKey?: StringKey }[] = [
+  {
+    id: SERVER_ID,
+    labelKey: 'admin.librarySettingsDialog.atOnce.server',
+    detailKey: 'admin.librarySettingsDialog.atOnce.serverDetail',
+  },
+  {
+    id: '1',
+    labelKey: 'admin.librarySettingsDialog.atOnce.single',
+    detailKey: 'admin.librarySettingsDialog.atOnce.oneDetail',
+  },
+  { id: '2', labelKey: 'admin.librarySettingsDialog.atOnce.two' },
+  { id: '4', labelKey: 'admin.librarySettingsDialog.atOnce.four' },
 ];
+
+/**
+ * The options for how many files are rendered at once, in words.
+ */
+const buildAtOnceOptions = (): LanguageOption[] =>
+  AT_ONCE_OPTIONS.map((option) => ({
+    id: option.id,
+    label: say(option.labelKey),
+    ...(option.detailKey === undefined ? {} : { detail: say(option.detailKey) }),
+  }));
 
 /**
  * The language picker's options, with the browser's own language pinned to the top when it is one
@@ -43,11 +63,13 @@ const buildLanguageOptions = (): LanguageOption[] => {
   const ordered = browserEntry === undefined ? rest : [browserEntry, ...rest];
 
   return [
-    { id: NONE_ID, label: "Each file's own default" },
+    { id: NONE_ID, label: say('admin.librarySettingsDialog.eachFileDefault') },
     ...ordered.map(([code, label]) => ({
       id: code,
       label,
-      ...(code === browserLanguage ? { detail: 'Your browser' } : {}),
+      ...(code === browserLanguage
+        ? { detail: say('admin.librarySettingsDialog.yourBrowser') }
+        : {}),
     })),
   ];
 };
@@ -74,6 +96,7 @@ const LibrarySettingsDialog = ({
 }: LibrarySettingsDialogProps) => {
   const library = useHeldWhileClosing(requested, isOpen);
   const languageOptions = buildLanguageOptions();
+  const atOnceOptions = buildAtOnceOptions();
 
   const [selected, setSelected] = useState(library?.defaultAudioLanguage ?? NONE_ID);
   const [atOnce, setAtOnce] = useState(library?.filesAtOnce?.toString() ?? SERVER_ID);
@@ -100,7 +123,7 @@ const LibrarySettingsDialog = ({
   };
 
   const finish = (updated: Library) => {
-    tellOutcome(`Saved the settings of ${updated.name}.`, null);
+    tellOutcome(say('admin.librarySettingsDialog.saved', { name: updated.name }), null);
     onUpdated(updated);
     reset();
     onClose();
@@ -133,7 +156,10 @@ const LibrarySettingsDialog = ({
         finish(updated);
       }
     } catch (thrown) {
-      const said = thrown instanceof Error ? thrown.message : 'The library could not be updated.';
+      const said =
+        thrown instanceof Error
+          ? thrown.message
+          : say('admin.librarySettingsDialog.couldNotUpdate');
 
       setError(said);
       tellOutcome('', said);
@@ -156,33 +182,38 @@ const LibrarySettingsDialog = ({
   }
 
   const selectedLabel = languageOptions.find((option) => option.id === selected)?.label ?? selected;
-  const atOnceLabel = AT_ONCE_OPTIONS.find((option) => option.id === atOnce)?.label ?? atOnce;
+  const atOnceLabel = atOnceOptions.find((option) => option.id === atOnce)?.label ?? atOnce;
   const profileLabel =
     requestProfileId === THE_BEST
-      ? 'Whichever profile names this library'
+      ? say('admin.librarySettingsDialog.whicheverProfile')
       : (profiles.find((profile) => profile.id === requestProfileId)?.name ??
-        'Whichever profile names this library');
+        say('admin.librarySettingsDialog.whicheverProfile'));
 
   return (
-    <DialogCompanion label={`${library.name} settings`} isOpen={isOpen} onClose={close}>
+    <DialogCompanion
+      label={say('admin.librarySettingsDialog.label', { name: library.name })}
+      isOpen={isOpen}
+      onClose={close}
+    >
       <DialogTitle size="compact" title={library.name} />
 
       {confirming === null ? (
         <>
           <DialogContent className="flex flex-col gap-6">
             <fieldset className="flex flex-col gap-2">
-              <legend className="text-sm font-medium text-text">Force default audio track</legend>
+              <legend className="text-sm font-medium text-text">
+                {say('admin.librarySettingsDialog.audioLegend')}
+              </legend>
 
               <p className="text-xs text-text-muted">
-                Previews and playback prefer this language, when a file has a track in it. A file
-                with no matching track keeps its own default.
+                {say('admin.librarySettingsDialog.audioBody')}
               </p>
 
               <OptionMenu
-                label="Force default audio track"
+                label={say('admin.librarySettingsDialog.audioLegend')}
                 groups={[
                   {
-                    name: 'Language',
+                    name: say('admin.librarySettingsDialog.languageGroup'),
                     selectedId: selected,
                     onSelect: setSelected,
                     options: languageOptions,
@@ -201,22 +232,22 @@ const LibrarySettingsDialog = ({
             </fieldset>
 
             <fieldset className="flex flex-col gap-2">
-              <legend className="text-sm font-medium text-text">Files at once</legend>
+              <legend className="text-sm font-medium text-text">
+                {say('admin.librarySettingsDialog.atOnceLegend')}
+              </legend>
 
               <p className="text-xs text-text-muted">
-                How many of this library&rsquo;s files are rendered at the same time. A library on a
-                local disk wants as many as the machine can feed. A library on a network share wants
-                one: the files come down a single wire, and asking for four divides it four ways.
+                {say('admin.librarySettingsDialog.atOnceBody')}
               </p>
 
               <OptionMenu
-                label="Files at once"
+                label={say('admin.librarySettingsDialog.atOnceLegend')}
                 groups={[
                   {
-                    name: 'At once',
+                    name: say('admin.librarySettingsDialog.atOnceGroup'),
                     selectedId: atOnce,
                     onSelect: setAtOnce,
-                    options: AT_ONCE_OPTIONS,
+                    options: atOnceOptions,
                   },
                 ]}
                 trigger={
@@ -232,16 +263,16 @@ const LibrarySettingsDialog = ({
             </fieldset>
 
             <fieldset className="flex flex-col gap-3">
-              <legend className="text-sm font-medium text-text">Requests</legend>
+              <legend className="text-sm font-medium text-text">
+                {say('admin.librarySettingsDialog.requestsLegend')}
+              </legend>
 
               <p className="text-xs text-text-muted">
-                Whether what people ask for can be filed here, which profile those releases are
-                judged by, and where they are put. Left alone, they are judged by whichever profile
-                names this library and filed in the library&rsquo;s own folder.
+                {say('admin.librarySettingsDialog.requestsBody')}
               </p>
 
               <Switch
-                label="Takes requests"
+                label={say('admin.librarySettingsDialog.takesRequests')}
                 isOn={takesRequests}
                 onToggle={() => {
                   setTakesRequests(!takesRequests);
@@ -251,14 +282,17 @@ const LibrarySettingsDialog = ({
               {!takesRequests ? null : (
                 <>
                   <OptionMenu
-                    label="Quality profile for requests"
+                    label={say('admin.librarySettingsDialog.profileLabel')}
                     groups={[
                       {
-                        name: 'Quality',
+                        name: say('admin.librarySettingsDialog.qualityGroup'),
                         selectedId: requestProfileId,
                         onSelect: setRequestProfileId,
                         options: [
-                          { id: THE_BEST, label: 'Whichever profile names this library' },
+                          {
+                            id: THE_BEST,
+                            label: say('admin.librarySettingsDialog.whicheverProfile'),
+                          },
                           ...profiles
                             .filter(
                               (profile) =>
@@ -280,11 +314,11 @@ const LibrarySettingsDialog = ({
                   />
 
                   <TextField
-                    label="Where requests are filed"
+                    label={say('admin.librarySettingsDialog.requestPathLabel')}
                     value={requestPath}
                     onValueChange={setRequestPath}
                     placeholder={library.path}
-                    description="A folder of its own for what is fetched, where you want it kept apart. The library’s own folder otherwise."
+                    description={say('admin.librarySettingsDialog.requestPathHelp')}
                   />
                 </>
               )}
@@ -300,7 +334,7 @@ const LibrarySettingsDialog = ({
           <DialogFooter
             dismiss={{ onChoose: close, isDisabled: isSaving }}
             confirm={{
-              label: 'Save',
+              label: say('common.save'),
               onChoose: () => {
                 void save();
               },
@@ -312,20 +346,21 @@ const LibrarySettingsDialog = ({
         <>
           <DialogContent>
             <p className="text-sm text-text-muted">
-              This will start a preview generation task for {library.name}&rsquo;s existing media,
-              so previews match {confirming.label}. Progress shows next to the library once started.
-              Continue?
+              {say('admin.librarySettingsDialog.regenerateBody', {
+                name: library.name,
+                language: confirming.label,
+              })}
             </p>
           </DialogContent>
 
           <DialogFooter
             dismiss={{
-              label: 'Not now',
+              label: say('admin.librarySettingsDialog.notNow'),
               onChoose: () => {
                 finish(confirming.saved);
               },
             }}
-            confirm={{ label: 'Regenerate previews', onChoose: regenerate }}
+            confirm={{ label: say('admin.librarySettingsDialog.regenerate'), onChoose: regenerate }}
           />
         </>
       )}

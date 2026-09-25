@@ -3,6 +3,7 @@ import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
 import { ROLE_COLOURS } from '@ValenceUI/tokens/roleColours';
+import { say } from '@ValenceI18n/say';
 import type { ColorSwatchPickerProps } from './ColorSwatchPicker.types';
 
 /**
@@ -21,7 +22,7 @@ const ColorSwatchPicker = ({ value, onChange, className }: ColorSwatchPickerProp
       size="sm"
       isIconOnly
       isPill
-      label="No colour"
+      label={say('admin.colorSwatchPicker.noColour')}
       onClick={() => {
         onChange(null);
       }}

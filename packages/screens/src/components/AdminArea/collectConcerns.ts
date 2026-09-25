@@ -6,6 +6,8 @@ import { valenceCpuShare } from './valenceCpuShare';
 import { libraryDisk } from './libraryDisk';
 import { memoryEnvelope } from './memoryEnvelope';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 type ConcernTone = 'broken' | 'attention' | 'setup';
 
@@ -74,8 +76,11 @@ const collectConcerns = ({
     concerns.push({
       id: 'requests',
       tone: 'broken',
-      title: 'The requests service is unreachable',
-      detail: `Nothing requested will be searched for or downloaded until it is back. ${requests.problem ?? `Looked for it at ${requests.address}`}.`,
+      title: say('admin.collectConcerns.requestsTitle'),
+      detail:
+        requests.problem === null
+          ? say('admin.collectConcerns.requestsLookedAt', { address: requests.address })
+          : say('admin.collectConcerns.requestsProblem', { problem: requests.problem }),
       panel: 'requests',
       help: docsFor(requests.problemCode ?? 'RequestsUnreachable'),
     });
@@ -92,8 +97,8 @@ const collectConcerns = ({
       tone: 'attention',
       title:
         failingIndexers.length === 1
-          ? `The indexer ${first?.name ?? ''} keeps failing`
-          : `${failingIndexers.length.toString()} indexers keep failing`,
+          ? say('admin.collectConcerns.indexerFailing', { name: first?.name ?? '' })
+          : sayCount('admin.collectConcerns.indexersFailing', failingIndexers.length),
       detail:
         failingIndexers.length === 1
           ? (first?.problem ?? '')
@@ -109,8 +114,8 @@ const collectConcerns = ({
     concerns.push({
       id: 'requests-vpn',
       tone: 'broken',
-      title: 'The VPN is down',
-      detail: vpn.problem ?? 'The requests service cannot reach the tunnel it downloads through.',
+      title: say('admin.collectConcerns.vpnTitle'),
+      detail: vpn.problem ?? say('admin.collectConcerns.vpnDetail'),
       panel: 'requests',
       help: docsFor(vpn.problemCode ?? 'VpnDown'),
     });
@@ -122,11 +127,11 @@ const collectConcerns = ({
     concerns.push({
       id: 'transcoder',
       tone: 'broken',
-      title: 'The media service is unreachable',
+      title: say('admin.collectConcerns.transcoderTitle'),
       detail:
         address === ''
-          ? 'Nothing that needs converting will play until it is back.'
-          : `Nothing that needs converting will play until it is back. Looked for it at ${address}.`,
+          ? say('admin.collectConcerns.transcoderDetail')
+          : say('admin.collectConcerns.transcoderLookedAt', { address }),
       panel: 'activity',
     });
   }
@@ -141,11 +146,11 @@ const collectConcerns = ({
     concerns.push({
       id: 'ffmpeg-version',
       tone: 'attention',
-      title: 'The media service is running an FFmpeg older than Valence supports',
+      title: say('admin.collectConcerns.ffmpegTitle'),
       detail:
         version === null
-          ? 'Everything still plays, but the filters that keep frames on the graphics card may be missing, so transcodes cost several times more than they need to.'
-          : `Everything still plays on ${version}, but the filters that keep frames on the graphics card may be missing, so transcodes cost several times more than they need to.`,
+          ? say('admin.collectConcerns.ffmpegDetail')
+          : say('admin.collectConcerns.ffmpegVersionDetail', { version }),
       panel: 'activity',
     });
   }
@@ -156,8 +161,8 @@ const collectConcerns = ({
     concerns.push({
       id: 'failed-jobs',
       tone: 'broken',
-      title: failed.length === 1 ? 'A job failed' : `${failed.length.toString()} jobs failed`,
-      detail: failed[0]?.failure?.message ?? 'Look at the job list for what went wrong.',
+      title: sayCount('admin.collectConcerns.jobsFailed', failed.length),
+      detail: failed[0]?.failure?.message ?? say('admin.collectConcerns.jobsFailedDetail'),
       panel: 'jobs',
     });
   }
@@ -172,10 +177,10 @@ const collectConcerns = ({
       title:
         stalled.length === 1
           ? worst.everSucceeded
-            ? `${worst.label} fails every time it runs`
-            : `${worst.label} has never once succeeded`
-          : `${stalled.length.toString()} kinds of job fail every time they run`,
-      detail: `Nothing on its schedule has happened since. Last failure: ${worst.reason}`,
+            ? say('admin.collectConcerns.stalledOne', { job: worst.label })
+            : say('admin.collectConcerns.neverSucceeded', { job: worst.label })
+          : sayCount('admin.collectConcerns.stalledKinds', stalled.length),
+      detail: say('admin.collectConcerns.stalledDetail', { reason: worst.reason }),
       panel: 'jobs',
     });
   }
@@ -189,9 +194,9 @@ const collectConcerns = ({
       id: 'memory',
       tone: 'attention',
       title: memory.isLimited
-        ? 'Valence is nearly at the memory it is allowed'
-        : 'Memory is nearly full',
-      detail: 'Converting several things at once may fail or be killed.',
+        ? say('admin.collectConcerns.memoryLimited')
+        : say('admin.collectConcerns.memoryFull'),
+      detail: say('admin.collectConcerns.memoryDetail'),
       panel: 'activity',
     });
   }
@@ -209,8 +214,11 @@ const collectConcerns = ({
     concerns.push({
       id: 'disk',
       tone: 'attention',
-      title: 'The library disk is nearly full',
-      detail: `${formatBytes(disk.availableBytes)} left on ${disk.mountPoint}. A scan that finds new files may have nowhere to put what it makes of them.`,
+      title: say('admin.collectConcerns.diskTitle'),
+      detail: say('admin.collectConcerns.diskDetail', {
+        left: formatBytes(disk.availableBytes),
+        mount: disk.mountPoint,
+      }),
       panel: 'libraries',
     });
   }
@@ -223,13 +231,13 @@ const collectConcerns = ({
     concerns.push({
       id: 'cpu',
       tone: 'attention',
-      title: 'The processor has been at full stretch',
+      title: say('admin.collectConcerns.cpuTitle'),
       detail:
         share === null
-          ? 'Playback that needs converting may stutter while it lasts.'
+          ? say('admin.collectConcerns.cpuDetail')
           : share >= VALENCE_BLAME
-            ? `Valence is using ${share.toFixed(0)}% of the machine, so this is its own work. Playback that needs converting may stutter while it lasts.`
-            : `Valence is using ${share.toFixed(0)}% of the machine, so most of this is something else on the box.`,
+            ? say('admin.collectConcerns.cpuValence', { share: share.toFixed(0) })
+            : say('admin.collectConcerns.cpuElsewhere', { share: share.toFixed(0) }),
       panel: 'activity',
     });
   }
@@ -240,8 +248,8 @@ const collectConcerns = ({
     concerns.push({
       id: 'artefacts',
       tone: 'attention',
-      title: 'Previews and thumbnails are not being kept',
-      detail: `They are being written to ${artefacts.root}, which is not on a volume, so every one of them is thrown away the next time this container is recreated — which is what an update does. Map a volume there, or point VALENCE_ARTEFACT_DIR at one that is mapped.`,
+      title: say('admin.collectConcerns.artefactsTitle'),
+      detail: say('admin.collectConcerns.artefactsDetail', { folder: artefacts.root }),
       panel: 'activity',
     });
   }
@@ -255,9 +263,8 @@ const collectConcerns = ({
     concerns.push({
       id: 'encoder',
       tone: 'attention',
-      title: 'The graphics encoder has been at full stretch',
-      detail:
-        'The next stream that needs converting will fall back to the processor, which is several times the work.',
+      title: say('admin.collectConcerns.encoderTitle'),
+      detail: say('admin.collectConcerns.encoderDetail'),
       panel: 'activity',
     });
   }
@@ -271,14 +278,18 @@ const collectConcerns = ({
   );
 
   if (starved.length > 0) {
+    const starvedName = starved[0]?.profileName ?? null;
+
     concerns.push({
       id: 'starved-sessions',
       tone: 'attention',
       title:
         starved.length === 1
-          ? `${starved[0]?.profileName ?? 'Somebody'} is running out of buffer`
-          : `${starved.length.toString()} streams are running out of buffer`,
-      detail: 'They are seconds from stalling. The network or the box is behind.',
+          ? starvedName === null
+            ? say('admin.collectConcerns.somebodyStarved')
+            : say('admin.collectConcerns.starvedOne', { name: starvedName })
+          : sayCount('admin.collectConcerns.streamsStarved', starved.length),
+      detail: say('admin.collectConcerns.starvedDetail'),
       panel: 'activity',
     });
   }
@@ -291,9 +302,11 @@ const collectConcerns = ({
       tone: 'attention',
       title:
         unscanned.length === 1
-          ? `${unscanned[0]?.name ?? 'A library'} has never been scanned`
-          : `${unscanned.length.toString()} libraries have never been scanned`,
-      detail: 'Nothing in them can be watched until they have been.',
+          ? unscanned[0] === undefined
+            ? say('admin.collectConcerns.aLibraryUnscanned')
+            : say('admin.collectConcerns.unscannedOne', { name: unscanned[0].name })
+          : sayCount('admin.collectConcerns.librariesUnscanned', unscanned.length),
+      detail: say('admin.collectConcerns.unscannedDetail'),
       panel: 'libraries',
     });
   }
@@ -302,8 +315,8 @@ const collectConcerns = ({
     concerns.push({
       id: 'no-libraries',
       tone: 'setup',
-      title: 'There are no libraries yet',
-      detail: 'Add one pointing at a folder of media.',
+      title: say('admin.collectConcerns.noLibrariesTitle'),
+      detail: say('admin.collectConcerns.noLibrariesDetail'),
       panel: 'libraries',
     });
   }
@@ -312,8 +325,8 @@ const collectConcerns = ({
     concerns.push({
       id: 'no-catalogue-key',
       tone: 'setup',
-      title: 'No metadata catalogue key is set',
-      detail: 'Titles, artwork and years come from filenames alone without one.',
+      title: say('admin.collectConcerns.noKeyTitle'),
+      detail: say('admin.collectConcerns.noKeyDetail'),
       panel: 'settings',
     });
   }

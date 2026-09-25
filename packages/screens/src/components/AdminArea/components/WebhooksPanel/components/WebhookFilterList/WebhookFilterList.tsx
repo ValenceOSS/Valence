@@ -4,6 +4,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
+import { say } from '@ValenceI18n/say';
 import type { WebhookFilterListProps } from './WebhookFilterList.types';
 
 const EVERYONE = 'everyone';
@@ -64,12 +65,12 @@ const WebhookFilterList = ({
       ) : (
         <>
           <SegmentedRow
-            label={`Which ${title.toLowerCase()}`}
+            label={say('admin.webhookFilterList.which', { what: title.toLowerCase() })}
             tone="accent"
             size="sm"
             items={[
-              { id: EVERYONE, label: 'Everybody' },
-              { id: SOME, label: 'Only these' },
+              { id: EVERYONE, label: say('admin.webhookFilterList.everybody') },
+              { id: SOME, label: say('admin.webhookFilterList.onlyThese') },
             ]}
             value={isPicking ? SOME : EVERYONE}
             onSelect={(id) => {
@@ -84,17 +85,19 @@ const WebhookFilterList = ({
           {!isPicking ? null : (
             <div className="flex flex-col gap-2 pt-1">
               <TextField
-                label={`Find in ${title.toLowerCase()}`}
+                label={say('admin.webhookFilterList.findIn', { what: title.toLowerCase() })}
                 isLabelHidden
                 type="search"
                 value={search}
                 onValueChange={setSearch}
-                placeholder={`Find in ${title.toLowerCase()}`}
+                placeholder={say('admin.webhookFilterList.findIn', { what: title.toLowerCase() })}
                 icon={<Icon of={SearchIcon} size={15} />}
               />
 
               {shown.length === 0 ? (
-                <p className="text-sm text-text-muted">Nothing here matches that.</p>
+                <p className="text-sm text-text-muted">
+                  {say('admin.webhookFilterList.nothingMatches')}
+                </p>
               ) : (
                 <ul
                   role="group"

@@ -16,14 +16,16 @@ import { createLibrary } from '@ValenceClient/library/fetchLibrary';
 import { validateAddLibraryForm } from './validateAddLibraryForm';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { AddLibraryDialogProps, AddLibraryFormErrors } from './AddLibraryDialog.types';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
 const CUSTOM = 'custom';
 
-const KIND_LABELS: Record<LibraryKind, string> = {
-  movies: 'Movies',
-  shows: 'Shows',
-  music: 'Music',
-  books: 'Books',
+const READS_LIKE: Record<LibraryKind, StringKey> = {
+  movies: 'admin.addLibraryDialog.readsLikeMovies',
+  shows: 'admin.addLibraryDialog.readsLikeShows',
+  music: 'admin.addLibraryDialog.readsLikeMusic',
+  books: 'admin.addLibraryDialog.readsLikeBooks',
 };
 
 /**
@@ -94,10 +96,11 @@ const AddLibraryDialog = ({ isOpen, onClose, onCreated }: AddLibraryDialogProps)
       );
 
       onCreated(library);
-      tellOutcome(`Added ${library.name}.`, null);
+      tellOutcome(say('admin.addLibraryDialog.added', { name: library.name }), null);
       reset();
     } catch (error) {
-      const said = error instanceof Error ? error.message : 'The library could not be added.';
+      const said =
+        error instanceof Error ? error.message : say('admin.addLibraryDialog.couldNotAdd');
 
       setErrors({ submit: said });
       tellOutcome('', said);
@@ -107,23 +110,26 @@ const AddLibraryDialog = ({ isOpen, onClose, onCreated }: AddLibraryDialogProps)
   };
 
   return (
-    <DialogCompanion label="Add a library" isOpen={isOpen} onClose={close}>
-      <DialogTitle size="compact" title="Add a library" />
+    <DialogCompanion label={say('admin.addLibraryDialog.title')} isOpen={isOpen} onClose={close}>
+      <DialogTitle size="compact" title={say('admin.addLibraryDialog.title')} />
 
       <DialogContent className="flex flex-col gap-5">
         <TextField
-          label="Name"
+          label={say('admin.addLibraryDialog.nameLabel')}
           value={name}
           onValueChange={setName}
           {...(errors.name === undefined ? {} : { error: errors.name })}
         />
 
         <FormField
-          label="Type"
-          description="What this library holds, which decides how it reads and what it is called."
+          label={say('admin.addLibraryDialog.typeLabel')}
+          description={say('admin.addLibraryDialog.typeDescription')}
         >
           <div className="flex flex-wrap gap-2">
-            {[...LIBRARY_PRESETS, { id: CUSTOM, label: 'Custom' }].map((entry) => (
+            {[
+              ...LIBRARY_PRESETS,
+              { id: CUSTOM, labelKey: 'admin.addLibraryDialog.custom' } as const,
+            ].map((entry) => (
               <Button
                 key={entry.id}
                 size="sm"
@@ -133,7 +139,7 @@ const AddLibraryDialog = ({ isOpen, onClose, onCreated }: AddLibraryDialogProps)
                   setPreset(entry.id);
                 }}
               >
-                {entry.label}
+                {say(entry.labelKey)}
               </Button>
             ))}
           </div>
@@ -142,15 +148,18 @@ const AddLibraryDialog = ({ isOpen, onClose, onCreated }: AddLibraryDialogProps)
         {preset === CUSTOM ? (
           <>
             <TextField
-              label="Type name"
+              label={say('admin.addLibraryDialog.typeNameLabel')}
               value={flavour}
               onValueChange={setFlavour}
-              placeholder="Documentaries"
-              description="What to call this kind of library."
+              placeholder={say('admin.addLibraryDialog.typeNamePlaceholder')}
+              description={say('admin.addLibraryDialog.typeNameDescription')}
               {...(errors.flavour === undefined ? {} : { error: errors.flavour })}
             />
 
-            <FormField label="Reads like" description="Which of the built-in kinds it is read as.">
+            <FormField
+              label={say('admin.addLibraryDialog.readsLikeLabel')}
+              description={say('admin.addLibraryDialog.readsLikeDescription')}
+            >
               <div className="flex flex-wrap gap-2">
                 {SELECTABLE_LIBRARY_KINDS.map((entry) => (
                   <Button
@@ -162,7 +171,7 @@ const AddLibraryDialog = ({ isOpen, onClose, onCreated }: AddLibraryDialogProps)
                       setCustomKind(entry);
                     }}
                   >
-                    {`Reads like ${KIND_LABELS[entry].toLowerCase()}`}
+                    {say(READS_LIKE[entry])}
                   </Button>
                 ))}
               </div>
@@ -174,11 +183,11 @@ const AddLibraryDialog = ({ isOpen, onClose, onCreated }: AddLibraryDialogProps)
           <div className="flex items-end gap-2">
             <div className="min-w-0 flex-1">
               <TextField
-                label="Path"
+                label={say('admin.addLibraryDialog.pathLabel')}
                 value={path}
                 onValueChange={setPath}
                 placeholder="/media/movies"
-                description="A folder on the machine running Valence, not your browser."
+                description={say('admin.addLibraryDialog.pathDescription')}
                 {...(errors.path === undefined ? {} : { error: errors.path })}
               />
             </div>
@@ -192,7 +201,7 @@ const AddLibraryDialog = ({ isOpen, onClose, onCreated }: AddLibraryDialogProps)
                 }}
               >
                 <Icon of={FolderIcon} size={14} />
-                Browse
+                {say('admin.addLibraryDialog.browse')}
               </Button>
             )}
           </div>
@@ -221,7 +230,7 @@ const AddLibraryDialog = ({ isOpen, onClose, onCreated }: AddLibraryDialogProps)
       <DialogFooter
         dismiss={{ onChoose: close, isDisabled: isSubmitting }}
         confirm={{
-          label: 'Add library',
+          label: say('admin.addLibraryDialog.confirm'),
           onChoose: () => {
             void submit();
           },

@@ -26,6 +26,9 @@ import { describeTimeLeft } from '@ValenceScreens/components/AdminArea/component
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { QueuedDownload } from '@ValenceContracts/schemas/DownloadQueue';
 import type { DownloadQueueTableProps } from './DownloadQueueTable.types';
+import { say } from '@ValenceI18n/say';
+import { sayInParts } from '@ValenceScreens/components/AdminArea/sayInParts';
+import { aroundTheFigure } from '@ValenceScreens/components/AdminArea/aroundTheFigure';
 
 const PAUSABLE = new Set(['queued', 'downloading', 'stalled']);
 
@@ -44,9 +47,10 @@ const describeArrived = (download: QueuedDownload): ReactNode => {
   return download.doneBytes === null || download.state === 'done' ? (
     <AnimatedBytes bytes={download.sizeBytes} />
   ) : (
-    <>
-      <AnimatedBytes bytes={download.doneBytes} /> of <AnimatedBytes bytes={download.sizeBytes} />
-    </>
+    sayInParts('admin.downloadQueueTable.arrived', {
+      done: <AnimatedBytes bytes={download.doneBytes} />,
+      size: <AnimatedBytes bytes={download.sizeBytes} />,
+    })
   );
 };
 
@@ -76,7 +80,7 @@ const DownloadQueueTable = ({
     () => [
       {
         id: 'title',
-        header: 'Release',
+        header: say('admin.downloadQueueTable.release'),
         accessorFn: (download) => download.title,
         cell: ({ row }) => (
           <span className="flex max-w-[32rem] min-w-0 flex-col gap-0.5">
@@ -86,7 +90,7 @@ const DownloadQueueTable = ({
 
             <span className="truncate text-xs text-text-muted">
               {[
-                LIBRARY_KIND_NAMES[row.original.libraryKind].label,
+                say(LIBRARY_KIND_NAMES[row.original.libraryKind].labelKey),
                 row.original.clientName,
                 row.original.indexerName,
               ]
@@ -98,7 +102,7 @@ const DownloadQueueTable = ({
       },
       {
         id: 'state',
-        header: 'State',
+        header: say('admin.downloadQueueTable.state'),
         accessorFn: (download) => describeDownloadState(download).label,
         cell: ({ row }) => {
           const state = describeDownloadState(row.original);
@@ -107,7 +111,12 @@ const DownloadQueueTable = ({
             <span className="flex items-center gap-1.5">
               <Badge size="sm" tone={state.tone}>
                 {row.original.state === 'downloading' ? (
-                  <Spinner size="xs" label={`Downloading ${row.original.title}`} />
+                  <Spinner
+                    size="xs"
+                    label={say('admin.downloadQueueTable.downloadingTitle', {
+                      title: row.original.title,
+                    })}
+                  />
                 ) : null}
                 {state.label}
               </Badge>
@@ -134,7 +143,7 @@ const DownloadQueueTable = ({
       },
       {
         id: 'progress',
-        header: 'Progress',
+        header: say('admin.downloadQueueTable.progress'),
         accessorFn: (download) => download.progress,
         cell: ({ row }) => {
           const arrived = describeArrived(row.original);
@@ -142,7 +151,7 @@ const DownloadQueueTable = ({
           return (
             <span className="flex flex-col gap-1">
               <ProgressBar
-                label={`How much of ${row.original.title} has arrived`}
+                label={say('admin.downloadQueueTable.progressLabel', { title: row.original.title })}
                 value={Math.round(row.original.progress * 1000) / 10}
                 readout={
                   <AnimatedNumber
@@ -162,7 +171,7 @@ const DownloadQueueTable = ({
       },
       {
         id: 'speed',
-        header: 'Speed',
+        header: say('admin.downloadQueueTable.speed'),
         accessorFn: (download) => download.downloadBytesPerSecond ?? -1,
         cell: ({ row }) => (
           <ReadoutLines
@@ -172,7 +181,7 @@ const DownloadQueueTable = ({
       },
       {
         id: 'left',
-        header: 'Time left',
+        header: say('admin.downloadQueueTable.timeLeft'),
         accessorFn: (download) => download.secondsLeft ?? Number.MAX_SAFE_INTEGER,
         cell: ({ row }) => (
           <span className="text-xs tabular-nums text-text-muted">
@@ -182,7 +191,7 @@ const DownloadQueueTable = ({
       },
       {
         id: 'peers',
-        header: 'Peers',
+        header: say('admin.downloadQueueTable.peers'),
         accessorFn: (download) => download.seeds ?? -1,
         cell: ({ row }) => (
           <ReadoutLines
@@ -193,12 +202,12 @@ const DownloadQueueTable = ({
                     <AnimatedNumber
                       key="seeding"
                       value={row.original.seeds ?? 0}
-                      suffix=" seeding"
+                      {...aroundTheFigure(say('admin.downloadQueueTable.seeding'), '{count}')}
                     />,
                     <AnimatedNumber
                       key="fetching"
                       value={row.original.peers ?? 0}
-                      suffix=" fetching"
+                      {...aroundTheFigure(say('admin.downloadQueueTable.fetching'), '{count}')}
                     />,
                   ]
             }
@@ -212,12 +221,15 @@ const DownloadQueueTable = ({
         cell: ({ row }) =>
           busyId === row.original.id ? (
             <span className="flex justify-end">
-              <Spinner size="sm" label={`Working on ${row.original.title}`} />
+              <Spinner
+                size="sm"
+                label={say('admin.downloadQueueTable.workingOn', { title: row.original.title })}
+              />
             </span>
           ) : (
             <span className="flex justify-end">
               <ActionMenu
-                label={`Actions for ${row.original.title}`}
+                label={say('admin.downloadQueueTable.actionsFor', { title: row.original.title })}
                 trigger={<Icon of={MoreHorizontalIcon} size={16} />}
                 groups={[
                   {
@@ -226,7 +238,7 @@ const DownloadQueueTable = ({
                         ? [
                             {
                               id: 'pause',
-                              label: 'Pause',
+                              label: say('admin.downloadQueueTable.pause'),
                               icon: <Icon of={PauseFilledIcon} size={15} />,
                               onChoose: () => {
                                 onPause(row.original);
@@ -238,7 +250,7 @@ const DownloadQueueTable = ({
                         ? [
                             {
                               id: 'resume',
-                              label: 'Resume',
+                              label: say('admin.downloadQueueTable.resume'),
                               icon: <Icon of={PlayFilledIcon} size={15} />,
                               onChoose: () => {
                                 onResume(row.original);
@@ -248,7 +260,7 @@ const DownloadQueueTable = ({
                         : []),
                       {
                         id: 'remove',
-                        label: 'Remove',
+                        label: say('admin.downloadQueueTable.remove'),
                         icon: <Icon of={BinFilledIcon} size={15} />,
                         isDestructive: true,
                         onChoose: () => {
@@ -262,13 +274,13 @@ const DownloadQueueTable = ({
                       .filter((library) => library.kind === row.original.libraryKind)
                       .map((library) => ({
                         id: `file-${library.id}`,
-                        label: `File into ${library.name}`,
+                        label: say('admin.downloadQueueTable.fileInto', { library: library.name }),
                         hint:
                           row.original.state !== 'done'
-                            ? 'Once it has downloaded.'
+                            ? say('admin.downloadQueueTable.fileOnceDownloaded')
                             : row.original.filedInto === null
-                              ? 'Now, named from the release.'
-                              : 'Again, beside what was filed before.',
+                              ? say('admin.downloadQueueTable.fileNow')
+                              : say('admin.downloadQueueTable.fileAgain'),
                         icon: <Icon of={FoldersFilledIcon} size={15} />,
                         onChoose: () => {
                           onFile(row.original, library.id);
@@ -286,11 +298,11 @@ const DownloadQueueTable = ({
 
   return (
     <DataTable
-      label="Downloads"
+      label={say('admin.downloadQueueTable.label')}
       columns={columns}
       rows={[...downloads]}
       getRowId={(download) => download.id}
-      emptyMessage="Nothing has been sent to a download client yet. Send a release from Search to see it here."
+      emptyMessage={say('admin.downloadQueueTable.empty')}
     />
   );
 };

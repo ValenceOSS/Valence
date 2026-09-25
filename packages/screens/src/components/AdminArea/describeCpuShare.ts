@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+
 /**
  * Says how much of the machine Valence is using, in words that stay honest at the edges — a share too
  * small to draw is said to be under a percent rather than rounded to nothing, and one that was never
@@ -8,7 +10,7 @@
  */
 const describeCpuShare = (share: number | null): string => {
   if (share === null) {
-    return 'not measured';
+    return say('admin.describeCpuShare.notMeasured');
   }
 
   if (share <= 0) {

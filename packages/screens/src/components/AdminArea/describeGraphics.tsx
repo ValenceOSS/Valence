@@ -1,6 +1,7 @@
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import type { Monitor } from '@ValenceClient/admin/fetchAdmin';
 import type { Stat } from '@ValenceScreens/components/AdminArea/components/StatStrip/StatStrip.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Decides what the graphics tile says, and is careful about what it refuses to say. Cards report
@@ -20,7 +21,10 @@ const describeGraphics = (
   if (graphics === null) {
     return {
       value: '—',
-      detail: notes.length === 0 ? 'No card Valence can read' : 'No reading, hover for why',
+      detail:
+        notes.length === 0
+          ? say('admin.describeGraphics.noCard')
+          : say('admin.describeGraphics.hoverForWhy'),
     };
   }
 
@@ -29,7 +33,9 @@ const describeGraphics = (
       value: <AnimatedNumber value={Math.round(graphics.encoderPercent)} suffix="%" />,
       fraction: graphics.encoderPercent / 100,
       detail:
-        graphics.measured === 'valenceOnly' ? 'video engine, ours only' : 'encoder, not whole card',
+        graphics.measured === 'valenceOnly'
+          ? say('admin.describeGraphics.oursOnly')
+          : say('admin.describeGraphics.encoderOnly'),
     };
   }
 
@@ -37,13 +43,16 @@ const describeGraphics = (
     return {
       value: <AnimatedNumber value={Math.round(graphics.devicePercent)} suffix="%" />,
       fraction: graphics.devicePercent / 100,
-      detail: 'whole card, not encoder',
+      detail: say('admin.describeGraphics.wholeCard'),
     };
   }
 
   return {
     value: '—',
-    detail: notes.length === 0 ? 'Nothing readable' : 'No reading, hover for why',
+    detail:
+      notes.length === 0
+        ? say('admin.describeGraphics.nothingReadable')
+        : say('admin.describeGraphics.hoverForWhy'),
   };
 };
 

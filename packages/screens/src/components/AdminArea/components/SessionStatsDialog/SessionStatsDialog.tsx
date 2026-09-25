@@ -12,6 +12,7 @@ import {
   describeAudioAxis,
 } from '@ValenceCore/functions/describePlaybackAxis';
 import { describeTranscodeReuse } from '@ValenceCore/functions/describeTranscodeReuse';
+import { say } from '@ValenceI18n/say';
 import type { SessionStatsDialogProps } from './SessionStatsDialog.types';
 
 type RowProps = {
@@ -48,51 +49,73 @@ const SessionStatsDialog = ({ session, isOpen, onClose }: SessionStatsDialogProp
   const { playback } = session;
 
   return (
-    <DialogCompanion label="Stream stats" isOpen={isOpen} onClose={onClose}>
-      <DialogTitle size="compact" title="Stream stats">
-        <Button isIconOnly variant="ghost" label="Close" size="sm" onClick={onClose}>
+    <DialogCompanion
+      label={say('admin.sessionStatsDialog.title')}
+      isOpen={isOpen}
+      onClose={onClose}
+    >
+      <DialogTitle size="compact" title={say('admin.sessionStatsDialog.title')}>
+        <Button isIconOnly variant="ghost" label={say('common.close')} size="sm" onClick={onClose}>
           <Icon of={XIcon} size={16} />
         </Button>
       </DialogTitle>
 
       <DialogContent>
         <dl className="flex flex-col divide-y divide-[var(--surface-line)]">
-          <Row name="Viewer">{nameOfSession(session)}</Row>
-          <Row name="Device">{session.deviceLabel}</Row>
+          <Row name={say('admin.sessionStatsDialog.viewer')}>{nameOfSession(session)}</Row>
+          <Row name={say('admin.sessionStatsDialog.device')}>{session.deviceLabel}</Row>
 
           {playback === null ? (
-            <Row name="Watching">Nothing right now</Row>
+            <Row name={say('admin.sessionStatsDialog.watching')}>
+              {say('admin.sessionStatsDialog.nothingRightNow')}
+            </Row>
           ) : (
             <>
-              <Row name="Title">{playback.mediaTitle}</Row>
-              <Row name="Delivery">{describeSessionDelivery(playback).detail}</Row>
-              <Row name="Reused">{describeTranscodeReuse(playback.reuse)}</Row>
-              <Row name="Status">
-                {playback.isPlaying
-                  ? 'Playing'
-                  : playback.pausedByAdmin
-                    ? 'Paused by an admin'
-                    : 'Paused'}
+              <Row name={say('admin.sessionStatsDialog.titleRow')}>{playback.mediaTitle}</Row>
+              <Row name={say('admin.sessionStatsDialog.delivery')}>
+                {describeSessionDelivery(playback).detail}
               </Row>
-              <Row name="Started">{new Date(playback.startedAt).toLocaleTimeString()}</Row>
+              <Row name={say('admin.sessionStatsDialog.reused')}>
+                {describeTranscodeReuse(playback.reuse)}
+              </Row>
+              <Row name={say('admin.sessionStatsDialog.status')}>
+                {playback.isPlaying
+                  ? say('admin.sessionStatsDialog.playing')
+                  : playback.pausedByAdmin
+                    ? say('admin.sessionStatsDialog.pausedByAdmin')
+                    : say('admin.sessionStatsDialog.paused')}
+              </Row>
+              <Row name={say('admin.sessionStatsDialog.started')}>
+                {new Date(playback.startedAt).toLocaleTimeString()}
+              </Row>
 
-              <Row name="Container">
+              <Row name={say('admin.sessionStatsDialog.container')}>
                 {describeAxis(playback.plan.container.kind, playback.plan.container.reason.detail)}
               </Row>
-              <Row name="Video">{describeVideoAxis(playback.plan.video)}</Row>
-              <Row name="Audio">{describeAudioAxis(playback.plan.audio)}</Row>
-              <Row name="Subtitles">
+              <Row name={say('admin.sessionStatsDialog.video')}>
+                {describeVideoAxis(playback.plan.video)}
+              </Row>
+              <Row name={say('admin.sessionStatsDialog.audio')}>
+                {describeAudioAxis(playback.plan.audio)}
+              </Row>
+              <Row name={say('admin.sessionStatsDialog.subtitles')}>
                 {describeAxis(playback.plan.subtitles.kind, playback.plan.subtitles.reason.detail)}
               </Row>
 
               {playback.health === null ? (
-                <Row name="Buffer">Not reported yet</Row>
+                <Row name={say('admin.sessionStatsDialog.buffer')}>
+                  {say('admin.sessionStatsDialog.notReported')}
+                </Row>
               ) : (
                 <>
-                  <Row name="Buffer">{`${playback.health.bufferedAheadSeconds.toFixed(1)}s ahead`}</Row>
-                  <Row name="Picture size">
+                  <Row name={say('admin.sessionStatsDialog.buffer')}>
+                    {say('admin.sessionStatsDialog.ahead', {
+                      seconds: playback.health.bufferedAheadSeconds.toFixed(1),
+                    })}
+                  </Row>
+                  <Row name={say('admin.sessionStatsDialog.pictureSize')}>
                     {playback.health.presentedWidth === 0
-                      ? 'Nothing decoded yet'
+                      ? say('admin.sessionStatsDialog.nothingDecoded')
                       : `${playback.health.presentedWidth.toString()}x${playback.health.presentedHeight.toString()}`}
                   </Row>
                 </>

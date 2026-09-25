@@ -1,3 +1,6 @@
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
+
 /**
  * Sums up testing several indexers at once: how many answered, and why each of the rest did not.
  *
@@ -8,9 +11,13 @@ const describeTestRound = (
   outcomes: readonly { name: string; failure: string | null }[],
 ): { done: string; failure: string | null } => {
   const failed = outcomes.flatMap(({ failure }) => (failure === null ? [] : [failure]));
-  const count = outcomes.length.toString();
+  const [only] = outcomes;
   const done =
-    outcomes.length === 1 ? `${outcomes[0]?.name ?? 'It'} answered.` : `All ${count} answered.`;
+    outcomes.length === 1
+      ? only === undefined
+        ? say('admin.describeTestRound.itAnswered')
+        : say('admin.describeTestRound.oneAnswered', { name: only.name })
+      : sayCount('admin.describeTestRound.allAnswered', outcomes.length);
 
   if (failed.length === 0) {
     return { done, failure: null };
@@ -20,7 +27,11 @@ const describeTestRound = (
     ? { done, failure: failed.join('') }
     : {
         done,
-        failure: `${(outcomes.length - failed.length).toString()} of ${count} answered. ${failed.join('; ')}`,
+        failure: say('admin.describeTestRound.someAnswered', {
+          answered: outcomes.length - failed.length,
+          tried: outcomes.length,
+          failures: failed.join('; '),
+        }),
       };
 };
 

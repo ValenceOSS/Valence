@@ -1,4 +1,5 @@
 import type { AdminOverview } from '@ValenceClient/admin/fetchAdmin';
+import { say } from '@ValenceI18n/say';
 
 type ToneMapper = {
   label: string;
@@ -33,25 +34,23 @@ const describeToneMapping = (
 
   if (hardwareToneMaps.length > 0) {
     return {
-      label: `${hardwareToneMaps.join(', ')} on the device`,
-      detail:
-        software === ''
-          ? 'Anything the card cannot take is passed through untouched, because this build has no software tone mapper behind it.'
-          : null,
+      label: say('admin.describeToneMapping.onDevice', {
+        filters: hardwareToneMaps.join(say('admin.describeToneMapping.listSeparator')),
+      }),
+      detail: software === '' ? say('admin.describeToneMapping.nothingBehind') : null,
     };
   }
 
   if (software === '') {
     return {
-      label: 'None',
-      detail:
-        'This build has neither libplacebo nor zscale and the card proved nothing, so an HDR film is passed through as it is and looks washed out on a screen that cannot show it.',
+      label: say('admin.describeToneMapping.none'),
+      detail: say('admin.describeToneMapping.noneDetail'),
     };
   }
 
   return {
-    label: `${software}, in software`,
-    detail: `The card proved no tone mapper of its own, so every HDR film converted for an SDR screen costs the processor ${software} on top of the encode.`,
+    label: say('admin.describeToneMapping.inSoftware', { mapper: software }),
+    detail: say('admin.describeToneMapping.inSoftwareDetail', { mapper: software }),
   };
 };
 

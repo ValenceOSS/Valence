@@ -1,12 +1,46 @@
-const certificationRegions = [
-  { id: 'GB', label: 'United Kingdom', detail: 'U, PG, 12, 15, 18' },
-  { id: 'US', label: 'United States', detail: 'G, PG, PG-13, R, NC-17' },
-  { id: 'IE', label: 'Ireland', detail: 'G, PG, 12A, 15A, 16, 18' },
-  { id: 'AU', label: 'Australia', detail: 'G, PG, M, MA15+, R18+' },
-  { id: 'DE', label: 'Germany', detail: 'FSK 0, 6, 12, 16, 18' },
-  { id: 'FR', label: 'France', detail: '0, 12, 16, 18' },
-  { id: 'NL', label: 'Netherlands', detail: '0, 6, 9, 12, 14, 16, 18' },
-  { id: 'ES', label: 'Spain', detail: '0, 7, 12, 16, 18' },
+import type { StringKey } from '@ValenceI18n/StringKey';
+
+const certificationRegions: readonly { id: string; labelKey: StringKey; detailKey: StringKey }[] = [
+  {
+    id: 'GB',
+    labelKey: 'admin.certificationRegions.gb',
+    detailKey: 'admin.certificationRegions.gbRatings',
+  },
+  {
+    id: 'US',
+    labelKey: 'admin.certificationRegions.us',
+    detailKey: 'admin.certificationRegions.usRatings',
+  },
+  {
+    id: 'IE',
+    labelKey: 'admin.certificationRegions.ie',
+    detailKey: 'admin.certificationRegions.ieRatings',
+  },
+  {
+    id: 'AU',
+    labelKey: 'admin.certificationRegions.au',
+    detailKey: 'admin.certificationRegions.auRatings',
+  },
+  {
+    id: 'DE',
+    labelKey: 'admin.certificationRegions.de',
+    detailKey: 'admin.certificationRegions.deRatings',
+  },
+  {
+    id: 'FR',
+    labelKey: 'admin.certificationRegions.fr',
+    detailKey: 'admin.certificationRegions.frRatings',
+  },
+  {
+    id: 'NL',
+    labelKey: 'admin.certificationRegions.nl',
+    detailKey: 'admin.certificationRegions.nlRatings',
+  },
+  {
+    id: 'ES',
+    labelKey: 'admin.certificationRegions.es',
+    detailKey: 'admin.certificationRegions.esRatings',
+  },
 ];
 
 export { certificationRegions };

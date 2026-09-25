@@ -123,6 +123,10 @@ import { DownloadsPanel } from '@ValenceScreens/components/AdminArea/components/
 import { ReleaseSearchPanel } from './components/ReleaseSearchPanel/ReleaseSearchPanel';
 import type { AdminAreaProps } from './AdminArea.types';
 import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
+import { sayInParts } from '@ValenceScreens/components/AdminArea/sayInParts';
+import { aroundTheFigure } from '@ValenceScreens/components/AdminArea/aroundTheFigure';
 
 const HISTORY_LENGTH = 60;
 
@@ -350,15 +354,18 @@ const AdminArea = ({
   };
 
   const nameOfLibrary = (libraryId: string): string =>
-    libraries.find((library) => library.id === libraryId)?.name ?? 'The library';
+    libraries.find((library) => library.id === libraryId)?.name ??
+    say('admin.adminArea.theLibrary');
 
   const rescan = async (libraryId: string, force = false) => {
     const name = nameOfLibrary(libraryId);
     const taken = await startScan(libraryId, force);
 
     tellOutcome(
-      force ? `Read every file of ${name} again.` : `Scanned ${name}.`,
-      failureOfAnswer(taken, `${name} could not be scanned.`),
+      force
+        ? say('admin.adminArea.readLibraryAgain', { name })
+        : say('admin.adminArea.scannedLibrary', { name }),
+      failureOfAnswer(taken, say('admin.adminArea.couldNotScan', { name })),
     );
     await reloadLibraries();
   };
@@ -367,8 +374,8 @@ const AdminArea = ({
     const taken = await startScanAll(libraries);
 
     tellOutcome(
-      'Read every file of every library again.',
-      failureOfAnswer(taken, 'Not every library could be read again.'),
+      say('admin.adminArea.readEveryLibraryAgain'),
+      failureOfAnswer(taken, say('admin.adminArea.couldNotReadEvery')),
     );
     await reloadLibraries();
   };
@@ -377,8 +384,8 @@ const AdminArea = ({
     const taken = await startResetAll(libraries);
 
     tellOutcome(
-      'Rebuilt every library.',
-      failureOfAnswer(taken, 'Not every library could be rebuilt.'),
+      say('admin.adminArea.rebuiltEvery'),
+      failureOfAnswer(taken, say('admin.adminArea.couldNotRebuildEvery')),
     );
     await reloadLibraries();
   };
@@ -388,8 +395,8 @@ const AdminArea = ({
     const taken = await startRegeneratePreviews(libraryId);
 
     tellOutcome(
-      `Generated the missing previews of ${name}.`,
-      failureOfAnswer(taken, `The previews of ${name} could not be generated.`),
+      say('admin.adminArea.generatedPreviews', { name }),
+      failureOfAnswer(taken, say('admin.adminArea.couldNotGeneratePreviews', { name })),
     );
   };
 
@@ -409,7 +416,10 @@ const AdminArea = ({
             ? await runDefinedJobAll(kind, chosen)
             : await runDefinedJob(kind);
 
-      tellOutcome(`${label} finished.`, failureOfAnswer(taken, `${label} could not be started.`));
+      tellOutcome(
+        say('admin.adminArea.jobFinished', { job: label }),
+        failureOfAnswer(taken, say('admin.adminArea.couldNotStartJob', { job: label })),
+      );
       await reloadLibraries();
     },
     [jobDefinitions, libraries, reloadLibraries],
@@ -422,8 +432,8 @@ const AdminArea = ({
     const added = await addJobTrigger(kind, trigger);
 
     const isAdded = tellOutcome(
-      'Schedule added.',
-      failureOfMissing(added, 'That schedule could not be added.'),
+      say('admin.adminArea.scheduleAdded'),
+      failureOfMissing(added, say('admin.adminArea.couldNotAddSchedule')),
     );
 
     if (added === null || !isAdded) {
@@ -464,8 +474,8 @@ const AdminArea = ({
 
     if (
       !tellOutcome(
-        'Schedule removed.',
-        failureOfAnswer(removed, 'That schedule could not be removed.'),
+        say('admin.adminArea.scheduleRemoved'),
+        failureOfAnswer(removed, say('admin.adminArea.couldNotRemoveSchedule')),
       )
     ) {
       await reloadSchedules();
@@ -498,8 +508,8 @@ const AdminArea = ({
 
       void stopJobs(kind).then((stopped) => {
         tellOutcome(
-          `Asked ${label} to stop.`,
-          failureOfAnswer(stopped, `${label} could not be stopped.`),
+          say('admin.adminArea.askedJobToStop', { job: label }),
+          failureOfAnswer(stopped, say('admin.adminArea.couldNotStopJob', { job: label })),
         );
       });
     },
@@ -511,8 +521,8 @@ const AdminArea = ({
 
     try {
       tellOutcome(
-        'Stopped that stream.',
-        failureOfAnswer(await stopSession(clientId), 'That stream could not be stopped.'),
+        say('admin.adminArea.streamStopped'),
+        failureOfAnswer(await stopSession(clientId), say('admin.adminArea.couldNotStopStream')),
       );
       await reloadSessions();
     } finally {
@@ -525,8 +535,8 @@ const AdminArea = ({
 
     try {
       tellOutcome(
-        'Paused that stream.',
-        failureOfAnswer(await pauseSession(clientId), 'That stream could not be paused.'),
+        say('admin.adminArea.streamPaused'),
+        failureOfAnswer(await pauseSession(clientId), say('admin.adminArea.couldNotPauseStream')),
       );
       await reloadSessions();
     } finally {
@@ -539,8 +549,11 @@ const AdminArea = ({
 
     try {
       tellOutcome(
-        'Sent the message.',
-        failureOfAnswer(await messageSession(clientId, text), 'The message could not be sent.'),
+        say('admin.adminArea.messageSent'),
+        failureOfAnswer(
+          await messageSession(clientId, text),
+          say('admin.adminArea.couldNotSendMessage'),
+        ),
       );
     } finally {
       setBusyClientId(null);
@@ -552,8 +565,8 @@ const AdminArea = ({
 
     try {
       tellOutcome(
-        'Resumed that stream.',
-        failureOfAnswer(await resumeSession(clientId), 'That stream could not be resumed.'),
+        say('admin.adminArea.streamResumed'),
+        failureOfAnswer(await resumeSession(clientId), say('admin.adminArea.couldNotResumeStream')),
       );
       await reloadSessions();
     } finally {
@@ -624,17 +637,17 @@ const AdminArea = ({
   const graphicsInfo = (
     <dl className="flex flex-col gap-2 text-xs">
       <div className="flex items-baseline justify-between gap-3">
-        <dt className="shrink-0 text-text-muted">Hardware encoding</dt>
+        <dt className="shrink-0 text-text-muted">{say('admin.adminArea.hardwareEncoding')}</dt>
         <dd className="min-w-0 truncate text-text">{acceleration?.label ?? '—'}</dd>
       </div>
 
       <div className="flex items-baseline justify-between gap-3">
-        <dt className="shrink-0 text-text-muted">Hardware chains</dt>
+        <dt className="shrink-0 text-text-muted">{say('admin.adminArea.hardwareChains')}</dt>
         <dd className="min-w-0 truncate text-text">{chains?.label ?? '—'}</dd>
       </div>
 
       <div className="flex items-baseline justify-between gap-3">
-        <dt className="shrink-0 text-text-muted">HDR conversion</dt>
+        <dt className="shrink-0 text-text-muted">{say('admin.adminArea.hdrConversion')}</dt>
         <dd className="min-w-0 truncate text-text">{toneMapping?.label ?? '—'}</dd>
       </div>
 
@@ -644,14 +657,14 @@ const AdminArea = ({
 
       {ffmpegLine === null ? null : (
         <div className="flex items-baseline justify-between gap-3">
-          <dt className="shrink-0 text-text-muted">Transcoder</dt>
+          <dt className="shrink-0 text-text-muted">{say('admin.adminArea.transcoder')}</dt>
           <dd className="min-w-0 text-right text-text">{ffmpegLine}</dd>
         </div>
       )}
 
       {(resources?.graphicsNotes ?? []).length === 0 ? null : (
         <div className="flex flex-col gap-1 border-t border-[var(--surface-line)] pt-2">
-          <dt className="text-text-muted">Why there is no figure</dt>
+          <dt className="text-text-muted">{say('admin.adminArea.whyNoFigure')}</dt>
 
           {(resources?.graphicsNotes ?? []).map((note) => (
             <dd key={note} className="text-text">
@@ -775,60 +788,69 @@ const AdminArea = ({
         <StatStrip
           stats={[
             {
-              label: 'Processor',
+              label: say('admin.adminArea.processor'),
               value: (
                 <AnimatedNumber value={Math.round(resources?.systemCpuPercent ?? 0)} suffix="%" />
               ),
               fraction: (resources?.systemCpuPercent ?? 0) / 100,
               detail:
-                resources === null ? (
-                  '—'
-                ) : (
-                  <>
-                    <AnimatedNumber value={resources.cpuCount} suffix=" cores" /> · Valence{' '}
-                    {cpuShare !== null && cpuShare >= 1 ? (
-                      <AnimatedNumber value={Math.round(cpuShare)} suffix="%" />
-                    ) : (
-                      describeCpuShare(cpuShare)
-                    )}
-                  </>
-                ),
+                resources === null
+                  ? '—'
+                  : sayInParts('admin.adminArea.processorDetail', {
+                      cores: (
+                        <AnimatedNumber
+                          value={resources.cpuCount}
+                          {...aroundTheFigure(
+                            sayCount('admin.adminArea.cores', resources.cpuCount),
+                            resources.cpuCount.toLocaleString('en'),
+                          )}
+                        />
+                      ),
+                      share:
+                        cpuShare !== null && cpuShare >= 1 ? (
+                          <AnimatedNumber value={Math.round(cpuShare)} suffix="%" />
+                        ) : (
+                          describeCpuShare(cpuShare)
+                        ),
+                    }),
             },
             {
-              label: 'Memory',
+              label: say('admin.adminArea.memory'),
               value: memory === null ? '—' : <AnimatedBytes bytes={memory.usedBytes} />,
               fraction: memoryFraction,
               detail:
-                memory === null ? (
-                  '—'
-                ) : (
-                  <>
-                    of{' '}
-                    <AnimatedBytes
-                      bytes={memory.totalBytes}
-                      suffix={memory.isLimited ? ' allowed' : ''}
-                    />{' '}
-                    · Valence{' '}
-                    {valenceMemory === null ? (
-                      describeValenceMemory(valenceMemory)
-                    ) : (
-                      <AnimatedBytes bytes={valenceMemory} />
-                    )}
-                  </>
-                ),
+                memory === null
+                  ? '—'
+                  : sayInParts(
+                      memory.isLimited
+                        ? 'admin.adminArea.memoryAllowedDetail'
+                        : 'admin.adminArea.memoryDetail',
+                      {
+                        total: <AnimatedBytes bytes={memory.totalBytes} />,
+                        used:
+                          valenceMemory === null ? (
+                            describeValenceMemory(valenceMemory)
+                          ) : (
+                            <AnimatedBytes bytes={valenceMemory} />
+                          ),
+                      },
+                    ),
             },
             {
-              label: 'Graphics',
+              label: say('admin.adminArea.graphics'),
               ...describeGraphics(resources?.graphics ?? null, resources?.graphicsNotes ?? []),
               info: graphicsInfo,
             },
             {
-              label: 'Storage',
+              label: say('admin.adminArea.storage'),
               value:
                 mediaDisk === null ? (
                   '—'
                 ) : (
-                  <AnimatedBytes bytes={mediaDisk.availableBytes} suffix=" free" />
+                  <AnimatedBytes
+                    bytes={mediaDisk.availableBytes}
+                    {...aroundTheFigure(say('admin.adminArea.free'), '{bytes}')}
+                  />
                 ),
               ...(mediaDisk === null
                 ? {}
@@ -837,13 +859,12 @@ const AdminArea = ({
                       (mediaDisk.totalBytes - mediaDisk.availableBytes) / mediaDisk.totalBytes,
                   }),
               detail:
-                mediaDisk === null ? (
-                  'Not measured'
-                ) : (
-                  <>
-                    of <AnimatedBytes bytes={mediaDisk.totalBytes} /> · {mediaDisk.mountPoint}
-                  </>
-                ),
+                mediaDisk === null
+                  ? say('admin.adminArea.notMeasured')
+                  : sayInParts('admin.adminArea.storageDetail', {
+                      total: <AnimatedBytes bytes={mediaDisk.totalBytes} />,
+                      mount: mediaDisk.mountPoint,
+                    }),
             },
           ]}
         />
@@ -857,8 +878,7 @@ const AdminArea = ({
           className="flex flex-wrap items-center gap-3 rounded-xl border border-danger/40 bg-danger/10 px-5 py-4 font-body text-sm text-text"
         >
           <Icon of={TriangleAlertIcon} size={18} tone="danger" className="shrink-0" />
-          Some of this could not be read from the server, so parts of the page may be missing rather
-          than empty.
+          {say('admin.adminArea.partlyUnread')}
           <Button
             variant="ghost"
             size="sm"
@@ -866,7 +886,7 @@ const AdminArea = ({
               void loadAll();
             }}
           >
-            Try again
+            {say('common.tryAgain')}
           </Button>
         </motion.p>
       )}
@@ -945,8 +965,8 @@ const AdminArea = ({
               onChooseMoment={(item) => {
                 void fetchTrickplay(item.id).then((found) => {
                   if (found === null) {
-                    notify.say(`Scrub previews for ${item.title} have not finished yet.`, {
-                      description: 'A preview moment can be chosen once they have.',
+                    notify.say(say('admin.adminArea.previewsUnfinished', { title: item.title }), {
+                      description: say('admin.adminArea.previewsUnfinishedDetail'),
                     });
 
                     return;
@@ -957,10 +977,10 @@ const AdminArea = ({
               }}
               onRebuildArtefacts={async (item) =>
                 tellOutcome(
-                  `Rebuilding the previews of ${item.title}.`,
+                  say('admin.adminArea.rebuildingPreviews', { title: item.title }),
                   failureOfMissing(
                     await rebuildArtefacts(item.id),
-                    `The previews of ${item.title} could not be rebuilt.`,
+                    say('admin.adminArea.couldNotRebuildPreviews', { title: item.title }),
                   ),
                 )
               }
@@ -970,10 +990,15 @@ const AdminArea = ({
                       const seriesId = item.seriesId ?? null;
                       const name = item.seriesTitle ?? item.title;
                       const isGone = tellOutcome(
-                        `Deleted ${name}.`,
-                        await failureOfThrown(async () => {
-                          await (seriesId === null ? deleteMedia(item.id) : deleteSeries(seriesId));
-                        }, `${name} could not be deleted.`),
+                        say('admin.adminArea.deletedMedia', { title: name }),
+                        await failureOfThrown(
+                          async () => {
+                            await (seriesId === null
+                              ? deleteMedia(item.id)
+                              : deleteSeries(seriesId));
+                          },
+                          say('admin.adminArea.couldNotDeleteMedia', { title: name }),
+                        ),
                       );
 
                       if (isGone) {
@@ -1025,10 +1050,10 @@ const AdminArea = ({
               onReview={setReviewing}
               onStop={async (one) => {
                 const stopped = tellOutcome(
-                  'Stopped the re-encode.',
+                  say('admin.adminArea.reencodeStopped'),
                   failureOfAnswer(
                     await cancelReencode(one.id),
-                    'That re-encode could not be stopped.',
+                    say('admin.adminArea.couldNotStopReencode'),
                   ),
                 );
 
@@ -1127,7 +1152,7 @@ const AdminArea = ({
               onCreate={async (webhook) => {
                 const { created, refusal } = await createWebhook(webhook);
 
-                if (tellOutcome('Webhook created.', failureOfRefusal(refusal))) {
+                if (tellOutcome(say('admin.adminArea.webhookCreated'), failureOfRefusal(refusal))) {
                   setCreatedWebhook(created);
                   await reloadWebhooks();
                 }
@@ -1137,7 +1162,7 @@ const AdminArea = ({
               onEdit={async (id, change) => {
                 const refusal = await changeWebhook(id, change);
 
-                if (tellOutcome('Webhook saved.', failureOfRefusal(refusal))) {
+                if (tellOutcome(say('admin.adminArea.webhookSaved'), failureOfRefusal(refusal))) {
                   await reloadWebhooks();
                 }
 
@@ -1149,7 +1174,7 @@ const AdminArea = ({
               onSetEnabled={(id, enabled) => {
                 void setWebhookEnabled(id, enabled).then((refusal) => {
                   tellOutcome(
-                    enabled ? 'Webhook turned on.' : 'Webhook turned off.',
+                    enabled ? say('admin.adminArea.webhookOn') : say('admin.adminArea.webhookOff'),
                     failureOfRefusal(refusal),
                   );
 
@@ -1158,14 +1183,14 @@ const AdminArea = ({
               }}
               onDelete={(id) => {
                 void deleteWebhook(id).then((refusal) => {
-                  tellOutcome('Webhook deleted.', failureOfRefusal(refusal));
+                  tellOutcome(say('admin.adminArea.webhookDeleted'), failureOfRefusal(refusal));
 
                   return reloadWebhooks();
                 });
               }}
               onTest={(id) => {
                 void testWebhook(id).then((refusal) => {
-                  tellOutcome('Sent a test delivery.', failureOfRefusal(refusal));
+                  tellOutcome(say('admin.adminArea.testSent'), failureOfRefusal(refusal));
                 });
               }}
               deliveries={deliveries}
@@ -1174,7 +1199,7 @@ const AdminArea = ({
               onOpenHistory={setOpenHistoryId}
               onRedeliver={(subscriptionId, deliveryId) => {
                 void redeliverWebhook(subscriptionId, deliveryId).then((refusal) => {
-                  tellOutcome('Delivered it again.', failureOfRefusal(refusal));
+                  tellOutcome(say('admin.adminArea.redelivered'), failureOfRefusal(refusal));
 
                   return reloadDeliveries(subscriptionId);
                 });
@@ -1260,8 +1285,8 @@ const AdminArea = ({
           const isStarted = started !== null && started.started.length > 0;
 
           tellOutcome(
-            'Started re-encoding.',
-            failureOfAnswer(isStarted, 'Nothing could be re-encoded.'),
+            say('admin.adminArea.reencodingStarted'),
+            failureOfAnswer(isStarted, say('admin.adminArea.couldNotReencode')),
           );
           await reloadReencodes();
 
@@ -1277,8 +1302,8 @@ const AdminArea = ({
         reencode={reviewing}
         onConfirm={async (id) => {
           const done = tellOutcome(
-            'Kept the new encode and removed the original.',
-            failureOfAnswer(await confirmReencode(id), 'That could not be confirmed.'),
+            say('admin.adminArea.keptNewEncode'),
+            failureOfAnswer(await confirmReencode(id), say('admin.adminArea.couldNotConfirm')),
           );
 
           await Promise.all([reloadReencodes(), loadAll()]);
@@ -1287,8 +1312,8 @@ const AdminArea = ({
         }}
         onReject={async (id) => {
           const done = tellOutcome(
-            'Put the original back.',
-            failureOfAnswer(await rejectReencode(id), 'That could not be put back.'),
+            say('admin.adminArea.originalBack'),
+            failureOfAnswer(await rejectReencode(id), say('admin.adminArea.couldNotPutBack')),
           );
 
           await Promise.all([reloadReencodes(), loadAll()]);

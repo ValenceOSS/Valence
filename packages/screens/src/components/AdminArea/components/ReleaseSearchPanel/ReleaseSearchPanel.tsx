@@ -37,13 +37,15 @@ import { libraryKindOf } from './libraryKindOf';
 import { profilesForMode } from './profilesForMode';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { IndexerSearchMode, Release, ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
-const MODES: readonly { id: IndexerSearchMode; label: string }[] = [
-  { id: 'search', label: 'Anything' },
-  { id: 'movie', label: 'Films' },
-  { id: 'tv', label: 'Series' },
-  { id: 'music', label: 'Music' },
-  { id: 'book', label: 'Books' },
+const MODES: readonly { id: IndexerSearchMode; labelKey: StringKey }[] = [
+  { id: 'search', labelKey: 'admin.releaseSearchPanel.modeAnything' },
+  { id: 'movie', labelKey: 'admin.releaseSearchPanel.modeFilms' },
+  { id: 'tv', labelKey: 'admin.releaseSearchPanel.modeSeries' },
+  { id: 'music', labelKey: 'admin.releaseSearchPanel.modeMusic' },
+  { id: 'book', labelKey: 'admin.releaseSearchPanel.modeBooks' },
 ];
 
 /**
@@ -101,7 +103,7 @@ const ReleaseSearchPanel = () => {
         enableSorting: false,
         cell: ({ row }) => {
           const { magnetUrl, downloadUrl, infoUrl, title, indexerId, protocol } = row.original;
-          const kind = protocol === 'usenet' ? 'NZB' : 'torrent';
+          const isUsenet = protocol === 'usenet';
           const target = (clients.data ?? []).find(
             (client) => client.isEnabled && PROTOCOL_OF_CLIENT[client.kind] === protocol,
           );
@@ -113,7 +115,10 @@ const ReleaseSearchPanel = () => {
               return;
             }
 
-            setSaid({ text: `Sending ${title} to ${target.name}…`, isProblem: false });
+            setSaid({
+              text: say('admin.releaseSearchPanel.sending', { title, client: target.name }),
+              isProblem: false,
+            });
 
             void sendRelease({
               indexerId,
@@ -127,19 +132,42 @@ const ReleaseSearchPanel = () => {
             }).then(({ value, refusal }) => {
               setSaid(
                 value === null
-                  ? { text: refusal?.message ?? `${title} could not be sent.`, isProblem: true }
-                  : { text: `Sent ${title} to ${value.clientName}.`, isProblem: false },
+                  ? {
+                      text:
+                        refusal?.message ?? say('admin.releaseSearchPanel.couldNotSend', { title }),
+                      isProblem: true,
+                    }
+                  : {
+                      text: say('admin.releaseSearchPanel.sent', {
+                        title,
+                        client: value.clientName,
+                      }),
+                      isProblem: false,
+                    },
               );
             });
           };
 
           const save = () => {
-            setSaid({ text: `Fetching the ${kind}…`, isProblem: false });
+            setSaid({
+              text: say(
+                isUsenet
+                  ? 'admin.releaseSearchPanel.fetchingNzb'
+                  : 'admin.releaseSearchPanel.fetchingTorrent',
+              ),
+              isProblem: false,
+            });
 
             void fetchRelease(indexerId, downloadUrl ?? '').then(async ({ value, refusal }) => {
               if (value === null) {
                 setSaid({
-                  text: refusal?.message ?? `The ${kind} could not be fetched.`,
+                  text:
+                    refusal?.message ??
+                    say(
+                      isUsenet
+                        ? 'admin.releaseSearchPanel.couldNotFetchNzb'
+                        : 'admin.releaseSearchPanel.couldNotFetchTorrent',
+                    ),
                   isProblem: true,
                 });
 
@@ -149,7 +177,7 @@ const ReleaseSearchPanel = () => {
               if (value.kind === 'magnet') {
                 await navigator.clipboard.writeText(value.url);
                 setSaid({
-                  text: 'That release is a magnet link, which has been copied.',
+                  text: say('admin.releaseSearchPanel.magnetCopiedInstead'),
                   isProblem: false,
                 });
 
@@ -157,14 +185,14 @@ const ReleaseSearchPanel = () => {
               }
 
               downloadFile(value.name, value.file);
-              setSaid({ text: `Saved ${title}.`, isProblem: false });
+              setSaid({ text: say('admin.releaseSearchPanel.saved', { title }), isProblem: false });
             });
           };
 
           return (
             <span className="flex justify-end">
               <ActionMenu
-                label={`Actions for ${title}`}
+                label={say('admin.releaseSearchPanel.actionsFor', { title })}
                 trigger={<Icon of={MoreHorizontalIcon} size={16} />}
                 groups={[
                   {
@@ -173,8 +201,16 @@ const ReleaseSearchPanel = () => {
                         ? [
                             {
                               id: 'send',
-                              label: `Send to a ${protocol === 'usenet' ? 'usenet' : 'torrent'} client`,
-                              detail: `No ${protocol === 'usenet' ? 'usenet' : 'torrent'} client is switched on. Add one on the Downloads page.`,
+                              label: say(
+                                isUsenet
+                                  ? 'admin.releaseSearchPanel.sendToUsenet'
+                                  : 'admin.releaseSearchPanel.sendToTorrent',
+                              ),
+                              detail: say(
+                                isUsenet
+                                  ? 'admin.releaseSearchPanel.noUsenetClient'
+                                  : 'admin.releaseSearchPanel.noTorrentClient',
+                              ),
                               icon: <Icon of={SendFilledIcon} size={15} />,
                               isDisabled: true,
                               onChoose: () => undefined,
@@ -184,8 +220,11 @@ const ReleaseSearchPanel = () => {
                             id: `send-${sending}`,
                             label:
                               libraryKind === null
-                                ? `Send to ${target.name} as ${LIBRARY_KIND_NAMES[sending].one}`
-                                : `Send to ${target.name}`,
+                                ? say('admin.releaseSearchPanel.sendToAs', {
+                                    client: target.name,
+                                    kind: say(LIBRARY_KIND_NAMES[sending].oneKey),
+                                  })
+                                : say('admin.releaseSearchPanel.sendTo', { client: target.name }),
                             detail: describeWhereItGoes(
                               sending,
                               libraries.data ?? [],
@@ -199,27 +238,33 @@ const ReleaseSearchPanel = () => {
                           }))),
                       {
                         id: 'magnet',
-                        label: 'Copy the magnet link',
+                        label: say('admin.releaseSearchPanel.copyMagnet'),
                         icon: <Icon of={Link2FilledIcon} size={15} />,
                         isDisabled: magnetUrl === null,
                         onChoose: () => {
                           void navigator.clipboard.writeText(magnetUrl ?? '').then(() => {
-                            setSaid({ text: 'The magnet link has been copied.', isProblem: false });
+                            setSaid({
+                              text: say('admin.releaseSearchPanel.magnetCopied'),
+                              isProblem: false,
+                            });
                           });
                         },
                       },
                       {
                         id: 'download',
-                        label: `Save the ${kind}`,
-                        detail:
-                          'Fetched through Valence, with whatever the site needs to hand it over.',
+                        label: say(
+                          isUsenet
+                            ? 'admin.releaseSearchPanel.saveNzb'
+                            : 'admin.releaseSearchPanel.saveTorrent',
+                        ),
+                        detail: say('admin.releaseSearchPanel.saveDetail'),
                         icon: <Icon of={DownloadFilledIcon} size={15} />,
                         isDisabled: downloadUrl === null,
                         onChoose: save,
                       },
                       {
                         id: 'page',
-                        label: 'Open its page',
+                        label: say('admin.releaseSearchPanel.openPage'),
                         icon: <Icon of={SquareArrowUpRightFilledIcon} size={15} />,
                         isDisabled: infoUrl === null,
                         onChoose: () => {
@@ -271,7 +316,7 @@ const ReleaseSearchPanel = () => {
   );
 
   return (
-    <PanelCard title="Search" isFlush>
+    <PanelCard title={say('admin.releaseSearchPanel.heading')} isFlush>
       <form
         className="flex flex-col gap-3 p-4"
         onSubmit={(event) => {
@@ -281,18 +326,18 @@ const ReleaseSearchPanel = () => {
       >
         <div className="flex flex-wrap items-end gap-3">
           <TextField
-            label="Search for"
+            label={say('admin.releaseSearchPanel.searchFor')}
             type="search"
             value={query}
             onValueChange={setQuery}
-            placeholder="Dune Part Two 2160p"
+            placeholder={say('admin.releaseSearchPanel.searchPlaceholder')}
             className="min-w-0 flex-1"
           />
 
           {mode !== 'tv' ? null : (
             <>
               <TextField
-                label="Season"
+                label={say('admin.releaseSearchPanel.season')}
                 type="number"
                 min={0}
                 value={season}
@@ -301,7 +346,7 @@ const ReleaseSearchPanel = () => {
               />
 
               <TextField
-                label="Episode"
+                label={say('admin.releaseSearchPanel.episode')}
                 type="number"
                 min={0}
                 value={episode}
@@ -312,15 +357,15 @@ const ReleaseSearchPanel = () => {
           )}
 
           <Button type="submit" variant="glossy" disabled={query.trim() === '' || found.isFetching}>
-            Search
+            {say('admin.releaseSearchPanel.search')}
           </Button>
         </div>
 
         <div className="flex flex-wrap items-end gap-3">
           <SegmentedRow
-            label="What it is"
+            label={say('admin.releaseSearchPanel.whatItIs')}
             size="sm"
-            items={MODES}
+            items={MODES.map((one) => ({ id: one.id, label: say(one.labelKey) }))}
             value={mode}
             onSelect={(next) => {
               const chosen = MODES.find((one) => one.id === next)?.id;
@@ -340,16 +385,16 @@ const ReleaseSearchPanel = () => {
           />
 
           <OptionMenu
-            label="Judge against"
+            label={say('admin.releaseSearchPanel.judgeAgainst')}
             groups={[
               {
-                name: 'Judge against',
+                name: say('admin.releaseSearchPanel.judgeAgainst'),
                 selectedId: profileId ?? 'none',
                 onSelect: (next) => {
                   setProfileId(next === 'none' ? null : next);
                 },
                 options: [
-                  { id: 'none', label: 'No profile' },
+                  { id: 'none', label: say('admin.releaseSearchPanel.noProfile') },
                   ...offered.map((one) => ({ id: one.id, label: one.name })),
                 ],
               },
@@ -357,7 +402,9 @@ const ReleaseSearchPanel = () => {
             trigger={
               <>
                 <span className="truncate">
-                  {profile === null ? 'No profile' : `Judged against ${profile.name}`}
+                  {profile === null
+                    ? say('admin.releaseSearchPanel.noProfile')
+                    : say('admin.releaseSearchPanel.judgedAgainst', { name: profile.name })}
                 </span>
                 <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
               </>
@@ -368,12 +415,12 @@ const ReleaseSearchPanel = () => {
 
           {profile?.kind !== 'video' ? null : (
             <TextField
-              label="Running time (minutes)"
+              label={say('admin.releaseSearchPanel.runtime')}
               type="number"
               min={1}
               value={runtime}
               onValueChange={setRuntime}
-              placeholder="For judging size"
+              placeholder={say('admin.releaseSearchPanel.runtimePlaceholder')}
               className="w-48"
             />
           )}
@@ -390,33 +437,30 @@ const ReleaseSearchPanel = () => {
       )}
 
       {asked === null ? (
-        <p className="px-4 pb-6 text-sm text-text-muted">
-          Search every enabled indexer at once. What each finds is listed together, most widely
-          shared first.
-        </p>
+        <p className="px-4 pb-6 text-sm text-text-muted">{say('admin.releaseSearchPanel.intro')}</p>
       ) : found.isError ? (
         <CouldNotRead
-          what="The search"
+          what={say('admin.releaseSearchPanel.what')}
           isTryingAgain={found.isFetching}
           onTryAgain={() => {
             void found.refetch();
           }}
         />
       ) : found.isPending ? (
-        <Spinner isCentered label="Asking every indexer" size="sm" />
+        <Spinner isCentered label={say('admin.releaseSearchPanel.asking')} size="sm" />
       ) : (
         <div className="flex flex-col gap-3">
           <IndexerReportList reports={found.data.indexers} />
 
           <DataTable
-            label="Releases found"
+            label={say('admin.releaseSearchPanel.releasesFound')}
             columns={columns}
             rows={releases}
             getRowId={(release) => release.id}
             emptyMessage={
               found.data.indexers.length === 0
-                ? 'No indexer is switched on, so there was nothing to search.'
-                : 'Nothing was found. Try fewer words, or another kind.'
+                ? say('admin.releaseSearchPanel.noIndexer')
+                : say('admin.releaseSearchPanel.nothingFound')
             }
           />
         </div>

@@ -2,6 +2,7 @@ import { Button } from '@ValenceUI/Button';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { describeMusicMatch } from './describeMusicMatch';
 import type { MusicMatchListProps } from './MusicMatchList.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * What MusicBrainz found for a name, each artist or album with its cover where it has one — a note
@@ -13,7 +14,7 @@ import type { MusicMatchListProps } from './MusicMatchList.types';
  */
 const MusicMatchList = ({ matches, onChoose }: MusicMatchListProps) => (
   <ul
-    aria-label="Found in MusicBrainz"
+    aria-label={say('admin.musicMatchList.label')}
     className="flex max-h-[50vh] flex-col gap-2 overflow-y-auto"
   >
     {matches.map((match) => {
@@ -31,7 +32,7 @@ const MusicMatchList = ({ matches, onChoose }: MusicMatchListProps) => (
           >
             <MusicArtwork
               src={match.coverUrl}
-              label={`The cover of ${match.title}`}
+              label={say('admin.musicMatchList.coverOf', { title: match.title })}
               shape={match.kind === 'artist' ? 'round' : 'square'}
               className="w-14"
             />

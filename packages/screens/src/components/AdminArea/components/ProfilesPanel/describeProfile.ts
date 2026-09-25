@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { QUALITY_NAMES } from '@ValenceScreens/components/AdminArea/QUALITY_NAMES';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 
@@ -25,10 +26,10 @@ const describeProfile = (profile: QualityProfile): { takes: string; upgrades: st
         ? [named(profile.resolutions), named(profile.sources)].filter(Boolean).join(' · ')
         : named(profile.musicQualities),
     upgrades: !profile.isUpgrading
-      ? 'No'
+      ? say('admin.describeProfile.noUpgrades')
       : until === ''
-        ? 'To the best there is'
-        : `Until ${until}`,
+        ? say('admin.describeProfile.toTheBest')
+        : say('admin.describeProfile.until', { quality: until }),
   };
 };
 

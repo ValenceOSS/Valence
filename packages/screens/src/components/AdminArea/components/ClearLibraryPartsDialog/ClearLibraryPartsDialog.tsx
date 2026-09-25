@@ -10,12 +10,24 @@ import { LibraryPicker } from '@ValenceScreens/components/AdminArea/components/L
 import { describeLibraryPart } from '@ValenceScreens/components/AdminArea/describeLibraryPart';
 import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
 import type { ClearLibraryPartsDialogProps } from './ClearLibraryPartsDialog.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
-const GROUPS: { name: string; parts: LibraryPart[] }[] = [
-  { name: 'About each title', parts: ['descriptions', 'cast', 'ageRatings', 'trailers'] },
-  { name: 'Pictures', parts: ['artwork', 'logos'] },
-  { name: 'Made by Valence', parts: ['previews', 'scrubPreviews', 'intros'] },
-  { name: 'Music', parts: ['albumCovers', 'artistPictures', 'lyrics', 'musicVideos'] },
+const GROUPS: { nameKey: StringKey; parts: LibraryPart[] }[] = [
+  {
+    nameKey: 'admin.clearLibraryPartsDialog.aboutEachTitle',
+    parts: ['descriptions', 'cast', 'ageRatings', 'trailers'],
+  },
+  { nameKey: 'admin.clearLibraryPartsDialog.pictures', parts: ['artwork', 'logos'] },
+  {
+    nameKey: 'admin.clearLibraryPartsDialog.madeByValence',
+    parts: ['previews', 'scrubPreviews', 'intros'],
+  },
+  {
+    nameKey: 'admin.clearLibraryPartsDialog.music',
+    parts: ['albumCovers', 'artistPictures', 'lyrics', 'musicVideos'],
+  },
 ];
 
 /**
@@ -59,15 +71,19 @@ const ClearLibraryPartsDialog = ({
 
   return (
     <Dialog
-      label={definition === null ? 'Clear and fetch again' : definition.label}
+      label={
+        definition === null ? say('admin.clearLibraryPartsDialog.fallbackLabel') : definition.label
+      }
       isOpen={definition !== null}
       onClose={onClose}
     >
       {definition === null ? null : (
         <>
           <DialogTitle
-            title={`${definition.label}?`}
-            detail={`${definition.description} This cannot be undone.`}
+            title={say('admin.clearLibraryPartsDialog.title', { job: definition.label })}
+            detail={say('admin.clearLibraryPartsDialog.detail', {
+              description: definition.description,
+            })}
           />
 
           <DialogContent className="flex flex-col gap-6">
@@ -75,21 +91,21 @@ const ClearLibraryPartsDialog = ({
 
             <fieldset className="flex flex-col gap-5">
               <legend className="mb-3 text-xs uppercase tracking-[0.14em] text-text-muted">
-                What to clear
+                {say('admin.clearLibraryPartsDialog.whatToClear')}
               </legend>
 
               {offered.size === 0 ? (
                 <p className="text-sm text-text-muted">
                   {picked.length === 0
-                    ? 'Choose a library to see what can be cleared.'
-                    : 'Nothing in these libraries is fetched or made, so there is nothing to clear.'}
+                    ? say('admin.clearLibraryPartsDialog.chooseLibrary')
+                    : say('admin.clearLibraryPartsDialog.nothingToClear')}
                 </p>
               ) : null}
 
               {GROUPS.filter((group) => group.parts.some((part) => offered.has(part))).map(
                 (group) => (
-                  <div key={group.name} className="flex flex-col gap-3">
-                    <span className="text-sm font-medium text-text">{group.name}</span>
+                  <div key={group.nameKey} className="flex flex-col gap-3">
+                    <span className="text-sm font-medium text-text">{say(group.nameKey)}</span>
 
                     {group.parts
                       .filter((part) => offered.has(part))
@@ -118,8 +134,7 @@ const ClearLibraryPartsDialog = ({
 
             {readsAgainAfterClearing(parts) ? (
               <p role="note" className="text-sm text-text-muted">
-                Getting these back means reading every file in the chosen libraries again, which can
-                take hours on a large library.
+                {say('admin.clearLibraryPartsDialog.readsAgain')}
               </p>
             ) : null}
           </DialogContent>
@@ -127,7 +142,7 @@ const ClearLibraryPartsDialog = ({
           <DialogFooter
             dismiss={{ onChoose: onClose }}
             confirm={{
-              label: parts.length === 1 ? 'Clear 1 part' : `Clear ${parts.length.toString()} parts`,
+              label: sayCount('admin.clearLibraryPartsDialog.confirm', parts.length),
               onChoose: () => {
                 onClear(
                   definition.kind,

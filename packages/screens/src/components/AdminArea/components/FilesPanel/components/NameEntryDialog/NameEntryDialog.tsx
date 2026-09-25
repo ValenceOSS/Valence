@@ -5,6 +5,7 @@ import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { TextField } from '@ValenceUI/TextField';
 import type { NameEntryDialogProps } from './NameEntryDialog.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Asks for one name — for something being renamed, or a folder being made — and keeps asking, with
@@ -45,7 +46,7 @@ const NameEntryDialog = ({
 
       <DialogContent>
         <TextField
-          label="Name"
+          label={say('admin.nameEntryDialog.name')}
           value={name}
           onValueChange={setName}
           hasFocusOnMount

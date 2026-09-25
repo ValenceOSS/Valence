@@ -11,9 +11,10 @@ import { isSubscribableEvent } from '@ValenceContracts/schemas/Webhook';
 import { WebhookFields } from '@ValenceScreens/components/AdminArea/components/WebhookFields/WebhookFields';
 import {
   WEBHOOK_PANES,
-  WEBHOOK_PANE_ITEMS,
+  webhookPaneItems,
   isWebhookPane,
 } from '@ValenceScreens/components/AdminArea/components/WebhookFields/webhookPanes';
+import { say } from '@ValenceI18n/say';
 import type { WebhookDraft } from '@ValenceScreens/components/AdminArea/components/WebhookFields/WebhookFields.types';
 import type { EditWebhookDialogProps } from './EditWebhookDialog.types';
 
@@ -90,7 +91,11 @@ const EditWebhookDialog = ({
   };
 
   return (
-    <DialogCompanion label={`Edit ${webhook.name}`} isOpen={requested !== null} onClose={onClose}>
+    <DialogCompanion
+      label={say('admin.editWebhookDialog.title', { name: webhook.name })}
+      isOpen={requested !== null}
+      onClose={onClose}
+    >
       <Tabs
         value={pane}
         onValueChange={(next) => {
@@ -101,15 +106,15 @@ const EditWebhookDialog = ({
       >
         <DialogTitle
           size="compact"
-          title={`Edit ${webhook.name}`}
-          detail="Its signing secret stays as it is, so anything already checking deliveries keeps working."
+          title={say('admin.editWebhookDialog.title', { name: webhook.name })}
+          detail={say('admin.editWebhookDialog.detail')}
           below={
             <TabRow
-              label="What to change"
+              label={say('admin.webhookPanes.tabsLabel')}
               tone="underlined"
               size="sm"
               value={pane}
-              groups={[{ items: WEBHOOK_PANE_ITEMS }]}
+              groups={[{ items: webhookPaneItems() }]}
             />
           }
         />
@@ -129,7 +134,9 @@ const EditWebhookDialog = ({
           note={refusal}
           dismiss={{ onChoose: onClose }}
           confirm={{
-            label: isSaving ? 'Saving…' : 'Save changes',
+            label: isSaving
+              ? say('admin.editWebhookDialog.saving')
+              : say('admin.editWebhookDialog.saveChanges'),
             onChoose: save,
             isDisabled: !isReady || isSaving,
           }}

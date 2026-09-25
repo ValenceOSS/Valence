@@ -1,4 +1,5 @@
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says how much memory Valence is holding, in words that stay honest at the edges: a reading that was
@@ -8,6 +9,6 @@ import { formatBytes } from '@ValenceCore/functions/formatBytes';
  * @returns The phrase to show.
  */
 const describeValenceMemory = (bytes: number | null): string =>
-  bytes === null ? 'not measured' : formatBytes(bytes);
+  bytes === null ? say('admin.describeValenceMemory.notMeasured') : formatBytes(bytes);
 
 export { describeValenceMemory };

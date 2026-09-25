@@ -17,6 +17,7 @@ import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { deviceIconFor } from './deviceIcon';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { SessionStatsDialog } from '@ValenceScreens/components/AdminArea/components/SessionStatsDialog/SessionStatsDialog';
+import { say } from '@ValenceI18n/say';
 import type { SessionCardProps } from './SessionCard.types';
 
 /**
@@ -81,12 +82,16 @@ const SessionCard = ({
           <span className="truncate text-sm font-medium text-text">
             {playback?.mediaTitle ??
               (listening === null
-                ? 'Not watching anything'
+                ? say('admin.sessionCard.notWatching')
                 : `${listening.title} · ${listening.artists.join(', ')}`)}
           </span>
 
           {listening === null || playback !== null ? null : (
-            <Badge size="sm">{listening.delivery === 'encoded' ? 'Encoding' : 'Direct'}</Badge>
+            <Badge size="sm">
+              {listening.delivery === 'encoded'
+                ? say('admin.sessionCard.encoding')
+                : say('admin.sessionCard.direct')}
+            </Badge>
           )}
 
           {playback === null ? null : (
@@ -95,7 +100,11 @@ const SessionCard = ({
 
           {playback === null ||
           (playback.reuse !== 'whole' && playback.reuse !== 'shared') ? null : (
-            <Badge size="sm">{playback.reuse === 'whole' ? 'Cached' : 'Shared'}</Badge>
+            <Badge size="sm">
+              {playback.reuse === 'whole'
+                ? say('admin.sessionCard.cached')
+                : say('admin.sessionCard.shared')}
+            </Badge>
           )}
         </span>
 
@@ -106,7 +115,9 @@ const SessionCard = ({
           </span>
 
           {!isActive ? null : (
-            <span className="shrink-0">· {isPlaying ? 'Playing' : 'Paused'}</span>
+            <span className="shrink-0">
+              · {isPlaying ? say('admin.sessionCard.playing') : say('admin.sessionCard.paused')}
+            </span>
           )}
 
           {listening === null || playback !== null ? null : (
@@ -163,7 +174,7 @@ const SessionCard = ({
               <Button
                 isIconOnly
                 variant="ghost"
-                label="Pause"
+                label={say('admin.sessionCard.pause')}
                 size="sm"
                 disabled={isBusy}
                 onClick={onPause}
@@ -174,7 +185,7 @@ const SessionCard = ({
               <Button
                 isIconOnly
                 variant="ghost"
-                label="Play"
+                label={say('admin.sessionCard.play')}
                 size="sm"
                 disabled={isBusy}
                 onClick={onResume}
@@ -186,7 +197,7 @@ const SessionCard = ({
             <Button
               isIconOnly
               variant="ghost"
-              label="Stop"
+              label={say('admin.sessionCard.stop')}
               size="sm"
               disabled={isBusy}
               onClick={onStop}
@@ -197,7 +208,7 @@ const SessionCard = ({
             <Button
               isIconOnly
               variant="ghost"
-              label="Message"
+              label={say('admin.sessionCard.message')}
               size="sm"
               disabled={isBusy}
               onClick={onMessage}
@@ -211,7 +222,7 @@ const SessionCard = ({
           <Button
             isIconOnly
             variant="ghost"
-            label="Stream stats"
+            label={say('admin.sessionCard.streamStats')}
             size="sm"
             onClick={() => {
               setIsShowingStats(true);

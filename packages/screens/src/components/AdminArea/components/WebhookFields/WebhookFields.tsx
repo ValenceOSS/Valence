@@ -13,20 +13,22 @@ import {
 } from '@ValenceContracts/schemas/Webhook';
 import { MEDIA_KINDS, MEDIA_KIND_LABELS } from '@ValenceContracts/schemas/MediaKind';
 import { WebhookFilterList } from '@ValenceScreens/components/AdminArea/components/WebhooksPanel/components/WebhookFilterList/WebhookFilterList';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 import type { MediaKind } from '@ValenceContracts/schemas/MediaKind';
 import type { WebhookPreset, WebhookSubscribableEvent } from '@ValenceContracts/schemas/Webhook';
 import type { WebhookFieldsProps } from './WebhookFields.types';
 
-const PRESET_LABELS: Record<WebhookPreset, string> = {
-  generic: 'Valence’s own envelope, as JSON — build against this one',
-  discord: 'A message in a Discord channel',
-  ntfy: 'A notification through ntfy',
+const PRESET_LABELS: Record<WebhookPreset, StringKey> = {
+  generic: 'admin.webhookFields.preset.generic',
+  discord: 'admin.webhookFields.preset.discord',
+  ntfy: 'admin.webhookFields.preset.ntfy',
 };
 
 const ARRIVAL_CHOICES = [
-  { id: 'perScan', label: 'Once per scan' },
-  { id: 'perItem', label: 'One for each thing' },
-] as const;
+  { id: 'perScan', labelKey: 'admin.webhookFields.perScan' },
+  { id: 'perItem', labelKey: 'admin.webhookFields.perItem' },
+] as const satisfies readonly { id: string; labelKey: StringKey }[];
 
 const ITEM_TYPE_CHOICES = MEDIA_KINDS.map((kind) => ({
   id: kind,
@@ -80,31 +82,31 @@ const WebhookFields = ({
       <TabPanel value="where" travel={travel}>
         <div className="flex flex-col gap-4">
           <TextField
-            label="Name"
+            label={say('admin.webhookFields.name')}
             value={draft.name}
             onValueChange={(name) => {
               onChange({ ...draft, name });
             }}
-            placeholder="Discord"
-            description="What this is called in the list. Only you see it."
+            placeholder={say('admin.webhookFields.namePlaceholder')}
+            description={say('admin.webhookFields.nameDescription')}
             required
           />
 
           <TextField
-            label="Address"
+            label={say('admin.webhookFields.address')}
             type="url"
             value={draft.url}
             onValueChange={(url) => {
               onChange({ ...draft, url });
             }}
             placeholder="https://discord.com/api/webhooks/…"
-            description="Where the deliveries are posted."
+            description={say('admin.webhookFields.addressDescription')}
             required
           />
 
           <FormField
-            label="Shape"
-            description="What Valence sends, so the other end understands it."
+            label={say('admin.webhookFields.shape')}
+            description={say('admin.webhookFields.shapeDescription')}
           >
             <div className="flex flex-col gap-1.5">
               {WEBHOOK_PRESETS.map((candidate) => (
@@ -119,7 +121,7 @@ const WebhookFields = ({
                   }}
                 >
                   <span className="text-sm text-text">{candidate}</span>
-                  <span className="text-xs text-text-muted">{PRESET_LABELS[candidate]}</span>
+                  <span className="text-xs text-text-muted">{say(PRESET_LABELS[candidate])}</span>
                 </Button>
               ))}
             </div>
@@ -153,7 +155,9 @@ const WebhookFields = ({
                         );
                       }}
                     >
-                      {isEveryOne ? 'None' : 'All'}
+                      {isEveryOne
+                        ? say('admin.webhookFields.none')
+                        : say('admin.webhookFields.all')}
                     </Button>
                   </div>
 
@@ -212,18 +216,22 @@ const WebhookFields = ({
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
             <div className="flex flex-col gap-0.5">
-              <span className="text-sm font-medium text-text">When things arrive</span>
+              <span className="text-sm font-medium text-text">
+                {say('admin.webhookFields.whenThingsArrive')}
+              </span>
               <span className="text-xs text-text-muted">
-                A first scan of a large library arrives all at once. One message per scan keeps that
-                readable; one for each thing does not.
+                {say('admin.webhookFields.arrivalDetail')}
               </span>
             </div>
 
             <SegmentedRow
-              label="How arrivals are reported"
+              label={say('admin.webhookFields.arrivalLabel')}
               tone="accent"
               size="sm"
-              items={ARRIVAL_CHOICES}
+              items={ARRIVAL_CHOICES.map((choice) => ({
+                id: choice.id,
+                label: say(choice.labelKey),
+              }))}
               value={draft.filters.mediaAdded}
               onSelect={(id) => {
                 onChange({
@@ -238,33 +246,33 @@ const WebhookFields = ({
           </div>
 
           <WebhookFilterList
-            title="Accounts"
-            governs="Decides whose sign-ins and account changes are reported."
+            title={say('admin.webhookFields.accounts')}
+            governs={say('admin.webhookFields.accountsGoverns')}
             choices={accounts}
             chosen={draft.filters.accounts}
-            nothingToChoose="This server has no other accounts yet."
+            nothingToChoose={say('admin.webhookFields.noAccounts')}
             onChange={(chosen) => {
               onChange({ ...draft, filters: { ...draft.filters, accounts: chosen } });
             }}
           />
 
           <WebhookFilterList
-            title="Profiles"
-            governs="Decides whose watching is reported."
+            title={say('admin.webhookFields.profiles')}
+            governs={say('admin.webhookFields.profilesGoverns')}
             choices={profiles}
             chosen={draft.filters.profiles}
-            nothingToChoose="This server has no profiles yet."
+            nothingToChoose={say('admin.webhookFields.noProfiles')}
             onChange={(chosen) => {
               onChange({ ...draft, filters: { ...draft.filters, profiles: chosen } });
             }}
           />
 
           <WebhookFilterList
-            title="Kinds"
-            governs="Decides which kinds of thing are reported, arriving or being watched."
+            title={say('admin.webhookFields.kinds')}
+            governs={say('admin.webhookFields.kindsGoverns')}
             choices={ITEM_TYPE_CHOICES}
             chosen={draft.filters.itemTypes}
-            nothingToChoose="Nothing to choose from."
+            nothingToChoose={say('admin.webhookFields.nothingToChoose')}
             onChange={(chosen) => {
               onChange({
                 ...draft,

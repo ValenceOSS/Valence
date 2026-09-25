@@ -4,6 +4,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
 import { HouseholdFace } from '@ValenceScreens/components/HouseholdFace/HouseholdFace';
+import { say } from '@ValenceI18n/say';
 import type { RoleMembersProps } from './RoleMembers.types';
 
 /**
@@ -35,17 +36,17 @@ const RoleMembers = ({ accounts, heldIds, onToggle }: RoleMembersProps) => {
   return (
     <div className="flex flex-col gap-4">
       <TextField
-        label="Find somebody"
+        label={say('admin.roleMembers.findLabel')}
         isLabelHidden
         type="search"
         value={search}
         onValueChange={setSearch}
-        placeholder="Find somebody"
+        placeholder={say('admin.roleMembers.findLabel')}
         icon={<Icon of={SearchIcon} size={15} />}
       />
 
       {shown.length === 0 ? (
-        <p className="text-sm text-text-muted">Nobody here matches that.</p>
+        <p className="text-sm text-text-muted">{say('admin.roleMembers.nobodyMatches')}</p>
       ) : (
         <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
           {shown.map((account) => (
@@ -70,7 +71,7 @@ const RoleMembers = ({ accounts, heldIds, onToggle }: RoleMembersProps) => {
               </div>
 
               <Switch
-                label={`Whether ${account.name} holds this role`}
+                label={say('admin.roleMembers.holdsLabel', { name: account.name })}
                 isLabelHidden
                 isOn={heldIds.has(account.id)}
                 onToggle={() => {

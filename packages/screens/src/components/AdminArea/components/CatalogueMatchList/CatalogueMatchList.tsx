@@ -1,5 +1,6 @@
 import { Button } from '@ValenceUI/Button';
 import type { CatalogueMatchListProps } from './CatalogueMatchList.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * What the catalogue offered for a name, each with its poster, title, year and synopsis, to choose
@@ -39,7 +40,7 @@ const CatalogueMatchList = ({ matches, busyId = null, onChoose }: CatalogueMatch
               {match.year === null ? '' : ` (${match.year.toString()})`}
             </span>
             <span className="line-clamp-2 font-body text-xs text-text-muted">
-              {match.overview ?? 'No synopsis.'}
+              {match.overview ?? say('admin.catalogueMatchList.noSynopsis')}
             </span>
           </span>
         </Button>

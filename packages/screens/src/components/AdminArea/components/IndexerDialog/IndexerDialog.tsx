@@ -23,17 +23,19 @@ import type { IndexerCategory, IndexerTest } from '@ValenceContracts/schemas/Ind
 import type { IndexerForm } from './readIndexerForm';
 import type { IndexerDialogProps } from './IndexerDialog.types';
 import type { TryVerdict } from '@ValenceScreens/components/AdminArea/components/TryItButton/TryItButton.types';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
-const KEEPING: readonly { id: IndexerForm['removesWhenDone']; label: string }[] = [
-  { id: 'tracker', label: 'Follow the tracker' },
-  { id: 'always', label: 'Always delete' },
-  { id: 'never', label: 'Never delete' },
+const KEEPING: readonly { id: IndexerForm['removesWhenDone']; labelKey: StringKey }[] = [
+  { id: 'tracker', labelKey: 'admin.indexerDialog.followTracker' },
+  { id: 'always', labelKey: 'admin.indexerDialog.alwaysDelete' },
+  { id: 'never', labelKey: 'admin.indexerDialog.neverDelete' },
 ];
 
 const KINDS = [
-  { id: 'torznab', label: 'Torznab' },
-  { id: 'newznab', label: 'Newznab' },
-] as const;
+  { id: 'torznab', labelKey: 'admin.indexerDialog.torznab' },
+  { id: 'newznab', labelKey: 'admin.indexerDialog.newznab' },
+] as const satisfies readonly { id: string; labelKey: StringKey }[];
 
 /**
  * Adds an indexer, or changes one already kept.
@@ -140,7 +142,7 @@ const IndexerDialog = ({
 
         if (value === null) {
           setVerdict('failing');
-          setProblem(refusal?.message ?? 'It could not be tried.');
+          setProblem(refusal?.message ?? say('admin.indexerDialog.couldNotTry'));
 
           return;
         }
@@ -152,7 +154,9 @@ const IndexerDialog = ({
         }
 
         setVerdict(value.isWorking ? 'working' : 'failing');
-        setProblem(value.isWorking ? null : (value.problem ?? 'It did not answer.'));
+        setProblem(
+          value.isWorking ? null : (value.problem ?? say('admin.indexerDialog.didNotAnswer')),
+        );
         setForm((current) => ({ ...current, settings: { ...current.settings, CAPTCHA: '' } }));
       })
       .finally(() => {
@@ -177,12 +181,16 @@ const IndexerDialog = ({
     )
       .then(({ value, refusal }) => {
         if (value === null) {
-          setProblem(refusal?.message ?? 'That could not be saved.');
+          setProblem(refusal?.message ?? say('admin.indexerDialog.couldNotSave'));
 
           return;
         }
 
-        notify.worked(indexer === null ? `Added ${value.name}.` : `Saved ${value.name}.`);
+        notify.worked(
+          indexer === null
+            ? say('admin.indexerDialog.added', { name: value.name })
+            : say('admin.indexerDialog.saved', { name: value.name }),
+        );
         onSaved(value);
         onClose();
       })
@@ -202,10 +210,10 @@ const IndexerDialog = ({
 
   const title =
     indexer !== null
-      ? `Change ${indexer.name}`
+      ? say('admin.indexerDialog.changeTitle', { name: indexer.name })
       : start?.kind === 'cardigann'
-        ? `Add ${start.name}`
-        : 'Add an indexer';
+        ? say('admin.indexerDialog.addSiteTitle', { name: start.name })
+        : say('admin.indexerDialog.addTitle');
 
   return (
     <DialogCompanion label={title} isOpen={isOpen} onClose={onClose}>
@@ -214,18 +222,21 @@ const IndexerDialog = ({
         title={title}
         detail={
           isSite
-            ? (definition?.description ?? 'Reading what this site needs…')
-            : 'Any Torznab or Newznab indexer: a usenet indexer, a tracker, or a feed from Jackett or Prowlarr.'
+            ? (definition?.description ?? say('admin.indexerDialog.readingSiteEllipsis'))
+            : say('admin.indexerDialog.genericDetail')
         }
       />
 
       <DialogContent className="flex flex-col gap-4">
         {isSite ? null : (
-          <FormField label="Kind" description="Torznab for torrents, Newznab for usenet.">
+          <FormField
+            label={say('admin.indexerDialog.kind')}
+            description={say('admin.indexerDialog.kindDetail')}
+          >
             <SegmentedRow
-              label="Kind"
+              label={say('admin.indexerDialog.kind')}
               size="sm"
-              items={KINDS}
+              items={KINDS.map((one) => ({ id: one.id, label: say(one.labelKey) }))}
               value={form.kind}
               onSelect={(next) => {
                 const kind = KINDS.find((one) => one.id === next)?.id;
@@ -239,35 +250,35 @@ const IndexerDialog = ({
         )}
 
         <TextField
-          label="Name"
+          label={say('admin.indexerDialog.name')}
           value={form.name}
           onValueChange={(name) => {
             change({ name });
           }}
-          placeholder="NZBgeek"
+          placeholder={say('admin.indexerDialog.namePlaceholder')}
           required
         />
 
         {isSite ? (
           detail.isPending ? (
-            <Spinner isCentered label="Reading what this site needs" size="sm" />
+            <Spinner isCentered label={say('admin.indexerDialog.readingSite')} size="sm" />
           ) : definition === null ? (
             <p role="alert" className="text-sm text-danger">
-              This site’s definition is no longer in the catalogue.
+              {say('admin.indexerDialog.definitionGone')}
             </p>
           ) : (
             <>
               <FormField
-                label="Address"
-                description="Which of the site’s addresses to use. Try another if one is blocked."
+                label={say('admin.indexerDialog.address')}
+                description={say('admin.indexerDialog.siteAddressDetail')}
               >
                 <OptionMenu
-                  label="Address"
+                  label={say('admin.indexerDialog.address')}
                   triggerShape="field"
                   matchTriggerWidth
                   groups={[
                     {
-                      name: 'Address',
+                      name: say('admin.indexerDialog.address'),
                       selectedId: url,
                       onSelect: (next) => {
                         change({ url: next });
@@ -295,19 +306,19 @@ const IndexerDialog = ({
         ) : (
           <>
             <TextField
-              label="Address"
+              label={say('admin.indexerDialog.address')}
               type="url"
               value={form.url}
               onValueChange={(next) => {
                 change({ url: next });
               }}
               placeholder="http://jackett:9117/api/v2.0/indexers/all/results/torznab/"
-              description="The indexer’s site, or the Torznab feed Jackett or Prowlarr gives for it."
+              description={say('admin.indexerDialog.addressDetail')}
               required
             />
 
             <TextField
-              label="API key"
+              label={say('admin.indexerDialog.apiKey')}
               type="password"
               value={form.apiKey}
               onValueChange={(apiKey) => {
@@ -315,8 +326,8 @@ const IndexerDialog = ({
               }}
               description={
                 indexer?.hasApiKey === true
-                  ? 'A key is kept. Type a new one to replace it, or leave this empty to keep it.'
-                  : 'Leave this empty for an indexer that needs none.'
+                  ? say('admin.indexerDialog.keyKept')
+                  : say('admin.indexerDialog.keyNone')
               }
               autoComplete="off"
             />
@@ -325,17 +336,17 @@ const IndexerDialog = ({
 
         {tried?.captcha === null || tried?.captcha === undefined ? null : (
           <FormField
-            label="Captcha"
-            description="Type the characters in the picture, then try again."
+            label={say('admin.indexerDialog.captcha')}
+            description={say('admin.indexerDialog.captchaDetail')}
           >
             <div className="flex flex-col items-start gap-2">
               <img
                 src={tried.captcha.image}
-                alt="The characters to type"
+                alt={say('admin.indexerDialog.captchaAlt')}
                 className="rounded border border-[var(--surface-line)]"
               />
               <TextField
-                label="Characters in the picture"
+                label={say('admin.indexerDialog.captchaField')}
                 isLabelHidden
                 value={typeof form.settings['CAPTCHA'] === 'string' ? form.settings['CAPTCHA'] : ''}
                 onValueChange={(next) => {
@@ -349,7 +360,7 @@ const IndexerDialog = ({
 
         <div className="grid gap-4 sm:grid-cols-3">
           <TextField
-            label="Priority"
+            label={say('admin.indexerDialog.priority')}
             type="number"
             min={1}
             max={50}
@@ -357,11 +368,11 @@ const IndexerDialog = ({
             onValueChange={(priority) => {
               change({ priority });
             }}
-            description="1 is asked first."
+            description={say('admin.indexerDialog.priorityDetail')}
           />
 
           <TextField
-            label="Searches a minute"
+            label={say('admin.indexerDialog.perMinute')}
             type="number"
             min={1}
             max={600}
@@ -369,11 +380,11 @@ const IndexerDialog = ({
             onValueChange={(requestsPerMinute) => {
               change({ requestsPerMinute });
             }}
-            placeholder="No limit"
+            placeholder={say('admin.indexerDialog.noLimit')}
           />
 
           <TextField
-            label="Wait (seconds)"
+            label={say('admin.indexerDialog.wait')}
             type="number"
             min={5}
             max={120}
@@ -385,7 +396,7 @@ const IndexerDialog = ({
         </div>
 
         <Switch
-          label="Search this indexer"
+          label={say('admin.indexerDialog.searchThis')}
           isOn={form.isEnabled}
           onToggle={() => {
             change({ isEnabled: !form.isEnabled });
@@ -393,13 +404,13 @@ const IndexerDialog = ({
         />
 
         <FormField
-          label="After a download is filed"
-          description="Public trackers default to deleting the torrent. Private ones keep seeding, so you do not lose your account."
+          label={say('admin.indexerDialog.afterFiled')}
+          description={say('admin.indexerDialog.afterFiledDetail')}
         >
           <SegmentedRow
-            label="After a download is filed"
+            label={say('admin.indexerDialog.afterFiled')}
             size="sm"
-            items={KEEPING}
+            items={KEEPING.map((one) => ({ id: one.id, label: say(one.labelKey) }))}
             value={form.removesWhenDone}
             onSelect={(next) => {
               const chosen = KEEPING.find((one) => one.id === next)?.id;
@@ -414,35 +425,35 @@ const IndexerDialog = ({
         {form.removesWhenDone === 'never' ? null : (
           <div className="grid gap-4 sm:grid-cols-2">
             <TextField
-              label="Minimum seed time (seconds)"
+              label={say('admin.indexerDialog.seedTime')}
               type="number"
               min={0}
               value={form.seedSeconds}
               onValueChange={(seedSeconds) => {
                 change({ seedSeconds });
               }}
-              placeholder="What the tracker asks"
-              description="Whichever is higher: this or the tracker’s own minimum."
+              placeholder={say('admin.indexerDialog.trackerAsks')}
+              description={say('admin.indexerDialog.whicheverHigher')}
             />
 
             <TextField
-              label="Minimum seed ratio"
+              label={say('admin.indexerDialog.seedRatio')}
               type="number"
               min={0}
               value={form.seedRatio}
               onValueChange={(seedRatio) => {
                 change({ seedRatio });
               }}
-              placeholder="What the tracker asks"
-              description="Whichever is higher: this or the tracker’s own minimum."
+              placeholder={say('admin.indexerDialog.trackerAsks')}
+              description={say('admin.indexerDialog.whicheverHigher')}
             />
           </div>
         )}
 
         {categories.length === 0 ? null : (
           <FormField
-            label="Categories"
-            description="Only search these. Choose none to search every category the indexer has."
+            label={say('admin.indexerDialog.categories')}
+            description={say('admin.indexerDialog.categoriesDetail')}
           >
             <div className="grid gap-2 sm:grid-cols-2">
               {categories.map((category) => (
@@ -461,9 +472,11 @@ const IndexerDialog = ({
 
         <p role="status" className="sr-only">
           {verdict === 'working' && tried !== null
-            ? `It answered, and can search ${
-                (tried.capabilities?.modes ?? []).map((one) => one.mode).join(', ') || 'by words'
-              }.`
+            ? (tried.capabilities?.modes ?? []).length === 0
+              ? say('admin.indexerDialog.answeredWords')
+              : say('admin.indexerDialog.answeredModes', {
+                  modes: (tried.capabilities?.modes ?? []).map((one) => one.mode).join(', '),
+                })
             : ''}
         </p>
       </DialogContent>
@@ -471,11 +484,11 @@ const IndexerDialog = ({
       <DialogFooter
         note={problem}
         dismiss={{
-          label: onBack === undefined ? undefined : 'Back',
+          label: onBack === undefined ? undefined : say('common.back'),
           onChoose: onBack ?? onClose,
         }}
         confirm={{
-          label: indexer === null ? 'Add indexer' : 'Save',
+          label: indexer === null ? say('admin.indexerDialog.addIndexer') : say('common.save'),
           onChoose: save,
           isDisabled: isWorking || (isSite && definition === null),
         }}

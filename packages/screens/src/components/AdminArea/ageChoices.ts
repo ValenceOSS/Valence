@@ -1,10 +1,12 @@
-const AGE_CHOICES = [
-  { id: 'none', label: 'No ceiling', detail: 'Anything in this library' },
-  { id: '0', label: 'Suitable for all', detail: 'U and G only' },
-  { id: '8', label: 'Up to 8', detail: 'PG and below' },
-  { id: '12', label: 'Up to 12', detail: '12, 12A and below' },
-  { id: '15', label: 'Up to 15', detail: '15 and below' },
-  { id: '18', label: 'Up to 18', detail: 'Everything certificated' },
+import type { StringKey } from '@ValenceI18n/StringKey';
+
+const AGE_CHOICES: readonly { id: string; labelKey: StringKey; detailKey: StringKey }[] = [
+  { id: 'none', labelKey: 'admin.ageChoices.none', detailKey: 'admin.ageChoices.noneDetail' },
+  { id: '0', labelKey: 'admin.ageChoices.all', detailKey: 'admin.ageChoices.allDetail' },
+  { id: '8', labelKey: 'admin.ageChoices.upTo8', detailKey: 'admin.ageChoices.upTo8Detail' },
+  { id: '12', labelKey: 'admin.ageChoices.upTo12', detailKey: 'admin.ageChoices.upTo12Detail' },
+  { id: '15', labelKey: 'admin.ageChoices.upTo15', detailKey: 'admin.ageChoices.upTo15Detail' },
+  { id: '18', labelKey: 'admin.ageChoices.upTo18', detailKey: 'admin.ageChoices.upTo18Detail' },
 ];
 
 export { AGE_CHOICES };

@@ -39,13 +39,16 @@ import {
 } from '@ValenceContracts/schemas/Roundness';
 import { PreviewQualitySchema } from '@ValenceContracts/schemas/PreviewQuality';
 import { accelerationOptions } from '@ValenceScreens/components/AdminArea/accelerationOptions';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
+import type { StringKey } from '@ValenceI18n/StringKey';
 import type { SettingsPanelProps } from './SettingsPanel.types';
 
 const PREVIEW_QUALITY_CHOICES = [
-  { id: 'low', label: 'Low' },
-  { id: 'standard', label: 'Standard' },
-  { id: 'high', label: 'High' },
-] as const;
+  { id: 'low', labelKey: 'admin.settingsPanel.previewQuality.low' },
+  { id: 'standard', labelKey: 'admin.settingsPanel.previewQuality.standard' },
+  { id: 'high', labelKey: 'admin.settingsPanel.previewQuality.high' },
+] as const satisfies readonly { id: string; labelKey: StringKey }[];
 
 const SPLASHSCREEN_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
@@ -114,40 +117,49 @@ const SettingsPanel = ({
   const [splashscreen, setSplashscreen] = useState(overview?.settings.splashscreen ?? null);
   const [isChangingSplashscreen, setIsChangingSplashscreen] = useState(false);
   const [splashscreenProblem, setSplashscreenProblem] = useState<string | null>(null);
+  const accelKey = accelerationOptions.find((option) => option.id === accel)?.labelKey;
+  const regionKey = certificationRegions.find((option) => option.id === region)?.labelKey;
+  const keepingKey = downloadKeepingChoices.find(
+    (option) => option.id === keepsDownloadsFor,
+  )?.labelKey;
 
   return (
-    <PanelCard title="Settings" isFlush>
+    <PanelCard title={say('admin.settingsPanel.heading')} isFlush>
       <SettingList>
         <SettingRow
-          title="Hardware acceleration"
-          description="Valence picks whichever backend the machine proves it can use. Choose one to insist, which also uses an encoder that failed that check — for when the check is wrong and the card plainly works."
+          title={say('admin.settingsPanel.hardware.title')}
+          description={say('admin.settingsPanel.hardware.description')}
         >
           <OptionMenu
-            label="Hardware acceleration"
+            label={say('admin.settingsPanel.hardware.title')}
             groups={[
               {
-                name: 'Backend',
+                name: say('admin.settingsPanel.hardware.group'),
                 selectedId: accel,
                 onSelect: (id) => {
                   setAccel(id);
 
                   void saveHardwareAccel(id).then((saved) => {
                     tellOutcome(
-                      'Hardware encoding saved.',
-                      failureOfAnswer(saved, 'Hardware encoding could not be saved.'),
+                      say('admin.settingsPanel.hardware.saved'),
+                      failureOfAnswer(saved, say('admin.settingsPanel.hardware.couldNotSave')),
                     );
                     if (saved) {
                       onHardwareAccelSaved();
                     }
                   });
                 },
-                options: accelerationOptions,
+                options: accelerationOptions.map(({ id, labelKey, detailKey }) => ({
+                  id,
+                  label: say(labelKey),
+                  detail: say(detailKey),
+                })),
               },
             ]}
             trigger={
               <>
                 <span className="truncate">
-                  {accelerationOptions.find((option) => option.id === accel)?.label ?? 'Automatic'}
+                  {say(accelKey ?? 'admin.settingsPanel.hardware.automatic')}
                 </span>
 
                 <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
@@ -160,35 +172,39 @@ const SettingsPanel = ({
         </SettingRow>
 
         <SettingRow
-          title="Age certificates"
-          description="Whose certificates to read. A 15 and an R are not the same thing, so Valence orders them within one country rather than pretending they map onto each other. Every country's certificates are already stored, so changing this reads them again rather than rescanning."
+          title={say('admin.settingsPanel.certificates.title')}
+          description={say('admin.settingsPanel.certificates.description')}
         >
           <OptionMenu
-            label="Age certificates"
+            label={say('admin.settingsPanel.certificates.title')}
             groups={[
               {
-                name: 'Country',
+                name: say('admin.settingsPanel.certificates.group'),
                 selectedId: region,
                 onSelect: (id) => {
                   setRegion(id);
 
                   void saveCertificationRegion(id).then((saved) => {
                     tellOutcome(
-                      'Certification region saved.',
-                      failureOfAnswer(saved, 'The certification region could not be saved.'),
+                      say('admin.settingsPanel.certificates.saved'),
+                      failureOfAnswer(saved, say('admin.settingsPanel.certificates.couldNotSave')),
                     );
                     if (saved) {
                       onCertificationRegionSaved();
                     }
                   });
                 },
-                options: certificationRegions,
+                options: certificationRegions.map(({ id, labelKey, detailKey }) => ({
+                  id,
+                  label: say(labelKey),
+                  detail: say(detailKey),
+                })),
               },
             ]}
             trigger={
               <>
                 <span className="truncate">
-                  {certificationRegions.find((option) => option.id === region)?.label ?? region}
+                  {regionKey === undefined ? region : say(regionKey)}
                 </span>
 
                 <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
@@ -201,14 +217,17 @@ const SettingsPanel = ({
         </SettingRow>
 
         <SettingRow
-          title="Preview quality"
-          description="Smaller clips take less room and less time to make; sharper ones hold up across the hero. Changing it makes every preview again in the background."
+          title={say('admin.settingsPanel.previewQuality.title')}
+          description={say('admin.settingsPanel.previewQuality.description')}
         >
           <SegmentedRow
-            label="Preview quality"
+            label={say('admin.settingsPanel.previewQuality.title')}
             size="sm"
             tone="accent"
-            items={PREVIEW_QUALITY_CHOICES}
+            items={PREVIEW_QUALITY_CHOICES.map(({ id, labelKey }) => ({
+              id,
+              label: say(labelKey),
+            }))}
             value={quality}
             onSelect={(id) => {
               const chosen = PreviewQualitySchema.safeParse(id);
@@ -221,8 +240,8 @@ const SettingsPanel = ({
 
               void savePreviewQuality(chosen.data).then((saved) => {
                 tellOutcome(
-                  'Preview quality saved.',
-                  failureOfAnswer(saved, 'Preview quality could not be saved.'),
+                  say('admin.settingsPanel.previewQuality.saved'),
+                  failureOfAnswer(saved, say('admin.settingsPanel.previewQuality.couldNotSave')),
                 );
                 if (saved) {
                   onPreviewQualitySaved();
@@ -233,33 +252,37 @@ const SettingsPanel = ({
         </SettingRow>
 
         <SettingRow
-          title="Prepared downloads"
-          description="How long a file made for somebody to keep is held after it was last asked for. Anybody else asking for the same film in that time gets the same file without waiting."
+          title={say('admin.settingsPanel.downloads.title')}
+          description={say('admin.settingsPanel.downloads.description')}
         >
           <OptionMenu
-            label="Prepared downloads"
+            label={say('admin.settingsPanel.downloads.title')}
             groups={[
               {
-                name: 'Kept for',
+                name: say('admin.settingsPanel.downloads.group'),
                 selectedId: keepsDownloadsFor,
                 onSelect: (id) => {
                   setKeepsDownloadsFor(id);
 
                   void saveKeepsDownloadsForDays(Number(id)).then((saved) => {
                     tellOutcome(
-                      'How long downloads are kept saved.',
-                      failureOfAnswer(saved, 'How long downloads are kept could not be saved.'),
+                      say('admin.settingsPanel.downloads.saved'),
+                      failureOfAnswer(saved, say('admin.settingsPanel.downloads.couldNotSave')),
                     );
                   });
                 },
-                options: downloadKeepingChoices,
+                options: downloadKeepingChoices.map(({ id, labelKey }) => ({
+                  id,
+                  label: say(labelKey),
+                })),
               },
             ]}
             trigger={
               <>
                 <span className="truncate">
-                  {downloadKeepingChoices.find((option) => option.id === keepsDownloadsFor)
-                    ?.label ?? `${keepsDownloadsFor} days`}
+                  {keepingKey === undefined
+                    ? sayCount('admin.settingsPanel.downloads.days', Number(keepsDownloadsFor))
+                    : say(keepingKey)}
                 </span>
 
                 <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
@@ -272,11 +295,11 @@ const SettingsPanel = ({
         </SettingRow>
 
         <SettingRow
-          title="Roundness"
-          description="How round the corners of everything in Valence are, for everybody who uses this server. Sharp squares them all off; round softens them."
+          title={say('admin.settingsPanel.roundness.title')}
+          description={say('admin.settingsPanel.roundness.description')}
         >
           <SegmentedRow
-            label="Roundness"
+            label={say('admin.settingsPanel.roundness.title')}
             size="sm"
             tone="accent"
             items={ROUNDNESS_CHOICES}
@@ -292,8 +315,8 @@ const SettingsPanel = ({
 
               void saveRoundness(chosen.data).then((saved) => {
                 tellOutcome(
-                  'Roundness saved.',
-                  failureOfAnswer(saved, 'Roundness could not be saved.'),
+                  say('admin.settingsPanel.roundness.saved'),
+                  failureOfAnswer(saved, say('admin.settingsPanel.roundness.couldNotSave')),
                 );
                 if (saved) {
                   onRoundnessSaved?.();
@@ -304,11 +327,11 @@ const SettingsPanel = ({
         </SettingRow>
 
         <SettingRow
-          title="Show who lives here"
-          description="Draws the household's faces on the way in, so somebody signs in by picking one. Off, the way in asks for an address and a password instead, and nobody who has not signed in can read the names, pictures or identifiers of the people here."
+          title={say('admin.settingsPanel.faces.title')}
+          description={say('admin.settingsPanel.faces.description')}
         >
           <Switch
-            label="Show who lives here"
+            label={say('admin.settingsPanel.faces.title')}
             isLabelHidden
             isOn={showsFaces}
             onToggle={() => {
@@ -318,8 +341,8 @@ const SettingsPanel = ({
 
               void saveShowsProfilesBeforeSignIn(next).then((saved) => {
                 tellOutcome(
-                  'Sign-in screen saved.',
-                  failureOfAnswer(saved, 'The sign-in screen could not be changed.'),
+                  say('admin.settingsPanel.faces.saved'),
+                  failureOfAnswer(saved, say('admin.settingsPanel.faces.couldNotSave')),
                 );
                 if (saved) {
                   onProfileVisibilitySaved();
@@ -335,19 +358,23 @@ const SettingsPanel = ({
 
         <div>
           <SettingRow
-            title="Picture behind the way in"
-            description="Drawn behind the faces, with the colour of whoever is chosen still washing over it. Only somebody who may see the faces sees it, so it shows while Show who lives here is on. JPEG, PNG, WebP, AVIF or GIF, up to 16 MB."
+            title={say('admin.settingsPanel.splashscreen.title')}
+            description={say('admin.settingsPanel.splashscreen.description')}
           >
             {splashscreen === null ? null : (
               <img
                 src={splashscreen}
-                alt="The picture behind the way in"
+                alt={say('admin.settingsPanel.splashscreen.alt')}
                 className="h-10 w-16 rounded-md object-cover"
               />
             )}
 
             <FilePicker
-              label={splashscreen === null ? 'Choose a picture' : 'Replace the picture'}
+              label={
+                splashscreen === null
+                  ? say('admin.settingsPanel.splashscreen.chooseLabel')
+                  : say('admin.settingsPanel.splashscreen.replaceLabel')
+              }
               accept={SPLASHSCREEN_TYPES}
               size="sm"
               isLoading={isChangingSplashscreen}
@@ -365,14 +392,16 @@ const SettingsPanel = ({
                     return;
                   }
 
-                  tellOutcome('Splashscreen saved.', null);
+                  tellOutcome(say('admin.settingsPanel.splashscreen.saved'), null);
                   setSplashscreen(answer.splashscreen);
                   onSplashscreenSaved();
                 });
               }}
             >
               <Icon of={ImageIcon} size={15} />
-              {splashscreen === null ? 'Choose' : 'Replace'}
+              {splashscreen === null
+                ? say('admin.settingsPanel.splashscreen.choose')
+                : say('admin.settingsPanel.splashscreen.replace')}
             </FilePicker>
 
             {splashscreen === null ? null : (
@@ -388,8 +417,11 @@ const SettingsPanel = ({
                     setIsChangingSplashscreen(false);
 
                     tellOutcome(
-                      'Splashscreen removed.',
-                      failureOfAnswer(removed, 'The splashscreen could not be removed.'),
+                      say('admin.settingsPanel.splashscreen.removed'),
+                      failureOfAnswer(
+                        removed,
+                        say('admin.settingsPanel.splashscreen.couldNotRemove'),
+                      ),
                     );
 
                     if (removed) {
@@ -399,11 +431,13 @@ const SettingsPanel = ({
                       return;
                     }
 
-                    setSplashscreenProblem('The picture could not be removed. Try again.');
+                    setSplashscreenProblem(
+                      say('admin.settingsPanel.splashscreen.couldNotRemoveTryAgain'),
+                    );
                   });
                 }}
               >
-                Remove
+                {say('admin.settingsPanel.splashscreen.remove')}
               </Button>
             )}
           </SettingRow>
@@ -420,11 +454,11 @@ const SettingsPanel = ({
         </div>
 
         <SettingRow
-          title="Fetch trailers from the catalogue"
-          description="Offers a trailer for titles that have none on disk, played in a frame from the video host the catalogue points at. That is the one thing Valence does that reaches outside this server, which is why it is off until you say otherwise. A trailer already beside the file is always used instead."
+          title={say('admin.settingsPanel.trailers.title')}
+          description={say('admin.settingsPanel.trailers.description')}
         >
           <Switch
-            label="Fetch trailers from the catalogue"
+            label={say('admin.settingsPanel.trailers.title')}
             isLabelHidden
             isOn={fetchesTrailers}
             onToggle={() => {
@@ -434,8 +468,8 @@ const SettingsPanel = ({
 
               void saveFetchesCatalogueTrailers(next).then((saved) => {
                 tellOutcome(
-                  'Trailer setting saved.',
-                  failureOfAnswer(saved, 'The trailer setting could not be saved.'),
+                  say('admin.settingsPanel.trailers.saved'),
+                  failureOfAnswer(saved, say('admin.settingsPanel.trailers.couldNotSave')),
                 );
                 if (saved) {
                   onCatalogueTrailersSaved();
@@ -450,11 +484,11 @@ const SettingsPanel = ({
         </SettingRow>
 
         <SettingRow
-          title="Fetch music details from the web"
-          description="Looks for what a music library's files left out: album covers on the Cover Art Archive, artists' photographs and music videos on TheAudioDB, and song words on LRCLIB. Each album, artist and song is asked about once, on the next scan, and nothing a file already carries is replaced. Like trailers, it reaches outside this server, so it is off until you say otherwise."
+          title={say('admin.settingsPanel.musicDetails.title')}
+          description={say('admin.settingsPanel.musicDetails.description')}
         >
           <Switch
-            label="Fetch music details from the web"
+            label={say('admin.settingsPanel.musicDetails.title')}
             isLabelHidden
             isOn={fetchesMusic}
             onToggle={() => {
@@ -464,8 +498,8 @@ const SettingsPanel = ({
 
               void saveFetchesMusicDetails(next).then((saved) => {
                 tellOutcome(
-                  'Music details setting saved.',
-                  failureOfAnswer(saved, 'The music details setting could not be saved.'),
+                  say('admin.settingsPanel.musicDetails.saved'),
+                  failureOfAnswer(saved, say('admin.settingsPanel.musicDetails.couldNotSave')),
                 );
                 if (saved) {
                   onMusicDetailsSaved?.();
@@ -480,20 +514,20 @@ const SettingsPanel = ({
         </SettingRow>
 
         <SettingRow
-          title="TheAudioDB key"
+          title={say('admin.settingsPanel.audioDb.title')}
           description={
             overview?.settings.hasAudioDbKey === true
-              ? 'A key is set. Entering a new one replaces it.'
-              : 'Without one, artists are looked up with the free key, which finds only one music video for each artist.'
+              ? say('admin.settingsPanel.keyIsSet')
+              : say('admin.settingsPanel.audioDb.noKey')
           }
         >
           <TextField
-            label="TheAudioDB key"
+            label={say('admin.settingsPanel.audioDb.title')}
             isLabelHidden
             type="password"
             value={audioDbKey}
             onValueChange={setAudioDbKey}
-            placeholder="Paste a key"
+            placeholder={say('admin.settingsPanel.pasteKey')}
             size="sm"
             className="w-48 max-w-full"
           />
@@ -501,7 +535,7 @@ const SettingsPanel = ({
           <Button
             variant="glossy"
             size="sm"
-            label="Save the TheAudioDB key"
+            label={say('admin.settingsPanel.audioDb.saveLabel')}
             hasTooltip={false}
             isLoading={isSavingAudioDbKey}
             disabled={audioDbKey === ''}
@@ -510,8 +544,8 @@ const SettingsPanel = ({
 
               void saveAudioDbKey(audioDbKey).then((saved) => {
                 tellOutcome(
-                  'TheAudioDB key saved.',
-                  failureOfAnswer(saved, 'The TheAudioDB key could not be saved.'),
+                  say('admin.settingsPanel.audioDb.saved'),
+                  failureOfAnswer(saved, say('admin.settingsPanel.audioDb.couldNotSave')),
                 );
                 setIsSavingAudioDbKey(false);
 
@@ -522,13 +556,13 @@ const SettingsPanel = ({
               });
             }}
           >
-            Save
+            {say('common.save')}
           </Button>
         </SettingRow>
 
         <SettingRow
-          title="What a request for an artist watches"
-          description="Which of an artist's records are fetched where whoever asked did not say — their albums, and whatever else this household keeps. It can be changed on any one request."
+          title={say('admin.settingsPanel.releaseTypes.title')}
+          description={say('admin.settingsPanel.releaseTypes.description')}
         >
           <div className="w-72 max-w-full">
             <ReleaseTypeChooser
@@ -540,8 +574,8 @@ const SettingsPanel = ({
 
                 void saveRequestReleaseTypes(next).then((saved) => {
                   tellOutcome(
-                    'Release types saved.',
-                    failureOfAnswer(saved, 'The release types could not be saved.'),
+                    say('admin.settingsPanel.releaseTypes.saved'),
+                    failureOfAnswer(saved, say('admin.settingsPanel.releaseTypes.couldNotSave')),
                   );
                   if (saved) {
                     onReleaseTypesSaved?.();
@@ -557,20 +591,20 @@ const SettingsPanel = ({
         </SettingRow>
 
         <SettingRow
-          title="Metadata catalogue"
+          title={say('admin.settingsPanel.catalogue.title')}
           description={
             overview?.settings.hasCatalogueKey === true
-              ? 'A key is set. Entering a new one replaces it.'
-              : 'Without a key, titles and years come from filenames alone.'
+              ? say('admin.settingsPanel.keyIsSet')
+              : say('admin.settingsPanel.catalogue.noKey')
           }
         >
           <TextField
-            label="Catalogue key"
+            label={say('admin.settingsPanel.catalogue.keyLabel')}
             isLabelHidden
             type="password"
             value={catalogueKey}
             onValueChange={setCatalogueKey}
-            placeholder="Paste a key"
+            placeholder={say('admin.settingsPanel.pasteKey')}
             size="sm"
             className="w-48 max-w-full"
           />
@@ -585,8 +619,8 @@ const SettingsPanel = ({
 
               void saveCatalogueKey(catalogueKey).then((saved) => {
                 tellOutcome(
-                  'Catalogue key saved.',
-                  failureOfAnswer(saved, 'The catalogue key could not be saved.'),
+                  say('admin.settingsPanel.catalogue.saved'),
+                  failureOfAnswer(saved, say('admin.settingsPanel.catalogue.couldNotSave')),
                 );
                 setIsSaving(false);
 
@@ -597,16 +631,16 @@ const SettingsPanel = ({
               });
             }}
           >
-            Save
+            {say('common.save')}
           </Button>
         </SettingRow>
 
         <SettingRow
-          title="Rotten Tomatoes scores"
+          title={say('admin.settingsPanel.omdb.title')}
           description={
             overview?.settings.hasOmdbKey === true
-              ? 'A key is set. Entering a new one replaces it. Scores fill in as titles are scanned again.'
-              : 'Optional. A free OMDb key adds each title’s Rotten Tomatoes score, as titles are scanned.'
+              ? say('admin.settingsPanel.omdb.keyIsSet')
+              : say('admin.settingsPanel.omdb.noKey')
           }
         >
           <Button
@@ -616,16 +650,16 @@ const SettingsPanel = ({
               window.open('https://www.omdbapi.com/apikey.aspx', '_blank', 'noopener,noreferrer');
             }}
           >
-            Get a free key
+            {say('admin.settingsPanel.omdb.getKey')}
           </Button>
 
           <TextField
-            label="OMDb key"
+            label={say('admin.settingsPanel.omdb.keyLabel')}
             isLabelHidden
             type="password"
             value={omdbKey}
             onValueChange={setOmdbKey}
-            placeholder="Paste a key"
+            placeholder={say('admin.settingsPanel.pasteKey')}
             size="sm"
             className="w-48 max-w-full"
           />
@@ -633,7 +667,7 @@ const SettingsPanel = ({
           <Button
             variant="glossy"
             size="sm"
-            label="Save the OMDb key"
+            label={say('admin.settingsPanel.omdb.saveLabel')}
             hasTooltip={false}
             isLoading={isSavingOmdbKey}
             disabled={omdbKey === ''}
@@ -642,8 +676,8 @@ const SettingsPanel = ({
 
               void saveOmdbKey(omdbKey).then((saved) => {
                 tellOutcome(
-                  'OMDb key saved.',
-                  failureOfAnswer(saved, 'The OMDb key could not be saved.'),
+                  say('admin.settingsPanel.omdb.saved'),
+                  failureOfAnswer(saved, say('admin.settingsPanel.omdb.couldNotSave')),
                 );
                 setIsSavingOmdbKey(false);
 
@@ -654,21 +688,25 @@ const SettingsPanel = ({
               });
             }}
           >
-            Save
+            {say('common.save')}
           </Button>
         </SettingRow>
 
         <SettingRow
-          title="Signing in"
+          title={say('admin.settingsPanel.signingIn.title')}
           description={
             overview === null
               ? ''
-              : `Origins allowed to sign in: ${overview.settings.trustedOrigins.join(', ')}.`
+              : say('admin.settingsPanel.signingIn.origins', {
+                  origins: overview.settings.trustedOrigins.join(', '),
+                })
           }
         >
           {overview === null ? null : (
             <Badge tone={overview.settings.cookieSecure ? 'success' : 'warning'}>
-              {overview.settings.cookieSecure ? 'secure' : 'not secure'}
+              {overview.settings.cookieSecure
+                ? say('admin.settingsPanel.signingIn.secure')
+                : say('admin.settingsPanel.signingIn.notSecure')}
             </Badge>
           )}
         </SettingRow>

@@ -5,6 +5,7 @@ import { Card } from '@ValenceUI/Card';
 import { Icon } from '@ValenceUI/Icon';
 import type { ReactNode } from 'react';
 import type { AdminSetupGuideProps } from './AdminSetupGuide.types';
+import { say } from '@ValenceI18n/say';
 
 const CATALOGUE_KEY_PAGE = 'https://www.themoviedb.org/settings/api';
 
@@ -48,21 +49,19 @@ const AdminSetupGuide = ({
   }[] = [
     {
       id: 'library',
-      title: 'Add a library',
-      detail:
-        'A library is a folder of one kind of media: films, shows, music or books. Point Valence at it and it takes care of the rest.',
+      title: say('admin.adminSetupGuide.libraryTitle'),
+      detail: say('admin.adminSetupGuide.libraryDetail'),
       isDone: hasLibrary,
       actions: (
         <Button variant="glossy" size="sm" onClick={onAddLibrary}>
-          Add library
+          {say('admin.adminSetupGuide.addLibrary')}
         </Button>
       ),
     },
     {
       id: 'key',
-      title: 'Add a metadata key',
-      detail:
-        'Titles, artwork, years and ratings come from The Movie Database. A free key takes a minute to get: sign in there, open Settings, then API.',
+      title: say('admin.adminSetupGuide.keyTitle'),
+      detail: say('admin.adminSetupGuide.keyDetail'),
       isDone: hasCatalogueKey,
       actions: (
         <>
@@ -73,20 +72,19 @@ const AdminSetupGuide = ({
               window.open(CATALOGUE_KEY_PAGE, '_blank', 'noopener,noreferrer');
             }}
           >
-            Get a free key
+            {say('admin.adminSetupGuide.getKey')}
           </Button>
 
           <Button variant="ghost" size="sm" onClick={onOpenSettings}>
-            Enter it in Settings
+            {say('admin.adminSetupGuide.enterKey')}
           </Button>
         </>
       ),
     },
     {
       id: 'scan',
-      title: 'Scan your libraries',
-      detail:
-        'Scanning reads what is in each folder and looks it all up. Nothing can be watched until it has run.',
+      title: say('admin.adminSetupGuide.scanTitle'),
+      detail: say('admin.adminSetupGuide.scanDetail'),
       isDone: hasScanned,
       actions: (
         <Button
@@ -96,7 +94,7 @@ const AdminSetupGuide = ({
           disabled={!hasLibrary}
           onClick={onScanAll}
         >
-          Scan all
+          {say('admin.adminSetupGuide.scanAll')}
         </Button>
       ),
     },
@@ -105,15 +103,22 @@ const AdminSetupGuide = ({
   const next = steps.find((step) => !step.isDone)?.id;
 
   return (
-    <Card as="section" aria-label="Get Valence set up" padding="md" className="flex flex-col gap-4">
+    <Card
+      as="section"
+      aria-label={say('admin.adminSetupGuide.heading')}
+      padding="md"
+      className="flex flex-col gap-4"
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h2 className="text-base font-semibold text-text">Get Valence set up</h2>
-          <p className="text-sm text-text-muted">Three steps, and your media is ready to watch.</p>
+          <h2 className="text-base font-semibold text-text">
+            {say('admin.adminSetupGuide.heading')}
+          </h2>
+          <p className="text-sm text-text-muted">{say('admin.adminSetupGuide.lede')}</p>
         </div>
 
         <Button variant="ghost" size="sm" onClick={onHide}>
-          Hide
+          {say('admin.adminSetupGuide.hide')}
         </Button>
       </div>
 
@@ -139,7 +144,7 @@ const AdminSetupGuide = ({
                 {step.title}
                 {step.id === next ? (
                   <Badge tone="accent" size="sm">
-                    Start here
+                    {say('admin.adminSetupGuide.startHere')}
                   </Badge>
                 ) : null}
               </span>

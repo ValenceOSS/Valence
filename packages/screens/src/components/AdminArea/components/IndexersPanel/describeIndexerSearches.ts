@@ -1,11 +1,13 @@
 import type { Indexer, IndexerSearchMode } from '@ValenceContracts/schemas/Indexer';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
-const MODE_WORDS: Record<IndexerSearchMode, string> = {
-  search: 'Words',
-  movie: 'Films',
-  tv: 'Series',
-  music: 'Music',
-  book: 'Books',
+const MODE_WORDS: Record<IndexerSearchMode, StringKey> = {
+  search: 'admin.describeIndexerSearches.words',
+  movie: 'admin.describeIndexerSearches.films',
+  tv: 'admin.describeIndexerSearches.series',
+  music: 'admin.describeIndexerSearches.music',
+  book: 'admin.describeIndexerSearches.books',
 };
 
 /**
@@ -16,7 +18,8 @@ const MODE_WORDS: Record<IndexerSearchMode, string> = {
  */
 const describeIndexerSearches = (indexer: Indexer): string =>
   indexer.capabilities === null
-    ? 'Test it to find out'
-    : indexer.capabilities.modes.map((one) => MODE_WORDS[one.mode]).join(' · ') || 'Words';
+    ? say('admin.describeIndexerSearches.testToFindOut')
+    : indexer.capabilities.modes.map((one) => say(MODE_WORDS[one.mode])).join(' · ') ||
+      say('admin.describeIndexerSearches.words');
 
 export { describeIndexerSearches };

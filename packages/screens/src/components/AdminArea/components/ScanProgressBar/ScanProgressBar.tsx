@@ -1,13 +1,15 @@
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { cn } from '@ValenceUI/cn';
 import type { ScanProgressBarProps } from './ScanProgressBar.types';
 
-const PHASE_LABELS: Record<string, string> = {
-  probing: 'Probing',
-  previews: 'Generating previews',
-  trickplay: 'Generating scrub previews',
-  segments: 'Finding intros',
-  clearing: 'Clearing',
+const PHASE_LABELS: Record<string, StringKey> = {
+  probing: 'admin.scanProgressBar.phase.probing',
+  previews: 'admin.scanProgressBar.phase.previews',
+  trickplay: 'admin.scanProgressBar.phase.trickplay',
+  segments: 'admin.scanProgressBar.phase.segments',
+  clearing: 'admin.scanProgressBar.phase.clearing',
 };
 
 /**
@@ -38,19 +40,26 @@ const ScanProgressBar = ({
   const isKnown = processed !== null && total !== null;
   const fraction = !isKnown || total === 0 ? 0 : Math.min(processed / total, 1);
   const isEmpty = isKnown && total === 0;
-  const phaseLabel = phase === null ? null : (PHASE_LABELS[phase] ?? phase);
+  const phaseKey = phase === null ? undefined : PHASE_LABELS[phase];
+  const phaseLabel = phase === null ? null : phaseKey === undefined ? phase : say(phaseKey);
 
   return (
     <div
       role="progressbar"
-      aria-label={phaseLabel === null ? label : `${label}: ${phaseLabel}`}
+      aria-label={
+        phaseLabel === null
+          ? label
+          : say('admin.scanProgressBar.labelWithPhase', { label, phase: phaseLabel })
+      }
       {...(isKnown
         ? { 'aria-valuenow': processed, 'aria-valuemin': 0, 'aria-valuemax': total }
         : {})}
       className="flex shrink-0 items-center gap-2"
     >
       {isStopping ? (
-        <span className="shrink-0 text-xs text-warning">Stopping</span>
+        <span className="shrink-0 text-xs text-warning">
+          {say('admin.scanProgressBar.stopping')}
+        </span>
       ) : phaseLabel === null ? null : (
         <span className="shrink-0 text-xs text-text-muted">{phaseLabel}</span>
       )}

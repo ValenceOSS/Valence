@@ -6,6 +6,7 @@ import { TextField } from '@ValenceUI/TextField';
 import { describePermission } from '@ValenceClient/admin/describePermission';
 import { describePermissionDetail } from '@ValenceClient/admin/describePermissionDetail';
 import { groupPermissions } from '@ValenceClient/admin/groupPermissions';
+import { say } from '@ValenceI18n/say';
 import type { PermissionEditorProps } from './PermissionEditor.types';
 
 /**
@@ -44,17 +45,17 @@ const PermissionEditor = ({ catalogue, selected, onToggle }: PermissionEditorPro
   return (
     <div className="flex flex-col gap-6">
       <TextField
-        label="Search permissions"
+        label={say('admin.permissionEditor.searchLabel')}
         isLabelHidden
         type="search"
         value={search}
         onValueChange={setSearch}
-        placeholder="Search permissions"
+        placeholder={say('admin.permissionEditor.searchLabel')}
         icon={<Icon of={SearchIcon} size={15} />}
       />
 
       {groups.length === 0 ? (
-        <p className="text-sm text-text-muted">Nothing here matches that.</p>
+        <p className="text-sm text-text-muted">{say('admin.permissionEditor.nothingMatches')}</p>
       ) : (
         groups.map((group) => (
           <div key={group.id} className="flex flex-col gap-1">

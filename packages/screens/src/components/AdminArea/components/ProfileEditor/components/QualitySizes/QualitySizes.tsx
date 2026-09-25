@@ -12,6 +12,7 @@ import {
   sizeAt,
 } from '@ValenceScreens/components/AdminArea/components/ProfileEditor/sizeScale';
 import type { QualitySize } from '@ValenceContracts/schemas/QualityProfile';
+import { say } from '@ValenceI18n/say';
 import type { QualitySizesProps } from './QualitySizes.types';
 
 /**
@@ -22,16 +23,19 @@ import type { QualitySizesProps } from './QualitySizes.types';
  */
 const describeLimits = ({ minMb, maxMb }: Pick<QualitySize, 'minMb' | 'maxMb'>): string => {
   if (minMb === null && maxMb === null) {
-    return 'Any size';
+    return say('admin.qualitySizes.anySize');
   }
 
   if (maxMb === null) {
-    return `At least ${describeSizeAnHour(minMb ?? 0)}`;
+    return say('admin.qualitySizes.atLeast', { size: describeSizeAnHour(minMb ?? 0) });
   }
 
   return minMb === null
-    ? `No more than ${describeSizeAnHour(maxMb)}`
-    : `${describeSizeAnHour(minMb)} to ${describeSizeAnHour(maxMb)}`;
+    ? say('admin.qualitySizes.noMoreThan', { size: describeSizeAnHour(maxMb) })
+    : say('admin.qualitySizes.between', {
+        smallest: describeSizeAnHour(minMb),
+        largest: describeSizeAnHour(maxMb),
+      });
 };
 
 /**
@@ -60,13 +64,14 @@ const QualitySizes = ({ resolutions, sources, sizes, onChange }: QualitySizesPro
   return (
     <div className="flex flex-col gap-3">
       {shown.length === 0 ? (
-        <p className="font-body text-sm text-text-muted">
-          Tick a resolution and a source to set how large each may be.
-        </p>
+        <p className="font-body text-sm text-text-muted">{say('admin.qualitySizes.empty')}</p>
       ) : (
-        <ul aria-label="Sizes for each quality" className="flex flex-col gap-3">
+        <ul aria-label={say('admin.qualitySizes.listLabel')} className="flex flex-col gap-3">
           {shown.map((quality) => {
-            const name = `${QUALITY_NAMES[quality.source]} ${QUALITY_NAMES[quality.resolution]}`;
+            const name = say('admin.qualitySizes.qualityName', {
+              source: QUALITY_NAMES[quality.source],
+              resolution: QUALITY_NAMES[quality.resolution],
+            });
             const size = sizes.find(
               (one) => one.source === quality.source && one.resolution === quality.resolution,
             ) ?? { ...quality, minMb: null, maxMb: null };
@@ -81,8 +86,11 @@ const QualitySizes = ({ resolutions, sources, sizes, onChange }: QualitySizesPro
                 <span className="text-sm font-medium text-text">{name}</span>
 
                 <RangeSlider
-                  label={`Sizes for ${name}`}
-                  thumbLabels={[`Smallest for ${name}`, `Largest for ${name}`]}
+                  label={say('admin.qualitySizes.sliderLabel', { name })}
+                  thumbLabels={[
+                    say('admin.qualitySizes.smallestLabel', { name }),
+                    say('admin.qualitySizes.largestLabel', { name }),
+                  ]}
                   values={[lowest, highest]}
                   max={SIZE_STEPS}
                   onValuesChange={([lower, upper]) => {
@@ -109,7 +117,7 @@ const QualitySizes = ({ resolutions, sources, sizes, onChange }: QualitySizesPro
             onChange([...RECOMMENDED_QUALITY_SIZES]);
           }}
         >
-          Use TRaSH’s recommended sizes
+          {say('admin.qualitySizes.useRecommended')}
         </Button>
       </span>
     </div>

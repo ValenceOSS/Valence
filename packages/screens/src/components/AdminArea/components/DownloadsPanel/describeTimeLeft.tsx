@@ -2,6 +2,7 @@ import { Fragment } from 'react';
 import type { ReactNode } from 'react';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { partsOfTimeLeft } from '@ValenceCore/functions/partsOfTimeLeft';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says how long a download has left the way somebody would say it, to the nearest useful unit
@@ -14,7 +15,7 @@ const describeTimeLeft = (seconds: number): ReactNode => {
   const parts = partsOfTimeLeft(seconds);
 
   if (parts === null) {
-    return 'Under a minute';
+    return say('admin.describeTimeLeft.underAMinute');
   }
 
   return parts.map((part, at) => (

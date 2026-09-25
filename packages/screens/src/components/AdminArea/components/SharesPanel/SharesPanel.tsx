@@ -19,6 +19,7 @@ import { untilWhen } from '@ValenceClient/sharing/untilWhen';
 import { saidOpened } from '@ValenceClient/sharing/saidOpened';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { AdminShare } from '@ValenceContracts/schemas/Share';
+import { say } from '@ValenceI18n/say';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 
 /**
@@ -39,25 +40,27 @@ const SharesPanel = () => {
     () => [
       {
         id: 'title',
-        header: 'Link to',
+        header: say('admin.sharesPanel.linkTo'),
         accessorFn: (share) => share.title,
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col gap-0.5">
             <span className="flex flex-wrap items-center gap-2">
               <span className="truncate font-medium text-text">{row.original.title}</span>
 
-              {row.original.kind !== 'series' ? null : <Badge size="sm">Whole series</Badge>}
+              {row.original.kind !== 'series' ? null : (
+                <Badge size="sm">{say('admin.sharesPanel.wholeSeries')}</Badge>
+              )}
             </span>
 
             <span className="truncate text-xs text-text-muted">
-              Made {saidWhen(row.original.createdAt)}
+              {say('admin.sharesPanel.made', { when: saidWhen(row.original.createdAt) })}
             </span>
           </span>
         ),
       },
       {
         id: 'createdBy',
-        header: 'Handed out by',
+        header: say('admin.sharesPanel.handedOutBy'),
         accessorFn: (share) => share.createdByName,
         cell: ({ row }) => (
           <span className="truncate text-sm text-text">{row.original.createdByName}</span>
@@ -65,7 +68,7 @@ const SharesPanel = () => {
       },
       {
         id: 'standing',
-        header: 'Standing',
+        header: say('admin.sharesPanel.standing'),
         accessorFn: (share) => shareStanding(share, Date.now()).label,
         cell: ({ row }) => {
           const standing = shareStanding(row.original, Date.now());
@@ -76,7 +79,7 @@ const SharesPanel = () => {
                 {standing.label}
               </Badge>
 
-              {standing.label !== 'Live' ? null : (
+              {!standing.isLive ? null : (
                 <span className="truncate text-xs text-text-muted">{untilWhen(row.original)}</span>
               )}
             </span>
@@ -85,7 +88,7 @@ const SharesPanel = () => {
       },
       {
         id: 'opened',
-        header: 'Opened',
+        header: say('admin.sharesPanel.opened'),
         accessorFn: (share) => share.views,
         cell: ({ row }) => (
           <span className="whitespace-nowrap text-xs text-text-muted">
@@ -104,7 +107,7 @@ const SharesPanel = () => {
                 isIconOnly
                 variant="ghost"
                 size="sm"
-                label={`Withdraw the link to ${row.original.title}`}
+                label={say('admin.sharesPanel.withdrawLabel', { title: row.original.title })}
                 onClick={() => {
                   setWithdrawing(row.original);
                 }}
@@ -120,33 +123,33 @@ const SharesPanel = () => {
 
   return (
     <PanelCard
-      title="Shared links"
+      title={say('admin.sharesPanel.heading')}
       isFlush
       actions={
         <HoverCard
           side="bottom"
           align="end"
           detail={
-            <p className="max-w-xs text-xs leading-relaxed">
-              Anybody holding one of these can watch what it points at without an account here.
-              Withdrawing a link stops it at once, and tells whoever made it.
-            </p>
+            <p className="max-w-xs text-xs leading-relaxed">{say('admin.sharesPanel.about')}</p>
           }
         >
           <span className="text-text-muted hover:text-text">
-            <Icon of={InfoIcon} size={14} label="About shared links" />
+            <Icon of={InfoIcon} size={14} label={say('admin.sharesPanel.aboutLabel')} />
           </span>
         </HoverCard>
       }
     >
       <ConfirmDialog
-        title="Withdraw this link?"
+        title={say('admin.sharesPanel.withdrawTitle')}
         detail={
           withdrawing === null
             ? ''
-            : `${withdrawing.createdByName}’s link to ${withdrawing.title} stops working at once, including for anybody watching through it right now. They will be told it was withdrawn.`
+            : say('admin.sharesPanel.withdrawDetail', {
+                name: withdrawing.createdByName,
+                title: withdrawing.title,
+              })
         }
-        confirmLabel="Withdraw it"
+        confirmLabel={say('admin.sharesPanel.withdrawConfirm')}
         isDestructive
         isBusy={isWorking}
         isOpen={withdrawing !== null}
@@ -165,8 +168,8 @@ const SharesPanel = () => {
           void revokeAnybodysShare(share.id)
             .then(async (revoked) => {
               tellOutcome(
-                'Withdrew the link.',
-                failureOfAnswer(revoked, 'That link could not be withdrawn.'),
+                say('admin.sharesPanel.withdrew'),
+                failureOfAnswer(revoked, say('admin.sharesPanel.couldNotWithdraw')),
               );
 
               return cache.invalidateQueries({ queryKey: adminQueries.shares().queryKey });
@@ -180,20 +183,20 @@ const SharesPanel = () => {
 
       {asked.isError ? (
         <CouldNotRead
-          what="The links"
+          what={say('admin.sharesPanel.theLinks')}
           isTryingAgain={asked.isFetching}
           onTryAgain={() => {
             void asked.refetch();
           }}
         />
       ) : asked.isPending ? (
-        <Spinner isCentered label="Reading the links" size="sm" />
+        <Spinner isCentered label={say('admin.sharesPanel.reading')} size="sm" />
       ) : (
         <DataTable
-          label="Links handed out"
+          label={say('admin.sharesPanel.tableLabel')}
           columns={columns}
           rows={asked.data}
-          emptyMessage="Nobody has handed out a link."
+          emptyMessage={say('admin.sharesPanel.empty')}
         />
       )}
     </PanelCard>

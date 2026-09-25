@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { Icon } from '@ValenceUI/Icon';
 import { ArrowUTurnLeft as ArrowUTurnLeftIcon, Search as SearchIcon } from '@keyline-icons/react';
 import { useEffect, useState } from 'react';
@@ -85,36 +86,38 @@ const MatchPicker = ({ media, onClose, onCorrected }: MatchPickerProps) => {
     setIsForgetting(false);
 
     if (outcome === null) {
-      notify.failed('That could not be put back.');
+      notify.failed(say('admin.matchPicker.couldNotForget'));
 
       return;
     }
 
-    notify.worked('Corrected the match.');
+    notify.worked(say('admin.matchPicker.corrected'));
     onCorrected(outcome.jobId);
     onClose();
   };
 
   return (
     <DialogCompanion
-      label={media?.seriesTitle ?? media?.title ?? 'This item'}
+      label={media?.seriesTitle ?? media?.title ?? say('admin.matchPicker.thisItem')}
       isOpen={media !== null}
       onClose={onClose}
     >
       <DialogTitle
         size="compact"
-        title={media?.seriesTitle ?? media?.title ?? 'This item'}
+        title={media?.seriesTitle ?? media?.title ?? say('admin.matchPicker.thisItem')}
         detail={
-          isEpisode
-            ? 'Choosing here corrects every episode of this series, and every scan after it.'
-            : 'Choosing here corrects this film, and every scan after it.'
+          isEpisode ? say('admin.matchPicker.seriesDetail') : say('admin.matchPicker.filmDetail')
         }
       />
 
       <DialogContent className="flex flex-col gap-5">
         <div className="flex flex-wrap items-end gap-3">
           <TextField
-            label={`Search for a ${isEpisode ? 'series' : 'film'}`}
+            label={
+              isEpisode
+                ? say('admin.matchPicker.searchSeries')
+                : say('admin.matchPicker.searchFilm')
+            }
             value={query}
             onValueChange={setQuery}
             className="min-w-0 flex-1"
@@ -129,14 +132,14 @@ const MatchPicker = ({ media, onClose, onCorrected }: MatchPickerProps) => {
             }}
           >
             <Icon of={SearchIcon} size={16} />
-            Search
+            {say('admin.matchPicker.search')}
           </Button>
         </div>
 
-        {isSearching ? <Spinner label="Asking the catalogue" size="sm" /> : null}
+        {isSearching ? <Spinner label={say('admin.matchPicker.asking')} size="sm" /> : null}
 
         {matches === null || isSearching ? null : matches.length === 0 ? (
-          <p className="font-body text-sm text-text-muted">Nothing came back under that name.</p>
+          <p className="font-body text-sm text-text-muted">{say('admin.matchPicker.noMatches')}</p>
         ) : (
           <CatalogueMatchList
             matches={matches}
@@ -157,7 +160,7 @@ const MatchPicker = ({ media, onClose, onCorrected }: MatchPickerProps) => {
           }}
         >
           <Icon of={ArrowUTurnLeftIcon} size={16} />
-          Forget the correction
+          {say('admin.matchPicker.forget')}
         </Button>
       </DialogFooter>
     </DialogCompanion>

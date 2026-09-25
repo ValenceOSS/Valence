@@ -7,6 +7,7 @@ import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Job } from '@ValenceClient/admin/fetchAdmin';
 import type { BackgroundJobsProps } from './BackgroundJobs.types';
 import { describeJobStatus } from '@ValenceScreens/status/describeJobStatus';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Sums up what the queue is doing in one line, so the heading says whether anything is happening
@@ -61,7 +62,7 @@ const BackgroundJobsTable = ({
     () => [
       {
         id: 'state',
-        header: 'State',
+        header: say('admin.backgroundJobs.state'),
         accessorFn: (job) => job.state,
         cell: ({ row }) => (
           <Badge size="sm" tone={describeJobStatus(row.original.state).tone}>
@@ -71,7 +72,7 @@ const BackgroundJobsTable = ({
       },
       {
         id: 'kind',
-        header: 'Job',
+        header: say('admin.backgroundJobs.job'),
         accessorFn: (job) => describeQueueKind(job.kind),
         cell: ({ row }) => (
           <span
@@ -84,7 +85,7 @@ const BackgroundJobsTable = ({
       },
       {
         id: 'subject',
-        header: 'Subject',
+        header: say('admin.backgroundJobs.subject'),
         accessorFn: (job) => job.subject,
         cell: ({ row }) => (
           <span className="flex max-w-[16rem] min-w-0 flex-col">
@@ -102,21 +103,21 @@ const BackgroundJobsTable = ({
       },
       {
         id: 'finished',
-        header: 'Finished',
+        header: say('admin.backgroundJobs.finished'),
         accessorFn: (job) => job.finishedAtMs ?? 0,
         cell: ({ row }) => (
           <span className="whitespace-nowrap tabular-nums text-text-muted">
             {row.original.finishedAtMs === null
               ? row.original.startedAtMs === null
-                ? 'waiting'
-                : 'running'
+                ? say('admin.backgroundJobs.waiting')
+                : say('admin.backgroundJobs.running')
               : new Date(row.original.finishedAtMs).toLocaleTimeString()}
           </span>
         ),
       },
       {
         id: 'took',
-        header: 'Took',
+        header: say('admin.backgroundJobs.took'),
         accessorFn: (job) => (job.finishedAtMs ?? Date.now()) - (job.startedAtMs ?? Date.now()),
         cell: ({ row }) => (
           <span className="whitespace-nowrap tabular-nums text-text-muted">
@@ -129,17 +130,17 @@ const BackgroundJobsTable = ({
   );
 
   if (isUnreachable) {
-    return (
-      <p className="p-6 text-sm text-text-muted">The queue could not be read from the server.</p>
-    );
+    return <p className="p-6 text-sm text-text-muted">{say('admin.backgroundJobs.unreachable')}</p>;
   }
 
   return (
     <DataTable
-      label="Background jobs"
+      label={say('admin.backgroundJobs.label')}
       columns={columns}
       rows={rows}
-      emptyMessage={hasRead ? 'Nothing queued.' : 'Reading the queue…'}
+      emptyMessage={
+        hasRead ? say('admin.backgroundJobs.nothingQueued') : say('admin.backgroundJobs.reading')
+      }
       growsOnScroll={growsOnScroll}
       {...(pageSize === undefined ? {} : { pageSize })}
     />

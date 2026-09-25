@@ -8,6 +8,7 @@ import { cacheRows } from './cacheRows';
 import type { CacheBreakdownProps } from './CacheBreakdown.types';
 import { useTicking } from '@ValenceScreens/clock/useTicking';
 import { A_CAPTION_AGES_EVERY } from '@ValenceScreens/clock/A_CAPTION_AGES_EVERY';
+import { say } from '@ValenceI18n/say';
 
 /**
  * What Valence itself is keeping on the disk, a kind at a time: preview clips, scrub thumbnails,
@@ -54,7 +55,7 @@ const CacheBreakdown = ({
                     variant="subtle"
                     size="none"
                     isIconOnly
-                    label={`What ${row.label.toLowerCase()} means`}
+                    label={row.hintLabel ?? row.label}
                     hasTooltip={false}
                   >
                     <Icon of={InfoIcon} size={14} />
@@ -74,11 +75,11 @@ const CacheBreakdown = ({
 
       <p className="text-xs text-text-muted">
         {cache === null && artwork === null
-          ? 'Counting what is on the disk.'
-          : `${formatBytes(total)} of Valence's own files · counted ${describeSince(
-              new Date(cache?.atMs ?? artwork?.atMs ?? 0).toISOString(),
-              now,
-            )}`}
+          ? say('admin.cacheBreakdown.counting')
+          : say('admin.cacheBreakdown.total', {
+              total: formatBytes(total),
+              when: describeSince(new Date(cache?.atMs ?? artwork?.atMs ?? 0).toISOString(), now),
+            })}
       </p>
     </div>
   );

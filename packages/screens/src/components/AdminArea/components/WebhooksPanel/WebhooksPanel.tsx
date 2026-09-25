@@ -10,6 +10,7 @@ import { describeSince } from '@ValenceScreens/components/AdminArea/describeSinc
 import { AddWebhookDialog } from './components/AddWebhookDialog/AddWebhookDialog';
 import { EditWebhookDialog } from './components/EditWebhookDialog/EditWebhookDialog';
 import { DeliveryHistory } from './components/DeliveryHistory/DeliveryHistory';
+import { say } from '@ValenceI18n/say';
 import type { WebhookSubscription } from '@ValenceContracts/schemas/Webhook';
 import type { WebhooksPanelProps } from './WebhooksPanel.types';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
@@ -30,14 +31,24 @@ const describeLastAttempt = (
   now: number,
 ): { tone: 'quiet' | 'danger'; label: string } => {
   if (webhook.lastAttemptAt === null) {
-    return { tone: 'quiet', label: 'Never used' };
+    return { tone: 'quiet', label: say('admin.webhooksPanel.neverUsed') };
   }
 
   if (webhook.lastError === null) {
-    return { tone: 'quiet', label: `Delivered ${describeSince(webhook.lastAttemptAt, now)}` };
+    return {
+      tone: 'quiet',
+      label: say('admin.webhooksPanel.delivered', {
+        when: describeSince(webhook.lastAttemptAt, now),
+      }),
+    };
   }
 
-  return { tone: 'danger', label: `Failing since ${describeSince(webhook.lastAttemptAt, now)}` };
+  return {
+    tone: 'danger',
+    label: say('admin.webhooksPanel.failingSince', {
+      when: describeSince(webhook.lastAttemptAt, now),
+    }),
+  };
 };
 
 /**
@@ -111,9 +122,13 @@ const WebhooksPanel = ({
       />
 
       <ConfirmDialog
-        title={`Delete ${deleting?.name ?? 'this webhook'}?`}
-        detail="Nothing more will be sent there, and the signing secret is lost. Adding it again means giving the receiver a new secret."
-        confirmLabel="Delete"
+        title={
+          deleting === null
+            ? say('admin.webhooksPanel.deleteThisTitle')
+            : say('admin.webhooksPanel.deleteTitle', { name: deleting.name })
+        }
+        detail={say('admin.webhooksPanel.deleteDetail')}
+        confirmLabel={say('common.delete')}
         isDestructive
         isOpen={deleting !== null}
         onClose={() => {
@@ -129,17 +144,15 @@ const WebhooksPanel = ({
       />
 
       {created === null ? null : (
-        <PanelCard title="New webhook" isHighlighted>
+        <PanelCard title={say('admin.webhooksPanel.newWebhook')} isHighlighted>
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-1">
               <span className="text-sm font-medium text-text">
-                {created.name} is set up. Copy its signing secret now.
+                {say('admin.webhooksPanel.setUp', { name: created.name })}
               </span>
 
               <span className="text-xs text-text-muted">
-                This is the only time it is shown. Give it to the receiver so it can check that a
-                delivery really came from Valence. If it is lost, delete this webhook and make
-                another.
+                {say('admin.webhooksPanel.secretDetail')}
               </span>
             </div>
 
@@ -149,7 +162,7 @@ const WebhooksPanel = ({
 
             <div className="flex justify-end">
               <Button variant="secondary" size="sm" onClick={onDismissCreated}>
-                I have copied it
+                {say('admin.webhooksPanel.copiedIt')}
               </Button>
             </div>
           </div>
@@ -157,7 +170,7 @@ const WebhooksPanel = ({
       )}
 
       <PanelCard
-        title="Webhooks"
+        title={say('admin.webhooksPanel.heading')}
         isFlush
         actions={
           <PanelCardAction
@@ -166,14 +179,13 @@ const WebhooksPanel = ({
               setIsAdding(true);
             }}
           >
-            Create webhook
+            {say('admin.webhooksPanel.createWebhook')}
           </PanelCardAction>
         }
       >
         {webhooks.length === 0 ? (
           <p className="px-4 py-8 text-center text-sm text-text-muted">
-            Nothing is being told about anything. Create a webhook to have Valence post to Discord,
-            ntfy or anywhere else when a job fails.
+            {say('admin.webhooksPanel.empty')}
           </p>
         ) : (
           <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
@@ -187,7 +199,9 @@ const WebhooksPanel = ({
 
                     <Badge tone={attempt.tone}>{attempt.label}</Badge>
 
-                    {webhook.enabled ? null : <Badge tone="quiet">Off</Badge>}
+                    {webhook.enabled ? null : (
+                      <Badge tone="quiet">{say('admin.webhooksPanel.off')}</Badge>
+                    )}
                   </div>
 
                   <span className="break-all text-xs text-text-muted">{webhook.url}</span>
@@ -205,7 +219,7 @@ const WebhooksPanel = ({
 
                   <div className="flex flex-wrap items-center gap-2">
                     <Switch
-                      label="Enabled"
+                      label={say('admin.webhooksPanel.enabled')}
                       isOn={webhook.enabled}
                       onToggle={() => {
                         onSetEnabled(webhook.id, !webhook.enabled);
@@ -220,7 +234,7 @@ const WebhooksPanel = ({
                         onTest(webhook.id);
                       }}
                     >
-                      Send a test
+                      {say('admin.webhooksPanel.sendTest')}
                     </Button>
 
                     <Button
@@ -230,7 +244,7 @@ const WebhooksPanel = ({
                         setEditing(webhook);
                       }}
                     >
-                      Edit
+                      {say('admin.webhooksPanel.edit')}
                     </Button>
 
                     <Button
@@ -241,7 +255,9 @@ const WebhooksPanel = ({
                         onOpenHistory(openHistoryId === webhook.id ? null : webhook.id);
                       }}
                     >
-                      {openHistoryId === webhook.id ? 'Hide history' : 'History'}
+                      {openHistoryId === webhook.id
+                        ? say('admin.webhooksPanel.hideHistory')
+                        : say('admin.webhooksPanel.history')}
                     </Button>
 
                     <Button
@@ -251,7 +267,7 @@ const WebhooksPanel = ({
                         setDeleting(webhook);
                       }}
                     >
-                      Delete
+                      {say('common.delete')}
                     </Button>
                   </div>
 

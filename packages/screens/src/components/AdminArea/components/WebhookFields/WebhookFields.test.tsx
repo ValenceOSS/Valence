@@ -7,7 +7,7 @@ import { Tabs } from '@ValenceUI/Tabs';
 import { useTravelDirection } from '@ValenceUI/useTravelDirection';
 import { DEFAULT_WEBHOOK_FILTERS } from '@ValenceContracts/schemas/Webhook';
 import { WebhookFields } from './WebhookFields';
-import { WEBHOOK_PANES, WEBHOOK_PANE_ITEMS, isWebhookPane } from './webhookPanes';
+import { WEBHOOK_PANES, webhookPaneItems, isWebhookPane } from './webhookPanes';
 import type { WebhookDraft, WebhookFieldsProps } from './WebhookFields.types';
 
 const aDraft = (overrides: Partial<WebhookDraft> = {}): WebhookDraft => ({
@@ -41,7 +41,7 @@ const Harness = (props: Omit<WebhookFieldsProps, 'travel'>) => {
         tone="underlined"
         size="sm"
         value={pane}
-        groups={[{ items: WEBHOOK_PANE_ITEMS }]}
+        groups={[{ items: webhookPaneItems() }]}
       />
 
       <WebhookFields {...props} travel={travel} />
