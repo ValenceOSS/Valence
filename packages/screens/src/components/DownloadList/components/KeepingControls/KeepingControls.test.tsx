@@ -22,6 +22,7 @@ const prepared: Download = {
   bytesPerSecond: null,
   sizeBytes: 1_073_741_824,
   failure: null,
+  askedFrom: null,
   askedAt: '2026-08-22T00:00:00.000Z',
   readyAt: '2026-08-22T00:10:00.000Z',
 };
