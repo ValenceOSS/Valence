@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["ValenceNearbyModule"]
+  },
+  "android": {
+    "modules": ["app.valence.modules.nearby.ValenceNearbyModule"]
+  }
+}
