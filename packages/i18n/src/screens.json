@@ -1,12 +1,1122 @@
 {
+  "desktop.accountDevices": {
+    "client": "desktop",
+    "route": "/?account=devices",
+    "reach": "In the desktop app, open your account’s Devices panel, which lists this computer by name."
+  },
+  "desktop.cannotReach": {
+    "client": "desktop",
+    "route": "/",
+    "reach": "In the desktop app, pointed at a server that has stopped answering, the page shown in the window."
+  },
+  "desktop.connectToServer": {
+    "client": "desktop",
+    "route": "/",
+    "reach": "Open the desktop app for the first time, before it has been pointed at a server; the screen asking which Valence is yours."
+  },
+  "desktop.discord": {
+    "client": "desktop",
+    "route": "discord",
+    "reach": "With Discord open on the same computer and the desktop app playing a film, a song, or on the library, look at your own Discord profile’s activity status."
+  },
+  "desktop.downloadDialog": {
+    "client": "desktop",
+    "route": "/?item=<mediaId>",
+    "reach": "In the desktop app, signed in as a viewer, open a film's detail dialog from the home page and choose Download."
+  },
+  "desktop.downloads": {
+    "client": "desktop",
+    "route": "/?account=downloads",
+    "reach": "In the desktop app, open the Downloads panel after a download to this computer has failed."
+  },
+  "desktop.menuBar": {
+    "client": "desktop",
+    "route": "menu",
+    "reach": "In the desktop app, the application menu along the top of the screen on a Mac, or the File and View menus in the window on Windows and Linux; also the menu from right-clicking the window."
+  },
+  "desktop.windowBar": {
+    "client": "desktop",
+    "route": "/",
+    "reach": "Open the desktop app; the bar across the top of its window."
+  },
+  "phone.aChoiceOfEpisodes": {
+    "client": "phone",
+    "route": "Show/ChooseEpisodes",
+    "reach": "Home tab → Shows → tap a programme → Download → Choose episodes in the menu."
+  },
+  "phone.accountDevices": {
+    "client": "phone",
+    "route": "Account/Devices",
+    "reach": "Account tab → Devices."
+  },
+  "phone.accountHidden": {
+    "client": "phone",
+    "route": "Account/Hidden",
+    "reach": "Account tab → Hidden."
+  },
+  "phone.accountHistory": {
+    "client": "phone",
+    "route": "Account/History",
+    "reach": "Account tab → History."
+  },
+  "phone.accountProfile": {
+    "client": "phone",
+    "route": "Account/Profile",
+    "reach": "Account tab → Profile."
+  },
+  "phone.accountSecurity": {
+    "client": "phone",
+    "route": "Account/Security",
+    "reach": "Account tab → Security."
+  },
+  "phone.accountShares": {
+    "client": "phone",
+    "route": "Account/Shares",
+    "reach": "Account tab → Shares."
+  },
+  "phone.album": {
+    "client": "phone",
+    "route": "Album",
+    "reach": "Home tab → Music → tap an album under Recently added."
+  },
+  "phone.albums": {
+    "client": "phone",
+    "route": "Albums",
+    "reach": "Home tab → Music → See all beside Recently added."
+  },
+  "phone.artist": {
+    "client": "phone",
+    "route": "Artist",
+    "reach": "Home tab → Music → tap an artist under Artists."
+  },
+  "phone.artists": {
+    "client": "phone",
+    "route": "Artists",
+    "reach": "Home tab → Music → See all beside Artists."
+  },
+  "phone.askable": {
+    "client": "phone",
+    "route": "Asking",
+    "reach": "Search tab, as somebody allowed to ask for things → type the name of a film not in the library → tap it under Not in your library yet."
+  },
+  "phone.book": {
+    "client": "phone",
+    "route": "Book",
+    "reach": "Home tab → Books → tap a book."
+  },
+  "phone.browsing": {
+    "client": "phone",
+    "route": "Browsing",
+    "reach": "Search tab → Discover → See all beside one of the rows."
+  },
+  "phone.devicesSheet": {
+    "client": "phone",
+    "route": "MusicPlayer/PlayOn",
+    "reach": "Play a song, open the music player from the bar along the bottom, then tap the cast button beside the lyrics button."
+  },
+  "phone.downloads": {
+    "client": "phone",
+    "route": "Downloads",
+    "reach": "Downloads tab, with at least one film or episode kept on the phone."
+  },
+  "phone.libraryBooks": {
+    "client": "phone",
+    "route": "Library/Books",
+    "reach": "Home tab → Books in the row along the top."
+  },
+  "phone.libraryFilms": {
+    "client": "phone",
+    "route": "Library/Films",
+    "reach": "Home tab → Films in the row along the top."
+  },
+  "phone.libraryHome": {
+    "client": "phone",
+    "route": "Library/Home",
+    "reach": "Launch the app signed in: the Home tab, on Home in the row along the top."
+  },
+  "phone.libraryMusic": {
+    "client": "phone",
+    "route": "Library/Music",
+    "reach": "Home tab → Music in the row along the top."
+  },
+  "phone.libraryShows": {
+    "client": "phone",
+    "route": "Library/Shows",
+    "reach": "Home tab → Shows in the row along the top."
+  },
+  "phone.likedSongs": {
+    "client": "phone",
+    "route": "LikedSongs",
+    "reach": "Home tab → Music → Liked songs."
+  },
+  "phone.listening": {
+    "client": "phone",
+    "route": "Listening",
+    "reach": "Open an audiobook's page, play a chapter, then tap the bar along the bottom showing what is playing."
+  },
+  "phone.musicPlayer": {
+    "client": "phone",
+    "route": "MusicPlayer",
+    "reach": "Play a song, then tap the bar along the bottom showing what is playing."
+  },
+  "phone.musicPlayerUpNext": {
+    "client": "phone",
+    "route": "MusicPlayer/UpNext",
+    "reach": "Play an album, open the music player from the bar along the bottom, then tap the Up next button at the bottom right."
+  },
+  "phone.notifications": {
+    "client": "phone",
+    "route": "Notifications",
+    "reach": "Home tab → the bell at the top."
+  },
+  "phone.person": {
+    "client": "phone",
+    "route": "Person",
+    "reach": "Open a film's page and tap somebody in its cast."
+  },
+  "phone.playlist": {
+    "client": "phone",
+    "route": "Playlist",
+    "reach": "Home tab → Music → tap one of Your playlists."
+  },
+  "phone.playlistDetails": {
+    "client": "phone",
+    "route": "Playlist/Details",
+    "reach": "Home tab → Music → New playlist under Your playlists; or open a playlist of one's own → More → Edit details."
+  },
+  "phone.reader": {
+    "client": "phone",
+    "route": "Reading",
+    "reach": "Open a book's page → Read."
+  },
+  "phone.search": {
+    "client": "phone",
+    "route": "Search",
+    "reach": "Search tab, with something typed into the search box."
+  },
+  "phone.searchRequested": {
+    "client": "phone",
+    "route": "Search/Requested",
+    "reach": "Search tab, as somebody allowed to ask for things → Requested."
+  },
+  "phone.shareSheet": {
+    "client": "phone",
+    "route": "Title/Share",
+    "reach": "Open a film's page and tap Share. For an episode, open a programme, tap an episode, then Share."
+  },
+  "phone.show": {
+    "client": "phone",
+    "route": "Show",
+    "reach": "Home tab → Shows → tap a programme's poster."
+  },
+  "phone.signInATelevision": {
+    "client": "phone",
+    "route": "Television",
+    "reach": "Home tab → the scan button at the top right, then scan the code a television shows."
+  },
+  "phone.stillWatching": {
+    "client": "phone",
+    "route": "Playing/StillWatching",
+    "reach": "Play an episode of a programme and let several episodes play on by themselves until the app asks whether anybody is still watching."
+  },
+  "phone.theServerIsAway": {
+    "client": "phone",
+    "route": "Library/Home",
+    "reach": "Signed in, stop the server: the notice along the top saying it cannot be reached."
+  },
+  "phone.theWayIn": {
+    "client": "phone",
+    "route": "TheWayIn",
+    "reach": "Signed out, launch the app once a server has been chosen: the sign-in screen."
+  },
+  "phone.theWayInCode": {
+    "client": "phone",
+    "route": "TheWayIn/Code",
+    "reach": "Signed out, tap the profile of an account with two-step sign in on, and type its password."
+  },
+  "phone.theWayInPassword": {
+    "client": "phone",
+    "route": "TheWayIn/Password",
+    "reach": "Signed out, on the sign-in screen, tap a profile that has a password."
+  },
+  "phone.title": {
+    "client": "phone",
+    "route": "Title",
+    "reach": "Home tab → Films → tap a film's poster."
+  },
+  "phone.trackMenu": {
+    "client": "phone",
+    "route": "Album/TrackMenu",
+    "reach": "Home tab → Music → open an album → tap the menu button beside any song."
+  },
+  "phone.watching": {
+    "client": "phone",
+    "route": "Playing",
+    "reach": "Open a film's page → Play, then tap the picture to show the controls."
+  },
+  "phone.watchingSettings": {
+    "client": "phone",
+    "route": "Playing/Settings",
+    "reach": "Play a film with subtitles, tap the picture to show the controls, then tap the settings button at the top right."
+  },
+  "phone.whereIsYourValence": {
+    "client": "phone",
+    "route": "WhereIsYourValence",
+    "reach": "Launch the app with no server remembered, or Account tab → Use a different server."
+  },
+  "server.discord": {
+    "client": "server",
+    "route": "discord",
+    "reach": "As an administrator, Admin → System → Webhooks, add a Discord webhook, then press Test or cause an event such as a sign-in or a library scan; the message appears in the Discord channel."
+  },
+  "server.webhook": {
+    "client": "server",
+    "route": "webhook",
+    "reach": "As an administrator, Admin → System → Webhooks, add a webhook in the plain-text (Slack-style) format, then cause an event such as a sign-in or a library scan; the message arrives at the receiver."
+  },
+  "tv.account": {
+    "client": "tv",
+    "route": "Account",
+    "reach": "Signed in on the television, choose your own face at the right-hand end of the bar along the top."
+  },
+  "tv.ask": {
+    "client": "tv",
+    "route": "Search/Ask",
+    "reach": "Signed in on the television as somebody who may request, open Search, type a title the library does not have, and choose it under “Not in your library yet”."
+  },
+  "tv.book": {
+    "client": "tv",
+    "route": "Books/Book",
+    "reach": "On the television’s Books tab, choose an audiobook."
+  },
+  "tv.books": {
+    "client": "tv",
+    "route": "Books",
+    "reach": "Signed in on a television whose server has audiobooks, the Books tab in the bar along the top."
+  },
+  "tv.chooseServer": {
+    "client": "tv",
+    "route": "ChooseServer",
+    "reach": "On a television that has not yet chosen a server, the first screen; or from Account, press “Use a different server”."
+  },
+  "tv.enterPassword": {
+    "client": "tv",
+    "route": "WhoIsWatching/Password",
+    "reach": "On the television’s screen of faces, choose a face that has a password."
+  },
+  "tv.film": {
+    "client": "tv",
+    "route": "Film",
+    "reach": "Signed in on the television, open the Films tab and choose a film."
+  },
+  "tv.home": {
+    "client": "tv",
+    "route": "Home",
+    "reach": "Signed in on the television, the Home tab in the bar along the top."
+  },
+  "tv.listening": {
+    "client": "tv",
+    "route": "Listening",
+    "reach": "On the television, open an audiobook and press Play."
+  },
+  "tv.music": {
+    "client": "tv",
+    "route": "Music",
+    "reach": "Signed in on a television whose server has music, the Music tab in the bar along the top."
+  },
+  "tv.musicCollection": {
+    "client": "tv",
+    "route": "Music/Collection",
+    "reach": "On the television’s Music tab, choose an album, artist or playlist."
+  },
+  "tv.nowPlaying": {
+    "client": "tv",
+    "route": "NowPlaying",
+    "reach": "On the television, play a song from the Music tab and open the now-playing chip."
+  },
+  "tv.nowPlayingDevices": {
+    "client": "tv",
+    "route": "NowPlaying/Devices",
+    "reach": "On the television’s now-playing screen, press “Play on another device”."
+  },
+  "tv.nowPlayingQueue": {
+    "client": "tv",
+    "route": "NowPlaying/UpNext",
+    "reach": "On the television’s now-playing screen, press “Up next”."
+  },
+  "tv.phoneSignIn": {
+    "client": "tv",
+    "route": "WhoIsWatching/Phone",
+    "reach": "On a television with nobody signed in, where the server hides its faces, the screen showing a code to scan with a phone."
+  },
+  "tv.player": {
+    "client": "tv",
+    "route": "Player",
+    "reach": "On the television, play a film, and press the remote’s touch surface to bring up the controls."
+  },
+  "tv.playerSettings": {
+    "client": "tv",
+    "route": "Player/Settings",
+    "reach": "In the television’s player, bring up the controls and press Settings."
+  },
+  "tv.playerStats": {
+    "client": "tv",
+    "route": "Player/Stats",
+    "reach": "In the television’s player, press Settings and switch on “Stats for nerds”."
+  },
+  "tv.playerUpNext": {
+    "client": "tv",
+    "route": "Player/UpNext",
+    "reach": "In the television’s player, watch an episode of a programme to its closing credits, when the next episode is offered."
+  },
+  "tv.requests": {
+    "client": "tv",
+    "route": "Account/Requests",
+    "reach": "On the television’s Account page, as somebody who may request, press “All requests”."
+  },
+  "tv.search": {
+    "client": "tv",
+    "route": "Search",
+    "reach": "Signed in on the television, choose the magnifying glass at the left-hand end of the bar along the top, and type something."
+  },
+  "tv.show": {
+    "client": "tv",
+    "route": "Show",
+    "reach": "Signed in on the television, open the Shows tab and choose a programme."
+  },
+  "tv.whoIsWatching": {
+    "client": "tv",
+    "route": "WhoIsWatching",
+    "reach": "On a television that has chosen its server but has nobody signed in, the screen of faces."
+  },
+  "web.accountDevices": {
+    "client": "web",
+    "route": "/?account=devices",
+    "reach": "Signed in, open the account dialog from your face in the top bar and choose the Devices tab."
+  },
+  "web.accountHidden": {
+    "client": "web",
+    "route": "/?account=hidden",
+    "reach": "Signed in, open the account dialog from your face in the top bar and choose the Hidden tab."
+  },
+  "web.accountHistory": {
+    "client": "web",
+    "route": "/?account=history",
+    "reach": "Signed in, open the account dialog from your face in the top bar and choose the History tab."
+  },
+  "web.accountLinks": {
+    "client": "web",
+    "route": "/?account=links",
+    "reach": "Signed in, open the account dialog from your face in the top bar and choose the Links tab."
+  },
+  "web.accountProfile": {
+    "client": "web",
+    "route": "/?account=profile",
+    "reach": "Signed in, open the account menu from your face in the top bar and choose the Profile tab of the account dialog."
+  },
+  "web.accountSecurity": {
+    "client": "web",
+    "route": "/?account=security",
+    "reach": "Signed in, open the account dialog from your face in the top bar and choose the Security tab."
+  },
+  "web.accountSecurityPasskey": {
+    "client": "web",
+    "route": "/?account=security",
+    "reach": "Signed in, open the account dialog, choose the Security tab and add a passkey."
+  },
+  "web.accountSecurityTwoFactor": {
+    "client": "web",
+    "route": "/?account=security",
+    "reach": "Signed in, open the account dialog, choose the Security tab and set up two-factor authentication."
+  },
+  "web.adminAccounts": {
+    "client": "web",
+    "route": "/admin/accounts",
+    "reach": "Signed in as an administrator, Admin, then People → Accounts in the sidebar."
+  },
+  "web.adminActivity": {
+    "client": "web",
+    "route": "/admin/activity",
+    "reach": "Signed in as an administrator, Admin, then Activity → Sessions in the sidebar."
+  },
+  "web.adminActivityMessage": {
+    "client": "web",
+    "route": "/admin/activity",
+    "reach": "Signed in as an administrator, Admin, then Activity → Sessions in the sidebar, then the message button on a session that is playing something, which opens the Message dialog."
+  },
+  "web.adminActivityStats": {
+    "client": "web",
+    "route": "/admin/activity",
+    "reach": "Signed in as an administrator, Admin, then Activity → Sessions in the sidebar, then the Stream stats (info) button on a session that is playing a video, which opens the Stream stats panel."
+  },
+  "web.adminAddLibrary": {
+    "client": "web",
+    "route": "/admin/libraries",
+    "reach": "Signed in as an administrator, Admin → Libraries, then the Add library button, which opens the Add a library dialog."
+  },
+  "web.adminDownloads": {
+    "client": "web",
+    "route": "/admin/downloads",
+    "reach": "Signed in as an administrator, Admin, then Requests → Downloads in the sidebar."
+  },
+  "web.adminDownloadsRemove": {
+    "client": "web",
+    "route": "/admin/downloads",
+    "reach": "Signed in as an administrator, Admin, then Requests → Downloads in the sidebar, then Remove on a download, which opens the Remove download dialog."
+  },
+  "web.adminEncoding": {
+    "client": "web",
+    "route": "/admin/encoding",
+    "reach": "Signed in as an administrator, Admin, then Content → Encoding in the sidebar."
+  },
+  "web.adminEncodingReencode": {
+    "client": "web",
+    "route": "/admin/encoding",
+    "reach": "Signed in as an administrator, Admin → Encoding, then choose Re-encode to open the re-encode dialog."
+  },
+  "web.adminEncodingReview": {
+    "client": "web",
+    "route": "/admin/encoding",
+    "reach": "Signed in as an administrator, Admin → Encoding, then choose a finished re-encode to review it."
+  },
+  "web.adminFiles": {
+    "client": "web",
+    "route": "/admin/files",
+    "reach": "Signed in as an administrator, Admin, then Content → Files in the sidebar."
+  },
+  "web.adminIndexers": {
+    "client": "web",
+    "route": "/admin/indexers",
+    "reach": "Signed in as an administrator, Admin, then Requests → Indexers in the sidebar."
+  },
+  "web.adminJobs": {
+    "client": "web",
+    "route": "/admin/jobs",
+    "reach": "Signed in as an administrator, Admin, then Activity → Jobs & logs in the sidebar."
+  },
+  "web.adminJobsConfirmRun": {
+    "client": "web",
+    "route": "/admin/jobs",
+    "reach": "Signed in as an administrator, Admin, then Activity → Jobs & logs; choose Run now from the menu of a job that deletes something and needs no library, which asks before starting it."
+  },
+  "web.adminJobsHealth": {
+    "client": "web",
+    "route": "/admin/jobs?view=health",
+    "reach": "Signed in as an administrator, Admin → Jobs & Logs, then the Health view."
+  },
+  "web.adminJobsLogRecord": {
+    "client": "web",
+    "route": "/admin/jobs?view=logs",
+    "reach": "Signed in as an administrator, Admin → Jobs & Logs, the Logs view; choose any line of the log to open its record beside it."
+  },
+  "web.adminJobsLogs": {
+    "client": "web",
+    "route": "/admin/jobs?view=logs",
+    "reach": "Signed in as an administrator, Admin → Jobs & Logs, then the Logs view."
+  },
+  "web.adminJobsRunIssues": {
+    "client": "web",
+    "route": "/admin/jobs",
+    "reach": "Signed in as an administrator, Admin → Jobs & Logs; on a job run's row open the ⋯ menu and choose View issues."
+  },
+  "web.adminJobsRunLibraryJob": {
+    "client": "web",
+    "route": "/admin/jobs",
+    "reach": "Signed in as an administrator, Admin, then Activity → Jobs & logs; press Run on a job that works on libraries, which opens the dialog asking which libraries to run it on."
+  },
+  "web.adminJobsSchedule": {
+    "client": "web",
+    "route": "/admin/jobs",
+    "reach": "Signed in as an administrator, Admin, then Activity → Jobs & logs; press into a job to open its schedule, the list of triggers that make it run."
+  },
+  "web.adminJobsStop": {
+    "client": "web",
+    "route": "/admin/jobs",
+    "reach": "Signed in as an administrator, Admin, then Activity → Jobs & logs while a job is running; choose Stop it from its menu, which asks before stopping it."
+  },
+  "web.adminJobsTrace": {
+    "client": "web",
+    "route": "/admin/jobs",
+    "reach": "Signed in as an administrator, Admin → Jobs & Logs; choose any row in the job runs table to open its trace."
+  },
+  "web.adminLibraries": {
+    "client": "web",
+    "route": "/admin/libraries",
+    "reach": "Signed in as an administrator, Admin, then Content → Libraries in the sidebar."
+  },
+  "web.adminLibrariesDelete": {
+    "client": "web",
+    "route": "/admin/libraries",
+    "reach": "Signed in as an administrator, Admin, then Content → Libraries; choose Delete library from a library’s menu, which asks before deleting it."
+  },
+  "web.adminLibrariesReread": {
+    "client": "web",
+    "route": "/admin/libraries",
+    "reach": "Signed in as an administrator, Admin, then Content → Libraries; choose Read every file again from a library’s menu, which asks before starting."
+  },
+  "web.adminLibrariesReset": {
+    "client": "web",
+    "route": "/admin/libraries",
+    "reach": "Signed in as an administrator, Admin, then Content → Libraries; open the menu at the top of the panel and choose Reset and rebuild, which asks before starting."
+  },
+  "web.adminLibrariesRunningWork": {
+    "client": "web",
+    "route": "/admin/libraries",
+    "reach": "Signed in as an administrator, Admin, then Content → Libraries while a scan is running; press the running-work button to open the dialog listing what is under way."
+  },
+  "web.adminLibrariesSettings": {
+    "client": "web",
+    "route": "/admin/libraries",
+    "reach": "Signed in as an administrator, Admin, then Content → Libraries; open a library’s settings from its row, or add a library."
+  },
+  "web.adminLibrariesUpload": {
+    "client": "web",
+    "route": "/admin/libraries",
+    "reach": "Signed in as an administrator, Admin, then Content → Libraries; press Upload to open the dialog for sending files to the server."
+  },
+  "web.adminMedia": {
+    "client": "web",
+    "route": "/admin/media",
+    "reach": "Signed in as an administrator, Admin, then Content → Media in the sidebar."
+  },
+  "web.adminMediaDelete": {
+    "client": "web",
+    "route": "/admin/media",
+    "reach": "Signed in as an administrator allowed to delete media, Admin, then Content → Media; choose Delete file… or Delete series… from an item’s menu, which asks before deleting."
+  },
+  "web.adminMediaMatch": {
+    "client": "web",
+    "route": "/admin/media",
+    "reach": "Signed in as an administrator, Admin, then Content → Media; choose Fix match on an item to open the dialog for picking what it really is."
+  },
+  "web.adminMediaRebuild": {
+    "client": "web",
+    "route": "/admin/media",
+    "reach": "Signed in as an administrator, Admin, then Content → Media; choose Rebuild previews from an item’s menu, which asks before starting."
+  },
+  "web.adminOverview": {
+    "client": "web",
+    "route": "/admin/overview",
+    "reach": "Signed in as an administrator, Admin, then Overview in the sidebar."
+  },
+  "web.adminProfiles": {
+    "client": "web",
+    "route": "/admin/profiles",
+    "reach": "Signed in as an administrator, Admin, then Requests → Profiles in the sidebar."
+  },
+  "web.adminProfilesEditor": {
+    "client": "web",
+    "route": "/admin/profiles",
+    "reach": "Signed in as an administrator, Admin, then Requests → Profiles in the sidebar, then Add media profile (or Change in a profile’s actions menu). The dialog has Quality, Matching and Access tabs."
+  },
+  "web.adminProfilesRemove": {
+    "client": "web",
+    "route": "/admin/profiles",
+    "reach": "Signed in as an administrator, Admin, then Requests → Profiles in the sidebar, then Remove in a profile’s actions menu."
+  },
+  "web.adminRequested": {
+    "client": "web",
+    "route": "/admin/requested",
+    "reach": "Signed in as an administrator, Admin, then Requests → Requested in the sidebar."
+  },
+  "web.adminRequestedAsk": {
+    "client": "web",
+    "route": "/admin/requested",
+    "reach": "Signed in as an administrator, Admin, then Requests → Requested in the sidebar, then the button to ask for something new, which opens the Ask for media dialog."
+  },
+  "web.adminRequestedDetail": {
+    "client": "web",
+    "route": "/admin/requested",
+    "reach": "Signed in as an administrator, Admin, then Requests → Requested in the sidebar, then click a request to open its detail dialog. Its tabs are How it is going, Releases, What it has done and Never again."
+  },
+  "web.adminRequestedRefuse": {
+    "client": "web",
+    "route": "/admin/requested",
+    "reach": "Signed in as an administrator, Admin, then Requests → Requested in the sidebar, then Refuse on a pending request, which opens the Refuse dialog."
+  },
+  "web.adminRequests": {
+    "client": "web",
+    "route": "/admin/requests",
+    "reach": "Signed in as an administrator, Admin, then Requests → Overview in the sidebar."
+  },
+  "web.adminRoles": {
+    "client": "web",
+    "route": "/admin/roles",
+    "reach": "Signed in as an administrator, Admin, then People → Roles in the sidebar."
+  },
+  "web.adminRolesCreate": {
+    "client": "web",
+    "route": "/admin/roles",
+    "reach": "Signed in as an administrator, Admin, then People → Roles in the sidebar, then Create role in the corner of the Roles card."
+  },
+  "web.adminRolesDelete": {
+    "client": "web",
+    "route": "/admin/roles",
+    "reach": "Signed in as an administrator, Admin, then People → Roles in the sidebar, then the … menu on a role and Delete role."
+  },
+  "web.adminRolesEdit": {
+    "client": "web",
+    "route": "/admin/roles",
+    "reach": "Signed in as an administrator, Admin, then People → Roles in the sidebar, then the … menu on a role and Edit role."
+  },
+  "web.adminSearch": {
+    "client": "web",
+    "route": "/admin/search",
+    "reach": "Signed in as an administrator, Admin, then Requests → Search in the sidebar."
+  },
+  "web.adminSettings": {
+    "client": "web",
+    "route": "/admin/settings",
+    "reach": "Signed in as an administrator, Admin, then System → Settings in the sidebar."
+  },
+  "web.adminShares": {
+    "client": "web",
+    "route": "/admin/shares",
+    "reach": "Signed in as an administrator, Admin, then Activity → Links in the sidebar."
+  },
+  "web.adminSharesWithdraw": {
+    "client": "web",
+    "route": "/admin/shares",
+    "reach": "Signed in as an administrator, Admin, then Activity → Links in the sidebar, then the withdraw (broken link) button on a live link, which opens the Withdraw this link? dialog."
+  },
+  "web.adminWebhooks": {
+    "client": "web",
+    "route": "/admin/webhooks",
+    "reach": "Signed in as an administrator, Admin, then System → Webhooks in the sidebar."
+  },
+  "web.adminWebhooksAdd": {
+    "client": "web",
+    "route": "/admin/webhooks",
+    "reach": "Signed in as an administrator, Admin, then System → Webhooks in the sidebar, then Create webhook in the corner of the Webhooks card. Its Where, Events and Who tabs each show a different part of the form."
+  },
+  "web.adminWebhooksCreated": {
+    "client": "web",
+    "route": "/admin/webhooks",
+    "reach": "Signed in as an administrator, Admin, then System → Webhooks in the sidebar, straight after making a webhook with Create webhook, while its signing secret is still shown."
+  },
+  "web.adminWebhooksDelete": {
+    "client": "web",
+    "route": "/admin/webhooks",
+    "reach": "Signed in as an administrator, Admin, then System → Webhooks in the sidebar, then Delete on a webhook."
+  },
+  "web.adminWebhooksEdit": {
+    "client": "web",
+    "route": "/admin/webhooks",
+    "reach": "Signed in as an administrator, Admin, then System → Webhooks in the sidebar, then the … menu on a webhook and Edit."
+  },
+  "web.adminWebhooksHistory": {
+    "client": "web",
+    "route": "/admin/webhooks",
+    "reach": "Signed in as an administrator, Admin, then System → Webhooks in the sidebar, then History on a webhook that has sent something, one delivery of which failed."
+  },
+  "web.askDialog": {
+    "client": "web",
+    "route": "/requests?ask=<kind>:<id>",
+    "reach": "Signed in as a viewer, open Requests, search for a film, series, artist or album that is not in the library, and choose it to open its dialog."
+  },
+  "web.askable": {
+    "client": "web",
+    "route": "/requests?ask=<catalogueId>",
+    "reach": "Signed in as a viewer, on Requests choose a series that is not in the library yet; the dialog for requesting it."
+  },
+  "web.askableArtist": {
+    "client": "web",
+    "route": "/requests?view=music&ask=<catalogueId>",
+    "reach": "Signed in as a viewer, on Requests → Music choose an artist that is not in the library yet; the dialog for requesting them."
+  },
+  "web.audiobookPlayer": {
+    "client": "web",
+    "route": "/read",
+    "reach": "Signed in as a viewer, open Books, open an audiobook and press Listen; the small player in the corner, opened with its arrow button to show the panel with chapters, speed and sleep timer."
+  },
+  "web.bookDialog": {
+    "client": "web",
+    "route": "/read?book=<bookId>",
+    "reach": "Signed in as a viewer, open Books and choose any book to open its dialog; for the chapter list, choose a book with several chapters."
+  },
+  "web.books": {
+    "client": "web",
+    "route": "/read",
+    "reach": "Signed in as a viewer, choose Books in the navigation bar."
+  },
+  "web.chooseProfile": {
+    "client": "web",
+    "route": "/",
+    "reach": "Sign in to an account with several profiles; the screen asking who is watching."
+  },
   "web.confirmDelete": {
     "client": "web",
     "route": "/",
     "reach": "Any dialog asking whether to delete something, such as deleting a download from the Downloads panel."
   },
+  "web.decideForSomebody": {
+    "client": "web",
+    "route": "/?item=<mediaId>",
+    "reach": "Signed in as an administrator, open any film's detail dialog and choose 'Who may watch this' from its menu; the panel beside the dialog."
+  },
+  "web.device": {
+    "client": "web",
+    "route": "/device",
+    "reach": "Signed in, open /device in a browser, as a television's sign-in screen asks you to; the page for typing the television's code."
+  },
+  "web.downloads": {
+    "client": "web",
+    "route": "/",
+    "reach": "Signed in as a viewer, open a film and choose Download to keep it, then open the Downloads dialog from the account menu to see it being prepared."
+  },
+  "web.favourites": {
+    "client": "web",
+    "route": "/favourites",
+    "reach": "Signed in as a viewer, choose Favourites in the navigation bar."
+  },
+  "web.films": {
+    "client": "web",
+    "route": "/films",
+    "reach": "Signed in as a viewer, choose Films in the navigation bar."
+  },
+  "web.finishOnAnotherDevice": {
+    "client": "web",
+    "route": "/",
+    "reach": "Sign in on a television's browser to a household that has not been set up yet; the screen asking to finish setting up on a phone."
+  },
   "web.home": {
     "client": "web",
     "route": "/",
     "reach": "Signed in as a viewer, the home page."
+  },
+  "web.householdOnboarding": {
+    "client": "web",
+    "route": "/",
+    "reach": "Sign in for the first time to a household that has not been set up; the three-step 'Set up your household' panel (name, picture, passkey)."
+  },
+  "web.householdWelcome": {
+    "client": "web",
+    "route": "/",
+    "reach": "Finish the household onboarding on a brand-new server, after naming the household; the welcome page that follows."
+  },
+  "web.keptPlayer": {
+    "client": "web",
+    "route": "/kept/<downloadId>",
+    "reach": "In the desktop app, open Downloads from the top bar and play something that has been downloaded to this device; to see the message, open the address of a download that has been deleted."
+  },
+  "web.listeningParty": {
+    "client": "web",
+    "route": "/music",
+    "reach": "Signed in as a viewer, play a song on Music, open the listening party panel from the player and start a party."
+  },
+  "web.mediaDetail": {
+    "client": "web",
+    "route": "/?item=<mediaId>",
+    "reach": "Signed in as a viewer, on the home page choose any film or show card to open its detail dialog."
+  },
+  "web.music": {
+    "client": "web",
+    "route": "/music",
+    "reach": "Signed in as a viewer, choose Music in the navigation bar."
+  },
+  "web.musicAlbum": {
+    "client": "web",
+    "route": "/music?listen=album:<albumId>",
+    "reach": "Signed in as a viewer, open Music and choose any album."
+  },
+  "web.musicAlbums": {
+    "client": "web",
+    "route": "/music?listen=albums",
+    "reach": "Signed in as a viewer, open Music and choose See all beside Recently added, or Albums in the library."
+  },
+  "web.musicArtist": {
+    "client": "web",
+    "route": "/music?listen=artist:<artistId>",
+    "reach": "Signed in as a viewer, open Music and choose any artist."
+  },
+  "web.musicArtists": {
+    "client": "web",
+    "route": "/music?listen=artists",
+    "reach": "Signed in as a viewer, open Music and choose See all beside Artists."
+  },
+  "web.musicDevices": {
+    "client": "web",
+    "route": "/music",
+    "reach": "Signed in as a viewer, play a song, then choose the devices button in the player bar to open the Play on another device panel."
+  },
+  "web.musicImmersive": {
+    "client": "web",
+    "route": "/music",
+    "reach": "Signed in as a viewer, play a song, then choose the artwork in the player bar to open the full-window immersive player."
+  },
+  "web.musicLiked": {
+    "client": "web",
+    "route": "/music?listen=liked",
+    "reach": "Signed in as a viewer, open Music and choose Liked Songs in the library down the left."
+  },
+  "web.musicLyrics": {
+    "client": "web",
+    "route": "/music?listen=lyrics",
+    "reach": "Signed in as a viewer, play a song, then choose the lyrics button in the player bar along the bottom."
+  },
+  "web.musicParty": {
+    "client": "web",
+    "route": "/music",
+    "reach": "Signed in as a viewer, play a song, then choose the listening party button in the player bar to open the Listening party panel."
+  },
+  "web.musicPlaylist": {
+    "client": "web",
+    "route": "/music?listen=playlist:<playlistId>",
+    "reach": "Signed in as a viewer, open Music and choose one of your playlists in the library down the left; its More menu holds the sharing, edit and delete items."
+  },
+  "web.musicPlaylistDelete": {
+    "client": "web",
+    "route": "/music?listen=playlist:<playlistId>",
+    "reach": "Signed in as a viewer, open one of your playlists in Music, open its More menu and choose Delete playlist to open the confirm dialog."
+  },
+  "web.musicPlaylists": {
+    "client": "web",
+    "route": "/music?listen=playlists",
+    "reach": "Signed in as a viewer, open Music and choose See all beside Your playlists."
+  },
+  "web.musicQueue": {
+    "client": "web",
+    "route": "/music",
+    "reach": "Signed in as a viewer, play a song, then choose the queue button in the player bar to open the Queue panel on the right."
+  },
+  "web.musicSearch": {
+    "client": "web",
+    "route": "/music?listen=search:<query>",
+    "reach": "Signed in as a viewer, open Music and type into the Search music field at the top of the library."
+  },
+  "web.musicVideo": {
+    "client": "web",
+    "route": "/music",
+    "reach": "Signed in as a viewer, open Music and, on a song that has a music video, choose Watch the video to open the video dialog."
+  },
+  "web.musicVisualiser": {
+    "client": "web",
+    "route": "/music",
+    "reach": "Signed in as a viewer, play a song, open the immersive player from the artwork in the player bar, then choose the Visualiser button."
+  },
+  "web.new": {
+    "client": "web",
+    "route": "/new",
+    "reach": "Signed in as a viewer, choose New in the navigation bar."
+  },
+  "web.notifications": {
+    "client": "web",
+    "route": "/",
+    "reach": "Signed in as a viewer, open the bell in the top bar to see the notifications list."
+  },
+  "web.nowPlaying": {
+    "client": "web",
+    "route": "/",
+    "reach": "Signed in as a viewer, start a song or a video playing on another device; the now playing bar along the bottom of the window."
+  },
+  "web.offline": {
+    "client": "web",
+    "route": "/",
+    "reach": "Open Valence while the server cannot be reached; the offline screen with the files kept on this device."
+  },
+  "web.openInTheApp": {
+    "client": "web",
+    "route": "/",
+    "reach": "Open Valence in a phone browser; the banner offering to open the app."
+  },
+  "web.pageProblem": {
+    "client": "web",
+    "route": "/<missing>",
+    "reach": "Open an address that does not exist, or one whose page failed to load."
+  },
+  "web.personDialog": {
+    "client": "web",
+    "route": "/?person=<personId>",
+    "reach": "Signed in as a viewer, open a title and choose a person in its cast."
+  },
+  "web.phoneSignIn": {
+    "client": "web",
+    "route": "/phone-sign-in",
+    "reach": "Open the address a phone shows when it asks to be signed in from a browser."
+  },
+  "web.phoneSignInSignedOut": {
+    "client": "web",
+    "route": "/phone-sign-in?challenge=<challenge>",
+    "reach": "While signed out in this browser, open the address a phone shows when it asks to be signed in from a browser; the page offering a passkey first."
+  },
+  "web.playOn": {
+    "client": "web",
+    "route": "/?playing=<mediaId>",
+    "reach": "While something plays, choose Play on… in the player to send it to another device."
+  },
+  "web.playlistDialog": {
+    "client": "web",
+    "route": "/music",
+    "reach": "Signed in as a viewer, on Music choose New playlist, or edit a playlist."
+  },
+  "web.previewMoment": {
+    "client": "web",
+    "route": "/?item=<mediaId>",
+    "reach": "Signed in as an administrator, open a film's detail dialog and choose to set its preview moment; the dialog for choosing it."
+  },
+  "web.pushNotification": {
+    "client": "web",
+    "route": "notification",
+    "reach": "A system notification from a browser that has allowed push notifications, when the server sends one without its own title or text."
+  },
+  "web.read": {
+    "client": "web",
+    "route": "/read/<bookId>",
+    "reach": "Signed in as a viewer, open a book from Books and choose Read."
+  },
+  "web.readPanel": {
+    "client": "web",
+    "route": "/read/<bookId>",
+    "reach": "Signed in as a viewer, open a book from Books and choose Read, then open the panel from the button in the reader's top right corner."
+  },
+  "web.requests": {
+    "client": "web",
+    "route": "/requests",
+    "reach": "Signed in as a viewer, choose Requests in the navigation bar."
+  },
+  "web.requestsBooks": {
+    "client": "web",
+    "route": "/requests?view=books",
+    "reach": "Signed in as a viewer, choose Requests in the navigation bar, then the Books tab."
+  },
+  "web.requestsCancel": {
+    "client": "web",
+    "route": "/requests?view=mine",
+    "reach": "On Requests → the Requests tab, choose Cancel on one of your requests; the dialog confirming it."
+  },
+  "web.requestsMine": {
+    "client": "web",
+    "route": "/requests?view=mine",
+    "reach": "Signed in as a viewer who has requested something, choose Requests in the navigation bar, then the Requests tab."
+  },
+  "web.requestsMovies": {
+    "client": "web",
+    "route": "/requests?view=film:popular",
+    "reach": "Signed in as a viewer, choose Requests in the navigation bar, then the Movies tab."
+  },
+  "web.requestsMusic": {
+    "client": "web",
+    "route": "/requests?view=music",
+    "reach": "Signed in as a viewer, choose Requests in the navigation bar, then the Music tab."
+  },
+  "web.search": {
+    "client": "web",
+    "route": "/search",
+    "reach": "Signed in as a viewer, choose Search in the navigation bar and type a title."
+  },
+  "web.seriesDialog": {
+    "client": "web",
+    "route": "/read",
+    "reach": "Signed in as a viewer, on Books choose a series in a book rail to open its dialog."
+  },
+  "web.serverUnreachable": {
+    "client": "web",
+    "route": "/",
+    "reach": "Open Valence in a browser while its server is stopped, before anything has been kept for offline use; the page saying it is not reachable."
+  },
+  "web.setupWizard": {
+    "client": "web",
+    "route": "/",
+    "reach": "Open a brand-new Valence server for the first time; the setup wizard."
+  },
+  "web.share": {
+    "client": "web",
+    "route": "/share/<token>",
+    "reach": "Open a share link someone sent, while signed out."
+  },
+  "web.shareBook": {
+    "client": "web",
+    "route": "/share/<token>",
+    "reach": "Open a share link someone sent for a book, while signed out."
+  },
+  "web.shareDialog": {
+    "client": "web",
+    "route": "/",
+    "reach": "Signed in as a viewer, open a title and choose Share."
+  },
+  "web.shareEnded": {
+    "client": "web",
+    "route": "/share/<token>",
+    "reach": "Open a share link that has been withdrawn or has run out; the page saying it no longer works."
+  },
+  "web.showDialog": {
+    "client": "web",
+    "route": "/?show=<showId>",
+    "reach": "Signed in as a viewer, choose any show card to open its dialog."
+  },
+  "web.showDialogChooseEpisodes": {
+    "client": "web",
+    "route": "/?show=<showId>",
+    "reach": "Signed in as a viewer in the desktop app, open a show's dialog, choose Download, then Choose episodes; the dialog for picking which to keep."
+  },
+  "web.showDialogTrailer": {
+    "client": "web",
+    "route": "/?show=<showId>",
+    "reach": "Signed in as a viewer, open a show's dialog and choose Watch the trailer."
+  },
+  "web.shows": {
+    "client": "web",
+    "route": "/shows",
+    "reach": "Signed in as a viewer, choose Shows in the navigation bar."
+  },
+  "web.signIn": {
+    "client": "web",
+    "route": "/",
+    "reach": "Open Valence while signed out; the sign-in screen."
+  },
+  "web.splash": {
+    "client": "web",
+    "route": "/",
+    "reach": "Open Valence in a browser; the splash screen shown for a moment while it asks the server whether it has been set up."
+  },
+  "web.stillWatching": {
+    "client": "web",
+    "route": "/watch/<mediaId>",
+    "reach": "Let several episodes play on their own without touching anything until the Are you still watching? dialog appears."
+  },
+  "web.televisionHandoff": {
+    "client": "web",
+    "route": "/",
+    "reach": "Sign in on a television that shows a code, then open the address it shows in a browser."
+  },
+  "web.twoFactorChallenge": {
+    "client": "web",
+    "route": "/",
+    "reach": "Sign in to an account with two-factor authentication switched on; the screen asking for the code."
+  },
+  "web.videoRemote": {
+    "client": "web",
+    "route": "/",
+    "reach": "Signed in as a viewer while this account plays something on another device; open the remote from the now playing bar."
+  },
+  "web.watch": {
+    "client": "web",
+    "route": "/watch/<mediaId>",
+    "reach": "Signed in as a viewer, choose any film and press Play; the full-window player with its controls showing."
+  },
+  "web.watchParty": {
+    "client": "web",
+    "route": "/watch/<mediaId>",
+    "reach": "In the player, open the watch party menu from the control bar and start or join a party."
+  },
+  "web.watchPartyPassword": {
+    "client": "web",
+    "route": "/watch/<mediaId>?party=<partyId>",
+    "reach": "Open a link to a watch party that has a password; the dialog asking for it."
+  },
+  "web.watchStats": {
+    "client": "web",
+    "route": "/watch/<mediaId>",
+    "reach": "Signed in as a viewer, play a film that the server has to convert, open the player's settings and switch on Stats for nerds."
+  },
+  "web.watchTracks": {
+    "client": "web",
+    "route": "/watch/<mediaId>",
+    "reach": "In the player, open the audio and subtitles menu from the control bar."
+  },
+  "web.welcomeTour": {
+    "client": "web",
+    "route": "/",
+    "reach": "Sign in to a new account for the first time; the welcome tour."
   }
 }

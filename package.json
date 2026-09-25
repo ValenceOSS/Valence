@@ -21,6 +21,7 @@
     "branch:check": "tsx tools/branches/checkBranchName.ts",
     "branches:prune": "tsx tools/branches/pruneMergedBranches.ts",
     "i18n:screens": "tsx tools/i18n/captureScreens.ts",
+    "i18n:values": "tsx tools/i18n/writeStringValues.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "rust:check": "cargo clippy --all-targets -- -D warnings && cargo fmt --check",

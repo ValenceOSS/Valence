@@ -48,6 +48,7 @@ const READING_METHODS = new Set([
   'get',
   'getAll',
   'getItem',
+  'header',
   'has',
   'includes',
   'indexOf',
@@ -81,9 +82,11 @@ const QUIET_KEYS = new Set([
 ]);
 
 const QUIET_ATTRIBUTES =
-  /^(?:className|class|style|id|key|href|src|to|rel|target|type|role|name|data-.+|testID|nativeID)$/u;
+  /^(?:allow|className|class|style|id|key|href|src|to|rel|target|type|role|name|data-.+|testID|nativeID)$/u;
 
 const LETTER = /\p{L}/u;
+
+const STRING_KEY = /^[a-z][a-zA-Z0-9]*(?:\.[a-zA-Z0-9]+)+$/u;
 
 const CAPITALISED = /^\s*[\p{Lu}][\p{Ll}’']/u;
 
@@ -107,6 +110,10 @@ const createRule = ESLintUtils.RuleCreator(() => 'https://valence.local/no-hard-
  */
 const readsAsCode = (text: string): boolean => {
   const trimmed = text.trim();
+
+  if (STRING_KEY.test(trimmed)) {
+    return true;
+  }
 
   if (/^\p{Lu}\p{Ll}+\p{Lu}[\p{L}\d]*$|^[^\s]*[_/@#(-][^\s]*$/u.test(trimmed)) {
     return true;
@@ -188,6 +195,7 @@ const NEVER_WORDS = new Set<AST_NODE_TYPES>([
   AST_NODE_TYPES.TSEnumMember,
   AST_NODE_TYPES.SwitchCase,
   AST_NODE_TYPES.TSExternalModuleReference,
+  AST_NODE_TYPES.TaggedTemplateExpression,
 ]);
 
 const PASSES_THROUGH = new Set<AST_NODE_TYPES>([

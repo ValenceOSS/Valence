@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import screens from './screens.json';
 import strings from './strings-en.json';
+import values from './values-en.json';
 
 const EntrySchema = z.object({
   value: z.string().min(1),
@@ -50,17 +51,19 @@ describe('strings-en.json', () => {
     }
   });
 
-  it('fills the same gaps in both forms of a count', () => {
+  it('fills the same gaps in both forms of a count, though one may leave the number unsaid', () => {
     const gapsIn = (text: string) =>
-      [...text.matchAll(/\{(\w+)\}/gu)].map((match) => match[1]).toSorted();
+      [...text.matchAll(/\{(\w+)\}/gu)]
+        .map((match) => match[1])
+        .filter((gap) => gap !== 'count')
+        .toSorted();
+    const byKey = new Map(entries);
 
     for (const [key, entry] of entries) {
-      const other = key.endsWith('.one')
-        ? Object.entries(strings).find(([name]) => name === key.replace(/\.one$/u, '.other'))
-        : undefined;
+      const other = key.endsWith('.one') ? byKey.get(key.replace(/\.one$/u, '.other')) : undefined;
 
       if (other !== undefined) {
-        expect(gapsIn(entry.value), key).toEqual(gapsIn(other[1].value));
+        expect(gapsIn(entry.value), key).toEqual(gapsIn(other.value));
       }
     }
   });
@@ -71,5 +74,11 @@ describe('screens.json', () => {
     for (const [, screen] of Object.entries(screens)) {
       expect(ScreenSchema.safeParse(screen).success).toBe(true);
     }
+  });
+});
+
+describe('values-en.json', () => {
+  it('holds exactly the words of strings-en.json, so run pnpm i18n:values after changing it', () => {
+    expect(values).toEqual(Object.fromEntries(entries.map(([key, entry]) => [key, entry.value])));
   });
 });
