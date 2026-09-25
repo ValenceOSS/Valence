@@ -1,4 +1,4 @@
-import { tidy } from './readEpisodeFromPath';
+import { tidyName } from './naming/tidyName';
 
 /**
  * Names one file the way somebody watching a scan would recognise it — the file's own name, without
@@ -13,7 +13,7 @@ import { tidy } from './readEpisodeFromPath';
 const nameOfFile = (path: string): string => {
   const base = path.slice(path.lastIndexOf('/') + 1);
   const lastDot = base.lastIndexOf('.');
-  const named = tidy(lastDot > 0 ? base.slice(0, lastDot) : base);
+  const named = tidyName(lastDot > 0 ? base.slice(0, lastDot) : base);
 
   return named === '' ? base : named;
 };

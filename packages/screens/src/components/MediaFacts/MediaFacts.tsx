@@ -5,6 +5,7 @@ import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import type { ReactNode } from 'react';
 import type { MediaFactsProps } from './MediaFacts.types';
+import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 
 const SIZES = {
   inherit: '',
@@ -43,7 +44,16 @@ const MediaFacts = ({
 
   const facts: { key: string; said: ReactNode }[] = [
     ...(hasEpisode && typeof media.episodeNumber === 'number'
-      ? [{ key: 'episode', said: <span className="tabular-nums">EP{media.episodeNumber}</span> }]
+      ? [
+          {
+            key: 'episode',
+            said: (
+              <span className="tabular-nums">
+                EP{describeEpisodeNumbers(media.episodeNumber, media.episodeNumberEnd)}
+              </span>
+            ),
+          },
+        ]
       : []),
     ...(hasEpisode && typeof media.seasonNumber === 'number'
       ? [{ key: 'season', said: <span className="tabular-nums">S{media.seasonNumber}</span> }]

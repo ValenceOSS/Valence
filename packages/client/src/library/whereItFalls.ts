@@ -1,3 +1,4 @@
+import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
 /**
@@ -9,7 +10,7 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 const whereItFalls = (media: MediaSummary): string => {
   const numbers =
     typeof media.seasonNumber === 'number' && typeof media.episodeNumber === 'number'
-      ? `S${media.seasonNumber.toString()} · E${media.episodeNumber.toString()}  `
+      ? `S${media.seasonNumber.toString()} · E${describeEpisodeNumbers(media.episodeNumber, media.episodeNumberEnd)}  `
       : '';
 
   return `${numbers}${media.title}`;

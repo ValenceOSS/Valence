@@ -1,8 +1,10 @@
-import { readdir, realpath, stat } from 'node:fs/promises';
+import { readFile, readdir, realpath, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { MediaFileSystem, ScanFindings, ScannedFile } from './scanLibrary';
 
 const MAX_DEPTH = 12;
+
+const LARGEST_TEXT = 1_000_000;
 
 /**
  * Whether a failure to look at a path means the path is not there.
@@ -141,6 +143,15 @@ const walkInto = async (path: string, depth: number, seen: Set<string>): Promise
  */
 const createMediaFileSystem = (): MediaFileSystem => ({
   listFiles: (root) => walkInto(root, 0, new Set()),
+  readText: async (path) => {
+    const details = await stat(path).catch(() => null);
+
+    if (details === null || !details.isFile() || details.size > LARGEST_TEXT) {
+      return null;
+    }
+
+    return readFile(path, 'utf8').catch(() => null);
+  },
 });
 
 export { createMediaFileSystem };

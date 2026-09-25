@@ -12,6 +12,7 @@ import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import type { AnEpisodeProps } from './AnEpisode.types';
+import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 
 const styles = StyleSheet.create({
   about: { padding: 10 },
@@ -76,7 +77,9 @@ const AnEpisode = ({
           <View style={styles.row}>
             <View style={styles.number}>
               <Words size="small" tone="muted">
-                {episode.episodeNumber ?? '—'}
+                {episode.episodeNumber === null || episode.episodeNumber === undefined
+                  ? '—'
+                  : describeEpisodeNumbers(episode.episodeNumber, episode.episodeNumberEnd)}
               </Words>
             </View>
 

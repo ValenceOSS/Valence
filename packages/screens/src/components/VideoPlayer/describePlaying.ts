@@ -1,8 +1,11 @@
+import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
+
 type Playing = {
   title: string;
   seriesTitle?: string | null | undefined;
   seasonNumber?: number | null | undefined;
   episodeNumber?: number | null | undefined;
+  episodeNumberEnd?: number | null | undefined;
   year?: number | null | undefined;
 };
 
@@ -29,7 +32,9 @@ const describePlaying = (media: Playing): string => {
   const episode = media.episodeNumber ?? null;
 
   const where =
-    season === null || episode === null ? null : `S${season.toString()}E${episode.toString()}`;
+    season === null || episode === null
+      ? null
+      : `S${season.toString()}E${describeEpisodeNumbers(episode, media.episodeNumberEnd)}`;
 
   const dated =
     media.year === null || media.year === undefined ? named : `${named} (${media.year.toString()})`;

@@ -7,6 +7,7 @@ import { ProgressLine } from '@ValenceTv/components/ProgressLine/ProgressLine';
 import { joinFacts } from '@ValenceTv/library/joinFacts';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { EpisodeCardProps } from './EpisodeCard.types';
+import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 
 const WIDTH = 420;
 
@@ -60,7 +61,7 @@ const EpisodeCard = ({
 
         <Text numberOfLines={1} style={[styles.name, isFocused && styles.nameFocused]}>
           {typeof episode.episodeNumber === 'number'
-            ? `${episode.episodeNumber.toString()}. ${episode.title}`
+            ? `${describeEpisodeNumbers(episode.episodeNumber, episode.episodeNumberEnd)}. ${episode.title}`
             : episode.title}
         </Text>
 

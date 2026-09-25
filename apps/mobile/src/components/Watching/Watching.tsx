@@ -47,6 +47,7 @@ import type { WatchingProps } from './Watching.types';
 import type { VideoSource, VideoView as VideoViewRef } from 'expo-video';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { MediaSegment } from '@ValenceClient/playback/fetchSegments';
+import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 
 const SAY_IT_IS_ALIVE_EVERY = 30_000;
 
@@ -497,7 +498,7 @@ const Watching = ({
               label:
                 episode.episodeNumber === null || episode.episodeNumber === undefined
                   ? episode.title
-                  : `${episode.episodeNumber.toString()}. ${episode.title}`,
+                  : `${describeEpisodeNumbers(episode.episodeNumber, episode.episodeNumberEnd)}. ${episode.title}`,
               detail: howLongItRuns(episode.durationSeconds),
             })),
             onChoose: (id: string) => {

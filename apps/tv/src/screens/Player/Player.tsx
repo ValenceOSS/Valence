@@ -44,6 +44,7 @@ import type { HWEvent } from 'react-native';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { StreamReading } from '@ValenceTv/screens/Player/components/StreamStats/StreamStats.types';
 import type { PlayerProps } from './Player.types';
+import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 
 const HIDES_AFTER_MS = 5000;
 
@@ -239,7 +240,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
   const episodeLine =
     summary === null || typeof summary.seriesTitle !== 'string'
       ? null
-      : `S${(summary.seasonNumber ?? 1).toString()}: E${(summary.episodeNumber ?? 1).toString()} · ${summary.title}`;
+      : `S${(summary.seasonNumber ?? 1).toString()}: E${describeEpisodeNumbers(summary.episodeNumber ?? 1, summary.episodeNumberEnd)} · ${summary.title}`;
 
   const isDescribed = !detail.isPending;
 

@@ -23,6 +23,6 @@ const RENDITION_DIRECTORY = '.valence';
  * @returns Whether it is one of Valence's own rather than one of the library's.
  */
 const isInRenditionDirectory = (path: string): boolean =>
-  path.split('/').includes(RENDITION_DIRECTORY);
+  path.split(/[\\/]/).includes(RENDITION_DIRECTORY);
 
 export { RENDITION_DIRECTORY, isInRenditionDirectory };

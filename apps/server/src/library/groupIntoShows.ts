@@ -33,8 +33,10 @@ const gather = (items: MediaSummary[]): Map<string, MediaSummary[]> => {
 
 /**
  * Describes a programme from what its episodes agree on: its title, how many there are, when the
- * most recent arrived, and which episode's artwork should stand for the whole thing. A programme is
- * not stored anywhere, so everything about it is derived from the files that belong to it.
+ * most recent arrived, and which episode's artwork should stand for the whole thing — the first in
+ * broadcast order that has any, so one episode the catalogue knew nothing about cannot leave the
+ * whole programme blank. A programme is not stored anywhere, so everything about it is derived from
+ * the files that belong to it.
  *
  * Carries the series identifier separately from the programme's own, because the two are not always
  * the same thing: a programme the scanner resolved to a series is identified by that series, and one
@@ -51,7 +53,7 @@ const describeShow = (
   finished?: ReadonlySet<string>,
 ): ShowSummary | null => {
   const inOrder = [...episodes].sort(inBroadcastOrder);
-  const cover = inOrder[0];
+  const cover = inOrder.find((episode) => episode.hasPoster) ?? inOrder[0];
 
   if (cover?.seriesTitle === null || cover?.seriesTitle === undefined) {
     return null;

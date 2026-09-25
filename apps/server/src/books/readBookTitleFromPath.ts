@@ -1,4 +1,4 @@
-import { findYear } from '@ValenceServer/library/readTitleFromPath';
+import { findYear } from './findYear';
 import { bookFormatOf } from './openBookFile';
 
 const BRACKETED = /[([{][^)\]}]*[)\]}]/g;

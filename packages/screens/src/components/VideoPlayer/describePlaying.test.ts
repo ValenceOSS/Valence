@@ -18,6 +18,19 @@ describe('describePlaying', () => {
     ).toBe('Breaking Bad · S2E5 · Breakage (2009)');
   });
 
+  it('names a double episode by both of its numbers', () => {
+    expect(
+      describePlaying({
+        title: 'Pilot / Second',
+        seriesTitle: 'Show',
+        seasonNumber: 1,
+        episodeNumber: 1,
+        episodeNumberEnd: 2,
+        year: null,
+      }),
+    ).toBe('Show · S1E1–2 · Pilot / Second');
+  });
+
   it('says the programme without a place in it where the numbering is unknown', () => {
     expect(describePlaying({ title: 'Breakage', seriesTitle: 'Breaking Bad', year: 2009 })).toBe(
       'Breaking Bad · Breakage (2009)',

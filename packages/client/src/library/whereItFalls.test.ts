@@ -29,4 +29,10 @@ describe('whereItFalls', () => {
   it('gives only the title where the numbers are not known', () => {
     expect(whereItFalls(anEpisode({ seasonNumber: 1 }))).toBe('Good News About Hell');
   });
+
+  it('gives both numbers of a double episode', () => {
+    expect(
+      whereItFalls({ ...anEpisode({ seasonNumber: 1, episodeNumber: 2 }), episodeNumberEnd: 3 }),
+    ).toBe('S1 · E2–3  Good News About Hell');
+  });
 });

@@ -543,6 +543,10 @@ const createDatabaseLibraryService = ({
    * Reads a few named files again, now that a correction has said what they are, and writes what the
    * catalogue answers back over what was stored.
    *
+   * The scan is told the library's own root even though it reads only these files, because the root
+   * decides the folder each programme is filed under, and the scan places every file in the library
+   * again, not only these.
+   *
    * @param libraryId - The library the files are in.
    * @param paths - The files to read again.
    * @param onProgress - The job to report progress against, where one is watching.
@@ -561,10 +565,20 @@ const createDatabaseLibraryService = ({
       .from(mediaItem)
       .where(and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, paths)));
 
+    const found = await findLibrary(libraryId);
+
+    if (found === null) {
+      return;
+    }
+
     await scanLibrary({
       libraryId,
-      root: '',
-      files: { listFiles: () => Promise.resolve({ files: rows, unreadable: [] }) },
+      kind: found.kind === 'shows' ? 'shows' : 'movies',
+      root: found.path,
+      files: {
+        listFiles: () => Promise.resolve({ files: rows, unreadable: [] }),
+        ...(files.readText === undefined ? {} : { readText: files.readText }),
+      },
       store,
       transcoder,
       providers: providers ?? [],
@@ -744,12 +758,13 @@ const createDatabaseLibraryService = ({
    * @returns What the scan changed.
    */
   const scanFilms = async (
-    found: { id: string; path: string },
+    found: { id: string; path: string; kind: string },
     force: boolean,
     jobId: string | undefined,
   ): Promise<ScanResult> =>
     scanLibrary({
       libraryId: found.id,
+      kind: found.kind === 'shows' ? 'shows' : 'movies',
       root: found.path,
       files,
       store,
@@ -1173,6 +1188,7 @@ const createDatabaseLibraryService = ({
           seriesTitle: mediaItem.seriesTitle,
           seasonNumber: mediaItem.seasonNumber,
           episodeNumber: mediaItem.episodeNumber,
+          episodeNumberEnd: mediaItem.episodeNumberEnd,
           rating: mediaItem.rating,
           externalId: mediaItem.externalId,
           genres: mediaItem.genres,
@@ -1346,6 +1362,7 @@ const createDatabaseLibraryService = ({
           seriesTitle: mediaItem.seriesTitle,
           seasonNumber: mediaItem.seasonNumber,
           episodeNumber: mediaItem.episodeNumber,
+          episodeNumberEnd: mediaItem.episodeNumberEnd,
           rating: mediaItem.rating,
           externalId: mediaItem.externalId,
           genres: mediaItem.genres,
@@ -1387,6 +1404,7 @@ const createDatabaseLibraryService = ({
           seriesTitle: mediaItem.seriesTitle,
           seasonNumber: mediaItem.seasonNumber,
           episodeNumber: mediaItem.episodeNumber,
+          episodeNumberEnd: mediaItem.episodeNumberEnd,
           rating: mediaItem.rating,
           externalId: mediaItem.externalId,
           genres: mediaItem.genres,
@@ -1728,6 +1746,7 @@ const createDatabaseLibraryService = ({
           seriesTitle: row.seriesTitle,
           seasonNumber: row.seasonNumber,
           episodeNumber: row.episodeNumber,
+          episodeNumberEnd: row.episodeNumberEnd,
           releaseDate: row.releaseDate,
           budget: row.budget,
           revenue: row.revenue,
@@ -1982,7 +2001,9 @@ const createDatabaseLibraryService = ({
 
       return scanLibrary({
         libraryId,
-        root: folder,
+        kind: found.kind,
+        root: found.path,
+        within: folder,
         files,
         store,
         transcoder,

@@ -4,7 +4,9 @@ import { createExpiringCache } from './createExpiringCache';
 import { CAST_STORED } from '@ValenceContracts/schemas/Person';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
-import { readTitleFromPath } from './readTitleFromPath';
+import { episodeNumbersOf } from '@ValenceCore/functions/episodeNumbersOf';
+import { parseName } from './naming/parseName';
+import { nameOfFile } from './nameOfFile';
 import { pickLogo } from './pickLogo';
 import { createCatalogueGate } from './createCatalogueGate';
 import type {
@@ -76,6 +78,11 @@ const SearchResultSchema = z.object({
   vote_average: z.number().optional(),
 });
 
+const FindResponseSchema = z.object({
+  movie_results: z.array(z.object({ id: z.number() })).default([]),
+  tv_results: z.array(z.object({ id: z.number() })).default([]),
+});
+
 const SearchResponseSchema = z.object({
   results: z.array(SearchResultSchema).default([]),
   total_pages: z.number().int().nonnegative().default(1),
@@ -137,6 +144,8 @@ const DetailResponseSchema = z.object({
   id: z.number(),
   title: z.string().optional(),
   name: z.string().optional(),
+  original_title: z.string().optional(),
+  original_name: z.string().optional(),
   tagline: z.string().optional(),
   overview: z.string().optional(),
   release_date: z.string().optional(),
@@ -261,168 +270,126 @@ const normalizeTitle = (value: string): string =>
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .trim();
 
-const DENSE_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u;
+const TITLE_EXACT = 8;
 
-const LEAST_MEANINGFUL = 4;
-const LEAST_MEANINGFUL_DENSE = 2;
+const TITLE_WHOLE_WORDS_BEFORE = 4;
 
-const SEGMENTER = new Intl.Segmenter(undefined, { granularity: 'word' });
+const YEAR_EXACT = 2;
 
-/**
- * Picks the words of a title worth comparing, dropping the articles and prepositions that almost
- * every title contains — two films sharing only the word "the" share nothing.
- *
- * @param value - The title as written.
- * @returns The words worth matching on.
- */
-const significantWords = (value: string): Set<string> => {
-  const words = new Set<string>();
-
-  for (const { segment, isWordLike } of SEGMENTER.segment(normalizeTitle(value))) {
-    const least = DENSE_SCRIPT.test(segment) ? LEAST_MEANINGFUL_DENSE : LEAST_MEANINGFUL;
-
-    if (isWordLike === true && segment.length >= least) {
-      words.add(segment);
-    }
-  }
-
-  return words;
-};
-
-/**
- * Decides whether two titles share a word that means anything, which is the guard against a high
- * similarity score between short titles that merely look alike.
- *
- * @param left - One title.
- * @param right - The title to compare it against.
- * @returns Whether they share a word worth sharing.
- */
-const shareASignificantWord = (left: string, right: string): boolean => {
-  const leftWords = significantWords(left);
-  const rightWords = significantWords(right);
-
-  if (leftWords.size === 0 || rightWords.size === 0) {
-    return true;
-  }
-
-  return [...rightWords].some((word) => leftWords.has(word));
-};
-
-/**
- * Scores how alike two titles are, from nothing to one, on the letters they have in common once
- * both have been stripped. Used to choose between what a catalogue answered a search with, where the
- * filename is the only thing to judge by.
- *
- * @param left - One title.
- * @param right - The title to compare it against.
- * @returns How alike they are.
- */
-const similarity = (left: string, right: string): number => {
-  const pairsOf = (value: string): string[] => {
-    const clean = normalizeTitle(value).replace(/ /g, '');
-
-    return [...clean].slice(0, -1).map((letter, at) => `${letter}${clean[at + 1] ?? ''}`);
-  };
-
-  const leftPairs = pairsOf(left);
-  const rightPairs = pairsOf(right);
-
-  if (leftPairs.length === 0 || rightPairs.length === 0) {
-    const cleanLeft = normalizeTitle(left);
-
-    return cleanLeft !== '' && cleanLeft === normalizeTitle(right) ? 1 : 0;
-  }
-
-  const remaining = [...rightPairs];
-
-  const shared = leftPairs.filter((pair) => {
-    const at = remaining.indexOf(pair);
-
-    if (at === -1) {
-      return false;
-    }
-
-    remaining.splice(at, 1);
-
-    return true;
-  }).length;
-
-  return (2 * shared) / (leftPairs.length + rightPairs.length);
-};
-
-const YEAR_BONUS = 0.15;
-
-const TIE = 0.001;
+const YEAR_ADJACENT = 1;
 
 const SECONDS_IN_MINUTE = 60;
 
-type Shortlist = {
-  entries: SearchResult[];
-  wasExact: boolean;
+/**
+ * Scores a catalogue title against the one a file named, the way Jellyfin does: the same title
+ * scores highest, one that starts with it and carries on with more words half that, and anything
+ * else nothing — so `Wall` never half matches `Wall Street`.
+ *
+ * @param wanted - The file's title, normalised.
+ * @param title - A title the catalogue gave.
+ * @returns The score.
+ */
+const scoreTitle = (wanted: string, title: string | undefined): number => {
+  const found = normalizeTitle(title ?? '');
+
+  if (found === wanted) {
+    return TITLE_EXACT;
+  }
+
+  return found.length > wanted.length && found.startsWith(wanted) && found[wanted.length] === ' '
+    ? TITLE_WHOLE_WORDS_BEFORE
+    : 0;
 };
 
 /**
- * Every entry a catalogue offered that is equally the likeliest answer, scoring each on its title
- * and its year. A wrong match is worse than no match: it fills a library with confident nonsense,
- * where no match leaves the filename showing.
+ * Scores a catalogue entry's year against the one a file named: the same year scores, and so does
+ * one a year either side, since a release date in one country routinely straddles a new year.
+ *
+ * @param year - The file's year, where it gave one.
+ * @param found - The entry's year.
+ * @returns The score.
+ */
+const scoreYear = (year: number | null, found: number | null): number => {
+  if (year === null || found === null) {
+    return 0;
+  }
+
+  const apart = Math.abs(found - year);
+
+  return apart === 0 ? YEAR_EXACT : apart === 1 ? YEAR_ADJACENT : 0;
+};
+
+/**
+ * Whether a catalogue entry's titles agree with the one a file named: the same, or one starting
+ * with the other's words, so `The Office (US)` agrees with `The Office` while an unrelated entry
+ * that happens to share an identifier with it does not.
+ *
+ * @param wanted - The file's title.
+ * @param titles - The entry's titles, in the catalogue's language and its original one.
+ * @returns Whether any of them agrees.
+ */
+const titlesAgree = (wanted: string, titles: (string | undefined)[]): boolean => {
+  const normalised = normalizeTitle(wanted);
+
+  return (
+    normalised === '' ||
+    titles.some(
+      (title) =>
+        title !== undefined &&
+        (scoreTitle(normalised, title) > 0 || scoreTitle(normalizeTitle(title), wanted) > 0),
+    )
+  );
+};
+
+/**
+ * Every entry a catalogue offered that is equally the likeliest answer, scored the way Jellyfin
+ * scores them: on the title, in the catalogue's language or its original one, and then the year.
+ * Where nothing scores at all the catalogue's own first answer is kept, since its order is what
+ * settles a title that needs fuzzy matching.
  *
  * All of the joint best rather than one of them, because a title and a year do not always name one
  * film. Two films called Good Boy came out in 2026, so both score exactly alike, and picking one of
- * them is picking whichever the catalogue happened to list first — which is how two different files
- * ended up sharing an identity. Handing back the tie lets something that can actually tell them
- * apart settle it.
+ * them is picking whichever the catalogue happened to list first. Handing back the tie lets the
+ * running time settle it, and where it cannot, the catalogue's order does.
  *
- * @param candidates - What the catalogue offered.
+ * @param candidates - What the catalogue offered, in its order.
  * @param wanted - The title read from the file.
  * @param year - The year read from the file, where it had one.
- * @returns The joint best entries, and whether they matched the title exactly.
+ * @returns The joint best entries, in the catalogue's order.
  */
 const bestMatches = (
   candidates: readonly SearchResult[],
   wanted: string,
   year: number | null,
-): Shortlist => {
+): SearchResult[] => {
   const normalised = normalizeTitle(wanted);
+  const scored = candidates.map((entry) => ({
+    entry,
+    score:
+      (normalised === ''
+        ? 0
+        : Math.max(
+            scoreTitle(normalised, entry.title ?? entry.name),
+            scoreTitle(normalised, entry.original_title ?? entry.original_name),
+          )) + scoreYear(year, readYear(entry.release_date ?? entry.first_air_date)),
+  }));
+  const best = Math.max(0, ...scored.map((one) => one.score));
 
-  const exact =
-    normalised === ''
-      ? []
-      : candidates.filter(
-          (entry) => normalizeTitle(entry.title ?? entry.name ?? '') === normalised,
-        );
-
-  if (exact.length > 0) {
-    return { entries: exact, wasExact: true };
+  if (best === 0) {
+    return candidates[0] === undefined ? [] : [candidates[0]];
   }
 
-  const scored = candidates
-    .map((entry) => {
-      const found = readYear(entry.release_date ?? entry.first_air_date);
-
-      const names = [entry.title, entry.name, entry.original_title, entry.original_name].filter(
-        (name) => name !== undefined,
-      );
-
-      return {
-        entry,
-        score:
-          Math.max(0, ...names.map((name) => similarity(wanted, name))) +
-          (year !== null && found === year ? YEAR_BONUS : 0),
-      };
-    })
-    .sort((left, right) => right.score - left.score);
-
-  const best = scored[0];
-
-  if (best === undefined) {
-    return { entries: candidates[0] === undefined ? [] : [candidates[0]], wasExact: false };
-  }
-
-  return {
-    entries: scored.filter((one) => best.score - one.score <= TIE).map((one) => one.entry),
-    wasExact: false,
-  };
+  return scored.filter((one) => one.score === best).map((one) => one.entry);
 };
+
+/**
+ * The words a catalogue is searched with: everything that is not a letter, a number or a mark
+ * becomes a space, the interpunct in a title such as `WALL·E` aside.
+ *
+ * @param name - The name to search for.
+ * @returns The search.
+ */
+const searchNameOf = (name: string): string => name.replace(/[^\p{L}\p{N}\p{M}·]+/gu, ' ').trim();
 
 /**
  * Settles a tie by how long the film runs.
@@ -634,23 +601,30 @@ const createCatalogueMetadataProvider = ({
       const appended = wantsTrailers ? CERTIFICATES_AND_VIDEOS : CERTIFICATES;
 
       const episodeNumber = facts.episode?.episodeNumber ?? null;
-      const isEpisode = episodeNumber !== null;
-      const fromFilename = readTitleFromPath(facts.path);
-      const searchTitle = isEpisode
-        ? (facts.episode?.seriesTitle ?? fromFilename.title)
-        : fromFilename.title;
+      const seriesTitle = facts.episode?.seriesTitle ?? null;
+      const isEpisode = episodeNumber !== null || seriesTitle !== null;
+      const kind = isEpisode ? 'tv' : 'movie';
+      const wanted = parseName(
+        isEpisode ? (seriesTitle ?? facts.title ?? '') : (facts.title ?? nameOfFile(facts.path)),
+      );
+      const searchTitle = wanted.name;
+      const searchYear = isEpisode
+        ? (facts.episode?.seriesYear ?? wanted.year)
+        : (facts.year ?? wanted.year);
 
       /**
        * Turns a catalogue entry into the metadata Valence stores, taking only the fields it has a use for
        * and building full addresses for the artwork.
        *
+       * An episode is looked up by its number within the programme, and never checked against the
+       * title its file gives: a file's title is whatever a release called it, and the programme and
+       * the number are what say which episode it is.
+       *
        * @param detail - The catalogue's own record.
-       * @param isTheRightSeries - Whether it is a film or a programme, which decides where the title lives.
        * @returns The metadata to store against the file.
        */
       const describeFrom = async (
         detail: z.infer<typeof DetailResponseSchema>,
-        isTheRightSeries = false,
       ): Promise<Metadata | null> => {
         const cast: CastMember[] =
           detail.credits?.cast.slice(0, CAST_STORED).map((member) => ({
@@ -662,36 +636,32 @@ const createCatalogueMetadataProvider = ({
 
         const poster = imageUrl(imageBaseUrl, detail.poster_path, 'w500');
 
-        const season = isEpisode
-          ? SeasonResponseSchema.safeParse(
-              await request(
-                `/tv/${detail.id.toString()}/season/${(facts.episode?.seasonNumber ?? 1).toString()}`,
-                key,
-                {},
-              ),
-            )
-          : null;
-
-        const episode =
-          season?.success === true
-            ? (season.data.episodes.find((one) => one.episode_number === episodeNumber) ?? null)
+        const season =
+          episodeNumber !== null
+            ? SeasonResponseSchema.safeParse(
+                await request(
+                  `/tv/${detail.id.toString()}/season/${(facts.episode?.seasonNumber ?? 1).toString()}`,
+                  key,
+                  {},
+                ),
+              )
             : null;
+
+        const covered =
+          season?.success === true && episodeNumber !== null
+            ? episodeNumbersOf(episodeNumber, facts.episode?.episodeNumberEnd ?? null).flatMap(
+                (number) => season.data.episodes.find((one) => one.episode_number === number) ?? [],
+              )
+            : [];
+        const episode = covered[0] ?? null;
+        const joined = (said: (string | undefined)[]): string | null => {
+          const kept = said.filter((one): one is string => one !== undefined && one !== '');
+
+          return kept.length === 0 ? null : kept.join(' / ');
+        };
 
         const knownEpisodeTitle = facts.episode?.episodeTitle ?? null;
-        const catalogueEpisodeName =
-          episode !== null && episode.name !== undefined && episode.name !== ''
-            ? episode.name
-            : null;
-
-        if (
-          isEpisode &&
-          !isTheRightSeries &&
-          knownEpisodeTitle !== null &&
-          catalogueEpisodeName !== null &&
-          !shareASignificantWord(knownEpisodeTitle, catalogueEpisodeName)
-        ) {
-          return null;
-        }
+        const catalogueEpisodeName = joined(covered.map((one) => one.name));
 
         const still = episode === null ? null : imageUrl(imageBaseUrl, episode.still_path, 'w780');
         const backdrop = still ?? imageUrl(imageBaseUrl, detail.backdrop_path, 'w1280');
@@ -702,13 +672,10 @@ const createCatalogueMetadataProvider = ({
         const seriesName = detail.title ?? detail.name ?? searchTitle;
         const episodeName = catalogueEpisodeName ?? knownEpisodeTitle;
 
-        const overview =
-          episode !== null && episode.overview !== undefined && episode.overview !== ''
-            ? episode.overview
-            : detail.overview;
+        const overview = joined(covered.map((one) => one.overview)) ?? detail.overview;
 
         return {
-          title: isEpisode ? (episodeName ?? seriesName) : seriesName,
+          title: isEpisode ? (episodeName ?? facts.title ?? seriesName) : seriesName,
           ...(isEpisode ? { seriesTitle: seriesName } : {}),
           year: readYear(detail.release_date ?? detail.first_air_date),
           externalId: detail.id.toString(),
@@ -729,48 +696,127 @@ const createCatalogueMetadataProvider = ({
         };
       };
 
-      if (
-        facts.knownExternalId !== undefined &&
-        facts.knownExternalId !== null &&
-        facts.knownExternalId !== ''
-      ) {
-        const detailed = await request(
-          `/${facts.knownExternalKind ?? (isEpisode ? 'tv' : 'movie')}/${facts.knownExternalId}`,
-          key,
-          { append_to_response: appended },
+      /**
+       * Reads one catalogue entry in full by its identifier and describes the file from it.
+       *
+       * @param id - The entry's identifier.
+       * @param asKind - Whether it is a film or a programme.
+       * @param mustAgree - Whether the entry's title has to agree with the file's, as it must for
+       *   an identifier remembered from before, which may have been read as the other kind.
+       * @returns The metadata, or nothing where the catalogue would not say or does not agree.
+       */
+      const describeById = async (
+        id: string,
+        asKind: 'tv' | 'movie',
+        mustAgree = false,
+      ): Promise<Metadata | null> => {
+        const detail = DetailResponseSchema.safeParse(
+          await request(`/${asKind}/${id}`, key, { append_to_response: appended }),
         );
 
-        const detail = DetailResponseSchema.safeParse(detailed);
+        if (!detail.success) {
+          return null;
+        }
 
-        if (detail.success) {
-          return describeFrom(detail.data, true);
+        const {
+          title,
+          name,
+          original_title: originalTitle,
+          original_name: originalName,
+        } = detail.data;
+
+        return mustAgree && !titlesAgree(searchTitle, [title, name, originalTitle, originalName])
+          ? null
+          : describeFrom(detail.data);
+      };
+
+      /**
+       * Finds the catalogue's own identifier for one another catalogue gave the file or its folder.
+       *
+       * @param id - The other catalogue's identifier.
+       * @param source - Which catalogue it is from.
+       * @returns The identifier, or nothing where the catalogue does not know it.
+       */
+      const findById = async (
+        id: string,
+        source: 'imdb_id' | 'tvdb_id',
+      ): Promise<string | null> => {
+        const found = FindResponseSchema.safeParse(
+          await request(`/find/${id}`, key, { external_source: source }),
+        );
+        const results = found.success
+          ? isEpisode
+            ? found.data.tv_results
+            : found.data.movie_results
+          : [];
+
+        return results[0]?.id.toString() ?? null;
+      };
+
+      const known = facts.knownExternalId ?? null;
+
+      if (known !== null && known !== '') {
+        const described = await describeById(known, facts.knownExternalKind ?? kind);
+
+        if (described !== null) {
+          return described;
         }
       }
 
-      const seriesYear = facts.episode?.seriesYear ?? null;
-      const searched = await request(isEpisode ? '/search/tv' : '/search/movie', key, {
-        query: searchTitle,
-        ...(isEpisode
-          ? seriesYear === null
-            ? {}
-            : { first_air_date_year: seriesYear.toString() }
-          : fromFilename.year === null
-            ? {}
-            : { year: fromFilename.year.toString() }),
-      });
+      const named = facts.ids ?? { tmdb: null, imdb: null, tvdb: null };
+      const fromNames =
+        named.tmdb ??
+        (named.imdb === null ? null : await findById(named.imdb, 'imdb_id')) ??
+        (named.tvdb === null ? null : await findById(named.tvdb, 'tvdb_id'));
+      const remembered = facts.rememberedExternalId ?? null;
 
-      if (searched === null) {
+      for (const [id, mustAgree] of [
+        [fromNames, false],
+        [remembered, true],
+      ] as const) {
+        if (id !== null && id !== '') {
+          const described = await describeById(id, kind, mustAgree);
+
+          if (described !== null) {
+            return described;
+          }
+        }
+      }
+
+      /**
+       * Searches the catalogue for the file's title, filtered to its year where it has one.
+       *
+       * @param withYear - Whether to filter by the year.
+       * @returns What the catalogue offered, or nothing where it would not answer.
+       */
+      const search = async (withYear: boolean): Promise<SearchResult[] | null> => {
+        const searched = await request(isEpisode ? '/search/tv' : '/search/movie', key, {
+          query: searchNameOf(searchTitle),
+          ...(withYear && searchYear !== null
+            ? isEpisode
+              ? { first_air_date_year: searchYear.toString() }
+              : { year: searchYear.toString() }
+            : {}),
+        });
+
+        if (searched === null) {
+          return null;
+        }
+
+        const results = SearchResponseSchema.safeParse(searched);
+
+        return results.success ? results.data.results : [];
+      };
+
+      const filtered = await search(true);
+
+      if (filtered === null) {
         return null;
       }
 
-      const results = SearchResponseSchema.safeParse(searched);
-      const candidates = results.success ? results.data.results : [];
-
-      const shortlist = bestMatches(
-        candidates,
-        searchTitle,
-        seriesYear ?? fromFilename.year ?? null,
-      );
+      const candidates =
+        filtered.length === 0 && searchYear !== null ? ((await search(false)) ?? []) : filtered;
+      const shortlist = bestMatches(candidates, searchTitle, searchYear);
 
       /**
        * Asks the catalogue how long each tied entry runs, so the file's own length can settle which
@@ -803,9 +849,9 @@ const createCatalogueMetadataProvider = ({
       };
 
       const first =
-        shortlist.entries.length > 1 && !isEpisode
-          ? ((await settleByRuntime(shortlist.entries)) ?? shortlist.entries[0])
-          : shortlist.entries[0];
+        shortlist.length > 1 && !isEpisode
+          ? ((await settleByRuntime(shortlist)) ?? shortlist[0])
+          : shortlist[0];
 
       if (first === undefined) {
         return null;
@@ -827,7 +873,7 @@ const createCatalogueMetadataProvider = ({
         };
       }
 
-      return describeFrom(detail.data, shortlist.wasExact);
+      return describeFrom(detail.data);
     },
 
     readPerson: async (personId) => {
@@ -1141,13 +1187,4 @@ const createCatalogueMetadataProvider = ({
 
 export type { Fetcher };
 
-export {
-  createCatalogueMetadataProvider,
-  readYear,
-  imageUrl,
-  normalizeTitle,
-  significantWords,
-  shareASignificantWord,
-  similarity,
-  isAccessToken,
-};
+export { createCatalogueMetadataProvider, readYear, imageUrl, normalizeTitle, isAccessToken };
