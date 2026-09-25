@@ -2,6 +2,7 @@ type Channel = 'music' | 'book';
 
 type NativeMusic = {
   load: (channel: Channel, url: string, cookie: string | null) => void;
+  lineUp: (channel: Channel, url: string, cookie: string | null) => void;
   play: (channel: Channel) => void;
   pause: (channel: Channel) => void;
   seek: (channel: Channel, seconds: number) => void;

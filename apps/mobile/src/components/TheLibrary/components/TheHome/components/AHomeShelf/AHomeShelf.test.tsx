@@ -20,6 +20,23 @@ const aFilm = MediaSummarySchema.parse({
   addedAt: '2026-01-01T00:00:00.000Z',
 });
 
+const anEpisode = MediaSummarySchema.parse({
+  id: '3fa85f64-5717-4562-b3fc-2c963f66afa3',
+  libraryId: LIBRARY,
+  title: 'Good News About Hell',
+  year: 2022,
+  durationSeconds: 3300,
+  width: 1920,
+  height: 1080,
+  videoCodec: 'hevc',
+  videoRange: 'SDR',
+  addedAt: '2026-01-01T00:00:00.000Z',
+  seriesId: 'severance',
+  seriesTitle: 'Severance',
+  seasonNumber: 1,
+  episodeNumber: 1,
+});
+
 const { shows: upcoming } = ComingUpSchema.parse({
   shows: [
     {
@@ -60,6 +77,31 @@ describe('AHomeShelf', () => {
     await userEvent.press(drawn.getByRole('button', { name: 'Arrival' }));
 
     expect(onLookAt).toHaveBeenCalledWith(aFilm.id);
+  });
+
+  it('draws what somebody is part way through as stills, each episode named for its programme', async () => {
+    const onLookAt = jest.fn();
+    const drawn = await render(
+      <AHomeShelf
+        shelf={{
+          kind: 'rail',
+          rail: { id: 'resume', title: 'Continue watching', items: [anEpisode] },
+        }}
+        upcoming={upcoming}
+        progress={new Map()}
+        today="2026-09-24"
+        onLookAt={onLookAt}
+        onLookAtShow={jest.fn()}
+      />,
+    );
+
+    expect(drawn.getByText('S1 · E1  Good News About Hell')).toBeTruthy();
+
+    await userEvent.press(
+      drawn.getByRole('button', { name: 'Severance, S1 · E1  Good News About Hell' }),
+    );
+
+    expect(onLookAt).toHaveBeenCalledWith(anEpisode.id);
   });
 
   it('draws what is coming up, each opening its programme', async () => {

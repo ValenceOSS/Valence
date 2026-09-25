@@ -85,6 +85,10 @@ class ValenceMusicModule : Module() {
       }
     }
 
+    Function("lineUp") { channel: String, url: String, cookie: String? ->
+      main.post { speaker(channel)?.lineUp(url, cookie) }
+    }
+
     Function("play") { channel: String ->
       main.post { play(channel) }
     }
@@ -230,6 +234,7 @@ class ValenceMusicModule : Module() {
         "currentTime" to speaker.player.currentPosition.coerceAtLeast(0) / 1000.0,
         "duration" to if (duration == C.TIME_UNSET) -1.0 else duration / 1000.0,
         "paused" to !speaker.player.playWhenReady,
+        "source" to (speaker.player.currentMediaItem?.localConfiguration?.uri?.toString() ?: ""),
       ),
     )
   }

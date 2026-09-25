@@ -17,6 +17,8 @@ const anEpisode = MediaSummarySchema.parse({
   addedAt: '2026-01-01T00:00:00.000Z',
   seriesId: 'severance',
   seriesTitle: 'Severance',
+  seasonNumber: 1,
+  episodeNumber: 4,
 });
 
 beforeEach(() => {
@@ -44,5 +46,27 @@ describe('ACard', () => {
     await userEvent.press(drawn.getByRole('button', { name: 'Severance' }));
 
     expect(onLookAtShow).toHaveBeenCalledWith(anEpisode.libraryId, expect.any(String));
+  });
+
+  it('names an episode drawn as a still for its programme, and says which episode it is', async () => {
+    const onLookAt = jest.fn();
+    const drawn = await render(
+      <ACard
+        media={anEpisode}
+        asProgramme={false}
+        isStill
+        onLookAt={onLookAt}
+        onLookAtShow={jest.fn()}
+      />,
+    );
+
+    expect(drawn.getAllByText('Severance').length).toBeGreaterThan(0);
+    expect(drawn.getByText('S1 · E4  Good News About Hell')).toBeTruthy();
+
+    await userEvent.press(
+      drawn.getByRole('button', { name: 'Severance, S1 · E4  Good News About Hell' }),
+    );
+
+    expect(onLookAt).toHaveBeenCalledWith(anEpisode.id);
   });
 });

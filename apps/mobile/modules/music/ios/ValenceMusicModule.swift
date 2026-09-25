@@ -24,8 +24,9 @@ struct ATrackDescribed: Record {
 /// seconds back, thirty on and its speed.
 ///
 /// No queue and no chapters are kept here. The app decides what plays next, so this is only the
-/// speakers: each is told what to play and reports what happens, in the same events a browser's
-/// audio element sends, and whatever the lock screen asks for is passed on to decide what it means.
+/// speakers: each is told what to play, and what to run on into after it, and reports what happens
+/// in the same events a browser's audio element sends, and whatever the lock screen asks for is
+/// passed on to decide what it means.
 public class ValenceMusicModule: Module {
   private var speakers: [String: ValenceSpeaker] = [:]
   private var owner = "music"
@@ -54,6 +55,12 @@ public class ValenceMusicModule: Module {
 
         speaker.load(url, cookie: cookie)
         self.fetchTheArtwork(for: speaker)
+      }
+    }
+
+    Function("lineUp") { (channel: String, url: String, cookie: String?) in
+      self.onMain {
+        self.speaker(channel).lineUp(url, cookie: cookie)
       }
     }
 
@@ -165,6 +172,7 @@ public class ValenceMusicModule: Module {
       "currentTime": at.isFinite ? at : 0,
       "duration": duration.isFinite ? duration : -1,
       "paused": speaker.player.timeControlStatus == .paused,
+      "source": (speaker.player.currentItem?.asset as? AVURLAsset)?.url.absoluteString ?? "",
     ])
 
     if type == "timeupdate" {

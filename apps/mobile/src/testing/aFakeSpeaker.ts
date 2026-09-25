@@ -19,6 +19,7 @@ const aFakeSpeaker = (): {
   };
   const speaker = {
     load: jest.fn(),
+    lineUp: jest.fn(),
     play: jest.fn(),
     pause: jest.fn(),
     seek: jest.fn(),

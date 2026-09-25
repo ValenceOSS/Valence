@@ -5,6 +5,7 @@ type ACardProps = {
   asProgramme: boolean;
   watched?: number;
   wide?: number;
+  isStill?: boolean;
   onLookAt: (mediaId: string) => void;
   onLookAtShow: (libraryId: string, showId: string) => void;
 };

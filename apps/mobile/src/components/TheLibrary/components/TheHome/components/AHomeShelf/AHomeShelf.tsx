@@ -58,6 +58,7 @@ const AHomeShelfDrawn = ({
             key={media.id}
             media={media}
             asProgramme={shelf.rail.id !== RESUMING}
+            isStill={shelf.rail.id === RESUMING}
             watched={known === undefined ? 0 : watchedFraction(known)}
             onLookAt={onLookAt}
             onLookAtShow={onLookAtShow}

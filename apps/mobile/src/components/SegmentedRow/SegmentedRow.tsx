@@ -20,7 +20,8 @@ const styles = StyleSheet.create({
  * Every one of them is drawn as the row across the head of the library is: one capsule on liquid
  * glass where the phone has it, with a highlight that springs to the one picked, sat in a row that
  * swipes sideways and fades out at its edges where it holds more than fits — so the choices on
- * every page look and move as the library's do.
+ * every page look and move as the library's do. Where everything fits it keeps no room at its end
+ * for a fade, so it sits flush with whatever it is lined up against.
  *
  * @param label - What is being chosen, for anyone who cannot see the row.
  * @param items - What there is to choose from.
@@ -39,18 +40,27 @@ const SegmentedRow = ({
   isShown = true,
 }: SegmentedRowProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [room, setRoom] = useState(0);
+  const [wanted, setWanted] = useState(0);
+  const isOverflowing = !fills && wanted > room;
 
   if (items.length === 0) {
     return null;
   }
 
   return (
-    <AFadedEdge leading={isScrolled ? FADE : 0} trailing={fills ? 0 : FADE}>
+    <AFadedEdge leading={isScrolled ? FADE : 0} trailing={isOverflowing ? FADE : 0}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={fills ? styles.filling : styles.sideways}
+        contentContainerStyle={fills ? styles.filling : isOverflowing ? styles.sideways : null}
         scrollEventThrottle={32}
+        onLayout={(event) => {
+          setRoom(event.nativeEvent.layout.width);
+        }}
+        onContentSizeChange={(width) => {
+          setWanted(width - (isOverflowing ? FADE : 0));
+        }}
         onScroll={(event) => {
           setIsScrolled(event.nativeEvent.contentOffset.x > 1);
         }}

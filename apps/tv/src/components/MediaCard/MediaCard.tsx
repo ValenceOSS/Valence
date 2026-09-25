@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { titleLogoUrl } from '@ValenceClient/library/titleLogoUrl';
+import { whereItFalls } from '@ValenceClient/library/whereItFalls';
 import { Artwork } from '@ValenceTv/components/Artwork/Artwork';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { ProgressLine } from '@ValenceTv/components/ProgressLine/ProgressLine';
@@ -10,7 +11,6 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import { cardSizes } from './cardSizes';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaCardProps, MediaCardShape } from './MediaCard.types';
-import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 
 /**
  * Which of a title's pictures suits a card of this shape, falling back to the other where it has
@@ -30,21 +30,6 @@ const pictureFor = (media: MediaSummary, shape: MediaCardShape): string | null =
   }
 
   return has[second] ? artworkUrl(media.id, second) : null;
-};
-
-/**
- * Where an episode falls in its programme, as a card says it beneath the programme's name.
- *
- * @param media - The episode.
- * @returns Its season and number, and its own title.
- */
-const whereItFalls = (media: MediaSummary): string => {
-  const numbers =
-    typeof media.seasonNumber === 'number' && typeof media.episodeNumber === 'number'
-      ? `S${media.seasonNumber.toString()} · E${describeEpisodeNumbers(media.episodeNumber, media.episodeNumberEnd)}  `
-      : '';
-
-  return `${numbers}${media.title}`;
 };
 
 /**

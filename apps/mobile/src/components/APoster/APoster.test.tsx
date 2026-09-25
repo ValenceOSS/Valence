@@ -3,6 +3,7 @@ import { StyleSheet } from 'react-native';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { APoster } from './APoster';
+import { STILL_WIDTH } from './STILL_WIDTH';
 import { theArtworkFor } from './theArtworkFor';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
@@ -107,5 +108,22 @@ describe('APoster', () => {
     expect(
       whole !== null && !Array.isArray(whole) && StyleSheet.flatten(whole.props.style),
     ).toMatchObject({ width: 150 });
+  });
+
+  it('lies flat as a still, wider than a poster stands', async () => {
+    const drawn = await render(<APoster {...asDrawn(aTitle())} isStill />);
+    const whole = drawn.toJSON();
+
+    expect(
+      whole !== null && !Array.isArray(whole) && StyleSheet.flatten(whole.props.style),
+    ).toMatchObject({ width: STILL_WIDTH });
+  });
+
+  it('says a line beneath its name, where it was given one', async () => {
+    const drawn = await render(
+      <APoster {...asDrawn(aTitle())} year={null} detail="S1 · E2  Pilot" />,
+    );
+
+    expect(drawn.getByText('S1 · E2  Pilot')).toBeTruthy();
   });
 });

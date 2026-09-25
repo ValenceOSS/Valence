@@ -4,9 +4,12 @@ import UIKit
 /// One of the module's speakers: a player of its own, what it was last told to play, and how fast,
 /// so a song and a book can each be loaded, paused and carried on without the other losing its
 /// place.
+///
+/// The file to play next can be lined up behind the one playing, and the player runs straight on
+/// into it without a gap, saying it has advanced rather than that the last one ended.
 final class ValenceSpeaker {
   let channel: String
-  let player = AVPlayer()
+  let player = AVQueuePlayer()
   var described = ATrackDescribed()
   var artwork: UIImage?
   var artworkFor: String?
@@ -16,6 +19,7 @@ final class ValenceSpeaker {
   private var itemWatches: [NSKeyValueObservation] = []
   private var playerWatches: [NSKeyValueObservation] = []
   private var endWatch: NSObjectProtocol?
+  private var lined: AVPlayerItem?
   private let say: (ValenceSpeaker, String) -> Void
 
   /// Makes a speaker, which tells whoever made it what happens as it plays.
@@ -23,6 +27,7 @@ final class ValenceSpeaker {
     self.channel = channel
     self.say = say
     player.automaticallyWaitsToMinimizeStalling = true
+    player.actionAtItemEnd = .pause
     watchThePlayer()
   }
 
@@ -35,6 +40,37 @@ final class ValenceSpeaker {
 
     self.cookie = cookie
 
+    let item = anItem(address, cookie: cookie)
+
+    player.items().filter { $0 !== player.currentItem }.forEach { player.remove($0) }
+    lined = nil
+    player.actionAtItemEnd = .pause
+    watch(item)
+    player.replaceCurrentItem(with: item)
+    say(self, "waiting")
+  }
+
+  /// Lines up the file to play once this one ends, in place of any lined up before, or none.
+  func lineUp(_ url: String, cookie: String?) {
+    forgetTheLinedUp()
+
+    guard lined == nil, let address = URL(string: url), !url.isEmpty, let playing = player.currentItem else {
+      return
+    }
+
+    let item = anItem(address, cookie: cookie)
+
+    guard player.canInsert(item, after: playing) else {
+      return
+    }
+
+    player.insert(item, after: playing)
+    lined = item
+    player.actionAtItemEnd = .advance
+  }
+
+  /// A file to play, asked for with the session it was given and played at its own pitch.
+  private func anItem(_ address: URL, cookie: String?) -> AVPlayerItem {
     let asset = AVURLAsset(
       url: address,
       options: cookie == nil ? nil : ["AVURLAssetHTTPHeaderFieldsKey": ["Cookie": cookie ?? ""]]
@@ -42,9 +78,20 @@ final class ValenceSpeaker {
     let item = AVPlayerItem(asset: asset)
 
     item.audioTimePitchAlgorithm = .timeDomain
-    watch(item)
-    player.replaceCurrentItem(with: item)
-    say(self, "waiting")
+
+    return item
+  }
+
+  /// Takes back the file lined up to play next, so the one playing stops where it ends — unless the
+  /// player has already run on into it, which it is about to say.
+  private func forgetTheLinedUp() {
+    guard let lined, lined !== player.currentItem else {
+      return
+    }
+
+    player.remove(lined)
+    self.lined = nil
+    player.actionAtItemEnd = .pause
   }
 
   /// Plays, at whatever speed it was last set to.
@@ -82,7 +129,9 @@ final class ValenceSpeaker {
   /// Stops, and forgets the file.
   func stop() {
     player.pause()
-    player.replaceCurrentItem(with: nil)
+    player.removeAllItems()
+    lined = nil
+    player.actionAtItemEnd = .pause
     itemWatches = []
   }
 
@@ -116,15 +165,28 @@ final class ValenceSpeaker {
           }
         }
       },
+      player.observe(\.currentItem, options: [.new]) { [weak self] player, _ in
+        DispatchQueue.main.async {
+          guard let self, let now = player.currentItem, now === self.lined else {
+            return
+          }
+
+          self.lined = nil
+          self.player.actionAtItemEnd = .pause
+          self.say(self, "advanced")
+          self.watch(now)
+        }
+      },
     ]
   }
 
-  /// Watches one file: when it is ready, how long it is, whether it failed, and when it ends.
+  /// Watches one file: when it is ready, how long it is, whether it failed, and when it ends. A
+  /// file that runs on into the one lined up after it has not ended, it has advanced.
   private func watch(_ item: AVPlayerItem) {
     itemWatches = [
-      item.observe(\.status, options: [.new]) { [weak self] item, _ in
+      item.observe(\.status, options: [.initial, .new]) { [weak self] item, _ in
         DispatchQueue.main.async {
-          guard let self else {
+          guard let self, item === self.player.currentItem else {
             return
           }
 
@@ -149,8 +211,8 @@ final class ValenceSpeaker {
       forName: .AVPlayerItemDidPlayToEndTime,
       object: item,
       queue: .main
-    ) { [weak self] _ in
-      if let self {
+    ) { [weak self, weak item] _ in
+      if let self, let item, self.lined == nil, self.player.currentItem === item {
         self.say(self, "ended")
       }
     }

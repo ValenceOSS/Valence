@@ -14,7 +14,7 @@ const ROUND = 40;
 const DOT = 10;
 
 const styles = StyleSheet.create({
-  dot: { borderRadius: DOT / 2, height: DOT, position: 'absolute', right: 7, top: 7, width: DOT },
+  dot: { borderRadius: DOT / 2, height: DOT, position: 'absolute', right: 6, top: 6, width: DOT },
   whole: { alignItems: 'center', height: ROUND, justifyContent: 'center', width: ROUND },
 });
 
@@ -38,7 +38,7 @@ const TheBell = ({ onPress }: TheBellProps) => {
     >
       <View style={styles.whole}>
         {hasLiquidGlass() ? <AGlass roundness={ROUND / 2} /> : null}
-        <Icon of={Bell} size={20} colour={colours.text} />
+        <Icon of={Bell} size={24} colour={colours.text} />
         {unread === 0 ? null : <View style={[styles.dot, { backgroundColor: colours.accent }]} />}
       </View>
     </Button>

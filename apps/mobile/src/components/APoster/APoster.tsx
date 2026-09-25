@@ -2,6 +2,7 @@ import { Check } from '@keyline-icons/react-native';
 import { useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { POSTER_WIDTH } from '@ValenceMobile/components/APoster/POSTER_WIDTH';
+import { STILL_WIDTH } from '@ValenceMobile/components/APoster/STILL_WIDTH';
 import { HowFar } from '@ValenceMobile/components/HowFar/HowFar';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
@@ -10,6 +11,8 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { APosterProps } from './APoster.types';
 
 const RATIO = 3 / 2;
+
+const STILL_RATIO = 9 / 16;
 
 const styles = StyleSheet.create({
   howFar: { bottom: 0, left: 0, position: 'absolute', right: 0 },
@@ -59,6 +62,8 @@ const styles = StyleSheet.create({
  * @param count - How many episodes are left to watch, shown in the corner; nothing for none.
  * @param note - A word about where it stands, such as whether it is already here.
  * @param wide - How wide to draw it, where it fills a cell rather than sitting on a shelf.
+ * @param isStill - Whether it lies flat on a still from it rather than standing on its poster.
+ * @param detail - A line beneath its name, such as which episode it is.
  */
 const APoster = ({
   title,
@@ -67,18 +72,20 @@ const APoster = ({
   watched = 0,
   note = null,
   count = 0,
-  wide = POSTER_WIDTH,
+  isStill = false,
+  wide = isStill ? STILL_WIDTH : POSTER_WIDTH,
+  detail = null,
 }: APosterProps) => {
   const [isMissing, setIsMissing] = useState(false);
   const colours = useTheColours();
-  const size = { height: wide * RATIO, width: wide };
+  const size = { height: wide * (isStill ? STILL_RATIO : RATIO), width: wide };
 
   return (
     <View style={[styles.whole, { width: wide }]}>
       <View style={[styles.tile, size, { backgroundColor: colours.surfaceRaised }]}>
         {artwork === null || isMissing ? (
           <View style={[styles.tile, size, styles.standIn]}>
-            <Words size="small" tone="muted" lines={4}>
+            <Words size="small" tone="muted" lines={isStill ? 2 : 4}>
               {title}
             </Words>
           </View>
@@ -124,9 +131,15 @@ const APoster = ({
         ) : null}
       </View>
 
-      <Words size="small" lines={2}>
+      <Words size="small" lines={isStill ? 1 : 2}>
         {title}
       </Words>
+
+      {detail === null ? null : (
+        <Words size="small" tone="muted" lines={1}>
+          {detail}
+        </Words>
+      )}
 
       {year === null ? null : (
         <Words size="small" tone="muted">

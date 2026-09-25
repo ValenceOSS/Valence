@@ -9,6 +9,7 @@ type ListeningAudio = {
   play: () => Promise<void>;
   pause: () => void;
   addEventListener: (type: string, listener: () => void) => void;
+  lineUp?: (src: string) => void;
 };
 
 type AudiobookTrack = {
@@ -140,8 +141,8 @@ const startOf = (tracks: readonly AudiobookTrack[], trackAt: number): number =>
  * listener has got to in it, reckoned across the whole book rather than a track at a time, so a
  * skip or a chapter lands wherever it falls, even in the next track.
  *
- * It carries on from one track into the next, and says a book is finished only once its last track
- * ends. Where somebody is is kept every few seconds while it plays, and straight away as it pauses,
+ * It carries on from one track into the next, without a gap where the audio can take the next one
+ * ahead of time, and says a book is finished only once its last track ends. Where somebody is is kept every few seconds while it plays, and straight away as it pauses,
  * moves, changes track or closes, so another device carries on from the same moment. A sleep timer
  * pauses it after so many minutes, or at the end of the chapter playing when it was set.
  *
@@ -163,6 +164,7 @@ const createAudiobookPlayer = ({
   let resumeAt: number | null = null;
   let isSwitching = false;
   let savedAtMs = 0;
+  let linedUp = '';
 
   const change = (next: Partial<AudiobookPlayerState>): void => {
     state = { ...state, ...next };
@@ -189,6 +191,17 @@ const createAudiobookPlayer = ({
     });
   };
 
+  const lineUpNext = (): void => {
+    const following = state.tracks[state.trackAt + 1];
+    const src =
+      state.book === null || following === undefined ? '' : addressOf(state.book.id, following.id);
+
+    if (audio.lineUp !== undefined && src !== linedUp) {
+      linedUp = src;
+      audio.lineUp(src);
+    }
+  };
+
   const load = (trackAt: number, positionSeconds: number, isPlaying: boolean): void => {
     const track = state.tracks[trackAt];
 
@@ -205,8 +218,10 @@ const createAudiobookPlayer = ({
       isPlaying,
       problem: null,
     });
+    linedUp = '';
     audio.src = addressOf(state.book.id, track.id);
     audio.playbackRate = state.speed;
+    lineUpNext();
 
     if (isPlaying) {
       audio.play().catch(() => {
@@ -299,7 +314,7 @@ const createAudiobookPlayer = ({
     change({ isLoading: false });
   });
 
-  audio.addEventListener('ended', () => {
+  const runOn = (): void => {
     if (state.trackAt < state.tracks.length - 1) {
       load(state.trackAt + 1, 0, true);
       keep();
@@ -309,7 +324,30 @@ const createAudiobookPlayer = ({
 
     change({ isPlaying: false, bookPositionSeconds: state.durationSeconds });
     keep(true);
+  };
+
+  audio.addEventListener('advanced', () => {
+    const trackAt = state.trackAt + 1;
+
+    if (linedUp === '' || state.tracks[trackAt] === undefined || audio.src !== linedUp) {
+      linedUp = '';
+      runOn();
+
+      return;
+    }
+
+    linedUp = '';
+    change({
+      trackAt,
+      bookPositionSeconds: startOf(state.tracks, trackAt),
+      isLoading: false,
+      problem: null,
+    });
+    keep();
+    lineUpNext();
   });
+
+  audio.addEventListener('ended', runOn);
 
   audio.addEventListener('error', () => {
     if (state.book !== null && audio.src !== '') {
@@ -426,6 +464,7 @@ const createAudiobookPlayer = ({
     close: () => {
       keep();
       audio.pause();
+      linedUp = '';
       audio.src = '';
       resumeAt = null;
       isSwitching = false;
