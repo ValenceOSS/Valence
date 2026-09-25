@@ -2,6 +2,7 @@ import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
 import { TriangleAlert as TriangleAlertIcon } from '@keyline-icons/react';
+import { say } from '@ValenceI18n/say';
 import type { CouldNotReadProps } from './CouldNotRead.types';
 
 /**
@@ -34,12 +35,10 @@ const CouldNotRead = ({
   >
     <Icon of={TriangleAlertIcon} size={24} tone="danger" />
 
-    <p className="text-sm text-text-muted">
-      {what} could not be read. The server may be unreachable, or this session may have ended.
-    </p>
+    <p className="text-sm text-text-muted">{say('ui.couldNotRead.body', { what })}</p>
 
     <Button variant="secondary" size="sm" isLoading={isTryingAgain} onClick={onTryAgain}>
-      Try again
+      {say('common.tryAgain')}
     </Button>
   </div>
 );

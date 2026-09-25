@@ -1,6 +1,7 @@
 import { X as XIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
+import { say } from '@ValenceI18n/say';
 import type { AppliedFiltersProps } from './AppliedFilters.types';
 
 /**
@@ -19,7 +20,10 @@ const AppliedFilters = ({ groups, selected, onRemove, onClear }: AppliedFiltersP
   const applied = groups.flatMap((group) =>
     group.options
       .filter((option) => selected.has(option.id))
-      .map((option) => ({ id: option.id, said: `${group.name}: ${option.label}` })),
+      .map((option) => ({
+        id: option.id,
+        said: say('ui.appliedFilters.chip', { group: group.name, choice: option.label }),
+      })),
   );
 
   if (applied.length === 0) {
@@ -27,13 +31,16 @@ const AppliedFilters = ({ groups, selected, onRemove, onClear }: AppliedFiltersP
   }
 
   return (
-    <ul aria-label="Applied filters" className="flex flex-wrap items-center gap-2">
+    <ul
+      aria-label={say('ui.appliedFilters.listLabel')}
+      className="flex flex-wrap items-center gap-2"
+    >
       {applied.map((filter) => (
         <li key={filter.id} className="flex h-7 items-center">
           <Button
             variant="glossy"
             size="xs"
-            label={`Remove ${filter.said}`}
+            label={say('ui.appliedFilters.removeLabel', { filter: filter.said })}
             hasTooltip={false}
             onClick={() => {
               onRemove(filter.id);
@@ -47,7 +54,7 @@ const AppliedFilters = ({ groups, selected, onRemove, onClear }: AppliedFiltersP
 
       <li className="flex h-7 items-center">
         <Button variant="subtle" size="xs" onClick={onClear}>
-          Clear all
+          {say('ui.appliedFilters.clearAll')}
         </Button>
       </li>
     </ul>

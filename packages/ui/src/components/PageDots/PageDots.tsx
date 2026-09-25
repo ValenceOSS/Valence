@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { Tooltip } from '@ValenceUI/Tooltip';
 import { cn } from '@ValenceUI/cn';
+import { say } from '@ValenceI18n/say';
 import type { PageDotsProps } from './PageDots.types';
 
 const TONES = {
@@ -63,7 +64,11 @@ const PageDots = ({
           <Button
             variant="bare"
             size="none"
-            aria-label={`Show ${named ?? `page ${(index + 1).toString()}`}`}
+            aria-label={
+              named === undefined
+                ? say('ui.pageDots.showPage', { page: index + 1 })
+                : say('ui.pageDots.showNamed', { name: named })
+            }
             aria-current={selectedIndex === index ? 'true' : undefined}
             onClick={() => {
               onSelect(index);

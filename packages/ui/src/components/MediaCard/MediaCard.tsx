@@ -7,6 +7,7 @@ import { Check as CheckIcon } from '@keyline-icons/react';
 import { Icon } from '@ValenceUI/Icon';
 import { Tooltip } from '@ValenceUI/Tooltip';
 import { revealTransition } from '@ValenceUI/animations/reveal';
+import { say } from '@ValenceI18n/say';
 import type { MediaCardProps, MediaCardShape } from './MediaCard.types';
 
 const SHAPE_CLASSES: Record<MediaCardShape, string> = {
@@ -141,10 +142,10 @@ const MediaCard = ({
 
         {watchedFraction === undefined || watchedFraction < 1 ? null : (
           <span className="absolute bottom-3 right-3">
-            <Tooltip label="Watched">
+            <Tooltip label={say('ui.mediaCard.watched')}>
               <span
                 role="img"
-                aria-label="Watched"
+                aria-label={say('ui.mediaCard.watched')}
                 className="flex size-6 items-center justify-center rounded-full bg-scrim"
               >
                 <Icon of={CheckIcon} size={14} tone="scrim" />

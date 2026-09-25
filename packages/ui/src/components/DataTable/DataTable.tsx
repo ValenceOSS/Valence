@@ -14,6 +14,7 @@ import { cn } from '@ValenceUI/cn';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
+import { say } from '@ValenceI18n/say';
 import { dataTableFeatures } from './dataTableFeatures';
 import { DrawnCell } from './DrawnCell';
 import type { ColumnFiltersState, Renderable, RowData, SortingState } from '@tanstack/react-table';
@@ -88,7 +89,7 @@ const DataTable = <Row extends RowData>({
   columns,
   rows,
   totalRows,
-  emptyMessage = 'Nothing here yet.',
+  emptyMessage = say('ui.dataTable.emptyMessage'),
   onChooseRow,
   getRowId,
   toolbar,
@@ -226,7 +227,7 @@ const DataTable = <Row extends RowData>({
 
                         {filterOptions === undefined ? null : (
                           <OptionMenu
-                            label={`Filter by ${header.column.id}`}
+                            label={say('ui.dataTable.filterBy', { column: header.column.id })}
                             align="start"
                             trigger={
                               <Icon
@@ -237,8 +238,11 @@ const DataTable = <Row extends RowData>({
                             }
                             groups={[
                               {
-                                name: 'Filter',
-                                options: [{ id: 'all', label: 'All' }, ...filterOptions],
+                                name: say('ui.dataTable.filterGroup'),
+                                options: [
+                                  { id: 'all', label: say('ui.dataTable.filterAll') },
+                                  ...filterOptions,
+                                ],
                                 selectedId: typeof filterValue === 'string' ? filterValue : 'all',
                                 onSelect: (id) => {
                                   header.column.setFilterValue(id === 'all' ? undefined : id);
@@ -296,13 +300,13 @@ const DataTable = <Row extends RowData>({
       {growsOnScroll ? (
         holding >= rows.length ? null : (
           <p className="px-5 pt-3 font-body text-xs text-text-muted">
-            {`Showing ${holding.toString()} of ${rows.length.toString()} · scroll for more`}
+            {say('ui.dataTable.showingSome', { shown: holding, total: rows.length })}
           </p>
         )
       ) : pageCount <= 1 ? null : (
         <div className="flex items-center justify-between gap-4 px-5 pt-3">
           <p className="font-body text-xs text-text-muted">
-            {`Page ${(page + 1).toString()} of ${pageCount.toString()} · ${everyRow.toString()} in total`}
+            {say('ui.dataTable.pageOf', { page: page + 1, pages: pageCount, total: everyRow })}
           </p>
 
           <div className="flex items-center gap-1.5">
@@ -310,7 +314,7 @@ const DataTable = <Row extends RowData>({
               variant="secondary"
               size="sm"
               isIconOnly
-              label="Previous page"
+              label={say('ui.dataTable.previousPage')}
               disabled={page === 0}
               onClick={() => {
                 setPage(Math.max(0, page - 1));
@@ -323,7 +327,7 @@ const DataTable = <Row extends RowData>({
               variant="secondary"
               size="sm"
               isIconOnly
-              label="Next page"
+              label={say('ui.dataTable.nextPage')}
               disabled={page >= pageCount - 1}
               onClick={() => {
                 setPage(Math.min(pageCount - 1, page + 1));

@@ -11,6 +11,7 @@ import { usePagedScroller } from '@ValenceUI/usePagedScroller';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
+import { say } from '@ValenceI18n/say';
 import type { RailProps } from './Rail.types';
 
 const TOKENS = ['[--rail-gap:1rem] [--rail-peek:0rem]', RAIL.lane].join(' ');
@@ -115,7 +116,7 @@ const Rail = ({
                 variant="glossy"
                 size="xs"
                 isIconOnly
-                label={`Back a page of ${title}`}
+                label={say('ui.rail.backAPage', { title })}
                 hasTooltip={false}
                 disabled={isAtStart}
                 onClick={() => {
@@ -129,7 +130,7 @@ const Rail = ({
                 variant="glossy"
                 size="xs"
                 isIconOnly
-                label={`Forward a page of ${title}`}
+                label={say('ui.rail.forwardAPage', { title })}
                 hasTooltip={false}
                 disabled={isAtEnd}
                 onClick={() => {

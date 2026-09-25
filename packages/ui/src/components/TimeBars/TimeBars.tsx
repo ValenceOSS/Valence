@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { PointerEvent } from 'react';
 import { cn } from '@ValenceUI/cn';
+import { say } from '@ValenceI18n/say';
 import type { TimeBarsProps } from './TimeBars.types';
 
 const TICKS = 5;
@@ -77,7 +78,7 @@ const TimeBars = ({
   if (first === undefined || last === undefined) {
     return (
       <div className={cn('flex h-24 items-center justify-center', className)}>
-        <p className="font-body text-xs text-text-muted">Nothing in this time.</p>
+        <p className="font-body text-xs text-text-muted">{say('ui.timeBars.empty')}</p>
       </div>
     );
   }
@@ -227,7 +228,7 @@ const TimeBars = ({
                   </span>
                 ))
               : null}
-            {isPicking ? <span className="ml-auto">Drag across the bars to zoom in</span> : null}
+            {isPicking ? <span className="ml-auto">{say('ui.timeBars.dragToZoom')}</span> : null}
           </figcaption>
         </>
       )}

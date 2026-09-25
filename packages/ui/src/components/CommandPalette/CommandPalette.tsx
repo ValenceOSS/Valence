@@ -2,6 +2,7 @@ import { Command } from 'cmdk';
 import { Search as SearchIcon } from '@keyline-icons/react';
 import { Dialog } from '@ValenceUI/Dialog';
 import { Icon } from '@ValenceUI/Icon';
+import { say } from '@ValenceI18n/say';
 import type { CommandPaletteProps } from './CommandPalette.types';
 
 /**
@@ -32,8 +33,8 @@ const CommandPalette = ({
   onQueryChange,
   groups,
   onSelect,
-  placeholder = 'Search',
-  emptyLabel = 'Nothing matches that.',
+  placeholder = say('common.search'),
+  emptyLabel = say('ui.commandPalette.emptyLabel'),
 }: CommandPaletteProps) => (
   <Dialog label={label} isOpen={isOpen} onClose={onClose} className="w-full sm:w-[36rem]">
     <Command shouldFilter={false} label={label} loop>

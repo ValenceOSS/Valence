@@ -2,6 +2,7 @@ import { useId, useRef, useState } from 'react';
 import { cn } from '@ValenceUI/cn';
 import { buttonStyles } from '@ValenceUI/Button/buttonStyles';
 import { Spinner } from '@ValenceUI/Spinner';
+import { say } from '@ValenceI18n/say';
 import { readDroppedFiles } from './readDroppedFiles';
 import type { FilePickerProps } from './FilePicker.types';
 
@@ -133,7 +134,9 @@ const FilePicker = ({
         }}
       />
 
-      {isLoading ? <Spinner size={size === 'sm' ? 'sm' : 'md'} label="Working" /> : null}
+      {isLoading ? (
+        <Spinner size={size === 'sm' ? 'sm' : 'md'} label={say('ui.filePicker.working')} />
+      ) : null}
       {children}
     </label>
   );

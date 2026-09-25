@@ -1,5 +1,6 @@
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
+import { say } from '@ValenceI18n/say';
 import type { DialogFooterProps } from './DialogFooter.types';
 
 /**
@@ -66,7 +67,7 @@ const DialogFooter = ({ children, dismiss, confirm, note, className }: DialogFoo
         isLoading={dismiss.isLoading ?? false}
         onClick={dismiss.onChoose}
       >
-        {dismiss.label ?? (confirm === undefined ? 'Close' : 'Cancel')}
+        {dismiss.label ?? (confirm === undefined ? say('common.close') : say('common.cancel'))}
       </Button>
     )}
 

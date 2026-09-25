@@ -1,4 +1,5 @@
 import { cn } from '@ValenceUI/cn';
+import { say } from '@ValenceI18n/say';
 import { buttonStyles } from './buttonStyles';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Tooltip } from '@ValenceUI/Tooltip';
@@ -68,7 +69,9 @@ const Button = ({
       )}
       {...rest}
     >
-      {isLoading ? <Spinner size={size === 'sm' ? 'sm' : 'md'} label="Working" /> : null}
+      {isLoading ? (
+        <Spinner size={size === 'sm' ? 'sm' : 'md'} label={say('ui.button.working')} />
+      ) : null}
       {children}
     </button>
   );

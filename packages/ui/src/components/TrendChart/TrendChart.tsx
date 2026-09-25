@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, YAxis } from 'recharts';
 import { cn } from '@ValenceUI/cn';
+import { say } from '@ValenceI18n/say';
 import type { TrendChartProps } from './TrendChart.types';
 
 /**
@@ -30,7 +31,7 @@ const TrendChart = ({ values, ceiling, label, caption, className }: TrendChartPr
   if (values.length === 0) {
     return (
       <div className={cn('flex h-20 items-center', className)}>
-        <p className="font-body text-xs text-text-muted">Nothing measured yet.</p>
+        <p className="font-body text-xs text-text-muted">{say('ui.trendChart.empty')}</p>
       </div>
     );
   }

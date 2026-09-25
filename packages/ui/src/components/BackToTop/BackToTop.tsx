@@ -6,6 +6,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
 import { useHasScrolledPast } from '@ValenceUI/useHasScrolledPast';
 import { usePortalContainer } from '@ValenceUI/usePortalContainer';
+import { say } from '@ValenceI18n/say';
 import type { BackToTopProps } from './BackToTop.types';
 
 /**
@@ -31,7 +32,7 @@ import type { BackToTopProps } from './BackToTop.types';
  * @param label - What it does in words, for anything reading the page aloud.
  * @param className - Extra classes for the caller's own layout.
  */
-const BackToTop = ({ label = 'Back to top', className }: BackToTopProps) => {
+const BackToTop = ({ label = say('ui.backToTop.label'), className }: BackToTopProps) => {
   const { mark, hasPassed } = useHasScrolledPast();
   const prefersReducedMotion = useReducedMotionConfig();
   const portalContainer = usePortalContainer();

@@ -23,6 +23,7 @@ const EmbeddedVideo = ({ label, src, className }: EmbeddedVideoProps) => (
     loading="lazy"
     referrerPolicy="strict-origin"
     sandbox="allow-scripts allow-same-origin allow-presentation"
+     
     allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen"
     allowFullScreen
     className={cn('aspect-video w-full border-0 bg-shade', className)}

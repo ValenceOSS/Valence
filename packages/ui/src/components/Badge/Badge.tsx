@@ -1,5 +1,6 @@
 import { cn } from '@ValenceUI/cn';
 import { Spinner } from '@ValenceUI/Spinner';
+import { say } from '@ValenceI18n/say';
 import { inkOn } from './inkOn';
 import type { BadgeProps, BadgeSize, BadgeTone } from './Badge.types';
 
@@ -51,7 +52,9 @@ const Badge = ({ children, tone = 'quiet', colour = null, size = 'sm', className
     )}
   >
     {children}
-    {colour === null && tone === 'busy' ? <Spinner size="xs" label="In progress" /> : null}
+    {colour === null && tone === 'busy' ? (
+      <Spinner size="xs" label={say('ui.badge.inProgress')} />
+    ) : null}
   </span>
 );
 

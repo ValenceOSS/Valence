@@ -1,6 +1,7 @@
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { Logo } from '@ValenceUI/Logo';
 import { liquidSpring, stillTransition } from '@ValenceUI/animations/reveal';
+import { say } from '@ValenceI18n/say';
 import type { SplashScreenProps } from './SplashScreen.types';
 
 const OURS = 'valence';
@@ -27,8 +28,8 @@ const OURS = 'valence';
  * @param isLeaving - Whether the ground is fading, which it does once the mark has landed.
  */
 const SplashScreen = ({
-  name = 'Valence',
-  label = 'Loading',
+  name = say('common.valence'),
+  label = say('common.loading'),
   isReady = false,
   marksPlace,
   hasMark = true,
