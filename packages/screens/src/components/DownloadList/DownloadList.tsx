@@ -12,6 +12,7 @@ import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { forgetDownload, setDownloadPaused } from '@ValenceClient/downloads/fetchDownloads';
 import { downloadQueries } from '@ValenceClient/query/downloadQueries';
 import { canKeepFiles } from '@ValenceClient/downloads/canKeepFiles';
+import { whereToSaveADownload } from '@ValenceClient/downloads/whereToSaveADownload';
 import { useHeldFiles } from '@ValenceClient/downloads/useHeldFiles';
 import { describeKeeping } from '@ValenceCore/functions/describeKeeping';
 import { KeepingControls } from '@ValenceScreens/components/DownloadList/components/KeepingControls/KeepingControls';
@@ -22,9 +23,10 @@ import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
  * Says where a prepared file has got to, in the words somebody would use about it.
  *
  * @param download - The download.
+ * @param isKeepable - Whether this client keeps files, or saves them as a browser does.
  * @returns The line beneath its title.
  */
-const describeState = (download: Download): string => {
+const describeState = (download: Download, isKeepable: boolean): string => {
   const done = `${Math.round(download.progress * 100).toString()}%`;
 
   if (download.state === 'failed') {
@@ -45,9 +47,11 @@ const describeState = (download: Download): string => {
       : `Preparing — ${done} done, ${formatBytes(download.bytesPerSecond)}/s.`;
   }
 
+  const ready = isKeepable ? 'Ready to keep on this device' : 'Ready to save';
+
   return download.sizeBytes === null
-    ? 'Ready to keep on this device.'
-    : `Ready to keep on this device — ${formatBytes(download.sizeBytes)}.`;
+    ? `${ready}.`
+    : `${ready} — ${formatBytes(download.sizeBytes)}.`;
 };
 
 /**
@@ -59,10 +63,11 @@ const describeState = (download: Download): string => {
  *
  * @param download - What the server prepared.
  * @param held - The copy on this machine, where there is one.
+ * @param isKeepable - Whether this client keeps files, or saves them as a browser does.
  * @returns The line beneath the title.
  */
-const describeRow = (download: Download, held: HeldFile | null): string =>
-  held === null ? describeState(download) : describeKeeping(held);
+const describeRow = (download: Download, held: HeldFile | null, isKeepable: boolean): string =>
+  held === null ? describeState(download, isKeepable) : describeKeeping(held);
 
 /**
  * Gathers downloads under the programme they belong to, in the order they were asked for.
@@ -152,7 +157,11 @@ const DownloadList = () => {
               <SettingRow
                 key={download.id}
                 title={download.title}
-                description={describeRow(download, onThisDevice.get(download.id) ?? null)}
+                description={describeRow(
+                  download,
+                  onThisDevice.get(download.id) ?? null,
+                  isKeepable,
+                )}
               >
                 <Badge size="sm" tone={download.state === 'failed' ? 'danger' : 'quiet'}>
                   {download.quality}
@@ -165,6 +174,19 @@ const DownloadList = () => {
                     label={`Preparing ${download.title}`}
                     className="w-28"
                   />
+                )}
+
+                {download.state !== 'ready' || isKeepable ? null : (
+                  <Button
+                    variant="glossy"
+                    size="sm"
+                    onClick={() => {
+                      window.location.assign(whereToSaveADownload(download.id));
+                    }}
+                  >
+                    <Icon of={DownloadIcon} size={15} />
+                    Save file
+                  </Button>
                 )}
 
                 {download.state !== 'ready' || !isKeepable ? null : (

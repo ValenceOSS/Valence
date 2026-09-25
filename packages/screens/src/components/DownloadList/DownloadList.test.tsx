@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
+import { installATestClient } from '@ValenceScreens/testing/installATestClient';
 import { DownloadList } from './DownloadList';
 
 const READY = {
@@ -79,6 +80,21 @@ describe('DownloadList', () => {
 
     expect(await screen.findByText('Arrival')).toBeInTheDocument();
     expect(screen.getByText(/Ready to keep on this device/)).toBeInTheDocument();
+  });
+
+  it('offers to save a ready file where a browser cannot keep one', async () => {
+    const assign = vi.fn();
+
+    installATestClient({ canKeepFiles: () => false });
+    vi.stubGlobal('location', { ...window.location, assign });
+    drawWith([READY]);
+
+    expect(await screen.findByText(/Ready to save/)).toBeInTheDocument();
+    expect(screen.queryByText('Keep on this device')).toBeNull();
+
+    await userEvent.setup().click(screen.getByRole('button', { name: /Save file/ }));
+
+    expect(assign).toHaveBeenCalledWith(`/api/downloads/${READY.id}/file?save=1`);
   });
 
   it('says how far along something still being prepared is', async () => {

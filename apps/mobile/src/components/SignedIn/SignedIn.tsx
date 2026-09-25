@@ -62,6 +62,7 @@ import { Watching } from '@ValenceMobile/components/Watching/Watching';
 import { WatchingHeld } from '@ValenceMobile/components/WatchingHeld/WatchingHeld';
 import { useFetchWhatThisPhoneAskedFor } from '@ValenceMobile/downloads/useFetchWhatThisPhoneAskedFor';
 import { useTellTheServerWhatIsHeld } from '@ValenceClient/downloads/useTellTheServerWhatIsHeld';
+import { useFetchWhatThisDeviceAsked } from '@ValenceClient/downloads/useFetchWhatThisDeviceAsked';
 import { sendWatchedOffline } from '@ValenceClient/offline/watchedOffline';
 import { TheAlbums } from '@ValenceMobile/components/TheAlbums/TheAlbums';
 import { TheArtists } from '@ValenceMobile/components/TheArtists/TheArtists';
@@ -149,6 +150,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
     void sendWatchedOffline();
   }, []);
   useTellTheServerWhatIsHeld();
+  useFetchWhatThisDeviceAsked();
   useFetchWhatThisPhoneAskedFor();
   useListeningKeptFresh();
   const cache = useQueryClient();
