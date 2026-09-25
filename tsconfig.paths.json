@@ -13,6 +13,7 @@
       "@ValenceScreens/*": ["./packages/screens/src/*"],
       "@ValenceServer/*": ["./apps/server/src/*"],
       "@ValenceTv/*": ["./apps/tv/src/*"],
+      "@ValenceTranslations/*": ["./packages/i18n/strings/*"],
       "@ValenceRequests/*": ["./apps/requests/src/*"],
       "@ValenceUI/ActionBar": ["./packages/ui/src/components/ActionBar/ActionBar.tsx"],
       "@ValenceUI/ActionBar.types": ["./packages/ui/src/components/ActionBar/ActionBar.types.ts"],

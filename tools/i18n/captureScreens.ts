@@ -6,7 +6,7 @@ import { planCaptures } from './planCaptures';
 
 const ROOT = join(import.meta.dirname, '..', '..');
 
-const IMAGES = join(ROOT, 'packages', 'i18n', 'images');
+const IMAGES = join(ROOT, 'packages', 'i18n', 'strings', 'images');
 
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
@@ -54,7 +54,7 @@ const readParameters = (written: string): Record<string, string> =>
 const captureScreens = async (): Promise<void> => {
   const settings = SettingsSchema.parse(process.env);
   const screens = ScreensSchema.parse(
-    JSON.parse(readFileSync(join(ROOT, 'packages', 'i18n', 'src', 'screens.json'), 'utf8')),
+    JSON.parse(readFileSync(join(ROOT, 'packages', 'i18n', 'strings', 'screens.json'), 'utf8')),
   );
   const only = new Set(settings.VALENCE_CAPTURE_ONLY.split(',').filter((id) => id !== ''));
   const { visits, unfilled } = planCaptures(

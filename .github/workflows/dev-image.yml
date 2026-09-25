@@ -50,6 +50,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: true
 
       # The release that is being worked towards. Release-please keeps a pull request open for it, and
       # its title names the version it has decided on — `chore(main): release 1.0.0` — which is the
@@ -99,6 +101,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: true
 
       # A registry accepts a lower case name and this owner is not spelt that
       # way, so it is folded here rather than written out and left to drift.

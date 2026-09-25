@@ -332,7 +332,7 @@ const noHardCodedStrings = createRule({
     },
     messages: {
       words:
-        'Words a person reads come from the strings file: say("{{ hint }}…") from @ValenceI18n/say, with the words added to packages/i18n/src/strings-en.json along with where they are used.',
+        'Words a person reads come from the strings file: say("{{ hint }}…") from @ValenceI18n/say, with the words added to strings-en.json in Valence-Translations (packages/i18n/strings) along with where they are used.',
     },
     schema: [],
   },

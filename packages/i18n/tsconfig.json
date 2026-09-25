@@ -2,8 +2,8 @@
   "extends": ["../../tsconfig.base.json", "../../tsconfig.paths.json"],
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": ".",
     "types": ["node"]
   },
-  "include": ["src/**/*.ts", "src/**/*.json"]
+  "include": ["src/**/*.ts", "strings/*.json", "strings/problemsWith.ts", "strings/StringsFile.ts"]
 }

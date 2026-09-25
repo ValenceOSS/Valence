@@ -47,6 +47,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          submodules: true
           ref: ${{ inputs.ref }}
 
       - uses: pnpm/action-setup@v6

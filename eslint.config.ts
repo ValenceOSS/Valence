@@ -116,6 +116,7 @@ export default tseslint.config(
       'target/**',
       '**/.turbo/**',
       '**/.astro/**',
+      'packages/i18n/strings/**',
     ],
   },
   ...tseslint.configs.recommendedTypeChecked,

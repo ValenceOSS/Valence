@@ -62,6 +62,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          submodules: true
           fetch-depth: 0
 
       - uses: pnpm/action-setup@v6
@@ -130,6 +131,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: true
 
       - uses: pnpm/action-setup@v6
 
@@ -155,6 +158,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: true
 
       - uses: pnpm/action-setup@v6
 
@@ -191,6 +196,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: true
 
       - uses: pnpm/action-setup@v6
 
@@ -220,6 +227,8 @@ jobs:
         package: ${{ fromJSON(needs.changes.outputs.packages) }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: true
 
       - uses: pnpm/action-setup@v6
 
@@ -249,6 +258,8 @@ jobs:
         shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: true
 
       - uses: pnpm/action-setup@v6
 
@@ -316,6 +327,8 @@ jobs:
             ca-certificates curl git xz-utils build-essential pkg-config
 
       - uses: actions/checkout@v7
+        with:
+          submodules: true
 
       - uses: dtolnay/rust-toolchain@stable
         with:

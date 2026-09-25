@@ -105,6 +105,7 @@ jobs:
       # the release's version.
       - uses: actions/checkout@v7
         with:
+          submodules: true
           ref: ${{ inputs.ref || inputs.tag }}
 
       - uses: pnpm/action-setup@v6

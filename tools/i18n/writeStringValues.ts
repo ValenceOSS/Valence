@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { z } from 'zod';
 import { valuesOf } from './valuesOf';
 
-const SOURCE = join(import.meta.dirname, '..', '..', 'packages', 'i18n', 'src');
+const SOURCE = join(import.meta.dirname, '..', '..', 'packages', 'i18n', 'strings');
 
 const StringsSchema = z.record(z.string(), z.object({ value: z.string() }));
 

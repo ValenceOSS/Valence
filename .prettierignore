@@ -1,2 +1,5 @@
 # Icon Composer bundles are written by Icon Composer, which formats its own JSON.
 *.icon/
+
+# Valence-Translations checks and formats its own files.
+packages/i18n/strings/

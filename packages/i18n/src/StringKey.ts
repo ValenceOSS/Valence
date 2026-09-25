@@ -1,4 +1,4 @@
-import type strings from './strings-en.json';
+import type strings from '@ValenceTranslations/strings-en.json';
 
 type StringKey = keyof typeof strings;
 

@@ -1,4 +1,4 @@
-import values from './values-en.json';
+import values from '@ValenceTranslations/values-en.json';
 import type { StringKey } from './StringKey';
 
 const PLACEHOLDER = /\{(\w+)\}/gu;

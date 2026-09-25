@@ -2,9 +2,14 @@
 
 Every word Valence shows somebody, in one place, so it can be translated.
 
+The words themselves live in [Valence-Translations](https://github.com/ValenceOSS/Valence-Translations),
+checked out here as a git submodule at `strings/`. After cloning, run
+`git submodule update --init`. To add or change a string, change it there in a pull request, then
+move the submodule here to that commit.
+
 ## The strings file
 
-`src/strings-en.json` holds each string under a dotted key, grouped by where it is used:
+`strings/strings-en.json` holds each string under a dotted key, grouped by where it is used:
 
 ```json
 {
@@ -25,8 +30,8 @@ language's own plural rules.
 
 ## The screens file
 
-`src/screens.json` lists every screen a `context` can point at: which client draws it, where it
-is, and how to reach it. The screenshots in `images/` are captured from it, one per screen.
+`strings/screens.json` lists every screen a `context` can point at: which client draws it, where it
+is, and how to reach it. The screenshots in `strings/images/` are captured from it with `pnpm i18n:screens`, one per screen.
 
 ## In code
 
