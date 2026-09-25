@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { installATestClient } from '@ValenceScreens/testing/installATestClient';
+import { aFakeHeldFiles } from '@ValenceClient/testing/aFakeHeldFiles';
+import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import { DownloadList } from './DownloadList';
 
 const READY = {
@@ -226,6 +228,46 @@ describe('DownloadList', () => {
     await waitFor(() => {
       expect(
         fetchMock.mock.calls.some(([url]) => String(url).endsWith(`/${PREPARING.id}/pause`)),
+      ).toBe(true);
+    });
+  });
+
+  it('offers one delete for something on this device, clearing it here and on the server', async () => {
+    const here: HeldFile = {
+      downloadId: READY.id,
+      mediaId: READY.mediaId,
+      seriesId: null,
+      seriesTitle: null,
+      title: 'Arrival',
+      quality: 'original',
+      durationSeconds: 6960,
+      ofBytes: 4_000_000_000,
+      state: 'here',
+      bytes: 4_000_000_000,
+      bytesPerSecond: null,
+      failure: null,
+      keptAt: '2026-01-01T00:20:00.000Z',
+      hasPoster: false,
+    };
+    const files = aFakeHeldFiles([here]);
+
+    installATestClient({ held: files.held });
+    drawWith([READY]);
+
+    const deletes = await screen.findAllByRole('button', { name: /Delete Arrival/ });
+
+    expect(deletes).toHaveLength(1);
+
+    await userEvent.setup().click(deletes[0] ?? new HTMLElement());
+
+    await waitFor(() => {
+      expect(files.dropped).toEqual([READY.id]);
+      expect(
+        fetchMock.mock.calls.some(
+          ([url, init]) =>
+            String(url).endsWith(`/api/downloads/${READY.id}`) &&
+            RequestSchema.parse(init ?? {}).method === 'DELETE',
+        ),
       ).toBe(true);
     });
   });

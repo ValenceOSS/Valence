@@ -13,6 +13,7 @@ import { describeTimeToGo } from '@ValenceCore/functions/describeTimeToGo';
 import { forgetDownload, setDownloadPaused } from '@ValenceClient/downloads/fetchDownloads';
 import { downloadQueries } from '@ValenceClient/query/downloadQueries';
 import { canKeepFiles } from '@ValenceClient/downloads/canKeepFiles';
+import { dropAFile } from '@ValenceClient/downloads/keepingFiles';
 import { whereToSaveADownload } from '@ValenceClient/downloads/whereToSaveADownload';
 import { useHeldFiles } from '@ValenceClient/downloads/useHeldFiles';
 import { describeKeeping } from '@ValenceCore/functions/describeKeeping';
@@ -242,11 +243,17 @@ const DownloadList = () => {
                   variant="ghost"
                   size="sm"
                   isIconOnly
-                  label={`Stop keeping ${download.title} on the server`}
+                  label={
+                    onThisDevice.has(download.id)
+                      ? `Delete ${download.title} from this device and the server`
+                      : `Stop keeping ${download.title} on the server`
+                  }
                   onClick={() => {
-                    void forgetDownload(download.id).then(async () =>
-                      cache.invalidateQueries({ queryKey: downloadQueries.key }),
-                    );
+                    void (
+                      onThisDevice.has(download.id) ? dropAFile(download.id) : Promise.resolve()
+                    )
+                      .then(async () => forgetDownload(download.id))
+                      .then(async () => cache.invalidateQueries({ queryKey: downloadQueries.key }));
                   }}
                 >
                   <Icon of={BinIcon} size={16} />

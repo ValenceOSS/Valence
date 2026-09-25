@@ -1,30 +1,25 @@
-import {
-  Bin as BinIcon,
-  CircleCheck as CircleCheckIcon,
-  RotateCw as RotateCwIcon,
-  Smartphone as SmartphoneIcon,
-} from '@keyline-icons/react';
+import { RotateCw as RotateCwIcon, Smartphone as SmartphoneIcon } from '@keyline-icons/react';
 import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
-import { Badge } from '@ValenceUI/Badge';
+import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { keptFraction } from '@ValenceCore/functions/describeKeeping';
-import { dropAFile, keepAFile, pauseAFile } from '@ValenceClient/downloads/keepingFiles';
+import { keepAFile, pauseAFile } from '@ValenceClient/downloads/keepingFiles';
 import type { KeepingControlsProps } from './KeepingControls.types';
 
 /**
  * What can be done about the copy of a prepared download on this machine.
  *
- * The server having prepared something and this machine having a copy of it are two different
- * facts, and the row shows both because somebody clearing space cares about the difference. Letting
- * go here is about this disk only; the server goes on holding its own copy for the other devices,
- * and is told to stop separately.
+ * Once the copy is here, what is offered is playing it from this disk. Throwing it away is the row's
+ * one delete, which lets go of this copy and the server's together.
  *
  * @param download - What the server prepared.
  * @param held - The copy on this machine, where there is one.
  */
 const KeepingControls = ({ download, held }: KeepingControlsProps) => {
+  const go = useNavigate();
+
   if (held === null) {
     return (
       <Button
@@ -42,24 +37,16 @@ const KeepingControls = ({ download, held }: KeepingControlsProps) => {
 
   if (held.state === 'here') {
     return (
-      <>
-        <Badge size="sm" tone="success">
-          <Icon of={CircleCheckIcon} size={14} />
-          On this device
-        </Badge>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          isIconOnly
-          label={`Remove ${download.title} from this device`}
-          onClick={() => {
-            void dropAFile(download.id);
-          }}
-        >
-          <Icon of={BinIcon} size={16} />
-        </Button>
-      </>
+      <Button
+        variant="glossy"
+        size="sm"
+        onClick={() => {
+          void go({ to: '/kept/$downloadId', params: { downloadId: download.id } });
+        }}
+      >
+        <Icon of={PlayFilledIcon} size={15} />
+        Play
+      </Button>
     );
   }
 

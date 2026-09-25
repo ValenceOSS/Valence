@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { forgetPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakeHeldFiles } from '@ValenceClient/testing/aFakeHeldFiles';
 import type { FakeHeldFiles } from '@ValenceClient/testing/aFakeHeldFiles';
@@ -8,6 +8,10 @@ import { installATestClient } from '@ValenceScreens/testing/installATestClient';
 import type { Download } from '@ValenceContracts/schemas/Download';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import { KeepingControls } from './KeepingControls';
+
+const go = vi.hoisted(() => vi.fn());
+
+vi.mock('@tanstack/react-router', () => ({ useNavigate: () => go }));
 
 const prepared: Download = {
   id: '00000000-0000-4000-8000-000000000001',
@@ -74,20 +78,21 @@ describe('KeepingControls', () => {
     });
   });
 
-  it('says when it is already here', () => {
+  it('plays the copy on this device once it is here', async () => {
     render(<KeepingControls download={prepared} held={aFile()} />);
 
-    expect(screen.getByText('On this device')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Play' }));
+
+    expect(go).toHaveBeenCalledWith({
+      to: '/kept/$downloadId',
+      params: { downloadId: prepared.id },
+    });
   });
 
-  it('lets go of the copy here without touching the server’s', async () => {
+  it('leaves throwing it away to the row, so there is one delete and not two', () => {
     render(<KeepingControls download={prepared} held={aFile()} />);
 
-    await userEvent.click(screen.getByRole('button', { name: /Remove The Third Man/ }));
-
-    await waitFor(() => {
-      expect(files.dropped).toEqual([prepared.id]);
-    });
+    expect(screen.queryByRole('button', { name: /Remove/ })).toBeNull();
   });
 
   it('shows a transfer as it moves', () => {

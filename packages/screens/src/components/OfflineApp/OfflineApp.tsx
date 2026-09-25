@@ -11,8 +11,7 @@ import { Logo } from '@ValenceUI/Logo';
 import { useHeldFiles } from '@ValenceClient/downloads/useHeldFiles';
 import { useOfflineMode } from '@ValenceClient/offline/useOfflineMode';
 import { dropAFile, pauseAFile } from '@ValenceClient/downloads/keepingFiles';
-import { rememberWatchedOffline, watchedOffline } from '@ValenceClient/offline/watchedOffline';
-import { OfflinePlayer } from '@ValenceScreens/components/OfflinePlayer/OfflinePlayer';
+import { PlayingAKeptFile } from '@ValenceScreens/components/PlayingAKeptFile/PlayingAKeptFile';
 import { OfflineShelf } from '@ValenceScreens/components/OfflineShelf/OfflineShelf';
 import {
   askForADifferentServer,
@@ -49,17 +48,11 @@ const OfflineApp = ({ title }: OfflineAppProps) => {
   const playing = held.find((file) => file.downloadId === watching) ?? null;
 
   if (playing !== null) {
-    const gotTo = watchedOffline().find((entry) => entry.mediaId === playing.mediaId);
-
     return (
-      <OfflinePlayer
+      <PlayingAKeptFile
         file={playing}
-        {...(gotTo === undefined ? {} : { startAtSeconds: gotTo.positionSeconds })}
         onLeave={() => {
           setWatching(null);
-        }}
-        onProgress={(positionSeconds, durationSeconds) => {
-          rememberWatchedOffline(playing.mediaId, positionSeconds, durationSeconds);
         }}
       />
     );
