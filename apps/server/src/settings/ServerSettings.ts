@@ -27,6 +27,7 @@ const ServerSettingsSchema = z.object({
   reencodesAwaitingReviewCap: z.number().int().positive().max(50).default(5),
   requestReleaseTypes: ReleaseTypesSchema.default(['album']),
   roundness: RoundnessSchema.default('default'),
+  keepsDownloadsForDays: z.number().int().nonnegative().max(3650).default(14),
 });
 
 type ServerSettings = z.infer<typeof ServerSettingsSchema>;

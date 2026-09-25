@@ -52,6 +52,7 @@ type DownloadService = {
   list: (profileId: string) => Promise<Download[]>;
   follow: () => Promise<FollowedDownload[]>;
   forget: (profileId: string, id: string) => Promise<void>;
+  clearOutBefore: (cutoff: Date) => Promise<number>;
   readFile: (
     profileId: string,
     id: string,

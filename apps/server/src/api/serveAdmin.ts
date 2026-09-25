@@ -177,6 +177,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           fetchesMusicDetails: current.fetchesMusicDetails,
           requestReleaseTypes: current.requestReleaseTypes,
           roundness: current.roundness,
+          keepsDownloadsForDays: current.keepsDownloadsForDays,
           splashscreen: await splashscreen.address(),
           trustedOrigins: current.trustedOrigins,
           cookieSecure: current.cookieSecure,
@@ -235,6 +236,9 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         ? {}
         : { requestReleaseTypes: patch.requestReleaseTypes }),
       ...(patch.roundness === undefined ? {} : { roundness: patch.roundness }),
+      ...(patch.keepsDownloadsForDays === undefined
+        ? {}
+        : { keepsDownloadsForDays: patch.keepsDownloadsForDays }),
     });
 
     if (updated.certificationRegion !== before.certificationRegion) {
@@ -266,6 +270,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         fetchesMusicDetails: updated.fetchesMusicDetails,
         requestReleaseTypes: updated.requestReleaseTypes,
         roundness: updated.roundness,
+        keepsDownloadsForDays: updated.keepsDownloadsForDays,
         splashscreen: await splashscreen.address(),
       },
       200,

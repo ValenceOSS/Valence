@@ -121,6 +121,22 @@ const createMemoryDownloadService = (
       return Promise.resolve();
     },
 
+    clearOutBefore: (cutoff) => {
+      let cleared = 0;
+
+      for (const [profileId, downloads] of Object.entries(state.downloads)) {
+        const kept = downloads.filter(
+          (one) =>
+            !((one.state === 'ready' || one.state === 'failed') && new Date(one.askedAt) < cutoff),
+        );
+
+        cleared += downloads.length - kept.length;
+        state.downloads[profileId] = kept;
+      }
+
+      return Promise.resolve(cleared);
+    },
+
     hold: (profileId, _clientId, mediaId, quality) => {
       const held = state.holdings[profileId] ?? [];
 

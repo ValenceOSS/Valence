@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { isImageSubtitle } from '@ValenceCore/functions/isImageSubtitle';
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray, lt } from 'drizzle-orm';
 import { chooseSource } from '@ValenceCore/functions/chooseSource';
 import { compareToOriginal } from '@ValenceCore/functions/compareToOriginal';
 import { describeQualityMeaning } from '@ValenceCore/functions/describeQualityMeaning';
@@ -528,6 +528,36 @@ const createDownloadService = ({
       if (others.length === 0) {
         await transcoder.forgetDownload(row.renditionId).catch(() => false);
       }
+    },
+
+    clearOutBefore: async (cutoff) => {
+      const cleared = await db
+        .delete(preparedDownload)
+        .where(
+          and(
+            inArray(preparedDownload.state, ['ready', 'failed']),
+            lt(preparedDownload.askedAt, cutoff),
+          ),
+        )
+        .returning({ renditionId: preparedDownload.renditionId });
+
+      const renditions = [...new Set(cleared.map((row) => row.renditionId))];
+      const stillWanted =
+        renditions.length === 0
+          ? []
+          : await db
+              .select({ renditionId: preparedDownload.renditionId })
+              .from(preparedDownload)
+              .where(inArray(preparedDownload.renditionId, renditions));
+      const wanted = new Set(stillWanted.map((row) => row.renditionId));
+
+      await Promise.all(
+        renditions
+          .filter((renditionId) => !wanted.has(renditionId))
+          .map((renditionId) => transcoder.forgetDownload(renditionId).catch(() => false)),
+      );
+
+      return cleared.length;
     },
 
     hold: async (profileId, clientId, mediaId, quality) => {

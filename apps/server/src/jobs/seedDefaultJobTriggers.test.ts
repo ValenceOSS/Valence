@@ -29,6 +29,7 @@ const SETTINGS: ServerSettings = {
   splashscreenFile: null,
   reencodesAwaitingReviewCap: 5,
   roundness: 'default',
+  keepsDownloadsForDays: 14,
 };
 
 const build = (seededJobTriggerKinds: string[] = []) => ({

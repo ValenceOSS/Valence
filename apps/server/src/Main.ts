@@ -178,6 +178,7 @@ import {
   CLEANUP_IMAGE_CACHE_JOB,
   CLEANUP_ARTEFACT_CACHE_JOB,
   CLEANUP_SESSIONS_JOB,
+  CLEAR_OLD_DOWNLOADS_JOB,
   PRUNE_HISTORY_JOB,
   CHECK_CATALOGUE_CONNECTIVITY_JOB,
   CHECK_TRANSCODER_JOB,
@@ -365,6 +366,7 @@ const settings = createDatabaseSettingsStore({
     ownerAccountId: '',
     splashscreenFile: null,
     reencodesAwaitingReviewCap: 5,
+    keepsDownloadsForDays: 14,
     roundness: 'default',
   },
 });
@@ -1669,6 +1671,19 @@ const jobs = await createJobQueue({
         );
 
         log.info('server', `history: forgot ${forgotten.toString()} old viewings`);
+      },
+      [CLEAR_OLD_DOWNLOADS_JOB]: async () => {
+        const days = (await settings.read()).keepsDownloadsForDays;
+
+        if (days === 0) {
+          return;
+        }
+
+        const cleared = await downloadService.clearOutBefore(
+          new Date(Date.now() - days * 86_400_000),
+        );
+
+        log.info('playback', `downloads: cleared out ${cleared.toString()} old download(s)`);
       },
       [CLEANUP_SESSIONS_JOB]: async (jobId) => {
         const removed = await cleanupSessions({

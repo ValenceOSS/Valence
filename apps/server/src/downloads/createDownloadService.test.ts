@@ -196,6 +196,26 @@ describe('createDownloadService', () => {
     expect((await service.list('a-profile'))[0]?.state).toBe('preparing');
   });
 
+  it('clears out what was ready before the cutoff, and deletes the file nobody else points at', async () => {
+    const { service, transcoder } = await build([READY]);
+
+    await service.ask('a-profile', 'a-laptop', MEDIA_ID, 'original', []);
+
+    await expect(service.clearOutBefore(new Date(Date.now() + 60_000))).resolves.toBe(1);
+    await expect(service.list('a-profile')).resolves.toEqual([]);
+    expect(transcoder.forgetDownload).toHaveBeenCalledWith('a-rendition');
+  });
+
+  it('leaves what is still being prepared, and what was asked for since the cutoff', async () => {
+    const { service, transcoder } = await build([preparing(10), READY]);
+
+    await service.ask('a-profile', 'a-laptop', MEDIA_ID, 'original', []);
+
+    await expect(service.clearOutBefore(new Date(Date.now() + 60_000))).resolves.toBe(0);
+    await expect(service.clearOutBefore(new Date(Date.now() - 60_000))).resolves.toBe(0);
+    expect(transcoder.forgetDownload).not.toHaveBeenCalled();
+  });
+
   it('lists without asking the media service anything', async () => {
     const { service, transcoder } = await build([preparing(10)]);
 

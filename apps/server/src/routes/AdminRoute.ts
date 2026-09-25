@@ -57,6 +57,7 @@ const AdminSettingsSchema = z
     fetchesMusicDetails: z.boolean(),
     requestReleaseTypes: ReleaseTypesSchema,
     roundness: RoundnessSchema,
+    keepsDownloadsForDays: z.number().int().nonnegative(),
     splashscreen: z.string().nullable(),
   })
   .openapi('AdminSettings');
@@ -141,6 +142,7 @@ const AdminSettingsRequestSchema = z
     fetchesMusicDetails: z.boolean().optional(),
     requestReleaseTypes: ReleaseTypesSchema.optional(),
     roundness: RoundnessSchema.optional(),
+    keepsDownloadsForDays: z.number().int().nonnegative().max(3650).optional(),
   })
   .openapi('AdminSettingsRequest');
 

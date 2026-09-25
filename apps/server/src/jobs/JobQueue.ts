@@ -80,6 +80,8 @@ const CLEANUP_ARTEFACT_CACHE_JOB = 'server.cleanupArtefactCache';
 
 const CLEANUP_SESSIONS_JOB = 'server.cleanupSessions';
 
+const CLEAR_OLD_DOWNLOADS_JOB = 'server.clearOldDownloads';
+
 const CHECK_CATALOGUE_CONNECTIVITY_JOB = 'server.checkCatalogueConnectivity';
 
 const CHECK_TRANSCODER_JOB = 'server.checkTranscoder';
@@ -192,6 +194,7 @@ export {
   CLEANUP_IMAGE_CACHE_JOB,
   CLEANUP_ARTEFACT_CACHE_JOB,
   CLEANUP_SESSIONS_JOB,
+  CLEAR_OLD_DOWNLOADS_JOB,
   CHECK_CATALOGUE_CONNECTIVITY_JOB,
   CHECK_TRANSCODER_JOB,
   CHECK_DISK_SPACE_JOB,
