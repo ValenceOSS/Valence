@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, shell } from 'electron';
 import { join } from 'node:path';
 
 const WIDTH = 1280;
@@ -32,6 +32,9 @@ const CONTROLS = { color: '#00000000', symbolColor: '#ffffff', height: 32 };
  * The icon is given for the platforms that take one from the window. macOS takes its from the bundle
  * instead, which the packaging config points at the same file.
  *
+ * A page asking for a new window is a link somewhere outside Valence, such as its documentation,
+ * and goes to the system's own browser rather than to a bare window of this one.
+ *
  * @returns The window.
  */
 const openTheWindow = (): BrowserWindow => {
@@ -52,6 +55,14 @@ const openTheWindow = (): BrowserWindow => {
       devTools: !app.isPackaged,
       preload: join(app.getAppPath(), 'dist-preload/preload/Preload.js'),
     },
+  });
+
+  window.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https?:\/\//u.test(url)) {
+      void shell.openExternal(url);
+    }
+
+    return { action: 'deny' };
   });
 
   window.once('ready-to-show', () => {
