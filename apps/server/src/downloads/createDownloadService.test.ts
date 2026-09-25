@@ -9,6 +9,8 @@ import { createDownloadService } from './createDownloadService';
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
 import type { DownloadFile, Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
 
+const STARTING_POSTGRES_MS = 30_000;
+
 const MEDIA_ID = '9c858901-8a57-4791-81fe-4c455b099bc9';
 
 const FILM: MediaItem = {
@@ -168,7 +170,7 @@ const build = async (
   return { service, transcoder };
 };
 
-describe('createDownloadService', () => {
+describe('createDownloadService', { timeout: STARTING_POSTGRES_MS }, () => {
   it('remembers which device asked', async () => {
     const { service } = await build([preparing(0)]);
 

@@ -6,6 +6,8 @@ import { describe, expect, it } from 'vitest';
 import { authSchema, valenceSchema } from '@ValenceServer/db/Schema';
 import { createDatabaseUploadSessions } from './createDatabaseUploadSessions';
 
+const STARTING_POSTGRES_MS = 30_000;
+
 const UPLOAD = {
   libraryId: 'films',
   path: 'Arrival.mkv',
@@ -34,7 +36,7 @@ const aScratchDatabase = async () => {
   return drizzle(client, { schema: { ...authSchema, ...valenceSchema } });
 };
 
-describe('createDatabaseUploadSessions', () => {
+describe('createDatabaseUploadSessions', { timeout: STARTING_POSTGRES_MS }, () => {
   it('keeps an upload, file sizes past four gigabytes and all, and finds it again', async () => {
     const sessions = createDatabaseUploadSessions(await aScratchDatabase(), 60_000, 1024 ** 3);
     const opened = await sessions.open(UPLOAD);
