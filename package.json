@@ -19,6 +19,7 @@
     "lint": "oxlint --deny-warnings && eslint --max-warnings 0 . && tsx tools/comments/checkComments.ts",
     "lint:fix": "oxlint --fix --deny-warnings && eslint --fix --max-warnings 0 . && tsx tools/comments/checkComments.ts --fix",
     "branch:check": "tsx tools/branches/checkBranchName.ts",
+    "branches:prune": "tsx tools/branches/pruneMergedBranches.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "rust:check": "cargo clippy --all-targets -- -D warnings && cargo fmt --check",
