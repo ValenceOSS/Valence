@@ -39,6 +39,7 @@ import { AvailableUpdateSchema } from '@ValenceDesktop/main/AvailableUpdateSchem
 import type { AvailableUpdate } from '@ValenceDesktop/main/checkForUpdate';
 import { WHAT_VERSION_THIS_IS } from '@ValenceDesktop/main/aboutChannels';
 import { SET_UNREAD_BADGE } from '@ValenceDesktop/main/notificationChannels';
+import { SHOW_THE_WINDOW_CONTROLS } from '@ValenceDesktop/main/windowChannels';
 
 const HeldSchema = z.record(z.string(), z.string()).catch({});
 
@@ -64,6 +65,13 @@ markTheDocument(document, process.platform);
 document.addEventListener('valence:change-server', () => {
   ipcRenderer.send(CHANGE_SERVER);
 });
+
+new MutationObserver(() => {
+  ipcRenderer.send(
+    SHOW_THE_WINDOW_CONTROLS,
+    document.querySelector('html')?.dataset['valenceWatching'] !== 'hidden',
+  );
+}).observe(document, { subtree: true, attributeFilter: ['data-valence-watching'] });
 
 document.addEventListener('valence:now-watching', (event) => {
   ipcRenderer.send(NOW_WATCHING, event instanceof CustomEvent ? event.detail : null);

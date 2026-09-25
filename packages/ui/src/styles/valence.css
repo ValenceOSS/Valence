@@ -417,6 +417,23 @@ body {
   inset: var(--valence-window-bar) 0 0 0;
 }
 
+:root[data-valence-desktop='true'][data-valence-watching] {
+  --valence-window-bar: 0px;
+}
+
+[data-valence-desktop='true'][data-valence-watching] [data-slot='window-bar'] {
+  background: transparent;
+  transition: opacity var(--duration-base) var(--ease-soft);
+}
+
+[data-valence-desktop='true'][data-valence-watching='hidden'] [data-slot='window-bar'] {
+  opacity: 0;
+}
+
+[data-valence-desktop='true'][data-valence-watching] [data-slot='player-header'] {
+  padding-top: 2.5rem;
+}
+
 body {
   user-select: none;
   -webkit-user-select: none;

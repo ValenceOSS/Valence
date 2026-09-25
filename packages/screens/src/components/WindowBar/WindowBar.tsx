@@ -9,9 +9,12 @@ import type { WindowBarProps } from './WindowBar.types';
  * Every desktop platform needs somewhere to pick the window up by. Windows and Linux draw their own
  * minimise, maximise and close over the top right, transparent, so this shows through behind them.
  * macOS draws its traffic lights over the top left the same way. Either way this asks nothing of the
- * page under it beyond the room reserved for it — it draws a surface and nothing on it, so nothing
- * here is announced to somebody looking at anything but the window itself, unless there is a
- * release worth their pressing it for.
+ * page under it beyond the room reserved for it — it draws the same raised surface as the admin
+ * sidebar and nothing on it, so nothing here is announced to somebody looking at anything but the
+ * window itself, unless there is a release worth their pressing it for.
+ *
+ * While a film plays it takes no room at all: the film runs to the top of the window, and this and
+ * the system's own controls come and go over it with the player's controls.
  *
  * The one thing it will say sits at the top right, clear of the traffic lights macOS draws at the
  * top left. On macOS that is the whole of the clearance it needs, since nothing else is drawn over
@@ -26,7 +29,7 @@ import type { WindowBarProps } from './WindowBar.types';
 const WindowBar = ({ updateVersion, onInstallUpdate }: WindowBarProps) => (
   <div
     data-slot="window-bar"
-    className="fixed inset-x-0 top-0 z-[60] flex h-8 items-center justify-end bg-surface pr-[var(--valence-window-bar-clearance)] [-webkit-app-region:drag]"
+    className="fixed inset-x-0 top-0 z-[60] flex h-8 items-center justify-end bg-[color-mix(in_oklab,var(--color-surface-raised)_88%,var(--color-surface))] pr-[var(--valence-window-bar-clearance)] [-webkit-app-region:drag]"
   >
     {updateVersion === undefined ? null : (
       <Button
