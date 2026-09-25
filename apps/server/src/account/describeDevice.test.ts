@@ -41,4 +41,24 @@ describe('describeDevice', () => {
 
     expect(said.length).toBeLessThanOrEqual(40);
   });
+
+  it('names Valence’s own apps by the device they say they are on', () => {
+    expect(describeDevice("Valence (Dan's iPhone)")).toBe("Valence on Dan's iPhone");
+    expect(describeDevice('Valence (Living Room)')).toBe('Valence on Living Room');
+  });
+
+  it('tells the desktop app from the browser it is built on', () => {
+    expect(
+      describeDevice(
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Valence/1.1.2 Chrome/140.0.0.0 Electron/38.0.0 Safari/537.36',
+      ),
+    ).toBe('Valence desktop app on macOS');
+  });
+
+  it('names an app from before it said which device it was on as Valence, not its library', () => {
+    expect(describeDevice('Valence/1 CFNetwork/3896.100.1.3.1 Darwin/25.0.0')).toBe(
+      'Valence on an Apple device',
+    );
+    expect(describeDevice('okhttp/4.12.0')).toBe('Valence on Android');
+  });
 });

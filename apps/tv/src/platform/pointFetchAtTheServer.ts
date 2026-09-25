@@ -1,6 +1,9 @@
 import { PLACEHOLDER } from '@ValenceClient/session/askTheServer';
 import { signedHeaders } from '@ValenceTv/platform/theSessionToken';
 import { theServersOrigin } from '@ValenceTv/platform/theServersOrigin';
+import { describeThisTv } from '@ValenceTv/platform/describeThisTv';
+import { appUserAgent } from '@ValenceCore/functions/appUserAgent';
+import Constants from 'expo-constants';
 
 const OURS = '/api/';
 
@@ -29,7 +32,8 @@ const atTheServer = (asked: string): string => {
  * Adds this television's session to a request's headers, unless the request already says who it is,
  * and says the request comes from the server's own origin, as a page the server served would. The
  * sign-in library refuses anything that changes a session — signing out, above all — without an
- * origin it trusts, and a browser always sends one where a television sends none.
+ * origin it trusts, and a browser always sends one where a television sends none. It names the
+ * television too, so the devices signed in to an account list it by name.
  *
  * @param given - The headers the request was made with.
  * @returns The headers to send.
@@ -48,6 +52,8 @@ const withTheSession = (given: HeadersInit | undefined): Headers => {
   if (origin !== null && !headers.has('origin')) {
     headers.set('origin', origin);
   }
+
+  headers.set('user-agent', appUserAgent(describeThisTv(Constants.deviceName ?? null)));
 
   return headers;
 };

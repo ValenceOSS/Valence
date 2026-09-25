@@ -51,6 +51,12 @@ describe('withTheSession', () => {
     expect(headers.get('accept')).toBe('application/json');
   });
 
+  it('names the television, so the devices signed in list it by name', () => {
+    rememberServerAddress('http://valence.local:3000');
+
+    expect(withTheSession({}).get('user-agent')).toMatch(/^Valence \(.+\)$/u);
+  });
+
   it('keeps who a request already says it is', () => {
     rememberServerAddress('http://valence.local:3000');
     keepTheSessionToken('secret');
