@@ -128,6 +128,28 @@ describe('createAudiobookPlayer', () => {
     expect(player.read().bookPositionSeconds).toBe(0);
   });
 
+  it('lines up the next track and runs on into it without a gap, where the audio can', () => {
+    const { audio, save, player } = aPlayer();
+    const lineUp = vi.fn();
+
+    audio.lineUp = lineUp;
+    player.open(BOOK, TRACKS, null);
+    audio.fire('loadedmetadata');
+
+    expect(lineUp).toHaveBeenLastCalledWith(`/api/books/${BOOK.id}/chapters/two/audio`);
+
+    audio.fire('advanced');
+
+    expect(audio.src).toBe(`/api/books/${BOOK.id}/chapters/one/audio`);
+    expect(player.read()).toMatchObject({ trackAt: 1, bookPositionSeconds: 100 });
+    expect(save).toHaveBeenLastCalledWith(BOOK.id, {
+      chapterId: 'two',
+      positionSeconds: 0,
+      isFinished: false,
+    });
+    expect(lineUp).toHaveBeenCalledTimes(1);
+  });
+
   it('carries on into the next track, and says the book is finished after the last', () => {
     const { audio, save, player } = aPlayer();
 

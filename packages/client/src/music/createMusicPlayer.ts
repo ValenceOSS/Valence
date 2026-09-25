@@ -30,7 +30,10 @@ type AudioLike = {
   play: () => Promise<void>;
   pause: () => void;
   addEventListener: (type: string, listener: () => void) => void;
+  lineUp?: (src: string) => void;
 };
+
+type LinedUp = { src: string; queue: PlayQueue; quality: AudioQuality };
 
 type RemoteDevice = { clientId: string; label: string };
 
@@ -122,9 +125,10 @@ const VOLUME_SETTLES_MS = 200;
  *
  * Lossless is the file as it is, and a device that cannot play a file is asked for the highest
  * encode instead; one that fails partway is asked again at that encode, where it left off, before
- * anybody is told it would not play. What it plays is reported to the server, so this person's
- * other devices can show it, and while it is controlling one of them every button goes there
- * instead.
+ * anybody is told it would not play. Where the audio can take the next track before this one ends,
+ * it is given it, so an album plays through without a gap. What it plays is reported to the server,
+ * so this person's other devices can show it, and while it is controlling one of them every button
+ * goes there instead.
  *
  * @param deps - The audio element, where tracks stream from, and how to reach the server.
  * @returns The player.
@@ -156,12 +160,46 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
   let mirrored: MusicNowPlaying | null = null;
   let mirroredQueue = '';
   let volumeTimer: ReturnType<typeof setTimeout> | null = null;
+  let linedUp: LinedUp | null = null;
 
   audio.volume = gainFor(kept.volume);
   audio.muted = kept.isMuted;
 
+  const lineUpNext = (): void => {
+    const { lineUp } = audio;
+
+    if (lineUp === undefined) {
+      return;
+    }
+
+    const moved = state.remote === null && state.queue !== null ? nextIn(state.queue, false) : null;
+    const track = moved === null ? null : currentOf(moved);
+    const was = linedUp?.src ?? '';
+
+    if (moved === null || track === null) {
+      linedUp = null;
+    } else {
+      const quality = playableQuality(track, state.quality, canPlay);
+
+      linedUp = { src: streamUrl(track.id, quality), queue: moved, quality };
+    }
+
+    if ((linedUp?.src ?? '') !== was) {
+      lineUp(linedUp?.src ?? '');
+    }
+  };
+
+  const playFrom = (src: string): void => {
+    linedUp = null;
+    audio.src = src;
+  };
+
   const change = (next: Partial<MusicPlayerState>): void => {
     state = { ...state, ...next };
+
+    if ('queue' in next || 'quality' in next || 'remote' in next) {
+      lineUpNext();
+    }
 
     for (const listener of listeners) {
       listener();
@@ -232,7 +270,7 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
     const quality = playableQuality(track, state.quality, canPlay);
 
     resumeAt = positionSeconds > 0 ? positionSeconds : null;
-    audio.src = streamUrl(track.id, quality);
+    playFrom(streamUrl(track.id, quality));
 
     change({
       queue,
@@ -304,7 +342,7 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
     tell(true);
   });
 
-  audio.addEventListener('ended', () => {
+  const moveOn = (): void => {
     const { queue } = state;
     const moved = queue === null ? null : nextIn(queue, false);
 
@@ -316,6 +354,30 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
     }
 
     load(moved, 0, true);
+  };
+
+  audio.addEventListener('ended', moveOn);
+
+  audio.addEventListener('advanced', () => {
+    const arrived = linedUp;
+    const track = arrived === null ? null : currentOf(arrived.queue);
+
+    if (arrived === null || track === null) {
+      moveOn();
+
+      return;
+    }
+
+    linedUp = null;
+    change({
+      queue: arrived.queue,
+      current: track,
+      playingQuality: arrived.quality,
+      positionSeconds: 0,
+      durationSeconds: track.durationSeconds,
+      problem: null,
+    });
+    tell(true);
   });
 
   audio.addEventListener('error', () => {
@@ -327,8 +389,9 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
 
       if (track !== null) {
         resumeAt = state.positionSeconds > 0 ? state.positionSeconds : null;
-        audio.src = streamUrl(track.id, quality);
+        playFrom(streamUrl(track.id, quality));
         change({ playingQuality: quality });
+        lineUpNext();
         audio.play().catch(() => {
           change({ isPlaying: false });
         });

@@ -96,4 +96,38 @@ describe('speakerAudio, changing its mind', () => {
       null,
     );
   });
+
+  it('lines up the next file behind the one handed over, and takes it as playing once it advances', async () => {
+    const { speaker, say } = aFakeSpeaker();
+    const audio = speakerAudio(speaker, 'music');
+
+    audio.src = '/api/music/tracks/one/stream';
+    audio.lineUp?.('/api/music/tracks/two/stream');
+    await new Promise(setImmediate);
+
+    expect(speaker.lineUp).toHaveBeenCalledWith(
+      'music',
+      'http://one.local:8420/api/music/tracks/two/stream',
+      null,
+    );
+    expect(speaker.load.mock.invocationCallOrder[0]).toBeLessThan(
+      speaker.lineUp.mock.invocationCallOrder[0] ?? 0,
+    );
+
+    say({ channel: 'music', type: 'advanced', currentTime: 0, duration: 180, paused: false });
+
+    expect(audio.src).toBe('/api/music/tracks/two/stream');
+  });
+
+  it('never lines up behind a file that has since been replaced', async () => {
+    const { speaker } = aFakeSpeaker();
+    const audio = speakerAudio(speaker, 'music');
+
+    audio.src = '/api/music/tracks/one/stream';
+    audio.lineUp?.('/api/music/tracks/two/stream');
+    audio.src = '/api/music/tracks/three/stream';
+    await new Promise(setImmediate);
+
+    expect(speaker.lineUp).not.toHaveBeenCalled();
+  });
 });

@@ -135,6 +135,67 @@ describe('createMusicPlayer', () => {
     expect(audio.src).toContain(THREE[1]?.id ?? 'missing');
   });
 
+  it('lines up the next track behind the one playing, where the audio can take it', () => {
+    const { player, audio } = build();
+    const lineUp = vi.fn();
+
+    audio.lineUp = lineUp;
+    player.play(THREE, 0);
+
+    expect(lineUp).toHaveBeenLastCalledWith(`/stream/${THREE[1]?.id ?? ''}?quality=lossless`);
+  });
+
+  it('runs on into the track lined up without loading it again, and lines up the one after', () => {
+    const { player, audio, fire } = build();
+    const lineUp = vi.fn();
+
+    audio.lineUp = lineUp;
+    player.play(THREE, 0);
+
+    const loaded = audio.src;
+
+    fire('advanced');
+
+    expect(audio.src).toBe(loaded);
+    expect(player.read()).toMatchObject({ current: THREE[1], positionSeconds: 0 });
+    expect(lineUp).toHaveBeenLastCalledWith(`/stream/${THREE[2]?.id ?? ''}?quality=lossless`);
+  });
+
+  it('lines up again when what comes next changes', () => {
+    const { player, audio } = build();
+    const lineUp = vi.fn();
+    const added = track(4);
+
+    audio.lineUp = lineUp;
+    player.play(THREE, 0);
+    player.playNext([added]);
+
+    expect(lineUp).toHaveBeenLastCalledWith(`/stream/${added.id}?quality=lossless`);
+  });
+
+  it('lines up nothing behind the last track', () => {
+    const { player, audio, fire } = build();
+    const lineUp = vi.fn();
+
+    audio.lineUp = lineUp;
+    player.play(THREE, 1);
+    fire('advanced');
+
+    expect(player.read().current).toBe(THREE[2]);
+    expect(lineUp).toHaveBeenCalledTimes(1);
+  });
+
+  it('takes back what was lined up once it is no longer next', () => {
+    const { player, audio } = build();
+    const lineUp = vi.fn();
+
+    audio.lineUp = lineUp;
+    player.play(THREE, 1);
+    player.removeFromQueue(2);
+
+    expect(lineUp).toHaveBeenLastCalledWith('');
+  });
+
   it('stops at the end of the queue', () => {
     const { player, fire } = build();
 

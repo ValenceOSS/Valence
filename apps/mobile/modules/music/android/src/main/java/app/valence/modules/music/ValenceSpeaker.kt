@@ -14,11 +14,15 @@ import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.source.MediaSource
 
 /**
  * One of the module's speakers: a player of its own, what it was last told to play, and how fast,
  * so a song and a book can each be loaded, paused and carried on without the other losing its
  * place.
+ *
+ * The file to play next can be lined up behind the one playing, and the player runs straight on
+ * into it without a gap, saying it has advanced rather than that the last one ended.
  */
 @OptIn(UnstableApi::class)
 internal class ValenceSpeaker(
@@ -46,6 +50,7 @@ internal class ValenceSpeaker(
   private var loudness = 1f
   private var isMuted = false
   private var hasSaidReady = false
+  private var isLinedUp = false
 
   /** Reports what the player does, in the events a browser's audio element would send. */
   private val watching = object : Player.Listener {
@@ -75,6 +80,23 @@ internal class ValenceSpeaker(
       say(this@ValenceSpeaker, "error")
     }
 
+    override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+      if (reason != Player.MEDIA_ITEM_TRANSITION_REASON_AUTO || !isLinedUp) {
+        return
+      }
+
+      isLinedUp = false
+      player.removeMediaItems(0, player.currentMediaItemIndex)
+      say(this@ValenceSpeaker, "advanced")
+
+      if (player.playbackState == Player.STATE_READY) {
+        say(this@ValenceSpeaker, "loadedmetadata")
+        say(this@ValenceSpeaker, "canplay")
+      } else {
+        hasSaidReady = false
+      }
+    }
+
     override fun onPositionDiscontinuity(
       oldPosition: Player.PositionInfo,
       newPosition: Player.PositionInfo,
@@ -90,23 +112,44 @@ internal class ValenceSpeaker(
     player.addListener(watching)
   }
 
-  /** Starts on a new file, forgetting the last one. */
+  /** Starts on a new file, forgetting the last one and any lined up after it. */
   fun load(url: String, cookie: String?) {
-    val http = DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true)
-
     this.cookie = cookie
+    hasSaidReady = false
+    isLinedUp = false
+    player.setMediaSource(sourceFor(url, cookie))
+    player.prepare()
+    say(this, "waiting")
+  }
+
+  /** Lines up the file to play once this one ends, in place of any lined up before, or none. */
+  fun lineUp(url: String, cookie: String?) {
+    val after = player.currentMediaItemIndex + 1
+
+    if (after < player.mediaItemCount) {
+      player.removeMediaItems(after, player.mediaItemCount)
+    }
+
+    isLinedUp = false
+
+    if (url.isEmpty() || player.mediaItemCount == 0) {
+      return
+    }
+
+    player.addMediaSource(sourceFor(url, cookie))
+    isLinedUp = true
+  }
+
+  /** A file to play, asked for with the session it was given. */
+  private fun sourceFor(url: String, cookie: String?): MediaSource {
+    val http = DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true)
 
     if (cookie != null) {
       http.setDefaultRequestProperties(mapOf("Cookie" to cookie))
     }
 
-    val source = DefaultMediaSourceFactory(DefaultDataSource.Factory(context, http))
+    return DefaultMediaSourceFactory(DefaultDataSource.Factory(context, http))
       .createMediaSource(MediaItem.Builder().setUri(Uri.parse(url)).setMediaMetadata(theMetadata()).build())
-
-    hasSaidReady = false
-    player.setMediaSource(source)
-    player.prepare()
-    say(this, "waiting")
   }
 
   /** Moves to a place in the file. */
@@ -148,12 +191,16 @@ internal class ValenceSpeaker(
     val current = player.currentMediaItem ?: return
 
     runCatching {
-      player.replaceMediaItem(0, current.buildUpon().setMediaMetadata(theMetadata()).build())
+      player.replaceMediaItem(
+        player.currentMediaItemIndex,
+        current.buildUpon().setMediaMetadata(theMetadata()).build(),
+      )
     }
   }
 
   /** Stops, and forgets the file. */
   fun stop() {
+    isLinedUp = false
     player.stop()
     player.clearMediaItems()
   }

@@ -26,6 +26,9 @@ const AudioEventSchema = z.object({
  * been handed over waits for it. Taking the file away stops the speaker, and a file asked for and
  * then replaced before its session arrived is never loaded.
  *
+ * The file to play next can be lined up behind the one playing, so the speaker runs straight on
+ * into it without a gap and says it has advanced rather than ended.
+ *
  * @param speaker - The native music module.
  * @param channel - Which of its speakers.
  * @returns What a player plays through.
@@ -41,12 +44,19 @@ const speakerAudio = (speaker: NativeMusic, channel: Channel): AudioLike & Liste
   let rate = 1;
   let handedOver: Promise<void> = Promise.resolve();
   let asked = 0;
+  let upNext = '';
+  let linedUp = 0;
 
   speaker.addListener('onAudio', (said) => {
     const read = AudioEventSchema.safeParse(said);
 
     if (!read.success || read.data.channel !== channel) {
       return;
+    }
+
+    if (read.data.type === 'advanced') {
+      source = upNext;
+      upNext = '';
     }
 
     at = read.data.currentTime;
@@ -63,6 +73,7 @@ const speakerAudio = (speaker: NativeMusic, channel: Channel): AudioLike & Liste
     },
     set src(to: string) {
       source = to;
+      upNext = '';
       at = 0;
       long = Number.NaN;
       asked += 1;
@@ -129,6 +140,23 @@ const speakerAudio = (speaker: NativeMusic, channel: Channel): AudioLike & Liste
     pause: () => {
       isPaused = true;
       speaker.pause(channel);
+    },
+    lineUp: (to) => {
+      upNext = to;
+      linedUp += 1;
+
+      const thisAsk = asked;
+      const thisLine = linedUp;
+      const whole = to === '' || !to.startsWith('/') ? to : onThisServer(to);
+      const isStill = (): boolean => thisAsk === asked && thisLine === linedUp;
+
+      void handedOver
+        .then(async () => (whole === '' ? null : theCookiesThisPhoneHolds(whole)))
+        .then((cookie) => {
+          if (isStill()) {
+            speaker.lineUp(channel, whole, cookie);
+          }
+        });
     },
     addEventListener: (type, listener) => {
       const held = listeners.get(type) ?? new Set<() => void>();

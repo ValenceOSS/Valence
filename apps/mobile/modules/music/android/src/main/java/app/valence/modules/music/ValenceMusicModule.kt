@@ -85,6 +85,10 @@ class ValenceMusicModule : Module() {
       }
     }
 
+    Function("lineUp") { channel: String, url: String, cookie: String? ->
+      main.post { speaker(channel)?.lineUp(url, cookie) }
+    }
+
     Function("play") { channel: String ->
       main.post { play(channel) }
     }
