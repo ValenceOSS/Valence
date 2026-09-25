@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { say } from '@ValenceI18n/say';
 import { Reorder } from 'motion/react';
 import { Heart as HeartIcon } from '@keyline-icons/react';
 import {
@@ -130,7 +131,11 @@ const TrackList = ({
                     isCurrent ? 'text-text' : '',
                   )}
                 >
-                  {isCurrent && state.isPlaying ? <Equaliser label="Playing" /> : number.toString()}
+                  {isCurrent && state.isPlaying ? (
+                    <Equaliser label={say('screens.trackList.playing')} />
+                  ) : (
+                    number.toString()
+                  )}
                 </span>
 
                 <Button
@@ -138,7 +143,9 @@ const TrackList = ({
                   size="none"
                   isIconOnly
                   label={
-                    isCurrent && state.isPlaying ? `Pause ${track.title}` : `Play ${track.title}`
+                    isCurrent && state.isPlaying
+                      ? say('screens.trackList.pauseTrack', { title: track.title })
+                      : say('screens.trackList.playTrack', { title: track.title })
                   }
                   hasTooltip={false}
                   className="absolute inset-0 flex items-center justify-center text-text opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
@@ -189,7 +196,7 @@ const TrackList = ({
 
                     {track.isLossless ? (
                       <span className="mr-1 rounded-xs bg-hover px-1 text-[0.625rem] font-semibold uppercase tracking-wide">
-                        Lossless
+                        {say('screens.trackList.lossless')}
                       </span>
                     ) : null}
 
@@ -233,7 +240,11 @@ const TrackList = ({
                 size="none"
                 isIconOnly
                 isActive={isLiked}
-                label={isLiked ? `Unlike ${track.title}` : `Like ${track.title}`}
+                label={
+                  isLiked
+                    ? say('screens.trackList.unlikeTrack', { title: track.title })
+                    : say('screens.trackList.likeTrack', { title: track.title })
+                }
                 hasTooltip={false}
                 className={cn(
                   'transition-opacity',

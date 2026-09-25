@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { AnimatedBytes } from '@ValenceScreens/components/AnimatedBytes/AnimatedBytes';
 import { describeTimeLeft } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeTimeLeft';
 import type { RequestProgress } from '@ValenceContracts/schemas/CatalogueTitle';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says how a download is coming along, for whoever is waiting on it: how much has arrived, how
@@ -14,14 +15,25 @@ import type { RequestProgress } from '@ValenceContracts/schemas/CatalogueTitle';
 const describeDownloadProgress = (progress: RequestProgress): ReactNode => {
   const parts: ReactNode[] = [];
 
-  if (progress.sizeBytes !== null) {
+  const { sizeBytes, doneBytes, secondsLeft } = progress;
+
+  if (sizeBytes !== null) {
     parts.push(
-      progress.doneBytes === null ? (
-        <AnimatedBytes bytes={progress.sizeBytes} />
+      doneBytes === null ? (
+        <AnimatedBytes bytes={sizeBytes} />
       ) : (
         <>
-          <AnimatedBytes bytes={progress.doneBytes} /> of{' '}
-          <AnimatedBytes bytes={progress.sizeBytes} />
+          {say('screens.describeDownloadProgress.doneOfSize')
+            .split(/(\{done\}|\{size\})/u)
+            .map((piece, at) =>
+              piece === '{done}' ? (
+                <AnimatedBytes key={at.toString()} bytes={doneBytes} />
+              ) : piece === '{size}' ? (
+                <AnimatedBytes key={at.toString()} bytes={sizeBytes} />
+              ) : (
+                piece
+              ),
+            )}
         </>
       ),
     );
@@ -31,8 +43,20 @@ const describeDownloadProgress = (progress: RequestProgress): ReactNode => {
     parts.push(<AnimatedBytes bytes={progress.downloadBytesPerSecond} suffix="/s" />);
   }
 
-  if (progress.secondsLeft !== null) {
-    parts.push(<>{describeTimeLeft(progress.secondsLeft)} left</>);
+  if (secondsLeft !== null) {
+    parts.push(
+      <>
+        {say('screens.describeDownloadProgress.timeLeft')
+          .split(/(\{time\})/u)
+          .map((piece, at) =>
+            piece === '{time}' ? (
+              <Fragment key={at.toString()}>{describeTimeLeft(secondsLeft)}</Fragment>
+            ) : (
+              piece
+            ),
+          )}
+      </>,
+    );
   }
 
   if (parts.length === 0) {

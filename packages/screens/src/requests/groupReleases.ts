@@ -1,6 +1,7 @@
 import { RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
 import { RELEASE_TYPE_NAMES } from '@ValenceClient/requests/RELEASE_TYPE_NAMES';
 import type { CatalogueAlbum, ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
+import { say } from '@ValenceI18n/say';
 
 type ReleaseGroup = {
   id: string;
@@ -34,7 +35,7 @@ const groupReleases = (albums: readonly CatalogueAlbum[]): ReleaseGroup[] => {
       title: RELEASE_TYPE_NAMES[type].label,
       of: type,
     })),
-    { id: OTHER, title: 'Other releases', of: null },
+    { id: OTHER, title: say('screens.groupReleases.other'), of: null },
   ];
 
   return named

@@ -35,12 +35,14 @@ import { PlaylistView } from './components/PlaylistView/PlaylistView';
 import { PlaylistsView } from './components/PlaylistsView/PlaylistsView';
 import { QueuePanel } from './components/QueuePanel/QueuePanel';
 import type { MusicView } from '@ValenceClient/music/musicView';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
 const PANEL_TITLES = {
-  queue: 'Queue',
-  devices: 'Play on another device',
-  party: 'Listening party',
-} as const;
+  queue: { titleKey: 'screens.musicPage.queue', closeKey: 'screens.musicPage.closeQueue' },
+  devices: { titleKey: 'screens.musicPage.devices', closeKey: 'screens.musicPage.closeDevices' },
+  party: { titleKey: 'screens.musicPage.party', closeKey: 'screens.musicPage.closeParty' },
+} as const satisfies Record<string, { titleKey: StringKey; closeKey: StringKey }>;
 
 const PANEL_WIDTH = '20.5rem';
 
@@ -116,7 +118,7 @@ const MusicPage = () => {
 
   return (
     <main className="px-2 pt-2 sm:px-3 sm:pt-3">
-      <h1 className="sr-only">Music</h1>
+      <h1 className="sr-only">{say('screens.musicPage.heading')}</h1>
 
       <div className="flex flex-col h-[calc(100svh-var(--nav-clearance)-var(--valence-window-bar,0px)-var(--music-bar-room,0px)-1rem)] min-h-[28rem] sm:h-[calc(100svh-var(--nav-clearance)-var(--valence-window-bar,0px)-var(--music-bar-room,0px)-1.5rem)]">
         {isWide ? null : (
@@ -128,7 +130,7 @@ const MusicPage = () => {
                 setIsLibraryOpen(true);
               }}
             >
-              Your library
+              {say('screens.musicPage.yourLibrary')}
               <Icon of={MenuIcon} size={16} />
             </Button>
           </div>
@@ -153,7 +155,10 @@ const MusicPage = () => {
             </div>
           ) : null}
 
-          <section aria-label="Music" className="valence-card-shell flex min-h-0 min-w-0 flex-1">
+          <section
+            aria-label={say('screens.musicPage.heading')}
+            className="valence-card-shell flex min-h-0 min-w-0 flex-1"
+          >
             <div className="valence-card-face valence-card-face--raised relative min-h-0 flex-1 overflow-y-auto overscroll-contain [container-type:size] [--music-lane:1.25rem] sm:[--music-lane:2rem]">
               <MusicWash />
 
@@ -184,7 +189,7 @@ const MusicPage = () => {
                   className="hidden min-h-0 shrink-0 justify-end overflow-hidden lg:flex"
                 >
                   <aside
-                    aria-label={PANEL_TITLES[panel]}
+                    aria-label={say(PANEL_TITLES[panel].titleKey)}
                     className="valence-card-shell ml-2 flex min-h-0 w-[20rem] shrink-0"
                   >
                     <AnimatePresence mode="wait" initial={false}>
@@ -199,13 +204,13 @@ const MusicPage = () => {
                       >
                         <div className="flex items-center justify-between gap-2 px-4 pt-4 pb-2">
                           <h2 className="text-base font-semibold tracking-tight text-text">
-                            {PANEL_TITLES[panel]}
+                            {say(PANEL_TITLES[panel].titleKey)}
                           </h2>
                           <Button
                             variant="ghost"
                             size="xs"
                             isIconOnly
-                            label={`Close ${PANEL_TITLES[panel].toLowerCase()}`}
+                            label={say(PANEL_TITLES[panel].closeKey)}
                             onClick={() => {
                               setMusicPanel(null);
                             }}
@@ -233,7 +238,7 @@ const MusicPage = () => {
       </div>
 
       <Dialog
-        label="Your library"
+        label={say('screens.musicPage.yourLibrary')}
         isOpen={!isWide && isLibraryOpen}
         onClose={() => {
           setIsLibraryOpen(false);
@@ -246,7 +251,9 @@ const MusicPage = () => {
       </Dialog>
 
       <Dialog
-        label={panel === null ? 'Music' : PANEL_TITLES[panel]}
+        label={
+          panel === null ? say('screens.musicPage.heading') : say(PANEL_TITLES[panel].titleKey)
+        }
         isOpen={!isWide && panel !== null}
         onClose={() => {
           setMusicPanel(null);
@@ -255,7 +262,7 @@ const MusicPage = () => {
       >
         {panel === null ? null : (
           <>
-            <DialogTitle title={PANEL_TITLES[panel]} />
+            <DialogTitle title={say(PANEL_TITLES[panel].titleKey)} />
 
             <DialogContent>
               {panel === 'queue' ? (

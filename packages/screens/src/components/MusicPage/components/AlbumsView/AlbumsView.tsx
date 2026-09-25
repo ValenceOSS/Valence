@@ -9,12 +9,14 @@ import { AlbumShelf } from '@ValenceScreens/components/AlbumShelf/AlbumShelf';
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
 import type { AlbumOrder } from '@ValenceClient/music/fetchMusic';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
 const ORDERS = [
-  { id: 'recent', label: 'Recently added' },
-  { id: 'title', label: 'A–Z' },
-  { id: 'year', label: 'Year' },
-] as const;
+  { id: 'recent', labelKey: 'screens.albumsView.orderRecent' },
+  { id: 'title', labelKey: 'screens.albumsView.orderTitle' },
+  { id: 'year', labelKey: 'screens.albumsView.orderYear' },
+] as const satisfies readonly { id: string; labelKey: StringKey }[];
 
 /**
  * Whether a choice is one of the orders albums can be put in.
@@ -36,7 +38,7 @@ const AlbumsView = () => {
   if (albums.isPending) {
     return (
       <div className={`py-8 ${MUSIC_LANES.page}`}>
-        <Skeleton label="Reading your albums" className="h-64 w-full" />
+        <Skeleton label={say('screens.albumsView.reading')} className="h-64 w-full" />
       </div>
     );
   }
@@ -47,8 +49,8 @@ const AlbumsView = () => {
     return (
       <NothingHere
         of={RecordIcon}
-        title="No albums yet"
-        detail="Once a music library has been scanned, its albums will be here."
+        title={say('screens.albumsView.emptyTitle')}
+        detail={say('screens.albumsView.emptyDetail')}
         fills
       />
     );
@@ -57,14 +59,14 @@ const AlbumsView = () => {
   return (
     <div className="pt-6 pb-12">
       <AlbumShelf
-        heading="Albums"
+        heading={say('screens.albumsView.heading')}
         layout="grid"
         albums={found}
         action={
           <SegmentedRow
-            label="Put the albums in order by"
+            label={say('screens.albumsView.orderLabel')}
             size="sm"
-            items={ORDERS}
+            items={ORDERS.map((one) => ({ id: one.id, label: say(one.labelKey) }))}
             value={order}
             onSelect={(id) => {
               if (isOrder(id)) {

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import type { CatalogueBrowse, CatalogueFilters } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { FilterGroup } from '@ValenceUI/FilterMenu.types';
+import { say } from '@ValenceI18n/say';
 
 const DECADES = [2020, 2010, 2000, 1990, 1980, 1970, 1960, 1950] as const;
 
@@ -39,24 +40,24 @@ const useCatalogueFilters = (
 
   const groups: FilterGroup[] = [
     {
-      name: 'Genre',
+      name: say('screens.useCatalogueFilters.genre'),
       isSingle: true,
       options: genres.map((entry) => ({ id: `genre:${entry.id}`, label: entry.name })),
     },
     {
-      name: 'Decade',
+      name: say('screens.useCatalogueFilters.decade'),
       isSingle: true,
       options: DECADES.map((start) => ({
         id: `decade:${start.toString()}`,
-        label: `${start.toString()}s`,
+        label: say('screens.useCatalogueFilters.decadeLabel', { year: start }),
       })),
     },
     {
-      name: 'Rating',
+      name: say('screens.useCatalogueFilters.rating'),
       isSingle: true,
       options: RATING_FLOORS.map((floor) => ({
         id: `rating:${floor.toString()}`,
-        label: `${floor.toString()}+`,
+        label: say('screens.useCatalogueFilters.ratingLabel', { rating: floor }),
       })),
     },
   ].filter((group) => group.options.length > 0);

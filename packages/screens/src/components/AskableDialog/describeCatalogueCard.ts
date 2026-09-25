@@ -3,6 +3,7 @@ import { REQUEST_KIND_NAMES } from '@ValenceScreens/requests/REQUEST_KIND_NAMES'
 import { describeStanding } from '@ValenceClient/requests/describeStanding';
 import type { MediaCardCorner } from '@ValenceUI/MediaCard.types';
 import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says how a title to ask for is drawn on a card: the kind of thing it is, how far its request has
@@ -20,8 +21,10 @@ const describeCatalogueCard = (
 ): { badges: string[]; corner?: MediaCardCorner } => {
   if (title.standing.status === 'library') {
     return {
-      badges: [REQUEST_KIND_NAMES[title.kind], 'In library'],
-      ...(isWatched ? { corner: { icon: CheckIcon, label: 'Watched' } } : {}),
+      badges: [REQUEST_KIND_NAMES[title.kind], say('screens.describeCatalogueCard.inLibrary')],
+      ...(isWatched
+        ? { corner: { icon: CheckIcon, label: say('screens.describeCatalogueCard.watched') } }
+        : {}),
     };
   }
 

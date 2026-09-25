@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { Button } from '@ValenceUI/Button';
 import { describeProblem } from './describeProblem';
 import type { PageProblemProps } from './PageProblem.types';
+import { say } from '@ValenceI18n/say';
 
 const ThrownSchema = z.object({ message: z.string() });
 
@@ -42,7 +43,7 @@ const PageProblem = ({ error }: PageProblemProps) => {
             window.location.reload();
           }}
         >
-          Try again
+          {say('common.tryAgain')}
         </Button>
 
         <Button
@@ -51,7 +52,7 @@ const PageProblem = ({ error }: PageProblemProps) => {
             window.location.assign('/');
           }}
         >
-          Go to the start
+          {say('screens.pageProblem.goToStart')}
         </Button>
       </div>
     </main>

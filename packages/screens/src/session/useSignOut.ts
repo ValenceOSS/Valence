@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { notify } from '@ValenceUI/notify';
@@ -25,7 +26,7 @@ const useSignOut = (): (() => Promise<void>) => {
     const ended = await signOut();
 
     if (!ended) {
-      notify.failed('You are still signed in. The server would not end the session.');
+      notify.failed(say('screens.useSignOut.failed'));
 
       return;
     }

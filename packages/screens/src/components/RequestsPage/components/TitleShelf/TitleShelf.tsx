@@ -6,6 +6,7 @@ import { ShelfMoreCard } from '@ValenceScreens/components/RequestsPage/component
 import type { TitleShelfProps } from './TitleShelf.types';
 import { useIsTitleWatched } from '@ValenceScreens/requests/useIsTitleWatched';
 import { describeCatalogueCard } from '@ValenceScreens/components/AskableDialog/describeCatalogueCard';
+import { say } from '@ValenceI18n/say';
 
 const BEHIND_MORE = 4;
 
@@ -51,7 +52,7 @@ const TitleShelf = ({ shelf, onAsk, onBrowse }: TitleShelfProps) => {
       {openAll === undefined ? null : (
         <RevealItem index={shelf.titles.length} className="shrink-0 snap-start">
           <ShelfMoreCard
-            label={`See all of ${shelf.title.toLowerCase()}`}
+            label={say('screens.titleShelf.seeAllOf', { shelf: shelf.title.toLowerCase() })}
             posterUrls={shelf.titles
               .map((title) => title.posterUrl)
               .filter((posterUrl) => posterUrl !== null)

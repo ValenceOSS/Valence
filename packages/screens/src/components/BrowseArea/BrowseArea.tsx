@@ -33,6 +33,7 @@ import { MediaGrid } from '@ValenceScreens/components/MediaGrid/MediaGrid';
 import { GridSizeChooser } from '@ValenceScreens/components/GridSizeChooser/GridSizeChooser';
 import { readGridSize, saveGridSize } from '@ValenceScreens/library/gridSizePreference';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
+import type { StringKey } from '@ValenceI18n/StringKey';
 import type { BrowseAreaProps, BrowseKind } from './BrowseArea.types';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { BookRow } from '@ValenceScreens/components/BookRow/BookRow';
@@ -40,39 +41,59 @@ import { AppliedFilters } from '@ValenceUI/AppliedFilters';
 import { BackToTop } from '@ValenceUI/BackToTop';
 import { FilterMenu } from '@ValenceUI/FilterMenu';
 import { useLibraryFilters } from '@ValenceClient/library/useLibraryFilters';
+import { say } from '@ValenceI18n/say';
 
 const PAGE_SIZE = 120;
 
 const PAGES: Record<
   BrowseKind,
   {
-    title: string;
-    empty: string;
+    title: StringKey;
+    empty: StringKey;
+    filter: StringKey;
+    order: StringKey;
+    reading: StringKey;
     of: IconGlyph;
     emptyIsAbout: 'one library' | 'every library' | 'nothing anybody scanned';
   }
 > = {
   shows: {
-    title: 'Shows',
-    empty: 'No shows yet',
+    title: 'screens.browseArea.shows.title',
+    empty: 'screens.browseArea.shows.empty',
+    filter: 'screens.browseArea.shows.filter',
+    order: 'screens.browseArea.shows.order',
+    reading: 'screens.browseArea.shows.reading',
+    // eslint-disable-next-line valence/no-hard-coded-strings -- a case howToFillIt switches on, not words
     emptyIsAbout: 'one library',
     of: MonitorIcon,
   },
   films: {
-    title: 'Films',
-    empty: 'No films yet',
+    title: 'screens.browseArea.films.title',
+    empty: 'screens.browseArea.films.empty',
+    filter: 'screens.browseArea.films.filter',
+    order: 'screens.browseArea.films.order',
+    reading: 'screens.browseArea.films.reading',
+    // eslint-disable-next-line valence/no-hard-coded-strings -- a case howToFillIt switches on, not words
     emptyIsAbout: 'one library',
     of: FilmIcon,
   },
   new: {
-    title: 'New & Popular',
-    empty: 'Nothing new yet',
+    title: 'screens.browseArea.new.title',
+    empty: 'screens.browseArea.new.empty',
+    filter: 'screens.browseArea.new.filter',
+    order: 'screens.browseArea.new.order',
+    reading: 'screens.browseArea.new.reading',
+    // eslint-disable-next-line valence/no-hard-coded-strings -- a case howToFillIt switches on, not words
     emptyIsAbout: 'every library',
     of: FlameIcon,
   },
   favourites: {
-    title: 'Favourites',
-    empty: 'Nothing has been favourited yet',
+    title: 'screens.browseArea.favourites.title',
+    empty: 'screens.browseArea.favourites.empty',
+    filter: 'screens.browseArea.favourites.filter',
+    order: 'screens.browseArea.favourites.order',
+    reading: 'screens.browseArea.favourites.reading',
+    // eslint-disable-next-line valence/no-hard-coded-strings -- a case howToFillIt switches on, not words
     emptyIsAbout: 'nothing anybody scanned',
     of: HeartIcon,
   },
@@ -80,12 +101,12 @@ const PAGES: Record<
 
 const BROWSE_ORDERS: readonly BrowseOrder[] = ['added', 'released', 'title', 'rating', 'size'];
 
-const ORDER_NAMES: Record<BrowseOrder, string> = {
-  added: 'Recently added',
-  released: 'Release date',
-  title: 'Title',
-  rating: 'Rating',
-  size: 'Size',
+const ORDER_NAMES: Record<BrowseOrder, StringKey> = {
+  added: 'screens.browseArea.order.added',
+  released: 'screens.browseArea.order.released',
+  title: 'screens.browseArea.order.title',
+  rating: 'screens.browseArea.order.rating',
+  size: 'screens.browseArea.order.size',
 };
 /**
  * A page of the library asked one question — the films, the programmes, what arrived recently, what
@@ -237,11 +258,11 @@ const BrowseArea = ({
         transition={revealTransition(prefersReducedMotion, 'heavy')}
         className="flex min-h-10 items-center justify-end gap-4"
       >
-        <h1 className="sr-only">{page.title}</h1>
+        <h1 className="sr-only">{say(page.title)}</h1>
 
         {!isFilterable || filters.groups.length === 0 ? null : (
           <FilterMenu
-            label={`Filter ${page.title.toLowerCase()}`}
+            label={say(page.filter)}
             hasLabel
             groups={filters.groups}
             selected={filters.selected}
@@ -251,19 +272,22 @@ const BrowseArea = ({
 
         {!isFilterable || isReading || items.length === 0 ? null : (
           <OptionMenu
-            label={`Order ${page.title.toLowerCase()}`}
+            label={say(page.order)}
             align="end"
             triggerShape="button"
             trigger={
               <>
                 <Icon of={SortIcon} size={16} />
-                {ORDER_NAMES[arrangement.order]}
+                {say(ORDER_NAMES[arrangement.order])}
               </>
             }
             groups={[
               {
-                name: 'Order',
-                options: BROWSE_ORDERS.map((order) => ({ id: order, label: ORDER_NAMES[order] })),
+                name: say('screens.browseArea.orderGroup'),
+                options: BROWSE_ORDERS.map((order) => ({
+                  id: order,
+                  label: say(ORDER_NAMES[order]),
+                })),
                 selectedId: arrangement.order,
                 onSelect: (id) => {
                   const chosen = BrowseOrderSchema.safeParse(id);
@@ -274,10 +298,10 @@ const BrowseArea = ({
                 },
               },
               {
-                name: 'Show',
+                name: say('screens.browseArea.showGroup'),
                 options: [
-                  { id: 'everything', label: 'Everything' },
-                  { id: 'unwatched', label: 'Only what you have not watched' },
+                  { id: 'everything', label: say('screens.browseArea.everything') },
+                  { id: 'unwatched', label: say('screens.browseArea.onlyUnwatched') },
                 ],
                 selectedId: arrangement.isHidingWatched ? 'unwatched' : 'everything',
                 onSelect: (id) => {
@@ -316,12 +340,12 @@ const BrowseArea = ({
       <motion.section
         variants={revealVariants(prefersReducedMotion)}
         transition={revealTransition(prefersReducedMotion)}
-        aria-label={page.title}
+        aria-label={say(page.title)}
         className="flex flex-col gap-5"
       >
         {libraries.isError || found.isError ? (
           <CouldNotRead
-            what={page.title}
+            what={say(page.title)}
             isTryingAgain={libraries.isFetching || found.isFetching}
             onTryAgain={() => {
               void libraries.refetch();
@@ -329,36 +353,37 @@ const BrowseArea = ({
             }}
           />
         ) : isReading ? (
-          <Spinner isCentered label={`Reading ${page.title.toLowerCase()}`} size="sm" />
+          <Spinner isCentered label={say(page.reading)} size="sm" />
         ) : items.length === 0 && books.length === 0 ? (
           hasNoLibraries ? (
             <NothingHere
               of={FolderOpenIcon}
-              title="No libraries yet"
+              title={say('screens.browseArea.noLibraries')}
+              // eslint-disable-next-line valence/no-hard-coded-strings -- a case howToFillIt switches on, not words
               detail={howToFillIt('no libraries', onAddLibrary !== undefined)}
               {...(onAddLibrary === undefined
                 ? {}
                 : {
                     action: (
                       <Button variant="glossy" onClick={onAddLibrary}>
-                        Add a library
+                        {say('screens.browseArea.addLibrary')}
                       </Button>
                     ),
                   })}
             />
           ) : page.emptyIsAbout === 'nothing anybody scanned' ? (
-            <NothingHere of={page.of} title={page.empty} />
+            <NothingHere of={page.of} title={say(page.empty)} />
           ) : (
             <NothingHere
               of={page.of}
-              title={page.empty}
+              title={say(page.empty)}
               detail={howToFillIt(page.emptyIsAbout, onAddLibrary !== undefined)}
               {...(onAddLibrary === undefined
                 ? {}
                 : {
                     action: (
                       <Button variant="glossy" onClick={onAddLibrary}>
-                        Scan it
+                        {say('screens.browseArea.scanIt')}
                       </Button>
                     ),
                   })}
@@ -390,7 +415,7 @@ const BrowseArea = ({
             )}
 
             {books.length === 0 || onOpenBook === undefined ? null : (
-              <BookRow title="Books" books={books} onOpen={onOpenBook} />
+              <BookRow title={say('screens.browseArea.books')} books={books} onOpen={onOpenBook} />
             )}
           </>
         )}

@@ -15,6 +15,7 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { RailCard } from '@ValenceScreens/components/RailCard/RailCard';
 import type { PersonCredits } from '@ValenceContracts/schemas/Person';
 import type { PersonDialogProps } from './PersonDialog.types';
+import { say } from '@ValenceI18n/say';
 
 const NOTHING: PersonCredits = { films: [], shows: [], episodes: [] };
 
@@ -93,14 +94,19 @@ const PersonDialog = ({
 
   return (
     <Dialog
-      label={person?.name ?? 'Somebody in the cast'}
+      label={person?.name ?? say('screens.personDialog.somebody')}
       isOpen={personId !== null}
       onClose={onClose}
       size="stage"
     >
       <DialogContent className="p-0">
         <div className="absolute right-4 top-4 z-10">
-          <Button isIconOnly variant="overlay" label="Close" onClick={onClose}>
+          <Button
+            isIconOnly
+            variant="overlay"
+            label={say('screens.personDialog.close')}
+            onClick={onClose}
+          >
             <Icon of={XIcon} size={18} />
           </Button>
         </div>
@@ -122,11 +128,13 @@ const PersonDialog = ({
 
             <span className="flex min-w-0 flex-col gap-2">
               <h2 className="text-3xl font-semibold tracking-[-0.02em] text-text">
-                {person?.name ?? 'Somebody in the cast'}
+                {person?.name ?? say('screens.personDialog.somebody')}
               </h2>
 
               {role === null || role === undefined || role === '' ? null : (
-                <span className="font-body text-sm text-text-muted">as {role}</span>
+                <span className="font-body text-sm text-text-muted">
+                  {say('screens.personDialog.asRole', { role })}
+                </span>
               )}
 
               {said.length === 0 ? null : (
@@ -149,7 +157,7 @@ const PersonDialog = ({
 
           {couldNotRead ? (
             <CouldNotRead
-              what="Anything about them"
+              what={say('screens.personDialog.anythingAboutThem')}
               isTryingAgain={asked.isFetching || theirs.isFetching}
               onTryAgain={() => {
                 void asked.refetch();
@@ -160,12 +168,12 @@ const PersonDialog = ({
 
           {isEmpty ? (
             <p className="font-body text-sm text-text-muted">
-              Nothing is known about them, and nothing of theirs is on this server.
+              {say('screens.personDialog.nothingKnown')}
             </p>
           ) : null}
 
           {credits.films.length === 0 ? null : (
-            <Rail title="Films" sizesCards className="px-0">
+            <Rail title={say('screens.personDialog.films')} sizesCards className="px-0">
               {credits.films.map((media, at) => (
                 <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
                   <RailCard media={media} onPlay={onPlay} onInspect={onInspect} />
@@ -175,7 +183,7 @@ const PersonDialog = ({
           )}
 
           {credits.shows.length === 0 ? null : (
-            <Rail title="Programmes" sizesCards className="px-0">
+            <Rail title={say('screens.personDialog.programmes')} sizesCards className="px-0">
               {credits.shows.map((media, at) => (
                 <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
                   <RailCard
@@ -190,7 +198,7 @@ const PersonDialog = ({
           )}
 
           {credits.episodes.length === 0 ? null : (
-            <Rail title="Episodes" sizesCards className="px-0">
+            <Rail title={say('screens.personDialog.episodes')} sizesCards className="px-0">
               {credits.episodes.map((media, at) => (
                 <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
                   <RailCard media={media} onPlay={onPlay} onInspect={onInspect} />

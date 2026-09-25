@@ -4,6 +4,7 @@ import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { useHeldFiles } from '@ValenceClient/downloads/useHeldFiles';
 import { PlayingAKeptFile } from '@ValenceScreens/components/PlayingAKeptFile/PlayingAKeptFile';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Plays a download from this device rather than from the server, in the same player as anything
@@ -22,11 +23,11 @@ const KeptPlayerPage = () => {
   if (file === null) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-shade px-4">
-        <p className="font-body text-sm text-text-muted">That is not on this device any more.</p>
+        <p className="font-body text-sm text-text-muted">{say('screens.keptPlayerPage.gone')}</p>
 
         <Button variant="ghost" size="sm" onClick={leave}>
           <Icon of={ArrowLeftIcon} size={16} />
-          Go back
+          {say('screens.keptPlayerPage.goBack')}
         </Button>
       </main>
     );

@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import type { ReactNode } from 'react';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Icon } from '@ValenceUI/Icon';
@@ -12,6 +13,8 @@ import {
 } from '@ValenceCore/functions/describePlaybackAxis';
 import { describeTranscodeReuse } from '@ValenceCore/functions/describeTranscodeReuse';
 import type { StreamStatsProps } from './StreamStats.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * Rounds a number of seconds for the statistics panel, to one decimal place — buffer and encode
@@ -84,7 +87,7 @@ Group.displayName = 'Group';
  */
 const size = (width: number | null, height: number | null): string =>
   width === null || height === null || width === 0
-    ? 'not reported'
+    ? say('screens.streamStats.notReported')
     : `${width.toString()}x${height.toString()}`;
 
 /**
@@ -129,7 +132,7 @@ const StreamStats = ({
 
   return (
     <section
-      aria-label="Stats for nerds"
+      aria-label={say('screens.streamStats.heading')}
       className="valence-rail valence-solid pointer-events-auto max-h-[calc(100svh-11rem)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-lg p-4 text-xs text-text"
     >
       <header
@@ -146,137 +149,188 @@ const StreamStats = ({
           onGrab === undefined ? '' : 'cursor-grab touch-none select-none active:cursor-grabbing',
         )}
       >
-        <h3 className="text-sm font-medium tracking-tight">Stats for nerds</h3>
+        <h3 className="text-sm font-medium tracking-tight">{say('screens.streamStats.heading')}</h3>
 
-        <Button isIconOnly variant="ghost" label="Close stats" size="sm" onClick={onClose}>
+        <Button
+          isIconOnly
+          variant="ghost"
+          label={say('screens.streamStats.close')}
+          size="sm"
+          onClick={onClose}
+        >
           <Icon of={XIcon} size={16} />
         </Button>
       </header>
 
       <div className="flex flex-col">
-        <Group name="Session">
-          <Row name="Title">{media.title}</Row>
-          <Row name="Media id">{media.id}</Row>
-          <Row name="Session">{session?.sessionId ?? 'not started'}</Row>
-          <Row name="Mode">{session?.mode ?? 'deciding'}</Row>
-          <Row name="Reused">
-            {session === null ? 'deciding' : describeTranscodeReuse(session.reuse)}
+        <Group name={say('screens.streamStats.groupSession')}>
+          <Row name={say('screens.streamStats.title')}>{media.title}</Row>
+          <Row name={say('screens.streamStats.mediaId')}>{media.id}</Row>
+          <Row name={say('screens.streamStats.session')}>
+            {session?.sessionId ?? say('screens.streamStats.notStarted')}
           </Row>
-          <Row name="Starts at">{formatDuration(sessionStartSeconds)}</Row>
-          <Row name="Delivery">
+          <Row name={say('screens.streamStats.mode')}>
+            {session?.mode ?? say('screens.streamStats.deciding')}
+          </Row>
+          <Row name={say('screens.streamStats.reused')}>
             {session === null
-              ? 'none'
+              ? say('screens.streamStats.deciding')
+              : describeTranscodeReuse(session.reuse)}
+          </Row>
+          <Row name={say('screens.streamStats.startsAt')}>
+            {formatDuration(sessionStartSeconds)}
+          </Row>
+          <Row name={say('screens.streamStats.delivery')}>
+            {session === null
+              ? say('screens.streamStats.none')
               : session.delivery.kind === 'hls'
-                ? `HLS — ${session.delivery.manifestUrl}`
-                : `Direct — ${session.delivery.url}`}
+                ? say('screens.streamStats.hlsDelivery', { url: session.delivery.manifestUrl })
+                : say('screens.streamStats.directDelivery', { url: session.delivery.url })}
           </Row>
         </Group>
 
-        <Group name="Source">
-          <Row name="Video">
+        <Group name={say('screens.streamStats.groupSource')}>
+          <Row name={say('screens.streamStats.video')}>
             {detail === null
-              ? 'unknown'
+              ? say('screens.streamStats.unknown')
               : `${video} ${detail.width}x${detail.height} ${detail.videoRange}`}
           </Row>
-          <Row name="Audio">
-            {audio === null ? 'none' : `${audio.codec} ${audio.channels}ch ${audio.language ?? ''}`}
+          <Row name={say('screens.streamStats.audio')}>
+            {audio === null
+              ? say('screens.streamStats.none')
+              : `${audio.codec} ${audio.channels}ch ${audio.language ?? ''}`}
           </Row>
-          <Row name="Subtitles">
+          <Row name={say('screens.streamStats.subtitles')}>
             {detail === null || detail.subtitleStreams.length === 0
-              ? 'none'
-              : `${detail.subtitleStreams.length.toString()} tracks, first ${detail.subtitleStreams[0]?.format ?? ''}`}
+              ? say('screens.streamStats.none')
+              : sayCount('screens.streamStats.subtitleTracks', detail.subtitleStreams.length, {
+                  format: detail.subtitleStreams[0]?.format ?? '',
+                })}
           </Row>
         </Group>
 
-        <Group name="Output">
-          <Row name="Video">
+        <Group name={say('screens.streamStats.groupOutput')}>
+          <Row name={say('screens.streamStats.video')}>
             {delivered === null
-              ? 'nothing selected yet'
-              : `${delivered.videoCodec ?? 'unknown'} ${size(delivered.width, delivered.height)}${
+              ? say('screens.streamStats.nothingSelected')
+              : `${delivered.videoCodec ?? say('screens.streamStats.unknown')} ${size(delivered.width, delivered.height)}${
                   delivered.frameRate === null ? '' : ` @ ${delivered.frameRate.toFixed(3)}fps`
                 }`}
           </Row>
-          <Row name="Audio">
+          <Row name={say('screens.streamStats.audio')}>
             {delivered === null
-              ? 'nothing selected yet'
-              : `${delivered.audioCodec ?? 'unknown'}${
+              ? say('screens.streamStats.nothingSelected')
+              : `${delivered.audioCodec ?? say('screens.streamStats.unknown')}${
                   delivered.audioChannels === null ? '' : ` ${delivered.audioChannels.toString()}ch`
                 }${
                   delivered.audioSampleRate === null
                     ? ''
-                    : ` ${delivered.audioSampleRate.toString()}Hz`
+                    : ` ${say('screens.streamStats.hertz', { rate: delivered.audioSampleRate })}`
                 }`}
           </Row>
-          <Row name="Container">{delivered?.mimeType ?? 'nothing selected yet'}</Row>
-          <Row name="Bitrate">
+          <Row name={say('screens.streamStats.container')}>
+            {delivered?.mimeType ?? say('screens.streamStats.nothingSelected')}
+          </Row>
+          <Row name={say('screens.streamStats.bitrate')}>
             {delivered?.bitrateKbps === null || delivered === null ? (
-              'not reported'
+              say('screens.streamStats.notReported')
             ) : (
               <AnimatedNumber value={delivered.bitrateKbps} suffix="kbps" />
             )}
           </Row>
-          <Row name="Presented size">{size(health.presentedWidth, health.presentedHeight)}</Row>
-        </Group>
-
-        <Group name="Plan">
-          <Row name="Container">
-            {plan === null ? 'deciding' : axis(plan.container.kind, plan.container.reason.detail)}
-          </Row>
-          <Row name="Video">{plan === null ? 'deciding' : videoAxis(plan.video)}</Row>
-          <Row name="Audio">{plan === null ? 'deciding' : audioAxis(plan.audio)}</Row>
-          <Row name="Subtitles">
-            {plan === null ? 'deciding' : axis(plan.subtitles.kind, plan.subtitles.reason.detail)}
+          <Row name={say('screens.streamStats.presentedSize')}>
+            {size(health.presentedWidth, health.presentedHeight)}
           </Row>
         </Group>
 
-        <Group name="Playback">
-          <Row name="Position">{formatDuration(health.positionSeconds)}</Row>
-          <Row name="Frame on screen">{formatDuration(health.frameSeconds)}</Row>
-          <Row name="Stream starts at">{formatDuration(health.streamFromSeconds)}</Row>
-          <Row name="Buffered ahead">{seconds(health.bufferedAheadSeconds)}</Row>
-          <Row name="Encoded so far">{seconds(health.encodedSeconds)}</Row>
-          <Row name="Frames dropped">
-            {health.droppedFrames === null || health.decodedFrames === null ? (
-              'not reported'
-            ) : (
-              <>
-                <AnimatedNumber value={health.droppedFrames} /> of{' '}
-                <AnimatedNumber value={health.decodedFrames} />
-              </>
-            )}
+        <Group name={say('screens.streamStats.groupPlan')}>
+          <Row name={say('screens.streamStats.container')}>
+            {plan === null
+              ? say('screens.streamStats.deciding')
+              : axis(plan.container.kind, plan.container.reason.detail)}
+          </Row>
+          <Row name={say('screens.streamStats.video')}>
+            {plan === null ? say('screens.streamStats.deciding') : videoAxis(plan.video)}
+          </Row>
+          <Row name={say('screens.streamStats.audio')}>
+            {plan === null ? say('screens.streamStats.deciding') : audioAxis(plan.audio)}
+          </Row>
+          <Row name={say('screens.streamStats.subtitles')}>
+            {plan === null
+              ? say('screens.streamStats.deciding')
+              : axis(plan.subtitles.kind, plan.subtitles.reason.detail)}
+          </Row>
+        </Group>
+
+        <Group name={say('screens.streamStats.groupPlayback')}>
+          <Row name={say('screens.streamStats.position')}>
+            {formatDuration(health.positionSeconds)}
+          </Row>
+          <Row name={say('screens.streamStats.frameOnScreen')}>
+            {formatDuration(health.frameSeconds)}
+          </Row>
+          <Row name={say('screens.streamStats.streamStartsAt')}>
+            {formatDuration(health.streamFromSeconds)}
+          </Row>
+          <Row name={say('screens.streamStats.bufferedAhead')}>
+            {seconds(health.bufferedAheadSeconds)}
+          </Row>
+          <Row name={say('screens.streamStats.encodedSoFar')}>{seconds(health.encodedSeconds)}</Row>
+          <Row name={say('screens.streamStats.framesDropped')}>
+            {health.droppedFrames === null || health.decodedFrames === null
+              ? say('screens.streamStats.notReported')
+              : say('screens.streamStats.framesOf')
+                  .split(/(\{dropped\}|\{decoded\})/u)
+                  .map((part, at) =>
+                    part === '{dropped}' ? (
+                      <AnimatedNumber key={part} value={health.droppedFrames ?? 0} />
+                    ) : part === '{decoded}' ? (
+                      <AnimatedNumber key={part} value={health.decodedFrames ?? 0} />
+                    ) : (
+                      <Fragment key={`words-${at.toString()}`}>{part}</Fragment>
+                    ),
+                  )}
           </Row>
         </Group>
 
         {party === undefined ? null : (
-          <Group name="Watch party">
-            <Row name="Watching together">
+          <Group name={say('screens.streamStats.groupWatchParty')}>
+            <Row name={say('screens.streamStats.watchingTogether')}>
               <AnimatedNumber value={party.members} />
             </Row>
-            <Row name="Room state">
-              {party.isHeld ? 'held' : party.isPlaying ? 'playing' : 'paused'}
+            <Row name={say('screens.streamStats.roomState')}>
+              {party.isHeld
+                ? say('screens.streamStats.held')
+                : party.isPlaying
+                  ? say('screens.streamStats.playing')
+                  : say('screens.streamStats.paused')}
             </Row>
-            <Row name="Waiting for">
-              {party.waitingFor.length === 0 ? 'nobody' : party.waitingFor.join(', ')}
+            <Row name={say('screens.streamStats.waitingFor')}>
+              {party.waitingFor.length === 0
+                ? say('screens.streamStats.nobody')
+                : party.waitingFor.join(', ')}
             </Row>
-            <Row name="Room position">
+            <Row name={say('screens.streamStats.roomPosition')}>
               {party.referenceSeconds === null
-                ? 'this tab keeps time'
+                ? say('screens.streamStats.tabKeepsTime')
                 : formatDuration(party.referenceSeconds)}
             </Row>
-            <Row name="Out by">
+            <Row name={say('screens.streamStats.outBy')}>
               {party.referenceSeconds === null
-                ? 'n/a'
+                ? say('screens.streamStats.notApplicable')
                 : seconds(party.referenceSeconds - health.positionSeconds)}
             </Row>
-            <Row name="Clock jitter">
+            <Row name={say('screens.streamStats.clockJitter')}>
               <AnimatedNumber value={Math.round(party.jitterMs)} suffix="ms" />
             </Row>
           </Group>
         )}
 
         {session === null || session.warnings.length === 0 ? null : (
-          <Group name="Warnings">
-            <Row name="From the server">{session.warnings.join(' · ')}</Row>
+          <Group name={say('screens.streamStats.groupWarnings')}>
+            <Row name={say('screens.streamStats.fromTheServer')}>
+              {session.warnings.join(' · ')}
+            </Row>
           </Group>
         )}
       </div>

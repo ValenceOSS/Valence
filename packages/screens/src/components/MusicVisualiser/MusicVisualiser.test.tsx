@@ -8,6 +8,7 @@ import { setMusicVisualiser } from '@ValenceScreens/music/musicVisualiser';
 import { VISUALISERS } from '@ValenceScreens/music/visualisers/VISUALISERS';
 import { MusicVisualiser } from './MusicVisualiser';
 import type * as MotionReact from 'motion/react';
+import { say } from '@ValenceI18n/say';
 
 const motion = vi.hoisted(() => ({ isReduced: false }));
 
@@ -17,11 +18,11 @@ vi.mock('motion/react', async () => {
   return { ...actual, useReducedMotionConfig: () => motion.isReduced };
 });
 
-const first = VISUALISERS[0]?.name ?? '';
+const first = say(VISUALISERS[0]?.name ?? 'screens.visualisers.barsAndWaves');
 
-const second = VISUALISERS[1]?.name ?? '';
+const second = say(VISUALISERS[1]?.name ?? 'screens.visualisers.waves');
 
-const last = VISUALISERS[VISUALISERS.length - 1]?.name ?? '';
+const last = say(VISUALISERS[VISUALISERS.length - 1]?.name ?? 'screens.visualisers.warp');
 
 const playing = () => aFakeMusicPlayer({ current: aTrack(1), isPlaying: true });
 

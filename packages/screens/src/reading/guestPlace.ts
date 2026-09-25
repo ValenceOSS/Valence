@@ -15,6 +15,7 @@ type GuestPlace = z.infer<typeof GuestPlaceSchema>;
  * @param bookId - The book.
  * @returns The key.
  */
+// eslint-disable-next-line valence/no-hard-coded-strings -- a storage key, not words
 const keyFor = (bookId: string): string => `valence.shared.${bookId}`;
 
 /**

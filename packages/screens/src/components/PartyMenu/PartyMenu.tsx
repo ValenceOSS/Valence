@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { Icon } from '@ValenceUI/Icon';
 import { Users as UsersIcon } from '@keyline-icons/react';
 import { useEffect, useState } from 'react';
@@ -66,8 +67,12 @@ const PartyMenu = ({
   return (
     <PopoverPanel
       tone="default"
-      label={party === null ? 'Watch party' : `Watch party · ${watching.toString()} watching`}
-      heading="Watch party"
+      label={
+        party === null
+          ? say('screens.partyMenu.label')
+          : say('screens.partyMenu.labelWatching', { count: watching.toString() })
+      }
+      heading={say('screens.partyMenu.heading')}
       isDisabled={isDisabled}
       isOpen={isOpen}
       onOpenChange={show}
@@ -79,8 +84,7 @@ const PartyMenu = ({
       {party === null ? (
         <div className="flex w-72 max-w-full flex-col gap-3 text-text">
           <p className="text-xs leading-relaxed text-text-muted">
-            Watch this with other people here, in step. You get a link to send them, and whatever
-            anybody plays, pauses or skips happens for everybody.
+            {say('screens.partyMenu.explanation')}
           </p>
 
           <Button
@@ -91,7 +95,7 @@ const PartyMenu = ({
               onOpen?.();
             }}
           >
-            Start a watch party
+            {say('screens.partyMenu.start')}
           </Button>
         </div>
       ) : (

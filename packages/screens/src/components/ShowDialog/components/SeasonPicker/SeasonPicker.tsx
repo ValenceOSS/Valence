@@ -2,6 +2,7 @@ import { nameSeason } from '@ValenceClient/library/nameSeason';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import type { SeasonPickerProps } from './SeasonPicker.types';
+import { say } from '@ValenceI18n/say';
 
 const MOST_ON_A_TRACK = 6;
 
@@ -27,7 +28,7 @@ const SeasonPicker = ({ seasons, value, onChange }: SeasonPickerProps) => {
       <SegmentedRow
         size="sm"
         tone="accent"
-        label="Which season"
+        label={say('screens.seasonPicker.whichSeason')}
         items={seasons.map((one) => ({
           id: idOf(one.seasonNumber),
           label: nameSeason(one.seasonNumber),
@@ -41,17 +42,17 @@ const SeasonPicker = ({ seasons, value, onChange }: SeasonPickerProps) => {
 
   return (
     <OptionMenu
-      label="Which season"
+      label={say('screens.seasonPicker.whichSeason')}
       triggerShape="field"
       align="end"
       trigger={nameSeason(value)}
       groups={[
         {
-          name: 'Season',
+          name: say('screens.seasonPicker.season'),
           options: seasons.map((one) => ({
             id: idOf(one.seasonNumber),
             label: nameSeason(one.seasonNumber),
-            ...(one.isHeld ? {} : { detail: 'Not in your library' }),
+            ...(one.isHeld ? {} : { detail: say('screens.seasonPicker.notInLibrary') }),
           })),
           selectedId: idOf(value),
           onSelect: choose,

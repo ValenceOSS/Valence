@@ -6,6 +6,7 @@ import { Checkbox } from '@ValenceUI/Checkbox';
 import { TextField } from '@ValenceUI/TextField';
 import { validateSetupForm, parseOrigins } from './validateSetupForm';
 import type { SetupFormErrors, SetupWizardProps } from './SetupWizard.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Walks whoever opened Valence first through making it theirs: the administrator account, what the
@@ -50,8 +51,8 @@ const SetupWizard = ({ status, onComplete }: SetupWizardProps) => {
         setErrors({
           submit:
             response.status === 409
-              ? 'This server has already been set up. Reload the page to sign in.'
-              : 'Setup could not be completed. Check the details and try again.',
+              ? say('screens.setupWizard.alreadySetUp')
+              : say('screens.setupWizard.couldNotComplete'),
         });
 
         return;
@@ -59,7 +60,7 @@ const SetupWizard = ({ status, onComplete }: SetupWizardProps) => {
 
       onComplete();
     } catch {
-      setErrors({ submit: 'Could not reach the server. Check that it is still running.' });
+      setErrors({ submit: say('screens.setupWizard.couldNotReach') });
     } finally {
       setIsSubmitting(false);
     }
@@ -68,17 +69,17 @@ const SetupWizard = ({ status, onComplete }: SetupWizardProps) => {
   return (
     <main className="mx-auto flex max-w-lg flex-col gap-6 p-8">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold text-text">Set up Valence</h1>
-        <p className="text-text-muted">
-          Create the administrator account and confirm how this server is reached.
-        </p>
+        <h1 className="text-2xl font-semibold text-text">{say('screens.setupWizard.heading')}</h1>
+        <p className="text-text-muted">{say('screens.setupWizard.lede')}</p>
       </header>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-medium text-text">Administrator</h2>
+        <h2 className="text-lg font-medium text-text">
+          {say('screens.setupWizard.administrator')}
+        </h2>
 
         <TextField
-          label="Name"
+          label={say('screens.setupWizard.name')}
           value={name}
           onValueChange={setName}
           autoComplete="name"
@@ -86,7 +87,7 @@ const SetupWizard = ({ status, onComplete }: SetupWizardProps) => {
         />
 
         <TextField
-          label="Email"
+          label={say('screens.setupWizard.email')}
           type="email"
           value={email}
           onValueChange={setEmail}
@@ -95,29 +96,31 @@ const SetupWizard = ({ status, onComplete }: SetupWizardProps) => {
         />
 
         <TextField
-          label="Password"
+          label={say('screens.setupWizard.password')}
           type="password"
           value={password}
           onValueChange={setPassword}
           autoComplete="new-password"
-          description="At least 10 characters."
+          description={say('screens.setupWizard.passwordHint')}
           {...(errors.password === undefined ? {} : { error: errors.password })}
         />
       </section>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-medium text-text">Access</h2>
+        <h2 className="text-lg font-medium text-text">{say('screens.setupWizard.access')}</h2>
 
         <TextField
-          label="Trusted origins"
+          label={say('screens.setupWizard.trustedOrigins')}
           value={trustedOrigins}
           onValueChange={setTrustedOrigins}
-          description={`Detected ${status.detectedOrigin}. Add every address you use to reach Valence, separated by commas.`}
+          description={say('screens.setupWizard.trustedOriginsHint', {
+            origin: status.detectedOrigin,
+          })}
           {...(errors.trustedOrigins === undefined ? {} : { error: errors.trustedOrigins })}
         />
 
         <Checkbox
-          label="This server is reached over HTTPS"
+          label={say('screens.setupWizard.https')}
           checked={cookieSecure}
           onCheckedChange={setCookieSecure}
         />
@@ -129,8 +132,8 @@ const SetupWizard = ({ status, onComplete }: SetupWizardProps) => {
             <Icon of={UnlockIcon} size={16} className="mt-0.5 shrink-0" />
           )}
           {cookieSecure
-            ? 'Secure cookies will be used. Login will not work over plain HTTP.'
-            : 'Cookies will not be marked secure, so Valence works over plain HTTP on your network.'}
+            ? say('screens.setupWizard.secureCookies')
+            : say('screens.setupWizard.plainCookies')}
         </p>
       </section>
 
@@ -146,7 +149,7 @@ const SetupWizard = ({ status, onComplete }: SetupWizardProps) => {
           void submit();
         }}
       >
-        Finish setup
+        {say('screens.setupWizard.finish')}
       </Button>
     </main>
   );

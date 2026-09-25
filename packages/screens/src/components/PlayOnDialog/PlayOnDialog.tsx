@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { ChevronRight as ChevronRightIcon, Monitor as MonitorIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
@@ -24,18 +25,16 @@ const PlayOnDialog = ({ media, startSeconds, onClose, onSent }: PlayOnDialogProp
 
   return (
     <Dialog
-      label="Play on"
+      label={say('screens.playOnDialog.title')}
       isOpen={media !== null}
       onClose={onClose}
       className="sm:w-[min(28rem,92vw)]"
     >
-      <DialogTitle title="Play on" detail={media?.title} />
+      <DialogTitle title={say('screens.playOnDialog.title')} detail={media?.title} />
 
       <DialogContent>
         {televisions.length === 0 ? (
-          <p className="font-body text-sm text-text-muted">
-            Open Valence on your Apple TV, signed in as you, and it will be here.
-          </p>
+          <p className="font-body text-sm text-text-muted">{say('screens.playOnDialog.empty')}</p>
         ) : (
           <ul className="flex flex-col gap-1">
             {televisions.map((device) => (
@@ -44,7 +43,7 @@ const PlayOnDialog = ({ media, startSeconds, onClose, onSent }: PlayOnDialogProp
                   variant="row"
                   size="none"
                   hasTooltip={false}
-                  label={`Play on ${device.label}`}
+                  label={say('screens.playOnDialog.playOnDevice', { device: device.label })}
                   className="flex w-full items-center gap-3 rounded-lg p-3 text-left"
                   onClick={() => {
                     if (media === null) {
@@ -65,8 +64,13 @@ const PlayOnDialog = ({ media, startSeconds, onClose, onSent }: PlayOnDialogProp
                     <span className="truncate text-sm font-semibold text-text">{device.label}</span>
                     <span className="truncate text-xs text-text-muted">
                       {device.nowWatching === null
-                        ? 'Not playing anything'
-                        : `${device.nowWatching.isPlaying ? 'Playing' : 'Paused on'} ${device.nowWatching.title}`}
+                        ? say('screens.playOnDialog.notPlaying')
+                        : say(
+                            device.nowWatching.isPlaying
+                              ? 'screens.playOnDialog.playing'
+                              : 'screens.playOnDialog.pausedOn',
+                            { title: device.nowWatching.title },
+                          )}
                     </span>
                   </span>
                   <Icon of={ChevronRightIcon} size={16} />

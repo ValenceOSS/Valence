@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import { NAME_MAX } from '@ValenceContracts/schemas/Household';
 
 /**
@@ -13,10 +15,12 @@ const whatIsWrongWithTheName = (name: string): string | null => {
   const trimmed = name.trim();
 
   if (trimmed === '') {
-    return 'Give the household a name.';
+    return say('screens.whatIsWrongWithTheName.empty');
   }
 
-  return trimmed.length > NAME_MAX ? `Keep it to ${NAME_MAX.toString()} characters.` : null;
+  return trimmed.length > NAME_MAX
+    ? sayCount('screens.whatIsWrongWithTheName.tooLong', NAME_MAX)
+    : null;
 };
 
 export { whatIsWrongWithTheName };

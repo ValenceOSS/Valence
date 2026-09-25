@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { fetchSample } from '@ValenceClient/requests/fetchSample';
 import { notify } from '@ValenceUI/notify';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Plays half a minute of an album before somebody asks for it: one at a time, stopped by pressing it
@@ -46,7 +47,7 @@ const useSample = () => {
       setFinding(null);
 
       if (url === null) {
-        notify.say(`There is no sample of ${album} to hear.`);
+        notify.say(say('screens.useSample.noSample', { album }));
 
         return;
       }

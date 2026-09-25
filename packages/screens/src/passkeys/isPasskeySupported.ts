@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+
 /**
  * Whether this browser can use passkeys at all, which needs both the credential machinery and a
  * secure context — the machinery exists over plain HTTP but refuses to do anything.
@@ -17,15 +19,15 @@ const isPasskeySupported = (): boolean =>
  */
 const describePasskeyUnavailability = (): string | null => {
   if (typeof window === 'undefined') {
-    return 'Passkeys are not available here.';
+    return say('screens.describePasskeyUnavailability.notAvailable');
   }
 
   if (!window.isSecureContext) {
-    return 'Passkeys need a secure connection. Reach Valence over HTTPS, or on localhost, to add one.';
+    return say('screens.describePasskeyUnavailability.needsSecureConnection');
   }
 
   if (typeof window.PublicKeyCredential !== 'function') {
-    return 'This browser does not support passkeys.';
+    return say('screens.describePasskeyUnavailability.notSupported');
   }
 
   return null;

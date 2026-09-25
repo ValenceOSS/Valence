@@ -4,7 +4,9 @@ import {
   Unlink as UnlinkIcon,
 } from '@keyline-icons/react';
 import { SHARE_ENDING_SAID } from '@ValenceContracts/schemas/Share';
+import { say } from '@ValenceI18n/say';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
+import type { StringKey } from '@ValenceI18n/StringKey';
 import type { ShareEnding } from '@ValenceContracts/schemas/Share';
 
 type EndingTold = {
@@ -13,19 +15,17 @@ type EndingTold = {
   icon: IconGlyph;
 };
 
-const TOLD: Record<ShareEnding, { detail: string; icon: IconGlyph }> = {
+const TOLD: Record<ShareEnding, { detailKey: StringKey; icon: IconGlyph }> = {
   withdrawn: {
-    detail: 'Somebody stopped it working. Whoever sent it can send another.',
+    detailKey: 'screens.describeShareEnding.withdrawnDetail',
     icon: UnlinkIcon,
   },
   expired: {
-    detail:
-      'It was made to last a while, and that while is over. Whoever sent it can send another.',
+    detailKey: 'screens.describeShareEnding.expiredDetail',
     icon: ClockIcon,
   },
   spent: {
-    detail:
-      'It was made to be opened a set number of times, and it has been. Whoever sent it can send another.',
+    detailKey: 'screens.describeShareEnding.spentDetail',
     icon: EyeOffIcon,
   },
 };
@@ -48,7 +48,8 @@ const TOLD: Record<ShareEnding, { detail: string; icon: IconGlyph }> = {
  */
 const describeShareEnding = (ended: ShareEnding): EndingTold => ({
   said: SHARE_ENDING_SAID[ended],
-  ...TOLD[ended],
+  detail: say(TOLD[ended].detailKey),
+  icon: TOLD[ended].icon,
 });
 
 export type { EndingTold };

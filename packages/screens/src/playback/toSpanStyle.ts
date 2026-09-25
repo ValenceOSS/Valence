@@ -2,16 +2,27 @@ import type { CSSProperties } from 'react';
 import type { SubtitleSpan } from '@ValenceClient/playback/fetchSubtitleCues';
 
 const KNOWN_FONTS: Record<string, string> = {
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a CSS font stack, not words
   arial: 'Arial, Helvetica, sans-serif',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a CSS font stack, not words
   helvetica: 'Helvetica, Arial, sans-serif',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a CSS font stack, not words
   impact: 'Impact, Haettenschweiler, sans-serif',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a CSS font stack, not words
   verdana: 'Verdana, Geneva, sans-serif',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a CSS font stack, not words
   tahoma: 'Tahoma, Geneva, sans-serif',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a CSS font stack, not words
   georgia: 'Georgia, "Times New Roman", serif',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a CSS font stack, not words
   times: '"Times New Roman", Times, serif',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a CSS font stack, not words
   'times new roman': '"Times New Roman", Times, serif',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a CSS font stack, not words
   courier: '"Courier New", Courier, monospace',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a CSS font stack, not words
   'courier new': '"Courier New", Courier, monospace',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a CSS font stack, not words
   'comic sans ms': '"Comic Sans MS", cursive',
   'trebuchet ms': '"Trebuchet MS", Helvetica, sans-serif',
 };

@@ -6,6 +6,7 @@ import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { handBackToThePhone } from '@ValenceClient/phone/handBackToThePhone';
 import { signedInOnThisPage } from '@ValenceScreens/phone/signedInOnThisPage';
 import type { PhoneSignInProps } from './PhoneSignIn.types';
+import { say } from '@ValenceI18n/say';
 
 type Standing = 'asking' | 'handing' | 'handed' | 'failed';
 
@@ -55,24 +56,22 @@ const PhoneSignIn = ({ name }: PhoneSignInProps) => {
   return (
     <main className="mx-auto flex min-h-svh w-full max-w-md flex-col justify-center gap-6 px-6 py-16">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-medium text-text">Sign in the app</h1>
+        <h1 className="text-2xl font-medium text-text">{say('screens.phoneSignIn.heading')}</h1>
 
         <p className="text-sm text-text-muted">
-          The {name} app on your phone asked to sign in as {who.data?.name ?? 'you'}.
+          {who.data?.name === undefined
+            ? say('screens.phoneSignIn.askedAsYou', { name })
+            : say('screens.phoneSignIn.askedAs', { name, who: who.data.name })}
         </p>
       </header>
 
       {challenge === undefined ? (
-        <p className="text-base text-text">
-          This page is opened by the app. Start from Sign in on your phone.
-        </p>
+        <p className="text-base text-text">{say('screens.phoneSignIn.openedByTheApp')}</p>
       ) : standing === 'handed' ? (
-        <p className="text-base text-text">Signed in. Back to the app.</p>
+        <p className="text-base text-text">{say('screens.phoneSignIn.signedIn')}</p>
       ) : standing === 'failed' ? (
         <div className="flex flex-col gap-4">
-          <p className="text-base text-text">
-            That did not work. Try again, or close this and sign in from the app again.
-          </p>
+          <p className="text-base text-text">{say('screens.phoneSignIn.failed')}</p>
 
           <Button
             variant="glossy"
@@ -81,14 +80,12 @@ const PhoneSignIn = ({ name }: PhoneSignInProps) => {
               void handBack(challenge);
             }}
           >
-            Try again
+            {say('common.tryAgain')}
           </Button>
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          <p className="text-base text-text">
-            Only continue if you opened this from the app just now.
-          </p>
+          <p className="text-base text-text">{say('screens.phoneSignIn.onlyContinueIf')}</p>
 
           <Button
             variant="glossy"
@@ -98,7 +95,7 @@ const PhoneSignIn = ({ name }: PhoneSignInProps) => {
               void handBack(challenge);
             }}
           >
-            Continue
+            {say('screens.phoneSignIn.continue')}
           </Button>
         </div>
       )}

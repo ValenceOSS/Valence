@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { Icon } from '@ValenceUI/Icon';
 import { Image as ImageIcon, RefreshCw as RefreshCwIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
@@ -47,17 +48,17 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
   return (
     <>
       <SettingRow
-        title="Display name"
-        description="What everybody sharing this server sees when they pick who is watching."
+        title={say('screens.profileSettings.nameTitle')}
+        description={say('screens.profileSettings.nameDescription')}
       >
         <TextField
-          label="Display name"
+          label={say('screens.profileSettings.nameTitle')}
           isLabelHidden
           value={draft?.name ?? ''}
           onValueChange={(next) => {
             onDraft({ name: next });
           }}
-          placeholder={profile?.name ?? 'Your name'}
+          placeholder={profile?.name ?? say('screens.profileSettings.namePlaceholder')}
           disabled={!isReady}
           size="sm"
           className="w-56"
@@ -65,11 +66,11 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
       </SettingRow>
 
       <SettingRow
-        title="Profile picture"
+        title={say('screens.profileSettings.pictureTitle')}
         description={
           draft?.photo === null || draft?.photo === undefined
-            ? 'A photograph, one of the drawn faces, or the first letter of your name.'
-            : `${draft.photo.name} — saved when you press Save.`
+            ? say('screens.profileSettings.pictureDescription')
+            : say('screens.profileSettings.picturePending', { file: draft.photo.name })
         }
       >
         {profile === null || draft === null ? null : (
@@ -82,7 +83,7 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
         )}
 
         <FilePicker
-          label="Upload a picture"
+          label={say('screens.profileSettings.uploadLabel')}
           accept={PHOTO_TYPES}
           size="sm"
           disabled={!isReady}
@@ -94,20 +95,20 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
           }}
         >
           <Icon of={ImageIcon} size={15} />
-          Upload
+          {say('screens.profileSettings.upload')}
         </FilePicker>
       </SettingRow>
 
       <SettingRow
-        title="Drawn face"
-        description="Where you would rather not use a photograph, pick one of these instead."
+        title={say('screens.profileSettings.drawnTitle')}
+        description={say('screens.profileSettings.drawnDescription')}
       >
         {AVATAR_STYLES.map((style) => (
           <Button
             key={style}
             variant="bare"
             size="none"
-            label={`Use the ${style} face`}
+            label={say('screens.profileSettings.useDrawn', { style })}
             isActive={draft?.avatar.kind === 'drawn' && draft.avatar.style === style}
             disabled={!isReady}
             className={`size-8 overflow-hidden rounded-lg bg-subtle transition-transform ${
@@ -132,7 +133,7 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
           variant="ghost"
           size="sm"
           isIconOnly
-          label="Use your initial instead"
+          label={say('screens.profileSettings.useInitial')}
           disabled={!isReady}
           onClick={() => {
             onDraft({ avatar: { kind: 'initial' }, photo: null });
@@ -143,13 +144,13 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
       </SettingRow>
 
       <SettingRow
-        title="Theme"
-        description="Kept on this device rather than on your account, and applied as soon as you choose it."
+        title={say('screens.profileSettings.themeTitle')}
+        description={say('screens.profileSettings.themeDescription')}
       >
         <SegmentedRow
           size="sm"
           tone="accent"
-          label="Theme"
+          label={say('screens.profileSettings.themeTitle')}
           value={theme}
           items={THEME_CHOICES}
           onSelect={(chosen) => {
@@ -159,13 +160,13 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
       </SettingRow>
 
       <SettingRow
-        title="Movement"
-        description="Following the machine uses whatever your system asks for. Reduced stills the interface here without changing anything else you run."
+        title={say('screens.profileSettings.movementTitle')}
+        description={say('screens.profileSettings.movementDescription')}
       >
         <SegmentedRow
           size="sm"
           tone="accent"
-          label="Movement"
+          label={say('screens.profileSettings.movementTitle')}
           value={motion}
           items={MOTION_CHOICES}
           onSelect={(chosen) => {
@@ -175,15 +176,15 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
       </SettingRow>
 
       <SettingRow
-        title="Colour"
-        description="The background behind your initial, and the tint on your drawn face."
+        title={say('screens.profileSettings.colourTitle')}
+        description={say('screens.profileSettings.colourDescription')}
       >
         {PROFILE_COLOURS.map((option) => (
           <Button
             key={option}
             variant="bare"
             size="none"
-            label={`Use ${option}`}
+            label={say('screens.profileSettings.useColour', { colour: option })}
             isActive={option === draft?.colour}
             disabled={!isReady}
             style={{ backgroundColor: option }}
@@ -200,13 +201,13 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
       </SettingRow>
 
       <SettingRow
-        title="Ask if you are still watching"
-        description="After this many episodes play by themselves, Valence checks before starting another."
+        title={say('screens.profileSettings.stillWatchingTitle')}
+        description={say('screens.profileSettings.stillWatchingDescription')}
       >
         <SegmentedRow
           size="sm"
           tone="accent"
-          label="Ask if you are still watching"
+          label={say('screens.profileSettings.stillWatchingTitle')}
           items={STILL_WATCHING_CHOICES}
           value={
             draft === null || draft.askStillWatchingAfter === STILL_WATCHING_OFF
@@ -223,11 +224,11 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
 
       {canShowOnDiscord() ? (
         <SettingRow
-          title="Show what I am playing on Discord"
-          description="The title, and the series and episode or the artist where there is one, appear in your Discord status while something is playing. It needs Valence open on the same machine as Discord."
+          title={say('screens.profileSettings.discordTitle')}
+          description={say('screens.profileSettings.discordDescription')}
         >
           <Switch
-            label="Show what I am playing on Discord"
+            label={say('screens.profileSettings.discordTitle')}
             isLabelHidden
             isOn={draft?.showsWhatIamWatching ?? false}
             disabled={!isReady}

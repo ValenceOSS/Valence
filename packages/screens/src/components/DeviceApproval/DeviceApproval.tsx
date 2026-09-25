@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { useEffect, useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -59,28 +60,20 @@ const DeviceApproval = ({ name }: DeviceApprovalProps) => {
   return (
     <main className="mx-auto flex min-h-svh w-full max-w-md flex-col justify-center gap-6 px-6 py-16">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-medium text-text">Sign in a television</h1>
+        <h1 className="text-2xl font-medium text-text">{say('screens.deviceApproval.heading')}</h1>
 
-        <p className="text-sm text-text-muted">
-          A television showed you a code. Type it here and {name} will let it in as you.
-        </p>
+        <p className="text-sm text-text-muted">{say('screens.deviceApproval.lede', { name })}</p>
       </header>
 
       {standing === 'allowed' ? (
-        <p className="text-base text-text">
-          Done. The television should be watching in a moment — you can close this.
-        </p>
+        <p className="text-base text-text">{say('screens.deviceApproval.allowed')}</p>
       ) : standing === 'refused' ? (
-        <p className="text-base text-text">
-          Turned down. Nothing was signed in, and the code on that screen is now useless.
-        </p>
+        <p className="text-base text-text">{say('screens.deviceApproval.refused')}</p>
       ) : standing === 'reading' ? (
-        <Spinner label="Checking that code" />
+        <Spinner label={say('screens.deviceApproval.checking')} />
       ) : standing === 'unknown' ? (
         <div className="flex flex-col gap-4">
-          <p className="text-base text-text">
-            A television is asking to sign in as you. Only say yes if it is the one in front of you.
-          </p>
+          <p className="text-base text-text">{say('screens.deviceApproval.asking')}</p>
 
           <Button
             variant="glossy"
@@ -90,7 +83,7 @@ const DeviceApproval = ({ name }: DeviceApprovalProps) => {
               void answer(true);
             }}
           >
-            Yes, that is mine
+            {say('screens.deviceApproval.yes')}
           </Button>
 
           <Button
@@ -100,7 +93,7 @@ const DeviceApproval = ({ name }: DeviceApprovalProps) => {
               void answer(false);
             }}
           >
-            No, I did not ask for this
+            {say('screens.deviceApproval.no')}
           </Button>
         </div>
       ) : (
@@ -112,18 +105,16 @@ const DeviceApproval = ({ name }: DeviceApprovalProps) => {
           }}
         >
           <TextField
-            label="The code on the television"
+            label={say('screens.deviceApproval.codeLabel')}
             value={typed}
             onValueChange={setTyped}
             autoComplete="one-time-code"
             hasFocusOnMount
-            {...(standing === 'wrong'
-              ? { error: 'That code has run out, or there is no television waiting on it.' }
-              : {})}
+            {...(standing === 'wrong' ? { error: say('screens.deviceApproval.wrongCode') } : {})}
           />
 
           <Button type="submit" variant="glossy" size="lg" disabled={tidyTheCode(typed) === ''}>
-            Continue
+            {say('screens.deviceApproval.continue')}
           </Button>
         </form>
       )}

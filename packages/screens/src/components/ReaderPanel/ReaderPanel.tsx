@@ -8,6 +8,7 @@ import {
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import type { ReaderPanelProps } from './ReaderPanel.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Everything a reader can be told, in one panel down the side of the page rather than a menu over
@@ -35,12 +36,18 @@ const ReaderPanel = ({
   children,
 }: ReaderPanelProps) => (
   <aside
-    aria-label="Reading"
+    aria-label={say('screens.readerPanel.label')}
     className="valence-card-shell flex h-full min-h-0 w-[20rem] max-w-[calc(100vw-1rem)] shrink-0"
   >
     <div className="valence-card-face flex min-h-0 min-w-0 flex-1 flex-col">
       <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-4">
-        <Button variant="ghost" size="xs" isIconOnly label="Put the panel away" onClick={onClose}>
+        <Button
+          variant="ghost"
+          size="xs"
+          isIconOnly
+          label={say('screens.readerPanel.putAway')}
+          onClick={onClose}
+        >
           <Icon of={XIcon} size={16} />
         </Button>
 
@@ -49,7 +56,9 @@ const ReaderPanel = ({
           size="xs"
           isIconOnly
           isActive={isPinned}
-          label={isPinned ? 'Let the panel go' : 'Keep the panel beside the page'}
+          label={
+            isPinned ? say('screens.readerPanel.letGo') : say('screens.readerPanel.keepBeside')
+          }
           onClick={() => {
             onPinnedChange(!isPinned);
           }}

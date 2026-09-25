@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { say } from '@ValenceI18n/say';
 import { useQuery } from '@tanstack/react-query';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -42,7 +43,7 @@ const GuestReader = ({ book, onClose }: GuestReaderProps) => {
   if (asked.isError) {
     return (
       <CouldNotRead
-        what="That book"
+        what={say('screens.guestReader.thatBook')}
         isTryingAgain={asked.isFetching}
         onTryAgain={() => {
           void asked.refetch();
@@ -54,7 +55,7 @@ const GuestReader = ({ book, onClose }: GuestReaderProps) => {
   if (asked.data === undefined || asked.data === null || chapterId === '') {
     return (
       <div className="flex h-dvh items-center justify-center bg-shade">
-        <Spinner label="Opening the book" />
+        <Spinner label={say('screens.guestReader.opening')} />
       </div>
     );
   }

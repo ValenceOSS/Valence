@@ -21,6 +21,8 @@ import { describeKeeping } from '@ValenceCore/functions/describeKeeping';
 import { KeepingControls } from '@ValenceScreens/components/DownloadList/components/KeepingControls/KeepingControls';
 import type { Download } from '@ValenceContracts/schemas/Download';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * Says where a prepared file has got to, in the words somebody would use about it.
@@ -33,32 +35,42 @@ const describeState = (download: Download, isKeepable: boolean): string => {
   const done = `${Math.round(download.progress * 100).toString()}%`;
 
   if (download.state === 'failed') {
-    return download.failure ?? 'That could not be prepared.';
+    return download.failure ?? say('screens.downloadList.failed');
   }
 
   if (download.state === 'queued') {
-    return download.progress > 0 ? `Waiting to carry on from ${done}.` : 'Waiting its turn.';
+    return download.progress > 0
+      ? say('screens.downloadList.waitingFrom', { done })
+      : say('screens.downloadList.waiting');
   }
 
   if (download.state === 'paused') {
-    return `Paused at ${done}. What is done is kept.`;
+    return say('screens.downloadList.paused', { done });
   }
 
   if (download.state === 'preparing') {
     const said = [
-      `${done} done`,
-      ...(download.bytesPerSecond === null ? [] : [`${formatBytes(download.bytesPerSecond)}/s`]),
+      say('screens.downloadList.done', { done }),
+      ...(download.bytesPerSecond === null
+        ? []
+        : [say('screens.downloadList.rate', { rate: formatBytes(download.bytesPerSecond) })]),
       ...(download.secondsLeft === null ? [] : [describeTimeToGo(download.secondsLeft)]),
     ];
 
-    return `Preparing — ${said.join(' · ')}.`;
+    return say('screens.downloadList.preparing', { details: said.join(' · ') });
   }
 
-  const ready = isKeepable ? 'Ready to keep on this device' : 'Ready on the device that asked';
+  if (download.sizeBytes === null) {
+    return isKeepable
+      ? say('screens.downloadList.readyToKeep')
+      : say('screens.downloadList.readyElsewhere');
+  }
 
-  return download.sizeBytes === null
-    ? `${ready}.`
-    : `${ready} — ${formatBytes(download.sizeBytes)}.`;
+  const size = formatBytes(download.sizeBytes);
+
+  return isKeepable
+    ? say('screens.downloadList.readyToKeepSized', { size })
+    : say('screens.downloadList.readyElsewhereSized', { size });
 };
 
 /**
@@ -127,7 +139,7 @@ const DownloadList = () => {
     return (
       <div className="px-5 py-4">
         <CouldNotRead
-          what="Your downloads"
+          what={say('screens.downloadList.yours')}
           isTryingAgain={asked.isFetching}
           onTryAgain={() => {
             void asked.refetch();
@@ -141,7 +153,7 @@ const DownloadList = () => {
     return (
       <p className="flex items-center gap-2 px-5 py-6 font-body text-sm text-text-muted">
         <Icon of={DownloadIcon} size={18} />
-        Nothing prepared yet. Ask for something from its page and it will appear here.
+        {say('screens.downloadList.empty')}
       </p>
     );
   }
@@ -170,8 +182,8 @@ const DownloadList = () => {
         <p className="flex items-start gap-2 px-5 pt-4 font-body text-sm text-text-muted">
           <Icon of={BellIcon} size={16} className="mt-0.5 shrink-0" />
           {isKeepable
-            ? 'The server prepares these by itself, so Valence can be closed in the meantime. You will get a notification when each is ready, and it comes to this device the next time Valence is open.'
-            : 'The server prepares these by itself, and each goes to the device it was asked for on. You will get a notification when each is ready.'}
+            ? say('screens.downloadList.preparingHere')
+            : say('screens.downloadList.preparingElsewhere')}
         </p>
       ) : null}
 
@@ -182,8 +194,9 @@ const DownloadList = () => {
               <h3 className="text-xs uppercase tracking-[0.16em] text-text-muted">{group.title}</h3>
 
               <span className="font-body text-xs text-text-muted">
-                {group.items.filter((one) => one.state === 'ready').length.toString()} of{' '}
-                {group.items.length.toString()} ready
+                {sayCount('screens.downloadList.readyOf', group.items.length, {
+                  ready: group.items.filter((one) => one.state === 'ready').length,
+                })}
               </span>
             </header>
           )}
@@ -207,7 +220,7 @@ const DownloadList = () => {
                   <ProgressBar
                     value={download.progress}
                     max={1}
-                    label={`Preparing ${download.title}`}
+                    label={say('screens.downloadList.preparingLabel', { title: download.title })}
                     className="w-28"
                   />
                 )}
@@ -226,8 +239,8 @@ const DownloadList = () => {
                     isIconOnly
                     label={
                       download.state === 'paused'
-                        ? `Carry on preparing ${download.title}`
-                        : `Stop preparing ${download.title} for now`
+                        ? say('screens.downloadList.resume', { title: download.title })
+                        : say('screens.downloadList.pause', { title: download.title })
                     }
                     onClick={() => {
                       void setDownloadPaused(download.id, download.state !== 'paused').then(
@@ -249,8 +262,8 @@ const DownloadList = () => {
                   isIconOnly
                   label={
                     onThisDevice.has(download.id)
-                      ? `Delete ${download.title} from this device and the server`
-                      : `Stop keeping ${download.title} on the server`
+                      ? say('screens.downloadList.deleteHere', { title: download.title })
+                      : say('screens.downloadList.deleteServer', { title: download.title })
                   }
                   onClick={() => {
                     setDeleting(download);
@@ -265,13 +278,17 @@ const DownloadList = () => {
       ))}
 
       <ConfirmDialog
-        title={deleting === null ? 'Delete it?' : `Delete ${deleting.title}?`}
+        title={
+          deleting === null
+            ? say('screens.downloadList.deleteUnnamedTitle')
+            : say('screens.downloadList.deleteTitle', { title: deleting.title })
+        }
         detail={
           deletingHere
-            ? 'It is removed from this device and from the server. How far you got through it is kept.'
-            : 'The server stops keeping its copy. A device that already has one keeps its own.'
+            ? say('screens.downloadList.deleteHereDetail')
+            : say('screens.downloadList.deleteServerDetail')
         }
-        confirmLabel="Delete"
+        confirmLabel={say('common.delete')}
         isDestructive
         isBusy={isDeleting}
         isOpen={deleting !== null}

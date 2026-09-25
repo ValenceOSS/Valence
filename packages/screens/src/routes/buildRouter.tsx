@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import {
   createRootRoute,
   createRoute,
@@ -100,7 +101,7 @@ const phoneSearch = z.object({ challenge: z.string().optional(), profile: z.stri
  * @param title - What this instance is called.
  * @returns The router, ready to hand to a provider.
  */
-const buildRouter = (title = 'Valence') => {
+const buildRouter = (title = say('common.valence')) => {
   const root = createRootRoute({ component: () => <ValenceRoot initialTitle={title} /> });
 
   const carries = { validateSearch: readSearch };

@@ -11,6 +11,7 @@ import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The words of the song playing, following along with it.
@@ -39,8 +40,8 @@ const LyricsView = () => {
     return (
       <NothingHere
         of={MusicNoteIcon}
-        title="Nothing is playing"
-        detail="Play a song to follow its words here."
+        title={say('screens.lyricsView.nothingPlayingTitle')}
+        detail={say('screens.lyricsView.nothingPlayingDetail')}
         fills
       />
     );
@@ -49,7 +50,7 @@ const LyricsView = () => {
   if (asked.isPending) {
     return (
       <div className={`flex flex-col gap-6 py-10 ${MUSIC_LANES.page}`}>
-        <Skeleton label="Reading the lyrics" className="h-12 w-3/4" />
+        <Skeleton label={say('screens.lyricsView.reading')} className="h-12 w-3/4" />
         <Skeleton className="h-12 w-2/3" />
         <Skeleton className="h-12 w-1/2" />
       </div>
@@ -57,11 +58,14 @@ const LyricsView = () => {
   }
 
   if (lyrics === null || lyrics.lines.length === 0) {
-    return <NothingHere of={MicIcon} title="No lyrics found" fills />;
+    return <NothingHere of={MicIcon} title={say('screens.lyricsView.noLyrics')} fills />;
   }
 
   return (
-    <section aria-label={`Lyrics for ${shown.title}`} className="relative text-on-scrim">
+    <section
+      aria-label={say('screens.lyricsView.regionLabel', { title: shown.title })}
+      className="relative text-on-scrim"
+    >
       <div aria-hidden className="sticky top-0 -mb-[100cqh] h-[100cqh]">
         <CoverGlow src={cover} className="absolute inset-0" />
       </div>

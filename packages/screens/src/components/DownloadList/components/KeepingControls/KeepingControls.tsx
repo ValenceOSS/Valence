@@ -7,6 +7,7 @@ import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { keptFraction } from '@ValenceCore/functions/describeKeeping';
 import { keepAFile, pauseAFile } from '@ValenceClient/downloads/keepingFiles';
 import type { KeepingControlsProps } from './KeepingControls.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * What can be done about the copy of a prepared download on this machine.
@@ -30,7 +31,7 @@ const KeepingControls = ({ download, held }: KeepingControlsProps) => {
         }}
       >
         <Icon of={SmartphoneIcon} size={15} />
-        Keep on this device
+        {say('screens.keepingControls.keep')}
       </Button>
     );
   }
@@ -45,7 +46,7 @@ const KeepingControls = ({ download, held }: KeepingControlsProps) => {
         }}
       >
         <Icon of={PlayFilledIcon} size={15} />
-        Play
+        {say('screens.keepingControls.play')}
       </Button>
     );
   }
@@ -60,7 +61,7 @@ const KeepingControls = ({ download, held }: KeepingControlsProps) => {
         }}
       >
         <Icon of={RotateCwIcon} size={15} />
-        Try again
+        {say('common.tryAgain')}
       </Button>
     );
   }
@@ -71,7 +72,7 @@ const KeepingControls = ({ download, held }: KeepingControlsProps) => {
         <ProgressBar
           value={keptFraction(held) ?? 0}
           max={1}
-          label={`Fetching ${download.title} to this device`}
+          label={say('screens.keepingControls.fetching', { title: download.title })}
           className="w-28"
         />
       )}
@@ -82,8 +83,8 @@ const KeepingControls = ({ download, held }: KeepingControlsProps) => {
         isIconOnly
         label={
           held.state === 'paused'
-            ? `Carry on fetching ${download.title}`
-            : `Stop fetching ${download.title} for now`
+            ? say('screens.keepingControls.resume', { title: download.title })
+            : say('screens.keepingControls.pause', { title: download.title })
         }
         onClick={() => {
           void pauseAFile(download.id, held.state !== 'paused');

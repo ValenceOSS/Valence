@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import { say } from '@ValenceI18n/say';
 import { ApiKeyPanel } from '@ValenceScreens/components/ApiKeyPanel/ApiKeyPanel';
 import { HistoryPanel } from '@ValenceScreens/components/HistoryPanel/HistoryPanel';
 import { useTravelDirection } from '@ValenceUI/useTravelDirection';
@@ -40,7 +41,7 @@ const AccountArea = ({ user, panel, profile, draft, onDraft, onChanged }: Accoun
       className="flex w-full flex-col"
     >
       <TabPanel value="profile" className="flex flex-col gap-4" travel={travel}>
-        <PanelCard title="Profile" isFlush>
+        <PanelCard title={say('screens.accountArea.profileHeading')} isFlush>
           <SettingList>
             <ProfileSettings profile={profile} draft={draft} onDraft={onDraft} />
           </SettingList>
@@ -56,7 +57,7 @@ const AccountArea = ({ user, panel, profile, draft, onDraft, onChanged }: Accoun
       </TabPanel>
 
       <TabPanel value="history" className="flex flex-col gap-4" travel={travel}>
-        <PanelCard title="Watch history" isFlush>
+        <PanelCard title={say('screens.accountArea.historyHeading')} isFlush>
           <HistoryPanel />
         </PanelCard>
       </TabPanel>
@@ -66,7 +67,7 @@ const AccountArea = ({ user, panel, profile, draft, onDraft, onChanged }: Accoun
       </TabPanel>
 
       <TabPanel value="security" className="flex flex-col gap-4" travel={travel}>
-        <PanelCard title="Sign-in" isFlush>
+        <PanelCard title={say('screens.accountArea.signInHeading')} isFlush>
           <SettingList>
             <TwoFactorSetup isEnabled={user.twoFactorEnabled === true} onChanged={onChanged} />
 
@@ -74,7 +75,7 @@ const AccountArea = ({ user, panel, profile, draft, onDraft, onChanged }: Accoun
           </SettingList>
         </PanelCard>
 
-        <PanelCard title="API keys" isFlush>
+        <PanelCard title={say('screens.accountArea.apiKeysHeading')} isFlush>
           <ApiKeyPanel />
         </PanelCard>
       </TabPanel>

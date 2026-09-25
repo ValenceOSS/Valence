@@ -1,4 +1,6 @@
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const MINUTE = 60;
 const HOUR = 3600;
@@ -15,11 +17,11 @@ const DAY = 86_400;
  */
 const howLong = (seconds: number): string => {
   if (seconds < MINUTE) {
-    return 'under a minute';
+    return say('screens.describeDownloadCost.underAMinute');
   }
 
   if (seconds < HOUR) {
-    return `${Math.round(seconds / MINUTE).toString()} min`;
+    return say('screens.describeDownloadCost.minutes', { minutes: Math.round(seconds / MINUTE) });
   }
 
   if (seconds < DAY) {
@@ -27,13 +29,13 @@ const howLong = (seconds: number): string => {
     const minutes = Math.round((seconds % HOUR) / MINUTE);
 
     return minutes === 0 || minutes === 60
-      ? `${(hours + (minutes === 60 ? 1 : 0)).toString()} h`
-      : `${hours.toString()} h ${minutes.toString()} min`;
+      ? say('screens.describeDownloadCost.hours', { hours: hours + (minutes === 60 ? 1 : 0) })
+      : say('screens.describeDownloadCost.hoursAndMinutes', { hours, minutes });
   }
 
   const days = Math.round(seconds / DAY);
 
-  return `${days.toString()} ${days === 1 ? 'day' : 'days'}`;
+  return sayCount('screens.describeDownloadCost.days', days);
 };
 
 /**
@@ -52,12 +54,15 @@ const describeDownloadCost = (bytes: number | null, seconds: number | null): str
   }
 
   if (seconds === null) {
-    return `${formatBytes(bytes ?? 0)} downloaded`;
+    return say('screens.describeDownloadCost.sizeOnly', { size: formatBytes(bytes ?? 0) });
   }
 
   return bytes === null
-    ? `Downloaded in ${howLong(seconds)}`
-    : `${formatBytes(bytes)} in ${howLong(seconds)}`;
+    ? say('screens.describeDownloadCost.timeOnly', { time: howLong(seconds) })
+    : say('screens.describeDownloadCost.sizeAndTime', {
+        size: formatBytes(bytes),
+        time: howLong(seconds),
+      });
 };
 
 export { describeDownloadCost };

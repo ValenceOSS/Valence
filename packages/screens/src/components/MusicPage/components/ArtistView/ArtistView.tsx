@@ -21,6 +21,7 @@ import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import type { ArtistViewProps } from './ArtistView.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * An artist's page: their picture, a button to follow them, the songs of theirs this household
@@ -48,7 +49,7 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
   if (asked.isError) {
     return (
       <CouldNotRead
-        what="this artist"
+        what={say('screens.artistView.couldNotReadWhat')}
         isTryingAgain={asked.isFetching}
         onTryAgain={() => {
           void asked.refetch();
@@ -60,7 +61,7 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
   if (detail === undefined) {
     return (
       <div className={`flex flex-col gap-4 py-8 ${MUSIC_LANES.page}`}>
-        <Skeleton label="Reading the artist" shape="round" className="size-48" />
+        <Skeleton label={say('screens.artistView.reading')} shape="round" className="size-48" />
         <Skeleton className="h-12 w-1/2" />
       </div>
     );
@@ -73,7 +74,7 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
   return (
     <article className="flex flex-col">
       <MusicHeader
-        eyebrow="Artist"
+        eyebrow={say('screens.artistView.artist')}
         title={artist.name}
         artwork={
           <MusicArtwork
@@ -96,7 +97,7 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
               variant="confirm"
               size="lg"
               isIconOnly
-              label={`Play ${artist.name}`}
+              label={say('screens.artistView.play', { name: artist.name })}
               className="size-14"
               disabled={popular.length === 0}
               onClick={() => {
@@ -123,7 +124,7 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
                 });
               }}
             >
-              {isFollowed ? 'Following' : 'Follow'}
+              {isFollowed ? say('screens.artistView.following') : say('screens.artistView.follow')}
             </Button>
           </>
         }
@@ -131,12 +132,17 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
 
       <div className="flex flex-col gap-12 pb-10">
         {popular.length === 0 ? (
-          <NothingHere of={UserIcon} title="Nothing of theirs you can hear" />
+          <NothingHere of={UserIcon} title={say('screens.artistView.nothingToHear')} />
         ) : (
-          <section aria-label="Songs" className={`flex flex-col gap-3 ${MUSIC_LANES.tracks}`}>
-            <h2 className="px-3 text-lg font-semibold tracking-tight text-text">Songs</h2>
+          <section
+            aria-label={say('screens.artistView.songs')}
+            className={`flex flex-col gap-3 ${MUSIC_LANES.tracks}`}
+          >
+            <h2 className="px-3 text-lg font-semibold tracking-tight text-text">
+              {say('screens.artistView.songs')}
+            </h2>
             <TrackList
-              label={`Songs by ${artist.name}`}
+              label={say('screens.artistView.songsBy', { name: artist.name })}
               tracks={popular}
               showsArtwork
               showsAlbum={false}
@@ -148,16 +154,21 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
         )}
 
         <AlbumShelf
-          heading="Albums"
+          heading={say('screens.artistView.albums')}
           albums={albums}
           detailOf={(album) =>
-            [album.year?.toString(), album.isCompilation ? 'Compilation' : 'Album']
+            [
+              album.year?.toString(),
+              album.isCompilation
+                ? say('screens.artistView.compilation')
+                : say('screens.artistView.album'),
+            ]
               .filter((part) => part !== undefined)
               .join(' · ')
           }
         />
 
-        <AlbumShelf heading="Appears on" albums={appearsOn} />
+        <AlbumShelf heading={say('screens.artistView.appearsOn')} albums={appearsOn} />
       </div>
     </article>
   );

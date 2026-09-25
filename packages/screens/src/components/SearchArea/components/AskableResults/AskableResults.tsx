@@ -12,6 +12,7 @@ import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { AskableResultsProps } from './AskableResults.types';
 import { useIsTitleWatched } from '@ValenceScreens/requests/useIsTitleWatched';
 import { describeCatalogueCard } from '@ValenceScreens/components/AskableDialog/describeCatalogueCard';
+import { say } from '@ValenceI18n/say';
 
 /**
  * What a search found that is not in the library yet, as a group of its own under what is: films
@@ -61,9 +62,16 @@ const AskableResults = ({ query, kind, onAsk }: AskableResultsProps) => {
   }
 
   return (
-    <section aria-label="Not in your library yet" className="flex flex-col gap-6">
+    <section
+      aria-label={say('screens.askableResults.notInLibrary')}
+      className="flex flex-col gap-6"
+    >
       {video.length === 0 ? null : (
-        <Rail title="Not in your library yet" sizesCards className="-mx-[var(--rail-lane)]">
+        <Rail
+          title={say('screens.askableResults.notInLibrary')}
+          sizesCards
+          className="-mx-[var(--rail-lane)]"
+        >
           {video.map((title, at) => {
             return (
               <RevealItem
@@ -87,7 +95,11 @@ const AskableResults = ({ query, kind, onAsk }: AskableResultsProps) => {
       )}
 
       {music.length === 0 ? null : (
-        <Rail title="Artists not in your library yet" sizesCards className="-mx-[var(--rail-lane)]">
+        <Rail
+          title={say('screens.askableResults.artistsNotInLibrary')}
+          sizesCards
+          className="-mx-[var(--rail-lane)]"
+        >
           {music.map((title, at) => (
             <RevealItem key={title.id} index={at} className="shrink-0 snap-start">
               <MusicTile

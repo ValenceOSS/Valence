@@ -1,6 +1,7 @@
 import { partyAllows, powersOf } from '@ValenceContracts/schemas/WatchParty';
 import type { WatchPartyState } from '@ValenceClient/party/useWatchParty';
 import type { ListeningParty } from './listeningParty';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The listening party this window is in, read out of whichever party it is in, with what it may do
@@ -25,7 +26,9 @@ const listeningPartyFrom = (
 
   return {
     party,
-    hostName: party.members.find((member) => member.role === 'host')?.name ?? 'the host',
+    hostName:
+      party.members.find((member) => member.role === 'host')?.name ??
+      say('screens.listeningPartyFrom.theHost'),
     mayChoose: powersOf(role).includes('changeWhatIsPlaying'),
     mayPlayPause: partyAllows(party, role, { kind: 'play', atSeconds: 0 }),
     maySeek: partyAllows(party, role, { kind: 'seek', atSeconds: 0 }),

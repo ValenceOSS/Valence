@@ -1,4 +1,5 @@
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import { say } from '@ValenceI18n/say';
 
 type WhatIsPlaying = Partial<Pick<MediaSummary, 'seriesTitle' | 'extraKind'>>;
 
@@ -15,12 +16,12 @@ type WhatIsPlaying = Partial<Pick<MediaSummary, 'seriesTitle' | 'extraKind'>>;
  */
 const whatIsPlaying = ({ seriesTitle, extraKind }: WhatIsPlaying): string => {
   if (extraKind !== null && extraKind !== undefined) {
-    return 'this';
+    return say('screens.whatIsPlaying.this');
   }
 
   return seriesTitle !== null && seriesTitle !== undefined && seriesTitle !== ''
-    ? 'the episode'
-    : 'the film';
+    ? say('screens.whatIsPlaying.episode')
+    : say('screens.whatIsPlaying.film');
 };
 
 export type { WhatIsPlaying };

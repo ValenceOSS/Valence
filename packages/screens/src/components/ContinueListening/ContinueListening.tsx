@@ -4,6 +4,7 @@ import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { BookRow } from '@ValenceScreens/components/BookRow/BookRow';
 import { stillListening } from '@ValenceClient/books/stillListening';
 import type { ContinueListeningProps } from './ContinueListening.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The audiobooks somebody is partway through, most recently heard first, each saying the chapter
@@ -26,7 +27,7 @@ const ContinueListening = ({ onOpen }: ContinueListeningProps) => {
 
   return (
     <BookRow
-      title="Continue listening"
+      title={say('screens.continueListening.heading')}
       books={unfinished.map(({ book }) => book)}
       progress={progress}
       onOpen={onOpen}

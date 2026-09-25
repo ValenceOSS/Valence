@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { ObservabilitySearchSchema } from '@ValenceClient/admin/ObservabilitySearchSchema';
 import { mergeObservabilitySearch } from '@ValenceClient/admin/mergeObservabilitySearch';
 import { readObservabilityView } from '@ValenceScreens/components/ObservabilityPage/readObservabilityView';
@@ -74,7 +75,7 @@ const AdminPage = () => {
   if (isLoading || !mayAdminister) {
     return (
       <div className="mt-[var(--valence-window-bar)] flex h-[calc(100dvh-var(--valence-window-bar))] items-center justify-center">
-        <Spinner size="lg" label="Reading what you may do" />
+        <Spinner size="lg" label={say('screens.adminPage.loading')} />
       </div>
     );
   }
@@ -91,7 +92,7 @@ const AdminPage = () => {
           <Button
             variant="bare"
             size="none"
-            label="Close the sidebar"
+            label={say('screens.adminPage.closeSidebar')}
             onClick={() => {
               setIsCollapsed(true);
               saveSidebarCollapsed(true);
@@ -102,19 +103,21 @@ const AdminPage = () => {
 
         <Sidebar
           className="fixed bottom-0 left-0 top-[var(--valence-window-bar)] z-40 md:static md:z-auto"
-          label="Server"
+          label={say('screens.adminPage.sidebarLabel')}
           brand={
             <Button
               variant="bare"
               size="none"
-              label="Back to Valence"
+              label={say('screens.adminPage.backToValence')}
               onClick={() => {
                 void go({ to: '/' });
               }}
               className="flex items-center gap-2"
             >
               <Logo size={24} isSolid />
-              {isCollapsed ? null : <span className="font-semibold text-text">Valence</span>}
+              {isCollapsed ? null : (
+                <span className="font-semibold text-text">{say('common.valence')}</span>
+              )}
             </Button>
           }
           groups={sections.map((section) => ({
@@ -158,7 +161,7 @@ const AdminPage = () => {
               )}
 
               {isCollapsed || version === null ? null : (
-                <span className="text-center">Valence {version}</span>
+                <span className="text-center">{say('screens.adminPage.version', { version })}</span>
               )}
             </div>
           }
@@ -171,7 +174,7 @@ const AdminPage = () => {
                 variant="ghost"
                 size="sm"
                 isIconOnly
-                label="Open the sidebar"
+                label={say('screens.adminPage.openSidebar')}
                 onClick={() => {
                   setIsCollapsed(false);
                   saveSidebarCollapsed(false);

@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Icon } from '@ValenceUI/Icon';
@@ -113,7 +114,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
     setIsSaving(false);
 
     if (!saved) {
-      notify.failed('Those changes were not saved.');
+      notify.failed(say('screens.accountDialog.notSaved'));
 
       return;
     }
@@ -126,7 +127,12 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
   const showing = ACCOUNT_PANELS.find((one) => one.id === panel)?.id ?? 'profile';
 
   return (
-    <Dialog label="Your account" isOpen={panel !== null} onClose={onClose} size="stage">
+    <Dialog
+      label={say('screens.accountDialog.label')}
+      isOpen={panel !== null}
+      onClose={onClose}
+      size="stage"
+    >
       <Tabs
         value={showing}
         onValueChange={(next) => {
@@ -152,16 +158,26 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
             <TabRow
               tone="underlined"
               size="sm"
-              groups={[{ items: ACCOUNT_PANELS }]}
+              groups={[
+                { items: ACCOUNT_PANELS.map((one) => ({ id: one.id, label: say(one.labelKey) })) },
+              ]}
               value={showing}
-              label="What to change"
+              label={say('screens.accountDialog.tabsLabel')}
               className="-mx-5 px-5"
             />
           }
         >
-          {mayAdminister ? <Badge size="sm">admin</Badge> : null}
+          {mayAdminister ? (
+            <Badge size="sm">{say('screens.accountDialog.adminBadge')}</Badge>
+          ) : null}
 
-          <Button variant="ghost" size="sm" isIconOnly label="Close" onClick={onClose}>
+          <Button
+            variant="ghost"
+            size="sm"
+            isIconOnly
+            label={say('common.close')}
+            onClick={onClose}
+          >
             <Icon of={XIcon} size={16} />
           </Button>
         </DialogTitle>
@@ -193,7 +209,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
                 }}
               >
                 <Icon of={DoorOpenIcon} size={16} />
-                Sign out
+                {say('screens.accountDialog.signOut')}
               </Button>
 
               {showing !== 'profile' ? null : (
@@ -205,7 +221,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
                     void save();
                   }}
                 >
-                  Save
+                  {say('common.save')}
                 </Button>
               )}
             </div>

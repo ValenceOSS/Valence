@@ -3,6 +3,7 @@ import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { describeHiding } from '@ValenceClient/library/describeHiding';
 import type { ConfirmHidingProps } from './ConfirmHiding.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Asks before taking something out of somebody's own browsing, and says what will actually go.
@@ -31,9 +32,13 @@ const ConfirmHiding = ({ hiding, onHidden }: ConfirmHidingProps) => {
 
   return (
     <ConfirmDialog
-      title={hiding.asking === null ? 'Hide this?' : describeHiding(hiding.asking, shared).title}
+      title={
+        hiding.asking === null
+          ? say('screens.confirmHiding.title')
+          : describeHiding(hiding.asking, shared).title
+      }
       detail={hiding.asking === null ? '' : describeHiding(hiding.asking, shared).detail}
-      confirmLabel="Hide it"
+      confirmLabel={say('screens.confirmHiding.confirm')}
       isOpen={hiding.asking !== null}
       onClose={() => {
         hiding.dismiss();

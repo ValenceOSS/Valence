@@ -21,6 +21,8 @@ import { showSlug } from '@ValenceCore/functions/showSlug';
 import { MediaPreview } from '@ValenceScreens/components/MediaPreview/MediaPreview';
 import { MediaFacts } from '@ValenceScreens/components/MediaFacts/MediaFacts';
 import type { RailCardProps } from './RailCard.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const HOVER_DELAY_MILLISECONDS = 600;
 
@@ -274,7 +276,9 @@ const RailCard = ({
               <Button
                 variant="bare"
                 size="none"
-                aria-label={`More about ${media.seriesTitle ?? media.title}`}
+                aria-label={say('screens.railCard.moreAbout', {
+                  title: media.seriesTitle ?? media.title,
+                })}
                 onClick={inspect}
                 className="absolute inset-0 z-0 rounded-lg"
               />
@@ -298,13 +302,13 @@ const RailCard = ({
                         : [
                             show.seasonCount === 1
                               ? null
-                              : `${show.seasonCount.toString()} seasons`,
-                            `${show.episodeCount.toString()} episodes`,
+                              : sayCount('screens.railCard.seasons', show.seasonCount),
+                            sayCount('screens.railCard.episodes', show.episodeCount),
                             unwatchedCount === undefined
                               ? null
                               : unwatchedCount === 0
-                                ? 'All watched'
-                                : `${unwatchedCount.toString()} left`,
+                                ? say('screens.railCard.allWatched')
+                                : sayCount('screens.railCard.left', unwatchedCount),
                           ]
                             .filter((part) => part !== null)
                             .join(' · ')
@@ -324,7 +328,7 @@ const RailCard = ({
                   <Button
                     variant="bare"
                     size="none"
-                    aria-label={`About ${media.seriesTitle}`}
+                    aria-label={say('screens.railCard.aboutShow', { title: media.seriesTitle })}
                     onClick={(event) => {
                       event.stopPropagation();
                       onOpenShow(media);
@@ -376,8 +380,8 @@ const RailCard = ({
                   >
                     <Icon of={PlayFilledIcon} size={15} />
                     {resumeSeconds === undefined
-                      ? 'Play'
-                      : `Resume from ${formatDuration(resumeSeconds)}`}
+                      ? say('screens.railCard.play')
+                      : say('screens.railCard.resumeFrom', { time: formatDuration(resumeSeconds) })}
                   </Button>
 
                   {resumeSeconds === undefined ? null : (
@@ -385,7 +389,7 @@ const RailCard = ({
                       isIconOnly
                       variant="secondary"
                       size="md"
-                      label={`Start ${media.title} again`}
+                      label={say('screens.railCard.startAgain', { title: media.title })}
                       onClick={(event) => {
                         event.stopPropagation();
                         onPlay(media, 0);
@@ -400,7 +404,11 @@ const RailCard = ({
                       isIconOnly
                       variant="secondary"
                       size="md"
-                      label={isKept ? `Stop keeping ${media.title}` : `Keep ${media.title}`}
+                      label={
+                        isKept
+                          ? say('screens.railCard.stopKeeping', { title: media.title })
+                          : say('screens.railCard.keep', { title: media.title })
+                      }
                       isActive={isKept}
                       onClick={(event) => {
                         event.stopPropagation();
@@ -421,7 +429,7 @@ const RailCard = ({
                       isIconOnly
                       variant="secondary"
                       size="md"
-                      label={`Hide ${media.title}`}
+                      label={say('screens.railCard.hide', { title: media.title })}
                       onClick={(event) => {
                         event.stopPropagation();
                         onHide(media);

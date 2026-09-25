@@ -3,6 +3,7 @@ import { Button } from '@ValenceUI/Button';
 import { ContextMenu } from '@ValenceUI/ContextMenu';
 import { Icon } from '@ValenceUI/Icon';
 import type { MusicTileProps } from './MusicTile.types';
+import { say } from '@ValenceI18n/say';
 
 const LIFTS = [
   'transition-[translate,scale] duration-[var(--duration-fast)] ease-[var(--ease-out)]',
@@ -73,7 +74,7 @@ const MusicTile = ({
             variant="confirm"
             size="none"
             isIconOnly
-            label={`Play ${title}`}
+            label={say('screens.musicTile.play', { title })}
             hasTooltip={false}
             className={PLAY}
             onClick={onPlay}

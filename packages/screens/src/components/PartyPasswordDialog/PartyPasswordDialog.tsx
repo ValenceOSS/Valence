@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { useState } from 'react';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -26,31 +27,31 @@ const PartyPasswordDialog = ({ isOpen, wasWrong, onJoin, onClose }: PartyPasswor
   const [password, setPassword] = useState('');
 
   return (
-    <Dialog label="Watch party password" isOpen={isOpen} onClose={onClose}>
+    <Dialog label={say('screens.partyPasswordDialog.label')} isOpen={isOpen} onClose={onClose}>
       <DialogContent>
-        <DialogTitle title="This watch party has a password" />
+        <DialogTitle title={say('screens.partyPasswordDialog.title')} />
 
         <div className="flex flex-col gap-4 pt-2">
           <p className="text-sm leading-relaxed text-text-muted">
-            Whoever invited you set one. Ask them for it if you have not been told.
+            {say('screens.partyPasswordDialog.body')}
           </p>
 
           <TextField
-            label="Password"
+            label={say('screens.partyPasswordDialog.passwordLabel')}
             type="password"
             value={password}
             hasFocusOnMount
             autoComplete="off"
-            {...(wasWrong ? { error: 'That is not the password for this party.' } : {})}
+            {...(wasWrong ? { error: say('screens.partyPasswordDialog.wrong') } : {})}
             onValueChange={setPassword}
           />
         </div>
       </DialogContent>
 
       <DialogFooter
-        dismiss={{ label: 'Not now', onChoose: onClose }}
+        dismiss={{ label: say('screens.partyPasswordDialog.notNow'), onChoose: onClose }}
         confirm={{
-          label: 'Join',
+          label: say('screens.partyPasswordDialog.join'),
           onChoose: () => {
             onJoin(password);
           },

@@ -6,6 +6,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { Logo } from '@ValenceUI/Logo';
 import { liquidSpring, stillTransition } from '@ValenceUI/animations/reveal';
 import type { WelcomeToValenceProps } from './WelcomeToValence.types';
+import { say } from '@ValenceI18n/say';
 
 const MARKS_PLACE = 'valence-mark';
 
@@ -64,11 +65,11 @@ const WelcomeToValence = ({ name, household, onFinished }: WelcomeToValenceProps
 
       <motion.div {...rises(0.35)} className="flex flex-col items-center gap-3">
         <h1 className="bg-gradient-to-br from-text via-text to-accent bg-clip-text text-[clamp(2rem,6vw,3.25rem)] font-semibold tracking-[-0.04em] text-transparent">
-          {`Welcome to ${name}`}
+          {say('screens.welcomeToValence.welcome', { name })}
         </h1>
 
         <p className="max-w-sm text-base text-text-muted">
-          {`${household} is ready. Everything else can be changed whenever you like.`}
+          {say('screens.welcomeToValence.ready', { household })}
         </p>
       </motion.div>
 
@@ -83,7 +84,7 @@ const WelcomeToValence = ({ name, household, onFinished }: WelcomeToValenceProps
             setTimeout(onFinished, prefersReducedMotion === true ? 0 : WORDS_CLEAR_MS);
           }}
         >
-          Start watching
+          {say('screens.welcomeToValence.startWatching')}
           <Icon of={ChevronRightIcon} size={18} />
         </Button>
       </motion.div>

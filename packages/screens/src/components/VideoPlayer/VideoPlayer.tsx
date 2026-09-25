@@ -107,6 +107,8 @@ import type { QualityPreference } from '@ValenceClient/playback/qualityPreferenc
 import type { PlayerState, VideoPlayerProps } from './VideoPlayer.types';
 import { PlayOnDialog } from '@ValenceScreens/components/PlayOnDialog/PlayOnDialog';
 import { useVideoDevices } from '@ValenceClient/video/useVideoDevices';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 type FullscreenTarget = {
   requestFullscreen?: () => Promise<void>;
 };
@@ -166,12 +168,12 @@ const MOST_FRAME_SKEW_SECONDS = 30;
  */
 const waitingWord = (names: readonly string[]): string => {
   if (names.length === 0) {
-    return 'Getting the room in step';
+    return say('screens.videoPlayer.gettingInStep');
   }
 
   return names.length === 1
-    ? `Waiting for ${names[0] ?? ''}`
-    : `Waiting for ${names.length.toString()} people`;
+    ? say('screens.videoPlayer.waitingForName', { name: names[0] ?? '' })
+    : sayCount('screens.videoPlayer.waitingForPeople', names.length);
 };
 
 const HEARTBEAT_INTERVAL_MILLISECONDS = 30_000;
@@ -383,7 +385,7 @@ const VideoPlayer = ({
 
     if (shouldRun && element.paused) {
       element.play().catch(() => {
-        notify.say('Your browser will not start this on its own — press play to join in.', {
+        notify.say(say('screens.videoPlayer.pressPlayToJoin'), {
           where: PLAYER_TOASTS,
           id: PARTY_NOTICE,
         });
@@ -630,7 +632,7 @@ const VideoPlayer = ({
             return;
           }
 
-          notify.failed('That device would not take this stream.', { where: PLAYER_TOASTS });
+          notify.failed(say('screens.videoPlayer.deviceRefused'), { where: PLAYER_TOASTS });
         });
       }
 
@@ -1009,7 +1011,7 @@ const VideoPlayer = ({
             where: PLAYER_TOASTS,
             staysUntilDismissed: true,
             action: {
-              label: 'Dismiss',
+              label: say('screens.videoPlayer.dismiss'),
               onPress: () => {
                 notify.forget(said);
               },
@@ -1775,7 +1777,13 @@ const VideoPlayer = ({
         </h2>
 
         <div className="flex w-24 shrink-0 justify-end">
-          <Button isIconOnly variant="overlay" label="Close" onClick={onClose} size="md">
+          <Button
+            isIconOnly
+            variant="overlay"
+            label={say('screens.videoPlayer.close')}
+            onClick={onClose}
+            size="md"
+          >
             <Icon of={XIcon} size={20} />
           </Button>
         </div>
@@ -1834,10 +1842,12 @@ const VideoPlayer = ({
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-shade text-center">
               <Icon of={PictureInPictureIcon} size={32} tone="muted" />
 
-              <p className="text-sm text-text-muted">Playing in a floating window</p>
+              <p className="text-sm text-text-muted">
+                {say('screens.videoPlayer.inFloatingWindow')}
+              </p>
 
               <Button variant="secondary" size="sm" onClick={popOut}>
-                Bring it back
+                {say('screens.videoPlayer.bringItBack')}
               </Button>
             </div>
           )}
@@ -1848,11 +1858,12 @@ const VideoPlayer = ({
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-shade text-center">
               <Icon of={CastIcon} size={32} tone="muted" />
 
-              <p className="text-sm text-text-muted">Playing on another device</p>
+              <p className="text-sm text-text-muted">
+                {say('screens.videoPlayer.playingElsewhere')}
+              </p>
 
               <p className="max-w-xs text-xs text-text-muted/70">
-                The controls below still work. Stopping the cast from the device brings it back
-                here.
+                {say('screens.videoPlayer.castControls')}
               </p>
             </div>
           )}
@@ -1877,7 +1888,7 @@ const VideoPlayer = ({
                 label={
                   party?.isHeld === true
                     ? waitingWord(party.waitingFor)
-                    : `Waiting for more of ${whatIsPlaying(media)}`
+                    : say('screens.videoPlayer.waitingForMore', { title: whatIsPlaying(media) })
                 }
                 size="lg"
               />
@@ -1885,7 +1896,7 @@ const VideoPlayer = ({
               <p className="valence-solid rounded-md px-4 py-1.5 text-sm text-text">
                 {party?.isHeld === true
                   ? waitingWord(party.waitingFor)
-                  : `Waiting for more of ${whatIsPlaying(media)}`}
+                  : say('screens.videoPlayer.waitingForMore', { title: whatIsPlaying(media) })}
               </p>
             </div>
           )}
@@ -1901,10 +1912,10 @@ const VideoPlayer = ({
               <Spinner
                 label={
                   heldFrame === null
-                    ? 'Preparing playback'
+                    ? say('screens.videoPlayer.preparing')
                     : heldFrame.isItemChange
-                      ? 'Loading the next episode'
-                      : 'Changing the stream'
+                      ? say('screens.videoPlayer.loadingNextEpisode')
+                      : say('screens.videoPlayer.changingStream')
                 }
                 size={heldFrame === null ? 'lg' : 'sm'}
               />
@@ -2069,10 +2080,10 @@ const VideoPlayer = ({
                 }
 
                 if (!isReachableOrigin(window.location.origin)) {
-                  notify.failed(
-                    'Open Valence at its address on the network rather than as localhost, so a device has somewhere to fetch from.',
-                    { where: PLAYER_TOASTS, id: CAST_NOTICE },
-                  );
+                  notify.failed(say('screens.videoPlayer.castNeedsAddress'), {
+                    where: PLAYER_TOASTS,
+                    id: CAST_NOTICE,
+                  });
 
                   return;
                 }
@@ -2094,8 +2105,8 @@ const VideoPlayer = ({
 
                   notify.failed(
                     window.location.protocol === 'https:'
-                      ? 'This browser offered no device. Safari casts to AirPlay receivers; Chrome needs the extension that backs casting.'
-                      : 'This browser only casts over a secure connection. Serve Valence over HTTPS, or use Safari, which will cast from here as it is.',
+                      ? say('screens.videoPlayer.noCastDevice')
+                      : say('screens.videoPlayer.castNeedsHttps'),
                     { where: PLAYER_TOASTS, id: CAST_NOTICE },
                   );
                 });
@@ -2117,7 +2128,7 @@ const VideoPlayer = ({
 
       {state === 'failed' ? (
         <p role="alert" className="text-sm text-danger">
-          {problem ?? 'Playback failed.'}
+          {problem ?? say('screens.videoPlayer.failed')}
         </p>
       ) : null}
 

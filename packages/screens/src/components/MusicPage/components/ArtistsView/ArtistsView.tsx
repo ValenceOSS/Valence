@@ -8,11 +8,13 @@ import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { ArtistShelf } from '@ValenceScreens/components/ArtistShelf/ArtistShelf';
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
 const WHICH = [
-  { id: 'all', label: 'Everyone' },
-  { id: 'followed', label: 'Following' },
-] as const;
+  { id: 'all', labelKey: 'screens.artistsView.everyone' },
+  { id: 'followed', labelKey: 'screens.artistsView.following' },
+] as const satisfies readonly { id: string; labelKey: StringKey }[];
 
 /**
  * Every artist in the library as a grid of faces, or only the ones somebody follows.
@@ -25,9 +27,9 @@ const ArtistsView = () => {
 
   const which = (
     <SegmentedRow
-      label="Which artists to show"
+      label={say('screens.artistsView.whichLabel')}
       size="sm"
-      items={WHICH}
+      items={WHICH.map((one) => ({ id: one.id, label: say(one.labelKey) }))}
       value={isFollowedOnly ? 'followed' : 'all'}
       onSelect={(id) => {
         setIsFollowedOnly(id === 'followed');
@@ -38,7 +40,7 @@ const ArtistsView = () => {
   if (artists.isPending) {
     return (
       <div className={`py-8 ${MUSIC_LANES.page}`}>
-        <Skeleton label="Reading your artists" className="h-64 w-full" />
+        <Skeleton label={say('screens.artistsView.reading')} className="h-64 w-full" />
       </div>
     );
   }
@@ -52,16 +54,25 @@ const ArtistsView = () => {
           <div className={`flex justify-end ${MUSIC_LANES.page}`}>{which}</div>
           <NothingHere
             of={UserIcon}
-            title={isFollowedOnly ? 'Not following anybody yet' : 'No artists yet'}
+            title={
+              isFollowedOnly
+                ? say('screens.artistsView.noneFollowedTitle')
+                : say('screens.artistsView.emptyTitle')
+            }
             detail={
               isFollowedOnly
-                ? 'Follow an artist from their page and they will be here.'
-                : 'Once a music library has been scanned, its artists will be here.'
+                ? say('screens.artistsView.noneFollowedDetail')
+                : say('screens.artistsView.emptyDetail')
             }
           />
         </>
       ) : (
-        <ArtistShelf heading="Artists" layout="grid" artists={found} action={which} />
+        <ArtistShelf
+          heading={say('screens.artistsView.heading')}
+          layout="grid"
+          artists={found}
+          action={which}
+        />
       )}
     </div>
   );

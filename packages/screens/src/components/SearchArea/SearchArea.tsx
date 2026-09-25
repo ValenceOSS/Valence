@@ -26,6 +26,9 @@ import { BackToTop } from '@ValenceUI/BackToTop';
 import { AppliedFilters } from '@ValenceUI/AppliedFilters';
 import { FilterMenu } from '@ValenceUI/FilterMenu';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
 const SETTLE_MILLISECONDS = 250;
 
@@ -34,12 +37,12 @@ const isAProgramme = (media: MediaSummary): boolean =>
 
 const PAGE_SIZE = 60;
 
-const KINDS: { id: SearchKind; label: string }[] = [
-  { id: 'everything', label: 'Everything' },
-  { id: 'films', label: 'Films' },
-  { id: 'shows', label: 'Shows' },
-  { id: 'music', label: 'Music' },
-  { id: 'books', label: 'Books' },
+const KINDS: { id: SearchKind; label: StringKey }[] = [
+  { id: 'everything', label: 'screens.searchArea.everything' },
+  { id: 'films', label: 'screens.searchArea.films' },
+  { id: 'shows', label: 'screens.searchArea.shows' },
+  { id: 'music', label: 'screens.searchArea.music' },
+  { id: 'books', label: 'screens.searchArea.books' },
 ];
 
 /**
@@ -220,14 +223,14 @@ const SearchArea = ({
           transition={revealTransition(prefersReducedMotion, 'heavy')}
         >
           <TextField
-            label="Search the library"
+            label={say('screens.searchArea.searchLabel')}
             isLabelHidden
             isBare
             size="xl"
             type="search"
             hasFocusOnMount
             value={liveSearch}
-            placeholder="Everything you own"
+            placeholder={say('screens.searchArea.placeholder')}
             icon={<Icon of={SearchIcon} size={28} />}
             onValueChange={setLiveSearch}
           />
@@ -240,9 +243,9 @@ const SearchArea = ({
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <SegmentedRow
-              label="What to search"
+              label={say('screens.searchArea.whatToSearch')}
               size="sm"
-              items={KINDS}
+              items={KINDS.map((option) => ({ id: option.id, label: say(option.label) }))}
               value={kind}
               onSelect={(id) => {
                 const chosen = KINDS.find((option) => option.id === id);
@@ -255,7 +258,7 @@ const SearchArea = ({
 
             {filters.groups.length === 0 ? null : (
               <FilterMenu
-                label="Filter the library"
+                label={say('screens.searchArea.filter')}
                 hasLabel
                 groups={filters.groups}
                 selected={filters.selected}
@@ -281,18 +284,21 @@ const SearchArea = ({
       <motion.section
         variants={revealVariants(prefersReducedMotion)}
         transition={revealTransition(prefersReducedMotion)}
-        aria-label="Results"
+        aria-label={say('screens.searchArea.results')}
         className="flex flex-col gap-5"
       >
         <header className="flex flex-wrap items-center justify-between gap-3 text-sm text-text-muted">
           {isReading ? (
-            <Spinner isCentered label="Searching" size="sm" />
+            <Spinner isCentered label={say('screens.searchArea.searching')} size="sm" />
           ) : (
             <span>
               {howMany === 0 ? (
-                'Nothing here'
+                say('screens.searchArea.nothingHere')
               ) : (
-                <AnimatedNumber value={howMany} suffix={howMany === 1 ? ' result' : ' results'} />
+                <AnimatedNumber
+                  value={howMany}
+                  suffix={sayCount('screens.searchArea.resultsSuffix', howMany)}
+                />
               )}
             </span>
           )}
@@ -318,7 +324,7 @@ const SearchArea = ({
           >
             {libraries.isError || found.isError ? (
               <CouldNotRead
-                what="The library"
+                what={say('screens.searchArea.theLibrary')}
                 isTryingAgain={libraries.isFetching || found.isFetching}
                 onTryAgain={() => {
                   void libraries.refetch();
@@ -328,10 +334,10 @@ const SearchArea = ({
             ) : howMany === 0 && !isReading ? (
               <p className="max-w-prose text-text-muted">
                 {kind === 'books' && settled.search === undefined
-                  ? 'Type the name of a book, or who wrote it.'
+                  ? say('screens.searchArea.typeABook')
                   : isNarrowed
-                    ? 'Nothing matches all of that. Taking one of the filters off is usually the fastest way back.'
-                    : 'This library has nothing in it yet. Scanning one from the home page is where things come from.'}
+                    ? say('screens.searchArea.nothingMatches')
+                    : say('screens.searchArea.libraryEmpty')}
               </p>
             ) : (
               <div className="flex flex-col gap-8">
@@ -353,13 +359,20 @@ const SearchArea = ({
                 )}
 
                 {books.length === 0 || onOpenBook === undefined ? null : (
-                  <BookRow title="Books" books={books} onOpen={onOpenBook} />
+                  <BookRow
+                    title={say('screens.searchArea.booksRow')}
+                    books={books}
+                    onOpen={onOpenBook}
+                  />
                 )}
 
                 {music.artists.length === 0 && music.albums.length === 0 ? null : (
                   <div className="flex flex-col gap-8 [--music-lane:0px]">
-                    <ArtistShelf heading="Artists" artists={music.artists} />
-                    <AlbumShelf heading="Albums" albums={music.albums} />
+                    <ArtistShelf
+                      heading={say('screens.searchArea.artists')}
+                      artists={music.artists}
+                    />
+                    <AlbumShelf heading={say('screens.searchArea.albums')} albums={music.albums} />
                   </div>
                 )}
               </div>

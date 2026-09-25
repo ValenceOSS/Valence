@@ -19,6 +19,7 @@ import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import type { AlbumViewProps } from './AlbumView.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Counts songs in words that read properly at one as well as at many.
@@ -45,7 +46,7 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
   if (asked.isError) {
     return (
       <CouldNotRead
-        what="this album"
+        what={say('screens.albumView.couldNotReadWhat')}
         isTryingAgain={asked.isFetching}
         onTryAgain={() => {
           void asked.refetch();
@@ -57,7 +58,7 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
   if (detail === undefined) {
     return (
       <div className={`flex flex-col gap-4 py-8 ${MUSIC_LANES.page}`}>
-        <Skeleton label="Reading the album" shape="soft" className="size-48" />
+        <Skeleton label={say('screens.albumView.reading')} shape="soft" className="size-48" />
         <Skeleton className="h-12 w-2/3" />
       </div>
     );
@@ -69,7 +70,11 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
   return (
     <article className="flex flex-col">
       <MusicHeader
-        eyebrow={album.isCompilation ? 'Compilation' : 'Album'}
+        eyebrow={
+          album.isCompilation
+            ? say('screens.albumView.compilation')
+            : say('screens.albumView.album')
+        }
         title={album.title}
         artwork={
           <MusicArtwork
@@ -105,7 +110,7 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
               variant="confirm"
               size="lg"
               isIconOnly
-              label={`Play ${album.title}`}
+              label={say('screens.albumView.play', { title: album.title })}
               className="size-14"
               disabled={tracks.length === 0}
               onClick={() => {
@@ -118,7 +123,7 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
               variant="ghost"
               size="md"
               isIconOnly
-              label={`Shuffle ${album.title}`}
+              label={say('screens.albumView.shuffle', { title: album.title })}
               disabled={tracks.length === 0}
               onClick={() => {
                 player.play(tracks, Math.floor(Math.random() * tracks.length), {
@@ -135,7 +140,7 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
 
       <div className={`pb-8 ${MUSIC_LANES.tracks}`}>
         {tracks.length === 0 ? (
-          <NothingHere of={RecordIcon} title="Nothing on this album you can hear" />
+          <NothingHere of={RecordIcon} title={say('screens.albumView.nothingToHear')} />
         ) : (
           <TrackList
             label={album.title}

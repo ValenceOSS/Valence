@@ -1,4 +1,5 @@
 import type { PlaylistOwner } from '@ValenceContracts/schemas/Playlist';
+import { say } from '@ValenceI18n/say';
 
 /**
  * What to call whoever a playlist belongs to, including when they are gone.
@@ -9,6 +10,7 @@ import type { PlaylistOwner } from '@ValenceContracts/schemas/Playlist';
  * @param owner - The profile it belongs to, or nothing where that profile has been removed.
  * @returns What to write.
  */
-const nameOfOwner = (owner: PlaylistOwner | null): string => owner?.name ?? 'a removed profile';
+const nameOfOwner = (owner: PlaylistOwner | null): string =>
+  owner?.name ?? say('screens.nameOfOwner.removedProfile');
 
 export { nameOfOwner };

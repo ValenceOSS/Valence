@@ -9,6 +9,7 @@ import { StudiosRail } from '@ValenceScreens/components/RequestsPage/components/
 import { TitleShelf } from '@ValenceScreens/components/RequestsPage/components/TitleShelf/TitleShelf';
 import type { CatalogueShelf } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { DiscoverShelvesProps } from './DiscoverShelves.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Whether a shelf holds music, which decides how it is drawn: covers and faces rather than posters.
@@ -46,7 +47,7 @@ const DiscoverShelves = ({ onAsk, onBrowse, onBrowseStudio }: DiscoverShelvesPro
   if (discovered.isError) {
     return (
       <CouldNotRead
-        what="What there is to ask for"
+        what={say('screens.discoverShelves.whatThereIs')}
         isTryingAgain={discovered.isFetching}
         onTryAgain={() => {
           void discovered.refetch();
@@ -56,7 +57,7 @@ const DiscoverShelves = ({ onAsk, onBrowse, onBrowseStudio }: DiscoverShelvesPro
   }
 
   if (discovered.data === undefined) {
-    return <Spinner isCentered label="Reading what there is to ask for" />;
+    return <Spinner isCentered label={say('screens.discoverShelves.reading')} />;
   }
 
   const { shelves, studios } = discovered.data;

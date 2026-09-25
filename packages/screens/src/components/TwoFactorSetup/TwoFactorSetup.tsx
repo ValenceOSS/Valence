@@ -6,6 +6,7 @@ import { TextField } from '@ValenceUI/TextField';
 import { disableTwoFactor, enableTwoFactor, verifyTotp } from '@ValenceClient/session/auth';
 import { readTotpSecret, formatTotpSecret } from './readTotpSecret';
 import type { Enrollment, SetupStage, TwoFactorSetupProps } from './TwoFactorSetup.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Turns two-factor on and off for an account. Enrolling asks for the password again, shows the secret
@@ -33,7 +34,7 @@ const TwoFactorSetup = ({ isEnabled, onChanged }: TwoFactorSetupProps) => {
 
   const begin = async () => {
     if (password.length === 0) {
-      setError('Enter your password to continue.');
+      setError(say('screens.twoFactorSetup.enterPassword'));
 
       return;
     }
@@ -45,7 +46,7 @@ const TwoFactorSetup = ({ isEnabled, onChanged }: TwoFactorSetupProps) => {
       const started = await enableTwoFactor(password);
 
       if (started === null) {
-        setError('That password is incorrect.');
+        setError(say('screens.twoFactorSetup.wrongPassword'));
 
         return;
       }
@@ -58,7 +59,7 @@ const TwoFactorSetup = ({ isEnabled, onChanged }: TwoFactorSetupProps) => {
       setPassword('');
       setStage('showSecret');
     } catch {
-      setError('Could not reach the server. Check that it is still running.');
+      setError(say('screens.twoFactorSetup.couldNotReach'));
     } finally {
       setIsBusy(false);
     }
@@ -66,7 +67,7 @@ const TwoFactorSetup = ({ isEnabled, onChanged }: TwoFactorSetupProps) => {
 
   const confirm = async () => {
     if (!/^\d{6}$/.test(code.trim())) {
-      setError('Authenticator codes are 6 digits.');
+      setError(say('screens.twoFactorSetup.codeLength'));
 
       return;
     }
@@ -76,7 +77,7 @@ const TwoFactorSetup = ({ isEnabled, onChanged }: TwoFactorSetupProps) => {
 
     try {
       if (!(await verifyTotp(code.trim()))) {
-        setError('That code is not valid. Try the next one.');
+        setError(say('screens.twoFactorSetup.invalidCode'));
 
         return;
       }
@@ -84,7 +85,7 @@ const TwoFactorSetup = ({ isEnabled, onChanged }: TwoFactorSetupProps) => {
       reset();
       onChanged();
     } catch {
-      setError('Could not reach the server. Check that it is still running.');
+      setError(say('screens.twoFactorSetup.couldNotReach'));
     } finally {
       setIsBusy(false);
     }
@@ -92,7 +93,7 @@ const TwoFactorSetup = ({ isEnabled, onChanged }: TwoFactorSetupProps) => {
 
   const disable = async () => {
     if (password.length === 0) {
-      setError('Enter your password to continue.');
+      setError(say('screens.twoFactorSetup.enterPassword'));
 
       return;
     }
@@ -102,7 +103,7 @@ const TwoFactorSetup = ({ isEnabled, onChanged }: TwoFactorSetupProps) => {
 
     try {
       if (!(await disableTwoFactor(password))) {
-        setError('That password is incorrect.');
+        setError(say('screens.twoFactorSetup.wrongPassword'));
 
         return;
       }
@@ -110,7 +111,7 @@ const TwoFactorSetup = ({ isEnabled, onChanged }: TwoFactorSetupProps) => {
       reset();
       onChanged();
     } catch {
-      setError('Could not reach the server. Check that it is still running.');
+      setError(say('screens.twoFactorSetup.couldNotReach'));
     } finally {
       setIsBusy(false);
     }
@@ -119,11 +120,11 @@ const TwoFactorSetup = ({ isEnabled, onChanged }: TwoFactorSetupProps) => {
   return (
     <div className="flex flex-col">
       <SettingRow
-        title="Two-step sign in"
+        title={say('screens.twoFactorSetup.title')}
         description={
           isEnabled
-            ? 'Your account asks for a code from your authenticator app when you sign in.'
-            : 'A code from an authenticator app as well as your password, every time you sign in.'
+            ? say('screens.twoFactorSetup.onDescription')
+            : say('screens.twoFactorSetup.offDescription')
         }
       >
         {stage !== 'idle' ? null : isEnabled ? (
@@ -134,7 +135,7 @@ const TwoFactorSetup = ({ isEnabled, onChanged }: TwoFactorSetupProps) => {
               setStage('disable');
             }}
           >
-            Turn off
+            {say('screens.twoFactorSetup.turnOff')}
           </Button>
         ) : (
           <Button
@@ -144,7 +145,7 @@ const TwoFactorSetup = ({ isEnabled, onChanged }: TwoFactorSetupProps) => {
               setStage('confirmPassword');
             }}
           >
-            Set up
+            {say('screens.twoFactorSetup.setUp')}
           </Button>
         )}
       </SettingRow>
@@ -166,20 +167,20 @@ const TwoFactorSetup = ({ isEnabled, onChanged }: TwoFactorSetupProps) => {
             }}
           >
             <TextField
-              label="Password"
+              label={say('screens.twoFactorSetup.password')}
               type="password"
               value={password}
               onValueChange={setPassword}
               autoComplete="current-password"
-              description="Confirm it is you before changing sign in requirements."
+              description={say('screens.twoFactorSetup.passwordHint')}
             />
 
             <div className="flex gap-2">
               <Button type="submit" isLoading={isBusy}>
-                Continue
+                {say('screens.twoFactorSetup.continue')}
               </Button>
               <Button type="button" variant="ghost" onClick={reset}>
-                Cancel
+                {say('common.cancel')}
               </Button>
             </div>
           </form>
@@ -187,25 +188,24 @@ const TwoFactorSetup = ({ isEnabled, onChanged }: TwoFactorSetupProps) => {
 
         {stage === 'showSecret' && enrollment !== null ? (
           <div className="flex flex-col gap-4">
-            <p className="text-sm text-text-muted">
-              Scan this with your authenticator app, or enter the key by hand.
-            </p>
+            <p className="text-sm text-text-muted">{say('screens.twoFactorSetup.scanThis')}</p>
 
-            <QrCode value={enrollment.totpURI} label="Two-factor setup QR code" />
+            <QrCode value={enrollment.totpURI} label={say('screens.twoFactorSetup.qrLabel')} />
 
             <div className="flex flex-col gap-1">
-              <span className="text-sm font-medium text-text">Setup key</span>
+              <span className="text-sm font-medium text-text">
+                {say('screens.twoFactorSetup.setupKey')}
+              </span>
               <code className="rounded-md bg-surface-raised px-3 py-2 font-mono text-sm text-text">
                 {formatTotpSecret(enrollment.secret)}
               </code>
             </div>
 
             <div className="flex flex-col gap-1">
-              <span className="text-sm font-medium text-text">Backup codes</span>
-              <p className="text-sm text-text-muted">
-                Save these now. Each works once if you lose your authenticator, and they are not
-                shown again.
-              </p>
+              <span className="text-sm font-medium text-text">
+                {say('screens.twoFactorSetup.backupCodes')}
+              </span>
+              <p className="text-sm text-text-muted">{say('screens.twoFactorSetup.saveThese')}</p>
               <ul className="grid grid-cols-2 gap-1 rounded-md bg-surface-raised p-3 font-mono text-sm text-text">
                 {enrollment.backupCodes.map((backupCode) => (
                   <li key={backupCode}>{backupCode}</li>
@@ -222,20 +222,20 @@ const TwoFactorSetup = ({ isEnabled, onChanged }: TwoFactorSetupProps) => {
               }}
             >
               <TextField
-                label="Authenticator code"
+                label={say('screens.twoFactorSetup.codeLabel')}
                 value={code}
                 onValueChange={setCode}
                 autoComplete="one-time-code"
                 placeholder="123456"
-                description="Enter a code from your app to finish. Two-factor is not on until you do."
+                description={say('screens.twoFactorSetup.codeHint')}
               />
 
               <div className="flex gap-2">
                 <Button type="submit" isLoading={isBusy}>
-                  Turn on two-factor
+                  {say('screens.twoFactorSetup.turnOn')}
                 </Button>
                 <Button type="button" variant="ghost" onClick={reset}>
-                  Cancel
+                  {say('common.cancel')}
                 </Button>
               </div>
             </form>

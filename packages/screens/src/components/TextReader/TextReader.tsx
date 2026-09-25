@@ -29,6 +29,8 @@ import { useChromeThatHides } from '@ValenceScreens/reading/useChromeThatHides';
 import { useTurnKeys } from '@ValenceScreens/reading/useTurnKeys';
 import type { TextPreferences } from '@ValenceClient/books/textPreferences';
 import type { TextReaderProps } from './TextReader.types';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
 type Landing =
   | { kind: 'within'; within: number }
@@ -38,6 +40,7 @@ type Landing =
 
 const GAP = 48;
 
+// eslint-disable-next-line valence/no-hard-coded-strings -- a CSS font stack, not words
 const SERIF = 'ui-serif, "Iowan Old Style", "Palatino Linotype", Georgia, serif';
 
 const TWO_COLUMNS_FROM = 960;
@@ -52,19 +55,19 @@ const PAGE: Record<TextPreferences['page'], string> = {
   dark: 'bg-paper-dark text-ink-dark',
 };
 
-const NAMES: Record<string, string> = {
-  small: 'Small',
-  medium: 'Medium',
-  large: 'Large',
-  larger: 'Larger',
-  tight: 'Tight',
-  normal: 'Normal',
-  loose: 'Loose',
-  narrow: 'Narrow',
-  wide: 'Wide',
-  light: 'Light',
-  sepia: 'Sepia',
-  dark: 'Dark',
+const NAMES: Record<string, StringKey> = {
+  small: 'screens.textReader.small',
+  medium: 'screens.textReader.medium',
+  large: 'screens.textReader.large',
+  larger: 'screens.textReader.larger',
+  tight: 'screens.textReader.tight',
+  normal: 'screens.textReader.normal',
+  loose: 'screens.textReader.loose',
+  narrow: 'screens.textReader.narrow',
+  wide: 'screens.textReader.wide',
+  light: 'screens.textReader.light',
+  sepia: 'screens.textReader.sepia',
+  dark: 'screens.textReader.dark',
 };
 
 /**
@@ -305,7 +308,7 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
   if (contents.isError || text.isError) {
     return (
       <CouldNotRead
-        what="That book"
+        what={say('screens.textReader.thatBook')}
         isTryingAgain={contents.isFetching || text.isFetching}
         onTryAgain={() => {
           void contents.refetch();
@@ -318,8 +321,10 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
   if (contents.data === null || text.data === null) {
     return (
       <div className="valence-below-the-bar z-50 flex flex-col items-center justify-center gap-2 bg-shade text-center">
-        <p className="text-lg font-medium text-on-scrim">This book could not be opened</p>
-        <p className="text-sm text-on-scrim/70">Its file may be damaged, or not an ebook at all.</p>
+        <p className="text-lg font-medium text-on-scrim">
+          {say('screens.textReader.couldNotOpen')}
+        </p>
+        <p className="text-sm text-on-scrim/70">{say('screens.textReader.couldNotOpenBody')}</p>
       </div>
     );
   }
@@ -371,8 +376,8 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
             pickers={
               entries.length === 0 ? null : (
                 <ReaderPicker
-                  label="Contents"
-                  value={heading ?? 'The beginning'}
+                  label={say('screens.textReader.contents')}
+                  value={heading ?? say('screens.textReader.theBeginning')}
                   selectedId={current === null ? '' : current.toString()}
                   options={entries.map((entry, at) => ({
                     id: at.toString(),
@@ -385,8 +390,8 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
                       follow({ part: entry.part, anchor: entry.anchor });
                     }
                   }}
-                  previousLabel="Previous chapter"
-                  nextLabel="Next chapter"
+                  previousLabel={say('screens.textReader.previousChapter')}
+                  nextLabel={say('screens.textReader.nextChapter')}
                   {...(current !== null && current > 0
                     ? {
                         onPrevious: () => {
@@ -414,11 +419,15 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
             }
           >
             <SettingList>
-              <SettingRow title="Size">
+              <SettingRow title={say('screens.textReader.size')}>
                 <SegmentedRow
-                  label="Size"
+                  label={say('screens.textReader.size')}
                   size="sm"
-                  items={TEXT_SIZES.map((one) => ({ id: one, label: NAMES[one] ?? one }))}
+                  items={TEXT_SIZES.map((one) => {
+                    const name = NAMES[one];
+
+                    return { id: one, label: name === undefined ? one : say(name) };
+                  })}
                   value={settings.size}
                   onSelect={(id) => {
                     const size = TEXT_SIZES.find((one) => one === id);
@@ -430,11 +439,15 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
                 />
               </SettingRow>
 
-              <SettingRow title="Spacing">
+              <SettingRow title={say('screens.textReader.spacing')}>
                 <SegmentedRow
-                  label="Spacing"
+                  label={say('screens.textReader.spacing')}
                   size="sm"
-                  items={TEXT_SPACINGS.map((one) => ({ id: one, label: NAMES[one] ?? one }))}
+                  items={TEXT_SPACINGS.map((one) => {
+                    const name = NAMES[one];
+
+                    return { id: one, label: name === undefined ? one : say(name) };
+                  })}
                   value={settings.spacing}
                   onSelect={(id) => {
                     const spacing = TEXT_SPACINGS.find((one) => one === id);
@@ -446,11 +459,15 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
                 />
               </SettingRow>
 
-              <SettingRow title="Margins">
+              <SettingRow title={say('screens.textReader.margins')}>
                 <SegmentedRow
-                  label="Margins"
+                  label={say('screens.textReader.margins')}
                   size="sm"
-                  items={TEXT_MARGINS.map((one) => ({ id: one, label: NAMES[one] ?? one }))}
+                  items={TEXT_MARGINS.map((one) => {
+                    const name = NAMES[one];
+
+                    return { id: one, label: name === undefined ? one : say(name) };
+                  })}
                   value={settings.margins}
                   onSelect={(id) => {
                     const margins = TEXT_MARGINS.find((one) => one === id);
@@ -462,11 +479,15 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
                 />
               </SettingRow>
 
-              <SettingRow title="Page">
+              <SettingRow title={say('screens.textReader.page')}>
                 <SegmentedRow
-                  label="Page"
+                  label={say('screens.textReader.page')}
                   size="sm"
-                  items={TEXT_PAGES.map((one) => ({ id: one, label: NAMES[one] ?? one }))}
+                  items={TEXT_PAGES.map((one) => {
+                    const name = NAMES[one];
+
+                    return { id: one, label: name === undefined ? one : say(name) };
+                  })}
                   value={settings.page}
                   onSelect={(id) => {
                     const chosen = TEXT_PAGES.find((one) => one === id);
@@ -483,7 +504,7 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
         footer={
           <>
             <Slider
-              label="How far through the book"
+              label={say('screens.textReader.howFar')}
               tone="overlay"
               value={dragged ?? Math.round(fraction * SLIDER_STEPS)}
               max={SLIDER_STEPS}
@@ -520,7 +541,7 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
         >
           <div ref={viewport} className="relative min-h-0 flex-1 overflow-hidden">
             {text.data === undefined || part === null ? (
-              <Spinner isCentered label="Opening the book" />
+              <Spinner isCentered label={say('screens.textReader.opening')} />
             ) : (
               <div
                 ref={flow}

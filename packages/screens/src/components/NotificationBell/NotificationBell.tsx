@@ -9,6 +9,7 @@ import { Switch } from '@ValenceUI/Switch';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
+import { say } from '@ValenceI18n/say';
 import type { NotificationBellProps } from './NotificationBell.types';
 import { useTicking } from '@ValenceScreens/clock/useTicking';
 import { A_CAPTION_AGES_EVERY } from '@ValenceScreens/clock/A_CAPTION_AGES_EVERY';
@@ -42,7 +43,7 @@ const NotificationBell = ({
 
   return (
     <PopoverPanel
-      label="Notifications"
+      label={say('screens.notificationBell.title')}
       side="bottom"
       align="center"
       isBare
@@ -67,20 +68,20 @@ const NotificationBell = ({
       }
     >
       <PanelCard
-        title="Notifications"
+        title={say('screens.notificationBell.title')}
         isFlush
         className="w-96 max-w-[calc(100vw-2rem)]"
         actions={
           <>
             {unread === 0 ? null : (
               <PanelCardAction icon={CircleCheckIcon} onClick={onReadAll}>
-                Mark all read
+                {say('screens.notificationBell.markAllRead')}
               </PanelCardAction>
             )}
 
             {notifications.length === 0 ? null : (
               <PanelCardAction icon={BinIcon} onClick={onClearAll}>
-                Clear all
+                {say('screens.notificationBell.clearAll')}
               </PanelCardAction>
             )}
           </>
@@ -88,7 +89,7 @@ const NotificationBell = ({
       >
         {notifications.length === 0 ? (
           <p className="px-4 py-6 text-center text-sm text-text-muted">
-            Nothing yet. New films and episodes will show up here.
+            {say('screens.notificationBell.empty')}
           </p>
         ) : (
           <ul className="flex max-h-96 flex-col divide-y divide-[var(--surface-line)] overflow-y-auto">
@@ -143,7 +144,7 @@ const NotificationBell = ({
         {push === undefined ? null : (
           <div className="border-t border-[var(--surface-line)] px-4 py-3">
             <Switch
-              label="Also send these to this device"
+              label={say('screens.notificationBell.pushLabel')}
               isOn={push.isOn}
               onToggle={push.onToggle}
             />

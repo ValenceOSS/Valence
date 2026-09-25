@@ -4,6 +4,7 @@ import { bookPageUrl } from '@ValenceClient/books/fetchBooks';
 import { PageTurn } from '@ValenceScreens/components/PageTurn/PageTurn';
 import { widthFor } from '@ValenceScreens/reading/widthFor';
 import type { SpreadStageProps } from './SpreadStage.types';
+import { say } from '@ValenceI18n/say';
 
 const FIT_CLASSES = {
   width: 'w-full object-contain',
@@ -89,7 +90,7 @@ const SpreadStage = ({
     <img
       key={number}
       src={bookPageUrl(bookId, chapterId, number, askedWidth)}
-      alt={`Page ${(number + 1).toString()}`}
+      alt={say('screens.spreadStage.pageAlt', { number: (number + 1).toString() })}
       onLoad={(event) => {
         onLoaded(number, event.currentTarget);
       }}

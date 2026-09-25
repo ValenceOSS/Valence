@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { ChevronDown as ChevronDownIcon, Clock as ClockIcon } from '@keyline-icons/react';
 import { Icon } from '@ValenceUI/Icon';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
@@ -23,12 +24,12 @@ const TimeRangeMenu = ({ search, onSearchChange }: TimeRangeMenuProps) => {
 
   return (
     <OptionMenu
-      label="Time range"
+      label={say('screens.timeRangeMenu.label')}
       triggerShape="field"
       className="w-auto"
       groups={[
         {
-          name: 'Time range',
+          name: say('screens.timeRangeMenu.groupName'),
           selectedId: isZoomed ? '' : range,
           onSelect: (id) => {
             const found = LOG_RANGES.find((one) => one.id === id);
@@ -48,7 +49,10 @@ const TimeRangeMenu = ({ search, onSearchChange }: TimeRangeMenuProps) => {
         <>
           <Icon of={ClockIcon} size={15} className="shrink-0" />
           <span className="truncate">
-            {isZoomed ? 'Zoomed in' : (LOG_RANGES.find((one) => one.id === range)?.label ?? 'Time')}
+            {isZoomed
+              ? say('screens.timeRangeMenu.zoomedIn')
+              : (LOG_RANGES.find((one) => one.id === range)?.label ??
+                say('screens.timeRangeMenu.time'))}
           </span>
           <Icon of={ChevronDownIcon} size={14} className="shrink-0" />
         </>

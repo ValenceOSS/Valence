@@ -7,6 +7,7 @@ import { anAddressAPhoneCanReach } from '@ValenceClient/session/anAddressAPhoneC
 import { whereToTypeTheCode } from '@ValenceClient/session/whereToTypeTheCode';
 import type { DeviceGrant } from '@ValenceClient/session/auth';
 import type { TelevisionHandoffProps } from './TelevisionHandoff.types';
+import { say } from '@ValenceI18n/say';
 
 const SLOWS_BY_SECONDS = 5;
 
@@ -46,7 +47,7 @@ const TelevisionHandoff = ({ name, onSignedIn }: TelevisionHandoffProps) => {
       }
 
       if (started === null) {
-        setProblem('Valence could not be reached.');
+        setProblem(say('screens.televisionHandoff.unreachable'));
 
         return;
       }
@@ -82,13 +83,13 @@ const TelevisionHandoff = ({ name, onSignedIn }: TelevisionHandoffProps) => {
       }
 
       if (outcome.kind === 'refused') {
-        setProblem('That was turned down on the other device.');
+        setProblem(say('screens.televisionHandoff.refused'));
 
         return;
       }
 
       if (outcome.kind === 'expired') {
-        setProblem('That code ran out. Ask for another one.');
+        setProblem(say('screens.televisionHandoff.expired'));
 
         return;
       }
@@ -124,12 +125,12 @@ const TelevisionHandoff = ({ name, onSignedIn }: TelevisionHandoffProps) => {
   return (
     <main className="mx-auto flex min-h-svh w-full max-w-xl flex-col items-center justify-center gap-8 px-8 text-center">
       <header className="flex flex-col gap-3">
-        <h1 className="text-3xl font-medium text-text">Sign in with your phone</h1>
+        <h1 className="text-3xl font-medium text-text">
+          {say('screens.televisionHandoff.heading')}
+        </h1>
 
         <p className="text-base text-text-muted">
-          Nobody should have to spell a password out with a remote. Open this on your phone and
-          {` ${name} `}
-          will let this television in.
+          {say('screens.televisionHandoff.lede', { name })}
         </p>
       </header>
 
@@ -138,16 +139,16 @@ const TelevisionHandoff = ({ name, onSignedIn }: TelevisionHandoffProps) => {
           <p className="text-base text-danger">{problem}</p>
 
           <Button variant="glossy" size="lg" onClick={askAgain}>
-            Ask for another code
+            {say('screens.televisionHandoff.anotherCode')}
           </Button>
         </div>
       ) : grant === null ? (
-        <Spinner label="Asking for a code" size="lg" />
+        <Spinner label={say('screens.televisionHandoff.asking')} size="lg" />
       ) : (
         <div className="flex flex-col items-center gap-6">
           <QrCode
             value={anAddressAPhoneCanReach(grant.verificationUriComplete, window.location.origin)}
-            label="Open this on your phone"
+            label={say('screens.televisionHandoff.qrLabel')}
             size={200}
           />
 
@@ -161,7 +162,7 @@ const TelevisionHandoff = ({ name, onSignedIn }: TelevisionHandoffProps) => {
             {grant.userCode}
           </p>
 
-          <p className="text-sm text-text-muted">Waiting for you to say yes.</p>
+          <p className="text-sm text-text-muted">{say('screens.televisionHandoff.waiting')}</p>
         </div>
       )}
     </main>

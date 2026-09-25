@@ -5,6 +5,7 @@ import { VirtualStrip } from '@ValenceUI/VirtualStrip';
 import { cn } from '@ValenceUI/cn';
 import { usePageWarming } from '@ValenceScreens/reading/usePageWarming';
 import type { ScrollingPagesProps } from './ScrollingPages.types';
+import { say } from '@ValenceI18n/say';
 
 const ACROSS = 1200;
 
@@ -47,7 +48,7 @@ const ScrollingPages = ({
 
   return (
     <VirtualStrip
-      label="Pages"
+      label={say('screens.scrollingPages.pages')}
       count={pageCount}
       estimateSize={A_PAGE}
       startAtIndex={startAtPage}
@@ -60,10 +61,10 @@ const ScrollingPages = ({
         <div className="mx-auto flex min-h-40 max-w-3xl items-center justify-center p-8">
           {hasNextChapter ? (
             <Button variant="confirm" size="lg" onClick={onNextChapter}>
-              Next chapter
+              {say('screens.scrollingPages.nextChapter')}
             </Button>
           ) : (
-            <span className="text-sm text-on-scrim/70">The end</span>
+            <span className="text-sm text-on-scrim/70">{say('screens.scrollingPages.theEnd')}</span>
           )}
         </div>
       }
@@ -72,7 +73,7 @@ const ScrollingPages = ({
         <img
           key={page}
           src={bookPageUrl(bookId, chapterId, page, ACROSS)}
-          alt={`Page ${(page + 1).toString()}`}
+          alt={say('screens.scrollingPages.pageAlt', { number: (page + 1).toString() })}
           onLoad={() => {
             setLoaded((was) => new Set([...was, page]));
           }}

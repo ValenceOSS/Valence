@@ -5,6 +5,7 @@ import { Rail } from '@ValenceUI/Rail';
 import { cn } from '@ValenceUI/cn';
 import { canOpenPerson } from '@ValenceContracts/schemas/Person';
 import type { CastGridProps } from './CastGrid.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Shows the cast of a film or programme as a row of faces, each with the performer's name and the
@@ -30,7 +31,7 @@ import type { CastGridProps } from './CastGrid.types';
  */
 const CastGrid = ({ members, onOpenPerson }: CastGridProps) => (
   <Rail
-    title="Cast"
+    title={say('screens.castGrid.heading')}
     count={members.length}
     sizesCards
     cards="portrait"
@@ -42,7 +43,7 @@ const CastGrid = ({ members, onOpenPerson }: CastGridProps) => (
         <Button
           variant="bare"
           size="none"
-          label={`About ${member.name}`}
+          label={say('screens.castGrid.about', { name: member.name })}
           hasTooltip={false}
           disabled={!canOpenPerson(member.personId) || onOpenPerson === undefined}
           className={cn(

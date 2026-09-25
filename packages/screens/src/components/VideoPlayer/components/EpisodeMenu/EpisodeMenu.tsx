@@ -7,6 +7,7 @@ import { MediaCard } from '@ValenceUI/MediaCard';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import type { EpisodeMenuProps } from './EpisodeMenu.types';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Names a season for the heading above its episodes, falling back to a neutral heading for anything
@@ -16,7 +17,9 @@ import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNu
  * @returns What to call it.
  */
 const headingOf = (seasonNumber: number | null | undefined): string =>
-  typeof seasonNumber === 'number' ? `Season ${seasonNumber.toString()}` : 'Episodes';
+  typeof seasonNumber === 'number'
+    ? say('screens.episodeMenu.season', { number: seasonNumber })
+    : say('screens.episodeMenu.episodesHeading');
 
 /**
  * Offers the rest of the season without leaving the player, grouped by season and marked with how far
@@ -54,7 +57,7 @@ const EpisodeMenu = ({
   return (
     <PopoverPanel
       tone="default"
-      label="Episodes"
+      label={say('screens.episodeMenu.label')}
       heading={headingOf(playing?.seasonNumber)}
       isDisabled={isDisabled}
       isOpen={isOpen}
@@ -77,7 +80,9 @@ const EpisodeMenu = ({
               <MediaCard
                 title={episode.title}
                 subtitle={
-                  episode.id === playingId ? 'Playing' : formatDuration(episode.durationSeconds)
+                  episode.id === playingId
+                    ? say('screens.episodeMenu.playing')
+                    : formatDuration(episode.durationSeconds)
                 }
                 shape="wide"
                 {...(watchedFractionFor?.(episode.id) === undefined

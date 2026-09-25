@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
 import type { BadgeTone } from '@ValenceUI/Badge.types';
 
@@ -16,9 +17,9 @@ const describeJobStatus = (
     case 'queued':
       return STATUS_LOOK.queued;
     case 'running':
-      return { ...STATUS_LOOK.working, label: 'Running' };
+      return { ...STATUS_LOOK.working, label: say('screens.describeJobStatus.running') };
     case 'stopping':
-      return { ...STATUS_LOOK.attention, label: 'Stopping' };
+      return { ...STATUS_LOOK.attention, label: say('screens.describeJobStatus.stopping') };
     case 'finished':
     case 'completed':
       return STATUS_LOOK.done;

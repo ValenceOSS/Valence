@@ -6,6 +6,7 @@ import { RevealItem } from '@ValenceUI/RevealItem';
 import { describeAirDate } from '@ValenceCore/functions/describeAirDate';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import type { ComingUpProps } from './ComingUp.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * A row of the programmes in the library that have an episode still to come, soonest first, each
@@ -28,13 +29,22 @@ const ComingUp = ({ onOpenShow }: ComingUpProps) => {
   const today = new Date().toISOString().slice(0, 10);
 
   return (
-    <Rail title="Coming up" sizesCards cards="portrait" className="-mx-4 sm:-mx-6">
+    <Rail
+      title={say('screens.comingUp.heading')}
+      sizesCards
+      cards="portrait"
+      className="-mx-4 sm:-mx-6"
+    >
       {coming.map(({ show, episode }, at) => (
         <RevealItem key={show.id} index={at} className="shrink-0 snap-start">
           <MediaCard
             shape="poster"
             title={show.title}
-            subtitle={`S${episode.seasonNumber.toString()} E${episode.episodeNumber.toString()} · ${describeAirDate(episode.airDate, today)}`}
+            subtitle={say('screens.comingUp.subtitle', {
+              season: episode.seasonNumber,
+              episode: episode.episodeNumber,
+              when: describeAirDate(episode.airDate, today),
+            })}
             imageUrl={artworkUrl(show.coverMediaId, 'poster')}
             onSelect={() => {
               onOpenShow(show.seriesId ?? show.id);

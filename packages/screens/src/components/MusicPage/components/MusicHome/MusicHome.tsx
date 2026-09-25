@@ -12,6 +12,8 @@ import { useLikedSongsTile } from '@ValenceScreens/music/useLikedSongsTile';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { MusicFeature } from './components/MusicFeature/MusicFeature';
 import type { MusicView } from '@ValenceClient/music/musicView';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
 const RECENT = 18;
 
@@ -32,25 +34,25 @@ const MusicHome = () => {
   const mine = (playlists.data ?? []).filter((playlist) => playlist.isMine);
   const shared = (playlists.data ?? []).filter((playlist) => !playlist.isMine);
 
-  const seeAll = (view: MusicView, what: string) => (
+  const seeAll = (view: MusicView, label: StringKey) => (
     <Button
       variant="subtle"
       size="none"
-      label={`See all ${what}`}
+      label={say(label)}
       hasTooltip={false}
       className="text-sm"
       onClick={() => {
         open(view);
       }}
     >
-      See all
+      {say('screens.musicHome.seeAll')}
     </Button>
   );
 
   if (albums.isPending) {
     return (
       <div className={`flex flex-col gap-6 py-8 sm:flex-row sm:items-end ${MUSIC_LANES.page}`}>
-        <Skeleton label="Reading your music" className="size-60" />
+        <Skeleton label={say('screens.musicHome.reading')} className="size-60" />
         <div className="flex flex-1 flex-col gap-3">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-14 w-2/3" />
@@ -65,8 +67,8 @@ const MusicHome = () => {
     return (
       <NothingHere
         of={MusicNoteIcon}
-        title="No music yet"
-        detail="Once a music library has been added and scanned, its albums and artists will be here."
+        title={say('screens.musicHome.emptyTitle')}
+        detail={say('screens.musicHome.emptyDetail')}
         fills
       />
     );
@@ -77,25 +79,25 @@ const MusicHome = () => {
       <MusicFeature newest={recent[0] ?? null} />
 
       <PlaylistShelf
-        heading="Your playlists"
+        heading={say('screens.musicHome.yourPlaylists')}
         playlists={mine}
         leading={liked}
-        action={seeAll({ kind: 'playlists' }, 'playlists')}
+        action={seeAll({ kind: 'playlists' }, 'screens.musicHome.seeAllPlaylists')}
       />
 
       <AlbumShelf
-        heading="Recently added"
+        heading={say('screens.musicHome.recentlyAdded')}
         albums={recent.slice(0, RECENT)}
-        action={seeAll({ kind: 'albums' }, 'albums')}
+        action={seeAll({ kind: 'albums' }, 'screens.musicHome.seeAllAlbums')}
       />
 
       <ArtistShelf
-        heading="Artists"
+        heading={say('screens.musicHome.artists')}
         artists={(artists.data ?? []).slice(0, ARTISTS)}
-        action={seeAll({ kind: 'artists' }, 'artists')}
+        action={seeAll({ kind: 'artists' }, 'screens.musicHome.seeAllArtists')}
       />
 
-      <PlaylistShelf heading="Shared with you" playlists={shared} />
+      <PlaylistShelf heading={say('screens.musicHome.sharedWithYou')} playlists={shared} />
     </div>
   );
 };

@@ -11,6 +11,7 @@ import { useOfflineMode } from '@ValenceClient/offline/useOfflineMode';
 import { canKeepFiles } from '@ValenceClient/downloads/canKeepFiles';
 import { DownloadList } from '@ValenceScreens/components/DownloadList/DownloadList';
 import type { DownloadsDialogProps } from './DownloadsDialog.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Everything this viewer has asked the server to prepare, raised over whatever they were looking at.
@@ -31,16 +32,16 @@ const DownloadsDialog = ({ isOpen, onClose }: DownloadsDialogProps) => {
   const isKeepable = canKeepFiles();
 
   return (
-    <Dialog label="Downloads" isOpen={isOpen} onClose={onClose}>
+    <Dialog label={say('screens.downloadsDialog.heading')} isOpen={isOpen} onClose={onClose}>
       <DialogTitle
-        title="Downloads"
+        title={say('screens.downloadsDialog.heading')}
         detail={
           isKeepable
-            ? 'Once one is on this device it is yours until you delete it.'
-            : 'What you have asked for on your other devices, and how far along each is.'
+            ? say('screens.downloadsDialog.keepableDetail')
+            : say('screens.downloadsDialog.browserDetail')
         }
       >
-        <Button variant="ghost" size="sm" isIconOnly label="Close" onClick={onClose}>
+        <Button variant="ghost" size="sm" isIconOnly label={say('common.close')} onClick={onClose}>
           <Icon of={XIcon} size={16} />
         </Button>
       </DialogTitle>
@@ -49,12 +50,12 @@ const DownloadsDialog = ({ isOpen, onClose }: DownloadsDialogProps) => {
         {isKeepable ? (
           <SettingList>
             <SettingRow
-              title="Go offline"
-              description="Show only what is on this device. Worth turning on before you lose the connection rather than after."
+              title={say('screens.downloadsDialog.goOffline')}
+              description={say('screens.downloadsDialog.goOfflineDetail')}
             >
               <Switch
                 isOn={isByChoice}
-                label="Go offline"
+                label={say('screens.downloadsDialog.goOffline')}
                 isLabelHidden
                 onToggle={() => {
                   goOffline(!isByChoice);

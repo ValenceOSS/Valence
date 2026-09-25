@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'motion/react';
@@ -24,19 +25,23 @@ import { WayInBackground } from '@ValenceScreens/components/WayInBackground/WayI
 import { WelcomeToValence } from '@ValenceScreens/components/WelcomeToValence/WelcomeToValence';
 import { describePasskeyUnavailability } from '@ValenceScreens/passkeys/isPasskeySupported';
 import { whatIsWrongWithTheName } from './whatIsWrongWithTheName';
+import type { StringKey } from '@ValenceI18n/StringKey';
 import type { HouseholdOnboardingProps } from './HouseholdOnboarding.types';
 
 const STEPS = ['name', 'picture', 'passkey'] as const;
 
-const LABELS = ['Name', 'Picture', 'Passkey'];
+const LABELS: readonly StringKey[] = [
+  'screens.householdOnboarding.nameStep',
+  'screens.householdOnboarding.pictureStep',
+  'screens.householdOnboarding.passkeyStep',
+];
 
 const PICTURE_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif';
 
-const SAYS = {
-  name: 'Everybody who watches here shares this. It takes a moment and you will not be asked again.',
-  picture: 'Give the household a picture, or carry on without one.',
-  passkey:
-    'A passkey signs you in with your face, your fingerprint or your screen lock, and there is no password to forget.',
+const SAYS: Record<(typeof STEPS)[number], StringKey> = {
+  name: 'screens.householdOnboarding.nameLede',
+  picture: 'screens.householdOnboarding.pictureLede',
+  passkey: 'screens.householdOnboarding.passkeyLede',
 };
 
 /**
@@ -63,7 +68,9 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
   const [wrong, setWrong] = useState<string | null>(null);
   const [picture, setPicture] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [passkeyName, setPasskeyName] = useState('This device');
+  const [passkeyName, setPasskeyName] = useState(() =>
+    say('screens.householdOnboarding.thisDevice'),
+  );
   const [hasPasskey, setHasPasskey] = useState(false);
   const [isWelcoming, setIsWelcoming] = useState(false);
 
@@ -89,7 +96,7 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
     setIsSaving(false);
 
     if (saved === null) {
-      setWrong('That name could not be saved.');
+      setWrong(say('screens.householdOnboarding.notSaved'));
 
       return;
     }
@@ -113,7 +120,9 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
   const keepAPasskey = async (): Promise<void> => {
     setIsSaving(true);
 
-    const outcome = await registerPasskey(passkeyName.trim() === '' ? 'This device' : passkeyName);
+    const outcome = await registerPasskey(
+      passkeyName.trim() === '' ? say('screens.householdOnboarding.thisDevice') : passkeyName,
+    );
 
     setIsSaving(false);
 
@@ -144,7 +153,11 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
       <main className="relative flex min-h-svh flex-col overflow-hidden">
         <WayInBackground splashscreen={asking.data?.splashscreen ?? null} />
 
-        <WelcomeToValence name="Valence" household={name.trim()} onFinished={onDone} />
+        <WelcomeToValence
+          name={say('common.valence')}
+          household={name.trim()}
+          onFinished={onDone}
+        />
       </main>
     );
   }
@@ -158,7 +171,7 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
       >
-        <Logo size={44} isSolid label="Valence" />
+        <Logo size={44} isSolid label={say('common.valence')} />
       </motion.span>
 
       <GlassPanel
@@ -167,19 +180,21 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
         className="flex w-full max-w-md flex-col gap-6 p-8"
       >
         <header className="flex flex-col gap-2 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-text">Set up your household</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-text">
+            {say('screens.householdOnboarding.heading')}
+          </h1>
 
-          <p className="text-sm leading-relaxed text-text-muted">{SAYS[step]}</p>
+          <p className="text-sm leading-relaxed text-text-muted">{say(SAYS[step])}</p>
         </header>
 
         <Tabs value={step} onValueChange={() => undefined} className="flex w-full flex-col">
           <TabPanel value="name" travel={travel}>
             <div className="flex flex-col gap-5">
               <TextField
-                label="What is this household called?"
+                label={say('screens.householdOnboarding.nameLabel')}
                 value={name}
                 onValueChange={setName}
-                description="Yours, your family's, whatever the television gets called."
+                description={say('screens.householdOnboarding.nameDescription')}
                 hasFocusOnMount
                 {...(wrong === null ? {} : { error: wrong })}
               />
@@ -193,7 +208,7 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
                   void keepTheName();
                 }}
               >
-                Continue
+                {say('screens.householdOnboarding.continue')}
               </Button>
             </div>
           </TabPanel>
@@ -209,7 +224,7 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
               )}
 
               <FilePicker
-                label="Choose a picture"
+                label={say('screens.householdOnboarding.choosePicture')}
                 accept={PICTURE_TYPES}
                 variant="secondary"
                 size="lg"
@@ -221,7 +236,9 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
                 }}
               >
                 <Icon of={ImageIcon} size={18} />
-                {picture === null ? 'Choose a picture' : 'Pick another'}
+                {picture === null
+                  ? say('screens.householdOnboarding.choosePicture')
+                  : say('screens.householdOnboarding.pickAnother')}
               </FilePicker>
 
               <Button
@@ -233,7 +250,9 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
                   setStep('passkey');
                 }}
               >
-                {picture === null ? 'Not now' : 'Continue'}
+                {picture === null
+                  ? say('screens.householdOnboarding.notNow')
+                  : say('screens.householdOnboarding.continue')}
               </Button>
             </div>
           </TabPanel>
@@ -244,15 +263,15 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
                 <p className="text-center text-sm text-text-muted">{noPasskeys}</p>
               ) : hasPasskey ? (
                 <p className="text-center text-sm text-text">
-                  That is set. You can sign in with it from now on.
+                  {say('screens.householdOnboarding.passkeyAdded')}
                 </p>
               ) : (
                 <>
                   <TextField
-                    label="Passkey name"
+                    label={say('screens.householdOnboarding.passkeyNameLabel')}
                     value={passkeyName}
                     onValueChange={setPasskeyName}
-                    description="Something you will recognise later, such as the device you are on."
+                    description={say('screens.householdOnboarding.passkeyNameDescription')}
                     {...(wrong === null ? {} : { error: wrong })}
                   />
 
@@ -266,7 +285,7 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
                     }}
                   >
                     <Icon of={KeyIcon} size={18} />
-                    Add a passkey
+                    {say('screens.householdOnboarding.addPasskey')}
                   </Button>
                 </>
               )}
@@ -280,7 +299,7 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
                   void finish();
                 }}
               >
-                Finish
+                {say('screens.householdOnboarding.finish')}
               </Button>
             </div>
           </TabPanel>
@@ -289,8 +308,8 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
         <PageDots
           count={STEPS.length}
           selectedIndex={at}
-          labels={LABELS}
-          label="Setting up"
+          labels={LABELS.map((key) => say(key))}
+          label={say('screens.householdOnboarding.dotsLabel')}
           onSelect={() => undefined}
           className="self-center"
         />

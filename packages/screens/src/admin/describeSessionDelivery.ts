@@ -1,4 +1,6 @@
+import { say } from '@ValenceI18n/say';
 import { describePlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
+import type { StringKey } from '@ValenceI18n/StringKey';
 import type { ActiveSession } from '@ValenceClient/admin/fetchAdmin';
 
 type SessionDelivery = {
@@ -8,22 +10,22 @@ type SessionDelivery = {
 
 const DELIVERIES = {
   DirectPlay: {
-    label: 'DirectPlay',
-    detail: 'Direct play — the original file, handed over untouched',
+    labelKey: 'screens.describeSessionDelivery.directPlayLabel',
+    detailKey: 'screens.describeSessionDelivery.directPlayDetail',
   },
   Remux: {
-    label: 'Remux',
-    detail: 'Remux — the original picture and sound, rewrapped for this client',
+    labelKey: 'screens.describeSessionDelivery.remuxLabel',
+    detailKey: 'screens.describeSessionDelivery.remuxDetail',
   },
   DirectStream: {
-    label: 'DirectStream',
-    detail: 'Direct stream — the original picture, with the sound converted',
+    labelKey: 'screens.describeSessionDelivery.directStreamLabel',
+    detailKey: 'screens.describeSessionDelivery.directStreamDetail',
   },
   Transcode: {
-    label: 'Transcoding',
-    detail: 'Transcoding — the server is converting the picture on the fly',
+    labelKey: 'screens.describeSessionDelivery.transcodeLabel',
+    detailKey: 'screens.describeSessionDelivery.transcodeDetail',
   },
-} as const satisfies Record<string, SessionDelivery>;
+} as const satisfies Record<string, { labelKey: StringKey; detailKey: StringKey }>;
 
 /**
  * How a session is being served, and what that costs the box.
@@ -41,7 +43,11 @@ const DELIVERIES = {
  */
 const describeSessionDelivery = (
   playback: NonNullable<ActiveSession['playback']>,
-): SessionDelivery => DELIVERIES[describePlaybackMode(playback.plan)];
+): SessionDelivery => {
+  const keys = DELIVERIES[describePlaybackMode(playback.plan)];
+
+  return { label: say(keys.labelKey), detail: say(keys.detailKey) };
+};
 
 export type { SessionDelivery };
 

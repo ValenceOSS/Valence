@@ -10,6 +10,8 @@ import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { FileGroupProps } from './FileGroup.types';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * How large a file is, or that nobody recorded it.
@@ -18,7 +20,9 @@ import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNu
  * @returns The size in words.
  */
 const describeSize = (sizeBytes: number | null | undefined): string =>
-  typeof sizeBytes === 'number' && sizeBytes > 0 ? formatBytes(sizeBytes) : 'size not recorded';
+  typeof sizeBytes === 'number' && sizeBytes > 0
+    ? formatBytes(sizeBytes)
+    : say('screens.fileGroup.sizeNotRecorded');
 
 /**
  * What one file inside a thing is called: the episode by its number where it has one, the cut by
@@ -29,7 +33,11 @@ const describeSize = (sizeBytes: number | null | undefined): string =>
  */
 const withinGroup = (item: MediaSummary): string => {
   if (typeof item.seasonNumber === 'number' && typeof item.episodeNumber === 'number') {
-    return `S${item.seasonNumber.toString()}E${describeEpisodeNumbers(item.episodeNumber, item.episodeNumberEnd)} · ${item.title}`;
+    return say('screens.fileGroup.episode', {
+      season: item.seasonNumber.toString(),
+      episode: describeEpisodeNumbers(item.episodeNumber, item.episodeNumberEnd),
+      title: item.title,
+    });
   }
 
   return item.versionLabel ?? item.title;
@@ -95,7 +103,9 @@ const FileGroup = ({ group, chosen, refusalFor, onToggle }: FileGroupProps) => {
           variant="subtle"
           size="none"
           aria-expanded={isOpen}
-          label={`${isOpen ? 'Hide' : 'Show'} what ${group.title} is made of`}
+          label={say(isOpen ? 'screens.fileGroup.hideParts' : 'screens.fileGroup.showParts', {
+            title: group.title,
+          })}
           isIconOnly
           hasTooltip={false}
           className="flex size-6 shrink-0 items-center justify-center"
@@ -115,7 +125,9 @@ const FileGroup = ({ group, chosen, refusalFor, onToggle }: FileGroupProps) => {
 
         <Checkbox
           label={group.title}
-          description={`${group.items.length.toString()} files · ${describeSize(group.sizeBytes)}`}
+          description={sayCount('screens.fileGroup.facts', group.items.length, {
+            size: describeSize(group.sizeBytes),
+          })}
           checked={takenCount === group.items.length}
           isMixed={takenCount > 0 && takenCount < group.items.length}
           onCheckedChange={(next) => {

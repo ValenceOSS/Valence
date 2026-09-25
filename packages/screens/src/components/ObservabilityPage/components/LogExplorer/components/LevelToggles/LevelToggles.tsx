@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Button } from '@ValenceUI/Button';
 import { Skeleton } from '@ValenceUI/Skeleton';
@@ -39,10 +41,13 @@ const LevelToggles = ({ histogram, levels, isReading, onToggle }: LevelTogglesPr
         <span className="text-lg font-semibold tabular-nums text-text">
           <AnimatedNumber value={events} />
         </span>{' '}
-        events
+        {sayCount('screens.levelToggles.events', events)}
       </p>
 
-      <ul aria-label="Levels" className="flex flex-wrap items-center justify-end gap-1">
+      <ul
+        aria-label={say('screens.levelToggles.levelsLabel')}
+        className="flex flex-wrap items-center justify-end gap-1"
+      >
         {totals.map(({ level, count }) => {
           const look = describeLogLevel(level);
           const isOn = levels.includes(level);

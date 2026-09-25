@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { say } from '@ValenceI18n/say';
 import { useQuery } from '@tanstack/react-query';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { BookRow } from '@ValenceScreens/components/BookRow/BookRow';
@@ -36,7 +37,7 @@ const ContinueReading = ({ onOpen }: ContinueReadingProps) => {
 
   return (
     <BookRow
-      title="Continue reading"
+      title={say('screens.continueReading.title')}
       books={unfinished.map((reading) => reading.book)}
       progress={progress}
       onOpen={onOpen}

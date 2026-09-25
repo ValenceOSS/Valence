@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { say } from '@ValenceI18n/say';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { DataTable } from '@ValenceUI/DataTable';
@@ -74,7 +75,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
     () => [
       {
         id: 'kind',
-        header: 'Job',
+        header: say('screens.jobHealth.jobHeader'),
         accessorFn: (kind) => describeJobKind(kind.kind, labels),
         cell: ({ row }) => (
           <span className="text-text" title={row.original.kind}>
@@ -84,7 +85,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
       },
       {
         id: 'rate',
-        header: 'Finished well',
+        header: say('screens.jobHealth.finishedWellHeader'),
         accessorFn: (kind) => successRate(kind.completed, kind.failed) ?? -1,
         cell: ({ row }) => {
           const rate = successRate(row.original.completed, row.original.failed);
@@ -98,7 +99,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
       },
       {
         id: 'runs',
-        header: 'Runs',
+        header: say('screens.jobHealth.runsHeader'),
         accessorFn: (kind) => kind.runs,
         cell: ({ row }) => (
           <span className="tabular-nums text-text-muted">
@@ -106,7 +107,10 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
             {row.original.running > 0 ? (
               <>
                 {' ('}
-                <AnimatedNumber value={row.original.running} suffix=" running" />
+                <AnimatedNumber
+                  value={row.original.running}
+                  suffix={say('screens.jobHealth.runningSuffix')}
+                />
                 {')'}
               </>
             ) : null}
@@ -115,7 +119,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
       },
       {
         id: 'failed',
-        header: 'Failed',
+        header: say('screens.jobHealth.failedHeader'),
         accessorFn: (kind) => kind.failed,
         cell: ({ row }) => (
           <span
@@ -129,7 +133,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
       },
       {
         id: 'median',
-        header: 'Typical run',
+        header: say('screens.jobHealth.typicalRunHeader'),
         accessorFn: (kind) => kind.medianMs ?? -1,
         cell: ({ row }) => (
           <span className="whitespace-nowrap tabular-nums text-text-muted">
@@ -139,7 +143,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
       },
       {
         id: 'slowest',
-        header: 'Slowest run',
+        header: say('screens.jobHealth.slowestRunHeader'),
         accessorFn: (kind) => kind.slowestMs ?? -1,
         cell: ({ row }) => (
           <span className="whitespace-nowrap tabular-nums text-text-muted">
@@ -149,7 +153,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
       },
       {
         id: 'last',
-        header: 'Last run',
+        header: say('screens.jobHealth.lastRunHeader'),
         accessorFn: (kind) => kind.lastAtMs ?? 0,
         cell: ({ row }) => (
           <span className="whitespace-nowrap tabular-nums text-text-muted">
@@ -167,38 +171,42 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
     <div className="flex flex-col gap-6">
       <HeadedSection
         isInset
-        title="How the jobs are doing"
+        title={say('screens.jobHealth.heading')}
         actions={<TimeRangeMenu search={search} onSearchChange={onSearchChange} />}
       >
         <StatStrip
-          label="How the jobs are doing overall"
+          label={say('screens.jobHealth.overallLabel')}
           items={[
-            { id: 'runs', label: 'Runs', value: <AnimatedNumber value={totals.runs} /> },
+            {
+              id: 'runs',
+              label: say('screens.jobHealth.runsStat'),
+              value: <AnimatedNumber value={totals.runs} />,
+            },
             {
               id: 'rate',
-              label: 'Finished well',
+              label: say('screens.jobHealth.finishedWellStat'),
               value: showRate(overall),
               isAlarming: overall !== null && overall < 0.9,
-              detail: 'Of the runs that have ended',
+              detail: say('screens.jobHealth.finishedWellDetail'),
             },
             {
               id: 'failed',
-              label: 'Failed',
+              label: say('screens.jobHealth.failedStat'),
               value: <AnimatedNumber value={totals.failed} />,
               isAlarming: totals.failed > 0,
             },
             {
               id: 'slowest',
-              label: 'Slowest run',
+              label: say('screens.jobHealth.slowestRunStat'),
               value: totals.slowest === 0 ? '—' : <ElapsedTime ms={totals.slowest} />,
             },
           ]}
         />
       </HeadedSection>
 
-      <HeadedSection isInset title="By kind of job">
+      <HeadedSection isInset title={say('screens.jobHealth.byKindHeading')}>
         <DataTable
-          label="How each kind of job has gone"
+          label={say('screens.jobHealth.byKindLabel')}
           columns={columns}
           rows={kinds}
           getRowId={(kind) => kind.kind}
@@ -209,7 +217,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
           height="fill"
           pageSize={12}
           emptyMessage={
-            asked.isPending ? 'Reading how the jobs have gone…' : 'No job has run in this time.'
+            asked.isPending ? say('screens.jobHealth.reading') : say('screens.jobHealth.empty')
           }
         />
       </HeadedSection>

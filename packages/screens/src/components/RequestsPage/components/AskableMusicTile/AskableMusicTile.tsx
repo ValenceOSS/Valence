@@ -3,6 +3,7 @@ import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwo
 import { MusicTile } from '@ValenceScreens/components/MusicTile/MusicTile';
 import { askingOf } from '@ValenceScreens/requests/askingOf';
 import type { AskableMusicTileProps } from './AskableMusicTile.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * One album or artist that can be asked for, drawn as a tile: who it is by, where it stands with
@@ -21,7 +22,7 @@ const AskableMusicTile = ({ title, onAsk }: AskableMusicTileProps) => (
     artwork={
       <MusicArtwork
         src={title.posterUrl}
-        label={`The cover of ${title.title}`}
+        label={say('screens.askableMusicTile.coverOf', { title: title.title })}
         shape={title.kind === 'artist' ? 'round' : 'square'}
         className="w-full"
       />

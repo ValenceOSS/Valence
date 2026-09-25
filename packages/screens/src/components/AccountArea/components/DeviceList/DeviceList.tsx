@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Icon } from '@ValenceUI/Icon';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
@@ -40,7 +42,7 @@ const DeviceList = () => {
     () => [
       {
         id: 'name',
-        header: 'Device',
+        header: say('screens.deviceList.deviceHeader'),
         accessorFn: (device) => device.name,
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col gap-0.5">
@@ -49,7 +51,7 @@ const DeviceList = () => {
 
               {!row.original.isCurrent ? null : (
                 <Badge size="sm" tone="accent">
-                  This one
+                  {say('screens.deviceList.thisOne')}
                 </Badge>
               )}
             </span>
@@ -62,7 +64,7 @@ const DeviceList = () => {
       },
       {
         id: 'signedIn',
-        header: 'Signed in',
+        header: say('screens.deviceList.signedInHeader'),
         accessorFn: (device) => device.signedInAt,
         cell: ({ row }) => (
           <span className="whitespace-nowrap text-xs text-text-muted">
@@ -78,14 +80,14 @@ const DeviceList = () => {
           row.original.isCurrent ? null : (
             <span className="flex justify-end">
               <ActionMenu
-                label={`Actions for ${row.original.name}`}
+                label={say('screens.deviceList.actionsFor', { name: row.original.name })}
                 trigger={<Icon of={MoreHorizontalIcon} size={16} />}
                 groups={[
                   {
                     items: [
                       {
                         id: 'end',
-                        label: 'Sign this out',
+                        label: say('screens.deviceList.signThisOut'),
                         icon: <Icon of={DoorOpenFilledIcon} size={15} />,
                         isDestructive: true,
                         onChoose: () => {
@@ -105,7 +107,7 @@ const DeviceList = () => {
 
   return (
     <PanelCard
-      title="Devices"
+      title={say('screens.deviceList.heading')}
       isFlush
       actions={
         elsewhere.length === 0 ? undefined : (
@@ -115,19 +117,15 @@ const DeviceList = () => {
               setIsEndingRest(true);
             }}
           >
-            Sign out everywhere else
+            {say('screens.deviceList.signOutEverywhereElse')}
           </PanelCardAction>
         )
       }
     >
       <ConfirmDialog
-        title="Sign this device out?"
-        detail={
-          ending === null
-            ? ''
-            : `${ending.name} will be signed out and whoever is using it has to sign in again.`
-        }
-        confirmLabel="Sign it out"
+        title={say('screens.deviceList.endOneTitle')}
+        detail={ending === null ? '' : say('screens.deviceList.endOneBody', { name: ending.name })}
+        confirmLabel={say('screens.deviceList.endOneConfirm')}
         isDestructive
         isOpen={ending !== null}
         onClose={() => {
@@ -145,11 +143,9 @@ const DeviceList = () => {
       />
 
       <ConfirmDialog
-        title="Sign out everywhere else?"
-        detail={`${elsewhere.length.toString()} other ${
-          elsewhere.length === 1 ? 'device' : 'devices'
-        } will be signed out. This one stays as it is.`}
-        confirmLabel="Sign them out"
+        title={say('screens.deviceList.endRestTitle')}
+        detail={sayCount('screens.deviceList.endRestBody', elsewhere.length)}
+        confirmLabel={say('screens.deviceList.endRestConfirm')}
         isDestructive
         isBusy={isWorking}
         isOpen={isEndingRest}
@@ -168,13 +164,13 @@ const DeviceList = () => {
       />
 
       {devices === null ? (
-        <Spinner isCentered label="Reading your devices" size="sm" />
+        <Spinner isCentered label={say('screens.deviceList.loading')} size="sm" />
       ) : (
         <DataTable
-          label="Where you are signed in"
+          label={say('screens.deviceList.tableLabel')}
           columns={columns}
           rows={devices}
-          emptyMessage="Nothing is signed in, which cannot be true of the thing you are reading this on. Try again in a moment."
+          emptyMessage={say('screens.deviceList.empty')}
         />
       )}
     </PanelCard>

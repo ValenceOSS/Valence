@@ -12,6 +12,7 @@ import { ConfirmHiding } from '@ValenceScreens/components/ConfirmHiding/ConfirmH
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { showSlug } from '@ValenceCore/functions/showSlug';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Searching the whole server, as a page of its own rather than a sheet over whatever was underneath.
@@ -33,7 +34,7 @@ const SearchPage = () => {
       exit="gone"
       className={cn(RAIL.lane, RAIL.inset, 'flex flex-col gap-6 pt-6 pb-16')}
     >
-      <h1 className="sr-only">Search</h1>
+      <h1 className="sr-only">{say('screens.searchPage.heading')}</h1>
 
       <ConfirmHiding hiding={hiding} />
 

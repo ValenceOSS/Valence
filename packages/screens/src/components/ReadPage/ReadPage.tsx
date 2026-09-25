@@ -9,6 +9,7 @@ import { saveReadingProgress } from '@ValenceClient/books/fetchBooks';
 import { whereToOpen } from '@ValenceClient/books/whereToOpen';
 import { PageReader } from '@ValenceScreens/components/PageReader/PageReader';
 import { TextReader } from '@ValenceScreens/components/TextReader/TextReader';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Reading one book.
@@ -65,7 +66,7 @@ const ReadPage = () => {
   if (asked.isError) {
     return (
       <CouldNotRead
-        what="That book"
+        what={say('screens.readPage.thatBook')}
         isTryingAgain={asked.isFetching}
         onTryAgain={() => {
           void asked.refetch();
@@ -77,7 +78,7 @@ const ReadPage = () => {
   if (asked.data === undefined || asked.data === null || read.data === undefined) {
     return (
       <div className="flex h-dvh items-center justify-center bg-shade">
-        <Spinner label="Opening the book" />
+        <Spinner label={say('screens.readPage.opening')} />
       </div>
     );
   }
@@ -85,10 +86,8 @@ const ReadPage = () => {
   if (chapterId === '') {
     return (
       <div className="flex h-dvh flex-col items-center justify-center gap-2 bg-shade text-center">
-        <p className="text-lg font-medium text-on-scrim">Nothing in this book yet</p>
-        <p className="text-sm text-on-scrim/70">
-          Scanning the library again may find its chapters.
-        </p>
+        <p className="text-lg font-medium text-on-scrim">{say('screens.readPage.emptyTitle')}</p>
+        <p className="text-sm text-on-scrim/70">{say('screens.readPage.emptyBody')}</p>
       </div>
     );
   }

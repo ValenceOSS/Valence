@@ -1,4 +1,4 @@
-const COULD_NOT = 'That could not be done.';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Reads the answer of an action that says only whether it worked.
@@ -7,7 +7,10 @@ const COULD_NOT = 'That could not be done.';
  * @param said - What to say where it did not.
  * @returns Why it failed, or nothing where it worked.
  */
-const failureOfAnswer = (isOk: boolean, said = COULD_NOT): string | null => (isOk ? null : said);
+const failureOfAnswer = (
+  isOk: boolean,
+  said = say('screens.failureOf.couldNotBeDone'),
+): string | null => (isOk ? null : said);
 
 /**
  * Reads the answer of an action that comes back with why it was refused, where it was.
@@ -25,8 +28,10 @@ const failureOfRefusal = (refusal: { message: string } | null): string | null =>
  * @param said - What to say where nothing was made.
  * @returns Why it failed, or nothing where it worked.
  */
-const failureOfMissing = (made: object | null, said = COULD_NOT): string | null =>
-  made === null ? said : null;
+const failureOfMissing = (
+  made: object | null,
+  said = say('screens.failureOf.couldNotBeDone'),
+): string | null => (made === null ? said : null);
 
 /**
  * Reads the answer of an action that comes back with what it made or why it was refused.
@@ -37,7 +42,7 @@ const failureOfMissing = (made: object | null, said = COULD_NOT): string | null 
  */
 const failureOfSent = (
   sent: { value: object | null; refusal: { message: string } | null },
-  said = COULD_NOT,
+  said = say('screens.failureOf.couldNotBeDone'),
 ): string | null => failureOfRefusal(sent.refusal) ?? (sent.value === null ? said : null);
 
 /**
@@ -49,7 +54,7 @@ const failureOfSent = (
  */
 const failureOfThrown = async <Made>(
   run: () => Promise<Made>,
-  said = COULD_NOT,
+  said = say('screens.failureOf.couldNotBeDone'),
 ): Promise<string | null> => {
   try {
     await run();

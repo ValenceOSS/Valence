@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import type { Library } from '@ValenceContracts/schemas/Library';
 
 type RunSubject = { name: string; library: Library | null };
@@ -13,18 +14,20 @@ const IDENTIFIER = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
  */
 const describeScope = (kind: string): string => {
   if (kind.startsWith('library.')) {
-    return 'Every library';
+    return say('screens.describeRunSubject.everyLibrary');
   }
 
   if (kind.startsWith('server.')) {
-    return 'This server';
+    return say('screens.describeRunSubject.thisServer');
   }
 
   if (kind.startsWith('requests.')) {
-    return 'Requests';
+    return say('screens.describeRunSubject.requests');
   }
 
-  return kind.startsWith('catalogue.') ? 'The catalogue' : 'Everything';
+  return kind.startsWith('catalogue.')
+    ? say('screens.describeRunSubject.theCatalogue')
+    : say('screens.describeRunSubject.everything');
 };
 
 /**
@@ -50,7 +53,7 @@ const describeRunSubject = (
   const library = libraries.find((candidate) => candidate.id === subject) ?? null;
 
   if (library === null && IDENTIFIER.test(subject)) {
-    return { name: 'A library that has been removed', library: null };
+    return { name: say('screens.describeRunSubject.removedLibrary'), library: null };
   }
 
   return { name: library?.name ?? subject, library };

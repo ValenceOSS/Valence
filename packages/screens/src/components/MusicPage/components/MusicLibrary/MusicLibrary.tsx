@@ -23,6 +23,7 @@ import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import type { ReactNode } from 'react';
 import type { MusicView } from '@ValenceClient/music/musicView';
+import { say } from '@ValenceI18n/say';
 
 type Entry = {
   key: string;
@@ -60,8 +61,8 @@ const MusicLibrary = () => {
   const entries = useMemo((): Entry[] => {
     const liked: Entry = {
       key: 'liked',
-      name: 'Liked Songs',
-      detail: 'Playlist',
+      name: say('screens.musicLibrary.likedSongs'),
+      detail: say('screens.musicLibrary.playlist'),
       artwork: (
         <span className="flex size-12 items-center justify-center rounded-md bg-text text-surface">
           <Icon of={HeartFilledIcon} size={20} />
@@ -75,7 +76,7 @@ const MusicLibrary = () => {
       ...(playlists.data ?? []).map((playlist): Entry => ({
         key: `playlist-${playlist.id}`,
         name: playlist.name,
-        detail: `Playlist · ${nameOfOwner(playlist.owner)}`,
+        detail: say('screens.musicLibrary.playlistBy', { owner: nameOfOwner(playlist.owner) }),
         artwork: (
           <PlaylistCover
             name={playlist.name}
@@ -88,7 +89,7 @@ const MusicLibrary = () => {
       ...(followed.data ?? []).map((artist): Entry => ({
         key: `artist-${artist.id}`,
         name: artist.name,
-        detail: 'Artist',
+        detail: say('screens.musicLibrary.artist'),
         artwork: (
           <MusicArtwork
             src={pictureOf(artist)}
@@ -102,7 +103,7 @@ const MusicLibrary = () => {
       ...(albums.data ?? []).map((album): Entry => ({
         key: `album-${album.id}`,
         name: album.title,
-        detail: `Album · ${album.artist.name}`,
+        detail: say('screens.musicLibrary.albumBy', { artist: album.artist.name }),
         artwork: (
           <MusicArtwork
             src={album.hasArtwork ? albumArtworkUrl(album.id) : null}
@@ -119,16 +120,19 @@ const MusicLibrary = () => {
   const shown = entries.filter((entry) => typed === '' || entry.name.toLowerCase().includes(typed));
 
   return (
-    <nav aria-label="Your library" className="flex h-full min-h-0 flex-col gap-3">
+    <nav
+      aria-label={say('screens.musicLibrary.regionLabel')}
+      className="flex h-full min-h-0 flex-col gap-3"
+    >
       <div className="flex items-center justify-between gap-2 px-3 pt-3">
-        <h2 className="text-base font-bold text-text">Your Library</h2>
+        <h2 className="text-base font-bold text-text">{say('screens.musicLibrary.heading')}</h2>
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="sm"
             isIconOnly
             isActive={view.kind === 'search'}
-            label="Search music"
+            label={say('screens.musicLibrary.searchMusic')}
             onClick={() => {
               open({ kind: 'search', query: '' });
             }}
@@ -144,7 +148,7 @@ const MusicLibrary = () => {
             variant="ghost"
             size="sm"
             isIconOnly
-            label="Create"
+            label={say('screens.musicLibrary.create')}
             onClick={() => {
               setIsMaking(true);
             }}
@@ -156,11 +160,11 @@ const MusicLibrary = () => {
 
       <div className="px-3">
         <TextField
-          label="Find in your library"
+          label={say('screens.musicLibrary.filter')}
           isLabelHidden
           type="search"
           size="sm"
-          placeholder="Find in your library"
+          placeholder={say('screens.musicLibrary.filter')}
           value={filter}
           onValueChange={setFilter}
         />
@@ -213,7 +217,7 @@ const MusicLibrary = () => {
                     </span>
                     {isPlayingFrom(entry.view, state) ? (
                       <Equaliser
-                        label="Playing"
+                        label={say('screens.musicLibrary.playing')}
                         isMoving={state.isPlaying}
                         className="mr-2 shrink-0 text-text"
                       />

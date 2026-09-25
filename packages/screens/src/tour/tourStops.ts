@@ -8,6 +8,7 @@ import {
   Search as SearchIcon,
   Tape as TapeIcon,
 } from '@keyline-icons/react';
+import { say } from '@ValenceI18n/say';
 import type { Place } from '@ValenceClient/navigation/readLocation';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
 
@@ -21,53 +22,82 @@ type TourStop = {
 const TOUR_STOPS: readonly TourStop[] = [
   {
     section: 'home',
-    title: 'Home',
-    detail:
-      'Pick up where you left off, see what has just been added, and find something to watch next.',
+    get title() {
+      return say('screens.tourStops.homeTitle');
+    },
+    get detail() {
+      return say('screens.tourStops.homeDetail');
+    },
     icon: HomeIcon,
   },
   {
     section: 'films',
-    title: 'Films',
-    detail:
-      'Every film in the library. Press one to see more, watch it, or watch it with somebody.',
+    get title() {
+      return say('screens.tourStops.filmsTitle');
+    },
+    get detail() {
+      return say('screens.tourStops.filmsDetail');
+    },
     icon: TapeIcon,
   },
   {
     section: 'shows',
-    title: 'Shows',
-    detail: 'Series and their seasons. Valence remembers which episode you are on.',
+    get title() {
+      return say('screens.tourStops.showsTitle');
+    },
+    get detail() {
+      return say('screens.tourStops.showsDetail');
+    },
     icon: MonitorIcon,
   },
   {
     section: 'music',
-    title: 'Music',
-    detail:
-      'Your music, with playlists, a queue you can drag into order, lyrics, and the option to play it on another device.',
+    get title() {
+      return say('screens.tourStops.musicTitle');
+    },
+    get detail() {
+      return say('screens.tourStops.musicDetail');
+    },
     icon: MusicNoteIcon,
   },
   {
     section: 'read',
-    title: 'Read',
-    detail: 'Books and comics, with your place kept wherever you read them.',
+    get title() {
+      return say('screens.tourStops.readTitle');
+    },
+    get detail() {
+      return say('screens.tourStops.readDetail');
+    },
     icon: BookIcon,
   },
   {
     section: 'requests',
-    title: 'Requests',
-    detail: 'Ask for something that is not here yet and follow it until it arrives.',
+    get title() {
+      return say('screens.tourStops.requestsTitle');
+    },
+    get detail() {
+      return say('screens.tourStops.requestsDetail');
+    },
     icon: PlusIcon,
   },
   {
     section: 'favourites',
-    title: 'Favourites',
-    detail: 'Press the heart on anything to keep it here, where it is easy to find again.',
+    get title() {
+      return say('screens.tourStops.favouritesTitle');
+    },
+    get detail() {
+      return say('screens.tourStops.favouritesDetail');
+    },
     icon: HeartIcon,
   },
   {
     section: 'search',
-    title: 'Search',
-    detail: 'Look across films, shows, music and books at once.',
+    get title() {
+      return say('screens.tourStops.searchTitle');
+    },
+    get detail() {
+      return say('screens.tourStops.searchDetail');
+    },
     icon: SearchIcon,
   },
 ];

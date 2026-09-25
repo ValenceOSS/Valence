@@ -13,6 +13,7 @@ import { Button } from '@ValenceUI/Button';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import type { EpisodeRowProps } from './EpisodeRow.types';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
+import { say } from '@ValenceI18n/say';
 
 /**
  * One episode in a list of them: its number, its name, how long it runs, what it is about, and how
@@ -41,8 +42,11 @@ const EpisodeRow = ({
       size="none"
       aria-label={
         resumeSeconds === undefined
-          ? `Play ${episode.title}`
-          : `Resume ${episode.title} from ${formatDuration(resumeSeconds)}`
+          ? say('screens.episodeRow.play', { title: episode.title })
+          : say('screens.episodeRow.resume', {
+              title: episode.title,
+              time: formatDuration(resumeSeconds),
+            })
       }
       onClick={() => {
         onPlay(episode, resumeSeconds ?? 0);
@@ -72,7 +76,7 @@ const EpisodeRow = ({
         {watchedFraction === undefined || watchedFraction < 1 ? null : (
           <span
             role="img"
-            aria-label="Watched"
+            aria-label={say('screens.episodeRow.watched')}
             className="absolute bottom-1.5 right-1.5 flex size-5 items-center justify-center rounded-full bg-scrim"
           >
             <Icon of={CheckIcon} size={12} tone="scrim" />
@@ -94,7 +98,9 @@ const EpisodeRow = ({
         <span className="font-body text-xs text-text-muted">
           {formatDuration(episode.durationSeconds)}
           {airs === undefined || airs === '' ? '' : ` · ${airs}`}
-          {resumeSeconds === undefined ? '' : ` · ${formatDuration(resumeSeconds)} in`}
+          {resumeSeconds === undefined
+            ? ''
+            : ` · ${say('screens.episodeRow.positionIn', { time: formatDuration(resumeSeconds) })}`}
         </span>
       </span>
     </Button>
@@ -106,8 +112,8 @@ const EpisodeRow = ({
         size="sm"
         label={
           (watchedFraction ?? 0) >= 1
-            ? `Mark ${episode.title} as unwatched`
-            : `Mark ${episode.title} as watched`
+            ? say('screens.episodeRow.markUnwatched', { title: episode.title })
+            : say('screens.episodeRow.markWatched', { title: episode.title })
         }
         isActive={(watchedFraction ?? 0) >= 1}
         onClick={() => {
@@ -125,7 +131,7 @@ const EpisodeRow = ({
       <Button
         isIconOnly
         variant="ghost"
-        label={`About ${episode.title}`}
+        label={say('screens.episodeRow.about', { title: episode.title })}
         size="sm"
         onClick={() => {
           onInspect(episode);

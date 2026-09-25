@@ -28,6 +28,7 @@ import { setMusicVisualiser, useMusicVisualiser } from '@ValenceScreens/music/mu
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 import type { ImmersiveMusicProps } from './ImmersiveMusic.types';
+import { say } from '@ValenceI18n/say';
 
 const OPENING = { duration: 0.28, ease: [0.23, 1, 0.32, 1] } as const;
 
@@ -107,7 +108,7 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
       {!isOpen || shown === null ? null : (
         <motion.section
           key="immersive"
-          aria-label={`${shown.title}, immersive`}
+          aria-label={say('screens.immersiveMusic.regionLabel', { title: shown.title })}
           initial={isStill ? { opacity: 0 } : { opacity: 0, scale: 1.02 }}
           animate={isStill ? { opacity: 1 } : { opacity: 1, scale: 1 }}
           exit={
@@ -125,7 +126,7 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
               <Button
                 variant="overlay"
                 isIconOnly
-                label="Visualiser"
+                label={say('screens.immersiveMusic.visualiser')}
                 onClick={() => {
                   setMusicVisualiser(true);
                 }}
@@ -136,7 +137,7 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
             <Button
               variant="overlay"
               isIconOnly
-              label="Close"
+              label={say('screens.immersiveMusic.close')}
               onClick={() => {
                 setMusicImmersive(false);
               }}
@@ -190,7 +191,11 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
                 </AnimatePresence>
 
                 <BarButton
-                  label={isLiked ? `Unlike ${shown.title}` : `Like ${shown.title}`}
+                  label={
+                    isLiked
+                      ? say('screens.immersiveMusic.unlike', { title: shown.title })
+                      : say('screens.immersiveMusic.like', { title: shown.title })
+                  }
                   glyph={HeartIcon}
                   litGlyph={HeartFilledIcon}
                   gesture="fill"
@@ -206,7 +211,7 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
               <div className="flex items-center gap-3 text-on-scrim/60">
                 <Icon of={VolumeLowIcon} size={16} />
                 <Slider
-                  label="Volume"
+                  label={say('screens.immersiveMusic.volume')}
                   tone="overlay"
                   value={Math.round((state.isMuted ? 0 : shown.volume) * 100)}
                   max={100}
@@ -232,7 +237,7 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
                 >
                   {lyrics === null || lyrics.lines.length === 0 ? (
                     <p className="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-on-scrim/60">
-                      {asked.isPending ? '' : 'No lyrics found'}
+                      {asked.isPending ? '' : say('screens.immersiveMusic.noLyrics')}
                     </p>
                   ) : (
                     <LyricLines

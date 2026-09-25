@@ -58,8 +58,7 @@ import { CastGrid } from './components/CastGrid/CastGrid';
 import { EXTRA_KIND_LABELS } from '@ValenceContracts/schemas/Library';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaDetailDialogProps } from './MediaDetailDialog.types';
-
-const ORIGINAL_VERSION = 'Original';
+import { say } from '@ValenceI18n/say';
 
 const CAST_PLACEHOLDERS = 5;
 
@@ -181,7 +180,13 @@ const MediaDetailDialog = ({
           artwork={shown.hasPoster ? artworkUrl(shown.id, 'poster') : null}
           isShowing={hasScrolledPast}
         >
-          <Button isIconOnly variant="ghost" size="sm" label="Close" onClick={onClose}>
+          <Button
+            isIconOnly
+            variant="ghost"
+            size="sm"
+            label={say('common.close')}
+            onClick={onClose}
+          >
             <Icon of={XIcon} size={16} />
           </Button>
         </ScrolledTitle>
@@ -206,7 +211,11 @@ const MediaDetailDialog = ({
                         <Button
                           isIconOnly
                           variant="overlay"
-                          label={isKept ? `Stop keeping ${shown.title}` : `Keep ${shown.title}`}
+                          label={
+                            isKept
+                              ? say('screens.mediaDetailDialog.stopKeeping', { title: shown.title })
+                              : say('screens.mediaDetailDialog.keep', { title: shown.title })
+                          }
                           isActive={isKept}
                           onClick={() => {
                             onToggleKept(shown);
@@ -232,13 +241,13 @@ const MediaDetailDialog = ({
               <div className="absolute left-4 top-4">
                 <Button variant="overlay" size="sm" onClick={onBack}>
                   <Icon of={ChevronLeftIcon} size={16} />
-                  {backLabel ?? 'Back'}
+                  {backLabel ?? say('common.back')}
                 </Button>
               </div>
             )}
 
             <div className="absolute right-4 top-4">
-              <Button isIconOnly variant="overlay" label="Close" onClick={onClose}>
+              <Button isIconOnly variant="overlay" label={say('common.close')} onClick={onClose}>
                 <Icon of={XIcon} size={20} />
               </Button>
             </div>
@@ -312,7 +321,7 @@ const MediaDetailDialog = ({
 
             {media !== null && asked.isError ? (
               <CouldNotRead
-                what="The rest of this"
+                what={say('screens.mediaDetailDialog.theRest')}
                 isTryingAgain={asked.isFetching}
                 onTryAgain={() => {
                   void asked.refetch();
@@ -322,7 +331,7 @@ const MediaDetailDialog = ({
 
             <section className="flex flex-col gap-3">
               <h3 className="text-sm font-medium uppercase tracking-[0.18em] text-text-muted">
-                Synopsis
+                {say('screens.mediaDetailDialog.synopsis')}
               </h3>
 
               {isLoading ? (
@@ -336,7 +345,7 @@ const MediaDetailDialog = ({
               ) : (
                 <p className="flex items-center gap-2 text-sm text-text-muted">
                   <Icon of={InfoIcon} size={16} />
-                  No synopsis yet. Configure a metadata provider and rescan to fill this in.
+                  {say('screens.mediaDetailDialog.noSynopsis')}
                 </p>
               )}
 
@@ -364,7 +373,7 @@ const MediaDetailDialog = ({
               {isLoading ? (
                 <>
                   <h3 className="text-sm font-medium uppercase tracking-[0.18em] text-text-muted">
-                    Cast
+                    {say('screens.mediaDetailDialog.cast')}
                   </h3>
 
                   <ul aria-hidden className="flex gap-4">
@@ -380,12 +389,12 @@ const MediaDetailDialog = ({
               ) : cast.length === 0 ? (
                 <>
                   <h3 className="text-sm font-medium uppercase tracking-[0.18em] text-text-muted">
-                    Cast
+                    {say('screens.mediaDetailDialog.cast')}
                   </h3>
 
                   <p className="flex items-center gap-2 text-sm text-text-muted">
                     <Icon of={InfoIcon} size={16} />
-                    Nobody is credited yet. A metadata provider supplies the cast.
+                    {say('screens.mediaDetailDialog.noCast')}
                   </p>
                 </>
               ) : (
@@ -397,7 +406,12 @@ const MediaDetailDialog = ({
             </section>
 
             {extras.length === 0 ? null : (
-              <Rail title="Extras" sizesCards hasArrows={false} className="px-0">
+              <Rail
+                title={say('screens.mediaDetailDialog.extras')}
+                sizesCards
+                hasArrows={false}
+                className="px-0"
+              >
                 {extras.map((extra) => (
                   <li key={extra.id}>
                     <MediaCard
@@ -421,8 +435,8 @@ const MediaDetailDialog = ({
               <Rail
                 title={
                   season === null
-                    ? 'More from this series'
-                    : `More from season ${season.toString()}`
+                    ? say('screens.mediaDetailDialog.moreFromSeries')
+                    : say('screens.mediaDetailDialog.moreFromSeason', { season })
                 }
                 sizesCards
                 hasArrows={false}
@@ -457,17 +471,17 @@ const MediaDetailDialog = ({
 
       <DialogFooter>
         <ActionBar
-          label="More to do with this"
+          label={say('screens.mediaDetailDialog.actions')}
           primary={
             <div className="flex w-full items-center gap-2">
               {versions.length === 0 ? null : (
                 <OptionMenu
-                  label="Which version to play"
+                  label={say('screens.mediaDetailDialog.whichVersion')}
                   triggerShape="field"
-                  trigger={chosenVersion?.versionLabel ?? ORIGINAL_VERSION}
+                  trigger={chosenVersion?.versionLabel ?? say('screens.mediaDetailDialog.original')}
                   groups={[
                     {
-                      name: 'Version',
+                      name: say('screens.mediaDetailDialog.version'),
                       options: theVersionsOf(shown.id, versions),
                       selectedId: chosenVersion?.id ?? shown.id,
                       onSelect: setVersion,
@@ -486,8 +500,10 @@ const MediaDetailDialog = ({
               >
                 <Icon of={PlayFilledIcon} size={18} />
                 {shownResume === undefined || chosenVersion !== null
-                  ? 'Play'
-                  : `Resume from ${formatDuration(shownResume)}`}
+                  ? say('screens.mediaDetailDialog.play')
+                  : say('screens.mediaDetailDialog.resumeFrom', {
+                      time: formatDuration(shownResume),
+                    })}
               </Button>
             </div>
           }
@@ -498,7 +514,7 @@ const MediaDetailDialog = ({
                   {
                     id: 'trailer',
                     isPinned: true,
-                    label: 'Watch the trailer',
+                    label: say('screens.mediaDetailDialog.watchTrailer'),
                     icon: <Icon of={TapeIcon} size={18} />,
                     onChoose: () => {
                       if (trailer === null) {
@@ -516,7 +532,7 @@ const MediaDetailDialog = ({
               : [
                   {
                     id: 'again',
-                    label: 'Start again',
+                    label: say('screens.mediaDetailDialog.startAgain'),
                     icon: <Icon of={ArrowUTurnRightIcon} size={18} />,
                     onChoose: () => {
                       onPlay(shown, 0);
@@ -529,7 +545,7 @@ const MediaDetailDialog = ({
                   {
                     id: 'share',
                     isPinned: true,
-                    label: 'Share',
+                    label: say('screens.mediaDetailDialog.share'),
                     icon: <Icon of={ShareIcon} size={18} />,
                     onChoose: () => {
                       onShare(shown);
@@ -540,12 +556,15 @@ const MediaDetailDialog = ({
               ? [
                   {
                     id: 'download',
-                    label: preparing === undefined ? 'Download' : `Preparing ${percent}`,
+                    label:
+                      preparing === undefined
+                        ? say('screens.mediaDetailDialog.download')
+                        : say('screens.mediaDetailDialog.preparingPercent', { percent }),
                     icon:
                       preparing === undefined ? (
                         <Icon of={DownloadIcon} size={18} />
                       ) : (
-                        <Spinner size="sm" label="Preparing" />
+                        <Spinner size="sm" label={say('screens.mediaDetailDialog.preparing')} />
                       ),
                     onChoose: () => {
                       setIsDownloading(true);
@@ -559,7 +578,7 @@ const MediaDetailDialog = ({
                   {
                     id: 'play-on',
                     isPinned: true,
-                    label: 'Play on TV',
+                    label: say('screens.mediaDetailDialog.playOnTv'),
                     icon: <Icon of={MonitorIcon} size={18} />,
                     onChoose: () => {
                       onPlayOn(
@@ -574,7 +593,7 @@ const MediaDetailDialog = ({
               : [
                   {
                     id: 'party',
-                    label: 'Watch together',
+                    label: say('screens.mediaDetailDialog.watchTogether'),
                     icon: <Icon of={UsersIcon} size={18} />,
                     onChoose: () => {
                       onStartParty(shown);
@@ -586,7 +605,7 @@ const MediaDetailDialog = ({
               : [
                   {
                     id: 'hide',
-                    label: 'Hide this',
+                    label: say('screens.mediaDetailDialog.hide'),
                     icon: <Icon of={EyeOffIcon} size={18} />,
                     onChoose: () => {
                       onHide(shown);
@@ -598,7 +617,7 @@ const MediaDetailDialog = ({
               : [
                   {
                     id: 'decide',
-                    label: 'Who may watch this',
+                    label: say('screens.mediaDetailDialog.whoMayWatch'),
                     icon: <Icon of={UserCheckIcon} size={18} />,
                     onChoose: () => {
                       onDecideForSomebody(shown);
@@ -609,7 +628,7 @@ const MediaDetailDialog = ({
               ? [
                   {
                     id: 'preview-moment',
-                    label: 'Choose the preview moment',
+                    label: say('screens.mediaDetailDialog.previewMoment'),
                     icon: <Icon of={FilmIcon} size={18} />,
                     onChoose: () => {
                       setIsChoosingMoment(true);
@@ -629,7 +648,7 @@ const MediaDetailDialog = ({
       />
 
       <Dialog
-        label={`${shown.title}, the trailer`}
+        label={say('screens.mediaDetailDialog.trailer', { title: shown.title })}
         isOpen={isWatchingTrailer && trailerKey !== null}
         className="sm:w-[min(64rem,94vw)]"
         onClose={() => {
@@ -639,7 +658,7 @@ const MediaDetailDialog = ({
         <DialogContent className="p-0">
           {trailerKey === null ? null : (
             <EmbeddedVideo
-              label={`${shown.title}, the trailer`}
+              label={say('screens.mediaDetailDialog.trailer', { title: shown.title })}
               src={catalogueTrailerUrl(trailerKey)}
             />
           )}

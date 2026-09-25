@@ -2,6 +2,7 @@ import { useElementWidth } from './useElementWidth';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { thumbnailAt } from '@ValenceClient/playback/fetchTrickplay';
 import type { TrickplayFrameProps } from './TrickplayFrame.types';
+import { say } from '@ValenceI18n/say';
 
 const PLACEHOLDER = { width: 320, height: 180 };
 
@@ -33,7 +34,7 @@ const TrickplayFrame = ({ trickplay, seconds, isFluid = false }: TrickplayFrameP
         {thumbnail === null ? null : (
           <div
             role="img"
-            aria-label={`Preview at ${formatDuration(seconds)}`}
+            aria-label={say('screens.trickplayFrame.previewAt', { time: formatDuration(seconds) })}
             className="absolute top-0 left-0 origin-top-left bg-no-repeat"
             style={{
               width: `${naturalWidth.toString()}px`,
@@ -64,7 +65,7 @@ const TrickplayFrame = ({ trickplay, seconds, isFluid = false }: TrickplayFrameP
   return (
     <div
       role="img"
-      aria-label={`Preview at ${formatDuration(seconds)}`}
+      aria-label={say('screens.trickplayFrame.previewAt', { time: formatDuration(seconds) })}
       className="rounded-lg bg-surface bg-no-repeat"
       style={{
         width: `${thumbnail.width.toString()}px`,

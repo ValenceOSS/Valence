@@ -18,6 +18,7 @@ import { DiscoverShelves } from './components/DiscoverShelves/DiscoverShelves';
 import { BooksDiscover } from './components/BooksDiscover/BooksDiscover';
 import { MusicDiscover } from './components/MusicDiscover/MusicDiscover';
 import { RequestsList } from './components/RequestsList/RequestsList';
+import { say } from '@ValenceI18n/say';
 
 const MINE = 'mine';
 
@@ -76,7 +77,7 @@ const RequestsPage = () => {
       exit="gone"
       className={cn(RAIL.lane, 'flex flex-col gap-6 pt-6 pb-16')}
     >
-      <h1 className="sr-only">Requests</h1>
+      <h1 className="sr-only">{say('screens.requestsPage.heading')}</h1>
 
       <Tabs
         value={showing}
@@ -91,16 +92,16 @@ const RequestsPage = () => {
         >
           <div className={RAIL.inset}>
             <TabRow
-              label="What to show"
+              label={say('screens.requestsPage.tabsLabel')}
               groups={[
                 {
                   items: [
-                    { id: DISCOVER, label: 'Discover' },
-                    { id: MOVIES, label: 'Movies' },
-                    { id: SHOWS, label: 'Shows' },
-                    { id: MUSIC, label: 'Music' },
-                    { id: BOOKS, label: 'Books' },
-                    { id: MINE, label: 'Requests' },
+                    { id: DISCOVER, label: say('screens.requestsPage.discover') },
+                    { id: MOVIES, label: say('screens.requestsPage.movies') },
+                    { id: SHOWS, label: say('screens.requestsPage.shows') },
+                    { id: MUSIC, label: say('screens.requestsPage.music') },
+                    { id: BOOKS, label: say('screens.requestsPage.books') },
+                    { id: MINE, label: say('screens.requestsPage.mine') },
                   ],
                 },
               ]}

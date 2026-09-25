@@ -3,6 +3,7 @@ import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
 import type { ShelfMoreCardProps } from './ShelfMoreCard.types';
+import { say } from '@ValenceI18n/say';
 
 const CORNERS = 4;
 
@@ -58,7 +59,9 @@ const ShelfMoreCard = ({ label, posterUrls, onOpen }: ShelfMoreCardProps) => (
           <Icon of={ChevronRightIcon} size={26} />
         </span>
 
-        <span className="text-base font-semibold text-on-scrim">See more</span>
+        <span className="text-base font-semibold text-on-scrim">
+          {say('screens.shelfMoreCard.seeMore')}
+        </span>
       </span>
     </span>
   </Button>

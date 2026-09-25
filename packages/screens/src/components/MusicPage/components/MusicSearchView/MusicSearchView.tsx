@@ -16,6 +16,7 @@ import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
 import type { MusicSearchViewProps } from './MusicSearchView.types';
+import { say } from '@ValenceI18n/say';
 
 const SETTLE_MS = 250;
 
@@ -60,12 +61,12 @@ const MusicSearchView = ({ query }: MusicSearchViewProps) => {
     <div className="flex flex-col gap-12 pt-2 pb-12">
       <div className={MUSIC_LANES.page}>
         <TextField
-          label="Search music"
+          label={say('screens.musicSearchView.searchLabel')}
           isLabelHidden
           type="search"
           size="lg"
           hasFocusOnMount
-          placeholder="What do you want to listen to?"
+          placeholder={say('screens.musicSearchView.placeholder')}
           icon={<Icon of={SearchIcon} size={18} />}
           value={typed}
           onValueChange={setTyped}
@@ -76,28 +77,40 @@ const MusicSearchView = ({ query }: MusicSearchViewProps) => {
       {query.trim() === '' ? (
         everything.isPending ? (
           <div className={MUSIC_LANES.page}>
-            <Skeleton label="Reading every album" className="h-48 w-full" />
+            <Skeleton
+              label={say('screens.musicSearchView.readingEverything')}
+              className="h-48 w-full"
+            />
           </div>
         ) : (
-          <AlbumShelf heading="Every album" layout="grid" albums={everything.data ?? []} />
+          <AlbumShelf
+            heading={say('screens.musicSearchView.everyAlbum')}
+            layout="grid"
+            albums={everything.data ?? []}
+          />
         )
       ) : asked.isPending ? (
         <div className={MUSIC_LANES.page}>
-          <Skeleton label="Searching" className="h-48 w-full" />
+          <Skeleton label={say('screens.musicSearchView.searching')} className="h-48 w-full" />
         </div>
       ) : isEmpty ? (
         <NothingHere
           of={SearchIcon}
-          title={`Nothing matches “${query}”`}
-          detail="Try fewer words."
+          title={say('common.nothingMatches', { query })}
+          detail={say('screens.musicSearchView.tryFewerWords')}
         />
       ) : (
         <>
           {(found?.tracks ?? []).length === 0 ? null : (
-            <section aria-label="Songs" className={`flex flex-col gap-3 ${MUSIC_LANES.tracks}`}>
-              <h2 className="px-3 text-lg font-semibold tracking-tight text-text">Songs</h2>
+            <section
+              aria-label={say('screens.musicSearchView.songs')}
+              className={`flex flex-col gap-3 ${MUSIC_LANES.tracks}`}
+            >
+              <h2 className="px-3 text-lg font-semibold tracking-tight text-text">
+                {say('screens.musicSearchView.songs')}
+              </h2>
               <TrackList
-                label={`Songs matching ${query}`}
+                label={say('screens.musicSearchView.songsMatching', { query })}
                 tracks={found?.tracks ?? []}
                 showsArtwork
                 onPlay={(index) => {
@@ -108,9 +121,18 @@ const MusicSearchView = ({ query }: MusicSearchViewProps) => {
               />
             </section>
           )}
-          <ArtistShelf heading="Artists" artists={found?.artists ?? []} />
-          <AlbumShelf heading="Albums" albums={found?.albums ?? []} />
-          <PlaylistShelf heading="Playlists" playlists={found?.playlists ?? []} />
+          <ArtistShelf
+            heading={say('screens.musicSearchView.artists')}
+            artists={found?.artists ?? []}
+          />
+          <AlbumShelf
+            heading={say('screens.musicSearchView.albums')}
+            albums={found?.albums ?? []}
+          />
+          <PlaylistShelf
+            heading={say('screens.musicSearchView.playlists')}
+            playlists={found?.playlists ?? []}
+          />
         </>
       )}
     </div>

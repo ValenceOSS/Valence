@@ -1,4 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
+import { say } from '@ValenceI18n/say';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { revealTransition, revealVariants, staggerVariants } from '@ValenceUI/animations/reveal';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
@@ -37,12 +38,12 @@ const BooksPage = () => {
       exit="gone"
       className="flex flex-col gap-6 px-5 pt-6 pb-16 sm:px-10"
     >
-      <h1 className="sr-only">Books</h1>
+      <h1 className="sr-only">{say('screens.booksPage.heading')}</h1>
 
       <motion.section
         variants={revealVariants(prefersReducedMotion)}
         transition={revealTransition(prefersReducedMotion)}
-        aria-label="Books"
+        aria-label={say('screens.booksPage.heading')}
         className="flex flex-col gap-5"
       >
         <ContinueReading onOpen={open} />

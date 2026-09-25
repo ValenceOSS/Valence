@@ -6,11 +6,11 @@ import { createWaves } from './createWaves';
 import type { Visualiser } from './Visualiser';
 
 const VISUALISERS: readonly Visualiser[] = [
-  { id: 'bars', name: 'Bars and waves', create: createBarsAndWaves },
-  { id: 'waves', name: 'Waves', create: createWaves },
-  { id: 'ambience', name: 'Ambience', create: createAmbience },
-  { id: 'halo', name: 'Halo', create: createRadial },
-  { id: 'warp', name: 'Warp', create: createWarp },
+  { id: 'bars', name: 'screens.visualisers.barsAndWaves', create: createBarsAndWaves },
+  { id: 'waves', name: 'screens.visualisers.waves', create: createWaves },
+  { id: 'ambience', name: 'screens.visualisers.ambience', create: createAmbience },
+  { id: 'halo', name: 'screens.visualisers.halo', create: createRadial },
+  { id: 'warp', name: 'screens.visualisers.warp', create: createWarp },
 ];
 
 export { VISUALISERS };

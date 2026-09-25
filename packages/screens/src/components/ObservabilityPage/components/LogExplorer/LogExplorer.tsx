@@ -9,6 +9,8 @@ import {
   X as XIcon,
 } from '@keyline-icons/react';
 import { Copy as CopyFilledIcon, Download as DownloadFilledIcon } from '@keyline-icons/react/fill';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { AppliedFilters } from '@ValenceUI/AppliedFilters';
@@ -56,11 +58,27 @@ const LIVE_EVERY_MS = 3000;
 
 const TYPING_MS = 350;
 
-const SORTS: readonly { id: LogSort; label: string; detail: string }[] = [
-  { id: 'newest', label: 'Newest first', detail: 'What just happened' },
-  { id: 'oldest', label: 'Oldest first', detail: 'Read it as a story' },
-  { id: 'severest', label: 'Most serious first', detail: 'Errors, then warnings' },
-  { id: 'busiest', label: 'Most repeated first', detail: 'What keeps happening' },
+const SORTS: readonly { id: LogSort; labelKey: StringKey; detailKey: StringKey }[] = [
+  {
+    id: 'newest',
+    labelKey: 'screens.logExplorer.newestFirst',
+    detailKey: 'screens.logExplorer.newestFirstDetail',
+  },
+  {
+    id: 'oldest',
+    labelKey: 'screens.logExplorer.oldestFirst',
+    detailKey: 'screens.logExplorer.oldestFirstDetail',
+  },
+  {
+    id: 'severest',
+    labelKey: 'screens.logExplorer.severestFirst',
+    detailKey: 'screens.logExplorer.severestFirstDetail',
+  },
+  {
+    id: 'busiest',
+    labelKey: 'screens.logExplorer.busiestFirst',
+    detailKey: 'screens.logExplorer.busiestFirstDetail',
+  },
 ];
 
 const writeToClipboard = async (text: string): Promise<void> => {
@@ -257,42 +275,52 @@ const LogExplorer = ({
     [view],
   );
   const groups = useMemo<FilterGroup[]>(() => {
-    const identifiers = [
-      ['job', view.ids.jobId, 'Job'],
-      ['library', view.ids.libraryId, 'Library'],
-      ['media', view.ids.mediaId, 'Media'],
-      ['session', view.ids.sessionId, 'Session'],
-      ['request', view.ids.requestId, 'Request'],
-    ].flatMap(([key, value, name]) =>
-      key === undefined || value === undefined || name === undefined
+    const identifiers = (
+      [
+        ['job', view.ids.jobId, 'screens.logExplorer.jobField'],
+        ['library', view.ids.libraryId, 'screens.logExplorer.libraryField'],
+        ['media', view.ids.mediaId, 'screens.logExplorer.mediaField'],
+        ['session', view.ids.sessionId, 'screens.logExplorer.sessionField'],
+        ['request', view.ids.requestId, 'screens.logExplorer.requestField'],
+      ] as const
+    ).flatMap(([key, value, name]) =>
+      value === undefined
         ? []
-        : [{ id: logFilterId(key, value), label: `${name} ${value}` }],
+        : [
+            {
+              id: logFilterId(key, value),
+              label: say('screens.logExplorer.identifierItem', { field: say(name), value }),
+            },
+          ],
     );
 
     return [
       {
-        name: 'Source',
+        name: say('screens.logExplorer.sourceFilter'),
         options: LOG_SOURCES.map((source) => ({
           id: logFilterId('source', source),
           label: source,
         })),
       },
       {
-        name: 'Job',
+        name: say('screens.logExplorer.jobFilter'),
         options: kindOptions.map((kind) => ({
           id: logFilterId('kind', kind),
           label: describeJobKind(kind, labels),
         })),
       },
-      ...(identifiers.length === 0 ? [] : [{ name: 'Identifier', options: identifiers }]),
+      ...(identifiers.length === 0
+        ? []
+        : [{ name: say('screens.logExplorer.identifierFilter'), options: identifiers }]),
     ];
   }, [kindOptions, labels, view.ids]);
 
   const applied = selection;
+  const sortLabel = SORTS.find((one) => one.id === view.sort)?.labelKey;
 
   const copyVisible = () => {
     void copy(logsAsText(records)).then(() => {
-      notify.worked('Copied to the clipboard.');
+      notify.worked(say('screens.logExplorer.copied'));
     });
   };
 
@@ -336,7 +364,7 @@ const LogExplorer = ({
         }}
         onCopy={() => {
           void copy(logLineAsText(record)).then(() => {
-            notify.worked('Copied the line.');
+            notify.worked(say('screens.logExplorer.copiedLine'));
           });
         }}
         onTrace={onTraceJob}
@@ -349,11 +377,11 @@ const LogExplorer = ({
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
         <TextField
-          label="Search the log"
+          label={say('screens.logExplorer.searchLabel')}
           isLabelHidden
           type="search"
           size="sm"
-          placeholder="Search — or filter with level:error  job:abc123  library:…  session:…"
+          placeholder={say('screens.logExplorer.searchPlaceholder')}
           value={typed}
           className="min-w-64 flex-1"
           onValueChange={(next) => {
@@ -372,12 +400,12 @@ const LogExplorer = ({
         <TimeRangeMenu search={search} onSearchChange={onSearchChange} />
 
         <OptionMenu
-          label="Order"
+          label={say('screens.logExplorer.orderLabel')}
           triggerShape="field"
           className="w-auto"
           groups={[
             {
-              name: 'Order',
+              name: say('screens.logExplorer.orderGroup'),
               selectedId: view.sort,
               onSelect: (id) => {
                 const sort = SORTS.find((one) => one.id === id);
@@ -388,21 +416,21 @@ const LogExplorer = ({
               },
               options: SORTS.map((sort) => ({
                 id: sort.id,
-                label: sort.label,
-                detail: sort.detail,
+                label: say(sort.labelKey),
+                detail: say(sort.detailKey),
               })),
             },
           ]}
           trigger={
             <>
-              <span className="truncate">{SORTS.find((one) => one.id === view.sort)?.label}</span>
+              <span className="truncate">{sortLabel === undefined ? null : say(sortLabel)}</span>
               <Icon of={ChevronDownIcon} size={14} className="shrink-0" />
             </>
           }
         />
 
         <FilterMenu
-          label="Filter the log"
+          label={say('screens.logExplorer.filterLabel')}
           hasLabel
           groups={groups}
           selected={selection}
@@ -421,14 +449,14 @@ const LogExplorer = ({
           }}
         >
           <Icon of={RadioIcon} size={15} />
-          Live
+          {say('screens.logExplorer.live')}
         </Button>
 
         <Button
           variant="ghost"
           size="sm"
           isIconOnly
-          label="Read the log again"
+          label={say('screens.logExplorer.refresh')}
           onClick={() => {
             setAnchor();
           }}
@@ -437,21 +465,21 @@ const LogExplorer = ({
         </Button>
 
         <ActionMenu
-          label="More about these lines"
+          label={say('screens.logExplorer.moreLabel')}
           trigger={<Icon of={MoreHorizontalIcon} size={16} />}
           groups={[
             {
               items: [
                 {
                   id: 'copy',
-                  label: 'Copy these lines',
+                  label: say('screens.logExplorer.copyLines'),
                   icon: <Icon of={CopyFilledIcon} size={15} />,
                   isDisabled: records.length === 0,
                   onChoose: copyVisible,
                 },
                 {
                   id: 'download',
-                  label: 'Download these lines',
+                  label: say('screens.logExplorer.downloadLines'),
                   icon: <Icon of={DownloadFilledIcon} size={15} />,
                   isDisabled: records.length === 0,
                   onChoose: () => {
@@ -464,18 +492,22 @@ const LogExplorer = ({
               ],
             },
             {
-              name: 'View',
+              name: say('screens.logExplorer.viewGroup'),
               items: [
                 {
                   id: 'wrap',
-                  label: isWrapped ? 'Cut long lines short' : 'Wrap long lines',
+                  label: isWrapped
+                    ? say('screens.logExplorer.cutLines')
+                    : say('screens.logExplorer.wrapLines'),
                   onChoose: () => {
                     setIsWrapped((was) => !was);
                   },
                 },
                 {
                   id: 'time',
-                  label: hasTime ? 'Hide the time' : 'Show the time',
+                  label: hasTime
+                    ? say('screens.logExplorer.hideTime')
+                    : say('screens.logExplorer.showTime'),
                   onChoose: () => {
                     setHasTime((was) => !was);
                   },
@@ -515,7 +547,10 @@ const LogExplorer = ({
                 change({ ...view, zoom: null });
               }}
             >
-              {`Zoomed to ${describeLogTime(view.zoom.fromMs)}–${describeLogTime(view.zoom.untilMs)}`}
+              {say('screens.logExplorer.zoomedTo', {
+                from: describeLogTime(view.zoom.fromMs),
+                until: describeLogTime(view.zoom.untilMs),
+              })}
               <Icon of={XIcon} size={13} />
             </Button>
           )}
@@ -548,7 +583,7 @@ const LogExplorer = ({
               colour: describeLogLevel(level).colour,
             }))}
             bucketMs={histogram.bucketMs}
-            label="How many events the log holds at each level over time"
+            label={say('screens.logExplorer.barsLabel')}
             formatTick={(atMs) => describeLogTick(atMs, spanMs)}
             formatSpan={describeLogSpan}
             onPickRange={(fromMs, untilMs) => {
@@ -561,10 +596,13 @@ const LogExplorer = ({
       <div className="grid gap-x-8 gap-y-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <HeadedSection
           isInset
-          title="Log lines"
+          title={say('screens.logExplorer.linesHeading')}
           actions={
             <span aria-live="polite" className="text-xs tabular-nums text-text-muted">
-              Showing <AnimatedNumber value={records.length} /> of <AnimatedNumber value={total} />
+              {say('screens.logExplorer.showing')}
+              <AnimatedNumber value={records.length} />
+              {say('screens.logExplorer.showingOf')}
+              <AnimatedNumber value={total} />
             </span>
           }
         >
@@ -574,23 +612,23 @@ const LogExplorer = ({
               className="max-h-[70svh] overflow-y-auto overscroll-contain lg:absolute lg:inset-0 lg:max-h-none"
             >
               {askedLogs.isPending ? (
-                <p className="py-6 text-sm text-text-muted">Reading the log…</p>
+                <p className="py-6 text-sm text-text-muted">{say('screens.logExplorer.reading')}</p>
               ) : records.length === 0 ? (
                 <NothingHere
                   of={TerminalIcon}
-                  title="No log lines match this"
-                  detail="Try a longer time range, or take some filters off."
+                  title={say('screens.logExplorer.emptyTitle')}
+                  detail={say('screens.logExplorer.emptyDetail')}
                 />
               ) : (
                 <ul
-                  aria-label="Log lines"
+                  aria-label={say('screens.logExplorer.linesLabel')}
                   className="flex flex-col divide-y divide-[var(--surface-line)]"
                 >
                   {lines}
 
                   <li ref={sentinel} className="flex justify-center py-3 text-xs text-text-muted">
                     {isFetchingNextPage ? (
-                      'Loading more…'
+                      say('screens.logExplorer.loadingMore')
                     ) : hasNextPage ? (
                       canWatchTheEnd ? null : (
                         <Button
@@ -600,13 +638,13 @@ const LogExplorer = ({
                             void fetchNextPage();
                           }}
                         >
-                          Show more
+                          {say('screens.logExplorer.showMore')}
                         </Button>
                       )
                     ) : records.length < total ? (
-                      'That is as far back as this list reads — narrow it to see the rest.'
+                      say('screens.logExplorer.asFarAsItReads')
                     ) : (
-                      'That is everything.'
+                      say('screens.logExplorer.everything')
                     )}
                   </li>
                 </ul>
@@ -616,12 +654,12 @@ const LogExplorer = ({
         </HeadedSection>
 
         <div className="flex flex-col gap-6">
-          <HeadedSection isInset title="Top sources">
+          <HeadedSection isInset title={say('screens.logExplorer.topSources')}>
             <BarList
-              label="Sources that logged the most"
-              heading="Source"
-              valueHeading="Events"
-              emptyMessage="Nothing logged in this time."
+              label={say('screens.logExplorer.topSourcesLabel')}
+              heading={say('screens.logExplorer.sourceHeading')}
+              valueHeading={say('screens.logExplorer.eventsHeading')}
+              emptyMessage={say('screens.logExplorer.topSourcesEmpty')}
               items={(askedFacets.data?.sources ?? []).map((facet) => ({
                 id: logFilterId('source', facet.value),
                 label: facet.value,
@@ -632,12 +670,12 @@ const LogExplorer = ({
             />
           </HeadedSection>
 
-          <HeadedSection isInset title="Top jobs">
+          <HeadedSection isInset title={say('screens.logExplorer.topJobs')}>
             <BarList
-              label="Kinds of job that logged the most"
-              heading="Job"
-              valueHeading="Events"
-              emptyMessage="No job logged in this time."
+              label={say('screens.logExplorer.topJobsLabel')}
+              heading={say('screens.logExplorer.jobHeading')}
+              valueHeading={say('screens.logExplorer.eventsHeading')}
+              emptyMessage={say('screens.logExplorer.topJobsEmpty')}
               items={(askedFacets.data?.jobKinds ?? []).map((facet) => ({
                 id: logFilterId('kind', facet.value),
                 label: describeJobKind(facet.value, labels),

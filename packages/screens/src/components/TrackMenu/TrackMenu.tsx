@@ -21,6 +21,7 @@ import { setMusicVideo } from '@ValenceScreens/music/musicVideo';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import type { TrackMenuProps } from './TrackMenu.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Everything that can be done with one song besides playing it: queue it, put it in a playlist, go
@@ -49,7 +50,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
 
   return (
     <ActionMenu
-      label={`More for ${track.title}`}
+      label={say('screens.trackMenu.moreFor', { title: track.title })}
       align="end"
       size="sm"
       {...(className === undefined ? {} : { className })}
@@ -59,30 +60,30 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
           items: [
             {
               id: 'next',
-              label: 'Play next',
+              label: say('screens.trackMenu.playNext'),
               icon: <Icon of={SkipForwardFilledIcon} size={16} />,
               onChoose: () => {
                 player.playNext([track]);
-                notify.say(`${track.title} plays next`);
+                notify.say(say('screens.trackMenu.playsNext', { title: track.title }));
               },
             },
             {
               id: 'queue',
-              label: 'Add to queue',
+              label: say('screens.trackMenu.addToQueue'),
               icon: <Icon of={ListOrderedFilledIcon} size={16} />,
               onChoose: () => {
                 player.addToQueue([track]);
-                notify.say(`Added ${track.title} to the queue`);
+                notify.say(say('screens.trackMenu.addedToQueue', { title: track.title }));
               },
             },
           ],
         },
         {
-          name: 'Add to playlist',
+          name: say('screens.trackMenu.addToPlaylist'),
           items: [
             {
               id: 'new',
-              label: 'New playlist',
+              label: say('screens.trackMenu.newPlaylist'),
               icon: <Icon of={PlusFilledIcon} size={16} />,
               onChoose: () => {
                 void createPlaylist({ name: track.title, mediaItemIds: [track.id] }).then(
@@ -90,7 +91,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
                     refresh();
 
                     if (made === null) {
-                      notify.failed('That playlist could not be made.');
+                      notify.failed(say('screens.trackMenu.couldNotMakePlaylist'));
 
                       return;
                     }
@@ -109,9 +110,9 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
                   refresh();
 
                   if (added) {
-                    notify.worked(`Added to ${playlist.name}`);
+                    notify.worked(say('screens.trackMenu.addedTo', { name: playlist.name }));
                   } else {
-                    notify.failed(`That could not be added to ${playlist.name}.`);
+                    notify.failed(say('screens.trackMenu.couldNotAddTo', { name: playlist.name }));
                   }
                 });
               },
@@ -125,7 +126,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
               : [
                   {
                     id: 'video',
-                    label: 'Watch the video',
+                    label: say('screens.trackMenu.watchTheVideo'),
                     icon: <Icon of={VideoFilledIcon} size={16} />,
                     onChoose: () => {
                       if (track.videoKey !== null) {
@@ -137,7 +138,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
                 ]),
             {
               id: 'album',
-              label: 'Go to album',
+              label: say('screens.trackMenu.goToAlbum'),
               icon: <Icon of={RecordFilledIcon} size={16} />,
               onChoose: () => {
                 open({ kind: 'album', id: track.album.id });
@@ -148,7 +149,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
               : [
                   {
                     id: 'artist',
-                    label: 'Go to artist',
+                    label: say('screens.trackMenu.goToArtist'),
                     icon: <Icon of={UserFilledIcon} size={16} />,
                     onChoose: () => {
                       open({ kind: 'artist', id: artist.id });
@@ -160,7 +161,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
               : [
                   {
                     id: 'up',
-                    label: 'Move up',
+                    label: say('screens.trackMenu.moveUp'),
                     icon: <Icon of={ChevronUpFilledIcon} size={16} />,
                     onChoose: onMoveUp,
                   },
@@ -170,7 +171,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
               : [
                   {
                     id: 'down',
-                    label: 'Move down',
+                    label: say('screens.trackMenu.moveDown'),
                     icon: <Icon of={ChevronDownFilledIcon} size={16} />,
                     onChoose: onMoveDown,
                   },
@@ -180,7 +181,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
               : [
                   {
                     id: 'remove',
-                    label: 'Remove from this playlist',
+                    label: say('screens.trackMenu.removeFromPlaylist'),
                     icon: <Icon of={BinFilledIcon} size={16} />,
                     isDestructive: true,
                     onChoose: onRemove,

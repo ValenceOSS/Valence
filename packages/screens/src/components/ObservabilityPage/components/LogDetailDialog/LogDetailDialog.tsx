@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import { Icon } from '@ValenceUI/Icon';
 import { X as XIcon } from '@keyline-icons/react';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
@@ -51,9 +53,13 @@ const LogDetailDialog = ({ record, isOpen, onClose, onOpenJob }: LogDetailDialog
         );
 
   return (
-    <DialogCompanion label="Log record" isOpen={isOpen && record !== null} onClose={onClose}>
-      <DialogTitle size="compact" title="Log record">
-        <Button isIconOnly variant="ghost" label="Close" size="sm" onClick={onClose}>
+    <DialogCompanion
+      label={say('screens.logDetailDialog.title')}
+      isOpen={isOpen && record !== null}
+      onClose={onClose}
+    >
+      <DialogTitle size="compact" title={say('screens.logDetailDialog.title')}>
+        <Button isIconOnly variant="ghost" label={say('common.close')} size="sm" onClick={onClose}>
           <Icon of={XIcon} size={16} />
         </Button>
       </DialogTitle>
@@ -62,11 +68,20 @@ const LogDetailDialog = ({ record, isOpen, onClose, onOpenJob }: LogDetailDialog
         {record !== null && (
           <div className="flex flex-col gap-4">
             <dl className="flex flex-col divide-y divide-[var(--surface-line)]">
-              <Row name="When">{`${describeLogDay(record.atMs)} at ${describeLogTime(record.atMs)}`}</Row>
-              <Row name="Level">{record.level}</Row>
-              <Row name="Source">{record.source}</Row>
+              <Row name={say('screens.logDetailDialog.whenTerm')}>
+                {say('screens.logDetailDialog.when', {
+                  day: describeLogDay(record.atMs),
+                  time: describeLogTime(record.atMs),
+                })}
+              </Row>
+              <Row name={say('screens.logDetailDialog.levelTerm')}>{record.level}</Row>
+              <Row name={say('screens.logDetailDialog.sourceTerm')}>{record.source}</Row>
 
-              {record.count > 1 && <Row name="Happened">{`${record.count.toString()} times`}</Row>}
+              {record.count > 1 && (
+                <Row name={say('screens.logDetailDialog.happenedTerm')}>
+                  {sayCount('screens.logDetailDialog.times', record.count)}
+                </Row>
+              )}
 
               {said.map(([name, value]) => (
                 <Row key={name} name={name}>

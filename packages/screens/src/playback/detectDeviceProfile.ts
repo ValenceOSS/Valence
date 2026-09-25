@@ -1,5 +1,6 @@
 import { DeviceProfileSchema } from '@ValenceContracts/schemas/DeviceProfile';
 import type { DeviceProfile } from '@ValenceContracts/schemas/DeviceProfile';
+import { say } from '@ValenceI18n/say';
 
 type CodecProbe = (mimeType: string) => boolean;
 
@@ -331,7 +332,7 @@ const channelsTheOutputAccepts = (): number => {
  * @param name - What to call this device in the session list.
  * @returns What this browser can play.
  */
-const detectFromBrowser = (name = 'Browser'): DeviceProfile => {
+const detectFromBrowser = (name = say('screens.detectDeviceProfile.browser')): DeviceProfile => {
   const isTypeSupported: CodecProbe =
     'MediaSource' in window && typeof window.MediaSource.isTypeSupported === 'function'
       ? (mimeType) => window.MediaSource.isTypeSupported(mimeType)

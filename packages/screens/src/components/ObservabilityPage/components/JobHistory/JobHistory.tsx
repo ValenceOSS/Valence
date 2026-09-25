@@ -6,6 +6,8 @@ import {
   MoreHorizontal as MoreHorizontalIcon,
 } from '@keyline-icons/react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Badge } from '@ValenceUI/Badge';
@@ -75,10 +77,22 @@ const STATUSES = [
   'failed',
 ] as const satisfies readonly JobRunStatus[];
 
-const SORTS: readonly { id: JobRunSort; label: string; detail: string }[] = [
-  { id: 'newest', label: 'Newest first', detail: 'What just ran' },
-  { id: 'oldest', label: 'Oldest first', detail: 'In the order it happened' },
-  { id: 'longest', label: 'Longest first', detail: 'What took the most time' },
+const SORTS: readonly { id: JobRunSort; labelKey: StringKey; detailKey: StringKey }[] = [
+  {
+    id: 'newest',
+    labelKey: 'screens.jobHistory.newestFirst',
+    detailKey: 'screens.jobHistory.newestFirstDetail',
+  },
+  {
+    id: 'oldest',
+    labelKey: 'screens.jobHistory.oldestFirst',
+    detailKey: 'screens.jobHistory.oldestFirstDetail',
+  },
+  {
+    id: 'longest',
+    labelKey: 'screens.jobHistory.longestFirst',
+    detailKey: 'screens.jobHistory.longestFirstDetail',
+  },
 ];
 
 const STATUS_FILTER_OPTIONS = STATUSES.map((id) => ({ id, label: describeJobStatus(id).label }));
@@ -104,7 +118,9 @@ const describeWhen = (record: JobRunRecord): string => {
     return describeMoment(record.finishedAtMs);
   }
 
-  return record.startedAtMs === null ? 'Queued' : 'Running…';
+  return record.startedAtMs === null
+    ? say('screens.jobHistory.queued')
+    : say('screens.jobHistory.running');
 };
 
 /**
@@ -250,7 +266,7 @@ const JobHistoryPanel = ({
   const groups = useMemo<FilterGroup[]>(
     () => [
       {
-        name: 'Status',
+        name: say('screens.jobHistory.statusFilter'),
         isSingle: true,
         options: STATUS_FILTER_OPTIONS.map((option) => ({
           id: `status:${option.id}`,
@@ -258,7 +274,7 @@ const JobHistoryPanel = ({
         })),
       },
       {
-        name: 'Job',
+        name: say('screens.jobHistory.jobFilter'),
         isSingle: true,
         options: definitions.map((definition) => ({
           id: `kind:${definition.kind}`,
@@ -288,7 +304,7 @@ const JobHistoryPanel = ({
   const sortGroups = useMemo(
     () => [
       {
-        name: 'Order',
+        name: say('screens.jobHistory.orderGroup'),
         selectedId: sort,
         onSelect: (id: string) => {
           const found = SORTS.find((one) => one.id === id);
@@ -297,20 +313,25 @@ const JobHistoryPanel = ({
             onSearchChange({ rsort: found.id === 'newest' ? undefined : found.id });
           }
         },
-        options: SORTS.map((one) => ({ id: one.id, label: one.label, detail: one.detail })),
+        options: SORTS.map((one) => ({
+          id: one.id,
+          label: say(one.labelKey),
+          detail: say(one.detailKey),
+        })),
       },
     ],
     [sort, onSearchChange],
   );
-  const sortTrigger = useMemo(
-    () => (
+  const sortTrigger = useMemo(() => {
+    const sortLabel = SORTS.find((one) => one.id === sort)?.labelKey;
+
+    return (
       <>
-        <span className="truncate">{SORTS.find((one) => one.id === sort)?.label}</span>
+        <span className="truncate">{sortLabel === undefined ? null : say(sortLabel)}</span>
         <Icon of={ChevronDownIcon} size={14} className="shrink-0" />
       </>
-    ),
-    [sort],
-  );
+    );
+  }, [sort]);
   const traceRun = useCallback(
     (record: JobRunRecord) => {
       onTrace(record.id);
@@ -378,7 +399,7 @@ const JobHistoryPanel = ({
     () => [
       {
         id: 'kind',
-        header: 'Job',
+        header: say('screens.jobHistory.jobHeader'),
         enableSorting: false,
         accessorFn: (record) => describeJobKind(record.kind, labels),
         cell: ({ row }) => (
@@ -387,7 +408,7 @@ const JobHistoryPanel = ({
               <Icon
                 of={BookmarkFilledIcon}
                 size={14}
-                label="Pinned to the top"
+                label={say('screens.jobHistory.pinned')}
                 className="shrink-0"
               />
             ) : null}
@@ -399,7 +420,7 @@ const JobHistoryPanel = ({
       },
       {
         id: 'status',
-        header: 'Status',
+        header: say('screens.jobHistory.statusHeader'),
         enableSorting: false,
         accessorFn: (record) => record.status,
         cell: ({ row }) => (
@@ -413,7 +434,9 @@ const JobHistoryPanel = ({
                 variant="subtle"
                 size="none"
                 isIconOnly
-                label={`What ${describeJobKind(row.original.kind, labels)} is doing`}
+                label={say('screens.jobHistory.whatIsItDoing', {
+                  job: describeJobKind(row.original.kind, labels),
+                })}
                 onClick={() => {
                   setOpenWorkFor(row.original.id);
                 }}
@@ -426,7 +449,7 @@ const JobHistoryPanel = ({
       },
       {
         id: 'subject',
-        header: 'Subject',
+        header: say('screens.jobHistory.subjectHeader'),
         enableSorting: false,
         accessorFn: (record) => describeRunSubject(record.subject, libraries, record.kind).name,
         cell: ({ row }) => {
@@ -452,22 +475,30 @@ const JobHistoryPanel = ({
                         {library === null ? null : (
                           <>
                             <div className="flex flex-col">
-                              <dt className="text-text-muted">Library</dt>
+                              <dt className="text-text-muted">
+                                {say('screens.jobHistory.libraryTerm')}
+                              </dt>
                               <dd className="text-text">{library.name}</dd>
                             </div>
 
                             <div className="flex flex-col">
-                              <dt className="text-text-muted">Kind</dt>
+                              <dt className="text-text-muted">
+                                {say('screens.jobHistory.kindTerm')}
+                              </dt>
                               <dd className="text-text">{library.kind}</dd>
                             </div>
 
                             <div className="flex flex-col">
-                              <dt className="text-text-muted">Folder</dt>
+                              <dt className="text-text-muted">
+                                {say('screens.jobHistory.folderTerm')}
+                              </dt>
                               <dd className="break-all text-text">{library.path}</dd>
                             </div>
 
                             <div className="flex flex-col">
-                              <dt className="text-text-muted">Items</dt>
+                              <dt className="text-text-muted">
+                                {say('screens.jobHistory.itemsTerm')}
+                              </dt>
                               <dd className="tabular-nums text-text">
                                 {library.itemCount.toString()}
                               </dd>
@@ -476,12 +507,16 @@ const JobHistoryPanel = ({
                         )}
 
                         <div className="flex flex-col">
-                          <dt className="text-text-muted">{library === null ? 'Subject' : 'ID'}</dt>
+                          <dt className="text-text-muted">
+                            {library === null
+                              ? say('screens.jobHistory.subjectTerm')
+                              : say('screens.jobHistory.idTerm')}
+                          </dt>
                           <dd className="break-all text-text">{row.original.subject}</dd>
                         </div>
 
                         <div className="flex flex-col">
-                          <dt className="text-text-muted">Run</dt>
+                          <dt className="text-text-muted">{say('screens.jobHistory.runTerm')}</dt>
                           <dd className="break-all text-text">{row.original.id}</dd>
                         </div>
                       </dl>
@@ -503,7 +538,7 @@ const JobHistoryPanel = ({
       },
       {
         id: 'progress',
-        header: 'Progress',
+        header: say('screens.jobHistory.progressHeader'),
         enableSorting: false,
         cell: ({ row }) => {
           const progress = row.original.progress;
@@ -519,14 +554,16 @@ const JobHistoryPanel = ({
 
                 <span className="tabular-nums text-text">
                   <AnimatedNumber value={progress.processed} />
-                  <span className="text-text-muted"> of </span>
+                  <span className="text-text-muted">{say('screens.jobHistory.progressOf')}</span>
                   <AnimatedNumber value={progress.total} />
                 </span>
               </span>
 
               <ProgressBar
                 isFull
-                label={`${describeJobKind(row.original.kind, labels)} progress`}
+                label={say('screens.jobHistory.progressLabel', {
+                  job: describeJobKind(row.original.kind, labels),
+                })}
                 value={row.original.status === 'completed' ? progress.total : progress.processed}
                 max={Math.max(progress.total, 1)}
               />
@@ -536,7 +573,7 @@ const JobHistoryPanel = ({
       },
       {
         id: 'when',
-        header: 'When',
+        header: say('screens.jobHistory.whenHeader'),
         enableSorting: false,
         accessorFn: (record) => record.finishedAtMs ?? record.startedAtMs ?? 0,
         cell: ({ row }) => (
@@ -544,7 +581,8 @@ const JobHistoryPanel = ({
             <span>{describeWhen(row.original)}</span>
             {row.original.startedAtMs === null || row.original.finishedAtMs === null ? null : (
               <span className="text-xs">
-                took <ElapsedTime ms={row.original.finishedAtMs - row.original.startedAtMs} />
+                {say('screens.jobHistory.took')}{' '}
+                <ElapsedTime ms={row.original.finishedAtMs - row.original.startedAtMs} />
               </span>
             )}
           </span>
@@ -557,35 +595,39 @@ const JobHistoryPanel = ({
         cell: ({ row }) => (
           <span className="flex justify-end">
             <ActionMenu
-              label={`Actions for ${describeJobKind(row.original.kind, labels)}`}
+              label={say('screens.jobHistory.actionsLabel', {
+                job: describeJobKind(row.original.kind, labels),
+              })}
               trigger={<Icon of={MoreHorizontalIcon} size={16} />}
               groups={[
                 {
                   items: [
                     {
                       id: 'pin',
-                      label: pinned.has(row.original.id) ? 'Unpin from the top' : 'Pin to the top',
+                      label: pinned.has(row.original.id)
+                        ? say('screens.jobHistory.unpin')
+                        : say('screens.jobHistory.pin'),
                       onChoose: () => {
                         togglePin(row.original.id);
                       },
                     },
                     {
                       id: 'trace',
-                      label: 'Trace this run',
+                      label: say('screens.jobHistory.trace'),
                       onChoose: () => {
                         onTrace(row.original.id);
                       },
                     },
                     {
                       id: 'logs',
-                      label: 'View logs',
+                      label: say('screens.jobHistory.viewLogs'),
                       onChoose: () => {
                         onViewLogs(row.original.id);
                       },
                     },
                     {
                       id: 'issues',
-                      label: 'View issues',
+                      label: say('screens.jobHistory.viewIssues'),
                       onChoose: () => {
                         setOpenIssuesFor(row.original.id);
                       },
@@ -605,11 +647,11 @@ const JobHistoryPanel = ({
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
         <TextField
-          label="Search job runs"
+          label={say('screens.jobHistory.searchLabel')}
           isLabelHidden
           type="search"
           size="sm"
-          placeholder="Search by job, library, error or run id"
+          placeholder={say('screens.jobHistory.searchPlaceholder')}
           value={typed}
           className="min-w-56 flex-1"
           onValueChange={setTyped}
@@ -618,7 +660,7 @@ const JobHistoryPanel = ({
         <TimeRangeMenu search={search} onSearchChange={onSearchChange} />
 
         <OptionMenu
-          label="Order"
+          label={say('screens.jobHistory.orderLabel')}
           triggerShape="field"
           className="w-auto"
           groups={sortGroups}
@@ -626,7 +668,7 @@ const JobHistoryPanel = ({
         />
 
         <FilterMenu
-          label="Filter job runs"
+          label={say('screens.jobHistory.filterLabel')}
           hasLabel
           groups={groups}
           selected={chosen}
@@ -636,21 +678,21 @@ const JobHistoryPanel = ({
 
       <Well>
         <StatStrip
-          label="How the job runs stand"
+          label={say('screens.jobHistory.statsLabel')}
           items={[
             {
               id: 'running',
-              label: 'Running now',
+              label: say('screens.jobHistory.runningNowStat'),
               value: <AnimatedNumber value={counts.running} />,
             },
             {
               id: 'completed',
-              label: 'Completed',
+              label: say('screens.jobHistory.completedStat'),
               value: <AnimatedNumber value={counts.completed} />,
             },
             {
               id: 'failed',
-              label: 'Failed',
+              label: say('screens.jobHistory.failedStat'),
               value: <AnimatedNumber value={counts.failed} />,
               isAlarming: counts.failed > 0,
             },
@@ -660,7 +702,7 @@ const JobHistoryPanel = ({
 
       <Well isFlush className="p-1">
         <DataTable
-          label="What pg-boss has run"
+          label={say('screens.jobHistory.tableLabel')}
           columns={columns}
           rows={records}
           totalRows={askedHistory.data?.total ?? records.length}
@@ -674,10 +716,10 @@ const JobHistoryPanel = ({
           pageSize={ROWS_PER_PAGE}
           emptyMessage={
             askedHistory.isError
-              ? 'Job history could not be read from the server.'
+              ? say('screens.jobHistory.couldNotRead')
               : askedHistory.isPending
-                ? 'Reading job history…'
-                : 'No job runs match this.'
+                ? say('screens.jobHistory.reading')
+                : say('screens.jobHistory.empty')
           }
         />
       </Well>
@@ -696,16 +738,20 @@ const JobHistoryPanel = ({
         }}
       />
 
-      <Dialog label="Job run issues" isOpen={openIssuesFor !== null} onClose={closeIssues}>
+      <Dialog
+        label={say('screens.jobHistory.issuesDialogLabel')}
+        isOpen={openIssuesFor !== null}
+        onClose={closeIssues}
+      >
         {openIssuesFor === null ? null : (
           <>
-            <DialogTitle title="Issues from this run" />
+            <DialogTitle title={say('screens.jobHistory.issuesTitle')} />
 
             <DialogContent>
               {askedIssues.isPending ? (
-                <p className="text-sm text-text-muted">Reading issues…</p>
+                <p className="text-sm text-text-muted">{say('screens.jobHistory.readingIssues')}</p>
               ) : issuesText === '' ? (
-                <p className="text-sm text-text-muted">No issues were recorded for this run.</p>
+                <p className="text-sm text-text-muted">{say('screens.jobHistory.noIssues')}</p>
               ) : (
                 <pre className="whitespace-pre-wrap break-words font-mono text-xs text-text">
                   {issuesText}
@@ -714,13 +760,13 @@ const JobHistoryPanel = ({
             </DialogContent>
 
             <DialogFooter
-              dismiss={{ label: 'Close', onChoose: closeIssues }}
+              dismiss={{ label: say('common.close'), onChoose: closeIssues }}
               confirm={{
-                label: 'Copy',
+                label: say('screens.jobHistory.copy'),
                 isDisabled: issuesText === '',
                 onChoose: () => {
                   void navigator.clipboard.writeText(issuesText).then(() => {
-                    notify.worked('Copied to the clipboard.');
+                    notify.worked(say('screens.jobHistory.copied'));
                   });
                 },
               }}

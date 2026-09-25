@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import { Rail } from '@ValenceUI/Rail';
 import { MediaCard } from '@ValenceUI/MediaCard';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
@@ -16,12 +18,10 @@ const describeOnShelf = (book: Book): string =>
   book.layout === 'reflow' || book.layout === 'audio'
     ? book.authors === null || book.authors.length === 0
       ? book.layout === 'audio'
-        ? 'Audiobook'
-        : 'Ebook'
+        ? say('screens.bookRow.audiobook')
+        : say('screens.bookRow.ebook')
       : book.authors.join(', ')
-    : book.chapterCount === 1
-      ? '1 chapter'
-      : `${book.chapterCount.toString()} chapters`;
+    : sayCount('screens.bookRow.chapterCount', book.chapterCount);
 
 /**
  * What goes above a book on a shelf: its place in its series, on a shelf of one series, and
@@ -33,7 +33,7 @@ const describeOnShelf = (book: Book): string =>
  */
 const eyebrowOf = (book: Book, isNumbered: boolean): string | null =>
   isNumbered && typeof book.series?.position === 'number'
-    ? `Book ${book.series.position.toString()}`
+    ? say('screens.bookRow.seriesPosition', { position: book.series.position.toString() })
     : (book.year?.toString() ?? null);
 
 /**
@@ -82,7 +82,10 @@ const BookRow = ({
             title={series.name}
             shape="poster"
             {...(first === undefined ? {} : { imageUrl: bookCoverUrl(first.id) })}
-            subtitle={[`${series.books.length.toString()} books`, ...authors].join(' · ')}
+            subtitle={[
+              sayCount('screens.bookRow.seriesBooks', series.books.length),
+              ...authors,
+            ].join(' · ')}
             onSelect={() => {
               onOpenSeries?.(series);
             }}

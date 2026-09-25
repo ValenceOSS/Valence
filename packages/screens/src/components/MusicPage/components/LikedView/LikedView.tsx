@@ -14,8 +14,7 @@ import { LikedCover } from '@ValenceScreens/components/LikedCover/LikedCover';
 import { MusicHeader } from '@ValenceScreens/components/MusicHeader/MusicHeader';
 import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
-
-const SOURCE = { kind: 'liked', id: null, name: 'Liked Songs' } as const;
+import { say } from '@ValenceI18n/say';
 
 /**
  * Every song this profile has liked, newest first — a playlist nobody has to make, kept by pressing
@@ -26,13 +25,14 @@ const LikedView = () => {
 
   useLightTheMusic(null);
   const { player } = useMusicPlayer();
+  const source = { kind: 'liked', id: null, name: say('screens.likedView.title') } as const;
   const tracks = asked.data ?? [];
   const total = tracks.reduce((sum, track) => sum + track.durationSeconds, 0);
 
   if (asked.isError) {
     return (
       <CouldNotRead
-        what="your liked songs"
+        what={say('screens.likedView.couldNotReadWhat')}
         isTryingAgain={asked.isFetching}
         onTryAgain={() => {
           void asked.refetch();
@@ -44,8 +44,8 @@ const LikedView = () => {
   return (
     <article className="flex flex-col">
       <MusicHeader
-        eyebrow="Playlist"
-        title="Liked Songs"
+        eyebrow={say('screens.likedView.playlist')}
+        title={say('screens.likedView.title')}
         artwork={<LikedCover iconSize={72} />}
         details={
           <span>
@@ -59,11 +59,11 @@ const LikedView = () => {
               variant="confirm"
               size="lg"
               isIconOnly
-              label="Play Liked Songs"
+              label={say('screens.likedView.play')}
               className="size-14"
               disabled={tracks.length === 0}
               onClick={() => {
-                player.play(tracks, 0, { source: SOURCE });
+                player.play(tracks, 0, { source });
               }}
             >
               <Icon of={PlayFilledIcon} size={24} />
@@ -72,11 +72,11 @@ const LikedView = () => {
               variant="ghost"
               size="md"
               isIconOnly
-              label="Shuffle Liked Songs"
+              label={say('screens.likedView.shuffle')}
               disabled={tracks.length === 0}
               onClick={() => {
                 player.play(tracks, Math.floor(Math.random() * tracks.length), {
-                  source: SOURCE,
+                  source,
                   isShuffled: true,
                 });
               }}
@@ -89,20 +89,20 @@ const LikedView = () => {
 
       <div className={`pb-10 ${MUSIC_LANES.tracks}`}>
         {asked.isPending ? (
-          <Skeleton label="Reading your liked songs" className="h-40 w-full" />
+          <Skeleton label={say('screens.likedView.reading')} className="h-40 w-full" />
         ) : tracks.length === 0 ? (
           <NothingHere
             of={HeartIcon}
-            title="Songs you like will be here"
-            detail="Press the heart beside any song to keep it."
+            title={say('screens.likedView.emptyTitle')}
+            detail={say('screens.likedView.emptyDetail')}
           />
         ) : (
           <TrackList
-            label="Liked Songs"
+            label={say('screens.likedView.title')}
             tracks={tracks}
             showsArtwork
             onPlay={(index) => {
-              player.play(tracks, index, { source: SOURCE });
+              player.play(tracks, index, { source });
             }}
           />
         )}

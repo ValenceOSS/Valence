@@ -1,9 +1,13 @@
 import { z } from 'zod';
 
 const FONT_FAMILIES = {
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a CSS font stack, not words
   sans: 'system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a CSS font stack, not words
   serif: 'Georgia, "Times New Roman", serif',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a CSS font stack, not words
   mono: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a CSS font stack, not words
   casual: '"Comic Sans MS", "Chalkboard SE", cursive',
 } as const;
 

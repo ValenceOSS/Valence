@@ -3,6 +3,7 @@ import { FormField } from '@ValenceUI/FormField';
 import { RELEASE_TYPES } from '@ValenceContracts/schemas/MediaRequest';
 import { RELEASE_TYPE_NAMES } from '@ValenceClient/requests/RELEASE_TYPE_NAMES';
 import type { ReleaseTypeChooserProps } from './ReleaseTypeChooser.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Which kinds of an artist's releases to fetch, now and as new ones come out — albums, EPs,
@@ -13,10 +14,13 @@ import type { ReleaseTypeChooserProps } from './ReleaseTypeChooser.types';
  */
 const ReleaseTypeChooser = ({ value, onChange }: ReleaseTypeChooserProps) => (
   <FormField
-    label="Releases"
-    description="Which of their releases are fetched, now and as new ones come out."
+    label={say('screens.releaseTypeChooser.label')}
+    description={say('screens.releaseTypeChooser.description')}
   >
-    <ul aria-label="Which releases" className="grid gap-2 sm:grid-cols-3">
+    <ul
+      aria-label={say('screens.releaseTypeChooser.listLabel')}
+      className="grid gap-2 sm:grid-cols-3"
+    >
       {RELEASE_TYPES.map((type) => (
         <li key={type}>
           <Checkbox

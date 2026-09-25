@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import { useEffect, useState } from 'react';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -67,26 +69,26 @@ const StillWatchingDialog = ({
   }, [isOpen, left, onGiveUp]);
 
   return (
-    <Dialog label="Are you still watching?" isOpen={isOpen} onClose={onGiveUp}>
-      <DialogTitle title="Are you still watching?" />
+    <Dialog label={say('screens.stillWatchingDialog.title')} isOpen={isOpen} onClose={onGiveUp}>
+      <DialogTitle title={say('screens.stillWatchingDialog.title')} />
 
       <DialogContent>
         <div className="flex flex-col gap-2">
           <p className="text-sm leading-relaxed text-text">
-            {`${title} is up next. Nothing will be played, and nothing marked as watched, unless you say so.`}
+            {say('screens.stillWatchingDialog.body', { title })}
           </p>
 
           <p className="text-xs text-text-muted" aria-live="polite">
             {left <= 0
-              ? 'Stopping…'
-              : `Stopping in ${Math.max(0, left).toString()} second${left === 1 ? '' : 's'}.`}
+              ? say('screens.stillWatchingDialog.stopping')
+              : sayCount('screens.stillWatchingDialog.stoppingIn', Math.max(0, left))}
           </p>
         </div>
       </DialogContent>
 
       <DialogFooter
-        dismiss={{ label: 'Stop', onChoose: onGiveUp }}
-        confirm={{ label: 'Still watching', onChoose: onCarryOn }}
+        dismiss={{ label: say('screens.stillWatchingDialog.stop'), onChoose: onGiveUp }}
+        confirm={{ label: say('screens.stillWatchingDialog.carryOn'), onChoose: onCarryOn }}
       />
     </Dialog>
   );

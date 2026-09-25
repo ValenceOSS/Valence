@@ -17,6 +17,7 @@ import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { posterForAFile } from '@ValenceClient/downloads/keepingFiles';
 import { watchedOffline } from '@ValenceClient/offline/watchedOffline';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
+import { say } from '@ValenceI18n/say';
 import type { OfflineShelfProps } from './OfflineShelf.types';
 
 const MEANINGFUL = 0.01;
@@ -66,11 +67,10 @@ const OfflineShelf = ({ held, onWatch, onDrop, onPause }: OfflineShelfProps) => 
       <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
         <Icon of={CloudOffIcon} size={32} tone="muted" />
 
-        <h2 className="font-body text-base text-text">Nothing is on this device</h2>
+        <h2 className="font-body text-base text-text">{say('screens.offlineShelf.emptyTitle')}</h2>
 
         <p className="max-w-sm font-body text-sm text-text-muted">
-          Downloads are fetched here while Valence is reachable. Once the server is back, ask for
-          something from its page and it will be waiting the next time you are offline.
+          {say('screens.offlineShelf.emptyBody')}
         </p>
       </div>
     );
@@ -83,7 +83,7 @@ const OfflineShelf = ({ held, onWatch, onDrop, onPause }: OfflineShelfProps) => 
       {byProgramme(held).map((group) => (
         <Rail
           key={group.title ?? 'films'}
-          title={group.title ?? 'Films'}
+          title={group.title ?? say('screens.offlineShelf.films')}
           sizesCards
           cards="portrait"
           className="-mx-4 sm:-mx-6"
@@ -92,8 +92,10 @@ const OfflineShelf = ({ held, onWatch, onDrop, onPause }: OfflineShelfProps) => 
             : {
                 action: (
                   <span className="font-body text-xs text-text-muted">
-                    {group.items.filter((one) => one.state === 'here').length.toString()} of{' '}
-                    {group.items.length.toString()} here
+                    {say('screens.offlineShelf.hereOfTotal', {
+                      here: group.items.filter((one) => one.state === 'here').length.toString(),
+                      total: group.items.length.toString(),
+                    })}
                   </span>
                 ),
               })}
@@ -116,7 +118,7 @@ const OfflineShelf = ({ held, onWatch, onDrop, onPause }: OfflineShelfProps) => 
                   title={file.title}
                   subtitle={
                     file.state === 'here'
-                      ? `${file.quality === 'original' ? 'Original' : file.quality} · ${formatBytes(file.bytes)}`
+                      ? `${file.quality === 'original' ? say('screens.offlineShelf.original') : file.quality} · ${formatBytes(file.bytes)}`
                       : describeKeeping(file)
                   }
                   {...(file.hasPoster ? { imageUrl: posterForAFile(file.downloadId) } : {})}
@@ -132,13 +134,13 @@ const OfflineShelf = ({ held, onWatch, onDrop, onPause }: OfflineShelfProps) => 
                   <ProgressBar
                     value={keptFraction(file) ?? 0}
                     max={1}
-                    label={`Fetching ${file.title}`}
+                    label={say('screens.offlineShelf.fetching', { title: file.title })}
                     className="mt-2"
                   />
                 )}
 
                 <ActionMenu
-                  label={`More for ${file.title}`}
+                  label={say('screens.offlineShelf.moreFor', { title: file.title })}
                   align="end"
                   size="sm"
                   look="raised"
@@ -153,8 +155,8 @@ const OfflineShelf = ({ held, onWatch, onDrop, onPause }: OfflineShelfProps) => 
                                 id: 'pause',
                                 label:
                                   file.state === 'paused'
-                                    ? 'Carry on fetching'
-                                    : 'Stop fetching for now',
+                                    ? say('screens.offlineShelf.carryOnFetching')
+                                    : say('screens.offlineShelf.stopFetching'),
                                 icon: (
                                   <Icon
                                     of={file.state === 'paused' ? PlayFilledIcon : PauseFilledIcon}
@@ -169,7 +171,7 @@ const OfflineShelf = ({ held, onWatch, onDrop, onPause }: OfflineShelfProps) => 
                           : []),
                         {
                           id: 'delete',
-                          label: 'Delete from this device',
+                          label: say('screens.offlineShelf.deleteFromDevice'),
                           icon: <Icon of={BinIcon} size={16} />,
                           isDestructive: true,
                           onChoose: () => {
@@ -187,9 +189,13 @@ const OfflineShelf = ({ held, onWatch, onDrop, onPause }: OfflineShelfProps) => 
       ))}
 
       <ConfirmDialog
-        title={deleting === null ? 'Delete it?' : `Delete ${deleting.title}?`}
-        detail="It is removed from this device. You can download it again once Valence is reachable."
-        confirmLabel="Delete"
+        title={
+          deleting === null
+            ? say('screens.offlineShelf.deleteIt')
+            : say('screens.offlineShelf.deleteTitle', { title: deleting.title })
+        }
+        detail={say('screens.offlineShelf.deleteDetail')}
+        confirmLabel={say('common.delete')}
         isDestructive
         isOpen={deleting !== null}
         onClose={() => {

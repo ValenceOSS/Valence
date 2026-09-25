@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
+import { say } from '@ValenceI18n/say';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
@@ -124,7 +125,7 @@ const ObservabilityPage = ({
   return (
     <div className="flex flex-col gap-4">
       <DialogCompanion
-        label={viewing?.label ?? 'Schedule'}
+        label={viewing?.label ?? say('screens.observabilityPage.scheduleLabel')}
         isOpen={viewing !== null}
         onClose={onCloseSchedule}
       >
@@ -168,7 +169,7 @@ const ObservabilityPage = ({
         }}
       >
         <PanelCard
-          title="Jobs & logs"
+          title={say('screens.observabilityPage.heading')}
           actions={
             <>
               <span className="text-xs text-text-muted">
@@ -176,12 +177,23 @@ const ObservabilityPage = ({
                   '—'
                 ) : (
                   <>
-                    <AnimatedNumber value={monitor.queue.running} suffix=" running" /> ·{' '}
-                    <AnimatedNumber value={monitor.queue.queued} suffix=" waiting" />
+                    <AnimatedNumber
+                      value={monitor.queue.running}
+                      suffix={say('screens.observabilityPage.runningSuffix')}
+                    />{' '}
+                    ·{' '}
+                    <AnimatedNumber
+                      value={monitor.queue.queued}
+                      suffix={say('screens.observabilityPage.waitingSuffix')}
+                    />
                     {failures === 0 ? null : (
                       <>
                         {' '}
-                        · <AnimatedNumber value={failures} suffix=" failed" />
+                        ·{' '}
+                        <AnimatedNumber
+                          value={failures}
+                          suffix={say('screens.observabilityPage.failedSuffix')}
+                        />
                       </>
                     )}
                   </>
@@ -192,7 +204,7 @@ const ObservabilityPage = ({
                 <>
                   {monitor.queue.paused ? (
                     <Badge size="sm" tone="warning">
-                      Paused
+                      {say('screens.observabilityPage.paused')}
                     </Badge>
                   ) : null}
 
@@ -204,7 +216,9 @@ const ObservabilityPage = ({
                       void setQueuePaused(!monitor.queue.paused);
                     }}
                   >
-                    {monitor.queue.paused ? 'Resume' : 'Pause'}
+                    {monitor.queue.paused
+                      ? say('screens.observabilityPage.resume')
+                      : say('screens.observabilityPage.pause')}
                   </PanelCardAction>
                 </>
               )}
@@ -212,17 +226,17 @@ const ObservabilityPage = ({
           }
           below={
             <TabRow
-              label="What to look at"
+              label={say('screens.observabilityPage.viewsLabel')}
               tone="underlined"
               size="sm"
               value={view}
               groups={[
                 {
                   items: [
-                    { id: 'jobs', label: 'Jobs' },
-                    { id: 'logs', label: 'Logs' },
-                    { id: 'health', label: 'Health' },
-                    { id: 'run', label: 'Run & schedule' },
+                    { id: 'jobs', label: say('screens.observabilityPage.jobsTab') },
+                    { id: 'logs', label: say('screens.observabilityPage.logsTab') },
+                    { id: 'health', label: say('screens.observabilityPage.healthTab') },
+                    { id: 'run', label: say('screens.observabilityPage.runTab') },
                   ],
                 },
               ]}

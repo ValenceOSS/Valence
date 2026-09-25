@@ -2,6 +2,7 @@ import { REQUEST_KIND_NAMES } from '@ValenceScreens/requests/REQUEST_KIND_NAMES'
 import { describeRequestBadge } from '@ValenceClient/requests/describeRequestBadge';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { FilterGroup } from '@ValenceUI/FilterMenu.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * A group of choices, left out where there is nothing to choose between.
@@ -34,38 +35,38 @@ const describeRequestFilters = (
 
   return [
     {
-      name: 'Kind',
+      name: say('screens.describeRequestFilters.kind'),
       options: Object.entries(REQUEST_KIND_NAMES).map(([id, label]) => ({
         id: `kind:${id}`,
         label,
       })),
     },
     {
-      name: 'Where it is',
+      name: say('screens.describeRequestFilters.whereItIs'),
       options: sorted(requests.map((request) => describeRequestBadge(request).label)).map(
         (label) => ({ id: `state:${label}`, label }),
       ),
     },
     ...groupOf(
-      'Library',
+      say('screens.describeRequestFilters.library'),
       [...new Set(requests.map((request) => request.libraryId))]
         .map((id) => ({
           id: `library:${id}`,
-          label: libraryNames.get(id) ?? 'A library that has gone',
+          label: libraryNames.get(id) ?? say('screens.describeRequestFilters.goneLibrary'),
         }))
         .toSorted((left, right) => left.label.localeCompare(right.label)),
     ),
     ...groupOf(
-      'Asked by',
+      say('screens.describeRequestFilters.askedBy'),
       [...new Map(requests.map((request) => [request.requestedBy.id, request.requestedBy.name]))]
         .map(([id, name]) => ({ id: `who:${id}`, label: name }))
         .toSorted((left, right) => left.label.localeCompare(right.label)),
     ),
     ...groupOf(
-      'Quality',
+      say('screens.describeRequestFilters.quality'),
       sorted(requests.map((request) => request.profileName ?? '')).map((name) => ({
         id: `quality:${name}`,
-        label: name === '' ? 'No quality set' : name,
+        label: name === '' ? say('screens.describeRequestFilters.noQuality') : name,
       })),
     ),
   ];

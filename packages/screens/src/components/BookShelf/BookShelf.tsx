@@ -1,4 +1,5 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
+import { say } from '@ValenceI18n/say';
 import { GalleryVerticalEnd as GalleryVerticalEndIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { NothingHere } from '@ValenceUI/NothingHere';
@@ -40,18 +41,18 @@ const BookShelf = ({ onOpen, onAddLibrary, libraryId = null }: BookShelfProps) =
     return (
       <NothingHere
         of={GalleryVerticalEndIcon}
-        title="No book libraries yet"
+        title={say('screens.bookShelf.noLibrariesTitle')}
         detail={
           onAddLibrary === undefined
-            ? 'Ask the server admin to add one.'
-            : 'Add one to get started.'
+            ? say('screens.bookShelf.noLibrariesAskAdmin')
+            : say('screens.bookShelf.noLibrariesAddOne')
         }
         {...(onAddLibrary === undefined
           ? {}
           : {
               action: (
                 <Button variant="glossy" onClick={onAddLibrary}>
-                  Add a library
+                  {say('screens.bookShelf.addLibrary')}
                 </Button>
               ),
             })}
@@ -63,18 +64,18 @@ const BookShelf = ({ onOpen, onAddLibrary, libraryId = null }: BookShelfProps) =
     return (
       <NothingHere
         of={GalleryVerticalEndIcon}
-        title="Nothing to read yet"
+        title={say('screens.bookShelf.nothingToReadTitle')}
         detail={
           onAddLibrary === undefined
-            ? 'Ask the server admin to scan it.'
-            : 'Scan it, or add files to its folder.'
+            ? say('screens.bookShelf.nothingToReadAskAdmin')
+            : say('screens.bookShelf.nothingToReadScan')
         }
         {...(onAddLibrary === undefined
           ? {}
           : {
               action: (
                 <Button variant="glossy" onClick={onAddLibrary}>
-                  Scan it
+                  {say('screens.bookShelf.scanIt')}
                 </Button>
               ),
             })}

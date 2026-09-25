@@ -3,6 +3,7 @@ import { Rail } from '@ValenceUI/Rail';
 import { RevealItem } from '@ValenceUI/RevealItem';
 import { cn } from '@ValenceUI/cn';
 import type { StudiosRailProps } from './StudiosRail.types';
+import { say } from '@ValenceI18n/say';
 
 const TILE = [
   'flex h-24 w-full items-center justify-center rounded-lg px-6',
@@ -27,7 +28,7 @@ const MARK = [
  * @param onOpen - Told which studio was chosen.
  */
 const StudiosRail = ({ studios, onOpen }: StudiosRailProps) => (
-  <Rail title="Studios" cards="wide" sizesCards>
+  <Rail title={say('screens.studiosRail.title')} cards="wide" sizesCards>
     {studios.map((studio, at) => (
       <RevealItem key={studio.id} index={at} className="shrink-0 snap-start">
         <Button

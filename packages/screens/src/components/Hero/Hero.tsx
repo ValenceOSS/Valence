@@ -25,6 +25,7 @@ import { MediaFacts } from '@ValenceScreens/components/MediaFacts/MediaFacts';
 import { PageDots } from '@ValenceUI/PageDots';
 import { useIsPageCovered } from '@ValenceUI/useIsPageCovered';
 import type { HeroProps } from './Hero.types';
+import { say } from '@ValenceI18n/say';
 
 const ROTATE_AFTER_MILLISECONDS = 28_000;
 
@@ -217,7 +218,7 @@ const Hero = ({
     >
       <motion.section
         ref={cardRef}
-        aria-label="Featured"
+        aria-label={say('screens.hero.label')}
         onFocusCapture={(event) => {
           setIsFocused(event.target.matches(':focus-visible'));
         }}
@@ -333,7 +334,9 @@ const Hero = ({
               }}
             >
               <Icon of={PlayFilledIcon} size={18} />
-              {resume === null ? 'Play' : `Resume from ${formatDuration(resume)}`}
+              {resume === null
+                ? say('screens.hero.play')
+                : say('screens.hero.resumeFrom', { time: formatDuration(resume) })}
             </Button>
 
             {onInspect === undefined ? null : (
@@ -345,7 +348,7 @@ const Hero = ({
                 }}
               >
                 <Icon of={InfoIcon} size={18} />
-                More info
+                {say('screens.hero.moreInfo')}
               </Button>
             )}
           </motion.div>
@@ -355,7 +358,7 @@ const Hero = ({
           count={items.length}
           selectedIndex={index}
           labels={items.map((item) => item.title)}
-          label="Featured items"
+          label={say('screens.hero.dots')}
           tone="overlay"
           onSelect={show}
           {...(isRotating ? { progress: turn } : {})}

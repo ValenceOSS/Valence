@@ -25,6 +25,7 @@ import {
 import { useChromeThatHides } from '@ValenceScreens/reading/useChromeThatHides';
 import { useFullscreen } from '@ValenceScreens/reading/useFullscreen';
 import type { MusicVisualiserProps } from './MusicVisualiser.types';
+import { say } from '@ValenceI18n/say';
 
 const FADING = { duration: 0.25, ease: [0.23, 1, 0.32, 1] } as const;
 
@@ -128,7 +129,7 @@ const MusicVisualiser = ({ player: given }: MusicVisualiserProps) => {
         <motion.section
           ref={holder}
           key="visualiser"
-          aria-label={`${visualiser.name}, visualiser`}
+          aria-label={say('screens.musicVisualiser.regionLabel', { name: say(visualiser.name) })}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -150,7 +151,7 @@ const MusicVisualiser = ({ player: given }: MusicVisualiserProps) => {
               transition={{ ...FADING, delay: 0.8 }}
               className="pointer-events-none absolute inset-x-6 bottom-[calc(2rem+env(safe-area-inset-bottom,0px))] text-center text-sm text-on-scrim/70"
             >
-              This browser can’t listen to this song, so there is nothing to draw.
+              {say('screens.musicVisualiser.cannotListen')}
             </motion.p>
           )}
 
@@ -168,7 +169,7 @@ const MusicVisualiser = ({ player: given }: MusicVisualiserProps) => {
                   <Button
                     variant="overlay"
                     isIconOnly
-                    label="Previous visualiser"
+                    label={say('screens.musicVisualiser.previous')}
                     onClick={() => {
                       step(-1);
                     }}
@@ -179,12 +180,12 @@ const MusicVisualiser = ({ player: given }: MusicVisualiserProps) => {
                     aria-live="polite"
                     className="min-w-32 text-center text-sm font-medium tabular-nums"
                   >
-                    {visualiser.name}
+                    {say(visualiser.name)}
                   </p>
                   <Button
                     variant="overlay"
                     isIconOnly
-                    label="Next visualiser"
+                    label={say('screens.musicVisualiser.next')}
                     onClick={() => {
                       step(1);
                     }}
@@ -198,7 +199,11 @@ const MusicVisualiser = ({ player: given }: MusicVisualiserProps) => {
                     <Button
                       variant="overlay"
                       isIconOnly
-                      label={isFullscreen ? 'Leave full screen' : 'Full screen'}
+                      label={
+                        isFullscreen
+                          ? say('screens.musicVisualiser.leaveFullScreen')
+                          : say('screens.musicVisualiser.fullScreen')
+                      }
                       onClick={toggle}
                     >
                       <Icon of={isFullscreen ? MinimizeIcon : MaximizeIcon} size={20} />
@@ -207,7 +212,7 @@ const MusicVisualiser = ({ player: given }: MusicVisualiserProps) => {
                   <Button
                     variant="overlay"
                     isIconOnly
-                    label="Close visualiser"
+                    label={say('screens.musicVisualiser.close')}
                     onClick={() => {
                       setMusicVisualiser(false);
                     }}

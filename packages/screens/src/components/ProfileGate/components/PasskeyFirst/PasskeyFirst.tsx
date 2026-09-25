@@ -3,6 +3,7 @@ import { Key as KeyIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import type { PasskeyFirstProps } from './PasskeyFirst.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The way in the phone app's sheet opens on: a passkey, asked for the moment the page opens, with a
@@ -38,11 +39,9 @@ const PasskeyFirst = ({
   return (
     <main className="mx-auto flex min-h-svh w-full max-w-md flex-col justify-center gap-6 px-6 py-16">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-medium text-text">Sign in to the app</h1>
+        <h1 className="text-2xl font-medium text-text">{say('screens.passkeyFirst.heading')}</h1>
 
-        <p className="text-sm text-text-muted">
-          Use the passkey you sign in to {name} with, and the app on your phone signs in too.
-        </p>
+        <p className="text-sm text-text-muted">{say('screens.passkeyFirst.body', { name })}</p>
       </header>
 
       {problem === null ? null : <p className="text-sm text-danger">{problem}</p>}
@@ -57,11 +56,11 @@ const PasskeyFirst = ({
           }}
         >
           <Icon of={KeyIcon} size={18} />
-          Use a passkey
+          {say('screens.passkeyFirst.usePasskey')}
         </Button>
 
         <Button variant="ghost" size="sm" onClick={onOtherWays}>
-          Other ways to sign in
+          {say('screens.passkeyFirst.otherWays')}
         </Button>
       </div>
     </main>

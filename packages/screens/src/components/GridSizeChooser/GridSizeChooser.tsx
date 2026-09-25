@@ -12,15 +12,17 @@ import { cn } from '@ValenceUI/cn';
 import type { MediaGridSize } from '@ValenceScreens/components/MediaGrid/MediaGrid.types';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
 import type { GridSizeChooserProps } from './GridSizeChooser.types';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
 const SIZES: readonly {
   id: MediaGridSize;
-  label: string;
+  label: StringKey;
   glyph: IconGlyph;
 }[] = [
-  { id: 'small', label: 'Small cards, more of them', glyph: Grid3x3Icon },
-  { id: 'medium', label: 'Medium cards', glyph: Grid2x2Icon },
-  { id: 'large', label: 'Large cards, fewer of them', glyph: SquareIcon },
+  { id: 'small', label: 'screens.gridSizeChooser.small', glyph: Grid3x3Icon },
+  { id: 'medium', label: 'screens.gridSizeChooser.medium', glyph: Grid2x2Icon },
+  { id: 'large', label: 'screens.gridSizeChooser.large', glyph: SquareIcon },
 ];
 
 /**
@@ -41,7 +43,7 @@ const GridSizeChooser = ({ value, onValueChange, className }: GridSizeChooserPro
   return (
     <div
       role="group"
-      aria-label="How large the cards are"
+      aria-label={say('screens.gridSizeChooser.label')}
       onPointerLeave={() => {
         setPointedAt(null);
       }}
@@ -61,7 +63,7 @@ const GridSizeChooser = ({ value, onValueChange, className }: GridSizeChooserPro
           variant="bare"
           size="none"
           isActive={value === id}
-          label={label}
+          label={say(label)}
           onPointerEnter={() => {
             setPointedAt(id);
           }}

@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { useState } from 'react';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { PopoverPanel } from '@ValenceUI/PopoverPanel';
@@ -20,17 +21,22 @@ const QueueConcurrency = ({ concurrency }: QueueConcurrencyProps) => {
 
   return (
     <PopoverPanel
-      label="How many jobs run at once"
-      heading="Jobs at once"
+      label={say('screens.queueConcurrency.label')}
+      heading={say('screens.queueConcurrency.heading')}
       side="bottom"
       align="end"
       triggerLook="button"
       className="w-64"
-      trigger={<AnimatedNumber value={concurrency} suffix=" at a time" />}
+      trigger={
+        <AnimatedNumber
+          value={concurrency}
+          suffix={say('screens.queueConcurrency.atATimeSuffix')}
+        />
+      }
     >
       <div className="flex flex-col gap-3 p-1">
         <Slider
-          label="Jobs at once"
+          label={say('screens.queueConcurrency.sliderLabel')}
           value={chosen ?? concurrency}
           max={MOST_TO_OFFER}
           onValueChange={setChosen}
@@ -41,8 +47,7 @@ const QueueConcurrency = ({ concurrency }: QueueConcurrencyProps) => {
         />
 
         <p className="text-xs leading-relaxed text-text-muted">
-          More jobs at once finishes background work sooner, and takes more of the machine while it
-          does. Lowering it lets what is running finish first.
+          {say('screens.queueConcurrency.explanation')}
         </p>
       </div>
     </PopoverPanel>

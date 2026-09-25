@@ -14,6 +14,8 @@ import type { CatalogueSeason, SeasonStanding } from '@ValenceContracts/schemas/
 import type { BadgeTone } from '@ValenceUI/Badge.types';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { SeasonChooserProps } from './SeasonChooser.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const STANDING_TONES: Readonly<Record<SeasonStanding, BadgeTone>> = {
   askable: 'quiet',
@@ -49,7 +51,7 @@ const SeasonChooser = ({ tmdbId, seasons, onChange }: SeasonChooserProps) => {
         enableSorting: false,
         header: () => (
           <Switch
-            label="Every season"
+            label={say('screens.seasonChooser.everySeason')}
             isLabelHidden
             isOn={isEveryOne}
             onToggle={() => {
@@ -74,7 +76,7 @@ const SeasonChooser = ({ tmdbId, seasons, onChange }: SeasonChooserProps) => {
       },
       {
         id: 'season',
-        header: 'Season',
+        header: say('screens.seasonChooser.season'),
         enableSorting: false,
         cell: ({ row }) => (
           <span className="whitespace-nowrap text-sm text-text">
@@ -84,7 +86,7 @@ const SeasonChooser = ({ tmdbId, seasons, onChange }: SeasonChooserProps) => {
       },
       {
         id: 'episodes',
-        header: 'Episodes',
+        header: say('screens.seasonChooser.episodes'),
         enableSorting: false,
         cell: ({ row }) => (
           <span className="text-sm text-text-muted">{row.original.episodeCount.toString()}</span>
@@ -92,7 +94,7 @@ const SeasonChooser = ({ tmdbId, seasons, onChange }: SeasonChooserProps) => {
       },
       {
         id: 'aired',
-        header: 'First aired',
+        header: say('screens.seasonChooser.firstAired'),
         enableSorting: false,
         cell: ({ row }) => (
           <span className="whitespace-nowrap text-sm text-text-muted">
@@ -102,7 +104,7 @@ const SeasonChooser = ({ tmdbId, seasons, onChange }: SeasonChooserProps) => {
       },
       {
         id: 'standing',
-        header: 'Status',
+        header: say('screens.seasonChooser.status'),
         enableSorting: false,
         cell: ({ row }) => (
           <Badge size="sm" tone={STANDING_TONES[row.original.standing]}>
@@ -115,26 +117,28 @@ const SeasonChooser = ({ tmdbId, seasons, onChange }: SeasonChooserProps) => {
   );
 
   return (
-    <FormField label="Seasons">
+    <FormField label={say('screens.seasonChooser.seasons')}>
       {listed.data === undefined ? (
-        <Spinner isCentered label="Asking the catalogue for its seasons" size="sm" />
+        <Spinner isCentered label={say('screens.seasonChooser.asking')} size="sm" />
       ) : (
         <div className="flex flex-col gap-2">
           <DataTable
-            label="Which seasons"
+            label={say('screens.seasonChooser.whichSeasons')}
             columns={columns}
             rows={rows}
             getRowId={(one) => one.season.toString()}
             height="compact"
-            emptyMessage="The catalogue lists no seasons for this series."
+            emptyMessage={say('screens.seasonChooser.noSeasons')}
           />
 
           <p className="text-xs text-text-muted">
             {isEveryOne
-              ? 'Every season, and any that come later.'
+              ? say('screens.seasonChooser.everyOne')
               : ticked.length === 0
-                ? 'No season is taken yet.'
-                : `${ticked.length.toString()} of ${rows.length.toString()} seasons.`}
+                ? say('screens.seasonChooser.noneTaken')
+                : sayCount('screens.seasonChooser.someTaken', rows.length, {
+                    ticked: ticked.length.toString(),
+                  })}
           </p>
         </div>
       )}

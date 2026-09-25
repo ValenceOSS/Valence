@@ -9,6 +9,7 @@ import { TextField } from '@ValenceUI/TextField';
 import { createPlaylist, updatePlaylist } from '@ValenceClient/music/fetchPlaylists';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import type { PlaylistDialogProps } from './PlaylistDialog.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Makes a playlist, or changes one: its name, what it is for, and whether its order means something.
@@ -44,7 +45,7 @@ const PlaylistDialog = ({ isOpen, onClose, playlist, onSaved }: PlaylistDialogPr
     const trimmed = name.trim();
 
     if (trimmed === '') {
-      setProblem('A playlist needs a name.');
+      setProblem(say('screens.playlistDialog.needsAName'));
 
       return;
     }
@@ -70,7 +71,11 @@ const PlaylistDialog = ({ isOpen, onClose, playlist, onSaved }: PlaylistDialogPr
     setIsSaving(false);
 
     if (saved === null) {
-      setProblem(isNew ? 'That playlist could not be made.' : 'That could not be saved.');
+      setProblem(
+        isNew
+          ? say('screens.playlistDialog.couldNotMake')
+          : say('screens.playlistDialog.couldNotSave'),
+      );
 
       return;
     }
@@ -81,12 +86,26 @@ const PlaylistDialog = ({ isOpen, onClose, playlist, onSaved }: PlaylistDialogPr
   };
 
   return (
-    <Dialog label={isNew ? 'New playlist' : 'Edit playlist'} isOpen={isOpen} onClose={onClose}>
-      <DialogTitle title={isNew ? 'New playlist' : 'Edit playlist'} />
+    <Dialog
+      label={
+        isNew
+          ? say('screens.playlistDialog.newPlaylist')
+          : say('screens.playlistDialog.editPlaylist')
+      }
+      isOpen={isOpen}
+      onClose={onClose}
+    >
+      <DialogTitle
+        title={
+          isNew
+            ? say('screens.playlistDialog.newPlaylist')
+            : say('screens.playlistDialog.editPlaylist')
+        }
+      />
 
       <DialogContent className="flex flex-col gap-4">
         <TextField
-          label="Name"
+          label={say('screens.playlistDialog.name')}
           value={name}
           hasFocusOnMount
           {...(problem === null ? {} : { error: problem })}
@@ -97,14 +116,14 @@ const PlaylistDialog = ({ isOpen, onClose, playlist, onSaved }: PlaylistDialogPr
         />
 
         <TextField
-          label="Description"
+          label={say('screens.playlistDialog.description')}
           value={description}
-          placeholder="What it is for"
+          placeholder={say('screens.playlistDialog.descriptionPlaceholder')}
           onValueChange={setDescription}
         />
 
         <Switch
-          label="The order matters"
+          label={say('screens.playlistDialog.orderMatters')}
           isOn={isOrdered}
           onToggle={() => {
             setIsOrdered((was) => !was);
@@ -112,14 +131,14 @@ const PlaylistDialog = ({ isOpen, onClose, playlist, onSaved }: PlaylistDialogPr
         />
 
         <p className="-mt-2 text-[0.8125rem] text-text-muted">
-          For chapters, a series in release order, or anything that should never shuffle or repeat.
+          {say('screens.playlistDialog.orderMattersDetail')}
         </p>
       </DialogContent>
 
       <DialogFooter
         dismiss={{ onChoose: onClose }}
         confirm={{
-          label: isNew ? 'Make it' : 'Save',
+          label: isNew ? say('screens.playlistDialog.makeIt') : say('common.save'),
           onChoose: () => {
             void save();
           },

@@ -11,6 +11,7 @@ import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { AskableBookTile } from '@ValenceScreens/components/RequestsPage/components/AskableBookTile/AskableBookTile';
 import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { BooksDiscoverProps } from './BooksDiscover.types';
+import { say } from '@ValenceI18n/say';
 
 const GRID =
   'grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6';
@@ -38,11 +39,11 @@ const BooksDiscover = ({ onAsk }: BooksDiscoverProps) => {
 
   const search = (
     <TextField
-      label="Search for a book"
+      label={say('screens.booksDiscover.searchLabel')}
       isLabelHidden
       value={typed}
       onValueChange={setTyped}
-      placeholder="Search for a book or an author"
+      placeholder={say('screens.booksDiscover.searchPlaceholder')}
       icon={<Icon of={SearchIcon} size={16} />}
       className="max-w-md"
     />
@@ -55,19 +56,19 @@ const BooksDiscover = ({ onAsk }: BooksDiscoverProps) => {
 
         {found.isError ? (
           <CouldNotRead
-            what="The books"
+            what={say('screens.booksDiscover.theBooks')}
             isTryingAgain={found.isFetching}
             onTryAgain={() => {
               void found.refetch();
             }}
           />
         ) : found.data === undefined ? (
-          <Spinner isCentered label="Searching for books" />
+          <Spinner isCentered label={say('screens.booksDiscover.searching')} />
         ) : found.data.length === 0 ? (
           <NothingHere
             of={BookOpenIcon}
-            title="No books found"
-            detail="Try the title, or the author, another way."
+            title={say('screens.booksDiscover.noneFoundTitle')}
+            detail={say('screens.booksDiscover.noneFoundDetail')}
           />
         ) : (
           grid(found.data)
@@ -79,7 +80,7 @@ const BooksDiscover = ({ onAsk }: BooksDiscoverProps) => {
   if (discovered.isError) {
     return (
       <CouldNotRead
-        what="What books there are to ask for"
+        what={say('screens.booksDiscover.whatBooks')}
         isTryingAgain={discovered.isFetching}
         onTryAgain={() => {
           void discovered.refetch();
@@ -89,7 +90,7 @@ const BooksDiscover = ({ onAsk }: BooksDiscoverProps) => {
   }
 
   if (discovered.data === undefined) {
-    return <Spinner isCentered label="Reading what books there are to ask for" />;
+    return <Spinner isCentered label={say('screens.booksDiscover.reading')} />;
   }
 
   const shelves = discovered.data.shelves.filter(
@@ -103,8 +104,8 @@ const BooksDiscover = ({ onAsk }: BooksDiscoverProps) => {
       {shelves.length === 0 ? (
         <NothingHere
           of={BookOpenIcon}
-          title="No books to ask for"
-          detail="Open Library could not be reached, or has nothing to suggest just now. You can still search for a book."
+          title={say('screens.booksDiscover.nothingTitle')}
+          detail={say('screens.booksDiscover.nothingDetail')}
         />
       ) : (
         shelves.map((shelf) => (

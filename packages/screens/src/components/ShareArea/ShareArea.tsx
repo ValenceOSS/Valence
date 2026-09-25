@@ -15,6 +15,7 @@ import type { OpenedShare } from '@ValenceClient/sharing/fetchShares';
 import type { ShareEnding } from '@ValenceContracts/schemas/Share';
 import type { ShareAreaProps } from './ShareArea.types';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
+import { say } from '@ValenceI18n/say';
 
 type Standing =
   | { kind: 'reading' }
@@ -48,7 +49,7 @@ const ShareArea = ({
   onPlay,
   resumeFor,
   ended,
-  name = 'Valence',
+  name = say('common.valence'),
   onRead,
 }: ShareAreaProps) => {
   const [standing, setStanding] = useState<Standing>({ kind: 'reading' });
@@ -97,11 +98,11 @@ const ShareArea = ({
         {told === null ? null : <Icon of={told.icon} size={40} tone="muted" />}
 
         <h1 className="text-2xl font-semibold tracking-[-0.02em] text-text">
-          {told?.said ?? 'This link does not work.'}
+          {told?.said ?? say('screens.shareArea.linkDoesNotWork')}
         </h1>
 
         <p className="max-w-[40ch] font-body text-sm text-text-muted">
-          {told?.detail ?? 'Ask whoever sent it for a new one.'}
+          {told?.detail ?? say('screens.shareArea.askForANewOne')}
         </p>
       </main>
     );
@@ -110,7 +111,7 @@ const ShareArea = ({
   if (standing.kind !== 'opened') {
     return (
       <main className="flex min-h-svh items-center justify-center">
-        <Spinner label={`Opening what was shared with you on ${name}`} />
+        <Spinner label={say('screens.shareArea.opening', { name })} />
       </main>
     );
   }
@@ -123,7 +124,7 @@ const ShareArea = ({
     return (
       <main className="flex min-h-svh flex-col items-center justify-center gap-6 px-6 py-12 text-center">
         <span className="text-xs uppercase tracking-[0.2em] text-text-muted">
-          Shared with you on {name}
+          {say('screens.shareArea.sharedWithYou', { name })}
         </span>
 
         {book.hasCover ? (
@@ -153,12 +154,12 @@ const ShareArea = ({
             }}
           >
             <Icon of={BookOpenIcon} size={18} />
-            Read
+            {say('screens.shareArea.read')}
           </Button>
         )}
 
         <p className="max-w-[40ch] font-body text-xs text-text-muted">
-          Where you are up to is kept on this device only.
+          {say('screens.shareArea.keptOnThisDevice')}
         </p>
       </main>
     );
@@ -172,7 +173,9 @@ const ShareArea = ({
       <main className="flex min-h-svh flex-col items-center justify-center gap-4 px-6 text-center">
         <h1 className="text-2xl font-semibold tracking-[-0.02em] text-text">{share.title}</h1>
 
-        <p className="font-body text-sm text-text-muted">There is nothing here to watch.</p>
+        <p className="font-body text-sm text-text-muted">
+          {say('screens.shareArea.nothingToWatch')}
+        </p>
       </main>
     );
   }
@@ -180,7 +183,7 @@ const ShareArea = ({
   return (
     <main className="relative min-h-svh">
       <span className="pointer-events-none absolute left-5 top-6 z-20 text-xs uppercase tracking-[0.2em] text-text-muted sm:left-10">
-        Shared with you on {name}
+        {say('screens.shareArea.sharedWithYou', { name })}
       </span>
 
       <Hero

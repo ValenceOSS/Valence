@@ -28,19 +28,20 @@ import type {
 } from '@ValenceContracts/schemas/Reencode';
 import type { QualityStepId } from '@ValenceContracts/schemas/QualityStep';
 import type { ReencodeDialogProps } from './ReencodeDialog.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
-const MODES: readonly { id: ReencodeMode; label: string }[] = [
-  { id: 'replace', label: 'Replace' },
-  { id: 'keep', label: 'Keep alongside' },
-  { id: 'audioOnly', label: 'Audio only' },
+const MODES: readonly { id: ReencodeMode; words: StringKey }[] = [
+  { id: 'replace', words: 'screens.reencodeDialog.modeReplace' },
+  { id: 'keep', words: 'screens.reencodeDialog.modeKeep' },
+  { id: 'audioOnly', words: 'screens.reencodeDialog.modeAudioOnly' },
 ];
 
-const MODE_MEANINGS: Record<ReencodeMode, string> = {
-  replace:
-    'Frees disk. The original is kept until you have watched the result and confirmed it — nothing else in Valence destroys your own media.',
-  keep: 'Costs disk, and buys a household where the box never converts anything at seven on a Sunday.',
-  audioOnly:
-    'The picture is copied untouched and only the lossless audio is compressed. The safest of the three.',
+const MODE_MEANINGS: Record<ReencodeMode, StringKey> = {
+  replace: 'screens.reencodeDialog.meaningReplace',
+  keep: 'screens.reencodeDialog.meaningKeep',
+  audioOnly: 'screens.reencodeDialog.meaningAudioOnly',
 };
 
 const SECTION = 'text-xs uppercase tracking-[0.14em] text-text-muted';
@@ -188,19 +189,19 @@ const ReencodeDialog = ({
   };
 
   return (
-    <Dialog label="Re-encode media" isOpen={isOpen} onClose={onClose}>
+    <Dialog label={say('screens.reencodeDialog.title')} isOpen={isOpen} onClose={onClose}>
       <DialogTitle
-        title="Re-encode media"
-        detail="Nothing starts until you press the button at the bottom."
+        title={say('screens.reencodeDialog.title')}
+        detail={say('screens.reencodeDialog.detail')}
       />
 
       <DialogContent className="flex flex-col gap-6">
         <fieldset className="flex flex-col gap-3">
-          <legend className={SECTION}>What to work on</legend>
+          <legend className={SECTION}>{say('screens.reencodeDialog.whatToWorkOn')}</legend>
 
           {libraries.length < 2 ? null : (
             <SegmentedRow
-              label="Which library to look in"
+              label={say('screens.reencodeDialog.whichLibrary')}
               size="sm"
               items={libraries.map((one) => ({ id: one.id, label: one.name }))}
               value={looking ?? ''}
@@ -210,21 +211,21 @@ const ReencodeDialog = ({
 
           <div className="flex flex-wrap items-end gap-3">
             <TextField
-              label="Find a title"
+              label={say('screens.reencodeDialog.findTitle')}
               size="sm"
               type="search"
-              placeholder="Any title"
+              placeholder={say('screens.reencodeDialog.anyTitle')}
               value={search}
               onValueChange={setSearch}
               className="min-w-0 flex-1"
             />
 
             <TextField
-              label="Larger than (GB)"
+              label={say('screens.reencodeDialog.largerThan')}
               size="sm"
               type="number"
               min={0}
-              placeholder="Any size"
+              placeholder={say('screens.reencodeDialog.anySize')}
               value={largerThan}
               onValueChange={setLargerThan}
               className="w-36"
@@ -232,11 +233,19 @@ const ReencodeDialog = ({
           </div>
 
           {media.length === 0 ? (
-            <p className="text-sm text-text-muted">Nothing has been scanned yet.</p>
+            <p className="text-sm text-text-muted">
+              {say('screens.reencodeDialog.nothingScanned')}
+            </p>
           ) : (
             <>
               <Checkbox
-                label={`Everything shown (${shown.length.toString()} ${shown.length === 1 ? 'file' : 'files'})${chosenElsewhere === 0 ? '' : ` · ${chosenElsewhere.toString()} chosen in another library`}`}
+                label={
+                  chosenElsewhere === 0
+                    ? sayCount('screens.reencodeDialog.everythingShown', shown.length)
+                    : sayCount('screens.reencodeDialog.everythingShownAndElsewhere', shown.length, {
+                        elsewhere: chosenElsewhere.toString(),
+                      })
+                }
                 checked={allShownChosen}
                 isMixed={someShownChosen && !allShownChosen}
                 onCheckedChange={(next) => {
@@ -256,7 +265,9 @@ const ReencodeDialog = ({
                 ))}
 
                 {groups.length === 0 ? (
-                  <li className="px-2 py-3 text-sm text-text-muted">Nothing matches that.</li>
+                  <li className="px-2 py-3 text-sm text-text-muted">
+                    {say('screens.reencodeDialog.nothingMatches')}
+                  </li>
                 ) : null}
               </ul>
             </>
@@ -264,12 +275,12 @@ const ReencodeDialog = ({
         </fieldset>
 
         <fieldset className="flex flex-col gap-3">
-          <legend className={SECTION}>What to do with them</legend>
+          <legend className={SECTION}>{say('screens.reencodeDialog.whatToDo')}</legend>
 
           <SegmentedRow
-            label="What to do with the encode"
+            label={say('screens.reencodeDialog.whatToDoLabel')}
             size="sm"
-            items={MODES}
+            items={MODES.map((one) => ({ id: one.id, label: say(one.words) }))}
             value={mode}
             onSelect={(id) => {
               setMode(MODES.find((one) => one.id === id)?.id ?? 'replace');
@@ -277,13 +288,13 @@ const ReencodeDialog = ({
           />
 
           <p className="font-body text-[0.8125rem] leading-snug text-text-muted">
-            {MODE_MEANINGS[mode]}
+            {say(MODE_MEANINGS[mode])}
           </p>
 
           {mode === 'audioOnly' ? null : (
             <div className="flex flex-col gap-2 rounded-lg border border-line bg-subtle px-3 py-2">
               <Choice
-                label="Quality"
+                label={say('screens.reencodeDialog.quality')}
                 value={quality}
                 options={QUALITY_STEPS.map((step) => ({ id: step.id, label: step.label }))}
                 onSelect={(id) => {
@@ -292,7 +303,7 @@ const ReencodeDialog = ({
               />
 
               <Choice
-                label="Codec"
+                label={say('screens.reencodeDialog.codec')}
                 value={videoCodec}
                 options={REENCODE_CODECS.map((codec) => ({
                   id: codec,
@@ -314,8 +325,8 @@ const ReencodeDialog = ({
 
           {mode === 'audioOnly' ? null : (
             <Checkbox
-              label="Compress the lossless audio too"
-              description="A TrueHD or DTS-HD track is often a large share of a remux. Compressing it narrows 7.1 to 5.1."
+              label={say('screens.reencodeDialog.compressAudio')}
+              description={say('screens.reencodeDialog.compressAudioDetail')}
               checked={compressesAudio}
               onCheckedChange={setCompressesAudio}
             />
@@ -324,7 +335,7 @@ const ReencodeDialog = ({
 
         {estimate === null || ids.length === 0 ? null : (
           <fieldset className="flex flex-col gap-3">
-            <legend className={SECTION}>What that costs</legend>
+            <legend className={SECTION}>{say('screens.reencodeDialog.whatItCosts')}</legend>
 
             <div className="flex flex-col gap-1 rounded-lg border border-line bg-subtle p-3">
               <span className="text-sm text-text">
@@ -339,35 +350,43 @@ const ReencodeDialog = ({
               </span>
               <span className="font-body text-xs text-text-muted">
                 {estimate.freeBytes === null
-                  ? 'Free space could not be read.'
-                  : `${formatBytes(estimate.freeBytes)} free`}
-                {estimate.committedBytes === 0
-                  ? ''
-                  : `, and ${formatBytes(estimate.committedBytes)} already promised to work in the queue`}
+                  ? say(
+                      estimate.committedBytes === 0
+                        ? 'screens.reencodeDialog.freeUnknown'
+                        : 'screens.reencodeDialog.freeUnknownAndPromised',
+                      { promised: formatBytes(estimate.committedBytes) },
+                    )
+                  : say(
+                      estimate.committedBytes === 0
+                        ? 'screens.reencodeDialog.free'
+                        : 'screens.reencodeDialog.freeAndPromised',
+                      {
+                        free: formatBytes(estimate.freeBytes),
+                        promised: formatBytes(estimate.committedBytes),
+                      },
+                    )}
               </span>
             </div>
 
             {room === 'willNotFit' ? (
-              <Callout title="There is not enough room" tone="danger">
-                Filling a media server disk takes down streaming, transcoding and the database with
-                it, which is a far worse outcome than a large file.
+              <Callout title={say('screens.reencodeDialog.noRoomTitle')} tone="danger">
+                {say('screens.reencodeDialog.noRoomBody')}
               </Callout>
             ) : room === 'tight' ? (
-              <Callout title="This would use most of what is left" tone="warning">
-                Every encode waiting to be judged holds both a film and its replacement until you
-                look at it.
+              <Callout title={say('screens.reencodeDialog.tightTitle')} tone="warning">
+                {say('screens.reencodeDialog.tightBody')}
               </Callout>
             ) : null}
 
             {isFull ? (
-              <Callout title="The queue is paused" tone="warning">
-                {`${estimate.awaitingReview.toString()} encodes are already waiting to be judged. Review some before adding more.`}
+              <Callout title={say('screens.reencodeDialog.queuePausedTitle')} tone="warning">
+                {sayCount('screens.reencodeDialog.queuePausedBody', estimate.awaitingReview)}
               </Callout>
             ) : null}
 
             {refusedCount === 0 ? null : (
-              <Callout title={`${refusedCount.toString()} of these will be turned away`}>
-                The reason is written under each one.
+              <Callout title={sayCount('screens.reencodeDialog.refusedTitle', refusedCount)}>
+                {say('screens.reencodeDialog.refusedBody')}
               </Callout>
             )}
           </fieldset>
@@ -379,10 +398,10 @@ const ReencodeDialog = ({
         confirm={{
           label:
             acceptedCount <= 0
-              ? 'Choose something first'
+              ? say('screens.reencodeDialog.chooseFirst')
               : mode === 'keep'
-                ? `Keep ${acceptedCount.toString()} alongside`
-                : `Re-encode ${acceptedCount.toString()}`,
+                ? say('screens.reencodeDialog.keepCount', { count: acceptedCount.toString() })
+                : say('screens.reencodeDialog.reencodeCount', { count: acceptedCount.toString() }),
           isLoading: isWeighing || isStarting,
           isDisabled: acceptedCount <= 0 || room === 'willNotFit',
           onChoose: () => {
@@ -401,9 +420,9 @@ const ReencodeDialog = ({
         isOpen={isConfirming}
         isDestructive
         isBusy={isStarting}
-        title={`Re-encode ${acceptedCount.toString()} ${acceptedCount === 1 ? 'file' : 'files'}?`}
-        detail="Each original is kept until you have watched the encode and confirmed it, and rejecting puts it back in one action. Once you confirm one, what the encoder discarded is gone for good."
-        confirmLabel="Queue them"
+        title={sayCount('screens.reencodeDialog.confirmTitle', acceptedCount)}
+        detail={say('screens.reencodeDialog.confirmDetail')}
+        confirmLabel={say('screens.reencodeDialog.confirmLabel')}
         onClose={() => {
           setIsConfirming(false);
         }}

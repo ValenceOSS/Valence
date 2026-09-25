@@ -3,6 +3,7 @@ import { FilterMenu } from '@ValenceUI/FilterMenu';
 import { useCatalogueFilters } from '@ValenceScreens/requests/useCatalogueFilters';
 import { CatalogueGrid } from '@ValenceScreens/components/RequestsPage/components/CatalogueGrid/CatalogueGrid';
 import type { CatalogueBrowserProps } from './CatalogueBrowser.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * A whole list of films or series to ask for, with the means to narrow it: a filter menu for genre,
@@ -22,7 +23,11 @@ const CatalogueBrowser = ({ browsing, onAsk }: CatalogueBrowserProps) => {
       <div className="flex items-center justify-end">
         {filters.groups.length === 0 ? null : (
           <FilterMenu
-            label={browsing.kind === 'film' ? 'Filter films' : 'Filter series'}
+            label={
+              browsing.kind === 'film'
+                ? say('screens.catalogueBrowser.filterFilms')
+                : say('screens.catalogueBrowser.filterSeries')
+            }
             hasLabel
             groups={filters.groups}
             selected={filters.selected}

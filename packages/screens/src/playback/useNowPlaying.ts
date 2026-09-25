@@ -6,6 +6,7 @@ import {
   artworkTheSystemAccepts,
 } from '@ValenceScreens/playback/artworkTheSystemAccepts';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
+import { say } from '@ValenceI18n/say';
 
 const A_SKIP = 10;
 
@@ -53,7 +54,10 @@ const whichEpisode = (media: NowPlaying['media']): string => {
     return '';
   }
 
-  return `Series ${seasonNumber.toString()}, Episode ${describeEpisodeNumbers(episodeNumber, media.episodeNumberEnd)}`;
+  return say('screens.useNowPlaying.whichEpisode', {
+    season: seasonNumber,
+    episode: describeEpisodeNumbers(episodeNumber, media.episodeNumberEnd),
+  });
 };
 
 /**
@@ -94,7 +98,10 @@ const useNowPlaying = ({
     const describe = (artwork: { src: string; sizes: string }[]): void => {
       session.metadata = new MediaMetadata({
         title,
-        artist: typeof seriesTitle === 'string' && seriesTitle !== '' ? seriesTitle : 'Valence',
+        artist:
+          typeof seriesTitle === 'string' && seriesTitle !== ''
+            ? seriesTitle
+            : say('common.valence'),
         album: episode,
         artwork,
       });

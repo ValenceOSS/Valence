@@ -11,6 +11,7 @@ import { upcomingIn } from '@ValenceClient/music/playQueue';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
+import { say } from '@ValenceI18n/say';
 
 /**
  * One song in the queue: its cover, its name and who it is by.
@@ -65,29 +66,35 @@ const QueuePanel = () => {
     return (
       <NothingHere
         of={ListOrderedIcon}
-        title="Nothing queued"
-        detail="Play something and what comes next will be here."
+        title={say('screens.queuePanel.emptyTitle')}
+        detail={say('screens.queuePanel.emptyDetail')}
       />
     );
   }
 
   return (
     <div className="flex flex-col gap-5">
-      <section aria-label="Now playing" className="flex flex-col gap-2">
-        <h3 className="px-2 text-sm font-semibold text-text">Now playing</h3>
+      <section aria-label={say('screens.queuePanel.nowPlaying')} className="flex flex-col gap-2">
+        <h3 className="px-2 text-sm font-semibold text-text">
+          {say('screens.queuePanel.nowPlaying')}
+        </h3>
         <div className="rounded-md px-2 py-1.5">
           <QueuedSong track={current} isCurrent />
         </div>
       </section>
 
-      <section aria-label="Next up" className="flex flex-col gap-2">
+      <section aria-label={say('screens.queuePanel.nextUp')} className="flex flex-col gap-2">
         <h3 className="px-2 text-sm font-semibold text-text">
-          {queue.source === null ? 'Next up' : `Next from ${queue.source.name}`}
+          {queue.source === null
+            ? say('screens.queuePanel.nextUp')
+            : say('screens.queuePanel.nextFrom', { name: queue.source.name })}
         </h3>
 
         {upcoming.length === 0 ? (
           <p className="px-2 text-sm text-text-muted">
-            {queue.repeat === 'all' ? 'The queue starts again after this.' : 'Nothing after this.'}
+            {queue.repeat === 'all'
+              ? say('screens.queuePanel.startsAgain')
+              : say('screens.queuePanel.nothingAfter')}
           </p>
         ) : (
           <div
@@ -137,7 +144,7 @@ const QueuePanel = () => {
                     <Button
                       variant="bare"
                       size="none"
-                      label={`Play ${track.title} now`}
+                      label={say('screens.queuePanel.playNow', { title: track.title })}
                       hasTooltip={false}
                       className="min-w-0 flex-1"
                       onClick={() => {
@@ -150,7 +157,7 @@ const QueuePanel = () => {
                       variant="ghost"
                       size="xs"
                       isIconOnly
-                      label={`Take ${track.title} out of the queue`}
+                      label={say('screens.queuePanel.remove', { title: track.title })}
                       className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
                       onClick={() => {
                         player.removeFromQueue(at);

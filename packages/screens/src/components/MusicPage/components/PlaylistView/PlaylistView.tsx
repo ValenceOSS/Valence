@@ -42,16 +42,8 @@ import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { whereAnEntryLands } from '@ValenceClient/music/whereAnEntryLands';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
 import type { PlaylistViewProps } from './PlaylistView.types';
-
-/**
- * Counts what is in a playlist in words that read properly at one as well as at many.
- *
- * @param count - How many.
- * @param noun - What one is called.
- * @returns The count and its noun.
- */
-const countOf = (count: number, noun: string): string =>
-  count === 1 ? `1 ${noun}` : `${count.toString()} ${noun}s`;
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * A playlist's page: its cover made of what is in it, whose it is, and everything in it in order.
@@ -82,7 +74,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
   if (asked.isError) {
     return (
       <CouldNotRead
-        what="this playlist"
+        what={say('screens.playlistView.couldNotReadWhat')}
         isTryingAgain={asked.isFetching}
         onTryAgain={() => {
           void asked.refetch();
@@ -94,7 +86,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
   if (detail === undefined) {
     return (
       <div className={`flex flex-col gap-4 py-8 ${MUSIC_LANES.page}`}>
-        <Skeleton label="Reading the playlist" shape="soft" className="size-48" />
+        <Skeleton label={say('screens.playlistView.reading')} shape="soft" className="size-48" />
         <Skeleton className="h-12 w-2/3" />
       </div>
     );
@@ -116,7 +108,11 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
   return (
     <article className="flex flex-col">
       <MusicHeader
-        eyebrow={playlist.isShared ? 'Shared playlist' : 'Playlist'}
+        eyebrow={
+          playlist.isShared
+            ? say('screens.playlistView.sharedPlaylist')
+            : say('screens.playlistView.playlist')
+        }
         title={playlist.name}
         artwork={
           <PlaylistCover
@@ -132,12 +128,18 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
             )}
             <span className="font-semibold text-text">{nameOfOwner(playlist.owner)}</span>
             <span>
-              · {countOf(entries.length - lost.length, others.length === 0 ? 'song' : 'item')}
+              ·{' '}
+              {sayCount(
+                others.length === 0
+                  ? 'screens.playlistView.songCount'
+                  : 'screens.playlistView.itemCount',
+                entries.length - lost.length,
+              )}
             </span>
             <span>· {formatDuration(playlist.durationSeconds)}</span>
-            {playlist.isOrdered ? <span>· In order</span> : null}
+            {playlist.isOrdered ? <span>· {say('screens.playlistView.inOrder')}</span> : null}
             {lost.length === 0 ? null : (
-              <span>· {countOf(lost.length, 'thing')} no longer in the library</span>
+              <span>· {sayCount('screens.playlistView.lostCount', lost.length)}</span>
             )}
           </>
         }
@@ -147,7 +149,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
               variant="confirm"
               size="lg"
               isIconOnly
-              label={`Play ${playlist.name}`}
+              label={say('screens.playlistView.play', { name: playlist.name })}
               className="size-14"
               disabled={tracks.length === 0}
               onClick={() => {
@@ -161,7 +163,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
               variant="ghost"
               size="md"
               isIconOnly
-              label={`Shuffle ${playlist.name}`}
+              label={say('screens.playlistView.shuffle', { name: playlist.name })}
               disabled={tracks.length === 0 || playlist.isOrdered}
               onClick={() => {
                 player.play(tracks, Math.floor(Math.random() * tracks.length), {
@@ -175,7 +177,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
 
             {playlist.isMine || mayClearAbandoned ? (
               <ActionMenu
-                label={`More for ${playlist.name}`}
+                label={say('screens.playlistView.more', { name: playlist.name })}
                 trigger={<Icon of={MoreHorizontalIcon} size={22} />}
                 groups={[
                   {
@@ -185,8 +187,8 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
                             {
                               id: 'share',
                               label: playlist.isShared
-                                ? 'Stop sharing'
-                                : 'Share with the household',
+                                ? say('screens.playlistView.stopSharing')
+                                : say('screens.playlistView.share'),
                               icon: <Icon of={ShareFilledIcon} size={16} />,
                               onChoose: () => {
                                 void updatePlaylist(playlist.id, {
@@ -197,8 +199,12 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
                                   if (agreed) {
                                     notify.worked(
                                       playlist.isShared
-                                        ? `${playlist.name} is yours alone again`
-                                        : `${playlist.name} is shared with the household`,
+                                        ? say('screens.playlistView.nowPrivate', {
+                                            name: playlist.name,
+                                          })
+                                        : say('screens.playlistView.nowShared', {
+                                            name: playlist.name,
+                                          }),
                                     );
                                   }
                                 });
@@ -206,7 +212,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
                             },
                             {
                               id: 'edit',
-                              label: 'Edit details',
+                              label: say('screens.playlistView.editDetails'),
                               icon: <Icon of={SquarePenFilledIcon} size={16} />,
                               onChoose: () => {
                                 setIsEditing(true);
@@ -216,7 +222,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
                         : []),
                       {
                         id: 'delete',
-                        label: 'Delete playlist',
+                        label: say('screens.playlistView.deletePlaylist'),
                         icon: <Icon of={BinFilledIcon} size={16} />,
                         isDestructive: true,
                         onChoose: () => {
@@ -236,8 +242,8 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
         {entries.length === 0 ? (
           <NothingHere
             of={ListMusicIcon}
-            title="Nothing in this playlist yet"
-            detail="Add songs to it from the menu beside any song."
+            title={say('screens.playlistView.emptyTitle')}
+            detail={say('screens.playlistView.emptyDetail')}
           />
         ) : (
           <TrackList
@@ -286,9 +292,9 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
         )}
 
         {others.length === 0 ? null : (
-          <section aria-label="Also in this playlist" className="flex flex-col gap-2">
+          <section aria-label={say('screens.playlistView.alsoIn')} className="flex flex-col gap-2">
             <h2 className="px-2 text-sm font-semibold uppercase tracking-[0.12em] text-text-muted">
-              Also in this playlist
+              {say('screens.playlistView.alsoIn')}
             </h2>
             <ul className="flex flex-col">
               {others.map((other) => (
@@ -308,27 +314,29 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
         )}
 
         {lost.length === 0 ? null : (
-          <section aria-label="No longer in the library" className="flex flex-col gap-2 px-2">
+          <section
+            aria-label={say('screens.playlistView.lostHeading')}
+            className="flex flex-col gap-2 px-2"
+          >
             <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-text-muted">
-              No longer in the library
+              {say('screens.playlistView.lostHeading')}
             </h2>
             <p className="text-sm text-text-muted">
-              {countOf(lost.length, 'thing')} that {lost.length === 1 ? 'was' : 'were'} in this
-              playlist went with the library {lost.length === 1 ? 'it' : 'they'} came from.
+              {sayCount('screens.playlistView.lostDetail', lost.length)}
             </p>
             {playlist.isMine ? (
               <Button
                 variant="secondary"
                 size="sm"
                 className="self-start"
-                label={`Remove what is gone from ${playlist.name}`}
+                label={say('screens.playlistView.removeLostLabel', { name: playlist.name })}
                 onClick={() => {
                   void Promise.all(
                     lost.map((entry) => dropFromPlaylist(playlist.id, entry.id)),
                   ).then(refresh);
                 }}
               >
-                Remove {lost.length === 1 ? 'it' : 'them'}
+                {sayCount('screens.playlistView.removeLost', lost.length)}
               </Button>
             ) : null}
           </section>
@@ -348,13 +356,13 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
       {playlist.isMine || mayClearAbandoned ? (
         <ConfirmDialog
           isOpen={isRemoving}
-          title={`Delete ${playlist.name}?`}
+          title={say('screens.playlistView.deleteTitle', { name: playlist.name })}
           detail={
             playlist.owner === null
-              ? 'This belonged to a profile that has been removed. The songs stay in the library. Only the playlist goes, for everybody it was shared with.'
-              : 'The songs stay in the library. Only the playlist goes, for everybody it was shared with.'
+              ? say('screens.playlistView.deleteOrphanDetail')
+              : say('screens.playlistView.deleteDetail')
           }
-          confirmLabel="Delete"
+          confirmLabel={say('common.delete')}
           isDestructive
           onClose={() => {
             setIsRemoving(false);

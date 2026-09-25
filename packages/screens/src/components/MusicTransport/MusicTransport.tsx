@@ -25,6 +25,8 @@ import { BarButton } from '@ValenceScreens/components/BarButton/BarButton';
 import { useListeningParty } from '@ValenceScreens/music/listeningParty';
 import type { Variants } from 'motion/react';
 import type { MusicTransportProps } from './MusicTransport.types';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
 const POPPING: Variants = {
   hidden: { opacity: 0, scale: 0.5 },
@@ -33,10 +35,10 @@ const POPPING: Variants = {
 };
 
 const REPEAT_LABELS = {
-  off: 'Repeat everything',
-  all: 'Repeat this song',
-  one: 'Stop repeating',
-} as const;
+  off: 'screens.musicTransport.repeatAll',
+  all: 'screens.musicTransport.repeatOne',
+  one: 'screens.musicTransport.stopRepeating',
+} as const satisfies Record<string, StringKey>;
 
 /**
  * The buttons that drive the song playing and the track that shows how far through it is: shuffle,
@@ -97,7 +99,7 @@ const MusicTransport = ({
 
   const scrubber = (
     <Slider
-      label="Where the song is"
+      label={say('screens.musicTransport.position')}
       tone={isImmersive ? 'overlay' : 'glass'}
       value={Math.min(position, shown.durationSeconds)}
       max={Math.max(shown.durationSeconds, 1)}
@@ -113,7 +115,11 @@ const MusicTransport = ({
 
   const shuffle = (
     <BarButton
-      label={queue?.isShuffled === true ? 'Stop shuffling' : 'Shuffle'}
+      label={
+        queue?.isShuffled === true
+          ? say('screens.musicTransport.stopShuffling')
+          : say('screens.musicTransport.shuffle')
+      }
       glyph={ShuffleIcon}
       litGlyph={ShuffleFilledIcon}
       gesture="tumble"
@@ -128,7 +134,7 @@ const MusicTransport = ({
 
   const repeating = (
     <BarButton
-      label={REPEAT_LABELS[repeat]}
+      label={say(REPEAT_LABELS[repeat])}
       glyph={repeat === 'one' ? Repeat1Icon : RepeatIcon}
       litGlyph={repeat === 'one' ? Repeat1FilledIcon : RepeatFilledIcon}
       gesture="spin"
@@ -144,7 +150,7 @@ const MusicTransport = ({
   const middle = (
     <>
       <BarButton
-        label="Previous"
+        label={say('screens.musicTransport.previous')}
         glyph={SkipBackFilledIcon}
         iconSize={iconSize}
         isDisabled={isIdle || isFollowing}
@@ -157,7 +163,9 @@ const MusicTransport = ({
         variant={isImmersive ? 'ghost' : 'confirm'}
         size={isImmersive ? 'md' : 'sm'}
         isIconOnly
-        label={shown.isPlaying ? 'Pause' : 'Play'}
+        label={
+          shown.isPlaying ? say('screens.musicTransport.pause') : say('screens.musicTransport.play')
+        }
         className={cn('relative', isImmersive ? 'size-14' : 'size-8')}
         disabled={!mayPlayPause}
         onClick={() => {
@@ -190,7 +198,7 @@ const MusicTransport = ({
             className="flex"
           >
             {shown.isLoading && shown.isPlaying ? (
-              <Spinner size="sm" label="Loading" />
+              <Spinner size="sm" label={say('screens.musicTransport.loading')} />
             ) : (
               <Icon
                 of={shown.isPlaying ? PauseFilledIcon : PlayFilledIcon}
@@ -202,7 +210,7 @@ const MusicTransport = ({
       </Button>
 
       <BarButton
-        label="Next"
+        label={say('screens.musicTransport.next')}
         glyph={SkipForwardFilledIcon}
         iconSize={iconSize}
         isDisabled={isIdle || isFollowing}

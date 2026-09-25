@@ -2,6 +2,7 @@ import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { Download as DownloadIcon } from '@keyline-icons/react';
 import type { WindowBarProps } from './WindowBar.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The strip a frameless window draws along its own top, where the system would otherwise put one.
@@ -40,7 +41,7 @@ const WindowBar = ({ updateVersion, onInstallUpdate }: WindowBarProps) => (
         className="h-6 gap-1 px-2 text-[0.6875rem] uppercase tracking-wide text-on-scrim opacity-70 hover:opacity-100 [-webkit-app-region:no-drag]"
       >
         <Icon of={DownloadIcon} size={13} />
-        Update available
+        {say('screens.windowBar.updateAvailable')}
       </Button>
     )}
   </div>

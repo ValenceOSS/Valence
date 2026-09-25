@@ -14,6 +14,7 @@ import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { Icon } from '@ValenceUI/Icon';
 import { Slider } from '@ValenceUI/Slider';
 import type { VideoRemoteProps } from './VideoRemote.types';
+import { say } from '@ValenceI18n/say';
 
 const BACK_BY = 10;
 
@@ -37,17 +38,26 @@ const VideoRemote = ({ isOpen, onClose, onPlayHere }: VideoRemoteProps) => {
 
   return (
     <Dialog
-      label={device === null ? 'Remote' : `Remote for ${device.label}`}
+      label={
+        device === null
+          ? say('screens.videoRemote.label')
+          : say('screens.videoRemote.labelFor', { device: device.label })
+      }
       isOpen={isOpen && device !== null}
       onClose={onClose}
       className="sm:w-[min(30rem,92vw)]"
     >
       <DialogTitle
-        title={watching?.title ?? 'Starting…'}
+        title={watching?.title ?? say('screens.videoRemote.starting')}
         detail={
           device === null
             ? undefined
-            : `${watching?.subtitle === null || watching === null ? '' : `${watching.subtitle} · `}On ${device.label}`
+            : watching === null || watching.subtitle === null
+              ? say('screens.videoRemote.onDevice', { device: device.label })
+              : say('screens.videoRemote.subtitleOnDevice', {
+                  subtitle: watching.subtitle,
+                  device: device.label,
+                })
         }
       />
 
@@ -62,7 +72,7 @@ const VideoRemote = ({ isOpen, onClose, onPlayHere }: VideoRemoteProps) => {
 
         <div className="flex flex-col gap-1">
           <Slider
-            label="Where the film is up to"
+            label={say('screens.videoRemote.position')}
             value={positionSeconds}
             max={Math.max(watching?.durationSeconds ?? 0, 1)}
             step={1}
@@ -86,7 +96,7 @@ const VideoRemote = ({ isOpen, onClose, onPlayHere }: VideoRemoteProps) => {
             variant="ghost"
             size="lg"
             isIconOnly
-            label={`Back ${BACK_BY.toString()} seconds`}
+            label={say('screens.videoRemote.back', { seconds: BACK_BY })}
             disabled={watching === null}
             onClick={() => {
               send({ kind: 'skip', seconds: -BACK_BY });
@@ -100,7 +110,7 @@ const VideoRemote = ({ isOpen, onClose, onPlayHere }: VideoRemoteProps) => {
             size="xl"
             isIconOnly
             isPill
-            label={isPlaying ? 'Pause' : 'Play'}
+            label={isPlaying ? say('screens.videoRemote.pause') : say('screens.videoRemote.play')}
             disabled={watching === null}
             onClick={() => {
               send({ kind: isPlaying ? 'pause' : 'resume' });
@@ -113,7 +123,7 @@ const VideoRemote = ({ isOpen, onClose, onPlayHere }: VideoRemoteProps) => {
             variant="ghost"
             size="lg"
             isIconOnly
-            label={`On ${ON_BY.toString()} seconds`}
+            label={say('screens.videoRemote.forward', { seconds: ON_BY })}
             disabled={watching === null}
             onClick={() => {
               send({ kind: 'skip', seconds: ON_BY });
@@ -139,7 +149,7 @@ const VideoRemote = ({ isOpen, onClose, onPlayHere }: VideoRemoteProps) => {
               onPlayHere(watching.mediaId, positionSeconds);
             }}
           >
-            Play here
+            {say('screens.videoRemote.playHere')}
           </Button>
 
           <Button
@@ -152,7 +162,7 @@ const VideoRemote = ({ isOpen, onClose, onPlayHere }: VideoRemoteProps) => {
             }}
           >
             <Icon of={StopIcon} size={16} />
-            Stop
+            {say('screens.videoRemote.stop')}
           </Button>
         </div>
       </DialogContent>

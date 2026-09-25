@@ -1,5 +1,6 @@
 import { describeTitleDetails } from '@ValenceClient/library/describeTitleDetails';
 import type { TitleDetailsProps } from './TitleDetails.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The facts of a title beyond what a card carries: when it came out, whether it is out or still
@@ -37,7 +38,9 @@ const TitleDetails = ({
 
   return (
     <section className="flex flex-col gap-3">
-      <h3 className="text-sm font-medium uppercase tracking-[0.18em] text-text-muted">Details</h3>
+      <h3 className="text-sm font-medium uppercase tracking-[0.18em] text-text-muted">
+        {say('screens.titleDetails.heading')}
+      </h3>
 
       <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
         {facts.map((fact) => (

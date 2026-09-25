@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { Icon } from '@ValenceUI/Icon';
 import { Bin as BinIcon, Check as CheckIcon } from '@keyline-icons/react';
 import { useMemo, useState } from 'react';
@@ -27,7 +28,8 @@ import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
  * @param viewing - The viewing as recorded.
  * @returns What to call it.
  */
-const nameOf = (viewing: Viewing): string => viewing.title ?? 'No longer in the library';
+const nameOf = (viewing: Viewing): string =>
+  viewing.title ?? say('screens.historyPanel.goneFromLibrary');
 
 /**
  * What this profile has watched and read, most recent first, with each entry removable, since a
@@ -92,15 +94,11 @@ const HistoryPanel = ({ now }: HistoryPanelProps) => {
   };
 
   if (isReading) {
-    return <Spinner isCentered label="Reading your history" />;
+    return <Spinner isCentered label={say('screens.historyPanel.loading')} />;
   }
 
   if (entries.length === 0) {
-    return (
-      <p className="p-4 text-sm text-text-muted">
-        Nothing yet. What you watch and read shows up here, and only you can see it.
-      </p>
-    );
+    return <p className="p-4 text-sm text-text-muted">{say('screens.historyPanel.empty')}</p>;
   }
 
   return (
@@ -125,27 +123,28 @@ const HistoryPanel = ({ now }: HistoryPanelProps) => {
                   <span className="truncate text-sm text-text-strong">{name}</span>
 
                   <span className="text-xs text-text-muted">
-                    {entry.kind === 'viewing' ? (
-                      <>
-                        {entry.viewing.seriesTitle === null
-                          ? ''
-                          : `${entry.viewing.seriesTitle} · `}
-                        {describeWhen(entry.at, now ?? new Date())} ·{' '}
-                        {formatDuration(entry.viewing.secondsWatched)} watched
-                      </>
-                    ) : (
-                      <>
-                        {describeWhen(entry.at, now ?? new Date())} ·{' '}
-                        {describeReadingPlace(entry.reading)}
-                      </>
-                    )}
+                    {entry.kind === 'viewing'
+                      ? entry.viewing.seriesTitle === null
+                        ? say('screens.historyPanel.viewing', {
+                            when: describeWhen(entry.at, now ?? new Date()),
+                            duration: formatDuration(entry.viewing.secondsWatched),
+                          })
+                        : say('screens.historyPanel.episodeViewing', {
+                            series: entry.viewing.seriesTitle,
+                            when: describeWhen(entry.at, now ?? new Date()),
+                            duration: formatDuration(entry.viewing.secondsWatched),
+                          })
+                      : say('screens.historyPanel.reading', {
+                          when: describeWhen(entry.at, now ?? new Date()),
+                          place: describeReadingPlace(entry.reading),
+                        })}
                   </span>
                 </div>
 
                 {isFinished ? (
                   <Badge tone={STATUS_LOOK.done.tone}>
                     <Icon of={CheckIcon} size={12} />
-                    Finished
+                    {say('screens.historyPanel.finished')}
                   </Badge>
                 ) : null}
 
@@ -153,7 +152,7 @@ const HistoryPanel = ({ now }: HistoryPanelProps) => {
                   variant="ghost"
                   size="sm"
                   className="ml-auto shrink-0"
-                  aria-label={`Forget ${name}`}
+                  aria-label={say('screens.historyPanel.forgetOne', { name })}
                   onClick={() => {
                     void (entry.kind === 'viewing'
                       ? forgetOne(entry.viewing.id)
@@ -177,13 +176,10 @@ const HistoryPanel = ({ now }: HistoryPanelProps) => {
               void readMore();
             }}
           >
-            Show more
+            {say('screens.historyPanel.showMore')}
           </Button>
         ) : (
-          <p className="text-xs text-text-muted">
-            Viewings are forgotten automatically after a year; where you are in a book is kept until
-            you forget it.
-          </p>
+          <p className="text-xs text-text-muted">{say('screens.historyPanel.keptFor')}</p>
         )}
 
         <Button
@@ -196,7 +192,7 @@ const HistoryPanel = ({ now }: HistoryPanelProps) => {
           }}
         >
           <Icon of={BinIcon} size={16} />
-          Forget everything
+          {say('screens.historyPanel.forgetAll')}
         </Button>
       </div>
     </div>

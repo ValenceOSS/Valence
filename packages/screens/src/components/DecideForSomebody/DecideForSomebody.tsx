@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -8,13 +9,14 @@ import { clearException, setException } from '@ValenceClient/admin/fetchLibraryA
 import { hidingSubjectOf } from '@ValenceClient/library/hidingSubjectOf';
 import { useShell } from '@ValenceClient/shell/useShell';
 import { HouseholdFace } from '@ValenceScreens/components/HouseholdFace/HouseholdFace';
+import type { StringKey } from '@ValenceI18n/StringKey';
 import type { DecideForSomebodyProps } from './DecideForSomebody.types';
 
 const CHOICES = [
-  { id: 'allow', label: 'Allow' },
-  { id: 'none', label: 'Their limit' },
-  { id: 'deny', label: 'Deny' },
-] as const;
+  { id: 'allow', labelKey: 'screens.decideForSomebody.allow' },
+  { id: 'none', labelKey: 'screens.decideForSomebody.theirLimit' },
+  { id: 'deny', labelKey: 'screens.decideForSomebody.deny' },
+] as const satisfies readonly { id: string; labelKey: StringKey }[];
 
 /**
  * Decides, for one film or programme, who may watch it whatever their age limit says.
@@ -65,18 +67,19 @@ const DecideForSomebody = ({ about, onClose }: DecideForSomebodyProps) => {
   };
 
   return (
-    <DialogCompanion label="Who may watch this" isOpen={about !== null} onClose={onClose}>
+    <DialogCompanion
+      label={say('screens.decideForSomebody.label')}
+      isOpen={about !== null}
+      onClose={onClose}
+    >
       <DialogTitle
-        title={`Who may watch ${title}`}
-        detail="Whatever age limit each account has. A denial always wins."
+        title={say('screens.decideForSomebody.title', { title })}
+        detail={say('screens.decideForSomebody.detail')}
       />
 
       <DialogContent className="flex flex-col gap-1">
         {accounts.length === 0 ? (
-          <p className="py-2 text-sm text-text-muted">
-            There is nobody to decide about. Administrators see everything, and taking something out
-            of your own browsing is what hiding it does.
-          </p>
+          <p className="py-2 text-sm text-text-muted">{say('screens.decideForSomebody.nobody')}</p>
         ) : (
           accounts.map((account) => (
             <div
@@ -101,10 +104,10 @@ const DecideForSomebody = ({ about, onClose }: DecideForSomebodyProps) => {
               </span>
 
               <SegmentedRow
-                label={`Who may watch ${title}: ${account.name}`}
+                label={say('screens.decideForSomebody.rowLabel', { title, name: account.name })}
                 size="sm"
                 tone="accent"
-                items={CHOICES}
+                items={CHOICES.map((one) => ({ id: one.id, label: say(one.labelKey) }))}
                 value={standing.find((one) => one.accountId === account.id)?.effect ?? 'none'}
                 onSelect={(chosen) => {
                   decide(account.id, chosen);

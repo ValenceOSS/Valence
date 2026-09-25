@@ -1,22 +1,34 @@
 import type { NavBarChoices } from '@ValenceUI/NavBar.types';
 import type { Library, LibraryKind } from '@ValenceContracts/schemas/Library';
+import type { StringKey } from '@ValenceI18n/StringKey';
+import { say } from '@ValenceI18n/say';
 
 const EVERY = 'all';
 
 const PLACES = [
-  { place: 'films', kind: 'movies', everyLabel: 'All film libraries', label: 'Film library' },
+  {
+    place: 'films',
+    kind: 'movies',
+    everyLabel: 'screens.libraryChoicesFor.allFilms',
+    label: 'screens.libraryChoicesFor.film',
+  },
   {
     place: 'shows',
     kind: 'shows',
-    everyLabel: 'All programme libraries',
-    label: 'Programme library',
+    everyLabel: 'screens.libraryChoicesFor.allProgrammes',
+    label: 'screens.libraryChoicesFor.programme',
   },
-  { place: 'read', kind: 'books', everyLabel: 'All book libraries', label: 'Book library' },
+  {
+    place: 'read',
+    kind: 'books',
+    everyLabel: 'screens.libraryChoicesFor.allBooks',
+    label: 'screens.libraryChoicesFor.book',
+  },
 ] as const satisfies readonly {
   place: 'films' | 'shows' | 'read';
   kind: LibraryKind;
-  everyLabel: string;
-  label: string;
+  everyLabel: StringKey;
+  label: StringKey;
 }[];
 
 /**
@@ -48,9 +60,9 @@ const libraryChoicesFor = (
         [
           place,
           {
-            label,
+            label: say(label),
             options: [
-              { id: EVERY, label: everyLabel },
+              { id: EVERY, label: say(everyLabel) },
               ...held.map((library) => ({ id: library.id, label: library.name })),
             ],
             selectedId: chosen?.id ?? EVERY,

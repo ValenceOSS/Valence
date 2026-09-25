@@ -6,6 +6,7 @@ import { fadeVariants, revealTransition } from '@ValenceUI/animations/reveal';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import type { MusicMiniPlayerProps } from './MusicMiniPlayer.types';
+import { say } from '@ValenceI18n/say';
 
 const ARRIVING = {
   hidden: { opacity: 0, y: '20%' },
@@ -50,7 +51,7 @@ const MusicMiniPlayer = ({ shown, onOpen, onTogglePlay }: MusicMiniPlayerProps) 
             <Button
               variant="bare"
               size="none"
-              label={`Open ${shown.title}`}
+              label={say('screens.musicMiniPlayer.open', { title: shown.title })}
               hasTooltip={false}
               className="flex min-w-0 items-center gap-2"
               onClick={onOpen}
@@ -75,7 +76,11 @@ const MusicMiniPlayer = ({ shown, onOpen, onTogglePlay }: MusicMiniPlayerProps) 
               variant="ghost"
               size="sm"
               isIconOnly
-              label={shown.isPlaying ? 'Pause' : 'Play'}
+              label={
+                shown.isPlaying
+                  ? say('screens.musicMiniPlayer.pause')
+                  : say('screens.musicMiniPlayer.play')
+              }
               onClick={onTogglePlay}
             >
               <Icon of={shown.isPlaying ? PauseIcon : PlayIcon} size={16} />

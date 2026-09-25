@@ -1,10 +1,12 @@
+import type { StringKey } from '@ValenceI18n/StringKey';
+
 const ACCOUNT_PANELS = [
-  { id: 'profile', label: 'Profile' },
-  { id: 'security', label: 'Security' },
-  { id: 'devices', label: 'Devices' },
-  { id: 'links', label: 'Links' },
-  { id: 'history', label: 'History' },
-  { id: 'hidden', label: 'Hidden' },
-] as const;
+  { id: 'profile', labelKey: 'screens.accountPanels.profile' },
+  { id: 'security', labelKey: 'screens.accountPanels.security' },
+  { id: 'devices', labelKey: 'screens.accountPanels.devices' },
+  { id: 'links', labelKey: 'screens.accountPanels.links' },
+  { id: 'history', labelKey: 'screens.accountPanels.history' },
+  { id: 'hidden', labelKey: 'screens.accountPanels.hidden' },
+] as const satisfies readonly { id: string; labelKey: StringKey }[];
 
 export { ACCOUNT_PANELS };

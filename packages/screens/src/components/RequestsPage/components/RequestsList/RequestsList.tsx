@@ -29,6 +29,7 @@ import { costOfRequest } from '@ValenceScreens/requests/costOfRequest';
 import { describeDownloadCost } from '@ValenceScreens/requests/describeDownloadCost';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { RequestsListProps } from './RequestsList.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The requests on this server, newest first, with where each has got to — waiting on approval,
@@ -73,7 +74,7 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
   if (requests.isError) {
     return (
       <CouldNotRead
-        what="The requests"
+        what={say('screens.requestsList.theRequests')}
         isTryingAgain={requests.isFetching}
         onTryAgain={() => {
           void requests.refetch();
@@ -83,15 +84,15 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
   }
 
   if (requests.data === undefined || me.data === undefined) {
-    return <Spinner isCentered label="Reading the requests" />;
+    return <Spinner isCentered label={say('screens.requestsList.reading')} />;
   }
 
   if (everything.length === 0) {
     return (
       <NothingHere
         of={CompassIcon}
-        title="Nothing has been requested yet"
-        detail="Find something on Discover, or search for it, and request it from its page."
+        title={say('screens.requestsList.emptyTitle')}
+        detail={say('screens.requestsList.emptyDetail')}
       />
     );
   }
@@ -100,18 +101,18 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
     <>
       <div className="flex flex-wrap items-center gap-2">
         <FilterMenu
-          label="Filter the requests"
+          label={say('screens.requestsList.filter')}
           groups={groups}
           selected={filters}
           onChange={setFilters}
         />
 
         <TextField
-          label="Search the requests"
+          label={say('screens.requestsList.search')}
           isLabelHidden
           size="sm"
           type="search"
-          placeholder="A title, or who asked"
+          placeholder={say('screens.requestsList.searchPlaceholder')}
           value={search}
           onValueChange={setSearch}
           className="w-56 max-w-full"
@@ -127,12 +128,12 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
       {shown.length === 0 ? (
         <NothingHere
           of={CompassIcon}
-          title="Nothing matches that"
-          detail="Clear a filter, or search for something else."
+          title={say('screens.requestsList.noneMatchTitle')}
+          detail={say('screens.requestsList.noneMatchDetail')}
         />
       ) : null}
 
-      <ul aria-label="Requests" className="flex flex-col gap-3">
+      <ul aria-label={say('screens.requestsList.listLabel')} className="flex flex-col gap-3">
         {shown.map((request) => {
           const badge = describeRequestBadge(request);
           const said = describeRequestProgress(request);
@@ -145,7 +146,7 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
               {isMusicRequest(request.kind) ? (
                 <MusicArtwork
                   src={request.posterUrl}
-                  label={`The cover of ${request.title}`}
+                  label={say('screens.requestsList.coverOf', { title: request.title })}
                   shape={request.kind === 'artist' ? 'round' : 'square'}
                   className="w-16"
                 />
@@ -177,8 +178,8 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
                 <span className="text-xs text-text-muted">
                   {[
                     request.requestedBy.id === me.data?.id
-                      ? 'Asked by you'
-                      : `Asked by ${request.requestedBy.name}`,
+                      ? say('screens.requestsList.askedByYou')
+                      : say('screens.requestsList.askedBy', { name: request.requestedBy.name }),
                     named.get(request.libraryId) ?? null,
                     request.profileName,
                   ]
@@ -189,7 +190,7 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
                 {said === null ? null : <span className="text-xs text-text-muted">{said}</span>}
                 {request.refusedBecause === null ? null : (
                   <span className="break-words text-xs text-text-muted">
-                    Refused: {request.refusedBecause}
+                    {say('screens.requestsList.refused', { reason: request.refusedBecause })}
                   </span>
                 )}
                 {badge.detail === null ? null : (
@@ -202,7 +203,7 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
 
                 {going === null ? null : (
                   <ProgressBar
-                    label={`How much of ${request.title} has arrived`}
+                    label={say('screens.requestsList.howMuchArrived', { title: request.title })}
                     value={Math.round(going.progress * 1000) / 10}
                     readout={
                       <DownloadProgressReadout progress={going} className="text-text-muted" />
@@ -222,7 +223,7 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
                       setCancelling(request);
                     }}
                   >
-                    Cancel
+                    {say('screens.requestsList.cancel')}
                   </Button>
                 ) : null}
                 <Button
@@ -243,7 +244,9 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
                     );
                   }}
                 >
-                  {request.state === 'available' && request.mediaId !== null ? 'Open' : 'Details'}
+                  {request.state === 'available' && request.mediaId !== null
+                    ? say('screens.requestsList.open')
+                    : say('screens.requestsList.details')}
                 </Button>
               </span>
             </Card>
@@ -252,9 +255,13 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
       </ul>
 
       <ConfirmDialog
-        title={`Cancel ${cancelling?.title ?? 'this request'}?`}
-        detail="It will not be fetched, and whatever it had started downloading is deleted. You can request it again whenever you like."
-        confirmLabel="Cancel request"
+        title={
+          cancelling === null
+            ? say('screens.requestsList.cancelThisRequest')
+            : say('screens.requestsList.cancelTitle', { title: cancelling.title })
+        }
+        detail={say('screens.requestsList.cancelDetail')}
+        confirmLabel={say('screens.requestsList.cancelConfirm')}
         isDestructive
         isOpen={cancelling !== null}
         onClose={() => {

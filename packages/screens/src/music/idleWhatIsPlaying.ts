@@ -1,4 +1,5 @@
 import type { WhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
+import { say } from '@ValenceI18n/say';
 
 /**
  * What the player bar shows when nothing is playing, so its controls can still be drawn — at rest,
@@ -9,7 +10,7 @@ import type { WhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
  */
 const idleWhatIsPlaying = (volume: number): WhatIsPlaying => ({
   trackId: '',
-  title: 'Nothing is playing',
+  title: say('screens.idleWhatIsPlaying.title'),
   artists: [],
   albumId: '',
   albumTitle: null,

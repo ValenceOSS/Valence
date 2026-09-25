@@ -1,4 +1,6 @@
 import { Check as CheckIcon } from '@keyline-icons/react';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import type { ChapterListProps } from './ChapterList.types';
@@ -13,7 +15,10 @@ import type { ChapterListProps } from './ChapterList.types';
  * @param onOpen - Told to open a chapter in the reader.
  */
 const ChapterList = ({ chapters, read, onOpen }: ChapterListProps) => (
-  <ul aria-label="Chapters" className="flex flex-col divide-y divide-divider">
+  <ul
+    aria-label={say('screens.chapterList.chapters')}
+    className="flex flex-col divide-y divide-divider"
+  >
     {chapters.map((chapter) => {
       const fraction = read.get(chapter.id) ?? 0;
       const isRead = fraction >= 1;
@@ -23,7 +28,7 @@ const ChapterList = ({ chapters, read, onOpen }: ChapterListProps) => (
           <Button
             variant="row"
             size="none"
-            label={`Read ${chapter.title}`}
+            label={say('screens.chapterList.readChapter', { title: chapter.title })}
             hasTooltip={false}
             onClick={() => {
               onOpen(chapter.id);
@@ -40,14 +45,14 @@ const ChapterList = ({ chapters, read, onOpen }: ChapterListProps) => (
               <span className="flex items-center gap-3 font-body text-xs text-text-muted">
                 <span className="shrink-0">
                   {chapter.pageCount === null
-                    ? 'Reflows to fit'
-                    : `${chapter.pageCount.toString()} ${chapter.pageCount === 1 ? 'page' : 'pages'}`}
+                    ? say('screens.chapterList.reflows')
+                    : sayCount('screens.chapterList.pageCount', chapter.pageCount)}
                 </span>
 
                 {fraction > 0 && !isRead ? (
                   <span
                     role="progressbar"
-                    aria-label={`How far through ${chapter.title}`}
+                    aria-label={say('screens.chapterList.howFarThrough', { title: chapter.title })}
                     aria-valuemin={0}
                     aria-valuemax={100}
                     aria-valuenow={Math.round(fraction * 100)}
@@ -61,13 +66,21 @@ const ChapterList = ({ chapters, read, onOpen }: ChapterListProps) => (
                 ) : null}
 
                 {fraction > 0 && !isRead ? (
-                  <span className="tabular-nums">{`${Math.round(fraction * 100).toString()}% read`}</span>
+                  <span className="tabular-nums">
+                    {say('screens.chapterList.percentRead', {
+                      percent: Math.round(fraction * 100).toString(),
+                    })}
+                  </span>
                 ) : null}
               </span>
             </span>
 
             {isRead ? (
-              <span role="img" aria-label="Read" className="shrink-0 text-text-muted">
+              <span
+                role="img"
+                aria-label={say('screens.chapterList.isRead')}
+                className="shrink-0 text-text-muted"
+              >
                 <Icon of={CheckIcon} size={16} />
               </span>
             ) : null}

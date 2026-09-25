@@ -4,6 +4,7 @@ import { useVideoRemote } from '@ValenceClient/video/useVideoRemote';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import type { VideoRemoteBarProps } from './VideoRemoteBar.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The film this device is the remote for, kept in the corner of every page while it plays on the
@@ -28,7 +29,7 @@ const VideoRemoteBar = ({ onOpen }: VideoRemoteBarProps) => {
           <Button
             variant="bare"
             size="none"
-            label={`Open the remote for ${device.label}`}
+            label={say('screens.videoRemoteBar.openRemote', { device: device.label })}
             hasTooltip={false}
             className="flex min-w-0 items-center gap-2"
             onClick={onOpen}
@@ -39,9 +40,11 @@ const VideoRemoteBar = ({ onOpen }: VideoRemoteBarProps) => {
 
             <span className="flex min-w-0 flex-col items-start">
               <span className="max-w-44 truncate text-[0.8125rem] font-semibold text-text">
-                {watching?.title ?? 'Starting…'}
+                {watching?.title ?? say('screens.videoRemoteBar.starting')}
               </span>
-              <span className="max-w-44 truncate text-xs text-text-muted">On {device.label}</span>
+              <span className="max-w-44 truncate text-xs text-text-muted">
+                {say('screens.videoRemoteBar.onDevice', { device: device.label })}
+              </span>
             </span>
           </Button>
 
@@ -49,7 +52,9 @@ const VideoRemoteBar = ({ onOpen }: VideoRemoteBarProps) => {
             variant="ghost"
             size="sm"
             isIconOnly
-            label={isPlaying ? 'Pause' : 'Play'}
+            label={
+              isPlaying ? say('screens.videoRemoteBar.pause') : say('screens.videoRemoteBar.play')
+            }
             disabled={watching === null}
             onClick={() => {
               send({ kind: isPlaying ? 'pause' : 'resume' });

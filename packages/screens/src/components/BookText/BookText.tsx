@@ -81,6 +81,7 @@ const build = (node: Node, key: number, onFollow: BookTextProps['onFollow']): Re
     if (href !== null && /^(https?:|mailto:)/i.test(href)) {
       return createElement(
         'a',
+        // eslint-disable-next-line valence/no-hard-coded-strings -- a link's rel tokens, not words
         { ...props, href, target: '_blank', rel: 'noreferrer noopener' },
         ...children,
       );

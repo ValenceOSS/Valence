@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -104,7 +106,8 @@ const JobTraceDialog = ({
   const lines = askedLines.data?.records ?? [];
   const bars = askedBars.data;
   const labels = new Map(definitions.map((one) => [one.kind, one.label]));
-  const label = run === null ? 'Job run' : describeJobKind(run.kind, labels);
+  const label =
+    run === null ? say('screens.jobTraceDialog.jobRun') : describeJobKind(run.kind, labels);
   const status = run === null ? null : describeJobStatus(run.status);
   const startedAt = run?.startedAtMs ?? run?.createdAtMs ?? lines[0]?.atMs ?? 0;
   const tookMs =
@@ -115,26 +118,35 @@ const JobTraceDialog = ({
   const progress = run?.progress ?? null;
 
   return (
-    <Dialog label="Job trace" isOpen={jobRunId !== null} onClose={onClose} size="stage">
+    <Dialog
+      label={say('screens.jobTraceDialog.dialogLabel')}
+      isOpen={jobRunId !== null}
+      onClose={onClose}
+      size="stage"
+    >
       <DialogTitle
         title={label}
-        detail={jobRunId === null ? undefined : `Run ${jobRunId}`}
+        detail={
+          jobRunId === null ? undefined : say('screens.jobTraceDialog.runId', { id: jobRunId })
+        }
         size="compact"
       />
 
       <DialogContent>
         <div className="flex flex-col gap-4">
           {askedRun.isPending ? (
-            <p className="text-sm text-text-muted">Reading the run…</p>
+            <p className="text-sm text-text-muted">{say('screens.jobTraceDialog.readingRun')}</p>
           ) : run === null ? (
-            <Callout title="This run is no longer in the history" tone="quiet">
-              Runs are kept for a month. Whatever it logged may still be in the log.
+            <Callout title={say('screens.jobTraceDialog.goneTitle')} tone="quiet">
+              {say('screens.jobTraceDialog.goneBody')}
             </Callout>
           ) : (
             <>
               <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-4">
                 <div className="flex flex-col gap-0.5">
-                  <dt className="text-xs text-text-muted">Status</dt>
+                  <dt className="text-xs text-text-muted">
+                    {say('screens.jobTraceDialog.statusTerm')}
+                  </dt>
                   <dd>
                     {status === null ? null : (
                       <Badge size="sm" tone={status.tone}>
@@ -145,17 +157,21 @@ const JobTraceDialog = ({
                 </div>
 
                 <div className="flex flex-col gap-0.5">
-                  <dt className="text-xs text-text-muted">Started</dt>
+                  <dt className="text-xs text-text-muted">
+                    {say('screens.jobTraceDialog.startedTerm')}
+                  </dt>
                   <dd className="tabular-nums text-text">
                     {run.startedAtMs === null
-                      ? 'Waiting to start'
+                      ? say('screens.jobTraceDialog.waitingToStart')
                       : `${describeLogDay(run.startedAtMs)}, ${describeLogTime(run.startedAtMs)}`}
                   </dd>
                 </div>
 
                 <div className="flex flex-col gap-0.5">
                   <dt className="text-xs text-text-muted">
-                    {run.finishedAtMs === null ? 'Running for' : 'Took'}
+                    {run.finishedAtMs === null
+                      ? say('screens.jobTraceDialog.runningForTerm')
+                      : say('screens.jobTraceDialog.tookTerm')}
                   </dt>
                   <dd className="tabular-nums text-text">
                     {tookMs === null ? (
@@ -171,7 +187,9 @@ const JobTraceDialog = ({
                 </div>
 
                 <div className="flex flex-col gap-0.5">
-                  <dt className="text-xs text-text-muted">Lines logged</dt>
+                  <dt className="text-xs text-text-muted">
+                    {say('screens.jobTraceDialog.linesLoggedTerm')}
+                  </dt>
                   <dd className="tabular-nums text-text">
                     <AnimatedNumber value={askedLines.data?.total ?? 0} />
                   </dd>
@@ -180,13 +198,14 @@ const JobTraceDialog = ({
 
               {progress === null ? null : (
                 <ProgressBar
-                  label={`${label} progress`}
+                  label={say('screens.jobTraceDialog.progressLabel', { job: label })}
                   value={progress.total === 0 ? null : progress.processed}
                   max={Math.max(progress.total, 1)}
                   readout={
                     <span>
                       {describeWords(progress.phase)} ·{' '}
-                      <AnimatedNumber value={progress.processed} /> of{' '}
+                      <AnimatedNumber value={progress.processed} />
+                      {say('screens.jobTraceDialog.progressOf')}
                       <AnimatedNumber value={progress.total} />
                     </span>
                   }
@@ -194,17 +213,17 @@ const JobTraceDialog = ({
               )}
 
               {run.errorMessage === null ? null : (
-                <Callout title="How it failed" tone="danger">
+                <Callout title={say('screens.jobTraceDialog.howItFailed')} tone="danger">
                   {run.errorMessage}
                 </Callout>
               )}
 
               {issues.length === 0 ? null : (
                 <Callout
-                  title={`${issues.length.toLocaleString()} issues were recorded`}
+                  title={sayCount('screens.jobTraceDialog.issuesRecorded', issues.length)}
                   tone="warning"
                 >
-                  Open “View issues” on the run for each file and why it was skipped.
+                  {say('screens.jobTraceDialog.issuesBody')}
                 </Callout>
               )}
             </>
@@ -227,21 +246,19 @@ const JobTraceDialog = ({
                 colour: describeLogLevel(level).colour,
               }))}
               bucketMs={bars.bucketMs}
-              label="How much this run logged, over the time it ran"
+              label={say('screens.jobTraceDialog.barsLabel')}
               formatTick={(atMs) => describeLogTick(atMs, bars.untilMs - bars.fromMs)}
               formatSpan={describeLogSpan}
             />
           )}
 
           {askedLines.isPending ? (
-            <p className="text-sm text-text-muted">Reading what it logged…</p>
+            <p className="text-sm text-text-muted">{say('screens.jobTraceDialog.readingLines')}</p>
           ) : lines.length === 0 ? (
-            <p className="text-sm text-text-muted">
-              This run logged nothing, or what it logged has been forgotten.
-            </p>
+            <p className="text-sm text-text-muted">{say('screens.jobTraceDialog.noLines')}</p>
           ) : (
             <ol
-              aria-label="What this run logged, in order"
+              aria-label={say('screens.jobTraceDialog.linesLabel')}
               className="flex max-h-[45vh] flex-col overflow-y-auto rounded-lg bg-[var(--surface-hover)] py-1 font-mono text-xs"
             >
               {lines.map((line) => {
@@ -279,9 +296,9 @@ const JobTraceDialog = ({
       </DialogContent>
 
       <DialogFooter
-        dismiss={{ label: 'Close', onChoose: onClose }}
+        dismiss={{ label: say('common.close'), onChoose: onClose }}
         confirm={{
-          label: 'Open in the log',
+          label: say('screens.jobTraceDialog.openInLog'),
           isDisabled: jobRunId === null,
           onChoose: () => {
             if (jobRunId !== null) {
@@ -295,11 +312,11 @@ const JobTraceDialog = ({
           disabled={lines.length === 0}
           onClick={() => {
             void copy(logsAsText(lines)).then(() => {
-              notify.worked('Copied the trace.');
+              notify.worked(say('screens.jobTraceDialog.copied'));
             });
           }}
         >
-          Copy trace
+          {say('screens.jobTraceDialog.copyTrace')}
         </Button>
       </DialogFooter>
     </Dialog>

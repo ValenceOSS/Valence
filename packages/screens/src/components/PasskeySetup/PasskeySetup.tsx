@@ -14,8 +14,11 @@ import {
 } from '@ValenceClient/session/auth';
 import type { Passkey } from '@ValenceContracts/schemas/Passkey';
 import type { PasskeySetupProps } from './PasskeySetup.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
-const DEFAULT_NAME = 'This device';
+const DEFAULT_NAME: StringKey = 'screens.passkeySetup.defaultName';
 
 /**
  * Lets somebody enrol a passkey on this device and remove ones they no longer have, so they can sign
@@ -27,7 +30,7 @@ const DEFAULT_NAME = 'This device';
 const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
   const [passkeys, setPasskeys] = useState<Passkey[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [name, setName] = useState(DEFAULT_NAME);
+  const [name, setName] = useState(() => say(DEFAULT_NAME));
   const [isAdding, setIsAdding] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -39,7 +42,7 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
     try {
       setPasskeys(await listPasskeys());
     } catch {
-      setMessage('Could not load your passkeys.');
+      setMessage(say('screens.passkeySetup.couldNotLoad'));
     } finally {
       setIsLoading(false);
     }
@@ -54,7 +57,7 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
     setIsAdding(true);
 
     try {
-      const outcome = await registerPasskey(name.trim() === '' ? DEFAULT_NAME : name.trim());
+      const outcome = await registerPasskey(name.trim() === '' ? say(DEFAULT_NAME) : name.trim());
 
       if (outcome.kind === 'failed') {
         setMessage(outcome.reason);
@@ -66,7 +69,7 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
         return;
       }
 
-      setName(DEFAULT_NAME);
+      setName(say(DEFAULT_NAME));
       await refresh();
       onChanged?.();
     } finally {
@@ -80,13 +83,13 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
     const next = renameValue.trim();
 
     if (next === '') {
-      setMessage('Give the passkey a name.');
+      setMessage(say('screens.passkeySetup.giveAName'));
 
       return;
     }
 
     if (!(await renamePasskey(passkey.id, next))) {
-      setMessage('That passkey could not be renamed.');
+      setMessage(say('screens.passkeySetup.couldNotRename'));
 
       return;
     }
@@ -100,7 +103,7 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
     setMessage(null);
 
     if (!(await deletePasskey(passkey.id))) {
-      setMessage('That passkey could not be removed.');
+      setMessage(say('screens.passkeySetup.couldNotRemove'));
 
       return;
     }
@@ -112,18 +115,15 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
   return (
     <div className="flex flex-col">
       <SettingRow
-        title="Passkeys"
-        description={
-          unavailable ??
-          'Sign in with the face, fingerprint or PIN this device already uses, instead of a password.'
-        }
+        title={say('screens.passkeySetup.title')}
+        description={unavailable ?? say('screens.passkeySetup.description')}
       >
         <span className="text-sm text-text-muted">
           {isLoading
-            ? 'Reading…'
+            ? say('screens.passkeySetup.reading')
             : passkeys.length === 0
-              ? 'None yet'
-              : `${passkeys.length.toString()} on this account`}
+              ? say('screens.passkeySetup.noneYet')
+              : sayCount('screens.passkeySetup.onThisAccount', passkeys.length)}
         </span>
       </SettingRow>
 
@@ -151,7 +151,7 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
                     }}
                   >
                     <TextField
-                      label="Passkey name"
+                      label={say('screens.passkeySetup.nameLabel')}
                       value={renameValue}
                       onValueChange={setRenameValue}
                       className="flex-1"
@@ -159,7 +159,7 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
 
                     <Button type="submit" size="sm">
                       <Icon of={CheckFilledIcon} size={16} />
-                      Save
+                      {say('common.save')}
                     </Button>
 
                     <Button
@@ -170,14 +170,14 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
                         setRenamingId(null);
                       }}
                     >
-                      Cancel
+                      {say('common.cancel')}
                     </Button>
                   </form>
                 ) : (
                   <>
                     <span className="flex items-center gap-2 text-sm text-text">
                       <Icon of={KeyIcon} size={16} />
-                      {passkey.name ?? 'Unnamed passkey'}
+                      {passkey.name ?? say('screens.passkeySetup.unnamed')}
                     </span>
 
                     <span className="flex items-center gap-1">
@@ -190,7 +190,7 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
                         }}
                       >
                         <Icon of={PenLineIcon} size={16} />
-                        Rename
+                        {say('screens.passkeySetup.rename')}
                       </Button>
 
                       <Button
@@ -201,7 +201,7 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
                         }}
                       >
                         <Icon of={BinIcon} size={16} />
-                        Remove
+                        {say('screens.passkeySetup.remove')}
                       </Button>
                     </span>
                   </>
@@ -221,7 +221,7 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
             }}
           >
             <TextField
-              label="Passkey name"
+              label={say('screens.passkeySetup.nameLabel')}
               value={name}
               onValueChange={setName}
               className="min-w-56 flex-1"
@@ -229,7 +229,7 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
 
             <Button type="submit" variant="glossy" size="md" isLoading={isAdding}>
               <Icon of={KeyIcon} size={16} />
-              Add a passkey
+              {say('screens.passkeySetup.add')}
             </Button>
           </form>
         ) : null}

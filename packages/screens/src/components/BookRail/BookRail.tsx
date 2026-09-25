@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { say } from '@ValenceI18n/say';
 import { Rail } from '@ValenceUI/Rail';
 import { Skeleton } from '@ValenceUI/Skeleton';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -28,7 +29,7 @@ const BookRail = ({ libraryId, title, onOpen }: BookRailProps) => {
     return (
       <Rail title={title}>
         <CouldNotRead
-          what="That shelf"
+          what={say('screens.bookRail.thatShelf')}
           isTryingAgain={asked.isFetching}
           onTryAgain={() => {
             void asked.refetch();

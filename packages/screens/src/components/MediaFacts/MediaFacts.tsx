@@ -6,6 +6,7 @@ import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import type { ReactNode } from 'react';
 import type { MediaFactsProps } from './MediaFacts.types';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
+import { say } from '@ValenceI18n/say';
 
 const SIZES = {
   inherit: '',
@@ -49,14 +50,25 @@ const MediaFacts = ({
             key: 'episode',
             said: (
               <span className="tabular-nums">
-                EP{describeEpisodeNumbers(media.episodeNumber, media.episodeNumberEnd)}
+                {say('screens.mediaFacts.episode', {
+                  episode: describeEpisodeNumbers(media.episodeNumber, media.episodeNumberEnd),
+                })}
               </span>
             ),
           },
         ]
       : []),
     ...(hasEpisode && typeof media.seasonNumber === 'number'
-      ? [{ key: 'season', said: <span className="tabular-nums">S{media.seasonNumber}</span> }]
+      ? [
+          {
+            key: 'season',
+            said: (
+              <span className="tabular-nums">
+                {say('screens.mediaFacts.season', { season: media.seasonNumber })}
+              </span>
+            ),
+          },
+        ]
       : []),
     ...(rating === null
       ? []

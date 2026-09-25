@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Eye as EyeIcon } from '@keyline-icons/react';
@@ -17,11 +18,23 @@ import { librariesToHide } from '@ValenceClient/library/librariesToHide';
 import { saidWhen } from '@ValenceClient/format/saidWhen';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Hidden } from '@ValenceContracts/schemas/Hidden';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
-const WHAT_IT_IS: Record<Hidden['kind'], string | null> = {
+const WHAT_IT_IS: Record<Hidden['kind'], StringKey | null> = {
   item: null,
-  series: 'Programme',
-  library: 'Whole library',
+  series: 'screens.hiddenPanel.programmeBadge',
+  library: 'screens.hiddenPanel.libraryBadge',
+};
+
+/**
+ * Draws the badge naming what kind of thing was hidden, where it is more than a single title.
+ *
+ * @param kind - What kind of thing was hidden.
+ */
+const badgeOf = (kind: Hidden['kind']) => {
+  const key = WHAT_IT_IS[kind];
+
+  return key === null ? null : <Badge size="sm">{say(key)}</Badge>;
 };
 
 /**
@@ -48,20 +61,18 @@ const HiddenPanel = () => {
     () => [
       {
         id: 'title',
-        header: 'Hidden',
+        header: say('screens.hiddenPanel.hiddenHeader'),
         accessorFn: (entry) => entry.title,
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col gap-0.5">
             <span className="flex flex-wrap items-center gap-2">
               <span className="truncate font-medium text-text">{row.original.title}</span>
 
-              {WHAT_IT_IS[row.original.kind] === null ? null : (
-                <Badge size="sm">{WHAT_IT_IS[row.original.kind]}</Badge>
-              )}
+              {badgeOf(row.original.kind)}
             </span>
 
             <span className="truncate text-xs text-text-muted">
-              Hidden {saidWhen(row.original.hiddenAt)}
+              {say('screens.hiddenPanel.hiddenWhen', { when: saidWhen(row.original.hiddenAt) })}
             </span>
           </span>
         ),
@@ -76,7 +87,7 @@ const HiddenPanel = () => {
               isIconOnly
               variant="ghost"
               size="sm"
-              label={`Bring ${row.original.title} back`}
+              label={say('screens.hiddenPanel.bringBack', { title: row.original.title })}
               onClick={() => {
                 hiding.show({ kind: row.original.kind, subjectId: row.original.subjectId });
               }}
@@ -91,22 +102,19 @@ const HiddenPanel = () => {
   );
 
   return (
-    <PanelCard title="Hidden" isFlush>
-      <p className="px-4 pt-4 text-sm text-text-muted">
-        Things you have taken out of your own browsing. Anything here can be brought back.
-      </p>
+    <PanelCard title={say('screens.hiddenPanel.heading')} isFlush>
+      <p className="px-4 pt-4 text-sm text-text-muted">{say('screens.hiddenPanel.lede')}</p>
 
       <div className="flex flex-col gap-2 px-4 pt-4">
-        <p className="text-sm font-medium text-text">Whole libraries</p>
-
-        <p className="text-xs text-text-muted">
-          The quickest of the three. Somebody who never watches television hides one thing here and
-          their home page becomes theirs.
+        <p className="text-sm font-medium text-text">
+          {say('screens.hiddenPanel.librariesHeading')}
         </p>
+
+        <p className="text-xs text-text-muted">{say('screens.hiddenPanel.librariesLede')}</p>
 
         <div className="flex flex-wrap gap-2 pt-1">
           {shelves.length === 0 ? (
-            <p className="text-sm text-text-muted">There are no libraries yet.</p>
+            <p className="text-sm text-text-muted">{say('screens.hiddenPanel.noLibraries')}</p>
           ) : (
             shelves.map((shelf) => {
               const isHidden = hiding.isHidden({ kind: 'library', subjectId: shelf.id });
@@ -119,8 +127,8 @@ const HiddenPanel = () => {
                   aria-pressed={isHidden}
                   label={
                     isHidden
-                      ? `Bring the ${shelf.name} library back`
-                      : `Hide the whole ${shelf.name} library`
+                      ? say('screens.hiddenPanel.bringLibraryBack', { name: shelf.name })
+                      : say('screens.hiddenPanel.hideLibrary', { name: shelf.name })
                   }
                   onClick={() => {
                     if (isHidden) {
@@ -144,20 +152,20 @@ const HiddenPanel = () => {
 
       {asked.isError ? (
         <CouldNotRead
-          what="What you have hidden"
+          what={say('screens.hiddenPanel.couldNotRead')}
           isTryingAgain={asked.isFetching}
           onTryAgain={() => {
             void asked.refetch();
           }}
         />
       ) : asked.isPending ? (
-        <Spinner isCentered label="Reading what you have hidden" size="sm" />
+        <Spinner isCentered label={say('screens.hiddenPanel.loading')} size="sm" />
       ) : (
         <DataTable
-          label="Things you have hidden"
+          label={say('screens.hiddenPanel.tableLabel')}
           columns={columns}
           rows={hiding.entries}
-          emptyMessage="You have not hidden anything. Hiding something from its page puts it here."
+          emptyMessage={say('screens.hiddenPanel.empty')}
         />
       )}
     </PanelCard>
