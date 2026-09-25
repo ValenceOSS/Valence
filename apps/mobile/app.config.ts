@@ -41,6 +41,7 @@ const config: ExpoConfig = {
     icon: '../../design/valence-icon.icon',
     supportsTablet: false,
     infoPlist: {
+      CFBundleDisplayName: 'Valence: Media Client',
       UIBackgroundModes: ['audio'],
       NSLocalNetworkUsageDescription:
         'Valence needs this to find and reach a server on your own network, which is where a self-hosted one usually is.',

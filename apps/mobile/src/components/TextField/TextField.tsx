@@ -4,20 +4,24 @@ import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
 import type { TextFieldProps } from './TextField.types';
+import { Words } from '@ValenceMobile/components/Words/Words';
+import { theColours } from '@ValenceMobile/theme/theColours';
 
 const styles = StyleSheet.create({
   action: { paddingHorizontal: 16, paddingVertical: 14 },
   divider: { alignSelf: 'stretch', marginVertical: 12, width: StyleSheet.hairlineWidth },
   field: {
-    borderRadius: 14,
-    borderWidth: 1,
-    fontFamily: FONTS.sans.semibold,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    fontFamily: FONTS.body.medium,
     fontSize: 16,
-    padding: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
   },
+  labelled: { gap: 8 },
   holding: { alignItems: 'center', flexDirection: 'row', padding: 0 },
   bare: { borderWidth: 0, flex: 1, paddingHorizontal: 0, paddingVertical: 12 },
-  inside: { borderWidth: 0, flex: 1 },
+  inside: { backgroundColor: 'transparent', borderWidth: 0, flex: 1 },
 });
 
 /**
@@ -36,6 +40,8 @@ const styles = StyleSheet.create({
  * @param action - Another way to fill it, offered at its end past a divider — a camera for a code
  *   that is on a screen across the room.
  * @param isBare - Whether it is drawn without its own box, inside something that already is one.
+ * @param isLabelHidden - Whether its label is left to a screen reader, for a field such as search
+ *   whose purpose is already plain from where it sits.
  */
 const TextField = ({
   label,
@@ -46,10 +52,15 @@ const TextField = ({
   keyboard = 'default',
   onSubmit,
   action,
+  isLabelHidden = false,
   isBare = false,
 }: TextFieldProps) => {
   const colours = useTheColours();
-  const ground = { backgroundColor: colours.surfaceRaised, borderColor: colours.border };
+  const isDark = colours.surface === theColours.dark.surface;
+  const ground = {
+    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(48, 60, 81, 0.05)',
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : colours.border,
+  };
 
   const typing = (
     <TextInput
@@ -70,24 +81,38 @@ const TextField = ({
         action !== undefined && styles.inside,
       ]}
       value={value}
-      {...(placeholder === undefined ? {} : { placeholder })}
+      {...(placeholder === undefined || (placeholder === label && !isLabelHidden && !isBare)
+        ? {}
+        : { placeholder })}
       {...(onSubmit === undefined ? {} : { onSubmitEditing: onSubmit })}
     />
   );
 
-  if (action === undefined) {
-    return typing;
+  const boxed =
+    action === undefined ? (
+      typing
+    ) : (
+      <View style={[styles.field, styles.holding, ground]}>
+        {typing}
+        <View style={[styles.divider, { backgroundColor: colours.border }]} />
+        <Button tone="bare" label={action.label} onPress={action.onPress}>
+          <View style={styles.action}>
+            <Icon of={action.icon} colour={colours.text} />
+          </View>
+        </Button>
+      </View>
+    );
+
+  if (isBare || isLabelHidden) {
+    return boxed;
   }
 
   return (
-    <View style={[styles.field, styles.holding, ground]}>
-      {typing}
-      <View style={[styles.divider, { backgroundColor: colours.border }]} />
-      <Button tone="bare" label={action.label} onPress={action.onPress}>
-        <View style={styles.action}>
-          <Icon of={action.icon} colour={colours.text} />
-        </View>
-      </Button>
+    <View style={styles.labelled}>
+      <Words size="small" isStrong>
+        {label}
+      </Words>
+      {boxed}
     </View>
   );
 };

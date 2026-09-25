@@ -173,7 +173,17 @@ const TheProfile = () => {
         </View>
       </View>
 
-      <TextField label="Name" value={draft.name} onValueChange={setName} placeholder="Your name" />
+      <AGroup title="Name">
+        <View style={styles.row}>
+          <TextField
+            label="Name"
+            value={draft.name}
+            onValueChange={setName}
+            placeholder="Your name"
+            isLabelHidden
+          />
+        </View>
+      </AGroup>
 
       <AGroup title="Picture">
         <ScrollView

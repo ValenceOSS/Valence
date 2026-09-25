@@ -1,4 +1,5 @@
 import { Check, Monitor, ScanQrCode, X } from '@keyline-icons/react-native';
+import { AGroup } from '@ValenceMobile/components/AGroup/AGroup';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
 import { answerDeviceRequest, readDeviceRequest } from '@ValenceClient/session/auth';
@@ -26,7 +27,7 @@ const TROUBLE: Record<Trouble, string> = {
 const A_HOST = /^[a-z][a-z0-9+.-]*:\/\/([^/?#]+)/iu;
 
 const styles = StyleSheet.create({
-  section: { gap: 12 },
+  section: { gap: 12, padding: 16 },
 });
 
 /**
@@ -120,101 +121,102 @@ const SignInATelevision = ({ startsWith, askedFrom = null }: SignInATelevisionPr
   };
 
   return (
-    <View style={styles.section}>
-      <Words size="heading">Sign in a television</Words>
-
-      {standing === 'allowed' || standing === 'refused' ? (
-        <>
-          <Words>
-            {standing === 'allowed'
-              ? 'Done. The television should be watching in a moment.'
-              : 'Turned down. Nothing was signed in, and the code on that screen no longer works.'}
-          </Words>
-          <Button tone="quiet" onPress={again}>
-            Another television
-          </Button>
-        </>
-      ) : standing === 'reading' ? (
-        <ActivityIndicator color={colours.textMuted} />
-      ) : standing === 'waiting' ? (
-        <>
-          <Words>
-            A television is asking to sign in as you. Only say yes if it is the one in front of you.
-          </Words>
-          <Button
-            icon={Check}
-            isBusy={isAnswering}
-            onPress={() => {
-              void answer(true);
-            }}
-          >
-            Yes, that is mine
-          </Button>
-          <Button
-            tone="ghost"
-            icon={X}
-            isDisabled={isAnswering}
-            onPress={() => {
-              void answer(false);
-            }}
-          >
-            No, I did not ask for this
-          </Button>
-        </>
-      ) : (
-        <>
-          <Words tone="muted">
-            A television showing a code can be signed in from here, as you. Type the code, or scan
-            the QR code beside it.
-          </Words>
-          <TextField
-            label="The code on the television"
-            value={typed}
-            onValueChange={setTyped}
-            placeholder="ABCD-1234"
-            onSubmit={() => {
-              if (tidyTheCode(typed) !== '') {
-                void check(tidyTheCode(typed));
-              }
-            }}
-            action={{
-              icon: ScanQrCode,
-              label: 'Scan the QR code',
-              onPress: () => {
-                void scan();
-              },
-            }}
-          />
-          {trouble === null ? null : <Words tone="danger">{TROUBLE[trouble]}</Words>}
-          {trouble === 'noCamera' ? (
+    <AGroup title="Sign in a television">
+      <View style={styles.section}>
+        {standing === 'allowed' || standing === 'refused' ? (
+          <>
+            <Words>
+              {standing === 'allowed'
+                ? 'Done. The television should be watching in a moment.'
+                : 'Turned down. Nothing was signed in, and the code on that screen no longer works.'}
+            </Words>
+            <Button tone="quiet" onPress={again}>
+              Another television
+            </Button>
+          </>
+        ) : standing === 'reading' ? (
+          <ActivityIndicator color={colours.textMuted} />
+        ) : standing === 'waiting' ? (
+          <>
+            <Words>
+              A television is asking to sign in as you. Only say yes if it is the one in front of
+              you.
+            </Words>
             <Button
-              tone="quiet"
+              icon={Check}
+              isBusy={isAnswering}
               onPress={() => {
-                void Linking.openSettings();
+                void answer(true);
               }}
             >
-              Open Settings
+              Yes, that is mine
             </Button>
-          ) : null}
-          {standing === 'wrong' ? (
-            <Words tone="danger">
-              {elsewhere === null
-                ? 'That code has run out, or there is no television waiting on it.'
-                : `That television is asking ${elsewhere}, and this phone uses a different server.`}
+            <Button
+              tone="ghost"
+              icon={X}
+              isDisabled={isAnswering}
+              onPress={() => {
+                void answer(false);
+              }}
+            >
+              No, I did not ask for this
+            </Button>
+          </>
+        ) : (
+          <>
+            <Words tone="muted">
+              A television showing a code can be signed in from here, as you. Type the code, or scan
+              the QR code beside it.
             </Words>
-          ) : null}
-          <Button
-            icon={Monitor}
-            isDisabled={tidyTheCode(typed) === ''}
-            onPress={() => {
-              void check(tidyTheCode(typed));
-            }}
-          >
-            Continue
-          </Button>
-        </>
-      )}
-    </View>
+            <TextField
+              label="The code on the television"
+              value={typed}
+              onValueChange={setTyped}
+              placeholder="ABCD-1234"
+              onSubmit={() => {
+                if (tidyTheCode(typed) !== '') {
+                  void check(tidyTheCode(typed));
+                }
+              }}
+              action={{
+                icon: ScanQrCode,
+                label: 'Scan the QR code',
+                onPress: () => {
+                  void scan();
+                },
+              }}
+            />
+            {trouble === null ? null : <Words tone="danger">{TROUBLE[trouble]}</Words>}
+            {trouble === 'noCamera' ? (
+              <Button
+                tone="quiet"
+                onPress={() => {
+                  void Linking.openSettings();
+                }}
+              >
+                Open Settings
+              </Button>
+            ) : null}
+            {standing === 'wrong' ? (
+              <Words tone="danger">
+                {elsewhere === null
+                  ? 'That code has run out, or there is no television waiting on it.'
+                  : `That television is asking ${elsewhere}, and this phone uses a different server.`}
+              </Words>
+            ) : null}
+            <Button
+              icon={Monitor}
+              isDisabled={tidyTheCode(typed) === ''}
+              onPress={() => {
+                void check(tidyTheCode(typed));
+              }}
+            >
+              Continue
+            </Button>
+          </>
+        )}
+      </View>
+    </AGroup>
   );
 };
 

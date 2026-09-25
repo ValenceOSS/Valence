@@ -1,4 +1,5 @@
 import { Bin, PenLine } from '@keyline-icons/react-native';
+import { AGroup } from '@ValenceMobile/components/AGroup/AGroup';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator, Alert, Linking, StyleSheet, View } from 'react-native';
@@ -25,7 +26,7 @@ const A_SECRET = /[?&]secret=([^&]+)/u;
 const styles = StyleSheet.create({
   act: { padding: 10 },
   row: { alignItems: 'center', flexDirection: 'row', gap: 6 },
-  section: { gap: 12 },
+  section: { gap: 10, padding: 16 },
   words: { flex: 1, gap: 2 },
 });
 
@@ -118,9 +119,9 @@ const TheSecurity = () => {
     enrollment === null ? null : decodeURIComponent(A_SECRET.exec(enrollment.totpURI)?.[1] ?? '');
 
   return (
-    <>
+    <AGroup title="Sign-in">
       <View style={styles.section}>
-        <Words size="heading">Two-step sign in</Words>
+        <Words isStrong>Two-step sign in</Words>
         <Words tone="muted">
           {isOn
             ? 'Your account asks for a code from your authenticator app when you sign in.'
@@ -224,7 +225,7 @@ const TheSecurity = () => {
       </View>
 
       <View style={styles.section}>
-        <Words size="heading">Passkeys</Words>
+        <Words isStrong>Passkeys</Words>
 
         {passkeys.isPending ? <ActivityIndicator color={colours.textMuted} /> : null}
 
@@ -296,7 +297,7 @@ const TheSecurity = () => {
           );
         })}
       </View>
-    </>
+    </AGroup>
   );
 };
 
