@@ -19,6 +19,14 @@ describe('Icon', () => {
     expect(drawn.getByText('32 #ffffff')).toBeTruthy();
   });
 
+  it('moves a play triangle a little right, so it looks centred, and leaves others alone', async () => {
+    const play = await render(<Icon of={Play} size={100} colour="#ffffff" />);
+    const other = await render(<Icon of={Traced} size={50} colour="#ffffff" />);
+
+    expect(play.toJSON()).toHaveProperty('props.style.transform', [{ translateX: 5 }]);
+    expect(other.toJSON()).not.toHaveProperty('props.style.transform');
+  });
+
   it('draws one of the real icons', async () => {
     const drawn = await render(<Icon of={Play} colour="#ffffff" />);
 
