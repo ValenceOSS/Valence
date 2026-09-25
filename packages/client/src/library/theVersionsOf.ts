@@ -1,4 +1,5 @@
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The versions of a title somebody can choose between, as every client names them: the title itself
@@ -12,8 +13,11 @@ const theVersionsOf = (
   mediaId: string,
   versions: readonly Pick<MediaSummary, 'id' | 'versionLabel'>[],
 ): { id: string; label: string }[] => [
-  { id: mediaId, label: 'Original' },
-  ...versions.map((one) => ({ id: one.id, label: one.versionLabel ?? 'Another version' })),
+  { id: mediaId, label: say('client.theVersionsOf.original') },
+  ...versions.map((one) => ({
+    id: one.id,
+    label: one.versionLabel ?? say('client.theVersionsOf.another'),
+  })),
 ];
 
 export { theVersionsOf };

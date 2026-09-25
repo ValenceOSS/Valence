@@ -3,6 +3,7 @@ import { inBroadcastOrder } from '@ValenceCore/functions/inBroadcastOrder';
 import { isWorthResuming } from '@ValenceContracts/schemas/WatchProgress';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
+import { say } from '@ValenceI18n/say';
 
 type Rail = {
   id: string;
@@ -54,7 +55,7 @@ const groupIntoRails = (
     .slice(0, RAIL_LIMIT);
 
   if (resuming.length > 0) {
-    rails.push({ id: 'resume', title: 'Continue watching', items: resuming });
+    rails.push({ id: 'resume', title: say('client.homeRows.continueWatching'), items: resuming });
   }
   const recentThreshold = now - RECENT_DAYS * 24 * 60 * 60 * 1000;
 
@@ -83,7 +84,7 @@ const groupIntoRails = (
     .slice(0, RAIL_LIMIT);
 
   if (recent.length > 0) {
-    rails.push({ id: 'recent', title: 'Recently added', items: recent });
+    rails.push({ id: 'recent', title: say('client.homeRows.recentlyAdded'), items: recent });
   }
 
   const series = new Map<string, MediaSummary[]>();
@@ -126,7 +127,10 @@ const groupIntoRails = (
   if (films.length > 0) {
     rails.push({
       id: 'everything',
-      title: rails.length === 0 ? 'Everything' : 'Films',
+      title:
+        rails.length === 0
+          ? say('client.groupIntoRails.everything')
+          : say('client.groupIntoRails.films'),
       items: [...films].sort((left, right) => left.title.localeCompare(right.title)),
     });
   }

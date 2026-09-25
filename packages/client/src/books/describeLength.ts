@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+
 /**
  * Says how long something lasts in hours and minutes, the way a person would round it.
  *
@@ -10,10 +12,15 @@ const describeLength = (seconds: number): string => {
   const over = minutes % 60;
 
   if (hours === 0) {
-    return `${minutes.toString()} min`;
+    return say('client.describeLength.minutes', { minutes: minutes.toString() });
   }
 
-  return over === 0 ? `${hours.toString()} h` : `${hours.toString()} h ${over.toString()} min`;
+  return over === 0
+    ? say('client.describeLength.hours', { hours: hours.toString() })
+    : say('client.describeLength.hoursAndMinutes', {
+        hours: hours.toString(),
+        minutes: over.toString(),
+      });
 };
 
 export { describeLength };

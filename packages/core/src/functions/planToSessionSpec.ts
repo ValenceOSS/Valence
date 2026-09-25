@@ -2,6 +2,7 @@ import type { PlaybackPlan } from '@ValenceContracts/schemas/PlaybackPlan';
 import { selectEncoder } from '@ValenceCore/functions/selectEncoder';
 import type { Capabilities } from '@ValenceCore/functions/selectEncoder';
 import type { SegmentContainer } from './segmentContainerFor';
+import { say } from '@ValenceI18n/say';
 
 type ToneMapping = 'zscale' | 'libplacebo' | 'unavailable';
 
@@ -92,9 +93,7 @@ const planToneMapping = (
   if (capability === 'unavailable') {
     return {
       deliveredRange: sourceRange,
-      warnings: [
-        `This server cannot tone map ${sourceRange} to SDR, so the stream keeps its original range instead of being converted. A client that colour manages will show it correctly; one that does not will show it washed out. Its FFmpeg build is missing the zscale or libplacebo filter.`,
-      ],
+      warnings: [say('core.planToSessionSpec.cannotToneMap', { range: sourceRange })],
     };
   }
 
@@ -140,7 +139,9 @@ const planToSessionSpec = ({
   const subtitleWarnings =
     plan.subtitles.kind === 'burnIn' && !canBurn
       ? [
-          `This server cannot burn in ${isImageBased ? 'image' : 'text'} subtitles, so they will not appear. Its FFmpeg build is missing the ${isImageBased ? 'overlay' : 'subtitles'} filter.`,
+          isImageBased
+            ? say('core.planToSessionSpec.cannotBurnImageSubtitles')
+            : say('core.planToSessionSpec.cannotBurnTextSubtitles'),
         ]
       : [];
 
@@ -193,7 +194,7 @@ const planToSessionSpec = ({
   if (chosen === null) {
     return {
       kind: 'unsupported',
-      reason: `This server has no working encoder for ${targetCodec}.`,
+      reason: say('core.planToSessionSpec.noEncoder', { codec: targetCodec }),
     };
   }
 

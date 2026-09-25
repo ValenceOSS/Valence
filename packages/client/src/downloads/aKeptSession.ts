@@ -1,6 +1,5 @@
 import type { StartedSession } from '@ValenceClient/playback/startPlaybackSession';
-
-const AS_IT_IS = { code: 'ClientSupportsSource', detail: 'Kept on this device.' } as const;
+import { say } from '@ValenceI18n/say';
 
 /**
  * A session for a file already on this device, so the ordinary player can play it without asking
@@ -10,19 +9,23 @@ const AS_IT_IS = { code: 'ClientSupportsSource', detail: 'Kept on this device.' 
  * @param url - Where the player reads it from on this device.
  * @returns A session that plays the file directly.
  */
-const aKeptSession = (mediaId: string, url: string): StartedSession => ({
-  sessionId: `kept-${mediaId}`,
-  delivery: { kind: 'direct', url },
-  mode: 'direct',
-  plan: {
-    mediaId,
-    container: { kind: 'passthrough', reason: AS_IT_IS },
-    video: { kind: 'passthrough', reason: AS_IT_IS },
-    audio: { kind: 'passthrough', streamIndex: null, reason: AS_IT_IS },
-    subtitles: { kind: 'none', reason: AS_IT_IS },
-  },
-  warnings: [],
-  reuse: null,
-});
+const aKeptSession = (mediaId: string, url: string): StartedSession => {
+  const asItIs = { code: 'ClientSupportsSource', detail: say('client.aKeptSession.kept') } as const;
+
+  return {
+    sessionId: `kept-${mediaId}`,
+    delivery: { kind: 'direct', url },
+    mode: 'direct',
+    plan: {
+      mediaId,
+      container: { kind: 'passthrough', reason: asItIs },
+      video: { kind: 'passthrough', reason: asItIs },
+      audio: { kind: 'passthrough', streamIndex: null, reason: asItIs },
+      subtitles: { kind: 'none', reason: asItIs },
+    },
+    warnings: [],
+    reuse: null,
+  };
+};
 
 export { aKeptSession };

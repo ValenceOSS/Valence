@@ -1,62 +1,56 @@
 import type { Permission } from '@ValenceContracts/schemas/Permission';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
-const DETAILS: Record<Permission, string> = {
-  administrator:
-    'Grants every permission there is, including anything added in a later release. Nothing else on this list needs granting alongside it.',
+const DETAILS: Record<Permission, StringKey> = {
+  administrator: 'client.describePermissionDetail.administrator',
 
-  'library.create': 'Point Valence at a new folder of media and add it as a library.',
-  'library.edit':
-    'Change a library’s settings — its name, which languages it prefers, how it scans.',
-  'library.delete': 'Remove a library and forget everything scanned from it.',
+  'library.create': 'client.describePermissionDetail.library.create',
+  'library.edit': 'client.describePermissionDetail.library.edit',
+  'library.delete': 'client.describePermissionDetail.library.delete',
 
-  'jobs.run': 'Start a job, such as a scan, by hand rather than waiting for it to run on its own.',
-  'jobs.schedule': 'Change when a recurring job runs, or turn its schedule off.',
-  'jobs.runDestructive':
-    'Run a reset or a full rebuild — the jobs that throw away what is stored and start again.',
+  'jobs.run': 'client.describePermissionDetail.jobs.run',
+  'jobs.schedule': 'client.describePermissionDetail.jobs.schedule',
+  'jobs.runDestructive': 'client.describePermissionDetail.jobs.runDestructive',
 
-  'media.rescan': 'Ask Valence to read one item again, picking up a file or metadata change.',
-  'media.delete': 'Delete a media file from disk, not just from the library.',
-  'media.reencode':
-    'Re-encode media at a chosen quality, either replacing the original file or keeping the result beside it. Replacing destroys the original once it has been reviewed, and nothing brings back what a lossy encoder discarded.',
-  'media.override': 'Correct an item’s metadata by hand when the catalogue matched it wrong.',
-  'media.artwork': 'Replace an item’s poster or backdrop with a different picture.',
-  'media.hide': 'Hide an item from every profile, not only their own.',
+  'media.rescan': 'client.describePermissionDetail.media.rescan',
+  'media.delete': 'client.describePermissionDetail.media.delete',
+  'media.reencode': 'client.describePermissionDetail.media.reencode',
+  'media.override': 'client.describePermissionDetail.media.override',
+  'media.artwork': 'client.describePermissionDetail.media.artwork',
+  'media.hide': 'client.describePermissionDetail.media.hide',
 
-  'sharing.link': 'Create a link that lets somebody outside the household watch one thing.',
-  'sharing.party': 'Start a watch party, playing one stream to everybody who joins it.',
-  'sharing.manage': 'See every share link anybody has created, and withdraw any of them.',
+  'sharing.link': 'client.describePermissionDetail.sharing.link',
+  'sharing.party': 'client.describePermissionDetail.sharing.party',
+  'sharing.manage': 'client.describePermissionDetail.sharing.manage',
 
-  'streaming.view': 'See who is watching right now, and what.',
-  'streaming.stop': 'End somebody else’s stream.',
-  'streaming.pause': 'Pause somebody else’s stream from where they are watching.',
-  'streaming.message': 'Send a message that appears over somebody else’s stream.',
+  'streaming.view': 'client.describePermissionDetail.streaming.view',
+  'streaming.stop': 'client.describePermissionDetail.streaming.stop',
+  'streaming.pause': 'client.describePermissionDetail.streaming.pause',
+  'streaming.message': 'client.describePermissionDetail.streaming.message',
 
-  'download.media': 'Save a copy of media to a device, for watching without a connection.',
+  'download.media': 'client.describePermissionDetail.download.media',
 
-  'requests.ask': 'Ask for a film or series the server does not have yet.',
-  'requests.askMusic': 'Ask for an artist or album the server does not have yet.',
-  'requests.autoApprove':
-    'Have what they ask for searched for and downloaded without waiting for somebody to approve it.',
-  'requests.viewAll': 'See what everybody has asked for, and how each download is getting on.',
-  'requests.approve': 'Approve or turn down what other people have asked for.',
-  'requests.manage':
-    'Set up the indexers, download clients and quality profiles requesting uses, and see the VPN.',
+  'requests.ask': 'client.describePermissionDetail.requests.ask',
+  'requests.askMusic': 'client.describePermissionDetail.requests.askMusic',
+  'requests.autoApprove': 'client.describePermissionDetail.requests.autoApprove',
+  'requests.viewAll': 'client.describePermissionDetail.requests.viewAll',
+  'requests.approve': 'client.describePermissionDetail.requests.approve',
+  'requests.manage': 'client.describePermissionDetail.requests.manage',
 
-  'account.invite': 'Invite somebody new to sign in and hold an account.',
-  'account.manage': 'Rename, suspend or remove an existing account.',
-  'account.ban': 'Ban an account, ending its sessions and refusing it a way back in.',
-  'account.roles': 'Create roles and choose which permissions each one grants.',
-  'account.profiles': 'Add, rename or remove another account’s profiles on their behalf.',
-  'account.security':
-    'Reset another account’s password, sign it out everywhere, and see where it is signed in.',
-  'account.keys':
-    'Hold an API key, for reaching Valence from a script or a device outside the browser.',
+  'account.invite': 'client.describePermissionDetail.account.invite',
+  'account.manage': 'client.describePermissionDetail.account.manage',
+  'account.ban': 'client.describePermissionDetail.account.ban',
+  'account.roles': 'client.describePermissionDetail.account.roles',
+  'account.profiles': 'client.describePermissionDetail.account.profiles',
+  'account.security': 'client.describePermissionDetail.account.security',
+  'account.keys': 'client.describePermissionDetail.account.keys',
 
-  'server.settings': 'Change server-wide settings, such as hardware acceleration and quality.',
-  'server.backup': 'Start a backup of the server, or restore one.',
-  'server.logs': 'Read the server’s log, including entries from before this account signed in.',
-  'server.monitor': 'See what the server is doing — its load, its memory, what it is encoding.',
-  'server.webhooks': 'Have the server call out to another address when something happens.',
+  'server.settings': 'client.describePermissionDetail.server.settings',
+  'server.backup': 'client.describePermissionDetail.server.backup',
+  'server.logs': 'client.describePermissionDetail.server.logs',
+  'server.monitor': 'client.describePermissionDetail.server.monitor',
+  'server.webhooks': 'client.describePermissionDetail.server.webhooks',
 };
 
 /**
@@ -66,6 +60,6 @@ const DETAILS: Record<Permission, string> = {
  *
  * @param permission The permission as the server names it.
  */
-const describePermissionDetail = (permission: Permission): string => DETAILS[permission];
+const describePermissionDetail = (permission: Permission): string => say(DETAILS[permission]);
 
 export { describePermissionDetail };

@@ -13,6 +13,7 @@ import type {
   WebhookSubscribableEvent,
   WebhookSubscription,
 } from '@ValenceContracts/schemas/Webhook';
+import { say } from '@ValenceI18n/say';
 
 const CreatedWebhookSchema = WebhookSubscriptionSchema.extend({ secret: z.string() });
 
@@ -67,7 +68,7 @@ const createWebhook = async (
   }).catch(() => null);
 
   if (response === null) {
-    return { created: null, refusal: { message: 'The server could not be reached.' } };
+    return { created: null, refusal: { message: say('client.serverProblem.unreachable') } };
   }
 
   const refusal = await readRefusal(response);
@@ -105,7 +106,7 @@ const changeWebhook = async (id: string, change: WebhookChange): Promise<Refusal
   }).catch(() => null);
 
   return response === null
-    ? { message: 'The server could not be reached.' }
+    ? { message: say('client.serverProblem.unreachable') }
     : readRefusal(response);
 };
 
@@ -123,7 +124,7 @@ const deleteWebhook = async (id: string): Promise<Refusal> => {
   }).catch(() => null);
 
   return response === null
-    ? { message: 'The server could not be reached.' }
+    ? { message: say('client.serverProblem.unreachable') }
     : readRefusal(response);
 };
 
@@ -140,7 +141,7 @@ const testWebhook = async (id: string): Promise<Refusal> => {
   }).catch(() => null);
 
   return response === null
-    ? { message: 'The server could not be reached.' }
+    ? { message: say('client.serverProblem.unreachable') }
     : readRefusal(response);
 };
 
@@ -173,7 +174,7 @@ const redeliverWebhook = async (id: string, deliveryId: string): Promise<Refusal
   }).catch(() => null);
 
   return response === null
-    ? { message: 'The server could not be reached.' }
+    ? { message: say('client.serverProblem.unreachable') }
     : readRefusal(response);
 };
 

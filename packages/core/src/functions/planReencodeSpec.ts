@@ -3,6 +3,7 @@ import { selectEncoder } from '@ValenceCore/functions/selectEncoder';
 import type { Capabilities } from '@ValenceCore/functions/selectEncoder';
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
 import type { ReencodeSettings } from '@ValenceContracts/schemas/Reencode';
+import { say } from '@ValenceI18n/say';
 
 const SEGMENT_SECONDS = 4;
 
@@ -106,7 +107,7 @@ const planReencodeSpec = ({
   if (missingAudio !== undefined && missingAudio.kind === 'encode') {
     return {
       kind: 'unsupported',
-      reason: `This server has no encoder for ${missingAudio.codec} audio.`,
+      reason: say('core.planReencodeSpec.noAudioEncoder', { codec: missingAudio.codec }),
     };
   }
 
@@ -157,7 +158,7 @@ const planReencodeSpec = ({
   if (encoder === null) {
     return {
       kind: 'unsupported',
-      reason: `This server has no encoder for ${plan.video.codec} video.`,
+      reason: say('core.planReencodeSpec.noVideoEncoder', { codec: plan.video.codec }),
     };
   }
 

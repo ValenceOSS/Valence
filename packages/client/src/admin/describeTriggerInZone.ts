@@ -1,4 +1,5 @@
 import type { ScheduleTrigger } from '@ValenceClient/admin/fetchAdmin';
+import { say } from '@ValenceI18n/say';
 
 type DescribeTriggerInZoneOptions = {
   trigger: ScheduleTrigger;
@@ -112,7 +113,7 @@ const describeTriggerInZone = ({
   }).format(instant);
 
   if (trigger.kind === 'daily') {
-    return `${clock} your time`;
+    return say('client.describeTriggerInZone.daily', { time: clock });
   }
 
   const day = new Intl.DateTimeFormat('en-GB', {
@@ -120,7 +121,7 @@ const describeTriggerInZone = ({
     weekday: 'long',
   }).format(instant);
 
-  return `${day} at ${clock} your time`;
+  return say('client.describeTriggerInZone.weekly', { day, time: clock });
 };
 
 export type { DescribeTriggerInZoneOptions };

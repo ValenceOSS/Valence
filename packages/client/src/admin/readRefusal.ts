@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { say } from '@ValenceI18n/say';
 
 type Refusal = { message: string } | null;
 
@@ -21,8 +22,7 @@ const readRefusal = async (response: Response): Promise<Refusal> => {
     .catch(() => null);
 
   return {
-    message:
-      body?.success === true ? body.data.error : 'That could not be done. Try again in a moment.',
+    message: body?.success === true ? body.data.error : say('client.readRefusal.couldNotBeDone'),
   };
 };
 

@@ -1,4 +1,5 @@
 import type { Book, ChapterMark } from '@ValenceContracts/schemas/Book';
+import { say } from '@ValenceI18n/say';
 
 type ListeningAudio = {
   src: string;
@@ -75,8 +76,6 @@ type AudiobookPlayer = {
 };
 
 const SAVES_EVERY_MS = 15_000;
-
-const COULD_NOT_PLAY = 'That track would not play.';
 
 const IDLE: AudiobookPlayerState = {
   book: null,
@@ -351,7 +350,11 @@ const createAudiobookPlayer = ({
 
   audio.addEventListener('error', () => {
     if (state.book !== null && audio.src !== '') {
-      change({ isPlaying: false, isLoading: false, problem: COULD_NOT_PLAY });
+      change({
+        isPlaying: false,
+        isLoading: false,
+        problem: say('client.createAudiobookPlayer.couldNotPlay'),
+      });
     }
   });
 

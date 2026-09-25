@@ -1,16 +1,18 @@
 import type { DownloadQuality } from '@ValenceContracts/schemas/Download';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
 const MEANINGS = {
-  original: 'Exactly what is on the server. The best it gets, and by far the largest.',
-  '2160p': 'Every pixel the film has, on a screen large enough to show them.',
-  '1440p': 'Sharper than most streaming services. Only worth it on a big screen.',
-  '1080p': 'About what a streaming service gives you. Looks great on a TV or a laptop.',
-  '720p': 'Hard to tell apart from 1080p on a phone or a tablet.',
-  '480p': 'Noticeably softer, still perfectly watchable. Good for a long flight.',
-  '360p': 'For when space is tight and you mostly want to follow along.',
-  '240p': 'For when space is very tight.',
-  '144p': 'For when space is very tight.',
-} as const satisfies Record<DownloadQuality, string>;
+  original: 'core.describeQualityMeaning.original',
+  '2160p': 'core.describeQualityMeaning.p2160',
+  '1440p': 'core.describeQualityMeaning.p1440',
+  '1080p': 'core.describeQualityMeaning.p1080',
+  '720p': 'core.describeQualityMeaning.p720',
+  '480p': 'core.describeQualityMeaning.p480',
+  '360p': 'core.describeQualityMeaning.p360',
+  '240p': 'core.describeQualityMeaning.p240',
+  '144p': 'core.describeQualityMeaning.p144',
+} as const satisfies Record<DownloadQuality, StringKey>;
 
 /**
  * What a rung means to look at, in words rather than in megabits.
@@ -23,6 +25,6 @@ const MEANINGS = {
  * @param quality - The rung, or the original.
  * @returns One sentence about what choosing it would look like.
  */
-const describeQualityMeaning = (quality: DownloadQuality): string => MEANINGS[quality];
+const describeQualityMeaning = (quality: DownloadQuality): string => say(MEANINGS[quality]);
 
 export { describeQualityMeaning };

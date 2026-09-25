@@ -272,6 +272,7 @@ const parseAdvancedSubStation = (source: string): AssScript => {
     }
 
     if (line.startsWith('Style:') && styleColumns.length > 0) {
+      // eslint-disable-next-line valence/no-hard-coded-strings -- the name of a row in a subtitle file, not words for a person
       const fields = line.slice('Style:'.length).split(',');
       const name = fieldOf(fields, styleColumns, 'name');
 
@@ -286,6 +287,7 @@ const parseAdvancedSubStation = (source: string): AssScript => {
       continue;
     }
 
+    // eslint-disable-next-line valence/no-hard-coded-strings -- the name of a row in a subtitle file, not words for a person
     const fields = line.slice('Dialogue:'.length).split(',');
     const from = readAssTimestamp(fieldOf(fields, eventColumns, 'start'));
     const to = readAssTimestamp(fieldOf(fields, eventColumns, 'end'));

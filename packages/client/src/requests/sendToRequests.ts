@@ -1,9 +1,8 @@
 import { readRefusal } from '@ValenceClient/admin/readRefusal';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
+import { say } from '@ValenceI18n/say';
 
 type Sent<Value> = { value: Value | null; refusal: Refusal };
-
-const UNREACHABLE: Refusal = { message: 'The server could not be reached.' };
 
 /**
  * Sends something to the requesting routes, and reads the answer or why it was refused.
@@ -29,7 +28,7 @@ const sendToRequests = async <Value>(
   }).catch(() => null);
 
   if (response === null) {
-    return { value: null, refusal: UNREACHABLE };
+    return { value: null, refusal: { message: say('client.serverProblem.unreachable') } };
   }
 
   const refusal = await readRefusal(response);

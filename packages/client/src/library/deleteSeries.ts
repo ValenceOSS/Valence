@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { changeOnServer } from '@ValenceClient/query/changeOnServer';
+import { say } from '@ValenceI18n/say';
 
 const DeletedSeriesSchema = z.object({ files: z.number().int().nonnegative() });
 
@@ -16,7 +17,7 @@ const deleteSeries = async (seriesId: string): Promise<number> =>
     await changeOnServer(
       `/api/series/${seriesId}`,
       { method: 'DELETE' },
-      'The series could not be deleted.',
+      say('client.deleteSeries.couldNotDelete'),
     ),
   ).files;
 

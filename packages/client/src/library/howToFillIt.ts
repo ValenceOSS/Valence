@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+
 /**
  * What somebody can do about an empty screen, said the same way on every client: an admin is told
  * what to do, anybody else who to ask.
@@ -12,16 +14,14 @@ const howToFillIt = (
   canManage: boolean,
 ): string => {
   if (missing === 'no libraries') {
-    return canManage ? 'Add one to get started.' : 'Ask the server admin to add one.';
+    return canManage ? say('client.howToFillIt.addOne') : say('client.howToFillIt.askToAdd');
   }
 
   if (missing === 'every library') {
-    return canManage
-      ? 'Scan your libraries, or add files to them.'
-      : 'Ask the server admin to scan your libraries.';
+    return canManage ? say('client.howToFillIt.scanAll') : say('client.howToFillIt.askToScanAll');
   }
 
-  return canManage ? 'Scan it, or add files to its folder.' : 'Ask the server admin to scan it.';
+  return canManage ? say('client.howToFillIt.scanOne') : say('client.howToFillIt.askToScanOne');
 };
 
 export { howToFillIt };

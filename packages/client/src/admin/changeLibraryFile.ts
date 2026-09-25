@@ -1,5 +1,6 @@
 import { ChangedEntrySchema } from '@ValenceContracts/schemas/LibraryFiles';
 import { changeOnServer } from '@ValenceClient/query/changeOnServer';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Changes something inside a library from the file manager — deletes it, renames it where it is,
@@ -20,18 +21,18 @@ const changeLibraryFile = async (
       ? await changeOnServer(
           `/api/admin/files?${new URLSearchParams({ path }).toString()}`,
           { method: 'DELETE' },
-          'That could not be deleted.',
+          say('client.changeLibraryFile.couldNotDelete'),
         )
       : change.kind === 'rename'
         ? await changeOnServer(
             '/api/admin/files/rename',
             { method: 'POST', json: { path, name: change.name } },
-            'That could not be renamed.',
+            say('client.changeLibraryFile.couldNotRename'),
           )
         : await changeOnServer(
             '/api/admin/files/move',
             { method: 'POST', json: { path, into: change.into } },
-            'That could not be moved.',
+            say('client.changeLibraryFile.couldNotMove'),
           );
 
   return ChangedEntrySchema.parse(answer).path;

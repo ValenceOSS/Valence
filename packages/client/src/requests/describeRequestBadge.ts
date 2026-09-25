@@ -3,6 +3,7 @@ import { describeCalendarDay } from '@ValenceClient/requests/describeCalendarDay
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { StateBadge } from '@ValenceClient/status/StateBadge';
 import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The day the next of a series' episodes airs, or an artist's albums comes out, where the
@@ -57,22 +58,30 @@ const describeRequestBadge = (request: MediaRequest, today = calendarToday()): S
   ) {
     return {
       ...STATUS_LOOK.queued,
-      label: 'Waiting to be added',
-      detail: 'Books are added to the library by hand. It will show up here once one has been.',
+      label: say('client.describeRequestBadge.bookWaiting'),
+      detail: say('client.describeRequestBadge.bookWaitingDetail'),
     };
   }
 
   switch (request.state) {
     case 'awaitingApproval':
-      return { ...STATUS_LOOK.attention, label: 'Awaiting approval', detail: null };
+      return {
+        ...STATUS_LOOK.attention,
+        label: say('client.describeRequestBadge.awaitingApproval'),
+        detail: null,
+      };
     case 'refused':
-      return { ...STATUS_LOOK.failed, label: 'Refused', detail: request.refusedBecause };
+      return {
+        ...STATUS_LOOK.failed,
+        label: say('client.describeRequestBadge.refused'),
+        detail: request.refusedBecause,
+      };
     case 'waiting': {
       if (request.kind !== 'film' && request.items.length === 0) {
         return {
           ...STATUS_LOOK.working,
-          label: 'Looking it up',
-          detail: 'Finding out what there is to fetch.',
+          label: say('client.describeRequestBadge.lookingUp'),
+          detail: say('client.describeRequestBadge.lookingUpDetail'),
         };
       }
 
@@ -84,8 +93,8 @@ const describeRequestBadge = (request: MediaRequest, today = calendarToday()): S
       if (isOutNow) {
         return {
           ...STATUS_LOOK.queued,
-          label: 'Queued to search',
-          detail: 'It is out, and will be searched for in a moment.',
+          label: say('client.describeRequestBadge.queuedToSearch'),
+          detail: say('client.describeRequestBadge.queuedToSearchDetail'),
         };
       }
 
@@ -93,11 +102,13 @@ const describeRequestBadge = (request: MediaRequest, today = calendarToday()): S
         return {
           ...STATUS_LOOK.queued,
           tone: 'quiet',
-          label: 'Not out yet',
+          label: say('client.describeRequestBadge.notOutYet'),
           detail:
             request.releaseDate === null
               ? null
-              : `Held until ${describeCalendarDay(request.releaseDate)}, when its quality profile says it is out.`,
+              : say('client.describeRequestBadge.heldUntil', {
+                  date: describeCalendarDay(request.releaseDate),
+                }),
         };
       }
 
@@ -108,64 +119,74 @@ const describeRequestBadge = (request: MediaRequest, today = calendarToday()): S
         return {
           ...STATUS_LOOK.queued,
           tone: 'quiet',
-          label: 'Not out yet',
+          label: say('client.describeRequestBadge.notOutYet'),
           detail:
             next === null
-              ? 'Waiting for the next album to be announced.'
-              : `Out ${describeCalendarDay(next)}.`,
+              ? say('client.describeRequestBadge.nextAlbumUnknown')
+              : say('client.describeRequestBadge.albumOut', { date: describeCalendarDay(next) }),
         };
       }
 
       return {
         ...STATUS_LOOK.queued,
         tone: 'quiet',
-        label: 'Not out yet',
+        label: say('client.describeRequestBadge.notOutYet'),
         detail:
           next === null
-            ? 'Waiting for the next episode to be announced.'
-            : `The next episode airs ${describeCalendarDay(next)}.`,
+            ? say('client.describeRequestBadge.nextEpisodeUnknown')
+            : say('client.describeRequestBadge.nextEpisodeAirs', {
+                date: describeCalendarDay(next),
+              }),
       };
     }
     case 'wanted':
       return {
         ...STATUS_LOOK.attention,
-        label: 'Wanted',
+        label: say('client.describeRequestBadge.wanted'),
         detail:
           request.problem ??
           (request.isPickedByHand
-            ? 'Waiting for a release to be picked by hand.'
-            : 'Searched for again every few hours.'),
+            ? say('client.describeRequestBadge.wantedByHand')
+            : say('client.describeRequestBadge.wantedAgain')),
         help: docsFor(request.problemCode),
       };
     case 'searching':
-      return { ...STATUS_LOOK.working, label: 'Searching', detail: null };
+      return {
+        ...STATUS_LOOK.working,
+        label: say('client.describeRequestBadge.searching'),
+        detail: null,
+      };
     case 'chosen':
-      return { ...STATUS_LOOK.working, label: 'Release chosen', detail: null };
+      return {
+        ...STATUS_LOOK.working,
+        label: say('client.describeRequestBadge.chosen'),
+        detail: null,
+      };
     case 'downloading':
       return {
         ...STATUS_LOOK.working,
-        label: 'Downloading',
+        label: say('client.describeRequestBadge.downloading'),
         detail: request.items.find((item) => item.state === 'downloading')?.releaseTitle ?? null,
       };
     case 'filing':
       return {
         ...STATUS_LOOK.working,
-        label: 'Filing',
+        label: say('client.describeRequestBadge.filing'),
         detail: request.problem,
         help: docsFor(request.problemCode),
       };
     case 'filed':
       return {
         ...STATUS_LOOK.working,
-        label: 'Filed',
-        detail: 'In its library, waiting for the library to find it.',
+        label: say('client.describeRequestBadge.filed'),
+        detail: say('client.describeRequestBadge.filedDetail'),
       };
     case 'available':
       return { ...STATUS_LOOK.done, detail: null };
     case 'failed':
       return {
         ...STATUS_LOOK.failed,
-        detail: request.problem ?? 'It failed.',
+        detail: request.problem ?? say('client.describeRequestBadge.failedDetail'),
         help: docsFor(request.problemCode),
       };
   }

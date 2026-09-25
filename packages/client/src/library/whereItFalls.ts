@@ -1,5 +1,6 @@
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Where an episode falls in its programme, as a card says it beneath the programme's name.
@@ -10,7 +11,10 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 const whereItFalls = (media: MediaSummary): string => {
   const numbers =
     typeof media.seasonNumber === 'number' && typeof media.episodeNumber === 'number'
-      ? `S${media.seasonNumber.toString()} · E${describeEpisodeNumbers(media.episodeNumber, media.episodeNumberEnd)}  `
+      ? `${say('client.whereItFalls.numbers', {
+          season: media.seasonNumber.toString(),
+          episode: describeEpisodeNumbers(media.episodeNumber, media.episodeNumberEnd),
+        })}  `
       : '';
 
   return `${numbers}${media.title}`;

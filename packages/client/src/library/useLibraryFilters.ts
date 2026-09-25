@@ -4,17 +4,19 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { buildFilterOptions } from '@ValenceClient/library/buildFilterOptions';
 import type { LibraryFacets } from '@ValenceContracts/schemas/Library';
 import type { FilterGroup } from '@ValenceClient/library/FilterGroup';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
 const NO_FACETS: LibraryFacets = { genres: [], decades: [], maxRating: 0 };
 
 const DECADE = 10;
 
 const GROUPS = [
-  { name: 'Genre', prefix: 'genre:' },
-  { name: 'Decade', prefix: 'decade:' },
-  { name: 'Rating', prefix: 'rating:' },
-  { name: 'Your rating', prefix: 'yours:' },
-] as const;
+  { name: 'client.useLibraryFilters.genre', prefix: 'genre:' },
+  { name: 'client.useLibraryFilters.decade', prefix: 'decade:' },
+  { name: 'client.useLibraryFilters.rating', prefix: 'rating:' },
+  { name: 'client.useLibraryFilters.yourRating', prefix: 'yours:' },
+] as const satisfies readonly { name: StringKey; prefix: string }[];
 
 /**
  * What somebody has narrowed a page of the library by — genre, decade, rating and their own rating
@@ -62,7 +64,7 @@ const useLibraryFilters = (held?: {
   };
 
   const groups = GROUPS.map((group) => ({
-    name: group.name,
+    name: say(group.name),
     isSingle: true,
     options: offered[group.prefix].map((option) => ({
       id: `${group.prefix}${option.value}`,

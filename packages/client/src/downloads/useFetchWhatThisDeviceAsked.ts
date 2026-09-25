@@ -7,6 +7,7 @@ import { useHeldFiles } from '@ValenceClient/downloads/useHeldFiles';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { downloadQueries } from '@ValenceClient/query/downloadQueries';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
+import { say } from '@ValenceI18n/say';
 
 const STARTED_HERE = 'valence.downloads.startedHere';
 
@@ -81,8 +82,8 @@ const useFetchWhatThisDeviceAsked = (): void => {
 
       if (before !== undefined && file.state === 'here') {
         platformInUse().notifyLocally({
-          title: `${file.title} is on this device`,
-          body: 'It is ready to watch offline.',
+          title: say('client.useFetchWhatThisDeviceAsked.hereTitle', { title: file.title }),
+          body: say('client.useFetchWhatThisDeviceAsked.hereBody'),
         });
       }
     }

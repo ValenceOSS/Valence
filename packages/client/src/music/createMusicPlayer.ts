@@ -19,6 +19,7 @@ import type { PlayQueue, QueueSource } from '@ValenceClient/music/playQueue';
 import type { MusicPreferences } from '@ValenceClient/music/musicPreferences';
 import type { AudioQuality, MusicTrack } from '@ValenceContracts/schemas/Music';
 import type { MusicCommand, MusicNowPlaying } from '@ValenceContracts/schemas/MusicRemote';
+import { say } from '@ValenceI18n/say';
 
 type AudioLike = {
   src: string;
@@ -108,8 +109,6 @@ type MusicPlayer = {
 const RESTART_AFTER_SECONDS = 3;
 
 const REPORT_EVERY_MS = 15_000;
-
-const COULD_NOT_PLAY = 'That track would not play.';
 
 const UP_NEXT_REPORTED = 500;
 
@@ -401,7 +400,11 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
       }
     }
 
-    change({ isPlaying: false, isLoading: false, problem: COULD_NOT_PLAY });
+    change({
+      isPlaying: false,
+      isLoading: false,
+      problem: say('client.createMusicPlayer.couldNotPlay'),
+    });
   });
 
   const player: MusicPlayer = {

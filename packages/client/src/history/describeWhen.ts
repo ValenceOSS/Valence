@@ -1,3 +1,6 @@
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
+
 const A_MINUTE = 60_000;
 const AN_HOUR = 60 * A_MINUTE;
 const A_DAY = 24 * AN_HOUR;
@@ -22,29 +25,29 @@ const describeWhen = (at: Date, now: Date): string => {
   const since = now.getTime() - at.getTime();
 
   if (since < A_MINUTE) {
-    return 'Just now';
+    return say('client.describeWhen.justNow');
   }
 
   if (since < AN_HOUR) {
     const minutes = Math.floor(since / A_MINUTE);
 
-    return `${minutes.toString()} min ago`;
+    return sayCount('client.describeWhen.minutesAgo', minutes);
   }
 
   if (since < A_DAY) {
     const hours = Math.floor(since / AN_HOUR);
 
-    return hours === 1 ? 'An hour ago' : `${hours.toString()} hours ago`;
+    return sayCount('client.describeWhen.hoursAgo', hours);
   }
 
   if (since < 2 * A_DAY) {
-    return 'Yesterday';
+    return say('client.describeWhen.yesterday');
   }
 
   if (since < A_WEEK) {
     const days = Math.floor(since / A_DAY);
 
-    return `${days.toString()} days ago`;
+    return sayCount('client.describeWhen.daysAgo', days);
   }
 
   return at.getFullYear() === now.getFullYear() ? dayAndMonth.format(at) : withYear.format(at);

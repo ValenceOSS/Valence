@@ -1,4 +1,5 @@
 import { changeOnServer } from '@ValenceClient/query/changeOnServer';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Deletes one file from its library's disk, with what was kept beside it, and has Valence forget
@@ -11,7 +12,7 @@ const deleteMedia = async (mediaId: string): Promise<void> => {
   await changeOnServer(
     `/api/media/${mediaId}`,
     { method: 'DELETE' },
-    'The file could not be deleted.',
+    say('client.deleteMedia.couldNotDelete'),
   );
 };
 

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { say } from '@ValenceI18n/say';
 
 const NETWORK = 1;
 const MEDIA = 3;
@@ -27,14 +28,14 @@ const PlaybackEngineErrorSchema = z.object({
  */
 const describePlaybackFailure = (category: number | null): string => {
   if (category === MEDIA) {
-    return 'This browser could not decode the stream.';
+    return say('client.describePlaybackFailure.decode');
   }
 
   if (category === NETWORK || category === MANIFEST || category === STREAMING) {
-    return 'The stream could not be loaded. Try again, and say so if it keeps happening.';
+    return say('client.describePlaybackFailure.load');
   }
 
-  return 'The stream could not be played.';
+  return say('client.describePlaybackFailure.play');
 };
 
 export { describePlaybackFailure, PlaybackEngineErrorSchema };

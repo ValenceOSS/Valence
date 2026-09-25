@@ -2,6 +2,7 @@ import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { z } from 'zod';
 import { MediaSegmentSchema } from '@ValenceContracts/schemas/MediaSegment';
 import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
+import { say } from '@ValenceI18n/say';
 
 const SegmentListSchema = z.object({ segments: z.array(MediaSegmentSchema) });
 
@@ -43,14 +44,14 @@ const skippableAt = (segments: MediaSegment[], positionSeconds: number): MediaSe
  */
 const describeSkip = (segment: MediaSegment): string => {
   if (segment.kind === 'recap') {
-    return 'Skip Recap';
+    return say('client.describeSkip.recap');
   }
 
   if (segment.kind === 'credits') {
-    return 'Skip Credits';
+    return say('client.describeSkip.credits');
   }
 
-  return 'Skip Intro';
+  return say('client.describeSkip.intro');
 };
 
 export type { MediaSegment };

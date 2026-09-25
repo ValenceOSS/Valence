@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+
 const KBPS_IN_MBPS = 1000;
 
 const BYTES_IN_GB = 1e9;
@@ -34,12 +36,18 @@ const describeRungCost = ({
   durationSeconds,
   isCeiling = true,
 }: DescribeRungCostOptions): string => {
-  const prefix = isCeiling ? 'up to ' : '';
-
-  const rate =
-    maxBitrateKbps >= KBPS_IN_MBPS
-      ? `${prefix}${(maxBitrateKbps / KBPS_IN_MBPS).toFixed(1)} Mbps`
-      : `${prefix}${maxBitrateKbps.toString()} kbps`;
+  const isMbps = maxBitrateKbps >= KBPS_IN_MBPS;
+  const figure = isMbps ? (maxBitrateKbps / KBPS_IN_MBPS).toFixed(1) : maxBitrateKbps.toString();
+  const rate = say(
+    isCeiling
+      ? isMbps
+        ? 'client.describeRungCost.upToMbps'
+        : 'client.describeRungCost.upToKbps'
+      : isMbps
+        ? 'client.describeRungCost.mbps'
+        : 'client.describeRungCost.kbps',
+    { rate: figure },
+  );
 
   if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) {
     return rate;

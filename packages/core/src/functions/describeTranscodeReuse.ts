@@ -1,4 +1,5 @@
 import type { TranscodeReuse } from '@ValenceContracts/schemas/TranscodeReuse';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Writes what a session found already made when it started, for a viewer's statistics panel and an
@@ -19,18 +20,18 @@ import type { TranscodeReuse } from '@ValenceContracts/schemas/TranscodeReuse';
  */
 const describeTranscodeReuse = (reuse: TranscodeReuse | null): string => {
   if (reuse === null) {
-    return 'n/a — nothing is being transcoded';
+    return say('core.describeTranscodeReuse.none');
   }
 
   switch (reuse) {
     case 'whole':
-      return 'Yes — the whole transcode was already made';
+      return say('core.describeTranscodeReuse.whole');
     case 'shared':
-      return 'Shared — another viewer’s transcode of exactly this';
+      return say('core.describeTranscodeReuse.shared');
     case 'partial':
-      return 'Partly — resumed where an earlier session stopped';
+      return say('core.describeTranscodeReuse.partial');
     case 'none':
-      return 'No — this transcode is being made now';
+      return say('core.describeTranscodeReuse.fresh');
   }
 };
 

@@ -1,5 +1,6 @@
 import { formatCalendarDate } from '@ValenceCore/functions/formatCalendarDate';
 import { formatMoney } from '@ValenceCore/functions/formatMoney';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Whether a title is an episode, which is whether it belongs to a series.
@@ -40,22 +41,30 @@ const describeTitleDetails = ({
     ? []
     : [
         {
-          label: isAnEpisode(seriesTitle) ? 'Aired' : 'Released',
+          label: isAnEpisode(seriesTitle)
+            ? say('client.describeTitleDetails.aired')
+            : say('client.describeTitleDetails.released'),
           value: formatCalendarDate(releaseDate),
         },
       ]),
   ...(status === undefined || status === null || status === '' || isAnEpisode(seriesTitle)
     ? []
-    : [{ label: 'Status', value: status }]),
+    : [{ label: say('client.describeTitleDetails.status'), value: status }]),
   ...(budget === undefined || budget === null || budget <= 0
     ? []
-    : [{ label: 'Budget', value: formatMoney(budget) }]),
+    : [{ label: say('client.describeTitleDetails.budget'), value: formatMoney(budget) }]),
   ...(revenue === undefined || revenue === null || revenue <= 0
     ? []
-    : [{ label: 'Box office', value: formatMoney(revenue) }]),
+    : [{ label: say('client.describeTitleDetails.boxOffice'), value: formatMoney(revenue) }]),
   ...(rottenTomatoes === undefined || rottenTomatoes === null
     ? []
-    : [{ label: 'Rotten Tomatoes', value: `${rottenTomatoes.toString()}%` }]),
+    : [
+        {
+          // eslint-disable-next-line valence/no-hard-coded-strings -- a brand name, printed as it is sold in every language
+          label: 'Rotten Tomatoes',
+          value: `${rottenTomatoes.toString()}%`,
+        },
+      ]),
 ];
 
 export { describeTitleDetails };

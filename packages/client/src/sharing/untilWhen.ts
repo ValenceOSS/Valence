@@ -1,5 +1,6 @@
 import { saidWhen } from '@ValenceClient/format/saidWhen';
 import type { Share } from '@ValenceContracts/schemas/Share';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says what still holds a link open, for one that is still working. A link with neither an end date
@@ -12,10 +13,12 @@ import type { Share } from '@ValenceContracts/schemas/Share';
  */
 const untilWhen = (share: Share): string => {
   if (share.expiresAt !== null) {
-    return `Runs out ${saidWhen(share.expiresAt)}`;
+    return say('client.untilWhen.runsOut', { when: saidWhen(share.expiresAt) });
   }
 
-  return share.viewCap === null ? 'Until it is withdrawn' : 'Until it has been opened enough times';
+  return share.viewCap === null
+    ? say('client.untilWhen.withdrawn')
+    : say('client.untilWhen.openedEnough');
 };
 
 export { untilWhen };

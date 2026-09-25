@@ -4,6 +4,7 @@ import type { Refusal } from './readRefusal';
 import { z } from 'zod';
 import { PermissionSchema } from '@ValenceContracts/schemas/Permission';
 import type { Permission, PermissionGrant, Role } from '@ValenceContracts/schemas/Permission';
+import { say } from '@ValenceI18n/say';
 
 const RoleSchema = z.object({
   id: z.string(),
@@ -67,7 +68,7 @@ const createRole = async (role: Omit<Role, 'id'>): Promise<Refusal> => {
   }).catch(() => null);
 
   return response === null
-    ? { message: 'The server could not be reached.' }
+    ? { message: say('client.serverProblem.unreachable') }
     : readRefusal(response);
 };
 
@@ -88,7 +89,7 @@ const updateRole = async (id: string, changes: Partial<Omit<Role, 'id'>>): Promi
   }).catch(() => null);
 
   return response === null
-    ? { message: 'The server could not be reached.' }
+    ? { message: say('client.serverProblem.unreachable') }
     : readRefusal(response);
 };
 
@@ -106,7 +107,7 @@ const deleteRole = async (id: string): Promise<Refusal> => {
   }).catch(() => null);
 
   return response === null
-    ? { message: 'The server could not be reached.' }
+    ? { message: say('client.serverProblem.unreachable') }
     : readRefusal(response);
 };
 
@@ -136,7 +137,7 @@ const assignRole = async (userId: string, roleId: string): Promise<Refusal> => {
   }).catch(() => null);
 
   return response === null
-    ? { message: 'The server could not be reached.' }
+    ? { message: say('client.serverProblem.unreachable') }
     : readRefusal(response);
 };
 
@@ -154,7 +155,7 @@ const removeRole = async (userId: string, roleId: string): Promise<Refusal> => {
   }).catch(() => null);
 
   return response === null
-    ? { message: 'The server could not be reached.' }
+    ? { message: say('client.serverProblem.unreachable') }
     : readRefusal(response);
 };
 
@@ -176,7 +177,7 @@ const setOverride = async (userId: string, grant: PermissionGrant): Promise<Refu
   }).catch(() => null);
 
   return response === null
-    ? { message: 'The server could not be reached.' }
+    ? { message: say('client.serverProblem.unreachable') }
     : readRefusal(response);
 };
 
@@ -194,7 +195,7 @@ const clearOverride = async (userId: string, permission: Permission): Promise<Re
   }).catch(() => null);
 
   return response === null
-    ? { message: 'The server could not be reached.' }
+    ? { message: say('client.serverProblem.unreachable') }
     : readRefusal(response);
 };
 

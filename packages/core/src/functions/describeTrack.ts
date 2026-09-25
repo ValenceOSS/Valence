@@ -1,3 +1,6 @@
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
+
 const LANGUAGE_CODES: Record<string, string> = {
   english: 'en',
   eng: 'en',
@@ -86,41 +89,63 @@ const LANGUAGE_CODES: Record<string, string> = {
 };
 
 const LANGUAGE_NAMES: Record<string, string> = {
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a language is named in its own words in every translation
   en: 'English',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a language is named in its own words in every translation
   fr: 'Français',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a language is named in its own words in every translation
   de: 'Deutsch',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a language is named in its own words in every translation
   es: 'Español',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a language is named in its own words in every translation
   it: 'Italiano',
   ja: '日本語',
   ko: '한국어',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a language is named in its own words in every translation
   nl: 'Nederlands',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a language is named in its own words in every translation
   pt: 'Português',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a language is named in its own words in every translation
   ru: 'Русский',
   zh: '中文',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a language is named in its own words in every translation
   pl: 'Polski',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a language is named in its own words in every translation
   sv: 'Svenska',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a language is named in its own words in every translation
   da: 'Dansk',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a language is named in its own words in every translation
   no: 'Norsk',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a language is named in its own words in every translation
   fi: 'Suomi',
   ar: 'العربية',
   hi: 'हिन्दी',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a language is named in its own words in every translation
   tr: 'Türkçe',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a language is named in its own words in every translation
   cs: 'Čeština',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a language is named in its own words in every translation
   el: 'Ελληνικά',
   he: 'עברית',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a language is named in its own words in every translation
   hu: 'Magyar',
   th: 'ไทย',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a language is named in its own words in every translation
   uk: 'Українська',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a language is named in its own words in every translation
   vi: 'Tiếng Việt',
 };
 
 const UNKNOWN_LANGUAGES = new Set(['', 'und', 'unknown', 'zxx', 'mul', 'mis']);
 
+const CHANNEL_WORDS: Record<number, StringKey> = {
+  1: 'core.describeChannels.mono',
+  2: 'core.describeChannels.stereo',
+  4: 'core.describeChannels.quad',
+};
+
 const CHANNEL_NAMES: Record<number, string> = {
-  1: 'Mono',
-  2: 'Stereo',
   3: '2.1',
-  4: 'Quad',
   6: '5.1',
   7: '6.1',
   8: '7.1',
@@ -173,8 +198,11 @@ const describeLanguage = (raw: string | null | undefined): string | null => {
  * @param channels - How many discrete audio channels the track carries.
  * @returns The arrangement as it is sold, such as `5.1` or `Stereo`.
  */
-const describeChannels = (channels: number): string =>
-  CHANNEL_NAMES[channels] ?? `${channels.toString()}ch`;
+const describeChannels = (channels: number): string => {
+  const word = CHANNEL_WORDS[channels];
+
+  return word === undefined ? (CHANNEL_NAMES[channels] ?? `${channels.toString()}ch`) : say(word);
+};
 
 type AudioTrackFacts = {
   index: number;
@@ -205,13 +233,14 @@ const describeAudioTrack = (track: AudioTrackFacts, position: number): string =>
 
   const named =
     title === ''
-      ? (language ?? `Track ${position.toString()}`)
+      ? (language ?? say('core.describeAudioTrack.numbered', { position: position.toString() }))
       : language === null || saysLanguage
         ? title
         : `${language} · ${title}`;
 
   const qualities = [
     describeChannels(track.channels),
+    // eslint-disable-next-line valence/no-hard-coded-strings -- Atmos is Dolby's brand name, printed as it is sold
     track.isAtmos === true ? 'Atmos' : track.codec.toUpperCase(),
   ];
 

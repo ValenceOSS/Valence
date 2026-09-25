@@ -1,4 +1,5 @@
 import { possessiveOf } from '@ValenceCore/functions/possessiveOf';
+import { say } from '@ValenceI18n/say';
 
 /**
  * What to call somebody watching on a link, on a screen listing who is watching.
@@ -12,7 +13,9 @@ import { possessiveOf } from '@ValenceCore/functions/possessiveOf';
 const describeGuest = (invitedBy: string | null): string => {
   const whose = invitedBy === null ? '' : possessiveOf(invitedBy);
 
-  return whose === '' ? 'A guest' : `${whose} guest`;
+  return whose === ''
+    ? say('core.describeGuest.aGuest')
+    : say('core.describeGuest.whose', { whose });
 };
 
 export { describeGuest };

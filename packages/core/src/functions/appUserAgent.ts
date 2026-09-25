@@ -15,6 +15,7 @@ const appUserAgent = (device: string): string => {
     .replaceAll(/[()]/gu, '')
     .trim();
 
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a User-Agent header, which carries only ASCII and is read by the server rather than shown as written
   return `Valence (${printable === '' ? 'Valence app' : printable})`;
 };
 

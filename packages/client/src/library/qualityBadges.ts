@@ -12,6 +12,7 @@ type AudioStreamFacts = Pick<
 const HIGH_DEFINITION: ReadonlySet<string> = new Set(['1440p', '1080p', '720p']);
 
 const RANGES: Readonly<Record<string, string>> = {
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a brand name, printed as it is sold in every language
   DolbyVision: 'Dolby Vision',
   HDR10Plus: 'HDR10+',
   HDR10: 'HDR10',
@@ -19,8 +20,11 @@ const RANGES: Readonly<Record<string, string>> = {
 };
 
 const SOUNDS: Readonly<Record<string, string>> = {
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a brand name, printed as it is sold in every language
   truehd: 'Dolby TrueHD',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a brand name, printed as it is sold in every language
   eac3: 'Dolby Digital+',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a brand name, printed as it is sold in every language
   ac3: 'Dolby Digital',
 };
 
@@ -55,7 +59,8 @@ const qualityBadges = (
     richest === undefined
       ? []
       : richest.isAtmos
-        ? ['Dolby Atmos']
+        ? // eslint-disable-next-line valence/no-hard-coded-strings -- a brand name, printed as it is sold in every language
+          ['Dolby Atmos']
         : [
             richest.codec === 'dts'
               ? richest.profile?.includes('MA') === true

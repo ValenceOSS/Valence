@@ -1,10 +1,12 @@
 import type { ReencodeCodec } from '@ValenceContracts/schemas/Reencode';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
 const TRADES = {
-  h264: 'Played by everything, including a fifteen year old television. The largest of the three for the same picture.',
-  hevc: 'About half the size of H.264 for the same picture, and played by most things made since about 2016. Anything older converts it on every play.',
-  av1: 'The smallest of the three, and the least widely played. A device that cannot decode it converts on every play — which trades disk once for processor for ever.',
-} as const satisfies Record<ReencodeCodec, string>;
+  h264: 'core.describeCodecTrade.h264',
+  hevc: 'core.describeCodecTrade.hevc',
+  av1: 'core.describeCodecTrade.av1',
+} as const satisfies Record<ReencodeCodec, StringKey>;
 
 /**
  * What choosing a codec costs as well as what it buys.
@@ -18,6 +20,6 @@ const TRADES = {
  * @param codec - The codec being weighed.
  * @returns One sentence about what choosing it would mean.
  */
-const describeCodecTrade = (codec: ReencodeCodec): string => TRADES[codec];
+const describeCodecTrade = (codec: ReencodeCodec): string => say(TRADES[codec]);
 
 export { describeCodecTrade };

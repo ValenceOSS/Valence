@@ -11,6 +11,7 @@ import type {
   WatchParty,
 } from '@ValenceContracts/schemas/WatchParty';
 import type { RealtimeClient } from '@ValenceClient/realtime/createRealtimeClient';
+import { say } from '@ValenceI18n/say';
 
 const ASK_THE_CLOCK_EVERY_MS = 5000;
 
@@ -133,7 +134,7 @@ const useWatchParty = (client: RealtimeClient = getRealtimeClient()): WatchParty
           setRoom(readRoom(toldRef.current.party, told, client.connectionId(), held));
         },
         onNotice: (told) => {
-          setNotice(`${told.byName} removed you from the watch party.`);
+          setNotice(say('client.useWatchParty.removed', { name: told.byName }));
         },
       },
       schedule: (run, afterMs) => {

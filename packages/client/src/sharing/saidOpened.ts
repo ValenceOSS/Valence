@@ -1,4 +1,5 @@
 import type { Share } from '@ValenceContracts/schemas/Share';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * Says how often a link has been opened, against its allowance where it has one. The plural follows
@@ -9,15 +10,11 @@ import type { Share } from '@ValenceContracts/schemas/Share';
  * @returns The phrase to show.
  */
 const saidOpened = (share: Share): string => {
-  const opened = share.views.toString();
-
   if (share.viewCap === null) {
-    return share.views === 1 ? '1 time' : `${opened} times`;
+    return sayCount('client.saidOpened.times', share.views);
   }
 
-  const cap = share.viewCap.toString();
-
-  return share.viewCap === 1 ? `${opened} of 1 time` : `${opened} of ${cap} times`;
+  return sayCount('client.saidOpened.timesOf', share.viewCap, { opened: share.views.toString() });
 };
 
 export { saidOpened };

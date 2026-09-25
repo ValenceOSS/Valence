@@ -7,6 +7,7 @@ import {
   AUDIO_QUALITY_LABELS,
 } from '@ValenceContracts/schemas/Music';
 import type { AudioQuality, MusicTrack } from '@ValenceContracts/schemas/Music';
+import { say } from '@ValenceI18n/say';
 
 type QualityChoice = {
   label: string;
@@ -21,7 +22,8 @@ type PlayingFile = Pick<MusicTrack, 'codec' | 'isLossless' | 'bitrateKbps'>;
  * @param kbps - The bitrate.
  * @returns The phrase.
  */
-const anHourOf = (kbps: number): string => `about ${formatBytes(bytesPerHour(kbps))} an hour`;
+const anHourOf = (kbps: number): string =>
+  say('client.describeAudioQuality.anHour', { size: formatBytes(bytesPerHour(kbps)) });
 
 /**
  * What a streaming quality is called and what it would send, for the song playing, and roughly what
@@ -48,7 +50,9 @@ const describeAudioQuality = (quality: AudioQuality, file: PlayingFile | null): 
         : `${file.codec.toUpperCase()} · ${file.bitrateKbps.toString()} kbps`;
 
     return {
-      label: file.isLossless ? AUDIO_QUALITY_LABELS.lossless : 'Original',
+      label: file.isLossless
+        ? AUDIO_QUALITY_LABELS.lossless
+        : say('client.describeAudioQuality.original'),
       detail: file.bitrateKbps === null ? what : `${what} · ${anHourOf(file.bitrateKbps)}`,
     };
   }
@@ -58,7 +62,9 @@ const describeAudioQuality = (quality: AudioQuality, file: PlayingFile | null): 
   if (file !== null && isAlreadyAsSmall(file, kbps) && file.bitrateKbps !== null) {
     return {
       label: AUDIO_QUALITY_LABELS[quality],
-      detail: `Plays the original, which is no bigger · ${anHourOf(file.bitrateKbps)}`,
+      detail: say('client.describeAudioQuality.playsOriginal', {
+        perHour: anHourOf(file.bitrateKbps),
+      }),
     };
   }
 

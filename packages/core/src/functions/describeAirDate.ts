@@ -1,4 +1,6 @@
 import { formatCalendarDate } from './formatCalendarDate';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -24,20 +26,20 @@ const describeAirDate = (airDate: string, today: string): string => {
   const days = Math.round((aired - now) / DAY_MS);
 
   if (days < 0) {
-    return `Aired ${formatCalendarDate(airDate)}`;
+    return say('core.describeAirDate.aired', { date: formatCalendarDate(airDate) });
   }
 
   if (days === 0) {
-    return 'Airs today';
+    return say('core.describeAirDate.today');
   }
 
   if (days === 1) {
-    return 'Airs tomorrow';
+    return say('core.describeAirDate.tomorrow');
   }
 
   return days <= SAID_IN_DAYS_UNTIL
-    ? `Airs in ${days.toString()} days`
-    : `Airs ${formatCalendarDate(airDate)}`;
+    ? sayCount('core.describeAirDate.inDays', days)
+    : say('core.describeAirDate.on', { date: formatCalendarDate(airDate) });
 };
 
 export { describeAirDate };

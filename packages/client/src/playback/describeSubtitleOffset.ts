@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+
 /**
  * How far subtitles have been nudged from where the file puts them, as a player's settings name it.
  *
@@ -5,6 +7,8 @@
  * @returns "In time", or the nudge signed to two places.
  */
 const describeSubtitleOffset = (seconds: number): string =>
-  seconds === 0 ? 'In time' : `${seconds > 0 ? '+' : ''}${seconds.toFixed(2)}s`;
+  seconds === 0
+    ? say('client.describeSubtitleOffset.inTime')
+    : `${seconds > 0 ? '+' : ''}${seconds.toFixed(2)}s`;
 
 export { describeSubtitleOffset };

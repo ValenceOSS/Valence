@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { HouseholdSchema, OnboardingSchema } from '@ValenceContracts/schemas/Household';
 import type { Household, HouseholdRequest, Onboarding } from '@ValenceContracts/schemas/Household';
+import { say } from '@ValenceI18n/say';
 
 const RefusalSchema = z.object({ error: z.string() });
 
@@ -49,7 +50,7 @@ const uploadHouseholdPhoto = async (file: File): Promise<string | null> => {
   }).catch(() => null);
 
   if (response === null) {
-    return 'That picture could not be sent.';
+    return say('client.fetchHousehold.couldNotSend');
   }
 
   if (response.ok) {
@@ -58,7 +59,7 @@ const uploadHouseholdPhoto = async (file: File): Promise<string | null> => {
 
   const said = RefusalSchema.safeParse(await response.json().catch(() => null));
 
-  return said.success ? said.data.error : 'That picture could not be used.';
+  return said.success ? said.data.error : say('client.fetchHousehold.couldNotUse');
 };
 
 /**

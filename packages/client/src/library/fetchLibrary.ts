@@ -13,6 +13,7 @@ import type {
   MediaPage,
   PreviewMoment,
 } from '@ValenceContracts/schemas/Library';
+import { say } from '@ValenceI18n/say';
 
 const LibraryListSchema = z.array(LibrarySchema);
 const ErrorBodySchema = z.object({ error: z.string() });
@@ -193,6 +194,7 @@ const fetchLibraryItems = async (
     query.set('minYourStars', String(minYourStars));
   }
 
+  // eslint-disable-next-line valence/no-hard-coded-strings -- an address on the server, whose query mark reads to the rule as the end of a question
   const response = await fetch(`/api/libraries/${libraryId}/items?${query.toString()}`, {
     headers: { accept: 'application/json' },
   });
@@ -246,7 +248,7 @@ const correctMatch = async (
   }).catch(() => null);
 
   if (response === null) {
-    return { problem: 'The server could not be reached.' };
+    return { problem: say('client.serverProblem.unreachable') };
   }
 
   const answer = AnswerSchema.safeParse(await response.json().catch(() => null));
@@ -259,7 +261,7 @@ const correctMatch = async (
     problem:
       answer.success && 'error' in answer.data
         ? answer.data.error
-        : `The server answered ${response.status.toString()}.`,
+        : say('client.serverProblem.answered', { status: response.status.toString() }),
   };
 };
 
@@ -335,7 +337,7 @@ const setPreviewMoment = async (
   }).catch(() => null);
 
   if (response === null) {
-    return { problem: 'The server could not be reached.' };
+    return { problem: say('client.serverProblem.unreachable') };
   }
 
   const answer = PreviewMomentAnswerSchema.safeParse(await response.json().catch(() => null));
@@ -348,7 +350,7 @@ const setPreviewMoment = async (
     problem:
       answer.success && 'error' in answer.data
         ? answer.data.error
-        : `The server answered ${response.status.toString()}.`,
+        : say('client.serverProblem.answered', { status: response.status.toString() }),
   };
 };
 

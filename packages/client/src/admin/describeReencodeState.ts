@@ -1,15 +1,17 @@
 import type { ReencodeState } from '@ValenceContracts/schemas/Reencode';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
 const WORDS = {
-  queued: 'Waiting its turn',
-  encoding: 'Encoding',
-  verifying: 'Checking what came out',
-  awaitingReview: 'Waiting for you',
-  finished: 'Done',
-  rejected: 'Rejected, original restored',
-  failed: 'Failed',
-  cancelled: 'Stopped',
-} as const satisfies Record<ReencodeState, string>;
+  queued: 'client.describeReencodeState.queued',
+  encoding: 'client.describeReencodeState.encoding',
+  verifying: 'client.describeReencodeState.verifying',
+  awaitingReview: 'client.describeReencodeState.awaitingReview',
+  finished: 'client.describeReencodeState.finished',
+  rejected: 'client.describeReencodeState.rejected',
+  failed: 'client.describeReencodeState.failed',
+  cancelled: 'client.describeReencodeState.cancelled',
+} as const satisfies Record<ReencodeState, StringKey>;
 
 /**
  * What a re-encode is doing, in words rather than in a state name.
@@ -21,6 +23,6 @@ const WORDS = {
  * @param state - Where it has got to.
  * @returns What to say about it.
  */
-const describeReencodeState = (state: ReencodeState): string => WORDS[state];
+const describeReencodeState = (state: ReencodeState): string => say(WORDS[state]);
 
 export { describeReencodeState };

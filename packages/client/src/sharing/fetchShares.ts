@@ -15,6 +15,7 @@ import type {
   Share,
   ShareEnding,
 } from '@ValenceContracts/schemas/Share';
+import { say } from '@ValenceI18n/say';
 
 const OpenedShareSchema = z.object({
   kind: z.enum(['item', 'series', 'book']),
@@ -129,7 +130,7 @@ const openShare = async (token: string): Promise<ShareOutcome> => {
 
       return {
         kind: 'gone',
-        reason: said.success ? said.data.error : 'This link no longer works.',
+        reason: said.success ? said.data.error : say('client.fetchShares.gone'),
         ended: said.success ? said.data.ended : 'withdrawn',
       };
     }

@@ -1,5 +1,7 @@
 import { RELEASE_TYPE_NAMES } from '@ValenceClient/requests/RELEASE_TYPE_NAMES';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * How much of a series or an artist has arrived, counting only episodes that have aired and albums
@@ -15,7 +17,9 @@ const describeRequestProgress = (request: MediaRequest): string | null => {
   }
 
   if (request.kind === 'album') {
-    return request.artistName === null ? null : `By ${request.artistName}`;
+    return request.artistName === null
+      ? null
+      : say('client.describeRequestProgress.by', { artist: request.artistName });
   }
 
   const out = request.items.filter((item) => item.state !== 'waiting');
@@ -25,14 +29,23 @@ const describeRequestProgress = (request: MediaRequest): string | null => {
     request.kind === 'artist'
       ? (request.releaseTypes ?? ['album']).map((type) => RELEASE_TYPE_NAMES[type].label).join(', ')
       : request.seasons === null
-        ? 'Every season'
-        : `Season${request.seasons.length === 1 ? '' : 's'} ${request.seasons.join(', ')}`;
-  const unit = request.kind === 'artist' ? 'album' : 'episode';
+        ? say('client.describeRequestProgress.everySeason')
+        : sayCount('client.describeRequestProgress.seasons', request.seasons.length, {
+            seasons: request.seasons.join(', '),
+          });
 
   return [
     asked,
-    `${here.length.toString()} of ${out.length.toString()} ${unit}${out.length === 1 ? '' : 's'} here`,
-    ...(downloading === 0 ? [] : [`${downloading.toString()} downloading`]),
+    sayCount(
+      request.kind === 'artist'
+        ? 'client.describeRequestProgress.albumsHere'
+        : 'client.describeRequestProgress.episodesHere',
+      out.length,
+      { here: here.length.toString() },
+    ),
+    ...(downloading === 0
+      ? []
+      : [sayCount('client.describeRequestProgress.downloading', downloading)]),
   ].join(' · ');
 };
 

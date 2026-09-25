@@ -1,15 +1,18 @@
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
+
 const FRACTIONS = [
-  'about the same size as the original',
-  'about half the size of the original',
-  'about a third of the original',
-  'about a quarter of the original',
-  'about a fifth of the original',
-  'about a sixth of the original',
-  'about a seventh of the original',
-  'about an eighth of the original',
-  'about a ninth of the original',
-  'about a tenth of the original',
-] as const;
+  'core.compareToOriginal.sameSize',
+  'core.compareToOriginal.half',
+  'core.compareToOriginal.third',
+  'core.compareToOriginal.quarter',
+  'core.compareToOriginal.fifth',
+  'core.compareToOriginal.sixth',
+  'core.compareToOriginal.seventh',
+  'core.compareToOriginal.eighth',
+  'core.compareToOriginal.ninth',
+  'core.compareToOriginal.tenth',
+] as const satisfies readonly StringKey[];
 
 const A_LOT_SMALLER = FRACTIONS.length;
 
@@ -35,10 +38,12 @@ const compareToOriginal = (bytes: number, originalBytes: number): string | null 
   const times = Math.round(originalBytes / bytes);
 
   if (times >= A_LOT_SMALLER) {
-    return `a small fraction of the original — about a ${times.toString()}th`;
+    return say('core.compareToOriginal.smallFraction', { times: times.toString() });
   }
 
-  return FRACTIONS[times - 1] ?? null;
+  const fraction = FRACTIONS[times - 1];
+
+  return fraction === undefined ? null : say(fraction);
 };
 
 export { compareToOriginal };

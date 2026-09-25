@@ -6,6 +6,7 @@ import {
 import { readRefusal } from '@ValenceClient/admin/readRefusal';
 import type { ExceptionHolder, LibraryReach } from '@ValenceContracts/schemas/LibraryAccess';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Every library on this server, and whether this account is allowed to see it.
@@ -41,7 +42,7 @@ const setLibraryAccess = async (
   }).catch(() => null);
 
   return response === null
-    ? { message: 'The server could not be reached.' }
+    ? { message: say('client.serverProblem.unreachable') }
     : readRefusal(response);
 };
 
@@ -75,7 +76,7 @@ const setCeiling = async (
   ).catch(() => null);
 
   return response === null
-    ? { message: 'The server could not be reached.' }
+    ? { message: say('client.serverProblem.unreachable') }
     : readRefusal(response);
 };
 
@@ -96,7 +97,7 @@ const clearException = async (
   ).catch(() => null);
 
   return response === null
-    ? { message: 'The server could not be reached.' }
+    ? { message: say('client.serverProblem.unreachable') }
     : readRefusal(response);
 };
 
@@ -140,7 +141,7 @@ const setException = async (
   }).catch(() => null);
 
   return response === null
-    ? { message: 'The server could not be reached.' }
+    ? { message: say('client.serverProblem.unreachable') }
     : readRefusal(response);
 };
 

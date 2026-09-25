@@ -26,6 +26,7 @@ import { getRealtimeClient } from '@ValenceClient/realtime/getRealtimeClient';
 import type { RealtimeClient } from '@ValenceClient/realtime/createRealtimeClient';
 import type { ScanJob } from '@ValenceClient/library/fetchLibrary';
 import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
+import { say } from '@ValenceI18n/say';
 
 const AdminUserSchema = z.object({
   id: z.string(),
@@ -911,7 +912,7 @@ const saveSplashscreen = async (
   }).catch(() => null);
 
   if (response === null) {
-    return { problem: 'The server could not be reached.' };
+    return { problem: say('client.serverProblem.unreachable') };
   }
 
   const answer = SplashscreenAnswerSchema.safeParse(await response.json().catch(() => null));
@@ -924,7 +925,7 @@ const saveSplashscreen = async (
     problem:
       answer.success && 'error' in answer.data
         ? answer.data.error
-        : `The server answered ${response.status.toString()}.`,
+        : say('client.serverProblem.answered', { status: response.status.toString() }),
   };
 };
 

@@ -1,5 +1,6 @@
 import type { LibraryFacets } from '@ValenceContracts/schemas/Library';
 import type { FilterOption } from '@ValenceClient/library/buildFilterOptions.types';
+import { say } from '@ValenceI18n/say';
 
 const RATING_FLOORS = [6, 7, 8, 9];
 
@@ -30,7 +31,7 @@ const buildFilterOptions = (
   genres: facets.genres.map((genre) => ({ value: genre, label: genre })),
   decades: facets.decades.map((decade) => ({
     value: decade.toString(),
-    label: `${decade.toString()}s`,
+    label: say('client.buildFilterOptions.decade', { decade: decade.toString() }),
   })),
   ratings: RATING_FLOORS.filter((floor) => facets.maxRating >= floor).map((floor) => ({
     value: floor.toString(),

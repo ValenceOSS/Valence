@@ -1,5 +1,12 @@
+import { say } from '@ValenceI18n/say';
+
 const STILL_WATCHING_CHOICES = [
-  { id: 'off', label: 'Never' },
+  {
+    id: 'off',
+    get label() {
+      return say('client.stillWatchingChoices.never');
+    },
+  },
   { id: '2', label: '2' },
   { id: '3', label: '3' },
   { id: '4', label: '4' },

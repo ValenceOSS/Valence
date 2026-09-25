@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+
 const SCHEMES = ['http://', 'https://'];
 
 const ANY_SCHEME = /^[a-z][a-z0-9+.-]*:\/\//i;
@@ -15,14 +17,14 @@ const readServerAddress = (typed: string): { address: string } | { problem: stri
   const trimmed = typed.trim();
 
   if (trimmed === '') {
-    return { problem: 'Enter the address of your Valence server.' };
+    return { problem: say('client.readServerAddress.empty') };
   }
 
   if (
     ANY_SCHEME.test(trimmed) &&
     !SCHEMES.some((scheme) => trimmed.toLowerCase().startsWith(scheme))
   ) {
-    return { problem: 'A Valence server is reached over http or https.' };
+    return { problem: say('client.readServerAddress.scheme') };
   }
 
   const withScheme = ANY_SCHEME.test(trimmed) ? trimmed : `https://${trimmed}`;
@@ -30,11 +32,11 @@ const readServerAddress = (typed: string): { address: string } | { problem: stri
   const read = URL.parse(withScheme);
 
   if (read === null || read.hostname === '') {
-    return { problem: 'That does not look like a web address.' };
+    return { problem: say('client.readServerAddress.notAnAddress') };
   }
 
   if (!SCHEMES.includes(`${read.protocol}//`)) {
-    return { problem: 'A Valence server is reached over http or https.' };
+    return { problem: say('client.readServerAddress.scheme') };
   }
 
   return { address: `${read.origin}${read.pathname.replace(/\/+$/, '')}` };

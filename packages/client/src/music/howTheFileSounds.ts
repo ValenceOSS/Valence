@@ -1,4 +1,5 @@
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
+import { say } from '@ValenceI18n/say';
 
 const LOSSLESS_TOPS_OUT_AT = 48_000;
 
@@ -15,12 +16,14 @@ const LOSSLESS_TOPS_OUT_AT = 48_000;
 const howTheFileSounds = (
   track: Pick<MusicTrack, 'isLossless' | 'sampleRate'>,
   isSentWhole: boolean,
-): 'Hi-Res Lossless' | 'Lossless' | null => {
+): string | null => {
   if (!track.isLossless || !isSentWhole) {
     return null;
   }
 
-  return (track.sampleRate ?? 0) > LOSSLESS_TOPS_OUT_AT ? 'Hi-Res Lossless' : 'Lossless';
+  return (track.sampleRate ?? 0) > LOSSLESS_TOPS_OUT_AT
+    ? say('client.howTheFileSounds.hiResLossless')
+    : say('client.howTheFileSounds.lossless');
 };
 
 export { howTheFileSounds };

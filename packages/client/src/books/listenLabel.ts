@@ -1,4 +1,5 @@
 import type { ListeningProgress } from '@ValenceContracts/schemas/Book';
+import { say } from '@ValenceI18n/say';
 
 /**
  * What the button that starts a book playing says: to listen, to carry on where somebody left off,
@@ -9,9 +10,9 @@ import type { ListeningProgress } from '@ValenceContracts/schemas/Book';
  */
 const listenLabel = (place: ListeningProgress | null | undefined): string =>
   place === null || place === undefined
-    ? 'Listen'
+    ? say('client.listenLabel.listen')
     : place.isFinished
-      ? 'Listen again'
-      : 'Continue listening';
+      ? say('client.listenLabel.again')
+      : say('client.listenLabel.carryOn');
 
 export { listenLabel };

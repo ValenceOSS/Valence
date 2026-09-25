@@ -4,6 +4,7 @@ import type { Refusal } from './readRefusal';
 import { AccountListSchema } from '@ValenceContracts/schemas/Account';
 import type { Account } from '@ValenceContracts/schemas/Account';
 import type { Avatar, ProfileColour } from '@ValenceContracts/schemas/ViewerProfile';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Everybody with an account on this server, with what each may do and whether they are banned. What
@@ -29,7 +30,7 @@ const banAccount = async (userId: string, reason: string): Promise<Refusal> => {
   }).catch(() => null);
 
   return response === null
-    ? { message: 'The server could not be reached.' }
+    ? { message: say('client.serverProblem.unreachable') }
     : readRefusal(response);
 };
 
@@ -46,7 +47,7 @@ const unbanAccount = async (userId: string): Promise<Refusal> => {
   }).catch(() => null);
 
   return response === null
-    ? { message: 'The server could not be reached.' }
+    ? { message: say('client.serverProblem.unreachable') }
     : readRefusal(response);
 };
 
@@ -64,7 +65,7 @@ const removeAccount = async (userId: string): Promise<Refusal> => {
   }).catch(() => null);
 
   return response === null
-    ? { message: 'The server could not be reached.' }
+    ? { message: say('client.serverProblem.unreachable') }
     : readRefusal(response);
 };
 
@@ -87,7 +88,7 @@ const inviteAccount = async (request: {
   }).catch(() => null);
 
   return response === null
-    ? { message: 'The server could not be reached.' }
+    ? { message: say('client.serverProblem.unreachable') }
     : readRefusal(response);
 };
 
@@ -111,7 +112,7 @@ const editAccount = async (
   }).catch(() => null);
 
   return response === null
-    ? { message: 'The server could not be reached.' }
+    ? { message: say('client.serverProblem.unreachable') }
     : readRefusal(response);
 };
 
@@ -132,7 +133,7 @@ const resetAccountPassword = async (userId: string, password: string): Promise<R
   }).catch(() => null);
 
   return response === null
-    ? { message: 'The server could not be reached.' }
+    ? { message: say('client.serverProblem.unreachable') }
     : readRefusal(response);
 };
 
@@ -152,7 +153,7 @@ const setAccountPhoto = async (userId: string, photo: File): Promise<Refusal> =>
   }).catch(() => null);
 
   return response === null
-    ? { message: 'The server could not be reached.' }
+    ? { message: say('client.serverProblem.unreachable') }
     : readRefusal(response);
 };
 
@@ -175,7 +176,7 @@ const setAccountAvatar = async (
   }).catch(() => null);
 
   return response === null
-    ? { message: 'The server could not be reached.' }
+    ? { message: say('client.serverProblem.unreachable') }
     : readRefusal(response);
 };
 

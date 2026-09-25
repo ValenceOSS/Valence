@@ -102,6 +102,7 @@ const fromAdvancedSubStation = (source: string): string => {
   for (const line of lines) {
     if (line.startsWith('Format:') && cues.length === 0) {
       const columns = line
+        // eslint-disable-next-line valence/no-hard-coded-strings -- the name of a row in a subtitle file, not words for a person
         .slice('Format:'.length)
         .split(',')
         .map((column) => column.trim().toLowerCase());
@@ -119,6 +120,7 @@ const fromAdvancedSubStation = (source: string): string => {
       continue;
     }
 
+    // eslint-disable-next-line valence/no-hard-coded-strings -- the name of a row in a subtitle file, not words for a person
     const fields = line.slice('Dialogue:'.length).split(',');
     const start = readAssTimestamp(fields[startColumn] ?? '');
     const end = readAssTimestamp(fields[endColumn] ?? '');

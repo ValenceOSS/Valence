@@ -1,4 +1,6 @@
 import type { Permission } from '@ValenceContracts/schemas/Permission';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
 type PermissionGroup = {
   id: string;
@@ -6,17 +8,17 @@ type PermissionGroup = {
   permissions: Permission[];
 };
 
-const GROUP_LABELS: Record<string, string> = {
-  administrator: 'Everything',
-  library: 'Libraries',
-  jobs: 'Jobs',
-  media: 'Media',
-  sharing: 'Sharing',
-  streaming: 'Streaming',
-  download: 'Downloads',
-  requests: 'Requests',
-  account: 'Accounts',
-  server: 'Server',
+const GROUP_LABELS: Record<string, StringKey> = {
+  administrator: 'client.groupPermissions.administrator',
+  library: 'client.groupPermissions.library',
+  jobs: 'client.groupPermissions.jobs',
+  media: 'client.groupPermissions.media',
+  sharing: 'client.groupPermissions.sharing',
+  streaming: 'client.groupPermissions.streaming',
+  download: 'client.groupPermissions.download',
+  requests: 'client.groupPermissions.requests',
+  account: 'client.groupPermissions.account',
+  server: 'client.groupPermissions.server',
 };
 
 /**
@@ -32,9 +34,10 @@ const groupPermissions = (permissions: readonly Permission[]): PermissionGroup[]
   for (const permission of permissions) {
     const id = permission.split('.')[0] ?? permission;
     const existing = groups.find((group) => group.id === id);
+    const label = GROUP_LABELS[id];
 
     if (existing === undefined) {
-      groups.push({ id, label: GROUP_LABELS[id] ?? id, permissions: [permission] });
+      groups.push({ id, label: label === undefined ? id : say(label), permissions: [permission] });
     } else {
       existing.permissions.push(permission);
     }

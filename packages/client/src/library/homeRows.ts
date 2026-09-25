@@ -1,6 +1,7 @@
 import { collapseToShows } from '@ValenceClient/library/pickFeatured';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { Rail } from '@ValenceClient/library/groupIntoRails';
+import { say } from '@ValenceI18n/say';
 
 type HomeRowsInput = {
   resuming: MediaSummary[];
@@ -54,7 +55,8 @@ const row = (
  * @param decade - The year the decade begins.
  * @returns What the row calls itself.
  */
-const decadeTitle = (decade: number): string => `From the ${decade.toString()}s`;
+const decadeTitle = (decade: number): string =>
+  say('client.homeRows.fromThe', { decade: decade.toString() });
 
 /**
  * The rows the front page is browsed by: carrying on, what somebody is likely to want, what is
@@ -80,10 +82,10 @@ const homeRows = ({
   decades,
   more,
 }: HomeRowsInput): Rail[] => [
-  ...row('resume', 'Continue watching', resuming, false, 1),
-  ...row('picked', 'Picked for you', picked),
-  ...row('recent', 'Recently added', recent, true, 1),
-  ...row('acclaimed', 'Critically acclaimed', acclaimed),
+  ...row('resume', say('client.homeRows.continueWatching'), resuming, false, 1),
+  ...row('picked', say('client.homeRows.pickedForYou'), picked),
+  ...row('recent', say('client.homeRows.recentlyAdded'), recent, true, 1),
+  ...row('acclaimed', say('client.homeRows.criticallyAcclaimed'), acclaimed),
   ...genres.flatMap(({ genre, items }) => row(`genre:${genre}`, genre, items)),
   ...decades.flatMap(({ decade, items }) =>
     row(`decade:${decade.toString()}`, decadeTitle(decade), items),

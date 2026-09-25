@@ -1,18 +1,28 @@
+import { say } from '@ValenceI18n/say';
+
 type Match = { name: string; pattern: RegExp };
 
 const BROWSERS: Match[] = [
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a product name, printed as it is sold in every language
   { name: 'Edge', pattern: /Edg\// },
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a product name, printed as it is sold in every language
   { name: 'Opera', pattern: /OPR\// },
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a product name, printed as it is sold in every language
   { name: 'Chromium', pattern: /Chrome\// },
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a product name, printed as it is sold in every language
   { name: 'Firefox', pattern: /Firefox\// },
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a product name, printed as it is sold in every language
   { name: 'Safari', pattern: /Safari\// },
 ];
 
 const OPERATING_SYSTEMS: Match[] = [
   { name: 'iOS', pattern: /iPhone|iPad|iPod/ },
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a product name, printed as it is sold in every language
   { name: 'Android', pattern: /Android/ },
   { name: 'macOS', pattern: /Mac OS X/ },
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a product name, printed as it is sold in every language
   { name: 'Windows', pattern: /Windows/ },
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a product name, printed as it is sold in every language
   { name: 'Linux', pattern: /Linux/ },
 ];
 
@@ -26,10 +36,11 @@ const OPERATING_SYSTEMS: Match[] = [
  */
 const detectClientLabel = (userAgent: string): string => {
   const browser =
-    BROWSERS.find((candidate) => candidate.pattern.test(userAgent))?.name ?? 'Browser';
+    BROWSERS.find((candidate) => candidate.pattern.test(userAgent))?.name ??
+    say('client.detectClientLabel.browser');
   const os = OPERATING_SYSTEMS.find((candidate) => candidate.pattern.test(userAgent))?.name ?? null;
 
-  return os === null ? browser : `${browser} on ${os}`;
+  return os === null ? browser : say('client.detectClientLabel.browserOn', { browser, os });
 };
 
 export { detectClientLabel };

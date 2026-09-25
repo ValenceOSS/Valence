@@ -1,6 +1,8 @@
 import { nameSeason } from '@ValenceClient/library/nameSeason';
 import type { ShowDetail } from '@ValenceContracts/schemas/Show';
 import type { AWayToDownload } from './waysToDownloadAProgramme.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * Counts episodes in words.
@@ -9,7 +11,7 @@ import type { AWayToDownload } from './waysToDownloadAProgramme.types';
  * @returns It, with the right noun.
  */
 const episodesIn = (count: number): string =>
-  count === 1 ? '1 episode' : `${count.toString()} episodes`;
+  sayCount('client.waysToDownloadAProgramme.episodes', count);
 
 /**
  * What somebody can download of a programme, as every client offers it: the season they are
@@ -37,16 +39,24 @@ const waysToDownloadAProgramme = (
       : [
           {
             kind: 'these' as const,
-            label: `${nameSeason(onScreen.seasonNumber)} · ${episodesIn(onScreen.episodes.length)}`,
+            label: say('client.waysToDownloadAProgramme.theSeason', {
+              season: nameSeason(onScreen.seasonNumber),
+              episodes: episodesIn(onScreen.episodes.length),
+            }),
             mediaIds: onScreen.episodes.map((episode) => episode.id),
           },
         ]),
     {
       kind: 'these',
-      label: `${isOneSeason ? 'Every episode' : 'Every season'} · ${episodesIn(every.length)}`,
+      label: say(
+        isOneSeason
+          ? 'client.waysToDownloadAProgramme.everyEpisode'
+          : 'client.waysToDownloadAProgramme.everySeason',
+        { episodes: episodesIn(every.length) },
+      ),
       mediaIds: undefined,
     },
-    { kind: 'choose', label: 'Choose episodes…' },
+    { kind: 'choose', label: say('client.waysToDownloadAProgramme.choose') },
   ];
 };
 

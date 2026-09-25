@@ -3,6 +3,8 @@ import { describeSpeed } from '@ValenceClient/books/describeSpeed';
 import { LISTENING_CHOICES } from '@ValenceClient/books/LISTENING_CHOICES';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import type { AudiobookPlayerState } from '@ValenceClient/books/createAudiobookPlayer';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 type ListeningPanel = 'speed' | 'sleep' | 'chapters';
 
@@ -35,15 +37,19 @@ const listeningChoices = (
 
   if (panel === 'sleep') {
     return [
-      { id: 'off', label: 'Off', isCurrent: state.sleep.kind === 'off' },
+      {
+        id: 'off',
+        label: say('client.listeningChoices.off'),
+        isCurrent: state.sleep.kind === 'off',
+      },
       ...LISTENING_CHOICES.sleepMinutes.map((minutes) => ({
         id: minutes.toString(),
-        label: `${minutes.toString()} minutes`,
+        label: sayCount('client.listeningChoices.minutes', minutes),
         isCurrent: false,
       })),
       {
         id: 'endOfChapter',
-        label: 'End of this chapter',
+        label: say('client.listeningChoices.endOfChapter'),
         isCurrent: state.sleep.kind === 'endOfChapter',
       },
     ];

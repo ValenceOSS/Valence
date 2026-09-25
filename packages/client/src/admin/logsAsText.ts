@@ -1,12 +1,6 @@
 import { logLineAsText } from './logLineAsText';
 import type { LogRecord } from '@ValenceContracts/schemas/Log';
-
-const WARNING = [
-  '# Valence log export',
-  '# These lines quote file paths, which disclose the layout of the library and the',
-  '# titles on the disk. Read what you are about to send before sending it.',
-  '',
-].join('\n');
+import { say } from '@ValenceI18n/say';
 
 /**
  * Turns the records on screen into something worth pasting into a bug report.
@@ -22,7 +16,9 @@ const WARNING = [
  * @returns The text to copy or download.
  */
 const logsAsText = (records: readonly LogRecord[]): string =>
-  `${WARNING}${[...records]
+  `${[say('client.logsAsText.heading'), ...say('client.logsAsText.warning').split('\n')]
+    .map((line) => `# ${line}\n`)
+    .join('')}${[...records]
     .sort((one, other) => one.atMs - other.atMs)
     .map(logLineAsText)
     .join('\n')}\n`;

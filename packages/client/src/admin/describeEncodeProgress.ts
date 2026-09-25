@@ -1,4 +1,6 @@
 import type { Reencode } from '@ValenceContracts/schemas/Reencode';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const A_MINUTE = 60;
 
@@ -12,18 +14,18 @@ const AN_HOUR = 60 * A_MINUTE;
  */
 const roughly = (seconds: number): string => {
   if (seconds < A_MINUTE) {
-    return 'less than a minute left';
+    return say('client.describeEncodeProgress.underAMinute');
   }
 
   if (seconds < AN_HOUR) {
     const minutes = Math.round(seconds / A_MINUTE);
 
-    return `about ${minutes.toString()} ${minutes === 1 ? 'minute' : 'minutes'} left`;
+    return sayCount('client.describeEncodeProgress.minutes', minutes);
   }
 
   const hours = Math.round(seconds / AN_HOUR);
 
-  return `about ${hours.toString()} ${hours === 1 ? 'hour' : 'hours'} left`;
+  return sayCount('client.describeEncodeProgress.hours', hours);
 };
 
 /**
@@ -56,7 +58,10 @@ const describeEncodeProgress = (reencode: Reencode, now = Date.now()): string =>
   const speed = (reencode.progress * reencode.durationSeconds) / elapsed;
   const left = elapsed * ((1 - reencode.progress) / reencode.progress);
 
-  return `${speed.toFixed(1)}× real time · ${roughly(left)}`;
+  return say('client.describeEncodeProgress.progress', {
+    speed: speed.toFixed(1),
+    left: roughly(left),
+  });
 };
 
 export { describeEncodeProgress };

@@ -1,54 +1,56 @@
 import type { Permission } from '@ValenceContracts/schemas/Permission';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
-const LABELS: Record<Permission, string> = {
-  administrator: 'Everything, including anything added later',
+const LABELS: Record<Permission, StringKey> = {
+  administrator: 'client.describePermission.administrator',
 
-  'library.create': 'Add a library',
-  'library.edit': 'Change a library’s settings',
-  'library.delete': 'Delete a library',
+  'library.create': 'client.describePermission.library.create',
+  'library.edit': 'client.describePermission.library.edit',
+  'library.delete': 'client.describePermission.library.delete',
 
-  'jobs.run': 'Run a job',
-  'jobs.schedule': 'Change when jobs run',
-  'jobs.runDestructive': 'Run reset and rebuild',
+  'jobs.run': 'client.describePermission.jobs.run',
+  'jobs.schedule': 'client.describePermission.jobs.schedule',
+  'jobs.runDestructive': 'client.describePermission.jobs.runDestructive',
 
-  'media.rescan': 'Rescan one item',
-  'media.delete': 'Delete media from disk',
-  'media.reencode': 'Re-encode media',
-  'media.override': 'Correct metadata',
-  'media.artwork': 'Change artwork',
-  'media.hide': 'Hide an item from everybody',
+  'media.rescan': 'client.describePermission.media.rescan',
+  'media.delete': 'client.describePermission.media.delete',
+  'media.reencode': 'client.describePermission.media.reencode',
+  'media.override': 'client.describePermission.media.override',
+  'media.artwork': 'client.describePermission.media.artwork',
+  'media.hide': 'client.describePermission.media.hide',
 
-  'sharing.link': 'Create share links',
-  'sharing.party': 'Start watch parties',
-  'sharing.manage': 'See and withdraw anybody’s share links',
+  'sharing.link': 'client.describePermission.sharing.link',
+  'sharing.party': 'client.describePermission.sharing.party',
+  'sharing.manage': 'client.describePermission.sharing.manage',
 
-  'streaming.view': 'See who is watching',
-  'streaming.stop': 'Stop somebody’s stream',
-  'streaming.pause': 'Pause somebody’s stream',
-  'streaming.message': 'Send somebody a message',
+  'streaming.view': 'client.describePermission.streaming.view',
+  'streaming.stop': 'client.describePermission.streaming.stop',
+  'streaming.pause': 'client.describePermission.streaming.pause',
+  'streaming.message': 'client.describePermission.streaming.message',
 
-  'download.media': 'Download media',
+  'download.media': 'client.describePermission.download.media',
 
-  'requests.ask': 'Request films and series',
-  'requests.askMusic': 'Request music',
-  'requests.autoApprove': 'Have requests go straight through',
-  'requests.viewAll': 'See everybody’s requests',
-  'requests.approve': 'Approve or turn down requests',
-  'requests.manage': 'Set up indexers, download clients and profiles',
+  'requests.ask': 'client.describePermission.requests.ask',
+  'requests.askMusic': 'client.describePermission.requests.askMusic',
+  'requests.autoApprove': 'client.describePermission.requests.autoApprove',
+  'requests.viewAll': 'client.describePermission.requests.viewAll',
+  'requests.approve': 'client.describePermission.requests.approve',
+  'requests.manage': 'client.describePermission.requests.manage',
 
-  'account.invite': 'Invite somebody',
-  'account.manage': 'Manage accounts',
-  'account.ban': 'Ban an account',
-  'account.roles': 'Manage roles',
-  'account.profiles': 'Manage other people’s profiles',
-  'account.security': 'Reset passwords and sign accounts out',
+  'account.invite': 'client.describePermission.account.invite',
+  'account.manage': 'client.describePermission.account.manage',
+  'account.ban': 'client.describePermission.account.ban',
+  'account.roles': 'client.describePermission.account.roles',
+  'account.profiles': 'client.describePermission.account.profiles',
+  'account.security': 'client.describePermission.account.security',
 
-  'server.settings': 'Change server settings',
-  'server.backup': 'Back the server up',
-  'server.logs': 'Read the logs',
-  'account.keys': 'Hold API keys for use outside the browser',
-  'server.monitor': 'See what the server is doing',
-  'server.webhooks': 'Have the server call out when something happens',
+  'server.settings': 'client.describePermission.server.settings',
+  'server.backup': 'client.describePermission.server.backup',
+  'server.logs': 'client.describePermission.server.logs',
+  'account.keys': 'client.describePermission.account.keys',
+  'server.monitor': 'client.describePermission.server.monitor',
+  'server.webhooks': 'client.describePermission.server.webhooks',
 };
 
 /**
@@ -57,6 +59,6 @@ const LABELS: Record<Permission, string> = {
  *
  * @param permission The permission as the server names it.
  */
-const describePermission = (permission: Permission): string => LABELS[permission];
+const describePermission = (permission: Permission): string => say(LABELS[permission]);
 
 export { describePermission };
