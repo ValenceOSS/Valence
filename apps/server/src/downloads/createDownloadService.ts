@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { isImageSubtitle } from '@ValenceCore/functions/isImageSubtitle';
+import { selectAudioStream } from '@ValenceCore/functions/describeTrack';
 import { and, desc, eq, inArray, lt } from 'drizzle-orm';
 import { chooseSource } from '@ValenceCore/functions/chooseSource';
 import { compareToOriginal } from '@ValenceCore/functions/compareToOriginal';
@@ -120,6 +121,7 @@ const createDownloadService = ({
       profile: media.keepingProfile(),
       requestedQuality: quality,
       neverSmaller: true,
+      preferredAudioLanguage: found.defaultAudioLanguage ?? null,
     });
 
     if (chosen === null) {
@@ -152,9 +154,12 @@ const createDownloadService = ({
       return null;
     }
 
+    const natural = selectAudioStream(source.audioStreams, found.defaultAudioLanguage ?? null);
     const wanted =
       audioLanguages.length === 0
-        ? source.audioStreams.slice(0, 1)
+        ? natural === undefined
+          ? []
+          : [natural]
         : source.audioStreams.filter((stream) => audioLanguages.includes(stream.language ?? ''));
 
     return {
@@ -275,9 +280,11 @@ const createDownloadService = ({
         return null;
       }
 
-      const file = await transcoder
-        .requestDownload(asked.request)
-        .catch((problem: Error) => problem.message);
+      const tryIt = () =>
+        transcoder.requestDownload(asked.request).catch((problem: Error) => problem.message);
+      const first = await tryIt();
+      const file =
+        typeof first !== 'string' && (first.failure ?? null) !== null ? await tryIt() : first;
 
       const refused = typeof file === 'string';
 
@@ -431,6 +438,7 @@ const createDownloadService = ({
           continue;
         }
 
+        const problem = file?.failure ?? null;
         const change =
           asked === null || file === null
             ? {
@@ -438,13 +446,19 @@ const createDownloadService = ({
                 failure: 'It is no longer in the library, so it cannot be prepared.',
                 bytesPerSecond: null,
               }
-            : {
-                state: file.isReady ? 'ready' : 'preparing',
-                progress: file.progress,
-                bytesPerSecond: file.isReady ? null : (file.bytesPerSecond ?? null),
-                sizeBytes: file.sizeBytes ?? null,
-                ...(file.isReady ? { readyAt: new Date() } : {}),
-              };
+            : problem !== null
+              ? {
+                  state: 'failed',
+                  failure: 'The media service could not prepare it. Ask again to try once more.',
+                  bytesPerSecond: null,
+                }
+              : {
+                  state: file.isReady ? 'ready' : 'preparing',
+                  progress: file.progress,
+                  bytesPerSecond: file.isReady ? null : (file.bytesPerSecond ?? null),
+                  sizeBytes: file.sizeBytes ?? null,
+                  ...(file.isReady ? { readyAt: new Date() } : {}),
+                };
 
         const isTheSame =
           change.state === row.state &&
@@ -467,6 +481,7 @@ const createDownloadService = ({
             accountId,
             download: await describe(updated),
             isNowReady: updated.state === 'ready',
+            problem,
           });
         }
       }

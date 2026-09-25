@@ -23,6 +23,7 @@ type FollowedDownload = {
   accountId: string;
   download: Download;
   isNowReady: boolean;
+  problem: string | null;
 };
 
 type DownloadService = {

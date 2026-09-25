@@ -2458,6 +2458,7 @@ const downloadService = createDownloadService({
           path: mediaItem.path,
           sizeBytes: mediaItem.sizeBytes,
           generation: library.generation,
+          defaultAudioLanguage: library.defaultAudioLanguage,
         })
         .from(mediaItem)
         .innerJoin(library, eq(library.id, mediaItem.libraryId))
@@ -2480,6 +2481,7 @@ const downloadService = createDownloadService({
         path: row.path,
         sizeBytes: row.sizeBytes,
         generation: row.generation,
+        defaultAudioLanguage: row.defaultAudioLanguage,
         renditions: kept.map((one) => ({
           id: one.id,
           path: one.path,
@@ -2512,6 +2514,17 @@ followTheDownloads({
       { changed: true },
       { kind: 'profiles', profileIds: [...new Set(followed.map((one) => one.profileId))] },
     );
+
+    for (const { download, problem } of followed) {
+      if (download.state === 'failed') {
+        log.warn(
+          'playback',
+          `downloads: ${download.title} could not be prepared: ${problem ?? download.failure ?? 'no reason given'}`,
+        );
+      } else if (download.state === 'ready') {
+        log.info('playback', `downloads: ${download.title} is ready to keep`);
+      }
+    }
 
     for (const { accountId, download } of followed.filter((one) => one.isNowReady)) {
       await notifyHousehold({

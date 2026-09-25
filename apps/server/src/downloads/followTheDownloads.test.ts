@@ -6,6 +6,7 @@ const A_CHANGE: FollowedDownload = {
   profileId: 'a-profile',
   accountId: 'an-account',
   isNowReady: true,
+  problem: null,
   download: {
     id: '9c858901-8a57-4791-81fe-4c455b099bc9',
     mediaId: '9c858901-8a57-4791-81fe-4c455b099bd0',

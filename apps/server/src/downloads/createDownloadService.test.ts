@@ -57,6 +57,24 @@ const preparing = (progress: number): DownloadFile => ({
   sizeBytes: null,
 });
 
+const FAILED: DownloadFile = {
+  id: 'a-rendition',
+  isReady: false,
+  progress: 0,
+  bytesPerSecond: null,
+  file: 'download.mp4',
+  sizeBytes: null,
+  failure: 'ffmpeg wrote no file',
+};
+
+const TWO_SOUNDTRACKS: MediaItem = {
+  ...FILM,
+  audioStreams: [
+    { index: 1, codec: 'eac3', channels: 6, language: 'ita', isDefault: true, isAtmos: false },
+    { index: 3, codec: 'eac3', channels: 6, language: 'eng', isDefault: false, isAtmos: false },
+  ],
+};
+
 const READY: DownloadFile = {
   id: 'a-rendition',
   isReady: true,
@@ -99,9 +117,15 @@ const aScratchDatabase = async () => {
  * whose answers each test chooses.
  *
  * @param answers - What the media service says to each request, in order.
+ * @param film - The one film the library holds.
+ * @param defaultAudioLanguage - The language its library prefers.
  * @returns The service and the media service's fake.
  */
-const build = async (answers: DownloadFile[]) => {
+const build = async (
+  answers: DownloadFile[],
+  film: MediaItem = FILM,
+  defaultAudioLanguage: string | null = null,
+) => {
   const requestDownload = vi.fn<Transcoder['requestDownload']>();
 
   for (const answer of answers) {
@@ -122,7 +146,13 @@ const build = async (answers: DownloadFile[]) => {
       findForPlayback: (mediaId) =>
         Promise.resolve(
           mediaId === MEDIA_ID
-            ? { item: FILM, path: '/films/Arrival.mp4', sizeBytes: 7_000_000_000, generation: 1 }
+            ? {
+                item: film,
+                path: '/films/Arrival.mp4',
+                sizeBytes: 7_000_000_000,
+                generation: 1,
+                defaultAudioLanguage,
+              }
             : null,
         ),
       titleOf: (mediaId) => Promise.resolve(mediaId === MEDIA_ID ? 'Arrival' : null),
@@ -215,6 +245,43 @@ describe('createDownloadService', () => {
     await expect(service.clearOutBefore(new Date(Date.now() - 60_000))).resolves.toBe(0);
     expect(transcoder.forgetDownload).not.toHaveBeenCalled();
   });
+
+  it('calls a download failed once the media service says it could not prepare it', async () => {
+    const { service } = await build([preparing(10), FAILED]);
+
+    await service.ask('a-profile', 'a-laptop', MEDIA_ID, 'original', []);
+
+    const [failed] = await service.follow();
+
+    expect(failed).toMatchObject({
+      problem: 'ffmpeg wrote no file',
+      download: { state: 'failed' },
+    });
+    await expect(service.follow()).resolves.toEqual([]);
+  });
+
+  it('tries again when asked for something whose last attempt failed', async () => {
+    const { service, transcoder } = await build([FAILED, preparing(0)]);
+
+    const asked = await service.ask('a-profile', 'a-laptop', MEDIA_ID, 'original', []);
+
+    expect(asked?.state).toBe('preparing');
+    expect(transcoder.requestDownload).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([
+    [null, 1],
+    ['eng', 3],
+  ])(
+    'carries the soundtrack playback would, for a library preferring %s',
+    async (language, index) => {
+      const { service, transcoder } = await build([preparing(0)], TWO_SOUNDTRACKS, language);
+
+      await service.ask('a-profile', 'a-laptop', MEDIA_ID, 'original', []);
+
+      expect(transcoder.requestDownload.mock.calls[0]?.[0].audioStreamIndexes).toEqual([index]);
+    },
+  );
 
   it('lists without asking the media service anything', async () => {
     const { service, transcoder } = await build([preparing(10)]);
