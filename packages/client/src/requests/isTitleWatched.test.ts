@@ -36,7 +36,9 @@ describe('isTitleWatched', () => {
   it('is never watched where it is not in the library, or is a series', () => {
     expect(
       isTitleWatched(
-        title({ standing: { status: 'askable', mediaId: null, requestId: null, requestState: null } }),
+        title({
+          standing: { status: 'askable', mediaId: null, requestId: null, requestState: null },
+        }),
         finished,
       ),
     ).toBe(false);

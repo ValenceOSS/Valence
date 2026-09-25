@@ -152,13 +152,29 @@ describe('createMusicPlayer', () => {
     audio.lineUp = lineUp;
     player.play(THREE, 0);
 
-    const loaded = audio.src;
+    const next = `/stream/${THREE[1]?.id ?? ''}?quality=lossless`;
 
+    audio.src = next;
     fire('advanced');
 
-    expect(audio.src).toBe(loaded);
+    expect(audio.src).toBe(next);
     expect(player.read()).toMatchObject({ current: THREE[1], positionSeconds: 0 });
     expect(lineUp).toHaveBeenLastCalledWith(`/stream/${THREE[2]?.id ?? ''}?quality=lossless`);
+  });
+
+  it('puts on the track that is next where the audio ran into one lined up before a change', () => {
+    const { player, audio, fire } = build();
+    const lineUp = vi.fn();
+    const added = track(4);
+
+    audio.lineUp = lineUp;
+    player.play(THREE, 0);
+    player.playNext([added]);
+    audio.src = `/stream/${THREE[1]?.id ?? ''}?quality=lossless`;
+    fire('advanced');
+
+    expect(player.read().current).toBe(added);
+    expect(audio.src).toBe(`/stream/${added.id}?quality=lossless`);
   });
 
   it('lines up again when what comes next changes', () => {
@@ -179,6 +195,7 @@ describe('createMusicPlayer', () => {
 
     audio.lineUp = lineUp;
     player.play(THREE, 1);
+    audio.src = `/stream/${THREE[2]?.id ?? ''}?quality=lossless`;
     fire('advanced');
 
     expect(player.read().current).toBe(THREE[2]);

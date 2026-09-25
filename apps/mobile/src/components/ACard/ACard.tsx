@@ -39,7 +39,7 @@ const ACard = ({
   return (
     <Button
       tone="bare"
-      label={detail === null ? title : `${title}, ${media.title}`}
+      label={detail === null ? title : `${title}, ${detail}`}
       onPress={() => {
         if (showId === null) {
           onLookAt(media.id);

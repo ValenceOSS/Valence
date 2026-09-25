@@ -314,10 +314,25 @@ const createAudiobookPlayer = ({
     change({ isLoading: false });
   });
 
+  const runOn = (): void => {
+    if (state.trackAt < state.tracks.length - 1) {
+      load(state.trackAt + 1, 0, true);
+      keep();
+
+      return;
+    }
+
+    change({ isPlaying: false, bookPositionSeconds: state.durationSeconds });
+    keep(true);
+  };
+
   audio.addEventListener('advanced', () => {
     const trackAt = state.trackAt + 1;
 
-    if (linedUp === '' || state.tracks[trackAt] === undefined) {
+    if (linedUp === '' || state.tracks[trackAt] === undefined || audio.src !== linedUp) {
+      linedUp = '';
+      runOn();
+
       return;
     }
 
@@ -332,17 +347,7 @@ const createAudiobookPlayer = ({
     lineUpNext();
   });
 
-  audio.addEventListener('ended', () => {
-    if (state.trackAt < state.tracks.length - 1) {
-      load(state.trackAt + 1, 0, true);
-      keep();
-
-      return;
-    }
-
-    change({ isPlaying: false, bookPositionSeconds: state.durationSeconds });
-    keep(true);
-  });
+  audio.addEventListener('ended', runOn);
 
   audio.addEventListener('error', () => {
     if (state.book !== null && audio.src !== '') {

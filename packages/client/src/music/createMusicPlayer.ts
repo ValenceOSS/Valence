@@ -362,7 +362,8 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
     const arrived = linedUp;
     const track = arrived === null ? null : currentOf(arrived.queue);
 
-    if (arrived === null || track === null) {
+    if (arrived === null || track === null || audio.src !== arrived.src) {
+      linedUp = null;
       moveOn();
 
       return;

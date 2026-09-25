@@ -186,7 +186,7 @@ final class ValenceSpeaker {
     itemWatches = [
       item.observe(\.status, options: [.initial, .new]) { [weak self] item, _ in
         DispatchQueue.main.async {
-          guard let self else {
+          guard let self, item === self.player.currentItem else {
             return
           }
 

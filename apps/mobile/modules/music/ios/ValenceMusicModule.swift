@@ -172,6 +172,7 @@ public class ValenceMusicModule: Module {
       "currentTime": at.isFinite ? at : 0,
       "duration": duration.isFinite ? duration : -1,
       "paused": speaker.player.timeControlStatus == .paused,
+      "source": (speaker.player.currentItem?.asset as? AVURLAsset)?.url.absoluteString ?? "",
     ])
 
     if type == "timeupdate" {

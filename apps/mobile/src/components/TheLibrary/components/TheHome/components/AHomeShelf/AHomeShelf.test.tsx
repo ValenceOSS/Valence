@@ -97,7 +97,9 @@ describe('AHomeShelf', () => {
 
     expect(drawn.getByText('S1 · E1  Good News About Hell')).toBeTruthy();
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Severance, Good News About Hell' }));
+    await userEvent.press(
+      drawn.getByRole('button', { name: 'Severance, S1 · E1  Good News About Hell' }),
+    );
 
     expect(onLookAt).toHaveBeenCalledWith(anEpisode.id);
   });

@@ -11,6 +11,7 @@ const AudioEventSchema = z.object({
   currentTime: z.number(),
   duration: z.number(),
   paused: z.boolean(),
+  source: z.string().optional(),
 });
 
 /**
@@ -27,7 +28,8 @@ const AudioEventSchema = z.object({
  * then replaced before its session arrived is never loaded.
  *
  * The file to play next can be lined up behind the one playing, so the speaker runs straight on
- * into it without a gap and says it has advanced rather than ended.
+ * into it without a gap and says it has advanced rather than ended. It says which file it advanced
+ * into, and that is the one taken as playing, since a file lined up since may not have reached it.
  *
  * @param speaker - The native music module.
  * @param channel - Which of its speakers.
@@ -46,6 +48,7 @@ const speakerAudio = (speaker: NativeMusic, channel: Channel): AudioLike & Liste
   let asked = 0;
   let upNext = '';
   let linedUp = 0;
+  const askedFor = new Map<string, string>();
 
   speaker.addListener('onAudio', (said) => {
     const read = AudioEventSchema.safeParse(said);
@@ -55,8 +58,9 @@ const speakerAudio = (speaker: NativeMusic, channel: Channel): AudioLike & Liste
     }
 
     if (read.data.type === 'advanced') {
-      source = upNext;
+      source = askedFor.get(read.data.source ?? '') ?? upNext;
       upNext = '';
+      askedFor.clear();
     }
 
     at = read.data.currentTime;
@@ -74,6 +78,7 @@ const speakerAudio = (speaker: NativeMusic, channel: Channel): AudioLike & Liste
     set src(to: string) {
       source = to;
       upNext = '';
+      askedFor.clear();
       at = 0;
       long = Number.NaN;
       asked += 1;
@@ -149,6 +154,10 @@ const speakerAudio = (speaker: NativeMusic, channel: Channel): AudioLike & Liste
       const thisLine = linedUp;
       const whole = to === '' || !to.startsWith('/') ? to : onThisServer(to);
       const isStill = (): boolean => thisAsk === asked && thisLine === linedUp;
+
+      if (whole !== '') {
+        askedFor.set(whole, to);
+      }
 
       void handedOver
         .then(async () => (whole === '' ? null : theCookiesThisPhoneHolds(whole)))

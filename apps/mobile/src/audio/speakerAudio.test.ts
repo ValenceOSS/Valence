@@ -130,4 +130,25 @@ describe('speakerAudio, changing its mind', () => {
 
     expect(speaker.lineUp).not.toHaveBeenCalled();
   });
+
+  it('takes the file the speaker says it advanced into, not one lined up after it', async () => {
+    const { speaker, say } = aFakeSpeaker();
+    const audio = speakerAudio(speaker, 'music');
+
+    audio.src = '/api/music/tracks/one/stream';
+    audio.lineUp?.('/api/music/tracks/two/stream');
+    audio.lineUp?.('/api/music/tracks/three/stream');
+    await new Promise(setImmediate);
+
+    say({
+      channel: 'music',
+      type: 'advanced',
+      currentTime: 0,
+      duration: 180,
+      paused: false,
+      source: 'http://one.local:8420/api/music/tracks/two/stream',
+    });
+
+    expect(audio.src).toBe('/api/music/tracks/two/stream');
+  });
 });

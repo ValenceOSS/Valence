@@ -138,9 +138,10 @@ describe('createAudiobookPlayer', () => {
 
     expect(lineUp).toHaveBeenLastCalledWith(`/api/books/${BOOK.id}/chapters/two/audio`);
 
+    audio.src = `/api/books/${BOOK.id}/chapters/two/audio`;
     audio.fire('advanced');
 
-    expect(audio.src).toBe(`/api/books/${BOOK.id}/chapters/one/audio`);
+    expect(audio.src).toBe(`/api/books/${BOOK.id}/chapters/two/audio`);
     expect(player.read()).toMatchObject({ trackAt: 1, bookPositionSeconds: 100 });
     expect(save).toHaveBeenLastCalledWith(BOOK.id, {
       chapterId: 'two',
