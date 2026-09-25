@@ -129,12 +129,13 @@ const ProfileGate = ({
   const passkeyAttempt = useRef(0);
   const isShown = useRef(true);
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    isShown.current = true;
+
+    return () => {
       isShown.current = false;
-    },
-    [],
-  );
+    };
+  }, []);
 
   const isOurs = name.toLowerCase() === OURS;
   const facesRef = useRef(new Map<string, HTMLButtonElement>());

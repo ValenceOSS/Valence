@@ -1,4 +1,6 @@
-import { act, screen, waitFor } from '@testing-library/react';
+import { StrictMode } from 'react';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -555,6 +557,25 @@ describe('opened from the phone app, leading with a passkey', () => {
 
     expect(screen.queryByText('Too late.')).not.toBeInTheDocument();
     expect(screen.getByText('Who is watching?')).toBeInTheDocument();
+  });
+
+  it('still lets somebody in under strict mode, which sets it up twice', async () => {
+    const onSignedIn = vi.fn();
+
+    passkeySupportedMock.mockReturnValue(true);
+    passkeyMock.mockReset().mockResolvedValue({ kind: 'signedIn' });
+
+    render(
+      <StrictMode>
+        <QueryClientProvider client={new QueryClient()}>
+          <ProfileGate onSignedIn={onSignedIn} leadsWithPasskey />
+        </QueryClientProvider>
+      </StrictMode>,
+    );
+
+    await waitFor(() => {
+      expect(onSignedIn).toHaveBeenCalled();
+    });
   });
 
   it('lets nobody in once it has gone', async () => {
