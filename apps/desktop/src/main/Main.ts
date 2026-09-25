@@ -55,6 +55,8 @@ import type { AvailableUpdate } from '@ValenceDesktop/main/checkForUpdate';
 import type { AskingTheServer } from '@ValenceDesktop/main/keepADownload';
 import { WHAT_VERSION_THIS_IS } from '@ValenceDesktop/main/aboutChannels';
 import { SET_UNREAD_BADGE } from '@ValenceDesktop/main/notificationChannels';
+import { SHOW_THE_WINDOW_CONTROLS } from '@ValenceDesktop/main/windowChannels';
+import { showTheWindowControls } from '@ValenceDesktop/main/showTheWindowControls';
 import { z } from 'zod';
 
 const WHERE_IT_HAS_ALWAYS_BEEN = 'Valence';
@@ -309,6 +311,12 @@ const start = async (): Promise<void> => {
 
   ipcMain.on(SET_UNREAD_BADGE, (_event, count) => {
     app.setBadgeCount(z.number().int().nonnegative().catch(0).parse(count));
+  });
+
+  ipcMain.on(SHOW_THE_WINDOW_CONTROLS, (_event, isShown) => {
+    if (theWindow !== null) {
+      showTheWindowControls(theWindow, z.boolean().catch(true).parse(isShown), process.platform);
+    }
   });
 
   const discord = tellDiscord(app.getPath('temp'));

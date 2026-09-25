@@ -1573,6 +1573,20 @@ const VideoPlayer = ({
   const isBarUpRef = useRef(isBarUp);
 
   useEffect(() => {
+    if (!isImmersive) {
+      return undefined;
+    }
+
+    const root = document.documentElement;
+
+    root.dataset['valenceWatching'] = isBarUp ? 'shown' : 'hidden';
+
+    return () => {
+      delete root.dataset['valenceWatching'];
+    };
+  }, [isImmersive, isBarUp]);
+
+  useEffect(() => {
     isBarUpRef.current = isBarUp;
   });
 
@@ -1732,6 +1746,7 @@ const VideoPlayer = ({
       onPointerLeave={onLeaveStage}
     >
       <header
+        data-slot="player-header"
         className={
           isImmersive
             ? `absolute inset-x-0 top-0 z-10 flex items-center gap-4 bg-gradient-to-b from-shade/70 to-transparent p-4 pl-[calc(1rem+env(safe-area-inset-left,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] pt-[calc(1rem+env(safe-area-inset-top,0px))] text-text transition-transform duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none ${

@@ -76,6 +76,10 @@
     "mac": {
       "category": "public.app-category.entertainment",
       "icon": "build/icon.icon",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
       "target": [
         {
           "target": "dmg",
