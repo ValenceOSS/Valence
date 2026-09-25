@@ -20,6 +20,7 @@ const DownloadSchema = z.object({
   bytesPerSecond: z.number().int().nonnegative().nullable(),
   sizeBytes: z.number().int().nonnegative().nullable(),
   failure: z.string().nullable(),
+  askedFrom: z.string().nullable().default(null),
   askedAt: z.string().datetime(),
   readyAt: z.string().datetime().nullable(),
 });
