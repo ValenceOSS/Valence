@@ -23,4 +23,8 @@ describe('isInRenditionDirectory', () => {
   it('is named for the directory it looks for', () => {
     expect(RENDITION_DIRECTORY).toBe('.valence');
   });
+
+  it('knows one on a Windows path', () => {
+    expect(isInRenditionDirectory('C:\\movies\\.valence\\renditions\\abc.mkv')).toBe(true);
+  });
 });

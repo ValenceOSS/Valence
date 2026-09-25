@@ -1,3 +1,4 @@
+import { episodeNumbersOf } from './episodeNumbersOf';
 import type { ShowDetail } from '@ValenceContracts/schemas/Show';
 
 type Gaps = {
@@ -51,16 +52,19 @@ const upTo = (numbers: number[], count: number): number[] => {
 
 /**
  * Reads the episode numbers one season of a programme actually holds, ignoring any episode the
- * scanner could not number.
+ * scanner could not number, and counting every episode a double episode's file holds.
  *
  * @param show - The programme, with its seasons and their episodes.
  * @param seasonNumber - The season being asked about.
  * @returns The episode numbers held, in the order the season lists them.
  */
 const numbersIn = (show: ShowDetail, seasonNumber: number): number[] =>
-  (show.seasons.find((season) => season.seasonNumber === seasonNumber)?.episodes ?? [])
-    .map((episode) => episode.episodeNumber)
-    .filter((number): number is number => number !== null && number !== undefined);
+  (show.seasons.find((season) => season.seasonNumber === seasonNumber)?.episodes ?? []).flatMap(
+    ({ episodeNumber, episodeNumberEnd }) =>
+      episodeNumber === null || episodeNumber === undefined
+        ? []
+        : episodeNumbersOf(episodeNumber, episodeNumberEnd ?? null),
+  );
 
 /**
  * Works out what a programme is missing, preferring the catalogue's own shape where one is known —

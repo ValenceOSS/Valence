@@ -708,6 +708,7 @@ const mediaItem = pgTable(
     certificationAge: integer('certificationAge'),
     seasonNumber: integer('seasonNumber'),
     episodeNumber: integer('episodeNumber'),
+    episodeNumberEnd: integer('episodeNumberEnd'),
     overview: text('overview'),
     tagline: text('tagline'),
     genres: jsonb('genres'),

@@ -100,8 +100,12 @@ const harness = (options: {
   linkExtras?: (libraryId: string, links: { path: string; parentPath: string }[]) => Promise<void>;
   forgetStaleVersions?: (libraryId: string, stillVersions: string[]) => Promise<void>;
   root?: string;
+  kind?: 'movies' | 'shows';
+  within?: string;
+  regroupSeries?: (libraryId: string, foldersByPath: Map<string, string>) => Promise<void>;
 }) => {
   const rows: MediaRow[] = [];
+  const walked: string[] = [];
   const removedPaths: string[] = [];
   const markScanned = vi.fn(() => Promise.resolve());
   const previewRequests: { inputPath: string; audioStreamIndex?: number }[] = [];
@@ -176,13 +180,18 @@ const harness = (options: {
   const run = () =>
     scanLibrary({
       libraryId: LIBRARY_ID,
+      kind: options.kind ?? 'movies',
       root: options.root ?? '/media/films',
+      ...(options.within === undefined ? {} : { within: options.within }),
       files: {
-        listFiles: () =>
-          Promise.resolve({
+        listFiles: (folder) => {
+          walked.push(folder);
+
+          return Promise.resolve({
             files: options.found ?? [],
             unreadable: options.unreadable ?? [],
-          }),
+          });
+        },
       },
       store: {
         listStored: () => Promise.resolve(options.existing ?? []),
@@ -198,6 +207,7 @@ const harness = (options: {
         },
         listOverrides: () => Promise.resolve(options.overrides ?? []),
         ...(options.linkExtras === undefined ? {} : { linkExtras: options.linkExtras }),
+        ...(options.regroupSeries === undefined ? {} : { regroupSeries: options.regroupSeries }),
         ...(options.forgetStaleVersions === undefined
           ? {}
           : { forgetStaleVersions: options.forgetStaleVersions }),
@@ -218,7 +228,7 @@ const harness = (options: {
       ...(options.trickplay === undefined ? {} : { trickplay: options.trickplay }),
     });
 
-  return { run, rows, removedPaths, markScanned, previewRequests };
+  return { run, rows, removedPaths, markScanned, previewRequests, walked };
 };
 
 describe('a library whose files have gone from under it', () => {
@@ -312,6 +322,73 @@ describe('a library whose files have gone from under it', () => {
 });
 
 describe('a scan of a few named files, rather than the whole library', () => {
+  it('walks only the folder it is given, but files every programme by the library root', async () => {
+    const regroupSeries = vi.fn<(libraryId: string, folders: Map<string, string>) => Promise<void>>(
+      () => Promise.resolve(),
+    );
+    const derek = '/media/shows/Derek/Season 1/Derek.S01E01.mkv';
+    const theFall = '/media/shows/The Fall/Season 1/The.Fall.S01E01.mkv';
+    const loose = '/media/shows/Loose.S01E01.mkv';
+    const { run, walked } = harness({
+      kind: 'shows',
+      root: '/media/shows',
+      within: '/media/shows/Derek',
+      found: [file(derek)],
+      existing: [stored(derek), stored(theFall), stored(loose)],
+      force: true,
+      isPartial: true,
+      regroupSeries,
+    });
+
+    await run();
+
+    const folders = regroupSeries.mock.calls[0]?.[1];
+
+    expect(walked).toEqual(['/media/shows/Derek']);
+    expect(folders).toEqual(new Map([[derek, '/media/shows/Derek']]));
+  });
+
+  it('never deletes what it did not walk, when it was given only part of the library', async () => {
+    const { run, removedPaths } = harness({
+      kind: 'shows',
+      root: '/media/shows',
+      within: '/media/shows/Derek',
+      found: [file('/media/shows/Derek/Season 1/Derek.S01E01.mkv')],
+      existing: [
+        stored('/media/shows/Derek/Season 1/Derek.S01E01.mkv'),
+        stored('/media/shows/The Fall/Season 1/The.Fall.S01E01.mkv'),
+      ],
+    });
+
+    await run();
+
+    expect(removedPaths).toEqual([]);
+  });
+
+  it('files every programme again when it walked the whole library', async () => {
+    const regroupSeries = vi.fn<(libraryId: string, folders: Map<string, string>) => Promise<void>>(
+      () => Promise.resolve(),
+    );
+    const derek = '/media/shows/Derek/Season 1/Derek.S01E01.mkv';
+    const theFall = '/media/shows/The Fall/Season 1/The.Fall.S01E01.mkv';
+    const { run } = harness({
+      kind: 'shows',
+      root: '/media/shows',
+      found: [file(derek), file(theFall)],
+      existing: [stored(derek), stored(theFall)],
+      regroupSeries,
+    });
+
+    await run();
+
+    expect(regroupSeries.mock.calls[0]?.[1]).toEqual(
+      new Map([
+        [derek, '/media/shows/Derek'],
+        [theFall, '/media/shows/The Fall'],
+      ]),
+    );
+  });
+
   it('leaves alone everything it was not asked about', async () => {
     const { run, removedPaths } = harness({
       found: [file('/from-s01e01.mkv')],
@@ -516,6 +593,7 @@ describe('scanLibrary', () => {
 
     await scanLibrary({
       libraryId: LIBRARY_ID,
+      kind: 'movies',
       root: '/media',
       files: { listFiles: () => Promise.resolve({ files: [file('/broken.mkv')], unreadable: [] }) },
       store: {
@@ -632,17 +710,16 @@ describe('scanLibrary', () => {
     expect(rows[0]).toMatchObject({ title: 'Arrival', year: 2016 });
   });
 
-  it('tells a provider what a file was already matched to, on a forced rescan', async () => {
-    let seenKnownExternalId: string | null | undefined;
+  it('tells a provider what a changed file was already matched to', async () => {
+    let remembered: string | null | undefined;
     const { run } = harness({
-      found: [file('/media/films/arrival.2016.1080p.mkv')],
+      found: [file('/media/films/arrival.2016.1080p.mkv', { sizeBytes: 2000 })],
       existing: [stored('/media/films/arrival.2016.1080p.mkv', { externalId: '329' })],
-      force: true,
       providers: [
         {
           name: 'plugin',
           describe: (facts) => {
-            seenKnownExternalId = facts.knownExternalId;
+            remembered = facts.rememberedExternalId;
             return Promise.resolve({ title: 'Arrival', year: 2016 });
           },
         },
@@ -651,7 +728,29 @@ describe('scanLibrary', () => {
 
     await run();
 
-    expect(seenKnownExternalId).toBe('329');
+    expect(remembered).toBe('329');
+  });
+
+  it('matches every file again from its name on a forced rescan, which is how a wrong match is put right', async () => {
+    let remembered: string | null | undefined = 'untouched';
+    const { run } = harness({
+      found: [file('/media/films/arrival.2016.1080p.mkv')],
+      existing: [stored('/media/films/arrival.2016.1080p.mkv', { externalId: '329' })],
+      force: true,
+      providers: [
+        {
+          name: 'plugin',
+          describe: (facts) => {
+            remembered = facts.rememberedExternalId;
+            return Promise.resolve({ title: 'Arrival', year: 2016, externalId: '329' });
+          },
+        },
+      ],
+    });
+
+    await run();
+
+    expect(remembered).toBeNull();
   });
 
   it('keeps what a catalogue said before rather than writing a filename over it', async () => {
@@ -855,6 +954,8 @@ describe('a correction somebody made', () => {
   it('reaches a season that did not exist when it was made', async () => {
     const asked: (string | null | undefined)[] = [];
     const { run } = harness({
+      kind: 'shows',
+      root: '/media/shows',
       found: [
         file('/media/shows/From/Season 01/from.s01e01.mkv'),
         file('/media/shows/From/Season 02/from.s02e01.mkv'),
@@ -954,16 +1055,18 @@ describe('a correction somebody made', () => {
   });
 
   it('leaves a file nobody corrected to whatever it was matched to', async () => {
-    let asked: string | null | undefined;
+    let asked: { known: string | null | undefined; remembered: string | null | undefined } = {
+      known: undefined,
+      remembered: undefined,
+    };
     const { run } = harness({
-      found: [file('/media/films/b.mkv')],
+      found: [file('/media/films/b.mkv', { sizeBytes: 2000 })],
       existing: [stored('/media/films/b.mkv', { externalId: '777' })],
-      force: true,
       providers: [
         {
           name: 'catalogue',
           describe: (facts) => {
-            asked = facts.knownExternalId;
+            asked = { known: facts.knownExternalId, remembered: facts.rememberedExternalId };
 
             return Promise.resolve({ title: 'B', year: 2000, externalId: '777' });
           },
@@ -973,7 +1076,7 @@ describe('a correction somebody made', () => {
 
     await run();
 
-    expect(asked).toBe('777');
+    expect(asked).toEqual({ known: null, remembered: '777' });
   });
 });
 
@@ -1082,6 +1185,8 @@ describe('a library holding extras', () => {
     const folder = '/media/shows/Bluey';
 
     await harness({
+      kind: 'shows',
+      root: '/media/shows',
       found: [file(`${folder}/Bluey - 01.mkv`), file(`${folder}/Bluey - 02.mkv`)],
       linkExtras,
     }).run();
@@ -1110,6 +1215,8 @@ describe('a library holding extras', () => {
 
   it('gives a programme its extras without pretending they are episodes', async () => {
     const { run, rows } = harness({
+      kind: 'shows',
+      root: '/media/tv',
       found: [
         file('/media/tv/Some Show/Season 1/Some.Show.S01E01.mkv'),
         file('/media/tv/Some Show/Extras/Making Of.mkv'),
@@ -1324,6 +1431,7 @@ describe('a programme split in two by a catalogue that answered for only some of
     const missed = `${SHOWS}/Curb Your Enthusiasm/Season 1/Curb.S01E01.mkv`;
 
     const { run, rows } = harness({
+      kind: 'shows',
       root: SHOWS,
       found: [file(answered), file(missed)],
       providers: [patchy({ [answered]: '4546' })],
@@ -1340,6 +1448,7 @@ describe('a programme split in two by a catalogue that answered for only some of
     const missed = `${SHOWS}/Unsolved (2018)/Unsolved.S01E01.mkv`;
 
     const { run, rows } = harness({
+      kind: 'shows',
       root: SHOWS,
       found: [file(answered), file(missed)],
       providers: [patchy({ [answered]: '101605' })],
@@ -1355,6 +1464,7 @@ describe('a programme split in two by a catalogue that answered for only some of
     const stray = `${SHOWS}/Euphoria (US)/Euphoria US S03E01 Andale.mkv`;
 
     const { run, rows } = harness({
+      kind: 'shows',
       root: SHOWS,
       found: [file(usual), file(stray)],
       providers: [patchy({})],
@@ -1363,11 +1473,12 @@ describe('a programme split in two by a catalogue that answered for only some of
     await run();
 
     expect(keysOf(rows)).toEqual(new Set(['folder:/media/shows/Euphoria (US)']));
-    expect(new Set(rows.map((row) => row.episode.seriesTitle))).toEqual(new Set(['Euphoria US']));
+    expect(new Set(rows.map((row) => row.episode.seriesTitle))).toEqual(new Set(['Euphoria (US)']));
   });
 
   it('names every episode of a folder after the folder, whatever each file called it', async () => {
     const { run, rows } = harness({
+      kind: 'shows',
       root: SHOWS,
       found: [
         file(`${SHOWS}/The Office (US)/The Office - S04E01.mkv`),
@@ -1378,7 +1489,9 @@ describe('a programme split in two by a catalogue that answered for only some of
 
     await run();
 
-    expect(new Set(rows.map((row) => row.episode.seriesTitle))).toEqual(new Set(['The Office US']));
+    expect(new Set(rows.map((row) => row.episode.seriesTitle))).toEqual(
+      new Set(['The Office (US)']),
+    );
   });
 });
 
@@ -1391,6 +1504,7 @@ describe('a folder below a programme, which is never a programme of its own', ()
     const second = `${SHOWS}/The Fall/Specials/Deleted Scenes 2.mkv`;
 
     const { run, rows } = harness({
+      kind: 'shows',
       root: SHOWS,
       found: [file(episode), file(first), file(second)],
     });
@@ -1405,6 +1519,7 @@ describe('a folder below a programme, which is never a programme of its own', ()
 
   it('keeps the name of a special, which is the only thing telling two of them apart', async () => {
     const { run, rows } = harness({
+      kind: 'shows',
       root: SHOWS,
       found: [
         file(`${SHOWS}/The Fall/The Fall - S01E01 - Dark Descent.mkv`),
@@ -1423,18 +1538,21 @@ describe('a folder below a programme, which is never a programme of its own', ()
     ]);
   });
 
-  it('does not merge two programmes filed under one drawer', async () => {
+  it('takes the folder at the top of the library as the programme, whatever is filed below it', async () => {
     const { run, rows } = harness({
+      kind: 'shows',
       root: SHOWS,
       found: [
-        file(`${SHOWS}/Marvel/Daredevil/Season 1/Daredevil.S01E01.mkv`),
-        file(`${SHOWS}/Marvel/Jessica Jones/Season 1/Jessica.Jones.S01E01.mkv`),
+        file(`${SHOWS}/Avatar The Last Airbender/Book 1 Water/Avatar S01E01.mkv`),
+        file(`${SHOWS}/Avatar The Last Airbender/Book 2 Earth/Avatar S02E01.mkv`),
       ],
     });
 
     await run();
 
-    expect(new Set(rows.map((row) => row.episode.seriesFolder)).size).toBe(2);
+    expect(new Set(rows.map((row) => row.episode.seriesFolder))).toEqual(
+      new Set([`${SHOWS}/Avatar The Last Airbender`]),
+    );
   });
 });
 
@@ -1447,13 +1565,14 @@ describe('an episode whose lookup failed while its neighbours succeeded', () => 
     const provider: MetadataProvider = {
       name: 'remembering',
       describe: (facts) => {
-        asked.push(facts.knownExternalId);
+        asked.push(facts.rememberedExternalId);
 
         return Promise.resolve({ title: 'An Episode', year: null, seriesTitle: 'The Fall' });
       },
     };
 
     const { run } = harness({
+      kind: 'shows',
       root: SHOWS,
       found: [file(`${SHOWS}/The Fall/The Fall - S01E02.mkv`)],
       existing: [stored(`${SHOWS}/The Fall/The Fall - S01E01.mkv`, { externalId: '2085' })],
@@ -1528,6 +1647,7 @@ describe('a film, which belongs to no programme however it is filed', () => {
 describe('a season filed under a numbered folder', () => {
   it('reads the number as the season, since it sits inside the programme', async () => {
     const { run, rows } = harness({
+      kind: 'shows',
       root: '/media/shows',
       found: [
         file('/media/shows/Some Show/01/Some Show ep 1.mkv'),
@@ -1542,6 +1662,7 @@ describe('a season filed under a numbered folder', () => {
 
   it('does not read a programme called 24 as a twenty-fourth season', async () => {
     const { run, rows } = harness({
+      kind: 'shows',
       root: '/media/shows',
       found: [file('/media/shows/24/24.S02E01.mkv')],
     });
@@ -1550,5 +1671,20 @@ describe('a season filed under a numbered folder', () => {
 
     expect(rows[0]?.episode.seasonNumber).toBe(2);
     expect(rows[0]?.episode.seriesFolder).toBe('/media/shows/24');
+  });
+});
+
+describe('a file holding two episodes', () => {
+  it('stores both numbers, so the second is known to be here', async () => {
+    const path = '/media/shows/Show/Season 1/Show.S01E01-E02.mkv';
+    const { run, rows } = harness({ kind: 'shows', root: '/media/shows', found: [file(path)] });
+
+    await run();
+
+    expect(rows[0]?.episode).toMatchObject({
+      seasonNumber: 1,
+      episodeNumber: 1,
+      episodeNumberEnd: 2,
+    });
   });
 });

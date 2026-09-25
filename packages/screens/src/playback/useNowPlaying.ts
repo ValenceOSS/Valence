@@ -5,6 +5,7 @@ import {
   artworkFetchedForTheSystem,
   artworkTheSystemAccepts,
 } from '@ValenceScreens/playback/artworkTheSystemAccepts';
+import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 
 const A_SKIP = 10;
 
@@ -12,7 +13,12 @@ const POSTER_SIZES = ['256x384', '512x768'] as const;
 
 type NowPlaying = {
   media: Pick<MediaSummary, 'id' | 'title'> &
-    Partial<Pick<MediaSummary, 'seriesTitle' | 'seasonNumber' | 'episodeNumber' | 'hasPoster'>>;
+    Partial<
+      Pick<
+        MediaSummary,
+        'seriesTitle' | 'seasonNumber' | 'episodeNumber' | 'episodeNumberEnd' | 'hasPoster'
+      >
+    >;
   isPlaying: boolean;
   positionSeconds: number;
   durationSeconds: number;
@@ -47,7 +53,7 @@ const whichEpisode = (media: NowPlaying['media']): string => {
     return '';
   }
 
-  return `Series ${seasonNumber.toString()}, Episode ${episodeNumber.toString()}`;
+  return `Series ${seasonNumber.toString()}, Episode ${describeEpisodeNumbers(episodeNumber, media.episodeNumberEnd)}`;
 };
 
 /**

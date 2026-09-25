@@ -23,6 +23,7 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ShowDetail } from '@ValenceContracts/schemas/Show';
 import type { ShowPageProps } from './ShowPage.types';
+import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 
 const STARRING = 4;
 
@@ -42,7 +43,7 @@ const seasonKey = (seasonNumber: number | null): string =>
  * @returns Its season and number.
  */
 const placeOf = (episode: MediaSummary): string =>
-  `S${(episode.seasonNumber ?? 1).toString()}: E${(episode.episodeNumber ?? 1).toString()}`;
+  `S${(episode.seasonNumber ?? 1).toString()}: E${describeEpisodeNumbers(episode.episodeNumber ?? 1, episode.episodeNumberEnd)}`;
 
 /**
  * What the catalogue says happens in an episode, where it says anything.

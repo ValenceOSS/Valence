@@ -174,6 +174,15 @@ describe('the ordering an episode list is read in', () => {
     expect(shows[0]?.coverMediaId).toBe(identified(2));
   });
 
+  it('takes its artwork from the first episode that has any, not one the catalogue did not know', () => {
+    const shows = groupIntoShows([
+      episode({ id: identified(1), episodeNumber: 1 }),
+      episode({ id: identified(2), episodeNumber: null, title: 'A special', hasPoster: false }),
+    ]);
+
+    expect(shows[0]?.coverMediaId).toBe(identified(1));
+  });
+
   it('treats a date it cannot read as long ago rather than as now', () => {
     const shows = groupIntoShows([
       episode({ id: identified(1), addedAt: 'whenever', episodeNumber: 1 }),

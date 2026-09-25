@@ -9,6 +9,7 @@ import { CODEC_NAMES } from '@ValenceCore/functions/renditionLabel';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { FileGroupProps } from './FileGroup.types';
+import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 
 /**
  * How large a file is, or that nobody recorded it.
@@ -27,8 +28,8 @@ const describeSize = (sizeBytes: number | null | undefined): string =>
  * @returns What to call it within its group.
  */
 const withinGroup = (item: MediaSummary): string => {
-  if (item.seasonNumber !== null && item.episodeNumber !== null) {
-    return `S${String(item.seasonNumber)}E${String(item.episodeNumber)} · ${item.title}`;
+  if (typeof item.seasonNumber === 'number' && typeof item.episodeNumber === 'number') {
+    return `S${item.seasonNumber.toString()}E${describeEpisodeNumbers(item.episodeNumber, item.episodeNumberEnd)} · ${item.title}`;
   }
 
   return item.versionLabel ?? item.title;

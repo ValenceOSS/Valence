@@ -6,6 +6,7 @@ import { PopoverPanel } from '@ValenceUI/PopoverPanel';
 import { MediaCard } from '@ValenceUI/MediaCard';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import type { EpisodeMenuProps } from './EpisodeMenu.types';
+import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 
 /**
  * Names a season for the heading above its episodes, falling back to a neutral heading for anything
@@ -67,7 +68,9 @@ const EpisodeMenu = ({
         {episodes.map((episode) => (
           <li key={episode.id} className="flex items-start gap-3">
             <span className="w-5 shrink-0 pt-1 text-right text-sm tabular-nums text-text/50">
-              {episode.episodeNumber ?? ''}
+              {episode.episodeNumber === null || episode.episodeNumber === undefined
+                ? ''
+                : describeEpisodeNumbers(episode.episodeNumber, episode.episodeNumberEnd)}
             </span>
 
             <span className="min-w-0 flex-1">

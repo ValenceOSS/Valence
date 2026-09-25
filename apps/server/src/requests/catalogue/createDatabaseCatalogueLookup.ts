@@ -63,7 +63,10 @@ const createDatabaseCatalogueLookup = (db: ValenceDatabase): CatalogueLookup => 
 
   episodesHeld: async (tmdbId) => {
     const rows = await db
-      .select({ season: mediaItem.seasonNumber, held: sql<number>`count(*)::int` })
+      .select({
+        season: mediaItem.seasonNumber,
+        held: sql<number>`sum(case when ${mediaItem.episodeNumberEnd} > ${mediaItem.episodeNumber} then ${mediaItem.episodeNumberEnd} - ${mediaItem.episodeNumber} + 1 else 1 end)::int`,
+      })
       .from(mediaItem)
       .innerJoin(series, eq(mediaItem.seriesId, series.id))
       .where(
