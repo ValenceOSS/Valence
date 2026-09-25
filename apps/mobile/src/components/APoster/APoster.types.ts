@@ -6,6 +6,8 @@ type APosterProps = {
   note?: string | null;
   count?: number;
   wide?: number;
+  isStill?: boolean;
+  detail?: string | null;
 };
 
 export type { APosterProps };

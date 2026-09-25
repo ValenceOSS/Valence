@@ -23,7 +23,13 @@ const SLIDES = {
 type Place = { x: number; width: number };
 
 const styles = StyleSheet.create({
-  capsule: { borderRadius: 999, flexDirection: 'row', overflow: 'hidden', padding: INSET },
+  capsule: {
+    alignItems: 'center',
+    borderRadius: 999,
+    flexDirection: 'row',
+    overflow: 'hidden',
+    padding: INSET,
+  },
   filling: { flexGrow: 1 },
   highlight: { borderRadius: 999, bottom: INSET, position: 'absolute', top: INSET },
   pill: {
@@ -34,6 +40,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 9,
   },
+  spread: { paddingHorizontal: 8 },
 });
 
 /**
@@ -52,7 +59,8 @@ const styles = StyleSheet.create({
  * @param items - What there is to choose from.
  * @param value - Which one is picked, or none yet.
  * @param onSelect - Told which one they picked.
- * @param fills - Whether it stretches across the width it is given, its choices spread along it.
+ * @param fills - Whether it stretches across the width it is given, its choices spread evenly
+ *   along it with whatever room is left shared between them, so each sits centred in its share.
  * @param isShown - Whether it is showing: its glass eases in and out on the native side and the rest
  *   fades, since glass does not render under anything faded from outside it.
  */
@@ -140,7 +148,7 @@ const ACapsuleRow = ({
                 onSelect(item.id);
               }}
             >
-              <View style={styles.pill}>
+              <View style={[styles.pill, fills && styles.spread]}>
                 {isChosen && item.icon !== undefined ? (
                   <Icon of={item.icon} size={ICON} colour={colours.accentContrast} />
                 ) : null}

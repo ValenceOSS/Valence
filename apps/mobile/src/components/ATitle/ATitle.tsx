@@ -232,22 +232,21 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
         )}
       </View>
 
-      <View style={styles.actions}>
-        {programme === null ? null : (
-          <Button
-            tone="bare"
-            label={`All episodes of ${programme.title}`}
-            onPress={() => {
-              onLookAtShow(programme.libraryId, programme.id);
-            }}
-          >
-            <View style={styles.action}>
-              <Icon of={ListVideo} colour={colours.text} />
-              <Words size="small">Episodes</Words>
-            </View>
-          </Button>
-        )}
+      {programme === null ? null : (
+        <Button
+          tone="ghost"
+          isWide
+          icon={ListVideo}
+          label={`All episodes of ${programme.title}`}
+          onPress={() => {
+            onLookAtShow(programme.libraryId, programme.id);
+          }}
+        >
+          All episodes
+        </Button>
+      )}
 
+      <View style={styles.actions}>
         <Button
           tone="bare"
           label="Favourite"

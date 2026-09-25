@@ -45,9 +45,9 @@ const APerson = ({ personId, onLookAt, onLookAtShow, onBack }: APersonProps) => 
   }
 
   const shelves = [
-    { title: 'Films', items: credits.data?.films ?? [], asProgramme: false },
-    { title: 'Programmes', items: credits.data?.shows ?? [], asProgramme: true },
-    { title: 'Episodes', items: credits.data?.episodes ?? [], asProgramme: false },
+    { title: 'Films', items: credits.data?.films ?? [], asProgramme: false, isStill: false },
+    { title: 'Programmes', items: credits.data?.shows ?? [], asProgramme: true, isStill: false },
+    { title: 'Episodes', items: credits.data?.episodes ?? [], asProgramme: false, isStill: true },
   ];
 
   return (
@@ -102,6 +102,7 @@ const APerson = ({ personId, onLookAt, onLookAtShow, onBack }: APersonProps) => 
                 key={media.id}
                 media={media}
                 asProgramme={shelf.asProgramme}
+                isStill={shelf.isStill}
                 onLookAt={onLookAt}
                 onLookAtShow={onLookAtShow}
               />
