@@ -16,7 +16,7 @@ import type { NearbyValence } from '@ValenceContracts/schemas/NearbyValence';
 import { useServerIsLost } from '@ValenceClient/offline/useServerIsLost';
 import '@ValenceDesktop/TheWindow.types';
 
-const router = buildRouter('Valence');
+const router = buildRouter();
 
 /**
  * Valence, drawn by this client rather than fetched from a server as pages.

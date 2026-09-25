@@ -1,5 +1,6 @@
 import { once } from 'node:events';
 import { createWriteStream } from 'node:fs';
+import { say } from '@ValenceI18n/say';
 
 const EVERY = 500;
 
@@ -95,11 +96,15 @@ const keepADownload = (asked: WhatToFetch): Fetching => {
     });
 
     if (!answer.ok) {
-      return { bytes, isComplete: false, failure: `The server answered ${answer.status}.` };
+      return {
+        bytes,
+        isComplete: false,
+        failure: say('desktop.keepADownload.serverAnswered', { status: answer.status }),
+      };
     }
 
     if (answer.body === null) {
-      return { bytes, isComplete: false, failure: 'The server sent no file.' };
+      return { bytes, isComplete: false, failure: say('desktop.keepADownload.noFile') };
     }
 
     const startingOver = asked.already > 0 && answer.status !== 206;
@@ -163,7 +168,7 @@ const keepADownload = (asked: WhatToFetch): Fetching => {
         return {
           bytes,
           isComplete: false,
-          failure: `The server sent ${bytes} of the ${whole} bytes it said the file was.`,
+          failure: say('desktop.keepADownload.shortFile', { bytes, whole }),
         };
       }
 

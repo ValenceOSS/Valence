@@ -1,5 +1,6 @@
 import { Menu } from 'electron';
 import type { BrowserWindow } from 'electron';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Offers the way back to choosing a server on a right click, anywhere in the window.
@@ -18,7 +19,7 @@ import type { BrowserWindow } from 'electron';
 const theWindowsOwnMenu = (window: BrowserWindow, changeServer: () => void): void => {
   window.webContents.on('context-menu', () => {
     Menu.buildFromTemplate([
-      { label: 'Change server…', click: changeServer },
+      { label: say('desktop.theWindowsOwnMenu.changeServer'), click: changeServer },
       { type: 'separator' },
       { role: 'reload' },
       { role: 'toggleDevTools' },

@@ -3,6 +3,7 @@ import { stat } from 'node:fs/promises';
 import type { Readable } from 'node:stream';
 import { z } from 'zod';
 import { theFileKept, thePosterKept } from '@ValenceDesktop/main/theHeldFolder';
+import { say } from '@ValenceI18n/say';
 
 const HELD = /^\/held\/(?<downloadId>[0-9a-fA-F-]{36})(?<what>\/poster)?$/u;
 
@@ -144,13 +145,13 @@ const aHeldFile = async (
   const asked = whatWasAsked(folder, pathname);
 
   if (asked === null) {
-    return new Response('Not a held file.', { status: 404 });
+    return new Response(say('desktop.aHeldFile.notHeld'), { status: 404 });
   }
 
   const there = await stat(asked.path).catch(() => null);
 
   if (there === null) {
-    return new Response('This client is not holding that.', { status: 404 });
+    return new Response(say('desktop.aHeldFile.notHolding'), { status: 404 });
   }
 
   const part = whichPart(range, there.size);

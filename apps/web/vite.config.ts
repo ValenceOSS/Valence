@@ -45,6 +45,7 @@ const pushWorker = (): Plugin => ({
       void build({
         configFile: false,
         logLevel: 'error',
+        resolve: { tsconfigPaths: true },
         build: {
           write: false,
           lib: { entry: WORKER_SOURCE, formats: ['es'], fileName: 'push-worker' },
@@ -63,6 +64,7 @@ const pushWorker = (): Plugin => ({
     await build({
       configFile: false,
       logLevel: 'error',
+      resolve: { tsconfigPaths: true },
       build: {
         emptyOutDir: false,
         outDir: 'dist',

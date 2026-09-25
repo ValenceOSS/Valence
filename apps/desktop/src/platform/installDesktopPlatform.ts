@@ -30,7 +30,12 @@ const installDesktopPlatform = (): void => {
     buildInfo: () => {
       const { version, commit, arch, electron, chrome } = window.valence.about;
 
-      return { version, commit, runsOn: `${arch} · Electron ${electron} · Chromium ${chrome}` };
+      return {
+        version,
+        commit,
+        // eslint-disable-next-line valence/no-hard-coded-strings -- the names and versions of the runtime, for a bug report
+        runsOn: `${arch} · Electron ${electron} · Chromium ${chrome}`,
+      };
     },
     notifyLocally,
     setUnreadBadge,

@@ -1,16 +1,12 @@
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 const WATCHING = 3;
 
 const LISTENING = 2;
 
 const LOGO = 'valence-desktop';
 
-const VALENCE = 'Valence';
-
-const BROWSING = 'Browsing the library';
-
 const ARTWORK_HOST = 'image.tmdb.org';
-
-const PAUSED = 'Paused';
 
 const BETWEEN = ' · ';
 
@@ -71,7 +67,8 @@ type DiscordActivity = {
  * @param isPaused - Whether the track has stopped.
  * @returns What the badge says when somebody rests on it.
  */
-const theBadgeTextFor = (isPaused: boolean): string => (isPaused ? 'Paused' : 'Playing');
+const theBadgeTextFor = (isPaused: boolean): string =>
+  isPaused ? say('desktop.aDiscordActivity.paused') : say('desktop.aDiscordActivity.playing');
 
 /**
  * Says how many other people are watching this together.
@@ -88,9 +85,7 @@ const theCompanyIn = (party: { id: string; size: number } | null): string | null
     return null;
   }
 
-  const others = party.size - 1;
-
-  return others === 1 ? 'with 1 other' : `with ${others.toString()} others`;
+  return sayCount('desktop.aDiscordActivity.withOthers', party.size - 1);
 };
 
 /**
@@ -112,7 +107,7 @@ const theArtistsIn = (artists: string[]): string | null => {
   const last = artists[artists.length - 1];
   const rest = artists.slice(0, -1);
 
-  return `${rest.join(', ')} & ${last}`;
+  return say('desktop.aDiscordActivity.artistsAnd', { rest: rest.join(', '), last: last ?? '' });
 };
 
 /**
@@ -133,7 +128,13 @@ const theStateLine = (
   const body = [line, together].filter((part) => part !== null).join(BETWEEN);
   const said = body === '' ? null : body;
 
-  return (isPaused ? (said === null ? PAUSED : `${PAUSED} — ${said}`) : said) ?? undefined;
+  return (
+    (isPaused
+      ? said === null
+        ? say('desktop.aDiscordActivity.paused')
+        : say('desktop.aDiscordActivity.pausedWith', { state: said })
+      : said) ?? undefined
+  );
 };
 
 /**
@@ -239,9 +240,9 @@ const aDiscordActivity = (
   if (playing.kind === 'browsing') {
     return {
       type: WATCHING,
-      details: BROWSING,
+      details: say('desktop.aDiscordActivity.browsing'),
       timestamps: { start: Math.floor(openedAt / A_SECOND) },
-      assets: { large_image: LOGO, large_text: VALENCE },
+      assets: { large_image: LOGO, large_text: say('common.valence') },
     };
   }
 
@@ -270,7 +271,7 @@ const aDiscordActivity = (
       ...timestamps,
       assets: {
         large_image: theTracksArtworkFor(playing.artwork) ?? LOGO,
-        large_text: VALENCE,
+        large_text: say('common.valence'),
         small_image: LOGO,
         small_text: theBadgeTextFor(playing.isPaused),
       },
@@ -278,18 +279,24 @@ const aDiscordActivity = (
     };
   }
 
-  const assets = { large_image: theArtworkFor(playing.artwork) ?? LOGO, large_text: VALENCE };
+  const assets = {
+    large_image: theArtworkFor(playing.artwork) ?? LOGO,
+    large_text: say('common.valence'),
+  };
 
   const episode =
     typeof playing.season === 'number' && typeof playing.episode === 'number'
-      ? `Series ${playing.season.toString()}, Episode ${playing.episode.toString()}`
+      ? say('desktop.aDiscordActivity.episode', {
+          season: playing.season,
+          episode: playing.episode,
+        })
       : null;
 
   const tmdb =
     playing.tmdbId === null
       ? null
       : {
-          label: 'View on TMDB',
+          label: say('desktop.aDiscordActivity.viewOnTmdb'),
           url: `https://www.themoviedb.org/${playing.isSeries ? 'tv' : 'movie'}/${playing.tmdbId}`,
         };
 

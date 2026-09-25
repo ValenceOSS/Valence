@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
+import { say } from '@ValenceI18n/say';
 
 type PushMessage = {
   data: { json: () => JsonValue } | null;
@@ -42,8 +43,8 @@ declare function addEventListener(
 ): void;
 
 const PushContentSchema = z.object({
-  title: z.string().default('Valence'),
-  body: z.string().default('Something new to watch'),
+  title: z.string().default(() => say('common.valence')),
+  body: z.string().default(() => say('web.pushWorker.defaultBody')),
   link: z.string().nullish(),
 });
 

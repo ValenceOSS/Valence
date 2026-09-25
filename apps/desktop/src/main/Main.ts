@@ -59,6 +59,7 @@ import { SHOW_THE_WINDOW_CONTROLS } from '@ValenceDesktop/main/windowChannels';
 import { showTheWindowControls } from '@ValenceDesktop/main/showTheWindowControls';
 import { z } from 'zod';
 
+// eslint-disable-next-line valence/no-hard-coded-strings -- the name of the folder the user data has always lived in
 const WHERE_IT_HAS_ALWAYS_BEEN = 'Valence';
 
 const ASK_AGAIN_EVERY = 15_000;
@@ -76,6 +77,7 @@ const ASK_AGAIN_EVERY = 15_000;
  */
 const askValence: AskingTheServer = (where, how) => net.fetch(where, how);
 
+// eslint-disable-next-line valence/no-hard-coded-strings -- the product's own name, which also names its user data folder
 app.setName('Valence');
 
 /**
