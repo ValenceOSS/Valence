@@ -2,7 +2,6 @@ import { askForSeries, fetchSeriesDownloadOffer } from '@ValenceClient/downloads
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { DownloadSchema } from '@ValenceContracts/schemas/Download';
-import { askedOnThisPhone } from '@ValenceMobile/downloads/askedOnThisPhone';
 import { chooseADownloadQuality } from '@ValenceMobile/downloads/chooseADownloadQuality';
 import { askToKeepAProgrammeOnThisPhone } from './askToKeepAProgrammeOnThisPhone';
 
@@ -51,7 +50,7 @@ beforeEach(() => {
 });
 
 describe('askToKeepAProgrammeOnThisPhone', () => {
-  it('asks for just the episodes chosen, and remembers each one this phone asked for', async () => {
+  it('asks for just the episodes chosen', async () => {
     const one = anEpisode('00000000-0000-4000-8000-000000000001');
     const two = anEpisode('00000000-0000-4000-8000-000000000002');
 
@@ -62,7 +61,6 @@ describe('askToKeepAProgrammeOnThisPhone', () => {
     ).resolves.toBe(true);
     expect(askForSeries).toHaveBeenCalledWith('severance', 'original', [], ['e1', 'e2']);
     expect(chooseADownloadQuality).toHaveBeenCalledWith(OFFER, 'Download Severance', '2 episodes');
-    expect(askedOnThisPhone()).toEqual([one.id, two.id]);
   });
 
   it('asks for nothing where no episodes were chosen', async () => {

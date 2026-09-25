@@ -2,7 +2,6 @@ import { askForDownload, fetchDownloadOffer } from '@ValenceClient/downloads/fet
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { DownloadSchema } from '@ValenceContracts/schemas/Download';
-import { askedOnThisPhone } from '@ValenceMobile/downloads/askedOnThisPhone';
 import { chooseADownloadQuality } from '@ValenceMobile/downloads/chooseADownloadQuality';
 import { askToKeepOnThisPhone } from './askToKeepOnThisPhone';
 
@@ -50,12 +49,11 @@ beforeEach(() => {
 });
 
 describe('askToKeepOnThisPhone', () => {
-  it('asks the server for the quality picked, and remembers this phone asked', async () => {
+  it('asks the server for the quality picked, which this phone then fetches', async () => {
     jest.mocked(chooseADownloadQuality).mockResolvedValue('original');
 
     await expect(askToKeepOnThisPhone('arrival', 'Arrival')).resolves.toBe(true);
     expect(askForDownload).toHaveBeenCalledWith('arrival', 'original');
-    expect(askedOnThisPhone()).toEqual([ASKED.id]);
   });
 
   it('asks for nothing when somebody cancels', async () => {

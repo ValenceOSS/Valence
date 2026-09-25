@@ -60,7 +60,6 @@ import { APageStack } from '@ValenceMobile/components/APageStack/APageStack';
 import { useTheProgrammeOfEpisode } from '@ValenceMobile/hooks/useTheProgrammeOfEpisode';
 import { Watching } from '@ValenceMobile/components/Watching/Watching';
 import { WatchingHeld } from '@ValenceMobile/components/WatchingHeld/WatchingHeld';
-import { useFetchWhatThisPhoneAskedFor } from '@ValenceMobile/downloads/useFetchWhatThisPhoneAskedFor';
 import { useTellTheServerWhatIsHeld } from '@ValenceClient/downloads/useTellTheServerWhatIsHeld';
 import { useFetchWhatThisDeviceAsked } from '@ValenceClient/downloads/useFetchWhatThisDeviceAsked';
 import { sendWatchedOffline } from '@ValenceClient/offline/watchedOffline';
@@ -151,7 +150,6 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   }, []);
   useTellTheServerWhatIsHeld();
   useFetchWhatThisDeviceAsked();
-  useFetchWhatThisPhoneAskedFor();
   useListeningKeptFresh();
   const cache = useQueryClient();
   const [pages, setPages] = useState<readonly APage[]>([]);

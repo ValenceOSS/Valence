@@ -1,12 +1,10 @@
 import { askForSeries, fetchSeriesDownloadOffer } from '@ValenceClient/downloads/fetchDownloads';
 import { thePhonesProfile } from '@ValenceMobile/playback/thePhonesProfile';
 import { chooseADownloadQuality } from '@ValenceMobile/downloads/chooseADownloadQuality';
-import { rememberAskedOnThisPhone } from '@ValenceMobile/downloads/rememberAskedOnThisPhone';
 
 /**
  * Offers the qualities some of a programme can be downloaded at, each costed across every episode
- * asked for, and asks the server to prepare them, remembering each so the phone fetches it once it
- * is ready.
+ * asked for, and asks the server to prepare them, which this phone then fetches once each is ready.
  *
  * @param seriesId - The programme.
  * @param title - What it is called, for the sheet.
@@ -38,13 +36,7 @@ const askToKeepAProgrammeOnThisPhone = async (
     return false;
   }
 
-  const asked = await askForSeries(seriesId, quality, [], mediaIds);
-
-  for (const one of asked) {
-    rememberAskedOnThisPhone(one.id, true);
-  }
-
-  return asked.length > 0;
+  return (await askForSeries(seriesId, quality, [], mediaIds)).length > 0;
 };
 
 export { askToKeepAProgrammeOnThisPhone };
