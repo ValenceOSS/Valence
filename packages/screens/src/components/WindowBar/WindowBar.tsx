@@ -29,7 +29,7 @@ import type { WindowBarProps } from './WindowBar.types';
 const WindowBar = ({ updateVersion, onInstallUpdate }: WindowBarProps) => (
   <div
     data-slot="window-bar"
-    className="fixed inset-x-0 top-0 z-[60] flex h-8 items-center justify-end bg-[color-mix(in_oklab,var(--color-surface-raised)_88%,var(--color-surface))] pr-[var(--valence-window-bar-clearance)] [-webkit-app-region:drag]"
+    className="fixed inset-x-0 top-0 z-[60] flex h-8 items-center justify-end border-b border-[var(--surface-line)] bg-[color-mix(in_oklab,var(--color-surface-raised)_88%,var(--color-surface))] pr-[var(--valence-window-bar-clearance)] [-webkit-app-region:drag]"
   >
     {updateVersion === undefined ? null : (
       <Button

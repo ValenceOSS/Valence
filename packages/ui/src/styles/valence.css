@@ -423,6 +423,7 @@ body {
 
 [data-valence-desktop='true'][data-valence-watching] [data-slot='window-bar'] {
   background: transparent;
+  border-color: transparent;
   transition: opacity var(--duration-base) var(--ease-soft);
 }
 
