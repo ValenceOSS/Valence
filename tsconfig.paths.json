@@ -6,6 +6,7 @@
       "@ValenceCore/*": ["./packages/core/src/*"],
       "@ValenceDesktop/*": ["./apps/desktop/src/*"],
       "@ValenceDocs/*": ["./apps/docs/src/*"],
+      "@ValenceI18n/*": ["./packages/i18n/src/*"],
       "@ValenceLanding/*": ["./apps/landing/src/*"],
       "@ValenceMobile/*": ["./apps/mobile/src/*"],
       "@ValenceSDK/*": ["./packages/plugin-sdk/src/*"],

@@ -25,6 +25,7 @@
     "@scalar/hono-api-reference": "^0.12.0",
     "@valence/contracts": "workspace:*",
     "@valence/core": "workspace:*",
+    "@valence/i18n": "workspace:*",
     "@valence/plugin-sdk": "workspace:*",
     "better-auth": "^1.7.4",
     "bonjour-service": "^1.4.4",

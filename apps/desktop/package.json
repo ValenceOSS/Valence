@@ -22,6 +22,7 @@
     "@valence/client": "workspace:*",
     "@valence/contracts": "workspace:*",
     "@valence/core": "workspace:*",
+    "@valence/i18n": "workspace:*",
     "@valence/screens": "workspace:*",
     "@valence/ui": "workspace:*",
     "better-auth": "^1.7.4",

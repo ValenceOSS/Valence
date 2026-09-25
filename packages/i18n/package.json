@@ -1,5 +1,5 @@
 {
-  "name": "@valence/core",
+  "name": "@valence/i18n",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -9,8 +9,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@valence/contracts": "workspace:*",
-    "@valence/i18n": "workspace:*",
     "zod": "^4.6.4"
   },
   "devDependencies": {

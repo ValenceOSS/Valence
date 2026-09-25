@@ -15,6 +15,7 @@
     "@tanstack/react-router": "^1.170.35",
     "@valence/client": "workspace:*",
     "@valence/contracts": "workspace:*",
+    "@valence/i18n": "workspace:*",
     "@valence/screens": "workspace:*",
     "@valence/ui": "workspace:*",
     "react": "^19.3.0",

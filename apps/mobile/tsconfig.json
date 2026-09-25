@@ -30,6 +30,9 @@
     },
     {
       "path": "../../packages/core"
+    },
+    {
+      "path": "../../packages/i18n"
     }
   ]
 }

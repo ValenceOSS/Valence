@@ -18,6 +18,7 @@
     "@valence/client": "workspace:*",
     "@valence/contracts": "workspace:*",
     "@valence/core": "workspace:*",
+    "@valence/i18n": "workspace:*",
     "expo": "~57.0.24",
     "expo-audio": "~57.0.5",
     "expo-constants": "~57.0.19",

@@ -1,10 +1,12 @@
 import tseslint from 'typescript-eslint';
 import { noComments } from './tools/eslint/noComments';
+import { noHardCodedStrings } from './tools/eslint/noHardCodedStrings';
 import { noRawColours } from './tools/eslint/noRawColours';
 
 const valence = {
   rules: {
     'no-comments': noComments,
+    'no-hard-coded-strings': noHardCodedStrings,
     'no-raw-colours': noRawColours,
   },
 };
@@ -167,6 +169,22 @@ export default tseslint.config(
   },
   {
     files: [
+      'packages/ui/src/**/*.{ts,tsx}',
+      'packages/screens/src/**/*.{ts,tsx}',
+      'packages/client/src/**/*.{ts,tsx}',
+      'packages/core/src/**/*.{ts,tsx}',
+      'apps/web/src/**/*.{ts,tsx}',
+      'apps/desktop/src/**/*.{ts,tsx}',
+      'apps/mobile/src/**/*.{ts,tsx}',
+      'apps/tv/src/**/*.{ts,tsx}',
+      'apps/server/src/**/*.{ts,tsx}',
+    ],
+    rules: {
+      'valence/no-hard-coded-strings': 'error',
+    },
+  },
+  {
+    files: [
       'apps/landing/src/**/*.ts',
       'apps/landing/src/**/*.tsx',
       'apps/docs/src/**/*.ts',
@@ -185,6 +203,7 @@ export default tseslint.config(
     files: ['**/*.test.ts', '**/*.test.tsx'],
     rules: {
       'valence/no-raw-colours': 'off',
+      'valence/no-hard-coded-strings': 'off',
       '@typescript-eslint/no-unnecessary-condition': 'off',
       'no-restricted-syntax': [
         'error',

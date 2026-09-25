@@ -1,0 +1,12 @@
+{
+  "web.confirmDelete": {
+    "client": "web",
+    "route": "/",
+    "reach": "Any dialog asking whether to delete something, such as deleting a download from the Downloads panel."
+  },
+  "web.home": {
+    "client": "web",
+    "route": "/",
+    "reach": "Signed in as a viewer, the home page."
+  }
+}

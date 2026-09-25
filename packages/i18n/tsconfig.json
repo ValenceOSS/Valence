@@ -5,6 +5,5 @@
     "rootDir": "src",
     "types": ["node"]
   },
-  "include": ["src/**/*.ts"],
-  "references": [{ "path": "../contracts" }, { "path": "../i18n" }]
+  "include": ["src/**/*.ts", "src/**/*.json"]
 }
