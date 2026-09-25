@@ -41,6 +41,7 @@ const OVERVIEW: AdminOverview = {
     fetchesMusicDetails: false,
     requestReleaseTypes: ['album'],
     certificationRegion: 'GB',
+    keepsDownloadsForDays: 14,
   },
   transcoder: {
     isReachable: true,

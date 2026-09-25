@@ -20,6 +20,10 @@ const saveCertificationRegion = vi.hoisted(() =>
   vi.fn<(region: string) => Promise<boolean>>(() => Promise.resolve(true)),
 );
 
+const saveKeepsDownloadsForDays = vi.hoisted(() =>
+  vi.fn<(days: number) => Promise<boolean>>(() => Promise.resolve(true)),
+);
+
 const saveFetchesCatalogueTrailers = vi.hoisted(() =>
   vi.fn<(fetches: boolean) => Promise<boolean>>(() => Promise.resolve(true)),
 );
@@ -49,6 +53,7 @@ vi.mock('@ValenceClient/admin/fetchAdmin', () => ({
   saveRoundness,
   saveShowsProfilesBeforeSignIn,
   saveCertificationRegion,
+  saveKeepsDownloadsForDays,
   saveFetchesCatalogueTrailers,
   saveFetchesMusicDetails,
   saveAudioDbKey,
@@ -73,6 +78,7 @@ const overview = (overrides: Partial<AdminOverview['settings']> = {}): AdminOver
     requestReleaseTypes: ['album'],
     roundness: 'default' as const,
     certificationRegion: 'GB',
+    keepsDownloadsForDays: 14,
     splashscreen: null,
     ...overrides,
   },
@@ -413,6 +419,29 @@ describe('SettingsPanel', () => {
     });
 
     expect(saved).not.toHaveBeenCalled();
+  });
+});
+
+describe('how long prepared downloads are kept', () => {
+  it.each([
+    [14, 'Two weeks'],
+    [0, 'Until deleted'],
+    [45, '45 days'],
+  ])('says %i days as %s', (days, said) => {
+    render(
+      <SettingsPanel
+        overview={overview({ keepsDownloadsForDays: days })}
+        onCatalogueKeySaved={vi.fn()}
+        onHardwareAccelSaved={vi.fn()}
+        onPreviewQualitySaved={vi.fn()}
+        onCertificationRegionSaved={vi.fn()}
+        onProfileVisibilitySaved={vi.fn()}
+        onCatalogueTrailersSaved={vi.fn()}
+        onSplashscreenSaved={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(said)).toBeInTheDocument();
   });
 });
 
