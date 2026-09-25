@@ -1024,6 +1024,7 @@ async fn start_download(
                 bytes_per_second: None,
                 size_bytes: download::size_of(&config.cache_root, &id).await,
                 id,
+                failure: None,
             }),
         )
             .into_response();
@@ -1035,6 +1036,10 @@ async fn start_download(
             Json(download::pending(id, progress, rate)),
         )
             .into_response();
+    }
+
+    if let Some(reason) = state.downloads.failure(&id).await {
+        return (StatusCode::OK, Json(download::failed(id, reason))).into_response();
     }
 
     if !state.downloads.claim(&id).await {
@@ -1418,6 +1423,10 @@ fn prepare_in_the_background(state: &AppState, request: &DownloadRequest, path: 
 
         if let Err(failure) = outcome {
             tracing::warn!(target: "download", %failure, subject = %id, "could not prepare the download");
+
+            if !matches!(failure, download::DownloadError::Stopped) {
+                downloads.fail(&id, failure.to_string()).await;
+            }
         }
 
         downloads.release(&id).await;

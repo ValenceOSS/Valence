@@ -111,6 +111,8 @@ pub struct DownloadFile {
     pub file: String,
     /// How large it turned out, once there is a file to measure.
     pub size_bytes: Option<u64>,
+    /// Why the last attempt at it failed, told once and then forgotten so asking again retries.
+    pub failure: Option<String>,
 }
 
 /// A prepared download, as a piece of work on [`crate::queue::WorkQueue`].
@@ -186,6 +188,21 @@ pub fn pending(id: String, progress: u8, bytes_per_second: Option<u64>) -> Downl
         progress,
         bytes_per_second,
         size_bytes: None,
+        failure: None,
+    }
+}
+
+/// What to say about a download whose last attempt failed.
+#[must_use]
+pub fn failed(id: String, failure: String) -> DownloadFile {
+    DownloadFile {
+        file: format!("/downloads/{id}/{DOWNLOAD_NAME}"),
+        id,
+        is_ready: false,
+        progress: 0,
+        bytes_per_second: None,
+        size_bytes: None,
+        failure: Some(failure),
     }
 }
 
@@ -263,7 +280,7 @@ pub fn download_arguments(
     directory: &Path,
     done: usize,
 ) -> Vec<String> {
-    let mut args = plan.to_download_args_from(seconds_done(done));
+    let mut args = plan.to_download_args_from(seconds_done(done), &request.audio_stream_indexes);
 
     args.push("-progress".into());
     args.push("pipe:1".into());
@@ -321,6 +338,8 @@ pub fn join_arguments(directory: &Path) -> Vec<String> {
         "0".into(),
         "-i".into(),
         directory.join(JOIN_LIST).to_string_lossy().into_owned(),
+        "-map".into(),
+        "0".into(),
         "-c".into(),
         "copy".into(),
         "-movflags".into(),
@@ -598,6 +617,7 @@ async fn ready(cache_root: &Path, id: &str) -> DownloadFile {
         bytes_per_second: None,
         size_bytes: size_of(cache_root, id).await,
         id: id.to_owned(),
+        failure: None,
     }
 }
 
@@ -781,6 +801,21 @@ mod tests {
     #[test]
     fn claims_nothing_about_a_film_of_no_length() {
         assert_eq!(progress_from("out_time_us=3600000000", 0.0), None);
+    }
+
+    #[test]
+    fn joins_every_track_rather_than_only_those_ffmpeg_would_pick() {
+        let args = super::join_arguments(std::path::Path::new("/cache/downloads/abc"));
+
+        assert!(args.windows(2).any(|pair| pair == ["-map", "0"]));
+    }
+
+    #[test]
+    fn says_why_a_download_failed() {
+        let told = super::failed("abc".to_owned(), "ffmpeg wrote no file".to_owned());
+
+        assert!(!told.is_ready);
+        assert_eq!(told.failure.as_deref(), Some("ffmpeg wrote no file"));
     }
 
     #[test]
