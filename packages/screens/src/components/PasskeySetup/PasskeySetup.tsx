@@ -214,7 +214,7 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
         {unavailable === null ? (
           <form
             noValidate
-            className="flex flex-col gap-3"
+            className="flex flex-wrap items-end gap-3"
             onSubmit={(event) => {
               event.preventDefault();
               void add();
@@ -224,10 +224,11 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
               label="Passkey name"
               value={name}
               onValueChange={setName}
-              description="Something you will recognise later, such as the device you are on."
+              className="min-w-56 flex-1"
             />
 
-            <Button type="submit" isLoading={isAdding}>
+            <Button type="submit" variant="glossy" size="md" isLoading={isAdding}>
+              <Icon of={KeyIcon} size={16} />
               Add a passkey
             </Button>
           </form>

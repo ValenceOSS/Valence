@@ -74,7 +74,7 @@ const AccountArea = ({ user, panel, profile, draft, onDraft, onChanged }: Accoun
           </SettingList>
         </PanelCard>
 
-        <PanelCard title="API keys">
+        <PanelCard title="API keys" isFlush>
           <ApiKeyPanel />
         </PanelCard>
       </TabPanel>

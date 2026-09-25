@@ -49,7 +49,7 @@ const GridSizeChooser = ({ value, onValueChange, className }: GridSizeChooserPro
         setPointedAt(null);
       }}
       className={cn(
-        'flex items-center gap-1 rounded-md p-1',
+        'flex h-8 items-center gap-0.5 rounded-md p-0.5',
         SEGMENTED.tones.inverted.track,
         className,
       )}
@@ -72,12 +72,12 @@ const GridSizeChooser = ({ value, onValueChange, className }: GridSizeChooserPro
             onValueChange(id);
           }}
           className={cn(
-            'relative flex size-8 items-center justify-center rounded-md',
+            'relative flex size-7 items-center justify-center rounded-[5px]',
             'transition-colors duration-[var(--duration-fast)] ease-[var(--ease-soft)]',
             lit === id ? 'text-text' : 'text-text-muted',
           )}
         >
-          {lit === id ? <SlidingMark group="grid-size-mark" /> : null}
+          {lit === id ? <SlidingMark group="grid-size-mark" className="rounded-[5px]" /> : null}
 
           <Icon of={glyph} size={16} />
         </Button>
