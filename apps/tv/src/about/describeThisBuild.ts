@@ -1,6 +1,7 @@
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { z } from 'zod';
+import { say } from '@ValenceI18n/say';
 
 const BuildSchema = z.object({ build: z.object({ version: z.string(), commit: z.string() }) });
 
@@ -16,9 +17,14 @@ const BuildSchema = z.object({ build: z.object({ version: z.string(), commit: z.
 const describeThisBuild = (serverCommit: string | null): string => {
   const read = BuildSchema.safeParse(Constants.expoConfig?.extra);
   const parts = [
-    read.success ? `Valence ${read.data.build.version} (${read.data.build.commit})` : null,
+    read.success
+      ? say('tv.describeThisBuild.client', {
+          version: read.data.build.version,
+          commit: read.data.build.commit,
+        })
+      : null,
     `tvOS ${String(Platform.Version)}`,
-    serverCommit === null ? null : `Server ${serverCommit}`,
+    serverCommit === null ? null : say('tv.describeThisBuild.server', { commit: serverCommit }),
   ].filter((part) => part !== null);
 
   return parts.join(' · ');

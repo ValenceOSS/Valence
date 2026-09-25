@@ -2,6 +2,7 @@ import { FlatList, StyleSheet, Text, TVFocusGuideView } from 'react-native';
 import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
 import { TrackRow } from '@ValenceTv/components/TrackRow/TrackRow';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { say } from '@ValenceI18n/say';
 import type { QueuePanelProps } from './QueuePanel.types';
 
 const WIDTH = 820;
@@ -17,10 +18,10 @@ const WIDTH = 820;
 const QueuePanel = ({ upcoming, onJump }: QueuePanelProps) => (
   <TVFocusGuideView style={styles.panel} trapFocusLeft trapFocusRight trapFocusUp trapFocusDown>
     <FadeIn>
-      <Text style={styles.title}>Up next</Text>
+      <Text style={styles.title}>{say('tv.queuePanel.title')}</Text>
 
       {upcoming.length === 0 ? (
-        <Text style={styles.empty}>Nothing plays after this song.</Text>
+        <Text style={styles.empty}>{say('tv.queuePanel.empty')}</Text>
       ) : (
         <FlatList
           data={upcoming}

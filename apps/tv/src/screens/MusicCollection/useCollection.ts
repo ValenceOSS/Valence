@@ -8,6 +8,8 @@ import type { QueueSource } from '@ValenceClient/music/playQueue';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
 import type { MusicItem } from '@ValenceTv/music/MusicItem';
 import type { ListenedView } from '@ValenceTv/music/ListenedView';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 type Collection = {
   item: MusicItem;
@@ -28,11 +30,15 @@ type Collection = {
  */
 const lengthOf = (tracks: readonly MusicTrack[]): string => {
   const minutes = Math.round(tracks.reduce((all, track) => all + track.durationSeconds, 0) / 60);
-  const songs = `${tracks.length.toString()} ${tracks.length === 1 ? 'song' : 'songs'}`;
+  const songs = sayCount('tv.useCollection.songs', tracks.length);
 
   return minutes < 60
-    ? `${songs}, ${minutes.toString()} min`
-    : `${songs}, ${Math.floor(minutes / 60).toString()} hr ${(minutes % 60).toString()} min`;
+    ? say('tv.useCollection.lengthInMinutes', { songs, minutes })
+    : say('tv.useCollection.lengthInHours', {
+        songs,
+        hours: Math.floor(minutes / 60),
+        minutes: minutes % 60,
+      });
 };
 
 /**
@@ -79,7 +85,10 @@ const useCollection = (view: ListenedView): Collection | null => {
     return {
       item,
       by: null,
-      facts: `${artist.data.artist.albumCount.toString()} albums · ${artist.data.artist.trackCount.toString()} songs`,
+      facts: say('tv.useCollection.artistFacts', {
+        albums: sayCount('tv.useCollection.albums', artist.data.artist.albumCount),
+        songs: sayCount('tv.useCollection.songs', artist.data.artist.trackCount),
+      }),
       tracks: artist.data.popular,
       albums: [...artist.data.albums, ...artist.data.appearsOn].map(albumItem),
       source: { kind: 'artist', id: view.id, name: item.title },

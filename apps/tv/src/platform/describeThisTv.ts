@@ -8,6 +8,7 @@
  * @returns The television as a person would describe it.
  */
 const describeThisTv = (deviceName: string | null): string =>
+  // eslint-disable-next-line valence/no-hard-coded-strings -- the product's own name, as the box names itself
   deviceName !== null && deviceName.trim() !== '' ? deviceName.trim() : 'Apple TV';
 
 export { describeThisTv };

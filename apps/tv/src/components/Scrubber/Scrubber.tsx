@@ -5,6 +5,7 @@ import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { useRemoteRing } from '@ValenceTv/remote/useRemoteRing';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { HWEvent } from 'react-native';
+import { say } from '@ValenceI18n/say';
 import type { ScrubberProps } from './Scrubber.types';
 
 const MOVES_BY = 10;
@@ -63,7 +64,10 @@ const Scrubber = ({ position, duration, onSeek, onFocus, ref }: ScrubberProps) =
   return (
     <Focusable
       ref={ref}
-      label={`${formatDuration(position)} of ${formatDuration(duration)}`}
+      label={say('tv.scrubber.positionOf', {
+        position: formatDuration(position),
+        duration: formatDuration(duration),
+      })}
       scale={1}
       onFocus={() => {
         setIsFocused(true);

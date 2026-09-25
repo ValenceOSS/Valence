@@ -6,6 +6,7 @@ import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { ProgressLine } from '@ValenceTv/components/ProgressLine/ProgressLine';
 import { joinFacts } from '@ValenceTv/library/joinFacts';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { say } from '@ValenceI18n/say';
 import type { EpisodeCardProps } from './EpisodeCard.types';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 
@@ -66,7 +67,10 @@ const EpisodeCard = ({
         </Text>
 
         <Text style={styles.facts}>
-          {joinFacts([formatDuration(episode.durationSeconds), isWatched ? 'Watched' : null])}
+          {joinFacts([
+            formatDuration(episode.durationSeconds),
+            isWatched ? say('tv.episodeCard.watched') : null,
+          ])}
         </Text>
 
         {overview === undefined || overview === null ? null : (

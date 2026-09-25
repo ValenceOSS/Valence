@@ -18,13 +18,18 @@ import { useRoomToFill } from '@ValenceTv/layout/useRoomToFill';
 import { useHandOff } from '@ValenceTv/navigation/useHandOff';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 import type { CatalogueProps } from './Catalogue.types';
 
 const ACROSS = 6;
 
 const RESTS_AFTER_MS = 600;
 
-const TITLES = { films: 'Films', shows: 'Shows' } as const;
+const TITLES = {
+  films: 'tv.catalogue.films',
+  shows: 'tv.catalogue.shows',
+} as const satisfies Record<string, StringKey>;
 
 /**
  * Every film, or every programme, as a wall of posters in alphabetical order, as the web's Films and
@@ -114,7 +119,7 @@ const CataloguePage = ({ kind, watchable, onOpen, onFeature, upTo }: CataloguePr
     return (
       <View style={styles.waiting}>
         <Text style={styles.empty}>
-          {kind === 'films' ? 'There are no films here yet.' : 'There are no shows here yet.'}
+          {kind === 'films' ? say('tv.catalogue.noFilms') : say('tv.catalogue.noShows')}
         </Text>
       </View>
     );
@@ -131,7 +136,7 @@ const CataloguePage = ({ kind, watchable, onOpen, onFeature, upTo }: CataloguePr
           contentContainerStyle={styles.inside}
           columnWrapperStyle={styles.row}
           showsVerticalScrollIndicator={false}
-          ListHeaderComponent={<Text style={styles.title}>{TITLES[kind]}</Text>}
+          ListHeaderComponent={<Text style={styles.title}>{say(TITLES[kind])}</Text>}
           renderItem={({ item, index }) => {
             const watched = progress.get(item.id);
 

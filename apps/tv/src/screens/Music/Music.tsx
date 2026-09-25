@@ -20,6 +20,7 @@ import { playlistItem } from '@ValenceTv/music/playlistItem';
 import { useHandOff } from '@ValenceTv/navigation/useHandOff';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { MusicItem } from '@ValenceTv/music/MusicItem';
+import { say } from '@ValenceI18n/say';
 import type { MusicProps } from './Music.types';
 
 const ACROSS = 4;
@@ -112,7 +113,7 @@ const MusicPage = ({ onOpen, onFeature, upTo }: MusicProps) => {
   if (recent.length === 0 && everyPlaylist.length === 0) {
     return (
       <View style={styles.waiting}>
-        <Text style={styles.empty}>There is no music here yet.</Text>
+        <Text style={styles.empty}>{say('tv.music.empty')}</Text>
       </View>
     );
   }
@@ -121,7 +122,7 @@ const MusicPage = ({ onOpen, onFeature, upTo }: MusicProps) => {
     <View style={styles.page} onLayout={room.onLayout}>
       <View style={styles.hero}>
         <Text numberOfLines={1} style={styles.name}>
-          {shown?.title ?? 'Music'}
+          {shown?.title ?? say('tv.music.heading')}
         </Text>
         {shown === null ? null : <Text style={styles.detail}>{shown.detail}</Text>}
       </View>
@@ -155,7 +156,7 @@ const MusicPage = ({ onOpen, onFeature, upTo }: MusicProps) => {
 
           {recent.length === 0 ? null : (
             <MusicShelf
-              title="Recently added"
+              title={say('tv.music.recentlyAdded')}
               items={recent}
               onOpen={onOpen}
               onFocus={restOnShelf}
@@ -163,12 +164,17 @@ const MusicPage = ({ onOpen, onFeature, upTo }: MusicProps) => {
           )}
 
           {everyArtist.length === 0 ? null : (
-            <MusicShelf title="Artists" items={everyArtist} onOpen={onOpen} onFocus={restOnShelf} />
+            <MusicShelf
+              title={say('tv.music.artists')}
+              items={everyArtist}
+              onOpen={onOpen}
+              onFocus={restOnShelf}
+            />
           )}
 
           {everyPlaylist.length === 0 ? null : (
             <MusicShelf
-              title="Playlists"
+              title={say('tv.music.playlists')}
               items={[LIKED_SONGS, ...everyPlaylist]}
               onOpen={onOpen}
               onFocus={restOnShelf}

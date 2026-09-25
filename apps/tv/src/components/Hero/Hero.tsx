@@ -21,6 +21,7 @@ import { joinFacts } from '@ValenceTv/library/joinFacts';
 import { useHandOff } from '@ValenceTv/navigation/useHandOff';
 import { tokens } from '@ValenceTv/theme/tokens';
 import { withAlpha } from '@ValenceTv/theme/withAlpha';
+import { say } from '@ValenceI18n/say';
 import type { HeroProps } from './Hero.types';
 
 const TAKES_TURNS_MS = 20_000;
@@ -137,7 +138,7 @@ const Hero = ({
                 {joinFacts([
                   typeof media.rating === 'number' ? `★ ${media.rating.toFixed(1)}` : null,
                   media.year?.toString(),
-                  isSeries ? 'Series' : formatDuration(media.durationSeconds),
+                  isSeries ? say('tv.hero.series') : formatDuration(media.durationSeconds),
                   media.genres?.slice(0, 2).join(', '),
                 ])}
               </Text>
@@ -165,7 +166,11 @@ const Hero = ({
         >
           <Button
             ref={playRef}
-            label={resume === null ? 'Play' : `Resume ${formatDuration(resume)}`}
+            label={
+              resume === null
+                ? say('tv.hero.play')
+                : say('tv.hero.resume', { when: formatDuration(resume) })
+            }
             icon={Play}
             variant="confirm"
             onFocus={() => {
@@ -182,7 +187,7 @@ const Hero = ({
             }}
           />
           <Button
-            label="More info"
+            label={say('tv.hero.moreInfo')}
             icon={Info}
             variant="overlay"
             onFocus={() => {

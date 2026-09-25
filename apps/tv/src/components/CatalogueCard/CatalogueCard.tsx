@@ -9,6 +9,7 @@ import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { Icon } from '@ValenceTv/components/Icon/Icon';
 import { cardSizes } from '@ValenceTv/components/MediaCard/cardSizes';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { say } from '@ValenceI18n/say';
 import type { CatalogueCardProps } from './CatalogueCard.types';
 
 /**
@@ -39,7 +40,7 @@ const CatalogueCard = ({ title, onPress, width }: CatalogueCardProps) => {
         <Artwork path={title.posterUrl} style={StyleSheet.absoluteFill} />
 
         {isWatched ? (
-          <View style={styles.had} accessible accessibilityLabel="Watched">
+          <View style={styles.had} accessible accessibilityLabel={say('tv.catalogueCard.watched')}>
             <Icon of={Check} size={26} colour={tokens.colours.onWhite} />
           </View>
         ) : null}

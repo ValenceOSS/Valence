@@ -41,6 +41,7 @@ const keepTheSessionToken = (token: string | null): void => {
 const signedHeaders = (): Record<string, string> => {
   const token = theSessionToken();
 
+  // eslint-disable-next-line valence/no-hard-coded-strings -- an HTTP authorization scheme
   return token === null ? {} : { authorization: `Bearer ${token}` };
 };
 

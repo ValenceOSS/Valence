@@ -3,6 +3,7 @@ import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { TrickplayThumb } from '@ValenceTv/screens/Player/components/TrickplayThumb/TrickplayThumb';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { say } from '@ValenceI18n/say';
 import type { ScrubberProps } from './Scrubber.types';
 
 const TRACK = 8;
@@ -43,7 +44,13 @@ const Scrubber = ({
   const played = duration > 0 ? Math.min(1, Math.max(0, position / duration)) : 0;
 
   return (
-    <Focusable label="Scrub" scale={1} onFocus={onFocus} onBlur={onBlur} onPress={onPress}>
+    <Focusable
+      label={say('tv.scrubber.scrub')}
+      scale={1}
+      onFocus={onFocus}
+      onBlur={onBlur}
+      onPress={onPress}
+    >
       {(isFocused) => {
         const thickness = isFocused ? TRACK_FOCUSED : TRACK;
 

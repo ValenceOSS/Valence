@@ -19,6 +19,7 @@ const AUDIO = ['aac', 'ac3', 'eac3', 'alac', 'mp3'];
 const theTvsProfile = (): DeviceProfile =>
   DeviceProfileSchema.parse({
     schemaVersion: 1,
+    // eslint-disable-next-line valence/no-hard-coded-strings -- the device profile's name, read by the server
     name: 'Apple TV',
     maxWidth: 3840,
     maxHeight: 2160,

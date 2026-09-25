@@ -9,6 +9,7 @@ import { ActionRow } from '@ValenceTv/components/ActionRow/ActionRow';
 import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { KeylineIcon } from '@ValenceTv/components/Icon/Icon.types';
+import { say } from '@ValenceI18n/say';
 import type { DevicesPanelProps } from './DevicesPanel.types';
 
 const WIDTH = 820;
@@ -48,11 +49,13 @@ const DevicesPanel = ({ shown, onChosen }: DevicesPanelProps) => {
   return (
     <TVFocusGuideView style={styles.panel} trapFocusLeft trapFocusRight trapFocusUp trapFocusDown>
       <FadeIn>
-        <Text style={styles.title}>Play on</Text>
+        <Text style={styles.title}>{say('tv.devicesPanel.title')}</Text>
 
         <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
           <ActionRow
-            label={remote === null ? 'This Apple TV · playing here' : 'This Apple TV'}
+            label={
+              remote === null ? say('tv.devicesPanel.thisTvPlaying') : say('tv.devicesPanel.thisTv')
+            }
             icon={remote === null ? Check : Monitor}
             hasPreferredFocus={remote === null}
             onPress={() => {
@@ -64,26 +67,33 @@ const DevicesPanel = ({ shown, onChosen }: DevicesPanelProps) => {
             }}
           />
 
-          <Text style={styles.heading}>Your other devices</Text>
+          <Text style={styles.heading}>{say('tv.devicesPanel.otherDevices')}</Text>
 
           {others.length === 0 ? (
             <View style={styles.none}>
-              <Text style={styles.empty}>
-                Open Valence on another device, signed in as you, and it will be here.
-              </Text>
+              <Text style={styles.empty}>{say('tv.devicesPanel.empty')}</Text>
             </View>
           ) : (
             others.map((device) => {
               const isChosen = remote?.clientId === device.clientId;
-              const doing =
-                device.nowPlaying === null
-                  ? 'not playing'
-                  : `${device.nowPlaying.isPlaying ? 'playing' : 'paused on'} ${device.nowPlaying.title}`;
+              const said = isChosen
+                ? say('tv.devicesPanel.controlling', { device: device.label })
+                : device.nowPlaying === null
+                  ? say('tv.devicesPanel.notPlaying', { device: device.label })
+                  : device.nowPlaying.isPlaying
+                    ? say('tv.devicesPanel.playing', {
+                        device: device.label,
+                        title: device.nowPlaying.title,
+                      })
+                    : say('tv.devicesPanel.pausedOn', {
+                        device: device.label,
+                        title: device.nowPlaying.title,
+                      });
 
               return (
                 <ActionRow
                   key={device.clientId}
-                  label={`${device.label} · ${isChosen ? 'controlling' : doing}`}
+                  label={said}
                   icon={isChosen ? Check : iconFor(device.label)}
                   hasPreferredFocus={isChosen}
                   onPress={() => {

@@ -6,6 +6,7 @@ import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { progressOfRequest } from '@ValenceClient/requests/progressOfRequest';
 import { tokens } from '@ValenceTv/theme/tokens';
 import { RequestCard } from '@ValenceTv/screens/Account/components/RequestCard/RequestCard';
+import { say } from '@ValenceI18n/say';
 import type { YourRequestsProps } from './YourRequests.types';
 
 const WATCHABLE_KINDS = new Set(['film', 'series']);
@@ -45,7 +46,7 @@ const YourRequests = ({ onOpen, onFocus }: YourRequestsProps) => {
 
   return (
     <View style={styles.section}>
-      <Text style={styles.heading}>Your requests</Text>
+      <Text style={styles.heading}>{say('tv.yourRequests.heading')}</Text>
 
       <TVFocusGuideView autoFocus>
         <FlatList

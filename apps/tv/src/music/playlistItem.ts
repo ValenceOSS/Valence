@@ -1,6 +1,7 @@
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import type { PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
 import type { MusicItem } from '@ValenceTv/music/MusicItem';
+import { say } from '@ValenceI18n/say';
 
 /**
  * A playlist as a tile: the cover of the first album on it, and whose it is.
@@ -16,7 +17,9 @@ const playlistItem = (playlist: PlaylistSummary): MusicItem => {
     id: playlist.id,
     title: playlist.name,
     detail:
-      playlist.isMine || playlist.owner === null ? 'Playlist' : `Playlist • ${playlist.owner.name}`,
+      playlist.isMine || playlist.owner === null
+        ? say('tv.playlistItem.mine')
+        : say('tv.playlistItem.theirs', { owner: playlist.owner.name }),
     art: cover === undefined ? null : albumArtworkUrl(cover),
     view: { kind: 'playlist', id: playlist.id },
   };

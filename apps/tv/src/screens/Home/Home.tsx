@@ -13,6 +13,7 @@ import { useRoomToFill } from '@ValenceTv/layout/useRoomToFill';
 import { putOnTheTopShelf } from '@ValenceTv/platform/putOnTheTopShelf';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import { say } from '@ValenceI18n/say';
 import type { HomeProps } from './Home.types';
 
 const HERO_SAMPLE = 40;
@@ -149,7 +150,7 @@ const HomePage = ({
   if (home.rails.length === 0) {
     return (
       <View style={styles.waiting}>
-        <Text style={styles.empty}>There is nothing to watch here yet.</Text>
+        <Text style={styles.empty}>{say('tv.home.empty')}</Text>
       </View>
     );
   }

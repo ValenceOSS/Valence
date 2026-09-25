@@ -32,6 +32,9 @@ import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { AudiobookPlayerState } from '@ValenceClient/books/createAudiobookPlayer';
 import type { ListeningPanel } from '@ValenceClient/books/listeningChoices';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
+import { sayCount } from '@ValenceI18n/sayCount';
 import type { ListeningProps } from './Listening.types';
 
 const COVER = { width: 400, height: 600 };
@@ -55,14 +58,16 @@ const sleepLabel = ({ sleep }: AudiobookPlayerState, now: number): string | null
   }
 
   return sleep.kind === 'endOfChapter'
-    ? 'End of chapter'
-    : `${Math.max(Math.ceil((sleep.endsAtMs - now) / 60_000), 1).toString()} min`;
+    ? say('tv.listening.endOfChapter')
+    : say('tv.listening.sleepMinutes', {
+        minutes: Math.max(Math.ceil((sleep.endsAtMs - now) / 60_000), 1),
+      });
 };
 
-const TITLES: Record<ListeningPanel, string> = {
-  speed: 'Speed',
-  sleep: 'Sleep timer',
-  chapters: 'Chapters',
+const TITLES: Record<ListeningPanel, StringKey> = {
+  speed: 'tv.listening.speed',
+  sleep: 'tv.listening.sleepTimer',
+  chapters: 'tv.listening.chapters',
 };
 
 /**
@@ -160,7 +165,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
         <View style={styles.back}>
           <Button
             ref={setBackButton}
-            label="Back"
+            label={say('common.back')}
             icon={ChevronLeft}
             variant="overlay"
             size="md"
@@ -189,10 +194,12 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
                 {chapter?.title ?? book.title}
               </Text>
               <Text numberOfLines={1} style={styles.book}>
-                {book.title}
                 {book.authors === null || book.authors.length === 0
-                  ? ''
-                  : ` — ${book.authors.join(', ')}`}
+                  ? book.title
+                  : say('tv.listening.bookBy', {
+                      title: book.title,
+                      authors: book.authors.join(', '),
+                    })}
               </Text>
             </View>
 
@@ -207,13 +214,13 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
             />
 
             <Text style={styles.left}>
-              {state.problem ?? `${describeLength(left)} left in the book`}
+              {state.problem ?? say('tv.listening.leftInTheBook', { length: describeLength(left) })}
             </Text>
 
             <View style={styles.transport}>
               <Button
                 onFocus={awayFromTheEdges}
-                label="Chapter before"
+                label={say('tv.listening.chapterBefore')}
                 icon={SkipBack}
                 variant="ghost"
                 isIconOnly
@@ -224,7 +231,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
               />
               <Button
                 onFocus={awayFromTheEdges}
-                label={`Back ${LISTENING_CHOICES.backSeconds.toString()} seconds`}
+                label={sayCount('tv.listening.backSeconds', LISTENING_CHOICES.backSeconds)}
                 icon={Rewind}
                 variant="ghost"
                 isIconOnly
@@ -235,7 +242,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
               />
               <Button
                 onFocus={awayFromTheEdges}
-                label={state.isPlaying ? 'Pause' : 'Play'}
+                label={state.isPlaying ? say('tv.listening.pause') : say('tv.listening.play')}
                 icon={state.isPlaying ? Pause : Play}
                 variant="ghost"
                 size="xl"
@@ -246,7 +253,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
               />
               <Button
                 onFocus={awayFromTheEdges}
-                label={`On ${LISTENING_CHOICES.forwardSeconds.toString()} seconds`}
+                label={sayCount('tv.listening.onSeconds', LISTENING_CHOICES.forwardSeconds)}
                 icon={FastForward}
                 variant="ghost"
                 isIconOnly
@@ -257,7 +264,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
               />
               <Button
                 onFocus={awayFromTheEdges}
-                label="Next chapter"
+                label={say('tv.listening.nextChapter')}
                 icon={SkipForward}
                 variant="ghost"
                 isIconOnly
@@ -281,7 +288,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
               />
               <Button
                 onFocus={awayFromTheEdges}
-                label={sleeping ?? 'Sleep timer'}
+                label={sleeping ?? say('tv.listening.sleepTimer')}
                 icon={sleeping === null ? Moon : MoonFilled}
                 variant={sleeping === null ? 'ghost' : 'soft'}
                 size="md"
@@ -291,7 +298,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
               />
               <Button
                 onFocus={awayFromTheEdges}
-                label="Chapters"
+                label={say('tv.listening.chapters')}
                 icon={List}
                 variant="ghost"
                 size="md"
@@ -306,7 +313,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
 
       {panel === null ? null : (
         <ChoicePanel
-          title={TITLES[panel]}
+          title={say(TITLES[panel])}
           choices={listeningChoices(panel, state)}
           onChoose={choose}
         />

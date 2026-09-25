@@ -1,6 +1,7 @@
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { partsOfTimeLeft } from '@ValenceCore/functions/partsOfTimeLeft';
 import type { RequestProgress } from '@ValenceContracts/schemas/CatalogueTitle';
+import { say } from '@ValenceI18n/say';
 
 /**
  * How a download is going, as the separate things worth saying about it: how far through it is,
@@ -22,7 +23,10 @@ const partsOfDownload = (
         ? null
         : progress.doneBytes === null
           ? formatBytes(progress.sizeBytes)
-          : `${formatBytes(progress.doneBytes)} of ${formatBytes(progress.sizeBytes)}`,
+          : say('tv.partsOfDownload.arrivedOf', {
+              done: formatBytes(progress.doneBytes),
+              size: formatBytes(progress.sizeBytes),
+            }),
     speed:
       progress.downloadBytesPerSecond === null || progress.downloadBytesPerSecond === 0
         ? null
@@ -31,7 +35,7 @@ const partsOfDownload = (
       progress.secondsLeft === null
         ? null
         : timeLeft === null
-          ? 'Under a minute'
+          ? say('tv.partsOfDownload.underAMinute')
           : timeLeft.map((part) => `${part.value.toString()} ${part.unit}`).join(' '),
   };
 };

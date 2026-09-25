@@ -1,5 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { say } from '@ValenceI18n/say';
 import type { ProgressLineProps } from './ProgressLine.types';
 
 const HEIGHT = 8;
@@ -15,7 +16,7 @@ const ProgressLine = ({ fraction, isInline = false }: ProgressLineProps) => (
   <View
     accessible
     accessibilityRole="progressbar"
-    accessibilityLabel="Watched"
+    accessibilityLabel={say('tv.progressLine.watched')}
     accessibilityValue={{
       min: 0,
       max: 100,

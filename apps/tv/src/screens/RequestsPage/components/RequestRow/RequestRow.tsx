@@ -5,6 +5,7 @@ import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { DownloadReadout } from '@ValenceTv/components/DownloadReadout/DownloadReadout';
 import { joinFacts } from '@ValenceTv/library/joinFacts';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { say } from '@ValenceI18n/say';
 import type { RequestRowProps } from './RequestRow.types';
 
 const POSTER = { width: 80, height: 120 };
@@ -61,7 +62,10 @@ const RequestRow = ({
 
               <Text numberOfLines={1} style={[styles.where, isFocused && { color: ink }]}>
                 {isSomeoneElses
-                  ? joinFacts([where, `Asked for by ${request.requestedBy.name}`])
+                  ? joinFacts([
+                      where,
+                      say('tv.requestRow.askedForBy', { name: request.requestedBy.name }),
+                    ])
                   : where}
               </Text>
 

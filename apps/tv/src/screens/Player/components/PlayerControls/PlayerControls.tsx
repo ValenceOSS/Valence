@@ -6,6 +6,7 @@ import { Badges } from '@ValenceTv/components/Badges/Badges';
 import { Button } from '@ValenceTv/components/Button/Button';
 import { Scrubber } from '@ValenceTv/screens/Player/components/Scrubber/Scrubber';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { say } from '@ValenceI18n/say';
 import type { PlayerControlsProps } from './PlayerControls.types';
 
 const SKIPS_BY = 10;
@@ -92,7 +93,7 @@ const PlayerControls = ({
 
       <View style={styles.buttons}>
         <Button
-          label={isPlaying ? 'Pause' : 'Play'}
+          label={isPlaying ? say('tv.playerControls.pause') : say('tv.playerControls.play')}
           icon={isPlaying ? Pause : Play}
           variant="overlay"
           size="md"
@@ -103,7 +104,7 @@ const PlayerControls = ({
           }}
         />
         <Button
-          label={`${SKIPS_BY.toString()}s`}
+          label={say('tv.playerControls.skipSeconds', { seconds: SKIPS_BY })}
           icon={RotateCcw}
           variant="overlay"
           size="md"
@@ -113,7 +114,7 @@ const PlayerControls = ({
           }}
         />
         <Button
-          label={`${SKIPS_BY.toString()}s`}
+          label={say('tv.playerControls.skipSeconds', { seconds: SKIPS_BY })}
           icon={RotateCw}
           variant="overlay"
           size="md"
@@ -125,10 +126,16 @@ const PlayerControls = ({
 
         <View style={styles.spring} />
 
-        <Button label="Settings" icon={Settings} variant="overlay" size="md" onPress={onSettings} />
+        <Button
+          label={say('tv.playerControls.settings')}
+          icon={Settings}
+          variant="overlay"
+          size="md"
+          onPress={onSettings}
+        />
         {onNext === null ? null : (
           <Button
-            label="Next episode"
+            label={say('tv.playerControls.nextEpisode')}
             icon={SkipForward}
             variant="overlay"
             size="md"

@@ -12,6 +12,7 @@ import { WayInBackdrop } from '@ValenceTv/components/WayInBackdrop/WayInBackdrop
 import { useReportSpot } from '@ValenceTv/layout/useReportSpot';
 import mark from '@ValenceTv/assets/valence-mark.png';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { say } from '@ValenceI18n/say';
 import type { EnterPasswordProps } from './EnterPassword.types';
 
 /**
@@ -89,7 +90,7 @@ const EnterPassword = ({
     }
 
     setIsAsking(true);
-    await settle(await verifyTotp(code), 'That code is not right.');
+    await settle(await verifyTotp(code), say('tv.enterPassword.wrongCode'));
   };
 
   return (
@@ -121,7 +122,7 @@ const EnterPassword = ({
             {needsCode ? (
               <TextField
                 key="code"
-                label="The code from your authenticator"
+                label={say('tv.enterPassword.codeLabel')}
                 value={code}
                 onChange={setCode}
                 onSubmit={() => {
@@ -133,7 +134,7 @@ const EnterPassword = ({
             ) : (
               <TextField
                 key="password"
-                label="Password"
+                label={say('tv.enterPassword.passwordLabel')}
                 value={password}
                 onChange={setPassword}
                 onSubmit={() => {
@@ -147,7 +148,7 @@ const EnterPassword = ({
             {problem === null ? null : <Text style={styles.problem}>{problem}</Text>}
 
             <Button
-              label={isAsking ? 'Signing in…' : 'Watch'}
+              label={isAsking ? say('tv.enterPassword.signingIn') : say('tv.enterPassword.watch')}
               variant="secondary"
               isWide
               isDisabled={isAsking || (needsCode ? code === '' : password === '')}
@@ -160,17 +161,17 @@ const EnterPassword = ({
 
         <View style={styles.between}>
           <View style={styles.rule} />
-          <Text style={styles.or}>or</Text>
+          <Text style={styles.or}>{say('tv.enterPassword.or')}</Text>
           <View style={styles.rule} />
         </View>
 
         <View style={styles.side}>
-          <Text style={styles.heading}>Use your phone</Text>
+          <Text style={styles.heading}>{say('tv.enterPassword.useYourPhone')}</Text>
           <PhoneSignIn onSignedIn={inByPhone} isStacked />
         </View>
       </View>
 
-      <Button label="Someone else" variant="ghost" onPress={onBack} />
+      <Button label={say('tv.enterPassword.someoneElse')} variant="ghost" onPress={onBack} />
     </View>
   );
 };

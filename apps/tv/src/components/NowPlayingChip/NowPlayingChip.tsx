@@ -13,6 +13,7 @@ import { Glass } from '@ValenceTv/components/Glass/Glass';
 import { MusicCover } from '@ValenceTv/components/MusicCover/MusicCover';
 import { PlayingBars } from '@ValenceTv/components/PlayingBars/PlayingBars';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { say } from '@ValenceI18n/say';
 import type { NowPlayingChipProps } from './NowPlayingChip.types';
 
 const COVER = 56;
@@ -73,7 +74,7 @@ const NowPlayingChip = ({ onOpen, ref }: NowPlayingChipProps) => {
     <Glass cornerRadius={tokens.radii.round} style={styles.glass}>
       <Focusable
         ref={ref}
-        label={`Now playing: ${shown.title}`}
+        label={say('tv.nowPlayingChip.label', { title: shown.title })}
         scale={1.06}
         onPress={() => {
           onOpen(heard);

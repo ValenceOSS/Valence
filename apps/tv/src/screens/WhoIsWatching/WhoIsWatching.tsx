@@ -21,6 +21,7 @@ import { Button } from '@ValenceTv/components/Button/Button';
 import { tokens } from '@ValenceTv/theme/tokens';
 import mark from '@ValenceTv/assets/valence-mark.png';
 import { PhoneSignIn } from '@ValenceTv/components/PhoneSignIn/PhoneSignIn';
+import { say } from '@ValenceI18n/say';
 import type { WhoIsWatchingProps } from './WhoIsWatching.types';
 
 const FACE_SIZE = 200;
@@ -52,6 +53,7 @@ const WhoIsWatching = ({ onChoose, onSignedIn, onChangeServer }: WhoIsWatchingPr
   const isHidden = wayIn.isSuccess && profiles.length === 0;
   const faces = useRef(new Map<string, View>());
   const { ref: holdMark, whereNow: whereMarkIs } = useReportSpot();
+  const origin = theServersOrigin();
 
   return (
     <View style={styles.screen}>
@@ -63,7 +65,7 @@ const WhoIsWatching = ({ onChoose, onSignedIn, onChangeServer }: WhoIsWatchingPr
             <Image source={mark} style={MARK} contentFit="contain" />
           </View>
           <Text style={styles.title}>
-            {isHidden ? 'Sign in with your phone' : 'Who is watching?'}
+            {isHidden ? say('tv.whoIsWatching.signInWithPhone') : say('tv.whoIsWatching.title')}
           </Text>
         </View>
       </FadeIn>
@@ -71,7 +73,7 @@ const WhoIsWatching = ({ onChoose, onSignedIn, onChangeServer }: WhoIsWatchingPr
       {wayIn.isPending ? (
         <ActivityIndicator size="large" color={tokens.colours.text} />
       ) : wayIn.isError ? (
-        <Text style={styles.problem}>This Valence could not be reached.</Text>
+        <Text style={styles.problem}>{say('tv.whoIsWatching.couldNotReach')}</Text>
       ) : isHidden ? (
         <PhoneSignIn onSignedIn={onSignedIn} />
       ) : (
@@ -123,12 +125,18 @@ const WhoIsWatching = ({ onChoose, onSignedIn, onChangeServer }: WhoIsWatchingPr
 
       <FadeIn isFilling={false} delayMs={STAGGER_MS * STAGGERED}>
         <TVFocusGuideView autoFocus style={styles.actions}>
-          <Button label="Use a different server" variant="ghost" onPress={onChangeServer} />
+          <Button
+            label={say('tv.whoIsWatching.differentServer')}
+            variant="ghost"
+            onPress={onChangeServer}
+          />
         </TVFocusGuideView>
       </FadeIn>
 
       <Text style={styles.footer}>
-        © Valence · {(theServersOrigin() ?? 'this Valence').replace(/^https?:\/\//u, '')}
+        {origin === null
+          ? say('tv.whoIsWatching.footerNoServer')
+          : say('tv.whoIsWatching.footer', { server: origin.replace(/^https?:\/\//u, '') })}
       </Text>
     </View>
   );

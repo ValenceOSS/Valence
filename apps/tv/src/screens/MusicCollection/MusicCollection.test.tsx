@@ -261,7 +261,7 @@ describe('MusicCollection', () => {
     });
 
     expect(drawn.getByText('Artist')).toBeTruthy();
-    expect(drawn.getByText('1 albums · 2 songs')).toBeTruthy();
+    expect(drawn.getByText('1 album · 2 songs')).toBeTruthy();
 
     expect(drawn.getByText('Albums')).toBeTruthy();
 

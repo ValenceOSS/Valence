@@ -10,17 +10,19 @@ import { MusicShelf } from '@ValenceTv/components/MusicShelf/MusicShelf';
 import { TrackRow } from '@ValenceTv/components/TrackRow/TrackRow';
 import { useRoomToFill } from '@ValenceTv/layout/useRoomToFill';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 import { useCollection } from './useCollection';
 import type { MusicCollectionProps } from './MusicCollection.types';
 
 const COVER = 360;
 
 const KINDS = {
-  album: 'Album',
-  artist: 'Artist',
-  playlist: 'Playlist',
-  liked: 'Playlist',
-} as const;
+  album: 'tv.musicCollection.album',
+  artist: 'tv.musicCollection.artist',
+  playlist: 'tv.musicCollection.playlist',
+  liked: 'tv.musicCollection.playlist',
+} as const satisfies Record<string, StringKey>;
 
 /**
  * An album, an artist, a playlist or somebody's liked songs, as the television's music apps show
@@ -74,7 +76,7 @@ const MusicCollection = ({ view, onPlayed, onOpen, onLight }: MusicCollectionPro
       <MusicCover kind={collection.item.kind} art={collection.item.art} size={COVER} isUrgent />
 
       <View style={styles.about}>
-        <Text style={styles.kind}>{KINDS[view.kind]}</Text>
+        <Text style={styles.kind}>{say(KINDS[view.kind])}</Text>
         <Text numberOfLines={2} style={styles.title}>
           {collection.item.title}
         </Text>
@@ -87,7 +89,7 @@ const MusicCollection = ({ view, onPlayed, onOpen, onLight }: MusicCollectionPro
 
         <View style={styles.actions}>
           <Button
-            label="Play"
+            label={say('tv.musicCollection.play')}
             icon={Play}
             variant="primary"
             hasPreferredFocus
@@ -97,7 +99,7 @@ const MusicCollection = ({ view, onPlayed, onOpen, onLight }: MusicCollectionPro
             }}
           />
           <Button
-            label="Shuffle"
+            label={say('tv.musicCollection.shuffle')}
             icon={Shuffle}
             variant="secondary"
             isDisabled={collection.tracks.length === 0 || collection.isOrdered}
@@ -124,7 +126,11 @@ const MusicCollection = ({ view, onPlayed, onOpen, onLight }: MusicCollectionPro
             ListFooterComponent={
               collection.albums.length === 0 ? null : (
                 <View style={styles.footer}>
-                  <MusicShelf title="Albums" items={collection.albums} onOpen={onOpen} />
+                  <MusicShelf
+                    title={say('tv.musicCollection.albums')}
+                    items={collection.albums}
+                    onOpen={onOpen}
+                  />
                 </View>
               )
             }

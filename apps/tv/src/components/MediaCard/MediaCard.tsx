@@ -8,6 +8,7 @@ import { Artwork } from '@ValenceTv/components/Artwork/Artwork';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { ProgressLine } from '@ValenceTv/components/ProgressLine/ProgressLine';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { sayCount } from '@ValenceI18n/sayCount';
 import { cardSizes } from './cardSizes';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaCardProps, MediaCardShape } from './MediaCard.types';
@@ -114,7 +115,7 @@ const MediaCard = ({
           <View
             style={styles.count}
             accessible
-            accessibilityLabel={`${unwatchedCount.toString()} ${unwatchedCount === 1 ? 'episode' : 'episodes'} left`}
+            accessibilityLabel={sayCount('common.episodesLeft', unwatchedCount)}
           >
             <Text style={styles.countWords}>
               {unwatchedCount > 99 ? '99+' : unwatchedCount.toString()}

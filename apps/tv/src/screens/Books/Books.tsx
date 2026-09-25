@@ -19,6 +19,7 @@ import { useRoomToFill } from '@ValenceTv/layout/useRoomToFill';
 import { useHandOff } from '@ValenceTv/navigation/useHandOff';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { Book } from '@ValenceContracts/schemas/Book';
+import { say } from '@ValenceI18n/say';
 import type { BooksProps } from './Books.types';
 
 const ACROSS = 6;
@@ -108,7 +109,7 @@ const BooksPage = ({ libraryIds, onOpen, onFeature, upTo }: BooksProps) => {
   if (books.length === 0) {
     return (
       <View style={styles.waiting}>
-        <Text style={styles.empty}>There are no audiobooks here yet.</Text>
+        <Text style={styles.empty}>{say('tv.books.empty')}</Text>
       </View>
     );
   }
@@ -117,7 +118,7 @@ const BooksPage = ({ libraryIds, onOpen, onFeature, upTo }: BooksProps) => {
     <View style={styles.page} onLayout={room.onLayout}>
       <View style={styles.hero}>
         <Text numberOfLines={1} style={styles.name}>
-          {shown?.title ?? 'Books'}
+          {shown?.title ?? say('tv.books.heading')}
         </Text>
         {shown === null ? null : (
           <Text numberOfLines={1} style={styles.detail}>
@@ -134,7 +135,7 @@ const BooksPage = ({ libraryIds, onOpen, onFeature, upTo }: BooksProps) => {
         >
           {partway.length === 0 ? null : (
             <BookShelf
-              title="Continue listening"
+              title={say('tv.books.continueListening')}
               books={partway}
               onOpen={onOpen}
               onFocus={restOnShelf}
@@ -142,7 +143,7 @@ const BooksPage = ({ libraryIds, onOpen, onFeature, upTo }: BooksProps) => {
           )}
 
           <View style={styles.every}>
-            <Text style={styles.title}>Every audiobook</Text>
+            <Text style={styles.title}>{say('tv.books.everyAudiobook')}</Text>
 
             <TVFocusGuideView autoFocus style={styles.grid}>
               {books.map((book, at) => (

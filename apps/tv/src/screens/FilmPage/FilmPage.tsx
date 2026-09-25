@@ -15,6 +15,7 @@ import { TitleSpread } from '@ValenceTv/components/TitleSpread/TitleSpread';
 import { joinFacts } from '@ValenceTv/library/joinFacts';
 import { useProgress } from '@ValenceTv/library/useProgress';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { say } from '@ValenceI18n/say';
 import type { FilmPageProps } from './FilmPage.types';
 
 const STARRING = 4;
@@ -39,7 +40,7 @@ const FilmPage = ({ mediaId, viewerId, onPlay }: FilmPageProps) => {
         {detail.isPending ? (
           <ActivityIndicator size="large" color={tokens.colours.text} />
         ) : (
-          <Text style={styles.problem}>This film could not be found.</Text>
+          <Text style={styles.problem}>{say('tv.filmPage.notFound')}</Text>
         )}
       </View>
     );
@@ -66,12 +67,18 @@ const FilmPage = ({ mediaId, viewerId, onPlay }: FilmPageProps) => {
       tagline={film.metadata.tagline}
       overview={film.metadata.overview}
       credits={[
-        ...(starring.length === 0 ? [] : [`Starring ${starring.join(', ')}`]),
+        ...(starring.length === 0
+          ? []
+          : [say('tv.titleSpread.starring', { names: starring.join(', ') })]),
         ...(genres.length === 0 ? [] : [genres.join(', ')]),
       ]}
     >
       <ActionRow
-        label={resume === null ? 'Play' : `Resume from ${formatDuration(resume)}`}
+        label={
+          resume === null
+            ? say('tv.filmPage.play')
+            : say('tv.filmPage.resumeFrom', { when: formatDuration(resume) })
+        }
         icon={Play}
         hasPreferredFocus
         onPress={() => {
@@ -84,7 +91,7 @@ const FilmPage = ({ mediaId, viewerId, onPlay }: FilmPageProps) => {
 
       {resume === null ? null : (
         <ActionRow
-          label="Play from the beginning"
+          label={say('tv.filmPage.playFromBeginning')}
           icon={RotateCcw}
           onPress={() => {
             onPlay(summary, 0);
@@ -93,7 +100,11 @@ const FilmPage = ({ mediaId, viewerId, onPlay }: FilmPageProps) => {
       )}
 
       <ActionRow
-        label={favourites.isKept(film.id) ? 'Remove from My List' : 'Add to My List'}
+        label={
+          favourites.isKept(film.id)
+            ? say('tv.filmPage.removeFromMyList')
+            : say('tv.filmPage.addToMyList')
+        }
         icon={favourites.isKept(film.id) ? Check : Plus}
         onPress={() => {
           favourites.toggle(film.id);

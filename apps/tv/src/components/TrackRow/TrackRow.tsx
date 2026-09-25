@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { NumberedRow } from '@ValenceTv/components/NumberedRow/NumberedRow';
+import { say } from '@ValenceI18n/say';
 import type { TrackRowProps } from './TrackRow.types';
 
 /**
@@ -30,7 +31,7 @@ const TrackRowLine = ({
     <NumberedRow
       label={`${track.title}, ${artists}`}
       title={track.title}
-      detail={`${track.isExplicit ? 'E · ' : ''}${artists}`}
+      detail={track.isExplicit ? say('tv.trackRow.explicit', { artists }) : artists}
       {...(showsAlbum ? { aside: track.album.title } : {})}
       length={track.durationSeconds}
       place={place}

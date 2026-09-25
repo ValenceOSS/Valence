@@ -38,6 +38,7 @@ import { useHandOff } from '@ValenceTv/navigation/useHandOff';
 import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
 import { tokens } from '@ValenceTv/theme/tokens';
 import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
+import { say } from '@ValenceI18n/say';
 import { DevicesPanel } from './components/DevicesPanel/DevicesPanel';
 import { LyricLines } from './components/LyricLines/LyricLines';
 import { Scrubber } from '@ValenceTv/components/Scrubber/Scrubber';
@@ -242,7 +243,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
         <Animated.View style={[styles.back, { opacity: fade }]}>
           <Button
             ref={setBackButton}
-            label="Back"
+            label={say('common.back')}
             icon={ChevronLeft}
             variant="overlay"
             size="md"
@@ -302,7 +303,11 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
                 </View>
                 <View style={styles.heart}>
                   <Button
-                    label={isLiked ? `Unlike ${shown.title}` : `Like ${shown.title}`}
+                    label={
+                      isLiked
+                        ? say('tv.nowPlaying.unlike', { title: shown.title })
+                        : say('tv.nowPlaying.like', { title: shown.title })
+                    }
                     icon={isLiked ? Heart : HeartOutline}
                     variant="ghost"
                     size="md"
@@ -317,8 +322,12 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
                 </View>
               </View>
               <Text numberOfLines={1} style={styles.artists}>
-                {shown.artists.map((artist) => artist.name).join(', ')}
-                {shown.albumTitle === null ? '' : ` — ${shown.albumTitle}`}
+                {shown.albumTitle === null
+                  ? shown.artists.map((artist) => artist.name).join(', ')
+                  : say('tv.nowPlaying.artistsAndAlbum', {
+                      artists: shown.artists.map((artist) => artist.name).join(', '),
+                      album: shown.albumTitle,
+                    })}
               </Text>
               {quality.length === 0 ? null : (
                 <View style={styles.badges}>
@@ -326,7 +335,9 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
                 </View>
               )}
               {state.remote === null ? null : (
-                <Text style={styles.remote}>Playing on {state.remote.label}</Text>
+                <Text style={styles.remote}>
+                  {say('tv.nowPlaying.playingOn', { device: state.remote.label })}
+                </Text>
               )}
             </Animated.View>
           </Animated.View>
@@ -347,7 +358,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
             <View style={styles.transport}>
               <Button
                 onFocus={awayFromTheEdges}
-                label={isShuffled ? 'Shuffle is on' : 'Shuffle'}
+                label={isShuffled ? say('tv.nowPlaying.shuffleIsOn') : say('tv.nowPlaying.shuffle')}
                 icon={Shuffle}
                 variant={isShuffled ? 'soft' : 'ghost'}
                 isIconOnly
@@ -356,7 +367,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
               />
               <Button
                 onFocus={awayFromTheEdges}
-                label="Back"
+                label={say('tv.nowPlaying.previous')}
                 icon={SkipBack}
                 variant="ghost"
                 isIconOnly
@@ -365,7 +376,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
               />
               <Button
                 onFocus={awayFromTheEdges}
-                label={isPlaying ? 'Pause' : 'Play'}
+                label={isPlaying ? say('tv.nowPlaying.pause') : say('tv.nowPlaying.play')}
                 icon={isPlaying ? Pause : Play}
                 variant="ghost"
                 size="xl"
@@ -376,7 +387,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
               />
               <Button
                 onFocus={awayFromTheEdges}
-                label="Next"
+                label={say('tv.nowPlaying.next')}
                 icon={SkipForward}
                 variant="ghost"
                 isIconOnly
@@ -387,10 +398,10 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
                 onFocus={awayFromTheEdges}
                 label={
                   repeat === 'one'
-                    ? 'Repeating this song'
+                    ? say('tv.nowPlaying.repeatingThisSong')
                     : repeat === 'all'
-                      ? 'Repeating'
-                      : 'Repeat'
+                      ? say('tv.nowPlaying.repeating')
+                      : say('tv.nowPlaying.repeat')
                 }
                 icon={repeat === 'one' ? Repeat1 : Repeat}
                 variant={repeat === 'off' ? 'ghost' : 'soft'}
@@ -403,7 +414,9 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
             <View style={styles.extras}>
               <Button
                 onFocus={awayFromTheEdges}
-                label={isBesideWords ? 'Hide the words' : 'Show the words'}
+                label={
+                  isBesideWords ? say('tv.nowPlaying.hideWords') : say('tv.nowPlaying.showWords')
+                }
                 icon={Quote}
                 variant={isBesideWords ? 'soft' : 'ghost'}
                 size="md"
@@ -415,7 +428,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
               />
               <Button
                 onFocus={awayFromTheEdges}
-                label="Up next"
+                label={say('tv.nowPlaying.upNext')}
                 icon={ListMusic}
                 variant="ghost"
                 size="md"
@@ -426,7 +439,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
               />
               <Button
                 onFocus={awayFromTheEdges}
-                label="Play on another device"
+                label={say('tv.nowPlaying.playOnAnotherDevice')}
                 icon={Cast}
                 variant={state.remote === null ? 'ghost' : 'soft'}
                 size="md"

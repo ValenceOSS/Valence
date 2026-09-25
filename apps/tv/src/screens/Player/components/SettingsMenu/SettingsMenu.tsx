@@ -4,6 +4,7 @@ import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { Icon } from '@ValenceTv/components/Icon/Icon';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { say } from '@ValenceI18n/say';
 import type { SettingsMenuProps } from './SettingsMenu.types';
 
 const WIDTH = 720;
@@ -20,7 +21,7 @@ const WIDTH = 720;
 const SettingsMenu = ({ settings, onOpen }: SettingsMenuProps) => (
   <TVFocusGuideView style={styles.panel} trapFocusLeft trapFocusRight trapFocusUp trapFocusDown>
     <FadeIn>
-      <Text style={styles.title}>Settings</Text>
+      <Text style={styles.title}>{say('tv.settingsMenu.title')}</Text>
 
       <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
         {settings.map((setting, at) => (

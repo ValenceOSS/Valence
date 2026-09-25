@@ -5,6 +5,7 @@ import { Artwork } from '@ValenceTv/components/Artwork/Artwork';
 import { Icon } from '@ValenceTv/components/Icon/Icon';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { HWEvent } from 'react-native';
+import { say } from '@ValenceI18n/say';
 import type { ArrivalBannerProps } from './ArrivalBanner.types';
 
 const STAYS_MS = 10_000;
@@ -25,6 +26,7 @@ const PICTURE = { width: 200, height: 112 };
  * @param onDismiss - Told when it has gone.
  */
 const ArrivalBanner = ({ arrival, picture, onWatch, onDismiss }: ArrivalBannerProps) => {
+  const [beforeIcon, afterIcon] = say('tv.arrivalBanner.pressToWatch').split('{icon}');
   const [shown] = useState(() => new Animated.Value(0));
 
   const leave = useCallback(() => {
@@ -79,9 +81,9 @@ const ArrivalBanner = ({ arrival, picture, onWatch, onDismiss }: ArrivalBannerPr
         </Text>
 
         <View style={styles.hint}>
-          <Text style={styles.press}>Press</Text>
+          <Text style={styles.press}>{beforeIcon?.trim()}</Text>
           <Icon of={Play} size={22} colour={tokens.colours.text} />
-          <Text style={styles.press}>to watch</Text>
+          <Text style={styles.press}>{afterIcon?.trim()}</Text>
         </View>
       </View>
     </Animated.View>

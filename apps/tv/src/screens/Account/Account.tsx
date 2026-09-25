@@ -12,6 +12,7 @@ import { Face } from '@ValenceTv/components/Face/Face';
 import { useHandOff } from '@ValenceTv/navigation/useHandOff';
 import { theServersOrigin } from '@ValenceTv/platform/theServersOrigin';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { say } from '@ValenceI18n/say';
 import type { AccountProps } from './Account.types';
 
 /**
@@ -35,19 +36,24 @@ const AccountPage = ({ user, onChangeServer, onRequests, onOpenRequest, upTo }: 
   const profile = watching.data ?? null;
   const server = useQuery(aboutQueries.server());
   const mayRequest = useMayRequest();
+  const origin = theServersOrigin();
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.screen}>
       {profile === null ? null : <Face profile={profile} size={160} />}
 
       <Text style={styles.name}>{profile?.name ?? user.name}</Text>
-      <Text style={styles.server}>Watching on {theServersOrigin() ?? 'this Valence'}</Text>
+      <Text style={styles.server}>
+        {origin === null
+          ? say('tv.account.watchingOnThis')
+          : say('tv.account.watchingOn', { server: origin })}
+      </Text>
 
       <TVFocusGuideView autoFocus style={styles.catches}>
         <View style={styles.actions}>
           <Button
-            label="Sign out"
-            detail="Choose another profile"
+            label={say('tv.account.signOut')}
+            detail={say('tv.account.signOutDetail')}
             variant="secondary"
             isWide
             onFocus={upToBar.arrive}
@@ -59,7 +65,7 @@ const AccountPage = ({ user, onChangeServer, onRequests, onOpenRequest, upTo }: 
           />
           {mayRequest ? (
             <Button
-              label="All requests"
+              label={say('tv.account.allRequests')}
               variant="secondary"
               isWide
               onFocus={upToBar.leave}
@@ -67,7 +73,7 @@ const AccountPage = ({ user, onChangeServer, onRequests, onOpenRequest, upTo }: 
             />
           ) : null}
           <Button
-            label="Use a different server"
+            label={say('tv.account.differentServer')}
             variant="ghost"
             onFocus={upToBar.leave}
             onPress={onChangeServer}

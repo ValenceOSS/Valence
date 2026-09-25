@@ -8,6 +8,8 @@ import { describeTranscodeReuse } from '@ValenceCore/functions/describeTranscode
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { Glass } from '@ValenceTv/components/Glass/Glass';
 import { tokens } from '@ValenceTv/theme/tokens';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import type { StreamStatsProps } from './StreamStats.types';
 
 const WIDTH = 760;
@@ -21,7 +23,7 @@ const WIDTH = 760;
  */
 const sizeOf = (width: number | null, height: number | null): string =>
   width === null || height === null || width === 0
-    ? 'not reported'
+    ? say('tv.streamStats.notReported')
     : `${width.toString()}x${height.toString()}`;
 
 /**
@@ -53,87 +55,102 @@ const StreamStats = ({
 
   const groups: { name: string; rows: [string, string][] }[] = [
     {
-      name: 'Session',
+      name: say('tv.streamStats.sessionGroup'),
       rows: [
-        ['Title', title],
-        ['Media id', mediaId],
-        ['Session', session?.sessionId ?? 'not started'],
-        ['Mode', session?.mode ?? 'deciding'],
-        ['Reused', session === null ? 'deciding' : describeTranscodeReuse(session.reuse)],
-        ['Starts at', formatDuration(sessionStartSeconds)],
-        ['Quality asked', quality],
+        [say('tv.streamStats.title'), title],
+        [say('tv.streamStats.mediaId'), mediaId],
+        [say('tv.streamStats.session'), session?.sessionId ?? say('tv.streamStats.notStarted')],
+        [say('tv.streamStats.mode'), session?.mode ?? say('tv.streamStats.deciding')],
         [
-          'Delivery',
-          session === null ? 'none' : session.delivery.kind === 'hls' ? 'HLS' : 'Direct',
+          say('tv.streamStats.reused'),
+          session === null ? say('tv.streamStats.deciding') : describeTranscodeReuse(session.reuse),
+        ],
+        [say('tv.streamStats.startsAt'), formatDuration(sessionStartSeconds)],
+        [say('tv.streamStats.qualityAsked'), quality],
+        [
+          say('tv.streamStats.delivery'),
+          session === null
+            ? say('tv.streamStats.none')
+            : session.delivery.kind === 'hls'
+              ? say('tv.streamStats.hls')
+              : say('tv.streamStats.direct'),
         ],
       ],
     },
     {
-      name: 'Source',
+      name: say('tv.streamStats.sourceGroup'),
       rows: [
         [
-          'Video',
+          say('tv.streamStats.video'),
           detail === null
-            ? 'unknown'
+            ? say('tv.streamStats.unknown')
             : `${detail.videoCodec} ${sizeOf(detail.width, detail.height)} ${detail.videoRange}`,
         ],
         [
-          'Audio',
+          say('tv.streamStats.audio'),
           audio === null
-            ? 'none'
+            ? say('tv.streamStats.none')
             : `${audio.codec} ${audio.channels.toString()}ch ${audio.language ?? ''}`.trim(),
         ],
         [
-          'Subtitles',
+          say('tv.streamStats.subtitles'),
           detail === null || detail.subtitleStreams.length === 0
-            ? 'none'
-            : `${detail.subtitleStreams.length.toString()} tracks`,
+            ? say('tv.streamStats.none')
+            : sayCount('tv.streamStats.tracks', detail.subtitleStreams.length),
         ],
       ],
     },
     {
-      name: 'Output',
+      name: say('tv.streamStats.outputGroup'),
       rows: [
-        ['Size', sizeOf(reading.width, reading.height)],
-        ['Range', reading.range ?? 'not reported'],
-        ['Container', reading.mimeType ?? 'not reported'],
+        [say('tv.streamStats.size'), sizeOf(reading.width, reading.height)],
+        [say('tv.streamStats.range'), reading.range ?? say('tv.streamStats.notReported')],
+        [say('tv.streamStats.container'), reading.mimeType ?? say('tv.streamStats.notReported')],
         [
-          'Bitrate',
+          say('tv.streamStats.bitrate'),
           reading.bitrate === null
-            ? 'not reported'
+            ? say('tv.streamStats.notReported')
             : `${Math.round(reading.bitrate / 1000).toString()}kbps`,
         ],
         [
-          'Frame rate',
-          reading.frameRate === null ? 'not reported' : `${reading.frameRate.toFixed(3)}fps`,
+          say('tv.streamStats.frameRate'),
+          reading.frameRate === null
+            ? say('tv.streamStats.notReported')
+            : `${reading.frameRate.toFixed(3)}fps`,
         ],
       ],
     },
     {
-      name: 'Plan',
+      name: say('tv.streamStats.planGroup'),
       rows: [
         [
-          'Container',
+          say('tv.streamStats.container'),
           plan === null
-            ? 'deciding'
+            ? say('tv.streamStats.deciding')
             : describeAxis(plan.container.kind, plan.container.reason.detail),
         ],
-        ['Video', plan === null ? 'deciding' : describeVideoAxis(plan.video)],
-        ['Audio', plan === null ? 'deciding' : describeAudioAxis(plan.audio)],
         [
-          'Subtitles',
+          say('tv.streamStats.video'),
+          plan === null ? say('tv.streamStats.deciding') : describeVideoAxis(plan.video),
+        ],
+        [
+          say('tv.streamStats.audio'),
+          plan === null ? say('tv.streamStats.deciding') : describeAudioAxis(plan.audio),
+        ],
+        [
+          say('tv.streamStats.subtitles'),
           plan === null
-            ? 'deciding'
+            ? say('tv.streamStats.deciding')
             : describeAxis(plan.subtitles.kind, plan.subtitles.reason.detail),
         ],
       ],
     },
     {
-      name: 'Playback',
+      name: say('tv.streamStats.playbackGroup'),
       rows: [
-        ['Position', formatDuration(reading.positionSeconds)],
+        [say('tv.streamStats.position'), formatDuration(reading.positionSeconds)],
         [
-          'Buffered ahead',
+          say('tv.streamStats.bufferedAhead'),
           `${Math.max(0, reading.bufferedSeconds - reading.positionSeconds).toFixed(1)}s`,
         ],
       ],
@@ -142,8 +159,11 @@ const StreamStats = ({
       ? []
       : [
           {
-            name: 'Warnings',
-            rows: [['From the server', session.warnings.join(' · ')]] satisfies [string, string][],
+            name: say('tv.streamStats.warningsGroup'),
+            rows: [[say('tv.streamStats.fromTheServer'), session.warnings.join(' · ')]] satisfies [
+              string,
+              string,
+            ][],
           },
         ]),
   ];
@@ -151,7 +171,7 @@ const StreamStats = ({
   return (
     <View style={styles.corner} pointerEvents="none">
       <Glass cornerRadius={tokens.radii.xl} style={styles.panel}>
-        <Text style={styles.title}>Stats for nerds</Text>
+        <Text style={styles.title}>{say('tv.streamStats.heading')}</Text>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.groups}>
           {groups.map((group) => (

@@ -12,17 +12,19 @@ import { useReportSpot } from '@ValenceTv/layout/useReportSpot';
 import { tokens } from '@ValenceTv/theme/tokens';
 import mark from '@ValenceTv/assets/valence-mark.png';
 import type { Tab } from '@ValenceTv/navigation/Tab';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 import type { TopBarProps } from './TopBar.types';
 
-const TABS: readonly { id: Tab; label: string; icon: typeof Home }[] = [
-  { id: 'home', label: 'Home', icon: Home },
-  { id: 'films', label: 'Films', icon: Film },
-  { id: 'shows', label: 'Shows', icon: Monitor },
+const TABS: readonly { id: Tab; labelKey: StringKey; icon: typeof Home }[] = [
+  { id: 'home', labelKey: 'tv.topBar.home', icon: Home },
+  { id: 'films', labelKey: 'tv.topBar.films', icon: Film },
+  { id: 'shows', labelKey: 'tv.topBar.shows', icon: Monitor },
 ];
 
-const MUSIC: (typeof TABS)[number] = { id: 'music', label: 'Music', icon: MusicNote };
+const MUSIC: (typeof TABS)[number] = { id: 'music', labelKey: 'tv.topBar.music', icon: MusicNote };
 
-const BOOKS: (typeof TABS)[number] = { id: 'books', label: 'Books', icon: Headphones };
+const BOOKS: (typeof TABS)[number] = { id: 'books', labelKey: 'tv.topBar.books', icon: Headphones };
 
 const MARK = { width: 54, height: 40 };
 
@@ -65,7 +67,10 @@ const TopBar = ({
   hasBooks,
 }: TopBarProps) => {
   const tabs = useMemo(
-    () => [...TABS, ...(hasMusic ? [MUSIC] : []), ...(hasBooks ? [BOOKS] : [])],
+    () =>
+      [...TABS, ...(hasMusic ? [MUSIC] : []), ...(hasBooks ? [BOOKS] : [])].map(
+        ({ id, labelKey, icon }) => ({ id, label: say(labelKey), icon }),
+      ),
     [hasMusic, hasBooks],
   );
   const { ref: holdFace, onLayout: faceLaidOut } = useReportSpot(onFaceAt);
@@ -98,7 +103,7 @@ const TopBar = ({
         <TVFocusGuideView autoFocus style={styles.capsule}>
           <Focusable
             ref={searchRef}
-            label="Search"
+            label={say('common.search')}
             scale={1.08}
             onFocus={() => {
               onChoose('search');
@@ -136,7 +141,7 @@ const TopBar = ({
           {profile === null ? null : (
             <Focusable
               ref={faceRef}
-              label={`${profile.name}'s profile`}
+              label={say('tv.topBar.profile', { name: profile.name })}
               scale={1.08}
               onFocus={() => {
                 onChoose('account');
