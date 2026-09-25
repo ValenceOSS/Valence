@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/ValenceOSS/Valence/compare/v1.1.1...v1.1.2) (2026-09-25)
+
+
+### Tests
+
+* **server:** give the tests that start a Postgres of their own thirty seconds ([02ba3ee](https://github.com/ValenceOSS/Valence/commit/02ba3ee1462ef8a2f5a19041e9eb1e55b7ebecf8))
+
 ## [1.1.1](https://github.com/ValenceOSS/Valence/compare/v1.1.0...v1.1.1) (2026-09-25)
 
 
