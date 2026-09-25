@@ -55,7 +55,8 @@ const HANDED_ON = ['/device', PHONE_SIGN_IN];
  *
  * Signing in lands on the home page, but for the pages another device opened to be signed in
  * through — a television's code, the phone app's sheet — which stay where they are, since what they
- * are for happens after. The phone's sheet is noted as signed in here, and leads with a passkey.
+ * are for happens after. The phone's sheet is noted as signed in here, leads with a passkey, and
+ * starts on whichever profile the app was signing in as.
  *
  * @param title - What this instance is called.
  */
@@ -385,6 +386,11 @@ const SignedIn = ({ title }: SignedInProps) => {
           name={title}
           isTelevision={isTelevision}
           leadsWithPasskey={window.location.pathname.startsWith(PHONE_SIGN_IN)}
+          startsAs={
+            window.location.pathname.startsWith(PHONE_SIGN_IN)
+              ? new URLSearchParams(window.location.search).get('profile')
+              : null
+          }
           onSignedIn={() => {
             const path = window.location.pathname;
 

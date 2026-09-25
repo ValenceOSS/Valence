@@ -282,6 +282,24 @@ describe('ProfileGate', () => {
     expect(screen.getByRole('button', { name: /Watch/ })).toBeDisabled();
   });
 
+  it('asks straight away for the profile somebody already chose elsewhere', async () => {
+    renderInAnAddress(<ProfileGate onSignedIn={vi.fn()} startsAs={HOUSEHOLD[1]?.id ?? null} />);
+
+    await arrive();
+
+    expect(screen.getByLabelText('Password')).toBeInTheDocument();
+    expect(screen.getByText('Sam')).toBeInTheDocument();
+    expect(screen.queryByText('Who is watching?')).not.toBeInTheDocument();
+  });
+
+  it('asks who is watching where the profile it was told of is not here', async () => {
+    renderInAnAddress(<ProfileGate onSignedIn={vi.fn()} startsAs="somebody-gone" />);
+
+    await arrive();
+
+    expect(screen.getByText('Who is watching?')).toBeInTheDocument();
+  });
+
   it('goes back to the wall when somebody picked the wrong person', async () => {
     const actor = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
 

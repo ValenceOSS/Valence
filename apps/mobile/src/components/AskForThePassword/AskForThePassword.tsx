@@ -160,7 +160,7 @@ const AskForThePassword = ({
                 Watch
               </Button>
 
-              <UseAPasskey label="Use a passkey instead" onIn={goIn} />
+              <UseAPasskey label="Use a passkey instead" onIn={goIn} profileId={profile.id} />
 
               <Button tone="ghost" icon={ChevronLeft} onPress={leave}>
                 Somebody else

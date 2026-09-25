@@ -100,12 +100,15 @@ Portrait.displayName = 'Portrait';
  * @param isTelevision - Whether this is a screen nobody can comfortably type on.
  * @param leadsWithPasskey - Whether to ask for a passkey first, as the phone app's sheet does, with
  *   the usual ways in a press away.
+ * @param startsAs - The profile somebody already chose elsewhere, such as in the phone app, which
+ *   is asked for straight away rather than the whole household again.
  */
 const ProfileGate = ({
   onSignedIn,
   name = 'Valence',
   isTelevision = false,
   leadsWithPasskey = false,
+  startsAs = null,
 }: ProfileGateProps) => {
   const [isHandingOver, setIsHandingOver] = useState(false);
   const asking = useQuery(sessionQueries.wayIn());
@@ -127,7 +130,22 @@ const ProfileGate = ({
   const [needsCode, setNeedsCode] = useState(false);
   const [wantsOtherWays, setWantsOtherWays] = useState(false);
   const passkeyAttempt = useRef(0);
+  const hasStarted = useRef(false);
   const isShown = useRef(true);
+
+  useEffect(() => {
+    if (hasStarted.current || startsAs === null || everyone === null) {
+      return;
+    }
+
+    hasStarted.current = true;
+
+    const asked = everyone.find((profile) => profile.id === startsAs);
+
+    if (asked !== undefined) {
+      setChosen(asked);
+    }
+  }, [everyone, startsAs]);
 
   useEffect(() => {
     isShown.current = true;

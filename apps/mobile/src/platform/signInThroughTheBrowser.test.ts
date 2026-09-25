@@ -30,6 +30,14 @@ describe('signInThroughTheBrowser', () => {
     expect(opened).not.toContain('the-secret');
   });
 
+  it('tells the page who was chosen in the app, where somebody was', async () => {
+    await signInThroughTheBrowser('3fa85f64-5717-4562-b3fc-2c963f66afa6');
+
+    expect(jest.mocked(signInOnTheWeb).mock.calls[0]?.[0]).toMatch(
+      /\/phone-sign-in\?challenge=the-challenge&profile=3fa85f64-5717-4562-b3fc-2c963f66afa6$/u,
+    );
+  });
+
   it('swaps the code that came back with the secret it kept', async () => {
     expect(await signInThroughTheBrowser()).toBe('in');
     expect(swapTheHandBack).toHaveBeenCalledWith('abc', 'the-secret');

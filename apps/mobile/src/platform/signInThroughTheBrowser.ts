@@ -9,15 +9,20 @@ import { theCodeIn } from '@ValenceMobile/platform/theCodeIn';
  * for a passkey.
  *
  * The page is sent a challenge and the phone keeps the secret it was made from, so the code the page
- * hands back is worth nothing to anything else that catches it on the way.
+ * hands back is worth nothing to anything else that catches it on the way. Where somebody already
+ * chose who they are in the app, the page is told, so it does not ask again.
  *
+ * @param profileId - The profile somebody chose in the app, where they chose one.
  * @returns Whether somebody is now signed in, gave up, or could not be.
  */
-const signInThroughTheBrowser = async (): Promise<'in' | 'cancelled' | 'failed'> => {
+const signInThroughTheBrowser = async (
+  profileId: string | null = null,
+): Promise<'in' | 'cancelled' | 'failed'> => {
   const { secret, challenge } = await aSecretAndItsChallenge();
-  const came = await signInOnTheWeb(onThisServer(`/phone-sign-in?challenge=${challenge}`)).catch(
-    () => undefined,
-  );
+  const asking = profileId === null ? '' : `&profile=${encodeURIComponent(profileId)}`;
+  const came = await signInOnTheWeb(
+    onThisServer(`/phone-sign-in?challenge=${challenge}${asking}`),
+  ).catch(() => undefined);
 
   if (came === null) {
     return 'cancelled';

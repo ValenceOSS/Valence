@@ -38,6 +38,20 @@ describe('OpenInTheApp', () => {
     expect(screen.queryByRole('button', { name: 'Open in the app' })).not.toBeInTheDocument();
   });
 
+  it('offers nothing on the page the app itself opened to be signed in through', async () => {
+    window.history.replaceState(null, '', '/phone-sign-in?challenge=abc');
+
+    renderInAnAddress(<OpenInTheApp />);
+
+    await new Promise((settle) => {
+      setTimeout(settle, 0);
+    });
+
+    expect(screen.queryByRole('button', { name: 'Open in the app' })).not.toBeInTheDocument();
+
+    window.history.replaceState(null, '', '/');
+  });
+
   it('offers nothing inside the desktop application', async () => {
     installPlatform(aFakePlatform({ thisClientKind: () => 'desktop' }));
 

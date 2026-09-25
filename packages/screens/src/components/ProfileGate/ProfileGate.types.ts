@@ -3,6 +3,7 @@ type ProfileGateProps = {
   name?: string;
   isTelevision?: boolean;
   leadsWithPasskey?: boolean;
+  startsAs?: string | null;
 };
 
 export type { ProfileGateProps };
