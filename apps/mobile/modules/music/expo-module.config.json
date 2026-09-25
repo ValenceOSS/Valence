@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["ValenceMusicModule"]
+  },
+  "android": {
+    "modules": ["app.valence.modules.music.ValenceMusicModule"]
+  }
+}

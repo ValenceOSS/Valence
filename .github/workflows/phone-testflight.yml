@@ -77,7 +77,7 @@ jobs:
           ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
 
       - name: Build
-        working-directory: apps/ios
+        working-directory: apps/mobile
         run: >
           npx eas-cli@latest build --local --platform ios --profile "$PROFILE" --non-interactive
           --output "$RUNNER_TEMP/valence.ipa"

@@ -14,9 +14,10 @@ reference, not a substitute for reading it.
 
 1. **TypeScript and Rust only.** No JavaScript files, including config. The
    phone and TV clients are React Native under Expo, TypeScript like the rest.
-   The one carve-out is Swift inside an Apple-platform client's native modules,
-   `apps/<client>/modules/<module>/ios/`, wrapping a system control for
-   TypeScript to use — see the standard for its limits.
+   The carve-outs are Swift inside an Apple-platform client's native modules,
+   `apps/<client>/modules/<module>/ios/`, and Kotlin inside an Android client's,
+   `apps/<client>/modules/<module>/android/`, each wrapping a system control or
+   capability for TypeScript to use — see the standard for their limits.
 2. **No duplication across modules.** Needed twice means extracted and shared.
 3. **No `../` imports.** Use `@ValenceUI/*`, `@ValenceClient/*`, `@ValenceContracts/*`,
    `@ValenceCore/*`, `@ValenceSDK/*`.
@@ -41,7 +42,7 @@ reference, not a substitute for reading it.
 9. **No raw SVG anywhere.** Icons come from `@keyline-icons/react` and are
    drawn by `@ValenceUI/Icon`, never by the renderer directly.
 10. **Every function and component has a co-located Vitest test** — except
-    `apps/ios`, which uses `jest-expo` for the same reason it exists.
+    `apps/mobile`, which uses `jest-expo` for the same reason it exists.
 11. **Conventional Commits.**
 
 ## File layout
@@ -90,7 +91,7 @@ that runs it.
 | `packages/client`  | What Valence is: readers, queries, realtime, session, sharing   |
 | `packages/screens` | What Valence looks like: every screen, and the routes onto them |
 | `apps/web`         | What a browser is: entry, platform, socket, service worker      |
-| `apps/ios`         | What a phone is: entry, platform, and the screens it draws      |
+| `apps/mobile`      | What a phone is: entry, platform, and the screens it draws      |
 
 - **Neither package may import `@ValenceWeb/*`.** ESLint says so. Neither reaches
   into a client. `packages/client` may not import `@ValenceUI/*` either — it does
