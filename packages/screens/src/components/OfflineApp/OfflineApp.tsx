@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import {
   CloudOff as CloudOffIcon,
-  HardDrive as HardDriveIcon,
+  Server as ServerIcon,
   Wifi as WifiIcon,
 } from '@keyline-icons/react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
+import { NavBar } from '@ValenceUI/NavBar';
 import { Icon } from '@ValenceUI/Icon';
 import { Logo } from '@ValenceUI/Logo';
 import { useHeldFiles } from '@ValenceClient/downloads/useHeldFiles';
@@ -59,69 +60,83 @@ const OfflineApp = ({ title }: OfflineAppProps) => {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-6 px-4 py-8">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Logo size={28} isSolid />
+    <>
+      <NavBar
+        brand={
+          <span className="flex items-center gap-2.5">
+            <Logo size={28} isSolid />
 
-          <div className="flex flex-col">
-            <h1 className="font-body text-lg text-text">{title}</h1>
+            <span className="hidden font-sans text-xl font-medium tracking-tight text-text sm:inline">
+              {title}
+            </span>
+          </span>
+        }
+        items={[]}
+        selectedId=""
+        onSelect={() => {}}
+        trailing={
+          <>
+            <Badge size="sm" tone="quiet">
+              <Icon of={CloudOffIcon} size={14} />
+              Offline
+            </Badge>
 
-            <p className="font-body text-xs text-text-muted">
-              {isReachable
-                ? 'Offline because you asked. Only what is on this device is shown.'
-                : 'Valence is not reachable. Only what is on this device is shown.'}
-            </p>
-          </div>
-        </div>
+            {!isTheDesktopClient() ? null : (
+              <Button
+                variant={isReachable ? 'ghost' : 'secondary'}
+                size="sm"
+                onClick={() => {
+                  void askForADifferentServer();
+                }}
+              >
+                <Icon of={ServerIcon} size={15} />
+                Change server
+              </Button>
+            )}
 
-        <div className="flex items-center gap-3">
-          <Badge size="sm" tone="quiet">
-            <Icon of={CloudOffIcon} size={14} />
-            Offline
-          </Badge>
-
-          {!isTheDesktopClient() ? null : (
-            <Button
-              variant={isReachable ? 'ghost' : 'primary'}
-              size="sm"
-              onClick={() => {
-                void askForADifferentServer();
-              }}
-            >
-              <Icon of={HardDriveIcon} size={15} />
-              Change server
-            </Button>
-          )}
-
-          {!isReachable ? null : (
-            <Button
-              variant="glossy"
-              size="sm"
-              onClick={() => {
-                goOffline(false);
-              }}
-            >
-              <Icon of={WifiIcon} size={15} />
-              {isByChoice ? 'Go back online' : 'Reconnect'}
-            </Button>
-          )}
-        </div>
-      </header>
-
-      <OfflineShelf
-        held={held}
-        onWatch={(file) => {
-          setWatching(file.downloadId);
-        }}
-        onDrop={(file) => {
-          void dropAFile(file.downloadId);
-        }}
-        onPause={(file, isPaused) => {
-          void pauseAFile(file.downloadId, isPaused);
-        }}
+            {!isReachable ? null : (
+              <Button
+                variant="glossy"
+                size="sm"
+                onClick={() => {
+                  goOffline(false);
+                }}
+              >
+                <Icon of={WifiIcon} size={15} />
+                {isByChoice ? 'Go back online' : 'Reconnect'}
+              </Button>
+            )}
+          </>
+        }
       />
-    </main>
+
+      <main className="flex min-h-screen flex-col gap-10 px-4 pb-16 pt-28 sm:px-6">
+        <header className="flex flex-col gap-1.5">
+          <h1 className="font-sans text-3xl font-semibold tracking-tight text-text">
+            On this device
+          </h1>
+
+          <p className="font-body text-sm text-text-muted">
+            {isReachable
+              ? 'You are offline because you asked to be, so only what is on this device is shown.'
+              : 'Valence cannot be reached, so only what is on this device is shown.'}
+          </p>
+        </header>
+
+        <OfflineShelf
+          held={held}
+          onWatch={(file) => {
+            setWatching(file.downloadId);
+          }}
+          onDrop={(file) => {
+            void dropAFile(file.downloadId);
+          }}
+          onPause={(file, isPaused) => {
+            void pauseAFile(file.downloadId, isPaused);
+          }}
+        />
+      </main>
+    </>
   );
 };
 

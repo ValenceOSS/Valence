@@ -1,15 +1,25 @@
-import { Bin as BinIcon, CloudOff as CloudOffIcon } from '@keyline-icons/react';
+import { useState } from 'react';
+import {
+  Bin as BinIcon,
+  CloudOff as CloudOffIcon,
+  MoreHorizontal as EllipsisIcon,
+} from '@keyline-icons/react';
 import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
-import { Badge } from '@ValenceUI/Badge';
-import { Button } from '@ValenceUI/Button';
+import { ActionMenu } from '@ValenceUI/ActionMenu';
+import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { Icon } from '@ValenceUI/Icon';
+import { MediaCard } from '@ValenceUI/MediaCard';
+import { Rail } from '@ValenceUI/Rail';
+import { RevealItem } from '@ValenceUI/RevealItem';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
-import { SettingList } from '@ValenceUI/SettingList';
-import { SettingRow } from '@ValenceUI/SettingRow';
 import { describeKeeping, keptFraction } from '@ValenceCore/functions/describeKeeping';
+import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { posterForAFile } from '@ValenceClient/downloads/keepingFiles';
+import { watchedOffline } from '@ValenceClient/offline/watchedOffline';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { OfflineShelfProps } from './OfflineShelf.types';
+
+const MEANINGFUL = 0.01;
 
 /**
  * Gathers what is on the disk under the programme each thing belongs to.
@@ -49,6 +59,8 @@ const byProgramme = (held: HeldFile[]): { title: string | null; items: HeldFile[
  * @param onPause - Told to stop a transfer for now, or to carry on with it.
  */
 const OfflineShelf = ({ held, onWatch, onDrop, onPause }: OfflineShelfProps) => {
+  const [deleting, setDeleting] = useState<HeldFile | null>(null);
+
   if (held.length === 0) {
     return (
       <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
@@ -64,103 +76,133 @@ const OfflineShelf = ({ held, onWatch, onDrop, onPause }: OfflineShelfProps) => 
     );
   }
 
+  const gotTo = new Map(watchedOffline().map((entry) => [entry.mediaId, entry]));
+
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-10">
       {byProgramme(held).map((group) => (
-        <section key={group.title ?? 'films'} className="flex flex-col">
-          {group.title === null ? null : (
-            <header className="flex items-baseline justify-between gap-3 px-5 pb-2 pt-5">
-              <h3 className="text-xs uppercase tracking-[0.16em] text-text-muted">{group.title}</h3>
-
-              <span className="font-body text-xs text-text-muted">
-                {group.items.filter((one) => one.state === 'here').length.toString()} of{' '}
-                {group.items.length.toString()} ready
-              </span>
-            </header>
-          )}
-
-          <SettingList>
-            {group.items.map((file) => (
-              <SettingRow
-                key={file.downloadId}
-                title={file.title}
-                description={describeKeeping(file)}
-                icon={
-                  <span className="block aspect-[2/3] w-9 shrink-0 overflow-hidden rounded-md bg-surface-raised ring-1 ring-line">
-                    {!file.hasPoster ? null : (
-                      <img
-                        src={posterForAFile(file.downloadId)}
-                        alt=""
-                        loading="lazy"
-                        className="h-full w-full object-cover"
-                      />
-                    )}
+        <Rail
+          key={group.title ?? 'films'}
+          title={group.title ?? 'Films'}
+          sizesCards
+          cards="portrait"
+          className="-mx-4 sm:-mx-6"
+          {...(group.title === null
+            ? {}
+            : {
+                action: (
+                  <span className="font-body text-xs text-text-muted">
+                    {group.items.filter((one) => one.state === 'here').length.toString()} of{' '}
+                    {group.items.length.toString()} here
                   </span>
-                }
+                ),
+              })}
+        >
+          {group.items.map((file, at) => {
+            const watched = gotTo.get(file.mediaId);
+            const fraction =
+              watched === undefined || watched.durationSeconds <= 0
+                ? 0
+                : watched.positionSeconds / watched.durationSeconds;
+
+            return (
+              <RevealItem
+                key={file.downloadId}
+                index={at}
+                className="group relative shrink-0 snap-start"
               >
-                <Badge size="sm" tone={file.state === 'failed' ? 'danger' : 'quiet'}>
-                  {file.quality}
-                </Badge>
+                <MediaCard
+                  shape="poster"
+                  title={file.title}
+                  subtitle={
+                    file.state === 'here'
+                      ? `${file.quality === 'original' ? 'Original' : file.quality} · ${formatBytes(file.bytes)}`
+                      : describeKeeping(file)
+                  }
+                  {...(file.hasPoster ? { imageUrl: posterForAFile(file.downloadId) } : {})}
+                  {...(fraction < MEANINGFUL ? {} : { watchedFraction: fraction })}
+                  onSelect={() => {
+                    if (file.state === 'here') {
+                      onWatch(file);
+                    }
+                  }}
+                />
 
                 {file.state !== 'fetching' ? null : (
                   <ProgressBar
                     value={keptFraction(file) ?? 0}
                     max={1}
                     label={`Fetching ${file.title}`}
-                    className="w-28"
+                    className="mt-2"
                   />
                 )}
 
-                {file.state !== 'here' ? null : (
-                  <Button
-                    variant="glossy"
-                    size="sm"
-                    onClick={() => {
-                      onWatch(file);
-                    }}
-                  >
-                    <Icon of={PlayFilledIcon} size={15} />
-                    Watch
-                  </Button>
-                )}
-
-                {file.state !== 'fetching' && file.state !== 'paused' ? null : (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    isIconOnly
-                    label={
-                      file.state === 'paused'
-                        ? `Carry on fetching ${file.title}`
-                        : `Stop fetching ${file.title} for now`
-                    }
-                    onClick={() => {
-                      onPause(file, file.state !== 'paused');
-                    }}
-                  >
-                    <Icon
-                      of={file.state === 'paused' ? PlayFilledIcon : PauseFilledIcon}
-                      size={16}
-                    />
-                  </Button>
-                )}
-
-                <Button
-                  variant="ghost"
+                <ActionMenu
+                  label={`More for ${file.title}`}
+                  align="end"
                   size="sm"
-                  isIconOnly
-                  label={`Remove ${file.title} from this device`}
-                  onClick={() => {
-                    onDrop(file);
-                  }}
-                >
-                  <Icon of={BinIcon} size={16} />
-                </Button>
-              </SettingRow>
-            ))}
-          </SettingList>
-        </section>
+                  look="raised"
+                  className="absolute right-2 top-2 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100"
+                  trigger={<Icon of={EllipsisIcon} size={16} />}
+                  groups={[
+                    {
+                      items: [
+                        ...(file.state === 'fetching' || file.state === 'paused'
+                          ? [
+                              {
+                                id: 'pause',
+                                label:
+                                  file.state === 'paused'
+                                    ? 'Carry on fetching'
+                                    : 'Stop fetching for now',
+                                icon: (
+                                  <Icon
+                                    of={file.state === 'paused' ? PlayFilledIcon : PauseFilledIcon}
+                                    size={16}
+                                  />
+                                ),
+                                onChoose: () => {
+                                  onPause(file, file.state !== 'paused');
+                                },
+                              },
+                            ]
+                          : []),
+                        {
+                          id: 'delete',
+                          label: 'Delete from this device',
+                          icon: <Icon of={BinIcon} size={16} />,
+                          isDestructive: true,
+                          onChoose: () => {
+                            setDeleting(file);
+                          },
+                        },
+                      ],
+                    },
+                  ]}
+                />
+              </RevealItem>
+            );
+          })}
+        </Rail>
       ))}
+
+      <ConfirmDialog
+        title={deleting === null ? 'Delete it?' : `Delete ${deleting.title}?`}
+        detail="It is removed from this device. You can download it again once Valence is reachable."
+        confirmLabel="Delete"
+        isDestructive
+        isOpen={deleting !== null}
+        onClose={() => {
+          setDeleting(null);
+        }}
+        onConfirm={() => {
+          if (deleting !== null) {
+            onDrop(deleting);
+          }
+
+          setDeleting(null);
+        }}
+      />
     </div>
   );
 };

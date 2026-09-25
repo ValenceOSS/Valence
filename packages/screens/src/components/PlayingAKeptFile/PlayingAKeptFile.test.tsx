@@ -6,6 +6,21 @@ import { aFakeHeldFiles } from '@ValenceClient/testing/aFakeHeldFiles';
 import { installATestClient } from '@ValenceScreens/testing/installATestClient';
 import { PlayingAKeptFile } from './PlayingAKeptFile';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
+import type { VideoPlayerProps } from '@ValenceScreens/components/VideoPlayer/VideoPlayer.types';
+
+const drawn = vi.hoisted((): { player: VideoPlayerProps | null } => ({ player: null }));
+
+vi.mock('@ValenceScreens/components/VideoPlayer/VideoPlayer', () => ({
+  VideoPlayer: (props: VideoPlayerProps) => {
+    drawn.player = props;
+
+    return (
+      <button type="button" onClick={props.onClose}>
+        Stop playing {props.media.title}
+      </button>
+    );
+  },
+}));
 
 const HERE: HeldFile = {
   downloadId: '00000000-0000-4000-8000-000000000001',
@@ -35,9 +50,14 @@ describe('PlayingAKeptFile', () => {
     installATestClient({ held: aFakeHeldFiles([HERE]).held });
     render(<PlayingAKeptFile file={HERE} onLeave={onLeave} />);
 
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Back to downloads' }));
+    expect(drawn.player).toMatchObject({
+      media: { id: HERE.mediaId, title: 'Arrival' },
+      isImmersive: true,
+    });
+    expect(drawn.player?.keptSource).toBe(`/held/${HERE.downloadId}`);
 
-    expect(screen.getByRole('heading', { name: 'Arrival' })).toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Stop playing Arrival' }));
+
     expect(onLeave).toHaveBeenCalled();
   });
 
