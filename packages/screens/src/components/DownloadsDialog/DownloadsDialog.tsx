@@ -8,6 +8,7 @@ import { SettingList } from '@ValenceUI/SettingList';
 import { SettingRow } from '@ValenceUI/SettingRow';
 import { Switch } from '@ValenceUI/Switch';
 import { useOfflineMode } from '@ValenceClient/offline/useOfflineMode';
+import { canKeepFiles } from '@ValenceClient/downloads/canKeepFiles';
 import { DownloadList } from '@ValenceScreens/components/DownloadList/DownloadList';
 import type { DownloadsDialogProps } from './DownloadsDialog.types';
 
@@ -18,21 +19,26 @@ import type { DownloadsDialogProps } from './DownloadsDialog.types';
  * that the film you asked for an hour ago is ready, and carry on with what you were doing. Closing
  * it puts back the page underneath, which is what a glance should do.
  *
- * It exists only where files can be kept. See `canKeepFiles`. Which is also why going offline is
- * offered from here: a client that can hold nothing has nothing to be offline with, so the switch
- * belongs beside the things it would show.
+ * A browser cannot keep files, so there it only shows how far along everything asked for on other
+ * devices has got. Going offline is offered only where files can be kept: a client that can hold
+ * nothing has nothing to be offline with, so the switch belongs beside the things it would show.
  *
  * @param isOpen - Whether the address has it open.
  * @param onClose - Told it was dismissed.
  */
 const DownloadsDialog = ({ isOpen, onClose }: DownloadsDialogProps) => {
   const { isByChoice, goOffline } = useOfflineMode();
+  const isKeepable = canKeepFiles();
 
   return (
     <Dialog label="Downloads" isOpen={isOpen} onClose={onClose}>
       <DialogTitle
         title="Downloads"
-        detail="Once one is on this device it is yours until you delete it."
+        detail={
+          isKeepable
+            ? 'Once one is on this device it is yours until you delete it.'
+            : 'What you have asked for on your other devices, and how far along each is.'
+        }
       >
         <Button variant="ghost" size="sm" isIconOnly label="Close" onClick={onClose}>
           <Icon of={XIcon} size={16} />
@@ -40,21 +46,23 @@ const DownloadsDialog = ({ isOpen, onClose }: DownloadsDialogProps) => {
       </DialogTitle>
 
       <DialogContent className="px-0">
-        <SettingList>
-          <SettingRow
-            title="Go offline"
-            description="Show only what is on this device. Worth turning on before you lose the connection rather than after."
-          >
-            <Switch
-              isOn={isByChoice}
-              label="Go offline"
-              isLabelHidden
-              onToggle={() => {
-                goOffline(!isByChoice);
-              }}
-            />
-          </SettingRow>
-        </SettingList>
+        {isKeepable ? (
+          <SettingList>
+            <SettingRow
+              title="Go offline"
+              description="Show only what is on this device. Worth turning on before you lose the connection rather than after."
+            >
+              <Switch
+                isOn={isByChoice}
+                label="Go offline"
+                isLabelHidden
+                onToggle={() => {
+                  goOffline(!isByChoice);
+                }}
+              />
+            </SettingRow>
+          </SettingList>
+        ) : null}
 
         <DownloadList />
       </DialogContent>

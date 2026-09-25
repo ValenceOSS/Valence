@@ -196,12 +196,12 @@ describe('AppShell', () => {
     expect(screen.getByRole('button', { name: 'Downloads' })).toBeInTheDocument();
   });
 
-  it('offers no downloads in a browser, which cannot be trusted to keep one', () => {
+  it('offers downloads in a browser too, to see how far along each has got', () => {
     installPlatform(aFakePlatform({ canKeepFiles: () => false }));
 
     draw();
 
-    expect(screen.queryByRole('button', { name: 'Downloads' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Downloads' })).toBeInTheDocument();
   });
 
   it('raises the account rather than going to it, since it is a dialog and not a section', async () => {

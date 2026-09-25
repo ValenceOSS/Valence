@@ -16,7 +16,6 @@ import { forgetDownload, setDownloadPaused } from '@ValenceClient/downloads/fetc
 import { downloadQueries } from '@ValenceClient/query/downloadQueries';
 import { canKeepFiles } from '@ValenceClient/downloads/canKeepFiles';
 import { dropAFile } from '@ValenceClient/downloads/keepingFiles';
-import { whereToSaveADownload } from '@ValenceClient/downloads/whereToSaveADownload';
 import { useHeldFiles } from '@ValenceClient/downloads/useHeldFiles';
 import { describeKeeping } from '@ValenceCore/functions/describeKeeping';
 import { KeepingControls } from '@ValenceScreens/components/DownloadList/components/KeepingControls/KeepingControls';
@@ -27,7 +26,7 @@ import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
  * Says where a prepared file has got to, in the words somebody would use about it.
  *
  * @param download - The download.
- * @param isKeepable - Whether this client keeps files, or saves them as a browser does.
+ * @param isKeepable - Whether this client keeps files, or only shows them as a browser does.
  * @returns The line beneath its title.
  */
 const describeState = (download: Download, isKeepable: boolean): string => {
@@ -55,7 +54,7 @@ const describeState = (download: Download, isKeepable: boolean): string => {
     return `Preparing — ${said.join(' · ')}.`;
   }
 
-  const ready = isKeepable ? 'Ready to keep on this device' : 'Ready to save';
+  const ready = isKeepable ? 'Ready to keep on this device' : 'Ready on the device that asked';
 
   return download.sizeBytes === null
     ? `${ready}.`
@@ -172,7 +171,7 @@ const DownloadList = () => {
           <Icon of={BellIcon} size={16} className="mt-0.5 shrink-0" />
           {isKeepable
             ? 'The server prepares these by itself, so Valence can be closed in the meantime. You will get a notification when each is ready, and it comes to this device the next time Valence is open.'
-            : 'The server prepares these by itself, so this page can be closed in the meantime. You will get a notification when each is ready to save.'}
+            : 'The server prepares these by itself, and each goes to the device it was asked for on. You will get a notification when each is ready.'}
         </p>
       ) : null}
 
@@ -211,19 +210,6 @@ const DownloadList = () => {
                     label={`Preparing ${download.title}`}
                     className="w-28"
                   />
-                )}
-
-                {download.state !== 'ready' || isKeepable ? null : (
-                  <Button
-                    variant="glossy"
-                    size="sm"
-                    onClick={() => {
-                      window.location.assign(whereToSaveADownload(download.id));
-                    }}
-                  >
-                    <Icon of={DownloadIcon} size={15} />
-                    Save file
-                  </Button>
                 )}
 
                 {download.state !== 'ready' || !isKeepable ? null : (

@@ -55,7 +55,6 @@ import {
   liquidSpring,
   stillTransition,
 } from '@ValenceUI/animations/reveal';
-import { canKeepFiles } from '@ValenceClient/downloads/canKeepFiles';
 import { useTheme } from '@ValenceClient/shell/useTheme';
 import { THEME_CHOICES } from '@ValenceScreens/theme/themeChoices';
 import { useMotion } from '@ValenceClient/shell/useMotion';
@@ -337,19 +336,15 @@ const AppShell = ({
   const face = avatar ?? <Icon of={CircleUserIcon} size={22} />;
 
   const actions: NavBarAction[] = [
-    ...(canKeepFiles()
-      ? [
-          {
-            id: 'downloads',
-            label: 'Downloads',
-            icon: <Icon of={DownloadFilledIcon} size={20} />,
-            activeIcon: <Icon of={DownloadFilledIcon} size={20} />,
-            gesture: 'settle' as const,
-            isCurrent: isDownloadsOpen,
-            onSelect: onOpenDownloads,
-          },
-        ]
-      : []),
+    {
+      id: 'downloads',
+      label: 'Downloads',
+      icon: <Icon of={DownloadFilledIcon} size={20} />,
+      activeIcon: <Icon of={DownloadFilledIcon} size={20} />,
+      gesture: 'settle' as const,
+      isCurrent: isDownloadsOpen,
+      onSelect: onOpenDownloads,
+    },
     {
       id: 'search',
       label: 'Search',

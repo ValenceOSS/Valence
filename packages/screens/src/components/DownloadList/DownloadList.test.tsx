@@ -84,19 +84,13 @@ describe('DownloadList', () => {
     expect(screen.getByText(/Ready to keep on this device/)).toBeInTheDocument();
   });
 
-  it('offers to save a ready file where a browser cannot keep one', async () => {
-    const assign = vi.fn();
-
+  it('only shows how far along things are in a browser, offering nothing to download', async () => {
     installATestClient({ canKeepFiles: () => false });
-    vi.stubGlobal('location', { ...window.location, assign });
     drawWith([READY]);
 
-    expect(await screen.findByText(/Ready to save/)).toBeInTheDocument();
+    expect(await screen.findByText(/Ready on the device that asked/)).toBeInTheDocument();
     expect(screen.queryByText('Keep on this device')).toBeNull();
-
-    await userEvent.setup().click(screen.getByRole('button', { name: /Save file/ }));
-
-    expect(assign).toHaveBeenCalledWith(`/api/downloads/${READY.id}/file?save=1`);
+    expect(screen.queryByRole('button', { name: /Save file/ })).toBeNull();
   });
 
   it('says how far along something still being prepared is', async () => {
