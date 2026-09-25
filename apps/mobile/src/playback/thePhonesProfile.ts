@@ -1,4 +1,4 @@
-import { Dimensions, PixelRatio } from 'react-native';
+import { Dimensions, PixelRatio, Platform } from 'react-native';
 import { DeviceProfileSchema } from '@ValenceContracts/schemas/DeviceProfile';
 import { describeThisPhone } from '@ValenceMobile/platform/describeThisPhone';
 import type { DeviceProfile } from '@ValenceContracts/schemas/DeviceProfile';
@@ -33,11 +33,19 @@ const H264_LEVEL = 52;
  * nothing to place. Folding down for the speakers is something iOS does anyway, and it does it
  * knowing what it is playing out of.
  *
+ * Android is held to less, by the same rule. Its phones are not one phone: which decoders one has
+ * depends on who made it, ten-bit HEVC and HDR are missing from plenty, and Dolby audio is only
+ * there where the maker paid for it — the player cannot decode AC-3 itself. So an Android phone is
+ * sent H.264 or eight-bit HEVC in SDR with AAC as it is, and anything else transcoded — into
+ * transport streams rather than fragmented MP4, since the fragments carry the audio encoder's delay
+ * as a negative start time, which Android's player refuses and an iPhone's plays past.
+ *
  * @returns What to negotiate with.
  */
 const thePhonesProfile = (): DeviceProfile => {
   const screen = Dimensions.get('screen');
   const density = PixelRatio.get();
+  const isAndroid = Platform.OS === 'android';
 
   return DeviceProfileSchema.parse({
     schemaVersion: 1,
@@ -45,17 +53,26 @@ const thePhonesProfile = (): DeviceProfile => {
     maxWidth: Math.round(Math.max(screen.width, screen.height) * density),
     maxHeight: Math.round(Math.min(screen.width, screen.height) * density),
     maxAudioChannels: EVERY_CHANNEL_IT_DECODES,
-    supportedVideoRanges: ['SDR', 'HDR10', 'HLG'],
-    tenBitVideoCodecs: ['hevc'],
+    supportedVideoRanges: isAndroid ? ['SDR'] : ['SDR', 'HDR10', 'HLG'],
+    tenBitVideoCodecs: isAndroid ? [] : ['hevc'],
     maxVideoLevels: { h264: H264_LEVEL, hevc: HEVC_LEVEL },
     canPlayInterlaced: false,
     unsupportedAudioProfiles: [],
     supportedSubtitleFormats: ['webvtt'],
     directPlayProfiles: [
-      { container: 'mp4', videoCodecs: ['h264', 'hevc'], audioCodecs: ['aac', 'ac3', 'eac3'] },
+      {
+        container: 'mp4',
+        videoCodecs: ['h264', 'hevc'],
+        audioCodecs: isAndroid ? ['aac'] : ['aac', 'ac3', 'eac3'],
+      },
     ],
     transcodingProfiles: [
-      { container: 'mp4', videoCodec: 'h264', audioCodec: 'aac', protocol: 'hls' },
+      {
+        container: isAndroid ? 'ts' : 'mp4',
+        videoCodec: 'h264',
+        audioCodec: 'aac',
+        protocol: 'hls',
+      },
     ],
   });
 };

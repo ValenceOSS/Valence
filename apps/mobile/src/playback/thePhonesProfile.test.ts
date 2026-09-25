@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { DeviceProfileSchema } from '@ValenceContracts/schemas/DeviceProfile';
 import { thePhonesProfile } from './thePhonesProfile';
 
@@ -46,5 +47,34 @@ describe('thePhonesProfile', () => {
 
   it('measures itself in real pixels rather than points', () => {
     expect(thePhonesProfile().maxWidth).toBeGreaterThan(1000);
+  });
+
+  describe('on Android', () => {
+    const was = Platform.OS;
+
+    beforeEach(() => {
+      Platform.OS = 'android';
+    });
+
+    afterEach(() => {
+      Platform.OS = was;
+    });
+
+    it('takes no ten-bit video and no HDR, which plenty of Android phones cannot decode', () => {
+      expect(thePhonesProfile().tenBitVideoCodecs).toEqual([]);
+      expect(thePhonesProfile().supportedVideoRanges).toEqual(['SDR']);
+    });
+
+    it('takes AAC alone as it is, since Dolby audio is not on every Android phone', () => {
+      expect(thePhonesProfile().directPlayProfiles[0]?.audioCodecs).toEqual(['aac']);
+    });
+
+    it('asks for transport streams when transcoded, whose timing its player reads', () => {
+      expect(thePhonesProfile().transcodingProfiles[0]?.container).toBe('ts');
+    });
+
+    it('is still a profile the server will accept', () => {
+      expect(() => DeviceProfileSchema.parse(thePhonesProfile())).not.toThrow();
+    });
   });
 });
