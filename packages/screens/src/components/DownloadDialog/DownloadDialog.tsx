@@ -18,6 +18,7 @@ import {
   fetchSeriesDownloadOffer,
 } from '@ValenceClient/downloads/fetchDownloads';
 import { downloadQueries } from '@ValenceClient/query/downloadQueries';
+import { canKeepFiles } from '@ValenceClient/downloads/canKeepFiles';
 import { detectFromBrowser } from '@ValenceScreens/playback/detectDeviceProfile';
 import { readFreeSpace } from '@ValenceScreens/downloads/readFreeSpace';
 import type { DownloadQuality } from '@ValenceContracts/schemas/Download';
@@ -198,6 +199,11 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
                 }
 
                 await cache.invalidateQueries({ queryKey: downloadQueries.key });
+                notify.worked('The server is preparing it', {
+                  description: canKeepFiles()
+                    ? 'Valence can be closed in the meantime. You will get a notification when it is ready, and it comes to this device the next time Valence is open.'
+                    : 'This page can be closed in the meantime. You will get a notification when it is ready to save.',
+                });
                 onClose();
               })
               .catch(() => {

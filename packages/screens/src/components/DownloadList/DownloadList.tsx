@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Icon } from '@ValenceUI/Icon';
-import { Bin as BinIcon, Download as DownloadIcon } from '@keyline-icons/react';
+import { Bell as BellIcon, Bin as BinIcon, Download as DownloadIcon } from '@keyline-icons/react';
 import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -9,6 +9,7 @@ import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { SettingList } from '@ValenceUI/SettingList';
 import { SettingRow } from '@ValenceUI/SettingRow';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
+import { describeTimeToGo } from '@ValenceCore/functions/describeTimeToGo';
 import { forgetDownload, setDownloadPaused } from '@ValenceClient/downloads/fetchDownloads';
 import { downloadQueries } from '@ValenceClient/query/downloadQueries';
 import { canKeepFiles } from '@ValenceClient/downloads/canKeepFiles';
@@ -42,9 +43,13 @@ const describeState = (download: Download, isKeepable: boolean): string => {
   }
 
   if (download.state === 'preparing') {
-    return download.bytesPerSecond === null
-      ? `Preparing — ${done} done.`
-      : `Preparing — ${done} done, ${formatBytes(download.bytesPerSecond)}/s.`;
+    const said = [
+      `${done} done`,
+      ...(download.bytesPerSecond === null ? [] : [`${formatBytes(download.bytesPerSecond)}/s`]),
+      ...(download.secondsLeft === null ? [] : [describeTimeToGo(download.secondsLeft)]),
+    ];
+
+    return `Preparing — ${said.join(' · ')}.`;
   }
 
   const ready = isKeepable ? 'Ready to keep on this device' : 'Ready to save';
@@ -137,8 +142,21 @@ const DownloadList = () => {
     );
   }
 
+  const isAnyPreparing = downloads.some(
+    (download) => download.state === 'queued' || download.state === 'preparing',
+  );
+
   return (
     <div className="flex flex-col">
+      {isAnyPreparing ? (
+        <p className="flex items-start gap-2 px-5 pt-4 font-body text-sm text-text-muted">
+          <Icon of={BellIcon} size={16} className="mt-0.5 shrink-0" />
+          {isKeepable
+            ? 'The server prepares these by itself, so Valence can be closed in the meantime. You will get a notification when each is ready, and it comes to this device the next time Valence is open.'
+            : 'The server prepares these by itself, so this page can be closed in the meantime. You will get a notification when each is ready to save.'}
+        </p>
+      ) : null}
+
       {groupBySeries(downloads).map((group) => (
         <section key={group.title ?? group.items[0]?.id} className="flex flex-col">
           {group.title === null ? null : (

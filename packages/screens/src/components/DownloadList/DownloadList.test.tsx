@@ -103,6 +103,30 @@ describe('DownloadList', () => {
     expect(await screen.findByText(/40% done/)).toBeInTheDocument();
   });
 
+  it('says how fast it is being prepared and how long it has left', async () => {
+    drawWith([{ ...PREPARING, bytesPerSecond: 2_000_000, secondsLeft: 720 }]);
+
+    expect(
+      await screen.findByText(
+        `Preparing — 40% done · ${formatBytes(2_000_000)}/s · about 12 min left.`,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('says Valence can be closed while the server prepares something', async () => {
+    drawWith([PREPARING]);
+
+    expect(await screen.findByText(/Valence can be closed in the meantime/)).toBeInTheDocument();
+  });
+
+  it('says nothing about closing it once nothing is being prepared', async () => {
+    drawWith([READY]);
+
+    await screen.findByText('Arrival');
+
+    expect(screen.queryByText(/can be closed/)).toBeNull();
+  });
+
   it('measures a preparing download against finishing, not against a hundred', async () => {
     drawWith([PREPARING]);
 
