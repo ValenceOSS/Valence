@@ -292,6 +292,20 @@ describe('ProfileGate', () => {
     expect(screen.queryByText('Who is watching?')).not.toBeInTheDocument();
   });
 
+  it('moves to another profile it is told of, while it stays open', async () => {
+    const drawn = renderInAnAddress(
+      <ProfileGate onSignedIn={vi.fn()} startsAs={HOUSEHOLD[1]?.id ?? null} />,
+    );
+
+    await arrive();
+
+    drawn.rerender(<ProfileGate onSignedIn={vi.fn()} startsAs={HOUSEHOLD[2]?.id ?? null} />);
+    await arrive();
+
+    expect(screen.getByText('Mum')).toBeInTheDocument();
+    expect(screen.queryByText('Sam')).not.toBeInTheDocument();
+  });
+
   it('asks who is watching where the profile it was told of is not here', async () => {
     renderInAnAddress(<ProfileGate onSignedIn={vi.fn()} startsAs="somebody-gone" />);
 

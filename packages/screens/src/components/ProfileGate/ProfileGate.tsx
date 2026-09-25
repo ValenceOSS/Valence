@@ -130,15 +130,15 @@ const ProfileGate = ({
   const [needsCode, setNeedsCode] = useState(false);
   const [wantsOtherWays, setWantsOtherWays] = useState(false);
   const passkeyAttempt = useRef(0);
-  const hasStarted = useRef(false);
+  const startedAs = useRef<string | null>(null);
   const isShown = useRef(true);
 
   useEffect(() => {
-    if (hasStarted.current || startsAs === null || everyone === null) {
+    if (startsAs === null || everyone === null || startsAs === startedAs.current) {
       return;
     }
 
-    hasStarted.current = true;
+    startedAs.current = startsAs;
 
     const asked = everyone.find((profile) => profile.id === startsAs);
 
