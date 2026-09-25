@@ -1,4 +1,4 @@
-import { act, waitFor } from '@testing-library/react';
+import { act, cleanup, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { aFakeHeldFiles } from '@ValenceClient/testing/aFakeHeldFiles';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
@@ -83,6 +83,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  cleanup();
   forgetPlatform();
 });
 
