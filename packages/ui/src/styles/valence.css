@@ -283,6 +283,7 @@
   --shadow-artwork-raised: 0 28px 60px -28px rgb(0 0 0 / 0.34);
   --shadow-cast: 0 32px 64px -36px rgb(0 0 0 / 0.28);
   --shadow-sheet: 0 -16px 40px -28px rgb(0 0 0 / 0.14);
+  --shadow-capsule: 0 12px 32px -16px rgb(0 0 0 / 0.5);
 
   --surface-line: color-mix(in oklab, var(--color-border) 70%, transparent);
   --surface-hover: color-mix(in oklab, var(--color-text) 6%, transparent);
@@ -419,6 +420,15 @@ body {
 
 :root[data-valence-desktop='true'][data-valence-watching] {
   --valence-window-bar: 0px;
+}
+
+:root[data-valence-desktop='true'][data-valence-way-in] {
+  --valence-window-bar: 0px;
+}
+
+[data-valence-desktop='true'][data-valence-way-in] [data-slot='window-bar'] {
+  background: transparent;
+  border-color: transparent;
 }
 
 [data-valence-desktop='true'][data-valence-watching] [data-slot='window-bar'] {

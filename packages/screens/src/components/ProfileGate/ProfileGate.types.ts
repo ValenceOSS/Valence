@@ -1,5 +1,6 @@
+import type { FaceLeaving } from '@ValenceScreens/components/FaceFlight/FaceFlight.types';
 type ProfileGateProps = {
-  onSignedIn: () => void;
+  onSignedIn: (face?: FaceLeaving) => void;
   name?: string;
   isTelevision?: boolean;
   leadsWithPasskey?: boolean;

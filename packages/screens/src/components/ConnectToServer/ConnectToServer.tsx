@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useUnderTheWindowBar } from '@ValenceScreens/desktop/useUnderTheWindowBar';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { TextField } from '@ValenceUI/TextField';
@@ -71,6 +72,8 @@ const ConnectToServer = ({
   recent = [],
   build = null,
 }: ConnectToServerProps) => {
+  useUnderTheWindowBar();
+
   const [typed, setTyped] = useState(startWith);
   const [problem, setProblem] = useState<string | null>(
     couldNotReach === undefined
@@ -115,7 +118,7 @@ const ConnectToServer = ({
 
   return (
     <main className="relative flex min-h-svh flex-col items-center justify-center gap-8 overflow-y-auto px-6 pb-28 pt-16">
-      <MoodBackground hasGrid isDrifting />
+      <MoodBackground isDrifting />
 
       <motion.div
         variants={staggerVariants}

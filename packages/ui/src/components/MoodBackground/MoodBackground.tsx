@@ -1,9 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useReducedMotionConfig } from 'motion/react';
-import { DotField } from '@ValenceUI/DotField';
 import { blendLights } from '@ValenceUI/blendLights';
-import { cn } from '@ValenceUI/cn';
-import type { DotFieldProps } from '@ValenceUI/DotField.types';
 import type { MoodBackgroundProps, MoodLight } from './MoodBackground.types';
 import { HOUSE_LIGHTS } from '@ValenceCore/tokens/houseLights';
 
@@ -35,6 +32,8 @@ const DRIFTS = [
   '55s',
   '43s',
 ] as const;
+
+const LIVELY = 0.3;
 
 const HOUSE = HOUSE_LIGHTS;
 
@@ -81,22 +80,17 @@ const paint = (light: MoodLight, at: number): string => {
 /**
  * Lights the page from behind with colours taken from whatever is on screen, so a library of a film
  * is lit by that film. The lights drift slowly rather than holding still, and can carry a grid over
- * them for the pages that want structure behind the artwork.
- *
- * Given a film it hands it to the grid it already draws, which stops rippling and shows the film
- * instead. It is the same field of dots either way — that is the whole joke, and it only works
- * because they were a display all along.
+ * over the page.
  *
  * @param lights - The colours and where they sit.
- * @param hasGrid - Whether to lay a grid over them.
  * @param isDrifting - Whether the lights move, or hold where they are.
- * @param film - A film for the grid to play, if there is one.
+ * @param isLively - Whether they drift quickly enough to be seen moving, for a screen that is being
+ *   waited on rather than read.
  */
 const MoodBackground = ({
   lights = [],
-  hasGrid = false,
   isDrifting = false,
-  film = null,
+  isLively = false,
 }: MoodBackgroundProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
   const given = lights.filter((light) => light.color !== '');
@@ -106,13 +100,8 @@ const MoodBackground = ({
   const paintedRef = useRef<string[]>([]);
   const driftingRef = useRef<HTMLDivElement | null>(null);
   const shiftedRef = useRef(-1);
-  const isShowingFilm = film !== null;
-  const filmRef = useRef(isShowingFilm);
-
-  const gridProps: DotFieldProps = film === null ? {} : { frame: film };
 
   useEffect(() => {
-    filmRef.current = isShowingFilm;
     wantedRef.current = lit;
   });
 
@@ -129,7 +118,7 @@ const MoodBackground = ({
       heldRef.current =
         prefersReducedMotion === true ? wanted : blendLights(heldRef.current, wanted, EASE);
 
-      const shift = filmRef.current ? 0 : Math.round(window.scrollY * PARALLAX);
+      const shift = Math.round(window.scrollY * PARALLAX);
       const drifting = driftingRef.current;
 
       if (drifting !== null && shiftedRef.current !== shift) {
@@ -160,10 +149,7 @@ const MoodBackground = ({
   return (
     <div
       role="presentation"
-      className={cn(
-        'pointer-events-none absolute inset-x-0 top-0 -z-10 h-[140svh] overflow-hidden',
-        isShowingFilm && 'valence-below-the-bar h-[calc(100svh-var(--valence-window-bar))]',
-      )}
+      className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[140svh] overflow-hidden"
     >
       <div ref={driftingRef} className="absolute inset-0 will-change-transform">
         {lit.map((light, at) => (
@@ -176,12 +162,10 @@ const MoodBackground = ({
             }
             style={{
               background: paint(light, at),
-              animationDuration: DRIFTS[at] ?? '40s',
+              animationDuration: `${(Number.parseFloat(DRIFTS[at] ?? '40') * (isLively ? LIVELY : 1)).toString()}s`,
             }}
           />
         ))}
-
-        {hasGrid || isShowingFilm ? <DotField {...gridProps} /> : null}
       </div>
 
       <span className="valence-mood-fade" />

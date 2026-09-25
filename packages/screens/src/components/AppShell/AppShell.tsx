@@ -3,7 +3,6 @@ import {
   BookOpen as BookOpenIcon,
   CircleUser as CircleUserIcon,
   Compass as CompassIcon,
-  Dice5 as Dice5Icon,
   Film as FilmIcon,
   Flame as FlameIcon,
   Heart as HeartIcon,
@@ -11,7 +10,6 @@ import {
   Monitor as MonitorIcon,
   MusicNote as MusicNoteIcon,
   Search as SearchIcon,
-  X as XIcon,
 } from '@keyline-icons/react';
 import {
   Bell as BellFilledIcon,
@@ -29,10 +27,10 @@ import {
   MusicNote as MusicNoteFilledIcon,
   Search as SearchFilledIcon,
   Settings as SettingsFilledIcon,
+  Question as QuestionFilledIcon,
 } from '@keyline-icons/react/fill';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
-  AnimatePresence,
   motion,
   useMotionValue,
   useMotionValueEvent,
@@ -46,8 +44,6 @@ import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { NavBar } from '@ValenceUI/NavBar';
 import { Logo } from '@ValenceUI/Logo';
 import { MoodBackground } from '@ValenceUI/MoodBackground';
-import { useDotFilm } from '@ValenceUI/useDotFilm';
-import { useKonamiCode } from '@ValenceUI/useKonamiCode';
 import {
   revealVariants,
   revealTransition,
@@ -66,7 +62,7 @@ import type { NavBarAction, NavBarItem } from '@ValenceUI/NavBar.types';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { AppShellProps, ShellSection } from './AppShell.types';
 
-const FADING = 1.2;
+const HELP_ADDRESS = 'https://docs.getvalence.app/start/faq';
 
 const SOLID_WITHIN = 64;
 
@@ -232,7 +228,6 @@ const AppShell = ({
   notifications,
 }: AppShellProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
-  const [isFilmPlaying, setIsFilmPlaying] = useState(false);
   const { scrollY } = useScroll();
   const solidity = useMotionValue(0);
   const { theme, choose } = useTheme();
@@ -256,22 +251,6 @@ const AppShell = ({
   useEffect(() => {
     reach(window.scrollY);
   }, [reach, section]);
-
-  useKonamiCode(() => {
-    if (section === 'home' && prefersReducedMotion !== true) {
-      setIsFilmPlaying(true);
-    }
-  });
-
-  const endFilm = useCallback(() => {
-    setIsFilmPlaying(false);
-  }, []);
-
-  const film = useDotFilm(isFilmPlaying, endFilm);
-
-  useEffect(() => {
-    setIsFilmPlaying(false);
-  }, [section]);
 
   useEffect(() => {
     if (section === 'home') {
@@ -333,7 +312,14 @@ const AppShell = ({
     };
   });
 
-  const face = avatar ?? <Icon of={CircleUserIcon} size={22} />;
+  const face =
+    avatar === undefined ? (
+      <Icon of={CircleUserIcon} size={22} />
+    ) : (
+      <span data-face-lands className="flex [html[data-face-arriving]_&]:opacity-0">
+        {avatar}
+      </span>
+    );
 
   const actions: NavBarAction[] = [
     {
@@ -369,7 +355,7 @@ const AppShell = ({
                       label="Choose something at random"
                       align="center"
                       look="face"
-                      trigger={<Icon of={Dice5Icon} size={20} />}
+                      trigger={<Icon of={Dice5FilledIcon} size={20} />}
                       groups={[
                         {
                           items: [
@@ -463,6 +449,14 @@ const AppShell = ({
                       },
                     ]
                   : []),
+                {
+                  id: 'help',
+                  label: 'Help',
+                  icon: <Icon of={QuestionFilledIcon} size={16} />,
+                  onChoose: () => {
+                    window.open(HELP_ADDRESS, '_blank', 'noopener,noreferrer');
+                  },
+                },
               ],
             ]
               .filter((items) => items.length > 0)
@@ -483,7 +477,7 @@ const AppShell = ({
                       choose(chosen.id);
                     }
                   }}
-                  className="w-full"
+                  fills
                 />
               ),
             },
@@ -503,7 +497,7 @@ const AppShell = ({
                       chooseMovement(chosen.id);
                     }
                   }}
-                  className="w-full"
+                  fills
                 />
               ),
             },
@@ -536,33 +530,9 @@ const AppShell = ({
         isFitted ? 'h-[calc(100svh-var(--valence-window-bar))] overflow-clip' : '',
       )}
     >
-      <MoodBackground lights={moodLights} film={film} />
+      <MoodBackground lights={moodLights} />
 
-      <AnimatePresence>
-        {isFilmPlaying ? (
-          <motion.div
-            key="leave-film"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{
-              duration: prefersReducedMotion === true ? 0 : FADING,
-              ease: 'easeInOut',
-            }}
-            className="fixed top-[calc(1rem+var(--nav-clearance))] right-4 z-50"
-          >
-            <Button isIconOnly variant="overlay" label="Stop the film" onClick={endFilm}>
-              <Icon of={XIcon} size={20} />
-            </Button>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-
-      <motion.div
-        animate={{ opacity: isFilmPlaying ? 0 : 1 }}
-        transition={{ duration: prefersReducedMotion === true ? 0 : FADING, ease: 'easeInOut' }}
-        className={isFilmPlaying ? 'pointer-events-none' : undefined}
-      >
+      <div>
         <NavBar
           brand={
             <Button
@@ -573,7 +543,7 @@ const AppShell = ({
               onClick={() => {
                 onSectionChange('home');
               }}
-              className="flex items-center rounded-md coarse:min-h-11"
+              className="flex items-center gap-2.5 rounded-md coarse:min-h-11"
             >
               {hasMark ? (
                 <motion.span
@@ -590,6 +560,10 @@ const AppShell = ({
                   <Logo size={28} isSolid />
                 </span>
               )}
+
+              <span className="hidden font-sans text-xl font-medium tracking-tight text-text sm:inline">
+                Valence
+              </span>
             </Button>
           }
           solidity={solidity}
@@ -625,7 +599,7 @@ const AppShell = ({
         </motion.main>
 
         {isFitted ? <div className="h-0 overflow-hidden">{dock}</div> : dock}
-      </motion.div>
+      </div>
     </div>
   );
 };

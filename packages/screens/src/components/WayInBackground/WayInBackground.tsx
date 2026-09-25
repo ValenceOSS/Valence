@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { cn } from '@ValenceUI/cn';
 import { MoodBackground } from '@ValenceUI/MoodBackground';
+import { useUnderTheWindowBar } from '@ValenceScreens/desktop/useUnderTheWindowBar';
 import type { WayInBackgroundProps } from './WayInBackground.types';
 
 /**
@@ -19,6 +20,8 @@ import type { WayInBackgroundProps } from './WayInBackground.types';
  */
 const WayInBackground = ({ splashscreen = null, lights = [] }: WayInBackgroundProps) => {
   const [hasGround, setHasGround] = useState(false);
+
+  useUnderTheWindowBar();
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -47,7 +50,7 @@ const WayInBackground = ({ splashscreen = null, lights = [] }: WayInBackgroundPr
       )}
 
       <div className={cn('absolute inset-0 isolate', splashscreen === null ? '' : 'opacity-50')}>
-        <MoodBackground lights={lights} hasGrid isDrifting />
+        <MoodBackground lights={lights} isDrifting isLively />
       </div>
     </div>
   );
