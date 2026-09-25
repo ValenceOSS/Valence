@@ -100,8 +100,11 @@ const harness = (options: {
   linkExtras?: (libraryId: string, links: { path: string; parentPath: string }[]) => Promise<void>;
   forgetStaleVersions?: (libraryId: string, stillVersions: string[]) => Promise<void>;
   root?: string;
+  within?: string;
+  regroupSeries?: (libraryId: string, foldersByPath: Map<string, string>) => Promise<void>;
 }) => {
   const rows: MediaRow[] = [];
+  const walked: string[] = [];
   const removedPaths: string[] = [];
   const markScanned = vi.fn(() => Promise.resolve());
   const previewRequests: { inputPath: string; audioStreamIndex?: number }[] = [];
@@ -177,12 +180,16 @@ const harness = (options: {
     scanLibrary({
       libraryId: LIBRARY_ID,
       root: options.root ?? '/media/films',
+      ...(options.within === undefined ? {} : { within: options.within }),
       files: {
-        listFiles: () =>
-          Promise.resolve({
+        listFiles: (folder) => {
+          walked.push(folder);
+
+          return Promise.resolve({
             files: options.found ?? [],
             unreadable: options.unreadable ?? [],
-          }),
+          });
+        },
       },
       store: {
         listStored: () => Promise.resolve(options.existing ?? []),
@@ -198,6 +205,7 @@ const harness = (options: {
         },
         listOverrides: () => Promise.resolve(options.overrides ?? []),
         ...(options.linkExtras === undefined ? {} : { linkExtras: options.linkExtras }),
+        ...(options.regroupSeries === undefined ? {} : { regroupSeries: options.regroupSeries }),
         ...(options.forgetStaleVersions === undefined
           ? {}
           : { forgetStaleVersions: options.forgetStaleVersions }),
@@ -218,7 +226,7 @@ const harness = (options: {
       ...(options.trickplay === undefined ? {} : { trickplay: options.trickplay }),
     });
 
-  return { run, rows, removedPaths, markScanned, previewRequests };
+  return { run, rows, removedPaths, markScanned, previewRequests, walked };
 };
 
 describe('a library whose files have gone from under it', () => {
@@ -312,6 +320,54 @@ describe('a library whose files have gone from under it', () => {
 });
 
 describe('a scan of a few named files, rather than the whole library', () => {
+  it('walks only the folder it is given, but files every programme by the library root', async () => {
+    const regroupSeries = vi.fn<(libraryId: string, folders: Map<string, string>) => Promise<void>>(
+      () => Promise.resolve(),
+    );
+    const derek = '/media/shows/Derek/Season 1/Derek.S01E01.mkv';
+    const theFall = '/media/shows/The Fall/Season 1/The.Fall.S01E01.mkv';
+    const loose = '/media/shows/Loose.S01E01.mkv';
+    const { run, walked } = harness({
+      root: '/media/shows',
+      within: '/media/shows/Derek',
+      found: [file(derek)],
+      existing: [stored(derek), stored(theFall), stored(loose)],
+      force: true,
+      isPartial: true,
+      regroupSeries,
+    });
+
+    await run();
+
+    const folders = regroupSeries.mock.calls[0]?.[1];
+
+    expect(walked).toEqual(['/media/shows/Derek']);
+    expect(folders).toEqual(new Map([[derek, '/media/shows/Derek']]));
+  });
+
+  it('files every programme again when it walked the whole library', async () => {
+    const regroupSeries = vi.fn<(libraryId: string, folders: Map<string, string>) => Promise<void>>(
+      () => Promise.resolve(),
+    );
+    const derek = '/media/shows/Derek/Season 1/Derek.S01E01.mkv';
+    const theFall = '/media/shows/The Fall/Season 1/The.Fall.S01E01.mkv';
+    const { run } = harness({
+      root: '/media/shows',
+      found: [file(derek), file(theFall)],
+      existing: [stored(derek), stored(theFall)],
+      regroupSeries,
+    });
+
+    await run();
+
+    expect(regroupSeries.mock.calls[0]?.[1]).toEqual(
+      new Map([
+        [derek, '/media/shows/Derek'],
+        [theFall, '/media/shows/The Fall'],
+      ]),
+    );
+  });
+
   it('leaves alone everything it was not asked about', async () => {
     const { run, removedPaths } = harness({
       found: [file('/from-s01e01.mkv')],

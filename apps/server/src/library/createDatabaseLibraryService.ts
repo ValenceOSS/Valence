@@ -543,6 +543,10 @@ const createDatabaseLibraryService = ({
    * Reads a few named files again, now that a correction has said what they are, and writes what the
    * catalogue answers back over what was stored.
    *
+   * The scan is told the library's own root even though it reads only these files, because the root
+   * decides the folder each programme is filed under, and the scan places every file in the library
+   * again, not only these.
+   *
    * @param libraryId - The library the files are in.
    * @param paths - The files to read again.
    * @param onProgress - The job to report progress against, where one is watching.
@@ -561,9 +565,15 @@ const createDatabaseLibraryService = ({
       .from(mediaItem)
       .where(and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, paths)));
 
+    const found = await findLibrary(libraryId);
+
+    if (found === null) {
+      return;
+    }
+
     await scanLibrary({
       libraryId,
-      root: '',
+      root: found.path,
       files: { listFiles: () => Promise.resolve({ files: rows, unreadable: [] }) },
       store,
       transcoder,
@@ -1982,7 +1992,8 @@ const createDatabaseLibraryService = ({
 
       return scanLibrary({
         libraryId,
-        root: folder,
+        root: found.path,
+        within: folder,
         files,
         store,
         transcoder,

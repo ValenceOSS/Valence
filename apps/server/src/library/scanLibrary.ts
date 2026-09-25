@@ -95,6 +95,7 @@ type MediaStore = {
 type ScanLibraryOptions = {
   libraryId: string;
   root: string;
+  within?: string;
   files: MediaFileSystem;
   store: MediaStore;
   transcoder: Transcoder;
@@ -300,10 +301,35 @@ const selectChanged = (
  * new or changed, asking the metadata providers about each, and removing rows for files that have
  * gone. Reports its progress as it goes, since a first scan of a real library takes minutes.
  *
- * @param options - Where to walk, what to write to, who to ask about files, how many to work on at
- *   once, and where to report progress and problems.
+ * @param options - The library's root, which decides the folder each programme is filed under, and
+ *   the folder under it to walk where that is only part of the library; what to write to, who to
+ *   ask about files, how many to work on at once, and where to report progress and problems.
  * @returns What the scan changed, counted.
  */
+/**
+ * The programme folders a scan files episodes by again: every one where it walked the whole
+ * library, but where it read only part of it just the programmes it read, so reading one programme
+ * again never moves another's episodes.
+ *
+ * @param seriesFolders - The folder of the programme each file in the library belongs to.
+ * @param found - The files the scan read.
+ * @param isPartial - Whether it read only part of the library.
+ * @returns The folder of each file to file again, by its path.
+ */
+const foldersToRegroup = (
+  seriesFolders: Map<string, string>,
+  found: readonly ScannedFile[],
+  isPartial: boolean,
+): Map<string, string> => {
+  if (!isPartial) {
+    return seriesFolders;
+  }
+
+  const read = new Set(found.flatMap((file) => seriesFolders.get(file.path) ?? []));
+
+  return new Map([...seriesFolders].filter(([, folder]) => read.has(folder)));
+};
+
 /**
  * Asks the transcoder which version of its probing rules this build applies.
  *
@@ -325,6 +351,7 @@ const readProbeVersion = async (transcoder: Transcoder): Promise<number | null> 
 const scanLibrary = async ({
   libraryId,
   root,
+  within = root,
   files,
   store,
   transcoder,
@@ -338,7 +365,7 @@ const scanLibrary = async ({
   onRemoved,
   isCancelled,
 }: ScanLibraryOptions): Promise<ScanResult> => {
-  const walked = await files.listFiles(root);
+  const walked = await files.listFiles(within);
   const found = walked.files.filter((file) => isMediaFile(file.path));
   const stored = await store.listStored(libraryId);
   const probeVersion = await readProbeVersion(transcoder);
@@ -375,7 +402,7 @@ const scanLibrary = async ({
   const overridesBySeries = correctionsBySeries(corrections, seriesFolders);
   const catalogueBySeries = catalogueIdsBySeries(stored, seriesFolders);
 
-  await store.regroupSeries?.(libraryId, seriesFolders);
+  await store.regroupSeries?.(libraryId, foldersToRegroup(seriesFolders, found, isPartial));
 
   let added = 0;
   let updated = 0;
@@ -539,14 +566,14 @@ const scanLibrary = async ({
 
   if (hasVanished) {
     onProblem?.(
-      root,
+      within,
       'Nothing was found where this library reads from, so what it already held has been left alone. Check the folder is still there — a network share that is not mounted looks exactly like an empty one.',
     );
   }
 
   if (hasGone) {
     onProblem?.(
-      root,
+      within,
       'The media service stopped answering, so this scan gave up rather than reporting the rest of the library as unreadable. Nothing was deleted, and the files it never reached are still waiting to be read.',
     );
 
@@ -555,7 +582,7 @@ const scanLibrary = async ({
 
   if (isCancelled?.() === true) {
     onProblem?.(
-      root,
+      within,
       'This scan was stopped before it finished. What it had already read is kept; nothing was deleted, and the library still counts as unscanned.',
     );
 
