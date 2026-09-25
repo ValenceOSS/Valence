@@ -18,8 +18,10 @@ const DownloadSchema = z.object({
   state: DownloadStateSchema,
   progress: z.number().min(0).max(1),
   bytesPerSecond: z.number().int().nonnegative().nullable(),
+  secondsLeft: z.number().int().nonnegative().nullable().default(null),
   sizeBytes: z.number().int().nonnegative().nullable(),
   failure: z.string().nullable(),
+  askedFrom: z.string().nullable().default(null),
   askedAt: z.string().datetime(),
   readyAt: z.string().datetime().nullable(),
 });

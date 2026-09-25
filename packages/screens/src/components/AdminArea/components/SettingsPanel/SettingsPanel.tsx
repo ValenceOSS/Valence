@@ -18,6 +18,7 @@ import { Switch } from '@ValenceUI/Switch';
 import { FilePicker } from '@ValenceUI/FilePicker';
 import {
   saveCertificationRegion,
+  saveKeepsDownloadsForDays,
   saveCatalogueKey,
   saveHardwareAccel,
   savePreviewQuality,
@@ -49,6 +50,7 @@ const PREVIEW_QUALITY_CHOICES = [
 const SPLASHSCREEN_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { certificationRegions } from '@ValenceScreens/components/AdminArea/certificationRegions';
+import { downloadKeepingChoices } from '@ValenceScreens/components/AdminArea/downloadKeepingChoices';
 import { ReleaseTypeChooser } from '@ValenceScreens/components/ReleaseTypeChooser/ReleaseTypeChooser';
 import type { ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 
@@ -92,6 +94,9 @@ const SettingsPanel = ({
   const [quality, setQuality] = useState(overview?.settings.previewQuality ?? 'high');
   const [roundness, setRoundness] = useState(overview?.settings.roundness ?? 'default');
   const [region, setRegion] = useState(overview?.settings.certificationRegion ?? 'GB');
+  const [keepsDownloadsFor, setKeepsDownloadsFor] = useState(
+    String(overview?.settings.keepsDownloadsForDays ?? 14),
+  );
   const [showsFaces, setShowsFaces] = useState(
     overview?.settings.showsProfilesBeforeSignIn ?? true,
   );
@@ -224,6 +229,45 @@ const SettingsPanel = ({
                 }
               });
             }}
+          />
+        </SettingRow>
+
+        <SettingRow
+          title="Prepared downloads"
+          description="How long a file made for somebody to keep is held after it was last asked for. Anybody else asking for the same film in that time gets the same file without waiting."
+        >
+          <OptionMenu
+            label="Prepared downloads"
+            groups={[
+              {
+                name: 'Kept for',
+                selectedId: keepsDownloadsFor,
+                onSelect: (id) => {
+                  setKeepsDownloadsFor(id);
+
+                  void saveKeepsDownloadsForDays(Number(id)).then((saved) => {
+                    tellOutcome(
+                      'How long downloads are kept saved.',
+                      failureOfAnswer(saved, 'How long downloads are kept could not be saved.'),
+                    );
+                  });
+                },
+                options: downloadKeepingChoices,
+              },
+            ]}
+            trigger={
+              <>
+                <span className="truncate">
+                  {downloadKeepingChoices.find((option) => option.id === keepsDownloadsFor)
+                    ?.label ?? `${keepsDownloadsFor} days`}
+                </span>
+
+                <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
+              </>
+            }
+            triggerShape="field"
+            align="end"
+            className="w-44 max-w-full"
           />
         </SettingRow>
 

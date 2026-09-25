@@ -109,6 +109,16 @@ describe('useFreshFromTheSocket', () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['admin'] });
   });
 
+  it('throws away the downloads when one of them moves on, in place of asking every few seconds', () => {
+    const invalidate = vi.spyOn(cache, 'invalidateQueries').mockResolvedValue(undefined);
+    const socket = aSocket();
+
+    listening(socket);
+    socket.say('keeping', ANYTHING);
+
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['downloads'] });
+  });
+
   it('throws away everything after a reconnection, since it missed whatever happened', () => {
     const invalidate = vi.spyOn(cache, 'invalidateQueries').mockResolvedValue(undefined);
     const socket = aSocket();
@@ -129,6 +139,7 @@ describe('useFreshFromTheSocket', () => {
       'notifications',
       'profile',
       'requests',
+      'keeping',
       'sessions',
       'resumed',
     ]);

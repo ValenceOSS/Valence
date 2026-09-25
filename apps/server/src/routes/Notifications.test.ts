@@ -180,6 +180,7 @@ describe('the notification routes', () => {
       { event: 'party.invited', inApp: true, push: false },
       { event: 'sharing.withdrawn', inApp: true, push: false },
       { event: 'requests.available', inApp: true, push: false },
+      { event: 'downloads.ready', inApp: true, push: false },
     ]);
   });
 

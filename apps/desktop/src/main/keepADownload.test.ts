@@ -61,6 +61,24 @@ describe('keepADownload', () => {
     await expect(readFile(onto, 'utf8')).resolves.toBe('hello world');
   });
 
+  it('does not call a file finished when fewer bytes came than the server promised', async () => {
+    const outcome = await keepADownload({
+      from: 'https://valence.test/api/downloads/one/file',
+      onto: join(folder, 'film.mp4'),
+      already: 0,
+      fetching: answering(
+        new Response(streamOf(['hello']), { headers: { 'content-length': '11' } }),
+      ),
+      report: () => {},
+    }).finished;
+
+    expect(outcome).toEqual({
+      bytes: 5,
+      isComplete: false,
+      failure: 'The server sent 5 of the 11 bytes it said the file was.',
+    });
+  });
+
   it('asks for the rest of a file it already has some of', async () => {
     const onto = join(folder, 'film.mp4');
     const seen: { asked?: RequestInit } = {};

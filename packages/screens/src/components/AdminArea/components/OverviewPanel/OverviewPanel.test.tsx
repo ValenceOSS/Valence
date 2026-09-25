@@ -61,6 +61,7 @@ const overview = (overrides: Partial<AdminOverview> = {}): AdminOverview => ({
     fetchesMusicDetails: false,
     requestReleaseTypes: ['album'],
     certificationRegion: 'GB',
+    keepsDownloadsForDays: 14,
     trustedOrigins: [],
   },
   transcoder: {

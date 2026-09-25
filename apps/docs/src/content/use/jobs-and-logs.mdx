@@ -55,6 +55,7 @@ Every job has a kind, shown in logs and filters, and a friendly label. Some run 
 | Clean up cached images                       | `server.cleanupImageCache`          | Removes artwork and profile photos nothing references, and kept book pages nobody has opened for 30 days. |
 | Clean up cached previews                     | `server.cleanupArtefactCache`       | Removes preview clips and scrub previews nothing addresses any more.                                      |
 | Clean up sessions                            | `server.cleanupSessions`            | Clears expired sign-in sessions and device-authorization codes.                                           |
+| Clear out old downloads                      | `server.clearOldDownloads`          | Deletes files prepared for keeping once nobody has asked for them for as long as the server keeps them.   |
 | Check catalogue connectivity                 | `server.checkCatalogueConnectivity` | Verifies the configured catalogue key can reach the catalogue.                                            |
 | Check the transcoder                         | `server.checkTranscoder`            | Asks the transcoder whether it is still answering.                                                        |
 | Check disk space                             | `server.checkDiskSpace`             | Asks how much room is left on the filesystems Valence writes to.                                          |
@@ -124,6 +125,7 @@ The first time Valence sees a job it gives it a default schedule. It never does 
 | Bring requests up to date with the catalogue | Daily at 04:30   |
 | Tell the household about new media           | Every hour       |
 | Clean up sessions                            | Daily at 05:30   |
+| Clear out old downloads                      | Daily at 05:40   |
 | Prune old webhook deliveries                 | Daily at 05:45   |
 | Prune old log records                        | Daily at 05:55   |
 | Prune old job history                        | Daily at 06:05   |

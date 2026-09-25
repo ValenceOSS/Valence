@@ -20,6 +20,7 @@ const healthyOverview = (overrides: Partial<AdminOverview> = {}): AdminOverview 
     fetchesMusicDetails: false,
     requestReleaseTypes: ['album'],
     certificationRegion: 'GB',
+    keepsDownloadsForDays: 14,
     trustedOrigins: [],
   },
   transcoder: {
@@ -510,6 +511,7 @@ describe('collectConcerns', () => {
             fetchesMusicDetails: false,
             requestReleaseTypes: ['album'],
             certificationRegion: 'GB',
+            keepsDownloadsForDays: 14,
             trustedOrigins: [],
           },
         }),
@@ -704,6 +706,7 @@ describe('collectConcerns', () => {
           fetchesMusicDetails: false,
           requestReleaseTypes: ['album'],
           certificationRegion: 'GB',
+          keepsDownloadsForDays: 14,
           trustedOrigins: [],
         },
       }),

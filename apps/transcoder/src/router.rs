@@ -1024,26 +1024,42 @@ async fn start_download(
                 bytes_per_second: None,
                 size_bytes: download::size_of(&config.cache_root, &id).await,
                 id,
+                failure: None,
+                seconds_left: None,
             }),
         )
             .into_response();
     }
 
     if let Some((progress, rate)) = state.downloads.progress(&id).await {
+        let left = state.downloads.time_left(&id).await;
+
         return (
             StatusCode::ACCEPTED,
-            Json(download::pending(id, progress, rate)),
+            Json(download::pending(id, progress, rate, left)),
         )
             .into_response();
     }
 
+    if let Some(reason) = state.downloads.failure(&id).await {
+        return (StatusCode::OK, Json(download::failed(id, reason))).into_response();
+    }
+
     if !state.downloads.claim(&id).await {
-        return (StatusCode::ACCEPTED, Json(download::pending(id, 0, None))).into_response();
+        return (
+            StatusCode::ACCEPTED,
+            Json(download::pending(id, 0, None, None)),
+        )
+            .into_response();
     }
 
     prepare_in_the_background(&state, &request, &path, id.clone());
 
-    (StatusCode::ACCEPTED, Json(download::pending(id, 0, None))).into_response()
+    (
+        StatusCode::ACCEPTED,
+        Json(download::pending(id, 0, None, None)),
+    )
+        .into_response()
 }
 
 /// Serves a prepared download.
@@ -1086,10 +1102,27 @@ async fn forget_download(
     Json(request): Json<ForgetDownload>,
 ) -> Response {
     let root = state.registry.config().cache_root.join("downloads");
+
+    if state.downloads.stop(&request.id).await {
+        for _ in 0..STOPPING_CHECKS {
+            if !state.downloads.is_claimed(&request.id).await {
+                break;
+            }
+
+            tokio::time::sleep(STOPPING_CHECK_EVERY).await;
+        }
+    }
+
     let forgotten = cache_sweep::forget(&root, &request.id).await;
 
     (StatusCode::OK, Json(ForgetReport { forgotten })).into_response()
 }
+
+/// How many times to look for a stopped download to have let go before its files are removed.
+const STOPPING_CHECKS: u32 = 50;
+
+/// How long to wait between those looks.
+const STOPPING_CHECK_EVERY: std::time::Duration = std::time::Duration::from_millis(100);
 
 /// Which prepared download to throw away.
 #[derive(Debug, Deserialize)]
@@ -1418,6 +1451,10 @@ fn prepare_in_the_background(state: &AppState, request: &DownloadRequest, path: 
 
         if let Err(failure) = outcome {
             tracing::warn!(target: "download", %failure, subject = %id, "could not prepare the download");
+
+            if !matches!(failure, download::DownloadError::Stopped) {
+                downloads.fail(&id, failure.to_string()).await;
+            }
         }
 
         downloads.release(&id).await;

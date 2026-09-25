@@ -11,6 +11,7 @@ import {
   CLEANUP_IMAGE_CACHE_JOB,
   CLEANUP_ARTEFACT_CACHE_JOB,
   CLEANUP_SESSIONS_JOB,
+  CLEAR_OLD_DOWNLOADS_JOB,
   CHECK_CATALOGUE_CONNECTIVITY_JOB,
   CHECK_TRANSCODER_JOB,
   CHECK_DISK_SPACE_JOB,
@@ -149,6 +150,16 @@ const JOB_DEFINITIONS: JobDefinition[] = [
     announcesFinish: false,
   },
   {
+    kind: CLEAR_OLD_DOWNLOADS_JOB,
+    label: 'Clear out old downloads',
+    description:
+      'Deletes files prepared for keeping once they have gone unasked for as long as the server keeps them. A device that already fetched one keeps its copy.',
+    needsLibrary: false,
+    destructive: true,
+    takesParts: false,
+    announcesFinish: false,
+  },
+  {
     kind: CHECK_CATALOGUE_CONNECTIVITY_JOB,
     label: 'Check catalogue connectivity',
     description: 'Verifies the configured catalogue key can actually reach the catalogue.',
@@ -267,6 +278,7 @@ const DEFAULT_JOB_TRIGGERS: Record<string, ScheduleTrigger[]> = {
   [REFRESH_REQUESTS_JOB]: [{ kind: 'daily', hour: 4, minute: 30 }],
   [SEND_MEDIA_DIGEST_JOB]: [{ kind: 'everyHours', hours: 1 }],
   [CLEANUP_SESSIONS_JOB]: [{ kind: 'daily', hour: 5, minute: 30 }],
+  [CLEAR_OLD_DOWNLOADS_JOB]: [{ kind: 'daily', hour: 5, minute: 40 }],
   [PRUNE_WEBHOOK_DELIVERIES_JOB]: [{ kind: 'daily', hour: 5, minute: 45 }],
   [PRUNE_LOGS_JOB]: [{ kind: 'daily', hour: 5, minute: 55 }],
   [PRUNE_JOB_HISTORY_JOB]: [{ kind: 'daily', hour: 6, minute: 5 }],

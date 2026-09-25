@@ -4,6 +4,9 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
+import { installATestClient } from '@ValenceScreens/testing/installATestClient';
+import { aFakeHeldFiles } from '@ValenceClient/testing/aFakeHeldFiles';
+import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import { DownloadList } from './DownloadList';
 
 const READY = {
@@ -81,10 +84,43 @@ describe('DownloadList', () => {
     expect(screen.getByText(/Ready to keep on this device/)).toBeInTheDocument();
   });
 
+  it('only shows how far along things are in a browser, offering nothing to download', async () => {
+    installATestClient({ canKeepFiles: () => false });
+    drawWith([READY]);
+
+    expect(await screen.findByText(/Ready on the device that asked/)).toBeInTheDocument();
+    expect(screen.queryByText('Keep on this device')).toBeNull();
+    expect(screen.queryByRole('button', { name: /Save file/ })).toBeNull();
+  });
+
   it('says how far along something still being prepared is', async () => {
     drawWith([PREPARING]);
 
     expect(await screen.findByText(/40% done/)).toBeInTheDocument();
+  });
+
+  it('says how fast it is being prepared and how long it has left', async () => {
+    drawWith([{ ...PREPARING, bytesPerSecond: 2_000_000, secondsLeft: 720 }]);
+
+    expect(
+      await screen.findByText(
+        `Preparing — 40% done · ${formatBytes(2_000_000)}/s · about 12 min left.`,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('says Valence can be closed while the server prepares something', async () => {
+    drawWith([PREPARING]);
+
+    expect(await screen.findByText(/Valence can be closed in the meantime/)).toBeInTheDocument();
+  });
+
+  it('says nothing about closing it once nothing is being prepared', async () => {
+    drawWith([READY]);
+
+    await screen.findByText('Arrival');
+
+    expect(screen.queryByText(/can be closed/)).toBeNull();
   });
 
   it('measures a preparing download against finishing, not against a hundred', async () => {
@@ -120,7 +156,7 @@ describe('DownloadList', () => {
     ).toBeInTheDocument();
   });
 
-  it('asks the server to forget it when told to', async () => {
+  it('asks the server to forget it once somebody confirms', async () => {
     const actor = userEvent.setup();
 
     drawWith([READY]);
@@ -128,6 +164,10 @@ describe('DownloadList', () => {
     await actor.click(
       await screen.findByRole('button', { name: /Stop keeping Arrival on the server/ }),
     );
+
+    expect(await screen.findByText('Delete Arrival?')).toBeInTheDocument();
+
+    await actor.click(screen.getByRole('button', { name: 'Delete' }));
 
     await waitFor(() => {
       expect(
@@ -137,6 +177,21 @@ describe('DownloadList', () => {
         ),
       ).toBe(true);
     });
+  });
+
+  it('leaves it alone where somebody thinks better of deleting it', async () => {
+    const actor = userEvent.setup();
+
+    drawWith([READY]);
+
+    await actor.click(
+      await screen.findByRole('button', { name: /Stop keeping Arrival on the server/ }),
+    );
+    await actor.click(await screen.findByRole('button', { name: 'Cancel' }));
+
+    expect(
+      fetchMock.mock.calls.some(([, init]) => RequestSchema.parse(init ?? {}).method === 'DELETE'),
+    ).toBe(false);
   });
 
   it('says a queued one is waiting rather than leaving it looking stuck', async () => {
@@ -186,6 +241,52 @@ describe('DownloadList', () => {
     await waitFor(() => {
       expect(
         fetchMock.mock.calls.some(([url]) => String(url).endsWith(`/${PREPARING.id}/pause`)),
+      ).toBe(true);
+    });
+  });
+
+  it('asks first, then clears something on this device here and on the server', async () => {
+    const here: HeldFile = {
+      downloadId: READY.id,
+      mediaId: READY.mediaId,
+      seriesId: null,
+      seriesTitle: null,
+      title: 'Arrival',
+      quality: 'original',
+      durationSeconds: 6960,
+      ofBytes: 4_000_000_000,
+      state: 'here',
+      bytes: 4_000_000_000,
+      bytesPerSecond: null,
+      failure: null,
+      keptAt: '2026-01-01T00:20:00.000Z',
+      hasPoster: false,
+    };
+    const files = aFakeHeldFiles([here]);
+
+    installATestClient({ held: files.held });
+    drawWith([READY]);
+
+    const deletes = await screen.findAllByRole('button', { name: /Delete Arrival/ });
+
+    expect(deletes).toHaveLength(1);
+
+    const actor = userEvent.setup();
+
+    await actor.click(deletes[0] ?? new HTMLElement());
+
+    expect(files.dropped).toEqual([]);
+
+    await actor.click(await screen.findByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => {
+      expect(files.dropped).toEqual([READY.id]);
+      expect(
+        fetchMock.mock.calls.some(
+          ([url, init]) =>
+            String(url).endsWith(`/api/downloads/${READY.id}`) &&
+            RequestSchema.parse(init ?? {}).method === 'DELETE',
+        ),
       ).toBe(true);
     });
   });

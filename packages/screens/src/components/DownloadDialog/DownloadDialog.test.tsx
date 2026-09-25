@@ -104,7 +104,7 @@ describe('DownloadDialog', () => {
   it('says plainly when the device would have to convert it first', async () => {
     renderInAnAddress(<DownloadDialog media={MEDIA} onClose={vi.fn()} />);
 
-    expect((await screen.findAllByText('converted first')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('Converted')).length).toBeGreaterThan(0);
   });
 
   it('reads the size against the room left, where the device will say', async () => {
@@ -149,7 +149,7 @@ describe('DownloadDialog', () => {
     renderInAnAddress(<DownloadDialog media={MEDIA} onClose={vi.fn()} />);
 
     await actor.click(
-      (await screen.findAllByRole('button', { name: 'Choose' }))[0] ?? new HTMLElement(),
+      (await screen.findAllByRole('radio', { checked: false }))[0] ?? new HTMLElement(),
     );
     await actor.click(screen.getByRole('button', { name: /Prepare it/ }));
 

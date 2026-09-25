@@ -1,17 +1,21 @@
+import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Icon } from '@ValenceUI/Icon';
-import { Bin as BinIcon, Download as DownloadIcon } from '@keyline-icons/react';
+import { Bell as BellIcon, Bin as BinIcon, Download as DownloadIcon } from '@keyline-icons/react';
 import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
+import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { SettingList } from '@ValenceUI/SettingList';
 import { SettingRow } from '@ValenceUI/SettingRow';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
+import { describeTimeToGo } from '@ValenceCore/functions/describeTimeToGo';
 import { forgetDownload, setDownloadPaused } from '@ValenceClient/downloads/fetchDownloads';
 import { downloadQueries } from '@ValenceClient/query/downloadQueries';
 import { canKeepFiles } from '@ValenceClient/downloads/canKeepFiles';
+import { dropAFile } from '@ValenceClient/downloads/keepingFiles';
 import { useHeldFiles } from '@ValenceClient/downloads/useHeldFiles';
 import { describeKeeping } from '@ValenceCore/functions/describeKeeping';
 import { KeepingControls } from '@ValenceScreens/components/DownloadList/components/KeepingControls/KeepingControls';
@@ -22,9 +26,10 @@ import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
  * Says where a prepared file has got to, in the words somebody would use about it.
  *
  * @param download - The download.
+ * @param isKeepable - Whether this client keeps files, or only shows them as a browser does.
  * @returns The line beneath its title.
  */
-const describeState = (download: Download): string => {
+const describeState = (download: Download, isKeepable: boolean): string => {
   const done = `${Math.round(download.progress * 100).toString()}%`;
 
   if (download.state === 'failed') {
@@ -40,14 +45,20 @@ const describeState = (download: Download): string => {
   }
 
   if (download.state === 'preparing') {
-    return download.bytesPerSecond === null
-      ? `Preparing — ${done} done.`
-      : `Preparing — ${done} done, ${formatBytes(download.bytesPerSecond)}/s.`;
+    const said = [
+      `${done} done`,
+      ...(download.bytesPerSecond === null ? [] : [`${formatBytes(download.bytesPerSecond)}/s`]),
+      ...(download.secondsLeft === null ? [] : [describeTimeToGo(download.secondsLeft)]),
+    ];
+
+    return `Preparing — ${said.join(' · ')}.`;
   }
 
+  const ready = isKeepable ? 'Ready to keep on this device' : 'Ready on the device that asked';
+
   return download.sizeBytes === null
-    ? 'Ready to keep on this device.'
-    : `Ready to keep on this device — ${formatBytes(download.sizeBytes)}.`;
+    ? `${ready}.`
+    : `${ready} — ${formatBytes(download.sizeBytes)}.`;
 };
 
 /**
@@ -59,10 +70,11 @@ const describeState = (download: Download): string => {
  *
  * @param download - What the server prepared.
  * @param held - The copy on this machine, where there is one.
+ * @param isKeepable - Whether this client keeps files, or saves them as a browser does.
  * @returns The line beneath the title.
  */
-const describeRow = (download: Download, held: HeldFile | null): string =>
-  held === null ? describeState(download) : describeKeeping(held);
+const describeRow = (download: Download, held: HeldFile | null, isKeepable: boolean): string =>
+  held === null ? describeState(download, isKeepable) : describeKeeping(held);
 
 /**
  * Gathers downloads under the programme they belong to, in the order they were asked for.
@@ -103,6 +115,8 @@ const groupBySeries = (downloads: Download[]): { title: string | null; items: Do
 const DownloadList = () => {
   const cache = useQueryClient();
   const asked = useQuery(downloadQueries.all());
+  const [deleting, setDeleting] = useState<Download | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const held = useHeldFiles();
 
   const downloads = asked.data ?? [];
@@ -132,8 +146,35 @@ const DownloadList = () => {
     );
   }
 
+  const deletingHere = deleting !== null && onThisDevice.has(deleting.id);
+
+  const deleteIt = (download: Download) => {
+    setIsDeleting(true);
+
+    void (onThisDevice.has(download.id) ? dropAFile(download.id) : Promise.resolve())
+      .then(async () => forgetDownload(download.id))
+      .then(async () => cache.invalidateQueries({ queryKey: downloadQueries.key }))
+      .finally(() => {
+        setIsDeleting(false);
+        setDeleting(null);
+      });
+  };
+
+  const isAnyPreparing = downloads.some(
+    (download) => download.state === 'queued' || download.state === 'preparing',
+  );
+
   return (
     <div className="flex flex-col">
+      {isAnyPreparing ? (
+        <p className="flex items-start gap-2 px-5 pt-4 font-body text-sm text-text-muted">
+          <Icon of={BellIcon} size={16} className="mt-0.5 shrink-0" />
+          {isKeepable
+            ? 'The server prepares these by itself, so Valence can be closed in the meantime. You will get a notification when each is ready, and it comes to this device the next time Valence is open.'
+            : 'The server prepares these by itself, and each goes to the device it was asked for on. You will get a notification when each is ready.'}
+        </p>
+      ) : null}
+
       {groupBySeries(downloads).map((group) => (
         <section key={group.title ?? group.items[0]?.id} className="flex flex-col">
           {group.title === null ? null : (
@@ -152,7 +193,11 @@ const DownloadList = () => {
               <SettingRow
                 key={download.id}
                 title={download.title}
-                description={describeRow(download, onThisDevice.get(download.id) ?? null)}
+                description={describeRow(
+                  download,
+                  onThisDevice.get(download.id) ?? null,
+                  isKeepable,
+                )}
               >
                 <Badge size="sm" tone={download.state === 'failed' ? 'danger' : 'quiet'}>
                   {download.quality}
@@ -202,11 +247,13 @@ const DownloadList = () => {
                   variant="ghost"
                   size="sm"
                   isIconOnly
-                  label={`Stop keeping ${download.title} on the server`}
+                  label={
+                    onThisDevice.has(download.id)
+                      ? `Delete ${download.title} from this device and the server`
+                      : `Stop keeping ${download.title} on the server`
+                  }
                   onClick={() => {
-                    void forgetDownload(download.id).then(async () =>
-                      cache.invalidateQueries({ queryKey: downloadQueries.key }),
-                    );
+                    setDeleting(download);
                   }}
                 >
                   <Icon of={BinIcon} size={16} />
@@ -216,6 +263,27 @@ const DownloadList = () => {
           </SettingList>
         </section>
       ))}
+
+      <ConfirmDialog
+        title={deleting === null ? 'Delete it?' : `Delete ${deleting.title}?`}
+        detail={
+          deletingHere
+            ? 'It is removed from this device and from the server. How far you got through it is kept.'
+            : 'The server stops keeping its copy. A device that already has one keeps its own.'
+        }
+        confirmLabel="Delete"
+        isDestructive
+        isBusy={isDeleting}
+        isOpen={deleting !== null}
+        onClose={() => {
+          setDeleting(null);
+        }}
+        onConfirm={() => {
+          if (deleting !== null) {
+            deleteIt(deleting);
+          }
+        }}
+      />
     </div>
   );
 };

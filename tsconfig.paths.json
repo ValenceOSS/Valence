@@ -43,6 +43,10 @@
         "./packages/ui/src/components/CommandPalette/CommandPalette.types.ts"
       ],
       "@ValenceUI/Callout": ["./packages/ui/src/components/Callout/Callout.tsx"],
+      "@ValenceUI/ChoiceList": ["./packages/ui/src/components/ChoiceList/ChoiceList.tsx"],
+      "@ValenceUI/ChoiceList.types": [
+        "./packages/ui/src/components/ChoiceList/ChoiceList.types.ts"
+      ],
       "@ValenceUI/Callout.types": ["./packages/ui/src/components/Callout/Callout.types.ts"],
       "@ValenceUI/Card": ["./packages/ui/src/components/Card/Card.tsx"],
       "@ValenceUI/Card.types": ["./packages/ui/src/components/Card/Card.types.ts"],

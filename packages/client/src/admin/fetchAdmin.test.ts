@@ -27,6 +27,7 @@ import {
   saveHardwareAccel,
   savePreviewQuality,
   saveRoundness,
+  saveKeepsDownloadsForDays,
   watchActiveSessions,
   measureStorage,
   saveSplashscreen,
@@ -66,6 +67,7 @@ const OVERVIEW = {
     fetchesMusicDetails: false,
     requestReleaseTypes: ['album'],
     certificationRegion: 'GB',
+    keepsDownloadsForDays: 14,
   },
   transcoder: {
     isReachable: true,
@@ -961,6 +963,17 @@ describe('stopping a job and choosing a backend', () => {
     expect(url).toBe('/api/admin/settings');
     expect(init?.method).toBe('PATCH');
     expect(init?.body).toBe(JSON.stringify({ previewQuality: 'low' }));
+  });
+
+  it('sends how long downloads are kept to the server', async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve({}) });
+
+    await expect(saveKeepsDownloadsForDays(30)).resolves.toBe(true);
+
+    const [url, init] = fetchMock.mock.calls.at(-1) ?? [];
+
+    expect(url).toBe('/api/admin/settings');
+    expect(init?.body).toBe(JSON.stringify({ keepsDownloadsForDays: 30 }));
   });
 
   it('sends the chosen roundness to the server', async () => {

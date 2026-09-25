@@ -158,6 +158,20 @@ const thePhonesHeldFiles = (
       return;
     }
 
+    const onTheDisk = await getInfoAsync(filmOf(row.downloadId)).catch(() => null);
+    const size = onTheDisk !== null && onTheDisk.exists ? onTheDisk.size : null;
+
+    if (size === null || (now.ofBytes !== null && size !== now.ofBytes)) {
+      store.forget(`${HELD_RESUMES}${row.downloadId}`);
+      change(row.downloadId, {
+        state: 'failed',
+        bytesPerSecond: null,
+        failure: 'The file arrived incomplete.',
+      });
+
+      return;
+    }
+
     store.forget(`${HELD_RESUMES}${row.downloadId}`);
     change(row.downloadId, { state: 'here', bytesPerSecond: null, failure: null });
     await fetchThePoster(now, cookie);

@@ -296,6 +296,17 @@ describe('VideoPlayer', () => {
     });
   });
 
+  it('plays a copy kept on this device without asking the server for a session', async () => {
+    const { container } = renderInAnAddress(
+      <VideoPlayer media={media} onClose={vi.fn()} keptSource="valence-kept://arrival" />,
+    );
+
+    await waitFor(() => {
+      expect(container.querySelector('video')?.getAttribute('src')).toBe('valence-kept://arrival');
+    });
+    expect(startMock).not.toHaveBeenCalled();
+  });
+
   it('attaches the media engine to the returned manifest', async () => {
     renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
 

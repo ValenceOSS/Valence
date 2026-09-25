@@ -2,6 +2,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
+import { installATestClient } from '@ValenceScreens/testing/installATestClient';
 import { DownloadsDialog } from './DownloadsDialog';
 
 const fetchMock = vi.fn();
@@ -37,6 +38,14 @@ describe('DownloadsDialog', () => {
     renderInAnAddress(<DownloadsDialog isOpen onClose={vi.fn()} />);
 
     expect(screen.getByText(/yours until you delete it/)).toBeInTheDocument();
+  });
+
+  it('in a browser, says it is for seeing progress and offers no going offline', () => {
+    installATestClient({ canKeepFiles: () => false });
+    renderInAnAddress(<DownloadsDialog isOpen onClose={vi.fn()} />);
+
+    expect(screen.getByText(/how far along each is/)).toBeInTheDocument();
+    expect(screen.queryByText('Go offline')).toBeNull();
   });
 
   it('shows what has been asked for', async () => {

@@ -159,6 +159,14 @@ const keepADownload = (asked: WhatToFetch): Fetching => {
       onto.end();
       await once(onto, 'finish');
 
+      if (whole !== null && bytes !== whole) {
+        return {
+          bytes,
+          isComplete: false,
+          failure: `The server sent ${bytes} of the ${whole} bytes it said the file was.`,
+        };
+      }
+
       return { bytes, isComplete: true, failure: null };
     } catch (problem) {
       onto.end();

@@ -33,7 +33,7 @@ const createMemoryDownloadService = (
       return Promise.resolve(first === undefined ? null : (state.offers[first] ?? null));
     },
 
-    ask: (profileId, mediaId, quality, audioLanguages) => {
+    ask: (profileId, clientId, mediaId, quality, audioLanguages) => {
       const asked = state.downloads[profileId] ?? [];
       const already = asked.find((one) => one.mediaId === mediaId && one.quality === quality);
 
@@ -54,6 +54,8 @@ const createMemoryDownloadService = (
         bytesPerSecond: null,
         sizeBytes: null,
         failure: null,
+        secondsLeft: null,
+        askedFrom: clientId,
         askedAt: new Date(0).toISOString(),
         readyAt: null,
       };
@@ -63,12 +65,12 @@ const createMemoryDownloadService = (
       return Promise.resolve(made);
     },
 
-    askForSeries: (profileId, seriesId, quality, audioLanguages, mediaIds) =>
+    askForSeries: (profileId, clientId, seriesId, quality, audioLanguages, mediaIds) =>
       Promise.all(
         theEpisodesAskedFor(
           (state.episodes[seriesId] ?? []).map((id) => ({ id })),
           mediaIds,
-        ).map(async ({ id }) => memory.ask(profileId, id, quality, audioLanguages)),
+        ).map(async ({ id }) => memory.ask(profileId, clientId, id, quality, audioLanguages)),
       ).then((asked) => asked.filter((one) => one !== null)),
 
     pause: (profileId, id) => {
@@ -89,7 +91,7 @@ const createMemoryDownloadService = (
 
     list: (profileId) => Promise.resolve(state.downloads[profileId] ?? []),
 
-    refresh: (profileId) => Promise.resolve(state.downloads[profileId] ?? []),
+    follow: () => Promise.resolve([]),
 
     readFile: (profileId, id) => {
       const ready = (state.downloads[profileId] ?? []).find(
@@ -100,14 +102,24 @@ const createMemoryDownloadService = (
         ready === undefined
           ? null
           : {
-              body: new Blob([`the film ${ready.mediaId}`]).stream(),
-              contentType: 'video/mp4',
-              status: 200,
-              contentRange: null,
-              contentLength: null,
+              file: {
+                body: new Blob([`the film ${ready.mediaId}`]).stream(),
+                contentType: 'video/mp4',
+                status: 200,
+                contentRange: null,
+                contentLength: null,
+              },
+              title: ready.title,
             },
       );
     },
+
+    find: (id) =>
+      Promise.resolve(
+        Object.values(state.downloads)
+          .flat()
+          .find((one) => one.id === id) ?? null,
+      ),
 
     forget: (profileId, id) => {
       state.downloads[profileId] = (state.downloads[profileId] ?? []).filter(
@@ -115,6 +127,22 @@ const createMemoryDownloadService = (
       );
 
       return Promise.resolve();
+    },
+
+    clearOutBefore: (cutoff) => {
+      let cleared = 0;
+
+      for (const [profileId, downloads] of Object.entries(state.downloads)) {
+        const kept = downloads.filter(
+          (one) =>
+            !((one.state === 'ready' || one.state === 'failed') && new Date(one.askedAt) < cutoff),
+        );
+
+        cleared += downloads.length - kept.length;
+        state.downloads[profileId] = kept;
+      }
+
+      return Promise.resolve(cleared);
     },
 
     hold: (profileId, _clientId, mediaId, quality) => {

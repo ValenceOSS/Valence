@@ -35,6 +35,11 @@ const BooksPage = lazyRouteComponent(
   'BooksPage',
 );
 
+const KeptPlayerPage = lazyRouteComponent(
+  async () => import('@ValenceScreens/components/KeptPlayerPage/KeptPlayerPage'),
+  'KeptPlayerPage',
+);
+
 const ReadPage = lazyRouteComponent(
   async () => import('@ValenceScreens/components/ReadPage/ReadPage'),
   'ReadPage',
@@ -120,6 +125,12 @@ const buildRouter = (title = 'Valence') => {
     ...carries,
   });
 
+  const kept = createRoute({
+    getParentRoute: () => signedIn,
+    path: '/kept/$downloadId',
+    component: KeptPlayerPage,
+  });
+
   const read = createRoute({
     getParentRoute: () => signedIn,
     path: '/read/$bookId',
@@ -193,6 +204,7 @@ const buildRouter = (title = 'Valence') => {
       share,
       signedIn.addChildren([
         watch,
+        kept,
         read,
         adminIndex,
         admin,

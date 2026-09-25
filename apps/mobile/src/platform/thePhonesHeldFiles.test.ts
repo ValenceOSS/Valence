@@ -30,7 +30,7 @@ jest.mock('expo-file-system/legacy', () => ({
   ),
   deleteAsync: jest.fn(() => Promise.resolve()),
   downloadAsync: jest.fn(() => Promise.resolve({ status: 200 })),
-  getInfoAsync: jest.fn(() => Promise.resolve({ exists: true })),
+  getInfoAsync: jest.fn(() => Promise.resolve({ exists: true, size: 11 })),
   makeDirectoryAsync: jest.fn(() => Promise.resolve()),
 }));
 
@@ -82,6 +82,17 @@ describe('thePhonesHeldFiles', () => {
       held.posterFor(ARRIVAL.downloadId),
       {},
     );
+  });
+
+  it('refuses a film that arrived shorter than the server said it was', async () => {
+    const held = thePhonesHeldFiles(aFakePlatform().store);
+
+    await held.keep({ ...ARRIVAL, ofBytes: 4_000 });
+
+    expect((await held.all())[0]).toMatchObject({
+      state: 'failed',
+      failure: 'The file arrived incomplete.',
+    });
   });
 
   it('remembers what it holds between launches', async () => {
@@ -137,6 +148,18 @@ describe('thePhonesHeldFiles', () => {
     mockHeard?.({ totalBytesWritten: 30, totalBytesExpectedToWrite: 100 });
 
     expect(store.writes.length - before).toBeLessThanOrEqual(1);
+
+    jest.mocked(getInfoAsync).mockResolvedValueOnce({
+      exists: true,
+
+      size: 100,
+
+      isDirectory: false,
+
+      uri: '',
+
+      modificationTime: 0,
+    });
 
     finish({ status: 200 });
     await keeping;

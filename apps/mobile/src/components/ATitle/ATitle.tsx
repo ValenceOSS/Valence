@@ -9,6 +9,7 @@ import {
   RotateCcw,
   Share,
 } from '@keyline-icons/react-native';
+import { describeTimeToGo } from '@ValenceCore/functions/describeTimeToGo';
 import { Heart as HeartFilled, Play as PlayFilled } from '@keyline-icons/react-native/fill';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -309,7 +310,11 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
               {held === null
                 ? preparing === null
                   ? 'Download'
-                  : `Preparing ${Math.round(preparing.progress * 100).toString()}%`
+                  : `Preparing ${Math.round(preparing.progress * 100).toString()}%${
+                      preparing.secondsLeft === null
+                        ? ''
+                        : `, ${describeTimeToGo(preparing.secondsLeft)}`
+                    }`
                 : held.state === 'here'
                   ? 'Downloaded'
                   : held.ofBytes === null || held.ofBytes === 0

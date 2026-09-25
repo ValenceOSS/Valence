@@ -12,9 +12,13 @@ const boss = vi.hoisted(() => {
   const scheduled: Schedule[] = [];
   const queued: { kind: string; id: string; libraryId: string }[] = [];
   const dropped: string[] = [];
-  const sent: { kind: string; options: { startAfter?: number; singletonKey?: string } }[] = [];
+  const sent: {
+    kind: string;
+    options: { startAfter?: number; singletonKey?: string; retryLimit?: number };
+  }[] = [];
+  const atOnce = new Map<string, number>();
 
-  return { workers, scheduled, queued, dropped, sent };
+  return { workers, scheduled, queued, dropped, sent, atOnce };
 });
 
 vi.mock('pg-boss', () => ({
@@ -29,8 +33,9 @@ vi.mock('pg-boss', () => ({
       return Promise.resolve();
     }
 
-    work(kind: string, handler: WorkHandler) {
+    work(kind: string, options: { localConcurrency?: number }, handler: WorkHandler) {
       boss.workers.set(kind, handler);
+      boss.atOnce.set(kind, options.localConcurrency ?? 1);
 
       return Promise.resolve('worker');
     }
@@ -41,7 +46,11 @@ vi.mock('pg-boss', () => ({
       return Promise.resolve();
     }
 
-    send(kind: string, _data: JsonValue, options: { startAfter?: number; singletonKey?: string }) {
+    send(
+      kind: string,
+      _data: JsonValue,
+      options: { startAfter?: number; singletonKey?: string; retryLimit?: number },
+    ) {
       boss.sent.push({ kind, options });
 
       return Promise.resolve('job');
@@ -87,6 +96,7 @@ beforeEach(() => {
   boss.queued.length = 0;
   boss.dropped.length = 0;
   boss.sent.length = 0;
+  boss.atOnce.clear();
 });
 
 describe('createJobQueue', () => {
@@ -354,6 +364,43 @@ describe('createJobQueue', () => {
 
     finish();
     await scanning;
+  });
+
+  it('names a job after what its payload says it is about, where no library is named', async () => {
+    const onFinished = vi.fn();
+
+    await (
+      await createJobQueue({
+        connectionString: 'postgres://flux',
+        handlers: { 'server.prepareDownload': () => Promise.resolve() },
+        onFinished,
+      })
+    ).startWorking();
+
+    await deliver('server.prepareDownload', [{ id: 'job-3', data: { subject: 'Arrival' } }]);
+
+    expect(onFinished).toHaveBeenCalledWith(
+      expect.objectContaining({ jobId: 'job-3', subject: 'Arrival' }),
+    );
+  });
+
+  it('runs as many of a kind at once, and retries it as often, as that kind is set to', async () => {
+    const queue = await createJobQueue({
+      connectionString: 'postgres://flux',
+      handlers: {
+        'server.prepareDownload': () => Promise.resolve(),
+        'library.scan': () => Promise.resolve(),
+      },
+      perKind: { 'server.prepareDownload': { atOnce: 8, retries: 0 } },
+    });
+
+    await queue.startWorking();
+    await queue.enqueue('server.prepareDownload', { subject: 'Arrival' });
+    await queue.enqueue('library.scan', { libraryId: 'films' });
+
+    expect(boss.atOnce.get('server.prepareDownload')).toBe(8);
+    expect(boss.atOnce.get('library.scan')).toBe(1);
+    expect(boss.sent.map((one) => one.options.retryLimit)).toEqual([0, 2]);
   });
 
   it('sends a job to be picked up now, where nothing says to hold it back', async () => {

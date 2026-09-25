@@ -2020,7 +2020,7 @@ impl TranscodePlan {
     /// those are the parts a download decides for itself.
     #[must_use]
     pub fn to_download_args(&self) -> Vec<String> {
-        self.to_download_args_from(0)
+        self.to_download_args_from(0, &[])
     }
 
     /// The same, resuming from part of the way in.
@@ -2066,19 +2066,36 @@ impl TranscodePlan {
     }
 
     #[must_use]
-    pub fn to_download_args_from(&self, from_seconds: u32) -> Vec<String> {
+    pub fn to_download_args_from(
+        &self,
+        from_seconds: u32,
+        audio_stream_indexes: &[u32],
+    ) -> Vec<String> {
         let mut args: Vec<String> = Vec::new();
 
         self.push_open(&mut args, from_seconds);
 
         let is_mapped = self.push_video_args(&mut args);
 
-        if let Some(index) = self.spec.audio_stream_index {
-            if !is_mapped {
+        if !is_mapped {
+            args.push("-map".into());
+            args.push("0:v:0".into());
+
+            let chosen: Vec<String> = if audio_stream_indexes.is_empty() {
+                vec![self
+                    .spec
+                    .audio_stream_index
+                    .map_or_else(|| "0:a:0?".to_owned(), |index| format!("0:{index}"))]
+            } else {
+                audio_stream_indexes
+                    .iter()
+                    .map(|index| format!("0:{index}"))
+                    .collect()
+            };
+
+            for stream in chosen {
                 args.push("-map".into());
-                args.push("0:v:0".into());
-                args.push("-map".into());
-                args.push(format!("0:{index}"));
+                args.push(stream);
             }
         }
 
@@ -4170,6 +4187,26 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
             .windows(2)
             .any(|pair| pair == ["-i", "/media/film.mkv"]));
         assert!(!args.iter().any(|argument| argument == "-map_chapters"));
+    }
+
+    /// Mapping subtitles alone turns off ffmpeg's own choice of picture and sound, so a download
+    /// that names none of them explicitly writes parts holding nothing but subtitles.
+    #[test]
+    fn maps_the_picture_and_every_sound_a_download_asked_for() {
+        let args = plan(encoding("libx265")).to_download_args_from(0, &[1, 3]);
+        let maps = pairs(&args, "-map");
+
+        assert_eq!(
+            maps,
+            vec!["0:v:0".to_owned(), "0:1".to_owned(), "0:3".to_owned()]
+        );
+    }
+
+    #[test]
+    fn maps_the_first_sound_where_a_download_named_none() {
+        let args = plan(encoding("libx265")).to_download_args();
+
+        assert!(pairs(&args, "-map").contains(&"0:a:0?".to_owned()));
     }
 
     fn plan(spec: SessionSpec) -> TranscodePlan {

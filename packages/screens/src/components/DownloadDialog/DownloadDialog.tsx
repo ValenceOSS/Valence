@@ -1,15 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Icon } from '@ValenceUI/Icon';
 import { TriangleAlert as TriangleAlertIcon } from '@keyline-icons/react';
-import { Badge } from '@ValenceUI/Badge';
-import { Button } from '@ValenceUI/Button';
+import { Callout } from '@ValenceUI/Callout';
+import { ChoiceList } from '@ValenceUI/ChoiceList';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
-import { SettingList } from '@ValenceUI/SettingList';
-import { SettingRow } from '@ValenceUI/SettingRow';
 import { Spinner } from '@ValenceUI/Spinner';
 import { notify } from '@ValenceUI/notify';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
@@ -108,7 +105,7 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
         }
       />
 
-      <DialogContent className="px-0">
+      <DialogContent>
         {asked.isPending ? (
           <Spinner isCentered label="Working out what this would cost" size="sm" />
         ) : options.length === 0 ? (
@@ -116,20 +113,24 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
             Nothing can be prepared for this yet.
           </p>
         ) : (
-          <SettingList>
-            {options.map((option) => (
-              <SettingRow
-                key={option.quality}
-                title={option.label}
-                description={
-                  option.comparison === null
-                    ? option.meaning
-                    : `${option.meaning} — ${option.comparison}.`
-                }
-                isMarked={picked?.quality === option.quality}
-              >
-                <span className="flex flex-col items-end gap-1">
-                  <span className="text-sm font-medium tabular-nums text-text">
+          <ChoiceList
+            label="How large to make it"
+            value={picked?.quality ?? null}
+            onChoose={(id) => {
+              const found = options.find((option) => option.quality === id);
+
+              if (found !== undefined) {
+                setChosen(found.quality);
+              }
+            }}
+            choices={options.map((option) => ({
+              id: option.quality,
+              title: option.label,
+              detail: option.meaning,
+              ...(option.wouldTranscode ? { note: 'Converted' } : {}),
+              aside: (
+                <span className="flex max-w-40 flex-col items-end gap-0.5">
+                  <span className="text-sm font-semibold tabular-nums text-text">
                     {option.bytes === null
                       ? 'Size unknown'
                       : series === null
@@ -137,45 +138,30 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
                         : `about ${formatBytes(option.bytes)}`}
                   </span>
 
-                  {option.wouldTranscode ? (
-                    <Badge size="sm" tone="warning">
-                      converted first
-                    </Badge>
-                  ) : null}
+                  {option.comparison === null ? null : (
+                    <span className="text-xs text-text-muted">{option.comparison}</span>
+                  )}
                 </span>
-
-                <Button
-                  variant={picked?.quality === option.quality ? 'primary' : 'soft'}
-                  size="sm"
-                  onClick={() => {
-                    setChosen(option.quality);
-                  }}
-                >
-                  {picked?.quality === option.quality ? 'Chosen' : 'Choose'}
-                </Button>
-              </SettingRow>
-            ))}
-          </SettingList>
+              ),
+            }))}
+          />
         )}
 
-        {verdict === 'unknown' ? null : (
-          <p
-            className={`mx-6 mt-4 flex items-start gap-2 rounded-xl px-4 py-3 font-body text-sm ${
-              verdict === 'fits'
-                ? 'text-text-muted'
-                : 'border border-danger/40 bg-danger/10 text-text'
-            }`}
-          >
-            {verdict === 'fits' ? null : (
-              <Icon of={TriangleAlertIcon} size={18} tone="danger" className="shrink-0" />
-            )}
-
-            {verdict === 'willNotFit'
-              ? `That will not fit. It needs ${formatBytes(picked?.bytes ?? 0)} and this device has ${formatBytes(freeBytes ?? 0)} free.`
-              : verdict === 'tight'
-                ? `That would take most of what is left — ${formatBytes(picked?.bytes ?? 0)} of the ${formatBytes(freeBytes ?? 0)} free on this device.`
-                : `${formatBytes(picked?.bytes ?? 0)}, and this device has ${formatBytes(freeBytes ?? 0)} free.`}
+        {verdict === 'unknown' ? null : verdict === 'fits' ? (
+          <p className="mt-4 font-body text-sm text-text-muted">
+            {`${formatBytes(picked?.bytes ?? 0)}, and this device has ${formatBytes(freeBytes ?? 0)} free.`}
           </p>
+        ) : (
+          <Callout
+            className="mt-4"
+            tone={verdict === 'willNotFit' ? 'danger' : 'warning'}
+            icon={TriangleAlertIcon}
+            title={verdict === 'willNotFit' ? 'That will not fit' : 'That is most of what is left'}
+          >
+            {verdict === 'willNotFit'
+              ? `It needs ${formatBytes(picked?.bytes ?? 0)}, and this device has ${formatBytes(freeBytes ?? 0)} free.`
+              : `${formatBytes(picked?.bytes ?? 0)} of the ${formatBytes(freeBytes ?? 0)} free on this device.`}
+          </Callout>
         )}
       </DialogContent>
 
@@ -212,6 +198,10 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
                 }
 
                 await cache.invalidateQueries({ queryKey: downloadQueries.key });
+                notify.worked('The server is preparing it', {
+                  description:
+                    'Valence can be closed in the meantime. You will get a notification when it is ready, and it comes to this device the next time Valence is open.',
+                });
                 onClose();
               })
               .catch(() => {

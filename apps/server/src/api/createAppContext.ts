@@ -1,5 +1,4 @@
 import { z } from '@hono/zod-openapi';
-import type { OpenAPIHono } from '@hono/zod-openapi';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import { readViewer } from '@ValenceServer/visibility/readViewer';
 import { subjectOfRequest } from '@ValenceServer/visibility/subjectOfRequest';
@@ -8,20 +7,6 @@ import type { MiddlewareHandler } from 'hono';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import { createMemoryHiddenService } from '@ValenceServer/hiding/createMemoryHiddenService';
 import { createPresenceService } from '@ValenceServer/presence/PresenceService';
-import {
-  askForDownloadRoute,
-  askForSeriesRoute,
-  offerSeriesRoute,
-  pauseDownloadRoute,
-  resumeDownloadRoute,
-  forgetDownloadRoute,
-  holdDownloadRoute,
-  listDownloadsRoute,
-  listHoldingsRoute,
-  offerDownloadRoute,
-  releaseDownloadRoute,
-  readDownloadRoute,
-} from '@ValenceServer/routes/DownloadRoute';
 import type { LibraryEntryChange } from '@ValenceServer/files/LibraryEntryChange';
 import { createUploadSessions } from '@ValenceServer/uploads/createUploadSessions';
 import { createUploadDisk } from '@ValenceServer/uploads/createUploadDisk';
@@ -188,11 +173,9 @@ const describeRefusal = (refusal: RoleChangeRefusal): string =>
  * their reach, how a refusal is worded — made once, before any endpoint is registered.
  *
  * @param options - What the server was built with.
- * @param app - The application the endpoints are registered on, for the helpers that answer
- *   through it.
  * @returns The context each area's endpoints read from.
  */
-const createAppContext = (options: CreateAppOptions, app: OpenAPIHono) => {
+const createAppContext = (options: CreateAppOptions) => {
   const {
     auth,
     settings,
@@ -1197,195 +1180,6 @@ const createAppContext = (options: CreateAppOptions, app: OpenAPIHono) => {
 
     return answer?.kind === 'answered' ? answer.value : [];
   };
-
-  if (downloads !== undefined) {
-    app.openapi(offerDownloadRoute, async (context) => {
-      const profileId = await readProfileId(context.req.raw.headers);
-
-      if (profileId === null) {
-        return context.json({ error: 'Nobody is signed in.' }, 401);
-      }
-
-      const offer = await downloads.offer(
-        context.req.valid('param').mediaId,
-        context.req.valid('json').deviceProfile,
-      );
-
-      return offer === null
-        ? context.json({ error: 'No such media item.' }, 404)
-        : context.json(offer, 200);
-    });
-
-    app.openapi(askForDownloadRoute, async (context) => {
-      const profileId = await readProfileId(context.req.raw.headers);
-
-      if (profileId === null) {
-        return context.json({ error: 'Nobody is signed in.' }, 401);
-      }
-
-      const { quality, audioLanguages } = context.req.valid('json');
-
-      const asked = await downloads.ask(
-        profileId,
-        context.req.valid('param').mediaId,
-        quality,
-        audioLanguages ?? [],
-      );
-
-      return asked === null
-        ? context.json({ error: 'No such media item.' }, 404)
-        : context.json(asked, 200);
-    });
-
-    app.openapi(offerSeriesRoute, async (context) => {
-      const profileId = await readProfileId(context.req.raw.headers);
-
-      if (profileId === null) {
-        return context.json({ error: 'Nobody is signed in.' }, 401);
-      }
-
-      const { deviceProfile, mediaIds } = context.req.valid('json');
-      const offer = await downloads.offerSeries(
-        context.req.valid('param').seriesId,
-        deviceProfile,
-        mediaIds,
-      );
-
-      return offer === null
-        ? context.json({ error: 'No such programme.' }, 404)
-        : context.json(offer, 200);
-    });
-
-    app.openapi(askForSeriesRoute, async (context) => {
-      const profileId = await readProfileId(context.req.raw.headers);
-
-      if (profileId === null) {
-        return context.json({ error: 'Nobody is signed in.' }, 401);
-      }
-
-      const { quality, audioLanguages, mediaIds } = context.req.valid('json');
-
-      const queued = await downloads.askForSeries(
-        profileId,
-        context.req.valid('param').seriesId,
-        quality,
-        audioLanguages ?? [],
-        mediaIds,
-      );
-
-      return context.json({ downloads: queued }, 200);
-    });
-
-    app.openapi(pauseDownloadRoute, async (context) => {
-      const profileId = await readProfileId(context.req.raw.headers);
-
-      if (profileId === null) {
-        return context.json({ error: 'Nobody is signed in.' }, 401);
-      }
-
-      await downloads.pause(profileId, context.req.valid('param').id);
-
-      return context.body(null, 204);
-    });
-
-    app.openapi(resumeDownloadRoute, async (context) => {
-      const profileId = await readProfileId(context.req.raw.headers);
-
-      if (profileId === null) {
-        return context.json({ error: 'Nobody is signed in.' }, 401);
-      }
-
-      await downloads.resume(profileId, context.req.valid('param').id);
-
-      return context.body(null, 204);
-    });
-
-    app.openapi(listDownloadsRoute, async (context) => {
-      const profileId = await readProfileId(context.req.raw.headers);
-
-      if (profileId === null) {
-        return context.json({ error: 'Nobody is signed in.' }, 401);
-      }
-
-      return context.json({ downloads: await downloads.refresh(profileId) }, 200);
-    });
-
-    app.openapi(forgetDownloadRoute, async (context) => {
-      const profileId = await readProfileId(context.req.raw.headers);
-
-      if (profileId === null) {
-        return context.json({ error: 'Nobody is signed in.' }, 401);
-      }
-
-      await downloads.forget(profileId, context.req.valid('param').id);
-
-      return context.body(null, 204);
-    });
-
-    app.openapi(readDownloadRoute, async (context) => {
-      const profileId = await readProfileId(context.req.raw.headers);
-
-      if (profileId === null) {
-        return context.json({ error: 'Nobody is signed in.' }, 401);
-      }
-
-      const file = await downloads.readFile(
-        profileId,
-        context.req.valid('param').id,
-        context.req.header('range') ?? null,
-      );
-
-      if (file === null) {
-        return context.json({ error: 'Nothing prepared under that name.' }, 404);
-      }
-
-      return context.body(file.body, file.status === 206 ? 206 : 200, forwardedFileHeaders(file));
-    });
-
-    app.openapi(listHoldingsRoute, async (context) => {
-      const profileId = await readProfileId(context.req.raw.headers);
-
-      if (profileId === null) {
-        return context.json({ error: 'Nobody is signed in.' }, 401);
-      }
-
-      return context.json({ holdings: await downloads.held(profileId) }, 200);
-    });
-
-    app.openapi(holdDownloadRoute, async (context) => {
-      const profileId = await readProfileId(context.req.raw.headers);
-
-      if (profileId === null) {
-        return context.json({ error: 'Nobody is signed in.' }, 401);
-      }
-
-      const clientId = context.req.header('x-valence-client') ?? profileId;
-
-      await downloads.hold(
-        profileId,
-        clientId,
-        context.req.valid('param').mediaId,
-        context.req.valid('json').quality,
-      );
-
-      return context.body(null, 204);
-    });
-
-    app.openapi(releaseDownloadRoute, async (context) => {
-      const profileId = await readProfileId(context.req.raw.headers);
-
-      if (profileId === null) {
-        return context.json({ error: 'Nobody is signed in.' }, 401);
-      }
-
-      const { mediaId, quality } = context.req.valid('param');
-      const clientId = context.req.header('x-valence-client') ?? profileId;
-
-      await downloads.release(profileId, clientId, mediaId, quality);
-
-      return context.body(null, 204);
-    });
-  }
 
   const phoneHandBacks = createPhoneHandBacks();
 

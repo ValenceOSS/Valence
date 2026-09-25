@@ -7,6 +7,7 @@ type MediaForDownload = {
     path: string;
     sizeBytes: number;
     generation: number;
+    defaultAudioLanguage?: string | null;
     renditions?: {
       id: string;
       item: Parameters<typeof negotiatePlayback>[0];

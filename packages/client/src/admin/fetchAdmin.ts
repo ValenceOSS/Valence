@@ -51,6 +51,7 @@ const AdminOverviewSchema = z.object({
     requestReleaseTypes: ReleaseTypesSchema.default(['album']),
     roundness: RoundnessSchema.optional(),
     certificationRegion: z.string().default('GB'),
+    keepsDownloadsForDays: z.number().int().nonnegative().default(14),
     splashscreen: z.string().nullish(),
   }),
   transcoder: z.object({
@@ -973,6 +974,23 @@ const saveCertificationRegion = async (certificationRegion: string): Promise<boo
   return response !== null && response.ok;
 };
 
+/**
+ * Sets how many days a prepared download is kept after it was last asked for.
+ *
+ * @param keepsDownloadsForDays - The number of days, where nought keeps them until deleted.
+ * @returns Whether it was written.
+ */
+const saveKeepsDownloadsForDays = async (keepsDownloadsForDays: number): Promise<boolean> => {
+  const response = await fetch('/api/admin/settings', {
+    method: 'PATCH',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ keepsDownloadsForDays }),
+  }).catch(() => null);
+
+  return response !== null && response.ok;
+};
+
 const savePreviewQuality = async (previewQuality: PreviewQuality): Promise<boolean> => {
   const response = await fetch('/api/admin/settings', {
     method: 'PATCH',
@@ -1064,6 +1082,7 @@ export {
   savePreviewQuality,
   saveRoundness,
   saveCertificationRegion,
+  saveKeepsDownloadsForDays,
   saveShowsProfilesBeforeSignIn,
   saveFetchesCatalogueTrailers,
   saveFetchesMusicDetails,

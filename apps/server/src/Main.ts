@@ -178,6 +178,9 @@ import {
   CLEANUP_IMAGE_CACHE_JOB,
   CLEANUP_ARTEFACT_CACHE_JOB,
   CLEANUP_SESSIONS_JOB,
+  CLEAR_OLD_DOWNLOADS_JOB,
+  PREPARE_DOWNLOAD_JOB,
+  PrepareDownloadJobSchema,
   PRUNE_HISTORY_JOB,
   CHECK_CATALOGUE_CONNECTIVITY_JOB,
   CHECK_TRANSCODER_JOB,
@@ -262,9 +265,11 @@ import { createDatabaseHistoryService } from '@ValenceServer/history/createDatab
 import { createDatabaseSignInStore } from '@ValenceServer/accounts/createDatabaseSignInStore';
 import { recordSignIn } from '@ValenceServer/accounts/recordSignIn';
 import { createDatabasePermissionService } from '@ValenceServer/auth/createDatabasePermissionService';
+import { followTheDownloads } from '@ValenceServer/downloads/followTheDownloads';
 import { createDownloadService } from '@ValenceServer/downloads/createDownloadService';
 import { createDatabaseReencodeService } from '@ValenceServer/reencode/createDatabaseReencodeService';
 import { keepingProfile } from '@ValenceServer/downloads/keepingProfile';
+import { watchADownload } from '@ValenceServer/downloads/watchADownload';
 import { readCertificatesAgain } from '@ValenceServer/library/readCertificatesAgain';
 const ChapterListSchema = z.array(
   z.object({
@@ -364,6 +369,7 @@ const settings = createDatabaseSettingsStore({
     ownerAccountId: '',
     splashscreenFile: null,
     reencodesAwaitingReviewCap: 5,
+    keepsDownloadsForDays: 14,
     roundness: 'default',
   },
 });
@@ -1234,6 +1240,7 @@ const jobEventLog = createJobEventLog(
 
 const jobs = await createJobQueue({
   connectionString: env.DATABASE_URL,
+  perKind: { [PREPARE_DOWNLOAD_JOB]: { atOnce: 16, retries: 0 } },
   handlers: traceJobs(
     {
       [SCAN_LIBRARY_JOB]: async (jobId, payload) => {
@@ -1668,6 +1675,36 @@ const jobs = await createJobQueue({
         );
 
         log.info('server', `history: forgot ${forgotten.toString()} old viewings`);
+      },
+      [PREPARE_DOWNLOAD_JOB]: async (jobId, payload) => {
+        const parsed = PrepareDownloadJobSchema.safeParse(payload);
+
+        if (!parsed.success) {
+          log.error('jobs', 'job queue: a download job carried data Valence could not read.');
+
+          return;
+        }
+
+        await watchADownload({
+          find: () => downloadService.find(parsed.data.downloadId),
+          report: (percent, item) => {
+            jobs.reportProgress(jobId, 'preparing', percent, 100, item);
+          },
+          isCancelled: () => jobs.isCancelled(jobId),
+        });
+      },
+      [CLEAR_OLD_DOWNLOADS_JOB]: async () => {
+        const days = (await settings.read()).keepsDownloadsForDays;
+
+        if (days === 0) {
+          return;
+        }
+
+        const cleared = await downloadService.clearOutBefore(
+          new Date(Date.now() - days * 86_400_000),
+        );
+
+        log.info('playback', `downloads: cleared out ${cleared.toString()} old download(s)`);
       },
       [CLEANUP_SESSIONS_JOB]: async (jobId) => {
         const removed = await cleanupSessions({
@@ -2442,6 +2479,7 @@ const downloadService = createDownloadService({
           path: mediaItem.path,
           sizeBytes: mediaItem.sizeBytes,
           generation: library.generation,
+          defaultAudioLanguage: library.defaultAudioLanguage,
         })
         .from(mediaItem)
         .innerJoin(library, eq(library.id, mediaItem.libraryId))
@@ -2464,6 +2502,7 @@ const downloadService = createDownloadService({
         path: row.path,
         sizeBytes: row.sizeBytes,
         generation: row.generation,
+        defaultAudioLanguage: row.defaultAudioLanguage,
         renditions: kept.map((one) => ({
           id: one.id,
           path: one.path,
@@ -2486,6 +2525,70 @@ const downloadService = createDownloadService({
   transcoder,
   capabilities: async () => transcoder.capabilities(),
   forcedAccel: async () => (await settings.read()).hardwareAccel,
+});
+
+const watchedDownloads = new Set<string>();
+
+followTheDownloads({
+  follow: () => downloadService.follow(),
+  onFollowed: async (followed) => {
+    realtime.publish(
+      'keeping',
+      { changed: true },
+      { kind: 'accounts', accountIds: [...new Set(followed.map((one) => one.accountId))] },
+    );
+
+    for (const { download, problem } of followed) {
+      if (download.state === 'preparing' && !watchedDownloads.has(download.id)) {
+        watchedDownloads.add(download.id);
+        void jobs
+          .enqueue(
+            PREPARE_DOWNLOAD_JOB,
+            { downloadId: download.id, subject: download.title },
+            download.id,
+          )
+          .catch(() => {
+            watchedDownloads.delete(download.id);
+          });
+      } else if (download.state !== 'preparing') {
+        watchedDownloads.delete(download.id);
+      }
+
+      if (download.state === 'failed') {
+        log.warn(
+          'playback',
+          `downloads: ${download.title} could not be prepared: ${problem ?? download.failure ?? 'no reason given'}`,
+        );
+      } else if (download.state === 'ready') {
+        log.info('playback', `downloads: ${download.title} is ready to keep`);
+      }
+    }
+
+    for (const { accountId, download } of followed.filter((one) => one.isNowReady)) {
+      await notifyHousehold({
+        store: notifications,
+        event: 'downloads.ready',
+        title: `${download.title} is ready to keep`,
+        body: `${download.title} has been prepared, and the device you asked on is fetching it.`,
+        link: null,
+        vapid: await readPushKeys(),
+        only: [accountId],
+        onProblem: (reason) => {
+          log.error('playback', `saying ${download.title} is ready: ${reason}`);
+        },
+        announce: (userIds) => {
+          realtime.publish(
+            'notifications',
+            { event: 'downloads.ready' },
+            { kind: 'accounts', accountIds: [...userIds] },
+          );
+        },
+      });
+    }
+  },
+  onProblem: (reason) => {
+    log.error('playback', `following what is being prepared: ${reason}`);
+  },
 });
 
 const reencodeService = createDatabaseReencodeService({

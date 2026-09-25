@@ -13,6 +13,7 @@ import { createMemoryRatingService } from '@ValenceServer/ratings/createMemoryRa
 import { createMemoryPermissionService } from '@ValenceServer/auth/createMemoryPermissionService';
 import { ADMINISTRATOR } from '@ValenceContracts/schemas/Permission';
 import { createMemoryShareService } from '@ValenceServer/sharing/createMemoryShareService';
+import { createMemoryDownloadService } from '@ValenceServer/downloads/createMemoryDownloadService';
 import { subjectOfRequest } from './subjectOfRequest';
 import type { Library, MediaDetail } from '@ValenceContracts/schemas/Library';
 
@@ -111,6 +112,7 @@ const build = () => {
     favourites: createMemoryFavouriteService(),
     ratings: createMemoryRatingService(),
     shares: createMemoryShareService({ shares: [], titles: { [ARRIVAL]: 'Arrival' } }),
+    downloads: createMemoryDownloadService(),
   });
 
   return { app, library, profiles, store, permissions: underneath, asked };
@@ -283,6 +285,22 @@ describe('what an account may not reach', () => {
     ]) {
       expect((await me.ask(path)).status, path).toBe(404);
     }
+  });
+
+  it('will not prepare it to keep, though it would before it was refused', async () => {
+    const me = await watching(context);
+    const askToKeep = () =>
+      context.app.request(`${BASE}/api/media/${ARRIVAL}/downloads`, {
+        method: 'POST',
+        headers: { cookie: me.cookie, origin: BASE, 'content-type': 'application/json' },
+        body: JSON.stringify({ quality: 'original' }),
+      });
+
+    expect((await askToKeep()).status).toBe(200);
+
+    context.library.state.blocked = [{ accountId: me.accountId, libraryId: FILMS }];
+
+    expect((await askToKeep()).status).toBe(404);
   });
 
   it('says nothing about why, answering as though it were never there', async () => {
