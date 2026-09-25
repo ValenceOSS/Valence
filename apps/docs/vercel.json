@@ -1,4 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ../../packages ../../package.json ../../pnpm-lock.yaml ../../pnpm-workspace.yaml ../../tsconfig.base.json ../../tsconfig.json ../../tsconfig.paths.json",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
