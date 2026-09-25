@@ -16,8 +16,19 @@ name: Desktop app
 # it to fetch only what changed. On macOS what it installs is the .zip rather than the .dmg. Without
 # those, a release looks like no release at all to every copy already installed.
 #
-# Windows, macOS and Linux. None of them is signed or notarised: there are no certificates, so
-# Windows SmartScreen and macOS Gatekeeper will warn on first run until there are.
+# Each installer is also handed over by itself, unzipped, so one can be downloaded straight off the
+# run's page. Everything a run produces goes into one zipped artefact per platform as well, which is
+# the one release.yml hangs on the release file by file.
+#
+# The macOS app is signed with a Developer ID and notarised by Apple wherever the certificate is
+# there to do it, and built unsigned as before where it is not, so a fork or a run before the
+# certificate exists still builds. It needs, under Settings → Secrets and variables → Actions:
+#   MAC_CERTIFICATE_P12        the Developer ID Application certificate exported as a .p12, in base64
+#   MAC_CERTIFICATE_PASSWORD   the password the .p12 was exported with
+#   ASC_KEY_ID, ASC_ISSUER_ID and ASC_API_KEY_P8, the App Store Connect key the phone's TestFlight
+#   workflow already uses, which is what notarising is asked with
+# Windows and Linux are not signed: Windows SmartScreen warns on first run until there is a
+# certificate for it too.
 
 on:
   workflow_dispatch:
@@ -54,6 +65,8 @@ jobs:
   build:
     name: Build for ${{ matrix.name }}
     runs-on: ${{ matrix.runner }}
+    env:
+      IS_SIGNED: ${{ secrets.MAC_CERTIFICATE_P12 != '' }}
     strategy:
       fail-fast: false
       matrix:
@@ -61,6 +74,8 @@ jobs:
           - name: Windows
             runner: windows-latest
             flags: --win --x64
+            installer: apps/desktop/release/Valence-Setup-*.exe
+            also: ''
             files: |
               apps/desktop/release/Valence-Setup-*.exe
               apps/desktop/release/Valence-Setup-*.exe.blockmap
@@ -68,6 +83,8 @@ jobs:
           - name: macOS
             runner: macos-latest
             flags: --mac --arm64 --x64
+            installer: apps/desktop/release/Valence-*-arm64.dmg
+            also: apps/desktop/release/Valence-*-x64.dmg
             files: |
               apps/desktop/release/Valence-*.dmg
               apps/desktop/release/Valence-*.dmg.blockmap
@@ -77,6 +94,8 @@ jobs:
           - name: Linux
             runner: ubuntu-latest
             flags: --linux --x64
+            installer: apps/desktop/release/Valence-*.AppImage
+            also: ''
             files: |
               apps/desktop/release/Valence-*.AppImage
               apps/desktop/release/latest-linux.yml
@@ -115,13 +134,82 @@ jobs:
 
       - run: pnpm --filter @valence/desktop exec electron-vite build
 
-      # No signing identity is discovered: there is none, and looking for one on a runner only
-      # produces a warning per attempt.
-      - run: pnpm --filter @valence/desktop exec electron-builder ${{ matrix.flags }} --publish never
-        env:
-          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      # The certificate goes into a keychain of this job's own, made and unlocked here, where the
+      # builder finds the Developer ID in it. The builder can make one itself from the certificate,
+      # but on current macOS runners it then cannot unlock what it made. The keychain and the
+      # notarising key go with the runner.
+      - name: Put the signing certificate in a keychain of its own
+        if: matrix.name == 'macOS' && env.IS_SIGNED == 'true'
+        shell: bash
+        run: |
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          password="$(openssl rand -hex 24)"
 
-      - uses: actions/upload-artifact@v7
+          printf '%s' "$MAC_CERTIFICATE_P12" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          security import "$RUNNER_TEMP/certificate.p12" -P "$MAC_CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 -k "$keychain"
+          security set-key-partition-list -S apple-tool:,apple: -k "$password" "$keychain" > /dev/null
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+          rm "$RUNNER_TEMP/certificate.p12"
+
+          mkdir -p "$RUNNER_TEMP/notarising"
+          printf '%s' "$ASC_API_KEY_P8" > "$RUNNER_TEMP/notarising/AuthKey_$ASC_KEY_ID.p8"
+          echo "CSC_KEYCHAIN=$keychain" >> "$GITHUB_ENV"
+        env:
+          MAC_CERTIFICATE_P12: ${{ secrets.MAC_CERTIFICATE_P12 }}
+          MAC_CERTIFICATE_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+
+      # Signed and notarised on macOS where the certificate was put in a keychain above; otherwise
+      # no identity is looked for, since there is none and looking on a runner only warns.
+      - name: Build
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ] && [ "$IS_SIGNED" = "true" ]; then
+            export APPLE_API_KEY="$RUNNER_TEMP/notarising/AuthKey_$ASC_KEY_ID.p8"
+            export APPLE_API_KEY_ID="$ASC_KEY_ID"
+            export APPLE_API_ISSUER="$ASC_ISSUER_ID"
+          else
+            export CSC_IDENTITY_AUTO_DISCOVERY=false
+          fi
+
+          pnpm --filter @valence/desktop exec electron-builder ${{ matrix.flags }} --publish never
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+
+      # A signature that is there but wrong fails here rather than on somebody's Mac: every app
+      # built is checked, and Gatekeeper is asked whether it would open it.
+      - name: Check the signature
+        if: matrix.name == 'macOS' && env.IS_SIGNED == 'true'
+        shell: bash
+        run: |
+          for app in apps/desktop/release/mac*/Valence.app; do
+            codesign --verify --deep --strict --verbose=2 "$app"
+            spctl --assess --type execute --verbose "$app"
+          done
+
+      - name: Hand over the installer on its own
+        uses: actions/upload-artifact@v7
+        with:
+          path: ${{ matrix.installer }}
+          archive: false
+          if-no-files-found: error
+
+      - name: Hand over the other installer on its own
+        if: matrix.also != ''
+        uses: actions/upload-artifact@v7
+        with:
+          path: ${{ matrix.also }}
+          archive: false
+          if-no-files-found: error
+
+      - name: Hand over everything, for the release
+        uses: actions/upload-artifact@v7
         with:
           name: valence-desktop-${{ matrix.name }}
           path: ${{ matrix.files }}
