@@ -134,30 +134,53 @@ jobs:
 
       - run: pnpm --filter @valence/desktop exec electron-vite build
 
-      # Signed and notarised on macOS where the certificate is there; otherwise no identity is
-      # looked for, since there is none and looking for one on a runner only warns once per attempt.
-      # The notarising key is written out for the length of the job, and thrown away with the runner.
+      # The certificate goes into a keychain of this job's own, made and unlocked here, where the
+      # builder finds the Developer ID in it. The builder can make one itself from the certificate,
+      # but on current macOS runners it then cannot unlock what it made. The keychain and the
+      # notarising key go with the runner.
+      - name: Put the signing certificate in a keychain of its own
+        if: matrix.name == 'macOS' && env.IS_SIGNED == 'true'
+        shell: bash
+        run: |
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          password="$(openssl rand -hex 24)"
+
+          printf '%s' "$MAC_CERTIFICATE_P12" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          security import "$RUNNER_TEMP/certificate.p12" -P "$MAC_CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 -k "$keychain"
+          security set-key-partition-list -S apple-tool:,apple: -k "$password" "$keychain" > /dev/null
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+          rm "$RUNNER_TEMP/certificate.p12"
+
+          mkdir -p "$RUNNER_TEMP/notarising"
+          printf '%s' "$ASC_API_KEY_P8" > "$RUNNER_TEMP/notarising/AuthKey_$ASC_KEY_ID.p8"
+          echo "CSC_KEYCHAIN=$keychain" >> "$GITHUB_ENV"
+        env:
+          MAC_CERTIFICATE_P12: ${{ secrets.MAC_CERTIFICATE_P12 }}
+          MAC_CERTIFICATE_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+
+      # Signed and notarised on macOS where the certificate was put in a keychain above; otherwise
+      # no identity is looked for, since there is none and looking on a runner only warns.
       - name: Build
         shell: bash
         run: |
-          if [ "$RUNNER_OS" = "macOS" ] && [ -n "$CSC_LINK" ]; then
-            mkdir -p "$RUNNER_TEMP/notarising"
-            printf '%s' "$ASC_API_KEY_P8" > "$RUNNER_TEMP/notarising/AuthKey_$ASC_KEY_ID.p8"
+          if [ "$RUNNER_OS" = "macOS" ] && [ "$IS_SIGNED" = "true" ]; then
             export APPLE_API_KEY="$RUNNER_TEMP/notarising/AuthKey_$ASC_KEY_ID.p8"
             export APPLE_API_KEY_ID="$ASC_KEY_ID"
             export APPLE_API_ISSUER="$ASC_ISSUER_ID"
           else
-            unset CSC_LINK CSC_KEY_PASSWORD
             export CSC_IDENTITY_AUTO_DISCOVERY=false
           fi
 
           pnpm --filter @valence/desktop exec electron-builder ${{ matrix.flags }} --publish never
         env:
-          CSC_LINK: ${{ matrix.name == 'macOS' && secrets.MAC_CERTIFICATE_P12 || '' }}
-          CSC_KEY_PASSWORD: ${{ matrix.name == 'macOS' && secrets.MAC_CERTIFICATE_PASSWORD || '' }}
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
 
       # A signature that is there but wrong fails here rather than on somebody's Mac: every app
       # built is checked, and Gatekeeper is asked whether it would open it.
