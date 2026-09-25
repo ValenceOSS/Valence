@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.1](https://github.com/ValenceOSS/Valence/compare/v1.1.0...v1.1.1) (2026-09-25)
+
+
+### Fixed
+
+* **repo:** copy the patched dependencies into every image before installing ([49c1826](https://github.com/ValenceOSS/Valence/commit/49c1826c8cc3ee44c0fcf3c533b5a17a13f095e6))
+* **repo:** copy the patched dependencies into every image before installing ([172ab2e](https://github.com/ValenceOSS/Valence/commit/172ab2e623c1277d4be2819be06b06eaa0237078))
+
 ## [1.1.0](https://github.com/ValenceOSS/Valence/compare/v1.0.0...v1.1.0) (2026-09-25)
 
 
