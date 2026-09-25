@@ -1,4 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { OptionMenu } from '@ValenceUI/OptionMenu';
+import { arrangeForBrowsing } from '@ValenceClient/library/arrangeForBrowsing';
+import { BrowseOrderSchema } from '@ValenceClient/library/BrowseOrder';
+import {
+  readBrowseArrangement,
+  saveBrowseArrangement,
+} from '@ValenceScreens/library/browseArrangementPreference';
+import type { Arrangement } from '@ValenceScreens/library/browseArrangementPreference';
+import type { BrowseOrder } from '@ValenceClient/library/BrowseOrder';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -6,6 +15,7 @@ import { revealVariants, revealTransition, staggerVariants } from '@ValenceUI/an
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { useQuery } from '@tanstack/react-query';
 import {
+  ArrowDownWideNarrow as SortIcon,
   Film as FilmIcon,
   Flame as FlameIcon,
   FolderOpen as FolderOpenIcon,
@@ -13,6 +23,7 @@ import {
   Monitor as MonitorIcon,
 } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
+import { Icon } from '@ValenceUI/Icon';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { howToFillIt } from '@ValenceClient/library/howToFillIt';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
@@ -67,6 +78,15 @@ const PAGES: Record<
   },
 };
 
+const BROWSE_ORDERS: readonly BrowseOrder[] = ['added', 'released', 'title', 'rating', 'size'];
+
+const ORDER_NAMES: Record<BrowseOrder, string> = {
+  added: 'Recently added',
+  released: 'Release date',
+  title: 'Title',
+  rating: 'Rating',
+  size: 'Size',
+};
 /**
  * A page of the library asked one question — the films, the programmes, what arrived recently, what
  * has been kept — drawn as a grid across every library rather than one at a time.
@@ -107,6 +127,7 @@ const BrowseArea = ({
   onAddLibrary,
 }: BrowseAreaProps) => {
   const [size, setSize] = useState(readGridSize);
+  const [arrangement, setArrangement] = useState(() => readBrowseArrangement(kind));
   const prefersReducedMotion = useReducedMotionConfig();
   const page = PAGES[kind];
   const filters = useLibraryFilters();
@@ -116,6 +137,7 @@ const BrowseArea = ({
     if (kindBefore.current !== kind) {
       kindBefore.current = kind;
       filters.clear();
+      setArrangement(readBrowseArrangement(kind));
     }
   });
 
@@ -163,6 +185,25 @@ const BrowseArea = ({
     [kind, found.data, isFinished],
   );
 
+  const shown = useMemo(
+    () =>
+      !isFilterable
+        ? items
+        : arrangeForBrowsing(items, {
+            ...arrangement,
+            isWatched: (item) =>
+              kind === 'shows'
+                ? unwatched?.get(item.seriesId ?? item.seriesTitle ?? '') === 0
+                : isFinished?.(item.id) === true,
+          }),
+    [isFilterable, items, arrangement, kind, unwatched, isFinished],
+  );
+
+  const arrange = (next: Arrangement) => {
+    setArrangement(next);
+    saveBrowseArrangement(kind, next);
+  };
+
   const bookIds = kind === 'favourites' ? keptBooks : [];
   const foundBooks = useQuery(bookQueries.find({ ids: bookIds }));
   const books = bookIds.length === 0 ? [] : (foundBooks.data ?? []);
@@ -202,6 +243,45 @@ const BrowseArea = ({
             groups={filters.groups}
             selected={filters.selected}
             onChange={filters.change}
+          />
+        )}
+
+        {!isFilterable || isReading || items.length === 0 ? null : (
+          <OptionMenu
+            label={`Order ${page.title.toLowerCase()}`}
+            align="end"
+            triggerShape="button"
+            trigger={
+              <>
+                <Icon of={SortIcon} size={16} />
+                {ORDER_NAMES[arrangement.order]}
+              </>
+            }
+            groups={[
+              {
+                name: 'Order',
+                options: BROWSE_ORDERS.map((order) => ({ id: order, label: ORDER_NAMES[order] })),
+                selectedId: arrangement.order,
+                onSelect: (id) => {
+                  const chosen = BrowseOrderSchema.safeParse(id);
+
+                  if (chosen.success) {
+                    arrange({ ...arrangement, order: chosen.data });
+                  }
+                },
+              },
+              {
+                name: 'Show',
+                options: [
+                  { id: 'everything', label: 'Everything' },
+                  { id: 'unwatched', label: 'Only what you have not watched' },
+                ],
+                selectedId: arrangement.isHidingWatched ? 'unwatched' : 'everything',
+                onSelect: (id) => {
+                  arrange({ ...arrangement, isHidingWatched: id === 'unwatched' });
+                },
+              },
+            ]}
           />
         )}
 
@@ -285,7 +365,7 @@ const BrowseArea = ({
           <>
             {items.length === 0 ? null : (
               <MediaGrid
-                items={items}
+                items={shown}
                 size={size}
                 isSeries={kind === 'shows'}
                 shape={kind === 'films' || kind === 'shows' ? 'poster' : 'wide'}

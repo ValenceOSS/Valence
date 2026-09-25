@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Icon } from '@ValenceUI/Icon';
 import { Check as CheckIcon } from '@keyline-icons/react';
 import * as RadixMenu from '@radix-ui/react-dropdown-menu';
+import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { MENU } from '@ValenceUI/tokens/menu';
 import { POPUP_MOTION } from '@ValenceUI/animations/motion';
@@ -69,31 +70,44 @@ const OptionMenu = ({
     }, HOVER_CLOSES_MS);
   };
 
-  const control = (
-    <RadixMenu.Trigger
-      aria-label={label}
-      title={label}
-      disabled={isDisabled}
-      className={cn(
-        'inline-flex shrink-0 items-center text-current',
-        'transition-colors duration-[var(--duration-fast)] ease-[var(--ease-soft)]',
-        'disabled:cursor-not-allowed disabled:opacity-50',
-        triggerShape === 'field'
-          ? cn(
-              'h-8 w-full justify-between gap-2 rounded-md px-3 text-[0.8125rem] font-semibold',
-              'border border-[var(--surface-line)] bg-[var(--surface-hover)] text-text',
-              'hover:bg-[var(--surface-active)]',
-            )
-          : cn(
-              'size-8 justify-center rounded-md',
-              'hover:bg-[var(--surface-hover)] data-[state=open]:bg-[var(--surface-active)]',
-            ),
-        className,
-      )}
-    >
-      {trigger}
-    </RadixMenu.Trigger>
-  );
+  const control =
+    triggerShape === 'button' ? (
+      <RadixMenu.Trigger asChild disabled={isDisabled}>
+        <Button
+          variant="secondary"
+          size="sm"
+          label={label}
+          hasTooltip={false}
+          {...(className === undefined ? {} : { className })}
+        >
+          {trigger}
+        </Button>
+      </RadixMenu.Trigger>
+    ) : (
+      <RadixMenu.Trigger
+        aria-label={label}
+        title={label}
+        disabled={isDisabled}
+        className={cn(
+          'inline-flex shrink-0 items-center text-current',
+          'transition-colors duration-[var(--duration-fast)] ease-[var(--ease-soft)]',
+          'disabled:cursor-not-allowed disabled:opacity-50',
+          triggerShape === 'field'
+            ? cn(
+                'h-8 w-full justify-between gap-2 rounded-md px-3 text-[0.8125rem] font-semibold',
+                'border border-[var(--surface-line)] bg-[var(--surface-hover)] text-text',
+                'hover:bg-[var(--surface-active)]',
+              )
+            : cn(
+                'size-8 justify-center rounded-md',
+                'hover:bg-[var(--surface-hover)] data-[state=open]:bg-[var(--surface-active)]',
+              ),
+          className,
+        )}
+      >
+        {trigger}
+      </RadixMenu.Trigger>
+    );
 
   const anchored = (
     <span

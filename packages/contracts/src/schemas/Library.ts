@@ -92,6 +92,7 @@ const MediaSummarySchema = z.object({
   genres: z.array(z.string()).nullish(),
   externalId: z.string().nullish(),
   sizeBytes: z.number().nonnegative().nullish(),
+  releaseDate: z.string().nullish(),
 });
 
 const CastMemberSchema = z.object({
