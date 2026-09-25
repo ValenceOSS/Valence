@@ -126,6 +126,15 @@ const ProfileGate = ({
   const [isReturning, setIsReturning] = useState(false);
   const [needsCode, setNeedsCode] = useState(false);
   const [wantsOtherWays, setWantsOtherWays] = useState(false);
+  const passkeyAttempt = useRef(0);
+  const isShown = useRef(true);
+
+  useEffect(
+    () => () => {
+      isShown.current = false;
+    },
+    [],
+  );
 
   const isOurs = name.toLowerCase() === OURS;
   const facesRef = useRef(new Map<string, HTMLButtonElement>());
@@ -255,26 +264,37 @@ const ProfileGate = ({
     settle(await signInWithEmail(email, password));
   };
 
+  /**
+   * Signs in with a passkey. A passkey accepted after somebody moved on to another way in has still
+   * signed them in, so it lets them through; a refusal by then is no longer theirs to hear about,
+   * and nothing is done once the gate has gone.
+   *
+   * @param isQuiet - Whether to say nothing of a refusal, as the first ask on opening does.
+   */
   const signInWithPasskey = async (isQuiet = false) => {
+    passkeyAttempt.current += 1;
+
+    const attempt = passkeyAttempt.current;
+
     setIsUsingPasskey(true);
     setProblem(null);
 
-    try {
-      const outcome = await authenticateWithPasskey();
+    const outcome = await authenticateWithPasskey();
 
-      if (outcome.kind === 'failed') {
-        if (!isQuiet) {
-          setProblem(outcome.reason);
-        }
+    if (!isShown.current) {
+      return;
+    }
 
-        return;
-      }
+    setIsUsingPasskey(false);
 
-      if (outcome.kind !== 'cancelled') {
-        onSignedIn();
-      }
-    } finally {
-      setIsUsingPasskey(false);
+    if (outcome.kind === 'signedIn') {
+      onSignedIn();
+
+      return;
+    }
+
+    if (outcome.kind === 'failed' && !isQuiet && attempt === passkeyAttempt.current) {
+      setProblem(outcome.reason);
     }
   };
 
@@ -292,7 +312,9 @@ const ProfileGate = ({
           void signInWithPasskey(isQuiet);
         }}
         onOtherWays={() => {
+          passkeyAttempt.current += 1;
           setProblem(null);
+          setIsUsingPasskey(false);
           setWantsOtherWays(true);
         }}
       />

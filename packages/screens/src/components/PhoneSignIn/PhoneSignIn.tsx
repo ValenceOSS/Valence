@@ -17,7 +17,7 @@ type Standing = 'asking' | 'handing' | 'handed' | 'failed';
  * saying yes. Somebody the browser already had signed in says yes first: handing it back the moment
  * the page loaded would let a link sent to somebody already signed in give their session to whatever
  * answers to the app's address on their phone. Only this page's own memory says which it was, so
- * nothing in a link can claim it.
+ * nothing in a link can claim it. Handing back can be tried again where it did not go through.
  *
  * @param name - What this instance is called.
  */
@@ -69,9 +69,21 @@ const PhoneSignIn = ({ name }: PhoneSignInProps) => {
       ) : standing === 'handed' ? (
         <p className="text-base text-text">Signed in. Back to the app.</p>
       ) : standing === 'failed' ? (
-        <p className="text-base text-text">
-          That did not work. Close this and sign in from the app again.
-        </p>
+        <div className="flex flex-col gap-4">
+          <p className="text-base text-text">
+            That did not work. Try again, or close this and sign in from the app again.
+          </p>
+
+          <Button
+            variant="glossy"
+            size="lg"
+            onClick={() => {
+              void handBack(challenge);
+            }}
+          >
+            Try again
+          </Button>
+        </div>
       ) : (
         <div className="flex flex-col gap-4">
           <p className="text-base text-text">

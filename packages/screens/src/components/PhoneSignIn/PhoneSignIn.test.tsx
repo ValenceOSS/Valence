@@ -74,7 +74,9 @@ describe('handing a sign-in back to the phone', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
     expect(
-      await screen.findByText('That did not work. Close this and sign in from the app again.'),
+      await screen.findByText(
+        'That did not work. Try again, or close this and sign in from the app again.',
+      ),
     ).toBeInTheDocument();
   });
 
@@ -108,5 +110,24 @@ describe('handing a sign-in back to the phone, from somebody who signed in on th
 
     expect(handBackToThePhone).not.toHaveBeenCalled();
     expect(screen.getByRole('button', { name: 'Continue' })).toBeTruthy();
+  });
+});
+
+describe('handing a sign-in back to the phone, where it does not go through', () => {
+  it('offers to try again with the same challenge', async () => {
+    signedInOnThisPage.mark();
+    handBackToThePhone
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce('valence://signed-in?code=abc');
+
+    await drawIt();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Try again' }));
+
+    await waitFor(() => {
+      expect(assign).toHaveBeenCalledWith('valence://signed-in?code=abc');
+    });
+    expect(handBackToThePhone).toHaveBeenCalledTimes(2);
+    expect(handBackToThePhone).toHaveBeenLastCalledWith(CHALLENGE);
   });
 });

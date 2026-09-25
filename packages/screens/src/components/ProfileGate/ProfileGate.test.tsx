@@ -531,6 +531,55 @@ describe('opened from the phone app, leading with a passkey', () => {
     expect(screen.getByText('Who is watching?')).toBeInTheDocument();
   });
 
+  it('says nothing of a passkey refused after somebody moved on to another way in', async () => {
+    const actor = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    let refuse: (outcome: { kind: 'failed'; reason: string }) => void = () => undefined;
+
+    passkeySupportedMock.mockReturnValue(true);
+    passkeyMock.mockReset().mockImplementation(
+      () =>
+        new Promise((settle) => {
+          refuse = settle;
+        }),
+    );
+
+    renderInAnAddress(<ProfileGate onSignedIn={vi.fn()} leadsWithPasskey />);
+
+    await actor.click(screen.getByRole('button', { name: /Use a passkey/ }));
+    await actor.click(screen.getByRole('button', { name: 'Other ways to sign in' }));
+    await act(async () => {
+      refuse({ kind: 'failed', reason: 'Too late.' });
+      await Promise.resolve();
+    });
+    await arrive();
+
+    expect(screen.queryByText('Too late.')).not.toBeInTheDocument();
+    expect(screen.getByText('Who is watching?')).toBeInTheDocument();
+  });
+
+  it('lets nobody in once it has gone', async () => {
+    const onSignedIn = vi.fn();
+    let accept: (outcome: { kind: 'signedIn' }) => void = () => undefined;
+
+    passkeySupportedMock.mockReturnValue(true);
+    passkeyMock.mockReset().mockImplementation(
+      () =>
+        new Promise((settle) => {
+          accept = settle;
+        }),
+    );
+
+    const drawn = renderInAnAddress(<ProfileGate onSignedIn={onSignedIn} leadsWithPasskey />);
+
+    drawn.unmount();
+    await act(async () => {
+      accept({ kind: 'signedIn' });
+      await Promise.resolve();
+    });
+
+    expect(onSignedIn).not.toHaveBeenCalled();
+  });
+
   it('opens on the usual ways in where the browser has no passkeys', async () => {
     passkeySupportedMock.mockReturnValue(false);
 
