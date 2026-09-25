@@ -44,6 +44,7 @@ type VideoPlayerProps = {
     isHidden: boolean;
     onOpenChange: (isOpen: boolean) => void;
   }) => ReactNode;
+  keptSource?: string;
 };
 
 type PlayerState = 'starting' | 'playing' | 'failed';

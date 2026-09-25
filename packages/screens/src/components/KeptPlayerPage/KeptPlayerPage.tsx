@@ -3,11 +3,13 @@ import { ArrowLeft as ArrowLeftIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { useHeldFiles } from '@ValenceClient/downloads/useHeldFiles';
-import { PlayingAKeptFile } from '@ValenceScreens/components/PlayingAKeptFile/PlayingAKeptFile';
+import { sourceForAFile } from '@ValenceClient/downloads/keepingFiles';
+import { rememberWatchedOffline, watchedOffline } from '@ValenceClient/offline/watchedOffline';
+import { VideoPlayer } from '@ValenceScreens/components/VideoPlayer/VideoPlayer';
 
 /**
- * Plays a download from this device rather than from the server, which is what having it here is
- * for, and goes back to wherever it was opened from when somebody is done.
+ * Plays a download from this device rather than from the server, in the same player as anything
+ * else, and goes back to wherever it was opened from when somebody is done.
  */
 const KeptPlayerPage = () => {
   const { downloadId } = useParams({ strict: false });
@@ -32,7 +34,29 @@ const KeptPlayerPage = () => {
     );
   }
 
-  return <PlayingAKeptFile file={file} onLeave={leave} />;
+  const gotTo = watchedOffline().find((entry) => entry.mediaId === file.mediaId);
+
+  return (
+    <main className="valence-below-the-bar z-40 flex flex-col bg-shade">
+      <VideoPlayer
+        media={{
+          id: file.mediaId,
+          title: file.title,
+          durationSeconds: file.durationSeconds ?? 0,
+          seriesTitle: file.seriesTitle,
+          hasPoster: file.hasPoster,
+        }}
+        keptSource={sourceForAFile(file.downloadId)}
+        startSeconds={gotTo?.positionSeconds ?? 0}
+        isImmersive
+        onClose={leave}
+        onStopped={leave}
+        onProgress={(positionSeconds, durationSeconds) => {
+          rememberWatchedOffline(file.mediaId, positionSeconds, durationSeconds);
+        }}
+      />
+    </main>
+  );
 };
 
 KeptPlayerPage.displayName = 'KeptPlayerPage';

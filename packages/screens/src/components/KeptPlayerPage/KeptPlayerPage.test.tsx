@@ -8,6 +8,17 @@ import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { KeptPlayerPage } from './KeptPlayerPage';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type * as Router from '@tanstack/react-router';
+import type { VideoPlayerProps } from '@ValenceScreens/components/VideoPlayer/VideoPlayer.types';
+
+const drawn = vi.hoisted((): { player: VideoPlayerProps | null } => ({ player: null }));
+
+vi.mock('@ValenceScreens/components/VideoPlayer/VideoPlayer', () => ({
+  VideoPlayer: (props: VideoPlayerProps) => {
+    drawn.player = props;
+
+    return <p>playing {props.media.title}</p>;
+  },
+}));
 
 const back = vi.hoisted(() => vi.fn());
 
@@ -39,11 +50,16 @@ afterEach(() => {
 });
 
 describe('KeptPlayerPage', () => {
-  it('plays the copy kept on this device', async () => {
+  it('plays the copy kept on this device in the ordinary player', async () => {
     installATestClient({ held: aFakeHeldFiles([HERE]).held });
     renderInAnAddress(<KeptPlayerPage />);
 
-    expect(await screen.findByRole('heading', { name: 'Arrival' })).toBeInTheDocument();
+    expect(await screen.findByText('playing Arrival')).toBeInTheDocument();
+    expect(drawn.player).toMatchObject({
+      keptSource: `/held/${HERE.downloadId}`,
+      isImmersive: true,
+      media: { id: HERE.mediaId },
+    });
   });
 
   it('says so, and offers the way back, where the copy is not here', async () => {

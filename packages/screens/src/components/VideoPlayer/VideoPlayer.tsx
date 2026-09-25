@@ -96,6 +96,7 @@ import type { PoppedOut } from '@ValenceScreens/playback/popOutWithCaptions';
 import type { CastState } from '@ValenceScreens/playback/castPlayback.types';
 import { describePlaying } from './describePlaying';
 import type { CastContext } from '@ValenceScreens/playback/castSender.types';
+import { aKeptSession } from '@ValenceClient/downloads/aKeptSession';
 import type { StartedSession } from '@ValenceClient/playback/startPlaybackSession';
 import type { MediaDetail } from '@ValenceContracts/schemas/Library';
 import { subtitleCuesUrl } from '@ValenceClient/playback/fetchSubtitleCues';
@@ -228,6 +229,8 @@ const EMPTY_HEALTH: PlaybackHealth = {
  * @param party - The watch party this viewing is part of, where it is part of one.
  * @param partyNotice - Something the party has to say, which may outlive the party itself.
  * @param renderPartyMenu - How to draw the watch party control in the bar, told when the bar has gone.
+ * @param keptSource - Where a copy kept on this device is read from, which is played instead of asking
+ * the server for a session.
  */
 const VideoPlayer = ({
   media,
@@ -243,6 +246,7 @@ const VideoPlayer = ({
   party,
   partyNotice = null,
   renderPartyMenu,
+  keptSource,
 }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -852,15 +856,18 @@ const VideoPlayer = ({
     window.addEventListener('pagehide', onPageHide);
 
     const run = async () => {
-      const outcome = await startPlaybackSession(
-        request.mediaId,
-        deviceProfile,
-        clientId,
-        request.startSeconds,
-        request.audioStreamIndex,
-        request.requestedQuality,
-        request.subtitleStreamIndex,
-      );
+      const outcome =
+        keptSource === undefined
+          ? await startPlaybackSession(
+              request.mediaId,
+              deviceProfile,
+              clientId,
+              request.startSeconds,
+              request.audioStreamIndex,
+              request.requestedQuality,
+              request.subtitleStreamIndex,
+            )
+          : ({ kind: 'started', session: aKeptSession(request.mediaId, keptSource) } as const);
 
       if (outcome.kind === 'failed') {
         if (!isAbandoned()) {
@@ -871,16 +878,18 @@ const VideoPlayer = ({
         return;
       }
 
-      startedId = outcome.session.sessionId;
+      startedId = keptSource === undefined ? outcome.session.sessionId : null;
 
       if (isAbandoned()) {
-        abandonStartedSession(startedId, clientId);
+        if (startedId !== null) {
+          abandonStartedSession(startedId, clientId);
+        }
 
         return;
       }
       setSession(outcome.session);
 
-      const sessionId = startedId;
+      const { sessionId } = outcome.session;
       const isHls = outcome.session.delivery.kind !== 'direct';
 
       heartbeatInterval = setInterval(() => {
@@ -966,7 +975,7 @@ const VideoPlayer = ({
         void stopPlaybackSession(startedId, clientId);
       }
     };
-  }, [request, start, reportPresenceHeartbeat, deviceProfile, media.id]);
+  }, [request, start, reportPresenceHeartbeat, deviceProfile, media.id, keptSource]);
 
   useEffect(
     () =>
