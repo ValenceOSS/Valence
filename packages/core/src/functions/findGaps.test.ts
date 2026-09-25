@@ -225,3 +225,29 @@ describe('findGaps', () => {
     expect(gaps.episodes.size).toBe(0);
   });
 });
+
+describe('findGaps, where one file holds two episodes', () => {
+  it('does not report the second episode of a double episode as missing', () => {
+    const held = show([{ seasonNumber: 1, episodes: [1, 3] }]);
+    const first = held.seasons[0]?.episodes[0];
+
+    if (first === undefined) {
+      throw new Error('The season has no first episode.');
+    }
+
+    const doubled: ShowDetail = {
+      ...held,
+      seasons: [
+        {
+          seasonNumber: 1,
+          episodes: [
+            { ...first, episodeNumberEnd: 2 },
+            ...(held.seasons[0]?.episodes.slice(1) ?? []),
+          ],
+        },
+      ],
+    };
+
+    expect(findGaps(doubled).episodes.get(1)).toBeUndefined();
+  });
+});

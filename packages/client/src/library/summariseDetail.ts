@@ -28,6 +28,7 @@ const summariseDetail = (detail: MediaDetail): MediaSummary => ({
   seriesTitle: detail.metadata.seriesTitle ?? null,
   seasonNumber: detail.metadata.seasonNumber ?? null,
   episodeNumber: detail.metadata.episodeNumber ?? null,
+  episodeNumberEnd: detail.metadata.episodeNumberEnd ?? null,
   genres: detail.metadata.genres ?? null,
 });
 

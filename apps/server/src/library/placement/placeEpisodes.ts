@@ -188,6 +188,7 @@ const placeEpisodes = (paths: readonly string[], root: string): Map<string, Plac
         seriesFolder,
         seasonNumber,
         episodeNumber,
+        episodeNumberEnd: episodeNumber === null ? null : (read?.endingEpisodeNumber ?? null),
         episodeTitle:
           readEpisodeTitle(stem) ?? (fromName.name === '' ? null : spaceOutName(fromName.name)),
       },

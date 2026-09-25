@@ -4,7 +4,7 @@ const CLEAN_STRINGS: readonly RegExp[] = [
   /^\s*(?<cleaned>.+?)[^\p{L}\p{M}\p{Nd}\p{Pc}]E[0-9]+(-|~)E?[0-9]+([^\p{L}\p{M}\p{Nd}\p{Pc}]|$)/iu,
   /^\s*\[[^\]]+\](?!\.[\p{L}\p{M}\p{Nd}\p{Pc}]+$)\s*(?<cleaned>.+)/iu,
   /^\s*(?<cleaned>.+?)\s+-\s+[0-9]+\s*$/iu,
-  /^\s*(?<cleaned>.+?)(([-._ ](trailer|sample))|-(scene|clip|behindthescenes|deleted|deletedscene|featurette|short|interview|other|extra))$/iu,
+  /^\s*(?<cleaned>.+?)(([-._](trailer|sample))|-(scene|clip|behindthescenes|deleted|deletedscene|featurette|short|interview|other|extra))$/iu,
 ];
 
 export { CLEAN_STRINGS };

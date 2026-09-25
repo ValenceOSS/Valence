@@ -42,6 +42,7 @@ const toSummary = (item: MediaDetail): MediaSummary => ({
   seriesTitle: item.metadata.seriesTitle ?? null,
   seasonNumber: item.metadata.seasonNumber ?? null,
   episodeNumber: item.metadata.episodeNumber ?? null,
+  episodeNumberEnd: item.metadata.episodeNumberEnd ?? null,
   genres: item.metadata.genres ?? null,
 });
 

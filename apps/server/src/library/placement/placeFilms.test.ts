@@ -116,6 +116,14 @@ describe('placeFilms', () => {
     expect(paths.map((path) => placed.get(path)?.isIgnored)).toEqual([true, true, true]);
   });
 
+  it('keeps a film whose title has the word sample in it', () => {
+    const paths = ['/movies/Free Sample (2021)/Free Sample (2021).mkv', '/movies/The Sample.mkv'];
+    const placed = placeFilms(paths, ROOT);
+
+    expect(placed.get(paths[0] ?? '')).toMatchObject({ isIgnored: false, title: 'Free Sample' });
+    expect(placed.get(paths[1] ?? '')?.isIgnored).toBe(false);
+  });
+
   it('reads identifiers written into the folder and file names, and cuts them out of the title', () => {
     const path = '/movies/The Matrix (1999) [tmdbid-603]/The Matrix [imdbid-tt0133093].mkv';
 

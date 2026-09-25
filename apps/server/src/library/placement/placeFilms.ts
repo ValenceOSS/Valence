@@ -13,7 +13,7 @@ import { labelOfVersion } from './labelOfVersion';
 import { pathParts } from './pathParts';
 import type { Placement } from './Placement.types';
 
-const SAMPLE = /\bsample\b/iu;
+const SAMPLE = /[-._]sample\d*\.[^.]+$/iu;
 
 const EXTRA_SUFFIX =
   /(?:[-._ ](?:trailer|sample)|- (?:trailer|sample)|-(?:scene|clip|interview|behindthescenes|deleted|deletedscene|featurette|short|extra|other))$/iu;

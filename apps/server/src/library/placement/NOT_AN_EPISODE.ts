@@ -6,6 +6,7 @@ const NOT_AN_EPISODE: EpisodeNumbering = {
   seriesFolder: null,
   seasonNumber: null,
   episodeNumber: null,
+  episodeNumberEnd: null,
   episodeTitle: null,
 };
 

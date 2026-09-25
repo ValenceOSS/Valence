@@ -119,4 +119,19 @@ describe('placeEpisodes', () => {
 
     expect(placing([path], path)?.episode.episodeTitle).toBe('The Second One');
   });
+
+  it('keeps both numbers of a double episode', () => {
+    const path = '/tv/Show/Season 1/Show.S01E01-E02.1080p.mkv';
+
+    expect(placing([path], path)?.episode).toMatchObject({ episodeNumber: 1, episodeNumberEnd: 2 });
+  });
+
+  it('does not read a resolution after an episode as the last of a run', () => {
+    const path = '/tv/Show/Season 9/Show-s09e14-1080p.mkv';
+
+    expect(placing([path], path)?.episode).toMatchObject({
+      episodeNumber: 14,
+      episodeNumberEnd: null,
+    });
+  });
 });

@@ -7,6 +7,7 @@ import { Button } from '@ValenceTv/components/Button/Button';
 import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { UpNextProps } from './UpNext.types';
+import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 
 const COUNTS_FROM = 10;
 
@@ -54,7 +55,7 @@ const UpNext = ({ episode, isAsking, onPlay, onStay }: UpNextProps) => {
 
   const place =
     typeof episode.seasonNumber === 'number' && typeof episode.episodeNumber === 'number'
-      ? `S${episode.seasonNumber.toString()}: E${episode.episodeNumber.toString()} · `
+      ? `S${episode.seasonNumber.toString()}: E${describeEpisodeNumbers(episode.episodeNumber, episode.episodeNumberEnd)} · `
       : '';
 
   return (

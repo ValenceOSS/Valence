@@ -335,7 +335,7 @@ const scanLibrary = async ({
   transcoder,
   providers = [createFilenameMetadataProvider()],
   force = false,
-  isPartial = false,
+  isPartial: askedPartial = false,
   atOnce = 1,
   onProblem,
   onProgress,
@@ -343,6 +343,7 @@ const scanLibrary = async ({
   onRemoved,
   isCancelled,
 }: ScanLibraryOptions): Promise<ScanResult> => {
+  const isPartial = askedPartial || within !== root;
   const walked = await files.listFiles(within);
   const listed = walked.files.filter((file) => isMediaFile(file.path));
   const stored = await store.listStored(libraryId);

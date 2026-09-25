@@ -14,5 +14,6 @@ describe('isMediaFile', () => {
 
   it('leaves out the re-encodes Valence keeps beside a library', () => {
     expect(isMediaFile('/movies/.valence/renditions/abc.mkv')).toBe(false);
+    expect(isMediaFile('C:\\movies\\.valence\\renditions\\abc.mkv')).toBe(false);
   });
 });

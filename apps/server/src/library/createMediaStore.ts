@@ -200,6 +200,7 @@ const createMediaStore = (
       seriesTitle,
       seasonNumber: row.episode.seasonNumber,
       episodeNumber: row.episode.episodeNumber,
+      episodeNumberEnd: row.episode.episodeNumberEnd,
       overview: row.metadata.overview ?? null,
       tagline: row.metadata.tagline ?? null,
       genres: row.metadata.genres ?? null,

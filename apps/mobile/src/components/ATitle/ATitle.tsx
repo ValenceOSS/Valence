@@ -47,6 +47,7 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
 import type { ATitleProps } from './ATitle.types';
+import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 
 const PLAY_HEIGHT = 46;
 
@@ -135,7 +136,7 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
       : `S${metadata.seasonNumber.toString()}${
           metadata.episodeNumber === null || metadata.episodeNumber === undefined
             ? ''
-            : ` E${metadata.episodeNumber.toString()}`
+            : ` E${describeEpisodeNumbers(metadata.episodeNumber, metadata.episodeNumberEnd)}`
         }`,
     title.year === null || title.year === undefined ? null : title.year.toString(),
     howLongItRuns(title.durationSeconds),

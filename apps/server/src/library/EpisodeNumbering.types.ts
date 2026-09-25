@@ -4,6 +4,7 @@ type EpisodeNumbering = {
   seriesFolder: string | null;
   seasonNumber: number | null;
   episodeNumber: number | null;
+  episodeNumberEnd: number | null;
   episodeTitle: string | null;
 };
 

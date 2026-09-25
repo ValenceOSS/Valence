@@ -348,6 +348,23 @@ describe('a scan of a few named files, rather than the whole library', () => {
     expect(folders).toEqual(new Map([[derek, '/media/shows/Derek']]));
   });
 
+  it('never deletes what it did not walk, when it was given only part of the library', async () => {
+    const { run, removedPaths } = harness({
+      kind: 'shows',
+      root: '/media/shows',
+      within: '/media/shows/Derek',
+      found: [file('/media/shows/Derek/Season 1/Derek.S01E01.mkv')],
+      existing: [
+        stored('/media/shows/Derek/Season 1/Derek.S01E01.mkv'),
+        stored('/media/shows/The Fall/Season 1/The.Fall.S01E01.mkv'),
+      ],
+    });
+
+    await run();
+
+    expect(removedPaths).toEqual([]);
+  });
+
   it('files every programme again when it walked the whole library', async () => {
     const regroupSeries = vi.fn<(libraryId: string, folders: Map<string, string>) => Promise<void>>(
       () => Promise.resolve(),
@@ -1654,5 +1671,20 @@ describe('a season filed under a numbered folder', () => {
 
     expect(rows[0]?.episode.seasonNumber).toBe(2);
     expect(rows[0]?.episode.seriesFolder).toBe('/media/shows/24');
+  });
+});
+
+describe('a file holding two episodes', () => {
+  it('stores both numbers, so the second is known to be here', async () => {
+    const path = '/media/shows/Show/Season 1/Show.S01E01-E02.mkv';
+    const { run, rows } = harness({ kind: 'shows', root: '/media/shows', found: [file(path)] });
+
+    await run();
+
+    expect(rows[0]?.episode).toMatchObject({
+      seasonNumber: 1,
+      episodeNumber: 1,
+      episodeNumberEnd: 2,
+    });
   });
 });

@@ -4,6 +4,7 @@ import { createExpiringCache } from './createExpiringCache';
 import { CAST_STORED } from '@ValenceContracts/schemas/Person';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
+import { episodeNumbersOf } from '@ValenceCore/functions/episodeNumbersOf';
 import { parseName } from './naming/parseName';
 import { nameOfFile } from './nameOfFile';
 import { pickLogo } from './pickLogo';
@@ -143,6 +144,8 @@ const DetailResponseSchema = z.object({
   id: z.number(),
   title: z.string().optional(),
   name: z.string().optional(),
+  original_title: z.string().optional(),
+  original_name: z.string().optional(),
   tagline: z.string().optional(),
   overview: z.string().optional(),
   release_date: z.string().optional(),
@@ -314,6 +317,28 @@ const scoreYear = (year: number | null, found: number | null): number => {
   const apart = Math.abs(found - year);
 
   return apart === 0 ? YEAR_EXACT : apart === 1 ? YEAR_ADJACENT : 0;
+};
+
+/**
+ * Whether a catalogue entry's titles agree with the one a file named: the same, or one starting
+ * with the other's words, so `The Office (US)` agrees with `The Office` while an unrelated entry
+ * that happens to share an identifier with it does not.
+ *
+ * @param wanted - The file's title.
+ * @param titles - The entry's titles, in the catalogue's language and its original one.
+ * @returns Whether any of them agrees.
+ */
+const titlesAgree = (wanted: string, titles: (string | undefined)[]): boolean => {
+  const normalised = normalizeTitle(wanted);
+
+  return (
+    normalised === '' ||
+    titles.some(
+      (title) =>
+        title !== undefined &&
+        (scoreTitle(normalised, title) > 0 || scoreTitle(normalizeTitle(title), wanted) > 0),
+    )
+  );
 };
 
 /**
@@ -622,16 +647,21 @@ const createCatalogueMetadataProvider = ({
               )
             : null;
 
-        const episode =
-          season?.success === true
-            ? (season.data.episodes.find((one) => one.episode_number === episodeNumber) ?? null)
-            : null;
+        const covered =
+          season?.success === true && episodeNumber !== null
+            ? episodeNumbersOf(episodeNumber, facts.episode?.episodeNumberEnd ?? null).flatMap(
+                (number) => season.data.episodes.find((one) => one.episode_number === number) ?? [],
+              )
+            : [];
+        const episode = covered[0] ?? null;
+        const joined = (said: (string | undefined)[]): string | null => {
+          const kept = said.filter((one): one is string => one !== undefined && one !== '');
+
+          return kept.length === 0 ? null : kept.join(' / ');
+        };
 
         const knownEpisodeTitle = facts.episode?.episodeTitle ?? null;
-        const catalogueEpisodeName =
-          episode !== null && episode.name !== undefined && episode.name !== ''
-            ? episode.name
-            : null;
+        const catalogueEpisodeName = joined(covered.map((one) => one.name));
 
         const still = episode === null ? null : imageUrl(imageBaseUrl, episode.still_path, 'w780');
         const backdrop = still ?? imageUrl(imageBaseUrl, detail.backdrop_path, 'w1280');
@@ -642,10 +672,7 @@ const createCatalogueMetadataProvider = ({
         const seriesName = detail.title ?? detail.name ?? searchTitle;
         const episodeName = catalogueEpisodeName ?? knownEpisodeTitle;
 
-        const overview =
-          episode !== null && episode.overview !== undefined && episode.overview !== ''
-            ? episode.overview
-            : detail.overview;
+        const overview = joined(covered.map((one) => one.overview)) ?? detail.overview;
 
         return {
           title: isEpisode ? (episodeName ?? facts.title ?? seriesName) : seriesName,
@@ -674,14 +701,33 @@ const createCatalogueMetadataProvider = ({
        *
        * @param id - The entry's identifier.
        * @param asKind - Whether it is a film or a programme.
-       * @returns The metadata, or nothing where the catalogue would not say.
+       * @param mustAgree - Whether the entry's title has to agree with the file's, as it must for
+       *   an identifier remembered from before, which may have been read as the other kind.
+       * @returns The metadata, or nothing where the catalogue would not say or does not agree.
        */
-      const describeById = async (id: string, asKind: 'tv' | 'movie'): Promise<Metadata | null> => {
+      const describeById = async (
+        id: string,
+        asKind: 'tv' | 'movie',
+        mustAgree = false,
+      ): Promise<Metadata | null> => {
         const detail = DetailResponseSchema.safeParse(
           await request(`/${asKind}/${id}`, key, { append_to_response: appended }),
         );
 
-        return detail.success ? describeFrom(detail.data) : null;
+        if (!detail.success) {
+          return null;
+        }
+
+        const {
+          title,
+          name,
+          original_title: originalTitle,
+          original_name: originalName,
+        } = detail.data;
+
+        return mustAgree && !titlesAgree(searchTitle, [title, name, originalTitle, originalName])
+          ? null
+          : describeFrom(detail.data);
       };
 
       /**
@@ -724,9 +770,12 @@ const createCatalogueMetadataProvider = ({
         (named.tvdb === null ? null : await findById(named.tvdb, 'tvdb_id'));
       const remembered = facts.rememberedExternalId ?? null;
 
-      for (const id of [fromNames, remembered]) {
+      for (const [id, mustAgree] of [
+        [fromNames, false],
+        [remembered, true],
+      ] as const) {
         if (id !== null && id !== '') {
-          const described = await describeById(id, kind);
+          const described = await describeById(id, kind, mustAgree);
 
           if (described !== null) {
             return described;

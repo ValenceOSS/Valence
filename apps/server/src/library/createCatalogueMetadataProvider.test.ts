@@ -1817,6 +1817,40 @@ describe('finding the right entry the way Jellyfin does', () => {
     expect(calls.some((call) => call.includes('/search/'))).toBe(false);
   });
 
+  it('searches instead where what a file was matched to before is a different title', async () => {
+    const { instance, calls } = provider({
+      '/movie/77': { id: 77, title: 'Something Else Entirely' },
+      '/search/movie': SEARCH,
+      '/movie/329': DETAIL,
+    });
+
+    const found = await instance.describe({
+      ...facts('/media/Arrival.mkv'),
+      title: 'Arrival',
+      rememberedExternalId: '77',
+    });
+
+    expect(calls.some((call) => call.includes('/movie/77'))).toBe(true);
+
+    expect(found?.externalId).toBe('329');
+  });
+
+  it('keeps a remembered match whose title the file names more fully', async () => {
+    const { instance, calls } = provider({ '/tv/2316': { id: 2316, name: 'The Office' } });
+
+    const found = await instance.describe({
+      ...facts('/tv/The Office (US)/Season 1/The Office S01E01.mkv', {
+        seriesTitle: 'The Office (US)',
+        seasonNumber: 1,
+        episodeNumber: null,
+      }),
+      rememberedExternalId: '2316',
+    });
+
+    expect(found?.externalId).toBe('2316');
+    expect(calls.some((call) => call.includes('/search/'))).toBe(false);
+  });
+
   it('describes an episode it cannot number from its programme, named by its file', async () => {
     const { instance, calls } = provider({
       '/search/tv': { results: [{ id: 42, name: 'Severance', first_air_date: '2022-02-18' }] },
@@ -1852,5 +1886,35 @@ describe('finding the right entry the way Jellyfin does', () => {
     expect(calls.find((call) => call.includes('/search/movie'))).toContain(
       'query=Arrival+Director+s+Cut',
     );
+  });
+});
+
+describe('a file holding two episodes', () => {
+  it('names and describes it from both, as one', async () => {
+    const { instance } = provider({
+      '/search/tv': { results: [{ id: 5, name: 'Show', first_air_date: '2020-01-01' }] },
+      '/tv/5/season/1': {
+        episodes: [
+          { episode_number: 1, name: 'Pilot', overview: 'It begins.', still_path: '/one.jpg' },
+          { episode_number: 2, name: 'Second', overview: 'It goes on.', still_path: '/two.jpg' },
+        ],
+      },
+      '/tv/5': { id: 5, name: 'Show' },
+    });
+
+    const found = await instance.describe(
+      facts('/tv/Show/Season 1/Show.S01E01-E02.mkv', {
+        seriesTitle: 'Show',
+        seasonNumber: 1,
+        episodeNumber: 1,
+        episodeNumberEnd: 2,
+      }),
+    );
+
+    expect(found).toMatchObject({
+      title: 'Pilot / Second',
+      overview: 'It begins. / It goes on.',
+    });
+    expect(found?.backdropUrl).toContain('/one.jpg');
   });
 });
