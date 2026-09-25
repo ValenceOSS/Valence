@@ -14,9 +14,15 @@ type FinishedJob = {
   reason: string | null;
 };
 
+type KindOptions = {
+  atOnce?: number;
+  retries?: number;
+};
+
 type CreateJobQueueOptions = {
   connectionString: string;
   handlers: Record<string, JobHandler>;
+  perKind?: Record<string, KindOptions>;
   onProblem?: (message: string) => void;
   onStarted?: (entry: { kind: string; jobId: string; subject: string | null }) => Promise<void>;
   onProgress?: (entry: {
@@ -60,6 +66,7 @@ const PG_BOSS_STATES: Record<string, JobState> = {
 const createJobQueue = async ({
   connectionString,
   handlers,
+  perKind = {},
   onProblem,
   onStarted,
   onProgress,
@@ -82,7 +89,11 @@ const createJobQueue = async ({
    * @returns What the job is about, or null where its payload names nothing.
    */
   const subjectOf = (payload: { [key: string]: JsonValue }): string | null =>
-    typeof payload['libraryId'] === 'string' ? payload['libraryId'] : null;
+    typeof payload['libraryId'] === 'string'
+      ? payload['libraryId']
+      : typeof payload['subject'] === 'string'
+        ? payload['subject']
+        : null;
 
   /**
    * Cancels a job that has not started yet, and remembers that it was cancelled for long enough that a
@@ -122,35 +133,39 @@ const createJobQueue = async ({
         continue;
       }
 
-      await boss.work(kind, async (jobs: Job<JsonValue>[]) => {
-        for (const job of jobs) {
-          const payload = readJobPayload(job.data);
-          const subject = subjectOf(payload);
+      await boss.work(
+        kind,
+        { localConcurrency: perKind[kind]?.atOnce ?? 1 },
+        async (jobs: Job<JsonValue>[]) => {
+          for (const job of jobs) {
+            const payload = readJobPayload(job.data);
+            const subject = subjectOf(payload);
 
-          running.set(job.id, { kind, subject });
+            running.set(job.id, { kind, subject });
 
-          await onStarted?.({ kind, jobId: job.id, subject });
+            await onStarted?.({ kind, jobId: job.id, subject });
 
-          try {
-            await handler(job.id, payload);
+            try {
+              await handler(job.id, payload);
 
-            onFinished?.({ kind, jobId: job.id, subject, reason: null });
-          } catch (error) {
-            onFinished?.({
-              kind,
-              jobId: job.id,
-              subject,
-              reason: error instanceof Error ? error.message : 'The job failed.',
-            });
+              onFinished?.({ kind, jobId: job.id, subject, reason: null });
+            } catch (error) {
+              onFinished?.({
+                kind,
+                jobId: job.id,
+                subject,
+                reason: error instanceof Error ? error.message : 'The job failed.',
+              });
 
-            throw error;
-          } finally {
-            running.delete(job.id);
-            progressByJobId.delete(job.id);
-            cancelled.delete(job.id);
+              throw error;
+            } finally {
+              running.delete(job.id);
+              progressByJobId.delete(job.id);
+              cancelled.delete(job.id);
+            }
           }
-        }
-      });
+        },
+      );
     }
   };
 
@@ -173,7 +188,7 @@ const createJobQueue = async ({
     boss.send(kind, payload, {
       ...(singletonKey === undefined ? {} : { singletonKey }),
       ...(startAfter === undefined ? {} : { startAfter }),
-      retryLimit: 2,
+      retryLimit: perKind[kind]?.retries ?? 2,
       retryBackoff: true,
       expireInSeconds: SCAN_EXPIRES_AFTER_SECONDS,
     });

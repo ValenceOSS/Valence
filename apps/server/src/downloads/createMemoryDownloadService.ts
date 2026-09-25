@@ -114,6 +114,13 @@ const createMemoryDownloadService = (
       );
     },
 
+    find: (id) =>
+      Promise.resolve(
+        Object.values(state.downloads)
+          .flat()
+          .find((one) => one.id === id) ?? null,
+      ),
+
     forget: (profileId, id) => {
       state.downloads[profileId] = (state.downloads[profileId] ?? []).filter(
         (one) => one.id !== id,

@@ -295,6 +295,14 @@ describe('createDownloadService', () => {
     },
   );
 
+  it('finds one download by itself, whoever asked for it', async () => {
+    const { service } = await build([preparing(10)]);
+    const asked = await service.ask('a-profile', 'a-laptop', MEDIA_ID, 'original', []);
+
+    await expect(service.find(asked?.id ?? '')).resolves.toMatchObject({ title: 'Arrival' });
+    await expect(service.find('00000000-0000-4000-8000-000000000000')).resolves.toBeNull();
+  });
+
   it('lists without asking the media service anything', async () => {
     const { service, transcoder } = await build([preparing(10)]);
 

@@ -179,6 +179,8 @@ import {
   CLEANUP_ARTEFACT_CACHE_JOB,
   CLEANUP_SESSIONS_JOB,
   CLEAR_OLD_DOWNLOADS_JOB,
+  PREPARE_DOWNLOAD_JOB,
+  PrepareDownloadJobSchema,
   PRUNE_HISTORY_JOB,
   CHECK_CATALOGUE_CONNECTIVITY_JOB,
   CHECK_TRANSCODER_JOB,
@@ -267,6 +269,7 @@ import { followTheDownloads } from '@ValenceServer/downloads/followTheDownloads'
 import { createDownloadService } from '@ValenceServer/downloads/createDownloadService';
 import { createDatabaseReencodeService } from '@ValenceServer/reencode/createDatabaseReencodeService';
 import { keepingProfile } from '@ValenceServer/downloads/keepingProfile';
+import { watchADownload } from '@ValenceServer/downloads/watchADownload';
 import { readCertificatesAgain } from '@ValenceServer/library/readCertificatesAgain';
 const ChapterListSchema = z.array(
   z.object({
@@ -1237,6 +1240,7 @@ const jobEventLog = createJobEventLog(
 
 const jobs = await createJobQueue({
   connectionString: env.DATABASE_URL,
+  perKind: { [PREPARE_DOWNLOAD_JOB]: { atOnce: 16, retries: 0 } },
   handlers: traceJobs(
     {
       [SCAN_LIBRARY_JOB]: async (jobId, payload) => {
@@ -1671,6 +1675,23 @@ const jobs = await createJobQueue({
         );
 
         log.info('server', `history: forgot ${forgotten.toString()} old viewings`);
+      },
+      [PREPARE_DOWNLOAD_JOB]: async (jobId, payload) => {
+        const parsed = PrepareDownloadJobSchema.safeParse(payload);
+
+        if (!parsed.success) {
+          log.error('jobs', 'job queue: a download job carried data Valence could not read.');
+
+          return;
+        }
+
+        await watchADownload({
+          find: () => downloadService.find(parsed.data.downloadId),
+          report: (percent, item) => {
+            jobs.reportProgress(jobId, 'preparing', percent, 100, item);
+          },
+          isCancelled: () => jobs.isCancelled(jobId),
+        });
       },
       [CLEAR_OLD_DOWNLOADS_JOB]: async () => {
         const days = (await settings.read()).keepsDownloadsForDays;
@@ -2506,6 +2527,8 @@ const downloadService = createDownloadService({
   forcedAccel: async () => (await settings.read()).hardwareAccel,
 });
 
+const watchedDownloads = new Set<string>();
+
 followTheDownloads({
   follow: () => downloadService.follow(),
   onFollowed: async (followed) => {
@@ -2516,6 +2539,21 @@ followTheDownloads({
     );
 
     for (const { download, problem } of followed) {
+      if (download.state === 'preparing' && !watchedDownloads.has(download.id)) {
+        watchedDownloads.add(download.id);
+        void jobs
+          .enqueue(
+            PREPARE_DOWNLOAD_JOB,
+            { downloadId: download.id, subject: download.title },
+            download.id,
+          )
+          .catch(() => {
+            watchedDownloads.delete(download.id);
+          });
+      } else if (download.state !== 'preparing') {
+        watchedDownloads.delete(download.id);
+      }
+
       if (download.state === 'failed') {
         log.warn(
           'playback',

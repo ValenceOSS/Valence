@@ -427,6 +427,16 @@ const createDownloadService = ({
       return Promise.all(rows.map(describe));
     },
 
+    find: async (id) => {
+      const [row] = await db
+        .select()
+        .from(preparedDownload)
+        .where(eq(preparedDownload.id, id))
+        .limit(1);
+
+      return row === undefined ? null : describe(row);
+    },
+
     follow: async () => {
       const rows = await db
         .select({ row: preparedDownload, accountId: viewerProfile.userId })

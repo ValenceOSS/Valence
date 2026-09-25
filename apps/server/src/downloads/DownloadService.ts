@@ -51,6 +51,7 @@ type DownloadService = {
   pause: (profileId: string, id: string) => Promise<void>;
   resume: (profileId: string, id: string) => Promise<void>;
   list: (profileId: string) => Promise<Download[]>;
+  find: (id: string) => Promise<Download | null>;
   follow: () => Promise<FollowedDownload[]>;
   forget: (profileId: string, id: string) => Promise<void>;
   clearOutBefore: (cutoff: Date) => Promise<number>;

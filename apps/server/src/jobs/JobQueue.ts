@@ -82,6 +82,13 @@ const CLEANUP_SESSIONS_JOB = 'server.cleanupSessions';
 
 const CLEAR_OLD_DOWNLOADS_JOB = 'server.clearOldDownloads';
 
+const PREPARE_DOWNLOAD_JOB = 'server.prepareDownload';
+
+const PrepareDownloadJobSchema = z.object({
+  downloadId: z.string().uuid(),
+  subject: z.string(),
+});
+
 const CHECK_CATALOGUE_CONNECTIVITY_JOB = 'server.checkCatalogueConnectivity';
 
 const CHECK_TRANSCODER_JOB = 'server.checkTranscoder';
@@ -195,6 +202,8 @@ export {
   CLEANUP_ARTEFACT_CACHE_JOB,
   CLEANUP_SESSIONS_JOB,
   CLEAR_OLD_DOWNLOADS_JOB,
+  PREPARE_DOWNLOAD_JOB,
+  PrepareDownloadJobSchema,
   CHECK_CATALOGUE_CONNECTIVITY_JOB,
   CHECK_TRANSCODER_JOB,
   CHECK_DISK_SPACE_JOB,
