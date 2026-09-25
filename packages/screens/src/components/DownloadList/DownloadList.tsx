@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Icon } from '@ValenceUI/Icon';
 import { Bell as BellIcon, Bin as BinIcon, Download as DownloadIcon } from '@keyline-icons/react';
 import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
+import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
 import { SettingList } from '@ValenceUI/SettingList';
@@ -114,6 +116,8 @@ const groupBySeries = (downloads: Download[]): { title: string | null; items: Do
 const DownloadList = () => {
   const cache = useQueryClient();
   const asked = useQuery(downloadQueries.all());
+  const [deleting, setDeleting] = useState<Download | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const held = useHeldFiles();
 
   const downloads = asked.data ?? [];
@@ -142,6 +146,20 @@ const DownloadList = () => {
       </p>
     );
   }
+
+  const deletingHere = deleting !== null && onThisDevice.has(deleting.id);
+
+  const deleteIt = (download: Download) => {
+    setIsDeleting(true);
+
+    void (onThisDevice.has(download.id) ? dropAFile(download.id) : Promise.resolve())
+      .then(async () => forgetDownload(download.id))
+      .then(async () => cache.invalidateQueries({ queryKey: downloadQueries.key }))
+      .finally(() => {
+        setIsDeleting(false);
+        setDeleting(null);
+      });
+  };
 
   const isAnyPreparing = downloads.some(
     (download) => download.state === 'queued' || download.state === 'preparing',
@@ -249,11 +267,7 @@ const DownloadList = () => {
                       : `Stop keeping ${download.title} on the server`
                   }
                   onClick={() => {
-                    void (
-                      onThisDevice.has(download.id) ? dropAFile(download.id) : Promise.resolve()
-                    )
-                      .then(async () => forgetDownload(download.id))
-                      .then(async () => cache.invalidateQueries({ queryKey: downloadQueries.key }));
+                    setDeleting(download);
                   }}
                 >
                   <Icon of={BinIcon} size={16} />
@@ -263,6 +277,27 @@ const DownloadList = () => {
           </SettingList>
         </section>
       ))}
+
+      <ConfirmDialog
+        title={deleting === null ? 'Delete it?' : `Delete ${deleting.title}?`}
+        detail={
+          deletingHere
+            ? 'It is removed from this device and from the server. How far you got through it is kept.'
+            : 'The server stops keeping its copy. A device that already has one keeps its own.'
+        }
+        confirmLabel="Delete"
+        isDestructive
+        isBusy={isDeleting}
+        isOpen={deleting !== null}
+        onClose={() => {
+          setDeleting(null);
+        }}
+        onConfirm={() => {
+          if (deleting !== null) {
+            deleteIt(deleting);
+          }
+        }}
+      />
     </div>
   );
 };

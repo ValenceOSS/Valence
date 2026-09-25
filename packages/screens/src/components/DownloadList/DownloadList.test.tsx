@@ -162,7 +162,7 @@ describe('DownloadList', () => {
     ).toBeInTheDocument();
   });
 
-  it('asks the server to forget it when told to', async () => {
+  it('asks the server to forget it once somebody confirms', async () => {
     const actor = userEvent.setup();
 
     drawWith([READY]);
@@ -170,6 +170,10 @@ describe('DownloadList', () => {
     await actor.click(
       await screen.findByRole('button', { name: /Stop keeping Arrival on the server/ }),
     );
+
+    expect(await screen.findByText('Delete Arrival?')).toBeInTheDocument();
+
+    await actor.click(screen.getByRole('button', { name: 'Delete' }));
 
     await waitFor(() => {
       expect(
@@ -179,6 +183,21 @@ describe('DownloadList', () => {
         ),
       ).toBe(true);
     });
+  });
+
+  it('leaves it alone where somebody thinks better of deleting it', async () => {
+    const actor = userEvent.setup();
+
+    drawWith([READY]);
+
+    await actor.click(
+      await screen.findByRole('button', { name: /Stop keeping Arrival on the server/ }),
+    );
+    await actor.click(await screen.findByRole('button', { name: 'Cancel' }));
+
+    expect(
+      fetchMock.mock.calls.some(([, init]) => RequestSchema.parse(init ?? {}).method === 'DELETE'),
+    ).toBe(false);
   });
 
   it('says a queued one is waiting rather than leaving it looking stuck', async () => {
@@ -232,7 +251,7 @@ describe('DownloadList', () => {
     });
   });
 
-  it('offers one delete for something on this device, clearing it here and on the server', async () => {
+  it('asks first, then clears something on this device here and on the server', async () => {
     const here: HeldFile = {
       downloadId: READY.id,
       mediaId: READY.mediaId,
@@ -258,7 +277,13 @@ describe('DownloadList', () => {
 
     expect(deletes).toHaveLength(1);
 
-    await userEvent.setup().click(deletes[0] ?? new HTMLElement());
+    const actor = userEvent.setup();
+
+    await actor.click(deletes[0] ?? new HTMLElement());
+
+    expect(files.dropped).toEqual([]);
+
+    await actor.click(await screen.findByRole('button', { name: 'Delete' }));
 
     await waitFor(() => {
       expect(files.dropped).toEqual([READY.id]);
