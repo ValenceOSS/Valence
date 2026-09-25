@@ -127,17 +127,20 @@ const BrowseArea = ({
   onAddLibrary,
 }: BrowseAreaProps) => {
   const [size, setSize] = useState(readGridSize);
-  const [arrangement, setArrangement] = useState(() => readBrowseArrangement(kind));
+  const [chosen, setChosen] = useState<{ kind: string; arrangement: Arrangement } | null>(null);
   const prefersReducedMotion = useReducedMotionConfig();
   const page = PAGES[kind];
   const filters = useLibraryFilters();
+  const arrangement = useMemo(
+    () => (chosen?.kind === kind ? chosen.arrangement : readBrowseArrangement(kind)),
+    [chosen, kind],
+  );
   const kindBefore = useRef(kind);
 
   useEffect(() => {
     if (kindBefore.current !== kind) {
       kindBefore.current = kind;
       filters.clear();
-      setArrangement(readBrowseArrangement(kind));
     }
   });
 
@@ -200,7 +203,7 @@ const BrowseArea = ({
   );
 
   const arrange = (next: Arrangement) => {
-    setArrangement(next);
+    setChosen({ kind, arrangement: next });
     saveBrowseArrangement(kind, next);
   };
 
