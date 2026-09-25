@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { checkRoleChange } from '@ValenceServer/auth/checkRoleChange';
 import { PERMISSIONS } from '@ValenceContracts/schemas/Permission';
 import {
@@ -38,7 +39,7 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(listPermissionsRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'account.roles'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     return context.json(
@@ -53,7 +54,7 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(listRolesRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'account.roles'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     return context.json({ roles: await permissions.listRoles() }, 200);
@@ -63,7 +64,7 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
     const actor = await readActor(context.req.raw.headers);
 
     if (actor === null || !actor.permissions.has('account.roles')) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const body = context.req.valid('json');
@@ -87,7 +88,7 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
     const actor = await readActor(context.req.raw.headers);
 
     if (actor === null || !actor.permissions.has('account.roles')) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { id } = context.req.valid('param');
@@ -95,7 +96,7 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
     const existing = (await permissions.listRoles()).find((role) => role.id === id);
 
     if (existing === undefined) {
-      return context.json({ error: 'No such role.' }, 404);
+      return context.json({ error: say('server.errors.noSuchRole') }, 404);
     }
 
     const refusal = checkRoleChange({
@@ -131,14 +132,11 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     if (stranded) {
-      return context.json(
-        { error: 'That would leave nobody able to administer this server.' },
-        400,
-      );
+      return context.json({ error: say('server.errors.wouldLeaveNoAdministrator') }, 400);
     }
 
     if (holding.updated === null) {
-      return context.json({ error: 'No such role.' }, 404);
+      return context.json({ error: say('server.errors.noSuchRole') }, 404);
     }
 
     return context.json(holding.updated, 200);
@@ -148,14 +146,14 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
     const actor = await readActor(context.req.raw.headers);
 
     if (actor === null || !actor.permissions.has('account.roles')) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { id } = context.req.valid('param');
     const existing = (await permissions.listRoles()).find((role) => role.id === id);
 
     if (existing === undefined) {
-      return context.json({ error: 'No such role.' }, 404);
+      return context.json({ error: say('server.errors.noSuchRole') }, 404);
     }
 
     const refusal = checkRoleChange({
@@ -173,8 +171,7 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
     if (existing.permissions.includes('administrator')) {
       return context.json(
         {
-          error:
-            'A role granting administrator cannot be deleted. Change what it grants, or move its holders first.',
+          error: say('server.errors.adminRoleUndeletable'),
         },
         400,
       );
@@ -187,7 +184,7 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(listAccountRolesRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'account.roles'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { userId } = context.req.valid('param');
@@ -206,14 +203,14 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
     const actor = await readActor(context.req.raw.headers);
 
     if (actor === null || !actor.permissions.has('account.roles')) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { userId, roleId } = context.req.valid('param');
     const role = (await permissions.listRoles()).find((candidate) => candidate.id === roleId);
 
     if (role === undefined) {
-      return context.json({ error: 'No such role.' }, 404);
+      return context.json({ error: say('server.errors.noSuchRole') }, 404);
     }
 
     const refusal = checkRoleChange({
@@ -239,7 +236,7 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
     const actor = await readActor(context.req.raw.headers);
 
     if (actor === null || !actor.permissions.has('account.roles')) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { userId, roleId } = context.req.valid('param');
@@ -269,13 +266,10 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     if (stranded) {
-      return context.json(
-        { error: 'That would leave nobody able to administer this server.' },
-        400,
-      );
+      return context.json({ error: say('server.errors.wouldLeaveNoAdministrator') }, 400);
     }
 
-    await sayRoleChanged(userId, role?.name ?? 'a role', 'taken');
+    await sayRoleChanged(userId, role?.name ?? say('server.defaults.aRole'), 'taken');
 
     return context.body(null, 204);
   });
@@ -284,7 +278,7 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
     const actor = await readActor(context.req.raw.headers);
 
     if (actor === null || !actor.permissions.has('account.roles')) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { userId } = context.req.valid('param');
@@ -318,10 +312,7 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     if (stranded) {
-      return context.json(
-        { error: 'That would leave nobody able to administer this server.' },
-        400,
-      );
+      return context.json({ error: say('server.errors.wouldLeaveNoAdministrator') }, 400);
     }
 
     return context.body(null, 204);
@@ -331,7 +322,7 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
     const actor = await readActor(context.req.raw.headers);
 
     if (actor === null || !actor.permissions.has('account.roles')) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { userId, permission } = context.req.valid('param');
@@ -361,10 +352,7 @@ const serveRole = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     if (stranded) {
-      return context.json(
-        { error: 'That would leave nobody able to administer this server.' },
-        400,
-      );
+      return context.json({ error: say('server.errors.wouldLeaveNoAdministrator') }, 400);
     }
 
     return context.body(null, 204);

@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { listSegmentsRoute } from '@ValenceServer/routes/SegmentRoute';
 import { registerMusicRoutes } from '@ValenceServer/music/registerMusicRoutes';
 import { registerVideoDeviceRoutes } from '@ValenceServer/video/registerVideoDeviceRoutes';
@@ -28,7 +29,7 @@ const serveSegment = (app: OpenAPIHono, context: AppContext): void => {
     const { mediaId } = context.req.valid('param');
 
     if ((await library.getMedia(mediaId)) === null) {
-      return context.json({ error: 'No such media item.' }, 404);
+      return context.json({ error: say('server.errors.noSuchMediaItem') }, 404);
     }
 
     return context.json({ segments: await segments.list(mediaId) }, 200);

@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type { FromClient, FromServer } from '@ValenceContracts/schemas/Realtime';
 import type {
@@ -135,13 +136,13 @@ const handlePartyMessage = (
     });
 
     if (joined.kind === 'unknown') {
-      write({ kind: 'refused', why: 'That party is not running.' });
+      write({ kind: 'refused', why: say('server.parties.notRunning') });
 
       return;
     }
 
     if (joined.kind === 'notWelcome') {
-      write({ kind: 'refused', why: 'The host has removed you from that party.' });
+      write({ kind: 'refused', why: say('server.parties.removed') });
 
       return;
     }
@@ -165,7 +166,7 @@ const handlePartyMessage = (
     const left = registry.leave(who.connectionId);
 
     tellEveryone(binding, left);
-    write({ kind: 'refused', why: 'You have left the party.' });
+    write({ kind: 'refused', why: say('server.parties.left') });
 
     return;
   }
@@ -173,7 +174,7 @@ const handlePartyMessage = (
   const mine = registry.partyOf(who.connectionId);
 
   if (mine === null) {
-    write({ kind: 'refused', why: 'You are not in a party.' });
+    write({ kind: 'refused', why: say('server.parties.notInAParty') });
 
     return;
   }

@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import {
   listSubtitlesRoute,
   readSubtitleCuesRoute,
@@ -21,7 +22,7 @@ const serveSubtitle = (app: OpenAPIHono, context: AppContext): void => {
     const tracks = await subtitles.list(context.req.valid('param').mediaId);
 
     if (tracks === null) {
-      return context.json({ error: 'No such media item.' }, 404);
+      return context.json({ error: say('server.errors.noSuchMediaItem') }, 404);
     }
 
     return context.json({ tracks }, 200);
@@ -34,7 +35,7 @@ const serveSubtitle = (app: OpenAPIHono, context: AppContext): void => {
     const track = await subtitles.read(mediaId, trackId);
 
     if (track === null) {
-      return context.json({ error: 'No such track.' }, 404);
+      return context.json({ error: say('server.errors.noSuchTrack') }, 404);
     }
 
     return context.body(shiftWebVtt(track, from), 200, {
@@ -49,7 +50,7 @@ const serveSubtitle = (app: OpenAPIHono, context: AppContext): void => {
     const cues = await subtitles.readCues(mediaId, trackId);
 
     if (cues === null) {
-      return context.json({ error: 'That track carries no styling of its own.' }, 404);
+      return context.json({ error: say('server.errors.trackNoStyling') }, 404);
     }
 
     return context.json({ cues: shiftSubtitleCues(cues, from) }, 200);

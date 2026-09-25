@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { betterAuth } from 'better-auth';
 import { createAuthMiddleware, APIError } from 'better-auth/api';
 import { z } from 'zod';
@@ -40,8 +41,6 @@ const IdentifierSchema = z
 
 const RefusalSchema = z.instanceof(APIError);
 
-const VALENCE_APP_NAME = 'Valence';
-
 const DEVICE_TOKEN_PATH = '/device/token';
 
 /**
@@ -69,7 +68,7 @@ const createAuth = ({
   onSignInSettled,
 }: CreateAuthOptions) => {
   return betterAuth({
-    appName: VALENCE_APP_NAME,
+    appName: say('common.valence'),
     database,
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
@@ -151,8 +150,8 @@ const createAuth = ({
       max: env.AUTH_RATE_LIMIT_MAX,
     },
     plugins: [
-      twoFactor({ issuer: VALENCE_APP_NAME }),
-      passkey({ rpName: VALENCE_APP_NAME }),
+      twoFactor({ issuer: say('common.valence') }),
+      passkey({ rpName: say('common.valence') }),
       deviceAuthorization({ expiresIn: '10m', interval: '5s' }),
       bearerWithoutACookie(),
       jwt(),

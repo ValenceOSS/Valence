@@ -28,6 +28,7 @@ const serveEveryRequest = (app: OpenAPIHono, context: AppContext): void => {
     await next();
 
     context.res.headers.set('Referrer-Policy', 'no-referrer');
+    // eslint-disable-next-line valence/no-hard-coded-strings -- an HTTP header value
     context.res.headers.set('X-Robots-Tag', 'noindex, nofollow');
   });
 

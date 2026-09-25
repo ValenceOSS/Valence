@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { PgBoss } from 'pg-boss';
 import type { Job } from 'pg-boss';
 import { scheduleSendOptions } from './scheduleSendOptions';
@@ -154,7 +155,7 @@ const createJobQueue = async ({
                 kind,
                 jobId: job.id,
                 subject,
-                reason: error instanceof Error ? error.message : 'The job failed.',
+                reason: error instanceof Error ? error.message : say('server.jobs.failed'),
               });
 
               throw error;

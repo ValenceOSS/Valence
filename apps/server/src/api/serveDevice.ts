@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import {
   listDevicesRoute,
   endDeviceRoute,
@@ -22,7 +23,7 @@ const serveDevice = (app: OpenAPIHono, context: AppContext): void => {
     const session = await readSessionOnce(auth, headers);
 
     if (session === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const held = await auth.api.listSessions({ headers }).catch(() => []);
@@ -47,7 +48,7 @@ const serveDevice = (app: OpenAPIHono, context: AppContext): void => {
     const session = await readSessionOnce(auth, headers);
 
     if (session === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const held = await auth.api.listSessions({ headers }).catch(() => []);
@@ -67,7 +68,7 @@ const serveDevice = (app: OpenAPIHono, context: AppContext): void => {
     const session = await readSessionOnce(auth, headers);
 
     if (session === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     await auth.api.revokeOtherSessions({ headers }).catch(() => undefined);
@@ -77,13 +78,13 @@ const serveDevice = (app: OpenAPIHono, context: AppContext): void => {
 
   app.get('/api/admin/monitor', async (context) => {
     if (!(await requires(context.req.raw.headers, 'server.monitor'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const reading = await monitor?.().catch(() => null);
 
     if (reading === null || reading === undefined) {
-      return context.json({ error: 'The media service did not answer.' }, 503);
+      return context.json({ error: say('server.errors.mediaServiceSilent') }, 503);
     }
 
     return new Response(JSON.stringify(reading), {

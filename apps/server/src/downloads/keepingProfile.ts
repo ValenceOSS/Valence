@@ -21,6 +21,7 @@ import type { DeviceProfile } from '@ValenceContracts/schemas/DeviceProfile';
  */
 const keepingProfile = (): DeviceProfile => ({
   schemaVersion: 1,
+  // eslint-disable-next-line valence/no-hard-coded-strings -- the device profile’s own name, which only the negotiator reads
   name: 'A file to keep',
   directPlayProfiles: [{ container: 'mp4', videoCodecs: ['h264'], audioCodecs: ['aac', 'mp3'] }],
   transcodingProfiles: [

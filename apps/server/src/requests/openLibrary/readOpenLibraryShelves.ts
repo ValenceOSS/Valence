@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 import { z } from 'zod';
 import { openLibraryCover } from '@ValenceServer/requests/openLibrary/openLibraryCover';
 import { openLibraryIdOf } from '@ValenceServer/requests/openLibrary/openLibraryIdOf';
@@ -7,12 +9,20 @@ import type { OpenLibraryBook } from '@ValenceServer/requests/openLibrary/OpenLi
 const MOST_ON_A_SHELF = 20;
 
 const SHELVES = [
-  { id: 'trending-books', title: 'Trending books', from: 'trending' },
-  { id: 'science-fiction-books', title: 'Science fiction', from: 'science_fiction' },
-  { id: 'fantasy-books', title: 'Fantasy', from: 'fantasy' },
-  { id: 'mystery-books', title: 'Mystery and thrillers', from: 'mystery_and_detective_stories' },
-  { id: 'history-books', title: 'History', from: 'history' },
-] as const;
+  { id: 'trending-books', titleKey: 'server.shelves.trendingBooks', from: 'trending' },
+  {
+    id: 'science-fiction-books',
+    titleKey: 'server.shelves.scienceFiction',
+    from: 'science_fiction',
+  },
+  { id: 'fantasy-books', titleKey: 'server.shelves.fantasy', from: 'fantasy' },
+  {
+    id: 'mystery-books',
+    titleKey: 'server.shelves.mystery',
+    from: 'mystery_and_detective_stories',
+  },
+  { id: 'history-books', titleKey: 'server.shelves.history', from: 'history' },
+] as const satisfies readonly { id: string; titleKey: StringKey; from: string }[];
 
 const TrendingSchema = z.object({
   works: z
@@ -73,7 +83,7 @@ const readOpenLibraryShelves = async (web: MusicWeb): Promise<OpenLibraryShelf[]
 
         return {
           id: shelf.id,
-          title: shelf.title,
+          title: say(shelf.titleKey),
           books: read.success
             ? read.data.works.flatMap((work) => {
                 const openLibraryId = work === null ? null : openLibraryIdOf(work.key);
@@ -102,7 +112,7 @@ const readOpenLibraryShelves = async (web: MusicWeb): Promise<OpenLibraryShelf[]
 
       return {
         id: shelf.id,
-        title: shelf.title,
+        title: say(shelf.titleKey),
         books: read.success
           ? read.data.works.flatMap((work) => {
               const openLibraryId = work === null ? null : openLibraryIdOf(work.key);

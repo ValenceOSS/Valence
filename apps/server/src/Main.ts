@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { docsFor } from '@ValenceCore/functions/docsFor';
 import { fileURLToPath } from 'node:url';
 import { join, relative } from 'node:path';
@@ -307,6 +308,7 @@ const AppliedMigrationSchema = z.object({ created_at: z.union([z.string(), z.num
  */
 const readAppliedStamps = async (): Promise<number[]> => {
   try {
+     
     const applied = await db.execute(sql`select created_at from drizzle.__drizzle_migrations`);
 
     return applied.rows.map((row) => Number(AppliedMigrationSchema.parse(row).created_at));
@@ -439,7 +441,7 @@ const auth = createAuth({
 
     void events.publish({
       event: 'account.created',
-      data: { accountId: userId, name: made?.name ?? 'Somebody' },
+      data: { accountId: userId, name: made?.name ?? say('server.defaults.somebody') },
     });
   },
   onSignInSettled: (attempt) => {
@@ -598,7 +600,7 @@ const describeViewing = async (viewing: PresenceViewing): Promise<ViewingData | 
       year: item.year ?? null,
       posterUrl: await libraryService.readArtworkUrl(viewing.mediaId, 'poster'),
       libraryId: item.libraryId,
-      libraryName: shelf?.name ?? 'A library',
+      libraryName: shelf?.name ?? say('server.defaults.aLibrary'),
       overview: item.metadata.overview ?? null,
       durationSeconds: item.durationSeconds,
       genres: item.metadata.genres ?? [],
@@ -801,6 +803,7 @@ const musicArtwork = createMusicArtwork(musicArtworkDir);
 const AUDIO_DB_FREE_KEY = '123';
 
 const musicWeb = createMusicWeb({
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a User-Agent header
   userAgent: `Valence/${env.VALENCE_VERSION} ( https://github.com/ValenceOSS/Valence )`,
   spacingMs: {
     'musicbrainz.org': 1100,
@@ -838,7 +841,7 @@ const lookUpMusic = async (libraryId: string, jobId: string, isAgain: boolean): 
     onProgress: (done, total) => {
       jobs.reportProgress(
         jobId,
-        `${done.toString()} of ${total.toString()} looked up`,
+        say('server.jobs.lookedUp', { done: done.toString(), total: total.toString() }),
         done,
         total,
       );
@@ -1023,7 +1026,7 @@ const transcoderWatch = createReachabilityWatch({
 
     void events.publish({
       event: 'transcoder.unreachable',
-      data: { reason: `${env.TRANSCODER_URL} did not answer a health check.` },
+      data: { reason: say('server.jobs.transcoderSilent', { address: env.TRANSCODER_URL }) },
     });
   },
   onRegained: () => {
@@ -1222,9 +1225,7 @@ const announceFinishedJob = (finished: FinishedJob): void => {
   })();
 };
 
-const interrupted = await jobHistory.interruptRunning(
-  'The server restarted while this was running, so it was stopped.',
-);
+const interrupted = await jobHistory.interruptRunning(say('server.jobs.interrupted'));
 
 if (interrupted > 0) {
   log.warn(
@@ -1233,10 +1234,11 @@ if (interrupted > 0) {
   );
 }
 
-const jobEventLog = createJobEventLog(
-  log,
-  (kind) => JOB_DEFINITIONS.find((definition) => definition.kind === kind)?.label ?? kind,
-);
+const jobEventLog = createJobEventLog(log, (kind) => {
+  const definition = JOB_DEFINITIONS.find((candidate) => candidate.kind === kind);
+
+  return definition === undefined ? kind : say(definition.labelKey);
+});
 
 const jobs = await createJobQueue({
   connectionString: env.DATABASE_URL,
@@ -1279,12 +1281,16 @@ const jobs = await createJobQueue({
             onScanned: async (result) => {
               jobs.reportProgress(
                 jobId,
-                `added ${result.added.toString()}, updated ${result.updated.toString()}, removed ${result.removed.toString()}`,
+                say('server.jobs.scanned', {
+                  added: result.added.toString(),
+                  updated: result.updated.toString(),
+                  removed: result.removed.toString(),
+                }),
                 1,
                 1,
               );
 
-              const libraryName = scanned?.name ?? 'A library';
+              const libraryName = scanned?.name ?? say('server.defaults.aLibrary');
               const arrived = await sayWhatAScanChanged(
                 libraryId,
                 { name: libraryName, kind: scanned?.kind ?? 'movies' },
@@ -1340,7 +1346,12 @@ const jobs = await createJobQueue({
           const { request } = filed;
 
           if (request === null) {
-            jobs.reportProgress(jobId, `added ${result.added.toString()}`, 1, 1);
+            jobs.reportProgress(
+              jobId,
+              say('server.jobs.added', { added: result.added.toString() }),
+              1,
+              1,
+            );
 
             return;
           }
@@ -1363,7 +1374,12 @@ const jobs = await createJobQueue({
                   request.tmdbId.toString(),
                 );
 
-          jobs.reportProgress(jobId, mediaId === null ? 'not found' : 'found', 1, 1);
+          jobs.reportProgress(
+            jobId,
+            say(mediaId === null ? 'server.jobs.notFound' : 'server.jobs.found'),
+            1,
+            1,
+          );
 
           if (mediaId === null) {
             log.warn(
@@ -1397,7 +1413,12 @@ const jobs = await createJobQueue({
         let done = 0;
 
         for (const request of followed.value) {
-          jobs.reportProgress(jobId, 'asking the catalogue', done, followed.value.length);
+          jobs.reportProgress(
+            jobId,
+            say('server.jobs.askingCatalogue'),
+            done,
+            followed.value.length,
+          );
 
           const catalogue = await catalogueForRequest(
             { describeForRequest, describeMusicForRequest, describeBookForRequest: describeBook },
@@ -1415,7 +1436,12 @@ const jobs = await createJobQueue({
           done += 1;
         }
 
-        jobs.reportProgress(jobId, `${done.toString()} brought up to date`, done, done);
+        jobs.reportProgress(
+          jobId,
+          say('server.jobs.broughtUpToDate', { done: done.toString() }),
+          done,
+          done,
+        );
       },
       [READ_AGAIN_JOB]: async (jobId, payload) => {
         const parsed = ReadAgainJobSchema.safeParse(payload);
@@ -2006,6 +2032,7 @@ const remember = (held: Map<string, ScannedItem[]>, libraryId: string, items: Sc
 
 const SCAN_GIVES_UP_AFTER_MILLISECONDS = 600_000;
 
+// eslint-disable-next-line valence/no-hard-coded-strings -- an id for a scan run, never shown
 const LONE_SCAN = 'a scan on its own';
 
 const scanRuns = collectScanRuns({
@@ -2035,6 +2062,7 @@ const libraryService = createDatabaseLibraryService({
     findChapterNames(
       (address) =>
         fetch(address, {
+          // eslint-disable-next-line valence/no-hard-coded-strings -- a User-Agent header
           headers: { 'User-Agent': 'Valence' },
           signal: AbortSignal.timeout(10_000),
         }),
@@ -2288,8 +2316,8 @@ const sayARequestArrived = async (
   await notifyHousehold({
     store: notifications,
     event: 'requests.available',
-    title: `${filed.title} is ready`,
-    body: `${filed.title}, which you asked for, is in the library now.`,
+    title: say('server.notifications.requestReadyTitle', { title: filed.title }),
+    body: say('server.notifications.requestReadyBody', { title: filed.title }),
     link: LINKS_TO_ARRIVALS[filed.kind](mediaId),
     vapid: await readPushKeys(),
     only: [requestedBy.id],
@@ -2568,8 +2596,8 @@ followTheDownloads({
       await notifyHousehold({
         store: notifications,
         event: 'downloads.ready',
-        title: `${download.title} is ready to keep`,
-        body: `${download.title} has been prepared, and the device you asked on is fetching it.`,
+        title: say('server.notifications.downloadReadyTitle', { title: download.title }),
+        body: say('server.notifications.downloadReadyBody', { title: download.title }),
         link: null,
         vapid: await readPushKeys(),
         only: [accountId],
@@ -2687,8 +2715,8 @@ const app = createApp({
     await notifyHousehold({
       store: notifications,
       event: 'sharing.withdrawn',
-      title: 'A link you handed out was withdrawn',
-      body: `${byName} withdrew your link to ${title}. Anybody watching through it has stopped.`,
+      title: say('server.notifications.linkWithdrawnTitle'),
+      body: say('server.notifications.linkWithdrawnBody', { name: byName, title }),
       link: null,
       vapid: await readPushKeys(),
       only: [accountId],
@@ -3076,11 +3104,22 @@ const askSomebodyToTheParty = async (
   await notifyHousehold({
     store: notifications,
     event: 'party.invited',
-    title: `${byName} wants to ${isListening ? 'listen' : 'watch'} with you`,
+    title: say(
+      isListening
+        ? 'server.notifications.listenInviteTitle'
+        : 'server.notifications.watchInviteTitle',
+      { name: byName },
+    ),
     body:
       found === undefined
-        ? `They have a ${isListening ? 'listening' : 'watch'} party running.`
-        : `They are ${isListening ? 'listening to' : 'watching'} ${found.title}.`,
+        ? say(
+            isListening
+              ? 'server.notifications.listeningPartyRunning'
+              : 'server.notifications.watchPartyRunning',
+          )
+        : say(isListening ? 'server.notifications.listeningTo' : 'server.notifications.watching', {
+            title: found.title,
+          }),
     link: isListening ? `/music?party=${party.id}` : `/watch/${party.mediaId}?party=${party.id}`,
     vapid: await readPushKeys(),
     only: [accountId],

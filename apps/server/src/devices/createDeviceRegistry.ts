@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import type {
   PresenceControlEvent,
   PresenceEntry,
@@ -114,7 +115,10 @@ const createDeviceRegistry = <Report>({
 
       const from = devices.find((entry) => entry.clientId === fromClientId);
 
-      return presence.tell(toClientId, event(from?.deviceLabel ?? 'Another device'));
+      return presence.tell(
+        toClientId,
+        event(from?.deviceLabel ?? say('server.defaults.anotherDevice')),
+      );
     },
   };
 };

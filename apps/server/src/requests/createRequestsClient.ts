@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { z } from 'zod';
 import {
   IndexerSchema,
@@ -148,6 +149,7 @@ const createRequestsClient = ({
       const response = await fetch(`${address}${path}`, {
         method,
         headers: {
+          // eslint-disable-next-line valence/no-hard-coded-strings -- an Authorization header
           Authorization: `Bearer ${secret}`,
           ...(body === undefined ? {} : { 'content-type': 'application/json' }),
         },
@@ -158,7 +160,7 @@ const createRequestsClient = ({
       if (response.status === 401) {
         return {
           kind: 'silent',
-          reason: `${address} refused the secret; REQUESTS_SECRET must be the same on both`,
+          reason: say('server.requests.secretRefused', { address }),
           problemCode: 'RequestsSecretRefused',
         };
       }
@@ -169,7 +171,7 @@ const createRequestsClient = ({
         return {
           kind: 'refused',
           status: response.status,
-          error: refusal.success ? refusal.data.error : 'The requests service refused that.',
+          error: refusal.success ? refusal.data.error : say('server.requests.refused'),
         };
       }
 
@@ -191,8 +193,8 @@ const createRequestsClient = ({
         kind: 'silent',
         reason:
           error instanceof z.ZodError || error instanceof SyntaxError
-            ? `${address} answered, but not as the requests service`
-            : `${address} did not answer`,
+            ? say('server.requests.notTheRequestsService', { address })
+            : say('server.requests.didNotAnswer', { address }),
         problemCode: 'RequestsUnreachable',
       };
     }
@@ -219,7 +221,9 @@ const createRequestsClient = ({
         : {
             kind: 'silent',
             reason:
-              answer.kind === 'silent' ? answer.reason : `${address} refused to say how it is`,
+              answer.kind === 'silent'
+                ? answer.reason
+                : say('server.requests.refusedToSay', { address }),
             problemCode: answer.kind === 'silent' ? answer.problemCode : 'RequestsUnreachable',
           };
     },
@@ -269,6 +273,7 @@ const createRequestsClient = ({
       try {
         const response = await fetch(`${address}${withIndexer(id)}/download`, {
           method: 'POST',
+          // eslint-disable-next-line valence/no-hard-coded-strings -- an Authorization header
           headers: { Authorization: `Bearer ${secret}`, 'content-type': 'application/json' },
           body: JSON.stringify({ url }),
           signal: AbortSignal.timeout(searchTimeoutMs),
@@ -304,7 +309,7 @@ const createRequestsClient = ({
       } catch {
         return {
           kind: 'silent',
-          reason: `${address} did not answer`,
+          reason: say('server.requests.didNotAnswer', { address }),
           problemCode: 'RequestsUnreachable',
         };
       }
@@ -420,11 +425,12 @@ const createRequestsClient = ({
 
       try {
         response = await fetch(`${address}/api/downloads/stream`, {
+          // eslint-disable-next-line valence/no-hard-coded-strings -- an Authorization header
           headers: { Authorization: `Bearer ${secret}`, accept: 'text/event-stream' },
           signal,
         });
       } catch {
-        return `${address} did not answer`;
+        return say('server.requests.didNotAnswer', { address });
       }
 
       if (!response.ok || response.body === null) {
@@ -448,10 +454,10 @@ const createRequestsClient = ({
           }
         });
       } catch {
-        return `${address} stopped streaming the downloads`;
+        return say('server.requests.stoppedStreaming', { address });
       }
 
-      return `${address} closed the stream of downloads`;
+      return say('server.requests.closedStream', { address });
     },
 
     listRequests: (): Promise<RequestsAnswer<MediaRequest[]>> =>

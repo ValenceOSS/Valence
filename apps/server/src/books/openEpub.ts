@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { linkToBookPlace } from '@ValenceContracts/schemas/Book';
 import { cleanBookDocument } from './cleanBookDocument';
 import { imageTypeFor } from './imageTypeFor';
@@ -16,7 +17,8 @@ const CONTAINER = 'META-INF/container.xml';
  * @param at - Which part of the book this is.
  * @returns What to call it.
  */
-const nameFor = (at: number): string => `Part ${(at + 1).toString()}`;
+const nameFor = (at: number): string =>
+  say('server.books.partNumber', { number: (at + 1).toString() });
 
 /**
  * The folder a path inside the archive sits in.

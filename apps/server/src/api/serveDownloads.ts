@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import {
   askForDownloadRoute,
   askForSeriesRoute,
@@ -37,7 +38,7 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const offer = await downloads.offer(
@@ -46,7 +47,7 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     return offer === null
-      ? context.json({ error: 'No such media item.' }, 404)
+      ? context.json({ error: say('server.errors.noSuchMediaItem') }, 404)
       : context.json(offer, 200);
   });
 
@@ -54,7 +55,7 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const { quality, audioLanguages } = context.req.valid('json');
@@ -68,7 +69,7 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     return asked === null
-      ? context.json({ error: 'No such media item.' }, 404)
+      ? context.json({ error: say('server.errors.noSuchMediaItem') }, 404)
       : context.json(asked, 200);
   });
 
@@ -76,7 +77,7 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const { deviceProfile, mediaIds } = context.req.valid('json');
@@ -87,7 +88,7 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     return offer === null
-      ? context.json({ error: 'No such programme.' }, 404)
+      ? context.json({ error: say('server.errors.noSuchProgramme') }, 404)
       : context.json(offer, 200);
   });
 
@@ -95,7 +96,7 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const { quality, audioLanguages, mediaIds } = context.req.valid('json');
@@ -116,7 +117,7 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     await downloads.pause(profileId, context.req.valid('param').id);
@@ -128,7 +129,7 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     await downloads.resume(profileId, context.req.valid('param').id);
@@ -140,7 +141,7 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     return context.json({ downloads: await downloads.list(profileId) }, 200);
@@ -150,7 +151,7 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     await downloads.forget(profileId, context.req.valid('param').id);
@@ -162,7 +163,7 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const found = await downloads.readFile(
@@ -172,7 +173,7 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     if (found === null) {
-      return context.json({ error: 'Nothing prepared under that name.' }, 404);
+      return context.json({ error: say('server.errors.nothingPrepared') }, 404);
     }
 
     const { file, title } = found;
@@ -193,7 +194,7 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     return context.json({ holdings: await downloads.held(profileId) }, 200);
@@ -203,7 +204,7 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const clientId = context.req.header('x-valence-client') ?? profileId;
@@ -222,7 +223,7 @@ const serveDownloads = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const { mediaId, quality } = context.req.valid('param');

@@ -48,9 +48,11 @@ const allowCrossOriginClients = ({ trustedOrigins }: AllowCrossOriginClientsOpti
       return context.body(null, 204, {
         'Access-Control-Allow-Origin': allowed,
         'Access-Control-Allow-Credentials': 'true',
+        // eslint-disable-next-line valence/no-hard-coded-strings -- an HTTP header value
         'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': ALLOWED_HEADERS.join(', '),
         'Access-Control-Max-Age': PREFLIGHT_SECONDS.toString(),
+        // eslint-disable-next-line valence/no-hard-coded-strings -- an HTTP header value
         Vary: 'Origin',
       });
     }
@@ -59,6 +61,7 @@ const allowCrossOriginClients = ({ trustedOrigins }: AllowCrossOriginClientsOpti
 
     context.res.headers.set('Access-Control-Allow-Origin', allowed);
     context.res.headers.set('Access-Control-Allow-Credentials', 'true');
+    // eslint-disable-next-line valence/no-hard-coded-strings -- an HTTP header name and value
     context.res.headers.append('Vary', 'Origin');
 
     const already = context.res.headers.get('Access-Control-Expose-Headers') ?? '';

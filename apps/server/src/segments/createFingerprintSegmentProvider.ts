@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { mapWithLimit } from '@ValenceCore/functions/mapWithLimit';
 import { findSharedAudio, agreeRange } from '@ValenceCore/functions/findSharedAudio';
 import { INTRO_BOUNDS } from './SegmentProvider';
@@ -125,7 +126,7 @@ const createFingerprintSegmentProvider = ({
       } catch (error) {
         onProblem?.(
           item.path,
-          error instanceof Error ? error.message : 'Could not be listened to.',
+          error instanceof Error ? error.message : say('server.issues.notListenedTo'),
         );
 
         return null;

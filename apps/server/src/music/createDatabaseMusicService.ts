@@ -77,10 +77,12 @@ const createDatabaseMusicService = (db: ValenceDatabase): MusicService => {
     isExplicit: musicTrack.isExplicit,
     bitDepth: musicTrack.bitDepth,
     sampleRate: musicTrack.sampleRate,
+     
     hasLyrics: sql<boolean>`${musicTrack.lyrics} is not null`,
     videoKey: musicTrack.videoKey,
     albumId: musicAlbum.id,
     albumTitle: musicAlbum.title,
+     
     albumHasArtwork: sql<boolean>`${musicAlbum.artworkPath} is not null`,
   };
 
@@ -194,13 +196,18 @@ const createDatabaseMusicService = (db: ValenceDatabase): MusicService => {
     year: musicAlbum.year,
     genres: musicAlbum.genres,
     isCompilation: musicAlbum.isCompilation,
+     
     hasArtwork: sql<boolean>`${musicAlbum.artworkPath} is not null`,
     addedAt: musicAlbum.addedAt,
     artistId: musicArtist.id,
     artistName: musicArtist.name,
+     
     trackCount: sql<number>`(select count(*)::int from ${musicTrack} where ${musicTrack.albumId} = ${musicAlbum.id})`,
+     
     durationSeconds: sql<number>`(select coalesce(sum(m."durationSeconds"), 0)::float from ${musicTrack} t join ${mediaItem} m on m.id = t."mediaItemId" where t."albumId" = ${musicAlbum.id})`,
+     
     sizeBytes: sql<number>`(select coalesce(sum(m."sizeBytes"), 0)::float from ${musicTrack} t join ${mediaItem} m on m.id = t."mediaItemId" where t."albumId" = ${musicAlbum.id})`,
+     
     isExplicit: sql<boolean>`exists (select 1 from ${musicTrack} t where t."albumId" = ${musicAlbum.id} and t."isExplicit")`,
   };
 
@@ -256,16 +263,21 @@ const createDatabaseMusicService = (db: ValenceDatabase): MusicService => {
         id: musicArtist.id,
         libraryId: musicArtist.libraryId,
         name: musicArtist.name,
+         
         hasImage: sql<boolean>`${musicArtist.imagePath} is not null`,
+         
         albumCount: sql<number>`(select count(*)::int from ${musicAlbum} where ${musicAlbum.artistId} = ${musicArtist.id})`,
+         
         trackCount: sql<number>`(select count(*)::int from ${musicTrackArtist} where ${musicTrackArtist.artistId} = ${musicArtist.id})`,
         imageAlbumId: sql<
           string | null
+           
         >`(select a.id from ${musicAlbum} a where a."artistId" = ${musicArtist.id} and a."artworkPath" is not null order by a.year desc nulls last limit 1)`,
         isFavourite:
           profileId === null
             ? sql<boolean>`false`
-            : sql<boolean>`exists (select 1 from ${favouriteArtist} f where f."artistId" = ${musicArtist.id} and f."profileId" = ${profileId})`,
+            :  
+              sql<boolean>`exists (select 1 from ${favouriteArtist} f where f."artistId" = ${musicArtist.id} and f."profileId" = ${profileId})`,
       })
       .from(musicArtist)
       .innerJoin(library, eq(library.id, musicArtist.libraryId))
@@ -399,6 +411,7 @@ const createDatabaseMusicService = (db: ValenceDatabase): MusicService => {
         viewer,
         credited,
         [
+           
           desc(sql`(select count(*) from ${favourite} f where f."mediaItemId" = ${mediaItem.id})`),
           desc(sql`coalesce(${musicAlbum.year}, 0)`),
           ...inAlbumOrder,
@@ -443,6 +456,7 @@ const createDatabaseMusicService = (db: ValenceDatabase): MusicService => {
         ),
         [
           desc(
+             
             sql`(select f."keptAt" from ${favourite} f where f."mediaItemId" = ${mediaItem.id} and f."profileId" = ${profileId})`,
           ),
         ],

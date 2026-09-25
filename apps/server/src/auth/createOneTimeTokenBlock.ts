@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { createMiddleware } from 'hono/factory';
 
 /**
@@ -12,7 +13,7 @@ import { createMiddleware } from 'hono/factory';
  */
 const createOneTimeTokenBlock = () =>
   createMiddleware((context) =>
-    Promise.resolve(context.json({ error: 'A phone signs in at /api/phone.' }, 404)),
+    Promise.resolve(context.json({ error: say('server.errors.phoneSignsInElsewhere') }, 404)),
   );
 
 export { createOneTimeTokenBlock };

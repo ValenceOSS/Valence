@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import {
   listRatingsRoute,
   rateMediaRoute,
@@ -26,7 +27,7 @@ const serveRating = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     return context.json({ ratings: await ratings.list(profileId) }, 200);
@@ -36,13 +37,13 @@ const serveRating = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const { mediaId } = context.req.valid('param');
 
     if ((await library.getMedia(mediaId)) === null) {
-      return context.json({ error: 'No such media item.' }, 404);
+      return context.json({ error: say('server.errors.noSuchMediaItem') }, 404);
     }
 
     await ratings.set(profileId, { mediaId }, context.req.valid('json').stars);
@@ -54,7 +55,7 @@ const serveRating = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     await ratings.clear(profileId, { mediaId: context.req.valid('param').mediaId });
@@ -64,13 +65,13 @@ const serveRating = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(readMediaHouseholdRatingRoute, async (context) => {
     if ((await readProfileId(context.req.raw.headers)) === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const { mediaId } = context.req.valid('param');
 
     if ((await library.getMedia(mediaId)) === null) {
-      return context.json({ error: 'No such media item.' }, 404);
+      return context.json({ error: say('server.errors.noSuchMediaItem') }, 404);
     }
 
     return context.json(await ratings.household({ mediaId }), 200);
@@ -80,13 +81,13 @@ const serveRating = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const { seriesId } = context.req.valid('param');
 
     if ((await library.getSeries(seriesId)) === null) {
-      return context.json({ error: 'No such programme.' }, 404);
+      return context.json({ error: say('server.errors.noSuchProgramme') }, 404);
     }
 
     await ratings.set(profileId, { seriesId }, context.req.valid('json').stars);
@@ -98,7 +99,7 @@ const serveRating = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     await ratings.clear(profileId, { seriesId: context.req.valid('param').seriesId });
@@ -108,13 +109,13 @@ const serveRating = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(readSeriesHouseholdRatingRoute, async (context) => {
     if ((await readProfileId(context.req.raw.headers)) === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const { seriesId } = context.req.valid('param');
 
     if ((await library.getSeries(seriesId)) === null) {
-      return context.json({ error: 'No such programme.' }, 404);
+      return context.json({ error: say('server.errors.noSuchProgramme') }, 404);
     }
 
     return context.json(await ratings.household({ seriesId }), 200);
@@ -124,13 +125,13 @@ const serveRating = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const { bookId } = context.req.valid('param');
 
     if (!(await bookInReach(context.req.raw.headers, bookId))) {
-      return context.json({ error: 'No such book.' }, 404);
+      return context.json({ error: say('server.errors.noSuchBook') }, 404);
     }
 
     await ratings.set(profileId, { bookId }, context.req.valid('json').stars);
@@ -142,7 +143,7 @@ const serveRating = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     await ratings.clear(profileId, { bookId: context.req.valid('param').bookId });
@@ -152,13 +153,13 @@ const serveRating = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(readBookHouseholdRatingRoute, async (context) => {
     if ((await readProfileId(context.req.raw.headers)) === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const { bookId } = context.req.valid('param');
 
     if (!(await bookInReach(context.req.raw.headers, bookId))) {
-      return context.json({ error: 'No such book.' }, 404);
+      return context.json({ error: say('server.errors.noSuchBook') }, 404);
     }
 
     return context.json(await ratings.household({ bookId }), 200);

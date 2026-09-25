@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { chooseSource } from '@ValenceCore/functions/chooseSource';
 import { sourcesOf } from '@ValenceCore/functions/sourcesOf';
 import type { negotiatePlayback } from '@ValenceCore/functions/negotiatePlayback';
@@ -79,8 +80,7 @@ const asDelivered = (plan: PlaybackPlan, item: MediaItem, encodesVideo: boolean)
       maxHeight: item.height,
       reason: {
         code: 'VideoNotSegmentable',
-        detail:
-          'The source cannot be cut into segments a player can start at, so it is encoded instead',
+        detail: say('server.playback.notSegmentable'),
       },
     },
   };
@@ -261,7 +261,10 @@ const createPlaybackService = ({
       } catch (error) {
         return {
           kind: 'failed',
-          reason: error instanceof Error ? describeFailure(error) : 'The media service failed.',
+          reason:
+            error instanceof Error
+              ? describeFailure(error)
+              : say('server.playback.mediaServiceFailed'),
         };
       }
     },

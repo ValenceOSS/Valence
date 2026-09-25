@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+
 const DEPTH = 4;
 
 /**
@@ -56,7 +58,7 @@ const describeFailure = (error: Error): string => {
     held = beneath(held);
   }
 
-  return said.length === 0 ? 'It failed, and said nothing about why.' : said.join(': ');
+  return said.length === 0 ? say('server.issues.failedSilently') : said.join(': ');
 };
 
 export { describeFailure };

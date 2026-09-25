@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { mediaImageRoute } from '@ValenceServer/routes/ImageRoute';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
@@ -17,17 +18,18 @@ const serveImage = (app: OpenAPIHono, context: AppContext): void => {
     const url = await library.readArtworkUrl(mediaId, kind);
 
     if (url === null || readImage === undefined) {
-      return context.json({ error: 'No artwork for that item.' }, 404);
+      return context.json({ error: say('server.errors.noArtwork') }, 404);
     }
 
     const image = await readImage(url);
 
     if (image === null) {
-      return context.json({ error: 'That artwork could not be read.' }, 404);
+      return context.json({ error: say('server.errors.artworkUnreadable') }, 404);
     }
 
     return context.body(image.body, 200, {
       'content-type': image.contentType,
+      // eslint-disable-next-line valence/no-hard-coded-strings -- an HTTP header value
       'cache-control': 'public, max-age=604800, immutable',
     });
   });

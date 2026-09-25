@@ -21,8 +21,10 @@ type CreateDatabaseWorkLockOptions = {
 
 const VALENCE_LIBRARY_WORK = 0x56414c45;
 
+// eslint-disable-next-line valence/no-hard-coded-strings -- SQL
 const TAKE = 'select pg_try_advisory_lock($1, hashtext($2)) as locked';
 
+// eslint-disable-next-line valence/no-hard-coded-strings -- SQL
 const RELEASE = 'select pg_advisory_unlock($1, hashtext($2)) as locked';
 
 /**

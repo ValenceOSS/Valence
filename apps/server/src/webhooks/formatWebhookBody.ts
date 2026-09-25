@@ -1,17 +1,29 @@
+import { say } from '@ValenceI18n/say';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { describeArrival } from './describeArrival';
 import { describeSpan } from './describeSpan';
 import { discordEmbedFor } from './discordEmbedFor';
 import { nameOfItem } from './nameOfItem';
 import { nameOfViewer } from './nameOfViewer';
+import { sayCount } from '@ValenceI18n/sayCount';
+import type { StringKey } from '@ValenceI18n/StringKey';
+import type { MediaRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 import type { PlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
 import type { WebhookPayload, WebhookPreset } from '@ValenceContracts/schemas/Webhook';
 
-const HOW_PLAYED: Record<PlaybackMode, string> = {
-  DirectPlay: 'sent as it lies',
-  Remux: 'repackaged but not re-encoded',
-  DirectStream: 'with only the sound converted',
-  Transcode: 'transcoded',
+const HOW_PLAYED: Record<PlaybackMode, StringKey> = {
+  DirectPlay: 'server.webhook.directPlay',
+  Remux: 'server.webhook.remux',
+  DirectStream: 'server.webhook.directStream',
+  Transcode: 'server.webhook.transcode',
+};
+
+const ASKED_FOR: Record<MediaRequestKind, StringKey> = {
+  film: 'server.webhook.askedForFilm',
+  series: 'server.webhook.askedForSeries',
+  artist: 'server.webhook.askedForArtist',
+  album: 'server.webhook.askedForAlbum',
+  book: 'server.webhook.askedForBook',
 };
 
 type WebhookRequestBody = {
@@ -29,110 +41,151 @@ type WebhookRequestBody = {
 const sentenceFor = (payload: WebhookPayload): string => {
   switch (payload.event) {
     case 'webhook.test': {
-      return 'Valence can reach this subscription. Nothing has gone wrong; somebody pressed test.';
+      return say('server.webhook.test');
     }
 
     case 'job.completed': {
-      const about = payload.data.subjectName === null ? '' : ` for ${payload.data.subjectName}`;
+      const { label, subjectName } = payload.data;
 
-      return `${payload.data.label}${about} finished.`;
+      return subjectName === null
+        ? say('server.webhook.jobFinished', { label })
+        : say('server.webhook.jobFinishedFor', { label, subject: subjectName });
     }
 
     case 'job.failed': {
-      const about = payload.data.subjectName === null ? '' : ` for ${payload.data.subjectName}`;
+      const { label, subjectName, reason } = payload.data;
 
-      return `${payload.data.label}${about} failed — ${payload.data.reason}`;
+      return subjectName === null
+        ? say('server.webhook.jobFailed', { label, reason })
+        : say('server.webhook.jobFailedFor', { label, subject: subjectName, reason });
     }
 
     case 'library.scanned': {
       const said = payload.data.libraries.map((one) => {
-        const counts = [
-          `${one.added.toString()} added`,
-          `${one.updated.toString()} updated`,
-          `${one.removed.toString()} removed`,
-          ...(one.failed === 0 ? [] : [`${one.failed.toString()} unreadable`]),
-        ];
-        const andMore =
-          one.arrivedNotListed === 0 ? '' : ` and ${one.arrivedNotListed.toString()} more`;
+        const numbers = {
+          added: one.added.toString(),
+          updated: one.updated.toString(),
+          removed: one.removed.toString(),
+          failed: one.failed.toString(),
+        };
+        const counts =
+          one.failed === 0
+            ? say('server.webhook.scanCounts', numbers)
+            : say('server.webhook.scanCountsUnreadable', numbers);
         const named = one.arrived.map(describeArrival).join(', ');
-        const titles = one.arrived.length === 0 ? '' : `\n${named}${andMore}`;
+        const listed =
+          one.arrivedNotListed === 0
+            ? named
+            : say('server.webhook.andMore', {
+                names: named,
+                count: one.arrivedNotListed.toString(),
+              });
+        const titles = one.arrived.length === 0 ? '' : `\n${listed}`;
 
-        return `${one.libraryName}: ${counts.join(', ')}${titles}`;
+        return `${say('server.webhook.scannedLibrary', { library: one.libraryName, counts })}${titles}`;
       });
 
       return said.join('\n');
     }
 
     case 'catalogue.unreachable': {
-      return 'The catalogue could not be reached. Scans will import files without matching them.';
+      return say('server.webhook.catalogueUnreachable');
     }
 
     case 'catalogue.reachable': {
-      return 'The catalogue can be reached again. Nothing needs doing.';
+      return say('server.webhook.catalogueReachable');
     }
 
     case 'transcoder.unreachable': {
-      return `The transcoder could not be reached — ${payload.data.reason}`;
+      return say('server.webhook.transcoderUnreachable', { reason: payload.data.reason });
     }
 
     case 'transcoder.reachable': {
-      return 'The transcoder is answering again. Nothing needs doing.';
+      return say('server.webhook.transcoderReachable');
     }
 
     case 'requests.unreachable': {
-      return `The requests service could not be reached — ${payload.data.reason}`;
+      return say('server.webhook.requestsUnreachable', { reason: payload.data.reason });
     }
 
     case 'requests.reachable': {
-      return 'The requests service is answering again. Nothing needs doing.';
+      return say('server.webhook.requestsReachable');
     }
 
     case 'requests.vpnDown': {
-      return `The VPN the requests service downloads through is down — ${payload.data.reason}`;
+      return say('server.webhook.vpnDown', { reason: payload.data.reason });
     }
 
     case 'requests.indexerFailing': {
-      return `The indexer ${payload.data.name} keeps failing — ${payload.data.problem}`;
+      return say('server.webhook.indexerFailing', {
+        name: payload.data.name,
+        problem: payload.data.problem,
+      });
     }
 
     case 'requests.indexerWorking': {
-      return `The indexer ${payload.data.name} is answering again. Nothing needs doing.`;
+      return say('server.webhook.indexerWorking', { name: payload.data.name });
     }
 
     case 'requests.downloadStarted': {
-      return `${payload.data.title} was sent to ${payload.data.client}.`;
+      return say('server.webhook.downloadStarted', {
+        title: payload.data.title,
+        client: payload.data.client,
+      });
     }
 
     case 'requests.downloadFailed': {
-      return `${payload.data.title} failed in ${payload.data.client} — ${payload.data.problem}`;
+      return say('server.webhook.downloadFailed', {
+        title: payload.data.title,
+        client: payload.data.client,
+        problem: payload.data.problem,
+      });
     }
 
     case 'requests.made': {
-      return `${payload.data.requestedBy} asked for the ${payload.data.kind} ${payload.data.title}.`;
+      return say(ASKED_FOR[payload.data.kind], {
+        name: payload.data.requestedBy,
+        title: payload.data.title,
+      });
     }
 
     case 'requests.approved': {
       return payload.data.approvedBy === null
-        ? `${payload.data.title} was approved as it was asked for.`
-        : `${payload.data.approvedBy} approved ${payload.data.title}.`;
+        ? say('server.webhook.approvedAsAsked', { title: payload.data.title })
+        : say('server.webhook.approvedBy', {
+            name: payload.data.approvedBy,
+            title: payload.data.title,
+          });
     }
 
     case 'requests.refused': {
       return payload.data.reason === null
-        ? `${payload.data.title} was refused.`
-        : `${payload.data.title} was refused — ${payload.data.reason}`;
+        ? say('server.webhook.refused', { title: payload.data.title })
+        : say('server.webhook.refusedBecause', {
+            title: payload.data.title,
+            reason: payload.data.reason,
+          });
     }
 
     case 'requests.chosen': {
-      return `${payload.data.release} was chosen for ${payload.data.title}.`;
+      return say('server.webhook.releaseChosen', {
+        release: payload.data.release,
+        title: payload.data.title,
+      });
     }
 
     case 'requests.filed': {
-      return `${payload.data.title} was filed into ${payload.data.folder}.`;
+      return say('server.webhook.filed', {
+        title: payload.data.title,
+        folder: payload.data.folder,
+      });
     }
 
     case 'requests.available': {
-      return `${payload.data.title} is ready to watch, as ${payload.data.requestedBy} asked.`;
+      return say('server.webhook.available', {
+        title: payload.data.title,
+        name: payload.data.requestedBy,
+      });
     }
 
     case 'requests.vpnUp': {
@@ -141,87 +194,128 @@ const sentenceFor = (payload: WebhookPayload): string => {
       );
 
       return where.length === 0
-        ? 'The VPN the requests service downloads through is up.'
-        : `The VPN the requests service downloads through is up, leaving from ${where.join(', ')}.`;
+        ? say('server.webhook.vpnUp')
+        : say('server.webhook.vpnUpFrom', { where: where.join(', ') });
     }
 
     case 'job.stalled': {
+      const { label, failures, reason } = payload.data;
+
       return payload.data.everSucceeded
-        ? `${payload.data.label} has failed every time it has run since it last worked — ${payload.data.failures.toString()} attempts, most recently: ${payload.data.reason}`
-        : `${payload.data.label} has never once succeeded — ${payload.data.failures.toString()} attempts, most recently: ${payload.data.reason}`;
+        ? sayCount('server.webhook.stalledSinceWorked', failures, { label, reason })
+        : sayCount('server.webhook.neverSucceeded', failures, { label, reason });
     }
 
     case 'job.working': {
-      return `${payload.data.label} has run without failing. Nothing needs doing.`;
+      return say('server.webhook.jobWorking', { label: payload.data.label });
     }
 
     case 'disk.low': {
-      return `${payload.data.mountPoint} is running out of room — ${formatBytes(payload.data.availableBytes)} left of ${formatBytes(payload.data.totalBytes)}.`;
+      return say('server.webhook.diskLow', {
+        disk: payload.data.mountPoint,
+        free: formatBytes(payload.data.availableBytes),
+        total: formatBytes(payload.data.totalBytes),
+      });
     }
 
     case 'disk.recovered': {
-      return `${payload.data.mountPoint} has room again — ${formatBytes(payload.data.availableBytes)} free. Nothing needs doing.`;
+      return say('server.webhook.diskRecovered', {
+        disk: payload.data.mountPoint,
+        free: formatBytes(payload.data.availableBytes),
+      });
     }
 
     case 'auth.succeeded': {
-      const from = payload.data.address === null ? '' : ` from ${payload.data.address}`;
+      const { name, deviceLabel, address } = payload.data;
 
-      return `${payload.data.name} signed in on ${payload.data.deviceLabel}${from}.`;
+      return address === null
+        ? say('server.webhook.signedIn', { name, device: deviceLabel })
+        : say('server.webhook.signedInFrom', { name, device: deviceLabel, address });
     }
 
     case 'auth.failed': {
-      const from = payload.data.address === null ? '' : ` from ${payload.data.address}`;
+      const { identifier, deviceLabel, address, reason } = payload.data;
 
-      return `A sign-in as ${payload.data.identifier} was refused on ${payload.data.deviceLabel}${from} — ${payload.data.reason}`;
+      return address === null
+        ? say('server.webhook.signInRefused', { identifier, device: deviceLabel, reason })
+        : say('server.webhook.signInRefusedFrom', {
+            identifier,
+            device: deviceLabel,
+            address,
+            reason,
+          });
     }
 
     case 'account.created': {
-      return `${payload.data.name} now has an account.`;
+      return say('server.webhook.accountCreated', { name: payload.data.name });
     }
 
     case 'account.deleted': {
-      return `${payload.data.name}'s account was deleted.`;
+      return say('server.webhook.accountDeleted', { name: payload.data.name });
     }
 
     case 'account.roleChanged': {
+      const { name, role } = payload.data;
+
       return payload.data.change === 'given'
-        ? `${payload.data.name} was given ${payload.data.role}.`
-        : `${payload.data.name} no longer has ${payload.data.role}.`;
+        ? say('server.webhook.roleGiven', { name, role })
+        : say('server.webhook.roleTaken', { name, role });
     }
 
     case 'media.added': {
-      return `${nameOfItem(payload.data)} arrived in ${payload.data.libraryName}.`;
+      return say('server.webhook.mediaAdded', {
+        item: nameOfItem(payload.data),
+        library: payload.data.libraryName,
+      });
     }
 
     case 'media.removed': {
-      return `${nameOfItem(payload.data)} is no longer in ${payload.data.libraryName}.`;
+      return say('server.webhook.mediaRemoved', {
+        item: nameOfItem(payload.data),
+        library: payload.data.libraryName,
+      });
     }
 
     case 'playback.started': {
-      return `${nameOfViewer(payload.data)} started watching ${nameOfItem(payload.data.item)} on ${payload.data.deviceLabel}, ${HOW_PLAYED[payload.data.mode]}.`;
+      return say('server.webhook.playbackStarted', {
+        viewer: nameOfViewer(payload.data),
+        item: nameOfItem(payload.data.item),
+        device: payload.data.deviceLabel,
+        how: say(HOW_PLAYED[payload.data.mode]),
+      });
     }
 
     case 'playback.stopped': {
       const { positionSeconds, durationSeconds } = payload.data;
-      const through =
-        positionSeconds === null || durationSeconds === null || durationSeconds === 0
-          ? ''
-          : ` ${Math.round((positionSeconds / durationSeconds) * 100).toString()}% of the way through`;
+      const viewer = nameOfViewer(payload.data);
+      const item = nameOfItem(payload.data.item);
 
-      return `${nameOfViewer(payload.data)} stopped watching ${nameOfItem(payload.data.item)}${through}.`;
+      return positionSeconds === null || durationSeconds === null || durationSeconds === 0
+        ? say('server.webhook.playbackStopped', { viewer, item })
+        : say('server.webhook.playbackStoppedPart', {
+            viewer,
+            item,
+            percent: Math.round((positionSeconds / durationSeconds) * 100).toString(),
+          });
     }
 
     case 'session.started': {
-      const from = payload.data.address === null ? '' : ` from ${payload.data.address}`;
+      const viewer = nameOfViewer(payload.data);
+      const { deviceLabel, address } = payload.data;
 
-      return `${nameOfViewer(payload.data)} opened Valence on ${payload.data.deviceLabel}${from}.`;
+      return address === null
+        ? say('server.webhook.sessionStarted', { viewer, device: deviceLabel })
+        : say('server.webhook.sessionStartedFrom', { viewer, device: deviceLabel, address });
     }
 
     case 'session.ended': {
       const stayed = describeSpan(payload.data.lastedSeconds);
-      const after = stayed === null ? '' : ` after ${stayed}`;
+      const viewer = nameOfViewer(payload.data);
+      const device = payload.data.deviceLabel;
 
-      return `${nameOfViewer(payload.data)} closed Valence on ${payload.data.deviceLabel}${after}.`;
+      return stayed === null
+        ? say('server.webhook.sessionEnded', { viewer, device })
+        : say('server.webhook.sessionEndedAfter', { viewer, device, span: stayed });
     }
   }
 };
@@ -236,7 +330,10 @@ const sentenceFor = (payload: WebhookPayload): string => {
 const withHowToFix = (sentence: string, docs: string | null): string =>
   docs === null
     ? sentence
-    : `${sentence}${sentence.endsWith('.') ? '' : '.'} How to fix it: ${docs}`;
+    : say('server.webhook.howToFix', {
+        sentence: sentence.endsWith('.') ? sentence : `${sentence}.`,
+        docs,
+      });
 
 /**
  * Writes a delivery in the shape its subscriber expects — the event itself for anything generic, and

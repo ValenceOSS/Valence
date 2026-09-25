@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
 import type { ExternalIds } from '@ValenceServer/library/naming/ExternalIds.types';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
@@ -158,7 +159,7 @@ const resolveNextEpisode = async (
     } catch (error) {
       onProblem?.(
         provider.name,
-        error instanceof Error ? describeFailure(error) : 'Provider failed.',
+        error instanceof Error ? describeFailure(error) : say('server.issues.providerFailed'),
       );
     }
   }
@@ -195,7 +196,7 @@ const resolveSeriesShape = async (
     } catch (error) {
       onProblem?.(
         provider.name,
-        error instanceof Error ? describeFailure(error) : 'Provider failed.',
+        error instanceof Error ? describeFailure(error) : say('server.issues.providerFailed'),
       );
     }
   }
@@ -229,7 +230,7 @@ const resolveMetadata = async (
     } catch (error) {
       onProblem?.(
         provider.name,
-        error instanceof Error ? describeFailure(error) : 'Provider failed.',
+        error instanceof Error ? describeFailure(error) : say('server.issues.providerFailed'),
       );
     }
   }

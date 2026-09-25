@@ -68,6 +68,7 @@ const createDatabaseFavouriteService = (db: ValenceDatabase): FavouriteService =
       .values({ id: randomUUID(), profileId, bookId, keptAt: new Date() })
       .onConflictDoNothing({
         target: [favourite.profileId, favourite.bookId],
+         
         where: sql`${favourite.bookId} is not null`,
       });
   },

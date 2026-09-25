@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { theChallengeFor } from '@ValenceServer/phone/theChallengeFor';
 import { exchangeRoute, handBackRoute } from '@ValenceServer/routes/PhoneRoute';
 import type { AppContext } from '@ValenceServer/api/AppContext';
@@ -19,7 +20,7 @@ const servePhone = (app: OpenAPIHono, context: AppContext): void => {
       .catch(() => null);
 
     if (minted === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     phoneHandBacks.remember(minted.token, challenge);
@@ -35,7 +36,7 @@ const servePhone = (app: OpenAPIHono, context: AppContext): void => {
     const challenge = phoneHandBacks.take(code);
 
     if (challenge === null || challenge !== theChallengeFor(secret)) {
-      return context.json({ error: 'That sign-in has expired. Try again.' }, 401);
+      return context.json({ error: say('server.errors.signInExpired') }, 401);
     }
 
     const signedIn = await auth.api
@@ -43,7 +44,7 @@ const servePhone = (app: OpenAPIHono, context: AppContext): void => {
       .catch(() => null);
 
     if (signedIn === null || !signedIn.ok) {
-      return context.json({ error: 'That sign-in has expired. Try again.' }, 401);
+      return context.json({ error: say('server.errors.signInExpired') }, 401);
     }
 
     const answer = context.body(null, 200);

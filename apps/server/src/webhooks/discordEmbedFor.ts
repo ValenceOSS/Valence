@@ -1,3 +1,5 @@
+import { sayCount } from '@ValenceI18n/sayCount';
+import { say } from '@ValenceI18n/say';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { describeArrival } from './describeArrival';
 import { describeSpan } from './describeSpan';
@@ -5,8 +7,6 @@ import { nameOfItem } from './nameOfItem';
 import { nameOfViewer } from './nameOfViewer';
 import { MEDIA_KIND_LABELS } from '@ValenceContracts/schemas/MediaKind';
 import type { WebhookPayload } from '@ValenceContracts/schemas/Webhook';
-
-const AUTHOR = 'Valence';
 
 const COLOURS = {
   failure: 0xe8503a,
@@ -123,9 +123,9 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
     case 'media.removed': {
       const arriving = payload.event === 'media.added';
 
-      const where = arriving
-        ? `Arrived in ${payload.data.libraryName}`
-        : `No longer in ${payload.data.libraryName}`;
+      const where = say(arriving ? 'server.discord.arrivedIn' : 'server.discord.noLongerIn', {
+        library: payload.data.libraryName,
+      });
 
       return {
         title: nameOfItem(payload.data),
@@ -133,12 +133,15 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
         colour: arriving ? COLOURS.arrival : COLOURS.quiet,
         posterUrl: payload.data.posterUrl,
         fields: [
-          field('Kind', MEDIA_KIND_LABELS[payload.data.kind]),
-          field('Library', payload.data.libraryName),
-          field('Runtime', describeSpan(payload.data.durationSeconds)),
-          field('Quality', payload.data.quality),
-          field('Rating', ratingOf(payload.data.rating)),
-          field('Genres', payload.data.genres.slice(0, GENRES_SHOWN).join(', ')),
+          field(say('server.discord.kind'), MEDIA_KIND_LABELS[payload.data.kind]),
+          field(say('server.discord.library'), payload.data.libraryName),
+          field(say('server.discord.runtime'), describeSpan(payload.data.durationSeconds)),
+          field(say('server.discord.quality'), payload.data.quality),
+          field(say('server.discord.rating'), ratingOf(payload.data.rating)),
+          field(
+            say('server.discord.genres'),
+            payload.data.genres.slice(0, GENRES_SHOWN).join(', '),
+          ),
         ],
       };
     }
@@ -146,14 +149,14 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
     case 'playback.started': {
       return {
         title: nameOfItem(payload.data.item),
-        description: `${nameOfViewer(payload.data)} started watching`,
+        description: say('server.discord.startedWatching', { viewer: nameOfViewer(payload.data) }),
         colour: COLOURS.viewing,
         posterUrl: payload.data.item.posterUrl,
         fields: [
-          field('Device', payload.data.deviceLabel),
-          field('Playing', payload.data.mode),
-          field('Quality', payload.data.item.quality),
-          field('Runtime', describeSpan(payload.data.item.durationSeconds)),
+          field(say('server.discord.device'), payload.data.deviceLabel),
+          field(say('server.discord.playing'), payload.data.mode),
+          field(say('server.discord.quality'), payload.data.item.quality),
+          field(say('server.discord.runtime'), describeSpan(payload.data.item.durationSeconds)),
         ],
       };
     }
@@ -161,13 +164,13 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
     case 'playback.stopped': {
       return {
         title: nameOfItem(payload.data.item),
-        description: `${nameOfViewer(payload.data)} stopped watching`,
+        description: say('server.discord.stoppedWatching', { viewer: nameOfViewer(payload.data) }),
         colour: COLOURS.viewing,
         posterUrl: payload.data.item.posterUrl,
         fields: [
-          field('Device', payload.data.deviceLabel),
+          field(say('server.discord.device'), payload.data.deviceLabel),
           field(
-            'Stopped at',
+            say('server.discord.stoppedAt'),
             progressOf(payload.data.positionSeconds, payload.data.durationSeconds),
           ),
         ],
@@ -176,55 +179,61 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
 
     case 'session.started': {
       return {
-        title: `${nameOfViewer(payload.data)} opened Valence`,
+        title: say('server.discord.opened', { viewer: nameOfViewer(payload.data) }),
         description: '',
         colour: COLOURS.viewing,
         fields: [
-          field('Device', payload.data.deviceLabel),
-          field('From', payload.data.address),
-          field('Account', payload.data.profileName === null ? null : payload.data.accountName),
-          field('Guest of', payload.data.guestOf),
+          field(say('server.discord.device'), payload.data.deviceLabel),
+          field(say('server.discord.from'), payload.data.address),
+          field(
+            say('server.discord.account'),
+            payload.data.profileName === null ? null : payload.data.accountName,
+          ),
+          field(say('server.discord.guestOf'), payload.data.guestOf),
         ],
       };
     }
 
     case 'session.ended': {
       return {
-        title: `${nameOfViewer(payload.data)} closed Valence`,
+        title: say('server.discord.closed', { viewer: nameOfViewer(payload.data) }),
         description: '',
         colour: COLOURS.quiet,
         fields: [
-          field('Device', payload.data.deviceLabel),
-          field('Stayed', describeSpan(payload.data.lastedSeconds)),
+          field(say('server.discord.device'), payload.data.deviceLabel),
+          field(say('server.discord.stayed'), describeSpan(payload.data.lastedSeconds)),
         ],
       };
     }
 
     case 'auth.succeeded': {
       return {
-        title: `${payload.data.name} signed in`,
+        title: say('server.discord.signedIn', { name: payload.data.name }),
         description: '',
         colour: COLOURS.auth,
-        fields: [field('Device', payload.data.deviceLabel), field('From', payload.data.address)],
+        fields: [
+          field(say('server.discord.device'), payload.data.deviceLabel),
+          field(say('server.discord.from'), payload.data.address),
+        ],
       };
     }
 
     case 'auth.failed': {
       return {
-        title: 'A sign-in was refused',
+        title: say('server.discord.signInRefused'),
         description: payload.data.reason,
         colour: COLOURS.failure,
         fields: [
-          field('Tried', payload.data.identifier),
-          field('Device', payload.data.deviceLabel),
-          field('From', payload.data.address),
+          field(say('server.discord.tried'), payload.data.identifier),
+          field(say('server.discord.device'), payload.data.deviceLabel),
+          field(say('server.discord.from'), payload.data.address),
         ],
       };
     }
 
     case 'account.created': {
       return {
-        title: `${payload.data.name} now has an account`,
+        title: say('server.discord.accountCreated', { name: payload.data.name }),
         description: '',
         colour: COLOURS.arrival,
         fields: [],
@@ -233,7 +242,7 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
 
     case 'account.deleted': {
       return {
-        title: `${payload.data.name}'s account was deleted`,
+        title: say('server.discord.accountDeleted', { name: payload.data.name }),
         description: '',
         colour: COLOURS.failure,
         fields: [],
@@ -242,12 +251,17 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
 
     case 'account.roleChanged': {
       return {
-        title: `${payload.data.name}'s roles changed`,
+        title: say('server.discord.rolesChanged', { name: payload.data.name }),
         description: sentence,
         colour: COLOURS.auth,
         fields: [
-          field('Role', payload.data.role),
-          field('Change', payload.data.change === 'given' ? 'Given' : 'Taken away'),
+          field(say('server.discord.role'), payload.data.role),
+          field(
+            say('server.discord.change'),
+            payload.data.change === 'given'
+              ? say('server.discord.given')
+              : say('server.discord.takenAway'),
+          ),
         ],
       };
     }
@@ -258,7 +272,9 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
 
       const described = libraries.map((one) => {
         const andMore =
-          one.arrivedNotListed === 0 ? '' : `\n…and ${one.arrivedNotListed.toString()} more`;
+          one.arrivedNotListed === 0
+            ? ''
+            : `\n${say('server.discord.andMore', { count: one.arrivedNotListed.toString() })}`;
 
         return one.arrived.length === 0
           ? null
@@ -268,65 +284,71 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
       return {
         title:
           libraries.length === 1
-            ? `${named[0] ?? 'A library'} finished scanning`
-            : `${libraries.length.toString()} libraries finished scanning`,
+            ? say('server.discord.libraryScanned', {
+                library: named[0] ?? say('server.defaults.aLibrary'),
+              })
+            : sayCount('server.discord.librariesScanned', libraries.length),
         description: described.filter((one) => one !== null).join('\n\n'),
         colour: added > 0 ? COLOURS.arrival : COLOURS.quiet,
         fields: [
-          field('Libraries', libraries.length === 1 ? null : named.join(', '), false),
-          field('Added', added.toString()),
-          field('Updated', updated.toString()),
-          field('Removed', removed.toString()),
-          field('Unreadable', failed === 0 ? null : failed.toString()),
+          field(
+            say('server.discord.libraries'),
+            libraries.length === 1 ? null : named.join(', '),
+            false,
+          ),
+          field(say('server.discord.added'), added.toString()),
+          field(say('server.discord.updated'), updated.toString()),
+          field(say('server.discord.removed'), removed.toString()),
+          field(say('server.discord.unreadable'), failed === 0 ? null : failed.toString()),
         ],
       };
     }
 
     case 'disk.low': {
       return {
-        title: `${payload.data.mountPoint} is running out of room`,
+        title: say('server.discord.diskLow', { disk: payload.data.mountPoint }),
         description: '',
         colour: COLOURS.failure,
         fields: [
-          field('Free', formatBytes(payload.data.availableBytes)),
-          field('Of', formatBytes(payload.data.totalBytes)),
+          field(say('server.discord.free'), formatBytes(payload.data.availableBytes)),
+          field(say('server.discord.of'), formatBytes(payload.data.totalBytes)),
         ],
       };
     }
 
     case 'disk.recovered': {
       return {
-        title: `${payload.data.mountPoint} has room again`,
+        title: say('server.discord.diskRecovered', { disk: payload.data.mountPoint }),
         description: '',
         colour: COLOURS.arrival,
-        fields: [field('Free', formatBytes(payload.data.availableBytes))],
+        fields: [field(say('server.discord.free'), formatBytes(payload.data.availableBytes))],
       };
     }
 
     case 'job.failed': {
       return {
-        title: `${payload.data.label} failed`,
+        title: say('server.discord.jobFailed', { label: payload.data.label }),
         description: payload.data.reason,
         colour: COLOURS.failure,
-        fields: [field('Library', payload.data.subjectName)],
+        fields: [field(say('server.discord.library'), payload.data.subjectName)],
       };
     }
 
     case 'job.completed': {
       return {
-        title: `${payload.data.label} finished`,
+        title: say('server.discord.jobFinished', { label: payload.data.label }),
         description: '',
         colour: COLOURS.quiet,
-        fields: [field('Library', payload.data.subjectName)],
+        fields: [field(say('server.discord.library'), payload.data.subjectName)],
       };
     }
 
     case 'job.stalled': {
       return {
-        title: `${payload.data.label} keeps failing`,
+        title: say('server.discord.jobStalled', { label: payload.data.label }),
         description: sentence,
         colour: COLOURS.failure,
-        fields: [field('Attempts', payload.data.failures.toString())],
+        fields: [field(say('server.discord.attempts'), payload.data.failures.toString())],
       };
     }
 
@@ -337,7 +359,7 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
         title: sentence,
         description: '',
         colour: COLOURS.failure,
-        fields: [field('How to fix it', payload.data.docs, false)],
+        fields: [field(say('server.discord.howToFix'), payload.data.docs, false)],
       };
     }
 
@@ -396,7 +418,7 @@ const discordEmbedFor = (payload: WebhookPayload, sentence: string): DiscordEmbe
   const title = clip(parts.title, TITLE_LIMIT);
   const spentElsewhere =
     title.length +
-    AUTHOR.length +
+    say('common.valence').length +
     fields.reduce((total, one) => total + one.name.length + one.value.length, 0);
 
   const description = clip(
@@ -408,7 +430,7 @@ const discordEmbedFor = (payload: WebhookPayload, sentence: string): DiscordEmbe
     title,
     description,
     color: parts.colour,
-    author: { name: AUTHOR },
+    author: { name: say('common.valence') },
     timestamp: payload.occurredAt,
     fields,
     ...(parts.posterUrl === null || parts.posterUrl === undefined

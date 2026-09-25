@@ -137,6 +137,7 @@ const createDatabasePlaylistService = (
             rows.map((row) => row.id),
           ),
           entryVisible(viewer),
+           
           sql`exists (select 1 from music_album a where a.id = ${musicTrack.albumId} and a."artworkPath" is not null)`,
         ),
       )

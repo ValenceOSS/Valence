@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
 import { HOUSEHOLD_LIMITS } from '@ValenceServer/household/HouseholdPicture';
 import {
@@ -35,7 +36,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     const account = await readAccount(context.req.raw.headers);
 
     if (account === null || households === undefined) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const [household, isOnboarded] = await Promise.all([
@@ -50,7 +51,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     const account = await readAccount(context.req.raw.headers);
 
     if (account === null || households === undefined) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     await households.change(account.id, context.req.valid('json'));
@@ -62,7 +63,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     const account = await readAccount(context.req.raw.headers);
 
     if (account === null || households === undefined) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     await households.finishOnboarding(account.id);
@@ -74,13 +75,13 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     const account = await readAccount(context.req.raw.headers);
 
     if (account === null || households === undefined) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const picture = await households.readAvatar(account.id);
 
     if (picture === null) {
-      return context.json({ error: 'That household has no picture.' }, 404);
+      return context.json({ error: say('server.errors.householdNoPicture') }, 404);
     }
 
     return context.body(picture.body.slice().buffer, 200, {
@@ -88,19 +89,20 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
       'cache-control':
         context.req.query('v') === undefined
           ? 'private, max-age=60'
-          : 'private, max-age=31536000, immutable',
+          : // eslint-disable-next-line valence/no-hard-coded-strings -- an HTTP header value
+            'private, max-age=31536000, immutable',
     });
   });
 
   app.get('/api/admin/accounts/:userId/avatar', async (context) => {
     if (!(await requires(context.req.raw.headers, 'account.manage'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const picture = await households?.readAvatar(context.req.param('userId'));
 
     if (picture === undefined || picture === null) {
-      return context.json({ error: 'That household has no picture.' }, 404);
+      return context.json({ error: say('server.errors.householdNoPicture') }, 404);
     }
 
     return context.body(picture.body.slice().buffer, 200, {
@@ -108,7 +110,8 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
       'cache-control':
         context.req.query('v') === undefined
           ? 'private, max-age=60'
-          : 'private, max-age=31536000, immutable',
+          : // eslint-disable-next-line valence/no-hard-coded-strings -- an HTTP header value
+            'private, max-age=31536000, immutable',
     });
   });
 
@@ -116,7 +119,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     const account = await readAccount(context.req.raw.headers);
 
     if (account === null || households === undefined) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const wrong = await households.savePhoto(account.id, {
@@ -137,13 +140,14 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     const picture = await profiles?.readAvatar(context.req.param('profileId'));
 
     if (picture === undefined || picture === null) {
-      return context.json({ error: 'That profile has no picture.' }, 404);
+      return context.json({ error: say('server.errors.profileNoPicture') }, 404);
     }
 
     const isVersioned = context.req.query('v') !== undefined;
 
     return context.body(picture.body.slice().buffer, 200, {
       'content-type': picture.contentType,
+      // eslint-disable-next-line valence/no-hard-coded-strings -- an HTTP header value
       'cache-control': isVersioned ? 'private, max-age=31536000, immutable' : 'private, max-age=60',
     });
   });
@@ -167,20 +171,21 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     const picture = await splashscreen.read();
 
     if (picture === null) {
-      return context.json({ error: 'This server has no picture behind the way in.' }, 404);
+      return context.json({ error: say('server.errors.noSignInPicture') }, 404);
     }
 
     const isVersioned = context.req.query('v') !== undefined;
 
     return context.body(picture.body.slice().buffer, 200, {
       'content-type': picture.contentType,
+      // eslint-disable-next-line valence/no-hard-coded-strings -- an HTTP header value
       'cache-control': isVersioned ? 'private, max-age=31536000, immutable' : 'private, max-age=60',
     });
   });
 
   app.put('/api/admin/splashscreen', tooBigToRead(SPLASHSCREEN_LIMITS), async (context) => {
     if (!(await requires(context.req.raw.headers, 'server.settings'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const wrong = await splashscreen.save({
@@ -199,7 +204,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
 
   app.delete('/api/admin/splashscreen', async (context) => {
     if (!(await requires(context.req.raw.headers, 'server.settings'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     return context.json({ removed: await splashscreen.remove() }, 200);
@@ -207,20 +212,20 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
 
   app.post('/api/profiles/:profileId/sign-in', async (context) => {
     if (profiles === undefined) {
-      return context.json({ error: 'No such profile.' }, 404);
+      return context.json({ error: say('server.errors.noSuchProfile') }, 404);
     }
 
     const body = await context.req.text().catch(() => '');
     const parsed = SignInBodySchema.safeParse(JsonValueSchema.parse(JSON.parse(body || 'null')));
 
     if (!parsed.success) {
-      return context.json({ error: 'A password is required.' }, 400);
+      return context.json({ error: say('server.errors.passwordRequired') }, 400);
     }
 
     const email = await profiles.findSignInEmail(context.req.param('profileId'));
 
     if (email === null) {
-      return context.json({ error: 'No such profile.' }, 404);
+      return context.json({ error: say('server.errors.noSuchProfile') }, 404);
     }
 
     const forwarded = new Headers(context.req.raw.headers);
@@ -242,7 +247,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     const seed = context.req.query('seed') ?? 'valence';
 
     if (!isAvatarStyle(style)) {
-      return context.json({ error: 'No such style.' }, 404);
+      return context.json({ error: say('server.errors.noSuchStyle') }, 404);
     }
 
     return context.body(drawAvatar(style, seed), 200, {
@@ -255,7 +260,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
     const account = await readAccount(context.req.raw.headers);
 
     if (account === null || profiles === undefined) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const wrong = await profiles.savePhoto(account.id, context.req.param('profileId'), {

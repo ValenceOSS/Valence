@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import {
   listBooksRoute,
   findBooksRoute,
@@ -30,7 +31,7 @@ const serveBook = (app: OpenAPIHono, context: AppContext): void => {
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null || books === undefined) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const { search, ids, limit } = context.req.valid('query');
@@ -52,7 +53,7 @@ const serveBook = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (viewer === null || profileId === null || books === undefined) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     return context.json(
@@ -65,7 +66,7 @@ const serveBook = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null || books === undefined) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     await books.forgetReading(profileId);
@@ -77,7 +78,7 @@ const serveBook = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null || books === undefined) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     await books.forgetReading(profileId, context.req.valid('param').bookId);
@@ -89,7 +90,7 @@ const serveBook = (app: OpenAPIHono, context: AppContext): void => {
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null || books === undefined) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     return context.json(
@@ -106,7 +107,7 @@ const serveBook = (app: OpenAPIHono, context: AppContext): void => {
         : await books.read(bookId);
 
     return found === null
-      ? context.json({ error: 'No such book.' }, 404)
+      ? context.json({ error: say('server.errors.noSuchBook') }, 404)
       : context.json(found, 200);
   });
 
@@ -118,11 +119,12 @@ const serveBook = (app: OpenAPIHono, context: AppContext): void => {
         : await books.readCover(bookId);
 
     if (cover === null) {
-      return context.json({ error: 'No cover for that book.' }, 404);
+      return context.json({ error: say('server.errors.noCoverForBook') }, 404);
     }
 
     return context.body(cover.bytes.slice().buffer, 200, {
       'content-type': cover.contentType,
+      // eslint-disable-next-line valence/no-hard-coded-strings -- an HTTP header value
       'cache-control': 'public, max-age=604800, immutable',
     });
   });
@@ -136,11 +138,12 @@ const serveBook = (app: OpenAPIHono, context: AppContext): void => {
         : await books.readPage(chapterId, page, width);
 
     if (read === null) {
-      return context.json({ error: 'No such page.' }, 404);
+      return context.json({ error: say('server.errors.noSuchPage') }, 404);
     }
 
     return context.body(read.bytes.slice().buffer, 200, {
       'content-type': read.contentType,
+      // eslint-disable-next-line valence/no-hard-coded-strings -- an HTTP header value
       'cache-control': 'private, max-age=604800, immutable',
     });
   });
@@ -153,7 +156,7 @@ const serveBook = (app: OpenAPIHono, context: AppContext): void => {
         : await books.readContents(chapterId);
 
     return contents === null
-      ? context.json({ error: 'That is not a book that reflows.' }, 404)
+      ? context.json({ error: say('server.errors.notAReflowingBook') }, 404)
       : context.json(contents, 200);
   });
 
@@ -170,7 +173,7 @@ const serveBook = (app: OpenAPIHono, context: AppContext): void => {
           );
 
     if (document === null) {
-      return context.json({ error: 'No such part of that book.' }, 404);
+      return context.json({ error: say('server.errors.noSuchPartOfBook') }, 404);
     }
 
     return context.body(document, 200, {
@@ -187,11 +190,12 @@ const serveBook = (app: OpenAPIHono, context: AppContext): void => {
         : await books.readResource(chapterId, context.req.valid('query').href);
 
     if (read === null) {
-      return context.json({ error: 'That is not in this book.' }, 404);
+      return context.json({ error: say('server.errors.notInThisBook') }, 404);
     }
 
     return context.body(read.bytes.slice().buffer, 200, {
       'content-type': read.contentType,
+      // eslint-disable-next-line valence/no-hard-coded-strings -- an HTTP header value
       'cache-control': 'private, max-age=604800, immutable',
     });
   });
@@ -211,23 +215,25 @@ const serveBook = (app: OpenAPIHono, context: AppContext): void => {
     const { bookId, chapterId } = context.req.valid('param');
 
     if (profileId === null || books === undefined) {
-      return context.json({ error: 'Nobody is signed in.' }, 404);
+      return context.json({ error: say('server.errors.notSignedIn') }, 404);
     }
 
     if (!(await bookInReach(context.req.raw.headers, bookId, chapterId))) {
-      return context.json({ error: 'No such chapter.' }, 404);
+      return context.json({ error: say('server.errors.noSuchChapter') }, 404);
     }
 
     const saved = await books.saveProgress(profileId, chapterId, context.req.valid('json'));
 
-    return saved ? context.body(null, 204) : context.json({ error: 'No such chapter.' }, 404);
+    return saved
+      ? context.body(null, 204)
+      : context.json({ error: say('server.errors.noSuchChapter') }, 404);
   });
 
   app.openapi(readReadingProgressRoute, async (context) => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null || books === undefined) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const { bookId } = context.req.valid('param');

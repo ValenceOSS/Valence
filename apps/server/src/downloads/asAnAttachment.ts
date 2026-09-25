@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+
 const UNSAFE = /[^\p{L}\p{N} ()'.,&!-]+/gu;
 
 const NOT_PLAIN = /[^\x20-\x7e]/gu;
@@ -13,8 +15,11 @@ const NOT_PLAIN = /[^\x20-\x7e]/gu;
  * @returns The value of a `Content-Disposition` header.
  */
 const asAnAttachment = (title: string): string => {
-  const cleaned = title.replace(UNSAFE, ' ').replace(/\s+/gu, ' ').trim() || 'Download';
-  const plain = cleaned.replace(NOT_PLAIN, '').replace(/\s+/gu, ' ').trim() || 'Download';
+  const cleaned =
+    title.replace(UNSAFE, ' ').replace(/\s+/gu, ' ').trim() || say('server.downloads.fallbackName');
+  const plain =
+    cleaned.replace(NOT_PLAIN, '').replace(/\s+/gu, ' ').trim() ||
+    say('server.downloads.fallbackName');
 
   return `attachment; filename="${plain}.mp4"; filename*=UTF-8''${encodeURIComponent(`${cleaned}.mp4`)}`;
 };

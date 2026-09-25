@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { isUnderAny } from '@ValenceServer/library/isUnderAny';
 import { isMediaFile } from './isMediaFile';
 import { resolveMetadata } from './MetadataProvider';
@@ -455,7 +456,7 @@ const scanLibrary = async ({
 
       if (probe.video === null) {
         failed += 1;
-        onProblem?.(file.path, 'No video stream.');
+        onProblem?.(file.path, say('server.issues.noVideoStream'));
 
         return false;
       }
@@ -501,13 +502,13 @@ const scanLibrary = async ({
                 rememberedExternalId: remembered,
               },
               (name, reason) =>
-                onProblem?.(file.path, `Metadata provider ${name} failed: ${reason}`),
+                onProblem?.(file.path, say('server.issues.providerFailedWith', { name, reason })),
             )
           : { title: placement?.title ?? nameOfFile(file.path), year: placement?.year ?? null };
 
       if (metadata === null) {
         failed += 1;
-        onProblem?.(file.path, 'No metadata provider could name this file.');
+        onProblem?.(file.path, say('server.issues.unnamed'));
 
         return false;
       }
@@ -516,10 +517,7 @@ const scanLibrary = async ({
 
       if (heldBefore !== null && (metadata.externalId ?? null) === null) {
         failed += 1;
-        onProblem?.(
-          file.path,
-          'The catalogue did not answer. Keeping what was already known about this file.',
-        );
+        onProblem?.(file.path, say('server.issues.catalogueSilentKept'));
 
         return false;
       }
@@ -568,7 +566,10 @@ const scanLibrary = async ({
     } catch (error) {
       failed += 1;
       failedInARow += 1;
-      onProblem?.(file.path, error instanceof Error ? describeFailure(error) : 'Probe failed.');
+      onProblem?.(
+        file.path,
+        error instanceof Error ? describeFailure(error) : say('server.issues.probeFailed'),
+      );
 
       if (failedInARow >= GIVE_UP_AFTER && !(await isReachable(transcoder))) {
         stopping = true;
@@ -586,26 +587,17 @@ const scanLibrary = async ({
   const hasGone = outcomes.some((gaveUp) => gaveUp);
 
   if (hasVanished) {
-    onProblem?.(
-      within,
-      'Nothing was found where this library reads from, so what it already held has been left alone. Check the folder is still there — a network share that is not mounted looks exactly like an empty one.',
-    );
+    onProblem?.(within, say('server.issues.libraryFolderEmpty'));
   }
 
   if (hasGone) {
-    onProblem?.(
-      within,
-      'The media service stopped answering, so this scan gave up rather than reporting the rest of the library as unreadable. Nothing was deleted, and the files it never reached are still waiting to be read.',
-    );
+    onProblem?.(within, say('server.issues.scanGaveUp'));
 
     return { added, updated, removed: 0, failed };
   }
 
   if (isCancelled?.() === true) {
-    onProblem?.(
-      within,
-      'This scan was stopped before it finished. What it had already read is kept; nothing was deleted, and the library still counts as unscanned.',
-    );
+    onProblem?.(within, say('server.issues.scanStopped'));
 
     return { added, updated, removed: 0, failed };
   }

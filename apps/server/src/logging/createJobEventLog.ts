@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import type { Logger } from './Logger';
 
 type JobEventLog = {
@@ -57,7 +58,7 @@ const createJobEventLog = (
       runs.set(jobId, run);
 
       const context = run.kind === null ? { jobId } : { jobId, jobKind: run.kind };
-      const name = run.kind === null ? 'A background job' : labelFor(run.kind);
+      const name = run.kind === null ? say('server.jobs.aBackgroundJob') : labelFor(run.kind);
 
       if (item !== null) {
         log.debug('jobs', `${phase}: ${item}`, { context });

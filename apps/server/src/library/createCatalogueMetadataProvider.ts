@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { wait } from '@ValenceCore/functions/wait';
 import { z } from 'zod';
 import { createExpiringCache } from './createExpiringCache';
@@ -519,6 +520,7 @@ const createCatalogueMetadataProvider = ({
       const response = await gate.run(() =>
         call(
           `${baseUrl}${path}?${parameters.toString()}`,
+          // eslint-disable-next-line valence/no-hard-coded-strings -- an Authorization header
           isToken ? { authorization: `Bearer ${key}` } : undefined,
         ),
       );
@@ -528,6 +530,7 @@ const createCatalogueMetadataProvider = ({
       }
 
       if (!isWorthRetrying(response.status) || attempt === RETRIES) {
+        // eslint-disable-next-line valence/no-hard-coded-strings -- a log line
         onProblem?.(`The catalogue answered ${response.status.toString()} for ${path}.`);
 
         return null;
@@ -1124,7 +1127,7 @@ const createCatalogueMetadataProvider = ({
             episodeNumber: next.episode_number,
             title:
               next.name === undefined || next.name === ''
-                ? `Episode ${next.episode_number.toString()}`
+                ? say('server.catalogue.episodeNumber', { number: next.episode_number.toString() })
                 : next.name,
             airDate: next.air_date,
           };
@@ -1159,7 +1162,9 @@ const createCatalogueMetadataProvider = ({
                   episodeNumber: episode.episode_number,
                   title:
                     episode.name === undefined || episode.name === ''
-                      ? `Episode ${episode.episode_number.toString()}`
+                      ? say('server.catalogue.episodeNumber', {
+                          number: episode.episode_number.toString(),
+                        })
                       : episode.name,
                   stillUrl: imageUrl(imageBaseUrl, episode.still_path, 'w780'),
                   overview:

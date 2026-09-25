@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import {
   adminOverviewRoute,
@@ -80,7 +81,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(searchCatalogueRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.override'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { query, kind } = context.req.valid('query');
@@ -90,7 +91,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(adminLogsRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'server.logs'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     if (logs === undefined) {
@@ -102,7 +103,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(adminLogHistogramRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'server.logs'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const query = context.req.valid('json');
@@ -121,7 +122,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(adminLogFacetsRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'server.logs'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     if (logs === undefined) {
@@ -133,7 +134,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(adminMeasureStorageRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'server.monitor'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const measured = await measureStorage?.();
@@ -151,7 +152,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(adminOverviewRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'server.monitor'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const [users, current, libraries, transcoderCapabilities, isReachable] = await Promise.all([
@@ -208,7 +209,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(adminSettingsRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'server.settings'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const patch = context.req.valid('json');
@@ -279,7 +280,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(adminSessionsRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'streaming.view'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const listeningOn = async (clientId: string) => {
@@ -317,7 +318,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(adminStopSessionRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'streaming.stop'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { clientId } = context.req.valid('param');
@@ -333,8 +334,8 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
       await playback.stop(transcoderSessionId, clientId);
     }
 
-    if (!presence.stop(clientId, 'This stream was stopped by an admin.')) {
-      return context.json({ error: 'That tab is not open.' }, 404);
+    if (!presence.stop(clientId, say('server.presence.stoppedByAdmin'))) {
+      return context.json({ error: say('server.errors.tabNotOpen') }, 404);
     }
 
     return context.body(null, 204);
@@ -342,21 +343,21 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(adminPauseSessionRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'streaming.pause'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { clientId } = context.req.valid('param');
     const entry = presence.list().find((candidate) => candidate.clientId === clientId);
 
     if (entry === undefined) {
-      return context.json({ error: 'That tab is not open.' }, 404);
+      return context.json({ error: say('server.errors.tabNotOpen') }, 404);
     }
 
     if (
-      !presence.pause(clientId, 'This stream was paused by an admin.') &&
+      !presence.pause(clientId, say('server.presence.pausedByAdmin')) &&
       music?.devices.order(clientId, { kind: 'pause' }) !== true
     ) {
-      return context.json({ error: 'That tab is not watching anything.' }, 409);
+      return context.json({ error: say('server.errors.tabNotWatching') }, 409);
     }
 
     return context.body(null, 204);
@@ -364,13 +365,13 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(adminMessageSessionRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'streaming.message'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { clientId } = context.req.valid('param');
 
     if (!presence.message(clientId, context.req.valid('json').text)) {
-      return context.json({ error: 'That tab is not open.' }, 404);
+      return context.json({ error: say('server.errors.tabNotOpen') }, 404);
     }
 
     return context.body(null, 204);
@@ -378,14 +379,14 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(adminResumeSessionRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'streaming.pause'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { clientId } = context.req.valid('param');
     const isListening = music?.devices.order(clientId, { kind: 'resume' }) === true;
 
     if (!presence.resume(clientId) && !isListening) {
-      return context.json({ error: 'That tab is not open.' }, 404);
+      return context.json({ error: say('server.errors.tabNotOpen') }, 404);
     }
 
     return context.body(null, 204);
@@ -393,15 +394,24 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(adminJobDefinitionsRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
-    return context.json({ definitions: [...jobDefinitions] }, 200);
+    return context.json(
+      {
+        definitions: jobDefinitions.map(({ labelKey, descriptionKey, ...definition }) => ({
+          ...definition,
+          label: say(labelKey),
+          description: say(descriptionKey),
+        })),
+      },
+      200,
+    );
   });
 
   app.openapi(adminRunJobRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { kind } = context.req.valid('param');
@@ -413,23 +423,23 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
       definition?.destructive === true &&
       !(await requires(context.req.raw.headers, 'jobs.runDestructive'))
     ) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     if (definition !== undefined && !definition.needsLibrary) {
       const asked = await maintenance.run(kind);
 
       return asked.jobId === null
-        ? context.json({ error: 'Nothing is running that under any id.' }, 404)
+        ? context.json({ error: say('server.errors.nothingRunningThat') }, 404)
         : context.json({ jobId: asked.jobId, state: asked.state }, 202);
     }
 
     if (libraryId === undefined) {
-      return context.json({ error: 'That job needs a library.' }, 404);
+      return context.json({ error: say('server.errors.jobNeedsLibrary') }, 404);
     }
 
     if (definition?.takesParts === true && parts === undefined) {
-      return context.json({ error: 'Say which parts of the library to clear.' }, 400);
+      return context.json({ error: say('server.errors.sayWhichPartsToClear') }, 400);
     }
 
     const libraryRunners: Record<string, () => Promise<{ jobId: string; state: string } | null>> = {
@@ -445,13 +455,13 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     const runner = libraryRunners[kind];
 
     if (runner === undefined) {
-      return context.json({ error: 'No such job kind.' }, 404);
+      return context.json({ error: say('server.errors.noSuchJobKind') }, 404);
     }
 
     const queued = await runner();
 
     if (queued === null) {
-      return context.json({ error: 'No such library.' }, 404);
+      return context.json({ error: say('server.errors.noSuchLibrary') }, 404);
     }
 
     return context.json(queued, 202);
@@ -459,19 +469,19 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(adminCancelJobRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { jobId } = context.req.valid('param');
 
     return (await cancelJob(jobId))
       ? context.json({ jobId }, 202)
-      : context.json({ error: 'Nothing is running under that id.' }, 404);
+      : context.json({ error: say('server.errors.nothingRunningUnderId') }, 404);
   });
 
   app.openapi(adminQueueConcurrencyRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { concurrency } = context.req.valid('json');
@@ -479,7 +489,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     try {
       await controlQueue?.setConcurrency(concurrency);
     } catch {
-      return context.json({ error: 'The media service could not be reached.' }, 502);
+      return context.json({ error: say('server.errors.mediaServiceUnreachable') }, 502);
     }
 
     return context.json({ concurrency }, 200);
@@ -487,13 +497,13 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(adminQueuePauseRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     try {
       await controlQueue?.pause();
     } catch {
-      return context.json({ error: 'The media service could not be reached.' }, 502);
+      return context.json({ error: say('server.errors.mediaServiceUnreachable') }, 502);
     }
 
     return context.json({ isPaused: true as const }, 200);
@@ -501,13 +511,13 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(adminQueueResumeRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     try {
       await controlQueue?.resume();
     } catch {
-      return context.json({ error: 'The media service could not be reached.' }, 502);
+      return context.json({ error: say('server.errors.mediaServiceUnreachable') }, 502);
     }
 
     return context.json({ isPaused: false as const }, 200);
@@ -515,7 +525,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(adminQueueRunNowRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { jobId } = context.req.valid('param');
@@ -523,15 +533,15 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     try {
       return (await controlQueue?.runNow(jobId)) === true
         ? context.json({ jobId }, 202)
-        : context.json({ error: 'No such job is waiting.' }, 404);
+        : context.json({ error: say('server.errors.noSuchJobWaiting') }, 404);
     } catch {
-      return context.json({ error: 'The media service could not be reached.' }, 502);
+      return context.json({ error: say('server.errors.mediaServiceUnreachable') }, 502);
     }
   });
 
   app.openapi(adminJobHistoryRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     if (jobHistory === undefined) {
@@ -557,7 +567,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(adminJobStatsRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const sinceMs = context.req.valid('query').sinceMs ?? Date.now() - 7 * 86_400_000;
@@ -567,19 +577,19 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(adminJobRunRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const found = await jobHistory?.readOne(context.req.valid('param').jobRunId);
 
     return found === undefined || found === null
-      ? context.json({ error: 'That run is not in the history.' }, 404)
+      ? context.json({ error: say('server.errors.runNotInHistory') }, 404)
       : context.json(found, 200);
   });
 
   app.openapi(adminJobHistoryIssuesRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     if (jobHistory === undefined) {
@@ -593,7 +603,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(adminJobSchedulesRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'jobs.schedule'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     return context.json(
@@ -604,7 +614,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(adminAddJobTriggerRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'jobs.schedule'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { kind } = context.req.valid('param');
@@ -612,7 +622,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     const added = await schedules.add(kind, trigger);
 
     if (added === null) {
-      return context.json({ error: 'No such job kind.' }, 404);
+      return context.json({ error: say('server.errors.noSuchJobKind') }, 404);
     }
 
     return context.json(added, 201);
@@ -620,13 +630,13 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(adminRemoveJobTriggerRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'jobs.schedule'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { kind, triggerId } = context.req.valid('param');
 
     if (!(await schedules.remove(kind, triggerId))) {
-      return context.json({ error: 'No such trigger.' }, 404);
+      return context.json({ error: say('server.errors.noSuchTrigger') }, 404);
     }
 
     return context.body(null, 204);
@@ -634,7 +644,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(adminMonitorHistoryRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'server.monitor'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     if (resourceHistory === undefined) {

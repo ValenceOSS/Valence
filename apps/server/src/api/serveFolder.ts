@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import {
   createFolderRoute,
   listFoldersRoute,
@@ -20,7 +21,7 @@ const serveFolder = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(searchFoldersRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'library.create'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { words, within } = context.req.valid('query');
@@ -28,12 +29,12 @@ const serveFolder = (app: OpenAPIHono, context: AppContext): void => {
 
     return found.kind === 'found'
       ? context.json(found.search, 200)
-      : context.json({ error: 'Give the whole path, starting from the root.' }, 400);
+      : context.json({ error: say('server.errors.giveWholePath') }, 400);
   });
 
   app.openapi(listFoldersRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'library.create'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const found = await listFolders(folderDisk, context.req.valid('query').path);
@@ -42,17 +43,17 @@ const serveFolder = (app: OpenAPIHono, context: AppContext): void => {
       case 'listed':
         return context.json(found.listing, 200);
       case 'relative':
-        return context.json({ error: 'Give the whole path, starting from the root.' }, 400);
+        return context.json({ error: say('server.errors.giveWholePath') }, 400);
       case 'missing':
-        return context.json({ error: 'There is no such folder.' }, 404);
+        return context.json({ error: say('server.errors.noSuchFolder') }, 404);
       case 'unreadable':
-        return context.json({ error: 'Valence is not allowed to read that folder.' }, 403);
+        return context.json({ error: say('server.errors.mayNotReadFolder') }, 403);
     }
   });
 
   app.openapi(createFolderRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'library.create'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { path, name } = context.req.valid('json');
@@ -62,26 +63,22 @@ const serveFolder = (app: OpenAPIHono, context: AppContext): void => {
       case 'created':
         return context.json(made.folder, 201);
       case 'relative':
-        return context.json({ error: 'Give the whole path, starting from the root.' }, 400);
+        return context.json({ error: say('server.errors.giveWholePath') }, 400);
       case 'badName':
-        return context.json(
-          { error: 'A folder’s name is a single name, with no slashes in it.' },
-          400,
-        );
+        return context.json({ error: say('server.errors.folderNameSingle') }, 400);
       case 'exists':
-        return context.json({ error: 'There is already something called that.' }, 409);
+        return context.json({ error: say('server.errors.alreadyCalledThat') }, 409);
       case 'missing':
-        return context.json({ error: 'There is no such folder to make it in.' }, 404);
+        return context.json({ error: say('server.errors.noFolderToMakeItIn') }, 404);
       case 'readOnly':
         return context.json(
           {
-            error:
-              'That disk is read-only to Valence. Give it read-write access to make folders there.',
+            error: say('server.errors.readOnlyMakeFolders'),
           },
           403,
         );
       case 'denied':
-        return context.json({ error: 'Valence is not allowed to make a folder there.' }, 403);
+        return context.json({ error: say('server.errors.mayNotMakeFolder') }, 403);
     }
   });
 };

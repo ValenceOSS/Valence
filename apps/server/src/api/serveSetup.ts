@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { suggestTrustedOrigins } from '@ValenceServer/setup/suggestTrustedOrigins';
 import { setupStatusRoute, setupCompleteRoute } from '@ValenceServer/routes/SetupRoute';
 import type { AppContext } from '@ValenceServer/api/AppContext';
@@ -28,7 +29,7 @@ const serveSetup = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(setupCompleteRoute, async (context) => {
     if ((await countUsers()) > 0) {
-      return context.json({ error: 'Setup has already been completed.' }, 409);
+      return context.json({ error: say('server.errors.setupDone') }, 409);
     }
 
     const { admin, trustedOrigins, cookieSecure } = context.req.valid('json');
@@ -39,7 +40,7 @@ const serveSetup = (app: OpenAPIHono, context: AppContext): void => {
     });
 
     if (!created.ok) {
-      return context.json({ error: 'The administrator account could not be created.' }, 400);
+      return context.json({ error: say('server.errors.administratorNotCreated') }, 400);
     }
 
     const ownerAccountId = await promoteToAdmin(admin.email);

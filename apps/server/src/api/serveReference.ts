@@ -14,14 +14,17 @@ const serveReference = (app: OpenAPIHono, context: AppContext): void => {
   app.doc('/api/openapi.json', {
     openapi: '3.1.0',
     info: {
+      // eslint-disable-next-line valence/no-hard-coded-strings -- the OpenAPI document, which the rule skips in *Route.ts
       title: 'Valence API',
       version: SERVER_VERSION,
+      // eslint-disable-next-line valence/no-hard-coded-strings -- the OpenAPI document, which the rule skips in *Route.ts
       description: 'Self-hosted streaming platform API.',
     },
   });
 
   app.get(
     '/api/reference',
+    // eslint-disable-next-line valence/no-hard-coded-strings -- the OpenAPI document, which the rule skips in *Route.ts
     apiReference({ spec: { url: '/api/openapi.json' }, pageTitle: 'Valence API' }),
   );
 };

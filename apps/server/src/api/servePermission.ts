@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { listMyPermissionsRoute } from '@ValenceServer/routes/PermissionRoute';
 import { ADMINISTRATOR } from '@ValenceContracts/schemas/Permission';
 import { narrowToKey } from '@ValenceServer/auth/narrowToKey';
@@ -19,7 +20,7 @@ const servePermission = (app: OpenAPIHono, context: AppContext): void => {
     const session = await readSessionOnce(auth, headers);
 
     if (session === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const resolved = await permissions.resolve(session.user.id);

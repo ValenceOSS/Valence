@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+
 type NamedItem = {
   title: string;
   seriesTitle: string | null;
@@ -18,7 +20,12 @@ const nameOfItem = (item: NamedItem): string => {
     const season = item.seasonNumber.toString().padStart(2, '0');
     const episode = item.episodeNumber.toString().padStart(2, '0');
 
-    return `${item.seriesTitle} S${season}E${episode} — ${item.title}`;
+    return say('server.webhook.episodeName', {
+      series: item.seriesTitle,
+      season,
+      episode,
+      title: item.title,
+    });
   }
 
   return item.year === null ? item.title : `${item.title} (${item.year.toString()})`;

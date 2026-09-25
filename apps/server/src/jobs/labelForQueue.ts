@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { JOB_DEFINITIONS, scheduleQueueNameFor } from './jobDefinitions';
 
 /**
@@ -14,7 +15,7 @@ const labelForQueue = (queueName: string): string => {
       candidate.kind === queueName || scheduleQueueNameFor(candidate.kind) === queueName,
   );
 
-  return definition?.label ?? queueName;
+  return definition === undefined ? queueName : say(definition.labelKey);
 };
 
 export { labelForQueue };

@@ -35,7 +35,8 @@ const queryFor = (kind: MusicRequestKind, described: JsonValue | null): string |
   const album = DeezerAlbumSchema.safeParse(described);
 
   return album.success
-    ? `releasegroup:${quotedForMusicBrainz(album.data.title)} AND artist:${quotedForMusicBrainz(album.data.artist.name)}`
+    ? // eslint-disable-next-line valence/no-hard-coded-strings -- MusicBrainz query syntax
+      `releasegroup:${quotedForMusicBrainz(album.data.title)} AND artist:${quotedForMusicBrainz(album.data.artist.name)}`
     : null;
 };
 

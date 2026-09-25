@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { wouldGainNothing } from '@ValenceCore/functions/wouldGainNothing';
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
 import type { ReencodeRefusal, ReencodeSettings } from '@ValenceContracts/schemas/Reencode';
@@ -41,29 +42,28 @@ const refuseReencode = ({
   if (isAlreadyUnderWay) {
     return {
       code: 'AlreadyUnderWay',
-      detail: 'This one is already queued or being worked on.',
+      detail: say('server.reencode.alreadyQueued'),
     };
   }
 
   if (isBeingWatched) {
     return {
       code: 'BeingWatched',
-      detail: 'Somebody is watching this now. Replacing a file underneath a stream would end it.',
+      detail: say('server.reencode.watchedNow'),
     };
   }
 
   if (!isFolderWritable) {
     return {
       code: 'FolderIsReadOnly',
-      detail:
-        'Valence cannot write to the folder this file is in. Media is usually mounted read only, which is sensible and means this cannot work until it is mounted read and write.',
+      detail: say('server.reencode.folderReadOnly'),
     };
   }
 
   if (item.subtitleStreams.length > 0 && CANNOT_CARRY_SUBTITLES.has(item.container.toLowerCase())) {
     return {
       code: 'SubtitlesWouldNotSurvive',
-      detail: `This file carries subtitles that a ${item.container} file cannot hold, and the container is never changed. Re-encoding it would lose them.`,
+      detail: say('server.reencode.subtitlesWouldBeLost', { container: item.container }),
     };
   }
 
@@ -72,8 +72,8 @@ const refuseReencode = ({
       code: 'AlreadyAsSmall',
       detail:
         settings.mode === 'keep'
-          ? 'This would be the same picture in the same codec as the file itself, so it would be a second copy of what is already there.'
-          : 'This file is already at or below what was chosen, so re-encoding it would throw away a generation of quality and save nothing.',
+          ? say('server.reencode.sameAsItIs')
+          : say('server.reencode.alreadySmaller'),
     };
   }
 

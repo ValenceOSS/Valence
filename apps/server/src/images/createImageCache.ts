@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { createHash } from 'node:crypto';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
@@ -57,7 +58,10 @@ const createImageCache = ({ directory, fetchImpl, onProblem }: CreateImageCacheO
         const response = await call(url);
 
         if (!response.ok) {
-          onProblem?.(url, `The catalogue answered ${response.status.toString()}.`);
+          onProblem?.(
+            url,
+            say('server.issues.catalogueAnswered', { status: response.status.toString() }),
+          );
 
           return null;
         }
@@ -65,7 +69,7 @@ const createImageCache = ({ directory, fetchImpl, onProblem }: CreateImageCacheO
         const contentType = response.headers.get('content-type') ?? 'image/jpeg';
 
         if (!IMAGE_TYPES.has(contentType.split(';')[0]?.trim() ?? '')) {
-          onProblem?.(url, `That is not an image: ${contentType}.`);
+          onProblem?.(url, say('server.issues.notAnImage', { type: contentType }));
 
           return null;
         }
@@ -75,7 +79,9 @@ const createImageCache = ({ directory, fetchImpl, onProblem }: CreateImageCacheO
         if (body.byteLength > MAX_BYTES) {
           onProblem?.(
             url,
-            `That image is ${Math.round(body.byteLength / 1024 / 1024).toString()}MB, which is too large to be artwork.`,
+            say('server.issues.imageTooLarge', {
+              megabytes: Math.round(body.byteLength / 1024 / 1024).toString(),
+            }),
           );
 
           return null;
@@ -87,7 +93,10 @@ const createImageCache = ({ directory, fetchImpl, onProblem }: CreateImageCacheO
 
         return { body, contentType };
       } catch (error) {
-        onProblem?.(url, error instanceof Error ? describeFailure(error) : 'Unreachable.');
+        onProblem?.(
+          url,
+          error instanceof Error ? describeFailure(error) : say('server.issues.unreachable'),
+        );
 
         return null;
       }

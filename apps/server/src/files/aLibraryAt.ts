@@ -9,6 +9,7 @@ import type { Library } from '@ValenceContracts/schemas/Library';
  */
 const aLibraryAt = (path: string, id = '3f2504e0-4f89-41d3-9a0c-0305e82c3301'): Library => ({
   id,
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a test fixture
   name: 'Films',
   kind: 'movies',
   path,

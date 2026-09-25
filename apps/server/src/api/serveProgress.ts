@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import {
   listProgressRoute,
   recordProgressRoute,
@@ -20,7 +21,7 @@ const serveProgress = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     return context.json({ progress: await progress.list(profileId) }, 200);
@@ -30,7 +31,7 @@ const serveProgress = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const { mediaId } = context.req.valid('param');
@@ -38,7 +39,7 @@ const serveProgress = (app: OpenAPIHono, context: AppContext): void => {
     const item = await library.getMedia(mediaId);
 
     if (item === null) {
-      return context.json({ error: 'No such media item.' }, 404);
+      return context.json({ error: say('server.errors.noSuchMediaItem') }, 404);
     }
 
     if ((item.extraKind ?? null) !== null) {
@@ -79,7 +80,7 @@ const serveProgress = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     await progress.forget(profileId, context.req.valid('param').mediaId);

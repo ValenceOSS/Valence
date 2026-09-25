@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { randomUUID } from 'node:crypto';
 import { isImageSubtitle } from '@ValenceCore/functions/isImageSubtitle';
 import { selectAudioStream } from '@ValenceCore/functions/describeTrack';
@@ -188,7 +189,7 @@ const createDownloadService = ({
   const describe = async (row: typeof preparedDownload.$inferSelect): Promise<Download> =>
     asDownload(
       row,
-      (await media.titleOf(row.mediaItemId)) ?? 'Something',
+      (await media.titleOf(row.mediaItemId)) ?? say('server.defaults.something'),
       await media.seriesOf(row.mediaItemId),
     );
 
@@ -205,7 +206,7 @@ const createDownloadService = ({
 
       const original = {
         quality: 'original' as const,
-        label: 'Original',
+        label: say('server.downloads.original'),
         meaning: describeQualityMeaning('original'),
         bytes: estimateDownloadBytes({
           quality: 'original',
@@ -309,7 +310,7 @@ const createDownloadService = ({
           .set({
             ...(clientId === null ? {} : { askedFromClientId: clientId }),
             ...(refused
-              ? { state: 'failed', failure: `The media service would not start it: ${file}` }
+              ? { state: 'failed', failure: say('server.downloads.wouldNotStart', { file }) }
               : {
                   renditionId: file.id,
                   state: file.isReady ? 'ready' : 'preparing',
@@ -344,7 +345,7 @@ const createDownloadService = ({
           bytesPerSecond: refused || file.isReady ? null : (file.bytesPerSecond ?? null),
           secondsLeft: refused || file.isReady ? null : (file.secondsLeft ?? null),
           sizeBytes: refused ? null : (file.sizeBytes ?? null),
-          ...(refused ? { failure: `The media service would not start it: ${file}` } : {}),
+          ...(refused ? { failure: say('server.downloads.wouldNotStart', { file }) } : {}),
           ...(!refused && file.isReady ? { readyAt: new Date() } : {}),
         })
         .returning();
@@ -459,14 +460,14 @@ const createDownloadService = ({
           asked === null || file === null
             ? {
                 state: 'failed',
-                failure: 'It is no longer in the library, so it cannot be prepared.',
+                failure: say('server.downloads.gone'),
                 bytesPerSecond: null,
                 secondsLeft: null,
               }
             : problem !== null
               ? {
                   state: 'failed',
-                  failure: 'The media service could not prepare it. Ask again to try once more.',
+                  failure: say('server.downloads.notPrepared'),
                   bytesPerSecond: null,
                   secondsLeft: null,
                 }
@@ -536,7 +537,10 @@ const createDownloadService = ({
 
       return file === null
         ? null
-        : { file, title: (await media.titleOf(row.mediaItemId)) ?? 'Download' };
+        : {
+            file,
+            title: (await media.titleOf(row.mediaItemId)) ?? say('server.downloads.fallbackName'),
+          };
     },
 
     forget: async (profileId, id) => {

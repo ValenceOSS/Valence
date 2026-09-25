@@ -14,6 +14,7 @@ type RoleGranting = {
 const TEST_ORIGIN = 'http://localhost:8420';
 
 const TEST_CREDENTIALS = {
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a test fixture
   name: 'Marques',
   email: 'marques@valence.local',
   password: 'a-long-enough-password',

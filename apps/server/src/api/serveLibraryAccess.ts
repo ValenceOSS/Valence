@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import {
   readExceptionsOnRoute,
@@ -63,7 +64,7 @@ const serveLibraryAccess = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     if ((await library.list(asTheServer)).every((shelf) => shelf.id !== libraryId)) {
-      return context.json({ error: 'No such library.' }, 404);
+      return context.json({ error: say('server.errors.noSuchLibrary') }, 404);
     }
 
     await library.allowLibrary(userId, libraryId);
@@ -80,7 +81,7 @@ const serveLibraryAccess = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     if ((await library.list(asTheServer)).every((shelf) => shelf.id !== libraryId)) {
-      return context.json({ error: 'No such library.' }, 404);
+      return context.json({ error: say('server.errors.noSuchLibrary') }, 404);
     }
 
     await library.refuseLibrary(userId, libraryId);
@@ -97,7 +98,7 @@ const serveLibraryAccess = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     if ((await library.list(asTheServer)).every((shelf) => shelf.id !== libraryId)) {
-      return context.json({ error: 'No such library.' }, 404);
+      return context.json({ error: say('server.errors.noSuchLibrary') }, 404);
     }
 
     const { maximumAge, allowsUnrated } = context.req.valid('json');
@@ -133,7 +134,7 @@ const serveLibraryAccess = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(readExceptionsOnRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'account.manage'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { kind, subjectId } = context.req.valid('param');
@@ -153,7 +154,7 @@ const serveLibraryAccess = (app: OpenAPIHono, context: AppContext): void => {
     const actor = await readAccount(context.req.raw.headers);
 
     if (!(await library.setException(userId, { kind, subjectId }, effect, actor?.id ?? null))) {
-      return context.json({ error: 'No such thing to make an exception of.' }, 404);
+      return context.json({ error: say('server.errors.noSuchException') }, 404);
     }
 
     return context.body(null, 204);

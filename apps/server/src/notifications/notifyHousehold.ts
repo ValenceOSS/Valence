@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { sendWebPush } from './sendWebPush';
 import type { NotificationEvent } from '@ValenceContracts/schemas/Notification';
 import type { NotificationStore } from './NotificationStore';
@@ -76,7 +77,7 @@ const notifyHousehold = async ({
       }
     }
   } catch (error) {
-    onProblem?.(error instanceof Error ? error.message : 'The household could not be told.');
+    onProblem?.(error instanceof Error ? error.message : say('server.issues.householdNotTold'));
   }
 };
 

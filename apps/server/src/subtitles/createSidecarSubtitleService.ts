@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { readdir, readFile } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
 import { toWebVtt } from '@ValenceCore/functions/toWebVtt';
@@ -113,7 +114,10 @@ const createSidecarSubtitleService = ({
 
       return { text: decoded.text };
     } catch (error) {
-      onProblem?.(track.path, error instanceof Error ? error.message : 'Unreadable.');
+      onProblem?.(
+        track.path,
+        error instanceof Error ? error.message : say('server.issues.unreadable'),
+      );
 
       return null;
     }
@@ -164,10 +168,7 @@ const createSidecarSubtitleService = ({
       }
 
       for (const picture of found.pictures) {
-        onProblem?.(
-          picture.path,
-          'A subtitle held as pictures rather than text, which cannot be shown yet.',
-        );
+        onProblem?.(picture.path, say('server.issues.pictureSubtitle'));
       }
 
       const tracks: SubtitleTrack[] = found.tracks.map((track) => ({

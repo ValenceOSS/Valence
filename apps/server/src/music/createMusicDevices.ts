@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { createDeviceRegistry } from '@ValenceServer/devices/createDeviceRegistry';
 import type {
   MusicCommand,
@@ -59,7 +60,7 @@ const createMusicDevices = ({ presence, onChanged }: MusicDevicesOptions): Music
         kind: 'music',
         command,
         fromClientId: 'server',
-        fromLabel: 'An administrator',
+        fromLabel: say('server.defaults.anAdministrator'),
       }),
 
     command: (listener, fromClientId, toClientId, command) =>

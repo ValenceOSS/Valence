@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import {
   listHiddenRoute,
   hideMediaRoute,
@@ -23,7 +24,7 @@ const serveHidden = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     return context.json({ hidden: await hiding.list(profileId) }, 200);
@@ -33,13 +34,13 @@ const serveHidden = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const { mediaId } = context.req.valid('param');
 
     if (!(await hiding.hide(profileId, { kind: 'item', subjectId: mediaId }))) {
-      return context.json({ error: 'No such item.' }, 404);
+      return context.json({ error: say('server.errors.noSuchItem') }, 404);
     }
 
     return context.body(null, 204);
@@ -49,7 +50,7 @@ const serveHidden = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     await hiding.show(profileId, { kind: 'item', subjectId: context.req.valid('param').mediaId });
@@ -61,13 +62,13 @@ const serveHidden = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const { seriesId } = context.req.valid('param');
 
     if (!(await hiding.hide(profileId, { kind: 'series', subjectId: seriesId }))) {
-      return context.json({ error: 'No such programme.' }, 404);
+      return context.json({ error: say('server.errors.noSuchProgramme') }, 404);
     }
 
     return context.body(null, 204);
@@ -77,7 +78,7 @@ const serveHidden = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     await hiding.show(profileId, {
@@ -92,7 +93,7 @@ const serveHidden = (app: OpenAPIHono, context: AppContext): void => {
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null || viewer.kind !== 'account' || viewer.profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const { libraryId } = context.req.valid('param');
@@ -100,11 +101,11 @@ const serveHidden = (app: OpenAPIHono, context: AppContext): void => {
     const refused = await library.isLibraryOutOfReach(viewer.accountId, libraryId);
 
     if (refused && !viewer.isAdministrator) {
-      return context.json({ error: 'No such library.' }, 404);
+      return context.json({ error: say('server.errors.noSuchLibrary') }, 404);
     }
 
     if (!(await hiding.hide(viewer.profileId, { kind: 'library', subjectId: libraryId }))) {
-      return context.json({ error: 'No such library.' }, 404);
+      return context.json({ error: say('server.errors.noSuchLibrary') }, 404);
     }
 
     return context.body(null, 204);
@@ -114,7 +115,7 @@ const serveHidden = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     await hiding.show(profileId, {

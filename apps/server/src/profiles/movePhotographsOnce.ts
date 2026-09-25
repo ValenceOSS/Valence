@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+
 type PhotographFileSystem = {
   list: (directory: string) => Promise<string[]>;
   ensure: (directory: string) => Promise<void>;
@@ -59,7 +61,7 @@ const movePhotographsOnce = async ({
 
       moved += 1;
     } catch (error) {
-      onProblem?.(name, error instanceof Error ? error.message : 'It could not be moved.');
+      onProblem?.(name, error instanceof Error ? error.message : say('server.issues.notMoved'));
     }
   }
 

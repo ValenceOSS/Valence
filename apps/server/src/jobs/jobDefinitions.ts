@@ -1,3 +1,4 @@
+import type { StringKey } from '@ValenceI18n/StringKey';
 import { z } from 'zod';
 import { LibraryPartSchema } from '@ValenceContracts/schemas/LibraryPart';
 import {
@@ -31,8 +32,8 @@ const RESET_LIBRARY_JOB = 'library.reset';
 
 type JobDefinition = {
   kind: string;
-  label: string;
-  description: string;
+  labelKey: StringKey;
+  descriptionKey: StringKey;
   needsLibrary: boolean;
   destructive: boolean;
   takesParts: boolean;
@@ -42,9 +43,8 @@ type JobDefinition = {
 const JOB_DEFINITIONS: JobDefinition[] = [
   {
     kind: SCAN_LIBRARY_JOB,
-    label: 'Scan for changes',
-    description:
-      'Finds new, changed and removed files, then makes whatever they are still missing.',
+    labelKey: 'server.jobs.scanLibrary.label',
+    descriptionKey: 'server.jobs.scanLibrary.description',
     needsLibrary: true,
     destructive: false,
     takesParts: false,
@@ -52,9 +52,8 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: REGENERATE_PREVIEWS_JOB,
-    label: 'Generate missing previews',
-    description:
-      "Renders preview clips for items that have none, using each library's forced audio language. Skips items that already have one.",
+    labelKey: 'server.jobs.regeneratePreviews.label',
+    descriptionKey: 'server.jobs.regeneratePreviews.description',
     needsLibrary: true,
     destructive: false,
     takesParts: false,
@@ -62,9 +61,8 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: REGENERATE_TRICKPLAY_JOB,
-    label: 'Generate missing scrub previews',
-    description:
-      'Renders the strip of images shown when scrubbing the seek bar, for items that have none. Skips items that already have one.',
+    labelKey: 'server.jobs.regenerateTrickplay.label',
+    descriptionKey: 'server.jobs.regenerateTrickplay.description',
     needsLibrary: true,
     destructive: false,
     takesParts: false,
@@ -72,9 +70,8 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: FETCH_LOGOS_JOB,
-    label: 'Fetch missing logos',
-    description:
-      "Collects the lettering each title is written in, so a hero shows the programme's own logo rather than its name set in the interface's typeface. Skips items that already have one, and items no catalogue has named.",
+    labelKey: 'server.jobs.fetchLogos.label',
+    descriptionKey: 'server.jobs.fetchLogos.description',
     needsLibrary: true,
     destructive: false,
     takesParts: false,
@@ -82,9 +79,8 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: DETECT_SEGMENTS_JOB,
-    label: 'Detect missing intros and outros',
-    description:
-      'Finds the intro and the recap in each episode by comparing the audio across a season, so viewers can skip them. Skips seasons already done.',
+    labelKey: 'server.jobs.detectSegments.label',
+    descriptionKey: 'server.jobs.detectSegments.description',
     needsLibrary: true,
     destructive: false,
     takesParts: false,
@@ -92,9 +88,8 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: RESET_LIBRARY_JOB,
-    label: 'Reset and rebuild',
-    description:
-      'Deletes every item in every library and starts again from nothing: scanning, then everything each item needs made for it. Hours of work on a large library.',
+    labelKey: 'server.jobs.resetLibrary.label',
+    descriptionKey: 'server.jobs.resetLibrary.description',
     needsLibrary: true,
     destructive: true,
     takesParts: false,
@@ -102,9 +97,8 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: CLEAR_LIBRARY_PARTS_JOB,
-    label: 'Clear and fetch again',
-    description:
-      'Erases the chosen parts of a library, such as descriptions, artwork, trailers or preview clips, then fetches or makes them again from scratch. Everything else is left alone.',
+    labelKey: 'server.jobs.clearLibraryParts.label',
+    descriptionKey: 'server.jobs.clearLibraryParts.description',
     needsLibrary: true,
     destructive: true,
     takesParts: true,
@@ -112,9 +106,8 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: CLEANUP_IMAGE_CACHE_JOB,
-    label: 'Clean up cached images',
-    description:
-      'Removes cached artwork and profile photos nothing references any more, and the kept pages of books nobody has opened for 30 days.',
+    labelKey: 'server.jobs.cleanupImageCache.label',
+    descriptionKey: 'server.jobs.cleanupImageCache.description',
     needsLibrary: false,
     destructive: false,
     takesParts: false,
@@ -122,9 +115,8 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: CLEANUP_ARTEFACT_CACHE_JOB,
-    label: 'Clean up cached previews',
-    description:
-      'Removes preview clips and scrub previews nothing addresses any more, freeing the space left behind by a reset or a change to how they are made.',
+    labelKey: 'server.jobs.cleanupArtefactCache.label',
+    descriptionKey: 'server.jobs.cleanupArtefactCache.description',
     needsLibrary: false,
     destructive: false,
     takesParts: false,
@@ -132,9 +124,8 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: PRUNE_HISTORY_JOB,
-    label: 'Prune old viewing history',
-    description:
-      'Forgets viewings older than a year. What each profile has watched recently stays; the rest is removed, because this log grows every evening and nobody reads back that far.',
+    labelKey: 'server.jobs.pruneHistory.label',
+    descriptionKey: 'server.jobs.pruneHistory.description',
     needsLibrary: false,
     destructive: true,
     takesParts: false,
@@ -142,8 +133,8 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: CLEANUP_SESSIONS_JOB,
-    label: 'Clean up sessions',
-    description: 'Clears out expired sign-in sessions and device-authorization codes.',
+    labelKey: 'server.jobs.cleanupSessions.label',
+    descriptionKey: 'server.jobs.cleanupSessions.description',
     needsLibrary: false,
     destructive: false,
     takesParts: false,
@@ -151,9 +142,8 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: CLEAR_OLD_DOWNLOADS_JOB,
-    label: 'Clear out old downloads',
-    description:
-      'Deletes files prepared for keeping once they have gone unasked for as long as the server keeps them. A device that already fetched one keeps its copy.',
+    labelKey: 'server.jobs.clearOldDownloads.label',
+    descriptionKey: 'server.jobs.clearOldDownloads.description',
     needsLibrary: false,
     destructive: true,
     takesParts: false,
@@ -161,8 +151,8 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: CHECK_CATALOGUE_CONNECTIVITY_JOB,
-    label: 'Check catalogue connectivity',
-    description: 'Verifies the configured catalogue key can actually reach the catalogue.',
+    labelKey: 'server.jobs.checkCatalogueConnectivity.label',
+    descriptionKey: 'server.jobs.checkCatalogueConnectivity.description',
     needsLibrary: false,
     destructive: false,
     takesParts: false,
@@ -170,9 +160,8 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: CHECK_TRANSCODER_JOB,
-    label: 'Check the transcoder',
-    description:
-      'Asks the transcoder whether it is still answering, so an operator hears about it going quiet from a notification rather than from somebody pressing play.',
+    labelKey: 'server.jobs.checkTranscoder.label',
+    descriptionKey: 'server.jobs.checkTranscoder.description',
     needsLibrary: false,
     destructive: false,
     takesParts: false,
@@ -180,9 +169,8 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: CHECK_DISK_SPACE_JOB,
-    label: 'Check disk space',
-    description:
-      'Asks how much room is left on the filesystems Valence writes to, so a disk about to fill is something an operator hears about rather than something a scan discovers.',
+    labelKey: 'server.jobs.checkDiskSpace.label',
+    descriptionKey: 'server.jobs.checkDiskSpace.description',
     needsLibrary: false,
     destructive: false,
     takesParts: false,
@@ -190,9 +178,8 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: CHECK_REQUESTS_JOB,
-    label: 'Check the requests service',
-    description:
-      'Asks the requests service whether it is still answering, and whether the VPN it downloads through is up, so an operator hears about either going quiet from a notification.',
+    labelKey: 'server.jobs.checkRequests.label',
+    descriptionKey: 'server.jobs.checkRequests.description',
     needsLibrary: false,
     destructive: false,
     takesParts: false,
@@ -200,9 +187,8 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: REFRESH_REQUESTS_JOB,
-    label: 'Bring requests up to date with the catalogue',
-    description:
-      'Asks the catalogue again about every film not yet fetched and every series still running, so a new episode is wanted the day it is announced and a film is held until the release date it has now.',
+    labelKey: 'server.jobs.refreshRequests.label',
+    descriptionKey: 'server.jobs.refreshRequests.description',
     needsLibrary: false,
     destructive: false,
     takesParts: false,
@@ -210,9 +196,8 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: SEND_MEDIA_DIGEST_JOB,
-    label: 'Tell the household about new media',
-    description:
-      'Collects what has been imported since the last time and says it once, so a scan of four hundred files is one notification rather than four hundred.',
+    labelKey: 'server.jobs.sendMediaDigest.label',
+    descriptionKey: 'server.jobs.sendMediaDigest.description',
     needsLibrary: false,
     destructive: false,
     takesParts: false,
@@ -220,9 +205,8 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: PRUNE_LOGS_JOB,
-    label: 'Prune old log records',
-    description:
-      'Forgets log records past the age their level is kept for, so errors outlive the ordinary chatter. A retention policy nobody enforces is a table that grows until the disk fills.',
+    labelKey: 'server.jobs.pruneLogs.label',
+    descriptionKey: 'server.jobs.pruneLogs.description',
     needsLibrary: false,
     destructive: false,
     takesParts: false,
@@ -230,9 +214,8 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: PRUNE_WEBHOOK_DELIVERIES_JOB,
-    label: 'Prune old webhook deliveries',
-    description:
-      'Forgets what was sent to webhook subscribers more than a week ago. Recent deliveries stay, so a receiver that has started failing is still visible; the rest goes, because this table gains a row for every event sent to everybody.',
+    labelKey: 'server.jobs.pruneWebhookDeliveries.label',
+    descriptionKey: 'server.jobs.pruneWebhookDeliveries.description',
     needsLibrary: false,
     destructive: false,
     takesParts: false,
@@ -240,9 +223,8 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: PRUNE_JOB_HISTORY_JOB,
-    label: 'Prune old job history',
-    description:
-      'Forgets job runs older than thirty days, and the per-item issues recorded against them.',
+    labelKey: 'server.jobs.pruneJobHistory.label',
+    descriptionKey: 'server.jobs.pruneJobHistory.description',
     needsLibrary: false,
     destructive: false,
     takesParts: false,
@@ -250,9 +232,8 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: REENCODE_JOB,
-    label: 'Work through the re-encoding queue',
-    description:
-      'Produces the encodes an administrator asked for, one file at a time. Each replacement waits for somebody to watch it and say it is fine before the original is disposed of, so this pauses rather than continuing once too many are waiting to be judged.',
+    labelKey: 'server.jobs.reencode.label',
+    descriptionKey: 'server.jobs.reencode.description',
     needsLibrary: false,
     destructive: true,
     takesParts: false,
@@ -260,8 +241,8 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: PRUNE_RESOURCE_HISTORY_JOB,
-    label: 'Prune old server load history',
-    description: 'Forgets server load samples older than a week.',
+    labelKey: 'server.jobs.pruneResourceHistory.label',
+    descriptionKey: 'server.jobs.pruneResourceHistory.description',
     needsLibrary: false,
     destructive: false,
     takesParts: false,

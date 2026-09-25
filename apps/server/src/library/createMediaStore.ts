@@ -160,6 +160,7 @@ const createMediaStore = (
               .onConflictDoUpdate({
                 target: [series.libraryId, series.key],
                 set: {
+                   
                   title: sql`case when ${series.externalId} is null or excluded."externalId" is not distinct from ${series.externalId} then excluded."title" else ${series.title} end`,
                   externalId: sql`coalesce(${series.externalId}, excluded."externalId")`,
                   updatedAt: new Date(),
@@ -293,6 +294,7 @@ const createMediaStore = (
         .from(series)
         .where(and(eq(series.libraryId, libraryId), inArray(series.id, ids)))
         .orderBy(
+           
           sql`case when ${series.externalId} is null then 1 else 0 end`,
           series.addedAt,
           series.id,
@@ -309,32 +311,29 @@ const createMediaStore = (
       if (losers.length > 0) {
         const kept = survivor.id;
 
-        await db
-          .delete(rating)
-          .where(
-            and(
-              inArray(rating.seriesId, losers),
-              sql`exists (select 1 from ${rating} as kept where kept."profileId" = ${rating.profileId} and kept."seriesId" = ${kept})`,
-            ),
-          );
+        await db.delete(rating).where(
+          and(
+            inArray(rating.seriesId, losers),
+             
+            sql`exists (select 1 from ${rating} as kept where kept."profileId" = ${rating.profileId} and kept."seriesId" = ${kept})`,
+          ),
+        );
 
-        await db
-          .delete(hidden)
-          .where(
-            and(
-              inArray(hidden.seriesId, losers),
-              sql`exists (select 1 from ${hidden} as kept where kept."profileId" = ${hidden.profileId} and kept."seriesId" = ${kept})`,
-            ),
-          );
+        await db.delete(hidden).where(
+          and(
+            inArray(hidden.seriesId, losers),
+             
+            sql`exists (select 1 from ${hidden} as kept where kept."profileId" = ${hidden.profileId} and kept."seriesId" = ${kept})`,
+          ),
+        );
 
-        await db
-          .delete(ageException)
-          .where(
-            and(
-              inArray(ageException.seriesId, losers),
-              sql`exists (select 1 from ${ageException} as kept where kept."userId" = ${ageException.userId} and kept."seriesId" = ${kept})`,
-            ),
-          );
+        await db.delete(ageException).where(
+          and(
+            inArray(ageException.seriesId, losers),
+             
+            sql`exists (select 1 from ${ageException} as kept where kept."userId" = ${ageException.userId} and kept."seriesId" = ${kept})`,
+          ),
+        );
 
         await db.update(rating).set({ seriesId: kept }).where(inArray(rating.seriesId, losers));
         await db.update(hidden).set({ seriesId: kept }).where(inArray(hidden.seriesId, losers));
@@ -363,14 +362,13 @@ const createMediaStore = (
   },
 
   forgetEmptySeries: async (libraryId) => {
-    await db
-      .delete(series)
-      .where(
-        and(
-          eq(series.libraryId, libraryId),
-          sql`not exists (select 1 from ${mediaItem} where ${mediaItem.seriesId} = ${series.id})`,
-        ),
-      );
+    await db.delete(series).where(
+      and(
+        eq(series.libraryId, libraryId),
+         
+        sql`not exists (select 1 from ${mediaItem} where ${mediaItem.seriesId} = ${series.id})`,
+      ),
+    );
   },
 
   linkExtras: async (libraryId, links) => {

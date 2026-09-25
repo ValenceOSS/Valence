@@ -1,9 +1,8 @@
+import { say } from '@ValenceI18n/say';
 import { describeDevice } from '@ValenceServer/account/describeDevice';
 import type { WebhookOccurrence } from '@ValenceServer/events/EventBus';
 
 const SIGN_IN_PATH = '/sign-in';
-
-const REFUSED = 'those details were not accepted.';
 
 type SignInAttempt = {
   path: string;
@@ -50,10 +49,10 @@ const describeSignInAttempt = (attempt: SignInAttempt): WebhookOccurrence | null
   return {
     event: 'auth.failed',
     data: {
-      identifier: attempt.identifier ?? 'somebody who gave no address',
+      identifier: attempt.identifier ?? say('server.signIn.noAddress'),
       deviceLabel,
       address: attempt.address,
-      reason: REFUSED,
+      reason: say('server.signIn.refused'),
     },
   };
 };

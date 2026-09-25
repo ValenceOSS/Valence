@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import {
   addPlaylistEntriesRoute,
@@ -37,10 +38,6 @@ type MusicRouteOptions = {
   requires: (headers: Headers, permission: Permission) => Promise<boolean>;
 };
 
-const NOBODY = { error: 'Nobody is signed in.' } as const;
-
-const NO_PROFILE = { error: 'Choose a profile first.' } as const;
-
 /**
  * The profile a viewer is acting as, where they are signed in and acting as one.
  *
@@ -69,7 +66,7 @@ const registerMusicRoutes = (
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const { order, limit } = context.req.valid('query');
@@ -89,7 +86,7 @@ const registerMusicRoutes = (
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const { favourites, limit } = context.req.valid('query');
@@ -109,13 +106,13 @@ const registerMusicRoutes = (
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const found = await music.library.readAlbum(viewer, context.req.valid('param').albumId);
 
     return found === null
-      ? context.json({ error: 'No such album.' }, 404)
+      ? context.json({ error: say('server.errors.noSuchAlbum') }, 404)
       : context.json(found, 200);
   });
 
@@ -123,14 +120,14 @@ const registerMusicRoutes = (
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const path = await music.library.readAlbumArtwork(viewer, context.req.valid('param').albumId);
     const bytes = path === null ? null : await music.readImage(path);
 
     if (bytes === null) {
-      return context.json({ error: 'No cover for that album.' }, 404);
+      return context.json({ error: say('server.errors.noCoverForAlbum') }, 404);
     }
 
     return context.body(bytes.slice().buffer, 200, {
@@ -143,13 +140,13 @@ const registerMusicRoutes = (
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const found = await music.library.readArtist(viewer, context.req.valid('param').artistId);
 
     return found === null
-      ? context.json({ error: 'No such artist.' }, 404)
+      ? context.json({ error: say('server.errors.noSuchArtist') }, 404)
       : context.json(found, 200);
   });
 
@@ -157,14 +154,14 @@ const registerMusicRoutes = (
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const path = await music.library.readArtistImage(viewer, context.req.valid('param').artistId);
     const bytes = path === null ? null : await music.readImage(path);
 
     if (bytes === null) {
-      return context.json({ error: 'No picture of that artist.' }, 404);
+      return context.json({ error: say('server.errors.noPictureOfArtist') }, 404);
     }
 
     return context.body(bytes.slice().buffer, 200, {
@@ -177,21 +174,21 @@ const registerMusicRoutes = (
     const profileId = profileOf(await viewerOf(context.req.raw.headers));
 
     if (profileId === null) {
-      return context.json(NO_PROFILE, 401);
+      return context.json({ error: say('server.errors.chooseProfileFirst') }, 401);
     }
 
     const kept = await music.library.keepArtist(profileId, context.req.valid('param').artistId);
 
     return kept
       ? context.json({ isFavourite: true }, 200)
-      : context.json({ error: 'No such artist.' }, 404);
+      : context.json({ error: say('server.errors.noSuchArtist') }, 404);
   });
 
   app.openapi(unfollowArtistRoute, async (context) => {
     const profileId = profileOf(await viewerOf(context.req.raw.headers));
 
     if (profileId === null) {
-      return context.json(NO_PROFILE, 401);
+      return context.json({ error: say('server.errors.chooseProfileFirst') }, 401);
     }
 
     await music.library.dropArtist(profileId, context.req.valid('param').artistId);
@@ -203,7 +200,7 @@ const registerMusicRoutes = (
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     return context.json(
@@ -216,7 +213,7 @@ const registerMusicRoutes = (
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     return context.json({ tracks: await music.library.listLiked(viewer) }, 200);
@@ -226,7 +223,7 @@ const registerMusicRoutes = (
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const typed = context.req.valid('query').q.trim().toLowerCase();
@@ -248,13 +245,13 @@ const registerMusicRoutes = (
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const lyrics = await music.library.readLyrics(viewer, context.req.valid('param').trackId);
 
     return lyrics === null
-      ? context.json({ error: 'No lyrics for that track.' }, 404)
+      ? context.json({ error: say('server.errors.noLyrics') }, 404)
       : context.json(lyrics, 200);
   });
 
@@ -262,13 +259,13 @@ const registerMusicRoutes = (
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const file = await music.library.readTrackFile(viewer, context.req.valid('param').trackId);
 
     if (file === null) {
-      return context.json({ error: 'No such track.' }, 404);
+      return context.json({ error: say('server.errors.noSuchTrack') }, 404);
     }
 
     const streamed = await music.stream(
@@ -278,7 +275,7 @@ const registerMusicRoutes = (
     );
 
     if (streamed === null) {
-      return context.json({ error: 'That track could not be read.' }, 404);
+      return context.json({ error: say('server.errors.trackUnreadable') }, 404);
     }
 
     const headers: Record<string, string> = {
@@ -302,7 +299,7 @@ const registerMusicRoutes = (
     const listener = deviceOwnerOf(await viewerOf(context.req.raw.headers));
 
     if (listener === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     return context.json({ devices: music.devices.list(listener) }, 200);
@@ -312,21 +309,21 @@ const registerMusicRoutes = (
     const listener = deviceOwnerOf(await viewerOf(context.req.raw.headers));
 
     if (listener === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const { clientId, nowPlaying } = context.req.valid('json');
 
     return music.devices.report(listener, clientId, nowPlaying)
       ? context.json({ ok: true }, 200)
-      : context.json({ error: 'That device is not connected.' }, 404);
+      : context.json({ error: say('server.errors.deviceNotConnected') }, 404);
   });
 
   app.openapi(commandDeviceRoute, async (context) => {
     const listener = deviceOwnerOf(await viewerOf(context.req.raw.headers));
 
     if (listener === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const { fromClientId, command } = context.req.valid('json');
@@ -339,14 +336,14 @@ const registerMusicRoutes = (
 
     return sent
       ? context.json({ ok: true }, 200)
-      : context.json({ error: 'That device is not one of yours, or is not there.' }, 404);
+      : context.json({ error: say('server.errors.deviceNotYours') }, 404);
   });
 
   app.openapi(listPlaylistsRoute, async (context) => {
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     return context.json({ playlists: await music.playlists.list(viewer) }, 200);
@@ -356,25 +353,27 @@ const registerMusicRoutes = (
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (profileOf(viewer) === null || viewer === null) {
-      return context.json(NO_PROFILE, 401);
+      return context.json({ error: say('server.errors.chooseProfileFirst') }, 401);
     }
 
     const made = await music.playlists.create(viewer, context.req.valid('json'));
 
-    return made === null ? context.json(NO_PROFILE, 401) : context.json(made, 201);
+    return made === null
+      ? context.json({ error: say('server.errors.chooseProfileFirst') }, 401)
+      : context.json(made, 201);
   });
 
   app.openapi(readPlaylistRoute, async (context) => {
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const found = await music.playlists.read(viewer, context.req.valid('param').playlistId);
 
     return found === null
-      ? context.json({ error: 'No such playlist.' }, 404)
+      ? context.json({ error: say('server.errors.noSuchPlaylist') }, 404)
       : context.json(found, 200);
   });
 
@@ -382,7 +381,7 @@ const registerMusicRoutes = (
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const changed = await music.playlists.update(
@@ -392,7 +391,7 @@ const registerMusicRoutes = (
     );
 
     return changed === null
-      ? context.json({ error: 'That playlist is not yours to change.' }, 404)
+      ? context.json({ error: say('server.errors.playlistNotYoursToChange') }, 404)
       : context.json(changed, 200);
   });
 
@@ -400,7 +399,7 @@ const registerMusicRoutes = (
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const removed = await music.playlists.remove(
@@ -411,14 +410,14 @@ const registerMusicRoutes = (
 
     return removed
       ? context.json({ removed: true }, 200)
-      : context.json({ error: 'That playlist is not yours to delete.' }, 404);
+      : context.json({ error: say('server.errors.playlistNotYoursToDelete') }, 404);
   });
 
   app.openapi(addPlaylistEntriesRoute, async (context) => {
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const added = await music.playlists.add(
@@ -428,7 +427,7 @@ const registerMusicRoutes = (
     );
 
     return added === null
-      ? context.json({ error: 'That playlist is not yours to change.' }, 404)
+      ? context.json({ error: say('server.errors.playlistNotYoursToChange') }, 404)
       : context.json({ added }, 200);
   });
 
@@ -436,7 +435,7 @@ const registerMusicRoutes = (
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const { playlistId, entryId } = context.req.valid('param');
@@ -449,14 +448,14 @@ const registerMusicRoutes = (
 
     return moved
       ? context.json({ moved: true }, 200)
-      : context.json({ error: 'That entry could not be moved.' }, 404);
+      : context.json({ error: say('server.errors.entryNotMoved') }, 404);
   });
 
   app.openapi(dropPlaylistEntryRoute, async (context) => {
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const { playlistId, entryId } = context.req.valid('param');
@@ -464,7 +463,7 @@ const registerMusicRoutes = (
 
     return removed
       ? context.json({ removed: true }, 200)
-      : context.json({ error: 'That entry is not in a playlist of yours.' }, 404);
+      : context.json({ error: say('server.errors.entryNotInYourPlaylist') }, 404);
   });
 };
 

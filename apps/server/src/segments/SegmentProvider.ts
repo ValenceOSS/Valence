@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import type { MediaSegment, SegmentKind } from '@ValenceContracts/schemas/MediaSegment';
 import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
 
@@ -105,7 +106,10 @@ const resolveSegments = async (
       found = await provider.detect(group, onItemDone, correlationId);
       answered = true;
     } catch (error) {
-      onProblem?.(provider.name, error instanceof Error ? error.message : 'Detection failed.');
+      onProblem?.(
+        provider.name,
+        error instanceof Error ? error.message : say('server.issues.detectionFailed'),
+      );
 
       continue;
     }

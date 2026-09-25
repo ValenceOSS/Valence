@@ -240,7 +240,9 @@ const createDatabaseMusicStore = (db: ValenceDatabase): MusicStore & EnrichingSt
         ? {
             lyrics: sql<
               string | null
+               
             >`case when ${musicTrack.lyricsLookedUpAt} is not null then ${musicTrack.lyrics} else null end`,
+             
             lyricsAreSynced: sql<boolean>`case when ${musicTrack.lyricsLookedUpAt} is not null then ${musicTrack.lyricsAreSynced} else false end`,
           }
         : ownLyrics;
@@ -374,6 +376,7 @@ const createDatabaseMusicStore = (db: ValenceDatabase): MusicStore & EnrichingSt
       .select({
         id: musicArtist.id,
         name: musicArtist.name,
+         
         hasImage: sql<boolean>`${musicArtist.imagePath} is not null`,
       })
       .from(musicArtist)
@@ -409,6 +412,7 @@ const createDatabaseMusicStore = (db: ValenceDatabase): MusicStore & EnrichingSt
         title: mediaItem.title,
         durationSeconds: mediaItem.durationSeconds,
         albumTitle: musicAlbum.title,
+         
         artistName: sql<string>`coalesce((select a.name from ${musicTrackArtist} ta join ${musicArtist} a on a.id = ta."artistId" where ta."mediaItemId" = ${mediaItem.id} order by ta.position limit 1), '')`,
       })
       .from(musicTrack)

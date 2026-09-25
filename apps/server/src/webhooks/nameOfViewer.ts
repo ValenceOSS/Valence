@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+
 type NamedViewer = {
   accountName: string | null;
   profileName: string | null;
@@ -23,7 +25,9 @@ const nameOfViewer = (viewer: NamedViewer): string => {
     return viewer.accountName;
   }
 
-  return host === null ? 'Somebody with a share link' : `A guest of ${host}`;
+  return host === null
+    ? say('server.webhook.shareViewer')
+    : say('server.webhook.guestOf', { host });
 };
 
 export type { NamedViewer };

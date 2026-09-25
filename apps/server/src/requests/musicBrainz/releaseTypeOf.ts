@@ -1,8 +1,10 @@
 import type { ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 
 const PRIMARY_TYPES: ReadonlyMap<string, ReleaseType> = new Map([
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a release type MusicBrainz sends
   ['Album', 'album'],
   ['EP', 'ep'],
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a release type MusicBrainz sends
   ['Single', 'single'],
 ]);
 

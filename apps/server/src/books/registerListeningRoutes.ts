@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { isAudiobookFormat } from '@ValenceContracts/schemas/Book';
 import {
   forgetListeningRoute,
@@ -19,8 +20,6 @@ type ListeningRouteOptions = {
   isInReach: (headers: Headers, bookId: string, chapterId?: string) => Promise<boolean>;
   streamFile: (path: string, range: string | null) => Promise<TranscoderStreamedFile | null>;
 };
-
-const NOBODY = { error: 'Nobody is signed in.' } as const;
 
 const SOUNDS: Partial<Record<BookFormat, string>> = {
   m4b: 'audio/mp4',
@@ -51,7 +50,7 @@ const registerListeningRoutes = (
     const { bookId, chapterId } = context.req.valid('param');
 
     if ((await viewerOf(context.req.raw.headers)) === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const file = (await isInReach(context.req.raw.headers, bookId, chapterId))
@@ -59,13 +58,13 @@ const registerListeningRoutes = (
       : null;
 
     if (file === null || !isAudiobookFormat(file.format)) {
-      return context.json({ error: 'No such track to listen to.' }, 404);
+      return context.json({ error: say('server.errors.noSuchTrackToListenTo') }, 404);
     }
 
     const streamed = await streamFile(file.path, context.req.header('range') ?? null);
 
     if (streamed === null) {
-      return context.json({ error: 'That track could not be read.' }, 404);
+      return context.json({ error: say('server.errors.trackUnreadable') }, 404);
     }
 
     const headers: Record<string, string> = {
@@ -91,7 +90,7 @@ const registerListeningRoutes = (
     const where = context.req.valid('json');
 
     if (profileId === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const isSaved =
@@ -100,7 +99,7 @@ const registerListeningRoutes = (
 
     return isSaved
       ? context.body(null, 204)
-      : context.json({ error: 'No such track in that book.' }, 404);
+      : context.json({ error: say('server.errors.noSuchTrackInBook') }, 404);
   });
 
   app.openapi(readListeningRoute, async (context) => {
@@ -108,7 +107,7 @@ const registerListeningRoutes = (
     const { bookId } = context.req.valid('param');
 
     if (profileId === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     return context.json(
@@ -126,7 +125,7 @@ const registerListeningRoutes = (
     const profileId = await profileOf(context.req.raw.headers);
 
     if (viewer === null || profileId === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     return context.json(
@@ -141,7 +140,7 @@ const registerListeningRoutes = (
     const profileId = await profileOf(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json(NOBODY, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     await books.forgetListening(profileId, context.req.valid('param').bookId);

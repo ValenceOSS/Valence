@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
 import { FromClientSchema } from '@ValenceContracts/schemas/Realtime';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
@@ -81,8 +82,6 @@ const asPayload = (event: PresenceControl): JsonValue => {
   return { kind: event.kind, reason: event.reason };
 };
 
-const UNNAMED = 'Someone';
-
 const readMessage = (raw: string) => {
   try {
     return FromClientSchema.safeParse(JsonValueSchema.parse(JSON.parse(raw)));
@@ -135,7 +134,7 @@ const createRealtimeHandler = ({
           ? (who.guestOf ?? null)
           : ((await presence?.nameOf(who.accountId, chosenProfileId)) ?? null);
 
-      return myName ?? UNNAMED;
+      return myName ?? say('server.defaults.someone');
     };
 
     const write = (message: FromServer) => {
@@ -234,7 +233,7 @@ const createRealtimeHandler = ({
           profileName: named,
           guestOf: who.guestOf ?? null,
           viaShare: who.viaShare ?? null,
-          deviceLabel: deviceLabel ?? 'Unknown device',
+          deviceLabel: deviceLabel ?? say('server.defaults.unknownDevice'),
           clientKind: clientKind ?? null,
           address: who.address ?? null,
           send: (event) => {

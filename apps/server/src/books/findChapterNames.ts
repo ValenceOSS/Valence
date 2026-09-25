@@ -98,6 +98,7 @@ const findChapterNames = async (
     });
     const read = await readFrom(
       ask,
+      // eslint-disable-next-line valence/no-hard-coded-strings -- a URL
       `${MANGADEX}/manga/${match.id}/feed?${feed.toString()}`,
       FeedAnswerSchema,
     );

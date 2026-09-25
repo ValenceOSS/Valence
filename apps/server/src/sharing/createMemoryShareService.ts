@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { randomUUID } from 'node:crypto';
 import { isShareLive } from '@ValenceContracts/schemas/Share';
 import { hashShareToken, makeShareToken } from './shareToken';
@@ -119,7 +120,7 @@ const createMemoryShareService = (
         state.shares.map((held) => ({
           ...describe(held, new Date()),
           createdBy: held.createdBy,
-          createdByName: state.names?.[held.createdBy] ?? 'Somebody',
+          createdByName: state.names?.[held.createdBy] ?? say('server.defaults.somebody'),
         })),
       ),
 

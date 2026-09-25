@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { WebhookPayloadSchema } from '@ValenceContracts/schemas/Webhook';
 import { deliverWebhook } from './deliverWebhook';
 import type { WebhookFetcher } from './deliverWebhook';
@@ -36,7 +37,7 @@ const runWebhookDelivery = async ({
     await subscriptions.recordAttempt(subscriptionId, {
       ok: false,
       status: null,
-      error: 'The queued event could not be read.',
+      error: say('server.webhooks.eventUnreadable'),
     });
 
     return true;

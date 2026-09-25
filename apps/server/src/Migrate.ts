@@ -34,6 +34,7 @@ const run = async (): Promise<void> => {
 
   const readAppliedStamps = async (): Promise<number[]> => {
     try {
+       
       const applied = await db.execute(sql`select created_at from drizzle.__drizzle_migrations`);
 
       return applied.rows.map((row) => Number(AppliedMigrationSchema.parse(row).created_at));

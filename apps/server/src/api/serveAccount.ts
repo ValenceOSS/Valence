@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
 import { describeDevice } from '@ValenceServer/account/describeDevice';
 import { checkAccountAction } from '@ValenceServer/auth/checkAccountAction';
@@ -52,7 +53,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(listAccountsRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'account.manage'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const listed = (await listUsers?.()) ?? [];
@@ -85,7 +86,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     const actor = await readActor(context.req.raw.headers);
 
     if (actor === null || !actor.permissions.has('account.ban')) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { userId } = context.req.valid('param');
@@ -109,15 +110,12 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
       const administrators = await permissions.countAdministrators();
 
       if (administrators <= 1) {
-        return context.json(
-          { error: 'That would leave nobody able to administer this server.' },
-          400,
-        );
+        return context.json({ error: say('server.errors.wouldLeaveNoAdministrator') }, 400);
       }
     }
 
     if (!(await banAccount?.(userId, reason))) {
-      return context.json({ error: 'No such account.' }, 404);
+      return context.json({ error: say('server.errors.noSuchAccount') }, 404);
     }
 
     return context.body(null, 204);
@@ -127,7 +125,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     const actor = await readActor(context.req.raw.headers);
 
     if (actor === null || !actor.permissions.has('account.ban')) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { userId } = context.req.valid('param');
@@ -147,7 +145,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     if (!(await unbanAccount?.(userId))) {
-      return context.json({ error: 'No such account.' }, 404);
+      return context.json({ error: say('server.errors.noSuchAccount') }, 404);
     }
 
     return context.body(null, 204);
@@ -157,7 +155,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     const actor = await readActor(context.req.raw.headers);
 
     if (actor === null || !actor.permissions.has('account.manage')) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { userId } = context.req.valid('param');
@@ -180,15 +178,12 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
       const administrators = await permissions.countAdministrators();
 
       if (administrators <= 1) {
-        return context.json(
-          { error: 'That would leave nobody able to administer this server.' },
-          400,
-        );
+        return context.json({ error: say('server.errors.wouldLeaveNoAdministrator') }, 400);
       }
     }
 
     if (!(await removeAccount?.(userId))) {
-      return context.json({ error: 'No such account.' }, 404);
+      return context.json({ error: say('server.errors.noSuchAccount') }, 404);
     }
 
     return context.body(null, 204);
@@ -196,13 +191,13 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(inviteAccountRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'account.invite'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const invited = await inviteAccount?.(context.req.valid('json'));
 
     if (invited === undefined || invited === null) {
-      return context.json({ error: 'That address is already in use.' }, 400);
+      return context.json({ error: say('server.errors.addressInUse') }, 400);
     }
 
     return context.json(
@@ -226,7 +221,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     const actor = await readActor(context.req.raw.headers);
 
     if (actor === null || !actor.permissions.has('account.manage')) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { userId } = context.req.valid('param');
@@ -255,11 +250,11 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     });
 
     if (changed === undefined || changed === 'missing') {
-      return context.json({ error: 'No such account.' }, 404);
+      return context.json({ error: say('server.errors.noSuchAccount') }, 404);
     }
 
     if (changed === 'taken') {
-      return context.json({ error: 'That address is already in use.' }, 400);
+      return context.json({ error: say('server.errors.addressInUse') }, 400);
     }
 
     return context.body(null, 204);
@@ -269,7 +264,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     const actor = await readActor(context.req.raw.headers);
 
     if (actor === null || !actor.permissions.has('account.security')) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { userId } = context.req.valid('param');
@@ -295,7 +290,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     const changed = await resetAccountPassword?.(userId, password);
 
     if (changed === undefined || !changed) {
-      return context.json({ error: 'No such account.' }, 404);
+      return context.json({ error: say('server.errors.noSuchAccount') }, 404);
     }
 
     return context.body(null, 204);
@@ -303,7 +298,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(listAccountSessionsRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'account.security'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { userId } = context.req.valid('param');
@@ -327,7 +322,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     const actor = await readActor(context.req.raw.headers);
 
     if (actor === null || !actor.permissions.has('account.security')) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { userId } = context.req.valid('param');
@@ -358,7 +353,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     const actor = await readActor(context.req.raw.headers);
 
     if (actor === null || !actor.permissions.has('account.security')) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { userId, sessionId } = context.req.valid('param');
@@ -389,7 +384,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     const actor = await readActor(context.req.raw.headers);
 
     if (actor === null || !actor.permissions.has('account.profiles')) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { userId } = context.req.valid('param');
@@ -418,7 +413,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     });
 
     if (changed === undefined || !changed) {
-      return context.json({ error: 'No such account.' }, 404);
+      return context.json({ error: say('server.errors.noSuchAccount') }, 404);
     }
 
     await announceProfiles(userId);
@@ -428,7 +423,7 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
 
   app.put('/api/admin/accounts/:userId/photo', tooBigToRead(), async (context) => {
     if (!(await requires(context.req.raw.headers, 'account.profiles'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const actor = await readActor(context.req.raw.headers);

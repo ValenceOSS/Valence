@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { randomUUID } from 'node:crypto';
 import { rm, stat } from 'node:fs/promises';
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
@@ -256,7 +257,7 @@ const createDatabaseReencodeService = ({
     const found = await media.findForReencode(row.mediaItemId);
 
     return {
-      title: found?.title ?? 'A file that is no longer in the library',
+      title: found?.title ?? say('server.reencode.gone'),
       seriesTitle: found?.seriesTitle ?? null,
       durationSeconds: found?.item.durationSeconds ?? 1,
     };
@@ -332,6 +333,7 @@ const createDatabaseReencodeService = ({
       .update(reencodeRequest)
       .set({ state: 'encoding', startedAt: new Date(), failure: null })
       .where(
+         
         sql`${reencodeRequest.id} = (
           select ${reencodeRequest.id} from ${reencodeRequest}
           where ${reencodeRequest.state} = 'queued'
@@ -369,6 +371,7 @@ const createDatabaseReencodeService = ({
     for (const row of stranded) {
       onProblem?.(
         'reencode',
+        // eslint-disable-next-line valence/no-hard-coded-strings -- a log line
         `took ${row.originalPath} back up, since this server stopped while it was being worked on`,
       );
     }
@@ -378,7 +381,7 @@ const createDatabaseReencodeService = ({
     const found = await media.findForReencode(row.mediaItemId);
 
     if (found === null) {
-      await failWith(row.id, 'That file is no longer in the library.');
+      await failWith(row.id, say('server.reencode.fileGone'));
 
       return;
     }
@@ -386,13 +389,13 @@ const createDatabaseReencodeService = ({
     const paths = reencodePathsFor(found.libraryPath, found.path, row.id);
 
     if (!(await canWriteInto(paths.directory))) {
-      await failWith(row.id, 'Valence cannot write to the folder this file is in.');
+      await failWith(row.id, say('server.reencode.cannotWrite'));
 
       return;
     }
 
     if (isBeingWatched(row.mediaItemId)) {
-      await failWith(row.id, 'Somebody started watching it, so it was left alone.');
+      await failWith(row.id, say('server.reencode.beingWatched'));
 
       return;
     }
@@ -443,7 +446,7 @@ const createDatabaseReencodeService = ({
     }
 
     if ((answer.failure ?? null) !== null) {
-      await failWith(row.id, answer.failure ?? 'The encode failed.');
+      await failWith(row.id, answer.failure ?? say('server.reencode.failed'));
 
       return;
     }
@@ -573,7 +576,7 @@ const createDatabaseReencodeService = ({
         if (facts === null) {
           refused.push({
             mediaId: candidate.mediaId,
-            refusal: { code: 'NotFound', detail: 'That file could not be read.' },
+            refusal: { code: 'NotFound', detail: say('server.reencode.unreadable') },
           });
 
           continue;

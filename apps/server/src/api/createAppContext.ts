@@ -1,3 +1,5 @@
+import type { StringKey } from '@ValenceI18n/StringKey';
+import { say } from '@ValenceI18n/say';
 import { z } from '@hono/zod-openapi';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import { readViewer } from '@ValenceServer/visibility/readViewer';
@@ -130,11 +132,11 @@ const NOT_STOOD: CatalogueStanding = {
   requestState: null,
 };
 
-const LIBRARY_KIND_WORDS: Record<LibraryKind, string> = {
-  movies: 'films',
-  shows: 'series',
-  music: 'music',
-  books: 'books',
+const NO_LIBRARY_FOR: Record<LibraryKind, StringKey> = {
+  movies: 'server.errors.noLibraryForFilms',
+  shows: 'server.errors.noLibraryForSeries',
+  music: 'server.errors.noLibraryForMusic',
+  books: 'server.errors.noLibraryForBooks',
 };
 
 const within = async <Answer>(work: Promise<Answer>, fallback: Answer): Promise<Answer> =>
@@ -151,17 +153,15 @@ const within = async <Answer>(work: Promise<Answer>, fallback: Answer): Promise<
  * What to tell somebody whose action on an account was refused.
  */
 const describeAccountRefusal = (refusal: AccountActionRefusal): string =>
-  refusal === 'self'
-    ? 'You cannot do that to your own account.'
-    : 'That account is at or above your own rank.';
+  refusal === 'self' ? say('server.errors.notToOwnAccount') : say('server.errors.accountOutranks');
 
 /**
  * What to tell somebody whose change to a role was refused.
  */
 const describeRefusal = (refusal: RoleChangeRefusal): string =>
   refusal === 'outranked'
-    ? 'That role is at or above your own.'
-    : 'You cannot grant a permission you do not hold.';
+    ? say('server.errors.roleOutranks')
+    : say('server.errors.cannotGrantUnheld');
 
 /**
  * Builds the Valence HTTP application.
@@ -283,7 +283,12 @@ const createAppContext = (options: CreateAppOptions) => {
 
     void events.publish({
       event: 'account.roleChanged',
-      data: { accountId: userId, name: named?.name ?? 'Somebody', role, change },
+      data: {
+        accountId: userId,
+        name: named?.name ?? say('server.defaults.somebody'),
+        role,
+        change,
+      },
     });
   };
 
@@ -412,7 +417,7 @@ const createAppContext = (options: CreateAppOptions) => {
     }
 
     if (await isOutOfReach(session.user.id, subject)) {
-      return context.json({ error: 'No such item.' }, 404);
+      return context.json({ error: say('server.errors.noSuchItem') }, 404);
     }
 
     return next();
@@ -427,39 +432,37 @@ const createAppContext = (options: CreateAppOptions) => {
   const sayWhyUnchanged = (change: Exclude<LibraryEntryChange, { kind: 'changed' }>) => {
     switch (change.kind) {
       case 'outside':
-        return { error: 'That is not inside a library.', status: 403 } as const;
+        return { error: say('server.errors.notInsideLibrary'), status: 403 } as const;
       case 'root':
         return {
-          error: 'That is a library’s own folder. Change the library itself instead.',
+          error: say('server.errors.libraryRootFolder'),
           status: 400,
         } as const;
       case 'exists':
-        return { error: 'Something of that name is already there.', status: 409 } as const;
+        return { error: say('server.errors.nameAlreadyThere'), status: 409 } as const;
       case 'badName':
         return {
-          error: 'A name is one plain name, with no slashes and no space at either end.',
+          error: say('server.errors.namePlain'),
           status: 400,
         } as const;
       case 'intoItself':
-        return { error: 'A folder cannot be moved into itself.', status: 400 } as const;
+        return { error: say('server.errors.folderIntoItself'), status: 400 } as const;
       case 'otherDisk':
         return {
-          error:
-            'That would move it onto another disk, which Valence does not do. Copy it across on the machine instead.',
+          error: say('server.errors.otherDisk'),
           status: 400,
         } as const;
       case 'missing':
-        return { error: 'There is nothing there.', status: 404 } as const;
+        return { error: say('server.errors.nothingThere'), status: 404 } as const;
       case 'readOnly':
         return {
-          error:
-            'That disk is read-only to Valence. Give it read-write access to change files there.',
+          error: say('server.errors.readOnlyChangeFiles'),
           status: 403,
         } as const;
       case 'denied':
-        return { error: 'Valence is not allowed to change files there.', status: 403 } as const;
+        return { error: say('server.errors.mayNotChangeFiles'), status: 403 } as const;
       case 'failed':
-        return { error: 'That could not be done.', status: 500 } as const;
+        return { error: say('server.errors.couldNotBeDone'), status: 500 } as const;
     }
   };
 
@@ -516,13 +519,12 @@ const createAppContext = (options: CreateAppOptions) => {
   const sayRefused = (refusal: UploadRefusal) =>
     refusal.kind === 'readOnly'
       ? ({
-          error:
-            'That disk is read-only to Valence. Give it read-write access to upload media there.',
+          error: say('server.errors.readOnlyUpload'),
           status: 403,
         } as const)
       : refusal.kind === 'denied'
-        ? ({ error: 'Valence is not allowed to write there.', status: 403 } as const)
-        : ({ error: 'The file could not be written.', status: 500 } as const);
+        ? ({ error: say('server.errors.mayNotWrite'), status: 403 } as const)
+        : ({ error: say('server.errors.fileNotWritten'), status: 500 } as const);
 
   /**
    * Throws away the staging files of uploads left untouched for long enough to count as abandoned,
@@ -544,19 +546,18 @@ const createAppContext = (options: CreateAppOptions) => {
     switch (refusal.kind) {
       case 'outside':
         return {
-          error: 'That file is not inside its library, so Valence will not delete it.',
+          error: say('server.errors.fileOutsideLibrary'),
           status: 403,
         } as const;
       case 'readOnly':
         return {
-          error:
-            'That disk is read-only to Valence. Give it read-write access to delete media there.',
+          error: say('server.errors.readOnlyDelete'),
           status: 403,
         } as const;
       case 'denied':
-        return { error: 'Valence is not allowed to delete files there.', status: 403 } as const;
+        return { error: say('server.errors.mayNotDelete'), status: 403 } as const;
       case 'failed':
-        return { error: 'The file could not be deleted.', status: 500 } as const;
+        return { error: say('server.errors.fileNotDeleted'), status: 500 } as const;
     }
   };
 
@@ -710,8 +711,8 @@ const createAppContext = (options: CreateAppOptions) => {
 
   const refuseWebhookKeeper = (keeper: 'anonymous' | 'forbidden') =>
     keeper === 'anonymous'
-      ? ({ error: 'Nobody is signed in.', status: 401 } as const)
-      : ({ error: 'This account may not manage webhooks.', status: 403 } as const);
+      ? ({ error: say('server.errors.notSignedIn'), status: 401 } as const)
+      : ({ error: say('server.errors.mayNotManageWebhooks'), status: 403 } as const);
 
   /**
    * Who is asking, and what they may do — resolved once for the role routes, which need both their
@@ -793,7 +794,7 @@ const createAppContext = (options: CreateAppOptions) => {
     const actor = await readActor(headers);
 
     if (actor === null || !actor.permissions.has('account.manage')) {
-      return 'That is for administrators.';
+      return say('server.errors.forAdministrators');
     }
 
     if (outranks(actor, userId, await permissions.rolesFor(userId), await theOwner())) {
@@ -835,7 +836,10 @@ const createAppContext = (options: CreateAppOptions) => {
     };
   };
 
-  const NOT_YOURS = { error: 'That is for whoever sets up requesting.' };
+  /**
+   * The answer for somebody who may not set up requesting.
+   */
+  const notYours = () => ({ error: say('server.errors.forWhoeverSetsUpRequesting') });
 
   const DATE_LENGTH = 10;
 
@@ -847,7 +851,10 @@ const createAppContext = (options: CreateAppOptions) => {
     await requests?.check();
   };
 
-  const REQUESTING_OFF = { error: 'Requesting is off.' };
+  /**
+   * The answer for anything about requesting while it is off.
+   */
+  const requestingOff = () => ({ error: say('server.errors.requestingOff') });
 
   /**
    * Whether somebody may reach through to the requests service, and the client to do it with.
@@ -889,11 +896,11 @@ const createAppContext = (options: CreateAppOptions) => {
     const client = await reachRequests(headers, allowed);
 
     if (client === 'refused') {
-      return { kind: 'refused', status: 403, ...NOT_YOURS };
+      return { kind: 'refused', status: 403, ...notYours() };
     }
 
     if (client === 'off') {
-      return { kind: 'refused', status: 404, ...REQUESTING_OFF };
+      return { kind: 'refused', status: 404, ...requestingOff() };
     }
 
     const answer = await ask(client);
@@ -958,7 +965,7 @@ const createAppContext = (options: CreateAppOptions) => {
     }
 
     if (session === null) {
-      return { kind: 'refused' as const, status: 403 as const, ...NOT_YOURS };
+      return { kind: 'refused' as const, status: 403 as const, ...notYours() };
     }
 
     if (isBookRequest(kind)) {
@@ -1062,12 +1069,12 @@ const createAppContext = (options: CreateAppOptions) => {
         : {
             kind: 'refused',
             status: 403,
-            error: 'This server uses one quality for every request.',
+            error: say('server.errors.oneQualityOnly'),
           };
     }
 
     if (asked.profileId !== undefined && !choices.some(({ id }) => id === asked.profileId)) {
-      return { kind: 'refused', status: 403, error: 'That quality is not available to you.' };
+      return { kind: 'refused', status: 403, error: say('server.errors.qualityNotAvailable') };
     }
 
     return { kind: 'chosen', profileId: asked.profileId };
@@ -1120,7 +1127,7 @@ const createAppContext = (options: CreateAppOptions) => {
       return {
         kind: 'refused',
         status: 400,
-        error: 'The catalogue does not know that, or cannot be asked just now.',
+        error: say('server.errors.catalogueUnknown'),
       };
     }
 
@@ -1128,7 +1135,7 @@ const createAppContext = (options: CreateAppOptions) => {
       return {
         kind: 'refused',
         status: 400,
-        error: `There is no library of ${LIBRARY_KIND_WORDS[libraryKind]} to put it in.`,
+        error: say(NO_LIBRARY_FOR[libraryKind]),
       };
     }
 
@@ -1276,7 +1283,6 @@ const createAppContext = (options: CreateAppOptions) => {
     SignInBodySchema,
     OVERVIEW_PATIENCE_MILLISECONDS,
     NOT_STOOD,
-    LIBRARY_KIND_WORDS,
     within,
     describeAccountRefusal,
     describeRefusal,
@@ -1306,10 +1312,10 @@ const createAppContext = (options: CreateAppOptions) => {
     wouldStrandTheServer,
     mayDecideAccess,
     requestsOverview,
-    NOT_YOURS,
+    notYours,
     DATE_LENGTH,
     recheckRequests,
-    REQUESTING_OFF,
+    requestingOff,
     reachRequests,
     throughRequests,
     APPROVERS,

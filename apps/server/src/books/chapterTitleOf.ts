@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+
 /**
  * What a chapter mark is called: its own title, unless it has none or only numbers it, as a ripped
  * audiobook's "001" does, where it is called by its place instead.
@@ -9,7 +11,9 @@
 const chapterTitleOf = (title: string | null | undefined, at: number): string => {
   const said = (title ?? '').trim();
 
-  return said === '' || /^\d+$/.test(said) ? `Chapter ${(at + 1).toString()}` : said;
+  return said === '' || /^\d+$/.test(said)
+    ? say('server.books.chapterNumber', { number: (at + 1).toString() })
+    : said;
 };
 
 export { chapterTitleOf };

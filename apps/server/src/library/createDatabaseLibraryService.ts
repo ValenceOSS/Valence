@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { readStoredCertifications } from '@ValenceServer/library/readStoredCertifications';
 import { askForLibraryWork } from '@ValenceServer/library/askForLibraryWork';
 import { jobBehindTheKey } from '@ValenceServer/library/jobBehindTheKey';
@@ -174,6 +175,7 @@ const matchesSearch = (search: string) => {
     ilike(mediaItem.seriesTitle, like),
     ilike(mediaItem.overview, like),
     ilike(mediaItem.tagline, like),
+     
     sql`exists (
       select 1
       from jsonb_array_elements(coalesce(${mediaItem.castMembers}, '[]'::jsonb)) as member
@@ -236,6 +238,7 @@ const COMING_UP_SHOWN = 40;
 const yourStars = (profileId: string) =>
   sql<
     number | null
+     
   >`(select ${rating.stars} from ${rating} where ${rating.mediaItemId} = ${mediaItem.id} and ${rating.profileId} = ${profileId} limit 1)`;
 
 /**
@@ -249,6 +252,7 @@ const yourStars = (profileId: string) =>
 const orderingFor = (options: ListItemsOptions) => {
   if (options.order === 'yourRating' && options.profileId !== undefined) {
     return [
+       
       sql`${yourStars(options.profileId)} desc nulls last`,
       asc(mediaItem.title),
       asc(mediaItem.id),
@@ -843,7 +847,7 @@ const createDatabaseLibraryService = ({
     });
 
     void nameChapters?.(found.id).catch(() =>
-      onProblem?.(found.path, 'its chapter names could not be looked up'),
+      onProblem?.(found.path, say('server.issues.chapterNamesNotFound')),
     );
 
     return result;
@@ -965,6 +969,7 @@ const createDatabaseLibraryService = ({
           takesRequests: library.takesRequests,
           requestProfileId: library.requestProfileId,
           requestPath: library.requestPath,
+           
           itemCount: sql<number>`(case when ${library.kind} = 'books' then count(distinct ${bookChapter.id}) else count(distinct ${mediaItem.id}) end)::int`,
         })
         .from(library)
@@ -1058,6 +1063,7 @@ const createDatabaseLibraryService = ({
           takesRequests: library.takesRequests,
           requestProfileId: library.requestProfileId,
           requestPath: library.requestPath,
+           
           itemCount: sql<number>`(case when ${library.kind} = 'books' then count(distinct ${bookChapter.id}) else count(distinct ${mediaItem.id}) end)::int`,
         })
         .from(library)
@@ -1091,10 +1097,12 @@ const createDatabaseLibraryService = ({
       const genreRows = await db
         .select({ value: sql<string>`genre` })
         .from(
+           
           sql`${mediaItem}, jsonb_array_elements_text(coalesce(${mediaItem.genres}, '[]'::jsonb)) as genre`,
         )
         .where(and(isNull(mediaItem.extraKind), isNotATrack(db), visibleToViewer(db, viewer)))
         .groupBy(sql`genre`)
+         
         .orderBy(sql`genre asc`);
 
       const decadeRows = await db

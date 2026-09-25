@@ -19,9 +19,12 @@ const describeSubtitleCharset = (decoded: DecodedSubtitle): string | null => {
 
   const why =
     decoded.decidedBy === 'language'
-      ? 'from the track language'
-      : 'a guess, since the file does not name its language';
+      ? // eslint-disable-next-line valence/no-hard-coded-strings -- a log line
+        'from the track language'
+      : // eslint-disable-next-line valence/no-hard-coded-strings -- a log line
+        'a guess, since the file does not name its language';
 
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a log line
   return `read as ${decoded.charset} (${why}; not valid UTF-8)`;
 };
 

@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import {
   presenceHeartbeatRoute,
   presenceStopWatchingRoute,
@@ -19,7 +20,7 @@ const servePresence = (app: OpenAPIHono, context: AppContext): void => {
     const { isPlaying, health } = context.req.valid('json');
 
     if (!(await isTheDeviceOfWhoeverIsAsking(context.req.raw.headers, clientId))) {
-      return context.json({ error: 'That is not your device.' }, 403);
+      return context.json({ error: say('server.errors.notYourDevice') }, 403);
     }
 
     presence.heartbeatPlayback(clientId, isPlaying, health);
@@ -31,7 +32,7 @@ const servePresence = (app: OpenAPIHono, context: AppContext): void => {
     const { clientId } = context.req.valid('param');
 
     if (!(await isTheDeviceOfWhoeverIsAsking(context.req.raw.headers, clientId))) {
-      return context.json({ error: 'That is not your device.' }, 403);
+      return context.json({ error: say('server.errors.notYourDevice') }, 403);
     }
 
     presence.stopPlayback(clientId);

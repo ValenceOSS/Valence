@@ -98,6 +98,7 @@ const withRottenTomatoes = (
       );
 
       if (!answered.ok) {
+        // eslint-disable-next-line valence/no-hard-coded-strings -- a log line
         onProblem?.(`OMDb answered ${imdbId} with an error`);
 
         return null;
@@ -109,6 +110,7 @@ const withRottenTomatoes = (
 
       return score;
     } catch {
+      // eslint-disable-next-line valence/no-hard-coded-strings -- a log line
       onProblem?.(`OMDb could not be reached for ${imdbId}`);
 
       return null;

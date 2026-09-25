@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { createMiddleware } from 'hono/factory';
 import { getCookie } from 'hono/cookie';
 import { howShareEnded, isShareLive, whyShareEnded } from '@ValenceContracts/schemas/Share';
@@ -48,13 +49,13 @@ const createShareGate = ({ shares, sessions, itemOf, shareHoldingTab }: ShareGat
     const token = getCookie(context, SHARE_COOKIE);
 
     if (token === undefined || token === '') {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const found = await shares.resolve(token);
 
     if (found === null) {
-      return context.json({ error: 'This link does not work.' }, 404);
+      return context.json({ error: say('server.errors.linkDoesNotWork') }, 404);
     }
 
     const joiner = getCookie(context, SHARE_JOINER);
@@ -70,7 +71,7 @@ const createShareGate = ({ shares, sessions, itemOf, shareHoldingTab }: ShareGat
     if (!isShareLive(standing, new Date())) {
       return context.json(
         {
-          error: whyShareEnded(standing, new Date()) ?? 'This link no longer works.',
+          error: whyShareEnded(standing, new Date()) ?? say('server.errors.linkNoLongerWorks'),
           ended: howShareEnded(standing, new Date()) ?? 'withdrawn',
         },
         410,
@@ -80,12 +81,12 @@ const createShareGate = ({ shares, sessions, itemOf, shareHoldingTab }: ShareGat
     const reach = reachOf({ method: context.req.method, path: context.req.path });
 
     if (reach.kind === 'refused') {
-      return context.json({ error: 'That is not part of what was shared.' }, 403);
+      return context.json({ error: say('server.errors.notPartOfShare') }, 403);
     }
 
     if (reach.kind === 'needsSession') {
       if (!sessions.isClaimedBy(reach.sessionId, found.id)) {
-        return context.json({ error: 'That is not part of what was shared.' }, 403);
+        return context.json({ error: say('server.errors.notPartOfShare') }, 403);
       }
 
       await next();
@@ -95,7 +96,7 @@ const createShareGate = ({ shares, sessions, itemOf, shareHoldingTab }: ShareGat
 
     if (reach.kind === 'needsTab') {
       if (shareHoldingTab?.(reach.clientId) !== found.id) {
-        return context.json({ error: 'That is not part of what was shared.' }, 403);
+        return context.json({ error: say('server.errors.notPartOfShare') }, 403);
       }
 
       await next();
@@ -104,14 +105,14 @@ const createShareGate = ({ shares, sessions, itemOf, shareHoldingTab }: ShareGat
     }
 
     if (reach.kind === 'needsBook' && (found.kind !== 'book' || found.bookId !== reach.bookId)) {
-      return context.json({ error: 'That is not part of what was shared.' }, 403);
+      return context.json({ error: say('server.errors.notPartOfShare') }, 403);
     }
 
     if (reach.kind === 'needsItem') {
       const item = await itemOf(reach.mediaId);
 
       if (item === null || !covers(found, item)) {
-        return context.json({ error: 'That is not part of what was shared.' }, 403);
+        return context.json({ error: say('server.errors.notPartOfShare') }, 403);
       }
     }
 

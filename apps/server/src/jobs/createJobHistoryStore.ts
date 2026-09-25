@@ -98,6 +98,7 @@ const orderingFor = (sort: JobRunSort): SQL[] => {
     case 'oldest':
       return [asc(jobRun.createdAt), asc(jobRun.id)];
     case 'longest':
+       
       return [sql`${TOOK} desc nulls last`, desc(jobRun.createdAt), desc(jobRun.id)];
     case 'newest':
       return [desc(jobRun.createdAt), desc(jobRun.id)];
@@ -170,9 +171,11 @@ const buildStatsQuery = (db: ValenceDatabase, sinceMs: number) =>
       ),
       failed: sql<number>`count(*) filter (where ${jobRun.status} = 'failed')`.mapWith(Number),
       running:
+         
         sql<number>`count(*) filter (where ${jobRun.status} in ('running', 'queued'))`.mapWith(
           Number,
         ),
+       
       medianMs: sql<string | number | null>`percentile_cont(0.5) within group (order by ${TOOK})`,
       slowestMs: sql<string | number | null>`max(${TOOK})`,
       lastAt: sql<Date | null>`max(${jobRun.createdAt})`,

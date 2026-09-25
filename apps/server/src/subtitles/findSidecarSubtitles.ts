@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { TEXT_SUBTITLE_EXTENSIONS } from '@ValenceContracts/constants/TEXT_SUBTITLE_EXTENSIONS';
 import { describeLanguage, readLanguage } from '@ValenceCore/functions/describeTrack';
 
@@ -92,7 +93,7 @@ const describeLabel = (
   isForced: boolean,
   isHearingImpaired: boolean,
 ): string => {
-  const base = describeLanguage(language) ?? 'Unknown';
+  const base = describeLanguage(language) ?? say('server.subtitles.unknownLanguage');
   const notes = [isForced ? 'forced' : '', isHearingImpaired ? 'SDH' : ''].filter(
     (note) => note !== '',
   );

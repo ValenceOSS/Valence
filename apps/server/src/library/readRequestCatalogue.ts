@@ -55,6 +55,7 @@ const DIGITAL = 4;
 
 const PHYSICAL = 5;
 
+// eslint-disable-next-line valence/no-hard-coded-strings -- status values the catalogue sends
 const ENDED = new Set(['Ended', 'Canceled']);
 
 const MOST_ALIASES = 20;

@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import type { FollowedDownload } from './DownloadService';
 
 const EVERY_MS = 3000;
@@ -39,7 +40,7 @@ const followTheDownloads = ({
       }
     } catch (problem) {
       onProblem?.(
-        problem instanceof Error ? problem.message : 'The downloads could not be followed.',
+        problem instanceof Error ? problem.message : say('server.issues.downloadsNotFollowed'),
       );
     } finally {
       if (!isStopped) {

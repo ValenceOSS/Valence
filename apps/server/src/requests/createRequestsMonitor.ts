@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { createReachabilityWatch } from '@ValenceServer/events/createReachabilityWatch';
 import { NO_WORK } from '@ValenceContracts/schemas/Requests';
 import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
@@ -77,7 +78,10 @@ const createRequestsMonitor = ({
 
   const vpn = createReachabilityWatch({
     onLost: () => {
-      onVpnDown(lastVpn?.problem ?? 'The tunnel is down', lastVpn?.problemCode ?? 'VpnDown');
+      onVpnDown(
+        lastVpn?.problem ?? say('server.requests.tunnelDown'),
+        lastVpn?.problemCode ?? 'VpnDown',
+      );
     },
     onRegained: () => {
       if (lastVpn !== null) {

@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { isUnderAny } from '@ValenceServer/library/isUnderAny';
 import { basename, dirname, relative, sep } from 'node:path';
 import { bookFormatOf, openBookFile } from './openBookFile';
@@ -189,7 +190,7 @@ const scanBookLibrary = async (options: ScanBookLibraryOptions): Promise<ScanRes
 
     if (format === null || opened === null) {
       failed += 1;
-      onProblem?.(file.path, 'That file could not be opened as a book.');
+      onProblem?.(file.path, say('server.issues.notABook'));
 
       continue;
     }
@@ -199,7 +200,7 @@ const scanBookLibrary = async (options: ScanBookLibraryOptions): Promise<ScanRes
 
     if (opened.layout !== 'audio' && settled !== undefined && settled !== opened.layout) {
       failed += 1;
-      onProblem?.(file.path, 'That book already reads another way, so this was left out of it.');
+      onProblem?.(file.path, say('server.issues.bookReadsAnotherWay'));
 
       continue;
     }

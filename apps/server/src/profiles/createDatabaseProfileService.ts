@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
@@ -200,7 +201,7 @@ const createDatabaseProfileService = (
     const created = {
       id: randomUUID(),
       userId,
-      name: name.trim() === '' ? 'Me' : name.trim(),
+      name: name.trim() === '' ? say('server.defaults.me') : name.trim(),
       colour: DEFAULT_COLOUR,
     };
 

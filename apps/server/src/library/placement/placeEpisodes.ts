@@ -73,7 +73,8 @@ const episodeKeyOf = (path: string): string | null => {
 
   return read.seasonNumber === null || read.episodeNumber === null
     ? null
-    : `S${String(read.seasonNumber)}E${String(read.episodeNumber)}`;
+    : // eslint-disable-next-line valence/no-hard-coded-strings -- a key episodes are grouped by
+      `S${String(read.seasonNumber)}E${String(read.episodeNumber)}`;
 };
 
 /**

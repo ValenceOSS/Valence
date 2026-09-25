@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { hostname } from 'node:os';
 import { Bonjour } from 'bonjour-service';
 import { VALENCE_SERVICE_TYPE } from '@ValenceContracts/constants/VALENCE_SERVICE_TYPE';
@@ -22,7 +23,8 @@ type Announcer = {
  * @param host - The machine's own name.
  * @returns The name to announce.
  */
-const nameOnTheNetwork = (host: string): string => `Valence on ${host.split('.')[0] ?? host}`;
+const nameOnTheNetwork = (host: string): string =>
+  say('server.discovery.name', { host: host.split('.')[0] ?? host });
 
 /**
  * Tells machines on the same network that there is a Valence here, and on which port, so a client
@@ -53,6 +55,7 @@ const announceOnTheNetwork = (
     new Bonjour({}, onError),
 ): ((done?: () => void) => void) => {
   const failed = (error: Error) => {
+    // eslint-disable-next-line valence/no-hard-coded-strings -- a log line
     warn(`Could not announce this server on the network: ${error.message}`);
   };
 

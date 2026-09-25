@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { FACE_LIMITS } from './whatIsWrongWithThePicture';
 import type { PictureFault, PictureLimits } from './whatIsWrongWithThePicture';
 
@@ -29,11 +30,11 @@ const describePictureFault = (
   const edge = limits.mostPixelsAnEdge.toString();
 
   const said: Record<PictureFault, string> = {
-    notAPicture: 'A picture has to be a JPEG, PNG, WebP, AVIF or GIF.',
-    tooLarge: `A picture has to be ${megabytes} MB or smaller.`,
-    tooDetailed: `A picture has to be ${edge} by ${edge} or smaller.`,
-    unreadable: 'That file could not be read as a picture.',
-    notYours: 'No such profile on this account.',
+    notAPicture: say('server.pictures.notAPicture'),
+    tooLarge: say('server.pictures.tooLarge', { megabytes }),
+    tooDetailed: say('server.pictures.tooDetailed', { edge }),
+    unreadable: say('server.pictures.unreadable'),
+    notYours: say('server.errors.noSuchProfileOnAccount'),
   };
 
   return { error: said[fault], status: STATUS[fault] };

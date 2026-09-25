@@ -1,9 +1,11 @@
+import { say } from '@ValenceI18n/say';
 import { describeLanguage, readLanguage } from '@ValenceCore/functions/describeTrack';
 import { isImageSubtitle } from '@ValenceCore/functions/isImageSubtitle';
 import { trackId } from './SubtitleService';
 import type { SubtitleService, SubtitleTrack } from './SubtitleService';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
 
+// eslint-disable-next-line valence/no-hard-coded-strings -- words matched in track titles
 const HEARING_IMPAIRED_MARKERS = ['sdh', 'cc', 'hearing', 'hard of hearing'];
 
 const UNREADABLE = new Set(['unknown']);
@@ -46,7 +48,7 @@ const describeSubtitle = (stream: EmbeddedStream, position: number): string => {
 
   const named =
     title === ''
-      ? (language ?? `Track ${position.toString()}`)
+      ? (language ?? say('server.subtitles.trackNumber', { number: position.toString() }))
       : language === null || saysLanguage
         ? title
         : `${language} · ${title}`;
@@ -148,7 +150,10 @@ const createEmbeddedSubtitleService = ({
           streamIndex: stream.index,
         });
       } catch (error) {
-        onProblem?.(found.path, error instanceof Error ? describeFailure(error) : 'Unreadable.');
+        onProblem?.(
+          found.path,
+          error instanceof Error ? describeFailure(error) : say('server.issues.unreadable'),
+        );
 
         return null;
       }

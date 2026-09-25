@@ -15,6 +15,7 @@ const IGNORED_FOLDERS = new Set([
   '#recycle',
   '@recycle',
   '$recycle.bin',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a folder name matched on disk
   'system volume information',
 ]);
 

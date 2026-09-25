@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { partyAllows, powersOf, whoKeepsTime } from '@ValenceContracts/schemas/WatchParty';
 import { whoIsHoldingUp } from '@ValenceCore/functions/whoIsHoldingUp';
 import type {
@@ -81,14 +82,6 @@ type Held = {
 };
 
 const WAIT_MOST_MS = 20_000;
-
-const REFUSED_UNKNOWN = 'That party is not running.';
-
-const REFUSED_NOT_IN = 'You are not in that party.';
-
-const REFUSED_NOT_ALLOWED = 'The host has not given you that.';
-
-const REFUSED_ONESELF = 'You cannot remove yourself from a party you can simply leave.';
 
 /**
  * Every watch party running, who is in each, and what each of them may do.
@@ -271,17 +264,17 @@ const createPartyRegistry = (newId: () => string): PartyRegistry => {
       const holding = held(partyId);
 
       if (holding === undefined) {
-        return { kind: 'refused', why: REFUSED_UNKNOWN };
+        return { kind: 'refused', why: say('server.parties.notRunning') };
       }
 
       const member = memberIn(holding.party, connectionId);
 
       if (member === undefined) {
-        return { kind: 'refused', why: REFUSED_NOT_IN };
+        return { kind: 'refused', why: say('server.parties.notInThatParty') };
       }
 
       if (!partyAllows(holding.party, member.role, command)) {
-        return { kind: 'refused', why: REFUSED_NOT_ALLOWED };
+        return { kind: 'refused', why: say('server.parties.notAllowed') };
       }
 
       const sequence = holding.sequence + 1;
@@ -337,17 +330,17 @@ const createPartyRegistry = (newId: () => string): PartyRegistry => {
       const holding = held(partyId);
 
       if (holding === undefined) {
-        return { kind: 'refused', why: REFUSED_UNKNOWN };
+        return { kind: 'refused', why: say('server.parties.notRunning') };
       }
 
       const actor = memberIn(holding.party, byConnectionId);
 
       if (actor === undefined) {
-        return { kind: 'refused', why: REFUSED_NOT_IN };
+        return { kind: 'refused', why: say('server.parties.notInThatParty') };
       }
 
       if (actor.role !== 'host') {
-        return { kind: 'refused', why: REFUSED_NOT_ALLOWED };
+        return { kind: 'refused', why: say('server.parties.notAllowed') };
       }
 
       const party = save(
@@ -368,27 +361,27 @@ const createPartyRegistry = (newId: () => string): PartyRegistry => {
       const holding = held(partyId);
 
       if (holding === undefined) {
-        return { kind: 'refused', why: REFUSED_UNKNOWN };
+        return { kind: 'refused', why: say('server.parties.notRunning') };
       }
 
       const actor = memberIn(holding.party, byConnectionId);
 
       if (actor === undefined) {
-        return { kind: 'refused', why: REFUSED_NOT_IN };
+        return { kind: 'refused', why: say('server.parties.notInThatParty') };
       }
 
       if (actor.role !== 'host') {
-        return { kind: 'refused', why: REFUSED_NOT_ALLOWED };
+        return { kind: 'refused', why: say('server.parties.notAllowed') };
       }
 
       if (byConnectionId === ofConnectionId) {
-        return { kind: 'refused', why: REFUSED_ONESELF };
+        return { kind: 'refused', why: say('server.parties.cannotRemoveYourself') };
       }
 
       const going = memberIn(holding.party, ofConnectionId);
 
       if (going === undefined) {
-        return { kind: 'refused', why: REFUSED_NOT_IN };
+        return { kind: 'refused', why: say('server.parties.notInThatParty') };
       }
 
       holding.notWelcome.add(going.accountId);
@@ -414,17 +407,17 @@ const createPartyRegistry = (newId: () => string): PartyRegistry => {
       const holding = held(partyId);
 
       if (holding === undefined) {
-        return { kind: 'refused', why: REFUSED_UNKNOWN };
+        return { kind: 'refused', why: say('server.parties.notRunning') };
       }
 
       const actor = memberIn(holding.party, byConnectionId);
 
       if (actor === undefined) {
-        return { kind: 'refused', why: REFUSED_NOT_IN };
+        return { kind: 'refused', why: say('server.parties.notInThatParty') };
       }
 
       if (!powersOf(actor.role).includes('invite')) {
-        return { kind: 'refused', why: REFUSED_NOT_ALLOWED };
+        return { kind: 'refused', why: say('server.parties.notAllowed') };
       }
 
       return { kind: 'may', party: holding.party, byName: actor.name };
@@ -434,17 +427,17 @@ const createPartyRegistry = (newId: () => string): PartyRegistry => {
       const holding = held(partyId);
 
       if (holding === undefined) {
-        return { kind: 'refused', why: REFUSED_UNKNOWN };
+        return { kind: 'refused', why: say('server.parties.notRunning') };
       }
 
       const actor = memberIn(holding.party, byConnectionId);
 
       if (actor === undefined) {
-        return { kind: 'refused', why: REFUSED_NOT_IN };
+        return { kind: 'refused', why: say('server.parties.notInThatParty') };
       }
 
       if (actor.role !== 'host') {
-        return { kind: 'refused', why: REFUSED_NOT_ALLOWED };
+        return { kind: 'refused', why: say('server.parties.notAllowed') };
       }
 
       holding.password = password;
@@ -463,17 +456,17 @@ const createPartyRegistry = (newId: () => string): PartyRegistry => {
       const holding = held(partyId);
 
       if (holding === undefined) {
-        return { kind: 'refused', why: REFUSED_UNKNOWN };
+        return { kind: 'refused', why: say('server.parties.notRunning') };
       }
 
       const actor = memberIn(holding.party, byConnectionId);
 
       if (actor === undefined) {
-        return { kind: 'refused', why: REFUSED_NOT_IN };
+        return { kind: 'refused', why: say('server.parties.notInThatParty') };
       }
 
       if (actor.role !== 'host') {
-        return { kind: 'refused', why: REFUSED_NOT_ALLOWED };
+        return { kind: 'refused', why: say('server.parties.notAllowed') };
       }
 
       const party = save(

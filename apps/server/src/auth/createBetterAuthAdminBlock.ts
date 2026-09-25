@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { createMiddleware } from 'hono/factory';
 
 /**
@@ -7,9 +8,7 @@ import { createMiddleware } from 'hono/factory';
  */
 const createBetterAuthAdminBlock = () =>
   createMiddleware((context) =>
-    Promise.resolve(
-      context.json({ error: 'Account administration is at /api/admin/accounts.' }, 404),
-    ),
+    Promise.resolve(context.json({ error: say('server.errors.accountAdminElsewhere') }, 404)),
   );
 
 export { createBetterAuthAdminBlock };

@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { isUnderAny } from '@ValenceServer/library/isUnderAny';
 import { basename, dirname } from 'node:path';
 import { isAudioFile } from './isAudioFile';
@@ -104,11 +105,7 @@ type ScanMusicLibraryOptions = {
   isCancelled?: () => boolean;
 };
 
-const VARIOUS_ARTISTS = 'Various Artists';
-
 const LYRIC_FILE = /\.(lrc|txt)$/i;
-
-const UNKNOWN_ARTIST = 'Unknown Artist';
 
 /**
  * A file's path without its extension, which is what a track and the lyrics beside it share.
@@ -220,15 +217,15 @@ const scanMusicLibrary = async (options: ScanMusicLibraryOptions): Promise<ScanR
 
     if (tags === null) {
       failed += 1;
-      onProblem?.(file.path, 'That file could not be read as a track.');
+      onProblem?.(file.path, say('server.issues.notATrack'));
 
       continue;
     }
 
     const folder = dirname(file.path);
     const albumArtistName = tags.isCompilation
-      ? VARIOUS_ARTISTS
-      : (tags.albumArtists[0] ?? tags.artists[0] ?? UNKNOWN_ARTIST);
+      ? say('server.music.variousArtists')
+      : (tags.albumArtists[0] ?? tags.artists[0] ?? say('server.music.unknownArtist'));
     const albumArtist = await artistNamed(
       albumArtistName,
       tags.isCompilation ? null : (tags.artistMusicbrainzIds[0] ?? null),

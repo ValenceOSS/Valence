@@ -1,3 +1,7 @@
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
+import type { CountedKey } from '@ValenceI18n/CountedKey';
+
 type AddedItem = {
   id: string;
   title: string;
@@ -28,9 +32,14 @@ const inWords = (names: string[]): string => {
   const listed =
     shown.length <= 1
       ? (shown[0] ?? '')
-      : `${shown.slice(0, -1).join(', ')} and ${shown[shown.length - 1] ?? ''}`;
+      : say('server.newMedia.andLast', {
+          names: shown.slice(0, -1).join(', '),
+          last: shown[shown.length - 1] ?? '',
+        });
 
-  return rest === 0 ? listed : `${listed} and ${rest.toString()} more`;
+  return rest === 0
+    ? listed
+    : say('server.newMedia.andMore', { names: listed, count: rest.toString() });
 };
 
 /**
@@ -63,12 +72,11 @@ const gather = (
  * Says how many of something there were, in the singular or the plural as the count needs.
  *
  * @param count - How many.
- * @param one - The word for one.
- * @param many - The word for several.
+ * @param key - The words for that many.
  * @returns The count in words, or nothing where there were none.
  */
-const counted = (count: number, one: string, many: string): string[] =>
-  count === 0 ? [] : [`${count.toString()} ${count === 1 ? one : many}`];
+const counted = (count: number, key: CountedKey): string[] =>
+  count === 0 ? [] : [sayCount(key, count)];
 
 /**
  * Turns everything imported in a window into the one thing worth saying about it — a film by name, or
@@ -116,18 +124,21 @@ const summariseNewMedia = (items: AddedItem[]): NewMediaSummary | null => {
     records.length === 1 && isAlone(songs.length) ? [...albums.keys()][0] : undefined;
 
   const words = [
-    ...counted(episodes.length, 'episode', 'episodes'),
-    ...counted(films.length, 'film', 'films'),
-    ...counted(songs.length, 'song', 'songs'),
+    ...counted(episodes.length, 'server.newMedia.episodes'),
+    ...counted(films.length, 'server.newMedia.films'),
+    ...counted(songs.length, 'server.newMedia.songs'),
   ];
 
   return {
     title: isAlone(songs.length)
-      ? 'Something new to listen to'
+      ? say('server.newMedia.toListenTo')
       : songs.length === 0
-        ? 'Something new to watch'
-        : 'Something new',
-    body: `${words.join(' and ')} — ${inWords(names)}`,
+        ? say('server.newMedia.toWatch')
+        : say('server.newMedia.something'),
+    body: say('server.newMedia.body', {
+      counts: words.reduce((joined, next) => say('server.newMedia.and', { joined, next })),
+      names: inWords(names),
+    }),
     link:
       only !== undefined
         ? `/?item=${only.id}`

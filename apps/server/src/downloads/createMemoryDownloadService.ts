@@ -103,6 +103,7 @@ const createMemoryDownloadService = (
           ? null
           : {
               file: {
+                // eslint-disable-next-line valence/no-hard-coded-strings -- stand-in file content in a test double
                 body: new Blob([`the film ${ready.mediaId}`]).stream(),
                 contentType: 'video/mp4',
                 status: 200,

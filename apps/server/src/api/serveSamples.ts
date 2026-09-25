@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { findASampleRoute } from '@ValenceServer/routes/SampleRoute';
 import { findASample } from '@ValenceServer/samples/findASample';
 import { createExpiringCache } from '@ValenceServer/library/createExpiringCache';
@@ -21,7 +22,7 @@ const serveSamples = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(findASampleRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'requests.askMusic'))) {
-      return context.json({ error: 'That is for somebody who may ask for music.' }, 403);
+      return context.json({ error: say('server.errors.forMusicAskers') }, 403);
     }
 
     const { artist, album } = context.req.valid('query');

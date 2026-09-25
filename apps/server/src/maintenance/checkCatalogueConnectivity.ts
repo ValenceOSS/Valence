@@ -44,6 +44,7 @@ const checkCatalogueConnectivity = async ({
 
   const response = await call(
     `${baseUrl}/authentication?${query.toString()}`,
+    // eslint-disable-next-line valence/no-hard-coded-strings -- an Authorization header
     isToken ? { authorization: `Bearer ${key}` } : undefined,
   ).catch(() => ({ ok: false, status: 0 }));
 

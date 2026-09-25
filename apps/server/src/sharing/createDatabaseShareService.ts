@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import { randomUUID } from 'node:crypto';
 import { and, count, desc, eq, isNull } from 'drizzle-orm';
 import { book, mediaItem, series, share, shareVisit, user } from '@ValenceServer/db/Schema';
@@ -8,8 +9,6 @@ import type { AdminShare, Share, ShareKind } from '@ValenceContracts/schemas/Sha
 import type { ResolvedShare, ShareService } from './ShareService';
 
 const LIMIT = 500;
-
-const GONE = 'Something no longer here';
 
 /**
  * Reads a stored kind back as one Valence recognises, so a row written by a later version does not
@@ -164,7 +163,7 @@ const createDatabaseShareService = (db: ValenceDatabase): ShareService => {
       mediaId: row.mediaItemId,
       seriesId: row.seriesId,
       bookId: row.bookId,
-      title: title ?? GONE,
+      title: title ?? say('server.sharing.gone'),
       createdAt: row.createdAt.toISOString(),
       expiresAt: row.expiresAt === null ? null : row.expiresAt.toISOString(),
       viewCap: row.viewCap,
@@ -318,7 +317,7 @@ const createDatabaseShareService = (db: ValenceDatabase): ShareService => {
 
       const title = kind === null || subjectId === null ? null : await titleOf(kind, subjectId);
 
-      return { createdBy: row.createdBy, title: title ?? GONE };
+      return { createdBy: row.createdBy, title: title ?? say('server.sharing.gone') };
     },
 
     resolve: async (token) => {
@@ -349,7 +348,7 @@ const createDatabaseShareService = (db: ValenceDatabase): ShareService => {
         mediaId: row.mediaItemId,
         seriesId: row.seriesId,
         bookId: row.bookId,
-        title: (await titleOf(kind, subjectId)) ?? GONE,
+        title: (await titleOf(kind, subjectId)) ?? say('server.sharing.gone'),
         expiresAt: row.expiresAt,
         viewCap: row.viewCap,
         views: await countViews(row.id),

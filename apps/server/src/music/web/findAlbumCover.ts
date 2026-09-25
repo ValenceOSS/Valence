@@ -48,6 +48,7 @@ const findAlbumCover = async (web: MusicWeb, album: AlbumToFind): Promise<Uint8A
   let best: { id: string } | undefined;
 
   for (const title of titles) {
+    // eslint-disable-next-line valence/no-hard-coded-strings -- MusicBrainz query syntax
     const query = `releasegroup:${quotedForMusicBrainz(title)} AND artist:${quotedForMusicBrainz(album.artistName)}`;
     const found = ReleaseGroupsSchema.safeParse(
       await web.json(

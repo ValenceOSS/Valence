@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import {
   cancelReencodeRoute,
   confirmReencodeRoute,
@@ -13,10 +14,6 @@ import {
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import type { Permission } from '@ValenceContracts/schemas/Permission';
 import type { ReencodeService } from './ReencodeService';
-
-const MAY_NOT = { error: 'That is for administrators.' } as const;
-
-const NO_SUCH = { error: 'No such re-encode.' } as const;
 
 type ReencodeRouteOptions = {
   reencodes: ReencodeService;
@@ -46,7 +43,7 @@ const registerReencodeRoutes = (
 ): void => {
   app.openapi(estimateReencodeRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.reencode'))) {
-      return context.json(MAY_NOT, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { mediaIds, ...settings } = context.req.valid('json');
@@ -56,7 +53,7 @@ const registerReencodeRoutes = (
 
   app.openapi(startReencodeRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.reencode'))) {
-      return context.json(MAY_NOT, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { mediaIds, ...settings } = context.req.valid('json');
@@ -75,7 +72,7 @@ const registerReencodeRoutes = (
 
   app.openapi(listReencodesRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.reencode'))) {
-      return context.json(MAY_NOT, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     return context.json({ reencodes: await reencodes.list() }, 200);
@@ -83,17 +80,19 @@ const registerReencodeRoutes = (
 
   app.openapi(cancelReencodeRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.reencode'))) {
-      return context.json(MAY_NOT, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const done = await reencodes.cancel(context.req.valid('param').id);
 
-    return done ? context.json({ done }, 200) : context.json(NO_SUCH, 404);
+    return done
+      ? context.json({ done }, 200)
+      : context.json({ error: say('server.errors.noSuchReencode') }, 404);
   });
 
   app.openapi(confirmReencodeRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.reencode'))) {
-      return context.json(MAY_NOT, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const done = await reencodes.confirm(context.req.valid('param').id);
@@ -102,12 +101,14 @@ const registerReencodeRoutes = (
       onQueued?.();
     }
 
-    return done ? context.json({ done }, 200) : context.json(NO_SUCH, 404);
+    return done
+      ? context.json({ done }, 200)
+      : context.json({ error: say('server.errors.noSuchReencode') }, 404);
   });
 
   app.openapi(rejectReencodeRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.reencode'))) {
-      return context.json(MAY_NOT, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const done = await reencodes.reject(context.req.valid('param').id);
@@ -116,22 +117,26 @@ const registerReencodeRoutes = (
       onQueued?.();
     }
 
-    return done ? context.json({ done }, 200) : context.json(NO_SUCH, 404);
+    return done
+      ? context.json({ done }, 200)
+      : context.json({ error: say('server.errors.noSuchReencode') }, 404);
   });
 
   app.openapi(sampleReencodeRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.reencode'))) {
-      return context.json(MAY_NOT, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const done = await reencodes.sample(context.req.valid('param').id);
 
-    return done ? context.json({ done }, 202) : context.json(NO_SUCH, 404);
+    return done
+      ? context.json({ done }, 202)
+      : context.json({ error: say('server.errors.noSuchReencode') }, 404);
   });
 
   app.openapi(reviewFrameRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.reencode'))) {
-      return context.json(MAY_NOT, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const { id } = context.req.valid('param');
@@ -139,7 +144,7 @@ const registerReencodeRoutes = (
     const frame = await reencodes.frame(id, side, seconds, width);
 
     if (frame === null) {
-      return context.json({ error: 'No frame there.' }, 404);
+      return context.json({ error: say('server.errors.noFrameThere') }, 404);
     }
 
     return context.body(frame, 200, {
@@ -150,7 +155,7 @@ const registerReencodeRoutes = (
 
   app.openapi(listRenditionsRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.reencode'))) {
-      return context.json(MAY_NOT, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     return context.json(
@@ -161,12 +166,14 @@ const registerReencodeRoutes = (
 
   app.openapi(removeRenditionRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.reencode'))) {
-      return context.json(MAY_NOT, 403);
+      return context.json({ error: say('server.errors.forAdministrators') }, 403);
     }
 
     const done = await reencodes.removeRendition(context.req.valid('param').id);
 
-    return done ? context.json({ done }, 200) : context.json({ error: 'No such rendition.' }, 404);
+    return done
+      ? context.json({ done }, 200)
+      : context.json({ error: say('server.errors.noSuchRendition') }, 404);
   });
 };
 

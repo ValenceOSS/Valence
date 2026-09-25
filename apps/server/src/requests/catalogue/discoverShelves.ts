@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 import { DEEZER_ID_PREFIX } from '@ValenceServer/requests/catalogue/DEEZER_ID_PREFIX';
 import type { UnstoodTitle } from '@ValenceServer/requests/catalogue/UnstoodTitle';
 import type {
@@ -30,16 +32,26 @@ type ShelfSources = {
 
 const VIDEO_SHELVES: readonly {
   id: string;
-  title: string;
+  titleKey: StringKey;
   list: CatalogueList;
   kind: 'tv' | 'movie';
 }[] = [
-  { id: 'trending-films', title: 'Trending films', list: 'trending', kind: 'movie' },
-  { id: 'trending-series', title: 'Trending series', list: 'trending', kind: 'tv' },
-  { id: 'popular-films', title: 'Popular films', list: 'popular', kind: 'movie' },
-  { id: 'popular-series', title: 'Popular series', list: 'popular', kind: 'tv' },
-  { id: 'coming-films', title: 'Coming soon', list: 'upcoming', kind: 'movie' },
-  { id: 'airing-series', title: 'On the air', list: 'upcoming', kind: 'tv' },
+  {
+    id: 'trending-films',
+    titleKey: 'server.shelves.trendingFilms',
+    list: 'trending',
+    kind: 'movie',
+  },
+  {
+    id: 'trending-series',
+    titleKey: 'server.shelves.trendingSeries',
+    list: 'trending',
+    kind: 'tv',
+  },
+  { id: 'popular-films', titleKey: 'server.shelves.popularFilms', list: 'popular', kind: 'movie' },
+  { id: 'popular-series', titleKey: 'server.shelves.popularSeries', list: 'popular', kind: 'tv' },
+  { id: 'coming-films', titleKey: 'server.shelves.comingSoon', list: 'upcoming', kind: 'movie' },
+  { id: 'airing-series', titleKey: 'server.shelves.onTheAir', list: 'upcoming', kind: 'tv' },
 ];
 
 /**
@@ -94,7 +106,7 @@ const discoverShelves = async (
       ? Promise.all(
           VIDEO_SHELVES.map(async (shelf) => ({
             id: shelf.id,
-            title: shelf.title,
+            title: say(shelf.titleKey),
             titles: (
               await sources.browse({ list: shelf.list, kind: shelf.kind, page: 1, studio: null })
             ).matches.map(titleOf),
@@ -115,7 +127,7 @@ const discoverShelves = async (
     ...video,
     {
       id: 'popular-albums',
-      title: 'Popular albums',
+      title: say('server.shelves.popularAlbums'),
       browse: null,
       titles: charts.albums.map((album) => ({
         kind: 'album' as const,
@@ -129,7 +141,7 @@ const discoverShelves = async (
     },
     {
       id: 'popular-artists',
-      title: 'Popular artists',
+      title: say('server.shelves.popularArtists'),
       browse: null,
       titles: charts.artists.map((artist) => ({
         kind: 'artist' as const,

@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 import {
   listHistoryRoute,
   forgetViewingRoute,
@@ -21,7 +22,7 @@ const serveHistory = (app: OpenAPIHono, context: AppContext): void => {
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (profileId === null || viewer === null || history === undefined) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     const { limit, offset } = context.req.valid('query');
@@ -41,11 +42,11 @@ const serveHistory = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null || history === undefined) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     if (!(await history.forget(profileId, context.req.valid('param').id))) {
-      return context.json({ error: 'No such viewing for this profile.' }, 404);
+      return context.json({ error: say('server.errors.noSuchViewing') }, 404);
     }
 
     return context.body(null, 204);
@@ -55,7 +56,7 @@ const serveHistory = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null || history === undefined) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json({ error: say('server.errors.notSignedIn') }, 401);
     }
 
     return context.json({ forgotten: await history.forgetAll(profileId) }, 200);

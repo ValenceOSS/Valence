@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+
 type LogolessItem = {
   id: string;
   externalId: string;
@@ -115,7 +117,7 @@ const fetchLogos = async ({
       missing += 1;
       onProblem?.(
         title.firstId,
-        cause instanceof Error ? cause.message : 'The catalogue did not answer.',
+        cause instanceof Error ? cause.message : say('server.issues.catalogueSilent'),
       );
     }
 

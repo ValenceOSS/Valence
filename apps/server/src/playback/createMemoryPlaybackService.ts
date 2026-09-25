@@ -60,6 +60,7 @@ const createMemoryPlaybackService = (
     if (state.unsupported === true) {
       return Promise.resolve({
         kind: 'unsupported' as const,
+        // eslint-disable-next-line valence/no-hard-coded-strings -- a stand-in reason in a test double
         reason: 'This server has no working encoder for h264.',
       });
     }

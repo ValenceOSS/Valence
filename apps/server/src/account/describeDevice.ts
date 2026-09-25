@@ -1,17 +1,28 @@
+import { say } from '@ValenceI18n/say';
+
 const BROWSERS = [
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a brand name and the marks it is known by
   { named: 'Edge', marks: ['Edg/'] },
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a brand name and the marks it is known by
   { named: 'Opera', marks: ['OPR/', 'Opera'] },
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a brand name and the marks it is known by
   { named: 'Firefox', marks: ['Firefox/'] },
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a brand name and the marks it is known by
   { named: 'Chrome', marks: ['Chrome/', 'Chromium/'] },
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a brand name and the marks it is known by
   { named: 'Safari', marks: ['Safari/'] },
 ] as const;
 
 const SYSTEMS = [
   { named: 'iPhone', marks: ['iPhone'] },
   { named: 'iPad', marks: ['iPad'] },
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a brand name and the marks it is known by
   { named: 'Android', marks: ['Android'] },
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a brand name and the marks it is known by
   { named: 'macOS', marks: ['Macintosh', 'Mac OS X'] },
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a brand name and the marks it is known by
   { named: 'Windows', marks: ['Windows'] },
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a brand name and the marks it is known by
   { named: 'Linux', marks: ['Linux', 'X11'] },
 ] as const;
 
@@ -36,7 +47,7 @@ const describeDevice = (userAgent: string | null | undefined): string => {
   const app = OUR_APP.exec(said)?.groups?.['device'];
 
   if (app !== undefined) {
-    return `Valence on ${app}`;
+    return say('server.describeDevice.app', { device: app });
   }
 
   const browser = BROWSERS.find((candidate) =>
@@ -48,26 +59,30 @@ const describeDevice = (userAgent: string | null | undefined): string => {
   )?.named;
 
   if (said.includes('Electron/')) {
-    return system === undefined ? 'Valence desktop app' : `Valence desktop app on ${system}`;
+    return system === undefined
+      ? say('server.describeDevice.desktop')
+      : say('server.describeDevice.desktopOn', { system });
   }
 
   if (said.startsWith('Valence/') && said.includes('CFNetwork/')) {
-    return 'Valence on an Apple device';
+    return say('server.describeDevice.apple');
   }
 
   if (said.startsWith('okhttp/')) {
-    return 'Valence on Android';
+    return say('server.describeDevice.android');
   }
 
   if (browser === undefined && system === undefined) {
-    return said.trim() === '' ? 'Unknown device' : said.slice(0, KEPT);
+    return said.trim() === '' ? say('server.defaults.unknownDevice') : said.slice(0, KEPT);
   }
 
   if (browser === undefined) {
-    return system ?? 'Unknown device';
+    return system ?? say('server.defaults.unknownDevice');
   }
 
-  return system === undefined ? browser : `${browser} on ${system}`;
+  return system === undefined
+    ? browser
+    : say('server.describeDevice.browserOn', { browser, system });
 };
 
 export { describeDevice };
