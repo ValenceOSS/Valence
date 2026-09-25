@@ -10,6 +10,7 @@ import {
 } from '@ValenceServer/db/Schema';
 import { z } from 'zod';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
+import { chapterHeardAt } from '@ValenceServer/books/chapterHeardAt';
 import {
   AUDIOBOOK_FORMATS,
   BookFormatSchema,
@@ -714,6 +715,7 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
             bookId: bookChapter.bookId,
             title: bookChapter.title,
             durationSeconds: bookChapter.durationSeconds,
+            marks: bookChapter.marks,
           })
           .from(bookChapter)
           .where(
@@ -723,7 +725,11 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
             ),
           )
           .orderBy(asc(bookChapter.number))
-      ).map((track) => ({ ...track, durationSeconds: track.durationSeconds ?? 0 }));
+      ).map((track) => ({
+        ...track,
+        durationSeconds: track.durationSeconds ?? 0,
+        marks: MarksSchema.parse(JsonValueSchema.catch(null).parse(track.marks ?? null)),
+      }));
 
       return recent.flatMap((row) => {
         const found = books.get(row.bookId);
@@ -740,7 +746,11 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
           {
             book: found,
             chapterId: row.chapterId,
-            chapterTitle: own[at]?.title ?? '',
+            chapterTitle: chapterHeardAt(
+              own[at]?.title ?? '',
+              own[at]?.marks ?? [],
+              row.positionSeconds,
+            ),
             positionSeconds: row.positionSeconds,
             heardSeconds: before + row.positionSeconds,
             durationSeconds: own.reduce((all, track) => all + track.durationSeconds, 0),

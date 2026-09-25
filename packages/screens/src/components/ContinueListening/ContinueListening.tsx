@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { BookRow } from '@ValenceScreens/components/BookRow/BookRow';
-import { describeListeningPlace } from '@ValenceScreens/listening/describeListeningPlace';
+import { stillListening } from '@ValenceClient/books/stillListening';
 import type { ContinueListeningProps } from './ContinueListening.types';
 
 /**
@@ -14,24 +14,9 @@ import type { ContinueListeningProps } from './ContinueListening.types';
  */
 const ContinueListening = ({ onOpen }: ContinueListeningProps) => {
   const asked = useQuery(bookQueries.listening());
-  const unfinished = useMemo(
-    () => (asked.data ?? []).filter((listening) => !listening.isFinished),
-    [asked.data],
-  );
+  const unfinished = useMemo(() => stillListening(asked.data ?? []), [asked.data]);
   const progress = useMemo(
-    () =>
-      new Map(
-        unfinished.map((listening) => [
-          listening.book.id,
-          {
-            fraction:
-              listening.durationSeconds > 0
-                ? Math.min(listening.heardSeconds / listening.durationSeconds, 1)
-                : 0,
-            detail: describeListeningPlace(listening),
-          },
-        ]),
-      ),
+    () => new Map(unfinished.map(({ book, fraction, detail }) => [book.id, { fraction, detail }])),
     [unfinished],
   );
 
@@ -42,7 +27,7 @@ const ContinueListening = ({ onOpen }: ContinueListeningProps) => {
   return (
     <BookRow
       title="Continue listening"
-      books={unfinished.map((listening) => listening.book)}
+      books={unfinished.map(({ book }) => book)}
       progress={progress}
       onOpen={onOpen}
     />

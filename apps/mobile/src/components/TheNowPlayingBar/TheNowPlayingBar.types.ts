@@ -1,5 +1,7 @@
+import type { Heard } from '@ValenceClient/books/heardLast';
+
 type TheNowPlayingBarProps = {
-  onOpen: () => void;
+  onOpen: (heard: Heard) => void;
 };
 
 export type { TheNowPlayingBarProps };

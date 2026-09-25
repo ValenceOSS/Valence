@@ -51,7 +51,7 @@ describe('useSystemNowPlaying', () => {
     mockState.current = SONG;
 
     await renderHook(() => {
-      useSystemNowPlaying();
+      useSystemNowPlaying(true);
     });
 
     expect(mockShow).toHaveBeenCalledWith(
@@ -67,7 +67,7 @@ describe('useSystemNowPlaying', () => {
 
   it('shows nothing while nothing plays', async () => {
     await renderHook(() => {
-      useSystemNowPlaying();
+      useSystemNowPlaying(true);
     });
 
     expect(mockShow).not.toHaveBeenCalled();
@@ -79,7 +79,18 @@ describe('useSystemNowPlaying', () => {
     mockState.remote = { clientId: 'phone' };
 
     await renderHook(() => {
-      useSystemNowPlaying();
+      useSystemNowPlaying(true);
+    });
+
+    expect(mockShow).not.toHaveBeenCalled();
+    expect(mockClear).toHaveBeenCalled();
+  });
+
+  it('shows nothing while a book is the one being heard', async () => {
+    mockState.current = SONG;
+
+    await renderHook(() => {
+      useSystemNowPlaying(false);
     });
 
     expect(mockShow).not.toHaveBeenCalled();
@@ -90,7 +101,7 @@ describe('useSystemNowPlaying', () => {
     mockState.current = SONG;
 
     const { unmount } = await renderHook(() => {
-      useSystemNowPlaying();
+      useSystemNowPlaying(true);
     });
 
     expect(mockClear).not.toHaveBeenCalled();
@@ -104,7 +115,7 @@ describe('useSystemNowPlaying', () => {
     mockState.current = SONG;
 
     const { rerender } = await renderHook(() => {
-      useSystemNowPlaying();
+      useSystemNowPlaying(true);
     });
 
     await rerender(undefined);

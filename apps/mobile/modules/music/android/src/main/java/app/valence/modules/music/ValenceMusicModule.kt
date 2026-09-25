@@ -2,21 +2,11 @@ package app.valence.modules.music
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import androidx.annotation.OptIn
-import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
-import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
-import androidx.media3.common.PlaybackException
-import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.DefaultDataSource
-import androidx.media3.datasource.DefaultHttpDataSource
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.MediaSession
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
@@ -26,7 +16,10 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.Executors
 
-/** What a track is called, for the lock screen and the notification. */
+/**
+ * What is playing, for the lock screen and the notification: a song, or a chapter of a book, and
+ * the stretch of the file it covers where it is only part of one.
+ */
 class ATrackDescribed : Record {
   @Field var title: String = ""
 
@@ -35,35 +28,38 @@ class ATrackDescribed : Record {
   @Field var album: String = ""
 
   @Field var artwork: String? = null
+
+  @Field var from: Double? = null
+
+  @Field var lasts: Double? = null
 }
 
 /**
- * Plays Valence's music the way music plays on an Android phone: on after the app is closed and the
- * phone is locked, described on the lock screen and in the notification shade, and answering their
- * buttons and a pair of headphones.
+ * Plays Valence's music and audiobooks the way they play on an Android phone: on after the app is
+ * closed and the phone is locked, described on the lock screen and in the notification shade, and
+ * answering their buttons and a pair of headphones.
  *
- * As on an iPhone the queue is not kept here. This is only the speaker: it is told what to play and
- * reports what happens in the same events a browser's audio element sends, and passes on whatever
- * the lock screen asks for so the app can decide what that means.
+ * Music and books each have a speaker of their own, named by the channel every call gives, so
+ * starting a book does not throw away the song that was loaded. Whichever last started playing is
+ * the one the lock screen shows and answers for.
+ *
+ * As on an iPhone no queue and no chapters are kept here. These are only the speakers: each is told
+ * what to play and reports what happens in the same events a browser's audio element sends, and
+ * whatever the lock screen asks for is passed on, naming the channel it answers for, so the app can
+ * decide what that means.
  */
 @OptIn(UnstableApi::class)
 class ValenceMusicModule : Module() {
   private val main = Handler(Looper.getMainLooper())
   private val fetching = Executors.newSingleThreadExecutor()
-  private var player: ExoPlayer? = null
-  private var described = ATrackDescribed()
-  private var artwork: ByteArray? = null
-  private var cookie: String? = null
-  private var loudness = 1f
-  private var isMuted = false
-  private var hasSaidReady = false
+  private val speakers = mutableMapOf<String, ValenceSpeaker>()
+  private val passedOn = mutableMapOf<String, ThePassedOnPlayer>()
+  private var owner = "music"
+  private var isTicking = false
 
   private val ticking = object : Runnable {
     override fun run() {
-      if (player?.isPlaying == true) {
-        send("timeupdate")
-      }
-
+      speakers.values.filter { it.player.isPlaying }.forEach { heard(it, "timeupdate") }
       main.postDelayed(this, 500)
     }
   }
@@ -77,77 +73,125 @@ class ValenceMusicModule : Module() {
     Events("onAudio", "onRemote")
 
     OnDestroy {
-      main.post { stopEverything() }
+      main.post { speakers.values.forEach { it.stop() } }
     }
 
-    Function("load") { url: String, cookie: String? ->
-      main.post { load(url, cookie) }
-    }
-
-    Function("play") {
-      main.post { play() }
-    }
-
-    Function("pause") {
-      main.post { player?.pause() }
-    }
-
-    Function("seek") { seconds: Double ->
-      main.post { player?.seekTo((seconds.coerceAtLeast(0.0) * 1000).toLong()) }
-    }
-
-    Function("setVolume") { volume: Double ->
+    Function("load") { channel: String, url: String, cookie: String? ->
       main.post {
-        loudness = volume.coerceIn(0.0, 1.0).toFloat()
-        player?.volume = if (isMuted) 0f else loudness
+        speaker(channel)?.let {
+          it.load(url, cookie)
+          fetchTheArtwork(it)
+        }
       }
     }
 
-    Function("setMuted") { muted: Boolean ->
-      main.post {
-        isMuted = muted
-        player?.volume = if (isMuted) 0f else loudness
-      }
+    Function("play") { channel: String ->
+      main.post { play(channel) }
     }
 
-    Function("describe") { track: ATrackDescribed ->
-      main.post { describe(track) }
+    Function("pause") { channel: String ->
+      main.post { speaker(channel)?.player?.pause() }
     }
 
-    Function("stop") {
-      main.post { stopEverything() }
+    Function("seek") { channel: String, seconds: Double ->
+      main.post { speaker(channel)?.seek(seconds) }
+    }
+
+    Function("setRate") { channel: String, rate: Double ->
+      main.post { speaker(channel)?.setRate(rate) }
+    }
+
+    Function("setVolume") { channel: String, volume: Double ->
+      main.post { speaker(channel)?.setVolume(volume) }
+    }
+
+    Function("setMuted") { channel: String, muted: Boolean ->
+      main.post { speaker(channel)?.setMuted(muted) }
+    }
+
+    Function("describe") { channel: String, track: ATrackDescribed ->
+      main.post { speaker(channel)?.let { describe(it, track) } }
+    }
+
+    Function("stop") { channel: String ->
+      main.post { speaker(channel)?.stop() }
     }
   }
 
-  /** The player, made the first time it is needed along with the session the lock screen reads. */
-  private fun thePlayer(): ExoPlayer? {
-    player?.let { return it }
+  /** The speaker for a channel, made the first time the channel is used. */
+  private fun speaker(channel: String): ValenceSpeaker? {
+    speakers[channel]?.let { return it }
 
     val context = context ?: return null
-    val made = ExoPlayer.Builder(context)
-      .setAudioAttributes(
-        AudioAttributes.Builder()
-          .setUsage(C.USAGE_MEDIA)
-          .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
-          .build(),
-        true,
-      )
-      .setHandleAudioBecomingNoisy(true)
-      .setWakeMode(C.WAKE_MODE_NETWORK)
-      .build()
+    val made = ValenceSpeaker(channel, context) { speaker, type -> heard(speaker, type) }
 
-    made.addListener(watching)
-    made.volume = if (isMuted) 0f else loudness
-    player = made
+    speakers[channel] = made
 
-    val passedOn = ThePassedOnPlayer(made) { command, seconds ->
-      sendEvent("onRemote", if (seconds == null) mapOf("command" to command) else mapOf("command" to command, "seconds" to seconds))
+    if (!isTicking) {
+      isTicking = true
+      main.post(ticking)
     }
+
+    return made
+  }
+
+  /**
+   * The speaker as the lock screen sees it, every button passed on for its channel. Android's bar
+   * runs through the whole file, so where it moved to is told from the start of the stretch the app
+   * described, as an iPhone's bar tells it.
+   */
+  private fun passedOnFor(speaker: ValenceSpeaker): ThePassedOnPlayer =
+    passedOn.getOrPut(speaker.channel) {
+      ThePassedOnPlayer(speaker.player, speaker.channel == "book") { command, seconds ->
+        val told = if (command == "seek" && seconds != null) {
+          seconds - (speaker.described.from ?: 0.0)
+        } else {
+          seconds
+        }
+
+        sendEvent(
+          "onRemote",
+          if (told == null) {
+            mapOf("channel" to speaker.channel, "command" to command)
+          } else {
+            mapOf("channel" to speaker.channel, "command" to command, "seconds" to told)
+          },
+        )
+      }
+    }
+
+  /**
+   * Plays a channel, handing it the lock screen and starting the service first so it carries on in
+   * the background.
+   */
+  private fun play(channel: String) {
+    val context = context ?: return
+    val speaker = speaker(channel) ?: return
+
+    owner = channel
+    takeTheLockScreen(context, speaker)
+    runCatching { context.startService(Intent(context, ValenceMusicService::class.java)) }
+    speaker.player.play()
+  }
+
+  /** Makes the one session the lock screen reads, or hands it to the speaker playing now. */
+  private fun takeTheLockScreen(context: Context, speaker: ValenceSpeaker) {
+    val shown = passedOnFor(speaker)
+    val session = TheSession.session
+
+    if (session != null) {
+      if (session.player !== shown) {
+        session.player = shown
+      }
+
+      return
+    }
+
     val opening = context.packageManager.getLaunchIntentForPackage(context.packageName)
-    val session = MediaSession.Builder(context, passedOn).setId("valence-music")
+    val building = MediaSession.Builder(context, shown).setId("valence-music")
 
     if (opening != null) {
-      session.setSessionActivity(
+      building.setSessionActivity(
         android.app.PendingIntent.getActivity(
           context,
           0,
@@ -157,137 +201,47 @@ class ValenceMusicModule : Module() {
       )
     }
 
-    TheSession.session = session.build()
-    main.post(ticking)
-
-    return made
+    TheSession.session = building.build()
   }
 
-  /** Takes what the track is called, fetching its cover where that has changed. */
-  private fun describe(track: ATrackDescribed) {
-    val isNewArtwork = track.artwork != described.artwork
+  /** Takes what a speaker plays, fetching its cover where that has changed. */
+  private fun describe(speaker: ValenceSpeaker, track: ATrackDescribed) {
+    val isNewArtwork = track.artwork != speaker.described.artwork
 
-    described = track
+    speaker.described = track
 
     if (isNewArtwork) {
-      artwork = null
-      fetchTheArtwork()
+      speaker.artwork = null
+      fetchTheArtwork(speaker)
     }
 
-    tellTheLockScreen()
+    speaker.tellTheLockScreen()
   }
 
-  /** Starts on a new track, forgetting the last one. */
-  private fun load(url: String, cookie: String?) {
-    val context = context ?: return
-    val player = thePlayer() ?: return
-    val http = DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true)
-
-    this.cookie = cookie
-
-    if (cookie != null) {
-      http.setDefaultRequestProperties(mapOf("Cookie" to cookie))
-    }
-
-    val source = DefaultMediaSourceFactory(DefaultDataSource.Factory(context, http))
-      .createMediaSource(MediaItem.Builder().setUri(Uri.parse(url)).setMediaMetadata(theMetadata()).build())
-
-    hasSaidReady = false
-    player.setMediaSource(source)
-    player.prepare()
-    send("waiting")
-  }
-
-  /** Plays, starting the service first so it carries on in the background. */
-  private fun play() {
-    val context = context ?: return
-    val player = thePlayer() ?: return
-
-    runCatching { context.startService(Intent(context, ValenceMusicService::class.java)) }
-    player.play()
-  }
-
-  /** Reports what the player does, in the events a browser's audio element would send. */
-  private val watching = object : Player.Listener {
-    override fun onPlaybackStateChanged(playbackState: Int) {
-      when (playbackState) {
-        Player.STATE_BUFFERING -> send("waiting")
-        Player.STATE_READY ->
-          if (!hasSaidReady) {
-            hasSaidReady = true
-            send("loadedmetadata")
-            send("canplay")
-          }
-        Player.STATE_ENDED -> send("ended")
-        else -> Unit
-      }
-    }
-
-    override fun onIsPlayingChanged(isPlaying: Boolean) {
-      if (isPlaying) {
-        send("playing")
-      } else if (player?.playWhenReady == false) {
-        send("pause")
-      }
-    }
-
-    override fun onPlayerError(error: PlaybackException) {
-      send("error")
-    }
-
-    override fun onPositionDiscontinuity(
-      oldPosition: Player.PositionInfo,
-      newPosition: Player.PositionInfo,
-      reason: Int,
-    ) {
-      if (reason == Player.DISCONTINUITY_REASON_SEEK) {
-        send("seeked")
-      }
-    }
-  }
-
-  /** Tells the app what just happened, with where the player is. */
-  private fun send(type: String) {
-    val player = player ?: return
-    val duration = player.duration
+  /** Tells the app what a speaker just did, with where it is. */
+  private fun heard(speaker: ValenceSpeaker, type: String) {
+    val duration = speaker.player.duration
 
     sendEvent(
       "onAudio",
       mapOf(
+        "channel" to speaker.channel,
         "type" to type,
-        "currentTime" to player.currentPosition.coerceAtLeast(0) / 1000.0,
+        "currentTime" to speaker.player.currentPosition.coerceAtLeast(0) / 1000.0,
         "duration" to if (duration == C.TIME_UNSET) -1.0 else duration / 1000.0,
-        "paused" to !player.playWhenReady,
+        "paused" to !speaker.player.playWhenReady,
       ),
     )
   }
 
-  /** What the lock screen shows about the track, with its cover where that has arrived. */
-  private fun theMetadata(): MediaMetadata {
-    val metadata = MediaMetadata.Builder()
-      .setTitle(described.title)
-      .setArtist(described.artist)
-      .setAlbumTitle(described.album)
+  /** Fetches a speaker's cover for the lock screen, with the same session its file came with. */
+  private fun fetchTheArtwork(speaker: ValenceSpeaker) {
+    val wanted = speaker.described.artwork ?: return
+    val withCookie = speaker.cookie
 
-    artwork?.let { metadata.setArtworkData(it, MediaMetadata.PICTURE_TYPE_FRONT_COVER) }
-
-    return metadata.build()
-  }
-
-  /** Puts what is playing on the lock screen, over whatever it said before. */
-  private fun tellTheLockScreen() {
-    val player = player ?: return
-    val current = player.currentMediaItem ?: return
-
-    runCatching {
-      player.replaceMediaItem(0, current.buildUpon().setMediaMetadata(theMetadata()).build())
+    if (speaker.artwork != null) {
+      return
     }
-  }
-
-  /** Fetches the album's cover for the lock screen, with the same session the track came with. */
-  private fun fetchTheArtwork() {
-    val wanted = described.artwork ?: return
-    val withCookie = cookie
 
     fetching.execute {
       val bytes = runCatching {
@@ -300,17 +254,11 @@ class ValenceMusicModule : Module() {
       }.getOrNull() ?: return@execute
 
       main.post {
-        if (described.artwork == wanted) {
-          artwork = bytes
-          tellTheLockScreen()
+        if (speaker.described.artwork == wanted) {
+          speaker.artwork = bytes
+          speaker.tellTheLockScreen()
         }
       }
     }
-  }
-
-  /** Stops playing, and takes Valence off the lock screen. */
-  private fun stopEverything() {
-    player?.stop()
-    player?.clearMediaItems()
   }
 }

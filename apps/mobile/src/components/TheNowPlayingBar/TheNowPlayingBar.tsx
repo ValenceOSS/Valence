@@ -1,16 +1,23 @@
-import { MusicNote } from '@keyline-icons/react-native';
+import { BookOpen, MusicNote } from '@keyline-icons/react-native';
 import {
+  FastForward as FastForwardFilled,
   Pause as PauseFilled,
   Play as PlayFilled,
   SkipForward as SkipForwardFilled,
 } from '@keyline-icons/react-native/fill';
 import { Image, StyleSheet, View } from 'react-native';
+import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
+import { LISTENING_CHOICES } from '@ValenceClient/books/LISTENING_CHOICES';
+import { useWhatIsHeard } from '@ValenceClient/books/useWhatIsHeard';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { AGlass } from '@ValenceMobile/components/AGlass/AGlass';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
+import { thePhonesAudiobookPlayer } from '@ValenceMobile/books/thePhonesAudiobookPlayer';
+import { thePhonesMusicPlayer } from '@ValenceMobile/music/thePhonesMusicPlayer';
+import { useTheBook } from '@ValenceMobile/hooks/useTheBook';
 import { useTheMusic } from '@ValenceMobile/hooks/useTheMusic';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
@@ -29,6 +36,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     width: ART,
   },
+  cover: { width: ART / 1.5 },
   button: { padding: 8 },
   fills: { height: '100%', width: '100%' },
   opens: { flex: 1 },
@@ -42,16 +50,89 @@ const styles = StyleSheet.create({
  * to skip it. Pressing anywhere else opens the player. While the music plays on another device,
  * it says which, and its buttons drive that device.
  *
+ * Where a book is the one being heard it shows the book instead: its cover, its title and who wrote
+ * it, a way to pause it and a way to go on thirty seconds.
+ *
  * Draws nothing while nothing is playing.
  *
- * @param onOpen - Told somebody wants the whole player.
+ * @param onOpen - Told which is being heard when somebody wants the whole player.
  */
 const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
   const colours = useTheColours();
   const { player, state } = useTheMusic();
+  const book = useTheBook();
+  const heard = useWhatIsHeard(thePhonesAudiobookPlayer(), thePhonesMusicPlayer());
   const shown = useWhatIsPlaying(state);
   const isPlaying = shown?.isPlaying ?? state.isPlaying;
   const track = state.current;
+  const listening = book.state.book;
+
+  if (heard === 'book' && listening !== null) {
+    return (
+      <View style={styles.row}>
+        <AGlass roundness={16} />
+
+        <View style={styles.opens}>
+          <Button
+            tone="bare"
+            label="Open the player"
+            onPress={() => {
+              onOpen('book');
+            }}
+          >
+            <View style={[styles.row, { paddingHorizontal: 0 }]}>
+              <View style={[styles.art, styles.cover, { backgroundColor: colours.surfaceRaised }]}>
+                {listening.hasCover ? (
+                  <Image
+                    style={styles.fills}
+                    source={{ uri: onThisServer(bookCoverUrl(listening.id)) }}
+                    accessibilityIgnoresInvertColors
+                  />
+                ) : (
+                  <Icon of={BookOpen} size={20} colour={colours.textMuted} />
+                )}
+              </View>
+
+              <View style={styles.said}>
+                <Words lines={1}>{listening.title}</Words>
+                <Words size="small" tone="muted" lines={1}>
+                  {listening.authors?.join(', ') ?? ''}
+                </Words>
+              </View>
+            </View>
+          </Button>
+        </View>
+
+        <Button
+          tone="bare"
+          label={book.state.isPlaying ? 'Pause' : 'Play'}
+          onPress={() => {
+            book.player.toggle();
+          }}
+        >
+          <View style={styles.button}>
+            <Icon
+              of={book.state.isPlaying ? PauseFilled : PlayFilled}
+              size={24}
+              colour={colours.text}
+            />
+          </View>
+        </Button>
+
+        <Button
+          tone="bare"
+          label={`On ${LISTENING_CHOICES.forwardSeconds.toString()} seconds`}
+          onPress={() => {
+            book.player.skip(LISTENING_CHOICES.forwardSeconds);
+          }}
+        >
+          <View style={styles.button}>
+            <Icon of={FastForwardFilled} size={24} colour={colours.text} />
+          </View>
+        </Button>
+      </View>
+    );
+  }
 
   if (track === null) {
     return null;
@@ -62,7 +143,13 @@ const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
       <AGlass roundness={16} />
 
       <View style={styles.opens}>
-        <Button tone="bare" label="Open the player" onPress={onOpen}>
+        <Button
+          tone="bare"
+          label="Open the player"
+          onPress={() => {
+            onOpen('music');
+          }}
+        >
           <View style={[styles.row, { paddingHorizontal: 0 }]}>
             <View style={[styles.art, { backgroundColor: colours.surfaceRaised }]}>
               {track.album.hasArtwork ? (

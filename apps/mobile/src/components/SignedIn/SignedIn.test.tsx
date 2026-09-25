@@ -349,6 +349,7 @@ describe('SignedIn', () => {
 
     const itEnds = async () => {
       await act(() => {
+        theFakePlayer.duration = 3000;
         theFakePlayer.say('playToEnd', { isPlaying: false });
       });
     };

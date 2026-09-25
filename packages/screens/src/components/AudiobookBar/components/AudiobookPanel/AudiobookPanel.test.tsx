@@ -1,9 +1,9 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { tracksOf } from '@ValenceScreens/listening/tracksOf';
-import { aFakeAudiobookPlayer } from '@ValenceScreens/testing/aFakeAudiobookPlayer';
-import { anAudiobook } from '@ValenceScreens/testing/anAudiobook';
+import { tracksOf } from '@ValenceClient/books/tracksOf';
+import { aFakeAudiobookPlayer } from '@ValenceClient/testing/aFakeAudiobookPlayer';
+import { anAudiobook } from '@ValenceClient/testing/anAudiobook';
 import { AudiobookPanel } from './AudiobookPanel';
 
 /**

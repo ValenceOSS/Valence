@@ -13,6 +13,7 @@ type TopBarProps = {
   onFaceAt: (at: Spot) => void;
   onMarkAt: (at: Spot) => void;
   hasMusic: boolean;
+  hasBooks: boolean;
 };
 
 export type { TopBarProps };

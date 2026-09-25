@@ -26,6 +26,7 @@ import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { RatingPanel } from '@ValenceScreens/components/RatingPanel/RatingPanel';
 import { describeReadingPlace } from '@ValenceClient/books/describeReadingPlace';
 import { readingFractionOf } from '@ValenceClient/books/readingFractionOf';
+import { listenLabel } from '@ValenceClient/books/listenLabel';
 import type { Book } from '@ValenceContracts/schemas/Book';
 import type { ActionBarAction } from '@ValenceUI/ActionBar.types';
 import type { BookDialogProps } from './BookDialog.types';
@@ -97,12 +98,6 @@ const BookDialog = ({
     ...bookQueries.listeningPlace(bookId ?? ''),
     enabled: bookId !== null && mayListen,
   });
-  const listenLabel =
-    heard.data === null || heard.data === undefined
-      ? 'Listen'
-      : heard.data.isFinished
-        ? 'Listen again'
-        : 'Continue listening';
   const isOnlyHeard = mayListen && book.hasText === false;
 
   const listen = () => {
@@ -129,7 +124,7 @@ const BookDialog = ({
                 {
                   id: 'listen',
                   isPinned: true,
-                  label: listenLabel,
+                  label: listenLabel(heard.data),
                   icon: <Icon of={HeadphonesIcon} size={18} />,
                   onChoose: listen,
                 },
@@ -277,7 +272,7 @@ const BookDialog = ({
             isOnlyHeard ? (
               <Button variant="confirm" size="lg" className="w-full" onClick={listen}>
                 <Icon of={HeadphonesIcon} size={18} />
-                {listenLabel}
+                {listenLabel(heard.data)}
               </Button>
             ) : (
               <Button

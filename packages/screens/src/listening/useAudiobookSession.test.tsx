@@ -1,11 +1,11 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { tracksOf } from '@ValenceScreens/listening/tracksOf';
-import { useAudiobookPlayer } from '@ValenceScreens/listening/useAudiobookPlayer';
+import { tracksOf } from '@ValenceClient/books/tracksOf';
+import { useAudiobookPlayer } from '@ValenceClient/books/useAudiobookPlayer';
 import { useAudiobookSession } from '@ValenceScreens/listening/useAudiobookSession';
-import { aFakeAudiobookPlayer } from '@ValenceScreens/testing/aFakeAudiobookPlayer';
+import { aFakeAudiobookPlayer } from '@ValenceClient/testing/aFakeAudiobookPlayer';
 import { aFakeMediaSession } from '@ValenceScreens/testing/aFakeMediaSession';
-import { anAudiobook } from '@ValenceScreens/testing/anAudiobook';
+import { anAudiobook } from '@ValenceClient/testing/anAudiobook';
 
 let session = aFakeMediaSession();
 

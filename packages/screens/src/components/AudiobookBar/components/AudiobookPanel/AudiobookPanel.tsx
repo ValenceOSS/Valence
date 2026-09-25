@@ -12,13 +12,10 @@ import { Slider } from '@ValenceUI/Slider';
 import { cn } from '@ValenceUI/cn';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { BarButton } from '@ValenceScreens/components/BarButton/BarButton';
-import { chapterPlaying } from '@ValenceScreens/listening/chapterPlaying';
-import { goToChapterBeside } from '@ValenceScreens/listening/goToChapterBeside';
+import { chapterPlaying } from '@ValenceClient/books/chapterPlaying';
+import { goToChapterBeside } from '@ValenceClient/books/goToChapterBeside';
+import { LISTENING_CHOICES } from '@ValenceClient/books/LISTENING_CHOICES';
 import type { AudiobookPanelProps } from './AudiobookPanel.types';
-
-const SPEEDS = [0.75, 1, 1.25, 1.5, 1.75, 2] as const;
-
-const SLEEP_MINUTES = [15, 30, 45, 60] as const;
 
 /**
  * Says a speed the way the menu lists it.
@@ -97,7 +94,7 @@ const AudiobookPanel = ({ state, player }: AudiobookPanelProps) => {
                 onSelect: (id) => {
                   player.setSpeed(Number(id));
                 },
-                options: SPEEDS.map((speed) => ({
+                options: LISTENING_CHOICES.speeds.map((speed) => ({
                   id: speed.toString(),
                   label: speedLabel(speed),
                 })),
@@ -134,7 +131,7 @@ const AudiobookPanel = ({ state, player }: AudiobookPanelProps) => {
                 },
                 options: [
                   { id: 'off', label: 'Off' },
-                  ...SLEEP_MINUTES.map((minutes) => ({
+                  ...LISTENING_CHOICES.sleepMinutes.map((minutes) => ({
                     id: minutes.toString(),
                     label: `In ${minutes.toString()} minutes`,
                   })),

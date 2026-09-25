@@ -4,6 +4,9 @@ node_modules/
 /ios/
 /android/
 
+# What xcodebuild leaves when the app is built for a simulator.
+/build/
+
 # Expo
 .expo/
 dist/

@@ -88,6 +88,7 @@ const theLibrary = (overrides: Partial<TheLibraryProps> = {}) =>
       onAllArtists={jest.fn()}
       onBook={jest.fn()}
       onRead={jest.fn()}
+      onListen={jest.fn()}
       {...overrides}
     />,
     { wrapper: CacheScope },

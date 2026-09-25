@@ -65,8 +65,8 @@ import { VideoRemote } from '@ValenceScreens/components/VideoRemote/VideoRemote'
 import { VideoRemoteBar } from '@ValenceScreens/components/VideoRemoteBar/VideoRemoteBar';
 import { useVideoDevices } from '@ValenceClient/video/useVideoDevices';
 import { onControlledDevice, readControlledDevice } from '@ValenceClient/video/controlledDevice';
-import { startListening } from '@ValenceScreens/listening/startListening';
-import { theAudiobookPlayer } from '@ValenceScreens/listening/theAudiobookPlayer';
+import { startListening } from '@ValenceClient/books/startListening';
+import { theAudiobookPlayer } from '@ValenceClient/books/theAudiobookPlayer';
 import { useSurprise } from '@ValenceScreens/library/useSurprise';
 import { libraryChoicesFor } from '@ValenceScreens/library/libraryChoicesFor';
 

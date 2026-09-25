@@ -10,7 +10,13 @@ import { watchPresence } from '@ValenceClient/presence/watchPresence';
 import { onPresenceEvent } from '@ValenceClient/presence/presenceEvents';
 import { useMusicRemote } from '@ValenceClient/music/useMusicRemote';
 import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
+import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
+import { theAudiobookPlayer } from '@ValenceClient/books/theAudiobookPlayer';
+import { useListeningKeptFresh } from '@ValenceClient/books/useListeningKeptFresh';
+import { useWhatIsHeard } from '@ValenceClient/books/useWhatIsHeard';
 import { useSystemNowPlaying } from '@ValenceTv/music/useSystemNowPlaying';
+import { useAudiobooks } from '@ValenceTv/books/useAudiobooks';
+import { useSystemNowPlayingABook } from '@ValenceTv/books/useSystemNowPlayingABook';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { showIdOf } from '@ValenceClient/library/showIdOf';
 import { summariseDetail } from '@ValenceClient/library/summariseDetail';
@@ -26,10 +32,13 @@ import { readOpeningLink } from '@ValenceTv/navigation/readOpeningLink';
 import { readArrivalLink } from '@ValenceTv/notifications/readArrivalLink';
 import { useArrivals } from '@ValenceTv/notifications/useArrivals';
 import { Account } from '@ValenceTv/screens/Account/Account';
+import { BookPage } from '@ValenceTv/screens/BookPage/BookPage';
+import { Books } from '@ValenceTv/screens/Books/Books';
 import { Catalogue } from '@ValenceTv/screens/Catalogue/Catalogue';
 import { AskPage } from '@ValenceTv/screens/AskPage/AskPage';
 import { FilmPage } from '@ValenceTv/screens/FilmPage/FilmPage';
 import { Home } from '@ValenceTv/screens/Home/Home';
+import { Listening } from '@ValenceTv/screens/Listening/Listening';
 import { Music } from '@ValenceTv/screens/Music/Music';
 import { MusicCollection } from '@ValenceTv/screens/MusicCollection/MusicCollection';
 import { NowPlaying } from '@ValenceTv/screens/NowPlaying/NowPlaying';
@@ -38,6 +47,7 @@ import { RequestsPage } from '@ValenceTv/screens/RequestsPage/RequestsPage';
 import { Search } from '@ValenceTv/screens/Search/Search';
 import { ShowPage } from '@ValenceTv/screens/ShowPage/ShowPage';
 import { tokens } from '@ValenceTv/theme/tokens';
+import type { Book } from '@ValenceContracts/schemas/Book';
 import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
@@ -52,13 +62,14 @@ const WATCHABLE = new Set(['movies', 'shows']);
 
 const UNDER_THE_BAR = 130;
 
-const KEPT = ['films', 'shows', 'music', 'account'] as const;
+const KEPT = ['films', 'shows', 'music', 'books', 'account'] as const;
 
 type Moods = {
   home: string | null;
   films: string | null;
   shows: string | null;
   music: string | null;
+  books: string | null;
   search: string | null;
 };
 
@@ -70,6 +81,14 @@ type Moods = {
  */
 const moodOf = (media: MediaSummary): string | null =>
   media.hasBackdrop ? artworkUrl(media.id, 'backdrop') : null;
+
+/**
+ * The picture a book lights the page with, where it has one.
+ *
+ * @param book - The book.
+ * @returns Where its cover is served, or nothing.
+ */
+const bookMoodOf = (book: Book): string | null => (book.hasCover ? bookCoverUrl(book.id) : null);
 
 /**
  * Everything behind the way in: the capsule floating along the top — search, Home, Films, Shows and
@@ -114,14 +133,16 @@ const moodOf = (media: MediaSummary): string | null =>
  * another of this person's devices — a phone, a laptop — plays straight away, over whatever was
  * open, the device that sent it becoming its remote.
  *
- * Music stops altogether as somebody signs out, changes who is watching or moves to another
- * Valence, rather than carrying on for whoever comes next.
+ * Music and audiobooks stop altogether as somebody signs out, changes who is watching or moves to
+ * another Valence, rather than carrying on for whoever comes next. A film starting pauses either.
  *
- * Music is offered only where the server has a music library with something in it.
+ * Music is offered only where the server has a music library with something in it, and books only
+ * where a books library holds something to listen to.
  *
- * Whatever song is playing is kept in the top right corner over every page but the players, for
- * the remote to open it from wherever somebody has got to. Opened from one of the parts, it opens
- * over the music part, so going back from it lands there rather than where it was opened from.
+ * Whatever song or book is playing is kept in the top right corner over every page but the players,
+ * for the remote to open it from wherever somebody has got to, and Play/Pause on the remote plays
+ * and pauses whichever it is. Opened from one of the parts, it opens over the music or books part,
+ * so going back from it lands there rather than where it was opened from.
  *
  * When something this viewer asked for arrives, a banner slides in to say so, and Play/Pause opens
  * it; nothing is announced over the player.
@@ -140,13 +161,19 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
   useFreshFromTheSocket(getRealtimeClient());
   useEffect(() => watchPresence(), [user]);
   useMusicRemote();
-  useSystemNowPlaying();
+  useListeningKeptFresh();
+
+  const heard = useWhatIsHeard();
+
+  useSystemNowPlaying(heard === 'music');
+  useSystemNowPlayingABook(heard === 'book');
 
   const watchingId = useQuery(profileQueries.watching()).data?.id ?? null;
 
   useEffect(
     () => () => {
       theMusicPlayer().leave();
+      theAudiobookPlayer().close();
     },
     [user.id, watchingId],
   );
@@ -159,6 +186,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     films: null,
     shows: null,
     music: null,
+    books: null,
     search: null,
   });
   const [items, setItems] = useState<ReadonlyMap<Tab, View>>(new Map());
@@ -215,16 +243,23 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
   const albums = useQuery({ ...musicQueries.albums('recent'), enabled: hasMusicLibrary });
   const hasMusic = hasMusicLibrary && (albums.data?.length ?? 0) > 0;
 
+  const bookLibraries = useMemo(
+    () => (libraries.data ?? []).filter((one) => one.kind === 'books').map((one) => one.id),
+    [libraries.data],
+  );
+  const audiobooks = useAudiobooks(bookLibraries);
+  const hasBooks = audiobooks.books.length > 0;
+
   const choose = useCallback((part: Tab) => {
     setTab(part);
     setVisited((was) => (was.has(part) ? was : new Set([...was, part])));
   }, []);
 
   useEffect(() => {
-    if (!hasMusic && tab === 'music') {
+    if ((!hasMusic && tab === 'music') || (!hasBooks && tab === 'books')) {
       setTab('home');
     }
-  }, [hasMusic, tab]);
+  }, [hasMusic, hasBooks, tab]);
 
   const open = useCallback((place: Place) => {
     setOpened((was) => [...was, place]);
@@ -244,7 +279,10 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
         const { mediaId, startSeconds } = event.command;
 
         setOpened((was) => [
-          ...was.filter((place) => place.kind !== 'play' && place.kind !== 'nowPlaying'),
+          ...was.filter(
+            (place) =>
+              place.kind !== 'play' && place.kind !== 'nowPlaying' && place.kind !== 'listening',
+          ),
           { kind: 'play', mediaId, startSeconds: Math.floor(startSeconds), carriedOn: 0 },
         ]);
       }),
@@ -410,6 +448,27 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     setOpened((was) => was.filter((place) => place.kind !== 'nowPlaying'));
   }, []);
 
+  const featureBooks = useCallback((path: string | null) => {
+    setMoods((was) => ({ ...was, books: path }));
+  }, []);
+
+  const openBook = useCallback(
+    (book: Book) => {
+      open({ kind: 'book', bookId: book.id, mood: bookMoodOf(book) });
+    },
+    [open],
+  );
+
+  const openListening = useCallback(() => {
+    setOpened((was) =>
+      was.at(-1)?.kind === 'listening' ? was : [...was, { kind: 'listening', mood: null }],
+    );
+  }, []);
+
+  const closeListening = useCallback(() => {
+    setOpened((was) => was.filter((place) => place.kind !== 'listening'));
+  }, []);
+
   const featureShow = useCallback((media: MediaSummary) => {
     setMoods((was) => ({ ...was, shows: moodOf(media) }));
   }, []);
@@ -420,6 +479,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
   useEffect(() => {
     if (isWatching) {
       theMusicPlayer().pause();
+      theAudiobookPlayer().pause();
     }
   }, [isWatching]);
 
@@ -429,13 +489,19 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
         return;
       }
 
+      if (heard === 'book') {
+        theAudiobookPlayer().toggle();
+
+        return;
+      }
+
       const music = theMusicPlayer();
 
       if (music.read().current !== null || music.read().remote !== null) {
         music.toggle();
       }
     },
-    [isWatching, arrival],
+    [isWatching, arrival, heard],
   );
 
   useTVEventHandler(hearPlayPause);
@@ -486,6 +552,13 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
                         onOpen={openMusic}
                         onFeature={featureMusic}
                         upTo={items.get('music') ?? null}
+                      />
+                    ) : part === 'books' ? (
+                      <Books
+                        libraryIds={bookLibraries}
+                        onOpen={openBook}
+                        onFeature={featureBooks}
+                        upTo={items.get('books') ?? null}
                       />
                     ) : part === 'account' ? (
                       <Account
@@ -538,6 +611,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
           onFaceAt={onFaceAt}
           onMarkAt={onMarkAt}
           hasMusic={hasMusic}
+          hasBooks={hasBooks}
         />
       </FocusFence>
 
@@ -583,6 +657,18 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
         </View>
       ) : null}
 
+      {top?.kind === 'book' ? (
+        <View style={styles.over}>
+          <BookPage key={top.bookId} bookId={top.bookId} onListen={openListening} />
+        </View>
+      ) : null}
+
+      {top?.kind === 'listening' ? (
+        <View style={styles.over}>
+          <Listening onEmpty={closeListening} onBack={back} />
+        </View>
+      ) : null}
+
       {top?.kind === 'requests' ? (
         <View style={styles.over}>
           <RequestsPage onOpen={openRequest} onLight={lightTheTop} />
@@ -602,10 +688,20 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
         </View>
       ) : null}
 
-      {isWatching || top?.kind === 'nowPlaying' ? null : (
+      {isWatching || top?.kind === 'nowPlaying' || top?.kind === 'listening' ? null : (
         <View style={styles.playing}>
           <NowPlayingChip
-            onOpen={() => {
+            onOpen={(which) => {
+              if (which === 'book') {
+                if (top === undefined && hasBooks) {
+                  choose('books');
+                }
+
+                openListening();
+
+                return;
+              }
+
               if (top === undefined && hasMusic) {
                 choose('music');
               }

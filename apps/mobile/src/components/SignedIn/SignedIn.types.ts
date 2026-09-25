@@ -28,6 +28,7 @@ type APage =
   | { kind: 'television'; code: string; askedFrom: string | null }
   | { kind: 'book'; bookId: string }
   | { kind: 'reading'; bookId: string; chapterId: string | null; isFromTheStart: boolean }
-  | { kind: 'playing' };
+  | { kind: 'playing' }
+  | { kind: 'listening' };
 
 export type { APage, SignedInProps };

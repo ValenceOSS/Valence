@@ -2,16 +2,13 @@ import { useEffect, useRef } from 'react';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { artworkTheSystemAccepts } from '@ValenceScreens/playback/artworkTheSystemAccepts';
 import { claimTheSystemsControls } from '@ValenceScreens/playback/claimTheSystemsControls';
-import { goToChapterBeside } from './goToChapterBeside';
+import { goToChapterBeside } from '@ValenceClient/books/goToChapterBeside';
+import { LISTENING_CHOICES } from '@ValenceClient/books/LISTENING_CHOICES';
 import type { Claim } from '@ValenceScreens/playback/claimTheSystemsControls';
 import type {
   AudiobookPlayer,
   AudiobookPlayerState,
 } from '@ValenceClient/books/createAudiobookPlayer';
-
-const BACK_SECONDS = 15;
-
-const FORWARD_SECONDS = 30;
 
 const COVER_SIZES = ['256x384', '512x768'] as const;
 
@@ -49,13 +46,13 @@ const useAudiobookSession = (state: AudiobookPlayerState, player: AudiobookPlaye
         [
           'seekbackward',
           (details) => {
-            player.skip(-(details.seekOffset ?? BACK_SECONDS));
+            player.skip(-(details.seekOffset ?? LISTENING_CHOICES.backSeconds));
           },
         ],
         [
           'seekforward',
           (details) => {
-            player.skip(details.seekOffset ?? FORWARD_SECONDS);
+            player.skip(details.seekOffset ?? LISTENING_CHOICES.forwardSeconds);
           },
         ],
         [
@@ -86,4 +83,4 @@ const useAudiobookSession = (state: AudiobookPlayerState, player: AudiobookPlaye
   }, [state.isPlaying, bookId]);
 };
 
-export { BACK_SECONDS, FORWARD_SECONDS, useAudiobookSession };
+export { useAudiobookSession };

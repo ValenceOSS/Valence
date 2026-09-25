@@ -3,31 +3,33 @@ import ExpoModulesCore
 import MediaPlayer
 import UIKit
 
-/// What a track is called, for the lock screen and Control Centre.
+/// What is playing, for the lock screen and Control Centre: a song, or a chapter of a book, and the
+/// stretch of the file it covers where it is only part of one.
 struct ATrackDescribed: Record {
   @Field var title: String = ""
   @Field var artist: String = ""
   @Field var album: String = ""
   @Field var artwork: String? = nil
+  @Field var from: Double? = nil
+  @Field var lasts: Double? = nil
 }
 
-/// Plays Valence's music the way music plays on an iPhone: on after the app is closed and the phone
-/// is locked, described on the lock screen and in Control Centre, and answering their buttons and
-/// a pair of headphones.
+/// Plays Valence's music and audiobooks the way they play on an iPhone: on after the app is closed
+/// and the phone is locked, described on the lock screen and in Control Centre, and answering their
+/// buttons and a pair of headphones.
 ///
-/// The queue is not kept here. The app decides what plays next, so this is only the speaker: it is
-/// told what to play and reports what happens, in the same events a browser's audio element sends,
-/// and passes on whatever the lock screen asks for so the app can decide what that means.
+/// Music and books each have a speaker of their own, named by the channel every call gives, so
+/// starting a book does not throw away the song that was loaded. Whichever last started playing is
+/// the one the lock screen shows and answers for: a song with its skip buttons, a book with fifteen
+/// seconds back, thirty on and its speed.
+///
+/// No queue and no chapters are kept here. The app decides what plays next, so this is only the
+/// speakers: each is told what to play and reports what happens, in the same events a browser's
+/// audio element sends, and whatever the lock screen asks for is passed on to decide what it means.
 public class ValenceMusicModule: Module {
-  private let player = AVPlayer()
-  private var timeWatch: Any?
-  private var itemWatches: [NSKeyValueObservation] = []
-  private var playerWatches: [NSKeyValueObservation] = []
-  private var endWatch: NSObjectProtocol?
+  private var speakers: [String: ValenceSpeaker] = [:]
+  private var owner = "music"
   private var interruptionWatch: NSObjectProtocol?
-  private var described = ATrackDescribed()
-  private var artworkFor: String?
-  private var cookie: String?
   private var hasCommands = false
 
   public func definition() -> ModuleDefinition {
@@ -36,115 +38,147 @@ public class ValenceMusicModule: Module {
     Events("onAudio", "onRemote")
 
     OnCreate {
-      self.player.automaticallyWaitsToMinimizeStalling = true
-      self.watchThePlayer()
+      self.watchForInterruptions()
     }
 
     OnDestroy {
-      self.stopEverything()
-    }
-
-    Function("load") { (url: String, cookie: String?) in
-      self.load(url, cookie: cookie)
-    }
-
-    Function("play") {
-      self.play()
-    }
-
-    Function("pause") {
-      self.player.pause()
-    }
-
-    Function("seek") { (seconds: Double) in
-      let to = CMTime(seconds: max(seconds, 0), preferredTimescale: 600)
-
-      self.player.seek(to: to, toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] done in
-        if done {
-          self?.send("seeked")
-          self?.tellTheLockScreen()
-        }
+      self.onMain {
+        self.speakers.values.forEach { $0.stop() }
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
       }
     }
 
-    Function("setVolume") { (volume: Double) in
-      self.player.volume = Float(min(max(volume, 0), 1))
+    Function("load") { (channel: String, url: String, cookie: String?) in
+      self.onMain {
+        let speaker = self.speaker(channel)
+
+        speaker.load(url, cookie: cookie)
+        self.fetchTheArtwork(for: speaker)
+      }
     }
 
-    Function("setMuted") { (isMuted: Bool) in
-      self.player.isMuted = isMuted
+    Function("play") { (channel: String) in
+      self.onMain {
+        self.play(channel)
+      }
     }
 
-    Function("describe") { (track: ATrackDescribed) in
-      self.described = track
-      self.tellTheLockScreen()
-      self.fetchTheArtwork()
+    Function("pause") { (channel: String) in
+      self.onMain {
+        self.speaker(channel).player.pause()
+      }
     }
 
-    Function("stop") {
-      self.stopEverything()
+    Function("seek") { (channel: String, seconds: Double) in
+      self.onMain {
+        self.speaker(channel).seek(seconds)
+      }
+    }
+
+    Function("setRate") { (channel: String, rate: Double) in
+      self.onMain {
+        self.speaker(channel).setRate(rate)
+        self.tellTheLockScreen(about: channel)
+      }
+    }
+
+    Function("setVolume") { (channel: String, volume: Double) in
+      self.onMain {
+        self.speaker(channel).player.volume = Float(min(max(volume, 0), 1))
+      }
+    }
+
+    Function("setMuted") { (channel: String, isMuted: Bool) in
+      self.onMain {
+        self.speaker(channel).player.isMuted = isMuted
+      }
+    }
+
+    Function("describe") { (channel: String, track: ATrackDescribed) in
+      self.onMain {
+        let speaker = self.speaker(channel)
+
+        speaker.described = track
+        self.tellTheLockScreen(about: channel)
+        self.fetchTheArtwork(for: speaker)
+      }
+    }
+
+    Function("stop") { (channel: String) in
+      self.onMain {
+        self.speaker(channel).stop()
+
+        if channel == self.owner {
+          MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+        }
+      }
     }
   }
 
-  /// Starts on a new track, forgetting the last one.
-  private func load(_ url: String, cookie: String?) {
-    guard let address = URL(string: url) else {
-      send("error")
-      return
+  /// Runs what a call asks for on the main thread, where the speakers and the lock screen are only
+  /// ever touched, since a synchronous function is called on JavaScript's own.
+  private func onMain(_ run: @escaping () -> Void) {
+    if Thread.isMainThread {
+      run()
+    } else {
+      DispatchQueue.main.async(execute: run)
     }
-
-    self.cookie = cookie
-
-    let asset = AVURLAsset(
-      url: address,
-      options: cookie == nil ? nil : ["AVURLAssetHTTPHeaderFieldsKey": ["Cookie": cookie ?? ""]]
-    )
-    let item = AVPlayerItem(asset: asset)
-
-    watch(item)
-    player.replaceCurrentItem(with: item)
-    send("waiting")
   }
 
-  /// Plays, taking the audio session first so it carries on in the background.
-  private func play() {
+  /// The speaker for a channel, made the first time the channel is used.
+  private func speaker(_ channel: String) -> ValenceSpeaker {
+    if let made = speakers[channel] {
+      return made
+    }
+
+    let made = ValenceSpeaker(channel: channel) { [weak self] speaker, type in
+      self?.heard(type, from: speaker)
+    }
+
+    speakers[channel] = made
+
+    return made
+  }
+
+  /// Plays a channel, taking the audio session and the lock screen for it first so it carries on in
+  /// the background and its buttons answer for it.
+  private func play(_ channel: String) {
     let session = AVAudioSession.sharedInstance()
 
-    try? session.setCategory(.playback, mode: .default, policy: .longFormAudio)
+    try? session.setCategory(.playback, mode: .spokenAudioIfBook(channel), policy: .longFormAudio)
     try? session.setActive(true)
+    owner = channel
     takeTheLockScreen()
-    player.play()
+    offerTheCommands()
+    speaker(channel).play()
+    tellTheLockScreen(about: channel)
   }
 
-  /// Watches the player as a whole: whether it is playing, waiting or paused, and where it is.
-  private func watchThePlayer() {
-    timeWatch = player.addPeriodicTimeObserver(
-      forInterval: CMTime(seconds: 0.5, preferredTimescale: 600),
-      queue: .main
-    ) { [weak self] _ in
-      self?.send("timeupdate")
-      self?.keepTheSession()
+  /// Passes on what a speaker said, and keeps the lock screen in step with the one it shows.
+  private func heard(_ type: String, from speaker: ValenceSpeaker) {
+    let duration = speaker.player.currentItem?.duration.seconds ?? .nan
+    let at = speaker.player.currentTime().seconds
+
+    sendEvent("onAudio", [
+      "channel": speaker.channel,
+      "type": type,
+      "currentTime": at.isFinite ? at : 0,
+      "duration": duration.isFinite ? duration : -1,
+      "paused": speaker.player.timeControlStatus == .paused,
+    ])
+
+    if type == "timeupdate" {
+      keepTheSession()
     }
 
-    playerWatches = [
-      player.observe(\.timeControlStatus, options: [.new]) { [weak self] player, _ in
-        DispatchQueue.main.async {
-          switch player.timeControlStatus {
-          case .playing:
-            self?.send("playing")
-          case .paused:
-            self?.send("pause")
-          case .waitingToPlayAtSpecifiedRate:
-            self?.send("waiting")
-          @unknown default:
-            break
-          }
+    if type != "timeupdate" {
+      tellTheLockScreen(about: speaker.channel)
+    }
+  }
 
-          self?.tellTheLockScreen()
-        }
-      },
-    ]
-
+  /// Resumes whichever channel the lock screen answers for once a call or an alarm is over, where
+  /// the system says to.
+  private func watchForInterruptions() {
     interruptionWatch = NotificationCenter.default.addObserver(
       forName: AVAudioSession.interruptionNotification,
       object: nil,
@@ -153,60 +187,18 @@ public class ValenceMusicModule: Module {
       guard let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
             AVAudioSession.InterruptionType(rawValue: raw) == .ended,
             let options = note.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt,
-            AVAudioSession.InterruptionOptions(rawValue: options).contains(.shouldResume) else {
+            AVAudioSession.InterruptionOptions(rawValue: options).contains(.shouldResume),
+            let self else {
         return
       }
 
-      self?.play()
+      self.play(self.owner)
     }
   }
 
-  /// Watches one track: when it is ready, how long it is, whether it failed, and when it ends.
-  private func watch(_ item: AVPlayerItem) {
-    itemWatches = [
-      item.observe(\.status, options: [.new]) { [weak self] item, _ in
-        DispatchQueue.main.async {
-          switch item.status {
-          case .readyToPlay:
-            self?.send("loadedmetadata")
-            self?.send("canplay")
-            self?.tellTheLockScreen()
-          case .failed:
-            self?.send("error")
-          default:
-            break
-          }
-        }
-      },
-    ]
-
-    if let endWatch {
-      NotificationCenter.default.removeObserver(endWatch)
-    }
-
-    endWatch = NotificationCenter.default.addObserver(
-      forName: .AVPlayerItemDidPlayToEndTime,
-      object: item,
-      queue: .main
-    ) { [weak self] _ in
-      self?.send("ended")
-    }
-  }
-
-  /// Tells the app what just happened, with where the player is.
-  private func send(_ type: String) {
-    let duration = player.currentItem?.duration.seconds ?? .nan
-
-    sendEvent("onAudio", [
-      "type": type,
-      "currentTime": player.currentTime().seconds.isFinite ? player.currentTime().seconds : 0,
-      "duration": duration.isFinite ? duration : -1,
-      "paused": player.timeControlStatus == .paused,
-    ])
-  }
-
-  /// Answers the lock screen, Control Centre and headphones by passing each on to the app, set up on
-  /// the main thread, since commands enabled from any other are not always honoured.
+  /// Answers the lock screen, Control Centre and headphones by passing each on to the app, naming
+  /// the channel it answers for, set up once on the main thread, since commands enabled from any
+  /// other are not always honoured.
   private func takeTheLockScreen() {
     guard Thread.isMainThread else {
       DispatchQueue.main.async { [weak self] in
@@ -232,29 +224,80 @@ public class ValenceMusicModule: Module {
     ]
 
     for (command, name) in passOn {
-      command.isEnabled = true
       command.addTarget { [weak self] _ in
-        self?.sendEvent("onRemote", ["command": name])
+        self?.sendEvent("onRemote", ["channel": self?.owner ?? "music", "command": name])
         return .success
       }
     }
 
-    commands.changePlaybackPositionCommand.isEnabled = true
+    commands.skipBackwardCommand.preferredIntervals = [15]
+    commands.skipForwardCommand.preferredIntervals = [30]
+
+    let skips: [(MPSkipIntervalCommand, String, Double)] = [
+      (commands.skipBackwardCommand, "back", 15),
+      (commands.skipForwardCommand, "forward", 30),
+    ]
+
+    for (command, name, fallback) in skips {
+      command.addTarget { [weak self] event in
+        let seconds = (event as? MPSkipIntervalCommandEvent)?.interval ?? fallback
+
+        self?.sendEvent(
+          "onRemote",
+          ["channel": self?.owner ?? "music", "command": name, "seconds": seconds]
+        )
+        return .success
+      }
+    }
+
+    commands.changePlaybackRateCommand.supportedPlaybackRates = [0.75, 1, 1.25, 1.5, 1.75, 2]
+    commands.changePlaybackRateCommand.addTarget { [weak self] event in
+      guard let changed = event as? MPChangePlaybackRateCommandEvent else {
+        return .commandFailed
+      }
+
+      self?.sendEvent(
+        "onRemote",
+        ["channel": self?.owner ?? "music", "command": "rate", "seconds": Double(changed.playbackRate)]
+      )
+      return .success
+    }
+
     commands.changePlaybackPositionCommand.addTarget { [weak self] event in
       guard let moved = event as? MPChangePlaybackPositionCommandEvent else {
         return .commandFailed
       }
 
-      self?.sendEvent("onRemote", ["command": "seek", "seconds": moved.positionTime])
+      self?.sendEvent(
+        "onRemote",
+        ["channel": self?.owner ?? "music", "command": "seek", "seconds": moved.positionTime]
+      )
       return .success
     }
   }
 
-  /// Takes the audio session back while music plays, where a video elsewhere in the app has since
-  /// set it to mix with other audio: an app that mixes is not the one the lock screen answers to, so
-  /// its skip buttons go grey.
+  /// Turns on the buttons that suit what the lock screen answers for: a song's skip to the next and
+  /// back, or a book's fifteen seconds back, thirty on and speed.
+  private func offerTheCommands() {
+    let commands = MPRemoteCommandCenter.shared()
+    let isBook = owner == "book"
+
+    commands.playCommand.isEnabled = true
+    commands.pauseCommand.isEnabled = true
+    commands.togglePlayPauseCommand.isEnabled = true
+    commands.changePlaybackPositionCommand.isEnabled = true
+    commands.nextTrackCommand.isEnabled = !isBook
+    commands.previousTrackCommand.isEnabled = !isBook
+    commands.skipBackwardCommand.isEnabled = isBook
+    commands.skipForwardCommand.isEnabled = isBook
+    commands.changePlaybackRateCommand.isEnabled = isBook
+  }
+
+  /// Takes the audio session back while something plays, where a video elsewhere in the app has
+  /// since set it to mix with other audio: an app that mixes is not the one the lock screen answers
+  /// to, so its buttons go grey.
   private func keepTheSession() {
-    guard player.timeControlStatus != .paused else {
+    guard speakers[owner]?.player.timeControlStatus != .paused else {
       return
     }
 
@@ -264,81 +307,83 @@ public class ValenceMusicModule: Module {
       return
     }
 
-    try? session.setCategory(.playback, mode: .default, policy: .longFormAudio)
+    try? session.setCategory(.playback, mode: .spokenAudioIfBook(owner), policy: .longFormAudio)
     try? session.setActive(true)
-
-    let commands = MPRemoteCommandCenter.shared()
-
-    commands.nextTrackCommand.isEnabled = true
-    commands.previousTrackCommand.isEnabled = true
+    offerTheCommands()
   }
 
-  /// Puts what is playing, and where it has got to, on the lock screen.
-  private func tellTheLockScreen() {
+  /// Puts what a channel is playing, and where it has got to, on the lock screen, where it is the
+  /// channel the lock screen shows. A part of a file is shown as though it were the whole of it.
+  private func tellTheLockScreen(about channel: String) {
     guard Thread.isMainThread else {
       DispatchQueue.main.async { [weak self] in
-        self?.tellTheLockScreen()
+        self?.tellTheLockScreen(about: channel)
       }
 
+      return
+    }
+
+    guard channel == owner, let speaker = speakers[channel] else {
       return
     }
 
     keepTheSession()
     var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
-    let duration = player.currentItem?.duration.seconds ?? .nan
-    let at = player.currentTime().seconds
+    let duration = speaker.player.currentItem?.duration.seconds ?? .nan
+    let at = speaker.player.currentTime().seconds
+    let from = speaker.described.from ?? 0
+    let lasts = speaker.described.lasts ?? duration
 
-    info[MPMediaItemPropertyTitle] = described.title
-    info[MPMediaItemPropertyArtist] = described.artist
-    info[MPMediaItemPropertyAlbumTitle] = described.album
-    info[MPMediaItemPropertyPlaybackDuration] = duration.isFinite ? duration : nil
-    info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = at.isFinite ? at : 0
-    info[MPNowPlayingInfoPropertyPlaybackRate] = player.timeControlStatus == .playing ? 1.0 : 0.0
+    info[MPMediaItemPropertyTitle] = speaker.described.title
+    info[MPMediaItemPropertyArtist] = speaker.described.artist
+    info[MPMediaItemPropertyAlbumTitle] = speaker.described.album
+    info[MPMediaItemPropertyPlaybackDuration] = lasts.isFinite ? lasts : nil
+    info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = at.isFinite ? max(at - from, 0) : 0
+    info[MPNowPlayingInfoPropertyPlaybackRate] = speaker.isPlaying ? Double(speaker.rate) : 0.0
+    info[MPNowPlayingInfoPropertyDefaultPlaybackRate] = Double(speaker.rate)
     info[MPNowPlayingInfoPropertyMediaType] = MPNowPlayingInfoMediaType.audio.rawValue
-
-    if artworkFor != described.artwork {
-      info[MPMediaItemPropertyArtwork] = nil
-    }
+    info[MPMediaItemPropertyArtwork] = speaker.artworkFor == speaker.described.artwork
+      ? speaker.artwork.map { image in MPMediaItemArtwork(boundsSize: image.size) { _ in image } }
+      : nil
 
     MPNowPlayingInfoCenter.default().nowPlayingInfo = info
   }
 
-  /// Fetches the album's artwork for the lock screen, with the same session the track came with.
-  private func fetchTheArtwork() {
-    guard let wanted = described.artwork, let address = URL(string: wanted) else {
+  /// Fetches a speaker's artwork for the lock screen, with the same session its file came with.
+  private func fetchTheArtwork(for speaker: ValenceSpeaker) {
+    guard let wanted = speaker.described.artwork,
+          wanted != speaker.artworkFor,
+          let address = URL(string: wanted) else {
       return
     }
 
     var asking = URLRequest(url: address)
 
-    if let cookie {
+    if let cookie = speaker.cookie {
       asking.setValue(cookie, forHTTPHeaderField: "Cookie")
     }
 
-    URLSession.shared.dataTask(with: asking) { [weak self] data, _, _ in
+    URLSession.shared.dataTask(with: asking) { [weak self, weak speaker] data, _, _ in
       guard let data, let image = UIImage(data: data) else {
         return
       }
 
       DispatchQueue.main.async {
-        guard let self, self.described.artwork == wanted else {
+        guard let self, let speaker, speaker.described.artwork == wanted else {
           return
         }
 
-        var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
-
-        info[MPMediaItemPropertyArtwork] = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
-        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
-        self.artworkFor = wanted
+        speaker.artwork = image
+        speaker.artworkFor = wanted
+        self.tellTheLockScreen(about: speaker.channel)
       }
     }.resume()
   }
+}
 
-  /// Stops playing, and takes Valence off the lock screen.
-  private func stopEverything() {
-    player.pause()
-    player.replaceCurrentItem(with: nil)
-    itemWatches = []
-    MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+private extension AVAudioSession.Mode {
+  /// Speech for a book, so the system treats it as a spoken word; the default for music.
+  static func spokenAudioIfBook(_ channel: String) -> AVAudioSession.Mode {
+    channel == "book" ? .spokenAudio : .default
   }
 }

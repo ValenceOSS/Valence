@@ -1,4 +1,5 @@
 import { isAudiobookFormat } from '@ValenceContracts/schemas/Book';
+import { chapterHeardAt } from '@ValenceServer/books/chapterHeardAt';
 import type {
   Book,
   BookChapter,
@@ -243,7 +244,11 @@ const createMemoryBookService = (given: MemoryBooks): BookService => {
                   {
                     book,
                     chapterId: entry.chapterId,
-                    chapterTitle: tracks[at]?.title ?? '',
+                    chapterTitle: chapterHeardAt(
+                      tracks[at]?.title ?? '',
+                      tracks[at]?.marks ?? [],
+                      entry.positionSeconds,
+                    ),
                     positionSeconds: entry.positionSeconds,
                     heardSeconds:
                       tracks.slice(0, at).reduce((all, chapter) => all + lengthOf(chapter), 0) +

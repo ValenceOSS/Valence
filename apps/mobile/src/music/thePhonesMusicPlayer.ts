@@ -1,15 +1,10 @@
 import { requireOptionalNativeModule } from 'expo';
-import { z } from 'zod';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
+import { RemoteCommandSchema } from '@ValenceMobile/audio/RemoteCommandSchema';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import type { MusicPlayer } from '@ValenceClient/music/createMusicPlayer';
-import type { NativeMusic } from './NativeMusic.types';
-
-const RemoteSchema = z.object({
-  command: z.enum(['play', 'pause', 'toggle', 'next', 'previous', 'seek']),
-  seconds: z.number().optional(),
-});
+import type { NativeMusic } from '@ValenceMobile/music/NativeMusic.types';
 
 let made: MusicPlayer | null = null;
 
@@ -55,18 +50,20 @@ const thePhonesMusicPlayer = (): MusicPlayer => {
     }
 
     described = current.id;
-    speaker.describe({
+    speaker.describe('music', {
       title: current.title,
       artist: current.artists.map((artist) => artist.name).join(', '),
       album: current.album.title,
       artwork: current.album.hasArtwork ? onThisServer(albumArtworkUrl(current.album.id)) : null,
+      from: null,
+      lasts: null,
     });
   });
 
   const listening = speaker.addListener('onRemote', (said) => {
-    const read = RemoteSchema.safeParse(said);
+    const read = RemoteCommandSchema.safeParse(said);
 
-    if (!read.success) {
+    if (!read.success || read.data.channel !== 'music') {
       return;
     }
 
@@ -88,6 +85,10 @@ const thePhonesMusicPlayer = (): MusicPlayer => {
         break;
       case 'seek':
         player.seek(read.data.seconds ?? 0);
+        break;
+      case 'back':
+      case 'forward':
+      case 'rate':
         break;
     }
   });

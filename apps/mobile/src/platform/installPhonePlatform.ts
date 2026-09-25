@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { thePhonesMusicOut } from '@ValenceMobile/music/thePhonesMusicOut';
+import { thePhonesListeningAudio } from '@ValenceMobile/books/thePhonesListeningAudio';
 import { describeThisPhone } from '@ValenceMobile/platform/describeThisPhone';
 import { giveThisPhoneAnOrigin } from '@ValenceMobile/platform/giveThisPhoneAnOrigin';
 import { giveThisPhoneCrypto } from '@ValenceMobile/platform/giveThisPhoneCrypto';
@@ -53,6 +54,7 @@ const installPhonePlatform = (held: Map<string, string>): void => {
     notifyLocally: () => {},
     setUnreadBadge: () => {},
     musicAudio: thePhonesMusicOut,
+    listeningAudio: thePhonesListeningAudio,
   });
 };
 

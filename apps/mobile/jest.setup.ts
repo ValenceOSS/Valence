@@ -48,6 +48,7 @@ jest.mock('expo', () => ({
           play: jest.fn(),
           pause: jest.fn(),
           seek: jest.fn(),
+          setRate: jest.fn(),
           setVolume: jest.fn(),
           setMuted: jest.fn(),
           describe: jest.fn(),

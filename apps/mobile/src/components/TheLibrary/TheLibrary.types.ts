@@ -14,6 +14,7 @@ type TheLibraryProps = {
   onAllArtists: () => void;
   onBook: (bookId: string) => void;
   onRead: (bookId: string) => void;
+  onListen: (bookId: string) => void;
   isSearching?: boolean;
   searchPage?: (
     header: ReactNode,

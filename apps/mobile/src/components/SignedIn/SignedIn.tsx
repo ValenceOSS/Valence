@@ -39,6 +39,12 @@ import { AReader } from '@ValenceMobile/components/AReader/AReader';
 import { TheNowPlayingBar } from '@ValenceMobile/components/TheNowPlayingBar/TheNowPlayingBar';
 import { ACatalogueList } from '@ValenceMobile/components/ACatalogueList/ACatalogueList';
 import { forgetTheMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
+import { forgetTheAudiobookPlayer } from '@ValenceClient/books/theAudiobookPlayer';
+import { startListening } from '@ValenceClient/books/startListening';
+import { useListeningKeptFresh } from '@ValenceClient/books/useListeningKeptFresh';
+import { bookQueries } from '@ValenceClient/query/bookQueries';
+import { thePhonesAudiobookPlayer } from '@ValenceMobile/books/thePhonesAudiobookPlayer';
+import { TheListeningPlayer } from '@ValenceMobile/components/TheListeningPlayer/TheListeningPlayer';
 import { theCodeInAScan } from '@ValenceClient/session/theCodeInAScan';
 import { scanACode } from '@ValenceMobile/platform/scanACode';
 import { ATabPage } from '@ValenceMobile/components/SignedIn/components/ATabPage/ATabPage';
@@ -64,6 +70,7 @@ import { TheFloatingPlayer } from '@ValenceMobile/components/TheFloatingPlayer/T
 import { ATelevisionToSignIn } from '@ValenceMobile/components/ATelevisionToSignIn/ATelevisionToSignIn';
 import { useLinksIntoTheApp } from '@ValenceMobile/hooks/useLinksIntoTheApp';
 import type { ReactNode } from 'react';
+import type { Heard } from '@ValenceClient/books/heardLast';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { APage, SignedInProps } from './SignedIn.types';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -143,6 +150,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   }, []);
   useTellTheServerWhatIsHeld();
   useFetchWhatThisPhoneAskedFor();
+  useListeningKeptFresh();
   const cache = useQueryClient();
   const [pages, setPages] = useState<readonly APage[]>([]);
   const [watching, setWatching] = useState<{ mediaId: string; startSeconds: number } | null>(null);
@@ -221,6 +229,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
 
   useEffect(
     () => () => {
+      forgetTheAudiobookPlayer();
       forgetTheMusicPlayer();
     },
     [],
@@ -228,6 +237,27 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
 
   const back = () => {
     setPages((was) => was.slice(0, -1));
+  };
+
+  const toTheListeningPlayer = () => {
+    setPages((was) => (was.at(-1)?.kind === 'listening' ? was : [...was, { kind: 'listening' }]));
+  };
+
+  const openWhatIsHeard = (heard: Heard) => {
+    if (heard === 'book') {
+      toTheListeningPlayer();
+    } else {
+      open({ kind: 'playing' });
+    }
+  };
+
+  const carryOnListening = (bookId: string) => {
+    void cache.fetchQuery(bookQueries.one(bookId)).then(async (detail) => {
+      if (detail !== null) {
+        await startListening(detail, thePhonesAudiobookPlayer());
+        toTheListeningPlayer();
+      }
+    });
   };
 
   const scanATelevision = async () => {
@@ -409,6 +439,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
             onRead={(bookId, chapterId, isFromTheStart) => {
               open({ kind: 'reading', bookId, chapterId, isFromTheStart });
             }}
+            onListen={toTheListeningPlayer}
             onBack={back}
           />
         );
@@ -438,6 +469,8 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
         );
       case 'playing':
         return <TheMusicPlayer onArtist={toArtist} onAlbum={toAlbum} onBack={back} />;
+      case 'listening':
+        return <TheListeningPlayer onBack={back} />;
     }
   };
 
@@ -503,6 +536,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
             onRead={(bookId) => {
               open({ kind: 'reading', bookId, chapterId: null, isFromTheStart: false });
             }}
+            onListen={carryOnListening}
           />
         </ATabPage>
       ) : null}
@@ -570,13 +604,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
       onSelect={setPart}
       {...(onFaceAt === undefined ? {} : { onFaceAt })}
       isFaceArriving={isFaceArriving}
-      above={
-        <TheNowPlayingBar
-          onOpen={() => {
-            open({ kind: 'playing' });
-          }}
-        />
-      }
+      above={<TheNowPlayingBar onOpen={openWhatIsHeard} />}
     >
       {showing}
     </TheTabs>
@@ -608,7 +636,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
                   )}
                 </UnderThePlayer>
               ),
-              rises: page.kind === 'playing',
+              rises: page.kind === 'playing' || page.kind === 'listening',
               holdsTheEdge: page.kind === 'reading',
             })),
           ]}
@@ -617,9 +645,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
         <TheMusicRemote />
         <TheFloatingPlayer
           isShown={MUSIC_PAGES.has(pages.at(-1)?.kind ?? 'playing')}
-          onOpen={() => {
-            open({ kind: 'playing' });
-          }}
+          onOpen={openWhatIsHeard}
         />
       </View>
       {covering === null ? null : (

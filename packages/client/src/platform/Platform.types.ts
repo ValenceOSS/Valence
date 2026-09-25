@@ -1,4 +1,5 @@
 import type { AudioLike } from '@ValenceClient/music/createMusicPlayer';
+import type { ListeningAudio } from '@ValenceClient/books/createAudiobookPlayer';
 import type { Connect } from '@ValenceClient/realtime/createRealtimeClient';
 import type { HeldFile, WhatToKeep } from '@ValenceContracts/schemas/HeldFile';
 import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
@@ -55,6 +56,7 @@ type Platform = {
   notifyLocally: (notice: LocalNotice) => void;
   setUnreadBadge: (count: number) => void;
   musicAudio: () => MusicAudio;
+  listeningAudio: () => ListeningAudio;
 };
 
 export type {
