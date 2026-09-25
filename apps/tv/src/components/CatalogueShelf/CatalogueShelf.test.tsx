@@ -1,4 +1,5 @@
 import { render, userEvent } from '@testing-library/react-native';
+import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { CatalogueShelf } from '@ValenceTv/components/CatalogueShelf/CatalogueShelf';
 import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 
@@ -19,6 +20,7 @@ describe('CatalogueShelf', () => {
   it('names the row and shows what is on it', async () => {
     const drawn = await render(
       <CatalogueShelf title="Trending" titles={TITLES} onOpen={jest.fn()} />,
+      { wrapper: CacheScope },
     );
 
     expect(drawn.getByText('Trending')).toBeTruthy();
@@ -29,7 +31,10 @@ describe('CatalogueShelf', () => {
 
   it('says which title was chosen', async () => {
     const onOpen = jest.fn();
-    const drawn = await render(<CatalogueShelf title="Trending" titles={TITLES} onOpen={onOpen} />);
+    const drawn = await render(
+      <CatalogueShelf title="Trending" titles={TITLES} onOpen={onOpen} />,
+      { wrapper: CacheScope },
+    );
 
     await userEvent.press(drawn.getByRole('button', { name: 'Arrival' }));
 
@@ -43,6 +48,7 @@ describe('CatalogueShelf', () => {
         titles={[aTitle('7', 'Film seven'), { ...aTitle('7', 'Show seven'), kind: 'series' }]}
         onOpen={jest.fn()}
       />,
+      { wrapper: CacheScope },
     );
 
     expect(drawn.getByRole('button', { name: 'Film seven' })).toBeTruthy();
