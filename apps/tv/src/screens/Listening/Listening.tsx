@@ -122,7 +122,7 @@ const TITLES: Record<ListeningPanel, string> = {
  *
  * Menu closes whichever panel is open, and otherwise goes back to wherever this was opened from, the
  * book carrying on, as does the Back button at the top left, which pressing up from the bar reaches
- * though it sits away to the left.
+ * though it sits away to the left, and pressing down from it goes back to the bar.
  *
  * @param onEmpty - Told when no book is open any more, to close the screen.
  * @param onBack - Told when the button at the top left is pressed, to go back as Menu does.
@@ -132,7 +132,24 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
   const [panel, setPanel] = useState<ListeningPanel | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [backButton, setBackButton] = useState<View | null>(null);
+  const [bar, setBar] = useState<View | null>(null);
   const upToBack = useHandOff('up', backButton);
+  const downFromBack = useHandOff('down', bar);
+
+  const atTheBack = useCallback(() => {
+    upToBack.leave();
+    downFromBack.arrive();
+  }, [upToBack, downFromBack]);
+
+  const atTheBar = useCallback(() => {
+    upToBack.arrive();
+    downFromBack.leave();
+  }, [upToBack, downFromBack]);
+
+  const awayFromTheEdges = useCallback(() => {
+    upToBack.leave();
+    downFromBack.leave();
+  }, [upToBack, downFromBack]);
   const { book, sleep } = state;
 
   useEffect(() => {
@@ -200,7 +217,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
             variant="overlay"
             size="md"
             isPill
-            onFocus={upToBack.leave}
+            onFocus={atTheBack}
             onPress={onBack}
           />
         </View>
@@ -232,7 +249,8 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
             </View>
 
             <Scrubber
-              onFocus={upToBack.arrive}
+              ref={setBar}
+              onFocus={atTheBar}
               position={state.bookPositionSeconds - chapterStart}
               duration={chapterLength}
               onSeek={(seconds) => {
@@ -246,7 +264,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
 
             <View style={styles.transport}>
               <Button
-                onFocus={upToBack.leave}
+                onFocus={awayFromTheEdges}
                 label="Chapter before"
                 icon={SkipBack}
                 variant="ghost"
@@ -257,7 +275,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
                 }}
               />
               <Button
-                onFocus={upToBack.leave}
+                onFocus={awayFromTheEdges}
                 label={`Back ${LISTENING_CHOICES.backSeconds.toString()} seconds`}
                 icon={Rewind}
                 variant="ghost"
@@ -268,7 +286,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
                 }}
               />
               <Button
-                onFocus={upToBack.leave}
+                onFocus={awayFromTheEdges}
                 label={state.isPlaying ? 'Pause' : 'Play'}
                 icon={state.isPlaying ? Pause : Play}
                 variant="ghost"
@@ -279,7 +297,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
                 onPress={player.toggle}
               />
               <Button
-                onFocus={upToBack.leave}
+                onFocus={awayFromTheEdges}
                 label={`On ${LISTENING_CHOICES.forwardSeconds.toString()} seconds`}
                 icon={FastForward}
                 variant="ghost"
@@ -290,7 +308,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
                 }}
               />
               <Button
-                onFocus={upToBack.leave}
+                onFocus={awayFromTheEdges}
                 label="Next chapter"
                 icon={SkipForward}
                 variant="ghost"
@@ -304,7 +322,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
 
             <View style={styles.extras}>
               <Button
-                onFocus={upToBack.leave}
+                onFocus={awayFromTheEdges}
                 label={speedLabel(state.speed)}
                 icon={state.speed === 1 ? Gauge : GaugeFilled}
                 variant={state.speed === 1 ? 'ghost' : 'soft'}
@@ -314,7 +332,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
                 }}
               />
               <Button
-                onFocus={upToBack.leave}
+                onFocus={awayFromTheEdges}
                 label={sleeping ?? 'Sleep timer'}
                 icon={sleeping === null ? Moon : MoonFilled}
                 variant={sleeping === null ? 'ghost' : 'soft'}
@@ -324,7 +342,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
                 }}
               />
               <Button
-                onFocus={upToBack.leave}
+                onFocus={awayFromTheEdges}
                 label="Chapters"
                 icon={List}
                 variant="ghost"

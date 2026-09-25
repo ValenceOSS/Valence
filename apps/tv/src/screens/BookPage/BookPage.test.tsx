@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, userEvent, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, userEvent, waitFor } from '@testing-library/react-native';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { aListening } from '@ValenceClient/testing/aListening';
 import { anAudiobook } from '@ValenceClient/testing/anAudiobook';
@@ -44,6 +44,16 @@ const draw = async ({ found = detail, place = null }: Seed = {}) => {
     </QueryClientProvider>,
   );
 
+  const [page] = drawn.container.queryAll(
+    (node) => node.type === 'View' && typeof node.props.onLayout === 'function',
+  );
+
+  if (page !== undefined) {
+    await fireEvent(page, 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 1920, height: 1080 } },
+    });
+  }
+
   return { drawn, onListen };
 };
 
@@ -58,6 +68,7 @@ describe('BookPage', () => {
     expect(drawn.getByText('Red Rising')).toBeTruthy();
     expect(drawn.getByText('Pierce Brown')).toBeTruthy();
     expect(drawn.getByText('2014   ·   20 min   ·   3 chapters')).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'The Institute, 5 min' })).toBeTruthy();
   });
 
   it('starts a book nobody has started from the beginning, and shows the player', async () => {
@@ -70,19 +81,30 @@ describe('BookPage', () => {
     });
     expect(mockFake.player.read().book?.id).toBe(detail.book.id);
     expect(mockFake.player.read().bookPositionSeconds).toBe(0);
-    expect(drawn.queryByRole('button', { name: 'Listen from the beginning' })).toBeNull();
+    expect(drawn.queryByRole('button', { name: 'Start again' })).toBeNull();
   });
 
   it('carries on from where somebody left off, or starts again', async () => {
     const { drawn, onListen } = await draw({ place: PLACE });
 
-    expect(drawn.getByText('Part 2 · 9 min left')).toBeTruthy();
+    expect(
+      drawn.getByText('2014   ·   20 min   ·   3 chapters   ·   Part 2 · 9 min left'),
+    ).toBeTruthy();
 
-    await userEvent.press(drawn.getByRole('button', { name: 'Listen from the beginning' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Start again' }));
 
     expect(onListen).toHaveBeenCalled();
     expect(mockFake.player.read().bookPositionSeconds).toBe(0);
     expect(drawn.getByRole('button', { name: 'Continue listening' })).toBeTruthy();
+  });
+
+  it('starts the book at a chapter chosen from the list, and shows the player', async () => {
+    const { drawn, onListen } = await draw();
+
+    await userEvent.press(drawn.getByRole('button', { name: 'The Passage, 5 min' }));
+
+    expect(onListen).toHaveBeenCalled();
+    expect(mockFake.player.read().bookPositionSeconds).toBe(900);
   });
 
   it('says so where the book has nothing to listen to', async () => {

@@ -11,18 +11,21 @@ const MOVES_BY = 10;
 
 const A_TURN_MOVES = 60;
 
+const THICK = 14;
+
 /**
  * How far through a song or a chapter it is: a bar filling as it plays, with the time gone at its
- * left and the time left at its right. The remote can land on it, which thickens it; left and right
- * then move it on or back ten seconds, and turning a thumb round the remote's ring moves it
- * smoothly.
+ * left and the time left at its right. The remote can land on it, which thickens it within the room
+ * it always keeps, so nothing around it moves; left and right then move it on or back ten seconds,
+ * and turning a thumb round the remote's ring moves it smoothly.
  *
  * @param position - How far through it is, in seconds.
  * @param duration - How long it is, in seconds.
  * @param onSeek - Told where to go, in seconds.
  * @param onFocus - Told when the remote lands on it.
+ * @param ref - Handed the bar, for something that has to send the remote to it.
  */
-const Scrubber = ({ position, duration, onSeek, onFocus }: ScrubberProps) => {
+const Scrubber = ({ position, duration, onSeek, onFocus, ref }: ScrubberProps) => {
   const [isFocused, setIsFocused] = useState(false);
   const through = duration > 0 ? Math.min(Math.max(position / duration, 0), 1) : 0;
 
@@ -59,6 +62,7 @@ const Scrubber = ({ position, duration, onSeek, onFocus }: ScrubberProps) => {
 
   return (
     <Focusable
+      ref={ref}
       label={`${formatDuration(position)} of ${formatDuration(duration)}`}
       scale={1}
       onFocus={() => {
@@ -70,9 +74,11 @@ const Scrubber = ({ position, duration, onSeek, onFocus }: ScrubberProps) => {
       }}
     >
       <View style={styles.bar}>
-        <View style={[styles.track, isFocused && styles.thick]}>
-          <View style={[styles.gone, { flex: through }]} />
-          <View style={{ flex: 1 - through }} />
+        <View style={styles.slot}>
+          <View style={[styles.track, isFocused && styles.thick]}>
+            <View style={[styles.gone, { flex: through }]} />
+            <View style={{ flex: 1 - through }} />
+          </View>
         </View>
 
         <View style={styles.times}>
@@ -88,6 +94,7 @@ Scrubber.displayName = 'Scrubber';
 
 const styles = StyleSheet.create({
   bar: { gap: tokens.space.xs, paddingVertical: tokens.space.xs },
+  slot: { height: THICK, justifyContent: 'center' },
   track: {
     height: 8,
     flexDirection: 'row',
@@ -95,7 +102,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: 'rgba(255,255,255,0.25)',
   },
-  thick: { height: 14, borderRadius: 7 },
+  thick: { height: THICK, borderRadius: THICK / 2 },
   gone: { backgroundColor: '#ffffff' },
   times: { flexDirection: 'row', justifyContent: 'space-between' },
   time: {

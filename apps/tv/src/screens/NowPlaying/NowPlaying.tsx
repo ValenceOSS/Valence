@@ -61,6 +61,10 @@ const NAME_RISES_BY = 28;
 
 const SMALLEST_COVER = 280;
 
+const TITLE_LINE = 48;
+
+const HEART = 72;
+
 /**
  * What is playing, filling the screen as the television's own music app fills it: the whole screen
  * lit by the song's cover, the cover itself with the song's name and who sings it, how far through
@@ -78,7 +82,8 @@ const SMALLEST_COVER = 280;
  *
  * Menu closes whichever panel is open, and otherwise goes back to wherever this was opened from,
  * the music carrying on, as does the Back button at the top left, which fades with the controls and
- * which pressing up from the heart reaches though it sits away to the left. The cover is as large
+ * which pressing up from the heart reaches though it sits away to the left, and pressing down from
+ * it goes back to the heart. The cover is as large
  * as the screen leaves room for above the song's name and the controls, so nothing falls off its
  * foot. While this television is controlling another device, everything here is
  * that device's: its song, its place in it, and every button sent to it.
@@ -103,7 +108,24 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
   const [controlsHeight, setControlsHeight] = useState(0);
   const [namesHeight, setNamesHeight] = useState(0);
   const [backButton, setBackButton] = useState<View | null>(null);
+  const [heart, setHeart] = useState<View | null>(null);
   const upToBack = useHandOff('up', backButton);
+  const downFromBack = useHandOff('down', heart);
+
+  const atTheBack = useCallback(() => {
+    upToBack.leave();
+    downFromBack.arrive();
+  }, [upToBack, downFromBack]);
+
+  const atTheHeart = useCallback(() => {
+    upToBack.arrive();
+    downFromBack.leave();
+  }, [upToBack, downFromBack]);
+
+  const awayFromTheEdges = useCallback(() => {
+    upToBack.leave();
+    downFromBack.leave();
+  }, [upToBack, downFromBack]);
   const screen = useWindowDimensions();
   const [fade] = useState(() => new Animated.Value(1));
   const [arrival] = useState(() => new Animated.Value(1));
@@ -225,7 +247,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
             variant="overlay"
             size="md"
             isPill
-            onFocus={upToBack.leave}
+            onFocus={atTheBack}
             onPress={onBack}
           />
         </Animated.View>
@@ -278,18 +300,21 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
                     {shown.title}
                   </Text>
                 </View>
-                <Button
-                  label={isLiked ? `Unlike ${shown.title}` : `Like ${shown.title}`}
-                  icon={isLiked ? Heart : HeartOutline}
-                  variant="ghost"
-                  size="md"
-                  isIconOnly
-                  iconSize={34}
-                  onFocus={upToBack.arrive}
-                  onPress={() => {
-                    favourites.toggle(shown.trackId);
-                  }}
-                />
+                <View style={styles.heart}>
+                  <Button
+                    label={isLiked ? `Unlike ${shown.title}` : `Like ${shown.title}`}
+                    icon={isLiked ? Heart : HeartOutline}
+                    variant="ghost"
+                    size="md"
+                    isIconOnly
+                    iconSize={34}
+                    ref={setHeart}
+                    onFocus={atTheHeart}
+                    onPress={() => {
+                      favourites.toggle(shown.trackId);
+                    }}
+                  />
+                </View>
               </View>
               <Text numberOfLines={1} style={styles.artists}>
                 {shown.artists.map((artist) => artist.name).join(', ')}
@@ -313,7 +338,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
             }}
           >
             <Scrubber
-              onFocus={upToBack.leave}
+              onFocus={awayFromTheEdges}
               position={shown.positionSeconds}
               duration={shown.durationSeconds}
               onSeek={player.seek}
@@ -321,7 +346,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
 
             <View style={styles.transport}>
               <Button
-                onFocus={upToBack.leave}
+                onFocus={awayFromTheEdges}
                 label={isShuffled ? 'Shuffle is on' : 'Shuffle'}
                 icon={Shuffle}
                 variant={isShuffled ? 'soft' : 'ghost'}
@@ -330,7 +355,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
                 onPress={player.toggleShuffle}
               />
               <Button
-                onFocus={upToBack.leave}
+                onFocus={awayFromTheEdges}
                 label="Back"
                 icon={SkipBack}
                 variant="ghost"
@@ -339,7 +364,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
                 onPress={player.previous}
               />
               <Button
-                onFocus={upToBack.leave}
+                onFocus={awayFromTheEdges}
                 label={isPlaying ? 'Pause' : 'Play'}
                 icon={isPlaying ? Pause : Play}
                 variant="ghost"
@@ -350,7 +375,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
                 onPress={player.toggle}
               />
               <Button
-                onFocus={upToBack.leave}
+                onFocus={awayFromTheEdges}
                 label="Next"
                 icon={SkipForward}
                 variant="ghost"
@@ -359,7 +384,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
                 onPress={player.next}
               />
               <Button
-                onFocus={upToBack.leave}
+                onFocus={awayFromTheEdges}
                 label={
                   repeat === 'one'
                     ? 'Repeating this song'
@@ -377,7 +402,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
 
             <View style={styles.extras}>
               <Button
-                onFocus={upToBack.leave}
+                onFocus={awayFromTheEdges}
                 label={isBesideWords ? 'Hide the words' : 'Show the words'}
                 icon={Quote}
                 variant={isBesideWords ? 'soft' : 'ghost'}
@@ -389,7 +414,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
                 }}
               />
               <Button
-                onFocus={upToBack.leave}
+                onFocus={awayFromTheEdges}
                 label="Up next"
                 icon={ListMusic}
                 variant="ghost"
@@ -400,7 +425,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
                 }}
               />
               <Button
-                onFocus={upToBack.leave}
+                onFocus={awayFromTheEdges}
                 label="Play on another device"
                 icon={Cast}
                 variant={state.remote === null ? 'ghost' : 'soft'}
@@ -467,8 +492,14 @@ const styles = StyleSheet.create({
   names: { gap: tokens.space.xs },
   titled: { flexDirection: 'row', alignItems: 'center', gap: tokens.space.sm },
   titleWords: { flex: 1 },
+  heart: { marginVertical: (TITLE_LINE - HEART) / 2 },
   badges: { flexDirection: 'row', gap: tokens.space.xs, marginTop: tokens.space.xs },
-  title: { color: '#ffffff', fontSize: tokens.type.heading + 4, fontWeight: '800' },
+  title: {
+    color: '#ffffff',
+    fontSize: tokens.type.heading + 4,
+    lineHeight: TITLE_LINE,
+    fontWeight: '800',
+  },
   artists: { color: 'rgba(255,255,255,0.75)', fontSize: tokens.type.body },
   remote: { color: 'rgba(255,255,255,0.6)', fontSize: tokens.type.small },
   controls: { gap: tokens.space.md },
