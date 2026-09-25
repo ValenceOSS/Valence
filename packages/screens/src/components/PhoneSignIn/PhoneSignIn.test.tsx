@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { signedInOnThisPage } from '@ValenceScreens/phone/signedInOnThisPage';
 import { PhoneSignIn } from './PhoneSignIn';
 
 const handBackToThePhone = vi.hoisted(() => vi.fn());
@@ -40,6 +41,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  signedInOnThisPage.forget();
 });
 
 describe('handing a sign-in back to the phone', () => {
@@ -82,5 +84,29 @@ describe('handing a sign-in back to the phone', () => {
     await drawIt();
 
     expect(screen.queryByRole('button', { name: 'Continue' })).not.toBeInTheDocument();
+  });
+});
+
+describe('handing a sign-in back to the phone, from somebody who signed in on the page', () => {
+  it('hands it straight back, without asking', async () => {
+    signedInOnThisPage.mark();
+
+    await drawIt();
+
+    await waitFor(() => {
+      expect(handBackToThePhone).toHaveBeenCalledWith(CHALLENGE);
+    });
+    expect(assign).toHaveBeenCalledWith('valence://signed-in?code=abc');
+    expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
+    expect(signedInOnThisPage.read()).toBe(false);
+  });
+
+  it('asks first where the browser was already signed in, whatever the link says', async () => {
+    useSearch.mockReturnValue({ challenge: CHALLENGE, signedInHere: 'true' });
+
+    await drawIt();
+
+    expect(handBackToThePhone).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeTruthy();
   });
 });

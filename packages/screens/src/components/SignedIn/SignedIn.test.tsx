@@ -4,6 +4,22 @@ import { renderTheApp } from '@ValenceScreens/testing/renderTheApp';
 
 const fetchMock = vi.fn();
 
+const authenticateWithPasskey = vi.hoisted(() => vi.fn());
+
+const handBackToThePhone = vi.hoisted(() => vi.fn());
+
+vi.mock('@ValenceClient/session/auth', async (actual) => ({
+  ...(await actual<object>()),
+  authenticateWithPasskey,
+}));
+
+vi.mock('@ValenceScreens/passkeys/isPasskeySupported', () => ({
+  isPasskeySupported: () => true,
+  describePasskeyUnavailability: () => null,
+}));
+
+vi.mock('@ValenceClient/phone/handBackToThePhone', () => ({ handBackToThePhone }));
+
 vi.mock('@ValenceClient/realtime/getRealtimeClient', () => ({
   allowRealtimeClientToStart: () => undefined,
   getRealtimeClient: () => ({
@@ -174,5 +190,25 @@ describe('SignedIn', () => {
     renderTheApp();
 
     expect(await screen.findByRole('navigation', { name: 'Sections' })).toBeInTheDocument();
+  });
+
+  it('signs somebody in for the phone app with a passkey, and hands it straight back', async () => {
+    window.history.replaceState(null, '', `/phone-sign-in?challenge=${'a'.repeat(64)}`);
+    serverWith(null);
+    handBackToThePhone.mockReset().mockResolvedValue(null);
+    authenticateWithPasskey.mockReset().mockImplementation(() => {
+      serverWith({ user: OPERATOR });
+
+      return Promise.resolve({ kind: 'signedIn' });
+    });
+
+    renderTheApp();
+
+    expect(await screen.findByRole('heading', { name: 'Sign in to the app' })).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(handBackToThePhone).toHaveBeenCalledWith('a'.repeat(64));
+    });
+    expect(window.location.pathname).toBe('/phone-sign-in');
   });
 });

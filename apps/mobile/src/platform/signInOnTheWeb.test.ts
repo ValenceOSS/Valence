@@ -1,5 +1,9 @@
+import { Platform } from 'react-native';
 import { requireOptionalNativeModule } from 'expo';
+import { signInInATab } from '@ValenceMobile/platform/signInInATab';
 import { signInOnTheWeb } from './signInOnTheWeb';
+
+jest.mock('@ValenceMobile/platform/signInInATab', () => ({ signInInATab: jest.fn() }));
 
 jest.mock('expo', () => ({
   ...jest.requireActual<object>('expo'),
@@ -37,5 +41,21 @@ describe('signInOnTheWeb', () => {
     await expect(signInOnTheWeb('https://valence.example/phone-sign-in')).rejects.toThrow(
       'This build cannot open the browser sheet.',
     );
+  });
+
+  it('opens a Chrome tab on Android instead of the sheet', async () => {
+    const was = Platform.OS;
+    const openInATab = jest.fn(() => Promise.resolve());
+
+    Platform.OS = 'android';
+    jest.mocked(requireOptionalNativeModule).mockReturnValue({ openInATab });
+    jest.mocked(signInInATab).mockResolvedValue('valence://signed-in?code=abc');
+
+    expect(await signInOnTheWeb('https://valence.example/phone-sign-in')).toBe(
+      'valence://signed-in?code=abc',
+    );
+    expect(signInInATab).toHaveBeenCalledWith('https://valence.example/phone-sign-in', openInATab);
+
+    Platform.OS = was;
   });
 });

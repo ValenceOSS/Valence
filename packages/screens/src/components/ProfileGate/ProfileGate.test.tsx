@@ -474,6 +474,75 @@ describe('signing in with a passkey instead of a password', () => {
   });
 });
 
+describe('opened from the phone app, leading with a passkey', () => {
+  it('asks for a passkey as it opens, and lets somebody in with it', async () => {
+    const onSignedIn = vi.fn();
+
+    passkeySupportedMock.mockReturnValue(true);
+    passkeyMock.mockReset().mockResolvedValue({ kind: 'signedIn' });
+
+    renderInAnAddress(<ProfileGate onSignedIn={onSignedIn} leadsWithPasskey />);
+
+    expect(screen.getByText('Sign in to the app')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(onSignedIn).toHaveBeenCalled();
+    });
+    expect(passkeyMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps quiet when the first ask is refused before anything was touched', async () => {
+    passkeySupportedMock.mockReturnValue(true);
+    passkeyMock.mockReset().mockResolvedValue({ kind: 'failed', reason: 'Not allowed.' });
+
+    renderInAnAddress(<ProfileGate onSignedIn={vi.fn()} leadsWithPasskey />);
+
+    await waitFor(() => {
+      expect(passkeyMock).toHaveBeenCalledTimes(1);
+    });
+    expect(screen.queryByText('Not allowed.')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Use a passkey/ })).toBeInTheDocument();
+  });
+
+  it('says what went wrong when a passkey asked for by hand is refused', async () => {
+    const actor = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+
+    passkeySupportedMock.mockReturnValue(true);
+    passkeyMock.mockReset().mockResolvedValue({ kind: 'failed', reason: 'Not allowed.' });
+
+    renderInAnAddress(<ProfileGate onSignedIn={vi.fn()} leadsWithPasskey />);
+
+    await actor.click(await screen.findByRole('button', { name: /Use a passkey/ }));
+
+    expect(await screen.findByText('Not allowed.')).toBeInTheDocument();
+  });
+
+  it('goes to the usual ways in for somebody without one', async () => {
+    const actor = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+
+    passkeySupportedMock.mockReturnValue(true);
+    passkeyMock.mockReset().mockResolvedValue({ kind: 'cancelled' });
+
+    renderInAnAddress(<ProfileGate onSignedIn={vi.fn()} leadsWithPasskey />);
+
+    await actor.click(screen.getByRole('button', { name: 'Other ways to sign in' }));
+    await arrive();
+
+    expect(screen.getByText('Who is watching?')).toBeInTheDocument();
+  });
+
+  it('opens on the usual ways in where the browser has no passkeys', async () => {
+    passkeySupportedMock.mockReturnValue(false);
+
+    renderInAnAddress(<ProfileGate onSignedIn={vi.fn()} leadsWithPasskey />);
+
+    await arrive();
+
+    expect(screen.queryByText('Sign in to the app')).not.toBeInTheDocument();
+    expect(screen.getByText('Who is watching?')).toBeInTheDocument();
+  });
+});
+
 describe('shown inside the desktop client', () => {
   it('offers a different server, which is the one thing a window can do and a browser cannot', async () => {
     document.documentElement.dataset['valenceDesktop'] = 'true';

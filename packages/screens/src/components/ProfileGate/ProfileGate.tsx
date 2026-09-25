@@ -39,6 +39,7 @@ import { TwoFactorChallenge } from '@ValenceScreens/components/TwoFactorChalleng
 import { isPasskeySupported } from '@ValenceScreens/passkeys/isPasskeySupported';
 import { authenticateWithPasskey, signInWithEmail } from '@ValenceClient/session/auth';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import { PasskeyFirst } from './components/PasskeyFirst/PasskeyFirst';
 import type { ProfileGateProps } from './ProfileGate.types';
 
 const OURS = 'valence';
@@ -97,8 +98,15 @@ Portrait.displayName = 'Portrait';
  * @param onSignedIn - Called once somebody is through.
  * @param name - What this server calls itself, shown above the faces.
  * @param isTelevision - Whether this is a screen nobody can comfortably type on.
+ * @param leadsWithPasskey - Whether to ask for a passkey first, as the phone app's sheet does, with
+ *   the usual ways in a press away.
  */
-const ProfileGate = ({ onSignedIn, name = 'Valence', isTelevision = false }: ProfileGateProps) => {
+const ProfileGate = ({
+  onSignedIn,
+  name = 'Valence',
+  isTelevision = false,
+  leadsWithPasskey = false,
+}: ProfileGateProps) => {
   const [isHandingOver, setIsHandingOver] = useState(false);
   const asking = useQuery(sessionQueries.wayIn());
   const everyone = asking.data?.profiles ?? null;
@@ -117,6 +125,7 @@ const ProfileGate = ({ onSignedIn, name = 'Valence', isTelevision = false }: Pro
   const [isTitleOver, setIsTitleOver] = useState(false);
   const [isReturning, setIsReturning] = useState(false);
   const [needsCode, setNeedsCode] = useState(false);
+  const [wantsOtherWays, setWantsOtherWays] = useState(false);
 
   const isOurs = name.toLowerCase() === OURS;
   const facesRef = useRef(new Map<string, HTMLButtonElement>());
@@ -246,7 +255,7 @@ const ProfileGate = ({ onSignedIn, name = 'Valence', isTelevision = false }: Pro
     settle(await signInWithEmail(email, password));
   };
 
-  const signInWithPasskey = async () => {
+  const signInWithPasskey = async (isQuiet = false) => {
     setIsUsingPasskey(true);
     setProblem(null);
 
@@ -254,7 +263,9 @@ const ProfileGate = ({ onSignedIn, name = 'Valence', isTelevision = false }: Pro
       const outcome = await authenticateWithPasskey();
 
       if (outcome.kind === 'failed') {
-        setProblem(outcome.reason);
+        if (!isQuiet) {
+          setProblem(outcome.reason);
+        }
 
         return;
       }
@@ -269,6 +280,23 @@ const ProfileGate = ({ onSignedIn, name = 'Valence', isTelevision = false }: Pro
 
   if (isHandingOver) {
     return <TelevisionHandoff name={name} onSignedIn={onSignedIn} />;
+  }
+
+  if (leadsWithPasskey && !wantsOtherWays && isPasskeySupported()) {
+    return (
+      <PasskeyFirst
+        name={name}
+        isUsingPasskey={isUsingPasskey}
+        problem={problem}
+        onPasskey={(isQuiet) => {
+          void signInWithPasskey(isQuiet);
+        }}
+        onOtherWays={() => {
+          setProblem(null);
+          setWantsOtherWays(true);
+        }}
+      />
+    );
   }
 
   return (
