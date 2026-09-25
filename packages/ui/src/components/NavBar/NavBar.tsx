@@ -13,14 +13,21 @@ import type { NavBarProps } from './NavBar.types';
 
 const MOVES = 'transition-colors duration-[var(--duration-fast)] ease-[var(--ease-soft)]';
 
+const GLASS = [
+  'backdrop-blur-2xl backdrop-saturate-150',
+  'bg-[color-mix(in_oklab,var(--color-text)_9%,transparent)]',
+  'shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-text)_14%,transparent),var(--shadow-capsule)]',
+].join(' ');
+
 const OPENS = [
   'transition-[width,margin,opacity] duration-[var(--duration-base)] ease-[var(--ease-soft)]',
   'motion-reduce:transition-none',
 ].join(' ');
 
 /**
- * The platform's one navigation bar, along the top of the window: the mark, the places, and the
- * tools at the right, which do something rather than going somewhere.
+ * The platform's one navigation bar, along the top of the window: the mark at the left, the places
+ * in a capsule of glass floating in the middle as the television draws them, and the tools at the
+ * right, which do something rather than going somewhere.
  *
  * Clear while the page is at its top, so the first thing somebody sees is the page rather than
  * chrome laid over it, and painted in as they scroll, so whatever passes beneath does not run
@@ -34,8 +41,10 @@ const OPENS = [
  * The paint is a layer of its own, so that one opacity carries the colour, the blur and the edge
  * together: a blur behind glass cannot be eased on its own, and would jump while the colour faded.
  *
- * A single mark rests on where you are, follows the pointer to whatever it passes over, and returns
- * when the pointer leaves. Places are words wherever there is room for them and their icons where
+ * One pill rests behind where you are and springs to whatever place the pointer passes over, as
+ * the television's tab bar and the phone's do: solid, with the word on it turned to the page's
+ * colour, wherever it is. The tools
+ * have a quiet pill of their own, only under the pointer. Places are words wherever there is room for them and their icons where
  * there is not — and the place being stood on carries its icon beside its word as well, so where you
  * are is said twice rather than only by the mark behind it. That icon holds still under the pointer:
  * it sits beside a word rather than standing in for one, and a lift or a wipe there reads as the
@@ -68,6 +77,8 @@ const OPENS = [
  * @param selectedId - Which place is being stood on.
  * @param onSelect - Told which place was chosen.
  * @param actions - The tools at the right.
+ * @param trailing - Anything else to stand at the far right, after the tools, such as words a
+ *   screen with nowhere to go needs said.
  * @param solidity - How far painted in it is, from clear at nothing to solid at one. Solid where
  *   the page does not say, since a bar that cannot be read over content is worse than one that is
  *   never clear.
@@ -79,15 +90,31 @@ const NavBar = ({
   selectedId,
   onSelect,
   actions = [],
+  trailing,
   solidity = 1,
   className,
 }: NavBarProps) => {
   const [pointedAt, setPointedAt] = useState<string | null>(null);
   const { actionsRef, openAction } = useOpenAction();
 
-  const lit = pointedAt ?? selectedId;
+  const isInThePlaces = items.some((item) => item.id === pointedAt);
+  const litPlace = isInThePlaces ? pointedAt : selectedId;
 
-  const mark = <SlidingMark group="nav-bar-mark" />;
+  const placeMark = (
+    <SlidingMark
+      group="nav-bar-places"
+      feel="liquid"
+      className="rounded-full bg-[var(--color-text)]"
+    />
+  );
+
+  const toolMark = (
+    <SlidingMark
+      group="nav-bar-tools"
+      feel="liquid"
+      className="rounded-full bg-[color-mix(in_oklab,var(--color-text)_16%,transparent)]"
+    />
+  );
 
   return (
     <header className={cn('valence-navbar fixed inset-x-0 top-0 z-30', className)}>
@@ -112,134 +139,137 @@ const NavBar = ({
         }}
         className="flex h-16 items-center gap-4 px-4 sm:gap-6 sm:px-6"
       >
-        {brand === undefined ? null : <span className="flex shrink-0 items-center">{brand}</span>}
+        <div className="flex flex-1 basis-0 items-center gap-3">
+          {brand === undefined ? null : <span className="flex shrink-0 items-center">{brand}</span>}
 
-        <ActionMenu
-          label="Places"
-          className="shrink-0 md:hidden"
-          trigger={<Icon of={MenuIcon} size={20} />}
-          groups={[
-            {
-              items: items.map((item) => ({
-                id: item.id,
-                label: item.label,
-                ...(item.icon === undefined ? {} : { icon: item.icon }),
-                ...(item.id === selectedId ? { detail: 'Here' } : {}),
-                onChoose: () => {
-                  onSelect(item.id);
-                },
-              })),
-            },
-          ]}
-        />
-
-        <ul className="valence-rail hidden min-w-0 items-center gap-0.5 overflow-x-auto md:flex">
-          {items.map((item) => {
-            const isCurrent = item.id === selectedId;
-
-            const button = (
-              <Button
-                variant="bare"
-                size="none"
-                label={item.label}
-                hasTooltip={false}
-                aria-current={isCurrent ? 'page' : undefined}
-                onPointerEnter={() => {
-                  setPointedAt(item.id);
-                }}
-                onFocus={(event) => {
-                  if (event.target.matches(':focus-visible')) {
-                    setPointedAt(item.id);
-                  }
-                }}
-                onClick={() => {
-                  setPointedAt(item.id);
-                  onSelect(item.id);
-                }}
-                className={cn(
-                  'relative flex h-9 shrink-0 items-center gap-2 rounded-md px-3.5 text-sm',
-                  'coarse:h-11',
-                  MOVES,
-                  isCurrent
-                    ? 'font-medium text-text'
-                    : lit === item.id
-                      ? 'text-text'
-                      : 'text-text-muted hover:text-text focus-visible:text-text',
-                )}
-              >
-                {lit === item.id ? mark : null}
-
-                {item.icon === undefined ? null : (
-                  <span
-                    className={cn(
-                      'relative z-10 flex overflow-hidden',
-                      OPENS,
-                      isCurrent
-                        ? 'md:-mx-0.5 md:w-[22px] md:px-0.5 md:opacity-100'
-                        : 'md:-ml-2 md:w-0 md:opacity-0',
-                    )}
-                  >
-                    <AnimatedIcon
-                      isPlaying={!isCurrent && pointedAt === item.id}
-                      icon={isCurrent ? (item.activeIcon ?? item.icon) : item.icon}
-                      {...(isCurrent || item.gesture === undefined
-                        ? {}
-                        : { gesture: item.gesture })}
-                      {...(isCurrent || item.activeIcon === undefined
-                        ? {}
-                        : { activeIcon: item.activeIcon })}
-                    />
-                  </span>
-                )}
-
-                <span className="relative z-10 hidden md:inline">{item.label}</span>
-              </Button>
-            );
-
-            const groups =
-              item.choices === undefined
-                ? []
-                : [
-                    {
-                      name: item.choices.label,
-                      options: [...item.choices.options],
-                      selectedId: item.choices.selectedId,
-                      onSelect: item.choices.onSelect,
-                    },
-                  ];
-
-            return (
-              <li key={item.id} className="flex shrink-0 items-center">
-                {item.choices === undefined ? (
-                  button
-                ) : (
-                  <OptionMenu
-                    label={item.choices.label}
-                    align="start"
-                    anchor={button}
-                    groups={groups}
-                  />
-                )}
-
-                {item.choices === undefined ? null : (
-                  <OptionMenu
-                    label={item.choices.label}
-                    triggerShape="icon"
-                    align="start"
-                    className="hidden coarse:inline-flex"
-                    trigger={<Icon of={ChevronDownIcon} size={14} />}
-                    groups={groups}
-                  />
-                )}
-              </li>
-            );
-          })}
-        </ul>
+          <ActionMenu
+            label="Places"
+            className="shrink-0 md:hidden"
+            trigger={<Icon of={MenuIcon} size={20} />}
+            groups={[
+              {
+                items: items.map((item) => ({
+                  id: item.id,
+                  label: item.label,
+                  ...(item.icon === undefined ? {} : { icon: item.icon }),
+                  ...(item.id === selectedId ? { detail: 'Here' } : {}),
+                  onChoose: () => {
+                    onSelect(item.id);
+                  },
+                })),
+              },
+            ]}
+          />
+        </div>
 
         <div
-          ref={actionsRef}
-          className="valence-rail ml-auto flex min-w-0 items-center gap-0.5 overflow-x-auto"
+          className={cn(
+            'hidden min-w-0 shrink rounded-full p-1',
+            GLASS,
+            items.length === 0 ? null : 'md:flex',
+          )}
         >
+          <ul className="valence-rail flex min-w-0 items-center gap-0.5 overflow-x-auto">
+            {items.map((item) => {
+              const isCurrent = item.id === selectedId;
+
+              const button = (
+                <Button
+                  variant="bare"
+                  size="none"
+                  label={item.label}
+                  hasTooltip={false}
+                  aria-current={isCurrent ? 'page' : undefined}
+                  onPointerEnter={() => {
+                    setPointedAt(item.id);
+                  }}
+                  onFocus={(event) => {
+                    if (event.target.matches(':focus-visible')) {
+                      setPointedAt(item.id);
+                    }
+                  }}
+                  onClick={() => {
+                    setPointedAt(item.id);
+                    onSelect(item.id);
+                  }}
+                  className={cn(
+                    'relative flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[0.9375rem] font-semibold',
+                    'coarse:h-11',
+                    MOVES,
+                    litPlace === item.id ? 'text-[var(--color-surface)]' : 'text-text',
+                  )}
+                >
+                  {litPlace === item.id ? placeMark : null}
+
+                  {item.icon === undefined ? null : (
+                    <span
+                      className={cn(
+                        'relative z-10 flex overflow-hidden',
+                        OPENS,
+                        isCurrent
+                          ? 'md:-mx-0.5 md:w-[22px] md:px-0.5 md:opacity-100'
+                          : 'md:-ml-2 md:w-0 md:opacity-0',
+                      )}
+                    >
+                      <AnimatedIcon
+                        isPlaying={!isCurrent && pointedAt === item.id}
+                        icon={isCurrent ? (item.activeIcon ?? item.icon) : item.icon}
+                        {...(isCurrent || item.gesture === undefined
+                          ? {}
+                          : { gesture: item.gesture })}
+                        {...(isCurrent || item.activeIcon === undefined
+                          ? {}
+                          : { activeIcon: item.activeIcon })}
+                      />
+                    </span>
+                  )}
+
+                  <span className="relative z-10 hidden md:inline">{item.label}</span>
+                </Button>
+              );
+
+              const groups =
+                item.choices === undefined
+                  ? []
+                  : [
+                      {
+                        name: item.choices.label,
+                        options: [...item.choices.options],
+                        selectedId: item.choices.selectedId,
+                        onSelect: item.choices.onSelect,
+                      },
+                    ];
+
+              return (
+                <li key={item.id} className="flex shrink-0 items-center">
+                  {item.choices === undefined ? (
+                    button
+                  ) : (
+                    <OptionMenu
+                      label={item.choices.label}
+                      align="start"
+                      anchor={button}
+                      groups={groups}
+                    />
+                  )}
+
+                  {item.choices === undefined ? null : (
+                    <OptionMenu
+                      label={item.choices.label}
+                      triggerShape="icon"
+                      align="start"
+                      className="hidden coarse:inline-flex"
+                      trigger={<Icon of={ChevronDownIcon} size={14} />}
+                      groups={groups}
+                    />
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
+        <div ref={actionsRef} className="flex flex-1 basis-0 items-center justify-end gap-0.5">
           {actions.map((action) =>
             action.control === undefined ? (
               <Button
@@ -260,15 +290,13 @@ const NavBar = ({
                 }}
                 onClick={action.onSelect}
                 className={cn(
-                  'relative flex size-9 shrink-0 items-center justify-center rounded-md text-sm',
+                  'relative flex size-9 shrink-0 items-center justify-center rounded-full text-sm',
                   'coarse:size-11',
                   MOVES,
-                  lit === action.id || action.isCurrent === true
-                    ? 'font-medium text-text'
-                    : 'text-text-muted hover:text-text focus-visible:text-text',
+                  'text-text',
                 )}
               >
-                {lit === action.id ? mark : null}
+                {pointedAt === action.id ? toolMark : null}
 
                 <span className="relative z-10 flex">
                   <AnimatedIcon
@@ -298,15 +326,9 @@ const NavBar = ({
                     setPointedAt(action.id);
                   }
                 }}
-                className={cn(
-                  'relative flex items-center',
-                  MOVES,
-                  lit === action.id || action.isCurrent === true
-                    ? 'text-text'
-                    : 'text-text-muted hover:text-text focus-visible:text-text',
-                )}
+                className={cn('relative flex items-center', MOVES, 'text-text')}
               >
-                {lit === action.id ? mark : null}
+                {pointedAt === action.id ? toolMark : null}
 
                 <span className="relative z-10 flex">
                   <AnimatedIcon
@@ -318,6 +340,10 @@ const NavBar = ({
                 </span>
               </div>
             ),
+          )}
+
+          {trailing === undefined ? null : (
+            <div className="ml-2 flex shrink-0 items-center gap-3">{trailing}</div>
           )}
         </div>
       </nav>

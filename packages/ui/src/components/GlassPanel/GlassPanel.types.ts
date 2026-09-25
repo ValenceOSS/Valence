@@ -1,6 +1,6 @@
 import type { ElementType, HTMLAttributes, ReactNode } from 'react';
 
-type GlassElevation = 'floating' | 'inset' | 'film';
+type GlassElevation = 'floating' | 'inset' | 'clear' | 'film';
 
 type GlassPanelProps = Omit<HTMLAttributes<HTMLElement>, 'className' | 'children'> & {
   children: ReactNode;

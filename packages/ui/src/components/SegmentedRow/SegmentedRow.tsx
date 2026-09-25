@@ -21,6 +21,8 @@ import type { SegmentedRowProps } from './SegmentedRow.types';
  *   fainter, for a choice that can be made but which this server has nothing behind.
  * @param value - Which one is chosen, so the mark can travel to it.
  * @param onSelect - Told which one was pressed.
+ * @param fills - Whether the choices share the whole width of the track evenly, for a row that is
+ *   stretched across its space rather than sized to its words.
  * @param className - Extra classes for the caller's own layout.
  */
 const SegmentedRow = ({
@@ -30,6 +32,7 @@ const SegmentedRow = ({
   onSelect,
   size = 'md',
   tone = 'inverted',
+  fills = false,
   className,
 }: SegmentedRowProps) => (
   <div
@@ -39,6 +42,7 @@ const SegmentedRow = ({
       SEGMENTED.track,
       SEGMENTED.tones[tone].track,
       SEGMENTED.trackSizes[size],
+      fills ? 'w-full' : '',
       className,
     )}
   >
@@ -52,6 +56,7 @@ const SegmentedRow = ({
         className={cn(
           SEGMENTED.item,
           SEGMENTED.itemSizes[size],
+          fills ? 'flex-1 justify-center' : '',
           item.id === value ? SEGMENTED.tones[tone].chosen : '',
           item.isAbsent === true && item.id !== value ? 'text-text-muted/60' : '',
         )}
