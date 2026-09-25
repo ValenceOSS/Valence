@@ -264,6 +264,10 @@ const Watching = ({
   }, [mediaId, asking, clientId]);
 
   const player = useVideoPlayer(source, (ready) => {
+    if (source === null) {
+      return;
+    }
+
     ready.timeUpdateEventInterval = HOW_OFTEN_IT_SAYS_WHERE_IT_IS;
     ready.showNowPlayingNotification = true;
     ready.staysActiveInBackground = true;
@@ -279,6 +283,10 @@ const Watching = ({
   const loaded = useEvent(player, 'sourceLoad');
 
   useEventListener(player, 'playToEnd', () => {
+    if (source === null || !(player.duration > 0)) {
+      return;
+    }
+
     onEnded?.();
   });
 

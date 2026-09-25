@@ -89,6 +89,33 @@ describe('Watching', () => {
     expect(drawn.queryByText(/asking/iu)).toBeNull();
   });
 
+  it('leaves a player alone until it has something to play, since Android takes that as the end', async () => {
+    const expoVideo = jest.requireMock<{
+      useVideoPlayer: (
+        source: { uri: string } | null,
+        ready?: (player: typeof theFakePlayer) => void,
+      ) => typeof theFakePlayer;
+    }>('expo-video');
+    const asMocked = expoVideo.useVideoPlayer;
+    const play = jest.spyOn(theFakePlayer, 'play');
+
+    expoVideo.useVideoPlayer = (source, ready) => {
+      if (source === null) {
+        ready?.(theFakePlayer);
+      }
+
+      return asMocked(source, ready);
+    };
+    jest.mocked(startPlaybackSession).mockReturnValue(new Promise(() => undefined));
+
+    await render(around(<Watching mediaId="one" onDone={jest.fn()} />));
+
+    expect(play).not.toHaveBeenCalled();
+
+    expoVideo.useVideoPlayer = asMocked;
+    play.mockRestore();
+  });
+
   it('tells the server what this phone can decode', async () => {
     jest
       .mocked(startPlaybackSession)
@@ -655,6 +682,40 @@ describe('Watching', () => {
       { positionSeconds: 6900, durationSeconds: 6960, isFinished: true },
       { isLeaving: false },
     );
+  });
+
+  it('takes no end from a player that has nothing in it yet, which Android reports as one', async () => {
+    jest.mocked(startPlaybackSession).mockReturnValue(new Promise(() => undefined));
+
+    const onEnded = jest.fn();
+
+    await render(around(<Watching mediaId="a-film" onDone={jest.fn()} onEnded={onEnded} />));
+
+    await act(() => {
+      theFakePlayer.say('playToEnd', { isPlaying: false });
+    });
+
+    expect(onEnded).not.toHaveBeenCalled();
+  });
+
+  it('takes no end from a film that has not yet said how long it is', async () => {
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+    theFakePlayer.duration = 0;
+
+    const onEnded = jest.fn();
+    const drawn = await render(
+      around(<Watching mediaId="a-film" onDone={jest.fn()} onEnded={onEnded} />),
+    );
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+    });
+
+    await act(() => {
+      theFakePlayer.say('playToEnd', { isPlaying: false });
+    });
+
+    expect(onEnded).not.toHaveBeenCalled();
   });
 
   it('says when the film has played to its end, so what follows can be decided', async () => {
