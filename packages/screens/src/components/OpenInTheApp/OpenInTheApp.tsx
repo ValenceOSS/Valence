@@ -52,12 +52,13 @@ const rememberPutAway = (): boolean => {
  * code with the camera is often looking at the way in rather than the approval.
  *
  * It says it is for somebody who has the app, because a page cannot see which apps a phone holds,
- * and it can be put away for the rest of the visit.
+ * and it can be put away for the rest of the visit. It is not offered on the page the app itself
+ * opened to be signed in through, since that is already the app.
  */
 const OpenInTheApp = () => {
   const [isPutAway, setIsPutAway] = useState(wasPutAway);
 
-  if (isPutAway || !isAnIPhone()) {
+  if (isPutAway || !isAnIPhone() || window.location.pathname.startsWith('/phone-sign-in')) {
     return null;
   }
 

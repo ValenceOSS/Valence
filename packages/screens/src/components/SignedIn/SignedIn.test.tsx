@@ -1,8 +1,25 @@
 import { screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderTheApp } from '@ValenceScreens/testing/renderTheApp';
+import { signedInOnThisPage } from '@ValenceScreens/phone/signedInOnThisPage';
 
 const fetchMock = vi.fn();
+
+const authenticateWithPasskey = vi.hoisted(() => vi.fn());
+
+const handBackToThePhone = vi.hoisted(() => vi.fn());
+
+vi.mock('@ValenceClient/session/auth', async (actual) => ({
+  ...(await actual<object>()),
+  authenticateWithPasskey,
+}));
+
+vi.mock('@ValenceScreens/passkeys/isPasskeySupported', () => ({
+  isPasskeySupported: () => true,
+  describePasskeyUnavailability: () => null,
+}));
+
+vi.mock('@ValenceClient/phone/handBackToThePhone', () => ({ handBackToThePhone }));
 
 vi.mock('@ValenceClient/realtime/getRealtimeClient', () => ({
   allowRealtimeClientToStart: () => undefined,
@@ -174,5 +191,48 @@ describe('SignedIn', () => {
     renderTheApp();
 
     expect(await screen.findByRole('navigation', { name: 'Sections' })).toBeInTheDocument();
+  });
+
+  it('signs somebody in for the phone app with a passkey, and hands it straight back', async () => {
+    window.history.replaceState(null, '', `/phone-sign-in?challenge=${'a'.repeat(64)}`);
+    serverWith(null);
+    handBackToThePhone.mockReset().mockResolvedValue(null);
+    authenticateWithPasskey.mockReset().mockImplementation(() => {
+      serverWith({ user: OPERATOR });
+
+      return Promise.resolve({ kind: 'signedIn' });
+    });
+
+    renderTheApp();
+
+    expect(await screen.findByRole('heading', { name: 'Sign in to the app' })).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(handBackToThePhone).toHaveBeenCalledWith('a'.repeat(64));
+    });
+    expect(window.location.pathname).toBe('/phone-sign-in');
+  });
+
+  it('does not keep a sign-in on the phone page for later when nothing asked for it', async () => {
+    window.history.replaceState(null, '', '/phone-sign-in');
+    signedInOnThisPage.forget();
+    serverWith(null);
+    handBackToThePhone.mockReset().mockResolvedValue(null);
+    authenticateWithPasskey.mockReset().mockImplementation(() => {
+      serverWith({ user: OPERATOR });
+
+      return Promise.resolve({ kind: 'signedIn' });
+    });
+
+    renderTheApp();
+
+    await waitFor(() => {
+      expect(authenticateWithPasskey).toHaveBeenCalled();
+    });
+    await waitFor(() => {
+      expect(screen.queryByRole('heading', { name: 'Sign in to the app' })).not.toBeInTheDocument();
+    });
+    expect(signedInOnThisPage.read()).toBe(false);
+    expect(handBackToThePhone).not.toHaveBeenCalled();
   });
 });

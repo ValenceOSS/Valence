@@ -39,6 +39,7 @@ import { TwoFactorChallenge } from '@ValenceScreens/components/TwoFactorChalleng
 import { isPasskeySupported } from '@ValenceScreens/passkeys/isPasskeySupported';
 import { authenticateWithPasskey, signInWithEmail } from '@ValenceClient/session/auth';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import { PasskeyFirst } from './components/PasskeyFirst/PasskeyFirst';
 import type { ProfileGateProps } from './ProfileGate.types';
 
 const OURS = 'valence';
@@ -97,8 +98,18 @@ Portrait.displayName = 'Portrait';
  * @param onSignedIn - Called once somebody is through.
  * @param name - What this server calls itself, shown above the faces.
  * @param isTelevision - Whether this is a screen nobody can comfortably type on.
+ * @param leadsWithPasskey - Whether to ask for a passkey first, as the phone app's sheet does, with
+ *   the usual ways in a press away.
+ * @param startsAs - The profile somebody already chose elsewhere, such as in the phone app, which
+ *   is asked for straight away rather than the whole household again.
  */
-const ProfileGate = ({ onSignedIn, name = 'Valence', isTelevision = false }: ProfileGateProps) => {
+const ProfileGate = ({
+  onSignedIn,
+  name = 'Valence',
+  isTelevision = false,
+  leadsWithPasskey = false,
+  startsAs = null,
+}: ProfileGateProps) => {
   const [isHandingOver, setIsHandingOver] = useState(false);
   const asking = useQuery(sessionQueries.wayIn());
   const everyone = asking.data?.profiles ?? null;
@@ -117,6 +128,32 @@ const ProfileGate = ({ onSignedIn, name = 'Valence', isTelevision = false }: Pro
   const [isTitleOver, setIsTitleOver] = useState(false);
   const [isReturning, setIsReturning] = useState(false);
   const [needsCode, setNeedsCode] = useState(false);
+  const [wantsOtherWays, setWantsOtherWays] = useState(false);
+  const passkeyAttempt = useRef(0);
+  const startedAs = useRef<string | null>(null);
+  const isShown = useRef(true);
+
+  useEffect(() => {
+    if (startsAs === null || everyone === null || startsAs === startedAs.current) {
+      return;
+    }
+
+    startedAs.current = startsAs;
+
+    const asked = everyone.find((profile) => profile.id === startsAs);
+
+    if (asked !== undefined) {
+      setChosen(asked);
+    }
+  }, [everyone, startsAs]);
+
+  useEffect(() => {
+    isShown.current = true;
+
+    return () => {
+      isShown.current = false;
+    };
+  }, []);
 
   const isOurs = name.toLowerCase() === OURS;
   const facesRef = useRef(new Map<string, HTMLButtonElement>());
@@ -246,29 +283,61 @@ const ProfileGate = ({ onSignedIn, name = 'Valence', isTelevision = false }: Pro
     settle(await signInWithEmail(email, password));
   };
 
-  const signInWithPasskey = async () => {
+  /**
+   * Signs in with a passkey. A passkey accepted after somebody moved on to another way in has still
+   * signed them in, so it lets them through; a refusal by then is no longer theirs to hear about,
+   * and nothing is done once the gate has gone.
+   *
+   * @param isQuiet - Whether to say nothing of a refusal, as the first ask on opening does.
+   */
+  const signInWithPasskey = async (isQuiet = false) => {
+    passkeyAttempt.current += 1;
+
+    const attempt = passkeyAttempt.current;
+
     setIsUsingPasskey(true);
     setProblem(null);
 
-    try {
-      const outcome = await authenticateWithPasskey();
+    const outcome = await authenticateWithPasskey();
 
-      if (outcome.kind === 'failed') {
-        setProblem(outcome.reason);
+    if (!isShown.current) {
+      return;
+    }
 
-        return;
-      }
+    setIsUsingPasskey(false);
 
-      if (outcome.kind !== 'cancelled') {
-        onSignedIn();
-      }
-    } finally {
-      setIsUsingPasskey(false);
+    if (outcome.kind === 'signedIn') {
+      onSignedIn();
+
+      return;
+    }
+
+    if (outcome.kind === 'failed' && !isQuiet && attempt === passkeyAttempt.current) {
+      setProblem(outcome.reason);
     }
   };
 
   if (isHandingOver) {
     return <TelevisionHandoff name={name} onSignedIn={onSignedIn} />;
+  }
+
+  if (leadsWithPasskey && !wantsOtherWays && isPasskeySupported()) {
+    return (
+      <PasskeyFirst
+        name={name}
+        isUsingPasskey={isUsingPasskey}
+        problem={problem}
+        onPasskey={(isQuiet) => {
+          void signInWithPasskey(isQuiet);
+        }}
+        onOtherWays={() => {
+          passkeyAttempt.current += 1;
+          setProblem(null);
+          setIsUsingPasskey(false);
+          setWantsOtherWays(true);
+        }}
+      />
+    );
   }
 
   return (

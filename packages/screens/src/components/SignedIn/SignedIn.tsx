@@ -33,6 +33,7 @@ import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 import type { StartOverride } from '@ValenceClient/shell/shell.types';
 import { useMusicRemote } from '@ValenceClient/music/useMusicRemote';
 import { useListenAlong } from '@ValenceScreens/music/useListenAlong';
+import { signedInOnThisPage } from '@ValenceScreens/phone/signedInOnThisPage';
 import type { SignedInProps } from './SignedIn.types';
 
 const PARTY_NOTICE_LINGERS_MS = 6000;
@@ -43,10 +44,19 @@ const MARKS_PLACE = 'valence-mark';
 
 const ASKS_AGAIN_MS = 4000;
 
+const PHONE_SIGN_IN = '/phone-sign-in';
+
+const HANDED_ON = ['/device', PHONE_SIGN_IN];
+
 /**
  * Everything behind the way in: who is watching, what they have seen, how far through it they are,
  * and the watch party they may be in. Held here rather than in each page, because the player, the
  * dialogs and the grids all read the same answers and must agree about them.
+ *
+ * Signing in lands on the home page, but for the pages another device opened to be signed in
+ * through — a television's code, the phone app's sheet — which stay where they are, since what they
+ * are for happens after. The phone's sheet is noted as signed in here, leads with a passkey, and
+ * starts on whichever profile the app was signing in as.
  *
  * @param title - What this instance is called.
  */
@@ -375,8 +385,21 @@ const SignedIn = ({ title }: SignedInProps) => {
         <ProfileGate
           name={title}
           isTelevision={isTelevision}
+          leadsWithPasskey={window.location.pathname.startsWith(PHONE_SIGN_IN)}
+          startsAs={
+            window.location.pathname.startsWith(PHONE_SIGN_IN)
+              ? new URLSearchParams(window.location.search).get('profile')
+              : null
+          }
           onSignedIn={() => {
-            if (!window.location.pathname.startsWith('/device')) {
+            const path = window.location.pathname;
+            const challenge = new URLSearchParams(window.location.search).get('challenge') ?? '';
+
+            if (path.startsWith(PHONE_SIGN_IN) && challenge !== '') {
+              signedInOnThisPage.mark();
+            }
+
+            if (!HANDED_ON.some((page) => path.startsWith(page))) {
               go({ section: 'home', search: '', inspecting: null, playing: null });
             }
 

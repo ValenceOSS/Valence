@@ -76,7 +76,7 @@ const ADMIN_DEFAULT_PANEL = 'overview';
 
 const adminSearch = z.object({ job: z.string().optional(), ...ObservabilitySearchSchema.shape });
 
-const phoneSearch = z.object({ challenge: z.string().optional() });
+const phoneSearch = z.object({ challenge: z.string().optional(), profile: z.string().optional() });
 
 /**
  * Builds the router: every address Valence serves, what it carries, and what is drawn there.

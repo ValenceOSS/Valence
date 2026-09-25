@@ -12,8 +12,9 @@ import type { UseAPasskeyProps } from './UseAPasskey.types';
  *
  * @param label - What the button says.
  * @param onIn - Told once they are through.
+ * @param profileId - The profile somebody already chose, which the page then asks for straight away.
  */
-const UseAPasskey = ({ label, onIn }: UseAPasskeyProps) => {
+const UseAPasskey = ({ label, onIn, profileId }: UseAPasskeyProps) => {
   const [isTrying, setIsTrying] = useState(false);
   const [hasFailed, setHasFailed] = useState(false);
 
@@ -21,7 +22,7 @@ const UseAPasskey = ({ label, onIn }: UseAPasskeyProps) => {
     setIsTrying(true);
     setHasFailed(false);
 
-    const outcome = await signInThroughTheBrowser();
+    const outcome = await signInThroughTheBrowser(profileId ?? null);
 
     setIsTrying(false);
 

@@ -1,6 +1,9 @@
 {
-  "platforms": ["apple"],
+  "platforms": ["apple", "android"],
   "apple": {
     "modules": ["ValenceWebSignInModule"]
+  },
+  "android": {
+    "modules": ["app.valence.modules.websignin.ValenceWebSignInModule"]
   }
 }

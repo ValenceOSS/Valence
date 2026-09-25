@@ -28,6 +28,22 @@ describe('UseAPasskey', () => {
     });
   });
 
+  it('tells the browser who was already chosen, and nobody where nobody was', async () => {
+    const drawn = await render(
+      <UseAPasskey label="Use a passkey instead" onIn={jest.fn()} profileId="profile-1" />,
+    );
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Use a passkey instead' }));
+
+    expect(signInThroughTheBrowser).toHaveBeenCalledWith('profile-1');
+
+    const anyone = await render(<UseAPasskey label="Sign in with a passkey" onIn={jest.fn()} />);
+
+    await userEvent.press(anyone.getByRole('button', { name: 'Sign in with a passkey' }));
+
+    expect(signInThroughTheBrowser).toHaveBeenLastCalledWith(null);
+  });
+
   it('says so where it did not work', async () => {
     jest.mocked(signInThroughTheBrowser).mockResolvedValue('failed');
 
