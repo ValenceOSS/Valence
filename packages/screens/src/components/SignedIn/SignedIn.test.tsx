@@ -1,6 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderTheApp } from '@ValenceScreens/testing/renderTheApp';
+import { signedInOnThisPage } from '@ValenceScreens/phone/signedInOnThisPage';
 
 const fetchMock = vi.fn();
 
@@ -210,5 +211,28 @@ describe('SignedIn', () => {
       expect(handBackToThePhone).toHaveBeenCalledWith('a'.repeat(64));
     });
     expect(window.location.pathname).toBe('/phone-sign-in');
+  });
+
+  it('does not keep a sign-in on the phone page for later when nothing asked for it', async () => {
+    window.history.replaceState(null, '', '/phone-sign-in');
+    signedInOnThisPage.forget();
+    serverWith(null);
+    handBackToThePhone.mockReset().mockResolvedValue(null);
+    authenticateWithPasskey.mockReset().mockImplementation(() => {
+      serverWith({ user: OPERATOR });
+
+      return Promise.resolve({ kind: 'signedIn' });
+    });
+
+    renderTheApp();
+
+    await waitFor(() => {
+      expect(authenticateWithPasskey).toHaveBeenCalled();
+    });
+    await waitFor(() => {
+      expect(screen.queryByRole('heading', { name: 'Sign in to the app' })).not.toBeInTheDocument();
+    });
+    expect(signedInOnThisPage.read()).toBe(false);
+    expect(handBackToThePhone).not.toHaveBeenCalled();
   });
 });

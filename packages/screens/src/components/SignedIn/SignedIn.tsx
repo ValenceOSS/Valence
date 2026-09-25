@@ -393,8 +393,9 @@ const SignedIn = ({ title }: SignedInProps) => {
           }
           onSignedIn={() => {
             const path = window.location.pathname;
+            const challenge = new URLSearchParams(window.location.search).get('challenge') ?? '';
 
-            if (path.startsWith(PHONE_SIGN_IN)) {
+            if (path.startsWith(PHONE_SIGN_IN) && challenge !== '') {
               signedInOnThisPage.mark();
             }
 
