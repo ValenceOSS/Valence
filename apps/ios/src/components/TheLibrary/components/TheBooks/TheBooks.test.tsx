@@ -3,6 +3,8 @@ import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { fetchBooks, fetchReading } from '@ValenceClient/books/fetchBooks';
+import { fetchListening } from '@ValenceClient/books/fetchListening';
+import { aListening } from '@ValenceClient/testing/aListening';
 import { aBook } from '@ValencePhone/testing/aBook';
 import { TheBooks } from './TheBooks';
 
@@ -12,8 +14,14 @@ jest.mock('@ValenceClient/books/fetchBooks', () => ({
   fetchReading: jest.fn(),
 }));
 
+jest.mock('@ValenceClient/books/fetchListening', () => ({
+  ...jest.requireActual<object>('@ValenceClient/books/fetchListening'),
+  fetchListening: jest.fn(),
+}));
+
 beforeEach(() => {
   installPlatform(aFakePlatform());
+  jest.mocked(fetchListening).mockResolvedValue([]);
 });
 
 describe('TheBooks', () => {
@@ -71,5 +79,30 @@ describe('TheBooks', () => {
     );
 
     expect(await drawn.findByText('No books yet')).toBeTruthy();
+  });
+
+  it('carries on with what is being listened to, saying the chapter and what is left', async () => {
+    jest.mocked(fetchBooks).mockResolvedValue([]);
+    jest.mocked(fetchReading).mockResolvedValue([]);
+    jest.mocked(fetchListening).mockResolvedValue([aListening(), aListening({ isFinished: true })]);
+    const onListen = jest.fn();
+    const drawn = await render(
+      <TheBooks
+        header={null}
+        libraryIds={['books']}
+        onBook={jest.fn()}
+        onRead={jest.fn()}
+        onListen={onListen}
+      />,
+      { wrapper: CacheScope },
+    );
+
+    await userEvent.press(
+      await drawn.findByRole('button', { name: 'Carry on listening to Red Rising' }),
+    );
+
+    expect(drawn.getByText('Continue listening')).toBeTruthy();
+    expect(drawn.getByText('Part 2 · 9 min left')).toBeTruthy();
+    expect(onListen).toHaveBeenCalledWith(aListening().book.id);
   });
 });

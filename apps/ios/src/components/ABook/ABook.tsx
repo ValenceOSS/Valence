@@ -7,10 +7,15 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { ActivityIndicator, Image, StyleSheet, View } from 'react-native';
 import { describeReadingPlace } from '@ValenceClient/books/describeReadingPlace';
+import { chaptersOf } from '@ValenceClient/books/createAudiobookPlayer';
+import { describeLength } from '@ValenceClient/books/describeLength';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { listenLabel } from '@ValenceClient/books/listenLabel';
+import { startAtChapter } from '@ValenceClient/books/startAtChapter';
 import { startListening } from '@ValenceClient/books/startListening';
 import { stillListening } from '@ValenceClient/books/stillListening';
+import { tracksOf } from '@ValenceClient/books/tracksOf';
+import { useChapterPlaying } from '@ValenceClient/books/useChapterPlaying';
 import { thePhonesAudiobookPlayer } from '@ValencePhone/books/thePhonesAudiobookPlayer';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { AShareSheet } from '@ValencePhone/components/AShareSheet/AShareSheet';
@@ -19,11 +24,13 @@ import { Icon } from '@ValencePhone/components/Icon/Icon';
 import { Screen } from '@ValencePhone/components/Screen/Screen';
 import { TheStars } from '@ValencePhone/components/TheStars/TheStars';
 import { Words } from '@ValencePhone/components/Words/Words';
+import { useTheBook } from '@ValencePhone/hooks/useTheBook';
 import { onThisServer } from '@ValencePhone/platform/onThisServer';
 import { useTheColours } from '@ValencePhone/theme/useTheColours';
 import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
 import { isAudiobookFormat } from '@ValenceContracts/schemas/Book';
 import type { ReadingProgress } from '@ValenceContracts/schemas/Book';
+import { AChapterToHear } from './components/AChapterToHear/AChapterToHear';
 import type { ABookProps } from './ABook.types';
 
 const COVER = 128;
@@ -81,7 +88,9 @@ const howFarInto = (read: ReadingProgress | undefined, pageCount: number | null)
  * start.
  *
  * A book there is to hear has a way to listen to it too, carrying on from where this profile left
- * off, and saying where that was; it leads where the book has nothing to read.
+ * off, and saying where that was; it leads where the book has nothing to read. Its chapters are
+ * listed as an album's songs are, with how long each lasts and the one playing marked, and any can
+ * be listened to from its start.
  *
  * @param bookId - Which book.
  * @param onRead - Told to open it, at a chapter somebody picked or where they left off.
@@ -97,6 +106,8 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
   const heard = useQuery({ ...bookQueries.listeningPlace(bookId), enabled: hasAudio });
   const listening = useQuery({ ...bookQueries.listening(), enabled: hasAudio });
   const [sharing, setSharing] = useState<ShareSubject | null>(null);
+  const hearing = useTheBook();
+  const chapterPlaying = useChapterPlaying(thePhonesAudiobookPlayer());
 
   if (read.isPending) {
     return (
@@ -124,6 +135,9 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
     .filter((chapter) => !isAudiobookFormat(chapter.format))
     .sort((one, other) => one.number - other.number);
   const partway = stillListening(listening.data ?? []).find((one) => one.book.id === bookId);
+  const tracks = tracksOf(chapters);
+  const toHear = chaptersOf(tracks);
+  const isThisBook = hearing.state.book?.id === bookId;
   const listen = (
     <Button
       tone={ordered.length === 0 ? 'bold' : 'quiet'}
@@ -140,6 +154,10 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
     book.authors === null || book.authors.length === 0 ? null : book.authors.join(', '),
     book.year === null ? null : book.year.toString(),
     ordered.length > 1 ? `${ordered.length.toString()} chapters` : null,
+    tracks.length === 0
+      ? null
+      : describeLength(tracks.reduce((all, track) => all + track.durationSeconds, 0)),
+    ordered.length === 0 && toHear.length > 1 ? `${toHear.length.toString()} chapters` : null,
   ].filter((fact) => fact !== null);
 
   return (
@@ -245,6 +263,24 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
               </Button>
             );
           })}
+        </View>
+      ) : null}
+      {toHear.length > 1 ? (
+        <View style={styles.chapters}>
+          <Words size="heading">{ordered.length > 1 ? 'Audiobook chapters' : 'Chapters'}</Words>
+          {toHear.map((chapter, at) => (
+            <AChapterToHear
+              key={`${at.toString()}:${chapter.title}`}
+              title={chapter.title}
+              at={at}
+              lasts={chapter.bookEndSeconds - chapter.bookStartSeconds}
+              isCurrent={isThisBook && at === chapterPlaying}
+              onListen={(from) => {
+                startAtChapter(thePhonesAudiobookPlayer(), book, tracks, from);
+                onListen();
+              }}
+            />
+          ))}
         </View>
       ) : null}
       <AShareSheet
