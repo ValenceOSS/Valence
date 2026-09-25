@@ -1124,6 +1124,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^4.1.11
         version: 4.1.11(vitest@4.1.11)
+      playwright-core:
+        specifier: 1.60.0
+        version: 1.60.0
       tsx:
         specifier: ^4.23.13
         version: 4.23.13
