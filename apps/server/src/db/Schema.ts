@@ -412,6 +412,7 @@ const preparedDownload = pgTable(
     state: text('state').notNull().default('preparing'),
     progress: integer('progress').notNull().default(0),
     bytesPerSecond: bigint('bytesPerSecond', { mode: 'number' }),
+    secondsLeft: integer('secondsLeft'),
     sizeBytes: bigint('sizeBytes', { mode: 'number' }),
     failure: text('failure'),
     askedFromClientId: text('askedFromClientId'),

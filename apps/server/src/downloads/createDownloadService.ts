@@ -72,6 +72,7 @@ const asDownload = (
   state: DownloadStateSchema.safeParse(row.state).data ?? 'preparing',
   progress: row.progress / 100,
   bytesPerSecond: row.bytesPerSecond,
+  secondsLeft: row.secondsLeft,
   sizeBytes: row.sizeBytes,
   failure: row.failure,
   askedFrom: row.askedFromClientId,
@@ -314,6 +315,7 @@ const createDownloadService = ({
                   state: file.isReady ? 'ready' : 'preparing',
                   progress: file.progress,
                   bytesPerSecond: file.bytesPerSecond ?? null,
+                  secondsLeft: file.isReady ? null : (file.secondsLeft ?? null),
                   sizeBytes: file.sizeBytes ?? null,
                   failure: null,
                   readyAt: file.isReady ? new Date() : null,
@@ -340,6 +342,7 @@ const createDownloadService = ({
           state: refused ? 'failed' : file.isReady ? 'ready' : 'preparing',
           progress: refused ? 0 : file.progress,
           bytesPerSecond: refused || file.isReady ? null : (file.bytesPerSecond ?? null),
+          secondsLeft: refused || file.isReady ? null : (file.secondsLeft ?? null),
           sizeBytes: refused ? null : (file.sizeBytes ?? null),
           ...(refused ? { failure: `The media service would not start it: ${file}` } : {}),
           ...(!refused && file.isReady ? { readyAt: new Date() } : {}),
@@ -381,7 +384,10 @@ const createDownloadService = ({
 
       await transcoder.stopDownload(row.renditionId).catch(() => false);
 
-      await db.update(preparedDownload).set({ state: 'paused' }).where(eq(preparedDownload.id, id));
+      await db
+        .update(preparedDownload)
+        .set({ state: 'paused', bytesPerSecond: null, secondsLeft: null })
+        .where(eq(preparedDownload.id, id));
     },
 
     resume: async (profileId, id) => {
@@ -445,17 +451,20 @@ const createDownloadService = ({
                 state: 'failed',
                 failure: 'It is no longer in the library, so it cannot be prepared.',
                 bytesPerSecond: null,
+                secondsLeft: null,
               }
             : problem !== null
               ? {
                   state: 'failed',
                   failure: 'The media service could not prepare it. Ask again to try once more.',
                   bytesPerSecond: null,
+                  secondsLeft: null,
                 }
               : {
                   state: file.isReady ? 'ready' : 'preparing',
                   progress: file.progress,
                   bytesPerSecond: file.isReady ? null : (file.bytesPerSecond ?? null),
+                  secondsLeft: file.isReady ? null : (file.secondsLeft ?? null),
                   sizeBytes: file.sizeBytes ?? null,
                   ...(file.isReady ? { readyAt: new Date() } : {}),
                 };
@@ -463,7 +472,8 @@ const createDownloadService = ({
         const isTheSame =
           change.state === row.state &&
           ('progress' in change ? change.progress === row.progress : true) &&
-          change.bytesPerSecond === row.bytesPerSecond;
+          change.bytesPerSecond === row.bytesPerSecond &&
+          change.secondsLeft === row.secondsLeft;
 
         if (isTheSame) {
           continue;

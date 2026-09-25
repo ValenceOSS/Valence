@@ -93,9 +93,12 @@ const READY: DownloadFile = {
 const aScratchDatabase = async () => {
   const client = new PGlite();
   const migrations = await Promise.all(
-    ['0045_offline_downloads.sql', '0046_download_speed.sql', '0083_the_device_that_asked.sql'].map(
-      (name) => readFile(join(import.meta.dirname, '..', '..', 'drizzle', name), 'utf8'),
-    ),
+    [
+      '0045_offline_downloads.sql',
+      '0046_download_speed.sql',
+      '0083_the_device_that_asked.sql',
+      '0084_the_time_a_download_has_left.sql',
+    ].map((name) => readFile(join(import.meta.dirname, '..', '..', 'drizzle', name), 'utf8')),
   );
 
   await client.exec(
@@ -244,6 +247,15 @@ describe('createDownloadService', () => {
     await expect(service.clearOutBefore(new Date(Date.now() + 60_000))).resolves.toBe(0);
     await expect(service.clearOutBefore(new Date(Date.now() - 60_000))).resolves.toBe(0);
     expect(transcoder.forgetDownload).not.toHaveBeenCalled();
+  });
+
+  it('says how long a file being prepared has left, once the media service can tell', async () => {
+    const { service } = await build([preparing(10), { ...preparing(30), secondsLeft: 420 }]);
+
+    await service.ask('a-profile', 'a-laptop', MEDIA_ID, 'original', []);
+    await service.follow();
+
+    expect((await service.list('a-profile'))[0]).toMatchObject({ progress: 0.3, secondsLeft: 420 });
   });
 
   it('calls a download failed once the media service says it could not prepare it', async () => {

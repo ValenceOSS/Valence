@@ -54,6 +54,7 @@ const createMemoryDownloadService = (
         bytesPerSecond: null,
         sizeBytes: null,
         failure: null,
+        secondsLeft: null,
         askedFrom: clientId,
         askedAt: new Date(0).toISOString(),
         readyAt: null,

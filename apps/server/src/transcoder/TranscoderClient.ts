@@ -150,6 +150,7 @@ const DownloadFileSchema = z.object({
   file: z.string(),
   sizeBytes: z.number().int().nonnegative().nullable().optional(),
   failure: z.string().nullable().optional(),
+  secondsLeft: z.number().int().nonnegative().nullable().optional(),
 });
 
 const RenditionFileSchema = z.object({

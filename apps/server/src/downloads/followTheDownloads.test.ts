@@ -20,6 +20,7 @@ const A_CHANGE: FollowedDownload = {
     bytesPerSecond: null,
     sizeBytes: 100,
     failure: null,
+    secondsLeft: null,
     askedFrom: 'a-laptop',
     askedAt: '2026-09-25T00:00:00.000Z',
     readyAt: '2026-09-25T00:10:00.000Z',

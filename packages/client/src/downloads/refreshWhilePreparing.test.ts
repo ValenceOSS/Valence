@@ -15,6 +15,7 @@ const A_DOWNLOAD: Download = {
   bytesPerSecond: null,
   sizeBytes: null,
   failure: null,
+  secondsLeft: null,
   askedFrom: null,
   askedAt: '2026-09-25T00:00:00.000Z',
   readyAt: null,

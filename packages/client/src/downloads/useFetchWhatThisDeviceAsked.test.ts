@@ -30,6 +30,7 @@ const aDownload = (over: Partial<Download> = {}): Download => ({
   bytesPerSecond: null,
   sizeBytes: 100,
   failure: null,
+  secondsLeft: null,
   askedFrom: THIS_LAPTOP,
   askedAt: '2026-09-25T00:00:00.000Z',
   readyAt: '2026-09-25T00:10:00.000Z',
