@@ -307,7 +307,7 @@ impl Session {
                 tracing::debug!(
                     target: "session",
                     session_id = %self.id,
-                    "cancel signal had nobody left to receive it, the run had already ended"
+                    "nothing to cancel, the transcode had already ended"
                 );
             }
         }
