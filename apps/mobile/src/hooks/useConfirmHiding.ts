@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Alert } from 'react-native';
 import { describeHiding } from '@ValenceClient/library/describeHiding';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
+import { say } from '@ValenceI18n/say';
 import type { Hiding } from '@ValenceClient/library/useHidden';
 
 /**
@@ -24,9 +25,9 @@ const useConfirmHiding = (hiding: Hiding, onHidden?: () => void): void => {
     const { title, detail } = describeHiding(asking, isShared);
 
     Alert.alert(title, detail, [
-      { text: 'Keep it', style: 'cancel', onPress: dismiss },
+      { text: say('phone.useConfirmHiding.keepIt'), style: 'cancel', onPress: dismiss },
       {
-        text: 'Hide it',
+        text: say('phone.useConfirmHiding.hideIt'),
         style: 'destructive',
         onPress: () => {
           confirm();

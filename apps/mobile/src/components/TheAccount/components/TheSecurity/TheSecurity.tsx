@@ -18,6 +18,7 @@ import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { TextField } from '@ValenceMobile/components/TextField/TextField';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { say } from '@ValenceI18n/say';
 
 const PASSKEYS = ['account', 'passkeys'] as const;
 
@@ -72,7 +73,7 @@ const TheSecurity = () => {
       setIsWorking(false);
 
       if (!isOff) {
-        setRefusal('That password is not right.');
+        setRefusal(say('phone.theSecurity.wrongPassword'));
 
         return;
       }
@@ -88,7 +89,7 @@ const TheSecurity = () => {
     setIsWorking(false);
 
     if (enrolled === null) {
-      setRefusal('That password is not right.');
+      setRefusal(say('phone.theSecurity.wrongPassword'));
 
       return;
     }
@@ -106,7 +107,7 @@ const TheSecurity = () => {
     setIsWorking(false);
 
     if (!isRight) {
-      setRefusal('That code is not right. Try the one your app shows now.');
+      setRefusal(say('phone.theSecurity.wrongCode'));
 
       return;
     }
@@ -119,13 +120,11 @@ const TheSecurity = () => {
     enrollment === null ? null : decodeURIComponent(A_SECRET.exec(enrollment.totpURI)?.[1] ?? '');
 
   return (
-    <AGroup title="Sign-in">
+    <AGroup title={say('phone.theSecurity.heading')}>
       <View style={styles.section}>
-        <Words isStrong>Two-step sign in</Words>
+        <Words isStrong>{say('phone.theSecurity.twoStep')}</Words>
         <Words tone="muted">
-          {isOn
-            ? 'Your account asks for a code from your authenticator app when you sign in.'
-            : 'A code from an authenticator app as well as your password, every time you sign in.'}
+          {isOn ? say('phone.theSecurity.twoStepOn') : say('phone.theSecurity.twoStepOff')}
         </Words>
 
         {step === 'resting' ? (
@@ -135,20 +134,20 @@ const TheSecurity = () => {
               setStep('password');
             }}
           >
-            {isOn ? 'Turn off' : 'Set up'}
+            {isOn ? say('phone.theSecurity.turnOff') : say('phone.theSecurity.setUp')}
           </Button>
         ) : null}
 
         {step === 'password' ? (
           <>
             <Words size="small" tone="muted">
-              Confirm it is you before changing sign in requirements.
+              {say('phone.theSecurity.confirmItIsYou')}
             </Words>
             <TextField
-              label="Password"
+              label={say('phone.theSecurity.passwordLabel')}
               value={password}
               onValueChange={setPassword}
-              placeholder="Password"
+              placeholder={say('phone.theSecurity.passwordLabel')}
               isSecret
               onSubmit={() => {
                 void withThePassword();
@@ -160,10 +159,10 @@ const TheSecurity = () => {
                 void withThePassword();
               }}
             >
-              Continue
+              {say('phone.theSecurity.continue')}
             </Button>
             <Button tone="quiet" onPress={reset}>
-              Cancel
+              {say('common.cancel')}
             </Button>
           </>
         ) : null}
@@ -176,26 +175,25 @@ const TheSecurity = () => {
                 void Linking.openURL(enrollment.totpURI);
               }}
             >
-              Add to Passwords
+              {say('phone.theSecurity.addToPasswords')}
             </Button>
 
             {secret === null || secret === '' ? null : (
               <>
                 <Words size="small" tone="muted">
-                  Or enter this key in your authenticator app by hand.
+                  {say('phone.theSecurity.enterKeyByHand')}
                 </Words>
                 <Words isSelectable>{secret}</Words>
               </>
             )}
 
             <Words size="small" tone="muted">
-              Save these now. Each works once if you lose your authenticator, and they are not shown
-              again.
+              {say('phone.theSecurity.saveBackupCodes')}
             </Words>
             <Words isSelectable>{enrollment.backupCodes.join('   ')}</Words>
 
             <TextField
-              label="Authenticator code"
+              label={say('phone.theSecurity.codeLabel')}
               value={code}
               onValueChange={setCode}
               placeholder="123456"
@@ -205,7 +203,7 @@ const TheSecurity = () => {
               }}
             />
             <Words size="small" tone="muted">
-              Enter a code from your app to finish. Two-factor is not on until you do.
+              {say('phone.theSecurity.enterCodeToFinish')}
             </Words>
             <Button
               isBusy={isWorking}
@@ -213,10 +211,10 @@ const TheSecurity = () => {
                 void finish();
               }}
             >
-              Turn on two-factor
+              {say('phone.theSecurity.turnOn')}
             </Button>
             <Button tone="quiet" onPress={reset}>
-              Cancel
+              {say('common.cancel')}
             </Button>
           </>
         ) : null}
@@ -225,16 +223,16 @@ const TheSecurity = () => {
       </View>
 
       <View style={styles.section}>
-        <Words isStrong>Passkeys</Words>
+        <Words isStrong>{say('phone.theSecurity.passkeys')}</Words>
 
         {passkeys.isPending ? <ActivityIndicator color={colours.textMuted} /> : null}
 
         {(passkeys.data ?? []).length === 0 && !passkeys.isPending ? (
-          <Words tone="muted">No passkeys yet. Add one from Valence on the web.</Words>
+          <Words tone="muted">{say('phone.theSecurity.noPasskeys')}</Words>
         ) : null}
 
         {(passkeys.data ?? []).map((passkey) => {
-          const name = passkey.name ?? 'A passkey';
+          const name = passkey.name ?? say('phone.theSecurity.aPasskey');
 
           return (
             <View key={passkey.id} style={styles.row}>
@@ -242,17 +240,17 @@ const TheSecurity = () => {
                 <Words>{name}</Words>
                 {passkey.createdAt === null || passkey.createdAt === undefined ? null : (
                   <Words size="small" tone="muted">
-                    {`Added ${saidWhen(passkey.createdAt)}`}
+                    {say('phone.theSecurity.added', { when: saidWhen(passkey.createdAt) })}
                   </Words>
                 )}
               </View>
 
               <Button
                 tone="bare"
-                label={`Rename ${name}`}
+                label={say('phone.theSecurity.renameWho', { name })}
                 onPress={() => {
                   Alert.prompt(
-                    'Rename passkey',
+                    say('phone.theSecurity.renamePasskey'),
                     undefined,
                     (next) => {
                       if (next.trim() !== '') {
@@ -273,20 +271,24 @@ const TheSecurity = () => {
 
               <Button
                 tone="bare"
-                label={`Remove ${name}`}
+                label={say('phone.theSecurity.removeWho', { name })}
                 onPress={() => {
-                  Alert.alert(`Remove ${name}?`, 'It will no longer sign you in.', [
-                    { text: 'Keep it', style: 'cancel' },
-                    {
-                      text: 'Remove it',
-                      style: 'destructive',
-                      onPress: () => {
-                        void deletePasskey(passkey.id).then(async () =>
-                          cache.invalidateQueries({ queryKey: PASSKEYS }),
-                        );
+                  Alert.alert(
+                    say('phone.theSecurity.removeTitle', { name }),
+                    say('phone.theSecurity.removeBody'),
+                    [
+                      { text: say('phone.theSecurity.keepIt'), style: 'cancel' },
+                      {
+                        text: say('phone.theSecurity.removeIt'),
+                        style: 'destructive',
+                        onPress: () => {
+                          void deletePasskey(passkey.id).then(async () =>
+                            cache.invalidateQueries({ queryKey: PASSKEYS }),
+                          );
+                        },
                       },
-                    },
-                  ]);
+                    ],
+                  );
                 }}
               >
                 <View style={styles.act}>

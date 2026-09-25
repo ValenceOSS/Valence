@@ -9,6 +9,7 @@ import { ATextReader } from '@ValenceMobile/components/AReader/components/ATextR
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { say } from '@ValenceI18n/say';
 import type { AReaderProps } from './AReader.types';
 
 /**
@@ -64,7 +65,7 @@ const AReader = ({ bookId, chapterId, isFromTheStart, onBack }: AReaderProps) =>
   if (asked.isError) {
     return (
       <Screen centres onBack={onBack}>
-        <Words tone="danger">That book could not be read.</Words>
+        <Words tone="danger">{say('phone.aReader.couldNotRead')}</Words>
       </Screen>
     );
   }
@@ -81,7 +82,7 @@ const AReader = ({ bookId, chapterId, isFromTheStart, onBack }: AReaderProps) =>
     return (
       <Screen centres onBack={onBack}>
         <Words tone="muted" isCentred>
-          Nothing in this book yet. Scanning the library again may find it.
+          {say('phone.aReader.nothingInIt')}
         </Words>
       </Screen>
     );

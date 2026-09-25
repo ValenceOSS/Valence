@@ -8,6 +8,7 @@ import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Slider } from '@ValenceMobile/components/Slider/Slider';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { say } from '@ValenceI18n/say';
 import type { NativeVolumeProps, VolumeModule } from './AVolumeSlider.types';
 
 const TheSystemSlider = requireNativeView<NativeVolumeProps>('ValenceVolume');
@@ -66,7 +67,7 @@ const AVolumeSlider = () => {
       <Icon of={VolumeLow} size={16} colour={colours.textMuted} />
       <View style={styles.slider}>
         <Slider
-          label="Volume"
+          label={say('phone.aVolumeSlider.volume')}
           value={volume}
           furthest={1}
           colour={colours.text}

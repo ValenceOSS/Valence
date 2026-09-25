@@ -2,6 +2,7 @@ import { FileSystemUploadType, uploadAsync } from 'expo-file-system/legacy';
 import { z } from 'zod';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
+import { say } from '@ValenceI18n/say';
 
 const KINDS: Record<string, string> = {
   avif: 'image/avif',
@@ -15,8 +16,6 @@ const KINDS: Record<string, string> = {
 
 const Refusal = z.object({ error: z.string() });
 
-const NOT_SENT = 'That photo could not be sent.';
-
 /**
  * Sends a photo on this phone to the server straight from its file, rather than reading it into
  * memory first, and says why the server refused it where it did.
@@ -29,7 +28,7 @@ const sendAPhoto = async (path: string, file: string): Promise<string | null> =>
   const address = platformInUse().serverAddress();
 
   if (address === null) {
-    return NOT_SENT;
+    return say('phone.sendAPhoto.notSent');
   }
 
   const cookie = await theCookiesThisPhoneHolds(address);
@@ -41,7 +40,7 @@ const sendAPhoto = async (path: string, file: string): Promise<string | null> =>
   }).catch(() => null);
 
   if (sent === null) {
-    return NOT_SENT;
+    return say('phone.sendAPhoto.notSent');
   }
 
   if (sent.status >= 200 && sent.status < 300) {
@@ -51,7 +50,7 @@ const sendAPhoto = async (path: string, file: string): Promise<string | null> =>
   try {
     return Refusal.parse(JSON.parse(sent.body)).error;
   } catch {
-    return NOT_SENT;
+    return say('phone.sendAPhoto.notSent');
   }
 };
 

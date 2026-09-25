@@ -2,6 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { asAClock } from '@ValenceMobile/components/Watching/asAClock';
+import { say } from '@ValenceI18n/say';
 import type { AChapterToHearProps } from './AChapterToHear.types';
 
 const styles = StyleSheet.create({
@@ -23,7 +24,7 @@ const styles = StyleSheet.create({
 const AChapterToHear = ({ title, at, lasts, isCurrent, onListen }: AChapterToHearProps) => (
   <Button
     tone="bare"
-    label={`Listen from ${title}`}
+    label={say('phone.aChapterToHear.listenFrom', { title })}
     isChosen={isCurrent}
     onPress={() => {
       onListen(at);

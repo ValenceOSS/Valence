@@ -8,6 +8,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { whatAPhoneAsksFor } from '@ValenceMobile/components/TheSearch/whatAPhoneAsksFor';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { ARequestProps } from './ARequest.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   poster: { borderRadius: 8, height: 90, width: 60 },
@@ -73,12 +74,15 @@ const ARequest = ({ request, progress, myId, onAsk }: ARequestProps) => {
 
             <Words size="small" tone="muted">
               {request.requestedBy.id === myId
-                ? 'Asked by you'
-                : `Asked by ${request.requestedBy.name}`}
+                ? say('phone.aRequest.askedByYou')
+                : say('phone.aRequest.askedBy', { name: request.requestedBy.name })}
             </Words>
 
             {going === null ? null : (
-              <HowFar fraction={going.progress} label={`How far ${request.title} has downloaded`} />
+              <HowFar
+                fraction={going.progress}
+                label={say('phone.aRequest.howFarDownloaded', { title: request.title })}
+              />
             )}
           </View>
         </View>
@@ -88,13 +92,13 @@ const ARequest = ({ request, progress, myId, onAsk }: ARequestProps) => {
         <View style={styles.fix}>
           <Button
             tone="bare"
-            label="How to fix this"
+            label={say('phone.aRequest.howToFix')}
             onPress={() => {
               void Linking.openURL(help);
             }}
           >
             <Words size="small" tone="accent">
-              How to fix this
+              {say('phone.aRequest.howToFix')}
             </Words>
           </Button>
         </View>

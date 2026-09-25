@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+
 const AN_HOUR = 3600;
 
 const A_MINUTE = 60;
@@ -16,7 +18,12 @@ const howLongItRuns = (seconds: number): string => {
   const hours = Math.floor(seconds / AN_HOUR);
   const minutes = Math.round((seconds - hours * AN_HOUR) / A_MINUTE);
 
-  return hours === 0 ? `${minutes.toString()}m` : `${hours.toString()}h ${minutes.toString()}m`;
+  return hours === 0
+    ? say('phone.howLongItRuns.minutes', { minutes: minutes.toString() })
+    : say('phone.howLongItRuns.hoursAndMinutes', {
+        hours: hours.toString(),
+        minutes: minutes.toString(),
+      });
 };
 
 export { howLongItRuns };

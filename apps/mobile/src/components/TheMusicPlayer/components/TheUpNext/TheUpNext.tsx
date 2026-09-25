@@ -6,6 +6,7 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { AComingTrack } from '@ValenceMobile/components/TheMusicPlayer/components/TheUpNext/components/AComingTrack/AComingTrack';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheMusic } from '@ValenceMobile/hooks/useTheMusic';
+import { say } from '@ValenceI18n/say';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
 
 const FADES_IN_OVER = 16;
@@ -44,16 +45,20 @@ const TheUpNext = () => {
   const askAbout = useCallback(
     (at: number, title: string) => {
       const choices = [
-        { label: 'Play now', run: () => player.jumpTo(at) },
-        ...(at > first ? [{ label: 'Move up', run: () => player.moveInQueue(at, at - 1) }] : []),
-        ...(at < last ? [{ label: 'Move down', run: () => player.moveInQueue(at, at + 1) }] : []),
-        { label: 'Take out of the queue', run: () => player.removeFromQueue(at) },
+        { label: say('phone.theUpNext.playNow'), run: () => player.jumpTo(at) },
+        ...(at > first
+          ? [{ label: say('phone.theUpNext.moveUp'), run: () => player.moveInQueue(at, at - 1) }]
+          : []),
+        ...(at < last
+          ? [{ label: say('phone.theUpNext.moveDown'), run: () => player.moveInQueue(at, at + 1) }]
+          : []),
+        { label: say('phone.theUpNext.takeOut'), run: () => player.removeFromQueue(at) },
       ];
 
       ActionSheetIOS.showActionSheetWithOptions(
         {
           title,
-          options: [...choices.map((choice) => choice.label), 'Cancel'],
+          options: [...choices.map((choice) => choice.label), say('common.cancel')],
           cancelButtonIndex: choices.length,
           destructiveButtonIndex: choices.length - 1,
         },
@@ -68,16 +73,18 @@ const TheUpNext = () => {
   if (queue === null || coming.length === 0) {
     return (
       <Words tone="muted">
-        {queue?.repeat === 'all' ? 'The queue starts again after this.' : 'Nothing after this.'}
+        {queue?.repeat === 'all'
+          ? say('phone.theUpNext.startsAgain')
+          : say('phone.theUpNext.nothingAfter')}
       </Words>
     );
   }
 
   const clear = () => {
-    Alert.alert('Clear up next?', 'Everything after this song comes off the queue.', [
-      { text: 'Keep it', style: 'cancel' },
+    Alert.alert(say('phone.theUpNext.clearTitle'), say('phone.theUpNext.clearBody'), [
+      { text: say('phone.theUpNext.keepIt'), style: 'cancel' },
       {
-        text: 'Clear',
+        text: say('phone.theUpNext.clear'),
         style: 'destructive',
         onPress: () => {
           player.clearUpNext();
@@ -90,10 +97,12 @@ const TheUpNext = () => {
     <View style={styles.whole}>
       <View style={styles.head}>
         <Words size="heading">
-          {queue.source === null ? 'Next up' : `Next from ${queue.source.name}`}
+          {queue.source === null
+            ? say('phone.theUpNext.nextUp')
+            : say('phone.theUpNext.nextFrom', { name: queue.source.name })}
         </Words>
-        <Button tone="quiet" label="Clear up next" onPress={clear}>
-          Clear
+        <Button tone="quiet" label={say('phone.theUpNext.clearLabel')} onPress={clear}>
+          {say('phone.theUpNext.clear')}
         </Button>
       </View>
 

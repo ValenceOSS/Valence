@@ -1,5 +1,6 @@
 import { ActionSheetIOS } from 'react-native';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
+import { say } from '@ValenceI18n/say';
 import type { DownloadOffer } from '@ValenceClient/downloads/fetchDownloads';
 import type { DownloadQuality } from '@ValenceContracts/schemas/Download';
 
@@ -28,7 +29,7 @@ const chooseADownloadQuality = async (
               .filter((part) => part !== null)
               .join(' · '),
           ),
-          'Cancel',
+          say('common.cancel'),
         ],
         cancelButtonIndex: offer.options.length,
       },

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { signInThroughTheBrowser } from '@ValenceMobile/platform/signInThroughTheBrowser';
+import { say } from '@ValenceI18n/say';
 import type { UseAPasskeyProps } from './UseAPasskey.types';
 
 /**
@@ -37,7 +38,7 @@ const UseAPasskey = ({ label, onIn, profileId }: UseAPasskeyProps) => {
 
   return (
     <>
-      {hasFailed ? <Words tone="danger">That did not sign you in. Try again.</Words> : null}
+      {hasFailed ? <Words tone="danger">{say('phone.useAPasskey.failed')}</Words> : null}
 
       <Button
         tone="ghost"

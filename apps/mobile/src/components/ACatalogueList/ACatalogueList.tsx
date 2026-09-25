@@ -9,6 +9,7 @@ import { whatAPhoneAsksFor } from '@ValenceMobile/components/TheSearch/whatAPhon
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { ACatalogueListProps } from './ACatalogueList.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * What a card is known by in the grid, since a film and a series can share a number.
@@ -56,7 +57,9 @@ const ACatalogueList = ({ browsing, title, onAsk, onBack }: ACatalogueListProps)
         <>
           <Words size="title">{title}</Words>
           {pages.isPending ? <ActivityIndicator color={colours.textMuted} /> : null}
-          {pages.isError ? <Words tone="danger">That could not be read.</Words> : null}
+          {pages.isError ? (
+            <Words tone="danger">{say('phone.aCatalogueList.couldNotRead')}</Words>
+          ) : null}
         </>
       }
       items={titles}

@@ -11,13 +11,15 @@ import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRo
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { say } from '@ValenceI18n/say';
 import type { AlbumOrder } from '@ValenceClient/music/fetchMusic';
 import type { TheAlbumsProps } from './TheAlbums.types';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
-const ORDERS: readonly { id: AlbumOrder; label: string }[] = [
-  { id: 'recent', label: 'Recently added' },
-  { id: 'title', label: 'A–Z' },
-  { id: 'year', label: 'Year' },
+const ORDERS: readonly { id: AlbumOrder; said: StringKey }[] = [
+  { id: 'recent', said: 'phone.theAlbums.recent' },
+  { id: 'title', said: 'phone.theAlbums.byName' },
+  { id: 'year', said: 'phone.theAlbums.year' },
 ];
 
 const ACROSS = 2;
@@ -40,10 +42,10 @@ const TheAlbums = ({ onAlbum, onBack }: TheAlbumsProps) => {
       across={ACROSS}
       header={
         <>
-          <Words size="title">Albums</Words>
+          <Words size="title">{say('phone.theAlbums.title')}</Words>
           <SegmentedRow
-            label="Put the albums in order by"
-            items={ORDERS}
+            label={say('phone.theAlbums.orderLabel')}
+            items={ORDERS.map((one) => ({ id: one.id, label: say(one.said) }))}
             value={order}
             onSelect={(id) => {
               setOrder(ORDERS.find((one) => one.id === id)?.id ?? 'recent');
@@ -53,8 +55,8 @@ const TheAlbums = ({ onAlbum, onBack }: TheAlbumsProps) => {
           {!albums.isPending && (albums.data ?? []).length === 0 ? (
             <ANothingHere
               of={Record}
-              title="No albums yet"
-              detail="Once a music library has been scanned, its albums will be here."
+              title={say('phone.theAlbums.emptyTitle')}
+              detail={say('phone.theAlbums.emptyDetail')}
             />
           ) : null}
         </>

@@ -8,6 +8,7 @@ import { ACatalogueCard } from '@ValenceMobile/components/ACatalogueCard/ACatalo
 import { whatAPhoneAsksFor } from '@ValenceMobile/components/TheSearch/whatAPhoneAsksFor';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { DiscoveredProps } from './Discovered.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * What is trending, popular and coming, a shelf each, for somebody looking for something to ask for.
@@ -24,7 +25,7 @@ const DiscoveredSection = ({ onAsk, onSeeAll }: DiscoveredProps) => {
   }
 
   if (discovered.isError) {
-    return <Words tone="danger">That could not be read.</Words>;
+    return <Words tone="danger">{say('phone.discovered.couldNotRead')}</Words>;
   }
 
   return discovered.data.shelves

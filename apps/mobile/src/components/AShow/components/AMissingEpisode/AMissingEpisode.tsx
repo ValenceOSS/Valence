@@ -6,6 +6,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { EPISODE_STILL } from '@ValenceMobile/components/AShow/components/EPISODE_STILL';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { AMissingEpisodeProps } from './AMissingEpisode.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   facts: { flex: 1, gap: 4 },
@@ -60,10 +61,12 @@ const AMissingEpisode = ({ at, title, stillUrl, airs }: AMissingEpisodeProps) =>
 
       <View style={styles.facts}>
         <Words lines={1} tone="muted">
-          {title ?? `Episode ${at.toString()}`}
+          {title ?? say('phone.aMissingEpisode.episode', { number: at.toString() })}
         </Words>
         <Words size="small" tone="muted">
-          {airs === '' ? 'Not in this library' : `Not in this library · ${airs}`}
+          {airs === ''
+            ? say('phone.aMissingEpisode.notHere')
+            : say('phone.aMissingEpisode.notHereAirs', { when: airs })}
         </Words>
       </View>
     </View>

@@ -8,6 +8,7 @@ import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { TheCastProps } from './TheCast.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   face: {
@@ -40,7 +41,7 @@ const TheCast = ({ cast, onLookAtPerson }: TheCastProps) => {
   }
 
   return (
-    <AShelf title="Cast">
+    <AShelf title={say('phone.theCast.heading')}>
       {cast.map((member) => {
         const face = (
           <View style={styles.whole}>

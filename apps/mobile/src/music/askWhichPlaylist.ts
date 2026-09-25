@@ -1,5 +1,6 @@
 import { ActionSheetIOS, Alert } from 'react-native';
 import { addToPlaylist, createPlaylist } from '@ValenceClient/music/fetchPlaylists';
+import { say } from '@ValenceI18n/say';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
 import type { PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
 
@@ -20,15 +21,19 @@ const askWhichPlaylist = (
 ): void => {
   ActionSheetIOS.showActionSheetWithOptions(
     {
-      title: 'Add to playlist',
-      options: ['New playlist', ...playlists.map((playlist) => playlist.name), 'Cancel'],
+      title: say('phone.askWhichPlaylist.title'),
+      options: [
+        say('phone.askWhichPlaylist.newPlaylist'),
+        ...playlists.map((playlist) => playlist.name),
+        say('common.cancel'),
+      ],
       cancelButtonIndex: playlists.length + 1,
     },
     (picked) => {
       if (picked === 0) {
         void createPlaylist({ name: track.title, mediaItemIds: [track.id] }).then((made) => {
           if (made === null) {
-            Alert.alert('That playlist could not be made.');
+            Alert.alert(say('phone.askWhichPlaylist.couldNotMake'));
 
             return;
           }
@@ -48,7 +53,7 @@ const askWhichPlaylist = (
 
       void addToPlaylist(chosen.id, [track.id]).then((isAdded) => {
         if (!isAdded) {
-          Alert.alert(`That could not be added to ${chosen.name}.`);
+          Alert.alert(say('phone.askWhichPlaylist.couldNotAdd', { name: chosen.name }));
 
           return;
         }

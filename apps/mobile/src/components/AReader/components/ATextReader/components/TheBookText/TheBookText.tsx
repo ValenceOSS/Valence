@@ -4,6 +4,7 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { ABookPicture } from '@ValenceMobile/components/AReader/components/ATextReader/components/TheBookText/components/ABookPicture/ABookPicture';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
+import { say } from '@ValenceI18n/say';
 import type { BookNode } from '@ValenceClient/books/readBookDocument.types';
 import type { ReactNode } from 'react';
 import type { TextStyle } from 'react-native';
@@ -186,7 +187,11 @@ const TheBookTextDrawn = ({ nodes, size, leading, ink, onLink, onAnchors }: TheB
         <Button
           key={key}
           tone="bare"
-          label={`Follow the link to ${textOf(node) || 'another place'}`}
+          label={
+            textOf(node) === ''
+              ? say('phone.theBookText.followLinkElsewhere')
+              : say('phone.theBookText.followLink', { place: textOf(node) })
+          }
           onPress={() => {
             onLink(href);
           }}

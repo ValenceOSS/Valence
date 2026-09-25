@@ -15,6 +15,7 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { say } from '@ValenceI18n/say';
 import type { BookReading } from '@ValenceContracts/schemas/Book';
 
 const styles = StyleSheet.create({
@@ -71,12 +72,12 @@ const TheHistory = () => {
 
   const forgetEverything = () => {
     Alert.alert(
-      'Forget everything you have watched and read?',
-      'Your history is cleared, and every book comes off the shelf of what you are reading. Where you are in each film and programme is kept.',
+      say('phone.theHistory.forgetEverythingTitle'),
+      say('phone.theHistory.forgetEverythingBody'),
       [
-        { text: 'Keep it', style: 'cancel' },
+        { text: say('phone.theHistory.keepIt'), style: 'cancel' },
         {
-          text: 'Forget everything',
+          text: say('phone.theHistory.forgetEverything'),
           style: 'destructive',
           onPress: () => {
             void Promise.all([forgetHistory(), forgetReading()]).then(reread);
@@ -91,34 +92,38 @@ const TheHistory = () => {
   }
 
   if (history.isError) {
-    return <Words tone="danger">Your history could not be read.</Words>;
+    return <Words tone="danger">{say('phone.theHistory.couldNotRead')}</Words>;
   }
 
   if (entries.length === 0) {
-    return <Words tone="muted">Nothing watched or read yet.</Words>;
+    return <Words tone="muted">{say('phone.theHistory.empty')}</Words>;
   }
 
   return (
     <>
       {entries.length === 0 ? null : (
-        <AGroup title="Watch history">
+        <AGroup title={say('phone.theHistory.heading')}>
           {entries.map((entry) => {
             const name =
               entry.kind === 'reading'
                 ? entry.reading.book.title
                 : entry.viewing.seriesTitle === null
-                  ? (entry.viewing.title ?? 'Something')
+                  ? (entry.viewing.title ?? say('phone.theHistory.something'))
                   : `${entry.viewing.seriesTitle} — ${entry.viewing.title ?? ''}`;
             const said =
               entry.kind === 'reading'
                 ? [
                     describeWhen(entry.at, now),
-                    entry.reading.isFinished ? 'Finished' : describeReadingPlace(entry.reading),
+                    entry.reading.isFinished
+                      ? say('phone.theHistory.finished')
+                      : describeReadingPlace(entry.reading),
                   ]
                 : [
                     describeWhen(entry.at, now),
-                    `${formatDuration(entry.viewing.secondsWatched)} watched`,
-                    entry.viewing.isFinished ? 'Finished' : null,
+                    say('phone.theHistory.watched', {
+                      duration: formatDuration(entry.viewing.secondsWatched),
+                    }),
+                    entry.viewing.isFinished ? say('phone.theHistory.finished') : null,
                   ];
 
             return (
@@ -135,7 +140,7 @@ const TheHistory = () => {
 
                 <Button
                   tone="bare"
-                  label={`Forget ${name}`}
+                  label={say('phone.theHistory.forgetWho', { name })}
                   onPress={() => {
                     if (entry.kind === 'reading') {
                       void forgetABook(entry.reading.book.id);
@@ -164,16 +169,16 @@ const TheHistory = () => {
             void history.fetchNextPage();
           }}
         >
-          Show more
+          {say('phone.theHistory.showMore')}
         </Button>
       ) : (
         <Words size="small" tone="muted">
-          Viewings are forgotten automatically after a year.
+          {say('phone.theHistory.forgottenAfterAYear')}
         </Words>
       )}
 
       <Button tone="quiet" onPress={forgetEverything}>
-        Forget everything
+        {say('phone.theHistory.forgetEverything')}
       </Button>
     </>
   );

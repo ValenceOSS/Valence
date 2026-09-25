@@ -1,6 +1,8 @@
 import { askForSeries, fetchSeriesDownloadOffer } from '@ValenceClient/downloads/fetchDownloads';
 import { thePhonesProfile } from '@ValenceMobile/playback/thePhonesProfile';
 import { chooseADownloadQuality } from '@ValenceMobile/downloads/chooseADownloadQuality';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * Offers the qualities some of a programme can be downloaded at, each costed across every episode
@@ -28,8 +30,8 @@ const askToKeepAProgrammeOnThisPhone = async (
 
   const quality = await chooseADownloadQuality(
     offer,
-    `Download ${title}`,
-    mediaIds.length === 1 ? '1 episode' : `${mediaIds.length.toString()} episodes`,
+    say('phone.askToKeepAProgrammeOnThisPhone.title', { title }),
+    sayCount('phone.askToKeepAProgrammeOnThisPhone.episodes', mediaIds.length),
   );
 
   if (quality === null) {

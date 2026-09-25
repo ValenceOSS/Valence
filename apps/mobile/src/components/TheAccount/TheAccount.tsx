@@ -14,6 +14,8 @@ import { TheHistory } from '@ValenceMobile/components/TheAccount/components/TheH
 import { TheShares } from '@ValenceMobile/components/TheAccount/components/TheShares/TheShares';
 import { TheSecurity } from '@ValenceMobile/components/TheAccount/components/TheSecurity/TheSecurity';
 import { TheProfile } from '@ValenceMobile/components/TheAccount/components/TheProfile/TheProfile';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 import type { TheAccountProps } from './TheAccount.types';
 
 const styles = StyleSheet.create({
@@ -21,13 +23,13 @@ const styles = StyleSheet.create({
 });
 
 const PANELS = [
-  { id: 'profile', label: 'Profile' },
-  { id: 'security', label: 'Security' },
-  { id: 'devices', label: 'Devices' },
-  { id: 'history', label: 'History' },
-  { id: 'hidden', label: 'Hidden' },
-  { id: 'shares', label: 'Shares' },
-] as const;
+  { id: 'profile', says: 'phone.theAccount.profilePanel' },
+  { id: 'security', says: 'phone.theAccount.securityPanel' },
+  { id: 'devices', says: 'phone.theAccount.devicesPanel' },
+  { id: 'history', says: 'phone.theAccount.historyPanel' },
+  { id: 'hidden', says: 'phone.theAccount.hiddenPanel' },
+  { id: 'shares', says: 'phone.theAccount.sharesPanel' },
+] as const satisfies readonly { id: string; says: StringKey }[];
 
 /**
  * Somebody's own account: how they appear, how they sign in, where they are signed in, what they
@@ -40,16 +42,22 @@ const TheAccount = ({ onOut, onElsewhere }: TheAccountProps) => {
   const who = useQuery(sessionQueries.who());
   const [panel, setPanel] = useState<string>('profile');
   const address = platformInUse().serverAddress();
+  const panels = PANELS.map((one) => ({ id: one.id, label: say(one.says) }));
 
   return (
     <Screen scrolls>
-      <Words size="title">Account</Words>
+      <Words size="title">{say('phone.theAccount.heading')}</Words>
 
       {who.data === null || who.data === undefined ? null : (
         <Words tone="muted">{who.data.email}</Words>
       )}
 
-      <SegmentedRow label="What to change" items={PANELS} value={panel} onSelect={setPanel} />
+      <SegmentedRow
+        label={say('phone.theAccount.whatToChange')}
+        items={panels}
+        value={panel}
+        onSelect={setPanel}
+      />
 
       {panel === 'security' ? (
         <TheSecurity />
@@ -67,15 +75,17 @@ const TheAccount = ({ onOut, onElsewhere }: TheAccountProps) => {
 
       <View style={styles.leaving}>
         <Button tone="ghost" icon={Server} isWide onPress={onElsewhere}>
-          Use a different server
+          {say('phone.theAccount.useADifferentServer')}
         </Button>
 
         <Button tone="ghost" icon={DoorOpen} isWide isDestructive onPress={onOut}>
-          Sign out
+          {say('phone.theAccount.signOut')}
         </Button>
 
         {address === null ? null : (
-          <Words size="small" tone="muted">{`Watching on ${address}`}</Words>
+          <Words size="small" tone="muted">
+            {say('phone.theAccount.watchingOn', { address })}
+          </Words>
         )}
       </View>
     </Screen>

@@ -37,7 +37,9 @@ import { Slider } from '@ValenceMobile/components/Slider/Slider';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { say } from '@ValenceI18n/say';
 import type { TextPreferences } from '@ValenceClient/books/textPreferences';
+import type { StringKey } from '@ValenceI18n/StringKey';
 import type { ATextReaderProps } from './ATextReader.types';
 
 const SLIDER_STEPS = 1000;
@@ -52,19 +54,19 @@ const LEAVES = { duration: 110, easing: Easing.in(Easing.quad), useNativeDriver:
 
 const ARRIVES = { duration: 200, easing: Easing.out(Easing.cubic), useNativeDriver: true } as const;
 
-const NAMES: Readonly<Record<string, string>> = {
-  small: 'Small',
-  medium: 'Medium',
-  large: 'Large',
-  larger: 'Larger',
-  tight: 'Tight',
-  normal: 'Normal',
-  loose: 'Loose',
-  narrow: 'Narrow',
-  wide: 'Wide',
-  light: 'Light',
-  sepia: 'Sepia',
-  dark: 'Dark',
+const NAMES: Readonly<Record<string, StringKey>> = {
+  small: 'phone.aTextReader.small',
+  medium: 'phone.aTextReader.medium',
+  large: 'phone.aTextReader.large',
+  larger: 'phone.aTextReader.larger',
+  tight: 'phone.aTextReader.tight',
+  normal: 'phone.aTextReader.normal',
+  loose: 'phone.aTextReader.loose',
+  narrow: 'phone.aTextReader.narrow',
+  wide: 'phone.aTextReader.wide',
+  light: 'phone.aTextReader.light',
+  sepia: 'phone.aTextReader.sepia',
+  dark: 'phone.aTextReader.dark',
 };
 
 const styles = StyleSheet.create({
@@ -81,7 +83,12 @@ const styles = StyleSheet.create({
  * @param ids - The choices.
  * @returns Them, as a row offers them.
  */
-const choicesOf = (ids: readonly string[]) => ids.map((id) => ({ id, label: NAMES[id] ?? id }));
+const choicesOf = (ids: readonly string[]) =>
+  ids.map((id) => {
+    const name = NAMES[id];
+
+    return { id, label: name === undefined ? id : say(name) };
+  });
 
 /**
  * A book whose text reflows — an EPUB — read a page at a time, as the web's text reader reads it:
@@ -340,7 +347,7 @@ const ATextReader = ({
       footer={
         <View style={styles.foot}>
           <Slider
-            label="Go to a place in the book"
+            label={say('phone.aTextReader.goToAPlace')}
             value={Math.round(fraction * SLIDER_STEPS)}
             furthest={SLIDER_STEPS}
             colour={colours.ink}
@@ -353,14 +360,16 @@ const ATextReader = ({
             }}
           />
           <Words size="small" isCentred colour={withAlpha(colours.ink, 0.8)}>
-            {`${Math.round(fraction * 100).toString()}% read`}
+            {say('phone.aTextReader.percentRead', {
+              percent: Math.round(fraction * 100).toString(),
+            })}
           </Words>
         </View>
       }
     >
       {contents.isError || document.isError ? (
         <View style={[styles.whole, { padding: 24, paddingTop: topRoom }]}>
-          <Words colour={colours.ink}>This book could not be read.</Words>
+          <Words colour={colours.ink}>{say('phone.aTextReader.couldNotRead')}</Words>
         </View>
       ) : (
         <View style={styles.whole} {...swiping.panHandlers}>
@@ -409,7 +418,11 @@ const ATextReader = ({
               ) : (
                 <Button
                   tone="bare"
-                  label={isShowingChrome ? 'Hide the controls' : 'Show the controls'}
+                  label={
+                    isShowingChrome
+                      ? say('phone.aTextReader.hideControls')
+                      : say('phone.aTextReader.showControls')
+                  }
                   onPress={({ x }) => {
                     const across =
                       width - Math.max(margin, room.left + 8) - Math.max(margin, room.right + 8);
@@ -441,7 +454,7 @@ const ATextReader = ({
                     onChapter(next.id);
                   }}
                 >
-                  {`On to ${next.title}`}
+                  {say('phone.aTextReader.onTo', { title: next.title })}
                 </Button>
               ) : null}
             </ScrollView>
@@ -468,7 +481,7 @@ const ATextReader = ({
       <AReaderPanel
         isOpen={isPanelOpen}
         title={book.title}
-        placesAre="Contents"
+        placesAre={say('phone.aTextReader.contents')}
         places={entries.map((entry, at) => ({
           id: at.toString(),
           label: entry.title,
@@ -489,9 +502,9 @@ const ATextReader = ({
         }}
       >
         <View style={styles.setting}>
-          <Words size="heading">Text size</Words>
+          <Words size="heading">{say('phone.aTextReader.textSize')}</Words>
           <SegmentedRow
-            label="Text size"
+            label={say('phone.aTextReader.textSize')}
             items={choicesOf(TEXT_SIZES)}
             value={settings.size}
             onSelect={(id) => {
@@ -504,9 +517,9 @@ const ATextReader = ({
           />
         </View>
         <View style={styles.setting}>
-          <Words size="heading">Line spacing</Words>
+          <Words size="heading">{say('phone.aTextReader.lineSpacing')}</Words>
           <SegmentedRow
-            label="Line spacing"
+            label={say('phone.aTextReader.lineSpacing')}
             items={choicesOf(TEXT_SPACINGS)}
             value={settings.spacing}
             onSelect={(id) => {
@@ -519,9 +532,9 @@ const ATextReader = ({
           />
         </View>
         <View style={styles.setting}>
-          <Words size="heading">Margins</Words>
+          <Words size="heading">{say('phone.aTextReader.margins')}</Words>
           <SegmentedRow
-            label="Margins"
+            label={say('phone.aTextReader.margins')}
             items={choicesOf(TEXT_MARGINS)}
             value={settings.margins}
             onSelect={(id) => {
@@ -534,9 +547,9 @@ const ATextReader = ({
           />
         </View>
         <View style={styles.setting}>
-          <Words size="heading">Page</Words>
+          <Words size="heading">{say('phone.aTextReader.page')}</Words>
           <SegmentedRow
-            label="Page colour"
+            label={say('phone.aTextReader.pageColour')}
             items={choicesOf(TEXT_PAGES)}
             value={settings.page}
             onSelect={(id) => {

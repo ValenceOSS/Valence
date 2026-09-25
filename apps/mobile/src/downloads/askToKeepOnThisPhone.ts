@@ -1,6 +1,7 @@
 import { askForDownload, fetchDownloadOffer } from '@ValenceClient/downloads/fetchDownloads';
 import { thePhonesProfile } from '@ValenceMobile/playback/thePhonesProfile';
 import { chooseADownloadQuality } from '@ValenceMobile/downloads/chooseADownloadQuality';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Offers the qualities a title can be downloaded at, in the system's action sheet, and asks the
@@ -17,7 +18,10 @@ const askToKeepOnThisPhone = async (mediaId: string, title: string): Promise<boo
     return false;
   }
 
-  const quality = await chooseADownloadQuality(offer, `Download ${title}`);
+  const quality = await chooseADownloadQuality(
+    offer,
+    say('phone.askToKeepOnThisPhone.title', { title }),
+  );
 
   if (quality === null) {
     return false;

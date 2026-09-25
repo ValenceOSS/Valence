@@ -20,6 +20,7 @@ import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { ANothingHere } from '@ValenceMobile/components/ANothingHere/ANothingHere';
+import { say } from '@ValenceI18n/say';
 import type { Download } from '@ValenceContracts/schemas/Download';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { TheDownloadsProps } from './TheDownloads.types';
@@ -71,12 +72,12 @@ const TheDownloads = ({ onWatch, onBack }: TheDownloadsProps) => {
 
   const forget = (row: ARow) => {
     Alert.alert(
-      `Forget ${row.title}?`,
-      'It comes off this phone, and the server stops keeping it.',
+      say('phone.theDownloads.forgetTitle', { title: row.title }),
+      say('phone.theDownloads.forgetBody'),
       [
-        { text: 'Keep it', style: 'cancel' },
+        { text: say('phone.theDownloads.keepIt'), style: 'cancel' },
         {
-          text: 'Forget it',
+          text: say('phone.theDownloads.forgetIt'),
           style: 'destructive',
           onPress: () => {
             void dropAFile(row.id)
@@ -100,28 +101,33 @@ const TheDownloads = ({ onWatch, onBack }: TheDownloadsProps) => {
           : null;
     const says =
       file?.state === 'here'
-        ? 'On this phone'
+        ? say('phone.theDownloads.onThisPhone')
         : file?.state === 'fetching'
           ? [
-              'Fetching',
+              say('phone.theDownloads.fetching'),
               file.ofBytes === null
                 ? null
-                : `${formatBytes(file.bytes)} of ${formatBytes(file.ofBytes)}`,
-              file.bytesPerSecond === null ? null : `${formatBytes(file.bytesPerSecond)}/s`,
+                : say('phone.theDownloads.bytesOf', {
+                    done: formatBytes(file.bytes),
+                    total: formatBytes(file.ofBytes),
+                  }),
+              file.bytesPerSecond === null
+                ? null
+                : say('phone.theDownloads.perSecond', { amount: formatBytes(file.bytesPerSecond) }),
             ]
               .filter((part) => part !== null)
               .join(' · ')
           : file?.state === 'paused'
-            ? 'Paused'
+            ? say('phone.theDownloads.paused')
             : file?.state === 'failed'
-              ? (file.failure ?? 'Could not be fetched')
+              ? (file.failure ?? say('phone.theDownloads.couldNotFetch'))
               : download?.state === 'preparing'
-                ? 'The server is preparing it'
+                ? say('phone.theDownloads.preparing')
                 : download?.state === 'ready'
-                  ? 'Ready to fetch'
+                  ? say('phone.theDownloads.readyToFetch')
                   : download?.state === 'failed'
-                    ? (download.failure ?? 'Could not be prepared')
-                    : 'Waiting';
+                    ? (download.failure ?? say('phone.theDownloads.couldNotPrepare'))
+                    : say('phone.theDownloads.waiting');
 
     return (
       <View key={row.id} style={{ gap: 6 }}>
@@ -136,7 +142,7 @@ const TheDownloads = ({ onWatch, onBack }: TheDownloadsProps) => {
           {file?.state === 'here' ? (
             <Button
               tone="bare"
-              label={`Watch ${row.title}`}
+              label={say('phone.theDownloads.watch', { title: row.title })}
               onPress={() => {
                 onWatch(file);
               }}
@@ -151,7 +157,9 @@ const TheDownloads = ({ onWatch, onBack }: TheDownloadsProps) => {
             <Button
               tone="bare"
               label={
-                file.state === 'paused' ? `Carry on fetching ${row.title}` : `Pause ${row.title}`
+                file.state === 'paused'
+                  ? say('phone.theDownloads.carryOn', { title: row.title })
+                  : say('phone.theDownloads.pause', { title: row.title })
               }
               onPress={() => {
                 void pauseAFile(row.id, file.state !== 'paused');
@@ -166,7 +174,7 @@ const TheDownloads = ({ onWatch, onBack }: TheDownloadsProps) => {
           {file === null && download?.state === 'ready' ? (
             <Button
               tone="bare"
-              label={`Keep ${row.title} on this phone`}
+              label={say('phone.theDownloads.keep', { title: row.title })}
               onPress={() => {
                 void keepAFile(download);
               }}
@@ -179,7 +187,7 @@ const TheDownloads = ({ onWatch, onBack }: TheDownloadsProps) => {
 
           <Button
             tone="bare"
-            label={`Forget ${row.title}`}
+            label={say('phone.theDownloads.forget', { title: row.title })}
             onPress={() => {
               forget(row);
             }}
@@ -191,7 +199,10 @@ const TheDownloads = ({ onWatch, onBack }: TheDownloadsProps) => {
         </View>
 
         {fraction === null ? null : (
-          <HowFar fraction={fraction} label={`How far ${row.title} has got`} />
+          <HowFar
+            fraction={fraction}
+            label={say('phone.theDownloads.howFar', { title: row.title })}
+          />
         )}
       </View>
     );
@@ -199,13 +210,13 @@ const TheDownloads = ({ onWatch, onBack }: TheDownloadsProps) => {
 
   return (
     <Screen scrolls {...(onBack === undefined ? {} : { onBack })}>
-      <Words size="title">Downloads</Words>
+      <Words size="title">{say('phone.theDownloads.heading')}</Words>
 
       {rows.length === 0 ? (
         <ANothingHere
           of={DownloadIcon}
-          title="Nothing downloaded yet"
-          detail="Download a film from its page to watch it without the server."
+          title={say('phone.theDownloads.emptyTitle')}
+          detail={say('phone.theDownloads.emptyDetail')}
         />
       ) : (
         drawn

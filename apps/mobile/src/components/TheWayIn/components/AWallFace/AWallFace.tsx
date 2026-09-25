@@ -2,6 +2,7 @@ import { Animated, View } from 'react-native';
 import { AFace } from '@ValenceMobile/components/AFace/AFace';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { useArrivingFrom } from '@ValenceMobile/hooks/useArrivingFrom';
+import { say } from '@ValenceI18n/say';
 import type { AWallFaceProps } from './AWallFace.types';
 
 /**
@@ -24,7 +25,7 @@ const AWallFace = ({ profile, arrivingFrom, onPicked }: AWallFaceProps) => {
       <Animated.View style={flying}>
         <Button
           tone="bare"
-          label={`Sign in as ${profile.name}`}
+          label={say('phone.aWallFace.signInAs', { name: profile.name })}
           onPress={() => {
             if (placed.current === null) {
               onPicked(profile, null);

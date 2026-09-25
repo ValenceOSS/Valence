@@ -7,6 +7,7 @@ import { asAClock } from '@ValenceMobile/components/Watching/asAClock';
 import { useTheBook } from '@ValenceMobile/hooks/useTheBook';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { say } from '@ValenceI18n/say';
 import type { ThePlaceInTheChapterProps } from './ThePlaceInTheChapter.types';
 
 const styles = StyleSheet.create({
@@ -35,7 +36,7 @@ const ThePlaceInTheChapter = ({ title }: ThePlaceInTheChapterProps) => {
   return (
     <View>
       <Slider
-        label={`Move through ${title}`}
+        label={say('phone.thePlaceInTheChapter.moveThrough', { title })}
         value={position}
         furthest={lasts}
         colour={colours.text}

@@ -8,9 +8,9 @@ import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { thePhonesMusicPlayer } from '@ValenceMobile/music/thePhonesMusicPlayer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { ANothingHere } from '@ValenceMobile/components/ANothingHere/ANothingHere';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import type { TheLikedSongsProps } from './TheLikedSongs.types';
-
-const SOURCE = { kind: 'liked' as const, id: null, name: 'Liked songs' };
 
 /**
  * Every song this profile has liked, newest first, as the web's liked songs page draws them, with a
@@ -26,6 +26,7 @@ const TheLikedSongs = ({ onAlbum, onArtist, onPlaylist, onBack }: TheLikedSongsP
   const read = useQuery(musicQueries.liked());
   const player = thePhonesMusicPlayer();
   const tracks = read.data ?? [];
+  const source = { kind: 'liked' as const, id: null, name: say('phone.theLikedSongs.title') };
 
   if (read.isPending) {
     return (
@@ -38,30 +39,30 @@ const TheLikedSongs = ({ onAlbum, onArtist, onPlaylist, onBack }: TheLikedSongsP
   return (
     <Screen scrolls onBack={onBack}>
       <AMusicHead
-        kind="Playlist"
-        title="Liked songs"
-        detail={`${tracks.length.toString()} ${tracks.length === 1 ? 'song' : 'songs'}`}
+        kind={say('phone.theLikedSongs.kind')}
+        title={say('phone.theLikedSongs.title')}
+        detail={sayCount('phone.theLikedSongs.songs', tracks.length)}
         artwork={null}
         standIn={Heart}
         canPlay={tracks.length > 0}
         onPlay={() => {
-          player.play(tracks, 0, { source: SOURCE });
+          player.play(tracks, 0, { source });
         }}
         onShuffle={() => {
-          player.play(tracks, 0, { source: SOURCE, isShuffled: true });
+          player.play(tracks, 0, { source, isShuffled: true });
         }}
       />
 
       {tracks.length === 0 ? (
         <ANothingHere
           of={Heart}
-          title="No liked songs yet"
-          detail="Songs you like will be here. Like one from its menu."
+          title={say('phone.theLikedSongs.emptyTitle')}
+          detail={say('phone.theLikedSongs.emptyDetail')}
         />
       ) : (
         <ATrackList
           tracks={tracks}
-          source={SOURCE}
+          source={source}
           onAlbum={onAlbum}
           onArtist={onArtist}
           {...(onPlaylist === undefined ? {} : { onPlaylist })}

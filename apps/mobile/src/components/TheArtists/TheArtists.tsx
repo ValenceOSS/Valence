@@ -11,12 +11,14 @@ import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRo
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { say } from '@ValenceI18n/say';
 import type { TheArtistsProps } from './TheArtists.types';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
 const WHICH = [
-  { id: 'all', label: 'Everyone' },
-  { id: 'followed', label: 'Following' },
-] as const;
+  { id: 'all', said: 'phone.theArtists.everyone' },
+  { id: 'followed', said: 'phone.theArtists.following' },
+] as const satisfies readonly { id: string; said: StringKey }[];
 
 const ACROSS = 2;
 
@@ -38,10 +40,10 @@ const TheArtists = ({ onArtist, onBack }: TheArtistsProps) => {
       across={ACROSS}
       header={
         <>
-          <Words size="title">Artists</Words>
+          <Words size="title">{say('phone.theArtists.title')}</Words>
           <SegmentedRow
-            label="Which artists to show"
-            items={WHICH}
+            label={say('phone.theArtists.whichLabel')}
+            items={WHICH.map((one) => ({ id: one.id, label: say(one.said) }))}
             value={isFollowedOnly ? 'followed' : 'all'}
             onSelect={(id) => {
               setIsFollowedOnly(id === 'followed');
@@ -52,14 +54,14 @@ const TheArtists = ({ onArtist, onBack }: TheArtistsProps) => {
             isFollowedOnly ? (
               <ANothingHere
                 of={Mic}
-                title="Not following anybody yet"
-                detail="Follow an artist from their page and they will be here."
+                title={say('phone.theArtists.noneFollowedTitle')}
+                detail={say('phone.theArtists.noneFollowedDetail')}
               />
             ) : (
               <ANothingHere
                 of={Mic}
-                title="No artists yet"
-                detail="Once a music library has been scanned, its artists will be here."
+                title={say('phone.theArtists.emptyTitle')}
+                detail={say('phone.theArtists.emptyDetail')}
               />
             )
           ) : null}

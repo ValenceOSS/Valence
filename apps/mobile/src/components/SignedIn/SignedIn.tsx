@@ -69,6 +69,7 @@ import { AMusicPage } from '@ValenceMobile/components/AMusicPage/AMusicPage';
 import { TheFloatingPlayer } from '@ValenceMobile/components/TheFloatingPlayer/TheFloatingPlayer';
 import { ATelevisionToSignIn } from '@ValenceMobile/components/ATelevisionToSignIn/ATelevisionToSignIn';
 import { useLinksIntoTheApp } from '@ValenceMobile/hooks/useLinksIntoTheApp';
+import { say } from '@ValenceI18n/say';
 import type { ReactNode } from 'react';
 import type { Heard } from '@ValenceClient/books/heardLast';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
@@ -181,12 +182,22 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   const mayRequest =
     requesting.data?.isEnabled === true && (may('requests.ask') || may('requests.askMusic'));
   const tabs = [
-    { id: 'home', label: 'Home', icon: Home, symbol: 'house' },
-    { id: 'search', label: 'Search', icon: Search, symbol: 'magnifyingglass' },
-    { id: 'downloads', label: 'Downloads', icon: Download, symbol: 'arrow.down.circle' },
+    { id: 'home', label: say('phone.signedIn.homeTab'), icon: Home, symbol: 'house' },
+    {
+      id: 'search',
+      label: say('phone.signedIn.searchTab'),
+      icon: Search,
+      symbol: 'magnifyingglass',
+    },
+    {
+      id: 'downloads',
+      label: say('phone.signedIn.downloadsTab'),
+      icon: Download,
+      symbol: 'arrow.down.circle',
+    },
     {
       id: 'account',
-      label: 'Account',
+      label: say('phone.signedIn.accountTab'),
       icon: CircleUser,
       symbol: 'person.crop.circle',
       ...(watcher.data === null || watcher.data === undefined

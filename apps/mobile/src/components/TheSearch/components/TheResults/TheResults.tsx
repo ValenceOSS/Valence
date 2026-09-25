@@ -12,6 +12,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { useGridCells } from '@ValenceMobile/hooks/useGridCells';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { TheResultsProps } from './TheResults.types';
+import { say } from '@ValenceI18n/say';
 
 const AS_MANY_AS_ARE_WORTH_SHOWING = 60;
 
@@ -70,7 +71,7 @@ const TheResultsSection = ({
   return (
     <>
       {results.length === 0 ? (
-        <Words tone="muted">{`Nothing called “${asked}” in the library.`}</Words>
+        <Words tone="muted">{say('phone.theResults.nothingCalled', { query: asked })}</Words>
       ) : (
         <View style={styles.shelf}>
           {results.map((media) => (
@@ -88,7 +89,7 @@ const TheResultsSection = ({
       )}
 
       {onAsk === null || askable.length === 0 ? null : (
-        <AShelf title="Not in your library yet">
+        <AShelf title={say('phone.theResults.notInYourLibrary')}>
           {askable.map((title) => (
             <ACatalogueCard key={`${title.kind}:${title.id}`} title={title} onAsk={onAsk} />
           ))}

@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import { modelName } from 'expo-device';
 import { z } from 'zod';
+import { say } from '@ValenceI18n/say';
 import type { BuildInfo } from '@ValenceClient/platform/Platform.types';
 
 /**
@@ -16,8 +17,14 @@ const thePhonesBuild = (): BuildInfo => ({
   commit: null,
   runsOn:
     Platform.OS === 'ios'
-      ? `iOS ${String(Platform.Version)} · ${modelName ?? 'iPhone'}`
-      : `Android ${String(Platform.Version)} · ${modelName ?? 'Android phone'}`,
+      ? say('phone.thePhonesBuild.runsOnIos', {
+          version: String(Platform.Version),
+          model: modelName ?? say('phone.thePhonesBuild.anIphone'),
+        })
+      : say('phone.thePhonesBuild.runsOnAndroid', {
+          version: String(Platform.Version),
+          model: modelName ?? say('phone.thePhonesBuild.anAndroidPhone'),
+        }),
 });
 
 export { thePhonesBuild };

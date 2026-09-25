@@ -15,9 +15,8 @@ import { useNearbyValences } from '@ValenceMobile/hooks/useNearbyValences';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { theAddressesToTry } from '@ValenceMobile/platform/theAddressesToTry';
 import { whicheverAnswers } from '@ValenceMobile/platform/whicheverAnswers';
+import { say } from '@ValenceI18n/say';
 import type { WhereIsYourValenceProps } from './WhereIsYourValence.types';
-
-const NOT_THERE = 'Nothing answered at that address.';
 
 const MARK_HIGH = 40;
 
@@ -71,7 +70,7 @@ const WhereIsYourValence = ({ onChosen, refusal = null }: WhereIsYourValenceProp
       setIsTrying(false);
 
       if (answered === null) {
-        setNothingThere(NOT_THERE);
+        setNothingThere(say('phone.whereIsYourValence.nothingAnswered'));
 
         return;
       }
@@ -101,10 +100,10 @@ const WhereIsYourValence = ({ onChosen, refusal = null }: WhereIsYourValenceProp
         <ARising after={after} turn={1}>
           <View style={styles.said}>
             <Words size="title" isCentred>
-              Where is your Valence?
+              {say('phone.whereIsYourValence.heading')}
             </Words>
             <Words tone="muted" isCentred>
-              The address you open it on, such as valence.example.com
+              {say('phone.whereIsYourValence.lede')}
             </Words>
           </View>
         </ARising>
@@ -113,7 +112,7 @@ const WhereIsYourValence = ({ onChosen, refusal = null }: WhereIsYourValenceProp
           <ARising after={after} turn={2} stretches>
             <View style={styles.asking}>
               <Words size="small" tone="muted">
-                Found on your network
+                {say('phone.whereIsYourValence.nearby')}
               </Words>
 
               {nearby.map((found) => (
@@ -132,7 +131,7 @@ const WhereIsYourValence = ({ onChosen, refusal = null }: WhereIsYourValenceProp
           <ARising after={after} turn={3} stretches>
             <View style={styles.asking}>
               <Words size="small" tone="muted">
-                Recently used
+                {say('phone.whereIsYourValence.recent')}
               </Words>
 
               {usedBefore.map((address) => (
@@ -153,9 +152,10 @@ const WhereIsYourValence = ({ onChosen, refusal = null }: WhereIsYourValenceProp
         <ARising after={after} turn={4} stretches>
           <View style={styles.asking}>
             <TextField
-              label="Server address"
+              label={say('phone.whereIsYourValence.addressLabel')}
               value={typed}
               onValueChange={setTyped}
+               
               placeholder="valence.example.com"
               keyboard="url"
               onSubmit={() => {
@@ -175,7 +175,7 @@ const WhereIsYourValence = ({ onChosen, refusal = null }: WhereIsYourValenceProp
                 tryIt();
               }}
             >
-              Connect
+              {say('phone.whereIsYourValence.connect')}
             </Button>
           </View>
         </ARising>

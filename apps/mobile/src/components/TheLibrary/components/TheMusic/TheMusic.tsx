@@ -12,6 +12,8 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { ANothingHere } from '@ValenceMobile/components/ANothingHere/ANothingHere';
 import { AnArrival } from '@ValenceMobile/components/AnArrival/AnArrival';
 import { APlaylistDetails } from '@ValenceMobile/components/APlaylistDetails/APlaylistDetails';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import type { PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
 import type { TheMusicProps } from './TheMusic.types';
 
@@ -74,7 +76,7 @@ const TheMusic = ({
         title={playlist.name}
         detail={
           playlist.isMine || playlist.owner === null
-            ? `${playlist.entryCount.toString()} songs`
+            ? sayCount('phone.theMusic.songCount', playlist.entryCount)
             : playlist.owner.name
         }
         artwork={cover === null ? null : onThisServer(albumArtworkUrl(cover))}
@@ -95,21 +97,21 @@ const TheMusic = ({
         {!albums.isPending && recent.length === 0 && mine.length === 0 && shared.length === 0 ? (
           <ANothingHere
             of={MusicNote}
-            title="No music yet"
-            detail="Once a music library has been added and scanned, its albums and artists will be here."
+            title={say('phone.theMusic.emptyTitle')}
+            detail={say('phone.theMusic.emptyDetail')}
           />
         ) : null}
 
-        <AShelf title="Your playlists">
+        <AShelf title={say('phone.theMusic.yourPlaylists')}>
           <AMusicTile
-            title="Liked songs"
-            detail={`${likedCount.toString()} ${likedCount === 1 ? 'song' : 'songs'}`}
+            title={say('phone.theMusic.likedSongs')}
+            detail={sayCount('phone.theMusic.songCount', likedCount)}
             artwork={null}
             onPress={onLiked}
           />
           {mine.map(aPlaylist)}
           <AMusicTile
-            title="New playlist"
+            title={say('phone.theMusic.newPlaylist')}
             artwork={null}
             standIn={Plus}
             onPress={() => {
@@ -119,7 +121,7 @@ const TheMusic = ({
         </AShelf>
 
         {recent.length === 0 ? null : (
-          <AShelf title="Recently added" onSeeAll={onAllAlbums}>
+          <AShelf title={say('phone.theMusic.recentlyAdded')} onSeeAll={onAllAlbums}>
             {recent.slice(0, RECENT).map((album) => (
               <AMusicTile
                 key={album.id}
@@ -135,7 +137,7 @@ const TheMusic = ({
         )}
 
         {(artists.data ?? []).length === 0 ? null : (
-          <AShelf title="Artists" onSeeAll={onAllArtists}>
+          <AShelf title={say('phone.theMusic.artists')} onSeeAll={onAllArtists}>
             {(artists.data ?? []).slice(0, ARTISTS).map((artist) => (
               <AMusicTile
                 key={artist.id}
@@ -151,7 +153,7 @@ const TheMusic = ({
         )}
 
         {shared.length === 0 ? null : (
-          <AShelf title="Shared with you">{shared.map(aPlaylist)}</AShelf>
+          <AShelf title={say('phone.theMusic.sharedWithYou')}>{shared.map(aPlaylist)}</AShelf>
         )}
 
         <APlaylistDetails

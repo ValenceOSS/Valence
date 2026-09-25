@@ -7,6 +7,8 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { APick } from '@ValenceMobile/components/AShow/components/AChoiceOfEpisodes/components/APick/APick';
 import type { AChoiceOfEpisodesProps } from './AChoiceOfEpisodes.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const styles = StyleSheet.create({
   episode: { alignItems: 'center', flexDirection: 'row', gap: 14, paddingVertical: 10 },
@@ -71,8 +73,8 @@ const AChoiceOfEpisodes = ({
   return (
     <ASheet
       isOpen={isOpen}
-      title="Choose episodes"
-      closeLabel="Cancel"
+      title={say('phone.aChoiceOfEpisodes.title')}
+      closeLabel={say('common.cancel')}
       onClose={close}
       footer={
         <Button
@@ -87,8 +89,8 @@ const AChoiceOfEpisodes = ({
           }}
         >
           {picked.size === 0
-            ? 'Pick some episodes'
-            : `Download ${picked.size === 1 ? '1 episode' : `${picked.size.toString()} episodes`}`}
+            ? say('phone.aChoiceOfEpisodes.pickSome')
+            : sayCount('phone.aChoiceOfEpisodes.download', picked.size)}
         </Button>
       }
     >
@@ -101,7 +103,14 @@ const AChoiceOfEpisodes = ({
           <View key={season.seasonNumber ?? 'other'}>
             <Button
               tone="bare"
-              label={`${standing === 'all' ? 'Let go of' : 'Pick'} ${nameSeason(season.seasonNumber)}`}
+              label={say(
+                standing === 'all'
+                  ? 'phone.aChoiceOfEpisodes.letGoOfSeason'
+                  : 'phone.aChoiceOfEpisodes.pickSeason',
+                {
+                  season: nameSeason(season.seasonNumber),
+                },
+              )}
               isDisabled={open.length === 0}
               onPress={() => {
                 flip(open, standing !== 'all');
@@ -141,7 +150,7 @@ const AChoiceOfEpisodes = ({
                       </Words>
                       {isHeld ? (
                         <Words size="small" tone="muted">
-                          On this phone
+                          {say('phone.aChoiceOfEpisodes.onThisPhone')}
                         </Words>
                       ) : null}
                     </View>

@@ -15,6 +15,7 @@ import { TextField } from '@ValenceMobile/components/TextField/TextField';
 import { UseAPasskey } from '@ValenceMobile/components/UseAPasskey/UseAPasskey';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useArrivingFrom } from '@ValenceMobile/hooks/useArrivingFrom';
+import { say } from '@ValenceI18n/say';
 import type { AskForThePasswordProps } from './AskForThePassword.types';
 
 const NAMED_AFTER = 100;
@@ -136,10 +137,10 @@ const AskForThePassword = ({
           <ARising after={NAMED_AFTER} turn={1} stretches>
             <View style={styles.asking}>
               <TextField
-                label="Password"
+                label={say('phone.askForThePassword.passwordLabel')}
                 value={password}
                 onValueChange={setPassword}
-                placeholder="Password"
+                placeholder={say('phone.askForThePassword.passwordLabel')}
                 isSecret
                 onSubmit={() => {
                   void tryIt();
@@ -157,13 +158,17 @@ const AskForThePassword = ({
                   void tryIt();
                 }}
               >
-                Watch
+                {say('phone.askForThePassword.watch')}
               </Button>
 
-              <UseAPasskey label="Use a passkey instead" onIn={goIn} profileId={profile.id} />
+              <UseAPasskey
+                label={say('phone.askForThePassword.usePasskey')}
+                onIn={goIn}
+                profileId={profile.id}
+              />
 
               <Button tone="ghost" icon={ChevronLeft} onPress={leave}>
-                Somebody else
+                {say('phone.askForThePassword.somebodyElse')}
               </Button>
             </View>
           </ARising>

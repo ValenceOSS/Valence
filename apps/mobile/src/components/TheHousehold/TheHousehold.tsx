@@ -67,6 +67,7 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
   const isSignedIn = session.data !== null && session.data !== undefined;
   const wasSignedIn = useRef(isSignedIn);
 
+  // eslint-disable-next-line valence/no-hard-coded-strings -- names which way the server is watched, not words anybody reads
   useTheServer(isSignedIn ? 'beside the socket' : 'here');
 
   useEffect(() => {

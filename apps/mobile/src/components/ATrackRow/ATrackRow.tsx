@@ -7,6 +7,7 @@ import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { asAClock } from '@ValenceMobile/components/Watching/asAClock';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { say } from '@ValenceI18n/say';
 import type { ATrackRowProps } from './ATrackRow.types';
 
 const ART = 44;
@@ -55,7 +56,7 @@ const OneTrack = ({
       <View style={styles.said}>
         <Button
           tone="bare"
-          label={`Play ${track.title}`}
+          label={say('phone.aTrackRow.play', { title: track.title })}
           onPress={() => {
             onPlay(at);
           }}
@@ -83,7 +84,7 @@ const OneTrack = ({
                 {track.isExplicit ? (
                   <View style={[styles.explicit, { borderColor: colours.textMuted }]}>
                     <Words size="small" tone="muted" isStrong>
-                      E
+                      {say('phone.aTrackRow.explicit')}
                     </Words>
                   </View>
                 ) : null}
@@ -104,7 +105,7 @@ const OneTrack = ({
 
       <Button
         tone="bare"
-        label={`More for ${track.title}`}
+        label={say('phone.aTrackRow.more', { title: track.title })}
         onPress={() => {
           onMenu(at);
         }}

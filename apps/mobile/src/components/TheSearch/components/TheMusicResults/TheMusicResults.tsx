@@ -12,6 +12,8 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { TheMusicResultsProps } from './TheMusicResults.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const SONGS_BESIDE_FILMS = 5;
 
@@ -52,7 +54,11 @@ const TheMusicResultsSection = ({
 
   if (isEmpty) {
     return isOnItsOwn ? (
-      <ANothingHere of={SearchX} title={`Nothing matches “${asked}”`} detail="Try fewer words." />
+      <ANothingHere
+        of={SearchX}
+        title={say('common.nothingMatches', { query: asked })}
+        detail={say('phone.theMusicResults.tryFewerWords')}
+      />
     ) : null;
   }
 
@@ -60,10 +66,14 @@ const TheMusicResultsSection = ({
     <View style={styles.whole}>
       {tracks.length === 0 ? null : (
         <View style={styles.songs}>
-          <Words size="heading">Songs</Words>
+          <Words size="heading">{say('phone.theMusicResults.songs')}</Words>
           <ATrackList
             tracks={isOnItsOwn ? tracks : tracks.slice(0, SONGS_BESIDE_FILMS)}
-            source={{ kind: 'search', id: null, name: `“${asked}”` }}
+            source={{
+              kind: 'search',
+              id: null,
+              name: say('phone.theMusicResults.searchedFor', { query: asked }),
+            }}
             onAlbum={onAlbum}
             onArtist={onArtist}
             onPlaylist={onPlaylist}
@@ -72,7 +82,7 @@ const TheMusicResultsSection = ({
       )}
 
       {artists.length === 0 ? null : (
-        <AShelf title="Artists">
+        <AShelf title={say('phone.theMusicResults.artists')}>
           {artists.map((artist) => (
             <AMusicTile
               key={artist.id}
@@ -88,7 +98,7 @@ const TheMusicResultsSection = ({
       )}
 
       {albums.length === 0 ? null : (
-        <AShelf title="Albums">
+        <AShelf title={say('phone.theMusicResults.albums')}>
           {albums.map((album) => (
             <AMusicTile
               key={album.id}
@@ -104,7 +114,7 @@ const TheMusicResultsSection = ({
       )}
 
       {playlists.length === 0 ? null : (
-        <AShelf title="Playlists">
+        <AShelf title={say('phone.theMusicResults.playlists')}>
           {playlists.map((playlist) => {
             const cover = playlist.artworkAlbumIds[0] ?? null;
 
@@ -112,7 +122,7 @@ const TheMusicResultsSection = ({
               <AMusicTile
                 key={playlist.id}
                 title={playlist.name}
-                detail={`${playlist.entryCount.toString()} songs`}
+                detail={sayCount('phone.theMusicResults.songCount', playlist.entryCount)}
                 artwork={cover === null ? null : onThisServer(albumArtworkUrl(cover))}
                 onPress={() => {
                   onPlaylist(playlist.id);

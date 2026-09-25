@@ -10,6 +10,7 @@ import { shareQueries } from '@ValenceClient/query/shareQueries';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { say } from '@ValenceI18n/say';
 import type { Share } from '@ValenceContracts/schemas/Share';
 
 const styles = StyleSheet.create({
@@ -44,17 +45,17 @@ const TheShares = () => {
    */
   const withdraw = (share: Share) => {
     Alert.alert(
-      `Withdraw the link to ${share.title}?`,
-      'Anybody who has it will no longer be able to open it. This cannot be undone.',
+      say('phone.theShares.withdrawTitle', { title: share.title }),
+      say('phone.theShares.withdrawBody'),
       [
-        { text: 'Keep it', style: 'cancel' },
+        { text: say('phone.theShares.keepIt'), style: 'cancel' },
         {
-          text: 'Withdraw',
+          text: say('phone.theShares.withdraw'),
           style: 'destructive',
           onPress: () => {
             void revokeShare(share.id).then(async (isWithdrawn) => {
               if (!isWithdrawn) {
-                Alert.alert('That link could not be withdrawn.');
+                Alert.alert(say('phone.theShares.couldNotWithdraw'));
 
                 return;
               }
@@ -69,20 +70,18 @@ const TheShares = () => {
 
   return (
     <>
-      <Words tone="muted">
-        Links you have handed out. Share something from its own page, and it will be here.
-      </Words>
+      <Words tone="muted">{say('phone.theShares.lede')}</Words>
 
       {read.isPending ? <ActivityIndicator color={colours.textMuted} /> : null}
 
-      {read.isError ? <Words tone="danger">Your links could not be read.</Words> : null}
+      {read.isError ? <Words tone="danger">{say('phone.theShares.couldNotRead')}</Words> : null}
 
       {!read.isPending && shares.length === 0 ? (
-        <Words tone="muted">You have not shared anything yet.</Words>
+        <Words tone="muted">{say('phone.theShares.empty')}</Words>
       ) : null}
 
       {shares.length === 0 ? null : (
-        <AGroup title="Shared links">
+        <AGroup title={say('phone.theShares.heading')}>
           {shares.map((share) => {
             const standing = shareStanding(share, now);
 
@@ -91,18 +90,22 @@ const TheShares = () => {
                 <View style={styles.words}>
                   <Words lines={1}>{share.title}</Words>
                   <Words size="small" tone="muted">
-                    {[standing.label, `Opened ${saidOpened(share)}`, untilWhen(share)].join(' · ')}
+                    {[
+                      standing.label,
+                      say('phone.theShares.opened', { times: saidOpened(share) }),
+                      untilWhen(share),
+                    ].join(' · ')}
                   </Words>
                 </View>
                 {standing.isLive ? (
                   <Button
                     tone="quiet"
-                    label={`Withdraw the link to ${share.title}`}
+                    label={say('phone.theShares.withdrawWho', { title: share.title })}
                     onPress={() => {
                       withdraw(share);
                     }}
                   >
-                    Withdraw
+                    {say('phone.theShares.withdraw')}
                   </Button>
                 ) : null}
               </View>

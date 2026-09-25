@@ -9,6 +9,8 @@ import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { APosterProps } from './APoster.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const RATIO = 3 / 2;
 
@@ -105,7 +107,7 @@ const APoster = ({
             style={[styles.count, { backgroundColor: colours.accent }]}
             accessible
             accessibilityRole="image"
-            accessibilityLabel={`${count.toString()} ${count === 1 ? 'episode' : 'episodes'} left`}
+            accessibilityLabel={sayCount('common.episodesLeft', count)}
           >
             <Text style={[styles.countWords, { color: colours.accentContrast }]}>
               {count > 99 ? '99+' : count.toString()}
@@ -118,7 +120,7 @@ const APoster = ({
             style={[styles.seen, { backgroundColor: withAlpha('#000000', 0.6) }]}
             accessible
             accessibilityRole="image"
-            accessibilityLabel="Watched"
+            accessibilityLabel={say('phone.aPoster.watched')}
           >
             <Icon of={Check} size={14} colour="#ffffff" />
           </View>
@@ -126,7 +128,7 @@ const APoster = ({
 
         {watched > 0 && watched < 1 ? (
           <View style={styles.howFar}>
-            <HowFar fraction={watched} label={`How far through ${title}`} />
+            <HowFar fraction={watched} label={say('phone.aPoster.howFarThrough', { title })} />
           </View>
         ) : null}
       </View>

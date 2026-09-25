@@ -52,6 +52,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ABlur } from '@ValenceMobile/components/ABlur/ABlur';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { theColours } from '@ValenceMobile/theme/theColours';
+import { say } from '@ValenceI18n/say';
 import type { ReactNode } from 'react';
 import type { VideoPlayer } from 'expo-video';
 import type { ALight } from '@ValenceMobile/components/AMoodBackground/AMoodBackground.types';
@@ -320,11 +321,19 @@ const TheLibrary = ({
   const reading = chosen === EVERY ? ofThisKind.map((library) => library.id) : [chosen];
   const isFiltered = filters.selected.size > 0;
   const parts = [
-    { id: 'home', label: 'Home', icon: HomeFilled },
-    ...(films.length > 0 ? [{ id: 'films', label: 'Films', icon: FilmFilled }] : []),
-    ...(programmes.length > 0 ? [{ id: 'shows', label: 'Shows', icon: MonitorFilled }] : []),
-    ...(hasMusic ? [{ id: 'music', label: 'Music', icon: MusicNoteFilled }] : []),
-    ...(bookLibraries.length > 0 ? [{ id: 'books', label: 'Books', icon: BookOpenFilled }] : []),
+    { id: 'home', label: say('phone.theLibrary.home'), icon: HomeFilled },
+    ...(films.length > 0
+      ? [{ id: 'films', label: say('phone.theLibrary.films'), icon: FilmFilled }]
+      : []),
+    ...(programmes.length > 0
+      ? [{ id: 'shows', label: say('phone.theLibrary.shows'), icon: MonitorFilled }]
+      : []),
+    ...(hasMusic
+      ? [{ id: 'music', label: say('phone.theLibrary.music'), icon: MusicNoteFilled }]
+      : []),
+    ...(bookLibraries.length > 0
+      ? [{ id: 'books', label: say('phone.theLibrary.books'), icon: BookOpenFilled }]
+      : []),
   ];
 
   const everything = useQuery({
@@ -417,10 +426,14 @@ const TheLibrary = ({
         <View style={styles.topRow}>
           <View style={styles.brand}>
             <ACarriedMark isHandedOn={false} />
-            <Words size="heading">Valence</Words>
+            <Words size="heading">{say('common.valence')}</Words>
           </View>
           <View style={styles.aside}>
-            <AGlassCircle of={ScanQrCode} label="Sign in a television" onPress={onScan} />
+            <AGlassCircle
+              of={ScanQrCode}
+              label={say('phone.theLibrary.signInATelevision')}
+              onPress={onScan}
+            />
             <TheBell onPress={onNotifications} />
           </View>
         </View>
@@ -446,7 +459,7 @@ const TheLibrary = ({
         >
           <View pointerEvents={isSearching ? 'none' : 'auto'}>
             <SegmentedRow
-              label="What to show"
+              label={say('phone.theLibrary.whatToShow')}
               fills
               isShown={!isSearching && !isBarAway}
               items={parts}
@@ -470,7 +483,7 @@ const TheLibrary = ({
           </View>
           <View pointerEvents={isSearching ? 'auto' : 'none'} style={styles.searchInstead}>
             <TheSearchBox
-              placeholder="Films, programmes, people"
+              placeholder={say('phone.theLibrary.searchPlaceholder')}
               onSettle={setSearchingFor}
               isCapsule
               isShown={isSearching}
@@ -502,13 +515,15 @@ const TheLibrary = ({
 
         {!libraries.isError && !isWaiting && drawsItsOwn ? null : (
           <AnArrival style={styles.arriving}>
-            {libraries.isError ? <Words tone="danger">Those could not be read.</Words> : null}
+            {libraries.isError ? (
+              <Words tone="danger">{say('phone.theLibrary.couldNotRead')}</Words>
+            ) : null}
 
             {ofThisKind.length > 1 ? (
               <SegmentedRow
-                label="Which library"
+                label={say('phone.theLibrary.whichLibrary')}
                 items={[
-                  { id: EVERY, label: 'All' },
+                  { id: EVERY, label: say('phone.theLibrary.all') },
                   ...ofThisKind.map((library) => ({ id: library.id, label: library.name })),
                 ]}
                 value={chosen}
@@ -531,14 +546,19 @@ const TheLibrary = ({
               isFiltered ? (
                 <ANothingHere
                   of={SearchX}
-                  title="Nothing matches those"
-                  detail="Try fewer filters, or clear them."
+                  title={say('phone.theLibrary.nothingMatches')}
+                  detail={say('phone.theLibrary.nothingMatchesDetail')}
                 />
               ) : (
                 <ANothingHere
                   of={part === 'films' ? Film : Monitor}
-                  title={part === 'films' ? 'No films yet' : 'No shows yet'}
+                  title={
+                    part === 'films'
+                      ? say('phone.theLibrary.noFilms')
+                      : say('phone.theLibrary.noShows')
+                  }
                   detail={howToFillIt(
+                    // eslint-disable-next-line valence/no-hard-coded-strings -- which case howToFillIt describes, not words
                     chosen === EVERY && ofThisKind.length > 1 ? 'every library' : 'one library',
                     false,
                   )}

@@ -18,6 +18,7 @@ import { TheFeatured } from '@ValenceMobile/components/TheLibrary/components/The
 import { AHomeShelf } from '@ValenceMobile/components/TheLibrary/components/TheHome/components/AHomeShelf/AHomeShelf';
 import { usePullToRefresh } from '@ValenceMobile/hooks/usePullToRefresh';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { say } from '@ValenceI18n/say';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import type { ComingUp } from '@ValenceContracts/schemas/Show';
 import type { AShelfOf } from '@ValenceMobile/components/TheLibrary/components/TheHome/components/AHomeShelf/AHomeShelf.types';
@@ -233,13 +234,15 @@ const TheHomePage = ({
           librariesAre === 'missing' ? (
             <ANothingHere
               of={FolderOpen}
-              title="No libraries yet"
+              title={say('phone.theHome.noLibraries')}
+              // eslint-disable-next-line valence/no-hard-coded-strings -- which case howToFillIt describes, not words
               detail={howToFillIt('no libraries', false)}
             />
           ) : (
             <ANothingHere
               of={Film}
-              title="Nothing to watch yet"
+              title={say('phone.theHome.nothingToWatch')}
+              // eslint-disable-next-line valence/no-hard-coded-strings -- which case howToFillIt describes, not words
               detail={howToFillIt('every library', false)}
             />
           )

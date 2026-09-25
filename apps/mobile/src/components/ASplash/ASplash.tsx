@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Animated, Easing, StyleSheet } from 'react-native';
 import mark from '@ValenceMobile/assets/valence-mark.png';
 import { theColours } from '@ValenceMobile/theme/theColours';
+import { say } from '@ValenceI18n/say';
 import type { ASplashProps } from './ASplash.types';
 
 const MARK_WIDE = 100;
@@ -90,7 +91,7 @@ const ASplash = ({ isDone, onGone }: ASplashProps) => {
         source={mark}
         resizeMode="contain"
         accessibilityRole="image"
-        accessibilityLabel="Valence"
+        accessibilityLabel={say('common.valence')}
         style={[
           styles.mark,
           {

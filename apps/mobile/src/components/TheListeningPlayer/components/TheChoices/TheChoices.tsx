@@ -8,15 +8,17 @@ import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheBook } from '@ValenceMobile/hooks/useTheBook';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { say } from '@ValenceI18n/say';
 import type { ListeningPanel } from '@ValenceClient/books/listeningChoices';
+import type { StringKey } from '@ValenceI18n/StringKey';
 import type { TheChoicesProps } from './TheChoices.types';
 
 const TICK = 20;
 
-const TITLES: Record<ListeningPanel, string> = {
-  speed: 'Speed',
-  sleep: 'Sleep timer',
-  chapters: 'Chapters',
+const TITLES: Record<ListeningPanel, StringKey> = {
+  speed: 'phone.theChoices.speed',
+  sleep: 'phone.theChoices.sleepTimer',
+  chapters: 'phone.theChoices.chapters',
 };
 
 const styles = StyleSheet.create({
@@ -38,7 +40,11 @@ const TheChoices = ({ panel, onClose }: TheChoicesProps) => {
   const { player, state } = useTheBook({ followsPosition: panel === 'chapters' });
 
   return (
-    <ASheet isOpen={panel !== null} title={panel === null ? '' : TITLES[panel]} onClose={onClose}>
+    <ASheet
+      isOpen={panel !== null}
+      title={panel === null ? '' : say(TITLES[panel])}
+      onClose={onClose}
+    >
       {panel === null
         ? null
         : listeningChoices(panel, state).map((choice) => (

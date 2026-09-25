@@ -1,6 +1,7 @@
 import { Image } from 'react-native';
 import mark from '@ValenceMobile/assets/valence-mark.png';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { say } from '@ValenceI18n/say';
 import type { TheMarkProps } from './TheMark.types';
 
 const WIDER_BY = 624 / 458;
@@ -18,7 +19,7 @@ const TheMark = ({ high = 28 }: TheMarkProps) => {
       source={mark}
       style={{ height: high, tintColor: colours.text, width: high * WIDER_BY }}
       accessibilityRole="image"
-      accessibilityLabel="Valence"
+      accessibilityLabel={say('common.valence')}
     />
   );
 };

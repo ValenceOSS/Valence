@@ -11,6 +11,7 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { TheBookResultsProps } from './TheBookResults.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The books whose title or author matches what was typed, across every book library, as the web's
@@ -32,12 +33,16 @@ const TheBookResultsSection = ({ asked, isOnItsOwn, onBook }: TheBookResultsProp
 
   if (books.length === 0) {
     return isOnItsOwn ? (
-      <ANothingHere of={SearchX} title={`Nothing matches “${asked}”`} detail="Try fewer words." />
+      <ANothingHere
+        of={SearchX}
+        title={say('common.nothingMatches', { query: asked })}
+        detail={say('phone.theBookResults.tryFewerWords')}
+      />
     ) : null;
   }
 
   return (
-    <AShelf title="Books">
+    <AShelf title={say('phone.theBookResults.books')}>
       {books.map((book) => (
         <Button
           key={book.id}

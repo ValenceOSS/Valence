@@ -7,6 +7,7 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { TextField } from '@ValenceMobile/components/TextField/TextField';
 import { Words } from '@ValenceMobile/components/Words/Words';
+import { say } from '@ValenceI18n/say';
 import type { AskForTheCodeProps } from './AskForTheCode.types';
 
 const MARK_HIGH = 40;
@@ -38,7 +39,9 @@ const AskForTheCode = ({ onIn, onBack }: AskForTheCodeProps) => {
     const said = code.trim();
 
     if (said === '') {
-      setRefusal(isTotp ? 'Enter the code from your authenticator app.' : 'Enter a backup code.');
+      setRefusal(
+        isTotp ? say('phone.askForTheCode.enterTotp') : say('phone.askForTheCode.enterBackup'),
+      );
 
       return;
     }
@@ -51,14 +54,14 @@ const AskForTheCode = ({ onIn, onBack }: AskForTheCodeProps) => {
     setIsTrying(false);
 
     if (accepted === null) {
-      setRefusal('Could not reach the server. Check that it is still running.');
+      setRefusal(say('phone.askForTheCode.unreachable'));
 
       return;
     }
 
     if (!accepted) {
       setRefusal(
-        isTotp ? 'That code is not valid. Try the next one.' : 'That backup code is not valid.',
+        isTotp ? say('phone.askForTheCode.totpInvalid') : say('phone.askForTheCode.backupInvalid'),
       );
 
       return;
@@ -73,16 +76,16 @@ const AskForTheCode = ({ onIn, onBack }: AskForTheCodeProps) => {
         <ACarriedMark high={MARK_HIGH} />
       </View>
 
-      <Words size="title">One more step</Words>
+      <Words size="title">{say('phone.askForTheCode.heading')}</Words>
 
       <Words tone="muted">
-        {isTotp
-          ? 'Enter the current code from your authenticator app.'
-          : 'Enter one of the backup codes you saved. Each can be used once.'}
+        {isTotp ? say('phone.askForTheCode.totpLede') : say('phone.askForTheCode.backupLede')}
       </Words>
 
       <TextField
-        label={isTotp ? 'Authenticator code' : 'Backup code'}
+        label={
+          isTotp ? say('phone.askForTheCode.totpLabel') : say('phone.askForTheCode.backupLabel')
+        }
         value={code}
         onValueChange={setCode}
         keyboard={isTotp ? 'code' : 'default'}
@@ -102,7 +105,7 @@ const AskForTheCode = ({ onIn, onBack }: AskForTheCodeProps) => {
           void tryIt();
         }}
       >
-        Continue
+        {say('phone.askForTheCode.continue')}
       </Button>
 
       <Button
@@ -114,11 +117,11 @@ const AskForTheCode = ({ onIn, onBack }: AskForTheCodeProps) => {
           setRefusal(null);
         }}
       >
-        {isTotp ? 'Use a backup code instead' : 'Use my authenticator app instead'}
+        {isTotp ? say('phone.askForTheCode.useBackup') : say('phone.askForTheCode.useTotp')}
       </Button>
 
       <Button tone="ghost" icon={ChevronLeft} onPress={onBack}>
-        Somebody else
+        {say('phone.askForTheCode.somebodyElse')}
       </Button>
     </Screen>
   );

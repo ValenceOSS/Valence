@@ -9,6 +9,8 @@ import { Toggle } from '@ValenceMobile/components/Toggle/Toggle';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { TheSeasonsProps } from './TheSeasons.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const styles = StyleSheet.create({
   row: { alignItems: 'center', flexDirection: 'row', gap: 12, paddingVertical: 6 },
@@ -39,14 +41,14 @@ const TheSeasons = ({ tmdbId, seasons, onChange }: TheSeasonsProps) => {
     <View>
       <View style={styles.row}>
         <View style={styles.words}>
-          <Words>Every season</Words>
+          <Words>{say('phone.theSeasons.everySeason')}</Words>
           <Words size="small" tone="muted">
-            And any still to come
+            {say('phone.theSeasons.andAnyToCome')}
           </Words>
         </View>
 
         <Toggle
-          label="Every season"
+          label={say('phone.theSeasons.everySeason')}
           isOn={seasons === null}
           onToggle={(isOn) => {
             onChange(isOn ? null : []);
@@ -60,7 +62,7 @@ const TheSeasons = ({ tmdbId, seasons, onChange }: TheSeasonsProps) => {
             <Words>{nameSeason(row.season)}</Words>
             <Words size="small" tone="muted">
               {[
-                `${row.episodeCount.toString()} episodes`,
+                sayCount('phone.theSeasons.episodes', row.episodeCount),
                 row.firstAired?.slice(0, 4) ?? null,
                 SEASON_STANDING_NAMES[row.standing],
               ]

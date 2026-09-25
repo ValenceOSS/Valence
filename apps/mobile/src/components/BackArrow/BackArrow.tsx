@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AGlassCircle } from '@ValenceMobile/components/AGlassCircle/AGlassCircle';
 import type { BackArrowProps } from './BackArrow.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   place: { left: 12, position: 'absolute' },
@@ -23,7 +24,7 @@ const BackArrow = ({ onBack, pointsDown = false }: BackArrowProps) => {
     <View style={[styles.place, { top: room.top + 4 }]}>
       <AGlassCircle
         of={pointsDown ? ChevronDown : ChevronLeft}
-        label={pointsDown ? 'Close' : 'Back'}
+        label={say(pointsDown ? 'common.close' : 'common.back')}
         onPress={onBack}
       />
     </View>

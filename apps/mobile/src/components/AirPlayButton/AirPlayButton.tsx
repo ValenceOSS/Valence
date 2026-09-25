@@ -4,6 +4,7 @@ import { drawsNatively } from '@ValenceMobile/platform/drawsNatively';
 import { AGlass } from '@ValenceMobile/components/AGlass/AGlass';
 import { hasLiquidGlass } from '@ValenceMobile/platform/hasLiquidGlass';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { say } from '@ValenceI18n/say';
 import type { AirPlayButtonProps, NativeAirPlayProps } from './AirPlayButton.types';
 
 const ThePicker = requireNativeView<NativeAirPlayProps>('ValenceAirPlay');
@@ -37,7 +38,7 @@ const AirPlayButton = ({ isOverPicture = false }: AirPlayButtonProps) => {
         colour={isOverPicture ? '#ffffff' : colours.text}
         activeColour={isOverPicture ? '#000000' : colours.accentContrast}
         style={{ height: ROUND, width: ROUND }}
-        accessibilityLabel="Play on another device"
+        accessibilityLabel={say('phone.airPlayButton.label')}
       />
     </View>
   );

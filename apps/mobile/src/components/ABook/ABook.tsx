@@ -27,6 +27,8 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheBook } from '@ValenceMobile/hooks/useTheBook';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
 import { isAudiobookFormat } from '@ValenceContracts/schemas/Book';
 import type { ReadingProgress } from '@ValenceContracts/schemas/Book';
@@ -65,18 +67,18 @@ const howFarInto = (read: ReadingProgress | undefined, pageCount: number | null)
   }
 
   if (read.isFinished) {
-    return 'Read';
+    return say('phone.aBook.chapterRead');
   }
 
   if (read.fraction !== null) {
-    return `${Math.round(read.fraction * 100).toString()}% read`;
+    return say('phone.aBook.percentRead', { percent: Math.round(read.fraction * 100).toString() });
   }
 
   const page = (read.pageNumber ?? 0) + 1;
 
   return pageCount === null
-    ? `Page ${page.toString()}`
-    : `Page ${page.toString()} of ${pageCount.toString()}`;
+    ? say('phone.aBook.onPage', { page: page.toString() })
+    : say('phone.aBook.onPageOf', { page: page.toString(), count: pageCount.toString() });
 };
 
 /**
@@ -120,7 +122,7 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
   if (read.data === undefined || read.data === null) {
     return (
       <Screen centres onBack={onBack}>
-        <Words tone="danger">That book could not be read.</Words>
+        <Words tone="danger">{say('phone.aBook.couldNotRead')}</Words>
       </Screen>
     );
   }
@@ -153,11 +155,13 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
   const facts = [
     book.authors === null || book.authors.length === 0 ? null : book.authors.join(', '),
     book.year === null ? null : book.year.toString(),
-    ordered.length > 1 ? `${ordered.length.toString()} chapters` : null,
+    ordered.length > 1 ? sayCount('phone.aBook.chapterCount', ordered.length) : null,
     tracks.length === 0
       ? null
       : describeLength(tracks.reduce((all, track) => all + track.durationSeconds, 0)),
-    ordered.length === 0 && toHear.length > 1 ? `${toHear.length.toString()} chapters` : null,
+    ordered.length === 0 && toHear.length > 1
+      ? sayCount('phone.aBook.chapterCount', toHear.length)
+      : null,
   ].filter((fact) => fact !== null);
 
   return (
@@ -183,9 +187,7 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
       {hasAudio && ordered.length === 0 ? listen : null}
 
       {ordered.length === 0 && !hasAudio ? (
-        <Words tone="muted">
-          Nothing in this book yet. Scanning the library again may find it.
-        </Words>
+        <Words tone="muted">{say('phone.aBook.nothingInIt')}</Words>
       ) : ordered.length === 0 ? null : (
         <Button
           tone="bold"
@@ -195,7 +197,11 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
             onRead(book.id, null, isFinished);
           }}
         >
-          {isStarted ? 'Continue reading' : isFinished ? 'Read again' : 'Read'}
+          {isStarted
+            ? say('phone.aBook.continueReading')
+            : isFinished
+              ? say('phone.aBook.readAgain')
+              : say('phone.aBook.read')}
         </Button>
       )}
 
@@ -209,12 +215,12 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
           setSharing({ kind: 'book', book });
         }}
       >
-        Share
+        {say('phone.aBook.share')}
       </Button>
 
       {where === null ? null : (
         <Words tone="muted" isCentred>
-          {isFinished ? 'Finished' : describeReadingPlace(where)}
+          {isFinished ? say('phone.aBook.finished') : describeReadingPlace(where)}
         </Words>
       )}
 
@@ -230,12 +236,12 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
 
       {ordered.length > 1 ? (
         <View style={styles.chapters}>
-          <Words size="heading">Chapters</Words>
+          <Words size="heading">{say('phone.aBook.chapters')}</Words>
           {ordered.map((chapter) => {
             const note = [
               chapter.pageCount === null
                 ? null
-                : `${chapter.pageCount.toString()} ${chapter.pageCount === 1 ? 'page' : 'pages'}`,
+                : sayCount('phone.aBook.pageCount', chapter.pageCount),
               howFarInto(held.get(chapter.id), chapter.pageCount),
             ]
               .filter((part) => part !== null)
@@ -245,7 +251,7 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
               <Button
                 key={chapter.id}
                 tone="bare"
-                label={`Read ${chapter.title}`}
+                label={say('phone.aBook.readChapter', { title: chapter.title })}
                 onPress={() => {
                   onRead(book.id, chapter.id, false);
                 }}
@@ -267,7 +273,11 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
       ) : null}
       {toHear.length > 1 ? (
         <View style={styles.chapters}>
-          <Words size="heading">{ordered.length > 1 ? 'Audiobook chapters' : 'Chapters'}</Words>
+          <Words size="heading">
+            {ordered.length > 1
+              ? say('phone.aBook.audiobookChapters')
+              : say('phone.aBook.chapters')}
+          </Words>
           {toHear.map((chapter, at) => (
             <AChapterToHear
               key={`${at.toString()}:${chapter.title}`}

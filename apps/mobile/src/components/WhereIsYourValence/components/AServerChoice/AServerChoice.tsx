@@ -5,6 +5,7 @@ import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { say } from '@ValenceI18n/say';
 import type { AServerChoiceProps } from './AServerChoice.types';
 
 const styles = StyleSheet.create({
@@ -35,7 +36,7 @@ const AServerChoice = ({ name, address, onChoose }: AServerChoiceProps) => {
   return (
     <Button
       tone="bare"
-      label={`Use ${name}`}
+      label={say('phone.aServerChoice.use', { name })}
       onPress={() => {
         onChoose(address);
       }}

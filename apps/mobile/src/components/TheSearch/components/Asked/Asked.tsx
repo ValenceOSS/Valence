@@ -7,6 +7,7 @@ import { ARequest } from '@ValenceMobile/components/TheSearch/components/AReques
 import { whatAPhoneAsksFor } from '@ValenceMobile/components/TheSearch/whatAPhoneAsksFor';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { AskedProps } from './Asked.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The films and programmes asked for, newest first, and where each has got to.
@@ -27,11 +28,11 @@ const Asked = ({ onAsk }: AskedProps) => {
   }
 
   if (requests.isError) {
-    return <Words tone="danger">Those could not be read.</Words>;
+    return <Words tone="danger">{say('phone.asked.couldNotRead')}</Words>;
   }
 
   if (mine.length === 0) {
-    return <Words tone="muted">Nothing asked for yet.</Words>;
+    return <Words tone="muted">{say('phone.asked.nothingYet')}</Words>;
   }
 
   return mine.map((request) => (

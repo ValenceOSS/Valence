@@ -10,6 +10,7 @@ import { HeldFileListSchema } from '@ValenceContracts/schemas/HeldFile';
 import { HELD_RESUMES } from '@ValenceMobile/platform/HELD_RESUMES';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
+import { say } from '@ValenceI18n/say';
 import type { DownloadResumable } from 'expo-file-system/legacy';
 import type { DeviceStore, HeldFiles } from '@ValenceClient/platform/Platform.types';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
@@ -152,7 +153,7 @@ const thePhonesHeldFiles = (
       change(row.downloadId, {
         state: 'failed',
         bytesPerSecond: null,
-        failure: 'The file could not be fetched from the server.',
+        failure: say('phone.thePhonesHeldFiles.couldNotFetch'),
       });
 
       return;
@@ -166,7 +167,7 @@ const thePhonesHeldFiles = (
       change(row.downloadId, {
         state: 'failed',
         bytesPerSecond: null,
-        failure: 'The file arrived incomplete.',
+        failure: say('phone.thePhonesHeldFiles.incomplete'),
       });
 
       return;

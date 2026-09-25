@@ -13,6 +13,7 @@ import { Toggle } from '@ValenceMobile/components/Toggle/Toggle';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useConfirmHiding } from '@ValenceMobile/hooks/useConfirmHiding';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   bringBack: { padding: 6 },
@@ -42,11 +43,9 @@ const TheHidden = () => {
 
   return (
     <>
-      <Words tone="muted">
-        Things you have taken out of your own browsing. Anything here can be brought back.
-      </Words>
+      <Words tone="muted">{say('phone.theHidden.lede')}</Words>
 
-      <AGroup title="Whole libraries">
+      <AGroup title={say('phone.theHidden.librariesHeading')}>
         {libraries.map((library) => {
           const isHidden = hiding.isHidden({ kind: 'library', subjectId: library.id });
 
@@ -57,7 +56,7 @@ const TheHidden = () => {
               </View>
 
               <Toggle
-                label={`Show the ${library.name} library`}
+                label={say('phone.theHidden.showLibrary', { name: library.name })}
                 isOn={!isHidden}
                 onToggle={(isOn) => {
                   if (isOn) {
@@ -72,10 +71,10 @@ const TheHidden = () => {
         })}
       </AGroup>
 
-      <AGroup title="Titles and programmes">
+      <AGroup title={say('phone.theHidden.titlesHeading')}>
         {titles.length === 0 ? (
           <View style={styles.row}>
-            <Words tone="muted">Nothing hidden.</Words>
+            <Words tone="muted">{say('phone.theHidden.nothingHidden')}</Words>
           </View>
         ) : (
           titles.map((entry) => (
@@ -83,13 +82,13 @@ const TheHidden = () => {
               <View style={styles.words}>
                 <Words lines={2}>{entry.title}</Words>
                 <Words size="small" tone="muted">
-                  {`Hidden ${saidWhen(entry.hiddenAt)}`}
+                  {say('phone.theHidden.hiddenWhen', { when: saidWhen(entry.hiddenAt) })}
                 </Words>
               </View>
 
               <Button
                 tone="bare"
-                label={`Bring ${entry.title} back`}
+                label={say('phone.theHidden.bringBack', { title: entry.title })}
                 onPress={() => {
                   hiding.show({ kind: entry.kind, subjectId: entry.subjectId });
                 }}

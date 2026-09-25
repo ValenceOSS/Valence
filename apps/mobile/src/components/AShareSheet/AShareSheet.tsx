@@ -12,12 +12,14 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRow';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
+import { say } from '@ValenceI18n/say';
 import type { AShareSheetProps } from './AShareSheet.types';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
 const WHAT = [
-  { id: 'item', label: 'Just this episode' },
-  { id: 'series', label: 'The whole programme' },
-] as const;
+  { id: 'item', said: 'phone.aShareSheet.justThisEpisode' },
+  { id: 'series', said: 'phone.aShareSheet.wholeProgramme' },
+] as const satisfies readonly { id: string; said: StringKey }[];
 
 const styles = StyleSheet.create({
   choice: { gap: 8 },
@@ -79,7 +81,7 @@ const AShareSheet = ({ subject, onClose }: AShareSheetProps) => {
     setIsWorking(false);
 
     if (made === null) {
-      setRefusal('That could not be shared. You may not have permission to hand out links.');
+      setRefusal(say('phone.aShareSheet.refused'));
 
       return;
     }
@@ -89,20 +91,29 @@ const AShareSheet = ({ subject, onClose }: AShareSheetProps) => {
   };
 
   return (
-    <ASheet isOpen={subject !== null} title={`Share ${named}`} onClose={onClose}>
+    <ASheet
+      isOpen={subject !== null}
+      title={say('phone.aShareSheet.title', { title: named })}
+      onClose={onClose}
+    >
       {link === null ? (
         <>
           {isEpisode ? (
             <View style={styles.choice}>
-              <Words size="heading">What to share</Words>
-              <SegmentedRow label="What to share" items={WHAT} value={what} onSelect={setWhat} />
+              <Words size="heading">{say('phone.aShareSheet.whatToShare')}</Words>
+              <SegmentedRow
+                label={say('phone.aShareSheet.whatToShare')}
+                items={WHAT.map((one) => ({ id: one.id, label: say(one.said) }))}
+                value={what}
+                onSelect={setWhat}
+              />
             </View>
           ) : null}
 
           <View style={styles.choice}>
-            <Words size="heading">Lasts</Words>
+            <Words size="heading">{say('phone.aShareSheet.lasts')}</Words>
             <SegmentedRow
-              label="How long the link lasts"
+              label={say('phone.aShareSheet.lastsLabel')}
               items={SHARE_LASTS}
               value={lasts}
               onSelect={setLasts}
@@ -110,15 +121,15 @@ const AShareSheet = ({ subject, onClose }: AShareSheetProps) => {
           </View>
 
           <View style={styles.choice}>
-            <Words size="heading">Who can open it</Words>
+            <Words size="heading">{say('phone.aShareSheet.whoCanOpen')}</Words>
             <SegmentedRow
-              label="How many people can open it"
+              label={say('phone.aShareSheet.whoCanOpenLabel')}
               items={SHARE_CAPS}
               value={cap}
               onSelect={setCap}
             />
             <Words size="small" tone="muted">
-              Whichever runs out first ends the link.
+              {say('phone.aShareSheet.whicheverFirst')}
             </Words>
           </View>
 
@@ -131,12 +142,12 @@ const AShareSheet = ({ subject, onClose }: AShareSheetProps) => {
               void make();
             }}
           >
-            Make a link
+            {say('phone.aShareSheet.makeALink')}
           </Button>
         </>
       ) : (
         <>
-          <Words tone="muted">This link is shown only once. Share or copy it now.</Words>
+          <Words tone="muted">{say('phone.aShareSheet.shownOnce')}</Words>
           <Words isSelectable>{link}</Words>
           <Button
             isWide
@@ -145,7 +156,7 @@ const AShareSheet = ({ subject, onClose }: AShareSheetProps) => {
               void Share.share({ url: link, message: link });
             }}
           >
-            Share the link
+            {say('phone.aShareSheet.shareTheLink')}
           </Button>
         </>
       )}

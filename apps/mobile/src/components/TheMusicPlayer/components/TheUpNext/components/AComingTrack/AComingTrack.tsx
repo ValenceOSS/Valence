@@ -7,6 +7,7 @@ import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { say } from '@ValenceI18n/say';
 import type { AComingTrackProps } from './AComingTrack.types';
 
 const ART = 44;
@@ -45,7 +46,7 @@ const OneComingTrack = ({ track, at, onPlay, onMenu }: AComingTrackProps) => {
       <View style={styles.play}>
         <Button
           tone="bare"
-          label={`Play ${track.title} now`}
+          label={say('phone.aComingTrack.playNow', { title: track.title })}
           onPress={() => {
             onPlay(at);
           }}
@@ -74,7 +75,7 @@ const OneComingTrack = ({ track, at, onPlay, onMenu }: AComingTrackProps) => {
 
       <Button
         tone="bare"
-        label={`More for ${track.title}`}
+        label={say('phone.aComingTrack.more', { title: track.title })}
         onPress={() => {
           onMenu(at, track.title);
         }}

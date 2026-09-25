@@ -4,6 +4,7 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheServer } from '@ValenceMobile/hooks/useTheServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   note: {
@@ -41,14 +42,18 @@ const TheServerIsAway = () => {
         ]}
       >
         <View style={styles.words}>
-          <Words size="small">{`Can’t reach ${address ?? 'your server'}`}</Words>
+          <Words size="small">
+            {address === null
+              ? say('phone.theServerIsAway.cannotReachYourServer')
+              : say('phone.theServerIsAway.cannotReach', { address })}
+          </Words>
           <Words size="small" tone="muted">
-            Trying again every few seconds.
+            {say('phone.theServerIsAway.tryingAgain')}
           </Words>
         </View>
 
         <Button tone="quiet" onPress={tryNow}>
-          Try now
+          {say('phone.theServerIsAway.tryNow')}
         </Button>
       </View>
     </View>

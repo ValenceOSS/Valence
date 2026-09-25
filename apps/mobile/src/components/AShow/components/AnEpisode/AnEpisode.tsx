@@ -13,6 +13,7 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import type { AnEpisodeProps } from './AnEpisode.types';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   about: { padding: 10 },
@@ -69,8 +70,11 @@ const AnEpisode = ({
           tone="bare"
           label={
             resumeSeconds === null
-              ? `Play ${episode.title}`
-              : `Resume ${episode.title} from ${formatDuration(resumeSeconds)}`
+              ? say('phone.anEpisode.play', { title: episode.title })
+              : say('phone.anEpisode.resume', {
+                  title: episode.title,
+                  when: formatDuration(resumeSeconds),
+                })
           }
           onPress={onWatch}
         >
@@ -105,7 +109,7 @@ const AnEpisode = ({
                   style={[styles.seen, { backgroundColor: withAlpha('#000000', 0.6) }]}
                   accessible
                   accessibilityRole="image"
-                  accessibilityLabel="Watched"
+                  accessibilityLabel={say('phone.anEpisode.watched')}
                 >
                   <Icon of={Check} size={12} colour="#ffffff" />
                 </View>
@@ -113,7 +117,10 @@ const AnEpisode = ({
 
               {watched > 0 && !isThrough ? (
                 <View style={styles.howFar}>
-                  <HowFar fraction={watched} label={`How far through ${episode.title}`} />
+                  <HowFar
+                    fraction={watched}
+                    label={say('phone.anEpisode.howFarThrough', { title: episode.title })}
+                  />
                 </View>
               ) : null}
             </View>
@@ -124,7 +131,9 @@ const AnEpisode = ({
                 {[
                   formatDuration(episode.durationSeconds),
                   airs === '' ? null : airs,
-                  resumeSeconds === null ? null : `${formatDuration(resumeSeconds)} in`,
+                  resumeSeconds === null
+                    ? null
+                    : say('phone.anEpisode.timeIn', { when: formatDuration(resumeSeconds) }),
                 ]
                   .filter((part) => part !== null)
                   .join(' · ')}
@@ -137,9 +146,9 @@ const AnEpisode = ({
       {onMarkWatched === undefined ? null : (
         <Button
           tone="bare"
-          label={
-            isThrough ? `Mark ${episode.title} as unwatched` : `Mark ${episode.title} as watched`
-          }
+          label={say(isThrough ? 'phone.anEpisode.markUnwatched' : 'phone.anEpisode.markWatched', {
+            title: episode.title,
+          })}
           onPress={onMarkWatched}
         >
           <View style={styles.about}>
@@ -152,7 +161,11 @@ const AnEpisode = ({
         </Button>
       )}
 
-      <Button tone="bare" label={`About ${episode.title}`} onPress={onLookAt}>
+      <Button
+        tone="bare"
+        label={say('phone.anEpisode.about', { title: episode.title })}
+        onPress={onLookAt}
+      >
         <View style={styles.about}>
           <Icon of={Info} size={20} colour={colours.textMuted} />
         </View>

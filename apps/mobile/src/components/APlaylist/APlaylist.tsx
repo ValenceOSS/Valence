@@ -24,6 +24,8 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { ANothingHere } from '@ValenceMobile/components/ANothingHere/ANothingHere';
 import { APlaylistDetails } from '@ValenceMobile/components/APlaylistDetails/APlaylistDetails';
 import { Button } from '@ValenceMobile/components/Button/Button';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import type { APlaylistProps } from './APlaylist.types';
 
 /**
@@ -65,7 +67,7 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
   if (read.data === undefined) {
     return (
       <Screen centres onBack={onBack}>
-        <Words tone="danger">That playlist could not be read.</Words>
+        <Words tone="danger">{say('phone.aPlaylist.couldNotRead')}</Words>
       </Screen>
     );
   }
@@ -82,27 +84,29 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
   const askWhatToDo = () => {
     const choices = [
       {
-        label: playlist.isShared ? 'Stop sharing' : 'Share with the household',
+        label: playlist.isShared
+          ? say('phone.aPlaylist.stopSharing')
+          : say('phone.aPlaylist.shareWithHousehold'),
         run: () => {
           void updatePlaylist(playlist.id, { isShared: !playlist.isShared }).then(refresh);
         },
       },
       {
-        label: 'Edit details',
+        label: say('phone.aPlaylist.editDetails'),
         run: () => {
           setIsEditing(true);
         },
       },
       {
-        label: 'Delete playlist',
+        label: say('phone.aPlaylist.deletePlaylist'),
         run: () => {
           Alert.alert(
-            `Delete ${playlist.name}?`,
-            'The songs stay in the library. Only the playlist goes, for everybody it was shared with.',
+            say('phone.aPlaylist.deleteTitle', { name: playlist.name }),
+            say('phone.aPlaylist.deleteBody'),
             [
-              { text: 'Cancel', style: 'cancel' },
+              { text: say('common.cancel'), style: 'cancel' },
               {
-                text: 'Delete',
+                text: say('common.delete'),
                 style: 'destructive',
                 onPress: () => {
                   void removePlaylist(playlist.id).then(async (isGone) => {
@@ -122,7 +126,7 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
     ActionSheetIOS.showActionSheetWithOptions(
       {
         title: playlist.name,
-        options: [...choices.map((choice) => choice.label), 'Cancel'],
+        options: [...choices.map((choice) => choice.label), say('common.cancel')],
         cancelButtonIndex: choices.length,
         destructiveButtonIndex: choices.length - 1,
       },
@@ -135,14 +139,14 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
   const source = { kind: 'playlist' as const, id: playlist.id, name: playlist.name };
   const detail = [
     playlist.isMine || playlist.owner === null ? null : playlist.owner.name,
-    `${tracks.length.toString()} ${tracks.length === 1 ? 'song' : 'songs'}`,
+    sayCount('phone.aPlaylist.songs', tracks.length),
     howLongItRuns(playlist.durationSeconds),
   ].filter((part) => part !== null);
 
   return (
     <Screen scrolls onBack={onBack} behind={<AMoodBackground palette={lights} />}>
       <AMusicHead
-        kind="Playlist"
+        kind={say('phone.aPlaylist.kind')}
         title={playlist.name}
         detail={detail.join(' · ')}
         artwork={cover === null ? null : onThisServer(albumArtworkUrl(cover))}
@@ -165,10 +169,10 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
           <Button
             tone="ghost"
             icon={MoreHorizontal}
-            label={`More for ${playlist.name}`}
+            label={say('phone.aPlaylist.moreFor', { name: playlist.name })}
             onPress={askWhatToDo}
           >
-            More
+            {say('phone.aPlaylist.more')}
           </Button>
         ) : null}
       </AMusicHead>
@@ -176,8 +180,8 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
       {tracks.length === 0 ? (
         <ANothingHere
           of={ListMusic}
-          title="Nothing in this playlist yet"
-          detail="Add songs to it from the menu beside any song."
+          title={say('phone.aPlaylist.emptyTitle')}
+          detail={say('phone.aPlaylist.emptyDetail')}
         />
       ) : (
         <ATrackList

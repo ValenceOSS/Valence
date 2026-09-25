@@ -40,6 +40,8 @@ import { ANothingHere } from '@ValenceMobile/components/ANothingHere/ANothingHer
 import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { AShowProps } from './AShow.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const OTHER = 'other';
 
@@ -100,7 +102,7 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
   if (show === undefined || show === null) {
     return (
       <Screen centres onBack={onBack}>
-        <Words tone="danger">That programme could not be read.</Words>
+        <Words tone="danger">{say('phone.aShow.couldNotRead')}</Words>
       </Screen>
     );
   }
@@ -188,11 +190,11 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
   const next = show.nextEpisode ?? null;
   const facts = [
     show.year === null || show.year === undefined ? null : show.year.toString(),
-    show.seasonCount === 1 ? '1 season' : `${show.seasonCount.toString()} seasons`,
+    sayCount('phone.aShow.seasons', show.seasonCount),
     show.rating === null || show.rating === undefined ? null : `★ ${show.rating.toFixed(1)}`,
     (show.genres ?? []).length === 0 ? null : (show.genres ?? []).slice(0, 2).join(', '),
     show.status === null || show.status === undefined || show.status === '' ? null : show.status,
-    isWatchedThrough ? 'Watched' : null,
+    isWatchedThrough ? say('phone.aShow.watched') : null,
   ].filter((fact) => fact !== null);
 
   return (
@@ -213,7 +215,11 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
 
       {next === null ? null : (
         <Words tone="accent">
-          {`Next: S${next.seasonNumber.toString()} E${next.episodeNumber.toString()} · ${describeAirDate(next.airDate, today)}`}
+          {say('phone.aShow.next', {
+            season: next.seasonNumber.toString(),
+            episode: next.episodeNumber.toString(),
+            when: describeAirDate(next.airDate, today),
+          })}
         </Words>
       )}
 
@@ -225,7 +231,10 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
             onWatch(pickingUp.episode.id, pickingUp.startSeconds);
           }}
         >
-          {`${pickingUp.isResuming ? 'Carry on' : 'Play'} S${(pickingUp.episode.seasonNumber ?? 0).toString()} E${(pickingUp.episode.episodeNumber ?? 0).toString()}`}
+          {say(pickingUp.isResuming ? 'phone.aShow.carryOnEpisode' : 'phone.aShow.playEpisode', {
+            season: (pickingUp.episode.seasonNumber ?? 0).toString(),
+            episode: (pickingUp.episode.episodeNumber ?? 0).toString(),
+          })}
         </Button>
       )}
 
@@ -233,7 +242,7 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
         {trailer === null && trailerKey === null ? null : (
           <Button
             tone="bare"
-            label="Trailer"
+            label={say('phone.aShow.trailer')}
             onPress={() => {
               if (trailer !== null) {
                 onWatch(trailer.id, 0);
@@ -248,7 +257,7 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
           >
             <View style={styles.action}>
               <Icon of={Film} colour={colours.text} />
-              <Words size="small">Trailer</Words>
+              <Words size="small">{say('phone.aShow.trailer')}</Words>
             </View>
           </Button>
         )}
@@ -256,14 +265,14 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
         {seriesId === null || held.length === 0 ? null : (
           <Button
             tone="bare"
-            label="Download"
+            label={say('phone.aShow.download')}
             onPress={() => {
               void download();
             }}
           >
             <View style={styles.action}>
               <Icon of={Download} colour={colours.text} />
-              <Words size="small">Download</Words>
+              <Words size="small">{say('phone.aShow.download')}</Words>
             </View>
           </Button>
         )}
@@ -271,21 +280,21 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
         {seriesId === null ? null : (
           <Button
             tone="bare"
-            label="Share"
+            label={say('phone.aShow.share')}
             onPress={() => {
               setSharing({ kind: 'series', seriesId, title: show.title });
             }}
           >
             <View style={styles.action}>
               <Icon of={Share} colour={colours.text} />
-              <Words size="small">Share</Words>
+              <Words size="small">{say('phone.aShow.share')}</Words>
             </View>
           </Button>
         )}
 
         <Button
           tone="bare"
-          label="Hide"
+          label={say('phone.aShow.hide')}
           onPress={() => {
             hiding.ask({
               id: show.coverMediaId,
@@ -297,7 +306,7 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
         >
           <View style={styles.action}>
             <Icon of={EyeOff} colour={colours.text} />
-            <Words size="small">Hide</Words>
+            <Words size="small">{say('phone.aShow.hide')}</Words>
           </View>
         </Button>
       </View>
@@ -313,12 +322,12 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
 
       <View style={styles.episodes}>
         <View style={styles.episodesHead}>
-          <Words size="heading">Episodes</Words>
+          <Words size="heading">{say('phone.aShow.episodes')}</Words>
 
           {laid.choices.length > 1 ? (
             <View style={styles.seasons}>
               <SegmentedRow
-                label="Season"
+                label={say('phone.aShow.season')}
                 items={laid.choices.map((choice) => ({
                   id: choice.seasonNumber === null ? OTHER : choice.seasonNumber.toString(),
                   label: nameSeason(choice.seasonNumber),
@@ -335,7 +344,9 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
         {shown.length === 0 ? null : (
           <Button
             tone="bare"
-            label={isSeasonWatched ? 'Mark season unwatched' : 'Mark season watched'}
+            label={say(
+              isSeasonWatched ? 'phone.aShow.markSeasonUnwatched' : 'phone.aShow.markSeasonWatched',
+            )}
             onPress={() => {
               mark(shown, !isSeasonWatched);
             }}
@@ -347,7 +358,11 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
                 colour={colours.textMuted}
               />
               <Words size="small" tone="muted">
-                {isSeasonWatched ? 'Mark season unwatched' : 'Mark season watched'}
+                {say(
+                  isSeasonWatched
+                    ? 'phone.aShow.markSeasonUnwatched'
+                    : 'phone.aShow.markSeasonWatched',
+                )}
               </Words>
             </View>
           </Button>
@@ -356,8 +371,8 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
         {laid.rows.length === 0 ? (
           <ANothingHere
             of={ListVideo}
-            title="No episodes yet"
-            detail="Episodes appear as they are scanned."
+            title={say('phone.aShow.noEpisodesTitle')}
+            detail={say('phone.aShow.noEpisodesDetail')}
           />
         ) : (
           <View>

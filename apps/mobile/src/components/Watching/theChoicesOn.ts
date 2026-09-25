@@ -12,6 +12,7 @@ import type { MediaDetail } from '@ValenceContracts/schemas/Library';
 import { QualityPreferenceSchema } from '@ValenceClient/playback/qualityPreference';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { ASetOfChoices } from '@ValenceMobile/components/Watching/components/TheChoices/TheChoices.types';
+import { say } from '@ValenceI18n/say';
 
 const AS_SENT = 'original';
 
@@ -80,10 +81,10 @@ const theChoicesOn = ({
 
   if (subtitles.length > 0) {
     sets.push({
-      heading: 'Subtitles',
+      heading: say('phone.theChoicesOn.subtitles'),
       chosen: chosenSubtitle,
       choices: [
-        { id: SUBTITLES_OFF, label: 'Off' },
+        { id: SUBTITLES_OFF, label: say('phone.theChoicesOn.subtitlesOff') },
         ...subtitles.map((track) => ({
           id: track.id,
           label: track.label,
@@ -96,7 +97,7 @@ const theChoicesOn = ({
 
   if (subtitles.length > 0 && chosenSubtitle !== SUBTITLES_OFF) {
     sets.push({
-      heading: 'Subtitle timing',
+      heading: say('phone.theChoicesOn.subtitleTiming'),
       chosen: subtitleOffset.toString(),
       choices: NUDGES.map((nudge) => ({
         id: nudge.toString(),
@@ -110,7 +111,7 @@ const theChoicesOn = ({
 
   if (streams.length > 1) {
     sets.push({
-      heading: 'Audio',
+      heading: say('phone.theChoicesOn.audio'),
       chosen: (
         chosenAudio ??
         streams.find((one) => one.isDefault)?.index ??
@@ -131,10 +132,14 @@ const theChoicesOn = ({
 
   if (rungs.length > 0) {
     sets.push({
-      heading: 'Quality',
+      heading: say('phone.theChoicesOn.quality'),
       chosen: chosenQuality,
       choices: [
-        { id: AS_SENT, label: 'Original', detail: 'As it is on the server' },
+        {
+          id: AS_SENT,
+          label: say('phone.theChoicesOn.original'),
+          detail: say('phone.theChoicesOn.originalDetail'),
+        },
         ...rungs.flatMap((rung) => {
           const step = QUALITY_STEPS.find((one) => one.id === rung);
 
@@ -144,7 +149,9 @@ const theChoicesOn = ({
                 {
                   id: rung,
                   label: step.label,
-                  detail: `up to ${(step.maxVideoBitrateKbps / 1000).toString()} Mbps`,
+                  detail: say('phone.theChoicesOn.upTo', {
+                    rate: (step.maxVideoBitrateKbps / 1000).toString(),
+                  }),
                 },
               ];
         }),
@@ -156,7 +163,7 @@ const theChoicesOn = ({
   }
 
   sets.push({
-    heading: 'Speed',
+    heading: say('phone.theChoicesOn.speed'),
     chosen: rate.toString(),
     choices: PLAYBACK_RATES.map((one) => ({
       id: one.toString(),

@@ -3,6 +3,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
 import type { TheNoticeProps } from './TheNotice.types';
+import { say } from '@ValenceI18n/say';
 
 const OVER_THE_PICTURE = '#ffffff';
 
@@ -45,8 +46,8 @@ const TheNotice = ({ says, onDismiss }: TheNoticeProps) => {
     <View style={[styles.place, { top: Math.max(room.top, 16) + 8 }]} pointerEvents="box-none">
       <View style={styles.sitting}>
         <Text style={styles.said}>{says}</Text>
-        <Button tone="bare" label="Dismiss" onPress={onDismiss}>
-          <Text style={styles.dismiss}>Dismiss</Text>
+        <Button tone="bare" label={say('phone.theNotice.dismiss')} onPress={onDismiss}>
+          <Text style={styles.dismiss}>{say('phone.theNotice.dismiss')}</Text>
         </Button>
       </View>
     </View>

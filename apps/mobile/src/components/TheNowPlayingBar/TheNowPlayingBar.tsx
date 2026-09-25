@@ -21,6 +21,8 @@ import { useTheBook } from '@ValenceMobile/hooks/useTheBook';
 import { useTheMusic } from '@ValenceMobile/hooks/useTheMusic';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import type { TheNowPlayingBarProps } from './TheNowPlayingBar.types';
 
 const ART = 42;
@@ -75,7 +77,7 @@ const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
         <View style={styles.opens}>
           <Button
             tone="bare"
-            label="Open the player"
+            label={say('phone.theNowPlayingBar.openThePlayer')}
             onPress={() => {
               onOpen('book');
             }}
@@ -105,7 +107,11 @@ const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
 
         <Button
           tone="bare"
-          label={book.state.isPlaying ? 'Pause' : 'Play'}
+          label={
+            book.state.isPlaying
+              ? say('phone.theNowPlayingBar.pause')
+              : say('phone.theNowPlayingBar.play')
+          }
           onPress={() => {
             book.player.toggle();
           }}
@@ -121,7 +127,7 @@ const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
 
         <Button
           tone="bare"
-          label={`On ${LISTENING_CHOICES.forwardSeconds.toString()} seconds`}
+          label={sayCount('phone.theNowPlayingBar.skipForward', LISTENING_CHOICES.forwardSeconds)}
           onPress={() => {
             book.player.skip(LISTENING_CHOICES.forwardSeconds);
           }}
@@ -145,7 +151,7 @@ const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
       <View style={styles.opens}>
         <Button
           tone="bare"
-          label="Open the player"
+          label={say('phone.theNowPlayingBar.openThePlayer')}
           onPress={() => {
             onOpen('music');
           }}
@@ -168,20 +174,24 @@ const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
               <Words size="small" tone="muted" lines={1}>
                 {state.remote === null
                   ? track.artists.map((artist) => artist.name).join(', ')
-                  : `Playing on ${state.remote.label}`}
+                  : say('phone.theNowPlayingBar.playingOn', { name: state.remote.label })}
               </Words>
             </View>
           </View>
         </Button>
       </View>
 
-      <Button tone="bare" label={isPlaying ? 'Pause' : 'Play'} onPress={() => player.toggle()}>
+      <Button
+        tone="bare"
+        label={isPlaying ? say('phone.theNowPlayingBar.pause') : say('phone.theNowPlayingBar.play')}
+        onPress={() => player.toggle()}
+      >
         <View style={styles.button}>
           <Icon of={isPlaying ? PauseFilled : PlayFilled} size={24} colour={colours.text} />
         </View>
       </Button>
 
-      <Button tone="bare" label="Next" onPress={() => player.next()}>
+      <Button tone="bare" label={say('phone.theNowPlayingBar.next')} onPress={() => player.next()}>
         <View style={styles.button}>
           <Icon of={SkipForwardFilled} size={24} colour={colours.text} />
         </View>

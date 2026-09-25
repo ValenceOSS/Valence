@@ -10,6 +10,7 @@ import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { APersonProps } from './APerson.types';
+import { say } from '@ValenceI18n/say';
 
 const PORTRAIT = 140;
 
@@ -45,10 +46,25 @@ const APerson = ({ personId, onLookAt, onLookAtShow, onBack }: APersonProps) => 
   }
 
   const shelves = [
-    { title: 'Films', items: credits.data?.films ?? [], asProgramme: false, isStill: false },
-    { title: 'Programmes', items: credits.data?.shows ?? [], asProgramme: true, isStill: false },
-    { title: 'Episodes', items: credits.data?.episodes ?? [], asProgramme: false, isStill: true },
-  ];
+    {
+      named: 'phone.aPerson.films',
+      items: credits.data?.films ?? [],
+      asProgramme: false,
+      isStill: false,
+    },
+    {
+      named: 'phone.aPerson.programmes',
+      items: credits.data?.shows ?? [],
+      asProgramme: true,
+      isStill: false,
+    },
+    {
+      named: 'phone.aPerson.episodes',
+      items: credits.data?.episodes ?? [],
+      asProgramme: false,
+      isStill: true,
+    },
+  ] as const;
 
   return (
     <Screen scrolls onBack={onBack}>
@@ -63,11 +79,16 @@ const APerson = ({ personId, onLookAt, onLookAtShow, onBack }: APersonProps) => 
           )}
         </View>
 
-        <Words size="title">{who?.name ?? 'Somebody'}</Words>
+        <Words size="title">{who?.name ?? say('phone.aPerson.somebody')}</Words>
 
         {who === null || (who.bornOn === null && who.bornIn === null) ? null : (
           <Words tone="muted">
-            {[who.bornOn === null ? null : `Born ${formatCalendarDate(who.bornOn)}`, who.bornIn]
+            {[
+              who.bornOn === null
+                ? null
+                : say('phone.aPerson.born', { when: formatCalendarDate(who.bornOn) }),
+              who.bornIn,
+            ]
               .filter((part) => part !== null)
               .join(' · ')}
           </Words>
@@ -87,7 +108,7 @@ const APerson = ({ personId, onLookAt, onLookAtShow, onBack }: APersonProps) => 
                 setIsAllOfIt(true);
               }}
             >
-              More
+              {say('phone.aPerson.more')}
             </Button>
           )}
         </>
@@ -96,7 +117,7 @@ const APerson = ({ personId, onLookAt, onLookAtShow, onBack }: APersonProps) => 
       {shelves
         .filter((shelf) => shelf.items.length > 0)
         .map((shelf) => (
-          <AShelf key={shelf.title} title={shelf.title}>
+          <AShelf key={shelf.named} title={say(shelf.named)}>
             {shelf.items.map((media) => (
               <ACard
                 key={media.id}

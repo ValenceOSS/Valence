@@ -20,6 +20,8 @@ import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
 import { thePhonesMusicPlayer } from '@ValenceMobile/music/thePhonesMusicPlayer';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import type { MusicAlbum } from '@ValenceContracts/schemas/Music';
 import type { AnArtistProps } from './AnArtist.types';
 
@@ -58,7 +60,7 @@ const AnArtist = ({ artistId, onAlbum, onArtist, onPlaylist, onBack }: AnArtistP
   if (read.data === undefined) {
     return (
       <Screen centres onBack={onBack}>
-        <Words tone="danger">That artist could not be read.</Words>
+        <Words tone="danger">{say('phone.anArtist.couldNotRead')}</Words>
       </Screen>
     );
   }
@@ -94,9 +96,9 @@ const AnArtist = ({ artistId, onAlbum, onArtist, onPlaylist, onBack }: AnArtistP
   return (
     <Screen scrolls onBack={onBack} behind={<AMoodBackground palette={lights} />}>
       <AMusicHead
-        kind="Artist"
+        kind={say('phone.anArtist.kind')}
         title={artist.name}
-        detail={`${artist.albumCount.toString()} ${artist.albumCount === 1 ? 'album' : 'albums'}`}
+        detail={sayCount('phone.anArtist.albums', artist.albumCount)}
         artwork={artist.hasImage ? onThisServer(artistImageUrl(artist.id)) : null}
         standIn={Mic}
         isRound
@@ -116,13 +118,13 @@ const AnArtist = ({ artistId, onAlbum, onArtist, onPlaylist, onBack }: AnArtistP
             );
           }}
         >
-          {artist.isFavourite ? 'Following' : 'Follow'}
+          {artist.isFavourite ? say('phone.anArtist.following') : say('phone.anArtist.follow')}
         </Button>
       </AMusicHead>
 
       {popular.length === 0 ? null : (
         <>
-          <Words size="heading">Popular</Words>
+          <Words size="heading">{say('phone.anArtist.popular')}</Words>
           <ATrackList
             tracks={shown}
             source={source}
@@ -137,14 +139,14 @@ const AnArtist = ({ artistId, onAlbum, onArtist, onPlaylist, onBack }: AnArtistP
                 setIsAllOfIt((was) => !was);
               }}
             >
-              {isAllOfIt ? 'Show fewer' : 'Show all'}
+              {isAllOfIt ? say('phone.anArtist.showFewer') : say('phone.anArtist.showAll')}
             </Button>
           ) : null}
         </>
       )}
 
-      {shelf('Albums', albums)}
-      {shelf('Appears on', appearsOn)}
+      {shelf(say('phone.anArtist.albumsShelf'), albums)}
+      {shelf(say('phone.anArtist.appearsOn'), appearsOn)}
     </Screen>
   );
 };

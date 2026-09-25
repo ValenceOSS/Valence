@@ -5,6 +5,7 @@ import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { ASheetProps } from './ASheet.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   foot: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: SCREEN_EDGE },
@@ -33,7 +34,14 @@ const styles = StyleSheet.create({
  * @param footer - What stays along its foot while the rest scrolls, where anything does.
  * @param children - What it holds.
  */
-const ASheet = ({ isOpen, title, closeLabel = 'Done', onClose, footer, children }: ASheetProps) => {
+const ASheet = ({
+  isOpen,
+  title,
+  closeLabel = say('phone.aSheet.done'),
+  onClose,
+  footer,
+  children,
+}: ASheetProps) => {
   const colours = useTheColours();
   const room = useSafeAreaInsets();
   const sides = {

@@ -7,6 +7,7 @@ import { TheSungLines } from '@ValenceMobile/components/TheMusicPlayer/component
 import { useWhereTheSongIs } from '@ValenceMobile/components/TheMusicPlayer/useWhereTheSongIs';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { say } from '@ValenceI18n/say';
 import type { TheLyricsProps } from './TheLyrics.types';
 
 const FADES_IN_OVER = 24;
@@ -40,7 +41,7 @@ const TheLyrics = ({ trackId, onSeek }: TheLyricsProps) => {
   if (lines.length === 0) {
     return (
       <Words tone="muted" isCentred>
-        There are no words for this one.
+        {say('phone.theLyrics.noLyrics')}
       </Words>
     );
   }

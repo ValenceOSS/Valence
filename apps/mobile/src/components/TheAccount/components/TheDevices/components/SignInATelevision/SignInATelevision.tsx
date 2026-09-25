@@ -11,17 +11,19 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { scanACode } from '@ValenceMobile/platform/scanACode';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 import type { SignInATelevisionProps } from './SignInATelevision.types';
 
 type Standing = 'asking' | 'reading' | 'waiting' | 'allowed' | 'refused' | 'wrong';
 
 type Trouble = 'notATelevision' | 'typeTheCode' | 'noCamera' | 'noScanner';
 
-const TROUBLE: Record<Trouble, string> = {
-  notATelevision: 'That QR code is not one a television showed.',
-  typeTheCode: 'Type the code the television shows, so it is known you are in front of it.',
-  noCamera: 'Valence may not use the camera. It can be allowed in Settings.',
-  noScanner: 'This device cannot scan codes. Type the one on the television instead.',
+const TROUBLE: Record<Trouble, StringKey> = {
+  notATelevision: 'phone.signInATelevision.notATelevision',
+  typeTheCode: 'phone.signInATelevision.typeTheCode',
+  noCamera: 'phone.signInATelevision.noCamera',
+  noScanner: 'phone.signInATelevision.noScanner',
 };
 
 const A_HOST = /^[a-z][a-z0-9+.-]*:\/\/([^/?#]+)/iu;
@@ -121,27 +123,24 @@ const SignInATelevision = ({ startsWith, askedFrom = null }: SignInATelevisionPr
   };
 
   return (
-    <AGroup title="Sign in a television">
+    <AGroup title={say('phone.signInATelevision.heading')}>
       <View style={styles.section}>
         {standing === 'allowed' || standing === 'refused' ? (
           <>
             <Words>
               {standing === 'allowed'
-                ? 'Done. The television should be watching in a moment.'
-                : 'Turned down. Nothing was signed in, and the code on that screen no longer works.'}
+                ? say('phone.signInATelevision.allowed')
+                : say('phone.signInATelevision.refused')}
             </Words>
             <Button tone="quiet" onPress={again}>
-              Another television
+              {say('phone.signInATelevision.anotherTelevision')}
             </Button>
           </>
         ) : standing === 'reading' ? (
           <ActivityIndicator color={colours.textMuted} />
         ) : standing === 'waiting' ? (
           <>
-            <Words>
-              A television is asking to sign in as you. Only say yes if it is the one in front of
-              you.
-            </Words>
+            <Words>{say('phone.signInATelevision.waiting')}</Words>
             <Button
               icon={Check}
               isBusy={isAnswering}
@@ -149,7 +148,7 @@ const SignInATelevision = ({ startsWith, askedFrom = null }: SignInATelevisionPr
                 void answer(true);
               }}
             >
-              Yes, that is mine
+              {say('phone.signInATelevision.allow')}
             </Button>
             <Button
               tone="ghost"
@@ -159,17 +158,14 @@ const SignInATelevision = ({ startsWith, askedFrom = null }: SignInATelevisionPr
                 void answer(false);
               }}
             >
-              No, I did not ask for this
+              {say('phone.signInATelevision.refuse')}
             </Button>
           </>
         ) : (
           <>
-            <Words tone="muted">
-              A television showing a code can be signed in from here, as you. Type the code, or scan
-              the QR code beside it.
-            </Words>
+            <Words tone="muted">{say('phone.signInATelevision.asking')}</Words>
             <TextField
-              label="The code on the television"
+              label={say('phone.signInATelevision.codeLabel')}
               value={typed}
               onValueChange={setTyped}
               placeholder="ABCD-1234"
@@ -180,13 +176,13 @@ const SignInATelevision = ({ startsWith, askedFrom = null }: SignInATelevisionPr
               }}
               action={{
                 icon: ScanQrCode,
-                label: 'Scan the QR code',
+                label: say('phone.signInATelevision.scan'),
                 onPress: () => {
                   void scan();
                 },
               }}
             />
-            {trouble === null ? null : <Words tone="danger">{TROUBLE[trouble]}</Words>}
+            {trouble === null ? null : <Words tone="danger">{say(TROUBLE[trouble])}</Words>}
             {trouble === 'noCamera' ? (
               <Button
                 tone="quiet"
@@ -194,14 +190,14 @@ const SignInATelevision = ({ startsWith, askedFrom = null }: SignInATelevisionPr
                   void Linking.openSettings();
                 }}
               >
-                Open Settings
+                {say('phone.signInATelevision.openSettings')}
               </Button>
             ) : null}
             {standing === 'wrong' ? (
               <Words tone="danger">
                 {elsewhere === null
-                  ? 'That code has run out, or there is no television waiting on it.'
-                  : `That television is asking ${elsewhere}, and this phone uses a different server.`}
+                  ? say('phone.signInATelevision.wrong')
+                  : say('phone.signInATelevision.elsewhere', { server: elsewhere })}
               </Words>
             ) : null}
             <Button
@@ -211,7 +207,7 @@ const SignInATelevision = ({ startsWith, askedFrom = null }: SignInATelevisionPr
                 void check(tidyTheCode(typed));
               }}
             >
-              Continue
+              {say('phone.signInATelevision.continue')}
             </Button>
           </>
         )}

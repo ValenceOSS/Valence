@@ -9,6 +9,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
 import { SPRINGS } from '@ValenceMobile/theme/SPRINGS';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { say } from '@ValenceI18n/say';
 import type { AReaderChromeProps } from './AReaderChrome.types';
 
 const BAR = 56;
@@ -97,7 +98,7 @@ const AReaderChrome = ({
         ]}
       >
         <View style={styles.bar}>
-          <AGlassCircle of={ChevronLeft} label="Back" onPress={onBack} />
+          <AGlassCircle of={ChevronLeft} label={say('common.back')} onPress={onBack} />
           <View style={styles.titles}>
             <Words lines={1} isStrong colour={ink}>
               {title}
@@ -108,7 +109,11 @@ const AReaderChrome = ({
               </Words>
             )}
           </View>
-          <AGlassCircle of={SlidersHorizontal} label="Contents and settings" onPress={onPanel} />
+          <AGlassCircle
+            of={SlidersHorizontal}
+            label={say('phone.aReaderChrome.contentsAndSettings')}
+            onPress={onPanel}
+          />
         </View>
       </Animated.View>
 

@@ -26,6 +26,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { turnThisPhoneSideways } from '@ValenceMobile/platform/turnThisPhoneSideways';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { say } from '@ValenceI18n/say';
 import type { ReaderPreferences } from '@ValenceClient/books/readerPreferences';
 import type { APageReaderProps, ASpreadOrTheEnd } from './APageReader.types';
 
@@ -38,13 +39,13 @@ const MOST_ZOOM = 5;
 const ZOOMED_PAST = 1.01;
 
 const DIRECTIONS = [
-  { id: 'leftToRight', label: 'Left to right' },
-  { id: 'rightToLeft', label: 'Right to left' },
+  { id: 'leftToRight', words: 'phone.aPageReader.leftToRight' },
+  { id: 'rightToLeft', words: 'phone.aPageReader.rightToLeft' },
 ] as const;
 
 const LAYOUTS = [
-  { id: 'one', label: 'One page' },
-  { id: 'two', label: 'Two pages' },
+  { id: 'one', words: 'phone.aPageReader.onePage' },
+  { id: 'two', words: 'phone.aPageReader.twoPages' },
 ] as const;
 
 const styles = StyleSheet.create({
@@ -173,9 +174,9 @@ const APageReader = ({
   if (chapter === undefined || count === 0) {
     return (
       <View style={[styles.whole, styles.end, { backgroundColor: PAPER }]}>
-        <Words colour={INK}>This chapter has no pages to show.</Words>
+        <Words colour={INK}>{say('phone.aPageReader.noPages')}</Words>
         <Button tone="bright" onPress={onBack}>
-          Back
+          {say('common.back')}
         </Button>
       </View>
     );
@@ -199,7 +200,7 @@ const APageReader = ({
         <View style={styles.foot}>
           {count > 1 ? (
             <Slider
-              label="Go to a page"
+              label={say('phone.aPageReader.goToAPage')}
               value={page}
               furthest={count - 1}
               colour={INK}
@@ -212,8 +213,15 @@ const APageReader = ({
           ) : null}
           <Words size="small" isCentred colour={withAlpha(INK, 0.8)}>
             {shownPages.length > 1
-              ? `Pages ${((shownPages[0] ?? 0) + 1).toString()}–${((shownPages[1] ?? 0) + 1).toString()} of ${count.toString()}`
-              : `Page ${(page + 1).toString()} of ${count.toString()}`}
+              ? say('phone.aPageReader.pagesOf', {
+                  first: ((shownPages[0] ?? 0) + 1).toString(),
+                  last: ((shownPages[1] ?? 0) + 1).toString(),
+                  count: count.toString(),
+                })
+              : say('phone.aPageReader.pageOf', {
+                  page: (page + 1).toString(),
+                  count: count.toString(),
+                })}
           </Words>
         </View>
       }
@@ -243,7 +251,7 @@ const APageReader = ({
             return (
               <View style={[styles.end, { height, width }]}>
                 <Words colour={INK} isCentred>
-                  {`Next: ${next?.title ?? ''}`}
+                  {say('phone.aPageReader.next', { title: next?.title ?? '' })}
                 </Words>
                 <Button
                   tone="bright"
@@ -253,7 +261,7 @@ const APageReader = ({
                     }
                   }}
                 >
-                  Read on
+                  {say('phone.aPageReader.readOn')}
                 </Button>
               </View>
             );
@@ -280,8 +288,13 @@ const APageReader = ({
                 tone="bare"
                 label={
                   item.pages.length > 1
-                    ? `Pages ${item.pages.map((one) => (one + 1).toString()).join(' and ')}`
-                    : `Page ${((item.pages[0] ?? 0) + 1).toString()}`
+                    ? say('phone.aPageReader.twoPagesHere', {
+                        first: ((item.pages[0] ?? 0) + 1).toString(),
+                        second: ((item.pages[1] ?? 0) + 1).toString(),
+                      })
+                    : say('phone.aPageReader.onePageHere', {
+                        page: ((item.pages[0] ?? 0) + 1).toString(),
+                      })
                 }
                 onPress={({ x }) => {
                   const isLeft = x < width / 3;
@@ -337,7 +350,7 @@ const APageReader = ({
       <AReaderPanel
         isOpen={isPanelOpen}
         title={book.title}
-        placesAre="Chapters"
+        placesAre={say('phone.aPageReader.chapters')}
         places={ordered.map((one) => ({
           id: one.id,
           label: one.title,
@@ -356,10 +369,10 @@ const APageReader = ({
         }}
       >
         <View style={styles.setting}>
-          <Words size="heading">Pages turn</Words>
+          <Words size="heading">{say('phone.aPageReader.pagesTurn')}</Words>
           <SegmentedRow
-            label="Which way the pages turn"
-            items={DIRECTIONS}
+            label={say('phone.aPageReader.whichWay')}
+            items={DIRECTIONS.map((one) => ({ id: one.id, label: say(one.words) }))}
             value={preferences.direction}
             onSelect={(id) => {
               const direction = DIRECTIONS.find((one) => one.id === id)?.id;
@@ -372,30 +385,30 @@ const APageReader = ({
         </View>
 
         <View style={styles.setting}>
-          <Words size="heading">Pages at once</Words>
+          <Words size="heading">{say('phone.aPageReader.pagesAtOnce')}</Words>
           <SegmentedRow
-            label="How many pages at once"
-            items={LAYOUTS}
+            label={say('phone.aPageReader.howMany')}
+            items={LAYOUTS.map((one) => ({ id: one.id, label: say(one.words) }))}
             value={preferences.isDouble ? 'two' : 'one'}
             onSelect={(id) => {
               choose({ isDouble: id === 'two' });
             }}
           />
           <Words size="small" tone="muted">
-            Two pages at once turns the phone on its side.
+            {say('phone.aPageReader.twoPagesTurns')}
           </Words>
         </View>
 
         {preferences.isDouble ? (
           <View style={styles.switch}>
             <View style={styles.switchWords}>
-              <Words>Cover on its own</Words>
+              <Words>{say('phone.aPageReader.coverAlone')}</Words>
               <Words size="small" tone="muted">
-                Pairs the pages after it as the printed book does.
+                {say('phone.aPageReader.coverAloneDetail')}
               </Words>
             </View>
             <Toggle
-              label="Cover on its own"
+              label={say('phone.aPageReader.coverAlone')}
               isOn={preferences.isOffset}
               onToggle={(isOffset) => {
                 choose({ isOffset });

@@ -1,5 +1,6 @@
 import { ActionSheetIOS } from 'react-native';
 import { askWhichPlaylist } from '@ValenceMobile/music/askWhichPlaylist';
+import { say } from '@ValenceI18n/say';
 import type { AskAboutATrack } from './askAboutATrack.types';
 
 /**
@@ -24,30 +25,39 @@ const askAboutATrack = ({
 }: AskAboutATrack): void => {
   const artist = track.artists[0] ?? null;
   const choices = [
-    { label: 'Play next', run: () => player.playNext([track]) },
-    { label: 'Add to queue', run: () => player.addToQueue([track]) },
+    { label: say('phone.askAboutATrack.playNext'), run: () => player.playNext([track]) },
+    { label: say('phone.askAboutATrack.addToQueue'), run: () => player.addToQueue([track]) },
     {
-      label: 'Add to playlist…',
+      label: say('phone.askAboutATrack.addToPlaylist'),
       run: () => {
         askWhichPlaylist(track, playlists, onPlaylistsChanged, onPlaylist);
       },
     },
-    { label: isLiked ? 'Remove from liked songs' : 'Like', run: onLike },
-    { label: 'Go to album', run: () => onAlbum(track.album.id) },
-    ...(artist === null ? [] : [{ label: 'Go to artist', run: () => onArtist(artist.id) }]),
+    {
+      label: isLiked ? say('phone.askAboutATrack.unlike') : say('phone.askAboutATrack.like'),
+      run: onLike,
+    },
+    { label: say('phone.askAboutATrack.goToAlbum'), run: () => onAlbum(track.album.id) },
+    ...(artist === null
+      ? []
+      : [{ label: say('phone.askAboutATrack.goToArtist'), run: () => onArtist(artist.id) }]),
     ...(inAPlaylist === undefined
       ? []
       : [
-          ...(inAPlaylist.canMoveUp ? [{ label: 'Move up', run: inAPlaylist.onMoveUp }] : []),
-          ...(inAPlaylist.canMoveDown ? [{ label: 'Move down', run: inAPlaylist.onMoveDown }] : []),
-          { label: 'Remove from this playlist', run: inAPlaylist.onRemove },
+          ...(inAPlaylist.canMoveUp
+            ? [{ label: say('phone.askAboutATrack.moveUp'), run: inAPlaylist.onMoveUp }]
+            : []),
+          ...(inAPlaylist.canMoveDown
+            ? [{ label: say('phone.askAboutATrack.moveDown'), run: inAPlaylist.onMoveDown }]
+            : []),
+          { label: say('phone.askAboutATrack.removeFromPlaylist'), run: inAPlaylist.onRemove },
         ]),
   ];
 
   ActionSheetIOS.showActionSheetWithOptions(
     {
       title: track.title,
-      options: [...choices.map((choice) => choice.label), 'Cancel'],
+      options: [...choices.map((choice) => choice.label), say('common.cancel')],
       cancelButtonIndex: choices.length,
       ...(inAPlaylist === undefined ? {} : { destructiveButtonIndex: choices.length - 1 }),
     },

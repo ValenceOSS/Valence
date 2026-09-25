@@ -29,6 +29,8 @@ import { useTheBook } from '@ValenceMobile/hooks/useTheBook';
 import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 import type { ListeningPanel } from '@ValenceClient/books/listeningChoices';
 import type { TheListeningPlayerProps } from './TheListeningPlayer.types';
 
@@ -85,7 +87,7 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
     return (
       <Screen centres onBack={onBack} goesBackDown>
         <Words tone="muted" isCentred>
-          Nothing is playing.
+          {say('phone.theListeningPlayer.nothingPlaying')}
         </Words>
       </Screen>
     );
@@ -142,7 +144,7 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
         <View style={styles.controls}>
           <Button
             tone="bare"
-            label="Chapter before"
+            label={say('phone.theListeningPlayer.chapterBefore')}
             onPress={() => {
               goToChapterBeside(player, -1);
             }}
@@ -154,7 +156,7 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
 
           <Button
             tone="bare"
-            label={`Back ${LISTENING_CHOICES.backSeconds.toString()} seconds`}
+            label={sayCount('phone.theListeningPlayer.backSeconds', LISTENING_CHOICES.backSeconds)}
             onPress={() => {
               player.skip(-LISTENING_CHOICES.backSeconds);
             }}
@@ -166,7 +168,11 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
 
           <Button
             tone="bare"
-            label={state.isPlaying ? 'Pause' : 'Play'}
+            label={
+              state.isPlaying
+                ? say('phone.theListeningPlayer.pause')
+                : say('phone.theListeningPlayer.play')
+            }
             onPress={() => {
               player.toggle();
             }}
@@ -182,7 +188,7 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
 
           <Button
             tone="bare"
-            label={`On ${LISTENING_CHOICES.forwardSeconds.toString()} seconds`}
+            label={sayCount('phone.theListeningPlayer.onSeconds', LISTENING_CHOICES.forwardSeconds)}
             onPress={() => {
               player.skip(LISTENING_CHOICES.forwardSeconds);
             }}
@@ -194,7 +200,7 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
 
           <Button
             tone="bare"
-            label="Next chapter"
+            label={say('phone.theListeningPlayer.nextChapter')}
             onPress={() => {
               goToChapterBeside(player, 1);
             }}
@@ -210,7 +216,7 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
         <View style={styles.extras}>
           <Button
             tone="bare"
-            label={`Speed, ${state.speed.toString()}×`}
+            label={say('phone.theListeningPlayer.speedLabel', { speed: state.speed.toString() })}
             isChosen={isFaster}
             onPress={() => {
               setPanel('speed');
@@ -221,7 +227,11 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
 
           <Button
             tone="bare"
-            label={isSleeping ? 'Sleep timer, on' : 'Sleep timer'}
+            label={
+              isSleeping
+                ? say('phone.theListeningPlayer.sleepTimerOnLabel')
+                : say('phone.theListeningPlayer.sleepTimerLabel')
+            }
             isChosen={isSleeping}
             onPress={() => {
               setPanel('sleep');
@@ -234,7 +244,7 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
 
           <Button
             tone="bare"
-            label="Chapters"
+            label={say('phone.theListeningPlayer.chapters')}
             isChosen={panel === 'chapters'}
             onPress={() => {
               setPanel('chapters');
@@ -247,11 +257,13 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
         {isFaster || isSleeping ? (
           <Words size="small" tone="muted" isCentred>
             {[
-              isFaster ? `${state.speed.toString()}×` : null,
+              isFaster
+                ? say('phone.theListeningPlayer.speed', { speed: state.speed.toString() })
+                : null,
               state.sleep.kind === 'endOfChapter'
-                ? 'Stops at the end of this chapter'
+                ? say('phone.theListeningPlayer.stopsAtChapterEnd')
                 : isSleeping
-                  ? 'Sleep timer on'
+                  ? say('phone.theListeningPlayer.sleepTimerOn')
                   : null,
             ]
               .filter((part) => part !== null)

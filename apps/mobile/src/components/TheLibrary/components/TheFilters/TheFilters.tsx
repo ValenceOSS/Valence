@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRow';
 import { Words } from '@ValenceMobile/components/Words/Words';
+import { say } from '@ValenceI18n/say';
 import type { TheFiltersProps } from './TheFilters.types';
 
 const styles = StyleSheet.create({
@@ -34,12 +35,14 @@ const TheFilters = ({ groups, selected, onChange, onClear }: TheFiltersProps) =>
             setIsOpen((was) => !was);
           }}
         >
-          {selected.size === 0 ? 'Filters' : `Filters · ${selected.size.toString()}`}
+          {selected.size === 0
+            ? say('phone.theFilters.filters')
+            : say('phone.theFilters.filtersChosen', { count: selected.size.toString() })}
         </Button>
 
         {selected.size === 0 ? null : (
           <Button tone="quiet" onPress={onClear}>
-            Clear
+            {say('phone.theFilters.clear')}
           </Button>
         )}
       </View>

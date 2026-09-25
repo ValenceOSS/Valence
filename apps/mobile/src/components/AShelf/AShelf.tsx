@@ -3,6 +3,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import type { AShelfProps } from './AShelf.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   bleeding: { marginHorizontal: -SCREEN_EDGE },
@@ -27,8 +28,12 @@ const AShelf = ({ title, onSeeAll, children }: AShelfProps) => (
     <View style={styles.head}>
       <Words size="heading">{title}</Words>
       {onSeeAll === undefined ? null : (
-        <Button tone="quiet" label={`See all ${title.toLowerCase()}`} onPress={onSeeAll}>
-          See all
+        <Button
+          tone="quiet"
+          label={say('phone.aShelf.seeAllOf', { title: title.toLowerCase() })}
+          onPress={onSeeAll}
+        >
+          {say('phone.aShelf.seeAll')}
         </Button>
       )}
     </View>

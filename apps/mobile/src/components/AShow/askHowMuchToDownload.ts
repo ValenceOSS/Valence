@@ -1,5 +1,6 @@
 import { ActionSheetIOS } from 'react-native';
 import type { AWayToDownload } from '@ValenceClient/downloads/waysToDownloadAProgramme.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Offers the ways to download some of a programme in the system's action sheet: the season on
@@ -16,8 +17,8 @@ const askHowMuchToDownload = async (
   const chosen = await new Promise<number>((settle) => {
     ActionSheetIOS.showActionSheetWithOptions(
       {
-        title: `Download ${title}`,
-        options: [...ways.map((way) => way.label), 'Cancel'],
+        title: say('phone.askHowMuchToDownload.title', { title }),
+        options: [...ways.map((way) => way.label), say('common.cancel')],
         cancelButtonIndex: ways.length,
       },
       settle,

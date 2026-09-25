@@ -5,6 +5,7 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { say } from '@ValenceI18n/say';
 import type { AReaderPanelProps } from './AReaderPanel.types';
 
 const INDENT = 16;
@@ -50,7 +51,7 @@ const AReaderPanel = ({
             <Button
               key={place.id}
               tone="bare"
-              label={`Go to ${place.label}`}
+              label={say('phone.aReaderPanel.goTo', { place: place.label })}
               isChosen={place.isHere}
               onPress={() => {
                 onPlace(place.id);

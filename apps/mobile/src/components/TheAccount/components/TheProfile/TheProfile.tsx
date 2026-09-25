@@ -22,6 +22,7 @@ import { TextField } from '@ValenceMobile/components/TextField/TextField';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { sendAPhoto } from '@ValenceMobile/platform/sendAPhoto';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { say } from '@ValenceI18n/say';
 import type { Avatar, ProfileColour } from '@ValenceContracts/schemas/ViewerProfile';
 
 const FACE = 52;
@@ -69,7 +70,7 @@ const TheProfile = () => {
     return asked.isPending ? (
       <ActivityIndicator color={colours.textMuted} />
     ) : (
-      <Words tone="danger">That profile could not be read.</Words>
+      <Words tone="danger">{say('phone.theProfile.couldNotRead')}</Words>
     );
   }
 
@@ -129,7 +130,7 @@ const TheProfile = () => {
     setIsSaving(false);
 
     if (!saved) {
-      setRefusal('Those changes were not saved.');
+      setRefusal(say('phone.theProfile.notSaved'));
 
       return;
     }
@@ -156,7 +157,7 @@ const TheProfile = () => {
               void choosePhoto();
             }}
           >
-            Choose a photo
+            {say('phone.theProfile.choosePhoto')}
           </Button>
 
           <Button
@@ -168,24 +169,24 @@ const TheProfile = () => {
               setAvatar({ kind: 'initial' });
             }}
           >
-            Use my initial
+            {say('phone.theProfile.useInitial')}
           </Button>
         </View>
       </View>
 
-      <AGroup title="Name">
+      <AGroup title={say('phone.theProfile.nameHeading')}>
         <View style={styles.row}>
           <TextField
-            label="Name"
+            label={say('phone.theProfile.nameLabel')}
             value={draft.name}
             onValueChange={setName}
-            placeholder="Your name"
+            placeholder={say('phone.theProfile.namePlaceholder')}
             isLabelHidden
           />
         </View>
       </AGroup>
 
-      <AGroup title="Picture">
+      <AGroup title={say('phone.theProfile.pictureHeading')}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -201,7 +202,7 @@ const TheProfile = () => {
               <Button
                 key={style}
                 tone="bare"
-                label={`Use the ${style} face`}
+                label={say('phone.theProfile.useFace', { style })}
                 isChosen={isChosen}
                 onPress={() => {
                   setPicked(null);
@@ -227,7 +228,7 @@ const TheProfile = () => {
             <Button
               key={option}
               tone="bare"
-              label={`Use ${option}`}
+              label={say('phone.theProfile.useColour', { colour: option })}
               isChosen={option === draft.colour}
               onPress={() => {
                 setColour(option);
@@ -246,17 +247,17 @@ const TheProfile = () => {
         </View>
       </AGroup>
 
-      <AGroup title="Still watching">
+      <AGroup title={say('phone.theProfile.stillWatchingHeading')}>
         <View style={styles.row}>
           <View style={styles.asks}>
-            <Words>Ask if you are still watching</Words>
+            <Words>{say('phone.theProfile.askStillWatching')}</Words>
             <Words size="small" tone="muted">
-              After this many episodes play by themselves.
+              {say('phone.theProfile.askStillWatchingDetail')}
             </Words>
           </View>
 
           <SegmentedRow
-            label="Ask if you are still watching"
+            label={say('phone.theProfile.askStillWatching')}
             items={STILL_WATCHING_CHOICES}
             value={
               draft.askStillWatchingAfter === STILL_WATCHING_OFF
@@ -279,7 +280,7 @@ const TheProfile = () => {
           void save();
         }}
       >
-        Save
+        {say('common.save')}
       </Button>
     </>
   );

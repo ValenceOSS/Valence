@@ -2,6 +2,7 @@ import { Volume, VolumeX } from '@keyline-icons/react-native';
 import { StyleSheet, View } from 'react-native';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
+import { say } from '@ValenceI18n/say';
 import type { ASoundSwitchProps } from './ASoundSwitch.types';
 
 const styles = StyleSheet.create({
@@ -17,7 +18,7 @@ const styles = StyleSheet.create({
 const ASoundSwitch = ({ isMuted, onToggle }: ASoundSwitchProps) => (
   <Button
     tone="bare"
-    label={isMuted ? 'Turn the sound on' : 'Turn the sound off'}
+    label={isMuted ? say('phone.aSoundSwitch.turnOn') : say('phone.aSoundSwitch.turnOff')}
     onPress={onToggle}
   >
     <View style={styles.reach}>

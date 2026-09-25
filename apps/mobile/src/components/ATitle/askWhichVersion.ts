@@ -1,4 +1,5 @@
 import { ActionSheetIOS } from 'react-native';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Offers the versions of a title in the system's action sheet, as the web offers them in a menu,
@@ -13,8 +14,8 @@ const askWhichVersion = (
 ): void => {
   ActionSheetIOS.showActionSheetWithOptions(
     {
-      title: 'Which version to play',
-      options: [...versions.map((one) => one.label), 'Cancel'],
+      title: say('phone.askWhichVersion.title'),
+      options: [...versions.map((one) => one.label), say('common.cancel')],
       cancelButtonIndex: versions.length,
     },
     (picked) => {

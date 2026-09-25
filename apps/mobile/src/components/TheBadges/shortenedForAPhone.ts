@@ -1,4 +1,5 @@
 const SHORT: Readonly<Record<string, string>> = {
+  // eslint-disable-next-line valence/no-hard-coded-strings -- brand names of audio and video formats, looked up by the badge's own name
   'Dolby Atmos': 'Atmos',
   'Dolby Vision': 'DV',
   'Dolby Digital+': 'DD+',
