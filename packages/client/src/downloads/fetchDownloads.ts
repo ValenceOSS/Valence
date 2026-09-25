@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { askTheServer } from '@ValenceClient/session/askTheServer';
+import { fromThisDevice } from '@ValenceClient/downloads/fromThisDevice';
 import {
   DownloadListSchema,
   DownloadQualitySchema,
@@ -126,7 +127,7 @@ const askForDownload = async (
 ): Promise<Download | null> => {
   const response = await askTheServer(`/api/media/${mediaId}/downloads`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...fromThisDevice() },
     body: JSON.stringify({ quality, audioLanguages }),
   }).catch(() => null);
 
@@ -160,7 +161,7 @@ const askForSeries = async (
 ): Promise<Download[]> => {
   const response = await askTheServer(`/api/series/${encodeURIComponent(seriesId)}/downloads`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...fromThisDevice() },
     body: JSON.stringify({
       quality,
       audioLanguages,
@@ -246,10 +247,10 @@ const setHolding = async (
     isHeld
       ? {
           method: 'PUT',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': 'application/json', ...fromThisDevice() },
           body: JSON.stringify({ quality }),
         }
-      : { method: 'DELETE' },
+      : { method: 'DELETE', headers: fromThisDevice() },
   ).catch(() => null);
 
   return response !== null && response.ok;

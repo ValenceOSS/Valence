@@ -3,14 +3,11 @@ import { fetchDownloads, fetchHoldings } from '@ValenceClient/downloads/fetchDow
 
 const DOWNLOADS = ['downloads'] as const;
 
-const PREPARING_IS_ASKED_ABOUT_EVERY_MS = 3000;
-
 /**
  * Everything this viewer has asked to have prepared.
  *
- * Asked about repeatedly while anything is still being prepared, and left alone once nothing is.
- * A transcode takes minutes, so there is something to watch; when there is not, polling a list that
- * cannot change is work nobody is waiting on.
+ * Not polled. The server follows each file being prepared and says on the keeping topic whenever
+ * one moves on, which is what refreshes this.
  *
  * @returns The query.
  */
@@ -18,10 +15,6 @@ const all = () =>
   queryOptions({
     queryKey: [...DOWNLOADS, 'all'],
     queryFn: () => fetchDownloads(),
-    refetchInterval: (query) =>
-      (query.state.data ?? []).some((one) => one.state === 'preparing')
-        ? PREPARING_IS_ASKED_ABOUT_EVERY_MS
-        : false,
   });
 
 /**
