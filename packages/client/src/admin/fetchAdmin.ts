@@ -114,12 +114,13 @@ const JobSchema = z.object({
   id: z.number(),
   kind: z.string(),
   subject: z.string(),
-  state: z.enum(['queued', 'running', 'finished', 'failed']),
+  state: z.enum(['queued', 'running', 'finished', 'failed', 'stopped']),
   queuedAtMs: z.number(),
   startedAtMs: z.number().nullable(),
   finishedAtMs: z.number().nullable(),
   correlationId: z.string().nullable().default(null),
   failure: JobFailureSchema.nullable().default(null),
+  stoppedBecause: z.string().nullable().default(null),
 });
 
 const ProcessUseSchema = z.object({
@@ -665,6 +666,10 @@ const fetchJobHistory = async (query: Partial<JobRunQuery> = {}): Promise<JobRun
 
   if (query.sort !== undefined) {
     parameters.set('sort', query.sort);
+  }
+
+  if (query.runningFirst === true) {
+    parameters.set('runningFirst', 'true');
   }
 
   if (query.offset !== undefined && query.offset > 0) {

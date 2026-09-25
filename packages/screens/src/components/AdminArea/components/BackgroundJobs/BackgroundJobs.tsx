@@ -97,6 +97,15 @@ const BackgroundJobsTable = ({
                 {row.original.failure.message}
               </span>
             )}
+
+            {row.original.stoppedBecause === null ? null : (
+              <span
+                className="truncate text-xs text-text-muted"
+                title={row.original.stoppedBecause}
+              >
+                {row.original.stoppedBecause}
+              </span>
+            )}
           </span>
         ),
       },

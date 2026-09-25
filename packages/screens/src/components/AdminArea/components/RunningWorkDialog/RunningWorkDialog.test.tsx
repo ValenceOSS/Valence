@@ -18,6 +18,7 @@ const task = (overrides: Partial<Job> = {}): Job => ({
   startedAtMs: 0,
   finishedAtMs: null,
   correlationId: 'run-1',
+  stoppedBecause: null,
   failure: null,
   ...overrides,
 });

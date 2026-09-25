@@ -12,7 +12,7 @@ Open the admin area and choose **Jobs & logs** under **Activity**.
 
 ## The page at a glance
 
-The header shows how many jobs are running and waiting, and how many have failed. Beside it are two controls for the whole queue.
+The header shows how many jobs are running and waiting, and how many job runs failed in the last 24 hours. Click that count to list them. The warning at the top of the admin area counts the same failures, and clicking it opens the same list. Beside it are two controls for the whole queue.
 
 - **Jobs at once** is a slider from 1 to 16. More jobs at once finishes background work sooner and takes more of the machine while it does. Lowering it lets whatever is running finish first.
 - **Pause** stops the queue picking up new work. A **Paused** badge appears while it is paused, and the button becomes **Resume**. Jobs already running finish; nothing new starts until you resume.
@@ -92,6 +92,8 @@ The job's progress appears in the same row, with a phase and a count, and you ca
 
 For a running job, the actions menu offers **Stop it**. What it has done so far is kept, and the rest is left undone until it is run again. A job that is only queued can be stopped the same way.
 
+Stopping a job that makes previews or scrub images also stops the renders it had already handed to the media service, straight away. A half-made clip or sheet is thrown away rather than kept, and that file is made again the next time the job runs. A scan still starts these jobs when it finishes, so work you stop picks up again after the next scan.
+
 ### Pausing the queue
 
 The **Pause** control in the header pauses the whole queue rather than one job. Use it when you need the machine for something else, for instance while a long scan is stealing bandwidth from a stream. Resume when you are ready.
@@ -143,7 +145,9 @@ Times are read in one timezone. Valence uses the timezone you set in the server 
 
 ## Reading the Jobs tab
 
-The Jobs tab is a table of runs, kept for 30 days. Each row shows the kind, what it ran against (a library name, for example), when it ran, how long it took, its progress, and its outcome: **Running now**, **Completed** or **Failed** (or queued while it waits). Failed runs show their error message.
+The Jobs tab is a table of runs, kept for 30 days. Each row shows the kind, what it ran against (a library name, for example), when it ran, how long it took, its progress, and its outcome: **Running now**, **Completed**, **Failed** or **Stopped** (or queued while it waits). Failed runs show their error message. Stopped runs say why they stopped: because somebody stopped them, or because the server restarted while they were running. Nothing went wrong with the files, and the job picks up where it left off the next time it runs.
+
+Runs that are still going stay at the top of the first page while the table is in its usual order, newest first and unfiltered, so a job that takes hours does not sink under everything that finished since it began. Once you sort or filter, the rows follow exactly what you chose.
 
 Above the table are:
 

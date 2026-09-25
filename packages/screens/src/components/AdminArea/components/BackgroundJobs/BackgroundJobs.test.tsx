@@ -12,6 +12,7 @@ const job = (overrides: Partial<Job> = {}): Job => ({
   startedAtMs: 0,
   finishedAtMs: null,
   correlationId: null,
+  stoppedBecause: null,
   failure: null,
   ...overrides,
 });
@@ -53,6 +54,26 @@ describe('BackgroundJobs', () => {
 
     expect(screen.getByText('Drawing scrub previews')).toBeInTheDocument();
     expect(screen.queryByText('thumbnails')).not.toBeInTheDocument();
+  });
+
+  it('says why a stopped task stopped, without painting it as a failure', () => {
+    render(
+      <BackgroundJobs
+        monitor={monitor([
+          job({
+            state: 'stopped',
+            finishedAtMs: 1,
+            stoppedBecause: 'Stopped before it finished.',
+          }),
+        ])}
+      />,
+    );
+
+    const reason = screen.getByText('Stopped before it finished.');
+
+    expect(reason).toHaveClass('text-text-muted');
+    expect(reason).not.toHaveClass('text-danger');
+    expect(screen.getByText('Stopped')).toBeInTheDocument();
   });
 
   it('names the file being worked on, which is how somebody finds it', () => {

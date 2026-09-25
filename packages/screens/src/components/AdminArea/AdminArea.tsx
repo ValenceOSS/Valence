@@ -122,6 +122,7 @@ import { ProfilesPanel } from '@ValenceScreens/components/AdminArea/components/P
 import { DownloadsPanel } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/DownloadsPanel';
 import { ReleaseSearchPanel } from './components/ReleaseSearchPanel/ReleaseSearchPanel';
 import type { AdminAreaProps } from './AdminArea.types';
+import type { ObservabilitySearch } from '@ValenceClient/admin/ObservabilitySearchSchema';
 import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
 
 const HISTORY_LENGTH = 60;
@@ -139,7 +140,7 @@ const PANEL_ORDER = ADMIN_PANELS.map((one) => one.id);
  *
  * @param historyLength - How many readings to keep for the graphs.
  * @param panel - Which panel is open, which the dialog around this holds.
- * @param onPanel - Told which panel to open.
+ * @param onPanel - Told which panel to open, and what to narrow it to where that was said.
  * @param initialJob - The job whose schedule to open, where the address named one.
  * @param observability - What the address says the jobs and logs page is showing and narrowed to.
  * @param onObservabilityChange - Called with each change to it, to write into the address.
@@ -187,6 +188,7 @@ const AdminArea = ({
   const askedRequests = useQuery(requestsQueries.availability());
   const hasRequests = askedRequests.data?.isEnabled ?? false;
   const askedRequestsOverview = useQuery(requestsQueries.overview(hasRequests));
+  const askedRecentFailures = useQuery(adminQueries.recentFailures());
 
   const overview = askedOverview.data ?? null;
   const monitor = askedMonitor.data ?? null;
@@ -278,14 +280,18 @@ const AdminArea = ({
   ]);
 
   const showPanel = useCallback(
-    (next: string) => {
+    (next: string, search?: ObservabilitySearch) => {
       const found = ADMIN_PANELS.find((candidate) => candidate.id === next);
 
       if (found === undefined) {
         return;
       }
 
-      onPanel(found.id);
+      if (search === undefined) {
+        onPanel(found.id);
+      } else {
+        onPanel(found.id, search);
+      }
       setViewingJobKind(null);
     },
     [onPanel],
@@ -671,6 +677,7 @@ const AdminArea = ({
     history,
     encoderHistory,
     requests: hasRequests ? (askedRequestsOverview.data ?? null) : null,
+    recentFailures: askedRecentFailures.data ?? null,
   });
   const isEverythingRead =
     overview !== null &&

@@ -698,6 +698,7 @@ describe('JobRunner', () => {
             startedAtMs: 0,
             finishedAtMs: null,
             correlationId: 'job-42',
+            stoppedBecause: null,
             failure: null,
           },
         ]}
@@ -745,6 +746,7 @@ describe('JobRunner', () => {
             startedAtMs: 0,
             finishedAtMs: null,
             correlationId: 'some-other-job',
+            stoppedBecause: null,
             failure: null,
           },
         ]}

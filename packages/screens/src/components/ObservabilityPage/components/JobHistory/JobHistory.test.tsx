@@ -155,6 +155,76 @@ describe('JobHistory', () => {
     );
 
     expect(await screen.findByText('no such path')).toBeInTheDocument();
+    expect(screen.getByText('no such path')).toHaveClass('text-danger');
+  });
+
+  it('says a stopped run was stopped, and why, without painting it as a failure', async () => {
+    askedHistory.mockResolvedValue(
+      page([
+        record({ status: 'stopped', errorMessage: 'The server restarted while this was running.' }),
+      ]),
+    );
+
+    renderHistory(
+      <JobHistory
+        search={{}}
+        onSearchChange={vi.fn()}
+        definitions={DEFINITIONS}
+        libraries={[]}
+        working={[]}
+        onViewLogs={vi.fn()}
+        onTrace={vi.fn()}
+      />,
+    );
+
+    const reason = await screen.findByText('The server restarted while this was running.');
+
+    expect(reason).toHaveClass('text-text-muted');
+    expect(reason).not.toHaveClass('text-danger');
+    expect(screen.getAllByText('Stopped').length).toBeGreaterThan(0);
+  });
+
+  it('asks for running runs first as the history opens, and not once it is sorted or filtered', async () => {
+    askedHistory.mockResolvedValue(page([]));
+
+    const { unmount } = renderHistory(
+      <JobHistory
+        search={{}}
+        onSearchChange={vi.fn()}
+        definitions={DEFINITIONS}
+        libraries={[]}
+        working={[]}
+        onViewLogs={vi.fn()}
+        onTrace={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(askedHistory).toHaveBeenCalledWith(
+        expect.objectContaining({ runningFirst: true, status: null }),
+      );
+    });
+
+    unmount();
+    askedHistory.mockClear();
+
+    renderHistory(
+      <JobHistory
+        search={{ rsort: 'oldest' }}
+        onSearchChange={vi.fn()}
+        definitions={DEFINITIONS}
+        libraries={[]}
+        working={[]}
+        onViewLogs={vi.fn()}
+        onTrace={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(askedHistory).toHaveBeenCalledWith(
+        expect.objectContaining({ runningFirst: false, sort: 'oldest' }),
+      );
+    });
   });
 
   it('says it is reading before the first page arrives', () => {
@@ -448,6 +518,7 @@ describe('JobHistory', () => {
             startedAtMs: 0,
             finishedAtMs: null,
             correlationId: 'run-1',
+            stoppedBecause: null,
             failure: null,
           },
           {
@@ -459,6 +530,7 @@ describe('JobHistory', () => {
             startedAtMs: 0,
             finishedAtMs: null,
             correlationId: 'run-2',
+            stoppedBecause: null,
             failure: null,
           },
         ]}
