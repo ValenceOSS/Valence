@@ -246,6 +246,7 @@ jobs:
     name: Desktop app
     needs: [verify, verify-rust, image, artefacts]
     uses: ./.github/workflows/desktop.yml
+    secrets: inherit
     with:
       tag: ${{ inputs.tag || github.ref_name }}
 
