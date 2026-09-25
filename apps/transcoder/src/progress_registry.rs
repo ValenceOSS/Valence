@@ -13,6 +13,7 @@
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::time::Instant;
 
 use tokio::sync::Mutex;
 
@@ -21,6 +22,27 @@ struct InFlight {
     progress: u8,
     bytes_per_second: Option<u64>,
     stop: Arc<AtomicBool>,
+    first_noted: Option<(Instant, u8)>,
+}
+
+/// How long the rate has to have been measured over before a time left is claimed from it.
+const SETTLED_SECONDS: f64 = 5.0;
+
+/// How long work that went from `from` to `now` per cent in `elapsed` seconds has left to run.
+#[must_use]
+pub fn seconds_left(from: u8, now: u8, elapsed: f64) -> Option<u64> {
+    if elapsed < SETTLED_SECONDS || now <= from || now >= 100 {
+        return None;
+    }
+
+    let per_second = f64::from(now - from) / elapsed;
+
+    #[allow(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        reason = "a positive number of seconds, rounded"
+    )]
+    Some((f64::from(100 - now) / per_second).round() as u64)
 }
 
 /// Keeps one piece of work per address, however many people ask for it, holds the switch that stops
@@ -86,7 +108,17 @@ impl ProgressRegistry {
         if let Some(held) = in_flight.get_mut(id) {
             held.progress = progress;
             held.bytes_per_second = bytes_per_second;
+            held.first_noted.get_or_insert((Instant::now(), progress));
         }
+    }
+
+    /// How long the claimed work looks to have left, judged from how fast it has moved so far.
+    pub async fn time_left(&self, id: &str) -> Option<u64> {
+        let in_flight = self.in_flight.lock().await;
+        let held = in_flight.get(id)?;
+        let (at, from) = held.first_noted?;
+
+        seconds_left(from, held.progress, at.elapsed().as_secs_f64())
     }
 
     /// How far through the work is and how fast, where any is under way.
@@ -170,6 +202,18 @@ mod tests {
         registry.note("one", 40, Some(8_000_000)).await;
 
         assert_eq!(registry.progress("one").await, Some((40, Some(8_000_000))));
+    }
+
+    #[test]
+    fn works_out_what_is_left_from_how_fast_it_has_gone() {
+        assert_eq!(super::seconds_left(10, 30, 60.0), Some(210));
+    }
+
+    #[test]
+    fn claims_no_time_left_before_it_has_settled_or_moved() {
+        assert_eq!(super::seconds_left(10, 30, 2.0), None);
+        assert_eq!(super::seconds_left(30, 30, 60.0), None);
+        assert_eq!(super::seconds_left(0, 100, 60.0), None);
     }
 
     #[tokio::test]

@@ -113,6 +113,8 @@ pub struct DownloadFile {
     pub size_bytes: Option<u64>,
     /// Why the last attempt at it failed, told once and then forgotten so asking again retries.
     pub failure: Option<String>,
+    /// How long it looks to have left, where it has run long enough to say.
+    pub seconds_left: Option<u64>,
 }
 
 /// A prepared download, as a piece of work on [`crate::queue::WorkQueue`].
@@ -180,7 +182,12 @@ pub async fn size_of(cache_root: &Path, id: &str) -> Option<u64> {
 
 /// What to say about a download nobody has finished preparing yet.
 #[must_use]
-pub fn pending(id: String, progress: u8, bytes_per_second: Option<u64>) -> DownloadFile {
+pub fn pending(
+    id: String,
+    progress: u8,
+    bytes_per_second: Option<u64>,
+    seconds_left: Option<u64>,
+) -> DownloadFile {
     DownloadFile {
         file: format!("/downloads/{id}/{DOWNLOAD_NAME}"),
         id,
@@ -189,6 +196,7 @@ pub fn pending(id: String, progress: u8, bytes_per_second: Option<u64>) -> Downl
         bytes_per_second,
         size_bytes: None,
         failure: None,
+        seconds_left,
     }
 }
 
@@ -203,6 +211,7 @@ pub fn failed(id: String, failure: String) -> DownloadFile {
         bytes_per_second: None,
         size_bytes: None,
         failure: Some(failure),
+        seconds_left: None,
     }
 }
 
@@ -373,6 +382,25 @@ pub fn rate(written: u64, elapsed: Duration) -> Option<u64> {
     }
 }
 
+/// How many bytes the parts written so far hold, which is what the file is growing by.
+///
+/// Read from the disk because ffmpeg writing through the segment muxer reports no size of its own.
+pub async fn bytes_in_parts(directory: &Path) -> u64 {
+    let Ok(mut entries) = tokio::fs::read_dir(directory.join(PARTS_DIRECTORY)).await else {
+        return 0;
+    };
+
+    let mut total = 0_u64;
+
+    while let Ok(Some(entry)) = entries.next_entry().await {
+        if let Ok(found) = entry.metadata().await {
+            total = total.saturating_add(found.len());
+        }
+    }
+
+    total
+}
+
 /// How large ffmpeg says it has written so far.
 ///
 /// `total_size` counts only the part being written, so what came before is added
@@ -448,7 +476,9 @@ pub async fn generate(
         let mut lines = BufReader::new(pipe).lines();
 
         let started = Instant::now();
+        let before = bytes_in_parts(&directory).await;
         let mut written = 0_u64;
+        let mut is_sized_by_ffmpeg = false;
 
         while let Ok(Some(line)) = lines.next_line().await {
             if stop.load(Ordering::Relaxed) {
@@ -466,9 +496,14 @@ pub async fn generate(
 
             if let Some(so_far) = written_from(&line) {
                 written = so_far;
+                is_sized_by_ffmpeg = true;
             }
 
             if let Some(done) = progress_from(&line, request.duration_seconds - behind) {
+                if !is_sized_by_ffmpeg {
+                    written = bytes_in_parts(&directory).await.saturating_sub(before);
+                }
+
                 told(
                     carried(already, request.duration_seconds, done),
                     rate(written, started.elapsed()),
@@ -618,6 +653,7 @@ async fn ready(cache_root: &Path, id: &str) -> DownloadFile {
         size_bytes: size_of(cache_root, id).await,
         id: id.to_owned(),
         failure: None,
+        seconds_left: None,
     }
 }
 
@@ -820,7 +856,7 @@ mod tests {
 
     #[test]
     fn names_the_file_a_pending_download_will_become() {
-        let waiting = pending("abc".to_owned(), 12, Some(8_000_000));
+        let waiting = pending("abc".to_owned(), 12, Some(8_000_000), Some(90));
 
         assert_eq!(waiting.file, format!("/downloads/abc/{DOWNLOAD_NAME}"));
         assert!(!waiting.is_ready);

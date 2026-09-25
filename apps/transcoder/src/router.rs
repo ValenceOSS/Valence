@@ -1025,15 +1025,18 @@ async fn start_download(
                 size_bytes: download::size_of(&config.cache_root, &id).await,
                 id,
                 failure: None,
+                seconds_left: None,
             }),
         )
             .into_response();
     }
 
     if let Some((progress, rate)) = state.downloads.progress(&id).await {
+        let left = state.downloads.time_left(&id).await;
+
         return (
             StatusCode::ACCEPTED,
-            Json(download::pending(id, progress, rate)),
+            Json(download::pending(id, progress, rate, left)),
         )
             .into_response();
     }
@@ -1043,12 +1046,20 @@ async fn start_download(
     }
 
     if !state.downloads.claim(&id).await {
-        return (StatusCode::ACCEPTED, Json(download::pending(id, 0, None))).into_response();
+        return (
+            StatusCode::ACCEPTED,
+            Json(download::pending(id, 0, None, None)),
+        )
+            .into_response();
     }
 
     prepare_in_the_background(&state, &request, &path, id.clone());
 
-    (StatusCode::ACCEPTED, Json(download::pending(id, 0, None))).into_response()
+    (
+        StatusCode::ACCEPTED,
+        Json(download::pending(id, 0, None, None)),
+    )
+        .into_response()
 }
 
 /// Serves a prepared download.
