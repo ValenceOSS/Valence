@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { FINISHED_WITHIN_SECONDS } from '@ValenceContracts/schemas/WatchProgress';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { fetchSubtitleTracks, SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
 import { fetchSegments } from '@ValenceClient/playback/fetchSegments';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
@@ -90,6 +91,15 @@ const styles = StyleSheet.create({
  * Whatever comes back is handed to the system's own player rather than driven from here. It is the
  * thing on this platform that knows about picture-in-picture, the lock screen and the route the
  * sound is going out by, and reimplementing any of that in JavaScript would be worse at all three.
+ *
+ * The player is made once, before there is anything to play, and handed each stream as it is
+ * negotiated, so what it is told about itself — to keep playing out of sight, to show on the lock
+ * screen, how often to say where it is — is told at once, and it starts, from wherever it was left,
+ * each time a stream has loaded rather than when it is made.
+ *
+ * Leaving the app carries the film on in a picture floating over everything else, and the lock
+ * screen shows it by its name and poster — as they were known when the stream began, since telling
+ * the player anything new about its source starts the film again.
  *
  * This is the one screen a phone is turned for, and it turns itself: almost everything a household
  * watches was shot wide, and a phone held upright shows it as a strip across the middle.
@@ -194,6 +204,11 @@ const Watching = ({
   }>({ from: startSeconds });
   const clientId = platformInUse().thisClientId();
   const title = useQuery(libraryQueries.detail(mediaId));
+  const named = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    named.current = title.data?.title;
+  }, [title.data]);
   const tracks = useQuery({
     queryKey: ['subtitles', mediaId],
     queryFn: () => fetchSubtitleTracks(mediaId),
@@ -249,7 +264,13 @@ const Watching = ({
 
         setSeekTo(asking.from);
         setSessionId(wasStarted);
-        setSource(cookie === null ? { uri } : { uri, headers: { Cookie: cookie } });
+        const artwork = onThisServer(artworkUrl(mediaId, 'poster'));
+        const told = {
+          uri,
+          metadata: named.current === undefined ? { artwork } : { title: named.current, artwork },
+        };
+
+        setSource(cookie === null ? told : { ...told, headers: { Cookie: cookie } });
       });
     });
 
@@ -265,19 +286,17 @@ const Watching = ({
   }, [mediaId, asking, clientId]);
 
   const player = useVideoPlayer(source, (ready) => {
-    if (source === null) {
-      return;
-    }
-
     ready.timeUpdateEventInterval = HOW_OFTEN_IT_SAYS_WHERE_IT_IS;
     ready.showNowPlayingNotification = true;
     ready.staysActiveInBackground = true;
+  });
 
+  useEventListener(player, 'sourceLoad', () => {
     if (seekTo > 0) {
-      ready.currentTime = seekTo;
+      player.seekBy(seekTo - player.currentTime);
     }
 
-    ready.play();
+    player.play();
   });
 
   const moving = useEvent(player, 'playingChange', { isPlaying: player.playing });
@@ -581,6 +600,7 @@ const Watching = ({
           style={styles.picture}
           player={player}
           allowsPictureInPicture
+          startsPictureInPictureAutomatically
           nativeControls={false}
           contentFit="contain"
         />

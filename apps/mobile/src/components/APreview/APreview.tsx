@@ -95,7 +95,10 @@ const APreview = ({
   const player = useVideoPlayer(clip, (ready) => {
     ready.muted = isMuted;
     ready.loop = false;
-    ready.play();
+  });
+
+  useEventListener(player, 'sourceLoad', () => {
+    player.play();
   });
   const moving = useEvent(player, 'playingChange', { isPlaying: player.playing });
   const isPlaying = clip !== null && moving.isPlaying;

@@ -12,6 +12,7 @@ import { reportWatchProgress } from '@ValenceClient/playback/watchProgress';
 import { get } from '@react-native-cookies/cookies';
 import { lockAsync, OrientationLock } from 'expo-screen-orientation';
 import { theFakePlayer } from '@ValenceMobile/testing/theFakePlayer';
+import { holdAWindowOf } from '@ValenceMobile/testing/holdAWindowOf';
 import { Watching } from './Watching';
 import type { StartedSession, StartOutcome } from '@ValenceClient/playback/startPlaybackSession';
 import type { PlaybackPlan } from '@ValenceContracts/schemas/PlaybackPlan';
@@ -60,6 +61,7 @@ const started = (delivery: StartedSession['delivery']): StartOutcome => ({
 const refused = (why: string): StartOutcome => ({ kind: 'failed', reason: why });
 
 beforeEach(() => {
+  holdAWindowOf(393, 852);
   jest.mocked(startPlaybackSession).mockReset();
   jest.mocked(stopPlaybackSession).mockReset().mockResolvedValue();
   jest.mocked(stopWatching).mockReset().mockResolvedValue();
@@ -571,6 +573,20 @@ describe('Watching', () => {
     });
 
     expect(theFakePlayer.showNowPlayingNotification).toBe(true);
+    expect(theFakePlayer.describedAs?.artwork).toContain('/api/media/a-film/image/poster');
+  });
+
+  it('carries the film on in a floating picture when somebody leaves the app', async () => {
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    const drawn = await render(around(<Watching mediaId="a-film" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+    });
+
+    expect(theFakePlayer.floatsOnLeaving).toBe(true);
+    expect(theFakePlayer.staysActiveInBackground).toBe(true);
   });
 
   it('is still drawn while it is fading, so it does not vanish mid-fade', async () => {
