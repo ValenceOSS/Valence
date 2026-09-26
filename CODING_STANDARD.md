@@ -60,6 +60,11 @@ The cost is a third language to read, so the boundary is kept narrow:
   TypeScript. It holds no screens, no application state and no requests to the
   server. A screen reaches a native view through `requireNativeView` or a
   module's functions, never through Swift of its own.
+- A native view that draws pictures may fetch them itself from the addresses
+  TypeScript hands it, as React Native's `Image` does — the page curl's pages
+  and the page scrubber's small pictures are two. What to fetch is always
+  TypeScript's decision: the view is given whole addresses and fetches nothing
+  else, keeping none of the server's answers beyond the pictures themselves.
 - Each module is declared by its `expo-module.config.json` and the `.podspec`
   CocoaPods reads. The podspec is Ruby because CocoaPods only reads Ruby; it
   declares the module and does nothing else.
