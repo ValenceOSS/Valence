@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { withAppDelegate, withInfoPlist } from 'expo/config-plugins.js';
-import type { ConfigPlugin } from 'expo/config-plugins.js';
+import { withAppDelegate, withInfoPlist } from 'expo/config-plugins';
+import type { ConfigPlugin } from 'expo/config-plugins';
 
 const THE_DELEGATE = join(import.meta.dirname, '..', 'modules', 'scene', 'SceneDelegate.swift');
 
@@ -32,6 +32,9 @@ const ALSO_HOLDS_THE_LAUNCH = `  var reactNativeFactory: RCTReactNativeFactory?
  * deserves to be read and edited as such. This only carries it into a project that is regenerated
  * every time anybody runs a prebuild.
  *
+ * Expo 58 writes the scene lifecycle itself, and an application delegate that makes no window of
+ * its own is left alone.
+ *
  * Every edit it makes is checked before it is made. An Expo release that writes a different
  * application delegate should stop a build rather than quietly produce one that cannot start.
  *
@@ -57,6 +60,10 @@ const withTheSceneLifecycle: ConfigPlugin = (config) => {
 
   return withAppDelegate(withManifest, (asked) => {
     const { contents } = asked.modResults;
+
+    if (!contents.includes('UIWindow(')) {
+      return asked;
+    }
 
     if (!contents.includes(THE_OLD_WAY)) {
       throw new Error(
