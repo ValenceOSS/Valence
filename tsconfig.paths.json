@@ -1,6 +1,15 @@
 {
   "compilerOptions": {
     "paths": {
+      "@ValenceUI/orbs/*": ["./packages/ui/src/orbs/*"],
+      "@ValenceUI/ColourPicker": ["./packages/ui/src/components/ColourPicker/ColourPicker.tsx"],
+      "@ValenceUI/ColourPicker.types": [
+        "./packages/ui/src/components/ColourPicker/ColourPicker.types.ts"
+      ],
+      "@ValenceUI/hsvOf": ["./packages/ui/src/functions/hsvOf.ts"],
+      "@ValenceUI/hexOfHsv": ["./packages/ui/src/functions/hexOfHsv.ts"],
+      "@ValenceUI/Orb": ["./packages/ui/src/components/Orb/Orb.tsx"],
+      "@ValenceUI/Orb.types": ["./packages/ui/src/components/Orb/Orb.types.ts"],
       "@ValenceClient/*": ["./packages/client/src/*"],
       "@ValenceContracts/*": ["./packages/contracts/src/*"],
       "@ValenceCore/*": ["./packages/core/src/*"],
