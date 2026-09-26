@@ -1,5 +1,37 @@
 # Changelog
 
+## [1.2.0](https://github.com/ValenceOSS/Valence/compare/v1.1.2...v1.2.0) (2026-09-26)
+
+
+### Added
+
+* **contracts:** let a face be an orb, a drawing, a framed photo or a lettered initial in any colour ([3e222ad](https://github.com/ValenceOSS/Valence/commit/3e222ad943fc000669534ff81a77cf798163091e))
+* **desktop:** open help and other web links in the browser rather than a new window ([3ed0392](https://github.com/ValenceOSS/Valence/commit/3ed0392674c02d773573d4399ddaaac6cee806ca))
+* **repo:** draw the phone's fields and account pages as the web does, and rename the app ([6c3e09a](https://github.com/ValenceOSS/Valence/commit/6c3e09ad4d8065877b569f0533a6f12e06fedea3))
+* **repo:** fit the phone app to the iphone duo and turn book pages with a page curl ([#448](https://github.com/ValenceOSS/Valence/issues/448)) ([bbea7cc](https://github.com/ValenceOSS/Valence/commit/bbea7cc264df9235e785019830a99f4b0c0c3d8c))
+* **server:** name a device after the valence app it is signed in from ([1ad9911](https://github.com/ValenceOSS/Valence/commit/1ad9911a091ecb6fbd1d70cc6fabbe6c19acff04))
+* **server:** remember how a face looks, and let a face chosen for yourself show over the account's ([05feada](https://github.com/ValenceOSS/Valence/commit/05feada0b024b19f67c28788374fe987144222c4))
+* **ui:** a face editor with orbs, photos, drawings, avatars and letters ([49e305c](https://github.com/ValenceOSS/Valence/commit/49e305c4ac9a78e6b277ef533661862d0de4e9be))
+* **ui:** add shader orbs, a colour picker, and fonts for letter faces ([b119022](https://github.com/ValenceOSS/Valence/commit/b1190223dec8a3b3c492b5045a2099ae51911172))
+* **ui:** bring the security and devices pages up to date, and size the grid switcher to match ([3cad638](https://github.com/ValenceOSS/Valence/commit/3cad638985dd691a264080a05a5a943e625f56ad))
+* **ui:** draw the nav bar as a glass capsule with a sliding pill, as the phone and television do ([e524e53](https://github.com/ValenceOSS/Valence/commit/e524e53d5bb7938fbc4abd35194cb243acaec01b))
+* **ui:** edit your face in one dialog: orbs, photos, drawings, avatars and letters ([c72a57f](https://github.com/ValenceOSS/Valence/commit/c72a57f1e838d4b5e8c37c24b5d19a5a00827d4e))
+* **ui:** light the way in from the profile picture, and fly the face to the bar after signing in ([84b5463](https://github.com/ValenceOSS/Valence/commit/84b5463f889e9ff4bb77c3a7d8be4fbf401574a8))
+* **ui:** nav bar capsule, browse sorting, offline redesign and a new way in ([e95f99e](https://github.com/ValenceOSS/Valence/commit/e95f99eb46742212a509c439ed76ea501abf2f6f))
+* **ui:** redesign the offline screen around rails of cards and the one player ([39b1e9c](https://github.com/ValenceOSS/Valence/commit/39b1e9c4dd3f6653d7997246f6b6ea2aeacd3160))
+* **ui:** sort browse pages by release date, title, rating or size, and hide what has been watched ([1e382a0](https://github.com/ValenceOSS/Valence/commit/1e382a056fe1b690b6cc9643b8991a8f9f9308dc))
+
+
+### Fixed
+
+* **repo:** keep a stopped job stopped when it throws, or when it is stopped mid-probe ([4c22f43](https://github.com/ValenceOSS/Valence/commit/4c22f43a9718d21900e8785b005139465ada5cf5))
+* **repo:** stop a job's encodes at once, and make the failed-jobs warning show what failed ([ec82e1b](https://github.com/ValenceOSS/Valence/commit/ec82e1bf502ac7b409575c2d0f0e5f5c4a856e58))
+* **server:** stop a job's renders with it, record stopped runs, and stop timing out fingerprints ([168dccb](https://github.com/ValenceOSS/Valence/commit/168dccbdea065f96cd1d7aabbe58cc3f810234a6))
+* **transcoder:** say what claiming a render came to without carrying a whole response ([234b649](https://github.com/ValenceOSS/Valence/commit/234b649de022919e6241476562e4789ef1ae5c2e))
+* **transcoder:** stop a job's previews and scrub images at once, and say stopped rather than failed ([4b80884](https://github.com/ValenceOSS/Valence/commit/4b80884c01ac387d3d25bc8752ef5077b45b53d5))
+* **ui:** read a browse page's arrangement from its kind rather than setting it in an effect ([a9ea823](https://github.com/ValenceOSS/Valence/commit/a9ea8239d4c9900bb6a35f35ab04d061cc08c79f))
+* **ui:** show stopped jobs as stopped, and make the failed-jobs warning open the failures it counts ([b807162](https://github.com/ValenceOSS/Valence/commit/b8071626cfbda4b86dd929a96aed5a3b1ad571fd))
+
 ## [1.1.2](https://github.com/ValenceOSS/Valence/compare/v1.1.1...v1.1.2) (2026-09-25)
 
 
