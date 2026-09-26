@@ -3,6 +3,7 @@ import { ChevronLeft, SlidersHorizontal } from '@keyline-icons/react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Animated, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ABlur } from '@ValenceMobile/components/ABlur/ABlur';
 import { AGlassCircle } from '@ValenceMobile/components/AGlassCircle/AGlassCircle';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { Words } from '@ValenceMobile/components/Words/Words';
@@ -12,6 +13,10 @@ import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import type { AReaderChromeProps } from './AReaderChrome.types';
 
 const BAR = 56;
+
+const SOLID = 0.94;
+
+const FROSTED_TINT = 0.45;
 
 const MOVES = { ...SPRINGS.rise, overshootClamping: true, useNativeDriver: true } as const;
 
@@ -41,6 +46,8 @@ const styles = StyleSheet.create({
  * @param onPanel - Told to bring out the reader's panel.
  * @param footer - What goes along the bottom.
  * @param children - The page.
+ * @param isFrosted - Whether the bars are dark frosted glass, the page showing blurred through a
+ *   light tint of the paper's colour, rather than solid.
  */
 const AReaderChrome = ({
   title,
@@ -53,6 +60,7 @@ const AReaderChrome = ({
   onPanel,
   footer,
   children,
+  isFrosted = false,
 }: AReaderChromeProps) => {
   const room = useSafeAreaInsets();
   const isStill = usePrefersStillness();
@@ -81,7 +89,7 @@ const AReaderChrome = ({
         style={[
           styles.head,
           {
-            backgroundColor: withAlpha(paper, 0.94),
+            backgroundColor: withAlpha(paper, isFrosted ? FROSTED_TINT : SOLID),
             paddingLeft: Math.max(12, room.left),
             paddingRight: Math.max(12, room.right),
             paddingTop: room.top,
@@ -96,6 +104,7 @@ const AReaderChrome = ({
           },
         ]}
       >
+        {isFrosted ? <ABlur isDark /> : null}
         <View style={styles.bar}>
           <AGlassCircle of={ChevronLeft} label="Back" onPress={onBack} />
           <View style={styles.titles}>
@@ -117,7 +126,7 @@ const AReaderChrome = ({
         style={[
           styles.foot,
           {
-            backgroundColor: withAlpha(paper, 0.94),
+            backgroundColor: withAlpha(paper, isFrosted ? FROSTED_TINT : SOLID),
             paddingBottom: room.bottom + 8,
             paddingLeft: Math.max(SCREEN_EDGE, room.left),
             paddingRight: Math.max(SCREEN_EDGE, room.right),
@@ -133,6 +142,7 @@ const AReaderChrome = ({
           },
         ]}
       >
+        {isFrosted ? <ABlur isDark /> : null}
         {footer}
       </Animated.View>
     </View>

@@ -1,77 +1,89 @@
-import { useEffect, useRef, useState } from 'react';
-import {
-  FlatList,
-  Image,
-  PixelRatio,
-  ScrollView,
-  StyleSheet,
-  View,
-  useWindowDimensions,
-} from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { StatusBar } from 'expo-status-bar';
+import { PixelRatio, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { bookPageUrl } from '@ValenceClient/books/fetchBooks';
+import { readBookmarks } from '@ValenceClient/books/readBookmarks';
+import { writeBookmarks } from '@ValenceClient/books/writeBookmarks';
 import {
   readReaderPreferences,
   writeReaderPreferences,
 } from '@ValenceClient/books/readerPreferences';
-import { groupHolding, spreadsFor } from '@ValenceClient/books/spreadsFor';
+import { APageCurl } from '@ValenceMobile/components/APageCurl/APageCurl';
+import { ASystemSlider } from '@ValenceMobile/components/ASystemSlider/ASystemSlider';
 import { AReaderChrome } from '@ValenceMobile/components/AReader/components/AReaderChrome/AReaderChrome';
-import { AReaderPanel } from '@ValenceMobile/components/AReader/components/AReaderPanel/AReaderPanel';
+import { AReaderRail } from '@ValenceMobile/components/AReader/components/AReaderRail/AReaderRail';
+import { AReaderSide } from '@ValenceMobile/components/AReader/components/AReaderSide/AReaderSide';
+import { AReaderSheet } from '@ValenceMobile/components/AReader/components/AReaderSheet/AReaderSheet';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
-import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRow';
-import { Slider } from '@ValenceMobile/components/Slider/Slider';
-import { Toggle } from '@ValenceMobile/components/Toggle/Toggle';
 import { Words } from '@ValenceMobile/components/Words/Words';
+import { useTheSideStrip } from '@ValenceMobile/hooks/useTheSideStrip';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { turnThisPhoneSideways } from '@ValenceMobile/platform/turnThisPhoneSideways';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import type { ReaderPreferences } from '@ValenceClient/books/readerPreferences';
-import type { APageReaderProps, ASpreadOrTheEnd } from './APageReader.types';
+import type { ARailTuning } from '@ValenceMobile/components/AReader/components/AReaderRail/ARailTuning';
+import type { APageReaderProps } from './APageReader.types';
 
 const PAPER = '#000000';
 
 const INK = '#ffffff';
 
-const MOST_ZOOM = 5;
+const THUMB_PIXELS = 160;
 
-const ZOOMED_PAST = 1.01;
+const SEAM = 5;
 
-const DIRECTIONS = [
-  { id: 'leftToRight', label: 'Left to right' },
-  { id: 'rightToLeft', label: 'Right to left' },
-] as const;
+const PANEL_ROUND = 12;
 
-const LAYOUTS = [
-  { id: 'one', label: 'One page' },
-  { id: 'two', label: 'Two pages' },
-] as const;
+const OPENED_FROM = 600;
+
+const NEAR_THE_END = 4;
+
+const NEXT_FIT = { both: 'width', height: 'both', width: 'height' } as const;
+
+const SIDE_TOP = 24;
+
+const CONTROLS_PANEL = '#2c2c30';
+
+const RAIL_TUNINGS: Record<'folded' | 'opened', ARailTuning> = {
+  folded: { buttonsX: -5, scrubberX: 31, scrubberWidth: 70, top: 166, isOutlined: false },
+  opened: { buttonsX: -6, scrubberX: 30, scrubberWidth: 70, top: 118, isOutlined: false },
+};
 
 const styles = StyleSheet.create({
   end: { alignItems: 'center', gap: 16, justifyContent: 'center', padding: SCREEN_EDGE },
-  foot: { gap: 4 },
-  setting: { gap: 8 },
-  spread: { alignItems: 'center', flexDirection: 'row', justifyContent: 'center' },
-  switch: { alignItems: 'center', flexDirection: 'row', gap: 12 },
-  switchWords: { flex: 1, gap: 2 },
+  foot: { gap: 8 },
+  page: { bottom: 0, overflow: 'hidden', position: 'absolute', top: 0 },
+  stripPanel: { bottom: 0, position: 'absolute', top: 0 },
   whole: { flex: 1 },
 });
 
 /**
- * A book of fixed pages — a comic, a manga, a PDF — as the web's page reader shows it: a page to the
- * screen, or two side by side as an open book shows them, turned by swiping or by tapping the left
- * or right third of the screen, the way that is forward following the way the book is read, and a
- * tap in the middle shows or hides the bars. A page can be pinched to look closer, and while it is
- * the page holds still rather than turning.
+ * A book of fixed pages — a comic, a manga, a PDF — turned as a printed book is: each page curls
+ * over from wherever the finger took hold of it, by the system's own page curl, and a tap on the
+ * left or right third turns it the same way. Held upright it shows a page at a time, and on its
+ * side two, bound down the middle as an open book is. A tap in the middle shows or hides the bars,
+ * and a page can be pinched to look closer.
  *
- * Two pages at once turns the phone on its side, as a film does, since two pages upright would each
- * be too small to read. Pages are paired as the web pairs them: the cover on its own where somebody
- * wants it so, and a page twice as wide as it is tall — a spread drawn as one — always alone.
+ * The bars over the page on an ordinary phone are dark frosted glass the page shows through, and
+ * the panels beside it on a folding one the same dark graphite, whatever the page's colour, so the
+ * page reads as a sheet held between them.
  *
- * The bars hold the way back, the chapter, a slider to any page and the reader's panel, which lists
- * the chapters and holds how the pages are laid out — kept on this device, as the web keeps it. The
- * last page of a chapter is followed by a way on to the next. Every turn is remembered, so the book
- * opens there next time, and the last page of the last chapter marks it read.
+ * On a folding phone with a strip down the side of its screen, the controls live in that strip
+ * instead of over the page — the way back, the contents, and every page of the chapter as a column
+ * of small pictures to drag through — on a dark panel of their own, set off from the page by a
+ * black seam, so the page has the rest of the screen to itself. Opened out to two
+ * pages, the spread is kept centred on the fold, with a panel on its far side matching the strip,
+ * so the pages meet where the phone bends and the page sits between two matching edges. That panel
+ * holds what the other hand reaches for: a turn onwards, a bookmark kept on this device, a lock
+ * that holds the pages still, how the pages fill their leaves, and how far through the chapter is,
+ * with the next chapter's first page once it is near.
+ *
+ * Two pages at once on an ordinary phone turns it on its side, as a film does; a folding phone is
+ * never turned, since opening it out is what gives it room for two. Every turn is
+ * remembered, so the book opens there next time, and the last page of the last chapter marks it
+ * read. Turning past the last page of a chapter opens the next.
  *
  * @param book - The book.
  * @param chapters - Its chapters.
@@ -92,8 +104,7 @@ const APageReader = ({
 }: APageReaderProps) => {
   const { width, height } = useWindowDimensions();
   const room = useSafeAreaInsets();
-  const inside = width - room.left - room.right;
-  const turning = useRef<FlatList<ASpreadOrTheEnd>>(null);
+  const strip = useTheSideStrip();
   const ordered = [...chapters].sort((one, other) => one.number - other.number);
   const at = ordered.findIndex((chapter) => chapter.id === chapterId);
   const chapter = ordered[at];
@@ -102,33 +113,36 @@ const APageReader = ({
   const [page, setPage] = useState(Math.min(Math.max(startAtPage, 0), Math.max(count - 1, 0)));
   const [isShowingChrome, setIsShowingChrome] = useState(true);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [isZoomed, setIsZoomed] = useState(false);
-  const [wide, setWide] = useState<ReadonlySet<number>>(new Set());
+  const [scrubbing, setScrubbing] = useState<number | null>(null);
+  const [paper, setPaper] = useState(PAPER);
+  const [isLocked, setIsLocked] = useState(false);
+  const [bookmarks, setBookmarks] = useState(() => readBookmarks(book.id, chapterId));
+  const posture = Math.min(width, height) < OPENED_FROM ? 'folded' : 'opened';
+  const tuning = RAIL_TUNINGS[posture];
   const [preferences, setPreferences] = useState(() =>
     readReaderPreferences(book.direction, book.id),
   );
-  const isRightToLeft = preferences.direction === 'rightToLeft';
-  const groups = spreadsFor({
-    pageCount: count,
-    isDouble: preferences.isDouble,
-    isOffset: preferences.isOffset,
-    wide,
-  });
-  const showing = groupHolding(groups, page);
-  const inOrder: ASpreadOrTheEnd[] = [
-    ...groups.map((pages) => ({ kind: 'spread' as const, pages })),
-    ...(next === undefined ? [] : [{ kind: 'next' as const }]),
-  ];
-  const laidOut = isRightToLeft ? [...inOrder].reverse() : inOrder;
-  const isOnTheLast = showing === groups.length - 1;
-
-  /**
-   * Where a spread sits in the row, which runs the other way for a book read right to left.
-   *
-   * @param which - The spread, or the way on past the last.
-   * @returns Its place in the row.
-   */
-  const slotOf = (which: number) => (isRightToLeft ? inOrder.length - 1 - which : which);
+  const isTwoUp = width > height;
+  const leftRoom = strip?.side === 'left' ? strip.breadth + SEAM : room.left;
+  const rightRoom = strip?.side === 'right' ? strip.breadth + SEAM : room.right;
+  const onTheFold = strip !== null && isTwoUp ? strip.breadth + SEAM : 0;
+  const bookWidth = width - leftRoom - rightRoom - onTheFold;
+  const pagePixels = Math.round((bookWidth / (isTwoUp ? 2 : 1)) * PixelRatio.get());
+  const isOnTheLast = page + (isTwoUp ? 2 : 1) >= count;
+  const pages = useMemo(
+    () =>
+      Array.from({ length: count }, (_, one) =>
+        onThisServer(bookPageUrl(book.id, chapterId, one, pagePixels)),
+      ),
+    [book.id, chapterId, count, pagePixels],
+  );
+  const pictures = useMemo(
+    () =>
+      Array.from({ length: count }, (_, one) =>
+        onThisServer(bookPageUrl(book.id, chapterId, one, THUMB_PIXELS)),
+      ),
+    [book.id, chapterId, count],
+  );
 
   useEffect(() => {
     if (count > 0) {
@@ -136,25 +150,19 @@ const APageReader = ({
     }
   }, [page, count, next, onPage, isOnTheLast]);
 
+  const hasStrip = strip !== null;
+
   useEffect(
-    () => (preferences.isDouble ? turnThisPhoneSideways() : undefined),
-    [preferences.isDouble],
+    () => (preferences.isDouble && !hasStrip ? turnThisPhoneSideways() : undefined),
+    [preferences.isDouble, hasStrip],
   );
 
   /**
-   * Turns to a spread, or on to the way to the next chapter.
-   *
-   * @param to - The spread, where one past the last is the way on.
-   * @param isAnimated - Whether it slides there.
+   * Opens the next chapter, where there is one.
    */
-  const turnTo = (to: number, isAnimated: boolean) => {
-    const target = Math.min(Math.max(to, 0), inOrder.length - 1);
-    const pages = groups[target];
-
-    turning.current?.scrollToIndex({ index: slotOf(target), animated: isAnimated });
-
-    if (pages !== undefined) {
-      setPage(pages[0] ?? 0);
+  const readOn = () => {
+    if (next !== undefined) {
+      onChapter(next.id);
     }
   };
 
@@ -170,6 +178,21 @@ const APageReader = ({
     setPreferences(chosen);
   };
 
+  const spread = isTwoUp ? [page, page + 1] : [page];
+  const isMarked = spread.some((one) => bookmarks.includes(one));
+
+  /**
+   * Marks the pages showing, or unmarks them where either already is.
+   */
+  const mark = () => {
+    const marked = isMarked
+      ? bookmarks.filter((one) => !spread.includes(one))
+      : [...bookmarks, page];
+
+    writeBookmarks(book.id, chapterId, marked);
+    setBookmarks(marked);
+  };
+
   if (chapter === undefined || count === 0) {
     return (
       <View style={[styles.whole, styles.end, { backgroundColor: PAPER }]}>
@@ -181,15 +204,192 @@ const APageReader = ({
     );
   }
 
-  const shownPages = groups[showing] ?? [page];
+  const theBook = (
+    <APageCurl
+      pages={pages}
+      page={page}
+      isTwoUp={isTwoUp}
+      isCoverAlone={preferences.isOffset}
+      isRightToLeft={preferences.direction === 'rightToLeft'}
+      paper={PAPER}
+      fit={preferences.fit}
+      isLocked={isLocked}
+      onTurn={setPage}
+      onMiddle={() => {
+        setIsShowingChrome((was) => !was);
+      }}
+      onPastTheEnd={readOn}
+      onPaper={setPaper}
+      style={
+        strip === null
+          ? [styles.whole, { marginLeft: leftRoom, marginRight: rightRoom }]
+          : styles.whole
+      }
+    />
+  );
+
+  const panel = (
+    <AReaderSheet
+      isOpen={isPanelOpen}
+      onClose={() => {
+        setIsPanelOpen(false);
+      }}
+      title={book.title}
+      isRightToLeft={preferences.direction === 'rightToLeft'}
+      onRightToLeft={(isRightToLeft) => {
+        choose({ direction: isRightToLeft ? 'rightToLeft' : 'leftToRight' });
+      }}
+      layout={hasStrip ? null : preferences.isDouble ? 'two' : 'one'}
+      onLayout={(layout) => {
+        choose({ isDouble: layout === 'two' });
+      }}
+      isCoverAlone={preferences.isOffset}
+      onCoverAlone={(isOffset) => {
+        choose({ isOffset });
+      }}
+      chapters={ordered.map((one) => ({
+        id: one.id,
+        label: one.title,
+        isHere: one.id === chapterId,
+      }))}
+      onChapter={(id) => {
+        setIsPanelOpen(false);
+
+        if (id !== chapterId) {
+          onChapter(id);
+        }
+      }}
+    />
+  );
+
+  if (strip !== null) {
+    return (
+      <View style={[styles.whole, { backgroundColor: '#000000' }]}>
+        <StatusBar style="light" />
+        <View
+          style={[
+            styles.page,
+            {
+              backgroundColor: paper,
+              left: leftRoom + (strip.side === 'right' ? onTheFold : 0),
+              right: rightRoom + (strip.side === 'left' ? onTheFold : 0),
+            },
+            strip.side === 'right' || onTheFold > 0
+              ? { borderBottomRightRadius: PANEL_ROUND, borderTopRightRadius: PANEL_ROUND }
+              : null,
+            strip.side === 'left' || onTheFold > 0
+              ? { borderBottomLeftRadius: PANEL_ROUND, borderTopLeftRadius: PANEL_ROUND }
+              : null,
+          ]}
+        >
+          {theBook}
+        </View>
+        <View
+          style={[
+            styles.stripPanel,
+            { backgroundColor: CONTROLS_PANEL, width: strip.breadth },
+            strip.side === 'right'
+              ? {
+                  borderBottomLeftRadius: PANEL_ROUND,
+                  borderTopLeftRadius: PANEL_ROUND,
+                  right: 0,
+                }
+              : {
+                  borderBottomRightRadius: PANEL_ROUND,
+                  borderTopRightRadius: PANEL_ROUND,
+                  left: 0,
+                },
+          ]}
+        />
+        {onTheFold > 0 ? (
+          <View
+            style={[
+              styles.stripPanel,
+              { backgroundColor: CONTROLS_PANEL, width: strip.breadth },
+              strip.side === 'right'
+                ? {
+                    borderBottomRightRadius: PANEL_ROUND,
+                    borderTopRightRadius: PANEL_ROUND,
+                    left: 0,
+                  }
+                : {
+                    borderBottomLeftRadius: PANEL_ROUND,
+                    borderTopLeftRadius: PANEL_ROUND,
+                    right: 0,
+                  },
+            ]}
+          />
+        ) : null}
+        {onTheFold > 0 ? (
+          <AReaderSide
+            breadth={strip.breadth}
+            side={strip.side === 'right' ? 'left' : 'right'}
+            top={SIDE_TOP}
+            below={room.bottom}
+            ink={INK}
+            isRightToLeft={preferences.direction === 'rightToLeft'}
+            isMarked={isMarked}
+            isLocked={isLocked}
+            fit={preferences.fit}
+            place={ordered.length > 1 ? chapter.title : book.title}
+            through={(page + spread.length) / count}
+            next={
+              next !== undefined && page >= count - NEAR_THE_END
+                ? {
+                    title: next.title,
+                    cover: onThisServer(bookPageUrl(book.id, next.id, 0, THUMB_PIXELS)),
+                  }
+                : null
+            }
+            onForward={() => {
+              if (isOnTheLast) {
+                readOn();
+
+                return;
+              }
+
+              setPage(Math.min(page + spread.length, count - 1));
+            }}
+            onMark={mark}
+            onLock={() => {
+              setIsLocked((was) => !was);
+            }}
+            onFit={() => {
+              choose({ fit: NEXT_FIT[preferences.fit] });
+            }}
+            onReadOn={readOn}
+          />
+        ) : null}
+        <AReaderRail
+          breadth={strip.breadth}
+          freeFrom={strip.freeFrom}
+          below={room.bottom}
+          side={strip.side}
+          centreIn={strip.centreIn}
+          tuning={tuning}
+          pictures={pictures}
+          page={page}
+          ink={INK}
+          onPage={setPage}
+          onBack={onBack}
+          onPanel={() => {
+            setIsPanelOpen(true);
+          }}
+          onReadOn={isOnTheLast && next !== undefined ? readOn : null}
+        />
+        {panel}
+      </View>
+    );
+  }
 
   return (
     <AReaderChrome
       title={book.title}
       place={ordered.length > 1 ? chapter.title : null}
-      paper={PAPER}
+      paper={CONTROLS_PANEL}
       ink={INK}
       isDarkPage
+      isFrosted
       isShown={isShowingChrome}
       onBack={onBack}
       onPanel={() => {
@@ -198,212 +398,31 @@ const APageReader = ({
       footer={
         <View style={styles.foot}>
           {count > 1 ? (
-            <Slider
+            <ASystemSlider
               label="Go to a page"
               value={page}
               furthest={count - 1}
-              colour={INK}
-              restColour={withAlpha(INK, 0.25)}
-              aheadColour={withAlpha(INK, 0.25)}
+              tint={INK}
+              onScrubbing={setScrubbing}
               onScrubbed={(to) => {
-                turnTo(groupHolding(groups, Math.round(to)), false);
+                setScrubbing(null);
+                setPage(to);
               }}
             />
           ) : null}
           <Words size="small" isCentred colour={withAlpha(INK, 0.8)}>
-            {shownPages.length > 1
-              ? `Pages ${((shownPages[0] ?? 0) + 1).toString()}–${((shownPages[1] ?? 0) + 1).toString()} of ${count.toString()}`
-              : `Page ${(page + 1).toString()} of ${count.toString()}`}
+            {`Page ${((scrubbing ?? page) + 1).toString()} of ${count.toString()}`}
           </Words>
+          {isOnTheLast && next !== undefined ? (
+            <Button tone="bright" onPress={readOn}>
+              {`Read on: ${next.title}`}
+            </Button>
+          ) : null}
         </View>
       }
     >
-      <FlatList
-        key={`${preferences.direction}:${String(preferences.isDouble)}:${String(preferences.isOffset)}:${width.toString()}`}
-        ref={turning}
-        data={laidOut}
-        horizontal
-        pagingEnabled
-        scrollEnabled={!isZoomed}
-        showsHorizontalScrollIndicator={false}
-        initialScrollIndex={slotOf(showing)}
-        getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
-        windowSize={5}
-        keyExtractor={(item) => (item.kind === 'spread' ? item.pages.join('-') : 'next')}
-        onMomentumScrollEnd={({ nativeEvent }) => {
-          const which = slotOf(Math.round(nativeEvent.contentOffset.x / width));
-          const pages = groups[which];
-
-          if (pages !== undefined) {
-            setPage(pages[0] ?? 0);
-          }
-        }}
-        renderItem={({ item }) => {
-          if (item.kind === 'next') {
-            return (
-              <View style={[styles.end, { height, width }]}>
-                <Words colour={INK} isCentred>
-                  {`Next: ${next?.title ?? ''}`}
-                </Words>
-                <Button
-                  tone="bright"
-                  onPress={() => {
-                    if (next !== undefined) {
-                      onChapter(next.id);
-                    }
-                  }}
-                >
-                  Read on
-                </Button>
-              </View>
-            );
-          }
-
-          const across = inside / item.pages.length;
-          const drawn = isRightToLeft ? [...item.pages].reverse() : item.pages;
-
-          return (
-            <ScrollView
-              style={{ height, width }}
-              maximumZoomScale={MOST_ZOOM}
-              minimumZoomScale={1}
-              bouncesZoom
-              centerContent
-              showsHorizontalScrollIndicator={false}
-              showsVerticalScrollIndicator={false}
-              scrollEventThrottle={32}
-              onScroll={({ nativeEvent }) => {
-                setIsZoomed(nativeEvent.zoomScale > ZOOMED_PAST);
-              }}
-            >
-              <Button
-                tone="bare"
-                label={
-                  item.pages.length > 1
-                    ? `Pages ${item.pages.map((one) => (one + 1).toString()).join(' and ')}`
-                    : `Page ${((item.pages[0] ?? 0) + 1).toString()}`
-                }
-                onPress={({ x }) => {
-                  const isLeft = x < width / 3;
-                  const isRight = x > (width * 2) / 3;
-
-                  if (isZoomed || (!isLeft && !isRight)) {
-                    setIsShowingChrome((was) => !was);
-
-                    return;
-                  }
-
-                  turnTo(showing + (isLeft === isRightToLeft ? 1 : -1), true);
-                }}
-              >
-                <View
-                  style={[
-                    styles.spread,
-                    { height, paddingLeft: room.left, paddingRight: room.right, width },
-                  ]}
-                >
-                  {drawn.map((one) => (
-                    <Image
-                      key={one}
-                      style={{ height, width: across }}
-                      resizeMode="contain"
-                      source={{
-                        uri: onThisServer(
-                          bookPageUrl(
-                            book.id,
-                            chapterId,
-                            one,
-                            Math.round(across * PixelRatio.get()),
-                          ),
-                        ),
-                      }}
-                      onLoad={({ nativeEvent }) => {
-                        const isWide = nativeEvent.source.width > nativeEvent.source.height;
-
-                        if (isWide && !wide.has(one)) {
-                          setWide((was) => new Set(was).add(one));
-                        }
-                      }}
-                      accessibilityIgnoresInvertColors
-                    />
-                  ))}
-                </View>
-              </Button>
-            </ScrollView>
-          );
-        }}
-      />
-
-      <AReaderPanel
-        isOpen={isPanelOpen}
-        title={book.title}
-        placesAre="Chapters"
-        places={ordered.map((one) => ({
-          id: one.id,
-          label: one.title,
-          depth: 0,
-          isHere: one.id === chapterId,
-        }))}
-        onPlace={(id) => {
-          setIsPanelOpen(false);
-
-          if (id !== chapterId) {
-            onChapter(id);
-          }
-        }}
-        onClose={() => {
-          setIsPanelOpen(false);
-        }}
-      >
-        <View style={styles.setting}>
-          <Words size="heading">Pages turn</Words>
-          <SegmentedRow
-            label="Which way the pages turn"
-            items={DIRECTIONS}
-            value={preferences.direction}
-            onSelect={(id) => {
-              const direction = DIRECTIONS.find((one) => one.id === id)?.id;
-
-              if (direction !== undefined) {
-                choose({ direction });
-              }
-            }}
-          />
-        </View>
-
-        <View style={styles.setting}>
-          <Words size="heading">Pages at once</Words>
-          <SegmentedRow
-            label="How many pages at once"
-            items={LAYOUTS}
-            value={preferences.isDouble ? 'two' : 'one'}
-            onSelect={(id) => {
-              choose({ isDouble: id === 'two' });
-            }}
-          />
-          <Words size="small" tone="muted">
-            Two pages at once turns the phone on its side.
-          </Words>
-        </View>
-
-        {preferences.isDouble ? (
-          <View style={styles.switch}>
-            <View style={styles.switchWords}>
-              <Words>Cover on its own</Words>
-              <Words size="small" tone="muted">
-                Pairs the pages after it as the printed book does.
-              </Words>
-            </View>
-            <Toggle
-              label="Cover on its own"
-              isOn={preferences.isOffset}
-              onToggle={(isOffset) => {
-                choose({ isOffset });
-              }}
-            />
-          </View>
-        ) : null}
-      </AReaderPanel>
+      {theBook}
+      {panel}
     </AReaderChrome>
   );
 };

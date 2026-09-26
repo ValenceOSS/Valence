@@ -4,6 +4,7 @@ type AGlassCircleProps = {
   of: AGlyph;
   label: string;
   onPress: () => void;
+  ink?: string;
 };
 
 export type { AGlassCircleProps };
