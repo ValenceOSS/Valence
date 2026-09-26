@@ -71,11 +71,17 @@ describe('AReaderRail', () => {
     const onPage = jest.fn();
 
     await render(aRail({ onPage }));
-    await fireEvent(theHostWith((one) => 'onLayout' in one.props), 'layout', {
-      nativeEvent: { layout: { width: 70, height: 400, x: 0, y: 0 } },
-    });
+    await fireEvent(
+      theHostWith((one) => 'onLayout' in one.props),
+      'layout',
+      {
+        nativeEvent: { layout: { width: 70, height: 400, x: 0, y: 0 } },
+      },
+    );
 
-    const column = theHostWith((one) => one.type === 'ViewManagerAdapter_ValencePageScrubber');
+    const column = theHostWith(
+      (one) => one.type === 'ViewManagerAdapter_ValencePageScrubber_PageScrubber',
+    );
 
     expect(column).toHaveProp('page', 1);
     expect(column).toHaveProp('pictures', PICTURES);
