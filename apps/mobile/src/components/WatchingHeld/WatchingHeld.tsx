@@ -16,7 +16,8 @@ const styles = StyleSheet.create({
 
 /**
  * Watching a film this phone keeps, with nothing asked of the server: played straight from the
- * file, with the system's own controls, from wherever it was left.
+ * file, with the system's own controls, from wherever it was left. Leaving the app carries on in
+ * a picture floating over everything else, and the lock screen shows it by name.
  *
  * Where somebody got to is remembered on the phone, and handed to the server the next time it
  * answers, as the web's offline player does.
@@ -27,10 +28,15 @@ const styles = StyleSheet.create({
 const WatchingHeld = ({ file, onDone }: WatchingHeldProps) => {
   const startAt =
     watchedOffline().find((one) => one.mediaId === file.mediaId)?.positionSeconds ?? 0;
-  const player = useVideoPlayer({ uri: sourceForAFile(file.downloadId) }, (ready) => {
-    ready.currentTime = startAt;
-    ready.play();
-  });
+  const player = useVideoPlayer(
+    { uri: sourceForAFile(file.downloadId), metadata: { title: file.title } },
+    (ready) => {
+      ready.showNowPlayingNotification = true;
+      ready.staysActiveInBackground = true;
+      ready.currentTime = startAt;
+      ready.play();
+    },
+  );
 
   useEffect(() => {
     const letGo = turnThisPhoneSideways();
@@ -53,7 +59,14 @@ const WatchingHeld = ({ file, onDone }: WatchingHeldProps) => {
 
   return (
     <View style={styles.whole}>
-      <VideoView style={styles.picture} player={player} nativeControls contentFit="contain" />
+      <VideoView
+        style={styles.picture}
+        player={player}
+        nativeControls
+        allowsPictureInPicture
+        startsPictureInPictureAutomatically
+        contentFit="contain"
+      />
       <BackArrow onBack={onDone} />
     </View>
   );

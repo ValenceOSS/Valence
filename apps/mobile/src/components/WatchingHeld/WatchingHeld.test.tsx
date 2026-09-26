@@ -2,6 +2,7 @@ import { render, userEvent } from '@testing-library/react-native';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
+import { theFakePlayer } from '@ValenceMobile/testing/theFakePlayer';
 import { WatchingHeld } from './WatchingHeld';
 
 jest.mock('@ValenceClient/downloads/keepingFiles', () => ({
@@ -36,5 +37,15 @@ describe('WatchingHeld', () => {
     await userEvent.press(drawn.getByRole('button', { name: 'Back' }));
 
     expect(onDone).toHaveBeenCalled();
+  });
+
+  it('shows the film by name on the lock screen and floats it when somebody leaves the app', async () => {
+    installPlatform(aFakePlatform());
+    await render(<WatchingHeld file={HELD} onDone={jest.fn()} />, { wrapper: CacheScope });
+
+    expect(theFakePlayer.showNowPlayingNotification).toBe(true);
+    expect(theFakePlayer.staysActiveInBackground).toBe(true);
+    expect(theFakePlayer.describedAs).toEqual({ title: 'Arrival' });
+    expect(theFakePlayer.floatsOnLeaving).toBe(true);
   });
 });

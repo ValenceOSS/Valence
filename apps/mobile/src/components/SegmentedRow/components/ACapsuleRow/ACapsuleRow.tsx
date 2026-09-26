@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Animated, Easing, LayoutAnimation, StyleSheet, View } from 'react-native';
+import { Animated, LayoutAnimation, StyleSheet, View } from 'react-native';
 import { AGlass } from '@ValenceMobile/components/AGlass/AGlass';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
@@ -7,6 +7,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { hasLiquidGlass } from '@ValenceMobile/platform/hasLiquidGlass';
 import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { ACapsuleRowProps } from './ACapsuleRow.types';
 
 const INSET = 4;
@@ -83,7 +84,7 @@ const ACapsuleRow = ({
     Animated.timing(seen, {
       toValue: isShown ? 1 : 0,
       duration: SHOWS_OVER,
-      easing: Easing.inOut(Easing.cubic),
+      easing: EASINGS.inOutCubic,
       useNativeDriver: true,
     }).start();
   }, [isShown, seen]);

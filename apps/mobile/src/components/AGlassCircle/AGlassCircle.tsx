@@ -28,8 +28,10 @@ const styles = StyleSheet.create({
  * @param of - The icon.
  * @param label - What pressing it does, for somebody who cannot see it.
  * @param onPress - Told it was pressed.
+ * @param ink - The colour of the icon on the glass, where what is behind the glass calls for one
+ *   other than the theme's.
  */
-const AGlassCircle = ({ of, label, onPress }: AGlassCircleProps) => {
+const AGlassCircle = ({ of, label, onPress, ink }: AGlassCircleProps) => {
   const colours = useTheColours();
 
   return (
@@ -37,7 +39,7 @@ const AGlassCircle = ({ of, label, onPress }: AGlassCircleProps) => {
       {hasLiquidGlass() ? (
         <View style={styles.glass}>
           <AGlass roundness={ROUND / 2} />
-          <Icon of={of} size={24} colour={colours.text} />
+          <Icon of={of} size={24} colour={ink ?? colours.text} />
         </View>
       ) : (
         <View style={styles.circle}>

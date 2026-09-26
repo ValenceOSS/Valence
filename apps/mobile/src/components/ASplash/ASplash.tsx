@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Animated, Easing, StyleSheet } from 'react-native';
+import { Animated, StyleSheet } from 'react-native';
 import mark from '@ValenceMobile/assets/valence-mark.png';
 import { theColours } from '@ValenceMobile/theme/theColours';
+import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { ASplashProps } from './ASplash.types';
 
 const MARK_WIDE = 100;
@@ -39,13 +40,13 @@ const ASplash = ({ isDone, onGone }: ASplashProps) => {
         Animated.timing(breath, {
           toValue: 1,
           duration: BREATHES_MS,
-          easing: Easing.inOut(Easing.sin),
+          easing: EASINGS.inOutSine,
           useNativeDriver: true,
         }),
         Animated.timing(breath, {
           toValue: 0,
           duration: BREATHES_MS,
-          easing: Easing.inOut(Easing.sin),
+          easing: EASINGS.inOutSine,
           useNativeDriver: true,
         }),
       ]),
@@ -66,7 +67,7 @@ const ASplash = ({ isDone, onGone }: ASplashProps) => {
     Animated.timing(leaving, {
       toValue: 1,
       duration: LEAVES_MS,
-      easing: Easing.in(Easing.cubic),
+      easing: EASINGS.inCubic,
       useNativeDriver: true,
     }).start();
 

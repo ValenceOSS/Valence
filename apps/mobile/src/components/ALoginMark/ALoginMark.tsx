@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, useWindowDimensions, View } from 'react-native';
+import { Animated, useWindowDimensions, View } from 'react-native';
 import { ACarriedMark } from '@ValenceMobile/components/ACarriedMark/ACarriedMark';
 import { useNotingTheMark } from '@ValenceMobile/components/ACarriedMark/useNotingTheMark';
 import { TheMark } from '@ValenceMobile/components/TheMark/TheMark';
 import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
 import { SPRINGS } from '@ValenceMobile/theme/SPRINGS';
+import { EASINGS } from '@ValenceMobile/theme/EASINGS';
+import type { ComponentRef } from 'react';
 import type { ALoginMarkProps } from './ALoginMark.types';
 
 const AS_BIG_AS = 2.9;
@@ -33,7 +35,7 @@ const ARRIVES_OVER = 700;
 const ALoginMark = ({ high, isIntroducing, settlesAfter }: ALoginMarkProps) => {
   const isStill = usePrefersStillness();
   const tall = useWindowDimensions().height;
-  const placed = useRef<View | null>(null);
+  const placed = useRef<ComponentRef<typeof View> | null>(null);
   const hasSettled = useRef(!isIntroducing);
   const slotAt = useRef<number | null>(null);
   const [showing] = useState(() => new Animated.Value(isIntroducing ? 0 : 1));
@@ -64,13 +66,13 @@ const ALoginMark = ({ high, isIntroducing, settlesAfter }: ALoginMarkProps) => {
       Animated.timing(showing, {
         toValue: 1,
         duration: ARRIVES_OVER,
-        easing: Easing.out(Easing.quad),
+        easing: EASINGS.outQuad,
         useNativeDriver: true,
       }),
       Animated.timing(size, {
         toValue: AS_BIG_AS,
         duration: ARRIVES_OVER,
-        easing: Easing.out(Easing.quad),
+        easing: EASINGS.outQuad,
         useNativeDriver: true,
       }),
     ]).start();

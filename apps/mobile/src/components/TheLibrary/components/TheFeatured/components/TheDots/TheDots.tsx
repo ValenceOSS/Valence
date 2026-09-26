@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Animated, Easing, StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { TheDotsProps } from './TheDots.types';
 
 const DOT = 6;
@@ -72,7 +73,7 @@ const TheDots = ({ count, at, filled }: TheDotsProps) => {
       Animated.timing(width, {
         toValue,
         duration: GROWS_OVER,
-        easing: Easing.out(Easing.cubic),
+        easing: EASINGS.outCubic,
         useNativeDriver: false,
       }).start();
     });

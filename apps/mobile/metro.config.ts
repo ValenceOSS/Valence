@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { z } from 'zod';
-import { getDefaultConfig } from 'expo/metro-config.js';
-import type { MetroConfig } from 'expo/metro-config.js';
+import { getDefaultConfig } from 'expo/metro-config';
+import type { MetroConfig } from 'expo/metro-config';
 
 const ONE_COPY = ['react', '@tanstack/react-query'] as const;
 

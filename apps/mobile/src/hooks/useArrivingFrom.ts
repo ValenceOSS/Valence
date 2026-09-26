@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { Animated } from 'react-native';
 import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
 import { SPRINGS } from '@ValenceMobile/theme/SPRINGS';
-import type { RefObject } from 'react';
+import type { ComponentRef, RefObject } from 'react';
 import type { View } from 'react-native';
 import type { ARectOnScreen } from './useArrivingFrom.types';
 
@@ -33,7 +33,7 @@ const useArrivingFrom = (
   isSquareAtTop = false,
   followsItsPlace = false,
 ): {
-  placed: RefObject<View | null>;
+  placed: RefObject<ComponentRef<typeof View> | null>;
   onPlaced: () => void;
   flying: {
     opacity: Animated.Value;
@@ -45,7 +45,7 @@ const useArrivingFrom = (
   };
 } => {
   const isStill = usePrefersStillness();
-  const placed = useRef<View | null>(null);
+  const placed = useRef<ComponentRef<typeof View> | null>(null);
   const hasLanded = useRef(false);
   const lastAt = useRef<ARectOnScreen | null>(null);
   const [shown] = useState(() => new Animated.Value(mayArrive ? 0 : 1));

@@ -2,7 +2,7 @@ import { Info } from '@keyline-icons/react-native';
 import { Play as PlayFilled } from '@keyline-icons/react-native/fill';
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Animated, Easing, StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { qualityBadges } from '@ValenceClient/library/qualityBadges';
 import { APreview } from '@ValenceMobile/components/APreview/APreview';
@@ -16,11 +16,10 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { howLongItRuns } from '@ValenceMobile/components/ATitle/howLongItRuns';
 import { useSoundPreference } from '@ValenceMobile/hooks/useSoundPreference';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { AFeatureProps } from './AFeature.types';
 
 const TELL_FOR = 8000;
-
-const TALL = 1.3;
 
 const LOGO_HIGH = 76;
 
@@ -109,6 +108,8 @@ const styles = StyleSheet.create({
  *
  * @param media - The title.
  * @param width - How wide to draw it.
+ * @param height - How tall to draw it: a poster on a phone held upright, wider than tall on a wide
+ *   screen.
  * @param isShowing - Whether it is the one in view.
  * @param resumeAt - Where somebody stopped in it, if they did.
  * @param onEnded - Told when its clip has played through.
@@ -119,6 +120,7 @@ const styles = StyleSheet.create({
 const AFeature = ({
   media,
   width,
+  height,
   isShowing,
   resumeAt,
   onEnded,
@@ -145,14 +147,14 @@ const AFeature = ({
         Animated.timing(arriving, {
           toValue: ARRIVES_FROM,
           duration: LEAVES_OVER,
-          easing: Easing.inOut(Easing.quad),
+          easing: EASINGS.inOutQuad,
           useNativeDriver: true,
         }),
         ...rising.map((part) =>
           Animated.timing(part, {
             toValue: 0,
             duration: WORDS_LEAVE_OVER,
-            easing: Easing.inOut(Easing.quad),
+            easing: EASINGS.inOutQuad,
             useNativeDriver: true,
           }),
         ),
@@ -166,7 +168,7 @@ const AFeature = ({
       Animated.timing(arriving, {
         toValue: 1,
         duration: ARRIVES_OVER,
-        easing: Easing.out(Easing.cubic),
+        easing: EASINGS.outCubic,
         useNativeDriver: true,
       }),
       Animated.stagger(
@@ -175,7 +177,7 @@ const AFeature = ({
           Animated.timing(part, {
             toValue: 1,
             duration: RISES_OVER,
-            easing: Easing.out(Easing.cubic),
+            easing: EASINGS.outCubic,
             useNativeDriver: true,
           }),
         ),
@@ -188,7 +190,7 @@ const AFeature = ({
       Animated.timing(telling, {
         toValue: 0,
         duration: FOLDS_OVER,
-        easing: Easing.inOut(Easing.cubic),
+        easing: EASINGS.inOutCubic,
         useNativeDriver: false,
       }).start(() => {
         setIsTelling(false);
@@ -235,17 +237,11 @@ const AFeature = ({
     <Button tone="bare" label={title} onPress={onMoreInfo}>
       <View
         collapsable={false}
-        style={[
-          styles.lifted,
-          { backgroundColor: colours.surfaceRaised, height: width * TALL, width },
-        ]}
+        style={[styles.lifted, { backgroundColor: colours.surfaceRaised, height, width }]}
       >
         <View
           collapsable={false}
-          style={[
-            styles.whole,
-            { backgroundColor: colours.surfaceRaised, height: width * TALL, width },
-          ]}
+          style={[styles.whole, { backgroundColor: colours.surfaceRaised, height, width }]}
         >
           <Animated.View
             collapsable={false}

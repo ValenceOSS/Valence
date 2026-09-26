@@ -1,8 +1,10 @@
 import { Text } from 'react-native';
-import { render, userEvent } from '@testing-library/react-native';
+import { render, screen, userEvent } from '@testing-library/react-native';
 import { AReaderChrome } from './AReaderChrome';
 
-const aChrome = (isShown: boolean, onBack = jest.fn(), onPanel = jest.fn()) => (
+const BLUR = 'ViewManagerAdapter_ValenceBlur';
+
+const aChrome = (isShown: boolean, onBack = jest.fn(), onPanel = jest.fn(), isFrosted = false) => (
   <AReaderChrome
     title="Dune"
     place="Book One"
@@ -13,6 +15,7 @@ const aChrome = (isShown: boolean, onBack = jest.fn(), onPanel = jest.fn()) => (
     onBack={onBack}
     onPanel={onPanel}
     footer={<Text>42% read</Text>}
+    isFrosted={isFrosted}
   >
     <Text>The page</Text>
   </AReaderChrome>
@@ -38,5 +41,17 @@ describe('AReaderChrome', () => {
 
     expect(onBack).toHaveBeenCalled();
     expect(onPanel).toHaveBeenCalled();
+  });
+
+  it('draws the page blurred behind both bars when they are frosted', async () => {
+    await render(aChrome(true, jest.fn(), jest.fn(), true));
+
+    expect(screen.container.queryAll((one) => one.type === BLUR)).toHaveLength(2);
+  });
+
+  it('draws no blur behind solid bars', async () => {
+    await render(aChrome(true));
+
+    expect(screen.container.queryAll((one) => one.type === BLUR)).toHaveLength(0);
   });
 });

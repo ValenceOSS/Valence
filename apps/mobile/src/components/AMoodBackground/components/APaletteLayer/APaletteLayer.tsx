@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Animated, Easing, StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { APaletteLayerProps } from './APaletteLayer.types';
 
 const STRENGTH_BY_ROW = [0.36, 0.28, 0.22] as const;
@@ -31,7 +32,7 @@ const APaletteLayer = ({ palette, isLeaving, isThereAlready = false }: APaletteL
     const fading = Animated.timing(shown, {
       toValue: isLeaving ? 0 : 1,
       duration: COMES_IN_OVER,
-      easing: Easing.inOut(Easing.quad),
+      easing: EASINGS.inOutQuad,
       useNativeDriver: true,
     });
 

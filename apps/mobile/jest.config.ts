@@ -70,6 +70,7 @@ const config: Config = {
     '^.+\\.mjs$': ['babel-jest', { presets: ['babel-preset-expo'] }],
   },
   moduleNameMapper: {
+    '^react-native/asset-registry$': '<rootDir>/node_modules/react-native/src/asset-registry.js',
     '^react$': '<rootDir>/node_modules/react',
     '^react/(.*)$': '<rootDir>/node_modules/react/$1',
     '^@tanstack/react-query$': '<rootDir>/node_modules/@tanstack/react-query',

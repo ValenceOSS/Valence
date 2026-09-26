@@ -1,13 +1,14 @@
 import { memo, useEffect, useState } from 'react';
-import { Animated, Easing } from 'react-native';
+import { Animated } from 'react-native';
 import { ASoftFocus } from '@ValenceMobile/components/ASoftFocus/ASoftFocus';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { SPRINGS } from '@ValenceMobile/theme/SPRINGS';
+import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { ALyricLineProps } from './ALyricLine.types';
 
 const SETTLES = { ...SPRINGS.liquid, overshootClamping: true, useNativeDriver: true } as const;
 
-const LIGHTS = { duration: 320, easing: Easing.out(Easing.cubic), useNativeDriver: true } as const;
+const LIGHTS = { duration: 320, easing: EASINGS.outCubic, useNativeDriver: true } as const;
 
 const BLUR_FOR_SMALLER_WORDS = 0.5;
 

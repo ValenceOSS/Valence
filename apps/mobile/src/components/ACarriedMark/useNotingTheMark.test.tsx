@@ -3,17 +3,12 @@ import { THE_MARKS_PLACE } from '@ValenceMobile/components/ACarriedMark/THE_MARK
 import { makeTheMarksWay } from '@ValenceMobile/components/ACarriedMark/makeTheMarksWay';
 import { useNotingTheMark } from './useNotingTheMark';
 import type { ReactNode } from 'react';
-import type { View } from 'react-native';
 
-const aPlacedMark = (): View => {
-  const placed = new (jest.requireActual<{ View: new () => View }>('react-native').View)();
-
-  placed.measureInWindow = (told) => {
+const aPlacedMark = () => ({
+  measureInWindow: (told: (x: number, y: number, width: number, height: number) => void) => {
     told(10, 20, 100, 40);
-  };
-
-  return placed;
-};
+  },
+});
 
 describe('useNotingTheMark', () => {
   it('notes the mark as shown, and hands on where it sat when it goes', async () => {

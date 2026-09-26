@@ -243,9 +243,11 @@ const TheHomePage = ({
               detail={howToFillIt('every library', false)}
             />
           )
-        ) : null
+        ) : undefined
       }
-      ListFooterComponent={isReadingMore ? <ActivityIndicator color={colours.textMuted} /> : null}
+      ListFooterComponent={
+        isReadingMore ? <ActivityIndicator color={colours.textMuted} /> : undefined
+      }
       onEndReached={onEndReached}
       onEndReachedThreshold={1.5}
       contentContainerStyle={spacing}

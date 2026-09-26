@@ -5,6 +5,7 @@ import type { VideoPlayer } from 'expo-video';
 type AFeatureProps = {
   media: MediaSummary;
   width: number;
+  height: number;
   isShowing: boolean;
   resumeAt: number | null;
   onEnded: () => void;

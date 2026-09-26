@@ -4,6 +4,7 @@ import { lyricStanding } from '@ValenceClient/music/lyricStanding';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { ALyricLine } from '@ValenceMobile/components/TheMusicPlayer/components/TheLyrics/components/ALyricLine/ALyricLine';
 import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
+import type { ComponentRef } from 'react';
 import type { TheSungLinesProps } from './TheSungLines.types';
 
 const LEAVES_A_READER_ALONE_FOR = 4000;
@@ -29,7 +30,7 @@ const styles = StyleSheet.create({
  */
 const TheLines = ({ lines, isSynced, sung, onSeek }: TheSungLinesProps) => {
   const isStill = usePrefersStillness();
-  const scrolling = useRef<ScrollView>(null);
+  const scrolling = useRef<ComponentRef<typeof ScrollView>>(null);
   const [places, setPlaces] = useState<ReadonlyMap<number, number>>(new Map());
   const [lastTouchedAt, setLastTouchedAt] = useState(0);
   const sungAt = places.get(sung);

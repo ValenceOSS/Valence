@@ -8,14 +8,7 @@ import {
 } from '@keyline-icons/react-native/fill';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
-import {
-  ActivityIndicator,
-  Animated,
-  Easing,
-  StyleSheet,
-  View,
-  useWindowDimensions,
-} from 'react-native';
+import { ActivityIndicator, Animated, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
@@ -51,10 +44,12 @@ import { useIsOnTop } from '@ValenceMobile/hooks/useIsOnTop';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ABlur } from '@ValenceMobile/components/ABlur/ABlur';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
+import { useTheSideStrip } from '@ValenceMobile/hooks/useTheSideStrip';
 import { theColours } from '@ValenceMobile/theme/theColours';
 import type { ReactNode } from 'react';
 import type { VideoPlayer } from 'expo-video';
 import type { ALight } from '@ValenceMobile/components/AMoodBackground/AMoodBackground.types';
+import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ShowSummary } from '@ValenceContracts/schemas/Show';
 import type { TheLibraryProps } from './TheLibrary.types';
@@ -219,7 +214,7 @@ const TheLibrary = ({
     Animated.timing(searchness, {
       toValue: isSearching ? 1 : 0,
       duration: BAR_MOVES_OVER,
-      easing: Easing.inOut(Easing.cubic),
+      easing: EASINGS.inOutCubic,
       useNativeDriver: true,
     }).start();
   }, [isSearching, searchness]);
@@ -235,7 +230,7 @@ const TheLibrary = ({
     Animated.timing(barAway, {
       toValue: isAway ? 1 : 0,
       duration: BAR_MOVES_OVER,
-      easing: Easing.out(Easing.cubic),
+      easing: EASINGS.outCubic,
       useNativeDriver: true,
     }).start();
   }, [isAway, barAway]);
@@ -268,6 +263,7 @@ const TheLibrary = ({
   const [scrolled, setScrolled] = useState<Readonly<Record<string, boolean>>>({});
   const isPast = scrolled[isSearching ? SEARCH : part] === true;
   const room = useSafeAreaInsets();
+  const strip = useTheSideStrip();
   const [arriving] = useState(() => new Animated.Value(0));
   const isOnTop = useIsOnTop();
 
@@ -382,7 +378,17 @@ const TheLibrary = ({
   );
 
   const bar = (
-    <View style={[styles.fixed, { paddingTop: room.top + SCREEN_EDGE }]} pointerEvents="box-none">
+    <View
+      style={[
+        styles.fixed,
+        {
+          paddingLeft: strip?.side === 'left' ? strip.breadth : 0,
+          paddingRight: strip?.side === 'right' ? strip.breadth : 0,
+          paddingTop: room.top + SCREEN_EDGE,
+        },
+      ]}
+      pointerEvents="box-none"
+    >
       <Animated.View
         collapsable={false}
         pointerEvents="none"

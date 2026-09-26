@@ -11,6 +11,7 @@ type AReaderChromeProps = {
   onPanel: () => void;
   footer: ReactNode;
   children: ReactNode;
+  isFrosted?: boolean;
 };
 
 export type { AReaderChromeProps };

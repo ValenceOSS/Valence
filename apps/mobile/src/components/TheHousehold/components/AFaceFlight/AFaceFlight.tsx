@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Animated, Easing, StyleSheet, Text } from 'react-native';
+import { Animated, StyleSheet, Text } from 'react-native';
 import { profileInitial } from '@ValenceContracts/schemas/ViewerProfile';
 import { thePictureFor } from '@ValenceMobile/components/AFace/thePictureFor';
 import { APicture } from '@ValenceMobile/components/APicture/APicture';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
+import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { AFaceFlightProps } from './AFaceFlight.types';
 
 const LIFTS_BY = 18;
@@ -55,20 +56,20 @@ const AFaceFlight = ({ profile, from, to, onLanded }: AFaceFlightProps) => {
       Animated.timing(moved.y, {
         toValue: -LIFTS_BY,
         duration: LIFTS_OVER,
-        easing: Easing.out(Easing.cubic),
+        easing: EASINGS.outCubic,
         useNativeDriver: true,
       }),
       Animated.timing(grown, {
         toValue: LIFTS_TO,
         duration: LIFTS_OVER,
-        easing: Easing.out(Easing.cubic),
+        easing: EASINGS.outCubic,
         useNativeDriver: true,
       }),
     ]).start();
     Animated.timing(round, {
       toValue: from.width / 2,
       duration: LIFTS_OVER,
-      easing: Easing.inOut(Easing.cubic),
+      easing: EASINGS.inOutCubic,
       useNativeDriver: false,
     }).start();
 

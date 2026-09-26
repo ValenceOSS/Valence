@@ -7,7 +7,9 @@ type TimeUpdate = {
   currentOffsetFromLive: null;
 };
 
-type WhatAPlayerSays = PlayingChange | TimeUpdate;
+type SourceLoaded = { loaded: true };
+
+type WhatAPlayerSays = PlayingChange | TimeUpdate | SourceLoaded;
 
 type FakePlayer = {
   play: () => void;
@@ -22,6 +24,8 @@ type FakePlayer = {
   staysActiveInBackground: boolean;
   source: string | null;
   sentWith: Record<string, string> | null;
+  describedAs: { title?: string; artwork?: string } | null;
+  floatsOnLeaving: boolean;
   addListener: (of: string, told: (said: WhatAPlayerSays) => void) => { remove: () => void };
   say: (of: string, said: WhatAPlayerSays) => void;
 };
@@ -47,6 +51,8 @@ const theFakePlayer: FakePlayer = {
   staysActiveInBackground: false,
   source: null,
   sentWith: null,
+  describedAs: null,
+  floatsOnLeaving: false,
   addListener: (of, told) => {
     listening.set(of, [...(listening.get(of) ?? []), told]);
 
@@ -80,6 +86,8 @@ const forgetTheFakePlayer = (): void => {
   theFakePlayer.staysActiveInBackground = false;
   theFakePlayer.source = null;
   theFakePlayer.sentWith = null;
+  theFakePlayer.describedAs = null;
+  theFakePlayer.floatsOnLeaving = false;
 };
 
 export type { FakePlayer, PlayingChange, TimeUpdate, WhatAPlayerSays };

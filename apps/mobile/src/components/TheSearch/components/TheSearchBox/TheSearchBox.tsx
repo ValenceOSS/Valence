@@ -1,12 +1,13 @@
 import { Search } from '@keyline-icons/react-native';
 import { useEffect, useState } from 'react';
-import { Animated, Easing, StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 import { useSettled } from '@ValenceClient/timing/useSettled';
 import { AGlass } from '@ValenceMobile/components/AGlass/AGlass';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { TextField } from '@ValenceMobile/components/TextField/TextField';
 import { hasLiquidGlass } from '@ValenceMobile/platform/hasLiquidGlass';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { TheSearchBoxProps } from './TheSearchBox.types';
 
 const HOLD_STILL_FOR = 250;
@@ -52,7 +53,7 @@ const TheSearchBox = ({
     Animated.timing(seen, {
       toValue: isShown ? 1 : 0,
       duration: SHOWS_OVER,
-      easing: Easing.inOut(Easing.cubic),
+      easing: EASINGS.inOutCubic,
       useNativeDriver: true,
     }).start();
   }, [isShown, seen]);

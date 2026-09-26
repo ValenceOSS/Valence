@@ -1,7 +1,9 @@
 import { lockAsync, OrientationLock } from 'expo-screen-orientation';
 import { settleTheOrientation } from './settleTheOrientation';
+import { holdAWindowOf } from '@ValenceMobile/testing/holdAWindowOf';
 
 beforeEach(() => {
+  holdAWindowOf(393, 852);
   jest.mocked(lockAsync).mockReset().mockResolvedValue();
 });
 
@@ -52,6 +54,31 @@ describe('settleTheOrientation', () => {
     expect(lockAsync).toHaveBeenLastCalledWith(OrientationLock.LANDSCAPE);
 
     await settleTheOrientation(-1);
+  });
+
+  it('lets a screen roomy both ways be held however it comes, even with a film asking', async () => {
+    holdAWindowOf(871, 669);
+
+    await settleTheOrientation(1);
+
+    expect(lockAsync).toHaveBeenLastCalledWith(OrientationLock.DEFAULT);
+
+    await settleTheOrientation(-1);
+  });
+
+  it('never locks a folding phone, which the system turns with the hand', async () => {
+    jest.replaceProperty(
+      jest.requireMock<{ initialWindowMetrics: object }>('react-native-safe-area-context'),
+      'initialWindowMetrics',
+      {
+        frame: { height: 678, width: 466, x: 0, y: 0 },
+        insets: { bottom: 34, left: 0, right: 84, top: 0 },
+      },
+    );
+
+    await settleTheOrientation(0);
+
+    expect(lockAsync).toHaveBeenLastCalledWith(OrientationLock.DEFAULT);
   });
 
   it('carries on where the phone would not be told', async () => {

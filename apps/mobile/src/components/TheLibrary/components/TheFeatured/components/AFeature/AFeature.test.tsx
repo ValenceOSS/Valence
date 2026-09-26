@@ -14,6 +14,7 @@ describe('AFeature', () => {
       <AFeature
         media={aTitle()}
         width={390}
+        height={507}
         isShowing={false}
         resumeAt={null}
         onEnded={jest.fn()}
