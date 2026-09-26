@@ -2,7 +2,11 @@ import { theFakePlayer as mockPlayer } from '@ValenceMobile/testing/theFakePlaye
 import type { FakePlayer } from '@ValenceMobile/testing/theFakePlayer';
 
 import mockAsyncStorage from '@react-native-async-storage/async-storage/jest/async-storage-mock';
-import { createContext as mockCreateContext, useEffect as mockUseEffect } from 'react';
+import {
+  createContext as mockCreateContext,
+  useEffect as mockUseEffect,
+  useState as mockUseState,
+} from 'react';
 import type { ReactNode } from 'react';
 
 jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
@@ -16,6 +20,7 @@ jest.mock('react-native-safe-area-context', () => {
     SafeAreaInsetsContext: mockCreateContext(room),
     useSafeAreaInsets: () => room,
     useSafeAreaFrame: () => ({ height: 852, width: 393, x: 0, y: 0 }),
+    initialWindowMetrics: { frame: { height: 852, width: 393, x: 0, y: 0 }, insets: room },
   };
 });
 
@@ -36,7 +41,7 @@ jest.mock('expo-crypto', () => ({
 
 jest.mock('expo-screen-orientation', () => ({
   lockAsync: jest.fn(() => Promise.resolve()),
-  OrientationLock: { ALL: 1, PORTRAIT_UP: 3, LANDSCAPE: 5, LANDSCAPE_LEFT: 6 },
+  OrientationLock: { DEFAULT: 0, ALL: 1, PORTRAIT_UP: 3, LANDSCAPE: 5, LANDSCAPE_LEFT: 6 },
 }));
 
 jest.mock('expo', () => ({
@@ -77,16 +82,41 @@ jest.mock('@react-native-cookies/cookies', () => ({
 
 jest.mock('expo-video', () => ({
   useVideoPlayer: (
-    source: { uri: string; headers?: Record<string, string> } | null,
+    source: {
+      uri: string;
+      headers?: Record<string, string>;
+      metadata?: { title?: string; artwork?: string };
+    } | null,
     ready?: (player: FakePlayer) => void,
   ) => {
-    if (source !== null && source.uri !== mockPlayer.source) {
+    mockUseState(() => {
+      ready?.(mockPlayer);
+
+      return true;
+    });
+
+    mockUseEffect(() => {
+      if (source === null) {
+        return;
+      }
+
       mockPlayer.source = source.uri;
       mockPlayer.sentWith = source.headers ?? null;
-      ready?.(mockPlayer);
-    }
+      mockPlayer.describedAs = source.metadata ?? null;
+      void Promise.resolve().then(() => {
+        mockPlayer.say('sourceLoad', { loaded: true });
+      });
+    }, [source?.uri]);
 
     return mockPlayer;
   },
-  VideoView: () => null,
+  VideoView: ({
+    startsPictureInPictureAutomatically,
+  }: {
+    startsPictureInPictureAutomatically?: boolean;
+  }) => {
+    mockPlayer.floatsOnLeaving = startsPictureInPictureAutomatically === true;
+
+    return null;
+  },
 }));

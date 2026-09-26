@@ -1,8 +1,10 @@
 import { lockAsync, OrientationLock } from 'expo-screen-orientation';
 import { holdThisPhoneUpright } from './holdThisPhoneUpright';
 import { turnThisPhoneSideways } from './turnThisPhoneSideways';
+import { holdAWindowOf } from '@ValenceMobile/testing/holdAWindowOf';
 
 beforeEach(() => {
+  holdAWindowOf(393, 852);
   jest.mocked(lockAsync).mockReset().mockResolvedValue();
 });
 
