@@ -6,7 +6,7 @@ import type { Household } from '@ValenceContracts/schemas/Household';
 const HOUSEHOLD: Household = {
   name: 'The Morgans',
   colour: '#3ac47d',
-  avatar: { kind: 'photo', isVideo: false },
+  avatar: { kind: 'photo', isVideo: false, frame: null },
   updatedAt: '2026-09-18T00:00:00.000Z',
 };
 
@@ -32,7 +32,9 @@ describe('HouseholdFace', () => {
   });
 
   it('falls back to the letter of the household name', () => {
-    render(<HouseholdFace household={{ ...HOUSEHOLD, avatar: { kind: 'initial' } }} />);
+    render(
+      <HouseholdFace household={{ ...HOUSEHOLD, avatar: { kind: 'initial', font: 'gilroy' } }} />,
+    );
 
     expect(screen.getByText('T')).toBeInTheDocument();
   });

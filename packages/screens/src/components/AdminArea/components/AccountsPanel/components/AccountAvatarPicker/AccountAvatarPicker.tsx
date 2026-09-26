@@ -52,7 +52,7 @@ const AccountAvatarPicker = ({ accountId, face, draft, onDraft }: AccountAvatarP
             onPick={(file) => {
               onDraft({
                 photo: file,
-                avatar: { kind: 'photo', isVideo: file.type.startsWith('video/') },
+                avatar: { kind: 'photo', isVideo: file.type.startsWith('video/'), frame: null },
               });
             }}
           >
@@ -98,7 +98,7 @@ const AccountAvatarPicker = ({ accountId, face, draft, onDraft }: AccountAvatarP
             isIconOnly
             label="Use their initial instead"
             onClick={() => {
-              onDraft({ avatar: { kind: 'initial' }, photo: null });
+              onDraft({ avatar: { kind: 'initial', font: 'gilroy' }, photo: null });
             }}
           >
             <Icon of={RefreshCwIcon} size={16} />

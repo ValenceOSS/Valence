@@ -24,7 +24,7 @@ const renderSetup = (ui: ReactElement) => render(ui, { wrapper: CacheScope });
 const HOUSEHOLD = {
   name: 'Dan',
   colour: '#3ac47d' as const,
-  avatar: { kind: 'initial' as const },
+  avatar: { kind: 'initial' as const, font: 'gilroy' as const },
   updatedAt: '2026-09-18T00:00:00.000Z',
 };
 

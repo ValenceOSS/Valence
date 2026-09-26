@@ -1,12 +1,18 @@
 import { useEffect, useState } from 'react';
 import { cn } from '@ValenceUI/cn';
+import { Orb } from '@ValenceUI/Orb';
+import { SketchPicture } from '@ValenceScreens/components/SketchPicture/SketchPicture';
+import { ORB_VARIANTS } from '@ValenceUI/orbs/ORB_VARIANTS';
 import { profileInitial } from '@ValenceContracts/schemas/ViewerProfile';
+import { framedPicture } from '@ValenceScreens/library/framedPicture';
+import { LETTER_FONT_LOOKS } from '@ValenceScreens/library/LETTER_FONT_LOOKS';
+import { inkFor } from '@ValenceScreens/library/inkFor';
 import type { FaceCircleProps } from './FaceCircle.types';
 
 /**
- * Draws a name, a colour and an avatar as a circle — a photograph, a drawn avatar, or an initial —
- * and shows a picture being uploaded before the server has taken it, so choosing one feels
- * immediate.
+ * Draws a name, a colour and an avatar as a circle — a photograph sat in its frame, a drawn
+ * avatar, an orb moving live, or an initial — and shows a picture being uploaded before the server
+ * has taken it, so choosing one feels immediate.
  *
  * A picture the server cannot produce falls back to the initial. Whatever is being drawn says it
  * has one whenever a filename is stored against it, and the file behind that name can be gone — a
@@ -62,18 +68,34 @@ const FaceCircle = ({
       : pending?.type.startsWith('video/') === true;
   const address = chosen ?? source;
   const showsPicture = chosen !== null || (avatar.kind !== 'initial' && !isMissing);
+  const orb =
+    avatar.kind === 'orb' ? ORB_VARIANTS.find((variant) => variant.key === avatar.orb) : undefined;
+  const frame = chosen === null && avatar.kind === 'photo' ? framedPicture(avatar.frame) : {};
+  const letter = avatar.kind === 'initial' ? LETTER_FONT_LOOKS[avatar.font] : null;
 
   return (
     <span
-      style={{ backgroundColor: showsPicture ? undefined : colour }}
+      style={{
+        backgroundColor: showsPicture ? undefined : colour,
+        ...(letter === null ? {} : { fontFamily: letter.family, fontWeight: letter.weight }),
+      }}
       className={cn(
-        'flex items-center justify-center overflow-hidden bg-subtle font-semibold text-text',
+        'flex items-center justify-center overflow-hidden bg-subtle font-semibold',
+        !showsPicture && inkFor(colour) === 'dark' ? 'text-letter-dark' : 'text-letter-light',
         shape === 'circle' ? 'rounded-full' : 'rounded-lg',
         isLifted && 'shadow-lg',
         className,
       )}
     >
-      {!showsPicture ? (
+      {orb !== undefined && avatar.kind === 'orb' ? (
+        <Orb
+          variant={orb}
+          look={{ params: avatar.params, colours: avatar.colours }}
+          className="h-full w-full"
+        />
+      ) : avatar.kind === 'sketch' ? (
+        <SketchPicture scene={avatar.scene} className="h-full w-full" />
+      ) : !showsPicture ? (
         profileInitial(name)
       ) : isMoving ? (
         <video
@@ -83,6 +105,7 @@ const FaceCircle = ({
           loop
           playsInline
           aria-hidden
+          style={frame}
           className="h-full w-full object-cover"
           onError={() => {
             setIsMissing(true);
@@ -92,6 +115,7 @@ const FaceCircle = ({
         <img
           src={address}
           alt=""
+          style={frame}
           className="h-full w-full object-cover"
           onError={() => {
             setIsMissing(true);
