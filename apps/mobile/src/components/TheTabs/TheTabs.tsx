@@ -151,8 +151,12 @@ const TheTabs = ({
                     <View
                       collapsable={false}
                       style={isFaceArriving ? styles.leftOut : null}
-                      onLayout={(event) => {
-                        event.currentTarget.measureInWindow((x, y, width, height) => {
+                      onLayout={({ currentTarget }) => {
+                        if (typeof currentTarget === 'number') {
+                          return;
+                        }
+
+                        currentTarget.measureInWindow((x, y, width, height) => {
                           onFaceAt?.({ x, y, width, height });
                         });
                       }}

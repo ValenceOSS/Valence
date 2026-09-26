@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Animated, Easing, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Animated, StyleSheet, View, useWindowDimensions } from 'react-native';
+import type { ComponentRef } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent, ScrollView } from 'react-native';
 import { showIdOf } from '@ValenceClient/library/showIdOf';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
@@ -11,6 +12,7 @@ import { AFeature } from '@ValenceMobile/components/TheLibrary/components/TheFea
 import { TheDots } from '@ValenceMobile/components/TheLibrary/components/TheFeatured/components/TheDots/TheDots';
 import { useTheSideStrip } from '@ValenceMobile/hooks/useTheSideStrip';
 import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
+import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { TheFeaturedProps } from './TheFeatured.types';
 
 const GAP = 12;
@@ -63,7 +65,7 @@ const fillOn = (filled: Animated.Value, from: number, overMs: number): void => {
   Animated.timing(filled, {
     toValue: 1,
     duration: Math.max(overMs, 0),
-    easing: Easing.linear,
+    easing: EASINGS.linear,
     useNativeDriver: true,
   }).start();
 };
@@ -116,7 +118,7 @@ const TheFeaturedTitles = ({
       }),
     [items, count, lead],
   );
-  const pager = useRef<ScrollView>(null);
+  const pager = useRef<ComponentRef<typeof ScrollView>>(null);
   const tallness = width > height ? TALL_ON_A_WIDE_SCREEN : TALL_ON_A_PHONE;
   const across = Math.min(
     width - (PEEK + GAP) * 2,

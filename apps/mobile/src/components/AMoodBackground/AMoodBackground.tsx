@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Animated, Easing, StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 import { HOUSE_LIGHTS } from '@ValenceCore/tokens/houseLights';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import { APaletteLayer } from '@ValenceMobile/components/AMoodBackground/components/APaletteLayer/APaletteLayer';
+import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { ALight, AMoodBackgroundProps } from './AMoodBackground.types';
 
 const BLOOMS = [
@@ -81,7 +82,7 @@ const AMoodBackground = ({ lights = NO_LIGHTS, palette = NO_PALETTE }: AMoodBack
     Animated.timing(paletted, {
       toValue: paletteKey === '' ? 0 : 1,
       duration: CHANGES_OVER,
-      easing: Easing.out(Easing.cubic),
+      easing: EASINGS.outCubic,
       useNativeDriver: true,
     }).start();
 
@@ -113,7 +114,7 @@ const AMoodBackground = ({ lights = NO_LIGHTS, palette = NO_PALETTE }: AMoodBack
     Animated.timing(lit, {
       toValue: chosen === null ? 0 : 1,
       duration: CHANGES_OVER,
-      easing: Easing.out(Easing.cubic),
+      easing: EASINGS.outCubic,
       useNativeDriver: true,
     }).start();
   }, [chosen, lit]);

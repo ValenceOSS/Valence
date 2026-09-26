@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import {
   ActivityIndicator,
   Animated,
-  Easing,
   Linking,
   PanResponder,
   ScrollView,
@@ -37,6 +36,8 @@ import { Slider } from '@ValenceMobile/components/Slider/Slider';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { EASINGS } from '@ValenceMobile/theme/EASINGS';
+import type { ComponentRef } from 'react';
 import type { TextPreferences } from '@ValenceClient/books/textPreferences';
 import type { ATextReaderProps } from './ATextReader.types';
 
@@ -48,9 +49,9 @@ const A_SWIPE = 40;
 
 const SLIDES_BY = 0.12;
 
-const LEAVES = { duration: 110, easing: Easing.in(Easing.quad), useNativeDriver: true } as const;
+const LEAVES = { duration: 110, easing: EASINGS.inQuad, useNativeDriver: true } as const;
 
-const ARRIVES = { duration: 200, easing: Easing.out(Easing.cubic), useNativeDriver: true } as const;
+const ARRIVES = { duration: 200, easing: EASINGS.outCubic, useNativeDriver: true } as const;
 
 const NAMES: Readonly<Record<string, string>> = {
   small: 'Small',
@@ -131,7 +132,7 @@ const ATextReader = ({
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [settings, setSettings] = useState(() => readTextPreferences(book.id));
   const [sliding] = useState(() => new Animated.Value(0));
-  const scrolling = useRef<ScrollView>(null);
+  const scrolling = useRef<ComponentRef<typeof ScrollView>>(null);
   const colours = READING_PAGES[settings.page];
   const size = TEXT_LOOK.size[settings.size];
   const lineHeight = size * TEXT_LOOK.leading[settings.spacing];

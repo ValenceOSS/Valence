@@ -2,7 +2,7 @@ import { Info } from '@keyline-icons/react-native';
 import { Play as PlayFilled } from '@keyline-icons/react-native/fill';
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Animated, Easing, StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { qualityBadges } from '@ValenceClient/library/qualityBadges';
 import { APreview } from '@ValenceMobile/components/APreview/APreview';
@@ -16,6 +16,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { howLongItRuns } from '@ValenceMobile/components/ATitle/howLongItRuns';
 import { useSoundPreference } from '@ValenceMobile/hooks/useSoundPreference';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { AFeatureProps } from './AFeature.types';
 
 const TELL_FOR = 8000;
@@ -146,14 +147,14 @@ const AFeature = ({
         Animated.timing(arriving, {
           toValue: ARRIVES_FROM,
           duration: LEAVES_OVER,
-          easing: Easing.inOut(Easing.quad),
+          easing: EASINGS.inOutQuad,
           useNativeDriver: true,
         }),
         ...rising.map((part) =>
           Animated.timing(part, {
             toValue: 0,
             duration: WORDS_LEAVE_OVER,
-            easing: Easing.inOut(Easing.quad),
+            easing: EASINGS.inOutQuad,
             useNativeDriver: true,
           }),
         ),
@@ -167,7 +168,7 @@ const AFeature = ({
       Animated.timing(arriving, {
         toValue: 1,
         duration: ARRIVES_OVER,
-        easing: Easing.out(Easing.cubic),
+        easing: EASINGS.outCubic,
         useNativeDriver: true,
       }),
       Animated.stagger(
@@ -176,7 +177,7 @@ const AFeature = ({
           Animated.timing(part, {
             toValue: 1,
             duration: RISES_OVER,
-            easing: Easing.out(Easing.cubic),
+            easing: EASINGS.outCubic,
             useNativeDriver: true,
           }),
         ),
@@ -189,7 +190,7 @@ const AFeature = ({
       Animated.timing(telling, {
         toValue: 0,
         duration: FOLDS_OVER,
-        easing: Easing.inOut(Easing.cubic),
+        easing: EASINGS.inOutCubic,
         useNativeDriver: false,
       }).start(() => {
         setIsTelling(false);

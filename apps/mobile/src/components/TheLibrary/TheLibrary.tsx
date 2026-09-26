@@ -8,14 +8,7 @@ import {
 } from '@keyline-icons/react-native/fill';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
-import {
-  ActivityIndicator,
-  Animated,
-  Easing,
-  StyleSheet,
-  View,
-  useWindowDimensions,
-} from 'react-native';
+import { ActivityIndicator, Animated, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
@@ -56,6 +49,7 @@ import { theColours } from '@ValenceMobile/theme/theColours';
 import type { ReactNode } from 'react';
 import type { VideoPlayer } from 'expo-video';
 import type { ALight } from '@ValenceMobile/components/AMoodBackground/AMoodBackground.types';
+import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ShowSummary } from '@ValenceContracts/schemas/Show';
 import type { TheLibraryProps } from './TheLibrary.types';
@@ -220,7 +214,7 @@ const TheLibrary = ({
     Animated.timing(searchness, {
       toValue: isSearching ? 1 : 0,
       duration: BAR_MOVES_OVER,
-      easing: Easing.inOut(Easing.cubic),
+      easing: EASINGS.inOutCubic,
       useNativeDriver: true,
     }).start();
   }, [isSearching, searchness]);
@@ -236,7 +230,7 @@ const TheLibrary = ({
     Animated.timing(barAway, {
       toValue: isAway ? 1 : 0,
       duration: BAR_MOVES_OVER,
-      easing: Easing.out(Easing.cubic),
+      easing: EASINGS.outCubic,
       useNativeDriver: true,
     }).start();
   }, [isAway, barAway]);

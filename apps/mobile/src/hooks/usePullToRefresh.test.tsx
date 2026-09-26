@@ -14,7 +14,7 @@ describe('usePullToRefresh', () => {
     });
 
     await act(() => {
-      result.current.props.onRefresh?.();
+      void result.current.props.onRefresh?.();
     });
 
     expect(refetching).toHaveBeenCalledWith({ type: 'active' });

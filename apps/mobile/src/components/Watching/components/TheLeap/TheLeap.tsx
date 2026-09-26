@@ -1,8 +1,9 @@
 import { Play as PlayFilled } from '@keyline-icons/react-native/fill';
 import { useEffect, useState } from 'react';
-import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
+import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { TheLeapProps } from './TheLeap.types';
 
 const OVER_THE_PICTURE = '#ffffff';
@@ -68,7 +69,7 @@ const TheLeap = ({ leap }: TheLeapProps) => {
       Animated.timing(sweep, {
         toValue: ARROWS.length,
         duration: SWEEPING,
-        easing: Easing.linear,
+        easing: EASINGS.linear,
         useNativeDriver: true,
       }),
     );
@@ -85,14 +86,14 @@ const TheLeap = ({ leap }: TheLeapProps) => {
       Animated.timing(showing, {
         toValue: 1,
         duration: COMING_IN,
-        easing: Easing.out(Easing.cubic),
+        easing: EASINGS.outCubic,
         useNativeDriver: true,
       }),
       Animated.delay(HOLDING),
       Animated.timing(showing, {
         toValue: 0,
         duration: GOING,
-        easing: Easing.in(Easing.quad),
+        easing: EASINGS.inQuad,
         useNativeDriver: true,
       }),
     ]);

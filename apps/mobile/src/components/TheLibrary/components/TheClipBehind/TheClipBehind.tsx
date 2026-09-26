@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Animated, Easing, StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 import { VideoView } from 'expo-video';
 import { ABlur } from '@ValenceMobile/components/ABlur/ABlur';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { theColours } from '@ValenceMobile/theme/theColours';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { VideoPlayer } from 'expo-video';
 import type { TheClipBehindProps } from './TheClipBehind.types';
 
@@ -65,7 +66,7 @@ const TheClipBehind = ({ player, children }: TheClipBehindProps) => {
     const fading = Animated.timing(shown, {
       toValue: 0,
       duration: FADES_OVER,
-      easing: Easing.inOut(Easing.quad),
+      easing: EASINGS.inOutQuad,
       useNativeDriver: true,
     });
 
@@ -88,7 +89,7 @@ const TheClipBehind = ({ player, children }: TheClipBehindProps) => {
     const fading = Animated.timing(shown, {
       toValue: 1,
       duration: FADES_OVER,
-      easing: Easing.inOut(Easing.quad),
+      easing: EASINGS.inOutQuad,
       useNativeDriver: true,
     });
 

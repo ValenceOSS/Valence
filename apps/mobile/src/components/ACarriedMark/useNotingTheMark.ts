@@ -1,6 +1,5 @@
 import { useContext, useLayoutEffect, useRef } from 'react';
 import { THE_MARKS_PLACE } from '@ValenceMobile/components/ACarriedMark/THE_MARKS_PLACE';
-import type { View } from 'react-native';
 import type { ARectOnScreen } from '@ValenceMobile/hooks/useArrivingFrom.types';
 
 /**
@@ -12,7 +11,13 @@ import type { ARectOnScreen } from '@ValenceMobile/hooks/useArrivingFrom.types';
  *   the screens of the way in and not from the library, whose next screen has no mark to take it.
  * @returns What to call with the still view the mark sits in, once that is laid out.
  */
-const useNotingTheMark = (isHandedOn = true): ((placed: View | null) => void) => {
+const useNotingTheMark = (
+  isHandedOn = true,
+): ((
+  placed: {
+    measureInWindow: (told: (x: number, y: number, width: number, height: number) => void) => void;
+  } | null,
+) => void) => {
   const way = useContext(THE_MARKS_PLACE);
   const sitsAt = useRef<ARectOnScreen | null>(null);
 

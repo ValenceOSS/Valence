@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useEvent, useEventListener } from 'expo';
-import { Animated, Easing, Image, StyleSheet, View } from 'react-native';
+import { Animated, Image, StyleSheet, View } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { readPreviewState } from '@ValenceClient/playback/readPreviewState';
 import { hushThePlayer } from '@ValenceMobile/playback/hushThePlayer';
@@ -8,6 +8,7 @@ import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
 import { useIsOnTop } from '@ValenceMobile/hooks/useIsOnTop';
 import { useIsOnMobileData } from '@ValenceMobile/components/APreview/useIsOnMobileData';
+import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { VideoPlayer, VideoSource } from 'expo-video';
 import type { APreviewProps } from './APreview.types';
 
@@ -127,7 +128,7 @@ const APreview = ({
     Animated.timing(showing, {
       toValue: isPlaying && isShowing ? 1 : 0,
       duration: FADES_IN_OVER,
-      easing: Easing.inOut(Easing.quad),
+      easing: EASINGS.inOutQuad,
       useNativeDriver: true,
     }).start(({ finished }) => {
       if (finished && !isShowing && livePlayer.current === player) {

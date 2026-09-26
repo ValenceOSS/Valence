@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { PixelRatio, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -129,19 +129,11 @@ const APageReader = ({
   const bookWidth = width - leftRoom - rightRoom - onTheFold;
   const pagePixels = Math.round((bookWidth / (isTwoUp ? 2 : 1)) * PixelRatio.get());
   const isOnTheLast = page + (isTwoUp ? 2 : 1) >= count;
-  const pages = useMemo(
-    () =>
-      Array.from({ length: count }, (_, one) =>
-        onThisServer(bookPageUrl(book.id, chapterId, one, pagePixels)),
-      ),
-    [book.id, chapterId, count, pagePixels],
+  const pages = Array.from({ length: count }, (_, one) =>
+    onThisServer(bookPageUrl(book.id, chapterId, one, pagePixels)),
   );
-  const pictures = useMemo(
-    () =>
-      Array.from({ length: count }, (_, one) =>
-        onThisServer(bookPageUrl(book.id, chapterId, one, THUMB_PIXELS)),
-      ),
-    [book.id, chapterId, count],
+  const pictures = Array.from({ length: count }, (_, one) =>
+    onThisServer(bookPageUrl(book.id, chapterId, one, THUMB_PIXELS)),
   );
 
   useEffect(() => {

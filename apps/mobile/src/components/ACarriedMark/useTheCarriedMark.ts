@@ -3,6 +3,8 @@ import { Animated } from 'react-native';
 import { useArrivingFrom } from '@ValenceMobile/hooks/useArrivingFrom';
 import { THE_MARKS_PLACE } from '@ValenceMobile/components/ACarriedMark/THE_MARKS_PLACE';
 import { useNotingTheMark } from '@ValenceMobile/components/ACarriedMark/useNotingTheMark';
+import type { ComponentRef, RefObject } from 'react';
+import type { View } from 'react-native';
 import type { ARectOnScreen } from '@ValenceMobile/hooks/useArrivingFrom.types';
 
 /**
@@ -22,7 +24,14 @@ import type { ARectOnScreen } from '@ValenceMobile/hooks/useArrivingFrom.types';
  * @returns What to hold the still view the mark sits in, what to call once that is laid out, how
  *   visible the mark is, and the movement to give it.
  */
-const useTheCarriedMark = (isHandedOn = true) => {
+const useTheCarriedMark = (
+  isHandedOn = true,
+): {
+  placed: RefObject<ComponentRef<typeof View> | null>;
+  shown: Animated.Value;
+  following: ReturnType<typeof useArrivingFrom>['flying'];
+  onPlaced: () => void;
+} => {
   const way = useContext(THE_MARKS_PLACE);
   const note = useNotingTheMark(isHandedOn);
   const following = useArrivingFrom(() => null, false, false, true);

@@ -75,7 +75,7 @@ describe('ARequest', () => {
   });
 
   it('opens what explains its problem, where it has one', async () => {
-    const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
     const drawn = await render(
       <ARequest
         request={aMediaRequest({
