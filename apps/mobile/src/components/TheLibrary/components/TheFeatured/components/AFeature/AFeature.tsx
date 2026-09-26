@@ -20,8 +20,6 @@ import type { AFeatureProps } from './AFeature.types';
 
 const TELL_FOR = 8000;
 
-const TALL = 1.3;
-
 const LOGO_HIGH = 76;
 
 const LOGO_AT_MOST = 0.7;
@@ -109,6 +107,8 @@ const styles = StyleSheet.create({
  *
  * @param media - The title.
  * @param width - How wide to draw it.
+ * @param height - How tall to draw it: a poster on a phone held upright, wider than tall on a wide
+ *   screen.
  * @param isShowing - Whether it is the one in view.
  * @param resumeAt - Where somebody stopped in it, if they did.
  * @param onEnded - Told when its clip has played through.
@@ -119,6 +119,7 @@ const styles = StyleSheet.create({
 const AFeature = ({
   media,
   width,
+  height,
   isShowing,
   resumeAt,
   onEnded,
@@ -235,17 +236,11 @@ const AFeature = ({
     <Button tone="bare" label={title} onPress={onMoreInfo}>
       <View
         collapsable={false}
-        style={[
-          styles.lifted,
-          { backgroundColor: colours.surfaceRaised, height: width * TALL, width },
-        ]}
+        style={[styles.lifted, { backgroundColor: colours.surfaceRaised, height, width }]}
       >
         <View
           collapsable={false}
-          style={[
-            styles.whole,
-            { backgroundColor: colours.surfaceRaised, height: width * TALL, width },
-          ]}
+          style={[styles.whole, { backgroundColor: colours.surfaceRaised, height, width }]}
         >
           <Animated.View
             collapsable={false}

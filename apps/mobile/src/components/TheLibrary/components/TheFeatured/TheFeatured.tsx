@@ -9,6 +9,7 @@ import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { AFeature } from '@ValenceMobile/components/TheLibrary/components/TheFeatured/components/AFeature/AFeature';
 import { TheDots } from '@ValenceMobile/components/TheLibrary/components/TheFeatured/components/TheDots/TheDots';
+import { useTheSideStrip } from '@ValenceMobile/hooks/useTheSideStrip';
 import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
 import type { TheFeaturedProps } from './TheFeatured.types';
 
@@ -17,6 +18,14 @@ const GAP = 12;
 const PEEK = 20;
 
 const ASIDE = 0.9;
+
+const AT_MOST_OF_THE_HEIGHT = 0.58;
+
+const TALL_ON_A_PHONE = 1.3;
+
+const TALL_ON_A_WIDE_SCREEN = 0.62;
+
+const ASIDE_AND_DOWN_BY = 28;
 
 const CLONES = 2;
 
@@ -64,6 +73,10 @@ const fillOn = (filled: Animated.Value, from: number, overMs: number): void => {
  * on: each plays a clip of itself once it has been showing a moment, and the next comes round
  * when the clip ends, or after a while where there is none.
  *
+ * Each card is a poster on a phone held upright and wider than tall on a wide screen, sized so it
+ * never takes more than a little over half the height. On a folding phone the cards either side sit
+ * a little lower, clear of the status in the strip down the side of its screen.
+ *
  * @param items - What to feature.
  * @param onWatch - Told to play something, and from where.
  * @param onLookAt - Told to open a title.
@@ -84,7 +97,8 @@ const TheFeaturedTitles = ({
   onClip,
   isInView = true,
 }: TheFeaturedProps) => {
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
+  const hasStrip = useTheSideStrip() !== null;
   const isStill = usePrefersStillness();
   const [filled] = useState(() => new Animated.Value(0));
   const watched = useQuery(viewingQueries.progress());
@@ -103,7 +117,12 @@ const TheFeaturedTitles = ({
     [items, count, lead],
   );
   const pager = useRef<ScrollView>(null);
-  const across = width - (PEEK + GAP) * 2;
+  const tallness = width > height ? TALL_ON_A_WIDE_SCREEN : TALL_ON_A_PHONE;
+  const across = Math.min(
+    width - (PEEK + GAP) * 2,
+    Math.round((height * AT_MOST_OF_THE_HEIGHT) / tallness),
+  );
+  const aside = (width - across) / 2;
   const step = across + GAP;
   const [scrolled] = useState(() => new Animated.Value(0));
   const [pointedAt, setPointedAt] = useState<number | null>(null);
@@ -121,6 +140,7 @@ const TheFeaturedTitles = ({
   );
   const leaning = useMemo(() => {
     const inward = (across * (1 - ASIDE)) / 2;
+    const down = hasStrip ? ASIDE_AND_DOWN_BY : 0;
 
     return cards.map((_, index) => {
       const inputRange = [(index - 1) * step, index * step, (index + 1) * step];
@@ -140,6 +160,13 @@ const TheFeaturedTitles = ({
             }),
           },
           {
+            translateY: scrolled.interpolate({
+              inputRange,
+              outputRange: [down, 0, down],
+              extrapolate: 'clamp',
+            }),
+          },
+          {
             scale: scrolled.interpolate({
               inputRange,
               outputRange: [ASIDE, 1, ASIDE],
@@ -149,7 +176,7 @@ const TheFeaturedTitles = ({
         ],
       };
     });
-  }, [cards, across, step, scrolled]);
+  }, [cards, across, step, scrolled, hasStrip]);
   const showing = items[at] ?? null;
 
   useEffect(() => {
@@ -320,7 +347,7 @@ const TheFeaturedTitles = ({
         }}
         showsHorizontalScrollIndicator={false}
         style={styles.pager}
-        contentContainerStyle={styles.cards}
+        contentContainerStyle={[styles.cards, { paddingHorizontal: aside }]}
         scrollEventThrottle={16}
         onScroll={followScrolling}
         onMomentumScrollEnd={(event) => {
@@ -339,6 +366,7 @@ const TheFeaturedTitles = ({
               <AFeature
                 media={media}
                 width={across}
+                height={Math.round(across * tallness)}
                 isShowing={isShowing}
                 {...(leaning[index] === undefined ? {} : { nearness: leaning[index].nearness })}
                 resumeAt={resumeFor(progress, media.id)}

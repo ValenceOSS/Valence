@@ -51,6 +51,7 @@ import { useIsOnTop } from '@ValenceMobile/hooks/useIsOnTop';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ABlur } from '@ValenceMobile/components/ABlur/ABlur';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
+import { useTheSideStrip } from '@ValenceMobile/hooks/useTheSideStrip';
 import { theColours } from '@ValenceMobile/theme/theColours';
 import type { ReactNode } from 'react';
 import type { VideoPlayer } from 'expo-video';
@@ -268,6 +269,7 @@ const TheLibrary = ({
   const [scrolled, setScrolled] = useState<Readonly<Record<string, boolean>>>({});
   const isPast = scrolled[isSearching ? SEARCH : part] === true;
   const room = useSafeAreaInsets();
+  const strip = useTheSideStrip();
   const [arriving] = useState(() => new Animated.Value(0));
   const isOnTop = useIsOnTop();
 
@@ -382,7 +384,17 @@ const TheLibrary = ({
   );
 
   const bar = (
-    <View style={[styles.fixed, { paddingTop: room.top + SCREEN_EDGE }]} pointerEvents="box-none">
+    <View
+      style={[
+        styles.fixed,
+        {
+          paddingLeft: strip?.side === 'left' ? strip.breadth : 0,
+          paddingRight: strip?.side === 'right' ? strip.breadth : 0,
+          paddingTop: room.top + SCREEN_EDGE,
+        },
+      ]}
+      pointerEvents="box-none"
+    >
       <Animated.View
         collapsable={false}
         pointerEvents="none"
