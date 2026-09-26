@@ -7,7 +7,7 @@ const PROFILE = {
   id: '11111111-1111-4111-8111-111111111111',
   name: 'Marques',
   colour: '#3a8ee8',
-  avatar: { kind: 'photo', isVideo: false },
+  avatar: { kind: 'photo', isVideo: false, frame: null },
   askStillWatchingAfter: 0,
   showsWhatIamWatching: false,
   createdAt: '2026-08-01T00:00:00.000Z',
@@ -17,7 +17,7 @@ const PROFILE = {
 const HOUSEHOLD = {
   name: 'Marques',
   colour: '#e8503a',
-  avatar: { kind: 'initial' },
+  avatar: { kind: 'initial', font: 'gilroy' },
   updatedAt: '2026-08-01T00:00:00.000Z',
 } as const;
 
@@ -48,7 +48,9 @@ describe('AccountFace', () => {
   it('draws the household’s own picture where it was given one', () => {
     const { container } = render(
       <AccountFace
-        account={account({ face: { ...HOUSEHOLD, avatar: { kind: 'photo', isVideo: false } } })}
+        account={account({
+          face: { ...HOUSEHOLD, avatar: { kind: 'photo', isVideo: false, frame: null } },
+        })}
       />,
     );
 

@@ -56,14 +56,14 @@ const COLUMNS = {
  */
 const readAvatarChoice = (row: HouseholdRow): Household['avatar'] => {
   if (row.photoPath !== null) {
-    return { kind: 'photo', isVideo: MOVING_FORMATS.has(extname(row.photoPath)) };
+    return { kind: 'photo', isVideo: MOVING_FORMATS.has(extname(row.photoPath)), frame: null };
   }
 
   if (row.avatarStyle !== null && row.avatarSeed !== null && isAvatarStyle(row.avatarStyle)) {
     return { kind: 'drawn', style: row.avatarStyle, seed: row.avatarSeed };
   }
 
-  return { kind: 'initial' };
+  return { kind: 'initial', font: 'gilroy' };
 };
 
 /**
@@ -118,7 +118,7 @@ const createDatabaseHouseholdService = (
         return {
           name: fallbackName,
           colour: DEFAULT_COLOUR,
-          avatar: { kind: 'initial' },
+          avatar: { kind: 'initial', font: 'gilroy' },
           updatedAt: new Date(0).toISOString(),
         };
       }

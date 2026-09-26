@@ -188,7 +188,71 @@
     U+A720-A7FF;
 }
 
+@font-face {
+  font-family: 'Valence Playfair';
+  src: url('../fonts/letters/PlayfairDisplay.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Valence Space Mono';
+  src: url('../fonts/letters/SpaceMono.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Valence Bebas';
+  src: url('../fonts/letters/BebasNeue.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Valence Pacifico';
+  src: url('../fonts/letters/Pacifico.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Valence Caveat';
+  src: url('../fonts/letters/Caveat.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Valence Pixel';
+  src: url('../fonts/letters/PressStart2P.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
+  --color-letter-dark: #15171a;
+  --color-letter-light: #f7f7f5;
+  --color-picker-light: #fff;
+  --color-picker-dark: #000;
+  --shadow-picker-thumb: 0 0 0 2px var(--color-surface), 0 1px 4px rgb(0 0 0 / 0.5);
+  --background-image-picker-hues: linear-gradient(
+    to right,
+    #f00,
+    #ff0,
+    #0f0,
+    #0ff,
+    #00f,
+    #f0f,
+    #f00
+  );
+
   --font-sans: 'Gilroy', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   --font-body: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;

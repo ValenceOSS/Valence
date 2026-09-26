@@ -1,7 +1,7 @@
+import { useState } from 'react';
 import { Icon } from '@ValenceUI/Icon';
-import { Image as ImageIcon, RefreshCw as RefreshCwIcon } from '@keyline-icons/react';
+import { PenSparkles as EditIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
-import { FilePicker } from '@ValenceUI/FilePicker';
 import { SettingRow } from '@ValenceUI/SettingRow';
 import { TextField } from '@ValenceUI/TextField';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
@@ -13,13 +13,13 @@ import { readMotion } from '@ValenceClient/shell/motion';
 import { MOTION_CHOICES } from '@ValenceScreens/motion/motionChoices';
 import { Switch } from '@ValenceUI/Switch';
 import { canShowOnDiscord } from '@ValenceClient/discord/canShowOnDiscord';
-import { PROFILE_COLOURS, AVATAR_STYLES } from '@ValenceContracts/schemas/ViewerProfile';
+import { PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
 import { STILL_WATCHING_OFF } from '@ValenceContracts/schemas/StillWatching';
 import { STILL_WATCHING_CHOICES } from '@ValenceClient/profiles/STILL_WATCHING_CHOICES';
 import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace';
+import { FaceEditor } from '@ValenceScreens/components/FaceEditor/FaceEditor';
+import { ColourChoice } from '@ValenceScreens/components/ColourChoice/ColourChoice';
 import type { ProfileSettingsProps } from './ProfileSettings.types';
-
-const PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif,video/webm,video/mp4';
 
 /**
  * Everything about how somebody appears: their name, their picture, the colour behind it, and how
@@ -41,8 +41,8 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
   const { theme, choose } = useTheme();
   const { motion, choose: chooseMovement } = useMotion();
 
+  const [isEditing, setIsEditing] = useState(false);
   const isReady = profile !== null && draft !== null;
-  const seed = profile?.id ?? 'valence';
 
   return (
     <>
@@ -68,78 +68,45 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
         title="Profile picture"
         description={
           draft?.photo === null || draft?.photo === undefined
-            ? 'A photograph, one of the drawn faces, or the first letter of your name.'
-            : `${draft.photo.name} — saved when you press Save.`
+            ? 'An orb, a photograph or GIF, a drawn face, or the first letter of your name.'
+            : 'Your new face is saved when you press Save.'
         }
       >
         {profile === null || draft === null ? null : (
           <ProfileFace
             shape="tile"
             profile={{ ...profile, name: draft.name, colour: draft.colour, avatar: draft.avatar }}
-            pending={draft.photo}
-            className="size-8 shrink-0 text-xs"
+            pending={draft.avatar.kind === 'photo' ? draft.photo : null}
+            className="size-10 shrink-0 text-sm"
           />
         )}
 
-        <FilePicker
-          label="Upload a picture"
-          accept={PHOTO_TYPES}
-          size="sm"
-          disabled={!isReady}
-          onPick={(file) => {
-            onDraft({
-              photo: file,
-              avatar: { kind: 'photo', isVideo: file.type.startsWith('video/') },
-            });
-          }}
-        >
-          <Icon of={ImageIcon} size={15} />
-          Upload
-        </FilePicker>
-      </SettingRow>
-
-      <SettingRow
-        title="Drawn face"
-        description="Where you would rather not use a photograph, pick one of these instead."
-      >
-        {AVATAR_STYLES.map((style) => (
-          <Button
-            key={style}
-            variant="bare"
-            size="none"
-            label={`Use the ${style} face`}
-            isActive={draft?.avatar.kind === 'drawn' && draft.avatar.style === style}
-            disabled={!isReady}
-            className={`size-8 overflow-hidden rounded-lg bg-subtle transition-transform ${
-              draft?.avatar.kind === 'drawn' && draft.avatar.style === style
-                ? 'ring-2 ring-accent'
-                : 'hover-hover:hover:scale-105'
-            }`}
-            onClick={() => {
-              onDraft({ avatar: { kind: 'drawn', style, seed }, photo: null });
-            }}
-          >
-            <img
-              src={`/api/profiles/avatars/${style}?seed=${encodeURIComponent(seed)}`}
-              alt=""
-              loading="lazy"
-              className="h-full w-full object-cover"
-            />
-          </Button>
-        ))}
-
         <Button
-          variant="ghost"
+          variant="secondary"
           size="sm"
-          isIconOnly
-          label="Use your initial instead"
           disabled={!isReady}
           onClick={() => {
-            onDraft({ avatar: { kind: 'initial' }, photo: null });
+            setIsEditing(true);
           }}
         >
-          <Icon of={RefreshCwIcon} size={16} />
+          <Icon of={EditIcon} size={15} />
+          Edit
         </Button>
+
+        {profile === null || draft === null ? null : (
+          <FaceEditor
+            isOpen={isEditing}
+            onClose={() => {
+              setIsEditing(false);
+            }}
+            profile={profile}
+            start={{ avatar: draft.avatar, photo: draft.photo, colour: draft.colour }}
+            onUse={(choice) => {
+              onDraft(choice);
+              setIsEditing(false);
+            }}
+          />
+        )}
       </SettingRow>
 
       <SettingRow
@@ -178,25 +145,14 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
         title="Colour"
         description="The background behind your initial, and the tint on your drawn face."
       >
-        {PROFILE_COLOURS.map((option) => (
-          <Button
-            key={option}
-            variant="bare"
-            size="none"
-            label={`Use ${option}`}
-            isActive={option === draft?.colour}
-            disabled={!isReady}
-            style={{ backgroundColor: option }}
-            className={`size-6 rounded-full transition-transform ${
-              option === draft?.colour
-                ? 'ring-2 ring-accent ring-offset-2 ring-offset-[var(--color-surface-raised)]'
-                : 'hover-hover:hover:scale-105'
-            }`}
-            onClick={() => {
-              onDraft({ colour: option });
-            }}
-          />
-        ))}
+        <ColourChoice
+          label="Colour"
+          value={draft?.colour ?? PROFILE_COLOURS[3]}
+          presets={PROFILE_COLOURS.slice(0, 6)}
+          onChange={(colour) => {
+            onDraft({ colour });
+          }}
+        />
       </SettingRow>
 
       <SettingRow

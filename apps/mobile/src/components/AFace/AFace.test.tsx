@@ -8,7 +8,7 @@ const aProfile = (overrides: Partial<ViewerProfile> = {}): ViewerProfile => ({
   id: '176acd29-9b53-4193-831d-291bc7a9d4eb',
   name: 'Dan',
   colour: '#e8503a',
-  avatar: { kind: 'initial' },
+  avatar: { kind: 'initial', font: 'gilroy' },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
   createdAt: '2026-01-01T00:00:00.000Z',
@@ -39,7 +39,7 @@ describe('AFace', () => {
 
   it('draws no initial where there is a picture to draw instead', async () => {
     const drawn = await render(
-      <AFace profile={aProfile({ avatar: { kind: 'photo', isVideo: false } })} />,
+      <AFace profile={aProfile({ avatar: { kind: 'photo', isVideo: false, frame: null } })} />,
     );
 
     expect(drawn.queryByText('D')).toBeNull();

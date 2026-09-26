@@ -137,14 +137,14 @@ describe('profiles over HTTP', () => {
     expect(await read(app, cookie)).toHaveLength(2);
   });
 
-  it('refuses a colour outside the set everything is tuned against', async () => {
+  it('refuses a colour that is not six hex digits', async () => {
     const { app } = build();
     const cookie = await signedIn(app);
 
     const response = await app.request(`${BASE}/api/profiles`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', cookie, origin: BASE },
-      body: JSON.stringify({ name: 'Sam', colour: '#123456' }),
+      body: JSON.stringify({ name: 'Sam', colour: 'red' }),
     });
 
     expect(response.status).toBe(400);
@@ -504,7 +504,7 @@ describe('giving a profile an account of its own', () => {
       id: PROFILE_ID,
       name: 'Dan',
       colour: '#e8a33a',
-      avatar: { kind: 'initial' },
+      avatar: { kind: 'initial', font: 'gilroy' },
       askStillWatchingAfter: 4,
       showsWhatIamWatching: false,
       createdAt: '2026-01-01T00:00:00.000Z',

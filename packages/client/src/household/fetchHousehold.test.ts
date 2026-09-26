@@ -9,7 +9,7 @@ import {
 const A_HOUSEHOLD = {
   name: 'The Morgans',
   colour: '#3ac47d',
-  avatar: { kind: 'initial' },
+  avatar: { kind: 'initial', font: 'gilroy' },
   updatedAt: '2026-09-18T00:00:00.000Z',
 };
 

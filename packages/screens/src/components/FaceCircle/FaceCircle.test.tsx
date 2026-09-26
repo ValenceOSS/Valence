@@ -16,7 +16,12 @@ beforeEach(() => {
 describe('FaceCircle', () => {
   it('draws the letter of a name that has no picture', () => {
     render(
-      <FaceCircle name="Marques" colour="#3a8ee8" avatar={{ kind: 'initial' }} source="/nowhere" />,
+      <FaceCircle
+        name="Marques"
+        colour="#3a8ee8"
+        avatar={{ kind: 'initial', font: 'gilroy' }}
+        source="/nowhere"
+      />,
     );
 
     expect(screen.getByText('M')).toBeInTheDocument();
@@ -26,7 +31,7 @@ describe('FaceCircle', () => {
     const face = {
       name: 'Marques',
       colour: '#3a8ee8',
-      avatar: { kind: 'initial' },
+      avatar: { kind: 'initial', font: 'gilroy' },
       source: '/x',
     } as const;
     const { container, rerender } = render(<FaceCircle {...face} />);
@@ -44,7 +49,7 @@ describe('FaceCircle', () => {
       <FaceCircle
         name="Marques"
         colour="#3a8ee8"
-        avatar={{ kind: 'photo', isVideo: false }}
+        avatar={{ kind: 'photo', isVideo: false, frame: null }}
         source="/api/somewhere/else"
       />,
     );
@@ -57,7 +62,7 @@ describe('FaceCircle', () => {
       <FaceCircle
         name="Marques"
         colour="#3a8ee8"
-        avatar={{ kind: 'photo', isVideo: true }}
+        avatar={{ kind: 'photo', isVideo: true, frame: null }}
         source="/api/somewhere/else"
       />,
     );
@@ -70,7 +75,7 @@ describe('FaceCircle', () => {
       <FaceCircle
         name="Marques"
         colour="#3a8ee8"
-        avatar={{ kind: 'photo', isVideo: false }}
+        avatar={{ kind: 'photo', isVideo: false, frame: null }}
         source="/api/gone"
       />,
     );
@@ -91,7 +96,7 @@ describe('FaceCircle', () => {
       <FaceCircle
         name="Marques"
         colour="#3a8ee8"
-        avatar={{ kind: 'photo', isVideo: false }}
+        avatar={{ kind: 'photo', isVideo: false, frame: null }}
         source="/api/gone?v=1"
       />,
     );
@@ -108,7 +113,7 @@ describe('FaceCircle', () => {
       <FaceCircle
         name="Marques"
         colour="#3a8ee8"
-        avatar={{ kind: 'photo', isVideo: false }}
+        avatar={{ kind: 'photo', isVideo: false, frame: null }}
         source="/api/gone?v=2"
       />,
     );
@@ -121,7 +126,7 @@ describe('FaceCircle', () => {
       <FaceCircle
         name="Marques"
         colour="#3a8ee8"
-        avatar={{ kind: 'initial' }}
+        avatar={{ kind: 'initial', font: 'gilroy' }}
         source="/api/gone"
         pending={new File(['bytes'], 'face.png', { type: 'image/png' })}
       />,

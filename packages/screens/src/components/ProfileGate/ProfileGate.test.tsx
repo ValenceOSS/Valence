@@ -14,7 +14,7 @@ const profileOf = (name: string, at: number): ViewerProfile => ({
   id: `00000000-0000-4000-8000-${at.toString().padStart(12, '0')}`,
   name,
   colour: '#3a8ee8',
-  avatar: { kind: 'initial' },
+  avatar: { kind: 'initial', font: 'gilroy' },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
   createdAt: '2026-01-01T00:00:00.000Z',

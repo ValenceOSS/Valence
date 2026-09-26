@@ -30,7 +30,7 @@ const aProfile = (showsWhatIamWatching: boolean): ViewerProfile => ({
   id: 'profile-1',
   name: 'Marques',
   colour: '#8b5ce8',
-  avatar: { kind: 'initial' },
+  avatar: { kind: 'initial', font: 'gilroy' },
   askStillWatchingAfter: 3,
   showsWhatIamWatching,
   createdAt: '2026-08-01T00:00:00.000Z',

@@ -42,7 +42,7 @@ const createMemoryHouseholdService = (
     const made: Held = {
       name: null,
       colour: DEFAULT_COLOUR,
-      avatar: { kind: 'initial' },
+      avatar: { kind: 'initial', font: 'gilroy' },
       updatedAt: new Date().toISOString(),
       onboardedAt: null,
       picture: null,
@@ -111,7 +111,7 @@ const createMemoryHouseholdService = (
       const one = held(userId);
 
       one.picture = photo.body;
-      one.avatar = { kind: 'photo', isVideo: false };
+      one.avatar = { kind: 'photo', isVideo: false, frame: null };
       one.updatedAt = new Date().toISOString();
 
       return null;

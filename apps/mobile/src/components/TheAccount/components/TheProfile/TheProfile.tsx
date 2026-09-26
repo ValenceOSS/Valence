@@ -101,7 +101,7 @@ const TheProfile = () => {
     }
 
     setPicked({ uri: asset.uri });
-    setAvatar({ kind: 'photo', isVideo: false });
+    setAvatar({ kind: 'photo', isVideo: false, frame: null });
   };
 
   const save = async () => {
@@ -165,7 +165,7 @@ const TheProfile = () => {
             isChosen={draft.avatar.kind === 'initial'}
             onPress={() => {
               setPicked(null);
-              setAvatar({ kind: 'initial' });
+              setAvatar({ kind: 'initial', font: 'gilroy' });
             }}
           >
             Use my initial

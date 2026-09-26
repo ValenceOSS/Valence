@@ -129,7 +129,7 @@ const AccountsPanel = () => {
   const [draftRoleIds, setDraftRoleIds] = useState<ReadonlySet<string>>(new Set());
   const [draftLibraryAccess, setDraftLibraryAccess] = useState<LibraryReach[]>([]);
   const [draftFace, setDraftFace] = useState<AccountAvatarDraft>({
-    avatar: { kind: 'initial' },
+    avatar: { kind: 'initial', font: 'gilroy' },
     colour: PROFILE_COLOURS[0],
     photo: null,
   });
@@ -180,7 +180,7 @@ const AccountsPanel = () => {
     setDraftName(picked?.name ?? '');
     setDraftEmail(picked?.email ?? '');
     setDraftFace({
-      avatar: picked?.face?.avatar ?? { kind: 'initial' },
+      avatar: picked?.face?.avatar ?? { kind: 'initial', font: 'gilroy' },
       colour: picked?.face?.colour ?? PROFILE_COLOURS[0],
       photo: null,
     });
@@ -206,7 +206,7 @@ const AccountsPanel = () => {
     (draftName !== picked.name ||
       draftEmail !== picked.email ||
       draftFace.photo !== null ||
-      !avatarsEqual(draftFace.avatar, picked.face?.avatar ?? { kind: 'initial' }) ||
+      !avatarsEqual(draftFace.avatar, picked.face?.avatar ?? { kind: 'initial', font: 'gilroy' }) ||
       draftFace.colour !== (picked.face?.colour ?? PROFILE_COLOURS[0]) ||
       draftRoleIds.size !== currentRoleIds.size ||
       [...draftRoleIds].some((id) => !currentRoleIds.has(id)) ||
@@ -320,7 +320,10 @@ const AccountsPanel = () => {
         return;
       }
     } else {
-      const originalAvatar = picked.face?.avatar ?? { kind: 'initial' as const };
+      const originalAvatar = picked.face?.avatar ?? {
+        kind: 'initial' as const,
+        font: 'gilroy' as const,
+      };
       const originalColour = picked.face?.colour ?? PROFILE_COLOURS[0];
       const avatarChanged = !avatarsEqual(draftFace.avatar, originalAvatar);
       const colourChanged = draftFace.colour !== originalColour;

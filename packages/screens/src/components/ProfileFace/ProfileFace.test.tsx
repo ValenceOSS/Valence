@@ -7,7 +7,7 @@ const PROFILE: ViewerProfile = {
   id: '00000000-0000-4000-8000-000000000001',
   name: 'Marques',
   colour: '#3a8ee8',
-  avatar: { kind: 'initial' },
+  avatar: { kind: 'initial', font: 'gilroy' },
   askStillWatchingAfter: 4,
   showsWhatIamWatching: false,
   createdAt: '2026-01-01T00:00:00.000Z',
@@ -62,7 +62,9 @@ describe('ProfileFace', () => {
 
   it('draws a still photograph as a picture', () => {
     const { container } = render(
-      <ProfileFace profile={{ ...PROFILE, avatar: { kind: 'photo', isVideo: false } }} />,
+      <ProfileFace
+        profile={{ ...PROFILE, avatar: { kind: 'photo', isVideo: false, frame: null } }}
+      />,
     );
 
     expect(pictureOf(container)?.tagName).toBe('IMG');
@@ -70,7 +72,9 @@ describe('ProfileFace', () => {
 
   it('plays a moving picture, which an image tag would draw as nothing', () => {
     const { container } = render(
-      <ProfileFace profile={{ ...PROFILE, avatar: { kind: 'photo', isVideo: true } }} />,
+      <ProfileFace
+        profile={{ ...PROFILE, avatar: { kind: 'photo', isVideo: true, frame: null } }}
+      />,
     );
 
     expect(pictureOf(container)?.tagName).toBe('VIDEO');
@@ -78,7 +82,9 @@ describe('ProfileFace', () => {
 
   it('falls back to the letter when the picture is not there to be drawn', () => {
     const { container } = render(
-      <ProfileFace profile={{ ...PROFILE, avatar: { kind: 'photo', isVideo: false } }} />,
+      <ProfileFace
+        profile={{ ...PROFILE, avatar: { kind: 'photo', isVideo: false, frame: null } }}
+      />,
     );
 
     fireEvent.error(theirPicture(container));
@@ -89,7 +95,9 @@ describe('ProfileFace', () => {
 
   it('falls back to the letter when a moving picture is not there either', () => {
     const { container } = render(
-      <ProfileFace profile={{ ...PROFILE, avatar: { kind: 'photo', isVideo: true } }} />,
+      <ProfileFace
+        profile={{ ...PROFILE, avatar: { kind: 'photo', isVideo: true, frame: null } }}
+      />,
     );
 
     fireEvent.error(theirPicture(container));
@@ -98,7 +106,7 @@ describe('ProfileFace', () => {
   });
 
   it('tries again once the picture has been changed', () => {
-    const photo = { ...PROFILE, avatar: { kind: 'photo', isVideo: false } as const };
+    const photo = { ...PROFILE, avatar: { kind: 'photo', isVideo: false, frame: null } as const };
     const { container, rerender } = render(<ProfileFace profile={photo} />);
 
     fireEvent.error(theirPicture(container));
@@ -138,7 +146,9 @@ describe('ProfileFace', () => {
 
   it('draws a decorative face, since the name beside it already says who it is', () => {
     const { container } = render(
-      <ProfileFace profile={{ ...PROFILE, avatar: { kind: 'photo', isVideo: false } }} />,
+      <ProfileFace
+        profile={{ ...PROFILE, avatar: { kind: 'photo', isVideo: false, frame: null } }}
+      />,
     );
 
     expect(pictureOf(container)).toHaveAttribute('alt', '');

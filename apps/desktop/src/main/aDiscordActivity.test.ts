@@ -126,7 +126,7 @@ describe('aDiscordActivity', () => {
   });
 
   it('says somebody has Valence open when they are between things, rather than nothing at all', () => {
-    expect(aDiscordActivity({ kind: 'browsing' }, OPENED)?.details).toBe('Browsing the library');
+    expect(aDiscordActivity({ kind: 'browsing' }, OPENED)?.details).toBe('Browsing libraries');
   });
 
   it('draws the logo while browsing, so the status looks like the one beside it', () => {
