@@ -58,10 +58,9 @@ jobs:
 
       # The app draws liquid glass where the phone has it, which needs the newest SDK, and a runner
       # does not always default to its newest Xcode.
-      - name: Use the newest Xcode on the runner
+      - name: Use Xcode on the runner
         run: |
-          newest="$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
-          sudo xcode-select -s "$newest"
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
           xcodebuild -version
 
       - run: pnpm install --frozen-lockfile
