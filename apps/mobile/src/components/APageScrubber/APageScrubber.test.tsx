@@ -5,7 +5,9 @@ import { APageScrubber } from './APageScrubber';
 const PICTURES = ['http://one.local:8420/small/1', 'http://one.local:8420/small/2'];
 
 const theColumn = () =>
-  theDrawnRoot().queryAll((node) => node.type === 'ViewManagerAdapter_ValencePageScrubber');
+  theDrawnRoot().queryAll(
+    (node) => node.type === 'ViewManagerAdapter_ValencePageScrubber_PageScrubber',
+  );
 
 const layOut = () =>
   fireEvent(theDrawnRoot(), 'layout', {
@@ -29,7 +31,7 @@ describe('APageScrubber', () => {
     await layOut();
     const [column] = theColumn();
 
-    expect(column?.parent?.type).toBe('ViewManagerAdapter_ExpoUI');
+    expect(column?.parent?.type).toBe('ViewManagerAdapter_ExpoUI_HostView');
     expect(column).toHaveProp('breadth', 84);
     expect(column).toHaveProp('tall', 400);
     expect(column).toHaveProp('pictures', PICTURES);
