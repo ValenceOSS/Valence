@@ -6,6 +6,7 @@ import { fetchLibraries, fetchLibraryItems } from '@ValenceClient/library/fetchL
 import { fetchWatchProgress } from '@ValenceClient/playback/watchProgress';
 import { fetchComingUp, fetchShows } from '@ValenceClient/library/fetchShows';
 import { fetchSession } from '@ValenceClient/session/auth';
+import { useTheSideStrip } from '@ValenceMobile/hooks/useTheSideStrip';
 import { TheLibrary } from './TheLibrary';
 import type { TheLibraryProps } from './TheLibrary.types';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -16,6 +17,7 @@ jest.mock('@ValenceClient/session/auth');
 jest.mock('@ValenceMobile/components/ACarriedMark/ACarriedMark', () => ({
   ACarriedMark: () => null,
 }));
+jest.mock('@ValenceMobile/hooks/useTheSideStrip', () => ({ useTheSideStrip: jest.fn() }));
 jest.mock('@ValenceClient/playback/watchProgress', () => ({
   ...jest.requireActual<object>('@ValenceClient/playback/watchProgress'),
   fetchWatchProgress: jest.fn(),
@@ -95,6 +97,7 @@ const theLibrary = (overrides: Partial<TheLibraryProps> = {}) =>
   );
 
 beforeEach(() => {
+  jest.mocked(useTheSideStrip).mockReset().mockReturnValue(null);
   installPlatform(aFakePlatform({ serverAddress: () => 'http://one.local:8420' }));
   jest.mocked(fetchLibraries).mockReset();
   jest.mocked(fetchLibraryItems).mockReset();
@@ -333,5 +336,21 @@ describe('TheLibrary', () => {
     const drawn = await theLibrary();
 
     expect(await drawn.findByText('Nothing to watch yet')).toBeTruthy();
+  });
+
+  it('keeps the bar clear of the strip down the side of a folding phone', async () => {
+    jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
+    jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [], total: 0 });
+    jest
+      .mocked(useTheSideStrip)
+      .mockReturnValue({ side: 'right', breadth: 84, freeFrom: 176, centreIn: 42 });
+
+    const drawn = await theLibrary();
+
+    await drawn.findByText('Nothing to watch yet');
+    const bar = drawn.getByRole('button', { name: 'Sign in a television' }).parent?.parent?.parent
+      ?.parent;
+
+    expect(bar).toHaveStyle({ paddingLeft: 0, paddingRight: 84 });
   });
 });
