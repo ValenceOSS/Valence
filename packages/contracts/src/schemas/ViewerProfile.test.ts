@@ -15,7 +15,7 @@ const PROFILE = {
   id: '00000000-0000-4000-8000-000000000001',
   name: 'Marques',
   colour: PROFILE_COLOURS[0],
-  avatar: { kind: 'initial' },
+  avatar: { kind: 'initial', font: 'gilroy' },
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 } as const;
@@ -25,8 +25,13 @@ describe('ViewerProfileSchema', () => {
     expect(ViewerProfileSchema.safeParse(PROFILE).success).toBe(true);
   });
 
-  it('refuses a colour outside the set everything is tuned against', () => {
-    expect(ViewerProfileSchema.safeParse({ ...PROFILE, colour: '#123456' }).success).toBe(false);
+  it('takes any colour written as six hex digits, and keeps it in lower case', () => {
+    expect(ViewerProfileSchema.parse({ ...PROFILE, colour: '#12AB56' }).colour).toBe('#12ab56');
+  });
+
+  it('refuses a colour that is not six hex digits', () => {
+    expect(ViewerProfileSchema.safeParse({ ...PROFILE, colour: 'red' }).success).toBe(false);
+    expect(ViewerProfileSchema.safeParse({ ...PROFILE, colour: '#12345' }).success).toBe(false);
   });
 
   it('refuses a name too long to be drawn under a portrait', () => {
@@ -49,7 +54,7 @@ describe('ViewerProfileSchema', () => {
 
 describe('AvatarSchema', () => {
   it('reads a letter, which is what a profile made in four seconds wears', () => {
-    expect(AvatarSchema.safeParse({ kind: 'initial' }).success).toBe(true);
+    expect(AvatarSchema.safeParse({ kind: 'initial', font: 'gilroy' }).success).toBe(true);
   });
 
   it('reads a drawn face', () => {
@@ -67,13 +72,14 @@ describe('AvatarSchema', () => {
   it('reads a photograph, and assumes it does not move unless told', () => {
     const parsed = AvatarSchema.parse({ kind: 'photo' });
 
-    expect(parsed).toEqual({ kind: 'photo', isVideo: false });
+    expect(parsed).toEqual({ kind: 'photo', isVideo: false, frame: null });
   });
 
   it('reads a picture that moves, which needs a video element rather than an image', () => {
-    expect(AvatarSchema.parse({ kind: 'photo', isVideo: true })).toEqual({
+    expect(AvatarSchema.parse({ kind: 'photo', isVideo: true, frame: null })).toEqual({
       kind: 'photo',
       isVideo: true,
+      frame: null,
     });
   });
 });

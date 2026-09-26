@@ -4,7 +4,7 @@ import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { AFaceFlight } from './AFaceFlight';
 import { aProfile } from '@ValenceMobile/testing/aProfile';
 
-const somebody = aProfile({ name: 'Marques', avatar: { kind: 'initial' } });
+const somebody = aProfile({ name: 'Marques', avatar: { kind: 'initial', font: 'gilroy' } });
 
 const FROM = { x: 120, y: 300, width: 136, height: 136 };
 

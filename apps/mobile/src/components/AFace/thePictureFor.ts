@@ -7,7 +7,8 @@ import type { ThePicture } from '@ValenceMobile/components/APicture/APicture.typ
  * Where to read somebody's picture from, and whether it is drawn.
  *
  * A drawn face is read from the drawing itself rather than the profile's picture, so a face somebody
- * has just chosen shows before it is saved. A photograph that moves has nothing a phone can show in
+ * has just chosen shows before it is saved. An orb or a sketch is shown as the picture the server keeps of it,
+ * since a phone draws no shaders. A photograph that moves has nothing a phone can show in
  * a tile, so it gives way to the initial.
  *
  * @param profile - Whose picture to read.
@@ -32,6 +33,9 @@ const thePictureFor = (
         ),
         isDrawn: true,
       };
+    case 'orb':
+    case 'sketch':
+      return { uri: onThisServer(profileAvatarUrl(profile)), isDrawn: false };
     case 'photo':
       return profile.avatar.isVideo
         ? null

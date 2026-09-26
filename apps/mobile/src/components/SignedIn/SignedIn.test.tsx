@@ -255,7 +255,7 @@ describe('SignedIn', () => {
           id: '3fa85f64-5717-4562-b3fc-2c963f66afb1',
           name: 'Dan',
           colour: PROFILE_COLOURS[0],
-          avatar: { kind: 'initial' },
+          avatar: { kind: 'initial', font: 'gilroy' },
           askStillWatchingAfter,
           createdAt: '2026-01-01T00:00:00.000Z',
           updatedAt: '2026-01-01T00:00:00.000Z',

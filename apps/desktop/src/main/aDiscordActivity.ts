@@ -6,7 +6,7 @@ const LOGO = 'valence-desktop';
 
 const VALENCE = 'Valence';
 
-const BROWSING = 'Browsing the library';
+const BROWSING = 'Browsing libraries';
 
 const ARTWORK_HOST = 'image.tmdb.org';
 

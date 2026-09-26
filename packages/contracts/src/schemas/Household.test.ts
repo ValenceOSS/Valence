@@ -4,7 +4,7 @@ import { HouseholdRequestSchema, HouseholdSchema, householdAvatarUrl } from './H
 const A_HOUSEHOLD = {
   name: 'The Morgans',
   colour: '#3ac47d',
-  avatar: { kind: 'initial' },
+  avatar: { kind: 'initial', font: 'gilroy' },
   updatedAt: '2026-09-18T00:00:00.000Z',
 };
 
@@ -24,9 +24,9 @@ describe('what a household is', () => {
 
   it('draws the same three kinds of face a profile does', () => {
     for (const avatar of [
-      { kind: 'initial' },
+      { kind: 'initial', font: 'gilroy' },
       { kind: 'drawn', style: 'bottts', seed: 'a-seed' },
-      { kind: 'photo', isVideo: false },
+      { kind: 'photo', isVideo: false, frame: null },
     ]) {
       expect(() => HouseholdSchema.parse({ ...A_HOUSEHOLD, avatar })).not.toThrow();
     }
