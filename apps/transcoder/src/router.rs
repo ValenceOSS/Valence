@@ -873,9 +873,9 @@ async fn start_preview(
         )
         .await
         {
-            Err(refused) => return refused,
-            Ok(None) => {}
-            Ok(Some(claimed)) => {
+            Claimed::JobStopped => return error(StatusCode::CONFLICT, JOB_STOPPED),
+            Claimed::UnderWay => {}
+            Claimed::Taken(claimed) => {
                 cut_in_the_background(
                     &state,
                     &request,
@@ -1002,6 +1002,16 @@ async fn is_from_a_stopped_job(renders: &RenderRegistry, correlation_id: Option<
     }
 }
 
+/// What asking to draw a render for one of the server's jobs came to.
+enum Claimed {
+    /// This caller draws it.
+    Taken(Claim),
+    /// Something else is already drawing it.
+    UnderWay,
+    /// The job that asked has been stopped, so the render is not drawn.
+    JobStopped,
+}
+
 /// Takes a render to draw for one of the server's jobs, unless something
 /// already has it or the job has been stopped.
 ///
@@ -1012,24 +1022,23 @@ async fn is_from_a_stopped_job(renders: &RenderRegistry, correlation_id: Option<
 ///
 /// # Returns
 ///
-/// The claim, nothing where the render is already under way, or the refusal
-/// to answer with where the job was stopped.
+/// The claim, or why there is none.
 async fn claim_for_a_live_job(
     renders: &RenderRegistry,
     id: &str,
     correlation_id: Option<&str>,
-) -> Result<Option<Claim>, Response> {
+) -> Claimed {
     let Some(claimed) = renders.claim(id, correlation_id).await else {
-        return Ok(None);
+        return Claimed::UnderWay;
     };
 
     if is_from_a_stopped_job(renders, correlation_id).await {
         renders.give_up(id).await;
 
-        return Err(error(StatusCode::CONFLICT, JOB_STOPPED));
+        return Claimed::JobStopped;
     }
 
-    Ok(Some(claimed))
+    Claimed::Taken(claimed)
 }
 
 /// Stops the render of an address and waits for it to let go, so its files
@@ -1771,9 +1780,9 @@ async fn start_trickplay(
             )
             .await
             {
-                Err(refused) => return refused,
-                Ok(None) => return (StatusCode::ACCEPTED, Json(pending)).into_response(),
-                Ok(Some(claimed)) => claimed,
+                Claimed::JobStopped => return error(StatusCode::CONFLICT, JOB_STOPPED),
+                Claimed::UnderWay => return (StatusCode::ACCEPTED, Json(pending)).into_response(),
+                Claimed::Taken(claimed) => claimed,
             };
 
             draw_in_the_background(
@@ -2082,9 +2091,9 @@ pub fn create_router(state: AppState) -> Router {
 mod tests {
     use super::{
         claim_for_a_live_job, content_type_for, is_safe_segment_name, parse_range, AppState,
+        Claimed,
     };
     use crate::render_registry::RenderRegistry;
-    use axum::http::StatusCode;
     use std::path::{Path, PathBuf};
 
     fn writing_to(roots: &[&str]) -> AppState {
@@ -2276,11 +2285,11 @@ mod tests {
 
         let claimed = claim_for_a_live_job(&renders, "abc", Some("job-1")).await;
 
-        assert!(matches!(claimed, Ok(Some(_))));
+        assert!(matches!(claimed, Claimed::Taken(_)));
         assert!(
             matches!(
                 claim_for_a_live_job(&renders, "abc", Some("job-1")).await,
-                Ok(None)
+                Claimed::UnderWay
             ),
             "a render already under way is not taken twice"
         );
@@ -2296,7 +2305,7 @@ mod tests {
 
         let refused = claim_for_a_live_job(&renders, "abc", Some("job-1")).await;
 
-        assert!(matches!(refused, Err(ref response) if response.status() == StatusCode::CONFLICT));
+        assert!(matches!(refused, Claimed::JobStopped));
         assert!(
             !renders.is_claimed("abc").await,
             "the claim is let go, so nothing is left drawing it"
