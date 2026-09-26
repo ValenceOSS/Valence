@@ -2,6 +2,8 @@ import { docsFor } from '@ValenceCore/functions/docsFor';
 import type { ActiveSession, AdminOverview, Monitor } from '@ValenceClient/admin/fetchAdmin';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { RequestsOverview } from '@ValenceContracts/schemas/Requests';
+import type { JobRunPage } from '@ValenceContracts/schemas/JobRun';
+import type { ObservabilitySearch } from '@ValenceClient/admin/ObservabilitySearchSchema';
 import { valenceCpuShare } from './valenceCpuShare';
 import { libraryDisk } from './libraryDisk';
 import { memoryEnvelope } from './memoryEnvelope';
@@ -15,6 +17,7 @@ type Concern = {
   title: string;
   detail: string;
   panel: string;
+  search?: ObservabilitySearch;
   help?: string | null;
 };
 
@@ -26,6 +29,7 @@ type CollectConcernsOptions = {
   history?: number[];
   encoderHistory?: number[];
   requests?: RequestsOverview | null;
+  recentFailures?: JobRunPage | null;
 };
 
 const MEMORY_PRESSURE = 0.92;
@@ -57,6 +61,7 @@ const TONE_ORDER: Record<ConcernTone, number> = { broken: 0, attention: 1, setup
  * @param history - Recent processor readings, used to tell a spike from sustained load.
  * @param encoderHistory - The same for the graphics encoder.
  * @param requests - What the server last heard from the requests service, where requesting is on.
+ * @param recentFailures - The job runs that failed in the last day, counted, with the latest of them.
  * @returns The concerns, broken things before things merely wanting attention.
  */
 const collectConcerns = ({
@@ -67,6 +72,7 @@ const collectConcerns = ({
   history = [],
   encoderHistory = [],
   requests = null,
+  recentFailures = null,
 }: CollectConcernsOptions): Concern[] => {
   const concerns: Concern[] = [];
 
@@ -150,15 +156,19 @@ const collectConcerns = ({
     });
   }
 
-  const failed = (monitor?.queue.jobs ?? []).filter((job) => job.state === 'failed');
+  const failed = recentFailures?.total ?? 0;
 
-  if (failed.length > 0) {
+  if (failed > 0) {
     concerns.push({
       id: 'failed-jobs',
       tone: 'broken',
-      title: failed.length === 1 ? 'A job failed' : `${failed.length.toString()} jobs failed`,
-      detail: failed[0]?.failure?.message ?? 'Look at the job list for what went wrong.',
+      title:
+        failed === 1
+          ? 'A job failed in the last 24 hours'
+          : `${failed.toString()} jobs failed in the last 24 hours`,
+      detail: recentFailures?.records[0]?.errorMessage ?? 'Open the list to see what went wrong.',
       panel: 'jobs',
+      search: { view: 'jobs', rstatus: 'failed', range: '24h' },
     });
   }
 

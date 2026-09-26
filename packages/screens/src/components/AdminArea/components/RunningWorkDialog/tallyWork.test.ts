@@ -11,6 +11,7 @@ const task = (id: number, state: Job['state']): Job => ({
   startedAtMs: null,
   finishedAtMs: null,
   correlationId: 'run-1',
+  stoppedBecause: null,
   failure: null,
 });
 

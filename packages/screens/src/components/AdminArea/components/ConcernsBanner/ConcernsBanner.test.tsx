@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { ConcernsBanner } from './ConcernsBanner';
 import type { Concern } from '@ValenceScreens/components/AdminArea/collectConcerns';
+import type { ObservabilitySearch } from '@ValenceClient/admin/ObservabilitySearchSchema';
 
 const concern = (over: Partial<Concern> = {}): Concern => ({
   id: 'transcoder-unreachable',
@@ -69,7 +70,35 @@ describe('ConcernsBanner', () => {
 
     await user.click(screen.getByRole('button', { name: /^Films has never been scanned/ }));
 
-    expect(onOpenPanel).toHaveBeenCalledWith('libraries');
+    expect(onOpenPanel).toHaveBeenCalledWith('libraries', undefined);
+  });
+
+  it('opens the panel narrowed to exactly what the concern counted', async () => {
+    const onOpenPanel = vi.fn<(panel: string, search?: ObservabilitySearch) => void>();
+    const user = userEvent.setup();
+
+    render(
+      <ConcernsBanner
+        concerns={[
+          concern({
+            id: 'failed-jobs',
+            title: '3 jobs failed in the last 24 hours',
+            panel: 'jobs',
+            search: { view: 'jobs', rstatus: 'failed', range: '24h' },
+          }),
+        ]}
+        onOpenPanel={onOpenPanel}
+        onDismiss={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /^3 jobs failed/ }));
+
+    expect(onOpenPanel).toHaveBeenCalledWith('jobs', {
+      view: 'jobs',
+      rstatus: 'failed',
+      range: '24h',
+    });
   });
 
   it('dismisses one without opening its panel', async () => {

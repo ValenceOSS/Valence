@@ -2,6 +2,7 @@ import type { RequestsVpn } from '@ValenceContracts/schemas/Requests';
 import { describe, expect, it } from 'vitest';
 import { NO_WORK } from '@ValenceContracts/schemas/Requests';
 import { collectConcerns } from './collectConcerns';
+import type { JobRunPage } from '@ValenceContracts/schemas/JobRun';
 import type { ActiveSession, AdminOverview, Job, Monitor } from '@ValenceClient/admin/fetchAdmin';
 import type { PlaybackPlan, Reason } from '@ValenceContracts/schemas/PlaybackPlan';
 import type { Library } from '@ValenceContracts/schemas/Library';
@@ -92,7 +93,25 @@ const failedJob = (message: string | null = null): Job => ({
   startedAtMs: 0,
   finishedAtMs: 1,
   correlationId: null,
+  stoppedBecause: null,
   failure: message === null ? null : { message, chain: [] },
+});
+
+const failedRuns = (total: number, errorMessage: string | null = null): JobRunPage => ({
+  total,
+  records: [
+    {
+      id: 'run-1',
+      kind: 'library.scan',
+      status: 'failed',
+      subject: 'Films',
+      startedAtMs: 0,
+      finishedAtMs: 1,
+      progress: null,
+      errorMessage,
+      createdAtMs: 0,
+    },
+  ],
 });
 
 const reason: Reason = { code: 'ClientSupportsSource', detail: 'Client declares support' };
@@ -217,34 +236,40 @@ describe('collectConcerns', () => {
       expect(concerns[0]?.detail).toBe('Nothing that needs converting will play until it is back.');
     });
 
-    it('reports a failed job', () => {
-      const concerns = collectConcerns({ ...healthy, monitor: healthyMonitor([failedJob()]) });
+    it('reports a job that failed in the last day', () => {
+      const concerns = collectConcerns({ ...healthy, recentFailures: failedRuns(1) });
 
-      expect(concerns[0]?.title).toBe('A job failed');
+      expect(concerns[0]?.title).toBe('A job failed in the last 24 hours');
     });
 
     it('counts several rather than listing them', () => {
-      const concerns = collectConcerns({
-        ...healthy,
-        monitor: healthyMonitor([failedJob(), failedJob()]),
-      });
+      const concerns = collectConcerns({ ...healthy, recentFailures: failedRuns(2) });
 
-      expect(concerns[0]?.title).toBe('2 jobs failed');
+      expect(concerns[0]?.title).toBe('2 jobs failed in the last 24 hours');
     });
 
-    it('carries why it failed, when the job said', () => {
+    it('carries why the latest failed, when the job said', () => {
       const concerns = collectConcerns({
         ...healthy,
-        monitor: healthyMonitor([failedJob('no such path')]),
+        recentFailures: failedRuns(3, 'no such path'),
       });
 
       expect(concerns[0]?.detail).toBe('no such path');
     });
 
-    it('points at the panel that explains it', () => {
-      const concerns = collectConcerns({ ...healthy, monitor: healthyMonitor([failedJob()]) });
+    it('opens the job history filtered to exactly the failures it counted', () => {
+      const concerns = collectConcerns({ ...healthy, recentFailures: failedRuns(1) });
 
       expect(concerns[0]?.panel).toBe('jobs');
+      expect(concerns[0]?.search).toEqual({ view: 'jobs', rstatus: 'failed', range: '24h' });
+    });
+
+    it('says nothing about work the media service dropped, which no list of runs holds', () => {
+      expect(
+        collectConcerns({ ...healthy, monitor: healthyMonitor([failedJob()]) }).map(
+          (concern) => concern.id,
+        ),
+      ).not.toContain('failed-jobs');
     });
   });
 
@@ -710,7 +735,8 @@ describe('collectConcerns', () => {
           trustedOrigins: [],
         },
       }),
-      monitor: healthyMonitor([failedJob()], { used: 99, total: 100 }),
+      monitor: healthyMonitor([], { used: 99, total: 100 }),
+      recentFailures: failedRuns(1),
       libraries: [library({ lastScannedAt: null })],
     });
 

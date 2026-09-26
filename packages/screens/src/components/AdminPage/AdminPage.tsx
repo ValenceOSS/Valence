@@ -185,8 +185,12 @@ const AdminPage = () => {
           <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-4">
             <AdminArea
               panel={showing}
-              onPanel={(next) => {
-                void go({ to: '/admin/$panel', params: { panel: next } });
+              onPanel={(next, search) => {
+                void go({
+                  to: '/admin/$panel',
+                  params: { panel: next },
+                  ...(search === undefined ? {} : { search }),
+                });
               }}
               initialJob={job ?? null}
               observability={{ ...observability, ...(view === undefined ? {} : { view }) }}

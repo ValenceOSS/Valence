@@ -146,6 +146,24 @@ describe('adminQueries', () => {
     expect(admin.fetchJobHistory).toHaveBeenCalledWith({ search: 'preview' });
   });
 
+  it('counts the runs that failed in the last day, and keeps asking', async () => {
+    vi.useFakeTimers({ now: 1_800_000_000_000 });
+
+    await expect(aCache().fetchQuery(adminQueries.recentFailures())).resolves.toEqual({
+      records: [],
+      total: 0,
+    });
+
+    vi.useRealTimers();
+
+    expect(admin.fetchJobHistory).toHaveBeenCalledWith({
+      status: 'failed',
+      sinceMs: 1_800_000_000_000 - 86_400_000,
+      limit: 1,
+    });
+    expect(adminQueries.recentFailures().refetchInterval).toBe(30_000);
+  });
+
   it('reads the issues one job run accumulated, once asked for', async () => {
     await expect(aCache().fetchQuery(adminQueries.jobHistoryIssues('run-1'))).resolves.toEqual([]);
 

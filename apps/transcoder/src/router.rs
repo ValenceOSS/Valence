@@ -25,6 +25,7 @@ use crate::preview::{
 use crate::probe::probe_media;
 use crate::progress_registry::ProgressRegistry;
 use crate::queue::WorkQueue;
+use crate::render_registry::{Claim, RenderRegistry};
 use crate::rendition::{self, RenditionJob, RenditionRequest};
 use crate::session::{await_run, segment_number, Reuse, SessionRegistry};
 use crate::subtitle::{extract_subtitle, SubtitleRequest};
@@ -834,6 +835,10 @@ async fn start_preview(
         );
     }
 
+    if is_from_a_stopped_job(state.previews.renders(), request.correlation_id.as_deref()).await {
+        return error(StatusCode::CONFLICT, JOB_STOPPED);
+    }
+
     let config = state.registry.config().clone();
     let id = request.id();
 
@@ -861,21 +866,31 @@ async fn start_preview(
     let duration = probe.duration_seconds;
 
     if !request.wait {
-        if state.previews.claim(&id).await {
-            cut_in_the_background(
-                &state,
-                &request,
-                &path,
-                crate::preview::Source {
-                    range,
-                    bit_depth,
-                    size,
-                    bars: None,
-                },
-                &capabilities,
-                duration,
-                id.clone(),
-            );
+        match claim_for_a_live_job(
+            state.previews.renders(),
+            &id,
+            request.correlation_id.as_deref(),
+        )
+        .await
+        {
+            Claimed::JobStopped => return error(StatusCode::CONFLICT, JOB_STOPPED),
+            Claimed::UnderWay => {}
+            Claimed::Taken(claimed) => {
+                cut_in_the_background(
+                    &state,
+                    &request,
+                    &path,
+                    crate::preview::Source {
+                        range,
+                        bit_depth,
+                        size,
+                        bars: None,
+                    },
+                    &capabilities,
+                    duration,
+                    claimed,
+                );
+            }
         }
 
         return (
@@ -976,6 +991,109 @@ struct ForgetReport {
     forgotten: bool,
 }
 
+/// What a render asked for by a stopped job is answered with.
+const JOB_STOPPED: &str = "The job that asked for this was stopped.";
+
+/// Whether an ask comes from one of the server's jobs that has been stopped.
+async fn is_from_a_stopped_job(renders: &RenderRegistry, correlation_id: Option<&str>) -> bool {
+    match correlation_id {
+        Some(job) => renders.is_job_stopped(job).await,
+        None => false,
+    }
+}
+
+/// What asking to draw a render for one of the server's jobs came to.
+enum Claimed {
+    /// This caller draws it.
+    Taken(Claim),
+    /// Something else is already drawing it.
+    UnderWay,
+    /// The job that asked has been stopped, so the render is not drawn.
+    JobStopped,
+}
+
+/// Takes a render to draw for one of the server's jobs, unless something
+/// already has it or the job has been stopped.
+///
+/// The job is looked at again once the render is claimed. A stop that lands
+/// while the file is still being probed finds no switch to throw, because the
+/// claim that makes one has not happened yet; the job is recorded before any
+/// switch is thrown, so this second look sees it.
+///
+/// # Returns
+///
+/// The claim, or why there is none.
+async fn claim_for_a_live_job(
+    renders: &RenderRegistry,
+    id: &str,
+    correlation_id: Option<&str>,
+) -> Claimed {
+    let Some(claimed) = renders.claim(id, correlation_id).await else {
+        return Claimed::UnderWay;
+    };
+
+    if is_from_a_stopped_job(renders, correlation_id).await {
+        renders.give_up(id).await;
+
+        return Claimed::JobStopped;
+    }
+
+    Claimed::Taken(claimed)
+}
+
+/// Stops the render of an address and waits for it to let go, so its files
+/// are not removed from under a running ffmpeg.
+///
+/// Removing them first is what made clearing a library's previews read as an
+/// encode failure: ffmpeg was part way through a clip, lost the folder it was
+/// writing into, and said so.
+async fn stop_before_forgetting(renders: &RenderRegistry, id: &str) {
+    if !renders.stop(id).await {
+        return;
+    }
+
+    for _ in 0..STOPPING_CHECKS {
+        if !renders.is_claimed(id).await {
+            break;
+        }
+
+        tokio::time::sleep(STOPPING_CHECK_EVERY).await;
+    }
+}
+
+/// Which of the server's jobs to stop the renders of.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct StopRenders {
+    correlation_id: String,
+}
+
+/// How many renders were stopped.
+#[derive(Debug, Serialize)]
+struct StoppedRenders {
+    stopped: usize,
+}
+
+/// Stops every clip and sheet one of the server's jobs asked for, at once.
+///
+/// Stopping a job on the server only stops it asking. What it had already
+/// asked for went on encoding here, for as long as each render took, while
+/// the jobs page said it had stopped.
+async fn stop_renders(State(state): State<AppState>, Json(request): Json<StopRenders>) -> Response {
+    let stopped = state
+        .previews
+        .renders()
+        .stop_job(&request.correlation_id)
+        .await
+        + state
+            .trickplay
+            .renders()
+            .stop_job(&request.correlation_id)
+            .await;
+
+    (StatusCode::OK, Json(StoppedRenders { stopped })).into_response()
+}
+
 /// Removes one clip, so the next request for it makes it again.
 ///
 /// Takes the request rather than an address for the same reason the sweep does:
@@ -986,7 +1104,11 @@ async fn forget_preview(
     Json(request): Json<PreviewRequest>,
 ) -> Response {
     let root = state.registry.config().artefact_root.join("previews");
-    let forgotten = cache_sweep::forget(&root, &request.id()).await;
+    let id = request.id();
+
+    stop_before_forgetting(state.previews.renders(), &id).await;
+
+    let forgotten = cache_sweep::forget(&root, &id).await;
 
     (StatusCode::OK, Json(ForgetReport { forgotten })).into_response()
 }
@@ -1135,7 +1257,11 @@ async fn forget_trickplay(
     Json(request): Json<TrickplayRequest>,
 ) -> Response {
     let root = state.registry.config().artefact_root.join("trickplay");
-    let forgotten = cache_sweep::forget(&root, &request.id()).await;
+    let id = request.id();
+
+    stop_before_forgetting(state.trickplay.renders(), &id).await;
+
+    let forgotten = cache_sweep::forget(&root, &id).await;
 
     (StatusCode::OK, Json(ForgetReport { forgotten })).into_response()
 }
@@ -1473,7 +1599,7 @@ fn cut_in_the_background(
     source: crate::preview::Source,
     capabilities: &Capabilities,
     duration_seconds: f64,
-    claimed: String,
+    claimed: Claim,
 ) {
     let config = state.registry.config();
     let previews = state.previews.clone();
@@ -1486,13 +1612,14 @@ fn cut_in_the_background(
     let subject = name_of(path);
     let found = capabilities.clone();
 
-    let id = claimed.clone();
+    let Claim { id, stop } = claimed;
 
     tokio::spawn(async move {
         let outcome = queue
-            .run(
+            .run_until(
                 PreviewJob::new(subject),
                 correlation_id.as_deref(),
+                stop.stopped(),
                 previews.generate(
                     crate::preview::Tools {
                         ffmpeg: &ffmpeg,
@@ -1507,11 +1634,17 @@ fn cut_in_the_background(
             )
             .await;
 
-        if let Err(failure) = outcome {
-            previews.remember_failure(&id, failure.to_string()).await;
+        match outcome {
+            Ok(Ok(_)) => {}
+            Ok(Err(failure)) => {
+                previews.remember_failure(&id, failure.to_string()).await;
+            }
+            Err(()) => {
+                cache_sweep::forget(&artefact_root.join("previews"), &id).await;
+            }
         }
 
-        previews.give_up(&claimed).await;
+        previews.give_up(&id).await;
     });
 }
 
@@ -1521,7 +1654,7 @@ fn draw_in_the_background(
     path: &Path,
     source: SheetSource,
     on_device: (Option<HardwareAccel>, Capabilities),
-    claimed: String,
+    claimed: Claim,
 ) {
     let config = state.registry.config();
     let trickplay = state.trickplay.clone();
@@ -1534,13 +1667,14 @@ fn draw_in_the_background(
     let subject = name_of(path);
     let (accel, found) = on_device;
 
-    let id = claimed.clone();
+    let Claim { id, stop } = claimed;
 
     tokio::spawn(async move {
         let outcome = queue
-            .run(
+            .run_until(
                 TrickplayJob::new(subject),
                 correlation_id.as_deref(),
+                stop.stopped(),
                 trickplay.generate(
                     crate::trickplay::Tools {
                         ffmpeg: &ffmpeg,
@@ -1555,12 +1689,38 @@ fn draw_in_the_background(
             )
             .await;
 
-        if let Err(failure) = outcome {
-            trickplay.remember_failure(&id, failure.to_string()).await;
+        match outcome {
+            Ok(Ok(_)) => {}
+            Ok(Err(failure)) => {
+                trickplay.remember_failure(&id, failure.to_string()).await;
+            }
+            Err(()) => {
+                cache_sweep::forget(&artefact_root.join("trickplay"), &id).await;
+            }
         }
 
-        trickplay.give_up(&claimed).await;
+        trickplay.give_up(&id).await;
     });
+}
+
+/// The graphics chip to draw sheets on, where one will draw them from a file
+/// of this depth.
+fn sheet_accel(
+    capabilities: &Capabilities,
+    asked: Option<HardwareAccel>,
+    bit_depth: Option<u8>,
+) -> Option<HardwareAccel> {
+    capabilities
+        .encoder_for("h264", asked)
+        .map(|found| found.accel)
+        .filter(|found| {
+            crate::chains::runs_here(
+                &capabilities.chains,
+                *found,
+                crate::chains::ChainShape::Sheet,
+                bit_depth,
+            )
+        })
 }
 
 async fn start_trickplay(
@@ -1576,6 +1736,10 @@ async fn start_trickplay(
         );
     }
 
+    if is_from_a_stopped_job(state.trickplay.renders(), request.correlation_id.as_deref()).await {
+        return error(StatusCode::CONFLICT, JOB_STOPPED);
+    }
+
     let probe = match probe_media(&state.ffprobe, &path).await {
         Ok(probe) => probe,
         Err(failure) => return error(StatusCode::BAD_REQUEST, &failure.to_string()),
@@ -1587,17 +1751,7 @@ async fn start_trickplay(
 
     let config = state.registry.config();
     let capabilities = detect_capabilities(&config.ffmpeg, &config.device).await;
-    let accel = capabilities
-        .encoder_for("h264", request.hardware_accel)
-        .map(|found| found.accel)
-        .filter(|found| {
-            crate::chains::runs_here(
-                &capabilities.chains,
-                *found,
-                crate::chains::ChainShape::Sheet,
-                video.bit_depth,
-            )
-        });
+    let accel = sheet_accel(&capabilities, request.hardware_accel, video.bit_depth);
 
     let source = SheetSource {
         width: video.width,
@@ -1619,9 +1773,17 @@ async fn start_trickplay(
             let tile_height = tile_height_for(request.tile_width, video.width, video.height);
             let pending = pending_index(&request, tile_height);
 
-            if !state.trickplay.claim(&id).await {
-                return (StatusCode::ACCEPTED, Json(pending)).into_response();
-            }
+            let claimed = match claim_for_a_live_job(
+                state.trickplay.renders(),
+                &id,
+                request.correlation_id.as_deref(),
+            )
+            .await
+            {
+                Claimed::JobStopped => return error(StatusCode::CONFLICT, JOB_STOPPED),
+                Claimed::UnderWay => return (StatusCode::ACCEPTED, Json(pending)).into_response(),
+                Claimed::Taken(claimed) => claimed,
+            };
 
             draw_in_the_background(
                 &state,
@@ -1629,7 +1791,7 @@ async fn start_trickplay(
                 &path,
                 source,
                 (accel, capabilities.clone()),
-                id,
+                claimed,
             );
 
             return (StatusCode::ACCEPTED, Json(pending)).into_response();
@@ -1921,12 +2083,17 @@ pub fn create_router(state: AppState) -> Router {
         .route("/trickplay/sweep", post(sweep_trickplay))
         .route("/trickplay/forget", post(forget_trickplay))
         .route("/trickplay/{id}/{name}", get(trickplay_file))
+        .route("/renders/stop", post(stop_renders))
         .with_state(state)
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{content_type_for, is_safe_segment_name, parse_range, AppState};
+    use super::{
+        claim_for_a_live_job, content_type_for, is_safe_segment_name, parse_range, AppState,
+        Claimed,
+    };
+    use crate::render_registry::RenderRegistry;
     use std::path::{Path, PathBuf};
 
     fn writing_to(roots: &[&str]) -> AppState {
@@ -2110,5 +2277,38 @@ mod tests {
         ] {
             assert_eq!(content_type_for(name), expected, "{name}");
         }
+    }
+
+    #[tokio::test]
+    async fn claims_a_render_for_a_job_that_is_still_going() {
+        let renders = RenderRegistry::new();
+
+        let claimed = claim_for_a_live_job(&renders, "abc", Some("job-1")).await;
+
+        assert!(matches!(claimed, Claimed::Taken(_)));
+        assert!(
+            matches!(
+                claim_for_a_live_job(&renders, "abc", Some("job-1")).await,
+                Claimed::UnderWay
+            ),
+            "a render already under way is not taken twice"
+        );
+    }
+
+    /// The stop landed while the file was being probed, before the claim made
+    /// a switch it could throw.
+    #[tokio::test]
+    async fn refuses_a_render_whose_job_was_stopped_before_it_was_claimed() {
+        let renders = RenderRegistry::new();
+
+        renders.stop_job("job-1").await;
+
+        let refused = claim_for_a_live_job(&renders, "abc", Some("job-1")).await;
+
+        assert!(matches!(refused, Claimed::JobStopped));
+        assert!(
+            !renders.is_claimed("abc").await,
+            "the claim is let go, so nothing is left drawing it"
+        );
     }
 }

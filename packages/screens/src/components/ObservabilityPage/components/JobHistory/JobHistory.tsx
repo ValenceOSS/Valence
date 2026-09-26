@@ -1,4 +1,5 @@
 import { Bookmark as BookmarkFilledIcon } from '@keyline-icons/react/fill';
+import { cn } from '@ValenceUI/cn';
 import { Icon } from '@ValenceUI/Icon';
 import {
   ChevronDown as ChevronDownIcon,
@@ -66,6 +67,7 @@ const STATUSES_COUNTED = [
   'running',
   'completed',
   'failed',
+  'stopped',
 ] as const satisfies readonly JobRunStatus[];
 
 const STATUSES = [
@@ -73,6 +75,7 @@ const STATUSES = [
   'running',
   'completed',
   'failed',
+  'stopped',
 ] as const satisfies readonly JobRunStatus[];
 
 const SORTS: readonly { id: JobRunSort; label: string; detail: string }[] = [
@@ -191,20 +194,29 @@ const JobHistoryPanel = ({
     }),
     [rq, range, from, until, sort, anchor, rkind],
   );
+  const isAsOpened =
+    rq === undefined &&
+    rstatus === undefined &&
+    rkind === undefined &&
+    rsort === undefined &&
+    range === undefined &&
+    from === undefined &&
+    until === undefined;
   const query = useMemo(
     () => ({
       ...narrowing,
       status: rstatus ?? null,
       limit: ROWS_PER_PAGE,
       offset: page * ROWS_PER_PAGE,
+      runningFirst: isAsOpened,
     }),
-    [narrowing, rstatus, page],
+    [narrowing, rstatus, page, isAsOpened],
   );
   const askedHistory = useQuery({
     ...adminQueries.jobHistory(query),
     placeholderData: keepPreviousData,
   });
-  const [askedRunning, askedCompleted, askedFailed] = useQueries({
+  const [askedRunning, askedCompleted, askedFailed, askedStopped] = useQueries({
     queries: STATUSES_COUNTED.map((status) => ({
       ...adminQueries.jobHistory({ ...narrowing, status, limit: 1, offset: 0 }),
       placeholderData: keepPreviousData,
@@ -246,6 +258,7 @@ const JobHistoryPanel = ({
     running: askedRunning?.data?.total ?? 0,
     completed: askedCompleted?.data?.total ?? 0,
     failed: askedFailed?.data?.total ?? 0,
+    stopped: askedStopped?.data?.total ?? 0,
   };
   const groups = useMemo<FilterGroup[]>(
     () => [
@@ -493,7 +506,13 @@ const JobHistoryPanel = ({
               </span>
 
               {row.original.errorMessage === null ? null : (
-                <span className="truncate text-xs text-danger" title={row.original.errorMessage}>
+                <span
+                  className={cn(
+                    'truncate text-xs',
+                    row.original.status === 'failed' ? 'text-danger' : 'text-text-muted',
+                  )}
+                  title={row.original.errorMessage}
+                >
                   {row.original.errorMessage}
                 </span>
               )}
@@ -653,6 +672,11 @@ const JobHistoryPanel = ({
               label: 'Failed',
               value: <AnimatedNumber value={counts.failed} />,
               isAlarming: counts.failed > 0,
+            },
+            {
+              id: 'stopped',
+              label: 'Stopped',
+              value: <AnimatedNumber value={counts.stopped} />,
             },
           ]}
         />

@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import userEvent from '@testing-library/user-event';
+import type { ObservabilitySearch } from '@ValenceClient/admin/ObservabilitySearchSchema';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
@@ -101,6 +102,7 @@ const MONITOR: Monitor = {
         startedAtMs: 0,
         finishedAtMs: null,
         correlationId: null,
+        stoppedBecause: null,
         failure: null,
       },
       {
@@ -112,6 +114,7 @@ const MONITOR: Monitor = {
         startedAtMs: 0,
         finishedAtMs: 900,
         correlationId: null,
+        stoppedBecause: null,
         failure: { message: 'no such encoder', chain: [] },
       },
     ],
@@ -456,7 +459,7 @@ const TheAdmin = ({
   panel = 'overview',
   onPanel,
   ...rest
-}: { panel?: string; onPanel?: (panel: string) => void } & Omit<
+}: { panel?: string; onPanel?: (panel: string, search?: ObservabilitySearch) => void } & Omit<
   AdminAreaProps,
   'panel' | 'onPanel'
 >) => {
@@ -464,9 +467,14 @@ const TheAdmin = ({
     () => ADMIN_PANELS.find((one) => one.id === panel)?.id ?? 'overview',
   );
 
-  const move = (next: string) => {
+  const move = (next: string, search?: ObservabilitySearch) => {
     setShowing(next);
-    onPanel?.(next);
+
+    if (search === undefined) {
+      onPanel?.(next);
+    } else {
+      onPanel?.(next, search);
+    }
   };
 
   return (
@@ -701,6 +709,33 @@ describe('AdminArea', () => {
   });
 
   it('says why a job failed rather than only that it did', async () => {
+    const otherwise = respondWith();
+
+    fetchMock.mockImplementation((input: string, init?: RequestInit) =>
+      input.includes('/api/admin/jobs/history?') && input.includes('status=failed')
+        ? Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                records: [
+                  {
+                    id: 'run-failed',
+                    kind: 'library.regenerateTrickplay',
+                    status: 'failed',
+                    subject: null,
+                    startedAtMs: 0,
+                    finishedAtMs: 900,
+                    progress: null,
+                    errorMessage: 'no such encoder',
+                    createdAtMs: 0,
+                  },
+                ],
+                total: 1,
+              }),
+          })
+        : otherwise(input, init),
+    );
+
     const actor = userEvent.setup();
 
     renderInAnAddress(<TheAdmin />);
@@ -708,6 +743,50 @@ describe('AdminArea', () => {
     await goTo(actor, 'Jobs & logs');
 
     expect((await screen.findAllByText('no such encoder')).length).toBeGreaterThan(0);
+  });
+
+  it('opens the job history filtered to the failures its warning counted', async () => {
+    const otherwise = respondWith();
+
+    fetchMock.mockImplementation((input: string, init?: RequestInit) =>
+      input.includes('/api/admin/jobs/history?') && input.includes('status=failed')
+        ? Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                records: [
+                  {
+                    id: 'run-failed',
+                    kind: 'library.regenerateTrickplay',
+                    status: 'failed',
+                    subject: null,
+                    startedAtMs: 0,
+                    finishedAtMs: 900,
+                    progress: null,
+                    errorMessage: 'no such encoder',
+                    createdAtMs: 0,
+                  },
+                ],
+                total: 2,
+              }),
+          })
+        : otherwise(input, init),
+    );
+
+    const actor = userEvent.setup();
+    const onPanel = vi.fn<(panel: string, search?: ObservabilitySearch) => void>();
+
+    renderInAnAddress(<TheAdmin onPanel={onPanel} />);
+
+    await actor.click(
+      await screen.findByRole('button', { name: /^2 jobs failed in the last 24 hours/ }),
+    );
+
+    expect(onPanel).toHaveBeenLastCalledWith('jobs', {
+      view: 'jobs',
+      rstatus: 'failed',
+      range: '24h',
+    });
   });
 
   it('lets an admin start any job on demand from the Work tab', async () => {

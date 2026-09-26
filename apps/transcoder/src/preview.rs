@@ -23,7 +23,7 @@ use crate::capability::Capabilities;
 use crate::chains::{runs_here, ChainShape};
 use crate::integrity::decodes;
 use crate::media::VideoRange;
-use crate::render_registry::RenderRegistry;
+use crate::render_registry::{Claim, RenderRegistry};
 use crate::steps_aside::steps_aside;
 use crate::transcode_plan::{
     tone_map_filter, HardwareAccel, HardwarePipeline, ToneMapping, NO_EMBEDDED_CAPTIONS,
@@ -797,9 +797,16 @@ impl PreviewRegistry {
         Self::default()
     }
 
-    /// Takes this clip to render, unless something already has.
-    pub async fn claim(&self, id: &str) -> bool {
-        self.renders.claim(id).await
+    /// Takes this clip to render, unless something already has, with the
+    /// signal that says when to give it up.
+    pub async fn claim(&self, id: &str, correlation_id: Option<&str>) -> Option<Claim> {
+        self.renders.claim(id, correlation_id).await
+    }
+
+    /// The renders under way, for stopping them.
+    #[must_use]
+    pub fn renders(&self) -> &RenderRegistry {
+        &self.renders
     }
 
     /// Remembers that a render failed, for whoever asks next.

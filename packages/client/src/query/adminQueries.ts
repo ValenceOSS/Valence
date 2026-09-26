@@ -41,6 +41,10 @@ const ADMIN = ['admin'] as const;
 
 const WATCHED_EVERY_MS = 5000;
 
+const RECENT_FAILURES_MS = 86_400_000;
+
+const RECENT_FAILURES_EVERY_MS = 30_000;
+
 /**
  * What the server is doing at a glance.
  *
@@ -108,6 +112,21 @@ const jobHistory = (query: Partial<JobRunQuery>) =>
   queryOptions({
     queryKey: [...ADMIN, 'jobHistory', query],
     queryFn: () => fetchJobHistory(query),
+  });
+
+/**
+ * How many job runs failed in the last day, and the latest of them — what the admin area warns about,
+ * counted the same way as the job history filtered to failures over the last 24 hours, so the warning
+ * and the list it opens agree.
+ *
+ * @returns The query.
+ */
+const recentFailures = () =>
+  queryOptions({
+    queryKey: [...ADMIN, 'recentFailures'],
+    queryFn: () =>
+      fetchJobHistory({ status: 'failed', sinceMs: Date.now() - RECENT_FAILURES_MS, limit: 1 }),
+    refetchInterval: RECENT_FAILURES_EVERY_MS,
   });
 
 /**
@@ -506,6 +525,7 @@ const adminQueries = {
   sessions,
   jobs,
   jobHistory,
+  recentFailures,
   jobHistoryIssues,
   jobStats,
   jobRun,

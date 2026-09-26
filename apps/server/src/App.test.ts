@@ -542,8 +542,17 @@ describe('job history and load history endpoints', () => {
         sort: 'newest',
         offset: 0,
         limit: 10,
+        runningFirst: false,
       },
     ]);
+  });
+
+  it('puts running runs first only when the history asks for that', async () => {
+    const { app, readCalls } = withHistory();
+
+    await app.request(`${TEST_ORIGIN}/api/admin/jobs/history?runningFirst=true`);
+
+    expect(readCalls[0]).toMatchObject({ runningFirst: true });
   });
 
   it('reads a page of job history in the order and from the page asked for', async () => {

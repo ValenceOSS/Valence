@@ -145,6 +145,33 @@ describe('generateTrickplay', () => {
     expect(completed).toEqual(['b']);
   });
 
+  it('says nothing is wrong with a file whose render was refused because the job was stopped', async () => {
+    let stopped = false;
+    const problems: string[] = [];
+    const transcoder = stubTranscoder(() => {
+      stopped = true;
+
+      return Promise.reject(new Error('The job that asked for this was stopped.'));
+    });
+
+    await generateTrickplay({
+      libraryId: LIBRARY_ID,
+      generation: 0,
+      store: {
+        listOutstanding: () => Promise.resolve([{ id: 'a', path: '/media/a.mkv' }]),
+        markComplete: () => Promise.resolve(),
+      },
+      transcoder,
+      trickplay: PARAMS,
+      isCancelled: () => stopped,
+      onProblem: (path) => {
+        problems.push(path);
+      },
+    });
+
+    expect(problems).toEqual([]);
+  });
+
   it('does nothing at all when a library has nothing outstanding', async () => {
     const { store, transcoder, trickplayRequests } = harness([]);
 

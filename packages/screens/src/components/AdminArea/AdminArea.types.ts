@@ -2,7 +2,7 @@ import type { ObservabilitySearch } from '@ValenceClient/admin/ObservabilitySear
 
 type AdminAreaProps = {
   panel: string;
-  onPanel: (panel: string) => void;
+  onPanel: (panel: string, search?: ObservabilitySearch) => void;
   historyLength?: number;
   initialJob?: string | null;
   observability?: ObservabilitySearch;

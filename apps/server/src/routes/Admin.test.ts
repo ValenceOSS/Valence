@@ -531,6 +531,50 @@ describe('administration over HTTP', () => {
     expect(cancelJob).toHaveBeenCalledWith('job-1');
   });
 
+  it('stops what the job had already asked the media service to render, at once', async () => {
+    const stopJob = vi.fn(() => Promise.resolve(2));
+    const { app, store, permissions } = build({
+      cancelJob: () => Promise.resolve(true),
+      controlQueue: {
+        setConcurrency: () => Promise.resolve(),
+        pause: () => Promise.resolve(),
+        resume: () => Promise.resolve(),
+        runNow: () => Promise.resolve(true),
+        stopJob,
+      },
+    });
+    const cookie = await signedInAsAdmin(app, store, permissions);
+
+    const response = await app.request(`${BASE}/api/admin/jobs/running/job-1/cancel`, {
+      method: 'POST',
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(response.status).toBe(202);
+    expect(stopJob).toHaveBeenCalledWith('job-1');
+  });
+
+  it('still stops the job when the media service cannot be reached', async () => {
+    const { app, store, permissions } = build({
+      cancelJob: () => Promise.resolve(true),
+      controlQueue: {
+        setConcurrency: () => Promise.resolve(),
+        pause: () => Promise.resolve(),
+        resume: () => Promise.resolve(),
+        runNow: () => Promise.resolve(true),
+        stopJob: () => Promise.reject(new Error('connection refused')),
+      },
+    });
+    const cookie = await signedInAsAdmin(app, store, permissions);
+
+    const response = await app.request(`${BASE}/api/admin/jobs/running/job-1/cancel`, {
+      method: 'POST',
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(response.status).toBe(202);
+  });
+
   it('says so when there is nothing running under that id', async () => {
     const { app, store, permissions } = build({ cancelJob: () => Promise.resolve(false) });
     const cookie = await signedInAsAdmin(app, store, permissions);
@@ -563,6 +607,7 @@ describe('administration over HTTP', () => {
       pause: vi.fn(() => Promise.resolve()),
       resume: vi.fn(() => Promise.resolve()),
       runNow: vi.fn(() => Promise.resolve(true)),
+      stopJob: vi.fn(() => Promise.resolve(0)),
     });
 
     it('changes how many run at once', async () => {

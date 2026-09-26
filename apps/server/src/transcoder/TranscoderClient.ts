@@ -166,6 +166,8 @@ const RenditionRemovedSchema = z.object({ removed: z.boolean() });
 
 const RenditionStoppedSchema = z.object({ stopped: z.boolean() });
 
+const RendersStoppedSchema = z.object({ stopped: z.number() });
+
 const SweepReportSchema = z.object({
   removed: z.number().int().nonnegative(),
   freedBytes: z.number().int().nonnegative(),
@@ -305,6 +307,7 @@ type QueueControl = {
   pause: () => Promise<void>;
   resume: () => Promise<void>;
   runNow: (jobId: number) => Promise<boolean>;
+  stopJob: (correlationId: string) => Promise<number>;
 };
 
 type Transcoder = {
@@ -590,12 +593,14 @@ const createTranscoderClient = ({
     });
 
   /**
-   * Asks for something that is rendered rather than read, and waits for as long as it takes.
+   * Asks for something that is worked out rather than read, and waits for as long as it takes.
    *
-   * No clock at all. A preview is an encode and a sheet is a thumbnail a minute across a whole film,
-   * both queued behind whatever else is being drawn, so any number picked here would be a guess at
-   * how long a stranger's film takes to work through — and being wrong about it reports work that is
-   * progressing normally as a failure, and leaves the item looking broken.
+   * No clock at all. A preview is an encode, a sheet is a thumbnail a minute across a whole film, and
+   * a fingerprint is minutes of sound decoded — all queued behind whatever else the media service is
+   * doing, so any number picked here would be a guess at how long a stranger's file takes to work
+   * through. Being wrong about it reports work that is progressing normally as a failure: a minute's
+   * clock on fingerprints gave up on episode after episode while they were still waiting their turn,
+   * and each one's intro went undetected.
    *
    * Nothing is given up by waiting. The connection is the liveness signal: a media service that dies
    * closes the socket and the request fails at once, which is the case a timeout was protecting
@@ -636,6 +641,9 @@ const createTranscoderClient = ({
 
       return response.ok;
     },
+    stopJob: async (correlationId) =>
+      RendersStoppedSchema.parse(await (await postJson('/renders/stop', { correlationId })).json())
+        .stopped,
   };
 
   return {
@@ -685,7 +693,7 @@ const createTranscoderClient = ({
       ),
 
     fingerprint: async (request) =>
-      FingerprintSchema.parse(await (await postJson('/fingerprint', request)).json()),
+      FingerprintSchema.parse(await (await postRender('/fingerprint', request)).json()),
 
     readFrame: async (request) => (await postJson('/frame', request)).arrayBuffer(),
 

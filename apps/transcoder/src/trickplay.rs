@@ -20,7 +20,7 @@ use tokio::process::Command;
 use crate::capability::Capabilities;
 use crate::integrity::decodes;
 use crate::media::VideoRange;
-use crate::render_registry::RenderRegistry;
+use crate::render_registry::{Claim, RenderRegistry};
 use crate::steps_aside::steps_aside;
 use crate::transcode_plan::{tone_map_format, HardwareAccel, HardwarePipeline};
 
@@ -840,9 +840,16 @@ impl TrickplayRegistry {
         Self::default()
     }
 
-    /// Takes this set of thumbnails to render, unless something already has.
-    pub async fn claim(&self, id: &str) -> bool {
-        self.renders.claim(id).await
+    /// Takes this set of thumbnails to render, unless something already has, with the
+    /// signal that says when to give it up.
+    pub async fn claim(&self, id: &str, correlation_id: Option<&str>) -> Option<Claim> {
+        self.renders.claim(id, correlation_id).await
+    }
+
+    /// The renders under way, for stopping them.
+    #[must_use]
+    pub fn renders(&self) -> &RenderRegistry {
+        &self.renders
     }
 
     /// Remembers that a render failed, for whoever asks next.
@@ -1059,14 +1066,17 @@ mod tests {
     async fn takes_a_set_of_thumbnails_only_once() {
         let registry = TrickplayRegistry::new();
 
-        assert!(registry.claim("one").await, "nothing else held it");
         assert!(
-            !registry.claim("one").await,
+            registry.claim("one", None).await.is_some(),
+            "nothing else held it"
+        );
+        assert!(
+            registry.claim("one", None).await.is_none(),
             "a render sits in a queue before it begins, so asking again while it waits would \
 otherwise start a second one"
         );
         assert!(
-            registry.claim("another").await,
+            registry.claim("another", None).await.is_some(),
             "a different film is its own work"
         );
     }
@@ -1075,11 +1085,11 @@ otherwise start a second one"
     async fn lets_go_of_a_claim_whose_work_never_ran() {
         let registry = TrickplayRegistry::new();
 
-        assert!(registry.claim("one").await);
+        assert!(registry.claim("one", None).await.is_some());
         registry.give_up("one").await;
 
         assert!(
-            registry.claim("one").await,
+            registry.claim("one", None).await.is_some(),
             "a claim that outlived its work would leave that film unable to be asked for again"
         );
     }

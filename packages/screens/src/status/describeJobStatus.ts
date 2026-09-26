@@ -10,7 +10,7 @@ import type { BadgeTone } from '@ValenceUI/Badge.types';
  * @returns The words and the tone to paint them in.
  */
 const describeJobStatus = (
-  status: 'queued' | 'running' | 'stopping' | 'finished' | 'completed' | 'failed',
+  status: 'queued' | 'running' | 'stopping' | 'stopped' | 'finished' | 'completed' | 'failed',
 ): { label: string; tone: BadgeTone } => {
   switch (status) {
     case 'queued':
@@ -19,6 +19,8 @@ const describeJobStatus = (
       return { ...STATUS_LOOK.working, label: 'Running' };
     case 'stopping':
       return { ...STATUS_LOOK.attention, label: 'Stopping' };
+    case 'stopped':
+      return STATUS_LOOK.stopped;
     case 'finished':
     case 'completed':
       return STATUS_LOOK.done;

@@ -30,6 +30,7 @@ const NO_FILTERS = {
   sort: 'newest',
   offset: 0,
   limit: 200,
+  runningFirst: false,
 } as const;
 
 describe('reading a page of job history', () => {
@@ -64,6 +65,23 @@ describe('reading a page of job history', () => {
 
   it('orders the newest run first', () => {
     expect(sqlFor(NO_FILTERS)).toContain('order by "job_run"."createdAt" desc');
+  });
+
+  it('puts a run that is still going first where the history asks for it', () => {
+    expect(sqlFor({ ...NO_FILTERS, runningFirst: true })).toContain(
+      `order by case when "job_run"."status" = 'running' then 0 else 1 end`,
+    );
+  });
+
+  it('keeps a run that began before the window in view while it is still going', () => {
+    const sql = sqlFor({ ...NO_FILTERS, runningFirst: true, sinceMs: 1000 });
+
+    expect(sql).toMatch(/\("job_run"\."createdAt" >= \$\d+ or "job_run"\."status" = \$\d+\)/);
+  });
+
+  it('orders exactly as asked where the history has not asked for running runs first', () => {
+    expect(sqlFor(NO_FILTERS)).not.toContain("= 'running' then 0");
+    expect(sqlFor({ ...NO_FILTERS, sinceMs: 1000 })).not.toContain('or "job_run"."status"');
   });
 
   it('caps how many rows come back, and skips the pages before the one asked for', () => {
@@ -224,8 +242,8 @@ describe('buildInterruptQuery', () => {
     expect(text).toContain("\"status\" in ('running', 'queued')");
   });
 
-  it('marks them failed, saying why', () => {
-    expect(queryFor('The server restarted').params).toContain('failed');
+  it('marks them stopped rather than failed, saying why', () => {
+    expect(queryFor('The server restarted').params).toContain('stopped');
     expect(queryFor('The server restarted').params).toContain('The server restarted');
   });
 

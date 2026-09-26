@@ -756,6 +756,7 @@ const adminJobHistoryRoute = createRoute({
       sort: JobRunSortSchema.optional(),
       offset: z.coerce.number().int().nonnegative().optional(),
       limit: z.coerce.number().int().positive().max(1000).optional(),
+      runningFirst: z.enum(['true', 'false']).optional(),
     }),
   },
   responses: {

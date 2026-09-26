@@ -1,7 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Badge } from '@ValenceUI/Badge';
+import { Button } from '@ValenceUI/Button';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -12,6 +14,7 @@ import { Tabs } from '@ValenceUI/Tabs';
 import { useTravelDirection } from '@ValenceUI/useTravelDirection';
 import { OBSERVABILITY_VIEWS } from '@ValenceClient/admin/ObservabilitySearchSchema';
 import { setQueuePaused } from '@ValenceClient/admin/fetchAdmin';
+import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { useObservabilitySearch } from '@ValenceScreens/admin/useObservabilitySearch';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { JobRunner } from '@ValenceScreens/components/AdminArea/components/JobRunner/JobRunner';
@@ -100,7 +103,7 @@ const ObservabilityPage = ({
   const [tracing, setTracing] = useState<string | null>(null);
   const travel = useTravelDirection([...OBSERVABILITY_VIEWS], view);
   const working = useMemo(() => monitor?.queue.jobs ?? [], [monitor]);
-  const failures = working.filter((job) => job.state === 'failed').length;
+  const failures = useQuery(adminQueries.recentFailures()).data?.total ?? 0;
   const viewing =
     viewingJobKind === null
       ? null
@@ -181,7 +184,27 @@ const ObservabilityPage = ({
                     {failures === 0 ? null : (
                       <>
                         {' '}
-                        · <AnimatedNumber value={failures} suffix=" failed" />
+                        ·{' '}
+                        <Button
+                          variant="link"
+                          size="none"
+                          label="Show the jobs that failed in the last 24 hours"
+                          hasTooltip={false}
+                          onClick={() => {
+                            update({
+                              view: 'jobs',
+                              rstatus: 'failed',
+                              range: '24h',
+                              rq: undefined,
+                              from: undefined,
+                              until: undefined,
+                            });
+                          }}
+                        >
+                          <span className="text-xs text-danger">
+                            <AnimatedNumber value={failures} suffix=" failed" />
+                          </span>
+                        </Button>
                       </>
                     )}
                   </>

@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setQueuePaused } from '@ValenceClient/admin/fetchAdmin';
+import { fetchJobHistory, setQueuePaused } from '@ValenceClient/admin/fetchAdmin';
 import { fetchJobRun } from '@ValenceClient/admin/fetchJobRun';
 import { fetchJobStats } from '@ValenceClient/admin/fetchJobStats';
 import { fetchLogFacets } from '@ValenceClient/admin/fetchLogFacets';
@@ -72,6 +72,7 @@ const job = (overrides: Partial<Job> = {}): Job => ({
   state: 'running',
   queuedAtMs: 0,
   correlationId: null,
+  stoppedBecause: null,
   failure: null,
   startedAtMs: null,
   finishedAtMs: null,
@@ -259,16 +260,44 @@ describe('ObservabilityPage', () => {
     expect(setQueuePaused).toHaveBeenCalledWith(false);
   });
 
-  it('mentions failures only when there are some', () => {
-    renderPage(<ObservabilityPage {...props} monitor={reading([job()])} />);
+  it('mentions failures only when there are some', async () => {
+    vi.mocked(fetchJobHistory).mockResolvedValueOnce({ records: [], total: 0 });
 
+    renderPage(<ObservabilityPage {...props} monitor={reading([job({ state: 'failed' })])} />);
+
+    await waitFor(() => {
+      expect(fetchJobHistory).toHaveBeenCalled();
+    });
     expect(screen.queryByText(/failed/)).not.toBeInTheDocument();
   });
 
-  it('counts failures into the summary when there are', () => {
-    renderPage(<ObservabilityPage {...props} monitor={reading([job({ state: 'failed' })])} />);
+  it('counts the runs that failed in the last day, not the media service’s own work', async () => {
+    renderPage(<ObservabilityPage {...props} monitor={reading([job()])} />);
 
-    expect(screen.getByText(/1 failed/)).toBeInTheDocument();
+    expect(await screen.findByText(/1 failed/)).toBeInTheDocument();
+  });
+
+  it('shows the runs it counted when the count is clicked', async () => {
+    const onSearchChange = vi.fn();
+
+    renderPage(
+      <ObservabilityPage
+        {...props}
+        monitor={reading([job()])}
+        search={{ view: 'logs', rq: 'previews' }}
+        onSearchChange={onSearchChange}
+      />,
+    );
+
+    await userEvent.setup().click(
+      await screen.findByRole('button', {
+        name: 'Show the jobs that failed in the last 24 hours',
+      }),
+    );
+
+    expect(onSearchChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ view: 'jobs', rstatus: 'failed', range: '24h', rq: undefined }),
+    );
   });
 
   it('opens a schedule over the page rather than taking its place', () => {

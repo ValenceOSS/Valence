@@ -24,7 +24,8 @@ const TONE_CLASSES: Record<ConcernTone, string> = {
  * live with.
  *
  * @param concerns - What is wrong, worst first.
- * @param onOpenPanel - Called with the panel a concern is dealt with in.
+ * @param onOpenPanel - Called with the panel a concern is dealt with in, and what to narrow it to
+ *   where the concern says.
  * @param onDismiss - Called with a concern somebody dismissed.
  */
 const ConcernsBanner = ({ concerns, onOpenPanel, onDismiss }: ConcernsBannerProps) => {
@@ -41,7 +42,7 @@ const ConcernsBanner = ({ concerns, onOpenPanel, onDismiss }: ConcernsBannerProp
               variant="ghost"
               className="h-auto min-w-0 flex-1 justify-start gap-3 px-3 py-2.5 text-left"
               onClick={() => {
-                onOpenPanel(concern.panel);
+                onOpenPanel(concern.panel, concern.search);
               }}
             >
               <span className={`mt-0.5 shrink-0 ${TONE_CLASSES[concern.tone]}`}>

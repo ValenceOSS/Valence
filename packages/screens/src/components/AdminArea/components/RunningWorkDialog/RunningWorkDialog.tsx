@@ -18,7 +18,8 @@ const ORDER: Readonly<Record<Job['state'], number>> = {
   running: 0,
   queued: 1,
   failed: 2,
-  finished: 3,
+  stopped: 3,
+  finished: 4,
 };
 
 /**

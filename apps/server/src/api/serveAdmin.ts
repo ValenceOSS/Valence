@@ -464,9 +464,13 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
     const { jobId } = context.req.valid('param');
 
-    return (await cancelJob(jobId))
-      ? context.json({ jobId }, 202)
-      : context.json({ error: 'Nothing is running under that id.' }, 404);
+    if (!(await cancelJob(jobId))) {
+      return context.json({ error: 'Nothing is running under that id.' }, 404);
+    }
+
+    await controlQueue?.stopJob(jobId).catch(() => 0);
+
+    return context.json({ jobId }, 202);
   });
 
   app.openapi(adminQueueConcurrencyRoute, async (context) => {
@@ -550,6 +554,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
         sort: asked.sort ?? 'newest',
         offset: asked.offset ?? 0,
         limit: asked.limit ?? 200,
+        runningFirst: asked.runningFirst === 'true',
       }),
       200,
     );

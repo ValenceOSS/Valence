@@ -9,6 +9,7 @@
 //! a fan.
 
 use std::collections::{HashMap, VecDeque};
+use std::convert::Infallible;
 use std::error::Error;
 use std::future::Future;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
@@ -36,7 +37,18 @@ pub enum JobState {
     Finished,
     /// Done, and it did not.
     Failed,
+    /// Given up before it finished, because somebody said to stop or nobody
+    /// was waiting for it any more. Nothing went wrong with the file.
+    Stopped,
 }
+
+/// What a job that was told to stop says about itself.
+pub const STOPPED_ON_REQUEST: &str =
+    "Cancelled. The half-finished file was deleted, and it will be made again the next time it is needed.";
+
+/// What a job says when the request for it was dropped, as a restart does.
+pub const STOPPED_UNWATCHED: &str =
+    "Cancelled because the server stopped waiting for it, for example while restarting. It will run again the next time it is needed.";
 
 /// What a piece of work is, for the queue's own bookkeeping.
 ///
@@ -97,6 +109,8 @@ pub struct JobRecord {
     pub finished_at_ms: Option<u64>,
     /// Why it failed, when it did.
     pub failure: Option<JobFailure>,
+    /// Why it was stopped, when it was.
+    pub stopped_because: Option<String>,
     /// Which of the server's jobs asked for this, where one did.
     ///
     /// The queue is otherwise flat: a job per file per artefact, with nothing
@@ -162,8 +176,16 @@ pub fn now_ms() -> u64 {
 /// The work is settled from a spawned task because a drop cannot await. Where
 /// there is no runtime left to spawn onto — the process is going away — there
 /// is nobody to mislead either.
+///
+/// Settled as stopped rather than failed. The file is fine and the work is
+/// asked for again; a restart that left a column of red failures behind it
+/// read as though every one of those files had broken ffmpeg.
+///
+/// Armed before the work waits for its turn, so work dropped while it was
+/// still queued is settled too rather than reading as queued for ever.
 struct Abandonment {
     jobs: Arc<Mutex<VecDeque<JobRecord>>>,
+    overrides: Arc<Mutex<HashMap<u64, Arc<Notify>>>>,
     id: u64,
     settled: bool,
 }
@@ -175,23 +197,27 @@ impl Drop for Abandonment {
         }
 
         let jobs = Arc::clone(&self.jobs);
+        let overrides = Arc::clone(&self.overrides);
         let id = self.id;
 
         if let Ok(handle) = tokio::runtime::Handle::try_current() {
             handle.spawn(async move {
-                let mut jobs = jobs.lock().await;
-
-                if let Some(job) = jobs.iter_mut().find(|job| job.id == id) {
-                    if job.finished_at_ms.is_none() {
-                        job.finished_at_ms = Some(now_ms());
-                        job.state = JobState::Failed;
-                        job.failure = Some(JobFailure {
-                            message: "nobody was left waiting for it".to_owned(),
-                            chain: Vec::new(),
-                        });
-                    }
-                }
+                overrides.lock().await.remove(&id);
+                settle_stopped(&jobs, id, STOPPED_UNWATCHED).await;
             });
+        }
+    }
+}
+
+/// Marks one job stopped, unless it has already been settled some other way.
+async fn settle_stopped(jobs: &Mutex<VecDeque<JobRecord>>, id: u64, because: &str) {
+    let mut jobs = jobs.lock().await;
+
+    if let Some(job) = jobs.iter_mut().find(|job| job.id == id) {
+        if job.finished_at_ms.is_none() {
+            job.finished_at_ms = Some(now_ms());
+            job.state = JobState::Stopped;
+            job.stopped_because = Some(because.to_owned());
         }
     }
 }
@@ -299,6 +325,46 @@ impl WorkQueue {
         F: Future<Output = Result<T, E>>,
         E: Error,
     {
+        match self
+            .run_until(
+                job,
+                correlation_id,
+                std::future::pending::<Infallible>(),
+                work,
+            )
+            .await
+        {
+            Ok(outcome) => outcome,
+            Err(never) => match never {},
+        }
+    }
+
+    /// Runs a piece of work when there is room for it, unless `stop` finishes
+    /// first — whether the work is still waiting for its turn or already
+    /// under way.
+    ///
+    /// Stopping drops the work where it stands, which is what kills its
+    /// ffmpeg: every render spawns it to die with its handle. The job is
+    /// recorded as stopped rather than failed, because nothing went wrong
+    /// with the file.
+    ///
+    /// # Errors
+    ///
+    /// The inner result is whatever the work itself failed with, unchanged.
+    /// The outer error is what `stop` finished with, where it finished first.
+    pub async fn run_until<J, T, E, F, S>(
+        &self,
+        job: J,
+        correlation_id: Option<&str>,
+        stop: S,
+        work: F,
+    ) -> Result<Result<T, E>, S::Output>
+    where
+        J: Job,
+        F: Future<Output = Result<T, E>>,
+        E: Error,
+        S: Future,
+    {
         let id = self.next_id.fetch_add(1, Ordering::Relaxed);
 
         self.record(JobRecord {
@@ -310,6 +376,7 @@ impl WorkQueue {
             started_at_ms: None,
             finished_at_ms: None,
             failure: None,
+            stopped_because: None,
             correlation_id: correlation_id.map(str::to_owned),
         })
         .await;
@@ -323,42 +390,57 @@ impl WorkQueue {
 
         self.overrides.lock().await.insert(id, Arc::clone(&go_now));
 
-        let permit = self.wait_for_a_turn(lane, &go_now).await;
-
-        self.overrides.lock().await.remove(&id);
-
-        self.amend(id, |job| {
-            job.state = JobState::Running;
-            job.started_at_ms = Some(now_ms());
-        })
-        .await;
-
         let mut abandonment = Abandonment {
             jobs: Arc::clone(&self.jobs),
+            overrides: Arc::clone(&self.overrides),
             id,
             settled: false,
         };
 
-        let outcome = work.await;
+        let running = async {
+            let permit = self.wait_for_a_turn(lane, &go_now).await;
 
-        abandonment.settled = true;
+            self.overrides.lock().await.remove(&id);
 
-        self.amend(id, |job| {
-            job.finished_at_ms = Some(now_ms());
+            self.amend(id, |job| {
+                job.state = JobState::Running;
+                job.started_at_ms = Some(now_ms());
+            })
+            .await;
 
-            match &outcome {
-                Ok(_) => job.state = JobState::Finished,
-                Err(failure) => {
-                    job.state = JobState::Failed;
-                    job.failure = Some(JobFailure::from_error(failure));
-                }
+            (work.await, permit)
+        };
+
+        tokio::select! {
+            (outcome, permit) = running => {
+                abandonment.settled = true;
+
+                self.amend(id, |job| {
+                    job.finished_at_ms = Some(now_ms());
+
+                    match &outcome {
+                        Ok(_) => job.state = JobState::Finished,
+                        Err(failure) => {
+                            job.state = JobState::Failed;
+                            job.failure = Some(JobFailure::from_error(failure));
+                        }
+                    }
+                })
+                .await;
+
+                drop(permit);
+
+                Ok(outcome)
             }
-        })
-        .await;
+            reason = stop => {
+                abandonment.settled = true;
 
-        drop(permit);
+                self.overrides.lock().await.remove(&id);
+                settle_stopped(&self.jobs, id, STOPPED_ON_REQUEST).await;
 
-        outcome
+                Err(reason)
+            }
+        }
     }
 
     /// Waits until this work may start: not while the queue is paused, and then
@@ -484,7 +566,7 @@ impl Default for WorkQueue {
 
 #[cfg(test)]
 mod tests {
-    use super::{Job, JobState, WorkQueue};
+    use super::{Job, JobState, WorkQueue, STOPPED_ON_REQUEST, STOPPED_UNWATCHED};
     use std::time::Duration;
 
     /// A fixed piece of work, for tests that only care about the queue's own
@@ -845,6 +927,126 @@ timestamps up by eye"
             .iter()
             .all(|job| job.state != JobState::Running));
         assert!(settled.jobs.iter().all(|job| job.finished_at_ms.is_some()));
+    }
+
+    #[tokio::test]
+    async fn a_job_whose_caller_went_away_reads_as_stopped_not_failed() {
+        let queue = WorkQueue::new(1);
+        let running = queue.clone();
+
+        let handle = tokio::spawn(async move {
+            let _ = running
+                .run(
+                    thumbnails("film.mkv"),
+                    None,
+                    std::future::pending::<Result<u8, std::io::Error>>(),
+                )
+                .await;
+        });
+
+        settle().await;
+        handle.abort();
+        settle().await;
+
+        let job = &queue.snapshot().await.jobs[0];
+
+        assert_eq!(
+            job.state,
+            JobState::Stopped,
+            "a restart is not the file's fault"
+        );
+        assert!(job.failure.is_none());
+        assert_eq!(job.stopped_because.as_deref(), Some(STOPPED_UNWATCHED));
+    }
+
+    /// Says when it is dropped, so a test can see work being abandoned.
+    struct Tell(Option<tokio::sync::oneshot::Sender<()>>);
+
+    impl Drop for Tell {
+        fn drop(&mut self) {
+            if let Some(sender) = self.0.take() {
+                let _ = sender.send(());
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn stops_running_work_when_told_to_and_drops_it() {
+        let queue = WorkQueue::new(1);
+        let (stop, stopped) = tokio::sync::oneshot::channel::<()>();
+        let (dropped_tx, dropped) = tokio::sync::oneshot::channel::<()>();
+
+        let running = queue.clone();
+        let handle = tokio::spawn(async move {
+            running
+                .run_until(thumbnails("film.mkv"), Some("job-1"), stopped, async move {
+                    let _held = Tell(Some(dropped_tx));
+
+                    std::future::pending::<Result<u8, std::io::Error>>().await
+                })
+                .await
+        });
+
+        settle().await;
+        let _ = stop.send(());
+
+        let outcome = handle.await.expect("the task ran");
+
+        assert!(outcome.is_err(), "told apart from work that finished");
+        tokio::time::timeout(Duration::from_secs(1), dropped)
+            .await
+            .expect("the work is dropped, which is what kills its ffmpeg")
+            .expect("told");
+
+        let job = &queue.snapshot().await.jobs[0];
+
+        assert_eq!(job.state, JobState::Stopped);
+        assert_eq!(job.stopped_because.as_deref(), Some(STOPPED_ON_REQUEST));
+        assert!(job.finished_at_ms.is_some());
+    }
+
+    #[tokio::test]
+    async fn stops_work_that_is_still_waiting_for_its_turn() {
+        let queue = WorkQueue::new(1);
+        let (release, gate) = tokio::sync::oneshot::channel::<()>();
+        let holding = queue.clone();
+
+        let held = tokio::spawn(async move {
+            holding
+                .run(thumbnails("first.mkv"), None, held_until(gate))
+                .await
+        });
+
+        settle().await;
+
+        let (stop, stopped) = tokio::sync::oneshot::channel::<()>();
+        let waiting = queue.clone();
+        let second = tokio::spawn(async move {
+            waiting
+                .run_until(thumbnails("second.mkv"), None, stopped, async {
+                    Ok::<u8, std::io::Error>(2)
+                })
+                .await
+        });
+
+        settle().await;
+        let _ = stop.send(());
+
+        assert!(second.await.expect("the task ran").is_err());
+
+        let snapshot = queue.snapshot().await;
+        let stopped_job = snapshot
+            .jobs
+            .iter()
+            .find(|job| job.subject == "second.mkv")
+            .expect("recorded");
+
+        assert_eq!(stopped_job.state, JobState::Stopped);
+        assert_eq!(stopped_job.started_at_ms, None, "it never began");
+        assert_eq!(snapshot.queued, 0);
+
+        let _ = release.send(());
+        let _ = held.await;
     }
 
     /// Work that finishes when told to, so a test can hold places in the queue.

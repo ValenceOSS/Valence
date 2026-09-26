@@ -388,6 +388,35 @@ describe('regeneratePreviews', () => {
 
     expect(asked[0]).not.toHaveProperty('hardwareAccel');
   });
+  it('says nothing is wrong with a file whose render was refused because the job was stopped', async () => {
+    let stopped = false;
+    const problems: string[] = [];
+    const transcoder = stubTranscoder(() => {
+      stopped = true;
+
+      return Promise.reject(new Error('The job that asked for this was stopped.'));
+    });
+
+    await regeneratePreviews({
+      libraryId: LIBRARY_ID,
+      generation: 0,
+      store: {
+        listOutstanding: () =>
+          Promise.resolve([{ id: 'item-0', path: '/media/a.mkv', audioStreams: multilingual }]),
+        markComplete: () => Promise.resolve(),
+      },
+      transcoder,
+      defaultAudioLanguage: null,
+      quality: 'high',
+      isCancelled: () => stopped,
+      onProblem: (path) => {
+        problems.push(path);
+      },
+    });
+
+    expect(problems).toEqual([]);
+  });
+
   it('stops within one ask when the scan is cancelled mid-render', async () => {
     vi.useFakeTimers();
 
