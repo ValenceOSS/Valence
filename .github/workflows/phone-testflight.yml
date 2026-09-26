@@ -42,7 +42,7 @@ permissions:
 jobs:
   testflight:
     name: Build and send to TestFlight
-    runs-on: self-hosted
+    runs-on: macos-26
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v7
