@@ -866,25 +866,31 @@ async fn start_preview(
     let duration = probe.duration_seconds;
 
     if !request.wait {
-        if let Some(claimed) = state
-            .previews
-            .claim(&id, request.correlation_id.as_deref())
-            .await
+        match claim_for_a_live_job(
+            state.previews.renders(),
+            &id,
+            request.correlation_id.as_deref(),
+        )
+        .await
         {
-            cut_in_the_background(
-                &state,
-                &request,
-                &path,
-                crate::preview::Source {
-                    range,
-                    bit_depth,
-                    size,
-                    bars: None,
-                },
-                &capabilities,
-                duration,
-                claimed,
-            );
+            Err(refused) => return refused,
+            Ok(None) => {}
+            Ok(Some(claimed)) => {
+                cut_in_the_background(
+                    &state,
+                    &request,
+                    &path,
+                    crate::preview::Source {
+                        range,
+                        bit_depth,
+                        size,
+                        bars: None,
+                    },
+                    &capabilities,
+                    duration,
+                    claimed,
+                );
+            }
         }
 
         return (
@@ -994,6 +1000,36 @@ async fn is_from_a_stopped_job(renders: &RenderRegistry, correlation_id: Option<
         Some(job) => renders.is_job_stopped(job).await,
         None => false,
     }
+}
+
+/// Takes a render to draw for one of the server's jobs, unless something
+/// already has it or the job has been stopped.
+///
+/// The job is looked at again once the render is claimed. A stop that lands
+/// while the file is still being probed finds no switch to throw, because the
+/// claim that makes one has not happened yet; the job is recorded before any
+/// switch is thrown, so this second look sees it.
+///
+/// # Returns
+///
+/// The claim, nothing where the render is already under way, or the refusal
+/// to answer with where the job was stopped.
+async fn claim_for_a_live_job(
+    renders: &RenderRegistry,
+    id: &str,
+    correlation_id: Option<&str>,
+) -> Result<Option<Claim>, Response> {
+    let Some(claimed) = renders.claim(id, correlation_id).await else {
+        return Ok(None);
+    };
+
+    if is_from_a_stopped_job(renders, correlation_id).await {
+        renders.give_up(id).await;
+
+        return Err(error(StatusCode::CONFLICT, JOB_STOPPED));
+    }
+
+    Ok(Some(claimed))
 }
 
 /// Stops the render of an address and waits for it to let go, so its files
@@ -1728,12 +1764,16 @@ async fn start_trickplay(
             let tile_height = tile_height_for(request.tile_width, video.width, video.height);
             let pending = pending_index(&request, tile_height);
 
-            let Some(claimed) = state
-                .trickplay
-                .claim(&id, request.correlation_id.as_deref())
-                .await
-            else {
-                return (StatusCode::ACCEPTED, Json(pending)).into_response();
+            let claimed = match claim_for_a_live_job(
+                state.trickplay.renders(),
+                &id,
+                request.correlation_id.as_deref(),
+            )
+            .await
+            {
+                Err(refused) => return refused,
+                Ok(None) => return (StatusCode::ACCEPTED, Json(pending)).into_response(),
+                Ok(Some(claimed)) => claimed,
             };
 
             draw_in_the_background(
@@ -2040,7 +2080,11 @@ pub fn create_router(state: AppState) -> Router {
 
 #[cfg(test)]
 mod tests {
-    use super::{content_type_for, is_safe_segment_name, parse_range, AppState};
+    use super::{
+        claim_for_a_live_job, content_type_for, is_safe_segment_name, parse_range, AppState,
+    };
+    use crate::render_registry::RenderRegistry;
+    use axum::http::StatusCode;
     use std::path::{Path, PathBuf};
 
     fn writing_to(roots: &[&str]) -> AppState {
@@ -2224,5 +2268,38 @@ mod tests {
         ] {
             assert_eq!(content_type_for(name), expected, "{name}");
         }
+    }
+
+    #[tokio::test]
+    async fn claims_a_render_for_a_job_that_is_still_going() {
+        let renders = RenderRegistry::new();
+
+        let claimed = claim_for_a_live_job(&renders, "abc", Some("job-1")).await;
+
+        assert!(matches!(claimed, Ok(Some(_))));
+        assert!(
+            matches!(
+                claim_for_a_live_job(&renders, "abc", Some("job-1")).await,
+                Ok(None)
+            ),
+            "a render already under way is not taken twice"
+        );
+    }
+
+    /// The stop landed while the file was being probed, before the claim made
+    /// a switch it could throw.
+    #[tokio::test]
+    async fn refuses_a_render_whose_job_was_stopped_before_it_was_claimed() {
+        let renders = RenderRegistry::new();
+
+        renders.stop_job("job-1").await;
+
+        let refused = claim_for_a_live_job(&renders, "abc", Some("job-1")).await;
+
+        assert!(matches!(refused, Err(ref response) if response.status() == StatusCode::CONFLICT));
+        assert!(
+            !renders.is_claimed("abc").await,
+            "the claim is let go, so nothing is left drawing it"
+        );
     }
 }

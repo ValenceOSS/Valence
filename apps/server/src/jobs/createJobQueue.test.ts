@@ -137,6 +137,35 @@ describe('createJobQueue', () => {
     });
   });
 
+  it('counts a stopped job that threw on its way out as stopped, and does not have it tried again', async () => {
+    const onFinished = vi.fn();
+    let fail: (error: Error) => void = () => {};
+    const running = new Promise<void>((_resolve, reject) => {
+      fail = reject;
+    });
+
+    const queue = await createJobQueue({
+      connectionString: 'postgres://flux',
+      handlers: { 'library.regenerateTrickplay': () => running },
+      onFinished,
+    });
+
+    await queue.startWorking();
+
+    const delivered = deliver('library.regenerateTrickplay', [
+      { id: 'job-sheets', data: { libraryId: 'films' } },
+    ]);
+
+    await expect(queue.cancel('job-sheets')).resolves.toBe(true);
+
+    fail(new Error('The media service rejected /trickplay.'));
+
+    await expect(delivered).resolves.toBeUndefined();
+    expect(onFinished).toHaveBeenCalledWith(
+      expect.objectContaining({ jobId: 'job-sheets', reason: null, wasStopped: true }),
+    );
+  });
+
   it('says a job that ended because it was asked to stop was stopped, not that it finished', async () => {
     const onFinished = vi.fn();
     let finish: () => void = () => {};

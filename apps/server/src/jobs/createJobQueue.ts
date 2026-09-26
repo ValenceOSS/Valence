@@ -157,15 +157,23 @@ const createJobQueue = async ({
                 wasStopped: cancelled.has(job.id),
               });
             } catch (error) {
+              const wasStopped = cancelled.has(job.id);
+
               onFinished?.({
                 kind,
                 jobId: job.id,
                 subject,
-                reason: error instanceof Error ? error.message : 'The job failed.',
-                wasStopped: cancelled.has(job.id),
+                reason: wasStopped
+                  ? null
+                  : error instanceof Error
+                    ? error.message
+                    : 'The job failed.',
+                wasStopped,
               });
 
-              throw error;
+              if (!wasStopped) {
+                throw error;
+              }
             } finally {
               running.delete(job.id);
               progressByJobId.delete(job.id);
