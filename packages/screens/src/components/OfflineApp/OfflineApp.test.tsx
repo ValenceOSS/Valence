@@ -6,9 +6,18 @@ import { aFakeHeldFiles } from '@ValenceClient/testing/aFakeHeldFiles';
 import { installATestClient } from '@ValenceScreens/testing/installATestClient';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { Reachability } from '@ValenceClient/platform/Platform.types';
+import type { VideoPlayerProps } from '@ValenceScreens/components/VideoPlayer/VideoPlayer.types';
 import { OfflineApp } from './OfflineApp';
 
 vi.mock('@ValenceClient/session/auth', () => ({ signOut: vi.fn().mockResolvedValue(true) }));
+
+vi.mock('@ValenceScreens/components/VideoPlayer/VideoPlayer', () => ({
+  VideoPlayer: (props: VideoPlayerProps) => (
+    <button type="button" onClick={props.onClose}>
+      Stop playing {props.media.title}
+    </button>
+  ),
+}));
 
 const aFile = (over: Partial<HeldFile> = {}): HeldFile => ({
   downloadId: '00000000-0000-4000-8000-000000000001',
@@ -50,7 +59,7 @@ describe('OfflineApp', () => {
   it('says which Valence this is, even with no server to ask', () => {
     render(<OfflineApp title="Kestrel" />);
 
-    expect(screen.getByRole('heading', { name: 'Kestrel' })).toBeInTheDocument();
+    expect(screen.getByText('Kestrel')).toBeInTheDocument();
   });
 
   it('says it is offline', () => {
@@ -64,13 +73,13 @@ describe('OfflineApp', () => {
 
     render(<OfflineApp title="Valence" />);
 
-    expect(screen.getByText(/Valence is not reachable/)).toBeInTheDocument();
+    expect(screen.getByText(/Valence cannot be reached/)).toBeInTheDocument();
   });
 
   it('says it was asked for when the server is answering fine', () => {
     render(<OfflineApp title="Valence" />);
 
-    expect(screen.getByText(/Offline because you asked/)).toBeInTheDocument();
+    expect(screen.getByText(/offline because you asked/)).toBeInTheDocument();
   });
 
   it('offers no way back while there is nothing to go back to', () => {
@@ -115,17 +124,10 @@ describe('OfflineApp', () => {
 
     render(<OfflineApp title="Valence" />);
 
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Watch/ })).toBeInTheDocument();
-    });
+    await userEvent.click(await screen.findByRole('button', { name: /^The Third Man/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Stop playing The Third Man' }));
 
-    await userEvent.click(screen.getByRole('button', { name: /Watch/ }));
-
-    expect(screen.getByRole('heading', { name: 'The Third Man' })).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole('button', { name: 'Back to downloads' }));
-
-    expect(screen.getByRole('heading', { name: 'Valence' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'On this device' })).toBeInTheDocument();
   });
 
   it('lets go of something without a server being involved', async () => {
@@ -139,7 +141,11 @@ describe('OfflineApp', () => {
       expect(screen.getByText('The Third Man')).toBeInTheDocument();
     });
 
-    await userEvent.click(screen.getByRole('button', { name: /Remove The Third Man/ }));
+    const actor = userEvent.setup();
+
+    await actor.click(screen.getByRole('button', { name: 'More for The Third Man' }));
+    await actor.click(await screen.findByRole('menuitem', { name: /Delete from this device/ }));
+    await actor.click(await screen.findByRole('button', { name: 'Delete' }));
 
     await waitFor(() => {
       expect(files.dropped).toEqual(['00000000-0000-4000-8000-000000000001']);

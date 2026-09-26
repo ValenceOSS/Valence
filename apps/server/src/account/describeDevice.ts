@@ -17,16 +17,27 @@ const SYSTEMS = [
 
 const KEPT = 40;
 
+const OUR_APP = /^Valence \((?<device>[^)]+)\)/u;
+
 /**
  * Names a device from what its browser said about itself, for the list of sessions an account can
  * review and end. A user agent nobody recognises is described as an unknown device rather than
  * printed raw, which would be a line of noise nobody can act on.
+ *
+ * Valence's own apps are named as themselves: the phone and the television say which device they are
+ * on, the desktop app is a browser underneath and is told apart by the runtime it carries, and an app
+ * from before they said so is at least named as Valence rather than as its networking library.
  *
  * @param userAgent - What the browser sent, if it sent anything.
  * @returns The browser and system, as a person would say them.
  */
 const describeDevice = (userAgent: string | null | undefined): string => {
   const said = userAgent ?? '';
+  const app = OUR_APP.exec(said)?.groups?.['device'];
+
+  if (app !== undefined) {
+    return `Valence on ${app}`;
+  }
 
   const browser = BROWSERS.find((candidate) =>
     candidate.marks.some((mark) => said.includes(mark)),
@@ -35,6 +46,18 @@ const describeDevice = (userAgent: string | null | undefined): string => {
   const system = SYSTEMS.find((candidate) =>
     candidate.marks.some((mark) => said.includes(mark)),
   )?.named;
+
+  if (said.includes('Electron/')) {
+    return system === undefined ? 'Valence desktop app' : `Valence desktop app on ${system}`;
+  }
+
+  if (said.startsWith('Valence/') && said.includes('CFNetwork/')) {
+    return 'Valence on an Apple device';
+  }
+
+  if (said.startsWith('okhttp/')) {
+    return 'Valence on Android';
+  }
 
   if (browser === undefined && system === undefined) {
     return said.trim() === '' ? 'Unknown device' : said.slice(0, KEPT);

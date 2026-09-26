@@ -142,3 +142,22 @@ it('keeps the chosen label readable under a pointer, ', () => {
 
   expect(screen.getByRole('button', { name: 'Books' })).toHaveClass('hover:text-text');
 });
+
+it('shares the width evenly between its choices where it fills its space', () => {
+  render(
+    <SegmentedRow
+      label="Theme"
+      fills
+      items={[
+        { id: 'system', label: 'System' },
+        { id: 'dark', label: 'Dark' },
+      ]}
+      value="dark"
+      onSelect={vi.fn()}
+    />,
+  );
+
+  expect(screen.getByRole('group', { name: 'Theme' })).toHaveClass('w-full');
+  expect(screen.getByRole('button', { name: 'System' })).toHaveClass('flex-1');
+  expect(screen.getByRole('button', { name: 'Dark' })).toHaveClass('flex-1');
+});

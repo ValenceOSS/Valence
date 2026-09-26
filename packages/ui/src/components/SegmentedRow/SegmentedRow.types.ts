@@ -15,6 +15,7 @@ type SegmentedRowProps = {
   items: readonly SegmentedItem[];
   value: string;
   onSelect: (id: string) => void;
+  fills?: boolean;
   className?: string;
 };
 

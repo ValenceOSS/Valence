@@ -1,10 +1,7 @@
 import { Icon } from '@ValenceUI/Icon';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
-import {
-  Bell as BellIcon,
-  Bin as BinIcon,
-  CircleCheck as CircleCheckIcon,
-} from '@keyline-icons/react';
+import { Bell as BellFilledIcon } from '@keyline-icons/react/fill';
+import { Bin as BinIcon, CircleCheck as CircleCheckIcon } from '@keyline-icons/react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { PopoverPanel } from '@ValenceUI/PopoverPanel';
@@ -56,7 +53,7 @@ const NotificationBell = ({
       }}
       trigger={
         <span className="relative flex size-9 items-center justify-center">
-          <Icon of={BellIcon} size={20} />
+          <Icon of={BellFilledIcon} size={20} />
 
           {unread === 0 ? null : (
             <Badge tone="accent" size="sm" className="absolute -right-1 -top-1">

@@ -71,6 +71,7 @@ const TheSearchBox = ({
       placeholder={placeholder}
       keyboard="search"
       isBare={isCapsule}
+      isLabelHidden
     />
   );
 

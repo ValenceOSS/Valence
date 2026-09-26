@@ -3,9 +3,7 @@ import { ArrowLeft as ArrowLeftIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { useHeldFiles } from '@ValenceClient/downloads/useHeldFiles';
-import { sourceForAFile } from '@ValenceClient/downloads/keepingFiles';
-import { rememberWatchedOffline, watchedOffline } from '@ValenceClient/offline/watchedOffline';
-import { VideoPlayer } from '@ValenceScreens/components/VideoPlayer/VideoPlayer';
+import { PlayingAKeptFile } from '@ValenceScreens/components/PlayingAKeptFile/PlayingAKeptFile';
 
 /**
  * Plays a download from this device rather than from the server, in the same player as anything
@@ -34,29 +32,7 @@ const KeptPlayerPage = () => {
     );
   }
 
-  const gotTo = watchedOffline().find((entry) => entry.mediaId === file.mediaId);
-
-  return (
-    <main className="valence-below-the-bar z-40 flex flex-col bg-shade">
-      <VideoPlayer
-        media={{
-          id: file.mediaId,
-          title: file.title,
-          durationSeconds: file.durationSeconds ?? 0,
-          seriesTitle: file.seriesTitle,
-          hasPoster: file.hasPoster,
-        }}
-        keptSource={sourceForAFile(file.downloadId)}
-        startSeconds={gotTo?.positionSeconds ?? 0}
-        isImmersive
-        onClose={leave}
-        onStopped={leave}
-        onProgress={(positionSeconds, durationSeconds) => {
-          rememberWatchedOffline(file.mediaId, positionSeconds, durationSeconds);
-        }}
-      />
-    </main>
-  );
+  return <PlayingAKeptFile file={file} onLeave={leave} />;
 };
 
 KeptPlayerPage.displayName = 'KeptPlayerPage';

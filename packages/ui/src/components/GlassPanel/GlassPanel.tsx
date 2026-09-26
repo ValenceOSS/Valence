@@ -4,6 +4,7 @@ import type { GlassElevation, GlassPanelProps } from './GlassPanel.types';
 const ELEVATION_CLASSES: Record<GlassElevation, string> = {
   floating: 'valence-float',
   inset: 'border border-line bg-subtle backdrop-blur-xl',
+  clear: 'valence-glass',
   film: 'valence-glass valence-glass--film',
 };
 
@@ -15,7 +16,8 @@ const ELEVATION_CLASSES: Record<GlassElevation, string> = {
  * @param children - What the pane holds.
  * @param elevation - How far off the page it reads, which sets the blur and the edge. `film` is the
  *   dark, see-through glass the video player's controls are made of, for a bar that floats over
- *   whatever the page is showing and should let it through.
+ *   whatever the page is showing and should let it through. `clear` is the same glass in the
+ *   theme's own tint, for a bar floating over the page in either theme.
  * @param as - The element to render as, where a plain division is not the right thing.
  * @param className - Extra classes for the caller's own layout.
  */

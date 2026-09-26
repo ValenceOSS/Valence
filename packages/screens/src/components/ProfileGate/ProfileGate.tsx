@@ -1,4 +1,7 @@
 import { Icon } from '@ValenceUI/Icon';
+import { lightsOfAColour } from '@ValenceScreens/library/lightsOfAColour';
+import { profileAvatarUrl } from '@ValenceContracts/schemas/ViewerProfile';
+import { useArtworkLights } from '@ValenceScreens/music/useArtworkLights';
 import { Logo } from '@ValenceUI/Logo';
 import { TelevisionHandoff } from '@ValenceScreens/components/TelevisionHandoff/TelevisionHandoff';
 import { WayInBackground } from '@ValenceScreens/components/WayInBackground/WayInBackground';
@@ -115,6 +118,24 @@ const ProfileGate = ({
   const everyone = asking.data?.profiles ?? null;
   const splashscreen = asking.data?.splashscreen ?? null;
   const [chosen, setChosen] = useState<ViewerProfile | null>(null);
+  const chosenFace = useRef<HTMLSpanElement>(null);
+
+  /**
+   * Lets somebody through, handing on where their face was so it can be carried to the bar.
+   */
+  const through = () => {
+    const at = chosenFace.current?.getBoundingClientRect();
+
+    onSignedIn(
+      chosen === null || at === undefined
+        ? undefined
+        : { profile: chosen, at: { x: at.x, y: at.y, width: at.width, height: at.height } },
+    );
+  };
+
+  const pictureLights = useArtworkLights(
+    chosen !== null && chosen.avatar.kind === 'photo' ? profileAvatarUrl(chosen) : null,
+  );
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [problem, setProblem] = useState<string | null>(null);
@@ -249,7 +270,7 @@ const ProfileGate = ({
     setIsSubmitting(false);
 
     if (outcome.kind === 'signedIn') {
-      onSignedIn();
+      through();
 
       return;
     }
@@ -307,7 +328,7 @@ const ProfileGate = ({
     setIsUsingPasskey(false);
 
     if (outcome.kind === 'signedIn') {
-      onSignedIn();
+      through();
 
       return;
     }
@@ -344,7 +365,13 @@ const ProfileGate = ({
     <main className="relative flex min-h-svh flex-col items-center justify-center gap-8 overflow-y-auto px-6 pb-28 pt-16">
       <WayInBackground
         splashscreen={splashscreen}
-        lights={chosen === null ? [] : [{ color: chosen.colour }]}
+        lights={
+          pictureLights.length > 0
+            ? [...pictureLights]
+            : chosen === null
+              ? []
+              : lightsOfAColour(chosen.colour)
+        }
       />
 
       <motion.div
@@ -412,7 +439,7 @@ const ProfileGate = ({
               transition={{ duration: 0.3, ease: [0.2, 0, 0, 1] }}
               className="flex w-full flex-col gap-4"
             >
-              <TwoFactorChallenge onVerified={onSignedIn} />
+              <TwoFactorChallenge onVerified={through} />
             </motion.div>
           ) : (
             <motion.form
@@ -603,7 +630,7 @@ const ProfileGate = ({
             </motion.div>
           ) : (
             <div key="password" className="flex w-full max-w-sm flex-col items-center gap-6">
-              <motion.span layoutId={`profile-${chosen.id}`} transition={move}>
+              <motion.span ref={chosenFace} layoutId={`profile-${chosen.id}`} transition={move}>
                 <Portrait profile={chosen} isLarge />
               </motion.span>
 
@@ -623,7 +650,7 @@ const ProfileGate = ({
                   transition={{ duration: 0.3, ease: [0.2, 0, 0, 1] }}
                   className="flex w-full flex-col gap-4"
                 >
-                  <TwoFactorChallenge onVerified={onSignedIn} />
+                  <TwoFactorChallenge onVerified={through} />
                 </motion.div>
               ) : (
                 <motion.form

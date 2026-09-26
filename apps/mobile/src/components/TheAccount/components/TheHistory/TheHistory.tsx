@@ -1,4 +1,5 @@
 import { Bin } from '@keyline-icons/react-native';
+import { AGroup } from '@ValenceMobile/components/AGroup/AGroup';
 import { useMemo } from 'react';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
@@ -18,7 +19,13 @@ import type { BookReading } from '@ValenceContracts/schemas/Book';
 
 const styles = StyleSheet.create({
   forget: { padding: 10 },
-  row: { alignItems: 'center', flexDirection: 'row', gap: 12 },
+  row: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
   words: { flex: 1, gap: 2 },
 });
 
@@ -93,57 +100,61 @@ const TheHistory = () => {
 
   return (
     <>
-      {entries.map((entry) => {
-        const name =
-          entry.kind === 'reading'
-            ? entry.reading.book.title
-            : entry.viewing.seriesTitle === null
-              ? (entry.viewing.title ?? 'Something')
-              : `${entry.viewing.seriesTitle} — ${entry.viewing.title ?? ''}`;
-        const said =
-          entry.kind === 'reading'
-            ? [
-                describeWhen(entry.at, now),
-                entry.reading.isFinished ? 'Finished' : describeReadingPlace(entry.reading),
-              ]
-            : [
-                describeWhen(entry.at, now),
-                `${formatDuration(entry.viewing.secondsWatched)} watched`,
-                entry.viewing.isFinished ? 'Finished' : null,
-              ];
+      {entries.length === 0 ? null : (
+        <AGroup title="Watch history">
+          {entries.map((entry) => {
+            const name =
+              entry.kind === 'reading'
+                ? entry.reading.book.title
+                : entry.viewing.seriesTitle === null
+                  ? (entry.viewing.title ?? 'Something')
+                  : `${entry.viewing.seriesTitle} — ${entry.viewing.title ?? ''}`;
+            const said =
+              entry.kind === 'reading'
+                ? [
+                    describeWhen(entry.at, now),
+                    entry.reading.isFinished ? 'Finished' : describeReadingPlace(entry.reading),
+                  ]
+                : [
+                    describeWhen(entry.at, now),
+                    `${formatDuration(entry.viewing.secondsWatched)} watched`,
+                    entry.viewing.isFinished ? 'Finished' : null,
+                  ];
 
-        return (
-          <View
-            key={entry.kind === 'reading' ? `book-${entry.reading.book.id}` : entry.viewing.id}
-            style={styles.row}
-          >
-            <View style={styles.words}>
-              <Words lines={2}>{name}</Words>
-              <Words size="small" tone="muted">
-                {said.filter((part) => part !== null).join(' · ')}
-              </Words>
-            </View>
+            return (
+              <View
+                key={entry.kind === 'reading' ? `book-${entry.reading.book.id}` : entry.viewing.id}
+                style={styles.row}
+              >
+                <View style={styles.words}>
+                  <Words lines={2}>{name}</Words>
+                  <Words size="small" tone="muted">
+                    {said.filter((part) => part !== null).join(' · ')}
+                  </Words>
+                </View>
 
-            <Button
-              tone="bare"
-              label={`Forget ${name}`}
-              onPress={() => {
-                if (entry.kind === 'reading') {
-                  void forgetABook(entry.reading.book.id);
+                <Button
+                  tone="bare"
+                  label={`Forget ${name}`}
+                  onPress={() => {
+                    if (entry.kind === 'reading') {
+                      void forgetABook(entry.reading.book.id);
 
-                  return;
-                }
+                      return;
+                    }
 
-                void forgetViewing(entry.viewing.id).then(reread);
-              }}
-            >
-              <View style={styles.forget}>
-                <Icon of={Bin} size={18} colour={colours.textMuted} />
+                    void forgetViewing(entry.viewing.id).then(reread);
+                  }}
+                >
+                  <View style={styles.forget}>
+                    <Icon of={Bin} size={18} colour={colours.textMuted} />
+                  </View>
+                </Button>
               </View>
-            </Button>
-          </View>
-        );
-      })}
+            );
+          })}
+        </AGroup>
+      )}
 
       {history.hasNextPage ? (
         <Button

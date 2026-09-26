@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AGroup } from '@ValenceMobile/components/AGroup/AGroup';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { revokeShare } from '@ValenceClient/sharing/fetchShares';
@@ -12,8 +13,13 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { Share } from '@ValenceContracts/schemas/Share';
 
 const styles = StyleSheet.create({
-  row: { alignItems: 'center', flexDirection: 'row', gap: 12, paddingVertical: 6 },
-  section: { gap: 6 },
+  row: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
   words: { flex: 1, gap: 2 },
 });
 
@@ -75,33 +81,35 @@ const TheShares = () => {
         <Words tone="muted">You have not shared anything yet.</Words>
       ) : null}
 
-      <View style={styles.section}>
-        {shares.map((share) => {
-          const standing = shareStanding(share, now);
+      {shares.length === 0 ? null : (
+        <AGroup title="Shared links">
+          {shares.map((share) => {
+            const standing = shareStanding(share, now);
 
-          return (
-            <View key={share.id} style={styles.row}>
-              <View style={styles.words}>
-                <Words lines={1}>{share.title}</Words>
-                <Words size="small" tone="muted">
-                  {[standing.label, `Opened ${saidOpened(share)}`, untilWhen(share)].join(' · ')}
-                </Words>
+            return (
+              <View key={share.id} style={styles.row}>
+                <View style={styles.words}>
+                  <Words lines={1}>{share.title}</Words>
+                  <Words size="small" tone="muted">
+                    {[standing.label, `Opened ${saidOpened(share)}`, untilWhen(share)].join(' · ')}
+                  </Words>
+                </View>
+                {standing.isLive ? (
+                  <Button
+                    tone="quiet"
+                    label={`Withdraw the link to ${share.title}`}
+                    onPress={() => {
+                      withdraw(share);
+                    }}
+                  >
+                    Withdraw
+                  </Button>
+                ) : null}
               </View>
-              {standing.isLive ? (
-                <Button
-                  tone="quiet"
-                  label={`Withdraw the link to ${share.title}`}
-                  onPress={() => {
-                    withdraw(share);
-                  }}
-                >
-                  Withdraw
-                </Button>
-              ) : null}
-            </View>
-          );
-        })}
-      </View>
+            );
+          })}
+        </AGroup>
+      )}
     </>
   );
 };

@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { FaceFlight } from '@ValenceScreens/components/FaceFlight/FaceFlight';
+import type { FaceLeaving } from '@ValenceScreens/components/FaceFlight/FaceFlight.types';
 import { LayoutGroup } from 'motion/react';
 import { Outlet } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -351,6 +353,11 @@ const SignedIn = ({ title }: SignedInProps) => {
     ],
   );
 
+  const [faceLeaving, setFaceLeaving] = useState<FaceLeaving | null>(null);
+  const faceLanded = useCallback(() => {
+    setFaceLeaving(null);
+  }, []);
+
   if (session.isError) {
     return (
       <main className="mx-auto flex max-w-lg flex-col gap-2 p-8">
@@ -393,7 +400,9 @@ const SignedIn = ({ title }: SignedInProps) => {
               ? new URLSearchParams(window.location.search).get('profile')
               : null
           }
-          onSignedIn={() => {
+          onSignedIn={(face) => {
+            setFaceLeaving(face ?? null);
+
             const path = window.location.pathname;
             const challenge = new URLSearchParams(window.location.search).get('challenge') ?? '';
 
@@ -408,6 +417,10 @@ const SignedIn = ({ title }: SignedInProps) => {
             void refresh();
           }}
         />
+      )}
+
+      {faceLeaving === null ? null : (
+        <FaceFlight profile={faceLeaving.profile} at={faceLeaving.at} onLanded={faceLanded} />
       )}
 
       {phase === 'gone' ? null : (

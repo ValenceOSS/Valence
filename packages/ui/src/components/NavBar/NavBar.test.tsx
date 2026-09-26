@@ -182,7 +182,7 @@ describe('NavBar', () => {
   it('stands a mark behind the place being stood on, and nowhere else', () => {
     const { container } = render(<NavBar {...props} />);
 
-    const marks = container.querySelectorAll('[data-mark="nav-bar-mark"]');
+    const marks = container.querySelectorAll('[data-mark="nav-bar-places"]');
 
     expect(marks).toHaveLength(1);
     expect(marks[0]?.closest('button')).toBe(screen.getByRole('button', { name: 'Home' }));
@@ -194,21 +194,51 @@ describe('NavBar', () => {
 
     await actor.hover(screen.getByRole('button', { name: 'Films' }));
 
-    expect(container.querySelector('[data-mark="nav-bar-mark"]')?.closest('button')).toBe(
+    expect(container.querySelector('[data-mark="nav-bar-places"]')?.closest('button')).toBe(
       screen.getByRole('button', { name: 'Films' }),
     );
 
     await actor.unhover(screen.getByRole('navigation', { name: 'Sections' }));
 
-    expect(container.querySelector('[data-mark="nav-bar-mark"]')?.closest('button')).toBe(
+    expect(container.querySelector('[data-mark="nav-bar-places"]')?.closest('button')).toBe(
       screen.getByRole('button', { name: 'Home' }),
+    );
+  });
+
+  it('floats the places in one capsule of glass, apart from the mark and the tools', () => {
+    render(
+      <NavBar
+        {...props}
+        actions={[{ id: 'search', label: 'Search', icon: <span />, onSelect: vi.fn() }]}
+      />,
+    );
+
+    const capsule = screen.getByRole('button', { name: 'Home' }).closest('.backdrop-blur-2xl');
+
+    expect(capsule).toHaveClass('rounded-full');
+    expect(capsule).not.toContainElement(screen.getByRole('button', { name: 'Search' }));
+  });
+
+  it('draws the pill solid, with the page’s colour on it, at rest and under the pointer', async () => {
+    const actor = userEvent.setup();
+    const { container } = render(<NavBar {...props} />);
+    const pill = () => container.querySelector('[data-mark="nav-bar-places"]');
+
+    expect(pill()).toHaveClass('bg-[var(--color-text)]');
+    expect(screen.getByRole('button', { name: 'Home' })).toHaveClass('text-[var(--color-surface)]');
+
+    await actor.hover(screen.getByRole('button', { name: 'Films' }));
+
+    expect(pill()).toHaveClass('bg-[var(--color-text)]');
+    expect(screen.getByRole('button', { name: 'Films' })).toHaveClass(
+      'text-[var(--color-surface)]',
     );
   });
 
   it('draws the mark in the same corner as the places it moves between', () => {
     const { container } = render(<NavBar {...props} />);
 
-    expect(container.querySelector('[data-mark="nav-bar-mark"]')).toHaveClass('rounded-md');
+    expect(container.querySelector('[data-mark="nav-bar-places"]')).toHaveClass('rounded-full');
   });
 
   it('goes where it is asked', async () => {
@@ -251,7 +281,7 @@ describe('NavBar', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: 'Search' })).toHaveClass('size-9', 'rounded-md');
+    expect(screen.getByRole('button', { name: 'Search' })).toHaveClass('size-9', 'rounded-full');
   });
 
   it('names every place for anybody who cannot see the icons', () => {
@@ -614,11 +644,11 @@ describe('the place being stood on', () => {
 
     await actor.click(films);
 
-    expect(container.querySelector('[data-mark="nav-bar-mark"]')?.closest('button')).toBe(films);
+    expect(container.querySelector('[data-mark="nav-bar-places"]')?.closest('button')).toBe(films);
 
     rerender(<NavBar {...props} selectedId="films" />);
 
-    expect(container.querySelector('[data-mark="nav-bar-mark"]')?.closest('button')).toBe(films);
+    expect(container.querySelector('[data-mark="nav-bar-places"]')?.closest('button')).toBe(films);
     expect(films).toHaveAttribute('aria-current', 'page');
   });
 
@@ -631,6 +661,6 @@ describe('the place being stood on', () => {
     await actor.click(screen.getByRole('button', { name: 'Home' }));
     await actor.click(films);
 
-    expect(container.querySelector('[data-mark="nav-bar-mark"]')?.closest('button')).toBe(films);
+    expect(container.querySelector('[data-mark="nav-bar-places"]')?.closest('button')).toBe(films);
   });
 });

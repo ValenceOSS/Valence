@@ -48,6 +48,14 @@ describe('giveThisPhoneAnOrigin', () => {
     expect(asked[0]?.url).toBe('http://192.168.1.36:8420/api/profiles/everyone');
   });
 
+  it('names itself to the server, so its devices list says which phone it is', async () => {
+    giveThisPhoneAnOrigin(aStore('http://192.168.1.36:8420'));
+
+    await globalThis.fetch('/api/profiles');
+
+    expect(new Headers(asked[0]?.init?.headers).get('user-agent')).toMatch(/^Valence \(.+\)$/u);
+  });
+
   it('carries what the caller asked with', async () => {
     giveThisPhoneAnOrigin(aStore('http://192.168.1.36:8420'));
 

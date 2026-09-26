@@ -16,6 +16,7 @@ type TextFieldProps = {
   onSubmit?: () => void;
   action?: TextFieldAction;
   isBare?: boolean;
+  isLabelHidden?: boolean;
 };
 
 export type { TextFieldAction, TextFieldProps };

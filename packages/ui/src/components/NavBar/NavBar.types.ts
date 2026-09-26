@@ -43,6 +43,7 @@ type NavBarProps = {
   selectedId: string;
   onSelect: (id: string) => void;
   actions?: NavBarAction[];
+  trailing?: ReactNode;
   solidity?: MotionValue<number> | number;
   className?: string;
 };

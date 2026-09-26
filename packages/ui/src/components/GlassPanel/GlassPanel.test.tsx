@@ -21,6 +21,13 @@ describe('GlassPanel', () => {
     expect(container.firstElementChild).not.toHaveClass('valence-float');
   });
 
+  it('is glass in the theme’s own tint when asked to be clear', () => {
+    const { container } = render(<GlassPanel elevation="clear">Places</GlassPanel>);
+
+    expect(container.firstElementChild).toHaveClass('valence-glass');
+    expect(container.firstElementChild).not.toHaveClass('valence-glass--film');
+  });
+
   it('is the see-through glass of the video player when asked to be', () => {
     const { container } = render(<GlassPanel elevation="film">Contents</GlassPanel>);
 

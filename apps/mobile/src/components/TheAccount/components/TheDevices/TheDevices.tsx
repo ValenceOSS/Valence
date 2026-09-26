@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { AGroup } from '@ValenceMobile/components/AGroup/AGroup';
 import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { endDevice, endOtherDevices, fetchDevices } from '@ValenceClient/account/fetchDevices';
 import { saidWhen } from '@ValenceClient/format/saidWhen';
@@ -10,7 +11,13 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 const DEVICES = ['account', 'devices'] as const;
 
 const styles = StyleSheet.create({
-  device: { alignItems: 'center', flexDirection: 'row', gap: 12 },
+  device: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
   words: { flex: 1, gap: 2 },
 });
 
@@ -66,36 +73,38 @@ const TheDevices = () => {
     <>
       <SignInATelevision />
 
-      {devices.data.map((device) => (
-        <View key={device.id} style={styles.device}>
-          <View style={styles.words}>
-            <Words>{device.isCurrent ? `${device.name} · This phone` : device.name}</Words>
-            <Words size="small" tone="muted">
-              {[device.address, `Signed in ${saidWhen(device.signedInAt)}`]
-                .filter((part) => part !== null)
-                .join(' · ')}
-            </Words>
+      <AGroup title="Devices">
+        {devices.data.map((device) => (
+          <View key={device.id} style={styles.device}>
+            <View style={styles.words}>
+              <Words>{device.isCurrent ? `${device.name} · This phone` : device.name}</Words>
+              <Words size="small" tone="muted">
+                {[device.address, `Signed in ${saidWhen(device.signedInAt)}`]
+                  .filter((part) => part !== null)
+                  .join(' · ')}
+              </Words>
+            </View>
+
+            {device.isCurrent ? null : (
+              <Button
+                tone="quiet"
+                label={`Sign out ${device.name}`}
+                onPress={() => {
+                  end(device.id, device.name);
+                }}
+              >
+                Sign out
+              </Button>
+            )}
           </View>
+        ))}
 
-          {device.isCurrent ? null : (
-            <Button
-              tone="quiet"
-              label={`Sign out ${device.name}`}
-              onPress={() => {
-                end(device.id, device.name);
-              }}
-            >
-              Sign out
-            </Button>
-          )}
-        </View>
-      ))}
-
-      {elsewhere.length === 0 ? null : (
-        <Button tone="quiet" onPress={endTheRest}>
-          Sign out everywhere else
-        </Button>
-      )}
+        {elsewhere.length === 0 ? null : (
+          <Button tone="quiet" onPress={endTheRest}>
+            Sign out everywhere else
+          </Button>
+        )}
+      </AGroup>
     </>
   );
 };

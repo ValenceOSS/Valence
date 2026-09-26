@@ -1,4 +1,6 @@
 import { theServerThisPhoneWatches } from '@ValenceMobile/platform/theServerThisPhoneWatches';
+import { appUserAgent } from '@ValenceCore/functions/appUserAgent';
+import { describeThisPhone } from '@ValenceMobile/platform/describeThisPhone';
 import type { DeviceStore } from '@ValenceClient/platform/Platform.types';
 
 /**
@@ -22,6 +24,9 @@ import type { DeviceStore } from '@ValenceClient/platform/Platform.types';
  * name, and there is no somewhere else. Only requests aimed at that server are told this, so
  * artwork or anything else fetched elsewhere is left exactly as it was.
  *
+ * It also names itself, so the devices signed in to an account list this phone by name rather than
+ * by the line the networking library would otherwise send.
+ *
  * @param store - Where the phone keeps which server it watches.
  */
 const giveThisPhoneAnOrigin = (store: DeviceStore): void => {
@@ -37,6 +42,7 @@ const giveThisPhoneAnOrigin = (store: DeviceStore): void => {
     if (input instanceof Request) {
       if (input.url.startsWith(address)) {
         input.headers.set('origin', address);
+        input.headers.set('user-agent', appUserAgent(describeThisPhone()));
       }
 
       return asked(input, init);
@@ -52,6 +58,7 @@ const giveThisPhoneAnOrigin = (store: DeviceStore): void => {
     const headers = new Headers(init?.headers);
 
     headers.set('origin', address);
+    headers.set('user-agent', appUserAgent(describeThisPhone()));
 
     return asked(whole, { ...init, headers });
   };

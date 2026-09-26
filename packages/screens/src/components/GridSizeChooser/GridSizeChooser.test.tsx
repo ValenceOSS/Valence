@@ -104,4 +104,10 @@ describe('how the sizes are drawn', () => {
     expect(track).toHaveClass('bg-[var(--surface-hover)]');
     expect(track).not.toHaveClass('valence-glass');
   });
+
+  it('stands as tall as the small buttons beside it, such as Filters', () => {
+    render(<GridSizeChooser value="medium" onValueChange={vi.fn()} />);
+
+    expect(screen.getByRole('group', { name: 'How large the cards are' })).toHaveClass('h-8');
+  });
 });

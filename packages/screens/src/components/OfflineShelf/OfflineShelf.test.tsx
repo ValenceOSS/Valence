@@ -73,8 +73,7 @@ describe('OfflineShelf', () => {
   it('offers something that is here', () => {
     draw([aFile()]);
 
-    expect(screen.getByText('The Third Man')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Watch/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^The Third Man/ })).toBeInTheDocument();
   });
 
   it('plays the one that was pressed', async () => {
@@ -82,40 +81,53 @@ describe('OfflineShelf', () => {
 
     draw([aFile()], { onWatch });
 
-    await userEvent.click(screen.getByRole('button', { name: /Watch/ }));
+    await userEvent.click(screen.getByRole('button', { name: /^The Third Man/ }));
 
     expect(onWatch).toHaveBeenCalledWith(expect.objectContaining({ title: 'The Third Man' }));
   });
 
-  it('shows something still arriving rather than hiding it', () => {
-    draw([aFile({ state: 'fetching', bytes: 536_870_912 })]);
+  it('shows something still arriving rather than hiding it, without playing it', async () => {
+    const onWatch = vi.fn();
+
+    draw([aFile({ state: 'fetching', bytes: 536_870_912 })], { onWatch });
 
     expect(screen.getByText(/Fetching — 50%/)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Watch/ })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /^The Third Man/ }));
+
+    expect(onWatch).not.toHaveBeenCalled();
   });
 
-  it('does not offer to play something that has not finished arriving', () => {
-    draw([aFile({ state: 'paused', bytes: 10 })]);
+  it('does not play something that has not finished arriving', async () => {
+    const onWatch = vi.fn();
 
-    expect(screen.queryByRole('button', { name: /Watch/ })).not.toBeInTheDocument();
+    draw([aFile({ state: 'paused', bytes: 10 })], { onWatch });
+
+    await userEvent.click(screen.getByRole('button', { name: /^The Third Man/ }));
+
+    expect(onWatch).not.toHaveBeenCalled();
   });
 
   it('lets a transfer be stopped for now', async () => {
+    const actor = userEvent.setup();
     const onPause = vi.fn();
 
     draw([aFile({ state: 'fetching', bytes: 10 })], { onPause });
 
-    await userEvent.click(screen.getByRole('button', { name: /Stop fetching/ }));
+    await actor.click(screen.getByRole('button', { name: 'More for The Third Man' }));
+    await actor.click(await screen.findByRole('menuitem', { name: /Stop fetching/ }));
 
     expect(onPause).toHaveBeenCalledWith(expect.objectContaining({ title: 'The Third Man' }), true);
   });
 
   it('lets a stopped transfer be carried on with', async () => {
+    const actor = userEvent.setup();
     const onPause = vi.fn();
 
     draw([aFile({ state: 'paused', bytes: 10 })], { onPause });
 
-    await userEvent.click(screen.getByRole('button', { name: /Carry on fetching/ }));
+    await actor.click(screen.getByRole('button', { name: 'More for The Third Man' }));
+    await actor.click(await screen.findByRole('menuitem', { name: /Carry on fetching/ }));
 
     expect(onPause).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'The Third Man' }),
@@ -123,14 +135,20 @@ describe('OfflineShelf', () => {
     );
   });
 
-  it('lets go of something to make room', async () => {
+  it('asks first, then lets go of something to make room', async () => {
+    const actor = userEvent.setup();
     const onDrop = vi.fn();
 
     draw([aFile()], { onDrop });
 
-    await userEvent.click(screen.getByRole('button', { name: /Remove The Third Man/ }));
+    await actor.click(screen.getByRole('button', { name: 'More for The Third Man' }));
+    await actor.click(await screen.findByRole('menuitem', { name: /Delete from this device/ }));
 
-    expect(onDrop).toHaveBeenCalled();
+    expect(onDrop).not.toHaveBeenCalled();
+
+    await actor.click(await screen.findByRole('button', { name: 'Delete' }));
+
+    expect(onDrop).toHaveBeenCalledWith(expect.objectContaining({ title: 'The Third Man' }));
   });
 
   it('says how much of a programme is actually here, which is the question before a flight', () => {
@@ -143,7 +161,7 @@ describe('OfflineShelf', () => {
       }),
     ]);
 
-    expect(screen.getByText('1 of 2 ready')).toBeInTheDocument();
+    expect(screen.getByText('1 of 2 here')).toBeInTheDocument();
   });
 
   it('says why something failed', () => {

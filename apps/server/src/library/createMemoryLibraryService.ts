@@ -44,6 +44,7 @@ const toSummary = (item: MediaDetail): MediaSummary => ({
   episodeNumber: item.metadata.episodeNumber ?? null,
   episodeNumberEnd: item.metadata.episodeNumberEnd ?? null,
   genres: item.metadata.genres ?? null,
+  releaseDate: item.metadata.releaseDate ?? null,
 });
 
 type HiddenRow = {

@@ -267,4 +267,37 @@ describe('OptionMenu anchored to something that does its own job', () => {
 
     expect(await screen.findByRole('menuitemradio', { name: '2x' })).toBeInTheDocument();
   });
+
+  it('opens on a press, not the pointer passing, when drawn as a button', async () => {
+    const actor = userEvent.setup();
+
+    render(
+      <OptionMenu
+        label="Order films"
+        triggerShape="button"
+        trigger="Recently added"
+        groups={[
+          {
+            name: 'Order',
+            options: [
+              { id: 'added', label: 'Recently added' },
+              { id: 'title', label: 'Title' },
+            ],
+            selectedId: 'added',
+            onSelect: vi.fn(),
+          },
+        ]}
+      />,
+    );
+
+    const button = screen.getByRole('button', { name: 'Order films' });
+
+    await actor.hover(button);
+
+    expect(screen.queryByRole('menuitemradio', { name: 'Title' })).toBeNull();
+
+    await actor.click(button);
+
+    expect(await screen.findByRole('menuitemradio', { name: 'Title' })).toBeInTheDocument();
+  });
 });
