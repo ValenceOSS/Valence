@@ -12,7 +12,11 @@ import {
   STILL_WATCHING_DEFAULT,
   StillWatchingSchema,
 } from '@ValenceContracts/schemas/StillWatching';
-import { ProfileColourSchema, PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
+import {
+  AvatarSchema,
+  ProfileColourSchema,
+  PROFILE_COLOURS,
+} from '@ValenceContracts/schemas/ViewerProfile';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
 import type { ProfileService } from './ProfileService';
 import type { ProfileColour, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
@@ -41,6 +45,7 @@ type ProfileRow = {
   avatarStyle: string | null;
   avatarSeed: string | null;
   photoPath: string | null;
+  avatarLook: ViewerProfile['avatar'] | null;
   askStillWatchingAfter: number;
   showsWhatIamWatching: boolean;
   createdAt: Date;
@@ -61,22 +66,34 @@ const readColour = (stored: string): ProfileColour => {
 };
 
 /**
- * Reads what a profile is drawn with — an uploaded photograph, a drawn avatar, or its initial —
- * from the columns that hold each, checked rather than trusted.
+ * Reads what a profile is drawn with — an uploaded photograph and how it is framed, an orb or a
+ * sketch with the picture kept of it, a drawn avatar, or its initial in its font — from the columns
+ * that hold each, checked rather than trusted.
  *
  * @param row - The profile row as stored.
  * @returns What to draw.
  */
 const readAvatarChoice = (row: ProfileRow): ViewerProfile['avatar'] => {
+  const read = AvatarSchema.safeParse(row.avatarLook);
+  const look = read.success ? read.data : null;
+
+  if (look?.kind === 'orb' || look?.kind === 'sketch') {
+    return look;
+  }
+
   if (row.photoPath !== null) {
-    return { kind: 'photo', isVideo: MOVING_FORMATS.has(extname(row.photoPath)) };
+    return {
+      kind: 'photo',
+      isVideo: MOVING_FORMATS.has(extname(row.photoPath)),
+      frame: look?.kind === 'photo' ? look.frame : null,
+    };
   }
 
   if (row.avatarStyle !== null && row.avatarSeed !== null && isAvatarStyle(row.avatarStyle)) {
     return { kind: 'drawn', style: row.avatarStyle, seed: row.avatarSeed };
   }
 
-  return { kind: 'initial' };
+  return { kind: 'initial', font: look?.kind === 'initial' ? look.font : 'gilroy' };
 };
 
 /**
@@ -107,32 +124,52 @@ const toProfile = (row: ProfileRow): ViewerProfile => ({
  * @param household - The account's own picture columns, or nothing where it has no household row.
  * @returns The profile, as the API describes one.
  */
-const toAccountProfile = (profile: ProfileRow, household: StoredFace | null): ViewerProfile =>
-  toProfile({ ...profile, ...pickTheAccountsFace(household, profile) });
+const toAccountProfile = (profile: ProfileRow, household: StoredFace | null): ViewerProfile => {
+  const face = pickTheAccountsFace(household, profile);
+  const isTheAccounts =
+    face.photoPath !== profile.photoPath || face.avatarStyle !== profile.avatarStyle;
+
+  return toProfile({ ...profile, ...face, avatarLook: isTheAccounts ? null : profile.avatarLook });
+};
 
 /**
  * Turns a chosen avatar into the columns that hold it, so that choosing one kind clears whatever
- * the other kind had left behind.
+ * the other kind had left behind. A photograph, an orb and a sketch keep the picture the upload
+ * before this wrote, and carry how they look alongside it.
  *
  * @param avatar - What the profile should be drawn with.
  * @returns The columns to write.
  */
 const avatarColumns = (
   avatar: ViewerProfile['avatar'] | undefined,
-): { avatarStyle: string | null; avatarSeed: string | null; photoPath: string | null } | null => {
+): {
+  avatarStyle?: string | null;
+  avatarSeed?: string | null;
+  photoPath?: string | null;
+  avatarLook: ViewerProfile['avatar'] | null;
+} | null => {
   if (avatar === undefined) {
     return null;
   }
 
   if (avatar.kind === 'drawn') {
-    return { avatarStyle: avatar.style, avatarSeed: avatar.seed, photoPath: null };
+    return {
+      avatarStyle: avatar.style,
+      avatarSeed: avatar.seed,
+      photoPath: null,
+      avatarLook: null,
+    };
   }
 
   if (avatar.kind === 'initial') {
-    return { avatarStyle: null, avatarSeed: null, photoPath: null };
+    return { avatarStyle: null, avatarSeed: null, photoPath: null, avatarLook: avatar };
   }
 
-  return null;
+  if (avatar.kind === 'photo') {
+    return { avatarLook: avatar };
+  }
+
+  return { avatarStyle: null, avatarSeed: null, avatarLook: avatar };
 };
 
 const HOUSEHOLD_FACE = {
@@ -150,6 +187,7 @@ const COLUMNS = {
   avatarStyle: viewerProfile.avatarStyle,
   avatarSeed: viewerProfile.avatarSeed,
   photoPath: viewerProfile.photoPath,
+  avatarLook: viewerProfile.avatarLook,
   askStillWatchingAfter: viewerProfile.askStillWatchingAfter,
   showsWhatIamWatching: viewerProfile.showsWhatIamWatching,
   createdAt: viewerProfile.createdAt,
@@ -169,6 +207,20 @@ const createDatabaseProfileService = (
   db: ValenceDatabase,
   photoDirectory: string,
 ): ProfileService => {
+  /**
+   * Stops an account's own picture standing in front of its profiles' faces, once somebody has
+   * chosen a face for themselves: the account's picture is only preferred while it is the one
+   * deliberate choice, and a face chosen later is the more deliberate of the two.
+   *
+   * @param userId - Whose account.
+   */
+  const letTheProfilesFaceShow = async (userId: string): Promise<void> => {
+    await db
+      .update(userProfile)
+      .set({ photoPath: null, avatarStyle: null, avatarSeed: null, updatedAt: new Date() })
+      .where(eq(userProfile.userId, userId));
+  };
+
   const listFor = async (userId: string): Promise<ViewerProfile[]> => {
     const rows = await db
       .select({ profile: COLUMNS, household: HOUSEHOLD_FACE })
@@ -210,7 +262,7 @@ const createDatabaseProfileService = (
       id: created.id,
       name: created.name,
       colour: readColour(created.colour),
-      avatar: { kind: 'initial' },
+      avatar: { kind: 'initial', font: 'gilroy' },
       askStillWatchingAfter: STILL_WATCHING_DEFAULT,
       showsWhatIamWatching: false,
       createdAt: new Date().toISOString(),
@@ -243,7 +295,7 @@ const createDatabaseProfileService = (
         id: created.id,
         name: created.name,
         colour: created.colour,
-        avatar: { kind: 'initial' },
+        avatar: { kind: 'initial', font: 'gilroy' },
         askStillWatchingAfter: STILL_WATCHING_DEFAULT,
         showsWhatIamWatching: false,
         createdAt: new Date().toISOString(),
@@ -270,6 +322,10 @@ const createDatabaseProfileService = (
         })
         .where(and(eq(viewerProfile.id, profileId), eq(viewerProfile.userId, userId)))
         .returning({ id: viewerProfile.id });
+
+      if (changed.length > 0 && chosen !== null) {
+        await letTheProfilesFaceShow(userId);
+      }
 
       return changed.length > 0;
     },
@@ -363,7 +419,14 @@ const createDatabaseProfileService = (
       }
 
       const face = pickTheAccountsFace(found.household, found.profile);
-      const choice = readAvatarChoice({ ...found.profile, ...face });
+      const isTheAccounts =
+        face.photoPath !== found.profile.photoPath ||
+        face.avatarStyle !== found.profile.avatarStyle;
+      const choice = readAvatarChoice({
+        ...found.profile,
+        ...face,
+        avatarLook: isTheAccounts ? null : found.profile.avatarLook,
+      });
 
       if (choice.kind === 'drawn') {
         return {
@@ -372,7 +435,7 @@ const createDatabaseProfileService = (
         };
       }
 
-      if (choice.kind === 'photo' && face.photoPath !== null) {
+      if (choice.kind !== 'initial' && face.photoPath !== null) {
         const body = await readFile(join(photoDirectory, face.photoPath)).catch(() => null);
 
         if (body !== null) {
@@ -415,6 +478,7 @@ const createDatabaseProfileService = (
         .update(viewerProfile)
         .set({ photoPath: name, avatarStyle: null, avatarSeed: null, updatedAt: new Date() })
         .where(eq(viewerProfile.id, profileId));
+      await letTheProfilesFaceShow(userId);
 
       return null;
     },

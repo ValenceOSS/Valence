@@ -67,12 +67,19 @@ const createMemoryProfileService = (
     ensureDefault: (userId, name) => {
       const [existing] = listFor(userId);
 
-      return Promise.resolve(existing ?? add(userId, name, DEFAULT_COLOUR, { kind: 'initial' }));
+      return Promise.resolve(
+        existing ?? add(userId, name, DEFAULT_COLOUR, { kind: 'initial', font: 'gilroy' }),
+      );
     },
 
     create: (userId, request) =>
       Promise.resolve(
-        add(userId, request.name, request.colour, request.avatar ?? { kind: 'initial' }),
+        add(
+          userId,
+          request.name,
+          request.colour,
+          request.avatar ?? { kind: 'initial', font: 'gilroy' },
+        ),
       ),
 
     rename: (userId, profileId, request) => {
@@ -175,7 +182,7 @@ const createMemoryProfileService = (
       held.photo = photo.body;
       held.profile = {
         ...held.profile,
-        avatar: { kind: 'photo', isVideo: false },
+        avatar: { kind: 'photo', isVideo: false, frame: null },
         updatedAt: stamp(),
       };
 

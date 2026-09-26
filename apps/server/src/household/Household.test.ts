@@ -113,7 +113,7 @@ describe('setting a household up over HTTP', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({
       isOnboarded: false,
-      household: { name: 'Dan', avatar: { kind: 'initial' } },
+      household: { name: 'Dan', avatar: { kind: 'initial', font: 'gilroy' } },
     });
   });
 

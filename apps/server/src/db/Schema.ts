@@ -15,6 +15,7 @@ import {
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
+import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
 
 const user = pgTable('user', {
   id: text('id').primaryKey(),
@@ -191,6 +192,7 @@ const viewerProfile = pgTable(
     avatarStyle: text('avatarStyle'),
     avatarSeed: text('avatarSeed'),
     photoPath: text('photoPath'),
+    avatarLook: jsonb('avatarLook').$type<Avatar>(),
     askStillWatchingAfter: integer('askStillWatchingAfter').notNull().default(4),
     showsWhatIamWatching: boolean('showsWhatIamWatching').notNull().default(false),
     createdAt: timestamp('createdAt').notNull().defaultNow(),

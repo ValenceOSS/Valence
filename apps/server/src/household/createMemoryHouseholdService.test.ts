@@ -22,7 +22,7 @@ describe('a household nobody has set up yet', () => {
     const households = createMemoryHouseholdService();
 
     await expect(households.read(ACCOUNT, 'Dan')).resolves.toMatchObject({
-      avatar: { kind: 'initial' },
+      avatar: { kind: 'initial', font: 'gilroy' },
     });
   });
 
