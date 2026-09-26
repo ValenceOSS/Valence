@@ -79,6 +79,9 @@ const fillOn = (filled: Animated.Value, from: number, overMs: number): void => {
  * never takes more than a little over half the height. On a folding phone the cards either side sit
  * a little lower, clear of the status in the strip down the side of its screen.
  *
+ * Beneath them, the dots say which is showing and how long is left of it: through its clip while
+ * one plays, and otherwise until it moves on by itself.
+ *
  * @param items - What to feature.
  * @param onWatch - Told to play something, and from where.
  * @param onLookAt - Told to open a title.
@@ -86,9 +89,6 @@ const fillOn = (filled: Animated.Value, from: number, overMs: number): void => {
  * @param onShowing - Told which title is showing, whenever that changes.
  * @param onClip - Told the showing title's clip while it plays.
  * @param isInView - Whether the page is scrolled to show it; away from it, nothing plays or moves on.
- *
- * Beneath them, the dots say which is showing and how long is left of it: through its clip while
- * one plays, and otherwise until it moves on by itself.
  */
 const TheFeaturedTitles = ({
   items,

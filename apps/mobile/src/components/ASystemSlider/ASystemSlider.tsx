@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Host, Slider } from '@expo/ui/swift-ui';
 import { accessibilityLabel, tint as tinted } from '@expo/ui/swift-ui/modifiers';
 import { StyleSheet } from 'react-native';
@@ -28,6 +28,10 @@ const ASystemSlider = ({
   onScrubbed,
 }: ASystemSliderProps) => {
   const held = useRef(value);
+
+  useEffect(() => {
+    held.current = value;
+  }, [value]);
 
   return (
     <Host matchContents={{ vertical: true }} colorScheme="dark" style={styles.whole}>

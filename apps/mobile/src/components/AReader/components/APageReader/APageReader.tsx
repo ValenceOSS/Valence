@@ -326,7 +326,7 @@ const APageReader = ({
             place={ordered.length > 1 ? chapter.title : book.title}
             through={(page + spread.length) / count}
             next={
-              next !== undefined && page >= count - NEAR_THE_END
+              next !== undefined && page > 0 && page >= count - NEAR_THE_END
                 ? {
                     title: next.title,
                     cover: onThisServer(bookPageUrl(book.id, next.id, 0, THUMB_PIXELS)),
