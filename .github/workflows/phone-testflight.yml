@@ -56,13 +56,6 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
 
-      # The app draws liquid glass where the phone has it, which needs the newest SDK, and a runner
-      # does not always default to its newest Xcode.
-      - name: Use Xcode on the runner
-        run: |
-          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
-          xcodebuild -version
-
       - run: pnpm install --frozen-lockfile
 
       # Where Xcode's upload tool looks for an API key by its id. The runner is thrown away with
