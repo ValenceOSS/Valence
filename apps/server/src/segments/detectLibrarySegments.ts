@@ -22,19 +22,20 @@ type DetectLibrarySegmentsOptions = {
 /**
  * Sorts a library's files into the groups worth comparing — episodes of the same season of the same
  * programme, which is where a shared intro would be. Comparing across programmes would be work spent
- * to find nothing.
+ * to find nothing, and a film has no intro or outro worth skipping, so films are left out.
  *
  * @param candidates - The library's items.
- * @returns The files grouped, one group per season.
+ * @returns The episodes grouped, one group per season.
  */
 const groupBySeason = (candidates: GroupedCandidate[]): Map<string, GroupedCandidate[]> => {
   const groups = new Map<string, GroupedCandidate[]>();
 
   for (const candidate of candidates) {
-    const key =
-      candidate.seriesId === null || candidate.seasonNumber === null
-        ? `film:${candidate.mediaId}`
-        : `${candidate.seriesId}:${candidate.seasonNumber.toString()}`;
+    if (candidate.seriesId === null || candidate.seasonNumber === null) {
+      continue;
+    }
+
+    const key = `${candidate.seriesId}:${candidate.seasonNumber.toString()}`;
 
     groups.set(key, [...(groups.get(key) ?? []), candidate]);
   }

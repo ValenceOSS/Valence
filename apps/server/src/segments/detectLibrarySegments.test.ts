@@ -107,10 +107,14 @@ describe('groupBySeason', () => {
     expect(groups.size).toBe(1);
   });
 
-  it('leaves every film in a group of its own', () => {
-    const groups = groupBySeason([episode('a', null, null), episode('b', null, null)]);
+  it('leaves films out, since a film has no intro worth skipping', () => {
+    const groups = groupBySeason([
+      episode('a', null, null),
+      episode('b', null, null),
+      episode('c', 'Some Show', 1),
+    ]);
 
-    expect(groups.size).toBe(2);
+    expect([...groups.values()].flat().map((candidate) => candidate.mediaId)).toEqual(['c']);
   });
 });
 

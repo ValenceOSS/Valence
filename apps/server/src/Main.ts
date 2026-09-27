@@ -965,14 +965,22 @@ const runDetectSegments = async (libraryId: string, jobId: string): Promise<void
  * so a library added last week is included without anybody rescheduling anything.
  *
  * @param run - The work to do for one library.
+ * @param kinds - The kinds of library the work applies to, or every kind when left out.
  * @returns A handler that does it for all of them.
  */
 const scheduleAcrossLibraries =
-  (run: (libraryId: string) => Promise<{ jobId: string; state: string } | null>) =>
+  (
+    run: (libraryId: string) => Promise<{ jobId: string; state: string } | null>,
+    kinds?: LibraryKind[],
+  ) =>
   async (): Promise<void> => {
     const libraries = await libraryService.list(asTheServer);
 
-    await Promise.all(libraries.map((library) => run(library.id)));
+    await Promise.all(
+      libraries
+        .filter((library) => kinds === undefined || kinds.includes(library.kind))
+        .map((library) => run(library.id)),
+    );
   };
 
 const libraryWork = createWorkLock();
@@ -1278,7 +1286,11 @@ const jobs = await createJobQueue({
               }
 
               await libraryService.fetchLogos(libraryId);
-              await libraryService.detectSegments(libraryId);
+
+              if (scanned?.kind === 'shows') {
+                await libraryService.detectSegments(libraryId);
+              }
+
               await libraryService.regeneratePreviews(libraryId);
               await libraryService.regenerateTrickplay(libraryId);
             },
@@ -1906,8 +1918,9 @@ const jobs = await createJobQueue({
       [scheduleTriggerKind(REGENERATE_TRICKPLAY_JOB)]: scheduleAcrossLibraries((id) =>
         libraryService.regenerateTrickplay(id),
       ),
-      [scheduleTriggerKind(DETECT_SEGMENTS_JOB)]: scheduleAcrossLibraries((id) =>
-        libraryService.detectSegments(id),
+      [scheduleTriggerKind(DETECT_SEGMENTS_JOB)]: scheduleAcrossLibraries(
+        (id) => libraryService.detectSegments(id),
+        ['shows'],
       ),
       [scheduleTriggerKind(RESET_LIBRARY_JOB)]: scheduleAcrossLibraries((id) =>
         libraryService.reset(id),
