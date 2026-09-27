@@ -28,7 +28,7 @@ use crate::queue::WorkQueue;
 use crate::render_registry::{Claim, RenderRegistry};
 use crate::rendition::{self, RenditionJob, RenditionRequest};
 use crate::session::{await_run, segment_number, Reuse, SessionRegistry};
-use crate::subtitle::{extract_subtitle, SubtitleRequest};
+use crate::subtitle::{SubtitleError, SubtitleRegistry, SubtitleRequest, SubtitleTrack, Tools};
 use crate::transcode_plan::HardwareAccel;
 use crate::transcode_plan::{DeviceFilters, SegmentStart, TranscodePlan};
 use crate::transcode_plan::{SessionSpec, MANIFEST_NAME};
@@ -81,6 +81,9 @@ pub struct AppState {
     pub media_roots: Vec<PathBuf>,
     /// Keeps one set of thumbnails from being rendered twice at once.
     pub trickplay: TrickplayRegistry,
+    /// Keeps one file from being read for its subtitles twice at once, and
+    /// what was read from being read again.
+    pub subtitles: SubtitleRegistry,
     /// Keeps one download from being prepared twice at once, and remembers how
     /// far through each is.
     ///
@@ -1310,11 +1313,22 @@ async fn start_frame(State(state): State<AppState>, Json(request): Json<FrameReq
     }
 }
 
+/// Answers with a subtitle track, or with why it could not be read.
+fn answer_with_track(outcome: Result<SubtitleTrack, SubtitleError>) -> Response {
+    match outcome {
+        Ok(track) => (StatusCode::OK, Json(track)).into_response(),
+        Err(failure) => error(StatusCode::BAD_REQUEST, &failure.to_string()),
+    }
+}
+
 /// Reads one subtitle track out of a container.
 ///
 /// Answers with the whole track rather than a path, because a subtitle file is
 /// a few tens of kilobytes and the player wants all of it before the first cue
-/// is due.
+/// is due. Not queued: somebody is waiting for it.
+///
+/// How long it waits, and what happens when the viewer gives up, is the
+/// registry's to decide.
 async fn start_subtitle(
     State(state): State<AppState>,
     Json(request): Json<SubtitleRequest>,
@@ -1328,10 +1342,18 @@ async fn start_subtitle(
         );
     }
 
-    match extract_subtitle(&state.registry.config().ffmpeg, &path, request.stream_index).await {
-        Ok(track) => (StatusCode::OK, Json(track)).into_response(),
-        Err(failure) => error(StatusCode::BAD_REQUEST, &failure.to_string()),
-    }
+    let config = state.registry.config();
+    let tools = Tools {
+        ffmpeg: config.ffmpeg.clone(),
+        ffprobe: state.ffprobe.clone(),
+    };
+
+    answer_with_track(
+        state
+            .subtitles
+            .read(tools, &config.artefact_root, path, request.stream_index)
+            .await,
+    )
 }
 
 /// Renders seek-bar previews for a file.
@@ -2112,6 +2134,7 @@ mod tests {
             downloads: crate::progress_registry::ProgressRegistry::new(),
             renditions: crate::progress_registry::ProgressRegistry::new(),
             trickplay: crate::trickplay::TrickplayRegistry::new(),
+            subtitles: crate::subtitle::SubtitleRegistry::new(),
             previews: crate::preview::PreviewRegistry::new(),
             monitor: crate::monitor::Monitor::new(crate::monitor::Journal::new()),
             audio: crate::audio::AudioRegistry::new(),

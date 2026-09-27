@@ -68,8 +68,10 @@ const marksHearingImpaired = (title: string | null | undefined): boolean => {
 };
 
 /**
- * Subtitles read out of the video container itself, extracted on demand and converted to the one
- * format a browser will take. Extracting is the expensive part, so each track is cut once and kept.
+ * Subtitles read out of the video container itself, converted to the one format a browser will
+ * take. Extracting means reading the whole file, since a track's cues are spread through it, so the
+ * media service keeps what it reads and reading begins the moment a player asks what tracks there
+ * are — by the time a viewer turns subtitles on, the read has usually finished.
  *
  * @param options - The library to read files from, and the transcoder that does the extracting.
  * @returns The subtitle service.
@@ -102,6 +104,24 @@ const createEmbeddedSubtitleService = ({
    */
   const idFor = (path: string, index: number): string => trackId(`${path}#${index.toString()}`);
 
+  /**
+   * Starts the media service reading a file's text tracks without waiting for it, so the read is
+   * under way before anybody chooses one. The first track stands in for all of them, because the
+   * media service takes every text track out of a file in the same pass.
+   *
+   * @param path - The file the tracks are in.
+   * @param streams - The file's subtitle streams.
+   */
+  const startReading = (path: string, streams: EmbeddedStream[]): void => {
+    const text = streams.find((stream) => !isImageSubtitle(stream.format));
+
+    if (text === undefined) {
+      return;
+    }
+
+    void transcoder.readSubtitle({ inputPath: path, streamIndex: text.index }).catch(() => null);
+  };
+
   return {
     list: async (mediaId) => {
       const found = await discover(mediaId);
@@ -109,6 +129,8 @@ const createEmbeddedSubtitleService = ({
       if (found === null) {
         return null;
       }
+
+      startReading(found.path, found.streams);
 
       const canBurn = found.streams.some((stream) => isImageSubtitle(stream.format))
         ? await canBurnImageSubtitles()
