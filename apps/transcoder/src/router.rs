@@ -1327,12 +1327,8 @@ fn answer_with_track(outcome: Result<SubtitleTrack, SubtitleError>) -> Response 
 /// a few tens of kilobytes and the player wants all of it before the first cue
 /// is due. Not queued: somebody is waiting for it.
 ///
-/// A track already kept is answered at once. Otherwise the request waits for
-/// one of a few reading slots, and a viewer who gives up while waiting costs
-/// nothing. Once its turn comes the read runs as a task of its own, so a
-/// viewer who closes the player partway through does not stop it: the file
-/// has been read that far already, and finishing is what keeps it from being
-/// read again.
+/// How long it waits, and what happens when the viewer gives up, is the
+/// registry's to decide.
 async fn start_subtitle(
     State(state): State<AppState>,
     Json(request): Json<SubtitleRequest>,
@@ -1347,42 +1343,17 @@ async fn start_subtitle(
     }
 
     let config = state.registry.config();
-    let subtitles = state.subtitles.clone();
-    let ffmpeg = config.ffmpeg.clone();
-    let ffprobe = state.ffprobe.clone();
-    let artefact_root = config.artefact_root.clone();
-    let stream_index = request.stream_index;
-
-    if let Some(found) = subtitles
-        .already_kept(&artefact_root, &path, stream_index)
-        .await
-    {
-        return answer_with_track(found);
-    }
-
-    let Some(slot) = subtitles.slot().await else {
-        return error(
-            StatusCode::SERVICE_UNAVAILABLE,
-            "Subtitles cannot be read right now.",
-        );
+    let tools = Tools {
+        ffmpeg: config.ffmpeg.clone(),
+        ffprobe: state.ffprobe.clone(),
     };
 
-    let reading = tokio::spawn(async move {
-        let _slot = slot;
-        let tools = Tools {
-            ffmpeg: &ffmpeg,
-            ffprobe: &ffprobe,
-        };
-
-        subtitles
-            .read(tools, &artefact_root, &path, stream_index)
-            .await
-    });
-
-    match reading.await {
-        Ok(outcome) => answer_with_track(outcome),
-        Err(failure) => error(StatusCode::INTERNAL_SERVER_ERROR, &failure.to_string()),
-    }
+    answer_with_track(
+        state
+            .subtitles
+            .read(tools, &config.artefact_root, path, request.stream_index)
+            .await,
+    )
 }
 
 /// Renders seek-bar previews for a file.

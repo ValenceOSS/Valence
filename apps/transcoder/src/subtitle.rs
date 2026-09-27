@@ -13,7 +13,7 @@
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex as StdMutex, PoisonError};
 
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -148,7 +148,7 @@ fn as_track(content: String) -> Result<SubtitleTrack, SubtitleError> {
 /// the speed.
 #[derive(Clone)]
 pub struct SubtitleRegistry {
-    reading: Arc<Mutex<HashMap<String, Arc<Mutex<()>>>>>,
+    reading: Arc<StdMutex<HashMap<String, Arc<Mutex<()>>>>>,
     slots: Arc<Semaphore>,
 }
 
@@ -161,68 +161,78 @@ impl Default for SubtitleRegistry {
     }
 }
 
+/// The right to read one file, given up when it is dropped — however the
+/// read ends, including by the request behind it going away.
+struct Claim {
+    reading: Arc<StdMutex<HashMap<String, Arc<Mutex<()>>>>>,
+    address: String,
+    guard: Option<OwnedMutexGuard<()>>,
+}
+
+impl Drop for Claim {
+    fn drop(&mut self) {
+        self.guard.take();
+
+        let mut reading = self.reading.lock().unwrap_or_else(PoisonError::into_inner);
+
+        if reading
+            .get(&self.address)
+            .is_some_and(|lock| Arc::strong_count(lock) == 1)
+        {
+            reading.remove(&self.address);
+        }
+    }
+}
+
 impl SubtitleRegistry {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// A track an earlier read already kept, without waiting for anything.
-    pub async fn already_kept(
-        &self,
-        artefact_root: &Path,
-        path: &Path,
-        stream_index: u32,
-    ) -> Option<Result<SubtitleTrack, SubtitleError>> {
-        let address = crate::source_address::of(path).await?;
-
-        kept(&artefact_root.join(DIRECTORY).join(address), stream_index).await
-    }
-
-    /// Waits for room to read another file.
-    ///
-    /// Waiting is the part a caller may give up on: a read that never got
-    /// its turn is never begun, where one that has is carried to its end.
-    pub async fn slot(&self) -> Option<OwnedSemaphorePermit> {
-        self.slots.clone().acquire_owned().await.ok()
-    }
-
     /// Waits for any read of this file already under way, then takes the next.
-    async fn hold(&self, address: &str) -> OwnedMutexGuard<()> {
+    async fn claim(&self, address: &str) -> Claim {
         let lock = self
             .reading
             .lock()
-            .await
+            .unwrap_or_else(PoisonError::into_inner)
             .entry(address.to_owned())
             .or_default()
             .clone();
 
-        lock.lock_owned().await
+        Claim {
+            reading: Arc::clone(&self.reading),
+            address: address.to_owned(),
+            guard: Some(lock.lock_owned().await),
+        }
     }
 
-    /// Forgets a file nobody else is waiting to read.
-    async fn release(&self, address: &str, guard: OwnedMutexGuard<()>) {
-        drop(guard);
-
-        let mut reading = self.reading.lock().await;
-
-        if reading
-            .get(address)
-            .is_some_and(|lock| Arc::strong_count(lock) == 1)
-        {
-            reading.remove(address);
-        }
+    /// Waits for room to read another file.
+    async fn slot(&self) -> Result<OwnedSemaphorePermit, SubtitleError> {
+        self.slots
+            .clone()
+            .acquire_owned()
+            .await
+            .map_err(|_| SubtitleError::Failed("subtitle reading has stopped".to_owned()))
     }
 
     /// One text track of a file as `WebVTT`, read out of the container only
     /// if no earlier request already did.
     ///
-    /// The first request for any track reads every text track the file
-    /// carries, so the rest are already waiting when they are asked for.
-    /// Where that fails — one track ffmpeg cannot convert fails them all — or
-    /// the file's header does not list the track asked for as text, that track
-    /// is read on its own, so one bad track never costs a viewer the one they
-    /// wanted.
+    /// A track already kept is answered at once. Otherwise this waits for
+    /// any read of the same file to finish, which usually answers it, and
+    /// only then for one of a few reading slots, so a second request for a
+    /// file never holds a slot another file could use. Waiting is the part a
+    /// caller may give up on. Once its turn comes the read runs as a task of
+    /// its own, so a viewer who closes the player partway does not stop it:
+    /// the file has been read that far already, and finishing is what keeps
+    /// it from being read again.
+    ///
+    /// The first read of a file takes every text track it carries, so the
+    /// rest are already waiting when they are asked for. Where that fails —
+    /// one track ffmpeg cannot convert fails them all — or the file's header
+    /// does not list the track asked for as text, that track is read on its
+    /// own, so one bad track never costs a viewer the one they wanted.
     ///
     /// # Errors
     ///
@@ -230,13 +240,20 @@ impl SubtitleRegistry {
     /// stream, or the stream turns out to hold nothing.
     pub async fn read(
         &self,
-        tools: Tools<'_>,
+        tools: Tools,
         artefact_root: &Path,
-        path: &Path,
+        path: PathBuf,
         stream_index: u32,
     ) -> Result<SubtitleTrack, SubtitleError> {
-        let Some(address) = crate::source_address::of(path).await else {
-            return extract_subtitle(tools.ffmpeg, path, stream_index).await;
+        let Some(address) = crate::source_address::of(&path).await else {
+            let slot = self.slot().await?;
+
+            return finish(async move {
+                let _slot = slot;
+
+                extract_subtitle(&tools.ffmpeg, &path, stream_index).await
+            })
+            .await;
         };
 
         let directory = artefact_root.join(DIRECTORY).join(&address);
@@ -245,64 +262,74 @@ impl SubtitleRegistry {
             return found;
         }
 
-        let guard = self.hold(&address).await;
-        let outcome = self
-            .read_holding(tools, &directory, path, stream_index)
-            .await;
+        let claim = self.claim(&address).await;
 
-        self.release(&address, guard).await;
-
-        outcome
-    }
-
-    /// Reads a file's text tracks into the directory kept for it, where the
-    /// track asked for is not there already.
-    async fn read_holding(
-        &self,
-        tools: Tools<'_>,
-        directory: &Path,
-        path: &Path,
-        stream_index: u32,
-    ) -> Result<SubtitleTrack, SubtitleError> {
-        if let Some(found) = kept(directory, stream_index).await {
+        if let Some(found) = kept(&directory, stream_index).await {
             return found;
         }
 
-        tokio::fs::create_dir_all(directory)
-            .await
-            .map_err(SubtitleError::Spawn)?;
+        let slot = self.slot().await?;
 
-        let indices = text_tracks(tools.ffprobe, path).await;
+        finish(async move {
+            let _claim = claim;
+            let _slot = slot;
 
-        if !indices.contains(&stream_index)
-            || extract_all(tools.ffmpeg, path, &indices, directory)
-                .await
-                .is_err()
-        {
-            let content = extract_subtitle(tools.ffmpeg, path, stream_index)
-                .await
-                .map(|track| track.content)
-                .or_else(|failure| match failure {
-                    SubtitleError::Empty => Ok(String::new()),
-                    other => Err(other),
-                })?;
-
-            keep(directory, stream_index, &content).await;
-
-            return as_track(content);
-        }
-
-        kept(directory, stream_index)
-            .await
-            .unwrap_or(Err(SubtitleError::Empty))
+            read_into(&tools, &directory, &path, stream_index).await
+        })
+        .await
     }
 }
 
+/// Runs a read as a task of its own, so dropping the caller does not stop it.
+async fn finish(
+    read: impl std::future::Future<Output = Result<SubtitleTrack, SubtitleError>> + Send + 'static,
+) -> Result<SubtitleTrack, SubtitleError> {
+    tokio::spawn(read)
+        .await
+        .map_err(|failure| SubtitleError::Failed(failure.to_string()))?
+}
+
+/// Reads a file's text tracks into the directory kept for it.
+async fn read_into(
+    tools: &Tools,
+    directory: &Path,
+    path: &Path,
+    stream_index: u32,
+) -> Result<SubtitleTrack, SubtitleError> {
+    tokio::fs::create_dir_all(directory)
+        .await
+        .map_err(SubtitleError::Spawn)?;
+
+    let indices = text_tracks(&tools.ffprobe, path).await;
+
+    if !indices.contains(&stream_index)
+        || extract_all(&tools.ffmpeg, path, &indices, directory)
+            .await
+            .is_err()
+    {
+        let content = extract_subtitle(&tools.ffmpeg, path, stream_index)
+            .await
+            .map(|track| track.content)
+            .or_else(|failure| match failure {
+                SubtitleError::Empty => Ok(String::new()),
+                other => Err(other),
+            })?;
+
+        keep(directory, stream_index, &content).await;
+
+        return as_track(content);
+    }
+
+    kept(directory, stream_index)
+        .await
+        .unwrap_or(Err(SubtitleError::Empty))
+}
+
 /// The programs a read needs.
-#[derive(Clone, Copy)]
-pub struct Tools<'a> {
-    pub ffmpeg: &'a str,
-    pub ffprobe: &'a str,
+#[derive(Clone)]
+pub struct Tools {
+    pub ffmpeg: String,
+    pub ffprobe: String,
 }
 
 /// Every text track a file carries, by stream index.
@@ -418,10 +445,30 @@ mod tests {
 
         let admitted = tokio::time::timeout(Duration::from_millis(50), registry.slot()).await;
 
-        assert!(
-            matches!(admitted, Ok(Some(_))),
-            "a finished read makes room"
-        );
+        assert!(matches!(admitted, Ok(Ok(_))), "a finished read makes room");
+    }
+
+    #[tokio::test]
+    async fn waits_for_a_read_of_the_same_file_but_not_of_another() {
+        let registry = SubtitleRegistry::new();
+        let first = registry.claim("film").await;
+
+        let same = tokio::time::timeout(Duration::from_millis(50), registry.claim("film")).await;
+        let other = tokio::time::timeout(Duration::from_millis(50), registry.claim("other")).await;
+
+        assert!(same.is_err(), "a second read of one file must wait");
+        assert!(other.is_ok(), "another file must not wait on it");
+
+        drop(first);
+    }
+
+    #[tokio::test]
+    async fn forgets_a_file_once_nobody_is_reading_it() {
+        let registry = SubtitleRegistry::new();
+
+        drop(registry.claim("film").await);
+
+        assert!(registry.reading.lock().expect("not poisoned").is_empty());
     }
 
     #[test]
