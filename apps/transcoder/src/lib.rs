@@ -37,6 +37,7 @@ pub mod rendition;
 pub mod router;
 pub mod session;
 pub mod session_sweep;
+pub mod source_address;
 pub mod steps_aside;
 pub mod subtitle;
 pub mod transcode_plan;

@@ -58,6 +58,7 @@ fn app(name: &str) -> axum::Router {
         ffprobe: ffprobe(),
         downloads: valence_transcoder::progress_registry::ProgressRegistry::new(),
         trickplay: TrickplayRegistry::default(),
+        subtitles: valence_transcoder::subtitle::SubtitleRegistry::default(),
         previews: PreviewRegistry::default(),
         monitor: Monitor::new(Journal::new()),
         audio: valence_transcoder::audio::AudioRegistry::new(),

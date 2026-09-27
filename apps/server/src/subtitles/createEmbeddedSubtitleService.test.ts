@@ -143,7 +143,7 @@ describe('createEmbeddedSubtitleService', () => {
 
     await createEmbeddedSubtitleService({
       media: { find: () => Promise.resolve({ path: PATH, streams: [streamOf()] }) },
-      transcoder: { readSubtitle: vi.fn() },
+      transcoder: { readSubtitle: vi.fn().mockResolvedValue('WEBVTT') },
       canBurnImageSubtitles: asked,
     }).list(MEDIA_ID);
 
@@ -179,6 +179,27 @@ describe('createEmbeddedSubtitleService', () => {
 
     await expect(service.read(MEDIA_ID, tracks?.[0]?.id ?? '')).resolves.toBe('WEBVTT');
     expect(readSubtitle).toHaveBeenCalledWith({ inputPath: PATH, streamIndex: 2 });
+  });
+
+  it('starts reading the text tracks as soon as they are listed, before any is chosen', async () => {
+    const { service, readSubtitle } = build([
+      streamOf({ index: 2, format: 'pgs' }),
+      streamOf({ index: 3 }),
+    ]);
+
+    await service.list(MEDIA_ID);
+
+    expect(readSubtitle).toHaveBeenCalledWith({ inputPath: PATH, streamIndex: 3 });
+  });
+
+  it('lists the tracks even when the early read fails', async () => {
+    const { service, onProblem } = build(
+      [streamOf()],
+      vi.fn().mockRejectedValue(new Error('no such stream')),
+    );
+
+    await expect(service.list(MEDIA_ID)).resolves.toHaveLength(1);
+    expect(onProblem).not.toHaveBeenCalled();
   });
 
   it('answers with nothing for a track the file does not have', async () => {

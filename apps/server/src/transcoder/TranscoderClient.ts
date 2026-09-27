@@ -738,7 +738,7 @@ const createTranscoderClient = ({
     openMonitorSocket: () => openSocket(),
 
     readSubtitle: async (request) =>
-      SubtitleTrackSchema.parse(await (await postJson('/subtitles', request)).json()).content,
+      SubtitleTrackSchema.parse(await (await postRender('/subtitles', request)).json()).content,
 
     requestDownload: async (request) =>
       DownloadFileSchema.parse(await (await postJson('/downloads', request)).json()),
