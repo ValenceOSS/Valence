@@ -1318,6 +1318,10 @@ async fn start_frame(State(state): State<AppState>, Json(request): Json<FrameReq
 /// Answers with the whole track rather than a path, because a subtitle file is
 /// a few tens of kilobytes and the player wants all of it before the first cue
 /// is due. Not queued: somebody is waiting for it.
+///
+/// The read runs as a task of its own, so a viewer who closes the player
+/// partway through does not stop it: the file has been read that far already,
+/// and finishing is what keeps it from being read again.
 async fn start_subtitle(
     State(state): State<AppState>,
     Json(request): Json<SubtitleRequest>,
@@ -1332,18 +1336,27 @@ async fn start_subtitle(
     }
 
     let config = state.registry.config();
-    let tools = Tools {
-        ffmpeg: &config.ffmpeg,
-        ffprobe: &state.ffprobe,
-    };
+    let subtitles = state.subtitles.clone();
+    let ffmpeg = config.ffmpeg.clone();
+    let ffprobe = state.ffprobe.clone();
+    let artefact_root = config.artefact_root.clone();
+    let stream_index = request.stream_index;
 
-    match state
-        .subtitles
-        .read(tools, &config.artefact_root, &path, request.stream_index)
-        .await
-    {
-        Ok(track) => (StatusCode::OK, Json(track)).into_response(),
-        Err(failure) => error(StatusCode::BAD_REQUEST, &failure.to_string()),
+    let reading = tokio::spawn(async move {
+        let tools = Tools {
+            ffmpeg: &ffmpeg,
+            ffprobe: &ffprobe,
+        };
+
+        subtitles
+            .read(tools, &artefact_root, &path, stream_index)
+            .await
+    });
+
+    match reading.await {
+        Ok(Ok(track)) => (StatusCode::OK, Json(track)).into_response(),
+        Ok(Err(failure)) => error(StatusCode::BAD_REQUEST, &failure.to_string()),
+        Err(failure) => error(StatusCode::INTERNAL_SERVER_ERROR, &failure.to_string()),
     }
 }
 
