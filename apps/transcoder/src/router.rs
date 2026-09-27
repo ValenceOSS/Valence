@@ -28,7 +28,7 @@ use crate::queue::WorkQueue;
 use crate::render_registry::{Claim, RenderRegistry};
 use crate::rendition::{self, RenditionJob, RenditionRequest};
 use crate::session::{await_run, segment_number, Reuse, SessionRegistry};
-use crate::subtitle::{SubtitleRegistry, SubtitleRequest, Tools};
+use crate::subtitle::{SubtitleError, SubtitleRegistry, SubtitleRequest, SubtitleTrack, Tools};
 use crate::transcode_plan::HardwareAccel;
 use crate::transcode_plan::{DeviceFilters, SegmentStart, TranscodePlan};
 use crate::transcode_plan::{SessionSpec, MANIFEST_NAME};
@@ -1313,15 +1313,26 @@ async fn start_frame(State(state): State<AppState>, Json(request): Json<FrameReq
     }
 }
 
+/// Answers with a subtitle track, or with why it could not be read.
+fn answer_with_track(outcome: Result<SubtitleTrack, SubtitleError>) -> Response {
+    match outcome {
+        Ok(track) => (StatusCode::OK, Json(track)).into_response(),
+        Err(failure) => error(StatusCode::BAD_REQUEST, &failure.to_string()),
+    }
+}
+
 /// Reads one subtitle track out of a container.
 ///
 /// Answers with the whole track rather than a path, because a subtitle file is
 /// a few tens of kilobytes and the player wants all of it before the first cue
 /// is due. Not queued: somebody is waiting for it.
 ///
-/// The read runs as a task of its own, so a viewer who closes the player
-/// partway through does not stop it: the file has been read that far already,
-/// and finishing is what keeps it from being read again.
+/// A track already kept is answered at once. Otherwise the request waits for
+/// one of a few reading slots, and a viewer who gives up while waiting costs
+/// nothing. Once its turn comes the read runs as a task of its own, so a
+/// viewer who closes the player partway through does not stop it: the file
+/// has been read that far already, and finishing is what keeps it from being
+/// read again.
 async fn start_subtitle(
     State(state): State<AppState>,
     Json(request): Json<SubtitleRequest>,
@@ -1342,7 +1353,22 @@ async fn start_subtitle(
     let artefact_root = config.artefact_root.clone();
     let stream_index = request.stream_index;
 
+    if let Some(found) = subtitles
+        .already_kept(&artefact_root, &path, stream_index)
+        .await
+    {
+        return answer_with_track(found);
+    }
+
+    let Some(slot) = subtitles.slot().await else {
+        return error(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "Subtitles cannot be read right now.",
+        );
+    };
+
     let reading = tokio::spawn(async move {
+        let _slot = slot;
         let tools = Tools {
             ffmpeg: &ffmpeg,
             ffprobe: &ffprobe,
@@ -1354,8 +1380,7 @@ async fn start_subtitle(
     });
 
     match reading.await {
-        Ok(Ok(track)) => (StatusCode::OK, Json(track)).into_response(),
-        Ok(Err(failure)) => error(StatusCode::BAD_REQUEST, &failure.to_string()),
+        Ok(outcome) => answer_with_track(outcome),
         Err(failure) => error(StatusCode::INTERNAL_SERVER_ERROR, &failure.to_string()),
     }
 }

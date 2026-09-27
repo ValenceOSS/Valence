@@ -18,9 +18,17 @@ use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tokio::process::Command;
-use tokio::sync::{Mutex, OwnedMutexGuard};
+use tokio::sync::{Mutex, OwnedMutexGuard, OwnedSemaphorePermit, Semaphore};
 
 const DIRECTORY: &str = "subtitles";
+
+/// How many files may be read for their subtitles at once.
+///
+/// A read runs to its end once begun, whether or not anybody still wants it,
+/// so somebody skipping through a season would otherwise leave a whole-file
+/// read behind on every episode, all of them fighting the film being watched
+/// for the same disk.
+const READS_AT_ONCE: usize = 2;
 
 /// What a caller asks to be pulled out of a container.
 #[derive(Debug, Clone, Deserialize)]
@@ -131,21 +139,52 @@ fn as_track(content: String) -> Result<SubtitleTrack, SubtitleError> {
     Ok(SubtitleTrack { content })
 }
 
-/// Keeps one file from being read for its subtitles twice at once.
+/// Keeps one file from being read for its subtitles twice at once, and only
+/// a few files at all.
 ///
 /// A player asks for a track the moment it is chosen, and choosing a second
 /// while the first is still coming out is ordinary. Without this each request
 /// starts its own read of the whole file, and the disk serves both at half
 /// the speed.
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct SubtitleRegistry {
     reading: Arc<Mutex<HashMap<String, Arc<Mutex<()>>>>>,
+    slots: Arc<Semaphore>,
+}
+
+impl Default for SubtitleRegistry {
+    fn default() -> Self {
+        Self {
+            reading: Arc::default(),
+            slots: Arc::new(Semaphore::new(READS_AT_ONCE)),
+        }
+    }
 }
 
 impl SubtitleRegistry {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// A track an earlier read already kept, without waiting for anything.
+    pub async fn already_kept(
+        &self,
+        artefact_root: &Path,
+        path: &Path,
+        stream_index: u32,
+    ) -> Option<Result<SubtitleTrack, SubtitleError>> {
+        let address = crate::source_address::of(path).await?;
+
+        kept(&artefact_root.join(DIRECTORY).join(address), stream_index).await
+    }
+
+    /// Waits for room to read another file.
+    ///
+    /// Waiting is the part a caller may give up on: a read that never got
+    /// its turn is never begun, where one that has is carried to its end.
+    pub async fn slot(&self) -> Option<OwnedSemaphorePermit> {
+        self.slots.clone().acquire_owned().await.ok()
     }
 
     /// Waits for any read of this file already under way, then takes the next.
@@ -358,8 +397,32 @@ pub async fn extract_subtitle(
 
 #[cfg(test)]
 mod tests {
-    use super::{extract_all_arguments, extract_arguments};
+    use super::{extract_all_arguments, extract_arguments, SubtitleRegistry, READS_AT_ONCE};
     use std::path::Path;
+    use std::time::Duration;
+
+    #[tokio::test]
+    async fn reads_only_a_few_files_at_once() {
+        let registry = SubtitleRegistry::new();
+        let mut taken = Vec::new();
+
+        for _ in 0..READS_AT_ONCE {
+            taken.push(registry.slot().await.expect("has room"));
+        }
+
+        let waiting = tokio::time::timeout(Duration::from_millis(50), registry.slot()).await;
+
+        assert!(waiting.is_err(), "a read past the limit must wait");
+
+        taken.pop();
+
+        let admitted = tokio::time::timeout(Duration::from_millis(50), registry.slot()).await;
+
+        assert!(
+            matches!(admitted, Ok(Some(_))),
+            "a finished read makes room"
+        );
+    }
 
     #[test]
     fn reads_every_track_in_one_pass() {
