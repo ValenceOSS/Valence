@@ -18,6 +18,19 @@ describe('describePlaying', () => {
     ).toBe('Breaking Bad · S2E5 · Breakage (2009)');
   });
 
+  it('dates an episode by when it was shown, not when its programme began', () => {
+    expect(
+      describePlaying({
+        title: 'Felina',
+        seriesTitle: 'Breaking Bad',
+        seasonNumber: 5,
+        episodeNumber: 16,
+        year: 2008,
+        releaseDate: '2013-09-29',
+      }),
+    ).toBe('Breaking Bad · S5E16 · Felina (2013)');
+  });
+
   it('names a double episode by both of its numbers', () => {
     expect(
       describePlaying({

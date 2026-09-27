@@ -26,7 +26,13 @@ type VideoPlayerProps = {
     Partial<
       Pick<
         MediaSummary,
-        'seriesTitle' | 'seasonNumber' | 'episodeNumber' | 'hasPoster' | 'year' | 'extraKind'
+        | 'seriesTitle'
+        | 'seasonNumber'
+        | 'episodeNumber'
+        | 'hasPoster'
+        | 'year'
+        | 'releaseDate'
+        | 'extraKind'
       >
     >;
   isImmersive?: boolean;

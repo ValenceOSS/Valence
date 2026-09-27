@@ -1,6 +1,7 @@
 import { act, fireEvent, render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fetchMediaDetail } from '@ValenceClient/library/fetchLibrary';
+import { MediaDetailSchema } from '@ValenceContracts/schemas/Library';
 import { fetchSegments } from '@ValenceClient/playback/fetchSegments';
 import {
   heartbeatPlaybackSession,
@@ -561,6 +562,55 @@ describe('Watching', () => {
     await fireEvent.press(drawn.getByLabelText('Show the controls'));
 
     expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+  });
+
+  it('names an episode by its programme and place in it, dated by when it was shown', async () => {
+    jest.mocked(fetchMediaDetail).mockResolvedValue(
+      MediaDetailSchema.parse({
+        id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+        libraryId: '3fa85f64-5717-4562-b3fc-2c963f66afa7',
+        title: 'Felina',
+        year: 2008,
+        container: 'mkv',
+        durationSeconds: 3300,
+        videoCodec: 'hevc',
+        videoRange: 'SDR',
+        width: 1920,
+        height: 1080,
+        bitrateKbps: 8000,
+        audioStreams: [
+          {
+            index: 1,
+            codec: 'eac3',
+            channels: 6,
+            language: 'eng',
+            isDefault: true,
+            isAtmos: false,
+          },
+        ],
+        subtitleStreams: [],
+        addedAt: '2026-01-01T00:00:00.000Z',
+        metadata: {
+          overview: 'The end.',
+          hasPoster: true,
+          hasBackdrop: false,
+          hasLogo: false,
+          seriesTitle: 'Breaking Bad',
+          seasonNumber: 5,
+          episodeNumber: 16,
+          releaseDate: '2013-09-29',
+        },
+      }),
+    );
+    jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
+
+    const drawn = await render(around(<Watching mediaId="an-episode" onDone={jest.fn()} />));
+
+    await waitFor(() => {
+      expect(drawn.getByText('Breaking Bad · S5E16 · Felina')).toBeTruthy();
+    });
+
+    expect(drawn.getByText('2013')).toBeTruthy();
   });
 
   it('tells the phone to keep showing what is playing on the lock screen', async () => {
