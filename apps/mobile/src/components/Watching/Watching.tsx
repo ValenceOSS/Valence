@@ -8,6 +8,7 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { fetchSubtitleTracks, SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
 import { fetchSegments } from '@ValenceClient/playback/fetchSegments';
+import { namePlaying } from '@ValenceClient/playback/namePlaying';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { onPresenceEvent } from '@ValenceClient/presence/presenceEvents';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
@@ -204,11 +205,15 @@ const Watching = ({
   }>({ from: startSeconds });
   const clientId = platformInUse().thisClientId();
   const title = useQuery(libraryQueries.detail(mediaId));
+  const called =
+    title.data === undefined || title.data === null
+      ? null
+      : namePlaying({ ...title.data.metadata, title: title.data.title, year: title.data.year });
   const named = useRef<string | undefined>(undefined);
 
   useEffect(() => {
-    named.current = title.data?.title;
-  }, [title.data]);
+    named.current = called?.name;
+  }, [called?.name]);
   const tracks = useQuery({
     queryKey: ['subtitles', mediaId],
     queryFn: () => fetchSubtitleTracks(mediaId),
@@ -630,8 +635,8 @@ const Watching = ({
         areControlsDrawn={areControlsDrawn}
         controls={{
           fade,
-          title: title.data?.title ?? '',
-          year: title.data?.year ?? null,
+          title: called?.name ?? '',
+          year: called?.year ?? null,
           isPlaying: moving.isPlaying,
           trickplay: frames.data ?? null,
           onPlayPause: () => {
