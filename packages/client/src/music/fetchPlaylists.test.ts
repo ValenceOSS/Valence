@@ -3,8 +3,11 @@ import {
   addToPlaylist,
   createPlaylist,
   dropFromPlaylist,
+  dropPlaylistArtwork,
   moveInPlaylist,
+  playlistArtworkUrl,
   removePlaylist,
+  savePlaylistArtwork,
   updatePlaylist,
 } from './fetchPlaylists';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
@@ -29,6 +32,7 @@ const SUMMARY = {
   lostCount: 0,
   durationSeconds: 0,
   artworkAlbumIds: [],
+  hasOwnArtwork: false,
   updatedAt: '2026-09-18T00:00:00.000Z',
 };
 
@@ -106,5 +110,49 @@ describe('fetchPlaylists', () => {
     fetchMock.mockRejectedValue(new Error('offline'));
 
     await expect(removePlaylist('p')).resolves.toBe(false);
+  });
+
+  it('reads a playlist cover of its own, versioned by when it changed', () => {
+    expect(playlistArtworkUrl(SUMMARY)).toBeNull();
+    expect(playlistArtworkUrl({ ...SUMMARY, hasOwnArtwork: true })).toBe(
+      `/api/playlists/${SUMMARY.id}/artwork?v=${encodeURIComponent(SUMMARY.updatedAt)}`,
+    );
+  });
+
+  it('sends a cover as it is, and says nothing went wrong when it was kept', async () => {
+    answerWith({});
+    const picture = new Blob(['x'], { type: 'image/png' });
+
+    await expect(savePlaylistArtwork(SUMMARY.id, picture)).resolves.toBeNull();
+    expect(fetchMock).toHaveBeenCalledWith(
+      `/api/playlists/${SUMMARY.id}/artwork`,
+      expect.objectContaining({ method: 'PUT', body: picture }),
+    );
+  });
+
+  it("passes on the server's reason when a cover is refused", async () => {
+    answerWith({ error: 'That picture is too large.' }, false);
+
+    await expect(savePlaylistArtwork(SUMMARY.id, new Blob(['x']))).resolves.toBe(
+      'That picture is too large.',
+    );
+  });
+
+  it('says a cover could not be sent when the request never arrives', async () => {
+    fetchMock.mockRejectedValue(new Error('offline'));
+
+    await expect(savePlaylistArtwork(SUMMARY.id, new Blob(['x']))).resolves.toBe(
+      'That picture could not be sent.',
+    );
+  });
+
+  it('takes a cover away again', async () => {
+    answerWith({});
+
+    await expect(dropPlaylistArtwork(SUMMARY.id)).resolves.toBe(true);
+    expect(fetchMock).toHaveBeenCalledWith(
+      `/api/playlists/${SUMMARY.id}/artwork`,
+      expect.objectContaining({ method: 'DELETE' }),
+    );
   });
 });

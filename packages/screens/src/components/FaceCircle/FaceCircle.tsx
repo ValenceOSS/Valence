@@ -6,7 +6,7 @@ import { ORB_VARIANTS } from '@ValenceUI/orbs/ORB_VARIANTS';
 import { profileInitial } from '@ValenceContracts/schemas/ViewerProfile';
 import { framedPicture } from '@ValenceScreens/library/framedPicture';
 import { LETTER_FONT_LOOKS } from '@ValenceScreens/library/LETTER_FONT_LOOKS';
-import { inkFor } from '@ValenceScreens/library/inkFor';
+import { inkFor } from '@ValenceClient/library/inkFor';
 import type { FaceCircleProps } from './FaceCircle.types';
 
 /**

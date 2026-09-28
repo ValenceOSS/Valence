@@ -1,3 +1,5 @@
+import { fetchAlbums } from '@ValenceClient/music/fetchMusic';
+import { fetchBooks } from '@ValenceClient/books/fetchBooks';
 import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
 import {
   fetchAdminOverview,
@@ -37,6 +39,7 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ResourceSampleRange } from '@ValenceContracts/schemas/ResourceSample';
 import { fetchExceptionsOn, fetchLibraryAccess } from '@ValenceClient/admin/fetchLibraryAccess';
 
+const MOST_ALBUMS_LISTED = 500;
 const ADMIN = ['admin'] as const;
 
 const WATCHED_EVERY_MS = 5000;
@@ -334,6 +337,32 @@ const deliveries = (webhookId: string | null) =>
   });
 
 /**
+ * Every album in the music libraries, by title, for the media panel to list beside the films and
+ * programmes and to correct from.
+ *
+ * @returns The query.
+ */
+const albums = () =>
+  queryOptions({
+    queryKey: [...ADMIN, 'albums'],
+    queryFn: () => fetchAlbums('title', MOST_ALBUMS_LISTED),
+  });
+
+/**
+ * Every book on every shelf, for the media panel to list beside the films and programmes and to
+ * correct from.
+ *
+ * @param libraryIds - The book libraries to read.
+ * @returns The query.
+ */
+const books = (libraryIds: readonly string[]) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'books', [...libraryIds].sort()],
+    queryFn: async () => (await Promise.all(libraryIds.map((id) => fetchBooks(id)))).flat(),
+    enabled: libraryIds.length > 0,
+  });
+
+/**
  * Everything on the server, one entry per thing rather than per file, which is what the media panel
  * lists and what a correction is started from.
  *
@@ -543,6 +572,8 @@ const adminQueries = {
   webhooks,
   deliveries,
   everything,
+  albums,
+  books,
   shares,
   key: ADMIN,
 };

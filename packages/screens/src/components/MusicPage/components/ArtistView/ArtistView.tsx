@@ -20,6 +20,7 @@ import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
+import { ArtistStory } from '@ValenceScreens/components/MusicPage/components/ArtistView/components/ArtistStory/ArtistStory';
 import type { ArtistViewProps } from './ArtistView.types';
 
 /**
@@ -158,6 +159,8 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
         />
 
         <AlbumShelf heading="Appears on" albums={appearsOn} />
+
+        <ArtistStory artistId={artist.id} name={artist.name} />
       </div>
     </article>
   );

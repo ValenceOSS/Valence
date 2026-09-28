@@ -1,18 +1,21 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  ImagePlus as ImagePlusIcon,
   ListMusic as ListMusicIcon,
   MoreHorizontal as MoreHorizontalIcon,
   Shuffle as ShuffleIcon,
 } from '@keyline-icons/react';
 import {
   Bin as BinFilledIcon,
+  Image as ImageFilledIcon,
   Play as PlayFilledIcon,
   Share as ShareFilledIcon,
   SquarePen as SquarePenFilledIcon,
 } from '@keyline-icons/react/fill';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Button } from '@ValenceUI/Button';
+import { FilePicker } from '@ValenceUI/FilePicker';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Icon } from '@ValenceUI/Icon';
@@ -23,8 +26,11 @@ import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { MEDIA_KIND_LABELS } from '@ValenceContracts/schemas/MediaKind';
 import {
   dropFromPlaylist,
+  dropPlaylistArtwork,
   moveInPlaylist,
+  playlistArtworkUrl,
   removePlaylist,
+  savePlaylistArtwork,
   updatePlaylist,
 } from '@ValenceClient/music/fetchPlaylists';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
@@ -57,7 +63,8 @@ const countOf = (count: number, noun: string): string =>
  * A playlist's page: its cover made of what is in it, whose it is, and everything in it in order.
  *
  * Somebody else's shared playlist can be played and shuffled but not changed. One's own can be
- * renamed, shared with the household or made private again, told its order matters, reordered a
+ * renamed, given a cover of its own or its songs' covers back, shared with the household or made
+ * private again, told its order matters, reordered a
  * song at a time and emptied a song at a time. Anything in it that is not music — a film for a film
  * night — is listed below the songs, since this player only plays songs.
  *
@@ -72,8 +79,10 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
   const [isRemoving, setIsRemoving] = useState(false);
   const { may } = useWhatIMayDo();
   const detail = asked.data;
+  const [isSendingCover, setIsSendingCover] = useState(false);
   const firstCover = detail?.playlist.artworkAlbumIds[0];
-  useLightTheMusic(firstCover === undefined ? null : albumArtworkUrl(firstCover));
+  const ownCover = detail === undefined ? null : playlistArtworkUrl(detail.playlist);
+  useLightTheMusic(ownCover ?? (firstCover === undefined ? null : albumArtworkUrl(firstCover)));
 
   const refresh = () => {
     void cache.invalidateQueries({ queryKey: musicQueries.playlistsKey });
@@ -122,6 +131,7 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
           <PlaylistCover
             name={playlist.name}
             albumIds={playlist.artworkAlbumIds}
+            artwork={ownCover}
             className="w-full"
           />
         }
@@ -173,6 +183,31 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
               <Icon of={ShuffleIcon} size={22} />
             </Button>
 
+            {playlist.isMine ? (
+              <FilePicker
+                label="Choose a cover"
+                accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
+                variant="ghost"
+                size="md"
+                isLoading={isSendingCover}
+                onPick={(file) => {
+                  setIsSendingCover(true);
+                  void savePlaylistArtwork(playlist.id, file).then((wrong) => {
+                    setIsSendingCover(false);
+                    refresh();
+
+                    if (wrong === null) {
+                      notify.worked(`${playlist.name} has a new cover`);
+                    } else {
+                      notify.failed(wrong);
+                    }
+                  });
+                }}
+              >
+                <Icon of={ImagePlusIcon} size={22} />
+              </FilePicker>
+            ) : null}
+
             {playlist.isMine || mayClearAbandoned ? (
               <ActionMenu
                 label={`More for ${playlist.name}`}
@@ -212,6 +247,18 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
                                 setIsEditing(true);
                               },
                             },
+                            ...(playlist.hasOwnArtwork
+                              ? [
+                                  {
+                                    id: 'cover',
+                                    label: "Use the songs' covers",
+                                    icon: <Icon of={ImageFilledIcon} size={16} />,
+                                    onChoose: () => {
+                                      void dropPlaylistArtwork(playlist.id).then(refresh);
+                                    },
+                                  },
+                                ]
+                              : []),
                           ]
                         : []),
                       {

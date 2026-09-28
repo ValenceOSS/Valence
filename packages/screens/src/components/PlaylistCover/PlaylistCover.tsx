@@ -5,15 +5,29 @@ import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import type { PlaylistCoverProps } from './PlaylistCover.types';
 
 /**
- * A playlist's cover, made of the covers of what is in it: the first album's alone where there is
- * only one, four in a grid once there are four, and a quiet mark where there is nothing yet.
+ * A playlist's cover: the one its owner gave it, or else one made of the covers of what is in it —
+ * the first album's alone where there is only one, four in a grid once there are four, and a quiet
+ * mark where there is nothing yet.
  *
  * @param name - The playlist, for anybody not looking at it.
  * @param albumIds - The albums whose covers to use, in the order they come up.
+ * @param artwork - The address of a cover of its own, which is used instead where there is one.
+ * @param standIn - What is drawn where there is no cover yet.
+ * @param iconSize - How large that is.
  * @param className - Its size and anything else the caller's layout needs.
  */
-const PlaylistCover = ({ name, albumIds, className }: PlaylistCoverProps) => {
-  const tiles = albumIds.length >= 4 ? albumIds.slice(0, 4) : albumIds.slice(0, 1);
+const PlaylistCover = ({
+  name,
+  albumIds,
+  artwork = null,
+  standIn = ListMusicIcon,
+  iconSize = 22,
+  className,
+}: PlaylistCoverProps) => {
+  const tiles =
+    artwork !== null
+      ? [artwork]
+      : (albumIds.length >= 4 ? albumIds.slice(0, 4) : albumIds.slice(0, 1)).map(albumArtworkUrl);
 
   return (
     <span
@@ -27,13 +41,13 @@ const PlaylistCover = ({ name, albumIds, className }: PlaylistCoverProps) => {
     >
       {tiles.length === 0 ? (
         <span className="flex items-center justify-center">
-          <Icon of={ListMusicIcon} size={22} />
+          <Icon of={standIn} size={iconSize} />
         </span>
       ) : (
-        tiles.map((albumId) => (
+        tiles.map((address) => (
           <img
-            key={albumId}
-            src={albumArtworkUrl(albumId)}
+            key={address}
+            src={address}
             alt=""
             loading="lazy"
             draggable={false}

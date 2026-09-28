@@ -12,11 +12,13 @@ import { tracksFor } from '@ValenceClient/music/tracksFor';
 import type { ActionMenuGroup } from '@ValenceUI/ActionMenu.types';
 import type { MusicPlayer } from '@ValenceClient/music/createMusicPlayer';
 import type { MusicView } from '@ValenceClient/music/musicView';
+import { playlistGroupFor } from './playlistGroupFor';
+import type { MyPlaylists } from '@ValenceClient/music/useMyPlaylists.types';
 
 /**
  * What can be done to an album, an artist, a playlist or somebody's liked songs from wherever it is
- * shown — play it, shuffle it, put it next or at the end of the queue, or open it — for the menu
- * that opens over it.
+ * shown — play it, shuffle it, put it next or at the end of the queue, add all of it to a playlist,
+ * or open it — for the menu that opens over it.
  *
  * Its songs are only fetched once something is chosen, so a list of a hundred albums does not
  * fetch a hundred albums' songs to be ready for a right-click that may never come.
@@ -25,6 +27,7 @@ import type { MusicView } from '@ValenceClient/music/musicView';
  * @param name - What it is called.
  * @param player - The player to hand its songs to.
  * @param open - Opens a page of the music section.
+ * @param playlists - This profile's playlists, to offer adding all of it to one.
  * @returns The menu's items.
  */
 const musicMenuFor = (
@@ -32,6 +35,7 @@ const musicMenuFor = (
   name: string,
   player: MusicPlayer,
   open: (view: MusicView) => void,
+  playlists?: MyPlaylists,
 ): ActionMenuGroup[] => {
   const withSongs = (then: (found: NonNullable<Awaited<ReturnType<typeof tracksFor>>>) => void) => {
     void tracksFor(view, name).then((found) => {
@@ -89,6 +93,16 @@ const musicMenuFor = (
         },
       ],
     },
+    ...(playlists === undefined
+      ? []
+      : [
+          playlistGroupFor(
+            name,
+            async () => (await tracksFor(view, name))?.tracks.map((track) => track.id) ?? [],
+            playlists,
+            open,
+          ),
+        ]),
     {
       items: [
         {

@@ -33,6 +33,8 @@ const fetchAccounts = vi.hoisted(() => vi.fn());
 const fetchFolders = vi.hoisted(() => vi.fn());
 const readWholeLibrary = vi.hoisted(() => vi.fn());
 const fetchEverybodysShares = vi.hoisted(() => vi.fn());
+const fetchAlbums = vi.hoisted(() => vi.fn());
+const fetchBooks = vi.hoisted(() => vi.fn());
 
 vi.mock('@ValenceClient/admin/fetchAdmin', () => admin);
 vi.mock('@ValenceClient/admin/fetchLogs', () => ({ fetchLogs }));
@@ -47,6 +49,8 @@ vi.mock('@ValenceClient/admin/fetchAccounts', () => ({ fetchAccounts }));
 vi.mock('@ValenceClient/admin/fetchFolders', () => ({ fetchFolders }));
 vi.mock('@ValenceClient/library/readWholeLibrary', () => ({ readWholeLibrary }));
 vi.mock('@ValenceClient/sharing/fetchShares', () => ({ fetchEverybodysShares }));
+vi.mock('@ValenceClient/music/fetchMusic', () => ({ fetchAlbums }));
+vi.mock('@ValenceClient/books/fetchBooks', () => ({ fetchBooks }));
 
 const aCache = (): QueryClient =>
   new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
@@ -90,6 +94,8 @@ beforeEach(() => {
   fetchAccounts.mockResolvedValue([]);
   fetchEverybodysShares.mockResolvedValue([]);
   readWholeLibrary.mockResolvedValue([aThing('one')]);
+  fetchAlbums.mockResolvedValue([]);
+  fetchBooks.mockImplementation((id: string) => Promise.resolve([{ id: `${id}-book` }]));
 });
 
 describe('adminQueries', () => {
@@ -293,5 +299,24 @@ describe('adminQueries', () => {
       aThing('ted-s01e01', 'Ted'),
       aThing('arrival'),
     ]);
+  });
+
+  it('lists albums by title for the media panel to correct from', async () => {
+    await expect(aCache().fetchQuery(adminQueries.albums())).resolves.toEqual([]);
+    expect(fetchAlbums).toHaveBeenCalledWith('title', 500);
+  });
+
+  it('reads the books of every book library as one list', async () => {
+    await expect(aCache().fetchQuery(adminQueries.books(['b', 'a']))).resolves.toEqual([
+      { id: 'b-book' },
+      { id: 'a-book' },
+    ]);
+    expect(adminQueries.books(['b', 'a']).queryKey).toEqual(
+      adminQueries.books(['a', 'b']).queryKey,
+    );
+  });
+
+  it('reads no books where there are no book libraries', () => {
+    expect(adminQueries.books([]).enabled).toBe(false);
   });
 });

@@ -300,6 +300,75 @@ describe('RailCard', () => {
   });
 });
 
+describe('a card drawn as its picture alone', () => {
+  it('rests as the picture with what is new about it said aloud, not a name beneath', () => {
+    renderInAnAddress(
+      <RailCard
+        media={MEDIA}
+        look="art"
+        flag="Recently added"
+        onPlay={vi.fn()}
+        onInspect={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Parasite, Recently added' })).toBeInTheDocument();
+    expect(screen.getByText('Recently added')).toBeInTheDocument();
+  });
+
+  it('opens the page when the picture is chosen', async () => {
+    const onInspect = vi.fn();
+    const actor = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+
+    renderInAnAddress(<RailCard media={MEDIA} look="art" onPlay={vi.fn()} onInspect={onInspect} />);
+
+    await actor.click(screen.getByRole('button', { name: 'Parasite' }));
+
+    expect(onInspect).toHaveBeenCalledWith(MEDIA);
+  });
+});
+
+describe('what the open card offers besides playing', () => {
+  it('folds everything else into a menu where there is more than one thing', async () => {
+    const onHide = vi.fn();
+    const actor = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const { container } = renderInAnAddress(
+      <RailCard
+        media={MEDIA}
+        resumeSeconds={60}
+        onPlay={vi.fn()}
+        onInspect={vi.fn()}
+        onToggleKept={vi.fn()}
+        onHide={onHide}
+      />,
+    );
+
+    await restOn(cardHolder(container));
+    await actor.click(screen.getByRole('button', { name: 'More to do with Parasite' }));
+    await actor.click(await screen.findByRole('menuitem', { name: 'Hide Parasite' }));
+
+    expect(onHide).toHaveBeenCalledWith(MEDIA);
+  });
+
+  it('keeps a single thing beside the play button, with no menu for it', async () => {
+    const onToggleKept = vi.fn();
+    const actor = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const { container } = renderInAnAddress(
+      <RailCard media={MEDIA} onPlay={vi.fn()} onInspect={vi.fn()} onToggleKept={onToggleKept} />,
+    );
+
+    await restOn(cardHolder(container));
+
+    expect(
+      screen.queryByRole('button', { name: 'More to do with Parasite' }),
+    ).not.toBeInTheDocument();
+
+    await actor.click(screen.getByRole('button', { name: 'Keep Parasite' }));
+
+    expect(onToggleKept).toHaveBeenCalledWith(MEDIA);
+  });
+});
+
 describe('a card that stands upright', () => {
   it('stands on the poster when asked to', () => {
     const { container } = renderInAnAddress(

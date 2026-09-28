@@ -95,6 +95,7 @@ import type { Trickplay } from '@ValenceClient/playback/fetchTrickplay';
 import type { PoppedOut } from '@ValenceScreens/playback/popOutWithCaptions';
 import type { CastState } from '@ValenceScreens/playback/castPlayback.types';
 import { describePlaying } from './describePlaying';
+import { PausedScreen } from './components/PausedScreen/PausedScreen';
 import type { CastContext } from '@ValenceScreens/playback/castSender.types';
 import { aKeptSession } from '@ValenceClient/downloads/aKeptSession';
 import type { StartedSession } from '@ValenceClient/playback/startPlaybackSession';
@@ -120,6 +121,8 @@ type FullscreenVideo = {
 };
 
 const IDLE_MILLISECONDS = 2500;
+
+const PAUSED_SCREEN_MILLISECONDS = 10_000;
 
 const DOUBLE_TAP_MILLISECONDS = 300;
 
@@ -280,6 +283,7 @@ const VideoPlayer = ({
   const [health, setHealth] = useState<PlaybackHealth>(EMPTY_HEALTH);
   const [delivered, setDelivered] = useState<DeliveredFormat | null>(null);
   const [isIdle, setIsIdle] = useState(false);
+  const [isResting, setIsResting] = useState(false);
   const pointRef = useRef<{ x: number; y: number } | null>(null);
   const [activity, setActivity] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1);
@@ -1232,6 +1236,22 @@ const VideoPlayer = ({
     };
   }, [isPlaying, activity]);
 
+  useEffect(() => {
+    setIsResting(false);
+
+    if (!isImmersive || isPlaying || state !== 'playing' || isMenuOpen || isShowingStats) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setIsResting(true);
+    }, PAUSED_SCREEN_MILLISECONDS);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [isImmersive, isPlaying, activity, state, isMenuOpen, isShowingStats]);
+
   const duration = media.durationSeconds > 0 ? media.durationSeconds : reportedDuration;
 
   const togglePlay = useCallback(() => {
@@ -1578,7 +1598,7 @@ const VideoPlayer = ({
     };
   }, []);
 
-  const isBarUp = !isIdle || isShowingStats || isMenuOpen;
+  const isBarUp = (!isIdle && !isResting) || isShowingStats || isMenuOpen;
   const isBarUpRef = useRef(isBarUp);
 
   useEffect(() => {
@@ -2114,6 +2134,8 @@ const VideoPlayer = ({
           </div>
         </div>
       </div>
+
+      {isImmersive ? <PausedScreen media={media} isShown={isResting} /> : null}
 
       {state === 'failed' ? (
         <p role="alert" className="text-sm text-danger">

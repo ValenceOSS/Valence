@@ -6,6 +6,7 @@ import {
   PlaylistSummarySchema,
 } from '@ValenceContracts/schemas/Playlist';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import type {
   CreatePlaylist,
   PlaylistDetail,
@@ -125,13 +126,65 @@ const moveInPlaylist = async (
 const dropFromPlaylist = async (playlistId: string, entryId: string): Promise<boolean> =>
   (await change(`/api/playlists/${playlistId}/entries/${entryId}`, 'DELETE'))?.ok === true;
 
+/**
+ * Where a playlist's own cover is read from, versioned by when the playlist last changed so a new
+ * cover is fetched rather than an old one read from a cache.
+ *
+ * @param playlist - The playlist.
+ * @returns The address, or nothing where it has no cover of its own.
+ */
+const playlistArtworkUrl = (playlist: PlaylistSummary): string | null =>
+  playlist.hasOwnArtwork
+    ? `/api/playlists/${playlist.id}/artwork?v=${encodeURIComponent(playlist.updatedAt)}`
+    : null;
+
+/**
+ * Gives one of this profile's playlists a cover of its own.
+ *
+ * @param playlistId - The playlist.
+ * @param picture - The picture, and what kind it is.
+ * @returns What was wrong with it, or nothing where it was kept.
+ */
+const savePlaylistArtwork = async (playlistId: string, picture: Blob): Promise<string | null> => {
+  const response = await fetch(`/api/playlists/${playlistId}/artwork`, {
+    method: 'PUT',
+    credentials: 'same-origin',
+    headers: { ...profileHeaders(), 'content-type': picture.type },
+    body: picture,
+  }).catch(() => null);
+
+  if (response === null) {
+    return 'That picture could not be sent.';
+  }
+
+  if (response.ok) {
+    return null;
+  }
+
+  const said = RefusalSchema.safeParse(await response.json().catch(() => null));
+
+  return said.success ? said.data.error : 'That picture could not be used.';
+};
+
+/**
+ * Takes a playlist's own cover away, so it is drawn from its songs' albums again.
+ *
+ * @param playlistId - The playlist.
+ * @returns Whether it was taken away.
+ */
+const dropPlaylistArtwork = async (playlistId: string): Promise<boolean> =>
+  (await change(`/api/playlists/${playlistId}/artwork`, 'DELETE'))?.ok === true;
+
 export {
   addToPlaylist,
   createPlaylist,
   dropFromPlaylist,
+  dropPlaylistArtwork,
   fetchPlaylist,
   fetchPlaylists,
   moveInPlaylist,
+  playlistArtworkUrl,
   removePlaylist,
+  savePlaylistArtwork,
   updatePlaylist,
 };

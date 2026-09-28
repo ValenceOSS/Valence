@@ -48,7 +48,7 @@ const aFakeMusicPlayerWith = (
     seek: spy(),
     setVolume: spy(),
     toggleMute: spy(),
-    toggleShuffle: spy(),
+    cycleShuffle: spy(),
     cycleRepeat: spy(),
     playNext: spy(),
     addToQueue: spy(),

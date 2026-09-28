@@ -17,10 +17,12 @@ import { PlaylistCover } from '@ValenceScreens/components/PlaylistCover/Playlist
 import { PlaylistDialog } from '@ValenceScreens/components/PlaylistDialog/PlaylistDialog';
 import { Equaliser } from '@ValenceScreens/components/Equaliser/Equaliser';
 import { isPlayingFrom } from '@ValenceScreens/music/isPlayingFrom';
+import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
 import { musicMenuFor } from '@ValenceScreens/music/musicMenuFor';
 import { nameOfOwner } from '@ValenceScreens/music/nameOfOwner';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
+import { playlistArtworkUrl } from '@ValenceClient/music/fetchPlaylists';
 import type { ReactNode } from 'react';
 import type { MusicView } from '@ValenceClient/music/musicView';
 
@@ -50,6 +52,7 @@ const isSameView = (left: MusicView, right: MusicView): boolean =>
 const MusicLibrary = () => {
   const { view, open } = useMusicNavigation();
   const { state, player } = useMusicPlayer();
+  const addingTo = useMyPlaylists();
   const { containerRef, rect, follow, clear } = useSlidingHighlight();
   const [filter, setFilter] = useState('');
   const [isMaking, setIsMaking] = useState(false);
@@ -80,6 +83,7 @@ const MusicLibrary = () => {
           <PlaylistCover
             name={playlist.name}
             albumIds={playlist.artworkAlbumIds}
+            artwork={playlistArtworkUrl(playlist)}
             className="size-12"
           />
         ),
@@ -182,7 +186,7 @@ const MusicLibrary = () => {
               <li key={entry.key} data-highlight>
                 <ContextMenu
                   label={entry.name}
-                  groups={musicMenuFor(entry.view, entry.name, player, open)}
+                  groups={musicMenuFor(entry.view, entry.name, player, open, addingTo)}
                 >
                   <Button
                     variant="bare"

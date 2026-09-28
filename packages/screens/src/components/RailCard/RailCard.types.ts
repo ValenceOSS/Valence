@@ -16,6 +16,8 @@ type RailCardProps = {
   onHide?: (media: MediaSummary) => void;
   isSeries?: boolean;
   shape?: ComponentProps<typeof MediaCard>['shape'];
+  look?: 'card' | 'art';
+  flag?: string;
 };
 
 export type { RailCardProps };

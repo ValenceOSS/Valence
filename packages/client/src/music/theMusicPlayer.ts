@@ -1,4 +1,4 @@
-import { fetchTracks, trackStreamUrl } from '@ValenceClient/music/fetchMusic';
+import { fetchPicks, fetchTracks, trackStreamUrl } from '@ValenceClient/music/fetchMusic';
 import { readMusicPreferences, saveMusicPreferences } from '@ValenceClient/music/musicPreferences';
 import { reportNowPlaying, sendMusicCommand } from '@ValenceClient/music/musicDevices';
 import { createMusicPlayer } from '@ValenceClient/music/createMusicPlayer';
@@ -28,6 +28,7 @@ const theMusicPlayer = (): MusicPlayer => {
     streamUrl: trackStreamUrl,
     canPlay,
     fetchTracks,
+    fetchPicks,
     report: (nowPlaying) => {
       void reportNowPlaying(nowPlaying).catch(() => false);
     },

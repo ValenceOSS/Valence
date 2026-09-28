@@ -13,6 +13,7 @@ describe('musicQueries', () => {
       musicQueries.playlists().queryKey,
       musicQueries.playlist('p').queryKey,
       musicQueries.devices().queryKey,
+      musicQueries.artistStory('b').queryKey,
     ];
 
     for (const key of keys) {
@@ -32,5 +33,10 @@ describe('musicQueries', () => {
   it('does not search for nothing', () => {
     expect(musicQueries.search('  ').enabled).toBe(false);
     expect(musicQueries.search('caramel').enabled).toBe(true);
+  });
+
+  it("keeps an artist's story apart from the artist, and for an hour", () => {
+    expect(musicQueries.artistStory('b').queryKey).not.toEqual(musicQueries.artist('b').queryKey);
+    expect(musicQueries.artistStory('b').staleTime).toBe(60 * 60 * 1000);
   });
 });

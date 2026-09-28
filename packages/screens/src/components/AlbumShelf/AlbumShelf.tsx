@@ -3,6 +3,7 @@ import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwo
 import { MusicTile } from '@ValenceScreens/components/MusicTile/MusicTile';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
+import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
 import { musicMenuFor } from '@ValenceScreens/music/musicMenuFor';
 import { RevealItem } from '@ValenceUI/RevealItem';
 import { MusicShelf } from '@ValenceScreens/components/MusicShelf/MusicShelf';
@@ -37,6 +38,7 @@ const AlbumShelf = ({
 }: AlbumShelfProps) => {
   const { open } = useMusicNavigation();
   const { player } = useMusicPlayer();
+  const addingTo = useMyPlaylists();
 
   if (albums.length === 0) {
     return null;
@@ -60,7 +62,7 @@ const AlbumShelf = ({
             onOpen={() => {
               open({ kind: 'album', id: album.id });
             }}
-            menu={musicMenuFor({ kind: 'album', id: album.id }, album.title, player, open)}
+            menu={musicMenuFor({ kind: 'album', id: album.id }, album.title, player, open, addingTo)}
             onPlay={() => {
               void fetchAlbum(album.id).then((read) => {
                 player.play(read.tracks, 0, {

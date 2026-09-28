@@ -303,6 +303,15 @@ describe('MediaDetailDialog', () => {
     expect(await screen.findByText('A linguist meets visitors.')).toBeInTheDocument();
   });
 
+  it('shows the certificate as its board issues it, and how it looks, once it arrives', async () => {
+    detailMock.mockResolvedValue(detail({ certification: '12A', certificationRegion: 'GB' }));
+    renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+    expect(await screen.findByRole('img', { name: 'Rated 12A by the BBFC' })).toBeInTheDocument();
+    expect(screen.getByText('HD')).toBeInTheDocument();
+    expect(screen.getByText('HDR10')).toBeInTheDocument();
+  });
+
   it('names the cast with their roles', async () => {
     detailMock.mockResolvedValue(
       detail({

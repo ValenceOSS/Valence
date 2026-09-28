@@ -5,6 +5,7 @@ type BarButtonProps = {
   label: string;
   glyph: IconGlyph;
   litGlyph?: IconGlyph;
+  badge?: IconGlyph;
   gesture?: IconGesture;
   iconSize?: number;
   isLit?: boolean;

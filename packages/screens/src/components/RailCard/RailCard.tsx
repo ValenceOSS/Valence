@@ -4,14 +4,18 @@ import {
   ArrowUTurnRight as ArrowUTurnRightIcon,
   EyeOff as EyeOffIcon,
   Heart as HeartIcon,
+  MoreHorizontal as MoreHorizontalIcon,
 } from '@keyline-icons/react';
 import { Heart as HeartFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { MediaCard } from '@ValenceUI/MediaCard';
+import { ArtCard } from '@ValenceUI/ArtCard';
 import { Badge } from '@ValenceUI/Badge';
+import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { liquidSpring } from '@ValenceUI/animations/reveal';
 import { hasFinePointer } from '@ValenceUI/hasFinePointer';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
@@ -32,6 +36,14 @@ const POSTER_POPOUT_REM = 22;
 
 const GENRE_LIMIT = 3;
 type Anchor = { left: number; top: number; width: number };
+
+type Extra = {
+  id: string;
+  label: string;
+  icon: ReactNode;
+  isActive?: boolean;
+  onChoose: () => void;
+};
 
 /**
  * Places an opened card over the one it grew from, so it expands from where the pointer already is
@@ -70,7 +82,8 @@ const fitInside = (top: number, height: number): number => {
 /**
  * A card in a row that grows when a pointer rests on it, playing a preview and showing what it is
  * with the controls for starting or keeping it. Rests before opening, since a pointer crossing a
- * row should not open every card it passes.
+ * row should not open every card it passes. Where the opened card is too narrow to hold every control
+ * beside the one that plays it, the rest fold into a menu rather than running off its edge.
  *
  * @param media - The item to draw.
  * @param watchedFraction - How far through it this viewer is.
@@ -90,6 +103,10 @@ const fitInside = (top: number, height: number): number => {
  *   Either way, what opens over it is the wide preview, grown wide enough to be watched.
  *   A card that stands for a whole programme is always upright, on the programme's poster, whatever
  *   was asked.
+ * @param look - Whether it rests as a card with its name and facts beneath, or as the picture alone
+ *   with its logo drawn in, a flag for what is new and a bar for how far through it is, as a home
+ *   page lays titles out.
+ * @param flag - What is new about it, across the picture where it rests as the picture alone.
  */
 const RailCard = ({
   media,
@@ -105,6 +122,8 @@ const RailCard = ({
   onHide,
   isSeries = false,
   shape: askedShape = 'wide',
+  look = 'card',
+  flag,
 }: RailCardProps) => {
   const shape = isSeries ? 'poster' : askedShape;
 
@@ -158,6 +177,47 @@ const RailCard = ({
   const genres = isSeries ? (show?.genres ?? []) : (detail?.metadata.genres ?? []);
 
   const panelRef = useRef<HTMLDivElement>(null);
+  const isMenuOpenRef = useRef(false);
+
+  const extras: Extra[] = [
+    ...(resumeSeconds === undefined
+      ? []
+      : [
+          {
+            id: 'again',
+            label: `Start ${media.title} again`,
+            icon: <Icon of={ArrowUTurnRightIcon} size={17} />,
+            onChoose: () => {
+              onPlay(media, 0);
+            },
+          },
+        ]),
+    ...(onToggleKept === undefined
+      ? []
+      : [
+          {
+            id: 'keep',
+            label: isKept ? `Stop keeping ${media.title}` : `Keep ${media.title}`,
+            icon: <Icon of={HeartIcon} whenActive={HeartFilledIcon} isActive={isKept} size={17} />,
+            isActive: isKept,
+            onChoose: () => {
+              onToggleKept(media);
+            },
+          },
+        ]),
+    ...(onHide === undefined
+      ? []
+      : [
+          {
+            id: 'hide',
+            label: `Hide ${media.title}`,
+            icon: <Icon of={EyeOffIcon} size={17} />,
+            onChoose: () => {
+              onHide(media);
+            },
+          },
+        ]),
+  ];
 
   useLayoutEffect(() => {
     const panel = panelRef.current;
@@ -234,24 +294,36 @@ const RailCard = ({
         cancel();
       }}
     >
-      <MediaCard
-        {...(isSeries || media.seriesTitle === null || media.seriesTitle === undefined
-          ? {}
-          : { eyebrow: media.title })}
-        title={media.seriesTitle ?? media.title}
-        subtitle={<MediaFacts media={media} hasEpisode={!isSeries} />}
-        shape={shape}
-        {...(watchedFraction === undefined ? {} : { watchedFraction })}
-        {...(unwatchedCount === undefined
-          ? {}
-          : {
-              count: unwatchedCount,
-              countLabel: `${unwatchedCount.toString()} ${unwatchedCount === 1 ? 'episode' : 'episodes'} left`,
-            })}
-        {...(restingUrl === undefined ? {} : { imageUrl: restingUrl })}
-        onSelect={inspect}
-        className="w-full"
-      />
+      {look === 'art' ? (
+        <ArtCard
+          title={media.seriesTitle ?? media.title}
+          {...(wideUrl === undefined ? {} : { imageUrl: wideUrl })}
+          {...(media.hasLogo ? { logoUrl: artworkUrl(media.id, 'logo') } : {})}
+          {...(flag === undefined ? {} : { flag })}
+          {...(watchedFraction === undefined ? {} : { watchedFraction })}
+          onSelect={inspect}
+          className="w-full"
+        />
+      ) : (
+        <MediaCard
+          {...(isSeries || media.seriesTitle === null || media.seriesTitle === undefined
+            ? {}
+            : { eyebrow: media.title })}
+          title={media.seriesTitle ?? media.title}
+          subtitle={<MediaFacts media={media} hasEpisode={!isSeries} />}
+          shape={shape}
+          {...(watchedFraction === undefined ? {} : { watchedFraction })}
+          {...(unwatchedCount === undefined
+            ? {}
+            : {
+                count: unwatchedCount,
+                countLabel: `${unwatchedCount.toString()} ${unwatchedCount === 1 ? 'episode' : 'episodes'} left`,
+              })}
+          {...(restingUrl === undefined ? {} : { imageUrl: restingUrl })}
+          onSelect={inspect}
+          className="w-full"
+        />
+      )}
 
       {createPortal(
         <AnimatePresence>
@@ -263,7 +335,11 @@ const RailCard = ({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1 / GROWTH }}
               transition={liquidSpring}
-              onPointerLeave={close}
+              onPointerLeave={() => {
+                if (!isMenuOpenRef.current) {
+                  close();
+                }
+              }}
               style={{
                 left: anchor.left,
                 top: anchor.top,
@@ -364,72 +440,68 @@ const RailCard = ({
                   )}
                 </span>
 
-                <span className="relative z-10 flex shrink-0 items-center gap-2 pt-1">
+                <span className="@container relative z-10 flex shrink-0 items-center gap-2 pt-1">
                   <Button
                     variant="confirm"
                     size="md"
-                    className="flex-1"
+                    className="min-w-0 flex-1"
                     onClick={(event) => {
                       event.stopPropagation();
                       onPlay(media, resumeSeconds ?? 0);
                     }}
                   >
                     <Icon of={PlayFilledIcon} size={15} />
-                    {resumeSeconds === undefined
-                      ? 'Play'
-                      : `Resume from ${formatDuration(resumeSeconds)}`}
+                    <span className="truncate">
+                      {resumeSeconds === undefined
+                        ? 'Play'
+                        : `Resume from ${formatDuration(resumeSeconds)}`}
+                    </span>
                   </Button>
 
-                  {resumeSeconds === undefined ? null : (
-                    <Button
-                      isIconOnly
-                      variant="secondary"
-                      size="md"
-                      label={`Start ${media.title} again`}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onPlay(media, 0);
+                  {extras.length <= 1 ? null : (
+                    <ActionMenu
+                      label={`More to do with ${media.title}`}
+                      align="end"
+                      look="raised"
+                      className="size-9 @sm:hidden"
+                      trigger={<Icon of={MoreHorizontalIcon} size={17} />}
+                      onOpenChange={(isOpen) => {
+                        isMenuOpenRef.current = isOpen;
+
+                        if (!isOpen && panelRef.current?.matches(':hover') !== true) {
+                          close();
+                        }
                       }}
-                    >
-                      <Icon of={ArrowUTurnRightIcon} size={17} />
-                    </Button>
+                      groups={[
+                        {
+                          items: extras.map((extra) => ({
+                            id: extra.id,
+                            label: extra.label,
+                            icon: extra.icon,
+                            onChoose: extra.onChoose,
+                          })),
+                        },
+                      ]}
+                    />
                   )}
 
-                  {onToggleKept === undefined ? null : (
+                  {extras.map((extra) => (
                     <Button
+                      key={extra.id}
                       isIconOnly
                       variant="secondary"
                       size="md"
-                      label={isKept ? `Stop keeping ${media.title}` : `Keep ${media.title}`}
-                      isActive={isKept}
+                      label={extra.label}
+                      {...(extra.isActive === undefined ? {} : { isActive: extra.isActive })}
+                      className={extras.length <= 1 ? '' : 'hidden @sm:inline-flex'}
                       onClick={(event) => {
                         event.stopPropagation();
-                        onToggleKept(media);
+                        extra.onChoose();
                       }}
                     >
-                      <Icon
-                        of={HeartIcon}
-                        whenActive={HeartFilledIcon}
-                        isActive={isKept}
-                        size={17}
-                      />
+                      {extra.icon}
                     </Button>
-                  )}
-
-                  {onHide === undefined ? null : (
-                    <Button
-                      isIconOnly
-                      variant="secondary"
-                      size="md"
-                      label={`Hide ${media.title}`}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onHide(media);
-                      }}
-                    >
-                      <Icon of={EyeOffIcon} size={17} />
-                    </Button>
-                  )}
+                  ))}
                 </span>
               </div>
             </motion.div>

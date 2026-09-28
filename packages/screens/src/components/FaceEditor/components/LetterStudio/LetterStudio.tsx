@@ -3,7 +3,7 @@ import { cn } from '@ValenceUI/cn';
 import { LETTER_FONTS } from '@ValenceContracts/schemas/LetterFont';
 import { profileInitial } from '@ValenceContracts/schemas/ViewerProfile';
 import { ColourChoice } from '@ValenceScreens/components/ColourChoice/ColourChoice';
-import { inkFor } from '@ValenceScreens/library/inkFor';
+import { inkFor } from '@ValenceClient/library/inkFor';
 import { LETTER_FONT_LOOKS } from '@ValenceScreens/library/LETTER_FONT_LOOKS';
 import type { LetterStudioProps } from './LetterStudio.types';
 

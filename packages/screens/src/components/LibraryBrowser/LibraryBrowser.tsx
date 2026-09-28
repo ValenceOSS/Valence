@@ -5,6 +5,7 @@ import { Button } from '@ValenceUI/Button';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { staggerVariants } from '@ValenceUI/animations/reveal';
 import { RailCard } from '@ValenceScreens/components/RailCard/RailCard';
+import { freshFlags } from '@ValenceClient/library/freshFlags';
 import { BackToTop } from '@ValenceUI/BackToTop';
 import { Rail } from '@ValenceUI/Rail';
 import { ComingUp } from '@ValenceScreens/components/ComingUp/ComingUp';
@@ -26,7 +27,7 @@ import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { useHomeRows } from '@ValenceClient/library/useHomeRows';
 import { useShell } from '@ValenceClient/shell/useShell';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
-import type { LibraryKind } from '@ValenceContracts/schemas/Library';
+import type { LibraryKind, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { LibraryBrowserProps } from './LibraryBrowser.types';
 
 const HERO_COUNT = 5;
@@ -153,6 +154,17 @@ const LibraryBrowser = ({
   const rails = isHome ? home.rails : groupIntoRails(items, openedAt, progress);
   const shown = rails.flatMap((rail) => rail.items);
   const shownKey = shown.map((media) => media.id).join(',');
+
+  const flagOf = useMemo(
+    () => freshFlags([...heroItems, ...rails.flatMap((rail) => rail.items)], openedAt),
+    [heroItems, rails, openedAt],
+  );
+
+  const flagFor = (media: MediaSummary) => {
+    const flag = isHome ? flagOf(media) : null;
+
+    return flag === null ? {} : { flag };
+  };
 
   const reportItems = useRef(onItemsLoaded);
   const shownRef = useRef(shown);
@@ -358,6 +370,8 @@ const LibraryBrowser = ({
                         <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
                           <RailCard
                             media={media}
+                            look={isHome ? 'art' : 'card'}
+                            {...flagFor(media)}
                             {...(progress.has(media.id)
                               ? {
                                   watchedFraction: watchedFraction(
