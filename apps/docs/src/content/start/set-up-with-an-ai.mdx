@@ -1,0 +1,71 @@
+---
+title: Set up with an AI assistant
+description: A prompt to paste into ChatGPT, Claude or any other assistant, which asks about your machine and your media and then writes your compose file and the steps to start it.
+order: 6
+---
+
+If you would rather be walked through it, copy the prompt below into an AI assistant. It asks you about your machine, your media and how people will reach the server, one question at a time, and then writes a `compose.yaml` and `.env` for you with the steps to start them.
+
+The prompt tells the assistant to work from Valence's own files rather than from memory, and to ask rather than guess. It never needs your passwords: it tells you how to make the secrets yourself.
+
+<Callout title="Check what it writes" tone="quiet">
+  An assistant can still get things wrong. Compare what it gives you against the [Complete compose
+  file](/install/complete-compose-file) before you start it, and never paste a real secret into the
+  conversation.
+</Callout>
+
+## The prompt
+
+```text
+You are helping me install Valence, a self-hosted streaming server for films, programmes, music and
+books. Valence ships as Docker images and is started with Docker Compose.
+
+Work only from Valence's own files and documentation, not from memory:
+- The compose file: https://raw.githubusercontent.com/ValenceOSS/Valence/main/compose.yaml
+- The settings it reads: https://raw.githubusercontent.com/ValenceOSS/Valence/main/.env.example
+- The documentation: https://docs.getvalence.app
+If you cannot open these links, tell me, and I will paste the files in.
+
+Ask me these questions one at a time, waiting for each answer. Explain briefly why you are asking
+whenever the reason is not obvious, and suggest what most people choose.
+
+1. What operating system is the server running (for example Debian, Ubuntu, Unraid, TrueNAS, Synology,
+   macOS, Windows with Docker Desktop)? Is it a virtual machine?
+2. Do I already have Docker and the Compose plugin? If not, give me the official install steps for my
+   system.
+3. Where does my media live on that machine? Ask for the full path. Is it films and programmes, music,
+   books and audiobooks, or a mix?
+4. Does the machine have a GPU I want Valence to use for transcoding (Intel Quick Sync, AMD, NVIDIA)?
+   If it has no /dev/dri, the devices and group_add entries must be removed from the valence service.
+   If it does, help me find the group that owns /dev/dri/renderD128 with `ls -n /dev/dri`.
+5. How will people reach it: only at home, or from outside through a domain? If outside, do I already
+   run a reverse proxy (Caddy, Nginx Proxy Manager, Traefik, Cloudflare Tunnel)? What is the full
+   address people will type, including https://?
+6. What time zone am I in? Use an IANA name such as Europe/London.
+7. Do I want metadata (posters, descriptions, cast)? If so, explain how to get a free TMDB API key.
+8. Do I want the optional requests service, so people can ask for things the server does not have?
+   If so, which download client do I use, where does it put finished downloads, and does it sit
+   behind a VPN?
+
+When you have my answers:
+- Write my complete compose.yaml, starting from Valence's own file and changing only what my answers
+  require. Keep its comments.
+- Write my .env. Leave every secret as a placeholder and give me the command to generate each one
+  myself (openssl rand -base64 48). Never ask me to paste a secret to you.
+- Set PUBLIC_URL to the exact address people will use. If I am only testing over plain http on my
+  own network, set COOKIE_SECURE=false and say why.
+- If I use a reverse proxy, give me its configuration for Valence, including WebSocket support.
+- Give me the commands to start it, follow the logs, and check it is healthy with
+  curl -s http://localhost:8420/api/health.
+- Finish with what to do on first start: open PUBLIC_URL, create the administrator in the setup
+  wizard, and add a library pointing at the matching folder under /media.
+
+Keep the explanations short and plain. If something I tell you conflicts with Valence's files or
+documentation, point it out rather than working around it.
+```
+
+## What happens next
+
+The assistant asks its questions, then gives you two files and a handful of commands. Put `compose.yaml` and `.env` in one folder on the server, generate the secrets, and run `docker compose up -d`. When the log says the database is up to date, open your address and follow [First run](/use/first-run).
+
+If something goes wrong, [Troubleshooting](/reference/troubleshooting) covers the common faults, and you can paste the output of `docker compose logs valence` back into the same conversation.

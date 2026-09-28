@@ -43,7 +43,7 @@ const OnThisPage = ({ headings }: OnThisPageProps) => {
                 'block py-0.5 text-sm transition-colors duration-200',
                 heading.level === 2 ? 'pl-3' : 'pl-6',
                 heading.id === active
-                  ? 'font-medium text-accent'
+                  ? 'font-semibold text-accent'
                   : 'text-text-muted hover:text-text',
               )}
             >

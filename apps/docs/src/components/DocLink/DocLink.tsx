@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router';
 import type { AnchorHTMLAttributes } from 'react';
 
 const LINK_CLASSES =
-  'font-medium text-accent underline decoration-accent/30 underline-offset-4 transition-colors hover:decoration-accent';
+  'font-semibold text-accent underline decoration-accent/30 underline-offset-4 transition-colors hover:decoration-accent';
 
 /**
  * Draws a link written in a page: an address on this site goes through the router so it does not

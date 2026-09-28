@@ -121,9 +121,58 @@ const docSources = (): Plugin => ({
   },
 });
 
+/**
+ * Reads the pages again when one is added, taken away or changed while the dev server runs.
+ *
+ * The frontmatter and the sources are virtual modules built from the folder once, so without this a
+ * page written after the server started has no frontmatter in them, and the site refuses to draw at
+ * all until it is restarted. A page added or taken away reloads the site, since the sidebar changes;
+ * a page changed only has the two modules read afresh next time they are asked for.
+ */
+const docPagesFollowed = (): Plugin => ({
+  name: 'valence-doc-pages-followed',
+
+  configureServer: (server) => {
+    const forget = (path: string): boolean => {
+      if (!path.startsWith(CONTENT_FOLDER) || !path.endsWith('.mdx')) {
+        return false;
+      }
+
+      const graph = server.environments.client.moduleGraph;
+
+      for (const id of [RESOLVED_FRONTMATTER_VIRTUAL_ID, RESOLVED_SOURCES_VIRTUAL_ID]) {
+        const held = graph.getModuleById(id);
+
+        if (held !== undefined) {
+          graph.invalidateModule(held);
+        }
+      }
+
+      return true;
+    };
+
+    const reload = (path: string) => {
+      if (forget(path)) {
+        server.ws.send({ type: 'full-reload' });
+      }
+    };
+
+    server.watcher.on('add', reload);
+    server.watcher.on('unlink', reload);
+    server.watcher.on('change', forget);
+  },
+});
+
 export default defineConfig({
   resolve: { tsconfigPaths: true },
-  plugins: [documentation(), docFrontmatter(), docSources(), react(), tailwindcss()],
+  plugins: [
+    documentation(),
+    docFrontmatter(),
+    docSources(),
+    docPagesFollowed(),
+    react(),
+    tailwindcss(),
+  ],
   server: {
     port: 5175,
     host: true,

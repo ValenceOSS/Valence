@@ -1,0 +1,313 @@
+---
+title: Complete compose file
+description: The whole compose.yaml and a starting .env to copy and paste, for a server with a reverse proxy in front of it. Fill in four settings and start it.
+order: 0
+---
+
+This is the complete `compose.yaml` that ships with Valence, with its explanations left in, followed by a `.env` to go beside it. Copy both into one folder, fill in the four required settings, and start the stack. [Docker Compose](/install/docker-compose) walks through what every part does if you want to change it.
+
+<Callout title="No GPU?" tone="warning">
+  Delete the `devices` and `group_add` entries from the `valence` service if the machine has no
+  `/dev/dri`, such as a virtual machine, a Mac, or Windows running Docker Desktop. A device that
+  does not exist stops the container from starting, and the error does not say why.
+</Callout>
+
+## compose.yaml
+
+```yaml
+# Valence, as a server runs it: pulled rather than built, and behind a reverse
+# proxy that terminates TLS somewhere else.
+#
+# Paste this into Dockge as a stack and fill in the settings below. Nothing
+# here needs a file on disk, which is the point — no certificates, no
+# Caddyfile, nothing to upload.
+
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: valence
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: valence
+      TZ: ${TZ:-UTC}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U valence']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Deliberately no ports. Only Valence talks to this, and it does so over
+    # the stack's own network.
+
+  valence:
+    image: ghcr.io/marquescoding/valence:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://valence:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/valence
+
+      # Before an upgrade changes the database, Valence copies it to this folder, which is inside the
+      # `config` volume and so is kept. Migrations only go forward, so this copy is the way back to
+      # an older release: stop Valence, then run
+      #   docker compose run --rm --entrypoint node valence apps/server/dist/Rollback.js --list
+      # and the same with `--restore` to put the newest back, then start the older image.
+      # BACKUP_BEFORE_MIGRATE=false turns the copy off; BACKUPS_KEPT is how many to keep.
+      BACKUPS_KEPT: ${BACKUPS_KEPT:-3}
+
+      # Sign-in cookies are sealed with this. Changing it signs everybody out.
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET, at least 32 characters}
+
+      # The address a browser reaches Valence at, which is the proxy's and not
+      # this container's. Sign-in builds its redirects from it, so a wrong
+      # value here fails only at the moment somebody tries to sign in.
+      BETTER_AUTH_URL: ${PUBLIC_URL:?set PUBLIC_URL, e.g. https://valence.example.com}
+      TRUSTED_ORIGINS: ${PUBLIC_URL}
+
+      # True because the browser's half of the journey is HTTPS, even though
+      # this container only ever speaks plain HTTP to the proxy in front of it.
+      # A browser refuses to store a secure cookie from an insecure origin, so
+      # set this to false if you are testing over plain HTTP.
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+
+      # Where rendered previews and thumbnail sheets are kept. Not the same
+      # question as where segments are written, and deliberately separate: a
+      # segment is written while somebody is watching and thrown away behind
+      # them, so it wants the fastest disk in the machine, while a sheet costs
+      # minutes of decoding a film and is read for as long as that film is in
+      # the library, so it wants a disk that is kept. Point this at
+      # network-attached storage if that is where the space is, and leave the
+      # transcode directory on something local.
+      #
+      # Whatever you set it to, map a volume there. Anything written to a path
+      # with no volume behind it lives on the container's own filesystem and is
+      # gone the next time the container is recreated — which is what an update
+      # does. Valence says so at startup and on the admin page rather than
+      # letting a library quietly re-render itself every week.
+      VALENCE_ARTEFACT_DIR: ${VALENCE_ARTEFACT_DIR:-/cache/artefacts}
+
+      # Where the household's profile pictures are kept. Under /config rather
+      # than /cache on purpose: a preview can always be rendered again, and a
+      # picture somebody uploaded cannot. Whatever you set it to, map a volume
+      # there — a face written to a path with no volume behind it is gone the
+      # next time the container is recreated, and nothing can bring it back.
+      PROFILE_IMAGE_DIR: ${PROFILE_IMAGE_DIR:-/config/profiles}
+
+      # The clock scheduled jobs keep. A container defaults to UTC, so without
+      # this, "daily at 03:00" happens at 03:00 UTC rather than 3am where you are.
+      TZ: ${TZ:-UTC}
+
+      # How many files are probed at once during a scan. The default is half
+      # the cores, capped at four. A NAS with a large library and cores to
+      # spare can afford more; one sharing a disk with everything else cannot.
+      MEDIA_JOBS: ${MEDIA_JOBS:-4}
+
+      # Optional. Without it, titles and years are read from filenames and
+      # nothing fetches posters, descriptions or cast.
+      CATALOGUE_API_KEY: ${CATALOGUE_API_KEY:-}
+
+      # Optional: requesting. Leave both empty and Valence shows nothing about
+      # it. To switch it on, start the stack with the requests profile
+      # (`docker compose --profile requests up -d`, or COMPOSE_PROFILES=requests
+      # in Dockge), set REQUESTS_URL to http://requests:8421, and give
+      # REQUESTS_SECRET at least 32 characters — `openssl rand -hex 32` makes one.
+      # The same secret goes to the requests service below.
+      REQUESTS_URL: ${REQUESTS_URL:-}
+      REQUESTS_SECRET: ${REQUESTS_SECRET:-}
+
+    ports:
+      # Left of the colon is the port on the NAS, which is what the proxy
+      # points at. Change it if something already answers there.
+      - '${VALENCE_PORT:-8420}:8420'
+
+    volumes:
+      # Configuration, and the household's profile pictures. Keep it.
+      - config:/config
+      - cache:/cache
+      - transcodes:/transcodes
+      # Read only by default, which is the right way to run a media server and
+      # is what Valence expects. Re-encoding is the one feature that needs more:
+      # it writes into a `.valence` folder at the top of each library and
+      # renames from there into place, so it cannot work under `:ro`. Under the
+      # library root rather than elsewhere on purpose: swapping an encode in is
+      # a rename, and a rename is only instant within one filesystem. Set
+      # `MEDIA_ACCESS=` to an empty string if you want it, and Valence will say
+      # plainly that it cannot write rather than failing two hours into an encode.
+      #
+      # `-` rather than `:-` on purpose. The colon form falls back to the default
+      # when the variable is empty as well as when it is unset, so setting it to
+      # an empty string — which is what turning this on means — left the mount
+      # read only and the refusal unexplained.
+      - ${MEDIA_PATH:?set MEDIA_PATH, e.g. /mnt/tank/media}:/media${MEDIA_ACCESS-:ro}
+
+    # Hardware transcoding. Delete both of these if the machine has no GPU:
+    # a device that is not there stops the container from starting at all.
+    # The group is what owns /dev/dri/renderD128 on the host — 44 on most
+    # Debian-derived systems, 104 on some. `ls -n /dev/dri` says which.
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - ${RENDER_GROUP_ID:-44}
+
+  # The requests service: optional, and only started with the requests profile.
+  # It searches indexers and hands downloads to a download client of your own,
+  # then files what arrives into the library — which is why it, unlike Valence,
+  # mounts the media folder writable.
+  requests:
+    image: ghcr.io/marquescoding/valence-requests:latest
+    profiles: [requests]
+    restart: unless-stopped
+    # The browser it gets past Cloudflare's check with keeps its pages in shared
+    # memory, and Docker's 64 MB is not enough for a busy one.
+    shm_size: 512m
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://valence:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/valence
+
+      # The same value Valence was given above. The service refuses to start
+      # without one.
+      REQUESTS_SECRET: ${REQUESTS_SECRET:-}
+
+      # The user and group the service runs as, and so who owns what it files
+      # into your library. Set them to the owner of your media folders — the
+      # same ids your download client runs as. 0 keeps the old root behaviour.
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+
+      # Optional: gluetun's control server, so Valence can say whether the VPN
+      # your download client sits behind is up, and warn you when it drops.
+      # http://gluetun:8000 with the vpn profile below.
+      VPN_URL: ${VPN_URL:-}
+      VPN_API_KEY: ${VPN_API_KEY:-}
+
+      # Optional: lets this service ask the transcoder what a file it has just
+      # filed actually is, so the name it is filed under says the resolution,
+      # codec and audio the file really has rather than the ones its release
+      # name claimed. Left empty, the name is taken at its word, which is what
+      # it was before and is right most of the time.
+      #
+      # The transcoder lives inside the valence container and talks over a unix
+      # socket, which nothing outside that container can reach, so switching
+      # this on is three settings rather than one:
+      #
+      #   On valence:   VALENCE_TRANSCODER_ADDR: 0.0.0.0:8422
+      #                 TRANSCODER_URL: http://127.0.0.1:8422
+      #   Here:         TRANSCODER_URL: http://valence:8422
+      #
+      # Not 8420: the server already listens there in this same container. Only
+      # the stack's own network can reach that port either way — it is not
+      # published — but it is a port where there was none, so it is off unless
+      # you ask for it.
+      TRANSCODER_URL: ${REQUESTS_TRANSCODER_URL:-}
+
+      # Where the indexer catalogue comes from: a GitHub repository of Cardigann
+      # definitions, fetched daily. Prowlarr's, unless you point it elsewhere.
+      DEFINITIONS_REPOSITORY: ${DEFINITIONS_REPOSITORY:-Prowlarr/Indexers}
+      DEFINITIONS_BRANCH: ${DEFINITIONS_BRANCH:-master}
+      DEFINITIONS_PATH: ${DEFINITIONS_PATH:-definitions/v11}
+      TZ: ${TZ:-UTC}
+    volumes:
+      - ${MEDIA_PATH:?set MEDIA_PATH, e.g. /mnt/tank/media}:/media
+      - ${DOWNLOADS_PATH:-./downloads}:/downloads
+
+  # Optional: a VPN for your download client, started with the vpn profile.
+  # Put the download client on its network with `network_mode: service:gluetun`
+  # and publish the client's web port here rather than on the client. The
+  # provider settings are gluetun's own — see its wiki for yours.
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    profiles: [vpn]
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      VPN_SERVICE_PROVIDER: ${VPN_SERVICE_PROVIDER:-}
+      VPN_TYPE: ${VPN_TYPE:-wireguard}
+      WIREGUARD_PRIVATE_KEY: ${WIREGUARD_PRIVATE_KEY:-}
+      SERVER_COUNTRIES: ${VPN_SERVER_COUNTRIES:-}
+      # Lets the requests service ask how the tunnel is, with the key set as
+      # VPN_API_KEY. `docker run --rm qmcgaw/gluetun genkey` makes one.
+      HTTP_CONTROL_SERVER_AUTH_DEFAULT_ROLE: '{"auth":"apikey","apikey":"${VPN_API_KEY:-}"}'
+      TZ: ${TZ:-UTC}
+
+volumes:
+  db-data:
+  config:
+  cache:
+  transcodes:
+```
+
+## .env
+
+Compose reads this file from the same folder as `compose.yaml`. The first four lines are required; the rest are the defaults, written out so you can see them. Make each secret with `openssl rand -base64 48`, or a password manager's generator set to 48 characters.
+
+```ini
+# Required
+POSTGRES_PASSWORD=paste-a-long-random-string
+BETTER_AUTH_SECRET=paste-a-different-random-string-of-at-least-32-characters
+PUBLIC_URL=https://valence.example.com
+MEDIA_PATH=/mnt/tank/media
+
+# Optional, shown with their defaults
+TZ=UTC
+VALENCE_PORT=8420
+MEDIA_JOBS=4
+COOKIE_SECURE=true
+RENDER_GROUP_ID=44
+CATALOGUE_API_KEY=
+
+# Optional: requesting. Start the stack with COMPOSE_PROFILES=requests to use these.
+REQUESTS_URL=
+REQUESTS_SECRET=
+DOWNLOADS_PATH=./downloads
+PUID=1000
+PGID=1000
+
+# Optional: a VPN for your download client. Add vpn to COMPOSE_PROFILES to use these.
+VPN_URL=
+VPN_API_KEY=
+VPN_SERVICE_PROVIDER=
+VPN_TYPE=wireguard
+WIREGUARD_PRIVATE_KEY=
+VPN_SERVER_COUNTRIES=
+```
+
+## What each setting does
+
+| Setting                                                                             | Required | What it does                                                                                                               |
+| ----------------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `POSTGRES_PASSWORD`                                                                 | Yes      | The database password. Only Valence uses it, so any long random string.                                                    |
+| `BETTER_AUTH_SECRET`                                                                | Yes      | Seals sign-in cookies. At least 32 characters. Changing it signs everybody out.                                            |
+| `PUBLIC_URL`                                                                        | Yes      | The address a browser reaches Valence at — the reverse proxy's, not this machine's. Sign-in is refused from anywhere else. |
+| `MEDIA_PATH`                                                                        | Yes      | Your library on the host, mounted read only at `/media`.                                                                   |
+| `TZ`                                                                                | No       | The clock scheduled jobs keep, as an IANA name such as `Europe/London`.                                                    |
+| `VALENCE_PORT`                                                                      | No       | The port on the host your proxy points at. The container always listens on 8420.                                           |
+| `MEDIA_JOBS`                                                                        | No       | How many files a scan probes at once.                                                                                      |
+| `COOKIE_SECURE`                                                                     | No       | Set `false` only when testing over plain HTTP.                                                                             |
+| `RENDER_GROUP_ID`                                                                   | No       | The group that owns `/dev/dri/renderD128`. `ls -n /dev/dri` says which.                                                    |
+| `CATALOGUE_API_KEY`                                                                 | No       | A TMDB key for posters, descriptions and cast. Without one, titles come from file names.                                   |
+| `MEDIA_ACCESS`                                                                      | No       | Leave unset to mount the library read only. Set it to an empty string to allow re-encoding.                                |
+| `REQUESTS_URL`                                                                      | No       | `http://requests:8421` to switch requesting on.                                                                            |
+| `REQUESTS_SECRET`                                                                   | No       | At least 32 characters, shared by Valence and the requests service. `openssl rand -hex 32` makes one.                      |
+| `DOWNLOADS_PATH`                                                                    | No       | Where your download client puts finished downloads, for the requests service to file from.                                 |
+| `PUID`, `PGID`                                                                      | No       | Who owns what the requests service files into your library. Match your media folders' owner.                               |
+| `VPN_URL`, `VPN_API_KEY`                                                            | No       | gluetun's control server, `http://gluetun:8000`, so Valence can warn when the VPN drops.                                   |
+| `VPN_SERVICE_PROVIDER`, `VPN_TYPE`, `WIREGUARD_PRIVATE_KEY`, `VPN_SERVER_COUNTRIES` | No       | gluetun's own settings for your VPN provider. See gluetun's wiki.                                                          |
+
+Every variable Valence understands, including the ones this file does not pass through, is in [Environment variables](/reference/environment-variables).
+
+## Start it
+
+```bash
+docker compose up -d
+docker compose logs -f valence
+```
+
+Once the log says the database is up to date, open `PUBLIC_URL`. The setup wizard asks you to create the administrator — [First run](/use/first-run) takes it from there. To include requesting, start with `COMPOSE_PROFILES=requests docker compose up -d`, and see [Requesting](/install/requesting).
