@@ -4,7 +4,10 @@ import { buildRouter } from '@ValenceScreens/routes/buildRouter';
 import { ConnectToServer } from '@ValenceScreens/components/ConnectToServer/ConnectToServer';
 import { useAppliedTheme } from '@ValenceScreens/theme/useAppliedTheme';
 import { WindowBar } from '@ValenceScreens/components/WindowBar/WindowBar';
-import type { AvailableUpdate } from '@ValenceDesktop/TheWindow.types';
+import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
+import { useIsWatching } from '@ValenceScreens/playback/useIsWatching';
+import { platformInUse } from '@ValenceClient/platform/installPlatform';
+import type { DesktopUpdate } from '@ValenceContracts/schemas/DesktopUpdate';
 import {
   recentServerAddresses,
   rememberServerAddress,
@@ -17,6 +20,8 @@ import { useServerIsLost } from '@ValenceClient/offline/useServerIsLost';
 import '@ValenceDesktop/TheWindow.types';
 
 const router = buildRouter('Valence');
+
+const ASKED_ABOUT = 'valence.update.askedAbout';
 
 /**
  * Valence, drawn by this client rather than fetched from a server as pages.
@@ -33,6 +38,11 @@ const router = buildRouter('Valence');
  * The strip along the top is this client's too, and for the same reason: a browser gives a window
  * somewhere to be picked up by and a frameless one has nowhere. It draws nothing and lies over the
  * page rather than above it, so no screen pays height for a bar it never sees.
+ *
+ * A new release is offered rather than fetched. Somebody is asked once per version whether they want
+ * it — never while a film has the window, since the question can wait for the credits — and the
+ * strip keeps a way to fetch it for anybody who said not now. Saying yes, in either place, fetches
+ * it and restarts into it.
  *
  * The one screen this client owns is the first one: which Valence is yours. It has to be ours, because
  * until it is answered there is no server to ask anything of. Nothing else is drawn until it is
@@ -73,9 +83,9 @@ const Desktop = () => {
     () => window.valence.servers?.alreadyNearby ?? [],
   );
   const [recent] = useState(recentServerAddresses);
-  const [update, setUpdate] = useState<AvailableUpdate | null>(
-    () => window.valence.update.alreadyAvailable,
-  );
+  const [update, setUpdate] = useState<DesktopUpdate>(() => window.valence.update.now());
+  const [askedAbout, setAskedAbout] = useState(() => platformInUse().store.read(ASKED_ABOUT));
+  const isWatching = useIsWatching();
   const isLost = useServerIsLost();
 
   useAppliedTheme();
@@ -90,18 +100,47 @@ const Desktop = () => {
 
   useEffect(() => window.valence.servers?.whenNearbyChanges(setNearby), []);
 
-  useEffect(() => window.valence.update.whenAvailable(setUpdate), []);
+  useEffect(() => window.valence.update.whenChanged(setUpdate), []);
+
+  const answered = (version: string): void => {
+    platformInUse().store.write(ASKED_ABOUT, version);
+    setAskedAbout(version);
+  };
+
+  const isAsking = update.kind === 'available' && update.version !== askedAbout && !isWatching;
 
   const chosen = server === null || server === '' ? null : server;
 
   return (
     <>
       <WindowBar
-        {...(update === null ? {} : { updateVersion: update.version })}
-        onInstallUpdate={() => {
-          if (update !== null) {
-            window.valence.update.install();
+        update={update}
+        onUpdate={() => {
+          window.valence.update.download();
+        }}
+      />
+
+      <ConfirmDialog
+        title="Update Valence?"
+        detail={
+          update.kind === 'available'
+            ? `Valence ${update.version} is out. It downloads in the background, then Valence restarts to install it.`
+            : ''
+        }
+        confirmLabel="Update"
+        dismissLabel="Not now"
+        isOpen={isAsking}
+        onClose={() => {
+          if (update.kind === 'available') {
+            answered(update.version);
           }
+        }}
+        onConfirm={() => {
+          if (update.kind === 'available') {
+            answered(update.version);
+          }
+
+          window.valence.update.download();
         }}
       />
 

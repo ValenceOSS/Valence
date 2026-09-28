@@ -7,6 +7,8 @@ import { forgetPlatform, installPlatform } from '@ValenceClient/platform/install
 import type { Platform, Reachability } from '@ValenceClient/platform/Platform.types';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { NearbyValence } from '@ValenceContracts/schemas/NearbyValence';
+import type { DesktopUpdate } from '@ValenceContracts/schemas/DesktopUpdate';
+import userEvent from '@testing-library/user-event';
 import '@ValenceDesktop/TheWindow.types';
 
 vi.mock('@ValenceScreens/routes/buildRouter', () => ({ buildRouter: () => ({}) }));
@@ -53,7 +55,11 @@ const theWindowOffers = (found: string[], nearby: NearbyValence[] = []): void =>
       whenChanged: () => () => {},
     },
     reach: { now: () => true, whenChanged: () => () => {} },
-    update: { alreadyAvailable: null, whenAvailable: () => () => {}, install: () => {} },
+    update: {
+      now: () => ({ kind: 'none' }),
+      whenChanged: () => () => {},
+      download: () => {},
+    },
     about: {
       version: '1.2.0',
       commit: '2ae1bc1',
@@ -201,13 +207,85 @@ describe('Desktop', () => {
     expect(asking()).toBeNull();
   });
 
-  it('shows a release found before this screen had mounted to hear about it, not only one found after', async () => {
+  it('offers a release found before this screen had mounted to hear about it', async () => {
     aClient({}, 'http://valence.example');
-    window.valence.update.alreadyAvailable = { version: 'v1.2.0' };
+    window.valence.update.now = () => ({ kind: 'available', version: '1.2.0' });
 
     render(<Desktop />);
 
-    expect(await screen.findByRole('button', { name: /Update available/u })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Update Valence?' })).toBeInTheDocument();
+  });
+
+  it('asks whether to update, and fetches the release on yes', async () => {
+    aClient({}, 'http://valence.example');
+    const download = vi.fn();
+    window.valence.update.now = () => ({ kind: 'available', version: '1.2.0' });
+    window.valence.update.download = download;
+
+    render(<Desktop />);
+
+    expect(await screen.findByRole('heading', { name: 'Update Valence?' })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Update' }));
+
+    expect(download).toHaveBeenCalledOnce();
+  });
+
+  it('does not ask again about a version somebody put off', async () => {
+    aClient({}, 'http://valence.example');
+    window.valence.update.now = () => ({ kind: 'available', version: '1.2.0' });
+
+    const { unmount } = render(<Desktop />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Not now' }));
+    unmount();
+    render(<Desktop />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Update to 1.2.0' })).toBeInTheDocument();
+    });
+
+    expect(screen.queryByRole('heading', { name: 'Update Valence?' })).not.toBeInTheDocument();
+  });
+
+  it('holds the question while a film has the window', async () => {
+    aClient({}, 'http://valence.example');
+    document.documentElement.dataset['valenceWatching'] = 'shown';
+    window.valence.update.now = () => ({ kind: 'available', version: '1.2.0' });
+
+    try {
+      render(<Desktop />);
+
+      await screen.findByRole('button', { name: 'Update to 1.2.0' });
+
+      expect(screen.queryByRole('heading', { name: 'Update Valence?' })).not.toBeInTheDocument();
+
+      act(() => {
+        delete document.documentElement.dataset['valenceWatching'];
+      });
+
+      expect(await screen.findByRole('heading', { name: 'Update Valence?' })).toBeInTheDocument();
+    } finally {
+      delete document.documentElement.dataset['valenceWatching'];
+    }
+  });
+
+  it('follows a download the window was told about after it opened', async () => {
+    aClient({}, 'http://valence.example');
+    let tell: (update: DesktopUpdate) => void = () => undefined;
+    window.valence.update.whenChanged = (listener) => {
+      tell = listener;
+
+      return () => undefined;
+    };
+
+    render(<Desktop />);
+
+    act(() => {
+      tell({ kind: 'downloading', version: '1.2.0', percent: 45 });
+    });
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Updating 45%');
   });
 
   it('asks again where the chosen server stopped answering and nothing is on this device', async () => {

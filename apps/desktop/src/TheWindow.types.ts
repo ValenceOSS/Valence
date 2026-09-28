@@ -1,5 +1,6 @@
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type { NearbyValence } from '@ValenceContracts/schemas/NearbyValence';
+import type { DesktopUpdate } from '@ValenceContracts/schemas/DesktopUpdate';
 
 type ServersFound = {
   alreadyFound: string[];
@@ -28,14 +29,10 @@ type Reach = {
   whenChanged: (listener: (isReachable: boolean) => void) => () => void;
 };
 
-type AvailableUpdate = {
-  version: string;
-};
-
 type UpdateChecks = {
-  alreadyAvailable: AvailableUpdate | null;
-  whenAvailable: (listener: (update: AvailableUpdate) => void) => () => void;
-  install: () => void;
+  now: () => DesktopUpdate;
+  whenChanged: (listener: (update: DesktopUpdate) => void) => () => void;
+  download: () => void;
 };
 
 type AboutTheBuild = {
@@ -67,7 +64,6 @@ declare global {
 
 export type {
   AboutTheBuild,
-  AvailableUpdate,
   DesktopNotifications,
   FilesHeld,
   Preferences,

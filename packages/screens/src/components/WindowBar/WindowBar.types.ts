@@ -1,6 +1,8 @@
+import type { DesktopUpdate } from '@ValenceContracts/schemas/DesktopUpdate';
+
 type WindowBarProps = {
-  updateVersion?: string;
-  onInstallUpdate?: () => void;
+  update?: DesktopUpdate;
+  onUpdate?: () => void;
 };
 
 export type { WindowBarProps };

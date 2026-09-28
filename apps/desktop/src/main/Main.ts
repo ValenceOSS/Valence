@@ -45,13 +45,14 @@ import { theHeldFolder } from '@ValenceDesktop/main/theHeldFolder';
 import { theHeldIndex } from '@ValenceDesktop/main/theHeldIndex';
 import { theHeldLibrary } from '@ValenceDesktop/main/theHeldLibrary';
 import { theServerReach } from '@ValenceDesktop/main/theServerReach';
-import { checkForUpdate } from '@ValenceDesktop/main/checkForUpdate';
+import { followTheUpdates } from '@ValenceDesktop/main/followTheUpdates';
+import type { FollowedUpdates } from '@ValenceDesktop/main/followTheUpdates';
+import { theUpdateLog } from '@ValenceDesktop/main/theUpdateLog';
 import {
-  INSTALL_THE_UPDATE,
-  UPDATE_AVAILABLE,
+  DOWNLOAD_THE_UPDATE,
+  UPDATE_CHANGED,
   WHAT_UPDATE_IS_KNOWN,
 } from '@ValenceDesktop/main/updateChannels';
-import type { AvailableUpdate } from '@ValenceDesktop/main/checkForUpdate';
 import type { AskingTheServer } from '@ValenceDesktop/main/keepADownload';
 import { WHAT_VERSION_THIS_IS } from '@ValenceDesktop/main/aboutChannels';
 import { SET_UNREAD_BADGE } from '@ValenceDesktop/main/notificationChannels';
@@ -265,19 +266,17 @@ const start = async (): Promise<void> => {
 
   ipcMain.on(CHANGE_SERVER, changeServer);
 
-  let knownUpdate: AvailableUpdate | null = null;
-
-  const markUpdateKnown = (update: AvailableUpdate): void => {
-    knownUpdate = update;
-
-    if (theWindow !== null && !theWindow.isDestroyed()) {
-      theWindow.webContents.send(UPDATE_AVAILABLE, update);
-    }
-  };
+  let updates: FollowedUpdates | null = null;
 
   if (app.isPackaged) {
-    autoUpdater.autoDownload = true;
+    const log = theUpdateLog(app.getPath('userData'));
+    const write = (message?: string | Error): void => {
+      log(message instanceof Error ? message.message : (message ?? ''));
+    };
+
+    autoUpdater.autoDownload = false;
     autoUpdater.autoInstallOnAppQuit = false;
+    autoUpdater.logger = { info: write, warn: write, error: write };
 
     const testFeed = process.env.VALENCE_UPDATE_FEED_URL;
 
@@ -285,28 +284,33 @@ const start = async (): Promise<void> => {
       autoUpdater.setFeedURL({ provider: 'generic', url: testFeed });
     }
 
-    const updates = checkForUpdate({
+    const followed = followTheUpdates({
       updater: autoUpdater,
-      onReadyToInstall: markUpdateKnown,
+      log,
+      onChange: (update) => {
+        if (theWindow !== null && !theWindow.isDestroyed()) {
+          theWindow.webContents.send(UPDATE_CHANGED, update);
+        }
+      },
     });
 
+    updates = followed;
+
     app.on('will-quit', () => {
-      updates.stop();
+      followed.stop();
     });
   }
 
   ipcMain.on(WHAT_UPDATE_IS_KNOWN, (event) => {
-    event.returnValue = knownUpdate;
+    event.returnValue = updates?.now() ?? { kind: 'none' };
   });
 
   ipcMain.on(WHAT_VERSION_THIS_IS, (event) => {
     event.returnValue = app.getVersion();
   });
 
-  ipcMain.on(INSTALL_THE_UPDATE, () => {
-    if (knownUpdate !== null) {
-      autoUpdater.quitAndInstall();
-    }
+  ipcMain.on(DOWNLOAD_THE_UPDATE, () => {
+    updates?.download();
   });
 
   ipcMain.on(SET_UNREAD_BADGE, (_event, count) => {

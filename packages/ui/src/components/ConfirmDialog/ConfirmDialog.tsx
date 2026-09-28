@@ -13,6 +13,7 @@ import type { ConfirmDialogProps } from './ConfirmDialog.types';
  * @param title - What is about to happen.
  * @param detail - What it will do, in words somebody can weigh.
  * @param confirmLabel - What the confirming button says, which should name the action.
+ * @param dismissLabel - What the way out says, where Cancel is the wrong word for putting it off.
  * @param isDestructive - Whether the answer destroys something, which paints it red.
  * @param isBusy - Whether the work is already running.
  * @param isOpen - Whether the dialog is showing.
@@ -23,6 +24,7 @@ const ConfirmDialog = ({
   title,
   detail,
   confirmLabel,
+  dismissLabel,
   isDestructive = false,
   isBusy = false,
   isOpen,
@@ -37,7 +39,7 @@ const ConfirmDialog = ({
     </DialogContent>
 
     <DialogFooter
-      dismiss={{ onChoose: onClose, isDisabled: isBusy }}
+      dismiss={{ label: dismissLabel, onChoose: onClose, isDisabled: isBusy }}
       confirm={{ label: confirmLabel, onChoose: onConfirm, isLoading: isBusy, isDestructive }}
     />
   </Dialog>
