@@ -14,6 +14,7 @@ const answering = (answer: JsonValue | null) => {
   const web = {
     json: vi.fn((): Promise<JsonValue | null> => Promise.resolve(answer)),
     bytes: vi.fn((): Promise<Uint8Array | null> => Promise.resolve(null)),
+    text: vi.fn((): Promise<string | null> => Promise.resolve(null)),
   };
 
   return web satisfies MusicWeb;

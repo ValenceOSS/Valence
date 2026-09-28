@@ -158,6 +158,31 @@ const listTracksRoute = createRoute({
   },
 });
 
+const listPicksRoute = createRoute({
+  method: 'post',
+  path: '/api/music/picks',
+  tags: ['Music'],
+  summary: 'Songs from the library to mix into a queue, for smart shuffle',
+  description:
+    'Songs that are not in the queue, chosen by how much they share with it (its artists and its genres) and with what this profile likes and follows, with some chance mixed in.',
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            trackIds: z.array(z.string().uuid()).min(1).max(1000),
+            limit: z.number().int().positive().max(100).optional(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: json('The songs, best first', MusicTrackListSchema),
+    401: json('Not signed in', MusicError),
+  },
+});
+
 const listLikedRoute = createRoute({
   method: 'get',
   path: '/api/music/liked',
@@ -347,6 +372,7 @@ export {
   listArtistsRoute,
   listDevicesRoute,
   listLikedRoute,
+  listPicksRoute,
   listPlaylistsRoute,
   listTracksRoute,
   movePlaylistEntryRoute,

@@ -11,6 +11,7 @@ const aWeb = (answers: Record<string, JsonValue>) => {
       Promise.resolve(Object.entries(answers).find(([part]) => url.includes(part))?.[1] ?? null),
     ),
     bytes: vi.fn((): Promise<Uint8Array | null> => Promise.resolve(FACE)),
+    text: vi.fn((): Promise<string | null> => Promise.resolve(null)),
   };
 
   return web satisfies MusicWeb;

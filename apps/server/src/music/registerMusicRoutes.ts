@@ -1,3 +1,5 @@
+import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
+import { ARTWORK_LIMITS } from '@ValenceServer/playlists/ARTWORK_LIMITS';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import {
   addPlaylistEntriesRoute,
@@ -9,6 +11,7 @@ import {
   listArtistsRoute,
   listDevicesRoute,
   listLikedRoute,
+  listPicksRoute,
   listPlaylistsRoute,
   listTracksRoute,
   movePlaylistEntryRoute,
@@ -40,6 +43,8 @@ type MusicRouteOptions = {
 const NOBODY = { error: 'Nobody is signed in.' } as const;
 
 const NO_PROFILE = { error: 'Choose a profile first.' } as const;
+
+const PICKS_LIMIT = 30;
 
 /**
  * The profile a viewer is acting as, where they are signed in and acting as one.
@@ -220,6 +225,145 @@ const registerMusicRoutes = (
     }
 
     return context.json({ tracks: await music.library.listLiked(viewer) }, 200);
+  });
+
+  app.get('/api/music/artists/:artistId/story', async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json(NOBODY, 401);
+    }
+
+    const detail = await music.library.readArtist(viewer, context.req.param('artistId'));
+
+    if (detail === null) {
+      return context.json({ error: 'No such artist.' }, 404);
+    }
+
+    return context.json(
+      await music.stories.about(
+        { name: detail.artist.name },
+        [...detail.albums, ...detail.appearsOn].map((album) => album.title),
+      ),
+      200,
+    );
+  });
+
+  app.get('/api/music/catalogue/covers/:releaseGroupId', async (context) => {
+    if ((await viewerOf(context.req.raw.headers)) === null) {
+      return context.json(NOBODY, 401);
+    }
+
+    const title = context.req.query('title');
+    const artist = context.req.query('artist');
+    const picture = await music.pictures.cover(
+      context.req.param('releaseGroupId'),
+      title === undefined || artist === undefined ? null : { title, artist },
+    );
+
+    return picture === null
+      ? context.json({ error: 'No cover was found for that record.' }, 404)
+      : context.body(picture.body, 200, {
+          'content-type': picture.contentType,
+          'cache-control': 'private, max-age=604800',
+        });
+  });
+
+  app.get('/api/music/catalogue/artists/picture', async (context) => {
+    if ((await viewerOf(context.req.raw.headers)) === null) {
+      return context.json(NOBODY, 401);
+    }
+
+    const name = context.req.query('name') ?? '';
+    const picture =
+      name.trim() === ''
+        ? null
+        : await music.pictures.artistPicture(name, context.req.query('cover') ?? null);
+
+    return picture === null
+      ? context.json({ error: 'No picture was found for that artist.' }, 404)
+      : context.body(picture.body, 200, {
+          'content-type': picture.contentType,
+          'cache-control': 'private, max-age=604800',
+        });
+  });
+
+  app.get('/api/playlists/:playlistId/artwork', async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json(NOBODY, 401);
+    }
+
+    const artwork = await music.playlists.readArtwork(viewer, context.req.param('playlistId'));
+
+    if (artwork === null) {
+      return context.json({ error: 'That playlist has no cover of its own.' }, 404);
+    }
+
+    return context.body(artwork.body.slice().buffer, 200, {
+      'content-type': artwork.contentType,
+      'cache-control':
+        context.req.query('v') === undefined
+          ? 'private, max-age=60'
+          : 'private, max-age=31536000, immutable',
+    });
+  });
+
+  app.put('/api/playlists/:playlistId/artwork', async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json(NOBODY, 401);
+    }
+
+    if (Number(context.req.header('content-length') ?? 0) > ARTWORK_LIMITS.mostBytes) {
+      return context.json(describePictureFault('tooLarge', ARTWORK_LIMITS), 413);
+    }
+
+    const wrong = await music.playlists.saveArtwork(viewer, context.req.param('playlistId'), {
+      body: new Uint8Array(await context.req.arrayBuffer()),
+      contentType: context.req.header('content-type') ?? '',
+    });
+
+    if (wrong === 'notYours') {
+      return context.json({ error: 'That playlist is not yours to change.' }, 404);
+    }
+
+    if (wrong !== null) {
+      const said = describePictureFault(wrong, ARTWORK_LIMITS);
+
+      return context.json({ error: said.error }, said.status);
+    }
+
+    return context.body(null, 204);
+  });
+
+  app.delete('/api/playlists/:playlistId/artwork', async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json(NOBODY, 401);
+    }
+
+    return (await music.playlists.dropArtwork(viewer, context.req.param('playlistId')))
+      ? context.body(null, 204)
+      : context.json({ error: 'That playlist is not yours to change.' }, 404);
+  });
+
+  app.openapi(listPicksRoute, async (context) => {
+    const viewer = await viewerOf(context.req.raw.headers);
+
+    if (viewer === null) {
+      return context.json(NOBODY, 401);
+    }
+
+    const { trackIds, limit } = context.req.valid('json');
+
+    return context.json(
+      { tracks: await music.library.listPicks(viewer, trackIds, limit ?? PICKS_LIMIT) },
+      200,
+    );
   });
 
   app.openapi(searchMusicRoute, async (context) => {

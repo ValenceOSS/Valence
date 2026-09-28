@@ -20,6 +20,7 @@ const PlaylistSummarySchema = z.object({
   lostCount: z.number().int().nonnegative(),
   durationSeconds: z.number().nonnegative(),
   artworkAlbumIds: z.array(z.string().uuid()).max(4),
+  hasOwnArtwork: z.boolean(),
   updatedAt: z.string(),
 });
 

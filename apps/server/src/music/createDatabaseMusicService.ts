@@ -1,4 +1,17 @@
-import { and, asc, desc, eq, exists, ilike, inArray, isNotNull, ne, sql } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  exists,
+  ilike,
+  inArray,
+  isNotNull,
+  ne,
+  notInArray,
+  or,
+  sql,
+} from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 import { z } from 'zod';
 import {
@@ -447,6 +460,89 @@ const createDatabaseMusicService = (db: ValenceDatabase): MusicService => {
           ),
         ],
         LIKED_LIMIT,
+      );
+    },
+
+    listPicks: async (viewer, seedIds, limit) => {
+      const seeds = [...seedIds];
+      const profileId = profileOf(viewer);
+
+      if (seeds.length === 0) {
+        return [];
+      }
+
+      const credited = await db
+        .selectDistinct({ id: musicTrackArtist.artistId })
+        .from(musicTrackArtist)
+        .where(inArray(musicTrackArtist.mediaItemId, seeds));
+      const shelved = await db
+        .selectDistinct({ genres: musicAlbum.genres })
+        .from(musicTrack)
+        .innerJoin(musicAlbum, eq(musicAlbum.id, musicTrack.albumId))
+        .where(inArray(musicTrack.mediaItemId, seeds));
+      const artists = credited.map((row) => row.id);
+      const genres = [...new Set(shelved.flatMap((row) => NamesSchema.parse(row.genres)))];
+
+      const byTheirArtists =
+        artists.length === 0
+          ? sql`false`
+          : exists(
+              db
+                .select({ one: sql`1` })
+                .from(musicTrackArtist)
+                .where(
+                  and(
+                    eq(musicTrackArtist.mediaItemId, mediaItem.id),
+                    inArray(musicTrackArtist.artistId, artists),
+                  ),
+                ),
+            );
+      const inTheirGenres =
+        genres.length === 0
+          ? sql`false`
+          : sql`exists (select 1 from jsonb_array_elements_text(case when jsonb_typeof(${musicAlbum.genres}) = 'array' then ${musicAlbum.genres} else '[]'::jsonb end) g where g in (${sql.join(
+              genres.map((genre) => sql`${genre}`),
+              sql`, `,
+            )}))`;
+      const isLiked =
+        profileId === null
+          ? sql`false`
+          : exists(
+              db
+                .select({ one: sql`1` })
+                .from(favourite)
+                .where(
+                  and(eq(favourite.mediaItemId, mediaItem.id), eq(favourite.profileId, profileId)),
+                ),
+            );
+      const byFollowed =
+        profileId === null
+          ? sql`false`
+          : exists(
+              db
+                .select({ one: sql`1` })
+                .from(musicTrackArtist)
+                .innerJoin(favouriteArtist, eq(favouriteArtist.artistId, musicTrackArtist.artistId))
+                .where(
+                  and(
+                    eq(musicTrackArtist.mediaItemId, mediaItem.id),
+                    eq(favouriteArtist.profileId, profileId),
+                  ),
+                ),
+            );
+
+      return tracksWhere(
+        viewer,
+        and(
+          notInArray(mediaItem.id, seeds),
+          or(byTheirArtists, inTheirGenres, isLiked, byFollowed),
+        ),
+        [
+          desc(
+            sql`(case when ${byTheirArtists} then 3 else 0 end) + (case when ${inTheirGenres} then 2 else 0 end) + (case when ${isLiked} then 2 else 0 end) + (case when ${byFollowed} then 1 else 0 end) + random() * 3`,
+          ),
+        ],
+        limit,
       );
     },
 

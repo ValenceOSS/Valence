@@ -1685,6 +1685,7 @@ const createDatabaseLibraryService = ({
         .where(eq(mediaItem.parentId, id))
         .orderBy(asc(mediaItem.extraKind), asc(mediaItem.title));
 
+      const region = (await certificationRegion()).trim().toUpperCase();
       const detail: MediaDetail = MediaDetailSchema.parse({
         id: row.id,
         libraryId: row.libraryId,
@@ -1756,9 +1757,9 @@ const createDatabaseLibraryService = ({
           status: row.catalogueStatus,
           rottenTomatoes: row.rottenTomatoes,
           certification:
-            readStoredCertifications(JsonValueSchema.parse(row.certifications ?? null))?.[
-              (await certificationRegion()).trim().toUpperCase()
-            ] ?? null,
+            readStoredCertifications(JsonValueSchema.parse(row.certifications ?? null))?.[region] ??
+            null,
+          certificationRegion: region,
         },
       });
 

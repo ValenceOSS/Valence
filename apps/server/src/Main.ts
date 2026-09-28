@@ -232,6 +232,9 @@ import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import type { OpenLibraryShelf } from '@ValenceServer/requests/openLibrary/readOpenLibraryShelves';
 import { createMusicWeb } from '@ValenceServer/music/web/createMusicWeb';
 import { enrichMusicLibrary } from '@ValenceServer/music/web/enrichMusicLibrary';
+import { createCataloguePictures } from '@ValenceServer/music/web/createCataloguePictures';
+import { createAlbumCorrections } from '@ValenceServer/music/web/createAlbumCorrections';
+import { createArtistStories } from '@ValenceServer/music/web/createArtistStories';
 import { createMusicFileSystem } from '@ValenceServer/music/createMusicFileSystem';
 import { createDatabasePlaylistService } from '@ValenceServer/playlists/createDatabasePlaylistService';
 import type { MusicServices } from '@ValenceServer/music/MusicServices';
@@ -786,7 +789,11 @@ const householdService = createDatabaseHouseholdService(db, env.PROFILE_IMAGE_DI
 
 const splashscreen = createFileSplashscreenStore(env.PROFILE_IMAGE_DIR, settings);
 
-const bookService = createDatabaseBookService(db, env.IMAGE_CACHE_DIR);
+const bookService = createDatabaseBookService(db, env.IMAGE_CACHE_DIR, {
+  search: (query) => searchOpenLibrary(musicWeb, query),
+  describe: (openLibraryId) => describeOpenLibraryBook(musicWeb, openLibraryId),
+  picture: (url) => musicWeb.bytes(url),
+});
 
 const transcoder = createTranscoderClient({ baseUrl: env.TRANSCODER_URL });
 
@@ -810,6 +817,10 @@ const musicWeb = createMusicWeb({
     'api.deezer.com': 250,
     'openlibrary.org': 1000,
     'covers.openlibrary.org': 250,
+    'itunes.apple.com': 3000,
+    'music.apple.com': 1000,
+    'www.wikidata.org': 250,
+    'en.wikipedia.org': 250,
   },
 });
 
@@ -863,9 +874,24 @@ const videoDevices = createVideoDevices({
   },
 });
 
+const cataloguePictureCache = createImageCache({
+  directory: join(env.IMAGE_CACHE_DIR, 'music-catalogue', 'pictures'),
+});
+
 const musicServices: MusicServices = {
   library: musicLibrary,
-  playlists: createDatabasePlaylistService(db, musicLibrary),
+  stories: createArtistStories(musicWeb),
+  corrections: createAlbumCorrections({ store: musicStore, web: musicWeb, artwork: musicArtwork }),
+  pictures: createCataloguePictures({
+    directory: join(env.IMAGE_CACHE_DIR, 'music-catalogue', 'found'),
+    web: musicWeb,
+    readImage: (url) => cataloguePictureCache.read(url),
+  }),
+  playlists: createDatabasePlaylistService(
+    db,
+    musicLibrary,
+    join(env.PROFILE_IMAGE_DIR, '..', 'playlists'),
+  ),
   devices: createMusicDevices({
     presence,
     onChanged: (accountId) => {

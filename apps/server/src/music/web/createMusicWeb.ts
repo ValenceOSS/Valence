@@ -9,6 +9,7 @@ type WebFetch = (
 type MusicWeb = {
   json: (url: string) => Promise<JsonValue | null>;
   bytes: (url: string) => Promise<Uint8Array | null>;
+  text: (url: string) => Promise<string | null>;
 };
 
 type MusicWebOptions = {
@@ -43,7 +44,7 @@ const BACKOFF_MS = 2000;
  *
  * @param options - Who to say is asking, how far apart to space each site's requests, how long to
  *   wait for an answer, and — for a test — how to fetch, wait and tell the time.
- * @returns A way to ask for JSON and for a picture.
+ * @returns A way to ask for JSON, for a picture and for a page.
  */
 const createMusicWeb = ({
   userAgent,
@@ -129,6 +130,12 @@ const createMusicWeb = ({
       const read = await answer.arrayBuffer().catch(() => null);
 
       return read === null || read.byteLength === 0 ? null : new Uint8Array(read);
+    },
+
+    text: async (url) => {
+      const answer = await ask(url, 'text/html');
+
+      return answer === null ? null : answer.text().catch(() => null);
     },
   };
 };

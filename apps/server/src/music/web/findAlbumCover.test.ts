@@ -12,6 +12,7 @@ const aWeb = (
   const web = {
     json: vi.fn((url: string) => Promise.resolve(json(url))),
     bytes: vi.fn((): Promise<Uint8Array | null> => Promise.resolve(bytes)),
+    text: vi.fn((): Promise<string | null> => Promise.resolve(null)),
   };
 
   return web satisfies MusicWeb;

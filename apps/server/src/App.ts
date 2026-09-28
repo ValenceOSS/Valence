@@ -1,3 +1,4 @@
+import { serveCorrections } from '@ValenceServer/api/serveCorrections';
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { createAppContext } from '@ValenceServer/api/createAppContext';
 import { serveEveryRequest } from '@ValenceServer/api/serveEveryRequest';
@@ -82,6 +83,7 @@ const createApp = (options: CreateAppOptions) => {
   serveRating(app, context);
   serveSegment(app, context);
   serveBook(app, context);
+  serveCorrections(app, context);
   serveImage(app, context);
   serveSubtitle(app, context);
   servePresence(app, context);

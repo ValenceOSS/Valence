@@ -15,6 +15,12 @@ type ArtistToLookUp = {
 
 type SongWithoutLyrics = SongToFind & { id: string };
 
+type KeptPicture = {
+  kind: 'album' | 'artist';
+  id: string;
+  path: string;
+};
+
 type EnrichingStore = {
   albumsToLookUp: (libraryId: string, isAgain: boolean) => Promise<AlbumToLookUp[]>;
   markAlbumLookedUp: (albumId: string) => Promise<void>;
@@ -26,6 +32,8 @@ type EnrichingStore = {
   keepFoundLyrics: (trackId: string, lyrics: string | null) => Promise<void>;
   setAlbumArtwork: (albumId: string, path: string) => Promise<void>;
   setArtistImage: (artistId: string, path: string) => Promise<void>;
+  picturesKept: (libraryId: string) => Promise<KeptPicture[]>;
+  forgetPicture: (kind: 'album' | 'artist', id: string) => Promise<void>;
 };
 
-export type { AlbumToLookUp, ArtistToLookUp, EnrichingStore, SongWithoutLyrics };
+export type { AlbumToLookUp, ArtistToLookUp, EnrichingStore, KeptPicture, SongWithoutLyrics };

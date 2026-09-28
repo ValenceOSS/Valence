@@ -42,6 +42,7 @@ const aWeb = (groups: readonly JsonValue[], artist: JsonValue | null = null) => 
       });
     }),
     bytes: vi.fn((): Promise<Uint8Array | null> => Promise.resolve(null)),
+    text: vi.fn((): Promise<string | null> => Promise.resolve(null)),
   };
 
   return web satisfies MusicWeb;
@@ -61,7 +62,7 @@ describe('describeArtistForRequest', () => {
       aliases: ['The Pink Floyd'],
       overview: 'UK rock band',
       posterUrl:
-        'https://coverartarchive.org/release-group/00000000-0000-4000-8000-000000000002/front-250',
+        '/api/music/catalogue/artists/picture?name=Pink+Floyd&cover=00000000-0000-4000-8000-000000000002',
       runtimeMinutes: null,
       releaseDates: { theatrical: null, digital: null, physical: null },
       episodes: [],

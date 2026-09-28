@@ -41,6 +41,7 @@ type MusicService = {
   readArtist: (viewer: Viewer, artistId: string) => Promise<MusicArtistDetail | null>;
   listTracks: (viewer: Viewer, ids: readonly string[]) => Promise<MusicTrack[]>;
   listLiked: (viewer: Viewer) => Promise<MusicTrack[]>;
+  listPicks: (viewer: Viewer, seedIds: readonly string[], limit: number) => Promise<MusicTrack[]>;
   search: (viewer: Viewer, query: string) => Promise<MusicSearch>;
   readLyrics: (viewer: Viewer, trackId: string) => Promise<Lyrics | null>;
   readTrackFile: (viewer: Viewer, trackId: string) => Promise<TrackFile | null>;

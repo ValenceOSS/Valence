@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { and, asc, count, desc, eq, ilike, inArray, max, notExists, or, sql } from 'drizzle-orm';
 import {
@@ -39,6 +40,8 @@ import type {
   SaveReadingProgress,
 } from '@ValenceContracts/schemas/Book';
 import type { BookPageBytes } from './BookFile';
+import type { BookMatching } from './BookMatching';
+import type { OpenLibraryBook } from '@ValenceServer/requests/openLibrary/OpenLibraryBook';
 import type { BookStore } from './scanBookLibrary';
 import { booksVisibleToViewer } from '@ValenceServer/visibility/booksVisibleToViewer';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
@@ -85,6 +88,9 @@ type BookService = BookStore &
     readListening: (profileId: string, bookId: string) => Promise<ListeningProgress | null>;
     listListening: (viewer: Viewer, profileId: string, limit: number) => Promise<BookListening[]>;
     forgetListening: (profileId: string, bookId?: string) => Promise<void>;
+    searchMatches: (query: string) => Promise<OpenLibraryBook[]>;
+    correct: (bookId: string, openLibraryId: number) => Promise<boolean>;
+    forgetCorrection: (bookId: string) => Promise<boolean>;
   };
 
 const NamesSchema = z.array(z.string()).nullable().catch(null);
@@ -138,11 +144,31 @@ const toBook = (row: typeof book.$inferSelect, chapterCount: number, heardCount:
  * tidies the artwork away tidies these too. A cover is drawn at the width a rail shows it, rather
  * than as the megabytes of first page it is.
  *
+ * A book whose file names it wrongly can be told what it really is, from Open Library: its title,
+ * authors, year, description and cover are taken from there and kept, and a scan leaves them alone
+ * until the correction is forgotten, when the file's own say comes back with the next scan.
+ *
  * @param db - The database.
  * @param cacheDir - Where pages are kept once they have been read.
+ * @param matching - How to search Open Library and read a work and its cover from it, for telling a
+ *   book what it really is.
  * @returns The service, which the scan writes through and the routes read through.
  */
-const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookService => {
+const createDatabaseBookService = (
+  db: ValenceDatabase,
+  cacheDir: string,
+  matching: BookMatching | null = null,
+): BookService => {
+  const chosenCovers = join(cacheDir, 'book-covers');
+
+  /**
+   * Where the cover chosen for a corrected book is kept.
+   *
+   * @param bookId - The book.
+   * @returns The file.
+   */
+  const chosenCoverOf = (bookId: string): string => join(chosenCovers, `${bookId}.webp`);
+
   const chapterFor = async (chapterId: string) => {
     const [found] = await db
       .select({
@@ -202,14 +228,22 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
         .onConflictDoUpdate({
           target: [book.libraryId, book.path],
           set: {
-            title: row.title,
+            title: sql`case when ${book.isCorrected} then ${book.title} else ${row.title} end`,
             ...(row.layout === 'audio' ? {} : { layout: row.layout, direction: row.direction }),
-            year: row.year,
+            year: sql`case when ${book.isCorrected} then ${book.year} else ${row.year} end`,
             seriesName: row.series?.name ?? null,
             seriesPosition: row.series?.position ?? null,
             updatedAt: new Date(),
-            ...(row.authors.length === 0 ? {} : { authors: row.authors }),
-            ...(row.overview === null ? {} : { overview: row.overview }),
+            ...(row.authors.length === 0
+              ? {}
+              : {
+                  authors: sql`case when ${book.isCorrected} then ${book.authors} else ${JSON.stringify(row.authors)}::jsonb end`,
+                }),
+            ...(row.overview === null
+              ? {}
+              : {
+                  overview: sql`case when ${book.isCorrected} then ${book.overview} else ${row.overview} end`,
+                }),
           },
         })
         .returning({ id: book.id });
@@ -475,6 +509,12 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
     },
 
     readCover: async (bookId) => {
+      const chosen = await readFile(chosenCoverOf(bookId)).catch(() => null);
+
+      if (chosen !== null) {
+        return { bytes: new Uint8Array(chosen), contentType: 'image/webp' };
+      }
+
       const chapters = await db
         .select({
           id: bookChapter.id,
@@ -770,6 +810,62 @@ const createDatabaseBookService = (db: ValenceDatabase, cacheDir: string): BookS
             bookId === undefined ? undefined : eq(listeningProgress.bookId, bookId),
           ),
         );
+    },
+
+    searchMatches: async (query) =>
+      query.trim() === '' || matching === null ? [] : matching.search(query.trim()),
+
+    correct: async (bookId, openLibraryId) => {
+      const found = matching === null ? null : await matching.describe(openLibraryId);
+
+      if (found === null || matching === null) {
+        return false;
+      }
+
+      const picture =
+        found.posterUrl === null
+          ? null
+          : await matching.picture(found.posterUrl.replace(/-M\.jpg$/, '-L.jpg'));
+
+      if (picture !== null) {
+        const drawn = await drawBookCover(
+          { bytes: picture, contentType: 'image/jpeg' },
+          COVER_WIDTH,
+        );
+
+        await mkdir(chosenCovers, { recursive: true });
+        await writeFile(chosenCoverOf(bookId), drawn.bytes);
+      }
+
+      const changed = await db
+        .update(book)
+        .set({
+          title: found.title,
+          year: found.year,
+          overview: found.overview,
+          ...(found.authors.length === 0 ? {} : { authors: found.authors }),
+          ...(found.subjects.length === 0 ? {} : { genres: found.subjects }),
+          externalId: `openlibrary:OL${openLibraryId.toString()}W`,
+          posterUrl: found.posterUrl,
+          isCorrected: true,
+          updatedAt: new Date(),
+        })
+        .where(eq(book.id, bookId))
+        .returning({ id: book.id });
+
+      return changed.length > 0;
+    },
+
+    forgetCorrection: async (bookId) => {
+      await rm(chosenCoverOf(bookId), { force: true });
+
+      const changed = await db
+        .update(book)
+        .set({ isCorrected: false, externalId: null, posterUrl: null, updatedAt: new Date() })
+        .where(eq(book.id, bookId))
+        .returning({ id: book.id });
+
+      return changed.length > 0;
     },
   };
 
