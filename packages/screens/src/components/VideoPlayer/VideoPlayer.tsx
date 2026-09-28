@@ -1535,12 +1535,17 @@ const VideoPlayer = ({
 
   const onLeaveStage = useCallback(
     (event: ReactPointerEvent<HTMLElement>) => {
-      pointRef.current = null;
+      const left = aLeaveWorthHiding(
+        event.pointerType,
+        { x: event.clientX, y: event.clientY },
+        event.currentTarget.getBoundingClientRect(),
+      );
 
-      if (!aLeaveWorthHiding(event.pointerType)) {
+      if (!left) {
         return;
       }
 
+      pointRef.current = null;
       setIsIdle(isPlaying);
     },
     [isPlaying],
