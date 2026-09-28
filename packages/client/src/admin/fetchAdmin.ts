@@ -6,6 +6,7 @@ import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { ListeningSessionSchema } from '@ValenceContracts/schemas/MusicRemote';
 import { z } from 'zod';
 import { ClientKindSchema } from '@ValenceContracts/schemas/ClientKind';
+import { JobGroupSchema } from '@ValenceContracts/schemas/JobGroup';
 import { PreviewQualitySchema } from '@ValenceContracts/schemas/PreviewQuality';
 import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
 import { PlaybackPlanSchema } from '@ValenceContracts/schemas/PlaybackPlan';
@@ -241,10 +242,13 @@ const ActiveSessionSchema = z.object({
 const JobDefinitionSchema = z.object({
   kind: z.string(),
   label: z.string(),
+  group: JobGroupSchema,
   description: z.string(),
   needsLibrary: z.boolean(),
   destructive: z.boolean(),
   takesParts: z.boolean(),
+  runsByHand: z.boolean(),
+  schedulable: z.boolean(),
 });
 
 const ScheduleTriggerSchema = z.discriminatedUnion('kind', [

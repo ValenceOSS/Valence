@@ -63,6 +63,9 @@ const definition: JobDefinition = {
   needsLibrary: true,
   destructive: false,
   takesParts: false,
+  group: 'library',
+  runsByHand: true,
+  schedulable: true,
 };
 
 const job = (overrides: Partial<Job> = {}): Job => ({

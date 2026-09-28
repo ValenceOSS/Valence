@@ -106,6 +106,7 @@ const BookSchema = z.object({
   posterUrl: z.string().url().nullish(),
   hasCover: z.boolean().default(false),
   chapterCount: z.number().int().nonnegative(),
+  sizeBytes: z.number().nonnegative().optional(),
   hasText: z.boolean().optional(),
   hasAudio: z.boolean().optional(),
   series: z

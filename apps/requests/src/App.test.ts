@@ -5,7 +5,7 @@ import {
   IndexerTestSchema,
   ReleaseSearchOutcomeSchema,
 } from '@ValenceContracts/schemas/Indexer';
-import { RequestsStatusSchema } from '@ValenceContracts/schemas/Requests';
+import { RequestsStatusSchema, SOLVER_NOT_USED } from '@ValenceContracts/schemas/Requests';
 import { QualityProfileDraftSchema } from '@ValenceContracts/schemas/QualityProfile';
 import type { IndexerCapabilities } from '@ValenceContracts/schemas/Indexer';
 import type { RequestsVpn } from '@ValenceContracts/schemas/Requests';
@@ -99,6 +99,7 @@ const THE_REST = {
   secret: A_SECRET,
   version: '0.4.0',
   readVpn: () => A_VPN,
+  readSolver: () => SOLVER_NOT_USED,
   isDatabaseUp: () => Promise.resolve(true),
   indexers: createIndexerService({
     store: createMemoryRecordStore<IndexerRecord>(),
@@ -154,7 +155,7 @@ describe('createApp', () => {
     expect((await aService(false).app.request('/health')).status).toBe(503);
   });
 
-  it('says what it is, how the VPN is and how the indexers are, to whoever holds the secret', async () => {
+  it('says what it is, how the VPN, the indexers and the solver are, to whoever holds the secret', async () => {
     const response = await aService().ask('/api/status');
 
     expect(response.status).toBe(200);
@@ -162,6 +163,7 @@ describe('createApp', () => {
       version: '0.4.0',
       vpn: A_VPN,
       indexers: { total: 0, enabled: 0, failing: [] },
+      solver: SOLVER_NOT_USED,
     });
   });
 

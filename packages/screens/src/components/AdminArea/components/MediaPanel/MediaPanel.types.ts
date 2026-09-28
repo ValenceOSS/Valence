@@ -1,24 +1,22 @@
 import type { Book } from '@ValenceContracts/schemas/Book';
-import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MusicAlbum } from '@ValenceContracts/schemas/Music';
-
-type MediaRow =
-  | { kind: 'video'; media: MediaSummary }
-  | { kind: 'album'; album: MusicAlbum }
-  | { kind: 'book'; book: Book };
 
 type MediaPanelProps = {
   isUnreachable?: boolean;
-  media: MediaSummary[];
-  albums?: MusicAlbum[];
-  books?: Book[];
+  libraries: readonly Library[];
+  media: readonly MediaSummary[];
+  albums?: readonly MusicAlbum[];
+  books?: readonly Book[];
   onCorrect: (media: MediaSummary) => void;
   onCorrectAlbum?: (album: MusicAlbum) => void;
   onCorrectBook?: (book: Book) => void;
   onChooseMoment: (media: MediaSummary) => void;
   onRebuildArtefacts: (media: MediaSummary) => Promise<boolean>;
-  onReencode?: (media: MediaSummary) => void;
-  onDelete?: (media: MediaSummary) => Promise<boolean>;
+  onReencode?: (media: readonly MediaSummary[]) => void;
+  onDelete?: (media: MediaSummary, isWholeSeries: boolean) => Promise<boolean>;
+  paths?: Readonly<Record<string, string>>;
+  onOpenFolder?: (path: string) => void;
 };
 
-export type { MediaPanelProps, MediaRow };
+export type { MediaPanelProps };

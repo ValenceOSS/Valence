@@ -187,7 +187,7 @@ describe('IndexersPanel', () => {
 
     await choose(user, 'Change');
 
-    const dialog = await screen.findByRole('dialog', { name: 'Change Jackett' });
+    const dialog = await screen.findByRole('dialog', { name: 'Edit Jackett' });
 
     expect(within(dialog).getByRole('textbox', { name: /Name/ })).toHaveValue('Jackett');
 

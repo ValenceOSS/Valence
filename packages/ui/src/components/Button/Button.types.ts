@@ -24,6 +24,7 @@ type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'> & 
   size?: ButtonSize;
   isLoading?: boolean;
   isPill?: boolean;
+  joins?: 'next';
   label?: string;
   isIconOnly?: boolean;
   isActive?: boolean;

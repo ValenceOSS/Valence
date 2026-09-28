@@ -14,13 +14,17 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { checkRequestsNow } from '@ValenceClient/requests/fetchRequests';
 import { saidWhen } from '@ValenceClient/format/saidWhen';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { describeRequestsSolver } from './describeRequestsSolver';
 import { describeRequestsVpn } from './describeRequestsVpn';
 
+const SOLVER_DOES =
+  'Opens sites protected by Cloudflare in a hidden browser, so their indexers can be searched.';
+
 /**
- * The requests service as whoever set it up sees it: what it is doing just now — what waits on
- * somebody, what is coming down and how fast, what is stuck and what arrived today — and then
- * whether the server can reach it, which release it is, and whether the VPN it downloads through
- * is up, with a way to ask again now rather than waiting for the next check.
+ * The requests service as whoever set it up sees it: whether the server can reach it, which release
+ * it is, whether the VPN it downloads through is up, whether the browser that gets past Cloudflare's
+ * check is healthy, and how the indexers are, with a way to ask again now rather than waiting for
+ * the next check.
  */
 const RequestsPanel = () => {
   const cache = useQueryClient();
@@ -47,6 +51,7 @@ const RequestsPanel = () => {
 
   const overview = asked.data ?? null;
   const vpn = overview === null ? null : describeRequestsVpn(overview);
+  const solver = overview === null ? null : describeRequestsSolver(overview);
 
   return (
     <PanelCard
@@ -66,7 +71,7 @@ const RequestsPanel = () => {
             void asked.refetch();
           }}
         />
-      ) : overview === null || vpn === null ? (
+      ) : overview === null || vpn === null || solver === null ? (
         <Spinner isCentered label="Reading the requests service" size="sm" />
       ) : (
         <>
@@ -110,6 +115,17 @@ const RequestsPanel = () => {
 
               <Badge size="sm" tone={vpn.tone}>
                 {vpn.label}
+              </Badge>
+            </SettingRow>
+
+            <SettingRow
+              title="Cloudflare solver"
+              description={[SOLVER_DOES, solver.detail].filter((part) => part !== '').join(' ')}
+            >
+              <HowToFix href={solver.help} />
+
+              <Badge size="sm" tone={solver.tone}>
+                {solver.label}
               </Badge>
             </SettingRow>
 

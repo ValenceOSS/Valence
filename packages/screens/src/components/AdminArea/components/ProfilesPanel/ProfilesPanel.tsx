@@ -245,6 +245,7 @@ const ProfilesPanel = () => {
           KINDS.map((kind) => (
             <TabPanel key={kind.id} value={kind.id}>
               <DataTable
+                height="fills"
                 label={kind.label}
                 columns={columns}
                 rows={profiles.data.filter((profile) => profile.kind === kind.id)}

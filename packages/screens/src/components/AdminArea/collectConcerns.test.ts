@@ -1,6 +1,6 @@
-import type { RequestsVpn } from '@ValenceContracts/schemas/Requests';
+import type { RequestsSolver, RequestsVpn } from '@ValenceContracts/schemas/Requests';
 import { describe, expect, it } from 'vitest';
-import { NO_WORK } from '@ValenceContracts/schemas/Requests';
+import { NO_WORK, SOLVER_NOT_USED } from '@ValenceContracts/schemas/Requests';
 import { collectConcerns } from './collectConcerns';
 import type { JobRunPage } from '@ValenceContracts/schemas/JobRun';
 import type { ActiveSession, AdminOverview, Job, Monitor } from '@ValenceClient/admin/fetchAdmin';
@@ -809,13 +809,13 @@ describe('collectConcerns', () => {
       problemCode: problem === null ? null : 'VpnKeyRefused',
     });
 
-    const answering = (vpn: ReturnType<typeof aVpn>) => ({
+    const answering = (vpn: ReturnType<typeof aVpn>, solver: RequestsSolver = SOLVER_NOT_USED) => ({
       address: 'http://requests:8421',
       isReachable: true,
       problem: null,
       problemCode: null,
       checkedAt: '2026-09-19T12:00:00.000Z',
-      status: { version: '0.4.0', vpn, indexers: { total: 0, enabled: 0, failing: [] } },
+      status: { version: '0.4.0', vpn, indexers: { total: 0, enabled: 0, failing: [] }, solver },
       work: NO_WORK,
     });
 
@@ -889,6 +889,34 @@ describe('collectConcerns', () => {
       expect(collectConcerns({ ...healthy, requests: answering(aVpn(null)) })).toEqual([]);
     });
 
+    it('says the Cloudflare solver will not start, and why', () => {
+      const concerns = collectConcerns({
+        ...healthy,
+        requests: answering(aVpn(true), {
+          ...SOLVER_NOT_USED,
+          startProblem: 'No browser installed',
+        }),
+      });
+
+      expect(concerns).toEqual([
+        expect.objectContaining({ id: 'requests-solver', detail: 'No browser installed' }),
+      ]);
+    });
+
+    it('says nothing about a solver that has only failed at a site', () => {
+      expect(
+        collectConcerns({
+          ...healthy,
+          requests: answering(aVpn(true), {
+            ...SOLVER_NOT_USED,
+            failed: 1,
+            lastFailedAt: '2026-09-19T12:00:00.000Z',
+            problem: 'Timed out',
+          }),
+        }),
+      ).toEqual([]);
+    });
+
     it('says an indexer keeps failing, and why', () => {
       const concerns = collectConcerns({
         ...healthy,
@@ -909,6 +937,7 @@ describe('collectConcerns', () => {
                 },
               ],
             },
+            solver: SOLVER_NOT_USED,
           },
         },
       });
@@ -951,6 +980,7 @@ describe('collectConcerns', () => {
                 },
               ],
             },
+            solver: SOLVER_NOT_USED,
           },
         },
       });

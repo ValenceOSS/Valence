@@ -115,7 +115,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     const { search, kind, genre, yearFrom, yearTo, minRating, ids, order, limit, offset } =
       context.req.valid('query');
 
-    const { minYourStars } = context.req.valid('query');
+    const { minYourStars, versions } = context.req.valid('query');
     const askedBy = await readProfileId(context.req.raw.headers);
     const viewer = await viewerOf(context.req.raw.headers);
 
@@ -134,6 +134,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       ...(order === undefined ? {} : { order }),
       ...(askedBy === null ? {} : { profileId: askedBy }),
       ...(minYourStars === undefined ? {} : { minYourStars }),
+      ...(versions === 'all' ? { withVersions: true } : {}),
       limit: limit ?? DEFAULT_LIMIT,
       offset: offset ?? 0,
     });

@@ -7,6 +7,7 @@ const TONES: Readonly<Record<IconTone, string>> = {
   muted: 'text-text-muted',
   faint: 'text-text-muted/60',
   danger: 'text-danger',
+  success: 'text-success',
   scrim: 'text-on-scrim',
 };
 

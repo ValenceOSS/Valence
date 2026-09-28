@@ -32,6 +32,7 @@ import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { LibrariesPanelProps } from './LibrariesPanel.types';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { FolderLink } from '@ValenceScreens/components/FolderLink/FolderLink';
 import { readingOf } from '@ValenceScreens/components/AdminArea/readingOf';
 import { workOf } from '@ValenceScreens/components/AdminArea/workOf';
 import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
@@ -55,6 +56,7 @@ import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
  * @param onLibraryCreated - Called with a library that has just been added.
  * @param onLibraryUpdated - Called with a library whose settings have changed.
  * @param onLibraryDeleted - Told a library has been deleted, so the list can let it go.
+ * @param onOpenFolder - Called with a library's folder to open it in Files.
  * @param hasCatalogueKey - Whether a metadata catalogue key has been saved, for the setup guide.
  * @param isSetupHidden - Whether the setup guide has been put away, which is also the default, so
  *   that only a page told to offer it does.
@@ -76,6 +78,7 @@ const LibrariesPanel = ({
   onLibraryCreated,
   onLibraryUpdated,
   onLibraryDeleted,
+  onOpenFolder,
   hasCatalogueKey = true,
   isSetupHidden = true,
   onOpenSettings,
@@ -109,9 +112,11 @@ const LibrariesPanel = ({
               <Badge size="sm">{row.original.flavour ?? row.original.kind}</Badge>
             </span>
 
-            <span className="truncate text-xs text-text-muted" title={row.original.path}>
-              {row.original.path}
-            </span>
+            <FolderLink
+              shown={row.original.path}
+              folder={row.original.path}
+              onOpen={onOpenFolder}
+            />
           </span>
         ),
       },
@@ -273,7 +278,7 @@ const LibrariesPanel = ({
         ),
       },
     ],
-    [onScan, onRegeneratePreviews, progress],
+    [onScan, onRegeneratePreviews, onOpenFolder, progress],
   );
 
   return (
@@ -351,7 +356,7 @@ const LibrariesPanel = ({
               No libraries yet. Add one pointing at a folder of media.
             </p>
           ) : (
-            <DataTable label="Library roots" columns={columns} rows={libraries} />
+            <DataTable height="fills" label="Library roots" columns={columns} rows={libraries} />
           )}
         </>
       )}

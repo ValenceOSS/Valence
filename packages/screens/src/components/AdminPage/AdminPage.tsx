@@ -40,7 +40,7 @@ const AdminPage = () => {
   const go = useNavigate();
   const { panel } = useParams({ strict: false });
   const search = useSearch({ strict: false });
-  const { job } = search;
+  const { job, folder } = search;
   const { mayAdminister, isLoading } = useWhatIMayDo();
   const observability = ObservabilitySearchSchema.parse(search);
   const view = readObservabilityView(observability.view, panel);
@@ -203,6 +203,14 @@ const AdminPage = () => {
                     ...mergeObservabilitySearch(observability, change),
                   },
                   replace: true,
+                });
+              }}
+              folder={folder ?? null}
+              onOpenFolder={(path) => {
+                void go({
+                  to: '/admin/$panel',
+                  params: { panel: 'files' },
+                  search: { folder: path },
                 });
               }}
               onJobChange={(next) => {

@@ -446,6 +446,9 @@ describe('fetchJobDefinitions', () => {
       needsLibrary: true,
       destructive: false,
       takesParts: false,
+      group: 'library',
+      runsByHand: true,
+      schedulable: true,
     },
     {
       kind: 'library.reset',
@@ -454,6 +457,9 @@ describe('fetchJobDefinitions', () => {
       needsLibrary: true,
       destructive: true,
       takesParts: false,
+      group: 'reset',
+      runsByHand: true,
+      schedulable: false,
     },
   ];
 

@@ -30,8 +30,8 @@ const createJobScheduleService = ({
     JOB_DEFINITIONS.map((definition) => scheduleQueueNameFor(definition.kind)),
   );
 
-  const isKnownKind = (kind: string): boolean =>
-    definitions.some((definition) => definition.kind === kind);
+  const isSchedulable = (kind: string): boolean =>
+    definitions.some((definition) => definition.kind === kind && definition.schedulable);
 
   const reconcile = async (): Promise<void> => {
     const timezone = await readTimezone();
@@ -41,7 +41,7 @@ const createJobScheduleService = ({
     for (const row of stored) {
       const cron = toCron(row.trigger);
 
-      if (cron !== null && isKnownKind(row.kind)) {
+      if (cron !== null && isSchedulable(row.kind)) {
         wanted.set(row.id, { queueName: scheduleQueueNameFor(row.kind), cron });
       }
     }
@@ -74,7 +74,7 @@ const createJobScheduleService = ({
     },
 
     add: async (kind, trigger) => {
-      if (!isKnownKind(kind)) {
+      if (!isSchedulable(kind)) {
         return null;
       }
 
@@ -104,7 +104,7 @@ const createJobScheduleService = ({
       );
 
       return definitions
-        .filter((definition) => startupKinds.has(definition.kind))
+        .filter((definition) => startupKinds.has(definition.kind) && definition.schedulable)
         .map((definition) => definition.kind);
     },
   };

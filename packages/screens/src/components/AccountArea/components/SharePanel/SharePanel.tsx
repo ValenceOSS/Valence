@@ -64,9 +64,9 @@ const SharePanel = () => {
                 {standing.label}
               </Badge>
 
-              {standing.label !== 'Live' ? null : (
+              {standing.canWithdraw ? (
                 <span className="truncate text-xs text-text-muted">{untilWhen(row.original)}</span>
-              )}
+              ) : null}
             </span>
           );
         },
@@ -86,7 +86,7 @@ const SharePanel = () => {
         header: '',
         enableSorting: false,
         cell: ({ row }) =>
-          row.original.isSpent ? null : (
+          !shareStanding(row.original, Date.now()).canWithdraw ? null : (
             <span className="flex justify-end">
               <Button
                 isIconOnly

@@ -227,6 +227,9 @@ const JOB_DEFINITIONS = [
     needsLibrary: true,
     destructive: false,
     takesParts: false,
+    group: 'library',
+    runsByHand: true,
+    schedulable: true,
   },
   {
     kind: 'library.regeneratePreviews',
@@ -235,6 +238,9 @@ const JOB_DEFINITIONS = [
     needsLibrary: true,
     destructive: false,
     takesParts: false,
+    group: 'library',
+    runsByHand: true,
+    schedulable: true,
   },
   {
     kind: 'library.regenerateTrickplay',
@@ -243,6 +249,9 @@ const JOB_DEFINITIONS = [
     needsLibrary: true,
     destructive: false,
     takesParts: false,
+    group: 'library',
+    runsByHand: true,
+    schedulable: true,
   },
   {
     kind: 'library.detectSegments',
@@ -251,6 +260,9 @@ const JOB_DEFINITIONS = [
     needsLibrary: true,
     destructive: false,
     takesParts: false,
+    group: 'library',
+    runsByHand: true,
+    schedulable: true,
   },
   {
     kind: 'library.reset',
@@ -259,6 +271,9 @@ const JOB_DEFINITIONS = [
     needsLibrary: true,
     destructive: true,
     takesParts: false,
+    group: 'reset',
+    runsByHand: true,
+    schedulable: false,
   },
 ];
 
@@ -398,15 +413,18 @@ afterEach(() => {
 });
 
 /**
- * Chooses something from a job's actions menu on the Jobs section.
+ * Presses one of a job's buttons on the Jobs section: Run, or the one that opens its schedule.
  */
 const chooseJob = async (
   actor: ReturnType<typeof userEvent.setup>,
   job: string,
-  action: RegExp,
+  action: 'run' | 'schedule',
 ) => {
-  await actor.click(await screen.findByRole('button', { name: `Actions for ${job}` }));
-  await actor.click(await screen.findByRole('menuitem', { name: action }));
+  await actor.click(
+    await screen.findByRole('button', {
+      name: action === 'run' ? `Run ${job}` : `Edit the schedule for ${job}`,
+    }),
+  );
 };
 
 /**
@@ -800,7 +818,7 @@ describe('AdminArea', () => {
     expect(await screen.findByText('Scan for changes')).toBeInTheDocument();
     expect(screen.getByText('Reset and rebuild')).toBeInTheDocument();
 
-    await chooseJob(actor, 'Scan for changes', /Run now/);
+    await chooseJob(actor, 'Scan for changes', 'run');
     await actor.click(await screen.findByRole('button', { name: 'Run on every library' }));
 
     await waitFor(() => {
@@ -824,7 +842,7 @@ describe('AdminArea', () => {
 
     await goTo(actor, 'Jobs & logs');
     await openWorkTab(actor);
-    await chooseJob(actor, 'Scan for changes', /Run now/);
+    await chooseJob(actor, 'Scan for changes', 'run');
     await actor.click(await screen.findByRole('button', { name: 'Run on every library' }));
 
     await waitFor(() => {
@@ -850,7 +868,7 @@ describe('AdminArea', () => {
 
     await goTo(actor, 'Jobs & logs');
     await openWorkTab(actor);
-    await chooseJob(actor, 'Reset and rebuild', /Run now/);
+    await chooseJob(actor, 'Reset and rebuild', 'run');
 
     expect(await screen.findByRole('heading', { name: 'Reset and rebuild?' })).toBeInTheDocument();
 
@@ -860,14 +878,14 @@ describe('AdminArea', () => {
     );
   });
 
-  it('opens a job schedule over the list by pressing into its row, not its Run button', async () => {
+  it('opens a job schedule over the list from its schedule button', async () => {
     const actor = userEvent.setup();
 
     renderInAnAddress(<TheAdmin />);
 
     await goTo(actor, 'Jobs & logs');
     await openWorkTab(actor);
-    await chooseJob(actor, 'Scan for changes', /Edit schedule/);
+    await chooseJob(actor, 'Scan for changes', 'schedule');
 
     const schedule = await screen.findByRole('dialog');
 
@@ -882,7 +900,7 @@ describe('AdminArea', () => {
 
     await goTo(actor, 'Jobs & logs');
     await openWorkTab(actor);
-    await chooseJob(actor, 'Scan for changes', /Edit schedule/);
+    await chooseJob(actor, 'Scan for changes', 'schedule');
     await actor.click(await screen.findByRole('button', { name: 'Add trigger' }));
     await actor.click(await screen.findByRole('button', { name: 'Add' }));
 
@@ -896,7 +914,9 @@ describe('AdminArea', () => {
       );
     });
 
-    expect(await screen.findByText('Daily at 03:00')).toBeInTheDocument();
+    expect(
+      await within(await screen.findByRole('dialog')).findByText('Daily at 03:00'),
+    ).toBeInTheDocument();
   });
 
   it('removes a trigger from a job schedule page', async () => {
@@ -906,7 +926,7 @@ describe('AdminArea', () => {
 
     await goTo(actor, 'Jobs & logs');
     await openWorkTab(actor);
-    await chooseJob(actor, 'Scan for changes', /Edit schedule/);
+    await chooseJob(actor, 'Scan for changes', 'schedule');
     await actor.click(await screen.findByRole('button', { name: 'Add trigger' }));
     await actor.click(await screen.findByRole('button', { name: 'Add' }));
     await actor.click(await screen.findByRole('button', { name: 'Remove Daily at 03:00' }));
@@ -928,14 +948,12 @@ describe('AdminArea', () => {
 
     await goTo(actor, 'Jobs & logs');
     await openWorkTab(actor);
-    await chooseJob(actor, 'Scan for changes', /Edit schedule/);
+    await chooseJob(actor, 'Scan for changes', 'schedule');
     await actor.click(
       within(await screen.findByRole('dialog')).getByRole('button', { name: 'Close' }),
     );
 
-    expect(
-      await screen.findByRole('button', { name: 'Actions for Scan for changes' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Run Scan for changes' })).toBeInTheDocument();
   });
 
   it('lets an operator set the catalogue key', async () => {

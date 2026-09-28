@@ -65,7 +65,7 @@ const FACE =
 const PANEL = [
   'flex flex-col overflow-hidden rounded-none',
   SHELL,
-  'sm:w-[min(42rem,92vw)] sm:rounded-2xl',
+  'sm:w-[min(48rem,92vw)] sm:rounded-2xl',
 ].join(' ');
 
 const ROW = ['flex flex-col gap-3 overflow-y-auto', 'sm:flex-row sm:gap-0 sm:overflow-hidden'].join(
@@ -227,7 +227,7 @@ const Dialog = ({ label, isOpen, onClose, children, size = 'default', className 
           data-slot="dialog-content"
           className={cn(
             STANDING[size],
-            'sm:w-[min(42rem,92vw)]',
+            'sm:w-[min(48rem,92vw)]',
             ROW,
             PANEL_MOTION[size],
             SIZE_CLASSES[size],

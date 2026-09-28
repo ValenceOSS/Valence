@@ -13,6 +13,7 @@ import { inVersionOrder } from './inVersionOrder';
 import { isOrdinaryPath } from './isOrdinaryPath';
 import { labelOfVersion } from './labelOfVersion';
 import { pathParts } from './pathParts';
+import { sharedStart } from './sharedStart';
 import { readEpisodeTitle } from './readEpisodeTitle';
 import type { Placement } from './Placement.types';
 
@@ -74,27 +75,6 @@ const episodeKeyOf = (path: string): string | null => {
   return read.seasonNumber === null || read.episodeNumber === null
     ? null
     : `S${String(read.seasonNumber)}E${String(read.episodeNumber)}`;
-};
-
-/**
- * The start two names share, which is what the versions of one episode are told apart after.
- *
- * @param left - One name.
- * @param right - The other.
- * @returns What they both start with.
- */
-const sharedStart = (left: string, right: string): string => {
-  let at = 0;
-
-  while (
-    at < left.length &&
-    at < right.length &&
-    left[at]?.toLowerCase() === right[at]?.toLowerCase()
-  ) {
-    at += 1;
-  }
-
-  return left.slice(0, at);
 };
 
 /**

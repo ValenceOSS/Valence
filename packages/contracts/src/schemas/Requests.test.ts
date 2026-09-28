@@ -29,6 +29,17 @@ const A_STATUS = {
       },
     ],
   },
+  solver: {
+    isRunning: true,
+    sites: 2,
+    runningSince: '2026-09-19T00:00:00.000Z',
+    passed: 14,
+    failed: 1,
+    lastPassedAt: '2026-09-19T00:05:00.000Z',
+    lastFailedAt: '2026-09-19T00:01:00.000Z',
+    problem: 'Timed out after 60 seconds getting past the site’s browser check',
+    startProblem: null,
+  },
 };
 
 describe('Requests', () => {
@@ -36,7 +47,7 @@ describe('Requests', () => {
     expect(RequestsStatusSchema.parse(A_STATUS)).toEqual(A_STATUS);
   });
 
-  it('reads a service with no VPN set up, and one too old to say about its indexers', () => {
+  it('reads a service with no VPN set up, and one too old to say about its indexers or solver', () => {
     const status = {
       version: '0.4.0',
       vpn: {
@@ -53,6 +64,7 @@ describe('Requests', () => {
       ...status,
       vpn: { ...status.vpn, problemCode: null },
       indexers: { total: 0, enabled: 0, failing: [] },
+      solver: null,
     });
   });
 

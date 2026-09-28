@@ -3,7 +3,7 @@ import type { ComponentType } from 'react';
 
 type IconGlyph = ComponentType<GlyphProps>;
 
-type IconTone = 'inherit' | 'strong' | 'muted' | 'faint' | 'danger' | 'scrim';
+type IconTone = 'inherit' | 'strong' | 'muted' | 'faint' | 'danger' | 'success' | 'scrim';
 
 type IconProps = {
   of: IconGlyph;

@@ -181,6 +181,22 @@ describe('SharePanel', () => {
     });
   });
 
+  it('can withdraw a used-up link, since whoever opened it can still watch', async () => {
+    fetchShares.mockResolvedValue([share({ viewCap: 1, views: 1, isSpent: true })]);
+
+    const user = userEvent.setup();
+
+    renderInAnAddress(<SharePanel />);
+
+    expect(await screen.findByText('Whoever opened it can still watch')).toBeInTheDocument();
+
+    await withdraw(user, 'The Thing');
+
+    await waitFor(() => {
+      expect(revokeShare).toHaveBeenCalledWith('share-1');
+    });
+  });
+
   it('leaves a link alone where the confirmation is dismissed', async () => {
     fetchShares.mockResolvedValue([share()]);
 

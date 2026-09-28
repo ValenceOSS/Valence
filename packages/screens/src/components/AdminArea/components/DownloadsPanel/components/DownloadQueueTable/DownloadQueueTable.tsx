@@ -62,6 +62,8 @@ const describeArrived = (download: QueuedDownload): ReactNode => {
  * @param onPause - Called to pause a download.
  * @param onResume - Called to resume one.
  * @param onRemove - Called to remove one.
+ * @param fillsScreen - Whether it stands as tall as the room left below it, on a page that is
+ *   otherwise this table, rather than a modest height inside a dialog.
  */
 const DownloadQueueTable = ({
   downloads,
@@ -71,6 +73,7 @@ const DownloadQueueTable = ({
   onPause,
   onResume,
   onRemove,
+  fillsScreen = false,
 }: DownloadQueueTableProps) => {
   const columns = useMemo<DataTableColumn<QueuedDownload>[]>(
     () => [
@@ -286,6 +289,7 @@ const DownloadQueueTable = ({
 
   return (
     <DataTable
+      height={fillsScreen ? 'fills' : 'compact'}
       label="Downloads"
       columns={columns}
       rows={[...downloads]}

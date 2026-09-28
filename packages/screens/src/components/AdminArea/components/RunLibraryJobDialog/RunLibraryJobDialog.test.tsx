@@ -12,6 +12,9 @@ const SCAN: JobDefinition = {
   needsLibrary: true,
   destructive: false,
   takesParts: false,
+  group: 'library',
+  runsByHand: true,
+  schedulable: true,
 };
 
 const RESET: JobDefinition = {
@@ -21,6 +24,9 @@ const RESET: JobDefinition = {
   needsLibrary: true,
   destructive: true,
   takesParts: false,
+  group: 'reset',
+  runsByHand: true,
+  schedulable: false,
 };
 
 const MOVIES: Library = {

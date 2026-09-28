@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createInertJobQueue } from './createInertJobQueue';
 import { createJobScheduleService } from './createJobScheduleService';
 import { createMemoryJobTriggerStore } from './createMemoryJobTriggerStore';
+import { RESET_LIBRARY_JOB } from './jobDefinitions';
 import type { JobQueue } from './JobQueue';
 
 const ZONE = 'Europe/London';
@@ -125,6 +126,20 @@ describe('createJobScheduleService', () => {
 
     await schedules.add('library.scan', { kind: 'startup' });
     await schedules.add('server.cleanupSessions', { kind: 'daily', hour: 3, minute: 0 });
+
+    expect(await schedules.sync()).toEqual(['library.scan']);
+  });
+
+  it('does not run at startup a job that can no longer be scheduled, though a trigger was kept', async () => {
+    const store = createMemoryJobTriggerStore();
+    const schedules = createJobScheduleService({
+      store,
+      jobs: createInertJobQueue(),
+      readTimezone: () => Promise.resolve(ZONE),
+    });
+
+    await store.add(RESET_LIBRARY_JOB, { kind: 'startup' });
+    await schedules.add('library.scan', { kind: 'startup' });
 
     expect(await schedules.sync()).toEqual(['library.scan']);
   });

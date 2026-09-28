@@ -29,6 +29,9 @@ const DEFINITIONS: JobDefinition[] = [
     needsLibrary: true,
     destructive: false,
     takesParts: false,
+    group: 'library',
+    runsByHand: true,
+    schedulable: true,
   },
 ];
 

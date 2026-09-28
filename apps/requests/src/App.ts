@@ -9,7 +9,11 @@ import {
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
 import type { DefinitionCatalogue } from '@ValenceRequests/definitions/createDefinitionCatalogue';
 import { readBody } from '@ValenceRequests/readBody';
-import type { RequestsStatus, RequestsVpn } from '@ValenceContracts/schemas/Requests';
+import type {
+  RequestsSolver,
+  RequestsStatus,
+  RequestsVpn,
+} from '@ValenceContracts/schemas/Requests';
 import type { IndexerService } from '@ValenceRequests/indexers/createIndexerService';
 import type { ProfileService } from '@ValenceRequests/profiles/createProfileService';
 
@@ -17,6 +21,7 @@ type CreateAppOptions = {
   secret: string;
   version: string;
   readVpn: () => RequestsVpn;
+  readSolver: () => RequestsSolver;
   isDatabaseUp: () => Promise<boolean>;
   indexers: IndexerService;
   definitions: Pick<DefinitionCatalogue, 'catalogue' | 'detail' | 'refresh'>;
@@ -33,6 +38,7 @@ const NO_SUCH_INDEXER = { error: 'No such indexer.' };
  * @param secret - What the server presents as a bearer token.
  * @param version - The release this service is.
  * @param readVpn - The last word on the VPN.
+ * @param readSolver - The last word on the browser that gets past Cloudflare's check.
  * @param isDatabaseUp - Whether the database answers.
  * @param indexers - The indexers, and searching them.
  * @param definitions - The catalogue of sites a definition describes.
@@ -44,6 +50,7 @@ const createApp = ({
   secret,
   version,
   readVpn,
+  readSolver,
   isDatabaseUp,
   indexers,
   definitions,
@@ -69,6 +76,7 @@ const createApp = ({
       version,
       vpn: readVpn(),
       indexers: await indexers.health(),
+      solver: readSolver(),
     } satisfies RequestsStatus),
   );
 

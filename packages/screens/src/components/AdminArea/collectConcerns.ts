@@ -122,6 +122,19 @@ const collectConcerns = ({
     });
   }
 
+  const solver = requests?.status?.solver ?? null;
+
+  if (requests?.isReachable === true && solver !== null && solver.startProblem !== null) {
+    concerns.push({
+      id: 'requests-solver',
+      tone: 'broken',
+      title: 'The Cloudflare solver will not start',
+      detail: solver.startProblem,
+      panel: 'requests',
+      help: docsFor('CloudflareCheckFailed'),
+    });
+  }
+
   if (overview !== null && !overview.transcoder.isReachable) {
     const address = overview.transcoder.address;
 

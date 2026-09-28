@@ -1,5 +1,6 @@
 import { describeChannels } from '@ValenceCore/functions/describeTrack';
 import { sharpestStepOf } from '@ValenceCore/functions/sharpestStepOf';
+import { describeRange } from '@ValenceClient/library/describeRange';
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
 
 type AudioStreamFacts = Pick<
@@ -10,13 +11,6 @@ type AudioStreamFacts = Pick<
 };
 
 const HIGH_DEFINITION: ReadonlySet<string> = new Set(['1440p', '1080p', '720p']);
-
-const RANGES: Readonly<Record<string, string>> = {
-  DolbyVision: 'Dolby Vision',
-  HDR10Plus: 'HDR10+',
-  HDR10: 'HDR10',
-  HLG: 'HLG',
-};
 
 const SOUNDS: Readonly<Record<string, string>> = {
   truehd: 'Dolby TrueHD',
@@ -65,7 +59,7 @@ const qualityBadges = (
             richest.channels > 2 ? describeChannels(richest.channels) : null,
           ];
 
-  return [sharpness, RANGES[item.videoRange] ?? null, ...sound].filter((badge) => badge !== null);
+  return [sharpness, describeRange(item.videoRange), ...sound].filter((badge) => badge !== null);
 };
 
 export { qualityBadges };

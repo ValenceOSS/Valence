@@ -40,6 +40,8 @@ const buttonStyles = cva(
       shape: {
         square: 'rounded-md',
         pill: 'rounded-full',
+        joinsNext: 'rounded-l-md rounded-r-none',
+        joinsPrevious: 'rounded-l-none rounded-r-md',
         bare: '',
       },
       isIconOnly: {

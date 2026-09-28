@@ -148,11 +148,11 @@ describe('DownloadClientDialog', () => {
 
     await user.click(screen.getByRole('button', { name: 'qBittorrent' }));
     await fillIn(user);
-    await user.click(screen.getByRole('button', { name: 'Try it' }));
+    await user.click(screen.getByRole('button', { name: 'Test' }));
 
     expect(await screen.findByText('It answered, and is v5.0.1.')).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Try it' }).querySelector('.text-success'),
+      screen.getByRole('button', { name: 'Test' }).querySelector('.text-success'),
     ).not.toBeNull();
   });
 
@@ -173,13 +173,13 @@ describe('DownloadClientDialog', () => {
 
     await user.click(screen.getByRole('button', { name: 'qBittorrent' }));
     await fillIn(user);
-    await user.click(screen.getByRole('button', { name: 'Try it' }));
+    await user.click(screen.getByRole('button', { name: 'Test' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'qBittorrent refused the username or password',
     );
     expect(
-      screen.getByRole('button', { name: 'Try it' }).querySelector('.text-danger'),
+      screen.getByRole('button', { name: 'Test' }).querySelector('.text-danger'),
     ).not.toBeNull();
   });
 
@@ -200,15 +200,15 @@ describe('DownloadClientDialog', () => {
 
     await user.click(screen.getByRole('button', { name: 'qBittorrent' }));
     await fillIn(user);
-    await user.click(screen.getByRole('button', { name: 'Try it' }));
+    await user.click(screen.getByRole('button', { name: 'Test' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('It did not answer.');
 
-    await user.click(screen.getByRole('button', { name: 'Try it' }));
+    await user.click(screen.getByRole('button', { name: 'Test' }));
 
     expect(await screen.findByText('Requesting is off.')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Try it' }));
+    await user.click(screen.getByRole('button', { name: 'Test' }));
 
     expect(await screen.findByText('It could not be tried.')).toBeInTheDocument();
   });
@@ -220,13 +220,11 @@ describe('DownloadClientDialog', () => {
 
     await user.click(screen.getByRole('button', { name: 'qBittorrent' }));
     await fillIn(user);
-    await user.click(screen.getByRole('button', { name: 'Try it' }));
+    await user.click(screen.getByRole('button', { name: 'Test' }));
     await screen.findByText(/It answered/);
     await user.type(screen.getByRole('textbox', { name: 'Books' }), 's');
 
-    expect(
-      screen.getByRole('button', { name: 'Try it' }).querySelector('.text-success'),
-    ).toBeNull();
+    expect(screen.getByRole('button', { name: 'Test' }).querySelector('.text-success')).toBeNull();
   });
 
   it('says what is wrong before trying or saving anything', async () => {
@@ -235,7 +233,7 @@ describe('DownloadClientDialog', () => {
     open();
 
     await user.clear(screen.getByRole('textbox', { name: 'Name' }));
-    await user.click(screen.getByRole('button', { name: 'Try it' }));
+    await user.click(screen.getByRole('button', { name: 'Test' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Give the client a name.');
 
@@ -276,7 +274,7 @@ describe('DownloadClientDialog', () => {
     expect(screen.getByText(/A password is kept/)).toBeInTheDocument();
 
     await user.click(screen.getByRole('switch', { name: 'Send releases to this client' }));
-    await user.click(screen.getByRole('button', { name: 'Try it' }));
+    await user.click(screen.getByRole('button', { name: 'Test' }));
 
     await waitFor(() => {
       expect(tryDownloadClient).toHaveBeenCalledWith(

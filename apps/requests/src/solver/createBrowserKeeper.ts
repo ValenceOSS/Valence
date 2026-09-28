@@ -13,13 +13,15 @@ type CreateBrowserKeeperOptions<T extends BrowserLike> = {
  *
  * @param launch - Starts a browser.
  * @param now - The clock.
- * @returns The keeper: `get` the browser, how long it has been up, and `retire` it.
+ * @returns The keeper: `get` the browser, how long it has been up, whether it is running now,
+ *   and `retire` it.
  */
 const createBrowserKeeper = <T extends BrowserLike>({
   launch,
   now = Date.now,
 }: CreateBrowserKeeperOptions<T>) => {
   let current: { browser: Promise<T>; since: number } | null = null;
+  let running: T | null = null;
 
   const get = async (): Promise<T> => {
     const seen = current;
@@ -39,6 +41,14 @@ const createBrowserKeeper = <T extends BrowserLike>({
     const launching = launch();
 
     current = { browser: launching, since: now() };
+    void launching.then(
+      (browser) => {
+        if (current?.browser === launching) {
+          running = browser;
+        }
+      },
+      () => {},
+    );
 
     return launching;
   };
@@ -47,12 +57,15 @@ const createBrowserKeeper = <T extends BrowserLike>({
     const retiring = current;
 
     current = null;
+    running = null;
     await retiring?.browser.then((browser) => browser.close()).catch(() => {});
   };
 
   const upFor = (): number => (current === null ? 0 : now() - current.since);
 
-  return { get, retire, upFor };
+  const isRunning = (): boolean => running?.isConnected() === true;
+
+  return { get, retire, upFor, isRunning };
 };
 
 type BrowserKeeper<T extends BrowserLike> = ReturnType<typeof createBrowserKeeper<T>>;

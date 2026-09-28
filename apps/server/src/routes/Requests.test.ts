@@ -18,6 +18,7 @@ import {
   RequestsAvailabilitySchema,
   NO_WORK,
   RequestsOverviewSchema,
+  SOLVER_NOT_USED,
 } from '@ValenceContracts/schemas/Requests';
 import { ProfilesOnOfferSchema } from '@ValenceContracts/schemas/QualityProfile';
 import type { RequestsStatus } from '@ValenceContracts/schemas/Requests';
@@ -46,6 +47,7 @@ const A_STATUS: RequestsStatus = {
     problemCode: null,
   },
   indexers: { total: 0, enabled: 0, failing: [] },
+  solver: SOLVER_NOT_USED,
 };
 
 const AN_INDEXER = {

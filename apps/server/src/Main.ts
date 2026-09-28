@@ -1860,6 +1860,7 @@ const jobs = await createJobQueue({
               gt(mediaItem.addedAt, since),
               lte(mediaItem.addedAt, now),
               isNull(mediaItem.extraKind),
+              isNull(mediaItem.parentId),
             ),
           );
 

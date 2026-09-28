@@ -27,6 +27,7 @@ import {
   library,
   libraryBlock,
   mediaItem,
+  musicTrack,
   watchProgress,
   mediaPreviewOverride,
   rating,
@@ -965,7 +966,7 @@ const createDatabaseLibraryService = ({
           takesRequests: library.takesRequests,
           requestProfileId: library.requestProfileId,
           requestPath: library.requestPath,
-          itemCount: sql<number>`(case when ${library.kind} = 'books' then count(distinct ${bookChapter.id}) else count(distinct ${mediaItem.id}) end)::int`,
+          itemCount: sql<number>`(case when ${library.kind} = 'books' then count(distinct ${bookChapter.id}) else count(distinct ${mediaItem.id}) filter (where ${mediaItem.parentId} is null) end)::int`,
         })
         .from(library)
         .leftJoin(mediaItem, eq(mediaItem.libraryId, library.id))
@@ -1058,7 +1059,7 @@ const createDatabaseLibraryService = ({
           takesRequests: library.takesRequests,
           requestProfileId: library.requestProfileId,
           requestPath: library.requestPath,
-          itemCount: sql<number>`(case when ${library.kind} = 'books' then count(distinct ${bookChapter.id}) else count(distinct ${mediaItem.id}) end)::int`,
+          itemCount: sql<number>`(case when ${library.kind} = 'books' then count(distinct ${bookChapter.id}) else count(distinct ${mediaItem.id}) filter (where ${mediaItem.parentId} is null) end)::int`,
         })
         .from(library)
         .leftJoin(mediaItem, eq(mediaItem.libraryId, library.id))
@@ -1093,7 +1094,14 @@ const createDatabaseLibraryService = ({
         .from(
           sql`${mediaItem}, jsonb_array_elements_text(coalesce(${mediaItem.genres}, '[]'::jsonb)) as genre`,
         )
-        .where(and(isNull(mediaItem.extraKind), isNotATrack(db), visibleToViewer(db, viewer)))
+        .where(
+          and(
+            isNull(mediaItem.extraKind),
+            isNull(mediaItem.parentId),
+            isNotATrack(db),
+            visibleToViewer(db, viewer),
+          ),
+        )
         .groupBy(sql`genre`)
         .orderBy(sql`genre asc`);
 
@@ -1104,6 +1112,7 @@ const createDatabaseLibraryService = ({
           and(
             isNotNull(mediaItem.year),
             isNull(mediaItem.extraKind),
+            isNull(mediaItem.parentId),
             isNotATrack(db),
             visibleToViewer(db, viewer),
           ),
@@ -1114,7 +1123,14 @@ const createDatabaseLibraryService = ({
       const [best] = await db
         .select({ rating: sql<number>`coalesce(max(${mediaItem.rating}), 0)::float` })
         .from(mediaItem)
-        .where(and(isNull(mediaItem.extraKind), isNotATrack(db), visibleToViewer(db, viewer)));
+        .where(
+          and(
+            isNull(mediaItem.extraKind),
+            isNull(mediaItem.parentId),
+            isNotATrack(db),
+            visibleToViewer(db, viewer),
+          ),
+        );
 
       return {
         genres: genreRows.map((row) => row.value),
@@ -1152,7 +1168,10 @@ const createDatabaseLibraryService = ({
         ...(options.minRating === undefined ? [] : [gte(mediaItem.rating, options.minRating)]),
         ...(options.seriesId === undefined ? [] : [eq(mediaItem.seriesId, options.seriesId)]),
         ...(options.ids === undefined
-          ? [isNull(mediaItem.extraKind)]
+          ? [
+              isNull(mediaItem.extraKind),
+              ...(options.withVersions === true ? [] : [isNull(mediaItem.parentId)]),
+            ]
           : options.ids.length === 0
             ? [sql`false`]
             : [inArray(mediaItem.id, options.ids)]),
@@ -1193,6 +1212,8 @@ const createDatabaseLibraryService = ({
           rating: mediaItem.rating,
           externalId: mediaItem.externalId,
           genres: mediaItem.genres,
+          parentId: mediaItem.parentId,
+          versionLabel: mediaItem.versionLabel,
         })
         .from(mediaItem)
         .where(filters)
@@ -1338,7 +1359,11 @@ const createDatabaseLibraryService = ({
             : eq(mediaItem.id, scope.mediaId)
           : scope.seriesId === null
             ? null
-            : and(eq(mediaItem.seriesId, scope.seriesId), isNull(mediaItem.extraKind));
+            : and(
+                eq(mediaItem.seriesId, scope.seriesId),
+                isNull(mediaItem.extraKind),
+                isNull(mediaItem.parentId),
+              );
 
       if (where === null) {
         return [];
@@ -1417,6 +1442,7 @@ const createDatabaseLibraryService = ({
           and(
             sql`${mediaItem.castMembers} @> ${JSON.stringify([{ personId }])}::jsonb`,
             isNull(mediaItem.extraKind),
+            isNull(mediaItem.parentId),
             visibleToViewer(db, viewer),
           ),
         )
@@ -1858,6 +1884,24 @@ const createDatabaseLibraryService = ({
         .where(inArray(mediaItem.path, paths));
 
       return Object.fromEntries(rows.map((row) => [row.path, row.id]));
+    },
+
+    mediaPathsIn: async (libraryId) => {
+      const [items, albums, books] = await Promise.all([
+        db
+          .select({ id: mediaItem.id, path: mediaItem.path })
+          .from(mediaItem)
+          .where(and(eq(mediaItem.libraryId, libraryId), isNotATrack(db))),
+        db
+          .select({ id: musicTrack.albumId, path: sql<string>`min(${mediaItem.path})` })
+          .from(musicTrack)
+          .innerJoin(mediaItem, eq(mediaItem.id, musicTrack.mediaItemId))
+          .where(eq(mediaItem.libraryId, libraryId))
+          .groupBy(musicTrack.albumId),
+        db.select({ id: book.id, path: book.path }).from(book).where(eq(book.libraryId, libraryId)),
+      ]);
+
+      return Object.fromEntries([...items, ...albums, ...books].map((row) => [row.id, row.path]));
     },
 
     regeneratePreviews: async (libraryId) => {

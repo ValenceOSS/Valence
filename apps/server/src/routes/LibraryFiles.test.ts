@@ -21,6 +21,7 @@ import {
   ChangedEntrySchema,
   LibraryFileSearchSchema,
   LibraryFolderSchema,
+  MediaPathsSchema,
 } from '@ValenceContracts/schemas/LibraryFiles';
 
 const BASE = 'http://localhost:8420';
@@ -121,6 +122,27 @@ describe('the file manager over HTTP', () => {
     const inside = LibraryFolderSchema.parse(await (await send(at(root))).json());
 
     expect(inside.entries.map((entry) => entry.name)).toEqual(['Arrival (2016)', 'Dune.mkv']);
+  });
+
+  it('says where each item in a library is, only to somebody who may change libraries', async () => {
+    const libraryId = '0f8fad5b-d9cb-469f-a165-70867728950e';
+    const { send, library } = await build();
+    const told = vi
+      .spyOn(library, 'mediaPathsIn')
+      .mockResolvedValue({ 'media-1': join(root, 'Dune.mkv') });
+
+    const answer = await send(`/media?${new URLSearchParams({ libraryId }).toString()}`);
+
+    expect(MediaPathsSchema.parse(await answer.json())).toEqual({
+      paths: { 'media-1': join(root, 'Dune.mkv') },
+    });
+    expect(told).toHaveBeenCalledWith(libraryId);
+
+    const { send: askAsNobody } = await build(false);
+
+    expect(
+      (await askAsNobody(`/media?${new URLSearchParams({ libraryId }).toString()}`)).status,
+    ).toBe(403);
   });
 
   it('refuses a folder outside every library', async () => {

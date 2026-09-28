@@ -202,6 +202,18 @@ describe('fetchLibraryItems', () => {
     expect(fetchMock.mock.calls[0]?.[0]).toContain('search=dune');
   });
 
+  it('asks for a film’s other versions only where told to', async () => {
+    fetchMock.mockResolvedValue(ok({ items: [], total: 0 }));
+
+    await fetchLibraryItems(library.id, { withVersions: true });
+
+    expect(String(fetchMock.mock.calls.at(-1)?.[0])).toContain('versions=all');
+
+    await fetchLibraryItems(library.id);
+
+    expect(String(fetchMock.mock.calls.at(-1)?.[0])).not.toContain('versions=');
+  });
+
   it('omits an empty search term', async () => {
     fetchMock.mockResolvedValue(ok({ items: [], total: 0 }));
 

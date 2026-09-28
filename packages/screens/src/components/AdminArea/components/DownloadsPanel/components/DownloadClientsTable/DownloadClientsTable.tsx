@@ -187,6 +187,7 @@ const DownloadClientsTable = ({
 
   return (
     <DataTable
+      height="fills"
       label="Download clients"
       columns={columns}
       rows={[...clients]}

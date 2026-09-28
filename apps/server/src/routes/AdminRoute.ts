@@ -6,6 +6,7 @@ import { RoundnessSchema } from '@ValenceContracts/schemas/Roundness';
 import { PREVIEW_QUALITIES } from '@ValenceContracts/schemas/PreviewQuality';
 import { TranscodeReuseSchema } from '@ValenceContracts/schemas/TranscodeReuse';
 import { JobRunRequestSchema } from '@ValenceServer/jobs/jobDefinitions';
+import { JobGroupSchema } from '@ValenceContracts/schemas/JobGroup';
 import { ScheduleTriggerSchema } from '@ValenceServer/jobs/scheduleTrigger';
 import {
   LogFacetsQuerySchema,
@@ -359,10 +360,13 @@ const AdminJobDefinitionSchema = z
   .object({
     kind: z.string(),
     label: z.string(),
+    group: JobGroupSchema,
     description: z.string(),
     needsLibrary: z.boolean(),
     destructive: z.boolean(),
     takesParts: z.boolean(),
+    runsByHand: z.boolean(),
+    schedulable: z.boolean(),
   })
   .openapi('AdminJobDefinition');
 
@@ -413,6 +417,10 @@ const adminRunJobRoute = createRoute({
     },
     404: {
       description: 'No such job kind or library, or nothing of those parts in the library',
+      content: { 'application/json': { schema: AdminError } },
+    },
+    409: {
+      description: 'A job that starts itself when there is work for it',
       content: { 'application/json': { schema: AdminError } },
     },
   },
@@ -607,7 +615,7 @@ const adminAddJobTriggerRoute = createRoute({
       content: { 'application/json': { schema: AdminError } },
     },
     404: {
-      description: 'No such job kind',
+      description: 'No such job kind, or one that cannot be scheduled',
       content: { 'application/json': { schema: AdminError } },
     },
   },

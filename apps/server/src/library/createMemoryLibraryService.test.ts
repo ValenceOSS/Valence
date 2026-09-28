@@ -136,6 +136,22 @@ describe('ordering a listing', () => {
   });
 });
 
+describe('a film held as more than one version', () => {
+  it('lists the film once, leaving its other versions to its own page', async () => {
+    const service = createMemoryLibraryService({
+      libraries: [theLibrary],
+      media: [
+        film({ id: 'main' }),
+        film({ id: 'cut', parentId: 'main', versionLabel: 'Extended Cut' }),
+      ],
+    });
+
+    const found = await service.listItems(asTheServer, LIBRARY_ID, everything);
+
+    expect(found?.items.map((one) => one.id)).toEqual(['main']);
+  });
+});
+
 describe('reaching a programme and its episodes', () => {
   it('answers with nothing where no series is held at all', async () => {
     const service = createMemoryLibraryService({ libraries: [], media: [] });

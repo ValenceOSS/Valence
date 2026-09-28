@@ -35,17 +35,23 @@ const MoveEntryRequestSchema = z.object({
 
 const ChangedEntrySchema = z.object({ path: z.string() });
 
+const MediaPathsSchema = z.object({
+  paths: z.record(z.string(), z.string()),
+});
+
 type LibraryEntry = z.infer<typeof LibraryEntrySchema>;
 type LibraryFolder = z.infer<typeof LibraryFolderSchema>;
 type LibraryFileSearch = z.infer<typeof LibraryFileSearchSchema>;
+type MediaPaths = z.infer<typeof MediaPathsSchema>;
 
-export type { LibraryEntry, LibraryFileSearch, LibraryFolder };
+export type { LibraryEntry, LibraryFileSearch, LibraryFolder, MediaPaths };
 
 export {
   ChangedEntrySchema,
   LibraryEntrySchema,
   LibraryFileSearchSchema,
   LibraryFolderSchema,
+  MediaPathsSchema,
   MoveEntryRequestSchema,
   RenameEntryRequestSchema,
 };

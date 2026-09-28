@@ -184,12 +184,14 @@ const createSitePool = <A extends Agent>({
 
   const has = (key: string): boolean => entries.has(key);
 
+  const size = (): number => entries.size;
+
   const closeAll = async (): Promise<void> => {
     await Promise.all([...entries.keys()].map(drop));
     await retire();
   };
 
-  return { use, has, closeAll };
+  return { use, has, size, closeAll };
 };
 
 type SitePool<A extends Agent> = ReturnType<typeof createSitePool<A>>;

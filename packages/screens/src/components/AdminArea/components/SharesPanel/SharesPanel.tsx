@@ -76,9 +76,9 @@ const SharesPanel = () => {
                 {standing.label}
               </Badge>
 
-              {standing.label !== 'Live' ? null : (
+              {standing.canWithdraw ? (
                 <span className="truncate text-xs text-text-muted">{untilWhen(row.original)}</span>
-              )}
+              ) : null}
             </span>
           );
         },
@@ -98,7 +98,7 @@ const SharesPanel = () => {
         header: '',
         enableSorting: false,
         cell: ({ row }) =>
-          row.original.isSpent ? null : (
+          !shareStanding(row.original, Date.now()).canWithdraw ? null : (
             <span className="flex justify-end">
               <Button
                 isIconOnly
@@ -190,6 +190,7 @@ const SharesPanel = () => {
         <Spinner isCentered label="Reading the links" size="sm" />
       ) : (
         <DataTable
+          height="fills"
           label="Links handed out"
           columns={columns}
           rows={asked.data}

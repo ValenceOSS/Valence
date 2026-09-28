@@ -2,6 +2,7 @@ import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import {
   deleteLibraryFileRoute,
   listLibraryFilesRoute,
+  listMediaPathsRoute,
   moveLibraryFileRoute,
   renameLibraryFileRoute,
   searchLibraryFilesRoute,
@@ -45,6 +46,17 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
       case 'failed':
         return context.json({ error: 'Valence is not allowed to read that folder.' }, 403);
     }
+  });
+
+  app.openapi(listMediaPathsRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'library.edit'))) {
+      return context.json({ error: 'That is for administrators.' }, 403);
+    }
+
+    return context.json(
+      { paths: await library.mediaPathsIn(context.req.valid('query').libraryId) },
+      200,
+    );
   });
 
   app.openapi(searchLibraryFilesRoute, async (context) => {

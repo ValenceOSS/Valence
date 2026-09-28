@@ -12,10 +12,35 @@ const RequestsVpnSchema = z.object({
   problemCode: ProblemCodeFieldSchema,
 });
 
+const RequestsSolverSchema = z.object({
+  isRunning: z.boolean(),
+  sites: z.number().int().min(0),
+  runningSince: z.string().datetime().nullable(),
+  passed: z.number().int().min(0),
+  failed: z.number().int().min(0),
+  lastPassedAt: z.string().datetime().nullable(),
+  lastFailedAt: z.string().datetime().nullable(),
+  problem: z.string().nullable(),
+  startProblem: z.string().nullable(),
+});
+
+const SOLVER_NOT_USED: z.infer<typeof RequestsSolverSchema> = {
+  isRunning: false,
+  sites: 0,
+  runningSince: null,
+  passed: 0,
+  failed: 0,
+  lastPassedAt: null,
+  lastFailedAt: null,
+  problem: null,
+  startProblem: null,
+};
+
 const RequestsStatusSchema = z.object({
   version: z.string(),
   vpn: RequestsVpnSchema,
   indexers: IndexerHealthSchema.default({ total: 0, enabled: 0, failing: [] }),
+  solver: RequestsSolverSchema.nullable().default(null),
 });
 
 const RequestsAvailabilitySchema = z.object({
@@ -57,15 +82,25 @@ const RequestsOverviewSchema = z.object({
 });
 
 type RequestsVpn = z.infer<typeof RequestsVpnSchema>;
+type RequestsSolver = z.infer<typeof RequestsSolverSchema>;
 type RequestsStatus = z.infer<typeof RequestsStatusSchema>;
 type RequestsAvailability = z.infer<typeof RequestsAvailabilitySchema>;
 type RequestsOverview = z.infer<typeof RequestsOverviewSchema>;
 type RequestsWork = z.infer<typeof RequestsWorkSchema>;
 
-export type { RequestsAvailability, RequestsOverview, RequestsStatus, RequestsVpn, RequestsWork };
+export type {
+  RequestsAvailability,
+  RequestsOverview,
+  RequestsSolver,
+  RequestsStatus,
+  RequestsVpn,
+  RequestsWork,
+};
 
 export {
   NO_WORK,
+  SOLVER_NOT_USED,
+  RequestsSolverSchema,
   RequestsAvailabilitySchema,
   RequestsOverviewSchema,
   RequestsWorkSchema,

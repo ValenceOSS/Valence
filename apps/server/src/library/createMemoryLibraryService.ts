@@ -583,7 +583,8 @@ const createMemoryLibraryService = (
       .filter((item) => matchesFilters(item, options))
       .filter((item) =>
         options.ids === undefined
-          ? (item.extraKind ?? null) === null
+          ? (item.extraKind ?? null) === null &&
+            (options.withVersions === true || (item.parentId ?? null) === null)
           : options.ids.includes(item.id),
       )
       .filter(
@@ -759,6 +760,8 @@ const createMemoryLibraryService = (
   },
 
   mediaIdsAt: () => Promise.resolve({}),
+
+  mediaPathsIn: () => Promise.resolve({}),
 
   rebuildArtefacts: (mediaId) =>
     Promise.resolve(

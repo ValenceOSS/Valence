@@ -9,6 +9,7 @@ type DownloadQueueTableProps = {
   onPause: (download: QueuedDownload) => void;
   onResume: (download: QueuedDownload) => void;
   onRemove: (download: QueuedDownload) => void;
+  fillsScreen?: boolean;
 };
 
 export type { DownloadQueueTableProps };

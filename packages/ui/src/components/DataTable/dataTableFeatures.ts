@@ -1,8 +1,10 @@
 import {
   columnFilteringFeature,
+  createExpandedRowModel,
   createFilteredRowModel,
   createPaginatedRowModel,
   createSortedRowModel,
+  rowExpandingFeature,
   rowPaginationFeature,
   rowSortingFeature,
   tableFeatures,
@@ -10,6 +12,7 @@ import {
 
 type DataTableColumnMeta = {
   filterOptions?: readonly { id: string; label: string }[];
+  shrinks?: boolean;
 };
 
 const columnMeta: DataTableColumnMeta = {};
@@ -21,6 +24,8 @@ const dataTableFeatures = tableFeatures({
   sortedRowModel: createSortedRowModel(),
   rowPaginationFeature,
   paginatedRowModel: createPaginatedRowModel(),
+  rowExpandingFeature,
+  expandedRowModel: createExpandedRowModel(),
   columnMeta,
 });
 

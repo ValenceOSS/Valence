@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { NO_WORK } from '@ValenceContracts/schemas/Requests';
+import { NO_WORK, SOLVER_NOT_USED } from '@ValenceContracts/schemas/Requests';
 import type { RequestsStatus, RequestsVpn } from '@ValenceContracts/schemas/Requests';
 import type { RequestsReading } from '@ValenceServer/requests/createRequestsClient';
 import { createRequestsMonitor } from './createRequestsMonitor';
@@ -28,6 +28,7 @@ const answered = (isUp: boolean | null): RequestsReading => ({
     version: '0.4.0',
     vpn: aVpn(isUp),
     indexers: { total: 0, enabled: 0, failing: [] },
+    solver: SOLVER_NOT_USED,
   } satisfies RequestsStatus,
 });
 
@@ -87,6 +88,7 @@ describe('createRequestsMonitor', () => {
         version: '0.4.0',
         vpn: aVpn(true),
         indexers: { total: 0, enabled: 0, failing: [] },
+        solver: SOLVER_NOT_USED,
       },
     });
   });
@@ -149,6 +151,7 @@ describe('createRequestsMonitor', () => {
         version: '0.4.0',
         vpn: { ...aVpn(false), problem: null, problemCode: null },
         indexers: { total: 0, enabled: 0, failing: [] },
+        solver: SOLVER_NOT_USED,
       },
     });
 
@@ -193,6 +196,7 @@ describe('createRequestsMonitor', () => {
         version: '0.4.0',
         vpn: aVpn(null),
         indexers: { total: 2, enabled: 2, failing: indexers },
+        solver: SOLVER_NOT_USED,
       },
     });
 

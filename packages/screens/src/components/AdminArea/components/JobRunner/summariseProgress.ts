@@ -62,4 +62,6 @@ const summariseProgress = (entries: ScanEntry[]): ProgressSummary | null => {
   };
 };
 
+export type { ProgressSummary };
+
 export { summariseProgress };

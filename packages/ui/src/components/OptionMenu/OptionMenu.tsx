@@ -5,6 +5,7 @@ import * as RadixMenu from '@radix-ui/react-dropdown-menu';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { MENU } from '@ValenceUI/tokens/menu';
+import { JOINED_LOOKS } from '@ValenceUI/tokens/joinedLooks';
 import { POPUP_MOTION } from '@ValenceUI/animations/motion';
 import { usePortalContainer } from '@ValenceUI/usePortalContainer';
 import type { OptionMenuProps } from './OptionMenu.types';
@@ -25,6 +26,8 @@ const HOVER_CLOSES_MS = 220;
  *   arrow is pressed on it, and pressing it still does what it did.
  * @param columns - The choices, in one or more named columns.
  * @param className - Extra classes for the caller's own layout.
+ * @param triggerShape - How its own control is drawn: a glyph, a field, a button, or an arrow that
+ *   runs on from the button before it and is painted as that button.
  */
 const OptionMenu = ({
   label,
@@ -92,16 +95,20 @@ const OptionMenu = ({
           'inline-flex shrink-0 items-center text-current',
           'transition-colors duration-[var(--duration-fast)] ease-[var(--ease-soft)]',
           'disabled:cursor-not-allowed disabled:opacity-50',
-          triggerShape === 'field'
-            ? cn(
-                'h-8 w-full justify-between gap-2 rounded-md px-3 text-[0.8125rem] font-semibold',
-                'border border-[var(--surface-line)] bg-[var(--surface-hover)] text-text',
-                'hover:bg-[var(--surface-active)]',
-              )
-            : cn(
-                'size-8 justify-center rounded-md',
-                'hover:bg-[var(--surface-hover)] data-[state=open]:bg-[var(--surface-active)]',
-              ),
+          triggerShape === 'confirmJoined'
+            ? JOINED_LOOKS.confirm
+            : triggerShape === 'secondaryJoined'
+              ? JOINED_LOOKS.secondary
+              : triggerShape === 'field'
+                ? cn(
+                    'h-8 w-full justify-between gap-2 rounded-md px-3 text-[0.8125rem] font-semibold',
+                    'border border-[var(--surface-line)] bg-[var(--surface-hover)] text-text',
+                    'hover:bg-[var(--surface-active)]',
+                  )
+                : cn(
+                    'size-8 justify-center rounded-md',
+                    'hover:bg-[var(--surface-hover)] data-[state=open]:bg-[var(--surface-active)]',
+                  ),
           className,
         )}
       >

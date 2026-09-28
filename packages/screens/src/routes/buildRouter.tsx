@@ -79,7 +79,11 @@ const BROWSABLE = ['/shows', '/films', '/new', '/favourites'] as const;
 
 const ADMIN_DEFAULT_PANEL = 'overview';
 
-const adminSearch = z.object({ job: z.string().optional(), ...ObservabilitySearchSchema.shape });
+const adminSearch = z.object({
+  job: z.string().optional(),
+  folder: z.string().optional(),
+  ...ObservabilitySearchSchema.shape,
+});
 
 const phoneSearch = z.object({ challenge: z.string().optional(), profile: z.string().optional() });
 

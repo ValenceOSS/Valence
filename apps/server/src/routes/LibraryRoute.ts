@@ -138,6 +138,7 @@ const listItemsRoute = createRoute({
       ids: z.string().optional(),
       order: z.enum(['title', 'newest', 'yourRating']).optional(),
       minYourStars: z.coerce.number().int().min(1).max(5).optional(),
+      versions: z.enum(['all']).optional(),
       limit: z.coerce.number().int().positive().max(200).optional(),
       offset: z.coerce.number().int().nonnegative().optional(),
     }),

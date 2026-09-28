@@ -4,6 +4,8 @@ import { FormField } from '@ValenceUI/FormField';
 import { Icon } from '@ValenceUI/Icon';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { TextField } from '@ValenceUI/TextField';
+import { describeOptionLabel } from './describeOptionLabel';
+import { splitSettingLabel } from './splitSettingLabel';
 import type { DefinitionSettingsFieldsProps } from './DefinitionSettingsFields.types';
 
 /**
@@ -39,17 +41,21 @@ const DefinitionSettingsFields = ({
               {setting.detail}
             </p>
           );
-        case 'checkbox':
+        case 'checkbox': {
+          const { title, detail } = splitSettingLabel(setting.label);
+
           return (
             <Checkbox
               key={setting.name}
-              label={setting.label}
+              label={title}
+              {...(detail === null ? {} : { description: detail })}
               checked={value === true}
               onCheckedChange={(checked) => {
                 onChange(setting.name, checked);
               }}
             />
           );
+        }
         case 'select': {
           const chosen = typeof value === 'string' ? value : '';
 
@@ -68,14 +74,16 @@ const DefinitionSettingsFields = ({
                     },
                     options: setting.options.map((option) => ({
                       id: option.value,
-                      label: option.label,
+                      label: describeOptionLabel(option.label),
                     })),
                   },
                 ]}
                 trigger={
                   <>
                     <span className="truncate">
-                      {setting.options.find((option) => option.value === chosen)?.label ?? chosen}
+                      {describeOptionLabel(
+                        setting.options.find((option) => option.value === chosen)?.label ?? chosen,
+                      )}
                     </span>
                     <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
                   </>
