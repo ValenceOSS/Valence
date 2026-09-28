@@ -1,6 +1,7 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { z } from 'zod';
 import { readLanguage } from '@ValenceCore/functions/describeTrack';
+import { selectForcedSubtitle } from '@ValenceCore/functions/selectForcedSubtitle';
 
 const SubtitleTrackSchema = z.object({
   id: z.string(),
@@ -54,47 +55,45 @@ const subtitleTrackUrl = (mediaId: string, trackId: string, fromSeconds = 0): st
  * subtitle, it is the wrong language across the bottom of the picture. Measured on a real file whose
  * only forced track was Italian while the audio selected was English.
  *
- * Languages are compared whatever they are spelt as — `eng`, `en` or `English` are the same — and
- * a track whose language is unknown is not assumed to match, because the cost of being wrong is
- * subtitles nobody asked for, where the cost of being cautious is a viewer turning them on.
+ * Where a forced track comes as both text and pictures the text one is shown, the same answer the
+ * server gives when it plans the stream. See `selectForcedSubtitle`.
  *
  * @param tracks - The tracks available.
  * @param spokenLanguage - The language of the audio being played, where it is known.
  * @returns The track to start with, or the identifier meaning none.
  */
-const defaultTrackId = (tracks: SubtitleTrack[], spokenLanguage?: string | null): string => {
-  const spoken = readLanguage((spokenLanguage ?? '').split('-')[0]);
-
-  if (spoken === null || spoken === '') {
-    return SUBTITLES_OFF;
-  }
-
-  const forced = tracks.find(
-    (track) => track.isForced && readLanguage(track.language?.split('-')[0]) === spoken,
-  );
-
-  return forced?.id ?? SUBTITLES_OFF;
-};
+const defaultTrackId = (tracks: SubtitleTrack[], spokenLanguage?: string | null): string =>
+  selectForcedSubtitle(tracks, spokenLanguage)?.id ?? SUBTITLES_OFF;
 
 /**
  * Finds the track that continues what a viewer was already reading, when playback moves to the next
- * episode — subtitles chosen once should not have to be chosen again per episode.
+ * film or episode — subtitles chosen once should not have to be chosen again every time.
+ *
+ * Only a text track carries on. A track of pictures has to be drawn into the video, which restarts
+ * the stream and holds it to an encode for as long as it is on — a cost somebody pays by choosing
+ * that track, not one a remembered language should spend on their behalf. A remux usually lists its
+ * pictures first, so taking the first track in the language turned them on for every film. A full
+ * track is preferred over a forced one, since the viewer was reading everything, not just the signs.
  *
  * @param tracks - The tracks available on the new item.
  * @param language - The language they were reading.
- * @returns The track to select, or null where this item has none in that language.
+ * @returns The track to select, or null where this item has no text track in that language.
  */
 const trackForLanguage = (
   tracks: SubtitleTrack[],
   language: string | null,
 ): SubtitleTrack | null => {
-  if (language === null || language === '') {
+  const wanted = readLanguage(language);
+
+  if (wanted === null) {
     return null;
   }
 
-  const spoken = language.split('-')[0]?.toLowerCase() ?? '';
+  const readable = tracks.filter(
+    (track) => track.delivery === 'text' && readLanguage(track.language) === wanted,
+  );
 
-  return tracks.find((track) => (track.language ?? '').toLowerCase().startsWith(spoken)) ?? null;
+  return readable.find((track) => !track.isForced) ?? readable[0] ?? null;
 };
 
 export type { SubtitleTrack };

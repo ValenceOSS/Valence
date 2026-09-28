@@ -2,7 +2,6 @@ import { isImageSubtitle } from './isImageSubtitle';
 import { readLanguage } from './describeTrack';
 
 type ForcedCandidate = {
-  index: number;
   format: string;
   language?: string | null | undefined;
   isForced: boolean;

@@ -1702,7 +1702,9 @@ const VideoPlayer = ({
         },
         c: () => {
           setSelectedSubtitleId((current) =>
-            current === SUBTITLES_OFF ? (subtitleTracks[0]?.id ?? SUBTITLES_OFF) : SUBTITLES_OFF,
+            current === SUBTITLES_OFF
+              ? (subtitleTracks.find((track) => track.delivery === 'text')?.id ?? SUBTITLES_OFF)
+              : SUBTITLES_OFF,
           );
         },
       };

@@ -85,6 +85,23 @@ describe('defaultTrackId', () => {
     expect(defaultTrackId(tracks, 'en-GB')).toBe('en-forced');
   });
 
+  it('shows the forced text track over the forced pictures', () => {
+    const tracks = [
+      track({ id: 'pgs', format: 'pgs', delivery: 'burnIn', isForced: true, streamIndex: 3 }),
+      track({ id: 'srt', isForced: true }),
+    ];
+
+    expect(defaultTrackId(tracks, 'en')).toBe('srt');
+  });
+
+  it('shows forced pictures where the language has no forced text', () => {
+    const tracks = [
+      track({ id: 'pgs', format: 'pgs', delivery: 'burnIn', isForced: true, streamIndex: 3 }),
+    ];
+
+    expect(defaultTrackId(tracks, 'en')).toBe('pgs');
+  });
+
   it('stays off when nothing is forced', () => {
     expect(defaultTrackId([track()], 'en')).toBe(SUBTITLES_OFF);
   });
@@ -141,5 +158,36 @@ describe('trackForLanguage', () => {
 
   it('answers with nothing for a file that carries no subtitles', () => {
     expect(trackForLanguage([], 'en')).toBeNull();
+  });
+
+  it('passes over pictures to the text track, since a remux lists its pictures first', () => {
+    const tracks = [
+      track({ id: 'pgs', language: 'eng', format: 'pgs', delivery: 'burnIn', streamIndex: 3 }),
+      track({ id: 'srt', language: 'eng' }),
+    ];
+
+    expect(trackForLanguage(tracks, 'en')?.id).toBe('srt');
+  });
+
+  it('answers with nothing rather than turn on pictures nobody chose', () => {
+    const tracks = [
+      track({ id: 'pgs', language: 'eng', format: 'pgs', delivery: 'burnIn', streamIndex: 3 }),
+    ];
+
+    expect(trackForLanguage(tracks, 'en')).toBeNull();
+  });
+
+  it('continues with the full track rather than the forced one', () => {
+    const tracks = [track({ id: 'forced', isForced: true }), track({ id: 'full' })];
+
+    expect(trackForLanguage(tracks, 'en')?.id).toBe('full');
+  });
+
+  it('settles for a forced track where it is the only text in the language', () => {
+    expect(trackForLanguage([track({ id: 'forced', isForced: true })], 'en')?.id).toBe('forced');
+  });
+
+  it('does not take one language for another that shares its first letters', () => {
+    expect(trackForLanguage([track({ id: 'a', language: 'enm' })], 'en')).toBeNull();
   });
 });
