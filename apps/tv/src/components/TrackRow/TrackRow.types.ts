@@ -6,6 +6,7 @@ type TrackRowProps = {
   isCurrent: boolean;
   isPlaying: boolean;
   showsAlbum?: boolean;
+  isPick?: boolean;
   onPress: (place: number) => void;
   onFocus?: (place: number) => void;
 };

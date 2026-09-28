@@ -4,12 +4,12 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { ARequest } from '@ValenceMobile/components/TheSearch/components/ARequest/ARequest';
-import { whatAPhoneAsksFor } from '@ValenceMobile/components/TheSearch/whatAPhoneAsksFor';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { AskedProps } from './Asked.types';
 
 /**
- * The films and programmes asked for, newest first, and where each has got to.
+ * Everything asked for — films, programmes, music and books — newest first, and where each has got
+ * to.
  *
  * @param onAsk - Told which one somebody wants to see.
  */
@@ -17,7 +17,7 @@ const Asked = ({ onAsk }: AskedProps) => {
   const requests = useQuery(requestsQueries.mediaRequests());
   const who = useQuery(sessionQueries.who());
   const colours = useTheColours();
-  const mine = (requests.data ?? []).filter((request) => whatAPhoneAsksFor(request.kind));
+  const mine = requests.data ?? [];
   const progress = useQuery(
     requestsQueries.requestProgress(mine.some((request) => request.state === 'downloading')),
   );

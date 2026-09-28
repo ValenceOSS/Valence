@@ -6,6 +6,7 @@ type TheLibraryProps = {
   onLookAtShow: (libraryId: string, showId: string) => void;
   onNotifications: () => void;
   onScan: () => void;
+  onRequested?: () => void;
   onAlbum: (albumId: string) => void;
   onArtist: (artistId: string) => void;
   onPlaylist: (playlistId: string) => void;
@@ -15,11 +16,21 @@ type TheLibraryProps = {
   onBook: (bookId: string) => void;
   onRead: (bookId: string) => void;
   onListen: (bookId: string) => void;
-  isSearching?: boolean;
+  side?: 'home' | 'search' | 'downloads' | 'account';
   searchPage?: (
     header: ReactNode,
     searchingFor: string,
     onScrolled: (isScrolled: boolean) => void,
+  ) => ReactNode;
+  downloadsPage?: (
+    header: ReactNode,
+    onScrolled: (isScrolled: boolean) => void,
+    searchingFor: string,
+  ) => ReactNode;
+  accountPage?: (
+    header: ReactNode,
+    onScrolled: (isScrolled: boolean) => void,
+    shown: string,
   ) => ReactNode;
 };
 

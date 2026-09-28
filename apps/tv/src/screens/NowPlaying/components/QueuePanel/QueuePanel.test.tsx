@@ -10,6 +10,7 @@ describe('QueuePanel', () => {
           { at: 3, track: aTrack(7) },
           { at: 4, track: aTrack(2) },
         ]}
+        picks={[]}
         onJump={jest.fn()}
       />,
     );
@@ -31,6 +32,7 @@ describe('QueuePanel', () => {
           { at: 3, track: aTrack(7) },
           { at: 4, track: aTrack(2) },
         ]}
+        picks={[]}
         onJump={onJump}
       />,
     );
@@ -41,9 +43,24 @@ describe('QueuePanel', () => {
   });
 
   it('says so when nothing plays after this song', async () => {
-    const drawn = await render(<QueuePanel upcoming={[]} onJump={jest.fn()} />);
+    const drawn = await render(<QueuePanel upcoming={[]} picks={[]} onJump={jest.fn()} />);
 
     expect(drawn.getByText('Nothing plays after this song.')).toBeTruthy();
     expect(drawn.queryAllByRole('button')).toHaveLength(0);
+  });
+
+  it('marks a song smart shuffle mixed in from the library', async () => {
+    const drawn = await render(
+      <QueuePanel
+        upcoming={[
+          { at: 3, track: aTrack(7) },
+          { at: 4, track: aTrack(2) },
+        ]}
+        picks={[aTrack(2).id]}
+        onJump={jest.fn()}
+      />,
+    );
+
+    expect(drawn.getAllByText('Smart shuffle · Sleep Token')).toHaveLength(1);
   });
 });

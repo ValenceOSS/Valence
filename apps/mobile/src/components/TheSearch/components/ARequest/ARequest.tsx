@@ -2,11 +2,13 @@ import { Image, Linking, StyleSheet, View } from 'react-native';
 import { describeRequestBadge } from '@ValenceClient/requests/describeRequestBadge';
 import { describeRequestProgress } from '@ValenceClient/requests/describeRequestProgress';
 import { progressOfRequest } from '@ValenceClient/requests/progressOfRequest';
+import { describeDownloadLine } from '@ValenceClient/requests/describeDownloadLine';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { HowFar } from '@ValenceMobile/components/HowFar/HowFar';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { whatAPhoneAsksFor } from '@ValenceMobile/components/TheSearch/whatAPhoneAsksFor';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { pictureOnThisServer } from '@ValenceMobile/platform/pictureOnThisServer';
 import type { ARequestProps } from './ARequest.types';
 
 const styles = StyleSheet.create({
@@ -17,8 +19,10 @@ const styles = StyleSheet.create({
 });
 
 /**
- * One thing somebody asked for, and how far it has got, with a link to what explains its problem
- * where it has one.
+ * One thing somebody asked for — a film, a programme, music or a book — and how far it has got: while
+ * it downloads, a bar and how much has come, how fast and how long is left; and a link to what
+ * explains its problem where it has one. A film or a programme opens its page when pressed; music
+ * and books have no page on a phone, so they are only shown.
  *
  * @param request - What was asked for.
  * @param progress - Everything downloading, of which this may be some.
@@ -30,59 +34,68 @@ const ARequest = ({ request, progress, myId, onAsk }: ARequestProps) => {
   const badge = describeRequestBadge(request);
   const across = describeRequestProgress(request);
   const going = request.state === 'downloading' ? progressOfRequest(request, progress) : null;
+  const saidOfGoing = going === null ? null : describeDownloadLine(going);
   const { kind, tmdbId } = request;
-
-  if (!whatAPhoneAsksFor(kind) || tmdbId === null) {
-    return null;
-  }
-
   const { help } = badge;
+  const card = (
+    <View style={styles.row}>
+      <Image
+        style={[styles.poster, { backgroundColor: colours.surfaceRaised }]}
+        {...(request.posterUrl === null
+          ? {}
+          : { source: { uri: pictureOnThisServer(request.posterUrl) } })}
+        accessibilityIgnoresInvertColors
+      />
+
+      <View style={styles.words}>
+        <Words lines={1}>
+          {request.year === null ? request.title : `${request.title} (${request.year.toString()})`}
+        </Words>
+
+        <Words size="small" tone={badge.tone === 'danger' ? 'danger' : 'accent'}>
+          {badge.detail === null ? badge.label : `${badge.label} · ${badge.detail}`}
+        </Words>
+
+        {across === null ? null : (
+          <Words size="small" tone="muted">
+            {across}
+          </Words>
+        )}
+
+        <Words size="small" tone="muted">
+          {request.requestedBy.id === myId
+            ? 'Asked by you'
+            : `Asked by ${request.requestedBy.name}`}
+        </Words>
+
+        {going === null ? null : (
+          <HowFar fraction={going.progress} label={`How far ${request.title} has downloaded`} />
+        )}
+
+        {saidOfGoing === null ? null : (
+          <Words size="small" tone="muted">
+            {saidOfGoing}
+          </Words>
+        )}
+      </View>
+    </View>
+  );
 
   return (
     <View>
-      <Button
-        tone="bare"
-        label={request.title}
-        onPress={() => {
-          onAsk(kind, tmdbId.toString());
-        }}
-      >
-        <View style={styles.row}>
-          <Image
-            style={[styles.poster, { backgroundColor: colours.surfaceRaised }]}
-            {...(request.posterUrl === null ? {} : { source: { uri: request.posterUrl } })}
-            accessibilityIgnoresInvertColors
-          />
-
-          <View style={styles.words}>
-            <Words lines={1}>
-              {request.year === null
-                ? request.title
-                : `${request.title} (${request.year.toString()})`}
-            </Words>
-
-            <Words size="small" tone={badge.tone === 'danger' ? 'danger' : 'accent'}>
-              {badge.detail === null ? badge.label : `${badge.label} · ${badge.detail}`}
-            </Words>
-
-            {across === null ? null : (
-              <Words size="small" tone="muted">
-                {across}
-              </Words>
-            )}
-
-            <Words size="small" tone="muted">
-              {request.requestedBy.id === myId
-                ? 'Asked by you'
-                : `Asked by ${request.requestedBy.name}`}
-            </Words>
-
-            {going === null ? null : (
-              <HowFar fraction={going.progress} label={`How far ${request.title} has downloaded`} />
-            )}
-          </View>
-        </View>
-      </Button>
+      {whatAPhoneAsksFor(kind) && tmdbId !== null ? (
+        <Button
+          tone="bare"
+          label={request.title}
+          onPress={() => {
+            onAsk(kind, tmdbId.toString());
+          }}
+        >
+          {card}
+        </Button>
+      ) : (
+        card
+      )}
 
       {help === null || help === undefined ? null : (
         <View style={styles.fix}>

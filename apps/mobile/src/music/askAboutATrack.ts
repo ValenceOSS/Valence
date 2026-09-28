@@ -29,7 +29,13 @@ const askAboutATrack = ({
     {
       label: 'Add to playlist…',
       run: () => {
-        askWhichPlaylist(track, playlists, onPlaylistsChanged, onPlaylist);
+        askWhichPlaylist(
+          track.title,
+          () => Promise.resolve([track.id]),
+          playlists,
+          onPlaylistsChanged,
+          onPlaylist,
+        );
       },
     },
     { label: isLiked ? 'Remove from liked songs' : 'Like', run: onLike },

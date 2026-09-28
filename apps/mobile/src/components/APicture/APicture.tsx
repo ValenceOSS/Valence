@@ -1,5 +1,5 @@
 import { Image, StyleSheet } from 'react-native';
-import { SvgUri } from 'react-native-svg';
+import { ADrawing } from '@ValenceMobile/components/APicture/components/ADrawing/ADrawing';
 import type { APictureProps } from './APicture.types';
 
 const styles = StyleSheet.create({
@@ -9,20 +9,26 @@ const styles = StyleSheet.create({
 /**
  * A picture from the server, filling whatever holds it.
  *
- * A drawn face is a vector the server draws, which `Image` cannot read, so it is handed to the
- * drawing library the icons already use, as a browser hands one to an `img`.
+ * A drawn face is a vector the server draws, which `Image` cannot read, so it is drawn by the
+ * drawing library the icons already use, as a browser draws one in an `img`.
  *
  * @param picture - Where it is, and whether it is drawn.
  * @param onMissing - Told it could not be read.
+ * @param onLoad - Told it has been read and drawn.
  */
-const APicture = ({ picture, onMissing }: APictureProps) =>
+const APicture = ({ picture, onMissing, onLoad }: APictureProps) =>
   picture.isDrawn ? (
-    <SvgUri uri={picture.uri} width="100%" height="100%" onError={onMissing} />
+    <ADrawing
+      uri={picture.uri}
+      onMissing={onMissing}
+      {...(onLoad === undefined ? {} : { onLoad })}
+    />
   ) : (
     <Image
       style={styles.whole}
       source={{ uri: picture.uri }}
       onError={onMissing}
+      {...(onLoad === undefined ? {} : { onLoad })}
       accessibilityIgnoresInvertColors
     />
   );

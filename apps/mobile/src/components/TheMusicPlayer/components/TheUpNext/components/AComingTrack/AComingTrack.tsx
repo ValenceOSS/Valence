@@ -1,4 +1,5 @@
 import { MoreHorizontal, MusicNote } from '@keyline-icons/react-native';
+import { Sparkle as SparkleFilled } from '@keyline-icons/react-native/fill';
 import { memo } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
@@ -22,6 +23,7 @@ const styles = StyleSheet.create({
   },
   fills: { height: '100%', width: '100%' },
   menu: { padding: 10 },
+  picked: { alignItems: 'center', flexDirection: 'row', gap: 4 },
   play: { flex: 1 },
   row: { alignItems: 'center', flexDirection: 'row' },
   said: { flex: 1, gap: 2 },
@@ -30,14 +32,15 @@ const styles = StyleSheet.create({
 
 /**
  * One song still to come in the queue, with its album's cover, which skips to it when pressed and
- * has a menu of what else can be done with it.
+ * has a menu of what else can be done with it. A song smart shuffle mixed in is marked as one.
  *
  * @param track - The song.
  * @param at - Its place in the queue, handed back when it is pressed.
+ * @param isPick - Whether smart shuffle mixed it in from the library.
  * @param onPlay - Told to skip to the song at its place.
  * @param onMenu - Told to offer what else can be done with the song at its place.
  */
-const OneComingTrack = ({ track, at, onPlay, onMenu }: AComingTrackProps) => {
+const OneComingTrack = ({ track, at, isPick, onPlay, onMenu }: AComingTrackProps) => {
   const colours = useTheColours();
 
   return (
@@ -64,9 +67,21 @@ const OneComingTrack = ({ track, at, onPlay, onMenu }: AComingTrackProps) => {
             </View>
             <View style={styles.said}>
               <Words lines={1}>{track.title}</Words>
-              <Words size="small" tone="muted" lines={1}>
-                {track.artists.map((artist) => artist.name).join(', ')}
-              </Words>
+              {isPick ? (
+                <View style={styles.picked}>
+                  <Icon of={SparkleFilled} size={10} colour={colours.accent} />
+                  <Words size="small" tone="accent" lines={1}>
+                    Smart shuffle
+                  </Words>
+                  <Words size="small" tone="muted" lines={1}>
+                    · {track.artists.map((artist) => artist.name).join(', ')}
+                  </Words>
+                </View>
+              ) : (
+                <Words size="small" tone="muted" lines={1}>
+                  {track.artists.map((artist) => artist.name).join(', ')}
+                </Words>
+              )}
             </View>
           </View>
         </Button>

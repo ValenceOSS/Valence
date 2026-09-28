@@ -5,7 +5,8 @@ import {
   Play as PlayFilled,
   SkipForward as SkipForwardFilled,
 } from '@keyline-icons/react-native/fill';
-import { Image, StyleSheet, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { Animated, Image, PanResponder, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { LISTENING_CHOICES } from '@ValenceClient/books/LISTENING_CHOICES';
 import { useWhatIsHeard } from '@ValenceClient/books/useWhatIsHeard';
@@ -21,11 +22,20 @@ import { useTheBook } from '@ValenceMobile/hooks/useTheBook';
 import { useTheMusic } from '@ValenceMobile/hooks/useTheMusic';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { SPRINGS } from '@ValenceMobile/theme/SPRINGS';
 import type { TheNowPlayingBarProps } from './TheNowPlayingBar.types';
 
 const ART = 42;
 
 const HIGH = 60;
+
+const GOES_PAST = 0.35;
+
+const GOES_FASTER_THAN = 0.8;
+
+const GOES_OFF_MS = 180;
+
+const BACK = { ...SPRINGS.liquid, toValue: 0, useNativeDriver: true } as const;
 
 const styles = StyleSheet.create({
   art: {
@@ -53,6 +63,9 @@ const styles = StyleSheet.create({
  * Where a book is the one being heard it shows the book instead: its cover, its title and who wrote
  * it, a way to pause it and a way to go on thirty seconds.
  *
+ * While it is paused it can be swiped away to either side, which stops the music or closes the
+ * book, as a paused player on the lock screen can be; while it plays it stays where it is.
+ *
  * Draws nothing while nothing is playing.
  *
  * @param onOpen - Told which is being heard when somebody wants the whole player.
@@ -66,10 +79,83 @@ const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
   const isPlaying = shown?.isPlaying ?? state.isPlaying;
   const track = state.current;
   const listening = book.state.book;
+  const across = useWindowDimensions().width;
+  const isBook = heard === 'book' && listening !== null;
+  const isPaused = isBook ? !book.state.isPlaying : track !== null && !isPlaying;
+  const [slid] = useState(() => new Animated.Value(0));
+  const [latest] = useState(
+    () => new Map<'now', { isPaused: boolean; across: number; letGo: () => void }>(),
+  );
 
-  if (heard === 'book' && listening !== null) {
+  useEffect(() => {
+    latest.set('now', {
+      isPaused,
+      across,
+      letGo: isBook
+        ? () => {
+            book.player.close();
+          }
+        : () => {
+            player.stop();
+          },
+    });
+  });
+
+  const [swipe] = useState(() =>
+    PanResponder.create({
+      onMoveShouldSetPanResponderCapture: (_, gesture) =>
+        latest.get('now')?.isPaused === true &&
+        Math.abs(gesture.dx) > 10 &&
+        Math.abs(gesture.dx) > Math.abs(gesture.dy) * 2,
+      onPanResponderMove: (_, gesture) => {
+        slid.setValue(gesture.dx);
+      },
+      onPanResponderRelease: (_, gesture) => {
+        const now = latest.get('now');
+
+        if (now === undefined) {
+          return;
+        }
+
+        const { across: wide, letGo } = now;
+        const isGoing =
+          Math.abs(gesture.dx) > wide * GOES_PAST || Math.abs(gesture.vx) > GOES_FASTER_THAN;
+
+        if (!isGoing) {
+          Animated.spring(slid, BACK).start();
+
+          return;
+        }
+
+        Animated.timing(slid, {
+          toValue: (gesture.dx === 0 ? Math.sign(gesture.vx) : Math.sign(gesture.dx)) * wide,
+          duration: GOES_OFF_MS,
+          useNativeDriver: true,
+        }).start(() => {
+          letGo();
+          slid.setValue(0);
+        });
+      },
+      onPanResponderTerminate: () => {
+        Animated.spring(slid, BACK).start();
+      },
+    }),
+  );
+  const moving = useMemo(
+    () => ({
+      opacity: slid.interpolate({
+        inputRange: [-across, 0, across],
+        outputRange: [0, 1, 0],
+        extrapolate: 'clamp',
+      }),
+      transform: [{ translateX: slid }],
+    }),
+    [slid, across],
+  );
+
+  if (isBook) {
     return (
-      <View style={styles.row}>
+      <Animated.View style={[styles.row, moving]} {...swipe.panHandlers}>
         <AGlass roundness={16} />
 
         <View style={styles.opens}>
@@ -130,7 +216,7 @@ const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
             <Icon of={FastForwardFilled} size={24} colour={colours.text} />
           </View>
         </Button>
-      </View>
+      </Animated.View>
     );
   }
 
@@ -139,7 +225,7 @@ const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
   }
 
   return (
-    <View style={styles.row}>
+    <Animated.View style={[styles.row, moving]} {...swipe.panHandlers}>
       <AGlass roundness={16} />
 
       <View style={styles.opens}>
@@ -186,7 +272,7 @@ const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
           <Icon of={SkipForwardFilled} size={24} colour={colours.text} />
         </View>
       </Button>
-    </View>
+    </Animated.View>
   );
 };
 

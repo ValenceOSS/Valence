@@ -7,6 +7,7 @@ import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMe
 import { describeAskableFacts } from '@ValenceClient/requests/describeAskableFacts';
 import { describeStanding } from '@ValenceClient/requests/describeStanding';
 import { progressOfRequest } from '@ValenceClient/requests/progressOfRequest';
+import { describeDownloadLine } from '@ValenceClient/requests/describeDownloadLine';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { HowFar } from '@ValenceMobile/components/HowFar/HowFar';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
@@ -68,6 +69,7 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
   const request = (requests.data ?? []).find((one) => one.id === title?.standing.requestId) ?? null;
   const progress = useQuery(requestsQueries.requestProgress(request?.state === 'downloading'));
   const going = request === null ? null : progressOfRequest(request, progress.data ?? []);
+  const saidOfGoing = going === null ? null : describeDownloadLine(going);
   const choices = offered.data?.forcedId === null ? offered.data.choices : [];
   const needsQuality = choices.length > 1 && quality === null;
 
@@ -143,6 +145,12 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
 
       {going === null ? null : (
         <HowFar fraction={going.progress} label={`How far ${title.title} has downloaded`} />
+      )}
+
+      {saidOfGoing === null ? null : (
+        <Words size="small" tone="muted">
+          {saidOfGoing}
+        </Words>
       )}
 
       {title.standing.status === 'askable' ? (

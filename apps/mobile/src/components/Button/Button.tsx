@@ -38,6 +38,7 @@ const styles = StyleSheet.create({
  *
  * @param children - What it says.
  * @param onPress - What it does, told where it was pressed for a press area that cares.
+ * @param onLongPress - What holding it down does, where holding it offers more than a press.
  * @param tone - Whether it is the thing to press on a page, drawn in the page's own ink so it is
  *   white on a dark page and dark on a light one, as every client draws it; the thing to press over
  *   artwork, which is white whatever the page is; a soft pill for a thing somebody may want
@@ -57,6 +58,7 @@ const styles = StyleSheet.create({
 const Button = ({
   children,
   onPress,
+  onLongPress,
   tone = 'bold',
   icon,
   fills = false,
@@ -95,6 +97,7 @@ const Button = ({
       onPress={({ nativeEvent }) => {
         onPress({ x: nativeEvent.locationX, y: nativeEvent.locationY });
       }}
+      {...(onLongPress === undefined ? {} : { onLongPress })}
       style={({ pressed }) => [
         isBare ? styles.bare : isGhost ? styles.ghost : isBright ? styles.bright : styles.quiet,
         fills && styles.fills,

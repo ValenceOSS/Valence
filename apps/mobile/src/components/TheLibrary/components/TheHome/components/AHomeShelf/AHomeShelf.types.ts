@@ -1,3 +1,4 @@
+import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { Rail } from '@ValenceClient/library/groupIntoRails';
 import type { ComingUp } from '@ValenceContracts/schemas/Show';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
@@ -11,6 +12,7 @@ type AHomeShelfProps = {
   today: string;
   onLookAt: (mediaId: string) => void;
   onLookAtShow: (libraryId: string, showId: string) => void;
+  flagOf: (media: MediaSummary) => string | null;
 };
 
 export type { AHomeShelfProps, AShelfOf };

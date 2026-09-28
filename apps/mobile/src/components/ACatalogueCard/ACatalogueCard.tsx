@@ -6,6 +6,7 @@ import { describeStanding } from '@ValenceClient/requests/describeStanding';
 import { APoster } from '@ValenceMobile/components/APoster/APoster';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { whatAPhoneAsksFor } from '@ValenceMobile/components/TheSearch/whatAPhoneAsksFor';
+import { pictureOnThisServer } from '@ValenceMobile/platform/pictureOnThisServer';
 import type { ACatalogueCardProps } from './ACatalogueCard.types';
 
 /**
@@ -35,7 +36,7 @@ const ACatalogueCard = ({ title, onAsk, wide }: ACatalogueCardProps) => {
       <APoster
         title={title.title}
         year={title.year}
-        artwork={title.posterUrl}
+        artwork={title.posterUrl === null ? null : pictureOnThisServer(title.posterUrl)}
         note={describeStanding(title.standing)?.label ?? null}
         watched={isWatched ? 1 : 0}
         {...(wide === undefined ? {} : { wide })}

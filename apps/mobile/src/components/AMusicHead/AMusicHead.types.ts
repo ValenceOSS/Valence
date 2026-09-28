@@ -6,6 +6,7 @@ type AMusicHeadProps = {
   title: string;
   detail: string | null;
   artwork: string | null;
+  albumIds?: readonly string[];
   standIn: AGlyph;
   isRound?: boolean;
   canPlay: boolean;

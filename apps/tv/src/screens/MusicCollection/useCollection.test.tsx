@@ -55,6 +55,7 @@ const aPlaylist = (change: Partial<PlaylistSummary> = {}): PlaylistSummary => ({
   lostCount: 0,
   durationSeconds: 600,
   artworkAlbumIds: [],
+  hasOwnArtwork: false,
   updatedAt: '2026-01-01T00:00:00.000Z',
   ...change,
 });

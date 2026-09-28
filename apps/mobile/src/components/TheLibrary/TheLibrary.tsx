@@ -1,4 +1,4 @@
-import { Film, Monitor, ScanQrCode, SearchX } from '@keyline-icons/react-native';
+import { Film, Inbox, Monitor, ScanQrCode, SearchX } from '@keyline-icons/react-native';
 import {
   Film as FilmFilled,
   Home as HomeFilled,
@@ -46,6 +46,7 @@ import { ABlur } from '@ValenceMobile/components/ABlur/ABlur';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { useTheSideStrip } from '@ValenceMobile/hooks/useTheSideStrip';
 import { theColours } from '@ValenceMobile/theme/theColours';
+import { ACCOUNT_PANELS } from '@ValenceMobile/components/TheAccount/ACCOUNT_PANELS';
 import type { ReactNode } from 'react';
 import type { VideoPlayer } from 'expo-video';
 import type { ALight } from '@ValenceMobile/components/AMoodBackground/AMoodBackground.types';
@@ -83,6 +84,8 @@ const programmesOf = (
 });
 
 const SEARCH = 'search';
+
+const SIDES = ['home', 'search', 'downloads', 'account'] as const;
 
 /**
  * Notes whether a part has been scrolled from its top, which is what brings the bar's blur in.
@@ -160,6 +163,7 @@ const styles = StyleSheet.create({
  * @param onLookAtShow - Told which programme, in which library.
  * @param onNotifications - Told somebody wants to see what the server has told them.
  * @param onScan - Told somebody wants to scan a television's code to sign it in.
+ * @param onRequested - Told somebody wants to see what has been asked for, where they may ask.
  * @param onAlbum - Told to open an album.
  * @param onArtist - Told to open an artist.
  * @param onPlaylist - Told to open a playlist.
@@ -169,6 +173,11 @@ const styles = StyleSheet.create({
  * @param onBook - Told to open a book.
  * @param onRead - Told to carry on reading a book.
  * @param onListen - Told to carry on listening to a book.
+ * @param side - Which of the pages beside the library shows — the library itself, Search, Downloads
+ *   or Account — each sliding in beneath the same bar and over the same background.
+ * @param searchPage - Draws Search beneath the bar.
+ * @param downloadsPage - Draws Downloads beneath the bar.
+ * @param accountPage - Draws Account beneath the bar.
  */
 const TheLibrary = ({
   onWatch,
@@ -176,6 +185,7 @@ const TheLibrary = ({
   onLookAtShow,
   onNotifications,
   onScan,
+  onRequested,
   onAlbum,
   onArtist,
   onPlaylist,
@@ -185,8 +195,10 @@ const TheLibrary = ({
   onBook,
   onRead,
   onListen,
-  isSearching = false,
+  side = 'home',
   searchPage,
+  downloadsPage,
+  accountPage,
 }: TheLibraryProps) => {
   const colours = useTheColours();
   const told = useRef({ onWatch, onLookAt, onLookAtShow });
@@ -199,32 +211,34 @@ const TheLibrary = ({
   const [isBarAway, setIsBarAway] = useState(false);
   const [partsTall, setPartsTall] = useState(0);
   const [searchingFor, setSearchingFor] = useState('');
-  const [hasSearched, setHasSearched] = useState(isSearching);
+  const [downloadsFor, setDownloadsFor] = useState('');
+  const [accountShows, setAccountShows] = useState<string>(ACCOUNT_PANELS[0].id);
+  const isSearching = side === 'search';
+  const isAside = side !== 'home';
+  const [seen, setSeen] = useState<ReadonlySet<string>>(() => new Set([side]));
   const { width: wide } = useWindowDimensions();
 
   useEffect(() => {
-    if (isSearching) {
-      setHasSearched(true);
-    }
-  }, [isSearching]);
-  const [searchness] = useState(() => new Animated.Value(isSearching ? 1 : 0));
+    setSeen((was) => (was.has(side) ? was : new Set([...was, side])));
+  }, [side]);
+  const [along] = useState(() => new Animated.Value(SIDES.indexOf(side)));
 
   useEffect(() => {
     setIsBarAway(false);
-    Animated.timing(searchness, {
-      toValue: isSearching ? 1 : 0,
+    Animated.timing(along, {
+      toValue: SIDES.indexOf(side),
       duration: BAR_MOVES_OVER,
       easing: EASINGS.inOutCubic,
       useNativeDriver: true,
     }).start();
-  }, [isSearching, searchness]);
+  }, [side, along]);
   const turnedAt = useRef(0);
-  const isAway = isBarAway && !isSearching;
-  const searching = useRef(isSearching);
+  const isAway = isBarAway && !isAside;
+  const aside = useRef(isAside);
 
   useLayoutEffect(() => {
-    searching.current = isSearching;
-  }, [isSearching]);
+    aside.current = isAside;
+  }, [isAside]);
 
   useEffect(() => {
     Animated.timing(barAway, {
@@ -237,7 +251,7 @@ const TheLibrary = ({
 
   const followScroll = useCallback(
     (y: number) => {
-      if (searching.current) {
+      if (aside.current) {
         return;
       }
 
@@ -261,7 +275,7 @@ const TheLibrary = ({
     [barTall, isBarAway],
   );
   const [scrolled, setScrolled] = useState<Readonly<Record<string, boolean>>>({});
-  const isPast = scrolled[isSearching ? SEARCH : part] === true;
+  const isPast = scrolled[isAside ? side : part] === true;
   const room = useSafeAreaInsets();
   const strip = useTheSideStrip();
   const [arriving] = useState(() => new Animated.Value(0));
@@ -426,6 +440,9 @@ const TheLibrary = ({
             <Words size="heading">Valence</Words>
           </View>
           <View style={styles.aside}>
+            {onRequested === undefined ? null : (
+              <AGlassCircle of={Inbox} label="Requested" onPress={onRequested} />
+            )}
             <AGlassCircle of={ScanQrCode} label="Sign in a television" onPress={onScan} />
             <TheBell onPress={onNotifications} />
           </View>
@@ -450,11 +467,11 @@ const TheLibrary = ({
             },
           ]}
         >
-          <View pointerEvents={isSearching ? 'none' : 'auto'}>
+          <View pointerEvents={isAside ? 'none' : 'auto'}>
             <SegmentedRow
               label="What to show"
               fills
-              isShown={!isSearching && !isBarAway}
+              isShown={!isAside && !isBarAway}
               items={parts}
               value={part}
               onSelect={(next) => {
@@ -482,6 +499,24 @@ const TheLibrary = ({
               isShown={isSearching}
             />
           </View>
+          <View pointerEvents={side === 'downloads' ? 'auto' : 'none'} style={styles.searchInstead}>
+            <TheSearchBox
+              placeholder="Find a download"
+              onSettle={setDownloadsFor}
+              isCapsule
+              isShown={side === 'downloads'}
+            />
+          </View>
+          <View pointerEvents={side === 'account' ? 'auto' : 'none'} style={styles.searchInstead}>
+            <SegmentedRow
+              label="What to change"
+              fills
+              isShown={side === 'account'}
+              items={ACCOUNT_PANELS}
+              value={accountShows}
+              onSelect={setAccountShows}
+            />
+          </View>
         </Animated.View>
       </View>
     </View>
@@ -489,6 +524,14 @@ const TheLibrary = ({
 
   const searchScrolled = useCallback((isScrolled: boolean) => {
     setScrolled((was) => noteScrolled(was, SEARCH, isScrolled));
+  }, []);
+
+  const downloadsScrolled = useCallback((isScrolled: boolean) => {
+    setScrolled((was) => noteScrolled(was, 'downloads', isScrolled));
+  }, []);
+
+  const accountScrolled = useCallback((isScrolled: boolean) => {
+    setScrolled((was) => noteScrolled(was, 'account', isScrolled));
   }, []);
 
   const homeScrolled = useCallback((isScrolled: boolean) => {
@@ -611,6 +654,45 @@ const TheLibrary = ({
     [howFar, part, lookAt, lookAtShow],
   );
 
+  const slides = useMemo(() => {
+    const at = (which: (typeof SIDES)[number]) =>
+      along.interpolate({
+        inputRange: [0, SIDES.length - 1],
+        outputRange: [
+          SIDES.indexOf(which) * wide,
+          (SIDES.indexOf(which) - (SIDES.length - 1)) * wide,
+        ],
+      });
+
+    return {
+      home: at('home'),
+      search: at('search'),
+      downloads: at('downloads'),
+      account: at('account'),
+    };
+  }, [along, wide]);
+  const underTheBar = useMemo(
+    () => <View style={{ height: barTall - UNDER_THE_BAR }} />,
+    [barTall],
+  );
+  const searchShown = useMemo(
+    () => searchPage?.(underTheBar, searchingFor, searchScrolled),
+    [searchPage, underTheBar, searchingFor, searchScrolled],
+  );
+  const downloadsShown = useMemo(
+    () => downloadsPage?.(underTheBar, downloadsScrolled, downloadsFor),
+    [downloadsPage, underTheBar, downloadsScrolled, downloadsFor],
+  );
+  const accountShown = useMemo(
+    () => accountPage?.(underTheBar, accountScrolled, accountShows),
+    [accountPage, underTheBar, accountScrolled, accountShows],
+  );
+  const sidePages = [
+    ['search', searchShown],
+    ['downloads', downloadsShown],
+    ['account', accountShown],
+  ] as const;
+
   const isHomeSeen = part === 'home';
 
   const home = (
@@ -618,8 +700,8 @@ const TheLibrary = ({
       collapsable={false}
       style={[StyleSheet.absoluteFill, isHomeSeen ? null : styles.hidden]}
       pointerEvents={isHomeSeen ? 'auto' : 'none'}
-      accessibilityElementsHidden={!isHomeSeen || isSearching}
-      importantForAccessibility={isHomeSeen && !isSearching ? 'auto' : 'no-hide-descendants'}
+      accessibilityElementsHidden={!isHomeSeen || isAside}
+      importantForAccessibility={isHomeSeen && !isAside ? 'auto' : 'no-hide-descendants'}
     >
       <IS_ON_TOP.Provider value={isOnTop && part === 'home'}>
         <TheHome
@@ -649,17 +731,8 @@ const TheLibrary = ({
     <>
       <Animated.View
         collapsable={false}
-        pointerEvents={isSearching ? 'none' : 'box-none'}
-        style={[
-          StyleSheet.absoluteFill,
-          {
-            transform: [
-              {
-                translateX: searchness.interpolate({ inputRange: [0, 1], outputRange: [0, -wide] }),
-              },
-            ],
-          },
-        ]}
+        pointerEvents={isAside ? 'none' : 'box-none'}
+        style={[StyleSheet.absoluteFill, { transform: [{ translateX: slides.home }] }]}
       >
         {home}
         {part === 'home' ? null : part === 'books' ? (
@@ -695,33 +768,20 @@ const TheLibrary = ({
         )}
       </Animated.View>
 
-      {hasSearched ? (
-        <Animated.View
-          collapsable={false}
-          pointerEvents={isSearching ? 'box-none' : 'none'}
-          accessibilityElementsHidden={!isSearching}
-          importantForAccessibility={isSearching ? 'auto' : 'no-hide-descendants'}
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              transform: [
-                {
-                  translateX: searchness.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [wide, 0],
-                  }),
-                },
-              ],
-            },
-          ]}
-        >
-          {searchPage?.(
-            <View style={{ height: barTall - UNDER_THE_BAR }} />,
-            searchingFor,
-            searchScrolled,
-          )}
-        </Animated.View>
-      ) : null}
+      {sidePages.map(([which, page]) =>
+        !seen.has(which) || page === undefined ? null : (
+          <Animated.View
+            key={which}
+            collapsable={false}
+            pointerEvents={side === which ? 'box-none' : 'none'}
+            accessibilityElementsHidden={side !== which}
+            importantForAccessibility={side === which ? 'auto' : 'no-hide-descendants'}
+            style={[StyleSheet.absoluteFill, { transform: [{ translateX: slides[which] }] }]}
+          >
+            <IS_ON_TOP.Provider value={isOnTop && side === which}>{page}</IS_ON_TOP.Provider>
+          </Animated.View>
+        ),
+      )}
     </>,
   );
 };

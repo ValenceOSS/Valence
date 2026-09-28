@@ -8,6 +8,11 @@ import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { thePhonesMusicPlayer } from '@ValenceMobile/music/thePhonesMusicPlayer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { ANothingHere } from '@ValenceMobile/components/ANothingHere/ANothingHere';
+import { coverAlbumsOf } from '@ValenceClient/music/coverAlbumsOf';
+import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
+import { AMoodBackground } from '@ValenceMobile/components/AMoodBackground/AMoodBackground';
+import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
+import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import type { TheLikedSongsProps } from './TheLikedSongs.types';
 
 const SOURCE = { kind: 'liked' as const, id: null, name: 'Liked songs' };
@@ -26,6 +31,10 @@ const TheLikedSongs = ({ onAlbum, onArtist, onPlaylist, onBack }: TheLikedSongsP
   const read = useQuery(musicQueries.liked());
   const player = thePhonesMusicPlayer();
   const tracks = read.data ?? [];
+  const covers = coverAlbumsOf(tracks);
+  const lights = usePictureLights(
+    covers[0] === undefined ? null : onThisServer(albumArtworkUrl(covers[0])),
+  );
 
   if (read.isPending) {
     return (
@@ -36,19 +45,23 @@ const TheLikedSongs = ({ onAlbum, onArtist, onPlaylist, onBack }: TheLikedSongsP
   }
 
   return (
-    <Screen scrolls onBack={onBack}>
+    <Screen scrolls onBack={onBack} behind={<AMoodBackground palette={lights} />}>
       <AMusicHead
         kind="Playlist"
         title="Liked songs"
         detail={`${tracks.length.toString()} ${tracks.length === 1 ? 'song' : 'songs'}`}
         artwork={null}
+        albumIds={covers}
         standIn={Heart}
         canPlay={tracks.length > 0}
         onPlay={() => {
           player.play(tracks, 0, { source: SOURCE });
         }}
         onShuffle={() => {
-          player.play(tracks, 0, { source: SOURCE, isShuffled: true });
+          player.play(tracks, Math.floor(Math.random() * tracks.length), {
+            source: SOURCE,
+            isShuffled: true,
+          });
         }}
       />
 

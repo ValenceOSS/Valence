@@ -10,8 +10,10 @@ jest.mock('@ValenceClient/library/fetchLibrary', () => ({
   fetchLibraries: jest.fn(),
 }));
 
-const aSearch = () => (
+const aSearch = (onSide = jest.fn()) => (
   <TheSearch
+    side="discover"
+    onSide={onSide}
     onLookAt={jest.fn()}
     onLookAtShow={jest.fn()}
     onAsk={null}

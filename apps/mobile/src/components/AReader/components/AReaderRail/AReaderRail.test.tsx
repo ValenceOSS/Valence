@@ -79,8 +79,8 @@ describe('AReaderRail', () => {
       },
     );
 
-    const column = theHostWith(
-      (one) => one.type === 'ViewManagerAdapter_ValencePageScrubber_PageScrubber',
+    const column = theHostWith((one) =>
+      String(one.type).startsWith('ViewManagerAdapter_ValencePageScrubber'),
     );
 
     expect(column).toHaveProp('page', 1);

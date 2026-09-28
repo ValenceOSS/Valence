@@ -11,6 +11,8 @@ import { ATrackList } from '@ValenceMobile/components/ATrackList/ATrackList';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { useAskAboutAnAlbum } from '@ValenceMobile/music/useAskAboutAnAlbum';
+import { playlistArtworkUrl } from '@ValenceClient/music/fetchPlaylists';
 import type { TheMusicResultsProps } from './TheMusicResults.types';
 
 const SONGS_BESIDE_FILMS = 5;
@@ -40,6 +42,7 @@ const TheMusicResultsSection = ({
   onArtist,
   onPlaylist,
 }: TheMusicResultsProps) => {
+  const askAboutAnAlbum = useAskAboutAnAlbum(onPlaylist);
   const colours = useTheColours();
   const found = useQuery(musicQueries.search(asked));
   const { tracks = [], albums = [], artists = [], playlists = [] } = found.data ?? {};
@@ -98,6 +101,9 @@ const TheMusicResultsSection = ({
               onPress={() => {
                 onAlbum(album.id);
               }}
+              onLongPress={() => {
+                askAboutAnAlbum(album);
+              }}
             />
           ))}
         </AShelf>
@@ -106,14 +112,15 @@ const TheMusicResultsSection = ({
       {playlists.length === 0 ? null : (
         <AShelf title="Playlists">
           {playlists.map((playlist) => {
-            const cover = playlist.artworkAlbumIds[0] ?? null;
+            const ownCover = playlistArtworkUrl(playlist);
 
             return (
               <AMusicTile
                 key={playlist.id}
                 title={playlist.name}
                 detail={`${playlist.entryCount.toString()} songs`}
-                artwork={cover === null ? null : onThisServer(albumArtworkUrl(cover))}
+                artwork={ownCover === null ? null : onThisServer(ownCover)}
+                {...(ownCover === null ? { albumIds: playlist.artworkAlbumIds } : {})}
                 onPress={() => {
                   onPlaylist(playlist.id);
                 }}

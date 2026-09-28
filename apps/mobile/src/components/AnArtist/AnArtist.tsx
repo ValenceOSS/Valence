@@ -20,6 +20,8 @@ import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
 import { thePhonesMusicPlayer } from '@ValenceMobile/music/thePhonesMusicPlayer';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { useAskAboutAnAlbum } from '@ValenceMobile/music/useAskAboutAnAlbum';
+import { AnArtistStory } from '@ValenceMobile/components/AnArtist/components/AnArtistStory/AnArtistStory';
 import type { MusicAlbum } from '@ValenceContracts/schemas/Music';
 import type { AnArtistProps } from './AnArtist.types';
 
@@ -38,6 +40,7 @@ const POPULAR_AT_FIRST = 5;
  * @param onBack - Told somebody is done with them.
  */
 const AnArtist = ({ artistId, onAlbum, onArtist, onPlaylist, onBack }: AnArtistProps) => {
+  const askAboutAnAlbum = useAskAboutAnAlbum(onPlaylist);
   const colours = useTheColours();
   const cache = useQueryClient();
   const read = useQuery(musicQueries.artist(artistId));
@@ -86,6 +89,9 @@ const AnArtist = ({ artistId, onAlbum, onArtist, onPlaylist, onBack }: AnArtistP
             onPress={() => {
               onAlbum(album.id);
             }}
+            onLongPress={() => {
+              askAboutAnAlbum(album);
+            }}
           />
         ))}
       </AShelf>
@@ -105,7 +111,10 @@ const AnArtist = ({ artistId, onAlbum, onArtist, onPlaylist, onBack }: AnArtistP
           player.play(popular, 0, { source });
         }}
         onShuffle={() => {
-          player.play(popular, 0, { source, isShuffled: true });
+          player.play(popular, Math.floor(Math.random() * popular.length), {
+            source,
+            isShuffled: true,
+          });
         }}
       >
         <Button
@@ -145,6 +154,8 @@ const AnArtist = ({ artistId, onAlbum, onArtist, onPlaylist, onBack }: AnArtistP
 
       {shelf('Albums', albums)}
       {shelf('Appears on', appearsOn)}
+
+      <AnArtistStory artistId={artist.id} name={artist.name} />
     </Screen>
   );
 };

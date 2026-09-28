@@ -195,17 +195,20 @@ const thePhonesHeldFiles = (
 
   return {
     all: async () => {
-      const found = await Promise.all(
+      const gone = await Promise.all(
         rows.map(async (row) =>
           row.state !== 'here' ||
           (await getInfoAsync(filmOf(row.downloadId)).catch(() => ({ exists: false }))).exists
-            ? row
-            : null,
+            ? null
+            : row.downloadId,
         ),
       );
+      const missing = new Set(gone.filter((downloadId) => downloadId !== null));
 
-      rows = found.filter((row) => row !== null);
-      save();
+      if (missing.size > 0) {
+        rows = rows.filter((row) => !missing.has(row.downloadId));
+        save();
+      }
 
       return rows;
     },

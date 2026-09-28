@@ -6,6 +6,7 @@ type ThePicture = {
 type APictureProps = {
   picture: ThePicture;
   onMissing: () => void;
+  onLoad?: () => void;
 };
 
 export type { APictureProps, ThePicture };

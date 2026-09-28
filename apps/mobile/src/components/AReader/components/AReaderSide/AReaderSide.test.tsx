@@ -56,11 +56,14 @@ describe('AReaderSide', () => {
   it.each([
     ['width', 'Filling the width. Fill the height instead'],
     ['height', 'Filling the height. Show whole pages instead'],
-  ] as const)('says the pages are %s-filled, and what pressing changes it to', async (fit, says) => {
-    await render(aSide({ fit }));
+  ] as const)(
+    'says the pages are %s-filled, and what pressing changes it to',
+    async (fit, says) => {
+      await render(aSide({ fit }));
 
-    expect(screen.getByRole('button', { name: says })).toBeTruthy();
-  });
+      expect(screen.getByRole('button', { name: says })).toBeTruthy();
+    },
+  );
 
   it('says how far through the chapter is', async () => {
     await render(aSide());

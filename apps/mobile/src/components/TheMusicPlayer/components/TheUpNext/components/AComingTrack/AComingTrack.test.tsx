@@ -13,7 +13,7 @@ describe('AComingTrack', () => {
     const onPlay = jest.fn();
     const onMenu = jest.fn();
     const drawn = await render(
-      <AComingTrack track={aTrack(4)} at={3} onPlay={onPlay} onMenu={onMenu} />,
+      <AComingTrack track={aTrack(4)} at={3} isPick={false} onPlay={onPlay} onMenu={onMenu} />,
     );
 
     await userEvent.press(drawn.getByRole('button', { name: 'Play Track 4 now' }));
@@ -21,5 +21,27 @@ describe('AComingTrack', () => {
 
     expect(onPlay).toHaveBeenCalledWith(3);
     expect(onMenu).toHaveBeenCalledWith(3, 'Track 4');
+  });
+
+  it('marks a song smart shuffle mixed in from the library', async () => {
+    const drawn = await render(
+      <AComingTrack track={aTrack(4)} at={3} isPick onPlay={jest.fn()} onMenu={jest.fn()} />,
+    );
+
+    expect(drawn.getByText('Smart shuffle')).toBeTruthy();
+  });
+
+  it('marks nothing on a song somebody chose', async () => {
+    const drawn = await render(
+      <AComingTrack
+        track={aTrack(4)}
+        at={3}
+        isPick={false}
+        onPlay={jest.fn()}
+        onMenu={jest.fn()}
+      />,
+    );
+
+    expect(drawn.queryByText('Smart shuffle')).toBeNull();
   });
 });

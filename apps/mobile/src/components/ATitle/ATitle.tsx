@@ -169,7 +169,19 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
 
       <View style={styles.facts}>
         <Words tone="muted">{facts.join(' · ')}</Words>
-        <TheBadges badges={qualityBadges(title)} />
+        <TheBadges
+          badges={qualityBadges(title)}
+          rating={
+            typeof title.metadata.certification === 'string' &&
+            title.metadata.certification !== '' &&
+            typeof title.metadata.certificationRegion === 'string'
+              ? {
+                  certification: title.metadata.certification,
+                  region: title.metadata.certificationRegion,
+                }
+              : null
+          }
+        />
       </View>
 
       {tagline === null && overview === null ? null : (

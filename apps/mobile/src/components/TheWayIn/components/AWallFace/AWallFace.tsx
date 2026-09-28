@@ -21,7 +21,7 @@ const AWallFace = ({ profile, arrivingFrom, onPicked }: AWallFaceProps) => {
 
   return (
     <View ref={placed} collapsable={false} onLayout={onPlaced}>
-      <Animated.View style={flying}>
+      <Animated.View style={{ opacity: flying.opacity }}>
         <Button
           tone="bare"
           label={`Sign in as ${profile.name}`}
@@ -37,7 +37,7 @@ const AWallFace = ({ profile, arrivingFrom, onPicked }: AWallFaceProps) => {
             });
           }}
         >
-          <AFace profile={profile} />
+          <AFace profile={profile} tileMotion={{ transform: flying.transform }} />
         </Button>
       </Animated.View>
     </View>

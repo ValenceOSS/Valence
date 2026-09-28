@@ -71,6 +71,8 @@ const QUEUE: PlayQueue = {
   order: [0, 1, 2],
   at: 0,
   isShuffled: false,
+  isSmart: false,
+  picks: [],
   repeat: 'off',
   isOrdered: false,
   source: null,
@@ -156,7 +158,7 @@ describe('NowPlaying', () => {
 
     expect(player.toggle).toHaveBeenCalledTimes(1);
     expect(player.next).toHaveBeenCalledTimes(1);
-    expect(player.toggleShuffle).toHaveBeenCalledTimes(1);
+    expect(player.cycleShuffle).toHaveBeenCalledTimes(1);
     expect(player.cycleRepeat).toHaveBeenCalledTimes(1);
     expect(player.previous).toHaveBeenCalledTimes(1);
   });

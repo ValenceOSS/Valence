@@ -11,6 +11,7 @@ import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRo
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { useAskAboutAnAlbum } from '@ValenceMobile/music/useAskAboutAnAlbum';
 import type { AlbumOrder } from '@ValenceClient/music/fetchMusic';
 import type { TheAlbumsProps } from './TheAlbums.types';
 
@@ -30,6 +31,7 @@ const ACROSS = 2;
  * @param onBack - Told somebody is done with it.
  */
 const TheAlbums = ({ onAlbum, onBack }: TheAlbumsProps) => {
+  const askAboutAnAlbum = useAskAboutAnAlbum();
   const colours = useTheColours();
   const [order, setOrder] = useState<AlbumOrder>('recent');
   const albums = useQuery(musicQueries.albums(order));
@@ -69,6 +71,9 @@ const TheAlbums = ({ onAlbum, onBack }: TheAlbumsProps) => {
           side={width}
           onPress={() => {
             onAlbum(album.id);
+          }}
+          onLongPress={() => {
+            askAboutAnAlbum(album);
           }}
         />
       )}

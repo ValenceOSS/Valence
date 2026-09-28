@@ -12,6 +12,7 @@ import type { TrackRowProps } from './TrackRow.types';
  * @param isCurrent - Whether it is the song playing now.
  * @param isPlaying - Whether the music is playing rather than paused.
  * @param showsAlbum - Whether to say which album it is from.
+ * @param isPick - Whether smart shuffle mixed it in from the library, which it says.
  * @param onPress - Told where in the list the chosen song comes.
  * @param onFocus - Told where in the list the song the remote is on comes.
  */
@@ -21,6 +22,7 @@ const TrackRowLine = ({
   isCurrent,
   isPlaying,
   showsAlbum = false,
+  isPick = false,
   onPress,
   onFocus,
 }: TrackRowProps) => {
@@ -30,7 +32,7 @@ const TrackRowLine = ({
     <NumberedRow
       label={`${track.title}, ${artists}`}
       title={track.title}
-      detail={`${track.isExplicit ? 'E · ' : ''}${artists}`}
+      detail={`${isPick ? 'Smart shuffle · ' : ''}${track.isExplicit ? 'E · ' : ''}${artists}`}
       {...(showsAlbum ? { aside: track.album.title } : {})}
       length={track.durationSeconds}
       place={place}

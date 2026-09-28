@@ -16,6 +16,8 @@ type TheSearchProps = {
   header?: ReactNode;
   onScrolled?: (isScrolled: boolean) => void;
   onSeeAll?: (browsing: CatalogueBrowse, title: string) => void;
+  side: string;
+  onSide: (side: string) => void;
 };
 
 export type { TheSearchProps };

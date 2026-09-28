@@ -34,12 +34,12 @@ describe('Asked', () => {
     expect(await drawn.findByText('Dune (2021)')).toBeTruthy();
   });
 
-  it('leaves out music', async () => {
+  it('lists music asked for beside the films', async () => {
     answering([aMediaRequest({ kind: 'album', title: 'Blue', tmdbId: null })]);
 
     const drawn = await render(around(<Asked onAsk={jest.fn()} />));
 
-    expect(await drawn.findByText('Nothing asked for yet.')).toBeTruthy();
+    expect(await drawn.findByText('Blue (2021)')).toBeTruthy();
   });
 
   it('says so where nothing has been asked for', async () => {
