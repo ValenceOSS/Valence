@@ -63,12 +63,12 @@ const ComparisonTable = () => {
           <tbody>
             {COMPARISON_ROWS.map((row) => (
               <tr key={row.label} className="border-b border-border/60 last:border-0">
-                <th scope="row" className={`${HEAD_CELL} font-medium`}>
+                <th scope="row" className={`${HEAD_CELL} font-semibold`}>
                   {row.label}
                 </th>
                 <td className={`${CELL} text-text-muted`}>{row.plex}</td>
                 <td className={`${CELL} text-text-muted`}>{row.jellyfin}</td>
-                <td className={`${CELL} font-medium text-text`}>{row.valence}</td>
+                <td className={`${CELL} font-semibold text-text`}>{row.valence}</td>
               </tr>
             ))}
           </tbody>

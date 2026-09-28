@@ -7,6 +7,7 @@ declare module 'virtual:changelog' {
     html_url: string;
     prerelease: boolean;
     draft: boolean;
+    assets?: { name: string; browser_download_url: string; size: number }[];
   };
 
   const releases: GithubReleaseJson[];

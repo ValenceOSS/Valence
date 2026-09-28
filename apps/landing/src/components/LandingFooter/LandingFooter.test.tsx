@@ -17,6 +17,23 @@ describe('LandingFooter', () => {
     expect(screen.getByRole('link', { name: 'Terms' })).toHaveAttribute('href', '/terms');
   });
 
+  it('leads to the docs, the compose file and setting up with an assistant', async () => {
+    await renderWithRoutes(LandingFooter);
+
+    expect(screen.getByRole('link', { name: 'Docs' })).toHaveAttribute(
+      'href',
+      'https://docs.getvalence.app',
+    );
+    expect(screen.getByRole('link', { name: 'Deploying it' })).toHaveAttribute(
+      'href',
+      'https://docs.getvalence.app/install/complete-compose-file',
+    );
+    expect(screen.getByRole('link', { name: 'Set up with AI' })).toHaveAttribute(
+      'href',
+      'https://docs.getvalence.app/start/set-up-with-an-ai',
+    );
+  });
+
   it('opens the project on GitHub in a new tab, rather than leaving this one', async () => {
     await renderWithRoutes(LandingFooter);
 

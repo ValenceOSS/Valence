@@ -7,6 +7,7 @@ import { LandingNav } from '@ValenceLanding/components/LandingNav/LandingNav';
 import { LandingFooter } from '@ValenceLanding/components/LandingFooter/LandingFooter';
 import { HomePage } from '@ValenceLanding/components/HomePage/HomePage';
 import { ChangelogPage } from '@ValenceLanding/components/ChangelogPage/ChangelogPage';
+import { ChangelogEntryPage } from '@ValenceLanding/components/ChangelogEntryPage/ChangelogEntryPage';
 import { PrivacyPage } from '@ValenceLanding/components/PrivacyPage/PrivacyPage';
 import { TermsPage } from '@ValenceLanding/components/TermsPage/TermsPage';
 import { PageProblem } from '@ValenceLanding/components/PageProblem/PageProblem';
@@ -34,7 +35,8 @@ const LandingShell = () => {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const prefersReducedMotion = useReducedMotionConfig();
   const isHome = pathname === '/';
-  const Page = PAGES[pathname] ?? PageProblem;
+  const Page =
+    PAGES[pathname] ?? (pathname.startsWith('/changelog/') ? ChangelogEntryPage : PageProblem);
 
   return (
     <div className="relative z-0 flex min-h-dvh flex-col bg-surface text-text">

@@ -1,46 +1,115 @@
-import { Card } from '@ValenceUI/Card';
+import { useEffect, useRef } from 'react';
 import { RevealItem } from '@ValenceUI/RevealItem';
 import { cn } from '@ValenceUI/cn';
 import { FeatureVisual } from './components/FeatureVisual/FeatureVisual';
-import type { FeatureCardProps } from './FeatureCard.types';
+import type { FeatureCardProps, FeatureCardShape } from './FeatureCard.types';
+
+const FIGURE = 'font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-text-muted/70';
+
+const SPANS: Record<FeatureCardShape, string> = {
+  square: '',
+  wide: 'sm:col-span-2',
+};
+
+const LAYOUTS: Record<FeatureCardShape, string> = {
+  square: 'flex-col',
+  wide: 'flex-col lg:flex-row-reverse lg:gap-10',
+};
+
+const PICTURES: Record<FeatureCardShape, string> = {
+  square: 'h-80',
+  wide: 'h-60 lg:h-auto lg:min-h-72 lg:w-[58%] lg:shrink-0',
+};
 
 /**
- * One feature, in a grid of them, arriving in place after the ones before it and lifting to meet a
- * pointer that lingers over it. The first feature of a group leads the rest, drawn full width and
- * bolder, so the grid reads as a bento of differently-weighted tiles rather than a list in boxes.
+ * One feature in a ruled grid of them, the way a figure sits in a paper: its number, a working
+ * piece of the product doing what the feature says, and the words for it beneath or beside.
+ *
+ * There is no box around it. The grid's hairlines separate one feature from the next, and the
+ * picture fades into the page rather than ending at an edge, so the product is what is looked at
+ * rather than the frame it came in. Pointed at, a soft light follows the pointer across it and its
+ * picture acts the feature out. In a group of four, two are drawn wide, the words beside
+ * the picture rather than beneath it.
  *
  * @param feature - What it is and why it matters.
  * @param index - Where it sits in the grid, so it arrives in order.
- * @param isFeatured - Whether this is the one card in its group that leads, drawn wider and bolder.
+ * @param figure - Its number, as a figure in the page is numbered.
+ * @param shape - How much of the grid it takes: one cell, or two side by side.
  */
-const FeatureCard = ({ feature, index, isFeatured = false }: FeatureCardProps) => (
-  <RevealItem index={index} className={cn('list-none', isFeatured ? 'col-span-full' : '')}>
-    <Card
-      as="article"
-      tone="glass"
-      radius="xl"
-      padding="none"
-      isInteractive
-      className={cn(
-        'group flex h-full flex-col overflow-hidden',
-        'hover-hover:hover:ring-1 hover-hover:hover:ring-accent/40',
-        isFeatured ? 'sm:flex-row' : '',
-      )}
-    >
-      <div className={cn('h-40 p-3', isFeatured ? 'sm:h-auto sm:w-64 sm:shrink-0 sm:p-4' : '')}>
-        <FeatureVisual kind={feature.visual} icon={feature.icon} />
-      </div>
+const FeatureCard = ({ feature, index, figure, shape = 'square' }: FeatureCardProps) => {
+  const cellRef = useRef<HTMLElement>(null);
 
-      <div className="flex flex-1 flex-col justify-center gap-2 p-6 pt-3 sm:pt-3">
-        <h3 className={cn('font-semibold text-text', isFeatured ? 'text-2xl' : 'text-lg')}>
-          {feature.title}
-        </h3>
+  useEffect(() => {
+    const cell = cellRef.current;
 
-        <p className="text-sm leading-relaxed text-text-muted">{feature.detail}</p>
-      </div>
-    </Card>
-  </RevealItem>
-);
+    if (cell === null) {
+      return;
+    }
+
+    const follow = (event: PointerEvent) => {
+      const box = cell.getBoundingClientRect();
+
+      cell.style.setProperty('--spot-x', `${(event.clientX - box.left).toString()}px`);
+      cell.style.setProperty('--spot-y', `${(event.clientY - box.top).toString()}px`);
+    };
+
+    cell.addEventListener('pointermove', follow);
+
+    return () => {
+      cell.removeEventListener('pointermove', follow);
+    };
+  }, []);
+
+  return (
+    <RevealItem index={index} className={cn('list-none bg-surface', SPANS[shape])}>
+      <article
+        ref={cellRef}
+        className={cn('group relative isolate flex h-full gap-6 p-6 sm:p-8', LAYOUTS[shape])}
+      >
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(22rem_circle_at_var(--spot-x,50%)_var(--spot-y,50%),var(--surface-hover),transparent_70%)] opacity-0 transition-opacity duration-300 motion-reduce:transition-none acted:opacity-100"
+        />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 opacity-0 shadow-[inset_0_0_0_1px_var(--surface-line)] transition-opacity duration-300 motion-reduce:transition-none acted:opacity-100"
+        />
+
+        <div className={cn('flex flex-col gap-4', PICTURES[shape])}>
+          <span className={cn(FIGURE, shape === 'wide' ? 'lg:hidden' : '')}>Fig {figure}</span>
+
+          <div className="min-h-0 flex-1">
+            <FeatureVisual kind={feature.visual} />
+          </div>
+        </div>
+
+        <div
+          className={cn(
+            'flex flex-col gap-2',
+            shape === 'wide' ? 'lg:flex-1 lg:justify-between lg:py-1' : '',
+          )}
+        >
+          {shape === 'wide' ? (
+            <span className={cn(FIGURE, 'hidden lg:block')}>Fig {figure}</span>
+          ) : null}
+
+          <span className="flex flex-col gap-2">
+            <h3
+              className={cn(
+                'text-balance font-semibold tracking-tight text-text',
+                shape === 'square' ? 'text-lg' : 'text-xl lg:text-2xl',
+              )}
+            >
+              {feature.title}
+            </h3>
+
+            <p className="text-sm leading-relaxed text-text-muted">{feature.detail}</p>
+          </span>
+        </div>
+      </article>
+    </RevealItem>
+  );
+};
 
 FeatureCard.displayName = 'FeatureCard';
 

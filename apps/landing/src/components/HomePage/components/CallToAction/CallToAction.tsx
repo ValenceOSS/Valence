@@ -2,9 +2,10 @@ import { motion, useReducedMotionConfig } from 'motion/react';
 import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
 import { Button } from '@ValenceUI/Button';
 import { GlassPanel } from '@ValenceUI/GlassPanel';
+import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
 
 /**
- * The last thing on the page: one more way to go and actually run it.
+ * The last thing on the page: one more way to go and actually run it, straight into the docs.
  */
 const CallToAction = () => {
   const prefersReducedMotion = useReducedMotionConfig();
@@ -35,14 +36,10 @@ const CallToAction = () => {
             variant="glossy"
             size="xl"
             onClick={() => {
-              window.open(
-                'https://github.com/MarquesCoding/Valence',
-                '_blank',
-                'noopener,noreferrer',
-              );
+              window.location.assign(`${DOCS_URL}/start/quick-start`);
             }}
           >
-            Get started
+            Read the quick start
           </Button>
         </GlassPanel>
       </motion.div>

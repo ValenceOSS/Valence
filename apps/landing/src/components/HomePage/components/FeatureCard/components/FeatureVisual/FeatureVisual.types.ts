@@ -1,10 +1,24 @@
-import type { IconGlyph } from '@ValenceUI/Icon.types';
-
-type FeatureVisualKind = 'window' | 'waveform' | 'orbit' | 'stack';
+type FeatureVisualKind =
+  | 'devices'
+  | 'hdr'
+  | 'skips'
+  | 'reader'
+  | 'party'
+  | 'shareLink'
+  | 'offline'
+  | 'notifications'
+  | 'sessions'
+  | 'webhooks'
+  | 'setup'
+  | 'contract'
+  | 'apiKeys'
+  | 'plugins'
+  | 'terminal'
+  | 'household'
+  | 'auth';
 
 type FeatureVisualProps = {
   kind: FeatureVisualKind;
-  icon: IconGlyph;
 };
 
 export type { FeatureVisualKind, FeatureVisualProps };

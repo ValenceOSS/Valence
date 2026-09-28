@@ -1,34 +1,28 @@
-import { useMemo } from 'react';
 import { motion } from 'motion/react';
 import { groupVariants } from '@ValenceUI/animations/reveal';
-import { ChangelogRelease } from '@ValenceLanding/components/ChangelogPage/components/ChangelogRelease/ChangelogRelease';
-import { VersionSlider } from '@ValenceLanding/components/ChangelogPage/components/VersionSlider/VersionSlider';
-import { readReleases } from '@ValenceLanding/content/githubRelease';
-import rawReleases from 'virtual:changelog';
-
-const RELEASES = readReleases(rawReleases);
+import { ChangelogSummary } from '@ValenceLanding/components/ChangelogPage/components/ChangelogSummary/ChangelogSummary';
+import { CHANGELOG } from '@ValenceLanding/content/changelog/CHANGELOG';
 
 /**
- * Every release Valence has shipped, read straight from GitHub's own release history.
+ * Every release Valence has shipped, newest first, each written up by hand and leading to a page of
+ * its own.
  */
-const ChangelogPage = () => {
-  const versions = useMemo(() => RELEASES.map((release) => release.version), []);
+const ChangelogPage = () => (
+  <div className="mx-auto max-w-5xl px-5 pb-24 pt-32 sm:px-10">
+    <header className="flex flex-col gap-3 pb-6">
+      <h1 className="text-5xl font-semibold tracking-tight text-text sm:text-6xl">Changelog</h1>
+      <p className="max-w-xl text-lg text-text-muted">
+        New things in Valence, and what got better, written up as they ship.
+      </p>
+    </header>
 
-  return (
-    <div className="mx-auto max-w-3xl px-5 py-16 sm:px-10">
-      <h1 className="text-4xl font-semibold tracking-tight text-text">Changelog</h1>
-      <p className="mt-2 text-text-muted">Every release, in the order it shipped.</p>
-
-      <motion.ul initial="hidden" animate="shown" variants={groupVariants} className="mt-10">
-        {RELEASES.map((release, index) => (
-          <ChangelogRelease key={release.version} release={release} index={index} />
-        ))}
-      </motion.ul>
-
-      <VersionSlider versions={versions} />
-    </div>
-  );
-};
+    <motion.ul initial="hidden" animate="shown" variants={groupVariants}>
+      {CHANGELOG.map((entry, index) => (
+        <ChangelogSummary key={entry.slug} entry={entry} index={index} />
+      ))}
+    </motion.ul>
+  </div>
+);
 
 ChangelogPage.displayName = 'ChangelogPage';
 

@@ -1,5 +1,7 @@
 @import '@valence/ui/src/styles/valence.css';
 
+@custom-variant acted (&:where(.group:is(:hover, :focus-within) *));
+
 @property --color-pink {
   syntax: '<color>';
   inherits: true;

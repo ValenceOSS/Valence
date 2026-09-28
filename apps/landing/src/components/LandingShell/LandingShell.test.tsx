@@ -21,6 +21,12 @@ describe('LandingShell', () => {
     expect(await screen.findByRole('heading', { name: 'Changelog' })).toBeInTheDocument();
   });
 
+  it('draws a release on a page of its own', async () => {
+    await renderWithRoutes(LandingShell, '/changelog/the-first-release');
+
+    expect(await screen.findByRole('heading', { name: 'The first release' })).toBeInTheDocument();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(LandingShell.displayName).toBe('LandingShell');
   });

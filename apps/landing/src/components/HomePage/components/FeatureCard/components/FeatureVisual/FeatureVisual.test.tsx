@@ -1,23 +1,40 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { HardDrive as HardDriveIcon } from '@keyline-icons/react';
 import { FeatureVisual } from './FeatureVisual';
 import type { FeatureVisualKind } from './FeatureVisual.types';
 
-const KINDS_WITH_ICON: FeatureVisualKind[] = ['window', 'orbit', 'stack'];
+const KINDS: FeatureVisualKind[] = [
+  'devices',
+  'hdr',
+  'skips',
+  'reader',
+  'party',
+  'shareLink',
+  'offline',
+  'notifications',
+  'sessions',
+  'webhooks',
+  'setup',
+  'contract',
+  'apiKeys',
+  'plugins',
+  'terminal',
+  'household',
+  'auth',
+];
 
 describe('FeatureVisual', () => {
-  it.each(KINDS_WITH_ICON)('draws the %s kind around the feature’s own icon', (kind) => {
-    const { container } = render(<FeatureVisual kind={kind} icon={HardDriveIcon} />);
+  it.each(KINDS)(
+    'draws the %s picture, hidden from assistive technology and out of reach',
+    (kind) => {
+      const { container } = render(<FeatureVisual kind={kind} />);
+      const picture = container.firstElementChild;
 
-    expect(container.querySelector('.valence-icon')).toBeInTheDocument();
-  });
-
-  it('draws the waveform kind as bars, without the feature’s own icon', () => {
-    const { container } = render(<FeatureVisual kind="waveform" icon={HardDriveIcon} />);
-
-    expect(container.querySelector('.valence-icon')).not.toBeInTheDocument();
-  });
+      expect(picture).toHaveAttribute('aria-hidden', 'true');
+      expect(picture).toHaveAttribute('inert');
+      expect(picture?.textContent).not.toBe('');
+    },
+  );
 
   it('sets a display name so devtools can identify it', () => {
     expect(FeatureVisual.displayName).toBe('FeatureVisual');

@@ -25,9 +25,9 @@ describe('HomePage', () => {
 
     expect(
       screen.getByRole('img', {
-        name: "The Valence web app open on a title's page, with the continue-watching rail beneath it",
+        name: "The Valence web app's home page, with a film in the featured row",
       }),
-    ).toHaveAttribute('src', '/hero.jpeg');
+    ).toHaveAttribute('src', '/devices/web.jpg');
   });
 
   it('makes a statement about who the data belongs to', () => {

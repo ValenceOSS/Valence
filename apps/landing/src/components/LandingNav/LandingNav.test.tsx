@@ -21,6 +21,10 @@ describe('LandingNav', () => {
     expect(screen.getByRole('link', { name: 'Changelog' })).toHaveAttribute('href', '/changelog');
     expect(screen.getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/privacy');
     expect(screen.getByRole('link', { name: 'Terms' })).toHaveAttribute('href', '/terms');
+    expect(screen.getByRole('link', { name: 'Docs' })).toHaveAttribute(
+      'href',
+      'https://docs.getvalence.app',
+    );
   });
 
   it('opens the project on GitHub, in a new tab', async () => {

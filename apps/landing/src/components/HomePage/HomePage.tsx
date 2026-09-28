@@ -2,11 +2,12 @@ import { Hero } from '@ValenceLanding/components/HomePage/components/Hero/Hero';
 import { DataOwnershipStatement } from '@ValenceLanding/components/HomePage/components/DataOwnershipStatement/DataOwnershipStatement';
 import { FeatureSection } from '@ValenceLanding/components/HomePage/components/FeatureSection/FeatureSection';
 import { ComparisonTable } from '@ValenceLanding/components/HomePage/components/ComparisonTable/ComparisonTable';
+import { DownloadSection } from '@ValenceLanding/components/HomePage/components/DownloadSection/DownloadSection';
 import { CallToAction } from '@ValenceLanding/components/HomePage/components/CallToAction/CallToAction';
 import { FEATURE_GROUPS } from '@ValenceLanding/content/features';
 
 /**
- * getvalence.app itself: what Valence is, what it does, and how it compares.
+ * getvalence.app itself: what Valence is, what it does, how it compares, and where to get it.
  */
 const HomePage = () => (
   <>
@@ -14,11 +15,13 @@ const HomePage = () => (
 
     <DataOwnershipStatement />
 
-    {FEATURE_GROUPS.map((group) => (
-      <FeatureSection key={group.title} group={group} />
+    {FEATURE_GROUPS.map((group, at) => (
+      <FeatureSection key={group.title} group={group} number={at + 1} />
     ))}
 
     <ComparisonTable />
+
+    <DownloadSection />
 
     <CallToAction />
   </>
