@@ -233,13 +233,23 @@ const MediaRequestsPanel = () => {
   const filterGroups = useMemo(() => describeRequestFilters(requests.data ?? []), [requests.data]);
 
   const awaiting = useMemo(
-    () => (requests.data ?? []).filter((request) => request.approval === 'awaiting'),
-    [requests.data],
+    () => shown.filter((request) => request.approval === 'awaiting'),
+    [shown],
   );
   const chosenAwaiting = useMemo(
     () => awaiting.filter((request) => chosen.has(request.id)),
     [awaiting, chosen],
   );
+
+  const narrowTo = useCallback((next: ReadonlySet<string>) => {
+    setFilters(next);
+    setChosen(new Set());
+  }, []);
+
+  const searchFor = useCallback((next: string) => {
+    setSearch(next);
+    setChosen(new Set());
+  }, []);
 
   const choose = useCallback((id: string, isChosen: boolean) => {
     setChosen((held) => {
@@ -257,7 +267,7 @@ const MediaRequestsPanel = () => {
 
   const decide = useCallback(
     (decision: 'approve' | 'refuse', reason = '') => {
-      const ids = [...chosen];
+      const ids = chosenAwaiting.map((request) => request.id);
 
       if (ids.length === 0) {
         return;
@@ -291,7 +301,7 @@ const MediaRequestsPanel = () => {
           setIsDeciding(false);
         });
     },
-    [chosen, reread],
+    [chosenAwaiting, reread],
   );
 
   const menuFor = useCallback(
@@ -827,7 +837,7 @@ const MediaRequestsPanel = () => {
               label="Filter the requests"
               groups={filterGroups}
               selected={filters}
-              onChange={setFilters}
+              onChange={narrowTo}
             />
 
             <TextField
@@ -837,7 +847,7 @@ const MediaRequestsPanel = () => {
               type="search"
               placeholder="A title, or who asked"
               value={search}
-              onValueChange={setSearch}
+              onValueChange={searchFor}
               className="w-56 max-w-full"
             />
 
@@ -950,7 +960,7 @@ const MediaRequestsPanel = () => {
 
         <RefuseRequestDialog
           request={refusingChosen ? (chosenAwaiting[0] ?? null) : null}
-          howMany={chosen.size}
+          howMany={chosenAwaiting.length}
           onClose={() => {
             setRefusingChosen(false);
           }}
@@ -1024,12 +1034,12 @@ const MediaRequestsPanel = () => {
                   one !== 'approve' ? undefined : (
                     <div className="mr-auto flex flex-wrap items-center gap-3">
                       <span className="text-sm text-text-muted">
-                        {chosen.size === 0
+                        {chosenAwaiting.length === 0
                           ? `${awaiting.length.toString()} waiting on approval`
-                          : `${chosen.size.toString()} chosen`}
+                          : `${chosenAwaiting.length.toString()} chosen`}
                       </span>
 
-                      {chosen.size === 0 ? null : (
+                      {chosenAwaiting.length === 0 ? null : (
                         <>
                           <Button
                             variant="secondary"

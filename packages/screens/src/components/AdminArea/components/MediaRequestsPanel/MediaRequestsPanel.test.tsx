@@ -190,6 +190,33 @@ describe('MediaRequestsPanel', () => {
     expect(await screen.findByText('1 approved.')).toBeInTheDocument();
   });
 
+  it('chooses only the requests a search leaves on screen, and forgets choices it hides', async () => {
+    const user = userEvent.setup();
+
+    fetchMediaRequests.mockResolvedValue([
+      DUNE,
+      { ...SEVERANCE, approval: 'awaiting', state: 'awaitingApproval' },
+    ]);
+
+    renderInAnAddress(<MediaRequestsPanel />);
+
+    await screen.findByText('Dune');
+    await user.click(screen.getByRole('tab', { name: /^To approve/ }));
+    await user.click(await screen.findByRole('checkbox', { name: 'Choose Dune' }));
+    await user.type(screen.getByRole('searchbox', { name: 'Search the requests' }), 'sever');
+    await user.click(
+      await screen.findByRole('checkbox', { name: 'Choose all 1 waiting on approval' }),
+    );
+
+    expect(screen.getByText('1 chosen')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Approve them' }));
+
+    await waitFor(() => {
+      expect(decideMediaRequests).toHaveBeenCalledWith([SEVERANCE.id], 'approve', '');
+    });
+  });
+
   it('refuses everything chosen with one reason between them', async () => {
     const user = userEvent.setup();
 

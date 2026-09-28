@@ -104,7 +104,7 @@ const createJobScheduleService = ({
       );
 
       return definitions
-        .filter((definition) => startupKinds.has(definition.kind))
+        .filter((definition) => startupKinds.has(definition.kind) && definition.schedulable)
         .map((definition) => definition.kind);
     },
   };

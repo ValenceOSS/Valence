@@ -360,6 +360,23 @@ describe('MediaPanel', () => {
     });
   });
 
+  it('offers no whole-series delete for episodes that belong to no series', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MediaPanel
+        {...props}
+        media={[{ ...episode('e1', 1, 1, 'Pilot'), seriesId: null }]}
+        onDelete={vi.fn().mockResolvedValue(true)}
+      />,
+    );
+
+    await user.click(screen.getByRole('tab', { name: 'Shows' }));
+    await user.click(await screen.findByRole('button', { name: 'Actions for From' }));
+
+    expect(screen.queryByRole('menuitem', { name: /Delete series/ })).not.toBeInTheDocument();
+  });
+
   it('re-encodes every episode of a series from the series’ own menu', async () => {
     const onReencode = vi.fn();
     const user = userEvent.setup();

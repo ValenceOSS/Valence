@@ -419,7 +419,7 @@ const MediaPanel = ({
               },
             ]),
       ],
-      ...(onDelete === undefined
+      ...(onDelete === undefined || title.lead.seriesId === null
         ? []
         : [
             [

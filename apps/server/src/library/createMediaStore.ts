@@ -402,6 +402,7 @@ const createMediaStore = (
           eq(mediaItem.libraryId, libraryId),
           isNull(mediaItem.extraKind),
           isNotNull(mediaItem.parentId),
+          sql`not exists (select 1 from ${mediaItem} as parent where parent."id" = ${mediaItem.parentId} and parent."externalId" = ${mediaItem.externalId})`,
           stillVersions.length === 0 ? undefined : notInArray(mediaItem.path, stillVersions),
         ),
       );

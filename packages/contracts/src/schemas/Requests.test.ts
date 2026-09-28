@@ -4,7 +4,6 @@ import {
   RequestsAvailabilitySchema,
   RequestsOverviewSchema,
   RequestsStatusSchema,
-  SOLVER_NOT_USED,
 } from './Requests';
 
 const A_STATUS = {
@@ -65,7 +64,7 @@ describe('Requests', () => {
       ...status,
       vpn: { ...status.vpn, problemCode: null },
       indexers: { total: 0, enabled: 0, failing: [] },
-      solver: SOLVER_NOT_USED,
+      solver: null,
     });
   });
 

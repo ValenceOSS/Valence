@@ -37,6 +37,16 @@ describe('describeRequestsSolver', () => {
     expect(describeRequestsSolver(hearing(null)).label).toBe('Not checked');
   });
 
+  it('says nothing of a service too old to report on its solver, rather than calling it working', () => {
+    const answered = hearing(SOLVER_NOT_USED);
+    const status = answered.status === null ? null : { ...answered.status, solver: null };
+
+    expect(describeRequestsSolver({ ...answered, status })).toMatchObject({
+      label: 'Not checked',
+      tone: 'quiet',
+    });
+  });
+
   it('calls a solver nothing has asked for yet working rather than broken', () => {
     expect(describeRequestsSolver(hearing(SOLVER_NOT_USED))).toMatchObject({
       label: 'Working',

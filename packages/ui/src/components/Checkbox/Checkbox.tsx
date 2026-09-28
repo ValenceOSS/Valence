@@ -78,7 +78,9 @@ const Checkbox = ({
         </span>
       ) : (
         <span className="flex flex-col gap-0.5">
-          <span id={labelId}>{label}</span>
+          <span id={labelId} className={isLabelHidden ? 'sr-only' : undefined}>
+            {label}
+          </span>
           <span id={describedId} className="text-xs text-text-muted">
             {description}
           </span>

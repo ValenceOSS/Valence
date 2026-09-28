@@ -40,7 +40,7 @@ const RequestsStatusSchema = z.object({
   version: z.string(),
   vpn: RequestsVpnSchema,
   indexers: IndexerHealthSchema.default({ total: 0, enabled: 0, failing: [] }),
-  solver: RequestsSolverSchema.default(SOLVER_NOT_USED),
+  solver: RequestsSolverSchema.nullable().default(null),
 });
 
 const RequestsAvailabilitySchema = z.object({

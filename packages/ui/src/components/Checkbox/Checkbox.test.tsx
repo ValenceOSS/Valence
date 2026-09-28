@@ -99,4 +99,14 @@ describe('Checkbox standing for several things at once', () => {
     expect(screen.getByRole('checkbox', { name: 'Choose Dune' })).toBeInTheDocument();
     expect(screen.getByText('Choose Dune')).toHaveClass('sr-only');
   });
+
+  it('hides its label but keeps its description on show when it has one', () => {
+    render(<Checkbox label="Choose Dune" description="Asked for by Sam" isLabelHidden />);
+
+    expect(
+      screen.getByRole('checkbox', { name: 'Choose Dune', description: 'Asked for by Sam' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Choose Dune')).toHaveClass('sr-only');
+    expect(screen.getByText('Asked for by Sam')).not.toHaveClass('sr-only');
+  });
 });
