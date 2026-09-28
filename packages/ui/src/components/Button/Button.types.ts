@@ -5,6 +5,7 @@ type ButtonVariant =
   | 'glossy'
   | 'confirm'
   | 'secondary'
+  | 'raised'
   | 'soft'
   | 'ghost'
   | 'danger'

@@ -145,4 +145,10 @@ describe('Badge', () => {
     expect(badgeOf('Queued')).toHaveClass('bg-busy');
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
+
+  it('outlines a badge in the colour of the words around it', () => {
+    render(<Badge tone="outline">HD</Badge>);
+
+    expect(badgeOf('HD')).toHaveClass('border', 'border-current/60', 'bg-transparent');
+  });
 });

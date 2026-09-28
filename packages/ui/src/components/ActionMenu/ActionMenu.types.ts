@@ -30,6 +30,7 @@ type ActionMenuProps = {
   size?: ActionMenuSize;
   look?: ActionMenuLook;
   isDisabled?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
   className?: string;
 };
 

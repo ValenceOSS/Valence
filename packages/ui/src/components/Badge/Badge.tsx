@@ -13,6 +13,7 @@ const TONE_CLASSES: Record<BadgeTone, string> = {
   waiting: 'bg-busy text-surface',
   warning: 'bg-highlight text-highlight-contrast',
   danger: 'bg-danger text-surface',
+  outline: 'border border-current/60 bg-transparent text-current',
 };
 
 const SIZE_CLASSES: Record<BadgeSize, string> = {

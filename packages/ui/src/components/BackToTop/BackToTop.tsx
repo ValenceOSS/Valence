@@ -23,6 +23,9 @@ import type { BackToTopProps } from './BackToTop.types';
  * and for them the journey back is instant too — a page this long scrolled smoothly is a long way to
  * watch travel past.
  *
+ * It is solid rather than glass, since it floats over whatever the page has scrolled under it — a
+ * bright picture as often as not — and a see-through button there is lost against it.
+ *
  * The button is drawn outside the page rather than within it. Anything held inside something that
  * has been moved is fixed against that thing rather than against the window, and a screen animating
  * in has been moved, however slightly — so a button left there rides up the page as it scrolls
@@ -47,7 +50,7 @@ const BackToTop = ({ label = 'Back to top', className }: BackToTopProps) => {
           className={cn('fixed bottom-6 right-6 z-40', className)}
         >
           <Button
-            variant="glossy"
+            variant="raised"
             size="lg"
             isIconOnly
             label={label}

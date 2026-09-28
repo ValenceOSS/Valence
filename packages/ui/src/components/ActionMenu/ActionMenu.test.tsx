@@ -216,4 +216,24 @@ describe('ActionMenu', () => {
     expect(await screen.findByText('the tabs')).toBeInTheDocument();
     expect(screen.getByText('Theme')).toBeInTheDocument();
   });
+
+  it('says when it opens and closes, for a caller that must not vanish from under it', async () => {
+    const onOpenChange = vi.fn();
+
+    render(
+      <ActionMenu
+        {...props}
+        onOpenChange={onOpenChange}
+        groups={[{ items: [{ id: 'hide', label: 'Hide', onChoose: vi.fn() }] }]}
+      />,
+    );
+
+    const user = await open();
+
+    expect(onOpenChange).toHaveBeenLastCalledWith(true);
+
+    await user.click(await screen.findByRole('menuitem', { name: 'Hide' }));
+
+    expect(onOpenChange).toHaveBeenLastCalledWith(false);
+  });
 });

@@ -45,8 +45,9 @@ const LANE = 'px-[var(--rail-lane)] scroll-px-[var(--rail-lane)]';
  * without being clipped; without that the lower half of an arrow would be the row's and not the arrow's.
  *
  * They turn by whole cards, land on whole cards, and dim at either end rather than disappearing so
- * the header does not shift as the row is turned. The row itself is dragged where there is no
- * hover, and left to the arrows where there is, so a trackpad cannot leave it resting between pages.
+ * the header does not shift as the row is turned. The row can be swiped as well, by a finger or a
+ * trackpad, and wherever a swipe lets go it settles against the start of a whole card, so it lines
+ * up with the page's gutter as the arrows do.
  *
  * @param title - What the row holds.
  * @param children - The cards in it.
@@ -152,7 +153,6 @@ const Rail = ({
           animate="shown"
           className={cn(
             'valence-rail -my-6 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth py-6',
-            'hover-hover:overflow-x-hidden',
             sizesCards ? cn(FITTED, hasArrows ? LANE : '') : 'scroll-p-1 px-1',
           )}
         >

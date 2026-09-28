@@ -302,4 +302,17 @@ describe('Rail', () => {
       'bg-[var(--surface-hover)]',
     );
   });
+
+  it('can be swiped with a trackpad as well as turned, settling on the start of a card', () => {
+    render(
+      <Rail title="Films" sizesCards>
+        <li>One</li>
+      </Rail>,
+    );
+
+    const row = screen.getByRole('list');
+
+    expect(row).toHaveClass('overflow-x-auto', 'snap-x', 'snap-mandatory');
+    expect(row).not.toHaveClass('hover-hover:overflow-x-hidden');
+  });
 });

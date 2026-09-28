@@ -425,4 +425,13 @@ describe('Button', () => {
       expect(screen.getByRole('button', { name: 'Use red' })).toBeEmptyDOMElement();
     });
   });
+
+  it('offers a solid raised button for something floating over a picture', () => {
+    render(<Button variant="raised">Back to top</Button>);
+
+    const raised = screen.getByRole('button', { name: 'Back to top' });
+
+    expect(raised).toHaveClass('bg-surface-raised', 'shadow-[var(--shadow-lifted)]');
+    expect(raised).not.toHaveClass('bg-[var(--surface-hover)]');
+  });
 });
