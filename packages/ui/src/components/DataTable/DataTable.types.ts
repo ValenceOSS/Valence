@@ -13,11 +13,12 @@ type DataTableProps<Row extends RowData> = {
   onChooseRow?: (row: Row) => void;
   getRowId?: (row: Row) => string;
   toolbar?: ReactNode;
+  getSubRows?: (row: Row) => readonly Row[] | undefined;
   pageSize?: number;
   page?: number;
   onPageChange?: (page: number) => void;
   growsOnScroll?: boolean;
-  height?: 'compact' | 'fill' | 'parent';
+  height?: 'compact' | 'fill' | 'parent' | 'fills';
   className?: string;
 };
 

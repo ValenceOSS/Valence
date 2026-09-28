@@ -91,9 +91,10 @@ beforeEach(() => {
  * Draws the panel with a cache of its own.
  *
  * @param mayDelete - Whether Delete is offered.
+ * @param openAt - A folder handed in to open.
  * @returns What it was told.
  */
-const draw = (mayDelete = true) => {
+const draw = (mayDelete = true, openAt: string | null = null) => {
   const onChanged = vi.fn();
   const onScan = vi.fn();
 
@@ -101,7 +102,13 @@ const draw = (mayDelete = true) => {
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
     >
-      <FilesPanel libraries={[FILMS]} mayDelete={mayDelete} onChanged={onChanged} onScan={onScan} />
+      <FilesPanel
+        libraries={[FILMS]}
+        mayDelete={mayDelete}
+        openAt={openAt}
+        onChanged={onChanged}
+        onScan={onScan}
+      />
     </QueryClientProvider>,
   );
 
@@ -143,6 +150,13 @@ describe('FilesPanel', () => {
     await actor.click(within(trail).getByRole('button', { name: 'Libraries' }));
 
     expect(await screen.findByRole('cell', { name: /^Films$/ })).toBeInTheDocument();
+  });
+
+  it('opens a folder it is handed, such as a library’s from the Libraries page', async () => {
+    draw(true, '/media/films');
+
+    expect(await screen.findByRole('cell', { name: /Arrival\.mkv/ })).toBeInTheDocument();
+    expect(fetchLibraryFolderMock).toHaveBeenCalledWith('/media/films');
   });
 
   it('renames a file, and tells the page something changed', async () => {

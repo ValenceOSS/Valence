@@ -213,11 +213,11 @@ describe('IndexerDialog', () => {
     open();
 
     await fillIn(user);
-    await user.click(screen.getByRole('button', { name: 'Try it' }));
+    await user.click(screen.getByRole('button', { name: 'Test' }));
 
     expect(await screen.findByText('It answered, and can search movie.')).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Try it' }).querySelector('.text-success'),
+      screen.getByRole('button', { name: 'Test' }).querySelector('.text-success'),
     ).not.toBeNull();
     expect(tryIndexer).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'NZBgeek' }),
@@ -242,11 +242,11 @@ describe('IndexerDialog', () => {
     open();
 
     await fillIn(user);
-    await user.click(screen.getByRole('button', { name: 'Try it' }));
+    await user.click(screen.getByRole('button', { name: 'Test' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('The indexer refused the API key');
     expect(
-      screen.getByRole('button', { name: 'Try it' }).querySelector('.text-danger'),
+      screen.getByRole('button', { name: 'Test' }).querySelector('.text-danger'),
     ).not.toBeNull();
   });
 
@@ -264,7 +264,7 @@ describe('IndexerDialog', () => {
     open();
 
     await fillIn(user);
-    await user.click(screen.getByRole('button', { name: 'Try it' }));
+    await user.click(screen.getByRole('button', { name: 'Test' }));
 
     expect(screen.getByRole('status', { name: 'Working' })).toBeInTheDocument();
 
@@ -293,11 +293,11 @@ describe('IndexerDialog', () => {
     open();
 
     await fillIn(user);
-    await user.click(screen.getByRole('button', { name: 'Try it' }));
+    await user.click(screen.getByRole('button', { name: 'Test' }));
     await screen.findByText('It answered, and can search by words.');
     await user.click(screen.getByRole('checkbox', { name: 'Movies' }));
 
-    const tryButton = screen.getByRole('button', { name: 'Try it' });
+    const tryButton = screen.getByRole('button', { name: 'Test' });
 
     expect(tryButton.querySelector('.text-success')).not.toBeNull();
 
@@ -315,7 +315,7 @@ describe('IndexerDialog', () => {
     open();
 
     await fillIn(user);
-    await user.click(screen.getByRole('button', { name: 'Try it' }));
+    await user.click(screen.getByRole('button', { name: 'Test' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Requesting is off.');
   });
@@ -325,7 +325,7 @@ describe('IndexerDialog', () => {
 
     open();
 
-    await user.click(screen.getByRole('button', { name: 'Try it' }));
+    await user.click(screen.getByRole('button', { name: 'Test' }));
 
     expect(tryIndexer).not.toHaveBeenCalled();
   });
@@ -373,7 +373,7 @@ describe('IndexerDialog', () => {
 
     open(KEPT);
 
-    await user.click(screen.getByRole('button', { name: 'Try it' }));
+    await user.click(screen.getByRole('button', { name: 'Test' }));
 
     await waitFor(() => {
       expect(tryIndexer).toHaveBeenCalledWith(expect.objectContaining({ apiKey: '' }), KEPT.id);
@@ -388,7 +388,7 @@ describe('IndexerDialog', () => {
     await user.click(screen.getByRole('checkbox', { name: 'TV' }));
     await user.click(screen.getByRole('checkbox', { name: 'Movies' }));
     await user.click(screen.getByRole('checkbox', { name: 'TV' }));
-    await user.click(screen.getByRole('switch', { name: 'Search this indexer' }));
+    await user.click(screen.getByRole('switch', { name: 'Enabled' }));
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => {
@@ -513,7 +513,7 @@ describe('IndexerDialog', () => {
       openSite();
 
       await screen.findByText('A Russian tracker');
-      await user.click(screen.getByRole('button', { name: 'Try it' }));
+      await user.click(screen.getByRole('button', { name: 'Test' }));
 
       expect(await screen.findByRole('img', { name: 'The characters to type' })).toHaveAttribute(
         'src',
@@ -521,7 +521,7 @@ describe('IndexerDialog', () => {
       );
 
       await user.type(screen.getByRole('textbox', { name: 'Characters in the picture' }), 'x7k2');
-      await user.click(screen.getByRole('button', { name: 'Try it' }));
+      await user.click(screen.getByRole('button', { name: 'Test' }));
 
       await waitFor(() => {
         expect(tryIndexer.mock.calls.at(-1)?.[0].settings?.['CAPTCHA']).toBe('x7k2');

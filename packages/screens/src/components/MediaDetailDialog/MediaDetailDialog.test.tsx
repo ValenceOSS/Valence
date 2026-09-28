@@ -866,16 +866,16 @@ describe('a film held as more than one cut of itself', () => {
       expect(screen.getByRole('button', { name: /Play/ })).toBeInTheDocument();
     });
 
-    expect(screen.queryByRole('button', { name: 'Which version to play' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Which edition to play' })).not.toBeInTheDocument();
   });
 
-  it('offers the choice before playing rather than during', async () => {
+  it('offers every edition behind an arrow on the Play button', async () => {
     detailMock.mockResolvedValue({ ...detail(), versions: [blackAndWhite] });
 
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Which version to play' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Which edition to play' })).toBeInTheDocument();
     });
   });
 
@@ -886,15 +886,15 @@ describe('a film held as more than one cut of itself', () => {
     renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={onPlay} />);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Which version to play' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Which edition to play' })).toBeInTheDocument();
     });
 
-    await userEvent.setup().click(screen.getByRole('button', { name: /Play/ }));
+    await userEvent.setup().click(screen.getByRole('button', { name: /^Play$/ }));
 
     expect(onPlay).toHaveBeenCalledWith(expect.objectContaining({ id: 'media-1' }), 0);
   });
 
-  it('plays the cut that was chosen instead', async () => {
+  it('chooses an edition from the arrow, and plays it from the Play button', async () => {
     const onPlay = vi.fn();
     detailMock.mockResolvedValue({ ...detail(), versions: [blackAndWhite] });
 
@@ -903,12 +903,15 @@ describe('a film held as more than one cut of itself', () => {
     const actor = userEvent.setup();
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Which version to play' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Which edition to play' })).toBeInTheDocument();
     });
 
-    await actor.click(screen.getByRole('button', { name: 'Which version to play' }));
-    await actor.click(await screen.findByRole('menuitemradio', { name: 'B&W' }));
-    await actor.click(screen.getByRole('button', { name: /Play/ }));
+    await actor.click(screen.getByRole('button', { name: 'Which edition to play' }));
+    await actor.click(await screen.findByRole('menuitemradio', { name: /B&W/ }));
+
+    expect(onPlay).not.toHaveBeenCalled();
+
+    await actor.click(screen.getByRole('button', { name: /^Play B&W$/ }));
 
     expect(onPlay).toHaveBeenCalledWith(expect.objectContaining({ id: 'version-1' }), 0);
   });

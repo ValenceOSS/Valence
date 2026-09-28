@@ -92,4 +92,11 @@ describe('Checkbox standing for several things at once', () => {
 
     expect(screen.getByText('Everything over 20 GB')).toBeVisible();
   });
+
+  it('keeps its label for whoever reads it out, where the label is hidden', () => {
+    render(<Checkbox label="Choose Dune" isLabelHidden />);
+
+    expect(screen.getByRole('checkbox', { name: 'Choose Dune' })).toBeInTheDocument();
+    expect(screen.getByText('Choose Dune')).toHaveClass('sr-only');
+  });
 });

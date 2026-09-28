@@ -54,6 +54,7 @@ const props = {
   onLibraryCreated: vi.fn(),
   onLibraryUpdated: vi.fn(),
   onLibraryDeleted: vi.fn(),
+  onOpenFolder: vi.fn(),
 };
 
 afterEach(() => {
@@ -96,6 +97,19 @@ describe('LibrariesPanel', () => {
     await waitFor(() => {
       expect(onScan).toHaveBeenCalledWith(library().id);
     });
+  });
+
+  it('opens a library’s folder in Files when its path is pressed', async () => {
+    const onOpenFolder = vi.fn();
+    const user = userEvent.setup();
+
+    render(<LibrariesPanel {...props} onOpenFolder={onOpenFolder} libraries={[library()]} />);
+
+    await user.click(
+      await screen.findByRole('button', { name: `Open ${library().path} in Files` }),
+    );
+
+    expect(onOpenFolder).toHaveBeenCalledWith(library().path);
   });
 
   it('offers to generate previews for films and programmes, which have them', async () => {

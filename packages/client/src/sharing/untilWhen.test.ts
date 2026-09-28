@@ -30,4 +30,15 @@ describe('untilWhen', () => {
   it('says an allowance is what will end a link that has one and no date', () => {
     expect(untilWhen(share({ viewCap: 3 }))).toBe('Until it has been opened enough times');
   });
+
+  it('says whoever opened a used-up link can still watch, and until when', () => {
+    expect(untilWhen(share({ viewCap: 1, views: 1, isSpent: true }))).toBe(
+      'Whoever opened it can still watch',
+    );
+    expect(
+      untilWhen(
+        share({ viewCap: 1, views: 1, isSpent: true, expiresAt: '2099-03-04T15:30:00.000Z' }),
+      ),
+    ).toMatch(/^Whoever opened it can still watch until .*2099/);
+  });
 });

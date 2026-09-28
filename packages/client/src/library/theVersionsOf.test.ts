@@ -19,4 +19,10 @@ describe('the versions of a title', () => {
       label: 'Another version',
     });
   });
+
+  it('calls the title itself by its own name where it has one', () => {
+    expect(theVersionsOf('main', [], 'Bluray-1080p')).toEqual([
+      { id: 'main', label: 'Bluray-1080p' },
+    ]);
+  });
 });

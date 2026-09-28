@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { NO_WORK } from '@ValenceContracts/schemas/Requests';
+import { NO_WORK, SOLVER_NOT_USED } from '@ValenceContracts/schemas/Requests';
 import {
   checkRequestsNow,
   fetchRequestsAvailability,
@@ -24,6 +24,7 @@ const AN_OVERVIEW = {
       problemCode: null,
     },
     indexers: { total: 0, enabled: 0, failing: [] },
+    solver: SOLVER_NOT_USED,
   },
 };
 

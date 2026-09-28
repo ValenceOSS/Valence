@@ -148,6 +148,8 @@ const HISTORY_LENGTH = 60;
 
 const PANEL_ORDER = ADMIN_PANELS.map((one) => one.id);
 
+const NO_PATHS: Readonly<Record<string, string>> = {};
+
 /**
  * The server as the person running it sees it: the dashboard, what is being watched, the libraries
  * and what they hold, the jobs, the settings and the webhooks. Owns the polling that keeps all of it
@@ -164,6 +166,8 @@ const PANEL_ORDER = ADMIN_PANELS.map((one) => one.id);
  * @param observability - What the address says the jobs and logs page is showing and narrowed to.
  * @param onObservabilityChange - Called with each change to it, to write into the address.
  * @param onJobChange - Called with the job whose schedule was opened, or null on going back.
+ * @param folder - The folder the address says to open in Files.
+ * @param onOpenFolder - Called with a folder to open in Files.
  */
 const AdminArea = ({
   historyLength = HISTORY_LENGTH,
@@ -173,6 +177,8 @@ const AdminArea = ({
   observability,
   onObservabilityChange,
   onJobChange,
+  folder = null,
+  onOpenFolder,
 }: AdminAreaProps) => {
   const cache = useQueryClient();
   const [history, setHistory] = useState<number[]>([]);
@@ -218,15 +224,15 @@ const AdminArea = ({
 
   const libraries = useMemo(() => askedLibraries.data ?? [], [askedLibraries.data]);
 
-  const askedMediaKey = adminQueries.everything(libraries.map((library) => library.id)).queryKey;
-  const askedMedia = useQuery(adminQueries.everything(libraries.map((library) => library.id)));
   const askedAlbums = useQuery(adminQueries.albums());
   const askedBooks = useQuery(
     adminQueries.books(
       libraries.filter((library) => library.kind === 'books').map((library) => library.id),
     ),
   );
+  const askedEveryFileKey = adminQueries.everyFile(libraries.map((library) => library.id)).queryKey;
   const askedEveryFile = useQuery(adminQueries.everyFile(libraries.map((library) => library.id)));
+  const askedMediaPaths = useQuery(adminQueries.mediaPaths(libraries.map((library) => library.id)));
   const askedReencodes = useQuery(adminQueries.reencodes());
 
   const askedPermissions = useQuery(sessionQueries.permissions());
@@ -234,8 +240,8 @@ const AdminArea = ({
     askedPermissions.data?.isAdministrator === true ||
     (askedPermissions.data?.permissions.includes('media.delete') ?? false);
 
-  const media = askedMedia.data ?? [];
   const everyFile = askedEveryFile.data ?? [];
+  const mediaPaths = askedMediaPaths.data ?? NO_PATHS;
   const reencodes = askedReencodes.data ?? [];
   const sessions = askedSessions.data ?? [];
   const jobDefinitions = useMemo(() => askedJobs.data ?? [], [askedJobs.data]);
@@ -283,7 +289,7 @@ const AdminArea = ({
   const unreachable = useMemo(() => {
     const readings = {
       overview: askedOverview.isError,
-      media: askedMedia.isError,
+      media: askedEveryFile.isError,
       monitor: askedMonitor.isError,
       libraries: askedLibraries.isError,
       sessions: askedSessions.isError,
@@ -298,7 +304,7 @@ const AdminArea = ({
     );
   }, [
     askedOverview.isError,
-    askedMedia.isError,
+    askedEveryFile.isError,
     askedMonitor.isError,
     askedLibraries.isError,
     askedSessions.isError,
@@ -331,10 +337,21 @@ const AdminArea = ({
     ]);
   }, [cache]);
 
-  const reloadLibraries = useCallback(
-    async () => cache.invalidateQueries({ queryKey: libraryQueries.all().queryKey }),
-    [cache],
-  );
+  const reloadLibraries = useCallback(async () => {
+    const ids = libraries.map((library) => library.id);
+
+    await Promise.all([
+      cache.invalidateQueries({ queryKey: libraryQueries.all().queryKey }),
+      cache.invalidateQueries({ queryKey: adminQueries.everyFile(ids).queryKey }),
+      cache.invalidateQueries({ queryKey: adminQueries.mediaPaths(ids).queryKey }),
+      cache.invalidateQueries({ queryKey: adminQueries.albums().queryKey }),
+      cache.invalidateQueries({
+        queryKey: adminQueries.books(
+          libraries.filter((library) => library.kind === 'books').map((library) => library.id),
+        ).queryKey,
+      }),
+    ]);
+  }, [cache, libraries]);
 
   const reloadSessions = useCallback(
     async () => cache.invalidateQueries({ queryKey: adminQueries.sessions().queryKey }),
@@ -968,15 +985,23 @@ const AdminArea = ({
               onLibraryCreated={onLibraryCreated}
               onLibraryUpdated={onLibraryUpdated}
               onLibraryDeleted={onLibraryDeleted}
+              onOpenFolder={(path) => {
+                onOpenFolder?.(path);
+              }}
             />
           </TabPanel>
 
           <TabPanel value="media" travel={travel}>
             <MediaPanel
               isUnreachable={unreachable.has('media')}
-              media={media}
+              libraries={libraries}
+              media={everyFile}
               albums={askedAlbums.data ?? NO_ALBUMS}
               books={askedBooks.data ?? NO_BOOKS}
+              paths={mediaPaths}
+              onOpenFolder={(path) => {
+                onOpenFolder?.(path);
+              }}
               onCorrect={setCorrecting}
               onCorrectAlbum={setCorrectingAlbum}
               onCorrectBook={setCorrectingBook}
@@ -1004,9 +1029,9 @@ const AdminArea = ({
               }
               {...(mayDeleteMedia
                 ? {
-                    onDelete: async (item: MediaSummary) => {
-                      const seriesId = item.seriesId ?? null;
-                      const name = item.seriesTitle ?? item.title;
+                    onDelete: async (item: MediaSummary, isWholeSeries: boolean) => {
+                      const seriesId = isWholeSeries ? (item.seriesId ?? null) : null;
+                      const name = isWholeSeries ? (item.seriesTitle ?? item.title) : item.title;
                       const isGone = tellOutcome(
                         `Deleted ${name}.`,
                         await failureOfThrown(async () => {
@@ -1015,12 +1040,12 @@ const AdminArea = ({
                       );
 
                       if (isGone) {
-                        cache.setQueryData(askedMediaKey, (current: MediaSummary[] = []) =>
-                          current.filter(
-                            (entry) =>
-                              entry.id !== item.id &&
-                              (seriesId === null || entry.seriesId !== seriesId),
-                          ),
+                        const isKept = (entry: MediaSummary) =>
+                          entry.id !== item.id &&
+                          (seriesId === null || entry.seriesId !== seriesId);
+
+                        cache.setQueryData(askedEveryFileKey, (current: MediaSummary[] = []) =>
+                          current.filter(isKept),
                         );
                         void cache.invalidateQueries({ queryKey: libraryQueries.key });
                         void cache.invalidateQueries({ queryKey: adminQueries.key });
@@ -1030,14 +1055,17 @@ const AdminArea = ({
                     },
                   }
                 : {})}
-              onReencode={(item) => {
+              onReencode={(items) => {
                 setIsChoosingReencode(true);
-                void weighReencode([item.id], {
-                  mode: 'replace',
-                  quality: '1080p',
-                  videoCodec: 'hevc',
-                  audio: 'keep',
-                });
+                void weighReencode(
+                  items.map((item) => item.id),
+                  {
+                    mode: 'replace',
+                    quality: '1080p',
+                    videoCodec: 'hevc',
+                    audio: 'keep',
+                  },
+                );
               }}
             />
           </TabPanel>
@@ -1046,6 +1074,7 @@ const AdminArea = ({
             <FilesPanel
               libraries={libraries}
               mayDelete={mayDeleteMedia}
+              openAt={folder}
               onChanged={() => {
                 void cache.invalidateQueries({ queryKey: libraryQueries.key });
                 void cache.invalidateQueries({ queryKey: adminQueries.key });
@@ -1262,7 +1291,7 @@ const AdminArea = ({
               : watchJob(libraryId, 'library.readAgain', jobId)
           ).then(async () => {
             await cache.invalidateQueries({
-              queryKey: adminQueries.everything(libraries.map((library) => library.id)).queryKey,
+              queryKey: adminQueries.everyFile(libraries.map((library) => library.id)).queryKey,
             });
           });
         }}

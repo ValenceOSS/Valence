@@ -16,6 +16,7 @@ import {
 import { AudioStreamSchema } from '@ValenceContracts/schemas/MediaItem';
 import { isNotATrack } from '@ValenceServer/music/isNotATrack';
 import { describeQuality } from './describeQuality';
+import { groupSameFilms } from './placement/groupSameFilms';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
 import type { PreviewMoment } from '@ValenceContracts/schemas/Library';
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
@@ -404,6 +405,40 @@ const createMediaStore = (
           stillVersions.length === 0 ? undefined : notInArray(mediaItem.path, stillVersions),
         ),
       );
+  },
+
+  linkSameFilms: async (libraryId) => {
+    const films = await db
+      .select({
+        id: mediaItem.id,
+        path: mediaItem.path,
+        externalId: mediaItem.externalId,
+        parentId: mediaItem.parentId,
+        versionLabel: mediaItem.versionLabel,
+      })
+      .from(mediaItem)
+      .where(
+        and(
+          eq(mediaItem.libraryId, libraryId),
+          isNull(mediaItem.seriesTitle),
+          isNull(mediaItem.extraKind),
+          isNotNull(mediaItem.externalId),
+          isNotATrack(db),
+        ),
+      );
+
+    const links = groupSameFilms(
+      films.flatMap((film) =>
+        film.externalId === null ? [] : [{ ...film, externalId: film.externalId }],
+      ),
+    );
+
+    for (const link of links) {
+      await db
+        .update(mediaItem)
+        .set({ parentId: link.parentId, versionLabel: link.versionLabel })
+        .where(eq(mediaItem.id, link.id));
+    }
   },
 
   listOverrides: async (libraryId) => {

@@ -21,6 +21,7 @@ import { fetchAccountSessions } from '@ValenceClient/admin/fetchAccountSessions'
 import { fetchFolders } from '@ValenceClient/admin/fetchFolders';
 import { searchFolders } from '@ValenceClient/admin/searchFolders';
 import { fetchLibraryFolder } from '@ValenceClient/admin/fetchLibraryFolder';
+import { fetchMediaPaths } from '@ValenceClient/admin/fetchMediaPaths';
 import { searchLibraryFiles } from '@ValenceClient/admin/searchLibraryFiles';
 import { fetchResourceHistory } from '@ValenceClient/admin/fetchResourceHistory';
 import {
@@ -35,7 +36,6 @@ import { fetchEverybodysShares } from '@ValenceClient/sharing/fetchShares';
 import { readWholeLibrary } from '@ValenceClient/library/readWholeLibrary';
 import type { JobRunQuery } from '@ValenceContracts/schemas/JobRun';
 import type { LogFacetsQuery, LogHistogramQuery, LogQuery } from '@ValenceContracts/schemas/Log';
-import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ResourceSampleRange } from '@ValenceContracts/schemas/ResourceSample';
 import { fetchExceptionsOn, fetchLibraryAccess } from '@ValenceClient/admin/fetchLibraryAccess';
 
@@ -363,39 +363,10 @@ const books = (libraryIds: readonly string[]) =>
   });
 
 /**
- * Everything on the server, one entry per thing rather than per file, which is what the media panel
- * lists and what a correction is started from.
- *
- * @param libraryIds - The libraries to read, which is all of them.
- * @returns The query.
- */
-const everything = (libraryIds: readonly string[]) =>
-  queryOptions({
-    queryKey: [...ADMIN, 'everything', [...libraryIds].sort()],
-    queryFn: async () => {
-      const shelves = await Promise.all(libraryIds.map((id) => readWholeLibrary(id)));
-      const byThing = new Map<string, MediaSummary>();
-
-      for (const item of shelves.flat()) {
-        const key = item.seriesTitle ?? item.id;
-
-        if (!byThing.has(key)) {
-          byThing.set(key, item);
-        }
-      }
-
-      return [...byThing.values()];
-    },
-    enabled: libraryIds.length > 0,
-  });
-
-/**
- * Every file on the server, one entry per file rather than per thing.
- *
- * The other listing keeps one entry per programme, which is what correcting a match wants: a
- * correction applies to a whole series and offering four hundred episodes to choose between would
- * be four hundred ways to say the same thing. Re-encoding is the opposite — every episode is its
- * own file on its own disk, and collapsing them would offer exactly one of them.
+ * Every file on the server, one entry per file rather than per thing: every episode and every
+ * version of a film is its own file on its own disk, which is what re-encoding and the media panel
+ * both work from. The panel gathers episodes under their series and versions under their film
+ * itself.
  *
  * @param libraryIds - The libraries to read, which is all of them.
  * @returns The query.
@@ -404,7 +375,7 @@ const everyFile = (libraryIds: readonly string[]) =>
   queryOptions({
     queryKey: [...ADMIN, 'everyFile', [...libraryIds].sort()],
     queryFn: async () => {
-      const shelves = await Promise.all(libraryIds.map((id) => readWholeLibrary(id)));
+      const shelves = await Promise.all(libraryIds.map((id) => readWholeLibrary(id, true)));
 
       return shelves.flat();
     },
@@ -449,6 +420,22 @@ const folderSearch = (words: string, within: string | null) =>
     queryKey: [...ADMIN, 'folders', within, 'search', words],
     queryFn: () => searchFolders(words, within),
     retry: false,
+  });
+
+/**
+ * Where on the disk every item in some libraries is, for showing a title's file beside it.
+ *
+ * @param libraryIds - The libraries to read, which is all of them.
+ * @returns The query, answering each item's file by the item.
+ */
+const mediaPaths = (libraryIds: readonly string[]) =>
+  queryOptions({
+    queryKey: [...ADMIN, 'mediaPaths', [...libraryIds].sort()],
+    queryFn: async () =>
+      (await Promise.all(libraryIds.map((id) => fetchMediaPaths(id)))).reduce<
+        Record<string, string>
+      >((all, one) => ({ ...all, ...one }), {}),
+    enabled: libraryIds.length > 0,
   });
 
 /**
@@ -540,6 +527,7 @@ const renditions = (mediaId: string | null) =>
 
 const adminQueries = {
   everyFile,
+  mediaPaths,
   reencodes,
   renditions,
   exceptionsOn,
@@ -571,7 +559,6 @@ const adminQueries = {
   accountSessions,
   webhooks,
   deliveries,
-  everything,
   albums,
   books,
   shares,

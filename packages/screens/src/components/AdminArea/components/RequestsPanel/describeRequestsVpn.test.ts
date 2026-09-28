@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { NO_WORK } from '@ValenceContracts/schemas/Requests';
+import { NO_WORK, SOLVER_NOT_USED } from '@ValenceContracts/schemas/Requests';
 import { describeRequestsVpn } from './describeRequestsVpn';
 import type { RequestsOverview, RequestsVpn } from '@ValenceContracts/schemas/Requests';
 
@@ -25,7 +25,12 @@ const hearing = (vpn: RequestsVpn | null): RequestsOverview => ({
   status:
     vpn === null
       ? null
-      : { version: '0.4.0', vpn, indexers: { total: 0, enabled: 0, failing: [] } },
+      : {
+          version: '0.4.0',
+          vpn,
+          indexers: { total: 0, enabled: 0, failing: [] },
+          solver: SOLVER_NOT_USED,
+        },
   work: NO_WORK,
 });
 
@@ -71,6 +76,6 @@ describe('describeRequestsVpn', () => {
   });
 
   it('says nothing can be known while the service is silent', () => {
-    expect(describeRequestsVpn(hearing(null)).label).toBe('Unknown');
+    expect(describeRequestsVpn(hearing(null)).label).toBe('Not checked');
   });
 });

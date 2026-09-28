@@ -1,7 +1,7 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { NO_WORK } from '@ValenceContracts/schemas/Requests';
+import { NO_WORK, SOLVER_NOT_USED } from '@ValenceContracts/schemas/Requests';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { RequestsPanel } from './RequestsPanel';
 import type { RequestsOverview } from '@ValenceContracts/schemas/Requests';
@@ -32,6 +32,7 @@ const ANSWERING: RequestsOverview = {
       problemCode: null,
     },
     indexers: { total: 0, enabled: 0, failing: [] },
+    solver: SOLVER_NOT_USED,
   },
   work: NO_WORK,
 };
@@ -82,7 +83,7 @@ describe('RequestsPanel', () => {
     renderInAnAddress(<RequestsPanel />);
 
     expect(await screen.findByText('Unreachable')).toBeInTheDocument();
-    expect(screen.getByText('Unknown')).toBeInTheDocument();
+    expect(screen.getAllByText('Not checked')).toHaveLength(2);
   });
 
   it('says the service has not been checked yet, rather than calling it unreachable', async () => {
@@ -90,7 +91,7 @@ describe('RequestsPanel', () => {
 
     renderInAnAddress(<RequestsPanel />);
 
-    expect(await screen.findByText('Not checked')).toBeInTheDocument();
+    expect(await screen.findAllByText('Not checked')).toHaveLength(3);
     expect(screen.getByText(/Looking for it at http:\/\/requests:8421/)).toBeInTheDocument();
   });
 
@@ -101,7 +102,7 @@ describe('RequestsPanel', () => {
 
     renderInAnAddress(<RequestsPanel />);
 
-    await screen.findByText('Not checked');
+    await screen.findAllByText('Not checked');
     await user.click(screen.getByRole('button', { name: 'Check now' }));
 
     expect(await screen.findByText('Answering')).toBeInTheDocument();
@@ -155,6 +156,7 @@ describe('RequestsPanel', () => {
             },
           ],
         },
+        solver: SOLVER_NOT_USED,
       },
     });
 
@@ -180,6 +182,7 @@ describe('RequestsPanel', () => {
             problemCode: code,
           })),
         },
+        solver: SOLVER_NOT_USED,
       },
     });
 
@@ -210,12 +213,18 @@ describe('RequestsPanel', () => {
         version: '0.4.0',
         vpn: ANSWERING.status?.vpn ?? NOT_CHECKED_VPN,
         indexers: { total: 1, enabled: 1, failing: [] },
+        solver: SOLVER_NOT_USED,
       },
     });
 
     renderInAnAddress(<RequestsPanel />);
 
-    expect(await screen.findByText('Working')).toBeInTheDocument();
+    const indexers = (await screen.findByText('Indexers')).closest<HTMLElement>(
+      '[data-slot="setting-row"]',
+    );
+
+    expect(indexers).not.toBeNull();
+    expect(within(indexers ?? document.body).getByText('Working')).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

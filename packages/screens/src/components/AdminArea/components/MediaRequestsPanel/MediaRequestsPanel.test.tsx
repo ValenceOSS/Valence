@@ -103,13 +103,16 @@ const choose = async (user: ReturnType<typeof userEvent.setup>, title: string, a
 };
 
 describe('MediaRequestsPanel', () => {
-  it('lists every request, where it is, and who asked', async () => {
+  it('lists every request under All, with its status and who requested it', async () => {
+    const user = userEvent.setup();
+
     renderInAnAddress(<MediaRequestsPanel />);
 
-    await screen.findByText('Dune (2021)');
+    await screen.findByText('Dune');
+    await user.click(screen.getByRole('tab', { name: /^All/ }));
 
     expect(within(rowOf('Dune')).getByText('Awaiting approval')).toBeInTheDocument();
-    expect(within(rowOf('Dune')).getByText('Asked for by Sam')).toBeInTheDocument();
+    expect(within(rowOf('Dune')).getByText('Sam')).toBeInTheDocument();
     expect(within(rowOf('Severance')).getByText('Downloading')).toBeInTheDocument();
     expect(
       within(rowOf('Severance')).getByText('Severance.S01E01.1080p.WEB-DL'),
@@ -124,12 +127,12 @@ describe('MediaRequestsPanel', () => {
 
     renderInAnAddress(<MediaRequestsPanel />);
 
-    await screen.findByText('Dune (2021)');
+    await screen.findByText('Dune');
     await user.click(screen.getByRole('button', { name: 'Filter the requests' }));
     await user.click(screen.getByRole('menuitemcheckbox', { name: 'Series' }));
 
-    expect(screen.queryByText('Dune (2021)')).not.toBeInTheDocument();
-    expect(screen.getByText('Severance (2022)')).toBeInTheDocument();
+    expect(screen.queryByText('Dune')).not.toBeInTheDocument();
+    expect(screen.getByText('Severance')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Filter the requests' })).toHaveTextContent('1');
   });
 
@@ -138,11 +141,11 @@ describe('MediaRequestsPanel', () => {
 
     renderInAnAddress(<MediaRequestsPanel />);
 
-    await screen.findByText('Dune (2021)');
+    await screen.findByText('Dune');
     await user.type(screen.getByRole('searchbox', { name: 'Search the requests' }), 'sever');
 
-    expect(screen.queryByText('Dune (2021)')).not.toBeInTheDocument();
-    expect(screen.getByText('Severance (2022)')).toBeInTheDocument();
+    expect(screen.queryByText('Dune')).not.toBeInTheDocument();
+    expect(screen.getByText('Severance')).toBeInTheDocument();
 
     await user.type(screen.getByRole('searchbox', { name: 'Search the requests' }), 'zzz');
 
@@ -173,6 +176,8 @@ describe('MediaRequestsPanel', () => {
 
     renderInAnAddress(<MediaRequestsPanel />);
 
+    await screen.findByText('Dune');
+    await user.click(screen.getByRole('tab', { name: /^To approve/ }));
     await user.click(await screen.findByRole('checkbox', { name: 'Choose Dune' }));
 
     expect(screen.getByText('1 chosen')).toBeInTheDocument();
@@ -195,6 +200,8 @@ describe('MediaRequestsPanel', () => {
 
     renderInAnAddress(<MediaRequestsPanel />);
 
+    await screen.findByText('Dune');
+    await user.click(screen.getByRole('tab', { name: /^To approve/ }));
     await user.click(
       await screen.findByRole('checkbox', { name: 'Choose all 2 waiting on approval' }),
     );
@@ -295,6 +302,7 @@ describe('MediaRequestsPanel', () => {
     expect(await screen.findByText('Refuse Dune?')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
 
+    await user.click(screen.getByRole('tab', { name: /^All/ }));
     await choose(user, 'Severance', /Pick a release/);
     expect(await screen.findByRole('tab', { name: 'Releases' })).toHaveAttribute(
       'aria-selected',
@@ -314,6 +322,92 @@ describe('MediaRequestsPanel', () => {
 
     await user.click(screen.getByRole('button', { name: 'Request media' }));
     expect(await screen.findByRole('textbox', { name: 'Search for a film' })).toBeInTheDocument();
+  });
+
+  it('opens on every request, All first, counting each part of the list in its tab', async () => {
+    renderInAnAddress(<MediaRequestsPanel />);
+
+    await screen.findByText('Dune');
+
+    const tabs = screen.getAllByRole('tab');
+
+    expect(tabs.map((tab) => tab.textContent)).toEqual(['All 2', 'To approve 1', 'In progress 1']);
+    expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
+    expect(await screen.findByText('Severance')).toBeInTheDocument();
+  });
+
+  it('approves a request at once from its tick, and refuses it only after asking', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<MediaRequestsPanel />);
+
+    await user.click(await screen.findByRole('button', { name: 'Approve Dune' }));
+
+    await waitFor(() => {
+      expect(decideMediaRequests).toHaveBeenCalledWith([DUNE.id], 'approve');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Refuse Dune' }));
+
+    expect(await screen.findByText('Refuse Dune?')).toBeInTheDocument();
+  });
+
+  it('opens a series onto its episodes, each with where it is', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<MediaRequestsPanel />);
+
+    await screen.findByText('Dune');
+    await user.click(screen.getByRole('tab', { name: /^In progress/ }));
+    await user.click(await screen.findByRole('button', { name: 'Show what Severance is made of' }));
+
+    const episode = screen.getByRole('row', { name: /S1 E1/ });
+
+    expect(episode).toHaveAttribute('data-depth', '1');
+    expect(within(episode).getByText('Downloading')).toBeInTheDocument();
+  });
+
+  it('opens a series of several seasons onto its seasons, and each season onto its episodes', async () => {
+    const user = userEvent.setup();
+    const first = SEVERANCE.items[0];
+
+    if (first === undefined) {
+      throw new Error('Severance needs an episode to copy');
+    }
+
+    fetchMediaRequests.mockResolvedValue([
+      {
+        ...SEVERANCE,
+        seasons: null,
+        items: [
+          { ...first, id: '6ba7b810-9dad-11d1-80b4-00000000a001', state: 'available' },
+          {
+            ...first,
+            id: '6ba7b810-9dad-11d1-80b4-00000000a002',
+            season: 2,
+            episode: 1,
+            title: 'Hello, Ms. Cobel',
+            state: 'available',
+          },
+        ],
+      },
+    ]);
+
+    renderInAnAddress(<MediaRequestsPanel />);
+
+    await user.click(await screen.findByRole('button', { name: 'Show what Severance is made of' }));
+
+    const seasonTwo = screen.getByRole('row', { name: /Season 2/ });
+
+    expect(seasonTwo).toHaveAttribute('data-depth', '1');
+    expect(within(seasonTwo).getByText('Available')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Show the episodes in Season 2' }));
+
+    const episode = screen.getByRole('row', { name: /Hello, Ms. Cobel/ });
+
+    expect(episode).toHaveAttribute('data-depth', '2');
+    expect(within(episode).getByText('E1')).toBeInTheDocument();
   });
 
   it('forgets a request once that is confirmed', async () => {

@@ -12,6 +12,8 @@ import type { CheckboxProps } from './Checkbox.types';
  * wrong.
  *
  * @param label - What ticking it means.
+ * @param isLabelHidden - Whether the label is only read out, for a box whose row already says what
+ *   it is, such as one choosing a row of a table.
  * @param description - A qualification the label would be worse for carrying, shown beneath it.
  * @param checked - Whether it is ticked, for a caller holding the state.
  * @param isMixed - Whether it stands for several things that do not agree, which a tick would
@@ -23,6 +25,7 @@ import type { CheckboxProps } from './Checkbox.types';
  */
 const Checkbox = ({
   label,
+  isLabelHidden = false,
   description,
   checked,
   isMixed = false,
@@ -70,7 +73,9 @@ const Checkbox = ({
         </RadixCheckbox.Indicator>
       </RadixCheckbox.Root>
       {description === undefined ? (
-        <span id={labelId}>{label}</span>
+        <span id={labelId} className={isLabelHidden ? 'sr-only' : undefined}>
+          {label}
+        </span>
       ) : (
         <span className="flex flex-col gap-0.5">
           <span id={labelId}>{label}</span>

@@ -134,10 +134,34 @@ describe('DefinitionSettingsFields', () => {
     expect(onChange).toHaveBeenCalledWith('sort', 'time');
   });
 
-  it('shows a choice it has no label for by its value', () => {
+  it('shows a choice it has no label for by its value, starting with a capital', () => {
     draw({ sort: 'relevance' });
 
-    expect(screen.getByRole('button', { name: 'Sort by' })).toHaveTextContent('relevance');
+    expect(screen.getByRole('button', { name: 'Sort by' })).toHaveTextContent('Relevance');
+  });
+
+  it('puts a checkbox’s explanation beneath its title', () => {
+    renderInAnAddress(
+      <DefinitionSettingsFields
+        settings={[
+          {
+            name: 'disablesort',
+            kind: 'checkbox',
+            label: 'Disable sorting - the site stops sorting under load',
+            detail: null,
+            default: false,
+            options: [],
+            isSecret: false,
+          },
+        ]}
+        values={{}}
+        secretsSet={[]}
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('checkbox', { name: 'Disable sorting' })).toBeInTheDocument();
+    expect(screen.getByText('The site stops sorting under load')).toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

@@ -22,7 +22,7 @@ const share = (overrides: Partial<Share> = {}): Share => ({
 
 describe('shareStanding', () => {
   it('says a working link is live, and says so loudly enough to be found', () => {
-    expect(shareStanding(share(), NOW)).toEqual({ label: 'Live', isLive: true });
+    expect(shareStanding(share(), NOW)).toEqual({ label: 'Live', isLive: true, canWithdraw: true });
   });
 
   it('says a withdrawn link was withdrawn rather than that it is merely finished', () => {
@@ -39,5 +39,19 @@ describe('shareStanding', () => {
 
   it('calls a link with an end date still ahead of it live', () => {
     expect(shareStanding(share({ expiresAt: '2099-01-01T00:00:00.000Z' }), NOW).label).toBe('Live');
+  });
+
+  it('lets a used-up link be withdrawn, since whoever opened it can still watch', () => {
+    expect(shareStanding(share({ viewCap: 1, views: 1, isSpent: true }), NOW).canWithdraw).toBe(
+      true,
+    );
+  });
+
+  it('offers nothing to withdraw once a link is withdrawn or has run out', () => {
+    expect(shareStanding(share({ isRevoked: true, isSpent: true }), NOW).canWithdraw).toBe(false);
+    expect(
+      shareStanding(share({ expiresAt: '2020-01-01T00:00:00.000Z', isSpent: true }), NOW)
+        .canWithdraw,
+    ).toBe(false);
   });
 });

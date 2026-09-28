@@ -94,6 +94,21 @@ describe('createSitePool', () => {
     expect(opened).toHaveLength(2);
   });
 
+  it('counts the sites it has open', async () => {
+    const { pool } = aPool();
+
+    expect(pool.size()).toBe(0);
+
+    await pool.use('site:a', nothing);
+    await pool.use('site:b', nothing);
+
+    expect(pool.size()).toBe(2);
+
+    await pool.closeAll();
+
+    expect(pool.size()).toBe(0);
+  });
+
   it('opens one agent for two requests that arrive together', async () => {
     const { pool, opened } = aPool();
 

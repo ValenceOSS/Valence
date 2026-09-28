@@ -24,7 +24,7 @@ import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { ActionBar } from '@ValenceUI/ActionBar';
-import { OptionMenu } from '@ValenceUI/OptionMenu';
+import { SplitButton } from '@ValenceUI/SplitButton';
 import { canKeepFiles } from '@ValenceClient/downloads/canKeepFiles';
 import { downloadQueries } from '@ValenceClient/query/downloadQueries';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -38,7 +38,7 @@ import { Skeleton } from '@ValenceUI/Skeleton';
 import { MediaCard } from '@ValenceUI/MediaCard';
 import { Rail } from '@ValenceUI/Rail';
 import { revealVariants, revealTransition, staggerVariants } from '@ValenceUI/animations/reveal';
-import { theVersionsOf } from '@ValenceClient/library/theVersionsOf';
+import { editionOptionsOf } from '@ValenceClient/library/editionOptionsOf';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -59,8 +59,6 @@ import { CastGrid } from './components/CastGrid/CastGrid';
 import { EXTRA_KIND_LABELS } from '@ValenceContracts/schemas/Library';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaDetailDialogProps } from './MediaDetailDialog.types';
-
-const ORIGINAL_VERSION = 'Original';
 
 const CAST_PLACEHOLDERS = 5;
 
@@ -469,35 +467,42 @@ const MediaDetailDialog = ({
           label="More to do with this"
           primary={
             <div className="flex w-full items-center gap-2">
-              {versions.length === 0 ? null : (
-                <OptionMenu
-                  label="Which version to play"
-                  triggerShape="field"
-                  trigger={chosenVersion?.versionLabel ?? ORIGINAL_VERSION}
-                  groups={[
-                    {
-                      name: 'Version',
-                      options: theVersionsOf(shown.id, versions),
-                      selectedId: chosenVersion?.id ?? shown.id,
-                      onSelect: setVersion,
-                    },
-                  ]}
-                />
+              {versions.length === 0 ? (
+                <Button
+                  variant="confirm"
+                  size="lg"
+                  className="min-w-0 flex-1"
+                  onClick={() => {
+                    onPlay(shown, shownResume ?? 0);
+                  }}
+                >
+                  <Icon of={PlayFilledIcon} size={18} />
+                  {shownResume === undefined
+                    ? 'Play'
+                    : `Resume from ${formatDuration(shownResume)}`}
+                </Button>
+              ) : (
+                <SplitButton
+                  className="flex-1"
+                  choiceLabel="Which edition to play"
+                  choiceName="Editions"
+                  onClick={() => {
+                    onPlay(chosenVersion ?? shown, chosenVersion === null ? (shownResume ?? 0) : 0);
+                  }}
+                  options={editionOptionsOf(shown, detail?.versionLabel ?? null, versions)}
+                  selectedId={chosenVersion?.id ?? shown.id}
+                  onSelect={(id) => {
+                    setVersion(id === shown.id ? null : id);
+                  }}
+                >
+                  <Icon of={PlayFilledIcon} size={18} />
+                  {chosenVersion !== null
+                    ? `Play ${chosenVersion.versionLabel ?? 'this edition'}`
+                    : shownResume === undefined
+                      ? 'Play'
+                      : `Resume from ${formatDuration(shownResume)}`}
+                </SplitButton>
               )}
-
-              <Button
-                variant="confirm"
-                size="lg"
-                className="min-w-0 flex-1"
-                onClick={() => {
-                  onPlay(chosenVersion ?? shown, chosenVersion === null ? (shownResume ?? 0) : 0);
-                }}
-              >
-                <Icon of={PlayFilledIcon} size={18} />
-                {shownResume === undefined || chosenVersion !== null
-                  ? 'Play'
-                  : `Resume from ${formatDuration(shownResume)}`}
-              </Button>
             </div>
           }
           actions={[

@@ -45,6 +45,93 @@ describe('DataTable', () => {
     expect(before).toHaveTextContent('two');
   });
 
+  it('opens a row onto the rows beneath it, in the same columns, without them taking a page', async () => {
+    type Shelf = { name: string; items: number; parts?: Shelf[] };
+
+    const user = userEvent.setup();
+    const shelves: Shelf[] = [
+      { name: 'Films', items: 106 },
+      {
+        name: 'Shows',
+        items: 38,
+        parts: [
+          { name: 'Season 1', items: 10 },
+          { name: 'Season 2', items: 8 },
+        ],
+      },
+    ];
+    const columns: DataTableColumn<Shelf>[] = [
+      {
+        id: 'name',
+        header: 'Name',
+        accessorFn: (shelf) => shelf.name,
+        cell: ({ row }) =>
+          row.getCanExpand() ? (
+            <button
+              type="button"
+              onClick={() => {
+                row.toggleExpanded();
+              }}
+            >
+              {`Open ${row.original.name}`}
+            </button>
+          ) : (
+            <span>{row.original.name}</span>
+          ),
+      },
+      { id: 'items', header: 'Items', accessorFn: (shelf) => shelf.items },
+    ];
+
+    render(
+      <DataTable
+        label="Shelves"
+        columns={columns}
+        rows={shelves}
+        pageSize={2}
+        getSubRows={(shelf) => shelf.parts}
+      />,
+    );
+
+    expect(screen.queryByText('Season 1')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Open Shows' }));
+
+    const season = screen.getByText('Season 1').closest('tr');
+
+    expect(season).toHaveAttribute('data-depth', '1');
+    expect(season?.querySelectorAll('td')).toHaveLength(2);
+    expect(screen.getByText('Season 2')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Next page' })).not.toBeInTheDocument();
+  });
+
+  it('stands as tall as the room left below it where asked, however little it holds', () => {
+    const { container } = render(
+      <DataTable label="Libraries" columns={COLUMNS} rows={ROWS} height="fills" />,
+    );
+
+    expect(container.querySelector('[class*="max-h-"]')).toBeNull();
+    expect(container.querySelector<HTMLElement>('.valence-rail')?.style.height).toBe(
+      `${window.innerHeight.toString()}px`,
+    );
+  });
+
+  it('draws a column that shrinks only as wide as what it holds', () => {
+    render(
+      <DataTable
+        label="Libraries"
+        columns={[
+          { id: 'pick', header: '', meta: { shrinks: true }, cell: () => <span>x</span> },
+          ...COLUMNS,
+        ]}
+        rows={ROWS.slice(0, 1)}
+      />,
+    );
+
+    expect(screen.getAllByRole('columnheader')[0]).toHaveClass('w-px');
+    expect(screen.getAllByRole('cell')[0]).toHaveClass('w-px');
+    expect(screen.getAllByRole('cell')[1]).not.toHaveClass('w-px');
+  });
+
   describe('paging', () => {
     it('stays on the page it is on when the rows are read again', async () => {
       const user = userEvent.setup();

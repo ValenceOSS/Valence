@@ -22,6 +22,7 @@ import type { ButtonProps } from './Button.types';
  * @param size - How large it is, or none to leave height and padding to the caller.
  * @param isLoading - Whether the thing it does is under way, which also stops it being pressed twice.
  * @param isPill - Whether to round it fully, which is a circle for an icon on its own.
+ * @param joins - Whether it runs on into the control after it, squaring the side they meet on.
  * @param label - What it does in words, required of anything wearing only an icon.
  * @param isIconOnly - Whether it is a glyph and nothing else, which makes it square rather than wide.
  * @param isActive - Whether what it does is currently in force, said as well as shown.
@@ -35,6 +36,7 @@ const Button = ({
   size = 'md',
   isLoading = false,
   isPill = false,
+  joins,
   isIconOnly = false,
   isActive = false,
   hasTooltip = true,
@@ -61,7 +63,14 @@ const Button = ({
           variant,
           size,
           isIconOnly,
-          shape: isBare && !isPill ? 'bare' : isPill ? 'pill' : 'square',
+          shape:
+            isBare && !isPill
+              ? 'bare'
+              : isPill
+                ? 'pill'
+                : joins === 'next'
+                  ? 'joinsNext'
+                  : 'square',
         }),
         isActive && !isBare ? 'bg-active' : '',
         className,

@@ -367,7 +367,7 @@ const RolesPanel = () => {
             label="Roles"
             columns={columns}
             rows={roles}
-            height="fill"
+            height="fills"
             emptyMessage="No roles yet."
           />
         )}

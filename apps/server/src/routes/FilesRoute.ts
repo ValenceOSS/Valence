@@ -3,6 +3,7 @@ import {
   ChangedEntrySchema,
   LibraryFileSearchSchema,
   LibraryFolderSchema,
+  MediaPathsSchema,
   MoveEntryRequestSchema,
   RenameEntryRequestSchema,
 } from '@ValenceContracts/schemas/LibraryFiles';
@@ -34,6 +35,22 @@ const listLibraryFilesRoute = createRoute({
       'Not somebody who may change libraries, a folder outside every library, or one Valence cannot read',
     ),
     404: refused('No such folder'),
+  },
+});
+
+const listMediaPathsRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/files/media',
+  tags: ['Admin'],
+  summary: 'Say where on the disk each film, episode, album and book in a library is',
+  request: { query: z.object({ libraryId: z.string().uuid() }) },
+  responses: {
+    200: {
+      description:
+        'Each one’s file, by its id; an album by one of its tracks, a book by its file or folder',
+      content: { 'application/json': { schema: MediaPathsSchema.openapi('MediaPaths') } },
+    },
+    403: refused('Not somebody who may change libraries'),
   },
 });
 
@@ -122,6 +139,7 @@ const moveLibraryFileRoute = createRoute({
 export {
   deleteLibraryFileRoute,
   listLibraryFilesRoute,
+  listMediaPathsRoute,
   moveLibraryFileRoute,
   renameLibraryFileRoute,
   searchLibraryFilesRoute,

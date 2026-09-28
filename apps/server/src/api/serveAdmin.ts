@@ -409,6 +409,10 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
     const definition = jobDefinitions.find((job) => job.kind === kind);
 
+    if (definition?.runsByHand === false) {
+      return context.json({ error: 'That job starts itself when there is work for it.' }, 409);
+    }
+
     if (
       definition?.destructive === true &&
       !(await requires(context.req.raw.headers, 'jobs.runDestructive'))
@@ -617,7 +621,7 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     const added = await schedules.add(kind, trigger);
 
     if (added === null) {
-      return context.json({ error: 'No such job kind.' }, 404);
+      return context.json({ error: 'No such job kind, or one that cannot be scheduled.' }, 404);
     }
 
     return context.json(added, 201);

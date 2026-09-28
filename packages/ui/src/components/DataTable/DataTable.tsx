@@ -8,6 +8,9 @@ import {
   Filter as FilterIcon,
 } from '@keyline-icons/react';
 import { useState } from 'react';
+import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
+import { spring, stillTransition } from '@ValenceUI/animations/reveal';
+import { useRoomBelow } from '@ValenceUI/useRoomBelow';
 import { useTable } from '@tanstack/react-table';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
@@ -16,7 +19,13 @@ import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
 import { dataTableFeatures } from './dataTableFeatures';
 import { DrawnCell } from './DrawnCell';
-import type { ColumnFiltersState, Renderable, RowData, SortingState } from '@tanstack/react-table';
+import type {
+  ColumnFiltersState,
+  ExpandedState,
+  Renderable,
+  RowData,
+  SortingState,
+} from '@tanstack/react-table';
 import type { ReactNode } from 'react';
 import type { DataTableProps } from './DataTable.types';
 
@@ -51,10 +60,13 @@ const ROWS_A_PAGE = 25;
 
 const NEAR_THE_END = 200;
 
+const SHRINKS = 'w-px whitespace-nowrap pr-0 sm:pr-0';
+
 const HEIGHT_CLASSES = {
   compact: 'max-h-[28rem]',
   fill: 'max-h-[calc(100dvh-16rem)]',
   parent: 'min-h-0 flex-1',
+  fills: '',
 } as const;
 
 /**
@@ -73,14 +85,19 @@ const HEIGHT_CLASSES = {
  * @param getRowId - Names a row by what it is about rather than where it sits, so a row a person
  *   is mid-interaction with keeps its own identity when a live update inserts or reorders around it.
  * @param toolbar - Controls to sit above the table, such as a search box.
+ * @param getSubRows - The rows that open beneath a row, such as a series' episodes, drawn in the
+ *   same columns and indented by how deep they sit, sliding open and shut. A cell opens and closes
+ *   its own row through the row it is handed; the rows beneath it do not count towards a page.
  * @param pageSize - How many rows to show at once.
  * @param page - Which page to show, counted from nothing, where the caller keeps it — so it survives
  *   the table being drawn again elsewhere, and can be carried in an address.
  * @param onPageChange - Told each time the page changes, where the caller keeps it.
  * @param growsOnScroll - Whether reaching the bottom loads more rather than paging.
  * @param height - Whether the table caps at a modest height, reaches for the bottom of the
- *   viewport, for a page that is otherwise this table alone, or takes whatever room its parent
- *   gives it, as in a dialog whose table is the part that scrolls.
+ *   viewport, for a page that is otherwise this table alone, takes whatever room its parent gives
+ *   it, as in a dialog whose table is the part that scrolls, or stands exactly as tall as the room
+ *   left below it, reaching the foot of the screen however little it holds, so the page stays still
+ *   and only the table scrolls.
  * @param className - Extra classes for the caller's own layout.
  */
 const DataTable = <Row extends RowData>({
@@ -92,6 +109,7 @@ const DataTable = <Row extends RowData>({
   onChooseRow,
   getRowId,
   toolbar,
+  getSubRows,
   pageSize = ROWS_A_PAGE,
   page: givenPage,
   onPageChange,
@@ -101,9 +119,12 @@ const DataTable = <Row extends RowData>({
 }: DataTableProps<Row>) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [expanded, setExpanded] = useState<ExpandedState>({});
   const [ownPage, setOwnPage] = useState(0);
   const [shown, setShown] = useState(pageSize);
   const { containerRef, rect, follow, clear } = useSlidingHighlight();
+  const room = useRoomBelow(containerRef, height === 'fills');
+  const slides = useReducedMotionConfig() === true ? stillTransition : spring;
 
   const everyRow = totalRows ?? rows.length;
   const lastPage = Math.max(0, Math.ceil(everyRow / pageSize) - 1);
@@ -132,9 +153,14 @@ const DataTable = <Row extends RowData>({
     columns,
     manualPagination: totalRows !== undefined,
     ...(getRowId === undefined ? {} : { getRowId }),
+    ...(getSubRows === undefined ? {} : { getSubRows }),
+    paginateExpandedRows: false,
+    autoResetExpanded: false,
+    onExpandedChange: setExpanded,
     state: {
       sorting,
       columnFilters,
+      expanded,
       pagination: growsOnScroll
         ? { pageIndex: 0, pageSize: holding }
         : { pageIndex: page, pageSize },
@@ -161,7 +187,9 @@ const DataTable = <Row extends RowData>({
   return (
     <div className={cn('flex flex-col pb-3', className)}>
       {toolbar === undefined ? null : (
-        <div className="flex flex-wrap items-center justify-end gap-3 px-5 pb-3">{toolbar}</div>
+        <div className="flex flex-wrap items-center justify-end gap-3 px-5 pb-4 pt-4">
+          {toolbar}
+        </div>
       )}
 
       <div
@@ -171,6 +199,7 @@ const DataTable = <Row extends RowData>({
         onScroll={(event) => {
           reachEnd(event.currentTarget);
         }}
+        {...(room === null ? {} : { style: { height: room } })}
         className={cn(
           'valence-rail relative overflow-x-auto overflow-y-auto',
           HEIGHT_CLASSES[height],
@@ -192,7 +221,10 @@ const DataTable = <Row extends RowData>({
                     <th
                       key={header.id}
                       scope="col"
-                      className="sticky top-0 z-20 bg-[var(--card-face)] px-3 py-2 first:rounded-tl-lg last:rounded-tr-lg text-left text-xs font-medium uppercase tracking-[0.14em] text-text-muted sm:px-5"
+                      className={cn(
+                        'sticky top-0 z-20 bg-[var(--card-face)] px-3 py-2 first:rounded-tl-lg last:rounded-tr-lg text-left text-xs font-medium uppercase tracking-[0.14em] text-text-muted sm:px-5',
+                        header.column.columnDef.meta?.shrinks === true ? SHRINKS : '',
+                      )}
                     >
                       <div className="flex items-center gap-1">
                         {header.isPlaceholder ? null : canSort ? (
@@ -266,28 +298,85 @@ const DataTable = <Row extends RowData>({
                 </td>
               </tr>
             ) : (
-              table.getRowModel().rows.map((row) => (
-                <tr
-                  key={row.id}
-                  data-highlight={row.id}
-                  onClick={
-                    onChooseRow === undefined
-                      ? undefined
-                      : () => {
-                          onChooseRow(row.original);
-                        }
-                  }
-                  className={cn(onChooseRow === undefined ? '' : 'cursor-pointer')}
-                >
-                  {row.getAllCells().map((cell) => (
-                    <td key={cell.id} className="px-3 py-3 align-middle sm:px-5">
+              <AnimatePresence initial={false}>
+                {table.getRowModel().rows.map((row) => {
+                  const cells = row
+                    .getAllCells()
+                    .map((cell) => (
                       <DrawnCell
+                        key={cell.id}
                         draw={() => drawnBy(cell.column.columnDef.cell, cell.getContext())}
                       />
-                    </td>
-                  ))}
-                </tr>
-              ))
+                    ));
+                  const shrinks = row
+                    .getAllCells()
+                    .map((cell) => cell.column.columnDef.meta?.shrinks === true);
+
+                  return row.depth === 0 ? (
+                    <tr
+                      key={row.id}
+                      data-highlight={row.id}
+                      data-depth={row.depth}
+                      onClick={
+                        onChooseRow === undefined
+                          ? undefined
+                          : () => {
+                              onChooseRow(row.original);
+                            }
+                      }
+                      className={cn(onChooseRow === undefined ? '' : 'cursor-pointer')}
+                    >
+                      {cells.map((drawn, at) => (
+                        <td
+                          key={drawn.key}
+                          className={cn(
+                            'px-3 py-3 align-middle sm:px-5',
+                            shrinks[at] === true ? SHRINKS : '',
+                          )}
+                        >
+                          {drawn}
+                        </td>
+                      ))}
+                    </tr>
+                  ) : (
+                    <motion.tr
+                      key={row.id}
+                      data-highlight={row.id}
+                      data-depth={row.depth}
+                      exit={{ opacity: 0 }}
+                      transition={slides}
+                      onClick={
+                        onChooseRow === undefined
+                          ? undefined
+                          : () => {
+                              onChooseRow(row.original);
+                            }
+                      }
+                      className={cn(onChooseRow === undefined ? '' : 'cursor-pointer')}
+                    >
+                      {cells.map((drawn, at) => (
+                        <td
+                          key={drawn.key}
+                          className={cn(
+                            'px-3 align-middle sm:px-5',
+                            shrinks[at] === true ? SHRINKS : '',
+                          )}
+                        >
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={slides}
+                            className="overflow-hidden"
+                          >
+                            <div className="py-2">{drawn}</div>
+                          </motion.div>
+                        </td>
+                      ))}
+                    </motion.tr>
+                  );
+                })}
+              </AnimatePresence>
             )}
           </tbody>
         </table>

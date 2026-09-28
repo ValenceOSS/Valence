@@ -28,6 +28,7 @@ type ListItemsOptions = {
   order?: 'title' | 'newest' | 'yourRating';
   profileId?: string;
   minYourStars?: number;
+  withVersions?: boolean;
   limit: number;
   offset: number;
 };
@@ -127,6 +128,7 @@ type LibraryService = ShowService & {
   deleteMedia: (mediaId: string) => Promise<MediaDeletion>;
   deleteSeries: (seriesId: string) => Promise<SeriesDeletion>;
   mediaIdsAt: (paths: string[]) => Promise<Record<string, string>>;
+  mediaPathsIn: (libraryId: string) => Promise<Record<string, string>>;
   correctMatch: (
     mediaId: string,
     reference: { externalId: string; externalKind: 'tv' | 'movie' },

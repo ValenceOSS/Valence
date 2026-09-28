@@ -53,12 +53,21 @@ import type { FilesPanelProps } from './FilesPanel.types';
  *
  * @param libraries - The libraries there are, for knowing which one a folder is in.
  * @param mayDelete - Whether the one looking may delete media, which decides whether Delete is offered.
+ * @param openAt - A folder to open, handed in from elsewhere; a new one opens it, and nothing leaves
+ *   whatever folder is open alone.
  * @param onChanged - Told that something on the disk changed, so what depends on the catalogue can
  *   be read again.
  * @param onScan - Asked to scan a library once something is uploaded into it.
  */
-const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps) => {
-  const [at, setAt] = useState<string | null>(null);
+const FilesPanel = ({
+  libraries,
+  mayDelete,
+  openAt = null,
+  onChanged,
+  onScan,
+}: FilesPanelProps) => {
+  const [at, setAt] = useState<string | null>(openAt);
+  const [wasHanded, setWasHanded] = useState(openAt);
   const [typed, setTyped] = useState('');
   const words = useDeferredValue(typed.trim());
   const isSearching = words.length >= 2;
@@ -91,6 +100,14 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
     setTyped('');
     setAt(path);
   };
+
+  if (wasHanded !== openAt) {
+    setWasHanded(openAt);
+
+    if (openAt !== null) {
+      open(openAt);
+    }
+  }
 
   const refresh = async () => {
     await cache.invalidateQueries({
@@ -351,6 +368,7 @@ const FilesPanel = ({ libraries, mayDelete, onChanged, onScan }: FilesPanelProps
         />
       ) : (
         <DataTable
+          height="fills"
           label={isSearching ? 'Files found' : 'Files'}
           columns={columns}
           rows={rows}

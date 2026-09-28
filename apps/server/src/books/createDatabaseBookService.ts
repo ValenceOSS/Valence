@@ -109,14 +109,20 @@ const MarksSchema = z.array(ChapterMarkSchema).catch([]);
 const namesIn = (held: JsonValue): string[] | null => NamesSchema.parse(held);
 
 /**
- * A book as a shelf shows it, from its row and how many chapters it has.
+ * A book as a shelf shows it, from its row and what its chapters add up to.
  *
  * @param row - The book as stored.
  * @param chapterCount - How many chapters are in it.
  * @param heardCount - How many of those are listened to rather than read.
+ * @param sizeBytes - How big its chapters' files are together.
  * @returns The book.
  */
-const toBook = (row: typeof book.$inferSelect, chapterCount: number, heardCount: number): Book => ({
+const toBook = (
+  row: typeof book.$inferSelect,
+  chapterCount: number,
+  heardCount: number,
+  sizeBytes: number,
+): Book => ({
   id: row.id,
   libraryId: row.libraryId,
   title: row.title,
@@ -130,6 +136,7 @@ const toBook = (row: typeof book.$inferSelect, chapterCount: number, heardCount:
   posterUrl: row.posterUrl,
   hasCover: chapterCount > 0,
   chapterCount,
+  sizeBytes,
   hasText: chapterCount > heardCount,
   hasAudio: heardCount > 0,
   series: row.seriesName === null ? null : { name: row.seriesName, position: row.seriesPosition },
@@ -405,6 +412,7 @@ const createDatabaseBookService = (
                   sql<number>`count(*) filter (where ${inArray(bookChapter.format, [...AUDIOBOOK_FORMATS])})`.mapWith(
                     Number,
                   ),
+                bytes: sql<number>`coalesce(sum(${bookChapter.sizeBytes}), 0)`.mapWith(Number),
               })
               .from(bookChapter)
               .where(
@@ -418,7 +426,12 @@ const createDatabaseBookService = (
       const howMany = new Map(counted.map((row) => [row.bookId, row]));
 
       return rows.map((row) =>
-        toBook(row, howMany.get(row.id)?.count ?? 0, howMany.get(row.id)?.heard ?? 0),
+        toBook(
+          row,
+          howMany.get(row.id)?.count ?? 0,
+          howMany.get(row.id)?.heard ?? 0,
+          howMany.get(row.id)?.bytes ?? 0,
+        ),
       );
     },
 
@@ -464,6 +477,7 @@ const createDatabaseBookService = (
           chapters.filter((chapter) =>
             isAudiobookFormat(BookFormatSchema.catch('cbz').parse(chapter.format)),
           ).length,
+          chapters.reduce((sum, chapter) => sum + chapter.sizeBytes, 0),
         ),
         chapters: chapters.map((chapter) => ({
           id: chapter.id,

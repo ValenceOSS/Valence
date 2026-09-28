@@ -312,6 +312,7 @@ const DownloadsPanel = () => {
             <Spinner isCentered label="Reading the downloads" size="sm" />
           ) : (
             <DownloadQueueTable
+              fillsScreen
               downloads={queue.data.downloads}
               libraries={libraries.data ?? NO_LIBRARIES}
               busyId={busyId}

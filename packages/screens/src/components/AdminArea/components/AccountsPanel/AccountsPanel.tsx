@@ -655,7 +655,7 @@ const AccountsPanel = () => {
             columns={columns}
             rows={shown}
             pageSize={10}
-            height="fill"
+            height="fills"
             emptyMessage={
               accounts.length === 0 ? 'Nobody has an account yet.' : 'Nobody here matches that.'
             }

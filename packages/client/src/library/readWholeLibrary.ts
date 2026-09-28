@@ -10,13 +10,18 @@ const MOST_PAGES = 100;
  * whatever the first sixty happened to be.
  *
  * @param libraryId - The library to read.
+ * @param withVersions - Whether a film's other versions come too, as their own entries.
  * @returns Every item in it.
  */
-const readWholeLibrary = async (libraryId: string): Promise<MediaSummary[]> => {
+const readWholeLibrary = async (
+  libraryId: string,
+  withVersions = false,
+): Promise<MediaSummary[]> => {
   const gathered: MediaSummary[] = [];
 
   for (let page = 0; page < MOST_PAGES; page += 1) {
     const answer = await fetchLibraryItems(libraryId, {
+      withVersions,
       limit: PAGE_SIZE,
       offset: page * PAGE_SIZE,
     }).catch(() => null);

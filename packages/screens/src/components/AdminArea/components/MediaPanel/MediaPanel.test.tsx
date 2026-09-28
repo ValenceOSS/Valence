@@ -1,8 +1,9 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { MediaPanel } from './MediaPanel';
-import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 
 const item = (overrides: Partial<MediaSummary> = {}): MediaSummary => ({
   id: 'item-1',
@@ -22,10 +23,46 @@ const item = (overrides: Partial<MediaSummary> = {}): MediaSummary => ({
   seriesTitle: null,
   seasonNumber: null,
   episodeNumber: null,
+  externalId: 'tmdb-1',
+  sizeBytes: 4_000_000_000,
   ...overrides,
 });
 
+const library = (overrides: Partial<Library> = {}): Library => ({
+  id: 'library-1',
+  name: 'Films',
+  kind: 'movies',
+  path: '/media/films',
+  itemCount: 1,
+  lastScannedAt: null,
+  defaultAudioLanguage: null,
+  filesAtOnce: null,
+  takesRequests: true,
+  requestProfileId: null,
+  requestPath: null,
+  ...overrides,
+});
+
+const SHOWS = library({ id: 'library-2', name: 'Shows', kind: 'shows', path: '/media/shows' });
+
+const MUSIC = library({ id: 'library-3', name: 'Music', kind: 'music', path: '/media/music' });
+
+const BOOKS = library({ id: 'library-4', name: 'Books', kind: 'books', path: '/media/books' });
+
+const episode = (id: string, season: number, number: number, title: string): MediaSummary =>
+  item({
+    id,
+    libraryId: SHOWS.id,
+    title,
+    seriesId: 'series-from',
+    seriesTitle: 'From',
+    seasonNumber: season,
+    episodeNumber: number,
+    sizeBytes: 1_000_000_000,
+  });
+
 const props = {
+  libraries: [library(), SHOWS],
   media: [],
   onCorrect: vi.fn(),
   onChooseMoment: vi.fn(),
@@ -37,41 +74,6 @@ describe('MediaPanel', () => {
     render(<MediaPanel {...props} media={[item()]} />);
 
     expect(screen.getByText('Parasite')).toBeInTheDocument();
-  });
-
-  it('names a series by its programme, with the episode standing for it said quietly', () => {
-    render(<MediaPanel {...props} media={[item({ title: 'Long Day', seriesTitle: 'From' })]} />);
-
-    const row = screen.getByRole('row', { name: /From/ });
-
-    expect(within(row).getByText('From')).toBeInTheDocument();
-    expect(within(row).getByText('Long Day')).toBeInTheDocument();
-  });
-
-  it('says which is a film and which is a series, since a correction differs by kind', () => {
-    render(<MediaPanel {...props} media={[item()]} />);
-
-    expect(screen.getByText(/Film/)).toBeInTheDocument();
-  });
-
-  it('narrows by kind, so films and series can be looked at apart', async () => {
-    const user = userEvent.setup();
-
-    render(
-      <MediaPanel
-        {...props}
-        media={[
-          item(),
-          item({ id: 'item-2', title: 'Long Day', seriesId: 's', seriesTitle: 'From' }),
-        ]}
-      />,
-    );
-
-    await user.click(screen.getByRole('button', { name: 'Filter by kind' }));
-    await user.click(await screen.findByRole('menuitemradio', { name: 'Series' }));
-
-    expect(screen.queryByText('Parasite')).not.toBeInTheDocument();
-    expect(screen.getByText('From')).toBeInTheDocument();
   });
 
   it('narrows to what was searched for', async () => {
@@ -93,16 +95,6 @@ describe('MediaPanel', () => {
     await user.type(screen.getByLabelText('Find a programme or film'), 'zzz');
 
     expect(screen.getByText(/Nothing here matches that/)).toBeInTheDocument();
-  });
-
-  it('tells an empty library apart from one it could not read', () => {
-    const { rerender } = render(<MediaPanel {...props} />);
-
-    expect(screen.getByText(/Nothing has been scanned yet/)).toBeInTheDocument();
-
-    rerender(<MediaPanel {...props} isUnreachable />);
-
-    expect(screen.getByText(/could not be read from the server/)).toBeInTheDocument();
   });
 
   it('asks for the item whose match is wrong', async () => {
@@ -144,18 +136,6 @@ describe('MediaPanel', () => {
     const [, first] = screen.getAllByRole('row');
 
     expect(first?.textContent).toContain('Alien');
-  });
-
-  it('says which are films and which are series, since a wrong match differs by kind', () => {
-    render(<MediaPanel {...props} media={[item()]} />);
-
-    expect(screen.getByRole('columnheader', { name: /Kind/ })).toBeInTheDocument();
-  });
-
-  it('shows which items have no artwork, since that is what a bad match looks like', () => {
-    render(<MediaPanel {...props} media={[item({ hasPoster: false })]} />);
-
-    expect(screen.getByText('Missing')).toBeInTheDocument();
   });
 
   it('offers to rebuild one item, for the case where a single preview is wrong', async () => {
@@ -232,32 +212,6 @@ describe('MediaPanel', () => {
     expect(screen.queryByRole('menuitem', { name: /Delete file/ })).not.toBeInTheDocument();
   });
 
-  it('deletes a series only once it has been asked twice, as a whole', async () => {
-    const onDelete = vi.fn().mockResolvedValue(true);
-    const user = userEvent.setup();
-
-    render(
-      <MediaPanel
-        {...props}
-        media={[item({ title: 'Long Day', seriesId: 's', seriesTitle: 'From' })]}
-        onDelete={onDelete}
-      />,
-    );
-
-    await user.click(screen.getByRole('button', { name: /Actions for/ }));
-    await user.click(screen.getByRole('menuitem', { name: /Delete series/ }));
-
-    expect(await screen.findByText('Delete every episode of From?')).toBeInTheDocument();
-    expect(onDelete).not.toHaveBeenCalled();
-
-    await user.click(screen.getByRole('button', { name: 'Delete series' }));
-
-    expect(onDelete).toHaveBeenCalledWith(expect.objectContaining({ id: 'item-1' }));
-    await vi.waitFor(() => {
-      expect(screen.queryByText('Delete every episode of From?')).not.toBeInTheDocument();
-    });
-  });
-
   it('keeps asking where the file could not be deleted, so it can be tried again', async () => {
     const onDelete = vi.fn().mockResolvedValue(false);
     const user = userEvent.setup();
@@ -272,6 +226,418 @@ describe('MediaPanel', () => {
       expect(onDelete).toHaveBeenCalledTimes(1);
     });
     expect(screen.getByText('Delete Parasite?')).toBeInTheDocument();
+  });
+
+  it('gives each library of films or series its own tab', async () => {
+    const user = userEvent.setup();
+
+    render(<MediaPanel {...props} media={[item(), episode('e1', 1, 1, 'Pilot')]} />);
+
+    expect(screen.getByText('Parasite')).toBeInTheDocument();
+    expect(screen.queryByText('From')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: 'Shows' }));
+
+    expect(await screen.findByText('From')).toBeInTheDocument();
+    expect(screen.queryByText('Parasite')).not.toBeInTheDocument();
+  });
+
+  it('lists a series once, sized by all its episodes rather than one', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MediaPanel
+        {...props}
+        media={[episode('e1', 1, 1, 'Pilot'), episode('e2', 1, 2, 'Choose Wisely')]}
+      />,
+    );
+
+    await user.click(screen.getByRole('tab', { name: 'Shows' }));
+
+    const row = await screen.findByRole('row', { name: /From/ });
+
+    expect(within(row).getByText('1 season · 2 episodes')).toBeInTheDocument();
+    expect(within(row).getByText(formatBytes(2_000_000_000))).toBeInTheDocument();
+    expect(within(row).queryByText('Pilot')).not.toBeInTheDocument();
+  });
+
+  it('opens a series onto its seasons, and a season onto its episodes, in the table’s own columns', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MediaPanel
+        {...props}
+        media={[
+          episode('e3', 2, 1, 'Return'),
+          episode('e1', 1, 1, 'Pilot'),
+          episode('e2', 1, 2, 'Choose Wisely'),
+        ]}
+      />,
+    );
+
+    await user.click(screen.getByRole('tab', { name: 'Shows' }));
+    await user.click(await screen.findByRole('button', { name: 'Show the episodes of From' }));
+
+    const seasonOne = screen.getByRole('row', { name: /Season 1/ });
+
+    expect(seasonOne).toHaveAttribute('data-depth', '1');
+    expect(within(seasonOne).getByText('2 episodes')).toBeInTheDocument();
+    expect(within(seasonOne).getByText(formatBytes(2_000_000_000))).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: /Season 2/ })).toBeInTheDocument();
+    expect(screen.queryByText('Pilot')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Show the episodes in Season 1' }));
+
+    const pilot = screen.getByRole('row', { name: /Pilot/ });
+
+    expect(pilot).toHaveAttribute('data-depth', '2');
+    expect(within(pilot).getByText('E1')).toBeInTheDocument();
+    expect(within(pilot).getByText(formatBytes(1_000_000_000))).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Hide the episodes of From' }));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Season 1')).not.toBeInTheDocument();
+    });
+  });
+
+  it('opens a series of one season straight onto its episodes', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MediaPanel
+        {...props}
+        media={[episode('e1', 1, 1, 'Pilot'), episode('e2', 1, 2, 'Choose Wisely')]}
+      />,
+    );
+
+    await user.click(screen.getByRole('tab', { name: 'Shows' }));
+    await user.click(await screen.findByRole('button', { name: 'Show the episodes of From' }));
+
+    expect(screen.getByRole('row', { name: /Pilot/ })).toHaveAttribute('data-depth', '1');
+    expect(screen.queryByText('Season 1')).not.toBeInTheDocument();
+  });
+
+  it('deletes one episode from its own menu without taking the series with it', async () => {
+    const onDelete = vi.fn().mockResolvedValue(true);
+    const user = userEvent.setup();
+
+    render(
+      <MediaPanel
+        {...props}
+        media={[episode('e1', 1, 1, 'Pilot'), episode('e2', 1, 2, 'Choose Wisely')]}
+        onDelete={onDelete}
+      />,
+    );
+
+    await user.click(screen.getByRole('tab', { name: 'Shows' }));
+    await user.click(await screen.findByRole('button', { name: 'Show the episodes of From' }));
+    await user.click(screen.getByRole('button', { name: 'Actions for Pilot' }));
+    await user.click(screen.getByRole('menuitem', { name: /Delete file/ }));
+    await user.click(await screen.findByRole('button', { name: 'Delete file' }));
+
+    expect(onDelete).toHaveBeenCalledWith(expect.objectContaining({ id: 'e1' }), false);
+  });
+
+  it('deletes a series only once it has been asked twice, as a whole', async () => {
+    const onDelete = vi.fn().mockResolvedValue(true);
+    const user = userEvent.setup();
+
+    render(<MediaPanel {...props} media={[episode('e1', 1, 1, 'Pilot')]} onDelete={onDelete} />);
+
+    await user.click(screen.getByRole('tab', { name: 'Shows' }));
+    await user.click(await screen.findByRole('button', { name: 'Actions for From' }));
+    await user.click(screen.getByRole('menuitem', { name: /Delete series/ }));
+
+    expect(await screen.findByText('Delete every episode of From?')).toBeInTheDocument();
+    expect(onDelete).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Delete series' }));
+
+    expect(onDelete).toHaveBeenCalledWith(expect.objectContaining({ id: 'e1' }), true);
+    await vi.waitFor(() => {
+      expect(screen.queryByText('Delete every episode of From?')).not.toBeInTheDocument();
+    });
+  });
+
+  it('re-encodes every episode of a series from the series’ own menu', async () => {
+    const onReencode = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <MediaPanel
+        {...props}
+        media={[episode('e1', 1, 1, 'Pilot'), episode('e2', 1, 2, 'Choose Wisely')]}
+        onReencode={onReencode}
+      />,
+    );
+
+    await user.click(screen.getByRole('tab', { name: 'Shows' }));
+    await user.click(await screen.findByRole('button', { name: 'Actions for From' }));
+    await user.click(screen.getByRole('menuitem', { name: /Re-encode every episode/ }));
+
+    expect(onReencode).toHaveBeenCalledWith([
+      expect.objectContaining({ id: 'e1' }),
+      expect.objectContaining({ id: 'e2' }),
+    ]);
+  });
+
+  it('shows each title’s poster, and says where there is none', () => {
+    render(
+      <MediaPanel
+        {...props}
+        media={[item(), item({ id: 'item-2', title: 'Heat', hasPoster: false })]}
+      />,
+    );
+
+    expect(screen.getByLabelText('No artwork')).toBeInTheDocument();
+  });
+
+  it('narrows to what is unmatched: no match, or no poster', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MediaPanel
+        {...props}
+        media={[
+          item(),
+          item({ id: 'item-2', title: 'Heat', externalId: null }),
+          item({ id: 'item-3', title: 'Alien', hasPoster: false }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText('Unmatched')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Unmatched (2)' }));
+
+    expect(screen.queryByText('Parasite')).not.toBeInTheDocument();
+    expect(screen.getByText('Heat')).toBeInTheDocument();
+    expect(screen.getByText('Alien')).toBeInTheDocument();
+  });
+
+  it('says what a film is at a glance: how long, how sharp and how it is encoded', () => {
+    render(<MediaPanel {...props} media={[item()]} />);
+
+    expect(screen.getByText('2:12:00 · 1080p · HEVC')).toBeInTheDocument();
+  });
+
+  it('tells an empty library apart from one it could not read, and from having none', () => {
+    const { rerender } = render(<MediaPanel {...props} />);
+
+    expect(screen.getByText(/Nothing has been scanned into this library yet/)).toBeInTheDocument();
+
+    rerender(<MediaPanel {...props} isUnreachable />);
+
+    expect(screen.getByText(/could not be read from the server/)).toBeInTheDocument();
+
+    rerender(<MediaPanel {...props} libraries={[]} />);
+
+    expect(screen.getByText(/no library yet/)).toBeInTheDocument();
+  });
+
+  it('shows where a film’s file is, and opens its folder in Files', async () => {
+    const onOpenFolder = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <MediaPanel
+        {...props}
+        media={[item()]}
+        paths={{ 'item-1': '/media/films/Parasite (2019)/Parasite.mkv' }}
+        onOpenFolder={onOpenFolder}
+      />,
+    );
+
+    expect(screen.getByText('Parasite (2019)/Parasite.mkv')).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', { name: 'Open /media/films/Parasite (2019) in Files' }),
+    );
+
+    expect(onOpenFolder).toHaveBeenCalledWith('/media/films/Parasite (2019)');
+  });
+
+  it('shows a series’ own folder, and each episode’s folder from its row', async () => {
+    const onOpenFolder = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <MediaPanel
+        {...props}
+        media={[episode('e1', 1, 1, 'Pilot'), episode('e2', 2, 1, 'Return')]}
+        paths={{
+          e1: '/media/shows/From/Season 1/From S01E01.mkv',
+          e2: '/media/shows/From/Season 2/From S02E01.mkv',
+        }}
+        onOpenFolder={onOpenFolder}
+      />,
+    );
+
+    await user.click(screen.getByRole('tab', { name: 'Shows' }));
+
+    expect(
+      await screen.findByRole('button', { name: 'Open /media/shows/From in Files' }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Show the episodes of From' }));
+    await user.click(screen.getByRole('button', { name: 'Show the episodes in Season 2' }));
+    await user.click(screen.getByRole('button', { name: 'Actions for Return' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Show in Files' }));
+
+    expect(onOpenFolder).toHaveBeenCalledWith('/media/shows/From/Season 2');
+  });
+
+  it('lists a music library’s albums with their covers, and corrects one', async () => {
+    const onCorrectAlbum = vi.fn();
+    const user = userEvent.setup();
+    const blue = {
+      id: '0f8fad5b-d9cb-469f-a165-70867728950e',
+      libraryId: MUSIC.id,
+      title: 'Blue',
+      artist: { id: '7c9e6679-7425-40de-944b-e07fc1f90ae7', name: 'Joni Mitchell' },
+      year: 1971,
+      genres: [],
+      hasArtwork: false,
+      isCompilation: false,
+      trackCount: 10,
+      durationSeconds: 2160,
+      sizeBytes: 0,
+      isExplicit: false,
+      addedAt: '2026-09-21T00:00:00.000Z',
+    };
+
+    render(
+      <MediaPanel
+        {...props}
+        libraries={[library(), MUSIC]}
+        albums={[blue]}
+        onCorrectAlbum={onCorrectAlbum}
+        paths={{ [blue.id]: '/media/music/Joni Mitchell/Blue/CD 1/01 All I Want.flac' }}
+        onOpenFolder={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole('tab', { name: 'Music' }));
+
+    expect(await screen.findByText('Blue')).toBeInTheDocument();
+    expect(screen.getByText('Joni Mitchell · 10 tracks · 36:00')).toBeInTheDocument();
+    expect(screen.getByText('1 album')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'No cover (1)' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Actions for Blue' }));
+    await user.click(screen.getByRole('menuitem', { name: /Wrong match/ }));
+
+    expect(onCorrectAlbum).toHaveBeenCalledWith(blue);
+    expect(screen.getByText('Joni Mitchell/Blue')).toBeInTheDocument();
+  });
+
+  it('lists a book library’s books by title and author, with where each is', async () => {
+    const onOpenFolder = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <MediaPanel
+        {...props}
+        libraries={[library(), BOOKS]}
+        books={[
+          {
+            id: '0f8fad5b-d9cb-469f-a165-70867728950e',
+            libraryId: BOOKS.id,
+            title: 'Dune',
+            layout: 'reflow',
+            direction: 'leftToRight',
+            year: 1965,
+            overview: null,
+            genres: null,
+            authors: ['Frank Herbert'],
+            rating: null,
+            hasCover: true,
+            chapterCount: 48,
+            sizeBytes: 5_000_000,
+            addedAt: '2026-09-21T00:00:00.000Z',
+            updatedAt: '2026-09-21T00:00:00.000Z',
+          },
+        ]}
+        paths={{ '0f8fad5b-d9cb-469f-a165-70867728950e': '/media/books/Dune.epub' }}
+        onOpenFolder={onOpenFolder}
+      />,
+    );
+
+    await user.click(screen.getByRole('tab', { name: 'Books' }));
+
+    expect(await screen.findByText('Dune')).toBeInTheDocument();
+    expect(screen.getByText('Frank Herbert · 48 chapters')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Open /media/books in Files' }));
+
+    expect(onOpenFolder).toHaveBeenCalledWith('/media/books');
+    expect(screen.getByText('Dune.epub')).toBeInTheDocument();
+    expect(screen.getByText(formatBytes(5_000_000))).toBeInTheDocument();
+  });
+
+  it('opens a film onto each of its editions, each with its own file actions', async () => {
+    const onDelete = vi.fn().mockResolvedValue(true);
+    const user = userEvent.setup();
+
+    render(
+      <MediaPanel
+        {...props}
+        media={[
+          item(),
+          item({
+            id: 'item-2',
+            parentId: 'item-1',
+            versionLabel: 'Extended Cut',
+            width: 1280,
+            height: 720,
+            sizeBytes: 1_000_000_000,
+          }),
+        ]}
+        onDelete={onDelete}
+      />,
+    );
+
+    expect(screen.getAllByText('Parasite')).toHaveLength(1);
+    expect(screen.getByText('2 editions')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Show the editions of Parasite' }));
+
+    const cut = screen.getByRole('row', { name: /Extended Cut/ });
+
+    expect(cut).toHaveAttribute('data-depth', '1');
+    expect(within(cut).getByText(/720p/)).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: /Original/ })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Actions for Extended Cut' }));
+    await user.click(screen.getByRole('menuitem', { name: /Delete file/ }));
+    await user.click(await screen.findByRole('button', { name: 'Delete file' }));
+
+    expect(onDelete).toHaveBeenCalledWith(expect.objectContaining({ id: 'item-2' }), false);
+  });
+
+  it('opens an episode onto its editions where it has more than one file', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MediaPanel
+        {...props}
+        media={[
+          episode('e1', 1, 1, 'Pilot'),
+          { ...episode('e1b', 1, 1, 'Pilot'), parentId: 'e1', versionLabel: 'Bluray-1080p' },
+          episode('e2', 1, 2, 'Choose Wisely'),
+        ]}
+      />,
+    );
+
+    await user.click(screen.getByRole('tab', { name: 'Shows' }));
+    await user.click(await screen.findByRole('button', { name: 'Show the episodes of From' }));
+
+    expect(screen.getAllByRole('row', { name: /Pilot/ })).toHaveLength(1);
+
+    await user.click(screen.getByRole('button', { name: 'Show the editions of Pilot' }));
+
+    expect(screen.getByRole('row', { name: /Bluray-1080p/ })).toHaveAttribute('data-depth', '2');
   });
 
   it('sets a display name so devtools can identify it', () => {

@@ -8,6 +8,7 @@ import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { FormField } from '@ValenceUI/FormField';
+import { HeadedSection } from '@ValenceUI/HeadedSection';
 import { Icon } from '@ValenceUI/Icon';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
@@ -202,7 +203,7 @@ const IndexerDialog = ({
 
   const title =
     indexer !== null
-      ? `Change ${indexer.name}`
+      ? `Edit ${indexer.name}`
       : start?.kind === 'cardigann'
         ? `Add ${start.name}`
         : 'Add an indexer';
@@ -219,245 +220,266 @@ const IndexerDialog = ({
         }
       />
 
-      <DialogContent className="flex flex-col gap-4">
-        {isSite ? null : (
-          <FormField label="Kind" description="Torznab for torrents, Newznab for usenet.">
-            <SegmentedRow
-              label="Kind"
-              size="sm"
-              items={KINDS}
-              value={form.kind}
-              onSelect={(next) => {
-                const kind = KINDS.find((one) => one.id === next)?.id;
-
-                if (kind !== undefined) {
-                  change({ kind });
-                }
-              }}
-            />
-          </FormField>
-        )}
-
-        <TextField
-          label="Name"
-          value={form.name}
-          onValueChange={(name) => {
-            change({ name });
-          }}
-          placeholder="NZBgeek"
-          required
-        />
-
-        {isSite ? (
-          detail.isPending ? (
-            <Spinner isCentered label="Reading what this site needs" size="sm" />
-          ) : definition === null ? (
-            <p role="alert" className="text-sm text-danger">
-              This site’s definition is no longer in the catalogue.
-            </p>
-          ) : (
-            <>
-              <FormField
-                label="Address"
-                description="Which of the site’s addresses to use. Try another if one is blocked."
-              >
-                <OptionMenu
-                  label="Address"
-                  triggerShape="field"
-                  matchTriggerWidth
-                  groups={[
-                    {
-                      name: 'Address',
-                      selectedId: url,
-                      onSelect: (next) => {
-                        change({ url: next });
-                      },
-                      options: links.map((link) => ({ id: link, label: link })),
-                    },
-                  ]}
-                  trigger={
-                    <>
-                      <span className="truncate">{url}</span>
-                      <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
-                    </>
-                  }
-                />
-              </FormField>
-
-              <DefinitionSettingsFields
-                settings={definition.settings}
-                values={form.settings}
-                secretsSet={indexer?.secretsSet ?? []}
-                onChange={setSetting}
-              />
-            </>
-          )
-        ) : (
-          <>
-            <TextField
-              label="Address"
-              type="url"
-              value={form.url}
-              onValueChange={(next) => {
-                change({ url: next });
-              }}
-              placeholder="http://jackett:9117/api/v2.0/indexers/all/results/torznab/"
-              description="The indexer’s site, or the Torznab feed Jackett or Prowlarr gives for it."
-              required
-            />
-
-            <TextField
-              label="API key"
-              type="password"
-              value={form.apiKey}
-              onValueChange={(apiKey) => {
-                change({ apiKey });
-              }}
-              description={
-                indexer?.hasApiKey === true
-                  ? 'A key is kept. Type a new one to replace it, or leave this empty to keep it.'
-                  : 'Leave this empty for an indexer that needs none.'
-              }
-              autoComplete="off"
-            />
-          </>
-        )}
-
-        {tried?.captcha === null || tried?.captcha === undefined ? null : (
-          <FormField
-            label="Captcha"
-            description="Type the characters in the picture, then try again."
-          >
-            <div className="flex flex-col items-start gap-2">
-              <img
-                src={tried.captcha.image}
-                alt="The characters to type"
-                className="rounded border border-[var(--surface-line)]"
-              />
-              <TextField
-                label="Characters in the picture"
-                isLabelHidden
-                value={typeof form.settings['CAPTCHA'] === 'string' ? form.settings['CAPTCHA'] : ''}
-                onValueChange={(next) => {
-                  setSetting('CAPTCHA', next);
-                }}
-                autoComplete="off"
-              />
-            </div>
-          </FormField>
-        )}
-
-        <div className="grid gap-4 sm:grid-cols-3">
+      <DialogContent className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4">
           <TextField
-            label="Priority"
-            type="number"
-            min={1}
-            max={50}
-            value={form.priority}
-            onValueChange={(priority) => {
-              change({ priority });
+            label="Name"
+            value={form.name}
+            onValueChange={(name) => {
+              change({ name });
             }}
-            description="1 is asked first."
+            placeholder="NZBgeek"
+            required
           />
 
-          <TextField
-            label="Searches a minute"
-            type="number"
-            min={1}
-            max={600}
-            value={form.requestsPerMinute}
-            onValueChange={(requestsPerMinute) => {
-              change({ requestsPerMinute });
-            }}
-            placeholder="No limit"
-          />
-
-          <TextField
-            label="Wait (seconds)"
-            type="number"
-            min={5}
-            max={120}
-            value={form.timeoutSeconds}
-            onValueChange={(timeoutSeconds) => {
-              change({ timeoutSeconds });
+          <Switch
+            label="Enabled"
+            isOn={form.isEnabled}
+            onToggle={() => {
+              change({ isEnabled: !form.isEnabled });
             }}
           />
         </div>
 
-        <Switch
-          label="Search this indexer"
-          isOn={form.isEnabled}
-          onToggle={() => {
-            change({ isEnabled: !form.isEnabled });
-          }}
-        />
+        <HeadedSection title={isSite ? 'Site' : 'Connection'}>
+          <div className="flex flex-col gap-4">
+            {isSite ? null : (
+              <FormField label="Kind" description="Torznab for torrents, Newznab for usenet.">
+                <SegmentedRow
+                  label="Kind"
+                  size="sm"
+                  items={KINDS}
+                  value={form.kind}
+                  onSelect={(next) => {
+                    const kind = KINDS.find((one) => one.id === next)?.id;
 
-        <FormField
-          label="After a download is filed"
-          description="Public trackers default to deleting the torrent. Private ones keep seeding, so you do not lose your account."
-        >
-          <SegmentedRow
-            label="After a download is filed"
-            size="sm"
-            items={KEEPING}
-            value={form.removesWhenDone}
-            onSelect={(next) => {
-              const chosen = KEEPING.find((one) => one.id === next)?.id;
-
-              if (chosen !== undefined) {
-                change({ removesWhenDone: chosen });
-              }
-            }}
-          />
-        </FormField>
-
-        {form.removesWhenDone === 'never' ? null : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <TextField
-              label="Minimum seed time (seconds)"
-              type="number"
-              min={0}
-              value={form.seedSeconds}
-              onValueChange={(seedSeconds) => {
-                change({ seedSeconds });
-              }}
-              placeholder="What the tracker asks"
-              description="Whichever is higher: this or the tracker’s own minimum."
-            />
-
-            <TextField
-              label="Minimum seed ratio"
-              type="number"
-              min={0}
-              value={form.seedRatio}
-              onValueChange={(seedRatio) => {
-                change({ seedRatio });
-              }}
-              placeholder="What the tracker asks"
-              description="Whichever is higher: this or the tracker’s own minimum."
-            />
-          </div>
-        )}
-
-        {categories.length === 0 ? null : (
-          <FormField
-            label="Categories"
-            description="Only search these. Choose none to search every category the indexer has."
-          >
-            <div className="grid gap-2 sm:grid-cols-2">
-              {categories.map((category) => (
-                <Checkbox
-                  key={category.id}
-                  label={category.name}
-                  checked={form.categories.includes(category.id)}
-                  onCheckedChange={() => {
-                    toggleCategory(category.id);
+                    if (kind !== undefined) {
+                      change({ kind });
+                    }
                   }}
                 />
-              ))}
+              </FormField>
+            )}
+
+            {isSite ? (
+              detail.isPending ? (
+                <Spinner isCentered label="Reading what this site needs" size="sm" />
+              ) : definition === null ? (
+                <p role="alert" className="text-sm text-danger">
+                  This site’s definition is no longer in the catalogue.
+                </p>
+              ) : (
+                <>
+                  <FormField
+                    label="Address"
+                    description="Which of the site’s addresses to use. Try another if one is blocked."
+                  >
+                    <OptionMenu
+                      label="Address"
+                      triggerShape="field"
+                      matchTriggerWidth
+                      groups={[
+                        {
+                          name: 'Address',
+                          selectedId: url,
+                          onSelect: (next) => {
+                            change({ url: next });
+                          },
+                          options: links.map((link) => ({ id: link, label: link })),
+                        },
+                      ]}
+                      trigger={
+                        <>
+                          <span className="truncate">{url}</span>
+                          <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
+                        </>
+                      }
+                    />
+                  </FormField>
+
+                  <DefinitionSettingsFields
+                    settings={definition.settings}
+                    values={form.settings}
+                    secretsSet={indexer?.secretsSet ?? []}
+                    onChange={setSetting}
+                  />
+                </>
+              )
+            ) : (
+              <>
+                <TextField
+                  label="Address"
+                  type="url"
+                  value={form.url}
+                  onValueChange={(next) => {
+                    change({ url: next });
+                  }}
+                  placeholder="http://jackett:9117/api/v2.0/indexers/all/results/torznab/"
+                  description="The indexer’s site, or the Torznab feed Jackett or Prowlarr gives for it."
+                  required
+                />
+
+                <TextField
+                  label="API key"
+                  type="password"
+                  value={form.apiKey}
+                  onValueChange={(apiKey) => {
+                    change({ apiKey });
+                  }}
+                  description={
+                    indexer?.hasApiKey === true
+                      ? 'A key is kept. Type a new one to replace it, or leave this empty to keep it.'
+                      : 'Leave this empty for an indexer that needs none.'
+                  }
+                  autoComplete="off"
+                />
+              </>
+            )}
+
+            {tried?.captcha === null || tried?.captcha === undefined ? null : (
+              <FormField
+                label="Captcha"
+                description="Type the characters in the picture, then try again."
+              >
+                <div className="flex flex-col items-start gap-2">
+                  <img
+                    src={tried.captcha.image}
+                    alt="The characters to type"
+                    className="rounded border border-[var(--surface-line)]"
+                  />
+                  <TextField
+                    label="Characters in the picture"
+                    isLabelHidden
+                    value={
+                      typeof form.settings['CAPTCHA'] === 'string' ? form.settings['CAPTCHA'] : ''
+                    }
+                    onValueChange={(next) => {
+                      setSetting('CAPTCHA', next);
+                    }}
+                    autoComplete="off"
+                  />
+                </div>
+              </FormField>
+            )}
+          </div>
+        </HeadedSection>
+
+        <HeadedSection title="Searching">
+          <div className="flex flex-col gap-4">
+            <div className="grid items-end gap-4 sm:grid-cols-3">
+              <TextField
+                label="Priority"
+                type="number"
+                min={1}
+                max={50}
+                value={form.priority}
+                onValueChange={(priority) => {
+                  change({ priority });
+                }}
+                description="1 is searched first."
+              />
+
+              <TextField
+                label="Searches per minute"
+                type="number"
+                min={1}
+                max={600}
+                value={form.requestsPerMinute}
+                onValueChange={(requestsPerMinute) => {
+                  change({ requestsPerMinute });
+                }}
+                placeholder="No limit"
+                description="Leave empty for no limit."
+              />
+
+              <TextField
+                label="Timeout (seconds)"
+                type="number"
+                min={5}
+                max={120}
+                value={form.timeoutSeconds}
+                onValueChange={(timeoutSeconds) => {
+                  change({ timeoutSeconds });
+                }}
+                description="How long to wait for an answer."
+              />
             </div>
-          </FormField>
-        )}
+
+            {categories.length === 0 ? null : (
+              <FormField
+                label="Categories"
+                description="Only search these. Choose none to search every category the indexer has."
+              >
+                <div className="grid gap-x-4 gap-y-2 sm:grid-cols-3">
+                  {categories.map((category) => (
+                    <Checkbox
+                      key={category.id}
+                      label={category.name}
+                      checked={form.categories.includes(category.id)}
+                      onCheckedChange={() => {
+                        toggleCategory(category.id);
+                      }}
+                    />
+                  ))}
+                </div>
+              </FormField>
+            )}
+          </div>
+        </HeadedSection>
+
+        <HeadedSection title="After downloading">
+          <div className="flex flex-col gap-4">
+            <FormField
+              label="When a download is done"
+              description="Public trackers default to deleting the torrent. Private ones keep seeding, so you do not lose your account."
+            >
+              <SegmentedRow
+                label="When a download is done"
+                size="sm"
+                items={KEEPING}
+                value={form.removesWhenDone}
+                onSelect={(next) => {
+                  const chosen = KEEPING.find((one) => one.id === next)?.id;
+
+                  if (chosen !== undefined) {
+                    change({ removesWhenDone: chosen });
+                  }
+                }}
+              />
+            </FormField>
+
+            {form.removesWhenDone === 'never' ? null : (
+              <FormField
+                label="Seed limits"
+                description="Keeps seeding until this or the tracker’s own minimum, whichever is higher."
+              >
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <TextField
+                    label="Seed time (seconds)"
+                    type="number"
+                    min={0}
+                    value={form.seedSeconds}
+                    onValueChange={(seedSeconds) => {
+                      change({ seedSeconds });
+                    }}
+                    placeholder="What the tracker asks"
+                  />
+
+                  <TextField
+                    label="Seed ratio"
+                    type="number"
+                    min={0}
+                    value={form.seedRatio}
+                    onValueChange={(seedRatio) => {
+                      change({ seedRatio });
+                    }}
+                    placeholder="What the tracker asks"
+                  />
+                </div>
+              </FormField>
+            )}
+          </div>
+        </HeadedSection>
 
         <p role="status" className="sr-only">
           {verdict === 'working' && tried !== null

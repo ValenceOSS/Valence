@@ -358,6 +358,7 @@ const IndexersPanel = () => {
         <Spinner isCentered label="Reading the indexers" size="sm" />
       ) : (
         <DataTable
+          height="fills"
           label="Indexers"
           columns={columns}
           rows={asked.data}

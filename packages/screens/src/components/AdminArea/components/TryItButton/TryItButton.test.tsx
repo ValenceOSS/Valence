@@ -8,7 +8,7 @@ describe('TryItButton', () => {
     const onTry = vi.fn();
 
     render(<TryItButton isTrying={false} verdict={null} onTry={onTry} />);
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Try it' }));
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Test' }));
 
     expect(onTry).toHaveBeenCalled();
   });
@@ -25,20 +25,20 @@ describe('TryItButton', () => {
     const { rerender } = render(<TryItButton isTrying={false} verdict="working" onTry={vi.fn()} />);
 
     expect(
-      screen.getByRole('button', { name: 'Try it' }).querySelector('.text-success'),
+      screen.getByRole('button', { name: 'Test' }).querySelector('.text-success'),
     ).not.toBeNull();
 
     rerender(<TryItButton isTrying={false} verdict="failing" onTry={vi.fn()} />);
 
     expect(
-      screen.getByRole('button', { name: 'Try it' }).querySelector('.text-danger'),
+      screen.getByRole('button', { name: 'Test' }).querySelector('.text-danger'),
     ).not.toBeNull();
   });
 
   it('can be held back while something else is under way', () => {
     render(<TryItButton isTrying={false} verdict={null} isDisabled onTry={vi.fn()} />);
 
-    expect(screen.getByRole('button', { name: 'Try it' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Test' })).toBeDisabled();
   });
 
   it('sets a display name so devtools can identify it', () => {

@@ -107,4 +107,39 @@ describe('createBrowserKeeper', () => {
     await keeper.get().catch(() => null);
     await expect(keeper.retire()).resolves.toBeUndefined();
   });
+
+  it('says it is running only once a browser is up, and not after it has gone or retired', async () => {
+    const { browser, disconnect } = aBrowser();
+    const keeper = createBrowserKeeper({ launch: () => Promise.resolve(browser) });
+
+    expect(keeper.isRunning()).toBe(false);
+
+    await keeper.get();
+
+    expect(keeper.isRunning()).toBe(true);
+
+    disconnect();
+
+    expect(keeper.isRunning()).toBe(false);
+  });
+
+  it('says it is not running once retired', async () => {
+    const { browser } = aBrowser();
+    const keeper = createBrowserKeeper({ launch: () => Promise.resolve(browser) });
+
+    await keeper.get();
+    await keeper.retire();
+
+    expect(keeper.isRunning()).toBe(false);
+  });
+
+  it('says it is not running when the browser would not start', async () => {
+    const keeper = createBrowserKeeper({
+      launch: () => Promise.reject(new Error('No browser installed')),
+    });
+
+    await expect(keeper.get()).rejects.toThrow('No browser installed');
+
+    expect(keeper.isRunning()).toBe(false);
+  });
 });

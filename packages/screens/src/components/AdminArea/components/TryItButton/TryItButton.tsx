@@ -21,7 +21,7 @@ const TryItButton = ({ isTrying, verdict, isDisabled = false, onTry }: TryItButt
         className={verdict === 'working' ? 'text-success' : 'text-danger'}
       />
     )}
-    Try it
+    Test
   </Button>
 );
 

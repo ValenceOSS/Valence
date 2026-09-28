@@ -1,13 +1,6 @@
 import { docsFor } from '@ValenceCore/functions/docsFor';
-import type { BadgeTone } from '@ValenceUI/Badge.types';
 import type { RequestsOverview } from '@ValenceContracts/schemas/Requests';
-
-type RequestsVpnDescription = {
-  label: string;
-  tone: BadgeTone;
-  detail: string;
-  help?: string | null;
-};
+import type { RequestsHealth } from './RequestsHealth.types';
 
 /**
  * Says how the VPN the requests service downloads through is, as a badge and the line beneath it.
@@ -15,12 +8,12 @@ type RequestsVpnDescription = {
  * @param overview - What the server last heard from the service.
  * @returns The badge's words and tone, and the line to show with it.
  */
-const describeRequestsVpn = (overview: RequestsOverview): RequestsVpnDescription => {
+const describeRequestsVpn = (overview: RequestsOverview): RequestsHealth => {
   const vpn = overview.status?.vpn ?? null;
 
   if (vpn === null) {
     return {
-      label: 'Unknown',
+      label: 'Not checked',
       tone: 'quiet',
       detail: 'Nothing can be said about the VPN until the requests service answers.',
     };
@@ -55,7 +48,5 @@ const describeRequestsVpn = (overview: RequestsOverview): RequestsVpnDescription
         : `The tunnel is up, and traffic leaves from ${where.join(', ')}.`,
   };
 };
-
-export type { RequestsVpnDescription };
 
 export { describeRequestsVpn };

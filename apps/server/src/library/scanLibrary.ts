@@ -87,6 +87,7 @@ type MediaStore = {
   listOverrides?: (libraryId: string) => Promise<MediaOverride[]>;
   linkExtras?: (libraryId: string, links: { path: string; parentPath: string }[]) => Promise<void>;
   forgetStaleVersions?: (libraryId: string, stillVersions: string[]) => Promise<void>;
+  linkSameFilms?: (libraryId: string) => Promise<void>;
   regroupSeries?: (libraryId: string, foldersByPath: Map<string, string>) => Promise<void>;
   forgetEmptySeries?: (libraryId: string) => Promise<void>;
   markScanned: (libraryId: string) => Promise<void>;
@@ -633,6 +634,8 @@ const scanLibrary = async ({
   if (gone.length > 0) {
     onRemoved?.(gone);
   }
+
+  await store.linkSameFilms?.(libraryId);
 
   await store.forgetEmptySeries?.(libraryId);
 

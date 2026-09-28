@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createRequestsClient } from './createRequestsClient';
+import { SOLVER_NOT_USED } from '@ValenceContracts/schemas/Requests';
 import type { DownloadStreamFrame } from '@ValenceContracts/schemas/DownloadQueue';
 
 const A_SECRET = 'a-secret-long-enough-to-be-worth-keeping';
@@ -16,6 +17,7 @@ const A_STATUS = {
     problemCode: null,
   },
   indexers: { total: 0, enabled: 0, failing: [] },
+  solver: SOLVER_NOT_USED,
 };
 
 /**

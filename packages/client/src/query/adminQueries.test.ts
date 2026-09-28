@@ -32,6 +32,7 @@ const webhooks = vi.hoisted(() => ({ fetchWebhooks: vi.fn(), fetchWebhookDeliver
 const fetchAccounts = vi.hoisted(() => vi.fn());
 const fetchFolders = vi.hoisted(() => vi.fn());
 const readWholeLibrary = vi.hoisted(() => vi.fn());
+const fetchMediaPaths = vi.hoisted(() => vi.fn());
 const fetchEverybodysShares = vi.hoisted(() => vi.fn());
 const fetchAlbums = vi.hoisted(() => vi.fn());
 const fetchBooks = vi.hoisted(() => vi.fn());
@@ -48,6 +49,7 @@ vi.mock('@ValenceClient/admin/fetchWebhooks', () => webhooks);
 vi.mock('@ValenceClient/admin/fetchAccounts', () => ({ fetchAccounts }));
 vi.mock('@ValenceClient/admin/fetchFolders', () => ({ fetchFolders }));
 vi.mock('@ValenceClient/library/readWholeLibrary', () => ({ readWholeLibrary }));
+vi.mock('@ValenceClient/admin/fetchMediaPaths', () => ({ fetchMediaPaths }));
 vi.mock('@ValenceClient/sharing/fetchShares', () => ({ fetchEverybodysShares }));
 vi.mock('@ValenceClient/music/fetchMusic', () => ({ fetchAlbums }));
 vi.mock('@ValenceClient/books/fetchBooks', () => ({ fetchBooks }));
@@ -139,7 +141,8 @@ describe('adminQueries', () => {
   it('asks nothing about nobody and nothing', () => {
     expect(adminQueries.accountPermissions(null).enabled).toBe(false);
     expect(adminQueries.deliveries(null).enabled).toBe(false);
-    expect(adminQueries.everything([]).enabled).toBe(false);
+    expect(adminQueries.everyFile([]).enabled).toBe(false);
+    expect(adminQueries.mediaPaths([]).enabled).toBe(false);
     expect(adminQueries.jobHistoryIssues(null).enabled).toBe(false);
     expect(adminQueries.jobRun(null).enabled).toBe(false);
   });
@@ -288,17 +291,16 @@ describe('adminQueries', () => {
     await expect(cache.fetchQuery(adminQueries.deliveries('hook'))).resolves.toEqual([]);
   });
 
-  it('lists everything on the server once per thing rather than once per file', async () => {
-    readWholeLibrary.mockResolvedValue([
-      aThing('ted-s01e01', 'Ted'),
-      aThing('ted-s01e02', 'Ted'),
-      aThing('arrival'),
-    ]);
+  it('says where every item is across every library, as one answer', async () => {
+    fetchMediaPaths.mockImplementation((libraryId: string) =>
+      Promise.resolve(
+        libraryId === 'films' ? { a: '/media/films/A.mkv' } : { b: '/media/shows/B.mkv' },
+      ),
+    );
 
-    await expect(aCache().fetchQuery(adminQueries.everything(['films']))).resolves.toEqual([
-      aThing('ted-s01e01', 'Ted'),
-      aThing('arrival'),
-    ]);
+    await expect(aCache().fetchQuery(adminQueries.mediaPaths(['films', 'shows']))).resolves.toEqual(
+      { a: '/media/films/A.mkv', b: '/media/shows/B.mkv' },
+    );
   });
 
   it('lists albums by title for the media panel to correct from', async () => {

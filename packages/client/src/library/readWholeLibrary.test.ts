@@ -43,7 +43,11 @@ describe('readWholeLibrary', () => {
 
     await readWholeLibrary('library-1');
 
-    expect(fetchLibraryItemsMock).toHaveBeenCalledWith('library-1', { limit: 200, offset: 0 });
+    expect(fetchLibraryItemsMock).toHaveBeenCalledWith('library-1', {
+      withVersions: false,
+      limit: 200,
+      offset: 0,
+    });
   });
 
   it('reads past the first page, which is where a large library lives', async () => {
@@ -55,6 +59,7 @@ describe('readWholeLibrary', () => {
 
     expect(everything).toHaveLength(260);
     expect(fetchLibraryItemsMock).toHaveBeenNthCalledWith(2, 'library-1', {
+      withVersions: false,
       limit: 200,
       offset: 200,
     });
@@ -90,5 +95,16 @@ describe('readWholeLibrary', () => {
     await readWholeLibrary('library-1');
 
     expect(fetchLibraryItemsMock).toHaveBeenCalledTimes(100);
+  });
+
+  it('reads a film’s other versions too where asked, for whoever manages the files', async () => {
+    fetchLibraryItemsMock.mockResolvedValue(aPage(3, 3));
+
+    await readWholeLibrary('library-1', true);
+
+    expect(fetchLibraryItemsMock).toHaveBeenCalledWith(
+      'library-1',
+      expect.objectContaining({ withVersions: true }),
+    );
   });
 });

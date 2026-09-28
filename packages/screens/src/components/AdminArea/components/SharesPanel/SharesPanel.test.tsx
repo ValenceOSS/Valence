@@ -183,6 +183,23 @@ describe('SharesPanel', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('can withdraw a used-up link, since whoever opened it can still watch', async () => {
+    fetchEverybodysShares.mockResolvedValue([share({ viewCap: 1, views: 1, isSpent: true })]);
+
+    const user = userEvent.setup();
+
+    renderInAnAddress(<SharesPanel />);
+
+    expect(await screen.findByText('Whoever opened it can still watch')).toBeInTheDocument();
+
+    await user.click(await screen.findByRole('button', { name: 'Withdraw the link to The Thing' }));
+    await user.click(await screen.findByRole('button', { name: 'Withdraw it' }));
+
+    await waitFor(() => {
+      expect(revokeAnybodysShare).toHaveBeenCalledWith('share-1');
+    });
+  });
+
   it('says plainly when nobody has handed anything out', async () => {
     renderInAnAddress(<SharesPanel />);
 

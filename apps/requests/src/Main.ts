@@ -14,6 +14,7 @@ import { createIndexerClient } from '@ValenceRequests/indexers/createIndexerClie
 import { createIndexerService } from '@ValenceRequests/indexers/createIndexerService';
 import { createPacer } from '@ValenceRequests/indexers/createPacer';
 import { createSiteClient } from '@ValenceRequests/cardigann/createSiteClient';
+import { createSolverWatch } from '@ValenceRequests/solver/createSolverWatch';
 import { createBrowserKeeper } from '@ValenceRequests/solver/createBrowserKeeper';
 import { createGate } from '@ValenceRequests/solver/createGate';
 import { createSiteAgent } from '@ValenceRequests/solver/createSiteAgent';
@@ -111,8 +112,14 @@ const definitions = createDefinitionCatalogue({
   fetch,
 });
 
+const solverWatch = createSolverWatch({
+  isRunning: () => browser.isRunning(),
+  runningFor: () => browser.upFor(),
+  sites: () => sites.size(),
+});
+
 const browser = createBrowserKeeper({
-  launch: () => {
+  launch: solverWatch.starting(() => {
     say('Starting the browser that gets past Cloudflare’s check.');
 
     return Camoufox({
@@ -122,7 +129,7 @@ const browser = createBrowserKeeper({
       disable_coop: true,
       i_know_what_im_doing: true,
     });
-  },
+  }),
 });
 
 const opening = createGate(1);
@@ -148,7 +155,10 @@ const indexers = createIndexerService({
     fetch,
     pacer: createPacer(),
     definitions: definitions.definition,
-    site: createSiteClient({ fetch, solver: createSolver({ pool: sites }) }),
+    site: createSiteClient({
+      fetch,
+      solver: solverWatch.watching(createSolver({ pool: sites })),
+    }),
   }),
 });
 
@@ -254,6 +264,7 @@ const app = createApp({
   secret: env.REQUESTS_SECRET,
   version: env.VALENCE_VERSION,
   readVpn: vpn.current,
+  readSolver: solverWatch.current,
   isDatabaseUp: async () => {
     try {
       await db.execute(sql`select 1`);

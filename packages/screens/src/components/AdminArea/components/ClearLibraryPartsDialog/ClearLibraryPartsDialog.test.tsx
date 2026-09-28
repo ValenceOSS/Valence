@@ -12,6 +12,9 @@ const CLEAR: JobDefinition = {
   needsLibrary: true,
   destructive: true,
   takesParts: true,
+  group: 'reset',
+  runsByHand: true,
+  schedulable: false,
 };
 
 const MOVIES: Library = {

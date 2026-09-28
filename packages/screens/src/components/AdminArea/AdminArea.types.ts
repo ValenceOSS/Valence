@@ -8,6 +8,8 @@ type AdminAreaProps = {
   observability?: ObservabilitySearch;
   onObservabilityChange?: (change: ObservabilitySearch) => void;
   onJobChange?: (kind: string | null) => void;
+  folder?: string | null;
+  onOpenFolder?: (path: string) => void;
 };
 
 export type { AdminAreaProps };
