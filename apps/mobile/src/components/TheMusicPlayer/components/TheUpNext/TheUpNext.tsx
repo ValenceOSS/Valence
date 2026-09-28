@@ -102,7 +102,13 @@ const TheUpNext = () => {
           data={coming}
           keyExtractor={({ at, track }) => `${track.id}:${at.toString()}`}
           renderItem={({ item }) => (
-            <AComingTrack track={item.track} at={item.at} onPlay={skipTo} onMenu={askAbout} />
+            <AComingTrack
+              track={item.track}
+              at={item.at}
+              isPick={queue.picks.includes(item.track.id)}
+              onPlay={skipTo}
+              onMenu={askAbout}
+            />
           )}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}

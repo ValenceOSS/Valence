@@ -3,6 +3,7 @@ import {
   fetchAlbum,
   fetchAlbums,
   fetchArtist,
+  fetchArtistStory,
   fetchArtists,
   fetchLiked,
   fetchLyrics,
@@ -13,6 +14,7 @@ import { fetchPlaylist, fetchPlaylists } from '@ValenceClient/music/fetchPlaylis
 import { fetchMusicDevices } from '@ValenceClient/music/musicDevices';
 import type { AlbumOrder } from '@ValenceClient/music/fetchMusic';
 
+const STORY_KEPT_MS = 60 * 60 * 1000;
 const MUSIC = ['music'] as const;
 
 const PLAYLISTS = [...MUSIC, 'playlists'] as const;
@@ -57,6 +59,20 @@ const artist = (artistId: string) =>
   queryOptions({
     queryKey: [...MUSIC, 'artist', artistId],
     queryFn: () => fetchArtist(artistId),
+  });
+
+/**
+ * What can be said about an artist beyond their songs in the library, which changes slowly enough
+ * to keep for an hour.
+ *
+ * @param artistId - The artist.
+ * @returns The query.
+ */
+const artistStory = (artistId: string) =>
+  queryOptions({
+    queryKey: [...MUSIC, 'artist', artistId, 'story'],
+    queryFn: () => fetchArtistStory(artistId),
+    staleTime: STORY_KEPT_MS,
   });
 
 /**
@@ -131,6 +147,7 @@ const musicQueries = {
   album,
   albums,
   artist,
+  artistStory,
   artists,
   devices,
   key: MUSIC,

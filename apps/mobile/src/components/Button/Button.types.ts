@@ -9,6 +9,7 @@ type PressedAt = {
 type ButtonProps = {
   children?: ReactNode;
   onPress: (at: PressedAt) => void;
+  onLongPress?: () => void;
   tone?: 'bold' | 'bright' | 'ghost' | 'quiet' | 'bare';
   icon?: AGlyph;
   fills?: boolean;

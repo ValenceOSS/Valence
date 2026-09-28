@@ -161,7 +161,7 @@ describe('NowPlayingBar', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Shuffle' }));
     await userEvent.click(screen.getByRole('button', { name: 'Repeat everything' }));
 
-    expect(player.toggleShuffle).toHaveBeenCalled();
+    expect(player.cycleShuffle).toHaveBeenCalled();
     expect(player.cycleRepeat).toHaveBeenCalled();
   });
 

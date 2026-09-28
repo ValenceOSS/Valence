@@ -3,6 +3,7 @@ import { creditedArtistOf } from '@ValenceServer/requests/musicBrainz/creditedAr
 import { calendarDateOf } from '@ValenceServer/requests/musicBrainz/calendarDateOf';
 import { MusicBrainzReleaseGroupSchema } from '@ValenceServer/requests/musicBrainz/MusicBrainzReleaseGroupSchema';
 import { releaseGroupCoverUrl } from '@ValenceServer/requests/musicBrainz/releaseGroupCoverUrl';
+import { artistPictureUrl } from '@ValenceServer/requests/musicBrainz/artistPictureUrl';
 import { releaseTypeOf } from '@ValenceServer/requests/musicBrainz/releaseTypeOf';
 import type { MusicCatalogueHit, MusicRequestKind } from '@ValenceContracts/schemas/MediaRequest';
 import type { MusicWeb } from '@ValenceServer/music/web/createMusicWeb';
@@ -54,8 +55,8 @@ const yearOf = (date: string | null): number | null => {
 
 /**
  * Searches MusicBrainz for artists or albums to ask for, best matches first: an artist with what
- * tells them apart from others of the name and the year they began, or an album with its artist,
- * its kind, the year it came out and its cover.
+ * tells them apart from others of the name, the year they began and their picture, or an album
+ * with its artist, its kind, the year it came out and its cover.
  *
  * @param web - The way out to the web, paced as MusicBrainz asks.
  * @param query - What was typed.
@@ -93,7 +94,7 @@ const searchMusicCatalogue = async (
                   disambiguation: artist.disambiguation === '' ? null : artist.disambiguation,
                   type: null,
                   year: yearOf(artist['life-span'].begin),
-                  coverUrl: null,
+                  coverUrl: artistPictureUrl(artist.name),
                 },
               ],
         )
@@ -115,7 +116,10 @@ const searchMusicCatalogue = async (
                 disambiguation: group.disambiguation === '' ? null : group.disambiguation,
                 type: releaseTypeOf(group['primary-type'], group['secondary-types']),
                 year: yearOf(group['first-release-date']),
-                coverUrl: releaseGroupCoverUrl(group.id),
+                coverUrl: releaseGroupCoverUrl(group.id, {
+                  title: group.title,
+                  artist: creditedArtistOf(group),
+                }),
               },
             ],
       )

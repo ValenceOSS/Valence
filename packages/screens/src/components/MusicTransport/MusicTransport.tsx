@@ -9,6 +9,7 @@ import {
   Repeat as RepeatFilledIcon,
   Repeat1 as Repeat1FilledIcon,
   Shuffle as ShuffleFilledIcon,
+  Sparkle as SparkleFilledIcon,
   SkipBack as SkipBackFilledIcon,
   SkipForward as SkipForwardFilledIcon,
 } from '@keyline-icons/react/fill';
@@ -23,6 +24,7 @@ import { fadeVariants, spring, stillTransition } from '@ValenceUI/animations/rev
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { BarButton } from '@ValenceScreens/components/BarButton/BarButton';
 import { useListeningParty } from '@ValenceScreens/music/listeningParty';
+import { shuffleModeOf } from '@ValenceClient/music/shuffleModeOf';
 import type { Variants } from 'motion/react';
 import type { MusicTransportProps } from './MusicTransport.types';
 
@@ -32,6 +34,12 @@ const POPPING: Variants = {
   gone: { opacity: 0, scale: 0.5 },
 };
 
+const SHUFFLE_LABELS = {
+  off: 'Shuffle',
+  on: 'Smart shuffle',
+  smart: 'Stop shuffling',
+} as const;
+
 const REPEAT_LABELS = {
   off: 'Repeat everything',
   all: 'Repeat this song',
@@ -40,7 +48,8 @@ const REPEAT_LABELS = {
 
 /**
  * The buttons that drive the song playing and the track that shows how far through it is: shuffle,
- * back, play, forward, repeat, and the time gone and left.
+ * back, play, forward, repeat, and the time gone and left. Shuffle goes round three settings: off,
+ * shuffled, and smart shuffle, which mixes songs from the library in and marks them in the queue.
  *
  * Drawn on the player bar as a compact middle column, and in the immersive view as a quiet block
  * beneath the cover — the scrubber first with the time either side of it, the buttons spread
@@ -75,6 +84,7 @@ const MusicTransport = ({
   const { queue } = state;
   const isOrdered = queue?.isOrdered === true;
   const repeat = queue?.repeat ?? 'off';
+  const shuffling = shuffleModeOf(queue);
   const isFollowing = listening !== null && !listening.mayChoose;
   const mayJoinIn = isFollowing && !shown.isPlaying && listening.party.isPlaying;
   const mayPlayPause = !isIdle && (!isFollowing || listening.mayPlayPause || mayJoinIn);
@@ -113,15 +123,16 @@ const MusicTransport = ({
 
   const shuffle = (
     <BarButton
-      label={queue?.isShuffled === true ? 'Stop shuffling' : 'Shuffle'}
+      label={SHUFFLE_LABELS[shuffling]}
       glyph={ShuffleIcon}
       litGlyph={ShuffleFilledIcon}
+      {...(shuffling === 'smart' ? { badge: SparkleFilledIcon } : {})}
       gesture="tumble"
-      isLit={queue?.isShuffled === true}
+      isLit={shuffling !== 'off'}
       isDisabled={isIdle || isOrdered || shown.remote !== null || isFollowing}
       className={isImmersive ? '' : 'hidden md:inline-flex'}
       onClick={() => {
-        player.toggleShuffle();
+        player.cycleShuffle();
       }}
     />
   );

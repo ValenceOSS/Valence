@@ -50,6 +50,21 @@ describe('TrackRow', () => {
     expect(drawn.getByText('E · Sleep Token')).toBeOnTheScreen();
   });
 
+  it('marks a song smart shuffle mixed in from the library', async () => {
+    const drawn = await render(
+      <TrackRow
+        track={TRACK}
+        place={0}
+        isCurrent={false}
+        isPlaying={false}
+        isPick
+        onPress={jest.fn()}
+      />,
+    );
+
+    expect(drawn.getByText('Smart shuffle · Sleep Token')).toBeOnTheScreen();
+  });
+
   it('says which album it is from only when asked', async () => {
     const without = await render(
       <TrackRow track={TRACK} place={0} isCurrent={false} isPlaying={false} onPress={jest.fn()} />,

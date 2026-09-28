@@ -18,7 +18,8 @@ const WHILE_HERE = 30000;
  * Whichever one is asked to pick up, the moment the server answers again after going quiet, tells it
  * how far somebody got in anything they watched from the phone meanwhile and has everything asked
  * for afresh, so a server that restarted puts the app back as it was without anybody pressing
- * anything. Where somebody is signed in and the socket is already back, the socket has asked for
+ * anything. Whatever was still being asked while it was away is asked again rather than waited on,
+ * since a question put to a machine that was off can hang for minutes after it is back. Where somebody is signed in and the socket is already back, the socket has asked for
  * everything afresh itself, so it is not asked for twice.
  *
  * @param pickingUp - Whether this one picks up after the server, and how, or leaves it to another.
@@ -43,10 +44,7 @@ const useTheServer = (
       void sendWatchedOffline();
 
       if (pickingUp === 'here' || !getRealtimeClient().isLive()) {
-        void cache.invalidateQueries(
-          { predicate: (query) => query.queryKey[0] !== ANSWERS[0] },
-          { cancelRefetch: false },
-        );
+        void cache.invalidateQueries({ predicate: (query) => query.queryKey[0] !== ANSWERS[0] });
       }
     }
 

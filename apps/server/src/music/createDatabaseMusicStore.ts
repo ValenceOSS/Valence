@@ -14,6 +14,7 @@ import { isStillThere } from '@ValenceServer/music/isStillThere';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
 import type { MusicStore } from './scanMusicLibrary';
 import type { EnrichingStore } from './web/EnrichingStore';
+import type { AlbumCorrectingStore } from './web/AlbumCorrectingStore';
 
 /**
  * Deletes the albums a scan left with no tracks and the artists left with neither an album nor a
@@ -70,7 +71,9 @@ const pruneEmpty = async (db: ValenceDatabase, libraryId: string): Promise<void>
  * @param db - The database.
  * @returns The store.
  */
-const createDatabaseMusicStore = (db: ValenceDatabase): MusicStore & EnrichingStore => ({
+const createDatabaseMusicStore = (
+  db: ValenceDatabase,
+): MusicStore & EnrichingStore & AlbumCorrectingStore => ({
   listStored: (libraryId) =>
     db
       .select({
@@ -130,7 +133,11 @@ const createDatabaseMusicStore = (db: ValenceDatabase): MusicStore & EnrichingSt
     const key = nameKey(row.title);
     const found = () =>
       db
-        .select({ id: musicAlbum.id, artworkPath: musicAlbum.artworkPath })
+        .select({
+          id: musicAlbum.id,
+          artworkPath: musicAlbum.artworkPath,
+          isCorrected: musicAlbum.isCorrected,
+        })
         .from(musicAlbum)
         .where(
           and(
@@ -149,15 +156,21 @@ const createDatabaseMusicStore = (db: ValenceDatabase): MusicStore & EnrichingSt
         .set({
           ...(row.year === null ? {} : { year: row.year }),
           ...(row.genres.length === 0 ? {} : { genres: row.genres }),
-          ...(row.musicbrainzId === null ? {} : { musicbrainzId: row.musicbrainzId }),
-          ...(row.releaseGroupMusicbrainzId === null
+          ...(row.musicbrainzId === null || known.isCorrected
+            ? {}
+            : { musicbrainzId: row.musicbrainzId }),
+          ...(row.releaseGroupMusicbrainzId === null || known.isCorrected
             ? {}
             : { releaseGroupMusicbrainzId: row.releaseGroupMusicbrainzId }),
           ...(row.isCompilation ? { isCompilation: true } : {}),
         })
         .where(eq(musicAlbum.id, known.id));
 
-      return { id: known.id, hasArtwork: known.artworkPath !== null };
+      return {
+        id: known.id,
+        hasArtwork: known.artworkPath !== null,
+        isCorrected: known.isCorrected,
+      };
     }
 
     await db
@@ -181,6 +194,7 @@ const createDatabaseMusicStore = (db: ValenceDatabase): MusicStore & EnrichingSt
     return {
       id: made?.id ?? '',
       hasArtwork: made?.artworkPath !== null && made?.artworkPath !== undefined,
+      isCorrected: made?.isCorrected === true,
     };
   },
 
@@ -320,12 +334,74 @@ const createDatabaseMusicStore = (db: ValenceDatabase): MusicStore & EnrichingSt
     return tracks.map((track) => track.path);
   },
 
+  correctAlbum: async (albumId, releaseGroupId, artworkPath) => {
+    const changed = await db
+      .update(musicAlbum)
+      .set({
+        releaseGroupMusicbrainzId: releaseGroupId,
+        musicbrainzId: null,
+        isCorrected: true,
+        lookedUpAt: new Date(),
+        ...(artworkPath === null ? {} : { artworkPath }),
+      })
+      .where(eq(musicAlbum.id, albumId))
+      .returning({ id: musicAlbum.id });
+
+    return changed.length > 0;
+  },
+
+  forgetAlbumCorrection: async (albumId) => {
+    const changed = await db
+      .update(musicAlbum)
+      .set({ isCorrected: false, artworkPath: null, lookedUpAt: null })
+      .where(eq(musicAlbum.id, albumId))
+      .returning({ id: musicAlbum.id });
+
+    return changed.length > 0;
+  },
+
   setAlbumArtwork: async (albumId, path) => {
     await db.update(musicAlbum).set({ artworkPath: path }).where(eq(musicAlbum.id, albumId));
   },
 
   setArtistImage: async (artistId, path) => {
     await db.update(musicArtist).set({ imagePath: path }).where(eq(musicArtist.id, artistId));
+  },
+
+  picturesKept: async (libraryId) => {
+    const albums = await db
+      .select({ id: musicAlbum.id, path: musicAlbum.artworkPath })
+      .from(musicAlbum)
+      .where(and(eq(musicAlbum.libraryId, libraryId), isNotNull(musicAlbum.artworkPath)));
+    const artists = await db
+      .select({ id: musicArtist.id, path: musicArtist.imagePath })
+      .from(musicArtist)
+      .where(and(eq(musicArtist.libraryId, libraryId), isNotNull(musicArtist.imagePath)));
+
+    return [
+      ...albums.flatMap((row) =>
+        row.path === null ? [] : [{ kind: 'album' as const, id: row.id, path: row.path }],
+      ),
+      ...artists.flatMap((row) =>
+        row.path === null ? [] : [{ kind: 'artist' as const, id: row.id, path: row.path }],
+      ),
+    ];
+  },
+
+  forgetPicture: async (kind, id) => {
+    if (kind === 'album') {
+      await db
+        .update(musicAlbum)
+        .set({ artworkPath: null, lookedUpAt: null })
+        .where(eq(musicAlbum.id, id));
+
+      return;
+    }
+
+    await db
+      .update(musicArtist)
+      .set({ imagePath: null, lookedUpAt: null })
+      .where(eq(musicArtist.id, id));
   },
 
   removeByPaths: async (libraryId, paths) => {

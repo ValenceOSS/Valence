@@ -411,7 +411,9 @@ const discordEmbedFor = (payload: WebhookPayload, sentence: string): DiscordEmbe
     author: { name: AUTHOR },
     timestamp: payload.occurredAt,
     fields,
-    ...(parts.posterUrl === null || parts.posterUrl === undefined
+    ...(parts.posterUrl === null ||
+    parts.posterUrl === undefined ||
+    !/^https?:\/\//.test(parts.posterUrl)
       ? {}
       : { thumbnail: { url: parts.posterUrl } }),
   };

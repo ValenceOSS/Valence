@@ -1,4 +1,5 @@
 import { ListOrdered as ListOrderedIcon, X as XIcon } from '@keyline-icons/react';
+import { Sparkle as SparkleFilledIcon } from '@keyline-icons/react/fill';
 import { useEffect, useRef, useState } from 'react';
 import { Reorder } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
@@ -13,14 +14,24 @@ import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
 
 /**
- * One song in the queue: its cover, its name and who it is by.
+ * One song in the queue: its cover, its name and who it is by, marked where smart shuffle mixed it
+ * in from the library rather than it being chosen.
  *
- * @param props - The song, and whether it is the one playing.
+ * @param props - The song, whether it is the one playing, and whether smart shuffle picked it.
  * @param props.track - The song.
  * @param props.isCurrent - Whether it is playing.
+ * @param props.isPick - Whether smart shuffle mixed it in.
  * @returns The row's contents.
  */
-const QueuedSong = ({ track, isCurrent }: { track: MusicTrack; isCurrent: boolean }) => (
+const QueuedSong = ({
+  track,
+  isCurrent,
+  isPick,
+}: {
+  track: MusicTrack;
+  isCurrent: boolean;
+  isPick: boolean;
+}) => (
   <span className="flex min-w-0 items-center gap-3">
     <MusicArtwork
       src={track.album.hasArtwork ? albumArtworkUrl(track.album.id) : null}
@@ -33,8 +44,14 @@ const QueuedSong = ({ track, isCurrent }: { track: MusicTrack; isCurrent: boolea
       >
         {track.title}
       </span>
-      <span className="truncate text-xs text-text-muted">
-        {track.artists.map((artist) => artist.name).join(', ')}
+      <span className="flex min-w-0 items-center gap-1 text-xs text-text-muted">
+        {isPick ? (
+          <span className="flex shrink-0 items-center gap-0.5 text-accent">
+            <Icon of={SparkleFilledIcon} size={10} />
+            Smart shuffle ·
+          </span>
+        ) : null}
+        <span className="truncate">{track.artists.map((artist) => artist.name).join(', ')}</span>
       </span>
     </span>
   </span>
@@ -44,7 +61,7 @@ QueuedSong.displayName = 'QueuedSong';
 
 /**
  * What is playing and what plays after it, in the order it will play — shuffled order where the
- * queue is shuffled. Pressing a song further down plays it now; the cross beside one takes it out,
+ * queue is shuffled, with the songs smart shuffle mixed in marked. Pressing a song further down plays it now; the cross beside one takes it out,
  * and dragging one to another place changes the order it plays in.
  */
 const QueuePanel = () => {
@@ -76,7 +93,11 @@ const QueuePanel = () => {
       <section aria-label="Now playing" className="flex flex-col gap-2">
         <h3 className="px-2 text-sm font-semibold text-text">Now playing</h3>
         <div className="rounded-md px-2 py-1.5">
-          <QueuedSong track={current} isCurrent />
+          <QueuedSong
+            track={current}
+            isCurrent
+            isPick={queue.picks.includes(current.id)}
+          />
         </div>
       </section>
 
@@ -144,7 +165,11 @@ const QueuePanel = () => {
                         player.jumpTo(at);
                       }}
                     >
-                      <QueuedSong track={track} isCurrent={false} />
+                      <QueuedSong
+                        track={track}
+                        isCurrent={false}
+                        isPick={queue.picks.includes(track.id)}
+                      />
                     </Button>
                     <Button
                       variant="ghost"

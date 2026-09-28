@@ -2,6 +2,7 @@ import {
   addToQueue,
   currentOf,
   cycleRepeat,
+  cycleShuffle,
   jumpTo,
   nextIn,
   playNext,
@@ -10,8 +11,8 @@ import {
   moveInQueue,
   removeFromQueue,
   startQueue,
-  toggleShuffle,
   upcomingIn,
+  weavePicks,
 } from '@ValenceClient/music/playQueue';
 import { playableQuality } from '@ValenceClient/music/playableQuality';
 import { gainFor } from '@ValenceCore/functions/gainFor';
@@ -65,6 +66,7 @@ type MusicPlayerDeps = {
   streamUrl: (trackId: string, quality: AudioQuality) => string;
   canPlay: (type: string) => boolean;
   fetchTracks: (ids: readonly string[]) => Promise<MusicTrack[]>;
+  fetchPicks?: (ids: readonly string[]) => Promise<MusicTrack[]>;
   report: (nowPlaying: MusicNowPlaying | null) => void;
   command: (clientId: string, command: MusicCommand) => Promise<boolean>;
   preferences: {
@@ -88,7 +90,7 @@ type MusicPlayer = {
   seek: (seconds: number) => void;
   setVolume: (volume: number) => void;
   toggleMute: () => void;
-  toggleShuffle: () => void;
+  cycleShuffle: () => void;
   cycleRepeat: () => void;
   playNext: (tracks: readonly MusicTrack[]) => void;
   addToQueue: (tracks: readonly MusicTrack[]) => void;
@@ -291,6 +293,19 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
     tell(true);
   };
 
+  const mixIn = (queue: PlayQueue): void => {
+    void (deps.fetchPicks?.(queue.tracks.map((track) => track.id)) ?? Promise.resolve([])).then(
+      (picks) => {
+        if (state.queue === null || !state.queue.isSmart || picks.length === 0) {
+          return;
+        }
+
+        change({ queue: weavePicks(state.queue, picks) });
+        tell(true);
+      },
+    );
+  };
+
   const remotely = (sent: MusicCommand): boolean => {
     if (state.remote === null) {
       return false;
@@ -420,13 +435,17 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
         return;
       }
 
-      const queue = startQueue(tracks, startAt, {
+      const started = startQueue(tracks, startAt, {
         ...(options.isOrdered === undefined ? {} : { isOrdered: options.isOrdered }),
-        ...(options.isShuffled === undefined ? {} : { isShuffled: options.isShuffled }),
+        isShuffled: options.isShuffled ?? state.queue?.isShuffled ?? false,
         repeat: state.queue?.repeat ?? 'off',
         source: options.source ?? null,
         random,
       });
+      const queue = {
+        ...started,
+        isSmart: started.isShuffled && (state.queue?.isSmart ?? false),
+      };
 
       if (state.remote !== null) {
         void command(state.remote.clientId, {
@@ -442,6 +461,10 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
       }
 
       load(queue, options.positionSeconds ?? 0, options.isPlaying ?? true);
+
+      if (queue.isSmart) {
+        mixIn(queue);
+      }
     },
 
     toggle: () => {
@@ -563,9 +586,18 @@ const createMusicPlayer = (deps: MusicPlayerDeps): MusicPlayer => {
       tell(true);
     },
 
-    toggleShuffle: () => {
-      if (state.queue !== null) {
-        change({ queue: toggleShuffle(state.queue, random) });
+    cycleShuffle: () => {
+      if (state.queue === null) {
+        return;
+      }
+
+      const queue = cycleShuffle(state.queue, random);
+
+      change({ queue });
+      tell(true);
+
+      if (queue.isSmart) {
+        mixIn(queue);
       }
     },
 

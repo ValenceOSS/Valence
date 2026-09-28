@@ -10,6 +10,9 @@ import {
 } from '@ValenceContracts/schemas/Music';
 import { MusicSearchSchema } from '@ValenceContracts/schemas/MusicSearch';
 import { RequestFailed } from '@ValenceClient/query/RequestFailed';
+import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
+import { ArtistStorySchema } from '@ValenceContracts/schemas/ArtistStory';
+import type { ArtistStory } from '@ValenceContracts/schemas/ArtistStory';
 import type {
   AudioQuality,
   Lyrics,
@@ -23,15 +26,23 @@ import type { MusicSearchResult } from '@ValenceContracts/schemas/MusicSearch';
 
 type AlbumOrder = 'recent' | 'title' | 'year';
 
+const PICKS_FROM = 1000;
+
 /**
  * Reads the albums in every music library this profile can see.
  *
  * @param order - Newest first, by title, or by year.
+ * @param limit - How many at most, where more than the server's usual are wanted.
  * @returns The albums.
  */
-const fetchAlbums = async (order: AlbumOrder = 'recent'): Promise<MusicAlbum[]> =>
-  (await readFromServer(`/api/music/albums?order=${order}`, MusicAlbumListSchema, profileHeaders()))
-    .albums;
+const fetchAlbums = async (order: AlbumOrder = 'recent', limit?: number): Promise<MusicAlbum[]> =>
+  (
+    await readFromServer(
+      `/api/music/albums?order=${order}${limit === undefined ? '' : `&limit=${limit.toString()}`}`,
+      MusicAlbumListSchema,
+      profileHeaders(),
+    )
+  ).albums;
 
 /**
  * Reads the artists with an album this profile can see, or only the ones it follows.
@@ -144,6 +155,44 @@ const setArtistFollowed = async (artistId: string, isFollowed: boolean): Promise
 };
 
 /**
+ * Asks for songs from the library to mix into a queue for smart shuffle: ones that share its
+ * artists or genres, or that this profile likes or follows, with some chance in the choosing.
+ *
+ * @param ids - The songs in the queue, which are never picked.
+ * @returns The songs, best first, or none where the server could not be asked.
+ */
+const fetchPicks = async (ids: readonly string[]): Promise<MusicTrack[]> => {
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const response = await fetch('/api/music/picks', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { ...profileHeaders(), 'content-type': 'application/json' },
+    body: JSON.stringify({ trackIds: ids.slice(0, PICKS_FROM) }),
+  }).catch(() => null);
+
+  if (response === null || !response.ok) {
+    return [];
+  }
+
+  const parsed = MusicTrackListSchema.safeParse(JsonValueSchema.parse(await response.json()));
+
+  return parsed.success ? parsed.data.tracks : [];
+};
+
+/**
+ * Reads what can be said about an artist beyond the songs of theirs in the library: a few sentences
+ * about them, and their albums the library does not have yet.
+ *
+ * @param artistId - The artist.
+ * @returns What there is to say.
+ */
+const fetchArtistStory = (artistId: string): Promise<ArtistStory> =>
+  readFromServer(`/api/music/artists/${artistId}/story`, ArtistStorySchema, profileHeaders());
+
+/**
  * Where a track is streamed from at a quality.
  *
  * @param trackId - The track.
@@ -177,9 +226,11 @@ export {
   fetchAlbum,
   fetchAlbums,
   fetchArtist,
+  fetchArtistStory,
   fetchArtists,
   fetchLiked,
   fetchLyrics,
+  fetchPicks,
   fetchTracks,
   searchMusic,
   setArtistFollowed,

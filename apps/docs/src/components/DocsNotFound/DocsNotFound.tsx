@@ -12,7 +12,7 @@ const DocsNotFound = () => (
       beginning.
     </p>
 
-    <Link to="/" className="font-medium text-accent underline-offset-4 hover:underline">
+    <Link to="/" className="font-semibold text-accent underline-offset-4 hover:underline">
       Back to the documentation home
     </Link>
   </div>

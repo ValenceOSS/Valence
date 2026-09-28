@@ -106,6 +106,7 @@ const MediaMetadataSchema = z.object({
   overview: z.string().nullish(),
   tagline: z.string().nullish(),
   certification: z.string().nullish(),
+  certificationRegion: z.string().nullish(),
   genres: z.array(z.string()).nullish(),
   cast: z.array(CastMemberSchema).nullish(),
   rating: z.number().nullish(),

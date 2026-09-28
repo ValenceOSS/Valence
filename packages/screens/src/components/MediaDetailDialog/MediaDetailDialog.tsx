@@ -49,6 +49,7 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { PreviewMomentPicker } from '@ValenceScreens/components/PreviewMomentPicker/PreviewMomentPicker';
 import { MediaPreview } from '@ValenceScreens/components/MediaPreview/MediaPreview';
 import { MediaFacts } from '@ValenceScreens/components/MediaFacts/MediaFacts';
+import { TitleBadges } from '@ValenceScreens/components/TitleBadges/TitleBadges';
 import { scrollToTopOf } from '@ValenceScreens/navigation/scrollToTopOf';
 import { TitleDetails } from '@ValenceScreens/components/TitleDetails/TitleDetails';
 import { RatingPanel } from '@ValenceScreens/components/RatingPanel/RatingPanel';
@@ -293,6 +294,14 @@ const MediaDetailDialog = ({
                   size="sm"
                   tone="scrim"
                 />
+              </motion.div>
+
+              <motion.div
+                variants={revealVariants(prefersReducedMotion)}
+                transition={revealTransition(prefersReducedMotion)}
+                className="text-on-scrim/85"
+              >
+                <TitleBadges detail={detail} />
               </motion.div>
             </motion.div>
           </div>

@@ -12,6 +12,9 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { ANothingHere } from '@ValenceMobile/components/ANothingHere/ANothingHere';
 import { AnArrival } from '@ValenceMobile/components/AnArrival/AnArrival';
 import { APlaylistDetails } from '@ValenceMobile/components/APlaylistDetails/APlaylistDetails';
+import { useAskAboutAnAlbum } from '@ValenceMobile/music/useAskAboutAnAlbum';
+import { coverAlbumsOf } from '@ValenceClient/music/coverAlbumsOf';
+import { playlistArtworkUrl } from '@ValenceClient/music/fetchPlaylists';
 import type { PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
 import type { TheMusicProps } from './TheMusic.types';
 
@@ -47,6 +50,7 @@ const TheMusic = ({
   onAllArtists,
   onScrolled,
 }: TheMusicProps) => {
+  const askAboutAnAlbum = useAskAboutAnAlbum(onPlaylist);
   const colours = useTheColours();
   const cache = useQueryClient();
   const [isMaking, setIsMaking] = useState(false);
@@ -66,7 +70,7 @@ const TheMusic = ({
    * @returns Its tile.
    */
   const aPlaylist = (playlist: PlaylistSummary) => {
-    const cover = playlist.artworkAlbumIds[0] ?? null;
+    const ownCover = playlistArtworkUrl(playlist);
 
     return (
       <AMusicTile
@@ -77,7 +81,8 @@ const TheMusic = ({
             ? `${playlist.entryCount.toString()} songs`
             : playlist.owner.name
         }
-        artwork={cover === null ? null : onThisServer(albumArtworkUrl(cover))}
+        artwork={ownCover === null ? null : onThisServer(ownCover)}
+        {...(ownCover === null ? { albumIds: playlist.artworkAlbumIds } : {})}
         onPress={() => {
           onPlaylist(playlist.id);
         }}
@@ -105,6 +110,7 @@ const TheMusic = ({
             title="Liked songs"
             detail={`${likedCount.toString()} ${likedCount === 1 ? 'song' : 'songs'}`}
             artwork={null}
+            albumIds={coverAlbumsOf(liked.data ?? [])}
             onPress={onLiked}
           />
           {mine.map(aPlaylist)}
@@ -128,6 +134,9 @@ const TheMusic = ({
                 artwork={album.hasArtwork ? onThisServer(albumArtworkUrl(album.id)) : null}
                 onPress={() => {
                   onAlbum(album.id);
+                }}
+                onLongPress={() => {
+                  askAboutAnAlbum(album);
                 }}
               />
             ))}

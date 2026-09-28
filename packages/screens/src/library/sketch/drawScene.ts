@@ -1,18 +1,9 @@
 import { SKETCH_SPACE } from '@ValenceContracts/schemas/SketchScene';
 import { LETTER_FONT_LOOKS } from '@ValenceScreens/library/LETTER_FONT_LOOKS';
+import { STROKE_LOOKS } from '@ValenceClient/sketch/STROKE_LOOKS';
 import type { SketchItem, SketchScene, SketchStroke } from '@ValenceContracts/schemas/SketchScene';
 
 const EMOJI_FONT = "'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif";
-
-const STROKE_LOOKS: Record<
-  SketchStroke['tool'],
-  { alpha: number; thickness: number; cap: CanvasLineCap }
-> = {
-  pen: { alpha: 1, thickness: 1, cap: 'round' },
-  pencil: { alpha: 0.72, thickness: 0.55, cap: 'round' },
-  marker: { alpha: 0.42, thickness: 1.6, cap: 'square' },
-  eraser: { alpha: 1, thickness: 1.4, cap: 'round' },
-};
 
 /**
  * Draws one stroke, each stretch of it as thick as the pressure there, so a pen pressed harder

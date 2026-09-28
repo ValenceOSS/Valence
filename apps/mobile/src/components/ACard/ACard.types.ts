@@ -6,6 +6,8 @@ type ACardProps = {
   watched?: number;
   wide?: number;
   isStill?: boolean;
+  look?: 'poster' | 'art';
+  flag?: string | null;
   onLookAt: (mediaId: string) => void;
   onLookAtShow: (libraryId: string, showId: string) => void;
 };

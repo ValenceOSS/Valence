@@ -1,23 +1,24 @@
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { groupVariants, revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
-import { cn } from '@ValenceUI/cn';
 import { FeatureCard } from '@ValenceLanding/components/HomePage/components/FeatureCard/FeatureCard';
+import type { FeatureCardShape } from '@ValenceLanding/components/HomePage/components/FeatureCard/FeatureCard.types';
 import type { FeatureSectionProps } from './FeatureSection.types';
 
-const REST_COLUMNS: Record<number, string> = {
-  2: 'sm:grid-cols-2',
-  3: 'sm:grid-cols-2 lg:grid-cols-3',
+const SHAPES: Record<number, readonly FeatureCardShape[]> = {
+  3: ['square', 'square', 'square'],
+  4: ['wide', 'square', 'square', 'wide'],
 };
 
-const DEFAULT_REST_COLUMNS = 'sm:grid-cols-2 lg:grid-cols-3';
-
 /**
- * One themed group of features — Viewing, Sharing, and so on — a heading over a grid that arrives
- * card by card as it scrolls into view.
+ * One themed group of features — Viewing, Sharing, and so on — its heading and a line about it set
+ * side by side over a grid ruled with hairlines, which arrives feature by feature as it scrolls into
+ * view. A group of three sits in three equal columns, and a group of
+ * four alternates a wide feature with a square one.
  *
  * @param group - The group's title, its one-line description, and its features.
+ * @param number - Where the group comes on the page, which numbers its figures.
  */
-const FeatureSection = ({ group }: FeatureSectionProps) => {
+const FeatureSection = ({ group, number }: FeatureSectionProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
 
   return (
@@ -31,12 +32,12 @@ const FeatureSection = ({ group }: FeatureSectionProps) => {
         viewport={{ once: true, margin: '-80px' }}
         variants={revealVariants(prefersReducedMotion)}
         transition={revealTransition(prefersReducedMotion, 'heavy')}
-        className="mb-10 flex flex-col gap-2"
+        className="mb-12 grid gap-4 lg:grid-cols-2 lg:items-end lg:gap-16"
       >
-        <h2 className="text-3xl font-semibold tracking-tight text-text lg:text-4xl">
+        <h2 className="max-w-md text-balance text-4xl font-semibold tracking-tight text-text lg:text-5xl">
           {group.title}
         </h2>
-        <p className="text-text-muted">{group.detail}</p>
+        <p className="max-w-md text-balance text-text-muted lg:justify-self-end">{group.detail}</p>
       </motion.div>
 
       <motion.ul
@@ -44,17 +45,15 @@ const FeatureSection = ({ group }: FeatureSectionProps) => {
         whileInView="shown"
         viewport={{ once: true, margin: '-80px' }}
         variants={groupVariants}
-        className={cn(
-          'grid grid-cols-1 gap-4',
-          REST_COLUMNS[group.features.length - 1] ?? DEFAULT_REST_COLUMNS,
-        )}
+        className="grid grid-flow-row-dense grid-cols-1 gap-px border border-border/60 bg-border/60 sm:grid-cols-2 lg:grid-cols-3"
       >
         {group.features.map((feature, index) => (
           <FeatureCard
             key={feature.title}
             feature={feature}
             index={index}
-            isFeatured={index === 0}
+            figure={`${number.toString()}.${(index + 1).toString()}`}
+            shape={SHAPES[group.features.length]?.[index] ?? 'square'}
           />
         ))}
       </motion.ul>

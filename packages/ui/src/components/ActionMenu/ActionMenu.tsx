@@ -49,6 +49,8 @@ const LOOKS = {
  * @param look - Plain, lit only when pointed at; a face, which is a circle that is not lit at all,
  *   for a picture standing in as the control; or raised, with a fill and an edge of its own, for a
  *   control that has to be found on a busy row.
+ * @param onOpenChange - Told when it opens or closes, for a caller that must not vanish from under
+ *   it while it is open.
  * @param className - Extra classes for the caller's own layout.
  */
 const ActionMenu = ({
@@ -59,6 +61,7 @@ const ActionMenu = ({
   size = 'md',
   look = 'plain',
   isDisabled = false,
+  onOpenChange,
   className,
 }: ActionMenuProps) => {
   const portalContainer = usePortalContainer();
@@ -66,7 +69,7 @@ const ActionMenu = ({
   const { containerRef, rect, follow, clear } = useSlidingHighlight();
 
   return (
-    <RadixMenu.Root>
+    <RadixMenu.Root {...(onOpenChange === undefined ? {} : { onOpenChange })}>
       <RadixMenu.Trigger
         aria-label={label}
         disabled={isDisabled}

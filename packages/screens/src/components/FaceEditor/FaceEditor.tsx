@@ -5,6 +5,7 @@ import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { ORB_VARIANTS } from '@ValenceUI/orbs/ORB_VARIANTS';
+import { orbLoop } from '@ValenceUI/orbs/orbLoop';
 import { orbPicture } from '@ValenceUI/orbs/orbPicture';
 import { PROFILE_COLOURS, profileAvatarUrl } from '@ValenceContracts/schemas/ViewerProfile';
 import { DrawnStudio } from '@ValenceScreens/components/FaceEditor/components/DrawnStudio/DrawnStudio';
@@ -44,9 +45,9 @@ const modeOf = (avatar: Avatar): Mode => avatar.kind;
  * coming back loses nothing. Nothing is saved from here: using a face hands it to the profile's
  * own draft, which is saved with everything else about the profile.
  *
- * An orb or a drawing is handed over with a still of itself, taken as it is used, because the
- * phone and the
- * television draw pictures rather than shaders.
+ * An orb is handed over with a few seconds of itself moving, looped as a GIF, and a drawing with a
+ * still of itself, taken as each is used, because the phone and the television draw pictures rather
+ * than shaders. An orb the browser cannot film is handed over as a still instead.
  *
  * @param isOpen - Whether the editor is showing.
  * @param onClose - Told it was put away without using anything.
@@ -124,17 +125,25 @@ const FaceEditor = ({ isOpen, onClose, profile, start, onUse }: FaceEditorProps)
 
     setIsUsing(true);
 
+    const moving = mode === 'orb' && variant !== undefined ? await orbLoop(variant, orb) : null;
     const still =
-      mode === 'sketch'
-        ? await sketchPicture(scene)
-        : variant === undefined
-          ? null
-          : await orbPicture(variant, orb);
+      moving !== null
+        ? null
+        : mode === 'sketch'
+          ? await sketchPicture(scene)
+          : variant === undefined
+            ? null
+            : await orbPicture(variant, orb);
 
     setIsUsing(false);
     onUse({
       avatar,
-      photo: still === null ? null : new File([still], `${mode}.png`, { type: 'image/png' }),
+      photo:
+        moving !== null
+          ? new File([moving], 'orb.gif', { type: 'image/gif' })
+          : still === null
+            ? null
+            : new File([still], `${mode}.png`, { type: 'image/png' }),
       colour,
     });
   };

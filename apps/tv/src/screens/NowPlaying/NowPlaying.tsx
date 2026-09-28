@@ -18,6 +18,7 @@ import {
   Repeat,
   Repeat1,
   Shuffle,
+  Sparkles,
 } from '@keyline-icons/react-native';
 import { Heart, Pause, Play, SkipBack, SkipForward } from '@keyline-icons/react-native/fill';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
@@ -42,8 +43,17 @@ import { DevicesPanel } from './components/DevicesPanel/DevicesPanel';
 import { LyricLines } from './components/LyricLines/LyricLines';
 import { Scrubber } from '@ValenceTv/components/Scrubber/Scrubber';
 import { QueuePanel } from './components/QueuePanel/QueuePanel';
+import { shuffleModeOf } from '@ValenceClient/music/shuffleModeOf';
 import type { HWEvent } from 'react-native';
 import type { NowPlayingProps } from './NowPlaying.types';
+
+const SHUFFLE_LABELS = {
+  off: 'Shuffle',
+  on: 'Shuffle is on',
+  smart: 'Smart shuffle is on',
+} as const;
+
+const NO_PICKS: readonly string[] = [];
 
 const RESTS_AFTER_MS = 6000;
 
@@ -206,7 +216,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
   const cover = shown.hasArtwork ? albumArtworkUrl(shown.albumId) : null;
   const isLiked = favourites.isKept(shown.trackId);
   const repeat = state.queue?.repeat ?? 'off';
-  const isShuffled = state.queue?.isShuffled ?? false;
+  const shuffling = shuffleModeOf(state.queue);
   const isOrdered = state.queue?.isOrdered ?? false;
   const room =
     screen.height -
@@ -347,12 +357,12 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
             <View style={styles.transport}>
               <Button
                 onFocus={awayFromTheEdges}
-                label={isShuffled ? 'Shuffle is on' : 'Shuffle'}
-                icon={Shuffle}
-                variant={isShuffled ? 'soft' : 'ghost'}
+                label={SHUFFLE_LABELS[shuffling]}
+                icon={shuffling === 'smart' ? Sparkles : Shuffle}
+                variant={shuffling === 'off' ? 'ghost' : 'soft'}
                 isIconOnly
                 isDisabled={isOrdered}
-                onPress={player.toggleShuffle}
+                onPress={player.cycleShuffle}
               />
               <Button
                 onFocus={awayFromTheEdges}
@@ -455,6 +465,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
       {panel === 'queue' ? (
         <QueuePanel
           upcoming={upcoming}
+          picks={state.queue?.picks ?? NO_PICKS}
           onJump={(at) => {
             player.jumpTo(at);
             closePanel();

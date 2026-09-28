@@ -1,5 +1,6 @@
 import { fetchLibraries, fetchLibraryItems } from '@ValenceClient/library/fetchLibrary';
 import { fetchShows } from '@ValenceClient/library/fetchShows';
+import { fetchAlbums } from '@ValenceClient/music/fetchMusic';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { Surprise } from './pickAnything.types';
 
@@ -52,9 +53,28 @@ const shelfOfItems = async (libraryId: string): Promise<Shelf> => {
 };
 
 /**
- * Chooses something to watch at random, from a kind of library or from all of them. Programmes are
- * offered as programmes and everything else as itself, so the answer is always something somebody
- * could start now.
+ * Every album in the music libraries this profile can see, as one shelf: music is kept as albums
+ * rather than as a library's items, which a music library has none of.
+ *
+ * @returns The shelf.
+ */
+const shelfOfAlbums = async (): Promise<Shelf> => {
+  const albums = await fetchAlbums().catch(() => []);
+
+  return {
+    total: albums.length,
+    at: (index) => {
+      const found = albums[index];
+
+      return Promise.resolve(found === undefined ? null : { kind: 'album', albumId: found.id });
+    },
+  };
+};
+
+/**
+ * Chooses something at random, from a kind of library or from all of them. Programmes are offered
+ * as programmes, music as an album, and everything else as itself, so the answer is always
+ * something somebody could start now.
  *
  * @param only - The libraries to choose from, and which kind to narrow to where one was asked
  *   for.
@@ -65,13 +85,17 @@ const pickAnything = async (only?: LibraryKind): Promise<Surprise | null> => {
     const libraries = await fetchLibraries();
     const wanted = only === undefined ? libraries : libraries.filter((one) => one.kind === only);
 
-    const shelves = await Promise.all(
-      wanted.map(async (entry) =>
-        entry.kind === 'shows'
-          ? shelfOfShows(entry.id).catch(() => ({ total: 0, at: () => Promise.resolve(null) }))
-          : shelfOfItems(entry.id).catch(() => ({ total: 0, at: () => Promise.resolve(null) })),
-      ),
-    );
+    const hasMusic = wanted.some((entry) => entry.kind === 'music');
+    const shelves = await Promise.all([
+      ...wanted
+        .filter((entry) => entry.kind !== 'music')
+        .map(async (entry) =>
+          entry.kind === 'shows'
+            ? shelfOfShows(entry.id).catch(() => ({ total: 0, at: () => Promise.resolve(null) }))
+            : shelfOfItems(entry.id).catch(() => ({ total: 0, at: () => Promise.resolve(null) })),
+        ),
+      ...(hasMusic ? [shelfOfAlbums()] : []),
+    ]);
 
     const total = shelves.reduce((held, shelf) => held + shelf.total, 0);
 

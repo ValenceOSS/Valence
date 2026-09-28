@@ -188,7 +188,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
           className="valence-card-shell pointer-events-auto mx-auto max-w-[120rem] text-text"
         >
           <div className="valence-card-face valence-card-face--raised flex flex-col overflow-hidden">
-            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)_minmax(0,1fr)]">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,1.6fr)_auto]">
               <div className="flex min-w-0 items-center gap-3">
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.div
@@ -267,7 +267,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
 
               <ActionMenu
                 label="More music controls"
-                className="md:hidden"
+                className="lg:hidden"
                 trigger={<Icon of={MoreHorizontalIcon} size={20} />}
                 groups={[
                   {
@@ -323,11 +323,11 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 ]}
               />
 
-              <div className="col-span-2 md:col-span-1">
+              <div className="col-span-2 lg:col-span-1">
                 <MusicTransport state={state} shown={shown} player={player} isIdle={isIdle} />
               </div>
 
-              <div className="hidden min-w-0 items-center justify-end gap-1 md:flex">
+              <div className="hidden items-center justify-end gap-1 lg:flex">
                 <BarButton
                   label="Lyrics"
                   glyph={MicIcon}

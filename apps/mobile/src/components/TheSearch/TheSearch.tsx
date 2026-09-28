@@ -51,6 +51,9 @@ const SIDES = [
  * @param header - What goes above the results, such as room for that bar.
  * @param onScrolled - Told whether it has been scrolled from its top.
  * @param onSeeAll - Told somebody wants the whole of one of Discover's lists.
+ * @param side - Whether what is new or what has been asked for is shown before anything is typed,
+ *   held above it so a button elsewhere can open what has been asked for.
+ * @param onSide - Told which of those somebody chose.
  */
 const TheSearch = ({
   onLookAt,
@@ -64,6 +67,8 @@ const TheSearch = ({
   header,
   onScrolled,
   onSeeAll,
+  side,
+  onSide,
 }: TheSearchProps) => {
   const libraries = useQuery(libraryQueries.all());
   const watched = useQuery(viewingQueries.progress());
@@ -71,7 +76,6 @@ const TheSearch = ({
   const isTypedAbove = typedAbove !== undefined;
   const searchingFor = typedAbove ?? typedHere;
   const [kind, setKind] = useState<string>('everything');
-  const [side, setSide] = useState<string>('discover');
   const howFarThrough = useMemo(() => {
     const howFar = byMediaId(watched.data ?? []);
 
@@ -119,7 +123,7 @@ const TheSearch = ({
           <Words tone="muted">Everything in every library.</Words>
         ) : (
           <>
-            <SegmentedRow label="What to show" items={SIDES} value={side} onSelect={setSide} />
+            <SegmentedRow label="What to show" items={SIDES} value={side} onSelect={onSide} />
 
             {side === 'asked' ? (
               <Asked onAsk={onAsk} />

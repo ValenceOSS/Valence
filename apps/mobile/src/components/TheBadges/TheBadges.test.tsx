@@ -20,4 +20,21 @@ describe('TheBadges', () => {
 
     expect(drawn.toJSON()).toBeNull();
   });
+
+  it('leads with the certificate, as its board publishes it', async () => {
+    const drawn = await render(
+      <TheBadges badges={['HD']} rating={{ certification: '15', region: 'GB' }} />,
+    );
+
+    expect(drawn.getByLabelText('Rated 15 by the BBFC')).toBeTruthy();
+    expect(drawn.getByText('HD')).toBeTruthy();
+  });
+
+  it('draws the certificate even where there is nothing else to say', async () => {
+    const drawn = await render(
+      <TheBadges badges={[]} rating={{ certification: 'PG-13', region: 'US' }} />,
+    );
+
+    expect(drawn.getByLabelText('Rated PG-13 by the MPA')).toBeTruthy();
+  });
 });

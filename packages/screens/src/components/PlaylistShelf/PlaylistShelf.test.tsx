@@ -25,6 +25,7 @@ const PLAYLIST = {
   lostCount: 0,
   durationSeconds: 201,
   artworkAlbumIds: [],
+  hasOwnArtwork: false,
   updatedAt: '',
 };
 

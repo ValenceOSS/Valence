@@ -10,6 +10,7 @@ import { PersonDialog } from '@ValenceScreens/components/PersonDialog/PersonDial
 import { AccountDialog } from '@ValenceScreens/components/AccountDialog/AccountDialog';
 import { DownloadsDialog } from '@ValenceScreens/components/DownloadsDialog/DownloadsDialog';
 import { ShareDialog } from '@ValenceScreens/components/ShareDialog/ShareDialog';
+import { useMayRequest } from '@ValenceClient/requests/useMayRequest';
 import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
 import { StillWatchingDialog } from '@ValenceScreens/components/StillWatchingDialog/StillWatchingDialog';
 import { NotificationBell } from '@ValenceScreens/components/NotificationBell/NotificationBell';
@@ -54,7 +55,6 @@ import { NowPlayingBar } from '@ValenceScreens/components/NowPlayingBar/NowPlayi
 import { useMusicLights } from '@ValenceScreens/music/musicLights';
 import { AskableDialog } from '@ValenceScreens/components/AskableDialog/AskableDialog';
 import { placeOfArrival } from '@ValenceScreens/requests/placeOfArrival';
-import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import type { ShellSection } from '@ValenceScreens/components/AppShell/AppShell.types';
 import type { Inbox } from '@ValenceClient/notifications/fetchNotifications';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
@@ -68,6 +68,7 @@ import { onControlledDevice, readControlledDevice } from '@ValenceClient/video/c
 import { startListening } from '@ValenceClient/books/startListening';
 import { theAudiobookPlayer } from '@ValenceClient/books/theAudiobookPlayer';
 import { useSurprise } from '@ValenceScreens/library/useSurprise';
+import { writeMusicView } from '@ValenceClient/music/musicView';
 import { libraryChoicesFor } from '@ValenceScreens/library/libraryChoicesFor';
 
 const NOTHING_WAITING = { notifications: [], unread: 0 };
@@ -120,6 +121,17 @@ const ValenceShell = () => {
       return;
     }
 
+    if (found.kind === 'album') {
+      go({
+        section: 'music',
+        listen: writeMusicView({ kind: 'album', id: found.albumId }),
+        inspecting: null,
+        show: null,
+      });
+
+      return;
+    }
+
     rememberItems([found.item]);
     move({ inspecting: found.item.id, show: null });
   });
@@ -129,10 +141,8 @@ const ValenceShell = () => {
   const keptBooks = useFavourites(watching, 'books');
   const rate = useRate(watching);
   const hiding = useHidden(watching);
-  const { mayAdminister, may } = useWhatIMayDo();
-  const requesting = useQuery(requestsQueries.availability());
-  const mayRequest =
-    requesting.data?.isEnabled === true && (may('requests.ask') || may('requests.askMusic'));
+  const { mayAdminister } = useWhatIMayDo();
+  const mayRequest = useMayRequest();
   const leave = useSignOut();
 
   const [openShow, setOpenShow] = useState<ShowSummary | null>(null);

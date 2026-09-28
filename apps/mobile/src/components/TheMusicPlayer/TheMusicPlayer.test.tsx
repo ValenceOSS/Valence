@@ -41,16 +41,24 @@ describe('TheMusicPlayer', () => {
     expect(thePhonesMusicPlayer().read().current?.id).toBe(aTrack(2).id);
   });
 
-  it('turns shuffle on, and shows it on', async () => {
+  it('steps shuffle through on, smart and off, saying what the next press does', async () => {
     await act(() => {
+      thePhonesMusicPlayer().stop();
       thePhonesMusicPlayer().play([aTrack(1), aTrack(2)], 0);
     });
     const drawn = await render(aPlayer(), { wrapper: CacheScope });
 
     await userEvent.press(drawn.getByRole('button', { name: 'Shuffle' }));
 
+    expect(
+      drawn.getByRole('button', { name: 'Smart shuffle' }).props.accessibilityState,
+    ).toMatchObject({ selected: true });
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Smart shuffle' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Stop shuffling' }));
+
     expect(drawn.getByRole('button', { name: 'Shuffle' }).props.accessibilityState).toMatchObject({
-      selected: true,
+      selected: false,
     });
   });
 });

@@ -18,9 +18,10 @@ import { Logo } from '@ValenceUI/Logo';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { readStarCount } from '@ValenceLanding/content/githubStars';
+import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
 import repository from 'virtual:github-stars';
 
-const NAV_LINK = 'text-sm font-medium transition-colors';
+const NAV_LINK = 'text-sm font-semibold transition-colors';
 
 const LINKS = [
   { to: '/changelog', label: 'Changelog' },
@@ -31,6 +32,8 @@ const LINKS = [
 const GITHUB_URL = 'https://github.com/MarquesCoding/Valence';
 
 const DISCORD_URL = 'https://discord.gg/uTtcAHMy9N';
+
+const SOCIAL_BUTTON = 'hidden items-center gap-2 rounded-2xl sm:inline-flex';
 
 const SOCIAL_LINKS = [
   { href: GITHUB_URL, icon: IconBrandGithubFilled, label: 'View the source on GitHub' },
@@ -98,6 +101,10 @@ const LandingNav = () => {
         </Link>
 
         <div className="relative z-10 hidden items-center gap-6 sm:flex">
+          <a href={DOCS_URL} className={cn(NAV_LINK, 'text-text-muted hover:text-text')}>
+            Docs
+          </a>
+
           {LINKS.map((link) => (
             <Link
               key={link.to}
@@ -114,7 +121,7 @@ const LandingNav = () => {
             variant="glossy"
             size="sm"
             label="View the source on GitHub"
-            className="hidden items-center gap-2 rounded-2xl sm:inline-flex"
+            className={SOCIAL_BUTTON}
             onClick={() => {
               window.open(GITHUB_URL, '_blank', 'noopener,noreferrer');
             }}
@@ -125,10 +132,10 @@ const LandingNav = () => {
           </Button>
 
           <Button
-            variant="discord"
+            variant="glossy"
             size="sm"
             label="Join the Discord"
-            className="hidden items-center gap-2 sm:inline-flex"
+            className={SOCIAL_BUTTON}
             onClick={() => {
               window.open(DISCORD_URL, '_blank', 'noopener,noreferrer');
             }}
@@ -143,13 +150,22 @@ const LandingNav = () => {
             trigger={<IconMenu2 size={18} />}
             groups={[
               {
-                items: LINKS.map((link) => ({
-                  id: link.to,
-                  label: link.label,
-                  onChoose: () => {
-                    void navigate({ to: link.to });
+                items: [
+                  {
+                    id: 'docs',
+                    label: 'Docs',
+                    onChoose: () => {
+                      window.location.assign(DOCS_URL);
+                    },
                   },
-                })),
+                  ...LINKS.map((link) => ({
+                    id: link.to,
+                    label: link.label,
+                    onChoose: () => {
+                      void navigate({ to: link.to });
+                    },
+                  })),
+                ],
               },
               {
                 items: SOCIAL_LINKS.map((social) => ({

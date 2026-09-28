@@ -12,9 +12,10 @@ const WIDTH = 820;
  * closes the panel, and the remote stays inside it until then.
  *
  * @param upcoming - The songs still to come, each with where it sits in the order.
+ * @param picks - The songs smart shuffle mixed in, which are marked as such.
  * @param onJump - Told where in the order the chosen song sits.
  */
-const QueuePanel = ({ upcoming, onJump }: QueuePanelProps) => (
+const QueuePanel = ({ upcoming, picks, onJump }: QueuePanelProps) => (
   <TVFocusGuideView style={styles.panel} trapFocusLeft trapFocusRight trapFocusUp trapFocusDown>
     <FadeIn>
       <Text style={styles.title}>Up next</Text>
@@ -33,6 +34,7 @@ const QueuePanel = ({ upcoming, onJump }: QueuePanelProps) => (
               place={index}
               isCurrent={false}
               isPlaying={false}
+              isPick={picks.includes(item.track.id)}
               onPress={() => {
                 onJump(item.at);
               }}

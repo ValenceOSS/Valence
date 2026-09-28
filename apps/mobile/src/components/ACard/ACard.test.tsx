@@ -69,4 +69,25 @@ describe('ACard', () => {
 
     expect(onLookAt).toHaveBeenCalledWith(anEpisode.id);
   });
+
+  it('lies flat on its picture with a flag, as the home page lays it out', async () => {
+    const onLookAt = jest.fn();
+    const drawn = await render(
+      <ACard
+        media={anEpisode}
+        asProgramme={false}
+        look="art"
+        flag="New episode"
+        onLookAt={onLookAt}
+        onLookAtShow={jest.fn()}
+      />,
+    );
+
+    expect(drawn.getByText('New episode')).toBeTruthy();
+    expect(drawn.getByText('Severance')).toBeTruthy();
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Good News About Hell, New episode' }));
+
+    expect(onLookAt).toHaveBeenCalledWith(anEpisode.id);
+  });
 });

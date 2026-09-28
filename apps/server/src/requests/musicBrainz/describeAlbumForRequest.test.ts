@@ -12,6 +12,7 @@ const aWeb = (answer: JsonValue | null) => {
   const web = {
     json: vi.fn((): Promise<JsonValue | null> => Promise.resolve(answer)),
     bytes: vi.fn((): Promise<Uint8Array | null> => Promise.resolve(null)),
+    text: vi.fn((): Promise<string | null> => Promise.resolve(null)),
   };
 
   return web satisfies MusicWeb;
@@ -33,7 +34,7 @@ describe('describeAlbumForRequest', () => {
       year: 1979,
       aliases: [],
       overview: null,
-      posterUrl: `https://coverartarchive.org/release-group/${THE_WALL}/front-250`,
+      posterUrl: `/api/music/catalogue/covers/${THE_WALL}?title=The+Wall&artist=Pink+Floyd`,
       runtimeMinutes: null,
       releaseDates: { theatrical: null, digital: null, physical: null },
       episodes: [],

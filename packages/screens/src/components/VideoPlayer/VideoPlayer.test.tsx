@@ -1409,6 +1409,62 @@ describe('VideoPlayer', () => {
     }
   });
 
+  it('says what is being watched once it has been left paused a while', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+
+    try {
+      renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} isImmersive />);
+
+      await settled();
+
+      const element = await screen.findByLabelText('Arrival');
+
+      fireEvent.play(element);
+      fireEvent.pause(element);
+
+      expect(screen.queryByText('You’re watching')).not.toBeInTheDocument();
+
+      act(() => {
+        vi.advanceTimersByTime(11_000);
+      });
+
+      expect(await screen.findByText('You’re watching')).toBeInTheDocument();
+      expect(screen.getByText('Paused')).toBeInTheDocument();
+
+      const stage = screen.getByLabelText('Arrival').parentElement;
+
+      if (stage !== null) {
+        fireEvent.pointerMove(stage, { clientX: 10, clientY: 10 });
+      }
+
+      await waitFor(() => {
+        expect(screen.queryByText('You’re watching')).not.toBeInTheDocument();
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('never says so while it is playing', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+
+    try {
+      renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} isImmersive />);
+
+      await settled();
+
+      fireEvent.play(await screen.findByLabelText('Arrival'));
+
+      act(() => {
+        vi.advanceTimersByTime(20_000);
+      });
+
+      expect(screen.queryByText('You’re watching')).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('brings the controls and the pointer back when the viewer moves', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
 

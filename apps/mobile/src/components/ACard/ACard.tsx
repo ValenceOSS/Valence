@@ -1,6 +1,8 @@
 import { showIdOf } from '@ValenceClient/library/showIdOf';
 import { whereItFalls } from '@ValenceClient/library/whereItFalls';
 import { APoster } from '@ValenceMobile/components/APoster/APoster';
+import { AnArtCard } from '@ValenceMobile/components/AnArtCard/AnArtCard';
+import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { theArtworkFor } from '@ValenceMobile/components/APoster/theArtworkFor';
 import { theStillFor } from '@ValenceMobile/components/APoster/theStillFor';
 import { Button } from '@ValenceMobile/components/Button/Button';
@@ -19,6 +21,9 @@ import type { ACardProps } from './ACard.types';
  * @param watched - How much of it has been seen.
  * @param wide - How wide to draw it, where it fills a cell of a grid.
  * @param isStill - Whether it lies flat on a still from it rather than standing on its poster.
+ * @param look - Whether it is drawn as a poster with its name beneath, or as its backdrop alone with
+ *   its logo drawn in, as the home page lays titles out.
+ * @param flag - What is new about it, across the picture where it is drawn as its backdrop.
  * @param onLookAt - Told to open a title.
  * @param onLookAtShow - Told to open a programme.
  */
@@ -28,6 +33,8 @@ const ACard = ({
   watched = 0,
   wide,
   isStill = false,
+  look = 'poster',
+  flag = null,
   onLookAt,
   onLookAtShow,
 }: ACardProps) => {
@@ -39,7 +46,7 @@ const ACard = ({
   return (
     <Button
       tone="bare"
-      label={detail === null ? title : `${title}, ${detail}`}
+      label={[title, detail, flag].filter((part) => part !== null).join(', ')}
       onPress={() => {
         if (showId === null) {
           onLookAt(media.id);
@@ -48,15 +55,26 @@ const ACard = ({
         }
       }}
     >
-      <APoster
-        title={title}
-        year={showId === null && !isAnEpisode ? media.year : null}
-        artwork={isStill ? theStillFor(media) : theArtworkFor(media)}
-        watched={showId === null ? watched : 0}
-        isStill={isStill}
-        detail={detail}
-        {...(wide === undefined ? {} : { wide })}
-      />
+      {look === 'art' ? (
+        <AnArtCard
+          title={media.seriesTitle ?? media.title}
+          artwork={theStillFor(media)}
+          logo={media.hasLogo ? onThisServer(`/api/media/${media.id}/image/logo`) : null}
+          flag={flag}
+          watched={showId === null ? watched : 0}
+          {...(wide === undefined ? {} : { wide })}
+        />
+      ) : (
+        <APoster
+          title={title}
+          year={showId === null && !isAnEpisode ? media.year : null}
+          artwork={isStill ? theStillFor(media) : theArtworkFor(media)}
+          watched={showId === null ? watched : 0}
+          isStill={isStill}
+          detail={detail}
+          {...(wide === undefined ? {} : { wide })}
+        />
+      )}
     </Button>
   );
 };

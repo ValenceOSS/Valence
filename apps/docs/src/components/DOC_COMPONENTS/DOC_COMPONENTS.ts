@@ -13,7 +13,7 @@ const DOC_COMPONENTS = {
   h4: levelledHeading(4),
   p: styleElement('p', 'my-4 text-base leading-7 text-text-muted'),
   ul: styleElement('ul', 'my-4 list-disc space-y-2 pl-6 text-text-muted marker:text-text-muted/60'),
-  ol: styleElement('ol', 'my-4 list-decimal space-y-2 pl-6 text-text-muted marker:font-medium'),
+  ol: styleElement('ol', 'my-4 list-decimal space-y-2 pl-6 text-text-muted marker:font-semibold'),
   li: styleElement('li', 'pl-1 leading-7'),
   strong: styleElement('strong', 'font-semibold text-text'),
   blockquote: styleElement(

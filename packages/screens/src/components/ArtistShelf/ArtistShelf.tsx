@@ -3,6 +3,7 @@ import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwo
 import { MusicTile } from '@ValenceScreens/components/MusicTile/MusicTile';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
+import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
 import { musicMenuFor } from '@ValenceScreens/music/musicMenuFor';
 import { RevealItem } from '@ValenceUI/RevealItem';
 import { MusicShelf } from '@ValenceScreens/components/MusicShelf/MusicShelf';
@@ -36,6 +37,7 @@ const pictureOf = (artist: MusicArtist): string | null => {
 const ArtistShelf = ({ heading, artists, layout = 'rail', action }: ArtistShelfProps) => {
   const { open } = useMusicNavigation();
   const { player } = useMusicPlayer();
+  const addingTo = useMyPlaylists();
 
   if (artists.length === 0) {
     return null;
@@ -60,7 +62,7 @@ const ArtistShelf = ({ heading, artists, layout = 'rail', action }: ArtistShelfP
             onOpen={() => {
               open({ kind: 'artist', id: artist.id });
             }}
-            menu={musicMenuFor({ kind: 'artist', id: artist.id }, artist.name, player, open)}
+            menu={musicMenuFor({ kind: 'artist', id: artist.id }, artist.name, player, open, addingTo)}
             shape="round"
           />
         </RevealItem>

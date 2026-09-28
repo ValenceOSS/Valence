@@ -33,7 +33,7 @@ type MusicFileSystem = {
 
 type KeptArtist = { id: string; hasImage: boolean };
 
-type KeptAlbum = { id: string; hasArtwork: boolean };
+type KeptAlbum = { id: string; hasArtwork: boolean; isCorrected: boolean };
 
 type AlbumRow = {
   libraryId: string;
@@ -89,6 +89,7 @@ type MusicStore = {
 
 type MusicArtwork = {
   keep: (kind: 'album' | 'artist', id: string, source: ArtworkSource) => Promise<string | null>;
+  isKept: (path: string) => Promise<boolean>;
 };
 
 type ScanMusicLibraryOptions = {
@@ -282,7 +283,7 @@ const scanMusicLibrary = async (options: ScanMusicLibraryOptions): Promise<ScanR
       lyricsModifiedAtMs: lyricFiles.get(stemOf(file.path)) ?? null,
     });
 
-    if (!pictured.has(album.id) && (force || !album.hasArtwork)) {
+    if (!pictured.has(album.id) && !album.isCorrected && (force || !album.hasArtwork)) {
       const folderArt =
         tags.picture === null ? await files.findFolderArt(folder).catch(() => null) : null;
       const source: ArtworkSource | null =

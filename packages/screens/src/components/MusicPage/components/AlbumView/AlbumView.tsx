@@ -1,6 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
-import { Record as RecordIcon, Shuffle as ShuffleIcon } from '@keyline-icons/react';
+import {
+  ListPlus as ListPlusIcon,
+  Record as RecordIcon,
+  Shuffle as ShuffleIcon,
+} from '@keyline-icons/react';
 import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
+import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Icon } from '@ValenceUI/Icon';
@@ -18,6 +23,8 @@ import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
+import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
+import { playlistGroupFor } from '@ValenceScreens/music/playlistGroupFor';
 import type { AlbumViewProps } from './AlbumView.types';
 
 /**
@@ -30,7 +37,8 @@ const songs = (count: number): string => (count === 1 ? '1 song' : `${count.toSt
 
 /**
  * An album's page: its cover large on a wash of its colour, who it is by and when, and every track
- * in the order the record plays them, with a button to play it from the top or shuffled.
+ * in the order the record plays them, with a button to play it from the top or shuffled, and one
+ * to add the whole of it to a playlist.
  *
  * @param albumId - The album.
  */
@@ -38,6 +46,7 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
   const asked = useQuery(musicQueries.album(albumId));
   const { open } = useMusicNavigation();
   const { player } = useMusicPlayer();
+  const playlists = useMyPlaylists();
   const detail = asked.data;
   const cover = detail?.album.hasArtwork === true ? albumArtworkUrl(albumId) : null;
   useLightTheMusic(cover);
@@ -129,6 +138,20 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
             >
               <Icon of={ShuffleIcon} size={22} />
             </Button>
+            {tracks.length === 0 ? null : (
+              <ActionMenu
+                label={`Add ${album.title} to a playlist`}
+                trigger={<Icon of={ListPlusIcon} size={22} />}
+                groups={[
+                  playlistGroupFor(
+                    album.title,
+                    () => Promise.resolve(tracks.map((track) => track.id)),
+                    playlists,
+                    open,
+                  ),
+                ]}
+              />
+            )}
           </>
         }
       />

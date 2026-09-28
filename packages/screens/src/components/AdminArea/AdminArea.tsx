@@ -21,6 +21,22 @@ import {
   startReencodes,
 } from '@ValenceClient/admin/fetchReencodes';
 import { MatchPicker } from './components/MatchPicker/MatchPicker';
+import { CorrectionPicker } from '@ValenceScreens/components/AdminArea/components/CorrectionPicker/CorrectionPicker';
+import { PosterMatchList } from '@ValenceScreens/components/AdminArea/components/PosterMatchList/PosterMatchList';
+import { MusicMatchList } from '@ValenceScreens/components/AdminArea/components/MusicMatchList/MusicMatchList';
+import {
+  correctAlbum,
+  correctBook,
+  forgetAlbumCorrection,
+  forgetBookCorrection,
+  searchAlbumMatches,
+  searchBookMatches,
+} from '@ValenceClient/admin/fetchCorrections';
+import { musicQueries } from '@ValenceClient/query/musicQueries';
+import type { Book } from '@ValenceContracts/schemas/Book';
+import type { BookMatch } from '@ValenceContracts/schemas/BookMatch';
+import type { MusicAlbum } from '@ValenceContracts/schemas/Music';
+import type { MusicCatalogueHit } from '@ValenceContracts/schemas/MediaRequest';
 import { PreviewMomentPicker } from '@ValenceScreens/components/PreviewMomentPicker/PreviewMomentPicker';
 import { OverviewPanel } from './components/OverviewPanel/OverviewPanel';
 import { RolesPanel } from './components/RolesPanel/RolesPanel';
@@ -125,6 +141,9 @@ import type { AdminAreaProps } from './AdminArea.types';
 import type { ObservabilitySearch } from '@ValenceClient/admin/ObservabilitySearchSchema';
 import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
 
+const NO_ALBUMS: MusicAlbum[] = [];
+
+const NO_BOOKS: Book[] = [];
 const HISTORY_LENGTH = 60;
 
 const PANEL_ORDER = ADMIN_PANELS.map((one) => one.id);
@@ -160,6 +179,8 @@ const AdminArea = ({
   const [encoderHistory, setEncoderHistory] = useState<number[]>([]);
   const [viewingJobKind, setViewingJobKind] = useState<string | null>(initialJob ?? null);
   const [correcting, setCorrecting] = useState<MediaSummary | null>(null);
+  const [correctingAlbum, setCorrectingAlbum] = useState<MusicAlbum | null>(null);
+  const [correctingBook, setCorrectingBook] = useState<Book | null>(null);
   const [choosingMoment, setChoosingMoment] = useState<MediaSummary | null>(null);
   const chosenDetail = useQuery(libraryQueries.detail(choosingMoment?.id ?? null));
   const {
@@ -199,6 +220,12 @@ const AdminArea = ({
 
   const askedMediaKey = adminQueries.everything(libraries.map((library) => library.id)).queryKey;
   const askedMedia = useQuery(adminQueries.everything(libraries.map((library) => library.id)));
+  const askedAlbums = useQuery(adminQueries.albums());
+  const askedBooks = useQuery(
+    adminQueries.books(
+      libraries.filter((library) => library.kind === 'books').map((library) => library.id),
+    ),
+  );
   const askedEveryFile = useQuery(adminQueries.everyFile(libraries.map((library) => library.id)));
   const askedReencodes = useQuery(adminQueries.reencodes());
 
@@ -948,7 +975,11 @@ const AdminArea = ({
             <MediaPanel
               isUnreachable={unreachable.has('media')}
               media={media}
+              albums={askedAlbums.data ?? NO_ALBUMS}
+              books={askedBooks.data ?? NO_BOOKS}
               onCorrect={setCorrecting}
+              onCorrectAlbum={setCorrectingAlbum}
+              onCorrectBook={setCorrectingBook}
               onChooseMoment={(item) => {
                 void fetchTrickplay(item.id).then((found) => {
                   if (found === null) {
@@ -1234,6 +1265,86 @@ const AdminArea = ({
               queryKey: adminQueries.everything(libraries.map((library) => library.id)).queryKey,
             });
           });
+        }}
+      />
+
+      <CorrectionPicker<MusicCatalogueHit>
+        title={correctingAlbum?.title ?? null}
+        detail="Choosing here says which record this album is and takes that record's cover. Its title and songs stay as its files say, and later scans keep the choice."
+        searchLabel="Search for a record"
+        startingQuery={
+          correctingAlbum === null ? '' : `${correctingAlbum.artist.name} ${correctingAlbum.title}`
+        }
+        search={searchAlbumMatches}
+        drawMatches={(matches, _busyId, choose) => (
+          <MusicMatchList matches={matches} onChoose={choose} />
+        )}
+        keyOf={(match) => match.musicBrainzId}
+        choose={(match) =>
+          correctingAlbum === null
+            ? Promise.resolve('No album is being corrected.')
+            : correctAlbum(correctingAlbum.id, match)
+        }
+        forget={() =>
+          correctingAlbum === null
+            ? Promise.resolve('No album is being corrected.')
+            : forgetAlbumCorrection(correctingAlbum.id)
+        }
+        onChanged={() => {
+          void cache.invalidateQueries({ queryKey: adminQueries.albums().queryKey });
+          void cache.invalidateQueries({ queryKey: musicQueries.key });
+        }}
+        onClose={() => {
+          setCorrectingAlbum(null);
+        }}
+      />
+
+      <CorrectionPicker<BookMatch>
+        title={correctingBook?.title ?? null}
+        detail="Choosing here takes this book's title, authors, year, description and cover from Open Library, and later scans keep the choice."
+        searchLabel="Search for a book"
+        startingQuery={
+          correctingBook === null
+            ? ''
+            : [correctingBook.title, ...(correctingBook.authors ?? []).slice(0, 1)].join(' ')
+        }
+        search={searchBookMatches}
+        drawMatches={(matches, busyId, choose) => (
+          <PosterMatchList
+            matches={matches.map((match) => ({
+              id: match.openLibraryId.toString(),
+              title: match.title,
+              year: match.year,
+              detail: match.author ?? 'Author unknown',
+              posterUrl: match.coverUrl,
+            }))}
+            busyId={busyId}
+            onChoose={(id) => {
+              const chosen = matches.find((match) => match.openLibraryId.toString() === id);
+
+              if (chosen !== undefined) {
+                choose(chosen);
+              }
+            }}
+          />
+        )}
+        keyOf={(match) => match.openLibraryId.toString()}
+        choose={(match) =>
+          correctingBook === null
+            ? Promise.resolve('No book is being corrected.')
+            : correctBook(correctingBook.id, match.openLibraryId)
+        }
+        forget={() =>
+          correctingBook === null
+            ? Promise.resolve('No book is being corrected.')
+            : forgetBookCorrection(correctingBook.id)
+        }
+        onChanged={() => {
+          void cache.invalidateQueries({ queryKey: adminQueries.key });
+          void cache.invalidateQueries({ queryKey: ['books'] });
+        }}
+        onClose={() => {
+          setCorrectingBook(null);
         }}
       />
 

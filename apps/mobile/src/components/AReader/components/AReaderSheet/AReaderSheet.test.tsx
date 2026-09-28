@@ -48,13 +48,20 @@ describe('AReaderSheet', () => {
     const onClose = jest.fn();
 
     await render(aSheet({ onClose }));
-    await fireEvent(theHostWith((one) => 'isPresented' in one.props), 'isPresentedChange', {
-      nativeEvent: { isPresented: false },
-    });
+    await fireEvent(
+      theHostWith((one) => 'isPresented' in one.props),
+      'isPresentedChange',
+      {
+        nativeEvent: { isPresented: false },
+      },
+    );
 
     expect(onClose).toHaveBeenCalledTimes(1);
 
-    await fireEvent(theHostWith((one) => one.props.label === 'Done'), 'buttonPress');
+    await fireEvent(
+      theHostWith((one) => one.props.label === 'Done'),
+      'buttonPress',
+    );
 
     expect(onClose).toHaveBeenCalledTimes(2);
   });
@@ -63,9 +70,13 @@ describe('AReaderSheet', () => {
     const onClose = jest.fn();
 
     await render(aSheet({ onClose }));
-    await fireEvent(theHostWith((one) => 'isPresented' in one.props), 'isPresentedChange', {
-      nativeEvent: { isPresented: true },
-    });
+    await fireEvent(
+      theHostWith((one) => 'isPresented' in one.props),
+      'isPresentedChange',
+      {
+        nativeEvent: { isPresented: true },
+      },
+    );
 
     expect(onClose).not.toHaveBeenCalled();
   });
@@ -87,9 +98,13 @@ describe('AReaderSheet', () => {
     const onLayout = jest.fn();
 
     await render(aSheet({ onLayout }));
-    await fireEvent(theHostWith((one) => one.props.selection === 'one'), 'selectionChange', {
-      nativeEvent: { selection: 'two' },
-    });
+    await fireEvent(
+      theHostWith((one) => one.props.selection === 'one'),
+      'selectionChange',
+      {
+        nativeEvent: { selection: 'two' },
+      },
+    );
 
     expect(onLayout).toHaveBeenCalledWith('two');
   });

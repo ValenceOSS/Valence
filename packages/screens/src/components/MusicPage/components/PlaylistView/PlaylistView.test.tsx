@@ -37,6 +37,7 @@ const summary = (overrides = {}) => ({
   lostCount: 0,
   durationSeconds: 7600,
   artworkAlbumIds: [],
+  hasOwnArtwork: false,
   updatedAt: '2026-09-18T00:00:00.000Z',
   ...overrides,
 });

@@ -9,7 +9,8 @@ type BadgeTone =
   | 'busy'
   | 'waiting'
   | 'warning'
-  | 'danger';
+  | 'danger'
+  | 'outline';
 
 type BadgeSize = 'sm' | 'md';
 

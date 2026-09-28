@@ -1,8 +1,9 @@
-import { fetchPlaylist } from '@ValenceClient/music/fetchPlaylists';
+import { fetchPlaylist, playlistArtworkUrl } from '@ValenceClient/music/fetchPlaylists';
 import { MusicTile } from '@ValenceScreens/components/MusicTile/MusicTile';
 import { PlaylistCover } from '@ValenceScreens/components/PlaylistCover/PlaylistCover';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
+import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
 import { musicMenuFor } from '@ValenceScreens/music/musicMenuFor';
 import { nameOfOwner } from '@ValenceScreens/music/nameOfOwner';
 import { RevealItem } from '@ValenceUI/RevealItem';
@@ -43,6 +44,7 @@ const PlaylistShelf = ({
 }: PlaylistShelfProps) => {
   const { open } = useMusicNavigation();
   const { player } = useMusicPlayer();
+  const addingTo = useMyPlaylists();
 
   if (playlists.length === 0 && leading === undefined) {
     return null;
@@ -64,13 +66,20 @@ const PlaylistShelf = ({
               <PlaylistCover
                 name={playlist.name}
                 albumIds={playlist.artworkAlbumIds}
+                artwork={playlistArtworkUrl(playlist)}
                 className="w-full"
               />
             }
             onOpen={() => {
               open({ kind: 'playlist', id: playlist.id });
             }}
-            menu={musicMenuFor({ kind: 'playlist', id: playlist.id }, playlist.name, player, open)}
+            menu={musicMenuFor(
+              { kind: 'playlist', id: playlist.id },
+              playlist.name,
+              player,
+              open,
+              addingTo,
+            )}
             onPlay={() => {
               void fetchPlaylist(playlist.id).then((read) => {
                 const tracks = read.entries.flatMap((entry) =>

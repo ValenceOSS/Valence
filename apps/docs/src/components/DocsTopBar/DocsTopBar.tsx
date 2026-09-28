@@ -62,7 +62,7 @@ const DocsTopBar = () => {
         </Button>
 
         <Button
-          variant="discord"
+          variant="glossy"
           size="sm"
           label="Join the Discord"
           className="inline-flex items-center gap-2"

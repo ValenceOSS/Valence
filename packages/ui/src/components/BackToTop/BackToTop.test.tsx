@@ -72,4 +72,12 @@ describe('BackToTop', () => {
   it('sets a display name so devtools can identify it', () => {
     expect(BackToTop.displayName).toBe('BackToTop');
   });
+
+  it('stands solid rather than as glass, so it is not lost against a picture beneath it', () => {
+    everythingAt(-500);
+
+    render(<BackToTop />);
+
+    expect(screen.getByRole('button', { name: 'Back to top' })).toHaveClass('bg-surface-raised');
+  });
 });

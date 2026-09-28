@@ -10,6 +10,7 @@ const aWeb = (answer: JsonValue | null) => {
   const web = {
     json: vi.fn((): Promise<JsonValue | null> => Promise.resolve(answer)),
     bytes: vi.fn((): Promise<Uint8Array | null> => Promise.resolve(null)),
+    text: vi.fn((): Promise<string | null> => Promise.resolve(null)),
   };
 
   return web satisfies MusicWeb;
@@ -38,7 +39,7 @@ describe('searchMusicCatalogue', () => {
         disambiguation: 'UK rock band',
         type: null,
         year: 1965,
-        coverUrl: null,
+        coverUrl: '/api/music/catalogue/artists/picture?name=Pink+Floyd',
       },
     ]);
     expect(fine.json).toHaveBeenCalledWith(
@@ -71,7 +72,7 @@ describe('searchMusicCatalogue', () => {
         type: 'album',
         year: 1973,
         coverUrl:
-          'https://coverartarchive.org/release-group/f5093c06-23e3-404f-aeaa-40f72885ee3a/front-250',
+          '/api/music/catalogue/covers/f5093c06-23e3-404f-aeaa-40f72885ee3a?title=The+Dark+Side+of+the+Moon&artist=Pink+Floyd',
       },
     ]);
     expect(web.json).toHaveBeenCalledWith(

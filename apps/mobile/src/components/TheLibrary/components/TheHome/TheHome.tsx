@@ -1,5 +1,6 @@
 import { Film, FolderOpen } from '@keyline-icons/react-native';
 import { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { freshFlags } from '@ValenceClient/library/freshFlags';
 import { useQuery } from '@tanstack/react-query';
 import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -100,6 +101,12 @@ const TheHomePage = ({
   const wasScrolled = useRef<boolean | null>(null);
   const heroEnds = useRef<number | null>(null);
   const [isHeroInView, setIsHeroInView] = useState(true);
+  const [openedAt] = useState(() => Date.now());
+  const flagOf = useMemo(
+    () =>
+      freshFlags([...(sample.data ?? []), ...home.rails.flatMap((rail) => rail.items)], openedAt),
+    [sample.data, home.rails, openedAt],
+  );
 
   const withComingUp = useMemo(() => {
     const shelves = home.rails.flatMap((rail): AShelfOf[] =>
@@ -129,10 +136,11 @@ const TheHomePage = ({
           today={today}
           onLookAt={onLookAt}
           onLookAtShow={onLookAtShow}
+          flagOf={flagOf}
         />
       </AnArrival>
     ),
-    [upcoming, progress, today, onLookAt, onLookAtShow],
+    [upcoming, progress, today, onLookAt, onLookAtShow, flagOf],
   );
 
   const onScroll = useCallback(

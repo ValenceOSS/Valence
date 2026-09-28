@@ -6,7 +6,6 @@ import {
   MusicNote,
   Repeat,
   Repeat1,
-  Shuffle,
 } from '@keyline-icons/react-native';
 import {
   Heart as HeartFilled,
@@ -16,12 +15,19 @@ import {
   SkipForward as SkipForwardFilled,
 } from '@keyline-icons/react-native/fill';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
-import { Alert, Animated, Image, StyleSheet, useWindowDimensions, View } from 'react-native';
+import {
+  Alert,
+  Animated,
+  Image,
+  PanResponder,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { howTheFileSounds } from '@ValenceClient/music/howTheFileSounds';
 import { whatTheFileHolds } from '@ValenceClient/music/whatTheFileHolds';
 import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
-import { whichWayTheQueueMoved } from '@ValenceClient/music/whichWayTheQueueMoved';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { ALitCircle } from '@ValenceMobile/components/ALitCircle/ALitCircle';
@@ -42,9 +48,18 @@ import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
 import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { SPRINGS } from '@ValenceMobile/theme/SPRINGS';
+import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
+import { shuffleModeOf } from '@ValenceClient/music/shuffleModeOf';
+import { AShuffleMark } from '@ValenceMobile/components/AShuffleMark/AShuffleMark';
 import type { TheMusicPlayerProps } from './TheMusicPlayer.types';
+
+const SHUFFLE_LABELS = {
+  off: 'Shuffle',
+  on: 'Smart shuffle',
+  smart: 'Stop shuffling',
+} as const;
 
 const RESTING = 0.86;
 
@@ -53,6 +68,14 @@ const SMALL = 64;
 const TITLE_ROOM = 64;
 
 const SWITCH_SHIFT = 32;
+
+const TURNS_PAST = 0.25;
+
+const TURNS_FASTER_THAN = 0.5;
+
+const TURNS_IN_MS = 220;
+
+const HELD_BACK = 0.25;
 
 const BREATHES = { ...SPRINGS.heavy, useNativeDriver: true } as const;
 
@@ -94,6 +117,10 @@ const styles = StyleSheet.create({
  * a little while the song is paused, and forward again when it plays. A lossless file says so, and
  * pressing that says exactly what the file is. Going on to the next song slides the cover away to
  * the left and the next one in from the right; going back slides them the other way.
+ * The covers either side wait just off the screen, so swiping the cover pages to the song before
+ * or after it the way a carousel does: the cover follows the finger, the next one slides in with
+ * it, and letting go far enough or fast enough finishes the turn and plays that song. Nothing is
+ * redrawn when it lands, since the cover that slid in is the one that stays.
  *
  * Asking for the words or for what comes next folds the cover away into the corner beside the song's
  * name, and the words or the queue take its place until they are asked away again. Going from one
@@ -127,19 +154,138 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
   const [folding] = useState(() => new Animated.Value(0));
   const [swapping] = useState(() => new Animated.Value(1));
   const at = state.queue?.at ?? 0;
-  const [shown, setShown] = useState({ id: track?.id ?? null, cover, at });
-  const [leaving, setLeaving] = useState<{
-    id: string;
-    cover: string | null;
-    way: 1 | -1;
-  } | null>(null);
+  const [shown, setShown] = useState({ id: track?.id ?? null, cover });
+  const [leaving, setLeaving] = useState<{ id: string; cover: string | null } | null>(null);
   const leavingId = leaving?.id ?? null;
   const isFolded = beside !== 'nothing';
   const [besideShown, setBesideShown] = useState(beside);
   const [besideLeaving, setBesideLeaving] = useState<'queue' | 'lyrics' | null>(null);
   const [switching] = useState(() => new Animated.Value(1));
+  const [position] = useState(() => new Animated.Value(at));
+  const [lastAt] = useState(() => new Map<'at', number>([['at', at]]));
+  const queue = state.queue;
+
+  /**
+   * The song a step away in the order it plays, going round where the queue repeats, and the place
+   * it holds, so its cover can wait beside this one to be swiped in.
+   *
+   * @param step - One on, or one back.
+   * @returns Where it is and its cover, or nothing where there is no song that way.
+   */
+  const songAt = (step: 1 | -1) => {
+    if (queue === null) {
+      return null;
+    }
+
+    const length = queue.order.length;
+    const place = queue.at + step;
+    const isRound = place < 0 || place >= length;
+
+    if (isRound && (queue.repeat !== 'all' || length < 2)) {
+      return null;
+    }
+
+    const found = queue.tracks[queue.order[(place + length) % length] ?? -1];
+
+    return found === undefined
+      ? null
+      : {
+          place: (place + length) % length,
+          cover: found.album.hasArtwork ? onThisServer(albumArtworkUrl(found.album.id)) : null,
+        };
+  };
+  const before = songAt(-1);
+  const after = songAt(1);
+  const [latest] = useState(
+    () =>
+      new Map<
+        'now',
+        {
+          at: number;
+          page: number;
+          hasBefore: boolean;
+          hasAfter: boolean;
+          turn: (towards: 1 | -1) => void;
+        }
+      >(),
+  );
+
+  useEffect(() => {
+    latest.set('now', {
+      at,
+      page: width * (isPlaying ? 1 : RESTING),
+      hasBefore: before !== null,
+      hasAfter: after !== null,
+      turn: (towards) => {
+        const now = player.read().queue;
+
+        if (towards === 1) {
+          player.next();
+        } else if (now !== null && now.at > 0) {
+          player.jumpTo(now.at - 1);
+        } else {
+          player.previous();
+        }
+      },
+    });
+  });
+
+  const [turning] = useState(() =>
+    PanResponder.create({
+      onMoveShouldSetPanResponderCapture: (_, gesture) =>
+        Math.abs(gesture.dx) > 10 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 2,
+      onPanResponderMove: (_, gesture) => {
+        const now = latest.get('now');
+
+        if (now === undefined) {
+          return;
+        }
+
+        const canGo = gesture.dx < 0 ? now.hasAfter : now.hasBefore;
+
+        position.setValue(now.at - (canGo ? gesture.dx : gesture.dx * HELD_BACK) / now.page);
+      },
+      onPanResponderRelease: (_, gesture) => {
+        const now = latest.get('now');
+        const towards = (gesture.dx === 0 ? gesture.vx : gesture.dx) < 0 ? 1 : -1;
+        const canGo = towards === 1 ? now?.hasAfter === true : now?.hasBefore === true;
+        const isTurning =
+          now !== undefined &&
+          canGo &&
+          (Math.abs(gesture.dx) > now.page * TURNS_PAST ||
+            Math.abs(gesture.vx) > TURNS_FASTER_THAN);
+
+        if (!isTurning) {
+          Animated.spring(position, {
+            ...SPRINGS.liquid,
+            toValue: now?.at ?? 0,
+            useNativeDriver: true,
+          }).start();
+
+          return;
+        }
+
+        Animated.timing(position, {
+          toValue: now.at + towards,
+          duration: TURNS_IN_MS,
+          easing: EASINGS.outCubic,
+          useNativeDriver: true,
+        }).start(({ finished }) => {
+          if (finished) {
+            now.turn(towards);
+          }
+        });
+      },
+      onPanResponderTerminate: () => {
+        Animated.spring(position, {
+          ...SPRINGS.liquid,
+          toValue: latest.get('now')?.at ?? 0,
+          useNativeDriver: true,
+        }).start();
+      },
+    }),
+  );
   const shift = isStill ? 0 : SWITCH_SHIFT * (besideShown === 'queue' ? 1 : -1);
-  const way = leaving?.way ?? 1;
   const besideComesIn = useMemo(
     () =>
       folding.interpolate({
@@ -165,6 +311,11 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
     () => folding.interpolate({ inputRange: [0, 1], outputRange: [(across - side) / 2, 0] }),
     [folding, across, side],
   );
+  const slides = useMemo(() => {
+    const placed = (index: number) => Animated.multiply(Animated.subtract(index, position), width);
+
+    return { before: placed(at - 1), current: placed(at), after: placed(at + 1) };
+  }, [position, width, at]);
   const coverScale = useMemo(
     () => folding.interpolate({ inputRange: [0, 1], outputRange: [1, SMALL / side] }),
     [folding, side],
@@ -172,14 +323,6 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
   const swappedAway = useMemo(
     () => swapping.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
     [swapping],
-  );
-  const swapLeaves = useMemo(
-    () => swapping.interpolate({ inputRange: [0, 1], outputRange: [0, -way * width] }),
-    [swapping, way, width],
-  );
-  const swapArrives = useMemo(
-    () => swapping.interpolate({ inputRange: [0, 1], outputRange: [way * width, 0] }),
-    [swapping, way, width],
   );
   const seek = useCallback(
     (to: number) => {
@@ -198,15 +341,23 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
 
   if (track !== null && shown.id !== track.id) {
     if (shown.id !== null) {
-      setLeaving({
-        id: shown.id,
-        cover: shown.cover,
-        way: whichWayTheQueueMoved(shown.at, at, state.queue?.order.length ?? 0),
-      });
+      setLeaving({ id: shown.id, cover: shown.cover });
     }
 
-    setShown({ id: track.id, cover, at });
+    setShown({ id: track.id, cover });
   }
+
+  useLayoutEffect(() => {
+    const was = lastAt.get('at') ?? at;
+
+    lastAt.set('at', at);
+
+    if (Math.abs(at - was) === 1 && !isStill && !isFolded) {
+      Animated.spring(position, { ...FOLDS, toValue: at }).start();
+    } else {
+      position.setValue(at);
+    }
+  }, [at, isFolded, isStill, lastAt, position]);
 
   useLayoutEffect(() => {
     if (leavingId === null) {
@@ -276,7 +427,7 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
 
   const isLiked = favourites.isKept(track.id);
   const repeat = state.queue?.repeat ?? 'off';
-  const isShuffled = state.queue?.isShuffled ?? false;
+  const shuffling = shuffleModeOf(state.queue);
   const sounds = howTheFileSounds(track, (state.playingQuality ?? state.quality) === 'lossless');
   const firstArtist = track.artists[0];
 
@@ -394,15 +545,17 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
           </>
         ) : (
           <>
-            <Button
-              tone="bare"
-              label={`Open ${track.album.title}`}
-              onPress={() => {
-                onAlbum(track.album.id);
-              }}
-            >
-              <View style={{ height: side }} />
-            </Button>
+            <View {...turning.panHandlers}>
+              <Button
+                tone="bare"
+                label={`Open ${track.album.title}`}
+                onPress={() => {
+                  onAlbum(track.album.id);
+                }}
+              >
+                <View style={{ height: side }} />
+              </Button>
+            </View>
             <View style={styles.head}>
               {naming}
               {liking}
@@ -421,25 +574,38 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
             ]}
           >
             <Animated.View style={{ transform: [{ scale: breathing }] }}>
-              {leaving === null ? null : (
+              {leaving === null || !isFolded ? null : (
                 <Animated.View
-                  style={[
-                    StyleSheet.absoluteFill,
-                    isFolded
-                      ? { opacity: swappedAway }
-                      : { transform: [{ translateX: swapLeaves }] },
-                  ]}
+                  key="leaving"
+                  style={[StyleSheet.absoluteFill, { opacity: swappedAway }]}
                 >
                   {drawCover(leaving.cover)}
                 </Animated.View>
               )}
+              {isFolded || before === null ? null : (
+                <Animated.View
+                  key={`at-${before.place.toString()}`}
+                  style={[StyleSheet.absoluteFill, { transform: [{ translateX: slides.before }] }]}
+                >
+                  {drawCover(before.cover)}
+                </Animated.View>
+              )}
               <Animated.View
+                key={`at-${at.toString()}`}
                 style={
-                  isFolded ? { opacity: swapping } : { transform: [{ translateX: swapArrives }] }
+                  isFolded ? { opacity: swapping } : { transform: [{ translateX: slides.current }] }
                 }
               >
                 {drawCover(cover)}
               </Animated.View>
+              {isFolded || after === null ? null : (
+                <Animated.View
+                  key={`at-${after.place.toString()}`}
+                  style={[StyleSheet.absoluteFill, { transform: [{ translateX: slides.after }] }]}
+                >
+                  {drawCover(after.cover)}
+                </Animated.View>
+              )}
             </Animated.View>
           </Animated.View>
         )}
@@ -467,11 +633,11 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
         <View style={styles.controls}>
           <Button
             tone="bare"
-            label="Shuffle"
-            isChosen={isShuffled}
-            onPress={() => player.toggleShuffle()}
+            label={SHUFFLE_LABELS[shuffling]}
+            isChosen={shuffling !== 'off'}
+            onPress={() => player.cycleShuffle()}
           >
-            <ALitCircle of={Shuffle} size={20} isLit={isShuffled} />
+            <AShuffleMark mode={shuffling} size={20} />
           </Button>
 
           <Button tone="bare" label="Previous" onPress={() => player.previous()}>

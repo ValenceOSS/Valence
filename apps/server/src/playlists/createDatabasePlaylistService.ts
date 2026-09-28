@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
+import { extname, join } from 'node:path';
 import { and, asc, desc, eq, gt, inArray, isNull, max, or, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 import {
@@ -12,6 +14,12 @@ import {
 import { librariesVisibleToViewer } from '@ValenceServer/visibility/librariesVisibleToViewer';
 import { visibleToViewer } from '@ValenceServer/visibility/visibleToViewer';
 import { STEP, positionBetween } from './positionBetween';
+import { ARTWORK_LIMITS } from '@ValenceServer/playlists/ARTWORK_LIMITS';
+import {
+  contentTypeFor,
+  extensionFor,
+  whatIsWrongWithThePicture,
+} from '@ValenceServer/profiles/whatIsWrongWithThePicture';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
 import type { MediaKind } from '@ValenceContracts/schemas/MediaKind';
 import type { PlaylistEntry, PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
@@ -58,13 +66,18 @@ const kindOf = (libraryKind: string, seriesTitle: string | null): MediaKind => {
  * rather than shown and then refused. Only the owner may change a playlist; anybody may read one
  * that has been shared.
  *
+ * A playlist's owner may give it a cover of its own, kept as a file beside the other uploaded
+ * pictures and checked the way a face is; without one it is drawn from its songs' albums.
+ *
  * @param db - The database.
  * @param music - Where a song entry is read out as a full track.
+ * @param artworkDirectory - Where the covers people upload for their playlists are kept.
  * @returns The service.
  */
 const createDatabasePlaylistService = (
   db: ValenceDatabase,
   music: MusicService,
+  artworkDirectory: string,
 ): PlaylistService => {
   const entryVisible = (viewer: Viewer): SQL | undefined =>
     and(visibleToViewer(db, viewer), librariesVisibleToViewer(db, viewer));
@@ -93,6 +106,7 @@ const createDatabasePlaylistService = (
         profileId: playlist.profileId,
         ownerName: viewerProfile.name,
         ownerColour: viewerProfile.colour,
+        artworkPath: playlist.artworkPath,
         updatedAt: playlist.updatedAt,
       })
       .from(playlist)
@@ -184,6 +198,7 @@ const createDatabasePlaylistService = (
       lostCount: lost.get(row.id) ?? 0,
       durationSeconds: tallied.get(row.id)?.durationSeconds ?? 0,
       artworkAlbumIds: tiled.get(row.id) ?? [],
+      hasOwnArtwork: row.artworkPath !== null,
       updatedAt: row.updatedAt.toISOString(),
     }));
   };
@@ -499,6 +514,80 @@ const createDatabasePlaylistService = (
       }
 
       return dropped.length > 0;
+    },
+
+    readArtwork: async (viewer, playlistId) => {
+      const [row] = await db
+        .select({ artworkPath: playlist.artworkPath })
+        .from(playlist)
+        .where(and(eq(playlist.id, playlistId), readable(viewer)))
+        .limit(1);
+
+      if (row?.artworkPath === null || row?.artworkPath === undefined) {
+        return null;
+      }
+
+      const contentType = contentTypeFor(extname(row.artworkPath));
+      const body = await readFile(join(artworkDirectory, row.artworkPath)).catch(() => null);
+
+      return body === null || contentType === undefined
+        ? null
+        : { body: new Uint8Array(body), contentType };
+    },
+
+    saveArtwork: async (viewer, playlistId, artwork) => {
+      if (!(await owned(viewer, playlistId))) {
+        return 'notYours';
+      }
+
+      const wrong = await whatIsWrongWithThePicture(artwork, ARTWORK_LIMITS);
+
+      if (wrong !== null) {
+        return wrong;
+      }
+
+      const name = `${playlistId}-${Date.now().toString()}${extensionFor(artwork.contentType) ?? '.png'}`;
+      const [was] = await db
+        .select({ artworkPath: playlist.artworkPath })
+        .from(playlist)
+        .where(eq(playlist.id, playlistId))
+        .limit(1);
+
+      await mkdir(artworkDirectory, { recursive: true });
+      await writeFile(join(artworkDirectory, name), artwork.body);
+      await db
+        .update(playlist)
+        .set({ artworkPath: name, updatedAt: new Date() })
+        .where(eq(playlist.id, playlistId));
+
+      if (was?.artworkPath !== null && was?.artworkPath !== undefined) {
+        await unlink(join(artworkDirectory, was.artworkPath)).catch(() => undefined);
+      }
+
+      return null;
+    },
+
+    dropArtwork: async (viewer, playlistId) => {
+      if (!(await owned(viewer, playlistId))) {
+        return false;
+      }
+
+      const [was] = await db
+        .select({ artworkPath: playlist.artworkPath })
+        .from(playlist)
+        .where(eq(playlist.id, playlistId))
+        .limit(1);
+
+      await db
+        .update(playlist)
+        .set({ artworkPath: null, updatedAt: new Date() })
+        .where(eq(playlist.id, playlistId));
+
+      if (was?.artworkPath !== null && was?.artworkPath !== undefined) {
+        await unlink(join(artworkDirectory, was.artworkPath)).catch(() => undefined);
+      }
+
+      return true;
     },
   };
 };

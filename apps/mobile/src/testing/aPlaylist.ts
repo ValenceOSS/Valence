@@ -20,6 +20,7 @@ const aPlaylist = (overrides: Partial<PlaylistSummary> = {}): PlaylistSummary =>
     lostCount: 0,
     durationSeconds: 600,
     artworkAlbumIds: [],
+    hasOwnArtwork: false,
     updatedAt: '2026-09-01T00:00:00.000Z',
     ...overrides,
   });

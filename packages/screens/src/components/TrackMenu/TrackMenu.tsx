@@ -1,12 +1,9 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { MoreHorizontal as MoreHorizontalIcon } from '@keyline-icons/react';
 import {
   Bin as BinFilledIcon,
   ChevronDown as ChevronDownFilledIcon,
   ChevronUp as ChevronUpFilledIcon,
-  ListMusic as ListMusicFilledIcon,
   ListOrdered as ListOrderedFilledIcon,
-  Plus as PlusFilledIcon,
   Record as RecordFilledIcon,
   SkipForward as SkipForwardFilledIcon,
   User as UserFilledIcon,
@@ -15,11 +12,11 @@ import {
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Icon } from '@ValenceUI/Icon';
 import { notify } from '@ValenceUI/notify';
-import { addToPlaylist, createPlaylist } from '@ValenceClient/music/fetchPlaylists';
-import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { setMusicVideo } from '@ValenceScreens/music/musicVideo';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
+import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
+import { playlistGroupFor } from '@ValenceScreens/music/playlistGroupFor';
 import type { TrackMenuProps } from './TrackMenu.types';
 
 /**
@@ -36,16 +33,10 @@ import type { TrackMenuProps } from './TrackMenu.types';
  * @param className - Anything the caller's layout needs.
  */
 const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMenuProps) => {
-  const cache = useQueryClient();
   const { player } = useMusicPlayer();
   const { open } = useMusicNavigation();
-  const playlists = useQuery(musicQueries.playlists());
-  const mine = (playlists.data ?? []).filter((playlist) => playlist.isMine);
+  const playlists = useMyPlaylists();
   const [artist] = track.artists;
-
-  const refresh = () => {
-    void cache.invalidateQueries({ queryKey: musicQueries.playlistsKey });
-  };
 
   return (
     <ActionMenu
@@ -77,47 +68,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
             },
           ],
         },
-        {
-          name: 'Add to playlist',
-          items: [
-            {
-              id: 'new',
-              label: 'New playlist',
-              icon: <Icon of={PlusFilledIcon} size={16} />,
-              onChoose: () => {
-                void createPlaylist({ name: track.title, mediaItemIds: [track.id] }).then(
-                  (made) => {
-                    refresh();
-
-                    if (made === null) {
-                      notify.failed('That playlist could not be made.');
-
-                      return;
-                    }
-
-                    open({ kind: 'playlist', id: made.id });
-                  },
-                );
-              },
-            },
-            ...mine.map((playlist) => ({
-              id: `playlist-${playlist.id}`,
-              label: playlist.name,
-              icon: <Icon of={ListMusicFilledIcon} size={16} />,
-              onChoose: () => {
-                void addToPlaylist(playlist.id, [track.id]).then((added) => {
-                  refresh();
-
-                  if (added) {
-                    notify.worked(`Added to ${playlist.name}`);
-                  } else {
-                    notify.failed(`That could not be added to ${playlist.name}.`);
-                  }
-                });
-              },
-            })),
-          ],
-        },
+        playlistGroupFor(track.title, () => Promise.resolve([track.id]), playlists, open),
         {
           items: [
             ...(track.videoKey === null

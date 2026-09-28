@@ -22,7 +22,7 @@ const PageNeighbours = ({ previous, next }: Neighbours) => (
           <Icon of={ArrowLeftIcon} size={14} tone="muted" />
           Previous
         </span>
-        <span className="font-medium text-text">{previous.title}</span>
+        <span className="font-semibold text-text">{previous.title}</span>
       </Link>
     )}
 
@@ -34,7 +34,7 @@ const PageNeighbours = ({ previous, next }: Neighbours) => (
           Next
           <Icon of={ArrowRightIcon} size={14} tone="muted" />
         </span>
-        <span className="font-medium text-text">{next.title}</span>
+        <span className="font-semibold text-text">{next.title}</span>
       </Link>
     )}
   </nav>

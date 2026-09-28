@@ -17,6 +17,7 @@ const SWELL = [1, 1.25, 1];
  * @param label - What pressing it does, which is also its tooltip.
  * @param litGlyph - The filled drawing to show while it is lit.
  * @param glyph - The icon.
+ * @param badge - A small mark at the icon's corner, for a setting with more than on and off.
  * @param gesture - How the icon moves when pointed at.
  * @param iconSize - How large the icon is.
  * @param isLit - Whether the thing it stands for is on, which colours it and swells it as it comes on.
@@ -28,6 +29,7 @@ const BarButton = ({
   label,
   glyph,
   litGlyph,
+  badge,
   gesture = 'settle',
   iconSize = 18,
   isLit = false,
@@ -59,7 +61,7 @@ const BarButton = ({
         initial={false}
         animate={{ scale: isLit && prefersReducedMotion !== true ? SWELL : 1 }}
         transition={settleTween}
-        className="flex"
+        className="relative flex"
       >
         <AnimatedIcon
           gesture={gesture}
@@ -73,6 +75,11 @@ const BarButton = ({
             />
           }
         />
+        {badge === undefined ? null : (
+          <span className="absolute -top-1.5 -right-1.5 flex text-accent">
+            <Icon of={badge} size={Math.round(iconSize / 2)} />
+          </span>
+        )}
       </motion.span>
     </Button>
   );

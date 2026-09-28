@@ -1,91 +1,62 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { HardDrive as HardDriveIcon } from '@keyline-icons/react';
 import { FeatureSection } from './FeatureSection';
+import type { Feature } from '@ValenceLanding/content/features';
+
+const featuresNamed = (...titles: string[]): Feature[] =>
+  titles.map((title) => ({ title, detail: `${title} in detail.`, visual: 'terminal' }));
 
 describe('FeatureSection', () => {
-  it('names the group and draws each of its features', () => {
+  it('names the group and draws each of its features, numbered by the group', () => {
     render(
       <FeatureSection
         group={{
           title: 'Platform',
           detail: 'What it takes to run it.',
-          features: [
-            {
-              icon: HardDriveIcon,
-              visual: 'window',
-              title: 'One image',
-              detail: 'Everything in one place.',
-            },
-            {
-              icon: HardDriveIcon,
-              visual: 'window',
-              title: 'Read only',
-              detail: 'Nothing written back.',
-            },
-          ],
+          features: featuresNamed('One image', 'Read only', 'Real auth'),
         }}
+        number={5}
       />,
     );
 
-    expect(screen.getByRole('region', { name: 'Platform' })).toBeInTheDocument();
-    expect(screen.getByText('What it takes to run it.')).toBeInTheDocument();
-    expect(screen.getByText('One image')).toBeInTheDocument();
-    expect(screen.getByText('Read only')).toBeInTheDocument();
+    const region = screen.getByRole('region', { name: 'Platform' });
+
+    expect(within(region).getByText('What it takes to run it.')).toBeInTheDocument();
+    expect(within(region).getByRole('heading', { name: 'Read only' })).toBeInTheDocument();
+    expect(within(region).getByText('Fig 5.2')).toBeInTheDocument();
   });
 
-  it('leads a group of four with one larger, featured card', () => {
+  it('lays a group of three in equal cells', () => {
+    render(
+      <FeatureSection
+        group={{ title: 'Platform', detail: 'Run it.', features: featuresNamed('A', 'B', 'C') }}
+        number={5}
+      />,
+    );
+
+    for (const item of screen.getAllByRole('listitem')) {
+      expect(item).not.toHaveClass('sm:col-span-2');
+    }
+  });
+
+  it('alternates a group of four, wide then square, then square then wide', () => {
     render(
       <FeatureSection
         group={{
           title: 'Viewing',
-          detail: "What it's like to sit down and watch something.",
-          features: [
-            { icon: HardDriveIcon, visual: 'window', title: 'First', detail: 'Leads the group.' },
-            { icon: HardDriveIcon, visual: 'window', title: 'Second', detail: 'An ordinary card.' },
-            { icon: HardDriveIcon, visual: 'window', title: 'Third', detail: 'An ordinary card.' },
-            { icon: HardDriveIcon, visual: 'window', title: 'Fourth', detail: 'An ordinary card.' },
-          ],
+          detail: 'Watch.',
+          features: featuresNamed('First', 'Second', 'Third', 'Fourth'),
         }}
+        number={1}
       />,
     );
 
-    expect(screen.getByRole('heading', { name: 'First' })).toHaveClass('text-2xl');
-    expect(screen.getByRole('heading', { name: 'Second' })).toHaveClass('text-lg');
-  });
+    const items = screen.getAllByRole('listitem');
 
-  it('leads a group of three the same way, so every group opens with a featured card', () => {
-    render(
-      <FeatureSection
-        group={{
-          title: 'Platform',
-          detail: 'What it takes to run it.',
-          features: [
-            {
-              icon: HardDriveIcon,
-              visual: 'window',
-              title: 'One image',
-              detail: 'Everything in one place.',
-            },
-            {
-              icon: HardDriveIcon,
-              visual: 'window',
-              title: 'Read only',
-              detail: 'Nothing written back.',
-            },
-            {
-              icon: HardDriveIcon,
-              visual: 'window',
-              title: 'Real auth',
-              detail: 'TOTP and passkeys.',
-            },
-          ],
-        }}
-      />,
-    );
-
-    expect(screen.getByRole('heading', { name: 'One image' })).toHaveClass('text-2xl');
-    expect(screen.getByRole('heading', { name: 'Read only' })).toHaveClass('text-lg');
+    expect(items[0]).toHaveClass('sm:col-span-2');
+    expect(items[1]).not.toHaveClass('sm:col-span-2');
+    expect(items[2]).not.toHaveClass('sm:col-span-2');
+    expect(items[3]).toHaveClass('sm:col-span-2');
   });
 
   it('sets a display name so devtools can identify it', () => {

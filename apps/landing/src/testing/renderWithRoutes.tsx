@@ -23,11 +23,12 @@ const renderWithRoutes = async (component: RouteComponent, path = '/'): Promise<
   const root = createRootRoute({ component });
   const home = createRoute({ getParentRoute: () => root, path: '/' });
   const changelog = createRoute({ getParentRoute: () => root, path: '/changelog' });
+  const release = createRoute({ getParentRoute: () => root, path: '/changelog/$slug' });
   const privacy = createRoute({ getParentRoute: () => root, path: '/privacy' });
   const terms = createRoute({ getParentRoute: () => root, path: '/terms' });
 
   const router = createRouter({
-    routeTree: root.addChildren([home, changelog, privacy, terms]),
+    routeTree: root.addChildren([home, changelog, release, privacy, terms]),
     history: createMemoryHistory({ initialEntries: [path] }),
   });
 

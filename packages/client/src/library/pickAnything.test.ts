@@ -16,6 +16,12 @@ vi.mock('@ValenceClient/library/fetchLibrary', () => ({
     fetchLibraryItems(libraryId, options),
 }));
 
+const fetchAlbums = vi.fn<() => Promise<{ id: string }[]>>();
+
+vi.mock('@ValenceClient/music/fetchMusic', () => ({
+  fetchAlbums: () => fetchAlbums(),
+}));
+
 vi.mock('@ValenceClient/library/fetchShows', () => ({
   fetchShows: (libraryId: string) => fetchShows(libraryId),
 }));
@@ -53,6 +59,7 @@ beforeEach(() => {
   fetchLibraryItems.mockReset();
   fetchShows.mockReset();
   fetchShows.mockResolvedValue([]);
+  fetchAlbums.mockReset().mockResolvedValue([]);
 });
 
 afterEach(() => {
@@ -170,5 +177,20 @@ describe('pickAnything, when a library will not answer', () => {
     fetchLibraryItems.mockResolvedValue({ items: [item('arrival')], total: 1 });
 
     await expect(pickAnything()).resolves.toEqual({ kind: 'item', item: item('arrival') });
+  });
+
+  it('offers a whole album from a music library', async () => {
+    fetchLibraries.mockResolvedValue([{ id: 'music-1', kind: 'music' }]);
+    fetchAlbums.mockResolvedValue([{ id: 'album-1' }, { id: 'album-2' }]);
+    vi.spyOn(Math, 'random').mockReturnValue(0.6);
+
+    await expect(pickAnything('music')).resolves.toEqual({ kind: 'album', albumId: 'album-2' });
+  });
+
+  it('offers nothing from music where the albums cannot be read', async () => {
+    fetchLibraries.mockResolvedValue([{ id: 'music-1', kind: 'music' }]);
+    fetchAlbums.mockRejectedValue(new Error('offline'));
+
+    await expect(pickAnything('music')).resolves.toBeNull();
   });
 });

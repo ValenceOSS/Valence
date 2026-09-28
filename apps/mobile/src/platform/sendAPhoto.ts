@@ -1,6 +1,6 @@
 import { FileSystemUploadType, uploadAsync } from 'expo-file-system/legacy';
-import { z } from 'zod';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
 
 const KINDS: Record<string, string> = {
@@ -13,8 +13,6 @@ const KINDS: Record<string, string> = {
   webp: 'image/webp',
 };
 
-const Refusal = z.object({ error: z.string() });
-
 const NOT_SENT = 'That photo could not be sent.';
 
 /**
@@ -23,9 +21,14 @@ const NOT_SENT = 'That photo could not be sent.';
  *
  * @param path - Where on the server it goes, such as `/api/profiles/{id}/photo`.
  * @param file - Where the photo is on this phone.
+ * @param headers - Anything more the request has to carry, such as which profile is sending it.
  * @returns Nothing once it is kept, or what went wrong.
  */
-const sendAPhoto = async (path: string, file: string): Promise<string | null> => {
+const sendAPhoto = async (
+  path: string,
+  file: string,
+  headers: Record<string, string> = {},
+): Promise<string | null> => {
   const address = platformInUse().serverAddress();
 
   if (address === null) {
@@ -37,7 +40,12 @@ const sendAPhoto = async (path: string, file: string): Promise<string | null> =>
   const sent = await uploadAsync(`${address}${path}`, file, {
     httpMethod: 'PUT',
     uploadType: FileSystemUploadType.BINARY_CONTENT,
-    headers: { 'content-type': kind, origin: address, ...(cookie === null ? {} : { cookie }) },
+    headers: {
+      ...headers,
+      'content-type': kind,
+      origin: address,
+      ...(cookie === null ? {} : { cookie }),
+    },
   }).catch(() => null);
 
   if (sent === null) {
@@ -49,7 +57,7 @@ const sendAPhoto = async (path: string, file: string): Promise<string | null> =>
   }
 
   try {
-    return Refusal.parse(JSON.parse(sent.body)).error;
+    return RefusalSchema.parse(JSON.parse(sent.body)).error;
   } catch {
     return NOT_SENT;
   }

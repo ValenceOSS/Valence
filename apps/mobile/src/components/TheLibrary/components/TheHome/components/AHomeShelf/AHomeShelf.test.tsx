@@ -69,6 +69,7 @@ describe('AHomeShelf', () => {
         today="2026-09-24"
         onLookAt={onLookAt}
         onLookAtShow={jest.fn()}
+        flagOf={() => null}
       />,
     );
 
@@ -79,7 +80,7 @@ describe('AHomeShelf', () => {
     expect(onLookAt).toHaveBeenCalledWith(aFilm.id);
   });
 
-  it('draws what somebody is part way through as stills, each episode named for its programme', async () => {
+  it('draws what somebody is part way through as pictures named for its programme, each opening its episode', async () => {
     const onLookAt = jest.fn();
     const drawn = await render(
       <AHomeShelf
@@ -92,16 +93,34 @@ describe('AHomeShelf', () => {
         today="2026-09-24"
         onLookAt={onLookAt}
         onLookAtShow={jest.fn()}
+        flagOf={() => null}
       />,
     );
 
-    expect(drawn.getByText('S1 · E1  Good News About Hell')).toBeTruthy();
+    expect(drawn.getByText('Severance')).toBeTruthy();
 
     await userEvent.press(
       drawn.getByRole('button', { name: 'Severance, S1 · E1  Good News About Hell' }),
     );
 
     expect(onLookAt).toHaveBeenCalledWith(anEpisode.id);
+  });
+
+  it('flags what is new about a title across its picture', async () => {
+    const drawn = await render(
+      <AHomeShelf
+        shelf={{ kind: 'rail', rail: { id: 'recent', title: 'Recently added', items: [aFilm] } }}
+        upcoming={upcoming}
+        progress={new Map()}
+        today="2026-09-24"
+        onLookAt={jest.fn()}
+        onLookAtShow={jest.fn()}
+        flagOf={(media) => (media.id === aFilm.id ? 'New episode' : null)}
+      />,
+    );
+
+    expect(drawn.getByText('New episode')).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'Arrival, New episode' })).toBeTruthy();
   });
 
   it('draws what is coming up, each opening its programme', async () => {
@@ -114,6 +133,7 @@ describe('AHomeShelf', () => {
         today="2026-09-24"
         onLookAt={jest.fn()}
         onLookAtShow={onLookAtShow}
+        flagOf={() => null}
       />,
     );
 

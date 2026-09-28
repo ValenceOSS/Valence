@@ -3,6 +3,7 @@ import { Play as PlayFilled } from '@keyline-icons/react-native/fill';
 import { useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { Button } from '@ValenceMobile/components/Button/Button';
+import { ACoverGrid } from '@ValenceMobile/components/ACoverGrid/ACoverGrid';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
@@ -34,6 +35,8 @@ const styles = StyleSheet.create({
  * @param title - What it is called.
  * @param detail - A line about it, where there is one.
  * @param artwork - Its cover, or nothing where it has none.
+ * @param albumIds - The albums whose covers make up its cover instead, four in a grid, for a list of
+ *   songs from many albums.
  * @param standIn - What is drawn where there is no cover.
  * @param isRound - Whether the cover is round, as an artist's is.
  * @param canPlay - Whether there is anything to play.
@@ -46,6 +49,7 @@ const AMusicHead = ({
   title,
   detail,
   artwork,
+  albumIds,
   standIn,
   isRound = false,
   canPlay,
@@ -64,7 +68,9 @@ const AMusicHead = ({
           { backgroundColor: colours.surfaceRaised, borderRadius: isRound ? SIDE / 2 : 16 },
         ]}
       >
-        {artwork === null || isMissing ? (
+        {albumIds !== undefined ? (
+          <ACoverGrid albumIds={albumIds} standIn={standIn} iconSize={64} />
+        ) : artwork === null || isMissing ? (
           <Icon of={standIn} size={64} colour={colours.textMuted} />
         ) : (
           <Image

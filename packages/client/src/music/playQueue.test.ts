@@ -3,6 +3,7 @@ import {
   addToQueue,
   currentOf,
   cycleRepeat,
+  cycleShuffle,
   jumpTo,
   clearUpNext,
   moveInQueue,
@@ -13,6 +14,7 @@ import {
   startQueue,
   toggleShuffle,
   upcomingIn,
+  weavePicks,
 } from './playQueue';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
 
@@ -207,5 +209,68 @@ describe('playQueue', () => {
 
     expect(currentOf(queue)).toBeNull();
     expect(nextIn(queue, true)).toBeNull();
+  });
+});
+
+describe('smart shuffle', () => {
+  const EXTRA = [6, 7, 8].map(track);
+
+  const smart = () => cycleShuffle(cycleShuffle(startQueue(FIVE, 0), steady), steady);
+
+  it('goes round off, shuffled, smart and off again', () => {
+    const shuffled = cycleShuffle(startQueue(FIVE, 0), steady);
+
+    expect(shuffled.isShuffled).toBe(true);
+    expect(shuffled.isSmart).toBe(false);
+    expect(smart().isSmart).toBe(true);
+
+    const off = cycleShuffle(smart());
+
+    expect(off.isShuffled).toBe(false);
+    expect(off.isSmart).toBe(false);
+  });
+
+  it('never shuffles a queue whose order means something, or one with nothing in it', () => {
+    const ordered = startQueue(FIVE, 0, { isOrdered: true });
+
+    expect(cycleShuffle(ordered)).toBe(ordered);
+
+    const empty = startQueue([], 0);
+
+    expect(cycleShuffle(empty)).toBe(empty);
+  });
+
+  it('mixes songs into what is still to come, one after every few chosen ones', () => {
+    const woven = weavePicks(smart(), EXTRA, 2);
+
+    expect(woven.picks).toEqual(EXTRA.slice(0, 2).map((pick) => pick.id));
+    expect(woven.tracks).toHaveLength(7);
+    expect(woven.order.slice(woven.at + 1)).toHaveLength(6);
+  });
+
+  it('does not mix in a song already in the queue', () => {
+    expect(weavePicks(smart(), [track(1)], 2).picks).toEqual([]);
+  });
+
+  it('mixes nothing in once smart shuffle has been switched off', () => {
+    const shuffled = cycleShuffle(startQueue(FIVE, 0), steady);
+
+    expect(weavePicks(shuffled, EXTRA)).toBe(shuffled);
+  });
+
+  it('lets go of the mixed-in songs still to come when switched off, keeping the chosen ones', () => {
+    const off = cycleShuffle(weavePicks(smart(), EXTRA, 2));
+
+    expect(off.picks).toEqual([]);
+    expect(off.tracks.map((song) => song.id).sort()).toEqual(FIVE.map((song) => song.id).sort());
+  });
+
+  it('keeps a mixed-in song that is playing when smart shuffle is switched off', () => {
+    const woven = weavePicks(smart(), EXTRA, 2);
+    const onPick = jumpTo(woven, woven.order.indexOf(5));
+    const off = cycleShuffle(onPick);
+
+    expect(currentOf(off)?.id).toBe(EXTRA[0]?.id);
+    expect(off.tracks).toHaveLength(6);
   });
 });

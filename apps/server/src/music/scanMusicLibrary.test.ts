@@ -78,14 +78,14 @@ const memoryStore = (stored: StoredTrack[] = []) => {
       const known = albums.get(key);
 
       if (known !== undefined) {
-        return Promise.resolve({ id: known.id, hasArtwork: known.hasArtwork });
+        return Promise.resolve({ id: known.id, hasArtwork: known.hasArtwork, isCorrected: false });
       }
 
       const id = `album-${(albums.size + 1).toString()}`;
 
       albums.set(key, { ...row, id, hasArtwork: false });
 
-      return Promise.resolve({ id, hasArtwork: false });
+      return Promise.resolve({ id, hasArtwork: false, isCorrected: false });
     }),
     keepTrack: vi.fn((row: TrackRow) => {
       tracks.push(row);
@@ -120,6 +120,7 @@ const keptArtwork = (): MusicArtwork & { keep: ReturnType<typeof vi.fn> } => ({
   keep: vi.fn((kind: 'album' | 'artist', id: string) =>
     Promise.resolve(`/cache/${kind}-${id}.webp`),
   ),
+  isKept: vi.fn(() => Promise.resolve(true)),
 });
 
 describe('scanMusicLibrary', () => {

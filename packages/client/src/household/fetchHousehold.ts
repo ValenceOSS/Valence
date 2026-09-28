@@ -1,9 +1,7 @@
-import { z } from 'zod';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { HouseholdSchema, OnboardingSchema } from '@ValenceContracts/schemas/Household';
 import type { Household, HouseholdRequest, Onboarding } from '@ValenceContracts/schemas/Household';
-
-const RefusalSchema = z.object({ error: z.string() });
 
 /**
  * The household, and whether anybody has finished setting it up.

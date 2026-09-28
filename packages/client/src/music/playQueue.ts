@@ -13,6 +13,8 @@ type PlayQueue = {
   order: number[];
   at: number;
   isShuffled: boolean;
+  isSmart: boolean;
+  picks: string[];
   repeat: RepeatMode;
   isOrdered: boolean;
   source: QueueSource | null;
@@ -81,6 +83,8 @@ const startQueue = (
       : straight,
     at: isShuffled ? 0 : first,
     isShuffled,
+    isSmart: false,
+    picks: [],
     repeat: isOrdered ? 'off' : (options.repeat ?? 'off'),
     isOrdered,
     source: options.source ?? null,
@@ -174,6 +178,103 @@ const toggleShuffle = (queue: PlayQueue, random: () => number = Math.random): Pl
         order: shuffledOrder(queue.tracks.length, playing, random),
         at: 0,
       };
+};
+
+/**
+ * Lets go of the songs smart shuffle mixed in and goes back to the order things were chosen in.
+ *
+ * Mixed-in songs still to come are dropped. One playing when smart shuffle is switched off keeps
+ * playing, placed before the chosen song that was due to follow it, so nothing is interrupted and
+ * nothing chosen is lost.
+ *
+ * @param queue - The queue, smart shuffling.
+ * @returns The queue in its chosen order, with no mixed-in songs left to come.
+ */
+const leaveSmartShuffle = (queue: PlayQueue): PlayQueue => {
+  const picked = new Set(queue.picks);
+  const playing = queue.order[queue.at] ?? -1;
+  const playingTrack = queue.tracks[playing];
+  const chosen = queue.tracks.flatMap((track, index) => (picked.has(track.id) ? [] : [index]));
+  const isOnAPick = playingTrack !== undefined && picked.has(playingTrack.id);
+  const dueNext = queue.order.slice(queue.at + 1).find((index) => chosen.includes(index));
+  const before = dueNext === undefined ? chosen.length : chosen.indexOf(dueNext);
+  const kept = isOnAPick ? [...chosen.slice(0, before), playing, ...chosen.slice(before)] : chosen;
+  const tracks = kept.flatMap((index) => {
+    const track = queue.tracks[index];
+
+    return track === undefined ? [] : [track];
+  });
+
+  return {
+    ...queue,
+    tracks,
+    order: Array.from({ length: tracks.length }, (_, index) => index),
+    at: Math.max(kept.indexOf(playing), 0),
+    isShuffled: false,
+    isSmart: false,
+    picks: [],
+  };
+};
+
+/**
+ * Goes round the shuffle settings: off, then shuffled, then smart shuffle, which mixes songs from
+ * the library into what is still to come, then off again.
+ *
+ * Smart shuffle is only switched on here; the songs it mixes in are found by whoever holds the
+ * queue and woven in with `weavePicks` once they arrive.
+ *
+ * @param queue - The queue.
+ * @param random - Where the randomness comes from.
+ * @returns The queue, unchanged where its order means something.
+ */
+const cycleShuffle = (queue: PlayQueue, random: () => number = Math.random): PlayQueue => {
+  if (queue.isOrdered || queue.order.length === 0) {
+    return queue;
+  }
+
+  if (queue.isSmart) {
+    return leaveSmartShuffle(queue);
+  }
+
+  return queue.isShuffled ? { ...queue, isSmart: true } : toggleShuffle(queue, random);
+};
+
+/**
+ * Mixes songs from the library into what is still to come, one after every few chosen songs, and
+ * remembers which they are so they can be marked and let go of again.
+ *
+ * A song already in the queue is not mixed in a second time.
+ *
+ * @param queue - The queue, smart shuffling.
+ * @param picks - The songs to mix in, best first.
+ * @param every - How many chosen songs play between two mixed-in ones.
+ * @returns The queue with them in, unchanged where smart shuffle has been switched off since.
+ */
+const weavePicks = (queue: PlayQueue, picks: readonly MusicTrack[], every = 3): PlayQueue => {
+  if (!queue.isSmart) {
+    return queue;
+  }
+
+  const there = new Set(queue.tracks.map((track) => track.id));
+  const fresh = picks.filter((track) => !there.has(track.id));
+  const upcoming = queue.order.slice(queue.at + 1);
+  const room = Math.floor(upcoming.length / every);
+  const woven = fresh.slice(0, Math.max(room, 1));
+  const from = queue.tracks.length;
+  const order = upcoming.flatMap((index, offset) => {
+    const slot = Math.floor((offset + 1) / every) - 1;
+    const pick = (offset + 1) % every === 0 ? woven[slot] : undefined;
+
+    return pick === undefined ? [index] : [index, from + slot];
+  });
+  const placed = woven.slice(0, order.length - upcoming.length);
+
+  return {
+    ...queue,
+    tracks: [...queue.tracks, ...placed],
+    order: [...queue.order.slice(0, queue.at + 1), ...order],
+    picks: [...queue.picks, ...placed.map((track) => track.id)],
+  };
 };
 
 /**
@@ -304,6 +405,7 @@ export {
   clearUpNext,
   currentOf,
   cycleRepeat,
+  cycleShuffle,
   jumpTo,
   moveInQueue,
   nextIn,
@@ -313,4 +415,5 @@ export {
   startQueue,
   toggleShuffle,
   upcomingIn,
+  weavePicks,
 };

@@ -136,6 +136,39 @@ describe('LibraryBrowser', () => {
     expect(cardIn('Recently added', 'Arrival')).toBeInTheDocument();
   });
 
+  it('flags only the few titles that arrived most recently, not a whole new library', async () => {
+    fetchItemsMock.mockResolvedValue({ items: several('New', 10), total: 10 });
+    draw(<LibraryBrowser onPlay={vi.fn()} />);
+
+    const rail = await screen.findByRole('region', { name: 'Recently added' });
+
+    await waitFor(() => {
+      expect(
+        within(rail).getAllByRole('button', { name: /, Recently added$/ }).length,
+      ).toBeGreaterThan(0);
+    });
+    expect(
+      within(rail).getAllByRole('button', { name: /, Recently added$/ }).length,
+    ).toBeLessThanOrEqual(6);
+  });
+
+  it('flags nothing that arrived weeks ago', async () => {
+    fetchItemsMock.mockResolvedValue({
+      items: [
+        { ...arrival, addedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() },
+      ],
+      total: 1,
+    });
+    draw(<LibraryBrowser onPlay={vi.fn()} />);
+
+    const rail = await screen.findByRole('region', { name: 'Recently added' });
+
+    expect(within(rail).getByRole('button', { name: 'Arrival' })).toBeInTheDocument();
+    expect(
+      within(rail).queryByRole('button', { name: /, Recently added$/ }),
+    ).not.toBeInTheDocument();
+  });
+
   it('does not count the library at somebody, since nobody asked', async () => {
     draw(<LibraryBrowser onPlay={vi.fn()} />);
 

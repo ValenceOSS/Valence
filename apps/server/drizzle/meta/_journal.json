@@ -603,6 +603,20 @@
       "when": 1790385862147,
       "tag": "0085_faces_that_remember_how_they_look",
       "breakpoints": true
+    },
+    {
+      "idx": 86,
+      "version": "7",
+      "when": 1790456159571,
+      "tag": "0086_playlists_with_their_own_cover",
+      "breakpoints": true
+    },
+    {
+      "idx": 87,
+      "version": "7",
+      "when": 1790458586220,
+      "tag": "0087_corrections_for_books_and_albums",
+      "breakpoints": true
     }
   ]
 }

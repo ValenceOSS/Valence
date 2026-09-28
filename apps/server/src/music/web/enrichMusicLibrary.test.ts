@@ -20,6 +20,8 @@ const aStore = (overrides: Partial<EnrichingStore> = {}) => {
     keepFoundLyrics: vi.fn<EnrichingStore['keepFoundLyrics']>(done),
     setAlbumArtwork: vi.fn<EnrichingStore['setAlbumArtwork']>(done),
     setArtistImage: vi.fn<EnrichingStore['setArtistImage']>(done),
+    picturesKept: vi.fn<EnrichingStore['picturesKept']>(() => Promise.resolve([])),
+    forgetPicture: vi.fn<EnrichingStore['forgetPicture']>(done),
   };
 
   return { ...store, ...overrides } satisfies EnrichingStore;
@@ -28,10 +30,12 @@ const aStore = (overrides: Partial<EnrichingStore> = {}) => {
 const aWeb = (json: (url: string) => JsonValue | null): MusicWeb => ({
   json: vi.fn((url: string) => Promise.resolve(json(url))),
   bytes: vi.fn((): Promise<Uint8Array | null> => Promise.resolve(COVER)),
+  text: vi.fn((): Promise<string | null> => Promise.resolve(null)),
 });
 
 const artwork = {
   keep: vi.fn((kind: string, id: string) => Promise.resolve(`/art/${kind}-${id}.webp`)),
+  isKept: vi.fn((): Promise<boolean> => Promise.resolve(true)),
 };
 
 const SLEEP_TOKEN = {

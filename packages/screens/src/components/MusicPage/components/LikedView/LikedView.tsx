@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Heart as HeartIcon, Shuffle as ShuffleIcon } from '@keyline-icons/react';
-import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
+import { Heart as HeartFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { Icon } from '@ValenceUI/Icon';
@@ -10,12 +10,14 @@ import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
-import { LikedCover } from '@ValenceScreens/components/LikedCover/LikedCover';
+import { PlaylistCover } from '@ValenceScreens/components/PlaylistCover/PlaylistCover';
+import { coverAlbumsOf } from '@ValenceClient/music/coverAlbumsOf';
 import { MusicHeader } from '@ValenceScreens/components/MusicHeader/MusicHeader';
 import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 
 const SOURCE = { kind: 'liked', id: null, name: 'Liked Songs' } as const;
+import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 
 /**
  * Every song this profile has liked, newest first — a playlist nobody has to make, kept by pressing
@@ -23,10 +25,11 @@ const SOURCE = { kind: 'liked', id: null, name: 'Liked Songs' } as const;
  */
 const LikedView = () => {
   const asked = useQuery(musicQueries.liked());
-
-  useLightTheMusic(null);
   const { player } = useMusicPlayer();
   const tracks = asked.data ?? [];
+  const covers = coverAlbumsOf(tracks);
+
+  useLightTheMusic(covers[0] === undefined ? null : albumArtworkUrl(covers[0]));
   const total = tracks.reduce((sum, track) => sum + track.durationSeconds, 0);
 
   if (asked.isError) {
@@ -46,7 +49,15 @@ const LikedView = () => {
       <MusicHeader
         eyebrow="Playlist"
         title="Liked Songs"
-        artwork={<LikedCover iconSize={72} />}
+        artwork={
+          <PlaylistCover
+            name="Liked Songs"
+            albumIds={covers}
+            standIn={HeartFilledIcon}
+            iconSize={72}
+            className="w-full"
+          />
+        }
         details={
           <span>
             {tracks.length === 1 ? '1 song' : `${tracks.length.toString()} songs`} ·{' '}

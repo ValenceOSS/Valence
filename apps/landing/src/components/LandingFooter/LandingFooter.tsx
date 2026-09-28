@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { IconBrandDiscordFilled, IconBrandGithubFilled } from '@tabler/icons-react';
 import { Logo } from '@ValenceUI/Logo';
 import { cn } from '@ValenceUI/cn';
+import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
 
 const YEAR = new Date().getFullYear();
 
@@ -13,8 +14,10 @@ const GROUPS = [
   {
     title: 'Product',
     links: [
+      { href: DOCS_URL, label: 'Docs' },
       { to: '/changelog', label: 'Changelog' },
-      { href: `${GITHUB_URL}/blob/main/DEPLOYMENT.md`, label: 'Deploying it' },
+      { href: `${DOCS_URL}/install/complete-compose-file`, label: 'Deploying it' },
+      { href: `${DOCS_URL}/start/set-up-with-an-ai`, label: 'Set up with AI' },
     ],
   },
   {

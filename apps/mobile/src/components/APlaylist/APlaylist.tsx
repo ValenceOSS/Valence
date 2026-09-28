@@ -3,7 +3,13 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActionSheetIOS, ActivityIndicator, Alert } from 'react-native';
 import {
+  UIImagePickerPreferredAssetRepresentationMode,
+  launchImageLibraryAsync,
+} from 'expo-image-picker';
+import {
   dropFromPlaylist,
+  dropPlaylistArtwork,
+  playlistArtworkUrl,
   moveInPlaylist,
   removePlaylist,
   updatePlaylist,
@@ -24,6 +30,9 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { ANothingHere } from '@ValenceMobile/components/ANothingHere/ANothingHere';
 import { APlaylistDetails } from '@ValenceMobile/components/APlaylistDetails/APlaylistDetails';
 import { Button } from '@ValenceMobile/components/Button/Button';
+import { coverAlbumsOf } from '@ValenceClient/music/coverAlbumsOf';
+import { sendAPhoto } from '@ValenceMobile/platform/sendAPhoto';
+import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
 import type { APlaylistProps } from './APlaylist.types';
 
 /**
@@ -47,8 +56,13 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
   const read = useQuery(musicQueries.playlist(playlistId));
   const player = thePhonesMusicPlayer();
   const coverAlbumId = read.data?.playlist.artworkAlbumIds[0] ?? null;
+  const ownCover = read.data === undefined ? null : playlistArtworkUrl(read.data.playlist);
   const lights = usePictureLights(
-    coverAlbumId === null ? null : onThisServer(albumArtworkUrl(coverAlbumId)),
+    ownCover !== null
+      ? onThisServer(ownCover)
+      : coverAlbumId === null
+        ? null
+        : onThisServer(albumArtworkUrl(coverAlbumId)),
   );
   const [isEditing, setIsEditing] = useState(false);
 
@@ -79,6 +93,35 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
   const tracks = songs.map((song) => song.track);
   const entryIds = songs.map((song) => song.entryId);
 
+  const chooseACover = async () => {
+    const chosen = await launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.85,
+      preferredAssetRepresentationMode: UIImagePickerPreferredAssetRepresentationMode.Compatible,
+    });
+    const asset = chosen.assets?.[0];
+
+    if (chosen.canceled || asset === undefined) {
+      return;
+    }
+
+    const wrong = await sendAPhoto(
+      `/api/playlists/${playlist.id}/artwork`,
+      asset.uri,
+      profileHeaders(),
+    );
+
+    if (wrong !== null) {
+      Alert.alert(wrong);
+
+      return;
+    }
+
+    await refresh();
+  };
+
   const askWhatToDo = () => {
     const choices = [
       {
@@ -93,6 +136,22 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
           setIsEditing(true);
         },
       },
+      {
+        label: 'Choose a cover',
+        run: () => {
+          void chooseACover();
+        },
+      },
+      ...(playlist.hasOwnArtwork
+        ? [
+            {
+              label: "Use the songs' covers",
+              run: () => {
+                void dropPlaylistArtwork(playlist.id).then(refresh);
+              },
+            },
+          ]
+        : []),
       {
         label: 'Delete playlist',
         run: () => {
@@ -131,7 +190,6 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
       },
     );
   };
-  const cover = playlist.artworkAlbumIds[0] ?? null;
   const source = { kind: 'playlist' as const, id: playlist.id, name: playlist.name };
   const detail = [
     playlist.isMine || playlist.owner === null ? null : playlist.owner.name,
@@ -145,14 +203,18 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
         kind="Playlist"
         title={playlist.name}
         detail={detail.join(' · ')}
-        artwork={cover === null ? null : onThisServer(albumArtworkUrl(cover))}
+        artwork={ownCover === null ? null : onThisServer(ownCover)}
+        {...(ownCover === null ? { albumIds: coverAlbumsOf(tracks) } : {})}
         standIn={ListMusic}
         canPlay={tracks.length > 0}
         onPlay={() => {
           player.play(tracks, 0, { source, isOrdered: playlist.isOrdered });
         }}
         onShuffle={() => {
-          player.play(tracks, 0, { source, isShuffled: true });
+          player.play(tracks, Math.floor(Math.random() * tracks.length), {
+            source,
+            isShuffled: true,
+          });
         }}
       >
         {playlist.description === null ? null : (

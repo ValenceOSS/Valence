@@ -2,6 +2,7 @@ import { MusicNote } from '@keyline-icons/react-native';
 import { useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { Button } from '@ValenceMobile/components/Button/Button';
+import { ACoverGrid } from '@ValenceMobile/components/ACoverGrid/ACoverGrid';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
@@ -25,25 +26,35 @@ const styles = StyleSheet.create({
  * @param title - What it is called.
  * @param detail - A line about it, where there is one.
  * @param artwork - Its cover, or nothing where it has none.
+ * @param albumIds - The albums whose covers make up its cover instead, four in a grid, for a list of
+ *   songs from many albums.
  * @param isRound - Whether the cover is round, as an artist's is.
  * @param side - How wide it is, for a grid that fills its columns rather than a shelf.
  * @param standIn - What is drawn where there is no cover, where a note would not say what it is.
  * @param onPress - Told somebody wants to open it.
+ * @param onLongPress - Told somebody held it down, for what else can be done with it.
  */
 const AMusicTile = ({
   title,
   detail = null,
   artwork,
+  albumIds,
   isRound = false,
   side = SIDE,
   standIn = MusicNote,
   onPress,
+  onLongPress,
 }: AMusicTileProps) => {
   const colours = useTheColours();
   const [isMissing, setIsMissing] = useState(false);
 
   return (
-    <Button tone="bare" label={title} onPress={onPress}>
+    <Button
+      tone="bare"
+      label={title}
+      onPress={onPress}
+      {...(onLongPress === undefined ? {} : { onLongPress })}
+    >
       <View style={[styles.whole, { width: side }]}>
         <View
           style={[
@@ -56,7 +67,9 @@ const AMusicTile = ({
             },
           ]}
         >
-          {artwork === null || isMissing ? (
+          {albumIds !== undefined ? (
+            <ACoverGrid albumIds={albumIds} standIn={standIn} iconSize={40} />
+          ) : artwork === null || isMissing ? (
             <Icon of={standIn} size={40} colour={colours.textMuted} />
           ) : (
             <Image

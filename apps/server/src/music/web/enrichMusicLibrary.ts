@@ -1,5 +1,8 @@
 import { nameKey } from '@ValenceServer/music/nameKey';
 import { findAlbumCover } from './findAlbumCover';
+import { findAppleAlbumCoverUrl } from './findAppleAlbumCoverUrl';
+import { findAppleArtistPictureUrl } from './findAppleArtistPictureUrl';
+import { findDeezerArtistPictureUrl } from './findDeezerArtistPictureUrl';
 import { findArtistLooks } from './findArtistLooks';
 import { findLyrics } from './findLyrics';
 import type { MusicArtwork } from '@ValenceServer/music/scanMusicLibrary';
@@ -36,7 +39,12 @@ const matchable = (title: string): string => nameKey(title.replace(/\s*[([].*?[)
 /**
  * Fills in what a music library's own files did not say, from the services music is described by:
  * covers for albums that came without one, photographs of the artists, their music videos, and
- * the words of songs that came without them.
+ * the words of songs that came without them. A cover MusicBrainz does not have, or a photograph
+ * TheAudioDB does not, is looked for on Deezer and in Apple's catalogue, neither of which needs a
+ * key.
+ *
+ * A picture kept earlier whose file has since gone is forgotten first, so it is looked for again
+ * rather than drawn as a picture that is not there.
  *
  * Only what is missing is asked for, and each album, artist and song is asked about once — what
  * was looked up and not found is remembered as looked up, so a rescan does not ask the same
@@ -59,6 +67,24 @@ const enrichMusicLibrary = async ({
   isCancelled = () => false,
 }: EnrichOptions): Promise<Enriched> => {
   const found: Enriched = { covers: 0, pictures: 0, videos: 0, lyrics: 0 };
+
+  /**
+   * Reads a picture a catalogue pointed at, where it pointed at one.
+   *
+   * @param finding - Where the picture is, once found.
+   * @returns The picture, or nothing.
+   */
+  const fromTheWeb = async (finding: Promise<string | null>): Promise<Uint8Array | null> => {
+    const address = await finding;
+
+    return address === null ? null : web.bytes(address);
+  };
+  for (const kept of await store.picturesKept(libraryId)) {
+    if (!(await artwork.isKept(kept.path))) {
+      await store.forgetPicture(kept.kind, kept.id);
+    }
+  }
+
   const albums = await store.albumsToLookUp(libraryId, isAgain);
   const artists = await store.artistsToLookUp(libraryId, isAgain);
   const songs = await store.songsWithoutLyrics(libraryId, isAgain);
@@ -75,7 +101,8 @@ const enrichMusicLibrary = async ({
       return found;
     }
 
-    const cover = await findAlbumCover(web, album);
+    const cover =
+      (await findAlbumCover(web, album)) ?? (await fromTheWeb(findAppleAlbumCoverUrl(web, album)));
     const kept = cover === null ? null : await artwork.keep('album', album.id, { bytes: cover });
 
     if (kept !== null) {
@@ -93,9 +120,14 @@ const enrichMusicLibrary = async ({
     }
 
     const looks = await findArtistLooks(web, audioDbKey, artist.name);
+    const picture = artist.hasImage
+      ? null
+      : (looks.picture ??
+        (await fromTheWeb(findDeezerArtistPictureUrl(web, artist.name))) ??
+        (await fromTheWeb(findAppleArtistPictureUrl(web, artist.name))));
 
-    if (!artist.hasImage && looks.picture !== null) {
-      const kept = await artwork.keep('artist', artist.id, { bytes: looks.picture });
+    if (picture !== null) {
+      const kept = await artwork.keep('artist', artist.id, { bytes: picture });
 
       if (kept !== null) {
         await store.setArtistImage(artist.id, kept);

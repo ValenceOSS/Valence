@@ -35,7 +35,10 @@ const describeAlbumForRequest = async (
     year: album.firstReleased === null ? null : Number(album.firstReleased.slice(0, 4)),
     aliases: [],
     overview: read.data.disambiguation === '' ? null : read.data.disambiguation,
-    posterUrl: releaseGroupCoverUrl(album.id),
+    posterUrl: releaseGroupCoverUrl(album.id, {
+      title: album.title,
+      artist: creditedArtistOf(read.data),
+    }),
     runtimeMinutes: null,
     releaseDates: { theatrical: null, digital: null, physical: null },
     episodes: [],

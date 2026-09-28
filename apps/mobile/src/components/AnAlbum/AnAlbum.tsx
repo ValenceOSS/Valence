@@ -1,5 +1,6 @@
-import { Record } from '@keyline-icons/react-native';
+import { ListPlus, Record } from '@keyline-icons/react-native';
 import { useQuery } from '@tanstack/react-query';
+import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
 import { ActivityIndicator } from 'react-native';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
@@ -11,6 +12,7 @@ import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { howLongItRuns } from '@ValenceMobile/components/ATitle/howLongItRuns';
 import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
+import { askWhichPlaylist } from '@ValenceMobile/music/askWhichPlaylist';
 import { thePhonesMusicPlayer } from '@ValenceMobile/music/thePhonesMusicPlayer';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
@@ -18,8 +20,8 @@ import type { AnAlbumProps } from './AnAlbum.types';
 
 /**
  * One album, as the web's album page draws it: its cover, who it is by, when it came out and how
- * long it runs, a way to play it in order or shuffled, and its tracks by number, lit from behind in
- * the colours of its cover as the player is.
+ * long it runs, a way to play it in order or shuffled or to add the whole of it to a playlist, and
+ * its tracks by number, lit from behind in the colours of its cover as the player is.
  *
  * @param albumId - Which album.
  * @param onAlbum - Told to open another album, from a track's menu.
@@ -31,6 +33,7 @@ const AnAlbum = ({ albumId, onAlbum, onArtist, onPlaylist, onBack }: AnAlbumProp
   const colours = useTheColours();
   const read = useQuery(musicQueries.album(albumId));
   const player = thePhonesMusicPlayer();
+  const playlists = useMyPlaylists();
   const lights = usePictureLights(
     read.data?.album.hasArtwork === true ? onThisServer(albumArtworkUrl(read.data.album.id)) : null,
   );
@@ -69,10 +72,13 @@ const AnAlbum = ({ albumId, onAlbum, onArtist, onPlaylist, onBack }: AnAlbumProp
         standIn={Record}
         canPlay={tracks.length > 0}
         onPlay={() => {
-          player.play(tracks, 0, { source, isOrdered: true });
+          player.play(tracks, 0, { source });
         }}
         onShuffle={() => {
-          player.play(tracks, 0, { source, isShuffled: true });
+          player.play(tracks, Math.floor(Math.random() * tracks.length), {
+            source,
+            isShuffled: true,
+          });
         }}
       >
         <Button
@@ -83,6 +89,23 @@ const AnAlbum = ({ albumId, onAlbum, onArtist, onPlaylist, onBack }: AnAlbumProp
         >
           {album.artist.name}
         </Button>
+        {tracks.length === 0 ? null : (
+          <Button
+            tone="quiet"
+            icon={ListPlus}
+            onPress={() => {
+              askWhichPlaylist(
+                album.title,
+                () => Promise.resolve(tracks.map((track) => track.id)),
+                playlists.mine,
+                playlists.changed,
+                onPlaylist,
+              );
+            }}
+          >
+            Add to playlist
+          </Button>
+        )}
       </AMusicHead>
 
       <ATrackList

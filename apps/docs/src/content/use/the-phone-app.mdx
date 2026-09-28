@@ -1,0 +1,46 @@
+---
+title: The phone app
+description: 'Valence on an iPhone or an Android phone: finding your server, signing in, the tabs, downloads to watch offline, music, audiobooks and sending playback to another screen.'
+order: 11
+---
+
+The phone app is Valence for iPhone and Android. It is the same library, the same household and the same progress as the web app, laid out for a hand rather than a pointer and drawn with the phone's own controls. Like the [desktop app](/install/desktop-app), it is a window onto your server: it keeps no library of its own beyond what you download to it.
+
+## Finding your server
+
+The first time it opens, the app asks where your Valence is. On the same network as the server, it lists the servers it hears announcing themselves, so you can pick yours rather than type it. Otherwise type the address you use in a browser, with or without `https://`; the app tries it before keeping it and says so if nothing answers. You can point the phone at another server later from the account page.
+
+## Signing in
+
+The app then shows the wall of faces from your server. Choose yours and sign in with your password, followed by your authenticator's code if the account has two-step sign in, or with a passkey, which the app offers beside the faces. See [Accounts and roles](/use/accounts-and-roles#your-own-account).
+
+A phone can also sign a television in: scan the code the television shows with the phone's camera and approve it in the app.
+
+## The tabs
+
+| Tab       | What it holds                                                                                                                       |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Home      | The featured titles and the rows of the web's home page, with films, programmes, music and books a swipe away along the top.        |
+| Search    | Every library at once, and for somebody who may ask for things, the catalogue: what is trending and coming, and what you asked for. |
+| Downloads | What the server is preparing for this phone, what is ready to fetch, and what the phone keeps.                                      |
+| Account   | Your profile, how you sign in, where you are signed in, what you have watched and hidden, and the links you have shared.            |
+
+A title's page carries what the web's does: its facts, certificate and quality badges, the synopsis, cast and trailer, and the buttons to play, keep, download, share and hide. A programme's page is read season by season.
+
+## Downloads and watching offline
+
+Download a film or an episode from its page, choosing a quality against its size first. The server prepares the file and the phone fetches it; a fetch can be paused and picked up again, and one that drops carries on where it stopped. The Downloads tab shows how far each has got and how fast.
+
+What the phone keeps plays with no server at all. When the server cannot be reached the app says so, keeps trying on its own, and still lists and plays everything downloaded. How long the server keeps a prepared file is an administrator's setting in the admin area.
+
+## Watching and listening
+
+The player has its own controls for a phone: quality, audio, subtitles and their timing, and speed, fading away while you watch. Music plays in a bar above the tabs that opens into a full player with the queue and lyrics, and audiobooks have a player of their own with the same chapters, speeds and sleep timer as the web's. See [Audiobooks](/use/audiobooks).
+
+## Playing on another screen
+
+From the music player, choose where the music plays: this phone, or any other Valence your profile has open, such as a browser, the desktop app, a television or another phone. It carries on from the same moment, with the rest of the queue, and the phone becomes its remote. On an iPhone the system's AirPlay button sends the sound to speakers and televisions as well.
+
+## Getting the app
+
+The app is not in the App Store or Google Play yet. Until it is, it is built from the `apps/mobile` folder of the [repository](https://github.com/ValenceOSS/Valence) with Expo and installed from there.

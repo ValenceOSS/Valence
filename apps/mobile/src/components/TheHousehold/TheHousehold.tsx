@@ -37,7 +37,10 @@ const styles = StyleSheet.create({
  *
  * It keeps an eye on whether the server is answering at all, so that one which went quiet — while
  * somebody was signed in or before they could — picks everything up again once it is back, and
- * that while it is gone, what this phone keeps can still be watched.
+ * that while it is gone, what this phone keeps can still be watched. A server that is not
+ * answering when the app opens is not waited on: asking who is signed in can hang for minutes
+ * against a machine that is off, so once the server is known to be away the way in is shown,
+ * saying it cannot be reached, rather than a screen that is only waiting.
  *
  * The lights behind the way in are kept lit here, under the wall and the password alike, so that
  * picking a face turns them to its colour slowly rather than cutting from one screen's lights to
@@ -67,7 +70,7 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
   const isSignedIn = session.data !== null && session.data !== undefined;
   const wasSignedIn = useRef(isSignedIn);
 
-  useTheServer(isSignedIn ? 'beside the socket' : 'here');
+  const { isAway } = useTheServer(isSignedIn ? 'beside the socket' : 'here');
 
   useEffect(() => {
     if (wasSignedIn.current && !isSignedIn) {
@@ -100,7 +103,7 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
       />
     );
 
-  if (session.isPending) {
+  if (session.isPending && !isAway) {
     return (
       <Screen centres>
         <ActivityIndicator />

@@ -20,6 +20,7 @@ const RESUMING = 'resume';
  * @param today - Today, as a date, to say when an episode airs against.
  * @param onLookAt - Told to open a title.
  * @param onLookAtShow - Told to open a programme.
+ * @param flagOf - What is new about a title, where anything is.
  */
 const AHomeShelfDrawn = ({
   shelf,
@@ -27,6 +28,7 @@ const AHomeShelfDrawn = ({
   progress,
   today,
   onLookAt,
+  flagOf,
   onLookAtShow,
 }: AHomeShelfProps) =>
   shelf.kind === 'comingUp' ? (
@@ -60,6 +62,8 @@ const AHomeShelfDrawn = ({
             asProgramme={shelf.rail.id !== RESUMING}
             isStill={shelf.rail.id === RESUMING}
             watched={known === undefined ? 0 : watchedFraction(known)}
+            look="art"
+            flag={flagOf(media)}
             onLookAt={onLookAt}
             onLookAtShow={onLookAtShow}
           />

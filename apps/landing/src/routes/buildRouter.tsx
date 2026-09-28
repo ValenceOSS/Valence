@@ -17,12 +17,14 @@ const buildRouter = () => {
 
   const changelog = createRoute({ getParentRoute: () => root, path: '/changelog' });
 
+  const release = createRoute({ getParentRoute: () => root, path: '/changelog/$slug' });
+
   const privacy = createRoute({ getParentRoute: () => root, path: '/privacy' });
 
   const terms = createRoute({ getParentRoute: () => root, path: '/terms' });
 
   return createRouter({
-    routeTree: root.addChildren([home, changelog, privacy, terms]),
+    routeTree: root.addChildren([home, changelog, release, privacy, terms]),
     defaultErrorComponent: PageProblem,
     scrollRestoration: true,
   });

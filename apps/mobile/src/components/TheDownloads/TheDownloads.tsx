@@ -44,8 +44,19 @@ type ARow = { id: string; title: string; download: Download | null; held: HeldFi
  * @param onWatch - Told to play a film this phone keeps.
  * @param onBack - Told somebody is done with it, where it was opened from somewhere rather than
  *   being a tab of its own.
+ * @param header - What stands above it where it slides in beneath the library's bar, as Search
+ *   does, over the library's own background; its title is then the bar's.
+ * @param onScrolled - Told whether it has been scrolled from its top.
+ * @param searchingFor - What was typed in the library's bar, which only the downloads whose name
+ *   holds it are listed for.
  */
-const TheDownloads = ({ onWatch, onBack }: TheDownloadsProps) => {
+const TheDownloads = ({
+  onWatch,
+  onBack,
+  header,
+  onScrolled,
+  searchingFor = '',
+}: TheDownloadsProps) => {
   const cache = useQueryClient();
   const colours = useTheColours();
   const downloads = useQuery(downloadQueries.all());
@@ -67,6 +78,10 @@ const TheDownloads = ({ onWatch, onBack }: TheDownloadsProps) => {
       .map((file) => ({ id: file.downloadId, title: file.title, download: null, held: file })),
   ];
 
+  const wanted = searchingFor.trim().toLowerCase();
+  const shown =
+    wanted === '' ? rows : rows.filter((row) => row.title.toLowerCase().includes(wanted));
+
   const reread = () => cache.invalidateQueries({ queryKey: downloadQueries.all().queryKey });
 
   const forget = (row: ARow) => {
@@ -81,14 +96,17 @@ const TheDownloads = ({ onWatch, onBack }: TheDownloadsProps) => {
           onPress: () => {
             void dropAFile(row.id)
               .then(async () => (row.download === null ? true : forgetDownload(row.id)))
-              .then(reread);
+              .catch(() => false)
+              .finally(() => {
+                void reread();
+              });
           },
         },
       ],
     );
   };
 
-  const drawn = rows.map((row) => {
+  const drawn = shown.map((row) => {
     const { download, held: file } = row;
     const fraction =
       file !== null && file.state !== 'here'
@@ -198,10 +216,17 @@ const TheDownloads = ({ onWatch, onBack }: TheDownloadsProps) => {
   });
 
   return (
-    <Screen scrolls {...(onBack === undefined ? {} : { onBack })}>
-      <Words size="title">Downloads</Words>
+    <Screen
+      scrolls
+      isSeeThrough={header !== undefined}
+      {...(onBack === undefined ? {} : { onBack })}
+      {...(onScrolled === undefined ? {} : { onScrolled })}
+    >
+      {header ?? <Words size="title">Downloads</Words>}
 
-      {rows.length === 0 ? (
+      {rows.length > 0 && shown.length === 0 ? (
+        <Words tone="muted">No download is called that.</Words>
+      ) : rows.length === 0 ? (
         <ANothingHere
           of={DownloadIcon}
           title="Nothing downloaded yet"

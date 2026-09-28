@@ -3,7 +3,9 @@ import {
   albumArtworkUrl,
   artistImageUrl,
   fetchAlbums,
+  fetchArtistStory,
   fetchArtists,
+  fetchPicks,
   fetchLyrics,
   fetchTracks,
   searchMusic,
@@ -108,5 +110,45 @@ describe('fetchMusic', () => {
     expect(trackStreamUrl('t', 'low')).toBe('/api/music/tracks/t/stream?quality=low');
     expect(albumArtworkUrl('a')).toBe('/api/music/albums/a/artwork');
     expect(artistImageUrl('b')).toBe('/api/music/artists/b/image');
+  });
+
+  it('asks nothing for picks to go with no songs', async () => {
+    await expect(fetchPicks([])).resolves.toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('asks for songs to mix in beside the ones queued', async () => {
+    answerWith({ tracks: [] });
+
+    await expect(fetchPicks(['a', 'b'])).resolves.toEqual([]);
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/music/picks',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ trackIds: ['a', 'b'] }) }),
+    );
+  });
+
+  it('mixes nothing in where the picks cannot be had or read', async () => {
+    answerWith({}, false, 500);
+
+    await expect(fetchPicks(['a'])).resolves.toEqual([]);
+
+    answerWith({ nothing: true });
+
+    await expect(fetchPicks(['a'])).resolves.toEqual([]);
+
+    fetchMock.mockRejectedValue(new Error('offline'));
+
+    await expect(fetchPicks(['a'])).resolves.toEqual([]);
+  });
+
+  it("reads an artist's story", async () => {
+    answerWith({ bio: 'A band.', sourceUrl: null, missing: [] });
+
+    await expect(fetchArtistStory('ar')).resolves.toEqual({
+      bio: 'A band.',
+      sourceUrl: null,
+      missing: [],
+    });
+    expect(fetchMock).toHaveBeenCalledWith('/api/music/artists/ar/story', expect.anything());
   });
 });

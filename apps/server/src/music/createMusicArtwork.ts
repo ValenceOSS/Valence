@@ -1,4 +1,4 @@
-import { mkdir, readFile } from 'node:fs/promises';
+import { mkdir, readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import sharp from 'sharp';
 import type { MusicArtwork } from './scanMusicLibrary';
@@ -16,7 +16,8 @@ const WEBP_QUALITY = 86;
  * on rather than out of the track again.
  *
  * @param directory - Where the pictures are kept.
- * @returns A way to keep one, which answers where it was kept, or nothing where it would not draw.
+ * @returns A way to keep one, which answers where it was kept, or nothing where it would not draw,
+ *   and a way to tell whether one kept earlier is still there.
  */
 const createMusicArtwork = (directory: string): MusicArtwork => ({
   keep: async (kind, id, source) => {
@@ -44,6 +45,8 @@ const createMusicArtwork = (directory: string): MusicArtwork => ({
 
     return drawn === null ? null : at;
   },
+
+  isKept: async (path) => (await stat(path).catch(() => null))?.isFile() === true,
 });
 
 export { createMusicArtwork };

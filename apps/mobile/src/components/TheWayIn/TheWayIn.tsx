@@ -49,6 +49,10 @@ const styles = StyleSheet.create({
  * is. Pointing the phone at another server sits beneath it, and at the foot what this phone's copy
  * of Valence is and what the server runs, as the desktop's way in says it.
  *
+ * Where the server cannot be reached — its answer failed, or it is known to be away while the
+ * answer has not come — the faces give way to saying so, with a way to try again, to watch what the
+ * phone keeps, and to point it at a different server.
+ *
  * @param returningFrom - The face somebody is coming back from, and where it was on the screen.
  * @param onPicked - Told whose face somebody chose, and where it was.
  * @param onIn - Told once somebody signed in without picking a face.
@@ -69,6 +73,7 @@ const TheWayIn = ({
   const watched = useTheServer();
   const kept = useHeldFiles().filter((file) => file.state === 'here');
   const profiles = asking.data?.profiles ?? [];
+  const isUnreachable = asking.isError || (watched.isAway && !asking.isSuccess);
   const [isReturning] = useState(returningFrom !== null);
   const isFirst = useIsTheFirstMark();
   const after = isFirst ? INTRODUCED_AFTER : 0;
@@ -93,7 +98,7 @@ const TheWayIn = ({
       <View style={styles.wall}>
         <ALoginMark high={MARK_HIGH} isIntroducing={isFirst} settlesAfter={INTRODUCED_AFTER} />
 
-        {asking.isError ? (
+        {isUnreachable ? (
           <ARising after={after} turn={1}>
             <View style={styles.centred}>
               <Words size="title" isCentred>

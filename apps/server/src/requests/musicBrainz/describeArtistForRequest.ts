@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { catalogueAlbumOf } from '@ValenceServer/requests/musicBrainz/catalogueAlbumOf';
 import { MusicBrainzReleaseGroupSchema } from '@ValenceServer/requests/musicBrainz/MusicBrainzReleaseGroupSchema';
-import { releaseGroupCoverUrl } from '@ValenceServer/requests/musicBrainz/releaseGroupCoverUrl';
+import { artistPictureUrl } from '@ValenceServer/requests/musicBrainz/artistPictureUrl';
 import type { RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
 import type { MusicWeb } from '@ValenceServer/music/web/createMusicWeb';
 
@@ -91,7 +91,7 @@ const describeArtistForRequest = async (
       ),
     ].slice(0, MOST_ALIASES),
     overview: artist.data.disambiguation === '' ? null : artist.data.disambiguation,
-    posterUrl: newest === undefined ? null : releaseGroupCoverUrl(newest.id),
+    posterUrl: artistPictureUrl(name, newest?.id ?? null),
     runtimeMinutes: null,
     releaseDates: { theatrical: null, digital: null, physical: null },
     episodes: [],

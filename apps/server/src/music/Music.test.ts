@@ -72,6 +72,7 @@ const PLAYLIST: PlaylistSummary = {
   lostCount: 0,
   durationSeconds: 0,
   artworkAlbumIds: [],
+  hasOwnArtwork: false,
   updatedAt: '2026-09-18T00:00:00.000Z',
 };
 
@@ -85,6 +86,7 @@ const fakeMusic = () => {
     readArtist: vi.fn(() => Promise.resolve(null)),
     listTracks: vi.fn(() => Promise.resolve([TRACK])),
     listLiked: vi.fn(() => Promise.resolve([])),
+    listPicks: vi.fn(() => Promise.resolve([TRACK])),
     search: vi.fn(() => Promise.resolve({ tracks: [TRACK], albums: [], artists: [] })),
     readLyrics: vi.fn(() =>
       Promise.resolve({ isSynced: true, lines: [{ atMs: 1000, text: 'Words' }] }),
@@ -113,6 +115,9 @@ const fakeMusic = () => {
     add: vi.fn(() => Promise.resolve(1)),
     move: vi.fn(() => Promise.resolve(true)),
     drop: vi.fn(() => Promise.resolve(true)),
+    readArtwork: vi.fn(() => Promise.resolve(null)),
+    saveArtwork: vi.fn(() => Promise.resolve(null)),
+    dropArtwork: vi.fn(() => Promise.resolve(false)),
   };
 
   const music = {
@@ -124,6 +129,18 @@ const fakeMusic = () => {
       command: vi.fn(() => false),
       playingOn: vi.fn(() => null),
       order: vi.fn(() => false),
+    },
+    pictures: {
+      cover: vi.fn(() => Promise.resolve(null)),
+      artistPicture: vi.fn(() => Promise.resolve(null)),
+    },
+    corrections: {
+      search: vi.fn(() => Promise.resolve([])),
+      correct: vi.fn(() => Promise.resolve(false)),
+      forget: vi.fn(() => Promise.resolve(false)),
+    },
+    stories: {
+      about: vi.fn(() => Promise.resolve({ bio: null, sourceUrl: null, missing: [] })),
     },
     stream: vi.fn(() =>
       Promise.resolve({

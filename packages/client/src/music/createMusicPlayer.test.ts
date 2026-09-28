@@ -677,4 +677,67 @@ describe('createMusicPlayer', () => {
 
     expect(listener).toHaveBeenCalled();
   });
+
+  it('goes round the shuffle settings, and mixes songs in on smart shuffle', async () => {
+    const pick = track(9);
+    const fetchPicks = vi.fn(() => Promise.resolve([pick]));
+    const { player } = build({ fetchPicks });
+
+    player.play([...THREE, track(4), track(5)], 0);
+    player.cycleShuffle();
+
+    expect(player.read().queue?.isShuffled).toBe(true);
+    expect(fetchPicks).not.toHaveBeenCalled();
+
+    player.cycleShuffle();
+
+    expect(player.read().queue?.isSmart).toBe(true);
+
+    await vi.waitFor(() => {
+      expect(player.read().queue?.picks).toEqual([pick.id]);
+    });
+
+    player.cycleShuffle();
+
+    expect(player.read().queue).toMatchObject({ isShuffled: false, isSmart: false, picks: [] });
+  });
+
+  it('keeps smart shuffle on for the next thing played, and mixes into that too', async () => {
+    const fetchPicks = vi.fn(() => Promise.resolve([track(9)]));
+    const { player } = build({ fetchPicks });
+
+    player.play([...THREE, track(4), track(5)], 0);
+    player.cycleShuffle();
+    player.cycleShuffle();
+    player.play(THREE, 0);
+
+    expect(player.read().queue?.isSmart).toBe(true);
+
+    await vi.waitFor(() => {
+      expect(fetchPicks).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('does nothing to the shuffle with nothing queued', () => {
+    const { player } = build();
+
+    player.cycleShuffle();
+
+    expect(player.read().queue).toBeNull();
+  });
+
+  it('mixes nothing in where nothing comes back', async () => {
+    const fetchPicks = vi.fn(() => Promise.resolve([]));
+    const { player } = build({ fetchPicks });
+
+    player.play([...THREE, track(4), track(5)], 0);
+    player.cycleShuffle();
+    player.cycleShuffle();
+
+    await vi.waitFor(() => {
+      expect(fetchPicks).toHaveBeenCalled();
+    });
+
+    expect(player.read().queue?.picks).toEqual([]);
+  });
 });
