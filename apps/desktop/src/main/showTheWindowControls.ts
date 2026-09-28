@@ -12,18 +12,27 @@ const HIDDEN = '#00000000';
  * laid over the page without closing the window, so there their symbols are drawn clear instead,
  * which leaves the corner as empty as the rest of the picture.
  *
+ * A full-screen window on Windows and Linux has no controls to draw, and is left alone. Recolouring
+ * them redraws the window's frame, and Windows answers that by telling the page the pointer has
+ * left it, over and over as the player's controls came and went. The window asks again for what it
+ * should be showing once it comes out of full screen.
+ *
  * @param window - The window.
  * @param isShown - Whether they should be showing.
  * @param platform - Which system it is running on.
  */
 const showTheWindowControls = (
-  window: Pick<BrowserWindow, 'setWindowButtonVisibility' | 'setTitleBarOverlay'>,
+  window: Pick<BrowserWindow, 'setWindowButtonVisibility' | 'setTitleBarOverlay' | 'isFullScreen'>,
   isShown: boolean,
   platform: NodeJS.Platform,
 ): void => {
   if (platform === 'darwin') {
     window.setWindowButtonVisibility(isShown);
 
+    return;
+  }
+
+  if (window.isFullScreen()) {
     return;
   }
 

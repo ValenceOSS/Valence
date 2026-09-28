@@ -1,9 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import { showTheWindowControls } from './showTheWindowControls';
 
-const aWindow = () => ({
+const aWindow = (isFullScreen = false) => ({
   setWindowButtonVisibility: vi.fn(),
   setTitleBarOverlay: vi.fn(),
+  isFullScreen: () => isFullScreen,
 });
 
 describe('showTheWindowControls', () => {
@@ -28,5 +29,22 @@ describe('showTheWindowControls', () => {
       [{ symbolColor: '#ffffff' }],
     ]);
     expect(window.setWindowButtonVisibility).not.toHaveBeenCalled();
+  });
+
+  it('leaves a full-screen window alone on Windows, where recolouring it tells the page the pointer left', () => {
+    const window = aWindow(true);
+
+    showTheWindowControls(window, false, 'win32');
+    showTheWindowControls(window, true, 'win32');
+
+    expect(window.setTitleBarOverlay).not.toHaveBeenCalled();
+  });
+
+  it('still takes the traffic lights away from a full-screen window on macOS', () => {
+    const window = aWindow(true);
+
+    showTheWindowControls(window, false, 'darwin');
+
+    expect(window.setWindowButtonVisibility.mock.calls).toEqual([[false]]);
   });
 });

@@ -313,11 +313,30 @@ const start = async (): Promise<void> => {
     app.setBadgeCount(z.number().int().nonnegative().catch(0).parse(count));
   });
 
+  let areControlsShown = true;
+
   ipcMain.on(SHOW_THE_WINDOW_CONTROLS, (_event, isShown) => {
+    areControlsShown = z.boolean().catch(true).parse(isShown);
+
     if (theWindow !== null) {
-      showTheWindowControls(theWindow, z.boolean().catch(true).parse(isShown), process.platform);
+      showTheWindowControls(theWindow, areControlsShown, process.platform);
     }
   });
+
+  const openAWindow = (): BrowserWindow => {
+    const window = openTheWindow();
+
+    theWindowsOwnMenu(window, changeServer);
+
+    const showWhatWasAskedFor = (): void => {
+      showTheWindowControls(window, areControlsShown, process.platform);
+    };
+
+    window.on('leave-full-screen', showWhatWasAskedFor);
+    window.on('leave-html-full-screen', showWhatWasAskedFor);
+
+    return window;
+  };
 
   const discord = tellDiscord(app.getPath('temp'));
 
@@ -331,8 +350,7 @@ const start = async (): Promise<void> => {
 
   theApplicationMenu(changeServer, !app.isPackaged);
 
-  theWindow = openTheWindow();
-  theWindowsOwnMenu(theWindow, changeServer);
+  theWindow = openAWindow();
 
   await findAValence();
   await showTheApplication(theWindow);
@@ -341,8 +359,7 @@ const start = async (): Promise<void> => {
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      theWindow = openTheWindow();
-      theWindowsOwnMenu(theWindow, changeServer);
+      theWindow = openAWindow();
 
       void showTheApplication(theWindow);
     }
