@@ -1733,6 +1733,39 @@ describe('VideoPlayer', () => {
     expect(onEnded).toHaveBeenCalledOnce();
   });
 
+  it('says the film has run out when the clock reaches its length, though the element never ends', async () => {
+    const onEnded = vi.fn();
+
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} onEnded={onEnded} />);
+    await settled();
+
+    const element = await screen.findByLabelText('Arrival');
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined);
+
+    fireEvent.timeUpdate(element, { target: { currentTime: 7200 } });
+    fireEvent.timeUpdate(element, { target: { currentTime: 7201.5 } });
+    fireEvent.ended(element);
+
+    expect(onEnded).toHaveBeenCalledOnce();
+    expect(pause).toHaveBeenCalled();
+  });
+
+  it('says so again when the viewer goes back and plays to the end a second time', async () => {
+    const onEnded = vi.fn();
+
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} onEnded={onEnded} />);
+    await settled();
+
+    const element = await screen.findByLabelText('Arrival');
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined);
+
+    fireEvent.ended(element);
+    fireEvent.timeUpdate(element, { target: { currentTime: 7000 } });
+    fireEvent.ended(element);
+
+    expect(onEnded).toHaveBeenCalledTimes(2);
+  });
+
   it('counts the film as watched to the end before handing over', async () => {
     const onProgress = vi.fn();
 

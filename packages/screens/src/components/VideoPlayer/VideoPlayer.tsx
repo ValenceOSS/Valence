@@ -45,6 +45,7 @@ import { loadCastSender, castStateOf, castStream } from '@ValenceScreens/playbac
 import { applyVolumeBoost } from '@ValenceScreens/playback/volumeBoost';
 import { hasFinePointer } from '@ValenceUI/hasFinePointer';
 import { aLeaveWorthHiding } from '@ValenceScreens/playback/aLeaveWorthHiding';
+import { hasReachedTheEnd } from '@ValenceScreens/playback/hasReachedTheEnd';
 import { whatIsPlaying } from '@ValenceScreens/playback/whatIsPlaying';
 import { SKIP_SECONDS } from './components/PlayerControls/PlayerControls.types';
 import { fetchTrickplay } from '@ValenceClient/playback/fetchTrickplay';
@@ -285,6 +286,7 @@ const VideoPlayer = ({
   const [isIdle, setIsIdle] = useState(false);
   const [isResting, setIsResting] = useState(false);
   const pointRef = useRef<{ x: number; y: number } | null>(null);
+  const hasFinishedRef = useRef(false);
   const [activity, setActivity] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [subtitleTracks, setSubtitleTracks] = useState<SubtitleTrack[]>([]);
@@ -1749,19 +1751,35 @@ const VideoPlayer = ({
     };
   }, [isImmersive, isFullscreen, onClose]);
 
+  const finish = () => {
+    if (hasFinishedRef.current) {
+      return;
+    }
+
+    hasFinishedRef.current = true;
+    onProgress?.(duration, duration);
+    onEnded?.();
+  };
+
   const asItPlays = {
     onTimeUpdate: (seconds: number) => {
       setPosition(seconds);
       setHeldFrame(null);
       onProgress?.(seconds, duration);
+
+      if (!hasReachedTheEnd(seconds, duration)) {
+        hasFinishedRef.current = false;
+
+        return;
+      }
+
+      videoRef.current?.pause();
+      finish();
     },
     onDurationChange: setReportedDuration,
     onPlayingChange: setIsPlaying,
     onBufferingChange: setIsBuffering,
-    onEnded: () => {
-      onProgress?.(duration, duration);
-      onEnded?.();
-    },
+    onEnded: finish,
   };
 
   return (
