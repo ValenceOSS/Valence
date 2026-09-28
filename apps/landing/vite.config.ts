@@ -137,13 +137,82 @@ const githubStarsContent = (): Plugin => ({
   },
 });
 
+const CATALOGUE_VIRTUAL_ID = 'virtual:plugin-catalogue';
+
+const RESOLVED_CATALOGUE_VIRTUAL_ID = `\0${CATALOGUE_VIRTUAL_ID}`;
+
+const CATALOGUE_URL =
+  process.env.VALENCE_PLUGIN_CATALOGUE_URL ??
+  'https://valenceoss.github.io/valence-plugins/catalogue.json';
+
+const NO_CATALOGUE = '{"format":1,"generatedAt":"1970-01-01T00:00:00.000Z","plugins":[]}';
+
+let cachedCatalogue: Promise<string> | null = null;
+
+/**
+ * Fetches the official plugin catalogue once per build or dev-server run, settling for an empty one
+ * where it cannot be had or is not JSON, so a catalogue that is down never fails the site's build.
+ *
+ * Unlike the GitHub API calls, no token is ever sent: the catalogue is a public page and a
+ * credential has no business travelling to it. Nothing is fetched under a test runner.
+ *
+ * @returns The catalogue as JSON text.
+ */
+const fetchCatalogue = async (): Promise<string> => {
+  if (process.env.VITEST !== undefined) {
+    return NO_CATALOGUE;
+  }
+
+  cachedCatalogue ??= fetch(CATALOGUE_URL, { headers: { Accept: 'application/json' } })
+    .then(async (response) => {
+      const text = response.ok ? await response.text() : NO_CATALOGUE;
+
+      JSON.parse(text);
+
+      return text;
+    })
+    .catch(() => {
+      process.stderr.write(`Could not read ${CATALOGUE_URL}. Carrying on without it.\n`);
+
+      return NO_CATALOGUE;
+    });
+
+  return cachedCatalogue;
+};
+
+/**
+ * Hands the app the official plugin catalogue as a module, fetched at build or dev-server start, so
+ * the plugins page ships with its listing already in it.
+ */
+const pluginCatalogueContent = (): Plugin => ({
+  name: 'valence-plugin-catalogue-content',
+
+  resolveId: (id) => (id === CATALOGUE_VIRTUAL_ID ? RESOLVED_CATALOGUE_VIRTUAL_ID : undefined),
+
+  load: async (id) => {
+    if (id !== RESOLVED_CATALOGUE_VIRTUAL_ID) {
+      return undefined;
+    }
+
+    const raw = await fetchCatalogue();
+
+    return `export default ${raw};`;
+  },
+});
+
 export default defineConfig({
   resolve: { tsconfigPaths: true },
-  plugins: [react(), tailwindcss(), changelogContent(), githubStarsContent()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    changelogContent(),
+    githubStarsContent(),
+    pluginCatalogueContent(),
+  ],
   server: {
     port: 5174,
     host: true,
   },
 });
 
-export { changelogContent, githubStarsContent };
+export { changelogContent, githubStarsContent, pluginCatalogueContent };

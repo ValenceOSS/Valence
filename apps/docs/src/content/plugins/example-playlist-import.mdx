@@ -1,0 +1,198 @@
+---
+title: 'Example: playlist import'
+description: A walk through the official playlist import plugin, which brings Spotify and Apple Music playlists into Valence and asks for the songs you do not have.
+order: 12
+---
+
+The official **Playlist import** plugin brings playlists across from Spotify and Apple Music, builds them in Valence from the songs you already have, and can ask for the rest. It shows how a plugin uses requests and playlists, and how two very different services can sit behind one page. The full source is in [ValenceOSS/valence-plugins](https://github.com/ValenceOSS/valence-plugins/tree/main/plugins/music-import).
+
+## What it does
+
+- **Spotify:** connect your account, and every playlist you have is listed.
+- **Apple Music:** paste the link of a public playlist.
+- Choose one, and a Valence playlist with the same name is made from every song already in the library.
+- If you leave **Ask for songs I do not have** on, the albums of the missing songs are requested for you, and follow your usual approval like any request you make yourself.
+
+## The manifest
+
+```json
+{
+  "manifestVersion": 2,
+  "id": "music-import",
+  "name": "Playlist import",
+  "version": "1.0.0",
+  "apiVersion": "^1.0",
+  "author": { "name": "Valence", "url": "https://github.com/ValenceOSS" },
+  "description": "Brings your Spotify and Apple Music playlists into Valence, and asks for the songs you do not have yet.",
+  "icon": "icon.png",
+  "permissions": [
+    {
+      "kind": "network",
+      "hosts": ["accounts.spotify.com", "api.spotify.com", "api.music.apple.com"]
+    },
+    { "kind": "library", "access": "read" },
+    { "kind": "playlists", "access": "write" },
+    { "kind": "requests", "access": "create" },
+    { "kind": "storage", "quotaBytes": 1000000 },
+    { "kind": "notifications" },
+    {
+      "kind": "accounts",
+      "providers": [
+        {
+          "id": "spotify",
+          "name": "Spotify",
+          "authorizeUrl": "https://accounts.spotify.com/authorize",
+          "tokenUrl": "https://accounts.spotify.com/api/token",
+          "scopes": ["playlist-read-private", "playlist-read-collaborative"],
+          "clientIdSetting": "spotifyClientId",
+          "clientSecretSetting": "spotifyClientSecret"
+        }
+      ]
+    }
+  ],
+  "contributes": {
+    "pages": [
+      { "id": "import", "title": "Import playlists", "placement": "account", "icon": "music" }
+    ]
+  },
+  "entry": "dist/plugin.js",
+  "settings": [
+    { "id": "spotifyClientId", "label": "Spotify client ID", "kind": "text" },
+    { "id": "spotifyClientSecret", "label": "Spotify client secret", "kind": "secret" },
+    {
+      "id": "appleDeveloperToken",
+      "label": "Apple Music developer token",
+      "kind": "secret",
+      "help": "Only needed for Apple Music links."
+    }
+  ]
+}
+```
+
+Apple Music has no OAuth for servers, so it is not an account provider. Public playlists can be read with an Apple Music developer token, which the administrator puts in a secret setting.
+
+## One shape for both services
+
+Each source is read into the same plain list of songs, so everything after that is shared.
+
+```ts
+type Song = { title: string; artist: string; album: string | null; isrc: string | null };
+
+const readSpotify = async (
+  valence: ValenceHost,
+  token: string,
+  playlistId: string,
+): Promise<Song[]> => {
+  const songs: Song[] = [];
+  let next: string | null =
+    `https://api.spotify.com/v1/playlists/${encodeURIComponent(playlistId)}/tracks?limit=100`;
+
+  while (next !== null) {
+    const response = await valence.http.fetch(next, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const page = SpotifyTracksSchema.parse(JSON.parse(response.text));
+
+    for (const { track } of page.items) {
+      if (track !== null) {
+        songs.push({
+          title: track.name,
+          artist: track.artists[0]?.name ?? '',
+          album: track.album.name,
+          isrc: track.external_ids.isrc ?? null,
+        });
+      }
+    }
+
+    next = page.next;
+  }
+
+  return songs;
+};
+```
+
+`page.next` is an address Spotify gives, but the plugin can only follow it because it is on `api.spotify.com`, a host it listed. If Spotify ever pointed elsewhere, the request would be refused.
+
+The Apple Music reader takes a link such as `https://music.apple.com/gb/playlist/road-trip/pl.u-abc123`, reads the storefront and id from it, and asks `https://api.music.apple.com/v1/catalog/gb/playlists/pl.u-abc123?include=tracks` with the developer token.
+
+## Building the playlist
+
+```ts
+const importSongs = async (
+  valence: ValenceHost,
+  profileId: string,
+  name: string,
+  songs: Song[],
+  askForMissing: boolean,
+) => {
+  const found: string[] = [];
+  const missing: Song[] = [];
+
+  for (const song of songs) {
+    const track = await valence.music.findTrack({
+      title: song.title,
+      artist: song.artist,
+      ...(song.album === null ? {} : { album: song.album }),
+      ...(song.isrc === null ? {} : { isrc: song.isrc }),
+    });
+
+    if (track === null) {
+      missing.push(song);
+    } else {
+      found.push(track.id);
+    }
+  }
+
+  const playlist = await valence.playlists.create(profileId, {
+    name,
+    description: 'Imported by Playlist import',
+  });
+
+  await valence.playlists.add(profileId, playlist.id, found);
+
+  if (askForMissing) {
+    await askForAlbums(valence, profileId, missing);
+  }
+
+  return { found: found.length, missing: missing.length };
+};
+```
+
+## Asking for what is missing
+
+Requests are for albums, so the plugin groups the missing songs by album, searches the catalogue for each once, and asks for the ones that are not already in the library or already asked for.
+
+```ts
+const askForAlbums = async (valence: ValenceHost, profileId: string, missing: Song[]) => {
+  const albums = new Map<string, Song>();
+
+  for (const song of missing) {
+    albums.set(`${song.artist}\u0000${song.album ?? song.title}`, song);
+  }
+
+  for (const song of albums.values()) {
+    const hits = await valence.requests.searchCatalogue(
+      `${song.artist} ${song.album ?? song.title}`,
+      'album',
+    );
+    const hit = hits.find((each) => !each.isInLibrary && !each.isRequested);
+
+    if (hit !== undefined) {
+      await valence.requests.create(profileId, { catalogueId: hit.catalogueId, kind: hit.kind });
+    }
+  }
+};
+```
+
+`requests.create` acts as the person, so if their account cannot ask for music, the answer is `refused` and nothing is asked for. The plugin cannot get round a person's own request rights.
+
+## Saying it is done
+
+A big playlist takes a while, so the page answers straight away and the plugin sends a notification when the import is finished:
+
+```ts
+await valence.notifications.send(profileId, {
+  title: `${name} is ready`,
+  body: `${result.found.toString()} songs added, ${result.missing.toString()} asked for.`,
+});
+```

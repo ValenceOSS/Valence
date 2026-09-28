@@ -36,7 +36,11 @@ const fetchMock = vi.fn();
  * @param handlers - What to tell about a change.
  * @returns What was rendered.
  */
-const drawOn = (panel: string, handlers: { onChanged?: () => void } = {}) =>
+const drawOn = (
+  panel: string,
+  handlers: { onChanged?: () => void } = {},
+  pluginPages: { id: string; label: string; pluginId: string; pageId: string }[] = [],
+) =>
   renderInAnAddress(
     <Tabs value={panel} onValueChange={() => {}}>
       <AccountArea
@@ -53,6 +57,7 @@ const drawOn = (panel: string, handlers: { onChanged?: () => void } = {}) =>
         }}
         onDraft={vi.fn()}
         onChanged={handlers.onChanged ?? vi.fn()}
+        pluginPages={pluginPages}
       />
     </Tabs>,
   );
@@ -129,5 +134,18 @@ describe('AccountArea', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(AccountArea.displayName).toBe('AccountArea');
+  });
+
+  it('draws a page a plugin adds, from the plugin’s own building blocks', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ blocks: [{ type: 'text', text: 'Connect AniList to begin' }] }), { status: 200 }),
+    );
+
+    drawOn('plugin.anilist.tracking', {}, [
+      { id: 'plugin.anilist.tracking', label: 'Anime tracking', pluginId: 'anilist', pageId: 'tracking' },
+    ]);
+
+    expect(await screen.findByText('Connect AniList to begin')).toBeInTheDocument();
+    expect(screen.getByText('Anime tracking')).toBeInTheDocument();
   });
 });

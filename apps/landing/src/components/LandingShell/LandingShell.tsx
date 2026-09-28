@@ -7,6 +7,7 @@ import { LandingNav } from '@ValenceLanding/components/LandingNav/LandingNav';
 import { LandingFooter } from '@ValenceLanding/components/LandingFooter/LandingFooter';
 import { HomePage } from '@ValenceLanding/components/HomePage/HomePage';
 import { ChangelogPage } from '@ValenceLanding/components/ChangelogPage/ChangelogPage';
+import { PluginsPage } from '@ValenceLanding/components/PluginsPage/PluginsPage';
 import { ChangelogEntryPage } from '@ValenceLanding/components/ChangelogEntryPage/ChangelogEntryPage';
 import { PrivacyPage } from '@ValenceLanding/components/PrivacyPage/PrivacyPage';
 import { TermsPage } from '@ValenceLanding/components/TermsPage/TermsPage';
@@ -16,6 +17,7 @@ import type { ComponentType } from 'react';
 const PAGES: Record<string, ComponentType> = {
   '/': HomePage,
   '/changelog': ChangelogPage,
+  '/plugins': PluginsPage,
   '/privacy': PrivacyPage,
   '/terms': TermsPage,
 };

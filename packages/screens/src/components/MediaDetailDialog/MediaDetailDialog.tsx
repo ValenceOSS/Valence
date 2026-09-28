@@ -50,6 +50,7 @@ import { PreviewMomentPicker } from '@ValenceScreens/components/PreviewMomentPic
 import { MediaPreview } from '@ValenceScreens/components/MediaPreview/MediaPreview';
 import { MediaFacts } from '@ValenceScreens/components/MediaFacts/MediaFacts';
 import { TitleBadges } from '@ValenceScreens/components/TitleBadges/TitleBadges';
+import { PluginPanels } from '@ValenceScreens/components/PluginPanels/PluginPanels';
 import { scrollToTopOf } from '@ValenceScreens/navigation/scrollToTopOf';
 import { TitleDetails } from '@ValenceScreens/components/TitleDetails/TitleDetails';
 import { RatingPanel } from '@ValenceScreens/components/RatingPanel/RatingPanel';
@@ -366,6 +367,8 @@ const MediaDetailDialog = ({
               revenue={metadata?.revenue}
               rottenTomatoes={metadata?.rottenTomatoes}
             />
+
+            <PluginPanels on="title" subjectId={shown.id} />
 
             <section className="flex flex-col gap-3">
               {isLoading ? (

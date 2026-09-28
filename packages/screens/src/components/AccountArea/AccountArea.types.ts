@@ -9,6 +9,7 @@ type AccountAreaProps = {
   draft: ProfileDraft | null;
   onDraft: (change: Partial<ProfileDraft>) => void;
   onChanged: () => void;
+  pluginPages?: readonly { id: string; label: string; pluginId: string; pageId: string }[];
 };
 
 export type { AccountAreaProps };

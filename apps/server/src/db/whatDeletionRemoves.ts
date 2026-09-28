@@ -367,6 +367,27 @@ const WHAT_DELETION_REMOVES: readonly OwnedThing[] = [
     fate: 'namesItWithoutHoldingIt',
     rule: 'isARecordOfWhatHappened',
   },
+  {
+    table: 'plugin_installation',
+    column: 'installedBy',
+    owner: 'account',
+    fate: 'outlivesIt',
+    rule: 'saysWhoDecided',
+  },
+  {
+    table: 'plugin_connection',
+    column: 'profileId',
+    owner: 'profile',
+    fate: 'goesWithIt',
+    rule: 'isPersonal',
+  },
+  {
+    table: 'plugin_profile',
+    column: 'profileId',
+    owner: 'profile',
+    fate: 'goesWithIt',
+    rule: 'isPersonal',
+  },
 ];
 
 export type { Fate, OwnedThing, Owner, Rule };

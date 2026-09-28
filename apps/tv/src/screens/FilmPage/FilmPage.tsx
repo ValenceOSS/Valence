@@ -11,6 +11,7 @@ import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { ActionRow } from '@ValenceTv/components/ActionRow/ActionRow';
+import { PluginPanels } from '@ValenceTv/components/PluginPanels/PluginPanels';
 import { TitleSpread } from '@ValenceTv/components/TitleSpread/TitleSpread';
 import { joinFacts } from '@ValenceTv/library/joinFacts';
 import { useProgress } from '@ValenceTv/library/useProgress';
@@ -69,6 +70,7 @@ const FilmPage = ({ mediaId, viewerId, onPlay }: FilmPageProps) => {
         ...(starring.length === 0 ? [] : [`Starring ${starring.join(', ')}`]),
         ...(genres.length === 0 ? [] : [genres.join(', ')]),
       ]}
+      below={<PluginPanels on="title" subjectId={film.id} />}
     >
       <ActionRow
         label={resume === null ? 'Play' : `Resume from ${formatDuration(resume)}`}

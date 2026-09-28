@@ -1,0 +1,53 @@
+import {
+  Alert as AlertIcon,
+  Book as BookIcon,
+  Check as CheckIcon,
+  Clock as ClockIcon,
+  Download as DownloadIcon,
+  Film as FilmIcon,
+  Heart as HeartIcon,
+  Info as InfoIcon,
+  Link as LinkIcon,
+  List as ListIcon,
+  Monitor as MonitorIcon,
+  MusicNote as MusicNoteIcon,
+  Play as PlayIcon,
+  Plus as PlusIcon,
+  RefreshCw as RefreshIcon,
+  Search as SearchIcon,
+  Settings as SettingsIcon,
+  Star as StarIcon,
+  Bin as BinIcon,
+  Upload as UploadIcon,
+  User as UserIcon,
+  X as XIcon,
+} from '@keyline-icons/react';
+import type { IconName } from '@ValenceSDK/surface/IconNameSchema';
+import type { IconGlyph } from '@ValenceUI/Icon.types';
+
+const PLUGIN_ICONS: Readonly<Record<IconName, IconGlyph>> = {
+  alert: AlertIcon,
+  book: BookIcon,
+  check: CheckIcon,
+  clock: ClockIcon,
+  download: DownloadIcon,
+  film: FilmIcon,
+  heart: HeartIcon,
+  info: InfoIcon,
+  link: LinkIcon,
+  list: ListIcon,
+  music: MusicNoteIcon,
+  play: PlayIcon,
+  plus: PlusIcon,
+  refresh: RefreshIcon,
+  search: SearchIcon,
+  settings: SettingsIcon,
+  star: StarIcon,
+  trash: BinIcon,
+  tv: MonitorIcon,
+  upload: UploadIcon,
+  user: UserIcon,
+  x: XIcon,
+};
+
+export { PLUGIN_ICONS };

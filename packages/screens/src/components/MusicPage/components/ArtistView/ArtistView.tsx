@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PluginPanels } from '@ValenceScreens/components/PluginPanels/PluginPanels';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { User as UserIcon } from '@keyline-icons/react';
 import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
@@ -161,6 +162,8 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
         <AlbumShelf heading="Appears on" albums={appearsOn} />
 
         <ArtistStory artistId={artist.id} name={artist.name} />
+
+        <PluginPanels on="artist" subjectId={artist.id} />
       </div>
     </article>
   );

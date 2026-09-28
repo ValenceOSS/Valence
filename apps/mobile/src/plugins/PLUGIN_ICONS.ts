@@ -1,0 +1,53 @@
+import {
+  Bin,
+  Book,
+  Check,
+  CircleAlert,
+  CircleUser,
+  Clock,
+  Download,
+  Film,
+  Heart,
+  Info,
+  Link,
+  List,
+  Monitor,
+  MusicNote,
+  Play,
+  Plus,
+  RefreshCw,
+  Search,
+  Settings,
+  Star,
+  Upload,
+  X,
+} from '@keyline-icons/react-native/fill';
+import type { IconName } from '@ValenceSDK/surface/IconNameSchema';
+import type { AGlyph } from '@ValenceMobile/components/Icon/Icon.types';
+
+const PLUGIN_ICONS: Readonly<Record<IconName, AGlyph>> = {
+  alert: CircleAlert,
+  book: Book,
+  check: Check,
+  clock: Clock,
+  download: Download,
+  film: Film,
+  heart: Heart,
+  info: Info,
+  link: Link,
+  list: List,
+  music: MusicNote,
+  play: Play,
+  plus: Plus,
+  refresh: RefreshCw,
+  search: Search,
+  settings: Settings,
+  star: Star,
+  trash: Bin,
+  tv: Monitor,
+  upload: Upload,
+  user: CircleUser,
+  x: X,
+};
+
+export { PLUGIN_ICONS };

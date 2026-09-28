@@ -1,10 +1,10 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
-import { changelogContent, githubStarsContent } from './vite.config.ts';
+import { changelogContent, githubStarsContent, pluginCatalogueContent } from './vite.config.ts';
 
 export default defineConfig({
   resolve: { tsconfigPaths: true },
-  plugins: [react(), changelogContent(), githubStarsContent()],
+  plugins: [react(), changelogContent(), githubStarsContent(), pluginCatalogueContent()],
   test: {
     environment: 'jsdom',
     globals: true,

@@ -14,7 +14,9 @@ import { TheHistory } from '@ValenceMobile/components/TheAccount/components/TheH
 import { TheShares } from '@ValenceMobile/components/TheAccount/components/TheShares/TheShares';
 import { TheSecurity } from '@ValenceMobile/components/TheAccount/components/TheSecurity/TheSecurity';
 import { TheProfile } from '@ValenceMobile/components/TheAccount/components/TheProfile/TheProfile';
-import { ACCOUNT_PANELS } from '@ValenceMobile/components/TheAccount/ACCOUNT_PANELS';
+import { useAccountPanels } from '@ValenceMobile/components/TheAccount/useAccountPanels';
+import { APluginPage } from '@ValenceMobile/components/APluginPage/APluginPage';
+import { pluginPageOf } from '@ValenceMobile/plugins/pluginPageOf';
 import type { TheAccountProps } from './TheAccount.types';
 
 const styles = StyleSheet.create({
@@ -23,7 +25,7 @@ const styles = StyleSheet.create({
 
 /**
  * Somebody's own account: how they appear, how they sign in, where they are signed in, what they
- * have watched and hidden, the links they have handed out, and the way out.
+ * have watched and hidden, the links they have handed out, any page a plugin adds, and the way out.
  *
  * @param onElsewhere - Told that somebody wants to point this phone at a different server.
  * @param onOut - Told to sign out.
@@ -37,6 +39,8 @@ const TheAccount = ({ onOut, onElsewhere, header, onScrolled, shown }: TheAccoun
   const who = useQuery(sessionQueries.who());
   const [chosen, setChosen] = useState<string>('profile');
   const panel = shown ?? chosen;
+  const panels = useAccountPanels();
+  const pluginPage = pluginPageOf(panel);
   const address = platformInUse().serverAddress();
 
   return (
@@ -52,15 +56,12 @@ const TheAccount = ({ onOut, onElsewhere, header, onScrolled, shown }: TheAccoun
       )}
 
       {shown === undefined ? (
-        <SegmentedRow
-          label="What to change"
-          items={ACCOUNT_PANELS}
-          value={panel}
-          onSelect={setChosen}
-        />
+        <SegmentedRow label="What to change" items={panels} value={panel} onSelect={setChosen} />
       ) : null}
 
-      {panel === 'security' ? (
+      {pluginPage !== null ? (
+        <APluginPage key={panel} pluginId={pluginPage.pluginId} pageId={pluginPage.pageId} />
+      ) : panel === 'security' ? (
         <TheSecurity />
       ) : panel === 'devices' ? (
         <TheDevices />

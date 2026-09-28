@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "zod": "^4.6.4"
+    "zod": "^4.6.4",
+    "@valence/plugin-sdk": "workspace:*"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.11",

@@ -19,6 +19,7 @@ import { motion, useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
 import { Dialog } from '@ValenceUI/Dialog';
+import { PluginPanels } from '@ValenceScreens/components/PluginPanels/PluginPanels';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { ActionBar } from '@ValenceUI/ActionBar';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -381,6 +382,10 @@ const ShowDialog = ({
               </ul>
             )}
           </section>
+
+          {(shown.seriesId ?? null) === null ? null : (
+            <PluginPanels on="series" subjectId={shown.seriesId ?? ''} />
+          )}
         </div>
       </DialogContent>
 

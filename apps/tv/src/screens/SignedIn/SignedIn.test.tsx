@@ -206,14 +206,19 @@ jest.mock('@ValenceTv/screens/Account/Account', () => ({
   Account: ({
     onRequests,
     onOpenRequest,
+    onOpenPluginPage,
     onChangeServer,
   }: {
     onRequests: () => void;
     onOpenRequest: (request: MediaRequest) => void;
+    onOpenPluginPage: (page: { pluginId: string; pageId: string }) => void;
     onChangeServer: () => void;
   }) =>
     mockStandIn('Account', {
       'All requests': onRequests,
+      'Anime tracking': () => {
+        onOpenPluginPage({ pluginId: 'anilist', pageId: 'tracking' });
+      },
       'Open my request': () => {
         onOpenRequest(mockRequest);
       },
@@ -259,6 +264,11 @@ jest.mock('@ValenceTv/screens/AskPage/AskPage', () => ({
 
 jest.mock('@ValenceTv/screens/RequestsPage/RequestsPage', () => ({
   RequestsPage: () => mockStandIn('Requests'),
+}));
+
+jest.mock('@ValenceTv/screens/PluginPage/PluginPage', () => ({
+  PluginPage: ({ pluginId, pageId }: { pluginId: string; pageId: string }) =>
+    mockStandIn(`Plugin page ${pageId} of ${pluginId}`),
 }));
 
 jest.mock('@ValenceTv/screens/Music/Music', () => ({ Music: () => mockStandIn('Music') }));
@@ -501,6 +511,21 @@ describe('SignedIn', () => {
     await userEvent.press(drawn.getByRole('button', { name: 'Open my request' }));
 
     expect(drawn.getByText('Ask for film 438631')).toBeTruthy();
+  });
+
+  it('opens a page a plugin adds to the account, and goes back from it', async () => {
+    const drawn = await drawSignedIn();
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Go to Account' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Anime tracking' }));
+
+    expect(drawn.getByText('Plugin page tracking of anilist')).toBeTruthy();
+
+    await act(() => {
+      pressMenu();
+    });
+
+    expect(drawn.queryByText('Plugin page tracking of anilist')).toBeNull();
   });
 
   it('hands moving to another server up from the profile', async () => {

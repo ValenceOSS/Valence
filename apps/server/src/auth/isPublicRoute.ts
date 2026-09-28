@@ -16,6 +16,11 @@ const PUBLIC_ROUTES: readonly PublicRoute[] = [
   { method: 'GET', path: /^\/api\/share\/[^/]+$/ },
   { method: 'GET', path: /^\/api\/openapi\.json$/ },
   { method: 'GET', path: /^\/api\/reference$/ },
+  {
+    method: 'GET',
+    path: /^\/api\/plugins\/[a-z][a-z0-9-]{2,63}\/accounts\/[a-z][a-z0-9-]{0,39}\/connect$/,
+  },
+  { method: 'GET', path: /^\/api\/plugins\/oauth\/callback$/ },
 ];
 
 const FACE_ROUTES: readonly PublicRoute[] = [
@@ -38,6 +43,10 @@ const FACE_ROUTES: readonly PublicRoute[] = [
  * The picture behind the way in follows the faces rather than standing apart from them. It is
  * whatever the household chose to greet itself with, which is as often a family photograph as a
  * poster, so closing the wall closes it too.
+ *
+ * Connecting an account to a plugin is open too, because a phone opens it in the system browser,
+ * which has no session: the connect address answers only to the one-use ticket a signed-in person
+ * was handed, and the callback only to the browser that started it.
  *
  * The generated avatars stay open: they are drawn from a style and a seed in the address and say
  * nothing about anybody. So does signing in as a face, which needs the identifier already and is a

@@ -57,6 +57,8 @@ const DETAILS: Record<Permission, string> = {
   'server.logs': 'Read the server’s log, including entries from before this account signed in.',
   'server.monitor': 'See what the server is doing — its load, its memory, what it is encoding.',
   'server.webhooks': 'Have the server call out to another address when something happens.',
+  'server.plugins':
+    'Install plugins from the catalogue or a file, choose what they may do, change their settings and remove them.',
 };
 
 /**

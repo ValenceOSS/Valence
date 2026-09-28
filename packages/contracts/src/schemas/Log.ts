@@ -11,6 +11,7 @@ const LOG_SOURCES = [
   'playback',
   'catalogue',
   'requests',
+  'plugins',
 ] as const;
 
 const LOG_SORTS = ['newest', 'oldest', 'severest', 'busiest'] as const;

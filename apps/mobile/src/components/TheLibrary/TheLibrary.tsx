@@ -47,6 +47,8 @@ import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { useTheSideStrip } from '@ValenceMobile/hooks/useTheSideStrip';
 import { theColours } from '@ValenceMobile/theme/theColours';
 import { ACCOUNT_PANELS } from '@ValenceMobile/components/TheAccount/ACCOUNT_PANELS';
+import { useAccountPanels } from '@ValenceMobile/components/TheAccount/useAccountPanels';
+import { usePluginThemeInStep } from '@ValenceMobile/plugins/usePluginThemeInStep';
 import type { ReactNode } from 'react';
 import type { VideoPlayer } from 'expo-video';
 import type { ALight } from '@ValenceMobile/components/AMoodBackground/AMoodBackground.types';
@@ -213,6 +215,9 @@ const TheLibrary = ({
   const [searchingFor, setSearchingFor] = useState('');
   const [downloadsFor, setDownloadsFor] = useState('');
   const [accountShows, setAccountShows] = useState<string>(ACCOUNT_PANELS[0].id);
+  const accountPanels = useAccountPanels();
+
+  usePluginThemeInStep();
   const isSearching = side === 'search';
   const isAside = side !== 'home';
   const [seen, setSeen] = useState<ReadonlySet<string>>(() => new Set([side]));
@@ -512,7 +517,7 @@ const TheLibrary = ({
               label="What to change"
               fills
               isShown={side === 'account'}
-              items={ACCOUNT_PANELS}
+              items={accountPanels}
               value={accountShows}
               onSelect={setAccountShows}
             />

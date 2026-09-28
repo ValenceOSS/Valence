@@ -27,6 +27,12 @@ describe('LandingShell', () => {
     expect(await screen.findByRole('heading', { name: 'The first release' })).toBeInTheDocument();
   });
 
+  it('draws the plugins page', async () => {
+    await renderWithRoutes(LandingShell, '/plugins');
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Plugins' })).toBeInTheDocument();
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(LandingShell.displayName).toBe('LandingShell');
   });

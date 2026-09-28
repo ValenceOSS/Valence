@@ -1,5 +1,9 @@
 import Constants from 'expo-constants';
 import { z } from 'zod';
+import { keptPluginTheme } from '@ValenceClient/plugins/keptPluginTheme';
+import { PLUGIN_THEME_CHOICE_KEY } from '@ValenceClient/plugins/PLUGIN_THEME_CHOICE_KEY';
+import { paletteWithTheme } from '@ValenceTv/plugins/paletteWithTheme';
+import { theTvsStore } from '@ValenceTv/platform/theTvsStore';
 
 const PaletteSchema = z.object({
   'color-surface': z.string(),
@@ -35,23 +39,28 @@ const readThePalette = () => ExtraSchema.parse(Constants.expoConfig?.extra);
 
 const read = readThePalette();
 
-const palette = {
-  surface: read.palette['color-surface'],
-  surfaceRaised: read.palette['color-surface-raised'],
-  border: read.palette['color-border'],
-  text: read.palette['color-text'],
-  textMuted: read.palette['color-text-muted'],
-  accent: read.palette['color-accent'],
-  accentHover: read.palette['color-accent-hover'],
-  accentContrast: read.palette['color-accent-contrast'],
-  onWhite: read.palette['color-on-white'],
-  danger: read.palette['color-danger'],
-  success: read.palette['color-success'],
-  scrim: read.palette['color-scrim'],
-  onScrim: read.palette['color-on-scrim'],
-  line: read.palette['surface-line'],
-  hover: read.palette['surface-hover'],
-  active: read.palette['surface-active'],
-};
+const store = theTvsStore();
+
+const palette = paletteWithTheme(
+  {
+    surface: read.palette['color-surface'],
+    surfaceRaised: read.palette['color-surface-raised'],
+    border: read.palette['color-border'],
+    text: read.palette['color-text'],
+    textMuted: read.palette['color-text-muted'],
+    accent: read.palette['color-accent'],
+    accentHover: read.palette['color-accent-hover'],
+    accentContrast: read.palette['color-accent-contrast'],
+    onWhite: read.palette['color-on-white'],
+    danger: read.palette['color-danger'],
+    success: read.palette['color-success'],
+    scrim: read.palette['color-scrim'],
+    onScrim: read.palette['color-on-scrim'],
+    line: read.palette['surface-line'],
+    hover: read.palette['surface-hover'],
+    active: read.palette['surface-active'],
+  },
+  keptPluginTheme(store.read(PLUGIN_THEME_CHOICE_KEY), store),
+);
 
 export { palette };

@@ -108,6 +108,13 @@ const DeliverWebhookJobSchema = z.object({
 
 const PRUNE_WEBHOOK_DELIVERIES_JOB = 'server.pruneWebhookDeliveries';
 
+const RUN_PLUGIN_SCHEDULE_JOB = 'plugin.schedule';
+
+const RunPluginScheduleJobSchema = z.object({
+  pluginId: z.string().min(1).max(64),
+  scheduleId: z.string().min(1).max(40),
+});
+
 const PRUNE_LOGS_JOB = 'server.pruneLogs';
 
 const PRUNE_JOB_HISTORY_JOB = 'server.pruneJobHistory';
@@ -216,5 +223,7 @@ export {
   PRUNE_RESOURCE_HISTORY_JOB,
   REENCODE_JOB,
   DeliverWebhookJobSchema,
+  RUN_PLUGIN_SCHEDULE_JOB,
+  RunPluginScheduleJobSchema,
   scheduleTriggerKind,
 };

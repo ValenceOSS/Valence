@@ -617,6 +617,13 @@
       "when": 1790458586220,
       "tag": "0087_corrections_for_books_and_albums",
       "breakpoints": true
+    },
+    {
+      "idx": 88,
+      "version": "7",
+      "when": 1790601797079,
+      "tag": "0088_plugins",
+      "breakpoints": true
     }
   ]
 }

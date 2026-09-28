@@ -16,6 +16,7 @@ const GROUPS = [
     links: [
       { href: DOCS_URL, label: 'Docs' },
       { to: '/changelog', label: 'Changelog' },
+      { to: '/plugins', label: 'Plugins' },
       { href: `${DOCS_URL}/install/complete-compose-file`, label: 'Deploying it' },
       { href: `${DOCS_URL}/start/set-up-with-an-ai`, label: 'Set up with AI' },
     ],

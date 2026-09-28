@@ -15,6 +15,7 @@ import { AShelf } from '@ValenceMobile/components/AShelf/AShelf';
 import { ATrackList } from '@ValenceMobile/components/ATrackList/ATrackList';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
+import { APluginPanels } from '@ValenceMobile/components/APluginPanels/APluginPanels';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
 import { thePhonesMusicPlayer } from '@ValenceMobile/music/thePhonesMusicPlayer';
@@ -156,6 +157,8 @@ const AnArtist = ({ artistId, onAlbum, onArtist, onPlaylist, onBack }: AnArtistP
       {shelf('Appears on', appearsOn)}
 
       <AnArtistStory artistId={artist.id} name={artist.name} />
+
+      <APluginPanels on="artist" subjectId={artistId} />
     </Screen>
   );
 };

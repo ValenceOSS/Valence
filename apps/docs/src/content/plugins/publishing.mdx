@@ -1,0 +1,83 @@
+---
+title: Signing and the catalogue
+description: How the official catalogue is published and signed, how Valence checks it, and how to get a plugin into it.
+order: 10
+---
+
+Valence installs plugins from the official catalogue, or from a file an administrator uploads. The catalogue is signed, and so is every package in it, so a server can tell a plugin the Valence project published from one it has never seen.
+
+## What is signed
+
+Signatures are Ed25519, made over the exact bytes of a file, and written as base64.
+
+- **Each package.** The catalogue lists every package's address, its SHA-256 digest and its signature.
+- **The catalogue itself.** `catalogue.json` is published beside `catalogue.json.sig`, a signature over its exact bytes.
+
+The public half of the official key, `valence-official-2026`, is built into every Valence server. The private half exists only as a secret in the catalogue repository's release workflow.
+
+## What Valence checks
+
+When an administrator opens the catalogue, Valence fetches `catalogue.json` and its signature from `https://valenceoss.github.io/valence-plugins/` and refuses the whole catalogue if the signature does not hold. A server can be pointed at another catalogue with `VALENCE_PLUGIN_CATALOGUE_URL`, but it must still be signed by a key the server knows.
+
+When a plugin from the catalogue is installed, Valence downloads the package, and refuses it unless:
+
+1. its SHA-256 digest matches the catalogue's,
+2. its signature holds under the key the catalogue names, and
+3. its contents pass every [package](/plugins/packaging) and [manifest](/plugins/manifest) rule.
+
+Only then is the administrator shown what it asks for.
+
+## The catalogue format
+
+```json
+{
+  "format": 1,
+  "generatedAt": "2026-09-28T12:00:00.000Z",
+  "plugins": [
+    {
+      "id": "anilist",
+      "name": "AniList and MyAnimeList",
+      "description": "Imports your anime list and keeps what you have watched in step.",
+      "author": "Valence",
+      "version": "1.0.0",
+      "apiVersion": "^1.0",
+      "kinds": ["extension"],
+      "permissions": [{ "kind": "network", "hosts": ["graphql.anilist.co", "anilist.co"] }],
+      "packageUrl": "https://github.com/ValenceOSS/valence-plugins/releases/download/anilist-v1.0.0/anilist-1.0.0.vplugin",
+      "sha256": "…64 hex digits…",
+      "signature": "…base64…",
+      "keyId": "valence-official-2026",
+      "iconUrl": "https://valenceoss.github.io/valence-plugins/icons/anilist.png",
+      "sourceUrl": "https://github.com/ValenceOSS/valence-plugins/tree/main/plugins/anilist",
+      "publishedAt": "2026-09-28T12:00:00.000Z"
+    }
+  ]
+}
+```
+
+`kinds` says whether a plugin is an `extension`, a `theme`, or both. A catalogue lists at most 1,000 plugins. `CatalogueSchema` in `@ValenceSDK/package/CatalogueSchema` defines it.
+
+The same catalogue drives the [plugins page on getvalence.app](https://getvalence.app/plugins).
+
+## How the official catalogue is published
+
+[ValenceOSS/valence-plugins](https://github.com/ValenceOSS/valence-plugins) holds every official plugin under `plugins/`. When a change reaches its `main` branch, a GitHub Actions workflow:
+
+1. builds and tests every plugin,
+2. packs each plugin whose version changed,
+3. signs each new package with the catalogue key,
+4. publishes the package as a release named `<id>-v<version>`,
+5. rebuilds `catalogue.json`, signs it, and publishes it to GitHub Pages.
+
+## Getting your plugin into the catalogue
+
+1. Build it from the [template](/plugins/getting-started), with tests, and make sure it asks for no more than it needs.
+2. Open a pull request against `ValenceOSS/valence-plugins` adding your plugin under `plugins/<id>`.
+3. The pull request is reviewed like any code in Valence, with extra care for what it asks to be allowed to do and every address it reaches.
+4. Once merged, the workflow signs and publishes it.
+
+Every update goes through the same review.
+
+## Sharing a plugin without the catalogue
+
+You can hand anyone your `.vplugin`, and an administrator can upload it. Unless it is signed by a key their server knows, Valence tells them plainly that it cannot say who made it, and asks them to confirm they trust you before installing. See [installing plugins](/use/plugins).

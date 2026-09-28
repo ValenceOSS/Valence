@@ -16,6 +16,8 @@ import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { AccountArea } from '@ValenceScreens/components/AccountArea/AccountArea';
 import { BuildInfoFooter } from '@ValenceScreens/components/AccountDialog/components/BuildInfoFooter/BuildInfoFooter';
 import { ACCOUNT_PANELS } from '@ValenceScreens/components/AccountArea/accountPanels';
+import { pluginAccountPages } from '@ValenceScreens/components/AccountArea/pluginAccountPages';
+import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace';
 import { saveProfile, uploadProfilePhoto } from '@ValenceClient/profiles/fetchProfiles';
 import { useSignOut } from '@ValenceScreens/session/useSignOut';
@@ -123,14 +125,18 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
     await refresh();
   };
 
-  const showing = ACCOUNT_PANELS.find((one) => one.id === panel)?.id ?? 'profile';
+  const contributions = useQuery({ ...pluginQueries.contributions(), enabled: panel !== null });
+  const pluginPages = pluginAccountPages(contributions.data);
+  const panels: readonly { id: string; label: string }[] = [...ACCOUNT_PANELS, ...pluginPages];
+
+  const showing = panels.find((one) => one.id === panel)?.id ?? 'profile';
 
   return (
     <Dialog label="Your account" isOpen={panel !== null} onClose={onClose} size="stage">
       <Tabs
         value={showing}
         onValueChange={(next) => {
-          const found = ACCOUNT_PANELS.find((one) => one.id === next);
+          const found = panels.find((one) => one.id === next);
 
           if (found !== undefined) {
             onPanel(found.id);
@@ -152,7 +158,10 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
             <TabRow
               tone="underlined"
               size="sm"
-              groups={[{ items: ACCOUNT_PANELS }]}
+              groups={[
+                { items: ACCOUNT_PANELS },
+                ...(pluginPages.length === 0 ? [] : [{ label: 'Plugins', items: pluginPages }]),
+              ]}
               value={showing}
               label="What to change"
               className="-mx-5 px-5"
@@ -178,6 +187,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
             onChanged={() => {
               void refresh();
             }}
+            pluginPages={pluginPages}
           />
         </DialogContent>
 

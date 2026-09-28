@@ -50,6 +50,7 @@ const PERMISSIONS = [
   'server.logs',
   'server.monitor',
   'server.webhooks',
+  'server.plugins',
 ] as const;
 
 const PermissionSchema = z.enum(PERMISSIONS);

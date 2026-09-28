@@ -55,6 +55,8 @@ import type { HistoryService } from '@ValenceServer/history/HistoryService';
 import type { VideoDevices } from '@ValenceServer/video/createVideoDevices';
 import type { MusicServices } from '@ValenceServer/music/MusicServices';
 import type { ReencodeService } from '@ValenceServer/reencode/ReencodeService';
+import type { PluginService } from '@ValenceServer/plugins/service/createPluginService';
+import type { PluginHost } from '@ValenceServer/plugins/broker/PluginHost';
 
 type ArtefactCount = { count: number; bytes: number };
 
@@ -200,6 +202,7 @@ type CreateAppOptions = {
   jobHistory?: JobHistoryStore;
   resourceHistory?: ResourceHistoryStore;
   events?: EventBus;
+  plugins?: (requests: PluginHost['requests']) => PluginService;
   sayALinkWasWithdrawn?: (told: {
     accountId: string;
     title: string;

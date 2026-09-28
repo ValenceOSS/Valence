@@ -1,0 +1,39 @@
+import { vi } from 'vitest';
+import { A_PLUGIN_MEDIA_FOR_TEST } from './A_PLUGIN_MEDIA_FOR_TEST';
+import type { PluginHost } from './PluginHost';
+
+/**
+ * A host whose every call answers plainly and can be inspected, for tests of what calls it.
+ *
+ * @returns The host.
+ */
+const aPluginHostForTest = (): PluginHost => ({
+  profiles: {
+    read: vi.fn((id: string) =>
+      Promise.resolve(id === 'gone' ? null : { id, name: `Profile ${id}`, accountId: 'a1' }),
+    ),
+  },
+  library: {
+    search: vi.fn(() => Promise.resolve([A_PLUGIN_MEDIA_FOR_TEST])),
+    findByExternalId: vi.fn(() => Promise.resolve([A_PLUGIN_MEDIA_FOR_TEST])),
+    episodes: vi.fn(() => Promise.resolve([A_PLUGIN_MEDIA_FOR_TEST])),
+  },
+  viewing: {
+    progress: vi.fn(() => Promise.resolve([])),
+    markWatched: vi.fn(() => Promise.resolve()),
+    markUnwatched: vi.fn(() => Promise.resolve()),
+  },
+  requests: {
+    searchCatalogue: vi.fn(() => Promise.resolve([])),
+    create: vi.fn(() => Promise.resolve({ status: 'made' as const })),
+  },
+  playlists: {
+    list: vi.fn(() => Promise.resolve([{ id: 'pl1', name: 'Mine' }])),
+    create: vi.fn(() => Promise.resolve({ id: 'pl2' })),
+    add: vi.fn(() => Promise.resolve()),
+  },
+  music: { findTrack: vi.fn(() => Promise.resolve(null)) },
+  notifications: { send: vi.fn(() => Promise.resolve()) },
+});
+
+export { aPluginHostForTest };

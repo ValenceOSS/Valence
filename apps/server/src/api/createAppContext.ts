@@ -34,13 +34,19 @@ import { createMemoryNotificationStore } from '@ValenceServer/notifications/crea
 import { narrowToKey } from '@ValenceServer/auth/narrowToKey';
 import { readSessionOnce } from '@ValenceServer/auth/readSessionOnce';
 import type { WebhookOccurrence } from '@ValenceServer/events/EventBus';
+import { MediaRequestAskSchema } from '@ValenceContracts/schemas/MediaRequest';
 import type {
+  MediaRequest,
   MediaRequestAsk,
   MediaRequestDraft,
   MediaRequestKind,
   ReleaseType,
 } from '@ValenceContracts/schemas/MediaRequest';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
+import { bookAsTitle } from '@ValenceServer/requests/catalogue/discoverShelves';
+import { standTitles } from '@ValenceServer/requests/catalogue/standTitles';
+import type { UnstoodTitle } from '@ValenceServer/requests/catalogue/UnstoodTitle';
+import type { PluginHost } from '@ValenceServer/plugins/broker/PluginHost';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { isForLibrary, profilesOnOffer } from '@ValenceContracts/functions/profilesOnOffer';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
@@ -263,6 +269,7 @@ const createAppContext = (options: CreateAppOptions) => {
     resourceHistory,
     events,
     sayALinkWasWithdrawn,
+    plugins: startPlugins,
   } = options;
 
   /**
@@ -309,6 +316,33 @@ const createAppContext = (options: CreateAppOptions) => {
 
     return narrowToKey(held, allowed).has(permission);
   };
+
+  type Asker = {
+    account: () => Promise<{ id: string; name: string } | null>;
+    holds: (permission: Permission) => Promise<boolean>;
+  };
+
+  /**
+   * Somebody asking, as whatever the request carries says: its session, narrowed by any key.
+   */
+  const askerOf = (headers: Headers): Asker => ({
+    account: async () => (await readSessionOnce(auth, headers))?.user ?? null,
+    holds: (permission) => requires(headers, permission),
+  });
+
+  /**
+   * Somebody asking without a request of their own — a plugin acting for one of its people — with
+   * exactly what their account holds.
+   */
+  const askerFor = (account: { id: string; name: string }): Asker => ({
+    account: () => Promise.resolve(account),
+    holds: async (permission) => (await permissions.resolve(account.id)).has(permission),
+  });
+
+  /**
+   * Whoever is asking, from a request's headers or as they were already worked out.
+   */
+  const asAsker = (who: Headers | Asker): Asker => (who instanceof Headers ? askerOf(who) : who);
 
   /**
    * Who a request is for, as both the account it belongs to and the person watching.
@@ -854,15 +888,17 @@ const createAppContext = (options: CreateAppOptions) => {
   /**
    * Whether somebody may reach through to the requests service, and the client to do it with.
    *
-   * @param headers - Who is asking.
+   * @param who - Who is asking.
    * @returns The client, or why not.
    */
   const reachRequests = async (
-    headers: Headers,
+    who: Headers | Asker,
     allowed: readonly Permission[] = ['requests.manage'],
   ): Promise<RequestsClient | 'refused' | 'off'> => {
+    const asker = asAsker(who);
+
     for (const permission of allowed) {
-      if (await requires(headers, permission)) {
+      if (await asker.holds(permission)) {
         return requestsClient ?? 'off';
       }
     }
@@ -875,20 +911,20 @@ const createAppContext = (options: CreateAppOptions) => {
    * it: the answer, or the refusal and the status that fits it — not theirs to ask, requesting off,
    * the service refusing the question, or the service not heard at all.
    *
-   * @param headers - Who is asking.
+   * @param who - Who is asking.
    * @param ask - What to ask the service.
    * @param allowed - The permissions, any one of which lets them ask.
    * @returns The answer, or why not.
    */
   const throughRequests = async <Value>(
-    headers: Headers,
+    who: Headers | Asker,
     ask: (client: RequestsClient) => Promise<RequestsAnswer<Value>>,
     allowed: readonly Permission[] = ['requests.manage'],
   ): Promise<
     | { kind: 'answered'; value: Value }
     | { kind: 'refused'; status: 400 | 403 | 404 | 502; error: string }
   > => {
-    const client = await reachRequests(headers, allowed);
+    const client = await reachRequests(who, allowed);
 
     if (client === 'refused') {
       return { kind: 'refused', status: 403, ...NOT_YOURS };
@@ -947,19 +983,20 @@ const createAppContext = (options: CreateAppOptions) => {
   };
 
   const profilesFor = async (
-    headers: Headers,
+    who: Headers | Asker,
     kind: MediaRequestKind,
     libraryId: string | undefined,
     allowed: readonly Permission[] = [...ASKERS, ...APPROVERS],
   ) => {
-    const session = await readSessionOnce(auth, headers);
-    const answer = await throughRequests(headers, (client) => client.listProfiles(), allowed);
+    const asker = asAsker(who);
+    const account = await asker.account();
+    const answer = await throughRequests(asker, (client) => client.listProfiles(), allowed);
 
     if (answer.kind !== 'answered') {
       return answer;
     }
 
-    if (session === null) {
+    if (account === null) {
       return { kind: 'refused' as const, status: 403 as const, ...NOT_YOURS };
     }
 
@@ -975,7 +1012,7 @@ const createAppContext = (options: CreateAppOptions) => {
     const profileKind = isMusicRequest(kind) ? 'music' : 'video';
     const into = (await libraryForRequest(kind, libraryId))?.id ?? null;
 
-    if (await requires(headers, 'requests.manage')) {
+    if (await asker.holds('requests.manage')) {
       return {
         kind: 'answered' as const,
         value: {
@@ -987,11 +1024,11 @@ const createAppContext = (options: CreateAppOptions) => {
       };
     }
 
-    const held = await permissions.rolesFor(session.user.id);
+    const held = await permissions.rolesFor(account.id);
     const offered = profilesOnOffer(
       answer.value,
       profileKind,
-      { accountId: session.user.id, roleIds: held.map((role) => role.id) },
+      { accountId: account.id, roleIds: held.map((role) => role.id) },
       into,
     );
 
@@ -1031,19 +1068,19 @@ const createAppContext = (options: CreateAppOptions) => {
    * Reaching the profiles is itself gated on the same permission the ask is, so the refusal for not
    * being allowed to ask at all comes from here.
    *
-   * @param headers - What the asking carried.
+   * @param who - Who is asking.
    * @param asked - What is being asked for.
    * @returns The profile to draft with, or why the ask is refused.
    */
   const profileForAsk = async (
-    headers: Headers,
+    who: Headers | Asker,
     asked: MediaRequestAsk,
   ): Promise<
     | { kind: 'chosen'; profileId: string | undefined }
     | { kind: 'refused'; status: 400 | 403 | 404 | 502; error: string }
   > => {
     const isMusic = isMusicRequest(asked.kind);
-    const offered = await profilesFor(headers, asked.kind, asked.libraryId, [
+    const offered = await profilesFor(who, asked.kind, asked.libraryId, [
       isMusic ? 'requests.askMusic' : 'requests.ask',
       ...APPROVERS,
     ]);
@@ -1089,7 +1126,7 @@ const createAppContext = (options: CreateAppOptions) => {
    * it will be filed into — of films, series or music, as it is — who asked and whether that makes
    * it approved.
    *
-   * @param headers - Who is asking.
+   * @param who - Who is asking.
    * @param asked - What they asked for.
    * @returns The request to make, or why it cannot be.
    */
@@ -1103,11 +1140,12 @@ const createAppContext = (options: CreateAppOptions) => {
     (await settings.read()).requestReleaseTypes;
 
   const draftFor = async (
-    headers: Headers,
+    who: Headers | Asker,
     asked: MediaRequestAsk,
     profileId: string | undefined,
   ): Promise<Drafted> => {
-    const session = await readSessionOnce(auth, headers);
+    const asker = asAsker(who);
+    const account = await asker.account();
     const catalogue = await catalogueFor(asked);
     const libraryKind = libraryKindOf(asked.kind);
     const libraries = (await library.list(asTheServer)).filter(
@@ -1126,7 +1164,7 @@ const createAppContext = (options: CreateAppOptions) => {
       };
     }
 
-    if (chosen === undefined || session === null) {
+    if (chosen === undefined || account === null) {
       return {
         kind: 'refused',
         status: 400,
@@ -1149,8 +1187,8 @@ const createAppContext = (options: CreateAppOptions) => {
         libraryId: chosen.id,
         libraryPath: chosen.requestPath ?? chosen.path,
         libraryLanguage: chosen.defaultAudioLanguage,
-        requestedBy: { id: session.user.id, name: session.user.name },
-        isApproved: await requires(headers, 'requests.autoApprove'),
+        requestedBy: { id: account.id, name: account.name },
+        isApproved: await asker.holds('requests.autoApprove'),
         catalogue,
       },
     };
@@ -1183,10 +1221,133 @@ const createAppContext = (options: CreateAppOptions) => {
     return answer?.kind === 'answered' ? answer.value : [];
   };
 
+  /**
+   * What the catalogues know by a name: films and series from the film catalogue, music from the
+   * music one and books from Open Library, each in the one shape a search answers with.
+   *
+   * @param query - What was typed.
+   * @param kind - What kind of thing is being looked for.
+   * @returns What matched, not yet stood against the library or the requests.
+   */
+  const findInCatalogue = async (query: string, kind: MediaRequestKind): Promise<UnstoodTitle[]> =>
+    isBookRequest(kind)
+      ? (await discovery.searchBooks(query)).map(bookAsTitle)
+      : isMusicRequest(kind)
+        ? (await searchMusicCatalogue(query, kind)).map((hit) => ({
+            kind: hit.kind,
+            id: hit.musicBrainzId,
+            title: hit.title,
+            subtitle: hit.artist ?? hit.disambiguation,
+            year: hit.year,
+            overview: null,
+            posterUrl: hit.coverUrl,
+          }))
+        : (await searchCatalogue(query, kind === 'film' ? 'movie' : 'tv')).map((match) => ({
+            kind,
+            id: match.externalId,
+            title: match.title,
+            subtitle: null,
+            year: match.year,
+            overview: match.overview,
+            posterUrl: match.posterUrl,
+          }));
+
+  /**
+   * Says that something was asked for, and that it was approved where asking was enough.
+   *
+   * @param request - What the requests service made of the ask.
+   * @param isNew - Whether this ask made it, rather than finding it already asked for.
+   * @param isApproved - Whether the asker's ask approves it.
+   */
+  const sayOfAsk = (request: MediaRequest, isNew: boolean, isApproved: boolean): void => {
+    if (isNew) {
+      sayOfRequest({
+        event: 'requests.made',
+        data: { title: request.title, kind: request.kind, requestedBy: request.requestedBy.name },
+      });
+    }
+
+    if (isApproved && (isNew || request.approval === 'approved')) {
+      sayOfRequest({
+        event: 'requests.approved',
+        data: { title: request.title, approvedBy: null },
+      });
+    }
+  };
+
+  const requestsForPlugins: PluginHost['requests'] = {
+    searchCatalogue: async (query, kind) => {
+      if (kind === 'track') {
+        return [];
+      }
+
+      const stood = await standTitles(
+        (await findInCatalogue(query, kind)).slice(0, 20),
+        discovery.lookup,
+        await everyRequest(),
+      );
+
+      return stood.map((title) => ({
+        catalogueId: title.id,
+        kind,
+        title: title.title,
+        year: title.year,
+        artist: kind === 'album' ? title.subtitle : null,
+        isInLibrary: title.standing.status === 'library',
+        isRequested: title.standing.status === 'requested',
+      }));
+    },
+    create: async (profileId, hit) => {
+      const accountId = (await profiles?.accountOf(profileId)) ?? null;
+      const named = ((await listUsers?.()) ?? []).find((one) => one.id === accountId);
+      const read = MediaRequestAskSchema.safeParse(
+        hit.kind === 'album'
+          ? { kind: 'album', musicBrainzId: hit.catalogueId }
+          : { kind: hit.kind, tmdbId: Number(hit.catalogueId) },
+      );
+
+      if (hit.kind === 'track' || named === undefined || !read.success) {
+        return { status: 'refused' };
+      }
+
+      const asker = askerFor({ id: named.id, name: named.name });
+      const profile = await profileForAsk(asker, read.data);
+
+      if (profile.kind === 'refused') {
+        return { status: 'refused' };
+      }
+
+      const drafted = await draftFor(asker, read.data, profile.profileId);
+      const answer = await throughRequests(
+        asker,
+        (client) =>
+          drafted.kind === 'refused' ? Promise.resolve(drafted) : client.addRequest(drafted.draft),
+        [isMusicRequest(read.data.kind) ? 'requests.askMusic' : 'requests.ask'],
+      );
+
+      if (answer.kind !== 'answered') {
+        return { status: 'refused' };
+      }
+
+      sayOfAsk(
+        answer.value.request,
+        answer.value.isNew,
+        drafted.kind === 'drafted' && drafted.draft.isApproved,
+      );
+
+      return { status: answer.value.isNew ? 'made' : 'already' };
+    },
+  };
+
   const phoneHandBacks = createPhoneHandBacks();
+
+  const plugins = startPlugins?.(requestsForPlugins);
 
   return {
     auth,
+    plugins,
+    findInCatalogue,
+    sayOfAsk,
     settings,
     SERVER_VERSION,
     SERVER_COMMIT:

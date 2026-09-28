@@ -3,6 +3,7 @@ import { MotionConfig } from 'motion/react';
 import { useOfflineMode } from '@ValenceClient/offline/useOfflineMode';
 import { useAppliedTheme } from '@ValenceScreens/theme/useAppliedTheme';
 import { useAppliedRoundness } from '@ValenceScreens/roundness/useAppliedRoundness';
+import { useAppliedPluginTheme } from '@ValenceScreens/theme/useAppliedPluginTheme';
 import { useAppliedMotion } from '@ValenceScreens/motion/useAppliedMotion';
 import { sendWatchedOffline } from '@ValenceClient/offline/watchedOffline';
 import { App } from '@ValenceScreens/components/App/App';
@@ -25,7 +26,8 @@ import type { ValenceRootProps } from './ValenceRoot.types';
  *
  * The chosen theme is put on the document from here, because this is the outermost thing either
  * application has in common — and from the one screen that is drawn before this exists, which is a
- * client asking which server is yours.
+ * client asking which server is yours. A plugin theme somebody chose goes on after the server's
+ * corners, so its own corners win while it is in force.
  *
  * @param initialTitle - What this instance is called.
  */
@@ -35,6 +37,7 @@ const ValenceRoot = ({ initialTitle }: ValenceRootProps) => {
 
   useAppliedTheme();
   useAppliedRoundness();
+  useAppliedPluginTheme();
 
   const howMuchMovement = useAppliedMotion();
 

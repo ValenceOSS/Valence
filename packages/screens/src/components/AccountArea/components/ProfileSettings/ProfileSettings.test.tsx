@@ -1,8 +1,9 @@
-import { render, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { chooseTheme, chosenTheme } from '@ValenceClient/shell/theme';
 import { installATestClient } from '@ValenceScreens/testing/installATestClient';
+import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { ProfileSettings } from './ProfileSettings';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ProfileDraft } from './ProfileSettings.types';
@@ -33,7 +34,7 @@ beforeEach(() => {
 
 describe('ProfileSettings', () => {
   it('offers every theme there is, named the way the account menu names them', () => {
-    render(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={vi.fn()} />);
+    renderInAnAddress(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={vi.fn()} />);
 
     const themes = screen.getByRole('group', { name: 'Theme' });
 
@@ -46,7 +47,7 @@ describe('ProfileSettings', () => {
     const actor = userEvent.setup();
     const onDraft = vi.fn();
 
-    render(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={onDraft} />);
+    renderInAnAddress(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={onDraft} />);
 
     await actor.click(
       within(screen.getByRole('group', { name: 'Theme' })).getByRole('button', { name: 'Dark' }),
@@ -60,7 +61,7 @@ describe('ProfileSettings', () => {
     const actor = userEvent.setup();
     const onDraft = vi.fn();
 
-    render(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={onDraft} />);
+    renderInAnAddress(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={onDraft} />);
 
     await actor.type(screen.getByLabelText('Display name'), '!');
 
@@ -72,7 +73,7 @@ describe('ProfileSettings', () => {
   });
 
   it('offers no way to show Discord status outside the desktop client', () => {
-    render(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={vi.fn()} />);
+    renderInAnAddress(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={vi.fn()} />);
 
     expect(screen.queryByText('Show what I am playing on Discord')).not.toBeInTheDocument();
   });
@@ -80,7 +81,7 @@ describe('ProfileSettings', () => {
   it('offers it on the desktop client, since only it can reach Discord', () => {
     installATestClient({ thisClientKind: () => 'desktop' });
 
-    render(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={vi.fn()} />);
+    renderInAnAddress(<ProfileSettings profile={PROFILE} draft={DRAFT} onDraft={vi.fn()} />);
 
     expect(screen.getByText('Show what I am playing on Discord')).toBeInTheDocument();
   });

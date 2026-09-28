@@ -1,0 +1,143 @@
+---
+title: Getting started
+description: Write, build and install your first Valence plugin from the template repository, in about ten minutes.
+order: 1
+---
+
+This page takes you from nothing to a plugin running on your own server. It uses the template repository, which has the build, the tests and the packing already set up.
+
+<Callout title="Before you start" tone="quiet">
+  You need Node 24 or later, pnpm, and a Valence server where you are an administrator. Read [how
+  plugins are kept safe](/develop/plugins) first if you have not: it explains why a plugin can only
+  describe its pages rather than draw them.
+</Callout>
+
+## 1. Make a copy of the template
+
+Open [ValenceOSS/valence-plugin-template](https://github.com/ValenceOSS/valence-plugin-template) and choose **Use this template**. Then clone your copy and install.
+
+```bash
+git clone https://github.com/you/my-valence-plugin
+cd my-valence-plugin
+pnpm install
+```
+
+The template holds:
+
+| Path            | What it is                                                           |
+| --------------- | -------------------------------------------------------------------- |
+| `manifest.json` | What your plugin is and what it asks for                             |
+| `src/plugin.ts` | Your plugin, written against the SDK                                 |
+| `src/*.test.ts` | Tests that call your handlers directly                               |
+| `assets/`       | Pictures your plugin shows, such as its icon                         |
+| `tsconfig.json` | Maps `@ValenceSDK/*` to the SDK so your editor and the build find it |
+| `build.ts`      | Bundles `src/plugin.ts` into one file, `dist/plugin.js`              |
+
+The SDK is `@valence/plugin-sdk`, installed straight from the Valence repository:
+
+```json
+{
+  "dependencies": {
+    "@valence/plugin-sdk": "github:ValenceOSS/Valence#path:/packages/plugin-sdk"
+  }
+}
+```
+
+It is published as TypeScript source, so the template's `tsconfig.json` points `@ValenceSDK/*` at it:
+
+```json
+{
+  "compilerOptions": {
+    "paths": { "@ValenceSDK/*": ["./node_modules/@valence/plugin-sdk/src/*"] }
+  }
+}
+```
+
+## 2. Describe your plugin
+
+Edit `manifest.json`. This one adds a page to each person's account that greets them.
+
+```json
+{
+  "manifestVersion": 2,
+  "id": "hello-valence",
+  "name": "Hello Valence",
+  "version": "0.1.0",
+  "apiVersion": "^1.0",
+  "author": { "name": "You" },
+  "description": "Says hello, and counts how often you have visited.",
+  "permissions": [{ "kind": "storage", "quotaBytes": 100000 }],
+  "contributes": {
+    "pages": [{ "id": "hello", "title": "Hello", "placement": "account", "icon": "star" }]
+  },
+  "entry": "dist/plugin.js"
+}
+```
+
+Every field is explained on the [manifest page](/plugins/manifest).
+
+## 3. Write it
+
+`src/plugin.ts` calls `definePlugin` once with your handlers. A page handler's `render` returns a surface: a title and a list of [building blocks](/plugins/building-blocks).
+
+```ts
+import { definePlugin } from '@ValenceSDK/host/definePlugin';
+
+definePlugin({
+  pages: {
+    hello: {
+      render: async ({ valence, viewer }) => {
+        const key = `visits:${viewer.profileId}`;
+        const seen = await valence.storage.get(key);
+        const visits = typeof seen === 'number' ? seen + 1 : 1;
+
+        await valence.storage.set(key, visits);
+
+        return {
+          title: 'Hello',
+          blocks: [
+            { type: 'heading', text: 'Hello from your first plugin' },
+            { type: 'text', text: `You have opened this page ${visits.toString()} times.` },
+            { type: 'button', label: 'Start again', action: { id: 'reset' }, tone: 'secondary' },
+          ],
+        };
+      },
+      act: async ({ valence, viewer }, request) => {
+        if (request.action.id === 'reset') {
+          await valence.storage.delete(`visits:${viewer.profileId}`);
+        }
+      },
+    },
+  },
+});
+```
+
+When `act` returns nothing, Valence calls `render` again and shows the result, which is almost always what you want.
+
+## 4. Test it
+
+Handlers are plain functions, so a test calls them with a stand-in `valence`. The template's `fakeValence()` keeps storage in memory.
+
+```bash
+pnpm test
+```
+
+## 5. Build and pack it
+
+```bash
+pnpm build
+pnpm valence-plugin pack
+```
+
+`pack` checks the manifest and the code against the package rules and writes `hello-valence-0.1.0.vplugin`. See [packaging](/plugins/packaging).
+
+## 6. Install it
+
+In Valence, open **Admin**, then **Plugins**, then **Upload**, and choose your `.vplugin` file. Because it is not signed by a key Valence knows, you will see a warning. Read the permissions it asks for, confirm that you trust it, and install. Then open your account: **Hello** is there.
+
+## Where next
+
+- [Permissions](/plugins/permissions): everything a plugin can ask for.
+- [Host API](/plugins/host-api): every method on `valence`.
+- [Building blocks](/plugins/building-blocks): everything a page can hold.
+- The two official plugins, written up step by step: [anime tracking](/plugins/example-anime-tracking) and [playlist import](/plugins/example-playlist-import).

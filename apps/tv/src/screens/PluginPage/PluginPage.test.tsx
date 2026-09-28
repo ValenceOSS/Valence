@@ -1,0 +1,84 @@
+import { render, userEvent } from '@testing-library/react-native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { somePluginContributions } from '@ValenceClient/testing/somePluginContributions';
+import { fetchPluginContributions } from '@ValenceClient/plugins/fetchPluginContributions';
+import { fetchPluginSurface } from '@ValenceClient/plugins/fetchPluginSurface';
+import { actOnPluginSurface } from '@ValenceClient/plugins/actOnPluginSurface';
+import { SurfaceSchema } from '@ValenceSDK/surface/SurfaceSchema';
+import { PluginPage } from '@ValenceTv/screens/PluginPage/PluginPage';
+import type { ReactNode } from 'react';
+
+jest.mock('@ValenceClient/plugins/fetchPluginContributions', () => ({
+  fetchPluginContributions: jest.fn(),
+}));
+jest.mock('@ValenceClient/plugins/fetchPluginSurface', () => ({ fetchPluginSurface: jest.fn() }));
+jest.mock('@ValenceClient/plugins/actOnPluginSurface', () => ({ actOnPluginSurface: jest.fn() }));
+
+const Scope = ({ children }: { children: ReactNode }) => (
+  <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    {children}
+  </QueryClientProvider>
+);
+
+const CONNECT = SurfaceSchema.parse({
+  blocks: [
+    { type: 'text', text: 'Keep your anime list in step.' },
+    {
+      type: 'button',
+      label: 'Connect AniList',
+      action: { id: 'valence.accounts.connect', payload: { provider: 'anilist' } },
+    },
+  ],
+});
+
+beforeEach(() => {
+  jest.resetAllMocks();
+  jest.mocked(fetchPluginContributions).mockResolvedValue(somePluginContributions());
+});
+
+describe('PluginPage', () => {
+  it('draws the page under its title, named with the plugin it comes from', async () => {
+    jest.mocked(fetchPluginSurface).mockResolvedValue(CONNECT);
+    const drawn = await render(<PluginPage pluginId="anilist" pageId="tracking" />, {
+      wrapper: Scope,
+    });
+
+    expect(await drawn.findByText('Keep your anime list in step.')).toBeTruthy();
+    expect(drawn.getByText('Anime tracking')).toBeTruthy();
+    expect(drawn.getByText('From AniList')).toBeTruthy();
+    expect(fetchPluginSurface).toHaveBeenCalledWith({
+      kind: 'page',
+      pluginId: 'anilist',
+      pageId: 'tracking',
+    });
+  });
+
+  it('says an account has to be connected on another device', async () => {
+    jest.mocked(fetchPluginSurface).mockResolvedValue(CONNECT);
+    jest.mocked(actOnPluginSurface).mockResolvedValue({
+      kind: 'navigate',
+      to: '/api/plugins/anilist/accounts/anilist/connect',
+    });
+    const drawn = await render(<PluginPage pluginId="anilist" pageId="tracking" />, {
+      wrapper: Scope,
+    });
+
+    await userEvent.press(await drawn.findByText('Connect AniList'));
+
+    expect(await drawn.findByText(/on your phone or on the web/u)).toBeTruthy();
+  });
+
+  it('offers to try again when the page cannot be read', async () => {
+    jest.mocked(fetchPluginSurface).mockRejectedValueOnce(new Error('Away'));
+    jest.mocked(fetchPluginSurface).mockResolvedValueOnce(CONNECT);
+    const drawn = await render(<PluginPage pluginId="anilist" pageId="tracking" />, {
+      wrapper: Scope,
+    });
+
+    expect(await drawn.findByText('This page could not be read.')).toBeTruthy();
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Try again' }));
+
+    expect(await drawn.findByText('Keep your anime list in step.')).toBeTruthy();
+  });
+});

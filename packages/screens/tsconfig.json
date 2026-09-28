@@ -10,6 +10,9 @@
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "references": [
     {
+      "path": "../plugin-sdk"
+    },
+    {
       "path": "../contracts"
     },
     {

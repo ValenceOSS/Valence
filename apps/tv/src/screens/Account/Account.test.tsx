@@ -4,6 +4,8 @@ import { aboutQueries } from '@ValenceClient/query/aboutQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
+import { pluginQueries } from '@ValenceClient/query/pluginQueries';
+import { somePluginContributions } from '@ValenceClient/testing/somePluginContributions';
 import { signOutHere } from '@ValenceTv/session/signOutHere';
 import { Account } from '@ValenceTv/screens/Account/Account';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
@@ -54,7 +56,11 @@ const aCache = ({ mayRequest }: { mayRequest: boolean }): QueryClient => {
 
 const drawAccount = (
   cache: QueryClient,
-  told: { onChangeServer?: () => void; onRequests?: () => void } = {},
+  told: {
+    onChangeServer?: () => void;
+    onRequests?: () => void;
+    onOpenPluginPage?: (page: { pluginId: string; pageId: string }) => void;
+  } = {},
 ) =>
   render(
     <QueryClientProvider client={cache}>
@@ -63,6 +69,7 @@ const drawAccount = (
         onChangeServer={told.onChangeServer ?? jest.fn()}
         onRequests={told.onRequests ?? jest.fn()}
         onOpenRequest={jest.fn()}
+        onOpenPluginPage={told.onOpenPluginPage ?? jest.fn()}
         upTo={null}
       />
     </QueryClientProvider>,
@@ -105,6 +112,18 @@ describe('Account', () => {
 
     expect(onRequests).toHaveBeenCalledTimes(1);
     expect(onChangeServer).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens a page a plugin adds to the account', async () => {
+    const onOpenPluginPage = jest.fn();
+    const cache = aCache({ mayRequest: false });
+
+    cache.setQueryData(pluginQueries.contributions().queryKey, somePluginContributions());
+    const drawn = await drawAccount(cache, { onOpenPluginPage });
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Anime tracking, AniList' }));
+
+    expect(onOpenPluginPage).toHaveBeenCalledWith({ pluginId: 'anilist', pageId: 'tracking' });
   });
 
   it('signs this television out and forgets what it knew', async () => {

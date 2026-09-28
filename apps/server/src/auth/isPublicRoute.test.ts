@@ -21,6 +21,14 @@ describe('isPublicRoute', () => {
     expect(isPublicRoute('POST', '/api/auth/sign-in/email')).toBe(true);
   });
 
+  it('lets a browser with no session connect an account to a plugin, and nothing else of plugins', () => {
+    expect(isPublicRoute('GET', '/api/plugins/anilist-sync/accounts/anilist/connect')).toBe(true);
+    expect(isPublicRoute('GET', '/api/plugins/oauth/callback')).toBe(true);
+    expect(isPublicRoute('DELETE', '/api/plugins/anilist-sync/accounts/anilist')).toBe(false);
+    expect(isPublicRoute('GET', '/api/plugins/anilist-sync/pages/home')).toBe(false);
+    expect(isPublicRoute('GET', '/api/plugins')).toBe(false);
+  });
+
   describe('the sign-in screen', () => {
     it('keeps who lives here to itself until the server says otherwise', () => {
       expect(isPublicRoute('GET', '/api/profiles/everyone')).toBe(false);

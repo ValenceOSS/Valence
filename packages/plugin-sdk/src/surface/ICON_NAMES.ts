@@ -1,0 +1,26 @@
+const ICON_NAMES = [
+  'alert',
+  'book',
+  'check',
+  'clock',
+  'download',
+  'film',
+  'heart',
+  'info',
+  'link',
+  'list',
+  'music',
+  'play',
+  'plus',
+  'refresh',
+  'search',
+  'settings',
+  'star',
+  'trash',
+  'tv',
+  'upload',
+  'user',
+  'x',
+] as const;
+
+export { ICON_NAMES };

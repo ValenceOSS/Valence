@@ -195,7 +195,20 @@ import {
   REENCODE_JOB,
   DeliverWebhookJobSchema,
   scheduleTriggerKind,
+  RUN_PLUGIN_SCHEDULE_JOB,
+  RunPluginScheduleJobSchema,
 } from '@ValenceServer/jobs/JobQueue';
+import { OFFICIAL_PLUGIN_KEYS } from '@ValenceSDK/package/OFFICIAL_PLUGIN_KEYS';
+import { PLUGIN_API_VERSION } from '@ValenceSDK/manifest/PLUGIN_API_VERSION';
+import { createCatalogueClient } from '@ValenceServer/plugins/catalogue/createCatalogueClient';
+import { createPluginFetch } from '@ValenceServer/plugins/network/createPluginFetch';
+import { createPluginService } from '@ValenceServer/plugins/service/createPluginService';
+import { createDatabasePluginStore } from '@ValenceServer/plugins/store/createDatabasePluginStore';
+import { createPluginHost } from '@ValenceServer/plugins/host/createPluginHost';
+import { createDatabaseMediaRefs } from '@ValenceServer/plugins/host/createDatabaseMediaRefs';
+import { sealingKeyFrom } from '@ValenceServer/plugins/sealingKeyFrom';
+import type { PluginService } from '@ValenceServer/plugins/service/createPluginService';
+import type { EventBus } from '@ValenceServer/events/EventBus';
 import { createDatabaseWebhookStore } from '@ValenceServer/webhooks/createDatabaseWebhookStore';
 import { createDatabaseNotificationStore } from '@ValenceServer/notifications/createDatabaseNotificationStore';
 import { notifyHousehold } from '@ValenceServer/notifications/notifyHousehold';
@@ -1017,7 +1030,9 @@ const webhookSubscriptions = createDatabaseWebhookStore(db);
 
 let openDeliveries: ((subscriptionId: string, payload: string) => Promise<void>) | null = null;
 
-const events = createWebhookEventBus({
+const running: { plugins: PluginService | null } = { plugins: null };
+
+const webhookEvents = createWebhookEventBus({
   subscriptions: webhookSubscriptions,
   enqueue: async (subscriptionId, payload) => {
     if (openDeliveries === null) {
@@ -1030,6 +1045,15 @@ const events = createWebhookEventBus({
     log.error('server', `events: ${reason}`);
   },
 });
+
+const events: EventBus = {
+  publish: (occurrence) => {
+    running.plugins?.dispatch(occurrence);
+
+    return webhookEvents.publish(occurrence);
+  },
+};
+
 const notifications = createDatabaseNotificationStore(db);
 
 /**
@@ -1917,6 +1941,17 @@ const jobs = await createJobQueue({
 
         log.info('server', 'resource history: forgot samples older than 7 days');
       },
+      [RUN_PLUGIN_SCHEDULE_JOB]: async (_jobId, payload) => {
+        const parsed = RunPluginScheduleJobSchema.safeParse(payload);
+
+        if (!parsed.success) {
+          log.error('jobs', 'job queue: a plugin schedule carried data Valence could not read.');
+
+          return;
+        }
+
+        await running.plugins?.runSchedule(parsed.data.pluginId, parsed.data.scheduleId);
+      },
       [DELIVER_WEBHOOK_JOB]: async (_jobId, payload) => {
         const parsed = DeliverWebhookJobSchema.safeParse(payload);
 
@@ -2688,7 +2723,121 @@ const reencodeService = createDatabaseReencodeService({
   },
 });
 
+/**
+ * Downloads the plugin catalogue, its signature or a package from wherever the catalogue says,
+ * over HTTPS to a public address only. Where it came from is not what makes it trusted; the
+ * signatures checked afterwards are.
+ *
+ * @param url - What to download.
+ * @param mostBytes - The most that will be read.
+ * @returns What was downloaded, or nothing where it could not be.
+ */
+const downloadForPlugins = async (url: string, mostBytes: number): Promise<Uint8Array | null> => {
+  try {
+    const answer = await createPluginFetch({
+      pluginId: 'catalogue',
+      hosts: 'any',
+      mostBytes,
+    }).fetchBytes(url);
+
+    return answer.status === 200 ? new Uint8Array(answer.body) : null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Starts the plugins, once the application can say how a plugin asks for something on somebody's
+ * behalf.
+ *
+ * @param requests - How a plugin searches the catalogues and asks for something.
+ * @returns The plugins.
+ */
+const startPlugins = (
+  requests: Parameters<typeof createPluginHost>[0]['requests'],
+): PluginService => {
+  const media = createDatabaseMediaRefs(db);
+  const started = createPluginService({
+    store: createDatabasePluginStore(db),
+    host: createPluginHost({
+      readProfile: async (profileId) => {
+        const [found] = await db
+          .select({
+            id: viewerProfile.id,
+            name: viewerProfile.name,
+            accountId: viewerProfile.userId,
+          })
+          .from(viewerProfile)
+          .where(eq(viewerProfile.id, profileId))
+          .limit(1);
+
+        return found ?? null;
+      },
+      media,
+      durationOf: async (mediaId) => {
+        const [found] = await db
+          .select({ durationSeconds: mediaItem.durationSeconds })
+          .from(mediaItem)
+          .where(eq(mediaItem.id, mediaId))
+          .limit(1);
+
+        return found?.durationSeconds ?? null;
+      },
+      progress: createDatabaseWatchProgressService(db),
+      history: historyService,
+      playlists: musicServices.playlists,
+      notify: async (accountId, note) => {
+        await notifyHousehold({
+          store: notifications,
+          event: 'plugins.message',
+          title: note.title,
+          body: note.body,
+          link: null,
+          vapid: await readPushKeys(),
+          only: [accountId],
+          onProblem: (reason) => {
+            log.warn('plugins', `a plugin's notification: ${reason}`);
+          },
+          announce: (userIds) => {
+            realtime.publish(
+              'notifications',
+              { event: 'plugins.message' },
+              { kind: 'accounts', accountIds: [...userIds] },
+            );
+          },
+        });
+      },
+      requests,
+    }),
+    catalogue: createCatalogueClient({
+      url: env.VALENCE_PLUGIN_CATALOGUE_URL,
+      download: downloadForPlugins,
+      keys: OFFICIAL_PLUGIN_KEYS,
+    }),
+    keys: OFFICIAL_PLUGIN_KEYS,
+    sealingKey: sealingKeyFrom(env.BETTER_AUTH_SECRET),
+    redirectUri: `${env.BETTER_AUTH_URL}/api/plugins/oauth/callback`,
+    apiVersion: PLUGIN_API_VERSION,
+    enqueueSchedule: async (pluginId, scheduleId, afterSeconds) => {
+      await jobs.enqueueAfter(
+        RUN_PLUGIN_SCHEDULE_JOB,
+        { pluginId, scheduleId },
+        afterSeconds,
+        `${pluginId}:${scheduleId}`,
+      );
+    },
+    log: (level, message) => {
+      log[level]('plugins', message);
+    },
+  });
+
+  running.plugins = started;
+
+  return started;
+};
+
 const app = createApp({
+  plugins: startPlugins,
   auth,
   settings,
   uploadSessions: createDatabaseUploadSessions(db),
@@ -3034,6 +3183,8 @@ if (seededKinds.length > 0) {
 }
 
 await jobs.startWorking();
+
+await running.plugins?.start();
 
 for (const kind of await schedules.sync()) {
   const queueName = scheduleQueueNameFor(kind);

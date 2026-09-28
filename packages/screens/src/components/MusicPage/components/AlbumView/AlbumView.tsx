@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { PluginPanels } from '@ValenceScreens/components/PluginPanels/PluginPanels';
 import {
   ListPlus as ListPlusIcon,
   Record as RecordIcon,
@@ -174,6 +175,8 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
         {album.genres.length === 0 ? null : (
           <p className="px-3 pt-6 text-xs text-text-muted">{album.genres.join(' · ')}</p>
         )}
+
+        <PluginPanels on="album" subjectId={albumId} className="px-3 pt-8" />
       </div>
     </article>
   );

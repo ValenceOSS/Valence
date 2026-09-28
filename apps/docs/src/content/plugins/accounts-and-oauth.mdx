@@ -1,0 +1,121 @@
+---
+title: Accounts and OAuth
+description: Let people connect their account on another service to your plugin, with Valence running the OAuth flow and keeping the tokens.
+order: 7
+---
+
+Many plugins act on someone's account elsewhere: their AniList list, their Spotify playlists. A plugin never sees a password and never runs an OAuth flow itself. It declares the provider, Valence runs the flow, keeps the tokens encrypted, refreshes them, and hands the plugin a current access token when it asks.
+
+## 1. Declare the provider
+
+Add an `accounts` permission, list the provider's hosts under `network`, and declare the settings that will hold your OAuth client's details.
+
+```json
+{
+  "permissions": [
+    { "kind": "network", "hosts": ["anilist.co", "graphql.anilist.co"] },
+    {
+      "kind": "accounts",
+      "providers": [
+        {
+          "id": "anilist",
+          "name": "AniList",
+          "authorizeUrl": "https://anilist.co/api/v2/oauth/authorize",
+          "tokenUrl": "https://anilist.co/api/v2/oauth/token",
+          "scopes": [],
+          "clientIdSetting": "anilistClientId",
+          "clientSecretSetting": "anilistClientSecret"
+        }
+      ]
+    }
+  ],
+  "settings": [
+    { "id": "anilistClientId", "label": "AniList client ID", "kind": "text" },
+    { "id": "anilistClientSecret", "label": "AniList client secret", "kind": "secret" }
+  ]
+}
+```
+
+Every field is described on the [permissions page](/plugins/permissions#accounts). Valence refuses a manifest whose provider addresses are not on a `network` host, or whose settings are not declared.
+
+## 2. The administrator registers an OAuth client
+
+OAuth clients belong to the server, not to you: each Valence server registers its own with the provider and types the client ID and secret into your plugin's settings. Tell them how in your plugin's description or documentation. The address to register as the redirect is the server's own:
+
+```
+https://<their Valence address>/api/plugins/oauth/callback
+```
+
+## 3. Offer a connect button
+
+Put a button on your page with Valence's own [connect action](/plugins/building-blocks#actions-valence-handles-itself). Valence takes the person to the provider, and brings them back to your page when they have agreed.
+
+```ts
+render: async ({ valence, viewer }) => {
+  const anilist = await valence.accounts.connection(viewer.profileId, 'anilist');
+
+  return {
+    title: 'Anime tracking',
+    blocks:
+      anilist === null
+        ? [
+            { type: 'text', text: 'Connect AniList to import your list.' },
+            {
+              type: 'button',
+              label: 'Connect AniList',
+              tone: 'primary',
+              action: { id: 'valence.accounts.connect', payload: { provider: 'anilist' } },
+            },
+          ]
+        : [
+            { type: 'notice', tone: 'success', text: `Connected as ${anilist.account ?? 'you'}.` },
+            {
+              type: 'button',
+              label: 'Disconnect',
+              tone: 'danger',
+              action: {
+                id: 'valence.accounts.disconnect',
+                payload: { provider: 'anilist' },
+                confirm: 'Stop syncing with AniList?',
+              },
+            },
+          ],
+  };
+},
+```
+
+## How the flow is kept safe
+
+- Valence uses the authorisation code flow with PKCE. The `state` it sends is bound to the person's session and profile, so a link from someone else cannot connect their account to yours.
+- Tokens are stored encrypted, never sent to any app, and removed when the person disconnects, when their profile is deleted or when the plugin is uninstalled.
+- The client secret, if there is one, is a `secret` setting: stored encrypted and never shown again once saved.
+
+## 4. Use the connection
+
+```ts
+const connection = await valence.accounts.connection(profileId, 'anilist');
+
+if (connection !== null) {
+  const response = await valence.http.fetch('https://graphql.anilist.co', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${connection.accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ query: '{ Viewer { id name } }' }),
+  });
+}
+```
+
+`connection` refreshes the token first if it has expired and the provider gave a refresh token. If the provider has revoked it, `connection` returns `null`: show the connect button again.
+
+## When someone connects
+
+Give `onAccountConnected` to start work straight away, such as a first import, rather than waiting for the next schedule.
+
+```ts
+onAccountConnected: async ({ valence }, { profileId, provider }) => {
+  valence.log.info('Connected', { provider });
+  await importList(valence, profileId);
+},
+```

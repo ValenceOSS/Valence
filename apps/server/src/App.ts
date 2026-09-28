@@ -38,6 +38,7 @@ import { serveSubtitle } from '@ValenceServer/api/serveSubtitle';
 import { servePresence } from '@ValenceServer/api/servePresence';
 import { servePhone } from '@ValenceServer/api/servePhone';
 import { serveReference } from '@ValenceServer/api/serveReference';
+import { servePlugins } from '@ValenceServer/api/servePlugins';
 import type { CreateAppOptions } from '@ValenceServer/api/CreateAppOptions';
 
 /**
@@ -88,6 +89,7 @@ const createApp = (options: CreateAppOptions) => {
   serveSubtitle(app, context);
   servePresence(app, context);
   servePhone(app, context);
+  servePlugins(app, context);
   serveReference(app, context);
 
   return app;

@@ -1,0 +1,111 @@
+import { CatalogueSchema } from '@ValenceSDK/package/CatalogueSchema';
+import { sha256Of } from '@ValenceSDK/package/sha256Of';
+import { PACKAGE_LIMITS } from '@ValenceSDK/package/PACKAGE_LIMITS';
+import type { Catalogue, CatalogueEntry } from '@ValenceSDK/package/CatalogueSchema';
+import { isSignedBy } from './isSignedBy';
+import { readSignatureFile } from './readSignatureFile';
+
+type Download = (url: string, mostBytes: number) => Promise<Uint8Array | null>;
+
+type CreateCatalogueClientOptions = {
+  url: string;
+  download: Download;
+  keys: Readonly<Record<string, string>>;
+  now?: () => number;
+};
+
+type CatalogueRead = { catalogue: Catalogue | null; problem: string | null };
+
+const KEPT_FOR_MILLISECONDS = 10 * 60 * 1000;
+
+const MOST_CATALOGUE_BYTES = 2 * 1024 * 1024;
+
+/**
+ * Reads the official plugin catalogue and the packages it lists, believing nothing it has not
+ * checked. The catalogue must carry a signature from one of the keys the server was built with; a
+ * package must hash to what the catalogue says and carry a signature from the key it names. A
+ * catalogue that cannot be reached or checked is reported as such, never used unchecked.
+ *
+ * Kept for ten minutes after a good read, so an administrator browsing it is not a fetch a click.
+ *
+ * @param options - Where the catalogue is, how to download, and the trusted keys.
+ * @returns How to read the catalogue and fetch a package from it.
+ */
+const createCatalogueClient = ({
+  url,
+  download,
+  keys,
+  now = Date.now,
+}: CreateCatalogueClientOptions) => {
+  let kept: { read: CatalogueRead; until: number } | null = null;
+
+  const read = async (): Promise<CatalogueRead> => {
+    if (kept !== null && kept.until > now()) {
+      return kept.read;
+    }
+
+    const [bytes, signatureBytes] = await Promise.all([
+      download(url, MOST_CATALOGUE_BYTES),
+      download(`${url}.sig`, 4096),
+    ]);
+
+    if (bytes === null || signatureBytes === null) {
+      return { catalogue: null, problem: 'The plugin catalogue could not be reached.' };
+    }
+
+    const signature = readSignatureFile(Buffer.from(signatureBytes).toString('utf8'));
+
+    if (signature === null || isSignedBy(bytes, signature, keys) === null) {
+      return {
+        catalogue: null,
+        problem: 'The plugin catalogue is not signed by the Valence project.',
+      };
+    }
+
+    let parsed: ReturnType<typeof CatalogueSchema.safeParse>;
+
+    try {
+      parsed = CatalogueSchema.safeParse(JSON.parse(Buffer.from(bytes).toString('utf8')));
+    } catch {
+      return { catalogue: null, problem: 'The plugin catalogue could not be read.' };
+    }
+
+    if (!parsed.success) {
+      return { catalogue: null, problem: 'The plugin catalogue could not be read.' };
+    }
+
+    const good = { catalogue: parsed.data, problem: null };
+
+    kept = { read: good, until: now() + KEPT_FOR_MILLISECONDS };
+
+    return good;
+  };
+
+  const fetchPackage = async (
+    entry: CatalogueEntry,
+  ): Promise<{ bytes: Uint8Array } | { problem: string }> => {
+    const bytes = await download(entry.packageUrl, PACKAGE_LIMITS.packageBytes);
+
+    if (bytes === null) {
+      return { problem: `${entry.name} could not be downloaded.` };
+    }
+
+    if (sha256Of(bytes) !== entry.sha256) {
+      return { problem: `${entry.name} is not the package the catalogue describes.` };
+    }
+
+    if (isSignedBy(bytes, { keyId: entry.keyId, signature: entry.signature }, keys) === null) {
+      return { problem: `${entry.name} is not signed by the key the catalogue names.` };
+    }
+
+    return { bytes };
+  };
+
+  return { read, fetchPackage };
+};
+
+type CatalogueClient = ReturnType<typeof createCatalogueClient>;
+
+export type { CatalogueClient, Download };
+
+export { createCatalogueClient };

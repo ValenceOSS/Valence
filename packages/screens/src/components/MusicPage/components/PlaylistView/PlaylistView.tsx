@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PluginPanels } from '@ValenceScreens/components/PluginPanels/PluginPanels';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ImagePlus as ImagePlusIcon,
@@ -418,6 +419,8 @@ const PlaylistView = ({ playlistId }: PlaylistViewProps) => {
           }}
         />
       ) : null}
+
+      <PluginPanels on="playlist" subjectId={playlistId} className="px-3 pb-8 pt-6" />
     </article>
   );
 };

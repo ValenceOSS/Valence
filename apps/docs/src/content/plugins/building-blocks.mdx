@@ -1,0 +1,358 @@
+---
+title: Building blocks
+description: Every block a plugin page or panel can hold, every field on each, how actions and fields travel back, and the limits a surface must keep to.
+order: 5
+---
+
+A plugin never draws anything itself. Its pages and panels return a **surface**: a title and a list of blocks. The web, phone and TV apps each draw those blocks with their own components, so a plugin page looks and feels like the rest of Valence on every screen, with no code of the plugin's running there.
+
+The schemas are `SurfaceSchema` and `SurfaceBlockSchema` in `@ValenceSDK/surface/`. Valence checks every surface a plugin returns against them before it goes anywhere near an app, and a surface that fails is replaced by a short notice.
+
+## A surface
+
+```ts
+const surface = {
+  title: 'Anime tracking',
+  blocks: [
+    { type: 'notice', tone: 'success', text: 'Your AniList list is connected.' },
+    {
+      type: 'section',
+      title: 'Last sync',
+      children: [
+        {
+          type: 'row',
+          label: 'Frieren',
+          detail: 'Episode 12 of 28',
+          badge: 'Watching',
+          icon: 'tv',
+        },
+        { type: 'progress', label: 'Series watched', value: 0.43 },
+      ],
+    },
+    { type: 'toggle', field: 'pushProgress', label: 'Send my progress to AniList', value: true },
+    { type: 'button', label: 'Sync now', action: { id: 'sync' }, icon: 'refresh' },
+  ],
+};
+```
+
+| Field    | Rules                                     |
+| -------- | ----------------------------------------- |
+| `title`  | Optional plain text, up to 120 characters |
+| `blocks` | Up to 200 blocks at the top level         |
+
+## Text is only ever text
+
+Every string a block shows is plain text. Nothing is read as HTML or Markdown, so `<b>` shows as `<b>`. Control characters and the Unicode direction overrides that could disguise text (U+202A to U+202E and U+2066 to U+2069) are refused. A **label** is at most 120 characters; **words** are at most 2,000.
+
+## Blocks
+
+### heading
+
+```json
+{ "type": "heading", "text": "Your lists" }
+```
+
+| Field  | Rules |
+| ------ | ----- |
+| `text` | Label |
+
+### text
+
+```json
+{ "type": "text", "text": "Nothing to import yet.", "tone": "muted" }
+```
+
+| Field  | Rules                                               |
+| ------ | --------------------------------------------------- |
+| `text` | Words                                               |
+| `tone` | Optional: `default`, `muted`, `danger` or `success` |
+
+### notice
+
+A boxed message that stands out, like Valence's own callouts.
+
+```json
+{
+  "type": "notice",
+  "tone": "warning",
+  "title": "Not connected",
+  "text": "Connect AniList to import your list."
+}
+```
+
+| Field   | Rules                                    |
+| ------- | ---------------------------------------- |
+| `tone`  | `info`, `warning`, `danger` or `success` |
+| `title` | Optional label                           |
+| `text`  | Words                                    |
+
+### row
+
+One line of a list: a label, a quieter detail beneath, and optionally a badge, an icon or a picture. With an `action`, the whole row can be pressed.
+
+```json
+{
+  "type": "row",
+  "label": "Road trip",
+  "detail": "42 songs, 38 found",
+  "badge": "Spotify",
+  "icon": "music",
+  "action": { "id": "open-playlist", "payload": { "id": "37i9dQ" } }
+}
+```
+
+| Field    | Rules                                  |
+| -------- | -------------------------------------- |
+| `label`  | Label                                  |
+| `detail` | Optional label                         |
+| `badge`  | Optional label, drawn as a small badge |
+| `icon`   | Optional [icon](#icons)                |
+| `image`  | Optional [image](#images)              |
+| `action` | Optional [action](#actions)            |
+
+### button
+
+```json
+{
+  "type": "button",
+  "label": "Import",
+  "action": { "id": "import" },
+  "tone": "primary",
+  "icon": "download"
+}
+```
+
+| Field    | Rules                                        |
+| -------- | -------------------------------------------- |
+| `label`  | Label                                        |
+| `action` | An [action](#actions)                        |
+| `tone`   | Optional: `primary`, `secondary` or `danger` |
+| `icon`   | Optional [icon](#icons)                      |
+
+### toggle
+
+A switch whose value is sent back with every action. See [fields](#fields).
+
+```json
+{
+  "type": "toggle",
+  "field": "autoRequest",
+  "label": "Ask for songs I do not have",
+  "value": true,
+  "help": "Requests follow your usual approval."
+}
+```
+
+| Field   | Rules                         |
+| ------- | ----------------------------- |
+| `field` | A [field id](#fields)         |
+| `label` | Label                         |
+| `value` | `true` or `false`             |
+| `help`  | Optional label, shown beneath |
+
+### textField
+
+```json
+{
+  "type": "textField",
+  "field": "playlistLink",
+  "label": "Apple Music playlist link",
+  "placeholder": "https://music.apple.com/..."
+}
+```
+
+| Field         | Rules                                                            |
+| ------------- | ---------------------------------------------------------------- |
+| `field`       | A [field id](#fields)                                            |
+| `label`       | Label                                                            |
+| `value`       | Optional words, what is in the field already                     |
+| `placeholder` | Optional label                                                   |
+| `isSecret`    | Optional `true`, to hide what is typed, as a password field does |
+
+### select
+
+```json
+{
+  "type": "select",
+  "field": "list",
+  "label": "Which list",
+  "value": "watching",
+  "options": [
+    { "value": "watching", "label": "Watching" },
+    { "value": "completed", "label": "Completed" }
+  ]
+}
+```
+
+| Field     | Rules                                                                |
+| --------- | -------------------------------------------------------------------- |
+| `field`   | A [field id](#fields)                                                |
+| `label`   | Label                                                                |
+| `value`   | Optional, up to 100 characters, the option chosen now                |
+| `options` | 1 to 50 options, each a `value` (up to 100 characters) and a `label` |
+
+### progress
+
+```json
+{ "type": "progress", "label": "Matched", "value": 0.9 }
+```
+
+| Field   | Rules                |
+| ------- | -------------------- |
+| `label` | Optional label       |
+| `value` | A number from 0 to 1 |
+
+### image
+
+```json
+{ "type": "image", "image": { "kind": "asset", "name": "banner.png" }, "alt": "The AniList logo" }
+```
+
+| Field   | Rules                                       |
+| ------- | ------------------------------------------- |
+| `image` | An [image](#images)                         |
+| `alt`   | Label, read out to anyone who cannot see it |
+
+### link
+
+A link that opens outside Valence, in a new tab or the system browser.
+
+```json
+{ "type": "link", "label": "Open my AniList profile", "url": "https://anilist.co/user/frieren" }
+```
+
+| Field   | Rules                               |
+| ------- | ----------------------------------- |
+| `label` | Label                               |
+| `url`   | An `https` address on a real domain |
+
+### media
+
+Something in the library, drawn as the same card Valence uses everywhere, and opening it when pressed.
+
+```json
+{ "type": "media", "mediaId": "0f3c1d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f" }
+```
+
+| Field     | Rules                              |
+| --------- | ---------------------------------- |
+| `mediaId` | The id of something in the library |
+
+### divider
+
+```json
+{ "type": "divider" }
+```
+
+### section
+
+A group of blocks under an optional title. Sections can hold sections.
+
+```json
+{
+  "type": "section",
+  "title": "Settings",
+  "children": [
+    { "type": "toggle", "field": "pushProgress", "label": "Send progress", "value": true }
+  ]
+}
+```
+
+| Field      | Rules            |
+| ---------- | ---------------- |
+| `title`    | Optional label   |
+| `children` | Up to 100 blocks |
+
+### list
+
+A titled list of rows.
+
+```json
+{
+  "type": "list",
+  "title": "Imported playlists",
+  "rows": [{ "type": "row", "label": "Road trip", "detail": "38 of 42 found" }]
+}
+```
+
+| Field   | Rules                  |
+| ------- | ---------------------- |
+| `title` | Optional label         |
+| `rows`  | Up to 200 [rows](#row) |
+
+## Actions
+
+Buttons and rows carry an action. Pressing one sends it to your plugin's `act` handler, with the value of every field on the surface.
+
+```json
+{
+  "id": "import-playlist",
+  "payload": { "playlistId": "37i9dQ", "source": "spotify" },
+  "confirm": "Import this playlist?"
+}
+```
+
+| Field     | Rules                                                                                                                                                   |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`      | Starts with a lower case letter, then up to 63 lower case letters, digits, dots, underscores and hyphens                                                |
+| `payload` | Optional object with keys of up to 64 characters and values that are strings (up to 1,000 characters), numbers, booleans or `null`, at most 4 KB in all |
+| `confirm` | Optional question, up to 200 characters. The app asks it first, and only sends the action if the person agrees.                                         |
+
+### Actions Valence handles itself
+
+Two action ids are Valence's own. A plugin uses them to offer [account connections](/plugins/accounts-and-oauth) without handling any of the flow:
+
+| Action id                     | Payload                 | What happens                                                  |
+| ----------------------------- | ----------------------- | ------------------------------------------------------------- |
+| `valence.accounts.connect`    | `{ "provider": "..." }` | The person is taken to that provider to connect their account |
+| `valence.accounts.disconnect` | `{ "provider": "..." }` | Their connection to that provider is forgotten                |
+
+## Fields
+
+`toggle`, `textField` and `select` are fields. A field's `field` id starts with a lower case letter, then up to 39 letters and digits, such as `autoRequest`. When an action is sent, the app sends the current value of every field with it:
+
+```ts
+type SurfaceActRequest = {
+  action: {
+    id: string;
+    payload?: Record<string, string | number | boolean | null>;
+    confirm?: string;
+  };
+  fields: Record<string, string | boolean>;
+};
+```
+
+A toggle's value is a boolean; a text field's and a select's are strings of up to 2,000 characters. At most 60 fields are sent.
+
+Treat every value as untrusted input: check it as you would anything else a person types.
+
+## Images
+
+An image is one of three kinds.
+
+| Kind     | Fields                                                | Drawn from                                                                                                                            |
+| -------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `asset`  | `name`, such as `icon.png`                            | A picture packed with your plugin in `assets/`                                                                                        |
+| `remote` | `url`, an `https` address                             | Fetched by the server through `/api/plugins/{id}/image`, only from hosts in your `network` list, only if it is an image, at most 5 MB |
+| `media`  | `mediaId`, and `art`: `poster`, `backdrop` or `cover` | The artwork Valence already has for something in the library                                                                          |
+
+No app ever fetches a plugin's image straight from another site.
+
+## Icons
+
+Icons are named, and each app draws its own version of each: `alert`, `book`, `check`, `clock`, `download`, `film`, `heart`, `info`, `link`, `list`, `music`, `play`, `plus`, `refresh`, `search`, `settings`, `star`, `trash`, `tv`, `upload`, `user` and `x`.
+
+## Limits
+
+| Limit                                   | Value            |
+| --------------------------------------- | ---------------- |
+| Blocks in a surface, counting every row | 400              |
+| How deep sections may nest              | 6                |
+| Blocks at the top level                 | 200              |
+| Children in one section                 | 100              |
+| Rows in one list                        | 200              |
+| A label                                 | 120 characters   |
+| Words                                   | 2,000 characters |
+| An action's payload                     | 4 KB             |
+
+A phone and a television draw every one of these blocks, so keep pages short and put long lists behind a button.
