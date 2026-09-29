@@ -68,6 +68,7 @@ import { TheFloatingPlayer } from '@ValenceMobile/components/TheFloatingPlayer/T
 import { ATelevisionToSignIn } from '@ValenceMobile/components/ATelevisionToSignIn/ATelevisionToSignIn';
 import { useLinksIntoTheApp } from '@ValenceMobile/hooks/useLinksIntoTheApp';
 import { useMayRequest } from '@ValenceClient/requests/useMayRequest';
+import { useCarPlay } from '@ValenceMobile/carPlay/useCarPlay';
 import type { ReactNode } from 'react';
 import type { Heard } from '@ValenceClient/books/heardLast';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
@@ -150,6 +151,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   useTellTheServerWhatIsHeld();
   useFetchWhatThisDeviceAsked();
   useListeningKeptFresh();
+  useCarPlay();
   const cache = useQueryClient();
   const [pages, setPages] = useState<readonly APage[]>([]);
   const [watching, setWatching] = useState<{ mediaId: string; startSeconds: number } | null>(null);
