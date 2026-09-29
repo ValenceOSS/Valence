@@ -1038,6 +1038,21 @@ describe('discovering and describing titles to ask for', () => {
     expect(calls[0]).toContain('append_to_response=credits%2Cvideos');
   });
 
+  it('lists a studio with its logo recoloured in the colours of the text beside it, on either theme', async () => {
+    const { instance } = provider({
+      '/company/2': { id: 2, name: 'Walt Disney Pictures', logo_path: '/disney.png' },
+    });
+
+    await expect(instance.studios?.()).resolves.toEqual([
+      {
+        id: '2',
+        name: 'Walt Disney Pictures',
+        logoUrl: 'https://image.tmdb.org/t/p/w300_filter(duotone,e9f3ef,a5a5a5)/disney.png',
+        lightLogoUrl: 'https://image.tmdb.org/t/p/w300_filter(duotone,303c51,c4cbd4)/disney.png',
+      },
+    ]);
+  });
+
   it('has nothing to list or describe without a key', async () => {
     const { instance } = provider({}, { key: null });
 

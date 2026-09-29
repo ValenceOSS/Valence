@@ -26,7 +26,14 @@ const sources = () => {
       }),
     ),
     studios: vi.fn<ShelfSources['studios']>(() =>
-      Promise.resolve([{ id: '2', name: 'Walt Disney Pictures', logoUrl: 'https://p/d.png' }]),
+      Promise.resolve([
+        {
+          id: '2',
+          name: 'Walt Disney Pictures',
+          logoUrl: 'https://p/d.png',
+          lightLogoUrl: 'https://p/d-light.png',
+        },
+      ]),
     ),
     charts: vi.fn<ShelfSources['charts']>(() =>
       Promise.resolve({
@@ -66,7 +73,12 @@ describe('discoverShelves', () => {
     });
 
     expect(studios).toEqual([
-      { id: '2', name: 'Walt Disney Pictures', logoUrl: 'https://p/d.png' },
+      {
+        id: '2',
+        name: 'Walt Disney Pictures',
+        logoUrl: 'https://p/d.png',
+        lightLogoUrl: 'https://p/d-light.png',
+      },
     ]);
     expect(shelves.map((shelf) => shelf.id)).toEqual([
       'trending-films',

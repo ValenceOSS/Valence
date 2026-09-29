@@ -13,7 +13,14 @@ vi.mock('@ValenceClient/requests/fetchAskable', () => ({
   fetchDiscover: () =>
     Promise.resolve({
       shelves: [],
-      studios: [{ id: '2', name: 'Walt Disney Pictures', logoUrl: 'https://image/disney.png' }],
+      studios: [
+        {
+          id: '2',
+          name: 'Walt Disney Pictures',
+          logoUrl: 'https://image/disney.png',
+          lightLogoUrl: 'https://image/disney-light.png',
+        },
+      ],
     }),
 }));
 

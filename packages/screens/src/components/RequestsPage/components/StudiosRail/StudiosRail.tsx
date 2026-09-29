@@ -12,16 +12,12 @@ const TILE = [
   'hover-hover:hover:-translate-y-0.5 hover-hover:hover:shadow-[var(--shadow-lifted)]',
 ].join(' ');
 
-const MARK = [
-  'max-h-12 w-auto max-w-full object-contain',
-  'opacity-80 transition-opacity duration-[var(--duration-base)] ease-[var(--ease-out)]',
-  'motion-reduce:transition-none hover-hover:group-hover/studio:opacity-100',
-  'valence-mark-ink',
-].join(' ');
+const MARK = 'max-h-12 w-auto max-w-full object-contain';
 
 /**
  * The studios, drawn as their marks rather than their names, so the row is read the way a shelf of
- * logos is. Choosing one shows everything of theirs the catalogue lists.
+ * logos is. Each mark comes coloured for either theme, and the one for the theme in use is shown.
+ * Choosing one shows everything of theirs the catalogue lists.
  *
  * @param studios - The studios to show.
  * @param onOpen - Told which studio was chosen.
@@ -43,7 +39,20 @@ const StudiosRail = ({ studios, onOpen }: StudiosRailProps) => (
           {studio.logoUrl === null ? (
             <span className="text-sm font-semibold text-text">{studio.name}</span>
           ) : (
-            <img src={studio.logoUrl} alt={studio.name} loading="lazy" className={MARK} />
+            <>
+              <img
+                src={studio.logoUrl}
+                alt={studio.name}
+                loading="lazy"
+                className={cn(MARK, 'valence-mark-on-dark')}
+              />
+              <img
+                src={studio.lightLogoUrl ?? studio.logoUrl}
+                alt={studio.name}
+                loading="lazy"
+                className={cn(MARK, 'valence-mark-on-light')}
+              />
+            </>
           )}
         </Button>
       </RevealItem>

@@ -45,7 +45,14 @@ beforeEach(() => {
         browse: null,
       },
     ],
-    studios: [{ id: '2', name: 'Walt Disney Pictures', logoUrl: 'https://image/disney.png' }],
+    studios: [
+      {
+        id: '2',
+        name: 'Walt Disney Pictures',
+        logoUrl: 'https://image/disney.png',
+        lightLogoUrl: 'https://image/disney-light.png',
+      },
+    ],
   });
 });
 

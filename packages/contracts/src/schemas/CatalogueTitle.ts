@@ -51,6 +51,7 @@ const CatalogueStudioSchema = z.object({
   id: z.string().min(1),
   name: z.string(),
   logoUrl: z.string().nullable(),
+  lightLogoUrl: z.string().nullable(),
 });
 
 const CatalogueGenreSchema = z.object({
