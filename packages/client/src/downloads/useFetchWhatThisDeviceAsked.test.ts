@@ -52,6 +52,7 @@ const aFile = (download: Download, over: Partial<HeldFile> = {}): HeldFile => ({
   failure: null,
   keptAt: '2026-09-25T00:10:00.000Z',
   hasPoster: false,
+  hasTrickplay: false,
   ...over,
 });
 

@@ -101,6 +101,7 @@ import { describePlaying } from './describePlaying';
 import { PausedScreen } from './components/PausedScreen/PausedScreen';
 import type { CastContext } from '@ValenceScreens/playback/castSender.types';
 import { aKeptSession } from '@ValenceClient/downloads/aKeptSession';
+import { sourceForAFile, trickplayForAFile } from '@ValenceClient/downloads/keepingFiles';
 import { useOfflineMode } from '@ValenceClient/offline/useOfflineMode';
 import type { StartedSession } from '@ValenceClient/playback/startPlaybackSession';
 import type { MediaDetail } from '@ValenceContracts/schemas/Library';
@@ -236,8 +237,8 @@ const EMPTY_HEALTH: PlaybackHealth = {
  * @param party - The watch party this viewing is part of, where it is part of one.
  * @param partyNotice - Something the party has to say, which may outlive the party itself.
  * @param renderPartyMenu - How to draw the watch party control in the bar, told when the bar has gone.
- * @param keptSource - Where a copy kept on this device is read from, which is played instead of asking
- * the server for a session.
+ * @param keptDownloadId - The download of a copy kept on this device, which is played, and scrubbed
+ * through with its own thumbnails, instead of asking the server for a session.
  */
 const VideoPlayer = ({
   media,
@@ -253,7 +254,7 @@ const VideoPlayer = ({
   party,
   partyNotice = null,
   renderPartyMenu,
-  keptSource,
+  keptDownloadId,
 }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -265,6 +266,7 @@ const VideoPlayer = ({
   const cache = useQueryClient();
   const { isOffline } = useOfflineMode();
   const isOfflineRef = useRef(isOffline);
+  const keptSource = keptDownloadId === undefined ? undefined : sourceForAFile(keptDownloadId);
 
   useEffect(() => {
     isOfflineRef.current = isOffline;
@@ -1083,10 +1085,6 @@ const VideoPlayer = ({
     setSegments([]);
     setSelectedAudioIndex(null);
 
-    if (isOffline) {
-      return;
-    }
-
     let askingAgain: ReturnType<typeof setTimeout> | null = null;
 
     const askForFrames = () => {
@@ -1103,7 +1101,29 @@ const VideoPlayer = ({
       });
     };
 
-    askForFrames();
+    if (keptDownloadId !== undefined) {
+      void trickplayForAFile(keptDownloadId).then((kept) => {
+        if (abandoned) {
+          return;
+        }
+
+        if (kept !== null || isOffline) {
+          setTrickplay(kept);
+        } else {
+          askForFrames();
+        }
+      });
+    }
+
+    if (isOffline) {
+      return () => {
+        abandoned = true;
+      };
+    }
+
+    if (keptDownloadId === undefined) {
+      askForFrames();
+    }
 
     void cache
       .ensureQueryData(libraryQueries.detail(media.id))
@@ -1153,7 +1173,7 @@ const VideoPlayer = ({
         clearTimeout(askingAgain);
       }
     };
-  }, [media.id, cache, isOffline]);
+  }, [media.id, cache, isOffline, keptDownloadId]);
 
   useEffect(() => {
     if (detail === null || session === null || subtitleTracks.length === 0) {

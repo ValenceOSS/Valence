@@ -36,6 +36,7 @@ const aFilm = (): HeldFile => ({
   failure: null,
   keptAt: '2026-08-22T00:00:00.000Z',
   hasPoster: true,
+  hasTrickplay: false,
 });
 
 const unreachable: Reachability = {

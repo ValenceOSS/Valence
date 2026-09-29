@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -28,6 +28,22 @@ describe('whatWasAsked', () => {
 
   it('reads its artwork out of one', () => {
     expect(whatWasAsked('/held', `/held/${ID}/poster`)?.kind).toBe('image/jpeg');
+  });
+
+  it('reads a thumbnail sheet out of one, from its own folder', () => {
+    expect(whatWasAsked('/held', `/held/${ID}/trickplay/sheet-001.jpg`)).toEqual({
+      path: join('/held', `${ID}.trickplay`, 'sheet-001.jpg'),
+      kind: 'image/jpeg',
+    });
+  });
+
+  it('reads the thumbnails index out of one', () => {
+    expect(whatWasAsked('/held', `/held/${ID}/trickplay/thumbnails.vtt`)?.kind).toBe('text/vtt');
+  });
+
+  it('refuses a thumbnail name that would climb out of its folder', () => {
+    expect(whatWasAsked('/held', `/held/${ID}/trickplay/../${ID}.mp4`)).toBeNull();
+    expect(whatWasAsked('/held', `/held/${ID}/trickplay/.hidden`)).toBeNull();
   });
 
   it('refuses an address that is not a held file', () => {
@@ -102,6 +118,15 @@ describe('aHeldFile', () => {
 
     expect(answer.headers.get('content-type')).toBe('image/jpeg');
     await expect(answer.text()).resolves.toBe('an-image');
+  });
+
+  it('hands over a thumbnail sheet kept beside it', async () => {
+    await mkdir(join(folder, `${ID}.trickplay`));
+    await writeFile(join(folder, `${ID}.trickplay`, 'sheet-001.jpg'), 'a-sheet');
+
+    const answer = await aHeldFile(folder, `/held/${ID}/trickplay/sheet-001.jpg`, null);
+
+    expect(await answer.text()).toBe('a-sheet');
   });
 
   it('says plainly that it is not holding something rather than failing', async () => {

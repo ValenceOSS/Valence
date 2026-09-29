@@ -43,6 +43,7 @@ const HERE: HeldFile = {
   failure: null,
   keptAt: '2026-01-01T00:20:00.000Z',
   hasPoster: false,
+  hasTrickplay: false,
 };
 
 afterEach(() => {
@@ -56,7 +57,7 @@ describe('KeptPlayerPage', () => {
 
     expect(await screen.findByText('playing Arrival')).toBeInTheDocument();
     expect(drawn.player).toMatchObject({
-      keptSource: `/held/${HERE.downloadId}`,
+      keptDownloadId: HERE.downloadId,
       isImmersive: true,
       media: { id: HERE.mediaId },
     });

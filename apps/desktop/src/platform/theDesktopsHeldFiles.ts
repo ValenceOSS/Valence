@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { HeldFileSchema } from '@ValenceContracts/schemas/HeldFile';
+import { KEPT_TRICKPLAY_INDEX } from '@ValenceClient/downloads/KEPT_TRICKPLAY_INDEX';
+import { keptTrickplayFrom } from '@ValenceClient/downloads/keptTrickplayFrom';
 import type { HeldFiles } from '@ValenceClient/platform/Platform.types';
 
 const HeldFilesSchema = z.array(HeldFileSchema).catch([]);
@@ -34,6 +36,12 @@ const theDesktopsHeldFiles = (): HeldFiles => {
     },
     sourceFor: (downloadId) => `/held/${downloadId}`,
     posterFor: (downloadId) => `/held/${downloadId}/poster`,
+    trickplayFor: async (downloadId) => {
+      const index = `/held/${downloadId}/trickplay/${KEPT_TRICKPLAY_INDEX}`;
+      const answer = await fetch(index).catch(() => null);
+
+      return answer === null || !answer.ok ? null : keptTrickplayFrom(await answer.text(), index);
+    },
     whenChanged: (listener) =>
       held.whenChanged((said) => {
         listener(HeldFilesSchema.parse(said));

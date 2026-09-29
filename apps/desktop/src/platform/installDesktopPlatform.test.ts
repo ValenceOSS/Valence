@@ -108,6 +108,33 @@ describe('installDesktopPlatform', () => {
     expect(platformInUse().held.sourceFor('a-download')).toBe('/held/a-download');
   });
 
+  it('reads the thumbnails kept beside a film from this client', async () => {
+    const fetching = vi.fn((address: string) =>
+      Promise.resolve(
+        new Response(
+          address.endsWith('thumbnails.vtt')
+            ? 'WEBVTT\n\n00:00:00.000 --> 00:00:10.000\nsheet-001.jpg#xywh=0,0,320,180\n'
+            : 'gone',
+        ),
+      ),
+    );
+
+    vi.stubGlobal('fetch', fetching);
+    installDesktopPlatform();
+
+    const kept = await platformInUse().held.trickplayFor('a-download');
+
+    expect(fetching).toHaveBeenCalledWith('/held/a-download/trickplay/thumbnails.vtt');
+    expect(kept?.thumbnails[0]?.sheetUrl).toBe('/held/a-download/trickplay/sheet-001.jpg');
+  });
+
+  it('finds no thumbnails where none were kept', async () => {
+    vi.stubGlobal('fetch', () => Promise.resolve(new Response('gone', { status: 404 })));
+    installDesktopPlatform();
+
+    await expect(platformInUse().held.trickplayFor('a-download')).resolves.toBeNull();
+  });
+
   it('takes what the process that does the asking says about reach', () => {
     vi.stubGlobal('valence', aBridge(false));
 

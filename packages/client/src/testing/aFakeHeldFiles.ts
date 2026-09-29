@@ -62,6 +62,7 @@ const aFakeHeldFiles = (starting: HeldFile[] = []): FakeHeldFiles => {
       },
       sourceFor: (downloadId) => `/held/${downloadId}`,
       posterFor: (downloadId) => `/held/${downloadId}/poster`,
+      trickplayFor: () => Promise.resolve(null),
       whenChanged: (listener) => {
         listeners.add(listener);
 

@@ -21,6 +21,7 @@ const aFile = (over: Partial<HeldFile> = {}): HeldFile => ({
   failure: null,
   keptAt: '2026-08-22T00:00:00.000Z',
   hasPoster: false,
+  hasTrickplay: false,
   ...over,
 });
 

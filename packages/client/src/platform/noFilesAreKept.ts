@@ -20,6 +20,7 @@ const noFilesAreKept = (): HeldFiles => ({
   pause: () => Promise.resolve(),
   sourceFor: () => '',
   posterFor: () => '',
+  trickplayFor: () => Promise.resolve(null),
   whenChanged: () => () => {},
 });
 

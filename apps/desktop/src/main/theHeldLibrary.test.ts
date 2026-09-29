@@ -56,6 +56,54 @@ type Serving = {
   status?: number;
   poster?: string | null;
   pauseFor?: number;
+  trickplay?: 'made' | 'not yet' | 'missing a sheet';
+};
+
+const INDEX = '/api/playback/trickplay/t1/thumbnails.vtt';
+
+const VTT = [
+  'WEBVTT',
+  '',
+  '00:00:00.000 --> 00:00:10.000',
+  'sheet-001.jpg#xywh=0,0,320,180',
+  '',
+  '00:16:40.000 --> 00:16:50.000',
+  'sheet-002.jpg#xywh=0,0,320,180',
+].join('\n');
+
+/**
+ * What the server says about a film's thumbnails, or nothing where this is not about them.
+ *
+ * @param address - What was asked for.
+ * @param serving - What the server has.
+ * @returns The answer, or null.
+ */
+const thumbnailsAnswer = (address: string, serving: Serving): Response | null => {
+  if (address.endsWith('/trickplay')) {
+    return serving.trickplay === undefined || serving.trickplay === 'not yet'
+      ? new Response('not yet', { status: 404 })
+      : new Response(
+          JSON.stringify({
+            id: 't1',
+            url: INDEX,
+            intervalSeconds: 10,
+            tileWidth: 320,
+            tileHeight: 180,
+          }),
+        );
+  }
+
+  if (address.endsWith(INDEX)) {
+    return new Response(VTT);
+  }
+
+  if (address.includes('/api/playback/trickplay/t1/')) {
+    return serving.trickplay === 'missing a sheet' && address.endsWith('sheet-002.jpg')
+      ? new Response('gone', { status: 404 })
+      : new Response('a-sheet');
+  }
+
+  return null;
 };
 
 const addressOf = (where: RequestInfo | URL): string => {
@@ -81,6 +129,12 @@ const aServer = (serving: Serving = {}) => {
     const address = addressOf(where);
 
     seen.push(address);
+
+    const aboutThumbnails = thumbnailsAnswer(address, serving);
+
+    if (aboutThumbnails !== null) {
+      return Promise.resolve(aboutThumbnails);
+    }
 
     if (address.includes('/image/poster')) {
       return Promise.resolve(
@@ -204,6 +258,58 @@ describe('theHeldLibrary', () => {
     expect([held?.state, held?.hasPoster]).toEqual(['here', false]);
   });
 
+  it('keeps the thumbnails beside it, for scrubbing without the server', async () => {
+    const { library } = aLibrary({ trickplay: 'made' });
+
+    await library.keep(asked);
+    await settle();
+
+    const [held] = await library.all();
+    const kept = join(folder, `${asked.downloadId}.trickplay`);
+
+    expect(held?.hasTrickplay).toBe(true);
+    await expect(readFile(join(kept, 'thumbnails.vtt'), 'utf8')).resolves.toBe(VTT);
+    await expect(readFile(join(kept, 'sheet-002.jpg'), 'utf8')).resolves.toBe('a-sheet');
+  });
+
+  it('keeps the film while the server has not made its thumbnails yet', async () => {
+    const { library } = aLibrary({ trickplay: 'not yet' });
+
+    await library.keep(asked);
+    await settle();
+
+    const [held] = await library.all();
+
+    expect([held?.state, held?.hasTrickplay]).toEqual(['here', false]);
+  });
+
+  it('picks the thumbnails up once the server has made them', async () => {
+    const serving: Serving = { trickplay: 'not yet' };
+    const { library } = aLibrary(serving);
+
+    await library.keep(asked);
+    await settle();
+
+    serving.trickplay = 'made';
+    await library.carryOnWhereItLeftOff();
+
+    const [held] = await library.all();
+
+    expect(held?.hasTrickplay).toBe(true);
+  });
+
+  it('keeps all the thumbnails or none, so the scrubber never draws holes', async () => {
+    const { library } = aLibrary({ trickplay: 'missing a sheet' });
+
+    await library.keep(asked);
+    await settle();
+
+    const [held] = await library.all();
+
+    expect(held?.hasTrickplay).toBe(false);
+    await expect(stat(join(folder, `${asked.downloadId}.trickplay`))).rejects.toThrow();
+  });
+
   it('stops offering something whose file somebody deleted from Finder', async () => {
     const { library } = aLibrary();
 
@@ -266,6 +372,16 @@ describe('theHeldLibrary', () => {
     );
   });
 
+  it('takes the thumbnails with it when a download is forgotten', async () => {
+    const { library } = aLibrary({ trickplay: 'made' });
+
+    await library.keep(asked);
+    await settle();
+    await library.drop(asked.downloadId);
+
+    await expect(stat(join(folder, `${asked.downloadId}.trickplay`))).rejects.toThrow();
+  });
+
   it('forgets a download and takes its file with it', async () => {
     const { library } = aLibrary();
 
@@ -312,6 +428,7 @@ describe('theHeldLibrary', () => {
       failure: null,
       keptAt: '2026-08-22T00:00:00.000Z',
       hasPoster: false,
+      hasTrickplay: false,
     });
 
     index.write({
@@ -323,6 +440,7 @@ describe('theHeldLibrary', () => {
       failure: null,
       keptAt: '2026-08-22T00:00:00.000Z',
       hasPoster: false,
+      hasTrickplay: false,
     });
 
     const { library } = aLibrary({}, index);

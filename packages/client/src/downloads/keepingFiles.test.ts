@@ -10,6 +10,7 @@ import {
   pauseAFile,
   posterForAFile,
   sourceForAFile,
+  trickplayForAFile,
 } from './keepingFiles';
 
 const prepared: Download = {
@@ -114,6 +115,25 @@ describe('sourceForAFile', () => {
     installPlatform(aFakePlatform({ held: aFakeHeldFiles().held }));
 
     expect(posterForAFile(prepared.id)).toBe(`/held/${prepared.id}/poster`);
+  });
+
+  it('finds no thumbnails on a client that keeps nothing', async () => {
+    installPlatform(aFakePlatform());
+
+    await expect(trickplayForAFile(prepared.id)).resolves.toBeNull();
+  });
+
+  it('finds no thumbnails rather than failing where they could not be read', async () => {
+    installPlatform(
+      aFakePlatform({
+        held: {
+          ...aFakeHeldFiles().held,
+          trickplayFor: () => Promise.reject(new Error('unreadable')),
+        },
+      }),
+    );
+
+    await expect(trickplayForAFile(prepared.id)).resolves.toBeNull();
   });
 
   it('offers nowhere on a client that keeps nothing', () => {

@@ -1,4 +1,3 @@
-import { sourceForAFile } from '@ValenceClient/downloads/keepingFiles';
 import { rememberWatchedOffline, watchedOffline } from '@ValenceClient/offline/watchedOffline';
 import { VideoPlayer } from '@ValenceScreens/components/VideoPlayer/VideoPlayer';
 import type { PlayingAKeptFileProps } from './PlayingAKeptFile.types';
@@ -23,7 +22,7 @@ const PlayingAKeptFile = ({ file, onLeave }: PlayingAKeptFileProps) => {
           seriesTitle: file.seriesTitle,
           hasPoster: file.hasPoster,
         }}
-        keptSource={sourceForAFile(file.downloadId)}
+        keptDownloadId={file.downloadId}
         startSeconds={gotTo?.positionSeconds ?? 0}
         isImmersive
         onClose={onLeave}
