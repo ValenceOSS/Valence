@@ -49,13 +49,18 @@ const MANIFEST = PluginManifestSchema.parse({
         },
       ],
     },
+    { kind: 'webhooks' },
   ],
   settings: [{ id: 'clientId', label: 'Client id', kind: 'text' }],
-  contributes: { pages: [{ id: 'home', title: 'Home', placement: 'account' }] },
+  contributes: {
+    pages: [{ id: 'home', title: 'Home', placement: 'account' }],
+    webhooks: [{ id: 'ping', title: 'Pings' }],
+  },
 });
 
 const CODE = `globalThis.valencePlugin = {
   pages: { home: { render: async ({ viewer }) => ({ blocks: [{ type: 'text', text: 'Hello ' + viewer.profileId }] }) } },
+  webhooks: { ping: async () => {} },
 };`;
 
 const PACKAGE = packPlugin({ format: 1, manifest: MANIFEST, code: CODE, assets: {} });
@@ -315,4 +320,23 @@ describe('the plugin routes', () => {
       '#/components/schemas/PluginSurfaceBlock',
     );
   });
+
+  it('takes a webhook at the plugin’s private address from anybody, and nothing at a wrong one', async () => {
+    const { request, install, service } = await signedInWith(['server.plugins']);
+
+    await install();
+
+    const listed = InstalledPluginsSchema.parse(await (await request('/api/plugins')).json());
+    const address = new URL(listed.plugins[0]?.webhooks[0]?.url ?? '');
+    const path = address.pathname;
+    const post = (at: string, body: string) =>
+      request(at, { method: 'POST', body, headers: { 'content-type': 'application/json' } }, false);
+
+    expect((await post(path, '{"hello":true}')).status).toBe(204);
+    expect((await post(`${path.slice(0, -4)}abcd`, '{}')).status).toBe(404);
+    expect((await post(path.replace('/ping/', '/pong/'), '{}')).status).toBe(404);
+    expect((await post(path, 'x'.repeat(300 * 1024))).status).toBe(413);
+
+    service.stop();
+  }, 30_000);
 });

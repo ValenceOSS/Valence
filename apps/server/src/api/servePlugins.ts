@@ -18,6 +18,7 @@ import {
   previewCatalogueRoute,
   previewUploadRoute,
   readCatalogueRoute,
+  receiveWebhookRoute,
   renderPageRoute,
   renderPanelRoute,
   rollbackPluginRoute,
@@ -39,6 +40,15 @@ const NO_SUCH = { error: 'There is no such plugin, or it is turned off.' } as co
 const BROWSER_COOKIE = 'valence-plugin-connect';
 
 const CALLBACK_PATH = '/api/plugins/oauth/callback';
+
+const MOST_WEBHOOK_BYTES = 256 * 1024;
+
+const WEBHOOK_HEADERS_KEPT_BACK = new Set([
+  'cookie',
+  'authorization',
+  'x-api-key',
+  'proxy-authorization',
+]);
 
 const PAGE_HEADERS = {
   'x-content-type-options': 'nosniff',
@@ -229,6 +239,45 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
     return 'refused' in changed
       ? context.json({ error: changed.refused }, 422)
       : context.json(changed, 200);
+  });
+
+  app.openapi(receiveWebhookRoute, async (context) => {
+    const { id, hook, secret } = context.req.valid('param');
+    const declared = Number(context.req.header('content-length') ?? '0');
+
+    if (declared > MOST_WEBHOOK_BYTES) {
+      return context.json({ error: 'That message is too large.' }, 413);
+    }
+
+    const bytes = new Uint8Array(await context.req.arrayBuffer());
+
+    if (bytes.byteLength > MOST_WEBHOOK_BYTES) {
+      return context.json({ error: 'That message is too large.' }, 413);
+    }
+
+    const headers = Object.fromEntries(
+      [...context.req.raw.headers.entries()].filter(
+        ([name]) => !WEBHOOK_HEADERS_KEPT_BACK.has(name.toLowerCase()),
+      ),
+    );
+    const heard =
+      plugins === undefined
+        ? 'unknown'
+        : await plugins.receiveWebhook(id, hook, secret, {
+            headers,
+            body: new TextDecoder().decode(bytes),
+          });
+
+    switch (heard) {
+      case 'accepted':
+        return context.body(null, 204);
+      case 'unknown':
+        return context.json(NO_SUCH, 404);
+      case 'limited':
+        return context.json({ error: 'Too many messages. Try again in a minute.' }, 429);
+      case 'failed':
+        return context.json({ error: 'The plugin could not handle that message.' }, 502);
+    }
   });
 
   app.openapi(rollbackPluginRoute, async (context) => {

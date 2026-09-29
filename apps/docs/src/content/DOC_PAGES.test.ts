@@ -22,6 +22,7 @@ describe('DOC_PAGES', () => {
         '/plugins/themes',
         '/plugins/accounts-and-oauth',
         '/plugins/schedules-and-events',
+        '/plugins/webhooks',
         '/plugins/packaging',
         '/plugins/publishing',
         '/plugins/upgrades-and-rollback',

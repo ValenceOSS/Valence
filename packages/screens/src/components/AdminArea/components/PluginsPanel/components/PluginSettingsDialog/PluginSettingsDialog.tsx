@@ -1,15 +1,13 @@
-import { CircleCheck as CircleCheckIcon, Copy as CopyIcon } from '@keyline-icons/react';
 import { useEffect, useState } from 'react';
-import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
-import { Icon } from '@ValenceUI/Icon';
 import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
 import { changePlugin } from '@ValenceClient/plugins/changePlugin';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
+import { CopyableAddress } from './components/CopyableAddress/CopyableAddress';
 import type { PluginSettingsDialogProps } from './PluginSettingsDialog.types';
 
 /**
@@ -29,7 +27,6 @@ const PluginSettingsDialog = ({
   onClose,
   onSaved,
 }: PluginSettingsDialogProps) => {
-  const [hasCopied, setHasCopied] = useState(false);
   const [values, setValues] = useState<Record<string, string | boolean>>({});
   const [isSaving, setIsSaving] = useState(false);
 
@@ -59,29 +56,21 @@ const PluginSettingsDialog = ({
           <DialogContent className="flex flex-col gap-4">
             {redirectUri === null ||
             !plugin.permissions.some((permission) => permission.kind === 'accounts') ? null : (
-              <div className="flex flex-col gap-1.5 rounded-lg border border-border/60 bg-surface-raised/40 p-3">
-                <span className="text-sm font-semibold">Redirect address</span>
-                <span className="text-xs text-text-muted">
-                  Give this to each service when you create its API client, so it can send people
-                  back here once they connect.
-                </span>
-                <div className="flex items-center gap-2">
-                  <code className="min-w-0 flex-1 truncate font-mono text-xs">{redirectUri}</code>
-                  <Button
-                    size="xs"
-                    variant="ghost"
-                    onClick={() => {
-                      void navigator.clipboard.writeText(redirectUri).then(() => {
-                        setHasCopied(true);
-                      });
-                    }}
-                  >
-                    {hasCopied ? 'Copied' : 'Copy'}
-                    <Icon of={hasCopied ? CircleCheckIcon : CopyIcon} size={14} />
-                  </Button>
-                </div>
-              </div>
+              <CopyableAddress
+                title="Redirect address"
+                detail="Give this to each service when you create its API client, so it can send people back here once they connect."
+                address={redirectUri}
+              />
             )}
+
+            {plugin.webhooks.map((hook) => (
+              <CopyableAddress
+                key={hook.id}
+                title={hook.title}
+                detail="Give this webhook address to the service that sends these messages. It is secret: anybody holding it can send this plugin a message."
+                address={hook.url}
+              />
+            ))}
 
             {plugin.settings.map((setting) => {
               const value = values[setting.id];

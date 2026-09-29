@@ -58,6 +58,12 @@ const describePermission = (permission: Permission): { title: string; detail: st
         title: 'Send notifications',
         detail: 'Tell people things in Valence’s own notifications.',
       };
+    case 'webhooks':
+      return {
+        title: 'Receive webhooks',
+        detail:
+          'Let outside services send it messages at private addresses of its own, which it acts on here.',
+      };
   }
 };
 

@@ -30,6 +30,8 @@ const describePermission = (permission: Permission): string => {
       return `Connects to your ${listInWords(permission.providers.map((provider) => provider.name))} account`;
     case 'notifications':
       return 'Sends you notifications';
+    case 'webhooks':
+      return 'Receives messages from outside services';
   }
 };
 

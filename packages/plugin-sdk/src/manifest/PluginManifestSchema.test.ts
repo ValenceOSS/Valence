@@ -32,6 +32,7 @@ describe('PluginManifestSchema', () => {
       themes: [],
       schedules: [],
       events: [],
+      webhooks: [],
       nodes: [],
     });
   });
@@ -66,7 +67,7 @@ describe('PluginManifestSchema', () => {
 
   it('insists on an entry when the plugin has anything to run', () => {
     expect(problemsOf({ ...aManifest(), entry: undefined })).toContain(
-      'A plugin with pages, panels, schedules, events or permissions names its entry',
+      'A plugin with pages, panels, schedules, events, webhooks or permissions names its entry',
     );
   });
 
@@ -180,6 +181,37 @@ describe('PluginManifestSchema', () => {
         }),
       ),
     ).toContain('Each permission node is declared once');
+  });
+
+  it('receives webhooks only with the webhooks permission, each id once', () => {
+    const hooks = { webhooks: [{ id: 'ping', title: 'Pings' }] };
+
+    expect(
+      problemsOf(
+        aManifest({ contributes: hooks, permissions: [{ kind: 'viewing', access: 'write' }] }),
+      ),
+    ).toContain('Receiving webhooks needs the webhooks permission');
+    expect(
+      problemsOf(
+        aManifest({
+          contributes: hooks,
+          permissions: [{ kind: 'viewing', access: 'write' }, { kind: 'webhooks' }],
+        }),
+      ),
+    ).toEqual([]);
+    expect(
+      problemsOf(
+        aManifest({
+          contributes: {
+            webhooks: [
+              { id: 'ping', title: 'Pings' },
+              { id: 'ping', title: 'Pings again' },
+            ],
+          },
+          permissions: [{ kind: 'viewing', access: 'write' }, { kind: 'webhooks' }],
+        }),
+      ),
+    ).toContain('Each webhook id is used once');
   });
 
   it('refuses an event the plugin has no permission to hear', () => {

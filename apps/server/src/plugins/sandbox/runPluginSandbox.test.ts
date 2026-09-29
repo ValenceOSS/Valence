@@ -132,6 +132,7 @@ describe('the plugin sandbox', () => {
       events: false,
       accountConnected: false,
       upgraded: false,
+      webhooks: [],
     });
   });
 

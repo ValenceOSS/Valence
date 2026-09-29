@@ -10,6 +10,7 @@ const HANDLERS = [
   'event',
   'accountConnected',
   'upgraded',
+  'webhook',
 ] as const;
 
 const ToSandboxSchema = z.discriminatedUnion('type', [

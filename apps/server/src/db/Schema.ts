@@ -1339,6 +1339,19 @@ const pluginPrevious = pgTable('plugin_previous', {
   keptAt: timestamp('keptAt').notNull().defaultNow(),
 });
 
+const pluginHook = pgTable(
+  'plugin_hook',
+  {
+    pluginId: text('pluginId')
+      .notNull()
+      .references(() => pluginInstallation.id, { onDelete: 'cascade' }),
+    hookId: text('hookId').notNull(),
+    secret: text('secret').notNull(),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.pluginId, table.hookId] })],
+);
+
 const pluginConnection = pgTable(
   'plugin_connection',
   {
@@ -1390,6 +1403,7 @@ export {
   pluginInstallation,
   pluginStorage,
   pluginPrevious,
+  pluginHook,
   pluginConnection,
   pluginProfile,
   accountActivity,

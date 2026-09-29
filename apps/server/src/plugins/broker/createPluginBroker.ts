@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
@@ -54,6 +55,13 @@ const ARGS = {
   'storage.set': z.tuple([Key, JsonValueSchema]),
   'storage.delete': z.tuple([Key]),
   'storage.keys': z.tuple([z.string().max(200).optional()]),
+  'crypto.hmac': z.tuple([
+    z.enum(['sha1', 'sha256', 'sha512']),
+    z.string().max(4096),
+    z.string().max(1_000_000),
+    z.enum(['hex', 'base64']).optional(),
+  ]),
+  'crypto.equal': z.tuple([z.string().max(4096), z.string().max(4096)]),
   'http.fetch': z.tuple([z.string().max(2000), FetchInit]),
   'accounts.connection': z.tuple([Id, Id]),
   'accounts.disconnect': z.tuple([Id, Id]),
@@ -174,6 +182,20 @@ const createPluginBroker = ({
         log(method === 'log.info' ? 'info' : method === 'log.warn' ? 'warn' : 'error', message);
 
         return null;
+      }
+      case 'crypto.hmac': {
+        const [algorithm, key, message, encoding] = ARGS[method].parse(args);
+
+        return createHmac(algorithm, key)
+          .update(message)
+          .digest(encoding ?? 'hex');
+      }
+      case 'crypto.equal': {
+        const [left, right] = ARGS[method].parse(args).map((text) => Buffer.from(text));
+
+        return left !== undefined && right !== undefined && left.length === right.length
+          ? timingSafeEqual(left, right)
+          : false;
       }
       case 'storage.get': {
         needs('storage');

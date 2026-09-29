@@ -1,0 +1,92 @@
+---
+title: Webhooks
+description: Let an outside service tell your plugin about something the moment it happens, at a private address of its own.
+order: 9
+---
+
+Some services tell you when something changes rather than waiting to be asked: a playlist edited on Spotify, a list updated on AniList, a build finished on GitHub. A webhook is how your plugin hears about it straight away instead of polling on a schedule.
+
+## Declare it
+
+Ask for the `webhooks` permission and name each webhook under `contributes.webhooks`:
+
+```json
+"permissions": [{ "kind": "webhooks" }],
+"contributes": {
+  "webhooks": [{ "id": "spotify", "title": "Spotify playlist changes" }]
+}
+```
+
+| Field   | Holds                                                    |
+| ------- | -------------------------------------------------------- |
+| `id`    | Up to 40 lower case letters, digits and hyphens          |
+| `title` | 1 to 60 characters, shown to the administrator beside it |
+
+A plugin has at most 8 webhooks.
+
+## The address
+
+Every install gets a private address for each webhook, with a secret of its own in it:
+
+```
+https://your-valence/api/plugins/<plugin>/hooks/<webhook>/<secret>
+```
+
+The administrator finds it in the plugin's **Settings**, with a button to copy it, and gives it to the service. Anybody holding the address can send your plugin a message, so treat what arrives as untrusted, and check the service's own signature where it sends one.
+
+The address needs no Valence session: a service calls it from its own servers. A wrong secret, a webhook you did not declare, or a plugin that is turned off all answer the same `404`, so the address says nothing about what exists.
+
+## Handle it
+
+```ts
+import { definePlugin } from '@ValenceSDK/host/definePlugin';
+
+definePlugin({
+  webhooks: {
+    spotify: async ({ valence }, request) => {
+      const secret = (await valence.settings.read())['spotifySecret'];
+      const expected = await valence.crypto.hmac('sha256', String(secret), request.body);
+
+      if (!(await valence.crypto.equal(expected, request.headers['x-spotify-signature'] ?? ''))) {
+        valence.log.warn('A Spotify message was not signed by Spotify');
+
+        return;
+      }
+
+      const change = JSON.parse(request.body);
+
+      await valence.storage.set(`changed:${change.playlistId}`, change.changedAt);
+    },
+  },
+});
+```
+
+`request` is:
+
+```ts
+type WebhookRequest = {
+  headers: Record<string, string>;
+  body: string;
+  receivedAt: string;
+};
+```
+
+- `headers` are the request's own, lower case, without `cookie`, `authorization`, `proxy-authorization` or `x-api-key`.
+- `body` is the whole body as text, at most 256 KB. Parse it yourself.
+- Only `POST` reaches you.
+
+## What the service is told
+
+| Answer | Means                                                 |
+| ------ | ----------------------------------------------------- |
+| `204`  | Your handler finished                                 |
+| `404`  | No plugin receives at that address                    |
+| `413`  | The body is over 256 KB                               |
+| `429`  | More than 60 messages reached this plugin in a minute |
+| `502`  | Your handler threw or ran out of time                 |
+
+Keep the handler quick, as with events: store what arrived and do slow work on a schedule. Most services retry on `429` and `502`.
+
+## Removing a webhook
+
+A webhook left out of a later version stops answering straight away, and its secret is forgotten; adding it back gives it a new address. Removing the plugin forgets every address it had.

@@ -34,6 +34,7 @@ const PluginManifestSchema = z
       themes: [],
       schedules: [],
       events: [],
+      webhooks: [],
       nodes: [],
     }),
     entry: z
@@ -62,6 +63,7 @@ const PluginManifestSchema = z
       manifest.contributes.panels.length > 0 ||
       manifest.contributes.schedules.length > 0 ||
       manifest.contributes.events.length > 0 ||
+      manifest.contributes.webhooks.length > 0 ||
       manifest.permissions.length > 0;
 
     if (new Set(kinds).size !== kinds.length) {
@@ -72,7 +74,8 @@ const PluginManifestSchema = z
       context.addIssue({
         code: 'custom',
         path: ['entry'],
-        message: 'A plugin with pages, panels, schedules, events or permissions names its entry',
+        message:
+          'A plugin with pages, panels, schedules, events, webhooks or permissions names its entry',
       });
     }
 
@@ -123,6 +126,20 @@ const PluginManifestSchema = z
           message: `Hearing ${topic} needs the ${EVENT_PERMISSIONS[topic]} permission`,
         });
       }
+    }
+
+    if (manifest.contributes.webhooks.length > 0 && !kinds.includes('webhooks')) {
+      context.addIssue({
+        code: 'custom',
+        path: ['contributes', 'webhooks'],
+        message: 'Receiving webhooks needs the webhooks permission',
+      });
+    }
+
+    const hooks = manifest.contributes.webhooks.map((hook) => hook.id);
+
+    if (new Set(hooks).size !== hooks.length) {
+      context.addIssue({ code: 'custom', message: 'Each webhook id is used once' });
     }
 
     const nodes = manifest.contributes.nodes.map((node) => node.id);

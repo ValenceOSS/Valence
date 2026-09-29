@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto';
+import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { readPluginPackage } from '@ValenceSDK/package/readPluginPackage';
 import { sha256Of } from '@ValenceSDK/package/sha256Of';
 import { SurfaceSchema } from '@ValenceSDK/surface/SurfaceSchema';
@@ -85,6 +85,10 @@ const CONNECT_ACTION = 'valence.accounts.connect';
 const DISCONNECT_ACTION = 'valence.accounts.disconnect';
 
 const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/avif']);
+
+const WEBHOOK_WINDOW_MILLISECONDS = 60_000;
+
+const MOST_WEBHOOKS_PER_WINDOW = 60;
 
 const ASSET_TYPES: Readonly<Record<string, string>> = {
   png: 'image/png',
@@ -272,6 +276,56 @@ const createPluginService = ({
     } catch (error) {
       return error instanceof Error && error.message !== '' ? error.message : 'It failed.';
     }
+  };
+
+  const hookBase = new URL(redirectUri).origin;
+
+  const heard = new Map<string, number[]>();
+
+  const ensureHooks = async (record: InstalledRecord): Promise<void> => {
+    const receives = record.manifest.permissions.some(
+      (permission) => permission.kind === 'webhooks',
+    );
+    const declared = receives ? record.manifest.contributes.webhooks.map((hook) => hook.id) : [];
+    const kept = await store.readHooks(record.id);
+
+    for (const hookId of declared) {
+      if (kept[hookId] === undefined) {
+        await store.saveHook(record.id, hookId, randomBytes(24).toString('base64url'));
+      }
+    }
+
+    await store.forgetHooksExcept(record.id, declared);
+  };
+
+  const addressesOf = async (record: InstalledRecord): Promise<InstalledPlugin['webhooks']> => {
+    const kept = await store.readHooks(record.id);
+
+    return record.manifest.contributes.webhooks.flatMap((hook) => {
+      const secret = kept[hook.id];
+
+      return secret === undefined
+        ? []
+        : [
+            {
+              id: hook.id,
+              title: hook.title,
+              url: `${hookBase}/api/plugins/${encodeURIComponent(record.id)}/hooks/${encodeURIComponent(hook.id)}/${secret}`,
+            },
+          ];
+    });
+  };
+
+  const summarise = async (record: InstalledRecord, updateAvailable: string | null) =>
+    summaryOf(record, runtime.stateOf(record.id), updateAvailable, await addressesOf(record));
+
+  const isTooOften = (pluginId: string): boolean => {
+    const since = now() - WEBHOOK_WINDOW_MILLISECONDS;
+    const recent = (heard.get(pluginId) ?? []).filter((at) => at > since);
+
+    heard.set(pluginId, [...recent, now()]);
+
+    return recent.length >= MOST_WEBHOOKS_PER_WINDOW;
   };
 
   const latestVersions = async (): Promise<Map<string, string>> => {
@@ -495,15 +549,13 @@ const createPluginService = ({
     listInstalled: async (): Promise<InstalledPlugin[]> => {
       const latest = await latestVersions();
 
-      return (await store.list()).map((record) => {
-        const newer = latest.get(record.id);
+      return Promise.all(
+        (await store.list()).map((record) => {
+          const newer = latest.get(record.id);
 
-        return summaryOf(
-          record,
-          runtime.stateOf(record.id),
-          newer !== undefined && newer !== record.version ? newer : null,
-        );
-      });
+          return summarise(record, newer !== undefined && newer !== record.version ? newer : null);
+        }),
+      );
     },
     readCatalogue: async (): Promise<CatalogueListing> => {
       const read = await catalogue.read();
@@ -659,7 +711,9 @@ const createPluginService = ({
       await scheduleAll(saved);
       announce({ pluginId: manifest.id, change: existing === null ? 'installed' : 'updated' });
 
-      return summaryOf(saved, runtime.stateOf(saved.id), null);
+      await ensureHooks(saved);
+
+      return summarise(saved, null);
     },
     change: async (
       id: string,
@@ -710,7 +764,9 @@ const createPluginService = ({
               : 'disabled',
       });
 
-      return summaryOf(saved, runtime.stateOf(id), null);
+      await ensureHooks(saved);
+
+      return summarise(saved, null);
     },
     rollback: async (id: string): Promise<InstalledPlugin | { refused: string } | null> => {
       const record = await store.read(id);
@@ -739,7 +795,9 @@ const createPluginService = ({
       log('info', `plugin ${id}: rolled back from ${record.version} to ${saved.version}`);
       announce({ pluginId: id, change: 'updated' });
 
-      return summaryOf(saved, runtime.stateOf(id), null);
+      await ensureHooks(saved);
+
+      return summarise(saved, null);
     },
     uninstall: async (id: string): Promise<boolean> => {
       runtime.stop(id);
@@ -1006,8 +1064,51 @@ const createPluginService = ({
         }
       });
     },
+    receiveWebhook: async (
+      pluginId: string,
+      hookId: string,
+      secret: string,
+      request: { headers: Record<string, string>; body: string },
+    ): Promise<'accepted' | 'unknown' | 'limited' | 'failed'> => {
+      const found = await runnable(pluginId);
+      const kept = found === null ? undefined : (await store.readHooks(pluginId))[hookId];
+
+      if (
+        found === null ||
+        kept === undefined ||
+        !found.record.manifest.contributes.webhooks.some((hook) => hook.id === hookId) ||
+        !found.record.manifest.permissions.some((permission) => permission.kind === 'webhooks') ||
+        kept.length !== secret.length ||
+        !timingSafeEqual(Buffer.from(kept), Buffer.from(secret))
+      ) {
+        return 'unknown';
+      }
+
+      if (isTooOften(pluginId)) {
+        return 'limited';
+      }
+
+      try {
+        await runtime.invoke(
+          { record: found.record, code: found.code },
+          'webhook',
+          { id: hookId, request: { ...request, receivedAt: new Date(now()).toISOString() } },
+          { kind: 'background' },
+        );
+
+        return 'accepted';
+      } catch (error) {
+        log(
+          'warn',
+          `plugin ${pluginId}: webhook ${hookId} failed: ${error instanceof Error ? error.message : 'failed'}`,
+        );
+
+        return 'failed';
+      }
+    },
     start: async (): Promise<void> => {
       for (const record of await store.list()) {
+        await ensureHooks(record);
         await scheduleAll(record);
       }
     },

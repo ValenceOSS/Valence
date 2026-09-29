@@ -29,6 +29,15 @@ describe('isPublicRoute', () => {
     expect(isPublicRoute('GET', '/api/plugins')).toBe(false);
   });
 
+  it('lets an outside service post to a plugin’s webhook address, and only post there', () => {
+    const address = '/api/plugins/music-import/hooks/spotify/Zm9vYmFyYmF6cXV4cXV1eDEyMzQ1Njc4';
+
+    expect(isPublicRoute('POST', address)).toBe(true);
+    expect(isPublicRoute('GET', address)).toBe(false);
+    expect(isPublicRoute('POST', '/api/plugins/music-import/hooks/spotify')).toBe(false);
+    expect(isPublicRoute('POST', `${address}/more`)).toBe(false);
+  });
+
   describe('the sign-in screen', () => {
     it('keeps who lives here to itself until the server says otherwise', () => {
       expect(isPublicRoute('GET', '/api/profiles/everyone')).toBe(false);

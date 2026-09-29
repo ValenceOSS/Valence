@@ -47,6 +47,15 @@ type ValenceHost = {
     delete: (key: string) => Promise<void>;
     keys: (prefix?: string) => Promise<string[]>;
   };
+  crypto: {
+    hmac: (
+      algorithm: 'sha1' | 'sha256' | 'sha512',
+      key: string,
+      message: string,
+      encoding?: 'hex' | 'base64',
+    ) => Promise<string>;
+    equal: (left: string, right: string) => Promise<boolean>;
+  };
   http: {
     fetch: (
       url: string,

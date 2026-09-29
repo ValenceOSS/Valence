@@ -25,11 +25,21 @@ type PluginEvent = {
   mediaId: string | null;
 };
 
+type WebhookRequest = {
+  headers: Record<string, string>;
+  body: string;
+  receivedAt: string;
+};
+
 type PluginDefinition = {
   pages?: Record<string, SurfaceHandler>;
   panels?: Record<string, SurfaceHandler>;
   schedules?: Record<string, (context: { valence: ValenceHost }) => Promise<void>>;
   events?: (event: PluginEvent, context: { valence: ValenceHost }) => Promise<void>;
+  webhooks?: Record<
+    string,
+    (context: { valence: ValenceHost }, request: WebhookRequest) => Promise<void>
+  >;
   onUpgraded?: (
     context: { valence: ValenceHost },
     versions: { from: string; to: string },
@@ -40,4 +50,11 @@ type PluginDefinition = {
   ) => Promise<void>;
 };
 
-export type { PluginDefinition, PluginEvent, SurfaceContext, SurfaceHandler, Viewer };
+export type {
+  PluginDefinition,
+  PluginEvent,
+  SurfaceContext,
+  SurfaceHandler,
+  Viewer,
+  WebhookRequest,
+};

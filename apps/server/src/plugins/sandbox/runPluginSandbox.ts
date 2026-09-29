@@ -68,6 +68,7 @@ const PRELUDE = `
         events: typeof definition.events === 'function',
         accountConnected: typeof definition.onAccountConnected === 'function',
         upgraded: typeof definition.onUpgraded === 'function',
+        webhooks: Object.keys(definition.webhooks || {}),
       };
     } else if (handler === 'page.render') {
       result = await within(definition.pages, args.id).render(context);
@@ -85,6 +86,8 @@ const PRELUDE = `
       if (typeof definition.events === 'function') await definition.events(args.event, { valence });
     } else if (handler === 'accountConnected') {
       if (typeof definition.onAccountConnected === 'function') await definition.onAccountConnected({ valence }, args.connection);
+    } else if (handler === 'webhook') {
+      await within(definition.webhooks, args.id)({ valence }, args.request);
     } else if (handler === 'upgraded') {
       if (typeof definition.onUpgraded === 'function') await definition.onUpgraded({ valence }, args.versions);
     }

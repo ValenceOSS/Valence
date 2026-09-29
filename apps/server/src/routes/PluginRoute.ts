@@ -179,6 +179,39 @@ const changePluginRoute = createRoute({
   },
 });
 
+const receiveWebhookRoute = createRoute({
+  method: 'post',
+  path: '/api/plugins/{id}/hooks/{hook}/{secret}',
+  tags: ['Plugins'],
+  summary: 'Hand an outside service’s message to the plugin whose private address this is',
+  request: {
+    params: z.object({
+      id: PluginId,
+      hook: LocalId,
+      secret: z.string().regex(/^[A-Za-z0-9_-]{16,64}$/),
+    }),
+  },
+  responses: {
+    204: { description: 'The plugin took it' },
+    404: {
+      description: 'No plugin receives at this address',
+      content: { 'application/json': { schema: PluginError } },
+    },
+    413: {
+      description: 'The message is too large',
+      content: { 'application/json': { schema: PluginError } },
+    },
+    429: {
+      description: 'Too many messages; try again later',
+      content: { 'application/json': { schema: PluginError } },
+    },
+    502: {
+      description: 'The plugin could not handle it',
+      content: { 'application/json': { schema: PluginError } },
+    },
+  },
+});
+
 const rollbackPluginRoute = createRoute({
   method: 'post',
   path: '/api/plugins/{id}/rollback',
@@ -386,6 +419,7 @@ export {
   previewCatalogueRoute,
   previewUploadRoute,
   readCatalogueRoute,
+  receiveWebhookRoute,
   renderPageRoute,
   renderPanelRoute,
   rollbackPluginRoute,

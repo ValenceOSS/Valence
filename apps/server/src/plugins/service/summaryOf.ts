@@ -9,12 +9,14 @@ import type { InstalledRecord } from '@ValenceServer/plugins/store/PluginStore';
  * @param record - The installed plugin.
  * @param state - Whether its sandbox is running.
  * @param updateAvailable - A newer version the catalogue has, where it has one.
+ * @param webhooks - The private address each of its webhooks is reached at.
  * @returns The summary.
  */
 const summaryOf = (
   record: InstalledRecord,
   state: InstalledPlugin['state'],
   updateAvailable: string | null,
+  webhooks: InstalledPlugin['webhooks'] = [],
 ): InstalledPlugin => ({
   ...describeManifest(record.manifest),
   trust: record.trust,
@@ -37,6 +39,7 @@ const summaryOf = (
   updatedAt: record.updatedAt,
   updateAvailable,
   previousVersion: record.previousVersion,
+  webhooks,
 });
 
 export { summaryOf };

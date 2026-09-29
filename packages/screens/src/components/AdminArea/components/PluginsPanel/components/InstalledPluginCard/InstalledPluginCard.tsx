@@ -109,7 +109,7 @@ const InstalledPluginCard = ({
           </Button>
         ))}
 
-        {plugin.settings.length === 0 ? null : (
+        {plugin.settings.length === 0 && plugin.webhooks.length === 0 ? null : (
           <Button size="sm" variant="secondary" onClick={onSettings}>
             <Icon of={SettingsIcon} size={14} />
             Settings

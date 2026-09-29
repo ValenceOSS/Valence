@@ -1,3 +1,4 @@
+import { createHmac } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 import { packPlugin } from '@ValenceSDK/package/packPlugin';
 import { PluginManifestSchema } from '@ValenceSDK/manifest/PluginManifestSchema';
@@ -437,4 +438,109 @@ describe('a plugin from upload to use, through its own process', () => {
 
     service.stop();
   }, 30_000);
+
+  it('hands a webhook to the plugin at its own private address, and nowhere else', async () => {
+    const service = build();
+    const hooked = packPlugin({
+      format: 1,
+      manifest: PluginManifestSchema.parse({
+        ...MANIFEST,
+        id: 'hooked',
+        name: 'Hooked',
+        permissions: [{ kind: 'storage', quotaBytes: 4096 }, { kind: 'webhooks' }],
+        contributes: {
+          pages: [{ id: 'last', title: 'Last message', placement: 'account' }],
+          webhooks: [{ id: 'spotify', title: 'Spotify changes' }],
+        },
+        settings: [],
+      }),
+      code: `globalThis.valencePlugin = {
+  pages: {
+    last: {
+      render: async ({ valence }) => ({
+        blocks: [{ type: 'text', text: JSON.stringify(await valence.storage.get('last')) }],
+      }),
+    },
+  },
+  webhooks: {
+    spotify: async ({ valence }, request) => {
+      const signed = await valence.crypto.hmac('sha256', 'shared', request.body);
+      const good = await valence.crypto.equal(signed, request.headers['x-signature'] ?? '');
+      await valence.storage.set('last', { body: request.body, good });
+    },
+  },
+};`,
+      assets: {},
+    });
+    const done = await installOver(service, hooked);
+
+    expect('refused' in done ? done.refused : done.webhooks.map((hook) => hook.id)).toEqual([
+      'spotify',
+    ]);
+
+    const [listed] = await service.listInstalled();
+    const address = new URL(listed?.webhooks[0]?.url ?? '');
+    const secret = address.pathname.split('/').at(-1) ?? '';
+
+    expect(address.origin).toBe('https://valence.home');
+    expect(address.pathname).toMatch(/^\/api\/plugins\/hooked\/hooks\/spotify\/[\w-]{32}$/u);
+
+    const signature = createHmac('sha256', 'shared').update('{"changed":true}').digest('hex');
+
+    expect(
+      await service.receiveWebhook('hooked', 'spotify', secret, {
+        headers: { 'x-signature': signature },
+        body: '{"changed":true}',
+      }),
+    ).toBe('accepted');
+    expect(
+      await service.receiveWebhook('hooked', 'spotify', `${secret.slice(0, -1)}x`, {
+        headers: {},
+        body: 'forged',
+      }),
+    ).toBe('unknown');
+    expect(
+      await service.receiveWebhook('hooked', 'elsewhere', secret, { headers: {}, body: '' }),
+    ).toBe('unknown');
+
+    const last = { kind: 'page', id: 'last', subject: null } as const;
+
+    expect((await service.render('hooked', last, VIEWER))?.surface).toEqual({
+      blocks: [{ type: 'text', text: '{"body":"{\\"changed\\":true}","good":true}' }],
+    });
+
+    service.stop();
+  }, 30_000);
+
+  it('turns webhooks away once a plugin has had too many in a minute', async () => {
+    const service = build();
+    const hooked = packPlugin({
+      format: 1,
+      manifest: PluginManifestSchema.parse({
+        ...MANIFEST,
+        id: 'busy',
+        name: 'Busy',
+        permissions: [{ kind: 'webhooks' }],
+        contributes: { webhooks: [{ id: 'ping', title: 'Pings' }] },
+        settings: [],
+      }),
+      code: 'globalThis.valencePlugin = { webhooks: { ping: async () => {} } };',
+      assets: {},
+    });
+
+    await installOver(service, hooked);
+
+    const [listed] = await service.listInstalled();
+    const secret = new URL(listed?.webhooks[0]?.url ?? '').pathname.split('/').at(-1) ?? '';
+    const answers = [];
+
+    for (let sent = 0; sent < 61; sent += 1) {
+      answers.push(await service.receiveWebhook('busy', 'ping', secret, { headers: {}, body: '' }));
+    }
+
+    expect(answers.filter((answer) => answer === 'accepted')).toHaveLength(60);
+    expect(answers.at(-1)).toBe('limited');
+
+    service.stop();
+  }, 60_000);
 });

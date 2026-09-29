@@ -1,7 +1,7 @@
 ---
 title: Upgrades and rollback
 description: Change the shape of what your plugin keeps between versions, and what happens when an upgrade goes wrong.
-order: 11
+order: 12
 ---
 
 A plugin never changes Valence's database. What it keeps lives in its own storage, one JSON value per key, so a new field is a new key or a new property inside a value. When a new version changes the shape of what an older one stored, it converts that data once, as it is installed.

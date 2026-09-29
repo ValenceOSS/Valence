@@ -114,4 +114,30 @@ describe('PluginSettingsDialog', () => {
 
     vi.unstubAllGlobals();
   });
+
+  it('shows each webhook’s private address, to give to the service that sends it', () => {
+    renderInAnAddress(
+      <PluginSettingsDialog
+        plugin={aPlugin({
+          webhooks: [
+            {
+              id: 'spotify',
+              title: 'Spotify changes',
+              url: 'https://valence.test/api/plugins/anilist/hooks/spotify/abcdefghijklmnopqrstuvwxyz012345',
+            },
+          ],
+        })}
+        redirectUri={null}
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Spotify changes')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'https://valence.test/api/plugins/anilist/hooks/spotify/abcdefghijklmnopqrstuvwxyz012345',
+      ),
+    ).toBeInTheDocument();
+  });
 });

@@ -72,6 +72,10 @@ type PluginEvent = {
 
 See [schedules and events](/plugins/schedules-and-events).
 
+### Webhooks
+
+Each webhook handler gets `{ valence }` and the request: its `headers`, its `body` as text, and `receivedAt`. See [webhooks](/plugins/webhooks).
+
 ## The valence object
 
 ### plugin
@@ -116,6 +120,15 @@ A private store of JSON values by key.
 | `http.fetch(url, init?)` | `Promise<{ status: number; headers: Record<string, string>; text: string }>` | `network`  |
 
 `init` may hold `method` (`GET`, `POST`, `PUT`, `PATCH` or `DELETE`), `headers` and a string `body`. The whole response body arrives as text; call `JSON.parse` on it yourself. A request to a host not in your `network` list, or one that breaks the [network rules](/develop/plugins#network-rules), fails before anything is sent. A non-2xx status is not an error: check `status`.
+
+### crypto
+
+| Method                                            | Returns            | Permission |
+| ------------------------------------------------- | ------------------ | ---------- |
+| `crypto.hmac(algorithm, key, message, encoding?)` | `Promise<string>`  | None       |
+| `crypto.equal(left, right)`                       | `Promise<boolean>` | None       |
+
+`algorithm` is `sha1`, `sha256` or `sha512`, and `encoding` is `hex` (the default) or `base64`. `equal` compares two strings in constant time, which is how to check a signature without giving its value away.
 
 ### accounts
 

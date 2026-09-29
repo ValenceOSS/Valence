@@ -1,10 +1,11 @@
-import { and, asc, eq, like, ne, sql } from 'drizzle-orm';
+import { and, asc, eq, like, ne, notInArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { PluginTrustSchema } from '@ValenceContracts/schemas/Plugin';
 import { PluginManifestSchema } from '@ValenceSDK/manifest/PluginManifestSchema';
 import {
   pluginConnection,
+  pluginHook,
   pluginInstallation,
   pluginPrevious,
   pluginProfile,
@@ -106,6 +107,30 @@ const createDatabasePluginStore = (db: ValenceDatabase): PluginStore => {
         .insert(pluginInstallation)
         .values(row)
         .onConflictDoUpdate({ target: pluginInstallation.id, set: row });
+    },
+    readHooks: async (pluginId) =>
+      Object.fromEntries(
+        (
+          await db
+            .select({ hookId: pluginHook.hookId, secret: pluginHook.secret })
+            .from(pluginHook)
+            .where(eq(pluginHook.pluginId, pluginId))
+        ).map((row) => [row.hookId, row.secret]),
+      ),
+    saveHook: async (pluginId, hookId, secret) => {
+      await db
+        .insert(pluginHook)
+        .values({ pluginId, hookId, secret })
+        .onConflictDoUpdate({ target: [pluginHook.pluginId, pluginHook.hookId], set: { secret } });
+    },
+    forgetHooksExcept: async (pluginId, keep) => {
+      await db
+        .delete(pluginHook)
+        .where(
+          keep.length === 0
+            ? eq(pluginHook.pluginId, pluginId)
+            : and(eq(pluginHook.pluginId, pluginId), notInArray(pluginHook.hookId, [...keep])),
+        );
     },
     keepPrevious: async (id) =>
       db.transaction(async (tx) => {

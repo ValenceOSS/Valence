@@ -104,6 +104,14 @@ Opens `valence.accounts.connection` and `valence.accounts.disconnect`. Valence r
 
 No fields. Opens `valence.notifications.send`, which puts a notification in someone's bell, the same place Valence's own notifications go.
 
+## webhooks
+
+```json
+{ "kind": "webhooks" }
+```
+
+No fields. Lets outside services send your plugin messages at private addresses of its own, one for each webhook under `contributes.webhooks`. See [webhooks](/plugins/webhooks).
+
 ## Your own permission nodes
 
 The permissions above say what your plugin may do. Permission nodes say which people may use parts of it. Declare them under `contributes.nodes`:

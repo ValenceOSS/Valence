@@ -22,6 +22,7 @@ const PermissionSchema = z.discriminatedUnion('kind', [
     providers: z.array(AccountProviderSchema).min(1).max(4),
   }),
   z.object({ kind: z.literal('notifications') }),
+  z.object({ kind: z.literal('webhooks') }),
 ]);
 
 type Permission = z.infer<typeof PermissionSchema>;

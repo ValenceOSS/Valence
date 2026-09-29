@@ -44,6 +44,7 @@ const InstalledPluginSchema = PluginSummarySchema.extend({
   updatedAt: z.iso.datetime(),
   updateAvailable: z.string().nullable(),
   previousVersion: z.string().nullable(),
+  webhooks: z.array(z.object({ id: z.string(), title: z.string(), url: z.string() })),
 });
 
 const InstalledPluginsSchema = z.object({

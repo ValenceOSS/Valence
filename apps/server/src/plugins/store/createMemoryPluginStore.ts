@@ -13,6 +13,7 @@ const createMemoryPluginStore = (now: () => Date = () => new Date()): PluginStor
   const values = new Map<string, Map<string, { value: JsonValue; bytes: number }>>();
   const connections = new Map<string, ConnectionRecord>();
   const profiles = new Map<string, Set<string>>();
+  const hooks = new Map<string, Map<string, string>>();
   const previous = new Map<
     string,
     { record: InstalledRecord; values: Map<string, { value: JsonValue; bytes: number }> }
@@ -55,6 +56,20 @@ const createMemoryPluginStore = (now: () => Date = () => new Date()): PluginStor
         problem: null,
         previousVersion: null,
       });
+
+      return Promise.resolve();
+    },
+    readHooks: (pluginId) => Promise.resolve(Object.fromEntries(hooks.get(pluginId) ?? [])),
+    saveHook: (pluginId, hookId, secret) => {
+      hooks.set(pluginId, new Map([...(hooks.get(pluginId) ?? []), [hookId, secret]]));
+
+      return Promise.resolve();
+    },
+    forgetHooksExcept: (pluginId, keep) => {
+      hooks.set(
+        pluginId,
+        new Map([...(hooks.get(pluginId) ?? [])].filter(([hookId]) => keep.includes(hookId))),
+      );
 
       return Promise.resolve();
     },
@@ -108,6 +123,7 @@ const createMemoryPluginStore = (now: () => Date = () => new Date()): PluginStor
 
       values.delete(id);
       previous.delete(id);
+      hooks.delete(id);
       profiles.delete(id);
 
       for (const [key, connection] of connections) {
