@@ -1537,13 +1537,7 @@ const VideoPlayer = ({
 
   const onLeaveStage = useCallback(
     (event: ReactPointerEvent<HTMLElement>) => {
-      const left = aLeaveWorthHiding(
-        event.pointerType,
-        { x: event.clientX, y: event.clientY },
-        event.currentTarget.getBoundingClientRect(),
-      );
-
-      if (!left) {
+      if (!aLeaveWorthHiding(event.pointerType)) {
         return;
       }
 

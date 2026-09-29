@@ -1636,32 +1636,6 @@ describe('VideoPlayer', () => {
     }
   });
 
-  it('keeps the controls where a mouse is said to leave while still over the picture, as Windows says under its drag bar', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-
-    try {
-      renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} isImmersive />);
-
-      const element = await screen.findByLabelText('Arrival');
-
-      fireEvent.play(element);
-
-      const stage = element.parentElement;
-      const player = stage?.closest('section');
-
-      if (stage !== null && player !== null && player !== undefined) {
-        player.getBoundingClientRect = () => new DOMRect(0, 0, 1000, 500);
-
-        fireEvent.pointerMove(player, { clientX: 500, clientY: 16 });
-        fireEvent.pointerLeave(player, { clientX: 500, clientY: 16, pointerType: 'mouse' });
-      }
-
-      expect(stage?.className).toContain('cursor-default');
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
   it('brings the controls back on a tap, which no pointer movement ever reports', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
 
