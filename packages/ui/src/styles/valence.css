@@ -277,7 +277,6 @@
   --color-on-scrim: oklch(0.99 0 0);
   --color-shade: oklch(0 0 0);
 
-
   --color-paper-light: oklch(0.979 0.006 85);
   --color-ink-light: oklch(0.225 0.008 70);
   --color-paper-sepia: oklch(0.94 0.035 85);
@@ -504,6 +503,10 @@ body {
 
 [data-valence-desktop='true'][data-valence-watching='hidden'] [data-slot='window-bar'] {
   opacity: 0;
+}
+
+[data-valence-desktop='true']:has(:fullscreen) [data-slot='window-bar'] {
+  display: none;
 }
 
 [data-valence-desktop='true'][data-valence-watching] [data-slot='player-header'] {

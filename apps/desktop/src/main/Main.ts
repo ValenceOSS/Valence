@@ -95,6 +95,31 @@ const keepThisClientsFilesWhereTheyAre = (): void => {
 
 keepThisClientsFilesWhereTheyAre();
 
+/**
+ * Leaves a playing video on the ordinary compositing path, where what is drawn over it survives.
+ *
+ * Windows can hand a full-screen video straight to a hardware overlay plane, which the display
+ * scans out itself. Everything the compositor had put beneath it — the player's controls, the
+ * title, the paused screen — then stops being painted while staying live to the mouse, so it is
+ * all still there, still clickable, and cannot be seen. Holding each of them on a layer of its own
+ * only works if the layers exist before the window goes full screen, which no rule about being
+ * full screen can arrange; taking the plane away is the cure that does not depend on which layers
+ * the browser decides to promote.
+ *
+ * It costs a little power while something plays, and nothing at all otherwise. Only the last
+ * disable-features the browser is given is read, so anything else that needs one belongs in this
+ * list rather than in a second call.
+ */
+const leaveAVideoOnTheOrdinaryPath = (): void => {
+  if (process.platform !== 'win32') {
+    return;
+  }
+
+  app.commandLine.appendSwitch('disable-features', 'DirectCompositionVideoOverlays');
+};
+
+leaveAVideoOnTheOrdinaryPath();
+
 claimTheScheme();
 
 let theWindow: BrowserWindow | null = null;
@@ -317,11 +342,32 @@ const start = async (): Promise<void> => {
     app.setBadgeCount(z.number().int().nonnegative().catch(0).parse(count));
   });
 
+  let areControlsShown = true;
+
   ipcMain.on(SHOW_THE_WINDOW_CONTROLS, (_event, isShown) => {
+    areControlsShown = z.boolean().catch(true).parse(isShown);
+
     if (theWindow !== null) {
-      showTheWindowControls(theWindow, z.boolean().catch(true).parse(isShown), process.platform);
+      showTheWindowControls(theWindow, areControlsShown, process.platform);
     }
   });
+
+  const openAWindow = (): BrowserWindow => {
+    const window = openTheWindow();
+
+    areControlsShown = true;
+
+    theWindowsOwnMenu(window, changeServer);
+
+    const showWhatWasAskedFor = (): void => {
+      showTheWindowControls(window, areControlsShown, process.platform);
+    };
+
+    window.on('leave-full-screen', showWhatWasAskedFor);
+    window.on('leave-html-full-screen', showWhatWasAskedFor);
+
+    return window;
+  };
 
   const discord = tellDiscord(app.getPath('temp'));
 
@@ -335,8 +381,7 @@ const start = async (): Promise<void> => {
 
   theApplicationMenu(changeServer, !app.isPackaged);
 
-  theWindow = openTheWindow();
-  theWindowsOwnMenu(theWindow, changeServer);
+  theWindow = openAWindow();
 
   await findAValence();
   await showTheApplication(theWindow);
@@ -345,8 +390,7 @@ const start = async (): Promise<void> => {
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      theWindow = openTheWindow();
-      theWindowsOwnMenu(theWindow, changeServer);
+      theWindow = openAWindow();
 
       void showTheApplication(theWindow);
     }

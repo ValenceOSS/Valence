@@ -1707,6 +1707,80 @@ describe('VideoPlayer', () => {
     expect(onEnded).toHaveBeenCalledOnce();
   });
 
+  it('says the film has run out when the clock reaches its length, though the element never ends', async () => {
+    const onEnded = vi.fn();
+
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} onEnded={onEnded} />);
+    await settled();
+
+    const element = await screen.findByLabelText('Arrival');
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined);
+
+    fireEvent.timeUpdate(element, { target: { currentTime: 7200 } });
+    fireEvent.timeUpdate(element, { target: { currentTime: 7201.5 } });
+    fireEvent.ended(element);
+
+    expect(onEnded).toHaveBeenCalledOnce();
+    expect(pause).toHaveBeenCalled();
+  });
+
+  it('says so again when the viewer goes back and plays to the end a second time', async () => {
+    const onEnded = vi.fn();
+
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} onEnded={onEnded} />);
+    await settled();
+
+    const element = await screen.findByLabelText('Arrival');
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined);
+
+    fireEvent.ended(element);
+    fireEvent.timeUpdate(element, { target: { currentTime: 7000 } });
+    fireEvent.ended(element);
+
+    expect(onEnded).toHaveBeenCalledTimes(2);
+  });
+
+  it('says the next episode has run out too, once it has played in the same player', async () => {
+    const onEnded = vi.fn();
+    const next = { id: 'media-2', title: 'Dune', durationSeconds: 600 };
+
+    const { rerender } = renderInAnAddress(
+      <VideoPlayer media={media} onClose={vi.fn()} onEnded={onEnded} />,
+    );
+    await settled();
+
+    fireEvent.ended(await screen.findByLabelText('Arrival'));
+
+    rerender(<VideoPlayer media={next} onClose={vi.fn()} onEnded={onEnded} />);
+
+    const element = await screen.findByLabelText('Dune');
+
+    fireEvent.timeUpdate(element, { target: { currentTime: 0 } });
+    fireEvent.ended(element);
+
+    expect(onEnded).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not end the next episode on a time left over from the one before', async () => {
+    const onEnded = vi.fn();
+    const next = { id: 'media-2', title: 'Dune', durationSeconds: 600 };
+
+    const { rerender } = renderInAnAddress(
+      <VideoPlayer media={media} onClose={vi.fn()} onEnded={onEnded} />,
+    );
+    await settled();
+
+    fireEvent.ended(await screen.findByLabelText('Arrival'));
+
+    rerender(<VideoPlayer media={next} onClose={vi.fn()} onEnded={onEnded} />);
+
+    fireEvent.timeUpdate(await screen.findByLabelText('Dune'), {
+      target: { currentTime: 7200 },
+    });
+
+    expect(onEnded).toHaveBeenCalledOnce();
+  });
+
   it('counts the film as watched to the end before handing over', async () => {
     const onProgress = vi.fn();
 

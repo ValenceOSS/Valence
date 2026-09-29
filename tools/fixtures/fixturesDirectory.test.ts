@@ -1,10 +1,11 @@
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { fixturesDirectory } from './fixturesDirectory';
 
 describe('fixturesDirectory', () => {
   it('keeps the corpus out of the working tree by default', () => {
     expect(fixturesDirectory({ configured: undefined, home: '/home/dan' })).toBe(
-      '/home/dan/.cache/valence-fixtures',
+      join('/home/dan', '.cache', 'valence-fixtures'),
     );
   });
 
@@ -14,7 +15,7 @@ describe('fixturesDirectory', () => {
 
   it('treats a blank setting as no setting', () => {
     expect(fixturesDirectory({ configured: '   ', home: '/home/dan' })).toBe(
-      '/home/dan/.cache/valence-fixtures',
+      join('/home/dan', '.cache', 'valence-fixtures'),
     );
   });
 });

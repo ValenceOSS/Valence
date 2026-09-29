@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const setIcon = vi.fn();
@@ -30,7 +31,7 @@ describe('theDockIcon', () => {
   it('puts Valence in the dock, which otherwise shows the engine it was run with', () => {
     theDockIcon();
 
-    expect(setIcon).toHaveBeenCalledWith('/an/app/build/icon-dev.png');
+    expect(setIcon).toHaveBeenCalledWith(join('/an/app', 'build', 'icon-dev.png'));
   });
 
   it('asks for nothing once packaged, where the folder it would ask for is not carried', () => {

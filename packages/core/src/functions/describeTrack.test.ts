@@ -22,6 +22,11 @@ describe('readLanguage', () => {
     expect(readLanguage('deu')).toBe('de');
   });
 
+  it('ignores the region on a language that carries one', () => {
+    expect(readLanguage('en-GB')).toBe('en');
+    expect(readLanguage('pt_BR')).toBe('pt');
+  });
+
   it('normalises a language written out', () => {
     expect(readLanguage('Japanese')).toBe('ja');
   });

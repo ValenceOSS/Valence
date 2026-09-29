@@ -131,14 +131,14 @@ const CHANNEL_NAMES: Record<number, string> = {
 /**
  * Normalises whatever a file called a language into a two-letter code. Files carry two-letter
  * codes, three-letter codes, both competing three-letter standards, and sometimes the language
- * written out in full; all of them mean the same thing to a viewer and are answered with the same
- * code here.
+ * written out in full, with or without a region after them; all of them mean the same thing to a
+ * viewer and are answered with the same code here.
  *
  * @param raw - The language as the file tagged it, in any spelling, or nothing at all.
  * @returns The two-letter code, or null where the tag was absent or meant "nobody said".
  */
 const readLanguage = (raw: string | null | undefined): string | null => {
-  const lowered = (raw ?? '').trim().toLowerCase();
+  const lowered = (raw ?? '').trim().toLowerCase().split(/[-_]/)[0] ?? '';
 
   if (UNKNOWN_LANGUAGES.has(lowered)) {
     return null;

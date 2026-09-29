@@ -45,6 +45,7 @@ import { loadCastSender, castStateOf, castStream } from '@ValenceScreens/playbac
 import { applyVolumeBoost } from '@ValenceScreens/playback/volumeBoost';
 import { hasFinePointer } from '@ValenceUI/hasFinePointer';
 import { aLeaveWorthHiding } from '@ValenceScreens/playback/aLeaveWorthHiding';
+import { hasReachedTheEnd } from '@ValenceScreens/playback/hasReachedTheEnd';
 import { whatIsPlaying } from '@ValenceScreens/playback/whatIsPlaying';
 import { SKIP_SECONDS } from './components/PlayerControls/PlayerControls.types';
 import { fetchTrickplay } from '@ValenceClient/playback/fetchTrickplay';
@@ -285,6 +286,7 @@ const VideoPlayer = ({
   const [isIdle, setIsIdle] = useState(false);
   const [isResting, setIsResting] = useState(false);
   const pointRef = useRef<{ x: number; y: number } | null>(null);
+  const hasFinishedRef = useRef(false);
   const [activity, setActivity] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [subtitleTracks, setSubtitleTracks] = useState<SubtitleTrack[]>([]);
@@ -1535,12 +1537,11 @@ const VideoPlayer = ({
 
   const onLeaveStage = useCallback(
     (event: ReactPointerEvent<HTMLElement>) => {
-      pointRef.current = null;
-
       if (!aLeaveWorthHiding(event.pointerType)) {
         return;
       }
 
+      pointRef.current = null;
       setIsIdle(isPlaying);
     },
     [isPlaying],
@@ -1702,7 +1703,9 @@ const VideoPlayer = ({
         },
         c: () => {
           setSelectedSubtitleId((current) =>
-            current === SUBTITLES_OFF ? (subtitleTracks[0]?.id ?? SUBTITLES_OFF) : SUBTITLES_OFF,
+            current === SUBTITLES_OFF
+              ? (subtitleTracks.find((track) => track.delivery === 'text')?.id ?? SUBTITLES_OFF)
+              : SUBTITLES_OFF,
           );
         },
       };
@@ -1742,20 +1745,65 @@ const VideoPlayer = ({
     };
   }, [isImmersive, isFullscreen, onClose]);
 
+  const finish = () => {
+    if (hasFinishedRef.current) {
+      return;
+    }
+
+    hasFinishedRef.current = true;
+    onProgress?.(duration, duration);
+    onEnded?.();
+  };
+
   const asItPlays = {
     onTimeUpdate: (seconds: number) => {
       setPosition(seconds);
       setHeldFrame(null);
       onProgress?.(seconds, duration);
+
+      if (!hasReachedTheEnd(seconds, duration)) {
+        hasFinishedRef.current = false;
+
+        return;
+      }
+
+      videoRef.current?.pause();
+      finish();
     },
     onDurationChange: setReportedDuration,
     onPlayingChange: setIsPlaying,
     onBufferingChange: setIsBuffering,
-    onEnded: () => {
-      onProgress?.(duration, duration);
-      onEnded?.();
-    },
+    onEnded: finish,
   };
+
+  const theTitleBar = (
+    <header
+      data-slot="player-header"
+      className={
+        isImmersive
+          ? `absolute inset-x-0 top-0 z-40 flex items-center gap-4 bg-gradient-to-b from-shade/70 to-transparent p-4 pl-[calc(1rem+env(safe-area-inset-left,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] pt-[calc(1rem+env(safe-area-inset-top,0px))] text-text transition-transform duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none ${
+              isBarUp ? 'translate-y-0' : 'pointer-events-none -translate-y-full'
+            }`
+          : 'flex items-center gap-4'
+      }
+    >
+      <div className="w-24 shrink-0" aria-hidden />
+
+      <h2
+        className={`flex-1 truncate text-center text-lg font-medium ${
+          isImmersive ? '' : 'text-text'
+        }`}
+      >
+        {describePlaying(media)}
+      </h2>
+
+      <div className="flex w-24 shrink-0 justify-end">
+        <Button isIconOnly variant="overlay" label="Close" onClick={onClose} size="md">
+          <Icon of={XIcon} size={20} />
+        </Button>
+      </div>
+    </header>
+  );
 
   return (
     <section
@@ -1774,32 +1822,7 @@ const VideoPlayer = ({
       }}
       onPointerLeave={onLeaveStage}
     >
-      <header
-        data-slot="player-header"
-        className={
-          isImmersive
-            ? `absolute inset-x-0 top-0 z-10 flex items-center gap-4 bg-gradient-to-b from-shade/70 to-transparent p-4 pl-[calc(1rem+env(safe-area-inset-left,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] pt-[calc(1rem+env(safe-area-inset-top,0px))] text-text transition-transform duration-[var(--duration-base)] ease-[var(--ease-out)] motion-reduce:transition-none ${
-                isBarUp ? 'translate-y-0' : 'pointer-events-none -translate-y-full'
-              }`
-            : 'flex items-center gap-4'
-        }
-      >
-        <div className="w-24 shrink-0" aria-hidden />
-
-        <h2
-          className={`flex-1 truncate text-center text-lg font-medium ${
-            isImmersive ? '' : 'text-text'
-          }`}
-        >
-          {describePlaying(media)}
-        </h2>
-
-        <div className="flex w-24 shrink-0 justify-end">
-          <Button isIconOnly variant="overlay" label="Close" onClick={onClose} size="md">
-            <Icon of={XIcon} size={20} />
-          </Button>
-        </div>
-      </header>
+      {isImmersive ? null : theTitleBar}
 
       <div
         className={
@@ -1822,6 +1845,8 @@ const VideoPlayer = ({
                 : 'relative overflow-hidden rounded-lg bg-shade'
           } ${isIdle && !isShowingStats && !isMenuOpen ? 'cursor-none' : 'cursor-default'} outline-none`}
         >
+          {isImmersive ? theTitleBar : null}
+
           <VideoSurface
             label={media.title}
             videoRef={videoRef}
