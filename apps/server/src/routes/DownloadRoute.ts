@@ -12,6 +12,7 @@ const DownloadOptionSchema = z
     bytes: z.number().int().nonnegative().nullable(),
     comparison: z.string().nullable(),
     wouldTranscode: z.boolean(),
+    savesSpace: z.boolean(),
   })
   .openapi('DownloadOption');
 

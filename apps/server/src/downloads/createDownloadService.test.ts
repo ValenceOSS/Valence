@@ -130,6 +130,7 @@ const build = async (
   answers: DownloadFile[],
   film: MediaItem = FILM,
   defaultAudioLanguage: string | null = null,
+  sizeBytes = 7_000_000_000,
 ) => {
   const requestDownload = vi.fn<Transcoder['requestDownload']>();
 
@@ -154,7 +155,7 @@ const build = async (
             ? {
                 item: film,
                 path: '/films/Arrival.mp4',
-                sizeBytes: 7_000_000_000,
+                sizeBytes,
                 generation: 1,
                 defaultAudioLanguage,
               }
@@ -327,5 +328,64 @@ describe('createDownloadService', { timeout: STARTING_POSTGRES_MS }, () => {
       state: 'preparing',
       askedFrom: 'a-laptop',
     });
+  });
+});
+
+describe('what a download is offered at', { timeout: STARTING_POSTGRES_MS }, () => {
+  const AN_EPISODE: MediaItem = {
+    ...FILM,
+    title: 'My Two Dads',
+    videoCodec: 'hevc',
+    bitrateKbps: 1520,
+    durationSeconds: 2253,
+  };
+
+  it('says a smaller picture would come out bigger than the file itself, and saves nothing', async () => {
+    const { service } = await build([], AN_EPISODE, null, 429_000_000);
+
+    const offer = await service.offer(MEDIA_ID, keepingProfile());
+    const at720 = offer?.options.find((option) => option.quality === '720p');
+
+    expect(at720?.comparison).toBe('bigger than the original');
+    expect(at720?.savesSpace).toBe(false);
+  });
+
+  it('says one that would be smaller only by a sliver is about the same size', async () => {
+    const { service } = await build([], AN_EPISODE, null, 330_000_000);
+
+    const offer = await service.offer(MEDIA_ID, keepingProfile());
+    const at480 = offer?.options.find((option) => option.quality === '480p');
+
+    expect(at480?.comparison).toBe('about the same size as the original');
+    expect(at480?.savesSpace).toBe(false);
+  });
+
+  it('still lets the original and a picture that is really smaller be chosen', async () => {
+    const { service } = await build([], AN_EPISODE, null, 429_000_000);
+
+    const offer = await service.offer(MEDIA_ID, keepingProfile());
+
+    expect(offer?.options.find((option) => option.quality === 'original')?.savesSpace).toBe(true);
+    expect(offer?.options.find((option) => option.quality === '480p')?.savesSpace).toBe(true);
+  });
+
+  it('prices what it does offer from the encode it would really be', async () => {
+    const { service } = await build([], AN_EPISODE, null, 429_000_000);
+
+    const offer = await service.offer(MEDIA_ID, keepingProfile());
+    const at480 = offer?.options.find((option) => option.quality === '480p');
+
+    expect(at480?.bytes).toBe(Math.round(((1000 + 128) * 1000 * 2253) / 8));
+    expect(at480?.comparison).toBe('about three-quarters of the original');
+  });
+
+  it('still offers a smaller picture of a film that has room to lose', async () => {
+    const { service } = await build([]);
+
+    const offer = await service.offer(MEDIA_ID, keepingProfile());
+    const at720 = offer?.options.find((option) => option.quality === '720p');
+
+    expect(at720?.bytes).toBe(((2500 + 192) * 1000 * 7200) / 8);
+    expect(at720?.comparison).toBe('about a third of the original');
   });
 });

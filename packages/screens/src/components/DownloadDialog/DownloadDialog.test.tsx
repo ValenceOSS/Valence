@@ -36,6 +36,7 @@ const OFFER = {
       bytes: 60_000_000_000,
       comparison: null,
       wouldTranscode: true,
+      savesSpace: true,
     },
     {
       quality: '1080p',
@@ -44,6 +45,7 @@ const OFFER = {
       bytes: 4_000_000_000,
       comparison: 'a small fraction of the original — about a 15th',
       wouldTranscode: true,
+      savesSpace: true,
     },
   ],
 };
@@ -99,6 +101,33 @@ describe('DownloadDialog', () => {
     renderInAnAddress(<DownloadDialog media={MEDIA} onClose={vi.fn()} />);
 
     expect(await screen.findByText(/about a 15th/)).toBeInTheDocument();
+  });
+
+  it('shows a rung that would be no smaller, says why, and does not let it be chosen', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () =>
+        Promise.resolve({
+          ...OFFER,
+          options: [
+            OFFER.options[0],
+            {
+              ...OFFER.options[1],
+              quality: '720p',
+              label: '720p',
+              bytes: 70_000_000_000,
+              comparison: 'bigger than the original',
+              savesSpace: false,
+            },
+          ],
+        }),
+    });
+
+    renderInAnAddress(<DownloadDialog media={MEDIA} onClose={vi.fn()} />);
+
+    expect(await screen.findByText('bigger than the original')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /720p/ })).toBeDisabled();
   });
 
   it('says plainly when the device would have to convert it first', async () => {

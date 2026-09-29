@@ -108,6 +108,7 @@ describe('fetchDownloadOffer', () => {
             bytes: 60_000_000_000,
             comparison: null,
             wouldTranscode: true,
+            savesSpace: true,
           },
         ],
       }),
@@ -117,6 +118,30 @@ describe('fetchDownloadOffer', () => {
 
     expect(offer?.options[0]?.bytes).toBe(60_000_000_000);
     expect(offer?.options[0]?.wouldTranscode).toBe(true);
+  });
+
+  it('lets a rung be chosen where a server from before this said nothing about saving space', async () => {
+    fetchMock.mockResolvedValue(
+      answering({
+        mediaId: A_DOWNLOAD.mediaId,
+        title: 'Arrival',
+        episodes: 1,
+        options: [
+          {
+            quality: '720p',
+            label: '720p',
+            meaning: 'Smaller.',
+            bytes: 2_000_000_000,
+            comparison: null,
+            wouldTranscode: true,
+          },
+        ],
+      }),
+    );
+
+    const offer = await fetchDownloadOffer(A_DOWNLOAD.mediaId, PROFILE);
+
+    expect(offer?.options[0]?.savesSpace).toBe(true);
   });
 
   it('answers nothing rather than throwing where the server would not say', async () => {

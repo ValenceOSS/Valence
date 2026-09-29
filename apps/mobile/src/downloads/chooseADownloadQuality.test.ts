@@ -1,28 +1,31 @@
 import { ActionSheetIOS } from 'react-native';
 import { chooseADownloadQuality } from './chooseADownloadQuality';
 
+const ORIGINAL = {
+  quality: 'original' as const,
+  label: 'Original',
+  meaning: 'As it is on the server',
+  bytes: 4_000_000_000,
+  comparison: null,
+  wouldTranscode: false,
+  savesSpace: true,
+};
+
+const AT_720P = {
+  quality: '720p' as const,
+  label: '720p',
+  meaning: 'Smaller',
+  bytes: null,
+  comparison: null,
+  wouldTranscode: true,
+  savesSpace: true,
+};
+
 const OFFER = {
   mediaId: 'arrival',
   title: 'Arrival',
   episodes: 1,
-  options: [
-    {
-      quality: 'original' as const,
-      label: 'Original',
-      meaning: 'As it is on the server',
-      bytes: 4_000_000_000,
-      comparison: null,
-      wouldTranscode: false,
-    },
-    {
-      quality: '720p' as const,
-      label: '720p',
-      meaning: 'Smaller',
-      bytes: null,
-      comparison: null,
-      wouldTranscode: true,
-    },
-  ],
+  options: [ORIGINAL, AT_720P],
 };
 
 describe('chooseADownloadQuality', () => {
@@ -39,6 +42,31 @@ describe('chooseADownloadQuality', () => {
       '720p',
       'Cancel',
     ]);
+  });
+
+  it('says a quality would be no smaller than the original, and greys it out', async () => {
+    const asking = jest
+      .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
+      .mockImplementation((_, picked) => {
+        picked(2);
+      });
+    const bigger = {
+      ...OFFER,
+      options: [
+        ORIGINAL,
+        {
+          ...AT_720P,
+          bytes: 5_000_000_000,
+          comparison: 'bigger than the original',
+          savesSpace: false,
+        },
+      ],
+    };
+
+    await chooseADownloadQuality(bigger, 'Download Arrival');
+
+    expect(asking.mock.lastCall?.[0].options[1]).toMatch(/bigger than the original$/u);
+    expect(asking.mock.lastCall?.[0].disabledButtonIndices).toEqual([1]);
   });
 
   it('hands back nothing when somebody cancels', async () => {

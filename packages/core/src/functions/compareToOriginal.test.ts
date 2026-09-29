@@ -12,6 +12,20 @@ describe('compareToOriginal', () => {
     );
   });
 
+  it('says two-thirds where the rung is two-thirds, rather than rounding it down to half', () => {
+    expect(compareToOriginal(282_000_000, 429_000_000)).toBe('about two-thirds of the original');
+  });
+
+  it('says three-quarters where it is three-quarters', () => {
+    expect(compareToOriginal(6_000_000_000, 8_000_000_000)).toBe(
+      'about three-quarters of the original',
+    );
+  });
+
+  it('still says half where it is half', () => {
+    expect(compareToOriginal(197_000_000, 429_000_000)).toBe('about half the size of the original');
+  });
+
   it('says nothing where a rung is no smaller, since there is no case to make', () => {
     expect(compareToOriginal(8_000_000_000, 8_000_000_000)).toBeNull();
     expect(compareToOriginal(9_000_000_000, 8_000_000_000)).toBeNull();
