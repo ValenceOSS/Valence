@@ -416,16 +416,44 @@ describe('PlayerControls', () => {
     expect(screen.getByRole('menuitemradio', { name: /480p/ })).toBeInTheDocument();
   });
 
-  it('shows a step bitrate as a detail', async () => {
+  it('names the resolution the original is, where the player knows it', async () => {
     const user = userEvent.setup();
-    draw({ availableQualitySteps: ['720p'] });
+    draw({ availableQualitySteps: ['720p'], originalLabel: 'Original (1080p)' });
 
     await user.click(screen.getByRole('button', { name: 'Settings' }));
     await user.click(await screen.findByRole('button', { name: /^Quality/ }));
 
-    expect(await screen.findByRole('menuitemradio', { name: /720p/ })).toHaveTextContent(
-      '2.5 Mbps',
+    expect(await screen.findByRole('menuitemradio', { name: 'Original (1080p)' })).toBeChecked();
+  });
+
+  it('shows what a step would cost, worked out from the film, and no fixed figure without one', async () => {
+    const user = userEvent.setup();
+    draw({
+      availableQualitySteps: ['720p', '480p'],
+      qualityStepCosts: { '480p': 'up to 656 kbps · ~185 MB' },
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Settings' }));
+    await user.click(await screen.findByRole('button', { name: /^Quality/ }));
+
+    expect(await screen.findByRole('menuitemradio', { name: /480p/ })).toHaveTextContent(
+      '656 kbps',
     );
+    expect(screen.getByRole('menuitemradio', { name: /720p/ })).not.toHaveTextContent('Mbps');
+  });
+
+  it('shows a step that would cost what the original does, and does not let it be chosen', async () => {
+    const user = userEvent.setup();
+    draw({ availableQualitySteps: ['720p', '480p'], qualityStepsSavingNothing: ['720p'] });
+
+    await user.click(screen.getByRole('button', { name: 'Settings' }));
+    await user.click(await screen.findByRole('button', { name: /^Quality/ }));
+
+    const noSmaller = await screen.findByRole('menuitemradio', { name: /720p/ });
+
+    expect(noSmaller).toHaveTextContent('no smaller than the original');
+    expect(noSmaller).toBeDisabled();
+    expect(screen.getByRole('menuitemradio', { name: /480p/ })).toBeEnabled();
   });
 
   it('reports the step that was chosen', async () => {

@@ -4,6 +4,7 @@ type SettingsChoice = {
   id: string;
   label: string;
   detail?: string;
+  isDisabled?: boolean;
 };
 
 type SettingsChoiceRow = {

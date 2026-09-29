@@ -1,9 +1,8 @@
 import { estimateReencodeBytes } from '@ValenceCore/functions/estimateReencodeBytes';
 import { resolveQualityStep } from '@ValenceCore/functions/resolveQualityStep';
+import { savesEnough } from '@ValenceCore/functions/savesEnough';
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
 import type { ReencodeSettings } from '@ValenceContracts/schemas/Reencode';
-
-const WORTH_DOING = 0.9;
 
 /**
  * Whether re-encoding this file on these settings would achieve nothing, and so should be refused
@@ -40,7 +39,7 @@ const wouldGainNothing = (item: MediaItem, settings: ReencodeSettings): boolean 
     return false;
   }
 
-  return estimated > item.sizeBytes * WORTH_DOING;
+  return !savesEnough(estimated, item.sizeBytes);
 };
 
 export { wouldGainNothing };

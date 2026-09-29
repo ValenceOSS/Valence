@@ -18,6 +18,7 @@ const EDGE = 24;
 const styles = StyleSheet.create({
   behind: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
   chosenRow: { backgroundColor: 'rgba(255, 255, 255, 0.08)' },
+  disabledRow: { opacity: 0.5 },
   detail: { color: QUIETLY, fontFamily: FONTS.sans.semibold, fontSize: 12 },
   heading: {
     color: QUIETLY,
@@ -92,12 +93,19 @@ const TheChoicesPanel = ({ sets, onClose }: TheChoicesProps) => {
                   key={choice.id}
                   tone="bare"
                   isChosen={choice.id === set.chosen}
+                  isDisabled={choice.isDisabled === true}
                   label={choice.label}
                   onPress={() => {
                     set.onChoose(choice.id);
                   }}
                 >
-                  <View style={[styles.row, choice.id === set.chosen && styles.chosenRow]}>
+                  <View
+                    style={[
+                      styles.row,
+                      choice.id === set.chosen && styles.chosenRow,
+                      choice.isDisabled === true && styles.disabledRow,
+                    ]}
+                  >
                     <Text style={styles.label} numberOfLines={1}>
                       {choice.label}
                     </Text>

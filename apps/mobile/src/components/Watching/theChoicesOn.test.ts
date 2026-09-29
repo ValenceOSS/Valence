@@ -1,5 +1,6 @@
 import { MediaDetailSchema } from '@ValenceContracts/schemas/Library';
 import { AudioStreamSchema } from '@ValenceContracts/schemas/MediaItem';
+import { thePhonesProfile } from '@ValenceMobile/playback/thePhonesProfile';
 import { theChoicesOn } from './theChoicesOn';
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 import type { SubtitleTrack } from '@ValenceClient/playback/fetchSubtitles';
@@ -50,6 +51,7 @@ const aTrack = (
 
 const asking = {
   media: aFilm(3840, 2160),
+  profile: thePhonesProfile(),
   subtitles: [],
   chosenSubtitle: 'off',
   onSubtitle: jest.fn(),
@@ -115,14 +117,15 @@ describe('theChoicesOn', () => {
     const quality = sets.find((set) => set.heading === 'Quality');
 
     expect(quality?.choices[0]?.id).toBe('original');
-    expect(quality?.choices[0]?.label).toBe('Original');
+    expect(quality?.choices[0]?.label).toBe('Original (4K)');
   });
 
   it('says what each step would cost, so the choice can be made on the number', () => {
     const sets = theChoicesOn({ ...asking, streams: [aStream(1, 'eng', true)] });
     const quality = sets.find((set) => set.heading === 'Quality');
 
-    expect(quality?.choices.find((one) => one.id === '1080p')?.detail).toBe('up to 4.5 Mbps');
+    expect(quality?.choices.find((one) => one.id === '1080p')?.detail).toContain('Mbps');
+    expect(quality?.choices.find((one) => one.id === '1080p')?.isDisabled).toBeUndefined();
   });
 
   it('offers nothing bigger than the file itself', () => {

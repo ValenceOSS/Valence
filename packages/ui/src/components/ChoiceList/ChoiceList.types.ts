@@ -6,6 +6,7 @@ type Choice = {
   detail?: string;
   note?: string;
   aside?: ReactNode;
+  isDisabled?: boolean;
 };
 
 type ChoiceListProps = {

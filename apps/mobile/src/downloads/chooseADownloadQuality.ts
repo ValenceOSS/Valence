@@ -5,7 +5,7 @@ import type { DownloadQuality } from '@ValenceContracts/schemas/Download';
 
 /**
  * Offers the qualities something can be downloaded at, each with what it costs, in the system's
- * action sheet.
+ * action sheet. One that would come out no smaller than the original says so and cannot be picked.
  *
  * @param offer - What the server offered.
  * @param title - What the sheet is headed with.
@@ -24,13 +24,20 @@ const chooseADownloadQuality = async (
         ...(message === undefined ? {} : { message }),
         options: [
           ...offer.options.map((option) =>
-            [option.label, option.bytes === null ? null : formatBytes(option.bytes)]
+            [
+              option.label,
+              option.bytes === null ? null : formatBytes(option.bytes),
+              option.savesSpace ? null : option.comparison,
+            ]
               .filter((part) => part !== null)
               .join(' · '),
           ),
           'Cancel',
         ],
         cancelButtonIndex: offer.options.length,
+        disabledButtonIndices: offer.options.flatMap((option, at) =>
+          option.savesSpace ? [] : [at],
+        ),
       },
       settle,
     );

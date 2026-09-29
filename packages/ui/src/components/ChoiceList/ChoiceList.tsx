@@ -11,7 +11,8 @@ import type { ChoiceListProps } from './ChoiceList.types';
  *
  * The row is the control: the whole of it is pressed to pick it, rather than a button tucked at the
  * end of each, and the one picked is ticked and tinted rather than outlined and labelled as well.
- * Read out as a set of radio buttons, since that is what it is.
+ * Read out as a set of radio buttons, since that is what it is. An option that can be seen but
+ * not taken is shown dimmed and cannot be pressed, so what it would have been is still there to read.
  *
  * @param label - What is being chosen, read out to anybody who cannot see the rows.
  * @param choices - The options, in the order they are shown.
@@ -31,6 +32,7 @@ const ChoiceList = ({ label, choices, value, onChoose, className }: ChoiceListPr
           size="none"
           role="radio"
           aria-checked={isChosen}
+          disabled={choice.isDisabled === true}
           onClick={() => {
             onChoose(choice.id);
           }}
@@ -39,6 +41,7 @@ const ChoiceList = ({ label, choices, value, onChoose, className }: ChoiceListPr
             isChosen
               ? 'border-accent/60 bg-accent/10 hover:bg-accent/15'
               : 'border-[var(--surface-line)]',
+            choice.isDisabled === true && 'opacity-50',
           )}
         >
           <span

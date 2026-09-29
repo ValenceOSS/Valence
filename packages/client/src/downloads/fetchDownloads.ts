@@ -20,6 +20,7 @@ const DownloadOptionSchema = z.object({
   bytes: z.number().int().nonnegative().nullable(),
   comparison: z.string().nullable(),
   wouldTranscode: z.boolean(),
+  savesSpace: z.boolean().default(true),
 });
 
 const DownloadOfferSchema = z.object({

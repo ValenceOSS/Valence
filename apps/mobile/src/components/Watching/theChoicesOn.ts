@@ -1,6 +1,11 @@
 import { describeAudioTrack } from '@ValenceCore/functions/describeTrack';
 import { listAvailableQualitySteps } from '@ValenceCore/functions/listAvailableQualitySteps';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
+import { originalLabel } from '@ValenceCore/functions/originalLabel';
+import { qualityStepCostsFor } from '@ValenceClient/playback/qualityStepCostsFor';
+import { stepsThatSaveNothing } from '@ValenceClient/playback/stepsThatSaveNothing';
+import { qualityStepDetail } from '@ValenceClient/playback/qualityStepDetail';
+import type { DeviceProfile } from '@ValenceContracts/schemas/DeviceProfile';
 import { SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
 import { PLAYBACK_RATES } from '@ValenceClient/playback/PLAYBACK_RATES';
 import { SUBTITLE_STEP_SECONDS } from '@ValenceClient/playback/SUBTITLE_STEP_SECONDS';
@@ -28,6 +33,7 @@ type WhatThereIsToChoose = {
   chosenSubtitle: string;
   onSubtitle: (trackId: string) => void;
   media: MediaDetail | null;
+  profile: DeviceProfile;
   chosenAudio: number | null;
   chosenQuality: QualityPreference;
   onAudio: (streamIndex: number) => void;
@@ -55,6 +61,7 @@ type WhatThereIsToChoose = {
  * @param chosenSubtitle - Which is being read, or off.
  * @param onSubtitle - Told which one they want.
  * @param media - The file itself, which decides what qualities are worth offering.
+ * @param profile - What this phone can play, which decides what each quality would cost.
  * @param chosenAudio - Which soundtrack is playing, or none chosen and the file's own default.
  * @param chosenQuality - What was asked for, or the file as it is.
  * @param onAudio - Told which soundtrack they want.
@@ -67,6 +74,7 @@ const theChoicesOn = ({
   chosenSubtitle,
   onSubtitle,
   media,
+  profile,
   chosenAudio,
   chosenQuality,
   onAudio,
@@ -128,25 +136,37 @@ const theChoicesOn = ({
   }
 
   const rungs = media === null ? [] : listAvailableQualitySteps(media);
+  const costs = media === null ? {} : qualityStepCostsFor({ media, profile });
+  const savingNothing = media === null ? [] : stepsThatSaveNothing({ media, profile });
 
   if (rungs.length > 0) {
     sets.push({
       heading: 'Quality',
       chosen: chosenQuality,
       choices: [
-        { id: AS_SENT, label: 'Original', detail: 'As it is on the server' },
+        {
+          id: AS_SENT,
+          label: media === null ? 'Original' : originalLabel(media),
+          detail: 'As it is on the server',
+        },
         ...rungs.flatMap((rung) => {
           const step = QUALITY_STEPS.find((one) => one.id === rung);
 
-          return step === undefined
-            ? []
-            : [
-                {
-                  id: rung,
-                  label: step.label,
-                  detail: `up to ${(step.maxVideoBitrateKbps / 1000).toString()} Mbps`,
-                },
-              ];
+          if (step === undefined) {
+            return [];
+          }
+
+          const isNoSmaller = savingNothing.includes(rung);
+          const detail = qualityStepDetail({ cost: costs[rung], isNoSmaller });
+
+          return [
+            {
+              id: rung,
+              label: step.label,
+              ...(detail === undefined ? {} : { detail }),
+              ...(isNoSmaller ? { isDisabled: true } : {}),
+            },
+          ];
         }),
       ],
       onChoose: (id) => {

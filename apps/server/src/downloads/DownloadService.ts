@@ -9,6 +9,7 @@ type DownloadOption = {
   bytes: number | null;
   comparison: string | null;
   wouldTranscode: boolean;
+  savesSpace: boolean;
 };
 
 type DownloadOffer = {

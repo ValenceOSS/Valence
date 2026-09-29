@@ -33,6 +33,8 @@ type PlayerControlsProps = {
   audioTracks: AudioTrack[];
   selectedAudioIndex: number | null;
   availableQualitySteps: QualityStepId[];
+  originalLabel?: string;
+  qualityStepsSavingNothing?: readonly QualityStepId[];
   qualityStepCosts?: Partial<Record<QualityPreference, string>>;
   selectedQuality: QualityPreference;
   isDisabled?: boolean;

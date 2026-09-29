@@ -128,6 +128,7 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
               title: option.label,
               detail: option.meaning,
               ...(option.wouldTranscode ? { note: 'Converted' } : {}),
+              isDisabled: !option.savesSpace,
               aside: (
                 <span className="flex max-w-40 flex-col items-end gap-0.5">
                   <span className="text-sm font-semibold tabular-nums text-text">

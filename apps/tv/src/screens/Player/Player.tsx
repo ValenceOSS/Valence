@@ -14,6 +14,9 @@ import { showIdOf } from '@ValenceClient/library/showIdOf';
 import { summariseDetail } from '@ValenceClient/library/summariseDetail';
 import { decideWhatFollows } from '@ValenceClient/playback/decideWhatFollows';
 import { describeSkip, skippableAt } from '@ValenceClient/playback/fetchSegments';
+import { qualityStepCostsFor } from '@ValenceClient/playback/qualityStepCostsFor';
+import { qualityStepDetail } from '@ValenceClient/playback/qualityStepDetail';
+import { stepsThatSaveNothing } from '@ValenceClient/playback/stepsThatSaveNothing';
 import { defaultTrackId, SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
 import {
   REPORT_EVERY_MILLISECONDS,
@@ -25,6 +28,7 @@ import {
   saveQualityPreference,
 } from '@ValenceClient/playback/qualityPreference';
 import { describeAudioTrack } from '@ValenceCore/functions/describeTrack';
+import { originalLabel } from '@ValenceCore/functions/originalLabel';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
 import { STILL_WATCHING_OFF } from '@ValenceContracts/schemas/StillWatching';
 import { FINISHED_WITHIN_SECONDS } from '@ValenceContracts/schemas/WatchProgress';
@@ -32,6 +36,7 @@ import { Button } from '@ValenceTv/components/Button/Button';
 import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
 import { useRemoteRing } from '@ValenceTv/remote/useRemoteRing';
 import { usePlaybackSession } from '@ValenceTv/playback/usePlaybackSession';
+import { theTvsProfile } from '@ValenceTv/playback/theTvsProfile';
 import { useRemoteControlled } from '@ValenceTv/playback/useRemoteControlled';
 import { PlayerControls } from '@ValenceTv/screens/Player/components/PlayerControls/PlayerControls';
 import { SubtitleLine } from '@ValenceTv/screens/Player/components/SubtitleLine/SubtitleLine';
@@ -148,6 +153,20 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
     [detail.data],
   );
   const showId = summary === null ? null : showIdOf(summary);
+  const stepCosts = useMemo(
+    () =>
+      detail.data === undefined || detail.data === null
+        ? {}
+        : qualityStepCostsFor({ media: detail.data, profile: theTvsProfile() }),
+    [detail.data],
+  );
+  const stepsSavingNothing = useMemo(
+    () =>
+      detail.data === undefined || detail.data === null
+        ? []
+        : stepsThatSaveNothing({ media: detail.data, profile: theTvsProfile() }),
+    [detail.data],
+  );
   const show = useQuery({
     ...libraryQueries.show(detail.data?.libraryId ?? null, showId),
     enabled: showId !== null && detail.data !== undefined && detail.data !== null,
@@ -745,10 +764,26 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
           title="Quality"
           chosen={quality}
           choices={[
-            { id: 'original', label: 'Original' },
+            {
+              id: 'original',
+              label:
+                detail.data === undefined || detail.data === null
+                  ? 'Original'
+                  : originalLabel(detail.data),
+            },
             ...QUALITY_STEPS.filter(
               (step) => step.maxHeight <= (detail.data?.height ?? Number.MAX_SAFE_INTEGER),
-            ).map((step) => ({ id: step.id, label: step.label })),
+            ).map((step) => {
+              const isNoSmaller = stepsSavingNothing.includes(step.id);
+              const said = qualityStepDetail({ cost: stepCosts[step.id], isNoSmaller });
+
+              return {
+                id: step.id,
+                label: step.label,
+                ...(said === undefined ? {} : { detail: said }),
+                ...(isNoSmaller ? { isDisabled: true } : {}),
+              };
+            }),
           ]}
           onChoose={(id) => {
             const chosen = QualityPreferenceSchema.safeParse(id);

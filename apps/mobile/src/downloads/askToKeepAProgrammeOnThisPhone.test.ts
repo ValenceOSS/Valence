@@ -20,6 +20,7 @@ const OFFER = {
       bytes: null,
       comparison: null,
       wouldTranscode: false,
+      savesSpace: true,
     },
   ],
 };

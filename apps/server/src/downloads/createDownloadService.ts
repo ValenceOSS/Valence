@@ -8,7 +8,9 @@ import { describeQualityMeaning } from '@ValenceCore/functions/describeQualityMe
 import { estimateDownloadBytes } from '@ValenceCore/functions/estimateDownloadBytes';
 import { listAvailableQualitySteps } from '@ValenceCore/functions/listAvailableQualitySteps';
 import { negotiatePlayback } from '@ValenceCore/functions/negotiatePlayback';
+import { originalLabel } from '@ValenceCore/functions/originalLabel';
 import { planToSessionSpec } from '@ValenceCore/functions/planToSessionSpec';
+import { savesEnough } from '@ValenceCore/functions/savesEnough';
 import { sourcesOf } from '@ValenceCore/functions/sourcesOf';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
 import { DownloadQualitySchema, DownloadStateSchema } from '@ValenceContracts/schemas/Download';
@@ -192,6 +194,58 @@ const createDownloadService = ({
       await media.seriesOf(row.mediaItemId),
     );
 
+  /**
+   * How a download's size reads against the file it would be made from, including where it would
+   * be no smaller at all.
+   *
+   * @param bytes - What the download would cost.
+   * @param originalBytes - What the file itself costs.
+   * @returns The comparison in words, or nothing where the file's own size is not known.
+   */
+  const againstTheOriginal = (bytes: number, originalBytes: number): string | null => {
+    if (originalBytes <= 0) {
+      return null;
+    }
+
+    if (bytes > originalBytes) {
+      return 'bigger than the original';
+    }
+
+    return savesEnough(bytes, originalBytes)
+      ? compareToOriginal(bytes, originalBytes)
+      : 'about the same size as the original';
+  };
+
+  /**
+   * How large a download of one quality would be, from the same plan the file would be made to.
+   *
+   * @param found - The item, where it lives and how large it is.
+   * @param quality - The quality asked for.
+   * @returns The size in bytes, or nothing where it cannot be worked out.
+   */
+  const sizeOfADownload = (
+    found: NonNullable<Awaited<ReturnType<MediaForDownload['findForPlayback']>>>,
+    quality: DownloadQuality,
+  ): number | null => {
+    const chosen = chooseSource({
+      sources: sourcesOf(found),
+      profile: media.keepingProfile(),
+      requestedQuality: quality,
+      neverSmaller: true,
+      preferredAudioLanguage: found.defaultAudioLanguage ?? null,
+    });
+
+    if (chosen === null) {
+      return null;
+    }
+
+    return estimateDownloadBytes({
+      plan: chosen.plan,
+      source: chosen.source.item,
+      sizeBytes: chosen.source.isOriginal ? found.sizeBytes : (chosen.source.item.sizeBytes ?? 0),
+    });
+  };
+
   const service: DownloadService = {
     offer: async (mediaId, deviceProfile): Promise<DownloadOffer | null> => {
       const found = await media.findForPlayback(mediaId);
@@ -205,31 +259,25 @@ const createDownloadService = ({
 
       const original = {
         quality: 'original' as const,
-        label: 'Original',
+        label: originalLabel(item),
         meaning: describeQualityMeaning('original'),
-        bytes: estimateDownloadBytes({
-          quality: 'original',
-          durationSeconds: item.durationSeconds,
-          sizeBytes: found.sizeBytes,
-        }),
+        bytes: found.sizeBytes > 0 ? found.sizeBytes : null,
         comparison: null,
         wouldTranscode: asIs.video.kind === 'transcode' || asIs.audio.kind === 'transcode',
+        savesSpace: true,
       };
 
       const rungs = listAvailableQualitySteps(item).map((id) => {
-        const bytes = estimateDownloadBytes({
-          quality: id,
-          durationSeconds: item.durationSeconds,
-          sizeBytes: found.sizeBytes,
-        });
+        const bytes = sizeOfADownload(found, id);
 
         return {
           quality: id,
           label: QUALITY_STEPS.find((step) => step.id === id)?.label ?? id,
           meaning: describeQualityMeaning(id),
           bytes,
-          comparison: bytes === null ? null : compareToOriginal(bytes, found.sizeBytes),
+          comparison: bytes === null ? null : againstTheOriginal(bytes, found.sizeBytes),
           wouldTranscode: true,
+          savesSpace: bytes === null || found.sizeBytes <= 0 || savesEnough(bytes, found.sizeBytes),
         };
       });
 
@@ -262,14 +310,25 @@ const createDownloadService = ({
         title: series?.title ?? sample.title,
         episodes: found.length,
         options: sample.options.map((option) => {
-          const bytes = found.reduce<number | null>((running, one) => {
-            const its =
-              one.options.find((other) => other.quality === option.quality)?.bytes ?? null;
+          const totalOf = (quality: DownloadQuality) =>
+            found.reduce<number | null>((running, one) => {
+              const its = one.options.find((other) => other.quality === quality)?.bytes ?? null;
 
-            return running === null || its === null ? null : running + its;
-          }, 0);
+              return running === null || its === null ? null : running + its;
+            }, 0);
 
-          return { ...option, bytes };
+          const bytes = totalOf(option.quality);
+          const originals = totalOf('original');
+
+          const isComparable =
+            option.quality !== 'original' && bytes !== null && originals !== null;
+
+          return {
+            ...option,
+            bytes,
+            comparison: isComparable ? againstTheOriginal(bytes, originals) : null,
+            savesSpace: isComparable ? savesEnough(bytes, originals) : true,
+          };
         }),
       };
     },

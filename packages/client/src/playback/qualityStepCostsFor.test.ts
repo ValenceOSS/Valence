@@ -56,7 +56,7 @@ describe('qualityStepCostsFor', () => {
     const costs = qualityStepCostsFor({ media: compressed, profile });
 
     expect(costs['720p']).not.toContain('2.5 Mbps');
-    expect(costs['720p']).toContain('1.4 Mbps');
+    expect(costs['720p']).toContain('722 kbps');
   });
 
   it('describes no rung it does not offer', () => {

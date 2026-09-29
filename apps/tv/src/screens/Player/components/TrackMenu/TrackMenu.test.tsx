@@ -32,6 +32,27 @@ describe('TrackMenu', () => {
     expect(onChoose).toHaveBeenCalledWith('fr');
   });
 
+  it('will not take a choice that is not worth making', async () => {
+    const onChoose = jest.fn();
+    const drawn = await render(
+      <TrackMenu
+        title="Quality"
+        choices={[
+          { id: 'original', label: 'Original (1080p)' },
+          { id: '720p', label: '720p', detail: 'no smaller than the original', isDisabled: true },
+        ]}
+        chosen="original"
+        onChoose={onChoose}
+      />,
+    );
+
+    await userEvent.press(
+      drawn.getByRole('button', { name: '720p, no smaller than the original' }),
+    );
+
+    expect(onChoose).not.toHaveBeenCalled();
+  });
+
   it('starts the remote on the one in use', async () => {
     const drawn = await render(
       <TrackMenu title="Subtitles" choices={CHOICES} chosen="en" onChoose={jest.fn()} />,

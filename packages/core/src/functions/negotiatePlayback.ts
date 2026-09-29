@@ -12,6 +12,7 @@ import { selectAudioStream } from './describeTrack';
 import { isImageSubtitle } from './isImageSubtitle';
 import { selectForcedSubtitle } from './selectForcedSubtitle';
 import { encodeBitrateFor } from './encodeBitrateFor';
+import { ladderBitrateFor } from './ladderBitrateFor';
 /**
  * Decides what the file should be delivered in: the container it is already in where the device
  * says it can play that container holding this file's codecs, and the fallback the device asked for
@@ -173,16 +174,22 @@ const decideVideo = (
     kind: 'transcode',
     codec: targetCodec,
     range: rangeFor(media, profile) ?? 'SDR',
-    maxBitrateKbps: encodeBitrateFor({
-      sourceBitrateKbps: media.bitrateKbps,
-      sourceCodec: media.videoCodec,
-      targetCodec,
-      ceilingKbps: maxBitrateKbps,
-      sourceWidth: media.width,
-      sourceHeight: media.height,
-      maxWidth,
-      maxHeight,
-    }),
+    maxBitrateKbps:
+      clamp === null
+        ? encodeBitrateFor({
+            sourceBitrateKbps: media.bitrateKbps,
+            sourceCodec: media.videoCodec,
+            targetCodec,
+            ceilingKbps: maxBitrateKbps,
+            sourceWidth: media.width,
+            sourceHeight: media.height,
+            maxWidth,
+            maxHeight,
+          })
+        : Math.min(
+            ladderBitrateFor({ media, targetCodec, maxWidth, maxHeight }),
+            maxBitrateKbps ?? Number.POSITIVE_INFINITY,
+          ),
     maxWidth,
     maxHeight,
     reason: { code, detail },

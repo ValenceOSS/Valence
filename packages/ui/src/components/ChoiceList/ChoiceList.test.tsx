@@ -36,4 +36,25 @@ describe('ChoiceList', () => {
 
     expect(onChoose).toHaveBeenCalledWith('original');
   });
+
+  it('shows an option that cannot be taken, and does not let it be picked', async () => {
+    const onChoose = vi.fn();
+
+    render(
+      <ChoiceList
+        label="Size"
+        choices={[...SIZES, { id: '720p', title: '720p', aside: '704 MB', isDisabled: true }]}
+        value="original"
+        onChoose={onChoose}
+      />,
+    );
+
+    const disabled = screen.getByRole('radio', { name: /720p/ });
+
+    expect(disabled).toBeDisabled();
+
+    await userEvent.click(disabled);
+
+    expect(onChoose).not.toHaveBeenCalled();
+  });
 });
