@@ -3,7 +3,8 @@ name: Desktop app
 # Builds the desktop app's installers, so a release has something to attach.
 #
 # A workflow of its own, called by release.yml, because it needs a different operating system and
-# so that it can be run by hand to prove the app still packages without cutting a release. It runs on
+# so that it can be run by hand to prove the app still packages without cutting a release. To build
+# only some platforms, for trying a branch out, start desktop-test-build.yml instead. It runs on
 # a release and when somebody starts it, and on nothing else: three runners, one of them a macOS one,
 # is not a cost every pull request should carry.
 #
@@ -41,6 +42,10 @@ on:
         description: Branch or commit to build the source from, where it should not be the tag itself
         required: false
         default: ''
+      platforms:
+        description: Which of Windows, macOS and Linux to build, separated by commas, or empty for all three
+        required: false
+        default: ''
   workflow_call:
     inputs:
       tag:
@@ -53,6 +58,11 @@ on:
         required: false
         type: string
         default: ''
+      platforms:
+        description: Which of Windows, macOS and Linux to build, separated by commas, or empty for all three
+        required: false
+        type: string
+        default: ''
 
 concurrency:
   group: desktop-${{ github.ref }}-${{ inputs.tag }}
@@ -62,43 +72,82 @@ permissions:
   contents: read
 
 jobs:
+  # Which platforms to build: all three for a release or a run started here, and whichever were
+  # ticked for a test build started from desktop-test-build.yml. A matrix cannot be trimmed by an
+  # input directly, so the rows are written out here and the ones asked for handed to the build.
+  platforms:
+    name: Choose the platforms
+    runs-on: ubuntu-latest
+    outputs:
+      include: ${{ steps.chosen.outputs.include }}
+    steps:
+      - id: chosen
+        env:
+          ASKED: ${{ inputs.platforms }}
+        run: |
+          include=$(jq -c --arg asked "$ASKED" '
+            ($asked | split(",") | map(select(. != ""))) as $wanted
+            | [.[] | select($asked == "" or (.name as $name | $wanted | index($name)))
+                   | .files |= join("\n")]' <<'ROWS'
+          [
+            {
+              "name": "Windows",
+              "runner": "windows-latest",
+              "flags": "--win --x64",
+              "installer": "apps/desktop/release/Valence-Setup-*.exe",
+              "also": "",
+              "files": [
+                "apps/desktop/release/Valence-Setup-*.exe",
+                "apps/desktop/release/Valence-Setup-*.exe.blockmap",
+                "apps/desktop/release/latest.yml"
+              ]
+            },
+            {
+              "name": "macOS",
+              "runner": "macos-latest",
+              "flags": "--mac --arm64 --x64",
+              "installer": "apps/desktop/release/Valence-*-arm64.dmg",
+              "also": "apps/desktop/release/Valence-*-x64.dmg",
+              "files": [
+                "apps/desktop/release/Valence-*.dmg",
+                "apps/desktop/release/Valence-*.dmg.blockmap",
+                "apps/desktop/release/Valence-*-mac.zip",
+                "apps/desktop/release/Valence-*-mac.zip.blockmap",
+                "apps/desktop/release/latest-mac.yml"
+              ]
+            },
+            {
+              "name": "Linux",
+              "runner": "ubuntu-latest",
+              "flags": "--linux --x64",
+              "installer": "apps/desktop/release/Valence-*.AppImage",
+              "also": "",
+              "files": [
+                "apps/desktop/release/Valence-*.AppImage",
+                "apps/desktop/release/latest-linux.yml"
+              ]
+            }
+          ]
+          ROWS
+          )
+
+          if [ "$include" = "[]" ]; then
+            echo "Nothing to build: tick at least one of Windows, macOS and Linux." >&2
+            exit 1
+          fi
+
+          echo "include=$include" >> "$GITHUB_OUTPUT"
+
   build:
     name: Build for ${{ matrix.name }}
+    needs: platforms
     runs-on: ${{ matrix.runner }}
     env:
       IS_SIGNED: ${{ secrets.MAC_CERTIFICATE_P12 != '' }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: Windows
-            runner: windows-latest
-            flags: --win --x64
-            installer: apps/desktop/release/Valence-Setup-*.exe
-            also: ''
-            files: |
-              apps/desktop/release/Valence-Setup-*.exe
-              apps/desktop/release/Valence-Setup-*.exe.blockmap
-              apps/desktop/release/latest.yml
-          - name: macOS
-            runner: macos-latest
-            flags: --mac --arm64 --x64
-            installer: apps/desktop/release/Valence-*-arm64.dmg
-            also: apps/desktop/release/Valence-*-x64.dmg
-            files: |
-              apps/desktop/release/Valence-*.dmg
-              apps/desktop/release/Valence-*.dmg.blockmap
-              apps/desktop/release/Valence-*-mac.zip
-              apps/desktop/release/Valence-*-mac.zip.blockmap
-              apps/desktop/release/latest-mac.yml
-          - name: Linux
-            runner: ubuntu-latest
-            flags: --linux --x64
-            installer: apps/desktop/release/Valence-*.AppImage
-            also: ''
-            files: |
-              apps/desktop/release/Valence-*.AppImage
-              apps/desktop/release/latest-linux.yml
+        include: ${{ fromJSON(needs.platforms.outputs.include) }}
     steps:
       # The tag unless told otherwise. A release cut before the packaging was written cannot build
       # its own desktop app, and `ref` is how one is built from source that can, still stamped with
