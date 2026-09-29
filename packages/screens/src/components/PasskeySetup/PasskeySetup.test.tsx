@@ -9,12 +9,16 @@ const listPasskeysMock = vi.hoisted(() => vi.fn());
 const deletePasskeyMock = vi.hoisted(() => vi.fn());
 const renamePasskeyMock = vi.hoisted(() => vi.fn());
 const describeUnavailabilityMock = vi.hoisted(() => vi.fn());
+const isConfirmedMock = vi.hoisted(() => vi.fn());
+const confirmItIsYouMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@ValenceClient/session/auth', () => ({
   registerPasskey: registerPasskeyMock,
   listPasskeys: listPasskeysMock,
   deletePasskey: deletePasskeyMock,
   renamePasskey: renamePasskeyMock,
+  isThisSessionConfirmed: isConfirmedMock,
+  confirmItIsYou: confirmItIsYouMock,
 }));
 
 vi.mock('@ValenceScreens/passkeys/isPasskeySupported', () => ({
@@ -35,6 +39,8 @@ beforeEach(() => {
   renamePasskeyMock.mockReset();
   renamePasskeyMock.mockResolvedValue(true);
   describeUnavailabilityMock.mockReset();
+  isConfirmedMock.mockReset().mockResolvedValue(true);
+  confirmItIsYouMock.mockReset().mockResolvedValue({ kind: 'confirmed' });
 
   registerPasskeyMock.mockResolvedValue({ kind: 'registered' });
   listPasskeysMock.mockResolvedValue([]);
@@ -228,5 +234,33 @@ describe('PasskeySetup where passkeys are added in the browser', () => {
 
     expect(addOne).toHaveBeenCalledExactlyOnceWith();
     expect(screen.queryByRole('button', { name: /Add a passkey/ })).not.toBeInTheDocument();
+  });
+});
+
+describe('PasskeySetup for a session signed in a while ago', () => {
+  it('asks for the password before offering to add one', async () => {
+    describeUnavailabilityMock.mockReturnValue(null);
+    isConfirmedMock.mockResolvedValue(false);
+    render(<PasskeySetup />);
+
+    await userEvent.type(await screen.findByLabelText('Password'), 'a-long-enough-password');
+
+    expect(screen.queryByRole('button', { name: /Add a passkey/ })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+
+    expect(confirmItIsYouMock).toHaveBeenCalledWith('a-long-enough-password');
+    expect(await screen.findByRole('button', { name: /Add a passkey/ })).toBeInTheDocument();
+  });
+
+  it('asks for it where the server turned an add away, rather than showing an error', async () => {
+    describeUnavailabilityMock.mockReturnValue(null);
+    registerPasskeyMock.mockResolvedValue({ kind: 'unconfirmed' });
+    render(<PasskeySetup />);
+
+    await userEvent.click(await screen.findByRole('button', { name: /Add a passkey/ }));
+
+    expect(await screen.findByLabelText('Password')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });

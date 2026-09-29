@@ -6,6 +6,7 @@ import type { SignInAttempt } from '@ValenceServer/auth/describeSignInAttempt';
 import { readCallerAddress } from '@ValenceServer/web/readCallerAddress';
 import { setSessionCookie } from 'better-auth/cookies';
 import { bearerWithoutACookie } from '@ValenceServer/auth/bearerWithoutACookie';
+import { confirmItIsYou } from '@ValenceServer/auth/confirmItIsYou';
 import {
   admin,
   deviceAuthorization,
@@ -153,6 +154,7 @@ const createAuth = ({
     plugins: [
       twoFactor({ issuer: VALENCE_APP_NAME }),
       passkey({ rpName: VALENCE_APP_NAME }),
+      confirmItIsYou(),
       deviceAuthorization({ expiresIn: '10m', interval: '5s' }),
       bearerWithoutACookie(),
       jwt(),

@@ -19,7 +19,12 @@ import type { SessionUser } from '@ValenceContracts/schemas/Session';
 import type { Passkey } from '@ValenceContracts/schemas/Passkey';
 
 type RegisterOutcome =
-  { kind: 'registered' } | { kind: 'cancelled' } | { kind: 'failed'; reason: string };
+  | { kind: 'registered' }
+  | { kind: 'cancelled' }
+  | { kind: 'unconfirmed' }
+  | { kind: 'failed'; reason: string };
+
+type ConfirmOutcome = { kind: 'confirmed' } | { kind: 'failed'; reason: string };
 
 type AuthenticateOutcome =
   { kind: 'signedIn' } | { kind: 'cancelled' } | { kind: 'failed'; reason: string };
@@ -88,6 +93,8 @@ const client = buildClient();
 const CodedSchema = z.object({ code: z.string() });
 
 const TwoFactorRedirectSchema = z.object({ twoFactorRedirect: z.literal(true) });
+
+const ConfirmationSchema = z.object({ isConfirmed: z.boolean() });
 
 /**
  * Whether a refusal was somebody changing their mind rather than something going wrong.
@@ -206,6 +213,51 @@ const whyTheSystemSaidNo = (error: Error | string | null | undefined, otherwise:
   error instanceof Error && error.message !== '' ? error.message : otherwise;
 
 /**
+ * Whether this session was signed in, or confirmed, recently enough for the server to let it add a
+ * passkey — which it only checks once the passkey has been made, too late to say anything useful.
+ *
+ * A server that cannot say is taken to be one that does not ask, which is how every server before
+ * this question behaved.
+ *
+ * @returns Whether it is.
+ */
+const isThisSessionConfirmed = async (): Promise<boolean> => {
+  const answer = await client
+    .$fetch('/confirmation', { method: 'GET', throw: false })
+    .catch(() => null);
+  const read = ConfirmationSchema.safeParse(answer?.data);
+
+  return read.success ? read.data.isConfirmed : true;
+};
+
+/**
+ * Confirms it is still the person signed in, with their password, so the server treats this session
+ * as freshly signed in.
+ *
+ * @param password - Their password.
+ * @returns Whether it was confirmed, and why not where it was not.
+ */
+const confirmItIsYou = async (password: string): Promise<ConfirmOutcome> => {
+  const answer = await client
+    .$fetch('/confirm-it-is-you', { method: 'POST', body: { password }, throw: false })
+    .catch(() => null);
+
+  if (answer === null) {
+    return { kind: 'failed', reason: 'Valence could not be reached.' };
+  }
+
+  return answer.error === null
+    ? { kind: 'confirmed' }
+    : {
+        kind: 'failed',
+        reason:
+          answer.error.status === 429
+            ? 'Too many tries. Wait a minute and try again.'
+            : (answer.error.message ?? 'That is not your password.'),
+      };
+};
+
+/**
  * Adds a passkey through the host's own operating system rather than the page, for a host whose
  * pages the browser engine will not let make one for the server.
  *
@@ -273,7 +325,9 @@ const registerThroughTheSystem = async (
  *
  * A browser runs it in the page. A host whose pages cannot hands it to its operating system. One
  * that adds passkeys somewhere else entirely, or cannot at all, is refused here, since the account
- * page offers it no button that would call this.
+ * page offers it no button that would call this. A session signed in too long ago is turned away
+ * before anything is made, so that confirming it is them comes first rather than a passkey the server
+ * then refuses.
  *
  * @param name - What to call this device in the list of passkeys.
  * @returns Whether it worked, and why not where it did not.
@@ -281,16 +335,20 @@ const registerThroughTheSystem = async (
 const registerPasskey = async (name: string): Promise<RegisterOutcome> => {
   const passkeys = platformInUse().passkeys();
 
-  if (passkeys.kind === 'through-the-system') {
-    return await registerThroughTheSystem(name, passkeys.make);
-  }
-
   if (passkeys.kind === 'through-a-sign-in-page') {
     return { kind: 'failed', reason: 'Add a passkey from Valence in your browser.' };
   }
 
   if (passkeys.kind === 'none') {
     return { kind: 'failed', reason: passkeys.why };
+  }
+
+  if (!(await isThisSessionConfirmed())) {
+    return { kind: 'unconfirmed' };
+  }
+
+  if (passkeys.kind === 'through-the-system') {
+    return await registerThroughTheSystem(name, passkeys.make);
   }
 
   const answer = await client.passkey.addPasskey({ name }).catch(() => null);
@@ -662,6 +720,7 @@ const answerDeviceRequest = async (userCode: string, isAllowed: boolean): Promis
 };
 
 export type {
+  ConfirmOutcome,
   RegisterOutcome,
   AuthenticateOutcome,
   Enrollment,
@@ -675,6 +734,8 @@ export {
   signInWithEmail,
   signOut,
   registerPasskey,
+  isThisSessionConfirmed,
+  confirmItIsYou,
   authenticateWithPasskey,
   listPasskeys,
   deletePasskey,
