@@ -46,6 +46,30 @@ afterEach(() => {
 });
 
 describe('reading what a server allows', () => {
+  it('reads a role holding a plugin’s own permission, rather than refusing every role', async () => {
+    answering({
+      roles: [
+        {
+          id: 'role-1',
+          name: 'Node testers',
+          position: 5,
+          permissions: ['jobs.run', 'plugin.anilist.sync'],
+          color: null,
+        },
+      ],
+    });
+
+    await expect(fetchRoles()).resolves.toEqual([
+      {
+        id: 'role-1',
+        name: 'Node testers',
+        position: 5,
+        permissions: ['jobs.run', 'plugin.anilist.sync'],
+        color: null,
+      },
+    ]);
+  });
+
   it('reads the catalogue of permissions', async () => {
     answering({ permissions: ['library.edit', 'jobs.run'] });
 

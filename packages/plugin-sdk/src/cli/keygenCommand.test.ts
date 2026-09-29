@@ -8,12 +8,19 @@ import { keygenCommand } from './keygenCommand';
 
 describe('keygenCommand', () => {
   it('writes a matching pair, with the private key readable by its owner alone', () => {
-    const paths = keygenCommand(join(mkdtempSync(join(tmpdir(), 'valence-keys-')), 'keys'), 'test-key');
+    const paths = keygenCommand(
+      join(mkdtempSync(join(tmpdir(), 'valence-keys-')), 'keys'),
+      'test-key',
+    );
     const bytes = new TextEncoder().encode('x');
 
     expect(statSync(paths.privateKey).mode & 0o777).toBe(0o600);
     expect(
-      verifySignature(bytes, signBytes(bytes, readFileSync(paths.privateKey, 'utf8')), readFileSync(paths.publicKey, 'utf8')),
+      verifySignature(
+        bytes,
+        signBytes(bytes, readFileSync(paths.privateKey, 'utf8')),
+        readFileSync(paths.publicKey, 'utf8'),
+      ),
     ).toBe(true);
   });
 });

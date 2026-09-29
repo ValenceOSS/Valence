@@ -3,7 +3,14 @@ import { ContributionsSchema } from './ContributionsSchema';
 
 describe('ContributionsSchema', () => {
   it('defaults every list to empty', () => {
-    expect(ContributionsSchema.parse({})).toEqual({ pages: [], panels: [], themes: [], schedules: [], events: [] });
+    expect(ContributionsSchema.parse({})).toEqual({
+      pages: [],
+      panels: [],
+      themes: [],
+      schedules: [],
+      events: [],
+      nodes: [],
+    });
   });
 
   it('refuses an event topic Valence does not publish', () => {
@@ -12,6 +19,8 @@ describe('ContributionsSchema', () => {
   });
 
   it('refuses a panel on something Valence has no page for', () => {
-    expect(ContributionsSchema.safeParse({ panels: [{ id: 'x', title: 'X', on: 'settings' }] }).success).toBe(false);
+    expect(
+      ContributionsSchema.safeParse({ panels: [{ id: 'x', title: 'X', on: 'settings' }] }).success,
+    ).toBe(false);
   });
 });

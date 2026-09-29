@@ -23,17 +23,27 @@ describe('readPluginPackage', () => {
     const bomb = gzipSync(Buffer.alloc(PACKAGE_LIMITS.packageBytes * 3, 32));
 
     expect(bomb.byteLength).toBeLessThan(PACKAGE_LIMITS.packageBytes);
-    expect(readPluginPackage(bomb)).toEqual({ ok: false, problem: 'The package is not a gzipped Valence plugin.' });
+    expect(readPluginPackage(bomb)).toEqual({
+      ok: false,
+      problem: 'The package is not a gzipped Valence plugin.',
+    });
   });
 
   it('refuses gzipped text that is not JSON', () => {
-    expect(readPluginPackage(gzipSync('not json'))).toEqual({ ok: false, problem: 'The package does not hold JSON.' });
+    expect(readPluginPackage(gzipSync('not json'))).toEqual({
+      ok: false,
+      problem: 'The package does not hold JSON.',
+    });
   });
 
   it('says why a package breaks the rules', () => {
-    const opened = readPluginPackage(gzipSync(JSON.stringify({ format: 1, manifest: aManifest() })));
+    const opened = readPluginPackage(
+      gzipSync(JSON.stringify({ format: 1, manifest: aManifest() })),
+    );
 
     expect(opened.ok).toBe(false);
-    expect(opened.ok ? '' : opened.problem).toContain('A package carries code exactly when its manifest names an entry');
+    expect(opened.ok ? '' : opened.problem).toContain(
+      'A package carries code exactly when its manifest names an entry',
+    );
   });
 });

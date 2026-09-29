@@ -16,9 +16,15 @@ describe('readabilityProblemsOf', () => {
   });
 
   it('checks the accent’s own ink and muted text at their own thresholds', () => {
-    const problems = readabilityProblemsOf(aTheme({ accentContrast: '#3b82f7', textMuted: '#333333' }));
+    const problems = readabilityProblemsOf(
+      aTheme({ accentContrast: '#3b82f7', textMuted: '#333333' }),
+    );
 
     expect(problems.some((problem) => problem.startsWith('accentContrast on accent'))).toBe(true);
-    expect(problems.some((problem) => problem.startsWith('textMuted on surface') && problem.endsWith('at least 3:1'))).toBe(true);
+    expect(
+      problems.some(
+        (problem) => problem.startsWith('textMuted on surface') && problem.endsWith('at least 3:1'),
+      ),
+    ).toBe(true);
   });
 });

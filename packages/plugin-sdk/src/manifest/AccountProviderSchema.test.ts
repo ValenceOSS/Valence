@@ -16,7 +16,14 @@ describe('AccountProviderSchema', () => {
   });
 
   it('refuses an insecure token address and a malformed setting name', () => {
-    expect(AccountProviderSchema.safeParse({ ...provider, tokenUrl: 'http://accounts.spotify.com/api/token' }).success).toBe(false);
-    expect(AccountProviderSchema.safeParse({ ...provider, clientIdSetting: 'Client-Id' }).success).toBe(false);
+    expect(
+      AccountProviderSchema.safeParse({
+        ...provider,
+        tokenUrl: 'http://accounts.spotify.com/api/token',
+      }).success,
+    ).toBe(false);
+    expect(
+      AccountProviderSchema.safeParse({ ...provider, clientIdSetting: 'Client-Id' }).success,
+    ).toBe(false);
   });
 });

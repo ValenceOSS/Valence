@@ -16,7 +16,10 @@ const aPluginFolder = (changes: Partial<PluginManifestInput> = {}): string => {
 
   mkdirSync(join(folder, 'dist'));
   mkdirSync(join(folder, 'assets'));
-  writeFileSync(join(folder, 'manifest.json'), JSON.stringify(aManifest({ icon: 'icon.png', ...changes })));
+  writeFileSync(
+    join(folder, 'manifest.json'),
+    JSON.stringify(aManifest({ icon: 'icon.png', ...changes })),
+  );
   writeFileSync(join(folder, 'dist', 'plugin.js'), 'globalThis.valencePlugin = {};');
   writeFileSync(join(folder, 'assets', 'icon.png'), 'png');
   writeFileSync(join(folder, 'assets', 'notes.txt'), 'ignored');

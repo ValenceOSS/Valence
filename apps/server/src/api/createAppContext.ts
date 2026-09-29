@@ -57,7 +57,7 @@ import type { RequestsOverview } from '@ValenceContracts/schemas/Requests';
 import { NO_DISCOVERY } from '@ValenceServer/requests/catalogue/NO_DISCOVERY';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { CatalogueStanding } from '@ValenceContracts/schemas/CatalogueTitle';
-import type { Permission } from '@ValenceContracts/schemas/Permission';
+import type { GrantedPermission, Permission } from '@ValenceContracts/schemas/Permission';
 import type { CreateAppOptions } from '@ValenceServer/api/CreateAppOptions';
 
 const SHARE_JOINER = 'valence_share_joiner';
@@ -297,25 +297,30 @@ const createAppContext = (options: CreateAppOptions) => {
   };
 
   /**
-   * Whether whoever is asking holds a particular permission.
+   * Everything whoever is asking may do, including what plugins registered, narrowed to what an API
+   * key was restricted to where they are asking with one.
    */
-  const requires = async (headers: Headers, permission: Permission): Promise<boolean> => {
+  const grantsOf = async (headers: Headers): Promise<ReadonlySet<GrantedPermission>> => {
     const session = await readSessionOnce(auth, headers);
 
     if (session === null) {
-      return false;
+      return new Set();
     }
 
     const held = await permissions.resolve(session.user.id);
 
     if (headers.get('x-api-key') === null) {
-      return held.has(permission);
+      return held;
     }
 
-    const allowed = await apiKeys.restrictionFor(headers, session.session.id);
-
-    return narrowToKey(held, allowed).has(permission);
+    return narrowToKey(held, await apiKeys.restrictionFor(headers, session.session.id));
   };
+
+  /**
+   * Whether whoever is asking holds a particular permission.
+   */
+  const requires = async (headers: Headers, permission: Permission): Promise<boolean> =>
+    (await grantsOf(headers)).has(permission);
 
   type Asker = {
     account: () => Promise<{ id: string; name: string } | null>;
@@ -1449,6 +1454,7 @@ const createAppContext = (options: CreateAppOptions) => {
     describeRefusal,
     sayRoleChanged,
     requires,
+    grantsOf,
     viewerOf,
     bookInReach,
     isOutOfReach,

@@ -1,12 +1,15 @@
 import { useMemo, useState } from 'react';
 import { Search as SearchIcon } from '@keyline-icons/react';
 import { Icon } from '@ValenceUI/Icon';
-import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
 import { describePermission } from '@ValenceClient/admin/describePermission';
 import { describePermissionDetail } from '@ValenceClient/admin/describePermissionDetail';
 import { groupPermissions } from '@ValenceClient/admin/groupPermissions';
+import { PermissionRow } from './components/PermissionRow/PermissionRow';
+import type { PluginContributions } from '@ValenceContracts/schemas/Plugin';
 import type { PermissionEditorProps } from './PermissionEditor.types';
+
+const NO_NODES: PluginContributions['nodes'] = [];
 
 /**
  * Every permission a role can hold, grouped by what it is about and searchable by name — a switch
@@ -14,10 +17,16 @@ import type { PermissionEditorProps } from './PermissionEditor.types';
  * naming an identifier nobody not writing the server would recognise.
  *
  * @param catalogue - Every permission the server knows about.
+ * @param pluginNodes - The permissions plugins registered, grouped beneath Valence's own by plugin.
  * @param selected - Which of them this role currently holds.
  * @param onToggle - Told which permission was switched, on or off.
  */
-const PermissionEditor = ({ catalogue, selected, onToggle }: PermissionEditorProps) => {
+const PermissionEditor = ({
+  catalogue,
+  pluginNodes = NO_NODES,
+  selected,
+  onToggle,
+}: PermissionEditorProps) => {
   const [search, setSearch] = useState('');
 
   const groups = useMemo(() => {
@@ -41,6 +50,24 @@ const PermissionEditor = ({ catalogue, selected, onToggle }: PermissionEditorPro
       .filter((group) => group.permissions.length > 0);
   }, [catalogue, search]);
 
+  const pluginGroups = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    const matching = pluginNodes.filter(
+      (node) =>
+        query === '' ||
+        node.title.toLowerCase().includes(query) ||
+        (node.description ?? '').toLowerCase().includes(query) ||
+        node.pluginName.toLowerCase().includes(query) ||
+        node.node.includes(query),
+    );
+
+    return [...new Set(matching.map((node) => node.pluginId))].map((pluginId) => ({
+      pluginId,
+      pluginName: matching.find((node) => node.pluginId === pluginId)?.pluginName ?? pluginId,
+      nodes: matching.filter((node) => node.pluginId === pluginId),
+    }));
+  }, [pluginNodes, search]);
+
   return (
     <div className="flex flex-col gap-6">
       <TextField
@@ -53,7 +80,7 @@ const PermissionEditor = ({ catalogue, selected, onToggle }: PermissionEditorPro
         icon={<Icon of={SearchIcon} size={15} />}
       />
 
-      {groups.length === 0 ? (
+      {groups.length === 0 && pluginGroups.length === 0 ? (
         <p className="text-sm text-text-muted">Nothing here matches that.</p>
       ) : (
         groups.map((group) => (
@@ -62,34 +89,40 @@ const PermissionEditor = ({ catalogue, selected, onToggle }: PermissionEditorPro
 
             <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
               {group.permissions.map((permission) => (
-                <li
+                <PermissionRow
                   key={permission}
-                  className="flex items-start justify-between gap-4 py-3 first:pt-0"
-                >
-                  <div className="flex min-w-0 flex-col gap-0.5">
-                    <span className="text-sm font-medium text-text">
-                      {describePermission(permission)}
-                    </span>
-                    <span className="text-xs leading-relaxed text-text-muted">
-                      {describePermissionDetail(permission)}
-                    </span>
-                  </div>
-
-                  <Switch
-                    label={describePermission(permission)}
-                    isLabelHidden
-                    isOn={selected.includes(permission)}
-                    onToggle={() => {
-                      onToggle(permission);
-                    }}
-                    className="mt-0.5 shrink-0"
-                  />
-                </li>
+                  label={describePermission(permission)}
+                  detail={describePermissionDetail(permission)}
+                  isOn={selected.includes(permission)}
+                  onToggle={() => {
+                    onToggle(permission);
+                  }}
+                />
               ))}
             </ul>
           </div>
         ))
       )}
+
+      {pluginGroups.map((group) => (
+        <div key={group.pluginId} className="flex flex-col gap-1">
+          <h4 className="text-base font-semibold text-text">{`From ${group.pluginName}`}</h4>
+
+          <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
+            {group.nodes.map((node) => (
+              <PermissionRow
+                key={node.node}
+                label={node.title}
+                detail={node.description ?? `Lets somebody use this part of ${group.pluginName}.`}
+                isOn={selected.includes(node.node)}
+                onToggle={() => {
+                  onToggle(node.node);
+                }}
+              />
+            ))}
+          </ul>
+        </div>
+      ))}
     </div>
   );
 };

@@ -10,7 +10,9 @@ type MediaRef = {
   seriesId: string | null;
   seasonNumber: number | null;
   episodeNumber: number | null;
-  externalIds: Partial<Record<'tmdb' | 'tvdb' | 'imdb' | 'anilist' | 'mal' | 'musicbrainz' | 'isrc', string>>;
+  externalIds: Partial<
+    Record<'tmdb' | 'tvdb' | 'imdb' | 'anilist' | 'mal' | 'musicbrainz' | 'isrc', string>
+  >;
 };
 
 type ProgressEntry = {
@@ -48,7 +50,11 @@ type ValenceHost = {
   http: {
     fetch: (
       url: string,
-      init?: { method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'; headers?: Record<string, string>; body?: string },
+      init?: {
+        method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+        headers?: Record<string, string>;
+        body?: string;
+      },
     ) => Promise<{ status: number; headers: Record<string, string>; text: string }>;
   };
   accounts: {
@@ -71,17 +77,30 @@ type ValenceHost = {
   };
   requests: {
     searchCatalogue: (query: string, kind: CatalogueHit['kind']) => Promise<CatalogueHit[]>;
-    create: (profileId: string, hit: Pick<CatalogueHit, 'catalogueId' | 'kind'>) => Promise<{ status: 'made' | 'already' | 'refused' }>;
+    create: (
+      profileId: string,
+      hit: Pick<CatalogueHit, 'catalogueId' | 'kind'>,
+    ) => Promise<{ status: 'made' | 'already' | 'refused' }>;
   };
   playlists: {
     list: (profileId: string) => Promise<{ id: string; name: string }[]>;
-    create: (profileId: string, playlist: { name: string; description?: string }) => Promise<{ id: string }>;
+    create: (
+      profileId: string,
+      playlist: { name: string; description?: string },
+    ) => Promise<{ id: string }>;
     add: (profileId: string, playlistId: string, mediaIds: string[]) => Promise<void>;
   };
   music: {
-    findTrack: (track: { title: string; artist: string; album?: string; isrc?: string }) => Promise<MediaRef | null>;
+    findTrack: (track: {
+      title: string;
+      artist: string;
+      album?: string;
+      isrc?: string;
+    }) => Promise<MediaRef | null>;
   };
-  notifications: { send: (profileId: string, note: { title: string; body: string }) => Promise<void> };
+  notifications: {
+    send: (profileId: string, note: { title: string; body: string }) => Promise<void>;
+  };
 };
 
 export type { CatalogueHit, MediaRef, ProgressEntry, Scalar, Stored, ValenceHost };

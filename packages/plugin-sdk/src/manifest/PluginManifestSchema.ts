@@ -21,7 +21,10 @@ const PluginManifestSchema = z
     author: z.object({ name: z.string().min(1).max(80), url: HttpsUrlSchema.optional() }),
     description: z.string().min(1).max(500),
     homepage: HttpsUrlSchema.optional(),
-    icon: z.string().regex(/^[a-z0-9-]+\.(png|jpg|webp)$/).optional(),
+    icon: z
+      .string()
+      .regex(/^[a-z0-9-]+\.(png|jpg|webp)$/)
+      .optional(),
     permissions: z.array(PermissionSchema).max(16).default([]),
     contributes: ContributionsSchema.default({
       pages: [],
@@ -29,8 +32,12 @@ const PluginManifestSchema = z
       themes: [],
       schedules: [],
       events: [],
+      nodes: [],
     }),
-    entry: z.string().regex(/^[a-z0-9/_-]+\.js$/).optional(),
+    entry: z
+      .string()
+      .regex(/^[a-z0-9/_-]+\.js$/)
+      .optional(),
     settings: z
       .array(
         z.object({
@@ -104,6 +111,22 @@ const PluginManifestSchema = z
 
     if (new Set(ids).size !== ids.length) {
       context.addIssue({ code: 'custom', message: 'Each contribution id is used once' });
+    }
+
+    const nodes = manifest.contributes.nodes.map((node) => node.id);
+
+    if (new Set(nodes).size !== nodes.length) {
+      context.addIssue({ code: 'custom', message: 'Each permission node is declared once' });
+    }
+
+    for (const place of [...manifest.contributes.pages, ...manifest.contributes.panels]) {
+      if (place.requires !== undefined && !nodes.includes(place.requires)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['contributes'],
+          message: `${place.title} requires ${place.requires}, which is not declared under nodes`,
+        });
+      }
     }
   });
 

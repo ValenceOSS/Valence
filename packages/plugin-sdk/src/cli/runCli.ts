@@ -26,7 +26,10 @@ const runCli = (
   const [command, ...rest] = words;
   const { options, positional } = readOptions(rest);
   const signingKey = (): string => {
-    const key = options['key'] === undefined ? environment['VALENCE_PLUGIN_SIGNING_KEY'] : readFileSync(options['key'], 'utf8');
+    const key =
+      options['key'] === undefined
+        ? environment['VALENCE_PLUGIN_SIGNING_KEY']
+        : readFileSync(options['key'], 'utf8');
 
     if (key === undefined || key.trim() === '') {
       throw new Error('No signing key: pass --key or set VALENCE_PLUGIN_SIGNING_KEY.');

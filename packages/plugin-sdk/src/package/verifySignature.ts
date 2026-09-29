@@ -14,7 +14,10 @@ const verifySignature = (bytes: Uint8Array, signature: string, publicKeyPem: str
   try {
     const key = createPublicKey(publicKeyPem);
 
-    return key.asymmetricKeyType === 'ed25519' && verify(null, bytes, key, Buffer.from(signature, 'base64'));
+    return (
+      key.asymmetricKeyType === 'ed25519' &&
+      verify(null, bytes, key, Buffer.from(signature, 'base64'))
+    );
   } catch {
     return false;
   }

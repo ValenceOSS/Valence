@@ -2,10 +2,15 @@ import { randomUUID } from 'node:crypto';
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import { resolvePermissions } from '@ValenceCore/functions/resolvePermissions';
 import { ADMINISTRATOR } from '@ValenceContracts/schemas/Permission';
-import type { Permission, PermissionGrant, Role } from '@ValenceContracts/schemas/Permission';
+import type {
+  GrantedPermission,
+  PermissionGrant,
+  Role,
+} from '@ValenceContracts/schemas/Permission';
 import { role, rolePermission, userPermissionOverride, userRole } from '@ValenceServer/db/Schema';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
 import { readPermission } from './readPermission';
+import { readGrantedPermission } from './readGrantedPermission';
 import type { PermissionService } from './PermissionService';
 
 /**
@@ -37,7 +42,7 @@ const readGrants = (rows: readonly { permission: string; effect: string }[]): Pe
 const createDatabasePermissionService = (db: ValenceDatabase): PermissionService => {
   const permissionsByRole = async (
     roleIds: readonly string[],
-  ): Promise<Map<string, Permission[]>> => {
+  ): Promise<Map<string, GrantedPermission[]>> => {
     if (roleIds.length === 0) {
       return new Map();
     }
@@ -47,10 +52,10 @@ const createDatabasePermissionService = (db: ValenceDatabase): PermissionService
       .from(rolePermission)
       .where(inArray(rolePermission.roleId, [...roleIds]));
 
-    const byRole = new Map<string, Permission[]>();
+    const byRole = new Map<string, GrantedPermission[]>();
 
     for (const row of rows) {
-      const permission = readPermission(row.permission);
+      const permission = readGrantedPermission(row.permission);
 
       if (permission === null) {
         continue;
@@ -92,7 +97,7 @@ const createDatabasePermissionService = (db: ValenceDatabase): PermissionService
         .where(eq(userPermissionOverride.userId, userId)),
     );
 
-  const writePermissions = async (roleId: string, permissions: readonly Permission[]) => {
+  const writePermissions = async (roleId: string, permissions: readonly GrantedPermission[]) => {
     await db.delete(rolePermission).where(eq(rolePermission.roleId, roleId));
 
     if (permissions.length > 0) {

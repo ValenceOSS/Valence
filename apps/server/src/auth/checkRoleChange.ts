@@ -1,14 +1,14 @@
 import { ADMINISTRATOR } from '@ValenceContracts/schemas/Permission';
-import type { Permission } from '@ValenceContracts/schemas/Permission';
+import type { GrantedPermission } from '@ValenceContracts/schemas/Permission';
 
 type RoleChangeRefusal = 'outranked' | 'escalation';
 
 type CheckRoleChangeOptions = {
   actorId: string;
   actorHighestPosition: number | null;
-  actorPermissions: ReadonlySet<Permission>;
+  actorPermissions: ReadonlySet<GrantedPermission>;
   targetPosition: number;
-  granting?: readonly Permission[];
+  granting?: readonly GrantedPermission[];
   ownerId: string | null;
 };
 
@@ -44,7 +44,7 @@ const checkRoleChange = ({
     return 'outranked';
   }
 
-  const holds = (permission: Permission): boolean =>
+  const holds = (permission: GrantedPermission): boolean =>
     actorPermissions.has(ADMINISTRATOR) || actorPermissions.has(permission);
 
   return granting.some((permission) => !holds(permission)) ? 'escalation' : null;

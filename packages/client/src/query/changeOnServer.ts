@@ -24,13 +24,14 @@ const changeOnServer = async (
   },
   fallback: string,
 ): Promise<JsonValue> => {
+  const headers = {
+    ...(init.json === undefined ? {} : { 'content-type': 'application/json' }),
+    ...init.headers,
+  };
   const response = await fetch(path, {
     method: init.method,
     credentials: 'same-origin',
-    headers: {
-      ...(init.json === undefined ? {} : { 'content-type': 'application/json' }),
-      ...init.headers,
-    },
+    ...(Object.keys(headers).length === 0 ? {} : { headers }),
     ...(init.json === undefined ? {} : { body: JSON.stringify(init.json) }),
   });
 

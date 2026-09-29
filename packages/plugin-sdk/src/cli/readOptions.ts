@@ -5,7 +5,9 @@
  * @param words - The arguments after the command's name.
  * @returns The options by name, and the positional words.
  */
-const readOptions = (words: readonly string[]): { options: Record<string, string>; positional: string[] } => {
+const readOptions = (
+  words: readonly string[],
+): { options: Record<string, string>; positional: string[] } => {
   const options: Record<string, string> = {};
   const positional: string[] = [];
 

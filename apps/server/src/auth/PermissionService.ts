@@ -1,7 +1,12 @@
-import type { Permission, PermissionGrant, Role } from '@ValenceContracts/schemas/Permission';
+import type {
+  GrantedPermission,
+  Permission,
+  PermissionGrant,
+  Role,
+} from '@ValenceContracts/schemas/Permission';
 
 type PermissionService = {
-  resolve: (userId: string) => Promise<ReadonlySet<Permission>>;
+  resolve: (userId: string) => Promise<ReadonlySet<GrantedPermission>>;
 
   listRoles: () => Promise<Role[]>;
   createRole: (role: Omit<Role, 'id'>) => Promise<Role>;

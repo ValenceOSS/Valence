@@ -1,9 +1,11 @@
-import type { Permission } from '@ValenceContracts/schemas/Permission';
+import type { GrantedPermission, Permission } from '@ValenceContracts/schemas/Permission';
+import type { PluginContributions } from '@ValenceContracts/schemas/Plugin';
 
 type PermissionEditorProps = {
   catalogue: Permission[];
-  selected: Permission[];
-  onToggle: (permission: Permission) => void;
+  pluginNodes?: PluginContributions['nodes'];
+  selected: readonly GrantedPermission[];
+  onToggle: (permission: GrantedPermission) => void;
 };
 
 export type { PermissionEditorProps };

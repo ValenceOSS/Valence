@@ -34,6 +34,7 @@ const somePluginContributions = (
       { pluginId: 'anilist', pluginName: 'AniList', panelId: 'score', title: 'Score', on: 'title' },
     ],
     themes: [{ ...aPluginTheme(), pluginId: 'night-sky', pluginName: 'Night Sky' }],
+    nodes: [],
     ...overrides,
   });
 

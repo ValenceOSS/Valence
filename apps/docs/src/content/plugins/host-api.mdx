@@ -47,12 +47,12 @@ type SurfaceHandler = {
 
 type SurfaceContext = {
   valence: ValenceHost;
-  viewer: { profileId: string; isAdmin: boolean };
+  viewer: { profileId: string; isAdmin: boolean; nodes: string[] };
   subject: { kind: 'title' | 'series' | 'album' | 'artist' | 'playlist'; id: string } | null;
 };
 ```
 
-- `viewer` is the person looking at it. Profile-scoped methods called from a page or panel may act only for `viewer.profileId`.
+- `viewer` is the person looking at it. Profile-scoped methods called from a page or panel may act only for `viewer.profileId`. `viewer.nodes` lists which of your [permission nodes](/plugins/permissions#your-own-permission-nodes) they hold.
 - `subject` is what a panel is sitting on, and `null` on a page.
 - `render` returns a [surface](/plugins/building-blocks).
 - `act` receives the pressed action and the current value of every field on the surface. Return a surface to show it straight away, or nothing to have Valence call `render` again.

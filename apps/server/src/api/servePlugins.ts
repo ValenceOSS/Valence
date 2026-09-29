@@ -60,7 +60,7 @@ const PICTURE_HEADERS = {
  * @param context - What they are answered with.
  */
 const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
-  const { plugins, auth, requires, readProfileId } = context;
+  const { plugins, auth, requires, grantsOf, readProfileId } = context;
 
   const administrator = async (headers: Headers): Promise<'allowed' | 401 | 403> => {
     const session = await readSessionOnce(auth, headers);
@@ -83,6 +83,7 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
       accountId: session.user.id,
       profileId: (await readProfileId(headers)) ?? session.user.id,
       isAdmin: await requires(headers, 'server.plugins'),
+      grants: await grantsOf(headers),
     };
   };
 
@@ -272,8 +273,8 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
 
     return context.json(
       plugins === undefined
-        ? { pages: [], panels: [], themes: [] }
-        : await plugins.contributions(viewer.isAdmin),
+        ? { pages: [], panels: [], themes: [], nodes: [] }
+        : await plugins.contributions(viewer),
       200,
     );
   });

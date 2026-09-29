@@ -26,16 +26,29 @@ describe('PluginManifestSchema', () => {
     });
 
     expect(manifest.permissions).toEqual([]);
-    expect(manifest.contributes).toEqual({ pages: [], panels: [], themes: [], schedules: [], events: [] });
+    expect(manifest.contributes).toEqual({
+      pages: [],
+      panels: [],
+      themes: [],
+      schedules: [],
+      events: [],
+      nodes: [],
+    });
   });
 
   it('refuses an id that is not lower-case kebab-case', () => {
-    expect(problemsOf(aManifest({ id: 'Anime_Tracker' }))).toContain('Plugin ids are lower-case kebab-case');
+    expect(problemsOf(aManifest({ id: 'Anime_Tracker' }))).toContain(
+      'Plugin ids are lower-case kebab-case',
+    );
   });
 
   it('refuses a version that is not full semver, and an api range it cannot read', () => {
-    expect(problemsOf(aManifest({ version: '1.2' }))).toContain('A plugin version is a full semver version');
-    expect(problemsOf(aManifest({ apiVersion: '>=1 <2' }))).toContain('apiVersion is a semver range such as ^1.0');
+    expect(problemsOf(aManifest({ version: '1.2' }))).toContain(
+      'A plugin version is a full semver version',
+    );
+    expect(problemsOf(aManifest({ apiVersion: '>=1 <2' }))).toContain(
+      'apiVersion is a semver range such as ^1.0',
+    );
   });
 
   it('refuses a permission declared twice', () => {
@@ -134,6 +147,38 @@ describe('PluginManifestSchema', () => {
         }),
       ),
     ).toContain('Each contribution id is used once');
+  });
+
+  it('lets a page or panel require only a permission node the plugin declares, once', () => {
+    const declared = aManifest({
+      contributes: {
+        pages: [{ id: 'sync', title: 'Sync', placement: 'account', requires: 'sync' }],
+        nodes: [{ id: 'sync', title: 'Sync lists' }],
+      },
+    });
+
+    expect(problemsOf(declared)).toEqual([]);
+    expect(
+      problemsOf(
+        aManifest({
+          contributes: {
+            panels: [{ id: 'score', title: 'Score', on: 'title', requires: 'rate' }],
+          },
+        }),
+      ),
+    ).toContain('Score requires rate, which is not declared under nodes');
+    expect(
+      problemsOf(
+        aManifest({
+          contributes: {
+            nodes: [
+              { id: 'sync', title: 'Sync lists' },
+              { id: 'sync', title: 'Sync lists again' },
+            ],
+          },
+        }),
+      ),
+    ).toContain('Each permission node is declared once');
   });
 
   it('refuses a schedule more often than every fifteen minutes', () => {

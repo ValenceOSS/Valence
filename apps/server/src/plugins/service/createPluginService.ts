@@ -20,6 +20,7 @@ import { summaryOf } from './summaryOf';
 import { eventsFrom } from './eventsFrom';
 import { openSettings } from './openSettings';
 import { permissionsHashOf } from './permissionsHashOf';
+import { nodesHeldBy } from './nodesHeldBy';
 import type {
   CatalogueListing,
   InstalledPlugin,
@@ -367,9 +368,12 @@ const createPluginService = ({
         ? record.manifest.contributes.pages.find((page) => page.id === at.id)
         : record.manifest.contributes.panels.find((panel) => panel.id === at.id);
 
+    const held = nodesHeldBy(record.manifest, viewer.grants);
+
     if (
       contributed === undefined ||
-      ('placement' in contributed && contributed.placement === 'admin' && !viewer.isAdmin)
+      ('placement' in contributed && contributed.placement === 'admin' && !viewer.isAdmin) ||
+      (contributed.requires !== undefined && !held.includes(contributed.requires))
     ) {
       return null;
     }
@@ -384,7 +388,7 @@ const createPluginService = ({
     };
     const args = {
       id: at.id,
-      viewer: { profileId: viewer.profileId, isAdmin: viewer.isAdmin },
+      viewer: { profileId: viewer.profileId, isAdmin: viewer.isAdmin, nodes: held },
       subject: at.subject,
     };
     const assets = new Set(Object.keys(plugin.assets));
@@ -748,13 +752,18 @@ const createPluginService = ({
 
       return removed;
     },
-    contributions: async (isAdmin: boolean): Promise<PluginContributions> => {
+    contributions: async (
+      viewer: Pick<PluginViewer, 'isAdmin' | 'grants'>,
+    ): Promise<PluginContributions> => {
       const enabled = (await store.list()).filter((record) => record.isEnabled);
+      const mayUse = (record: InstalledRecord, requires: string | undefined): boolean =>
+        requires === undefined || nodesHeldBy(record.manifest, viewer.grants).includes(requires);
 
       return {
         pages: enabled.flatMap((record) =>
           record.manifest.contributes.pages
-            .filter((page) => page.placement === 'account' || isAdmin)
+            .filter((page) => page.placement === 'account' || viewer.isAdmin)
+            .filter((page) => mayUse(record, page.requires))
             .map((page) => ({
               pluginId: record.id,
               pluginName: record.manifest.name,
@@ -765,19 +774,30 @@ const createPluginService = ({
             })),
         ),
         panels: enabled.flatMap((record) =>
-          record.manifest.contributes.panels.map((panel) => ({
-            pluginId: record.id,
-            pluginName: record.manifest.name,
-            panelId: panel.id,
-            title: panel.title,
-            on: panel.on,
-          })),
+          record.manifest.contributes.panels
+            .filter((panel) => mayUse(record, panel.requires))
+            .map((panel) => ({
+              pluginId: record.id,
+              pluginName: record.manifest.name,
+              panelId: panel.id,
+              title: panel.title,
+              on: panel.on,
+            })),
         ),
         themes: enabled.flatMap((record) =>
           record.manifest.contributes.themes.map((theme) => ({
             ...theme,
             pluginId: record.id,
             pluginName: record.manifest.name,
+          })),
+        ),
+        nodes: enabled.flatMap((record) =>
+          record.manifest.contributes.nodes.map((node) => ({
+            node: `plugin.${record.id}.${node.id}` as const,
+            pluginId: record.id,
+            pluginName: record.manifest.name,
+            title: node.title,
+            description: node.description ?? null,
           })),
         ),
       };

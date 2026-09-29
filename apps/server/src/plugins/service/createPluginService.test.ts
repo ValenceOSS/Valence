@@ -40,7 +40,9 @@ const MANIFEST = PluginManifestSchema.parse({
       { id: 'home', title: 'Counter', placement: 'account' },
       { id: 'bad', title: 'Bad', placement: 'account' },
       { id: 'secret', title: 'Secret', placement: 'admin' },
+      { id: 'managed', title: 'Managed', placement: 'account', requires: 'manage' },
     ],
+    nodes: [{ id: 'manage', title: 'Manage the counter' }],
   },
 });
 
@@ -60,6 +62,9 @@ const CODE = `globalThis.valencePlugin = {
     },
     bad: { render: async () => ({ blocks: [{ type: 'script', source: 'alert(1)' }] }) },
     secret: { render: async () => ({ blocks: [{ type: 'text', text: 'admins only' }] }) },
+    managed: {
+      render: async ({ viewer }) => ({ blocks: [{ type: 'text', text: 'holds ' + viewer.nodes.join(',') }] }),
+    },
   },
 };`;
 
@@ -104,7 +109,12 @@ const installOver = async (service: ReturnType<typeof build>, bytes: Uint8Array)
   );
 };
 
-const VIEWER: PluginViewer = { accountId: 'account-1', profileId: 'profile-1', isAdmin: false };
+const VIEWER: PluginViewer = {
+  accountId: 'account-1',
+  profileId: 'profile-1',
+  isAdmin: false,
+  grants: new Set(),
+};
 
 const HOME = { kind: 'page', id: 'home', subject: null } as const;
 
@@ -310,10 +320,11 @@ describe('a plugin from upload to use, through its own process', () => {
   it('lists what it adds, and forgets everything when uninstalled', async () => {
     const service = await installed();
 
-    expect((await service.contributions(false)).pages.map((page) => page.pageId)).toEqual([
-      'home',
-      'bad',
-    ]);
+    expect(
+      (await service.contributions({ isAdmin: false, grants: new Set() })).pages.map(
+        (page) => page.pageId,
+      ),
+    ).toEqual(['home', 'bad']);
     expect(await service.uninstall('counter')).toBe(true);
     expect(await service.render('counter', HOME, VIEWER)).toBeNull();
     expect(await service.listInstalled()).toEqual([]);
@@ -395,6 +406,34 @@ describe('a plugin from upload to use, through its own process', () => {
     expect((await service.render('counter', HOME, VIEWER))?.surface).toEqual({
       blocks: [{ type: 'text', text: 'Pressed 1' }],
     });
+
+    service.stop();
+  }, 30_000);
+
+  it('shows a page that needs a permission node only to whoever holds it, and says which they hold', async () => {
+    const service = await installed();
+    const managed = { kind: 'page', id: 'managed', subject: null } as const;
+    const holder: PluginViewer = { ...VIEWER, grants: new Set(['plugin.counter.manage']) };
+
+    expect(await service.render('counter', managed, VIEWER)).toBeNull();
+    expect((await service.contributions(VIEWER)).pages.map((page) => page.pageId)).not.toContain(
+      'managed',
+    );
+    expect((await service.render('counter', managed, holder))?.surface).toEqual({
+      blocks: [{ type: 'text', text: 'holds manage' }],
+    });
+    expect((await service.contributions(holder)).pages.map((page) => page.pageId)).toContain(
+      'managed',
+    );
+    expect((await service.contributions(VIEWER)).nodes).toEqual([
+      {
+        node: 'plugin.counter.manage',
+        pluginId: 'counter',
+        pluginName: 'Counter',
+        title: 'Manage the counter',
+        description: null,
+      },
+    ]);
 
     service.stop();
   }, 30_000);

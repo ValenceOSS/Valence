@@ -45,12 +45,13 @@ describe('plugin reads', () => {
   });
 
   it('reads what plugins add', async () => {
-    answer({ pages: [], panels: [], themes: [] });
+    answer({ pages: [], panels: [], themes: [], nodes: [] });
 
     await expect(fetchPluginContributions()).resolves.toEqual({
       pages: [],
       panels: [],
       themes: [],
+      nodes: [],
     });
     expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/plugins/contributions');
   });

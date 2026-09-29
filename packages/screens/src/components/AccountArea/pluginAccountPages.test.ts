@@ -25,6 +25,7 @@ describe('pluginAccountPages', () => {
         ],
         panels: [],
         themes: [],
+        nodes: [],
       }),
     ).toEqual([
       {

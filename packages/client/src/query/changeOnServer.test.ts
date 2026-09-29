@@ -40,7 +40,6 @@ describe('changeOnServer', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/thing', {
       method: 'DELETE',
       credentials: 'same-origin',
-      headers: {},
     });
   });
 

@@ -12,6 +12,7 @@ const ContributionsSchema = z.object({
         title: z.string().min(1).max(40),
         placement: z.enum(['account', 'admin']),
         icon: IconNameSchema.optional(),
+        requires: LocalIdSchema.optional(),
       }),
     )
     .max(8)
@@ -22,6 +23,7 @@ const ContributionsSchema = z.object({
         id: LocalIdSchema,
         title: z.string().min(1).max(40),
         on: z.enum(['title', 'series', 'album', 'artist', 'playlist']),
+        requires: LocalIdSchema.optional(),
       }),
     )
     .max(8)
@@ -38,6 +40,16 @@ const ContributionsSchema = z.object({
     .max(8)
     .default([]),
   events: z.array(z.enum(EVENT_TOPICS)).max(EVENT_TOPICS.length).default([]),
+  nodes: z
+    .array(
+      z.object({
+        id: LocalIdSchema,
+        title: z.string().min(1).max(60),
+        description: z.string().max(200).optional(),
+      }),
+    )
+    .max(20)
+    .default([]),
 });
 
 type Contributions = z.infer<typeof ContributionsSchema>;

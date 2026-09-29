@@ -104,6 +104,37 @@ Opens `valence.accounts.connection` and `valence.accounts.disconnect`. Valence r
 
 No fields. Opens `valence.notifications.send`, which puts a notification in someone's bell, the same place Valence's own notifications go.
 
+## Your own permission nodes
+
+The permissions above say what your plugin may do. Permission nodes say which people may use parts of it. Declare them under `contributes.nodes`:
+
+```json
+"contributes": {
+  "pages": [
+    { "id": "tracking", "title": "Anime tracking", "placement": "account" },
+    { "id": "sync-log", "title": "Sync log", "placement": "account", "requires": "view-log" }
+  ],
+  "nodes": [
+    { "id": "view-log", "title": "See the sync log", "description": "Read what the last syncs did." }
+  ]
+}
+```
+
+- Each node becomes a permission named `plugin.<your id>.<node id>`, listed under your plugin's name in the Roles editor, where an administrator gives it to roles like any of Valence's own.
+- Administrators hold every node.
+- A page or panel that `requires` a node is hidden from, and refused to, anybody without it.
+- Your code is told which of your nodes the person holds, as `viewer.nodes`, so an action can check before it does something.
+
+```ts
+act: async ({ viewer }, request) => {
+  if (request.action.id === 'clear-log' && !viewer.nodes.includes('view-log')) {
+    return { blocks: [{ type: 'notice', tone: 'danger', text: 'You may not clear the log.' }] };
+  }
+},
+```
+
+Removing your plugin takes its nodes out of every role.
+
 ## Always available
 
 These need no permission: `valence.plugin`, `valence.settings.read`, `valence.log` and `valence.profiles.list`.

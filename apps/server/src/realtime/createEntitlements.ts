@@ -1,13 +1,13 @@
-import type { Permission } from '@ValenceContracts/schemas/Permission';
+import type { GrantedPermission } from '@ValenceContracts/schemas/Permission';
 
 type EntitlementOptions = {
-  resolve: (accountId: string) => Promise<ReadonlySet<Permission>>;
+  resolve: (accountId: string) => Promise<ReadonlySet<GrantedPermission>>;
   now: () => number;
   ttlMs: number;
 };
 
 type Entitlements = {
-  of: (accountId: string) => Promise<ReadonlySet<Permission>>;
+  of: (accountId: string) => Promise<ReadonlySet<GrantedPermission>>;
   forget: (accountId: string) => void;
   forgetAll: () => void;
 };
@@ -27,7 +27,7 @@ type Entitlements = {
  * @returns The entitlement reader.
  */
 const createEntitlements = ({ resolve, now, ttlMs }: EntitlementOptions): Entitlements => {
-  const held = new Map<string, { at: number; permissions: ReadonlySet<Permission> }>();
+  const held = new Map<string, { at: number; permissions: ReadonlySet<GrantedPermission> }>();
 
   return {
     of: async (accountId) => {

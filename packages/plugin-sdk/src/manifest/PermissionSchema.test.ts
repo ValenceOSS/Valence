@@ -13,16 +13,28 @@ describe('PermissionSchema', () => {
       { kind: 'notifications' },
     ].map((permission) => PermissionSchema.parse(permission).kind);
 
-    expect(kinds).toEqual(['network', 'library', 'viewing', 'requests', 'playlists', 'storage', 'notifications']);
+    expect(kinds).toEqual([
+      'network',
+      'library',
+      'viewing',
+      'requests',
+      'playlists',
+      'storage',
+      'notifications',
+    ]);
   });
 
   it('refuses write access to the library, and storage over 50 MB', () => {
     expect(PermissionSchema.safeParse({ kind: 'library', access: 'write' }).success).toBe(false);
-    expect(PermissionSchema.safeParse({ kind: 'storage', quotaBytes: 60_000_000 }).success).toBe(false);
+    expect(PermissionSchema.safeParse({ kind: 'storage', quotaBytes: 60_000_000 }).success).toBe(
+      false,
+    );
   });
 
   it('refuses a network permission with no hosts, or a wildcard', () => {
     expect(PermissionSchema.safeParse({ kind: 'network', hosts: [] }).success).toBe(false);
-    expect(PermissionSchema.safeParse({ kind: 'network', hosts: ['*.example.com'] }).success).toBe(false);
+    expect(PermissionSchema.safeParse({ kind: 'network', hosts: ['*.example.com'] }).success).toBe(
+      false,
+    );
   });
 });

@@ -39,7 +39,8 @@ import { adminQueries } from '@ValenceClient/query/adminQueries';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Account } from '@ValenceClient/admin/fetchAccounts';
 import type { Refusal } from '@ValenceClient/admin/fetchRoles';
-import type { Permission, Role } from '@ValenceContracts/schemas/Permission';
+import { pluginQueries } from '@ValenceClient/query/pluginQueries';
+import type { GrantedPermission, Permission, Role } from '@ValenceContracts/schemas/Permission';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 
 const NEW_ROLE_POSITION = 50;
@@ -73,14 +74,14 @@ const RolesPanel = () => {
   const [deleting, setDeleting] = useState<Role | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [newRolePosition, setNewRolePosition] = useState(NEW_ROLE_POSITION.toString());
-  const [newRolePermissions, setNewRolePermissions] = useState<Permission[]>([]);
+  const [newRolePermissions, setNewRolePermissions] = useState<GrantedPermission[]>([]);
   const [newRoleName, setNewRoleName] = useState('');
   const [newRoleColor, setNewRoleColor] = useState<string | null>(null);
   const [refusal, setRefusal] = useState<Refusal>(null);
   const [draftName, setDraftName] = useState('');
   const [draftPosition, setDraftPosition] = useState('');
   const [draftColor, setDraftColor] = useState<string | null>(null);
-  const [draftPermissions, setDraftPermissions] = useState<Permission[]>([]);
+  const [draftPermissions, setDraftPermissions] = useState<GrantedPermission[]>([]);
   const [draftMemberIds, setDraftMemberIds] = useState<ReadonlySet<string>>(new Set());
 
   const cache = useQueryClient();
@@ -88,9 +89,11 @@ const RolesPanel = () => {
   const askedRoles = useQuery(adminQueries.roles());
   const askedCatalogue = useQuery(adminQueries.permissions());
   const askedAccounts = useQuery(adminQueries.accounts());
+  const askedPlugins = useQuery(pluginQueries.contributions());
 
   const roles = askedRoles.data ?? NO_ROLES;
   const catalogue = askedCatalogue.data ?? NO_PERMISSIONS;
+  const pluginNodes = askedPlugins.data?.nodes;
   const accounts = askedAccounts.data ?? NO_ACCOUNTS;
   const couldNotRead = askedRoles.isError || askedCatalogue.isError;
 
@@ -412,6 +415,7 @@ const RolesPanel = () => {
 
           <PermissionEditor
             catalogue={catalogue}
+            {...(pluginNodes === undefined ? {} : { pluginNodes })}
             selected={newRolePermissions}
             onToggle={(permission) => {
               setNewRolePermissions((held) =>
@@ -571,6 +575,7 @@ const RolesPanel = () => {
               <TabPanel value="permissions" travel={travel}>
                 <PermissionEditor
                   catalogue={catalogue}
+                  {...(pluginNodes === undefined ? {} : { pluginNodes })}
                   selected={draftPermissions}
                   onToggle={(permission) => {
                     setDraftPermissions((held) =>

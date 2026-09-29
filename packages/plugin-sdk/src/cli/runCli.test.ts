@@ -51,7 +51,20 @@ describe('runCli', () => {
     expect(existsSync(join(folder, 'keys', 'mine.pem'))).toBe(true);
     expect(
       runCli(
-        ['catalogue', 'packages', '--key-id', 'k', '--package-url', 'https://x.test/{file}', '--source-url', 'https://x.test/{id}', '--icon-url', 'https://x.test/{file}', '--key', join(folder, 'keys', 'mine.pem')],
+        [
+          'catalogue',
+          'packages',
+          '--key-id',
+          'k',
+          '--package-url',
+          'https://x.test/{file}',
+          '--source-url',
+          'https://x.test/{id}',
+          '--icon-url',
+          'https://x.test/{file}',
+          '--key',
+          join(folder, 'keys', 'mine.pem'),
+        ],
         {},
         listen().output,
       ),
@@ -75,7 +88,9 @@ describe('runCli', () => {
     writeFileSync(file, 'bytes');
     writeFileSync(keyFile, privateKey());
 
-    expect(runCli(['sign', file], { VALENCE_PLUGIN_SIGNING_KEY: privateKey() }, listen().output)).toBe(0);
+    expect(
+      runCli(['sign', file], { VALENCE_PLUGIN_SIGNING_KEY: privateKey() }, listen().output),
+    ).toBe(0);
     expect(runCli(['sign', file, '--key', keyFile], {}, listen().output)).toBe(0);
     expect(existsSync(`${file}.sig`)).toBe(true);
   });
@@ -83,14 +98,24 @@ describe('runCli', () => {
   it('refuses to sign with no key, saying how to give one', () => {
     const heard = listen();
 
-    expect(runCli(['sign', 'a.vplugin'], { VALENCE_PLUGIN_SIGNING_KEY: ' ' }, heard.output)).toBe(1);
-    expect(heard.complained).toEqual(['No signing key: pass --key or set VALENCE_PLUGIN_SIGNING_KEY.']);
+    expect(runCli(['sign', 'a.vplugin'], { VALENCE_PLUGIN_SIGNING_KEY: ' ' }, heard.output)).toBe(
+      1,
+    );
+    expect(heard.complained).toEqual([
+      'No signing key: pass --key or set VALENCE_PLUGIN_SIGNING_KEY.',
+    ]);
   });
 
   it('makes a key pair', () => {
     const heard = listen();
 
-    expect(runCli(['keygen', 'mine', '--out', mkdtempSync(join(tmpdir(), 'valence-cli-'))], {}, heard.output)).toBe(0);
+    expect(
+      runCli(
+        ['keygen', 'mine', '--out', mkdtempSync(join(tmpdir(), 'valence-cli-'))],
+        {},
+        heard.output,
+      ),
+    ).toBe(0);
     expect(heard.said).toHaveLength(2);
   });
 
@@ -136,7 +161,9 @@ describe('runCli', () => {
   it('says what went wrong when packing fails', () => {
     const heard = listen();
 
-    expect(runCli(['pack', mkdtempSync(join(tmpdir(), 'valence-empty-'))], {}, heard.output)).toBe(1);
+    expect(runCli(['pack', mkdtempSync(join(tmpdir(), 'valence-empty-'))], {}, heard.output)).toBe(
+      1,
+    );
     expect(heard.complained[0]).toContain('manifest.json');
   });
 });

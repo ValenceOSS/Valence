@@ -8,7 +8,10 @@ describe('contrastRatio', () => {
   });
 
   it('does not care which colour comes first', () => {
-    expect(contrastRatio('#777777', '#ffffff')).toBeCloseTo(contrastRatio('#ffffff', '#777777'), 10);
+    expect(contrastRatio('#777777', '#ffffff')).toBeCloseTo(
+      contrastRatio('#ffffff', '#777777'),
+      10,
+    );
     expect(contrastRatio('#777777', '#ffffff')).toBeCloseTo(4.48, 2);
   });
 });

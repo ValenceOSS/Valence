@@ -59,19 +59,22 @@ Every `https` address in a manifest must be a real domain name, at most 2,000 ch
 
 ## What a plugin contributes
 
-`contributes` is an object with five lists, each of which may be left out.
+`contributes` is an object with six lists, each of which may be left out.
 
-| List        | Up to | Each holds                                                                                                                    |
-| ----------- | ----- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `pages`     | 8     | `id`, `title` (1 to 40 characters), `placement` (`account` or `admin`) and an optional [icon](/plugins/building-blocks#icons) |
-| `panels`    | 8     | `id`, `title` (1 to 40 characters) and `on`: `title`, `series`, `album`, `artist` or `playlist`                               |
-| `themes`    | 12    | A theme, described on the [themes page](/plugins/themes)                                                                      |
-| `schedules` | 8     | `id`, `label` (1 to 60 characters) and `everyMinutes`, a whole number from 15 to 10,080 (a week)                              |
-| `events`    | 7     | Event topics, described on the [schedules and events page](/plugins/schedules-and-events)                                     |
+| List        | Up to | Each holds                                                                                                                                    |
+| ----------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pages`     | 8     | `id`, `title` (1 to 40 characters), `placement` (`account` or `admin`) and an optional [icon](/plugins/building-blocks#icons)                 |
+| `panels`    | 8     | `id`, `title` (1 to 40 characters) and `on`: `title`, `series`, `album`, `artist` or `playlist`                                               |
+| `themes`    | 12    | A theme, described on the [themes page](/plugins/themes)                                                                                      |
+| `schedules` | 8     | `id`, `label` (1 to 60 characters) and `everyMinutes`, a whole number from 15 to 10,080 (a week)                                              |
+| `events`    | 7     | Event topics, described on the [schedules and events page](/plugins/schedules-and-events)                                                     |
+| `nodes`     | 20    | Your own [permission nodes](/plugins/permissions#your-own-permission-nodes): `id`, `title` (1 to 60 characters) and an optional `description` |
 
 Every `id` in `contributes` starts with a lower case letter and has at most 40 characters of letters, digits and hyphens. Each is used once within its own list, and it is the key your code uses for that page, panel, theme or schedule.
 
 A page with `placement: "account"` appears in each person's account area. A page with `placement: "admin"` appears only in the admin area, only for administrators.
+
+A page or panel may also name `requires`, one of your `nodes`: it is then shown only to people whose role holds that node, and Valence refuses to draw it for anybody else.
 
 ## Settings
 

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { PermissionSchema as PluginPermissionSchema } from '@ValenceSDK/manifest/PermissionSchema';
+import { PluginNodeSchema } from './Permission';
 import { IconNameSchema } from '@ValenceSDK/surface/IconNameSchema';
 import { PluginThemeSchema } from '@ValenceSDK/theme/PluginThemeSchema';
 import { SurfaceSchema } from '@ValenceSDK/surface/SurfaceSchema';
@@ -101,6 +102,15 @@ const PluginContributionsSchema = z.object({
   ),
   themes: z.array(
     PluginThemeSchema.and(z.object({ pluginId: z.string(), pluginName: z.string() })),
+  ),
+  nodes: z.array(
+    z.object({
+      node: PluginNodeSchema,
+      pluginId: z.string(),
+      pluginName: z.string(),
+      title: z.string(),
+      description: z.string().nullable(),
+    }),
   ),
 });
 

@@ -12,7 +12,10 @@ const PluginThemeSchema = z
   })
   .superRefine((theme, context) => {
     if (theme.dark === undefined && theme.light === undefined) {
-      context.addIssue({ code: 'custom', message: 'A theme gives a dark scheme, a light one, or both' });
+      context.addIssue({
+        code: 'custom',
+        message: 'A theme gives a dark scheme, a light one, or both',
+      });
     }
 
     for (const scheme of ['dark', 'light'] as const) {

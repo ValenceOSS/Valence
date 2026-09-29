@@ -10,7 +10,10 @@ import { join } from 'node:path';
  * @param keyId - What to call the pair, such as `my-plugins-2026`.
  * @returns Where the private and the public key were written.
  */
-const keygenCommand = (outDirectory: string, keyId: string): { privateKey: string; publicKey: string } => {
+const keygenCommand = (
+  outDirectory: string,
+  keyId: string,
+): { privateKey: string; publicKey: string } => {
   const { privateKey, publicKey } = generateKeyPairSync('ed25519');
   const paths = {
     privateKey: join(outDirectory, `${keyId}.pem`),
@@ -18,7 +21,9 @@ const keygenCommand = (outDirectory: string, keyId: string): { privateKey: strin
   };
 
   mkdirSync(outDirectory, { recursive: true });
-  writeFileSync(paths.privateKey, privateKey.export({ type: 'pkcs8', format: 'pem' }), { mode: 0o600 });
+  writeFileSync(paths.privateKey, privateKey.export({ type: 'pkcs8', format: 'pem' }), {
+    mode: 0o600,
+  });
   writeFileSync(paths.publicKey, publicKey.export({ type: 'spki', format: 'pem' }));
 
   return paths;

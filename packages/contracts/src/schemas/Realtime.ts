@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { ClientKindSchema } from './ClientKind';
 import { JsonValueSchema } from './JsonValue';
 import { PartyCommandSchema, PartyKindSchema, PartyRoleSchema } from './WatchParty';
-import type { Permission } from './Permission';
+import type { GrantedPermission, Permission } from './Permission';
 
 const VIEWER_TOPICS = [
   'media',
@@ -206,7 +206,7 @@ const permissionForTopic = (topic: RealtimeTopic): Permission | null => PERMISSI
  * @param held - The permissions resolved for whoever the connection is acting as.
  * @returns Whether it may be delivered.
  */
-const mayHearTopic = (topic: RealtimeTopic, held: ReadonlySet<Permission>): boolean => {
+const mayHearTopic = (topic: RealtimeTopic, held: ReadonlySet<GrantedPermission>): boolean => {
   const needed = permissionForTopic(topic);
 
   return needed === null || held.has(needed);
@@ -223,7 +223,7 @@ const mayHearTopic = (topic: RealtimeTopic, held: ReadonlySet<Permission>): bool
  */
 const splitByEntitlement = (
   asked: readonly RealtimeTopic[],
-  held: ReadonlySet<Permission>,
+  held: ReadonlySet<GrantedPermission>,
 ): { allowed: RealtimeTopic[]; refused: RealtimeTopic[] } => {
   const allowed: RealtimeTopic[] = [];
   const refused: RealtimeTopic[] = [];

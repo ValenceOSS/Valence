@@ -13,7 +13,10 @@ describe('signCommand', () => {
 
     writeFileSync(path, 'bytes');
 
-    const signaturePath = signCommand(path, privateKey.export({ type: 'pkcs8', format: 'pem' }).toString());
+    const signaturePath = signCommand(
+      path,
+      privateKey.export({ type: 'pkcs8', format: 'pem' }).toString(),
+    );
 
     expect(signaturePath).toBe(`${path}.sig`);
     expect(

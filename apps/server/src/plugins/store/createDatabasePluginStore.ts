@@ -9,6 +9,7 @@ import {
   pluginPrevious,
   pluginProfile,
   pluginStorage,
+  rolePermission,
 } from '@ValenceServer/db/Schema';
 import { likeLiterally } from '@ValenceServer/db/likeLiterally';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
@@ -194,12 +195,22 @@ const createDatabasePluginStore = (db: ValenceDatabase): PluginStore => {
       return changed.length > 0;
     },
     remove: async (id) =>
-      (
-        await db
+      db.transaction(async (tx) => {
+        const removed = await tx
           .delete(pluginInstallation)
           .where(eq(pluginInstallation.id, id))
-          .returning({ id: pluginInstallation.id })
-      ).length > 0,
+          .returning({ id: pluginInstallation.id });
+
+        if (removed.length === 0) {
+          return false;
+        }
+
+        await tx
+          .delete(rolePermission)
+          .where(like(rolePermission.permission, `plugin.${likeLiterally(id)}.%`));
+
+        return true;
+      }),
     readValue: async (pluginId, key) => {
       const [row] = await db
         .select({ value: pluginStorage.value })

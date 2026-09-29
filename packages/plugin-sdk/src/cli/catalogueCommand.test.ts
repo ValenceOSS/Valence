@@ -55,13 +55,27 @@ describe('catalogueCommand', () => {
     const [anime, midnight] = catalogue.plugins;
 
     expect(CatalogueSchema.parse(JSON.parse(text))).toEqual(catalogue);
-    expect(verifySignature(Buffer.from(text), readFileSync(join(site, 'catalogue.json.sig'), 'utf8').trim(), pair.publicKey)).toBe(true);
-    expect(anime?.kinds).toEqual(['extension']);
-    expect(anime?.packageUrl).toBe('https://example.com/releases/anime-tracker-v1.2.0/anime-tracker-1.2.0.vplugin');
-    expect(anime?.iconUrl).toBe('https://example.com/icons/anime-tracker-icon.png');
-    expect(anime?.sha256).toBe(sha256Of(readFileSync(join(packages, 'anime-tracker-1.2.0.vplugin'))));
     expect(
-      verifySignature(readFileSync(join(packages, 'anime-tracker-1.2.0.vplugin')), anime?.signature ?? '', pair.publicKey),
+      verifySignature(
+        Buffer.from(text),
+        readFileSync(join(site, 'catalogue.json.sig'), 'utf8').trim(),
+        pair.publicKey,
+      ),
+    ).toBe(true);
+    expect(anime?.kinds).toEqual(['extension']);
+    expect(anime?.packageUrl).toBe(
+      'https://example.com/releases/anime-tracker-v1.2.0/anime-tracker-1.2.0.vplugin',
+    );
+    expect(anime?.iconUrl).toBe('https://example.com/icons/anime-tracker-icon.png');
+    expect(anime?.sha256).toBe(
+      sha256Of(readFileSync(join(packages, 'anime-tracker-1.2.0.vplugin'))),
+    );
+    expect(
+      verifySignature(
+        readFileSync(join(packages, 'anime-tracker-1.2.0.vplugin')),
+        anime?.signature ?? '',
+        pair.publicKey,
+      ),
     ).toBe(true);
     expect(existsSync(join(site, 'icons', 'anime-tracker-icon.png'))).toBe(true);
     expect(midnight?.kinds).toEqual(['theme']);
@@ -73,8 +87,10 @@ describe('catalogueCommand', () => {
 
     writeFileSync(join(packages, 'broken-1.0.0.vplugin'), 'not gzip');
 
-    expect(() => catalogueCommand(options(packages, mkdtempSync(join(tmpdir(), 'valence-site-')), keys().privateKey))).toThrow(
-      'broken-1.0.0.vplugin: The package is not a gzipped Valence plugin.',
-    );
+    expect(() =>
+      catalogueCommand(
+        options(packages, mkdtempSync(join(tmpdir(), 'valence-site-')), keys().privateKey),
+      ),
+    ).toThrow('broken-1.0.0.vplugin: The package is not a gzipped Valence plugin.');
   });
 });

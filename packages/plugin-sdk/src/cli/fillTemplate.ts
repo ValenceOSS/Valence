@@ -5,7 +5,10 @@
  * @param values - What goes in each hole.
  * @returns The address with every hole filled.
  */
-const fillTemplate = (template: string, values: { id: string; version: string; file: string }): string =>
+const fillTemplate = (
+  template: string,
+  values: { id: string; version: string; file: string },
+): string =>
   template
     .replaceAll('{id}', encodeURIComponent(values.id))
     .replaceAll('{version}', encodeURIComponent(values.version))

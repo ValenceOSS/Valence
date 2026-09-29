@@ -18,7 +18,11 @@ describe('PluginThemeSchema', () => {
   });
 
   it('refuses a scheme that would be hard to read, naming the scheme', () => {
-    const read = PluginThemeSchema.safeParse({ id: 'murky', name: 'Murky', light: aTheme({ text: '#1a1a1a' }) });
+    const read = PluginThemeSchema.safeParse({
+      id: 'murky',
+      name: 'Murky',
+      light: aTheme({ text: '#1a1a1a' }),
+    });
 
     expect(read.success).toBe(false);
     expect(read.success ? [] : read.error.issues.map((issue) => issue.path[0])).toContain('light');

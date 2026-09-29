@@ -8,7 +8,9 @@ const nested = (depth: number): SurfaceBlock =>
 
 describe('SurfaceSchema', () => {
   it('accepts a small surface', () => {
-    expect(SurfaceSchema.parse({ title: 'Tracking', blocks: [{ type: 'divider' }] }).blocks).toHaveLength(1);
+    expect(
+      SurfaceSchema.parse({ title: 'Tracking', blocks: [{ type: 'divider' }] }).blocks,
+    ).toHaveLength(1);
   });
 
   it('refuses sections nested deeper than a phone can draw', () => {
@@ -20,7 +22,10 @@ describe('SurfaceSchema', () => {
   });
 
   it('refuses more blocks than a surface may hold, counting rows', () => {
-    const rows = Array.from({ length: 200 }, (_, at) => ({ type: 'row' as const, label: at.toString() }));
+    const rows = Array.from({ length: 200 }, (_, at) => ({
+      type: 'row' as const,
+      label: at.toString(),
+    }));
     const read = SurfaceSchema.safeParse({
       blocks: [
         { type: 'list', rows },

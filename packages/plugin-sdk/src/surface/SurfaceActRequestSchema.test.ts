@@ -12,9 +12,16 @@ describe('SurfaceActRequestSchema', () => {
   });
 
   it('refuses more than sixty fields, and a field name that is not a simple name', () => {
-    const many = Object.fromEntries(Array.from({ length: 61 }, (_, at) => [`field${at.toString()}`, 'x']));
+    const many = Object.fromEntries(
+      Array.from({ length: 61 }, (_, at) => [`field${at.toString()}`, 'x']),
+    );
 
-    expect(SurfaceActRequestSchema.safeParse({ action: { id: 'save' }, fields: many }).success).toBe(false);
-    expect(SurfaceActRequestSchema.safeParse({ action: { id: 'save' }, fields: { 'no-dashes': 'x' } }).success).toBe(false);
+    expect(
+      SurfaceActRequestSchema.safeParse({ action: { id: 'save' }, fields: many }).success,
+    ).toBe(false);
+    expect(
+      SurfaceActRequestSchema.safeParse({ action: { id: 'save' }, fields: { 'no-dashes': 'x' } })
+        .success,
+    ).toBe(false);
   });
 });

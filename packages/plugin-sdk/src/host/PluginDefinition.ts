@@ -2,7 +2,7 @@ import type { Surface } from '@ValenceSDK/surface/SurfaceSchema';
 import type { SurfaceActRequest } from '@ValenceSDK/surface/SurfaceActRequestSchema';
 import type { ValenceHost } from './ValenceHost';
 
-type Viewer = { profileId: string; isAdmin: boolean };
+type Viewer = { profileId: string; isAdmin: boolean; nodes: string[] };
 
 type SurfaceContext = {
   valence: ValenceHost;

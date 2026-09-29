@@ -8,7 +8,10 @@ const AccountProviderSchema = z.object({
   tokenUrl: HttpsUrlSchema,
   scopes: z.array(z.string().min(1).max(100)).max(20),
   clientIdSetting: z.string().regex(/^[a-z][a-zA-Z0-9]{0,39}$/),
-  clientSecretSetting: z.string().regex(/^[a-z][a-zA-Z0-9]{0,39}$/).optional(),
+  clientSecretSetting: z
+    .string()
+    .regex(/^[a-z][a-zA-Z0-9]{0,39}$/)
+    .optional(),
 });
 
 type AccountProvider = z.infer<typeof AccountProviderSchema>;

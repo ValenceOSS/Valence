@@ -10,7 +10,8 @@ const entry = {
   apiVersion: '^1.0',
   kinds: ['extension'],
   permissions: [{ kind: 'library', access: 'read' }],
-  packageUrl: 'https://github.com/ValenceOSS/valence-plugins/releases/download/anilist-v1.0.0/anilist-1.0.0.vplugin',
+  packageUrl:
+    'https://github.com/ValenceOSS/valence-plugins/releases/download/anilist-v1.0.0/anilist-1.0.0.vplugin',
   sha256: 'a'.repeat(64),
   signature: 'AAAA',
   keyId: 'valence-official-2026',
@@ -21,14 +22,21 @@ const entry = {
 describe('CatalogueSchema', () => {
   it('reads a catalogue', () => {
     expect(
-      CatalogueSchema.parse({ format: 1, generatedAt: '2026-09-28T12:00:00.000Z', plugins: [entry] }).plugins,
+      CatalogueSchema.parse({
+        format: 1,
+        generatedAt: '2026-09-28T12:00:00.000Z',
+        plugins: [entry],
+      }).plugins,
     ).toHaveLength(1);
   });
 
   it('refuses an entry with a malformed digest or an http package address', () => {
     expect(
-      CatalogueSchema.safeParse({ format: 1, generatedAt: '2026-09-28T12:00:00.000Z', plugins: [{ ...entry, sha256: 'xyz' }] })
-        .success,
+      CatalogueSchema.safeParse({
+        format: 1,
+        generatedAt: '2026-09-28T12:00:00.000Z',
+        plugins: [{ ...entry, sha256: 'xyz' }],
+      }).success,
     ).toBe(false);
     expect(
       CatalogueSchema.safeParse({
