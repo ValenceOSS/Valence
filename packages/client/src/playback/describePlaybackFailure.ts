@@ -34,7 +34,7 @@ const PlaybackEngineErrorSchema = z.object({
  */
 const describePlaybackFailure = (category: number | null, code?: number): string => {
   if (code === QUOTA_EXCEEDED) {
-    return 'The stream could not be loaded. Try again, and say so if it keeps happening.';
+    return 'The stream could not be loaded. Try playing it again.';
   }
 
   if (category === MEDIA) {
@@ -42,7 +42,7 @@ const describePlaybackFailure = (category: number | null, code?: number): string
   }
 
   if (category === NETWORK || category === MANIFEST || category === STREAMING) {
-    return 'The stream could not be loaded. Try again, and say so if it keeps happening.';
+    return 'The stream could not be loaded. Try playing it again.';
   }
 
   return 'The stream could not be played.';

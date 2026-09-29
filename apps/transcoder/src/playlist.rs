@@ -176,6 +176,11 @@ pub struct VideoRendition {
 /// One variant and one audio rendition: the player gives each its own buffer,
 /// which is the whole reason for sending them apart, and joins them on the
 /// timestamps inside the segments. See VAL-307.
+///
+/// It says there are no captions carried inside the picture. Told nothing, Shaka
+/// looks for them by fetching the first, middle and last segments of the film,
+/// and to a transcode positioned where a viewer resumed, a request for the
+/// first and the last is two seeks that pull it away from them.
 #[must_use]
 pub fn build_multivariant_playlist(video: &VideoRendition, audio: &AudioRendition) -> String {
     let mut playlist = String::from("#EXTM3U\n#EXT-X-VERSION:7\n#EXT-X-INDEPENDENT-SEGMENTS\n");
@@ -202,7 +207,8 @@ pub fn build_multivariant_playlist(video: &VideoRendition, audio: &AudioRenditio
 
     let _ = writeln!(
         playlist,
-        "#EXT-X-STREAM-INF:BANDWIDTH={},CODECS=\"{},{}\"{resolution},AUDIO=\"audio\"",
+        "#EXT-X-STREAM-INF:BANDWIDTH={},CODECS=\"{},{}\"{resolution},AUDIO=\"audio\",\
+         CLOSED-CAPTIONS=NONE",
         video.bandwidth.max(1),
         video.codec,
         audio.codec
@@ -425,7 +431,7 @@ mod tests {
         assert!(
             playlist.contains(
                 "#EXT-X-STREAM-INF:BANDWIDTH=16000000,CODECS=\"hvc1.2.4.L120.90,ec-3\",\
-                 RESOLUTION=1920x800,AUDIO=\"audio\"\nvideo.m3u8\n"
+                 RESOLUTION=1920x800,AUDIO=\"audio\",CLOSED-CAPTIONS=NONE\nvideo.m3u8\n"
             ),
             "{playlist}"
         );
