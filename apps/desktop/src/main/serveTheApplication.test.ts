@@ -133,11 +133,40 @@ describe('askingAs', () => {
 });
 
 describe('serveTheApplication', () => {
+  it('asks whether the server is still there when a request is slow to be answered', async () => {
+    vi.useFakeTimers();
+
+    const reach = {
+      isReachable: () => true,
+      noteReached: vi.fn(),
+      noteMissed: vi.fn(),
+      checkNow: vi.fn(),
+      whenChanged: () => () => {},
+      stop: vi.fn(),
+    };
+
+    fetch.mockReturnValue(new Promise(() => undefined));
+    serveTheApplication(reach, '/held');
+
+    void handle.mock.lastCall?.[1](new Request('valence://app/api/library'));
+    await vi.advanceTimersByTimeAsync(9_000);
+
+    expect(reach.checkNow).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(2_000);
+
+    expect(reach.checkNow).toHaveBeenCalledOnce();
+    expect(reach.noteMissed).not.toHaveBeenCalled();
+
+    vi.useRealTimers();
+  });
+
   it('lets go of the server when the page gives up, so an abandoned video request frees its connection', async () => {
     const reach = {
       isReachable: () => true,
       noteReached: vi.fn(),
       noteMissed: vi.fn(),
+      checkNow: vi.fn(),
       whenChanged: () => () => {},
       stop: vi.fn(),
     };
@@ -201,6 +230,7 @@ describe('the policy a page is held to', () => {
         isReachable: () => true,
         noteReached: vi.fn(),
         noteMissed: vi.fn(),
+        checkNow: vi.fn(),
         whenChanged: () => () => {},
         stop: vi.fn(),
       },
@@ -233,6 +263,7 @@ describe('the policy a page is held to', () => {
         isReachable: () => true,
         noteReached: vi.fn(),
         noteMissed: vi.fn(),
+        checkNow: vi.fn(),
         whenChanged: () => () => {},
         stop: vi.fn(),
       },

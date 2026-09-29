@@ -144,4 +144,62 @@ describe('theServerReach', () => {
 
     expect(reach.isReachable()).toBe(true);
   });
+
+  it('counts a server that takes a connection and says nothing as gone', async () => {
+    const silent: typeof globalThis.fetch = (_where, how) =>
+      new Promise((_answer, fail) => {
+        how?.signal?.addEventListener('abort', () => {
+          fail(new Error('gave up'));
+        });
+      });
+
+    reach = theServerReach({ where: () => WHERE, fetching: silent, every: 10_000, within: 10 });
+
+    reach.checkNow();
+    await soon();
+
+    expect(reach.isReachable()).toBe(false);
+  });
+
+  it('leaves a server that answers the check alone, however slow the request that asked', async () => {
+    reach = theServerReach({
+      where: () => WHERE,
+      fetching: answering([answered]),
+      every: 10_000,
+      within: 10,
+    });
+
+    reach.checkNow();
+    await soon();
+
+    expect(reach.isReachable()).toBe(true);
+  });
+
+  it('keeps asking past a check that never came back', async () => {
+    let asked = 0;
+
+    const silentThenBack: typeof globalThis.fetch = (_where, how) => {
+      asked += 1;
+
+      return asked === 1
+        ? new Promise((_answer, fail) => {
+            how?.signal?.addEventListener('abort', () => {
+              fail(new Error('gave up'));
+            });
+          })
+        : answered();
+    };
+
+    reach = theServerReach({
+      where: () => WHERE,
+      fetching: silentThenBack,
+      every: 5,
+      within: 10,
+    });
+
+    reach.noteMissed();
+    await soon(80);
+
+    expect(reach.isReachable()).toBe(true);
+  });
 });
