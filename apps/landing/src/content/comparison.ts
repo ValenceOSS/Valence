@@ -47,7 +47,7 @@ const COMPARISON_ROWS: ComparisonRow[] = [
     label: 'Plugin ecosystem',
     plex: 'Closed, mostly deprecated',
     jellyfin: 'Mature, community',
-    valence: 'Capability-scoped API, in progress',
+    valence: 'Sandboxed, permission-scoped, signed',
   },
   {
     label: 'Documented public API',

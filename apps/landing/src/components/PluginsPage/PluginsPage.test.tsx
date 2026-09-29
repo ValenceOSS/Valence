@@ -27,7 +27,7 @@ describe('PluginsPage', () => {
   it('says the first plugins are coming when the catalogue is empty, as it is under test', () => {
     render(<PluginsPage />);
 
-    expect(screen.getByText(/The first official plugins are on their way/)).toBeInTheDocument();
+    expect(screen.getByText(/The official catalogue could not be read just now/)).toBeInTheDocument();
     expect(screen.queryByRole('list', { name: 'Official plugins' })).not.toBeInTheDocument();
   });
 });

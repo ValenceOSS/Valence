@@ -112,9 +112,9 @@ const FEATURE_GROUPS: FeatureGroup[] = [
         visual: 'apiKeys',
       },
       {
-        title: 'Built for a plugin API',
+        title: 'Plugins that ask first',
         detail:
-          'A sandboxed capability model (network allowlists, read-only library access, storage quotas) is already designed in. The runtime is on its way; the architecture is not an afterthought bolted on later.',
+          'Plugins run in a sandbox on your server and can only do what you allowed when you installed them: the sites they may reach, what they may read, how much they may keep. Official ones are signed, and they work on every Valence app.',
         visual: 'plugins',
       },
     ],

@@ -58,8 +58,8 @@ const PluginsPage = ({ plugins = OFFICIAL }: PluginsPageProps) => (
 
     {plugins.length === 0 ? (
       <p className="mt-12 max-w-xl text-text-muted">
-        The first official plugins are on their way. Until then, the documentation shows how to
-        write one of your own.
+        The official catalogue could not be read just now. The documentation shows how to write a
+        plugin of your own in the meantime.
       </p>
     ) : (
       <motion.ul
