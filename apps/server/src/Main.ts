@@ -2829,6 +2829,9 @@ const startPlugins = (
     log: (level, message) => {
       log[level]('plugins', message);
     },
+    announce: (change) => {
+      realtime.publish('plugins', change, { kind: 'everyone' });
+    },
   });
 
   running.plugins = started;

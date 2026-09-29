@@ -689,7 +689,7 @@ const TheLibrary = ({
     [downloadsPage, underTheBar, downloadsScrolled, downloadsFor],
   );
   const accountShown = useMemo(
-    () => accountPage?.(underTheBar, accountScrolled, accountShows),
+    () => accountPage?.(underTheBar, accountScrolled, accountShows, setAccountShows),
     [accountPage, underTheBar, accountScrolled, accountShows],
   );
   const sidePages = [

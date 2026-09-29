@@ -17,6 +17,7 @@ import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { CatalogueEntryRow } from '@ValenceScreens/components/AdminArea/components/PluginsPanel/components/CatalogueEntryRow/CatalogueEntryRow';
 import { InstallReviewDialog } from '@ValenceScreens/components/AdminArea/components/PluginsPanel/components/InstallReviewDialog/InstallReviewDialog';
 import { InstalledPluginCard } from '@ValenceScreens/components/AdminArea/components/PluginsPanel/components/InstalledPluginCard/InstalledPluginCard';
+import { usePluginWithdrawn } from '@ValenceClient/plugins/usePluginWithdrawn';
 import { PluginPageDialog } from '@ValenceScreens/components/AdminArea/components/PluginsPanel/components/PluginPageDialog/PluginPageDialog';
 import { PluginSettingsDialog } from '@ValenceScreens/components/AdminArea/components/PluginsPanel/components/PluginSettingsDialog/PluginSettingsDialog';
 import type { InstallPreview, InstalledPlugin } from '@ValenceContracts/schemas/Plugin';
@@ -39,6 +40,10 @@ const PluginsPanel = () => {
     null,
   );
   const [isUploading, setIsUploading] = useState(false);
+
+  usePluginWithdrawn(page?.pluginId ?? null, () => {
+    setPage(null);
+  });
 
   const reread = async () => {
     await cache.invalidateQueries({ queryKey: pluginQueries.key });

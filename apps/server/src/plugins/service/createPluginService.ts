@@ -23,6 +23,7 @@ import { permissionsHashOf } from './permissionsHashOf';
 import type {
   CatalogueListing,
   InstalledPlugin,
+  PluginChange,
   InstallPreview,
   PluginActAnswer,
   PluginContributions,
@@ -54,6 +55,7 @@ type CreatePluginServiceOptions = {
   apiVersion: string;
   enqueueSchedule: (pluginId: string, scheduleId: string, afterSeconds: number) => Promise<void>;
   log: (level: 'info' | 'warn' | 'error', message: string) => void;
+  announce?: (change: PluginChange) => void;
   fetchFor?: FetchFor;
   startSandbox?: CreatePluginRuntimeOptions['start'];
   now?: () => number;
@@ -109,6 +111,7 @@ const createPluginService = ({
   apiVersion,
   enqueueSchedule,
   log,
+  announce = () => undefined,
   fetchFor = (pluginId, hosts) => createPluginFetch({ pluginId, hosts }),
   startSandbox,
   now = Date.now,
@@ -595,6 +598,7 @@ const createPluginService = ({
 
       log('info', `plugin ${manifest.id}: installed ${manifest.version} (${waiting.trust})`);
       await scheduleAll(saved);
+      announce({ pluginId: manifest.id, change: existing === null ? 'installed' : 'updated' });
 
       return summaryOf(saved, runtime.stateOf(saved.id), null);
     },
@@ -637,6 +641,16 @@ const createPluginService = ({
         await scheduleAll(saved);
       }
 
+      announce({
+        pluginId: id,
+        change:
+          changes.isEnabled === undefined || changes.isEnabled === record.isEnabled
+            ? 'settings'
+            : changes.isEnabled
+              ? 'enabled'
+              : 'disabled',
+      });
+
       return summaryOf(saved, runtime.stateOf(id), null);
     },
     uninstall: async (id: string): Promise<boolean> => {
@@ -646,6 +660,7 @@ const createPluginService = ({
 
       if (removed) {
         log('info', `plugin ${id}: uninstalled`);
+        announce({ pluginId: id, change: 'removed' });
       }
 
       return removed;

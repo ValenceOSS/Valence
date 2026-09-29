@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAShell } from '@ValenceScreens/testing/renderInAShell';
 import { signOut } from '@ValenceClient/session/auth';
 import { notify } from '@ValenceUI/notify';
+import { somePluginContributions } from '@ValenceClient/testing/somePluginContributions';
 import { AccountDialog } from './AccountDialog';
 import type * as Auth from '@ValenceClient/session/auth';
 import type * as Notify from '@ValenceUI/notify';
@@ -27,8 +28,27 @@ vi.mock('@ValenceClient/session/auth', async (importOriginal) => ({
 vi.mock('@ValenceUI/notify', async (importOriginal) => {
   const original = await importOriginal<typeof Notify>();
 
-  return { ...original, notify: { ...original.notify, failed: vi.fn() } };
+  return { ...original, notify: { ...original.notify, failed: vi.fn(), say: vi.fn() } };
 });
+
+const withdrawn = vi.hoisted(() => {
+  const heard: {
+    pluginId: string | null;
+    tell: (change: { pluginId: string; change: 'disabled' | 'removed' }) => void;
+  } = { pluginId: null, tell: () => undefined };
+
+  return heard;
+});
+
+vi.mock('@ValenceClient/plugins/usePluginWithdrawn', () => ({
+  usePluginWithdrawn: (
+    pluginId: string | null,
+    onWithdrawn: (change: { pluginId: string; change: 'disabled' | 'removed' }) => void,
+  ) => {
+    withdrawn.pluginId = pluginId;
+    withdrawn.tell = onWithdrawn;
+  },
+}));
 
 const ended = vi.mocked(signOut);
 
@@ -167,4 +187,35 @@ describe('what can actually be saved', () => {
       expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
     },
   );
+
+  it('goes back to the profile, and says why, when the plugin page open is turned off', async () => {
+    fetchMock.mockImplementation((url: string) =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve(
+            url.includes('/api/plugins/contributions')
+              ? somePluginContributions()
+              : { profiles: [PROFILE] },
+          ),
+      }),
+    );
+
+    const told = draw('plugin.anilist.tracking');
+
+    await waitFor(() => {
+      expect(withdrawn.pluginId).toBe('anilist');
+    });
+
+    withdrawn.tell({ pluginId: 'anilist', change: 'disabled' });
+
+    expect(told.onPanel).toHaveBeenCalledWith('profile');
+    expect(notify.say).toHaveBeenCalledWith('AniList was turned off by an administrator.');
+  });
+
+  it('listens for no plugin while one of Valence’s own panels is open', () => {
+    draw('security');
+
+    expect(withdrawn.pluginId).toBeNull();
+  });
 });

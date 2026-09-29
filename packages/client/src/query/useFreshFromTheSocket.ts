@@ -8,6 +8,7 @@ import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { downloadQueries } from '@ValenceClient/query/downloadQueries';
+import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 import type { RealtimeClient } from '@ValenceClient/realtime/createRealtimeClient';
 
 type SaysWhatChanged = Pick<RealtimeClient, 'subscribe' | 'onResumed'>;
@@ -63,6 +64,10 @@ const useFreshFromTheSocket = (client: SaysWhatChanged | null = getRealtimeClien
 
       client.subscribe('keeping', () => {
         void cache.invalidateQueries({ queryKey: downloadQueries.key });
+      }),
+
+      client.subscribe('plugins', () => {
+        void cache.invalidateQueries({ queryKey: pluginQueries.key });
       }),
 
       client.subscribe('sessions', () => {

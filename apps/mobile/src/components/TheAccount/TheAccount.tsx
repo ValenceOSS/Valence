@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { DoorOpen, Server } from '@keyline-icons/react-native';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
+import { pluginQueries } from '@ValenceClient/query/pluginQueries';
+import { usePluginWithdrawn } from '@ValenceClient/plugins/usePluginWithdrawn';
+import { saidWhenWithdrawn } from '@ValenceClient/plugins/saidWhenWithdrawn';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRow';
@@ -34,13 +37,24 @@ const styles = StyleSheet.create({
  * @param onScrolled - Told whether it has been scrolled from its top.
  * @param shown - Which part of the account shows, where the library's bar chooses it; left out, the
  *   page chooses for itself with a row of its own.
+ * @param onShow - Told to show another part, where the library's bar chooses; used when a plugin
+ *   page closes because an administrator turned the plugin off.
  */
-const TheAccount = ({ onOut, onElsewhere, header, onScrolled, shown }: TheAccountProps) => {
+const TheAccount = ({ onOut, onElsewhere, header, onScrolled, shown, onShow }: TheAccountProps) => {
   const who = useQuery(sessionQueries.who());
   const [chosen, setChosen] = useState<string>('profile');
   const panel = shown ?? chosen;
   const panels = useAccountPanels();
   const pluginPage = pluginPageOf(panel);
+  const contributions = useQuery(pluginQueries.contributions());
+  const pluginName =
+    contributions.data?.pages.find((page) => page.pluginId === pluginPage?.pluginId)?.pluginName ??
+    'That plugin';
+
+  usePluginWithdrawn(pluginPage?.pluginId ?? null, (change) => {
+    (onShow ?? setChosen)('profile');
+    Alert.alert(saidWhenWithdrawn(pluginName, change.change));
+  });
   const address = platformInUse().serverAddress();
 
   return (

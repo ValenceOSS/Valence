@@ -339,11 +339,17 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   );
 
   const accountPage = useCallback(
-    (header: ReactNode, onScrolled: (isScrolled: boolean) => void, shown: string) => (
+    (
+      header: ReactNode,
+      onScrolled: (isScrolled: boolean) => void,
+      shown: string,
+      onShow: (panel: string) => void,
+    ) => (
       <TheAccount
         header={header}
         onScrolled={onScrolled}
         shown={shown}
+        onShow={onShow}
         onOut={() => {
           void signOut().then(() => {
             latest.get('now')?.onOut();

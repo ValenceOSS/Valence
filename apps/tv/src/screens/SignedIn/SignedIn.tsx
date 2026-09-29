@@ -690,6 +690,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
             key={`${top.pluginId}:${top.pageId}`}
             pluginId={top.pluginId}
             pageId={top.pageId}
+            onGone={back}
           />
         </View>
       ) : null}

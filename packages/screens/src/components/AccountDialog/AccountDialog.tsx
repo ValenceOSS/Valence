@@ -18,6 +18,8 @@ import { BuildInfoFooter } from '@ValenceScreens/components/AccountDialog/compon
 import { ACCOUNT_PANELS } from '@ValenceScreens/components/AccountArea/accountPanels';
 import { pluginAccountPages } from '@ValenceScreens/components/AccountArea/pluginAccountPages';
 import { pluginQueries } from '@ValenceClient/query/pluginQueries';
+import { usePluginWithdrawn } from '@ValenceClient/plugins/usePluginWithdrawn';
+import { saidWhenWithdrawn } from '@ValenceClient/plugins/saidWhenWithdrawn';
 import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace';
 import { saveProfile, uploadProfilePhoto } from '@ValenceClient/profiles/fetchProfiles';
 import { useSignOut } from '@ValenceScreens/session/useSignOut';
@@ -130,6 +132,12 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
   const panels: readonly { id: string; label: string }[] = [...ACCOUNT_PANELS, ...pluginPages];
 
   const showing = panels.find((one) => one.id === panel)?.id ?? 'profile';
+  const showingPlugin = pluginPages.find((page) => page.id === panel) ?? null;
+
+  usePluginWithdrawn(showingPlugin?.pluginId ?? null, (change) => {
+    onPanel('profile');
+    notify.say(saidWhenWithdrawn(showingPlugin?.pluginName ?? 'That plugin', change.change));
+  });
 
   return (
     <Dialog label="Your account" isOpen={panel !== null} onClose={onClose} size="stage">

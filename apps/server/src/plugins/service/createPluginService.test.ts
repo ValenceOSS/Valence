@@ -6,6 +6,7 @@ import { createPluginService } from './createPluginService';
 import type { CatalogueClient } from '@ValenceServer/plugins/catalogue/createCatalogueClient';
 import { aPluginHostForTest } from '@ValenceServer/plugins/broker/aPluginHostForTest';
 import type { PluginViewer } from './PluginViewer';
+import type { PluginChange } from '@ValenceContracts/schemas/Plugin';
 
 const MANIFEST = PluginManifestSchema.parse({
   manifestVersion: 2,
@@ -68,7 +69,7 @@ const VIEWER: PluginViewer = { accountId: 'account-1', profileId: 'profile-1', i
 
 const HOME = { kind: 'page', id: 'home', subject: null } as const;
 
-const build = () => {
+const build = (announce: (change: PluginChange) => void = vi.fn()) => {
   const catalogue: CatalogueClient = {
     read: () => Promise.resolve({ catalogue: null, problem: 'offline' }),
     fetchPackage: () => Promise.resolve({ problem: 'offline' }),
@@ -83,13 +84,14 @@ const build = () => {
     apiVersion: '1.0.0',
     enqueueSchedule: vi.fn(() => Promise.resolve()),
     log: vi.fn(),
+    announce,
   });
 
   return service;
 };
 
-const installed = async () => {
-  const service = build();
+const installed = async (announce: (change: PluginChange) => void = vi.fn()) => {
+  const service = build(announce);
   const preview = await service.previewUpload(PACKAGE, null, 'account-1');
 
   if ('problem' in preview) {
@@ -276,5 +278,24 @@ describe('a plugin from upload to use, through its own process', () => {
     expect(await service.uninstall('counter')).toBe(true);
     expect(await service.render('counter', HOME, VIEWER)).toBeNull();
     expect(await service.listInstalled()).toEqual([]);
+  });
+
+  it('tells every client when a plugin arrives, is turned off or on, changes, or goes', async () => {
+    const announce = vi.fn<(change: PluginChange) => void>();
+    const service = await installed(announce);
+
+    await service.change('counter', { isEnabled: false });
+    await service.change('counter', { isEnabled: false });
+    await service.change('counter', { isEnabled: true });
+    await service.uninstall('counter');
+
+    expect(announce.mock.calls.map(([said]) => said.change)).toEqual([
+      'installed',
+      'disabled',
+      'settings',
+      'enabled',
+      'removed',
+    ]);
+    expect(announce.mock.calls.every(([said]) => said.pluginId === 'counter')).toBe(true);
   });
 });

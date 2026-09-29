@@ -70,21 +70,22 @@ Here `jobs` was refused because the account does not hold `jobs.run`.
 
 Topics are split into viewer feeds, which any signed in account may hear, and admin feeds, which need a permission. The table is `PERMISSION_BY_TOPIC` in the contracts package, kept as one table rather than checked at each publishing site so that adding a topic without deciding who may hear it is a type error and not an accidental broadcast.
 
-| Topic           | Kind   | Permission needed | What it carries                                                                               |
-| --------------- | ------ | ----------------- | --------------------------------------------------------------------------------------------- |
-| `media`         | Viewer | None              | Library changes, such as `{"added": 4}` or `{"event":"changed","mediaId":"..."}`              |
-| `notifications` | Viewer | None              | A notification arrived for this account, such as `{"event":"media.added"}`                    |
-| `profile`       | Viewer | None              | This account's profile or settings changed                                                    |
-| `presence`      | Viewer | None              | Control events aimed at a tab, such as stopped, paused, resumed, a message or a music command |
-| `playback`      | Viewer | None              | Playback related changes, such as music devices changing                                      |
-| `party`         | Viewer | None              | Watch and listening party state and commands                                                  |
-| `requests`      | Viewer | None              | A media request changed: made, approved, refused, cancelled, downloading, filed or arrived    |
-| `keeping`       | Viewer | None              | A download this profile asked for moved on: prepared further, ready, paused or failed         |
-| `monitor`       | Admin  | `server.monitor`  | Live resource readings relayed from the media service                                         |
-| `sessions`      | Admin  | `streaming.view`  | Viewing sessions started, stopped or changed                                                  |
-| `logs`          | Admin  | `server.logs`     | Log records as they are written                                                               |
-| `jobs`          | Admin  | `jobs.run`        | Job started, progress and finished events                                                     |
-| `downloads`     | Admin  | `requests.manage` | The download queue from the requests service                                                  |
+| Topic           | Kind   | Permission needed | What it carries                                                                                |
+| --------------- | ------ | ----------------- | ---------------------------------------------------------------------------------------------- |
+| `media`         | Viewer | None              | Library changes, such as `{"added": 4}` or `{"event":"changed","mediaId":"..."}`               |
+| `notifications` | Viewer | None              | A notification arrived for this account, such as `{"event":"media.added"}`                     |
+| `profile`       | Viewer | None              | This account's profile or settings changed                                                     |
+| `presence`      | Viewer | None              | Control events aimed at a tab, such as stopped, paused, resumed, a message or a music command  |
+| `playback`      | Viewer | None              | Playback related changes, such as music devices changing                                       |
+| `party`         | Viewer | None              | Watch and listening party state and commands                                                   |
+| `requests`      | Viewer | None              | A media request changed: made, approved, refused, cancelled, downloading, filed or arrived     |
+| `keeping`       | Viewer | None              | A download this profile asked for moved on: prepared further, ready, paused or failed          |
+| `plugins`       | Viewer | None              | A plugin was installed, updated, turned on or off, changed or removed: `{"pluginId","change"}` |
+| `monitor`       | Admin  | `server.monitor`  | Live resource readings relayed from the media service                                          |
+| `sessions`      | Admin  | `streaming.view`  | Viewing sessions started, stopped or changed                                                   |
+| `logs`          | Admin  | `server.logs`     | Log records as they are written                                                                |
+| `jobs`          | Admin  | `jobs.run`        | Job started, progress and finished events                                                      |
+| `downloads`     | Admin  | `requests.manage` | The download queue from the requests service                                                   |
 
 Payload shapes are per topic and are plain JSON. The contract types `payload` as any JSON value on purpose, so a topic can change what it carries without a protocol change. Treat payloads as signals: on `media`, invalidate library queries and refetch, rather than trying to patch the cache from the payload.
 

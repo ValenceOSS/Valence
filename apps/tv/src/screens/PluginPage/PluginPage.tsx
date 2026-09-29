@@ -1,5 +1,6 @@
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -9,6 +10,8 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { usePluginSurface } from '@ValenceClient/plugins/usePluginSurface';
 import { pluginQueries } from '@ValenceClient/query/pluginQueries';
+import { usePluginWithdrawn } from '@ValenceClient/plugins/usePluginWithdrawn';
+import { saidWhenWithdrawn } from '@ValenceClient/plugins/saidWhenWithdrawn';
 import { Button } from '@ValenceTv/components/Button/Button';
 import { PluginSurface } from '@ValenceTv/components/PluginSurface/PluginSurface';
 import { PluginNotice } from '@ValenceTv/components/PluginSurface/components/PluginNotice/PluginNotice';
@@ -43,14 +46,20 @@ const styles = StyleSheet.create({
  *
  * @param pluginId - The plugin.
  * @param pageId - Which of its pages.
+ * @param onGone - Told to leave, when an administrator turns the plugin off or removes it.
  */
-const PluginPage = ({ pluginId, pageId }: PluginPageProps) => {
+const PluginPage = ({ pluginId, pageId, onGone }: PluginPageProps) => {
   const contributions = useQuery(pluginQueries.contributions());
   const scanning = useScanToOpen();
   const page = usePluginSurface({ kind: 'page', pluginId, pageId }, scanning.host);
   const about = contributions.data?.pages.find(
     (each) => each.pluginId === pluginId && each.pageId === pageId,
   );
+
+  usePluginWithdrawn(pluginId, (change) => {
+    onGone();
+    Alert.alert(saidWhenWithdrawn(about?.pluginName ?? 'That plugin', change.change));
+  });
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.inside}>

@@ -31,6 +31,7 @@ type TheLibraryProps = {
     header: ReactNode,
     onScrolled: (isScrolled: boolean) => void,
     shown: string,
+    onShow: (panel: string) => void,
   ) => ReactNode;
 };
 

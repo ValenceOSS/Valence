@@ -103,6 +103,11 @@ const PluginContributionsSchema = z.object({
   ),
 });
 
+const PluginChangeSchema = z.object({
+  pluginId: z.string(),
+  change: z.enum(['installed', 'updated', 'enabled', 'disabled', 'settings', 'removed']),
+});
+
 const PluginActAnswerSchema = z.object({
   surface: SurfaceSchema.nullable(),
   navigate: z.string().nullable(),
@@ -110,6 +115,7 @@ const PluginActAnswerSchema = z.object({
 
 type PluginTrust = z.infer<typeof PluginTrustSchema>;
 type InstalledPlugins = z.infer<typeof InstalledPluginsSchema>;
+type PluginChange = z.infer<typeof PluginChangeSchema>;
 type PluginSetting = z.infer<typeof PluginSettingSchema>;
 type PluginSummary = z.infer<typeof PluginSummarySchema>;
 type InstalledPlugin = z.infer<typeof InstalledPluginSchema>;
@@ -121,6 +127,7 @@ type PluginActAnswer = z.infer<typeof PluginActAnswerSchema>;
 export type {
   CatalogueListing,
   PluginActAnswer,
+  PluginChange,
   InstalledPlugin,
   InstalledPlugins,
   InstallPreview,
@@ -133,6 +140,7 @@ export type {
 export {
   CatalogueListingSchema,
   PluginActAnswerSchema,
+  PluginChangeSchema,
   InstalledPluginSchema,
   InstalledPluginsSchema,
   InstallPreviewSchema,
