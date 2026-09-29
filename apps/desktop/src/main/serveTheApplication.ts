@@ -260,6 +260,9 @@ const aPage = (page: Buffer): Response =>
  * rule is the release's own: a page that only drew its cast portraits in development, because nothing
  * there refused them, is how a release went out without any.
  *
+ * A page that arrived packed has already been unpacked on the way, so it no longer is what its
+ * encoding and length say, and both are dropped.
+ *
  * @param answer - What Vite sent.
  * @returns The same answer, carrying the policy where it is a page.
  */
@@ -269,6 +272,11 @@ const underThePolicy = (answer: Response): Response => {
   }
 
   const headers = new Headers(answer.headers);
+
+  if (headers.has('content-encoding')) {
+    headers.delete('content-encoding');
+    headers.delete('content-length');
+  }
 
   headers.set('content-security-policy', DEVELOPMENT_POLICY);
 
@@ -324,13 +332,11 @@ const serveTheApplication = (reach: ServerReach, heldFolder: string): void => {
       const onward = `https://${asked.host}${asked.pathname}${asked.search}`;
 
       try {
-        return underThePolicy(
-          await net.fetch(onward, {
-            method: request.method,
-            signal: request.signal,
-            headers: worthCarrying(request.headers),
-          }),
-        );
+        return await net.fetch(onward, {
+          method: request.method,
+          signal: request.signal,
+          headers: worthCarrying(request.headers),
+        });
       } catch {
         return said(502, `${asked.host} could not be reached.`);
       }
