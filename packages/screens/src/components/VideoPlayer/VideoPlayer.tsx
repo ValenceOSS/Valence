@@ -1375,7 +1375,8 @@ const VideoPlayer = ({
     ],
   );
 
-  const availableQualitySteps = detail === null ? [] : listAvailableQualitySteps(detail);
+  const availableQualitySteps =
+    detail === null || keptSource !== undefined ? [] : listAvailableQualitySteps(detail);
   const qualityStepsSavingNothing = useMemo(
     () => (detail === null ? [] : stepsThatSaveNothing({ media: detail, profile: deviceProfile })),
     [detail, deviceProfile],

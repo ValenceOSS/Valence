@@ -307,6 +307,33 @@ describe('VideoPlayer', () => {
     expect(startMock).not.toHaveBeenCalled();
   });
 
+  it('offers smaller qualities of a film the server is sending', async () => {
+    detailMock.mockResolvedValue(detailWithTwoAudioTracks);
+    const actor = userEvent.setup();
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+    await settled();
+    await actor.click(screen.getByRole('button', { name: 'Settings' }));
+
+    expect(await screen.findByText('Quality')).toBeInTheDocument();
+  });
+
+  it('offers no qualities for a copy kept on this device, which is one file at one quality', async () => {
+    detailMock.mockResolvedValue(detailWithTwoAudioTracks);
+    const actor = userEvent.setup();
+    renderInAnAddress(
+      <VideoPlayer media={media} onClose={vi.fn()} keptSource="valence-kept://arrival" />,
+    );
+
+    await waitFor(() => {
+      expect(detailMock).toHaveBeenCalled();
+    });
+    await actor.click(await screen.findByRole('button', { name: 'Settings' }));
+
+    expect(await screen.findByRole('switch', { name: /Stats for nerds/ })).toBeInTheDocument();
+    expect(screen.queryByText('Quality')).not.toBeInTheDocument();
+  });
+
   it('attaches the media engine to the returned manifest', async () => {
     renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
 
