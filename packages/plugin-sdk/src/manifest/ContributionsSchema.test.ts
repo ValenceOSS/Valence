@@ -10,6 +10,7 @@ describe('ContributionsSchema', () => {
       schedules: [],
       events: [],
       webhooks: [],
+      emits: [],
       nodes: [],
     });
   });

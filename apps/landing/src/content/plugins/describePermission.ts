@@ -32,6 +32,8 @@ const describePermission = (permission: Permission): string => {
       return 'Sends you notifications';
     case 'webhooks':
       return 'Receives messages from outside services';
+    case 'emits':
+      return 'Tells your webhooks when things happen';
   }
 };
 

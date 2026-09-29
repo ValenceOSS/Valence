@@ -35,6 +35,7 @@ const PluginManifestSchema = z
       schedules: [],
       events: [],
       webhooks: [],
+      emits: [],
       nodes: [],
     }),
     entry: z
@@ -64,6 +65,7 @@ const PluginManifestSchema = z
       manifest.contributes.schedules.length > 0 ||
       manifest.contributes.events.length > 0 ||
       manifest.contributes.webhooks.length > 0 ||
+      manifest.contributes.emits.length > 0 ||
       manifest.permissions.length > 0;
 
     if (new Set(kinds).size !== kinds.length) {
@@ -134,6 +136,20 @@ const PluginManifestSchema = z
         path: ['contributes', 'webhooks'],
         message: 'Receiving webhooks needs the webhooks permission',
       });
+    }
+
+    if (manifest.contributes.emits.length > 0 && !kinds.includes('emits')) {
+      context.addIssue({
+        code: 'custom',
+        path: ['contributes', 'emits'],
+        message: 'Sending events to Valence’s webhooks needs the emits permission',
+      });
+    }
+
+    const emitted = manifest.contributes.emits.map((emit) => emit.id);
+
+    if (new Set(emitted).size !== emitted.length) {
+      context.addIssue({ code: 'custom', message: 'Each emitted event id is used once' });
     }
 
     const hooks = manifest.contributes.webhooks.map((hook) => hook.id);

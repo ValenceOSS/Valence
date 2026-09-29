@@ -660,4 +660,32 @@ describe('formatWebhookBody, a sign-in', () => {
       }),
     ).toBe('Ada signed in on Chrome on macOS.');
   });
+
+  it('says what a plugin reported, and which plugin, on every kind of receiver', () => {
+    const reported: WebhookPayload = {
+      ...anEnvelope,
+      event: 'plugin.event',
+      data: {
+        pluginId: 'music-import',
+        pluginName: 'Playlist import',
+        name: 'imported',
+        title: 'A playlist was imported',
+        detail: { playlist: 'Road trip', songs: 12, requested: null },
+      },
+    };
+    const discord = DiscordMessageSchema.parse(
+      JSON.parse(formatWebhookBody('discord', reported).body),
+    ).embeds[0];
+
+    expect(formatWebhookBody('ntfy', reported).body).toContain(
+      'Playlist import: A playlist was imported',
+    );
+    expect(discord?.title).toBe('A playlist was imported');
+    expect(discord?.description).toBe('From Playlist import');
+    expect(discord?.fields.map((field) => `${field.name}=${field.value}`)).toEqual([
+      'playlist=Road trip',
+      'songs=12',
+    ]);
+    expect(JSON.parse(formatWebhookBody('generic', reported).body)).toStrictEqual(reported);
+  });
 });

@@ -112,6 +112,14 @@ No fields. Opens `valence.notifications.send`, which puts a notification in some
 
 No fields. Lets outside services send your plugin messages at private addresses of its own, one for each webhook under `contributes.webhooks`. See [webhooks](/plugins/webhooks).
 
+## emits
+
+```json
+{ "kind": "emits" }
+```
+
+No fields. Opens `valence.events.emit`, which sends one of the events you list under `contributes.emits` to every webhook an administrator subscribed to plugin events. See [telling Valence's webhooks](/plugins/webhooks#telling-valences-webhooks).
+
 ## Your own permission nodes
 
 The permissions above say what your plugin may do. Permission nodes say which people may use parts of it. Declare them under `contributes.nodes`:

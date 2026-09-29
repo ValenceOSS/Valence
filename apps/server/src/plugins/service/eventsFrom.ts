@@ -91,6 +91,7 @@ const eventsFrom = (occurrence: WebhookOccurrence, at: string): PluginEvent[] =>
     case 'account.roleChanged':
     case 'session.started':
     case 'session.ended':
+    case 'plugin.event':
       return [];
   }
 };

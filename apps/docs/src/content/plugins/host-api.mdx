@@ -121,6 +121,14 @@ A private store of JSON values by key.
 
 `init` may hold `method` (`GET`, `POST`, `PUT`, `PATCH` or `DELETE`), `headers` and a string `body`. The whole response body arrives as text; call `JSON.parse` on it yourself. A request to a host not in your `network` list, or one that breaks the [network rules](/develop/plugins#network-rules), fails before anything is sent. A non-2xx status is not an error: check `status`.
 
+### events
+
+| Method                     | Returns         | Permission |
+| -------------------------- | --------------- | ---------- |
+| `events.emit(id, detail?)` | `Promise<void>` | `emits`    |
+
+`id` is one of your `contributes.emits`. `detail` is up to 20 names with a string, number, boolean or `null` each. At most 30 events a minute; more fail.
+
 ### crypto
 
 | Method                                            | Returns            | Permission |

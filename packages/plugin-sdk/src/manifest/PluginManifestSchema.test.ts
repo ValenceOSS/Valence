@@ -33,6 +33,7 @@ describe('PluginManifestSchema', () => {
       schedules: [],
       events: [],
       webhooks: [],
+      emits: [],
       nodes: [],
     });
   });
@@ -212,6 +213,31 @@ describe('PluginManifestSchema', () => {
         }),
       ),
     ).toContain('Each webhook id is used once');
+  });
+
+  it('sends events to Valence’s webhooks only with the emits permission, each id once', () => {
+    const emits = { emits: [{ id: 'imported', title: 'A playlist was imported' }] };
+    const allowed = [{ kind: 'viewing', access: 'write' }, { kind: 'emits' }] as const;
+
+    expect(
+      problemsOf(
+        aManifest({ contributes: emits, permissions: [{ kind: 'viewing', access: 'write' }] }),
+      ),
+    ).toContain('Sending events to Valence’s webhooks needs the emits permission');
+    expect(problemsOf(aManifest({ contributes: emits, permissions: [...allowed] }))).toEqual([]);
+    expect(
+      problemsOf(
+        aManifest({
+          contributes: {
+            emits: [
+              { id: 'imported', title: 'Imported' },
+              { id: 'imported', title: 'Imported again' },
+            ],
+          },
+          permissions: [...allowed],
+        }),
+      ),
+    ).toContain('Each emitted event id is used once');
   });
 
   it('refuses an event the plugin has no permission to hear', () => {

@@ -58,6 +58,12 @@ const describePermission = (permission: Permission): { title: string; detail: st
         title: 'Send notifications',
         detail: 'Tell people things in Valence’s own notifications.',
       };
+    case 'emits':
+      return {
+        title: 'Tell your webhooks things',
+        detail:
+          'Send the events it lists to the webhooks you have subscribed to plugin events, such as an import finishing.',
+      };
     case 'webhooks':
       return {
         title: 'Receive webhooks',

@@ -90,3 +90,22 @@ Keep the handler quick, as with events: store what arrived and do slow work on a
 ## Removing a webhook
 
 A webhook left out of a later version stops answering straight away, and its secret is forgotten; adding it back gives it a new address. Removing the plugin forgets every address it had.
+
+## Telling Valence's webhooks
+
+The other way round, your plugin can tell whatever an administrator has hooked up to Valence, such as a Discord channel or ntfy, that something happened. Ask for the `emits` permission and list the events:
+
+```json
+"permissions": [{ "kind": "emits" }],
+"contributes": {
+  "emits": [{ "id": "imported", "title": "A playlist was imported" }]
+}
+```
+
+Then send one, with a little detail:
+
+```ts
+await valence.events.emit('imported', { playlist: 'Road trip', songs: 12 });
+```
+
+Administrators receive it by ticking **Plugin reported** on a webhook in **Admin › Webhooks**. Each event arrives as `plugin.event`, naming your plugin, the event's `id` and `title`, and its detail: Discord shows the title with the detail as fields, ntfy a line of text, and a generic receiver the whole envelope. An event you did not list, or more than 30 in a minute, fails instead of being sent.

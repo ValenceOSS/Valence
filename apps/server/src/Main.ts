@@ -2808,6 +2808,7 @@ const startPlugins = (
         });
       },
       requests,
+      publish: (occurrence) => events.publish(occurrence),
     }),
     catalogue: createCatalogueClient({
       url: env.VALENCE_PLUGIN_CATALOGUE_URL,

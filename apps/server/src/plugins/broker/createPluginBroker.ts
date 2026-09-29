@@ -55,6 +55,7 @@ const ARGS = {
   'storage.set': z.tuple([Key, JsonValueSchema]),
   'storage.delete': z.tuple([Key]),
   'storage.keys': z.tuple([z.string().max(200).optional()]),
+  'events.emit': z.tuple([z.string().regex(/^[a-z][a-z0-9-]{0,39}$/), Detail.optional()]),
   'crypto.hmac': z.tuple([
     z.enum(['sha1', 'sha256', 'sha512']),
     z.string().max(4096),
@@ -96,6 +97,10 @@ const ARGS = {
 
 type Method = keyof typeof ARGS;
 
+const EMIT_WINDOW_MILLISECONDS = 60_000;
+
+const MOST_EMITS_PER_WINDOW = 30;
+
 /**
  * Whether a method name is one the broker answers.
  *
@@ -126,6 +131,7 @@ const createPluginBroker = ({
 }: CreatePluginBrokerOptions): PluginBroker => {
   const granted = installation.manifest.permissions;
   const name = installation.manifest.name;
+  const emitted: number[] = [];
 
   const find = <K extends Permission['kind']>(kind: K): Extract<Permission, { kind: K }> | null =>
     granted.find(
@@ -180,6 +186,36 @@ const createPluginBroker = ({
         const [message] = ARGS[method].parse(args);
 
         log(method === 'log.info' ? 'info' : method === 'log.warn' ? 'warn' : 'error', message);
+
+        return null;
+      }
+      case 'events.emit': {
+        needs('emits');
+
+        const [id, detail] = ARGS[method].parse(args);
+        const declared = installation.manifest.contributes.emits.find((emit) => emit.id === id);
+
+        if (declared === undefined) {
+          throw new Error(`This plugin did not declare an event called ${id}.`);
+        }
+
+        const since = Date.now() - EMIT_WINDOW_MILLISECONDS;
+
+        emitted.splice(0, emitted.length, ...emitted.filter((at) => at > since));
+
+        if (emitted.length >= MOST_EMITS_PER_WINDOW) {
+          throw new Error('This plugin has sent too many events this minute.');
+        }
+
+        emitted.push(Date.now());
+
+        await host.events.emit({
+          pluginId: installation.id,
+          pluginName: name,
+          name: id,
+          title: declared.title,
+          detail: Object.fromEntries(Object.entries(detail ?? {}).slice(0, 20)),
+        });
 
         return null;
       }

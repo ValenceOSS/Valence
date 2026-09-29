@@ -223,6 +223,10 @@ const sentenceFor = (payload: WebhookPayload): string => {
 
       return `${nameOfViewer(payload.data)} closed Valence on ${payload.data.deviceLabel}${after}.`;
     }
+
+    case 'plugin.event': {
+      return `${payload.data.pluginName}: ${payload.data.title}`;
+    }
   }
 };
 

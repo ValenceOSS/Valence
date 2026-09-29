@@ -3,6 +3,7 @@ import type { PlaylistService } from '@ValenceServer/playlists/PlaylistService';
 import type { WatchProgressService } from '@ValenceServer/progress/WatchProgressService';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import type { PluginHost } from '@ValenceServer/plugins/broker/PluginHost';
+import type { WebhookOccurrence } from '@ValenceServer/events/EventBus';
 
 type Profile = { id: string; name: string; accountId: string };
 
@@ -15,6 +16,7 @@ type CreatePluginHostOptions = {
   playlists: PlaylistService;
   notify: (accountId: string, note: { title: string; body: string }) => Promise<void>;
   requests: PluginHost['requests'];
+  publish: (occurrence: WebhookOccurrence) => Promise<void>;
 };
 
 /**
@@ -34,6 +36,7 @@ const createPluginHost = ({
   playlists,
   notify,
   requests,
+  publish,
 }: CreatePluginHostOptions): PluginHost => {
   const viewerFor = async (profileId: string): Promise<Viewer> => {
     const profile = await readProfile(profileId);
@@ -131,6 +134,9 @@ const createPluginHost = ({
           });
         }
       },
+    },
+    events: {
+      emit: (event) => publish({ event: 'plugin.event', data: event }),
     },
   };
 };

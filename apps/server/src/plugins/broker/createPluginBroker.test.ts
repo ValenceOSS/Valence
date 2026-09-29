@@ -13,7 +13,7 @@ const VIEWER: BrokerScope = { kind: 'viewer', profileId: 'p1', accountId: 'a1', 
 
 const BACKGROUND: BrokerScope = { kind: 'background' };
 
-const manifestWith = (permissions: Permission[]) =>
+const manifestWith = (permissions: Permission[], contributes: object = {}) =>
   PluginManifestSchema.parse({
     manifestVersion: 2,
     id: 'broker-test',
@@ -23,11 +23,12 @@ const manifestWith = (permissions: Permission[]) =>
     author: { name: 'Tester' },
     description: 'Tests the broker.',
     permissions,
+    contributes,
     entry: 'dist/plugin.js',
     settings: [{ id: 'clientId', label: 'Client id', kind: 'text' }],
   });
 
-const build = (permissions: Permission[]) => {
+const build = (permissions: Permission[], contributes: object = {}) => {
   const store = createMemoryPluginStore();
   const host = aPluginHostForTest();
   const fetch = vi.fn(() => Promise.resolve({ status: 200, headers: {}, text: 'ok' }));
@@ -38,7 +39,7 @@ const build = (permissions: Permission[]) => {
   const broker = createPluginBroker({
     installation: {
       id: 'broker-test',
-      manifest: manifestWith(permissions),
+      manifest: manifestWith(permissions, contributes),
       settings: { clientId: 'abc' },
     },
     store,
@@ -328,5 +329,30 @@ describe('the plugin broker', () => {
     vi.mocked(host.library.search).mockRejectedValueOnce(new Error('The library is busy.'));
 
     await expect(ask('library.search', ['x'])).rejects.toThrow('The library is busy.');
+  });
+
+  it('sends only events the plugin declared, with the emits permission, a few a minute', async () => {
+    const declared = { emits: [{ id: 'imported', title: 'A playlist was imported' }] };
+    const { ask, host } = build([{ kind: 'emits' }], declared);
+
+    await ask('events.emit', ['imported', { songs: 12 }], BACKGROUND);
+
+    expect(host.events.emit).toHaveBeenCalledWith({
+      pluginId: 'broker-test',
+      pluginName: 'Broker Test',
+      name: 'imported',
+      title: 'A playlist was imported',
+      detail: { songs: 12 },
+    });
+    await expect(ask('events.emit', ['deleted'], BACKGROUND)).rejects.toThrow(
+      'did not declare an event called deleted',
+    );
+
+    for (let sent = 1; sent < 30; sent += 1) {
+      await ask('events.emit', ['imported'], BACKGROUND);
+    }
+
+    await expect(ask('events.emit', ['imported'], BACKGROUND)).rejects.toThrow('too many events');
+    await expect(build([]).ask('events.emit', ['imported'], BACKGROUND)).rejects.toThrow();
   });
 });

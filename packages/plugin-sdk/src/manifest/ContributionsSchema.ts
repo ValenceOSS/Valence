@@ -40,6 +40,10 @@ const ContributionsSchema = z.object({
     .max(8)
     .default([]),
   events: z.array(z.enum(EVENT_TOPICS)).max(EVENT_TOPICS.length).default([]),
+  emits: z
+    .array(z.object({ id: LocalIdSchema, title: z.string().min(1).max(80) }))
+    .max(12)
+    .default([]),
   webhooks: z
     .array(z.object({ id: LocalIdSchema, title: z.string().min(1).max(60) }))
     .max(8)

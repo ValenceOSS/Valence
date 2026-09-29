@@ -49,6 +49,7 @@ const build = () => {
     dropArtwork: unused,
   };
   const notify = vi.fn(() => Promise.resolve());
+  const publish = vi.fn(() => Promise.resolve());
   const fake = aPluginHostForTest();
   const host = createPluginHost({
     readProfile: (profileId) =>
@@ -62,9 +63,10 @@ const build = () => {
     playlists,
     notify,
     requests: fake.requests,
+    publish,
   });
 
-  return { host, progress, history, playlists, seen, notify };
+  return { host, progress, history, playlists, seen, notify, publish };
 };
 
 describe('what Valence does when a plugin asks', () => {
@@ -121,5 +123,20 @@ describe('what Valence does when a plugin asks', () => {
       title: 'AniList: Synced',
       body: '3 episodes',
     });
+  });
+
+  it('hands an event a plugin sends to Valence’s webhooks, as a plugin event', async () => {
+    const { host, publish } = build();
+    const event = {
+      pluginId: 'music-import',
+      pluginName: 'Playlist import',
+      name: 'imported',
+      title: 'A playlist was imported',
+      detail: { songs: 12 },
+    };
+
+    await host.events.emit(event);
+
+    expect(publish).toHaveBeenCalledWith({ event: 'plugin.event', data: event });
   });
 });

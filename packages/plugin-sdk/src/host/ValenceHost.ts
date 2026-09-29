@@ -47,6 +47,9 @@ type ValenceHost = {
     delete: (key: string) => Promise<void>;
     keys: (prefix?: string) => Promise<string[]>;
   };
+  events: {
+    emit: (id: string, detail?: Record<string, string | number | boolean | null>) => Promise<void>;
+  };
   crypto: {
     hmac: (
       algorithm: 'sha1' | 'sha256' | 'sha512',

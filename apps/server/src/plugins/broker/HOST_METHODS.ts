@@ -7,6 +7,7 @@ const HOST_METHODS = [
   'storage.set',
   'storage.delete',
   'storage.keys',
+  'events.emit',
   'crypto.hmac',
   'crypto.equal',
   'http.fetch',

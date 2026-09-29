@@ -59,7 +59,7 @@ Every `https` address in a manifest must be a real domain name, at most 2,000 ch
 
 ## What a plugin contributes
 
-`contributes` is an object with seven lists, each of which may be left out.
+`contributes` is an object with eight lists, each of which may be left out.
 
 | List        | Up to | Each holds                                                                                                                                    |
 | ----------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -69,6 +69,7 @@ Every `https` address in a manifest must be a real domain name, at most 2,000 ch
 | `schedules` | 8     | `id`, `label` (1 to 60 characters) and `everyMinutes`, a whole number from 15 to 10,080 (a week)                                              |
 | `events`    | 7     | Event topics, described on the [schedules and events page](/plugins/schedules-and-events)                                                     |
 | `webhooks`  | 8     | `id` and `title` (1 to 60 characters), described on the [webhooks page](/plugins/webhooks)                                                    |
+| `emits`     | 12    | `id` and `title` (1 to 80 characters): the events you send to [Valence's webhooks](/plugins/webhooks#telling-valences-webhooks)               |
 | `nodes`     | 20    | Your own [permission nodes](/plugins/permissions#your-own-permission-nodes): `id`, `title` (1 to 60 characters) and an optional `description` |
 
 Every `id` in `contributes` starts with a lower case letter and has at most 40 characters of letters, digits and hyphens. Each is used once within its own list, and it is the key your code uses for that page, panel, theme or schedule.

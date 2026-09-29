@@ -40,6 +40,15 @@ type PluginHost = {
   notifications: {
     send: (profileId: string, note: { title: string; body: string; from: string }) => Promise<void>;
   };
+  events: {
+    emit: (event: {
+      pluginId: string;
+      pluginName: string;
+      name: string;
+      title: string;
+      detail: Record<string, string | number | boolean | null>;
+    }) => Promise<void>;
+  };
 };
 
 export type { PluginHost };
