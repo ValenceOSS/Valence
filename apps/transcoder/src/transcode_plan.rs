@@ -272,6 +272,25 @@ pub enum SubtitleAction {
     },
 }
 
+/// Which of a film's streams a session's segments carry.
+///
+/// A browser buffers audio and video that arrive together in one buffer, and
+/// Chromium divides each new segment between them by what is already held: after
+/// a quiet stretch it counts most of a large copied segment as audio, which has a
+/// twelfth of the room video has, and refuses it. Sent apart, each gets its own
+/// buffer and its own limit. See VAL-307.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Track {
+    /// Picture and sound in the same segments.
+    #[default]
+    Both,
+    /// The picture alone.
+    Video,
+    /// The sound alone.
+    Audio,
+}
+
 /// Everything that decides what bytes come out, and therefore everything the
 /// session cache is keyed on.
 ///
@@ -328,6 +347,13 @@ pub struct SessionSpec {
     /// which is right for every codec that has only one.
     #[serde(default)]
     pub source_video_codec: Option<String>,
+    /// Which streams the segments carry.
+    ///
+    /// Absent means both, which is what every caller outside the media service
+    /// asks for: splitting a session into its picture and its sound is decided
+    /// here, where the segments are made.
+    #[serde(default)]
+    pub track: Track,
 }
 
 impl SessionSpec {
@@ -354,10 +380,53 @@ impl SessionSpec {
             SubtitleAction::BurnIn { .. } => "subs=burnIn",
         };
 
-        format!(
+        let summary = format!(
             "{video} {audio} {subtitles} accel={:?} container={:?} from={}s",
             self.hardware_accel, self.container, self.start_seconds
-        )
+        );
+
+        match self.track {
+            Track::Both => summary,
+            Track::Video => format!("{summary} track=video"),
+            Track::Audio => format!("{summary} track=audio"),
+        }
+    }
+
+    /// The picture of this session, on its own.
+    #[must_use]
+    pub fn video_alone(&self) -> Self {
+        Self {
+            track: Track::Video,
+            ..self.clone()
+        }
+    }
+
+    /// The sound of this session, on its own and in segments of `segment_seconds`.
+    ///
+    /// Everything about the picture is set aside, so every quality of the same
+    /// film shares one directory of sound rather than making it again for each.
+    #[must_use]
+    pub fn audio_alone(&self, segment_seconds: u32) -> Self {
+        Self {
+            segment_seconds,
+            hardware_accel: HardwareAccel::None,
+            video: VideoAction::Copy,
+            subtitles: SubtitleAction::None,
+            source_size: None,
+            source_video_codec: None,
+            track: Track::Audio,
+            ..self.clone()
+        }
+    }
+
+    /// Adds which streams the segments carry to an address being worked out.
+    ///
+    /// Left out for both, so a session that carries both keeps the address it had
+    /// before sessions could be split, and the segments already made for it.
+    fn hash_track(&self, hasher: &mut Sha256) {
+        if self.track != Track::Both {
+            hasher.update(format!("{:?}", self.track).as_bytes());
+        }
     }
 }
 
@@ -404,6 +473,7 @@ impl SessionSpec {
         hasher.update(format!("{:?}", self.subtitles).as_bytes());
         hasher.update(format!("{:?}", self.source_size).as_bytes());
         hasher.update(format!("{:?}", self.container).as_bytes());
+        self.hash_track(&mut hasher);
 
         let digest = hasher.finalize();
         let mut id = String::with_capacity(32);
@@ -439,6 +509,7 @@ impl SessionSpec {
         hasher.update(format!("{:?}", self.subtitles).as_bytes());
         hasher.update(format!("{:?}", self.source_size).as_bytes());
         hasher.update(format!("{:?}", self.container).as_bytes());
+        self.hash_track(&mut hasher);
 
         let digest = hasher.finalize();
         let mut id = String::with_capacity(32);
@@ -2005,6 +2076,29 @@ impl TranscodePlan {
         }
     }
 
+    /// Adds the arguments for a run that carries the sound alone.
+    ///
+    /// The output-side `-ss 0` drops any frame timed before the film begins. An
+    /// encoder's priming, or a source whose audio leads its picture, puts the first
+    /// frame a few milliseconds below zero, and fragmented MP4 records a fragment's
+    /// start in an unsigned field: written there, minus five milliseconds becomes
+    /// eighteen quintillion, and a browser refuses the whole track.
+    fn push_audio_alone_args(&self, args: &mut Vec<String>) {
+        if let Some(index) = self.spec.audio_stream_index {
+            args.push("-map".into());
+            args.push(format!("0:{index}"));
+        }
+
+        args.push("-vn".into());
+        args.push("-sn".into());
+        args.push("-dn".into());
+
+        self.push_audio_args(args);
+
+        args.push("-ss".into());
+        args.push("0".into());
+    }
+
     /// The same decisions, written as one progressive file rather than segments.
     ///
     /// A download is the same transcode a session would have done — this exists
@@ -2286,18 +2380,27 @@ impl TranscodePlan {
         args.push("-i".into());
         args.push(self.spec.input_path.clone());
 
-        let is_mapped = self.push_video_args(&mut args);
+        match self.spec.track {
+            Track::Both => {
+                let is_mapped = self.push_video_args(&mut args);
 
-        if let Some(index) = self.spec.audio_stream_index {
-            if !is_mapped {
-                args.push("-map".into());
-                args.push("0:v:0".into());
-                args.push("-map".into());
-                args.push(format!("0:{index}"));
+                if let Some(index) = self.spec.audio_stream_index {
+                    if !is_mapped {
+                        args.push("-map".into());
+                        args.push("0:v:0".into());
+                        args.push("-map".into());
+                        args.push(format!("0:{index}"));
+                    }
+                }
+
+                self.push_audio_args(&mut args);
             }
+            Track::Video => {
+                self.push_video_args(&mut args);
+                args.push("-an".into());
+            }
+            Track::Audio => self.push_audio_alone_args(&mut args),
         }
-
-        self.push_audio_args(&mut args);
 
         args.push("-avoid_negative_ts".into());
         args.push("disabled".into());
@@ -2344,7 +2447,7 @@ mod tests {
         forced_idr_arguments, frame_route, keeps_frames_on_the_gpu, rate_control_arguments,
         software_equivalent, takes_ten_bit, tone_map_format, AudioAction, AudioCarry,
         DeviceFilters, FrameRoute, HardwareAccel, SegmentContainer, SegmentStart, SessionSpec,
-        SubtitleAction, ToneMapping, TrackCarry, TranscodePlan, VideoAction, DEFAULT_DEVICE,
+        SubtitleAction, ToneMapping, Track, TrackCarry, TranscodePlan, VideoAction, DEFAULT_DEVICE,
         TEXT_OVERLAY_FPS,
     };
     use crate::media::ColourMetadata;
@@ -2376,6 +2479,7 @@ mod tests {
             source_size: None,
             container: SegmentContainer::Fmp4,
             source_video_codec: None,
+            track: Track::Both,
         }
     }
 
@@ -5057,5 +5161,121 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
         };
 
         assert_ne!(first.session_id(), second.session_id());
+    }
+
+    /// The picture alone carries no sound, which travels in its own segments.
+    #[test]
+    fn leaves_the_sound_out_of_the_picture() {
+        let args = plan(spec().video_alone()).to_ffmpeg_args();
+
+        assert!(args.iter().any(|argument| argument == "-an"));
+        assert!(!args.iter().any(|argument| argument == "-c:a"));
+        assert!(args.windows(2).any(|w| w == ["-c:v", "copy"]));
+    }
+
+    /// The sound alone is the chosen track and nothing else.
+    #[test]
+    fn carries_only_the_chosen_sound() {
+        let chosen = SessionSpec {
+            audio_stream_index: Some(3),
+            ..spec()
+        };
+
+        let args = plan(chosen.audio_alone(4)).to_ffmpeg_args();
+
+        assert!(args.windows(2).any(|w| w == ["-map", "0:3"]));
+        assert!(!args.windows(2).any(|w| w == ["-map", "0:v:0"]));
+        assert!(args.iter().any(|argument| argument == "-vn"));
+        assert!(args.iter().any(|argument| argument == "-sn"));
+        assert!(args.windows(2).any(|w| w == ["-c:a", "copy"]));
+        assert!(!args.iter().any(|argument| argument == "-c:v"));
+    }
+
+    /// A frame of priming timed before the film begins is dropped rather than
+    /// written into an unsigned field as a number no browser will place.
+    #[test]
+    fn drops_sound_timed_before_the_film_begins() {
+        let args = plan(spec().audio_alone(4)).to_ffmpeg_args();
+
+        let input = args
+            .iter()
+            .position(|argument| argument == "-i")
+            .expect("reads an input");
+        let dropped = args
+            .windows(2)
+            .rposition(|w| w == ["-ss", "0"])
+            .expect("drops what comes before nought");
+
+        assert!(
+            dropped > input,
+            "an output option, after the input: {args:?}"
+        );
+    }
+
+    /// Sound is decoded on the processor whatever the picture was going to use.
+    #[test]
+    fn never_asks_the_graphics_card_for_the_sound() {
+        let args = plan(on_gpu(HardwareAccel::Vaapi).audio_alone(4)).to_ffmpeg_args();
+
+        assert!(!args.iter().any(|argument| argument == "-hwaccel"));
+        assert!(!args.iter().any(|argument| argument == "-init_hw_device"));
+    }
+
+    /// The sound is the same whatever the picture is doing, so every quality of a
+    /// film shares one making of it.
+    #[test]
+    fn shares_the_sound_between_qualities_of_the_same_film() {
+        let copied = spec();
+        let encoded = SessionSpec {
+            video: VideoAction::Encode {
+                encoder: "libx264".into(),
+                max_bitrate_kbps: 4_000,
+                max_width: 1280,
+                max_height: 720,
+                tone_map: None,
+                deinterlace: false,
+                square_pixels: false,
+            },
+            ..spec()
+        };
+
+        assert_eq!(
+            copied.audio_alone(4).plan_id(),
+            encoded.audio_alone(4).plan_id()
+        );
+        assert_ne!(
+            copied.video_alone().plan_id(),
+            encoded.video_alone().plan_id()
+        );
+    }
+
+    /// Splitting a session makes new addresses, and leaves the one a session
+    /// carrying both already had, with the segments made for it, where it was.
+    #[test]
+    fn gives_each_part_of_a_split_session_an_address_of_its_own() {
+        let both = spec();
+
+        assert_eq!(both.track, Track::Both);
+        assert_ne!(both.plan_id(), both.video_alone().plan_id());
+        assert_ne!(both.plan_id(), both.audio_alone(4).plan_id());
+        assert_ne!(both.video_alone().plan_id(), both.audio_alone(4).plan_id());
+    }
+
+    /// A caller that says nothing about tracks asks for both, as every caller did
+    /// before sessions could be split.
+    #[test]
+    fn reads_a_spec_that_names_no_track_as_both() {
+        let payload = serde_json::json!({
+            "inputPath": "/media/film.mkv",
+            "startSeconds": 0,
+            "segmentSeconds": 4,
+            "hardwareAccel": "none",
+            "video": { "kind": "copy" },
+            "audio": { "kind": "copy" },
+        });
+
+        let read: SessionSpec = serde_json::from_value(payload).expect("reads");
+
+        assert_eq!(read.track, Track::Both);
     }
 }

@@ -5,8 +5,11 @@ const MEDIA = 3;
 const MANIFEST = 4;
 const STREAMING = 5;
 
+const QUOTA_EXCEEDED = 3017;
+
 const PlaybackEngineErrorSchema = z.object({
   category: z.number().int(),
+  code: z.number().int().optional(),
 });
 
 /**
@@ -22,10 +25,18 @@ const PlaybackEngineErrorSchema = z.object({
  * element's own error codes, mapped onto the same few integers — so naming a cause is guesswork
  * dressed as a diagnosis.
  *
+ * A full buffer is filed under media too, but the browser refusing to hold a segment is not the
+ * browser failing to decode it, and says so as a stream that would not load.
+ *
  * @param category - The engine's own category for the failure.
+ * @param code - The engine's own code for it, where one was given.
  * @returns What to tell the viewer.
  */
-const describePlaybackFailure = (category: number | null): string => {
+const describePlaybackFailure = (category: number | null, code?: number): string => {
+  if (code === QUOTA_EXCEEDED) {
+    return 'The stream could not be loaded. Try again, and say so if it keeps happening.';
+  }
+
   if (category === MEDIA) {
     return 'This browser could not decode the stream.';
   }

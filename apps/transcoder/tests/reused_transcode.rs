@@ -23,7 +23,7 @@ use valence_transcoder::queue::WorkQueue;
 use valence_transcoder::router::{create_router, AppState};
 use valence_transcoder::session::{SessionConfig, SessionRegistry};
 use valence_transcoder::transcode_plan::{
-    AudioAction, HardwareAccel, SegmentContainer, SessionSpec, SubtitleAction, VideoAction,
+    AudioAction, HardwareAccel, SegmentContainer, SessionSpec, SubtitleAction, Track, VideoAction,
 };
 
 mod common;
@@ -123,6 +123,7 @@ fn registry(name: &str) -> SessionRegistry {
         idle_timeout: Duration::from_secs(60),
         manifest_timeout: std::time::Duration::from_secs(120),
         max_concurrent: 2,
+        split_audio: false,
     })
 }
 
@@ -164,6 +165,7 @@ fn spec(input: &std::path::Path) -> SessionSpec {
         source_size: None,
         container: SegmentContainer::Fmp4,
         source_video_codec: None,
+        track: Track::Both,
     }
 }
 

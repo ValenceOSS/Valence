@@ -52,6 +52,7 @@ fn app(root: std::path::PathBuf) -> axum::Router {
             idle_timeout: Duration::from_secs(60),
             manifest_timeout: std::time::Duration::from_secs(120),
             max_concurrent: 2,
+            split_audio: false,
         }),
         ffprobe: ffprobe(),
         downloads: valence_transcoder::progress_registry::ProgressRegistry::new(),

@@ -105,6 +105,7 @@ fn app_with(root: &Path, ffmpeg: String, media_roots: Vec<PathBuf>) -> axum::Rou
             idle_timeout: Duration::from_secs(60),
             manifest_timeout: Duration::from_secs(120),
             max_concurrent: 2,
+            split_audio: false,
         }),
         ffprobe: ffprobe(),
         downloads: valence_transcoder::progress_registry::ProgressRegistry::new(),

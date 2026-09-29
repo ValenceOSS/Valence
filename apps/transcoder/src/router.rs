@@ -14,10 +14,12 @@ use serde::{Deserialize, Serialize};
 use crate::audio::{touch, AudioBitrate, AudioRegistry};
 use crate::cache_sweep;
 use crate::capability::{detect_capabilities, Capabilities};
+use crate::codec_string::codec_string;
 use crate::download::{self, DownloadFile, DownloadJob, DownloadRequest};
 use crate::fingerprint::{fingerprint, FingerprintJob, FingerprintRequest};
 use crate::frame::{take_frame, FrameRequest};
 use crate::monitor::{Monitor, Report};
+use crate::playlist::{build_multivariant_playlist, VideoRendition, AUDIO_PLAYLIST_NAME};
 use crate::preview::{
     directory_for as preview_directory, is_complete as preview_ready, PreviewClip, PreviewJob,
     PreviewRegistry, PreviewRequest,
@@ -28,10 +30,11 @@ use crate::queue::WorkQueue;
 use crate::render_registry::{Claim, RenderRegistry};
 use crate::rendition::{self, RenditionJob, RenditionRequest};
 use crate::session::{await_run, segment_number, Reuse, SessionRegistry};
+use crate::split_session::{self, Half};
 use crate::subtitle::{SubtitleError, SubtitleRegistry, SubtitleRequest, SubtitleTrack, Tools};
 use crate::transcode_plan::HardwareAccel;
 use crate::transcode_plan::{DeviceFilters, SegmentStart, TranscodePlan};
-use crate::transcode_plan::{SessionSpec, MANIFEST_NAME};
+use crate::transcode_plan::{SessionSpec, INIT_SEGMENT_NAME, MANIFEST_NAME};
 use crate::trickplay::{
     directory_for, is_complete, pending_index, tile_height_for, SheetSource, TrickplayJob,
     TrickplayRegistry, TrickplayRequest,
@@ -684,7 +687,18 @@ async fn start_session(
         return error(StatusCode::NOT_FOUND, "No such input file.");
     }
 
-    let started = match state.registry.start(spec, device_id.as_deref()).await {
+    if split_session::splits(&spec, state.registry.config().split_audio) {
+        if let Some(response) = start_split(&state, &spec, device_id.as_deref()).await {
+            return response;
+        }
+    }
+
+    start_both(&state, spec, device_id.as_deref()).await
+}
+
+/// Starts one session carrying the picture and sound together.
+async fn start_both(state: &AppState, spec: SessionSpec, device_id: Option<&str>) -> Response {
+    let started = match state.registry.start(spec, device_id).await {
         Ok(started) => started,
         Err(failure) => {
             tracing::error!(target: "session", %failure, "refused");
@@ -712,7 +726,7 @@ async fn start_session(
             manifest_timeout.as_secs()
         );
 
-        state.registry.stop(&id, device_id.as_deref()).await;
+        state.registry.stop(&id, device_id).await;
 
         return error(
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -732,6 +746,236 @@ async fn start_session(
         .into_response()
 }
 
+/// Starts a session as its picture and its sound, sent apart.
+///
+/// `None` sends the caller back to one session carrying both: a file with no
+/// sound has nothing to split, and a half whose codec cannot be read cannot be
+/// named in the playlist a player sets its decoders up from. See VAL-307.
+async fn start_split(
+    state: &AppState,
+    spec: &SessionSpec,
+    device_id: Option<&str>,
+) -> Option<Response> {
+    let probe = probe_media(&state.ffprobe, Path::new(&spec.input_path))
+        .await
+        .ok()?;
+    let stream =
+        split_session::chosen_audio(&probe.audio_streams, spec.audio_stream_index)?.clone();
+
+    let halves = match start_halves(state, spec, stream.index, device_id).await {
+        Ok(halves) => halves,
+        Err(response) => return Some(*response),
+    };
+
+    let (Some(video_codec), Some(audio_codec)) = (
+        codec_of(&halves.video_directory).await,
+        codec_of(&halves.audio_directory).await,
+    ) else {
+        tracing::warn!(
+            target: "session",
+            session_id = %halves.video.id,
+            "could not read what the picture or the sound is, so they are sent together"
+        );
+        stop_halves(state, &halves, device_id).await;
+
+        return None;
+    };
+
+    let size = matches!(spec.video, crate::transcode_plan::VideoAction::Copy)
+        .then(|| {
+            probe
+                .video
+                .as_ref()
+                .map(|video| (video.width, video.height))
+        })
+        .flatten();
+
+    let playlist = build_multivariant_playlist(
+        &VideoRendition {
+            codec: video_codec,
+            bandwidth: split_session::bandwidth(spec, probe.bitrate_kbps),
+            size,
+        },
+        &split_session::audio_rendition(&stream, &spec.audio, audio_codec),
+    );
+
+    if let Err(failure) = write_replacing(
+        &halves
+            .video_directory
+            .join(split_session::MULTIVARIANT_NAME),
+        playlist.as_bytes(),
+    )
+    .await
+    {
+        tracing::error!(target: "session", %failure, "could not write the playlist joining picture and sound");
+        stop_halves(state, &halves, device_id).await;
+
+        return Some(error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Could not write the playlist.",
+        ));
+    }
+
+    Some(
+        (
+            StatusCode::OK,
+            Json(SessionResponse {
+                manifest: format!("/sessions/{}/{MANIFEST_NAME}", halves.video.id),
+                id: halves.video.id,
+                encodes_video: halves.video.encodes_video,
+                reuse: halves.video.reuse,
+            }),
+        )
+            .into_response(),
+    )
+}
+
+/// The two sessions a split session is made of, once both have begun writing.
+struct Halves {
+    video: crate::session::Started,
+    audio: crate::session::Started,
+    video_directory: PathBuf,
+    audio_directory: PathBuf,
+}
+
+/// Starts a session's picture and its sound, and waits for both to begin.
+///
+/// Neither is left running if the other cannot be started, since half a film
+/// is nothing a player can use.
+async fn start_halves(
+    state: &AppState,
+    spec: &SessionSpec,
+    audio_stream_index: u32,
+    device_id: Option<&str>,
+) -> Result<Halves, Box<Response>> {
+    let refused = |failure: &crate::session::SessionError| {
+        tracing::error!(target: "session", %failure, "refused");
+
+        Box::new(error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            &failure.to_string(),
+        ))
+    };
+
+    let sound = SessionSpec {
+        audio_stream_index: Some(audio_stream_index),
+        ..spec.audio_alone(split_session::AUDIO_SEGMENT_SECONDS)
+    };
+
+    let video = state
+        .registry
+        .start(spec.video_alone(), device_id)
+        .await
+        .map_err(|failure| refused(&failure))?;
+
+    let audio = match state.registry.start(sound, device_id).await {
+        Ok(started) => started,
+        Err(failure) => {
+            state.registry.stop(&video.id, device_id).await;
+
+            return Err(refused(&failure));
+        }
+    };
+
+    state.registry.link(&video.id, &audio.id).await;
+
+    let directories = (
+        state.registry.touch(&video.id).await,
+        state.registry.touch(&audio.id).await,
+    );
+
+    let (Some(video_directory), Some(audio_directory)) = directories else {
+        state.registry.stop(&video.id, device_id).await;
+        state.registry.stop(&audio.id, device_id).await;
+
+        return Err(Box::new(error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "The session disappeared.",
+        )));
+    };
+
+    let halves = Halves {
+        video,
+        audio,
+        video_directory,
+        audio_directory,
+    };
+
+    let manifest_timeout = state.registry.config().manifest_timeout;
+
+    if !(await_run(&halves.video_directory, manifest_timeout).await
+        && await_run(&halves.audio_directory, manifest_timeout).await)
+    {
+        tracing::error!(
+            target: "session",
+            session_id = %halves.video.id,
+            "produced no manifest within {}s; see the ffmpeg output above",
+            manifest_timeout.as_secs()
+        );
+        stop_halves(state, &halves, device_id).await;
+
+        return Err(Box::new(error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "ffmpeg produced no manifest.",
+        )));
+    }
+
+    Ok(halves)
+}
+
+/// Lets go of both halves of a split session.
+async fn stop_halves(state: &AppState, halves: &Halves, device_id: Option<&str>) {
+    state.registry.stop(&halves.video.id, device_id).await;
+    state.registry.stop(&halves.audio.id, device_id).await;
+}
+
+/// Serves the sound's playlist of a split session, matched to its picture's.
+async fn serve_audio_playlist(state: &AppState, video: &str, audio: &str) -> Response {
+    let (Some(video_directory), Some(audio_directory)) = (
+        state.registry.touch(video).await,
+        state.registry.touch(audio).await,
+    ) else {
+        return error(StatusCode::NOT_FOUND, "No such session.");
+    };
+
+    let (Ok(video_playlist), Ok(audio_playlist)) = (
+        tokio::fs::read_to_string(video_directory.join(MANIFEST_NAME)).await,
+        tokio::fs::read_to_string(audio_directory.join(MANIFEST_NAME)).await,
+    ) else {
+        return error(StatusCode::NOT_FOUND, "No such segment.");
+    };
+
+    (
+        StatusCode::OK,
+        [(header::CONTENT_TYPE, content_type_for(AUDIO_PLAYLIST_NAME))],
+        split_session::with_target_of(&audio_playlist, &video_playlist),
+    )
+        .into_response()
+}
+
+/// The codec string of the stream a session's initialisation segment describes.
+async fn codec_of(directory: &Path) -> Option<String> {
+    let init = tokio::fs::read(directory.join(INIT_SEGMENT_NAME))
+        .await
+        .ok()?;
+
+    codec_string(&init)
+}
+
+/// Writes a file whole, so a reader never finds half of it.
+///
+/// Two viewers starting the same film write the same playlist at the same
+/// moment, and a player reading between them must see one or the other.
+async fn write_replacing(path: &Path, contents: &[u8]) -> std::io::Result<()> {
+    static WRITES: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+    let write = WRITES.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let staging = path.with_extension(format!("{}.{write}.part", std::process::id()));
+
+    tokio::fs::write(&staging, contents).await?;
+    tokio::fs::rename(&staging, path).await
+}
+
 /// Serves a file out of a session, waiting for one that is still being made.
 ///
 /// A segment is not a file that either exists or does not. It is a piece of
@@ -747,6 +991,20 @@ async fn session_file(
     AxumPath((id, name)): AxumPath<(String, String)>,
     headers: HeaderMap,
 ) -> Response {
+    let companion = state.registry.companion_of(&id).await;
+
+    if let (Some(companion), true) = (companion.as_deref(), name == AUDIO_PLAYLIST_NAME) {
+        return serve_audio_playlist(&state, &id, companion).await;
+    }
+
+    let (id, name) = match companion {
+        Some(companion) => match split_session::route(&name) {
+            (Half::Video, named) => (id, named),
+            (Half::Audio, named) => (companion, named),
+        },
+        None => (id, name),
+    };
+
     let Some(directory) = state.registry.touch(&id).await else {
         return error(StatusCode::NOT_FOUND, "No such session.");
     };
@@ -1924,7 +2182,16 @@ async fn stop_session(
     AxumPath(id): AxumPath<String>,
     Query(query): Query<StopSessionQuery>,
 ) -> Response {
+    let companion = state.registry.companion_of(&id).await;
+
     if state.registry.stop(&id, query.device_id.as_deref()).await {
+        if let Some(companion) = companion {
+            state
+                .registry
+                .stop(&companion, query.device_id.as_deref())
+                .await;
+        }
+
         return (StatusCode::NO_CONTENT, Body::empty()).into_response();
     }
 
@@ -2129,6 +2396,7 @@ mod tests {
                 idle_timeout: std::time::Duration::from_secs(60),
                 manifest_timeout: std::time::Duration::from_secs(120),
                 max_concurrent: 2,
+                split_audio: false,
             }),
             ffprobe: "ffprobe".to_owned(),
             downloads: crate::progress_registry::ProgressRegistry::new(),

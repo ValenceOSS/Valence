@@ -262,6 +262,11 @@ pub struct Session {
     /// session: 1750 runs, the last dozen alternating between segment 355 and
     /// segment 570, with both requests refused in the end.
     last_wanted: u64,
+    /// The other half of a session whose picture and sound are sent apart.
+    ///
+    /// Either half being used keeps both, so one is never collected as idle
+    /// while a viewer is still playing the other.
+    companion: Option<String>,
 }
 
 impl Session {
@@ -820,6 +825,12 @@ pub struct SessionConfig {
     /// should be able to say so rather than be told the transcode failed.
     pub manifest_timeout: Duration,
     pub max_concurrent: usize,
+    /// Whether a session's sound is sent apart from its picture where it can be.
+    ///
+    /// On unless an operator turns it off, which is the way back to one set of
+    /// segments carrying both should a client turn out not to take them apart.
+    /// See VAL-307.
+    pub split_audio: bool,
 }
 
 impl Default for SessionConfig {
@@ -833,6 +844,7 @@ impl Default for SessionConfig {
             idle_timeout: Duration::from_secs(90),
             manifest_timeout: Duration::from_secs(20),
             max_concurrent: 2,
+            split_audio: true,
         }
     }
 }
@@ -1026,6 +1038,7 @@ impl SessionRegistry {
             lengths: Arc::new(boundaries.lengths),
             seeks_forward: boundaries.seeks_forward,
             last_wanted: 0,
+            companion: None,
         };
 
         if is_complete {
@@ -1122,7 +1135,32 @@ impl SessionRegistry {
 
         session.touch();
 
-        Some(session.directory.clone())
+        let directory = session.directory.clone();
+        let companion = session.companion.clone();
+
+        if let Some(other) = companion.and_then(|other| sessions.get_mut(&other)) {
+            other.touch();
+        }
+
+        Some(directory)
+    }
+
+    /// Pairs a session's picture with its sound, so that using either keeps both.
+    pub async fn link(&self, video: &str, audio: &str) {
+        let mut sessions = self.sessions.lock().await;
+
+        if let Some(session) = sessions.get_mut(video) {
+            session.companion = Some(audio.to_owned());
+        }
+
+        if let Some(session) = sessions.get_mut(audio) {
+            session.companion = Some(video.to_owned());
+        }
+    }
+
+    /// The other half of a session sent as picture and sound apart, if it is.
+    pub async fn companion_of(&self, id: &str) -> Option<String> {
+        self.sessions.lock().await.get(id)?.companion.clone()
     }
 
     /// Records which segment a viewer has just been given.
@@ -1185,6 +1223,12 @@ impl SessionRegistry {
         };
 
         session.heartbeat(is_playing);
+
+        let companion = session.companion.clone();
+
+        if let Some(other) = companion.and_then(|other| sessions.get_mut(&other)) {
+            other.heartbeat(is_playing);
+        }
 
         true
     }
@@ -1800,7 +1844,8 @@ mod tests {
     };
     use crate::boundaries::{Boundaries, LAYOUT, LENGTHS_NAME};
     use crate::transcode_plan::{
-        AudioAction, HardwareAccel, SegmentContainer, SessionSpec, SubtitleAction, VideoAction,
+        AudioAction, HardwareAccel, SegmentContainer, SessionSpec, SubtitleAction, Track,
+        VideoAction,
     };
 
     fn run(from: u64, head: Option<u64>) -> RunPosition {
@@ -2025,6 +2070,7 @@ mod tests {
             source_size: None,
             container: SegmentContainer::Fmp4,
             source_video_codec: None,
+            track: Track::Both,
         };
 
         let directory = root.join(spec.plan_id());

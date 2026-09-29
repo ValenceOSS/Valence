@@ -12,7 +12,7 @@ use std::path::Path;
 use std::process::Command;
 
 use valence_transcoder::playlist::build_vod_playlist;
-use valence_transcoder::transcode_plan::SegmentContainer;
+use valence_transcoder::transcode_plan::{SegmentContainer, Track};
 
 mod common;
 
@@ -93,8 +93,11 @@ fn ffprobe_reads_a_generated_playlist_as_a_film() {
     assert!(!lengths.is_empty(), "ffmpeg wrote no segments");
 
     let path = directory.join("valence.m3u8");
-    std::fs::write(&path, build_vod_playlist(&lengths, SegmentContainer::Fmp4))
-        .expect("wrote the playlist");
+    std::fs::write(
+        &path,
+        build_vod_playlist(&lengths, SegmentContainer::Fmp4, Track::Both),
+    )
+    .expect("wrote the playlist");
 
     let output = Command::new(ffprobe())
         .args([
