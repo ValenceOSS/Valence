@@ -18,19 +18,32 @@ const OPEN_ENDED = /^bytes=(\d+)-$/;
 
 const CARRIED = ['accept', 'content-type', 'range', 'x-valence-profile', 'authorization'];
 
-const POLICY = [
-  "default-src 'self'",
-  `script-src 'self' ${SCHEME}://www.gstatic.com`,
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
-  "media-src 'self' blob:",
-  "font-src 'self' data:",
-  "connect-src 'self' ws: wss:",
-  "object-src 'none'",
-  "frame-src 'none'",
-  "base-uri 'self'",
-  "form-action 'none'",
-].join('; ');
+/**
+ * Writes the policy a page of this client is held to, allowing these sources of script beyond its own.
+ *
+ * @param scripts - Where else script may come from.
+ * @returns The policy, as the header carries it.
+ */
+const policyAllowing = (scripts: readonly string[]): string =>
+  [
+    "default-src 'self'",
+    ["script-src 'self'", ...scripts].join(' '),
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https:",
+    "media-src 'self' blob:",
+    "font-src 'self' data:",
+    "connect-src 'self' ws: wss:",
+    "object-src 'none'",
+    "frame-src 'none'",
+    "base-uri 'self'",
+    "form-action 'none'",
+  ].join('; ');
+
+const CAST_SENDER = `${SCHEME}://www.gstatic.com`;
+
+const POLICY = policyAllowing([CAST_SENDER]);
+
+const DEVELOPMENT_POLICY = policyAllowing([CAST_SENDER, "'unsafe-inline'"]);
 
 const TYPES = new Map([
   ['html', 'text/html'],
@@ -227,10 +240,9 @@ const said = (status: number, error: string): Response =>
  * Inline styles are allowed because animation sets them: every element that moves is moved by writing
  * a style attribute to it, and a policy that refused those would leave a still application. The cast
  * sender is named because a page written for a browser asks for it without a scheme, so it arrives
- * on this client's own scheme and is fetched from Google as itself.
- *
- * Only the packaged bundle is served this way. In development the pages come from Vite, which serves
- * its own inline module scripts, and a policy strict enough to be worth having would refuse them.
+ * on this client's own scheme and is fetched from Google as itself. Pictures may come from anywhere
+ * over https, because a cast portrait, a poster to ask for or a studio's logo is the catalogue's own
+ * address, and an image can show something but not run it.
  *
  * @param page - The document.
  * @returns The answer, with the policy attached.
@@ -239,6 +251,41 @@ const aPage = (page: Buffer): Response =>
   new Response(new Uint8Array(page), {
     headers: { 'content-type': 'text/html', 'content-security-policy': POLICY },
   });
+
+/**
+ * Holds a page from Vite to the packaged client's policy, so what development shows is what a
+ * release will.
+ *
+ * Vite serves its own inline module scripts, so those are allowed here and nowhere else. Every other
+ * rule is the release's own: a page that only drew its cast portraits in development, because nothing
+ * there refused them, is how a release went out without any.
+ *
+ * A page that arrived packed has already been unpacked on the way, so it no longer is what its
+ * encoding and length say, and both are dropped.
+ *
+ * @param answer - What Vite sent.
+ * @returns The same answer, carrying the policy where it is a page.
+ */
+const underThePolicy = (answer: Response): Response => {
+  if (!(answer.headers.get('content-type') ?? '').startsWith('text/html')) {
+    return answer;
+  }
+
+  const headers = new Headers(answer.headers);
+
+  if (headers.has('content-encoding')) {
+    headers.delete('content-encoding');
+    headers.delete('content-length');
+  }
+
+  headers.set('content-security-policy', DEVELOPMENT_POLICY);
+
+  return new Response(answer.body, {
+    status: answer.status,
+    statusText: answer.statusText,
+    headers,
+  });
+};
 
 /**
  * Serves this client's own pages, and passes everything it asks of Valence through to the server.
@@ -358,11 +405,13 @@ const serveTheApplication = (reach: ServerReach, heldFolder: string): void => {
       const onward = new URL(asked.pathname + asked.search, served).toString();
 
       try {
-        return await net.fetch(onward, {
-          method: request.method,
-          signal: request.signal,
-          headers: worthCarrying(request.headers),
-        });
+        return underThePolicy(
+          await net.fetch(onward, {
+            method: request.method,
+            signal: request.signal,
+            headers: worthCarrying(request.headers),
+          }),
+        );
       } catch {
         return said(502, `This client's own pages could not be read from ${served}.`);
       }
@@ -387,10 +436,12 @@ const serveTheApplication = (reach: ServerReach, heldFolder: string): void => {
 
 export {
   ORIGIN,
+  POLICY,
   aSliceOf,
   untilLetGo,
   askingAs,
   claimTheScheme,
   serveTheApplication,
+  underThePolicy,
   worthCarrying,
 };

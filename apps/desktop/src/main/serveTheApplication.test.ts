@@ -15,8 +15,15 @@ vi.mock('@ValenceDesktop/main/theServerAddress', () => ({
   theServerAddress: () => 'http://localhost:8420',
 }));
 
-const { aSliceOf, askingAs, untilLetGo, serveTheApplication, worthCarrying } =
-  await import('./serveTheApplication');
+const {
+  POLICY,
+  aSliceOf,
+  askingAs,
+  untilLetGo,
+  serveTheApplication,
+  underThePolicy,
+  worthCarrying,
+} = await import('./serveTheApplication');
 
 const SERVER = 'http://localhost:8420';
 
@@ -145,5 +152,97 @@ describe('serveTheApplication', () => {
     giveUp.abort();
 
     expect(fetch.mock.lastCall?.[1]?.signal?.aborted).toBe(true);
+  });
+});
+
+describe('the policy a page is held to', () => {
+  it('lets a picture come from the catalogue, which is where every cast portrait lives', () => {
+    expect(POLICY).toContain("img-src 'self' data: blob: https:");
+  });
+
+  it('still refuses script from anywhere but this client and the cast sender', () => {
+    expect(POLICY).toContain("script-src 'self' valence://www.gstatic.com;");
+  });
+
+  it('holds a page from Vite to the same rules as a release', () => {
+    const page = underThePolicy(
+      new Response('<html></html>', { headers: { 'content-type': 'text/html; charset=utf-8' } }),
+    );
+
+    expect(page.headers.get('content-security-policy')).toContain(
+      "img-src 'self' data: blob: https:",
+    );
+    expect(page.headers.get('content-security-policy')).toContain("'unsafe-inline'");
+  });
+
+  it('drops the encoding and length of a page that was unpacked on its way from Vite', () => {
+    const page = underThePolicy(
+      new Response('<html></html>', {
+        headers: {
+          'content-type': 'text/html',
+          'content-encoding': 'gzip',
+          'content-length': '20',
+        },
+      }),
+    );
+
+    expect(page.headers.get('content-encoding')).toBeNull();
+    expect(page.headers.get('content-length')).toBeNull();
+  });
+
+  it('passes an answer from another host through untouched', async () => {
+    vi.stubEnv('ELECTRON_RENDERER_URL', 'http://localhost:5176');
+    fetch.mockResolvedValue(
+      new Response('<html></html>', { headers: { 'content-type': 'text/html' } }),
+    );
+
+    serveTheApplication(
+      {
+        isReachable: () => true,
+        noteReached: vi.fn(),
+        noteMissed: vi.fn(),
+        whenChanged: () => () => {},
+        stop: vi.fn(),
+      },
+      '/held',
+    );
+
+    const answer = await handle.mock.lastCall?.[1](
+      new Request('valence://www.gstatic.com/cv/js/sender/v1/cast_sender.js'),
+    );
+
+    expect(answer?.headers.get('content-security-policy')).toBeNull();
+
+    vi.unstubAllEnvs();
+  });
+
+  it('leaves a script or a stylesheet from Vite as it came', () => {
+    const script = new Response('export {}', { headers: { 'content-type': 'text/javascript' } });
+
+    expect(underThePolicy(script)).toBe(script);
+  });
+
+  it('holds a page to the policy on its way from Vite in development', async () => {
+    vi.stubEnv('ELECTRON_RENDERER_URL', 'http://localhost:5176');
+    fetch.mockResolvedValue(
+      new Response('<html></html>', { headers: { 'content-type': 'text/html' } }),
+    );
+
+    serveTheApplication(
+      {
+        isReachable: () => true,
+        noteReached: vi.fn(),
+        noteMissed: vi.fn(),
+        whenChanged: () => () => {},
+        stop: vi.fn(),
+      },
+      '/held',
+    );
+
+    const answer = await handle.mock.lastCall?.[1](new Request('valence://app/'));
+
+    expect(answer?.headers.get('content-security-policy')).toContain('https:');
+
+    vi.unstubAllEnvs();
   });
 });
