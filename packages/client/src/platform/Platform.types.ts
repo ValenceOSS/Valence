@@ -3,6 +3,10 @@ import type { ListeningAudio } from '@ValenceClient/books/createAudiobookPlayer'
 import type { Connect } from '@ValenceClient/realtime/createRealtimeClient';
 import type { HeldFile, WhatToKeep } from '@ValenceContracts/schemas/HeldFile';
 import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
+import type { PasskeyAssertion } from '@ValenceContracts/schemas/PasskeyAssertion';
+import type { PasskeyAttestation } from '@ValenceContracts/schemas/PasskeyAttestation';
+import type { PasskeyCreationOptions } from '@ValenceContracts/schemas/PasskeyCreationOptions';
+import type { PasskeyRequestOptions } from '@ValenceContracts/schemas/PasskeyRequestOptions';
 
 type DeviceStore = {
   read: (key: string) => string | null;
@@ -42,6 +46,22 @@ type MusicAudio = {
   canPlay: (type: string) => boolean;
 };
 
+type PasskeyHandOff = 'in' | 'cancelled' | 'failed';
+
+type Passkeys =
+  | { kind: 'in-the-page' }
+  | {
+      kind: 'through-the-system';
+      ask: (options: PasskeyRequestOptions) => Promise<PasskeyAssertion | null>;
+      make: (options: PasskeyCreationOptions) => Promise<PasskeyAttestation | null>;
+    }
+  | {
+      kind: 'through-a-sign-in-page';
+      signIn: (profileId: string | null) => Promise<PasskeyHandOff>;
+      addOne: () => void;
+    }
+  | { kind: 'none'; why: string };
+
 type Platform = {
   store: DeviceStore;
   serverAddress: () => string | null;
@@ -57,6 +77,7 @@ type Platform = {
   setUnreadBadge: (count: number) => void;
   musicAudio: () => MusicAudio;
   listeningAudio: () => ListeningAudio;
+  passkeys: () => Passkeys;
 };
 
 export type {
@@ -66,6 +87,8 @@ export type {
   HeldFiles,
   LocalNotice,
   MusicAudio,
+  PasskeyHandOff,
+  Passkeys,
   Platform,
   Reachability,
 };

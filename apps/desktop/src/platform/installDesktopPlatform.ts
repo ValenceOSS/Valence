@@ -8,6 +8,7 @@ import { theDesktopsSocket } from '@ValenceDesktop/platform/theDesktopsSocket';
 import { theDesktopsHeldFiles } from '@ValenceDesktop/platform/theDesktopsHeldFiles';
 import { theDesktopsReach } from '@ValenceDesktop/platform/theDesktopsReach';
 import { notifyLocally, setUnreadBadge } from '@ValenceDesktop/platform/theDesktopsNotifications';
+import { theDesktopsPasskeys } from '@ValenceDesktop/platform/theDesktopsPasskeys';
 
 /**
  * Tells the application what it is running on, when what it is running on is this client.
@@ -36,6 +37,7 @@ const installDesktopPlatform = (): void => {
     setUnreadBadge,
     musicAudio: theBrowserAudio,
     listeningAudio: theBrowsersListeningAudio,
+    passkeys: theDesktopsPasskeys,
   });
 };
 

@@ -1,0 +1,3 @@
+const PASSKEY_TIMEOUT = 5 * 60 * 1000;
+
+export { PASSKEY_TIMEOUT };

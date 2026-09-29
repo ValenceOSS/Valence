@@ -9,11 +9,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "electron-vite dev",
+    "dev": "pnpm run native --optional && electron-vite dev",
     "build": "electron-vite build",
-    "package": "electron-vite build && electron-builder",
+    "package": "pnpm run native && electron-vite build && electron-builder",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "native": "pnpm --filter @valence/tools exec tsx desktop/buildDesktopNative.ts"
   },
   "dependencies": {
     "@keyline-icons/react": "^1.0.0",
@@ -66,7 +67,11 @@
       "dist/**",
       "dist-main/**",
       "dist-preload/**",
+      "dist-native/**",
       "package.json"
+    ],
+    "asarUnpack": [
+      "dist-native/**"
     ],
     "publish": {
       "provider": "github",
@@ -121,7 +126,7 @@
       ],
       "executableName": "valence"
     },
-    "copyright": "Copyright © Valence contributors",
+    "copyright": "Copyright \u00a9 Valence contributors",
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,

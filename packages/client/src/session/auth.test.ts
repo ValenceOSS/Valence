@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { readCurrentProfile, writeCurrentProfile } from '@ValenceClient/profiles/currentProfile';
@@ -57,6 +58,15 @@ const said = (body: object | null, status = 200) =>
  */
 const asked = (at = 0): string =>
   new URL(String(fetchMock.mock.calls[at]?.[0] ?? '/'), 'http://localhost:3000').pathname;
+
+/**
+ * What was sent with a request, read back as JSON.
+ */
+const sentWith = (at: number): object => {
+  const body = fetchMock.mock.calls[at]?.[1]?.body;
+
+  return typeof body === 'string' ? z.record(z.string(), z.json()).parse(JSON.parse(body)) : {};
+};
 
 beforeEach(() => {
   fetchMock.mockReset();
@@ -251,6 +261,178 @@ describe('passkeys', () => {
     );
 
     await expect(authenticateWithPasskey()).resolves.toEqual({ kind: 'cancelled' });
+  });
+});
+
+const REQUEST_OPTIONS = {
+  challenge: 'Y2hhbGxlbmdl',
+  rpId: 'valence.test',
+  userVerification: 'preferred',
+};
+
+const CREATION_OPTIONS = {
+  challenge: 'Y2hhbGxlbmdl',
+  rp: { name: 'Valence', id: 'valence.test' },
+  user: { id: 'dXNlcg', name: 'Operator', displayName: 'Operator' },
+  pubKeyCredParams: [{ alg: -7, type: 'public-key' }],
+};
+
+const AN_ASSERTION = {
+  id: 'key',
+  rawId: 'key',
+  type: 'public-key' as const,
+  response: { clientDataJSON: 'e30', authenticatorData: 'AA', signature: 'AA' },
+};
+
+const AN_ATTESTATION = {
+  id: 'key',
+  rawId: 'key',
+  type: 'public-key' as const,
+  response: { clientDataJSON: 'e30', attestationObject: 'AA', transports: ['internal'] },
+};
+
+describe('passkeys through the system', () => {
+  it('signs in with what the host asked its system for', async () => {
+    const ask = vi.fn(() => Promise.resolve(AN_ASSERTION));
+
+    installPlatform(
+      aFakePlatform({
+        passkeys: () => ({ kind: 'through-the-system', ask, make: vi.fn() }),
+      }),
+    );
+    fetchMock
+      .mockResolvedValueOnce(said(REQUEST_OPTIONS))
+      .mockResolvedValueOnce(said({ session: {}, user: AN_ACCOUNT }));
+
+    await expect(authenticateWithPasskey()).resolves.toEqual({ kind: 'signedIn' });
+
+    expect(ask).toHaveBeenCalledWith(REQUEST_OPTIONS);
+    expect(asked(0)).toBe('/api/auth/passkey/generate-authenticate-options');
+    expect(asked(1)).toBe('/api/auth/passkey/verify-authentication');
+    expect(sentWith(1)).toEqual({
+      response: AN_ASSERTION,
+    });
+  });
+
+  it('says nothing where somebody cancelled the system prompt', async () => {
+    installPlatform(
+      aFakePlatform({
+        passkeys: () => ({
+          kind: 'through-the-system',
+          ask: () => Promise.resolve(null),
+          make: vi.fn(),
+        }),
+      }),
+    );
+    fetchMock.mockResolvedValueOnce(said(REQUEST_OPTIONS));
+
+    await expect(authenticateWithPasskey()).resolves.toEqual({ kind: 'cancelled' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('passes on what the system said went wrong', async () => {
+    installPlatform(
+      aFakePlatform({
+        passkeys: () => ({
+          kind: 'through-the-system',
+          ask: () => Promise.reject(new Error('Windows Hello is not set up.')),
+          make: vi.fn(),
+        }),
+      }),
+    );
+    fetchMock.mockResolvedValueOnce(said(REQUEST_OPTIONS));
+
+    await expect(authenticateWithPasskey()).resolves.toEqual({
+      kind: 'failed',
+      reason: 'Windows Hello is not set up.',
+    });
+  });
+
+  it('adds what the host had its system make, under the name given', async () => {
+    const make = vi.fn(() => Promise.resolve(AN_ATTESTATION));
+
+    installPlatform(
+      aFakePlatform({ passkeys: () => ({ kind: 'through-the-system', ask: vi.fn(), make }) }),
+    );
+    fetchMock.mockResolvedValueOnce(said(CREATION_OPTIONS)).mockResolvedValueOnce(said(A_PASSKEY));
+
+    await expect(registerPasskey('Laptop')).resolves.toEqual({ kind: 'registered' });
+
+    expect(make).toHaveBeenCalledWith(CREATION_OPTIONS);
+    expect(asked(0)).toBe('/api/auth/passkey/generate-register-options');
+    expect(asked(1)).toBe('/api/auth/passkey/verify-registration');
+    expect(sentWith(1)).toEqual({
+      response: AN_ATTESTATION,
+      name: 'Laptop',
+    });
+  });
+
+  it('refuses options the server did not send whole', async () => {
+    const ask = vi.fn();
+
+    installPlatform(
+      aFakePlatform({ passkeys: () => ({ kind: 'through-the-system', ask, make: vi.fn() }) }),
+    );
+    fetchMock.mockResolvedValueOnce(said({ rpId: 'valence.test' }));
+
+    await expect(authenticateWithPasskey()).resolves.toMatchObject({ kind: 'failed' });
+    expect(ask).not.toHaveBeenCalled();
+  });
+});
+
+describe('passkeys through a sign-in page', () => {
+  it('signs in on the page, for the face already chosen', async () => {
+    const signIn = vi.fn(() => Promise.resolve('in' as const));
+
+    installPlatform(
+      aFakePlatform({
+        passkeys: () => ({ kind: 'through-a-sign-in-page', signIn, addOne: vi.fn() }),
+      }),
+    );
+
+    await expect(authenticateWithPasskey('profile-1')).resolves.toEqual({ kind: 'signedIn' });
+    expect(signIn).toHaveBeenCalledWith('profile-1');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('tells a cancelled page from a failed one', async () => {
+    installPlatform(
+      aFakePlatform({
+        passkeys: () => ({
+          kind: 'through-a-sign-in-page',
+          signIn: () => Promise.resolve('cancelled' as const),
+          addOne: vi.fn(),
+        }),
+      }),
+    );
+
+    await expect(authenticateWithPasskey()).resolves.toEqual({ kind: 'cancelled' });
+  });
+
+  it('does not try to add one here', async () => {
+    installPlatform(
+      aFakePlatform({
+        passkeys: () => ({ kind: 'through-a-sign-in-page', signIn: vi.fn(), addOne: vi.fn() }),
+      }),
+    );
+
+    await expect(registerPasskey('Laptop')).resolves.toMatchObject({ kind: 'failed' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('passkeys where there are none', () => {
+  it('says why', async () => {
+    installPlatform(aFakePlatform({ passkeys: () => ({ kind: 'none', why: 'Not here.' }) }));
+
+    await expect(authenticateWithPasskey()).resolves.toEqual({
+      kind: 'failed',
+      reason: 'Not here.',
+    });
+    await expect(registerPasskey('Laptop')).resolves.toEqual({
+      kind: 'failed',
+      reason: 'Not here.',
+    });
   });
 });
 

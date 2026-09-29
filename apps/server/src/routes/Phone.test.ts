@@ -72,6 +72,27 @@ describe('handing a sign-in back to a phone', () => {
     expect(url).toMatch(/^valence:\/\/signed-in\?code=.+/);
   });
 
+  it('sends a desktop app listening on this machine back to its own port', async () => {
+    const { post } = await aServer();
+    const response = await post('/api/phone/hand-back', {
+      challenge: theChallengeFor(SECRET),
+      port: 51_234,
+    });
+    const { url } = HandBackSchema.parse(await response.json());
+
+    expect(url).toMatch(/^http:\/\/127\.0\.0\.1:51234\/signed-in\?code=.+/);
+  });
+
+  it('refuses a port a program could not have listened on without privileges', async () => {
+    const { post } = await aServer();
+    const response = await post('/api/phone/hand-back', {
+      challenge: theChallengeFor(SECRET),
+      port: 80,
+    });
+
+    expect(response.status).toBe(400);
+  });
+
   it('refuses somebody who is not signed in', async () => {
     const { post } = await aServer();
     const response = await post(

@@ -319,7 +319,7 @@ const ProfileGate = ({
     setIsUsingPasskey(true);
     setProblem(null);
 
-    const outcome = await authenticateWithPasskey();
+    const outcome = await authenticateWithPasskey(chosen?.id ?? null);
 
     if (!isShown.current) {
       return;

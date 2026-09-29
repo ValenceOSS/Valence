@@ -28,6 +28,19 @@ describe('handBackToThePhone', () => {
     );
   });
 
+  it('names the port a desktop app is listening on, where it gave one', async () => {
+    fetchMock.mockResolvedValue(
+      Response.json({ url: 'http://127.0.0.1:51234/signed-in?code=abc' }),
+    );
+
+    await handBackToThePhone(CHALLENGE, 51_234);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/phone/hand-back',
+      expect.objectContaining({ body: JSON.stringify({ challenge: CHALLENGE, port: 51_234 }) }),
+    );
+  });
+
   it('answers with where to send the browser', async () => {
     fetchMock.mockResolvedValue(Response.json({ url: 'valence://signed-in?code=abc' }));
 

@@ -134,6 +134,15 @@ jobs:
 
       - run: pnpm --filter @valence/desktop exec electron-vite build
 
+      # The part of the app written in Rust, which asks Windows for a passkey. A Mac and Linux sign in
+      # with one in the browser, so they build nothing and need no toolchain.
+      - uses: dtolnay/rust-toolchain@stable
+        if: matrix.name == 'Windows'
+
+      - name: Build the native module
+        if: matrix.name == 'Windows'
+        run: pnpm --filter @valence/desktop run native
+
       # The certificate goes into a keychain of this job's own, made and unlocked here, where the
       # builder finds the Developer ID in it. The builder can make one itself from the certificate,
       # but on current macOS runners it then cannot unlock what it made. The keychain and the

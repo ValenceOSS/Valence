@@ -199,6 +199,13 @@ On **Security**, enable **Two-step sign in** to require a code from an authentic
 
 Passkeys let you sign in with the face, fingerprint or PIN a device already uses, instead of a password. Add one from **Security**, give it a name you will recognise, such as the device you are on, and rename or remove it later. Passkeys need a browser and device that support them; where they are unavailable the option says so.
 
+In the desktop app, **Use a passkey** works like this:
+
+- **Windows** opens Windows Hello inside the app, which also offers a phone, a security key or any passkey manager Windows knows about. You can add passkeys from **Security** as you would in a browser.
+- **macOS** and **Linux** open Valence's sign-in page in your default browser, so the passkeys on offer are the ones your browser has: iCloud Keychain in Safari, or whichever password manager extension you use. Once you are signed in, the browser hands you back to the app. You add passkeys from your browser too; **Security** has a button that opens it there.
+
+Passkeys in the desktop app need your server reached over HTTPS, the same as in a browser.
+
 ### API keys
 
 If your role includes `account.keys`, the **API keys** card on the Security panel lets you create keys for scripts and devices outside the browser. Give a key a name and create it. The key is shown once, so copy it then. You can turn a key off and on again, or revoke it. A key can be created with an expiry, a narrower set of permissions and a rate limit through the API, and it can never carry a permission that its holder does not have. See the [API overview](/reference/api-overview) for how to use one.

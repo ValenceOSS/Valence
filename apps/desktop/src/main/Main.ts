@@ -41,6 +41,7 @@ import { showTheApplication } from '@ValenceDesktop/main/showTheApplication';
 import { claimTheScheme, serveTheApplication } from '@ValenceDesktop/main/serveTheApplication';
 import { carryTheSessionToTheSocket } from '@ValenceDesktop/main/carryTheSessionToTheSocket';
 import { answerAboutHeldFiles } from '@ValenceDesktop/main/answerAboutHeldFiles';
+import { answerAboutPasskeys } from '@ValenceDesktop/main/answerAboutPasskeys';
 import { theHeldFolder } from '@ValenceDesktop/main/theHeldFolder';
 import { theHeldIndex } from '@ValenceDesktop/main/theHeldIndex';
 import { theHeldLibrary } from '@ValenceDesktop/main/theHeldLibrary';
@@ -241,6 +242,8 @@ const start = async (): Promise<void> => {
       theWindow.webContents.send(channel, said);
     }
   });
+
+  answerAboutPasskeys();
 
   reach.whenChanged((isReachable) => {
     if (isReachable) {

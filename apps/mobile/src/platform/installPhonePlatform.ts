@@ -55,6 +55,7 @@ const installPhonePlatform = (held: Map<string, string>): void => {
     setUnreadBadge: () => {},
     musicAudio: thePhonesMusicOut,
     listeningAudio: thePhonesListeningAudio,
+    passkeys: () => ({ kind: 'none', why: 'Add a passkey from Valence on the web.' }),
   });
 };
 

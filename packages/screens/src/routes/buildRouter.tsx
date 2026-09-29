@@ -85,7 +85,11 @@ const adminSearch = z.object({
   ...ObservabilitySearchSchema.shape,
 });
 
-const phoneSearch = z.object({ challenge: z.string().optional(), profile: z.string().optional() });
+const phoneSearch = z.object({
+  challenge: z.string().optional(),
+  profile: z.string().optional(),
+  port: z.coerce.number().int().min(1024).max(65535).optional().catch(undefined),
+});
 
 /**
  * Builds the router: every address Valence serves, what it carries, and what is drawn there.

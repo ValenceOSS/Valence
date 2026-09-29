@@ -68,6 +68,13 @@ const theWindowOffers = (found: string[], nearby: NearbyValence[] = []): void =>
       chrome: '130.0.0',
     },
     notifications: { setBadge: () => {} },
+    passkeys: {
+      way: 'page',
+      ask: () => Promise.resolve({ kind: 'cancelled' }),
+      make: () => Promise.resolve({ kind: 'cancelled' }),
+      signInOnAPage: () => Promise.resolve({ kind: 'cancelled' }),
+      addOneInTheBrowser: () => {},
+    },
     servers: {
       alreadyFound: found,
       reach: () => Promise.resolve(true),
