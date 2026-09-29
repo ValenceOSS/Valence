@@ -936,7 +936,7 @@ const VideoPlayer = ({
                 return;
               }
 
-              setProblem(describePlaybackFailure(fault.category));
+              setProblem(describePlaybackFailure(fault.category, fault.code));
               setState('failed');
             },
           });
@@ -959,7 +959,11 @@ const VideoPlayer = ({
         if (!isAbandoned()) {
           const engine = PlaybackEngineErrorSchema.safeParse(error);
 
-          setProblem(describePlaybackFailure(engine.success ? engine.data.category : null));
+          setProblem(
+            engine.success
+              ? describePlaybackFailure(engine.data.category, engine.data.code)
+              : describePlaybackFailure(null),
+          );
           setState('failed');
         }
       }

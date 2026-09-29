@@ -97,6 +97,8 @@ fn session_config(ffmpeg: String, ffprobe: String) -> SessionConfig {
             .ok()
             .and_then(|value| value.parse().ok())
             .unwrap_or(defaults.max_concurrent),
+        split_audio: env::var("VALENCE_SPLIT_AUDIO")
+            .map_or(defaults.split_audio, |value| value != "0"),
     }
 }
 

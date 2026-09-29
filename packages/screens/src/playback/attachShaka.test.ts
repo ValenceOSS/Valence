@@ -306,7 +306,7 @@ describe('attachShaka, reading what is actually being delivered', () => {
 });
 
 describe('the timestamps Shaka plays to', () => {
-  it('takes them from the order segments arrive in, which is what stops it dropping frames', async () => {
+  it('takes them from inside each segment, which keeps a join whole and the sound in step', async () => {
     const { module, player } = engine();
 
     await attachShaka({
@@ -315,7 +315,9 @@ describe('the timestamps Shaka plays to', () => {
       loadShaka: () => Promise.resolve(module),
     });
 
-    expect(player.configure).toHaveBeenCalledWith({ manifest: { hls: { sequenceMode: true } } });
+    expect(player.configure).toHaveBeenCalledWith({
+      manifest: { hls: { sequenceMode: false, ignoreManifestTimestampsInSegmentsMode: true } },
+    });
   });
 
   it('settles that before it loads anything, since it cannot be changed underneath a stream', async () => {

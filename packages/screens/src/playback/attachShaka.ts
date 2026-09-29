@@ -25,7 +25,9 @@ type ShakaStats = {
 
 type ShakaPlayer = {
   attach: (element: HTMLMediaElement) => Promise<void>;
-  configure?: (config: { manifest: { hls: { sequenceMode: boolean } } }) => void;
+  configure?: (config: {
+    manifest: { hls: { sequenceMode: boolean; ignoreManifestTimestampsInSegmentsMode: boolean } };
+  }) => void;
   load: (manifestUrl: string, startSeconds?: number) => Promise<void>;
   destroy: () => Promise<void>;
   addEventListener?: (name: string, listener: (event: Event) => void) => void;
@@ -59,7 +61,9 @@ type AttachOptions = {
 
 const CRITICAL = 2;
 
-const SEQUENCE_MODE = { manifest: { hls: { sequenceMode: true } } } as const;
+const SEGMENT_TIMESTAMPS = {
+  manifest: { hls: { sequenceMode: false, ignoreManifestTimestampsInSegmentsMode: true } },
+} as const;
 
 type DeliveredFormat = {
   videoCodec: string | null;
@@ -164,16 +168,13 @@ const faultFrom = (event: Event): PlaybackFault | null => {
  * @returns A handle carrying the teardown to call — an orphaned engine keeps buffering and holds
  *   the element open — and a reading of what the engine is actually being sent.
  *
- * Shaka is told to take its timestamps from the order segments arrive in rather than from inside
- * them. Its own default is the opposite, and on a copied stream it drops frames: measured against a
- * 4K HEVC remux, the picture skipped 17.292s to 17.458s, again at 35.833s and again at 46.958s — a
- * reorder window of frames lost at a segment join each time, while the sound played through and
- * nothing was counted as dropped. The same segments through hls.js lost none of them, which is what
- * showed the fault was here rather than in what Valence had produced.
- *
- * It is not a trade against seeking, which was the reason to doubt it. Seeks landed closer and
- * settled quicker than the default — within a frame at worst against 42ms, and 35ms against 108ms —
- * and resuming part way into a film landed nearer as well.
+ * Shaka is told to place each segment by the timestamps inside it rather than by where the
+ * playlist says it begins. Its default moves a segment to the playlist's time, and on a copied
+ * stream that drops the frames a keyframe opens with at a join — measured on a 4K HEVC remux and
+ * again on a Bluray, a quarter of a second lost at each. Taking the timestamps from the order
+ * segments arrive in avoided that, but kept audio and video in one buffer's timeline: with the two
+ * sent apart it lets them drift, and it put the sound 60ms late after a seek even together, while
+ * the segments' own timestamps held it within a frame. See VAL-307.
  */
 const attachShaka = async ({
   element,
@@ -192,7 +193,7 @@ const attachShaka = async ({
 
   const player = new shaka.Player();
 
-  player.configure?.(SEQUENCE_MODE);
+  player.configure?.(SEGMENT_TIMESTAMPS);
 
   player.addEventListener?.('error', (event) => {
     const fault = faultFrom(event);

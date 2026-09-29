@@ -20,7 +20,7 @@ use crate::keyframes::{
 };
 use crate::playlist::build_vod_playlist;
 use crate::probe::probe_media;
-use crate::transcode_plan::{SessionSpec, VideoAction, MANIFEST_NAME};
+use crate::transcode_plan::{SessionSpec, Track, VideoAction, MANIFEST_NAME};
 
 /// The segment boundaries, cached beside the segments they describe.
 pub const LENGTHS_NAME: &str = "lengths.json";
@@ -387,7 +387,7 @@ async fn compute_boundaries(ffprobe: &str, artefact_root: &Path, spec: &SessionS
         }
     };
 
-    if matches!(spec.video, VideoAction::Encode { .. }) {
+    if matches!(spec.video, VideoAction::Encode { .. }) || spec.track == Track::Audio {
         return equal(true);
     }
 
@@ -527,7 +527,7 @@ pub async fn ensure_boundaries(
 
     if let Err(error) = tokio::fs::write(
         directory.join(MANIFEST_NAME),
-        build_vod_playlist(&found.offered_lengths(), spec.container),
+        build_vod_playlist(&found.offered_lengths(), spec.container, spec.track),
     )
     .await
     {

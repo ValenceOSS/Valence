@@ -56,7 +56,8 @@ use std::process::Command;
 
 use valence_transcoder::transcode_plan::{
     frame_route, AudioAction, DeviceFilters, FrameRoute, HardwareAccel, SegmentContainer,
-    SegmentStart, SessionSpec, SubtitleAction, TranscodePlan, VideoAction, RUN_PLAYLIST_NAME,
+    SegmentStart, SessionSpec, SubtitleAction, Track, TranscodePlan, VideoAction,
+    RUN_PLAYLIST_NAME,
 };
 
 mod common;
@@ -205,6 +206,7 @@ fn burn_in_spec(path: &Path, subtitle_index: u32, accel: HardwareAccel) -> Sessi
         source_size: video_size(path),
         container: SegmentContainer::default(),
         source_video_codec: None,
+        track: Track::Both,
     }
 }
 
