@@ -327,7 +327,7 @@ const createDownloadService = ({
             ...option,
             bytes,
             comparison: isComparable ? againstTheOriginal(bytes, originals) : null,
-            savesSpace: isComparable ? savesEnough(bytes, originals) : option.savesSpace,
+            savesSpace: isComparable ? savesEnough(bytes, originals) : true,
           };
         }),
       };

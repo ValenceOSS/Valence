@@ -762,11 +762,11 @@ describe('Player', () => {
       await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
       await userEvent.press(drawn.getByRole('button', { name: 'Quality, Original' }));
 
-      expect(drawn.queryByRole('button', { name: '4K' })).toBeNull();
-      expect(drawn.queryByRole('button', { name: '1440p' })).toBeNull();
-      expect(drawn.getByRole('button', { name: '1080p' })).toBeTruthy();
+      expect(drawn.queryByRole('button', { name: /^4K/ })).toBeNull();
+      expect(drawn.queryByRole('button', { name: /^1440p/ })).toBeNull();
+      expect(drawn.getByRole('button', { name: /^1080p, / })).toBeTruthy();
 
-      await userEvent.press(drawn.getByRole('button', { name: '720p' }));
+      await userEvent.press(drawn.getByRole('button', { name: /^720p, / }));
 
       expect(platformInUse().store.read('valence.qualityPreference')).toBe('720p');
       expect(mockSession.asked.at(-1)).toEqual({

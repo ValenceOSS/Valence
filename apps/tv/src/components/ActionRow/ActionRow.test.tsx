@@ -14,6 +14,19 @@ describe('ActionRow', () => {
     expect(drawn.getByText('Play')).toBeTruthy();
   });
 
+  it('says more after its label where there is more to say', async () => {
+    const drawn = await render(<ActionRow label="720p" detail="1.4 Mbps" onPress={jest.fn()} />);
+
+    expect(drawn.getByText('1.4 Mbps')).toBeTruthy();
+    expect(drawn.getByRole('button', { name: '720p, 1.4 Mbps' })).toBeTruthy();
+  });
+
+  it('is passed by where it is not to be pressed', async () => {
+    const drawn = await render(<ActionRow label="720p" onPress={jest.fn()} isDisabled />);
+
+    expect(drawn.getByRole('button', { name: '720p' })).toBeDisabled();
+  });
+
   it('lights its words dark on white while the remote is on it', async () => {
     const drawn = await render(<ActionRow label="Trailer" onPress={jest.fn()} />);
 

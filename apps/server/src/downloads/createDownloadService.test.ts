@@ -124,6 +124,8 @@ const aScratchDatabase = async () => {
  * @param answers - What the media service says to each request, in order.
  * @param film - The one film the library holds.
  * @param defaultAudioLanguage - The language its library prefers.
+ * @param sizeBytes - How large the film's file is.
+ * @param laterEpisodes - Further episodes of the same programme, by id, and how large each file is.
  * @returns The service and the media service's fake.
  */
 const build = async (
@@ -131,6 +133,7 @@ const build = async (
   film: MediaItem = FILM,
   defaultAudioLanguage: string | null = null,
   sizeBytes = 7_000_000_000,
+  laterEpisodes: Record<string, number> = {},
 ) => {
   const requestDownload = vi.fn<Transcoder['requestDownload']>();
 
@@ -149,20 +152,28 @@ const build = async (
     transcoder,
     capabilities: () => Promise.resolve(CAPABILITIES),
     media: {
-      findForPlayback: (mediaId) =>
-        Promise.resolve(
-          mediaId === MEDIA_ID
-            ? {
+      findForPlayback: (mediaId) => {
+        const size = mediaId === MEDIA_ID ? sizeBytes : laterEpisodes[mediaId];
+
+        return Promise.resolve(
+          size === undefined
+            ? null
+            : {
                 item: film,
                 path: '/films/Arrival.mp4',
-                sizeBytes,
+                sizeBytes: size,
                 generation: 1,
                 defaultAudioLanguage,
-              }
-            : null,
-        ),
+              },
+        );
+      },
       titleOf: (mediaId) => Promise.resolve(mediaId === MEDIA_ID ? 'Arrival' : null),
-      episodesOf: () => Promise.resolve([]),
+      episodesOf: () =>
+        Promise.resolve(
+          Object.keys(laterEpisodes).length === 0
+            ? []
+            : [MEDIA_ID, ...Object.keys(laterEpisodes)].map((id) => ({ id, title: 'Arrival' })),
+        ),
       seriesOf: () => Promise.resolve(null),
       keepingProfile,
     },
@@ -377,6 +388,29 @@ describe('what a download is offered at', { timeout: STARTING_POSTGRES_MS }, () 
 
     expect(at480?.bytes).toBe(Math.round(((656 + 128) * 1000 * 2253) / 8));
     expect(at480?.comparison).toBe('about half the size of the original');
+  });
+
+  it('lets a season be had smaller where the size of one episode is not known', async () => {
+    const { service } = await build([], AN_EPISODE, null, 380_000_000, { 'episode-2': 0 });
+
+    const offer = await service.offerSeries('a-series', keepingProfile(), undefined);
+    const at720 = offer?.options.find((option) => option.quality === '720p');
+
+    expect(offer?.episodes).toBe(2);
+    expect(at720?.comparison).toBeNull();
+    expect(at720?.savesSpace).toBe(true);
+  });
+
+  it('says a season would come out no smaller, where every episode is known', async () => {
+    const { service } = await build([], AN_EPISODE, null, 380_000_000, {
+      'episode-2': 380_000_000,
+    });
+
+    const offer = await service.offerSeries('a-series', keepingProfile(), undefined);
+    const at720 = offer?.options.find((option) => option.quality === '720p');
+
+    expect(at720?.comparison).toBe('bigger than the original');
+    expect(at720?.savesSpace).toBe(false);
   });
 
   it('still offers a smaller picture of a film that has room to lose', async () => {

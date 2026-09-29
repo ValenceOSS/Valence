@@ -33,6 +33,7 @@ import { Slider } from '@ValenceUI/Slider';
 import { SettingsMenu } from '@ValenceUI/SettingsMenu';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
+import { qualityStepDetail } from '@ValenceClient/playback/qualityStepDetail';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
 import { CaptionSettings } from '@ValenceScreens/components/VideoPlayer/components/CaptionSettings/CaptionSettings';
 import { EpisodeMenu } from '@ValenceScreens/components/VideoPlayer/components/EpisodeMenu/EpisodeMenu';
@@ -468,12 +469,7 @@ const PlayerControls = ({
                     },
                     ...availableQualitySteps.map((id) => {
                       const isNoSmaller = qualityStepsSavingNothing.includes(id);
-                      const cost = qualityStepCosts[id];
-                      const detail = isNoSmaller
-                        ? [cost, 'no smaller than the original']
-                            .filter((part) => part !== undefined)
-                            .join(' · ')
-                        : cost;
+                      const detail = qualityStepDetail({ cost: qualityStepCosts[id], isNoSmaller });
 
                       return {
                         id,

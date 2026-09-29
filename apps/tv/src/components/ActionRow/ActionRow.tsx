@@ -15,23 +15,28 @@ const ICON_SIZE = 30;
  * Where carrying on is the thing to do, the line says how far through somebody is.
  *
  * @param label - What pressing it does.
+ * @param detail - A quieter word after the label, where there is more to say about it.
  * @param icon - What leads the line, or nothing for a line that keeps its place in a list beside
  *   lines that have one.
  * @param onPress - Told when it is pressed.
  * @param watchedFraction - How far through the title this viewer is, for the line that resumes it.
  * @param hasPreferredFocus - Whether the remote starts here.
+ * @param isDisabled - Whether it is shown dimmed and the remote passes it by.
  */
 const ActionRow = ({
   label,
+  detail,
   icon,
   onPress,
   watchedFraction,
   hasPreferredFocus = false,
+  isDisabled = false,
 }: ActionRowProps) => (
   <Focusable
-    label={label}
+    label={detail === undefined ? label : `${label}, ${detail}`}
     onPress={onPress}
     hasPreferredFocus={hasPreferredFocus}
+    isDisabled={isDisabled}
     scale={1}
     isAnchoredLeft
   >
@@ -39,7 +44,7 @@ const ActionRow = ({
       const ink = isFocused ? tokens.colours.onWhite : tokens.colours.text;
 
       return (
-        <View style={[styles.row, isFocused && styles.focused]}>
+        <View style={[styles.row, isFocused && styles.focused, isDisabled && styles.disabled]}>
           {icon === undefined ? (
             <View style={styles.blank} />
           ) : (
@@ -49,6 +54,15 @@ const ActionRow = ({
           <Text numberOfLines={1} style={[styles.label, { color: ink }]}>
             {label}
           </Text>
+
+          {detail === undefined ? null : (
+            <Text
+              numberOfLines={1}
+              style={[styles.detail, { color: isFocused ? ink : tokens.colours.muted }]}
+            >
+              {detail}
+            </Text>
+          )}
 
           {watchedFraction === undefined ? null : (
             <ProgressLine fraction={watchedFraction} isInline />
@@ -72,7 +86,9 @@ const styles = StyleSheet.create({
     borderRadius: tokens.radii.sm,
   },
   focused: { backgroundColor: '#ffffff' },
+  disabled: { opacity: 0.5 },
   label: { flex: 1, fontSize: tokens.type.body, fontWeight: '500' },
+  detail: { flexShrink: 1, fontSize: tokens.type.small },
   blank: { width: ICON_SIZE, height: ICON_SIZE },
 });
 

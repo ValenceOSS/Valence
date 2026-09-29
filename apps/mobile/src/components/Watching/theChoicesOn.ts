@@ -4,6 +4,7 @@ import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
 import { originalLabel } from '@ValenceCore/functions/originalLabel';
 import { qualityStepCostsFor } from '@ValenceClient/playback/qualityStepCostsFor';
 import { stepsThatSaveNothing } from '@ValenceClient/playback/stepsThatSaveNothing';
+import { qualityStepDetail } from '@ValenceClient/playback/qualityStepDetail';
 import type { DeviceProfile } from '@ValenceContracts/schemas/DeviceProfile';
 import { SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
 import { PLAYBACK_RATES } from '@ValenceClient/playback/PLAYBACK_RATES';
@@ -156,15 +157,13 @@ const theChoicesOn = ({
           }
 
           const isNoSmaller = savingNothing.includes(rung);
-          const detail = [costs[rung], isNoSmaller ? 'no smaller than the original' : undefined]
-            .filter((part) => part !== undefined)
-            .join(' · ');
+          const detail = qualityStepDetail({ cost: costs[rung], isNoSmaller });
 
           return [
             {
               id: rung,
               label: step.label,
-              ...(detail === '' ? {} : { detail }),
+              ...(detail === undefined ? {} : { detail }),
               ...(isNoSmaller ? { isDisabled: true } : {}),
             },
           ];
