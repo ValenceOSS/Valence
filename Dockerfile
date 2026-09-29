@@ -11,6 +11,7 @@ FROM rust:1.98-bookworm AS transcoder-build
 WORKDIR /build
 COPY Cargo.toml Cargo.lock rustfmt.toml ./
 COPY apps/transcoder ./apps/transcoder
+COPY apps/desktop/native ./apps/desktop/native
 RUN cargo build --release --bin valence-transcoder
 
 FROM node:24-bookworm-slim AS web-build
