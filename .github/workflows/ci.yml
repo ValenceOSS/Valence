@@ -361,7 +361,11 @@ jobs:
     needs: changes
     if: needs.changes.outputs.native == 'true'
     steps:
+      # Nothing here pushes, and cargo runs build scripts from every crate it builds, so the token
+      # is not left behind in the checkout for them to find.
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - uses: dtolnay/rust-toolchain@stable
         with:
