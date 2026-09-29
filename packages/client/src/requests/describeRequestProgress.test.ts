@@ -1,30 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
+import { aRequestItem } from '@ValenceClient/testing/aRequestItem';
 import { describeRequestProgress } from '@ValenceClient/requests/describeRequestProgress';
 import type { RequestItem, RequestItemState } from '@ValenceContracts/schemas/MediaRequest';
 
-/**
- * An episode in the state given.
- */
-const anEpisode = (episode: number, state: RequestItemState): RequestItem => ({
-  id: `6ba7b810-9dad-11d1-80b4-${episode.toString().padStart(12, '0')}`,
-  musicBrainzId: null,
-  season: 1,
-  episode,
-  title: '',
-  airDate: null,
-  state,
-  problem: null,
-  problemCode: null,
-  releaseTitle: null,
-  downloadId: null,
-  filePath: null,
-  score: null,
-  downloadedBytes: null,
-  downloadSeconds: null,
-  lastSearchedAt: null,
-  updatedAt: '2026-09-19T00:00:00.000Z',
-});
+const anEpisode = (episode: number, state: RequestItemState): RequestItem =>
+  aRequestItem({
+    id: `6ba7b810-9dad-11d1-80b4-${episode.toString().padStart(12, '0')}`,
+    episode,
+    state,
+  });
 
 describe('describeRequestProgress', () => {
   it('counts what of a series has aired and arrived', () => {
