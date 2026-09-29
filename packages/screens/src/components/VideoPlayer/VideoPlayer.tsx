@@ -79,6 +79,7 @@ import {
 } from '@ValenceScreens/playback/playbackPreferences';
 import { describeAudioTrack } from '@ValenceCore/functions/describeTrack';
 import { listAvailableQualitySteps } from '@ValenceCore/functions/listAvailableQualitySteps';
+import { originalLabel } from '@ValenceCore/functions/originalLabel';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { TrickplayPreview } from './components/TrickplayPreview/TrickplayPreview';
@@ -2065,6 +2066,7 @@ const VideoPlayer = ({
               audioTracks={audioTracks}
               selectedAudioIndex={selectedAudioIndex}
               availableQualitySteps={availableQualitySteps}
+              originalLabel={detail === null ? 'Original' : originalLabel(detail)}
               qualityStepCosts={qualityStepCosts}
               selectedQuality={request.requestedQuality}
               isDisabled={state !== 'playing'}

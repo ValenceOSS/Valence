@@ -416,6 +416,16 @@ describe('PlayerControls', () => {
     expect(screen.getByRole('menuitemradio', { name: /480p/ })).toBeInTheDocument();
   });
 
+  it('names the resolution the original is, where the player knows it', async () => {
+    const user = userEvent.setup();
+    draw({ availableQualitySteps: ['720p'], originalLabel: 'Original (1080p)' });
+
+    await user.click(screen.getByRole('button', { name: 'Settings' }));
+    await user.click(await screen.findByRole('button', { name: /^Quality/ }));
+
+    expect(await screen.findByRole('menuitemradio', { name: 'Original (1080p)' })).toBeChecked();
+  });
+
   it('shows a step bitrate as a detail', async () => {
     const user = userEvent.setup();
     draw({ availableQualitySteps: ['720p'] });

@@ -8,6 +8,7 @@ import { describeQualityMeaning } from '@ValenceCore/functions/describeQualityMe
 import { estimateDownloadBytes } from '@ValenceCore/functions/estimateDownloadBytes';
 import { listAvailableQualitySteps } from '@ValenceCore/functions/listAvailableQualitySteps';
 import { negotiatePlayback } from '@ValenceCore/functions/negotiatePlayback';
+import { originalLabel } from '@ValenceCore/functions/originalLabel';
 import { planToSessionSpec } from '@ValenceCore/functions/planToSessionSpec';
 import { savesEnough } from '@ValenceCore/functions/savesEnough';
 import { sourcesOf } from '@ValenceCore/functions/sourcesOf';
@@ -258,7 +259,7 @@ const createDownloadService = ({
 
       const original = {
         quality: 'original' as const,
-        label: 'Original',
+        label: originalLabel(item),
         meaning: describeQualityMeaning('original'),
         bytes: found.sizeBytes > 0 ? found.sizeBytes : null,
         comparison: null,

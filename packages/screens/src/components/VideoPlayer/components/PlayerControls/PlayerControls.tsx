@@ -93,6 +93,7 @@ const bitrateDetail = (maxVideoBitrateKbps: number): string =>
  * @param audioTracks - The audio tracks available.
  * @param selectedAudioIndex - The audio track in use, if the player has settled on one.
  * @param availableQualitySteps - The rungs of the ladder this session offers.
+ * @param originalLabel - What the file as it is on the server is called, with its resolution.
  * @param qualityStepCosts - What each rung would actually cost, where the session has worked it out.
  * @param selectedQuality - Whether quality is being chosen automatically or pinned to a rung.
  * @param isDisabled - Whether the controls are inert, as they are while a session is starting.
@@ -145,6 +146,7 @@ const PlayerControls = ({
   audioTracks,
   selectedAudioIndex,
   availableQualitySteps,
+  originalLabel = 'Original',
   qualityStepCosts = {},
   selectedQuality,
   isDisabled = false,
@@ -474,7 +476,7 @@ const PlayerControls = ({
                   choices: [
                     {
                       id: 'original',
-                      label: 'Original',
+                      label: originalLabel,
                       ...(qualityStepCosts.original === undefined
                         ? {}
                         : { detail: qualityStepCosts.original }),
