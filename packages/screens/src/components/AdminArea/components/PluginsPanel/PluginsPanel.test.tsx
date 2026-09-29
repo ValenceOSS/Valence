@@ -41,7 +41,7 @@ const CATALOGUE_ENTRY = {
 };
 
 beforeEach(() => {
-  fetchInstalledPlugins.mockReset().mockResolvedValue([aPlugin()]);
+  fetchInstalledPlugins.mockReset().mockResolvedValue({ plugins: [aPlugin()], redirectUri: null });
   fetchPluginCatalogue
     .mockReset()
     .mockResolvedValue({ isReachable: true, problem: null, plugins: [CATALOGUE_ENTRY] });
@@ -116,7 +116,7 @@ describe('PluginsPanel', () => {
   });
 
   it('says when the catalogue cannot be reached, and when nothing is installed', async () => {
-    fetchInstalledPlugins.mockResolvedValue([]);
+    fetchInstalledPlugins.mockResolvedValue({ plugins: [], redirectUri: null });
     fetchPluginCatalogue.mockResolvedValue({
       isReachable: false,
       problem: 'GitHub did not answer.',
@@ -125,7 +125,9 @@ describe('PluginsPanel', () => {
 
     renderInAnAddress(<PluginsPanel />);
 
-    expect(await screen.findByText(/GitHub did not answer\. Plugins already installed keep working\./u)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/GitHub did not answer\. Plugins already installed keep working\./u),
+    ).toBeInTheDocument();
     expect(screen.getByText('Official plugins are unavailable')).toBeInTheDocument();
     expect(await screen.findByText(/No plugins yet/u)).toBeInTheDocument();
   });
@@ -143,12 +145,15 @@ describe('PluginsPanel', () => {
   });
 
   it('fetches a newer version to review, and opens a plugin’s administrator page', async () => {
-    fetchInstalledPlugins.mockResolvedValue([
-      aPlugin({
-        updateAvailable: '1.1.0',
-        pages: [{ id: 'log', title: 'Sync log', placement: 'admin' }],
-      }),
-    ]);
+    fetchInstalledPlugins.mockResolvedValue({
+      plugins: [
+        aPlugin({
+          updateAvailable: '1.1.0',
+          pages: [{ id: 'log', title: 'Sync log', placement: 'admin' }],
+        }),
+      ],
+      redirectUri: null,
+    });
     fetchPluginSurface.mockResolvedValue({ blocks: [{ type: 'text', text: 'All in step' }] });
 
     renderInAnAddress(<PluginsPanel />);

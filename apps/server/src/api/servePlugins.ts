@@ -93,7 +93,10 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     return context.json(
-      { plugins: plugins === undefined ? [] : await plugins.listInstalled() },
+      {
+        plugins: plugins === undefined ? [] : await plugins.listInstalled(),
+        redirectUri: plugins?.redirectUri ?? null,
+      },
       200,
     );
   });

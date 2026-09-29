@@ -18,6 +18,7 @@ import { packPlugin } from '@ValenceSDK/package/packPlugin';
 import { PluginManifestSchema } from '@ValenceSDK/manifest/PluginManifestSchema';
 import {
   InstalledPluginSchema,
+  InstalledPluginsSchema,
   InstallPreviewSchema,
   PluginActAnswerSchema,
   PluginContributionsSchema,
@@ -149,24 +150,23 @@ describe('the plugin routes', () => {
     );
   });
 
-  it('uploads with a warning, installs, and lists the plugin', async () => {
+  it('uploads marked unsigned, installs, and lists the plugin with the redirect address', async () => {
     const { request, install, service } = await signedInWith(['server.plugins']);
     const preview = PreviewAnswer.parse(
       await (await request('/api/plugins/upload', { method: 'POST', body: PACKAGE })).json(),
     );
 
     expect(preview.trust).toBe('unsigned');
-    expect(preview.warnings.length).toBeGreaterThan(0);
+    expect(preview.warnings).toEqual([]);
 
     const installed = await install();
 
     expect(installed.status).toBe(201);
     expect(InstalledPluginSchema.parse(await installed.json()).id).toBe('route-test');
-    expect(
-      z
-        .object({ plugins: z.array(InstalledPluginSchema) })
-        .parse(await (await request('/api/plugins')).json()).plugins,
-    ).toHaveLength(1);
+    const listed = InstalledPluginsSchema.parse(await (await request('/api/plugins')).json());
+
+    expect(listed.plugins).toHaveLength(1);
+    expect(listed.redirectUri).toBe(`${TEST_ORIGIN}/api/plugins/oauth/callback`);
 
     service.stop();
   });

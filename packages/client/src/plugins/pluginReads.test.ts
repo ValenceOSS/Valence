@@ -22,9 +22,15 @@ afterEach(() => {
 
 describe('plugin reads', () => {
   it('reads the installed plugins', async () => {
-    answer({ plugins: [aPlugin()] });
+    answer({
+      plugins: [aPlugin()],
+      redirectUri: 'https://valence.test/api/plugins/oauth/callback',
+    });
 
-    await expect(fetchInstalledPlugins()).resolves.toEqual([aPlugin()]);
+    await expect(fetchInstalledPlugins()).resolves.toEqual({
+      plugins: [aPlugin()],
+      redirectUri: 'https://valence.test/api/plugins/oauth/callback',
+    });
     expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/plugins');
   });
 

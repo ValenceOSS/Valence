@@ -2,6 +2,7 @@ import { createRoute, z } from '@hono/zod-openapi';
 import {
   CatalogueListingSchema,
   InstalledPluginSchema,
+  InstalledPluginsSchema,
   InstallPreviewSchema,
   PluginActAnswerSchema,
   PluginContributionsSchema,
@@ -16,6 +17,8 @@ const PluginId = z.string().regex(/^[a-z][a-z0-9-]{2,63}$/);
 const LocalId = z.string().regex(/^[a-z][a-z0-9-]{0,39}$/);
 
 const Installed = InstalledPluginSchema.openapi('InstalledPlugin');
+
+const InstalledList = InstalledPluginsSchema.openapi('InstalledPlugins');
 
 const Preview = InstallPreviewSchema.openapi('PluginInstallPreview');
 
@@ -48,7 +51,7 @@ const listPluginsRoute = createRoute({
   responses: {
     200: {
       description: 'The installed plugins',
-      content: { 'application/json': { schema: z.object({ plugins: z.array(Installed) }) } },
+      content: { 'application/json': { schema: InstalledList } },
     },
     ...refusals,
   },

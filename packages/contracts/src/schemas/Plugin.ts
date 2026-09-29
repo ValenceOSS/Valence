@@ -25,7 +25,9 @@ const PluginSummarySchema = z.object({
   iconUrl: z.string().nullable(),
   trust: PluginTrustSchema,
   permissions: z.array(PluginPermissionSchema),
-  pages: z.array(z.object({ id: z.string(), title: z.string(), placement: z.enum(['account', 'admin']) })),
+  pages: z.array(
+    z.object({ id: z.string(), title: z.string(), placement: z.enum(['account', 'admin']) }),
+  ),
   panels: z.array(z.object({ id: z.string(), title: z.string(), on: z.string() })),
   themes: z.array(z.object({ id: z.string(), name: z.string() })),
   schedules: z.array(z.object({ id: z.string(), label: z.string(), everyMinutes: z.number() })),
@@ -40,6 +42,11 @@ const InstalledPluginSchema = PluginSummarySchema.extend({
   installedAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
   updateAvailable: z.string().nullable(),
+});
+
+const InstalledPluginsSchema = z.object({
+  plugins: z.array(InstalledPluginSchema),
+  redirectUri: z.string().nullable(),
 });
 
 const CatalogueListingSchema = z.object({
@@ -91,7 +98,9 @@ const PluginContributionsSchema = z.object({
       on: z.enum(['title', 'series', 'album', 'artist', 'playlist']),
     }),
   ),
-  themes: z.array(PluginThemeSchema.and(z.object({ pluginId: z.string(), pluginName: z.string() }))),
+  themes: z.array(
+    PluginThemeSchema.and(z.object({ pluginId: z.string(), pluginName: z.string() })),
+  ),
 });
 
 const PluginActAnswerSchema = z.object({
@@ -100,6 +109,7 @@ const PluginActAnswerSchema = z.object({
 });
 
 type PluginTrust = z.infer<typeof PluginTrustSchema>;
+type InstalledPlugins = z.infer<typeof InstalledPluginsSchema>;
 type PluginSetting = z.infer<typeof PluginSettingSchema>;
 type PluginSummary = z.infer<typeof PluginSummarySchema>;
 type InstalledPlugin = z.infer<typeof InstalledPluginSchema>;
@@ -112,6 +122,7 @@ export type {
   CatalogueListing,
   PluginActAnswer,
   InstalledPlugin,
+  InstalledPlugins,
   InstallPreview,
   PluginContributions,
   PluginSetting,
@@ -123,6 +134,7 @@ export {
   CatalogueListingSchema,
   PluginActAnswerSchema,
   InstalledPluginSchema,
+  InstalledPluginsSchema,
   InstallPreviewSchema,
   PluginContributionsSchema,
   PluginSettingSchema,

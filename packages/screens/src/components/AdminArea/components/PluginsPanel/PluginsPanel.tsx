@@ -109,14 +109,14 @@ const PluginsPanel = () => {
           />
         ) : installed.isPending ? (
           <Spinner isCentered size="sm" label="Reading the plugins" />
-        ) : installed.data.length === 0 ? (
+        ) : installed.data.plugins.length === 0 ? (
           <p className="px-4 py-6 text-sm text-text-muted">
             No plugins yet. Plugins run in a sandbox on this server and can only do what you allow
             when you install them.
           </p>
         ) : (
           <ul className="flex flex-col divide-y divide-border/50">
-            {installed.data.map((plugin) => (
+            {installed.data.plugins.map((plugin) => (
               <InstalledPluginCard
                 key={plugin.id}
                 plugin={plugin}
@@ -205,6 +205,7 @@ const PluginsPanel = () => {
 
       <PluginSettingsDialog
         plugin={settingsOf}
+        redirectUri={installed.data?.redirectUri ?? null}
         onClose={() => {
           setSettingsOf(null);
         }}

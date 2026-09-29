@@ -1,8 +1,11 @@
+import { CircleCheck as CircleCheckIcon, Copy as CopyIcon } from '@keyline-icons/react';
 import { useEffect, useState } from 'react';
+import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
+import { Icon } from '@ValenceUI/Icon';
 import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
 import { changePlugin } from '@ValenceClient/plugins/changePlugin';
@@ -15,10 +18,18 @@ import type { PluginSettingsDialogProps } from './PluginSettingsDialog.types';
  * is sent, so leaving it alone keeps what the server holds.
  *
  * @param plugin - The plugin, or nothing while the dialog is shut.
+ * @param redirectUri - Where outside services send somebody back to after they connect an account,
+ *   shown to copy for a plugin that connects them.
  * @param onClose - Told it was dismissed.
  * @param onSaved - Told the settings were saved.
  */
-const PluginSettingsDialog = ({ plugin, onClose, onSaved }: PluginSettingsDialogProps) => {
+const PluginSettingsDialog = ({
+  plugin,
+  redirectUri,
+  onClose,
+  onSaved,
+}: PluginSettingsDialogProps) => {
+  const [hasCopied, setHasCopied] = useState(false);
   const [values, setValues] = useState<Record<string, string | boolean>>({});
   const [isSaving, setIsSaving] = useState(false);
 
@@ -46,6 +57,32 @@ const PluginSettingsDialog = ({ plugin, onClose, onSaved }: PluginSettingsDialog
           <DialogTitle title={`${plugin.name} settings`} />
 
           <DialogContent className="flex flex-col gap-4">
+            {redirectUri === null ||
+            !plugin.permissions.some((permission) => permission.kind === 'accounts') ? null : (
+              <div className="flex flex-col gap-1.5 rounded-lg border border-border/60 bg-surface-raised/40 p-3">
+                <span className="text-sm font-semibold">Redirect address</span>
+                <span className="text-xs text-text-muted">
+                  Give this to each service when you create its API client, so it can send people
+                  back here once they connect.
+                </span>
+                <div className="flex items-center gap-2">
+                  <code className="min-w-0 flex-1 truncate font-mono text-xs">{redirectUri}</code>
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(redirectUri).then(() => {
+                        setHasCopied(true);
+                      });
+                    }}
+                  >
+                    {hasCopied ? 'Copied' : 'Copy'}
+                    <Icon of={hasCopied ? CircleCheckIcon : CopyIcon} size={14} />
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {plugin.settings.map((setting) => {
               const value = values[setting.id];
 

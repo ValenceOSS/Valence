@@ -18,7 +18,12 @@ describe('PluginSettingsDialog', () => {
     const onSaved = vi.fn();
 
     renderInAnAddress(
-      <PluginSettingsDialog plugin={aPlugin()} onClose={vi.fn()} onSaved={onSaved} />,
+      <PluginSettingsDialog
+        plugin={aPlugin()}
+        redirectUri={null}
+        onClose={vi.fn()}
+        onSaved={onSaved}
+      />,
     );
 
     expect(screen.getByLabelText('Client secret')).toHaveValue('');
@@ -40,7 +45,12 @@ describe('PluginSettingsDialog', () => {
 
   it('sends a secret somebody typed', async () => {
     renderInAnAddress(
-      <PluginSettingsDialog plugin={aPlugin()} onClose={vi.fn()} onSaved={vi.fn()} />,
+      <PluginSettingsDialog
+        plugin={aPlugin()}
+        redirectUri={null}
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+      />,
     );
 
     await userEvent.type(screen.getByLabelText('Client secret'), 's3cret');
@@ -51,5 +61,57 @@ describe('PluginSettingsDialog', () => {
         settings: { clientId: 'abc', clientSecret: 's3cret', pushProgress: true },
       });
     });
+  });
+
+  it('offers the redirect address to copy, only for a plugin that connects accounts', async () => {
+    const writeText = vi.fn(() => Promise.resolve());
+
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
+
+    const address = 'https://valence.test/api/plugins/oauth/callback';
+    const { rerender } = renderInAnAddress(
+      <PluginSettingsDialog
+        plugin={aPlugin()}
+        redirectUri={address}
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText(address)).toBeNull();
+
+    rerender(
+      <PluginSettingsDialog
+        plugin={aPlugin({
+          permissions: [
+            {
+              kind: 'accounts',
+              providers: [
+                {
+                  id: 'anilist',
+                  name: 'AniList',
+                  authorizeUrl: 'https://anilist.co/api/v2/oauth/authorize',
+                  tokenUrl: 'https://anilist.co/api/v2/oauth/token',
+                  scopes: [],
+                  clientIdSetting: 'clientId',
+                },
+              ],
+            },
+          ],
+        })}
+        redirectUri={address}
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(address)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Copy' }));
+
+    expect(writeText).toHaveBeenCalledWith(address);
+    expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument();
+
+    vi.unstubAllGlobals();
   });
 });

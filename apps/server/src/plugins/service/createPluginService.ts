@@ -456,6 +456,7 @@ const createPluginService = ({
   };
 
   return {
+    redirectUri,
     listInstalled: async (): Promise<InstalledPlugin[]> => {
       const latest = await latestVersions();
 

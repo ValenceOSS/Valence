@@ -1,15 +1,14 @@
-import { z } from 'zod';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
-import { InstalledPluginSchema } from '@ValenceContracts/schemas/Plugin';
-import type { InstalledPlugin } from '@ValenceContracts/schemas/Plugin';
+import { InstalledPluginsSchema } from '@ValenceContracts/schemas/Plugin';
+import type { InstalledPlugins } from '@ValenceContracts/schemas/Plugin';
 
 /**
- * Every plugin this server has installed, whether it is on, and how it is getting on.
+ * Every plugin this server has installed, whether it is on, and how it is getting on, with the
+ * address outside services send somebody back to after they connect an account.
  *
- * @returns The plugins.
+ * @returns The plugins, and the redirect address, where the server has one.
  */
-const fetchInstalledPlugins = async (): Promise<InstalledPlugin[]> =>
-  (await readFromServer('/api/plugins', z.object({ plugins: z.array(InstalledPluginSchema) })))
-    .plugins;
+const fetchInstalledPlugins = (): Promise<InstalledPlugins> =>
+  readFromServer('/api/plugins', InstalledPluginsSchema);
 
 export { fetchInstalledPlugins };
