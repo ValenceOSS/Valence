@@ -1389,21 +1389,23 @@ const VideoPlayer = ({
 
   const skippable = state === 'playing' ? skippableAt(segments, position) : null;
 
-  const audioTracks = (detail?.audioStreams ?? []).map((stream, position) => ({
-    index: stream.index,
-    label: describeAudioTrack(
-      {
-        index: stream.index,
-        codec: stream.codec,
-        channels: stream.channels,
-        language: stream.language,
-        title: stream.title,
-        isAtmos: stream.isAtmos,
-        isDefault: stream.isDefault,
-      },
-      position + 1,
-    ),
-  }));
+  const audioTracks = (keptSource === undefined ? (detail?.audioStreams ?? []) : []).map(
+    (stream, position) => ({
+      index: stream.index,
+      label: describeAudioTrack(
+        {
+          index: stream.index,
+          codec: stream.codec,
+          channels: stream.channels,
+          language: stream.language,
+          title: stream.title,
+          isAtmos: stream.isAtmos,
+          isDefault: stream.isDefault,
+        },
+        position + 1,
+      ),
+    }),
+  );
 
   const changeAudio = useCallback(
     (streamIndex: number) => {

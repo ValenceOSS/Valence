@@ -318,7 +318,7 @@ describe('VideoPlayer', () => {
     expect(await screen.findByText('Quality')).toBeInTheDocument();
   });
 
-  it('offers no qualities for a copy kept on this device, which is one file at one quality', async () => {
+  it('offers no qualities or sound tracks for a copy kept on this device, which is one file', async () => {
     detailMock.mockResolvedValue(detailWithTwoAudioTracks);
     const actor = userEvent.setup();
     renderInAnAddress(
@@ -332,6 +332,7 @@ describe('VideoPlayer', () => {
 
     expect(await screen.findByRole('switch', { name: /Stats for nerds/ })).toBeInTheDocument();
     expect(screen.queryByText('Quality')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Audio track/ })).not.toBeInTheDocument();
   });
 
   it('attaches the media engine to the returned manifest', async () => {
