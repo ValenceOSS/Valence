@@ -10,8 +10,8 @@ import { createPluginRuntime } from '@ValenceServer/plugins/runtime/createPlugin
 import { cleanSurface } from '@ValenceServer/plugins/surfaces/cleanSurface';
 import { serviceNotice } from '@ValenceServer/plugins/surfaces/serviceNotice';
 import { satisfiesApiRange } from '@ValenceServer/plugins/install/satisfiesApiRange';
-import { isSignedBy } from '@ValenceServer/plugins/catalogue/isSignedBy';
-import { readSignatureFile } from '@ValenceServer/plugins/catalogue/readSignatureFile';
+import { isSignedBy } from '@ValenceSDK/package/isSignedBy';
+import { readSignatureFile } from '@ValenceSDK/package/readSignatureFile';
 import { sealSecret } from '@ValenceServer/plugins/sealSecret';
 import { openSecret } from '@ValenceServer/plugins/openSecret';
 import { changeSettings } from './changeSettings';

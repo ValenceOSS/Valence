@@ -1,26 +1,17 @@
-import { generateKeyPairSync } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 import { sha256Of } from '@ValenceSDK/package/sha256Of';
 import { signBytes } from '@ValenceSDK/package/signBytes';
+import { aKeyPair } from '@ValenceSDK/testing/aKeyPair';
 import { createCatalogueClient } from './createCatalogueClient';
-import { readSignatureFile } from './readSignatureFile';
+import { readSignatureFile } from '@ValenceSDK/package/readSignatureFile';
 
-const pair = () => {
-  const { publicKey, privateKey } = generateKeyPairSync('ed25519');
+const TRUSTED = aKeyPair();
 
-  return {
-    publicPem: publicKey.export({ type: 'spki', format: 'pem' }).toString(),
-    privatePem: privateKey.export({ type: 'pkcs8', format: 'pem' }).toString(),
-  };
-};
-
-const TRUSTED = pair();
-
-const STRANGER = pair();
+const STRANGER = aKeyPair();
 
 const PACKAGE = new TextEncoder().encode('pretend package bytes');
 
-const entry = (signedWith = TRUSTED.privatePem, bytes = PACKAGE) => ({
+const entry = (signedWith = TRUSTED.privateKey, bytes = PACKAGE) => ({
   id: 'anime-tracking',
   name: 'Anime tracking',
   description: 'Keeps AniList up to date.',
@@ -52,13 +43,13 @@ const build = (files: Record<string, Uint8Array | null>, now = () => 0) => {
     client: createCatalogueClient({
       url: URL_OF,
       download,
-      keys: { 'valence-official-2026': TRUSTED.publicPem },
+      keys: { 'valence-official-2026': TRUSTED.publicKey },
       now,
     }),
   };
 };
 
-const signed = (bytes: Uint8Array, key = TRUSTED.privatePem, asJson = false) =>
+const signed = (bytes: Uint8Array, key = TRUSTED.privateKey, asJson = false) =>
   new TextEncoder().encode(
     asJson
       ? JSON.stringify({ keyId: 'valence-official-2026', signature: signBytes(bytes, key) })
@@ -91,7 +82,7 @@ describe('the official plugin catalogue', () => {
     const bytes = catalogueBytes();
     const { client } = build({
       [URL_OF]: bytes,
-      [`${URL_OF}.sig`]: signed(bytes, TRUSTED.privatePem, true),
+      [`${URL_OF}.sig`]: signed(bytes, TRUSTED.privateKey, true),
     });
 
     expect((await client.read()).problem).toBeNull();
@@ -104,7 +95,7 @@ describe('the official plugin catalogue', () => {
       (
         await build({
           [URL_OF]: bytes,
-          [`${URL_OF}.sig`]: signed(bytes, STRANGER.privatePem),
+          [`${URL_OF}.sig`]: signed(bytes, STRANGER.privateKey),
         }).client.read()
       ).problem,
     ).toBe('The plugin catalogue is not signed by the Valence project.');
@@ -142,7 +133,7 @@ describe('the official plugin catalogue', () => {
     expect(await client.fetchPackage({ ...good, sha256: 'b'.repeat(64) })).toEqual({
       problem: 'Anime tracking is not the package the catalogue describes.',
     });
-    expect(await client.fetchPackage(entry(STRANGER.privatePem))).toEqual({
+    expect(await client.fetchPackage(entry(STRANGER.privateKey))).toEqual({
       problem: 'Anime tracking is not signed by the key the catalogue names.',
     });
     expect(await client.fetchPackage({ ...good, keyId: 'someone-else' })).toEqual({

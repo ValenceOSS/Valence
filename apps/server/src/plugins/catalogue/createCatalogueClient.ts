@@ -1,9 +1,8 @@
-import { CatalogueSchema } from '@ValenceSDK/package/CatalogueSchema';
 import { sha256Of } from '@ValenceSDK/package/sha256Of';
 import { PACKAGE_LIMITS } from '@ValenceSDK/package/PACKAGE_LIMITS';
 import type { Catalogue, CatalogueEntry } from '@ValenceSDK/package/CatalogueSchema';
-import { isSignedBy } from './isSignedBy';
-import { readSignatureFile } from './readSignatureFile';
+import { isSignedBy } from '@ValenceSDK/package/isSignedBy';
+import { readSignedCatalogue } from '@ValenceSDK/package/readSignedCatalogue';
 
 type Download = (url: string, mostBytes: number) => Promise<Uint8Array | null>;
 
@@ -53,28 +52,19 @@ const createCatalogueClient = ({
       return { catalogue: null, problem: 'The plugin catalogue could not be reached.' };
     }
 
-    const signature = readSignatureFile(Buffer.from(signatureBytes).toString('utf8'));
+    const opened = readSignedCatalogue(bytes, Buffer.from(signatureBytes).toString('utf8'), keys);
 
-    if (signature === null || isSignedBy(bytes, signature, keys) === null) {
+    if ('problem' in opened) {
       return {
         catalogue: null,
-        problem: 'The plugin catalogue is not signed by the Valence project.',
+        problem:
+          opened.problem === 'unsigned'
+            ? 'The plugin catalogue is not signed by the Valence project.'
+            : 'The plugin catalogue could not be read.',
       };
     }
 
-    let parsed: ReturnType<typeof CatalogueSchema.safeParse>;
-
-    try {
-      parsed = CatalogueSchema.safeParse(JSON.parse(Buffer.from(bytes).toString('utf8')));
-    } catch {
-      return { catalogue: null, problem: 'The plugin catalogue could not be read.' };
-    }
-
-    if (!parsed.success) {
-      return { catalogue: null, problem: 'The plugin catalogue could not be read.' };
-    }
-
-    const good = { catalogue: parsed.data, problem: null };
+    const good = { catalogue: opened.catalogue, problem: null };
 
     kept = { read: good, until: now() + KEPT_FOR_MILLISECONDS };
 

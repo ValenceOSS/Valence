@@ -1,4 +1,4 @@
-import { verifySignature } from '@ValenceSDK/package/verifySignature';
+import { verifySignature } from './verifySignature';
 
 /**
  * Which of the trusted keys, if any, signed some bytes — the key named where one was named, and

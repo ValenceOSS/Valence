@@ -1,6 +1,9 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { tsImport } from 'tsx/esm/api';
+import { z } from 'zod';
+import type { catalogueSignedBy } from '@ValenceSDK/package/catalogueSignedBy';
 import type { Plugin } from 'vite';
 
 const CHANGELOG_VIRTUAL_ID = 'virtual:changelog';
@@ -149,9 +152,42 @@ const NO_CATALOGUE = '{"format":1,"generatedAt":"1970-01-01T00:00:00.000Z","plug
 
 let cachedCatalogue: Promise<string> | null = null;
 
+const SigningSchema = z.object({
+  catalogueSignedBy: z.custom<typeof catalogueSignedBy>((value) => typeof value === 'function'),
+});
+
+const KeysSchema = z.object({ OFFICIAL_PLUGIN_KEYS: z.record(z.string(), z.string()) });
+
 /**
- * Fetches the official plugin catalogue once per build or dev-server run, settling for an empty one
- * where it cannot be had or is not JSON, so a catalogue that is down never fails the site's build.
+ * Whether the catalogue was signed by one of the Valence project's keys. The check is the SDK's own,
+ * the same one a server makes before installing anything from the catalogue, loaded through tsx
+ * because Vite does not resolve the workspace's aliases while it is loading its own config.
+ *
+ * @param bytes - The catalogue, exactly as it was published.
+ * @param signatureText - Its signature file.
+ * @returns Whether the Valence project signed it.
+ */
+const isSignedByValence = async (bytes: Uint8Array, signatureText: string): Promise<boolean> => {
+  const [signing, keys] = await Promise.all([
+    tsImport('@ValenceSDK/package/catalogueSignedBy', import.meta.url),
+    tsImport('@ValenceSDK/package/OFFICIAL_PLUGIN_KEYS', import.meta.url),
+  ]);
+
+  return (
+    SigningSchema.parse(signing).catalogueSignedBy(
+      bytes,
+      signatureText,
+      KeysSchema.parse(keys).OFFICIAL_PLUGIN_KEYS,
+    ) !== null
+  );
+};
+
+/**
+ * Fetches the official plugin catalogue once per build or dev-server run, and lists it only once its
+ * signature holds against the official keys, as a server would before installing from it. Settles
+ * for an empty one where it cannot be had, is not signed or is not JSON, so a catalogue that is down
+ * never fails the site's build and one that was tampered with is never shown. Whether it is a
+ * catalogue at all is the plugins page's to check, as it reads it.
  *
  * Unlike the GitHub API calls, no token is ever sent: the catalogue is a public page and a
  * credential has no business travelling to it. Nothing is fetched under a test runner.
@@ -163,9 +199,28 @@ const fetchCatalogue = async (): Promise<string> => {
     return NO_CATALOGUE;
   }
 
-  cachedCatalogue ??= fetch(CATALOGUE_URL, { headers: { Accept: 'application/json' } })
-    .then(async (response) => {
-      const text = response.ok ? await response.text() : NO_CATALOGUE;
+  cachedCatalogue ??= Promise.all([
+    fetch(CATALOGUE_URL, { headers: { Accept: 'application/json' } }),
+    fetch(`${CATALOGUE_URL}.sig`),
+  ])
+    .then(async ([catalogue, signature]) => {
+      if (!catalogue.ok || !signature.ok) {
+        process.stderr.write(`Could not read ${CATALOGUE_URL}. Carrying on without it.\n`);
+
+        return NO_CATALOGUE;
+      }
+
+      const bytes = new Uint8Array(await catalogue.arrayBuffer());
+
+      if (!(await isSignedByValence(bytes, await signature.text()))) {
+        process.stderr.write(
+          `${CATALOGUE_URL} is not signed by the Valence project. Listing no plugins.\n`,
+        );
+
+        return NO_CATALOGUE;
+      }
+
+      const text = new TextDecoder().decode(bytes);
 
       JSON.parse(text);
 
