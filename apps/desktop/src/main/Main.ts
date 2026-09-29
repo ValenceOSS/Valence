@@ -351,6 +351,8 @@ const start = async (): Promise<void> => {
   const openAWindow = (): BrowserWindow => {
     const window = openTheWindow();
 
+    areControlsShown = true;
+
     theWindowsOwnMenu(window, changeServer);
 
     const showWhatWasAskedFor = (): void => {
