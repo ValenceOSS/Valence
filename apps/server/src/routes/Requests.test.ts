@@ -1749,7 +1749,14 @@ describe('requests for films and series, through the server', () => {
         hasMore: list === 'trending',
       }),
     studios: () =>
-      Promise.resolve([{ id: '2', name: 'Walt Disney Pictures', logoUrl: 'https://p/d.png' }]),
+      Promise.resolve([
+        {
+          id: '2',
+          name: 'Walt Disney Pictures',
+          logoUrl: 'https://p/d.png',
+          lightLogoUrl: 'https://p/d-light.png',
+        },
+      ]),
     charts: () =>
       Promise.resolve({
         albums: [{ deezerId: 7, title: 'Pylon', artist: 'Band', coverUrl: null }],

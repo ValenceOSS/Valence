@@ -47,7 +47,14 @@ describe('fetchAskable', () => {
           browse: { kind: 'film', list: 'trending', studio: null },
         },
       ],
-      studios: [{ id: '2', name: 'Walt Disney Pictures', logoUrl: 'https://p/d.png' }],
+      studios: [
+        {
+          id: '2',
+          name: 'Walt Disney Pictures',
+          logoUrl: 'https://p/d.png',
+          lightLogoUrl: 'https://p/d-light.png',
+        },
+      ],
     });
 
     expect(await fetchDiscover()).toMatchObject({
