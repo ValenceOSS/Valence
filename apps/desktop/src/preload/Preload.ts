@@ -40,8 +40,24 @@ import { keepTheLatest } from '@ValenceDesktop/preload/keepTheLatest';
 import { WHAT_VERSION_THIS_IS } from '@ValenceDesktop/main/aboutChannels';
 import { SET_UNREAD_BADGE } from '@ValenceDesktop/main/notificationChannels';
 import { SHOW_THE_WINDOW_CONTROLS } from '@ValenceDesktop/main/windowChannels';
+import {
+  ADD_ONE_IN_THE_BROWSER,
+  ASK_FOR_A_PASSKEY,
+  MAKE_A_PASSKEY,
+  SIGN_IN_ON_A_PAGE,
+} from '@ValenceDesktop/main/passkeyChannels';
+import { AskReplySchema } from '@ValenceDesktop/main/AskReply';
+import { MakeReplySchema } from '@ValenceDesktop/main/MakeReply';
+import { HandBackReplySchema } from '@ValenceDesktop/main/HandBackReply';
+import type { PasskeyCreationOptions } from '@ValenceContracts/schemas/PasskeyCreationOptions';
+import type { PasskeyRequestOptions } from '@ValenceContracts/schemas/PasskeyRequestOptions';
 
 const HeldSchema = z.record(z.string(), z.string()).catch({});
+
+const UNANSWERED = {
+  kind: 'failed',
+  reason: 'This app did not answer about the passkey.',
+} as const;
 
 const held = HeldSchema.parse(ipcRenderer.sendSync(READ_EVERYTHING));
 
@@ -153,6 +169,24 @@ contextBridge.exposeInMainWorld('valence', {
   notifications: {
     setBadge: (count: number) => {
       ipcRenderer.send(SET_UNREAD_BADGE, count);
+    },
+  },
+  passkeys: {
+    way: process.platform === 'win32' ? 'system' : 'page',
+    ask: async (options: PasskeyRequestOptions) =>
+      AskReplySchema.catch(UNANSWERED).parse(
+        await ipcRenderer.invoke(ASK_FOR_A_PASSKEY, options).catch(() => UNANSWERED),
+      ),
+    make: async (options: PasskeyCreationOptions) =>
+      MakeReplySchema.catch(UNANSWERED).parse(
+        await ipcRenderer.invoke(MAKE_A_PASSKEY, options).catch(() => UNANSWERED),
+      ),
+    signInOnAPage: async (challenge: string, profileId: string | null) =>
+      HandBackReplySchema.catch(UNANSWERED).parse(
+        await ipcRenderer.invoke(SIGN_IN_ON_A_PAGE, challenge, profileId).catch(() => UNANSWERED),
+      ),
+    addOneInTheBrowser: () => {
+      ipcRenderer.send(ADD_ONE_IN_THE_BROWSER);
     },
   },
   servers: {

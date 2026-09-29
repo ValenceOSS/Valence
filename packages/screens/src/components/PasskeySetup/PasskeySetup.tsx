@@ -6,6 +6,7 @@ import { Button } from '@ValenceUI/Button';
 import { SettingRow } from '@ValenceUI/SettingRow';
 import { TextField } from '@ValenceUI/TextField';
 import { describePasskeyUnavailability } from '@ValenceScreens/passkeys/isPasskeySupported';
+import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import {
   deletePasskey,
   listPasskeys,
@@ -22,6 +23,8 @@ const DEFAULT_NAME = 'This device';
  * in with a fingerprint or a security key instead of a password. Lists what is already enrolled with
  * when each was last used, since a passkey nobody recognises is one worth removing.
  *
+ * A client whose passkeys are added in the browser offers to open Valence there instead.
+ *
  * @param onChanged - Called after a passkey is added or removed, so the account page can refresh.
  */
 const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
@@ -34,6 +37,7 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
   const [renameValue, setRenameValue] = useState('');
 
   const unavailable = describePasskeyUnavailability();
+  const whereTheyAreAdded = platformInUse().passkeys();
 
   const refresh = useCallback(async () => {
     try {
@@ -232,6 +236,19 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
               Add a passkey
             </Button>
           </form>
+        ) : whereTheyAreAdded.kind === 'through-a-sign-in-page' ? (
+          <div>
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => {
+                whereTheyAreAdded.addOne();
+              }}
+            >
+              <Icon of={KeyIcon} size={16} />
+              Add in your browser
+            </Button>
+          </div>
         ) : null}
       </div>
     </div>

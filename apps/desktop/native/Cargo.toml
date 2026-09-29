@@ -1,0 +1,25 @@
+[package]
+name = "valence-desktop-native"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+napi = "3.13"
+napi-derive = "3.6"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.62", features = [
+  "Win32_Foundation",
+  "Win32_Networking_WindowsWebServices",
+] }
+
+[build-dependencies]
+napi-build = "2.5"

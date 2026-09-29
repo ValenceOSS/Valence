@@ -57,6 +57,7 @@ const aFakePlatform = (overrides: Partial<Platform> = {}): Platform => {
       pause: () => {},
       addEventListener: () => {},
     }),
+    passkeys: () => ({ kind: 'in-the-page' }),
     ...overrides,
   };
 };

@@ -4,16 +4,22 @@ const PhoneError = z.object({ error: z.string() }).openapi('PhoneError');
 
 const A_CHALLENGE = z.string().regex(/^[0-9a-f]{64}$/u);
 
+const A_LOOPBACK_PORT = z.number().int().min(1024).max(65535);
+
 const handBackRoute = createRoute({
   method: 'post',
   path: '/api/phone/hand-back',
   tags: ['Phone'],
-  summary: 'Make a code to hand a browser sign-in back to a phone',
+  summary: 'Make a code to hand a browser sign-in back to an app',
   description:
-    'Answered only to a POST from a page somebody has just signed in on, never to a link: a GET that minted codes could be aimed at any browser already signed in, and would hand its session to whatever caught the redirect. The code is kept against the challenge the phone sent, so it is worth nothing without the secret only that phone holds.',
+    'Answered only to a POST from a page somebody has just signed in on, never to a link: a GET that minted codes could be aimed at any browser already signed in, and would hand its session to whatever caught the redirect. The code is kept against the challenge the app sent, so it is worth nothing without the secret only that app holds. The link goes back into the app by its own scheme, or, where a port is named, to that port on this machine alone, which is how a desktop app on Linux listens for it.',
   request: {
     body: {
-      content: { 'application/json': { schema: z.object({ challenge: A_CHALLENGE }) } },
+      content: {
+        'application/json': {
+          schema: z.object({ challenge: A_CHALLENGE, port: A_LOOPBACK_PORT.optional() }),
+        },
+      },
     },
   },
   responses: {

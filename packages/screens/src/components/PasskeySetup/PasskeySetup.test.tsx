@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { installPlatform, platformInUse } from '@ValenceClient/platform/installPlatform';
 import { PasskeySetup } from './PasskeySetup';
 
 const registerPasskeyMock = vi.hoisted(() => vi.fn());
@@ -209,5 +210,23 @@ describe('PasskeySetup when unavailable', () => {
     render(<PasskeySetup />);
 
     expect(await screen.findByText('Laptop')).toBeInTheDocument();
+  });
+});
+
+describe('PasskeySetup where passkeys are added in the browser', () => {
+  it('offers to open the browser instead of adding one here', async () => {
+    const addOne = vi.fn();
+
+    installPlatform({
+      ...platformInUse(),
+      passkeys: () => ({ kind: 'through-a-sign-in-page', signIn: vi.fn(), addOne }),
+    });
+    describeUnavailabilityMock.mockReturnValue('Passkeys are added from Valence in your browser.');
+    render(<PasskeySetup />);
+
+    await userEvent.click(await screen.findByRole('button', { name: /Add in your browser/ }));
+
+    expect(addOne).toHaveBeenCalledExactlyOnceWith();
+    expect(screen.queryByRole('button', { name: /Add a passkey/ })).not.toBeInTheDocument();
   });
 });

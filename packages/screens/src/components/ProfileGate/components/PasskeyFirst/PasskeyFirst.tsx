@@ -5,7 +5,7 @@ import { Icon } from '@ValenceUI/Icon';
 import type { PasskeyFirstProps } from './PasskeyFirst.types';
 
 /**
- * The way in the phone app's sheet opens on: a passkey, asked for the moment the page opens, with a
+ * The way in an app's sign-in page opens on: a passkey, asked for the moment the page opens, with a
  * button to ask again and a way to the usual sign-in for somebody without one.
  *
  * The first ask is quiet: a browser that will only ask for a passkey after a tap refuses it, and that
@@ -41,7 +41,7 @@ const PasskeyFirst = ({
         <h1 className="text-2xl font-medium text-text">Sign in to the app</h1>
 
         <p className="text-sm text-text-muted">
-          Use the passkey you sign in to {name} with, and the app on your phone signs in too.
+          Use the passkey you sign in to {name} with, and the app signs in too.
         </p>
       </header>
 

@@ -8,17 +8,17 @@ This page takes you from a fresh clone to a running Valence development environm
 
 ## Prerequisites
 
-| Tool    | Version                                            | Why                                                                                          |
-| ------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Node.js | The version in `.nvmrc` (currently 24)             | Runs the server, the tooling and every build. `package.json` requires `node` at 24 or newer. |
-| pnpm    | 10.34.5, from the `packageManager` field           | The workspace manager. Enable it with `corepack enable`.                                     |
-| Docker  | Any recent Docker with Compose                     | Runs Postgres for development.                                                               |
-| Rust    | Stable, through [rustup](https://rustup.rs)        | Builds the media service. Optional if you only touch the web client.                         |
-| FFmpeg  | Valence's own build, fetched by `pnpm ffmpeg:sync` | The media service drives it as a child process.                                              |
+| Tool    | Version                                            | Why                                                                                                                  |
+| ------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Node.js | The version in `.nvmrc` (currently 24)             | Runs the server, the tooling and every build. `package.json` requires `node` at 24 or newer.                         |
+| pnpm    | 10.34.5, from the `packageManager` field           | The workspace manager. Enable it with `corepack enable`.                                                             |
+| Docker  | Any recent Docker with Compose                     | Runs Postgres for development.                                                                                       |
+| Rust    | Stable, through [rustup](https://rustup.rs)        | Builds the media service, and the desktop app's native module on Windows. Optional if you only touch the web client. |
+| FFmpeg  | Valence's own build, fetched by `pnpm ffmpeg:sync` | The media service drives it as a child process.                                                                      |
 
 Two notes on that table.
 
-- Skipping Rust is fine for web work. The dev script for the media service tells you in a sentence that `cargo` was not found, rather than failing with a stack trace.
+- Skipping Rust is fine for web work. The dev script for the media service tells you in a sentence that `cargo` was not found, rather than failing with a stack trace. The desktop app's does the same and starts without its native module, so passkeys in it do not work until you install Rust.
 - Skipping the FFmpeg sync is not fatal but it is worse than it looks. The media service falls back to whatever `ffmpeg` is on your `PATH`. On a Mac, Homebrew's build has no `overlay_videotoolbox` or `tonemap_videotoolbox`, so subtitles and HDR quietly leave the hardware and nothing says so.
 
 ## Clone and install
@@ -115,7 +115,7 @@ pnpm --filter @valence/requests dev
 | Web client       | `pnpm --filter @valence/web dev`        | Vite dev server that proxies `/api` (with WebSockets) to 8420                                    | 5173                                              |
 | Media service    | `pnpm --filter @valence/transcoder dev` | Runs `cargo run --bin valence-transcoder -- serve` through `tools/transcoder/serveTranscoder.ts` | The unix socket in `TRANSCODER_URL`               |
 | Requests service | `pnpm --filter @valence/requests dev`   | `tsx watch` over its `src/Main.ts`                                                               | 8421, from `REQUESTS_PORT`                        |
-| Desktop          | `pnpm --filter @valence/desktop dev`    | `electron-vite dev`                                                                              | The renderer's dev server, 5174 in `.env.example` |
+| Desktop          | `pnpm --filter @valence/desktop dev`    | Builds the native module with `tools/desktop/buildDesktopNative.ts`, then `electron-vite dev`    | The renderer's dev server, 5174 in `.env.example` |
 
 The media service dev script decides for you what to do. With a `unix:` address in `TRANSCODER_URL` it starts the Rust service. With an `http://` address it assumes the service runs elsewhere and starts nothing. With no address it stops and tells you to copy `.env.example`.
 
@@ -221,7 +221,7 @@ Husky installs three hooks.
 
 Do not use `--no-verify` to get past a failing hook. CI runs the same checks, so it only delays the failure.
 
-`.github/workflows/ci.yml` runs on every pull request and every push to `main`. Lint and `pnpm db:check` start at once. One job builds every package other packages depend on and caches turbo's output. Typecheck and every test job restore that cache, so nothing rebuilds. Tests run one package per runner, and `@valence/screens` is sharded four ways because it is the one package on jsdom with hundreds of test files. The Rust job runs only on pull requests that touch the transcoder, in a Debian container with Valence's FFmpeg, and always on `main`. The media pipeline has its own workflow, described in [Testing](/develop/testing).
+`.github/workflows/ci.yml` runs on every pull request and every push to `main`. Lint and `pnpm db:check` start at once. One job builds every package other packages depend on and caches turbo's output. Typecheck and every test job restore that cache, so nothing rebuilds. Tests run one package per runner, and `@valence/screens` is sharded four ways because it is the one package on jsdom with hundreds of test files. The Rust job runs only on pull requests that touch the transcoder or the desktop app's native module, in a Debian container with Valence's FFmpeg, and always on `main`. The native module's Windows Hello code only compiles on Windows, so a pull request that touches it is also linted and built on a Windows runner. The media pipeline has its own workflow, described in [Testing](/develop/testing).
 
 ## When something does not start
 

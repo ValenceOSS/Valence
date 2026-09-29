@@ -208,7 +208,7 @@ describe('SignedIn', () => {
     expect(await screen.findByRole('heading', { name: 'Sign in to the app' })).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(handBackToThePhone).toHaveBeenCalledWith('a'.repeat(64));
+      expect(handBackToThePhone).toHaveBeenCalledWith('a'.repeat(64), null);
     });
     expect(window.location.pathname).toBe('/phone-sign-in');
   });

@@ -8,6 +8,13 @@ import {
 } from 'better-auth/client/plugins';
 import { passkeyClient } from '@better-auth/passkey/client';
 import { writeCurrentProfile } from '@ValenceClient/profiles/currentProfile';
+import { platformInUse } from '@ValenceClient/platform/installPlatform';
+import { PasskeyCreationOptionsSchema } from '@ValenceContracts/schemas/PasskeyCreationOptions';
+import { PasskeyRequestOptionsSchema } from '@ValenceContracts/schemas/PasskeyRequestOptions';
+import type { PasskeyAssertion } from '@ValenceContracts/schemas/PasskeyAssertion';
+import type { PasskeyAttestation } from '@ValenceContracts/schemas/PasskeyAttestation';
+import type { PasskeyCreationOptions } from '@ValenceContracts/schemas/PasskeyCreationOptions';
+import type { PasskeyRequestOptions } from '@ValenceContracts/schemas/PasskeyRequestOptions';
 import type { SessionUser } from '@ValenceContracts/schemas/Session';
 import type { Passkey } from '@ValenceContracts/schemas/Passkey';
 
@@ -189,13 +196,103 @@ const signOut = async (): Promise<boolean> => {
 };
 
 /**
- * Runs the browser's registration ceremony and hands the result to the server, which is how a device
- * becomes something somebody can sign in with instead of a password.
+ * What went wrong, in words, from whatever a host threw while asking its system for a passkey.
+ *
+ * @param error - What was thrown.
+ * @param otherwise - What to say where it carried no message.
+ * @returns The reason.
+ */
+const whyTheSystemSaidNo = (error: Error | string | null | undefined, otherwise: string): string =>
+  error instanceof Error && error.message !== '' ? error.message : otherwise;
+
+/**
+ * Adds a passkey through the host's own operating system rather than the page, for a host whose
+ * pages the browser engine will not let make one for the server.
+ *
+ * The same two requests the library makes — options, then what was made — with the ceremony
+ * between them handed to the host, which asks the system over its own window.
+ *
+ * @param name - What to call this device in the list of passkeys.
+ * @param make - The host's way of making one.
+ * @returns Whether it worked, and why not where it did not.
+ */
+const registerThroughTheSystem = async (
+  name: string,
+  make: (options: PasskeyCreationOptions) => Promise<PasskeyAttestation | null>,
+): Promise<RegisterOutcome> => {
+  const asked = await client
+    .$fetch('/passkey/generate-register-options', { method: 'GET', query: { name }, throw: false })
+    .catch(() => null);
+  const options = PasskeyCreationOptionsSchema.safeParse(asked?.data);
+
+  if (!options.success) {
+    return { kind: 'failed', reason: 'Valence could not be reached.' };
+  }
+
+  let made: PasskeyAttestation | null;
+
+  try {
+    made = await make(options.data);
+  } catch (error) {
+    return {
+      kind: 'failed',
+      reason: whyTheSystemSaidNo(
+        error instanceof Error ? error : null,
+        'Your device could not create a passkey.',
+      ),
+    };
+  }
+
+  if (made === null) {
+    return { kind: 'cancelled' };
+  }
+
+  const verified = await client
+    .$fetch('/passkey/verify-registration', {
+      method: 'POST',
+      body: { response: made, name },
+      throw: false,
+    })
+    .catch(() => null);
+
+  if (verified === null) {
+    return { kind: 'failed', reason: 'Valence could not be reached.' };
+  }
+
+  return verified.error === null
+    ? { kind: 'registered' }
+    : {
+        kind: 'failed',
+        reason: verified.error.message ?? 'Your device could not create a passkey.',
+      };
+};
+
+/**
+ * Runs the registration ceremony and hands the result to the server, which is how a device becomes
+ * something somebody can sign in with instead of a password.
+ *
+ * A browser runs it in the page. A host whose pages cannot hands it to its operating system. One
+ * that adds passkeys somewhere else entirely, or cannot at all, is refused here, since the account
+ * page offers it no button that would call this.
  *
  * @param name - What to call this device in the list of passkeys.
  * @returns Whether it worked, and why not where it did not.
  */
 const registerPasskey = async (name: string): Promise<RegisterOutcome> => {
+  const passkeys = platformInUse().passkeys();
+
+  if (passkeys.kind === 'through-the-system') {
+    return await registerThroughTheSystem(name, passkeys.make);
+  }
+
+  if (passkeys.kind === 'through-a-sign-in-page') {
+    return { kind: 'failed', reason: 'Add a passkey from Valence in your browser.' };
+  }
+
+  if (passkeys.kind === 'none') {
+    return { kind: 'failed', reason: passkeys.why };
+  }
+
   const answer = await client.passkey.addPasskey({ name }).catch(() => null);
 
   if (answer === null) {
@@ -216,13 +313,93 @@ const registerPasskey = async (name: string): Promise<RegisterOutcome> => {
 };
 
 /**
- * Signs in with a passkey: the browser signs a challenge with whatever credential the person
- * chooses, and the result is checked by the server. The password is never involved, and nothing
- * secret leaves the device.
+ * Signs in with a passkey the host asks its own operating system for, the same two requests the
+ * library makes with the ceremony between them handed over.
  *
+ * @param ask - The host's way of asking for one.
  * @returns Whether it worked, and why not where it did not.
  */
-const authenticateWithPasskey = async (): Promise<AuthenticateOutcome> => {
+const authenticateThroughTheSystem = async (
+  ask: (options: PasskeyRequestOptions) => Promise<PasskeyAssertion | null>,
+): Promise<AuthenticateOutcome> => {
+  const asked = await client
+    .$fetch('/passkey/generate-authenticate-options', { method: 'GET', throw: false })
+    .catch(() => null);
+  const options = PasskeyRequestOptionsSchema.safeParse(asked?.data);
+
+  if (!options.success) {
+    return { kind: 'failed', reason: 'Valence could not be reached.' };
+  }
+
+  let signed: PasskeyAssertion | null;
+
+  try {
+    signed = await ask(options.data);
+  } catch (error) {
+    return {
+      kind: 'failed',
+      reason: whyTheSystemSaidNo(
+        error instanceof Error ? error : null,
+        'That passkey was not accepted.',
+      ),
+    };
+  }
+
+  if (signed === null) {
+    return { kind: 'cancelled' };
+  }
+
+  const verified = await client
+    .$fetch('/passkey/verify-authentication', {
+      method: 'POST',
+      body: { response: signed },
+      throw: false,
+    })
+    .catch(() => null);
+
+  if (verified === null) {
+    return { kind: 'failed', reason: 'Valence could not be reached.' };
+  }
+
+  return verified.error === null
+    ? { kind: 'signedIn' }
+    : { kind: 'failed', reason: verified.error.message ?? 'That passkey was not accepted.' };
+};
+
+/**
+ * Signs in with a passkey: whatever credential the person chooses signs a challenge, and the result
+ * is checked by the server. The password is never involved, and nothing secret leaves the device.
+ *
+ * Where it happens is the host's to say. A browser signs in the page; a host whose pages cannot asks
+ * its operating system; a host that cannot do either here signs in on a page elsewhere and is handed
+ * the session back.
+ *
+ * @param profileId - The face somebody already chose, which a page elsewhere asks for straight away.
+ * @returns Whether it worked, and why not where it did not.
+ */
+const authenticateWithPasskey = async (
+  profileId: string | null = null,
+): Promise<AuthenticateOutcome> => {
+  const passkeys = platformInUse().passkeys();
+
+  if (passkeys.kind === 'through-the-system') {
+    return await authenticateThroughTheSystem(passkeys.ask);
+  }
+
+  if (passkeys.kind === 'through-a-sign-in-page') {
+    const outcome = await passkeys.signIn(profileId);
+
+    return outcome === 'in'
+      ? { kind: 'signedIn' }
+      : outcome === 'cancelled'
+        ? { kind: 'cancelled' }
+        : { kind: 'failed', reason: 'That did not sign you in. Try again.' };
+  }
+
+  if (passkeys.kind === 'none') {
+    return { kind: 'failed', reason: passkeys.why };
+  }
+
   const answer = await client.signIn.passkey().catch(() => null);
 
   if (answer === null) {

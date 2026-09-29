@@ -10,8 +10,9 @@ import type { PhoneSignInProps } from './PhoneSignIn.types';
 type Standing = 'asking' | 'handing' | 'handed' | 'failed';
 
 /**
- * The page the phone app opens to sign somebody in with what only a browser can do, such as a
- * passkey, and hands the session back to it.
+ * The page an app opens to sign somebody in with what only a browser can do, such as a passkey, and
+ * hands the session back to it — the phone app, or the desktop app on a Mac or Linux, which opens
+ * this page in the person's own browser and names a port on this machine to be handed it at.
  *
  * Somebody who signed in on this page just now is handed straight back, since signing in was them
  * saying yes. Somebody the browser already had signed in says yes first: handing it back the moment
@@ -22,7 +23,7 @@ type Standing = 'asking' | 'handing' | 'handed' | 'failed';
  * @param name - What this instance is called.
  */
 const PhoneSignIn = ({ name }: PhoneSignInProps) => {
-  const { challenge } = useSearch({ strict: false });
+  const { challenge, port } = useSearch({ strict: false });
   const who = useQuery(sessionQueries.who());
   const [standing, setStanding] = useState<Standing>('asking');
   const hasHandedOnItsOwn = useRef(false);
@@ -30,7 +31,7 @@ const PhoneSignIn = ({ name }: PhoneSignInProps) => {
   const handBack = async (asked: string): Promise<void> => {
     setStanding('handing');
 
-    const url = await handBackToThePhone(asked);
+    const url = await handBackToThePhone(asked, port ?? null);
 
     if (url === null) {
       setStanding('failed');
@@ -58,13 +59,13 @@ const PhoneSignIn = ({ name }: PhoneSignInProps) => {
         <h1 className="text-2xl font-medium text-text">Sign in the app</h1>
 
         <p className="text-sm text-text-muted">
-          The {name} app on your phone asked to sign in as {who.data?.name ?? 'you'}.
+          The {name} app asked to sign in as {who.data?.name ?? 'you'}.
         </p>
       </header>
 
       {challenge === undefined ? (
         <p className="text-base text-text">
-          This page is opened by the app. Start from Sign in on your phone.
+          This page is opened by the app. Start from Sign in, in the app.
         </p>
       ) : standing === 'handed' ? (
         <p className="text-base text-text">Signed in. Back to the app.</p>

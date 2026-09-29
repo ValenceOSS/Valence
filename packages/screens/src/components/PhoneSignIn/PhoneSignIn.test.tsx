@@ -28,7 +28,7 @@ const drawIt = async () => {
     </QueryClientProvider>,
   );
 
-  await screen.findByText('The Valence app on your phone asked to sign in as Marques.');
+  await screen.findByText('The Valence app asked to sign in as Marques.');
 };
 
 beforeEach(() => {
@@ -51,11 +51,24 @@ describe('handing a sign-in back to the phone', () => {
     expect(handBackToThePhone).not.toHaveBeenCalled();
   });
 
+  it('hands it back to the port a desktop app on this machine named', async () => {
+    useSearch.mockReturnValue({ challenge: CHALLENGE, port: 51_234 });
+    handBackToThePhone.mockResolvedValue('http://127.0.0.1:51234/signed-in?code=abc');
+
+    await drawIt();
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+
+    expect(handBackToThePhone).toHaveBeenCalledWith(CHALLENGE, 51_234);
+    await waitFor(() => {
+      expect(assign).toHaveBeenCalledWith('http://127.0.0.1:51234/signed-in?code=abc');
+    });
+  });
+
   it('hands it back against the challenge the phone sent', async () => {
     await drawIt();
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
-    expect(handBackToThePhone).toHaveBeenCalledWith(CHALLENGE);
+    expect(handBackToThePhone).toHaveBeenCalledWith(CHALLENGE, null);
   });
 
   it('sends the browser back to the app with the code', async () => {
@@ -96,7 +109,7 @@ describe('handing a sign-in back to the phone, from somebody who signed in on th
     await drawIt();
 
     await waitFor(() => {
-      expect(handBackToThePhone).toHaveBeenCalledWith(CHALLENGE);
+      expect(handBackToThePhone).toHaveBeenCalledWith(CHALLENGE, null);
     });
     expect(assign).toHaveBeenCalledWith('valence://signed-in?code=abc');
     expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
@@ -128,6 +141,6 @@ describe('handing a sign-in back to the phone, where it does not go through', ()
       expect(assign).toHaveBeenCalledWith('valence://signed-in?code=abc');
     });
     expect(handBackToThePhone).toHaveBeenCalledTimes(2);
-    expect(handBackToThePhone).toHaveBeenLastCalledWith(CHALLENGE);
+    expect(handBackToThePhone).toHaveBeenLastCalledWith(CHALLENGE, null);
   });
 });

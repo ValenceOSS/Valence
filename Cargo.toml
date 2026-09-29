@@ -1,5 +1,5 @@
 [workspace]
-members = ["apps/transcoder"]
+members = ["apps/transcoder", "apps/desktop/native"]
 resolver = "2"
 
 [workspace.package]

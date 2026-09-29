@@ -38,6 +38,7 @@ const installTvPlatform = (): void => {
     setUnreadBadge: () => undefined,
     musicAudio: theTvsMusicAudio,
     listeningAudio: theTvsListeningAudio,
+    passkeys: () => ({ kind: 'none', why: 'A television is signed in from a phone.' }),
   });
 };
 

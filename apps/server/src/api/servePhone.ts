@@ -13,7 +13,7 @@ const servePhone = (app: OpenAPIHono, context: AppContext): void => {
   const { auth, phoneHandBacks } = context;
 
   app.openapi(handBackRoute, async (context) => {
-    const { challenge } = context.req.valid('json');
+    const { challenge, port } = context.req.valid('json');
     const minted = await auth.api
       .generateOneTimeToken({ headers: context.req.raw.headers })
       .catch(() => null);
@@ -24,10 +24,9 @@ const servePhone = (app: OpenAPIHono, context: AppContext): void => {
 
     phoneHandBacks.remember(minted.token, challenge);
 
-    return context.json(
-      { url: `valence://signed-in?code=${encodeURIComponent(minted.token)}` },
-      200,
-    );
+    const back = port === undefined ? 'valence:/' : `http://127.0.0.1:${port.toString()}`;
+
+    return context.json({ url: `${back}/signed-in?code=${encodeURIComponent(minted.token)}` }, 200);
   });
 
   app.openapi(exchangeRoute, async (context) => {

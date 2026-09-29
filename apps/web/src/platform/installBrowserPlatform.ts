@@ -34,6 +34,7 @@ const installBrowserPlatform = (): void => {
     setUnreadBadge: () => {},
     musicAudio: theBrowserAudio,
     listeningAudio: theBrowsersListeningAudio,
+    passkeys: () => ({ kind: 'in-the-page' }),
   });
 };
 
