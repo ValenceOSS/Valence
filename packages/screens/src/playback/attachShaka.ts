@@ -26,7 +26,13 @@ type ShakaStats = {
 type ShakaPlayer = {
   attach: (element: HTMLMediaElement) => Promise<void>;
   configure?: (config: {
-    manifest: { hls: { sequenceMode: boolean; ignoreManifestTimestampsInSegmentsMode: boolean } };
+    manifest: {
+      hls: {
+        sequenceMode: boolean;
+        ignoreManifestTimestampsInSegmentsMode: boolean;
+        disableClosedCaptionsDetection: boolean;
+      };
+    };
   }) => void;
   load: (manifestUrl: string, startSeconds?: number) => Promise<void>;
   destroy: () => Promise<void>;
@@ -61,8 +67,14 @@ type AttachOptions = {
 
 const CRITICAL = 2;
 
-const SEGMENT_TIMESTAMPS = {
-  manifest: { hls: { sequenceMode: false, ignoreManifestTimestampsInSegmentsMode: true } },
+const READING_THE_PLAYLIST = {
+  manifest: {
+    hls: {
+      sequenceMode: false,
+      ignoreManifestTimestampsInSegmentsMode: true,
+      disableClosedCaptionsDetection: true,
+    },
+  },
 } as const;
 
 type DeliveredFormat = {
@@ -175,6 +187,11 @@ const faultFrom = (event: Event): PlaybackFault | null => {
  * segments arrive in avoided that, but kept audio and video in one buffer's timeline: with the two
  * sent apart it lets them drift, and it put the sound 60ms late after a seek even together, while
  * the segments' own timestamps held it within a frame. See VAL-307.
+ *
+ * Nor does it look for captions carried inside the picture, which Valence never offers — subtitles
+ * go as tracks of their own. Looking means fetching the first, middle and last segments of the
+ * film, and to a transcode positioned where somebody resumed, the first and the last are two seeks
+ * that pull it away from them, so the film never loads.
  */
 const attachShaka = async ({
   element,
@@ -193,7 +210,7 @@ const attachShaka = async ({
 
   const player = new shaka.Player();
 
-  player.configure?.(SEGMENT_TIMESTAMPS);
+  player.configure?.(READING_THE_PLAYLIST);
 
   player.addEventListener?.('error', (event) => {
     const fault = faultFrom(event);
