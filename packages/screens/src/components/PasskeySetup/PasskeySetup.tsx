@@ -9,10 +9,12 @@ import { describePasskeyUnavailability } from '@ValenceScreens/passkeys/isPasske
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import {
   deletePasskey,
+  isThisSessionConfirmed,
   listPasskeys,
   registerPasskey,
   renamePasskey,
 } from '@ValenceClient/session/auth';
+import { ConfirmItIsYou } from '@ValenceScreens/components/PasskeySetup/components/ConfirmItIsYou/ConfirmItIsYou';
 import type { Passkey } from '@ValenceContracts/schemas/Passkey';
 import type { PasskeySetupProps } from './PasskeySetup.types';
 
@@ -23,7 +25,8 @@ const DEFAULT_NAME = 'This device';
  * in with a fingerprint or a security key instead of a password. Lists what is already enrolled with
  * when each was last used, since a passkey nobody recognises is one worth removing.
  *
- * A client whose passkeys are added in the browser offers to open Valence there instead.
+ * A client whose passkeys are added in the browser offers to open Valence there instead. A session
+ * signed in too long ago for the server to let it add one asks for the password first.
  *
  * @param onChanged - Called after a passkey is added or removed, so the account page can refresh.
  */
@@ -35,6 +38,7 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
   const [message, setMessage] = useState<string | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
+  const [isConfirmed, setIsConfirmed] = useState(true);
 
   const unavailable = describePasskeyUnavailability();
   const whereTheyAreAdded = platformInUse().passkeys();
@@ -53,6 +57,14 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
     void refresh();
   }, [refresh]);
 
+  useEffect(() => {
+    if (unavailable !== null) {
+      return;
+    }
+
+    void isThisSessionConfirmed().then(setIsConfirmed);
+  }, [unavailable]);
+
   const add = async () => {
     setMessage(null);
     setIsAdding(true);
@@ -67,6 +79,12 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
       }
 
       if (outcome.kind === 'cancelled') {
+        return;
+      }
+
+      if (outcome.kind === 'unconfirmed') {
+        setIsConfirmed(false);
+
         return;
       }
 
@@ -215,7 +233,13 @@ const PasskeySetup = ({ onChanged }: PasskeySetupProps) => {
           </ul>
         )}
 
-        {unavailable === null ? (
+        {unavailable === null && !isConfirmed ? (
+          <ConfirmItIsYou
+            onConfirmed={() => {
+              setIsConfirmed(true);
+            }}
+          />
+        ) : unavailable === null ? (
           <form
             noValidate
             className="flex flex-wrap items-end gap-3"

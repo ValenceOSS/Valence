@@ -6,6 +6,8 @@ import { readCurrentProfile, writeCurrentProfile } from '@ValenceClient/profiles
 import {
   askWhetherTheDeviceMayIn,
   authenticateWithPasskey,
+  confirmItIsYou,
+  isThisSessionConfirmed,
   deletePasskey,
   disableTwoFactor,
   enableTwoFactor,
@@ -354,14 +356,18 @@ describe('passkeys through the system', () => {
     installPlatform(
       aFakePlatform({ passkeys: () => ({ kind: 'through-the-system', ask: vi.fn(), make }) }),
     );
-    fetchMock.mockResolvedValueOnce(said(CREATION_OPTIONS)).mockResolvedValueOnce(said(A_PASSKEY));
+    fetchMock
+      .mockResolvedValueOnce(said({ isConfirmed: true }))
+      .mockResolvedValueOnce(said(CREATION_OPTIONS))
+      .mockResolvedValueOnce(said(A_PASSKEY));
 
     await expect(registerPasskey('Laptop')).resolves.toEqual({ kind: 'registered' });
 
     expect(make).toHaveBeenCalledWith(CREATION_OPTIONS);
-    expect(asked(0)).toBe('/api/auth/passkey/generate-register-options');
-    expect(asked(1)).toBe('/api/auth/passkey/verify-registration');
-    expect(sentWith(1)).toEqual({
+    expect(asked(0)).toBe('/api/auth/confirmation');
+    expect(asked(1)).toBe('/api/auth/passkey/generate-register-options');
+    expect(asked(2)).toBe('/api/auth/passkey/verify-registration');
+    expect(sentWith(2)).toEqual({
       response: AN_ATTESTATION,
       name: 'Laptop',
     });
@@ -377,6 +383,57 @@ describe('passkeys through the system', () => {
 
     await expect(authenticateWithPasskey()).resolves.toMatchObject({ kind: 'failed' });
     expect(ask).not.toHaveBeenCalled();
+  });
+});
+
+describe('confirming it is you', () => {
+  it('asks for confirmation before any passkey is made, for a session signed in long ago', async () => {
+    const make = vi.fn();
+
+    installPlatform(
+      aFakePlatform({ passkeys: () => ({ kind: 'through-the-system', ask: vi.fn(), make }) }),
+    );
+    fetchMock.mockResolvedValueOnce(said({ isConfirmed: false }));
+
+    await expect(registerPasskey('Laptop')).resolves.toEqual({ kind: 'unconfirmed' });
+    expect(make).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('asks the same of a browser, before its own ceremony', async () => {
+    fetchMock.mockResolvedValueOnce(said({ isConfirmed: false }));
+
+    await expect(registerPasskey('Laptop')).resolves.toEqual({ kind: 'unconfirmed' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('takes a server that cannot say as one that does not ask', async () => {
+    fetchMock.mockResolvedValueOnce(said({ error: 'Not found' }, 404));
+
+    await expect(isThisSessionConfirmed()).resolves.toBe(true);
+  });
+
+  it('confirms with the password', async () => {
+    fetchMock.mockResolvedValueOnce(said({ isConfirmed: true }));
+
+    await expect(confirmItIsYou('a-password')).resolves.toEqual({ kind: 'confirmed' });
+    expect(asked()).toBe('/api/auth/confirm-it-is-you');
+    expect(sentWith(0)).toEqual({ password: 'a-password' });
+  });
+
+  it('says why it did not', async () => {
+    fetchMock
+      .mockResolvedValueOnce(said({ message: 'That is not your password.' }, 400))
+      .mockResolvedValueOnce(said({ message: 'Too many requests.' }, 429));
+
+    await expect(confirmItIsYou('wrong')).resolves.toEqual({
+      kind: 'failed',
+      reason: 'That is not your password.',
+    });
+    await expect(confirmItIsYou('wrong')).resolves.toEqual({
+      kind: 'failed',
+      reason: 'Too many tries. Wait a minute and try again.',
+    });
   });
 });
 

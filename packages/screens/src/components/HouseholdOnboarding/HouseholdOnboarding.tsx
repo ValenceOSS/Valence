@@ -124,7 +124,13 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
       return;
     }
 
-    setWrong(outcome.kind === 'cancelled' ? null : outcome.reason);
+    setWrong(
+      outcome.kind === 'cancelled'
+        ? null
+        : outcome.kind === 'unconfirmed'
+          ? 'You signed in a while ago. Add a passkey from your account, where you can confirm it is you.'
+          : outcome.reason,
+    );
   };
 
   const finish = async (): Promise<void> => {
