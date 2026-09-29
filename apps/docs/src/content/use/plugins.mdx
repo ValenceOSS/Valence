@@ -1,6 +1,6 @@
 ---
 title: Plugins
-description: Install plugins from the official catalogue or a file, read what they ask for, fill in their settings, and turn them off or remove them.
+description: Install plugins from the official catalogue or a file, read what they ask for, fill in their settings, grant their permissions, roll them back, and turn them off or remove them.
 order: 13
 ---
 
@@ -44,6 +44,8 @@ If the file is a newer version of a plugin you already have, Valence says which 
 | Keeps its own data, up to a size                      | A private store for the plugin, removed with it                           |
 | Connects to an account elsewhere                      | People may connect their account on that service to the plugin            |
 | Sends notifications                                   | It may put notifications in people's bell                                 |
+| Receives webhooks                                     | Outside services may send it messages at private addresses of its own     |
+| Tells your webhooks things                            | It may send the events it lists to webhooks subscribed to plugin events   |
 
 A plugin acts only for the people who use its page or connect an account to it. It never sees passwords, sessions or files.
 
@@ -57,6 +59,19 @@ A plugin that connects people's accounts on another service needs you to registe
 https://<your Valence address>/api/plugins/oauth/callback
 ```
 
+The plugin's **Settings** shows this address under **Redirect address**, ready to copy.
+
+A plugin that receives webhooks lists one private address for each under **Settings** too. Give each to the service that sends it; anyone with the address can post to it, so treat it like a password. Reinstalling the plugin after removing it gives new addresses.
+
+<Callout title="Addresses from outside" tone="warning">
+  Both addresses are built from `BETTER_AUTH_URL`. For services outside your home to reach them, it
+  must be the address Valence is reached at from the internet, not `localhost` or a local IP.
+</Callout>
+
+## Permissions a plugin adds
+
+A plugin may add permissions of its own, such as "Sync lists", to decide who can use its pages and panels. They appear in the [role editor](/use/accounts-and-roles#the-permission-catalogue) in a group named after the plugin, and are granted like any other. The Administrator role holds them all. Removing the plugin takes its permissions out of every role, and installing it again does not bring those grants back.
+
 ## What people see
 
 - **Pages** appear in each person's account area, or in the admin area for pages meant for administrators.
@@ -66,11 +81,15 @@ https://<your Valence address>/api/plugins/oauth/callback
 
 ## Updating
 
-When the catalogue has a newer version, the plugin's row says so. If the update asks for more than the installed version, you review the difference before it is installed.
+When the catalogue has a newer version, the plugin's row says so with **Update to** and the version. If the update asks for more than the installed version, you review the difference before it is installed. Some updates convert what the plugin kept to a new shape as they install.
+
+### Rolling back
+
+Valence keeps the version an update replaced, with what it had kept as it was at that moment. **Roll back to** and that version puts it back. Anything the plugin kept after the update is lost, and only one step back is kept: rolling back again, or updating again, starts afresh.
 
 ## Turning a plugin off, or removing it
 
-- **Disable** stops the plugin at once. Its pages, panels and themes disappear and its scheduled work stops, but its settings, data and people's connected accounts are kept for when you turn it back on.
-- **Uninstall** removes the plugin with its settings, its stored data and every connected account.
+- **The switch** on its row turns a plugin off at once. Its pages, panels and themes disappear and its scheduled work stops, but its settings, data and people's connected accounts are kept for when you turn it back on. Anybody on one of its pages, on the web, the phone or the TV, is taken back to where they came from and told why.
+- **Remove** takes the plugin away with its settings, everything it kept, every connected account, its permissions in roles, its webhook addresses and the version kept for rolling back. The dialog first lists what this particular plugin would take with it, such as how much it kept and how many people connected an account to which service, and offers **Turn it off** instead, which keeps all of that. Where a service supports it, Valence also asks that service to cancel the access people gave, so the plugin disappears from their account there too.
 
 If a plugin keeps failing, Valence stops restarting it and says why on its row. Disabling it and turning it back on starts it afresh.

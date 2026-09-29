@@ -61,7 +61,7 @@ A webhook is a subscription: an address, a format and a list of events. When one
 2. Give it a **Name**. Only you see it.
 3. Enter the **Address** the deliveries are posted to.
 4. Choose a **Shape**: what Valence sends, so the other end understands it.
-5. Tick the events you want, grouped as The server, Requests, People, The library and Watching.
+5. Tick the events you want, grouped as The server, Requests, People, The library, Watching and Plugins.
 6. Optionally narrow it with filters, described below.
 7. Press **Create webhook**.
 
@@ -92,6 +92,7 @@ You can subscribe to these events. The test delivery is separate and is sent onl
 | People      | `auth.succeeded`, `auth.failed`, `account.created`, `account.deleted`, `account.roleChanged`, `session.started`, `session.ended`                                                                                                                                                                                     |
 | The library | `media.added`, `media.removed`                                                                                                                                                                                                                                                                                       |
 | Watching    | `playback.started`, `playback.stopped`                                                                                                                                                                                                                                                                               |
+| Plugins     | `plugin.event` (a plugin reporting something it said it would, such as an import finishing)                                                                                                                                                                                                                          |
 
 Some notes worth knowing:
 
@@ -99,6 +100,7 @@ Some notes worth knowing:
 - `requests.indexerFailing` is sent after three failures in a row. Five turn the indexer off.
 - `auth.failed` does not include attempts that were rate limited, because those are refused before Valence sees them.
 - The Requests group only appears where the requests service is set up. See [Requests](/use/requests).
+- `plugin.event` names the plugin, the event and its title, with whatever detail the plugin sent. Only plugins given the permission to tell your webhooks things can send one. See [plugins](/use/plugins).
 
 ### Filters
 

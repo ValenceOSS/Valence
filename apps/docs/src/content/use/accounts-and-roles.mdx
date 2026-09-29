@@ -108,47 +108,50 @@ Deleting a role removes what it granted from everyone who held it. Creating role
 
 Permissions are the only thing a role contains. These are all of them.
 
-| Permission             | What it lets somebody do                                             |
-| ---------------------- | -------------------------------------------------------------------- |
-| `administrator`        | Everything, including anything added later.                          |
-| `library.create`       | Add a library.                                                       |
-| `library.edit`         | Change a library's settings.                                         |
-| `library.delete`       | Remove a library and forget everything scanned from it.              |
-| `jobs.run`             | Start a job by hand, stop one, and change how many run at once.      |
-| `jobs.schedule`        | Change when a recurring job runs.                                    |
-| `jobs.runDestructive`  | Run reset and rebuild, the jobs that throw away what is stored.      |
-| `media.rescan`         | Ask Valence to read one item again.                                  |
-| `media.delete`         | Delete a media file from disk.                                       |
-| `media.reencode`       | Re-encode media at a chosen quality.                                 |
-| `media.override`       | Correct an item's metadata by hand.                                  |
-| `media.artwork`        | Replace an item's poster or backdrop.                                |
-| `media.hide`           | Hide an item from every profile.                                     |
-| `sharing.link`         | Create share links.                                                  |
-| `sharing.party`        | Start watch parties.                                                 |
-| `sharing.manage`       | See every share link and withdraw any of them.                       |
-| `streaming.view`       | See who is watching and what.                                        |
-| `streaming.stop`       | End somebody else's stream.                                          |
-| `streaming.pause`      | Pause somebody else's stream.                                        |
-| `streaming.message`    | Send a message that appears over somebody else's stream.             |
-| `download.media`       | Save media to a device for offline viewing.                          |
-| `requests.ask`         | Request films and series.                                            |
-| `requests.askMusic`    | Request artists and albums.                                          |
-| `requests.autoApprove` | Have requests go straight through without approval.                  |
-| `requests.viewAll`     | See everybody's requests.                                            |
-| `requests.approve`     | Approve or refuse other people's requests.                           |
-| `requests.manage`      | Set up indexers, download clients and quality profiles.              |
-| `account.invite`       | Add a new account.                                                   |
-| `account.manage`       | List, rename and remove accounts.                                    |
-| `account.ban`          | Ban and unban accounts.                                              |
-| `account.roles`        | Create roles and choose what they grant.                             |
-| `account.profiles`     | Add, rename or remove another account's profiles.                    |
-| `account.security`     | Reset passwords, end sessions and see where an account is signed in. |
-| `account.keys`         | Hold API keys.                                                       |
-| `server.settings`      | Change server-wide settings.                                         |
-| `server.backup`        | Start a backup or restore one.                                       |
-| `server.logs`          | Read the server's log.                                               |
-| `server.monitor`       | See what the server is doing: load, memory and encoding.             |
-| `server.webhooks`      | Have the server call out to another address when something happens.  |
+| Permission             | What it lets somebody do                                                                                      |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `administrator`        | Everything, including anything added later.                                                                   |
+| `library.create`       | Add a library.                                                                                                |
+| `library.edit`         | Change a library's settings.                                                                                  |
+| `library.delete`       | Remove a library and forget everything scanned from it.                                                       |
+| `jobs.run`             | Start a job by hand, stop one, and change how many run at once.                                               |
+| `jobs.schedule`        | Change when a recurring job runs.                                                                             |
+| `jobs.runDestructive`  | Run reset and rebuild, the jobs that throw away what is stored.                                               |
+| `media.rescan`         | Ask Valence to read one item again.                                                                           |
+| `media.delete`         | Delete a media file from disk.                                                                                |
+| `media.reencode`       | Re-encode media at a chosen quality.                                                                          |
+| `media.override`       | Correct an item's metadata by hand.                                                                           |
+| `media.artwork`        | Replace an item's poster or backdrop.                                                                         |
+| `media.hide`           | Hide an item from every profile.                                                                              |
+| `sharing.link`         | Create share links.                                                                                           |
+| `sharing.party`        | Start watch parties.                                                                                          |
+| `sharing.manage`       | See every share link and withdraw any of them.                                                                |
+| `streaming.view`       | See who is watching and what.                                                                                 |
+| `streaming.stop`       | End somebody else's stream.                                                                                   |
+| `streaming.pause`      | Pause somebody else's stream.                                                                                 |
+| `streaming.message`    | Send a message that appears over somebody else's stream.                                                      |
+| `download.media`       | Save media to a device for offline viewing.                                                                   |
+| `requests.ask`         | Request films and series.                                                                                     |
+| `requests.askMusic`    | Request artists and albums.                                                                                   |
+| `requests.autoApprove` | Have requests go straight through without approval.                                                           |
+| `requests.viewAll`     | See everybody's requests.                                                                                     |
+| `requests.approve`     | Approve or refuse other people's requests.                                                                    |
+| `requests.manage`      | Set up indexers, download clients and quality profiles.                                                       |
+| `account.invite`       | Add a new account.                                                                                            |
+| `account.manage`       | List, rename and remove accounts.                                                                             |
+| `account.ban`          | Ban and unban accounts.                                                                                       |
+| `account.roles`        | Create roles and choose what they grant.                                                                      |
+| `account.profiles`     | Add, rename or remove another account's profiles.                                                             |
+| `account.security`     | Reset passwords, end sessions and see where an account is signed in.                                          |
+| `account.keys`         | Hold API keys.                                                                                                |
+| `server.settings`      | Change server-wide settings.                                                                                  |
+| `server.backup`        | Start a backup or restore one.                                                                                |
+| `server.logs`          | Read the server's log.                                                                                        |
+| `server.monitor`       | See what the server is doing: load, memory and encoding.                                                      |
+| `server.plugins`       | Install plugins from the catalogue or a file, choose what they may do, change their settings and remove them. |
+| `server.webhooks`      | Have the server call out to another address when something happens.                                           |
+
+Installed plugins can add permissions of their own, such as `plugin.anilist.sync`. They appear in the role editor in a group named after each plugin, described by the plugin, and are granted like any other. The Administrator role holds every one of them. They go when the plugin is removed. See [plugins](/use/plugins#permissions-a-plugin-adds).
 
 An account's effective permissions are the union of everything its roles grant. The server also supports per-account allow and deny overrides for a single permission through the API, but the admin area does not expose them yet, so manage access through roles.
 
