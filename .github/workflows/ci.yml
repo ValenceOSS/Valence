@@ -323,7 +323,11 @@ jobs:
           apt-get install -y --no-install-recommends \
             ca-certificates curl git xz-utils build-essential pkg-config
 
+      # Nothing here pushes, and cargo runs build scripts from every crate in the workspace, so the
+      # token is not left behind in the checkout for them to find.
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - uses: dtolnay/rust-toolchain@stable
         with:
