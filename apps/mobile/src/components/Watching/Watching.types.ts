@@ -1,3 +1,4 @@
+import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
 type WatchingProps = {
@@ -7,6 +8,7 @@ type WatchingProps = {
   onEnded?: () => void;
   seasons?: readonly { seasonNumber: number | null; episodes: readonly MediaSummary[] }[];
   onChooseEpisode?: (mediaId: string) => void;
+  kept?: HeldFile;
 };
 
 export type { WatchingProps };

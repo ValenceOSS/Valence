@@ -57,7 +57,6 @@ import { UnderThePlayer } from '@ValenceMobile/components/SignedIn/components/Un
 import { APageStack } from '@ValenceMobile/components/APageStack/APageStack';
 import { useTheProgrammeOfEpisode } from '@ValenceMobile/hooks/useTheProgrammeOfEpisode';
 import { Watching } from '@ValenceMobile/components/Watching/Watching';
-import { WatchingHeld } from '@ValenceMobile/components/WatchingHeld/WatchingHeld';
 import { useTellTheServerWhatIsHeld } from '@ValenceClient/downloads/useTellTheServerWhatIsHeld';
 import { useFetchWhatThisDeviceAsked } from '@ValenceClient/downloads/useFetchWhatThisDeviceAsked';
 import { sendWatchedOffline } from '@ValenceClient/offline/watchedOffline';
@@ -626,8 +625,10 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
         }}
       />
     ) : watchingHeld !== null ? (
-      <WatchingHeld
-        file={watchingHeld}
+      <Watching
+        key={watchingHeld.downloadId}
+        mediaId={watchingHeld.mediaId}
+        kept={watchingHeld}
         onDone={() => {
           setWatchingHeld(null);
         }}

@@ -14,7 +14,12 @@ import { get } from '@react-native-cookies/cookies';
 import { lockAsync, OrientationLock } from 'expo-screen-orientation';
 import { theFakePlayer } from '@ValenceMobile/testing/theFakePlayer';
 import { holdAWindowOf } from '@ValenceMobile/testing/holdAWindowOf';
+import { installPlatform } from '@ValenceClient/platform/installPlatform';
+import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
+import { aFakeHeldFiles } from '@ValenceClient/testing/aFakeHeldFiles';
+import { rememberWatchedOffline, watchedOffline } from '@ValenceClient/offline/watchedOffline';
 import { Watching } from './Watching';
+import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { StartedSession, StartOutcome } from '@ValenceClient/playback/startPlaybackSession';
 import type { PlaybackPlan } from '@ValenceContracts/schemas/PlaybackPlan';
 import type { ReactNode } from 'react';
@@ -81,6 +86,37 @@ beforeEach(() => {
 afterEach(() => {
   jest.useRealTimers();
 });
+
+const KEPT: HeldFile = {
+  downloadId: '00000000-0000-4000-8000-000000000001',
+  mediaId: '00000000-0000-4000-8000-000000000002',
+  seriesId: null,
+  seriesTitle: 'Ted',
+  title: 'My Two Dads',
+  quality: '480p',
+  durationSeconds: 1500,
+  ofBytes: null,
+  state: 'here',
+  bytes: 250_000_000,
+  bytesPerSecond: null,
+  failure: null,
+  keptAt: '2026-09-29T00:00:00.000Z',
+  hasPoster: true,
+  hasTrickplay: true,
+};
+
+/**
+ * A phone holding downloads, whose kept thumbnails are read by the given function.
+ *
+ * @param trickplayFor - How the kept thumbnails are read.
+ */
+const aPhoneKeeping = (trickplayFor = jest.fn(() => Promise.resolve(null))) => {
+  installPlatform(
+    aFakePlatform({ canKeepFiles: () => true, held: { ...aFakeHeldFiles().held, trickplayFor } }),
+  );
+
+  return trickplayFor;
+};
 
 describe('Watching', () => {
   it('waits without words, since there is nothing to say yet', async () => {
@@ -801,5 +837,87 @@ describe('Watching', () => {
     });
 
     expect(onEnded).toHaveBeenCalled();
+  });
+
+  describe('a copy kept on this phone', () => {
+    it('plays the file on the phone, without asking the server for a session', async () => {
+      aPhoneKeeping();
+
+      const drawn = await render(
+        around(<Watching mediaId={KEPT.mediaId} kept={KEPT} onDone={jest.fn()} />),
+      );
+
+      await waitFor(() => {
+        expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+      });
+
+      expect(theFakePlayer.source).toBe(`/held/${KEPT.downloadId}`);
+      expect(startPlaybackSession).not.toHaveBeenCalled();
+    });
+
+    it('is named from what was kept, since the server may not be there to ask', async () => {
+      aPhoneKeeping();
+      jest.mocked(fetchSegments).mockClear();
+
+      const drawn = await render(
+        around(<Watching mediaId={KEPT.mediaId} kept={KEPT} onDone={jest.fn()} />),
+      );
+
+      expect(await drawn.findByText(/My Two Dads/u)).toBeTruthy();
+      expect(fetchMediaDetail).not.toHaveBeenCalled();
+      expect(fetchSegments).not.toHaveBeenCalled();
+    });
+
+    it('scrubs with the thumbnails kept beside it', async () => {
+      const trickplayFor = aPhoneKeeping();
+
+      await render(around(<Watching mediaId={KEPT.mediaId} kept={KEPT} onDone={jest.fn()} />));
+
+      await waitFor(() => {
+        expect(trickplayFor).toHaveBeenCalledWith(KEPT.downloadId);
+      });
+    });
+
+    it('picks up where it was left on this phone', async () => {
+      aPhoneKeeping();
+      rememberWatchedOffline(KEPT.mediaId, 600, 1500);
+
+      const drawn = await render(
+        around(<Watching mediaId={KEPT.mediaId} kept={KEPT} onDone={jest.fn()} />),
+      );
+
+      await waitFor(() => {
+        expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+      });
+
+      expect(theFakePlayer.currentTime).toBe(600);
+    });
+
+    it('remembers where it got to on the phone, and tells the server nothing', async () => {
+      jest.useFakeTimers({ doNotFake: ['nextTick', 'queueMicrotask'] });
+      aPhoneKeeping();
+
+      const drawn = await render(
+        around(<Watching mediaId={KEPT.mediaId} kept={KEPT} onDone={jest.fn()} />),
+      );
+
+      await waitFor(() => {
+        expect(drawn.getByLabelText('Stop watching')).toBeTruthy();
+      });
+
+      await act(() => {
+        jest.advanceTimersByTime(30_000);
+      });
+
+      await drawn.unmount();
+
+      expect(watchedOffline()).toEqual([
+        expect.objectContaining({ mediaId: KEPT.mediaId, positionSeconds: 420 }),
+      ]);
+      expect(reportWatchProgress).not.toHaveBeenCalled();
+      expect(heartbeatPlaybackSession).not.toHaveBeenCalled();
+      expect(stopWatching).not.toHaveBeenCalled();
+      expect(stopPlaybackSession).not.toHaveBeenCalled();
+    });
   });
 });
