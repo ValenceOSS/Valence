@@ -65,6 +65,45 @@ const CODE = `globalThis.valencePlugin = {
 
 const PACKAGE = packPlugin({ format: 1, manifest: MANIFEST, code: CODE, assets: {} });
 
+/**
+ * The counter plugin at another version, with a data change of its own to run when it is upgraded
+ * to.
+ *
+ * @param version - The version.
+ * @param onUpgraded - The body of its onUpgraded hook.
+ * @returns The package.
+ */
+const counterAt = (version: string, onUpgraded: string): Uint8Array =>
+  packPlugin({
+    format: 1,
+    manifest: { ...MANIFEST, version },
+    code: CODE.replace(
+      'globalThis.valencePlugin = {',
+      `globalThis.valencePlugin = {\n  onUpgraded: async ({ valence }, versions) => { ${onUpgraded} },`,
+    ),
+    assets: {},
+  });
+
+/**
+ * Installs a package over whatever the service already has, accepting it as shown.
+ *
+ * @param service - The service.
+ * @param bytes - The package.
+ * @returns What installing said.
+ */
+const installOver = async (service: ReturnType<typeof build>, bytes: Uint8Array) => {
+  const preview = await service.previewUpload(bytes, null, 'account-1');
+
+  if ('problem' in preview) {
+    throw new Error(preview.problem);
+  }
+
+  return service.install(
+    { token: preview.token, permissionsHash: preview.permissionsHash, acceptUnsigned: true },
+    'account-1',
+  );
+};
+
 const VIEWER: PluginViewer = { accountId: 'account-1', profileId: 'profile-1', isAdmin: false };
 
 const HOME = { kind: 'page', id: 'home', subject: null } as const;
@@ -298,4 +337,65 @@ describe('a plugin from upload to use, through its own process', () => {
     ]);
     expect(announce.mock.calls.every(([said]) => said.pluginId === 'counter')).toBe(true);
   });
+
+  it('runs an upgrade’s own data change, and rolls back to the version and data it replaced', async () => {
+    const service = await installed();
+    const press = { action: { id: 'press' }, fields: {} };
+
+    await service.act('counter', HOME, VIEWER, press);
+    await service.act('counter', HOME, VIEWER, press);
+
+    const upgraded = await installOver(
+      service,
+      counterAt(
+        '2.0.0',
+        "await valence.storage.set('count', ((await valence.storage.get('count')) ?? 0) * 10);",
+      ),
+    );
+
+    expect('refused' in upgraded ? upgraded.refused : upgraded.previousVersion).toBe('1.0.0');
+    expect((await service.render('counter', HOME, VIEWER))?.surface).toEqual({
+      blocks: [{ type: 'text', text: 'Pressed 20' }],
+    });
+
+    const rolled = await service.rollback('counter');
+
+    expect(rolled !== null && !('refused' in rolled) ? rolled.version : rolled).toBe('1.0.0');
+    expect((await service.render('counter', HOME, VIEWER))?.surface).toEqual({
+      blocks: [{ type: 'text', text: 'Pressed 2' }],
+    });
+    expect(await service.rollback('counter')).toEqual({
+      refused: 'No earlier version of this plugin is kept to go back to.',
+    });
+
+    service.stop();
+  }, 30_000);
+
+  it('puts the earlier version and its data back when an upgrade’s data change fails', async () => {
+    const service = await installed();
+
+    await service.act('counter', HOME, VIEWER, { action: { id: 'press' }, fields: {} });
+
+    const upgraded = await installOver(
+      service,
+      counterAt(
+        '3.0.0',
+        "await valence.storage.set('count', 999); throw new Error('The old list could not be read.');",
+      ),
+    );
+
+    expect('refused' in upgraded ? upgraded.refused : '').toMatch(
+      /Counter 3\.0\.0 could not bring its data up to date, so 1\.0\.0 was put back as it was\..*The old list could not be read\./u,
+    );
+
+    const [kept] = await service.listInstalled();
+
+    expect(kept?.version).toBe('1.0.0');
+    expect(kept?.previousVersion).toBeNull();
+    expect((await service.render('counter', HOME, VIEWER))?.surface).toEqual({
+      blocks: [{ type: 'text', text: 'Pressed 1' }],
+    });
+
+    service.stop();
+  }, 30_000);
 });

@@ -12,6 +12,7 @@ const previewCataloguePlugin = vi.hoisted(() => vi.fn());
 const uploadPluginPackage = vi.hoisted(() => vi.fn());
 const changePlugin = vi.hoisted(() => vi.fn());
 const removePlugin = vi.hoisted(() => vi.fn());
+const rollbackPlugin = vi.hoisted(() => vi.fn());
 const told = vi.hoisted(() => ({ worked: vi.fn(), failed: vi.fn() }));
 
 vi.mock('@ValenceClient/plugins/fetchInstalledPlugins', () => ({ fetchInstalledPlugins }));
@@ -20,6 +21,7 @@ vi.mock('@ValenceClient/plugins/previewCataloguePlugin', () => ({ previewCatalog
 vi.mock('@ValenceClient/plugins/uploadPluginPackage', () => ({ uploadPluginPackage }));
 vi.mock('@ValenceClient/plugins/changePlugin', () => ({ changePlugin }));
 vi.mock('@ValenceClient/plugins/removePlugin', () => ({ removePlugin }));
+vi.mock('@ValenceClient/plugins/rollbackPlugin', () => ({ rollbackPlugin }));
 vi.mock('@ValenceUI/notify', () => ({ notify: told }));
 
 const fetchPluginSurface = vi.hoisted(() => vi.fn());
@@ -49,6 +51,7 @@ beforeEach(() => {
   uploadPluginPackage.mockReset().mockResolvedValue(anInstallPreview({ trust: 'unsigned' }));
   changePlugin.mockReset().mockResolvedValue(undefined);
   removePlugin.mockReset().mockResolvedValue(undefined);
+  rollbackPlugin.mockReset().mockResolvedValue(aPlugin({ version: '0.9.0' }));
   told.worked.mockReset();
   told.failed.mockReset();
 });
@@ -113,6 +116,30 @@ describe('PluginsPanel', () => {
     await waitFor(() => {
       expect(removePlugin).toHaveBeenCalledWith('anilist');
     });
+  });
+
+  it('rolls a plugin back to the version an upgrade replaced, once it is confirmed', async () => {
+    fetchInstalledPlugins.mockResolvedValue({
+      plugins: [aPlugin({ previousVersion: '0.9.0' })],
+      redirectUri: null,
+    });
+
+    renderInAnAddress(<PluginsPanel />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Roll back to 0.9.0' }));
+
+    const dialog = screen.getByRole('dialog');
+
+    expect(
+      within(dialog).getByText(/Anything it kept since the upgrade is lost/u),
+    ).toBeInTheDocument();
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Roll back' }));
+
+    await waitFor(() => {
+      expect(rollbackPlugin).toHaveBeenCalledWith('anilist');
+    });
+    expect(told.worked).toHaveBeenCalledWith('Rolled AniList back to 0.9.0.');
   });
 
   it('says when the catalogue cannot be reached, and when nothing is installed', async () => {

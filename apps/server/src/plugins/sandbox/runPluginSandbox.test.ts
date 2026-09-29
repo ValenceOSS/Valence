@@ -131,6 +131,7 @@ describe('the plugin sandbox', () => {
       schedules: ['tick'],
       events: false,
       accountConnected: false,
+      upgraded: false,
     });
   });
 

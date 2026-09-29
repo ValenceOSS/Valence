@@ -24,6 +24,7 @@ describe('DOC_PAGES', () => {
         '/plugins/schedules-and-events',
         '/plugins/packaging',
         '/plugins/publishing',
+        '/plugins/upgrades-and-rollback',
         '/plugins/example-anime-tracking',
         '/plugins/example-playlist-import',
       ]),

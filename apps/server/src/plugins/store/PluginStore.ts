@@ -17,6 +17,7 @@ type InstalledRecord = {
   installedAt: string;
   updatedAt: string;
   problem: string | null;
+  previousVersion: string | null;
 };
 
 type ConnectionRecord = {
@@ -32,7 +33,11 @@ type ConnectionRecord = {
 type PluginStore = {
   list: () => Promise<InstalledRecord[]>;
   read: (id: string) => Promise<InstalledRecord | null>;
-  save: (record: Omit<InstalledRecord, 'installedAt' | 'updatedAt' | 'problem'>) => Promise<void>;
+  save: (
+    record: Omit<InstalledRecord, 'installedAt' | 'updatedAt' | 'problem' | 'previousVersion'>,
+  ) => Promise<void>;
+  keepPrevious: (id: string) => Promise<boolean>;
+  restorePrevious: (id: string) => Promise<boolean>;
   change: (
     id: string,
     changes: Partial<Pick<InstalledRecord, 'isEnabled' | 'settings' | 'problem'>>,

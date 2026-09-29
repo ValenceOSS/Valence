@@ -46,6 +46,7 @@ const aPlugin = (overrides: Partial<InstalledPlugin> = {}): InstalledPlugin => (
   installedAt: '2026-09-28T10:00:00.000Z',
   updatedAt: '2026-09-28T10:00:00.000Z',
   updateAvailable: null,
+  previousVersion: null,
   ...overrides,
 });
 

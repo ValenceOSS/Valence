@@ -6,6 +6,7 @@ import { PluginManifestSchema } from '@ValenceSDK/manifest/PluginManifestSchema'
 import {
   pluginConnection,
   pluginInstallation,
+  pluginPrevious,
   pluginProfile,
   pluginStorage,
 } from '@ValenceServer/db/Schema';
@@ -14,6 +15,10 @@ import type { ValenceDatabase } from '@ValenceServer/db/Database';
 import type { InstalledRecord, PluginStore } from './PluginStore';
 
 const SettingsSchema = z.record(z.string(), z.union([z.string(), z.boolean()]));
+
+const KeptStorageSchema = z.array(
+  z.object({ key: z.string(), value: JsonValueSchema, bytes: z.number().int().nonnegative() }),
+);
 
 /**
  * Installed plugins, what each keeps and who connected to it, held in Postgres. A row whose manifest
@@ -24,7 +29,10 @@ const SettingsSchema = z.record(z.string(), z.union([z.string(), z.boolean()]));
  * @returns The store.
  */
 const createDatabasePluginStore = (db: ValenceDatabase): PluginStore => {
-  const readRow = (row: typeof pluginInstallation.$inferSelect): InstalledRecord[] => {
+  const readRow = (
+    row: typeof pluginInstallation.$inferSelect,
+    previousVersion: string | null,
+  ): InstalledRecord[] => {
     const manifest = PluginManifestSchema.safeParse(row.manifest);
     const trust = PluginTrustSchema.safeParse(row.trust);
     const settings = SettingsSchema.safeParse(row.settings);
@@ -47,19 +55,36 @@ const createDatabasePluginStore = (db: ValenceDatabase): PluginStore => {
         installedAt: row.installedAt.toISOString(),
         updatedAt: row.updatedAt.toISOString(),
         problem: row.problem,
+        previousVersion,
       },
     ];
   };
 
+  const previousVersions = async (): Promise<Map<string, string>> =>
+    new Map(
+      (
+        await db
+          .select({ pluginId: pluginPrevious.pluginId, version: pluginPrevious.version })
+          .from(pluginPrevious)
+      ).map((row) => [row.pluginId, row.version]),
+    );
+
   return {
-    list: async () =>
-      (await db.select().from(pluginInstallation).orderBy(asc(pluginInstallation.id))).flatMap(
-        readRow,
-      ),
+    list: async () => {
+      const earlier = await previousVersions();
+
+      return (
+        await db.select().from(pluginInstallation).orderBy(asc(pluginInstallation.id))
+      ).flatMap((row) => readRow(row, earlier.get(row.id) ?? null));
+    },
     read: async (id) => {
       const [row] = await db.select().from(pluginInstallation).where(eq(pluginInstallation.id, id));
+      const [earlier] = await db
+        .select({ version: pluginPrevious.version })
+        .from(pluginPrevious)
+        .where(eq(pluginPrevious.pluginId, id));
 
-      return row === undefined ? null : (readRow(row)[0] ?? null);
+      return row === undefined ? null : (readRow(row, earlier?.version ?? null)[0] ?? null);
     },
     save: async (record) => {
       const row = {
@@ -81,6 +106,84 @@ const createDatabasePluginStore = (db: ValenceDatabase): PluginStore => {
         .values(row)
         .onConflictDoUpdate({ target: pluginInstallation.id, set: row });
     },
+    keepPrevious: async (id) =>
+      db.transaction(async (tx) => {
+        const [row] = await tx
+          .select()
+          .from(pluginInstallation)
+          .where(eq(pluginInstallation.id, id));
+
+        if (row === undefined) {
+          return false;
+        }
+
+        const storage = await tx
+          .select({
+            key: pluginStorage.key,
+            value: pluginStorage.value,
+            bytes: pluginStorage.bytes,
+          })
+          .from(pluginStorage)
+          .where(eq(pluginStorage.pluginId, id));
+        const kept = {
+          version: row.version,
+          trust: row.trust,
+          manifest: row.manifest,
+          package: row.package,
+          sha256: row.sha256,
+          storage,
+          keptAt: new Date(),
+        };
+
+        await tx
+          .insert(pluginPrevious)
+          .values({ pluginId: id, ...kept })
+          .onConflictDoUpdate({ target: pluginPrevious.pluginId, set: kept });
+
+        return true;
+      }),
+    restorePrevious: async (id) =>
+      db.transaction(async (tx) => {
+        const [earlier] = await tx
+          .select()
+          .from(pluginPrevious)
+          .where(eq(pluginPrevious.pluginId, id));
+        const storage = KeptStorageSchema.safeParse(earlier?.storage);
+
+        if (earlier === undefined || !storage.success) {
+          return false;
+        }
+
+        const restored = await tx
+          .update(pluginInstallation)
+          .set({
+            version: earlier.version,
+            trust: earlier.trust,
+            manifest: earlier.manifest,
+            package: earlier.package,
+            sha256: earlier.sha256,
+            problem: null,
+            updatedAt: new Date(),
+          })
+          .where(eq(pluginInstallation.id, id))
+          .returning({ id: pluginInstallation.id });
+
+        if (restored.length === 0) {
+          return false;
+        }
+
+        await tx.delete(pluginStorage).where(eq(pluginStorage.pluginId, id));
+
+        if (storage.data.length > 0) {
+          await tx
+            .insert(pluginStorage)
+            .values(storage.data.map((kept) => ({ pluginId: id, ...kept })));
+        }
+
+        await tx.delete(pluginPrevious).where(eq(pluginPrevious.pluginId, id));
+
+        return true;
+      }),
     change: async (id, changes) => {
       const changed = await db
         .update(pluginInstallation)

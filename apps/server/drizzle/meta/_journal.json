@@ -624,6 +624,13 @@
       "when": 1790601797079,
       "tag": "0088_plugins",
       "breakpoints": true
+    },
+    {
+      "idx": 89,
+      "version": "7",
+      "when": 1790695146236,
+      "tag": "0089_plugin_rollback",
+      "breakpoints": true
     }
   ]
 }

@@ -5,8 +5,10 @@ import { changePlugin } from './changePlugin';
 import { installPlugin } from './installPlugin';
 import { previewCataloguePlugin } from './previewCataloguePlugin';
 import { removePlugin } from './removePlugin';
+import { rollbackPlugin } from './rollbackPlugin';
 import { uploadPluginPackage } from './uploadPluginPackage';
 import { anInstallPreview } from '@ValenceClient/testing/anInstallPreview';
+import { aPlugin } from '@ValenceClient/testing/aPlugin';
 
 const fetchMock = vi.fn<(input: string, init?: RequestInit) => Promise<Response>>();
 
@@ -79,6 +81,14 @@ describe('plugin changes', () => {
     answer({ surface: null, navigate: '/api/plugins/anilist//evil.example' });
 
     await expect(actOnPluginSurface(place, request)).rejects.toThrow();
+  });
+
+  it('rolls a plugin back, and reads the plugin as it now is', async () => {
+    answer(aPlugin({ version: '0.9.0' }));
+
+    await expect(rollbackPlugin('anilist')).resolves.toEqual(aPlugin({ version: '0.9.0' }));
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/plugins/anilist/rollback');
+    expect(fetchMock.mock.calls[0]?.[1]?.method).toBe('POST');
   });
 
   it('previews an official plugin', async () => {

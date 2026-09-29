@@ -12,7 +12,10 @@ type SurfaceContext = {
 
 type SurfaceHandler = {
   render: (context: SurfaceContext) => Surface | Promise<Surface>;
-  act?: (context: SurfaceContext, request: SurfaceActRequest) => Surface | Promise<Surface> | void | Promise<void>;
+  act?: (
+    context: SurfaceContext,
+    request: SurfaceActRequest,
+  ) => Surface | Promise<Surface> | void | Promise<void>;
 };
 
 type PluginEvent = {
@@ -27,6 +30,10 @@ type PluginDefinition = {
   panels?: Record<string, SurfaceHandler>;
   schedules?: Record<string, (context: { valence: ValenceHost }) => Promise<void>>;
   events?: (event: PluginEvent, context: { valence: ValenceHost }) => Promise<void>;
+  onUpgraded?: (
+    context: { valence: ValenceHost },
+    versions: { from: string; to: string },
+  ) => Promise<void>;
   onAccountConnected?: (
     context: { valence: ValenceHost },
     connection: { profileId: string; provider: string },

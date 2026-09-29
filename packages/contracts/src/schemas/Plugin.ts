@@ -42,6 +42,7 @@ const InstalledPluginSchema = PluginSummarySchema.extend({
   installedAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
   updateAvailable: z.string().nullable(),
+  previousVersion: z.string().nullable(),
 });
 
 const InstalledPluginsSchema = z.object({

@@ -9,6 +9,7 @@ const handlers = () => ({
   onToggle: vi.fn(),
   onSettings: vi.fn(),
   onUpdate: vi.fn(),
+  onRollback: vi.fn(),
   onRemove: vi.fn(),
   onOpenPage: vi.fn(),
 });
@@ -22,6 +23,7 @@ describe('InstalledPluginCard', () => {
         <InstalledPluginCard
           plugin={aPlugin({
             updateAvailable: '1.1.0',
+            previousVersion: '0.9.0',
             pages: [{ id: 'log', title: 'Sync log', placement: 'admin' }],
             iconUrl: '/api/plugins/anilist/assets/icon.png',
           })}
@@ -40,12 +42,14 @@ describe('InstalledPluginCard', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Update to 1.1.0' }));
     await userEvent.click(screen.getByRole('button', { name: 'Sync log' }));
     await userEvent.click(screen.getByRole('button', { name: /Settings/u }));
+    await userEvent.click(screen.getByRole('button', { name: 'Roll back to 0.9.0' }));
     await userEvent.click(screen.getByRole('button', { name: /Remove/u }));
     await userEvent.click(screen.getByRole('switch', { name: 'Turn AniList off' }));
 
     expect(said.onUpdate).toHaveBeenCalled();
     expect(said.onOpenPage).toHaveBeenCalledWith({ pageId: 'log', title: 'Sync log' });
     expect(said.onSettings).toHaveBeenCalled();
+    expect(said.onRollback).toHaveBeenCalled();
     expect(said.onRemove).toHaveBeenCalled();
     expect(said.onToggle).toHaveBeenCalled();
   });

@@ -36,6 +36,7 @@ const summaryOf = (
   installedAt: record.installedAt,
   updatedAt: record.updatedAt,
   updateAvailable,
+  previousVersion: record.previousVersion,
 });
 
 export { summaryOf };

@@ -1326,6 +1326,19 @@ const pluginStorage = pgTable(
   (table) => [primaryKey({ columns: [table.pluginId, table.key] })],
 );
 
+const pluginPrevious = pgTable('plugin_previous', {
+  pluginId: text('pluginId')
+    .primaryKey()
+    .references(() => pluginInstallation.id, { onDelete: 'cascade' }),
+  version: text('version').notNull(),
+  trust: text('trust').notNull(),
+  manifest: jsonb('manifest').notNull(),
+  package: text('package').notNull(),
+  sha256: text('sha256').notNull(),
+  storage: jsonb('storage').notNull(),
+  keptAt: timestamp('keptAt').notNull().defaultNow(),
+});
+
 const pluginConnection = pgTable(
   'plugin_connection',
   {
@@ -1376,6 +1389,7 @@ const valenceSchema = { userProfile, viewerProfile, serverSetting, library, medi
 export {
   pluginInstallation,
   pluginStorage,
+  pluginPrevious,
   pluginConnection,
   pluginProfile,
   accountActivity,

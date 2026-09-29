@@ -245,6 +245,33 @@ const createPluginService = ({
       : { record, plugin, code: plugin.code };
   };
 
+  const bringDataUpToDate = async (
+    pluginId: string,
+    versions: { from: string; to: string },
+  ): Promise<string | null> => {
+    const record = await store.read(pluginId);
+    const plugin = record === null ? null : unpack(record);
+
+    if (record === null || plugin?.code === undefined) {
+      return null;
+    }
+
+    try {
+      await runtime.invoke(
+        { record, code: plugin.code },
+        'upgraded',
+        { versions },
+        {
+          kind: 'background',
+        },
+      );
+
+      return null;
+    } catch (error) {
+      return error instanceof Error && error.message !== '' ? error.message : 'It failed.';
+    }
+  };
+
   const latestVersions = async (): Promise<Map<string, string>> => {
     const read = await catalogue.read();
 
@@ -576,6 +603,12 @@ const createPluginService = ({
       const { manifest } = waiting.plugin;
       const existing = await store.read(manifest.id);
       const kept = changeSettings(manifest, existing?.settings ?? {}, {}, sealingKey);
+      const upgradesFrom =
+        existing !== null && existing.version !== manifest.version ? existing.version : null;
+
+      if (upgradesFrom !== null) {
+        await store.keepPrevious(manifest.id);
+      }
 
       await store.save({
         id: manifest.id,
@@ -594,6 +627,27 @@ const createPluginService = ({
 
       if (saved === null) {
         return { refused: 'The plugin could not be kept.' };
+      }
+
+      if (upgradesFrom !== null) {
+        const problem = await bringDataUpToDate(manifest.id, {
+          from: upgradesFrom,
+          to: manifest.version,
+        });
+
+        if (problem !== null) {
+          runtime.stop(manifest.id);
+          await store.restorePrevious(manifest.id);
+          log(
+            'warn',
+            `plugin ${manifest.id}: ${manifest.version} could not bring its data up to date, so ${upgradesFrom} was put back: ${problem}`,
+          );
+          announce({ pluginId: manifest.id, change: 'updated' });
+
+          return {
+            refused: `${manifest.name} ${manifest.version} could not bring its data up to date, so ${upgradesFrom} was put back as it was. ${problem}`,
+          };
+        }
       }
 
       log('info', `plugin ${manifest.id}: installed ${manifest.version} (${waiting.trust})`);
@@ -650,6 +704,35 @@ const createPluginService = ({
               ? 'enabled'
               : 'disabled',
       });
+
+      return summaryOf(saved, runtime.stateOf(id), null);
+    },
+    rollback: async (id: string): Promise<InstalledPlugin | { refused: string } | null> => {
+      const record = await store.read(id);
+
+      if (record === null) {
+        return null;
+      }
+
+      if (record.previousVersion === null) {
+        return { refused: 'No earlier version of this plugin is kept to go back to.' };
+      }
+
+      runtime.stop(id);
+
+      if (!(await store.restorePrevious(id))) {
+        return { refused: 'The earlier version could not be put back.' };
+      }
+
+      const saved = await store.read(id);
+
+      if (saved === null) {
+        return null;
+      }
+
+      await scheduleAll(saved);
+      log('info', `plugin ${id}: rolled back from ${record.version} to ${saved.version}`);
+      announce({ pluginId: id, change: 'updated' });
 
       return summaryOf(saved, runtime.stateOf(id), null);
     },

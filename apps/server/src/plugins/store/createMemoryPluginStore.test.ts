@@ -61,4 +61,28 @@ describe('createMemoryPluginStore', () => {
     expect(await store.readConnection('store-test', 'p1', 'anilist')).toBeNull();
     expect(await store.remove('store-test')).toBe(false);
   });
+
+  it('keeps the version an upgrade replaces with what it kept, and puts both back once', async () => {
+    const store = createMemoryPluginStore(() => new Date('2026-01-01T00:00:00.000Z'));
+
+    await store.save(A_RECORD);
+    await store.writeValue('store-test', 'count', 2, 1);
+
+    expect(await store.keepPrevious('store-test')).toBe(true);
+
+    await store.save({ ...A_RECORD, version: '2.0.0', sha256: 'c'.repeat(64) });
+    await store.writeValue('store-test', 'count', 20, 2);
+
+    expect((await store.read('store-test'))?.previousVersion).toBe('1.0.0');
+    expect(await store.restorePrevious('store-test')).toBe(true);
+
+    const back = await store.read('store-test');
+
+    expect(back?.version).toBe('1.0.0');
+    expect(back?.sha256).toBe('b'.repeat(64));
+    expect(back?.previousVersion).toBeNull();
+    expect(await store.readValue('store-test', 'count')).toBe(2);
+    expect(await store.restorePrevious('store-test')).toBe(false);
+    expect(await store.keepPrevious('nothing-here')).toBe(false);
+  });
 });

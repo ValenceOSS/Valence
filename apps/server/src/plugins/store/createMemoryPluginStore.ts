@@ -13,6 +13,15 @@ const createMemoryPluginStore = (now: () => Date = () => new Date()): PluginStor
   const values = new Map<string, Map<string, { value: JsonValue; bytes: number }>>();
   const connections = new Map<string, ConnectionRecord>();
   const profiles = new Map<string, Set<string>>();
+  const previous = new Map<
+    string,
+    { record: InstalledRecord; values: Map<string, { value: JsonValue; bytes: number }> }
+  >();
+
+  const withPrevious = (record: InstalledRecord): InstalledRecord => ({
+    ...record,
+    previousVersion: previous.get(record.id)?.record.version ?? null,
+  });
 
   const connectionKey = (pluginId: string, profileId: string, provider: string): string =>
     JSON.stringify([pluginId, profileId, provider]);
@@ -26,8 +35,15 @@ const createMemoryPluginStore = (now: () => Date = () => new Date()): PluginStor
   };
 
   return {
-    list: () => Promise.resolve([...installed.values()].sort((a, b) => a.id.localeCompare(b.id))),
-    read: (id) => Promise.resolve(installed.get(id) ?? null),
+    list: () =>
+      Promise.resolve(
+        [...installed.values()].sort((a, b) => a.id.localeCompare(b.id)).map(withPrevious),
+      ),
+    read: (id) => {
+      const found = installed.get(id);
+
+      return Promise.resolve(found === undefined ? null : withPrevious(found));
+    },
     save: (record) => {
       const was = installed.get(record.id);
       const at = now().toISOString();
@@ -37,9 +53,44 @@ const createMemoryPluginStore = (now: () => Date = () => new Date()): PluginStor
         installedAt: was?.installedAt ?? at,
         updatedAt: at,
         problem: null,
+        previousVersion: null,
       });
 
       return Promise.resolve();
+    },
+    keepPrevious: (id) => {
+      const was = installed.get(id);
+
+      if (was === undefined) {
+        return Promise.resolve(false);
+      }
+
+      previous.set(id, { record: was, values: new Map(kept(id)) });
+
+      return Promise.resolve(true);
+    },
+    restorePrevious: (id) => {
+      const earlier = previous.get(id);
+      const current = installed.get(id);
+
+      if (earlier === undefined || current === undefined) {
+        return Promise.resolve(false);
+      }
+
+      installed.set(id, {
+        ...current,
+        version: earlier.record.version,
+        trust: earlier.record.trust,
+        manifest: earlier.record.manifest,
+        packageBase64: earlier.record.packageBase64,
+        sha256: earlier.record.sha256,
+        updatedAt: now().toISOString(),
+        problem: null,
+      });
+      values.set(id, new Map(earlier.values));
+      previous.delete(id);
+
+      return Promise.resolve(true);
     },
     change: (id, changes) => {
       const was = installed.get(id);
@@ -56,6 +107,7 @@ const createMemoryPluginStore = (now: () => Date = () => new Date()): PluginStor
       const had = installed.delete(id);
 
       values.delete(id);
+      previous.delete(id);
       profiles.delete(id);
 
       for (const [key, connection] of connections) {

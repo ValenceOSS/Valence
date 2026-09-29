@@ -20,6 +20,7 @@ import {
   readCatalogueRoute,
   renderPageRoute,
   renderPanelRoute,
+  rollbackPluginRoute,
   uninstallPluginRoute,
 } from '@ValenceServer/routes/PluginRoute';
 import type { AppContext } from '@ValenceServer/api/AppContext';
@@ -227,6 +228,25 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
     return 'refused' in changed
       ? context.json({ error: changed.refused }, 422)
       : context.json(changed, 200);
+  });
+
+  app.openapi(rollbackPluginRoute, async (context) => {
+    const allowed = await administrator(context.req.raw.headers);
+
+    if (allowed !== 'allowed') {
+      return context.json(allowed === 401 ? NOT_SIGNED_IN : NOT_ALLOWED, allowed);
+    }
+
+    const rolled =
+      plugins === undefined ? null : await plugins.rollback(context.req.valid('param').id);
+
+    if (rolled === null) {
+      return context.json(NO_SUCH, 404);
+    }
+
+    return 'refused' in rolled
+      ? context.json({ error: rolled.refused }, 422)
+      : context.json(rolled, 200);
   });
 
   app.openapi(uninstallPluginRoute, async (context) => {

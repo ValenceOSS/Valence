@@ -17,6 +17,7 @@ import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { CatalogueEntryRow } from '@ValenceScreens/components/AdminArea/components/PluginsPanel/components/CatalogueEntryRow/CatalogueEntryRow';
 import { InstallReviewDialog } from '@ValenceScreens/components/AdminArea/components/PluginsPanel/components/InstallReviewDialog/InstallReviewDialog';
 import { InstalledPluginCard } from '@ValenceScreens/components/AdminArea/components/PluginsPanel/components/InstalledPluginCard/InstalledPluginCard';
+import { rollbackPlugin } from '@ValenceClient/plugins/rollbackPlugin';
 import { usePluginWithdrawn } from '@ValenceClient/plugins/usePluginWithdrawn';
 import { PluginPageDialog } from '@ValenceScreens/components/AdminArea/components/PluginsPanel/components/PluginPageDialog/PluginPageDialog';
 import { PluginSettingsDialog } from '@ValenceScreens/components/AdminArea/components/PluginsPanel/components/PluginSettingsDialog/PluginSettingsDialog';
@@ -36,6 +37,7 @@ const PluginsPanel = () => {
   const [busy, setBusy] = useState<string | null>(null);
   const [settingsOf, setSettingsOf] = useState<InstalledPlugin | null>(null);
   const [removing, setRemoving] = useState<InstalledPlugin | null>(null);
+  const [rollingBack, setRollingBack] = useState<InstalledPlugin | null>(null);
   const [page, setPage] = useState<{ pluginId: string; pageId: string; title: string } | null>(
     null,
   );
@@ -152,6 +154,9 @@ const PluginsPanel = () => {
                 onUpdate={() => {
                   look(plugin.id);
                 }}
+                onRollback={() => {
+                  setRollingBack(plugin);
+                }}
                 onRemove={() => {
                   setRemoving(plugin);
                 }}
@@ -224,6 +229,39 @@ const PluginsPanel = () => {
         page={page}
         onClose={() => {
           setPage(null);
+        }}
+      />
+
+      <ConfirmDialog
+        title={rollingBack === null ? 'Roll back this plugin?' : `Roll back ${rollingBack.name}?`}
+        detail={`${rollingBack?.previousVersion ?? 'The earlier version'} comes back with what it had kept as it was when the upgrade happened. Anything it kept since the upgrade is lost.`}
+        confirmLabel="Roll back"
+        isBusy={rollingBack !== null && busy === rollingBack.id}
+        isOpen={rollingBack !== null}
+        onClose={() => {
+          setRollingBack(null);
+        }}
+        onConfirm={() => {
+          const plugin = rollingBack;
+
+          if (plugin === null) {
+            return;
+          }
+
+          setBusy(plugin.id);
+
+          void rollbackPlugin(plugin.id)
+            .then((back) => {
+              tellOutcome(`Rolled ${plugin.name} back to ${back.version}.`, null);
+            })
+            .catch((problem: Error) => {
+              tellOutcome('', problem.message);
+            })
+            .finally(() => {
+              setBusy(null);
+              setRollingBack(null);
+              void reread();
+            });
         }}
       />
 

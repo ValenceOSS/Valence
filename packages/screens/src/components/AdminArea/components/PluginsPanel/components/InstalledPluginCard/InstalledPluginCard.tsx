@@ -1,4 +1,9 @@
-import { Plug as PlugIcon, Settings as SettingsIcon, Bin as BinIcon } from '@keyline-icons/react';
+import {
+  Bin as BinIcon,
+  Plug as PlugIcon,
+  RotateCcw as RotateCcwIcon,
+  Settings as SettingsIcon,
+} from '@keyline-icons/react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Callout } from '@ValenceUI/Callout';
@@ -22,6 +27,7 @@ const STATES = {
  * @param isBusy - Whether something is being done to it.
  * @param onToggle - Told to turn it on or off.
  * @param onSettings - Told to open its settings.
+ * @param onRollback - Told to put back the version an upgrade replaced.
  * @param onUpdate - Told to fetch the newer version from the catalogue.
  * @param onRemove - Told to remove it.
  * @param onOpenPage - Told to open one of its administrator pages.
@@ -32,6 +38,7 @@ const InstalledPluginCard = ({
   onToggle,
   onSettings,
   onUpdate,
+  onRollback,
   onRemove,
   onOpenPage,
 }: InstalledPluginCardProps) => {
@@ -106,6 +113,13 @@ const InstalledPluginCard = ({
           <Button size="sm" variant="secondary" onClick={onSettings}>
             <Icon of={SettingsIcon} size={14} />
             Settings
+          </Button>
+        )}
+
+        {plugin.previousVersion === null ? null : (
+          <Button size="sm" variant="ghost" disabled={isBusy} onClick={onRollback}>
+            <Icon of={RotateCcwIcon} size={14} />
+            Roll back to {plugin.previousVersion}
           </Button>
         )}
 

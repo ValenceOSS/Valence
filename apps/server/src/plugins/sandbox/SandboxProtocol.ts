@@ -9,6 +9,7 @@ const HANDLERS = [
   'schedule',
   'event',
   'accountConnected',
+  'upgraded',
 ] as const;
 
 const ToSandboxSchema = z.discriminatedUnion('type', [

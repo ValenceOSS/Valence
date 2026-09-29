@@ -6,6 +6,7 @@ type InstalledPluginCardProps = {
   onToggle: () => void;
   onSettings: () => void;
   onUpdate: () => void;
+  onRollback: () => void;
   onRemove: () => void;
   onOpenPage: (page: { pageId: string; title: string }) => void;
 };

@@ -179,6 +179,23 @@ const changePluginRoute = createRoute({
   },
 });
 
+const rollbackPluginRoute = createRoute({
+  method: 'post',
+  path: '/api/plugins/{id}/rollback',
+  tags: ['Plugins'],
+  summary: 'Put back the version an upgrade replaced, with what it kept as it was then',
+  request: { params: z.object({ id: PluginId }) },
+  responses: {
+    200: { description: 'The plugin', content: { 'application/json': { schema: Installed } } },
+    422: {
+      description: 'There is no earlier version to go back to',
+      content: { 'application/json': { schema: PluginError } },
+    },
+    ...refusals,
+    ...notFound,
+  },
+});
+
 const uninstallPluginRoute = createRoute({
   method: 'delete',
   path: '/api/plugins/{id}',
@@ -371,5 +388,6 @@ export {
   readCatalogueRoute,
   renderPageRoute,
   renderPanelRoute,
+  rollbackPluginRoute,
   uninstallPluginRoute,
 };
