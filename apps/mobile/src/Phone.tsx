@@ -13,6 +13,7 @@ import { ASplash } from '@ValenceMobile/components/ASplash/ASplash';
 import { THE_FIRST_SCREEN_IS_READY } from '@ValenceMobile/components/ASplash/THE_FIRST_SCREEN_IS_READY';
 import { TheFirstScreenWatch } from '@ValenceMobile/components/ASplash/components/TheFirstScreenWatch/TheFirstScreenWatch';
 import { TheFlyingMark } from '@ValenceMobile/components/TheFlyingMark/TheFlyingMark';
+import { TheChosenAppearance } from '@ValenceMobile/components/TheChosenAppearance/TheChosenAppearance';
 import { TheHousehold } from '@ValenceMobile/components/TheHousehold/TheHousehold';
 import { WhereIsYourValence } from '@ValenceMobile/components/WhereIsYourValence/WhereIsYourValence';
 
@@ -96,6 +97,7 @@ const Phone = () => {
               />
             )}
             <TheFlyingMark />
+            <TheChosenAppearance />
             <StatusBar style={isSplashGone ? 'auto' : 'light'} />
             <TheFirstScreenWatch
               hasServer={address !== null && !isAsking}
