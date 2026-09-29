@@ -1,5 +1,4 @@
 import { Icon } from '@ValenceUI/Icon';
-import { cue } from '@ValenceUI/sounds/cue';
 import {
   Check as CheckIcon,
   ChevronLeft as ChevronLeftIcon,
@@ -100,9 +99,7 @@ const SettingsMenu = ({
   return (
     <RadixPopover.Root
       onOpenChange={(open) => {
-        if (open) {
-          cue('open');
-        } else {
+        if (!open) {
           close();
         }
 

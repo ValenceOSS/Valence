@@ -1,5 +1,4 @@
 import { toast } from 'sonner';
-import { cue } from '@ValenceUI/sounds/cue';
 
 type Notice = {
   description?: string;
@@ -28,64 +27,45 @@ const asOptions = (notice: Notice | undefined) => ({
 });
 
 /**
- * Tells the viewer something that happened, with no verdict attached, heard as a quiet note where
- * sounds are on and the message is new rather than an update to one already showing.
+ * Tells the viewer something that happened, with no verdict attached.
  *
  * @param message - What happened.
  * @param notice - A second line, an action, or an identifier to update later.
  * @returns The identifier, for updating or dismissing it.
  */
-const say = (message: string, notice?: Notice): string | number => {
-  if (notice?.id === undefined) {
-    cue('ready', { emphasis: 'subtle' });
-  }
-
-  return toast(message, asOptions(notice));
-};
+const say = (message: string, notice?: Notice): string | number =>
+  toast(message, asOptions(notice));
 
 /**
- * Tells the viewer that what they asked for worked, heard as success where sounds are on.
+ * Tells the viewer that what they asked for worked.
  *
  * @param message - What worked.
  * @param notice - A second line, an action, or an identifier to update later.
  * @returns The identifier, for updating or dismissing it.
  */
-const worked = (message: string, notice?: Notice): string | number => {
-  cue('success');
-
-  return toast.success(message, asOptions(notice));
-};
+const worked = (message: string, notice?: Notice): string | number =>
+  toast.success(message, asOptions(notice));
 
 /**
  * Tells the viewer that what they asked for did not work, which is the case worth being clearest
- * about — an error nobody surfaces is an application that appears to have ignored them. Heard as an
- * error where sounds are on.
+ * about — an error nobody surfaces is an application that appears to have ignored them.
  *
  * @param message - What went wrong, in the viewer's terms rather than the server's.
  * @param notice - A second line, an action, or an identifier to update later.
  * @returns The identifier, for updating or dismissing it.
  */
-const failed = (message: string, notice?: Notice): string | number => {
-  cue('error');
-
-  return toast.error(message, asOptions(notice));
-};
+const failed = (message: string, notice?: Notice): string | number =>
+  toast.error(message, asOptions(notice));
 
 /**
- * Tells the viewer something is under way and will finish on its own, heard beginning where sounds
- * are on and it is new rather than an update.
+ * Tells the viewer something is under way and will finish on its own.
  *
  * @param message - What is happening.
  * @param notice - A second line, an action, or an identifier to update later.
  * @returns The identifier, which the caller passes back to say how it went.
  */
-const working = (message: string, notice?: Notice): string | number => {
-  if (notice?.id === undefined) {
-    cue('loading', { emphasis: 'subtle' });
-  }
-
-  return toast.loading(message, asOptions(notice));
-};
+const working = (message: string, notice?: Notice): string | number =>
+  toast.loading(message, asOptions(notice));
 
 /**
  * Takes a message back, for something that stopped mattering before the viewer read it.

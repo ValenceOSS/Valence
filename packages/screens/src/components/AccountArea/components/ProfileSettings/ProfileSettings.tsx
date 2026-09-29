@@ -11,7 +11,6 @@ import { THEME_CHOICES } from '@ValenceScreens/theme/themeChoices';
 import { useMotion } from '@ValenceClient/shell/useMotion';
 import { readMotion } from '@ValenceClient/shell/motion';
 import { MOTION_CHOICES } from '@ValenceScreens/motion/motionChoices';
-import { useSounds } from '@ValenceClient/shell/useSounds';
 import { Switch } from '@ValenceUI/Switch';
 import { canShowOnDiscord } from '@ValenceClient/discord/canShowOnDiscord';
 import { PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
@@ -42,7 +41,6 @@ import type { ProfileSettingsProps } from './ProfileSettings.types';
 const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
   const { theme, choose } = useTheme();
   const { motion, choose: chooseMovement } = useMotion();
-  const sounds = useSounds();
 
   const [isEditing, setIsEditing] = useState(false);
   const isReady = profile !== null && draft !== null;
@@ -142,20 +140,6 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
           items={MOTION_CHOICES}
           onSelect={(chosen) => {
             chooseMovement(readMotion(chosen));
-          }}
-        />
-      </SettingRow>
-
-      <SettingRow
-        title="Sounds"
-        description="Quiet clicks and chimes as you press, open, choose and finish things on this device. Off until you turn it on."
-      >
-        <Switch
-          label="Play interface sounds"
-          isLabelHidden
-          isOn={sounds.isOn}
-          onToggle={() => {
-            sounds.choose(!sounds.isOn);
           }}
         />
       </SettingRow>

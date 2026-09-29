@@ -161,20 +161,12 @@ describe('MediaCard', () => {
 
   it('shows a count in the corner, says what it means, and draws nothing for none', () => {
     const { rerender } = render(
-      <MediaCard
-        title="Severance"
-        subtitle=""
-        count={3}
-        countLabel="3 episodes left"
-        onSelect={() => {}}
-      />,
+      <MediaCard title="Severance" subtitle="" count={3} countLabel="3 episodes left" onSelect={() => {}} />,
     );
 
     expect(screen.getByRole('img', { name: '3 episodes left' })).toHaveTextContent('3');
 
-    rerender(
-      <MediaCard title="Severance" subtitle="" count={0} countLabel="" onSelect={() => {}} />,
-    );
+    rerender(<MediaCard title="Severance" subtitle="" count={0} countLabel="" onSelect={() => {}} />);
 
     expect(screen.queryByRole('img', { name: /left/ })).not.toBeInTheDocument();
   });

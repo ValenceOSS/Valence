@@ -4,10 +4,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { NotificationBell } from './NotificationBell';
 import type { Notification } from '@ValenceContracts/schemas/Notification';
 
-const cued = vi.hoisted(() => vi.fn());
-
-vi.mock('@ValenceUI/sounds/cue', () => ({ cue: cued }));
-
 const aNotification = (overrides: Partial<Notification> = {}): Notification => ({
   id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
   event: 'media.added',
@@ -179,37 +175,5 @@ describe('NotificationBell', () => {
     await open(user);
 
     expect(screen.queryByRole('button', { name: 'Clear all' })).not.toBeInTheDocument();
-  });
-
-  it('chimes for a notification that arrives, but not for those already there', () => {
-    cued.mockReset();
-
-    const props = {
-      notifications: [],
-      unread: 0,
-      onOpen: vi.fn(),
-      onRead: vi.fn(),
-      onReadAll: vi.fn(),
-      onClearAll: vi.fn(),
-      onFollow: vi.fn(),
-    };
-    const { rerender } = render(<NotificationBell {...props} />);
-
-    rerender(<NotificationBell {...props} notifications={[aNotification()]} unread={1} />);
-
-    expect(cued).not.toHaveBeenCalled();
-
-    rerender(
-      <NotificationBell
-        {...props}
-        notifications={[
-          aNotification({ id: '3f2504e0-4f89-41d3-9a0c-0305e82c3302' }),
-          aNotification(),
-        ]}
-        unread={2}
-      />,
-    );
-
-    expect(cued.mock.calls).toEqual([['attention']]);
   });
 });

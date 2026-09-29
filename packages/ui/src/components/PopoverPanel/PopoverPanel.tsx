@@ -1,5 +1,4 @@
 import * as RadixPopover from '@radix-ui/react-popover';
-import { cue } from '@ValenceUI/sounds/cue';
 import { buttonStyles } from '@ValenceUI/Button/buttonStyles';
 import { cn } from '@ValenceUI/cn';
 import { POPUP_MOTION } from '@ValenceUI/animations/motion';
@@ -48,13 +47,7 @@ const PopoverPanel = ({
   return (
     <RadixPopover.Root
       {...(isOpen === undefined ? {} : { open: isOpen })}
-      onOpenChange={(open) => {
-        if (open) {
-          cue('open');
-        }
-
-        onOpenChange?.(open);
-      }}
+      {...(onOpenChange === undefined ? {} : { onOpenChange })}
     >
       <Tooltip label={label} side={side === 'top' ? 'top' : 'bottom'}>
         <RadixPopover.Trigger

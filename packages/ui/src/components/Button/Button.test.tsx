@@ -3,10 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { Button } from './Button';
 
-const cued = vi.hoisted(() => vi.fn());
-
-vi.mock('@ValenceUI/sounds/cue', () => ({ cue: cued }));
-
 describe('Button', () => {
   it('renders its children as an accessible button', () => {
     render(<Button>Play</Button>);
@@ -437,33 +433,5 @@ describe('Button', () => {
 
     expect(raised).toHaveClass('bg-surface-raised', 'shadow-[var(--shadow-lifted)]');
     expect(raised).not.toHaveClass('bg-[var(--surface-hover)]');
-  });
-
-  it('sounds as it is pressed, and is heard starting the work it does', () => {
-    cued.mockReset();
-
-    const drawn = render(<Button sound="toggle">Shuffle</Button>);
-
-    expect(screen.getByRole('button', { name: 'Shuffle' })).toHaveAttribute('data-cuelume-toggle');
-
-    drawn.rerender(
-      <Button sound="toggle" isLoading>
-        Shuffle
-      </Button>,
-    );
-
-    expect(cued).toHaveBeenCalledWith('loading', { emphasis: 'subtle' });
-  });
-
-  it('taps by default, and stays quiet where told to', () => {
-    render(
-      <>
-        <Button>Save</Button>
-        <Button sound="none">Cancel</Button>
-      </>,
-    );
-
-    expect(screen.getByRole('button', { name: 'Save' })).toHaveAttribute('data-cuelume-tap');
-    expect(screen.getByRole('button', { name: 'Cancel' }).outerHTML).not.toContain('data-cuelume');
   });
 });

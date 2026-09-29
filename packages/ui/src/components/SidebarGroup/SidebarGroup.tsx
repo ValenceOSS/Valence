@@ -51,7 +51,6 @@ const SidebarGroup = ({
           variant="bare"
           size="none"
           aria-expanded={isOpen}
-          sound="toggle"
           onClick={() => {
             setIsOpen((was) => !was);
           }}
@@ -93,7 +92,6 @@ const SidebarGroup = ({
                     variant="bare"
                     size="sm"
                     label={item.label}
-                    sound="navigate"
                     hasTooltip={false}
                     aria-current={isCurrent ? 'page' : undefined}
                     onPointerEnter={() => {

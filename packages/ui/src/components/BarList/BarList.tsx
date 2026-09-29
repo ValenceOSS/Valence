@@ -87,7 +87,6 @@ const BarList = ({
                     variant="row"
                     size="none"
                     aria-pressed={isChosen}
-                    sound="select"
                     className="flex w-full px-2 py-1.5 font-body text-sm"
                     onClick={() => {
                       onChoose(item.id);

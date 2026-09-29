@@ -31,13 +31,7 @@ const ConfirmDialog = ({
   onClose,
   onConfirm,
 }: ConfirmDialogProps) => (
-  <Dialog
-    label={title}
-    isOpen={isOpen}
-    onClose={onClose}
-    isWarning={isDestructive}
-    className="sm:w-[min(28rem,92vw)]"
-  >
+  <Dialog label={title} isOpen={isOpen} onClose={onClose} className="sm:w-[min(28rem,92vw)]">
     <DialogTitle title={title} />
 
     <DialogContent>

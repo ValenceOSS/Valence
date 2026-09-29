@@ -232,7 +232,6 @@ const DataTable = <Row extends RowData>({
                             variant="subtle"
                             size="none"
                             onClick={header.column.getToggleSortingHandler()}
-                            sound="select"
                             className="inline-flex items-center gap-1.5 uppercase tracking-[0.14em]"
                           >
                             <DrawnCell
@@ -401,7 +400,6 @@ const DataTable = <Row extends RowData>({
               size="sm"
               isIconOnly
               label="Previous page"
-              sound="navigate"
               disabled={page === 0}
               onClick={() => {
                 setPage(Math.max(0, page - 1));
@@ -415,7 +413,6 @@ const DataTable = <Row extends RowData>({
               size="sm"
               isIconOnly
               label="Next page"
-              sound="navigate"
               disabled={page >= pageCount - 1}
               onClick={() => {
                 setPage(Math.min(pageCount - 1, page + 1));

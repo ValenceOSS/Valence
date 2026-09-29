@@ -1,6 +1,4 @@
 import { Check as CheckIcon, Filter as FilterIcon } from '@keyline-icons/react';
-import { soundOnPress } from '@ValenceUI/sounds/soundOnPress';
-import { cue } from '@ValenceUI/sounds/cue';
 import { Filter as FilterFilledIcon } from '@keyline-icons/react/fill';
 import * as RadixMenu from '@radix-ui/react-dropdown-menu';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
@@ -34,17 +32,10 @@ const FilterMenu = ({ label, groups, selected, hasLabel = false, onChange }: Fil
   const portalContainer = usePortalContainer();
 
   return (
-    <RadixMenu.Root
-      modal={false}
-      onOpenChange={(open) => {
-        if (open) {
-          cue('open');
-        }
-      }}
-    >
+    <RadixMenu.Root modal={false}>
       <RadixMenu.Trigger asChild>
         {hasLabel ? (
-          <Button variant="secondary" size="sm" label={label} hasTooltip={false} sound="none">
+          <Button variant="secondary" size="sm" label={label} hasTooltip={false}>
             <Icon
               of={FilterIcon}
               whenActive={FilterFilledIcon}
@@ -59,7 +50,7 @@ const FilterMenu = ({ label, groups, selected, hasLabel = false, onChange }: Fil
             )}
           </Button>
         ) : (
-          <Button variant="ghost" size="sm" isIconOnly label={label} sound="none">
+          <Button variant="ghost" size="sm" isIconOnly label={label}>
             <span className="relative flex">
               <Icon
                 of={FilterIcon}
@@ -96,7 +87,6 @@ const FilterMenu = ({ label, groups, selected, hasLabel = false, onChange }: Fil
               {group.options.map((option) => (
                 <RadixMenu.CheckboxItem
                   key={option.id}
-                  {...soundOnPress('toggle')}
                   checked={selected.has(option.id)}
                   onSelect={(event) => {
                     event.preventDefault();
@@ -139,7 +129,6 @@ const FilterMenu = ({ label, groups, selected, hasLabel = false, onChange }: Fil
               <RadixMenu.Separator className="my-1.5 h-px bg-[var(--surface-line)]" />
 
               <RadixMenu.Item
-                {...soundOnPress('tap')}
                 className={cn(
                   MENU.item,
                   'text-text-muted data-[highlighted]:bg-[var(--surface-hover)]',

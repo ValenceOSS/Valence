@@ -1,6 +1,4 @@
 import * as RadixContextMenu from '@radix-ui/react-context-menu';
-import { soundOnPress } from '@ValenceUI/sounds/soundOnPress';
-import { cue } from '@ValenceUI/sounds/cue';
 import { cn } from '@ValenceUI/cn';
 import { POPUP_MOTION } from '@ValenceUI/animations/motion';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
@@ -35,13 +33,7 @@ const ContextMenu = ({
   const { containerRef, rect, follow, clear } = useSlidingHighlight();
 
   return (
-    <RadixContextMenu.Root
-      onOpenChange={(open) => {
-        if (open) {
-          cue('open');
-        }
-      }}
-    >
+    <RadixContextMenu.Root>
       <RadixContextMenu.Trigger disabled={isDisabled} className={cn('block', className)}>
         {children}
       </RadixContextMenu.Trigger>
@@ -78,7 +70,6 @@ const ContextMenu = ({
                 {group.items.map((item) => (
                   <RadixContextMenu.Item
                     key={item.id}
-                    {...soundOnPress('select')}
                     data-highlight={item.id}
                     disabled={item.isDisabled ?? false}
                     onSelect={(event) => {

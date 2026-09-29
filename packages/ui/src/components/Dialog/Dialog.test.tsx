@@ -4,10 +4,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { forgetPageCovers, isPageCovered } from '@ValenceUI/pageCover';
 import { Dialog } from './Dialog';
 
-const cued = vi.hoisted(() => vi.fn());
-
-vi.mock('@ValenceUI/sounds/cue', () => ({ cue: cued }));
-
 afterEach(() => {
   forgetPageCovers();
 });
@@ -255,33 +251,5 @@ describe('Dialog', () => {
     expect(panel.className).toContain('data-[state=open]:slide-in-from-bottom');
     expect(panel.className).toContain('ease-[var(--ease-drawer)]');
     expect(panel.className).not.toContain('data-[state=open]:zoom-in-95');
-  });
-
-  it('is heard opening and closing, and opening as a warning where what it asks is grave', () => {
-    cued.mockReset();
-
-    const drawn = render(
-      <Dialog label="Rename" isOpen={false} onClose={vi.fn()}>
-        <p>Name</p>
-      </Dialog>,
-    );
-
-    drawn.rerender(
-      <Dialog label="Rename" isOpen onClose={vi.fn()}>
-        <p>Name</p>
-      </Dialog>,
-    );
-    drawn.rerender(
-      <Dialog label="Rename" isOpen={false} onClose={vi.fn()}>
-        <p>Name</p>
-      </Dialog>,
-    );
-    drawn.rerender(
-      <Dialog label="Delete" isOpen isWarning onClose={vi.fn()}>
-        <p>Gone for good</p>
-      </Dialog>,
-    );
-
-    expect(cued.mock.calls).toEqual([['open'], ['close'], ['warning']]);
   });
 });

@@ -1,6 +1,4 @@
 import * as RadixMenu from '@radix-ui/react-dropdown-menu';
-import { soundOnPress } from '@ValenceUI/sounds/soundOnPress';
-import { cue } from '@ValenceUI/sounds/cue';
 import { Info as InfoIcon } from '@keyline-icons/react/fill';
 import { cn } from '@ValenceUI/cn';
 import { Icon } from '@ValenceUI/Icon';
@@ -71,15 +69,7 @@ const ActionMenu = ({
   const { containerRef, rect, follow, clear } = useSlidingHighlight();
 
   return (
-    <RadixMenu.Root
-      onOpenChange={(open) => {
-        if (open) {
-          cue('open');
-        }
-
-        onOpenChange?.(open);
-      }}
-    >
+    <RadixMenu.Root {...(onOpenChange === undefined ? {} : { onOpenChange })}>
       <RadixMenu.Trigger
         aria-label={label}
         disabled={isDisabled}
@@ -137,7 +127,6 @@ const ActionMenu = ({
                 {group.items.map((item) => (
                   <RadixMenu.Item
                     key={item.id}
-                    {...soundOnPress('select')}
                     data-highlight={item.id}
                     disabled={item.isDisabled ?? false}
                     onSelect={(event) => {

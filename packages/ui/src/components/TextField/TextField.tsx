@@ -1,5 +1,4 @@
 import { useId } from 'react';
-import { soundOnPress } from '@ValenceUI/sounds/soundOnPress';
 import { cn } from '@ValenceUI/cn';
 import type { TextFieldProps } from './TextField.types';
 
@@ -75,7 +74,6 @@ const TextField = ({
         {icon === undefined ? null : <span className="shrink-0 text-text-muted">{icon}</span>}
 
         <input
-          {...soundOnPress('type')}
           id={fieldId}
           type={type}
           value={value}

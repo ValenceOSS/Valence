@@ -94,13 +94,7 @@ const Rail = ({
           {onOpenTitle === undefined ? (
             title
           ) : (
-            <Button
-              variant="link"
-              size="none"
-              onClick={onOpenTitle}
-              sound="navigate"
-              className="text-left"
-            >
+            <Button variant="link" size="none" onClick={onOpenTitle} className="text-left">
               {title}
             </Button>
           )}
@@ -123,7 +117,6 @@ const Rail = ({
                 size="xs"
                 isIconOnly
                 label={`Back a page of ${title}`}
-                sound="navigate"
                 hasTooltip={false}
                 disabled={isAtStart}
                 onClick={() => {
@@ -138,7 +131,6 @@ const Rail = ({
                 size="xs"
                 isIconOnly
                 label={`Forward a page of ${title}`}
-                sound="navigate"
                 hasTooltip={false}
                 disabled={isAtEnd}
                 onClick={() => {
