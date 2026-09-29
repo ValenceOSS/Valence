@@ -63,7 +63,9 @@ describe('planBrandOutputs', () => {
   it('draws every Apple TV icon and top shelf at the size tvOS asks for', () => {
     expect(
       outputs.flatMap((output) =>
-        output.kind === 'banner' ? [[output.to, output.width, output.height]] : [],
+        output.kind === 'banner' && output.to.startsWith('apps/tv')
+          ? [[output.to, output.width, output.height]]
+          : [],
       ),
     ).toEqual([
       ['apps/tv/assets/tv-icons/icon.png', 1280, 768],
@@ -82,5 +84,19 @@ describe('planBrandOutputs', () => {
         expect(output.width / output.height).toBeCloseTo(624 / 458, 1);
       }
     }
+  });
+
+  it('gives Android a whole icon, and its adaptive icon as the logo and the background apart', () => {
+    expect(
+      outputs.flatMap((output) =>
+        output.kind === 'banner' && output.to.startsWith('apps/mobile')
+          ? [[output.to, output.width, output.height, output.layers]]
+          : [],
+      ),
+    ).toEqual([
+      ['apps/mobile/assets/icon/android-icon.png', 1024, 1024, 'both'],
+      ['apps/mobile/assets/icon/android-icon-foreground.png', 1024, 1024, 'logo'],
+      ['apps/mobile/assets/icon/android-icon-background.png', 1024, 1024, 'background'],
+    ]);
   });
 });

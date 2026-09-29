@@ -247,6 +247,30 @@ const make = async (
         icon.logo,
       );
       const raw = { width: RENDER_PIXELS, height: RENDER_PIXELS };
+      const ground =
+        output.layers === 'logo'
+          ? sharp({
+              create: {
+                width: output.width,
+                height: output.height,
+                channels: 4,
+                background: { r: 0, g: 0, b: 0, alpha: 0 },
+              },
+            })
+          : sharp(
+              await sharp(icon.background, { raw: { ...raw, channels: 3 } })
+                .extract(plan.background)
+                .resize(output.width, output.height, { fit: 'fill' })
+                .png()
+                .toBuffer(),
+            );
+
+      if (output.layers === 'background') {
+        await ground.png().toFile(to);
+
+        return;
+      }
+
       const artworkHeight = Math.round((plan.logoHeight * plan.artwork.height) / icon.logo.height);
       const artwork = await sharp(icon.artwork, { raw: { ...raw, channels: 4 } })
         .extract(plan.artwork)
@@ -254,9 +278,7 @@ const make = async (
         .png()
         .toBuffer({ resolveWithObject: true });
 
-      await sharp(icon.background, { raw: { ...raw, channels: 3 } })
-        .extract(plan.background)
-        .resize(output.width, output.height, { fit: 'fill' })
+      await ground
         .composite([
           {
             input: artwork.data,
