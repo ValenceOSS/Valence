@@ -77,7 +77,7 @@ const AccountPage = ({ user, onChangeServer, onRequests, onOpenRequest, upTo }: 
 
       {mayRequest ? <YourRequests onOpen={onOpenRequest} onFocus={upToBar.leave} /> : null}
 
-      <Text style={styles.build}>{describeThisBuild(server.data?.commit ?? null)}</Text>
+      <Text style={styles.build}>{describeThisBuild(server.data ?? null)}</Text>
     </ScrollView>
   );
 };

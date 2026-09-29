@@ -155,6 +155,12 @@ jobs:
         env:
           TAG: ${{ inputs.tag || github.ref_name }}
 
+      # An image carries no .git, so the server is told which commit it was built from rather than
+      # left to find out and fail.
+      - name: Work out the commit
+        id: commit
+        run: echo "short=$(git rev-parse --short=7 HEAD)" >> "$GITHUB_OUTPUT"
+
       - name: Work out how to tag it
         id: meta
         uses: docker/metadata-action@v6
@@ -194,7 +200,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: VALENCE_VERSION=${{ steps.version.outputs.version }}
+          build-args: |
+            VALENCE_VERSION=${{ steps.version.outputs.version }}
+            VALENCE_COMMIT=${{ steps.commit.outputs.short }}
           cache-from: type=gha,scope=${{ matrix.image.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image.name }}
           provenance: false

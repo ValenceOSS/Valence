@@ -149,7 +149,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: VALENCE_VERSION=${{ needs.version.outputs.next }}-dev.${{ steps.commit.outputs.short }}
+          build-args: |
+            VALENCE_VERSION=${{ needs.version.outputs.next }}-dev.${{ steps.commit.outputs.short }}
+            VALENCE_COMMIT=${{ steps.commit.outputs.short }}
           cache-from: type=gha,scope=${{ matrix.image.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image.name }}
           provenance: false

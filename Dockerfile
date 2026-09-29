@@ -65,6 +65,11 @@ ARG TARGETARCH
 # nobody set reads as the development build it is rather than as a release that does not exist.
 ARG VALENCE_VERSION=0.0.0
 
+# The commit this image was built from. An image carries no .git to read it from, so without this the
+# server could only ever say its commit is unknown. Left empty for a local build, which falls back to
+# asking git.
+ARG VALENCE_COMMIT=
+
 # Matches the postgres major the compose file runs, since pg_dump refuses a server newer than itself.
 # What takes the snapshot before a migration, and puts one back on a rollback.
 ARG POSTGRES_MAJOR=18
@@ -115,6 +120,7 @@ RUN mkdir -p /config /config/profiles /cache/artefacts /transcodes /media
 ENV NODE_ENV=production \
     PORT=8420 \
     VALENCE_VERSION=${VALENCE_VERSION} \
+    VALENCE_COMMIT=${VALENCE_COMMIT} \
     TRANSCODER_URL=unix:/run/valence-transcoder.sock \
     VALENCE_VAAPI_DEVICE=/dev/dri/renderD128 \
     VALENCE_TRANSCODE_DIR=/transcodes \

@@ -41,6 +41,7 @@ const EnvSchema = z.object({
   IMAGE_CACHE_DIR: z.string().default('/cache/images'),
   PROFILE_IMAGE_DIR: z.string().default('/config/profiles'),
   VALENCE_VERSION: z.string().default('0.0.0'),
+  VALENCE_COMMIT: z.string().optional(),
   AUTH_RATE_LIMIT_ENABLED: z
     .enum(['true', 'false'])
     .default('true')

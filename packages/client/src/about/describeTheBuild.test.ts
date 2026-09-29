@@ -9,8 +9,8 @@ const BUILD = {
 
 describe('describeTheBuild', () => {
   it('names the client and the server it is talking to', () => {
-    expect(describeTheBuild(BUILD, 'f00cafe')).toBe(
-      'Valence 1.2.0 (2ae1bc1) · arm64 · Electron 33.0.0 · Chromium 130.0.0 · Server f00cafe',
+    expect(describeTheBuild(BUILD, { version: '1.2.0', commit: 'f00cafe' })).toBe(
+      'Valence 1.2.0 (2ae1bc1) · arm64 · Electron 33.0.0 · Chromium 130.0.0 · Server 1.2.0 (f00cafe)',
     );
   });
 
@@ -27,7 +27,9 @@ describe('describeTheBuild', () => {
   });
 
   it('names only the server in a browser, which has no build of its own', () => {
-    expect(describeTheBuild(null, 'f00cafe')).toBe('Server f00cafe');
+    expect(describeTheBuild(null, { version: '1.2.0', commit: 'f00cafe' })).toBe(
+      'Server 1.2.0 (f00cafe)',
+    );
   });
 
   it('says nothing where neither is known', () => {

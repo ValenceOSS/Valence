@@ -1,3 +1,4 @@
+import { commitThisIsRunning } from '@ValenceServer/about/commitThisIsRunning';
 import { z } from '@hono/zod-openapi';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import { readViewer } from '@ValenceServer/visibility/readViewer';
@@ -180,6 +181,7 @@ const createAppContext = (options: CreateAppOptions) => {
     auth,
     settings,
     version: SERVER_VERSION = '0.0.0',
+    commit: givenCommit,
     trustedOrigins,
     countUsers,
     promoteToAdmin,
@@ -1187,6 +1189,10 @@ const createAppContext = (options: CreateAppOptions) => {
     auth,
     settings,
     SERVER_VERSION,
+    SERVER_COMMIT:
+      givenCommit === undefined || givenCommit === ''
+        ? commitThisIsRunning()
+        : givenCommit.slice(0, 7),
     trustedOrigins,
     countUsers,
     promoteToAdmin,

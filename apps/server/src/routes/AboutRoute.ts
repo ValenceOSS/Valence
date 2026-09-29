@@ -10,7 +10,7 @@ const aboutRoute = createRoute({
   summary: 'Report what this server is running',
   responses: {
     200: {
-      description: 'The commit this server was started from',
+      description: 'The release and the commit this server was started from',
       content: { 'application/json': { schema: AboutResponse } },
     },
   },

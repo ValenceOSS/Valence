@@ -16,7 +16,7 @@ import { describeTheBuild } from '@ValenceClient/about/describeTheBuild';
  */
 const BuildInfoFooter = () => {
   const server = useQuery(aboutQueries.server());
-  const line = describeTheBuild(theBuildInfo(), server.data?.commit ?? null);
+  const line = describeTheBuild(theBuildInfo(), server.data ?? null);
 
   if (line === null) {
     return null;
