@@ -7,7 +7,8 @@ import { TextField } from '@ValenceTv/components/TextField/TextField';
 import { PluginMedia } from '@ValenceTv/components/PluginSurface/components/PluginMedia/PluginMedia';
 import { PluginNotice } from '@ValenceTv/components/PluginSurface/components/PluginNotice/PluginNotice';
 import { PluginRow } from '@ValenceTv/components/PluginSurface/components/PluginRow/PluginRow';
-import { PLUGIN_ICONS } from '@ValenceTv/plugins/PLUGIN_ICONS';
+import * as Keyline from '@keyline-icons/react-native/fill';
+import { glyphFor } from '@ValenceSDK/surface/glyphFor';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { PluginBlockProps } from './PluginBlock.types';
 
@@ -69,7 +70,7 @@ const PluginBlock = ({ block, pluginId, fields, onField, onAct, isActing }: Plug
                 : 'primary'
           }
           isLoading={isActing}
-          {...(block.icon === undefined ? {} : { icon: PLUGIN_ICONS[block.icon] })}
+          {...(block.icon === undefined ? {} : { icon: glyphFor(Keyline, block.icon) })}
           onPress={() => {
             onAct(block.action);
           }}

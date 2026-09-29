@@ -3,7 +3,8 @@ import { pluginImageUrl } from '@ValenceClient/plugins/pluginImageUrl';
 import { Artwork } from '@ValenceTv/components/Artwork/Artwork';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { Icon } from '@ValenceTv/components/Icon/Icon';
-import { PLUGIN_ICONS } from '@ValenceTv/plugins/PLUGIN_ICONS';
+import * as Keyline from '@keyline-icons/react-native/fill';
+import { glyphFor } from '@ValenceSDK/surface/glyphFor';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { PluginRowProps } from './PluginRow.types';
 
@@ -46,7 +47,7 @@ const PluginRow = ({ row, pluginId, onAct }: PluginRowProps) => {
       <View style={[styles.row, isFocused && styles.focused]}>
         {row.image === undefined ? (
           row.icon === undefined ? null : (
-            <Icon of={PLUGIN_ICONS[row.icon]} size={32} colour={ink} />
+            <Icon of={glyphFor(Keyline, row.icon)} size={32} colour={ink} />
           )
         ) : (
           <Artwork path={pluginImageUrl(pluginId, row.image)} style={styles.picture} />

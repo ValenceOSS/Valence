@@ -2,7 +2,8 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 import { Button } from '@ValenceTv/components/Button/Button';
-import { PLUGIN_ICONS } from '@ValenceTv/plugins/PLUGIN_ICONS';
+import * as Keyline from '@keyline-icons/react-native/fill';
+import { glyphFor } from '@ValenceSDK/surface/glyphFor';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { PluginPagesProps } from './PluginPages.types';
 
@@ -38,7 +39,7 @@ const PluginPages = ({ onOpen, onFocus }: PluginPagesProps) => {
             label={page.title}
             detail={page.pluginName}
             variant="secondary"
-            {...(page.icon === null ? {} : { icon: PLUGIN_ICONS[page.icon] })}
+            {...(page.icon === null ? {} : { icon: glyphFor(Keyline, page.icon) })}
             {...(onFocus === undefined ? {} : { onFocus })}
             onPress={() => {
               onOpen({ pluginId: page.pluginId, pageId: page.pageId });

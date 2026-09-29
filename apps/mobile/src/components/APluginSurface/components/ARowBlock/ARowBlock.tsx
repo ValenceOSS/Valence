@@ -3,7 +3,8 @@ import { ChevronRight } from '@keyline-icons/react-native';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
-import { PLUGIN_ICONS } from '@ValenceMobile/plugins/PLUGIN_ICONS';
+import * as Keyline from '@keyline-icons/react-native/fill';
+import { glyphFor } from '@ValenceSDK/surface/glyphFor';
 import { pluginImageUrl } from '@ValenceClient/plugins/pluginImageUrl';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
@@ -32,7 +33,7 @@ const ARowBlock = ({ row, pluginId, onAct, isActing }: ARowBlockProps) => {
     <View style={styles.row}>
       {row.image === undefined ? (
         row.icon === undefined ? null : (
-          <Icon of={PLUGIN_ICONS[row.icon]} size={22} colour={colours.text} />
+          <Icon of={glyphFor(Keyline, row.icon)} size={22} colour={colours.text} />
         )
       ) : (
         <Image

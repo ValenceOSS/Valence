@@ -9,7 +9,8 @@ import { AMediaBlock } from '@ValenceMobile/components/APluginSurface/components
 import { ANoticeBlock } from '@ValenceMobile/components/APluginSurface/components/ANoticeBlock/ANoticeBlock';
 import { ARowBlock } from '@ValenceMobile/components/APluginSurface/components/ARowBlock/ARowBlock';
 import { ASelectBlock } from '@ValenceMobile/components/APluginSurface/components/ASelectBlock/ASelectBlock';
-import { PLUGIN_ICONS } from '@ValenceMobile/plugins/PLUGIN_ICONS';
+import * as Keyline from '@keyline-icons/react-native/fill';
+import { glyphFor } from '@ValenceSDK/surface/glyphFor';
 import { pluginImageUrl } from '@ValenceClient/plugins/pluginImageUrl';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
@@ -62,7 +63,7 @@ const ABlock = ({ block, pluginId, fields, onField, onAct, isActing, onLookAt }:
           isDestructive={block.tone === 'danger'}
           isWide
           isBusy={isActing}
-          {...(block.icon === undefined ? {} : { icon: PLUGIN_ICONS[block.icon] })}
+          {...(block.icon === undefined ? {} : { icon: glyphFor(Keyline, block.icon) })}
           onPress={() => {
             onAct(block.action);
           }}

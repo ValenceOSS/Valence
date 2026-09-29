@@ -8,6 +8,7 @@ import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
 import { cn } from '@ValenceUI/cn';
 import { pluginImageUrl } from '@ValenceClient/plugins/pluginImageUrl';
+import { glyphFor } from '@ValenceSDK/surface/glyphFor';
 import { PLUGIN_ICONS } from '@ValenceScreens/components/PluginSurface/PLUGIN_ICONS';
 import { PluginMedia } from '@ValenceScreens/components/PluginSurface/components/PluginMedia/PluginMedia';
 import { PluginRow } from '@ValenceScreens/components/PluginSurface/components/PluginRow/PluginRow';
@@ -78,7 +79,9 @@ const PluginBlock = ({ pluginId, block, fields, onField, onAct, isActing }: Plug
             onAct(block.action);
           }}
         >
-          {block.icon === undefined ? null : <Icon of={PLUGIN_ICONS[block.icon]} size={16} />}
+          {block.icon === undefined ? null : (
+            <Icon of={glyphFor(PLUGIN_ICONS, block.icon)} size={16} />
+          )}
           {block.label}
         </Button>
       );

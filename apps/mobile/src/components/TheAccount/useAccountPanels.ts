@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Settings } from '@keyline-icons/react-native/fill';
 import { ACCOUNT_PANELS } from '@ValenceMobile/components/TheAccount/ACCOUNT_PANELS';
-import { PLUGIN_ICONS } from '@ValenceMobile/plugins/PLUGIN_ICONS';
+import * as Keyline from '@keyline-icons/react-native/fill';
+import { glyphFor } from '@ValenceSDK/surface/glyphFor';
 import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 import type { Segment } from '@ValenceMobile/components/SegmentedRow/SegmentedRow.types';
 
@@ -24,7 +24,7 @@ const useAccountPanels = (): readonly Segment[] => {
         .map((page) => ({
           id: `plugin:${page.pluginId}:${page.pageId}`,
           label: page.title,
-          icon: page.icon === null ? Settings : PLUGIN_ICONS[page.icon],
+          icon: page.icon === null ? Keyline.Settings : glyphFor(Keyline, page.icon),
         })),
     ],
     [pages],

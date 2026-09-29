@@ -2,6 +2,7 @@ import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { pluginImageUrl } from '@ValenceClient/plugins/pluginImageUrl';
+import { glyphFor } from '@ValenceSDK/surface/glyphFor';
 import { PLUGIN_ICONS } from '@ValenceScreens/components/PluginSurface/PLUGIN_ICONS';
 import type { PluginRowProps } from './PluginRow.types';
 
@@ -19,7 +20,7 @@ const PluginRow = ({ pluginId, row, onAct, isActing }: PluginRowProps) => {
     <span className="flex w-full min-w-0 items-center gap-3 px-3 py-2.5 text-left">
       {row.image === undefined ? (
         row.icon === undefined ? null : (
-          <Icon of={PLUGIN_ICONS[row.icon]} size={18} tone="muted" className="shrink-0" />
+          <Icon of={glyphFor(PLUGIN_ICONS, row.icon)} size={18} tone="muted" className="shrink-0" />
         )
       ) : (
         <img
