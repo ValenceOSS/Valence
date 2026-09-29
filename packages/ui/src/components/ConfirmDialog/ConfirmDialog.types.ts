@@ -2,6 +2,7 @@ type ConfirmDialogProps = {
   title: string;
   detail: string;
   confirmLabel: string;
+  dismissLabel?: string;
   isDestructive?: boolean;
   isBusy?: boolean;
   isOpen: boolean;

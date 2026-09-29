@@ -11,9 +11,10 @@ describe('WindowBar', () => {
   });
 
   it('draws a surface and nothing on it where there is no update', () => {
-    render(<WindowBar />);
+    render(<WindowBar update={{ kind: 'none' }} />);
 
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
   it('takes hold of the window it is laid over', () => {
@@ -24,24 +25,41 @@ describe('WindowBar', () => {
     );
   });
 
-  it('says an update is available, once one is', () => {
-    render(<WindowBar updateVersion="v1.2.0" />);
+  it('offers a release it has found, by its version', () => {
+    render(<WindowBar update={{ kind: 'available', version: '1.2.0' }} />);
 
-    expect(screen.getByRole('button', { name: 'Update available' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Update to 1.2.0' })).toBeInTheDocument();
   });
 
-  it('sends somebody to it when pressed', async () => {
+  it('fetches it when pressed', async () => {
     const user = userEvent.setup();
-    const onInstallUpdate = vi.fn();
+    const onUpdate = vi.fn();
 
-    render(<WindowBar updateVersion="v1.2.0" onInstallUpdate={onInstallUpdate} />);
+    render(<WindowBar update={{ kind: 'available', version: '1.2.0' }} onUpdate={onUpdate} />);
     await user.click(screen.getByRole('button'));
 
-    expect(onInstallUpdate).toHaveBeenCalled();
+    expect(onUpdate).toHaveBeenCalled();
+  });
+
+  it('says how far a download has got, with nothing to press', () => {
+    render(<WindowBar update={{ kind: 'downloading', version: '1.2.0', percent: 45 }} />);
+
+    expect(screen.getByRole('status')).toHaveTextContent('Updating 45%');
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('offers to try again after a download failed', async () => {
+    const user = userEvent.setup();
+    const onUpdate = vi.fn();
+
+    render(<WindowBar update={{ kind: 'failed', version: '1.2.0' }} onUpdate={onUpdate} />);
+    await user.click(screen.getByRole('button', { name: 'Retry update' }));
+
+    expect(onUpdate).toHaveBeenCalled();
   });
 
   it('lets a press reach the button rather than moving the window', () => {
-    render(<WindowBar updateVersion="v1.2.0" />);
+    render(<WindowBar update={{ kind: 'available', version: '1.2.0' }} />);
 
     expect(screen.getByRole('button')).toHaveClass('[-webkit-app-region:no-drag]');
   });

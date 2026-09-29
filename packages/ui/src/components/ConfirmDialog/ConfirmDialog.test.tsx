@@ -66,6 +66,20 @@ describe('ConfirmDialog', () => {
     expect(screen.getByRole('button', { name: 'Delete' })).toHaveClass('bg-white');
   });
 
+  it('says Cancel as the way out unless told otherwise', () => {
+    open();
+
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+  });
+
+  it('says what it is told to as the way out, for an answer that is only put off', async () => {
+    const { onClose } = open({ dismissLabel: 'Not now' });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Not now' }));
+
+    expect(onClose).toHaveBeenCalled();
+  });
+
   it('will not be cancelled while the work is running', () => {
     open({ isBusy: true });
 

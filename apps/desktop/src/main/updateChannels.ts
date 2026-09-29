@@ -1,7 +1,7 @@
-const UPDATE_AVAILABLE = 'valence.updateAvailable';
+const UPDATE_CHANGED = 'valence.updateChanged';
 
-const INSTALL_THE_UPDATE = 'valence.installTheUpdate';
+const DOWNLOAD_THE_UPDATE = 'valence.downloadTheUpdate';
 
 const WHAT_UPDATE_IS_KNOWN = 'valence.whatUpdateIsKnown';
 
-export { INSTALL_THE_UPDATE, UPDATE_AVAILABLE, WHAT_UPDATE_IS_KNOWN };
+export { DOWNLOAD_THE_UPDATE, UPDATE_CHANGED, WHAT_UPDATE_IS_KNOWN };

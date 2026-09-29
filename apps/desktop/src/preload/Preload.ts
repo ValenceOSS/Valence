@@ -31,12 +31,12 @@ import {
   WRITE_ONE,
 } from '@ValenceDesktop/main/preferenceChannels';
 import {
-  INSTALL_THE_UPDATE,
-  UPDATE_AVAILABLE,
+  DOWNLOAD_THE_UPDATE,
+  UPDATE_CHANGED,
   WHAT_UPDATE_IS_KNOWN,
 } from '@ValenceDesktop/main/updateChannels';
-import { AvailableUpdateSchema } from '@ValenceDesktop/main/AvailableUpdateSchema';
-import type { AvailableUpdate } from '@ValenceDesktop/main/checkForUpdate';
+import { DesktopUpdateSchema } from '@ValenceContracts/schemas/DesktopUpdate';
+import { keepTheLatest } from '@ValenceDesktop/preload/keepTheLatest';
 import { WHAT_VERSION_THIS_IS } from '@ValenceDesktop/main/aboutChannels';
 import { SET_UNREAD_BADGE } from '@ValenceDesktop/main/notificationChannels';
 import { SHOW_THE_WINDOW_CONTROLS } from '@ValenceDesktop/main/windowChannels';
@@ -51,9 +51,17 @@ const NearbySchema = z.array(NearbyValenceSchema).catch([]);
 
 const alreadyNearby = NearbySchema.parse(ipcRenderer.sendSync(WHAT_IS_NEARBY));
 
-const alreadyAvailable = AvailableUpdateSchema.nullable()
-  .catch(null)
-  .parse(ipcRenderer.sendSync(WHAT_UPDATE_IS_KNOWN));
+const theUpdate = keepTheLatest(
+  DesktopUpdateSchema.catch({ kind: 'none' }).parse(ipcRenderer.sendSync(WHAT_UPDATE_IS_KNOWN)),
+);
+
+ipcRenderer.on(UPDATE_CHANGED, (_event: IpcRendererEvent, said: JsonValue) => {
+  const parsed = DesktopUpdateSchema.safeParse(said);
+
+  if (parsed.success) {
+    theUpdate.set(parsed.data);
+  }
+});
 
 const canReachNow = (): boolean =>
   z.boolean().catch(true).parse(ipcRenderer.sendSync(CAN_REACH_NOW));
@@ -129,24 +137,10 @@ contextBridge.exposeInMainWorld('valence', {
     },
   },
   update: {
-    alreadyAvailable,
-    whenAvailable: (listener: (update: AvailableUpdate) => void) => {
-      const told = (_event: IpcRendererEvent, update: JsonValue) => {
-        const parsed = AvailableUpdateSchema.safeParse(update);
-
-        if (parsed.success) {
-          listener(parsed.data);
-        }
-      };
-
-      ipcRenderer.on(UPDATE_AVAILABLE, told);
-
-      return () => {
-        ipcRenderer.removeListener(UPDATE_AVAILABLE, told);
-      };
-    },
-    install: () => {
-      ipcRenderer.send(INSTALL_THE_UPDATE);
+    now: theUpdate.now,
+    whenChanged: theUpdate.whenChanged,
+    download: () => {
+      ipcRenderer.send(DOWNLOAD_THE_UPDATE);
     },
   },
   about: {

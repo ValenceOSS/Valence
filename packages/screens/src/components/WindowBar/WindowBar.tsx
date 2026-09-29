@@ -16,31 +16,40 @@ import type { WindowBarProps } from './WindowBar.types';
  * While a film plays it takes no room at all: the film runs to the top of the window, and this and
  * the system's own controls come and go over it with the player's controls.
  *
- * The one thing it will say sits at the top right, clear of the traffic lights macOS draws at the
- * top left. On macOS that is the whole of the clearance it needs, since nothing else is drawn over
- * the top right there — on Windows and Linux, where the system's own controls are, `--valence-
- * window-bar-clearance` widens to leave room for them instead. It is marked `no-drag` so a press
- * reaches it rather than moving the window, which is the one place in this whole strip that has to
- * answer a click instead of a grab.
+ * The one thing it will say is where an update has got to, at the top right, clear of the traffic
+ * lights macOS draws at the top left. On macOS that is the whole of the clearance it needs, since
+ * nothing else is drawn over the top right there — on Windows and Linux, where the system's own
+ * controls are, `--valence-window-bar-clearance` widens to leave room for them instead. A release
+ * that has been found is a button to fetch it, one being fetched says how far it has got, and one
+ * that failed is a button to try again. A button is marked `no-drag` so a press reaches it rather
+ * than moving the window, which is the one place in this whole strip that has to answer a click
+ * instead of a grab.
  *
- * @param updateVersion - The version waiting to be installed, or nothing where none is.
- * @param onInstallUpdate - Told to install it and restart, once there is one downloaded to install.
+ * @param update - Where an update has got to, or nothing where there is none.
+ * @param onUpdate - Told to fetch the update and restart into it.
  */
-const WindowBar = ({ updateVersion, onInstallUpdate }: WindowBarProps) => (
+const WindowBar = ({ update, onUpdate }: WindowBarProps) => (
   <div
     data-slot="window-bar"
     className="fixed inset-x-0 top-0 z-[60] flex h-8 items-center justify-end border-b border-[var(--surface-line)] bg-[color-mix(in_oklab,var(--color-surface-raised)_88%,var(--color-surface))] pr-[var(--valence-window-bar-clearance)] [-webkit-app-region:drag]"
   >
-    {updateVersion === undefined ? null : (
+    {update === undefined || update.kind === 'none' ? null : update.kind === 'downloading' ? (
+      <span
+        role="status"
+        className="px-2 text-[0.6875rem] uppercase tracking-wide text-on-scrim opacity-70"
+      >
+        Updating {update.percent.toString()}%
+      </span>
+    ) : (
       <Button
         variant="ghost"
         size="xs"
         hasTooltip={false}
-        onClick={onInstallUpdate}
+        onClick={onUpdate}
         className="h-6 gap-1 px-2 text-[0.6875rem] uppercase tracking-wide text-on-scrim opacity-70 hover:opacity-100 [-webkit-app-region:no-drag]"
       >
         <Icon of={DownloadIcon} size={13} />
-        Update available
+        {update.kind === 'failed' ? 'Retry update' : `Update to ${update.version}`}
       </Button>
     )}
   </div>
