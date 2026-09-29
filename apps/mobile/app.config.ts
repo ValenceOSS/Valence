@@ -1,5 +1,6 @@
 import type { ExpoConfig } from 'expo/config';
 import { withTheSceneLifecycle } from './plugins/withTheSceneLifecycle.ts';
+import { withCarPlay } from './plugins/withCarPlay.ts';
 import { releaseVersion } from '@valence/core/src/functions/releaseVersion.ts';
 
 const version = releaseVersion();
@@ -94,4 +95,4 @@ const config: ExpoConfig = {
   ],
 };
 
-export default withTheSceneLifecycle(config);
+export default withTheSceneLifecycle(withCarPlay(config));
