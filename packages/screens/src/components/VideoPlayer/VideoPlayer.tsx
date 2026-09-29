@@ -101,6 +101,7 @@ import { describePlaying } from './describePlaying';
 import { PausedScreen } from './components/PausedScreen/PausedScreen';
 import type { CastContext } from '@ValenceScreens/playback/castSender.types';
 import { aKeptSession } from '@ValenceClient/downloads/aKeptSession';
+import { useOfflineMode } from '@ValenceClient/offline/useOfflineMode';
 import type { StartedSession } from '@ValenceClient/playback/startPlaybackSession';
 import type { MediaDetail } from '@ValenceContracts/schemas/Library';
 import { subtitleCuesUrl } from '@ValenceClient/playback/fetchSubtitleCues';
@@ -262,6 +263,12 @@ const VideoPlayer = ({
   const isSilencedByPolicyRef = useRef(false);
   const frameSecondsRef = useRef(DEFAULT_FRAME_SECONDS);
   const cache = useQueryClient();
+  const { isOffline } = useOfflineMode();
+  const isOfflineRef = useRef(isOffline);
+
+  useEffect(() => {
+    isOfflineRef.current = isOffline;
+  });
   const [session, setSession] = useState<StartedSession | null>(null);
   const [state, setState] = useState<PlayerState>('starting');
   const [problem, setProblem] = useState<string | null>(null);
@@ -792,6 +799,10 @@ const VideoPlayer = ({
 
   const reportPresenceHeartbeat = useCallback(
     (clientId: string) => {
+      if (isOfflineRef.current) {
+        return;
+      }
+
       const current = videoRef.current;
       const playing = current !== null && !current.paused;
 
@@ -838,6 +849,10 @@ const VideoPlayer = ({
     const clientId = platformInUse().thisClientId();
 
     const onPageHide = () => {
+      if (isOfflineRef.current) {
+        return;
+      }
+
       const element = videoRef.current;
       const reached = element?.currentTime ?? 0;
       const whole = element?.duration ?? Number.NaN;
@@ -1042,7 +1057,7 @@ const VideoPlayer = ({
   );
 
   useEffect(() => {
-    if (session === null) {
+    if (session === null || isOfflineRef.current) {
       return;
     }
 
@@ -1051,7 +1066,9 @@ const VideoPlayer = ({
 
   useEffect(
     () => () => {
-      void stopWatching(platformInUse().thisClientId());
+      if (!isOfflineRef.current) {
+        void stopWatching(platformInUse().thisClientId());
+      }
     },
     [],
   );
@@ -1065,6 +1082,10 @@ const VideoPlayer = ({
     setSelectedSubtitleId(SUBTITLES_OFF);
     setSegments([]);
     setSelectedAudioIndex(null);
+
+    if (isOffline) {
+      return;
+    }
 
     let askingAgain: ReturnType<typeof setTimeout> | null = null;
 
@@ -1132,7 +1153,7 @@ const VideoPlayer = ({
         clearTimeout(askingAgain);
       }
     };
-  }, [media.id, cache]);
+  }, [media.id, cache, isOffline]);
 
   useEffect(() => {
     if (detail === null || session === null || subtitleTracks.length === 0) {
@@ -1457,7 +1478,7 @@ const VideoPlayer = ({
     const report = () => {
       const element = videoRef.current;
 
-      if (element === null) {
+      if (element === null || isOfflineRef.current) {
         return;
       }
 

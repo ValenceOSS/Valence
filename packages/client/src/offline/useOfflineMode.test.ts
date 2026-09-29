@@ -92,6 +92,25 @@ describe('useOfflineMode', () => {
     ]).toEqual([true, true, true]);
   });
 
+  it('tells every part of the app, not only the one that asked', () => {
+    installPlatform(aFakePlatform());
+
+    const asking = renderHook(() => useOfflineMode());
+    const elsewhere = renderHook(() => useOfflineMode());
+
+    act(() => {
+      asking.result.current.goOffline(true);
+    });
+
+    expect(elsewhere.result.current.isOffline).toBe(true);
+
+    act(() => {
+      asking.result.current.goOffline(false);
+    });
+
+    expect(elsewhere.result.current.isOffline).toBe(false);
+  });
+
   it('stays offline while it was asked for, even once the server is back', () => {
     const reach = aReach();
 

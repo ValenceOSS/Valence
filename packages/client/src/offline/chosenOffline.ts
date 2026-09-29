@@ -2,6 +2,8 @@ import { platformInUse } from '@ValenceClient/platform/installPlatform';
 
 const STORAGE_KEY = 'valence.offline.chosen';
 
+const following = new Set<(isChosen: boolean) => void>();
+
 /**
  * Whether somebody has said they want to be offline, whatever the network is doing.
  *
@@ -29,11 +31,28 @@ const chooseOffline = (isChosen: boolean): void => {
 
   if (isChosen) {
     store.write(STORAGE_KEY, 'yes');
-
-    return;
+  } else {
+    store.forget(STORAGE_KEY);
   }
 
-  store.forget(STORAGE_KEY);
+  for (const listener of following) {
+    listener(isChosen);
+  }
 };
 
-export { STORAGE_KEY, chooseOffline, chosenOffline };
+/**
+ * Tells a listener whenever somebody goes offline or comes back, wherever in the application they
+ * asked, so every part of it that cares follows the same answer.
+ *
+ * @param listener - Told what was asked for.
+ * @returns A way to stop telling it.
+ */
+const followChosenOffline = (listener: (isChosen: boolean) => void): (() => void) => {
+  following.add(listener);
+
+  return () => {
+    following.delete(listener);
+  };
+};
+
+export { STORAGE_KEY, chooseOffline, chosenOffline, followChosenOffline };

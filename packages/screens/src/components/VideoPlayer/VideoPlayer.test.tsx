@@ -3,6 +3,9 @@ import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import userEvent from '@testing-library/user-event';
 import { SKIP_SECONDS } from './components/PlayerControls/PlayerControls.types';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { onlineManager } from '@tanstack/react-query';
+import { chooseOffline } from '@ValenceClient/offline/chosenOffline';
+import { installATestClient } from '@ValenceScreens/testing/installATestClient';
 import { gainFor } from '@ValenceCore/functions/gainFor';
 import { notify } from '@ValenceUI/notify';
 import { VideoPlayer } from './VideoPlayer';
@@ -263,6 +266,8 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+  onlineManager.setOnline(true);
 });
 
 describe('VideoPlayer', () => {
@@ -333,6 +338,46 @@ describe('VideoPlayer', () => {
     expect(await screen.findByRole('switch', { name: /Stats for nerds/ })).toBeInTheDocument();
     expect(screen.queryByText('Quality')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Audio track/ })).not.toBeInTheDocument();
+  });
+
+  it('asks the server for nothing while playing a kept copy offline', async () => {
+    installATestClient({ canKeepFiles: () => true });
+    chooseOffline(true);
+    onlineManager.setOnline(false);
+    presenceHeartbeatMock.mockClear();
+    const fetchMock = vi.fn<(input: string, options?: RequestInit) => Promise<Response>>();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { container, unmount } = renderInAnAddress(
+      <VideoPlayer media={media} onClose={vi.fn()} keptSource="valence-kept://arrival" />,
+    );
+
+    await waitFor(() => {
+      expect(container.querySelector('video')?.getAttribute('src')).toBe('valence-kept://arrival');
+    });
+    fireEvent.play(await screen.findByLabelText('Arrival'));
+    unmount();
+
+    expect(trickplayMock).not.toHaveBeenCalled();
+    expect(detailMock).not.toHaveBeenCalled();
+    expect(segmentsMock).not.toHaveBeenCalled();
+    expect(subtitlesMock).not.toHaveBeenCalled();
+    expect(presenceHeartbeatMock).not.toHaveBeenCalled();
+    expect(stopWatchingMock).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('still asks for thumbnails and skip times for a kept copy while online', async () => {
+    const { container } = renderInAnAddress(
+      <VideoPlayer media={media} onClose={vi.fn()} keptSource="valence-kept://arrival" />,
+    );
+
+    await waitFor(() => {
+      expect(container.querySelector('video')?.getAttribute('src')).toBe('valence-kept://arrival');
+    });
+
+    expect(trickplayMock).toHaveBeenCalledWith('media-1');
+    expect(segmentsMock).toHaveBeenCalledWith('media-1');
   });
 
   it('attaches the media engine to the returned manifest', async () => {

@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
-import { chooseOffline, chosenOffline } from '@ValenceClient/offline/chosenOffline';
+import {
+  chooseOffline,
+  chosenOffline,
+  followChosenOffline,
+} from '@ValenceClient/offline/chosenOffline';
 
 type OfflineMode = {
   isOffline: boolean;
@@ -48,9 +52,16 @@ const useOfflineMode = (): OfflineMode => {
     return stop;
   }, [platform]);
 
+  useEffect(() => {
+    const stop = followChosenOffline(setIsByChoice);
+
+    setIsByChoice(chosenOffline());
+
+    return stop;
+  }, [platform]);
+
   const goOffline = useCallback((isChosen: boolean) => {
     chooseOffline(isChosen);
-    setIsByChoice(isChosen);
   }, []);
 
   return {
