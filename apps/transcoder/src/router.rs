@@ -762,9 +762,9 @@ async fn start_split(
     let stream =
         split_session::chosen_audio(&probe.audio_streams, spec.audio_stream_index)?.clone();
 
-    let halves = match start_halves(state, spec, device_id).await {
+    let halves = match start_halves(state, spec, stream.index, device_id).await {
         Ok(halves) => halves,
-        Err(response) => return Some(response),
+        Err(response) => return Some(*response),
     };
 
     let (Some(video_codec), Some(audio_codec)) = (
@@ -845,12 +845,21 @@ struct Halves {
 async fn start_halves(
     state: &AppState,
     spec: &SessionSpec,
+    audio_stream_index: u32,
     device_id: Option<&str>,
-) -> Result<Halves, Response> {
+) -> Result<Halves, Box<Response>> {
     let refused = |failure: &crate::session::SessionError| {
         tracing::error!(target: "session", %failure, "refused");
 
-        error(StatusCode::INTERNAL_SERVER_ERROR, &failure.to_string())
+        Box::new(error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            &failure.to_string(),
+        ))
+    };
+
+    let sound = SessionSpec {
+        audio_stream_index: Some(audio_stream_index),
+        ..spec.audio_alone(split_session::AUDIO_SEGMENT_SECONDS)
     };
 
     let video = state
@@ -859,14 +868,7 @@ async fn start_halves(
         .await
         .map_err(|failure| refused(&failure))?;
 
-    let audio = match state
-        .registry
-        .start(
-            spec.audio_alone(split_session::AUDIO_SEGMENT_SECONDS),
-            device_id,
-        )
-        .await
-    {
+    let audio = match state.registry.start(sound, device_id).await {
         Ok(started) => started,
         Err(failure) => {
             state.registry.stop(&video.id, device_id).await;
@@ -886,10 +888,10 @@ async fn start_halves(
         state.registry.stop(&video.id, device_id).await;
         state.registry.stop(&audio.id, device_id).await;
 
-        return Err(error(
+        return Err(Box::new(error(
             StatusCode::INTERNAL_SERVER_ERROR,
             "The session disappeared.",
-        ));
+        )));
     };
 
     let halves = Halves {
@@ -912,10 +914,10 @@ async fn start_halves(
         );
         stop_halves(state, &halves, device_id).await;
 
-        return Err(error(
+        return Err(Box::new(error(
             StatusCode::INTERNAL_SERVER_ERROR,
             "ffmpeg produced no manifest.",
-        ));
+        )));
     }
 
     Ok(halves)
@@ -965,7 +967,10 @@ async fn codec_of(directory: &Path) -> Option<String> {
 /// Two viewers starting the same film write the same playlist at the same
 /// moment, and a player reading between them must see one or the other.
 async fn write_replacing(path: &Path, contents: &[u8]) -> std::io::Result<()> {
-    let staging = path.with_extension(format!("{}.part", std::process::id()));
+    static WRITES: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+    let write = WRITES.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let staging = path.with_extension(format!("{}.{write}.part", std::process::id()));
 
     tokio::fs::write(&staging, contents).await?;
     tokio::fs::rename(&staging, path).await

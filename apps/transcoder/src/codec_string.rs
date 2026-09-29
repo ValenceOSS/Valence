@@ -25,12 +25,13 @@ const AUDIO_ENTRY_FIELDS: usize = 20;
 #[must_use]
 pub fn codec_string(init: &[u8]) -> Option<String> {
     let (kind, entry) = sample_entry(init)?;
+    let visual = || entry.get(VISUAL_ENTRY_FIELDS..);
 
     match &kind {
-        b"hvc1" | b"hev1" => hevc(kind, child(&entry[VISUAL_ENTRY_FIELDS..], *b"hvcC")?),
-        b"avc1" | b"avc3" => avc(kind, child(&entry[VISUAL_ENTRY_FIELDS..], *b"avcC")?),
-        b"av01" => av1(child(&entry[VISUAL_ENTRY_FIELDS..], *b"av1C")?),
-        b"dvh1" | b"dvhe" => dolby_vision(kind, &entry[VISUAL_ENTRY_FIELDS..]),
+        b"hvc1" | b"hev1" => hevc(kind, child(visual()?, *b"hvcC")?),
+        b"avc1" | b"avc3" => avc(kind, child(visual()?, *b"avcC")?),
+        b"av01" => av1(child(visual()?, *b"av1C")?),
+        b"dvh1" | b"dvhe" => dolby_vision(kind, visual()?),
         b"ec-3" => Some("ec-3".to_owned()),
         b"ac-3" => Some("ac-3".to_owned()),
         b"Opus" => Some("opus".to_owned()),
@@ -372,5 +373,13 @@ mod tests {
         assert_eq!(codec_string(b"not an mp4 at all"), None);
         assert_eq!(codec_string(&init_with(&visual(*b"hvc1", &[]))), None);
         assert_eq!(codec_string(&init_with(&audio(*b"mhm1", &[]))), None);
+    }
+
+    /// A picture's sample entry cut short is unreadable, not a crash.
+    #[test]
+    fn names_nothing_for_a_sample_entry_cut_short() {
+        let truncated = boxed(*b"hvc1", &[0_u8; 20]);
+
+        assert_eq!(codec_string(&init_with(&truncated)), None);
     }
 }
