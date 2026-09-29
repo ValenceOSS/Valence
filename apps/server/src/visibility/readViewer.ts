@@ -1,7 +1,7 @@
 import { readSessionOnce } from '@ValenceServer/auth/readSessionOnce';
 import type { ResolvesSessions } from '@ValenceServer/auth/readSessionOnce';
 import { ADMINISTRATOR } from '@ValenceContracts/schemas/Permission';
-import type { Permission } from '@ValenceContracts/schemas/Permission';
+import type { GrantedPermission } from '@ValenceContracts/schemas/Permission';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 const PROFILE_HEADER = 'x-valence-profile';
@@ -12,7 +12,7 @@ type NamesProfiles = {
 };
 
 type ResolvesPermissions = {
-  resolve: (userId: string) => Promise<ReadonlySet<Permission>>;
+  resolve: (userId: string) => Promise<ReadonlySet<GrantedPermission>>;
 };
 
 type ReadsViewers = {

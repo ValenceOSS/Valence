@@ -1,0 +1,57 @@
+---
+title: Upgrades and rollback
+description: Change the shape of what your plugin keeps between versions, and what happens when an upgrade goes wrong.
+order: 12
+---
+
+A plugin never changes Valence's database. What it keeps lives in its own storage, one JSON value per key, so a new field is a new key or a new property inside a value. When a new version changes the shape of what an older one stored, it converts that data once, as it is installed.
+
+## Convert your data in `onUpgraded`
+
+`onUpgraded` runs once, inside your plugin's sandbox, after a newer version is installed over an older one and before anybody uses it. It is told which version it replaced.
+
+```ts
+import { definePlugin } from '@ValenceSDK/host/definePlugin';
+
+definePlugin({
+  onUpgraded: async ({ valence }, { from }) => {
+    if (from.startsWith('1.')) {
+      for (const key of await valence.storage.keys('watched:')) {
+        const kept = await valence.storage.get(key);
+
+        if (typeof kept === 'number') {
+          await valence.storage.set(key, { episodes: kept, syncedAt: null });
+        }
+      }
+    }
+  },
+});
+```
+
+- `storage.keys(prefix)` lists the keys you kept that start with a prefix, so a conversion can walk everything of one kind.
+- Keep a version or shape marker in your values if more than one old shape can reach a new version.
+- It runs with the same permissions and limits as the rest of your plugin, and needs the `storage` permission to read or write storage.
+
+## When an upgrade fails
+
+If `onUpgraded` throws or runs out of time, Valence puts the version it replaced back exactly as it was, with everything it had kept, and tells the administrator why:
+
+> Anime tracking 2.0.0 could not bring its data up to date, so 1.4.0 was put back as it was.
+
+Your new version never serves a page on half converted data.
+
+## Rolling back
+
+Before every upgrade, Valence keeps the version being replaced and a copy of what it had stored. An administrator can put that version back with **Roll back** on the plugin's card, once, until the next upgrade.
+
+- Rolling back restores the code and the stored data together, as they were at the moment of the upgrade. Anything the plugin kept after the upgrade is lost.
+- The copy is replaced at the next upgrade, so only the most recent version can be rolled back to.
+- `onUpgraded` does not run when rolling back, because the data comes back exactly as the older version left it.
+
+## Removing a plugin
+
+Removing a plugin deletes its code, its settings, everything it kept and every account connected to it, the grants of its permission nodes, its webhook addresses and the earlier version kept for rolling back. Before anything goes, the Remove dialog lists what this plugin in particular would take with it: how much it kept, how many accounts are connected to which provider, and which providers will be asked to cancel access (those with a `revokeUrl`). Turning it off instead, which the same dialog offers, keeps all of that and stops it running. Every Valence client is told straight away, and anybody on one of its pages is taken somewhere else.
+
+## Backups
+
+Everything a plugin keeps is in Valence's own database, so backing up that database backs up plugins. Secrets, such as a client secret or a connected account's tokens, are sealed with `BETTER_AUTH_SECRET`: restore onto a server with a different one and administrators must enter those secrets again, and people must connect their accounts again.

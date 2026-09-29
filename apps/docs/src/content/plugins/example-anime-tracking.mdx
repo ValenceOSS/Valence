@@ -1,0 +1,206 @@
+---
+title: 'Example: anime tracking'
+description: A walk through the official AniList and MyAnimeList plugin, which imports your list and keeps what you have watched in step.
+order: 13
+---
+
+The official **AniList and MyAnimeList** plugin shows most of what a plugin can do: connecting accounts, a page of its own, a schedule, an event and storage. Its full source is in [ValenceOSS/valence-plugins](https://github.com/ValenceOSS/valence-plugins/tree/main/plugins/anilist). This page walks through how it is put together.
+
+## What it does
+
+- Each person connects their AniList account, their MyAnimeList account, or both, from **Anime tracking** in their account.
+- It imports their list: every series they have finished, or watched some of, is marked as watched in Valence up to the same episode, if the series is in the library.
+- Every hour it checks again.
+- When they finish an episode in Valence, it tells AniList and MyAnimeList, if they turned that on.
+
+## The manifest
+
+```json
+{
+  "manifestVersion": 2,
+  "id": "anilist",
+  "name": "AniList and MyAnimeList",
+  "version": "1.0.0",
+  "apiVersion": "^1.0",
+  "author": { "name": "Valence", "url": "https://github.com/ValenceOSS" },
+  "description": "Imports your anime list and keeps what you have watched in step with AniList and MyAnimeList.",
+  "icon": "icon.png",
+  "permissions": [
+    {
+      "kind": "network",
+      "hosts": ["anilist.co", "graphql.anilist.co", "myanimelist.net", "api.myanimelist.net"]
+    },
+    { "kind": "library", "access": "read" },
+    { "kind": "viewing", "access": "write" },
+    { "kind": "storage", "quotaBytes": 2000000 },
+    {
+      "kind": "accounts",
+      "providers": [
+        {
+          "id": "anilist",
+          "name": "AniList",
+          "authorizeUrl": "https://anilist.co/api/v2/oauth/authorize",
+          "tokenUrl": "https://anilist.co/api/v2/oauth/token",
+          "scopes": [],
+          "clientIdSetting": "anilistClientId",
+          "clientSecretSetting": "anilistClientSecret"
+        },
+        {
+          "id": "mal",
+          "name": "MyAnimeList",
+          "authorizeUrl": "https://myanimelist.net/v1/oauth2/authorize",
+          "tokenUrl": "https://myanimelist.net/v1/oauth2/token",
+          "scopes": [],
+          "clientIdSetting": "malClientId",
+          "clientSecretSetting": "malClientSecret"
+        }
+      ]
+    }
+  ],
+  "contributes": {
+    "pages": [
+      { "id": "tracking", "title": "Anime tracking", "placement": "account", "icon": "tv" }
+    ],
+    "schedules": [{ "id": "sync", "label": "Sync anime lists", "everyMinutes": 60 }],
+    "events": ["playback.finished"]
+  },
+  "entry": "dist/plugin.js",
+  "settings": [
+    { "id": "anilistClientId", "label": "AniList client ID", "kind": "text" },
+    { "id": "anilistClientSecret", "label": "AniList client secret", "kind": "secret" },
+    { "id": "malClientId", "label": "MyAnimeList client ID", "kind": "text" },
+    { "id": "malClientSecret", "label": "MyAnimeList client secret", "kind": "secret" }
+  ]
+}
+```
+
+It asks for four hosts and nothing wider, reads the library but never changes it, and needs `viewing: write` because marking episodes watched is the point.
+
+## Reading the list
+
+AniList has one GraphQL endpoint. The plugin asks for the person's list with their access token:
+
+```ts
+const LIST = `query ($userId: Int) {
+  MediaListCollection(userId: $userId, type: ANIME) {
+    lists { entries { progress status media { id idMal seasonYear episodes title { romaji english } } } }
+  }
+}`;
+
+const readAniList = async (valence: ValenceHost, token: string, userId: number) => {
+  const response = await valence.http.fetch('https://graphql.anilist.co', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: LIST, variables: { userId } }),
+  });
+
+  if (response.status !== 200) {
+    throw new Error(`AniList answered ${response.status.toString()}`);
+  }
+
+  return AniListCollectionSchema.parse(JSON.parse(response.text));
+};
+```
+
+What comes back from another service is untrusted, so it goes through a schema before anything uses it. The plugin bundles Zod for that.
+
+## Finding the series in the library
+
+Valence may already know a series' AniList or MyAnimeList id. If not, the plugin searches by title and checks the year.
+
+```ts
+const findSeries = async (valence: ValenceHost, entry: AniListEntry) => {
+  const byId = await valence.library.findByExternalId('anilist', entry.media.id.toString());
+
+  if (byId.length > 0) {
+    return byId[0];
+  }
+
+  const titles = [entry.media.title.english, entry.media.title.romaji].filter(
+    (title) => title !== null,
+  );
+
+  for (const title of titles) {
+    const found = await valence.library.search(title, ['series']);
+    const match = found.find((series) => series.year === entry.media.seasonYear);
+
+    if (match !== undefined) {
+      return match;
+    }
+  }
+
+  return null;
+};
+```
+
+Anything it cannot match is listed on the page, so people can see what was left out.
+
+## Marking what was watched
+
+```ts
+const importEntry = async (valence: ValenceHost, profileId: string, entry: AniListEntry) => {
+  const series = await findSeries(valence, entry);
+
+  if (series === null) {
+    return 'unmatched';
+  }
+
+  const episodes = (await valence.library.episodes(series.id)).toSorted(
+    (a, b) =>
+      (a.seasonNumber ?? 0) - (b.seasonNumber ?? 0) ||
+      (a.episodeNumber ?? 0) - (b.episodeNumber ?? 0),
+  );
+
+  for (const episode of episodes.slice(0, entry.progress)) {
+    await valence.viewing.markWatched(profileId, episode.id);
+  }
+
+  return 'imported';
+};
+```
+
+## Keeping it in step
+
+The hourly schedule runs the same import for everyone who connected, remembering where each person's list was last read in `valence.storage` so it only does the work that changed.
+
+```ts
+schedules: {
+  sync: async ({ valence }) => {
+    for (const profile of await valence.profiles.list()) {
+      await syncProfile(valence, profile.id);
+    }
+  },
+},
+```
+
+And when someone finishes an episode, the event sends their progress back, if they asked for that on the page:
+
+```ts
+events: async (event, { valence }) => {
+  if (event.topic !== 'playback.finished' || event.profileId === null || event.mediaId === null) {
+    return;
+  }
+
+  const wanted = await valence.storage.get(`push:${event.profileId}`);
+
+  if (wanted === true) {
+    await sendProgress(valence, event.profileId, event.mediaId);
+  }
+},
+```
+
+## The page
+
+The page shows who is connected, the last sync and anything unmatched, with a toggle for sending progress back and a button to sync now. The connect buttons use Valence's own [connect action](/plugins/accounts-and-oauth#3-offer-a-connect-button).
+
+```ts
+act: async ({ valence, viewer }, request) => {
+  await valence.storage.set(`push:${viewer.profileId}`, request.fields.pushProgress === true);
+
+  if (request.action.id === 'sync') {
+    await syncProfile(valence, viewer.profileId);
+  }
+},
+```
+
+`act` returns nothing, so Valence draws the page again straight after, with the new state.

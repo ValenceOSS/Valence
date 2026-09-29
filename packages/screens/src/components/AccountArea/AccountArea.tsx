@@ -13,9 +13,12 @@ import { TwoFactorSetup } from '@ValenceScreens/components/TwoFactorSetup/TwoFac
 import { PasskeySetup } from '@ValenceScreens/components/PasskeySetup/PasskeySetup';
 import { DeviceList } from '@ValenceScreens/components/AccountArea/components/DeviceList/DeviceList';
 import { SharePanel } from '@ValenceScreens/components/AccountArea/components/SharePanel/SharePanel';
-import type { AccountAreaProps } from './AccountArea.types';
+import { PluginSurfaceView } from '@ValenceScreens/components/PluginSurfaceView/PluginSurfaceView';
+import type { AccountAreaProps, PluginAccountPage } from './AccountArea.types';
 
-const PANEL_ORDER = ACCOUNT_PANELS.map((one) => one.id);
+const PANEL_ORDER: readonly string[] = ACCOUNT_PANELS.map((one) => one.id);
+
+const NO_PAGES: readonly PluginAccountPage[] = [];
 
 /**
  * Somebody's own account: their name and password, the devices they are signed in on, their passkeys
@@ -27,9 +30,19 @@ const PANEL_ORDER = ACCOUNT_PANELS.map((one) => one.id);
  * @param draft - The profile as it would be saved.
  * @param onDraft - Told what somebody changed about it.
  * @param onChanged - Told when something changed, so the shell can read the account again.
+ * @param pluginPages - The account pages plugins add, each drawn from the plugin's own building
+ *   blocks after Valence's own panels.
  */
-const AccountArea = ({ user, panel, profile, draft, onDraft, onChanged }: AccountAreaProps) => {
-  const travel = useTravelDirection(PANEL_ORDER, panel);
+const AccountArea = ({
+  user,
+  panel,
+  profile,
+  draft,
+  onDraft,
+  onChanged,
+  pluginPages = NO_PAGES,
+}: AccountAreaProps) => {
+  const travel = useTravelDirection([...PANEL_ORDER, ...pluginPages.map((page) => page.id)], panel);
 
   return (
     <motion.div
@@ -78,6 +91,16 @@ const AccountArea = ({ user, panel, profile, draft, onDraft, onChanged }: Accoun
           <ApiKeyPanel />
         </PanelCard>
       </TabPanel>
+
+      {pluginPages.map((page) => (
+        <TabPanel key={page.id} value={page.id} travel={travel}>
+          <PanelCard title={`From ${page.pluginName}`}>
+            <PluginSurfaceView
+              place={{ kind: 'page', pluginId: page.pluginId, pageId: page.pageId }}
+            />
+          </PanelCard>
+        </TabPanel>
+      ))}
     </motion.div>
   );
 };

@@ -10,6 +10,13 @@ describe('readEnv', () => {
     expect(env.COOKIE_SECURE).toBe(false);
   });
 
+  it('reads the plugin catalogue from the Valence project unless told otherwise', () => {
+    expect(readEnv({}).VALENCE_PLUGIN_CATALOGUE_URL).toBe(
+      'https://valenceoss.github.io/valence-plugins/catalogue.json',
+    );
+    expect(() => readEnv({ VALENCE_PLUGIN_CATALOGUE_URL: 'not a url' })).toThrow();
+  });
+
   it('coerces the port from a string', () => {
     expect(readEnv({ PORT: '9000' }).PORT).toBe(9000);
   });

@@ -21,6 +21,7 @@ import { AMoodBackground } from '@ValenceMobile/components/AMoodBackground/AMood
 import { AMusicHead } from '@ValenceMobile/components/AMusicHead/AMusicHead';
 import { ATrackList } from '@ValenceMobile/components/ATrackList/ATrackList';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
+import { APluginPanels } from '@ValenceMobile/components/APluginPanels/APluginPanels';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { howLongItRuns } from '@ValenceMobile/components/ATitle/howLongItRuns';
 import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
@@ -286,6 +287,7 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
           void refresh();
         }}
       />
+      <APluginPanels on="playlist" subjectId={playlistId} />
     </Screen>
   );
 };

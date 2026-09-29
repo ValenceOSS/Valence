@@ -23,6 +23,42 @@ describe('palette', () => {
     });
   });
 
+  it('lays the dark colours of a plugin theme chosen on this television over them', () => {
+    jest.isolateModules(() => {
+      const store = jest.requireMock<{ setItem: (key: string, value: string) => void }>(
+        'expo-secure-store',
+      );
+
+      store.setItem('valence.pluginTheme', 'night-sky/midnight');
+      store.setItem(
+        'valence.pluginThemeColours',
+        JSON.stringify({
+          choice: 'night-sky/midnight',
+          corners: 'standard',
+          dark: {
+            accent: '#7c9cff',
+            accentContrast: '#0b0d12',
+            surface: '#0b0d12',
+            surfaceRaised: '#151a24',
+            text: '#f2f4f8',
+            textMuted: '#a7b0c0',
+            border: '#2a3242',
+            danger: '#ff6b6b',
+            highlight: '#ffd166',
+            success: '#6bd68f',
+          },
+        }),
+      );
+
+      const themed = jest.requireActual<typeof Palette>('@ValenceTv/theme/palette').palette;
+
+      expect(themed.accent).toBe('#7c9cff');
+      expect(themed.accentHover).toBe('#7c9cff');
+      expect(themed.surface).toBe('#0b0d12');
+      expect(themed.onScrim).toBe('#ffffff');
+    });
+  });
+
   it('fails loudly where the build lost its colours', () => {
     jest.resetModules();
     jest.doMock('expo-constants', () => ({

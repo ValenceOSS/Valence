@@ -33,6 +33,7 @@ import { ATitleHead } from '@ValenceMobile/components/ATitleHead/ATitleHead';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
+import { APluginPanels } from '@ValenceMobile/components/APluginPanels/APluginPanels';
 import { TheBadges } from '@ValenceMobile/components/TheBadges/TheBadges';
 import { TheCast } from '@ValenceMobile/components/TheCast/TheCast';
 import { TheStars } from '@ValenceMobile/components/TheStars/TheStars';
@@ -399,6 +400,8 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
       )}
 
       <TheCast cast={metadata.cast ?? []} onLookAtPerson={onLookAtPerson} />
+
+      <APluginPanels on="title" subjectId={mediaId} />
 
       {extras.length === 0 ? null : (
         <AShelf title="Extras">

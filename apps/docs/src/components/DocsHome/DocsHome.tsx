@@ -14,6 +14,8 @@ const BLURBS: Readonly<Record<string, string>> = {
     'Docker Compose, the proxy in front, storage, hardware transcoding, updates and rollback.',
   use: 'Libraries, playback, accounts, requests, jobs and every setting in the admin area.',
   develop: 'Architecture, local setup, the coding standard, testing, plugins and releases.',
+  plugins:
+    'Write a plugin: the manifest, permissions, the host API, building blocks, themes and signing.',
   reference: 'Environment variables, ports, command line tools, the API and troubleshooting.',
 };
 

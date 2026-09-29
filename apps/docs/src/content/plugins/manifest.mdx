@@ -1,0 +1,120 @@
+---
+title: The manifest
+description: Every field of manifest.json, what it may hold and the checks Valence makes across fields before a plugin is accepted.
+order: 2
+---
+
+A manifest is the `manifest.json` at the root of a plugin. It says what the plugin is, what it adds and what it asks to be allowed to do. `PluginManifestSchema` in `@ValenceSDK/manifest/PluginManifestSchema` is the single definition of what is valid, and Valence checks every manifest against it before anything else happens.
+
+## A complete example
+
+```json
+{
+  "manifestVersion": 2,
+  "id": "anilist",
+  "name": "AniList and MyAnimeList",
+  "version": "1.0.0",
+  "apiVersion": "^1.0",
+  "author": { "name": "Valence", "url": "https://github.com/ValenceOSS" },
+  "description": "Imports your anime list and keeps what you have watched in step with AniList and MyAnimeList.",
+  "homepage": "https://github.com/ValenceOSS/valence-plugins",
+  "icon": "icon.png",
+  "permissions": [
+    { "kind": "network", "hosts": ["graphql.anilist.co", "anilist.co"] },
+    { "kind": "library", "access": "read" },
+    { "kind": "viewing", "access": "write" },
+    { "kind": "storage", "quotaBytes": 2000000 }
+  ],
+  "contributes": {
+    "pages": [
+      { "id": "tracking", "title": "Anime tracking", "placement": "account", "icon": "tv" }
+    ],
+    "schedules": [{ "id": "sync", "label": "Sync anime lists", "everyMinutes": 60 }],
+    "events": ["playback.finished"]
+  },
+  "entry": "dist/plugin.js",
+  "settings": [{ "id": "anilistClientId", "label": "AniList client ID", "kind": "text" }]
+}
+```
+
+## Fields
+
+| Field             | Required  | Rules                                                                                                                            |
+| ----------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `manifestVersion` | Yes       | Always `2`                                                                                                                       |
+| `id`              | Yes       | 3 to 64 characters, lower case, starting with a letter, then letters, digits and hyphens. It never changes once published.       |
+| `name`            | Yes       | 1 to 60 characters                                                                                                               |
+| `version`         | Yes       | A full semver version such as `1.4.0` or `2.0.0-beta.1`                                                                          |
+| `apiVersion`      | Yes       | The plugin API versions it works with, as `1`, `1.0`, `^1.0` or `~1.2.0`. The current API is `1.0.0`.                            |
+| `author`          | Yes       | `name`, 1 to 80 characters, and an optional `url`                                                                                |
+| `description`     | Yes       | 1 to 500 characters, shown before anyone installs it                                                                             |
+| `homepage`        | No        | An `https` address                                                                                                               |
+| `icon`            | No        | The name of a picture in `assets/`, such as `icon.png`: lower case letters, digits and hyphens, ending `.png`, `.jpg` or `.webp` |
+| `permissions`     | No        | Up to 16 [permissions](/plugins/permissions), each kind at most once. Defaults to none.                                          |
+| `contributes`     | No        | What the plugin adds, below. Defaults to nothing.                                                                                |
+| `entry`           | Sometimes | The bundled code, such as `dist/plugin.js`: lower case letters, digits, `/`, `_` and `-`, ending `.js`                           |
+| `settings`        | No        | Up to 16 settings an administrator fills in, below                                                                               |
+
+Every `https` address in a manifest must be a real domain name, at most 2,000 characters long.
+
+## What a plugin contributes
+
+`contributes` is an object with eight lists, each of which may be left out.
+
+| List        | Up to | Each holds                                                                                                                                    |
+| ----------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pages`     | 8     | `id`, `title` (1 to 40 characters), `placement` (`account` or `admin`) and an optional [icon](/plugins/building-blocks#icons)                 |
+| `panels`    | 8     | `id`, `title` (1 to 40 characters) and `on`: `title`, `series`, `album`, `artist` or `playlist`                                               |
+| `themes`    | 12    | A theme, described on the [themes page](/plugins/themes)                                                                                      |
+| `schedules` | 8     | `id`, `label` (1 to 60 characters) and `everyMinutes`, a whole number from 15 to 10,080 (a week)                                              |
+| `events`    | 7     | Event topics, described on the [schedules and events page](/plugins/schedules-and-events)                                                     |
+| `webhooks`  | 8     | `id` and `title` (1 to 60 characters), described on the [webhooks page](/plugins/webhooks)                                                    |
+| `emits`     | 12    | `id` and `title` (1 to 80 characters): the events you send to [Valence's webhooks](/plugins/webhooks#telling-valences-webhooks)               |
+| `nodes`     | 20    | Your own [permission nodes](/plugins/permissions#your-own-permission-nodes): `id`, `title` (1 to 60 characters) and an optional `description` |
+
+Every `id` in `contributes` starts with a lower case letter and has at most 40 characters of letters, digits and hyphens. Each is used once within its own list, and it is the key your code uses for that page, panel, theme or schedule.
+
+A page with `placement: "account"` appears in each person's account area. A page with `placement: "admin"` appears only in the admin area, only for administrators.
+
+A page or panel may also name `requires`, one of your `nodes`: it is then shown only to people whose role holds that node, and Valence refuses to draw it for anybody else.
+
+## Settings
+
+Settings are values an administrator types in when installing or configuring the plugin, such as an API client ID.
+
+| Field   | Rules                                                                                 |
+| ------- | ------------------------------------------------------------------------------------- |
+| `id`    | Starts with a lower case letter, then up to 39 letters and digits, such as `clientId` |
+| `label` | 1 to 60 characters                                                                    |
+| `kind`  | `text`, `secret` or `toggle`                                                          |
+| `help`  | Up to 200 characters, shown under the field                                           |
+
+A `secret` setting is stored encrypted and never sent back to any app. Your plugin reads settings with `valence.settings.read()`.
+
+## Checks across fields
+
+Some rules involve more than one field. Valence refuses a manifest that breaks any of them.
+
+- **Each permission kind appears once.** Two `network` entries are refused; list every host in one.
+- **Code is named when it is needed.** A plugin with any pages, panels, schedules, events or permissions must name its `entry`. A plugin that only carries themes needs no code at all.
+- **Accounts reach only listed hosts.** Every `authorizeUrl`, `tokenUrl` and `revokeUrl` of an [account provider](/plugins/accounts-and-oauth) must be on a host listed under `network`.
+- **Accounts read declared settings.** A provider's `clientIdSetting` and `clientSecretSetting` must name settings the manifest declares.
+- **Ids are unique.** No two pages, panels, themes or schedules share an `id` within their own list.
+
+## Checking a manifest yourself
+
+The schema is the contract, so you can check a manifest the same way Valence does.
+
+```ts
+import { PluginManifestSchema } from '@ValenceSDK/manifest/PluginManifestSchema';
+
+const checked = PluginManifestSchema.safeParse(JSON.parse(text));
+
+if (!checked.success) {
+  for (const issue of checked.error.issues) {
+    console.log(issue.path.join('.'), issue.message);
+  }
+}
+```
+
+`valence-plugin pack` does this for you, and refuses to pack a manifest with any problem.

@@ -19,6 +19,7 @@ import { STILL_WATCHING_CHOICES } from '@ValenceClient/profiles/STILL_WATCHING_C
 import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace';
 import { FaceEditor } from '@ValenceScreens/components/FaceEditor/FaceEditor';
 import { ColourChoice } from '@ValenceScreens/components/ColourChoice/ColourChoice';
+import { PluginThemeRow } from '@ValenceScreens/components/AccountArea/components/PluginThemeRow/PluginThemeRow';
 import type { ProfileSettingsProps } from './ProfileSettings.types';
 
 /**
@@ -124,6 +125,8 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
           }}
         />
       </SettingRow>
+
+      <PluginThemeRow />
 
       <SettingRow
         title="Movement"

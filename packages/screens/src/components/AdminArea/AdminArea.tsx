@@ -41,6 +41,7 @@ import { PreviewMomentPicker } from '@ValenceScreens/components/PreviewMomentPic
 import { OverviewPanel } from './components/OverviewPanel/OverviewPanel';
 import { RolesPanel } from './components/RolesPanel/RolesPanel';
 import { WebhooksPanel } from './components/WebhooksPanel/WebhooksPanel';
+import { PluginsPanel } from './components/PluginsPanel/PluginsPanel';
 import { SharesPanel } from './components/SharesPanel/SharesPanel';
 import {
   changeWebhook,
@@ -1182,6 +1183,10 @@ const AdminArea = ({
 
           <TabPanel value="shares" travel={travel}>
             <SharesPanel />
+          </TabPanel>
+
+          <TabPanel value="plugins" travel={travel}>
+            <PluginsPanel />
           </TabPanel>
 
           <TabPanel value="webhooks" travel={travel}>

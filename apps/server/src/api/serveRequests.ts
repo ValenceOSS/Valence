@@ -60,14 +60,12 @@ import {
 import { ReleaseDownloadRequestSchema } from '@ValenceContracts/schemas/Indexer';
 import { readSessionOnce } from '@ValenceServer/auth/readSessionOnce';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
-import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { seasonsOf } from '@ValenceContracts/functions/seasonsOf';
 import { describeCatalogueTitle } from '@ValenceServer/requests/catalogue/describeCatalogueTitle';
-import { bookAsTitle, discoverShelves } from '@ValenceServer/requests/catalogue/discoverShelves';
+import { discoverShelves } from '@ValenceServer/requests/catalogue/discoverShelves';
 import { standTitles } from '@ValenceServer/requests/catalogue/standTitles';
 import { progressOf } from '@ValenceServer/requests/progressOf';
-import type { UnstoodTitle } from '@ValenceServer/requests/catalogue/UnstoodTitle';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 
@@ -83,7 +81,6 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     library,
     requests,
     requestsClient,
-    searchCatalogue,
     describeForRequest,
     searchMusicCatalogue,
     discovery,
@@ -104,6 +101,8 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     profileForAsk,
     catalogueFor,
     draftFor,
+    findInCatalogue,
+    sayOfAsk,
     whatMayBeAsked,
     everyRequest,
   } = context;
@@ -198,21 +197,8 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const { request, isNew } = answer.value;
-    const isApproved = drafted.kind === 'drafted' && drafted.draft.isApproved;
 
-    if (isNew) {
-      sayOfRequest({
-        event: 'requests.made',
-        data: { title: request.title, kind: request.kind, requestedBy: request.requestedBy.name },
-      });
-    }
-
-    if (isApproved && (isNew || request.approval === 'approved')) {
-      sayOfRequest({
-        event: 'requests.approved',
-        data: { title: request.title, approvedBy: null },
-      });
-    }
+    sayOfAsk(request, isNew, drafted.kind === 'drafted' && drafted.draft.isApproved);
 
     if (asked.release === undefined || requestsClient === null) {
       return context.json(request, isNew ? 201 : 200);
@@ -410,27 +396,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(NOT_YOURS, 403);
     }
 
-    const found: UnstoodTitle[] = isBookRequest(kind)
-      ? (await discovery.searchBooks(query)).map(bookAsTitle)
-      : isMusicRequest(kind)
-        ? (await searchMusicCatalogue(query, kind)).map((hit) => ({
-            kind: hit.kind,
-            id: hit.musicBrainzId,
-            title: hit.title,
-            subtitle: hit.artist ?? hit.disambiguation,
-            year: hit.year,
-            overview: null,
-            posterUrl: hit.coverUrl,
-          }))
-        : (await searchCatalogue(query, kind === 'film' ? 'movie' : 'tv')).map((match) => ({
-            kind,
-            id: match.externalId,
-            title: match.title,
-            subtitle: null,
-            year: match.year,
-            overview: match.overview,
-            posterUrl: match.posterUrl,
-          }));
+    const found = await findInCatalogue(query, kind);
 
     return context.json(await standTitles(found, discovery.lookup, await everyRequest()), 200);
   });

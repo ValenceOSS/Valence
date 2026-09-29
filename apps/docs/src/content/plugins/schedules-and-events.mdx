@@ -1,0 +1,88 @@
+---
+title: Schedules and events
+description: Run work on a schedule, or when something happens in Valence, and which profiles that work may act for.
+order: 8
+---
+
+Not everything a plugin does starts with someone pressing a button. A sync can run every hour, and a watched episode can be sent to another service the moment it finishes.
+
+## Schedules
+
+Declare a schedule in the manifest, then give a handler with the same id.
+
+```json
+{
+  "contributes": {
+    "schedules": [{ "id": "sync", "label": "Sync anime lists", "everyMinutes": 60 }]
+  }
+}
+```
+
+```ts
+definePlugin({
+  schedules: {
+    sync: async ({ valence }) => {
+      for (const profile of await valence.profiles.list()) {
+        await syncProfile(valence, profile.id);
+      }
+    },
+  },
+});
+```
+
+| Field          | Rules                                               |
+| -------------- | --------------------------------------------------- |
+| `id`           | Up to 40 lower case letters, digits and hyphens     |
+| `label`        | 1 to 60 characters, shown on the jobs page          |
+| `everyMinutes` | A whole number from 15 to 10,080, which is one week |
+
+Schedules run as jobs, so they appear on the [jobs page](/use/jobs-and-logs) with their history, and an administrator can run one now. A schedule does not run while the plugin is disabled, and a run that is still going is not started again.
+
+A schedule acts for no one in particular, so it starts from `valence.profiles.list()`: the profiles that connected an account to the plugin or used its page. It may act only for those.
+
+## Events
+
+List the topics you want in the manifest's `events`, and give one `events` handler.
+
+```json
+{ "contributes": { "events": ["playback.finished"] } }
+```
+
+```ts
+definePlugin({
+  events: async (event, { valence }) => {
+    if (event.topic === 'playback.finished' && event.profileId !== null && event.mediaId !== null) {
+      await sendProgress(valence, event.profileId, event.mediaId);
+    }
+  },
+});
+```
+
+| Topic                | When                                              | `profileId` | `mediaId` | Needs     |
+| -------------------- | ------------------------------------------------- | ----------- | --------- | --------- |
+| `playback.started`   | Someone starts playing something                  | Yes         | Yes       | `viewing` |
+| `playback.stopped`   | Someone stops before the end                      | Yes         | Yes       | `viewing` |
+| `playback.finished`  | Someone reaches the end, and it counts as watched | Yes         | Yes       | `viewing` |
+| `media.added`        | Something new arrives in the library              | No          | Yes       | `library` |
+| `media.removed`      | Something leaves the library                      | No          | Yes       | `library` |
+| `library.scanned`    | A library scan finishes                           | No          | No        | `library` |
+| `requests.available` | Something someone asked for is now in the library | Yes         | Yes       | `library` |
+
+A plugin only hears a topic when it holds the permission beside it, so subscribing never tells it more than it could ask for directly: who watched what needs `viewing`, and changes to the library need `library`. A manifest listing a topic without that permission is refused.
+
+Every event is:
+
+```ts
+type PluginEvent = {
+  topic: string;
+  occurredAt: string;
+  profileId: string | null;
+  mediaId: string | null;
+};
+```
+
+An event about a profile reaches your plugin only if that profile connected an account to it or used its page. A plugin that did not list a topic never hears of it.
+
+## Keep it quick
+
+Every call into a plugin has 5 seconds of processor time and 30 seconds in all. Most of that is spent waiting for the network, which does not count against the 5 seconds, but a long import should still work in pieces: keep a cursor in `valence.storage`, do a batch, and let the next run carry on from there.

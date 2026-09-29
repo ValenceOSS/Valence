@@ -30,6 +30,7 @@ import { ATitleHead } from '@ValenceMobile/components/ATitleHead/ATitleHead';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
+import { APluginPanels } from '@ValenceMobile/components/APluginPanels/APluginPanels';
 import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRow';
 import { TheStars } from '@ValenceMobile/components/TheStars/TheStars';
 import { Words } from '@ValenceMobile/components/Words/Words';
@@ -414,6 +415,7 @@ const AShow = ({ libraryId, showId, onWatch, onLookAt, onBack }: AShowProps) => 
           void keep(mediaIds);
         }}
       />
+      <APluginPanels on="series" subjectId={showId} onLookAt={onLookAt} />
     </Screen>
   );
 };

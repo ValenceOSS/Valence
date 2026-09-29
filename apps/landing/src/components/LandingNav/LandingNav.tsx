@@ -25,6 +25,7 @@ const NAV_LINK = 'text-sm font-semibold transition-colors';
 
 const LINKS = [
   { to: '/changelog', label: 'Changelog' },
+  { to: '/plugins', label: 'Plugins' },
   { to: '/privacy', label: 'Privacy' },
   { to: '/terms', label: 'Terms' },
 ] as const;

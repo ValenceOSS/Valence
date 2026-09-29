@@ -6,6 +6,7 @@ const NOTIFICATION_EVENTS = [
   'sharing.withdrawn',
   'requests.available',
   'downloads.ready',
+  'plugins.message',
 ] as const;
 
 const NotificationEventSchema = z.enum(NOTIFICATION_EVENTS);

@@ -2,14 +2,14 @@ import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { readRefusal } from './readRefusal';
 import type { Refusal } from './readRefusal';
 import { z } from 'zod';
-import { PermissionSchema } from '@ValenceContracts/schemas/Permission';
+import { GrantedPermissionSchema, PermissionSchema } from '@ValenceContracts/schemas/Permission';
 import type { Permission, PermissionGrant, Role } from '@ValenceContracts/schemas/Permission';
 
 const RoleSchema = z.object({
   id: z.string(),
   name: z.string(),
   position: z.number(),
-  permissions: z.array(PermissionSchema),
+  permissions: z.array(GrantedPermissionSchema),
   color: z.string().nullable(),
 });
 
@@ -21,7 +21,7 @@ const GrantSchema = z.object({
 const AccountPermissionsSchema = z.object({
   roles: z.array(RoleSchema),
   overrides: z.array(GrantSchema),
-  effective: z.array(PermissionSchema),
+  effective: z.array(GrantedPermissionSchema),
 });
 
 type AccountPermissions = z.infer<typeof AccountPermissionsSchema>;

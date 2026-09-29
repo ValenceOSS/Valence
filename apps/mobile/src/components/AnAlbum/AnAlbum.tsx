@@ -9,6 +9,7 @@ import { AMusicHead } from '@ValenceMobile/components/AMusicHead/AMusicHead';
 import { ATrackList } from '@ValenceMobile/components/ATrackList/ATrackList';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
+import { APluginPanels } from '@ValenceMobile/components/APluginPanels/APluginPanels';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { howLongItRuns } from '@ValenceMobile/components/ATitle/howLongItRuns';
 import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
@@ -116,6 +117,8 @@ const AnAlbum = ({ albumId, onAlbum, onArtist, onPlaylist, onBack }: AnAlbumProp
         onArtist={onArtist}
         {...(onPlaylist === undefined ? {} : { onPlaylist })}
       />
+
+      <APluginPanels on="album" subjectId={albumId} />
     </Screen>
   );
 };

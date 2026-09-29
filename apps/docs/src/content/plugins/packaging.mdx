@@ -1,0 +1,111 @@
+---
+title: Packaging
+description: The .vplugin package format, its limits, and the valence-plugin command line tool that packs, signs and lists plugins.
+order: 10
+---
+
+A plugin is installed as one file, a `.vplugin`. It holds the manifest, the bundled code and the pictures, and nothing else.
+
+## The package format
+
+A `.vplugin` is gzipped JSON:
+
+```json
+{
+  "format": 1,
+  "manifest": { "manifestVersion": 2, "id": "anilist", "...": "..." },
+  "code": "the whole of dist/plugin.js",
+  "assets": { "icon.png": "iVBORw0KGgo..." }
+}
+```
+
+| Field      | Rules                                                                                                            |
+| ---------- | ---------------------------------------------------------------------------------------------------------------- |
+| `format`   | Always `1`                                                                                                       |
+| `manifest` | A [manifest](/plugins/manifest)                                                                                  |
+| `code`     | The bundled plugin as one string. Present exactly when the manifest names an `entry`.                            |
+| `assets`   | Pictures by name, as base64. Names are lower case letters, digits and hyphens, ending `.png`, `.jpg` or `.webp`. |
+
+There is no archive to unpack and no paths inside it, so a package cannot write outside where it is kept.
+
+## Limits
+
+| Limit               | Value  |
+| ------------------- | ------ |
+| The `.vplugin` file | 8 MB   |
+| Once unpacked       | 16 MB  |
+| The code            | 2 MB   |
+| One asset           | 512 KB |
+| All assets together | 4 MB   |
+| Number of assets    | 32     |
+
+If the manifest names an `icon`, it must be one of the assets.
+
+## Bundling your code
+
+Your code runs in a sandbox with no module loader, so it must be one file with everything it needs inside it, including the SDK. The template bundles with esbuild:
+
+```ts
+import { build } from 'esbuild';
+
+await build({
+  entryPoints: ['src/plugin.ts'],
+  bundle: true,
+  format: 'iife',
+  platform: 'neutral',
+  target: 'es2023',
+  outfile: 'dist/plugin.js',
+  minify: true,
+});
+```
+
+Keep dependencies few and small. Anything that needs Node, a browser or `fetch` will not work inside the sandbox.
+
+## The valence-plugin tool
+
+The SDK comes with a small command line tool, `valence-plugin`. The template runs it through pnpm.
+
+### pack
+
+```bash
+pnpm valence-plugin pack
+```
+
+Reads `manifest.json`, the file its `entry` names (usually `dist/plugin.js`) and everything in `assets/`, checks them against the manifest and package rules, and writes `<id>-<version>.vplugin`. It refuses to write a package with any problem, and says what the problem is.
+
+### keygen
+
+```bash
+pnpm valence-plugin keygen
+```
+
+Makes an Ed25519 key pair for signing, as PEM files: the private key, which you keep secret, and the public key, which you share. You only need your own key if you sign packages yourself. Plugins in the official catalogue are signed by the catalogue's key.
+
+### sign
+
+```bash
+VALENCE_PLUGIN_SIGNING_KEY="$(cat private.pem)" pnpm valence-plugin sign anilist-1.0.0.vplugin
+```
+
+Signs a package with the private key in `VALENCE_PLUGIN_SIGNING_KEY`, writing the signature beside it as `anilist-1.0.0.vplugin.sig`. The signature is Ed25519 over the package's exact bytes, as base64.
+
+### catalogue
+
+```bash
+VALENCE_PLUGIN_SIGNING_KEY="$(cat private.pem)" pnpm valence-plugin catalogue
+```
+
+Builds `catalogue.json` from a folder of signed packages and signs it as `catalogue.json.sig`. This is what the official catalogue's release workflow runs; see [publishing](/plugins/publishing).
+
+## Using the package functions yourself
+
+The tool is a thin wrapper around functions in `@ValenceSDK/package/`: `packPlugin`, `readPluginPackage`, `signBytes`, `verifySignature` and `sha256Of`. `readPluginPackage` is the same check Valence makes when a package is uploaded.
+
+```ts
+import { readFileSync } from 'node:fs';
+import { readPluginPackage } from '@ValenceSDK/package/readPluginPackage';
+
+const read = readPluginPackage(readFileSync('anilist-1.0.0.vplugin'));
+
+console.log(read.ok ? read.plugin.manifest.version : read.problem);
+```

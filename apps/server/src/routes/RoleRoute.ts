@@ -1,7 +1,11 @@
 import { createRoute, z } from '@hono/zod-openapi';
-import { PERMISSIONS } from '@ValenceContracts/schemas/Permission';
+import { GrantedPermissionSchema, PERMISSIONS } from '@ValenceContracts/schemas/Permission';
 
 const PermissionName = z.enum(PERMISSIONS);
+
+const HeldPermission = GrantedPermissionSchema.openapi({
+  description: 'One of Valence’s permissions, or a plugin’s own as plugin.<plugin>.<node>',
+});
 
 const RoleColor = z
   .string()
@@ -13,7 +17,7 @@ const Role = z
     id: z.string().uuid(),
     name: z.string().min(1).max(60),
     position: z.number().int().nonnegative(),
-    permissions: z.array(PermissionName),
+    permissions: z.array(HeldPermission),
     color: RoleColor,
   })
   .openapi('Role');
@@ -24,7 +28,7 @@ const RoleBody = z
   .object({
     name: z.string().min(1).max(60),
     position: z.number().int().nonnegative(),
-    permissions: z.array(PermissionName),
+    permissions: z.array(HeldPermission),
     color: RoleColor.optional(),
   })
   .openapi('RoleBody');
@@ -153,7 +157,7 @@ const listAccountRolesRoute = createRoute({
           schema: z.object({
             roles: z.array(Role),
             overrides: z.array(OverrideBody),
-            effective: z.array(PermissionName),
+            effective: z.array(HeldPermission),
           }),
         },
       },

@@ -3,49 +3,15 @@ import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createElement } from 'react';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
+import { aFakeSocket as aSocket } from '@ValenceClient/testing/aFakeSocket';
+import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 import { useFreshFromTheSocket } from './useFreshFromTheSocket';
-import type { RealtimeEvent, RealtimeTopic } from '@ValenceContracts/schemas/Realtime';
+import type { RealtimeEvent } from '@ValenceContracts/schemas/Realtime';
 import type { ReactNode } from 'react';
 
 const getRealtimeClient = vi.hoisted(() => vi.fn());
 
 vi.mock('@ValenceClient/realtime/getRealtimeClient', () => ({ getRealtimeClient }));
-
-/**
- * A socket that says nothing until a test says it did, and remembers what it was asked to stop
- * listening to.
- */
-const aSocket = () => {
-  const listeners = new Map<string, (event: RealtimeEvent) => void>();
-  const stopped: string[] = [];
-  let onResume = (): void => undefined;
-
-  return {
-    stopped,
-    say: (topic: string, event: RealtimeEvent) => {
-      listeners.get(topic)?.(event);
-    },
-    reconnect: () => {
-      onResume();
-    },
-    client: {
-      subscribe: (topic: RealtimeTopic, listen: (event: RealtimeEvent) => void) => {
-        listeners.set(topic, listen);
-
-        return () => {
-          stopped.push(topic);
-        };
-      },
-      onResumed: (run: () => void) => {
-        onResume = run;
-
-        return () => {
-          stopped.push('resumed');
-        };
-      },
-    },
-  };
-};
 
 const ANYTHING: RealtimeEvent = {
   kind: 'event',
@@ -119,6 +85,16 @@ describe('useFreshFromTheSocket', () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['downloads'] });
   });
 
+  it('throws away what the plugins add when one of them is installed, changed or turned off', () => {
+    const invalidate = vi.spyOn(cache, 'invalidateQueries').mockResolvedValue(undefined);
+    const socket = aSocket();
+
+    listening(socket);
+    socket.say('plugins', ANYTHING);
+
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: pluginQueries.key });
+  });
+
   it('throws away everything after a reconnection, since it missed whatever happened', () => {
     const invalidate = vi.spyOn(cache, 'invalidateQueries').mockResolvedValue(undefined);
     const socket = aSocket();
@@ -140,6 +116,7 @@ describe('useFreshFromTheSocket', () => {
       'profile',
       'requests',
       'keeping',
+      'plugins',
       'sessions',
       'resumed',
     ]);

@@ -9,22 +9,30 @@ const ErrorBodySchema = z.object({ error: z.string() });
  * the words say what to change, which is what a person needs to read.
  *
  * @param path - Where to ask.
- * @param init - How: the method, and a body where there is one.
+ * @param init - How: the method, a body where there is one, and anything else the request has to
+ *   carry, such as which face is acting.
  * @param fallback - What to say where the server gave no words of its own.
  * @returns What it sent back, or nothing where it sent nothing.
  * @throws With the server's words, or the fallback.
  */
 const changeOnServer = async (
   path: string,
-  init: { method: 'POST' | 'PUT' | 'PATCH' | 'DELETE'; json?: JsonValue },
+  init: {
+    method: 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+    json?: JsonValue;
+    headers?: Record<string, string>;
+  },
   fallback: string,
 ): Promise<JsonValue> => {
+  const headers = {
+    ...(init.json === undefined ? {} : { 'content-type': 'application/json' }),
+    ...init.headers,
+  };
   const response = await fetch(path, {
     method: init.method,
     credentials: 'same-origin',
-    ...(init.json === undefined
-      ? {}
-      : { headers: { 'content-type': 'application/json' }, body: JSON.stringify(init.json) }),
+    ...(Object.keys(headers).length === 0 ? {} : { headers }),
+    ...(init.json === undefined ? {} : { body: JSON.stringify(init.json) }),
   });
 
   if (!response.ok) {

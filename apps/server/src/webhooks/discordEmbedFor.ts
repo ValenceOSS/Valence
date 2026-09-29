@@ -200,6 +200,17 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
       };
     }
 
+    case 'plugin.event': {
+      return {
+        title: payload.data.title,
+        description: `From ${payload.data.pluginName}`,
+        colour: COLOURS.quiet,
+        fields: Object.entries(payload.data.detail)
+          .slice(0, 10)
+          .map(([name, value]) => field(name, value === null ? null : String(value))),
+      };
+    }
+
     case 'auth.succeeded': {
       return {
         title: `${payload.data.name} signed in`,

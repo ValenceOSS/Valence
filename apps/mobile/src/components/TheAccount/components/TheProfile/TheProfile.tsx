@@ -15,6 +15,7 @@ import { CaseSensitive, ImagePlus } from '@keyline-icons/react-native';
 import { AFace } from '@ValenceMobile/components/AFace/AFace';
 import { thePictureFor } from '@ValenceMobile/components/AFace/thePictureFor';
 import { AGroup } from '@ValenceMobile/components/AGroup/AGroup';
+import { AThemeChoice } from '@ValenceMobile/components/AThemeChoice/AThemeChoice';
 import { APicture } from '@ValenceMobile/components/APicture/APicture';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRow';
@@ -269,6 +270,8 @@ const TheProfile = () => {
           />
         </View>
       </AGroup>
+
+      <AThemeChoice />
 
       {refusal === null ? null : <Words tone="danger">{refusal}</Words>}
 

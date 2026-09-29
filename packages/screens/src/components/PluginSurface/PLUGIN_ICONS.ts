@@ -1,0 +1,53 @@
+import {
+  Bin,
+  Book,
+  Check,
+  CircleAlert,
+  CircleUser,
+  Clock,
+  Download,
+  Film,
+  Heart,
+  Info,
+  Link,
+  List,
+  Monitor,
+  MusicNote,
+  Play,
+  Plus,
+  RefreshCw,
+  Search,
+  Settings,
+  Star,
+  Upload,
+  X,
+} from '@keyline-icons/react';
+import type { IconGlyphName } from '@ValenceSDK/surface/ICON_GLYPHS';
+import type { IconGlyph } from '@ValenceUI/Icon.types';
+
+const PLUGIN_ICONS: Readonly<Record<IconGlyphName, IconGlyph>> = {
+  Bin,
+  Book,
+  Check,
+  CircleAlert,
+  CircleUser,
+  Clock,
+  Download,
+  Film,
+  Heart,
+  Info,
+  Link,
+  List,
+  Monitor,
+  MusicNote,
+  Play,
+  Plus,
+  RefreshCw,
+  Search,
+  Settings,
+  Star,
+  Upload,
+  X,
+};
+
+export { PLUGIN_ICONS };

@@ -17,6 +17,7 @@ import { ActionRow } from '@ValenceTv/components/ActionRow/ActionRow';
 import { EpisodeCard } from '@ValenceTv/components/EpisodeCard/EpisodeCard';
 import { TabBar } from '@ValenceTv/components/TabBar/TabBar';
 import { TitleSpread } from '@ValenceTv/components/TitleSpread/TitleSpread';
+import { PluginPanels } from '@ValenceTv/components/PluginPanels/PluginPanels';
 import { joinFacts } from '@ValenceTv/library/joinFacts';
 import { useProgress } from '@ValenceTv/library/useProgress';
 import { tokens } from '@ValenceTv/theme/tokens';
@@ -190,6 +191,8 @@ const ShowPage = ({ libraryId, showId, onPlay }: ShowPageProps) => {
               );
             }}
           />
+
+          <PluginPanels on="series" subjectId={showId} />
         </View>
       }
     >

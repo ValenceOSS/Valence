@@ -1,152 +1,89 @@
 ---
 title: Plugins
-description: The plugin model Valence is built around, the manifest contract in the plugin SDK, and an exact account of what works today and what does not.
+description: How Valence runs plugins without trusting them, the sandbox, permissions, the network rules and how signing decides what may be installed.
 order: 7
 ---
 
-Valence is designed so that plugins can extend it without being trusted with the server. Each plugin runs in a process of its own and reaches everything through a broker that enforces the capabilities the plugin declared. This page describes that design and the contract that exists in the repository. It is deliberately precise about the state of the implementation, because the plugin runtime is only partly built.
+A plugin adds to Valence: it can import your anime list, bring playlists across from another service, add a page to your account, put a panel beside a film or give the whole app a new look. It does this without being trusted with the server. This page explains the model and the security reasoning behind it. The [Plugins section](/plugins/getting-started) is the guide to writing one.
 
-<Callout title="What works today" tone="warning">
-  The repository contains the plugin manifest contract (`packages/plugin-sdk`) and an internal
-  metadata provider seam in the server. It does not yet contain a plugin loader, a broker, plugin
-  process management, a messaging protocol, runtime permission enforcement or any way to install or
-  publish a plugin. You cannot run a plugin against Valence today.
-</Callout>
+## What a plugin can add
 
-## The model
+| Contribution  | What people see                                                                        |
+| ------------- | -------------------------------------------------------------------------------------- |
+| **Pages**     | A page of its own in the account area, or in the admin area for administrators         |
+| **Panels**    | A panel on a title, a series, an album, an artist or a playlist                        |
+| **Themes**    | New colour schemes, offered next to the built-in ones on the web, the phone and the TV |
+| **Schedules** | Work that runs on its own every so often, such as a sync, listed on the jobs page      |
+| **Events**    | Work done when something happens, such as a film finishing                             |
 
-The design goals come from the project's own rules and security policy.
+Pages and panels are not code sent to your browser. They are descriptions made from Valence's own [building blocks](/plugins/building-blocks), and every app draws them with its own components.
 
-- **Process per plugin.** A plugin is not code loaded into the server. It runs in its own process, so a crash or a bad plugin cannot take the server down with it.
-- **Brokered.** A plugin never touches the filesystem, the network or session data directly. It asks the broker, which allows only what the manifest declared and what the administrator granted.
-- **Declared up front.** What a plugin can do is written in a manifest that is validated before anything runs, so an administrator can see the requested capabilities before installing.
-- **Plugin-facing anything lives in the SDK.** Under the [Coding standard](/develop/coding-standard), anything a plugin sees goes in `packages/plugin-sdk`, and everything exported from it carries TSDoc because it generates public documentation.
+## No plugin code runs in any app
 
-The broker is a security boundary. The project's [security policy](/reference/security) treats a plugin sandbox escape, meaning anything letting plugin code reach the filesystem, network or session data outside its granted capabilities, as critical.
+This is the rule the rest of the design follows. The web app, the phone app, the TV app and the desktop app never run anything a plugin wrote. There is no iframe, no web view, no `eval`, no script loaded from elsewhere, and nothing a plugin sends is ever read as HTML or Markdown.
 
-If you need something the broker does not expose, say so. Extension point requests are a first class issue type with a fast path, so the brokered model does not become a wall. See [Contributing](/develop/contributing).
+What a plugin can put in front of people is limited to three things:
 
-## What exists in the repository
+1. **Themes**, which are data: ten colours per scheme and a choice of corners, checked against a schema and a readability test before they are applied.
+2. **Surfaces**, which are data: a tree of blocks such as headings, rows, buttons and toggles. Text is plain text, links must be `https`, and images are fetched through the server. When someone presses a button the app sends the action to the server, the plugin answers there, and the app draws the new surface.
+3. **Ordinary content**, such as a playlist the plugin made or a title it marked as watched, which the apps already know how to show.
 
-### The plugin SDK package
+The reason is simple. Code running in a browser or a phone sits next to the viewer's session, their cookies and their other data, and a page that can run code can be made to do anything the page can. Keeping plugin code off every client removes that whole class of attack, and it is also what the App Store requires of an iPhone and Apple TV app.
 
-`packages/plugin-sdk` is the workspace package `@valence/plugin-sdk`, reached inside the repository through the `@ValenceSDK/*` alias. It is marked `private` and is not published to a registry yet, so outside contributors cannot install it. Its dependencies are `@valence/contracts` and `zod`.
+## Where plugin code does run
 
-Today it contains one module:
+Plugin code runs only on the server, and even there it is kept apart.
 
-| File                                  | Exports                                                                                                                              |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `src/manifest/PluginManifest.ts`      | `PluginManifestSchema`, `CapabilitySchema`, `ExtensionPointSchema` and the types `PluginManifest`, `Capability` and `ExtensionPoint` |
-| `src/manifest/PluginManifest.test.ts` | The tests for it                                                                                                                     |
+- **One process per plugin.** Each enabled plugin gets a child process of its own. A plugin that crashes or hangs takes nothing else with it, and the server restarts it with a growing delay.
+- **Node's permission model.** That process is started with `--permission`. It may read only the files it needs to start, and it cannot write files, start other programs, open worker threads or load native add-ons.
+- **QuickJS inside WebAssembly.** The plugin's JavaScript does not run in Node at all. It runs in QuickJS, a separate JavaScript engine compiled to WebAssembly, inside that process. From inside, there is no `require`, no `process`, no `fetch`, no `XMLHttpRequest` and no `WebAssembly`. The only way out is the `valence` object Valence hands to each handler.
+- **Limits on every call.** QuickJS is capped at 64 MB of memory and 5 seconds of processor time per call, and a call that has not finished after 30 seconds is abandoned. The process itself is capped at 160 MB.
 
-That is the whole public surface. There is no client library, no lifecycle hooks, no request or response types for extension points and no test harness for plugin authors yet.
+Every method on the `valence` object is a message to the server, which checks it against the permissions the administrator granted before doing anything. See the [host API](/plugins/host-api).
 
-### The manifest
+## Permissions
 
-A manifest is a JSON document that describes a plugin. `PluginManifestSchema` is the single definition of what is valid.
+A plugin lists what it needs in its manifest, and an administrator sees that list, in plain words, before installing it. A plugin cannot ask for more later: an update that asks for more is shown again and has to be accepted again. The full list is on the [permissions page](/plugins/permissions).
 
-```json
-{
-  "id": "tmdb-metadata",
-  "name": "TMDB Metadata",
-  "version": "1.2.0",
-  "apiVersion": "^1.0.0",
-  "author": "Valence Community",
-  "description": "Fetches film and series metadata from TMDB.",
-  "extensionPoints": ["MetadataProvider"],
-  "capabilities": [
-    { "kind": "network", "domains": ["api.themoviedb.org"] },
-    { "kind": "library", "access": "read" }
-  ],
-  "entry": "dist/plugin.js"
-}
-```
+| Permission      | Allows                                                                 |
+| --------------- | ---------------------------------------------------------------------- |
+| `network`       | `https` requests to the hosts it names, and nowhere else               |
+| `library`       | Reading the library                                                    |
+| `viewing`       | Reading, or reading and changing, what people have watched             |
+| `requests`      | Asking for titles on someone's behalf, within their own request rights |
+| `playlists`     | Reading, or creating and filling, playlists                            |
+| `storage`       | A private key and value store, up to a quota of at most 50 MB          |
+| `accounts`      | Connecting someone's account on another service through OAuth          |
+| `notifications` | Sending someone a notification inside Valence                          |
 
-| Field             | Type                  | Rules                                                                                                                 |
-| ----------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `id`              | string                | 3 to 64 characters, lower case kebab case, starting with a letter: `^[a-z][a-z0-9-]*$`                                |
-| `name`            | string                | 1 to 100 characters                                                                                                   |
-| `version`         | string                | Semver, starting `major.minor.patch`                                                                                  |
-| `apiVersion`      | string                | A semver range, such as `^1.0.0`, `~1.2` or `1.0.0 - 2.0.0`, naming the plugin API version the plugin was written for |
-| `author`          | string                | Required, at least one character                                                                                      |
-| `description`     | string                | 1 to 500 characters                                                                                                   |
-| `extensionPoints` | array                 | At least one value from the list below                                                                                |
-| `capabilities`    | array                 | Zero or more capability objects. An empty array is valid and means the plugin asks for nothing.                       |
-| `entry`           | string                | The plugin's entry file, relative to its package, such as `dist/plugin.js`                                            |
-| `settingsSchema`  | JSON object, optional | A JSON description of the settings the plugin exposes                                                                 |
+There is deliberately no permission for the file system, for sessions, for other plugins or for the database.
 
-### Extension points
+### Who a plugin acts for
 
-`ExtensionPointSchema` names the seven places a plugin may extend Valence.
+A plugin never acts for anyone at random. When someone uses a plugin's page or panel, the plugin acts only for that person's profile. Scheduled work and events act only for profiles that connected an account to the plugin or used its page. Requests are made as that person and are bound by the request rights their account already has.
 
-| Extension point            | Intended for                                                        |
-| -------------------------- | ------------------------------------------------------------------- |
-| `MetadataProvider`         | Supplying titles, artwork, cast and other details for library items |
-| `LibraryScanner`           | Reading media sources beyond the built-in scanner                   |
-| `AuthProvider`             | Signing people in through another identity system                   |
-| `NotificationChannel`      | Delivering notifications somewhere new                              |
-| `RequestBackend`           | Fulfilling media requests through another source                    |
-| `TranscodeProfileProvider` | Contributing transcode profiles                                     |
-| `UIContribution`           | Adding to the interface                                             |
+## Network rules
 
-These are the names the manifest accepts. The table describes the intent implied by each name. The request and response contracts for them have not been written, so nothing implements one end to end yet.
+`valence.http.fetch` is the only way a plugin reaches the internet, and it is strict.
 
-### Capabilities
+- Only `https`.
+- Only hosts listed under the `network` permission, matched exactly. There are no wildcards.
+- The host is resolved first, and private, loopback, link-local and cloud metadata addresses are refused, so a plugin cannot reach your router, your other containers or your cloud provider.
+- Redirects are followed by hand, at most three, and every hop is checked again.
+- 15 seconds per request and 5 MB per response.
+- No cookies and no credentials from the server are ever attached. A plugin sends only the headers it sets itself.
 
-A capability is a permission a plugin asks for. Each is an object with a `kind` and kind specific fields, and `CapabilitySchema` is a discriminated union over `kind`. An unknown kind is rejected, for example a `filesystem` capability with paths.
+Remote images on a plugin's page are fetched the same way, through `/api/plugins/{id}/image`, and only when they are images.
 
-| Kind      | Fields                                               | Meaning                                                     |
-| --------- | ---------------------------------------------------- | ----------------------------------------------------------- |
-| `network` | `domains`: one or more non-empty strings             | The domains the plugin may reach. At least one is required. |
-| `library` | `access`: `read`                                     | Read access to library data                                 |
-| `media`   | `access`: `probe` or `read`                          | Probing media files, or reading them                        |
-| `events`  | `topics`: one or more non-empty strings              | Which event topics the plugin may subscribe to              |
-| `storage` | `quotaBytes`: a positive integer, at most 50,000,000 | A quota of private storage, capped at 50 million bytes      |
+## Signing and trust
 
-There is deliberately no filesystem capability and no session capability. A plugin cannot ask for either.
+Valence installs a plugin from one of two places.
 
-### Validating a manifest
+- **The official catalogue.** A list of plugins published from [ValenceOSS/valence-plugins](https://github.com/ValenceOSS/valence-plugins). The list is signed, and so is each package in it, with an Ed25519 key whose public half is built into Valence. Valence checks both signatures and the package's SHA-256 digest before anything is installed. A package that fails any check is refused.
+- **An upload.** An administrator can upload a `.vplugin` file. If it is not signed by a key Valence knows, Valence says so plainly, and the administrator has to confirm that they trust whoever made it before it can be installed.
 
-Untrusted input enters through a Zod schema, and a manifest is untrusted input. This is the pattern for reading one.
+See [signing and the catalogue](/plugins/publishing).
 
-```ts
-import { PluginManifestSchema } from '@ValenceSDK/manifest/PluginManifest';
-import type { PluginManifest } from '@ValenceSDK/manifest/PluginManifest';
+## Reporting a way out
 
-const readManifest = (raw: string): PluginManifest => PluginManifestSchema.parse(JSON.parse(raw));
-
-export { readManifest };
-```
-
-`parse` throws a `ZodError` naming the failing field, for example `Plugin ids are lowercase kebab-case` for a bad `id`, or `apiVersion must be a semver range`. Use `safeParse` where you want to report every problem rather than throw.
-
-Because the schema is the contract, changing it is a public change. A change to a plugin extension point or to the manifest shape is marked breaking with `!` and a `BREAKING CHANGE:` footer, and it needs tests in `PluginManifest.test.ts`. See [Coding standard](/develop/coding-standard).
-
-## The internal metadata seam
-
-The closest thing to an extension point in the running server is not in the SDK. `apps/server/src/library/MetadataProvider.ts` defines an internal `MetadataProvider` type, and `resolveMetadata` asks each provider in turn about a file and takes the first real answer. The comment on it states the design intent: a plugin's provider overrides the built-in filename reader without replacing it, and a provider that fails is skipped rather than failing the scan, because a metadata service being down must not make a library unreadable.
-
-Two providers are wired in `Main.ts` today: a catalogue provider, which needs `CATALOGUE_API_KEY`, and a filename provider that works from paths alone. Neither is a plugin. They are built-in code that use the shape a plugin would fill. Treat it as a hint of where the extension point will land, not as a supported API: it can change without notice and it is not exposed outside the server.
-
-## What does not exist yet
-
-To avoid guessing, here is the list of things this page cannot document because they are not in the codebase.
-
-| Topic                                                                                       | State                                                                       |
-| ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| Plugin loader and discovery                                                                 | Not implemented                                                             |
-| Process supervision and the plugin lifecycle (install, enable, start, stop, update, remove) | Not implemented                                                             |
-| The broker and the messaging protocol between server and plugin                             | Not implemented                                                             |
-| Runtime enforcement of capabilities                                                         | Not implemented. The manifest declares them, and nothing enforces them yet. |
-| Administrator screens or API routes for plugins                                             | Not implemented                                                             |
-| A publishing or distribution channel                                                        | Not implemented                                                             |
-| A published SDK package                                                                     | Not implemented. `@valence/plugin-sdk` is private.                          |
-
-When any of these lands, this page will change with it. The rule that documentation is updated in the same pull request as the behaviour applies here too.
-
-## How to help
-
-- **Ask for an extension point.** Open an issue describing what you need and what capability it implies. This is the fast path the project promises.
-- **Review the manifest contract.** It is small, and it is where the security model is written down first. Pull requests that tighten it, or that add a capability with a clear reason, are welcome. Follow [Contributing](/develop/contributing).
-- **Keep it boring.** New capabilities should be as narrow as `network` is: an explicit list of things allowed, never a wildcard.
-- **Report holes.** If you find a way for plugin code to escape its declared capabilities in any future implementation, do not open a public issue. Follow the private reporting route in the [security policy](/reference/security).
+A way for plugin code to reach the file system, the network or session data beyond what it was granted is a critical security issue. Do not open a public issue. Follow the private route in the [security policy](/reference/security).

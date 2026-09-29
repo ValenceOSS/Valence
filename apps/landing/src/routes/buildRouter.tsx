@@ -19,12 +19,14 @@ const buildRouter = () => {
 
   const release = createRoute({ getParentRoute: () => root, path: '/changelog/$slug' });
 
+  const plugins = createRoute({ getParentRoute: () => root, path: '/plugins' });
+
   const privacy = createRoute({ getParentRoute: () => root, path: '/privacy' });
 
   const terms = createRoute({ getParentRoute: () => root, path: '/terms' });
 
   return createRouter({
-    routeTree: root.addChildren([home, changelog, release, privacy, terms]),
+    routeTree: root.addChildren([home, changelog, release, plugins, privacy, terms]),
     defaultErrorComponent: PageProblem,
     scrollRestoration: true,
   });

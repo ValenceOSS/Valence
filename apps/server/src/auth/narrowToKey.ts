@@ -1,4 +1,4 @@
-import type { Permission } from '@ValenceContracts/schemas/Permission';
+import type { GrantedPermission, Permission } from '@ValenceContracts/schemas/Permission';
 
 /**
  * Works out what an API key may actually do, which is never more than the account that issued it —
@@ -10,9 +10,9 @@ import type { Permission } from '@ValenceContracts/schemas/Permission';
  * @returns What the key may do.
  */
 const narrowToKey = (
-  held: ReadonlySet<Permission>,
+  held: ReadonlySet<GrantedPermission>,
   allowed: ReadonlySet<Permission> | null,
-): ReadonlySet<Permission> =>
+): ReadonlySet<GrantedPermission> =>
   allowed === null ? held : new Set([...allowed].filter((permission) => held.has(permission)));
 
 export { narrowToKey };

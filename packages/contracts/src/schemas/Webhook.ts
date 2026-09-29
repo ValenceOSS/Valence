@@ -41,6 +41,7 @@ const WEBHOOK_EVENTS = [
   'media.removed',
   'playback.started',
   'playback.stopped',
+  'plugin.event',
 ] as const;
 
 const WebhookEventSchema = z.enum(WEBHOOK_EVENTS);
@@ -102,6 +103,7 @@ const WEBHOOK_EVENT_LABELS: Record<WebhookEvent, string> = {
   'media.removed': 'Something left',
   'playback.started': 'Started watching',
   'playback.stopped': 'Stopped watching',
+  'plugin.event': 'Plugin reported',
 };
 
 const WEBHOOK_EVENT_NOTES: Partial<Record<WebhookEvent, string>> = {
@@ -114,6 +116,8 @@ const WEBHOOK_EVENT_NOTES: Partial<Record<WebhookEvent, string>> = {
   'session.started':
     'Sent when somebody opens Valence, not when they sign in, and says where from.',
   'session.ended': 'Sent a minute after the tab goes, so a reload is not a leaving.',
+  'plugin.event':
+    'Sent when an installed plugin reports something it said it would, such as an import finishing.',
 };
 
 type WebhookEventGroup = {
@@ -182,6 +186,11 @@ const WEBHOOK_EVENT_GROUPS: readonly WebhookEventGroup[] = [
     id: 'watching',
     label: 'Watching',
     events: ['playback.started', 'playback.stopped'],
+  },
+  {
+    id: 'plugins',
+    label: 'Plugins',
+    events: ['plugin.event'],
   },
 ];
 
@@ -507,6 +516,17 @@ const WebhookPayloadSchema = z.discriminatedUnion('event', [
     event: z.literal('session.ended'),
     data: WebhookSessionSchema.extend({
       lastedSeconds: z.number().nonnegative(),
+    }),
+  }),
+  z.object({
+    ...WebhookEnvelopeSchema,
+    event: z.literal('plugin.event'),
+    data: z.object({
+      pluginId: z.string(),
+      pluginName: z.string(),
+      name: z.string(),
+      title: z.string(),
+      detail: z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()])),
     }),
   }),
 ]);

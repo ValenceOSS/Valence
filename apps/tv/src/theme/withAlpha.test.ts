@@ -9,7 +9,11 @@ describe('withAlpha', () => {
     expect(withAlpha('rgba(1,2,3,0.5)', 1)).toBe('rgba(1, 2, 3, 1)');
   });
 
-  it('leaves a colour that is not rgba as it was', () => {
-    expect(withAlpha('#3a8ee8', 0.5)).toBe('#3a8ee8');
+  it('makes a hex colour from a plugin theme as opaque as asked', () => {
+    expect(withAlpha('#3a8ee8', 0.5)).toBe('rgba(58, 142, 232, 0.5)');
+  });
+
+  it('leaves a colour that is neither rgba nor hex as it was', () => {
+    expect(withAlpha('transparent', 0.5)).toBe('transparent');
   });
 });

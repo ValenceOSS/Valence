@@ -1297,6 +1297,94 @@ const userProfile = pgTable('user_profile', {
   updatedAt: timestamp('updatedAt').notNull().defaultNow(),
 });
 
+const pluginInstallation = pgTable('plugin_installation', {
+  id: text('id').primaryKey(),
+  version: text('version').notNull(),
+  trust: text('trust').notNull(),
+  manifest: jsonb('manifest').notNull(),
+  package: text('package').notNull(),
+  sha256: text('sha256').notNull(),
+  isEnabled: boolean('isEnabled').notNull().default(true),
+  settings: jsonb('settings').notNull().default({}),
+  installedBy: text('installedBy').references(() => user.id, { onDelete: 'set null' }),
+  installedAt: timestamp('installedAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+  problem: text('problem'),
+});
+
+const pluginStorage = pgTable(
+  'plugin_storage',
+  {
+    pluginId: text('pluginId')
+      .notNull()
+      .references(() => pluginInstallation.id, { onDelete: 'cascade' }),
+    key: text('key').notNull(),
+    value: jsonb('value').notNull(),
+    bytes: integer('bytes').notNull(),
+    updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.pluginId, table.key] })],
+);
+
+const pluginPrevious = pgTable('plugin_previous', {
+  pluginId: text('pluginId')
+    .primaryKey()
+    .references(() => pluginInstallation.id, { onDelete: 'cascade' }),
+  version: text('version').notNull(),
+  trust: text('trust').notNull(),
+  manifest: jsonb('manifest').notNull(),
+  package: text('package').notNull(),
+  sha256: text('sha256').notNull(),
+  storage: jsonb('storage').notNull(),
+  keptAt: timestamp('keptAt').notNull().defaultNow(),
+});
+
+const pluginHook = pgTable(
+  'plugin_hook',
+  {
+    pluginId: text('pluginId')
+      .notNull()
+      .references(() => pluginInstallation.id, { onDelete: 'cascade' }),
+    hookId: text('hookId').notNull(),
+    secret: text('secret').notNull(),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.pluginId, table.hookId] })],
+);
+
+const pluginConnection = pgTable(
+  'plugin_connection',
+  {
+    pluginId: text('pluginId')
+      .notNull()
+      .references(() => pluginInstallation.id, { onDelete: 'cascade' }),
+    profileId: text('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    provider: text('provider').notNull(),
+    accessToken: text('accessToken').notNull(),
+    refreshToken: text('refreshToken'),
+    expiresAt: timestamp('expiresAt'),
+    account: text('account'),
+    connectedAt: timestamp('connectedAt').notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.pluginId, table.profileId, table.provider] })],
+);
+
+const pluginProfile = pgTable(
+  'plugin_profile',
+  {
+    pluginId: text('pluginId')
+      .notNull()
+      .references(() => pluginInstallation.id, { onDelete: 'cascade' }),
+    profileId: text('profileId')
+      .notNull()
+      .references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    firstUsedAt: timestamp('firstUsedAt').notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.pluginId, table.profileId] })],
+);
+
 const authSchema = {
   user,
   session,
@@ -1312,6 +1400,12 @@ const authSchema = {
 const valenceSchema = { userProfile, viewerProfile, serverSetting, library, mediaItem };
 
 export {
+  pluginInstallation,
+  pluginStorage,
+  pluginPrevious,
+  pluginHook,
+  pluginConnection,
+  pluginProfile,
   accountActivity,
   watchHistory,
   series,

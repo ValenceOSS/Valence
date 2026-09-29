@@ -29,7 +29,7 @@ const emptySettings = () =>
     splashscreenFile: null,
     reencodesAwaitingReviewCap: 5,
     roundness: 'default',
-  keepsDownloadsForDays: 14,
+    keepsDownloadsForDays: 14,
   });
 
 /**

@@ -5,6 +5,7 @@ import { Tabs } from '@ValenceUI/Tabs';
 import { AccountArea } from './AccountArea';
 import type { SessionUser } from '@ValenceContracts/schemas/Session';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import type { PluginAccountPage } from './AccountArea.types';
 
 const USER: SessionUser = {
   id: '00000000-0000-4000-8000-000000000001',
@@ -36,7 +37,11 @@ const fetchMock = vi.fn();
  * @param handlers - What to tell about a change.
  * @returns What was rendered.
  */
-const drawOn = (panel: string, handlers: { onChanged?: () => void } = {}) =>
+const drawOn = (
+  panel: string,
+  handlers: { onChanged?: () => void } = {},
+  pluginPages: PluginAccountPage[] = [],
+) =>
   renderInAnAddress(
     <Tabs value={panel} onValueChange={() => {}}>
       <AccountArea
@@ -53,6 +58,7 @@ const drawOn = (panel: string, handlers: { onChanged?: () => void } = {}) =>
         }}
         onDraft={vi.fn()}
         onChanged={handlers.onChanged ?? vi.fn()}
+        pluginPages={pluginPages}
       />
     </Tabs>,
   );
@@ -129,5 +135,27 @@ describe('AccountArea', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(AccountArea.displayName).toBe('AccountArea');
+  });
+
+  it('draws a page a plugin adds, from the plugin’s own building blocks', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({ blocks: [{ type: 'text', text: 'Connect AniList to begin' }] }),
+        { status: 200 },
+      ),
+    );
+
+    drawOn('plugin.anilist.tracking', {}, [
+      {
+        id: 'plugin.anilist.tracking',
+        label: 'Anime tracking',
+        pluginId: 'anilist',
+        pluginName: 'AniList',
+        pageId: 'tracking',
+      },
+    ]);
+
+    expect(await screen.findByText('Connect AniList to begin')).toBeInTheDocument();
+    expect(screen.getByText('From AniList')).toBeInTheDocument();
   });
 });

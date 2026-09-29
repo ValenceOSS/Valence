@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { narrowToKey } from './narrowToKey';
-import type { Permission } from '@ValenceContracts/schemas/Permission';
+import type { GrantedPermission, Permission } from '@ValenceContracts/schemas/Permission';
 
 const held = (...permissions: Permission[]): ReadonlySet<Permission> => new Set(permissions);
 
@@ -47,7 +47,7 @@ describe('narrowToKey', () => {
   });
 
   it('never answers with more than the account holds, whatever it is asked for', () => {
-    const account = held('jobs.run', 'streaming.view');
+    const account: ReadonlySet<GrantedPermission> = held('jobs.run', 'streaming.view');
 
     const everything: Permission[] = [
       'administrator',
@@ -67,5 +67,15 @@ describe('narrowToKey', () => {
     }
 
     expect(narrowed).toEqual(account);
+  });
+
+  it('keeps a plugin’s own permissions from a key restricted to Valence’s', () => {
+    const account: ReadonlySet<GrantedPermission> = new Set<GrantedPermission>([
+      'jobs.run',
+      'plugin.anilist.sync',
+    ]);
+
+    expect(narrowToKey(account, held('jobs.run'))).toEqual(held('jobs.run'));
+    expect(narrowToKey(account, null)).toEqual(account);
   });
 });

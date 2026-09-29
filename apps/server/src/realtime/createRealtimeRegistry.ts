@@ -4,7 +4,7 @@ import type { Coalesced, Schedule } from './createCoalescer';
 import type { Entitlements } from './createEntitlements';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type { FromServer, RealtimeTopic } from '@ValenceContracts/schemas/Realtime';
-import type { Permission } from '@ValenceContracts/schemas/Permission';
+import type { GrantedPermission } from '@ValenceContracts/schemas/Permission';
 
 type RealtimeConnection = {
   id: string;
@@ -137,7 +137,7 @@ const createRealtimeRegistry = ({
    * @param connection - Whose entitlements to read.
    * @returns The permissions held.
    */
-  const heldBy = async (connection: RealtimeConnection): Promise<ReadonlySet<Permission>> =>
+  const heldBy = async (connection: RealtimeConnection): Promise<ReadonlySet<GrantedPermission>> =>
     connection.accountId === null ? new Set() : await entitlements.of(connection.accountId);
 
   const sendTo = (connection: RealtimeConnection, message: FromServer) => {

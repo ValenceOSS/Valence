@@ -43,6 +43,27 @@ describe('changeOnServer', () => {
     });
   });
 
+  it('carries the headers it was given beside the body', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ done: true }),
+    });
+
+    await changeOnServer(
+      '/api/thing',
+      { method: 'POST', json: { a: 1 }, headers: { 'x-valence-profile': 'p1' } },
+      'No.',
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/thing', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'content-type': 'application/json', 'x-valence-profile': 'p1' },
+      body: '{"a":1}',
+    });
+  });
+
   it('throws with the server’s words, or the fallback where it gave none', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: false,

@@ -3,6 +3,7 @@ const DOC_SECTIONS = [
   { id: 'install', title: 'Install' },
   { id: 'use', title: 'Use Valence' },
   { id: 'develop', title: 'Develop' },
+  { id: 'plugins', title: 'Plugins' },
   { id: 'reference', title: 'Reference' },
 ] as const;
 

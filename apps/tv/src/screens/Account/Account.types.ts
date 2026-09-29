@@ -7,6 +7,7 @@ type AccountProps = {
   onChangeServer: () => void;
   onRequests: () => void;
   onOpenRequest: (request: MediaRequest) => void;
+  onOpenPluginPage: (page: { pluginId: string; pageId: string }) => void;
   upTo: View | null;
 };
 

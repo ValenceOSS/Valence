@@ -1,0 +1,252 @@
+---
+title: Host API
+description: definePlugin, the handlers a plugin can give, and every method on the valence object with its arguments, results and the permission it needs.
+order: 4
+---
+
+Your plugin's code runs in a sandbox with nothing in it but plain JavaScript. Everything it needs from Valence comes through the `valence` object in each handler's context. Every method is a request to the server, checked against the plugin's granted [permissions](/plugins/permissions) before it runs. A method the plugin has no permission for fails with an error saying which permission is missing.
+
+The types are `ValenceHost` in `@ValenceSDK/host/ValenceHost` and `PluginDefinition` in `@ValenceSDK/host/PluginDefinition`.
+
+## definePlugin
+
+```ts
+import { definePlugin } from '@ValenceSDK/host/definePlugin';
+
+definePlugin({
+  pages: { tracking: { render, act } },
+  panels: { 'on-title': { render } },
+  schedules: { sync: async ({ valence }) => {} },
+  events: async (event, { valence }) => {},
+  onAccountConnected: async ({ valence }, { profileId, provider }) => {},
+});
+```
+
+Call it once, at the top level of your bundle. Every key is optional, and each id must match one in the manifest's `contributes`.
+
+| Key                  | Called when                                                                                    |
+| -------------------- | ---------------------------------------------------------------------------------------------- |
+| `pages`              | Someone opens one of your pages, or presses something on it                                    |
+| `panels`             | Someone opens something your panel sits on, or presses something in it                         |
+| `schedules`          | A schedule comes round, every `everyMinutes`                                                   |
+| `events`             | Something you listed under `events` happens                                                    |
+| `onAccountConnected` | Someone finishes connecting an account on one of your [providers](/plugins/accounts-and-oauth) |
+
+### Pages and panels
+
+A page or panel handler has `render`, and optionally `act`.
+
+```ts
+type SurfaceHandler = {
+  render: (context: SurfaceContext) => Surface | Promise<Surface>;
+  act?: (
+    context: SurfaceContext,
+    request: SurfaceActRequest,
+  ) => Surface | Promise<Surface> | void | Promise<void>;
+};
+
+type SurfaceContext = {
+  valence: ValenceHost;
+  viewer: { profileId: string; isAdmin: boolean; nodes: string[] };
+  subject: { kind: 'title' | 'series' | 'album' | 'artist' | 'playlist'; id: string } | null;
+};
+```
+
+- `viewer` is the person looking at it. Profile-scoped methods called from a page or panel may act only for `viewer.profileId`. `viewer.nodes` lists which of your [permission nodes](/plugins/permissions#your-own-permission-nodes) they hold.
+- `subject` is what a panel is sitting on, and `null` on a page.
+- `render` returns a [surface](/plugins/building-blocks).
+- `act` receives the pressed action and the current value of every field on the surface. Return a surface to show it straight away, or nothing to have Valence call `render` again.
+
+### Schedules and events
+
+A schedule gets `{ valence }`. An event handler gets the event and `{ valence }`:
+
+```ts
+type PluginEvent = {
+  topic: string;
+  occurredAt: string;
+  profileId: string | null;
+  mediaId: string | null;
+};
+```
+
+See [schedules and events](/plugins/schedules-and-events).
+
+### Webhooks
+
+Each webhook handler gets `{ valence }` and the request: its `headers`, its `body` as text, and `receivedAt`. See [webhooks](/plugins/webhooks).
+
+## The valence object
+
+### plugin
+
+`valence.plugin` is `{ id: string; version: string }`, the running plugin's own id and version. No permission.
+
+### settings
+
+| Method            | Returns                                      | Permission |
+| ----------------- | -------------------------------------------- | ---------- |
+| `settings.read()` | `Promise<Record<string, string \| boolean>>` | None       |
+
+The administrator's values for the manifest's `settings`, by id. A setting nobody has filled in is left out.
+
+### log
+
+| Method                        | Permission |
+| ----------------------------- | ---------- |
+| `log.info(message, detail?)`  | None       |
+| `log.warn(message, detail?)`  | None       |
+| `log.error(message, detail?)` | None       |
+
+`detail` is an object of strings, numbers, booleans and nulls. Lines go to the server log, tagged with the plugin's id, and appear on the logs page. Never log tokens.
+
+### storage
+
+A private store of JSON values by key.
+
+| Method                    | Returns                   | Permission |
+| ------------------------- | ------------------------- | ---------- |
+| `storage.get(key)`        | `Promise<Stored \| null>` | `storage`  |
+| `storage.set(key, value)` | `Promise<void>`           | `storage`  |
+| `storage.delete(key)`     | `Promise<void>`           | `storage`  |
+| `storage.keys(prefix?)`   | `Promise<string[]>`       | `storage`  |
+
+`Stored` is any JSON value: strings, numbers, booleans, `null`, arrays and objects of them. `set` fails if it would take the plugin over its quota.
+
+### http
+
+| Method                   | Returns                                                                      | Permission |
+| ------------------------ | ---------------------------------------------------------------------------- | ---------- |
+| `http.fetch(url, init?)` | `Promise<{ status: number; headers: Record<string, string>; text: string }>` | `network`  |
+
+`init` may hold `method` (`GET`, `POST`, `PUT`, `PATCH` or `DELETE`), `headers` and a string `body`. The whole response body arrives as text; call `JSON.parse` on it yourself. A request to a host not in your `network` list, or one that breaks the [network rules](/develop/plugins#network-rules), fails before anything is sent. A non-2xx status is not an error: check `status`.
+
+### events
+
+| Method                     | Returns         | Permission |
+| -------------------------- | --------------- | ---------- |
+| `events.emit(id, detail?)` | `Promise<void>` | `emits`    |
+
+`id` is one of your `contributes.emits`. `detail` is up to 20 names with a string, number, boolean or `null` each. At most 30 events a minute; more fail.
+
+### crypto
+
+| Method                                            | Returns            | Permission |
+| ------------------------------------------------- | ------------------ | ---------- |
+| `crypto.hmac(algorithm, key, message, encoding?)` | `Promise<string>`  | None       |
+| `crypto.equal(left, right)`                       | `Promise<boolean>` | None       |
+
+`algorithm` is `sha1`, `sha256` or `sha512`, and `encoding` is `hex` (the default) or `base64`. `equal` compares two strings in constant time, which is how to check a signature without giving its value away.
+
+### accounts
+
+| Method                                     | Returns                                                                                        | Permission |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------- | ---------- |
+| `accounts.connection(profileId, provider)` | `Promise<{ accessToken: string; expiresAt: string \| null; account: string \| null } \| null>` | `accounts` |
+| `accounts.disconnect(profileId, provider)` | `Promise<void>`                                                                                | `accounts` |
+
+`connection` gives a current access token for that person on that provider, refreshing it first if it has expired, or `null` if they have not connected. `account` is the name the provider knows them by, where it said.
+
+### profiles
+
+| Method            | Returns                                   | Permission |
+| ----------------- | ----------------------------------------- | ---------- |
+| `profiles.list()` | `Promise<{ id: string; name: string }[]>` | None       |
+
+The profiles the plugin may act for: those that connected an account to it or used its page. Scheduled work usually starts here.
+
+### library
+
+| Method                                 | Returns               | Permission |
+| -------------------------------------- | --------------------- | ---------- |
+| `library.search(query, kinds?)`        | `Promise<MediaRef[]>` | `library`  |
+| `library.findByExternalId(source, id)` | `Promise<MediaRef[]>` | `library`  |
+| `library.episodes(seriesId)`           | `Promise<MediaRef[]>` | `library`  |
+
+```ts
+type MediaRef = {
+  id: string;
+  kind: 'film' | 'series' | 'episode' | 'album' | 'track' | 'book';
+  title: string;
+  year: number | null;
+  seriesId: string | null;
+  seasonNumber: number | null;
+  episodeNumber: number | null;
+  externalIds: Partial<
+    Record<'tmdb' | 'tvdb' | 'imdb' | 'anilist' | 'mal' | 'musicbrainz' | 'isrc', string>
+  >;
+};
+```
+
+`kinds` narrows a search to some kinds. `source` is one of the `externalIds` keys.
+
+### viewing
+
+| Method                                                | Returns                    | Permission       |
+| ----------------------------------------------------- | -------------------------- | ---------------- |
+| `viewing.progress(profileId, since?)`                 | `Promise<ProgressEntry[]>` | `viewing`        |
+| `viewing.markWatched(profileId, mediaId, watchedAt?)` | `Promise<void>`            | `viewing: write` |
+| `viewing.markUnwatched(profileId, mediaId)`           | `Promise<void>`            | `viewing: write` |
+
+```ts
+type ProgressEntry = {
+  mediaId: string;
+  positionSeconds: number;
+  durationSeconds: number;
+  isFinished: boolean;
+  updatedAt: string;
+};
+```
+
+`since` is an ISO date and time; only entries updated after it are returned. `watchedAt` defaults to now.
+
+### requests
+
+| Method                                  | Returns                                                 | Permission |
+| --------------------------------------- | ------------------------------------------------------- | ---------- |
+| `requests.searchCatalogue(query, kind)` | `Promise<CatalogueHit[]>`                               | `requests` |
+| `requests.create(profileId, hit)`       | `Promise<{ status: 'made' \| 'already' \| 'refused' }>` | `requests` |
+
+```ts
+type CatalogueHit = {
+  catalogueId: string;
+  kind: 'film' | 'series' | 'album' | 'track';
+  title: string;
+  year: number | null;
+  artist: string | null;
+  isInLibrary: boolean;
+  isRequested: boolean;
+};
+```
+
+`create` takes `{ catalogueId, kind }` from a hit. `already` means it is in the library or already asked for; `refused` means the person may not ask for that kind of thing.
+
+### playlists
+
+| Method                                                | Returns                                   | Permission         |
+| ----------------------------------------------------- | ----------------------------------------- | ------------------ |
+| `playlists.list(profileId)`                           | `Promise<{ id: string; name: string }[]>` | `playlists`        |
+| `playlists.create(profileId, { name, description? })` | `Promise<{ id: string }>`                 | `playlists: write` |
+| `playlists.add(profileId, playlistId, mediaIds)`      | `Promise<void>`                           | `playlists: write` |
+
+### music
+
+| Method                                              | Returns                     | Permission |
+| --------------------------------------------------- | --------------------------- | ---------- |
+| `music.findTrack({ title, artist, album?, isrc? })` | `Promise<MediaRef \| null>` | `library`  |
+
+Finds a track already in the library. An `isrc` match wins; otherwise title and artist are matched loosely, the way Valence matches its own tags.
+
+### notifications
+
+| Method                                           | Returns         | Permission      |
+| ------------------------------------------------ | --------------- | --------------- |
+| `notifications.send(profileId, { title, body })` | `Promise<void>` | `notifications` |
+
+## Errors
+
+A method that fails rejects its promise with an `Error` whose message says why, for example that a permission is missing or a quota is full. An error your handler does not catch is logged, and the person sees a short notice from Valence rather than your error's text. Catch errors you can do something about, and let the rest go.
+
+## What is not there
+
+The sandbox has no timers, no `fetch`, no `require`, no `URL`, no `TextEncoder` and no file system. Use `valence.http.fetch` for the network, `encodeURIComponent` to build addresses, and schedules for anything that repeats. `Date`, `JSON`, `Math`, `RegExp`, `Promise`, `Map`, `Set`, `async` functions and the rest of standard JavaScript are all there.

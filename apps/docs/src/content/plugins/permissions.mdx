@@ -1,0 +1,165 @@
+---
+title: Permissions
+description: Every permission a plugin can ask for, its exact fields, the host API methods it opens and what an administrator is shown.
+order: 3
+---
+
+A plugin can do nothing outside its sandbox unless it asks, and an administrator agrees. Permissions go in the manifest's `permissions` list, at most 16 of them, each kind at most once. `PermissionSchema` in `@ValenceSDK/manifest/PermissionSchema` defines them.
+
+Ask for as little as you need. Administrators read this list before installing, and a short one is easier to trust.
+
+## network
+
+```json
+{ "kind": "network", "hosts": ["api.spotify.com", "accounts.spotify.com"] }
+```
+
+| Field   | Rules                                                                                                  |
+| ------- | ------------------------------------------------------------------------------------------------------ |
+| `hosts` | 1 to 20 host names, each written out in full and in lower case, with no scheme, port, path or wildcard |
+
+Opens `valence.http.fetch` to exactly these hosts. `api.spotify.com` does not cover `spotify.com`, and `*.spotify.com` is refused. Every request also follows the [network rules](/develop/plugins#network-rules): `https` only, no private addresses, redirects checked again, 15 seconds and 5 MB at most.
+
+## library
+
+```json
+{ "kind": "library", "access": "read" }
+```
+
+`access` is always `read`. Opens `valence.library.search`, `valence.library.findByExternalId`, `valence.library.episodes` and `valence.music.findTrack`. A plugin can never change the library.
+
+## viewing
+
+```json
+{ "kind": "viewing", "access": "write" }
+```
+
+`access` is `read` or `write`. `read` opens `valence.viewing.progress`. `write` also opens `valence.viewing.markWatched` and `valence.viewing.markUnwatched`.
+
+## requests
+
+```json
+{ "kind": "requests", "access": "create" }
+```
+
+`access` is always `create`. Opens `valence.requests.searchCatalogue` and `valence.requests.create`. A request is made as the person the plugin is acting for, so it follows their own request rights: someone who cannot ask for music cannot ask for music through a plugin either, and approval works exactly as it does for requests they make themselves.
+
+## playlists
+
+```json
+{ "kind": "playlists", "access": "write" }
+```
+
+`access` is `read` or `write`. `read` opens `valence.playlists.list`. `write` also opens `valence.playlists.create` and `valence.playlists.add`. A plugin sees and changes only the playlists of the person it is acting for.
+
+## storage
+
+```json
+{ "kind": "storage", "quotaBytes": 2000000 }
+```
+
+| Field        | Rules                                              |
+| ------------ | -------------------------------------------------- |
+| `quotaBytes` | A whole number above 0, at most 50,000,000 (50 MB) |
+
+Opens `valence.storage`, a private store of JSON values by key. Only this plugin can read it, and it is removed when the plugin is uninstalled. A write that would take the plugin over its quota fails.
+
+## accounts
+
+```json
+{
+  "kind": "accounts",
+  "providers": [
+    {
+      "id": "spotify",
+      "name": "Spotify",
+      "authorizeUrl": "https://accounts.spotify.com/authorize",
+      "tokenUrl": "https://accounts.spotify.com/api/token",
+      "scopes": ["playlist-read-private", "playlist-read-collaborative"],
+      "clientIdSetting": "spotifyClientId",
+      "clientSecretSetting": "spotifyClientSecret"
+    }
+  ]
+}
+```
+
+| Field                 | Rules                                                                                                                                                                                                                                  |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `providers`           | 1 to 4 providers                                                                                                                                                                                                                       |
+| `id`                  | 2 to 32 characters, lower case, starting with a letter, then letters, digits and hyphens                                                                                                                                               |
+| `name`                | 1 to 60 characters, shown on the connect button                                                                                                                                                                                        |
+| `authorizeUrl`        | The provider's OAuth authorisation address, `https`, on a host listed under `network`                                                                                                                                                  |
+| `tokenUrl`            | The provider's token address, `https`, on a host listed under `network`                                                                                                                                                                |
+| `revokeUrl`           | Optional. The provider's [RFC 7009](https://datatracker.ietf.org/doc/html/rfc7009) revocation address, `https`, on a host listed under `network`. Valence asks it to cancel each connected account's tokens when the plugin is removed |
+| `scopes`              | Up to 20 scopes, each 1 to 100 characters                                                                                                                                                                                              |
+| `clientIdSetting`     | The id of the [setting](/plugins/manifest#settings) holding the OAuth client ID                                                                                                                                                        |
+| `clientSecretSetting` | Optional. The id of the setting holding the client secret, for providers that need one                                                                                                                                                 |
+
+Opens `valence.accounts.connection` and `valence.accounts.disconnect`. Valence runs the whole OAuth flow and keeps the tokens encrypted; your plugin only ever sees a current access token. See [accounts and OAuth](/plugins/accounts-and-oauth).
+
+## notifications
+
+```json
+{ "kind": "notifications" }
+```
+
+No fields. Opens `valence.notifications.send`, which puts a notification in someone's bell, the same place Valence's own notifications go.
+
+## webhooks
+
+```json
+{ "kind": "webhooks" }
+```
+
+No fields. Lets outside services send your plugin messages at private addresses of its own, one for each webhook under `contributes.webhooks`. See [webhooks](/plugins/webhooks).
+
+## emits
+
+```json
+{ "kind": "emits" }
+```
+
+No fields. Opens `valence.events.emit`, which sends one of the events you list under `contributes.emits` to every webhook an administrator subscribed to plugin events. See [telling Valence's webhooks](/plugins/webhooks#telling-valences-webhooks).
+
+## Your own permission nodes
+
+The permissions above say what your plugin may do. Permission nodes say which people may use parts of it. Declare them under `contributes.nodes`:
+
+```json
+"contributes": {
+  "pages": [
+    { "id": "tracking", "title": "Anime tracking", "placement": "account" },
+    { "id": "sync-log", "title": "Sync log", "placement": "account", "requires": "view-log" }
+  ],
+  "nodes": [
+    { "id": "view-log", "title": "See the sync log", "description": "Read what the last syncs did." }
+  ]
+}
+```
+
+- Each node becomes a permission named `plugin.<your id>.<node id>`, listed under your plugin's name in the Roles editor, where an administrator gives it to roles like any of Valence's own.
+- Administrators hold every node.
+- A page or panel that `requires` a node is hidden from, and refused to, anybody without it.
+- Your code is told which of your nodes the person holds, as `viewer.nodes`, so an action can check before it does something.
+
+```ts
+act: async ({ viewer }, request) => {
+  if (request.action.id === 'clear-log' && !viewer.nodes.includes('view-log')) {
+    return { blocks: [{ type: 'notice', tone: 'danger', text: 'You may not clear the log.' }] };
+  }
+},
+```
+
+Removing your plugin takes its nodes out of every role.
+
+## Always available
+
+These need no permission: `valence.plugin`, `valence.settings.read`, `valence.log` and `valence.profiles.list`.
+
+## What there is no permission for
+
+There is no permission to read files, touch sessions or passwords, reach the database, see other plugins, run programs or reach a host that is not listed. These are left out on purpose, and a manifest asking for anything else is refused.
+
+## Updates that ask for more
+
+When an update asks for a permission the installed version did not have, or widens one (more hosts, `write` instead of `read`, a larger quota), Valence shows the administrator the difference and does not install the update until they accept it.

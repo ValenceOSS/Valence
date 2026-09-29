@@ -1,0 +1,101 @@
+---
+title: Themes
+description: Make a Valence theme, the ten colours of a scheme, the corners, and the readability test every theme has to pass.
+order: 6
+---
+
+A theme is data. It gives Valence a set of colours and a choice of corners, and each app applies them with its own components. A plugin that only carries themes needs no code at all: leave out `entry`, and ship nothing but the manifest.
+
+## A theme-only plugin
+
+```json
+{
+  "manifestVersion": 2,
+  "id": "nord-themes",
+  "name": "Nord",
+  "version": "1.0.0",
+  "apiVersion": "^1.0",
+  "author": { "name": "You" },
+  "description": "The Nord palette, dark and light.",
+  "contributes": {
+    "themes": [
+      {
+        "id": "nord",
+        "name": "Nord",
+        "corners": "round",
+        "dark": {
+          "accent": "#88c0d0",
+          "accentContrast": "#1f232b",
+          "surface": "#2e3440",
+          "surfaceRaised": "#3b4252",
+          "text": "#eceff4",
+          "textMuted": "#a3acbd",
+          "border": "#4c566a",
+          "danger": "#e0848b",
+          "highlight": "#ebcb8b",
+          "success": "#a3be8c"
+        }
+      }
+    ]
+  }
+}
+```
+
+People find your theme next to Valence's own on the theme choice, on the web, the phone and the TV.
+
+## Fields
+
+| Field     | Rules                                                                                 |
+| --------- | ------------------------------------------------------------------------------------- |
+| `id`      | Starts with a lower case letter, then up to 39 lower case letters, digits and hyphens |
+| `name`    | 1 to 40 characters                                                                    |
+| `corners` | `sharp`, `standard` or `round`. Defaults to `standard`.                               |
+| `dark`    | Optional. The colours for dark mode.                                                  |
+| `light`   | Optional. The colours for light mode.                                                 |
+
+Give `dark`, `light` or both. A theme with only one is offered only in that mode.
+
+## The ten colours
+
+Every colour is written as `#` and six lower case hex digits, such as `#88c0d0`. Nothing else is accepted: no names, no `rgb()`, no transparency.
+
+| Colour           | Used for                                                  |
+| ---------------- | --------------------------------------------------------- |
+| `accent`         | The primary colour: selected tabs, primary buttons, links |
+| `accentContrast` | Text and icons drawn on `accent`                          |
+| `surface`        | The page itself                                           |
+| `surfaceRaised`  | Cards, panels and menus that sit on the page              |
+| `text`           | Body text and headings                                    |
+| `textMuted`      | Secondary text, captions, placeholders                    |
+| `border`         | Lines and outlines                                        |
+| `danger`         | Destructive actions and errors                            |
+| `highlight`      | Things that need noticing, such as stars and warnings     |
+| `success`        | Things that went right                                    |
+
+## The readability test
+
+A theme that is hard to read is refused, not applied. For each scheme, Valence measures the contrast between these pairs the way the Web Content Accessibility Guidelines do, from 1:1 for a colour against itself to 21:1 for black on white.
+
+| Text             | On              | Needs at least |
+| ---------------- | --------------- | -------------- |
+| `text`           | `surface`       | 4.5:1          |
+| `text`           | `surfaceRaised` | 4.5:1          |
+| `textMuted`      | `surface`       | 3:1            |
+| `accentContrast` | `accent`        | 4.5:1          |
+| `danger`         | `surface`       | 3:1            |
+
+The message says which pair failed and by how much, for example `text on surface is 3.20:1, and needs at least 4.5:1`. `readabilityProblemsOf` and `contrastRatio` in `@ValenceSDK/theme/` are the same functions Valence uses, so you can check a theme before you pack it.
+
+```ts
+import { readabilityProblemsOf } from '@ValenceSDK/theme/readabilityProblemsOf';
+
+console.log(readabilityProblemsOf(theme.dark));
+```
+
+## How the apps apply a theme
+
+The colours are checked again on the server before any app receives them. The web app sets them as Valence's own colour tokens; the phone and TV apps feed them to their palettes. Because a theme is only colours and corners, it cannot change what a page does, only how it looks.
+
+## Themes in a plugin that does more
+
+A plugin with pages or panels can carry themes too, up to 12. They are offered for as long as the plugin is installed and enabled.

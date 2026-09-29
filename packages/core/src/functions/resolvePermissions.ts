@@ -1,8 +1,8 @@
 import { ADMINISTRATOR, PERMISSIONS } from '@ValenceContracts/schemas/Permission';
-import type { Permission, PermissionGrant } from '@ValenceContracts/schemas/Permission';
+import type { GrantedPermission, PermissionGrant } from '@ValenceContracts/schemas/Permission';
 
 type ResolvePermissionsOptions = {
-  roles: readonly { permissions: readonly Permission[] }[];
+  roles: readonly { permissions: readonly GrantedPermission[] }[];
   overrides?: readonly PermissionGrant[];
 };
 
@@ -18,12 +18,12 @@ type ResolvePermissionsOptions = {
 const resolvePermissions = ({
   roles,
   overrides = [],
-}: ResolvePermissionsOptions): ReadonlySet<Permission> => {
+}: ResolvePermissionsOptions): ReadonlySet<GrantedPermission> => {
   const denied = new Set(
     overrides.filter((grant) => grant.effect === 'deny').map((grant) => grant.permission),
   );
 
-  const granted = new Set<Permission>();
+  const granted = new Set<GrantedPermission>();
 
   for (const role of roles) {
     for (const permission of role.permissions) {
