@@ -157,6 +157,7 @@ describe('DEFAULT_ROLES', () => {
       'server.settings',
       'server.backup',
       'server.webhooks',
+      'server.plugins',
     ]);
   });
 });
