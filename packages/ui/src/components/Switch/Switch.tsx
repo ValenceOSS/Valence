@@ -16,6 +16,8 @@ const STRETCHING = { duration: 0.32, ease: [0.23, 1, 0.32, 1] } as const;
  *
  * @param label - What the setting is.
  * @param isLabelHidden - Whether to draw only the switch, for a row that already says what it is.
+ * @param isLabelWrapped - Whether a long label runs onto more lines rather than being cut short,
+ *   for words the caller does not control.
  * @param isOn - Whether it is on now.
  * @param onToggle - Told that it was pressed; the caller decides what the new state is.
  * @param icon - Something to draw beside the label.
@@ -28,6 +30,7 @@ const STRETCHING = { duration: 0.32, ease: [0.23, 1, 0.32, 1] } as const;
 const Switch = ({
   label,
   isLabelHidden = false,
+  isLabelWrapped = false,
   isOn,
   onToggle,
   icon,
@@ -78,7 +81,9 @@ const Switch = ({
         </span>
       )}
 
-      {isLabelHidden ? null : <span className="flex-1 truncate">{label}</span>}
+      {isLabelHidden ? null : (
+        <span className={cn('flex-1', isLabelWrapped ? 'text-pretty' : 'truncate')}>{label}</span>
+      )}
 
       <span
         className={cn(

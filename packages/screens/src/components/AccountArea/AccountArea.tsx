@@ -14,11 +14,11 @@ import { PasskeySetup } from '@ValenceScreens/components/PasskeySetup/PasskeySet
 import { DeviceList } from '@ValenceScreens/components/AccountArea/components/DeviceList/DeviceList';
 import { SharePanel } from '@ValenceScreens/components/AccountArea/components/SharePanel/SharePanel';
 import { PluginSurfaceView } from '@ValenceScreens/components/PluginSurfaceView/PluginSurfaceView';
-import type { AccountAreaProps } from './AccountArea.types';
+import type { AccountAreaProps, PluginAccountPage } from './AccountArea.types';
 
 const PANEL_ORDER: readonly string[] = ACCOUNT_PANELS.map((one) => one.id);
 
-const NO_PAGES: readonly { id: string; label: string; pluginId: string; pageId: string }[] = [];
+const NO_PAGES: readonly PluginAccountPage[] = [];
 
 /**
  * Somebody's own account: their name and password, the devices they are signed in on, their passkeys
@@ -94,7 +94,7 @@ const AccountArea = ({
 
       {pluginPages.map((page) => (
         <TabPanel key={page.id} value={page.id} travel={travel}>
-          <PanelCard title={page.label}>
+          <PanelCard title={`From ${page.pluginName}`}>
             <PluginSurfaceView
               place={{ kind: 'page', pluginId: page.pluginId, pageId: page.pageId }}
             />

@@ -8,7 +8,8 @@ import type { InstalledPlugin } from '@ValenceContracts/schemas/Plugin';
  *
  * @returns The plugins.
  */
-const fetchInstalledPlugins = (): Promise<InstalledPlugin[]> =>
-  readFromServer('/api/plugins', z.array(InstalledPluginSchema));
+const fetchInstalledPlugins = async (): Promise<InstalledPlugin[]> =>
+  (await readFromServer('/api/plugins', z.object({ plugins: z.array(InstalledPluginSchema) })))
+    .plugins;
 
 export { fetchInstalledPlugins };

@@ -171,8 +171,8 @@ const PluginsPanel = () => {
         ) : catalogue.isPending ? (
           <Spinner isCentered size="sm" label="Reading the catalogue" />
         ) : !catalogue.data.isReachable ? (
-          <Callout title="The catalogue could not be reached" tone="warning" className="m-4">
-            {catalogue.data.problem ?? 'Try again later. Plugins already installed keep working.'}
+          <Callout title="Official plugins are unavailable" tone="warning" className="m-4">
+            {`${catalogue.data.problem ?? 'The plugin catalogue could not be reached.'} Plugins already installed keep working.`}
           </Callout>
         ) : catalogue.data.plugins.length === 0 ? (
           <p className="px-4 py-6 text-sm text-text-muted">The catalogue has no plugins yet.</p>

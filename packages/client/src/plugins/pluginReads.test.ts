@@ -22,7 +22,7 @@ afterEach(() => {
 
 describe('plugin reads', () => {
   it('reads the installed plugins', async () => {
-    answer([aPlugin()]);
+    answer({ plugins: [aPlugin()] });
 
     await expect(fetchInstalledPlugins()).resolves.toEqual([aPlugin()]);
     expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/plugins');

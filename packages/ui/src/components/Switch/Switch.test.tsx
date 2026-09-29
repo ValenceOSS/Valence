@@ -4,6 +4,16 @@ import { describe, expect, it, vi } from 'vitest';
 import { Switch } from './Switch';
 
 describe('Switch', () => {
+  it('cuts a long label short, unless asked to let it wrap', () => {
+    const { rerender } = render(<Switch label="Subtitles" isOn={false} onToggle={vi.fn()} />);
+
+    expect(screen.getByText('Subtitles')).toHaveClass('truncate');
+
+    rerender(<Switch label="Subtitles" isLabelWrapped isOn={false} onToggle={vi.fn()} />);
+
+    expect(screen.getByText('Subtitles')).not.toHaveClass('truncate');
+  });
+
   it('is a switch to anything reading the page', () => {
     render(<Switch label="Subtitles" isOn={false} onToggle={vi.fn()} />);
 

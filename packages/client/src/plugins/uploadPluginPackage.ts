@@ -14,18 +14,17 @@ const ErrorSchema = z.object({ error: z.string() });
  * @throws With the server's words where it refused the file.
  */
 const uploadPluginPackage = async (file: Blob, signature: Blob | null): Promise<InstallPreview> => {
-  const form = new FormData();
-
-  form.append('package', file);
+  const headers: Record<string, string> = { 'content-type': 'application/gzip' };
 
   if (signature !== null) {
-    form.append('signature', signature);
+    headers['x-valence-signature'] = (await signature.text()).trim();
   }
 
   const response = await fetch('/api/plugins/upload', {
     method: 'POST',
     credentials: 'same-origin',
-    body: form,
+    headers,
+    body: file,
   });
   const body = await response.json().catch(() => null);
 

@@ -29,7 +29,7 @@ afterEach(() => {
 
 describe('plugin changes', () => {
   it('sends an action with only its id, payload and the fields', async () => {
-    answer({ blocks: [{ type: 'divider' }] });
+    answer({ surface: { blocks: [{ type: 'divider' }] }, navigate: null });
 
     const next = await actOnPluginSurface(
       { kind: 'page', pluginId: 'anilist', pageId: 'tracking' },
@@ -48,7 +48,7 @@ describe('plugin changes', () => {
   });
 
   it('reads nothing back where the plugin left its page as it was', async () => {
-    answer(null);
+    answer({ surface: null, navigate: null });
 
     await expect(
       actOnPluginSurface(
@@ -65,18 +65,18 @@ describe('plugin changes', () => {
       fields: {},
     };
 
-    answer({ navigate: '/api/plugins/anilist/accounts/anilist/connect' });
+    answer({ surface: null, navigate: '/api/plugins/anilist/accounts/anilist/connect' });
 
     await expect(actOnPluginSurface(place, request)).resolves.toEqual({
       kind: 'navigate',
       to: '/api/plugins/anilist/accounts/anilist/connect',
     });
 
-    answer({ navigate: 'https://evil.example/steal' });
+    answer({ surface: null, navigate: 'https://evil.example/steal' });
 
     await expect(actOnPluginSurface(place, request)).rejects.toThrow();
 
-    answer({ navigate: '/api/plugins/anilist//evil.example' });
+    answer({ surface: null, navigate: '/api/plugins/anilist//evil.example' });
 
     await expect(actOnPluginSurface(place, request)).rejects.toThrow();
   });
@@ -88,14 +88,21 @@ describe('plugin changes', () => {
     expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/plugins/catalogue/anilist/preview');
   });
 
-  it('uploads a package with its signature', async () => {
+  it('uploads a package as the body, with its signature beside it', async () => {
     answer(anInstallPreview({ trust: 'unsigned', warnings: ['Not signed'] }));
 
-    const preview = await uploadPluginPackage(new Blob(['x']), new Blob(['sig']));
-    const form = fetchMock.mock.calls[0]?.[1]?.body;
+    const file = new Blob(['x']);
+    const preview = await uploadPluginPackage(
+      file,
+      new Blob(['{"keyId":"k","signature":"YWJj"}\n']),
+    );
+    const sent = fetchMock.mock.calls[0]?.[1];
 
     expect(preview.trust).toBe('unsigned');
-    expect(form instanceof FormData ? [...form.keys()] : []).toEqual(['package', 'signature']);
+    expect(sent?.body).toBe(file);
+    expect(new Headers(sent?.headers).get('x-valence-signature')).toBe(
+      '{"keyId":"k","signature":"YWJj"}',
+    );
   });
 
   it('says why an upload was refused, in the server’s words or its own', async () => {

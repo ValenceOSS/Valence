@@ -88,9 +88,6 @@ const ASSET_TYPES: Readonly<Record<string, string>> = {
   webp: 'image/webp',
 };
 
-const UNSIGNED_WARNING =
-  'This plugin is not signed by the Valence project. Anybody could have written it; install it only if you trust where it came from.';
-
 /**
  * Everything the server does with plugins, in one place the routes and the job queue talk to:
  * what is installed and what the catalogue offers; previewing a package before it is installed,
@@ -287,7 +284,6 @@ const createPluginService = ({
               ),
           );
     const warnings = [
-      ...(trust === 'unsigned' ? [UNSIGNED_WARNING] : []),
       ...extraWarnings,
       ...(widened.length === 0
         ? []

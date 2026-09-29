@@ -125,7 +125,8 @@ describe('PluginsPanel', () => {
 
     renderInAnAddress(<PluginsPanel />);
 
-    expect(await screen.findByText('GitHub did not answer.')).toBeInTheDocument();
+    expect(await screen.findByText(/GitHub did not answer\. Plugins already installed keep working\./u)).toBeInTheDocument();
+    expect(screen.getByText('Official plugins are unavailable')).toBeInTheDocument();
     expect(await screen.findByText(/No plugins yet/u)).toBeInTheDocument();
   });
 

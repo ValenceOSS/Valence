@@ -2,20 +2,18 @@ import { z } from 'zod';
 import { changeOnServer } from '@ValenceClient/query/changeOnServer';
 import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
 import { surfacePathOf } from '@ValenceClient/plugins/surfacePathOf';
-import { SurfaceSchema } from '@ValenceSDK/surface/SurfaceSchema';
+import { PluginActAnswerSchema } from '@ValenceContracts/schemas/Plugin';
 import type { SurfaceActRequest } from '@ValenceSDK/surface/SurfaceActRequestSchema';
 import type { PluginPlace } from '@ValenceClient/plugins/PluginPlace';
 import type { SurfaceAnswer } from '@ValenceClient/plugins/SurfaceAnswer';
 
-const NavigateSchema = z.object({
-  navigate: z
-    .string()
-    .regex(/^\/api\/plugins\/[^/?#]+\//u, 'Only this server’s own plugin addresses are followed')
-    .refine(
-      (to) => !to.includes('//') && !to.includes('\\'),
-      'Only a path on this server is followed',
-    ),
-});
+const PluginPathSchema = z
+  .string()
+  .regex(/^\/api\/plugins\/[^/?#]+\//u, 'Only this server’s own plugin addresses are followed')
+  .refine(
+    (to) => !to.includes('//') && !to.includes('\\'),
+    'Only a path on this server is followed',
+  );
 
 /**
  * Tells a plugin somebody pressed something on its page or panel, with what they had filled in.
@@ -49,15 +47,13 @@ const actOnPluginSurface = async (
     'The plugin could not do that.',
   );
 
-  if (answer === null) {
-    return { kind: 'unchanged' };
+  const read = PluginActAnswerSchema.parse(answer);
+
+  if (read.navigate !== null) {
+    return { kind: 'navigate', to: PluginPathSchema.parse(read.navigate) };
   }
 
-  const navigate = NavigateSchema.safeParse(answer);
-
-  return navigate.success
-    ? { kind: 'navigate', to: navigate.data.navigate }
-    : { kind: 'surface', surface: SurfaceSchema.parse(answer) };
+  return read.surface === null ? { kind: 'unchanged' } : { kind: 'surface', surface: read.surface };
 };
 
 export { actOnPluginSurface };

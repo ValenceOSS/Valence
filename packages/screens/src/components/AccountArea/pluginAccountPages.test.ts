@@ -31,6 +31,7 @@ describe('pluginAccountPages', () => {
         id: 'plugin.anilist.tracking',
         label: 'Anime tracking',
         pluginId: 'anilist',
+        pluginName: 'AniList',
         pageId: 'tracking',
       },
     ]);

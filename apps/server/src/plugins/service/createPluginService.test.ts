@@ -109,7 +109,7 @@ const installed = async () => {
 };
 
 describe('a plugin from upload to use, through its own process', () => {
-  it('warns that an upload is unsigned, and installs only what was shown and accepted', async () => {
+  it('marks an upload unsigned, and installs only what was shown and accepted', async () => {
     const service = build();
     const preview = await service.previewUpload(PACKAGE, null, 'account-1');
 
@@ -118,7 +118,7 @@ describe('a plugin from upload to use, through its own process', () => {
     }
 
     expect(preview.trust).toBe('unsigned');
-    expect(preview.warnings.length).toBeGreaterThan(0);
+    expect(preview.warnings).toEqual([]);
     expect(
       await service.install(
         { token: preview.token, permissionsHash: 'something-else', acceptUnsigned: true },

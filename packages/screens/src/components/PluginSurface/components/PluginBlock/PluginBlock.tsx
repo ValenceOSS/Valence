@@ -90,6 +90,7 @@ const PluginBlock = ({ pluginId, block, fields, onField, onAct, isActing }: Plug
         <div className="flex flex-col gap-1">
           <Switch
             label={block.label}
+            isLabelWrapped
             isOn={fields[block.field] === true}
             onToggle={() => {
               onField(block.field, fields[block.field] !== true);
