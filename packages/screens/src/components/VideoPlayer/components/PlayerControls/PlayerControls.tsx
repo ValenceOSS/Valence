@@ -53,24 +53,6 @@ import type { PlayerControlsProps } from './PlayerControls.types';
 const rateLabel = (rate: number): string => `${rate.toString()}x`;
 
 /**
- * Says what a rung costs when nothing better is known, as a ceiling rather than a figure it hits.
- *
- * The fallback for a session that has not worked out what the rung would actually deliver. Where it
- * has, that figure is passed in instead, being derived from the source rather than from the ladder.
- *
- * A rung caps the bitrate; it does not aim at it. What actually goes out is derived from the
- * source, so a well compressed film comes in under the number and a viewer told it flat would be
- * owed an explanation. "Up to" is true either way.
- *
- * @param maxVideoBitrateKbps - The rung's ceiling.
- * @returns The ceiling in the largest unit that keeps it readable.
- */
-const bitrateDetail = (maxVideoBitrateKbps: number): string =>
-  maxVideoBitrateKbps >= 1000
-    ? `up to ${(maxVideoBitrateKbps / 1000).toFixed(1)} Mbps`
-    : `up to ${maxVideoBitrateKbps.toString()} kbps`;
-
-/**
  * The bar over the bottom of the video, and everything reachable from it: the scrubber and its
  * preview, play, skip and volume, and the menus for subtitles, audio, quality, speed, caption
  * appearance and the rest of the season. Holds no state about the viewing itself — every control
@@ -94,6 +76,8 @@ const bitrateDetail = (maxVideoBitrateKbps: number): string =>
  * @param selectedAudioIndex - The audio track in use, if the player has settled on one.
  * @param availableQualitySteps - The rungs of the ladder this session offers.
  * @param originalLabel - What the file as it is on the server is called, with its resolution.
+ * @param qualityStepsSavingNothing - Smaller qualities that would cost about what the original does,
+ *   shown but not offered.
  * @param qualityStepCosts - What each rung would actually cost, where the session has worked it out.
  * @param selectedQuality - Whether quality is being chosen automatically or pinned to a rung.
  * @param isDisabled - Whether the controls are inert, as they are while a session is starting.
@@ -147,6 +131,7 @@ const PlayerControls = ({
   selectedAudioIndex,
   availableQualitySteps,
   originalLabel = 'Original',
+  qualityStepsSavingNothing = [],
   qualityStepCosts = {},
   selectedQuality,
   isDisabled = false,
@@ -482,17 +467,19 @@ const PlayerControls = ({
                         : { detail: qualityStepCosts.original }),
                     },
                     ...availableQualitySteps.map((id) => {
-                      const step = QUALITY_STEPS.find((entry) => entry.id === id);
+                      const isNoSmaller = qualityStepsSavingNothing.includes(id);
+                      const cost = qualityStepCosts[id];
+                      const detail = isNoSmaller
+                        ? [cost, 'no smaller than the original']
+                            .filter((part) => part !== undefined)
+                            .join(' · ')
+                        : cost;
 
                       return {
                         id,
-                        label: step?.label ?? id,
-                        ...(step === undefined
-                          ? {}
-                          : {
-                              detail:
-                                qualityStepCosts[id] ?? bitrateDetail(step.maxVideoBitrateKbps),
-                            }),
+                        label: QUALITY_STEPS.find((entry) => entry.id === id)?.label ?? id,
+                        ...(detail === undefined ? {} : { detail }),
+                        ...(isNoSmaller ? { isDisabled: true } : {}),
                       };
                     }),
                   ],

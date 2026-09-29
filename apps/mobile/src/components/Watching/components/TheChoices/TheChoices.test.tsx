@@ -59,6 +59,26 @@ describe('TheChoices', () => {
     expect(onChoose).toHaveBeenCalledWith('1');
   });
 
+  it('will not take a choice that is not worth making', async () => {
+    const onChoose = jest.fn();
+    const drawn = await render(
+      <TheChoices
+        sets={[
+          {
+            ...quality,
+            onChoose,
+            choices: [{ id: '720p', label: '720p', detail: 'no smaller', isDisabled: true }],
+          },
+        ]}
+        onClose={jest.fn()}
+      />,
+    );
+
+    await userEvent.press(drawn.getByText('720p'));
+
+    expect(onChoose).not.toHaveBeenCalled();
+  });
+
   it('closes on the button', async () => {
     const onClose = jest.fn();
     const drawn = await render(<TheChoices sets={[audio]} onClose={onClose} />);

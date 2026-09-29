@@ -341,7 +341,7 @@ describe('what a download is offered at', { timeout: STARTING_POSTGRES_MS }, () 
   };
 
   it('says a smaller picture would come out bigger than the file itself, and saves nothing', async () => {
-    const { service } = await build([], AN_EPISODE, null, 429_000_000);
+    const { service } = await build([], AN_EPISODE, null, 380_000_000);
 
     const offer = await service.offer(MEDIA_ID, keepingProfile());
     const at720 = offer?.options.find((option) => option.quality === '720p');
@@ -351,13 +351,13 @@ describe('what a download is offered at', { timeout: STARTING_POSTGRES_MS }, () 
   });
 
   it('says one that would be smaller only by a sliver is about the same size', async () => {
-    const { service } = await build([], AN_EPISODE, null, 330_000_000);
+    const { service } = await build([], AN_EPISODE, null, 429_000_000);
 
     const offer = await service.offer(MEDIA_ID, keepingProfile());
-    const at480 = offer?.options.find((option) => option.quality === '480p');
+    const at720 = offer?.options.find((option) => option.quality === '720p');
 
-    expect(at480?.comparison).toBe('about the same size as the original');
-    expect(at480?.savesSpace).toBe(false);
+    expect(at720?.comparison).toBe('about the same size as the original');
+    expect(at720?.savesSpace).toBe(false);
   });
 
   it('still lets the original and a picture that is really smaller be chosen', async () => {
@@ -369,14 +369,14 @@ describe('what a download is offered at', { timeout: STARTING_POSTGRES_MS }, () 
     expect(offer?.options.find((option) => option.quality === '480p')?.savesSpace).toBe(true);
   });
 
-  it('prices what it does offer from the encode it would really be', async () => {
+  it('prices what it does offer from the encode it would really be, scaled from the source', async () => {
     const { service } = await build([], AN_EPISODE, null, 429_000_000);
 
     const offer = await service.offer(MEDIA_ID, keepingProfile());
     const at480 = offer?.options.find((option) => option.quality === '480p');
 
-    expect(at480?.bytes).toBe(Math.round(((1000 + 128) * 1000 * 2253) / 8));
-    expect(at480?.comparison).toBe('about three-quarters of the original');
+    expect(at480?.bytes).toBe(Math.round(((656 + 128) * 1000 * 2253) / 8));
+    expect(at480?.comparison).toBe('about half the size of the original');
   });
 
   it('still offers a smaller picture of a film that has room to lose', async () => {

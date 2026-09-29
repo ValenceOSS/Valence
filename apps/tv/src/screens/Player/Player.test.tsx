@@ -788,7 +788,7 @@ describe('Player', () => {
 
       const asked = mockSession.asked.length;
 
-      await userEvent.press(drawn.getByRole('button', { name: 'Original' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Original (1080p)' }));
 
       expect(mockSession.asked.slice(asked).every((one) => one.quality === 'original')).toBe(true);
       expect(platformInUse().store.read('valence.qualityPreference')).toBeNull();

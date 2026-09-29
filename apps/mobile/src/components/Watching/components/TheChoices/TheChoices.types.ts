@@ -2,6 +2,7 @@ type AChoice = {
   id: string;
   label: string;
   detail?: string;
+  isDisabled?: boolean;
 };
 
 type ASetOfChoices = {

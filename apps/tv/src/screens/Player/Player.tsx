@@ -25,6 +25,7 @@ import {
   saveQualityPreference,
 } from '@ValenceClient/playback/qualityPreference';
 import { describeAudioTrack } from '@ValenceCore/functions/describeTrack';
+import { originalLabel } from '@ValenceCore/functions/originalLabel';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
 import { STILL_WATCHING_OFF } from '@ValenceContracts/schemas/StillWatching';
 import { FINISHED_WITHIN_SECONDS } from '@ValenceContracts/schemas/WatchProgress';
@@ -745,7 +746,13 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
           title="Quality"
           chosen={quality}
           choices={[
-            { id: 'original', label: 'Original' },
+            {
+              id: 'original',
+              label:
+                detail.data === undefined || detail.data === null
+                  ? 'Original'
+                  : originalLabel(detail.data),
+            },
             ...QUALITY_STEPS.filter(
               (step) => step.maxHeight <= (detail.data?.height ?? Number.MAX_SAFE_INTEGER),
             ).map((step) => ({ id: step.id, label: step.label })),

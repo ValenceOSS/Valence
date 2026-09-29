@@ -742,6 +742,20 @@ describe('negotiatePlayback', () => {
       expect(plan.video.reason.code).toBe('UserForcedTranscode');
     });
 
+    it('builds the smaller picture of a modest source from what it spends, below the rung', () => {
+      const modest: MediaItem = { ...media, videoCodec: 'hevc', bitrateKbps: 1520 };
+
+      const plan = negotiatePlayback(modest, profile, {
+        maxWidth: 1280,
+        maxHeight: 720,
+        maxVideoBitrateKbps: 2500,
+        maxAudioBitrateKbps: null,
+      });
+
+      expect(plan.video.kind).toBe('transcode');
+      expect(plan.video.kind === 'transcode' && plan.video.maxBitrateKbps).toBeLessThan(2500);
+    });
+
     it('attributes the transcode to the device, not the clamp, when the device is the tighter limit', () => {
       const weak: DeviceProfile = {
         ...profile,

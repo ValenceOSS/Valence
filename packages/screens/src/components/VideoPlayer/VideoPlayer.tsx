@@ -18,6 +18,7 @@ import { SubtitleCues } from '@ValenceScreens/components/SubtitleCues/SubtitleCu
 import { isTheDesktopClient } from '@ValenceScreens/desktop/theDesktopShell';
 import { detectFromBrowser } from '@ValenceScreens/playback/detectDeviceProfile';
 import { qualityStepCostsFor } from '@ValenceClient/playback/qualityStepCostsFor';
+import { stepsThatSaveNothing } from '@ValenceClient/playback/stepsThatSaveNothing';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { onPresenceEvent } from '@ValenceClient/presence/presenceEvents';
 import {
@@ -1375,6 +1376,10 @@ const VideoPlayer = ({
   );
 
   const availableQualitySteps = detail === null ? [] : listAvailableQualitySteps(detail);
+  const qualityStepsSavingNothing = useMemo(
+    () => (detail === null ? [] : stepsThatSaveNothing({ media: detail, profile: deviceProfile })),
+    [detail, deviceProfile],
+  );
 
   const qualityStepCosts = useMemo(
     () => (detail === null ? {} : qualityStepCostsFor({ media: detail, profile: deviceProfile })),
@@ -2067,6 +2072,7 @@ const VideoPlayer = ({
               selectedAudioIndex={selectedAudioIndex}
               availableQualitySteps={availableQualitySteps}
               originalLabel={detail === null ? 'Original' : originalLabel(detail)}
+              qualityStepsSavingNothing={qualityStepsSavingNothing}
               qualityStepCosts={qualityStepCosts}
               selectedQuality={request.requestedQuality}
               isDisabled={state !== 'playing'}

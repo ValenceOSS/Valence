@@ -251,11 +251,16 @@ const SettingsMenu = ({
                             size="none"
                             role="menuitemradio"
                             aria-checked={choice.id === opened.selectedId}
+                            disabled={choice.isDisabled === true}
                             onClick={() => {
                               opened.onSelect(choice.id);
                               close();
                             }}
-                            className={cn(ROW, 'shrink-0 ')}
+                            className={cn(
+                              ROW,
+                              'shrink-0',
+                              choice.isDisabled === true && 'opacity-50',
+                            )}
                           >
                             <span className="flex size-4 shrink-0 items-center justify-center">
                               {choice.id === opened.selectedId ? (

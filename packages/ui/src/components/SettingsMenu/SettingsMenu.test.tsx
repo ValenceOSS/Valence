@@ -116,6 +116,29 @@ describe('SettingsMenu', () => {
     expect(await screen.findByRole('button', { name: /Playback speed/ })).toBeInTheDocument();
   });
 
+  it('shows a choice that cannot be taken, and does not report it when pressed', async () => {
+    const onSelect = vi.fn();
+    const actor = userEvent.setup();
+
+    draw([
+      {
+        ...SPEED,
+        onSelect,
+        choices: [...SPEED.choices, { id: '4', label: '4x', isDisabled: true }],
+      },
+    ]);
+    await open(actor);
+    await actor.click(await screen.findByRole('button', { name: /Playback speed/ }));
+
+    const disabled = await screen.findByRole('menuitemradio', { name: '4x' });
+
+    expect(disabled).toBeDisabled();
+
+    await actor.click(disabled);
+
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
   it('offers the way back as the heading, rather than as a second thing to find', async () => {
     const actor = userEvent.setup();
 

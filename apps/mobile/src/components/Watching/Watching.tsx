@@ -544,6 +544,7 @@ const Watching = ({
         chosenSubtitle: reading,
         onSubtitle: readInstead,
         media: title.data ?? null,
+        profile: thePhonesProfile(),
         chosenAudio: asking.audioStreamIndex ?? null,
         chosenQuality: asking.requestedQuality ?? 'original',
         onAudio: (audioStreamIndex) => {
