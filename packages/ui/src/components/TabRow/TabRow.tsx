@@ -1,4 +1,5 @@
 import * as RadixTabs from '@radix-ui/react-tabs';
+import { soundOnPress } from '@ValenceUI/sounds/soundOnPress';
 import { cn } from '@ValenceUI/cn';
 import { SlidingMark } from '@ValenceUI/SlidingMark';
 import { SEGMENTED } from '@ValenceUI/tokens/segmented';
@@ -52,6 +53,7 @@ const TabRow = ({ label, groups, value, size = 'md', tone = 'track', className }
 
           {group.items.map((item) => (
             <RadixTabs.Trigger
+              {...soundOnPress('select')}
               key={item.id}
               value={item.id}
               className={cn(

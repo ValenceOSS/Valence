@@ -39,6 +39,7 @@ const ArtCard = ({
         variant="bare"
         size="none"
         hasTooltip={false}
+        sound="navigate"
         label={flag === undefined ? title : `${title}, ${flag}`}
         className="group block w-full"
         onClick={onSelect}

@@ -105,6 +105,7 @@ const ColourPicker = ({ label, value, onChange, presets = [], className }: Colou
           {presets.map((preset) => (
             <Button
               key={preset}
+              sound="select"
               variant="bare"
               size="none"
               label={`Use ${preset}`}

@@ -5,6 +5,7 @@ import { useAppliedTheme } from '@ValenceScreens/theme/useAppliedTheme';
 import { useAppliedRoundness } from '@ValenceScreens/roundness/useAppliedRoundness';
 import { useAppliedPluginTheme } from '@ValenceScreens/theme/useAppliedPluginTheme';
 import { useAppliedMotion } from '@ValenceScreens/motion/useAppliedMotion';
+import { useAppliedSounds } from '@ValenceScreens/sounds/useAppliedSounds';
 import { sendWatchedOffline } from '@ValenceClient/offline/watchedOffline';
 import { App } from '@ValenceScreens/components/App/App';
 import { OfflineApp } from '@ValenceScreens/components/OfflineApp/OfflineApp';
@@ -38,6 +39,7 @@ const ValenceRoot = ({ initialTitle }: ValenceRootProps) => {
   useAppliedTheme();
   useAppliedRoundness();
   useAppliedPluginTheme();
+  useAppliedSounds();
 
   const howMuchMovement = useAppliedMotion();
 

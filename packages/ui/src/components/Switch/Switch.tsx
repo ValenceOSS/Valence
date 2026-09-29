@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { soundOnPress } from '@ValenceUI/sounds/soundOnPress';
 import * as RadixSwitch from '@radix-ui/react-switch';
 import { useAnimate, useReducedMotionConfig } from 'motion/react';
 import { cn } from '@ValenceUI/cn';
@@ -60,6 +61,7 @@ const Switch = ({
 
   return (
     <RadixSwitch.Root
+      {...soundOnPress('toggle')}
       checked={isOn}
       disabled={disabled}
       onCheckedChange={onToggle}

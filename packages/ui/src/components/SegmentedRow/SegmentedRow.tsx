@@ -49,6 +49,7 @@ const SegmentedRow = ({
     {items.map((item) => (
       <Button
         key={item.id}
+        sound="select"
         variant="bare"
         size="none"
         isActive={item.id === value}

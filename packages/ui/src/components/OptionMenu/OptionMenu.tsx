@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { soundOnPress } from '@ValenceUI/sounds/soundOnPress';
+import { cue } from '@ValenceUI/sounds/cue';
 import { Icon } from '@ValenceUI/Icon';
 import { Check as CheckIcon } from '@keyline-icons/react';
 import * as RadixMenu from '@radix-ui/react-dropdown-menu';
@@ -81,6 +83,7 @@ const OptionMenu = ({
           size="sm"
           label={label}
           hasTooltip={false}
+          sound="none"
           {...(className === undefined ? {} : { className })}
         >
           {trigger}
@@ -139,7 +142,16 @@ const OptionMenu = ({
 
   return (
     <RadixMenu.Root
-      {...(isAnchored ? { open: isOpen, onOpenChange: setIsOpen, modal: false } : {})}
+      {...(isAnchored ? { open: isOpen, modal: false } : {})}
+      onOpenChange={(open) => {
+        if (open) {
+          cue('open');
+        }
+
+        if (isAnchored) {
+          setIsOpen(open);
+        }
+      }}
     >
       {isAnchored ? anchored : control}
 
@@ -188,6 +200,7 @@ const OptionMenu = ({
                   {group.options.map((option) => (
                     <RadixMenu.RadioItem
                       key={option.id}
+                      {...soundOnPress('select')}
                       value={option.id}
                       className={cn(
                         'flex cursor-default items-center justify-between gap-4 rounded-sm px-3 py-2.5',

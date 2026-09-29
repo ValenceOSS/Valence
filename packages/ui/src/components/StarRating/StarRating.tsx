@@ -92,6 +92,7 @@ const StarRating = ({
         return (
           <Button
             key={step}
+            sound="select"
             variant="bare"
             size="none"
             isIconOnly

@@ -27,6 +27,7 @@ const ChoiceList = ({ label, choices, value, onChoose, className }: ChoiceListPr
       return (
         <Button
           key={choice.id}
+          sound="select"
           variant="row"
           size="none"
           role="radio"

@@ -63,6 +63,7 @@ const DialogFooter = ({ children, dismiss, confirm, note, className }: DialogFoo
       <Button
         variant="glossy"
         disabled={dismiss.isDisabled ?? false}
+        sound="none"
         isLoading={dismiss.isLoading ?? false}
         onClick={dismiss.onChoose}
       >

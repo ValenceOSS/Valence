@@ -77,6 +77,7 @@ const ReadMore = ({
           variant="subtle"
           size="none"
           className="text-sm"
+          sound="toggle"
           onClick={() => {
             setIsWhole((was) => !was);
           }}

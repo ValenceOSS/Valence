@@ -1035,6 +1035,9 @@ importers:
       cmdk:
         specifier: ^1.1.1
         version: 1.1.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      cuelume:
+        specifier: ^0.2.4
+        version: 0.2.4
       gifenc:
         specifier: ^1.0.3
         version: 1.0.3
@@ -9667,6 +9670,12 @@ packages:
     resolution:
       {
         integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==,
+      }
+
+  cuelume@0.2.4:
+    resolution:
+      {
+        integrity: sha512-w5Kj1h/MC8chBlwgfIdo/stB73m0RDa2KcIO93yI0mSq5qP6ERKOKTzv2JTj1KD9YUct4vZLAatohdeAe/mZJw==,
       }
 
   cva@1.0.0-beta.4:
@@ -24289,6 +24298,8 @@ snapshots:
       cssom: 0.3.8
 
   csstype@3.2.3: {}
+
+  cuelume@0.2.4: {}
 
   cva@1.0.0-beta.4(typescript@5.9.3):
     dependencies:

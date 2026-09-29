@@ -110,6 +110,7 @@ const Sidebar = ({
             size="sm"
             isIconOnly
             label="Close the sidebar"
+            sound="close"
             onClick={() => {
               onCollapsedChange(true);
             }}

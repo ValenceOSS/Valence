@@ -2,6 +2,7 @@
   "compilerOptions": {
     "paths": {
       "@ValenceUI/orbs/*": ["./packages/ui/src/orbs/*"],
+    "@ValenceUI/sounds/*": ["./packages/ui/src/sounds/*"],
       "@ValenceUI/ColourPicker": ["./packages/ui/src/components/ColourPicker/ColourPicker.tsx"],
       "@ValenceUI/ColourPicker.types": [
         "./packages/ui/src/components/ColourPicker/ColourPicker.types.ts"

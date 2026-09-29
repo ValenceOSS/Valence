@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { cue } from '@ValenceUI/sounds/cue';
 import * as RadixDialog from '@radix-ui/react-dialog';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { cn } from '@ValenceUI/cn';
@@ -153,8 +154,18 @@ const SIZE_CLASSES: Record<DialogSize, string> = {
  *   stands at the foot of it rather than the centre on anything larger, and slides up rather than
  *   fading in — see `Drawer`, the component that composes this size.
  * @param className - Extra classes for the caller's own layout.
+ * @param isWarning - Whether what it asks is grave, such as deleting something, which it is heard
+ *   opening as a warning rather than as an ordinary dialog, where sounds are on.
  */
-const Dialog = ({ label, isOpen, onClose, children, size = 'default', className }: DialogProps) => {
+const Dialog = ({
+  label,
+  isOpen,
+  onClose,
+  children,
+  size = 'default',
+  className,
+  isWarning = false,
+}: DialogProps) => {
   const portalContainer = usePortalContainer();
   const panelRef = useRef<HTMLDivElement>(null);
   const prefersReducedMotion = useReducedMotionConfig();
@@ -171,6 +182,16 @@ const Dialog = ({ label, isOpen, onClose, children, size = 'default', className 
 
     return coverPage();
   }, [isOpen]);
+
+  const wasOpen = useRef(isOpen);
+
+  useEffect(() => {
+    if (isOpen !== wasOpen.current) {
+      cue(isOpen ? (isWarning ? 'warning' : 'open') : 'close');
+    }
+
+    wasOpen.current = isOpen;
+  }, [isOpen, isWarning]);
 
   const claim = useCallback((id: string) => {
     setClaimed((standing) => (standing.includes(id) ? standing : [...standing, id]));

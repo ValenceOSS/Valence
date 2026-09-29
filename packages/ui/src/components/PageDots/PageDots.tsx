@@ -63,6 +63,7 @@ const PageDots = ({
           <Button
             variant="bare"
             size="none"
+            sound="navigate"
             aria-label={`Show ${named ?? `page ${(index + 1).toString()}`}`}
             aria-current={selectedIndex === index ? 'true' : undefined}
             onClick={() => {

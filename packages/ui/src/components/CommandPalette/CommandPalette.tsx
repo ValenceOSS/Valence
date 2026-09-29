@@ -1,4 +1,5 @@
 import { Command } from 'cmdk';
+import { soundOnPress } from '@ValenceUI/sounds/soundOnPress';
 import { Search as SearchIcon } from '@keyline-icons/react';
 import { Dialog } from '@ValenceUI/Dialog';
 import { Icon } from '@ValenceUI/Icon';
@@ -63,6 +64,7 @@ const CommandPalette = ({
             {group.items.map((item) => (
               <Command.Item
                 key={item.id}
+                {...soundOnPress('select')}
                 value={item.id}
                 onSelect={() => {
                   onSelect(item.id);

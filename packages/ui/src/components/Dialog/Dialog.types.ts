@@ -9,6 +9,7 @@ type DialogProps = {
   children: ReactNode;
   size?: DialogSize;
   className?: string;
+  isWarning?: boolean;
 };
 
 export type { DialogProps, DialogSize };

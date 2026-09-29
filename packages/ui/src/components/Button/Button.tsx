@@ -1,4 +1,7 @@
+import { useEffect, useRef } from 'react';
 import { cn } from '@ValenceUI/cn';
+import { cue } from '@ValenceUI/sounds/cue';
+import { soundOnPress } from '@ValenceUI/sounds/soundOnPress';
 import { buttonStyles } from './buttonStyles';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Tooltip } from '@ValenceUI/Tooltip';
@@ -29,6 +32,9 @@ import type { ButtonProps } from './Button.types';
  * @param hasTooltip - Whether resting a pointer on it shows the label.
  * @param tooltipDelayMilliseconds - How long a pointer rests before the label appears.
  * @param className - Extra classes for the caller's own layout.
+ * @param sound - What it sounds like when pressed, where sounds are on: a tap unless it chooses,
+ *   switches, opens or goes somewhere, or none where something else already says what happened. The
+ *   work it starts is heard beginning as well.
  */
 const Button = ({
   children,
@@ -45,9 +51,19 @@ const Button = ({
   className,
   disabled,
   type = 'button',
+  sound = 'tap',
   ...rest
 }: ButtonProps) => {
   const isDisabled = disabled === true || isLoading;
+  const wasLoading = useRef(isLoading);
+
+  useEffect(() => {
+    if (isLoading && !wasLoading.current) {
+      cue('loading', { emphasis: 'subtle' });
+    }
+
+    wasLoading.current = isLoading;
+  }, [isLoading]);
   const isBare = variant === 'bare';
 
   const control = (
@@ -58,6 +74,7 @@ const Button = ({
       {...(label === undefined ? {} : { 'aria-label': label })}
       {...(isActive ? { 'aria-pressed': true } : {})}
       data-slot="button"
+      {...soundOnPress(sound)}
       className={cn(
         buttonStyles({
           variant,

@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { PressSound } from '@ValenceUI/sounds/sounds.types';
 
 type ButtonVariant =
   | 'primary'
@@ -31,6 +32,7 @@ type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'> & 
   hasTooltip?: boolean;
   tooltipDelayMilliseconds?: number;
   className?: string;
+  sound?: PressSound | 'none';
 };
 
 export type { ButtonProps, ButtonVariant, ButtonSize };

@@ -178,6 +178,7 @@ const NavBar = ({
                   variant="bare"
                   size="none"
                   label={item.label}
+                  sound="navigate"
                   hasTooltip={false}
                   aria-current={isCurrent ? 'page' : undefined}
                   onPointerEnter={() => {
@@ -274,6 +275,7 @@ const NavBar = ({
             action.control === undefined ? (
               <Button
                 key={action.id}
+                sound="navigate"
                 variant="bare"
                 size="none"
                 data-highlight={action.id}

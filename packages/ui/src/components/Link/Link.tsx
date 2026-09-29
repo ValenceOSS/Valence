@@ -1,4 +1,5 @@
 import { cn } from '@ValenceUI/cn';
+import { soundOnPress } from '@ValenceUI/sounds/soundOnPress';
 import type { LinkProps } from './Link.types';
 
 const LOOK =
@@ -34,11 +35,17 @@ const isElsewhere = (href: string): boolean => {
  */
 const Link = ({ href, children, className }: LinkProps) =>
   isElsewhere(href) ? (
-    <a href={href} target="_blank" rel="noopener noreferrer" className={cn(LOOK, className)}>
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={cn(LOOK, className)}
+      {...soundOnPress('navigate')}
+    >
       {children}
     </a>
   ) : (
-    <a href={href} className={cn(LOOK, className)}>
+    <a href={href} className={cn(LOOK, className)} {...soundOnPress('navigate')}>
       {children}
     </a>
   );

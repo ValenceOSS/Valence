@@ -55,6 +55,7 @@ const BackToTop = ({ label = 'Back to top', className }: BackToTopProps) => {
             isIconOnly
             label={label}
             hasTooltip={false}
+            sound="navigate"
             onClick={() => {
               window.scrollTo({
                 top: 0,

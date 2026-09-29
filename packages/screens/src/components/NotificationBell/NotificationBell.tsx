@@ -1,4 +1,6 @@
+import { useEffect, useRef } from 'react';
 import { Icon } from '@ValenceUI/Icon';
+import { cue } from '@ValenceUI/sounds/cue';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Bell as BellFilledIcon } from '@keyline-icons/react/fill';
 import { Bin as BinIcon, CircleCheck as CircleCheckIcon } from '@keyline-icons/react';
@@ -17,7 +19,9 @@ const COUNTED_UP_TO = 9;
 
 /**
  * The bell in the dock and the list behind it: what has happened, what has not been read, and the
- * switch for having them pushed to this device even when the application is closed.
+ * switch for having them pushed to this device even when the application is closed. A notification
+ * arriving while it is open is heard, where sounds are on; the ones already there when it loaded are
+ * not.
  *
  * @param notifications - What to show, newest first.
  * @param unread - How many have not been read, for the count on the bell.
@@ -39,6 +43,20 @@ const NotificationBell = ({
   onFollow,
 }: NotificationBellProps) => {
   const now = useTicking(A_CAPTION_AGES_EVERY);
+  const newest = notifications[0]?.id ?? null;
+  const heardUpTo = useRef(newest);
+
+  useEffect(() => {
+    if (newest === null || newest === heardUpTo.current) {
+      return;
+    }
+
+    if (heardUpTo.current !== null) {
+      cue('attention');
+    }
+
+    heardUpTo.current = newest;
+  }, [newest]);
 
   return (
     <PopoverPanel

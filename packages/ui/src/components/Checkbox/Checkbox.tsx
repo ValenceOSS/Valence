@@ -1,4 +1,5 @@
 import { Icon } from '@ValenceUI/Icon';
+import { soundOnPress } from '@ValenceUI/sounds/soundOnPress';
 import { Check as CheckIcon, Minus as MinusIcon } from '@keyline-icons/react';
 import { useId } from 'react';
 import * as RadixCheckbox from '@radix-ui/react-checkbox';
@@ -46,6 +47,7 @@ const Checkbox = ({
       )}
     >
       <RadixCheckbox.Root
+        {...soundOnPress('toggle')}
         {...(isMixed
           ? { checked: 'indeterminate' as const }
           : checked === undefined
