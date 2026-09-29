@@ -108,7 +108,7 @@ Yes. Every endpoint has a contract, and the server serves an OpenAPI 3.1 documen
 
 ### Can I write plugins?
 
-The plugin model is designed around capabilities such as network allowlists, read-only library access and storage quotas, but the runtime is still in progress. See [Plugins](/develop/plugins).
+Yes. A plugin is TypeScript that runs in a sandbox on the server and asks for exactly what it needs, such as the hosts it may reach, read-only library access or a storage quota. It draws its pages and panels from building blocks every Valence app already knows, so it works on the web, the phone and the TV without shipping code to them. Start with [getting started](/plugins/getting-started), and see [how plugins are kept safe](/develop/plugins).
 
 ## Getting involved
 

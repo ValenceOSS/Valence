@@ -50,7 +50,7 @@ The list below is what the project itself claims for Valence. Each item is cover
 
 - **A documented API.** Every endpoint has a contract. Valence serves an OpenAPI 3.1 document and an interactive reference from the server itself. See the [API reference](/api) and the [API overview](/reference/api-overview).
 - **API keys.** Create, list and revoke keys from the account area.
-- **Plugins.** A capability-scoped plugin model is designed in, and the runtime is still in progress. Read [Plugins](/develop/plugins) for the current state before building on it.
+- **Plugins.** Plugins add pages, panels, themes and scheduled work, running in a sandbox on your server with only the permissions you accept. Official ones come from a signed catalogue. See [installing plugins](/use/plugins), or [write your own](/plugins/getting-started).
 
 ### Security
 
@@ -65,7 +65,7 @@ Sign-in supports TOTP two-factor authentication with backup codes, WebAuthn pass
 | Hardware transcoding | Yes, some behind Plex Pass     | Yes         | Yes, free, AV1 on several backends      |
 | Books                | Removed in 2022                | Plugin only | Built in                                |
 | Offline downloads    | Behind Plex Pass               | Via apps    | Built in, including a full offline mode |
-| Plugin ecosystem     | Closed, mostly deprecated      | Mature      | Capability-scoped API, in progress      |
+| Plugin ecosystem     | Closed, mostly deprecated      | Mature      | Sandboxed, permission-scoped, signed    |
 | Documented API       | Reverse-engineered             | Partial     | Full OpenAPI 3.1, hosted reference      |
 | Price                | Free tier, plus a subscription | Free        | Free                                    |
 
@@ -77,7 +77,6 @@ These rows are the project's own summary of the differences. Check each product'
 - **Not a downloader.** Valence does not fetch anything by itself. The optional requesting service searches indexers and hands releases to a download client that you provide, such as qBittorrent, Transmission, SABnzbd or NZBGet. You are responsible for what you choose to request.
 - **Not open to the internet by default.** It expects a reverse proxy in front of it that holds the certificate. See [Reverse proxy](/install/reverse-proxy).
 - **Not an open-signup site.** Accounts are created by an administrator, through invitations. Everybody in a household gets a profile of their own with their own history.
-- **Not a plugin platform yet.** The plugin runtime is in progress.
 - **Not multi-architecture for releases.** The published release images are built for linux/amd64. Other architectures are only built on request for nightly images. See [System requirements](/start/system-requirements).
 
 ## Licence
