@@ -286,6 +286,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     if: needs.changes.outputs.rust == 'true'
+    # Read only, since cargo runs build scripts from every crate it builds and nothing here writes.
+    permissions:
+      contents: read
     # On pull requests as well, which it did not used to be. The case for skipping them was that the
     # pre-push hook has already run cargo clippy and cargo test on the machine the change was
     # written on — which is true, and the machine is exactly the problem. A test reading a child's
@@ -364,6 +367,8 @@ jobs:
     runs-on: windows-latest
     needs: changes
     if: needs.changes.outputs.native == 'true'
+    permissions:
+      contents: read
     steps:
       # Nothing here pushes, and cargo runs build scripts from every crate it builds, so the token
       # is not left behind in the checkout for them to find.
