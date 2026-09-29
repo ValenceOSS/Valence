@@ -78,6 +78,10 @@ const placeIn = (
  * once it has been drawn, so the work of drawing it is not done in the frames it should be moving in,
  * and can be dragged back down from anywhere on it that does not scroll or slide on its own.
  *
+ * A page swapped for another in its place — a title found already in the library, opened in place of
+ * the page that would have asked for it — takes over where the one it replaced stood, sliding in if
+ * that one still was, rather than starting again off to the side.
+ *
  * Every page stays drawn beneath the one on top, so going back returns to it as it was left, scrolled
  * where it was scrolled; only the top one is told it is on top, so the rest can stop playing. Where
  * somebody has asked their phone for less motion, pages cross-fade instead of sliding.
@@ -96,9 +100,24 @@ const APageStack = ({ pages, onBack }: APageStackProps) => {
 
   if (held !== pages) {
     const gone = held.at(-1) ?? null;
+    const arrived = pages.at(-1) ?? null;
 
     if (pages.length < held.length && gone !== null && pages.length > 0) {
       setLeaving(gone);
+    }
+
+    if (
+      pages.length === held.length &&
+      gone !== null &&
+      arrived !== null &&
+      gone.key !== arrived.key
+    ) {
+      const place = places.get(gone.key);
+
+      if (place !== undefined) {
+        places.set(arrived.key, place);
+        places.delete(gone.key);
+      }
     }
 
     setHeld(pages);
@@ -149,6 +168,12 @@ const APageStack = ({ pages, onBack }: APageStackProps) => {
       if (under !== null) {
         Animated.spring(placeIn(places, under.key), { ...MOVE, toValue: PUSHED_UNDER }).start();
       }
+
+      return undefined;
+    }
+
+    if (pages.length === was.length && opened !== null && opened.key !== was.at(-1)?.key) {
+      Animated.spring(placeIn(places, opened.key), { ...MOVE, toValue: IN_PLACE }).start();
 
       return undefined;
     }

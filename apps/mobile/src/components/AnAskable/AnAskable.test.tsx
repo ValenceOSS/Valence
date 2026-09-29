@@ -3,7 +3,7 @@ import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
 import { fetchSession } from '@ValenceClient/session/auth';
-import { aCatalogueTitle } from '@ValenceClient/testing/aCatalogueTitle';
+import { aCatalogueTitleDetail } from '@ValenceClient/testing/aCatalogueTitleDetail';
 import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
 import { AnAskable } from './AnAskable';
 import type { ReactNode } from 'react';
@@ -39,17 +39,8 @@ const around = (children: ReactNode) => (
 /**
  * Dune as its page reads it, standing wherever the test says.
  */
-const theDetail = (standing: CatalogueStanding): CatalogueTitleDetail => ({
-  ...aCatalogueTitle({ standing }),
-  musicBrainzId: null,
-  backdropUrl: null,
-  genres: ['Science Fiction'],
-  runtimeMinutes: 155,
-  cast: [],
-  albums: [],
-  authors: [],
-  trailerKey: null,
-});
+const theDetail = (standing: CatalogueStanding): CatalogueTitleDetail =>
+  aCatalogueTitleDetail({ standing });
 
 /**
  * Answers every question the page asks.

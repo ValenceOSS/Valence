@@ -55,6 +55,8 @@ import { TheTabs } from '@ValenceMobile/components/TheTabs/TheTabs';
 import { AProgrammeBySeries } from '@ValenceMobile/components/SignedIn/components/AProgrammeBySeries/AProgrammeBySeries';
 import { UnderThePlayer } from '@ValenceMobile/components/SignedIn/components/UnderThePlayer/UnderThePlayer';
 import { APageStack } from '@ValenceMobile/components/APageStack/APageStack';
+import { pageInTheLibrary } from '@ValenceMobile/components/SignedIn/pageInTheLibrary';
+import { pageToAskAbout } from '@ValenceMobile/components/SignedIn/pageToAskAbout';
 import { useTheProgrammeOfEpisode } from '@ValenceMobile/hooks/useTheProgrammeOfEpisode';
 import { Watching } from '@ValenceMobile/components/Watching/Watching';
 import { WatchingHeld } from '@ValenceMobile/components/WatchingHeld/WatchingHeld';
@@ -395,13 +397,13 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
         onAsk={
           mayRequest
             ? (about, id) => {
-                latest.get('now')?.open({ kind: 'asking', about, id });
+                latest.get('now')?.open(pageToAskAbout(cache, about, id));
               }
             : null
         }
       />
     ),
-    [latest, mayRequest, searchSide],
+    [cache, latest, mayRequest, searchSide],
   );
 
   if (session.isPending) {
@@ -466,11 +468,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
             kind={page.about}
             id={page.id}
             onOpen={(kind, mediaId) => {
-              swap(
-                kind === 'film'
-                  ? { kind: 'title', mediaId }
-                  : { kind: 'series', seriesId: mediaId },
-              );
+              swap(pageInTheLibrary(kind, mediaId));
             }}
             onBack={back}
           />
@@ -481,7 +479,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
             browsing={page.browsing}
             title={page.title}
             onAsk={(about, id) => {
-              open({ kind: 'asking', about, id });
+              open(pageToAskAbout(cache, about, id));
             }}
             onBack={back}
           />

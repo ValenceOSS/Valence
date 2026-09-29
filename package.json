@@ -26,6 +26,7 @@
     "prepare": "husky",
     "fixtures:sync": "tsx tools/fixtures/syncFixtures.ts",
     "ffmpeg:sync": "tsx tools/ffmpeg/syncFfmpeg.ts",
+    "brand:render": "tsx tools/brand/renderBrand.ts",
     "db:check": "tsx tools/drizzle/checkDrizzleSnapshot.ts"
   },
   "devDependencies": {
