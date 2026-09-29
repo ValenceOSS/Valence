@@ -58,15 +58,17 @@ definePlugin({
 });
 ```
 
-| Topic                | When                                              | `profileId` | `mediaId` |
-| -------------------- | ------------------------------------------------- | ----------- | --------- |
-| `playback.started`   | Someone starts playing something                  | Yes         | Yes       |
-| `playback.stopped`   | Someone stops before the end                      | Yes         | Yes       |
-| `playback.finished`  | Someone reaches the end, and it counts as watched | Yes         | Yes       |
-| `media.added`        | Something new arrives in the library              | No          | Yes       |
-| `media.removed`      | Something leaves the library                      | No          | Yes       |
-| `library.scanned`    | A library scan finishes                           | No          | No        |
-| `requests.available` | Something someone asked for is now in the library | Yes         | Yes       |
+| Topic                | When                                              | `profileId` | `mediaId` | Needs     |
+| -------------------- | ------------------------------------------------- | ----------- | --------- | --------- |
+| `playback.started`   | Someone starts playing something                  | Yes         | Yes       | `viewing` |
+| `playback.stopped`   | Someone stops before the end                      | Yes         | Yes       | `viewing` |
+| `playback.finished`  | Someone reaches the end, and it counts as watched | Yes         | Yes       | `viewing` |
+| `media.added`        | Something new arrives in the library              | No          | Yes       | `library` |
+| `media.removed`      | Something leaves the library                      | No          | Yes       | `library` |
+| `library.scanned`    | A library scan finishes                           | No          | No        | `library` |
+| `requests.available` | Something someone asked for is now in the library | Yes         | Yes       | `library` |
+
+A plugin only hears a topic when it holds the permission beside it, so subscribing never tells it more than it could ask for directly: who watched what needs `viewing`, and changes to the library need `library`. A manifest listing a topic without that permission is refused.
 
 Every event is:
 

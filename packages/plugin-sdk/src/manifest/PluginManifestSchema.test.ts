@@ -101,6 +101,7 @@ describe('PluginManifestSchema', () => {
       aManifest({
         permissions: [
           { kind: 'network', hosts: ['anilist.co'] },
+          { kind: 'viewing', access: 'write' },
           {
             kind: 'accounts',
             providers: [
@@ -179,6 +180,12 @@ describe('PluginManifestSchema', () => {
         }),
       ),
     ).toContain('Each permission node is declared once');
+  });
+
+  it('refuses an event the plugin has no permission to hear', () => {
+    expect(
+      problemsOf(aManifest({ permissions: [{ kind: 'network', hosts: ['anilist.co'] }] })),
+    ).toContain('Hearing playback.finished needs the viewing permission');
   });
 
   it('refuses a schedule more often than every fifteen minutes', () => {

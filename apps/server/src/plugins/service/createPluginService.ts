@@ -21,6 +21,7 @@ import { eventsFrom } from './eventsFrom';
 import { openSettings } from './openSettings';
 import { permissionsHashOf } from './permissionsHashOf';
 import { nodesHeldBy } from './nodesHeldBy';
+import { mayHearEvent } from '@ValenceSDK/manifest/mayHearEvent';
 import type {
   CatalogueListing,
   InstalledPlugin,
@@ -976,7 +977,9 @@ const createPluginService = ({
           }
 
           for (const event of events) {
-            if (!record.manifest.contributes.events.some((topic) => topic === event.topic)) {
+            const topic = record.manifest.contributes.events.find((each) => each === event.topic);
+
+            if (topic === undefined || !mayHearEvent(record.manifest.permissions, topic)) {
               continue;
             }
 

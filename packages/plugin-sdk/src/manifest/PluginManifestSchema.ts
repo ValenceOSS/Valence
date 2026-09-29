@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { EVENT_PERMISSIONS } from './EVENT_PERMISSIONS';
+import { mayHearEvent } from './mayHearEvent';
 import { ContributionsSchema } from './ContributionsSchema';
 import { HttpsUrlSchema } from './HttpsUrlSchema';
 import { PermissionSchema } from './PermissionSchema';
@@ -111,6 +113,16 @@ const PluginManifestSchema = z
 
     if (new Set(ids).size !== ids.length) {
       context.addIssue({ code: 'custom', message: 'Each contribution id is used once' });
+    }
+
+    for (const topic of manifest.contributes.events) {
+      if (!mayHearEvent(manifest.permissions, topic)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['contributes', 'events'],
+          message: `Hearing ${topic} needs the ${EVENT_PERMISSIONS[topic]} permission`,
+        });
+      }
     }
 
     const nodes = manifest.contributes.nodes.map((node) => node.id);
