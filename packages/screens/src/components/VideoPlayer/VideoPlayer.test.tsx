@@ -1836,7 +1836,7 @@ describe('VideoPlayer', () => {
     });
     Object.defineProperty(element, 'duration', { configurable: true, value: 7200 });
 
-    await actor.keyboard('{ArrowRight}');
+    await actor.keyboard('.');
 
     const at = element instanceof HTMLVideoElement ? element.currentTime : 0;
 
@@ -1852,9 +1852,58 @@ describe('VideoPlayer', () => {
     renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} isImmersive />);
     await settled();
 
-    await actor.keyboard('{ArrowLeft}');
+    await actor.keyboard(',');
 
     expect(pause).toHaveBeenCalled();
+  });
+
+  it('skips as far as the buttons do on the arrow keys, and keeps playing', async () => {
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined);
+    const actor = userEvent.setup();
+
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} isImmersive />);
+    await settled();
+
+    const element = await screen.findByLabelText('Arrival');
+    seekableTo(element, 600);
+    Object.defineProperty(element, 'currentTime', {
+      configurable: true,
+      writable: true,
+      value: 60,
+    });
+    fireEvent.timeUpdate(element);
+
+    await actor.keyboard('{ArrowRight}');
+
+    expect(element).toHaveProperty('currentTime', 70);
+
+    fireEvent.timeUpdate(element);
+    await actor.keyboard('{ArrowLeft}');
+
+    expect(element).toHaveProperty('currentTime', 60);
+    expect(pause).not.toHaveBeenCalled();
+    expect(startMock).toHaveBeenCalledOnce();
+  });
+
+  it('leaves the arrow keys to a slider that has them', async () => {
+    const actor = userEvent.setup();
+
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} isImmersive />);
+    await settled();
+
+    const element = await screen.findByLabelText('Arrival');
+    seekableTo(element, 600);
+    Object.defineProperty(element, 'currentTime', {
+      configurable: true,
+      writable: true,
+      value: 60,
+    });
+    fireEvent.timeUpdate(element);
+
+    screen.getByRole('slider', { name: 'Volume' }).focus();
+    await actor.keyboard('{ArrowLeft}');
+
+    expect(element).toHaveProperty('currentTime', 60);
   });
 
   it('offers the rest of the season, and nothing at all for a film', async () => {

@@ -1692,13 +1692,27 @@ const VideoPlayer = ({
         return;
       }
 
+      if (
+        (event.key === 'ArrowLeft' || event.key === 'ArrowRight') &&
+        target instanceof HTMLElement &&
+        target.getAttribute('role') === 'slider'
+      ) {
+        return;
+      }
+
       const shortcuts: Record<string, () => void> = {
         ' ': togglePlay,
         k: togglePlay,
         ArrowLeft: () => {
-          stepFrame(-1);
+          skipRef.current(-SKIP_SECONDS);
         },
         ArrowRight: () => {
+          skipRef.current(SKIP_SECONDS);
+        },
+        ',': () => {
+          stepFrame(-1);
+        },
+        '.': () => {
           stepFrame(1);
         },
         j: () => {
