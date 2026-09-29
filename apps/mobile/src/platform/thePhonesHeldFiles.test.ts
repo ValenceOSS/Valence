@@ -172,6 +172,10 @@ describe('thePhonesHeldFiles', () => {
     const kept = `file:///phone/held/${ARRIVAL.downloadId}.trickplay/`;
 
     expect(row?.hasTrickplay).toBe(true);
+    expect(global.fetch).toHaveBeenCalledWith(
+      `http://one.local:8420/api/playback/${ARRIVAL.mediaId}/trickplay`,
+      { method: 'POST' },
+    );
     expect(writeAsStringAsync).toHaveBeenCalledWith(`${kept}thumbnails.vtt`, VTT);
     expect(downloadAsync).toHaveBeenCalledWith(
       'http://one.local:8420/api/playback/trickplay/t1/sheet-001.jpg',

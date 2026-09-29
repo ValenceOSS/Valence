@@ -50,18 +50,16 @@ const posterOf = (downloadId: string): string => `${FOLDER}${downloadId}.jpg`;
 const trickplayOf = (downloadId: string): string => `${FOLDER}${downloadId}.trickplay/`;
 
 /**
- * Asks this phone's server something with this phone's session, given a path on it.
+ * Asks this phone's server something, given a path on it, as the rest of the application does: the
+ * session travels in the phone's own cookie jar, which a cookie set by hand on a request would get
+ * in the way of.
  *
- * @param cookie - The session, where there is one.
- * @returns How to ask.
+ * @param path - Where on the server.
+ * @param how - The rest of the request.
+ * @returns The answer.
  */
-const askingWith =
-  (cookie: string | null) =>
-  (path: string, how: RequestInit = {}): Promise<Response> =>
-    fetch(onThisServer(path), {
-      ...how,
-      ...(cookie === null ? {} : { headers: { Cookie: cookie } }),
-    });
+const askTheServer = (path: string, how: RequestInit = {}): Promise<Response> =>
+  fetch(onThisServer(path), how);
 
 /**
  * The files this phone keeps for watching without the server, as the desktop keeps them: each
@@ -125,7 +123,7 @@ const thePhonesHeldFiles = (
   };
 
   const fetchTheTrickplay = async (row: HeldFile, cookie: string | null) => {
-    const wanted = await trickplayToKeep(askingWith(cookie), row.mediaId);
+    const wanted = await trickplayToKeep(askTheServer, row.mediaId);
 
     if (wanted === null) {
       return;
