@@ -181,6 +181,11 @@ pub struct VideoRendition {
 /// looks for them by fetching the first, middle and last segments of the film,
 /// and to a transcode positioned where a viewer resumed, a request for the
 /// first and the last is two seeks that pull it away from them.
+///
+/// A copied picture may still hold captions in its bytes. Valence does not offer
+/// them — an encode drops them, and subtitles go as tracks of their own — so a
+/// copy is described the same way, rather than stripped by a bitstream filter
+/// that would take the picture's other metadata with them.
 #[must_use]
 pub fn build_multivariant_playlist(video: &VideoRendition, audio: &AudioRendition) -> String {
     let mut playlist = String::from("#EXTM3U\n#EXT-X-VERSION:7\n#EXT-X-INDEPENDENT-SEGMENTS\n");
