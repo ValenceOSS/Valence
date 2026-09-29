@@ -12,7 +12,8 @@ import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 import { Button } from '@ValenceTv/components/Button/Button';
 import { PluginSurface } from '@ValenceTv/components/PluginSurface/PluginSurface';
 import { PluginNotice } from '@ValenceTv/components/PluginSurface/components/PluginNotice/PluginNotice';
-import { TV_SURFACE_HOST } from '@ValenceTv/plugins/TV_SURFACE_HOST';
+import { ScanToConnect } from '@ValenceTv/components/ScanToConnect/ScanToConnect';
+import { useScanToOpen } from '@ValenceTv/plugins/useScanToOpen';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { PluginPageProps } from './PluginPage.types';
 
@@ -38,13 +39,15 @@ const styles = StyleSheet.create({
  * A page a plugin adds to somebody's account, opened from their account on the television and
  * drawn from the plugin's building blocks, named with the plugin it comes from. The remote lands
  * on the page as it opens. Where the page cannot be read, it says so and offers to try again.
+ * Connecting an account is finished on a phone, from a code the page shows in its place.
  *
  * @param pluginId - The plugin.
  * @param pageId - Which of its pages.
  */
 const PluginPage = ({ pluginId, pageId }: PluginPageProps) => {
   const contributions = useQuery(pluginQueries.contributions());
-  const page = usePluginSurface({ kind: 'page', pluginId, pageId }, TV_SURFACE_HOST);
+  const scanning = useScanToOpen();
+  const page = usePluginSurface({ kind: 'page', pluginId, pageId }, scanning.host);
   const about = contributions.data?.pages.find(
     (each) => each.pluginId === pluginId && each.pageId === pageId,
   );
@@ -57,7 +60,9 @@ const PluginPage = ({ pluginId, pageId }: PluginPageProps) => {
       {page.problem === null ? null : <PluginNotice tone="danger" text={page.problem} />}
 
       <TVFocusGuideView autoFocus>
-        {page.surface !== undefined ? (
+        {scanning.address !== null ? (
+          <ScanToConnect address={scanning.address} onDone={scanning.done} />
+        ) : page.surface !== undefined ? (
           <PluginSurface
             pluginId={pluginId}
             surface={page.surface}

@@ -10,13 +10,13 @@ beforeEach(() => {
 });
 
 describe('openOnThePhone', () => {
-  it('opens a page of this server in the browser sheet', async () => {
+  it('opens a page of this server in the browser sheet, asking it to come back to the app', async () => {
     jest.mocked(signInOnTheWeb).mockResolvedValue(null);
 
-    await openOnThePhone('/api/plugins/anilist/accounts/anilist/connect');
+    await openOnThePhone('/api/plugins/anilist/accounts/anilist/connect?ticket=abc');
 
     expect(signInOnTheWeb).toHaveBeenCalledWith(
-      'https://valence.test/api/plugins/anilist/accounts/anilist/connect',
+      'https://valence.test/api/plugins/anilist/accounts/anilist/connect?ticket=abc&returnTo=valence%3A%2F%2Fplugins%2Fconnected',
     );
   });
 
@@ -30,6 +30,7 @@ describe('openOnThePhone', () => {
     jest.mocked(signInOnTheWeb).mockClear();
 
     await openOnThePhone('https://elsewhere.example/steal');
+    await openOnThePhone('//elsewhere.example/steal');
 
     expect(signInOnTheWeb).not.toHaveBeenCalled();
   });

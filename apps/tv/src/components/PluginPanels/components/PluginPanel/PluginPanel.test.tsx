@@ -1,4 +1,3 @@
-import { Alert } from 'react-native';
 import { render, userEvent } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fetchPluginSurface } from '@ValenceClient/plugins/fetchPluginSurface';
@@ -26,8 +25,7 @@ const props = {
 };
 
 describe('PluginPanel', () => {
-  it('says an account has to be connected on another device', async () => {
-    jest.spyOn(Alert, 'alert');
+  it('shows a code to finish connecting an account on a phone', async () => {
     jest.mocked(fetchPluginSurface).mockResolvedValue(
       SurfaceSchema.parse({
         blocks: [
@@ -47,7 +45,8 @@ describe('PluginPanel', () => {
 
     await userEvent.press(await drawn.findByText('Connect AniList'));
 
-    expect(await drawn.findByText(/on your phone or on the web/u)).toBeTruthy();
+    expect(await drawn.findByText('Connect on your phone')).toBeTruthy();
+    expect(drawn.queryByText('Connect AniList')).toBeNull();
   });
 
   it('leaves out a panel that cannot be read', async () => {

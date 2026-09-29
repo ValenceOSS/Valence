@@ -2,7 +2,8 @@ import { StyleSheet, Text, View } from 'react-native';
 import { usePluginSurface } from '@ValenceClient/plugins/usePluginSurface';
 import { PluginSurface } from '@ValenceTv/components/PluginSurface/PluginSurface';
 import { PluginNotice } from '@ValenceTv/components/PluginSurface/components/PluginNotice/PluginNotice';
-import { TV_SURFACE_HOST } from '@ValenceTv/plugins/TV_SURFACE_HOST';
+import { ScanToConnect } from '@ValenceTv/components/ScanToConnect/ScanToConnect';
+import { useScanToOpen } from '@ValenceTv/plugins/useScanToOpen';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { PluginPanelProps } from './PluginPanel.types';
 
@@ -31,9 +32,10 @@ const styles = StyleSheet.create({
  * @param subjectId - Which one.
  */
 const PluginPanel = ({ pluginId, pluginName, panelId, title, on, subjectId }: PluginPanelProps) => {
+  const scanning = useScanToOpen();
   const panel = usePluginSurface(
     { kind: 'panel', pluginId, panelId, on, subjectId },
-    TV_SURFACE_HOST,
+    scanning.host,
   );
 
   if (panel.surface === undefined) {
@@ -45,12 +47,16 @@ const PluginPanel = ({ pluginId, pluginName, panelId, title, on, subjectId }: Pl
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.from}>{`From ${pluginName}`}</Text>
       {panel.problem === null ? null : <PluginNotice tone="danger" text={panel.problem} />}
-      <PluginSurface
-        pluginId={pluginId}
-        surface={panel.surface}
-        onAct={panel.act}
-        isActing={panel.isActing}
-      />
+      {scanning.address === null ? (
+        <PluginSurface
+          pluginId={pluginId}
+          surface={panel.surface}
+          onAct={panel.act}
+          isActing={panel.isActing}
+        />
+      ) : (
+        <ScanToConnect address={scanning.address} onDone={scanning.done} />
+      )}
     </View>
   );
 };

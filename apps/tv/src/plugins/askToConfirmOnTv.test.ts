@@ -19,11 +19,9 @@ describe('askToConfirmOnTv', () => {
   });
 
   it('does not go ahead when the alert is dismissed', async () => {
-    jest
-      .spyOn(Alert, 'alert')
-      .mockImplementation((_title, _message, _choices, options) => {
-        options?.onDismiss?.();
-      });
+    jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, _choices, options) => {
+      options?.onDismiss?.();
+    });
 
     await expect(askToConfirmOnTv('Forget every show?')).resolves.toBe(false);
   });

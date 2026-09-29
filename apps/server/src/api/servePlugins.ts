@@ -2,7 +2,7 @@ import { PACKAGE_LIMITS } from '@ValenceSDK/package/PACKAGE_LIMITS';
 import { readSessionOnce } from '@ValenceServer/auth/readSessionOnce';
 import { connectionPage } from '@ValenceServer/plugins/accounts/connectionPage';
 import { isSecureRequest } from '@ValenceServer/plugins/accounts/isSecureRequest';
-import { pathOnThisServer } from '@ValenceServer/plugins/accounts/pathOnThisServer';
+import { whereToReturn } from '@ValenceServer/plugins/accounts/whereToReturn';
 import {
   actPageRoute,
   actPanelRoute,
@@ -385,7 +385,7 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
     const started = await plugins?.connect(id, provider, {
       ticket: ticket ?? null,
       viewer: await viewerOf(context.req.raw.headers),
-      returnTo: pathOnThisServer(returnTo),
+      returnTo: whereToReturn(returnTo),
     });
 
     if (started === undefined || 'problem' in started) {

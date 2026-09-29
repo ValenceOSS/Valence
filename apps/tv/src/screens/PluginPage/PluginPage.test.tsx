@@ -53,11 +53,11 @@ describe('PluginPage', () => {
     });
   });
 
-  it('says an account has to be connected on another device', async () => {
+  it('finishes connecting an account on a phone, then reads the page again', async () => {
     jest.mocked(fetchPluginSurface).mockResolvedValue(CONNECT);
     jest.mocked(actOnPluginSurface).mockResolvedValue({
       kind: 'navigate',
-      to: '/api/plugins/anilist/accounts/anilist/connect',
+      to: '/api/plugins/anilist/accounts/anilist/connect?ticket=abc',
     });
     const drawn = await render(<PluginPage pluginId="anilist" pageId="tracking" />, {
       wrapper: Scope,
@@ -65,7 +65,13 @@ describe('PluginPage', () => {
 
     await userEvent.press(await drawn.findByText('Connect AniList'));
 
-    expect(await drawn.findByText(/on your phone or on the web/u)).toBeTruthy();
+    expect(await drawn.findByText('Connect on your phone')).toBeTruthy();
+    expect(drawn.queryByText('Keep your anime list in step.')).toBeNull();
+
+    await userEvent.press(drawn.getByText('Done'));
+
+    expect(await drawn.findByText('Keep your anime list in step.')).toBeTruthy();
+    expect(fetchPluginSurface).toHaveBeenCalledTimes(2);
   });
 
   it('offers to try again when the page cannot be read', async () => {
