@@ -1,10 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { and, desc, eq } from 'drizzle-orm';
 import { watchProgress } from '@ValenceServer/db/Schema';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
+import type { ValenceSchema } from '@ValenceServer/db/Database';
 import type { WatchProgressService } from './WatchProgressService';
-
-const LIMIT = 60;
 
 /**
  * Where each profile has got to in each item, held in Postgres. This is the record a resume reads
@@ -13,7 +12,9 @@ const LIMIT = 60;
  * @param db - The database to read and write.
  * @returns The watch progress service.
  */
-const createDatabaseWatchProgressService = (db: ValenceDatabase): WatchProgressService => ({
+const createDatabaseWatchProgressService = (
+  db: PgDatabase<PgQueryResultHKT, ValenceSchema>,
+): WatchProgressService => ({
   read: async (profileId, mediaId) => {
     const [row] = await db
       .select()
@@ -37,8 +38,7 @@ const createDatabaseWatchProgressService = (db: ValenceDatabase): WatchProgressS
       .select()
       .from(watchProgress)
       .where(eq(watchProgress.profileId, profileId))
-      .orderBy(desc(watchProgress.updatedAt))
-      .limit(LIMIT);
+      .orderBy(desc(watchProgress.updatedAt));
 
     return rows.map((row) => ({
       mediaId: row.mediaItemId,
