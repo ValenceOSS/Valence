@@ -1,4 +1,6 @@
+import { describeTheServer } from '@ValenceClient/about/describeTheServer';
 import type { BuildInfo } from '@ValenceClient/platform/Platform.types';
+import type { About } from '@ValenceContracts/schemas/About';
 
 /**
  * Says what this build is, and what the server it is talking to runs, in the one line somebody pastes
@@ -9,15 +11,15 @@ import type { BuildInfo } from '@ValenceClient/platform/Platform.types';
  * which commit it came from, as a phone cannot, leaves the commit out rather than guessing.
  *
  * @param info - This client's own build, where it has one.
- * @param serverCommit - The commit the server was started from, where one answered.
+ * @param server - What the server says it runs, where one answered.
  * @returns The line, or nothing where neither is known.
  */
-const describeTheBuild = (info: BuildInfo | null, serverCommit: string | null): string | null => {
+const describeTheBuild = (info: BuildInfo | null, server: About | null): string | null => {
   const parts = [
     info === null
       ? null
       : `Valence ${info.version}${info.commit === null ? '' : ` (${info.commit})`} · ${info.runsOn}`,
-    serverCommit === null ? null : `Server ${serverCommit}`,
+    describeTheServer(server),
   ].filter((part) => part !== null);
 
   return parts.length === 0 ? null : parts.join(' · ');

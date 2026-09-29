@@ -2693,6 +2693,7 @@ const app = createApp({
   settings,
   uploadSessions: createDatabaseUploadSessions(db),
   version: env.VALENCE_VERSION,
+  commit: env.VALENCE_COMMIT,
   trustedOrigins: trustedOriginsFor({
     configured: env.TRUSTED_ORIGINS,
     port: env.PORT,

@@ -146,7 +146,9 @@ jobs:
           load: ${{ !inputs.publish && inputs.platforms == 'linux/amd64' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: VALENCE_VERSION=${{ needs.source.outputs.short }}-nightly
+          build-args: |
+            VALENCE_VERSION=${{ needs.source.outputs.short }}-nightly
+            VALENCE_COMMIT=${{ needs.source.outputs.short }}
           cache-from: type=gha,scope=${{ matrix.image.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image.name }}
           provenance: false

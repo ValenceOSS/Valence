@@ -68,7 +68,7 @@ const TheWayIn = ({
 }: TheWayInProps) => {
   const asking = useQuery(sessionQueries.wayIn());
   const server = useQuery(aboutQueries.server());
-  const build = describeTheBuild(theBuildInfo(), server.data?.commit ?? null);
+  const build = describeTheBuild(theBuildInfo(), server.data ?? null);
   const colours = useTheColours();
   const watched = useTheServer();
   const kept = useHeldFiles().filter((file) => file.state === 'here');

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 const AboutSchema = z.object({
+  version: z.string().optional(),
   commit: z.string(),
 });
 

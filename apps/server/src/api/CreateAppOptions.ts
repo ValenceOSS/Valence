@@ -74,6 +74,7 @@ type CreateAppOptions = {
   auth: ValenceAuth;
   settings: SettingsStore;
   version?: string;
+  commit?: string | undefined;
   trustedOrigins?: () => Promise<readonly string[]>;
   countUsers: () => Promise<number>;
   promoteToAdmin: (email: string) => Promise<string | null>;

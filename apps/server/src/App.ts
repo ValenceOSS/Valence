@@ -52,7 +52,7 @@ const createApp = (options: CreateAppOptions) => {
   const context = createAppContext(options);
 
   serveEveryRequest(app, context);
-  serveAbout(app);
+  serveAbout(app, context);
   serveSetup(app, context);
   serveLibrary(app, context);
   serveFiles(app, context);
