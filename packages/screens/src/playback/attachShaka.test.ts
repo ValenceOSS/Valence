@@ -316,7 +316,33 @@ describe('the timestamps Shaka plays to', () => {
     });
 
     expect(player.configure).toHaveBeenCalledWith({
-      manifest: { hls: { sequenceMode: false, ignoreManifestTimestampsInSegmentsMode: true } },
+      manifest: {
+        hls: {
+          sequenceMode: false,
+          ignoreManifestTimestampsInSegmentsMode: true,
+          disableClosedCaptionsDetection: true,
+        },
+      },
+    });
+  });
+
+  it('does not go looking for captions in the picture, which would pull a resumed film away', async () => {
+    const { module, player } = engine();
+
+    await attachShaka({
+      element: element(),
+      manifestUrl: '/manifest.m3u8',
+      loadShaka: () => Promise.resolve(module),
+    });
+
+    expect(player.configure).toHaveBeenCalledWith({
+      manifest: {
+        hls: {
+          sequenceMode: false,
+          ignoreManifestTimestampsInSegmentsMode: true,
+          disableClosedCaptionsDetection: true,
+        },
+      },
     });
   });
 
