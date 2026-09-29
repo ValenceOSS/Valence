@@ -87,7 +87,11 @@ const PluginManifestSchema = z
       }
 
       for (const provider of permission.providers) {
-        for (const address of [provider.authorizeUrl, provider.tokenUrl]) {
+        for (const address of [
+          provider.authorizeUrl,
+          provider.tokenUrl,
+          ...(provider.revokeUrl === undefined ? [] : [provider.revokeUrl]),
+        ]) {
           if (!network.includes(new URL(address).hostname)) {
             context.addIssue({
               code: 'custom',

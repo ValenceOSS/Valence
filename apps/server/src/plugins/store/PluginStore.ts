@@ -56,6 +56,7 @@ type PluginStore = {
     profileId: string,
     provider: string,
   ) => Promise<ConnectionRecord | null>;
+  connectionsOf: (pluginId: string) => Promise<ConnectionRecord[]>;
   saveConnection: (connection: ConnectionRecord) => Promise<void>;
   forgetConnection: (pluginId: string, profileId: string, provider: string) => Promise<boolean>;
   rememberProfile: (pluginId: string, profileId: string) => Promise<void>;

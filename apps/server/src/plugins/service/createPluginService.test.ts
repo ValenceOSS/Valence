@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { packPlugin } from '@ValenceSDK/package/packPlugin';
 import { PluginManifestSchema } from '@ValenceSDK/manifest/PluginManifestSchema';
 import { createMemoryPluginStore } from '@ValenceServer/plugins/store/createMemoryPluginStore';
+import { sealSecret } from '@ValenceServer/plugins/sealSecret';
 import { createPluginService } from './createPluginService';
 import type { CatalogueClient } from '@ValenceServer/plugins/catalogue/createCatalogueClient';
 import { aPluginHostForTest } from '@ValenceServer/plugins/broker/aPluginHostForTest';
@@ -29,6 +30,7 @@ const MANIFEST = PluginManifestSchema.parse({
           name: 'AniList',
           authorizeUrl: 'https://anilist.co/api/v2/oauth/authorize',
           tokenUrl: 'https://anilist.co/api/v2/oauth/token',
+          revokeUrl: 'https://anilist.co/api/v2/oauth/revoke',
           scopes: [],
           clientIdSetting: 'clientId',
         },
@@ -119,7 +121,10 @@ const VIEWER: PluginViewer = {
 
 const HOME = { kind: 'page', id: 'home', subject: null } as const;
 
-const build = (announce: (change: PluginChange) => void = vi.fn()) => {
+const build = (
+  announce: (change: PluginChange) => void = vi.fn(),
+  extra: Partial<Pick<Parameters<typeof createPluginService>[0], 'store' | 'fetchFor'>> = {},
+) => {
   const catalogue: CatalogueClient = {
     read: () => Promise.resolve({ catalogue: null, problem: 'offline' }),
     fetchPackage: () => Promise.resolve({ problem: 'offline' }),
@@ -135,13 +140,17 @@ const build = (announce: (change: PluginChange) => void = vi.fn()) => {
     enqueueSchedule: vi.fn(() => Promise.resolve()),
     log: vi.fn(),
     announce,
+    ...extra,
   });
 
   return service;
 };
 
-const installed = async (announce: (change: PluginChange) => void = vi.fn()) => {
-  const service = build(announce);
+const installed = async (
+  announce: (change: PluginChange) => void = vi.fn(),
+  extra: Parameters<typeof build>[1] = {},
+) => {
+  const service = build(announce, extra);
   const preview = await service.previewUpload(PACKAGE, null, 'account-1');
 
   if ('problem' in preview) {
@@ -331,6 +340,49 @@ describe('a plugin from upload to use, through its own process', () => {
     expect(await service.listInstalled()).toEqual([]);
   });
 
+  it('says what removing it takes, and asks the provider to cancel each connected account', async () => {
+    const store = createMemoryPluginStore();
+    const fetch = vi.fn(() => Promise.resolve({ status: 200, headers: {}, text: '' }));
+    const service = await installed(vi.fn(), {
+      store,
+      fetchFor: () => ({ fetch, fetchBytes: vi.fn() }),
+    });
+
+    await service.change('counter', { settings: { clientId: 'client-1' } });
+    await store.writeValue('counter', 'count', 3, 1);
+    await store.saveConnection({
+      pluginId: 'counter',
+      profileId: 'p1',
+      provider: 'anilist',
+      accessToken: sealSecret(Buffer.alloc(32, 7), 'at1'),
+      refreshToken: null,
+      expiresAt: null,
+      account: null,
+    });
+
+    expect(await service.removal('counter')).toEqual({
+      bytesKept: 1,
+      people: 1,
+      accounts: [{ provider: 'AniList', connected: 1, isRevoked: true }],
+      themes: 0,
+      nodes: 1,
+      webhooks: 0,
+      keepsEarlierVersion: false,
+    });
+    expect(await service.uninstall('counter')).toBe(true);
+    expect(fetch).toHaveBeenCalledWith(
+      'https://anilist.co/api/v2/oauth/revoke',
+      expect.objectContaining({
+        method: 'POST',
+        body: 'token=at1&token_type_hint=access_token&client_id=client-1',
+      }),
+    );
+    expect(await store.connectionsOf('counter')).toEqual([]);
+    expect(await service.removal('counter')).toBeNull();
+
+    service.stop();
+  }, 30_000);
+
   it('tells every client when a plugin arrives, is turned off or on, changes, or goes', async () => {
     const announce = vi.fn<(change: PluginChange) => void>();
     const service = await installed(announce);
@@ -485,6 +537,7 @@ describe('a plugin from upload to use, through its own process', () => {
     expect(address.origin).toBe('https://valence.home');
     expect(address.pathname).toMatch(/^\/api\/plugins\/hooked\/hooks\/spotify\/[\w-]{32}$/u);
 
+    const forged = `${secret.slice(0, -1)}${secret.endsWith('x') ? 'y' : 'x'}`;
     const signature = createHmac('sha256', 'shared').update('{"changed":true}').digest('hex');
 
     expect(
@@ -494,7 +547,7 @@ describe('a plugin from upload to use, through its own process', () => {
       }),
     ).toBe('accepted');
     expect(
-      await service.receiveWebhook('hooked', 'spotify', `${secret.slice(0, -1)}x`, {
+      await service.receiveWebhook('hooked', 'spotify', forged, {
         headers: {},
         body: 'forged',
       }),

@@ -97,7 +97,7 @@ Some rules involve more than one field. Valence refuses a manifest that breaks a
 
 - **Each permission kind appears once.** Two `network` entries are refused; list every host in one.
 - **Code is named when it is needed.** A plugin with any pages, panels, schedules, events or permissions must name its `entry`. A plugin that only carries themes needs no code at all.
-- **Accounts reach only listed hosts.** Every `authorizeUrl` and `tokenUrl` of an [account provider](/plugins/accounts-and-oauth) must be on a host listed under `network`.
+- **Accounts reach only listed hosts.** Every `authorizeUrl`, `tokenUrl` and `revokeUrl` of an [account provider](/plugins/accounts-and-oauth) must be on a host listed under `network`.
 - **Accounts read declared settings.** A provider's `clientIdSetting` and `clientSecretSetting` must name settings the manifest declares.
 - **Ids are unique.** No two pages, panels, themes or schedules share an `id` within their own list.
 

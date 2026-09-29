@@ -29,6 +29,7 @@ import type {
   InstallPreview,
   PluginActAnswer,
   PluginContributions,
+  PluginRemoval,
   PluginTrust,
 } from '@ValenceContracts/schemas/Plugin';
 import type { Surface } from '@ValenceSDK/surface/SurfaceSchema';
@@ -155,14 +156,14 @@ const createPluginService = ({
     store,
     seal: (secret) => sealSecret(sealingKey, secret),
     open: (sealed) => openSecret(sealingKey, sealed),
-    exchange: async (pluginId, tokenUrl, form) => {
+    exchange: async (pluginId, address, form) => {
       const record = await store.read(pluginId);
 
       if (record === null) {
         return { status: 404, text: '' };
       }
 
-      const answered = await fetchFor(pluginId, hostsOf(record)).fetch(tokenUrl, {
+      const answered = await fetchFor(pluginId, hostsOf(record)).fetch(address, {
         method: 'POST',
         headers: {
           'content-type': 'application/x-www-form-urlencoded',
@@ -799,8 +800,61 @@ const createPluginService = ({
 
       return summarise(saved, null);
     },
+    removal: async (id: string): Promise<PluginRemoval | null> => {
+      const record = await store.read(id);
+
+      if (record === null) {
+        return null;
+      }
+
+      const connections = await store.connectionsOf(id);
+      const accounts = record.manifest.permissions.flatMap((permission) =>
+        permission.kind === 'accounts' ? permission.providers : [],
+      );
+
+      return {
+        bytesKept: await store.bytesKept(id),
+        people: (await store.profilesOf(id)).length,
+        accounts: accounts
+          .map((provider) => ({
+            provider: provider.name,
+            connected: connections.filter((connection) => connection.provider === provider.id)
+              .length,
+            isRevoked: provider.revokeUrl !== undefined,
+          }))
+          .filter((account) => account.connected > 0),
+        themes: record.manifest.contributes.themes.length,
+        nodes: record.manifest.contributes.nodes.length,
+        webhooks: record.manifest.contributes.webhooks.length,
+        keepsEarlierVersion: record.previousVersion !== null,
+      };
+    },
     uninstall: async (id: string): Promise<boolean> => {
       runtime.stop(id);
+
+      const record = await store.read(id);
+      const revocations =
+        record === null
+          ? []
+          : await Promise.all(
+              (await store.connectionsOf(id)).map(async (connection) => {
+                const found = credentialsFor(record, connection.provider);
+
+                return found === null ||
+                  found.credentials === null ||
+                  found.provider.revokeUrl === undefined
+                  ? null
+                  : oauth.revoke(connection, found.provider, found.credentials);
+              }),
+            );
+      const asked = revocations.filter((revoked) => revoked !== null);
+
+      if (asked.length > 0) {
+        log(
+          'info',
+          `plugin ${id}: ${asked.filter(Boolean).length} of ${asked.length} connected accounts revoked`,
+        );
+      }
 
       const removed = await store.remove(id);
 

@@ -2,6 +2,7 @@ import { queryOptions } from '@tanstack/react-query';
 import { fetchInstalledPlugins } from '@ValenceClient/plugins/fetchInstalledPlugins';
 import { fetchPluginCatalogue } from '@ValenceClient/plugins/fetchPluginCatalogue';
 import { fetchPluginContributions } from '@ValenceClient/plugins/fetchPluginContributions';
+import { fetchPluginRemoval } from '@ValenceClient/plugins/fetchPluginRemoval';
 import { fetchPluginSurface } from '@ValenceClient/plugins/fetchPluginSurface';
 import type { PluginPlace } from '@ValenceClient/plugins/PluginPlace';
 
@@ -53,6 +54,19 @@ const surface = (place: PluginPlace) =>
     retry: false,
   });
 
-const pluginQueries = { installed, catalogue, contributions, surface, key: PLUGINS };
+/**
+ * What removing one plugin would take with it, read fresh each time somebody asks to remove it.
+ *
+ * @param id - The plugin.
+ * @returns The query.
+ */
+const removal = (id: string) =>
+  queryOptions({
+    queryKey: [...PLUGINS, 'removal', id],
+    queryFn: () => fetchPluginRemoval(id),
+    staleTime: 0,
+  });
+
+const pluginQueries = { installed, catalogue, contributions, surface, removal, key: PLUGINS };
 
 export { pluginQueries };

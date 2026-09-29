@@ -21,6 +21,7 @@ import {
   receiveWebhookRoute,
   renderPageRoute,
   renderPanelRoute,
+  pluginRemovalRoute,
   rollbackPluginRoute,
   uninstallPluginRoute,
 } from '@ValenceServer/routes/PluginRoute';
@@ -297,6 +298,19 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
     return 'refused' in rolled
       ? context.json({ error: rolled.refused }, 422)
       : context.json(rolled, 200);
+  });
+
+  app.openapi(pluginRemovalRoute, async (context) => {
+    const allowed = await administrator(context.req.raw.headers);
+
+    if (allowed !== 'allowed') {
+      return context.json(allowed === 401 ? NOT_SIGNED_IN : NOT_ALLOWED, allowed);
+    }
+
+    const removal =
+      plugins === undefined ? null : await plugins.removal(context.req.valid('param').id);
+
+    return removal === null ? context.json(NO_SUCH, 404) : context.json(removal, 200);
   });
 
   app.openapi(uninstallPluginRoute, async (context) => {

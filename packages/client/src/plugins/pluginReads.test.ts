@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchInstalledPlugins } from './fetchInstalledPlugins';
 import { fetchPluginCatalogue } from './fetchPluginCatalogue';
 import { fetchPluginContributions } from './fetchPluginContributions';
+import { fetchPluginRemoval } from './fetchPluginRemoval';
 import { fetchPluginSurface } from './fetchPluginSurface';
 import { aPlugin } from '@ValenceClient/testing/aPlugin';
 
@@ -54,6 +55,23 @@ describe('plugin reads', () => {
       nodes: [],
     });
     expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/plugins/contributions');
+  });
+
+  it('reads what removing a plugin would take with it', async () => {
+    const removal = {
+      bytesKept: 10,
+      people: 1,
+      accounts: [],
+      themes: 0,
+      nodes: 0,
+      webhooks: 0,
+      keepsEarlierVersion: false,
+    };
+
+    answer(removal);
+
+    await expect(fetchPluginRemoval('music-import')).resolves.toEqual(removal);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/plugins/music-import/removal');
   });
 
   it('reads a page, and refuses one that breaks the building blocks', async () => {

@@ -115,6 +115,22 @@ const PluginContributionsSchema = z.object({
   ),
 });
 
+const PluginRemovalSchema = z.object({
+  bytesKept: z.number().int().nonnegative(),
+  people: z.number().int().nonnegative(),
+  accounts: z.array(
+    z.object({
+      provider: z.string(),
+      connected: z.number().int().positive(),
+      isRevoked: z.boolean(),
+    }),
+  ),
+  themes: z.number().int().nonnegative(),
+  nodes: z.number().int().nonnegative(),
+  webhooks: z.number().int().nonnegative(),
+  keepsEarlierVersion: z.boolean(),
+});
+
 const PluginChangeSchema = z.object({
   pluginId: z.string(),
   change: z.enum(['installed', 'updated', 'enabled', 'disabled', 'settings', 'removed']),
@@ -134,6 +150,8 @@ type InstalledPlugin = z.infer<typeof InstalledPluginSchema>;
 type CatalogueListing = z.infer<typeof CatalogueListingSchema>;
 type InstallPreview = z.infer<typeof InstallPreviewSchema>;
 type PluginContributions = z.infer<typeof PluginContributionsSchema>;
+
+type PluginRemoval = z.infer<typeof PluginRemovalSchema>;
 type PluginActAnswer = z.infer<typeof PluginActAnswerSchema>;
 
 export type {
@@ -144,6 +162,7 @@ export type {
   InstalledPlugins,
   InstallPreview,
   PluginContributions,
+  PluginRemoval,
   PluginSetting,
   PluginSummary,
   PluginTrust,
@@ -157,6 +176,7 @@ export {
   InstalledPluginsSchema,
   InstallPreviewSchema,
   PluginContributionsSchema,
+  PluginRemovalSchema,
   PluginSettingSchema,
   PluginSummarySchema,
   PluginTrustSchema,

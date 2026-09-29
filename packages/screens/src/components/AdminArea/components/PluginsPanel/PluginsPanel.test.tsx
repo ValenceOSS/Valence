@@ -25,6 +25,9 @@ vi.mock('@ValenceClient/plugins/rollbackPlugin', () => ({ rollbackPlugin }));
 vi.mock('@ValenceUI/notify', () => ({ notify: told }));
 
 const fetchPluginSurface = vi.hoisted(() => vi.fn());
+const fetchPluginRemoval = vi.hoisted(() => vi.fn());
+
+vi.mock('@ValenceClient/plugins/fetchPluginRemoval', () => ({ fetchPluginRemoval }));
 
 vi.mock('@ValenceClient/plugins/fetchPluginSurface', () => ({ fetchPluginSurface }));
 
@@ -52,6 +55,15 @@ beforeEach(() => {
   changePlugin.mockReset().mockResolvedValue(undefined);
   removePlugin.mockReset().mockResolvedValue(undefined);
   rollbackPlugin.mockReset().mockResolvedValue(aPlugin({ version: '0.9.0' }));
+  fetchPluginRemoval.mockReset().mockResolvedValue({
+    bytesKept: 0,
+    people: 0,
+    accounts: [],
+    themes: 0,
+    nodes: 0,
+    webhooks: 0,
+    keepsEarlierVersion: false,
+  });
   told.worked.mockReset();
   told.failed.mockReset();
 });
@@ -115,6 +127,38 @@ describe('PluginsPanel', () => {
 
     await waitFor(() => {
       expect(removePlugin).toHaveBeenCalledWith('anilist');
+    });
+  });
+
+  it('offers to turn a plugin off rather than remove it, keeping what it had', async () => {
+    fetchPluginRemoval.mockResolvedValue({
+      bytesKept: 0,
+      people: 2,
+      accounts: [{ provider: 'AniList', connected: 2, isRevoked: false }],
+      themes: 0,
+      nodes: 0,
+      webhooks: 0,
+      keepsEarlierVersion: false,
+    });
+
+    renderInAnAddress(<PluginsPanel />);
+
+    await userEvent.click(await screen.findByRole('button', { name: /Remove/u }));
+
+    const dialog = screen.getByRole('dialog');
+
+    expect(
+      await within(dialog).findByText('2 accounts connected to AniList are forgotten.'),
+    ).toBeInTheDocument();
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Turn it off' }));
+
+    await waitFor(() => {
+      expect(changePlugin).toHaveBeenCalledWith('anilist', { isEnabled: false });
+    });
+    expect(removePlugin).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
   });
 

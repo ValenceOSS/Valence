@@ -14,7 +14,7 @@ import {
 } from '@ValenceServer/db/Schema';
 import { likeLiterally } from '@ValenceServer/db/likeLiterally';
 import type { ValenceDatabase } from '@ValenceServer/db/Database';
-import type { InstalledRecord, PluginStore } from './PluginStore';
+import type { ConnectionRecord, InstalledRecord, PluginStore } from './PluginStore';
 
 const SettingsSchema = z.record(z.string(), z.union([z.string(), z.boolean()]));
 
@@ -61,6 +61,16 @@ const createDatabasePluginStore = (db: ValenceDatabase): PluginStore => {
       },
     ];
   };
+
+  const connectionFrom = (row: typeof pluginConnection.$inferSelect): ConnectionRecord => ({
+    pluginId: row.pluginId,
+    profileId: row.profileId,
+    provider: row.provider,
+    accessToken: row.accessToken,
+    refreshToken: row.refreshToken,
+    expiresAt: row.expiresAt?.toISOString() ?? null,
+    account: row.account,
+  });
 
   const previousVersions = async (): Promise<Map<string, string>> =>
     new Map(
@@ -296,18 +306,16 @@ const createDatabasePluginStore = (db: ValenceDatabase): PluginStore => {
           ),
         );
 
-      return row === undefined
-        ? null
-        : {
-            pluginId: row.pluginId,
-            profileId: row.profileId,
-            provider: row.provider,
-            accessToken: row.accessToken,
-            refreshToken: row.refreshToken,
-            expiresAt: row.expiresAt?.toISOString() ?? null,
-            account: row.account,
-          };
+      return row === undefined ? null : connectionFrom(row);
     },
+    connectionsOf: async (pluginId) =>
+      (
+        await db
+          .select()
+          .from(pluginConnection)
+          .where(eq(pluginConnection.pluginId, pluginId))
+          .orderBy(asc(pluginConnection.profileId), asc(pluginConnection.provider))
+      ).map(connectionFrom),
     saveConnection: async (connection) => {
       const row = {
         ...connection,

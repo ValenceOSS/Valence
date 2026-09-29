@@ -98,6 +98,34 @@ describe('PluginManifestSchema', () => {
     expect(problems).toContain('anilist.co is used by AniList but not listed under network');
   });
 
+  it('insists that a provider’s revocation address is listed under network too', () => {
+    const problems = problemsOf(
+      aManifest({
+        permissions: [
+          { kind: 'network', hosts: ['anilist.co'] },
+          { kind: 'viewing', access: 'write' },
+          {
+            kind: 'accounts',
+            providers: [
+              {
+                id: 'anilist',
+                name: 'AniList',
+                authorizeUrl: 'https://anilist.co/api/v2/oauth/authorize',
+                tokenUrl: 'https://anilist.co/api/v2/oauth/token',
+                revokeUrl: 'https://auth.anilist.co/revoke',
+                scopes: [],
+                clientIdSetting: 'clientId',
+              },
+            ],
+          },
+        ],
+        settings: [{ id: 'clientId', label: 'Client id', kind: 'text' }],
+      }),
+    );
+
+    expect(problems).toEqual(['auth.anilist.co is used by AniList but not listed under network']);
+  });
+
   it('insists that an account provider’s settings are declared', () => {
     const problems = problemsOf(
       aManifest({

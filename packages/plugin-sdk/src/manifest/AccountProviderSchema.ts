@@ -6,6 +6,7 @@ const AccountProviderSchema = z.object({
   name: z.string().min(1).max(60),
   authorizeUrl: HttpsUrlSchema,
   tokenUrl: HttpsUrlSchema,
+  revokeUrl: HttpsUrlSchema.optional(),
   scopes: z.array(z.string().min(1).max(100)).max(20),
   clientIdSetting: z.string().regex(/^[a-z][a-zA-Z0-9]{0,39}$/),
   clientSecretSetting: z

@@ -218,4 +218,42 @@ describe('connecting an outside account to a plugin', () => {
       await oauth.tokensFor('anime', 'p1', PROVIDER, { clientId: 'c', clientSecret: null }),
     ).toBeNull();
   });
+
+  it('asks a provider with a revocation address to cancel the refresh token, or else the access token', async () => {
+    const { oauth, exchange } = build([
+      { status: 200, text: '' },
+      { status: 503, text: '' },
+    ]);
+    const revoking = { ...PROVIDER, revokeUrl: 'https://anilist.co/api/v2/oauth/revoke' };
+    const connection = {
+      pluginId: 'anime',
+      profileId: 'p1',
+      provider: 'anilist',
+      accessToken: 'sealed:at1',
+      refreshToken: 'sealed:rt1',
+      expiresAt: null,
+      account: null,
+    };
+
+    expect(await oauth.revoke(connection, revoking, CREDENTIALS)).toBe(true);
+    expect(exchange).toHaveBeenLastCalledWith('anime', revoking.revokeUrl, {
+      token: 'rt1',
+      token_type_hint: 'refresh_token',
+      client_id: 'client-1',
+      client_secret: 'shh',
+    });
+    expect(
+      await oauth.revoke({ ...connection, refreshToken: null }, revoking, {
+        clientId: 'client-1',
+        clientSecret: null,
+      }),
+    ).toBe(false);
+    expect(exchange).toHaveBeenLastCalledWith('anime', revoking.revokeUrl, {
+      token: 'at1',
+      token_type_hint: 'access_token',
+      client_id: 'client-1',
+    });
+    expect(await oauth.revoke(connection, PROVIDER, CREDENTIALS)).toBe(false);
+    expect(exchange).toHaveBeenCalledTimes(2);
+  });
 });

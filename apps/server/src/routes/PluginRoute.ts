@@ -6,6 +6,7 @@ import {
   InstallPreviewSchema,
   PluginActAnswerSchema,
   PluginContributionsSchema,
+  PluginRemovalSchema,
 } from '@ValenceContracts/schemas/Plugin';
 import { SurfaceSchema } from '@ValenceSDK/surface/SurfaceSchema';
 import { SurfaceActRequestSchema } from '@ValenceSDK/surface/SurfaceActRequestSchema';
@@ -229,11 +230,28 @@ const rollbackPluginRoute = createRoute({
   },
 });
 
+const pluginRemovalRoute = createRoute({
+  method: 'get',
+  path: '/api/plugins/{id}/removal',
+  tags: ['Plugins'],
+  summary: 'What removing a plugin would take with it, to show before anyone confirms',
+  request: { params: z.object({ id: PluginId }) },
+  responses: {
+    200: {
+      description: 'What goes with it',
+      content: { 'application/json': { schema: PluginRemovalSchema.openapi('PluginRemoval') } },
+    },
+    ...refusals,
+    ...notFound,
+  },
+});
+
 const uninstallPluginRoute = createRoute({
   method: 'delete',
   path: '/api/plugins/{id}',
   tags: ['Plugins'],
-  summary: 'Uninstall a plugin, forgetting what it kept and every account connected to it',
+  summary:
+    'Uninstall a plugin, forgetting what it kept and every account connected to it, and asking providers that can to revoke those accounts’ tokens',
   request: { params: z.object({ id: PluginId }) },
   responses: { 204: { description: 'Uninstalled' }, ...refusals, ...notFound },
 });
@@ -416,6 +434,7 @@ export {
   listPluginsRoute,
   pluginAssetRoute,
   pluginImageRoute,
+  pluginRemovalRoute,
   previewCatalogueRoute,
   previewUploadRoute,
   readCatalogueRoute,

@@ -156,6 +156,10 @@ const createMemoryPluginStore = (now: () => Date = () => new Date()): PluginStor
       ),
     readConnection: (pluginId, profileId, provider) =>
       Promise.resolve(connections.get(connectionKey(pluginId, profileId, provider)) ?? null),
+    connectionsOf: (pluginId) =>
+      Promise.resolve(
+        [...connections.values()].filter((connection) => connection.pluginId === pluginId),
+      ),
     saveConnection: (connection) => {
       connections.set(
         connectionKey(connection.pluginId, connection.profileId, connection.provider),

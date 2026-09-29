@@ -22,6 +22,7 @@ import {
   InstallPreviewSchema,
   PluginActAnswerSchema,
   PluginContributionsSchema,
+  PluginRemovalSchema,
 } from '@ValenceContracts/schemas/Plugin';
 import type { Permission } from '@ValenceContracts/schemas/Permission';
 
@@ -299,8 +300,18 @@ describe('the plugin routes', () => {
 
     await install();
 
+    const removal = await request('/api/plugins/route-test/removal');
+
+    expect(removal.status).toBe(200);
+    expect(PluginRemovalSchema.parse(await removal.json())).toMatchObject({
+      bytesKept: 0,
+      people: 0,
+      accounts: [],
+    });
+
     expect((await request('/api/plugins/route-test', { method: 'DELETE' })).status).toBe(204);
     expect((await request('/api/plugins/route-test', { method: 'DELETE' })).status).toBe(404);
+    expect((await request('/api/plugins/route-test/removal')).status).toBe(404);
   });
 
   it('documents itself in the specification, a surface’s blocks nesting by reference', async () => {

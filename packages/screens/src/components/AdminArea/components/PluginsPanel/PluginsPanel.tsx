@@ -20,6 +20,7 @@ import { InstalledPluginCard } from '@ValenceScreens/components/AdminArea/compon
 import { rollbackPlugin } from '@ValenceClient/plugins/rollbackPlugin';
 import { usePluginWithdrawn } from '@ValenceClient/plugins/usePluginWithdrawn';
 import { PluginPageDialog } from '@ValenceScreens/components/AdminArea/components/PluginsPanel/components/PluginPageDialog/PluginPageDialog';
+import { RemovePluginDialog } from '@ValenceScreens/components/AdminArea/components/PluginsPanel/components/RemovePluginDialog/RemovePluginDialog';
 import { PluginSettingsDialog } from '@ValenceScreens/components/AdminArea/components/PluginsPanel/components/PluginSettingsDialog/PluginSettingsDialog';
 import type { InstallPreview, InstalledPlugin } from '@ValenceContracts/schemas/Plugin';
 
@@ -49,6 +50,26 @@ const PluginsPanel = () => {
 
   const reread = async () => {
     await cache.invalidateQueries({ queryKey: pluginQueries.key });
+  };
+
+  const toggle = (plugin: InstalledPlugin, onDone?: () => void) => {
+    setBusy(plugin.id);
+
+    void changePlugin(plugin.id, { isEnabled: !plugin.isEnabled })
+      .then(() => {
+        tellOutcome(
+          plugin.isEnabled ? `Turned ${plugin.name} off.` : `Turned ${plugin.name} on.`,
+          null,
+        );
+      })
+      .catch((problem: Error) => {
+        tellOutcome('', problem.message);
+      })
+      .finally(() => {
+        setBusy(null);
+        onDone?.();
+        void reread();
+      });
   };
 
   const look = (pluginId: string) => {
@@ -129,24 +150,7 @@ const PluginsPanel = () => {
                 plugin={plugin}
                 isBusy={busy === plugin.id || fetching === plugin.id}
                 onToggle={() => {
-                  setBusy(plugin.id);
-
-                  void changePlugin(plugin.id, { isEnabled: !plugin.isEnabled })
-                    .then(() => {
-                      tellOutcome(
-                        plugin.isEnabled
-                          ? `Turned ${plugin.name} off.`
-                          : `Turned ${plugin.name} on.`,
-                        null,
-                      );
-                    })
-                    .catch((problem: Error) => {
-                      tellOutcome('', problem.message);
-                    })
-                    .finally(() => {
-                      setBusy(null);
-                      void reread();
-                    });
+                  toggle(plugin);
                 }}
                 onSettings={() => {
                   setSettingsOf(plugin);
@@ -265,15 +269,18 @@ const PluginsPanel = () => {
         }}
       />
 
-      <ConfirmDialog
-        title={removing === null ? 'Remove this plugin?' : `Remove ${removing.name}?`}
-        detail="It stops at once, and everything it kept and every account connected to it is forgotten. Themes it added go back to Valence’s own colours."
-        confirmLabel="Remove it"
-        isDestructive
+      <RemovePluginDialog
+        plugin={removing}
         isBusy={removing !== null && busy === removing.id}
-        isOpen={removing !== null}
         onClose={() => {
           setRemoving(null);
+        }}
+        onTurnOff={() => {
+          if (removing !== null) {
+            toggle(removing, () => {
+              setRemoving(null);
+            });
+          }
         }}
         onConfirm={() => {
           const plugin = removing;

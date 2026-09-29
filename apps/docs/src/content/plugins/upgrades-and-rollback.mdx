@@ -50,7 +50,7 @@ Before every upgrade, Valence keeps the version being replaced and a copy of wha
 
 ## Removing a plugin
 
-Removing a plugin deletes its code, its settings, everything it kept and every account connected to it, and the grants of its permission nodes. Turning it off instead keeps all of that and stops it running. Every Valence client is told straight away, and anybody on one of its pages is taken somewhere else.
+Removing a plugin deletes its code, its settings, everything it kept and every account connected to it, the grants of its permission nodes, its webhook addresses and the earlier version kept for rolling back. Before anything goes, the Remove dialog lists what this plugin in particular would take with it: how much it kept, how many accounts are connected to which provider, and which providers will be asked to cancel access (those with a `revokeUrl`). Turning it off instead, which the same dialog offers, keeps all of that and stops it running. Every Valence client is told straight away, and anybody on one of its pages is taken somewhere else.
 
 ## Backups
 

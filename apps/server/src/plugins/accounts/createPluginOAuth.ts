@@ -2,11 +2,11 @@ import { createHash, randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import type { AccountProvider } from '@ValenceSDK/manifest/AccountProviderSchema';
 import type { AccountTokens } from '@ValenceServer/plugins/broker/createPluginBroker';
-import type { PluginStore } from '@ValenceServer/plugins/store/PluginStore';
+import type { ConnectionRecord, PluginStore } from '@ValenceServer/plugins/store/PluginStore';
 
 type Exchange = (
   pluginId: string,
-  tokenUrl: string,
+  address: string,
   form: Record<string, string>,
 ) => Promise<{ status: number; text: string }>;
 
@@ -52,7 +52,8 @@ const EARLY_REFRESH_MILLISECONDS = 60 * 1000;
  * ever seeing how. Valence sends them to the provider with a one-off state and a PKCE challenge,
  * takes the code back itself, trades it for tokens from the provider's own token address, and seals
  * the tokens before they are kept. A plugin later asks for the access token of one person it may act
- * for, and gets a fresh one where the old one had expired.
+ * for, and gets a fresh one where the old one had expired. When the plugin goes, Valence asks each
+ * provider that has a revocation address to cancel what it gave out.
  *
  * The state is bound to a secret kept in the browser that started the connection, so a link to the
  * callback carried to somebody else's browser connects nothing.
@@ -239,6 +240,31 @@ const createPluginOAuth = ({
       return accessToken === null
         ? null
         : { accessToken, expiresAt: kept.expiresAt, account: kept.account };
+    },
+    revoke: async (
+      connection: ConnectionRecord,
+      provider: AccountProvider,
+      credentials: Credentials,
+    ): Promise<boolean> => {
+      const refresh = connection.refreshToken === null ? null : open(connection.refreshToken);
+      const token = refresh ?? open(connection.accessToken);
+
+      if (provider.revokeUrl === undefined || token === null) {
+        return false;
+      }
+
+      try {
+        const answered = await exchange(connection.pluginId, provider.revokeUrl, {
+          token,
+          token_type_hint: refresh === null ? 'access_token' : 'refresh_token',
+          client_id: credentials.clientId,
+          ...(credentials.clientSecret === null ? {} : { client_secret: credentials.clientSecret }),
+        });
+
+        return answered.status >= 200 && answered.status < 300;
+      } catch {
+        return false;
+      }
     },
   };
 };

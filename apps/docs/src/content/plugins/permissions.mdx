@@ -83,16 +83,17 @@ Opens `valence.storage`, a private store of JSON values by key. Only this plugin
 }
 ```
 
-| Field                 | Rules                                                                                    |
-| --------------------- | ---------------------------------------------------------------------------------------- |
-| `providers`           | 1 to 4 providers                                                                         |
-| `id`                  | 2 to 32 characters, lower case, starting with a letter, then letters, digits and hyphens |
-| `name`                | 1 to 60 characters, shown on the connect button                                          |
-| `authorizeUrl`        | The provider's OAuth authorisation address, `https`, on a host listed under `network`    |
-| `tokenUrl`            | The provider's token address, `https`, on a host listed under `network`                  |
-| `scopes`              | Up to 20 scopes, each 1 to 100 characters                                                |
-| `clientIdSetting`     | The id of the [setting](/plugins/manifest#settings) holding the OAuth client ID          |
-| `clientSecretSetting` | Optional. The id of the setting holding the client secret, for providers that need one   |
+| Field                 | Rules                                                                                                                                                                                                                                  |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `providers`           | 1 to 4 providers                                                                                                                                                                                                                       |
+| `id`                  | 2 to 32 characters, lower case, starting with a letter, then letters, digits and hyphens                                                                                                                                               |
+| `name`                | 1 to 60 characters, shown on the connect button                                                                                                                                                                                        |
+| `authorizeUrl`        | The provider's OAuth authorisation address, `https`, on a host listed under `network`                                                                                                                                                  |
+| `tokenUrl`            | The provider's token address, `https`, on a host listed under `network`                                                                                                                                                                |
+| `revokeUrl`           | Optional. The provider's [RFC 7009](https://datatracker.ietf.org/doc/html/rfc7009) revocation address, `https`, on a host listed under `network`. Valence asks it to cancel each connected account's tokens when the plugin is removed |
+| `scopes`              | Up to 20 scopes, each 1 to 100 characters                                                                                                                                                                                              |
+| `clientIdSetting`     | The id of the [setting](/plugins/manifest#settings) holding the OAuth client ID                                                                                                                                                        |
+| `clientSecretSetting` | Optional. The id of the setting holding the client secret, for providers that need one                                                                                                                                                 |
 
 Opens `valence.accounts.connection` and `valence.accounts.disconnect`. Valence runs the whole OAuth flow and keeps the tokens encrypted; your plugin only ever sees a current access token. See [accounts and OAuth](/plugins/accounts-and-oauth).
 
