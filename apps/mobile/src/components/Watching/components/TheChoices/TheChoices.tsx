@@ -6,6 +6,7 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
 import type { TheChoicesProps } from './TheChoices.types';
+import { say } from '@ValenceI18n/say';
 
 const OVER_THE_PICTURE = '#ffffff';
 
@@ -68,7 +69,11 @@ const TheChoicesPanel = ({ sets, onClose }: TheChoicesProps) => {
 
   return (
     <View style={styles.behind}>
-      <Button tone="bare" label="Close the settings" onPress={onClose}>
+      <Button
+        tone="bare"
+        label={say('phone.watching.theChoices.closeTheSettings')}
+        onPress={onClose}
+      >
         <View style={styles.behind} />
       </Button>
 
@@ -77,9 +82,13 @@ const TheChoicesPanel = ({ sets, onClose }: TheChoicesProps) => {
           contentContainerStyle={[styles.inside, { paddingLeft: EDGE, paddingTop: room.top + 18 }]}
         >
           <View style={styles.top}>
-            <Text style={styles.topWord}>Settings</Text>
+            <Text style={styles.topWord}>{say('common.settings')}</Text>
 
-            <Button tone="bare" label="Close the settings" onPress={onClose}>
+            <Button
+              tone="bare"
+              label={say('phone.watching.theChoices.closeTheSettings')}
+              onPress={onClose}
+            >
               <Icon of={X} size={22} colour={OVER_THE_PICTURE} />
             </Button>
           </View>

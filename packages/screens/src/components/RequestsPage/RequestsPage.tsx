@@ -15,6 +15,7 @@ import { DiscoverShelves } from './components/DiscoverShelves/DiscoverShelves';
 import { BooksDiscover } from './components/BooksDiscover/BooksDiscover';
 import { MusicDiscover } from './components/MusicDiscover/MusicDiscover';
 import { RequestsList } from './components/RequestsList/RequestsList';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The Requests page: somewhere to find things that are not in the library yet and ask for them, in
@@ -45,7 +46,7 @@ const RequestsPage = () => {
       exit="gone"
       className={cn(RAIL.lane, 'flex flex-col gap-6 pt-6 pb-16')}
     >
-      <h1 className="sr-only">Requests</h1>
+      <h1 className="sr-only">{say('common.requests')}</h1>
 
       <AnimatePresence mode="wait">
         <motion.div

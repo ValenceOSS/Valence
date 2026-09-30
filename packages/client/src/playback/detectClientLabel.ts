@@ -1,19 +1,21 @@
+import { say } from '@ValenceI18n/say';
+
 type Match = { name: string; pattern: RegExp };
 
 const BROWSERS: Match[] = [
-  { name: 'Edge', pattern: /Edg\// },
-  { name: 'Opera', pattern: /OPR\// },
-  { name: 'Chromium', pattern: /Chrome\// },
-  { name: 'Firefox', pattern: /Firefox\// },
-  { name: 'Safari', pattern: /Safari\// },
+  { name: say('common.edge'), pattern: /Edg\// },
+  { name: say('common.opera'), pattern: /OPR\// },
+  { name: say('common.chromium'), pattern: /Chrome\// },
+  { name: say('common.firefox'), pattern: /Firefox\// },
+  { name: say('client.playback.detectClientLabel.safari'), pattern: /Safari\// },
 ];
 
 const OPERATING_SYSTEMS: Match[] = [
   { name: 'iOS', pattern: /iPhone|iPad|iPod/ },
-  { name: 'Android', pattern: /Android/ },
+  { name: say('client.playback.detectClientLabel.android'), pattern: /Android/ },
   { name: 'macOS', pattern: /Mac OS X/ },
-  { name: 'Windows', pattern: /Windows/ },
-  { name: 'Linux', pattern: /Linux/ },
+  { name: say('common.windows'), pattern: /Windows/ },
+  { name: say('common.linux'), pattern: /Linux/ },
 ];
 
 /**
@@ -26,10 +28,12 @@ const OPERATING_SYSTEMS: Match[] = [
  */
 const detectClientLabel = (userAgent: string): string => {
   const browser =
-    BROWSERS.find((candidate) => candidate.pattern.test(userAgent))?.name ?? 'Browser';
+    BROWSERS.find((candidate) => candidate.pattern.test(userAgent))?.name ?? say('common.browser');
   const os = OPERATING_SYSTEMS.find((candidate) => candidate.pattern.test(userAgent))?.name ?? null;
 
-  return os === null ? browser : `${browser} on ${os}`;
+  return os === null
+    ? browser
+    : say('client.playback.detectClientLabel.browserOnOs', { browser, os });
 };
 
 export { detectClientLabel };

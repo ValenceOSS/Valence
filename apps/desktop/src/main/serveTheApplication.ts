@@ -5,6 +5,7 @@ import { theServerAddress } from '@ValenceDesktop/main/theServerAddress';
 import { aHeldFile } from '@ValenceDesktop/main/aHeldFile';
 import { stitchTheRest } from '@ValenceDesktop/main/stitchTheRest';
 import type { ServerReach } from '@ValenceDesktop/main/theServerReach';
+import { say } from '@ValenceI18n/say';
 
 const SCHEME = 'valence';
 
@@ -340,13 +341,16 @@ const serveTheApplication = (reach: ServerReach, heldFolder: string): void => {
           headers: worthCarrying(request.headers),
         });
       } catch {
-        return said(502, `${asked.host} could not be reached.`);
+        return said(
+          502,
+          say('desktop.main.theApplication.hostCouldNotBeReached', { host: asked.host }),
+        );
       }
     }
 
     if (asked.pathname.startsWith('/api/')) {
       if (server === '') {
-        return said(503, 'No Valence has been chosen yet.');
+        return said(503, say('common.noValenceHasBeenChosenYet'));
       }
 
       const onward = new URL(asked.pathname + asked.search, server);
@@ -397,12 +401,12 @@ const serveTheApplication = (reach: ServerReach, heldFolder: string): void => {
         clearTimeout(slow);
 
         if (upstream.signal.aborted) {
-          return said(499, 'The page stopped waiting.');
+          return said(499, say('desktop.main.theApplication.thePageStoppedWaiting'));
         }
 
         reach.noteMissed();
 
-        return said(503, `Valence could not be reached at ${server}.`);
+        return said(503, say('desktop.main.theApplication.valenceCouldNotBeReachedAt', { server }));
       }
     }
 
@@ -420,7 +424,10 @@ const serveTheApplication = (reach: ServerReach, heldFolder: string): void => {
           }),
         );
       } catch {
-        return said(502, `This client's own pages could not be read from ${served}.`);
+        return said(
+          502,
+          say('desktop.main.theApplication.thisClientsOwnPagesCouldNot', { served }),
+        );
       }
     }
 

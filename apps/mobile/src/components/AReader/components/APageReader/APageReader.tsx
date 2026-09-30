@@ -25,6 +25,7 @@ import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import type { ReaderPreferences } from '@ValenceClient/books/readerPreferences';
 import type { ARailTuning } from '@ValenceMobile/components/AReader/components/AReaderRail/ARailTuning';
 import type { APageReaderProps } from './APageReader.types';
+import { say } from '@ValenceI18n/say';
 
 const PAPER = '#000000';
 
@@ -188,9 +189,9 @@ const APageReader = ({
   if (chapter === undefined || count === 0) {
     return (
       <View style={[styles.whole, styles.end, { backgroundColor: PAPER }]}>
-        <Words colour={INK}>This chapter has no pages to show.</Words>
+        <Words colour={INK}>{say('phone.aReader.aPageReader.thisChapterHasNoPagesTo')}</Words>
         <Button tone="bright" onPress={onBack}>
-          Back
+          {say('common.back')}
         </Button>
       </View>
     );
@@ -391,7 +392,7 @@ const APageReader = ({
         <View style={styles.foot}>
           {count > 1 ? (
             <ASystemSlider
-              label="Go to a page"
+              label={say('phone.aReader.aPageReader.goToAPage')}
               value={page}
               furthest={count - 1}
               tint={INK}
@@ -403,11 +404,14 @@ const APageReader = ({
             />
           ) : null}
           <Words size="small" isCentred colour={withAlpha(INK, 0.8)}>
-            {`Page ${((scrubbing ?? page) + 1).toString()} of ${count.toString()}`}
+            {say('phone.aReader.aPageReader.pageValueOfCount', {
+              value: ((scrubbing ?? page) + 1).toString(),
+              count: count.toString(),
+            })}
           </Words>
           {isOnTheLast && next !== undefined ? (
             <Button tone="bright" onPress={readOn}>
-              {`Read on: ${next.title}`}
+              {say('common.readOnTitle', { title: next.title })}
             </Button>
           ) : null}
         </View>

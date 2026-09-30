@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+
 const OUR_BUILDS = ['-Valence', '-Flux'];
 
 /**
@@ -22,8 +24,8 @@ const describeFfmpeg = (banner: string | null): string | null => {
   }
 
   return OUR_BUILDS.some((name) => banner.includes(name))
-    ? `FFmpeg ${version}, the build Valence ships`
-    : `FFmpeg ${version}, not the build Valence ships`;
+    ? say('screens.adminArea.describeFfmpeg.fFmpegVersionTheBuildValenceShips', { version })
+    : say('screens.adminArea.describeFfmpeg.fFmpegVersionNotTheBuildValence', { version });
 };
 
 export { describeFfmpeg };

@@ -77,6 +77,8 @@ import type { RequestShelf } from '@ValenceClient/requests/shelfOfRequest';
 import type { StateBadge } from '@ValenceClient/status/StateBadge';
 import type { ActionMenuGroup } from '@ValenceUI/ActionMenu.types';
 import type { RequestRow } from './RequestRow.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const IN_HAND = new Set<MediaRequest['state']>([
   'searching',
@@ -87,13 +89,13 @@ const IN_HAND = new Set<MediaRequest['state']>([
 ]);
 
 const SHELF_NAMES: Record<RequestShelf | 'all', string> = {
-  approve: 'To approve',
-  progress: 'In progress',
-  coming: 'Requested',
-  wanted: 'Wanted',
-  here: 'Available',
-  refused: 'Refused',
-  all: 'All',
+  approve: say('screens.adminArea.mediaRequestsPanel.toApprove'),
+  progress: say('common.inProgress'),
+  coming: say('common.requested'),
+  wanted: say('common.wanted'),
+  here: say('common.available'),
+  refused: say('common.refused'),
+  all: say('common.all'),
 };
 
 /**
@@ -280,7 +282,9 @@ const MediaRequestsPanel = () => {
         .then(({ value, refusal }) => {
           if (value === null) {
             setSaid({
-              text: refusal?.message ?? 'They could not be decided.',
+              text:
+                refusal?.message ??
+                say('screens.adminArea.mediaRequestsPanel.theyCouldNotBeDecided'),
               isProblem: true,
             });
 
@@ -291,8 +295,16 @@ const MediaRequestsPanel = () => {
           setSaid({
             text:
               value.refused.length === 0
-                ? `${value.decided.length.toString()} ${decision === 'approve' ? 'approved' : 'refused'}.`
-                : `${value.decided.length.toString()} done, ${value.refused.length.toString()} could not be.`,
+                ? sayCount(
+                    decision === 'approve'
+                      ? 'screens.adminArea.mediaRequestsPanel.countApproved'
+                      : 'screens.adminArea.mediaRequestsPanel.countRefused',
+                    value.decided.length,
+                  )
+                : say('screens.adminArea.mediaRequestsPanel.lengthDoneLength2CouldNotBe', {
+                    length: value.decided.length.toString(),
+                    length2: value.refused.length.toString(),
+                  }),
             isProblem: value.refused.length > 0,
           });
         })
@@ -316,8 +328,8 @@ const MediaRequestsPanel = () => {
               : [
                   {
                     id: 'approve',
-                    label: 'Approve',
-                    detail: 'Look it over, and change it first if you like.',
+                    label: say('common.approve'),
+                    detail: say('screens.adminArea.mediaRequestsPanel.lookItOverAndChangeIt'),
                     icon: <Icon of={CheckFilledIcon} size={15} />,
                     onChoose: () => {
                       setApproving(request);
@@ -329,7 +341,7 @@ const MediaRequestsPanel = () => {
               : [
                   {
                     id: 'refuse',
-                    label: 'Refuse',
+                    label: say('common.refuse'),
                     icon: <Icon of={XFilledIcon} size={15} />,
                     onChoose: () => {
                       setRefusing(request);
@@ -342,8 +354,8 @@ const MediaRequestsPanel = () => {
           items: [
             {
               id: 'open',
-              label: 'Open',
-              detail: 'How it is going, what it found, and what it will not try.',
+              label: say('common.open'),
+              detail: say('screens.adminArea.mediaRequestsPanel.howItIsGoingWhatIt'),
               icon: <Icon of={ChevronRightFilledIcon} size={15} />,
               onChoose: () => {
                 setReading({ request, tab: 'going' });
@@ -351,8 +363,8 @@ const MediaRequestsPanel = () => {
             },
             {
               id: 'log',
-              label: 'See what it has done',
-              detail: 'Every search, what it found, and why.',
+              label: say('screens.adminArea.mediaRequestsPanel.seeWhatItHasDone'),
+              detail: say('screens.adminArea.mediaRequestsPanel.everySearchWhatItFoundAnd'),
               icon: <Icon of={ClockFilledIcon} size={15} />,
               onChoose: () => {
                 setReading({ request, tab: 'history' });
@@ -360,36 +372,40 @@ const MediaRequestsPanel = () => {
             },
             {
               id: 'retry',
-              label: 'Search again now',
-              detail: 'Tries again whatever failed, too.',
+              label: say('screens.adminArea.mediaRequestsPanel.searchAgainNow'),
+              detail: say('screens.adminArea.mediaRequestsPanel.triesAgainWhateverFailedToo'),
               icon: <Icon of={RotateCwFilledIcon} size={15} />,
               isDisabled: !isApproved || IN_HAND.has(request.state) || request.kind === 'book',
               onChoose: () => {
                 act(
                   request,
                   () => retryMediaRequest(request.id),
-                  `Searching again for ${request.title}.`,
+                  say('screens.adminArea.mediaRequestsPanel.searchingAgainForTitle', {
+                    title: request.title,
+                  }),
                 );
               },
             },
             {
               id: 'fulfil',
-              label: 'Mark as added',
-              detail: 'Say it has been met, such as a book you added to the library.',
+              label: say('screens.adminArea.mediaRequestsPanel.markAsAdded'),
+              detail: say('screens.adminArea.mediaRequestsPanel.sayItHasBeenMetSuch'),
               icon: <Icon of={CheckFilledIcon} size={15} />,
               isDisabled: !isApproved || request.state === 'available',
               onChoose: () => {
                 act(
                   request,
                   () => fulfilMediaRequest(request.id),
-                  `Marked ${request.title} as added.`,
+                  say('screens.adminArea.mediaRequestsPanel.markedTitleAsAdded', {
+                    title: request.title,
+                  }),
                 );
               },
             },
             {
               id: 'releases',
-              label: 'Pick a release',
-              detail: 'Search every indexer and choose what to fetch.',
+              label: say('screens.adminArea.mediaRequestsPanel.pickARelease'),
+              detail: say('screens.adminArea.mediaRequestsPanel.searchEveryIndexerAndChooseWhat'),
               icon: <Icon of={SearchFilledIcon} size={15} />,
               onChoose: () => {
                 setReading({ request, tab: 'releases' });
@@ -397,10 +413,12 @@ const MediaRequestsPanel = () => {
             },
             {
               id: 'picking',
-              label: request.isPickedByHand ? 'Fetch the best by itself' : 'Only fetch what I pick',
+              label: request.isPickedByHand
+                ? say('screens.adminArea.mediaRequestsPanel.fetchTheBestByItself')
+                : say('screens.adminArea.mediaRequestsPanel.onlyFetchWhatIPick'),
               detail: request.isPickedByHand
-                ? 'Searches for it, and fetches the best by its quality.'
-                : 'Stops searching for it by itself.',
+                ? say('screens.adminArea.mediaRequestsPanel.searchesForItAndFetchesThe')
+                : say('screens.adminArea.mediaRequestsPanel.stopsSearchingForItByItself'),
               icon: <Icon of={HandPointerRightFilledIcon} size={15} />,
               onChoose: () => {
                 act(
@@ -410,8 +428,12 @@ const MediaRequestsPanel = () => {
                       isPickedByHand: !request.isPickedByHand,
                     }),
                   request.isPickedByHand
-                    ? `${request.title} will be fetched automatically.`
-                    : `${request.title} will only be fetched when picked.`,
+                    ? say('screens.adminArea.mediaRequestsPanel.titleWillBeFetchedAutomatically', {
+                        title: request.title,
+                      })
+                    : say('screens.adminArea.mediaRequestsPanel.titleWillOnlyBeFetchedWhen', {
+                        title: request.title,
+                      }),
                 );
               },
             },
@@ -421,7 +443,7 @@ const MediaRequestsPanel = () => {
           items: [
             {
               id: 'remove',
-              label: 'Forget',
+              label: say('common.forget'),
               icon: <Icon of={BinFilledIcon} size={15} />,
               isDestructive: true,
               onChoose: () => {
@@ -446,11 +468,15 @@ const MediaRequestsPanel = () => {
             refusal:
               refusal ??
               (value !== null && value.refused.length > 0
-                ? { message: `${request.title} could not be approved.` }
+                ? {
+                    message: say('screens.adminArea.mediaRequestsPanel.titleCouldNotBeApproved', {
+                      title: request.title,
+                    }),
+                  }
                 : null),
           };
         },
-        `Approved ${request.title}.`,
+        say('common.approvedTitle', { title: request.title }),
       );
     },
     [act],
@@ -505,7 +531,10 @@ const MediaRequestsPanel = () => {
               id: 'chosen',
               header: () => (
                 <Checkbox
-                  label={`Choose all ${awaiting.length.toString()} waiting on approval`}
+                  label={say(
+                    'screens.adminArea.mediaRequestsPanel.chooseAllLengthWaitingOnApproval',
+                    { length: awaiting.length.toString() },
+                  )}
                   isLabelHidden
                   checked={awaiting.length > 0 && chosenAwaiting.length === awaiting.length}
                   isMixed={chosenAwaiting.length > 0 && chosenAwaiting.length < awaiting.length}
@@ -521,7 +550,9 @@ const MediaRequestsPanel = () => {
               cell: ({ row }: { row: { original: RequestRow } }) =>
                 row.original.kind === 'request' ? (
                   <Checkbox
-                    label={`Choose ${row.original.request.title}`}
+                    label={say('screens.adminArea.mediaRequestsPanel.chooseTitle', {
+                      title: row.original.request.title,
+                    })}
                     isLabelHidden
                     checked={chosen.has(row.original.id)}
                     onCheckedChange={(isChosen) => {
@@ -534,7 +565,7 @@ const MediaRequestsPanel = () => {
         : []),
       {
         id: 'title',
-        header: 'Name',
+        header: say('common.name'),
         accessorFn: (entry) =>
           entry.kind === 'request'
             ? entry.request.title
@@ -568,7 +599,12 @@ const MediaRequestsPanel = () => {
                   variant="subtle"
                   size="none"
                   isIconOnly
-                  label={`${isOpen ? 'Hide' : 'Show'} the episodes in ${nameSeason(entry.season)}`}
+                  label={say(
+                    isOpen
+                      ? 'screens.adminArea.mediaPanel.hideTheEpisodesInName'
+                      : 'screens.adminArea.mediaPanel.showTheEpisodesInName',
+                    { name: nameSeason(entry.season) },
+                  )}
                   aria-expanded={isOpen}
                   onClick={() => {
                     row.toggleExpanded();
@@ -589,7 +625,7 @@ const MediaRequestsPanel = () => {
                 <span className="flex min-w-0 flex-col gap-0.5">
                   <span className="truncate text-sm text-text">{nameSeason(entry.season)}</span>
                   <span className="truncate text-xs text-text-muted">
-                    {`${entry.items.length.toString()} ${entry.items.length === 1 ? 'episode' : 'episodes'}`}
+                    {sayCount('common.count.episodes', entry.items.length)}
                   </span>
                 </span>
               </span>
@@ -609,7 +645,12 @@ const MediaRequestsPanel = () => {
                   variant="subtle"
                   size="none"
                   isIconOnly
-                  label={`${isOpen ? 'Hide' : 'Show'} what ${request.title} is made of`}
+                  label={say(
+                    isOpen
+                      ? 'screens.adminArea.mediaRequestsPanel.hideWhatTitleIsMadeOf'
+                      : 'screens.adminArea.mediaRequestsPanel.showWhatTitleIsMadeOf',
+                    { title: request.title },
+                  )}
                   aria-expanded={isOpen}
                   onClick={() => {
                     row.toggleExpanded();
@@ -633,7 +674,7 @@ const MediaRequestsPanel = () => {
               {isMusicRequest(request.kind) ? (
                 <MusicArtwork
                   src={request.posterUrl}
-                  label={`The cover of ${request.title}`}
+                  label={say('common.theCoverOfTitle', { title: request.title })}
                   shape={request.kind === 'artist' ? 'round' : 'square'}
                   className="w-10"
                 />
@@ -666,7 +707,7 @@ const MediaRequestsPanel = () => {
       },
       {
         id: 'requestedBy',
-        header: 'Requested by',
+        header: say('screens.adminArea.mediaRequestsPanel.requestedBy'),
         accessorFn: (entry) => (entry.kind === 'request' ? entry.request.requestedBy.name : ''),
         cell: ({ row }) => {
           if (row.original.kind !== 'request') {
@@ -692,7 +733,7 @@ const MediaRequestsPanel = () => {
       },
       {
         id: 'state',
-        header: 'Status',
+        header: say('common.status'),
         accessorFn: (entry) => badgeOf(entry).label,
         cell: ({ row }) => {
           const badge = badgeOf(row.original);
@@ -714,7 +755,7 @@ const MediaRequestsPanel = () => {
       },
       {
         id: 'asked',
-        header: 'Date requested',
+        header: say('screens.adminArea.mediaRequestsPanel.dateRequested'),
         accessorFn: (entry) => (entry.kind === 'request' ? entry.request.createdAt : ''),
         cell: ({ row }) =>
           row.original.kind === 'request' ? (
@@ -739,7 +780,7 @@ const MediaRequestsPanel = () => {
           return (
             <span className="flex items-center justify-end gap-1">
               {busyId === request.id ? (
-                <Spinner label={`Working on ${request.title}`} size="sm" />
+                <Spinner label={say('common.workingOnTitle', { title: request.title })} size="sm" />
               ) : (
                 <>
                   {request.approval !== 'awaiting' ? null : (
@@ -748,7 +789,9 @@ const MediaRequestsPanel = () => {
                         variant="secondary"
                         size="sm"
                         isIconOnly
-                        label={`Approve ${request.title}`}
+                        label={say('screens.adminArea.mediaRequestsPanel.approveTitle', {
+                          title: request.title,
+                        })}
                         onClick={() => {
                           approveNow(request);
                         }}
@@ -760,7 +803,9 @@ const MediaRequestsPanel = () => {
                         variant="secondary"
                         size="sm"
                         isIconOnly
-                        label={`Refuse ${request.title}`}
+                        label={say('screens.adminArea.mediaRequestsPanel.refuseTitle', {
+                          title: request.title,
+                        })}
                         onClick={() => {
                           setRefusing(request);
                         }}
@@ -771,7 +816,7 @@ const MediaRequestsPanel = () => {
                   )}
 
                   <ActionMenu
-                    label={`Actions for ${request.title}`}
+                    label={say('common.actionsForTitle', { title: request.title })}
                     trigger={<Icon of={MoreHorizontalIcon} size={16} />}
                     groups={menuFor(request)}
                   />
@@ -810,11 +855,11 @@ const MediaRequestsPanel = () => {
       }}
     >
       <PanelCard
-        title="Requested"
+        title={say('common.requested')}
         isFlush
         below={
           <TabRow
-            label="Which requests"
+            label={say('screens.adminArea.mediaRequestsPanel.whichRequests')}
             tone="underlined"
             size="sm"
             value={shelf}
@@ -834,18 +879,18 @@ const MediaRequestsPanel = () => {
         actions={
           <>
             <FilterMenu
-              label="Filter the requests"
+              label={say('common.filterTheRequests')}
               groups={filterGroups}
               selected={filters}
               onChange={narrowTo}
             />
 
             <TextField
-              label="Search the requests"
+              label={say('common.searchTheRequests')}
               isLabelHidden
               size="sm"
               type="search"
-              placeholder="A title, or who asked"
+              placeholder={say('common.aTitleOrWhoAsked')}
               value={search}
               onValueChange={searchFor}
               className="w-56 max-w-full"
@@ -856,9 +901,7 @@ const MediaRequestsPanel = () => {
               align="end"
               detail={
                 <p className="max-w-xs text-xs leading-relaxed">
-                  Every film, series, artist and album requested, and where each has got to.
-                  Everything still wanted is searched for again every few hours by itself, and can
-                  be searched for now with Refetch media.
+                  {say('screens.adminArea.mediaRequestsPanel.everyFilmSeriesArtistAndAlbum')}
                 </p>
               }
             >
@@ -866,7 +909,7 @@ const MediaRequestsPanel = () => {
                 variant="ghost"
                 size="xs"
                 isIconOnly
-                label="About this list"
+                label={say('screens.adminArea.mediaRequestsPanel.aboutThisList')}
                 hasTooltip={false}
               >
                 <Icon of={InfoIcon} size={16} />
@@ -885,14 +928,19 @@ const MediaRequestsPanel = () => {
                     setSaid(
                       value === null
                         ? {
-                            text: refusal?.message ?? 'The search could not start.',
+                            text:
+                              refusal?.message ??
+                              say('screens.adminArea.mediaRequestsPanel.theSearchCouldNotStart'),
                             isProblem: true,
                           }
                         : {
                             text:
                               value.searched === 0
-                                ? 'Nothing is missing.'
-                                : `Searched again for ${value.searched.toString()} request${value.searched === 1 ? '' : 's'}.`,
+                                ? say('screens.adminArea.mediaRequestsPanel.nothingIsMissing')
+                                : sayCount(
+                                    'screens.adminArea.mediaRequestsPanel.searchedAgainForCountRequests',
+                                    value.searched,
+                                  ),
                             isProblem: false,
                           },
                     );
@@ -903,7 +951,7 @@ const MediaRequestsPanel = () => {
                   });
               }}
             >
-              Refetch media
+              {say('screens.adminArea.mediaRequestsPanel.refetchMedia')}
             </PanelCardAction>
 
             <PanelCardAction
@@ -912,7 +960,7 @@ const MediaRequestsPanel = () => {
                 setIsAsking(true);
               }}
             >
-              Request media
+              {say('common.requestMedia')}
             </PanelCardAction>
           </>
         }
@@ -974,9 +1022,13 @@ const MediaRequestsPanel = () => {
         />
 
         <ConfirmDialog
-          title={`Forget ${removing?.title ?? 'this request'}?`}
-          detail="Nothing more is fetched for it. Whatever it already brought stays in the library."
-          confirmLabel="Forget"
+          title={
+            removing === null
+              ? say('screens.adminArea.mediaRequestsPanel.forgetThisRequest')
+              : say('common.forgetTitle', { title: removing.title })
+          }
+          detail={say('screens.adminArea.mediaRequestsPanel.nothingMoreIsFetchedForIt')}
+          confirmLabel={say('common.forget')}
           isDestructive
           isOpen={removing !== null}
           onClose={() => {
@@ -991,7 +1043,7 @@ const MediaRequestsPanel = () => {
               act(
                 gone,
                 async () => ({ refusal: await removeMediaRequest(gone.id) }),
-                `Forgot ${gone.title}.`,
+                say('screens.adminArea.mediaRequestsPanel.forgotTitle', { title: gone.title }),
               );
             }
           }}
@@ -1008,19 +1060,21 @@ const MediaRequestsPanel = () => {
 
         {requests.isError ? (
           <CouldNotRead
-            what="The requests"
+            said={say('common.theRequestsCouldNotBeRead')}
             isTryingAgain={requests.isFetching}
             onTryAgain={() => {
               void requests.refetch();
             }}
           />
         ) : requests.isPending ? (
-          <Spinner isCentered label="Reading the requests" size="sm" />
+          <Spinner isCentered label={say('common.readingTheRequests')} size="sm" />
         ) : (
           tabs.map((one) => (
             <TabPanel key={one} value={one} travel={travel}>
               <DataTable
-                label={`Requests: ${SHELF_NAMES[one]}`}
+                label={say('screens.adminArea.mediaRequestsPanel.requestsSHELFNAMES', {
+                  SHELF_NAMES: SHELF_NAMES[one],
+                })}
                 columns={columns}
                 rows={one === shelf ? rows : []}
                 getRowId={(row) => row.id}
@@ -1035,8 +1089,13 @@ const MediaRequestsPanel = () => {
                     <div className="mr-auto flex flex-wrap items-center gap-3">
                       <span className="text-sm text-text-muted">
                         {chosenAwaiting.length === 0
-                          ? `${awaiting.length.toString()} waiting on approval`
-                          : `${chosenAwaiting.length.toString()} chosen`}
+                          ? say('screens.adminArea.mediaRequestsPanel.lengthWaitingOnApproval', {
+                              length: awaiting.length.toString(),
+                            })
+                          : sayCount(
+                              'screens.adminArea.mediaRequestsPanel.countChosen',
+                              chosenAwaiting.length,
+                            )}
                       </span>
 
                       {chosenAwaiting.length === 0 ? null : (
@@ -1049,7 +1108,7 @@ const MediaRequestsPanel = () => {
                               decide('approve');
                             }}
                           >
-                            Approve them
+                            {say('screens.adminArea.mediaRequestsPanel.approveThem')}
                           </Button>
 
                           <Button
@@ -1060,7 +1119,7 @@ const MediaRequestsPanel = () => {
                               setRefusingChosen(true);
                             }}
                           >
-                            Refuse them
+                            {say('screens.adminArea.mediaRequestsPanel.refuseThem')}
                           </Button>
                         </>
                       )}
@@ -1069,8 +1128,8 @@ const MediaRequestsPanel = () => {
                 }
                 emptyMessage={
                   requests.data.length === 0
-                    ? 'Nothing has been requested yet. Request a film, a series, an artist or an album to have it fetched and filed into its library.'
-                    : 'Nothing matches. Clear the filters or search for something else.'
+                    ? say('screens.adminArea.mediaRequestsPanel.nothingHasBeenRequestedYetRequest')
+                    : say('screens.adminArea.mediaRequestsPanel.nothingMatchesClearTheFiltersOr')
                 }
               />
             </TabPanel>

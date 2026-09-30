@@ -13,7 +13,9 @@ import { say } from '@ValenceI18n/say';
 const describeGuest = (invitedBy: string | null): string => {
   const whose = invitedBy === null ? '' : possessiveOf(invitedBy);
 
-  return whose === '' ? say('core.describeGuest.aGuest') : `${whose} guest`;
+  return whose === ''
+    ? say('core.describeGuest.aGuest')
+    : say('core.describeGuest.whoseGuest', { whose });
 };
 
 export { describeGuest };

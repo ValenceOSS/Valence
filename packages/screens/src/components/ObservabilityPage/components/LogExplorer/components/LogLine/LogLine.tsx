@@ -12,14 +12,15 @@ import { describeLogTime } from '@ValenceClient/admin/describeLogTime';
 import { logFilterId } from '@ValenceClient/admin/logViewSelection';
 import { describeLogLevel } from '@ValenceScreens/admin/describeLogLevel';
 import type { LogLineProps } from './LogLine.types';
+import { say } from '@ValenceI18n/say';
 
 const CONTEXT_FIELDS = [
-  ['jobId', 'job', 'Job'],
-  ['jobKind', 'kind', 'Kind of job'],
-  ['libraryId', 'library', 'Library'],
-  ['mediaId', 'media', 'Media'],
-  ['sessionId', 'session', 'Session'],
-  ['requestId', 'request', 'Request'],
+  ['jobId', 'job', say('common.job')],
+  ['jobKind', 'kind', say('screens.logExplorer.logLine.kindOfJob')],
+  ['libraryId', 'library', say('common.library')],
+  ['mediaId', 'media', say('common.media')],
+  ['sessionId', 'session', say('common.session')],
+  ['requestId', 'request', say('common.request')],
 ] as const;
 
 const SHORT = 8;
@@ -114,30 +115,38 @@ const LogLine = ({
         </Button>
 
         <ActionMenu
-          label="Actions for this line"
+          label={say('screens.logExplorer.logLine.actionsForThisLine')}
           size="sm"
           align="end"
           trigger={<Icon of={MoreVerticalIcon} size={16} />}
           groups={[
             {
               items: [
-                { id: 'open', label: 'Show log details', onChoose: onOpen },
-                { id: 'copy', label: 'Copy log line', onChoose: onCopy },
+                {
+                  id: 'open',
+                  label: say('screens.logExplorer.logLine.showLogDetails'),
+                  onChoose: onOpen,
+                },
+                {
+                  id: 'copy',
+                  label: say('screens.logExplorer.logLine.copyLogLine'),
+                  onChoose: onCopy,
+                },
               ],
             },
             {
-              name: 'Narrow the log to',
+              name: say('screens.logExplorer.logLine.narrowTheLogTo'),
               items: [
                 {
                   id: 'level',
-                  label: `Only ${record.level} lines`,
+                  label: say('screens.logExplorer.logLine.onlyLevelLines', { level: record.level }),
                   onChoose: () => {
                     onFilter(logFilterId('level', record.level));
                   },
                 },
                 {
                   id: 'source',
-                  label: `Only ${record.source}`,
+                  label: say('screens.logExplorer.logLine.onlySource', { source: record.source }),
                   onChoose: () => {
                     onFilter(logFilterId('source', record.source));
                   },
@@ -158,7 +167,7 @@ const LogLine = ({
                     items: [
                       {
                         id: 'trace',
-                        label: 'Trace this job',
+                        label: say('screens.logExplorer.logLine.traceThisJob'),
                         onChoose: () => {
                           onTrace(jobId);
                         },
@@ -179,13 +188,19 @@ const LogLine = ({
           )}
 
           {context.length === 0 ? null : (
-            <ul aria-label="Where this line came from" className="flex flex-wrap gap-1.5">
+            <ul
+              aria-label={say('screens.logExplorer.logLine.whereThisLineCameFrom')}
+              className="flex flex-wrap gap-1.5"
+            >
               {context.map(({ key, name, value }) => (
                 <li key={key}>
                   <Button
                     variant="secondary"
                     size="xs"
-                    label={`Narrow the log to ${name} ${value}`}
+                    label={say('screens.logExplorer.logLine.narrowTheLogToNameValue', {
+                      name,
+                      value,
+                    })}
                     hasTooltip={false}
                     onClick={() => {
                       onFilter(logFilterId(key, value));

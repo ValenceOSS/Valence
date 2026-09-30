@@ -53,6 +53,8 @@ import type {
 } from '@ValenceContracts/schemas/JobRun';
 import type { JobHistoryProps } from './JobHistory.types';
 import { describeJobStatus } from '@ValenceScreens/status/describeJobStatus';
+import { say } from '@ValenceI18n/say';
+import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
 
 const TYPING_MS = 350;
 
@@ -80,9 +82,21 @@ const STATUSES = [
 ] as const satisfies readonly JobRunStatus[];
 
 const SORTS: readonly { id: JobRunSort; label: string; detail: string }[] = [
-  { id: 'newest', label: 'Newest first', detail: 'What just ran' },
-  { id: 'oldest', label: 'Oldest first', detail: 'In the order it happened' },
-  { id: 'longest', label: 'Longest first', detail: 'What took the most time' },
+  {
+    id: 'newest',
+    label: say('common.newestFirst'),
+    detail: say('screens.observabilityPage.jobHistory.whatJustRan'),
+  },
+  {
+    id: 'oldest',
+    label: say('common.oldestFirst'),
+    detail: say('screens.observabilityPage.jobHistory.inTheOrderItHappened'),
+  },
+  {
+    id: 'longest',
+    label: say('screens.observabilityPage.jobHistory.longestFirst'),
+    detail: say('screens.observabilityPage.jobHistory.whatTookTheMostTime'),
+  },
 ];
 
 const STATUS_FILTER_OPTIONS = STATUSES.map((id) => ({ id, label: describeJobStatus(id).label }));
@@ -108,7 +122,9 @@ const describeWhen = (record: JobRunRecord): string => {
     return describeMoment(record.finishedAtMs);
   }
 
-  return record.startedAtMs === null ? 'Queued' : 'Running…';
+  return record.startedAtMs === null
+    ? say('common.queued')
+    : say('screens.observabilityPage.jobHistory.running');
 };
 
 /**
@@ -264,7 +280,7 @@ const JobHistoryPanel = ({
   const groups = useMemo<FilterGroup[]>(
     () => [
       {
-        name: 'Status',
+        name: say('common.status'),
         isSingle: true,
         options: STATUS_FILTER_OPTIONS.map((option) => ({
           id: `status:${option.id}`,
@@ -272,7 +288,7 @@ const JobHistoryPanel = ({
         })),
       },
       {
-        name: 'Job',
+        name: say('common.job'),
         isSingle: true,
         options: definitions.map((definition) => ({
           id: `kind:${definition.kind}`,
@@ -302,7 +318,7 @@ const JobHistoryPanel = ({
   const sortGroups = useMemo(
     () => [
       {
-        name: 'Order',
+        name: say('common.order'),
         selectedId: sort,
         onSelect: (id: string) => {
           const found = SORTS.find((one) => one.id === id);
@@ -392,7 +408,7 @@ const JobHistoryPanel = ({
     () => [
       {
         id: 'kind',
-        header: 'Job',
+        header: say('common.job'),
         enableSorting: false,
         accessorFn: (record) => describeJobKind(record.kind, labels),
         cell: ({ row }) => (
@@ -401,7 +417,7 @@ const JobHistoryPanel = ({
               <Icon
                 of={BookmarkFilledIcon}
                 size={14}
-                label="Pinned to the top"
+                label={say('screens.observabilityPage.jobHistory.pinnedToTheTop')}
                 className="shrink-0"
               />
             ) : null}
@@ -413,7 +429,7 @@ const JobHistoryPanel = ({
       },
       {
         id: 'status',
-        header: 'Status',
+        header: say('common.status'),
         enableSorting: false,
         accessorFn: (record) => record.status,
         cell: ({ row }) => (
@@ -427,7 +443,9 @@ const JobHistoryPanel = ({
                 variant="subtle"
                 size="none"
                 isIconOnly
-                label={`What ${describeJobKind(row.original.kind, labels)} is doing`}
+                label={say('screens.observabilityPage.jobHistory.whatKindIsDoing', {
+                  kind: describeJobKind(row.original.kind, labels),
+                })}
                 onClick={() => {
                   setOpenWorkFor(row.original.id);
                 }}
@@ -440,7 +458,7 @@ const JobHistoryPanel = ({
       },
       {
         id: 'subject',
-        header: 'Subject',
+        header: say('common.subject'),
         enableSorting: false,
         accessorFn: (record) => describeRunSubject(record.subject, libraries, record.kind).name,
         cell: ({ row }) => {
@@ -466,22 +484,24 @@ const JobHistoryPanel = ({
                         {library === null ? null : (
                           <>
                             <div className="flex flex-col">
-                              <dt className="text-text-muted">Library</dt>
+                              <dt className="text-text-muted">{say('common.library')}</dt>
                               <dd className="text-text">{library.name}</dd>
                             </div>
 
                             <div className="flex flex-col">
-                              <dt className="text-text-muted">Kind</dt>
+                              <dt className="text-text-muted">{say('common.kind')}</dt>
                               <dd className="text-text">{library.kind}</dd>
                             </div>
 
                             <div className="flex flex-col">
-                              <dt className="text-text-muted">Folder</dt>
+                              <dt className="text-text-muted">
+                                {say('screens.observabilityPage.jobHistory.folder')}
+                              </dt>
                               <dd className="break-all text-text">{library.path}</dd>
                             </div>
 
                             <div className="flex flex-col">
-                              <dt className="text-text-muted">Items</dt>
+                              <dt className="text-text-muted">{say('common.items')}</dt>
                               <dd className="tabular-nums text-text">
                                 {library.itemCount.toString()}
                               </dd>
@@ -490,12 +510,14 @@ const JobHistoryPanel = ({
                         )}
 
                         <div className="flex flex-col">
-                          <dt className="text-text-muted">{library === null ? 'Subject' : 'ID'}</dt>
+                          <dt className="text-text-muted">
+                            {library === null ? say('common.subject') : 'ID'}
+                          </dt>
                           <dd className="break-all text-text">{row.original.subject}</dd>
                         </div>
 
                         <div className="flex flex-col">
-                          <dt className="text-text-muted">Run</dt>
+                          <dt className="text-text-muted">{say('common.run')}</dt>
                           <dd className="break-all text-text">{row.original.id}</dd>
                         </div>
                       </dl>
@@ -523,7 +545,7 @@ const JobHistoryPanel = ({
       },
       {
         id: 'progress',
-        header: 'Progress',
+        header: say('common.progress'),
         enableSorting: false,
         cell: ({ row }) => {
           const progress = row.original.progress;
@@ -539,16 +561,30 @@ const JobHistoryPanel = ({
                   {describeWords(sayAgain(progress.phase))}
                 </span>
 
-                <span className="tabular-nums text-text">
-                  <AnimatedNumber value={progress.processed} />
-                  <span className="text-text-muted"> of </span>
-                  <AnimatedNumber value={progress.total} />
+                <span className="tabular-nums text-text-muted">
+                  <Sentence
+                    words="common.doneOfTotal"
+                    fillings={{
+                      done: (
+                        <span className="text-text">
+                          <AnimatedNumber value={progress.processed} />
+                        </span>
+                      ),
+                      total: (
+                        <span className="text-text">
+                          <AnimatedNumber value={progress.total} />
+                        </span>
+                      ),
+                    }}
+                  />
                 </span>
               </span>
 
               <ProgressBar
                 isFull
-                label={`${describeJobKind(row.original.kind, labels)} progress`}
+                label={say('screens.observabilityPage.jobHistory.kindProgress', {
+                  kind: describeJobKind(row.original.kind, labels),
+                })}
                 value={row.original.status === 'completed' ? progress.total : progress.processed}
                 max={Math.max(progress.total, 1)}
               />
@@ -558,7 +594,7 @@ const JobHistoryPanel = ({
       },
       {
         id: 'when',
-        header: 'When',
+        header: say('screens.observabilityPage.jobHistory.when'),
         enableSorting: false,
         accessorFn: (record) => record.finishedAtMs ?? record.startedAtMs ?? 0,
         cell: ({ row }) => (
@@ -566,7 +602,14 @@ const JobHistoryPanel = ({
             <span>{describeWhen(row.original)}</span>
             {row.original.startedAtMs === null || row.original.finishedAtMs === null ? null : (
               <span className="text-xs">
-                took <ElapsedTime ms={row.original.finishedAtMs - row.original.startedAtMs} />
+                <Sentence
+                  words="screens.observabilityPage.jobHistory.tookElapsed"
+                  fillings={{
+                    elapsed: (
+                      <ElapsedTime ms={row.original.finishedAtMs - row.original.startedAtMs} />
+                    ),
+                  }}
+                />
               </span>
             )}
           </span>
@@ -579,35 +622,39 @@ const JobHistoryPanel = ({
         cell: ({ row }) => (
           <span className="flex justify-end">
             <ActionMenu
-              label={`Actions for ${describeJobKind(row.original.kind, labels)}`}
+              label={say('screens.observabilityPage.jobHistory.actionsForKind', {
+                kind: describeJobKind(row.original.kind, labels),
+              })}
               trigger={<Icon of={MoreHorizontalIcon} size={16} />}
               groups={[
                 {
                   items: [
                     {
                       id: 'pin',
-                      label: pinned.has(row.original.id) ? 'Unpin from the top' : 'Pin to the top',
+                      label: pinned.has(row.original.id)
+                        ? say('screens.observabilityPage.jobHistory.unpinFromTheTop')
+                        : say('screens.observabilityPage.jobHistory.pinToTheTop'),
                       onChoose: () => {
                         togglePin(row.original.id);
                       },
                     },
                     {
                       id: 'trace',
-                      label: 'Trace this run',
+                      label: say('screens.observabilityPage.jobHistory.traceThisRun'),
                       onChoose: () => {
                         onTrace(row.original.id);
                       },
                     },
                     {
                       id: 'logs',
-                      label: 'View logs',
+                      label: say('screens.observabilityPage.jobHistory.viewLogs'),
                       onChoose: () => {
                         onViewLogs(row.original.id);
                       },
                     },
                     {
                       id: 'issues',
-                      label: 'View issues',
+                      label: say('screens.observabilityPage.jobHistory.viewIssues'),
                       onChoose: () => {
                         setOpenIssuesFor(row.original.id);
                       },
@@ -627,11 +674,11 @@ const JobHistoryPanel = ({
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
         <TextField
-          label="Search job runs"
+          label={say('screens.observabilityPage.jobHistory.searchJobRuns')}
           isLabelHidden
           type="search"
           size="sm"
-          placeholder="Search by job, library, error or run id"
+          placeholder={say('screens.observabilityPage.jobHistory.searchByJobLibraryErrorOr')}
           value={typed}
           className="min-w-56 flex-1"
           onValueChange={setTyped}
@@ -640,7 +687,7 @@ const JobHistoryPanel = ({
         <TimeRangeMenu search={search} onSearchChange={onSearchChange} />
 
         <OptionMenu
-          label="Order"
+          label={say('common.order')}
           triggerShape="field"
           className="w-auto"
           groups={sortGroups}
@@ -648,7 +695,7 @@ const JobHistoryPanel = ({
         />
 
         <FilterMenu
-          label="Filter job runs"
+          label={say('screens.observabilityPage.jobHistory.filterJobRuns')}
           hasLabel
           groups={groups}
           selected={chosen}
@@ -667,7 +714,7 @@ const JobHistoryPanel = ({
 
       <Well isFlush className="p-1">
         <DataTable
-          label="What pg-boss has run"
+          label={say('screens.observabilityPage.jobHistory.whatPgBossHasRun')}
           columns={columns}
           rows={records}
           totalRows={askedHistory.data?.total ?? records.length}
@@ -681,10 +728,10 @@ const JobHistoryPanel = ({
           pageSize={ROWS_PER_PAGE}
           emptyMessage={
             askedHistory.isError
-              ? 'Job history could not be read from the server.'
+              ? say('screens.observabilityPage.jobHistory.jobHistoryCouldNotBeRead')
               : askedHistory.isPending
-                ? 'Reading job history…'
-                : 'No job runs match this.'
+                ? say('screens.observabilityPage.jobHistory.readingJobHistory')
+                : say('screens.observabilityPage.jobHistory.noJobRunsMatchThis')
           }
         />
       </Well>
@@ -709,16 +756,24 @@ const JobHistoryPanel = ({
         }}
       />
 
-      <Dialog label="Job run issues" isOpen={openIssuesFor !== null} onClose={closeIssues}>
+      <Dialog
+        label={say('screens.observabilityPage.jobHistory.jobRunIssues')}
+        isOpen={openIssuesFor !== null}
+        onClose={closeIssues}
+      >
         {openIssuesFor === null ? null : (
           <>
-            <DialogTitle title="Issues from this run" />
+            <DialogTitle title={say('screens.observabilityPage.jobHistory.issuesFromThisRun')} />
 
             <DialogContent>
               {askedIssues.isPending ? (
-                <p className="text-sm text-text-muted">Reading issues…</p>
+                <p className="text-sm text-text-muted">
+                  {say('screens.observabilityPage.jobHistory.readingIssues')}
+                </p>
               ) : issuesText === '' ? (
-                <p className="text-sm text-text-muted">No issues were recorded for this run.</p>
+                <p className="text-sm text-text-muted">
+                  {say('screens.observabilityPage.jobHistory.noIssuesWereRecordedForThis')}
+                </p>
               ) : (
                 <pre className="whitespace-pre-wrap break-words font-mono text-xs text-text">
                   {issuesText}
@@ -727,13 +782,13 @@ const JobHistoryPanel = ({
             </DialogContent>
 
             <DialogFooter
-              dismiss={{ label: 'Close', onChoose: closeIssues }}
+              dismiss={{ label: say('common.close'), onChoose: closeIssues }}
               confirm={{
-                label: 'Copy',
+                label: say('common.copy'),
                 isDisabled: issuesText === '',
                 onChoose: () => {
                   void navigator.clipboard.writeText(issuesText).then(() => {
-                    notify.worked('Copied to the clipboard.');
+                    notify.worked(say('common.copiedToTheClipboard'));
                   });
                 },
               }}

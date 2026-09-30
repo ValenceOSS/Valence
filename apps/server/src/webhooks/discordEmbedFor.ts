@@ -6,6 +6,7 @@ import { nameOfViewer } from './nameOfViewer';
 import { MEDIA_KIND_LABELS } from '@ValenceContracts/schemas/MediaKind';
 import type { WebhookPayload } from '@ValenceContracts/schemas/Webhook';
 import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const AUTHOR = say('common.valence');
 
@@ -311,7 +312,9 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
 
       const described = libraries.map((one) => {
         const andMore =
-          one.arrivedNotListed === 0 ? '' : `\n…and ${one.arrivedNotListed.toString()} more`;
+          one.arrivedNotListed === 0
+            ? ''
+            : `\n${say('server.webhooks.discordEmbedFor.andMore', { count: one.arrivedNotListed.toString() })}`;
 
         return one.arrived.length === 0
           ? null
@@ -324,9 +327,10 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
             ? say('server.webhooks.libraryFinishedScanning', {
                 library: named[0] ?? say('common.aLibrary'),
               })
-            : say('server.webhooks.discordEmbedFor.librariesFinishedScanning', {
-                count: libraries.length.toString(),
-              }),
+            : sayCount(
+                'server.webhooks.discordEmbedFor.librariesFinishedScanning',
+                libraries.length,
+              ),
         description: described.filter((one) => one !== null).join('\n\n'),
         colour: added > 0 ? COLOURS.arrival : COLOURS.quiet,
         fields: [

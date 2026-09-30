@@ -1,4 +1,5 @@
 import type { BookReading } from '@ValenceContracts/schemas/Book';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says how far into a book somebody got: a share of it for text that reflows, and a page of a
@@ -9,14 +10,21 @@ import type { BookReading } from '@ValenceContracts/schemas/Book';
  */
 const describeReadingPlace = (reading: BookReading): string => {
   if (reading.fraction !== null) {
-    return `${Math.round(reading.fraction * 100).toString()}% read`;
+    return say('common.percentRead', { percent: Math.round(reading.fraction * 100).toString() });
   }
 
   const page = (reading.pageNumber ?? 0) + 1;
 
   return reading.pageCount === null
-    ? `${reading.chapterTitle} · page ${page.toString()}`
-    : `${reading.chapterTitle} · page ${page.toString()} of ${reading.pageCount.toString()}`;
+    ? say('client.books.describeReadingPlace.chapterTitlePagePage', {
+        chapterTitle: reading.chapterTitle,
+        page: page.toString(),
+      })
+    : say('client.books.describeReadingPlace.chapterTitlePagePageOfPageCount', {
+        chapterTitle: reading.chapterTitle,
+        page: page.toString(),
+        pageCount: reading.pageCount.toString(),
+      });
 };
 
 export { describeReadingPlace };

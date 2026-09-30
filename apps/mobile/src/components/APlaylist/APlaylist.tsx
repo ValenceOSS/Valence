@@ -35,6 +35,8 @@ import { coverAlbumsOf } from '@ValenceClient/music/coverAlbumsOf';
 import { sendAPhoto } from '@ValenceMobile/platform/sendAPhoto';
 import { profileHeaders } from '@ValenceClient/profiles/currentProfile';
 import type { APlaylistProps } from './APlaylist.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * One playlist, as the web's playlist page draws it: the cover of its first album, whose it is and
@@ -80,7 +82,7 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
   if (read.data === undefined) {
     return (
       <Screen centres onBack={onBack}>
-        <Words tone="danger">That playlist could not be read.</Words>
+        <Words tone="danger">{say('phone.aPlaylist.thatPlaylistCouldNotBeRead')}</Words>
       </Screen>
     );
   }
@@ -126,19 +128,19 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
   const askWhatToDo = () => {
     const choices = [
       {
-        label: playlist.isShared ? 'Stop sharing' : 'Share with the household',
+        label: playlist.isShared ? say('common.stopSharing') : say('common.shareWithTheHousehold'),
         run: () => {
           void updatePlaylist(playlist.id, { isShared: !playlist.isShared }).then(refresh);
         },
       },
       {
-        label: 'Edit details',
+        label: say('common.editDetails'),
         run: () => {
           setIsEditing(true);
         },
       },
       {
-        label: 'Choose a cover',
+        label: say('common.chooseACover'),
         run: () => {
           void chooseACover();
         },
@@ -146,7 +148,7 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
       ...(playlist.hasOwnArtwork
         ? [
             {
-              label: "Use the songs' covers",
+              label: say('common.useTheSongsCovers'),
               run: () => {
                 void dropPlaylistArtwork(playlist.id).then(refresh);
               },
@@ -154,15 +156,15 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
           ]
         : []),
       {
-        label: 'Delete playlist',
+        label: say('common.deletePlaylist'),
         run: () => {
           Alert.alert(
-            `Delete ${playlist.name}?`,
-            'The songs stay in the library. Only the playlist goes, for everybody it was shared with.',
+            say('common.deleteName', { name: playlist.name }),
+            say('common.theSongsStayInTheLibrary'),
             [
-              { text: 'Cancel', style: 'cancel' },
+              { text: say('common.cancel'), style: 'cancel' },
               {
-                text: 'Delete',
+                text: say('common.delete'),
                 style: 'destructive',
                 onPress: () => {
                   void removePlaylist(playlist.id).then(async (isGone) => {
@@ -182,7 +184,7 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
     ActionSheetIOS.showActionSheetWithOptions(
       {
         title: playlist.name,
-        options: [...choices.map((choice) => choice.label), 'Cancel'],
+        options: [...choices.map((choice) => choice.label), say('common.cancel')],
         cancelButtonIndex: choices.length,
         destructiveButtonIndex: choices.length - 1,
       },
@@ -194,14 +196,14 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
   const source = { kind: 'playlist' as const, id: playlist.id, name: playlist.name };
   const detail = [
     playlist.isMine || playlist.owner === null ? null : playlist.owner.name,
-    `${tracks.length.toString()} ${tracks.length === 1 ? 'song' : 'songs'}`,
+    sayCount('common.count.songs', tracks.length),
     howLongItRuns(playlist.durationSeconds),
   ].filter((part) => part !== null);
 
   return (
     <Screen scrolls onBack={onBack} behind={<AMoodBackground palette={lights} />}>
       <AMusicHead
-        kind="Playlist"
+        kind={say('common.playlist')}
         title={playlist.name}
         detail={detail.join(' · ')}
         artwork={ownCover === null ? null : onThisServer(ownCover)}
@@ -228,10 +230,10 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
           <Button
             tone="ghost"
             icon={MoreHorizontal}
-            label={`More for ${playlist.name}`}
+            label={say('common.moreForName', { name: playlist.name })}
             onPress={askWhatToDo}
           >
-            More
+            {say('common.more')}
           </Button>
         ) : null}
       </AMusicHead>
@@ -239,8 +241,8 @@ const APlaylist = ({ playlistId, onAlbum, onArtist, onBack }: APlaylistProps) =>
       {tracks.length === 0 ? (
         <ANothingHere
           of={ListMusic}
-          title="Nothing in this playlist yet"
-          detail="Add songs to it from the menu beside any song."
+          title={say('common.nothingInThisPlaylistYet')}
+          detail={say('common.addSongsToItFromThe')}
         />
       ) : (
         <ATrackList

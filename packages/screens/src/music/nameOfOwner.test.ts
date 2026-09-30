@@ -13,6 +13,6 @@ describe('nameOfOwner', () => {
   });
 
   it('says a profile was removed rather than leaving the line blank', () => {
-    expect(nameOfOwner(null)).toBe('a removed profile');
+    expect(nameOfOwner(null)).toBe('A removed profile');
   });
 });

@@ -10,11 +10,12 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { keepPluginTheme } from '@ValenceClient/plugins/keepPluginTheme';
 import { usePluginThemeChoice } from '@ValenceClient/plugins/usePluginThemeChoice';
 import { pluginQueries } from '@ValenceClient/query/pluginQueries';
+import { say } from '@ValenceI18n/say';
 
 const SCHEMES = [
-  { id: 'system', label: 'System' },
-  { id: 'light', label: 'Light' },
-  { id: 'dark', label: 'Dark' },
+  { id: 'system', label: say('common.system') },
+  { id: 'light', label: say('common.light') },
+  { id: 'dark', label: say('common.dark') },
 ] as const;
 
 const styles = StyleSheet.create({
@@ -34,9 +35,9 @@ const AThemeChoice = () => {
   const themes = contributions.data?.themes ?? [];
 
   return (
-    <AGroup title="Look">
+    <AGroup title={say('phone.aThemeChoice.look')}>
       <SegmentedRow
-        label="Light or dark"
+        label={say('phone.aThemeChoice.lightOrDark')}
         items={SCHEMES}
         value={theme}
         onSelect={(said) => {
@@ -47,7 +48,7 @@ const AThemeChoice = () => {
       {themes.length === 0 ? null : (
         <View style={styles.themes}>
           <Words size="small" tone="muted">
-            Themes from plugins
+            {say('common.themesFromPlugins')}
           </Words>
 
           <Button
@@ -60,7 +61,7 @@ const AThemeChoice = () => {
               plugin.choose(null);
             }}
           >
-            Valence
+            {say('common.valence')}
           </Button>
 
           {themes.map((each) => {
@@ -73,7 +74,10 @@ const AThemeChoice = () => {
                 tone={isChosen ? 'bold' : 'ghost'}
                 isWide
                 isChosen={isChosen}
-                label={`${each.name}, from ${each.pluginName}`}
+                label={say('phone.aThemeChoice.nameFromPluginName', {
+                  name: each.name,
+                  pluginName: each.pluginName,
+                })}
                 {...(isChosen ? { icon: Check } : {})}
                 onPress={() => {
                   keepPluginTheme(each.pluginId, each);

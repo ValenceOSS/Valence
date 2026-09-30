@@ -1,4 +1,5 @@
 import type { Asked } from '@ValenceClient/library/useHidden';
+import { say } from '@ValenceI18n/say';
 
 /**
  * What to ask before hiding something, and what hiding it does.
@@ -8,16 +9,25 @@ import type { Asked } from '@ValenceClient/library/useHidden';
  * @returns The question and what it means.
  */
 const describeHiding = (asking: Asked, isShared: boolean): { title: string; detail: string } => ({
-  title: `Hide ${asking.title}?`,
-  detail: `${
+  title: say('client.library.describeHiding.hideTitle', { title: asking.title }),
+  detail:
     asking.kind === 'series'
-      ? 'Every episode of it disappears'
+      ? say(
+          isShared
+            ? 'client.library.describeHiding.everyEpisodeDisappearsForYou'
+            : 'client.library.describeHiding.everyEpisodeDisappears',
+        )
       : asking.kind === 'library'
-        ? 'Everything in it disappears'
-        : 'It disappears'
-  } from your rows, your searches and the randomiser${
-    isShared ? ', for you and for nobody else on this account' : ''
-  }. Bring it back from Hidden on your profile at any time.`,
+        ? say(
+            isShared
+              ? 'client.library.describeHiding.everythingDisappearsForYou'
+              : 'client.library.describeHiding.everythingDisappears',
+          )
+        : say(
+            isShared
+              ? 'client.library.describeHiding.itDisappearsForYou'
+              : 'client.library.describeHiding.itDisappearsFromYourRows',
+          ),
 });
 
 export { describeHiding };

@@ -3,6 +3,7 @@ import { Button } from '@ValenceUI/Button';
 import { Tooltip } from '@ValenceUI/Tooltip';
 import { cn } from '@ValenceUI/cn';
 import type { PageDotsProps } from './PageDots.types';
+import { say } from '@ValenceI18n/say';
 
 const TONES = {
   page: {
@@ -63,7 +64,11 @@ const PageDots = ({
           <Button
             variant="bare"
             size="none"
-            aria-label={`Show ${named ?? `page ${(index + 1).toString()}`}`}
+            aria-label={
+              named === undefined
+                ? say('ui.pageDots.showPage', { page: (index + 1).toString() })
+                : say('ui.pageDots.showName', { name: named })
+            }
             aria-current={selectedIndex === index ? 'true' : undefined}
             onClick={() => {
               onSelect(index);

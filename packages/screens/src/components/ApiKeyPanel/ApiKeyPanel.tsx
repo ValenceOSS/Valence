@@ -20,6 +20,8 @@ import {
 } from '@ValenceClient/account/fetchApiKeys';
 import type { ApiKey } from '@ValenceContracts/schemas/ApiKey';
 import type { ApiKeyPanelProps } from './ApiKeyPanel.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * Says when a key was last used in words rather than as a timestamp, and says plainly when it never
@@ -30,16 +32,18 @@ import type { ApiKeyPanelProps } from './ApiKeyPanel.types';
  */
 const lastUsed = (at: string | null): string => {
   if (at === null) {
-    return 'Never used';
+    return say('common.neverUsed');
   }
 
   const days = Math.floor((Date.now() - Date.parse(at)) / 86_400_000);
 
   if (days < 1) {
-    return 'Used today';
+    return say('screens.apiKeyPanel.usedToday');
   }
 
-  return days === 1 ? 'Used yesterday' : `Used ${days.toString()} days ago`;
+  return days === 1
+    ? say('screens.apiKeyPanel.usedYesterday')
+    : say('screens.apiKeyPanel.usedDaysDaysAgo', { days: days.toString() });
 };
 
 const NOT_ALLOWED = 403;
@@ -93,13 +97,13 @@ const ApiKeyPanel = ({ showKeyForMilliseconds }: ApiKeyPanelProps) => {
   }, [made, showKeyForMilliseconds]);
 
   if (isReading) {
-    return <Spinner isCentered label="Reading your keys" size="sm" />;
+    return <Spinner isCentered label={say('screens.apiKeyPanel.readingYourKeys')} size="sm" />;
   }
 
   if (couldNotRead) {
     return (
       <CouldNotRead
-        what="Your keys"
+        said={say('screens.apiKeyPanel.yourKeysCouldNotBeRead')}
         onTryAgain={() => {
           setIsReading(true);
           void read();
@@ -111,7 +115,7 @@ const ApiKeyPanel = ({ showKeyForMilliseconds }: ApiKeyPanelProps) => {
   if (keys === null) {
     return (
       <p className="p-4 text-sm text-text-muted">
-        This account is not allowed to hold API keys. Whoever runs this server can change that.
+        {say('screens.apiKeyPanel.thisAccountIsNotAllowedTo')}
       </p>
     );
   }
@@ -119,15 +123,14 @@ const ApiKeyPanel = ({ showKeyForMilliseconds }: ApiKeyPanelProps) => {
   return (
     <div className="flex flex-col gap-4 px-5 py-4">
       <p className="max-w-prose font-body text-[0.8125rem] leading-snug text-text-muted">
-        A key lets something that is not a browser act as you — a script, a dashboard, an assistant.
-        It can do whatever you can do, and never more.
+        {say('screens.apiKeyPanel.aKeyLetsSomethingThatIs')}
       </p>
 
       {made === null ? null : (
         <div className="flex flex-col gap-2 rounded-lg border border-accent/40 bg-accent/10 p-3">
           <span className="flex items-center gap-2 text-sm font-medium text-text">
             <Icon of={TriangleAlertIcon} size={16} />
-            Copy {made.name} now — it will not be shown again.
+            {say('screens.apiKeyPanel.copyNameNowItWillNotBeShownAgain', { name: made.name })}
           </span>
 
           <span className="flex items-center gap-2">
@@ -145,7 +148,7 @@ const ApiKeyPanel = ({ showKeyForMilliseconds }: ApiKeyPanelProps) => {
               }}
             >
               <Icon of={CopyIcon} size={15} />
-              {hasCopied ? 'Copied' : 'Copy'}
+              {hasCopied ? say('common.copied') : say('common.copy')}
             </Button>
           </span>
         </div>
@@ -183,20 +186,20 @@ const ApiKeyPanel = ({ showKeyForMilliseconds }: ApiKeyPanelProps) => {
         }}
       >
         <TextField
-          label="What is this key for?"
+          label={say('screens.apiKeyPanel.whatIsThisKeyFor')}
           value={name}
-          placeholder="Home Assistant"
+          placeholder={say('screens.apiKeyPanel.homeAssistant')}
           onValueChange={setName}
           className="min-w-56 flex-1"
         />
 
         <Button type="submit" variant="glossy" size="md" isLoading={isMaking}>
-          Create key
+          {say('screens.apiKeyPanel.createKey')}
         </Button>
       </form>
 
       {keys.length === 0 ? (
-        <p className="text-sm text-text-muted">No keys yet.</p>
+        <p className="text-sm text-text-muted">{say('screens.apiKeyPanel.noKeysYet')}</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {keys.map((key) => (
@@ -213,21 +216,28 @@ const ApiKeyPanel = ({ showKeyForMilliseconds }: ApiKeyPanelProps) => {
                   {lastUsed(key.lastRequestAt)}
                   {key.rateLimit === null ? null : (
                     <Badge size="sm">
-                      {key.rateLimit.max.toString()} per {key.rateLimit.everySeconds.toString()}s
+                      {say('screens.apiKeyPanel.maxPerEverySecondsS', {
+                        max: key.rateLimit.max.toString(),
+                        everySeconds: key.rateLimit.everySeconds.toString(),
+                      })}
                     </Badge>
                   )}
                   {key.permissions === null ? null : (
                     <Badge size="sm">
                       {key.permissions.length === 0
-                        ? 'No permissions'
-                        : `${key.permissions.length.toString()} permissions`}
+                        ? say('screens.apiKeyPanel.noPermissions')
+                        : sayCount('common.count.permissions', key.permissions.length)}
                     </Badge>
                   )}
                 </span>
               </span>
 
               <Switch
-                label={key.enabled ? `Turn ${key.name} off` : `Turn ${key.name} on`}
+                label={
+                  key.enabled
+                    ? say('common.turnNameOff', { name: key.name })
+                    : say('common.turnNameOn', { name: key.name })
+                }
                 isOn={key.enabled}
                 onToggle={() => {
                   void setApiKeyEnabled(key.id, !key.enabled).then(read);
@@ -238,7 +248,7 @@ const ApiKeyPanel = ({ showKeyForMilliseconds }: ApiKeyPanelProps) => {
                 isIconOnly
                 variant="ghost"
                 size="sm"
-                label={`Revoke ${key.name}`}
+                label={say('screens.apiKeyPanel.revokeName', { name: key.name })}
                 onClick={() => {
                   void revokeApiKey(key.id).then(read);
                 }}

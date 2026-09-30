@@ -12,10 +12,11 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { TheArtistsProps } from './TheArtists.types';
+import { say } from '@ValenceI18n/say';
 
 const WHICH = [
-  { id: 'all', label: 'Everyone' },
-  { id: 'followed', label: 'Following' },
+  { id: 'all', label: say('common.everyone') },
+  { id: 'followed', label: say('common.following') },
 ] as const;
 
 const ACROSS = 2;
@@ -38,9 +39,9 @@ const TheArtists = ({ onArtist, onBack }: TheArtistsProps) => {
       across={ACROSS}
       header={
         <>
-          <Words size="title">Artists</Words>
+          <Words size="title">{say('common.artists')}</Words>
           <SegmentedRow
-            label="Which artists to show"
+            label={say('common.whichArtistsToShow')}
             items={WHICH}
             value={isFollowedOnly ? 'followed' : 'all'}
             onSelect={(id) => {
@@ -52,14 +53,14 @@ const TheArtists = ({ onArtist, onBack }: TheArtistsProps) => {
             isFollowedOnly ? (
               <ANothingHere
                 of={Mic}
-                title="Not following anybody yet"
-                detail="Follow an artist from their page and they will be here."
+                title={say('common.notFollowingAnybodyYet')}
+                detail={say('common.followAnArtistFromTheirPage')}
               />
             ) : (
               <ANothingHere
                 of={Mic}
-                title="No artists yet"
-                detail="Once a music library has been scanned, its artists will be here."
+                title={say('common.noArtistsYet')}
+                detail={say('common.onceAMusicLibraryHasBeen2')}
               />
             )
           ) : null}

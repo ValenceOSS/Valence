@@ -15,6 +15,7 @@ import { pluginImageUrl } from '@ValenceClient/plugins/pluginImageUrl';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { ABlockProps } from './ABlock.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   group: { gap: 12 },
@@ -135,7 +136,11 @@ const ABlock = ({ block, pluginId, fields, onField, onAct, isActing, onLookAt }:
               {block.label}
             </Words>
           )}
-          <HowFar fraction={block.value} label={block.label ?? 'Progress'} thickness={4} />
+          <HowFar
+            fraction={block.value}
+            label={block.label ?? say('common.progress')}
+            thickness={4}
+          />
         </View>
       );
 
@@ -155,7 +160,7 @@ const ABlock = ({ block, pluginId, fields, onField, onAct, isActing, onLookAt }:
         <Button
           tone="ghost"
           icon={ArrowUpRight}
-          label={`${block.label}, opens in the browser`}
+          label={say('phone.aPluginSurface.aBlock.labelOpensInTheBrowser', { label: block.label })}
           onPress={() => {
             if (block.url.startsWith('https://')) {
               void Linking.openURL(block.url);

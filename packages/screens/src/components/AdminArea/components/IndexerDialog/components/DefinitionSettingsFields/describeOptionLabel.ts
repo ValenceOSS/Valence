@@ -1,6 +1,8 @@
+import { say } from '@ValenceI18n/say';
+
 const NAMED: Readonly<Record<string, string>> = {
-  asc: 'Ascending',
-  desc: 'Descending',
+  asc: say('screens.definitionSettingsFields.describeOptionLabel.ascending'),
+  desc: say('screens.definitionSettingsFields.describeOptionLabel.descending'),
 };
 
 /**

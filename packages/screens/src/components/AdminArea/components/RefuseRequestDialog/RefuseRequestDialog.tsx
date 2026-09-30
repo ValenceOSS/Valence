@@ -7,6 +7,8 @@ import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { TextField } from '@ValenceUI/TextField';
 import { refuseMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
 import type { RefuseRequestDialogProps } from './RefuseRequestDialog.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * Refuses a request, with a reason for whoever asked where there is one worth giving. Several
@@ -31,8 +33,10 @@ const RefuseRequestDialog = ({
   const [problem, setProblem] = useState<string | null>(null);
   const isMany = howMany > 1 && onRefuseMany !== undefined;
   const title = isMany
-    ? `Refuse ${howMany.toString()} requests?`
-    : `Refuse ${request?.title ?? 'this request'}?`;
+    ? sayCount('screens.adminArea.refuseRequestDialog.refuseCountRequests', howMany)
+    : request === null
+      ? say('screens.adminArea.refuseRequestDialog.refuseThisRequest')
+      : say('screens.adminArea.refuseRequestDialog.refuseTitle', { title: request.title });
 
   const refuse = () => {
     if (request === null) {
@@ -52,12 +56,16 @@ const RefuseRequestDialog = ({
     void refuseMediaRequest(request.id, reason)
       .then(({ value, refusal }) => {
         if (value === null) {
-          setProblem(refusal?.message ?? 'It could not be refused.');
+          setProblem(
+            refusal?.message ?? say('screens.adminArea.refuseRequestDialog.itCouldNotBeRefused'),
+          );
 
           return;
         }
 
-        notify.worked(`Refused ${request.title}.`);
+        notify.worked(
+          say('screens.adminArea.refuseRequestDialog.refusedTitle', { title: request.title }),
+        );
         setReason('');
         onRefused(value);
         onClose();
@@ -72,19 +80,23 @@ const RefuseRequestDialog = ({
       <DialogTitle
         size="compact"
         title={title}
-        detail="Nothing is fetched for it. It can still be approved later."
+        detail={say('screens.adminArea.refuseRequestDialog.nothingIsFetchedForItIt')}
       />
 
       <DialogContent>
         <TextField
-          label="Why"
+          label={say('common.why')}
           value={reason}
           onValueChange={setReason}
-          placeholder="Optional"
+          placeholder={say('screens.adminArea.refuseRequestDialog.optional')}
           description={
             isMany
-              ? 'Shown to everybody who requested one of them.'
-              : `Shown to ${request?.requestedBy.name ?? 'whoever asked'}.`
+              ? say('screens.adminArea.refuseRequestDialog.shownToEverybodyWhoRequestedOne')
+              : request === null
+                ? say('screens.adminArea.refuseRequestDialog.shownToWhoeverAsked')
+                : say('screens.adminArea.refuseRequestDialog.shownToName', {
+                    name: request.requestedBy.name,
+                  })
           }
         />
       </DialogContent>
@@ -92,7 +104,12 @@ const RefuseRequestDialog = ({
       <DialogFooter
         note={problem}
         dismiss={{ onChoose: onClose }}
-        confirm={{ label: 'Refuse', onChoose: refuse, isLoading: isRefusing, isDestructive: true }}
+        confirm={{
+          label: say('common.refuse'),
+          onChoose: refuse,
+          isLoading: isRefusing,
+          isDestructive: true,
+        }}
       />
     </DialogCompanion>
   );

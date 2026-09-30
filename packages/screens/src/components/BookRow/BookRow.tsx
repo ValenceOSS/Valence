@@ -5,6 +5,8 @@ import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { gatherSeries } from '@ValenceScreens/reading/gatherSeries';
 import type { Book } from '@ValenceContracts/schemas/Book';
 import type { BookRowProps } from './BookRow.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * What goes under a book on a shelf: who wrote an ebook or an audiobook, or how many chapters a
@@ -17,12 +19,10 @@ const describeOnShelf = (book: Book): string =>
   book.layout === 'reflow' || book.layout === 'audio'
     ? book.authors === null || book.authors.length === 0
       ? book.layout === 'audio'
-        ? 'Audiobook'
-        : 'Ebook'
+        ? say('common.audiobook')
+        : say('common.ebook')
       : book.authors.join(', ')
-    : book.chapterCount === 1
-      ? '1 chapter'
-      : `${book.chapterCount.toString()} chapters`;
+    : sayCount('common.count.chapters', book.chapterCount);
 
 /**
  * What goes above a book on a shelf: its place in its series, on a shelf of one series, and
@@ -34,7 +34,7 @@ const describeOnShelf = (book: Book): string =>
  */
 const eyebrowOf = (book: Book, isNumbered: boolean): string | null =>
   isNumbered && typeof book.series?.position === 'number'
-    ? `Book ${book.series.position.toString()}`
+    ? say('screens.bookRow.bookPosition', { position: book.series.position.toString() })
     : (book.year?.toString() ?? null);
 
 /**
@@ -83,7 +83,9 @@ const BookRow = ({
               title={series.name}
               shape="book"
               {...(first === undefined ? {} : { imageUrl: bookCoverUrl(first.id) })}
-              subtitle={[`${series.books.length.toString()} books`, ...authors].join(' · ')}
+              subtitle={[sayCount('common.count.books', series.books.length), ...authors].join(
+                ' · ',
+              )}
               onSelect={() => {
                 onOpenSeries?.(series);
               }}

@@ -1,5 +1,6 @@
 import { QUALITY_NAMES } from '@ValenceScreens/components/AdminArea/QUALITY_NAMES';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says in a line what a profile takes, best first, and how far it upgrades.
@@ -25,10 +26,10 @@ const describeProfile = (profile: QualityProfile): { takes: string; upgrades: st
         ? [named(profile.resolutions), named(profile.sources)].filter(Boolean).join(' · ')
         : named(profile.musicQualities),
     upgrades: !profile.isUpgrading
-      ? 'No'
+      ? say('screens.profilesPanel.describeProfile.no')
       : until === ''
-        ? 'To the best there is'
-        : `Until ${until}`,
+        ? say('screens.profilesPanel.describeProfile.toTheBestThereIs')
+        : say('screens.profilesPanel.describeProfile.untilUntil', { until }),
   };
 };
 

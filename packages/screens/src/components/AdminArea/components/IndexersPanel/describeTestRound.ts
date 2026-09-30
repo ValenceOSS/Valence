@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+
 /**
  * Sums up testing several indexers at once: how many answered, and why each of the rest did not.
  *
@@ -10,7 +12,11 @@ const describeTestRound = (
   const failed = outcomes.flatMap(({ failure }) => (failure === null ? [] : [failure]));
   const count = outcomes.length.toString();
   const done =
-    outcomes.length === 1 ? `${outcomes[0]?.name ?? 'It'} answered.` : `All ${count} answered.`;
+    outcomes.length === 1
+      ? outcomes[0] === undefined
+        ? say('common.itAnswered')
+        : say('common.nameAnswered', { name: outcomes[0].name })
+      : say('screens.indexersPanel.describeTestRound.allCountAnswered', { count });
 
   if (failed.length === 0) {
     return { done, failure: null };
@@ -20,7 +26,11 @@ const describeTestRound = (
     ? { done, failure: failed.join('') }
     : {
         done,
-        failure: `${(outcomes.length - failed.length).toString()} of ${count} answered. ${failed.join('; ')}`,
+        failure: say('screens.indexersPanel.describeTestRound.valueOfCountAnsweredValue2', {
+          value: (outcomes.length - failed.length).toString(),
+          count,
+          value2: failed.join('; '),
+        }),
       };
 };
 

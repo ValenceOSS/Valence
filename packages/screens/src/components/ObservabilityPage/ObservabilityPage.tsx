@@ -32,6 +32,7 @@ import type {
   ObservabilityView,
 } from '@ValenceClient/admin/ObservabilitySearchSchema';
 import type { ObservabilityPageProps } from './ObservabilityPage.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Whether a string the tab row handed back actually names one of this page's views.
@@ -129,7 +130,7 @@ const ObservabilityPage = ({
   return (
     <div className="flex flex-col gap-4">
       <DialogCompanion
-        label={sayAgainIfAny(viewing?.label) ?? 'Schedule'}
+        label={sayAgainIfAny(viewing?.label) ?? say('screens.observabilityPage.schedule')}
         isOpen={viewing !== null}
         onClose={onCloseSchedule}
       >
@@ -177,7 +178,7 @@ const ObservabilityPage = ({
         }}
       >
         <PanelCard
-          title="Jobs & logs"
+          title={say('common.jobsLogs')}
           actions={
             <>
               <span className="text-xs text-text-muted">
@@ -194,7 +195,7 @@ const ObservabilityPage = ({
                         <Button
                           variant="link"
                           size="none"
-                          label="Show the jobs that failed in the last 24 hours"
+                          label={say('screens.observabilityPage.showTheJobsThatFailedIn')}
                           hasTooltip={false}
                           onClick={() => {
                             update({
@@ -221,7 +222,7 @@ const ObservabilityPage = ({
                 <>
                   {monitor.queue.paused ? (
                     <Badge size="sm" tone="warning">
-                      Paused
+                      {say('common.paused')}
                     </Badge>
                   ) : null}
 
@@ -233,7 +234,7 @@ const ObservabilityPage = ({
                       void setQueuePaused(!monitor.queue.paused);
                     }}
                   >
-                    {monitor.queue.paused ? 'Resume' : 'Pause'}
+                    {monitor.queue.paused ? say('common.resume') : say('common.pause')}
                   </PanelCardAction>
                 </>
               )}
@@ -241,17 +242,17 @@ const ObservabilityPage = ({
           }
           below={
             <TabRow
-              label="What to look at"
+              label={say('screens.observabilityPage.whatToLookAt')}
               tone="underlined"
               size="sm"
               value={view}
               groups={[
                 {
                   items: [
-                    { id: 'jobs', label: 'Jobs' },
-                    { id: 'logs', label: 'Logs' },
-                    { id: 'health', label: 'Health' },
-                    { id: 'run', label: 'Run & schedule' },
+                    { id: 'jobs', label: say('common.jobs') },
+                    { id: 'logs', label: say('screens.observabilityPage.logs') },
+                    { id: 'health', label: say('screens.observabilityPage.health') },
+                    { id: 'run', label: say('screens.observabilityPage.runSchedule') },
                   ],
                 },
               ]}

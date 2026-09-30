@@ -11,12 +11,13 @@ import { Callout } from '@ValenceUI/Callout';
 import { Icon } from '@ValenceUI/Icon';
 import { Switch } from '@ValenceUI/Switch';
 import type { InstalledPluginCardProps } from './InstalledPluginCard.types';
+import { say } from '@ValenceI18n/say';
 
 const STATES = {
-  running: { label: 'Running', tone: 'success' },
-  idle: { label: 'Ready', tone: 'quiet' },
-  stopped: { label: 'Off', tone: 'quiet' },
-  failed: { label: 'Failed', tone: 'danger' },
+  running: { label: say('common.running'), tone: 'success' },
+  idle: { label: say('screens.pluginsPanel.installedPluginCard.ready'), tone: 'quiet' },
+  stopped: { label: say('common.off'), tone: 'quiet' },
+  failed: { label: say('common.failed'), tone: 'danger' },
 } as const;
 
 /**
@@ -62,7 +63,7 @@ const InstalledPluginCard = ({
             <span className="truncate font-medium text-text">{plugin.name}</span>
             <span className="text-xs text-text-muted">{plugin.version}</span>
             <Badge size="sm" tone={plugin.trust === 'official' ? 'success' : 'warning'}>
-              {plugin.trust === 'official' ? 'Official' : 'Not signed'}
+              {plugin.trust === 'official' ? say('common.official') : say('common.notSigned')}
             </Badge>
             {plugin.isEnabled ? (
               <Badge size="sm" tone={state.tone}>
@@ -72,11 +73,17 @@ const InstalledPluginCard = ({
           </div>
 
           <p className="text-xs leading-relaxed text-text-muted">{plugin.description}</p>
-          <p className="text-xs text-text-muted/80">By {plugin.author}</p>
+          <p className="text-xs text-text-muted/80">
+            {say('common.byAuthor', { author: plugin.author })}
+          </p>
         </div>
 
         <Switch
-          label={plugin.isEnabled ? `Turn ${plugin.name} off` : `Turn ${plugin.name} on`}
+          label={
+            plugin.isEnabled
+              ? say('common.turnNameOff', { name: plugin.name })
+              : say('common.turnNameOn', { name: plugin.name })
+          }
           isLabelHidden
           isOn={plugin.isEnabled}
           disabled={isBusy}
@@ -85,7 +92,10 @@ const InstalledPluginCard = ({
       </div>
 
       {plugin.problem === null ? null : (
-        <Callout title="It stopped working" tone="danger">
+        <Callout
+          title={say('screens.pluginsPanel.installedPluginCard.itStoppedWorking')}
+          tone="danger"
+        >
           {sayAgain(plugin.problem)}
         </Callout>
       )}
@@ -93,7 +103,9 @@ const InstalledPluginCard = ({
       <div className="flex flex-wrap gap-2">
         {plugin.updateAvailable === null ? null : (
           <Button size="sm" variant="confirm" disabled={isBusy} onClick={onUpdate}>
-            Update to {plugin.updateAvailable}
+            {say('screens.pluginsPanel.installedPluginCard.updateToUpdateAvailable', {
+              updateAvailable: plugin.updateAvailable,
+            })}
           </Button>
         )}
 
@@ -113,20 +125,22 @@ const InstalledPluginCard = ({
         {plugin.settings.length === 0 && plugin.webhooks.length === 0 ? null : (
           <Button size="sm" variant="secondary" onClick={onSettings}>
             <Icon of={SettingsIcon} size={14} />
-            Settings
+            {say('common.settings')}
           </Button>
         )}
 
         {plugin.previousVersion === null ? null : (
           <Button size="sm" variant="ghost" disabled={isBusy} onClick={onRollback}>
             <Icon of={RotateCcwIcon} size={14} />
-            Roll back to {plugin.previousVersion}
+            {say('screens.adminArea.pluginsPanel.rollBackToVersion', {
+              version: plugin.previousVersion,
+            })}
           </Button>
         )}
 
         <Button size="sm" variant="ghost" disabled={isBusy} onClick={onRemove}>
           <Icon of={BinIcon} size={14} />
-          Remove
+          {say('common.remove')}
         </Button>
       </div>
     </li>

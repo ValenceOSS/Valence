@@ -10,6 +10,7 @@ import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { AReaderProps } from './AReader.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Reading one book, opened where the web's reading page opens it: in the chapter somebody last read
@@ -64,7 +65,7 @@ const AReader = ({ bookId, chapterId, isFromTheStart, onBack }: AReaderProps) =>
   if (asked.isError) {
     return (
       <Screen centres onBack={onBack}>
-        <Words tone="danger">That book could not be read.</Words>
+        <Words tone="danger">{say('common.thatBookCouldNotBeRead')}</Words>
       </Screen>
     );
   }
@@ -81,7 +82,7 @@ const AReader = ({ bookId, chapterId, isFromTheStart, onBack }: AReaderProps) =>
     return (
       <Screen centres onBack={onBack}>
         <Words tone="muted" isCentred>
-          Nothing in this book yet. Scanning the library again may find it.
+          {say('common.nothingInThisBookYetScanning')}
         </Words>
       </Screen>
     );

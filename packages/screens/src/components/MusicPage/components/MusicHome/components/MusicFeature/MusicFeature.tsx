@@ -14,6 +14,7 @@ import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import type { MusicFeatureProps } from './MusicFeature.types';
+import { say } from '@ValenceI18n/say';
 
 const UP_NEXT_SHOWN = 4;
 
@@ -58,7 +59,11 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
 
   return (
     <section
-      aria-label={song === null ? 'Newest in your library' : 'Now playing'}
+      aria-label={
+        song === null
+          ? say('screens.musicHome.musicFeature.newestInYourLibrary')
+          : say('common.nowPlaying')
+      }
       className={`relative grid items-end gap-8 pt-6 pb-4 lg:grid-cols-[minmax(0,1fr)_20rem] ${MUSIC_LANES.page}`}
     >
       <AnimatePresence mode="popLayout" initial={false}>
@@ -71,7 +76,7 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
           <Button
             variant="bare"
             size="none"
-            label={`Open ${album.title}`}
+            label={say('common.openTitle', { title: album.title })}
             hasTooltip={false}
             className="block w-48 shrink-0 sm:w-60 lg:w-72"
             onClick={() => {
@@ -93,10 +98,10 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
               className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted"
             >
               {song === null
-                ? 'Newest in your library'
+                ? say('screens.musicHome.musicFeature.newestInYourLibrary')
                 : state.isPlaying
-                  ? 'Now playing'
-                  : 'Paused'}
+                  ? say('common.nowPlaying')
+                  : say('common.paused')}
             </motion.span>
 
             <motion.h2
@@ -139,7 +144,11 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
                   of={song !== null && state.isPlaying ? PauseFilledIcon : PlayFilledIcon}
                   size={18}
                 />
-                {song === null ? 'Play' : state.isPlaying ? 'Pause' : 'Resume'}
+                {song === null
+                  ? say('common.play')
+                  : state.isPlaying
+                    ? say('common.pause')
+                    : say('common.resume')}
               </Button>
 
               {song === null || song.videoKey === null ? null : (
@@ -154,7 +163,7 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
                   }}
                 >
                   <Icon of={VideoIcon} size={18} />
-                  Watch the video
+                  {say('common.watchTheVideo')}
                 </Button>
               )}
             </motion.div>
@@ -163,9 +172,9 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
       </AnimatePresence>
 
       {upNext.length === 0 ? null : (
-        <section aria-label="Up next" className="hidden flex-col gap-2 lg:flex">
+        <section aria-label={say('common.upNext')} className="hidden flex-col gap-2 lg:flex">
           <h3 className="px-2 text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
-            Up next
+            {say('common.upNext')}
           </h3>
           <ol className="flex flex-col">
             {upNext.map(({ at, track }) => (
@@ -174,7 +183,7 @@ const MusicFeature = ({ newest, player: given }: MusicFeatureProps) => {
                   variant="row"
                   size="none"
                   hasTooltip={false}
-                  label={`Play ${track.title} now`}
+                  label={say('common.playTitleNow', { title: track.title })}
                   className="items-center gap-3 p-2"
                   onClick={() => {
                     player.jumpTo(at);

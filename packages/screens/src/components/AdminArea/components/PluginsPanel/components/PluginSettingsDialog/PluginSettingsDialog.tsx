@@ -9,6 +9,7 @@ import { changePlugin } from '@ValenceClient/plugins/changePlugin';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { CopyableAddress } from './components/CopyableAddress/CopyableAddress';
 import type { PluginSettingsDialogProps } from './PluginSettingsDialog.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * A plugin's settings, such as the keys it signs in to another service with. A secret is never shown
@@ -48,17 +49,21 @@ const PluginSettingsDialog = ({
   }, [plugin]);
 
   return (
-    <Dialog label="Plugin settings" isOpen={plugin !== null} onClose={onClose}>
+    <Dialog
+      label={say('screens.pluginsPanel.pluginSettingsDialog.pluginSettings')}
+      isOpen={plugin !== null}
+      onClose={onClose}
+    >
       {plugin === null ? null : (
         <>
-          <DialogTitle title={`${plugin.name} settings`} />
+          <DialogTitle title={say('common.nameSettings', { name: plugin.name })} />
 
           <DialogContent className="flex flex-col gap-4">
             {redirectUri === null ||
             !plugin.permissions.some((permission) => permission.kind === 'accounts') ? null : (
               <CopyableAddress
-                title="Redirect address"
-                detail="Give this to each service when you create its API client, so it can send people back here once they connect."
+                title={say('screens.pluginsPanel.pluginSettingsDialog.redirectAddress')}
+                detail={say('screens.pluginsPanel.pluginSettingsDialog.giveThisToEachServiceWhen')}
                 address={redirectUri}
               />
             )}
@@ -67,7 +72,9 @@ const PluginSettingsDialog = ({
               <CopyableAddress
                 key={hook.id}
                 title={hook.title}
-                detail="Give this webhook address to the service that sends these messages. It is secret: anybody holding it can send this plugin a message."
+                detail={say(
+                  'screens.pluginsPanel.pluginSettingsDialog.giveThisWebhookAddressToThe',
+                )}
                 address={hook.url}
               />
             ))}
@@ -97,7 +104,11 @@ const PluginSettingsDialog = ({
                   autoComplete={setting.kind === 'secret' ? 'new-password' : 'off'}
                   value={typeof value === 'string' ? value : ''}
                   {...(setting.kind === 'secret' && setting.isSet
-                    ? { placeholder: 'Saved. Type to replace it.' }
+                    ? {
+                        placeholder: say(
+                          'screens.pluginsPanel.pluginSettingsDialog.savedTypeToReplaceIt',
+                        ),
+                      }
                     : {})}
                   {...(setting.help === null ? {} : { description: setting.help })}
                   onValueChange={(next) => {
@@ -111,7 +122,7 @@ const PluginSettingsDialog = ({
           <DialogFooter
             dismiss={{ onChoose: onClose }}
             confirm={{
-              label: 'Save',
+              label: say('common.save'),
               isLoading: isSaving,
               onChoose: () => {
                 const settings = Object.fromEntries(
@@ -124,7 +135,12 @@ const PluginSettingsDialog = ({
 
                 void changePlugin(plugin.id, { settings })
                   .then(() => {
-                    tellOutcome(`Saved ${plugin.name}’s settings.`, null);
+                    tellOutcome(
+                      say('screens.pluginsPanel.pluginSettingsDialog.savedNameSSettings', {
+                        name: plugin.name,
+                      }),
+                      null,
+                    );
                     onSaved();
                   })
                   .catch((problem: Error) => {

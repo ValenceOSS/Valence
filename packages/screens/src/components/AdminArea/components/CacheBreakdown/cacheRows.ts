@@ -1,5 +1,7 @@
 import type { AdminOverview, Monitor } from '@ValenceClient/admin/fetchAdmin';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 type CacheRow = {
   label: string;
@@ -7,18 +9,6 @@ type CacheRow = {
   detail: string;
   hint?: string;
 };
-
-/**
- * Counts something in words that read properly at one as well as at many, so a row says "1 clip"
- * rather than "1 clips".
- *
- * @param count - How many there are.
- * @param one - What one is called.
- * @param many - What several are called.
- * @returns The count and its noun.
- */
-const counted = (count: number, one: string, many: string): string =>
-  count === 1 ? `1 ${one}` : `${count.toString()} ${many}`;
 
 /**
  * Builds the rows of the disk breakdown, one per kind of thing Valence keeps, each with its size and how
@@ -40,66 +30,69 @@ const cacheRows = (
   library: { bytes: number; itemCount: number } | null,
   bookPages: AdminOverview['bookPages'] = null,
 ): CacheRow[] => {
-  const pending = { value: '—', detail: 'Still counting' };
+  const pending = { value: '—', detail: say('screens.cacheBreakdown.cacheRows.stillCounting') };
 
   return [
     {
-      label: 'Preview clips',
+      label: say('common.previewClips'),
       ...(cache === null
         ? pending
         : {
             value: formatBytes(cache.previews.bytes),
-            detail: counted(cache.previews.count, 'clip', 'clips'),
+            detail: sayCount('screens.cacheBreakdown.cacheRows.clips', cache.previews.count),
           }),
     },
     {
-      label: 'Scrub thumbnails',
+      label: say('screens.cacheBreakdown.cacheRows.scrubThumbnails'),
       ...(cache === null
         ? pending
         : {
             value: formatBytes(cache.trickplay.bytes),
-            detail: counted(cache.trickplay.count, 'set', 'sets'),
+            detail: sayCount('screens.cacheBreakdown.cacheRows.sets', cache.trickplay.count),
           }),
     },
     {
-      label: 'Transcode sessions',
-      hint: 'Files that will not play on a device as they are get converted, and the result is kept so resuming does not convert it again. Each device keeps only the last thing it played. None of this is your media — it rebuilds on demand.',
+      label: say('screens.cacheBreakdown.cacheRows.transcodeSessions'),
+      hint: say('screens.cacheBreakdown.cacheRows.filesThatWillNotPlayOn'),
       ...(cache === null
         ? pending
         : {
             value: formatBytes(cache.sessions.bytes),
             detail:
               cache.sessions.count <= liveSessions
-                ? counted(cache.sessions.count, 'running', 'running')
-                : `${counted(cache.sessions.count - liveSessions, 'left behind', 'left behind')}`,
+                ? sayCount('screens.cacheBreakdown.cacheRows.running', cache.sessions.count)
+                : sayCount(
+                    'screens.cacheBreakdown.cacheRows.leftBehindCount',
+                    cache.sessions.count - liveSessions,
+                  ),
           }),
     },
     {
-      label: 'Artwork',
+      label: say('common.artwork'),
       ...(artwork === null
         ? pending
         : {
             value: formatBytes(artwork.bytes),
-            detail: counted(artwork.count, 'image', 'images'),
+            detail: sayCount('screens.cacheBreakdown.cacheRows.images', artwork.count),
           }),
     },
     ...(bookPages === null || bookPages.count === 0
       ? []
       : [
           {
-            label: 'Book pages',
-            hint: 'Pages of books and comics are kept once they have been drawn for a screen, so turning back is instant. A chapter nobody has opened for 30 days is let go, and comes back the next time somebody reads it.',
+            label: say('screens.cacheBreakdown.cacheRows.bookPages'),
+            hint: say('screens.cacheBreakdown.cacheRows.pagesOfBooksAndComicsAre'),
             value: formatBytes(bookPages.bytes),
-            detail: counted(bookPages.count, 'page', 'pages'),
+            detail: sayCount('common.count.pages', bookPages.count),
           },
         ]),
     {
-      label: 'Media library',
+      label: say('screens.cacheBreakdown.cacheRows.mediaLibrary'),
       ...(library === null
         ? pending
         : {
             value: formatBytes(library.bytes),
-            detail: counted(library.itemCount, 'file', 'files'),
+            detail: sayCount('screens.cacheBreakdown.cacheRows.files', library.itemCount),
           }),
     },
   ];

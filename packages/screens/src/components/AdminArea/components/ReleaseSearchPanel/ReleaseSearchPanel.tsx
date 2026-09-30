@@ -25,8 +25,8 @@ import { fetchRelease } from '@ValenceClient/requests/fetchIndexers';
 import { sendRelease } from '@ValenceClient/requests/fetchDownloadQueue';
 import { PROTOCOL_OF_CLIENT } from '@ValenceContracts/schemas/DownloadClient';
 import { LIBRARY_KINDS } from '@ValenceContracts/schemas/Library';
-import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
+import type { StringKey } from '@ValenceI18n/StringKey';
 import { downloadFile } from '@ValenceScreens/admin/downloadFile';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { releaseColumns } from '@ValenceScreens/components/AdminArea/releaseColumns';
@@ -37,13 +37,21 @@ import { libraryKindOf } from './libraryKindOf';
 import { profilesForMode } from './profilesForMode';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { IndexerSearchMode, Release, ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
+import { say } from '@ValenceI18n/say';
+
+const SEND_AS = {
+  movies: 'screens.adminArea.releaseSearchPanel.sendToNameAsAFilm',
+  shows: 'screens.adminArea.releaseSearchPanel.sendToNameAsASeries',
+  music: 'screens.adminArea.releaseSearchPanel.sendToNameAsMusic',
+  books: 'screens.adminArea.releaseSearchPanel.sendToNameAsABook',
+} as const satisfies Readonly<Record<LibraryKind, StringKey>>;
 
 const MODES: readonly { id: IndexerSearchMode; label: string }[] = [
-  { id: 'search', label: 'Anything' },
-  { id: 'movie', label: 'Films' },
-  { id: 'tv', label: 'Series' },
-  { id: 'music', label: 'Music' },
-  { id: 'book', label: 'Books' },
+  { id: 'search', label: say('common.anything') },
+  { id: 'movie', label: say('common.films') },
+  { id: 'tv', label: say('common.series') },
+  { id: 'music', label: say('common.music') },
+  { id: 'book', label: say('common.books') },
 ];
 
 /**
@@ -101,7 +109,7 @@ const ReleaseSearchPanel = () => {
         enableSorting: false,
         cell: ({ row }) => {
           const { magnetUrl, downloadUrl, infoUrl, title, indexerId, protocol } = row.original;
-          const kind = protocol === 'usenet' ? 'NZB' : 'torrent';
+          const isUsenet = protocol === 'usenet';
           const target = (clients.data ?? []).find(
             (client) => client.isEnabled && PROTOCOL_OF_CLIENT[client.kind] === protocol,
           );
@@ -113,7 +121,13 @@ const ReleaseSearchPanel = () => {
               return;
             }
 
-            setSaid({ text: `Sending ${title} to ${target.name}…`, isProblem: false });
+            setSaid({
+              text: say('screens.adminArea.releaseSearchPanel.sendingTitleToName', {
+                title,
+                name: target.name,
+              }),
+              isProblem: false,
+            });
 
             void sendRelease({
               indexerId,
@@ -127,19 +141,39 @@ const ReleaseSearchPanel = () => {
             }).then(({ value, refusal }) => {
               setSaid(
                 value === null
-                  ? { text: refusal?.message ?? `${title} could not be sent.`, isProblem: true }
-                  : { text: `Sent ${title} to ${value.clientName}.`, isProblem: false },
+                  ? {
+                      text:
+                        refusal?.message ??
+                        say('screens.adminArea.releaseSearchPanel.titleCouldNotBeSent', { title }),
+                      isProblem: true,
+                    }
+                  : {
+                      text: say('screens.adminArea.releaseSearchPanel.sentTitleToClientName', {
+                        title,
+                        clientName: value.clientName,
+                      }),
+                      isProblem: false,
+                    },
               );
             });
           };
 
           const save = () => {
-            setSaid({ text: `Fetching the ${kind}…`, isProblem: false });
+            setSaid({
+              text: isUsenet
+                ? say('screens.adminArea.releaseSearchPanel.fetchingTheNzb')
+                : say('screens.adminArea.releaseSearchPanel.fetchingTheTorrent'),
+              isProblem: false,
+            });
 
             void fetchRelease(indexerId, downloadUrl ?? '').then(async ({ value, refusal }) => {
               if (value === null) {
                 setSaid({
-                  text: refusal?.message ?? `The ${kind} could not be fetched.`,
+                  text:
+                    refusal?.message ??
+                    (isUsenet
+                      ? say('screens.adminArea.releaseSearchPanel.theNzbCouldNotBeFetched')
+                      : say('screens.adminArea.releaseSearchPanel.theTorrentCouldNotBeFetched')),
                   isProblem: true,
                 });
 
@@ -149,7 +183,7 @@ const ReleaseSearchPanel = () => {
               if (value.kind === 'magnet') {
                 await navigator.clipboard.writeText(value.url);
                 setSaid({
-                  text: 'That release is a magnet link, which has been copied.',
+                  text: say('screens.adminArea.releaseSearchPanel.thatReleaseIsAMagnetLink'),
                   isProblem: false,
                 });
 
@@ -157,14 +191,17 @@ const ReleaseSearchPanel = () => {
               }
 
               downloadFile(value.name, value.file);
-              setSaid({ text: `Saved ${title}.`, isProblem: false });
+              setSaid({
+                text: say('screens.adminArea.releaseSearchPanel.savedTitle', { title }),
+                isProblem: false,
+              });
             });
           };
 
           return (
             <span className="flex justify-end">
               <ActionMenu
-                label={`Actions for ${title}`}
+                label={say('common.actionsForTitle', { title })}
                 trigger={<Icon of={MoreHorizontalIcon} size={16} />}
                 groups={[
                   {
@@ -173,8 +210,20 @@ const ReleaseSearchPanel = () => {
                         ? [
                             {
                               id: 'send',
-                              label: `Send to a ${protocol === 'usenet' ? 'usenet' : 'torrent'} client`,
-                              detail: `No ${protocol === 'usenet' ? 'usenet' : 'torrent'} client is switched on. Add one on the Downloads page.`,
+                              label:
+                                protocol === 'usenet'
+                                  ? say('screens.adminArea.releaseSearchPanel.sendToAUsenetClient')
+                                  : say(
+                                      'screens.adminArea.releaseSearchPanel.sendToATorrentClient',
+                                    ),
+                              detail:
+                                protocol === 'usenet'
+                                  ? say(
+                                      'screens.adminArea.releaseSearchPanel.noUsenetClientIsSwitchedOn',
+                                    )
+                                  : say(
+                                      'screens.adminArea.releaseSearchPanel.noTorrentClientIsSwitchedOn',
+                                    ),
                               icon: <Icon of={SendFilledIcon} size={15} />,
                               isDisabled: true,
                               onChoose: () => undefined,
@@ -184,8 +233,10 @@ const ReleaseSearchPanel = () => {
                             id: `send-${sending}`,
                             label:
                               libraryKind === null
-                                ? `Send to ${target.name} as ${LIBRARY_KIND_NAMES[sending].one}`
-                                : `Send to ${target.name}`,
+                                ? say(SEND_AS[sending], { name: target.name })
+                                : say('screens.adminArea.releaseSearchPanel.sendToName', {
+                                    name: target.name,
+                                  }),
                             detail: describeWhereItGoes(
                               sending,
                               libraries.data ?? [],
@@ -199,27 +250,35 @@ const ReleaseSearchPanel = () => {
                           }))),
                       {
                         id: 'magnet',
-                        label: 'Copy the magnet link',
+                        label: say('screens.adminArea.releaseSearchPanel.copyTheMagnetLink'),
                         icon: <Icon of={Link2FilledIcon} size={15} />,
                         isDisabled: magnetUrl === null,
                         onChoose: () => {
                           void navigator.clipboard.writeText(magnetUrl ?? '').then(() => {
-                            setSaid({ text: 'The magnet link has been copied.', isProblem: false });
+                            setSaid({
+                              text: say(
+                                'screens.adminArea.releaseSearchPanel.theMagnetLinkHasBeenCopied',
+                              ),
+                              isProblem: false,
+                            });
                           });
                         },
                       },
                       {
                         id: 'download',
-                        label: `Save the ${kind}`,
-                        detail:
-                          'Fetched through Valence, with whatever the site needs to hand it over.',
+                        label: isUsenet
+                          ? say('screens.adminArea.releaseSearchPanel.saveTheNzb')
+                          : say('screens.adminArea.releaseSearchPanel.saveTheTorrent'),
+                        detail: say(
+                          'screens.adminArea.releaseSearchPanel.fetchedThroughValenceWithWhateverThe',
+                        ),
                         icon: <Icon of={DownloadFilledIcon} size={15} />,
                         isDisabled: downloadUrl === null,
                         onChoose: save,
                       },
                       {
                         id: 'page',
-                        label: 'Open its page',
+                        label: say('screens.adminArea.releaseSearchPanel.openItsPage'),
                         icon: <Icon of={SquareArrowUpRightFilledIcon} size={15} />,
                         isDisabled: infoUrl === null,
                         onChoose: () => {
@@ -271,7 +330,7 @@ const ReleaseSearchPanel = () => {
   );
 
   return (
-    <PanelCard title="Search" isFlush>
+    <PanelCard title={say('common.search')} isFlush>
       <form
         className="flex flex-col gap-3 p-4"
         onSubmit={(event) => {
@@ -281,18 +340,18 @@ const ReleaseSearchPanel = () => {
       >
         <div className="flex flex-wrap items-end gap-3">
           <TextField
-            label="Search for"
+            label={say('screens.adminArea.releaseSearchPanel.searchFor')}
             type="search"
             value={query}
             onValueChange={setQuery}
-            placeholder="Dune Part Two 2160p"
+            placeholder={say('screens.adminArea.releaseSearchPanel.dunePartTwo2160p')}
             className="min-w-0 flex-1"
           />
 
           {mode !== 'tv' ? null : (
             <>
               <TextField
-                label="Season"
+                label={say('common.season')}
                 type="number"
                 min={0}
                 value={season}
@@ -301,7 +360,7 @@ const ReleaseSearchPanel = () => {
               />
 
               <TextField
-                label="Episode"
+                label={say('common.episode')}
                 type="number"
                 min={0}
                 value={episode}
@@ -312,13 +371,13 @@ const ReleaseSearchPanel = () => {
           )}
 
           <Button type="submit" variant="glossy" disabled={query.trim() === '' || found.isFetching}>
-            Search
+            {say('common.search')}
           </Button>
         </div>
 
         <div className="flex flex-wrap items-end gap-3">
           <SegmentedRow
-            label="What it is"
+            label={say('screens.adminArea.releaseSearchPanel.whatItIs')}
             size="sm"
             items={MODES}
             value={mode}
@@ -340,16 +399,16 @@ const ReleaseSearchPanel = () => {
           />
 
           <OptionMenu
-            label="Judge against"
+            label={say('screens.adminArea.releaseSearchPanel.judgeAgainst')}
             groups={[
               {
-                name: 'Judge against',
+                name: say('screens.adminArea.releaseSearchPanel.judgeAgainst'),
                 selectedId: profileId ?? 'none',
                 onSelect: (next) => {
                   setProfileId(next === 'none' ? null : next);
                 },
                 options: [
-                  { id: 'none', label: 'No profile' },
+                  { id: 'none', label: say('screens.adminArea.releaseSearchPanel.noProfile') },
                   ...offered.map((one) => ({ id: one.id, label: one.name })),
                 ],
               },
@@ -357,7 +416,11 @@ const ReleaseSearchPanel = () => {
             trigger={
               <>
                 <span className="truncate">
-                  {profile === null ? 'No profile' : `Judged against ${profile.name}`}
+                  {profile === null
+                    ? say('screens.adminArea.releaseSearchPanel.noProfile')
+                    : say('screens.adminArea.releaseSearchPanel.judgedAgainstName', {
+                        name: profile.name,
+                      })}
                 </span>
                 <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
               </>
@@ -368,12 +431,12 @@ const ReleaseSearchPanel = () => {
 
           {profile?.kind !== 'video' ? null : (
             <TextField
-              label="Running time (minutes)"
+              label={say('screens.adminArea.releaseSearchPanel.runningTimeMinutes')}
               type="number"
               min={1}
               value={runtime}
               onValueChange={setRuntime}
-              placeholder="For judging size"
+              placeholder={say('screens.adminArea.releaseSearchPanel.forJudgingSize')}
               className="w-48"
             />
           )}
@@ -391,32 +454,31 @@ const ReleaseSearchPanel = () => {
 
       {asked === null ? (
         <p className="px-4 pb-6 text-sm text-text-muted">
-          Search every enabled indexer at once. What each finds is listed together, most widely
-          shared first.
+          {say('screens.adminArea.releaseSearchPanel.searchEveryEnabledIndexerAtOnce')}
         </p>
       ) : found.isError ? (
         <CouldNotRead
-          what="The search"
+          said={say('common.theSearchCouldNotBeRead')}
           isTryingAgain={found.isFetching}
           onTryAgain={() => {
             void found.refetch();
           }}
         />
       ) : found.isPending ? (
-        <Spinner isCentered label="Asking every indexer" size="sm" />
+        <Spinner isCentered label={say('common.askingEveryIndexer')} size="sm" />
       ) : (
         <div className="flex flex-col gap-3">
           <IndexerReportList reports={found.data.indexers} />
 
           <DataTable
-            label="Releases found"
+            label={say('common.releasesFound')}
             columns={columns}
             rows={releases}
             getRowId={(release) => release.id}
             emptyMessage={
               found.data.indexers.length === 0
-                ? 'No indexer is switched on, so there was nothing to search.'
-                : 'Nothing was found. Try fewer words, or another kind.'
+                ? say('screens.adminArea.releaseSearchPanel.noIndexerIsSwitchedOnSo')
+                : say('screens.adminArea.releaseSearchPanel.nothingWasFoundTryFewerWords')
             }
           />
         </div>

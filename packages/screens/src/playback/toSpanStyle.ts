@@ -1,18 +1,19 @@
 import type { CSSProperties } from 'react';
 import type { SubtitleSpan } from '@ValenceClient/playback/fetchSubtitleCues';
+import { say } from '@ValenceI18n/say';
 
 const KNOWN_FONTS: Record<string, string> = {
-  arial: 'Arial, Helvetica, sans-serif',
-  helvetica: 'Helvetica, Arial, sans-serif',
-  impact: 'Impact, Haettenschweiler, sans-serif',
-  verdana: 'Verdana, Geneva, sans-serif',
-  tahoma: 'Tahoma, Geneva, sans-serif',
-  georgia: 'Georgia, "Times New Roman", serif',
-  times: '"Times New Roman", Times, serif',
-  'times new roman': '"Times New Roman", Times, serif',
-  courier: '"Courier New", Courier, monospace',
-  'courier new': '"Courier New", Courier, monospace',
-  'comic sans ms': '"Comic Sans MS", cursive',
+  arial: say('screens.playback.toSpanStyle.arialHelveticaSansSerif'),
+  helvetica: say('screens.playback.toSpanStyle.helveticaArialSansSerif'),
+  impact: say('screens.playback.toSpanStyle.impactHaettenschweilerSansSerif'),
+  verdana: say('screens.playback.toSpanStyle.verdanaGenevaSansSerif'),
+  tahoma: say('screens.playback.toSpanStyle.tahomaGenevaSansSerif'),
+  georgia: say('common.georgiaTimesNewRomanSerif'),
+  times: say('screens.playback.toSpanStyle.timesNewRomanTimesSerif'),
+  'times new roman': say('screens.playback.toSpanStyle.timesNewRomanTimesSerif'),
+  courier: say('screens.playback.toSpanStyle.courierNewCourierMonospace'),
+  'courier new': say('screens.playback.toSpanStyle.courierNewCourierMonospace'),
+  'comic sans ms': say('screens.playback.toSpanStyle.comicSansMSCursive'),
   'trebuchet ms': '"Trebuchet MS", Helvetica, sans-serif',
 };
 

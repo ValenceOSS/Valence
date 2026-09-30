@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LibrariesPanel } from './LibrariesPanel';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { ScanEntry } from '@ValenceScreens/components/AdminArea/scanCoordinator';
+import { readsWhole } from '@ValenceScreens/testing/readsWhole';
 
 const library = (overrides: Partial<Library> = {}): Library => ({
   id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
@@ -189,13 +190,13 @@ describe('LibrariesPanel', () => {
 
     expect(screen.getByText('Films')).toBeInTheDocument();
     expect(screen.getByText('/media/films')).toBeInTheDocument();
-    expect(screen.getByText('4 items')).toBeInTheDocument();
+    expect(screen.getByText(readsWhole('4 items'))).toBeInTheDocument();
   });
 
   it('counts one item without saying "1 items"', () => {
     render(<LibrariesPanel {...props} libraries={[library({ itemCount: 1 })]} />);
 
-    expect(screen.getByText('1 item')).toBeInTheDocument();
+    expect(screen.getByText(readsWhole('1 item'))).toBeInTheDocument();
   });
 
   it('scans one library on request', async () => {

@@ -19,6 +19,7 @@ import { ScanToConnect } from '@ValenceTv/components/ScanToConnect/ScanToConnect
 import { useScanToOpen } from '@ValenceTv/plugins/useScanToOpen';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { PluginPageProps } from './PluginPage.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   page: { flex: 1 },
@@ -58,13 +59,17 @@ const PluginPage = ({ pluginId, pageId, onGone }: PluginPageProps) => {
 
   usePluginWithdrawn(pluginId, (change) => {
     onGone();
-    Alert.alert(saidWhenWithdrawn(about?.pluginName ?? 'That plugin', change.change));
+    Alert.alert(saidWhenWithdrawn(about?.pluginName ?? say('common.thatPlugin'), change.change));
   });
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.inside}>
-      <Text style={styles.heading}>{about?.title ?? 'Plugin'}</Text>
-      {about === undefined ? null : <Text style={styles.from}>{`From ${about.pluginName}`}</Text>}
+      <Text style={styles.heading}>{about?.title ?? say('tv.pluginPage.plugin')}</Text>
+      {about === undefined ? null : (
+        <Text style={styles.from}>
+          {say('common.fromPluginName', { pluginName: about.pluginName })}
+        </Text>
+      )}
 
       {page.problem === null ? null : <PluginNotice tone="danger" text={page.problem} />}
 
@@ -80,8 +85,13 @@ const PluginPage = ({ pluginId, pageId, onGone }: PluginPageProps) => {
           />
         ) : page.isError ? (
           <View style={styles.away}>
-            <Text style={styles.nothing}>This page could not be read.</Text>
-            <Button label="Try again" variant="secondary" hasPreferredFocus onPress={page.retry} />
+            <Text style={styles.nothing}>{say('tv.pluginPage.thisPageCouldNotBeRead')}</Text>
+            <Button
+              label={say('common.tryAgain')}
+              variant="secondary"
+              hasPreferredFocus
+              onPress={page.retry}
+            />
           </View>
         ) : (
           <ActivityIndicator size="large" color={tokens.colours.text} />

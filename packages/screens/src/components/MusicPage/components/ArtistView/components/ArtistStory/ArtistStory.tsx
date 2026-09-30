@@ -12,6 +12,7 @@ import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import { askingOf } from '@ValenceScreens/requests/askingOf';
 import { useMayRequest } from '@ValenceClient/requests/useMayRequest';
 import type { ArtistStoryProps } from './ArtistStory.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * What an artist's page says beyond the songs of theirs in the library: a few sentences about them,
@@ -39,10 +40,12 @@ const ArtistStory = ({ artistId, name }: ArtistStoryProps) => {
     <>
       {bio === null ? null : (
         <section
-          aria-label={`About ${name}`}
+          aria-label={say('common.aboutName', { name })}
           className={`flex flex-col gap-3 ${MUSIC_LANES.tracks}`}
         >
-          <h2 className="px-3 text-lg font-semibold tracking-tight text-text">About</h2>
+          <h2 className="px-3 text-lg font-semibold tracking-tight text-text">
+            {say('common.about')}
+          </h2>
           <div className="flex max-w-3xl flex-col gap-2 px-3">
             <ReadMore
               lines={4}
@@ -52,7 +55,7 @@ const ArtistStory = ({ artistId, name }: ArtistStoryProps) => {
             </ReadMore>
             {sourceUrl === null ? null : (
               <Link href={sourceUrl} className="w-fit font-body text-xs text-text-muted">
-                From Wikipedia
+                {say('common.fromWikipedia')}
               </Link>
             )}
           </div>
@@ -60,7 +63,7 @@ const ArtistStory = ({ artistId, name }: ArtistStoryProps) => {
       )}
 
       {!mayRequest || missing.length === 0 ? null : (
-        <MusicShelf heading={`More from ${name}`}>
+        <MusicShelf heading={say('common.moreFromName', { name })}>
           {missing.map((album, at) => (
             <RevealItem key={album.releaseGroupId} index={at}>
               <MusicTile
@@ -68,7 +71,7 @@ const ArtistStory = ({ artistId, name }: ArtistStoryProps) => {
                 detail={[
                   album.year?.toString(),
                   album.type === null ? undefined : RELEASE_TYPE_NAMES[album.type].one,
-                  'Not in your library',
+                  say('common.notInYourLibrary'),
                 ]
                   .filter((part) => part !== undefined)
                   .join(' · ')}

@@ -3,6 +3,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { SettingRow } from '@ValenceUI/SettingRow';
 import type { WaitRowProps } from './WaitRow.types';
+import { say } from '@ValenceI18n/say';
 
 const NEVER = 'never';
 
@@ -26,7 +27,7 @@ const WaitRow = ({ title, description, choices, value, unit, onChange }: WaitRow
         label={title}
         groups={[
           {
-            name: 'Give up after',
+            name: say('screens.giveUpRulesList.waitRow.giveUpAfter'),
             selectedId,
             onSelect: (id) => {
               onChange(id === NEVER ? null : Number(id));

@@ -1,5 +1,6 @@
 import { describePlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
 import type { ActiveSession } from '@ValenceClient/admin/fetchAdmin';
+import { say } from '@ValenceI18n/say';
 
 type SessionDelivery = {
   label: string;
@@ -9,19 +10,19 @@ type SessionDelivery = {
 const DELIVERIES = {
   DirectPlay: {
     label: 'DirectPlay',
-    detail: 'Direct play — the original file, handed over untouched',
+    detail: say('screens.admin.describeSessionDelivery.directPlayTheOriginalFileHanded'),
   },
   Remux: {
-    label: 'Remux',
-    detail: 'Remux — the original picture and sound, rewrapped for this client',
+    label: say('common.remux'),
+    detail: say('screens.admin.describeSessionDelivery.remuxTheOriginalPictureAndSound'),
   },
   DirectStream: {
     label: 'DirectStream',
-    detail: 'Direct stream — the original picture, with the sound converted',
+    detail: say('screens.admin.describeSessionDelivery.directStreamTheOriginalPictureWith'),
   },
   Transcode: {
-    label: 'Transcoding',
-    detail: 'Transcoding — the server is converting the picture on the fly',
+    label: say('screens.admin.describeSessionDelivery.transcoding'),
+    detail: say('screens.admin.describeSessionDelivery.transcodingTheServerIsConvertingThe'),
   },
 } as const satisfies Record<string, SessionDelivery>;
 

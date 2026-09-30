@@ -24,6 +24,8 @@ import { ReaderPanel } from '@ValenceScreens/components/ReaderPanel/ReaderPanel'
 import { ReaderPicker } from '@ValenceScreens/components/ReaderPicker/ReaderPicker';
 import { readPanelPinned, writePanelPinned } from '@ValenceScreens/reading/panelPreference';
 import type { PageReaderProps } from './PageReader.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * Names a spread of pages the way somebody would say it: one page, or two with a dash between.
@@ -295,7 +297,7 @@ const PageReader = ({
             pickers={
               <>
                 <ReaderPicker
-                  label={showing.length > 1 ? 'Pages' : 'Page'}
+                  label={showing.length > 1 ? say('common.pages') : say('common.page')}
                   value={describePages(showing)}
                   selectedId={at.toString()}
                   options={groups.map((group, index) => ({
@@ -305,15 +307,15 @@ const PageReader = ({
                   onSelect={(id) => {
                     setAt(Number(id));
                   }}
-                  previousLabel="Previous page"
-                  nextLabel="Next page"
+                  previousLabel={say('common.previousPage')}
+                  nextLabel={say('common.nextPage')}
                   {...(at > 0 || which > 0 ? { onPrevious: back } : {})}
                   {...(!isLast || which < ordering.length - 1 ? { onNext: forward } : {})}
                 />
 
                 {ordering.length > 1 ? (
                   <ReaderPicker
-                    label="Chapter"
+                    label={say('screens.pageReader.chapter')}
                     value={chapter?.title ?? ''}
                     selectedId={chapterId}
                     options={ordering.map((one) => ({
@@ -321,11 +323,13 @@ const PageReader = ({
                       label: one.title,
                       ...(one.pageCount === null
                         ? {}
-                        : { detail: `${one.pageCount.toString()} pages` }),
+                        : {
+                            detail: sayCount('common.count.pages', one.pageCount),
+                          }),
                     }))}
                     onSelect={onChapterChange}
-                    previousLabel="Previous chapter"
-                    nextLabel="Next chapter"
+                    previousLabel={say('common.previousChapter')}
+                    nextLabel={say('common.nextChapter')}
                     {...(which > 0
                       ? {
                           onPrevious: () => {
@@ -355,17 +359,17 @@ const PageReader = ({
           >
             <SettingList>
               <SettingRow
-                title="Layout"
+                title={say('screens.pageReader.layout')}
                 {...(settings.isScrolling
-                  ? { description: 'One long strip, as a webtoon is read' }
+                  ? { description: say('screens.pageReader.oneLongStripAsAWebtoon') }
                   : {})}
               >
                 <SegmentedRow
-                  label="Layout"
+                  label={say('screens.pageReader.layout')}
                   size="sm"
                   items={[
-                    { id: 'pages', label: 'Pages' },
-                    { id: 'scroll', label: 'Scroll' },
+                    { id: 'pages', label: say('common.pages') },
+                    { id: 'scroll', label: say('common.scroll') },
                   ]}
                   value={settings.isScrolling ? 'scroll' : 'pages'}
                   onSelect={(id) => {
@@ -376,13 +380,13 @@ const PageReader = ({
 
               {settings.isScrolling ? null : (
                 <>
-                  <SettingRow title="Pages">
+                  <SettingRow title={say('common.pages')}>
                     <SegmentedRow
-                      label="Pages"
+                      label={say('common.pages')}
                       size="sm"
                       items={[
-                        { id: 'single', label: 'One' },
-                        { id: 'double', label: 'Two' },
+                        { id: 'single', label: say('screens.pageReader.onePage') },
+                        { id: 'double', label: say('screens.pageReader.twoPages') },
                       ]}
                       value={settings.isDouble ? 'double' : 'single'}
                       onSelect={(id) => {
@@ -393,11 +397,11 @@ const PageReader = ({
 
                   {settings.isDouble ? (
                     <SettingRow
-                      title="Cover on its own"
-                      description="Pairing starts after page one"
+                      title={say('common.coverOnItsOwn')}
+                      description={say('screens.pageReader.pairingStartsAfterPageOne')}
                     >
                       <Switch
-                        label="Cover on its own"
+                        label={say('common.coverOnItsOwn')}
                         isLabelHidden
                         isOn={settings.isOffset}
                         onToggle={() => {
@@ -409,11 +413,13 @@ const PageReader = ({
 
                   {settings.isDouble ? (
                     <SettingRow
-                      title="Gap between pages"
-                      description={`${settings.gap.toString()} px`}
+                      title={say('screens.pageReader.gapBetweenPages')}
+                      description={say('screens.pageReader.gapPx', {
+                        gap: settings.gap.toString(),
+                      })}
                     >
                       <Slider
-                        label="Gap between pages"
+                        label={say('screens.pageReader.gapBetweenPages')}
                         value={settings.gap}
                         max={MOST_GAP}
                         onValueChange={(next) => {
@@ -424,9 +430,9 @@ const PageReader = ({
                     </SettingRow>
                   ) : null}
 
-                  <SettingRow title="Animate turning pages">
+                  <SettingRow title={say('screens.pageReader.animateTurningPages')}>
                     <Switch
-                      label="Animate turning pages"
+                      label={say('screens.pageReader.animateTurningPages')}
                       isLabelHidden
                       isOn={settings.isAnimated}
                       onToggle={() => {
@@ -435,14 +441,14 @@ const PageReader = ({
                     />
                   </SettingRow>
 
-                  <SettingRow title="Fit">
+                  <SettingRow title={say('screens.pageReader.fit')}>
                     <SegmentedRow
-                      label="Fit"
+                      label={say('screens.pageReader.fit')}
                       size="sm"
                       items={[
-                        { id: 'both', label: 'Screen' },
-                        { id: 'width', label: 'Width' },
-                        { id: 'height', label: 'Height' },
+                        { id: 'both', label: say('screens.pageReader.screen') },
+                        { id: 'width', label: say('screens.pageReader.width') },
+                        { id: 'height', label: say('screens.pageReader.height') },
                       ]}
                       value={settings.fit}
                       onSelect={(id) => {
@@ -454,17 +460,17 @@ const PageReader = ({
                   </SettingRow>
 
                   <SettingRow
-                    title="Reading direction"
+                    title={say('screens.pageReader.readingDirection')}
                     {...(book.direction === 'rightToLeft'
-                      ? { description: 'Right to left is how manga is read' }
+                      ? { description: say('screens.pageReader.rightToLeftIsHowManga') }
                       : {})}
                   >
                     <SegmentedRow
-                      label="Reading direction"
+                      label={say('screens.pageReader.readingDirection')}
                       size="sm"
                       items={[
-                        { id: 'leftToRight', label: 'Left to right' },
-                        { id: 'rightToLeft', label: 'Right to left' },
+                        { id: 'leftToRight', label: say('common.leftToRight') },
+                        { id: 'rightToLeft', label: say('common.rightToLeft') },
                       ]}
                       value={settings.direction}
                       onSelect={(id) => {
@@ -485,7 +491,7 @@ const PageReader = ({
           ) : (
             <>
               <Slider
-                label="Page"
+                label={say('common.page')}
                 tone="overlay"
                 value={at}
                 max={Math.max(groups.length - 1, 0)}

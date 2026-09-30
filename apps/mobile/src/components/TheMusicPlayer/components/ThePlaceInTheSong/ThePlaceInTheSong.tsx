@@ -7,6 +7,7 @@ import { useTheMusic } from '@ValenceMobile/hooks/useTheMusic';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import type { ThePlaceInTheSongProps } from './ThePlaceInTheSong.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   lasts: { alignItems: 'flex-end' },
@@ -29,7 +30,7 @@ const ThePlaceInTheSong = ({ title, children }: ThePlaceInTheSongProps) => {
   return (
     <View>
       <Slider
-        label={`Move through ${title}`}
+        label={say('common.moveThroughTitle', { title })}
         value={position}
         furthest={state.durationSeconds}
         colour={colours.text}

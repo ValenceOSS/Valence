@@ -14,6 +14,7 @@ import { ValenceShell } from '@ValenceScreens/components/ValenceShell/ValenceShe
 import { HomePage } from '@ValenceScreens/components/HomePage/HomePage';
 import { scrollKeyOf } from '@ValenceScreens/routes/scrollKeyOf';
 import { PageProblem } from '@ValenceScreens/components/PageProblem/PageProblem';
+import { say } from '@ValenceI18n/say';
 
 const SharePage = lazyRouteComponent(
   async () => import('@ValenceScreens/components/SharePage/SharePage'),
@@ -108,7 +109,7 @@ const phoneSearch = z.object({
  * @param title - What this instance is called.
  * @returns The router, ready to hand to a provider.
  */
-const buildRouter = (title = 'Valence') => {
+const buildRouter = (title = say('common.valence')) => {
   const root = createRootRoute({ component: () => <ValenceRoot initialTitle={title} /> });
 
   const carries = { validateSearch: readSearch };

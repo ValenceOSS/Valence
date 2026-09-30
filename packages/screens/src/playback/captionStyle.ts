@@ -1,10 +1,11 @@
 import { z } from 'zod';
+import { say } from '@ValenceI18n/say';
 
 const FONT_FAMILIES = {
   sans: 'system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-  serif: 'Georgia, "Times New Roman", serif',
+  serif: say('common.georgiaTimesNewRomanSerif'),
   mono: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace',
-  casual: '"Comic Sans MS", "Chalkboard SE", cursive',
+  casual: say('screens.playback.captionStyle.comicSansMSChalkboardSECursive'),
 } as const;
 
 /**

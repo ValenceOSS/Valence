@@ -25,6 +25,17 @@ ruleTester.run('no-hard-coded-strings', noHardCodedStrings, {
     { code: "log.info('The scan finished');" },
     { code: "log('Listening on port 3000.');" },
     { code: "const it = { label: '1080p' };" },
+    { code: "const it = rate === 1 ? say('common.normal') : `${rate.toString()}x`;" },
+    { code: "const it = <Tile className={count === 1 ? 'col-span-2' : 'col-span-1'} />;" },
+    { code: 'const it = { sans: \'system-ui, "Segoe UI", Roboto, sans-serif\' };' },
+    { code: 'const it = { transform: `translate3d(${x}px, ${y}px, 0)` };' },
+    { code: "const it = { rel: 'noreferrer noopener' };" },
+    { code: 'const it = `attachment; filename="${name}.mp4"`;' },
+    {
+      code: 'class Failed extends Error { constructor(path: string) { super(`${path} answered badly`); } }',
+    },
+    { code: 'const it = `valence.shared.${bookId}`;' },
+    { code: "const it = 'valence.held.resume.';" },
     { code: "const it = isShared ? 'public, max-age=604800, immutable' : 'no-store';" },
     { code: 'const it = saying(`server.jobs.phase.${phase}`);' },
     { code: "const it = line.slice('Dialogue:'.length);" },
@@ -77,5 +88,54 @@ ruleTester.run('no-hard-coded-strings', noHardCodedStrings, {
       errors: [{ messageId: 'words' }, { messageId: 'words' }],
     },
     { code: "const it = 'Hello ' + name;", errors: [{ messageId: 'words' }] },
+    {
+      code: 'const it = `${formatBytes(done)} of ${formatBytes(size)}`;',
+      errors: [{ messageId: 'words' }],
+    },
+    {
+      code: 'const it = <p>{`${describeLength(left)} left`}</p>;',
+      errors: [{ messageId: 'words' }],
+    },
+    {
+      code: "const it = count === 1 ? '1 episode' : `${count.toString()} episodes`;",
+      errors: [{ messageId: 'counted' }, { messageId: 'words' }],
+    },
+    {
+      code: "const it = `${count.toString()} song${count === 1 ? '' : 's'}`;",
+      errors: [{ messageId: 'counted' }],
+    },
+  ],
+});
+
+const typedRuleTester = new RuleTester({
+  languageOptions: {
+    parserOptions: {
+      projectService: { allowDefaultProject: ['*.ts'] },
+      tsconfigRootDir: import.meta.dirname,
+    },
+  },
+});
+
+typedRuleTester.run('no-hard-coded-strings, with types', noHardCodedStrings, {
+  valid: [
+    {
+      code: "const look = (variant: 'ghost' | 'soft') => variant; look(speed === 1 ? 'ghost' : 'soft');",
+    },
+    {
+      code: "const pick = (about: 'one library' | 'every library') => about; pick('every library');",
+    },
+    {
+      code: "type Page = { about: 'one library' | 'no libraries' }; const it: Page = { about: 'no libraries' };",
+    },
+  ],
+  invalid: [
+    {
+      code: "const pick = (label: string) => label; pick('every library');",
+      errors: [{ messageId: 'words' }],
+    },
+    {
+      code: "const flag = (isNew: boolean): 'New episode' | 'Recently added' => isNew ? 'New episode' : 'Recently added';",
+      errors: [{ messageId: 'words' }, { messageId: 'words' }],
+    },
   ],
 });

@@ -7,6 +7,7 @@ import type {
   DownloadClientDraft,
   DownloadClientKind,
 } from '@ValenceContracts/schemas/DownloadClient';
+import { say } from '@ValenceI18n/say';
 
 type DownloadClientForm = {
   kind: DownloadClientKind;
@@ -26,10 +27,22 @@ type ReadDownloadClientForm =
   { draft: DownloadClientDraft; problem: null } | { draft: null; problem: string };
 
 const CLIENT_KINDS = [
-  { id: 'qbittorrent', label: 'qBittorrent', address: 'http://qbittorrent:8080' },
-  { id: 'transmission', label: 'Transmission', address: 'http://transmission:9091' },
-  { id: 'sabnzbd', label: 'SABnzbd', address: 'http://sabnzbd:8080' },
-  { id: 'nzbget', label: 'NZBGet', address: 'http://nzbget:6789' },
+  {
+    id: 'qbittorrent',
+    label: say('screens.downloadClientDialog.readDownloadClientForm.qBittorrent'),
+    address: 'http://qbittorrent:8080',
+  },
+  { id: 'transmission', label: say('common.transmission'), address: 'http://transmission:9091' },
+  {
+    id: 'sabnzbd',
+    label: say('screens.downloadClientDialog.readDownloadClientForm.sABnzbd'),
+    address: 'http://sabnzbd:8080',
+  },
+  {
+    id: 'nzbget',
+    label: say('screens.downloadClientDialog.readDownloadClientForm.nZBGet'),
+    address: 'http://nzbget:6789',
+  },
 ] as const satisfies readonly { id: DownloadClientKind; label: string; address: string }[];
 
 const A_NEW_CLIENT: DownloadClientForm = {
@@ -112,24 +125,32 @@ const readDownloadClientForm = (form: DownloadClientForm): ReadDownloadClientFor
   };
 
   if (name === '') {
-    return { draft: null, problem: 'Give the client a name.' };
+    return {
+      draft: null,
+      problem: say('screens.downloadClientDialog.readDownloadClientForm.giveTheClientAName'),
+    };
   }
 
   if (!URL.canParse(url) || !/^https?:$/.test(new URL(url).protocol)) {
-    return { draft: null, problem: 'The address needs to be a whole http or https address.' };
+    return { draft: null, problem: say('common.theAddressNeedsToBeA') };
   }
 
   if (LIBRARY_KINDS.some((kind) => !/^[\w .-]+$/.test(categories[kind]))) {
     return {
       draft: null,
-      problem: 'A category is letters, numbers, spaces, dots, dashes and underscores.',
+      problem: say(
+        'screens.downloadClientDialog.readDownloadClientForm.aCategoryIsLettersNumbersSpaces',
+      ),
     };
   }
 
   if (
     new Set(LIBRARY_KINDS.map((kind) => categories[kind].toLowerCase())).size < LIBRARY_KINDS.length
   ) {
-    return { draft: null, problem: 'Each kind needs a category of its own.' };
+    return {
+      draft: null,
+      problem: say('screens.downloadClientDialog.readDownloadClientForm.eachKindNeedsACategoryOf'),
+    };
   }
 
   const remotePath = form.remotePath.trim();
@@ -138,15 +159,16 @@ const readDownloadClientForm = (form: DownloadClientForm): ReadDownloadClientFor
   if ((remotePath === '') !== (localPath === '')) {
     return {
       draft: null,
-      problem:
-        'Say where the downloads folder is both as the client sees it and as Valence does, or neither.',
+      problem: say(
+        'screens.downloadClientDialog.readDownloadClientForm.sayWhereTheDownloadsFolderIs',
+      ),
     };
   }
 
   const priority = readWholeNumber(form.priority, 1, 50);
 
   if (priority === null) {
-    return { draft: null, problem: 'Priority is a whole number from 1 to 50.' };
+    return { draft: null, problem: say('common.priorityIsAWholeNumberFrom') };
   }
 
   const isSabnzbd = form.kind === 'sabnzbd';

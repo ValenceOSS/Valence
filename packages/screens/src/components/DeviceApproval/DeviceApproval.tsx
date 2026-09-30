@@ -5,6 +5,7 @@ import { TextField } from '@ValenceUI/TextField';
 import { answerDeviceRequest, readDeviceRequest } from '@ValenceClient/session/auth';
 import { tidyTheCode } from '@ValenceClient/session/tidyTheCode';
 import type { DeviceApprovalProps } from './DeviceApproval.types';
+import { say } from '@ValenceI18n/say';
 
 type Standing = 'asking' | 'reading' | 'unknown' | 'allowed' | 'refused' | 'wrong';
 
@@ -59,28 +60,26 @@ const DeviceApproval = ({ name }: DeviceApprovalProps) => {
   return (
     <main className="mx-auto flex min-h-svh w-full max-w-md flex-col justify-center gap-6 px-6 py-16">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-medium text-text">Sign in a television</h1>
+        <h1 className="text-2xl font-medium text-text">{say('common.signInATelevision')}</h1>
 
         <p className="text-sm text-text-muted">
-          A television showed you a code. Type it here and {name} will let it in as you.
+          {say('screens.deviceApproval.aTelevisionShowedYouACode', { name })}
         </p>
       </header>
 
       {standing === 'allowed' ? (
         <p className="text-base text-text">
-          Done. The television should be watching in a moment — you can close this.
+          {say('screens.deviceApproval.doneTheTelevisionShouldBeWatching')}
         </p>
       ) : standing === 'refused' ? (
         <p className="text-base text-text">
-          Turned down. Nothing was signed in, and the code on that screen is now useless.
+          {say('screens.deviceApproval.turnedDownNothingWasSignedIn')}
         </p>
       ) : standing === 'reading' ? (
-        <Spinner label="Checking that code" />
+        <Spinner label={say('screens.deviceApproval.checkingThatCode')} />
       ) : standing === 'unknown' ? (
         <div className="flex flex-col gap-4">
-          <p className="text-base text-text">
-            A television is asking to sign in as you. Only say yes if it is the one in front of you.
-          </p>
+          <p className="text-base text-text">{say('common.aTelevisionIsAskingToSign')}</p>
 
           <Button
             variant="glossy"
@@ -90,7 +89,7 @@ const DeviceApproval = ({ name }: DeviceApprovalProps) => {
               void answer(true);
             }}
           >
-            Yes, that is mine
+            {say('common.yesThatIsMine')}
           </Button>
 
           <Button
@@ -100,7 +99,7 @@ const DeviceApproval = ({ name }: DeviceApprovalProps) => {
               void answer(false);
             }}
           >
-            No, I did not ask for this
+            {say('common.noIDidNotAskFor')}
           </Button>
         </div>
       ) : (
@@ -112,18 +111,16 @@ const DeviceApproval = ({ name }: DeviceApprovalProps) => {
           }}
         >
           <TextField
-            label="The code on the television"
+            label={say('common.theCodeOnTheTelevision')}
             value={typed}
             onValueChange={setTyped}
             autoComplete="one-time-code"
             hasFocusOnMount
-            {...(standing === 'wrong'
-              ? { error: 'That code has run out, or there is no television waiting on it.' }
-              : {})}
+            {...(standing === 'wrong' ? { error: say('common.thatCodeHasRunOutOr') } : {})}
           />
 
           <Button type="submit" variant="glossy" size="lg" disabled={tidyTheCode(typed) === ''}>
-            Continue
+            {say('common.continue')}
           </Button>
         </form>
       )}

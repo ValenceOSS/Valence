@@ -1,4 +1,5 @@
 import { accelerationOptions } from '@ValenceScreens/components/AdminArea/accelerationOptions';
+import { say } from '@ValenceI18n/say';
 
 type Acceleration = {
   label: string;
@@ -19,10 +20,9 @@ type Acceleration = {
 const describeAcceleration = (forced: string, probed: string[]): Acceleration => {
   if (forced === 'none') {
     return {
-      label: 'Software only · forced',
+      label: say('screens.adminArea.describeAcceleration.softwareOnlyForced'),
       tone: 'warning',
-      detail:
-        'Hardware encoding is turned off, so every transcode is done by the processor — several times the work, and fewer streams at once. Choose Automatic to use the machine\u2019s own encoder where it can.',
+      detail: say('screens.adminArea.describeAcceleration.hardwareEncodingIsTurnedOffSo'),
     };
   }
 
@@ -31,27 +31,30 @@ const describeAcceleration = (forced: string, probed: string[]): Acceleration =>
     const isUnverified = !probed.includes(forced);
 
     return {
-      label: `${name} · forced`,
+      label: say('screens.adminArea.describeAcceleration.nameForced', { name }),
       tone: isUnverified ? 'danger' : 'quiet',
       detail: isUnverified
-        ? `This machine never proved it can do ${name}, so every transcode will fall back to software. Choose Automatic to use what it can, or leave this if you know the check is wrong.`
-        : `${name} was chosen rather than left to Valence, and the machine proved it can do it. Transcodes use it instead of the processor.`,
+        ? say('screens.adminArea.describeAcceleration.thisMachineNeverProvedItCan', { name })
+        : say('screens.adminArea.describeAcceleration.nameWasChosenRatherThanLeft', { name }),
     };
   }
 
   if (probed.length === 0) {
     return {
-      label: 'Software only',
+      label: say('common.softwareOnly'),
       tone: 'quiet',
-      detail:
-        'This machine proved no hardware encoder Valence can use, so transcodes are done by the processor. Nothing was chosen — there was nothing to choose.',
+      detail: say('screens.adminArea.describeAcceleration.thisMachineProvedNoHardwareEncoder'),
     };
   }
 
   return {
-    label: `${probed.join(', ')} · automatic`,
+    label: say('screens.adminArea.describeAcceleration.valueAutomatic', {
+      value: probed.join(', '),
+    }),
     tone: 'quiet',
-    detail: `Valence uses whichever backend the machine proved it can do, which here is ${probed.join(' and ')}. Choose one in Settings to insist on it instead.`,
+    detail: say('screens.adminArea.describeAcceleration.valenceUsesWhicheverBackendTheMachine', {
+      value: probed.join(' and '),
+    }),
   };
 };
 

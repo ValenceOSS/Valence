@@ -23,6 +23,7 @@ import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import type { ComingUp } from '@ValenceContracts/schemas/Show';
 import type { AShelfOf } from '@ValenceMobile/components/TheLibrary/components/TheHome/components/AHomeShelf/AHomeShelf.types';
 import type { TheHomeProps } from './TheHome.types';
+import { say } from '@ValenceI18n/say';
 
 const FEATURED = 5;
 
@@ -241,13 +242,13 @@ const TheHomePage = ({
           librariesAre === 'missing' ? (
             <ANothingHere
               of={FolderOpen}
-              title="No libraries yet"
+              title={say('common.noLibrariesYet')}
               detail={howToFillIt('no libraries', false)}
             />
           ) : (
             <ANothingHere
               of={Film}
-              title="Nothing to watch yet"
+              title={say('common.nothingToWatchYet')}
               detail={howToFillIt('every library', false)}
             />
           )

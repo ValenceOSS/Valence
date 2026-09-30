@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import type { CopyableAddressProps } from './CopyableAddress.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * An address an administrator hands to an outside service, with what it is for and a way to copy
@@ -30,7 +31,7 @@ const CopyableAddress = ({ title, detail, address }: CopyableAddressProps) => {
             });
           }}
         >
-          {hasCopied ? 'Copied' : 'Copy'}
+          {hasCopied ? say('common.copied') : say('common.copy')}
           <Icon of={hasCopied ? CircleCheckIcon : CopyIcon} size={14} />
         </Button>
       </div>

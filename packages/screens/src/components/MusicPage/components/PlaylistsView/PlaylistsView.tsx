@@ -11,6 +11,7 @@ import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
 import { useLikedSongsTile } from '@ValenceScreens/music/useLikedSongsTile';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Somebody's playlists, with their liked songs at the front and a way to start a new one, then
@@ -30,12 +31,15 @@ const PlaylistsView = () => {
     <div className="flex flex-col gap-12 pt-6 pb-12">
       {playlists.isPending ? (
         <div className={MUSIC_LANES.page}>
-          <Skeleton label="Reading your playlists" className="h-64 w-full" />
+          <Skeleton
+            label={say('screens.musicPage.playlistsView.readingYourPlaylists')}
+            className="h-64 w-full"
+          />
         </div>
       ) : (
         <>
           <PlaylistShelf
-            heading="Playlists"
+            heading={say('common.playlists')}
             layout="grid"
             playlists={mine}
             leading={liked}
@@ -48,12 +52,12 @@ const PlaylistsView = () => {
                 }}
               >
                 <Icon of={PlusIcon} size={16} />
-                New playlist
+                {say('common.newPlaylist')}
               </Button>
             }
           />
 
-          <PlaylistShelf heading="Shared with you" layout="grid" playlists={shared} />
+          <PlaylistShelf heading={say('common.sharedWithYou')} layout="grid" playlists={shared} />
         </>
       )}
 

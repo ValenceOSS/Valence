@@ -56,6 +56,8 @@ import { laySeasonsOut } from '@ValenceClient/library/laySeasonsOut';
 import { describeAirDate } from '@ValenceCore/functions/describeAirDate';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ShowDialogProps } from './ShowDialog.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * A programme in full: its seasons, its episodes, where a viewer got to in each, and the episodes
@@ -187,7 +189,13 @@ const ShowDialog = ({
           artwork={artworkUrl(shown.coverMediaId, 'backdrop', { isOfTitle: true })}
           isShowing={hasScrolledPast}
         >
-          <Button isIconOnly variant="ghost" size="sm" label="Close" onClick={onClose}>
+          <Button
+            isIconOnly
+            variant="ghost"
+            size="sm"
+            label={say('common.close')}
+            onClick={onClose}
+          >
             <Icon of={XIcon} size={16} />
           </Button>
         </ScrolledTitle>
@@ -205,7 +213,7 @@ const ShowDialog = ({
           </div>
 
           <div className="absolute right-4 top-4">
-            <Button isIconOnly variant="overlay" label="Close" onClick={onClose}>
+            <Button isIconOnly variant="overlay" label={say('common.close')} onClick={onClose}>
               <Icon of={XIcon} size={20} />
             </Button>
           </div>
@@ -214,13 +222,16 @@ const ShowDialog = ({
             <DialogHeadlinePart className="flex flex-wrap items-center gap-3">
               <span className="text-sm font-medium uppercase tracking-[0.2em] text-on-scrim/75">
                 {shown.seasonCount === 1
-                  ? `${shown.episodeCount.toString()} episodes`
-                  : `${shown.seasonCount.toString()} seasons · ${shown.episodeCount.toString()} episodes`}
+                  ? sayCount('common.count.episodes', shown.episodeCount)
+                  : [
+                      sayCount('common.count.seasons', shown.seasonCount),
+                      sayCount('common.count.episodes', shown.episodeCount),
+                    ].join(' · ')}
               </span>
 
               {isWatchedThrough ? (
                 <Badge tone="success" size="sm">
-                  Watched
+                  {say('common.watched')}
                 </Badge>
               ) : null}
 
@@ -232,7 +243,11 @@ const ShowDialog = ({
 
               {detail?.nextEpisode === undefined || detail.nextEpisode === null ? null : (
                 <span className="text-sm text-on-scrim/85">
-                  {`Next: S${detail.nextEpisode.seasonNumber.toString()} E${detail.nextEpisode.episodeNumber.toString()} · ${describeAirDate(detail.nextEpisode.airDate, today)}`}
+                  {say('common.nextSSeasonNumberEEpisodeNumberAirDate', {
+                    seasonNumber: detail.nextEpisode.seasonNumber.toString(),
+                    episodeNumber: detail.nextEpisode.episodeNumber.toString(),
+                    airDate: describeAirDate(detail.nextEpisode.airDate, today),
+                  })}
                 </span>
               )}
             </DialogHeadlinePart>
@@ -287,7 +302,7 @@ const ShowDialog = ({
 
           <DialogSection>
             <header className="flex flex-wrap items-center justify-between gap-3">
-              <h3 className={RAIL.sectionTitle}>Episodes</h3>
+              <h3 className={RAIL.sectionTitle}>{say('common.episodes')}</h3>
 
               <span className="flex flex-wrap items-center gap-2">
                 {onMarkWatched === undefined || shownEpisodes.length === 0 ? null : (
@@ -304,11 +319,11 @@ const ShowDialog = ({
                     />
                     {isSeasonWatched
                       ? chooseFrom.length < 2
-                        ? 'Mark all unwatched'
-                        : 'Mark season unwatched'
+                        ? say('screens.showDialog.markAllUnwatched')
+                        : say('common.markSeasonUnwatched')
                       : chooseFrom.length < 2
-                        ? 'Mark all watched'
-                        : 'Mark season watched'}
+                        ? say('screens.showDialog.markAllWatched')
+                        : say('common.markSeasonWatched')}
                   </Button>
                 )}
 
@@ -320,21 +335,21 @@ const ShowDialog = ({
 
             {show !== null && asked.isError ? (
               <CouldNotRead
-                what="The episodes"
+                said={say('screens.showDialog.theEpisodesCouldNotBeRead')}
                 isTryingAgain={asked.isFetching}
                 onTryAgain={() => {
                   void asked.refetch();
                 }}
               />
             ) : isLoading ? (
-              <Spinner isCentered label="Reading the episodes" size="sm" />
+              <Spinner isCentered label={say('screens.showDialog.readingTheEpisodes')} size="sm" />
             ) : inOrder.length === 0 ? (
               <p className="text-sm text-text-muted">
-                Nothing here yet. Episodes appear as they are scanned.
+                {say('screens.showDialog.nothingHereYetEpisodesAppearAs')}
               </p>
             ) : (
               <SlidingList
-                label="Episodes"
+                label={say('common.episodes')}
                 items={inOrder}
                 keyOf={(row) => row.key}
                 renderItem={({ at, episode, listed, airs }) =>
@@ -381,11 +396,11 @@ const ShowDialog = ({
 
       <DialogFooter>
         <ActionBar
-          label="More to do with this programme"
+          label={say('screens.showDialog.moreToDoWithThisProgramme')}
           primary={
             carryingOn === null ? (
               <Button variant="confirm" size="lg" isLoading disabled>
-                Reading the episodes
+                {say('screens.showDialog.readingTheEpisodes')}
               </Button>
             ) : (
               <Button
@@ -397,10 +412,13 @@ const ShowDialog = ({
               >
                 <Icon of={PlayFilledIcon} size={18} />
                 {carryingOn.isResuming
-                  ? `Resume ${formatDuration(carryingOn.startSeconds)}`
-                  : `Play ${nameSeason(carryingOn.episode.seasonNumber ?? null)}, episode ${(
-                      carryingOn.episode.episodeNumber ?? 1
-                    ).toString()}`}
+                  ? say('screens.showDialog.resumeStartSeconds', {
+                      startSeconds: formatDuration(carryingOn.startSeconds),
+                    })
+                  : say('screens.showDialog.playValueEpisodeValue2', {
+                      value: nameSeason(carryingOn.episode.seasonNumber ?? null),
+                      value2: (carryingOn.episode.episodeNumber ?? 1).toString(),
+                    })}
               </Button>
             )
           }
@@ -411,7 +429,7 @@ const ShowDialog = ({
                   {
                     id: 'trailer',
                     isPinned: true,
-                    label: 'Watch the trailer',
+                    label: say('common.watchTheTrailer'),
                     icon: <Icon of={TapeIcon} size={18} />,
                     onChoose: () => {
                       if (trailer === null) {
@@ -429,7 +447,7 @@ const ShowDialog = ({
               : [
                   {
                     id: 'episode',
-                    label: 'About this episode',
+                    label: say('screens.showDialog.aboutThisEpisode'),
                     icon: <Icon of={InfoIcon} size={18} />,
                     onChoose: () => {
                       onInspect(carryingOn.episode);
@@ -442,7 +460,7 @@ const ShowDialog = ({
                   {
                     id: 'download',
                     isPinned: true,
-                    label: 'Download',
+                    label: say('common.download'),
                     icon: <Icon of={DownloadIcon} size={18} />,
                     onChoose: () => {
                       setIsChoosing(true);
@@ -473,7 +491,7 @@ const ShowDialog = ({
                   {
                     id: 'share',
                     isPinned: true,
-                    label: 'Share',
+                    label: say('common.share'),
                     icon: <Icon of={LinkIcon} size={18} />,
                     onChoose: () => {
                       onShare(shown);
@@ -516,7 +534,7 @@ const ShowDialog = ({
       />
 
       <Dialog
-        label={`${shown.title}, the trailer`}
+        label={say('common.titleTheTrailer', { title: shown.title })}
         isOpen={isWatchingTrailer && trailerKey !== null}
         className="sm:w-[min(64rem,94vw)]"
         onClose={() => {
@@ -526,7 +544,7 @@ const ShowDialog = ({
         <DialogContent className="p-0">
           {trailerKey === null ? null : (
             <EmbeddedVideo
-              label={`${shown.title}, the trailer`}
+              label={say('common.titleTheTrailer', { title: shown.title })}
               src={catalogueTrailerUrl(trailerKey)}
             />
           )}

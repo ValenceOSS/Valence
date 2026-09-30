@@ -8,6 +8,7 @@ import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { hasLiquidGlass } from '@ValenceMobile/platform/hasLiquidGlass';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { TheBellProps } from './TheBell.types';
+import { say } from '@ValenceI18n/say';
 
 const ROUND = 40;
 
@@ -33,7 +34,11 @@ const TheBell = ({ onPress }: TheBellProps) => {
   return (
     <Button
       tone="bare"
-      label={unread === 0 ? 'Notifications' : `Notifications, ${unread.toString()} unread`}
+      label={
+        unread === 0
+          ? say('common.notifications')
+          : say('phone.theBell.notificationsUnreadUnread', { unread: unread.toString() })
+      }
       onPress={onPress}
     >
       <View style={styles.whole}>

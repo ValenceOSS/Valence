@@ -6,6 +6,7 @@ import { PopoverPanel } from '@ValenceUI/PopoverPanel';
 import { cn } from '@ValenceUI/cn';
 import { PROFILE_COLOURS } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ColourChoiceProps } from './ColourChoice.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Choosing a colour: the ready ones laid out to be pressed, and one more swatch that opens a picker
@@ -40,7 +41,7 @@ const ColourChoice = ({
               key={preset}
               variant="bare"
               size="none"
-              label={`Use ${preset}`}
+              label={say('common.usePreset', { preset })}
               isActive={preset.toLowerCase() === value.toLowerCase()}
               style={{ backgroundColor: preset }}
               className={cn(
@@ -56,7 +57,11 @@ const ColourChoice = ({
           ))}
 
       <PopoverPanel
-        label={isCompact ? label : `Any colour for ${label.toLowerCase()}`}
+        label={
+          isCompact
+            ? label
+            : say('screens.colourChoice.anyColourForLabel', { label: label.toLowerCase() })
+        }
         side="bottom"
         align="start"
         isBare

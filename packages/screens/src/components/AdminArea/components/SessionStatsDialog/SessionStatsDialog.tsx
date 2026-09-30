@@ -14,6 +14,7 @@ import {
 } from '@ValenceCore/functions/describePlaybackAxis';
 import { describeTranscodeReuse } from '@ValenceCore/functions/describeTranscodeReuse';
 import type { SessionStatsDialogProps } from './SessionStatsDialog.types';
+import { say } from '@ValenceI18n/say';
 
 type RowProps = {
   name: string;
@@ -49,9 +50,9 @@ const SessionStatsDialog = ({ session, isOpen, onClose }: SessionStatsDialogProp
   const { playback } = session;
 
   return (
-    <DialogCompanion label="Stream stats" isOpen={isOpen} onClose={onClose}>
-      <DialogTitle size="compact" title="Stream stats">
-        <Button isIconOnly variant="ghost" label="Close" size="sm" onClick={onClose}>
+    <DialogCompanion label={say('common.streamStats')} isOpen={isOpen} onClose={onClose}>
+      <DialogTitle size="compact" title={say('common.streamStats')}>
+        <Button isIconOnly variant="ghost" label={say('common.close')} size="sm" onClick={onClose}>
           <Icon of={XIcon} size={16} />
         </Button>
       </DialogTitle>
@@ -62,7 +63,7 @@ const SessionStatsDialog = ({ session, isOpen, onClose }: SessionStatsDialogProp
           <Row name="Device">{session.deviceLabel}</Row>
 
           {playback === null ? (
-            <Row name="Watching">Nothing right now</Row>
+            <Row name="Watching">{say('screens.adminArea.sessionStatsDialog.nothingRightNow')}</Row>
           ) : (
             <>
               <Row name="Title">{playback.mediaTitle}</Row>
@@ -70,10 +71,10 @@ const SessionStatsDialog = ({ session, isOpen, onClose }: SessionStatsDialogProp
               <Row name="Reused">{describeTranscodeReuse(playback.reuse)}</Row>
               <Row name="Status">
                 {playback.isPlaying
-                  ? 'Playing'
+                  ? say('common.playing')
                   : playback.pausedByAdmin
-                    ? 'Paused by an admin'
-                    : 'Paused'}
+                    ? say('screens.adminArea.sessionStatsDialog.pausedByAnAdmin')
+                    : say('common.paused')}
               </Row>
               <Row name="Started">{new Date(playback.startedAt).toLocaleTimeString()}</Row>
 
@@ -93,13 +94,19 @@ const SessionStatsDialog = ({ session, isOpen, onClose }: SessionStatsDialogProp
               </Row>
 
               {playback.health === null ? (
-                <Row name="Buffer">Not reported yet</Row>
+                <Row name="Buffer">
+                  {say('screens.adminArea.sessionStatsDialog.notReportedYet')}
+                </Row>
               ) : (
                 <>
-                  <Row name="Buffer">{`${playback.health.bufferedAheadSeconds.toFixed(1)}s ahead`}</Row>
+                  <Row name="Buffer">
+                    {say('screens.adminArea.sessionStatsDialog.bufferedAheadSecondsSAhead', {
+                      bufferedAheadSeconds: playback.health.bufferedAheadSeconds.toFixed(1),
+                    })}
+                  </Row>
                   <Row name="Picture size">
                     {playback.health.presentedWidth === 0
-                      ? 'Nothing decoded yet'
+                      ? say('screens.adminArea.sessionStatsDialog.nothingDecodedYet')
                       : `${playback.health.presentedWidth.toString()}x${playback.health.presentedHeight.toString()}`}
                   </Row>
                 </>

@@ -9,11 +9,12 @@ import { hidingSubjectOf } from '@ValenceClient/library/hidingSubjectOf';
 import { useShell } from '@ValenceClient/shell/useShell';
 import { HouseholdFace } from '@ValenceScreens/components/HouseholdFace/HouseholdFace';
 import type { DecideForSomebodyProps } from './DecideForSomebody.types';
+import { say } from '@ValenceI18n/say';
 
 const CHOICES = [
-  { id: 'allow', label: 'Allow' },
-  { id: 'none', label: 'Their limit' },
-  { id: 'deny', label: 'Deny' },
+  { id: 'allow', label: say('screens.decideForSomebody.allow') },
+  { id: 'none', label: say('screens.decideForSomebody.theirLimit') },
+  { id: 'deny', label: say('screens.decideForSomebody.deny') },
 ] as const;
 
 /**
@@ -65,17 +66,20 @@ const DecideForSomebody = ({ about, onClose }: DecideForSomebodyProps) => {
   };
 
   return (
-    <DialogCompanion label="Who may watch this" isOpen={about !== null} onClose={onClose}>
+    <DialogCompanion
+      label={say('common.whoMayWatchThis')}
+      isOpen={about !== null}
+      onClose={onClose}
+    >
       <DialogTitle
-        title={`Who may watch ${title}`}
-        detail="Whatever age limit each account has. A denial always wins."
+        title={say('screens.decideForSomebody.whoMayWatchTitle', { title })}
+        detail={say('screens.decideForSomebody.whateverAgeLimitEachAccountHas')}
       />
 
       <DialogContent className="flex flex-col gap-1">
         {accounts.length === 0 ? (
           <p className="py-2 text-sm text-text-muted">
-            There is nobody to decide about. Administrators see everything, and taking something out
-            of your own browsing is what hiding it does.
+            {say('screens.decideForSomebody.thereIsNobodyToDecideAbout')}
           </p>
         ) : (
           accounts.map((account) => (
@@ -101,7 +105,10 @@ const DecideForSomebody = ({ about, onClose }: DecideForSomebodyProps) => {
               </span>
 
               <SegmentedRow
-                label={`Who may watch ${title}: ${account.name}`}
+                label={say('screens.decideForSomebody.whoMayWatchTitleName', {
+                  title,
+                  name: account.name,
+                })}
                 size="sm"
                 tone="accent"
                 items={CHOICES}

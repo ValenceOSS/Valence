@@ -17,6 +17,7 @@ import type { PasskeyCreationOptions } from '@ValenceContracts/schemas/PasskeyCr
 import type { PasskeyRequestOptions } from '@ValenceContracts/schemas/PasskeyRequestOptions';
 import type { SessionUser } from '@ValenceContracts/schemas/Session';
 import type { Passkey } from '@ValenceContracts/schemas/Passkey';
+import { say } from '@ValenceI18n/say';
 
 type RegisterOutcome =
   | { kind: 'registered' }
@@ -164,11 +165,11 @@ const signInWithEmail = async (
   const answer = await client.signIn.email({ email, password }).catch(() => null);
 
   if (answer === null) {
-    return { kind: 'refused', reason: 'Valence could not be reached.' };
+    return { kind: 'refused', reason: say('common.valenceCouldNotBeReached') };
   }
 
   if (answer.error !== null) {
-    return { kind: 'refused', reason: 'That address and password were not accepted.' };
+    return { kind: 'refused', reason: say('client.session.auth.thatAddressAndPasswordWereNot') };
   }
 
   return TwoFactorRedirectSchema.safeParse(answer.data).success
@@ -243,7 +244,7 @@ const confirmItIsYou = async (password: string): Promise<ConfirmOutcome> => {
     .catch(() => null);
 
   if (answer === null) {
-    return { kind: 'failed', reason: 'Valence could not be reached.' };
+    return { kind: 'failed', reason: say('common.valenceCouldNotBeReached') };
   }
 
   return answer.error === null
@@ -252,8 +253,8 @@ const confirmItIsYou = async (password: string): Promise<ConfirmOutcome> => {
         kind: 'failed',
         reason:
           answer.error.status === 429
-            ? 'Too many tries. Wait a minute and try again.'
-            : (answer.error.message ?? 'That is not your password.'),
+            ? say('client.session.auth.tooManyTriesWaitAMinute')
+            : (answer.error.message ?? say('common.thatIsNotYourPassword')),
       };
 };
 
@@ -278,7 +279,7 @@ const registerThroughTheSystem = async (
   const options = PasskeyCreationOptionsSchema.safeParse(asked?.data);
 
   if (!options.success) {
-    return { kind: 'failed', reason: 'Valence could not be reached.' };
+    return { kind: 'failed', reason: say('common.valenceCouldNotBeReached') };
   }
 
   let made: PasskeyAttestation | null;
@@ -290,7 +291,7 @@ const registerThroughTheSystem = async (
       kind: 'failed',
       reason: whyTheSystemSaidNo(
         error instanceof Error ? error : null,
-        'Your device could not create a passkey.',
+        say('client.session.auth.yourDeviceCouldNotCreateA'),
       ),
     };
   }
@@ -308,14 +309,14 @@ const registerThroughTheSystem = async (
     .catch(() => null);
 
   if (verified === null) {
-    return { kind: 'failed', reason: 'Valence could not be reached.' };
+    return { kind: 'failed', reason: say('common.valenceCouldNotBeReached') };
   }
 
   return verified.error === null
     ? { kind: 'registered' }
     : {
         kind: 'failed',
-        reason: verified.error.message ?? 'Your device could not create a passkey.',
+        reason: verified.error.message ?? say('client.session.auth.yourDeviceCouldNotCreateA'),
       };
 };
 
@@ -336,7 +337,7 @@ const registerPasskey = async (name: string): Promise<RegisterOutcome> => {
   const passkeys = platformInUse().passkeys();
 
   if (passkeys.kind === 'through-a-sign-in-page') {
-    return { kind: 'failed', reason: 'Add a passkey from Valence in your browser.' };
+    return { kind: 'failed', reason: say('client.session.auth.addAPasskeyFromValenceIn') };
   }
 
   if (passkeys.kind === 'none') {
@@ -354,7 +355,7 @@ const registerPasskey = async (name: string): Promise<RegisterOutcome> => {
   const answer = await client.passkey.addPasskey({ name }).catch(() => null);
 
   if (answer === null) {
-    return { kind: 'failed', reason: 'Valence could not be reached.' };
+    return { kind: 'failed', reason: say('common.valenceCouldNotBeReached') };
   }
 
   const error = answer.error ?? null;
@@ -367,7 +368,10 @@ const registerPasskey = async (name: string): Promise<RegisterOutcome> => {
     return { kind: 'cancelled' };
   }
 
-  return { kind: 'failed', reason: error.message ?? 'Your device could not create a passkey.' };
+  return {
+    kind: 'failed',
+    reason: error.message ?? say('client.session.auth.yourDeviceCouldNotCreateA'),
+  };
 };
 
 /**
@@ -386,7 +390,7 @@ const authenticateThroughTheSystem = async (
   const options = PasskeyRequestOptionsSchema.safeParse(asked?.data);
 
   if (!options.success) {
-    return { kind: 'failed', reason: 'Valence could not be reached.' };
+    return { kind: 'failed', reason: say('common.valenceCouldNotBeReached') };
   }
 
   let signed: PasskeyAssertion | null;
@@ -398,7 +402,7 @@ const authenticateThroughTheSystem = async (
       kind: 'failed',
       reason: whyTheSystemSaidNo(
         error instanceof Error ? error : null,
-        'That passkey was not accepted.',
+        say('client.session.auth.thatPasskeyWasNotAccepted'),
       ),
     };
   }
@@ -416,12 +420,15 @@ const authenticateThroughTheSystem = async (
     .catch(() => null);
 
   if (verified === null) {
-    return { kind: 'failed', reason: 'Valence could not be reached.' };
+    return { kind: 'failed', reason: say('common.valenceCouldNotBeReached') };
   }
 
   return verified.error === null
     ? { kind: 'signedIn' }
-    : { kind: 'failed', reason: verified.error.message ?? 'That passkey was not accepted.' };
+    : {
+        kind: 'failed',
+        reason: verified.error.message ?? say('client.session.auth.thatPasskeyWasNotAccepted'),
+      };
 };
 
 /**
@@ -451,7 +458,7 @@ const authenticateWithPasskey = async (
       ? { kind: 'signedIn' }
       : outcome === 'cancelled'
         ? { kind: 'cancelled' }
-        : { kind: 'failed', reason: 'That did not sign you in. Try again.' };
+        : { kind: 'failed', reason: say('common.thatDidNotSignYouIn') };
   }
 
   if (passkeys.kind === 'none') {
@@ -461,7 +468,7 @@ const authenticateWithPasskey = async (
   const answer = await client.signIn.passkey().catch(() => null);
 
   if (answer === null) {
-    return { kind: 'failed', reason: 'Valence could not be reached.' };
+    return { kind: 'failed', reason: say('common.valenceCouldNotBeReached') };
   }
 
   const error = answer.error ?? null;
@@ -474,7 +481,10 @@ const authenticateWithPasskey = async (
     return { kind: 'cancelled' };
   }
 
-  return { kind: 'failed', reason: error.message ?? 'That passkey was not accepted.' };
+  return {
+    kind: 'failed',
+    reason: error.message ?? say('client.session.auth.thatPasskeyWasNotAccepted'),
+  };
 };
 
 /**
@@ -654,7 +664,7 @@ const askWhetherTheDeviceMayIn = async (deviceCode: string): Promise<DeviceGrant
     .catch(() => null);
 
   if (answer === null) {
-    return { kind: 'failed', reason: 'Valence could not be reached.' };
+    return { kind: 'failed', reason: say('common.valenceCouldNotBeReached') };
   }
 
   if (answer.error === null) {
@@ -679,7 +689,7 @@ const askWhetherTheDeviceMayIn = async (deviceCode: string): Promise<DeviceGrant
     return { kind: 'expired' };
   }
 
-  return { kind: 'failed', reason: 'That code was not accepted.' };
+  return { kind: 'failed', reason: say('client.session.auth.thatCodeWasNotAccepted') };
 };
 
 /**

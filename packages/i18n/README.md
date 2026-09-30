@@ -48,20 +48,21 @@ and a translator has to catch that. If the meaning changes, give the string a ne
 
 ## Saying things
 
-| Helper                             | Returns                 | For                                                            |
-| ---------------------------------- | ----------------------- | -------------------------------------------------------------- |
-| `say(key, values?)`                | `string`                | English for this process: logs, webhooks, anything not shown   |
-| `sayCount(key, count, values?)`    | `string`                | The same, choosing `.one` or `.other`                          |
-| `sayParts(key, fillings)`          | `(string \| Filling)[]` | A sentence whose gap holds an element, such as a link          |
-| `saying(key, values?)`             | `Said`                  | Something a server tells a person, to store or to send         |
-| `sayingCount(key, count, values?)` | `Said`                  | The same, counted                                              |
-| `sayingAll(items)`                 | `Said`                  | Several names or things said, as "a, b and c"                  |
-| `sayingList(saids)`                | `Said`                  | Several separate reasons, run together                         |
-| `sayVerbatim(text)`                | `Said`                  | Text from elsewhere (a download client, a plugin), not our own |
-| `sayAgain(said)`                   | `string`                | A client showing a `Said` in the language it was built with    |
-| `sayAgainIfAny(said)`              | `string \| null`        | The same, for something that may be absent                     |
-| `refuse(key, values?)`             | `RefusalBody`           | The body of an error response                                  |
-| `refuseWith(said)`                 | `RefusalBody`           | An error response for a reason already held as a `Said`        |
+| Helper                                | Returns                 | For                                                            |
+| ------------------------------------- | ----------------------- | -------------------------------------------------------------- |
+| `say(key, values?)`                   | `string`                | English for this process: logs, webhooks, anything not shown   |
+| `sayCount(key, count, values?)`       | `string`                | The same, choosing `.one` or `.other`                          |
+| `sayParts(key, fillings)`             | `(string \| Filling)[]` | A sentence whose gap holds an element, such as a link          |
+| `sayCountParts(key, count, fillings)` | `(string \| Filling)[]` | The same, counted, where `{count}` is itself an element        |
+| `saying(key, values?)`                | `Said`                  | Something a server tells a person, to store or to send         |
+| `sayingCount(key, count, values?)`    | `Said`                  | The same, counted                                              |
+| `sayingAll(items)`                    | `Said`                  | Several names or things said, as "a, b and c"                  |
+| `sayingList(saids)`                   | `Said`                  | Several separate reasons, run together                         |
+| `sayVerbatim(text)`                   | `Said`                  | Text from elsewhere (a download client, a plugin), not our own |
+| `sayAgain(said)`                      | `string`                | A client showing a `Said` in the language it was built with    |
+| `sayAgainIfAny(said)`                 | `string \| null`        | The same, for something that may be absent                     |
+| `refuse(key, values?)`                | `RefusalBody`           | The body of an error response                                  |
+| `refuseWith(said)`                    | `RefusalBody`           | An error response for a reason already held as a `Said`        |
 
 ### What a server sends
 
@@ -96,12 +97,34 @@ the code and values next to it:
 
 Log lines and webhook payloads stay in English. They use `.message` or `say`, never a code.
 
+### Sentences with elements in them
+
+In `packages/screens`, a sentence whose gap holds an element, such as a link or a number that
+rolls, is drawn with `Sentence`:
+
+```tsx
+<Sentence words="common.doneOfTotal" fillings={{ done: <AnimatedBytes bytes={done} />, total }} />
+<Sentence counted="common.count.items" count={n} fillings={{ count: <AnimatedNumber value={n} /> }} />
+```
+
+The phone and TV clients map `sayParts` or `sayCountParts` into keyed fragments the same way.
+
 ## Enforcement
 
-The ESLint rule `valence/no-hard-coded-strings` reports any string literal that reads like words
-for a person: a capitalised phrase, a sentence, or text inside JSX or in a label-like property. It
-skips class names, keys, header names, handlers, measures such as `1080p`, and anything passed to
-a logger or to one of the helpers above. Tests are exempt.
+The ESLint rule `valence/no-hard-coded-strings` covers every package and app except the docs,
+landing and plugin SDK. It reports:
+
+- a string literal that reads like words for a person: a capitalised phrase, a sentence, or text
+  inside JSX or in a label-like property;
+- a template with words around its values, such as `` `${count} episodes` `` or `` `${time} left` ``;
+- a choice made on whether a number is one, such as `count === 1 ? 'song' : 'songs'`, which
+  belongs in `sayCount`.
+
+It skips class names, keys, header names, handlers, measures such as `1080p`, style values such
+as font stacks, and anything passed to a logger or to one of the helpers above. Where type
+information is available, a lower-case literal that is one of the values its type allows, such as
+`'every library'` passed where `'one library' | 'every library'` is expected, counts as a key.
+Tests are exempt.
 
 Machine values that look like words, such as a cookie's `sameSite`, a user agent, or a mode a
 client matches on, take a disable comment with a reason:

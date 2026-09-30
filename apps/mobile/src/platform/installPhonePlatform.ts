@@ -12,6 +12,7 @@ import { thePhonesStore } from '@ValenceMobile/platform/thePhonesStore';
 import { thePhonesHeldFiles } from '@ValenceMobile/platform/thePhonesHeldFiles';
 import { theServerThisPhoneWatches } from '@ValenceMobile/platform/theServerThisPhoneWatches';
 import { thisPhonesId } from '@ValenceMobile/platform/thisPhonesId';
+import { say } from '@ValenceI18n/say';
 
 const PICK_UP_DOWNLOADS_AFTER = 3000;
 
@@ -55,7 +56,10 @@ const installPhonePlatform = (held: Map<string, string>): void => {
     setUnreadBadge: () => {},
     musicAudio: thePhonesMusicOut,
     listeningAudio: thePhonesListeningAudio,
-    passkeys: () => ({ kind: 'none', why: 'Add a passkey from Valence on the web.' }),
+    passkeys: () => ({
+      kind: 'none',
+      why: say('phone.platform.installPhonePlatform.addAPasskeyFromValenceOn'),
+    }),
   });
 };
 

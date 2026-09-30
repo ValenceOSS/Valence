@@ -15,6 +15,7 @@ import type { WebhooksPanelProps } from './WebhooksPanel.types';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { useTicking } from '@ValenceScreens/clock/useTicking';
 import { A_CAPTION_AGES_EVERY } from '@ValenceScreens/clock/A_CAPTION_AGES_EVERY';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says how a subscription's last delivery went, in a word and a colour: never used, when it last
@@ -30,14 +31,24 @@ const describeLastAttempt = (
   now: number,
 ): { tone: 'quiet' | 'danger'; label: string } => {
   if (webhook.lastAttemptAt === null) {
-    return { tone: 'quiet', label: 'Never used' };
+    return { tone: 'quiet', label: say('common.neverUsed') };
   }
 
   if (webhook.lastError === null) {
-    return { tone: 'quiet', label: `Delivered ${describeSince(webhook.lastAttemptAt, now)}` };
+    return {
+      tone: 'quiet',
+      label: say('screens.adminArea.webhooksPanel.deliveredLastAttemptAt', {
+        lastAttemptAt: describeSince(webhook.lastAttemptAt, now),
+      }),
+    };
   }
 
-  return { tone: 'danger', label: `Failing since ${describeSince(webhook.lastAttemptAt, now)}` };
+  return {
+    tone: 'danger',
+    label: say('screens.adminArea.webhooksPanel.failingSinceLastAttemptAt', {
+      lastAttemptAt: describeSince(webhook.lastAttemptAt, now),
+    }),
+  };
 };
 
 /**
@@ -111,9 +122,13 @@ const WebhooksPanel = ({
       />
 
       <ConfirmDialog
-        title={`Delete ${deleting?.name ?? 'this webhook'}?`}
-        detail="Nothing more will be sent there, and the signing secret is lost. Adding it again means giving the receiver a new secret."
-        confirmLabel="Delete"
+        title={
+          deleting === null
+            ? say('screens.adminArea.webhooksPanel.deleteThisWebhook')
+            : say('common.deleteName', { name: deleting.name })
+        }
+        detail={say('screens.adminArea.webhooksPanel.nothingMoreWillBeSentThere')}
+        confirmLabel={say('common.delete')}
         isDestructive
         isOpen={deleting !== null}
         onClose={() => {
@@ -129,17 +144,15 @@ const WebhooksPanel = ({
       />
 
       {created === null ? null : (
-        <PanelCard title="New webhook" isHighlighted>
+        <PanelCard title={say('screens.adminArea.webhooksPanel.newWebhook')} isHighlighted>
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-1">
               <span className="text-sm font-medium text-text">
-                {created.name} is set up. Copy its signing secret now.
+                {say('screens.adminArea.webhooksPanel.nameIsSetUpCopyIts', { name: created.name })}
               </span>
 
               <span className="text-xs text-text-muted">
-                This is the only time it is shown. Give it to the receiver so it can check that a
-                delivery really came from Valence. If it is lost, delete this webhook and make
-                another.
+                {say('screens.adminArea.webhooksPanel.thisIsTheOnlyTimeIt')}
               </span>
             </div>
 
@@ -149,7 +162,7 @@ const WebhooksPanel = ({
 
             <div className="flex justify-end">
               <Button variant="secondary" size="sm" onClick={onDismissCreated}>
-                I have copied it
+                {say('screens.adminArea.webhooksPanel.iHaveCopiedIt')}
               </Button>
             </div>
           </div>
@@ -157,7 +170,7 @@ const WebhooksPanel = ({
       )}
 
       <PanelCard
-        title="Webhooks"
+        title={say('common.webhooks')}
         isFlush
         actions={
           <PanelCardAction
@@ -166,14 +179,13 @@ const WebhooksPanel = ({
               setIsAdding(true);
             }}
           >
-            Create webhook
+            {say('common.createWebhook')}
           </PanelCardAction>
         }
       >
         {webhooks.length === 0 ? (
           <p className="px-4 py-8 text-center text-sm text-text-muted">
-            Nothing is being told about anything. Create a webhook to have Valence post to Discord,
-            ntfy or anywhere else when a job fails.
+            {say('screens.adminArea.webhooksPanel.nothingIsBeingToldAboutAnything')}
           </p>
         ) : (
           <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
@@ -187,7 +199,7 @@ const WebhooksPanel = ({
 
                     <Badge tone={attempt.tone}>{attempt.label}</Badge>
 
-                    {webhook.enabled ? null : <Badge tone="quiet">Off</Badge>}
+                    {webhook.enabled ? null : <Badge tone="quiet">{say('common.off')}</Badge>}
                   </div>
 
                   <span className="break-all text-xs text-text-muted">{webhook.url}</span>
@@ -205,7 +217,7 @@ const WebhooksPanel = ({
 
                   <div className="flex flex-wrap items-center gap-2">
                     <Switch
-                      label="Enabled"
+                      label={say('common.enabled')}
                       isOn={webhook.enabled}
                       onToggle={() => {
                         onSetEnabled(webhook.id, !webhook.enabled);
@@ -220,7 +232,7 @@ const WebhooksPanel = ({
                         onTest(webhook.id);
                       }}
                     >
-                      Send a test
+                      {say('screens.adminArea.webhooksPanel.sendATest')}
                     </Button>
 
                     <Button
@@ -230,7 +242,7 @@ const WebhooksPanel = ({
                         setEditing(webhook);
                       }}
                     >
-                      Edit
+                      {say('common.edit')}
                     </Button>
 
                     <Button
@@ -241,7 +253,9 @@ const WebhooksPanel = ({
                         onOpenHistory(openHistoryId === webhook.id ? null : webhook.id);
                       }}
                     >
-                      {openHistoryId === webhook.id ? 'Hide history' : 'History'}
+                      {openHistoryId === webhook.id
+                        ? say('screens.adminArea.webhooksPanel.hideHistory')
+                        : say('common.history')}
                     </Button>
 
                     <Button
@@ -251,7 +265,7 @@ const WebhooksPanel = ({
                         setDeleting(webhook);
                       }}
                     >
-                      Delete
+                      {say('common.delete')}
                     </Button>
                   </div>
 

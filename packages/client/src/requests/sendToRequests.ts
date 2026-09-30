@@ -1,9 +1,10 @@
 import { readRefusal } from '@ValenceClient/admin/readRefusal';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
+import { say } from '@ValenceI18n/say';
 
 type Sent<Value> = { value: Value | null; refusal: Refusal };
 
-const UNREACHABLE: Refusal = { message: 'The server could not be reached.' };
+const UNREACHABLE: Refusal = { message: say('common.theServerCouldNotBeReached') };
 
 /**
  * Sends something to the requesting routes, and reads the answer or why it was refused.

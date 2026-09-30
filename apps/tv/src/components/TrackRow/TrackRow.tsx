@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { NumberedRow } from '@ValenceTv/components/NumberedRow/NumberedRow';
 import type { TrackRowProps } from './TrackRow.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * One song in a list of them: where it comes in the list, or bars rising and falling where it is
@@ -32,7 +33,7 @@ const TrackRowLine = ({
     <NumberedRow
       label={`${track.title}, ${artists}`}
       title={track.title}
-      detail={`${isPick ? 'Smart shuffle · ' : ''}${track.isExplicit ? 'E · ' : ''}${artists}`}
+      detail={`${isPick ? say('tv.trackRow.smartShuffle') : ''}${track.isExplicit ? say('tv.trackRow.e') : ''}${artists}`}
       {...(showsAlbum ? { aside: track.album.title } : {})}
       length={track.durationSeconds}
       place={place}

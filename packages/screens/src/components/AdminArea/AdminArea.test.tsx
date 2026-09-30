@@ -526,9 +526,7 @@ describe('AdminArea', () => {
   it('says how much of the busy processor is Valence itself', async () => {
     renderInAnAddress(<TheAdmin />);
 
-    expect((await screen.findByText('10 cores')).parentElement).toHaveTextContent(
-      '10 cores · Valence 19%',
-    );
+    expect(await screen.findByText(/cores · Valence/u)).toHaveTextContent('10 cores · Valence 19%');
   });
 
   it('says the graphics figure is the whole card when the encoder cannot be read', async () => {
@@ -565,7 +563,7 @@ describe('AdminArea', () => {
   it('reports room left on the disk the library is on, not on the one Valence boots from', async () => {
     renderInAnAddress(<TheAdmin />);
 
-    expect(await screen.findByText('2.0 TB free')).toBeInTheDocument();
+    expect((await screen.findByText('2.0 TB')).parentElement).toHaveTextContent('2.0 TB free');
     expect((await screen.findByText('8.0 TB')).parentElement).toHaveTextContent(
       'of 8.0 TB · /media',
     );

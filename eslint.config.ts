@@ -173,6 +173,13 @@ export default tseslint.config(
       'packages/contracts/src/**/*.{ts,tsx}',
       'apps/server/src/**/*.{ts,tsx}',
       'apps/requests/src/**/*.{ts,tsx}',
+      'packages/client/src/**/*.{ts,tsx}',
+      'packages/ui/src/**/*.{ts,tsx}',
+      'packages/screens/src/**/*.{ts,tsx}',
+      'apps/web/src/**/*.{ts,tsx}',
+      'apps/desktop/src/**/*.{ts,tsx}',
+      'apps/mobile/src/**/*.{ts,tsx}',
+      'apps/tv/src/**/*.{ts,tsx}',
     ],
     rules: {
       'valence/no-hard-coded-strings': 'error',

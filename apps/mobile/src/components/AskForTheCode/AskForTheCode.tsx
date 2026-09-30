@@ -8,6 +8,7 @@ import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { TextField } from '@ValenceMobile/components/TextField/TextField';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import type { AskForTheCodeProps } from './AskForTheCode.types';
+import { say } from '@ValenceI18n/say';
 
 const MARK_HIGH = 40;
 
@@ -38,7 +39,9 @@ const AskForTheCode = ({ onIn, onBack }: AskForTheCodeProps) => {
     const said = code.trim();
 
     if (said === '') {
-      setRefusal(isTotp ? 'Enter the code from your authenticator app.' : 'Enter a backup code.');
+      setRefusal(
+        isTotp ? say('common.enterTheCodeFromYourAuthenticator') : say('common.enterABackupCode'),
+      );
 
       return;
     }
@@ -51,14 +54,14 @@ const AskForTheCode = ({ onIn, onBack }: AskForTheCodeProps) => {
     setIsTrying(false);
 
     if (accepted === null) {
-      setRefusal('Could not reach the server. Check that it is still running.');
+      setRefusal(say('common.couldNotReachTheServerCheck'));
 
       return;
     }
 
     if (!accepted) {
       setRefusal(
-        isTotp ? 'That code is not valid. Try the next one.' : 'That backup code is not valid.',
+        isTotp ? say('common.thatCodeIsNotValidTry') : say('common.thatBackupCodeIsNotValid'),
       );
 
       return;
@@ -73,16 +76,16 @@ const AskForTheCode = ({ onIn, onBack }: AskForTheCodeProps) => {
         <ACarriedMark high={MARK_HIGH} />
       </View>
 
-      <Words size="title">One more step</Words>
+      <Words size="title">{say('phone.askForTheCode.oneMoreStep')}</Words>
 
       <Words tone="muted">
         {isTotp
-          ? 'Enter the current code from your authenticator app.'
-          : 'Enter one of the backup codes you saved. Each can be used once.'}
+          ? say('common.enterTheCurrentCodeFromYour')
+          : say('common.enterOneOfTheBackupCodes')}
       </Words>
 
       <TextField
-        label={isTotp ? 'Authenticator code' : 'Backup code'}
+        label={isTotp ? say('common.authenticatorCode') : say('common.backupCode')}
         value={code}
         onValueChange={setCode}
         keyboard={isTotp ? 'code' : 'default'}
@@ -102,7 +105,7 @@ const AskForTheCode = ({ onIn, onBack }: AskForTheCodeProps) => {
           void tryIt();
         }}
       >
-        Continue
+        {say('common.continue')}
       </Button>
 
       <Button
@@ -114,11 +117,11 @@ const AskForTheCode = ({ onIn, onBack }: AskForTheCodeProps) => {
           setRefusal(null);
         }}
       >
-        {isTotp ? 'Use a backup code instead' : 'Use my authenticator app instead'}
+        {isTotp ? say('common.useABackupCodeInstead') : say('common.useMyAuthenticatorAppInstead')}
       </Button>
 
       <Button tone="ghost" icon={ChevronLeft} onPress={onBack}>
-        Somebody else
+        {say('common.somebodyElse')}
       </Button>
     </Screen>
   );

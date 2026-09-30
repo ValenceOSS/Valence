@@ -14,6 +14,7 @@ import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { WatchedBar } from '@ValenceUI/WatchedBar';
 import type { EpisodeRowProps } from './EpisodeRow.types';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
+import { say } from '@ValenceI18n/say';
 
 /**
  * One episode in a list of them: its number, its name, how long it runs, what it is about, and how
@@ -42,8 +43,11 @@ const EpisodeRow = ({
       size="none"
       aria-label={
         resumeSeconds === undefined
-          ? `Play ${episode.title}`
-          : `Resume ${episode.title} from ${formatDuration(resumeSeconds)}`
+          ? say('common.playTitle', { title: episode.title })
+          : say('common.resumeTitleFromResumeSeconds', {
+              title: episode.title,
+              resumeSeconds: formatDuration(resumeSeconds),
+            })
       }
       onClick={() => {
         onPlay(episode, resumeSeconds ?? 0);
@@ -68,7 +72,7 @@ const EpisodeRow = ({
           {watchedFraction === undefined || watchedFraction < 1 ? null : (
             <span
               role="img"
-              aria-label="Watched"
+              aria-label={say('common.watched')}
               className="absolute bottom-1.5 right-1.5 flex size-5 items-center justify-center rounded-full bg-success text-surface"
             >
               <Icon of={CheckIcon} size={12} />
@@ -90,7 +94,9 @@ const EpisodeRow = ({
         <span className="font-body text-xs text-text-muted">
           {formatDuration(episode.durationSeconds)}
           {airs === undefined || airs === '' ? '' : ` · ${airs}`}
-          {resumeSeconds === undefined ? '' : ` · ${formatDuration(resumeSeconds)} in`}
+          {resumeSeconds === undefined
+            ? ''
+            : ` · ${say('common.durationIn', { duration: formatDuration(resumeSeconds) })}`}
         </span>
       </span>
     </Button>
@@ -103,8 +109,8 @@ const EpisodeRow = ({
             size="xs"
             label={
               (watchedFraction ?? 0) >= 1
-                ? `Mark ${episode.title} as unwatched`
-                : `Mark ${episode.title} as watched`
+                ? say('common.markTitleAsUnwatched', { title: episode.title })
+                : say('common.markTitleAsWatched', { title: episode.title })
             }
             hasTooltip={false}
             isActive={(watchedFraction ?? 0) >= 1}
@@ -112,7 +118,9 @@ const EpisodeRow = ({
               onMarkWatched(episode, (watchedFraction ?? 0) < 1);
             }}
           >
-            {(watchedFraction ?? 0) >= 1 ? 'Watched' : 'Mark as watched'}
+            {(watchedFraction ?? 0) >= 1
+              ? say('common.watched')
+              : say('screens.showDialog.episodeRow.markAsWatched')}
             <Icon
               of={(watchedFraction ?? 0) >= 1 ? CircleCheckFilledIcon : CircleCheckIcon}
               size={14}
@@ -124,13 +132,13 @@ const EpisodeRow = ({
           <Button
             variant="secondary"
             size="xs"
-            label={`About ${episode.title}`}
+            label={say('common.aboutTitle', { title: episode.title })}
             hasTooltip={false}
             onClick={() => {
               onInspect(episode);
             }}
           >
-            More info
+            {say('common.moreInfo')}
             <Icon of={InfoIcon} size={14} />
           </Button>
         )}

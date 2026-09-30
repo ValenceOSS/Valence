@@ -8,6 +8,7 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { describeRemoval } from '@ValenceClient/plugins/describeRemoval';
 import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 import type { RemovePluginDialogProps } from './RemovePluginDialog.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Asks before removing a plugin, listing what goes with it — what it kept, the accounts people
@@ -31,7 +32,10 @@ const RemovePluginDialog = ({
     ...pluginQueries.removal(plugin?.id ?? ''),
     enabled: plugin !== null,
   });
-  const title = `Remove ${plugin?.name ?? 'this plugin'}?`;
+  const title =
+    plugin === null
+      ? say('screens.pluginsPanel.removePluginDialog.removeThisPlugin')
+      : say('common.removeName', { name: plugin.name });
   const lines = removal.data === undefined ? [] : describeRemoval(removal.data);
 
   return (
@@ -44,14 +48,17 @@ const RemovePluginDialog = ({
       <DialogTitle title={title} />
 
       <DialogContent className="flex flex-col gap-3 font-body text-sm text-text-muted">
-        <p>It stops at once and cannot be undone.</p>
+        <p>{say('screens.pluginsPanel.removePluginDialog.itStopsAtOnceAndCannot')}</p>
 
         {removal.isPending ? (
-          <Spinner size="sm" label="Finding what goes with it" />
+          <Spinner
+            size="sm"
+            label={say('screens.pluginsPanel.removePluginDialog.findingWhatGoesWithIt')}
+          />
         ) : removal.isError ? (
-          <p>Valence could not say what it kept; whatever it was is deleted with it.</p>
+          <p>{say('screens.pluginsPanel.removePluginDialog.valenceCouldNotSayWhatIt')}</p>
         ) : lines.length === 0 ? (
-          <p>It kept nothing, and nobody connected an account to it.</p>
+          <p>{say('screens.pluginsPanel.removePluginDialog.itKeptNothingAndNobodyConnected')}</p>
         ) : (
           <ul className="flex list-disc flex-col gap-1.5 pl-5 text-text">
             {lines.map((line) => (
@@ -61,19 +68,21 @@ const RemovePluginDialog = ({
         )}
 
         {plugin?.isEnabled === true ? (
-          <p>Turning it off instead keeps all of this for when it is turned back on.</p>
+          <p>{say('screens.pluginsPanel.removePluginDialog.turningItOffInsteadKeepsAll')}</p>
         ) : null}
       </DialogContent>
 
-      <DialogFooter dismiss={{ label: 'Cancel', onChoose: onClose, isDisabled: isBusy }}>
+      <DialogFooter
+        dismiss={{ label: say('common.cancel'), onChoose: onClose, isDisabled: isBusy }}
+      >
         {plugin?.isEnabled === true ? (
           <Button variant="secondary" disabled={isBusy} onClick={onTurnOff}>
-            Turn it off
+            {say('screens.pluginsPanel.removePluginDialog.turnItOff')}
           </Button>
         ) : null}
 
         <Button variant="danger" isLoading={isBusy} onClick={onConfirm}>
-          Remove it
+          {say('common.removeIt')}
         </Button>
       </DialogFooter>
     </Dialog>

@@ -2,6 +2,7 @@ import { QrCode } from '@ValenceUI/QrCode';
 import { whereToTypeTheCode } from '@ValenceClient/session/whereToTypeTheCode';
 import { Spinner } from '@ValenceUI/Spinner';
 import type { FinishOnAnotherDeviceProps } from './FinishOnAnotherDevice.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * What a television shows instead of the setting-up form, which asks for a name and a picture and
@@ -18,19 +19,20 @@ import type { FinishOnAnotherDeviceProps } from './FinishOnAnotherDevice.types';
 const FinishOnAnotherDevice = ({ name, address }: FinishOnAnotherDeviceProps) => (
   <main className="mx-auto flex min-h-svh w-full max-w-xl flex-col items-center justify-center gap-8 px-8 text-center">
     <header className="flex flex-col gap-3">
-      <h1 className="text-3xl font-medium text-text">Finish setting up on your phone</h1>
+      <h1 className="text-3xl font-medium text-text">
+        {say('screens.finishOnAnotherDevice.finishSettingUpOnYourPhone')}
+      </h1>
 
       <p className="text-base text-text-muted">
-        {name} needs a name and a picture, and a remote is a poor way to give it either. Open this
-        on your phone and this television will carry on by itself.
+        {say('screens.finishOnAnotherDevice.nameNeedsANameAndA', { name })}
       </p>
     </header>
 
-    <QrCode value={address} label="Open this on your phone" size={200} />
+    <QrCode value={address} label={say('common.openThisOnYourPhone')} size={200} />
 
     <p className="text-base text-text-muted">{whereToTypeTheCode(address)}</p>
 
-    <Spinner label="Waiting for you to finish" />
+    <Spinner label={say('screens.finishOnAnotherDevice.waitingForYouToFinish')} />
   </main>
 );
 

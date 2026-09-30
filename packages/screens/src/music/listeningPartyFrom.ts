@@ -25,7 +25,7 @@ const listeningPartyFrom = (
 
   return {
     party,
-    hostName: party.members.find((member) => member.role === 'host')?.name ?? 'the host',
+    hostName: party.members.find((member) => member.role === 'host')?.name ?? null,
     mayChoose: powersOf(role).includes('changeWhatIsPlaying'),
     mayPlayPause: partyAllows(party, role, { kind: 'play', atSeconds: 0 }),
     maySeek: partyAllows(party, role, { kind: 'seek', atSeconds: 0 }),

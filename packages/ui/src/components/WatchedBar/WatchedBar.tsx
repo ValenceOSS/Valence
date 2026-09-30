@@ -1,5 +1,6 @@
 import { cn } from '@ValenceUI/cn';
 import type { WatchedBarProps } from './WatchedBar.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * How far into something somebody got, as a short bar drawn beneath its picture rather than over it,
@@ -14,7 +15,7 @@ const WatchedBar = ({ watched, className }: WatchedBarProps) => {
   return (
     <span
       role="img"
-      aria-label={`${Math.round(share * 100).toString()}% watched`}
+      aria-label={say('ui.watchedBar.valueWatched', { value: Math.round(share * 100).toString() })}
       className={cn(
         'mx-auto block h-1 w-3/5 overflow-hidden rounded-full bg-on-scrim/25',
         className,

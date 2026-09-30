@@ -1,4 +1,5 @@
 import type { Library } from '@ValenceContracts/schemas/Library';
+import { say } from '@ValenceI18n/say';
 
 type RunSubject = { name: string; library: Library | null };
 
@@ -13,18 +14,18 @@ const IDENTIFIER = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
  */
 const describeScope = (kind: string): string => {
   if (kind.startsWith('library.')) {
-    return 'Every library';
+    return say('common.everyLibrary2');
   }
 
   if (kind.startsWith('server.')) {
-    return 'This server';
+    return say('screens.jobHistory.describeRunSubject.thisServer');
   }
 
   if (kind.startsWith('requests.')) {
-    return 'Requests';
+    return say('common.requests');
   }
 
-  return kind.startsWith('catalogue.') ? 'The catalogue' : 'Everything';
+  return kind.startsWith('catalogue.') ? say('common.theCatalogue') : say('common.everything');
 };
 
 /**
@@ -50,7 +51,10 @@ const describeRunSubject = (
   const library = libraries.find((candidate) => candidate.id === subject) ?? null;
 
   if (library === null && IDENTIFIER.test(subject)) {
-    return { name: 'A library that has been removed', library: null };
+    return {
+      name: say('screens.jobHistory.describeRunSubject.aLibraryThatHasBeenRemoved'),
+      library: null,
+    };
   }
 
   return { name: library?.name ?? subject, library };

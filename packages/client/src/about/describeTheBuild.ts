@@ -1,6 +1,7 @@
 import { describeTheServer } from '@ValenceClient/about/describeTheServer';
 import type { BuildInfo } from '@ValenceClient/platform/Platform.types';
 import type { About } from '@ValenceContracts/schemas/About';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says what this build is, and what the server it is talking to runs, in the one line somebody pastes
@@ -18,7 +19,16 @@ const describeTheBuild = (info: BuildInfo | null, server: About | null): string 
   const parts = [
     info === null
       ? null
-      : `Valence ${info.version}${info.commit === null ? '' : ` (${info.commit})`} · ${info.runsOn}`,
+      : info.commit === null
+        ? say('client.about.describeTheBuild.valenceVersionRunsOn', {
+            version: info.version,
+            runsOn: info.runsOn,
+          })
+        : say('client.about.describeTheBuild.valenceVersionCommitRunsOn', {
+            version: info.version,
+            commit: info.commit,
+            runsOn: info.runsOn,
+          }),
     describeTheServer(server),
   ].filter((part) => part !== null);
 

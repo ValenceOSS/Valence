@@ -10,6 +10,7 @@ import { addedAtMs } from '@ValenceCore/functions/addedAtMs';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { Rail } from '@ValenceClient/library/groupIntoRails';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
+import { say } from '@ValenceI18n/say';
 
 const FIRST_GENRES = 6;
 
@@ -60,10 +61,15 @@ const encoreTitle = (
   decade: number | null,
 ): string => {
   if (decade !== null) {
-    return `${genre} from the ${decade.toString()}s`;
+    return say('client.library.useHomeRows.genreFromTheDecadeS', {
+      genre,
+      decade: decade.toString(),
+    });
   }
 
-  return order === 'newest' ? `New in ${genre}` : `${genre} A–Z`;
+  return order === 'newest'
+    ? say('client.library.useHomeRows.newInGenre', { genre })
+    : `${genre} A–Z`;
 };
 
 /**

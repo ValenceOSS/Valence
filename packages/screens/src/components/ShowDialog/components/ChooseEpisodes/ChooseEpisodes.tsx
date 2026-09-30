@@ -6,6 +6,7 @@ import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
 import type { ChooseEpisodesProps } from './ChooseEpisodes.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Picks which episodes of a programme to download: every season with its episodes under it, a
@@ -53,8 +54,12 @@ const ChooseEpisodes = ({
   };
 
   return (
-    <Dialog label={`Choose episodes of ${title}`} isOpen={isOpen} onClose={close}>
-      <DialogTitle title="Choose episodes" detail={title} />
+    <Dialog
+      label={say('screens.showDialog.chooseEpisodes.chooseEpisodesOfTitle', { title })}
+      isOpen={isOpen}
+      onClose={close}
+    >
+      <DialogTitle title={say('common.chooseEpisodes')} detail={title} />
 
       <DialogContent className="flex flex-col gap-6">
         {seasons.map((season) => {
@@ -81,7 +86,7 @@ const ChooseEpisodes = ({
                   <li key={episode.id}>
                     <Checkbox
                       label={`${episode.episodeNumber === null || episode.episodeNumber === undefined ? '' : `${episode.episodeNumber.toString()}. `}${episode.title}`}
-                      {...(held.has(episode.id) ? { description: 'On this device' } : {})}
+                      {...(held.has(episode.id) ? { description: say('common.onThisDevice') } : {})}
                       checked={picked.has(episode.id)}
                       disabled={held.has(episode.id)}
                       onCheckedChange={(isOn) => {
@@ -101,10 +106,12 @@ const ChooseEpisodes = ({
         confirm={{
           label:
             picked.size === 0
-              ? 'Pick some episodes'
+              ? say('common.pickSomeEpisodes')
               : picked.size === 1
-                ? 'Download 1 episode'
-                : `Download ${picked.size.toString()} episodes`,
+                ? say('screens.showDialog.chooseEpisodes.download1Episode')
+                : say('screens.showDialog.chooseEpisodes.downloadSizeEpisodes', {
+                    size: picked.size.toString(),
+                  }),
           isDisabled: picked.size === 0,
           onChoose: () => {
             const ids = [...picked];

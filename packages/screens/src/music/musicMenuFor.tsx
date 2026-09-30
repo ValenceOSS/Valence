@@ -14,6 +14,7 @@ import type { MusicPlayer } from '@ValenceClient/music/createMusicPlayer';
 import type { MusicView } from '@ValenceClient/music/musicView';
 import { playlistGroupFor } from './playlistGroupFor';
 import type { MyPlaylists } from '@ValenceClient/music/useMyPlaylists.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * What can be done to an album, an artist, a playlist or somebody's liked songs from wherever it is
@@ -50,7 +51,7 @@ const musicMenuFor = (
       items: [
         {
           id: 'play',
-          label: 'Play',
+          label: say('common.play'),
           icon: <Icon of={PlayFilledIcon} size={16} />,
           onChoose: () => {
             withSongs(({ tracks, source, isOrdered }) => {
@@ -60,7 +61,7 @@ const musicMenuFor = (
         },
         {
           id: 'shuffle',
-          label: 'Shuffle',
+          label: say('common.shuffle'),
           icon: <Icon of={ShuffleIcon} size={16} />,
           onChoose: () => {
             withSongs(({ tracks, source }) => {
@@ -73,7 +74,7 @@ const musicMenuFor = (
         },
         {
           id: 'next',
-          label: 'Play next',
+          label: say('common.playNext'),
           icon: <Icon of={SkipForwardFilledIcon} size={16} />,
           onChoose: () => {
             withSongs(({ tracks }) => {
@@ -83,7 +84,7 @@ const musicMenuFor = (
         },
         {
           id: 'queue',
-          label: 'Add to queue',
+          label: say('common.addToQueue'),
           icon: <Icon of={ListPlusIcon} size={16} />,
           onChoose: () => {
             withSongs(({ tracks }) => {
@@ -107,7 +108,7 @@ const musicMenuFor = (
       items: [
         {
           id: 'open',
-          label: `Open ${name}`,
+          label: say('common.openName', { name }),
           icon: <Icon of={EyeIcon} size={16} />,
           onChoose: () => {
             open(view);

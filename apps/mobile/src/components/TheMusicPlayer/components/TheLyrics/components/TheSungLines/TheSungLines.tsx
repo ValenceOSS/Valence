@@ -6,6 +6,7 @@ import { ALyricLine } from '@ValenceMobile/components/TheMusicPlayer/components/
 import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
 import type { ComponentRef } from 'react';
 import type { TheSungLinesProps } from './TheSungLines.types';
+import { say } from '@ValenceI18n/say';
 
 const LEAVES_A_READER_ALONE_FOR = 4000;
 
@@ -79,7 +80,7 @@ const TheLines = ({ lines, isSynced, sung, onSeek }: TheSungLinesProps) => {
             {isSynced && atMs !== null ? (
               <Button
                 tone="bare"
-                label={`Play from “${line.text}”`}
+                label={say('phone.theLyrics.theSungLines.playFromText', { text: line.text })}
                 onPress={() => {
                   setLastTouchedAt(0);
                   onSeek(atMs / 1000);

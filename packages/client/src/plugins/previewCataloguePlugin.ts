@@ -2,6 +2,7 @@ import { changeOnServer } from '@ValenceClient/query/changeOnServer';
 import { pluginPath } from '@ValenceClient/plugins/pluginPath';
 import { InstallPreviewSchema } from '@ValenceContracts/schemas/Plugin';
 import type { InstallPreview } from '@ValenceContracts/schemas/Plugin';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Has the server fetch and check an official plugin, and say what installing it would mean.
@@ -15,7 +16,7 @@ const previewCataloguePlugin = async (pluginId: string): Promise<InstallPreview>
     await changeOnServer(
       pluginPath('catalogue', pluginId, 'preview'),
       { method: 'POST' },
-      'That plugin could not be fetched.',
+      say('client.plugins.previewCataloguePlugin.thatPluginCouldNotBeFetched'),
     ),
   );
 

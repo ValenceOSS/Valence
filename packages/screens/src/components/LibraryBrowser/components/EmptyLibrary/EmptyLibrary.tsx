@@ -2,6 +2,7 @@ import { FolderOpen as FolderOpenIcon, Search as SearchIcon } from '@keyline-ico
 import { Button } from '@ValenceUI/Button';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import type { EmptyLibraryProps } from './EmptyLibrary.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says why there is nothing on screen, which is three different situations and three different
@@ -25,8 +26,8 @@ const EmptyLibrary = ({
     return (
       <NothingHere
         of={SearchIcon}
-        title={`Nothing matches “${search}”`}
-        detail="Try fewer words, or a different spelling."
+        title={say('screens.libraryBrowser.emptyLibrary.nothingMatchesSearch', { search })}
+        detail={say('screens.libraryBrowser.emptyLibrary.tryFewerWordsOrADifferent')}
       />
     );
   }
@@ -35,19 +36,19 @@ const EmptyLibrary = ({
     <NothingHere
       of={FolderOpenIcon}
       title={
-        hasContentElsewhere
-          ? `Nothing in ${libraryName ?? 'this library'} yet`
-          : 'Nothing has been scanned yet'
+        !hasContentElsewhere
+          ? say('screens.libraryBrowser.emptyLibrary.nothingHasBeenScannedYet')
+          : libraryName === null
+            ? say('screens.libraryBrowser.emptyLibrary.nothingInThisLibraryYet')
+            : say('screens.libraryBrowser.emptyLibrary.nothingInNameYet', { name: libraryName })
       }
-      detail={
-        canManage ? 'Scan it, or add files to its folder.' : 'Ask the server admin to scan it.'
-      }
+      detail={canManage ? say('common.scanItOrAddFilesTo') : say('common.askTheServerAdminToScan')}
       {...(onManage === undefined
         ? {}
         : {
             action: (
               <Button variant="glossy" onClick={onManage}>
-                Scan it
+                {say('common.scanIt')}
               </Button>
             ),
           })}

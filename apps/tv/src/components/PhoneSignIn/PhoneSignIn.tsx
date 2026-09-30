@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { askWhetherTheDeviceMayIn, startDeviceGrant } from '@ValenceClient/session/auth';
 import { anAddressAPhoneCanReach } from '@ValenceClient/session/anAddressAPhoneCanReach';
@@ -9,6 +9,8 @@ import { holdTheSession } from '@ValenceTv/session/holdTheSession';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { DeviceGrant } from '@ValenceClient/session/auth';
 import type { PhoneSignInProps } from './PhoneSignIn.types';
+import { say } from '@ValenceI18n/say';
+import { sayParts } from '@ValenceI18n/sayParts';
 
 const SLOWS_BY_SECONDS = 5;
 
@@ -58,9 +60,9 @@ const PhoneSignIn = ({ onSignedIn, isStacked = false }: PhoneSignInProps) => {
       if (outcome.kind === 'refused' || outcome.kind === 'expired' || outcome.kind === 'failed') {
         setProblem(
           outcome.kind === 'refused'
-            ? 'That phone said no.'
+            ? say('tv.phoneSignIn.thatPhoneSaidNo')
             : outcome.kind === 'expired'
-              ? 'That code ran out. Here is a new one.'
+              ? say('tv.phoneSignIn.thatCodeRanOutHereIs')
               : outcome.reason,
         );
         setAttempt((was) => was + 1);
@@ -81,7 +83,7 @@ const PhoneSignIn = ({ onSignedIn, isStacked = false }: PhoneSignInProps) => {
       }
 
       if (started === null) {
-        setProblem('This Valence would not start a sign-in.');
+        setProblem(say('tv.phoneSignIn.thisValenceWouldNotStartA'));
 
         return;
       }
@@ -120,16 +122,28 @@ const PhoneSignIn = ({ onSignedIn, isStacked = false }: PhoneSignInProps) => {
       <QrCode
         value={anAddressAPhoneCanReach(grant.verificationUri, origin)}
         size={isStacked ? 300 : 360}
-        label="A code to scan with your phone's camera"
+        label={say('common.aCodeToScanWithYour')}
       />
 
       <View style={[styles.steps, isStacked && styles.stackedSteps]}>
-        <Text style={styles.step}>Scan the code with your phone, or go to</Text>
-        <Text style={styles.address}>
-          {whereToTypeTheCode(anAddressAPhoneCanReach(grant.verificationUri, origin))}
-        </Text>
-        <Text style={styles.step}>and enter</Text>
-        <Text style={[styles.code, isStacked && styles.stackedCode]}>{grant.userCode}</Text>
+        {sayParts('tv.phoneSignIn.scanTheCodeOrGoToAndEnter', {
+          address: (
+            <Text style={styles.address}>
+              {whereToTypeTheCode(anAddressAPhoneCanReach(grant.verificationUri, origin))}
+            </Text>
+          ),
+          code: (
+            <Text style={[styles.code, isStacked && styles.stackedCode]}>{grant.userCode}</Text>
+          ),
+        }).map((part, at) =>
+          typeof part === 'string' ? (
+            <Text key={at.toString()} style={styles.step}>
+              {part.trim()}
+            </Text>
+          ) : (
+            <Fragment key={at.toString()}>{part}</Fragment>
+          ),
+        )}
         {problem === null ? null : <Text style={styles.problem}>{problem}</Text>}
       </View>
     </View>

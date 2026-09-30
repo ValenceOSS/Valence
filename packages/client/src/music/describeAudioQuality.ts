@@ -7,6 +7,7 @@ import {
   AUDIO_QUALITY_LABELS,
 } from '@ValenceContracts/schemas/Music';
 import type { AudioQuality, MusicTrack } from '@ValenceContracts/schemas/Music';
+import { say } from '@ValenceI18n/say';
 
 type QualityChoice = {
   label: string;
@@ -16,12 +17,17 @@ type QualityChoice = {
 type PlayingFile = Pick<MusicTrack, 'codec' | 'isLossless' | 'bitrateKbps'>;
 
 /**
- * Says roughly what an hour at a bitrate uses.
+ * Says what a quality sends, then roughly what an hour of it uses.
  *
+ * @param what - What it sends, such as a codec and a bitrate.
  * @param kbps - The bitrate.
- * @returns The phrase.
+ * @returns The line.
  */
-const anHourOf = (kbps: number): string => `about ${formatBytes(bytesPerHour(kbps))} an hour`;
+const withAnHourOf = (what: string, kbps: number): string =>
+  say('client.music.describeAudioQuality.whatAboutSizeAnHour', {
+    what,
+    size: formatBytes(bytesPerHour(kbps)),
+  });
 
 /**
  * What a streaming quality is called and what it would send, for the song playing, and roughly what
@@ -45,11 +51,14 @@ const describeAudioQuality = (quality: AudioQuality, file: PlayingFile | null): 
     const what =
       file.bitrateKbps === null
         ? file.codec.toUpperCase()
-        : `${file.codec.toUpperCase()} · ${file.bitrateKbps.toString()} kbps`;
+        : say('client.music.describeAudioQuality.codecKbps', {
+            codec: file.codec.toUpperCase(),
+            kbps: file.bitrateKbps.toString(),
+          });
 
     return {
-      label: file.isLossless ? AUDIO_QUALITY_LABELS.lossless : 'Original',
-      detail: file.bitrateKbps === null ? what : `${what} · ${anHourOf(file.bitrateKbps)}`,
+      label: file.isLossless ? AUDIO_QUALITY_LABELS.lossless : say('common.original'),
+      detail: file.bitrateKbps === null ? what : withAnHourOf(what, file.bitrateKbps),
     };
   }
 
@@ -58,13 +67,15 @@ const describeAudioQuality = (quality: AudioQuality, file: PlayingFile | null): 
   if (file !== null && isAlreadyAsSmall(file, kbps) && file.bitrateKbps !== null) {
     return {
       label: AUDIO_QUALITY_LABELS[quality],
-      detail: `Plays the original, which is no bigger · ${anHourOf(file.bitrateKbps)}`,
+      detail: say('client.music.describeAudioQuality.playsTheOriginalAboutSizeAnHour', {
+        size: formatBytes(bytesPerHour(file.bitrateKbps)),
+      }),
     };
   }
 
   return {
     label: AUDIO_QUALITY_LABELS[quality],
-    detail: `${AUDIO_QUALITY_DETAILS[quality]} · ${anHourOf(kbps)}`,
+    detail: withAnHourOf(AUDIO_QUALITY_DETAILS[quality], kbps),
   };
 };
 

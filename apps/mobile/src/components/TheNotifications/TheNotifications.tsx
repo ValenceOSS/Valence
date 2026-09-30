@@ -15,6 +15,7 @@ import { whereANotificationLeads } from '@ValenceMobile/components/TheNotificati
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { ANothingHere } from '@ValenceMobile/components/ANothingHere/ANothingHere';
 import type { TheNotificationsProps } from './TheNotifications.types';
+import { say } from '@ValenceI18n/say';
 
 const DOT = 8;
 
@@ -43,21 +44,25 @@ const TheNotifications = ({ onOpen, onBack }: TheNotificationsProps) => {
   const reread = () => cache.invalidateQueries({ queryKey: notificationQueries.key });
 
   const clearThemAll = () => {
-    Alert.alert('Clear every notification?', 'They are gone for good.', [
-      { text: 'Keep them', style: 'cancel' },
-      {
-        text: 'Clear them',
-        style: 'destructive',
-        onPress: () => {
-          void clearNotifications().then(reread);
+    Alert.alert(
+      say('phone.theNotifications.clearEveryNotification'),
+      say('phone.theNotifications.theyAreGoneForGood'),
+      [
+        { text: say('common.keepThem'), style: 'cancel' },
+        {
+          text: say('phone.theNotifications.clearThem'),
+          style: 'destructive',
+          onPress: () => {
+            void clearNotifications().then(reread);
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   return (
     <Screen scrolls onBack={onBack}>
-      <Words size="title">Notifications</Words>
+      <Words size="title">{say('common.notifications')}</Words>
 
       {notifications.length === 0 ? null : (
         <View style={styles.actions}>
@@ -67,20 +72,20 @@ const TheNotifications = ({ onOpen, onBack }: TheNotificationsProps) => {
               void markNotificationsRead().then(reread);
             }}
           >
-            Mark all read
+            {say('common.markAllRead')}
           </Button>
           <Button tone="quiet" onPress={clearThemAll}>
-            Clear all
+            {say('common.clearAll')}
           </Button>
         </View>
       )}
 
       {inbox.isPending ? <ActivityIndicator color={colours.textMuted} /> : null}
 
-      {inbox.isError ? <Words tone="danger">Those could not be read.</Words> : null}
+      {inbox.isError ? <Words tone="danger">{say('common.thoseCouldNotBeRead')}</Words> : null}
 
       {!inbox.isPending && notifications.length === 0 ? (
-        <ANothingHere of={Bell} title="Nothing new" />
+        <ANothingHere of={Bell} title={say('phone.theNotifications.nothingNew')} />
       ) : null}
 
       {notifications.map((notification) => {

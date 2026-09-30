@@ -10,6 +10,8 @@ import { valenceCpuShare } from './valenceCpuShare';
 import { libraryDisk } from './libraryDisk';
 import { memoryEnvelope } from './memoryEnvelope';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 type ConcernTone = 'broken' | 'attention' | 'setup';
 
@@ -80,11 +82,18 @@ const collectConcerns = ({
   const concerns: Concern[] = [];
 
   if (requests !== null && requests.checkedAt !== null && !requests.isReachable) {
+    const problem = sayAgainIfAny(requests.problem);
+
     concerns.push({
       id: 'requests',
       tone: 'broken',
-      title: 'The requests service is unreachable',
-      detail: `Nothing requested will be searched for or downloaded until it is back. ${sayAgainIfAny(requests.problem) ?? `Looked for it at ${requests.address}`}.`,
+      title: say('screens.adminArea.collectConcerns.theRequestsServiceIsUnreachable'),
+      detail:
+        problem === null
+          ? say('screens.adminArea.collectConcerns.nothingRequestedUntilBackLookedAt', {
+              address: requests.address,
+            })
+          : say('screens.adminArea.collectConcerns.nothingRequestedUntilBackProblem', { problem }),
       panel: 'requests',
       help: docsFor(requests.problemCode ?? 'RequestsUnreachable'),
     });
@@ -101,8 +110,13 @@ const collectConcerns = ({
       tone: 'attention',
       title:
         failingIndexers.length === 1
-          ? `The indexer ${first?.name ?? ''} keeps failing`
-          : `${failingIndexers.length.toString()} indexers keep failing`,
+          ? say('screens.adminArea.collectConcerns.theIndexerNameKeepsFailing', {
+              name: first?.name ?? '',
+            })
+          : sayCount(
+              'screens.adminArea.collectConcerns.indexersKeepFailing',
+              failingIndexers.length,
+            ),
       detail:
         failingIndexers.length === 1
           ? (sayAgainIfAny(first?.problem) ?? '')
@@ -126,10 +140,10 @@ const collectConcerns = ({
     concerns.push({
       id: 'requests-vpn',
       tone: 'broken',
-      title: 'The VPN is down',
+      title: say('screens.adminArea.collectConcerns.theVPNIsDown'),
       detail:
         sayAgainIfAny(vpn.problem) ??
-        'The requests service cannot reach the tunnel it downloads through.',
+        say('screens.adminArea.collectConcerns.theRequestsServiceCannotReachThe'),
       panel: 'requests',
       help: docsFor(vpn.problemCode ?? 'VpnDown'),
     });
@@ -141,7 +155,7 @@ const collectConcerns = ({
     concerns.push({
       id: 'requests-solver',
       tone: 'broken',
-      title: 'The Cloudflare solver will not start',
+      title: say('screens.adminArea.collectConcerns.theCloudflareSolverWillNotStart'),
       detail: sayAgain(solver.startProblem),
       panel: 'requests',
       help: docsFor('CloudflareCheckFailed'),
@@ -154,11 +168,13 @@ const collectConcerns = ({
     concerns.push({
       id: 'transcoder',
       tone: 'broken',
-      title: 'The media service is unreachable',
+      title: say('screens.adminArea.collectConcerns.theMediaServiceIsUnreachable'),
       detail:
         address === ''
-          ? 'Nothing that needs converting will play until it is back.'
-          : `Nothing that needs converting will play until it is back. Looked for it at ${address}.`,
+          ? say('screens.adminArea.collectConcerns.nothingThatNeedsConvertingWillPlay2')
+          : say('screens.adminArea.collectConcerns.nothingThatNeedsConvertingWillPlay', {
+              address,
+            }),
       panel: 'activity',
     });
   }
@@ -173,11 +189,11 @@ const collectConcerns = ({
     concerns.push({
       id: 'ffmpeg-version',
       tone: 'attention',
-      title: 'The media service is running an FFmpeg older than Valence supports',
+      title: say('screens.adminArea.collectConcerns.theMediaServiceIsRunningAn'),
       detail:
         version === null
-          ? 'Everything still plays, but the filters that keep frames on the graphics card may be missing, so transcodes cost several times more than they need to.'
-          : `Everything still plays on ${version}, but the filters that keep frames on the graphics card may be missing, so transcodes cost several times more than they need to.`,
+          ? say('screens.adminArea.collectConcerns.everythingStillPlaysButTheFilters')
+          : say('screens.adminArea.collectConcerns.everythingStillPlaysOnVersionBut', { version }),
       panel: 'activity',
     });
   }
@@ -190,11 +206,13 @@ const collectConcerns = ({
       tone: 'broken',
       title:
         failed === 1
-          ? 'A job failed in the last 24 hours'
-          : `${failed.toString()} jobs failed in the last 24 hours`,
+          ? say('screens.adminArea.collectConcerns.aJobFailedInTheLast')
+          : say('screens.adminArea.collectConcerns.failedJobsFailedInTheLast', {
+              failed: failed.toString(),
+            }),
       detail:
         sayAgainIfAny(recentFailures?.records[0]?.errorMessage) ??
-        'Open the list to see what went wrong.',
+        say('screens.adminArea.collectConcerns.openTheListToSeeWhat'),
       panel: 'jobs',
       search: { view: 'jobs', rstatus: 'failed', range: '24h' },
     });
@@ -210,10 +228,16 @@ const collectConcerns = ({
       title:
         stalled.length === 1
           ? worst.everSucceeded
-            ? `${sayAgain(worst.label)} fails every time it runs`
-            : `${sayAgain(worst.label)} has never once succeeded`
-          : `${stalled.length.toString()} kinds of job fail every time they run`,
-      detail: `Nothing on its schedule has happened since. Last failure: ${sayAgain(worst.reason)}`,
+            ? say('screens.adminArea.collectConcerns.labelFailsEveryTimeItRuns', {
+                label: sayAgain(worst.label),
+              })
+            : say('screens.adminArea.collectConcerns.labelHasNeverOnceSucceeded', {
+                label: sayAgain(worst.label),
+              })
+          : sayCount('screens.adminArea.collectConcerns.kindsOfJobFailEveryTime', stalled.length),
+      detail: say('screens.adminArea.collectConcerns.nothingOnItsScheduleHasHappened', {
+        reason: sayAgain(worst.reason),
+      }),
       panel: 'jobs',
     });
   }
@@ -227,9 +251,9 @@ const collectConcerns = ({
       id: 'memory',
       tone: 'attention',
       title: memory.isLimited
-        ? 'Valence is nearly at the memory it is allowed'
-        : 'Memory is nearly full',
-      detail: 'Converting several things at once may fail or be killed.',
+        ? say('screens.adminArea.collectConcerns.valenceIsNearlyAtTheMemory')
+        : say('screens.adminArea.collectConcerns.memoryIsNearlyFull'),
+      detail: say('screens.adminArea.collectConcerns.convertingSeveralThingsAtOnceMay'),
       panel: 'activity',
     });
   }
@@ -247,8 +271,11 @@ const collectConcerns = ({
     concerns.push({
       id: 'disk',
       tone: 'attention',
-      title: 'The library disk is nearly full',
-      detail: `${formatBytes(disk.availableBytes)} left on ${disk.mountPoint}. A scan that finds new files may have nowhere to put what it makes of them.`,
+      title: say('screens.adminArea.collectConcerns.theLibraryDiskIsNearlyFull'),
+      detail: say('screens.adminArea.collectConcerns.availableBytesLeftOnMountPointAScan', {
+        availableBytes: formatBytes(disk.availableBytes),
+        mountPoint: disk.mountPoint,
+      }),
       panel: 'libraries',
     });
   }
@@ -261,13 +288,17 @@ const collectConcerns = ({
     concerns.push({
       id: 'cpu',
       tone: 'attention',
-      title: 'The processor has been at full stretch',
+      title: say('screens.adminArea.collectConcerns.theProcessorHasBeenAtFull'),
       detail:
         share === null
-          ? 'Playback that needs converting may stutter while it lasts.'
+          ? say('screens.adminArea.collectConcerns.playbackThatNeedsConvertingMayStutter')
           : share >= VALENCE_BLAME
-            ? `Valence is using ${share.toFixed(0)}% of the machine, so this is its own work. Playback that needs converting may stutter while it lasts.`
-            : `Valence is using ${share.toFixed(0)}% of the machine, so most of this is something else on the box.`,
+            ? say('screens.adminArea.collectConcerns.valenceIsUsingShareOfThe2', {
+                share: share.toFixed(0),
+              })
+            : say('screens.adminArea.collectConcerns.valenceIsUsingShareOfThe', {
+                share: share.toFixed(0),
+              }),
       panel: 'activity',
     });
   }
@@ -278,8 +309,10 @@ const collectConcerns = ({
     concerns.push({
       id: 'artefacts',
       tone: 'attention',
-      title: 'Previews and thumbnails are not being kept',
-      detail: `They are being written to ${artefacts.root}, which is not on a volume, so every one of them is thrown away the next time this container is recreated — which is what an update does. Map a volume there, or point VALENCE_ARTEFACT_DIR at one that is mapped.`,
+      title: say('screens.adminArea.collectConcerns.previewsAndThumbnailsAreNotBeing'),
+      detail: say('screens.adminArea.collectConcerns.theyAreBeingWrittenToRoot', {
+        root: artefacts.root,
+      }),
       panel: 'activity',
     });
   }
@@ -293,9 +326,8 @@ const collectConcerns = ({
     concerns.push({
       id: 'encoder',
       tone: 'attention',
-      title: 'The graphics encoder has been at full stretch',
-      detail:
-        'The next stream that needs converting will fall back to the processor, which is several times the work.',
+      title: say('screens.adminArea.collectConcerns.theGraphicsEncoderHasBeenAt'),
+      detail: say('screens.adminArea.collectConcerns.theNextStreamThatNeedsConverting'),
       panel: 'activity',
     });
   }
@@ -309,14 +341,18 @@ const collectConcerns = ({
   );
 
   if (starved.length > 0) {
+    const watching = starved[0]?.profileName ?? null;
+
     concerns.push({
       id: 'starved-sessions',
       tone: 'attention',
       title:
         starved.length === 1
-          ? `${starved[0]?.profileName ?? 'Somebody'} is running out of buffer`
-          : `${starved.length.toString()} streams are running out of buffer`,
-      detail: 'They are seconds from stalling. The network or the box is behind.',
+          ? watching === null
+            ? say('screens.adminArea.collectConcerns.somebodyIsRunningOutOfBuffer')
+            : say('screens.adminArea.collectConcerns.nameIsRunningOutOfBuffer', { name: watching })
+          : sayCount('screens.adminArea.collectConcerns.streamsRunningOutOfBuffer', starved.length),
+      detail: say('screens.adminArea.collectConcerns.theyAreSecondsFromStallingThe'),
       panel: 'activity',
     });
   }
@@ -329,9 +365,13 @@ const collectConcerns = ({
       tone: 'attention',
       title:
         unscanned.length === 1
-          ? `${unscanned[0]?.name ?? 'A library'} has never been scanned`
-          : `${unscanned.length.toString()} libraries have never been scanned`,
-      detail: 'Nothing in them can be watched until they have been.',
+          ? unscanned[0] === undefined
+            ? say('screens.adminArea.collectConcerns.aLibraryHasNeverBeenScanned')
+            : say('screens.adminArea.collectConcerns.nameHasNeverBeenScanned', {
+                name: unscanned[0].name,
+              })
+          : sayCount('screens.adminArea.collectConcerns.librariesNeverScanned', unscanned.length),
+      detail: say('screens.adminArea.collectConcerns.nothingInThemCanBeWatched'),
       panel: 'libraries',
     });
   }
@@ -340,8 +380,8 @@ const collectConcerns = ({
     concerns.push({
       id: 'no-libraries',
       tone: 'setup',
-      title: 'There are no libraries yet',
-      detail: 'Add one pointing at a folder of media.',
+      title: say('screens.adminArea.collectConcerns.thereAreNoLibrariesYet'),
+      detail: say('screens.adminArea.collectConcerns.addOnePointingAtAFolder'),
       panel: 'libraries',
     });
   }
@@ -350,8 +390,8 @@ const collectConcerns = ({
     concerns.push({
       id: 'no-catalogue-key',
       tone: 'setup',
-      title: 'No metadata catalogue key is set',
-      detail: 'Titles, artwork and years come from filenames alone without one.',
+      title: say('screens.adminArea.collectConcerns.noMetadataCatalogueKeyIsSet'),
+      detail: say('screens.adminArea.collectConcerns.titlesArtworkAndYearsComeFrom'),
       panel: 'settings',
     });
   }

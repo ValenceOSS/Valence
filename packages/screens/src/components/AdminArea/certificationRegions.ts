@@ -1,12 +1,46 @@
+import { say } from '@ValenceI18n/say';
+
 const certificationRegions = [
-  { id: 'GB', label: 'United Kingdom', detail: 'U, PG, 12, 15, 18' },
-  { id: 'US', label: 'United States', detail: 'G, PG, PG-13, R, NC-17' },
-  { id: 'IE', label: 'Ireland', detail: 'G, PG, 12A, 15A, 16, 18' },
-  { id: 'AU', label: 'Australia', detail: 'G, PG, M, MA15+, R18+' },
-  { id: 'DE', label: 'Germany', detail: 'FSK 0, 6, 12, 16, 18' },
-  { id: 'FR', label: 'France', detail: '0, 12, 16, 18' },
-  { id: 'NL', label: 'Netherlands', detail: '0, 6, 9, 12, 14, 16, 18' },
-  { id: 'ES', label: 'Spain', detail: '0, 7, 12, 16, 18' },
+  {
+    id: 'GB',
+    label: say('screens.adminArea.certificationRegions.unitedKingdom'),
+    detail: say('screens.adminArea.certificationRegions.uPG121518'),
+  },
+  {
+    id: 'US',
+    label: say('screens.adminArea.certificationRegions.unitedStates'),
+    detail: say('screens.adminArea.certificationRegions.gPGPG13RNC'),
+  },
+  {
+    id: 'IE',
+    label: say('screens.adminArea.certificationRegions.ireland'),
+    detail: say('screens.adminArea.certificationRegions.gPG12A15A1618'),
+  },
+  {
+    id: 'AU',
+    label: say('screens.adminArea.certificationRegions.australia'),
+    detail: say('screens.adminArea.certificationRegions.gPGMMA15R18'),
+  },
+  {
+    id: 'DE',
+    label: say('screens.adminArea.certificationRegions.germany'),
+    detail: say('screens.adminArea.certificationRegions.fSK06121618'),
+  },
+  {
+    id: 'FR',
+    label: say('screens.adminArea.certificationRegions.france'),
+    detail: '0, 12, 16, 18',
+  },
+  {
+    id: 'NL',
+    label: say('screens.adminArea.certificationRegions.netherlands'),
+    detail: '0, 6, 9, 12, 14, 16, 18',
+  },
+  {
+    id: 'ES',
+    label: say('screens.adminArea.certificationRegions.spain'),
+    detail: '0, 7, 12, 16, 18',
+  },
 ];
 
 export { certificationRegions };

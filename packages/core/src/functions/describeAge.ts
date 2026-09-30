@@ -1,18 +1,10 @@
+import { sayCount } from '@ValenceI18n/sayCount';
+
 const MINUTE = 60_000;
 
 const HOUR = 60 * MINUTE;
 
 const DAY = 24 * HOUR;
-
-/**
- * Counts something in words that read the same for one as for several.
- *
- * @param count - How many.
- * @param unit - Of what.
- * @returns The phrase.
- */
-const counted = (count: number, unit: string): string =>
-  `${count.toString()} ${unit}${count === 1 ? '' : 's'}`;
 
 /**
  * Says how old something is the way a list of releases reads it — minutes for what was posted a
@@ -32,22 +24,22 @@ const describeAge = (when: string, nowMs: number): string | null => {
   const age = Math.max(nowMs - at, 0);
 
   if (age < HOUR) {
-    return counted(Math.max(Math.floor(age / MINUTE), 1), 'minute');
+    return sayCount('common.count.minutes', Math.max(Math.floor(age / MINUTE), 1));
   }
 
   if (age < DAY) {
-    return counted(Math.floor(age / HOUR), 'hour');
+    return sayCount('common.count.hours', Math.floor(age / HOUR));
   }
 
   if (age < 60 * DAY) {
-    return counted(Math.floor(age / DAY), 'day');
+    return sayCount('common.count.days', Math.floor(age / DAY));
   }
 
   if (age < 730 * DAY) {
-    return counted(Math.floor(age / (30 * DAY)), 'month');
+    return sayCount('common.count.months', Math.floor(age / (30 * DAY)));
   }
 
-  return counted(Math.floor(age / (365 * DAY)), 'year');
+  return sayCount('common.count.years', Math.floor(age / (365 * DAY)));
 };
 
 export { describeAge };

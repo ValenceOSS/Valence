@@ -50,6 +50,7 @@ import type { QualityPreference } from '@ValenceClient/playback/qualityPreferenc
 import type { StreamReading } from '@ValenceTv/screens/Player/components/StreamStats/StreamStats.types';
 import type { PlayerProps } from './Player.types';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
+import { say } from '@ValenceI18n/say';
 
 const HIDES_AFTER_MS = 5000;
 
@@ -90,7 +91,8 @@ const REFUSED_SIGN_IN = '-1013';
  * @param speed - How fast it plays, where one is its own pace.
  * @returns Its name.
  */
-const speedLabelOf = (speed: number): string => (speed === 1 ? 'Normal' : `${speed.toString()}×`);
+const speedLabelOf = (speed: number): string =>
+  speed === 1 ? say('common.normal') : `${speed.toString()}×`;
 
 /**
  * What the settings say for a quality: the original as it is, or the step's own name.
@@ -100,7 +102,7 @@ const speedLabelOf = (speed: number): string => (speed === 1 ? 'Normal' : `${spe
  */
 const qualityLabelOf = (quality: QualityPreference): string =>
   quality === 'original'
-    ? 'Original'
+    ? say('common.original')
     : (QUALITY_STEPS.find((step) => step.id === quality)?.label ?? quality);
 
 /**
@@ -114,8 +116,8 @@ const qualityLabelOf = (quality: QualityPreference): string =>
  */
 const whyItWillNotPlay = (message: string): string =>
   message.includes(REFUSED_SIGN_IN)
-    ? 'This Valence turned the television away. Its sign-in may have run out, so go back and sign in again.'
-    : `This could not be played. (${message})`;
+    ? say('tv.player.thisValenceTurnedTheTelevisionAway')
+    : say('tv.player.thisCouldNotBePlayedMessage', { message });
 
 /**
  * Plays a title across the whole screen, with Valence's own controls over it rather than the
@@ -243,7 +245,11 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
       }),
       player.addListener('statusChange', ({ status, error }) => {
         if (status === 'error' && !isSwitching.current) {
-          setFailure(whyItWillNotPlay(error?.message ?? 'the player gave no reason'));
+          setFailure(
+            error?.message === undefined
+              ? say('tv.player.thisCouldNotBePlayedNoReason')
+              : whyItWillNotPlay(error.message),
+          );
         }
       }),
     ];
@@ -259,7 +265,11 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
   const episodeLine =
     summary === null || typeof summary.seriesTitle !== 'string'
       ? null
-      : `S${(summary.seasonNumber ?? 1).toString()}: E${describeEpisodeNumbers(summary.episodeNumber ?? 1, summary.episodeNumberEnd)} · ${summary.title}`;
+      : say('tv.player.sValueEValue2Title', {
+          value: (summary.seasonNumber ?? 1).toString(),
+          value2: describeEpisodeNumbers(summary.episodeNumber ?? 1, summary.episodeNumberEnd),
+          title: summary.title,
+        });
 
   const isDescribed = !detail.isPending;
 
@@ -581,7 +591,12 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
     return (
       <View style={styles.middle}>
         <Text style={styles.problem}>{session.kind === 'failed' ? session.reason : failure}</Text>
-        <Button label="Go back" variant="secondary" hasPreferredFocus onPress={onLeave} />
+        <Button
+          label={say('common.goBack')}
+          variant="secondary"
+          hasPreferredFocus
+          onPress={onLeave}
+        />
       </View>
     );
   }
@@ -696,13 +711,13 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
       {menu === 'settings' ? (
         <SettingsMenu
           settings={[
-            { id: 'quality', label: 'Quality', value: qualityLabelOf(quality) },
+            { id: 'quality', label: say('common.quality'), value: qualityLabelOf(quality) },
             ...(chosenAudio === undefined
               ? []
               : [
                   {
                     id: 'audio',
-                    label: 'Audio',
+                    label: say('common.audio'),
                     value: describeAudioTrack(
                       chosenAudio,
                       (detail.data?.audioStreams.indexOf(chosenAudio) ?? 0) + 1,
@@ -711,11 +726,15 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
                 ]),
             {
               id: 'subtitles',
-              label: 'Subtitles',
-              value: textTracks.find((track) => track.id === subtitles)?.label ?? 'Off',
+              label: say('common.subtitles'),
+              value: textTracks.find((track) => track.id === subtitles)?.label ?? say('common.off'),
             },
-            { id: 'speed', label: 'Speed', value: speedLabelOf(speed) },
-            { id: 'stats', label: 'Stats for nerds', value: isShowingStats ? 'On' : 'Off' },
+            { id: 'speed', label: say('common.speed'), value: speedLabelOf(speed) },
+            {
+              id: 'stats',
+              label: say('common.statsForNerds'),
+              value: isShowingStats ? say('common.on') : say('common.off'),
+            },
           ]}
           onOpen={(id) => {
             if (id === 'stats') {
@@ -734,7 +753,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
 
       {menu === 'speed' ? (
         <TrackMenu
-          title="Speed"
+          title={say('common.speed')}
           chosen={speed.toString()}
           choices={SPEEDS.map((one) => ({ id: one.toString(), label: speedLabelOf(one) }))}
           onChoose={(id) => {
@@ -746,10 +765,10 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
 
       {menu === 'subtitles' ? (
         <TrackMenu
-          title="Subtitles"
+          title={say('common.subtitles')}
           chosen={subtitles}
           choices={[
-            { id: SUBTITLES_OFF, label: 'Off' },
+            { id: SUBTITLES_OFF, label: say('common.off') },
             ...textTracks.map((track) => ({ id: track.id, label: track.label })),
           ]}
           onChoose={(id) => {
@@ -761,14 +780,14 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
 
       {menu === 'quality' ? (
         <TrackMenu
-          title="Quality"
+          title={say('common.quality')}
           chosen={quality}
           choices={[
             {
               id: 'original',
               label:
                 detail.data === undefined || detail.data === null
-                  ? 'Original'
+                  ? say('common.original')
                   : originalLabel(detail.data),
             },
             ...QUALITY_STEPS.filter(
@@ -801,7 +820,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
 
       {menu === 'audio' && detail.data !== undefined && detail.data !== null ? (
         <TrackMenu
-          title="Audio"
+          title={say('common.audio')}
           chosen={String(chosenAudio?.index ?? '')}
           choices={detail.data.audioStreams.map((stream, place) => ({
             id: String(stream.index),

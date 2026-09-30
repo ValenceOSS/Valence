@@ -8,6 +8,7 @@ import { controlDevice } from '@ValenceClient/video/controlledDevice';
 import { sendVideoCommand } from '@ValenceClient/video/videoDevices';
 import { useVideoDevices } from '@ValenceClient/video/useVideoDevices';
 import type { PlayOnDialogProps } from './PlayOnDialog.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The televisions a film can be sent to: each of this person's Apple TVs with Valence open, and
@@ -24,17 +25,17 @@ const PlayOnDialog = ({ media, startSeconds, onClose, onSent }: PlayOnDialogProp
 
   return (
     <Dialog
-      label="Play on"
+      label={say('common.playOn')}
       isOpen={media !== null}
       onClose={onClose}
       className="sm:w-[min(28rem,92vw)]"
     >
-      <DialogTitle title="Play on" detail={media?.title} />
+      <DialogTitle title={say('common.playOn')} detail={media?.title} />
 
       <DialogContent>
         {televisions.length === 0 ? (
           <p className="font-body text-sm text-text-muted">
-            Open Valence on your Apple TV, signed in as you, and it will be here.
+            {say('screens.playOnDialog.openValenceOnYourAppleTV')}
           </p>
         ) : (
           <ul className="flex flex-col gap-1">
@@ -44,7 +45,7 @@ const PlayOnDialog = ({ media, startSeconds, onClose, onSent }: PlayOnDialogProp
                   variant="row"
                   size="none"
                   hasTooltip={false}
-                  label={`Play on ${device.label}`}
+                  label={say('common.playOnLabel', { label: device.label })}
                   className="flex w-full items-center gap-3 rounded-lg p-3 text-left"
                   onClick={() => {
                     if (media === null) {
@@ -65,8 +66,8 @@ const PlayOnDialog = ({ media, startSeconds, onClose, onSent }: PlayOnDialogProp
                     <span className="truncate text-sm font-semibold text-text">{device.label}</span>
                     <span className="truncate text-xs text-text-muted">
                       {device.nowWatching === null
-                        ? 'Not playing anything'
-                        : `${device.nowWatching.isPlaying ? 'Playing' : 'Paused on'} ${device.nowWatching.title}`}
+                        ? say('screens.playOnDialog.notPlayingAnything')
+                        : `${device.nowWatching.isPlaying ? say('common.playing') : say('common.pausedOn')} ${device.nowWatching.title}`}
                     </span>
                   </span>
                   <Icon of={ChevronRightIcon} size={16} />

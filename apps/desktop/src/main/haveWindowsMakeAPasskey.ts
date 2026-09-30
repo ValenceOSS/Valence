@@ -5,6 +5,7 @@ import { theNativeModule } from '@ValenceDesktop/main/theNativeModule';
 import { whatWindowsSaid } from '@ValenceDesktop/main/whatWindowsSaid';
 import type { MakeReply } from '@ValenceDesktop/main/MakeReply';
 import type { PasskeyCreationOptions } from '@ValenceContracts/schemas/PasskeyCreationOptions';
+import { say } from '@ValenceI18n/say';
 
 const MadeSchema = z.object({
   credentialId: z.instanceof(Buffer),
@@ -29,7 +30,10 @@ const haveWindowsMakeAPasskey = async (
   const make = theNativeModule().makeAPasskey;
 
   if (make === undefined) {
-    return { kind: 'failed', reason: 'This build cannot ask Windows to make a passkey.' };
+    return {
+      kind: 'failed',
+      reason: say('desktop.main.haveWindowsMakeAPasskey.thisBuildCannotAskWindowsTo'),
+    };
   }
 
   const clientData = aClientData('webauthn.create', options.challenge, server);

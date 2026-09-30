@@ -1,6 +1,7 @@
 import { Icon } from '@ValenceUI/Icon';
 import { Download as DownloadIcon } from '@keyline-icons/react';
 import type { MissingRowProps } from './MissingRow.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * An episode the catalogue says exists and this library does not have, drawn in place among the ones
@@ -32,11 +33,15 @@ const MissingRow = ({ episodeNumber, title, stillUrl, airs }: MissingRowProps) =
       <span className="flex min-w-0 flex-col gap-1">
         <span className="truncate text-sm font-medium text-text-muted">
           {title === undefined
-            ? `Episode ${episodeNumber.toString()}`
+            ? say('screens.showDialog.missingRow.episodeEpisodeNumber', {
+                episodeNumber: episodeNumber.toString(),
+              })
             : `${episodeNumber.toString()}. ${title}`}
         </span>
         <span className="font-body text-xs text-text-muted">
-          Not in this library{airs === undefined || airs === '' ? '' : ` · ${airs}`}
+          {airs === undefined || airs === ''
+            ? say('common.notInThisLibrary')
+            : say('common.notInThisLibraryAirs', { airs })}
         </span>
       </span>
     </span>

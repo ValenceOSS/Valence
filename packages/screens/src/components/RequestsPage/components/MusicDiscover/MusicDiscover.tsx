@@ -11,6 +11,7 @@ import { RevealItem } from '@ValenceUI/RevealItem';
 import { RevealGrid } from '@ValenceScreens/components/RequestsPage/components/RevealGrid/RevealGrid';
 import { SHELF_STEP } from '@ValenceScreens/components/RequestsPage/SHELF_STEP';
 import type { MusicDiscoverProps } from './MusicDiscover.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Everything music there is to ask for, laid out as it is on the pages for films and shows: each of
@@ -25,7 +26,7 @@ const MusicDiscover = ({ onAsk }: MusicDiscoverProps) => {
   if (discovered.isError) {
     return (
       <CouldNotRead
-        what="What music there is to ask for"
+        said={say('screens.requestsPage.musicDiscover.whatMusicThereIsToAskCouldNotBeRead')}
         isTryingAgain={discovered.isFetching}
         onTryAgain={() => {
           void discovered.refetch();
@@ -35,7 +36,12 @@ const MusicDiscover = ({ onAsk }: MusicDiscoverProps) => {
   }
 
   if (discovered.data === undefined) {
-    return <Spinner isPageCentered label="Reading what music there is to ask for" />;
+    return (
+      <Spinner
+        isPageCentered
+        label={say('screens.requestsPage.musicDiscover.readingWhatMusicThereIsTo')}
+      />
+    );
   }
 
   const shelves = discovered.data.shelves.filter(
@@ -46,8 +52,8 @@ const MusicDiscover = ({ onAsk }: MusicDiscoverProps) => {
     return (
       <NothingHere
         of={RecordIcon}
-        title="No music to ask for"
-        detail="This server is not set up to read the music charts, or none could be reached."
+        title={say('screens.requestsPage.musicDiscover.noMusicToAskFor')}
+        detail={say('screens.requestsPage.musicDiscover.thisServerIsNotSetUp')}
       />
     );
   }

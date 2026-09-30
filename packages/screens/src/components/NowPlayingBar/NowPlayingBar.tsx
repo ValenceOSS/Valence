@@ -54,6 +54,7 @@ import type { Variants } from 'motion/react';
 import type { NowPlayingBarProps } from './NowPlayingBar.types';
 import { BarButton } from '@ValenceScreens/components/BarButton/BarButton';
 import { MusicTransport } from '@ValenceScreens/components/MusicTransport/MusicTransport';
+import { say } from '@ValenceI18n/say';
 
 const ARRIVING: Variants = {
   hidden: { opacity: 0, y: '120%' },
@@ -183,7 +184,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
         className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] sm:px-3"
       >
         <section
-          aria-label="Now playing"
+          aria-label={say('common.nowPlaying')}
           className="valence-card-shell pointer-events-auto mx-auto max-w-[120rem] text-text"
         >
           <div className="valence-card-face valence-card-face--raised flex flex-col overflow-hidden">
@@ -202,7 +203,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                     <Button
                       variant="bare"
                       size="none"
-                      label="Open the immersive view"
+                      label={say('screens.nowPlayingBar.openTheImmersiveView')}
                       hasTooltip={false}
                       disabled={isIdle}
                       className="shrink-0"
@@ -251,7 +252,11 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 </AnimatePresence>
 
                 <BarButton
-                  label={isLiked ? `Unlike ${shown.title}` : `Like ${shown.title}`}
+                  label={
+                    isLiked
+                      ? say('common.unlikeTitle', { title: shown.title })
+                      : say('common.likeTitle', { title: shown.title })
+                  }
                   face={<KeepHeart isKept={isLiked} size={18} />}
                   gesture="fill"
                   isLit={isLiked}
@@ -264,7 +269,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
               </div>
 
               <ActionMenu
-                label="More music controls"
+                label={say('screens.nowPlayingBar.moreMusicControls')}
                 className="lg:hidden"
                 trigger={<Icon of={MoreHorizontalIcon} size={20} />}
                 groups={[
@@ -272,7 +277,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                     items: [
                       {
                         id: 'lyrics',
-                        label: 'Lyrics',
+                        label: say('common.lyrics'),
                         icon: <Icon of={MicFilledIcon} size={16} />,
                         isDisabled: isIdle,
                         onChoose: () => {
@@ -281,7 +286,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                       },
                       {
                         id: 'queue',
-                        label: 'Queue',
+                        label: say('common.queue'),
                         icon: <Icon of={ListOrderedFilledIcon} size={16} />,
                         onChoose: () => {
                           togglePanel('queue');
@@ -289,7 +294,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                       },
                       {
                         id: 'party',
-                        label: 'Listening party',
+                        label: say('common.listeningParty'),
                         icon: <Icon of={UsersFilledIcon} size={16} />,
                         onChoose: () => {
                           togglePanel('party');
@@ -297,7 +302,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                       },
                       {
                         id: 'devices',
-                        label: 'Play on another device',
+                        label: say('common.playOnAnotherDevice'),
                         icon: <Icon of={LaptopFilledIcon} size={16} />,
                         onChoose: () => {
                           togglePanel('devices');
@@ -305,7 +310,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                       },
                       {
                         id: 'mute',
-                        label: state.isMuted ? 'Unmute' : 'Mute',
+                        label: state.isMuted ? say('common.unmute') : say('common.mute'),
                         icon: <Icon of={volume === 0 ? VolumeXIcon : VolumeIcon} size={16} />,
                         keepsOpen: true,
                         onChoose: () => {
@@ -323,7 +328,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
 
               <div className="hidden items-center justify-end gap-1 lg:flex">
                 <BarButton
-                  label="Lyrics"
+                  label={say('common.lyrics')}
                   glyph={MicIcon}
                   litGlyph={MicFilledIcon}
                   gesture="ring"
@@ -335,7 +340,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 />
 
                 <BarButton
-                  label="Queue"
+                  label={say('common.queue')}
                   glyph={ListOrderedIcon}
                   litGlyph={ListOrderedFilledIcon}
                   isLit={panel === 'queue'}
@@ -345,7 +350,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 />
 
                 <BarButton
-                  label="Listening party"
+                  label={say('common.listeningParty')}
                   glyph={UsersIcon}
                   litGlyph={UsersFilledIcon}
                   isLit={panel === 'party' || listening !== null}
@@ -355,7 +360,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 />
 
                 <BarButton
-                  label="Play on another device"
+                  label={say('common.playOnAnotherDevice')}
                   glyph={LaptopIcon}
                   litGlyph={LaptopFilledIcon}
                   isLit={panel === 'devices' || shown.remote !== null}
@@ -365,7 +370,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 />
 
                 <OptionMenu
-                  label="Streaming quality"
+                  label={say('screens.nowPlayingBar.streamingQuality')}
                   align="end"
                   triggerShape="field"
                   className="w-auto shrink-0"
@@ -379,7 +384,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                   }
                   groups={[
                     {
-                      name: 'Quality',
+                      name: say('common.quality'),
                       selectedId: state.quality,
                       onSelect: (id) => {
                         const chosen = AudioQualitySchema.safeParse(id);
@@ -397,7 +402,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 />
 
                 <BarButton
-                  label={state.isMuted ? 'Unmute' : 'Mute'}
+                  label={state.isMuted ? say('common.unmute') : say('common.mute')}
                   glyph={volume === 0 ? VolumeXIcon : volume < 0.5 ? VolumeLowIcon : VolumeIcon}
                   gesture="ring"
                   onClick={() => {
@@ -406,7 +411,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 />
 
                 <Slider
-                  label="Volume"
+                  label={say('common.volume')}
                   tone="glass"
                   value={Math.round(volume * 100)}
                   max={100}
@@ -433,8 +438,14 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                   <div className="flex items-center justify-end gap-2 bg-on-scrim px-4 py-1 text-xs font-semibold text-shade">
                     <Icon of={UsersIcon} size={14} />
                     {isFollowing
-                      ? `Listening along with ${listening.hostName}`
-                      : `Hosting a listening party · ${listening.party.members.length.toString()} here`}
+                      ? listening.hostName === null
+                        ? say('screens.nowPlayingBar.listeningAlongWithTheHost')
+                        : say('screens.nowPlayingBar.listeningAlongWithHostName', {
+                            hostName: listening.hostName,
+                          })
+                      : say('screens.nowPlayingBar.hostingAListeningPartyLengthHere', {
+                          length: listening.party.members.length.toString(),
+                        })}
                   </div>
                 </motion.div>
               )}
@@ -449,7 +460,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                 >
                   <div className="flex items-center justify-end gap-2 bg-on-scrim px-4 py-1 text-xs font-semibold text-shade">
                     <Icon of={LaptopIcon} size={14} />
-                    Playing on {shown.remote.label}
+                    {say('common.playingOnLabel', { label: shown.remote.label })}
                   </div>
                 </motion.div>
               )}

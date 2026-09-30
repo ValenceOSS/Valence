@@ -4,10 +4,11 @@ import { MusicCatalogueHitSchema } from '@ValenceContracts/schemas/MediaRequest'
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import type { BookMatch } from '@ValenceContracts/schemas/BookMatch';
 import type { MusicCatalogueHit } from '@ValenceContracts/schemas/MediaRequest';
+import { say } from '@ValenceI18n/say';
 
 const AlbumMatchListSchema = z.object({ matches: z.array(MusicCatalogueHitSchema) });
 
-const NOT_SENT = 'The server could not be reached.';
+const NOT_SENT = say('common.theServerCouldNotBeReached');
 
 /**
  * Sends a correction and says what went wrong with it, where anything did.
@@ -36,7 +37,9 @@ const send = async (path: string, method: string, body?: object): Promise<string
 
   const said = RefusalSchema.safeParse(await response.json().catch(() => null));
 
-  return said.success ? said.data.error : 'That could not be changed.';
+  return said.success
+    ? said.data.error
+    : say('client.admin.fetchCorrections.thatCouldNotBeChanged');
 };
 
 /**

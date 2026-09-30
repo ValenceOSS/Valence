@@ -7,6 +7,7 @@ import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { Icon } from '@ValenceUI/Icon';
 import { TOUR_STOPS } from '@ValenceScreens/tour/tourStops';
 import type { WelcomeTourProps } from './WelcomeTour.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * A short walk through the places a new account can go, one at a time, with the page behind the
@@ -42,10 +43,13 @@ const WelcomeTour = ({ isOpen, name, onGoTo, onFinished }: WelcomeTourProps) => 
   };
 
   return (
-    <Dialog label={`Welcome to ${name}`} isOpen={isOpen} onClose={finish}>
+    <Dialog label={say('common.welcomeToName', { name })} isOpen={isOpen} onClose={finish}>
       <DialogTitle
-        title={step === 0 ? `Welcome to ${name}` : stop.title}
-        detail={`${(step + 1).toString()} of ${TOUR_STOPS.length.toString()}`}
+        title={step === 0 ? say('common.welcomeToName', { name }) : stop.title}
+        detail={say('screens.welcomeTour.valueOfLength', {
+          value: (step + 1).toString(),
+          length: TOUR_STOPS.length.toString(),
+        })}
       />
 
       <DialogContent>
@@ -64,9 +68,9 @@ const WelcomeTour = ({ isOpen, name, onGoTo, onFinished }: WelcomeTourProps) => 
       </DialogContent>
 
       <DialogFooter
-        dismiss={{ label: 'Skip tour', onChoose: finish }}
+        dismiss={{ label: say('screens.welcomeTour.skipTour'), onChoose: finish }}
         confirm={{
-          label: isLast ? 'Done' : 'Next',
+          label: isLast ? say('common.done') : say('common.next'),
           onChoose: () => {
             if (isLast) {
               finish();
@@ -85,7 +89,7 @@ const WelcomeTour = ({ isOpen, name, onGoTo, onFinished }: WelcomeTourProps) => 
               setStep((was) => was - 1);
             }}
           >
-            Back
+            {say('common.back')}
           </Button>
         )}
       </DialogFooter>

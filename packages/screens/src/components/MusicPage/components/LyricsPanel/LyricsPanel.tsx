@@ -3,6 +3,7 @@ import { NothingHere } from '@ValenceUI/NothingHere';
 import { Skeleton } from '@ValenceUI/Skeleton';
 import { LyricLines } from '@ValenceScreens/components/LyricLines/LyricLines';
 import { useSongLyrics } from '@ValenceScreens/music/useSongLyrics';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The words of the song playing, in the panel beside the music, the way the queue sits there: small
@@ -17,8 +18,8 @@ const LyricsPanel = () => {
     return (
       <NothingHere
         of={MusicNoteIcon}
-        title="Nothing is playing"
-        detail="Play a song to follow its words here."
+        title={say('common.nothingIsPlaying2')}
+        detail={say('common.playASongToFollowIts')}
       />
     );
   }
@@ -26,7 +27,7 @@ const LyricsPanel = () => {
   if (isReading) {
     return (
       <div className="flex flex-col gap-3 px-2 py-2">
-        <Skeleton label="Reading the lyrics" className="h-6 w-3/4" />
+        <Skeleton label={say('common.readingTheLyrics')} className="h-6 w-3/4" />
         <Skeleton className="h-6 w-2/3" />
         <Skeleton className="h-6 w-1/2" />
       </div>
@@ -34,11 +35,14 @@ const LyricsPanel = () => {
   }
 
   if (lyrics === null || lyrics.lines.length === 0) {
-    return <NothingHere of={MicIcon} title="No lyrics found" />;
+    return <NothingHere of={MicIcon} title={say('common.noLyricsFound')} />;
   }
 
   return (
-    <section aria-label={`Lyrics for ${shown.title}`} className="px-2 pt-2 pb-40">
+    <section
+      aria-label={say('common.lyricsForTitle', { title: shown.title })}
+      className="px-2 pt-2 pb-40"
+    >
       <LyricLines
         lyrics={lyrics}
         at={at}

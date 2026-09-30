@@ -13,6 +13,7 @@ import { Toggle } from '@ValenceMobile/components/Toggle/Toggle';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useConfirmHiding } from '@ValenceMobile/hooks/useConfirmHiding';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   bringBack: { padding: 6 },
@@ -42,11 +43,9 @@ const TheHidden = () => {
 
   return (
     <>
-      <Words tone="muted">
-        Things you have taken out of your own browsing. Anything here can be brought back.
-      </Words>
+      <Words tone="muted">{say('common.thingsYouHaveTakenOutOf')}</Words>
 
-      <AGroup title="Whole libraries">
+      <AGroup title={say('common.wholeLibraries')}>
         {libraries.map((library) => {
           const isHidden = hiding.isHidden({ kind: 'library', subjectId: library.id });
 
@@ -57,7 +56,7 @@ const TheHidden = () => {
               </View>
 
               <Toggle
-                label={`Show the ${library.name} library`}
+                label={say('phone.theAccount.theHidden.showTheNameLibrary', { name: library.name })}
                 isOn={!isHidden}
                 onToggle={(isOn) => {
                   if (isOn) {
@@ -72,34 +71,40 @@ const TheHidden = () => {
         })}
       </AGroup>
 
-      <AGroup title="Titles and programmes">
+      <AGroup title={say('phone.theAccount.theHidden.titlesAndProgrammes')}>
         {titles.length === 0 ? (
           <View style={styles.row}>
-            <Words tone="muted">Nothing hidden.</Words>
+            <Words tone="muted">{say('phone.theAccount.theHidden.nothingHidden')}</Words>
           </View>
         ) : (
-          titles.map((entry) => (
-            <View key={`${entry.kind}:${entry.subjectId}`} style={styles.row}>
-              <View style={styles.words}>
-                <Words lines={2}>{entry.title}</Words>
-                <Words size="small" tone="muted">
-                  {`Hidden ${saidWhen(entry.hiddenAt)}`}
-                </Words>
-              </View>
+          titles.map((entry) => {
+            const hidden = saidWhen(entry.hiddenAt);
 
-              <Button
-                tone="bare"
-                label={`Bring ${entry.title} back`}
-                onPress={() => {
-                  hiding.show({ kind: entry.kind, subjectId: entry.subjectId });
-                }}
-              >
-                <View style={styles.bringBack}>
-                  <Icon of={Eye} size={18} colour={colours.textMuted} />
+            return (
+              <View key={`${entry.kind}:${entry.subjectId}`} style={styles.row}>
+                <View style={styles.words}>
+                  <Words lines={2}>{entry.title}</Words>
+                  {hidden === null ? null : (
+                    <Words size="small" tone="muted">
+                      {say('common.hiddenHiddenAt', { hiddenAt: hidden })}
+                    </Words>
+                  )}
                 </View>
-              </Button>
-            </View>
-          ))
+
+                <Button
+                  tone="bare"
+                  label={say('common.bringTitleBack', { title: entry.title })}
+                  onPress={() => {
+                    hiding.show({ kind: entry.kind, subjectId: entry.subjectId });
+                  }}
+                >
+                  <View style={styles.bringBack}>
+                    <Icon of={Eye} size={18} colour={colours.textMuted} />
+                  </View>
+                </Button>
+              </View>
+            );
+          })
         )}
       </AGroup>
     </>

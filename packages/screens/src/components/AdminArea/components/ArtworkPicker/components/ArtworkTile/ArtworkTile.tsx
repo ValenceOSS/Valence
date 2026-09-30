@@ -3,6 +3,7 @@ import { Badge } from '@ValenceUI/Badge';
 import { Spinner } from '@ValenceUI/Spinner';
 import { cn } from '@ValenceUI/cn';
 import type { ArtworkTileProps } from './ArtworkTile.types';
+import { say } from '@ValenceI18n/say';
 
 const SHAPES = {
   poster: 'aspect-[2/3]',
@@ -50,7 +51,7 @@ const ArtworkTile = ({
   >
     {previewUrl === null ? (
       <span className="flex h-full w-full items-center justify-center px-3 text-center text-sm font-medium text-text">
-        The catalogue’s pick
+        {say('screens.artworkPicker.artworkTile.theCataloguesPick')}
       </span>
     ) : (
       <img
@@ -64,13 +65,13 @@ const ArtworkTile = ({
 
     <span className="absolute bottom-2 left-2">
       <Badge tone={isChosen ? 'accent' : 'solid'} size="sm">
-        {isChosen ? 'Chosen' : note}
+        {isChosen ? say('screens.artworkPicker.artworkTile.chosen') : note}
       </Badge>
     </span>
 
     {isBusy ? (
       <span className="absolute inset-0 flex items-center justify-center bg-scrim">
-        <Spinner size="md" label="Choosing this picture" />
+        <Spinner size="md" label={say('screens.artworkPicker.artworkTile.choosingThisPicture')} />
       </span>
     ) : null}
   </Button>

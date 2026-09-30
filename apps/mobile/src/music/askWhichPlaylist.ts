@@ -1,6 +1,7 @@
 import { ActionSheetIOS, Alert } from 'react-native';
 import { addToPlaylist, createPlaylist } from '@ValenceClient/music/fetchPlaylists';
 import type { PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
+import { say } from '@ValenceI18n/say';
 
 const MOST_AT_ONCE = 500;
 
@@ -23,8 +24,12 @@ const askWhichPlaylist = (
 ): void => {
   ActionSheetIOS.showActionSheetWithOptions(
     {
-      title: 'Add to playlist',
-      options: ['New playlist', ...playlists.map((playlist) => playlist.name), 'Cancel'],
+      title: say('common.addToPlaylist'),
+      options: [
+        say('common.newPlaylist'),
+        ...playlists.map((playlist) => playlist.name),
+        say('common.cancel'),
+      ],
       cancelButtonIndex: playlists.length + 1,
     },
     (picked) => {
@@ -38,7 +43,7 @@ const askWhichPlaylist = (
         const ids = found.slice(0, MOST_AT_ONCE);
 
         if (ids.length === 0) {
-          Alert.alert(`There is nothing in ${name} to add.`);
+          Alert.alert(say('common.thereIsNothingInNameTo', { name }));
 
           return;
         }
@@ -47,7 +52,7 @@ const askWhichPlaylist = (
           const made = await createPlaylist({ name, mediaItemIds: ids });
 
           if (made === null) {
-            Alert.alert('That playlist could not be made.');
+            Alert.alert(say('common.thatPlaylistCouldNotBeMade'));
 
             return;
           }
@@ -59,7 +64,7 @@ const askWhichPlaylist = (
         }
 
         if (!(await addToPlaylist(chosen.id, ids))) {
-          Alert.alert(`That could not be added to ${chosen.name}.`);
+          Alert.alert(say('common.thatCouldNotBeAddedTo', { name: chosen.name }));
 
           return;
         }

@@ -23,6 +23,8 @@ import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { ArtistStory } from '@ValenceScreens/components/MusicPage/components/ArtistView/components/ArtistStory/ArtistStory';
 import type { ArtistViewProps } from './ArtistView.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * An artist's page: their picture, a button to follow them, the songs of theirs this household
@@ -50,7 +52,7 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
   if (asked.isError) {
     return (
       <CouldNotRead
-        what="this artist"
+        said={say('screens.musicPage.artistView.thisArtistCouldNotBeRead')}
         isTryingAgain={asked.isFetching}
         onTryAgain={() => {
           void asked.refetch();
@@ -62,7 +64,11 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
   if (detail === undefined) {
     return (
       <div className={`flex flex-col gap-4 py-8 ${MUSIC_LANES.page}`}>
-        <Skeleton label="Reading the artist" shape="round" className="size-48" />
+        <Skeleton
+          label={say('screens.musicPage.artistView.readingTheArtist')}
+          shape="round"
+          className="size-48"
+        />
         <Skeleton className="h-12 w-1/2" />
       </div>
     );
@@ -75,7 +81,7 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
   return (
     <article className="flex flex-col">
       <MusicHeader
-        eyebrow="Artist"
+        eyebrow={say('common.artist')}
         title={artist.name}
         artwork={
           <MusicArtwork
@@ -88,8 +94,8 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
         }
         details={
           <span>
-            {artist.albumCount === 1 ? '1 album' : `${artist.albumCount.toString()} albums`} ·{' '}
-            {artist.trackCount === 1 ? '1 song' : `${artist.trackCount.toString()} songs`}
+            {sayCount('common.count.albums', artist.albumCount)} ·{' '}
+            {sayCount('common.count.songs', artist.trackCount)}
           </span>
         }
         actions={
@@ -98,7 +104,7 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
               variant="confirm"
               size="lg"
               isIconOnly
-              label={`Play ${artist.name}`}
+              label={say('common.playName', { name: artist.name })}
               className="size-14"
               disabled={popular.length === 0}
               onClick={() => {
@@ -125,7 +131,7 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
                 });
               }}
             >
-              {isFollowed ? 'Following' : 'Follow'}
+              {isFollowed ? say('common.following') : say('common.follow')}
             </Button>
           </>
         }
@@ -133,12 +139,20 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
 
       <div className="flex flex-col gap-12 pb-10">
         {popular.length === 0 ? (
-          <NothingHere of={UserIcon} title="Nothing of theirs you can hear" />
+          <NothingHere
+            of={UserIcon}
+            title={say('screens.musicPage.artistView.nothingOfTheirsYouCanHear')}
+          />
         ) : (
-          <section aria-label="Songs" className={`flex flex-col gap-3 ${MUSIC_LANES.tracks}`}>
-            <h2 className="px-3 text-lg font-semibold tracking-tight text-text">Songs</h2>
+          <section
+            aria-label={say('common.songs2')}
+            className={`flex flex-col gap-3 ${MUSIC_LANES.tracks}`}
+          >
+            <h2 className="px-3 text-lg font-semibold tracking-tight text-text">
+              {say('common.songs2')}
+            </h2>
             <TrackList
-              label={`Songs by ${artist.name}`}
+              label={say('screens.musicPage.artistView.songsByName', { name: artist.name })}
               tracks={popular}
               showsArtwork
               showsAlbum={false}
@@ -150,16 +164,19 @@ const ArtistView = ({ artistId }: ArtistViewProps) => {
         )}
 
         <AlbumShelf
-          heading="Albums"
+          heading={say('common.albums')}
           albums={albums}
           detailOf={(album) =>
-            [album.year?.toString(), album.isCompilation ? 'Compilation' : 'Album']
+            [
+              album.year?.toString(),
+              album.isCompilation ? say('common.compilation') : say('common.album'),
+            ]
               .filter((part) => part !== undefined)
               .join(' · ')
           }
         />
 
-        <AlbumShelf heading="Appears on" albums={appearsOn} />
+        <AlbumShelf heading={say('common.appearsOn')} albums={appearsOn} />
 
         <ArtistStory artistId={artist.id} name={artist.name} />
 

@@ -1,5 +1,7 @@
 import { Checkbox } from '@ValenceUI/Checkbox';
 import type { LibraryPickerProps } from './LibraryPicker.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * The libraries a piece of work can be pointed at, each ticked or not, with one box above them that
@@ -16,11 +18,11 @@ const LibraryPicker = ({ libraries, chosen, onChange }: LibraryPickerProps) => {
   return (
     <fieldset className="flex flex-col gap-3">
       <legend className="mb-3 text-xs uppercase tracking-[0.14em] text-text-muted">
-        Libraries
+        {say('common.libraries')}
       </legend>
 
       <Checkbox
-        label="Every library"
+        label={say('common.everyLibrary2')}
         checked={isEvery}
         onCheckedChange={(isChecked) => {
           onChange(new Set(isChecked ? libraries.map((library) => library.id) : []));
@@ -33,7 +35,9 @@ const LibraryPicker = ({ libraries, chosen, onChange }: LibraryPickerProps) => {
             key={library.id}
             label={library.name}
             description={
-              library.itemCount === 1 ? '1 item' : `${library.itemCount.toLocaleString()} items`
+              library.itemCount === 1
+                ? say('common.n1Item')
+                : sayCount('common.count.items', library.itemCount)
             }
             checked={chosen.has(library.id)}
             onCheckedChange={(isChecked) => {

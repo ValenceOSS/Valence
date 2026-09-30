@@ -2,6 +2,7 @@ import { X as XIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import type { AppliedFiltersProps } from './AppliedFilters.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * What a list is narrowed by, said plainly and one at a time, each with a way to take it off — the
@@ -27,13 +28,16 @@ const AppliedFilters = ({ groups, selected, onRemove, onClear }: AppliedFiltersP
   }
 
   return (
-    <ul aria-label="Applied filters" className="flex flex-wrap items-center gap-2">
+    <ul
+      aria-label={say('ui.appliedFilters.appliedFilters')}
+      className="flex flex-wrap items-center gap-2"
+    >
       {applied.map((filter) => (
         <li key={filter.id} className="flex h-7 items-center">
           <Button
             variant="glossy"
             size="xs"
-            label={`Remove ${filter.said}`}
+            label={say('ui.appliedFilters.removeSaid', { said: filter.said })}
             hasTooltip={false}
             onClick={() => {
               onRemove(filter.id);
@@ -47,7 +51,7 @@ const AppliedFilters = ({ groups, selected, onRemove, onClear }: AppliedFiltersP
 
       <li className="flex h-7 items-center">
         <Button variant="subtle" size="xs" onClick={onClear}>
-          Clear all
+          {say('common.clearAll')}
         </Button>
       </li>
     </ul>

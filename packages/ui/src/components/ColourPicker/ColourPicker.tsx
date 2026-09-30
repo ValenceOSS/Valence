@@ -6,6 +6,7 @@ import { cn } from '@ValenceUI/cn';
 import { hexOfHsv } from '@ValenceUI/hexOfHsv';
 import { hsvOf } from '@ValenceUI/hsvOf';
 import type { ColourPickerProps } from './ColourPicker.types';
+import { say } from '@ValenceI18n/say';
 
 const HEX = /^#[0-9a-f]{6}$/iu;
 
@@ -103,7 +104,10 @@ const ColourPicker = ({ label, value, onChange, presets = [], className }: Colou
       {presets.length === 0 ? null : (
         <SwatchRow
           label={`${label}: ready colours`}
-          swatches={presets.map((preset) => ({ id: preset, label: `Use ${preset}` }))}
+          swatches={presets.map((preset) => ({
+            id: preset,
+            label: say('common.usePreset', { preset }),
+          }))}
           value={presets.find((preset) => preset.toLowerCase() === value.toLowerCase()) ?? ''}
           onSelect={(preset) => {
             sent.current = preset;
@@ -117,7 +121,10 @@ const ColourPicker = ({ label, value, onChange, presets = [], className }: Colou
         role="slider"
         tabIndex={0}
         aria-label={`${label}: shade`}
-        aria-valuetext={`${Math.round(hsv.saturation * 100).toString()}% colour, ${Math.round(hsv.brightness * 100).toString()}% bright`}
+        aria-valuetext={say('ui.colourPicker.valueColourValue2Bright', {
+          value: Math.round(hsv.saturation * 100).toString(),
+          value2: Math.round(hsv.brightness * 100).toString(),
+        })}
         aria-valuenow={Math.round(hsv.saturation * 100)}
         onPointerDown={(event) => {
           event.currentTarget.setPointerCapture(event.pointerId);

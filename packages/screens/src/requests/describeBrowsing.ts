@@ -3,13 +3,14 @@ import type {
   CatalogueBrowseKind,
   CatalogueList,
 } from '@ValenceContracts/schemas/CatalogueTitle';
+import { say } from '@ValenceI18n/say';
 
 const KIND_WORDS: Record<CatalogueBrowseKind, string> = { film: 'films', series: 'series' };
 
 const LIST_WORDS: Record<CatalogueList, string> = {
-  trending: 'Trending',
-  popular: 'Popular',
-  upcoming: 'Coming',
+  trending: say('screens.requests.describeBrowsing.trending'),
+  popular: say('common.popular'),
+  upcoming: say('screens.requests.describeBrowsing.coming'),
 };
 
 /**
@@ -23,6 +24,6 @@ const LIST_WORDS: Record<CatalogueList, string> = {
 const describeBrowsing = (browsing: CatalogueBrowse, studioName: string | null = null): string =>
   browsing.studio === null
     ? `${LIST_WORDS[browsing.list]} ${KIND_WORDS[browsing.kind]}`
-    : `${studioName ?? 'Studio'} ${KIND_WORDS[browsing.kind]}`;
+    : `${studioName ?? say('screens.requests.describeBrowsing.studio')} ${KIND_WORDS[browsing.kind]}`;
 
 export { describeBrowsing };

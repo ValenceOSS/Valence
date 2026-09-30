@@ -25,6 +25,8 @@ import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ShowDetail } from '@ValenceContracts/schemas/Show';
 import type { ShowPageProps } from './ShowPage.types';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const STARRING = 4;
 
@@ -44,7 +46,10 @@ const seasonKey = (seasonNumber: number | null): string =>
  * @returns Its season and number.
  */
 const placeOf = (episode: MediaSummary): string =>
-  `S${(episode.seasonNumber ?? 1).toString()}: E${describeEpisodeNumbers(episode.episodeNumber ?? 1, episode.episodeNumberEnd)}`;
+  say('tv.showPage.sValueEValue2', {
+    value: (episode.seasonNumber ?? 1).toString(),
+    value2: describeEpisodeNumbers(episode.episodeNumber ?? 1, episode.episodeNumberEnd),
+  });
 
 /**
  * What the catalogue says happens in an episode, where it says anything.
@@ -82,7 +87,7 @@ const ShowPage = ({ libraryId, showId, onPlay }: ShowPageProps) => {
         {asked.isPending ? (
           <ActivityIndicator size="large" color={tokens.colours.text} />
         ) : (
-          <Text style={styles.problem}>This programme could not be found.</Text>
+          <Text style={styles.problem}>{say('tv.showPage.thisProgrammeCouldNotBeFound')}</Text>
         )}
       </View>
     );
@@ -140,7 +145,7 @@ const ShowPage = ({ libraryId, showId, onPlay }: ShowPageProps) => {
       stillPath={artworkUrl(show.coverMediaId, 'backdrop', { isOfTitle: true })}
       facts={joinFacts([
         show.year?.toString(),
-        show.seasonCount === 1 ? '1 season' : `${show.seasonCount.toString()} seasons`,
+        sayCount('common.count.seasons', show.seasonCount),
         typeof show.rating === 'number' ? `★ ${show.rating.toFixed(1)}` : null,
       ])}
       badges={cover.data === undefined || cover.data === null ? [] : qualityBadges(cover.data)}
@@ -151,7 +156,9 @@ const ShowPage = ({ libraryId, showId, onPlay }: ShowPageProps) => {
         show.overview ?? (carryingOn === null ? null : overviewOf(show, carryingOn.episode))
       }
       credits={[
-        ...(starring.length === 0 ? [] : [`Starring ${starring.join(', ')}`]),
+        ...(starring.length === 0
+          ? []
+          : [say('common.starringValue', { value: starring.join(', ') })]),
         ...(genres.length === 0 ? [] : [genres.join(', ')]),
       ]}
       below={
@@ -161,7 +168,7 @@ const ShowPage = ({ libraryId, showId, onPlay }: ShowPageProps) => {
               <TabBar tabs={seasons} current={current} onChoose={setChosen} />
             </View>
           ) : (
-            <Text style={styles.heading}>Episodes</Text>
+            <Text style={styles.heading}>{say('common.episodes')}</Text>
           )}
 
           <FlatList
@@ -200,8 +207,11 @@ const ShowPage = ({ libraryId, showId, onPlay }: ShowPageProps) => {
         <ActionRow
           label={
             carryingOn.isResuming
-              ? `Resume ${placeOf(carryingOn.episode)} from ${formatDuration(carryingOn.startSeconds)}`
-              : `Play ${placeOf(carryingOn.episode)}`
+              ? say('tv.showPage.resumeEpisodeFromStartSeconds', {
+                  episode: placeOf(carryingOn.episode),
+                  startSeconds: formatDuration(carryingOn.startSeconds),
+                })
+              : say('tv.showPage.playEpisode', { episode: placeOf(carryingOn.episode) })
           }
           icon={Play}
           hasPreferredFocus
@@ -219,11 +229,11 @@ const ShowPage = ({ libraryId, showId, onPlay }: ShowPageProps) => {
           label={
             isSeasonWatched
               ? seasons.length > 1
-                ? 'Mark this season unwatched'
-                : 'Mark every episode unwatched'
+                ? say('tv.showPage.markThisSeasonUnwatched')
+                : say('tv.showPage.markEveryEpisodeUnwatched')
               : seasons.length > 1
-                ? 'Mark this season watched'
-                : 'Mark every episode watched'
+                ? say('tv.showPage.markThisSeasonWatched')
+                : say('tv.showPage.markEveryEpisodeWatched')
           }
           icon={CircleCheck}
           onPress={() => {
@@ -234,7 +244,7 @@ const ShowPage = ({ libraryId, showId, onPlay }: ShowPageProps) => {
 
       {first === null || carryingOn === null || carryingOn.episode.id === first.id ? null : (
         <ActionRow
-          label="Play from the first episode"
+          label={say('tv.showPage.playFromTheFirstEpisode')}
           icon={RotateCcw}
           onPress={() => {
             onPlay(first, 0);

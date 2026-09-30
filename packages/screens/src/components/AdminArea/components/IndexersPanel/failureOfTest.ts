@@ -1,6 +1,7 @@
-import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import type { Sent } from '@ValenceClient/requests/sendToRequests';
 import type { IndexerTest } from '@ValenceContracts/schemas/Indexer';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says why testing an indexer failed, naming it: the server's refusal where it refused, or the
@@ -13,8 +14,13 @@ import type { IndexerTest } from '@ValenceContracts/schemas/Indexer';
 const failureOfTest = (name: string, { value, refusal }: Sent<IndexerTest>): string | null =>
   refusal === null
     ? value?.isWorking === false
-      ? `${name}: ${sayAgainIfAny(value.problem) ?? 'did not answer'}`
+      ? value.problem === null
+        ? say('screens.adminArea.downloadsPanel.nameDidNotAnswer', { name })
+        : say('screens.adminArea.downloadsPanel.nameProblem', {
+            name,
+            problem: sayAgain(value.problem),
+          })
       : null
-    : `${name}: ${refusal.message}`;
+    : say('screens.adminArea.downloadsPanel.nameProblem', { name, problem: refusal.message });
 
 export { failureOfTest };

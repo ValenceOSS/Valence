@@ -164,7 +164,7 @@ describe('PlaylistView', () => {
 
     renderInAnAddress(<PlaylistView playlistId={PLAYLIST_ID} />);
 
-    expect(await screen.findByText('a removed profile')).toBeInTheDocument();
+    expect(await screen.findByText('A removed profile')).toBeInTheDocument();
   });
 
   it('says what a playlist lost with the library it came from', async () => {
@@ -249,7 +249,7 @@ describe('PlaylistView', () => {
 
     renderInAnAddress(<PlaylistView playlistId={PLAYLIST_ID} />);
 
-    expect(await screen.findByText('a removed profile')).toBeInTheDocument();
+    expect(await screen.findByText('A removed profile')).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'More for Sunday morning' }),
     ).not.toBeInTheDocument();

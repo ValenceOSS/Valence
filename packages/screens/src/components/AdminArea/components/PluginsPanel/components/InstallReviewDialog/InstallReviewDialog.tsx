@@ -15,6 +15,7 @@ import { describePermission } from '@ValenceClient/plugins/describePermission';
 import { installPlugin } from '@ValenceClient/plugins/installPlugin';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import type { InstallReviewDialogProps } from './InstallReviewDialog.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The last look before a plugin is installed: who made it, whether Valence can vouch for it, and
@@ -38,12 +39,21 @@ const InstallReviewDialog = ({ preview, onClose, onInstalled }: InstallReviewDia
   const isUnsigned = preview?.trust === 'unsigned';
 
   return (
-    <Dialog label="Install a plugin" isOpen={preview !== null} onClose={onClose}>
+    <Dialog
+      label={say('screens.pluginsPanel.installReviewDialog.installAPlugin')}
+      isOpen={preview !== null}
+      onClose={onClose}
+    >
       {preview === null ? null : (
         <>
           <DialogTitle
-            title={`Install ${preview.plugin.name}?`}
-            detail={`Version ${preview.plugin.version} by ${preview.plugin.author}`}
+            title={say('screens.pluginsPanel.installReviewDialog.installName', {
+              name: preview.plugin.name,
+            })}
+            detail={say('screens.pluginsPanel.installReviewDialog.versionVersionByAuthor', {
+              version: preview.plugin.version,
+              author: preview.plugin.author,
+            })}
             icon={
               <Icon
                 of={isUnsigned ? TriangleAlertIcon : ShieldCheckIcon}
@@ -53,20 +63,20 @@ const InstallReviewDialog = ({ preview, onClose, onInstalled }: InstallReviewDia
             }
           >
             <Badge size="sm" tone={isUnsigned ? 'danger' : 'success'}>
-              {isUnsigned ? 'Not signed' : 'Official'}
+              {isUnsigned ? say('common.notSigned') : say('common.official')}
             </Badge>
           </DialogTitle>
 
           <DialogContent className="flex flex-col gap-5">
             {isUnsigned ? (
               <Callout
-                title="Valence cannot vouch for this plugin"
+                title={say(
+                  'screens.pluginsPanel.installReviewDialog.valenceCannotVouchForThisPlugin',
+                )}
                 tone="danger"
                 icon={TriangleAlertIcon}
               >
-                It is not signed by the Valence catalogue, so nobody has checked who made it or that
-                it is what it says. It still runs in Valence’s sandbox with only the permissions
-                below, but only install it if you trust where it came from.
+                {say('screens.pluginsPanel.installReviewDialog.itIsNotSignedByThe')}
               </Callout>
             ) : null}
 
@@ -76,8 +86,10 @@ const InstallReviewDialog = ({ preview, onClose, onInstalled }: InstallReviewDia
 
             {preview.replacesVersion === null ? null : (
               <p className="text-sm text-text-muted">
-                This replaces version {preview.replacesVersion}, keeping its settings and what it
-                stored.
+                {say(
+                  'screens.pluginsPanel.installReviewDialog.thisReplacesVersionReplacesVersionKeepingIts',
+                  { replacesVersion: preview.replacesVersion },
+                )}
               </p>
             )}
 
@@ -85,13 +97,12 @@ const InstallReviewDialog = ({ preview, onClose, onInstalled }: InstallReviewDia
 
             <section className="flex flex-col gap-2">
               <h3 className="text-sm font-medium uppercase tracking-[0.18em] text-text-muted">
-                It will be allowed to
+                {say('screens.pluginsPanel.installReviewDialog.itWillBeAllowedTo')}
               </h3>
 
               {preview.plugin.permissions.length === 0 ? (
                 <p className="text-sm text-text-muted">
-                  Nothing beyond drawing its own pages. It cannot reach your library, your people or
-                  the internet.
+                  {say('screens.pluginsPanel.installReviewDialog.nothingBeyondDrawingItsOwnPages')}
                 </p>
               ) : (
                 <ul className="flex flex-col divide-y divide-border/50 rounded-xl border border-border/60">
@@ -113,7 +124,7 @@ const InstallReviewDialog = ({ preview, onClose, onInstalled }: InstallReviewDia
 
             {isUnsigned ? (
               <Checkbox
-                label="I understand this plugin is not signed, and I trust where it came from"
+                label={say('screens.pluginsPanel.installReviewDialog.iUnderstandThisPluginIsNot')}
                 checked={isUnderstood}
                 onCheckedChange={setIsUnderstood}
               />
@@ -123,7 +134,9 @@ const InstallReviewDialog = ({ preview, onClose, onInstalled }: InstallReviewDia
           <DialogFooter
             dismiss={{ onChoose: onClose }}
             confirm={{
-              label: isUnsigned ? 'Install anyway' : 'Install',
+              label: isUnsigned
+                ? say('screens.pluginsPanel.installReviewDialog.installAnyway')
+                : say('common.install'),
               isDestructive: isUnsigned,
               isLoading: isInstalling,
               isDisabled: isUnsigned && !isUnderstood,
@@ -136,7 +149,12 @@ const InstallReviewDialog = ({ preview, onClose, onInstalled }: InstallReviewDia
                   acceptUnsigned: isUnsigned && isUnderstood,
                 })
                   .then(() => {
-                    tellOutcome(`Installed ${preview.plugin.name}.`, null);
+                    tellOutcome(
+                      say('screens.pluginsPanel.installReviewDialog.installedName', {
+                        name: preview.plugin.name,
+                      }),
+                      null,
+                    );
                     onInstalled();
                   })
                   .catch((problem: Error) => {

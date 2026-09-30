@@ -7,6 +7,7 @@ import { mirrorAcrossSpine } from '@ValenceCore/functions/mirrorAcrossSpine';
 import { pageCurlOf } from '@ValenceCore/functions/pageCurlOf';
 import type { CurlFold, CurlMatrix, CurlPoint } from '@ValenceCore/functions/pageCurl.types';
 import type { PageCurlProps } from './PageCurl.types';
+import { say } from '@ValenceI18n/say';
 
 const SHADE_DEPTH = 0.16;
 
@@ -21,7 +22,7 @@ const NOWHERE = 'polygon(0 0, 0 0, 0 0)';
 const clipOf = (points: readonly CurlPoint[]): string =>
   points.length < 3
     ? NOWHERE
-    : `polygon(${points.map((point) => `${point.x.toString()}px ${point.y.toString()}px`).join(', ')})`;
+    : `polygon(${points.map((point) => say('ui.pageCurl.xPxYPx', { x: point.x.toString(), y: point.y.toString() })).join(', ')})`;
 
 /**
  * Writes an affine matrix as a CSS transform.

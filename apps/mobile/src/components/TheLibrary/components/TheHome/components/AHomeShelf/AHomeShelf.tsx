@@ -7,6 +7,7 @@ import { AShelf } from '@ValenceMobile/components/AShelf/AShelf';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import type { AHomeShelfProps } from './AHomeShelf.types';
+import { say } from '@ValenceI18n/say';
 
 const RESUMING = 'resume';
 
@@ -32,7 +33,7 @@ const AHomeShelfDrawn = ({
   onLookAtShow,
 }: AHomeShelfProps) =>
   shelf.kind === 'comingUp' ? (
-    <AShelf title="Coming up">
+    <AShelf title={say('common.comingUp')}>
       {upcoming.map(({ show, episode }) => (
         <Button
           key={show.id}
@@ -45,7 +46,11 @@ const AHomeShelfDrawn = ({
           <APoster
             title={show.title}
             artwork={onThisServer(`/api/media/${show.coverMediaId}/image/poster`)}
-            note={`S${episode.seasonNumber.toString()} E${episode.episodeNumber.toString()} · ${describeAirDate(episode.airDate, today)}`}
+            note={say('common.sSeasonNumberEEpisodeNumberAirDate', {
+              seasonNumber: episode.seasonNumber.toString(),
+              episodeNumber: episode.episodeNumber.toString(),
+              airDate: describeAirDate(episode.airDate, today),
+            })}
           />
         </Button>
       ))}

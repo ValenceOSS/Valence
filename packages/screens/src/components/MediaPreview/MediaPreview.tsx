@@ -13,6 +13,7 @@ import { rampVolume } from '@ValenceScreens/playback/rampVolume';
 import { claimSound } from '@ValenceScreens/playback/soundOwner';
 import { useIsMusicOn } from '@ValenceScreens/music/useIsMusicOn';
 import type { MediaPreviewProps, PreviewAbsence } from './MediaPreview.types';
+import { say } from '@ValenceI18n/say';
 
 const SETTLE_MILLISECONDS = 2600;
 
@@ -25,9 +26,9 @@ const SETTLE_MILLISECONDS = 2600;
  */
 const previewUrl = (mediaId: string): string => `/api/media/${mediaId}/preview`;
 
-const PREVIEW_PENDING = 'Preview is being made — check back shortly';
+const PREVIEW_PENDING = say('screens.mediaPreview.previewIsBeingMadeCheckBack');
 
-const PREVIEW_ABSENT = 'No preview available';
+const PREVIEW_ABSENT = say('screens.mediaPreview.noPreviewAvailable');
 
 const LOOK_EVERY_MILLISECONDS = 200;
 
@@ -292,7 +293,7 @@ const MediaPreview = ({
       )}
 
       <VideoSurface
-        label="Preview"
+        label={say('screens.mediaPreview.preview')}
         videoRef={videoRef}
         className={`valence-preview h-full w-full object-cover transition-opacity duration-700 ${
           isShowingFrame ? 'opacity-0' : 'opacity-100'
@@ -358,7 +359,11 @@ const MediaPreview = ({
             <Button
               isIconOnly
               variant="overlay"
-              label={isPaused ? 'Play the preview' : 'Pause the preview'}
+              label={
+                isPaused
+                  ? say('screens.mediaPreview.playThePreview')
+                  : say('screens.mediaPreview.pauseThePreview')
+              }
               onClick={() => {
                 const element = videoRef.current;
 
@@ -386,7 +391,11 @@ const MediaPreview = ({
               <Button
                 isIconOnly
                 variant="overlay"
-                label={isMuted ? 'Turn sound on' : 'Turn sound off'}
+                label={
+                  isMuted
+                    ? say('screens.mediaPreview.turnSoundOn')
+                    : say('screens.mediaPreview.turnSoundOff')
+                }
                 onClick={() => {
                   const element = videoRef.current;
 

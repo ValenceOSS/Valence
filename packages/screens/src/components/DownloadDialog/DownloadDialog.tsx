@@ -22,6 +22,8 @@ import { detectFromBrowser } from '@ValenceScreens/playback/detectDeviceProfile'
 import { readFreeSpace } from '@ValenceScreens/downloads/readFreeSpace';
 import type { DownloadQuality } from '@ValenceContracts/schemas/Download';
 import type { DownloadDialogProps } from './DownloadDialog.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * Chooses what to download, and says what each choice costs before anybody commits to it.
@@ -92,29 +94,35 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
 
   return (
     <Dialog
-      label={`Download ${series?.title ?? media?.title ?? ''}`}
+      label={say('common.downloadTitle', { title: series?.title ?? media?.title ?? '' })}
       isOpen={isOpen}
       onClose={onClose}
     >
       <DialogTitle
-        title="Download"
+        title={say('common.download')}
         detail={
           series === null
             ? (media?.title ?? '')
-            : `${series.title} — ${episodes === 1 ? '1 episode' : `${episodes.toString()} episodes`}`
+            : sayCount('common.titleCountEpisodes', episodes, {
+                title: series.title,
+              })
         }
       />
 
       <DialogContent>
         {asked.isPending ? (
-          <Spinner isCentered label="Working out what this would cost" size="sm" />
+          <Spinner
+            isCentered
+            label={say('screens.downloadDialog.workingOutWhatThisWouldCost')}
+            size="sm"
+          />
         ) : options.length === 0 ? (
           <p className="px-6 py-8 font-body text-sm text-text-muted">
-            Nothing can be prepared for this yet.
+            {say('screens.downloadDialog.nothingCanBePreparedForThis')}
           </p>
         ) : (
           <ChoiceList
-            label="How large to make it"
+            label={say('screens.downloadDialog.howLargeToMakeIt')}
             value={picked?.quality ?? null}
             onChoose={(id) => {
               const found = options.find((option) => option.quality === id);
@@ -127,16 +135,18 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
               id: option.quality,
               title: option.label,
               detail: option.meaning,
-              ...(option.wouldTranscode ? { note: 'Converted' } : {}),
+              ...(option.wouldTranscode ? { note: say('screens.downloadDialog.converted') } : {}),
               isDisabled: !option.savesSpace,
               aside: (
                 <span className="flex max-w-40 flex-col items-end gap-0.5">
                   <span className="text-sm font-semibold tabular-nums text-text">
                     {option.bytes === null
-                      ? 'Size unknown'
+                      ? say('screens.downloadDialog.sizeUnknown')
                       : series === null
                         ? formatBytes(option.bytes)
-                        : `about ${formatBytes(option.bytes)}`}
+                        : say('screens.downloadDialog.aboutSize', {
+                            size: formatBytes(option.bytes),
+                          })}
                   </span>
 
                   {option.comparison === null ? null : (
@@ -150,18 +160,31 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
 
         {verdict === 'unknown' ? null : verdict === 'fits' ? (
           <p className="mt-4 font-body text-sm text-text-muted">
-            {`${formatBytes(picked?.bytes ?? 0)}, and this device has ${formatBytes(freeBytes ?? 0)} free.`}
+            {say('screens.downloadDialog.valueAndThisDeviceHasValue2', {
+              value: formatBytes(picked?.bytes ?? 0),
+              value2: formatBytes(freeBytes ?? 0),
+            })}
           </p>
         ) : (
           <Callout
             className="mt-4"
             tone={verdict === 'willNotFit' ? 'danger' : 'warning'}
             icon={TriangleAlertIcon}
-            title={verdict === 'willNotFit' ? 'That will not fit' : 'That is most of what is left'}
+            title={
+              verdict === 'willNotFit'
+                ? say('screens.downloadDialog.thatWillNotFit')
+                : say('screens.downloadDialog.thatIsMostOfWhatIs')
+            }
           >
             {verdict === 'willNotFit'
-              ? `It needs ${formatBytes(picked?.bytes ?? 0)}, and this device has ${formatBytes(freeBytes ?? 0)} free.`
-              : `${formatBytes(picked?.bytes ?? 0)} of the ${formatBytes(freeBytes ?? 0)} free on this device.`}
+              ? say('screens.downloadDialog.itNeedsValueAndThisDevice', {
+                  value: formatBytes(picked?.bytes ?? 0),
+                  value2: formatBytes(freeBytes ?? 0),
+                })
+              : say('screens.downloadDialog.valueOfTheValue2FreeOn', {
+                  value: formatBytes(picked?.bytes ?? 0),
+                  value2: formatBytes(freeBytes ?? 0),
+                })}
           </Callout>
         )}
       </DialogContent>
@@ -171,8 +194,8 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
         confirm={{
           label:
             series === null
-              ? 'Prepare it'
-              : `Queue ${episodes === 1 ? '1 episode' : `${episodes.toString()} episodes`}`,
+              ? say('screens.downloadDialog.prepareIt')
+              : sayCount('screens.downloadDialog.queueCountEpisodes', episodes),
           isLoading: isAsking,
           isDisabled: picked === null || verdict === 'willNotFit',
           onChoose: () => {
@@ -193,20 +216,19 @@ const DownloadDialog = ({ media, series = null, onClose }: DownloadDialogProps) 
             )
               .then(async (started) => {
                 if (!started) {
-                  notify.failed('That could not be started.');
+                  notify.failed(say('screens.downloadDialog.thatCouldNotBeStarted'));
 
                   return;
                 }
 
                 await cache.invalidateQueries({ queryKey: downloadQueries.key });
-                notify.worked('The server is preparing it', {
-                  description:
-                    'Valence can be closed in the meantime. You will get a notification when it is ready, and it comes to this device the next time Valence is open.',
+                notify.worked(say('common.theServerIsPreparingIt'), {
+                  description: say('screens.downloadDialog.valenceCanBeClosedInThe'),
                 });
                 onClose();
               })
               .catch(() => {
-                notify.failed('That could not be started.');
+                notify.failed(say('screens.downloadDialog.thatCouldNotBeStarted'));
               })
               .finally(() => {
                 setIsAsking(false);

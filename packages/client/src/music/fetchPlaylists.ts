@@ -13,6 +13,7 @@ import type {
   PlaylistSummary,
   UpdatePlaylist,
 } from '@ValenceContracts/schemas/Playlist';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Sends a change to the playlists and reads back whether it was taken.
@@ -154,7 +155,7 @@ const savePlaylistArtwork = async (playlistId: string, picture: Blob): Promise<s
   }).catch(() => null);
 
   if (response === null) {
-    return 'That picture could not be sent.';
+    return say('common.thatPictureCouldNotBeSent');
   }
 
   if (response.ok) {
@@ -163,7 +164,7 @@ const savePlaylistArtwork = async (playlistId: string, picture: Blob): Promise<s
 
   const said = RefusalSchema.safeParse(await response.json().catch(() => null));
 
-  return said.success ? said.data.error : 'That picture could not be used.';
+  return said.success ? said.data.error : say('common.thatPictureCouldNotBeUsed');
 };
 
 /**

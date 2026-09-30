@@ -3,6 +3,7 @@ import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { z } from 'zod';
 import { ViewerProfileListSchema } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
+import { say } from '@ValenceI18n/say';
 
 const TwoFactorPendingSchema = z.object({ twoFactorRedirect: z.literal(true) });
 
@@ -45,11 +46,11 @@ const signInAsProfile = async (
   }).catch(() => null);
 
   if (response === null) {
-    return { kind: 'refused', reason: 'Valence could not be reached.' };
+    return { kind: 'refused', reason: say('common.valenceCouldNotBeReached') };
   }
 
   if (!response.ok) {
-    return { kind: 'refused', reason: 'That password is not right.' };
+    return { kind: 'refused', reason: say('common.thatPasswordIsNotRight') };
   }
 
   const body = await response.text().catch(() => '');

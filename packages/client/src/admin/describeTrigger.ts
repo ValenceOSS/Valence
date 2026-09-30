@@ -1,13 +1,14 @@
 import type { ScheduleTrigger } from '@ValenceClient/admin/fetchAdmin';
+import { say } from '@ValenceI18n/say';
 
 const DAY_NAMES = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
+  say('client.admin.describeTrigger.sunday'),
+  say('client.admin.describeTrigger.monday'),
+  say('client.admin.describeTrigger.tuesday'),
+  say('client.admin.describeTrigger.wednesday'),
+  say('client.admin.describeTrigger.thursday'),
+  say('client.admin.describeTrigger.friday'),
+  say('client.admin.describeTrigger.saturday'),
 ] as const;
 
 /**
@@ -30,15 +31,26 @@ const toClock = (hour: number, minute: number): string =>
 const describeTrigger = (trigger: ScheduleTrigger): string => {
   switch (trigger.kind) {
     case 'startup':
-      return 'On application startup';
+      return say('common.onApplicationStartup');
     case 'everyMinutes':
-      return trigger.minutes === 1 ? 'Every minute' : `Every ${trigger.minutes.toString()} minutes`;
+      return trigger.minutes === 1
+        ? say('client.admin.describeTrigger.everyMinute')
+        : say('client.admin.describeTrigger.everyMinutesMinutes', {
+            minutes: trigger.minutes.toString(),
+          });
     case 'everyHours':
-      return trigger.hours === 1 ? 'Every hour' : `Every ${trigger.hours.toString()} hours`;
+      return trigger.hours === 1
+        ? say('client.admin.describeTrigger.everyHour')
+        : say('client.admin.describeTrigger.everyHoursHours', { hours: trigger.hours.toString() });
     case 'daily':
-      return `Daily at ${toClock(trigger.hour, trigger.minute)}`;
+      return say('client.admin.describeTrigger.dailyAtHour', {
+        hour: toClock(trigger.hour, trigger.minute),
+      });
     case 'weekly':
-      return `${DAY_NAMES[trigger.dayOfWeek] ?? 'Weekly'} at ${toClock(trigger.hour, trigger.minute)}`;
+      return say('common.dayAtTime', {
+        day: DAY_NAMES[trigger.dayOfWeek] ?? say('common.weekly'),
+        time: toClock(trigger.hour, trigger.minute),
+      });
   }
 };
 

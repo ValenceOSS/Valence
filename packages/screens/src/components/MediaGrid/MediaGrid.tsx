@@ -3,6 +3,7 @@ import { VirtualGrid } from '@ValenceUI/VirtualGrid';
 import { useArrivals } from '@ValenceScreens/motion/useArrivals';
 import { RailCard } from '@ValenceScreens/components/RailCard/RailCard';
 import type { MediaGridProps, MediaGridSize } from './MediaGrid.types';
+import { say } from '@ValenceI18n/say';
 
 const POSTER_WIDTHS: Record<MediaGridSize, number> = { small: 130, medium: 170, large: 220 };
 
@@ -54,7 +55,7 @@ const MediaGrid = ({
   return (
     <VirtualGrid
       count={items.length}
-      label="What is here"
+      label={say('screens.mediaGrid.whatIsHere')}
       leastCardWidth={(shape === 'poster' ? POSTER_WIDTHS : WIDE_WIDTHS)[size]}
       rowHeight={
         (shape === 'poster'

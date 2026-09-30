@@ -1,5 +1,5 @@
 type CouldNotReadProps = {
-  what: string;
+  said: string;
   onTryAgain: () => void;
   isTryingAgain?: boolean;
   className?: string;

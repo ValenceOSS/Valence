@@ -5,13 +5,13 @@ import { CouldNotRead } from './CouldNotRead';
 
 describe('CouldNotRead', () => {
   it('names what could not be read, since a page reads several things', () => {
-    render(<CouldNotRead what="Your library" onTryAgain={vi.fn()} />);
+    render(<CouldNotRead said="Your library could not be read." onTryAgain={vi.fn()} />);
 
     expect(screen.getByRole('alert')).toHaveTextContent('Your library could not be read');
   });
 
   it('announces itself, so somebody who cannot see it is told too', () => {
-    render(<CouldNotRead what="Your library" onTryAgain={vi.fn()} />);
+    render(<CouldNotRead said="Your library could not be read." onTryAgain={vi.fn()} />);
 
     expect(screen.getByRole('alert')).toBeInTheDocument();
   });
@@ -19,7 +19,7 @@ describe('CouldNotRead', () => {
   it('offers to try again, since most of what puts a panel here passes', async () => {
     const tryAgain = vi.fn();
     const user = userEvent.setup();
-    render(<CouldNotRead what="Your library" onTryAgain={tryAgain} />);
+    render(<CouldNotRead said="Your library could not be read." onTryAgain={tryAgain} />);
 
     await user.click(screen.getByRole('button', { name: 'Try again' }));
 
@@ -27,7 +27,9 @@ describe('CouldNotRead', () => {
   });
 
   it('says the reading is happening on the button rather than replacing the panel', () => {
-    render(<CouldNotRead what="Your library" onTryAgain={vi.fn()} isTryingAgain />);
+    render(
+      <CouldNotRead said="Your library could not be read." onTryAgain={vi.fn()} isTryingAgain />,
+    );
 
     expect(screen.getByRole('alert')).toHaveTextContent('could not be read');
     expect(screen.getByRole('button')).toBeDisabled();
@@ -35,7 +37,7 @@ describe('CouldNotRead', () => {
   });
 
   it('offers a way out rather than only a fault, which is the whole point of it', () => {
-    render(<CouldNotRead what="The accounts" onTryAgain={vi.fn()} />);
+    render(<CouldNotRead said="The accounts could not be read." onTryAgain={vi.fn()} />);
 
     expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
   });

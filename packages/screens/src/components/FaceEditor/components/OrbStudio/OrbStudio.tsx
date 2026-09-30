@@ -8,6 +8,7 @@ import { shuffledOrbLook } from '@ValenceScreens/library/shuffledOrbLook';
 import { ColourChoice } from '@ValenceScreens/components/ColourChoice/ColourChoice';
 import { OrbSetting } from '@ValenceScreens/components/FaceEditor/components/OrbSetting/OrbSetting';
 import type { OrbStudioProps } from './OrbStudio.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Choosing an orb and making it one's own: every orb moving in a gallery, then the chosen one's
@@ -27,14 +28,16 @@ const OrbStudio = ({ value, onChange }: OrbStudioProps) => {
   return (
     <div className="flex flex-col gap-8">
       <section className="flex flex-col gap-3">
-        <h3 className="text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">Orb</h3>
+        <h3 className="text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">
+          {say('common.orb')}
+        </h3>
         <div className="grid grid-cols-4 gap-3 sm:grid-cols-7">
           {ORB_VARIANTS.map((one) => (
             <Button
               key={one.key}
               variant="bare"
               size="none"
-              label={`Use the ${one.label} orb`}
+              label={say('screens.faceEditor.orbStudio.useTheLabelOrb', { label: one.label })}
               hasTooltip={false}
               isActive={one.key === variant.key}
               onClick={() => {
@@ -72,7 +75,7 @@ const OrbStudio = ({ value, onChange }: OrbStudioProps) => {
           }}
         >
           <Icon of={ShuffleIcon} size={15} />
-          Shuffle
+          {say('common.shuffle')}
         </Button>
         <Button
           variant="ghost"
@@ -82,13 +85,15 @@ const OrbStudio = ({ value, onChange }: OrbStudioProps) => {
           }}
         >
           <Icon of={ResetIcon} size={15} />
-          As it comes
+          {say('screens.faceEditor.orbStudio.asItComes')}
         </Button>
       </div>
 
       {variant.colours.length === 0 ? null : (
         <section className="flex flex-col gap-3">
-          <h3 className="text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">Colours</h3>
+          <h3 className="text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">
+            {say('common.colours')}
+          </h3>
           <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
             {variant.colours.map((colour) => (
               <div key={colour.key} className="flex items-center gap-3">
@@ -112,7 +117,9 @@ const OrbStudio = ({ value, onChange }: OrbStudioProps) => {
       )}
 
       <section className="flex flex-col gap-3">
-        <h3 className="text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">Settings</h3>
+        <h3 className="text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">
+          {say('common.settings')}
+        </h3>
         <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
           {variant.params.map((param) => (
             <OrbSetting

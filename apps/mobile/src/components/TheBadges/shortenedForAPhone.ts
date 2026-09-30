@@ -1,5 +1,7 @@
+import { say } from '@ValenceI18n/say';
+
 const SHORT: Readonly<Record<string, string>> = {
-  'Dolby Atmos': 'Atmos',
+  'Dolby Atmos': say('phone.theBadges.shortenedForAPhone.atmos'),
   'Dolby Vision': 'DV',
   'Dolby Digital+': 'DD+',
   'Dolby Digital': 'DD',

@@ -5,6 +5,7 @@ import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import type { RemoveDownloadDialogProps } from './RemoveDownloadDialog.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Asks before taking a download out of its client, and whether what it downloaded should go with
@@ -30,7 +31,10 @@ const RemoveDownloadDialog = ({
     setDeleteData(false);
   }
 
-  const title = `Remove ${download?.title ?? 'this download'}?`;
+  const title =
+    download === null
+      ? say('screens.adminArea.removeDownloadDialog.removeThisDownload')
+      : say('common.removeName', { name: download.title });
 
   return (
     <Dialog
@@ -43,17 +47,24 @@ const RemoveDownloadDialog = ({
 
       <DialogContent className="flex flex-col gap-3">
         <p className="font-body text-sm text-text-muted">
-          It is taken out of {download?.clientName ?? 'its client'}, and Valence stops following it.
+          {download === null
+            ? say('screens.adminArea.removeDownloadDialog.itIsTakenOutOfItsClient')
+            : say('screens.adminArea.removeDownloadDialog.itIsTakenOutOfName', {
+                name: download.clientName,
+              })}
         </p>
 
         {keepsFinishedFiles ? (
           <p className="font-body text-sm text-text-muted">
-            {download?.clientName ?? 'The client'} keeps what it has finished with, so its files
-            stay where they are.
+            {download === null
+              ? say('screens.adminArea.removeDownloadDialog.theClientKeepsWhatItHasFinished')
+              : say('screens.adminArea.removeDownloadDialog.nameKeepsWhatItHasFinished', {
+                  name: download.clientName,
+                })}
           </p>
         ) : (
           <Checkbox
-            label="Delete what it downloaded as well"
+            label={say('screens.adminArea.removeDownloadDialog.deleteWhatItDownloadedAsWell')}
             checked={deleteData}
             onCheckedChange={setDeleteData}
           />
@@ -63,7 +74,7 @@ const RemoveDownloadDialog = ({
       <DialogFooter
         dismiss={{ onChoose: onClose }}
         confirm={{
-          label: 'Remove',
+          label: say('common.remove'),
           onChoose: () => {
             onConfirm(deleteData && !keepsFinishedFiles);
           },

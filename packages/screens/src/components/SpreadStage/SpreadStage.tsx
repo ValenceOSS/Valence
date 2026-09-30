@@ -10,6 +10,7 @@ import { usePageDrag } from '@ValenceUI/usePageDrag';
 import { widthFor } from '@ValenceScreens/reading/widthFor';
 import type { CurlHold, CurlLeaf } from '@ValenceCore/functions/pageCurl.types';
 import type { SpreadStageProps } from './SpreadStage.types';
+import { say } from '@ValenceI18n/say';
 
 const FIT_CLASSES = {
   width: 'w-full object-contain',
@@ -292,7 +293,7 @@ const SpreadStage = ({
     <img
       key={number}
       src={bookPageUrl(bookId, chapterId, number, askedWidth)}
-      alt={isShown ? `Page ${(number + 1).toString()}` : ''}
+      alt={isShown ? say('common.pageValue', { value: (number + 1).toString() }) : ''}
       aria-hidden={!isShown}
       draggable={false}
       onLoad={(event) => {

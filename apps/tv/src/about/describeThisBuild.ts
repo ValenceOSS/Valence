@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import { z } from 'zod';
 import { describeTheServer } from '@ValenceClient/about/describeTheServer';
 import type { About } from '@ValenceContracts/schemas/About';
+import { say } from '@ValenceI18n/say';
 
 const BuildSchema = z.object({ build: z.object({ version: z.string(), commit: z.string() }) });
 
@@ -18,7 +19,12 @@ const BuildSchema = z.object({ build: z.object({ version: z.string(), commit: z.
 const describeThisBuild = (server: About | null): string => {
   const read = BuildSchema.safeParse(Constants.expoConfig?.extra);
   const parts = [
-    read.success ? `Valence ${read.data.build.version} (${read.data.build.commit})` : null,
+    read.success
+      ? say('tv.about.describeThisBuild.valenceVersionCommit', {
+          version: read.data.build.version,
+          commit: read.data.build.commit,
+        })
+      : null,
     `tvOS ${String(Platform.Version)}`,
     describeTheServer(server),
   ].filter((part) => part !== null);

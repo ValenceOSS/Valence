@@ -14,6 +14,7 @@ import { saidWhen } from '@ValenceClient/format/saidWhen';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { AccountSession } from '@ValenceClient/admin/fetchAccountSessions';
 import type { AccountDevicesProps } from './AccountDevices.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Everywhere one account is signed in, for an administrator reviewing it rather than the account
@@ -38,7 +39,7 @@ const AccountDevices = ({ accountId }: AccountDevicesProps) => {
     () => [
       {
         id: 'name',
-        header: 'Device',
+        header: say('common.device'),
         accessorFn: (device) => sayAgain(device.name),
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col gap-0.5">
@@ -52,11 +53,11 @@ const AccountDevices = ({ accountId }: AccountDevicesProps) => {
       },
       {
         id: 'signedIn',
-        header: 'Signed in',
+        header: say('common.signedIn'),
         accessorFn: (device) => device.signedInAt,
         cell: ({ row }) => (
           <span className="whitespace-nowrap text-xs text-text-muted">
-            {saidWhen(row.original.signedInAt)}
+            {saidWhen(row.original.signedInAt) ?? '—'}
           </span>
         ),
       },
@@ -67,14 +68,14 @@ const AccountDevices = ({ accountId }: AccountDevicesProps) => {
         cell: ({ row }) => (
           <span className="flex justify-end">
             <ActionMenu
-              label={`Actions for ${sayAgain(row.original.name)}`}
+              label={say('common.actionsForName', { name: sayAgain(row.original.name) })}
               trigger={<Icon of={MoreHorizontalIcon} size={16} />}
               groups={[
                 {
                   items: [
                     {
                       id: 'end',
-                      label: 'Sign this out',
+                      label: say('common.signThisOut'),
                       icon: <Icon of={DoorOpenFilledIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
@@ -95,13 +96,13 @@ const AccountDevices = ({ accountId }: AccountDevicesProps) => {
   return (
     <div className="flex flex-col gap-4">
       <ConfirmDialog
-        title="Sign this device out?"
+        title={say('common.signThisDeviceOut')}
         detail={
           ending === null
             ? ''
-            : `${sayAgain(ending.name)} will be signed out and whoever is using it has to sign in again.`
+            : say('common.nameWillBeSignedOutAnd', { name: sayAgain(ending.name) })
         }
-        confirmLabel="Sign it out"
+        confirmLabel={say('common.signItOut')}
         isDestructive
         isOpen={ending !== null}
         onClose={() => {
@@ -120,7 +121,9 @@ const AccountDevices = ({ accountId }: AccountDevicesProps) => {
 
       {asked.isError ? (
         <CouldNotRead
-          what="Where this account is signed in"
+          said={say(
+            'screens.accountsPanel.accountDevices.whereThisAccountIsSignedInCouldNotBeRead',
+          )}
           isTryingAgain={asked.isFetching}
           onTryAgain={() => {
             void asked.refetch();
@@ -128,10 +131,10 @@ const AccountDevices = ({ accountId }: AccountDevicesProps) => {
         />
       ) : (
         <DataTable
-          label="Where this account is signed in"
+          label={say('screens.accountsPanel.accountDevices.whereThisAccountIsSignedIn')}
           columns={columns}
           rows={sessions}
-          emptyMessage="This account is not signed in anywhere."
+          emptyMessage={say('screens.accountsPanel.accountDevices.thisAccountIsNotSignedIn')}
         />
       )}
     </div>

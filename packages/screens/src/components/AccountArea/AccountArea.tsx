@@ -15,6 +15,7 @@ import { DeviceList } from '@ValenceScreens/components/AccountArea/components/De
 import { SharePanel } from '@ValenceScreens/components/AccountArea/components/SharePanel/SharePanel';
 import { PluginSurfaceView } from '@ValenceScreens/components/PluginSurfaceView/PluginSurfaceView';
 import type { AccountAreaProps, PluginAccountPage } from './AccountArea.types';
+import { say } from '@ValenceI18n/say';
 
 const PANEL_ORDER: readonly string[] = ACCOUNT_PANELS.map((one) => one.id);
 
@@ -53,7 +54,7 @@ const AccountArea = ({
       className="flex w-full flex-col"
     >
       <TabPanel value="profile" className="flex flex-col gap-4" travel={travel}>
-        <PanelCard title="Profile" isFlush>
+        <PanelCard title={say('common.profile')} isFlush>
           <SettingList>
             <ProfileSettings profile={profile} draft={draft} onDraft={onDraft} />
           </SettingList>
@@ -69,7 +70,7 @@ const AccountArea = ({
       </TabPanel>
 
       <TabPanel value="history" className="flex flex-col gap-4" travel={travel}>
-        <PanelCard title="Watch history" isFlush>
+        <PanelCard title={say('common.watchHistory')} isFlush>
           <HistoryPanel />
         </PanelCard>
       </TabPanel>
@@ -87,14 +88,14 @@ const AccountArea = ({
           </SettingList>
         </PanelCard>
 
-        <PanelCard title="API keys" isFlush>
+        <PanelCard title={say('screens.accountArea.aPIKeys')} isFlush>
           <ApiKeyPanel />
         </PanelCard>
       </TabPanel>
 
       {pluginPages.map((page) => (
         <TabPanel key={page.id} value={page.id} travel={travel}>
-          <PanelCard title={`From ${page.pluginName}`}>
+          <PanelCard title={say('common.fromPluginName', { pluginName: page.pluginName })}>
             <PluginSurfaceView
               place={{ kind: 'page', pluginId: page.pluginId, pageId: page.pageId }}
             />

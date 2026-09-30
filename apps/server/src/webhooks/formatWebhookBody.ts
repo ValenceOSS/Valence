@@ -7,6 +7,7 @@ import { nameOfViewer } from './nameOfViewer';
 import type { PlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
 import type { WebhookPayload, WebhookPreset } from '@ValenceContracts/schemas/Webhook';
 import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const HOW_PLAYED: Record<PlaybackMode, string> = {
   DirectPlay: say('server.webhooks.formatWebhookBody.sentAsItLies'),
@@ -34,33 +35,44 @@ const sentenceFor = (payload: WebhookPayload): string => {
     }
 
     case 'job.completed': {
-      const about = payload.data.subjectName === null ? '' : ` for ${payload.data.subjectName}`;
-
-      return `${payload.data.label}${about} finished.`;
+      return payload.data.subjectName === null
+        ? say('common.labelFinished', { label: payload.data.label })
+        : say('server.webhooks.formatWebhookBody.labelForSubjectFinished', {
+            label: payload.data.label,
+            subject: payload.data.subjectName,
+          });
     }
 
     case 'job.failed': {
-      const about = payload.data.subjectName === null ? '' : ` for ${payload.data.subjectName}`;
-
-      return `${payload.data.label}${about} failed — ${payload.data.reason}`;
+      return payload.data.subjectName === null
+        ? say('server.webhooks.formatWebhookBody.labelFailed', {
+            label: payload.data.label,
+            reason: payload.data.reason,
+          })
+        : say('server.webhooks.formatWebhookBody.labelForSubjectFailed', {
+            label: payload.data.label,
+            subject: payload.data.subjectName,
+            reason: payload.data.reason,
+          });
     }
 
     case 'library.scanned': {
       const said = payload.data.libraries.map((one) => {
         const counts = [
-          `${one.added.toString()} added`,
-          `${one.updated.toString()} updated`,
-          `${one.removed.toString()} removed`,
-          ...(one.failed === 0 ? [] : [`${one.failed.toString()} unreadable`]),
+          sayCount('common.count.added', one.added),
+          sayCount('common.count.updated', one.updated),
+          sayCount('common.count.removed', one.removed),
+          ...(one.failed === 0 ? [] : [sayCount('common.count.unreadable', one.failed)]),
         ];
-        const andMore =
-          one.arrivedNotListed === 0
-            ? ''
-            : say('server.webhooks.formatWebhookBody.andArrivedNotListedMore', {
-                arrivedNotListed: one.arrivedNotListed.toString(),
-              });
         const named = one.arrived.map(describeArrival).join(', ');
-        const titles = one.arrived.length === 0 ? '' : `\n${named}${andMore}`;
+        const listed =
+          one.arrivedNotListed === 0
+            ? named
+            : say('server.webhooks.formatWebhookBody.namedAndMore', {
+                named,
+                count: one.arrivedNotListed.toString(),
+              });
+        const titles = one.arrived.length === 0 ? '' : `\n${listed}`;
 
         return `${one.libraryName}: ${counts.join(', ')}${titles}`;
       });
@@ -143,7 +155,10 @@ const sentenceFor = (payload: WebhookPayload): string => {
         ? say('server.webhooks.formatWebhookBody.titleWasApprovedAsItWas', {
             title: payload.data.title,
           })
-        : `${payload.data.approvedBy} approved ${payload.data.title}.`;
+        : say('server.webhooks.formatWebhookBody.approvedByApprovedTitle', {
+            approvedBy: payload.data.approvedBy,
+            title: payload.data.title,
+          });
     }
 
     case 'requests.refused': {
@@ -216,24 +231,32 @@ const sentenceFor = (payload: WebhookPayload): string => {
     }
 
     case 'auth.succeeded': {
-      const from = payload.data.address === null ? '' : ` from ${payload.data.address}`;
+      const { name, deviceLabel, address } = payload.data;
 
-      return say('server.webhooks.formatWebhookBody.nameSignedInOnDeviceLabelFrom', {
-        name: payload.data.name,
-        deviceLabel: payload.data.deviceLabel,
-        from,
-      });
+      return address === null
+        ? say('server.webhooks.formatWebhookBody.nameSignedInOnDevice', { name, deviceLabel })
+        : say('server.webhooks.formatWebhookBody.nameSignedInOnDeviceFromAddress', {
+            name,
+            deviceLabel,
+            address,
+          });
     }
 
     case 'auth.failed': {
-      const from = payload.data.address === null ? '' : ` from ${payload.data.address}`;
+      const { identifier, deviceLabel, address, reason } = payload.data;
 
-      return say('server.webhooks.formatWebhookBody.aSignInAsIdentifierWas', {
-        identifier: payload.data.identifier,
-        deviceLabel: payload.data.deviceLabel,
-        from,
-        reason: payload.data.reason,
-      });
+      return address === null
+        ? say('server.webhooks.formatWebhookBody.signInRefusedOnDevice', {
+            identifier,
+            deviceLabel,
+            reason,
+          })
+        : say('server.webhooks.formatWebhookBody.signInRefusedOnDeviceFromAddress', {
+            identifier,
+            deviceLabel,
+            address,
+            reason,
+          });
     }
 
     case 'account.created': {

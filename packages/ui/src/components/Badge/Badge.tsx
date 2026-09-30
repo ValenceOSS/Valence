@@ -2,6 +2,7 @@ import { cn } from '@ValenceUI/cn';
 import { Spinner } from '@ValenceUI/Spinner';
 import { inkOn } from './inkOn';
 import type { BadgeProps, BadgeSize, BadgeTone } from './Badge.types';
+import { say } from '@ValenceI18n/say';
 
 const TONE_CLASSES: Record<BadgeTone, string> = {
   quiet: 'bg-[var(--surface-hover)] text-text-muted',
@@ -52,7 +53,9 @@ const Badge = ({ children, tone = 'quiet', colour = null, size = 'sm', className
     )}
   >
     {children}
-    {colour === null && tone === 'busy' ? <Spinner size="xs" label="In progress" /> : null}
+    {colour === null && tone === 'busy' ? (
+      <Spinner size="xs" label={say('common.inProgress')} />
+    ) : null}
   </span>
 );
 

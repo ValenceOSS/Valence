@@ -4,6 +4,7 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRow';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import type { TheFiltersProps } from './TheFilters.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   group: { gap: 8 },
@@ -34,12 +35,14 @@ const TheFilters = ({ groups, selected, onChange, onClear }: TheFiltersProps) =>
             setIsOpen((was) => !was);
           }}
         >
-          {selected.size === 0 ? 'Filters' : `Filters · ${selected.size.toString()}`}
+          {selected.size === 0
+            ? say('common.filters')
+            : say('phone.theLibrary.theFilters.filtersSize', { size: selected.size.toString() })}
         </Button>
 
         {selected.size === 0 ? null : (
           <Button tone="quiet" onPress={onClear}>
-            Clear
+            {say('common.clear')}
           </Button>
         )}
       </View>

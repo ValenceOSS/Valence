@@ -9,11 +9,12 @@ import { AlbumShelf } from '@ValenceScreens/components/AlbumShelf/AlbumShelf';
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
 import type { AlbumOrder } from '@ValenceClient/music/fetchMusic';
+import { say } from '@ValenceI18n/say';
 
 const ORDERS = [
-  { id: 'recent', label: 'Recently added' },
-  { id: 'title', label: 'A–Z' },
-  { id: 'year', label: 'Year' },
+  { id: 'recent', label: say('common.recentlyAdded') },
+  { id: 'title', label: say('common.aZ') },
+  { id: 'year', label: say('common.year') },
 ] as const;
 
 /**
@@ -36,7 +37,10 @@ const AlbumsView = () => {
   if (albums.isPending) {
     return (
       <div className={`py-8 ${MUSIC_LANES.page}`}>
-        <Skeleton label="Reading your albums" className="h-64 w-full" />
+        <Skeleton
+          label={say('screens.musicPage.albumsView.readingYourAlbums')}
+          className="h-64 w-full"
+        />
       </div>
     );
   }
@@ -47,8 +51,8 @@ const AlbumsView = () => {
     return (
       <NothingHere
         of={RecordIcon}
-        title="No albums yet"
-        detail="Once a music library has been scanned, its albums will be here."
+        title={say('common.noAlbumsYet')}
+        detail={say('common.onceAMusicLibraryHasBeen')}
         fills
       />
     );
@@ -57,12 +61,12 @@ const AlbumsView = () => {
   return (
     <div className="pt-6 pb-12">
       <AlbumShelf
-        heading="Albums"
+        heading={say('common.albums')}
         layout="grid"
         albums={found}
         action={
           <SegmentedRow
-            label="Put the albums in order by"
+            label={say('common.putTheAlbumsInOrderBy')}
             size="sm"
             items={ORDERS}
             value={order}

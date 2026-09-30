@@ -37,12 +37,29 @@ import type {
   ReleaseType,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type { AskForMediaDialogProps } from './AskForMediaDialog.types';
+import { say } from '@ValenceI18n/say';
 
-const KINDS: readonly { id: MediaRequestKind; label: string; one: string }[] = [
-  { id: 'film', label: 'A film', one: 'a film' },
-  { id: 'series', label: 'A series', one: 'a series' },
-  { id: 'artist', label: 'An artist', one: 'an artist' },
-  { id: 'album', label: 'An album', one: 'an album' },
+const KINDS: readonly { id: MediaRequestKind; label: string; searchFor: string }[] = [
+  {
+    id: 'film',
+    label: say('common.aFilm2'),
+    searchFor: say('screens.adminArea.matchPicker.searchForAFilm'),
+  },
+  {
+    id: 'series',
+    label: say('common.aSeries2'),
+    searchFor: say('screens.adminArea.matchPicker.searchForASeries'),
+  },
+  {
+    id: 'artist',
+    label: say('screens.adminArea.askForMediaDialog.anArtist2'),
+    searchFor: say('screens.adminArea.askForMediaDialog.searchForAnArtist'),
+  },
+  {
+    id: 'album',
+    label: say('screens.adminArea.askForMediaDialog.anAlbum2'),
+    searchFor: say('screens.adminArea.askForMediaDialog.searchForAnAlbum'),
+  },
 ];
 
 type Chosen = {
@@ -85,15 +102,15 @@ const THE_LIBRARYS = 'library';
 
 const LATER_PICKS: Readonly<Record<MediaRequestKind, string>> = {
   film: '',
-  series: ' Later episodes wait for a pick too.',
-  artist: ' Later albums wait for a pick too.',
+  series: say('screens.adminArea.askForMediaDialog.laterEpisodesWaitForAPick'),
+  artist: say('screens.adminArea.askForMediaDialog.laterAlbumsWaitForAPick'),
   album: '',
   book: '',
 };
 
 const PICKING = [
-  { id: 'best', label: 'The best by its quality' },
-  { id: 'hand', label: 'I will pick it' },
+  { id: 'best', label: say('screens.adminArea.askForMediaDialog.theBestByItsQuality') },
+  { id: 'hand', label: say('screens.adminArea.askForMediaDialog.iWillPickIt') },
 ] as const;
 
 /**
@@ -125,7 +142,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
   const profiles = useQuery({ ...requestsQueries.profiles(), enabled: isOpen });
   const isMusic = isMusicRequest(kind);
   const qualities = [
-    { id: THE_LIBRARYS, label: 'The library’s own profile' },
+    { id: THE_LIBRARYS, label: say('common.theLibrarysOwnProfile') },
     ...(profiles.data ?? [])
       .filter((profile) => profile.kind === (isMusic ? 'music' : 'video'))
       .map((profile) => ({ id: profile.id, label: profile.name })),
@@ -185,7 +202,10 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
     void findReleasesFor(asked)
       .then(({ value, refusal }) => {
         if (value === null) {
-          setProblem(refusal?.message ?? 'The indexers could not be asked.');
+          setProblem(
+            refusal?.message ??
+              say('screens.adminArea.askForMediaDialog.theIndexersCouldNotBeAsked'),
+          );
 
           return;
         }
@@ -211,12 +231,12 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
     void askForMedia({ ...asked, ...(release === null ? {} : { release }) })
       .then(({ value, refusal }) => {
         if (value === null) {
-          setProblem(refusal?.message ?? 'That could not be requested.');
+          setProblem(refusal?.message ?? say('common.thatCouldNotBeRequested'));
 
           return;
         }
 
-        notify.worked('Asked for it.');
+        notify.worked(say('screens.adminArea.askForMediaDialog.askedForIt'));
         onAsked(value);
         setChosen(null);
         setMatches(null);
@@ -232,11 +252,16 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
   };
 
   return (
-    <DialogCompanion label="Request media" isOpen={isOpen} onClose={onClose} size="stage">
+    <DialogCompanion
+      label={say('common.requestMedia')}
+      isOpen={isOpen}
+      onClose={onClose}
+      size="stage"
+    >
       <DialogTitle
         size="compact"
-        title="Request media"
-        detail="Find a film, a series, an artist or an album in the catalogue. Once it is approved, it is searched for, downloaded and filed into its library."
+        title={say('common.requestMedia')}
+        detail={say('screens.adminArea.askForMediaDialog.findAFilmASeriesAn')}
       />
 
       <DialogContent
@@ -250,16 +275,16 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
             found={found.outcome}
             foundAt={found.at}
             pickingId={pickingId}
-            emptyMessage="Nothing the indexers have is for this. Go back and fetch the best by itself, to wait for one."
+            emptyMessage={say('screens.adminArea.askForMediaDialog.nothingTheIndexersHaveIsFor')}
             onPick={(release) => {
               ask(release);
             }}
           />
         ) : chosen === null ? (
           <>
-            <FormField label="What">
+            <FormField label={say('screens.adminArea.askForMediaDialog.what')}>
               <SegmentedRow
-                label="What"
+                label={say('screens.adminArea.askForMediaDialog.what')}
                 size="sm"
                 items={KINDS}
                 value={kind}
@@ -278,7 +303,10 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
 
             <div className="flex flex-wrap items-end gap-3">
               <TextField
-                label={`Search for ${KINDS.find((one) => one.id === kind)?.one ?? 'it'}`}
+                label={
+                  KINDS.find((one) => one.id === kind)?.searchFor ??
+                  say('screens.adminArea.askForMediaDialog.searchForIt')
+                }
                 value={query}
                 onValueChange={setQuery}
                 className="min-w-0 flex-1"
@@ -291,16 +319,16 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                 onClick={look}
               >
                 <Icon of={SearchIcon} size={16} />
-                Search
+                {say('common.search')}
               </Button>
             </div>
 
-            {isSearching ? <Spinner label="Asking the catalogue" size="sm" /> : null}
+            {isSearching ? <Spinner label={say('common.askingTheCatalogue')} size="sm" /> : null}
 
             {isSearching ? null : isMusic ? (
               musicMatches === null ? null : musicMatches.length === 0 ? (
                 <p className="font-body text-sm text-text-muted">
-                  MusicBrainz knows nothing under that name.
+                  {say('screens.adminArea.askForMediaDialog.musicBrainzKnowsNothingUnderThatName')}
                 </p>
               ) : (
                 <MusicMatchList
@@ -312,7 +340,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
               )
             ) : matches === null ? null : matches.length === 0 ? (
               <p className="font-body text-sm text-text-muted">
-                Nothing came back under that name.
+                {say('common.nothingCameBackUnderThatName')}
               </p>
             ) : (
               <CatalogueMatchList
@@ -332,7 +360,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                   {chosen.year === null ? '' : ` (${chosen.year.toString()})`}
                 </span>
                 <span className="line-clamp-3 font-body text-xs text-text-muted">
-                  {chosen.overview ?? (isMusic ? '' : 'No synopsis.')}
+                  {chosen.overview ?? (isMusic ? '' : say('common.noSynopsis'))}
                 </span>
               </span>
 
@@ -345,21 +373,21 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                   setFound(null);
                 }}
               >
-                Choose another
+                {say('common.chooseAnother')}
               </Button>
             </div>
 
             <FormField
-              label="Quality"
-              description="The profile its releases are judged by. Profiles are kept on the Profiles page."
+              label={say('common.quality')}
+              description={say('common.theProfileItsReleasesAreJudged')}
             >
               <OptionMenu
-                label="Quality"
+                label={say('common.quality')}
                 triggerShape="field"
                 matchTriggerWidth
                 groups={[
                   {
-                    name: 'Quality',
+                    name: say('common.quality'),
                     selectedId: profileId ?? THE_LIBRARYS,
                     onSelect: (next) => {
                       setProfileId(next === THE_LIBRARYS ? null : next);
@@ -370,7 +398,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
                 trigger={
                   <>
                     <span className="truncate">
-                      {quality?.label ?? 'The library’s own profile'}
+                      {quality?.label ?? say('common.theLibrarysOwnProfile')}
                     </span>
                     <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
                   </>
@@ -387,15 +415,17 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
             )}
 
             <FormField
-              label="Release"
+              label={say('common.release')}
               description={
                 isPickedByHand
-                  ? `You pick from what the indexers have before anything is requested.${LATER_PICKS[kind]}`
-                  : 'The best release by its quality is fetched as soon as one turns up.'
+                  ? say('screens.adminArea.askForMediaDialog.youPickFromWhatTheIndexers', {
+                      LATER_PICKS: LATER_PICKS[kind],
+                    })
+                  : say('screens.adminArea.askForMediaDialog.theBestReleaseByItsQuality')
               }
             >
               <SegmentedRow
-                label="Release"
+                label={say('common.release')}
                 size="sm"
                 items={PICKING}
                 value={isPickedByHand ? 'hand' : 'best'}
@@ -416,13 +446,13 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
             ? undefined
             : isPickedByHand
               ? {
-                  label: 'Find releases',
+                  label: say('screens.adminArea.askForMediaDialog.findReleases'),
                   isDisabled: !isReady,
                   isLoading: isFinding,
                   onChoose: findReleases,
                 }
               : {
-                  label: 'Request it',
+                  label: say('screens.adminArea.askForMediaDialog.requestIt'),
                   isDisabled: !isReady,
                   isLoading: isAsking,
                   onChoose: () => {
@@ -438,7 +468,7 @@ const AskForMediaDialog = ({ isOpen, onClose, onAsked }: AskForMediaDialogProps)
               setFound(null);
             }}
           >
-            Back
+            {say('common.back')}
           </Button>
         )}
       </DialogFooter>

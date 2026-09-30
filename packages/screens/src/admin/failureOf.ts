@@ -1,4 +1,6 @@
-const COULD_NOT = 'That could not be done.';
+import { say } from '@ValenceI18n/say';
+
+const COULD_NOT = say('error.common.thatCouldNotBeDone');
 
 /**
  * Reads the answer of an action that says only whether it worked.

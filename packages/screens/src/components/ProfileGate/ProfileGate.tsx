@@ -44,6 +44,7 @@ import { authenticateWithPasskey, signInWithEmail } from '@ValenceClient/session
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { PasskeyFirst } from './components/PasskeyFirst/PasskeyFirst';
 import type { ProfileGateProps } from './ProfileGate.types';
+import { say } from '@ValenceI18n/say';
 
 const OURS = 'valence';
 
@@ -107,7 +108,7 @@ Portrait.displayName = 'Portrait';
  */
 const ProfileGate = ({
   onSignedIn,
-  name = 'Valence',
+  name = say('common.valence'),
   isTelevision = false,
   leadsWithPasskey = false,
   startsAs = null,
@@ -385,7 +386,7 @@ const ProfileGate = ({
         <SegmentedRow
           size="sm"
           tone="accent"
-          label="Theme"
+          label={say('common.theme')}
           value={theme}
           items={THEME_CHOICES}
           onSelect={(picked) => {
@@ -428,7 +429,7 @@ const ProfileGate = ({
             transition={{ delay: 0.1, duration: 0.3 }}
             className="text-[clamp(1.75rem,5vw,3rem)] font-semibold tracking-[-0.04em] text-text"
           >
-            Sign in
+            {say('screens.profileGate.signIn')}
           </motion.h1>
 
           {needsCode ? (
@@ -453,7 +454,7 @@ const ProfileGate = ({
               }}
             >
               <TextField
-                label="Email"
+                label={say('common.email')}
                 type="email"
                 size="lg"
 
@@ -463,7 +464,7 @@ const ProfileGate = ({
               />
 
               <TextField
-                label="Password"
+                label={say('common.password')}
                 type="password"
                 size="lg"
 
@@ -480,7 +481,7 @@ const ProfileGate = ({
                 isLoading={isSubmitting}
                 disabled={email === '' || password === ''}
               >
-                Login
+                {say('common.login')}
                 <Icon of={ChevronRightIcon} size={18} />
               </Button>
 
@@ -494,14 +495,14 @@ const ProfileGate = ({
                   }}
                 >
                   <Icon of={KeyIcon} size={16} />
-                  Use a passkey instead
+                  {say('common.useAPasskeyInstead')}
                 </Button>
               )}
             </motion.form>
           )}
         </div>
       ) : everyone === null ? (
-        <Spinner label="Reading who is here" size="lg" />
+        <Spinner label={say('screens.profileGate.readingWhoIsHere')} size="lg" />
       ) : (
         <div className="flex w-full flex-col items-center">
           {chosen === null ? (
@@ -517,7 +518,7 @@ const ProfileGate = ({
                 transition={revealTransition(prefersReducedMotion, 'heavy')}
                 className="text-[clamp(1.75rem,5vw,3rem)] font-semibold tracking-[-0.04em] text-text"
               >
-                Who is watching?
+                {say('common.whoIsWatching')}
               </motion.h1>
 
               <motion.div
@@ -529,7 +530,7 @@ const ProfileGate = ({
                   <Button
                     isIconOnly
                     variant="ghost"
-                    label="Previous"
+                    label={say('common.previous')}
                     disabled={page === 0}
                     onClick={() => {
                       setIsReturning(false);
@@ -590,7 +591,7 @@ const ProfileGate = ({
                   <Button
                     isIconOnly
                     variant="ghost"
-                    label="Next"
+                    label={say('common.next')}
                     disabled={page >= pages - 1}
                     onClick={() => {
                       setIsReturning(false);
@@ -609,7 +610,7 @@ const ProfileGate = ({
                 <PageDots
                   count={pages}
                   selectedIndex={page}
-                  label="Pages of people"
+                  label={say('screens.profileGate.pagesOfPeople')}
                   onSelect={(at) => {
                     setIsReturning(false);
                     setPage(at);
@@ -623,7 +624,7 @@ const ProfileGate = ({
                   transition={revealTransition(prefersReducedMotion)}
                   className="max-w-sm text-center text-sm text-text-muted"
                 >
-                  Nobody has an account on this server yet.
+                  {say('common.nobodyHasAnAccountOnThis')}
                 </motion.p>
               )}
             </motion.div>
@@ -664,7 +665,7 @@ const ProfileGate = ({
                   }}
                 >
                   <TextField
-                    label="Password"
+                    label={say('common.password')}
                     type="password"
                     size="lg"
 
@@ -681,7 +682,7 @@ const ProfileGate = ({
                     isLoading={isSubmitting}
                     disabled={password === ''}
                   >
-                    Login
+                    {say('common.login')}
                     <Icon of={ChevronRightIcon} size={18} />
                   </Button>
 
@@ -695,7 +696,7 @@ const ProfileGate = ({
                       }}
                     >
                       <Icon of={KeyIcon} size={16} />
-                      Use a passkey instead
+                      {say('common.useAPasskeyInstead')}
                     </Button>
                   )}
                 </motion.form>
@@ -709,7 +710,7 @@ const ProfileGate = ({
                 <Button
                   isIconOnly
                   variant="ghost"
-                  label="Somebody else"
+                  label={say('common.somebodyElse')}
                   onClick={() => {
                     setIsReturning(true);
                     setChosen(null);
@@ -742,7 +743,7 @@ const ProfileGate = ({
               }}
             >
               <Icon of={SmartphoneIcon} size={16} />
-              Sign in with your phone
+              {say('common.signInWithYourPhone')}
             </Button>
           )}
 
@@ -754,7 +755,7 @@ const ProfileGate = ({
                 void askForADifferentServer();
               }}
             >
-              Use a different server
+              {say('common.useADifferentServer')}
             </Button>
           )}
         </motion.div>

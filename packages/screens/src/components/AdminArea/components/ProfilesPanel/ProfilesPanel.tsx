@@ -23,14 +23,19 @@ import { describeAskers } from './describeAskers';
 import { describeProfile } from './describeProfile';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { ProfileKind, QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
+import { say } from '@ValenceI18n/say';
 
 const KINDS: readonly { id: ProfileKind; label: string; empty: string }[] = [
   {
     id: 'video',
-    label: 'Films and series',
-    empty: 'No profiles for films or series yet.',
+    label: say('common.filmsAndSeries'),
+    empty: say('screens.adminArea.profilesPanel.noProfilesForFilmsOrSeries'),
   },
-  { id: 'music', label: 'Music', empty: 'No profiles for music yet.' },
+  {
+    id: 'music',
+    label: say('common.music'),
+    empty: say('screens.adminArea.profilesPanel.noProfilesForMusicYet'),
+  },
 ];
 
 /**
@@ -70,7 +75,7 @@ const ProfilesPanel = () => {
     () => [
       {
         id: 'name',
-        header: 'Profile',
+        header: say('common.profile'),
         accessorFn: (profile) => profile.name,
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col gap-0.5">
@@ -84,7 +89,7 @@ const ProfilesPanel = () => {
       },
       {
         id: 'upgrades',
-        header: 'Upgrades',
+        header: say('common.upgrades'),
         accessorFn: (profile) => describeProfile(profile).upgrades,
         cell: ({ row }) => (
           <span className="text-xs text-text-muted">{describeProfile(row.original).upgrades}</span>
@@ -92,7 +97,7 @@ const ProfilesPanel = () => {
       },
       {
         id: 'askers',
-        header: 'Who can use it',
+        header: say('common.whoCanUseIt'),
         accessorFn: (profile) => describeAskers(profile),
         cell: ({ row }) => (
           <span className="text-xs text-text-muted">{describeAskers(row.original)}</span>
@@ -100,14 +105,14 @@ const ProfilesPanel = () => {
       },
       {
         id: 'libraries',
-        header: 'Used for',
+        header: say('common.usedFor'),
         accessorFn: (profile) => profile.libraryIds.length,
         cell: ({ row }) => (
           <span className="text-xs text-text-muted">
             {row.original.libraryIds.length === 0
-              ? 'Every library'
+              ? say('common.everyLibrary2')
               : row.original.libraryIds
-                  .map((id) => named.get(id) ?? 'A library that has gone')
+                  .map((id) => named.get(id) ?? say('common.aLibraryThatHasGone'))
                   .join(', ')}
           </span>
         ),
@@ -119,14 +124,14 @@ const ProfilesPanel = () => {
         cell: ({ row }) => (
           <span className="flex justify-end">
             <ActionMenu
-              label={`Actions for ${row.original.name}`}
+              label={say('common.actionsForName', { name: row.original.name })}
               trigger={<Icon of={MoreHorizontalIcon} size={16} />}
               groups={[
                 {
                   items: [
                     {
                       id: 'change',
-                      label: 'Change',
+                      label: say('common.change'),
                       icon: <Icon of={PenFilledIcon} size={15} />,
                       onChoose: () => {
                         setEditing(row.original);
@@ -138,7 +143,7 @@ const ProfilesPanel = () => {
                   items: [
                     {
                       id: 'remove',
-                      label: 'Remove',
+                      label: say('common.remove'),
                       icon: <Icon of={BinFilledIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
@@ -166,7 +171,7 @@ const ProfilesPanel = () => {
       }}
     >
       <PanelCard
-        title="Profiles"
+        title={say('common.profiles')}
         isFlush
         actions={
           <PanelCardAction
@@ -175,12 +180,12 @@ const ProfilesPanel = () => {
               setIsAdding(true);
             }}
           >
-            Add media profile
+            {say('common.addMediaProfile')}
           </PanelCardAction>
         }
         below={
           <TabRow
-            label="Which profiles to show"
+            label={say('screens.adminArea.profilesPanel.whichProfilesToShow')}
             tone="underlined"
             size="sm"
             value={shown}
@@ -201,9 +206,13 @@ const ProfilesPanel = () => {
         />
 
         <ConfirmDialog
-          title={`Remove ${removing?.name ?? 'this profile'}?`}
-          detail="Searches can no longer be judged against it, and the libraries it was for will have none."
-          confirmLabel="Remove"
+          title={
+            removing === null
+              ? say('screens.adminArea.profilesPanel.removeThisProfile')
+              : say('common.removeName', { name: removing.name })
+          }
+          detail={say('screens.adminArea.profilesPanel.searchesCanNoLongerBeJudged')}
+          confirmLabel={say('common.remove')}
           isDestructive
           isOpen={removing !== null}
           onClose={() => {
@@ -217,7 +226,10 @@ const ProfilesPanel = () => {
             if (gone !== null) {
               void removeProfile(gone.id)
                 .then((refusal) => {
-                  tellOutcome(`Removed ${gone.name}.`, failureOfRefusal(refusal));
+                  tellOutcome(
+                    say('common.removedName', { name: gone.name }),
+                    failureOfRefusal(refusal),
+                  );
                   setProblem(refusal?.message ?? null);
                 })
                 .then(reread);
@@ -233,14 +245,18 @@ const ProfilesPanel = () => {
 
         {profiles.isError ? (
           <CouldNotRead
-            what="The profiles"
+            said={say('screens.adminArea.profilesPanel.theProfilesCouldNotBeRead')}
             isTryingAgain={profiles.isFetching}
             onTryAgain={() => {
               void profiles.refetch();
             }}
           />
         ) : profiles.isPending ? (
-          <Spinner isCentered label="Reading the profiles" size="sm" />
+          <Spinner
+            isCentered
+            label={say('screens.adminArea.profilesPanel.readingTheProfiles')}
+            size="sm"
+          />
         ) : (
           KINDS.map((kind) => (
             <TabPanel key={kind.id} value={kind.id}>

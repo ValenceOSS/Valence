@@ -1,5 +1,6 @@
 import { Link } from '@ValenceUI/Link';
 import type { HowToFixProps } from './HowToFix.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * A link to the section of the documentation that explains a problem and how to put it right, or
@@ -10,7 +11,7 @@ import type { HowToFixProps } from './HowToFix.types';
 const HowToFix = ({ href }: HowToFixProps) =>
   href === null || href === undefined ? null : (
     <Link href={href} className="text-xs">
-      How to fix this
+      {say('common.howToFixThis')}
     </Link>
   );
 

@@ -18,6 +18,7 @@ import { asAClock } from '@ValenceMobile/components/Watching/asAClock';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
 import { AirPlayButton } from '@ValenceMobile/components/AirPlayButton/AirPlayButton';
 import type { TheControlsProps } from './TheControls.types';
+import { say } from '@ValenceI18n/say';
 
 const OVER_THE_PICTURE = '#ffffff';
 
@@ -168,7 +169,11 @@ const TheControls = ({
           },
         ]}
       >
-        <Button tone="bare" label="Stop watching" onPress={onClose}>
+        <Button
+          tone="bare"
+          label={say('phone.watching.theControls.stopWatching')}
+          onPress={onClose}
+        >
           <Icon of={X} size={26} colour={OVER_THE_PICTURE} />
         </Button>
 
@@ -181,14 +186,18 @@ const TheControls = ({
         </View>
 
         {onEpisodes === undefined ? null : (
-          <Button tone="bare" label="Episodes" onPress={onEpisodes}>
+          <Button tone="bare" label={say('common.episodes')} onPress={onEpisodes}>
             <Icon of={ListVideo} size={26} colour={OVER_THE_PICTURE} />
           </Button>
         )}
 
         <AirPlayButton isOverPicture />
 
-        <Button tone="bare" label="Subtitles, audio and quality" onPress={onSettings}>
+        <Button
+          tone="bare"
+          label={say('phone.watching.theControls.subtitlesAudioAndQuality')}
+          onPress={onSettings}
+        >
           <Icon of={Settings} size={26} colour={OVER_THE_PICTURE} />
         </Button>
       </View>
@@ -196,7 +205,7 @@ const TheControls = ({
       <View style={styles.middle} pointerEvents="box-none">
         <Button
           tone="bare"
-          label={`Back ${A_STEP.toString()} seconds`}
+          label={say('phone.watching.theControls.backASTEPSeconds', { A_STEP: A_STEP.toString() })}
           onPress={() => {
             onSkip(-A_STEP);
           }}
@@ -207,7 +216,11 @@ const TheControls = ({
           </View>
         </Button>
 
-        <Button tone="bare" label={isPlaying ? 'Pause' : 'Play'} onPress={onPlayPause}>
+        <Button
+          tone="bare"
+          label={isPlaying ? say('common.pause') : say('common.play')}
+          onPress={onPlayPause}
+        >
           <View style={styles.reach}>
             <Icon of={isPlaying ? Pause : Play} size={62} colour={OVER_THE_PICTURE} />
           </View>
@@ -215,7 +228,9 @@ const TheControls = ({
 
         <Button
           tone="bare"
-          label={`Forward ${A_STEP.toString()} seconds`}
+          label={say('phone.watching.theControls.forwardASTEPSeconds', {
+            A_STEP: A_STEP.toString(),
+          })}
           onPress={() => {
             onSkip(A_STEP);
           }}
@@ -255,7 +270,7 @@ const TheControls = ({
         )}
 
         <Slider
-          label={`Seek through ${title}`}
+          label={say('common.seekThroughTitle', { title })}
           value={at}
           furthest={runsFor}
           buffered={buffered}

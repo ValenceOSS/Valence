@@ -248,9 +248,7 @@ describe('OverviewPanel', () => {
     it('mentions a queue that has not started yet', () => {
       renderPanel(<OverviewPanel {...props} monitor={monitor([], 3)} />);
 
-      expect(screen.getByText('3 waiting').parentElement).toHaveTextContent(
-        'Nothing running, 3 waiting.',
-      );
+      expect(screen.getByText(/Nothing running,/)).toHaveTextContent('Nothing running, 3 waiting.');
     });
 
     it('names what is running', () => {
@@ -275,7 +273,7 @@ describe('OverviewPanel', () => {
 
       const region = card('Libraries');
 
-      expect(within(region).getByText('42 items')).toBeInTheDocument();
+      expect(within(region).getByText(/items$/)).toHaveTextContent('42 items');
       expect(within(region).getByText(/Scanned just now/)).toBeInTheDocument();
     });
 

@@ -10,6 +10,7 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { TextField } from '@ValenceUI/TextField';
 import { notify } from '@ValenceUI/notify';
 import type { CorrectionPickerProps } from './CorrectionPicker.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Tells an album or a book what it really is: searches a catalogue under its name, which can be
@@ -75,7 +76,7 @@ const CorrectionPicker = <Match,>({
       return;
     }
 
-    notify.worked('Corrected the match.');
+    notify.worked(say('common.correctedTheMatch'));
     onChanged();
     onClose();
   };
@@ -93,14 +94,18 @@ const CorrectionPicker = <Match,>({
       return;
     }
 
-    notify.worked('It will say what its files say from the next scan.');
+    notify.worked(say('screens.adminArea.correctionPicker.itWillSayWhatItsFiles'));
     onChanged();
     onClose();
   };
 
   return (
-    <DialogCompanion label={title ?? 'This item'} isOpen={title !== null} onClose={onClose}>
-      <DialogTitle size="compact" title={title ?? 'This item'} detail={detail} />
+    <DialogCompanion
+      label={title ?? say('common.thisItem')}
+      isOpen={title !== null}
+      onClose={onClose}
+    >
+      <DialogTitle size="compact" title={title ?? say('common.thisItem')} detail={detail} />
 
       <DialogContent className="flex flex-col gap-5">
         <div className="flex flex-wrap items-end gap-3">
@@ -120,14 +125,16 @@ const CorrectionPicker = <Match,>({
             }}
           >
             <Icon of={SearchIcon} size={16} />
-            Search
+            {say('common.search')}
           </Button>
         </div>
 
-        {isSearching ? <Spinner label="Asking the catalogue" size="sm" /> : null}
+        {isSearching ? <Spinner label={say('common.askingTheCatalogue')} size="sm" /> : null}
 
         {matches === null || isSearching ? null : matches.length === 0 ? (
-          <p className="font-body text-sm text-text-muted">Nothing came back under that name.</p>
+          <p className="font-body text-sm text-text-muted">
+            {say('common.nothingCameBackUnderThatName')}
+          </p>
         ) : (
           drawMatches(matches, saving, (match) => {
             void chosen(match);
@@ -144,7 +151,7 @@ const CorrectionPicker = <Match,>({
           }}
         >
           <Icon of={ArrowUTurnLeftIcon} size={16} />
-          Use what the files say
+          {say('screens.adminArea.correctionPicker.useWhatTheFilesSay')}
         </Button>
       </DialogFooter>
     </DialogCompanion>

@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+
 /**
  * What to call this television in the sessions list an operator reads.
  *
@@ -8,6 +10,6 @@
  * @returns The television as a person would describe it.
  */
 const describeThisTv = (deviceName: string | null): string =>
-  deviceName !== null && deviceName.trim() !== '' ? deviceName.trim() : 'Apple TV';
+  deviceName !== null && deviceName.trim() !== '' ? deviceName.trim() : say('common.appleTV');
 
 export { describeThisTv };

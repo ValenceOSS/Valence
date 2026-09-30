@@ -4,6 +4,7 @@ import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { defaultLogView } from '@ValenceClient/admin/defaultLogView';
 import { LOG_RANGES } from '@ValenceClient/admin/logRanges';
 import type { TimeRangeMenuProps } from './TimeRangeMenu.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The stretch of time the page is looking at, chosen from the same menu wherever it is asked for.
@@ -23,12 +24,12 @@ const TimeRangeMenu = ({ search, onSearchChange }: TimeRangeMenuProps) => {
 
   return (
     <OptionMenu
-      label="Time range"
+      label={say('screens.observabilityPage.timeRangeMenu.timeRange')}
       triggerShape="field"
       className="w-auto"
       groups={[
         {
-          name: 'Time range',
+          name: say('screens.observabilityPage.timeRangeMenu.timeRange'),
           selectedId: isZoomed ? '' : range,
           onSelect: (id) => {
             const found = LOG_RANGES.find((one) => one.id === id);
@@ -48,7 +49,9 @@ const TimeRangeMenu = ({ search, onSearchChange }: TimeRangeMenuProps) => {
         <>
           <Icon of={ClockIcon} size={15} className="shrink-0" />
           <span className="truncate">
-            {isZoomed ? 'Zoomed in' : (LOG_RANGES.find((one) => one.id === range)?.label ?? 'Time')}
+            {isZoomed
+              ? say('screens.observabilityPage.timeRangeMenu.zoomedIn')
+              : (LOG_RANGES.find((one) => one.id === range)?.label ?? say('common.time'))}
           </span>
           <Icon of={ChevronDownIcon} size={14} className="valence-chevron shrink-0" />
         </>

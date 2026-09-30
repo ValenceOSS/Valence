@@ -14,6 +14,7 @@ import { correctMatch, forgetCorrection } from '@ValenceClient/library/fetchLibr
 import { CatalogueMatchList } from '@ValenceScreens/components/AdminArea/components/CatalogueMatchList/CatalogueMatchList';
 import type { CatalogueMatch } from '@ValenceClient/admin/fetchAdmin';
 import type { MatchPickerProps } from './MatchPicker.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Corrects what the catalogue made of a file. Shows what it was matched to, offers a search of the
@@ -85,36 +86,40 @@ const MatchPicker = ({ media, onClose, onCorrected }: MatchPickerProps) => {
     setIsForgetting(false);
 
     if (outcome === null) {
-      notify.failed('That could not be put back.');
+      notify.failed(say('common.thatCouldNotBePutBack'));
 
       return;
     }
 
-    notify.worked('Corrected the match.');
+    notify.worked(say('common.correctedTheMatch'));
     onCorrected(outcome.jobId);
     onClose();
   };
 
   return (
     <DialogCompanion
-      label={media?.seriesTitle ?? media?.title ?? 'This item'}
+      label={media?.seriesTitle ?? media?.title ?? say('common.thisItem')}
       isOpen={media !== null}
       onClose={onClose}
     >
       <DialogTitle
         size="compact"
-        title={media?.seriesTitle ?? media?.title ?? 'This item'}
+        title={media?.seriesTitle ?? media?.title ?? say('common.thisItem')}
         detail={
           isEpisode
-            ? 'Choosing here corrects every episode of this series, and every scan after it.'
-            : 'Choosing here corrects this film, and every scan after it.'
+            ? say('screens.adminArea.matchPicker.choosingHereCorrectsEveryEpisodeOf')
+            : say('screens.adminArea.matchPicker.choosingHereCorrectsThisFilmAnd')
         }
       />
 
       <DialogContent className="flex flex-col gap-5">
         <div className="flex flex-wrap items-end gap-3">
           <TextField
-            label={`Search for a ${isEpisode ? 'series' : 'film'}`}
+            label={
+              isEpisode
+                ? say('screens.adminArea.matchPicker.searchForASeries')
+                : say('screens.adminArea.matchPicker.searchForAFilm')
+            }
             value={query}
             onValueChange={setQuery}
             className="min-w-0 flex-1"
@@ -129,14 +134,16 @@ const MatchPicker = ({ media, onClose, onCorrected }: MatchPickerProps) => {
             }}
           >
             <Icon of={SearchIcon} size={16} />
-            Search
+            {say('common.search')}
           </Button>
         </div>
 
-        {isSearching ? <Spinner label="Asking the catalogue" size="sm" /> : null}
+        {isSearching ? <Spinner label={say('common.askingTheCatalogue')} size="sm" /> : null}
 
         {matches === null || isSearching ? null : matches.length === 0 ? (
-          <p className="font-body text-sm text-text-muted">Nothing came back under that name.</p>
+          <p className="font-body text-sm text-text-muted">
+            {say('common.nothingCameBackUnderThatName')}
+          </p>
         ) : (
           <CatalogueMatchList
             matches={matches}
@@ -157,7 +164,7 @@ const MatchPicker = ({ media, onClose, onCorrected }: MatchPickerProps) => {
           }}
         >
           <Icon of={ArrowUTurnLeftIcon} size={16} />
-          Forget the correction
+          {say('screens.adminArea.matchPicker.forgetTheCorrection')}
         </Button>
       </DialogFooter>
     </DialogCompanion>

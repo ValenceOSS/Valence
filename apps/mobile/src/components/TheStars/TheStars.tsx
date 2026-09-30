@@ -11,6 +11,8 @@ import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { TheStarsProps } from './TheStars.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const OUT_OF = [1, 2, 3, 4, 5] as const;
 
@@ -39,7 +41,7 @@ const TheStars = ({ subject }: TheStarsProps) => {
   return (
     <View style={styles.whole}>
       <Words size="small" tone="muted">
-        Your rating
+        {say('common.yourRating')}
       </Words>
 
       <View style={styles.row}>
@@ -47,7 +49,11 @@ const TheStars = ({ subject }: TheStarsProps) => {
           <Button
             key={stars}
             tone="bare"
-            label={stars === 1 ? '1 star' : `${stars.toString()} stars`}
+            label={
+              stars === 1
+                ? say('phone.theStars.n1Star')
+                : say('phone.theStars.starsStars', { stars: stars.toString() })
+            }
             isChosen={given === stars}
             onPress={() => {
               rate(subject, given === stars ? null : stars);
@@ -66,7 +72,9 @@ const TheStars = ({ subject }: TheStarsProps) => {
 
       {average === null || count === 0 ? null : (
         <Words size="small" tone="muted">
-          {`Household ${average.toFixed(1)} from ${count.toString()} ${count === 1 ? 'rating' : 'ratings'}`}
+          {sayCount('phone.theStars.householdAverageFromCountRatings', count, {
+            average: average.toFixed(1),
+          })}
         </Words>
       )}
     </View>

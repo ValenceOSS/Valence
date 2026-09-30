@@ -3,6 +3,7 @@ import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
 import { TrackRow } from '@ValenceTv/components/TrackRow/TrackRow';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { QueuePanelProps } from './QueuePanel.types';
+import { say } from '@ValenceI18n/say';
 
 const WIDTH = 820;
 
@@ -18,10 +19,12 @@ const WIDTH = 820;
 const QueuePanel = ({ upcoming, picks, onJump }: QueuePanelProps) => (
   <TVFocusGuideView style={styles.panel} trapFocusLeft trapFocusRight trapFocusUp trapFocusDown>
     <FadeIn>
-      <Text style={styles.title}>Up next</Text>
+      <Text style={styles.title}>{say('common.upNext')}</Text>
 
       {upcoming.length === 0 ? (
-        <Text style={styles.empty}>Nothing plays after this song.</Text>
+        <Text style={styles.empty}>
+          {say('tv.nowPlaying.queuePanel.nothingPlaysAfterThisSong')}
+        </Text>
       ) : (
         <FlatList
           data={upcoming}

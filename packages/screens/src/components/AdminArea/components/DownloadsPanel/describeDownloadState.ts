@@ -4,6 +4,7 @@ import { docsFor } from '@ValenceCore/functions/docsFor';
 import type { QueuedDownload } from '@ValenceContracts/schemas/DownloadQueue';
 import type { StateBadge } from '@ValenceClient/status/StateBadge';
 import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says how a download is, as a badge and the line beneath it, with the client's own reason
@@ -23,45 +24,56 @@ const describeDownloadState = (download: QueuedDownload): StateBadge => {
       return download.seeds === 0
         ? {
             ...STATUS_LOOK.attention,
-            label: 'Fetching metadata',
-            detail: sayAgainIfAny(download.problem) ?? 'Nobody is sharing it yet.',
+            label: say('screens.downloadsPanel.describeDownloadState.fetchingMetadata'),
+            detail:
+              sayAgainIfAny(download.problem) ??
+              say('screens.downloadsPanel.describeDownloadState.nobodyIsSharingItYet'),
           }
         : {
             ...STATUS_LOOK.working,
-            label: 'Fetching metadata',
-            detail: sayAgainIfAny(download.problem) ?? 'Learning what files it holds.',
+            label: say('screens.downloadsPanel.describeDownloadState.fetchingMetadata'),
+            detail:
+              sayAgainIfAny(download.problem) ??
+              say('screens.downloadsPanel.describeDownloadState.learningWhatFilesItHolds'),
           };
     case 'downloading':
       return {
         ...STATUS_LOOK.working,
-        label: 'Downloading',
+        label: say('common.downloading'),
         detail: download.problem === null ? null : sayAgain(download.problem),
       };
     case 'stalled':
       return {
         ...STATUS_LOOK.attention,
-        label: 'Stalled',
+        label: say('common.stalled'),
         detail:
           sayAgainIfAny(download.problem) ??
-          (download.protocol === 'torrent' ? 'Nobody is sending it.' : 'Nothing is arriving.'),
+          (download.protocol === 'torrent'
+            ? say('screens.downloadsPanel.describeDownloadState.nobodyIsSendingIt')
+            : say('screens.downloadsPanel.describeDownloadState.nothingIsArriving')),
       };
     case 'paused':
       return {
-        label: 'Paused',
+        label: say('common.paused'),
         tone: 'quiet',
         detail: download.problem === null ? null : sayAgain(download.problem),
       };
     case 'processing':
       return {
         ...STATUS_LOOK.working,
-        label: 'Finishing',
-        detail: download.protocol === 'usenet' ? 'Checking and unpacking.' : 'Checking.',
+        label: say('screens.downloadsPanel.describeDownloadState.finishing'),
+        detail:
+          download.protocol === 'usenet'
+            ? say('screens.downloadsPanel.describeDownloadState.checkingAndUnpacking')
+            : say('screens.downloadsPanel.describeDownloadState.checking'),
       };
     case 'done':
       if (download.filedInto !== null) {
         return {
           ...STATUS_LOOK.done,
-          detail: `Filed into ${download.filedInto}.`,
+          detail: say('screens.downloadsPanel.describeDownloadState.filedIntoFiledInto', {
+            filedInto: download.filedInto,
+          }),
         };
       }
 
@@ -72,14 +84,14 @@ const describeDownloadState = (download: QueuedDownload): StateBadge => {
           }
         : {
             ...STATUS_LOOK.attention,
-            label: 'Not filed',
+            label: say('screens.downloadsPanel.describeDownloadState.notFiled'),
             detail: sayAgain(download.filingProblem),
             help: docsFor(download.filingProblemCode),
           };
     case 'failed':
       return {
         ...STATUS_LOOK.failed,
-        detail: sayAgainIfAny(download.problem) ?? 'It failed.',
+        detail: sayAgainIfAny(download.problem) ?? say('common.itFailed'),
         help: docsFor(download.problemCode),
       };
   }

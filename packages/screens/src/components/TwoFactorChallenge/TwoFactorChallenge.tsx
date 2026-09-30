@@ -3,6 +3,7 @@ import { Button } from '@ValenceUI/Button';
 import { TextField } from '@ValenceUI/TextField';
 import { verifyBackupCode, verifyTotp } from '@ValenceClient/session/auth';
 import type { ChallengeMode, TwoFactorChallengeProps } from './TwoFactorChallenge.types';
+import { say } from '@ValenceI18n/say';
 
 const TOTP_LENGTH = 6;
 
@@ -24,13 +25,19 @@ const TwoFactorChallenge = ({ onVerified }: TwoFactorChallengeProps) => {
     const trimmed = code.trim();
 
     if (trimmed.length === 0) {
-      setError(isTotp ? 'Enter the code from your authenticator app.' : 'Enter a backup code.');
+      setError(
+        isTotp ? say('common.enterTheCodeFromYourAuthenticator') : say('common.enterABackupCode'),
+      );
 
       return;
     }
 
     if (isTotp && !/^\d{6}$/.test(trimmed)) {
-      setError(`Authenticator codes are ${TOTP_LENGTH.toString()} digits.`);
+      setError(
+        say('screens.twoFactorChallenge.authenticatorCodesAreTOTPLENGTHDigits', {
+          TOTP_LENGTH: TOTP_LENGTH.toString(),
+        }),
+      );
 
       return;
     }
@@ -43,7 +50,7 @@ const TwoFactorChallenge = ({ onVerified }: TwoFactorChallengeProps) => {
 
       if (!accepted) {
         setError(
-          isTotp ? 'That code is not valid. Try the next one.' : 'That backup code is not valid.',
+          isTotp ? say('common.thatCodeIsNotValidTry') : say('common.thatBackupCodeIsNotValid'),
         );
 
         return;
@@ -51,7 +58,7 @@ const TwoFactorChallenge = ({ onVerified }: TwoFactorChallengeProps) => {
 
       onVerified();
     } catch {
-      setError('Could not reach the server. Check that it is still running.');
+      setError(say('common.couldNotReachTheServerCheck'));
     } finally {
       setIsSubmitting(false);
     }
@@ -68,12 +75,12 @@ const TwoFactorChallenge = ({ onVerified }: TwoFactorChallengeProps) => {
     >
       <p className="text-center text-sm text-text-muted">
         {isTotp
-          ? 'Enter the current code from your authenticator app.'
-          : 'Enter one of the backup codes you saved. Each can be used once.'}
+          ? say('common.enterTheCurrentCodeFromYour')
+          : say('common.enterOneOfTheBackupCodes')}
       </p>
 
       <TextField
-        label={isTotp ? 'Authenticator code' : 'Backup code'}
+        label={isTotp ? say('common.authenticatorCode') : say('common.backupCode')}
         value={code}
         onValueChange={setCode}
         autoComplete="one-time-code"
@@ -84,7 +91,7 @@ const TwoFactorChallenge = ({ onVerified }: TwoFactorChallengeProps) => {
       />
 
       <Button type="submit" variant="glossy" size="lg" isLoading={isSubmitting}>
-        Verify
+        {say('screens.twoFactorChallenge.verify')}
       </Button>
 
       <Button
@@ -97,7 +104,7 @@ const TwoFactorChallenge = ({ onVerified }: TwoFactorChallengeProps) => {
           setError(null);
         }}
       >
-        {isTotp ? 'Use a backup code instead' : 'Use my authenticator app instead'}
+        {isTotp ? say('common.useABackupCodeInstead') : say('common.useMyAuthenticatorAppInstead')}
       </Button>
     </form>
   );

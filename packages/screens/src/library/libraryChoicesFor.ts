@@ -1,17 +1,28 @@
 import type { NavBarChoices } from '@ValenceUI/NavBar.types';
 import type { Library, LibraryKind } from '@ValenceContracts/schemas/Library';
+import { say } from '@ValenceI18n/say';
 
 const EVERY = 'all';
 
 const PLACES = [
-  { place: 'films', kind: 'movies', everyLabel: 'All film libraries', label: 'Film library' },
+  {
+    place: 'films',
+    kind: 'movies',
+    everyLabel: say('screens.library.libraryChoicesFor.allFilmLibraries'),
+    label: say('screens.library.libraryChoicesFor.filmLibrary'),
+  },
   {
     place: 'shows',
     kind: 'shows',
-    everyLabel: 'All programme libraries',
-    label: 'Programme library',
+    everyLabel: say('screens.library.libraryChoicesFor.allProgrammeLibraries'),
+    label: say('screens.library.libraryChoicesFor.programmeLibrary'),
   },
-  { place: 'read', kind: 'books', everyLabel: 'All book libraries', label: 'Book library' },
+  {
+    place: 'read',
+    kind: 'books',
+    everyLabel: say('screens.library.libraryChoicesFor.allBookLibraries'),
+    label: say('screens.library.libraryChoicesFor.bookLibrary'),
+  },
 ] as const satisfies readonly {
   place: 'films' | 'shows' | 'read';
   kind: LibraryKind;

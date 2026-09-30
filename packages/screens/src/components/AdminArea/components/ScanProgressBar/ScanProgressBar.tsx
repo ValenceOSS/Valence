@@ -1,13 +1,14 @@
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { cn } from '@ValenceUI/cn';
 import type { ScanProgressBarProps } from './ScanProgressBar.types';
+import { say } from '@ValenceI18n/say';
 
 const PHASE_LABELS: Record<string, string> = {
-  probing: 'Probing',
-  previews: 'Generating previews',
-  trickplay: 'Generating scrub previews',
-  segments: 'Finding intros',
-  clearing: 'Clearing',
+  probing: say('screens.adminArea.scanProgressBar.probing'),
+  previews: say('screens.adminArea.scanProgressBar.generatingPreviews'),
+  trickplay: say('screens.adminArea.scanProgressBar.generatingScrubPreviews'),
+  segments: say('screens.adminArea.scanProgressBar.findingIntros'),
+  clearing: say('screens.adminArea.scanProgressBar.clearing'),
 };
 
 /**
@@ -50,7 +51,7 @@ const ScanProgressBar = ({
       className="flex shrink-0 items-center gap-2"
     >
       {isStopping ? (
-        <span className="shrink-0 text-xs text-warning">Stopping</span>
+        <span className="shrink-0 text-xs text-warning">{say('common.stopping2')}</span>
       ) : phaseLabel === null ? null : (
         <span className="shrink-0 text-xs text-text-muted">{phaseLabel}</span>
       )}

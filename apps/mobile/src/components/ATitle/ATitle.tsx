@@ -50,6 +50,7 @@ import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
 import type { ATitleProps } from './ATitle.types';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
+import { say } from '@ValenceI18n/say';
 
 const PLAY_HEIGHT = 46;
 
@@ -121,7 +122,7 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
   if (title === undefined || title === null) {
     return (
       <Screen centres onBack={onBack}>
-        <Words tone="danger">That title could not be read.</Words>
+        <Words tone="danger">{say('common.thatTitleCouldNotBeRead')}</Words>
       </Screen>
     );
   }
@@ -196,12 +197,12 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
         <Button
           tone="ghost"
           icon={ChevronsUpDown}
-          label="Which version to play"
+          label={say('common.whichVersionToPlay')}
           onPress={() => {
             askWhichVersion(offered, setVersion);
           }}
         >
-          {offered.find((one) => one.id === playing)?.label ?? 'Original'}
+          {offered.find((one) => one.id === playing)?.label ?? say('common.original')}
         </Button>
       )}
 
@@ -219,14 +220,16 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
               onWatch(playing, carryOnAt ?? 0);
             }}
           >
-            {carryOnAt === null ? 'Play' : `Resume from ${howLongItRuns(carryOnAt)}`}
+            {carryOnAt === null
+              ? say('common.play')
+              : say('phone.aTitle.resumeFromCarryOnAt', { carryOnAt: howLongItRuns(carryOnAt) })}
           </Button>
         </View>
 
         {carryOnAt === null ? null : (
           <Button
             tone="bare"
-            label="Start again"
+            label={say('common.startAgain')}
             onPress={() => {
               onWatch(playing, 0);
             }}
@@ -252,19 +255,19 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
           tone="ghost"
           isWide
           icon={ListVideo}
-          label={`All episodes of ${programme.title}`}
+          label={say('phone.aTitle.allEpisodesOfTitle', { title: programme.title })}
           onPress={() => {
             onLookAtShow(programme.libraryId, programme.id);
           }}
         >
-          All episodes
+          {say('phone.aTitle.allEpisodes')}
         </Button>
       )}
 
       <View style={styles.actions}>
         <Button
           tone="bare"
-          label="Favourite"
+          label={say('phone.aTitle.favourite')}
           isChosen={isKept}
           onPress={() => {
             favourites.toggle(mediaId);
@@ -275,14 +278,14 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
               of={isKept ? HeartFilled : Heart}
               colour={isKept ? colours.danger : colours.text}
             />
-            <Words size="small">Favourite</Words>
+            <Words size="small">{say('phone.aTitle.favourite')}</Words>
           </View>
         </Button>
 
         {trailer === null && trailerKey === null ? null : (
           <Button
             tone="bare"
-            label="Trailer"
+            label={say('common.trailer')}
             onPress={() => {
               if (trailer !== null) {
                 onWatch(trailer.id, 0);
@@ -297,14 +300,20 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
           >
             <View style={styles.action}>
               <Icon of={Film} colour={colours.text} />
-              <Words size="small">Trailer</Words>
+              <Words size="small">{say('common.trailer')}</Words>
             </View>
           </Button>
         )}
 
         <Button
           tone="bare"
-          label={held === null ? 'Download' : held.state === 'here' ? 'Downloaded' : 'Downloading'}
+          label={
+            held === null
+              ? say('common.download')
+              : held.state === 'here'
+                ? say('common.downloaded')
+                : say('common.downloading')
+          }
           isDisabled={held !== null || preparing !== null}
           onPress={() => {
             void askToKeepOnThisPhone(mediaId, title.title).then(async (isAsked) => {
@@ -322,16 +331,19 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
             <Words size="small">
               {held === null
                 ? preparing === null
-                  ? 'Download'
-                  : `Preparing ${Math.round(preparing.progress * 100).toString()}%${
-                      preparing.secondsLeft === null
-                        ? ''
-                        : `, ${describeTimeToGo(preparing.secondsLeft)}`
-                    }`
+                  ? say('common.download')
+                  : preparing.secondsLeft === null
+                    ? say('phone.aTitle.preparingPercent', {
+                        percent: Math.round(preparing.progress * 100).toString(),
+                      })
+                    : say('phone.aTitle.preparingPercentTimeLeft', {
+                        percent: Math.round(preparing.progress * 100).toString(),
+                        timeLeft: describeTimeToGo(preparing.secondsLeft),
+                      })
                 : held.state === 'here'
-                  ? 'Downloaded'
+                  ? say('common.downloaded')
                   : held.ofBytes === null || held.ofBytes === 0
-                    ? 'Downloading'
+                    ? say('common.downloading')
                     : `${Math.round((held.bytes / held.ofBytes) * 100).toString()}%`}
             </Words>
           </View>
@@ -339,7 +351,7 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
 
         <Button
           tone="bare"
-          label="Share"
+          label={say('common.share')}
           onPress={() => {
             setSharing({
               kind: 'item',
@@ -354,13 +366,13 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
         >
           <View style={styles.action}>
             <Icon of={Share} colour={colours.text} />
-            <Words size="small">Share</Words>
+            <Words size="small">{say('common.share')}</Words>
           </View>
         </Button>
 
         <Button
           tone="bare"
-          label="Hide"
+          label={say('common.hide')}
           onPress={() => {
             hiding.ask({
               id: title.id,
@@ -372,7 +384,7 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
         >
           <View style={styles.action}>
             <Icon of={EyeOff} colour={colours.text} />
-            <Words size="small">Hide</Words>
+            <Words size="small">{say('common.hide')}</Words>
           </View>
         </Button>
       </View>
@@ -404,7 +416,7 @@ const ATitle = ({ mediaId, onWatch, onLookAtPerson, onLookAtShow, onBack }: ATit
       <APluginPanels on="title" subjectId={mediaId} />
 
       {extras.length === 0 ? null : (
-        <AShelf title="Extras">
+        <AShelf title={say('common.extras')}>
           {extras.map((extra) => (
             <Button
               key={extra.id}

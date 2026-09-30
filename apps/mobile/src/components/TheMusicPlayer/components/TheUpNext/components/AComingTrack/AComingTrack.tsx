@@ -9,6 +9,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { AComingTrackProps } from './AComingTrack.types';
+import { say } from '@ValenceI18n/say';
 
 const ART = 44;
 
@@ -48,7 +49,7 @@ const OneComingTrack = ({ track, at, isPick, onPlay, onMenu }: AComingTrackProps
       <View style={styles.play}>
         <Button
           tone="bare"
-          label={`Play ${track.title} now`}
+          label={say('common.playTitleNow', { title: track.title })}
           onPress={() => {
             onPlay(at);
           }}
@@ -71,7 +72,7 @@ const OneComingTrack = ({ track, at, isPick, onPlay, onMenu }: AComingTrackProps
                 <View style={styles.picked}>
                   <Icon of={SparkleFilled} size={10} colour={colours.accent} />
                   <Words size="small" tone="accent" lines={1}>
-                    Smart shuffle
+                    {say('common.smartShuffle')}
                   </Words>
                   <Words size="small" tone="muted" lines={1}>
                     · {track.artists.map((artist) => artist.name).join(', ')}
@@ -89,7 +90,7 @@ const OneComingTrack = ({ track, at, isPick, onPlay, onMenu }: AComingTrackProps
 
       <Button
         tone="bare"
-        label={`More for ${track.title}`}
+        label={say('common.moreForTitle', { title: track.title })}
         onPress={() => {
           onMenu(at, track.title);
         }}

@@ -5,11 +5,12 @@ import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
 import { musicMenuFor } from '@ValenceScreens/music/musicMenuFor';
-import { nameOfOwner } from '@ValenceScreens/music/nameOfOwner';
 import { RevealItem } from '@ValenceUI/RevealItem';
 import { MusicShelf } from '@ValenceScreens/components/MusicShelf/MusicShelf';
 import type { PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
 import type { PlaylistShelfProps } from './PlaylistShelf.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * The line under a playlist's name: whose it is where it is somebody else's, and how much is in it.
@@ -19,8 +20,12 @@ import type { PlaylistShelfProps } from './PlaylistShelf.types';
  */
 const describePlaylist = (playlist: PlaylistSummary): string =>
   [
-    playlist.isMine ? null : `By ${nameOfOwner(playlist.owner)}`,
-    playlist.entryCount === 1 ? '1 thing' : `${playlist.entryCount.toString()} things`,
+    playlist.isMine
+      ? null
+      : playlist.owner === null
+        ? say('screens.playlistShelf.byARemovedProfile')
+        : say('screens.playlistShelf.byOwner', { owner: playlist.owner.name }),
+    sayCount('common.count.things', playlist.entryCount),
   ]
     .filter((part) => part !== null)
     .join(' · ');

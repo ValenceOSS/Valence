@@ -1,4 +1,5 @@
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says in a few words who asks with a profile: everybody with no say in it, anybody who may ask, or
@@ -9,7 +10,7 @@ import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
  */
 const describeAskers = (profile: QualityProfile): string => {
   if (profile.isDefault) {
-    return 'Everything';
+    return say('common.everything');
   }
 
   const counted = [
@@ -19,7 +20,7 @@ const describeAskers = (profile: QualityProfile): string => {
     .filter(({ many }) => many > 0)
     .map(({ many, one, more }) => `${many} ${many === 1 ? one : more}`);
 
-  return counted.length === 0 ? 'Anybody' : counted.join(' and ');
+  return counted.length === 0 ? say('common.anybody') : counted.join(' and ');
 };
 
 export { describeAskers };

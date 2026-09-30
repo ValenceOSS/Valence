@@ -3,6 +3,7 @@ import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { Icon } from '@ValenceTv/components/Icon/Icon';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { ServerCardProps } from './ServerCard.types';
+import { say } from '@ValenceI18n/say';
 
 const TILE = { width: 320, height: 300 };
 
@@ -58,7 +59,7 @@ const ServerCard = ({
               <View style={styles.detail}>
                 {isAvailable ? <View style={styles.dot} /> : null}
                 <Text numberOfLines={1} style={[styles.address, { color: quiet }]}>
-                  {address ?? 'Available'}
+                  {address ?? say('common.available')}
                 </Text>
               </View>
             )}

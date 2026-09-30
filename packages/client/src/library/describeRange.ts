@@ -1,5 +1,7 @@
+import { say } from '@ValenceI18n/say';
+
 const RANGES: Readonly<Record<string, string>> = {
-  DolbyVision: 'Dolby Vision',
+  DolbyVision: say('client.library.describeRange.dolbyVision'),
   HDR10Plus: 'HDR10+',
   HDR10: 'HDR10',
   HLG: 'HLG',

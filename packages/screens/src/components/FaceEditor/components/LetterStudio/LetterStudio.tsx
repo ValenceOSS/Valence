@@ -6,6 +6,7 @@ import { ColourChoice } from '@ValenceScreens/components/ColourChoice/ColourChoi
 import { inkFor } from '@ValenceClient/library/inkFor';
 import { LETTER_FONT_LOOKS } from '@ValenceScreens/library/LETTER_FONT_LOOKS';
 import type { LetterStudioProps } from './LetterStudio.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The plainest face: the first letter of the name, the font it is set in, and the colour behind it.
@@ -20,7 +21,9 @@ import type { LetterStudioProps } from './LetterStudio.types';
 const LetterStudio = ({ name, colour, font, onColour, onFont }: LetterStudioProps) => (
   <div className="flex flex-col gap-8">
     <section className="flex flex-col gap-3">
-      <h3 className="text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">Font</h3>
+      <h3 className="text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">
+        {say('common.font')}
+      </h3>
       <div className="grid grid-cols-4 gap-3">
         {LETTER_FONTS.map((option) => {
           const look = LETTER_FONT_LOOKS[option];
@@ -30,7 +33,7 @@ const LetterStudio = ({ name, colour, font, onColour, onFont }: LetterStudioProp
               key={option}
               variant="bare"
               size="none"
-              label={`Set it in ${look.name}`}
+              label={say('screens.faceEditor.letterStudio.setItInName', { name: look.name })}
               hasTooltip={false}
               isActive={option === font}
               onClick={() => {
@@ -65,8 +68,10 @@ const LetterStudio = ({ name, colour, font, onColour, onFont }: LetterStudioProp
     </section>
 
     <section className="flex flex-col gap-3">
-      <h3 className="text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">Colour</h3>
-      <ColourChoice label="Colour" value={colour} onChange={onColour} />
+      <h3 className="text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">
+        {say('common.colour')}
+      </h3>
+      <ColourChoice label={say('common.colour')} value={colour} onChange={onColour} />
     </section>
   </div>
 );

@@ -3,7 +3,7 @@ import type { PartyCommand, WatchParty } from '@ValenceContracts/schemas/WatchPa
 
 type ListeningParty = {
   party: WatchParty;
-  hostName: string;
+  hostName: string | null;
   mayChoose: boolean;
   mayPlayPause: boolean;
   maySeek: boolean;

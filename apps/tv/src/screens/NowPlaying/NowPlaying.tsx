@@ -46,11 +46,12 @@ import { QueuePanel } from './components/QueuePanel/QueuePanel';
 import { shuffleModeOf } from '@ValenceClient/music/shuffleModeOf';
 import type { HWEvent } from 'react-native';
 import type { NowPlayingProps } from './NowPlaying.types';
+import { say } from '@ValenceI18n/say';
 
 const SHUFFLE_LABELS = {
-  off: 'Shuffle',
-  on: 'Shuffle is on',
-  smart: 'Smart shuffle is on',
+  off: say('common.shuffle'),
+  on: say('tv.nowPlaying.shuffleIsOn'),
+  smart: say('tv.nowPlaying.smartShuffleIsOn'),
 } as const;
 
 const NO_PICKS: readonly string[] = [];
@@ -252,7 +253,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
         <Animated.View style={[styles.back, { opacity: fade }]}>
           <Button
             ref={setBackButton}
-            label="Back"
+            label={say('common.back')}
             icon={ChevronLeft}
             variant="overlay"
             size="md"
@@ -312,7 +313,11 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
                 </View>
                 <View style={styles.heart}>
                   <Button
-                    label={isLiked ? `Unlike ${shown.title}` : `Like ${shown.title}`}
+                    label={
+                      isLiked
+                        ? say('common.unlikeTitle', { title: shown.title })
+                        : say('common.likeTitle', { title: shown.title })
+                    }
                     icon={isLiked ? Heart : HeartOutline}
                     variant="ghost"
                     size="md"
@@ -336,7 +341,9 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
                 </View>
               )}
               {state.remote === null ? null : (
-                <Text style={styles.remote}>Playing on {state.remote.label}</Text>
+                <Text style={styles.remote}>
+                  {say('common.playingOnLabel', { label: state.remote.label })}
+                </Text>
               )}
             </Animated.View>
           </Animated.View>
@@ -366,7 +373,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
               />
               <Button
                 onFocus={awayFromTheEdges}
-                label="Back"
+                label={say('common.back')}
                 icon={SkipBack}
                 variant="ghost"
                 isIconOnly
@@ -375,7 +382,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
               />
               <Button
                 onFocus={awayFromTheEdges}
-                label={isPlaying ? 'Pause' : 'Play'}
+                label={isPlaying ? say('common.pause') : say('common.play')}
                 icon={isPlaying ? Pause : Play}
                 variant="ghost"
                 size="xl"
@@ -386,7 +393,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
               />
               <Button
                 onFocus={awayFromTheEdges}
-                label="Next"
+                label={say('common.next')}
                 icon={SkipForward}
                 variant="ghost"
                 isIconOnly
@@ -397,10 +404,10 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
                 onFocus={awayFromTheEdges}
                 label={
                   repeat === 'one'
-                    ? 'Repeating this song'
+                    ? say('tv.nowPlaying.repeatingThisSong')
                     : repeat === 'all'
-                      ? 'Repeating'
-                      : 'Repeat'
+                      ? say('tv.nowPlaying.repeating')
+                      : say('tv.nowPlaying.repeat')
                 }
                 icon={repeat === 'one' ? Repeat1 : Repeat}
                 variant={repeat === 'off' ? 'ghost' : 'soft'}
@@ -413,7 +420,11 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
             <View style={styles.extras}>
               <Button
                 onFocus={awayFromTheEdges}
-                label={isBesideWords ? 'Hide the words' : 'Show the words'}
+                label={
+                  isBesideWords
+                    ? say('tv.nowPlaying.hideTheWords')
+                    : say('tv.nowPlaying.showTheWords')
+                }
                 icon={Quote}
                 variant={isBesideWords ? 'soft' : 'ghost'}
                 size="md"
@@ -425,7 +436,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
               />
               <Button
                 onFocus={awayFromTheEdges}
-                label="Up next"
+                label={say('common.upNext')}
                 icon={ListMusic}
                 variant="ghost"
                 size="md"
@@ -436,7 +447,7 @@ const NowPlaying = ({ onEmpty, onBack }: NowPlayingProps) => {
               />
               <Button
                 onFocus={awayFromTheEdges}
-                label="Play on another device"
+                label={say('common.playOnAnotherDevice')}
                 icon={Cast}
                 variant={state.remote === null ? 'ghost' : 'soft'}
                 size="md"

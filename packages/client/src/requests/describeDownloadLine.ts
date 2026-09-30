@@ -1,6 +1,7 @@
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { partsOfTimeLeft } from '@ValenceCore/functions/partsOfTimeLeft';
 import type { RequestProgress } from '@ValenceContracts/schemas/CatalogueTitle';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says how a download is going in one line of words, for a screen that shows it as text rather
@@ -17,7 +18,10 @@ const describeDownloadLine = (progress: RequestProgress): string | null => {
     parts.push(
       progress.doneBytes === null
         ? formatBytes(progress.sizeBytes)
-        : `${formatBytes(progress.doneBytes)} of ${formatBytes(progress.sizeBytes)}`,
+        : say('common.doneOfTotal', {
+            done: formatBytes(progress.doneBytes),
+            total: formatBytes(progress.sizeBytes),
+          }),
     );
   }
 
@@ -30,8 +34,10 @@ const describeDownloadLine = (progress: RequestProgress): string | null => {
 
     parts.push(
       left === null
-        ? 'Under a minute left'
-        : `${left.map((part) => `${part.value.toString()} ${part.unit}`).join(' ')} left`,
+        ? say('client.requests.describeDownloadLine.underAMinuteLeft')
+        : say('common.durationLeft', {
+            timeLeft: left.map((part) => `${part.value.toString()} ${part.unit}`).join(' '),
+          }),
     );
   }
 

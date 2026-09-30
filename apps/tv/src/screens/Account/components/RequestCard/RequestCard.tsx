@@ -7,6 +7,7 @@ import { ProgressLine } from '@ValenceTv/components/ProgressLine/ProgressLine';
 import { partsOfDownload } from '@ValenceTv/requests/partsOfDownload';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { RequestCardProps } from './RequestCard.types';
+import { say } from '@ValenceI18n/say';
 
 const POSTER = { width: 180, height: 270 };
 
@@ -30,7 +31,7 @@ const RequestCard = ({ request, going, onPress, onFocus }: RequestCardProps) => 
   const where =
     going === null
       ? (standing?.label ?? '')
-      : `${standing?.label ?? 'Downloading to library'} · ${partsOfDownload(going).percent}`;
+      : `${standing?.label ?? say('common.downloadingToLibrary')} · ${partsOfDownload(going).percent}`;
 
   const poster = useMemo(
     () => (

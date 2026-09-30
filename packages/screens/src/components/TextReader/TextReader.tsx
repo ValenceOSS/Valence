@@ -39,6 +39,7 @@ import { turnOfPageSwipe } from '@ValenceCore/functions/turnOfPageSwipe';
 import { usePageDrag } from '@ValenceUI/usePageDrag';
 import type { TextPreferences } from '@ValenceClient/books/textPreferences';
 import type { TextReaderProps } from './TextReader.types';
+import { say } from '@ValenceI18n/say';
 
 type Landing =
   | { kind: 'within'; within: number }
@@ -61,18 +62,18 @@ const PAGE: Record<TextPreferences['page'], string> = {
 };
 
 const NAMES: Record<string, string> = {
-  small: 'Small',
-  medium: 'Medium',
-  large: 'Large',
-  larger: 'Larger',
-  tight: 'Tight',
-  normal: 'Normal',
-  loose: 'Loose',
-  narrow: 'Narrow',
-  wide: 'Wide',
-  light: 'Light',
-  sepia: 'Sepia',
-  dark: 'Dark',
+  small: say('common.small'),
+  medium: say('common.medium'),
+  large: say('common.large'),
+  larger: say('common.larger'),
+  tight: say('common.tight'),
+  normal: say('common.normal'),
+  loose: say('common.loose'),
+  narrow: say('common.narrow'),
+  wide: say('common.wide'),
+  light: say('common.light'),
+  sepia: say('common.sepia'),
+  dark: say('common.dark'),
 };
 
 /**
@@ -380,7 +381,7 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
   if (contents.isError || text.isError) {
     return (
       <CouldNotRead
-        what="That book"
+        said={say('common.thatBookCouldNotBeRead')}
         isTryingAgain={contents.isFetching || text.isFetching}
         onTryAgain={() => {
           void contents.refetch();
@@ -393,8 +394,12 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
   if (contents.data === null || text.data === null) {
     return (
       <div className="valence-below-the-bar z-50 flex flex-col items-center justify-center gap-2 bg-shade text-center">
-        <p className="text-lg font-medium text-on-scrim">This book could not be opened</p>
-        <p className="text-sm text-on-scrim/70">Its file may be damaged, or not an ebook at all.</p>
+        <p className="text-lg font-medium text-on-scrim">
+          {say('screens.textReader.thisBookCouldNotBeOpened')}
+        </p>
+        <p className="text-sm text-on-scrim/70">
+          {say('screens.textReader.itsFileMayBeDamagedOr')}
+        </p>
       </div>
     );
   }
@@ -429,8 +434,8 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
             pickers={
               entries.length === 0 ? null : (
                 <ReaderPicker
-                  label="Contents"
-                  value={heading ?? 'The beginning'}
+                  label={say('common.contents')}
+                  value={heading ?? say('screens.textReader.theBeginning')}
                   selectedId={current === null ? '' : current.toString()}
                   options={entries.map((entry, at) => ({
                     id: at.toString(),
@@ -443,8 +448,8 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
                       follow({ part: entry.part, anchor: entry.anchor });
                     }
                   }}
-                  previousLabel="Previous chapter"
-                  nextLabel="Next chapter"
+                  previousLabel={say('common.previousChapter')}
+                  nextLabel={say('common.nextChapter')}
                   {...(current !== null && current > 0
                     ? {
                         onPrevious: () => {
@@ -472,9 +477,9 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
             }
           >
             <SettingList>
-              <SettingRow title="Size">
+              <SettingRow title={say('common.size')}>
                 <SegmentedRow
-                  label="Size"
+                  label={say('common.size')}
                   size="sm"
                   items={TEXT_SIZES.map((one) => ({ id: one, label: NAMES[one] ?? one }))}
                   value={settings.size}
@@ -488,9 +493,9 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
                 />
               </SettingRow>
 
-              <SettingRow title="Spacing">
+              <SettingRow title={say('screens.textReader.spacing')}>
                 <SegmentedRow
-                  label="Spacing"
+                  label={say('screens.textReader.spacing')}
                   size="sm"
                   items={TEXT_SPACINGS.map((one) => ({ id: one, label: NAMES[one] ?? one }))}
                   value={settings.spacing}
@@ -504,9 +509,9 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
                 />
               </SettingRow>
 
-              <SettingRow title="Margins">
+              <SettingRow title={say('common.margins')}>
                 <SegmentedRow
-                  label="Margins"
+                  label={say('common.margins')}
                   size="sm"
                   items={TEXT_MARGINS.map((one) => ({ id: one, label: NAMES[one] ?? one }))}
                   value={settings.margins}
@@ -520,9 +525,9 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
                 />
               </SettingRow>
 
-              <SettingRow title="Page">
+              <SettingRow title={say('common.page')}>
                 <SegmentedRow
-                  label="Page"
+                  label={say('common.page')}
                   size="sm"
                   items={TEXT_PAGES.map((one) => ({ id: one, label: NAMES[one] ?? one }))}
                   value={settings.page}
@@ -541,7 +546,7 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
         footer={
           <>
             <Slider
-              label="How far through the book"
+              label={say('screens.textReader.howFarThroughTheBook')}
               tone="overlay"
               value={dragged ?? Math.round(fraction * SLIDER_STEPS)}
               max={SLIDER_STEPS}
@@ -582,7 +587,7 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
             {...swipe}
           >
             {text.data === undefined || part === null ? (
-              <Spinner isCentered label="Opening the book" />
+              <Spinner isCentered label={say('common.openingTheBook')} />
             ) : (
               <motion.div className="h-full" style={{ x: slidesBy, opacity: showing }}>
                 <div

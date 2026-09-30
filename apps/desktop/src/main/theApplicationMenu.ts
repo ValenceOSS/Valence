@@ -1,5 +1,6 @@
 import { Menu, shell } from 'electron';
 import type { MenuItemConstructorOptions } from 'electron';
+import { say } from '@ValenceI18n/say';
 
 const IS_MAC = process.platform === 'darwin';
 
@@ -30,11 +31,15 @@ const IS_MAC = process.platform === 'darwin';
  */
 const theApplicationMenu = (changeServer: () => void, hasDevTools = false): Menu => {
   const valence: MenuItemConstructorOptions = {
-    label: 'Valence',
+    label: say('common.valence'),
     submenu: [
       { role: 'about' },
       { type: 'separator' },
-      { label: 'Change server…', accelerator: 'CmdOrCtrl+Shift+S', click: changeServer },
+      {
+        label: say('common.changeServer'),
+        accelerator: say('desktop.main.theApplicationMenu.cmdOrCtrlShiftS'),
+        click: changeServer,
+      },
       { type: 'separator' },
       { role: 'services' },
       { type: 'separator' },
@@ -47,9 +52,13 @@ const theApplicationMenu = (changeServer: () => void, hasDevTools = false): Menu
   };
 
   const file: MenuItemConstructorOptions = {
-    label: 'File',
+    label: say('desktop.main.theApplicationMenu.file'),
     submenu: [
-      { label: 'Change server…', accelerator: 'CmdOrCtrl+Shift+S', click: changeServer },
+      {
+        label: say('common.changeServer'),
+        accelerator: say('desktop.main.theApplicationMenu.cmdOrCtrlShiftS'),
+        click: changeServer,
+      },
       ...(IS_MAC ? [] : [{ type: 'separator' } as const, { role: 'quit' } as const]),
     ],
   };
@@ -59,7 +68,7 @@ const theApplicationMenu = (changeServer: () => void, hasDevTools = false): Menu
     file,
     { role: 'editMenu' },
     {
-      label: 'View',
+      label: say('common.view'),
       submenu: [
         { role: 'reload' },
         { role: 'forceReload' },
@@ -77,7 +86,7 @@ const theApplicationMenu = (changeServer: () => void, hasDevTools = false): Menu
       role: 'help',
       submenu: [
         {
-          label: 'Valence on the web',
+          label: say('desktop.main.theApplicationMenu.valenceOnTheWeb'),
           click: () => {
             void shell.openExternal('https://github.com/MarquesCoding/Valence');
           },

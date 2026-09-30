@@ -27,14 +27,8 @@ import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
 import { playlistGroupFor } from '@ValenceScreens/music/playlistGroupFor';
 import type { AlbumViewProps } from './AlbumView.types';
-
-/**
- * Counts songs in words that read properly at one as well as at many.
- *
- * @param count - How many songs.
- * @returns The count and its noun.
- */
-const songs = (count: number): string => (count === 1 ? '1 song' : `${count.toString()} songs`);
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * An album's page: its cover large on a wash of its colour, who it is by and when, and every track
@@ -55,7 +49,7 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
   if (asked.isError) {
     return (
       <CouldNotRead
-        what="this album"
+        said={say('screens.musicPage.albumView.thisAlbumCouldNotBeRead')}
         isTryingAgain={asked.isFetching}
         onTryAgain={() => {
           void asked.refetch();
@@ -67,7 +61,11 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
   if (detail === undefined) {
     return (
       <div className={`flex flex-col gap-4 py-8 ${MUSIC_LANES.page}`}>
-        <Skeleton label="Reading the album" shape="soft" className="size-48" />
+        <Skeleton
+          label={say('screens.musicPage.albumView.readingTheAlbum')}
+          shape="soft"
+          className="size-48"
+        />
         <Skeleton className="h-12 w-2/3" />
       </div>
     );
@@ -79,7 +77,7 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
   return (
     <article className="flex flex-col">
       <MusicHeader
-        eyebrow={album.isCompilation ? 'Compilation' : 'Album'}
+        eyebrow={album.isCompilation ? say('common.compilation') : say('common.album')}
         title={album.title}
         artwork={
           <MusicArtwork
@@ -103,7 +101,7 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
               {album.artist.name}
             </Button>
             {album.year === null ? null : <span>· {album.year.toString()}</span>}
-            <span>· {songs(album.trackCount)}</span>
+            <span>· {sayCount('common.count.songs', album.trackCount)}</span>
             <span>· {formatDuration(album.durationSeconds)}</span>
             {album.sizeBytes <= 0 ? null : <span>· {formatBytes(album.sizeBytes)}</span>}
             {album.isExplicit ? <ExplicitMark className="ml-1" /> : null}
@@ -115,7 +113,7 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
               variant="confirm"
               size="lg"
               isIconOnly
-              label={`Play ${album.title}`}
+              label={say('common.playTitle', { title: album.title })}
               className="size-14"
               disabled={tracks.length === 0}
               onClick={() => {
@@ -128,7 +126,7 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
               variant="ghost"
               size="md"
               isIconOnly
-              label={`Shuffle ${album.title}`}
+              label={say('screens.musicPage.albumView.shuffleTitle', { title: album.title })}
               disabled={tracks.length === 0}
               onClick={() => {
                 player.play(tracks, Math.floor(Math.random() * tracks.length), {
@@ -141,7 +139,9 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
             </Button>
             {tracks.length === 0 ? null : (
               <ActionMenu
-                label={`Add ${album.title} to a playlist`}
+                label={say('screens.musicPage.albumView.addTitleToAPlaylist', {
+                  title: album.title,
+                })}
                 trigger={<Icon of={ListPlusIcon} size={22} />}
                 groups={[
                   playlistGroupFor(
@@ -159,7 +159,10 @@ const AlbumView = ({ albumId }: AlbumViewProps) => {
 
       <div className={`pb-8 ${MUSIC_LANES.tracks}`}>
         {tracks.length === 0 ? (
-          <NothingHere of={RecordIcon} title="Nothing on this album you can hear" />
+          <NothingHere
+            of={RecordIcon}
+            title={say('screens.musicPage.albumView.nothingOnThisAlbumYouCan')}
+          />
         ) : (
           <TrackList
             label={album.title}

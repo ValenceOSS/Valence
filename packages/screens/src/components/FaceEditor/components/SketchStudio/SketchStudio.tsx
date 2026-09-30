@@ -26,6 +26,7 @@ import { STICKERS } from '@ValenceScreens/library/sketch/STICKERS';
 import type { LetterFont } from '@ValenceContracts/schemas/LetterFont';
 import type { SketchItem, SketchScene, SketchStroke } from '@ValenceContracts/schemas/SketchScene';
 import type { SketchStudioProps, SketchTool } from './SketchStudio.types';
+import { say } from '@ValenceI18n/say';
 
 const MOST_ITEMS = 400;
 
@@ -175,10 +176,10 @@ const SketchStudio = ({ scene, onChange }: SketchStudioProps) => {
 
         <span className="my-1 h-px w-6 bg-line" />
 
-        <ColourChoice isCompact label="Ink" value={colour} onChange={setColour} />
+        <ColourChoice isCompact label={say('common.ink')} value={colour} onChange={setColour} />
 
         <PopoverPanel
-          label="Size"
+          label={say('common.size')}
           side="bottom"
           align="start"
           isBare
@@ -193,11 +194,11 @@ const SketchStudio = ({ scene, onChange }: SketchStudioProps) => {
         >
           <div className="flex w-56 flex-col gap-2 p-1">
             <div className="flex items-baseline justify-between">
-              <span className="text-xs text-text">Size</span>
+              <span className="text-xs text-text">{say('common.size')}</span>
               <span className="font-mono text-[0.7rem] text-text-muted">{size}</span>
             </div>
             <Slider
-              label="Size"
+              label={say('common.size')}
               value={size - 2}
               max={78}
               valueLabel={(at) => (at + 2).toString()}
@@ -211,7 +212,7 @@ const SketchStudio = ({ scene, onChange }: SketchStudioProps) => {
         <span className="my-1 h-px w-6 bg-line" />
 
         <PopoverPanel
-          label="Add words"
+          label={say('screens.faceEditor.sketchStudio.addWords')}
           side="bottom"
           align="start"
           isOpen={isWordsOpen}
@@ -226,10 +227,10 @@ const SketchStudio = ({ scene, onChange }: SketchStudioProps) => {
           <div className="flex w-72 flex-col gap-3 p-1">
             <div className="flex items-center gap-2">
               <TextField
-                label="Words to add"
+                label={say('screens.faceEditor.sketchStudio.wordsToAdd')}
                 isLabelHidden
                 value={words}
-                placeholder="Say something"
+                placeholder={say('screens.faceEditor.sketchStudio.saySomething')}
                 size="sm"
                 hasFocusOnMount
                 className="flex-1"
@@ -239,7 +240,7 @@ const SketchStudio = ({ scene, onChange }: SketchStudioProps) => {
               />
               <ColourChoice
                 isCompact
-                label="Colour of the words"
+                label={say('screens.faceEditor.sketchStudio.colourOfTheWords')}
                 value={colour}
                 onChange={setColour}
               />
@@ -282,13 +283,13 @@ const SketchStudio = ({ scene, onChange }: SketchStudioProps) => {
                 setIsWordsOpen(false);
               }}
             >
-              Put it on
+              {say('screens.faceEditor.sketchStudio.putItOn')}
             </Button>
           </div>
         </PopoverPanel>
 
         <PopoverPanel
-          label="Add a sticker"
+          label={say('screens.faceEditor.sketchStudio.addASticker')}
           side="bottom"
           align="start"
           isOpen={isStickersOpen}
@@ -306,7 +307,7 @@ const SketchStudio = ({ scene, onChange }: SketchStudioProps) => {
                 key={sticker}
                 variant="ghost"
                 size="none"
-                label={`Add ${sticker}`}
+                label={say('screens.faceEditor.sketchStudio.addSticker', { sticker })}
                 hasTooltip={false}
                 className="aspect-square text-xl transition-transform hover-hover:hover:scale-110"
                 onClick={() => {
@@ -331,7 +332,7 @@ const SketchStudio = ({ scene, onChange }: SketchStudioProps) => {
 
         <ColourChoice
           isCompact
-          label="Background"
+          label={say('common.background')}
           value={scene.background}
           onChange={(hex) => {
             commit({ ...scene, background: hex });
@@ -345,7 +346,7 @@ const SketchStudio = ({ scene, onChange }: SketchStudioProps) => {
             variant="secondary"
             size="sm"
             isIconOnly
-            label="Undo"
+            label={say('screens.faceEditor.sketchStudio.undo')}
             disabled={past.length === 0}
             onClick={undo}
           >
@@ -355,7 +356,7 @@ const SketchStudio = ({ scene, onChange }: SketchStudioProps) => {
             variant="secondary"
             size="sm"
             isIconOnly
-            label="Redo"
+            label={say('screens.faceEditor.sketchStudio.redo')}
             disabled={future.length === 0}
             onClick={redo}
           >
@@ -365,7 +366,7 @@ const SketchStudio = ({ scene, onChange }: SketchStudioProps) => {
             variant="secondary"
             size="sm"
             isIconOnly
-            label="Start again"
+            label={say('common.startAgain')}
             disabled={scene.items.length === 0}
             onClick={() => {
               setSelected(null);
@@ -384,9 +385,9 @@ const SketchStudio = ({ scene, onChange }: SketchStudioProps) => {
               {chosen.kind === 'text' ? `“${chosen.text}”` : chosen.sticker}
             </span>
             <div className="flex min-w-32 flex-1 items-center gap-2">
-              <span className="text-xs text-text-muted">Size</span>
+              <span className="text-xs text-text-muted">{say('common.size')}</span>
               <Slider
-                label="Size"
+                label={say('common.size')}
                 value={Math.round(chosen.size) - 10}
                 max={chosen.kind === 'text' ? 790 : 990}
                 onValueChange={(at) => {
@@ -397,9 +398,9 @@ const SketchStudio = ({ scene, onChange }: SketchStudioProps) => {
               />
             </div>
             <div className="flex min-w-32 flex-1 items-center gap-2">
-              <span className="text-xs text-text-muted">Turn</span>
+              <span className="text-xs text-text-muted">{say('common.turn')}</span>
               <Slider
-                label="Turn"
+                label={say('common.turn')}
                 value={Math.round(chosen.turn) + 180}
                 max={360}
                 valueLabel={(at) => `${(at - 180).toString()}°`}
@@ -413,7 +414,7 @@ const SketchStudio = ({ scene, onChange }: SketchStudioProps) => {
             {chosen.kind === 'text' ? (
               <ColourChoice
                 isCompact
-                label="Colour of the words"
+                label={say('screens.faceEditor.sketchStudio.colourOfTheWords')}
                 value={chosen.colour}
                 onChange={(hex) => {
                   change(selected, (item) =>
@@ -426,7 +427,7 @@ const SketchStudio = ({ scene, onChange }: SketchStudioProps) => {
               variant="ghost"
               size="sm"
               isIconOnly
-              label="Take it off"
+              label={say('screens.faceEditor.sketchStudio.takeItOff')}
               onClick={() => {
                 commit({ ...scene, items: scene.items.filter((_, index) => index !== selected) });
                 setSelected(null);
@@ -438,15 +439,15 @@ const SketchStudio = ({ scene, onChange }: SketchStudioProps) => {
         ) : (
           <p className="px-1 text-xs text-text-muted">
             {tool === 'move'
-              ? 'Press a word or a sticker to move it; then size and turn it here.'
-              : 'Draw on the board. Add words and stickers from the bar, then move them with the arrow.'}
+              ? say('screens.faceEditor.sketchStudio.pressAWordOrASticker')
+              : say('screens.faceEditor.sketchStudio.drawOnTheBoardAddWords')}
           </p>
         )}
 
         <div className="relative w-full max-w-[26rem]">
           <canvas
             ref={canvas}
-            aria-label="Your drawing"
+            aria-label={say('screens.faceEditor.sketchStudio.yourDrawing')}
             role="img"
             onPointerDown={(event) => {
               const [x, y] = boardPlace(event);

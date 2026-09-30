@@ -18,6 +18,7 @@ import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { KeepHeart } from '@ValenceScreens/components/KeepHeart/KeepHeart';
 import type { TrackListProps } from './TrackList.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Songs in a list, one to a row: where it sits, what it is and who it is by, the album it is from,
@@ -126,7 +127,11 @@ const TrackList = ({
                     isCurrent ? 'text-text' : '',
                   )}
                 >
-                  {isCurrent && state.isPlaying ? <Equaliser label="Playing" /> : number.toString()}
+                  {isCurrent && state.isPlaying ? (
+                    <Equaliser label={say('common.playing')} />
+                  ) : (
+                    number.toString()
+                  )}
                 </span>
 
                 <Button
@@ -134,7 +139,9 @@ const TrackList = ({
                   size="none"
                   isIconOnly
                   label={
-                    isCurrent && state.isPlaying ? `Pause ${track.title}` : `Play ${track.title}`
+                    isCurrent && state.isPlaying
+                      ? say('common.pauseTitle', { title: track.title })
+                      : say('common.playTitle', { title: track.title })
                   }
                   hasTooltip={false}
                   className="absolute inset-0 flex items-center justify-center text-text opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
@@ -185,7 +192,7 @@ const TrackList = ({
 
                     {track.isLossless ? (
                       <span className="mr-1 rounded-xs bg-hover px-1 text-[0.625rem] font-semibold uppercase tracking-wide">
-                        Lossless
+                        {say('common.lossless')}
                       </span>
                     ) : null}
 
@@ -229,7 +236,11 @@ const TrackList = ({
                 size="none"
                 isIconOnly
                 isActive={isLiked}
-                label={isLiked ? `Unlike ${track.title}` : `Like ${track.title}`}
+                label={
+                  isLiked
+                    ? say('common.unlikeTitle', { title: track.title })
+                    : say('common.likeTitle', { title: track.title })
+                }
                 hasTooltip={false}
                 className={cn(
                   'transition-opacity',

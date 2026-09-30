@@ -1,5 +1,6 @@
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import type { ReencodeMode } from '@ValenceContracts/schemas/Reencode';
+import { say } from '@ValenceI18n/say';
 
 type Saving = {
   mode: ReencodeMode;
@@ -22,12 +23,19 @@ const describeSaving = ({ mode, nowBytes, afterBytes }: Saving): string => {
   const difference = afterBytes - nowBytes;
 
   if (difference === 0) {
-    return 'Uses the same disk either way';
+    return say('screens.encodingPanel.describeSaving.usesTheSameDiskEitherWay');
   }
 
   return difference < 0
-    ? `Frees about ${formatBytes(-difference)}`
-    : `Costs about ${formatBytes(difference)}${mode === 'keep' ? ', and buys a household that does not transcode' : ''}`;
+    ? say('screens.encodingPanel.describeSaving.freesAboutValue', {
+        value: formatBytes(-difference),
+      })
+    : say(
+        mode === 'keep'
+          ? 'screens.encodingPanel.describeSaving.costsAboutValueAndBuys'
+          : 'screens.encodingPanel.describeSaving.costsAboutValue',
+        { value: formatBytes(difference) },
+      );
 };
 
 export type { Saving };

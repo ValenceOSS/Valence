@@ -8,6 +8,7 @@ import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 import { Button } from '@ValenceTv/components/Button/Button';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { ThemeChoiceProps } from './ThemeChoice.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   choice: { gap: tokens.space.sm },
@@ -35,11 +36,11 @@ const ThemeChoice = ({ onFocus }: ThemeChoiceProps) => {
 
   return (
     <View style={styles.choice}>
-      <Text style={styles.heading}>Themes from plugins</Text>
+      <Text style={styles.heading}>{say('common.themesFromPlugins')}</Text>
 
       <View style={styles.themes}>
         <Button
-          label="Valence"
+          label={say('common.valence')}
           variant="secondary"
           {...(choice === null ? { icon: Check } : {})}
           {...(onFocus === undefined ? {} : { onFocus })}
@@ -70,7 +71,7 @@ const ThemeChoice = ({ onFocus }: ThemeChoiceProps) => {
       </View>
 
       {choice === openedIn ? null : (
-        <Text style={styles.note}>Valence opens in this theme the next time you open it.</Text>
+        <Text style={styles.note}>{say('tv.account.themeChoice.valenceOpensInThisThemeThe')}</Text>
       )}
     </View>
   );

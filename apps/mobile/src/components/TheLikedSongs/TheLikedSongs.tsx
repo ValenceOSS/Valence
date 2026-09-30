@@ -14,8 +14,10 @@ import { AMoodBackground } from '@ValenceMobile/components/AMoodBackground/AMood
 import { usePictureLights } from '@ValenceMobile/hooks/usePictureLights';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import type { TheLikedSongsProps } from './TheLikedSongs.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
-const SOURCE = { kind: 'liked' as const, id: null, name: 'Liked songs' };
+const SOURCE = { kind: 'liked' as const, id: null, name: say('common.likedSongs') };
 
 /**
  * Every song this profile has liked, newest first, as the web's liked songs page draws them, with a
@@ -47,9 +49,9 @@ const TheLikedSongs = ({ onAlbum, onArtist, onPlaylist, onBack }: TheLikedSongsP
   return (
     <Screen scrolls onBack={onBack} behind={<AMoodBackground palette={lights} />}>
       <AMusicHead
-        kind="Playlist"
-        title="Liked songs"
-        detail={`${tracks.length.toString()} ${tracks.length === 1 ? 'song' : 'songs'}`}
+        kind={say('common.playlist')}
+        title={say('common.likedSongs')}
+        detail={sayCount('common.count.songs', tracks.length)}
         artwork={null}
         albumIds={covers}
         standIn={Heart}
@@ -68,8 +70,8 @@ const TheLikedSongs = ({ onAlbum, onArtist, onPlaylist, onBack }: TheLikedSongsP
       {tracks.length === 0 ? (
         <ANothingHere
           of={Heart}
-          title="No liked songs yet"
-          detail="Songs you like will be here. Like one from its menu."
+          title={say('phone.theLikedSongs.noLikedSongsYet')}
+          detail={say('phone.theLikedSongs.songsYouLikeWillBeHere')}
         />
       ) : (
         <ATrackList

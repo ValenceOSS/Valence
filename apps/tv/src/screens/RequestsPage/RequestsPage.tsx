@@ -7,6 +7,7 @@ import { progressOfRequest } from '@ValenceClient/requests/progressOfRequest';
 import { tokens } from '@ValenceTv/theme/tokens';
 import { RequestRow } from './components/RequestRow/RequestRow';
 import type { RequestsPageProps } from './RequestsPage.types';
+import { say } from '@ValenceI18n/say';
 
 const WATCHABLE_KINDS = new Set(['film', 'series']);
 
@@ -43,14 +44,14 @@ const RequestsPage = ({ onOpen, onLight }: RequestsPageProps) => {
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.inside}>
-      <Text style={styles.heading}>Requests</Text>
+      <Text style={styles.heading}>{say('common.requests')}</Text>
 
       {requests.isPending ? (
         <ActivityIndicator size="large" color={tokens.colours.text} />
       ) : shown.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={styles.nothing}>Nothing has been asked for yet.</Text>
-          <Text style={styles.hint}>Find something in Search, and request it from its page.</Text>
+          <Text style={styles.nothing}>{say('tv.requestsPage.nothingHasBeenAskedForYet')}</Text>
+          <Text style={styles.hint}>{say('tv.requestsPage.findSomethingInSearchAndRequest')}</Text>
         </View>
       ) : (
         shown.map((request, at) => (

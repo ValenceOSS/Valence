@@ -3,6 +3,7 @@ import { buttonStyles } from './buttonStyles';
 import { Spinner } from '@ValenceUI/Spinner';
 import { Tooltip } from '@ValenceUI/Tooltip';
 import type { ButtonProps } from './Button.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The one place a `<button>` is written. Everything pressable in Valence is this or composes it, which
@@ -77,7 +78,9 @@ const Button = ({
       )}
       {...rest}
     >
-      {isLoading ? <Spinner size={size === 'sm' ? 'sm' : 'md'} label="Working" /> : null}
+      {isLoading ? (
+        <Spinner size={size === 'sm' ? 'sm' : 'md'} label={say('common.working')} />
+      ) : null}
       {children}
     </button>
   );

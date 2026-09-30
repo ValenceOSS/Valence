@@ -51,12 +51,13 @@ import { MakeReplySchema } from '@ValenceDesktop/main/MakeReply';
 import { HandBackReplySchema } from '@ValenceDesktop/main/HandBackReply';
 import type { PasskeyCreationOptions } from '@ValenceContracts/schemas/PasskeyCreationOptions';
 import type { PasskeyRequestOptions } from '@ValenceContracts/schemas/PasskeyRequestOptions';
+import { say } from '@ValenceI18n/say';
 
 const HeldSchema = z.record(z.string(), z.string()).catch({});
 
 const UNANSWERED = {
   kind: 'failed',
-  reason: 'This app did not answer about the passkey.',
+  reason: say('desktop.preload.preload.thisAppDidNotAnswerAbout'),
 } as const;
 
 const held = HeldSchema.parse(ipcRenderer.sendSync(READ_EVERYTHING));

@@ -157,7 +157,7 @@ const FEEDBACK_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
   CouldNotRead: [
     {
       title: 'A failed read',
-      render: () => <CouldNotRead what="Your requests" onTryAgain={nothing} />,
+      render: () => <CouldNotRead said="Your requests could not be read." onTryAgain={nothing} />,
     },
   ],
   AgeRating: [

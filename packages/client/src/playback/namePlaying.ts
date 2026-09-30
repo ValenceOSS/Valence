@@ -1,4 +1,5 @@
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
+import { say } from '@ValenceI18n/say';
 
 type Playing = {
   title: string;
@@ -44,7 +45,10 @@ const namePlaying = (media: Playing): { name: string; year: number | null } => {
   const where =
     season === null || episode === null
       ? null
-      : `S${season.toString()}E${describeEpisodeNumbers(episode, media.episodeNumberEnd)}`;
+      : say('common.searchWhatEpisode', {
+          season: season.toString(),
+          episode: describeEpisodeNumbers(episode, media.episodeNumberEnd),
+        });
 
   return {
     name: [series, where, media.title].filter((part) => part !== null).join(' · '),
