@@ -6,6 +6,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import type { AnArtCardProps } from './AnArtCard.types';
+import { say } from '@ValenceI18n/say';
 
 const RATIO = 9 / 16;
 
@@ -122,7 +123,7 @@ const AnArtCard = ({
 
       {watched > 0 && watched < 1 ? (
         <View style={styles.howFar}>
-          <HowFar fraction={watched} label={`How far through ${title}`} />
+          <HowFar fraction={watched} label={say('common.howFarThroughTitle', { title })} />
         </View>
       ) : null}
     </View>

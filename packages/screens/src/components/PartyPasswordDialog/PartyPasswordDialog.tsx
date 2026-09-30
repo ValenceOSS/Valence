@@ -5,6 +5,7 @@ import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { TextField } from '@ValenceUI/TextField';
 import type { PartyPasswordDialogProps } from './PartyPasswordDialog.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Asks for the password on a party somebody has been invited to.
@@ -26,31 +27,37 @@ const PartyPasswordDialog = ({ isOpen, wasWrong, onJoin, onClose }: PartyPasswor
   const [password, setPassword] = useState('');
 
   return (
-    <Dialog label="Watch party password" isOpen={isOpen} onClose={onClose}>
+    <Dialog
+      label={say('screens.partyPasswordDialog.watchPartyPassword')}
+      isOpen={isOpen}
+      onClose={onClose}
+    >
       <DialogContent>
-        <DialogTitle title="This watch party has a password" />
+        <DialogTitle title={say('screens.partyPasswordDialog.thisWatchPartyHasAPassword')} />
 
         <div className="flex flex-col gap-4 pt-2">
           <p className="text-sm leading-relaxed text-text-muted">
-            Whoever invited you set one. Ask them for it if you have not been told.
+            {say('screens.partyPasswordDialog.whoeverInvitedYouSetOneAsk')}
           </p>
 
           <TextField
-            label="Password"
+            label={say('common.password')}
             type="password"
             value={password}
             hasFocusOnMount
             autoComplete="off"
-            {...(wasWrong ? { error: 'That is not the password for this party.' } : {})}
+            {...(wasWrong
+              ? { error: say('screens.partyPasswordDialog.thatIsNotThePasswordFor') }
+              : {})}
             onValueChange={setPassword}
           />
         </div>
       </DialogContent>
 
       <DialogFooter
-        dismiss={{ label: 'Not now', onChoose: onClose }}
+        dismiss={{ label: say('common.notNow'), onChoose: onClose }}
         confirm={{
-          label: 'Join',
+          label: say('screens.partyPasswordDialog.join'),
           onChoose: () => {
             onJoin(password);
           },

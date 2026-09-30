@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -341,7 +342,12 @@ describe('MediaRequestsPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Close' }));
 
     fetchMediaRequestLog.mockResolvedValue([
-      { id: 1, at: '2026-09-19T00:00:00.000Z', message: 'Searched for it.', problemCode: null },
+      {
+        id: 1,
+        at: '2026-09-19T00:00:00.000Z',
+        message: sayVerbatim('Searched for it.'),
+        problemCode: null,
+      },
     ]);
     await choose(user, 'Dune', /See what it has done/);
     expect(await screen.findByText('Searched for it.')).toBeInTheDocument();

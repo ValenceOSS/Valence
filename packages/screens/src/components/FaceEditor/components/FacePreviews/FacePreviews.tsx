@@ -1,6 +1,7 @@
 import { cn } from '@ValenceUI/cn';
 import { FaceCircle } from '@ValenceScreens/components/FaceCircle/FaceCircle';
 import type { FacePreviewsProps } from './FacePreviews.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The face being made, large, and beneath it the same face at each size Valence draws faces:
@@ -23,13 +24,15 @@ const FacePreviews = ({ name, colour, avatar, source, pending, className }: Face
 
       <div className="flex w-full flex-col gap-3">
         <p className="text-center text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">
-          Around Valence
+          {say('screens.faceEditor.facePreviews.aroundValence')}
         </p>
 
         <div className="flex items-end justify-center gap-6">
           <div className="flex flex-col items-center gap-2">
             <FaceCircle {...face} shape="tile" className="size-20 text-2xl" />
-            <span className="text-xs text-text-muted">Who is watching</span>
+            <span className="text-xs text-text-muted">
+              {say('screens.faceEditor.facePreviews.whoIsWatching')}
+            </span>
           </div>
 
           <div className="flex flex-col items-center gap-2">
@@ -37,12 +40,16 @@ const FacePreviews = ({ name, colour, avatar, source, pending, className }: Face
               <FaceCircle {...face} className="size-7 text-[0.65rem]" />
               <span className="max-w-24 truncate text-xs text-text">{name}</span>
             </div>
-            <span className="text-xs text-text-muted">In a list</span>
+            <span className="text-xs text-text-muted">
+              {say('screens.faceEditor.facePreviews.inAList')}
+            </span>
           </div>
 
           <div className="flex flex-col items-center gap-2">
             <FaceCircle {...face} className="size-9 text-xs ring-2 ring-line" />
-            <span className="text-xs text-text-muted">The top bar</span>
+            <span className="text-xs text-text-muted">
+              {say('screens.faceEditor.facePreviews.theTopBar')}
+            </span>
           </div>
         </div>
       </div>

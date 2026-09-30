@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import type { JobRunIssue } from '@ValenceContracts/schemas/JobRun';
 
 /**
@@ -11,7 +12,7 @@ import type { JobRunIssue } from '@ValenceContracts/schemas/JobRun';
 const describeRunIssues = (failure: string | null, issues: readonly JobRunIssue[]): string =>
   [
     ...(failure === null ? [] : [failure]),
-    ...issues.map((issue) => `${issue.path}: ${issue.reason}`),
+    ...issues.map((issue) => `${issue.path}: ${sayAgain(issue.reason)}`),
   ].join('\n');
 
 export { describeRunIssues };

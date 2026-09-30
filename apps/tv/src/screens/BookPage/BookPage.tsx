@@ -23,6 +23,8 @@ import { useRoomToFill } from '@ValenceTv/layout/useRoomToFill';
 import { joinFacts } from '@ValenceTv/library/joinFacts';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { BookPageProps } from './BookPage.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const COVER = { width: 240, height: 360 };
 
@@ -58,7 +60,7 @@ const BookPage = ({ bookId, onListen }: BookPageProps) => {
         {detail.isPending ? (
           <ActivityIndicator size="large" color={tokens.colours.text} />
         ) : (
-          <Text style={styles.problem}>This book has nothing to listen to.</Text>
+          <Text style={styles.problem}>{say('tv.bookPage.thisBookHasNothingToListen')}</Text>
         )}
       </View>
     );
@@ -84,7 +86,7 @@ const BookPage = ({ bookId, onListen }: BookPageProps) => {
       </View>
 
       <View style={styles.about}>
-        <Text style={styles.kind}>Audiobook</Text>
+        <Text style={styles.kind}>{say('common.audiobook')}</Text>
         <Text numberOfLines={2} style={styles.title}>
           {book.title}
         </Text>
@@ -97,7 +99,7 @@ const BookPage = ({ bookId, onListen }: BookPageProps) => {
           {joinFacts([
             book.year?.toString(),
             describeLength(length),
-            chapters.length === 1 ? '1 chapter' : `${chapters.length.toString()} chapters`,
+            sayCount('common.count.chapters', chapters.length),
             partway?.detail,
           ])}
         </Text>
@@ -119,7 +121,7 @@ const BookPage = ({ bookId, onListen }: BookPageProps) => {
           />
           {isPartway ? (
             <Button
-              label="Start again"
+              label={say('common.startAgain')}
               icon={RotateCcw}
               variant="secondary"
               onPress={() => {

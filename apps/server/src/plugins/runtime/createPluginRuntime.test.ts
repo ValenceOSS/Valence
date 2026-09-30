@@ -1,3 +1,5 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { describe, expect, it, vi } from 'vitest';
 import { PluginManifestSchema } from '@ValenceSDK/manifest/PluginManifestSchema';
 import { createPluginRuntime } from './createPluginRuntime';
@@ -131,7 +133,7 @@ describe('keeping plugins running', () => {
   it('counts a sandbox that stops on its own as a failure, and passes logs on', async () => {
     const onProblem = vi.fn();
     const onLog = vi.fn();
-    let stopped: ((reason: string) => void) | undefined;
+    let stopped: ((reason: Said) => void) | undefined;
     const start = vi.fn((options: CreatePluginSandboxOptions<BrokerScope>) => {
       stopped = options.onStopped;
       options.onLog?.('warn', 'careful');
@@ -141,7 +143,7 @@ describe('keeping plugins running', () => {
     const runtime = createPluginRuntime({ brokerFor: () => vi.fn(), onProblem, onLog, start });
 
     await runtime.invoke({ record: RECORD, code: 'x' }, 'describe', {}, SCOPE);
-    stopped?.('InternalError: interrupted');
+    stopped?.(sayVerbatim('InternalError: interrupted'));
 
     expect(onProblem).toHaveBeenCalledWith(RECORD.id, 'InternalError: interrupted');
     expect(onLog).toHaveBeenCalledWith(RECORD.id, 'warn', 'careful');

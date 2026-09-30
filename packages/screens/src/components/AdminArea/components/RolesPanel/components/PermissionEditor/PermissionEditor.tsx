@@ -8,6 +8,7 @@ import { groupPermissions } from '@ValenceClient/admin/groupPermissions';
 import { PermissionRow } from './components/PermissionRow/PermissionRow';
 import type { PluginContributions } from '@ValenceContracts/schemas/Plugin';
 import type { PermissionEditorProps } from './PermissionEditor.types';
+import { say } from '@ValenceI18n/say';
 
 const NO_NODES: PluginContributions['nodes'] = [];
 
@@ -71,17 +72,17 @@ const PermissionEditor = ({
   return (
     <div className="flex flex-col gap-6">
       <TextField
-        label="Search permissions"
+        label={say('screens.rolesPanel.permissionEditor.searchPermissions')}
         isLabelHidden
         type="search"
         value={search}
         onValueChange={setSearch}
-        placeholder="Search permissions"
+        placeholder={say('screens.rolesPanel.permissionEditor.searchPermissions')}
         icon={<Icon of={SearchIcon} size={15} />}
       />
 
       {groups.length === 0 && pluginGroups.length === 0 ? (
-        <p className="text-sm text-text-muted">Nothing here matches that.</p>
+        <p className="text-sm text-text-muted">{say('common.nothingHereMatchesThat')}</p>
       ) : (
         groups.map((group) => (
           <div key={group.id} className="flex flex-col gap-1">
@@ -106,14 +107,21 @@ const PermissionEditor = ({
 
       {pluginGroups.map((group) => (
         <div key={group.pluginId} className="flex flex-col gap-1">
-          <h4 className="text-base font-semibold text-text">{`From ${group.pluginName}`}</h4>
+          <h4 className="text-base font-semibold text-text">
+            {say('common.fromPluginName', { pluginName: group.pluginName })}
+          </h4>
 
           <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
             {group.nodes.map((node) => (
               <PermissionRow
                 key={node.node}
                 label={node.title}
-                detail={node.description ?? `Lets somebody use this part of ${group.pluginName}.`}
+                detail={
+                  node.description ??
+                  say('screens.rolesPanel.permissionEditor.letsSomebodyUseThisPartOf', {
+                    pluginName: group.pluginName,
+                  })
+                }
                 isOn={selected.includes(node.node)}
                 onToggle={() => {
                   onToggle(node.node);

@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "269f7ae7-ece1-4069-9623-56a80feacd55",
+  "id": "5f15a7f8-af90-4533-8799-9d6a334db99a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "requests_blocklisted_release": {
@@ -37,7 +37,7 @@
         },
         "reason": {
           "name": "reason",
-          "type": "mediumtext",
+          "type": "json",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -411,7 +411,7 @@
         },
         "last_problem": {
           "name": "last_problem",
-          "type": "mediumtext",
+          "type": "json",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -432,7 +432,7 @@
         },
         "turned_off_because": {
           "name": "turned_off_because",
-          "type": "mediumtext",
+          "type": "json",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -678,7 +678,7 @@
         },
         "refused_because": {
           "name": "refused_because",
-          "type": "mediumtext",
+          "type": "json",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -743,7 +743,7 @@
         },
         "problem": {
           "name": "problem",
-          "type": "mediumtext",
+          "type": "json",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -1077,7 +1077,7 @@
         },
         "problem": {
           "name": "problem",
-          "type": "mediumtext",
+          "type": "json",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -1259,7 +1259,7 @@
         },
         "message": {
           "name": "message",
-          "type": "mediumtext",
+          "type": "json",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -1377,7 +1377,7 @@
         },
         "problem": {
           "name": "problem",
-          "type": "mediumtext",
+          "type": "json",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -1449,7 +1449,7 @@
         },
         "filing_problem": {
           "name": "filing_problem",
-          "type": "mediumtext",
+          "type": "json",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -1576,7 +1576,7 @@
         },
         "problem": {
           "name": "problem",
-          "type": "mediumtext",
+          "type": "json",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false

@@ -1,9 +1,13 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { describeSessionDelivery } from './describeSessionDelivery';
 import type { ActiveSession } from '@ValenceClient/admin/fetchAdmin';
 import type { PlaybackPlan, Reason } from '@ValenceContracts/schemas/PlaybackPlan';
 
-const reason: Reason = { code: 'ClientSupportsSource', detail: 'The client takes it as it is' };
+const reason: Reason = {
+  code: 'ClientSupportsSource',
+  detail: sayVerbatim('The client takes it as it is'),
+};
 
 const PLAN: PlaybackPlan = {
   mediaId: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',

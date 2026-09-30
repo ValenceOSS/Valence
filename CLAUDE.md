@@ -20,10 +20,10 @@ reference, not a substitute for reading it.
    capability for TypeScript to use — see the standard for their limits.
 2. **No duplication across modules.** Needed twice means extracted and shared.
 3. **No `../` imports.** Use `@ValenceUI/*`, `@ValenceClient/*`, `@ValenceContracts/*`,
-   `@ValenceCore/*`, `@ValenceSDK/*`, `@ValenceDatabase/*`. The one exception is
-   `#dialect/*` inside `apps/server`, `apps/requests` and `packages/database`, a
-   package subpath import resolved by build condition to the package's postgres
-   folder (and, once VAL-306 lands it, its mysql folder).
+   `@ValenceCore/*`, `@ValenceSDK/*`, `@ValenceDatabase/*`, `@ValenceI18n/*`. The one
+   exception is `#dialect/*` inside `apps/server`, `apps/requests` and
+   `packages/database`, a package subpath import resolved by build condition to the
+   package's postgres folder (and, once VAL-306 lands it, its mysql folder).
 4. **No `index.ts` / `index.tsx`.** No barrel files, ever.
 5. **`export { ComponentName }`** — named exports only, no default exports and
    no module objects. One member per file, filename matches the member. Set
@@ -47,6 +47,11 @@ reference, not a substitute for reading it.
 10. **Every function and component has a co-located Vitest test** — except
     `apps/mobile`, which uses `jest-expo` for the same reason it exists.
 11. **Conventional Commits.**
+12. **No hard-coded words.** Everything a person reads is an entry in
+    `packages/i18n/strings-en.json`, said by its handler; run `pnpm i18n:write`
+    after editing it. Servers send `{ code, message, values }` (`saying`) and
+    refuse with `{ error, code, values }` (`refuse`); logs and webhooks stay
+    English. ESLint's `valence/no-hard-coded-strings` enforces it.
 
 ## File layout
 

@@ -7,6 +7,7 @@ import { PHONE_SURFACE_HOST } from '@ValenceMobile/plugins/PHONE_SURFACE_HOST';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import type { APluginPanelProps } from './APluginPanel.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   panel: { borderRadius: 16, borderWidth: 1, gap: 12, padding: 16 },
@@ -49,7 +50,9 @@ const APluginPanel = ({
     <View style={[styles.panel, { borderColor: withAlpha(colours.text, 0.12) }]}>
       <View style={styles.title}>
         <Words isStrong>{title}</Words>
-        <Words size="small" tone="muted">{`From ${pluginName}`}</Words>
+        <Words size="small" tone="muted">
+          {say('common.fromPluginName', { pluginName })}
+        </Words>
       </View>
 
       {panel.problem === null ? null : <ANoticeBlock tone="danger" text={panel.problem} />}

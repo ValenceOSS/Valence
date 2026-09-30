@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { Icon } from '@ValenceUI/Icon';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Bell as BellFilledIcon } from '@keyline-icons/react/fill';
@@ -12,6 +13,7 @@ import { describeSince } from '@ValenceScreens/components/AdminArea/describeSinc
 import type { NotificationBellProps } from './NotificationBell.types';
 import { useTicking } from '@ValenceScreens/clock/useTicking';
 import { A_CAPTION_AGES_EVERY } from '@ValenceScreens/clock/A_CAPTION_AGES_EVERY';
+import { say } from '@ValenceI18n/say';
 
 const COUNTED_UP_TO = 9;
 
@@ -42,7 +44,7 @@ const NotificationBell = ({
 
   return (
     <PopoverPanel
-      label="Notifications"
+      label={say('common.notifications')}
       side="bottom"
       align="center"
       isBare
@@ -67,20 +69,20 @@ const NotificationBell = ({
       }
     >
       <PanelCard
-        title="Notifications"
+        title={say('common.notifications')}
         isFlush
         className="w-96 max-w-[calc(100vw-2rem)]"
         actions={
           <>
             {unread === 0 ? null : (
               <PanelCardAction icon={CircleCheckIcon} onClick={onReadAll}>
-                Mark all read
+                {say('common.markAllRead')}
               </PanelCardAction>
             )}
 
             {notifications.length === 0 ? null : (
               <PanelCardAction icon={BinIcon} onClick={onClearAll}>
-                Clear all
+                {say('common.clearAll')}
               </PanelCardAction>
             )}
           </>
@@ -88,7 +90,7 @@ const NotificationBell = ({
       >
         {notifications.length === 0 ? (
           <p className="px-4 py-6 text-center text-sm text-text-muted">
-            Nothing yet. New films and episodes will show up here.
+            {say('screens.notificationBell.nothingYetNewFilmsAndEpisodes')}
           </p>
         ) : (
           <ul className="flex max-h-96 flex-col divide-y divide-[var(--surface-line)] overflow-y-auto">
@@ -124,7 +126,7 @@ const NotificationBell = ({
                             : 'truncate text-sm text-text-muted'
                         }
                       >
-                        {notification.title}
+                        {sayAgain(notification.title)}
                       </span>
 
                       <span className="ml-auto shrink-0 text-xs tabular-nums text-text-muted">
@@ -132,7 +134,7 @@ const NotificationBell = ({
                       </span>
                     </span>
 
-                    <span className="text-xs text-text-muted">{notification.body}</span>
+                    <span className="text-xs text-text-muted">{sayAgain(notification.body)}</span>
                   </span>
                 </Button>
               </li>
@@ -143,7 +145,7 @@ const NotificationBell = ({
         {push === undefined ? null : (
           <div className="border-t border-[var(--surface-line)] px-4 py-3">
             <Switch
-              label="Also send these to this device"
+              label={say('screens.notificationBell.alsoSendTheseToThisDevice')}
               isOn={push.isOn}
               onToggle={push.onToggle}
             />

@@ -107,8 +107,8 @@ describe('createDefinitionCatalogue', () => {
     }).refresh();
 
     expect(read.definitions).toHaveLength(1);
-    expect(read.updatedAt).toBe(NOW.toISOString());
-    expect(read.problem).toBe(
+    expect(read.updatedAt).toEqual(NOW.toISOString());
+    expect(read.problem).toEqual(
       'The definitions could not be fetched from Prowlarr/Indexers@master/definitions/v11: Prowlarr/Indexers@master/definitions/v11 answered 403',
     );
 
@@ -118,7 +118,7 @@ describe('createDefinitionCatalogue', () => {
       fetch: () => Promise.reject(new TypeError('offline')),
     }).refresh();
 
-    expect(offline.problem).toContain('offline');
+    expect(offline.problem?.message).toContain('offline');
   });
 
   it('reads a definition, keeping it parsed until it changes', async () => {

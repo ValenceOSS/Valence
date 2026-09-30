@@ -15,6 +15,7 @@ import {
   varchar,
 } from 'drizzle-orm/mysql-core';
 import type { AnyMySqlColumn } from 'drizzle-orm/mysql-core';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
 import { hashOf } from '@ValenceDatabase/mysql/columns/hashOf';
 import { identifier } from '@ValenceDatabase/mysql/columns/identifier';
@@ -394,7 +395,7 @@ const preparedDownload = mysqlTable(
     bytesPerSecond: bigint('bytesPerSecond', { mode: 'number' }),
     secondsLeft: int('secondsLeft'),
     sizeBytes: bigint('sizeBytes', { mode: 'number' }),
-    failure: mediumtext('failure'),
+    failure: jsonColumn('failure').$type<Said>(),
     askedFromClientId: mediumtext('askedFromClientId'),
     askedAt: momentNow('askedAt').notNull(),
     readyAt: moment('readyAt'),
@@ -506,7 +507,7 @@ const jobRun = mysqlTable(
     startedAt: moment('startedAt'),
     finishedAt: moment('finishedAt'),
     progress: jsonColumn('progress'),
-    errorMessage: mediumtext('errorMessage'),
+    errorMessage: jsonColumn('errorMessage').$type<Said>(),
     createdAt: momentNow('createdAt').notNull(),
   },
   (table) => [
@@ -523,7 +524,7 @@ const jobRunIssue = mysqlTable(
       .notNull()
       .references(() => jobRun.id, { onDelete: 'cascade' }),
     path: mediumtext('path').notNull(),
-    reason: mediumtext('reason').notNull(),
+    reason: jsonColumn('reason').$type<Said>().notNull(),
     atMs: bigint('atMs', { mode: 'number' }).notNull(),
   },
   (table) => [index('job_run_issue_run_idx').on(table.jobRunId)],
@@ -842,7 +843,7 @@ const reencodeRequest = mysqlTable(
     producedBytes: bigint('producedBytes', { mode: 'number' }),
     progress: int('progress').notNull().default(0),
     bytesPerSecond: bigint('bytesPerSecond', { mode: 'number' }),
-    failure: mediumtext('failure'),
+    failure: jsonColumn('failure').$type<Said>(),
     askedBy: mediumtext('askedBy'),
     askedAt: momentNow('askedAt').notNull(),
     startedAt: moment('startedAt'),
@@ -1228,8 +1229,8 @@ const notification = mysqlTable(
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
     event: mediumtext('event').notNull(),
-    title: mediumtext('title').notNull(),
-    body: mediumtext('body').notNull(),
+    title: jsonColumn('title').$type<Said>().notNull(),
+    body: jsonColumn('body').$type<Said>().notNull(),
     link: mediumtext('link'),
     createdAt: momentNow('createdAt').notNull(),
     readAt: moment('readAt'),
@@ -1355,7 +1356,7 @@ const pluginInstallation = mysqlTable('plugin_installation', {
   installedBy: identifier('installedBy').references(() => user.id, { onDelete: 'set null' }),
   installedAt: momentNow('installedAt').notNull(),
   updatedAt: momentNow('updatedAt').notNull(),
-  problem: mediumtext('problem'),
+  problem: jsonColumn('problem').$type<Said>(),
 });
 
 const pluginStorage = mysqlTable(

@@ -1,8 +1,9 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { DeviceProfileSchema } from '@ValenceContracts/schemas/DeviceProfile';
 import { DownloadQualitySchema, DownloadSchema } from '@ValenceContracts/schemas/Download';
 
-const DownloadError = z.object({ error: z.string() }).openapi('DownloadError');
+const DownloadError = RefusalSchema.openapi('DownloadError');
 
 const DownloadOptionSchema = z
   .object({

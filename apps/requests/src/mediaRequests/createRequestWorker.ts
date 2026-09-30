@@ -1,3 +1,7 @@
+import { sayingList } from '@ValenceI18n/sayingList';
+import { sayingCount } from '@ValenceI18n/sayingCount';
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { basename, extname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
@@ -69,6 +73,8 @@ import type {
 import type { ProfileService } from '@ValenceRequests/profiles/createProfileService';
 import type { RequestLogStore } from '@ValenceRequests/mediaRequests/RequestLogStore';
 import type { Schedule } from '@ValenceRequests/timing/Schedule';
+import { say } from '@ValenceI18n/say';
+import { saying } from '@ValenceI18n/saying';
 
 type CreateRequestWorkerOptions = {
   requests: MediaRequestStore;
@@ -93,12 +99,12 @@ type CreateRequestWorkerOptions = {
   feedsEveryMs?: number;
   giveUpRules?: () => Promise<GiveUpRules>;
   settlesForMs?: number;
-  say?: (line: string) => void;
+  print?: (line: string) => void;
 };
 
 type Found = { request: MediaRequestRecord; items: RequestItemRecord[] };
 
-const NOTHING_REFUSED: ReadonlyMap<string, string> = new Map();
+const NOTHING_REFUSED: ReadonlyMap<string, Said> = new Map();
 
 const TICK_EVERY_MS = 30_000;
 
@@ -122,7 +128,9 @@ const MOST_FILING_ATTEMPTS = 5;
 
 const MOST_ALIASES_SEARCHED = 2;
 
-const NOTHING_FOUND = 'Nothing acceptable has been found yet';
+const NOTHING_FOUND = saying(
+  'requests.mediaRequests.requestWorker.nothingAcceptableHasBeenFoundYet',
+);
 
 const LIBRARY_KINDS_OF: Record<MediaRequestRecord['kind'], LibraryKind> = {
   film: 'movies',
@@ -141,13 +149,13 @@ const IN_FLIGHT = new Set<RequestItemRecord['state']>([
 
 const DEFAULT_PROFILES: Record<QualityProfile['kind'], QualityProfile> = {
   video: {
-    ...QualityProfileDraftSchema.parse({ name: 'Default', kind: 'video' }),
+    ...QualityProfileDraftSchema.parse({ name: say('common.default'), kind: 'video' }),
     id: '00000000-0000-4000-8000-000000000000',
     createdAt: '1970-01-01T00:00:00.000Z',
     updatedAt: '1970-01-01T00:00:00.000Z',
   },
   music: {
-    ...QualityProfileDraftSchema.parse({ name: 'Default', kind: 'music' }),
+    ...QualityProfileDraftSchema.parse({ name: say('common.default'), kind: 'music' }),
     id: '00000000-0000-4000-8000-000000000001',
     createdAt: '1970-01-01T00:00:00.000Z',
     updatedAt: '1970-01-01T00:00:00.000Z',
@@ -169,14 +177,16 @@ const whyNotFiled = (
   error: Error | null,
   path: string,
   clientName: string,
-): { problem: string; problemCode: ProblemCode | null; isATry: boolean } => {
+): { problem: Said; problemCode: ProblemCode | null; isATry: boolean } => {
   if (error instanceof NotAllowedThere) {
-    return { problem: error.message, problemCode: 'MayNotWriteToLibrary', isATry: false };
+    return { problem: error.said, problemCode: 'MayNotWriteToLibrary', isATry: false };
   }
 
   if (error !== null && 'code' in error && error.code === 'EACCES') {
     return {
-      problem: `The requests service may not write where this belongs (${error.message}). Set PUID and PGID on it to the owner of your media folders.`,
+      problem: saying('requests.mediaRequests.requestWorker.theRequestsServiceMayNotWrite', {
+        message: error.message,
+      }),
       problemCode: 'MayNotWriteToLibrary',
       isATry: false,
     };
@@ -184,12 +194,20 @@ const whyNotFiled = (
 
   return error !== null && 'code' in error && error.code === 'ENOENT'
     ? {
-        problem: `Valence cannot see ${path}, where ${clientName} put it. Set where ${clientName} saves downloads, as it sees them and as Valence does, on the Downloads page.`,
+        problem: saying(
+          'requests.mediaRequests.requestWorker.valenceCannotSeePathWhereClientName',
+          {
+            path,
+            clientName,
+          },
+        ),
         problemCode: 'CannotSeeDownload',
         isATry: false,
       }
     : {
-        problem: `It could not be filed: ${error?.message ?? 'no reason given'}`,
+        problem: saying('requests.mediaRequests.couldNotBeFiled', {
+          reason: error === null ? saying('common.noReasonGiven') : sayVerbatim(error.message),
+        }),
         problemCode: null,
         isATry: true,
       };
@@ -257,7 +275,7 @@ const groupedByDownload = (
  * @param feedsEveryMs - How often to read the indexers' newest releases.
  * @param giveUpRules - When a download is given up on and the next best release tried.
  * @param settlesForMs - How long a download runs before it is judged on how fast it is going.
- * @param say - Where to say what happened.
+ * @param print - Where to write what happened.
  * @returns The worker.
  */
 const createRequestWorker = ({
@@ -283,7 +301,7 @@ const createRequestWorker = ({
   feedsEveryMs = FEEDS_EVERY_MS,
   giveUpRules = () => Promise.resolve(GIVE_UP_DEFAULTS),
   settlesForMs = SETTLES_FOR_MS,
-  say = () => undefined,
+  print = () => undefined,
 }: CreateRequestWorkerOptions) => {
   let working: Promise<void> = Promise.resolve();
   let isRunning = false;
@@ -295,7 +313,7 @@ const createRequestWorker = ({
     working = next.then(
       () => undefined,
       (error: Error) => {
-        say(`Moving requests along failed: ${error.message}`);
+        print(`Moving requests along failed: ${error.message}`);
       },
     );
 
@@ -315,11 +333,11 @@ const createRequestWorker = ({
 
   const note = async (
     request: MediaRequestRecord,
-    message: string,
+    message: Said,
     problemCode: ProblemCode | null = null,
   ) => {
     await log.add(request.id, message, problemCode);
-    say(`${request.title}: ${message}`);
+    print(`${request.title}: ${message.message}`);
   };
 
   const approved = async (): Promise<Found[]> => {
@@ -352,7 +370,7 @@ const createRequestWorker = ({
     requestId: string,
     title: string | null,
     indexerId: string | null,
-    reason: string,
+    reason: Said,
   ) => {
     if (title !== null) {
       await blocked.insert({ id: randomUUID(), requestId, title, indexerId, reason, at: at() });
@@ -370,11 +388,11 @@ const createRequestWorker = ({
     holding: readonly RequestItemRecord[],
     score: number,
     isPickedByHand = false,
-  ): Promise<string | null> => {
+  ): Promise<Said | null> => {
     const url = release.magnetUrl ?? release.downloadUrl;
 
     if (url === null) {
-      return 'The release has no link to fetch it by';
+      return saying('requests.mediaRequests.requestWorker.theReleaseHasNoLinkTo');
     }
 
     for (const item of holding) {
@@ -434,7 +452,7 @@ const createRequestWorker = ({
     { request, items: all }: Found,
     releases: readonly Release[],
     isFetching: (item: RequestItemRecord) => boolean,
-  ): Promise<{ isSent: boolean; said: string }> => {
+  ): Promise<{ isSent: boolean; said: Said }> => {
     const judged = judgeForRequest({
       request,
       items: all,
@@ -451,34 +469,53 @@ const createRequestWorker = ({
 
     if (picked === undefined || holding === undefined || score === undefined) {
       const best = judged.releases[0];
-      const why = judged.judgements[0]?.rejections.join('; ');
+      const [firstWhy, ...restWhy] = judged.judgements[0]?.rejections ?? [];
 
       return {
         isSent: false,
         said:
-          best === undefined || why === undefined
-            ? `none of the ${releases.length.toString()} found were for it`
-            : `${forIt.toString()} of them for it, and none would do — the best, ${best.title}, because ${why}`,
+          best === undefined || firstWhy === undefined
+            ? sayingCount('requests.mediaRequests.noneFoundForIt', releases.length)
+            : saying('requests.mediaRequests.requestWorker.forItOfThemForItAnd', {
+                forIt,
+                title: best.title,
+                why: sayingList([firstWhy, ...restWhy]),
+              }),
       };
     }
 
     const problem = await send(request, picked, holding, score.score);
 
     return problem === null
-      ? { isSent: true, said: `chose ${picked.title}, the best of ${forIt.toString()} for it` }
-      : { isSent: false, said: `chose ${picked.title}, but could not send it: ${problem}` };
+      ? {
+          isSent: true,
+          said: saying('requests.mediaRequests.requestWorker.choseTitleTheBestOfForIt', {
+            title: picked.title,
+            forIt,
+          }),
+        }
+      : {
+          isSent: false,
+          said: saying('requests.mediaRequests.choseButCouldNotSend', {
+            title: picked.title,
+            problem,
+          }),
+        };
   };
 
-  const describeSearch = (search: ReleaseSearch): string => {
+  const describeSearch = (search: ReleaseSearch): Said => {
     if (search.album !== undefined) {
-      return `“${search.album}”`;
+      return saying('requests.mediaRequests.searchWhat.album', { album: search.album });
     }
 
     return search.season === undefined
-      ? 'it'
+      ? saying('requests.mediaRequests.searchWhat.it')
       : search.episode === undefined
-        ? `season ${search.season.toString()}`
-        : `S${search.season.toString().padStart(2, '0')}E${search.episode.toString().padStart(2, '0')}`;
+        ? saying('requests.mediaRequests.searchWhat.season', { season: search.season })
+        : saying('common.searchWhatEpisode', {
+            season: search.season.toString().padStart(2, '0'),
+            episode: search.episode.toString().padStart(2, '0'),
+          });
   };
 
   const searchFor = async (found: Found, fetching: readonly RequestItemRecord[]) => {
@@ -509,22 +546,34 @@ const createRequestWorker = ({
           outcome.releases,
           (item) => itemIds.includes(item.id) && pending.has(item.id),
         );
-        const unanswered = outcome.indexers.filter((report) => report.problem !== null);
+        const what = describeSearch(search);
+        const searched =
+          outcome.indexers.length === 0
+            ? saying('requests.mediaRequests.noIndexerOn')
+            : sayingCount('requests.mediaRequests.foundByIndexers', outcome.indexers.length, {
+                found: outcome.releases.length,
+                fetched: fetched.said,
+              });
 
         await note(
           found.request,
-          [
-            `Searched for ${describeSearch(search)}${query === search.query || query === queries[0] ? '' : ` as “${query}”`}`,
-            outcome.indexers.length === 0
-              ? ': no indexer is switched on'
-              : `: ${outcome.releases.length.toString()} found by ${outcome.indexers.length.toString()} indexer${outcome.indexers.length === 1 ? '' : 's'}, ${fetched.said}`,
-            ...unanswered.map(
-              (report) => `. ${report.indexerName} could not answer: ${report.problem ?? ''}`,
-            ),
-            '.',
-          ].join(''),
-          unanswered.find((report) => report.problemCode !== null)?.problemCode ?? null,
+          query === search.query || query === queries[0]
+            ? saying('requests.mediaRequests.searched', { what, outcome: searched })
+            : saying('requests.mediaRequests.searchedAs', { what, query, outcome: searched }),
         );
+
+        for (const report of outcome.indexers) {
+          if (report.problem !== null) {
+            await note(
+              found.request,
+              saying('requests.mediaRequests.indexerCouldNotAnswer', {
+                indexer: report.indexerName,
+                problem: report.problem,
+              }),
+              report.problemCode,
+            );
+          }
+        }
 
         if (fetched.isSent) {
           for (const id of itemIds) {
@@ -579,8 +628,13 @@ const createRequestWorker = ({
       await note(
         request,
         request.kind === 'film' || request.kind === 'album'
-          ? 'It is out, and wanted.'
-          : `${out.length.toString()} ${request.kind === 'artist' ? 'album' : 'episode'}${out.length === 1 ? ' is' : 's are'} out, and wanted.`,
+          ? saying('requests.mediaRequests.requestWorker.itIsOutAndWanted')
+          : sayingCount(
+              request.kind === 'artist'
+                ? 'requests.mediaRequests.albumsOut'
+                : 'requests.mediaRequests.episodesOut',
+              out.length,
+            ),
       );
     }
   };
@@ -588,7 +642,7 @@ const createRequestWorker = ({
   const giveUp = async (
     request: MediaRequestRecord,
     item: RequestItemRecord,
-    problem: string,
+    problem: Said,
     problemCode: ProblemCode | null = null,
   ) => {
     await update(item, { state: 'failed', problem, problemCode });
@@ -601,10 +655,7 @@ const createRequestWorker = ({
     });
   };
 
-  const letGo = (
-    item: RequestItemRecord,
-    problem: string,
-  ): Partial<Omit<RequestItemRecord, 'id'>> =>
+  const letGo = (item: RequestItemRecord, problem: Said): Partial<Omit<RequestItemRecord, 'id'>> =>
     item.filePath === null
       ? {
           state: 'wanted',
@@ -634,12 +685,18 @@ const createRequestWorker = ({
 
       if (download === null) {
         for (const item of fetching) {
-          await update(item, letGo(item, 'The download was taken out before it finished'));
+          await update(
+            item,
+            letGo(
+              item,
+              saying('requests.mediaRequests.requestWorker.theDownloadWasTakenOutBefore2'),
+            ),
+          );
         }
 
         await note(
           request,
-          'Its download was taken out before it finished, so it is wanted again.',
+          saying('requests.mediaRequests.requestWorker.itsDownloadWasTakenOutBefore'),
         );
         continue;
       }
@@ -663,18 +720,29 @@ const createRequestWorker = ({
         continue;
       }
 
-      const reason = judged.reason ?? 'The download failed';
+      const reason = judged.reason ?? saying('common.theDownloadFailed');
 
       await block(request.id, download.title, fetching[0]?.indexerId ?? null, reason);
       await queue.remove(download.id, true);
 
       for (const item of fetching) {
-        await update(item, letGo(item, `${reason}. Trying the next best release.`));
+        await update(
+          item,
+          letGo(
+            item,
+            saying('requests.mediaRequests.requestWorker.reasonTryingTheNextBestRelease', {
+              reason,
+            }),
+          ),
+        );
       }
 
       await note(
         request,
-        `${download.title} failed: ${reason}. It is blocklisted, and the next best is looked for.`,
+        saying('requests.mediaRequests.requestWorker.titleFailedReasonItIsBlocklisted', {
+          title: download.title,
+          reason,
+        }),
       );
     }
   };
@@ -689,7 +757,13 @@ const createRequestWorker = ({
 
       if (download === null || client === undefined) {
         for (const item of filing) {
-          await update(item, letGo(item, 'The download was taken out before it was filed'));
+          await update(
+            item,
+            letGo(
+              item,
+              saying('requests.mediaRequests.requestWorker.theDownloadWasTakenOutBefore'),
+            ),
+          );
         }
 
         continue;
@@ -698,12 +772,16 @@ const createRequestWorker = ({
       const attempts = (filing[0]?.attempts ?? 0) + 1;
 
       const retryOrFail = async (
-        problem: string,
+        problem: Said,
         isATry = true,
         problemCode: ProblemCode | null = null,
       ) => {
-        if (filing[0]?.problem !== problem) {
-          await note(request, `${download.title} could not be filed: ${problem}`, problemCode);
+        if (filing[0]?.problem?.message !== problem.message) {
+          await note(
+            request,
+            saying('requests.mediaRequests.notFiled', { title: download.title, problem }),
+            problemCode,
+          );
         }
 
         for (const item of filing) {
@@ -716,7 +794,11 @@ const createRequestWorker = ({
       };
 
       if (download.contentPath === null) {
-        await retryOrFail(`${client.name} has not said where it put the download`);
+        await retryOrFail(
+          saying('requests.mediaRequests.requestWorker.nameHasNotSaidWhereIt', {
+            name: client.name,
+          }),
+        );
         continue;
       }
 
@@ -747,7 +829,10 @@ const createRequestWorker = ({
           const why = refused.get(item.id);
 
           if (why !== undefined || path === undefined) {
-            await update(item, letGo(item, why ?? 'It was not in what was downloaded'));
+            await update(
+              item,
+              letGo(item, why ?? saying('requests.mediaRequests.requestWorker.itWasNotInWhatWas')),
+            );
             continue;
           }
 
@@ -775,7 +860,10 @@ const createRequestWorker = ({
           await block(request.id, download.title, filing[0]?.indexerId ?? null, firstRefusal);
           await note(
             request,
-            `${download.title} was not filed: ${firstRefusal}. It is blocklisted, and the next best is looked for.`,
+            saying('requests.mediaRequests.requestWorker.titleWasNotFiledFirstRefusalIt', {
+              title: download.title,
+              firstRefusal,
+            }),
           );
         }
 
@@ -784,7 +872,7 @@ const createRequestWorker = ({
             request.id,
             download.title,
             filing[0]?.indexerId ?? null,
-            'It held nothing asked for',
+            saying('requests.mediaRequests.requestWorker.itHeldNothingAskedFor'),
           );
         }
 
@@ -814,7 +902,11 @@ const createRequestWorker = ({
           });
           await note(
             request,
-            `Filed ${filed.size.toString()} from ${download.title} into ${folder}.`,
+            saying('requests.mediaRequests.requestWorker.filedSizeFromTitleIntoFolder', {
+              size: filed.size.toString(),
+              title: download.title,
+              folder,
+            }),
           );
         }
       } catch (error) {
@@ -909,7 +1001,7 @@ const createRequestWorker = ({
       };
 
       const couldNot = async (
-        problem: string,
+        problem: Said,
         isATry = true,
         problemCode: ProblemCode | null = null,
       ) => {
@@ -922,12 +1014,18 @@ const createRequestWorker = ({
       };
 
       if (client === undefined || download.contentPath === null) {
-        await couldNot(`${client?.name ?? 'Its client'} has not said where it put the download`);
+        await couldNot(
+          client === undefined
+            ? saying('requests.mediaRequests.itsClientHasNotSaidWhere')
+            : saying('requests.mediaRequests.requestWorker.nameHasNotSaidWhereIt', {
+                name: client.name,
+              }),
+        );
         continue;
       }
 
       if (parsed.title === '') {
-        await couldNot('Its name does not say what it is');
+        await couldNot(saying('requests.mediaRequests.requestWorker.itsNameDoesNotSayWhat'));
         continue;
       }
 
@@ -951,10 +1049,10 @@ const createRequestWorker = ({
         if (folder === null) {
           await couldNot(
             download.libraryKind === 'music'
-              ? 'No track in it could be filed'
+              ? saying('requests.mediaRequests.requestWorker.noTrackInItCouldBe')
               : download.libraryKind === 'books'
-                ? 'No book in it could be filed'
-                : 'No video in it could be filed',
+                ? saying('requests.mediaRequests.requestWorker.noBookInItCouldBe')
+                : saying('requests.mediaRequests.requestWorker.noVideoInItCouldBe'),
           );
           continue;
         }
@@ -971,7 +1069,7 @@ const createRequestWorker = ({
           libraryId: download.libraryId ?? '',
           folder,
         });
-        say(`Filed ${download.title} into ${folder}.`);
+        print(`Filed ${download.title} into ${folder}.`);
       } catch (error) {
         const why = whyNotFiled(error instanceof Error ? error : null, path, client.name);
 
@@ -1018,7 +1116,7 @@ const createRequestWorker = ({
         }
       }
 
-      say(`Searched again for ${searched.toString()} requests still missing something.`);
+      print(`Searched again for ${searched.toString()} requests still missing something.`);
 
       return { searched, startedAt };
     });
@@ -1048,7 +1146,12 @@ const createRequestWorker = ({
         const fetched = await fetchFrom(found, outcome.releases, isFetching);
 
         if (fetched.isSent) {
-          await note(found.request, `Among the newest releases, ${fetched.said}.`);
+          await note(
+            found.request,
+            saying('requests.mediaRequests.requestWorker.amongTheNewestReleasesSaid', {
+              said: fetched.said,
+            }),
+          );
         }
       }
     });
@@ -1235,7 +1338,7 @@ const createRequestWorker = ({
   const refusalsFor = async (
     request: MediaRequestRecord,
     filing: readonly RequestItemRecord[],
-  ): Promise<(found: Partial<ParsedRelease>) => string | null> => {
+  ): Promise<(found: Partial<ParsedRelease>) => Said | null> => {
     if (request.isPickedByHand || filing.some((item) => item.isPickedByHand)) {
       return () => null;
     }
@@ -1247,7 +1350,9 @@ const createRequestWorker = ({
 
       return refused === null
         ? null
-        : `It is ${QUALITY_LABELS[refused]}, which this profile does not take`;
+        : saying('requests.mediaRequests.requestWorker.notTakenByProfile', {
+            quality: QUALITY_LABELS[refused],
+          });
     };
   };
 
@@ -1265,7 +1370,7 @@ const createRequestWorker = ({
   const judgeFiles = async (
     download: Pick<SentDownloadRecord, 'id'>,
     videos: readonly string[],
-  ): Promise<string | null> => {
+  ): Promise<Said | null> => {
     const all = await items.list();
     const held = all.find((item) => item.downloadId === download.id);
 
@@ -1338,7 +1443,7 @@ const createRequestWorker = ({
       );
     },
 
-    pick: (id: string, picked: Release): Promise<MediaRequest | string | null> =>
+    pick: (id: string, picked: Release): Promise<MediaRequest | { refused: Said } | null> =>
       serially(async () => {
         const found = await find(id);
 
@@ -1359,9 +1464,16 @@ const createRequestWorker = ({
         const holding = judged.holding.get(picked.id) ?? [];
 
         if (holding.length === 0) {
-          return found.request.kind === 'film'
-            ? 'The film is on its way already'
-            : `That release holds no ${isMusicRequest(found.request.kind) ? 'album' : 'episode'} this request is waiting for`;
+          return {
+            refused:
+              found.request.kind === 'film'
+                ? saying('requests.mediaRequests.requestWorker.theFilmIsOnItsWay')
+                : saying(
+                    isMusicRequest(found.request.kind)
+                      ? 'requests.mediaRequests.releaseHoldsNoAlbumWaited'
+                      : 'requests.mediaRequests.releaseHoldsNoEpisodeWaited',
+                  ),
+          };
         }
 
         const problem = await send(
@@ -1373,10 +1485,15 @@ const createRequestWorker = ({
         );
 
         if (problem !== null) {
-          return problem;
+          return { refused: problem };
         }
 
-        await note(found.request, `${picked.title} was picked by hand.`);
+        await note(
+          found.request,
+          saying('requests.mediaRequests.requestWorker.titleWasPickedByHand', {
+            title: picked.title,
+          }),
+        );
 
         const after = await find(id);
 

@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { Bell } from '@keyline-icons/react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
@@ -14,6 +15,7 @@ import { whereANotificationLeads } from '@ValenceMobile/components/TheNotificati
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { ANothingHere } from '@ValenceMobile/components/ANothingHere/ANothingHere';
 import type { TheNotificationsProps } from './TheNotifications.types';
+import { say } from '@ValenceI18n/say';
 
 const DOT = 8;
 
@@ -42,21 +44,25 @@ const TheNotifications = ({ onOpen, onBack }: TheNotificationsProps) => {
   const reread = () => cache.invalidateQueries({ queryKey: notificationQueries.key });
 
   const clearThemAll = () => {
-    Alert.alert('Clear every notification?', 'They are gone for good.', [
-      { text: 'Keep them', style: 'cancel' },
-      {
-        text: 'Clear them',
-        style: 'destructive',
-        onPress: () => {
-          void clearNotifications().then(reread);
+    Alert.alert(
+      say('phone.theNotifications.clearEveryNotification'),
+      say('phone.theNotifications.theyAreGoneForGood'),
+      [
+        { text: say('common.keepThem'), style: 'cancel' },
+        {
+          text: say('phone.theNotifications.clearThem'),
+          style: 'destructive',
+          onPress: () => {
+            void clearNotifications().then(reread);
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   return (
     <Screen scrolls onBack={onBack}>
-      <Words size="title">Notifications</Words>
+      <Words size="title">{say('common.notifications')}</Words>
 
       {notifications.length === 0 ? null : (
         <View style={styles.actions}>
@@ -66,20 +72,20 @@ const TheNotifications = ({ onOpen, onBack }: TheNotificationsProps) => {
               void markNotificationsRead().then(reread);
             }}
           >
-            Mark all read
+            {say('common.markAllRead')}
           </Button>
           <Button tone="quiet" onPress={clearThemAll}>
-            Clear all
+            {say('common.clearAll')}
           </Button>
         </View>
       )}
 
       {inbox.isPending ? <ActivityIndicator color={colours.textMuted} /> : null}
 
-      {inbox.isError ? <Words tone="danger">Those could not be read.</Words> : null}
+      {inbox.isError ? <Words tone="danger">{say('common.thoseCouldNotBeRead')}</Words> : null}
 
       {!inbox.isPending && notifications.length === 0 ? (
-        <ANothingHere of={Bell} title="Nothing new" />
+        <ANothingHere of={Bell} title={say('phone.theNotifications.nothingNew')} />
       ) : null}
 
       {notifications.map((notification) => {
@@ -90,7 +96,7 @@ const TheNotifications = ({ onOpen, onBack }: TheNotificationsProps) => {
           <Button
             key={notification.id}
             tone="bare"
-            label={notification.title}
+            label={sayAgain(notification.title)}
             onPress={() => {
               if (isUnread) {
                 void markNotificationsRead(notification.id).then(reread);
@@ -106,9 +112,9 @@ const TheNotifications = ({ onOpen, onBack }: TheNotificationsProps) => {
                 style={[styles.dot, { backgroundColor: isUnread ? colours.accent : 'transparent' }]}
               />
               <View style={styles.words}>
-                <Words>{notification.title}</Words>
+                <Words>{sayAgain(notification.title)}</Words>
                 <Words size="small" tone="muted">
-                  {notification.body}
+                  {sayAgain(notification.body)}
                 </Words>
                 <Words size="small" tone="muted">
                   {describeWhen(new Date(notification.createdAt), now)}

@@ -16,6 +16,7 @@ import { stillTransition } from '@ValenceUI/animations/reveal';
 import { VALENCE_TOKENS } from '@ValenceUI/tokens';
 import { useFullscreen } from '@ValenceScreens/reading/useFullscreen';
 import type { ReaderChromeProps } from './ReaderChrome.types';
+import { say } from '@ValenceI18n/say';
 
 const PANEL_ROOM = '21rem';
 
@@ -87,7 +88,12 @@ const ReaderChrome = ({
             isShown || isPanelOpen ? 'opacity-100' : 'pointer-events-none opacity-0',
           )}
         >
-          <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close the reader">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            aria-label={say('screens.readerChrome.closeTheReader')}
+          >
             <Icon of={XIcon} size={18} />
           </Button>
 
@@ -97,7 +103,11 @@ const ReaderChrome = ({
             <Button
               variant="ghost"
               size="sm"
-              aria-label={isFullscreen ? 'Leave full screen' : 'Fill the screen'}
+              aria-label={
+                isFullscreen
+                  ? say('screens.readerChrome.leaveFullScreen')
+                  : say('screens.readerChrome.fillTheScreen')
+              }
               onClick={toggle}
             >
               <Icon of={isFullscreen ? MinimizeIcon : MaximizeIcon} size={18} />
@@ -108,7 +118,11 @@ const ReaderChrome = ({
             variant="ghost"
             size="sm"
             isActive={isPanelOpen}
-            aria-label={isPanelOpen ? 'Put the panel away' : 'Bring out the panel'}
+            aria-label={
+              isPanelOpen
+                ? say('common.putThePanelAway')
+                : say('screens.readerChrome.bringOutThePanel')
+            }
             onClick={() => {
               onPanelOpenChange(!isPanelOpen);
             }}
@@ -135,7 +149,7 @@ const ReaderChrome = ({
                   variant="bare"
                   size="none"
                   hasTooltip={false}
-                  label={isRightToLeft ? 'Next page' : 'Previous page'}
+                  label={isRightToLeft ? say('common.nextPage') : say('common.previousPage')}
                   className="h-full w-full items-center justify-start px-4"
                   onClick={isRightToLeft ? onForward : onBack}
                 >
@@ -156,7 +170,7 @@ const ReaderChrome = ({
                   variant="bare"
                   size="none"
                   hasTooltip={false}
-                  label={isRightToLeft ? 'Previous page' : 'Next page'}
+                  label={isRightToLeft ? say('common.previousPage') : say('common.nextPage')}
                   className="h-full w-full items-center justify-end px-4"
                   onClick={isRightToLeft ? onBack : onForward}
                 >
@@ -211,7 +225,7 @@ const ReaderChrome = ({
             <Button
               variant="bare"
               className="absolute inset-0 cursor-default bg-shade/30"
-              aria-label="Put the panel away"
+              aria-label={say('common.putThePanelAway')}
               onClick={() => {
                 onPanelOpenChange(false);
               }}

@@ -1,4 +1,6 @@
 import type { DecodedSubtitle } from './decodeSubtitle';
+import type { Said } from '@ValenceI18n/SaidSchema';
+import { saying } from '@ValenceI18n/saying';
 
 /**
  * Says what a subtitle file was read as and what decided that, for the files where anything was
@@ -12,17 +14,20 @@ import type { DecodedSubtitle } from './decodeSubtitle';
  * @param decoded - What the file was read as.
  * @returns What to report, or null where nothing was guessed.
  */
-const describeSubtitleCharset = (decoded: DecodedSubtitle): string | null => {
+const describeSubtitleCharset = (decoded: DecodedSubtitle): Said | null => {
   if (decoded.decidedBy === 'bom' || decoded.decidedBy === 'utf8') {
     return null;
   }
 
   const why =
     decoded.decidedBy === 'language'
-      ? 'from the track language'
-      : 'a guess, since the file does not name its language';
+      ? saying('server.subtitles.describeSubtitleCharset.fromTheTrackLanguage')
+      : saying('server.subtitles.describeSubtitleCharset.aGuessSinceTheFileDoes');
 
-  return `read as ${decoded.charset} (${why}; not valid UTF-8)`;
+  return saying('server.subtitles.describeSubtitleCharset.readAsCharsetWhyNotValid', {
+    charset: decoded.charset,
+    why,
+  });
 };
 
 export { describeSubtitleCharset };

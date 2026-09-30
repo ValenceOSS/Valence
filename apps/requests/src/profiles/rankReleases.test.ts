@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { aRelease as aSeededRelease } from '@ValenceRequests/testing/aRelease';
 import { rankReleases } from './rankReleases';
@@ -46,7 +47,7 @@ const judged = (releaseId: string, score: number, isRejected = false): Judgement
   },
   score,
   isRejected,
-  rejections: isRejected ? ['No'] : [],
+  rejections: isRejected ? [sayVerbatim('No')] : [],
   reasons: [],
 });
 

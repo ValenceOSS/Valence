@@ -4,6 +4,7 @@ import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
 import { askWhichPlaylist } from '@ValenceMobile/music/askWhichPlaylist';
 import { thePhonesMusicPlayer } from '@ValenceMobile/music/thePhonesMusicPlayer';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
+import { say } from '@ValenceI18n/say';
 
 /**
  * What an album held down offers, in the system's action sheet, as the web's album menu does: play
@@ -35,7 +36,7 @@ const useAskAboutAnAlbum = (
     };
     const choices = [
       {
-        label: 'Play',
+        label: say('common.play'),
         run: () => {
           withSongs((tracks) => {
             player.play(tracks, 0, { source });
@@ -43,7 +44,7 @@ const useAskAboutAnAlbum = (
         },
       },
       {
-        label: 'Shuffle',
+        label: say('common.shuffle'),
         run: () => {
           withSongs((tracks) => {
             player.play(tracks, Math.floor(Math.random() * tracks.length), {
@@ -54,7 +55,7 @@ const useAskAboutAnAlbum = (
         },
       },
       {
-        label: 'Play next',
+        label: say('common.playNext'),
         run: () => {
           withSongs((tracks) => {
             player.playNext(tracks);
@@ -62,7 +63,7 @@ const useAskAboutAnAlbum = (
         },
       },
       {
-        label: 'Add to queue',
+        label: say('common.addToQueue'),
         run: () => {
           withSongs((tracks) => {
             player.addToQueue(tracks);
@@ -70,7 +71,7 @@ const useAskAboutAnAlbum = (
         },
       },
       {
-        label: 'Add to playlist…',
+        label: say('common.addToPlaylist2'),
         run: () => {
           askWhichPlaylist(
             album.title,
@@ -86,7 +87,7 @@ const useAskAboutAnAlbum = (
     ActionSheetIOS.showActionSheetWithOptions(
       {
         title: album.title,
-        options: [...choices.map((choice) => choice.label), 'Cancel'],
+        options: [...choices.map((choice) => choice.label), say('common.cancel')],
         cancelButtonIndex: choices.length,
       },
       (picked) => {

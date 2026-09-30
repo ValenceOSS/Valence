@@ -1,9 +1,12 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { z } from 'zod';
 import { PlaybackPlanSchema } from '@ValenceContracts/schemas/PlaybackPlan';
 import { TranscodeReuseSchema } from '@ValenceContracts/schemas/TranscodeReuse';
 import type { DeviceProfile } from '@ValenceContracts/schemas/DeviceProfile';
 import type { PlaybackPlan } from '@ValenceContracts/schemas/PlaybackPlan';
 import type { QualityPreference } from './qualityPreference';
+import { say } from '@ValenceI18n/say';
 
 const DeliverySchema = z.union([
   z.object({
@@ -18,7 +21,7 @@ const StartedSessionSchema = z.object({
   delivery: DeliverySchema,
   mode: z.string(),
   plan: PlaybackPlanSchema,
-  warnings: z.array(z.string()).default([]),
+  warnings: z.array(SaidSchema).default([]),
   reuse: TranscodeReuseSchema.nullable().default(null),
 });
 
@@ -68,7 +71,10 @@ const startPlaybackSession = async (
   }).catch(() => null);
 
   if (response === null) {
-    return { kind: 'failed', reason: 'Could not reach the server.' };
+    return {
+      kind: 'failed',
+      reason: say('client.playback.startPlaybackSession.couldNotReachTheServer'),
+    };
   }
 
   if (!response.ok) {
@@ -78,14 +84,19 @@ const startPlaybackSession = async (
       kind: 'failed',
       reason: body.success
         ? body.data.error
-        : `Valence asked for something the server would not accept (${response.status.toString()}).`,
+        : say('client.playback.startPlaybackSession.valenceAskedForSomethingTheServer', {
+            status: response.status.toString(),
+          }),
     };
   }
 
   const parsed = StartedSessionSchema.safeParse(await response.json());
 
   if (!parsed.success) {
-    return { kind: 'failed', reason: 'The server sent a response Valence could not read.' };
+    return {
+      kind: 'failed',
+      reason: say('client.playback.startPlaybackSession.theServerSentAResponseValence'),
+    };
   }
 
   return { kind: 'started', session: parsed.data };
@@ -191,22 +202,40 @@ const describeWhy = (plan: PlaybackPlan): string[] => {
   const reasons: string[] = [];
 
   if (plan.video.kind === 'transcode') {
-    reasons.push(`Video: ${plan.video.reason.detail}`);
+    reasons.push(
+      say('client.playback.startPlaybackSession.videoDetail', {
+        detail: sayAgain(plan.video.reason.detail),
+      }),
+    );
   }
 
   if (plan.audio.kind === 'transcode') {
-    reasons.push(`Audio: ${plan.audio.reason.detail}`);
+    reasons.push(
+      say('client.playback.startPlaybackSession.audioDetail', {
+        detail: sayAgain(plan.audio.reason.detail),
+      }),
+    );
   }
 
   if (plan.container.kind === 'remux') {
-    reasons.push(`Container: ${plan.container.reason.detail}`);
+    reasons.push(
+      say('client.playback.startPlaybackSession.containerDetail', {
+        detail: sayAgain(plan.container.reason.detail),
+      }),
+    );
   }
 
   if (plan.subtitles.kind === 'burnIn') {
-    reasons.push(`Subtitles: ${plan.subtitles.reason.detail}`);
+    reasons.push(
+      say('client.playback.startPlaybackSession.subtitlesDetail', {
+        detail: sayAgain(plan.subtitles.reason.detail),
+      }),
+    );
   }
 
-  return reasons.length > 0 ? reasons : ['Playing without any conversion.'];
+  return reasons.length > 0
+    ? reasons
+    : [say('client.playback.startPlaybackSession.playingWithoutAnyConversion')];
 };
 
 export type { StartedSession, StartOutcome };

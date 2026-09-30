@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { cn } from '@ValenceUI/cn';
 import { Button } from '@ValenceUI/Button';
 import type { ReadMoreProps } from './ReadMore.types';
+import { say } from '@ValenceI18n/say';
 
 const CLAMP_CLASSES: Record<number, string> = {
   2: 'line-clamp-2',
@@ -30,8 +31,8 @@ const CLAMP_CLASSES: Record<number, string> = {
 const ReadMore = ({
   children,
   lines = 6,
-  moreLabel = 'Read more',
-  lessLabel = 'Read less',
+  moreLabel = say('common.readMore'),
+  lessLabel = say('common.readLess'),
   className,
 }: ReadMoreProps) => {
   const textRef = useRef<HTMLParagraphElement>(null);

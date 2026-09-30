@@ -46,6 +46,7 @@ import { SUBTITLE_STEP_SECONDS } from '@ValenceClient/playback/SUBTITLE_STEP_SEC
 import { describePlaybackRate } from '@ValenceClient/playback/describePlaybackRate';
 import { describeSubtitleOffset } from '@ValenceClient/playback/describeSubtitleOffset';
 import type { PlayerControlsProps } from './PlayerControls.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Formats a playback rate the way a viewer reads it rather than the way a float prints, so the menu
@@ -134,7 +135,7 @@ const PlayerControls = ({
   audioTracks,
   selectedAudioIndex,
   availableQualitySteps,
-  originalLabel = 'Original',
+  originalLabel = say('common.original'),
   qualityStepsSavingNothing = [],
   qualityStepCosts = {},
   selectedQuality,
@@ -178,7 +179,7 @@ const PlayerControls = ({
     <div className="valence-solid flex flex-col gap-1 rounded-lg px-3 py-2 text-text sm:px-4">
       <div className="flex items-center gap-3">
         <Slider
-          label={`Seek through ${title}`}
+          label={say('common.seekThroughTitle', { title })}
           value={position}
           max={duration}
           onValueChange={onSeek}
@@ -190,7 +191,11 @@ const PlayerControls = ({
         <Button
           variant="ghost"
           size="none"
-          aria-label={isShowingRemaining ? 'Show the time played' : 'Show the time remaining'}
+          aria-label={
+            isShowingRemaining
+              ? say('screens.videoPlayer.playerControls.showTheTimePlayed')
+              : say('screens.videoPlayer.playerControls.showTheTimeRemaining')
+          }
           onClick={onToggleTimeDisplay}
           className="shrink-0 px-1 text-xs tabular-nums sm:text-sm"
         >
@@ -205,7 +210,9 @@ const PlayerControls = ({
         <Button
           isIconOnly
           variant="ghost"
-          label={`Back ${SKIP_SECONDS.toString()} seconds`}
+          label={say('screens.videoPlayer.playerControls.backSKIPSECONDSSeconds', {
+            SKIP_SECONDS: SKIP_SECONDS.toString(),
+          })}
           onClick={() => {
             onSkip(-SKIP_SECONDS);
           }}
@@ -218,7 +225,7 @@ const PlayerControls = ({
         <Button
           isIconOnly
           variant="ghost"
-          label={isPlaying ? 'Pause' : 'Play'}
+          label={isPlaying ? say('common.pause') : say('common.play')}
           onClick={onTogglePlay}
           disabled={isDisabled}
           size="md"
@@ -233,7 +240,9 @@ const PlayerControls = ({
         <Button
           isIconOnly
           variant="ghost"
-          label={`Forward ${SKIP_SECONDS.toString()} seconds`}
+          label={say('screens.videoPlayer.playerControls.forwardSKIPSECONDSSeconds', {
+            SKIP_SECONDS: SKIP_SECONDS.toString(),
+          })}
           onClick={() => {
             onSkip(SKIP_SECONDS);
           }}
@@ -247,11 +256,19 @@ const PlayerControls = ({
           <Button
             isIconOnly
             variant="ghost"
-            label={`Next episode: ${
+            label={
               following.episodeNumber === null || following.episodeNumber === undefined
-                ? following.title
-                : `${describeEpisodeNumbers(following.episodeNumber, following.episodeNumberEnd)}. ${following.title}`
-            }`}
+                ? say('screens.videoPlayer.playerControls.nextEpisodeTitle', {
+                    title: following.title,
+                  })
+                : say('screens.videoPlayer.playerControls.nextEpisodeNumberTitle', {
+                    number: describeEpisodeNumbers(
+                      following.episodeNumber,
+                      following.episodeNumberEnd,
+                    ),
+                    title: following.title,
+                  })
+            }
             onClick={() => {
               onSelectEpisode(following);
             }}
@@ -268,7 +285,7 @@ const PlayerControls = ({
           <Button
             isIconOnly
             variant="ghost"
-            label={isMuted ? 'Unmute' : 'Mute'}
+            label={isMuted ? say('common.unmute') : say('common.mute')}
             onClick={onToggleMute}
             size="md"
           >
@@ -280,7 +297,7 @@ const PlayerControls = ({
           </Button>
 
           <Slider
-            label="Volume"
+            label={say('common.volume')}
             value={isMuted ? 0 : Math.round(volume * 100)}
             max={100}
             tone="glass"
@@ -310,7 +327,9 @@ const PlayerControls = ({
             isIconOnly
             variant="ghost"
             label={
-              selectedSubtitleId === SUBTITLES_OFF ? 'Turn subtitles on' : 'Turn subtitles off'
+              selectedSubtitleId === SUBTITLES_OFF
+                ? say('screens.videoPlayer.playerControls.turnSubtitlesOn')
+                : say('screens.videoPlayer.playerControls.turnSubtitlesOff')
             }
             isActive={selectedSubtitleId !== SUBTITLES_OFF}
             onClick={() => {
@@ -333,7 +352,7 @@ const PlayerControls = ({
         )}
 
         <SettingsMenu
-          label="Settings"
+          label={say('common.settings')}
           tone="default"
           {...(onMenuOpenChange === undefined ? {} : { onOpenChange: onMenuOpenChange })}
           isDisabled={isDisabled}
@@ -346,7 +365,7 @@ const PlayerControls = ({
                   {
                     kind: 'choice' as const,
                     id: 'audio',
-                    label: 'Audio track',
+                    label: say('screens.videoPlayer.playerControls.audioTrack'),
                     icon: <Icon of={HeadphonesIcon} size={18} />,
                     selectedId: (selectedAudioIndex ?? audioTracks[0]?.index ?? 0).toString(),
                     onSelect: (id: string) => {
@@ -369,7 +388,7 @@ const PlayerControls = ({
                     selectedId: selectedSubtitleId,
                     onSelect: onSubtitleChange,
                     choices: [
-                      { id: SUBTITLES_OFF, label: 'Off' },
+                      { id: SUBTITLES_OFF, label: say('common.off') },
                       ...subtitleTracks.map((track) => ({
                         id: track.id,
                         label: track.label,
@@ -384,7 +403,7 @@ const PlayerControls = ({
                   {
                     kind: 'custom' as const,
                     id: 'timing',
-                    label: 'Subtitle timing',
+                    label: say('common.subtitleTiming'),
                     icon: <Icon of={ClockIcon} size={18} />,
                     detail: describeSubtitleOffset(subtitleOffsetSeconds),
                     control: (
@@ -392,7 +411,7 @@ const PlayerControls = ({
                         <Button
                           isIconOnly
                           variant="ghost"
-                          label="Subtitles earlier"
+                          label={say('screens.videoPlayer.playerControls.subtitlesEarlier')}
                           size="sm"
                           onClick={() => {
                             onSubtitleOffsetChange(subtitleOffsetSeconds - SUBTITLE_STEP_SECONDS);
@@ -404,7 +423,7 @@ const PlayerControls = ({
                         <Button
                           isIconOnly
                           variant="ghost"
-                          label="Subtitles in time"
+                          label={say('screens.videoPlayer.playerControls.subtitlesInTime')}
                           size="sm"
                           onClick={() => {
                             onSubtitleOffsetChange(0);
@@ -416,7 +435,7 @@ const PlayerControls = ({
                         <Button
                           isIconOnly
                           variant="ghost"
-                          label="Subtitles later"
+                          label={say('screens.videoPlayer.playerControls.subtitlesLater')}
                           size="sm"
                           onClick={() => {
                             onSubtitleOffsetChange(subtitleOffsetSeconds + SUBTITLE_STEP_SECONDS);
@@ -434,7 +453,7 @@ const PlayerControls = ({
                   {
                     kind: 'panel' as const,
                     id: 'appearance',
-                    label: 'Caption settings',
+                    label: say('common.captionSettings'),
                     icon: <Icon of={TypeOutlineIcon} size={18} />,
                     content: (
                       <CaptionSettings
@@ -448,7 +467,7 @@ const PlayerControls = ({
             {
               kind: 'choice' as const,
               id: 'speed',
-              label: 'Playback speed',
+              label: say('screens.videoPlayer.playerControls.playbackSpeed'),
               icon: <Icon of={GaugeIcon} size={18} />,
               selectedId: playbackRate.toString(),
               onSelect: (id: string) => {
@@ -462,7 +481,7 @@ const PlayerControls = ({
             {
               kind: 'choice' as const,
               id: 'boost',
-              label: 'Volume boost',
+              label: say('screens.videoPlayer.playerControls.volumeBoost'),
               icon: <Icon of={VolumeIcon} size={18} />,
               selectedId: boost.toString(),
               onSelect: (id: string) => {
@@ -470,7 +489,7 @@ const PlayerControls = ({
               },
               choices: BOOST_STEPS.map((step) => ({
                 id: step.toString(),
-                label: step === 1 ? 'Off' : rateLabel(step),
+                label: step === 1 ? say('common.off') : rateLabel(step),
               })),
             },
             ...(availableQualitySteps.length === 0
@@ -479,7 +498,7 @@ const PlayerControls = ({
                   {
                     kind: 'choice' as const,
                     id: 'quality',
-                    label: 'Quality',
+                    label: say('common.quality'),
                     icon: <Icon of={MonitorIcon} size={18} />,
                     selectedId: selectedQuality,
                     onSelect: (id: string) => {
@@ -515,7 +534,7 @@ const PlayerControls = ({
             {
               kind: 'toggle' as const,
               id: 'stats',
-              label: 'Stats for nerds',
+              label: say('common.statsForNerds'),
               icon: <Icon of={CircleActivityIcon} size={18} />,
               isOn: isShowingStats,
               onToggle: onToggleStats,
@@ -524,7 +543,13 @@ const PlayerControls = ({
         />
 
         {onPlayOnTv === undefined ? null : (
-          <Button isIconOnly variant="ghost" label="Play on TV" onClick={onPlayOnTv} size="md">
+          <Button
+            isIconOnly
+            variant="ghost"
+            label={say('common.playOnTV')}
+            onClick={onPlayOnTv}
+            size="md"
+          >
             <Icon of={MonitorIcon} size={20} />
           </Button>
         )}
@@ -535,8 +560,8 @@ const PlayerControls = ({
             variant="ghost"
             label={
               castState === 'connected'
-                ? 'Playing on another device'
-                : 'Play on a device — your browser will ask which'
+                ? say('common.playingOnAnotherDevice')
+                : say('screens.videoPlayer.playerControls.playOnADeviceYourBrowser')
             }
             isActive={castState === 'connected'}
             disabled={castState === 'connecting'}
@@ -556,7 +581,7 @@ const PlayerControls = ({
           <Button
             isIconOnly
             variant="ghost"
-            label="Pop out"
+            label={say('screens.videoPlayer.playerControls.popOut')}
             onClick={onPopOut}
             isActive={isPoppedOut}
             size="md"
@@ -574,7 +599,11 @@ const PlayerControls = ({
           <Button
             isIconOnly
             variant="ghost"
-            label={isGlowing ? 'Leave the immersive view' : 'Immersive view'}
+            label={
+              isGlowing
+                ? say('screens.videoPlayer.playerControls.leaveTheImmersiveView')
+                : say('screens.videoPlayer.playerControls.immersiveView')
+            }
             isActive={isGlowing}
             onClick={onToggleGlow}
             size="md"
@@ -586,7 +615,11 @@ const PlayerControls = ({
         <Button
           isIconOnly
           variant="ghost"
-          label={isFullscreen ? 'Exit full screen' : 'Full screen'}
+          label={
+            isFullscreen
+              ? say('screens.videoPlayer.playerControls.exitFullScreen')
+              : say('screens.videoPlayer.playerControls.fullScreen')
+          }
           onClick={onToggleFullscreen}
           size="md"
         >

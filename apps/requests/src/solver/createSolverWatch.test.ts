@@ -79,7 +79,7 @@ describe('createSolverWatch', () => {
 
     await expect(launch()).rejects.toThrow('No browser installed');
 
-    expect(watch.current().startProblem).toBe('No browser installed');
+    expect(watch.current().startProblem).toEqual('No browser installed');
 
     works = true;
     await launch();

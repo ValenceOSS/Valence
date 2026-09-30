@@ -18,6 +18,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheServer } from '@ValenceMobile/hooks/useTheServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { TheWayInProps } from './TheWayIn.types';
+import { say } from '@ValenceI18n/say';
 
 const MARK_HIGH = 40;
 
@@ -102,11 +103,12 @@ const TheWayIn = ({
           <ARising after={after} turn={1}>
             <View style={styles.centred}>
               <Words size="title" isCentred>
-                {`Can’t reach ${watched.address ?? 'your server'}`}
+                {watched.address === null
+                  ? say('common.cantReachYourServer')
+                  : say('common.cantReachAddress', { address: watched.address })}
               </Words>
               <Words tone="muted" isCentred>
-                It may be restarting. Valence tries again every few seconds, or pull down to try
-                now.
+                {say('phone.theWayIn.itMayBeRestartingValenceTries')}
               </Words>
 
               <Button
@@ -117,12 +119,12 @@ const TheWayIn = ({
                   void asking.refetch();
                 }}
               >
-                Try again
+                {say('common.tryAgain')}
               </Button>
 
               {kept.length === 0 ? null : (
                 <Button tone="ghost" icon={Download} onPress={onDownloads}>
-                  Watch your downloads
+                  {say('phone.theWayIn.watchYourDownloads')}
                 </Button>
               )}
             </View>
@@ -130,7 +132,7 @@ const TheWayIn = ({
         ) : (
           <>
             <ARising after={after} turn={1} isArrived={isReturning}>
-              <Words size="title">Who is watching?</Words>
+              <Words size="title">{say('common.whoIsWatching')}</Words>
             </ARising>
 
             {asking.isPending ? <ActivityIndicator color={colours.textMuted} /> : null}
@@ -152,7 +154,7 @@ const TheWayIn = ({
             </View>
 
             {asking.isSuccess && profiles.length === 0 ? (
-              <Words tone="muted">Nobody has an account on this server yet.</Words>
+              <Words tone="muted">{say('common.nobodyHasAnAccountOnThis')}</Words>
             ) : null}
           </>
         )}
@@ -160,10 +162,10 @@ const TheWayIn = ({
 
       <ARising after={after} turn={profiles.length + 2} isArrived={isReturning}>
         <View style={styles.foot}>
-          <UseAPasskey label="Sign in with a passkey" onIn={onIn} />
+          <UseAPasskey label={say('phone.theWayIn.signInWithAPasskey')} onIn={onIn} />
 
           <Button tone="ghost" onPress={onElsewhere}>
-            Use a different server
+            {say('common.useADifferentServer')}
           </Button>
         </View>
       </ARising>

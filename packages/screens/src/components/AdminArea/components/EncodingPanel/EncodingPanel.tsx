@@ -1,3 +1,4 @@
+import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { useCallback, useMemo, useState } from 'react';
 import { Badge } from '@ValenceUI/Badge';
@@ -15,6 +16,8 @@ import { sortReencodes } from './sortReencodes';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { EncodingPanelProps } from './EncodingPanel.types';
 import type { Reencode } from '@ValenceContracts/schemas/Reencode';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * What an encode is called on a screen listing several, which is the programme rather than the
@@ -86,29 +89,29 @@ const EncodingPanel = ({
     () => [
       {
         id: 'title',
-        header: 'Title',
+        header: say('common.title'),
         accessorFn: nameOf,
         cell: ({ row }) => <span className="truncate text-text">{nameOf(row.original)}</span>,
       },
       {
         id: 'what',
-        header: 'What was asked for',
+        header: say('screens.adminArea.encodingPanel.whatWasAskedFor'),
         enableSorting: false,
         accessorFn: (one) => one.mode,
         cell: ({ row }) => (
           <span className="font-body text-xs text-text-muted">
             {row.original.mode === 'keep'
-              ? 'Kept alongside'
+              ? say('screens.adminArea.encodingPanel.keptAlongside')
               : row.original.mode === 'audioOnly'
-                ? 'Audio only'
-                : 'Replaced'}
+                ? say('common.audioOnly')
+                : say('screens.adminArea.encodingPanel.replaced')}
             {row.original.quality === null ? '' : ` · ${row.original.quality}`}
           </span>
         ),
       },
       {
         id: 'state',
-        header: 'What happened',
+        header: say('screens.adminArea.encodingPanel.whatHappened'),
         accessorFn: (one) => one.state,
         cell: ({ row }) => (
           <Badge
@@ -127,10 +130,12 @@ const EncodingPanel = ({
       },
       {
         id: 'failure',
-        header: 'Why',
+        header: say('common.why'),
         enableSorting: false,
         cell: ({ row }) => (
-          <span className="font-body text-xs text-text-muted">{row.original.failure ?? '—'}</span>
+          <span className="font-body text-xs text-text-muted">
+            {sayAgainIfAny(row.original.failure) ?? '—'}
+          </span>
         ),
       },
     ],
@@ -139,10 +144,9 @@ const EncodingPanel = ({
 
   if (isUnreachable) {
     return (
-      <PanelCard title="Encoding">
+      <PanelCard title={say('common.encoding')}>
         <p className="text-sm text-text-muted">
-          The re-encoding queue could not be read from the server. This is not the same as it being
-          empty.
+          {say('screens.adminArea.encodingPanel.theReEncodingQueueCouldNot')}
         </p>
       </PanelCard>
     );
@@ -151,28 +155,33 @@ const EncodingPanel = ({
   return (
     <div className="flex flex-col gap-5">
       <PanelCard
-        title="Waiting for you"
+        title={say('common.waitingForYou')}
         actions={
           <PanelCardAction icon={RefreshCwIcon} onClick={onChoose}>
-            Re-encode something
+            {say('screens.adminArea.encodingPanel.reEncodeSomething')}
           </PanelCardAction>
         }
       >
         {awaitingReview.length === 0 ? (
           <NothingHere
             of={TapeIcon}
-            title="Nothing is waiting"
-            detail="A replacement keeps both files until you have watched it and said it is fine. Nothing is discarded on a timer."
+            title={say('screens.adminArea.encodingPanel.nothingIsWaiting')}
+            detail={say('screens.adminArea.encodingPanel.aReplacementKeepsBothFilesUntil')}
           />
         ) : (
           <div className="flex flex-col gap-3">
             <Callout
-              title={`${awaitingReview.length.toString()} ${awaitingReview.length === 1 ? 'encode is' : 'encodes are'} holding a film and its replacement`}
+              title={sayCount(
+                'screens.adminArea.encodingPanel.countEncodesAreHoldingAFilm',
+                awaitingReview.length,
+              )}
               tone={awaitingReview.length >= awaitingReviewCap ? 'warning' : 'quiet'}
             >
               {awaitingReview.length >= awaitingReviewCap
-                ? `The queue has paused at ${awaitingReviewCap.toString()}, because every one of these is using disk until it is judged. Review some to let it carry on.`
-                : 'Nothing is thrown away until you have watched the result and confirmed it.'}
+                ? say('screens.adminArea.encodingPanel.theQueueHasPausedAtAwaitingReviewCap', {
+                    awaitingReviewCap: awaitingReviewCap.toString(),
+                  })
+                : say('screens.adminArea.encodingPanel.nothingIsThrownAwayUntilYou')}
             </Callout>
 
             <ul className="flex flex-col gap-2">
@@ -185,8 +194,12 @@ const EncodingPanel = ({
                     <span className="truncate text-sm text-text">{nameOf(one)}</span>
                     <span className="font-body text-xs text-text-muted">
                       {formatBytes(one.originalSizeBytes)} →{' '}
-                      {one.producedBytes === null ? 'unknown' : formatBytes(one.producedBytes)}
-                      {freedBy(one) === null ? '' : ` · frees ${freedBy(one) ?? ''}`}
+                      {one.producedBytes === null
+                        ? say('common.unknownSize')
+                        : formatBytes(one.producedBytes)}
+                      {freedBy(one) === null
+                        ? ''
+                        : ` · ${say('screens.adminArea.encodingPanel.freesSize', { size: freedBy(one) ?? '' })}`}
                     </span>
                   </span>
 
@@ -197,7 +210,7 @@ const EncodingPanel = ({
                       onReview(one);
                     }}
                   >
-                    Review
+                    {say('screens.adminArea.encodingPanel.review')}
                   </Button>
                 </li>
               ))}
@@ -206,9 +219,11 @@ const EncodingPanel = ({
         )}
       </PanelCard>
 
-      <PanelCard title="Under way">
+      <PanelCard title={say('screens.adminArea.encodingPanel.underWay')}>
         {underWay.length === 0 ? (
-          <p className="text-sm text-text-muted">Nothing is being encoded.</p>
+          <p className="text-sm text-text-muted">
+            {say('screens.adminArea.encodingPanel.nothingIsBeingEncoded')}
+          </p>
         ) : (
           <ul className="flex flex-col gap-3">
             {underWay.map((one) => (
@@ -239,7 +254,7 @@ const EncodingPanel = ({
                     void stop(one);
                   }}
                 >
-                  Stop
+                  {say('common.stop')}
                 </Button>
               </li>
             ))}
@@ -247,14 +262,14 @@ const EncodingPanel = ({
         )}
       </PanelCard>
 
-      <PanelCard title="Already done" isFlush>
+      <PanelCard title={say('screens.adminArea.encodingPanel.alreadyDone')} isFlush>
         <DataTable
-          label="Re-encodes that have finished"
+          label={say('screens.adminArea.encodingPanel.reEncodesThatHaveFinished')}
           columns={columns}
           rows={settled}
           pageSize={10}
           getRowId={(row) => row.id}
-          emptyMessage="Nothing has been re-encoded yet."
+          emptyMessage={say('screens.adminArea.encodingPanel.nothingHasBeenReEncodedYet')}
         />
       </PanelCard>
     </div>

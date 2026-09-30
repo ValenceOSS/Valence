@@ -7,6 +7,7 @@ import { TextField } from '@ValenceUI/TextField';
 import { describeOptionLabel } from './describeOptionLabel';
 import { splitSettingLabel } from './splitSettingLabel';
 import type { DefinitionSettingsFieldsProps } from './DefinitionSettingsFields.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The settings a site's definition asks for, each drawn as what it is: a text field, a password
@@ -107,8 +108,9 @@ const DefinitionSettingsFields = ({
               }}
               {...(isKept
                 ? {
-                    description:
-                      'Kept. Type a new one to replace it, or leave this empty to keep it.',
+                    description: say(
+                      'screens.indexerDialog.definitionSettingsFields.keptTypeANewOneTo',
+                    ),
                   }
                 : {})}
               autoComplete="off"

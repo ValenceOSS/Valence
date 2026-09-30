@@ -1,4 +1,5 @@
 import type { About } from '@ValenceContracts/schemas/About';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Names the release and commit a server says it runs, as the half of a build line that is about the
@@ -19,10 +20,12 @@ const describeTheServer = (about: About | null): string | null => {
   const commit = about.commit === '' || about.commit === 'unknown' ? null : about.commit;
 
   if (about.version === undefined) {
-    return commit === null ? null : `Server ${commit}`;
+    return commit === null ? null : say('client.about.describeTheServer.serverCommit', { commit });
   }
 
-  return commit === null ? `Server ${about.version}` : `Server ${about.version} (${commit})`;
+  return commit === null
+    ? say('client.about.describeTheServer.serverVersion', { version: about.version })
+    : say('client.about.describeTheServer.serverVersionCommit', { version: about.version, commit });
 };
 
 export { describeTheServer };

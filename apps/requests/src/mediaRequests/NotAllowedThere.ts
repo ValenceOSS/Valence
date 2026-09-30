@@ -1,7 +1,13 @@
-class NotAllowedThere extends Error {
+import { SaidError } from '@ValenceI18n/SaidError';
+import { saying } from '@ValenceI18n/saying';
+
+class NotAllowedThere extends SaidError {
   public constructor(folder: string, runningAs: string) {
     super(
-      `The requests service, running as ${runningAs}, may not write to ${folder}. Set PUID and PGID on it to the owner of your media folders.`,
+      saying('requests.mediaRequests.notAllowedThere.theRequestsServiceRunningAsRunningAs', {
+        runningAs,
+        folder,
+      }),
     );
     this.name = 'NotAllowedThere';
   }

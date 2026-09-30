@@ -1,4 +1,5 @@
 import { partsOfTimeLeft } from '@ValenceCore/functions/partsOfTimeLeft';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says how long something has left in a few words, rounded the way a person would say it.
@@ -10,8 +11,10 @@ const describeTimeToGo = (seconds: number): string => {
   const parts = partsOfTimeLeft(seconds);
 
   return parts === null
-    ? 'under a minute left'
-    : `about ${parts.map((part) => `${part.value.toString()} ${part.unit}`).join(' ')} left`;
+    ? say('core.describeTimeToGo.underAMinuteLeft')
+    : say('core.describeTimeToGo.aboutTimeLeft', {
+        time: parts.map((part) => `${part.value.toString()} ${part.unit}`).join(' '),
+      });
 };
 
 export { describeTimeToGo };

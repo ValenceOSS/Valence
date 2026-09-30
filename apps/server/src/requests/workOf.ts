@@ -1,3 +1,4 @@
+import { saying } from '@ValenceI18n/saying';
 import type { DownloadClientState, QueuedDownload } from '@ValenceContracts/schemas/DownloadQueue';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { RequestsWork } from '@ValenceContracts/schemas/Requests';
@@ -47,7 +48,10 @@ const workOf = (
       reachable: enabled.filter((client) => client.isReachable).length,
       failing: enabled
         .filter((client) => !client.isReachable)
-        .map((client) => ({ name: client.name, problem: client.problem ?? 'It is not answering' })),
+        .map((client) => ({
+          name: client.name,
+          problem: client.problem ?? saying('server.requests.workOf.itIsNotAnswering'),
+        })),
     },
   };
 };

@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
@@ -174,7 +175,7 @@ describe('asIssue', () => {
       id: 'issue-1',
       jobRunId: 'run-1',
       path: '/media/a.mkv',
-      reason: 'ffmpeg failed',
+      reason: sayVerbatim('ffmpeg failed'),
       atMs: 1234,
     });
 
@@ -237,7 +238,7 @@ describe('buildInterruptQuery', () => {
   const queryFor = (reason: string) => {
     const { db } = createDatabase(NOWHERE);
 
-    const { sql, params } = buildInterruptQuery(db, reason).toSQL();
+    const { sql, params } = buildInterruptQuery(db, sayVerbatim(reason)).toSQL();
 
     return { sql: sqlAsPostgresQuotes(sql), params };
   };
@@ -250,8 +251,10 @@ describe('buildInterruptQuery', () => {
   });
 
   it('marks them stopped rather than failed, saying why', () => {
-    expect(queryFor('The server restarted').params).toContain('stopped');
-    expect(queryFor('The server restarted').params).toContain('The server restarted');
+    expect(queryFor('The server restarted').params).toContainEqual('stopped');
+    expect(JSON.stringify(queryFor('The server restarted').params)).toContain(
+      'The server restarted',
+    );
   });
 
   it('asks for nothing back, which not every database can give', () => {
@@ -278,7 +281,11 @@ describe('createJobHistoryStore', () => {
       const store = createJobHistoryStore(db);
 
       await store.recordStarted({ id: 'run-1', kind: 'library.scan', subject: null });
-      await store.recordFinished({ id: 'run-1', status: 'failed', errorMessage: 'gone' });
+      await store.recordFinished({
+        id: 'run-1',
+        status: 'failed',
+        errorMessage: sayVerbatim('gone'),
+      });
       await store.recordStarted({ id: 'run-1', kind: 'library.scan', subject: 'lib' });
 
       const rows = await db.select().from(jobRun).where(eq(jobRun.id, 'run-1'));
@@ -299,7 +306,7 @@ describe('createJobHistoryStore', () => {
         .insert(jobRun)
         .values([aRun('a', 'library.scan', null), aRun('b', 'library.scan', 100)]);
 
-      expect(await store.interruptRunning('restarted')).toBe(1);
+      expect(await store.interruptRunning(sayVerbatim('restarted'))).toBe(1);
     },
     STARTING_POSTGRES_MS,
   );
@@ -362,6 +369,40 @@ describe('createJobHistoryStore', () => {
 
       expect(read.records.map((one) => one.id)).toEqual(['b']);
       expect(read.total).toBe(1);
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
+    'finds a run by the words of the error it ended with',
+    async () => {
+      const db = await aMigratedDatabase();
+      const store = createJobHistoryStore(db);
+
+      await db
+        .insert(jobRun)
+        .values([
+          {
+            ...aRun('a', 'library.scan', 100),
+            status: 'failed',
+            errorMessage: sayVerbatim('The disk is full'),
+          },
+          aRun('b', 'library.scan', 100),
+        ]);
+
+      const read = await store.read({
+        kind: null,
+        status: null,
+        search: 'DISK IS',
+        sinceMs: null,
+        untilMs: null,
+        sort: 'newest',
+        offset: 0,
+        limit: 10,
+        runningFirst: false,
+      });
+
+      expect(read.records.map((one) => one.id)).toEqual(['a']);
     },
     STARTING_POSTGRES_MS,
   );

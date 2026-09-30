@@ -4,6 +4,7 @@ import { PopoverPanel } from '@ValenceUI/PopoverPanel';
 import { Slider } from '@ValenceUI/Slider';
 import { setQueueConcurrency } from '@ValenceClient/admin/fetchAdmin';
 import type { QueueConcurrencyProps } from './QueueConcurrency.types';
+import { say } from '@ValenceI18n/say';
 
 const MOST_TO_OFFER = 16;
 
@@ -20,17 +21,22 @@ const QueueConcurrency = ({ concurrency }: QueueConcurrencyProps) => {
 
   return (
     <PopoverPanel
-      label="How many jobs run at once"
-      heading="Jobs at once"
+      label={say('screens.observabilityPage.queueConcurrency.howManyJobsRunAtOnce')}
+      heading={say('screens.observabilityPage.queueConcurrency.jobsAtOnce')}
       side="bottom"
       align="end"
       triggerLook="button"
       className="w-64"
-      trigger={<AnimatedNumber value={concurrency} suffix=" at a time" />}
+      trigger={
+        <AnimatedNumber
+          value={concurrency}
+          suffix={say('screens.observabilityPage.queueConcurrency.atATime')}
+        />
+      }
     >
       <div className="flex flex-col gap-3 p-1">
         <Slider
-          label="Jobs at once"
+          label={say('screens.observabilityPage.queueConcurrency.jobsAtOnce')}
           value={chosen ?? concurrency}
           max={MOST_TO_OFFER}
           onValueChange={setChosen}
@@ -41,8 +47,7 @@ const QueueConcurrency = ({ concurrency }: QueueConcurrencyProps) => {
         />
 
         <p className="text-xs leading-relaxed text-text-muted">
-          More jobs at once finishes background work sooner, and takes more of the machine while it
-          does. Lowering it lets what is running finish first.
+          {say('screens.observabilityPage.queueConcurrency.moreJobsAtOnceFinishesBackground')}
         </p>
       </div>
     </PopoverPanel>

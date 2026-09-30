@@ -1,0 +1,7 @@
+ALTER TABLE "job_run" ALTER COLUMN "errorMessage" SET DATA TYPE jsonb USING CASE WHEN "errorMessage" IS NULL THEN NULL ELSE jsonb_build_object('code', NULL, 'message', "errorMessage", 'values', '{}'::jsonb) END;--> statement-breakpoint
+ALTER TABLE "job_run_issue" ALTER COLUMN "reason" SET DATA TYPE jsonb USING CASE WHEN "reason" IS NULL THEN NULL ELSE jsonb_build_object('code', NULL, 'message', "reason", 'values', '{}'::jsonb) END;--> statement-breakpoint
+ALTER TABLE "notification" ALTER COLUMN "title" SET DATA TYPE jsonb USING CASE WHEN "title" IS NULL THEN NULL ELSE jsonb_build_object('code', NULL, 'message', "title", 'values', '{}'::jsonb) END;--> statement-breakpoint
+ALTER TABLE "notification" ALTER COLUMN "body" SET DATA TYPE jsonb USING CASE WHEN "body" IS NULL THEN NULL ELSE jsonb_build_object('code', NULL, 'message', "body", 'values', '{}'::jsonb) END;--> statement-breakpoint
+ALTER TABLE "plugin_installation" ALTER COLUMN "problem" SET DATA TYPE jsonb USING CASE WHEN "problem" IS NULL THEN NULL ELSE jsonb_build_object('code', NULL, 'message', "problem", 'values', '{}'::jsonb) END;--> statement-breakpoint
+ALTER TABLE "prepared_download" ALTER COLUMN "failure" SET DATA TYPE jsonb USING CASE WHEN "failure" IS NULL THEN NULL ELSE jsonb_build_object('code', NULL, 'message', "failure", 'values', '{}'::jsonb) END;--> statement-breakpoint
+ALTER TABLE "reencode_request" ALTER COLUMN "failure" SET DATA TYPE jsonb USING CASE WHEN "failure" IS NULL THEN NULL ELSE jsonb_build_object('code', NULL, 'message', "failure", 'values', '{}'::jsonb) END;

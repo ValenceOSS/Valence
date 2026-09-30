@@ -2,6 +2,7 @@ import { theChallengeFor } from '@ValenceServer/phone/theChallengeFor';
 import { exchangeRoute, handBackRoute } from '@ValenceServer/routes/PhoneRoute';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
+import { refuse } from '@ValenceI18n/refuse';
 
 /**
  * Registers the phone endpoints.
@@ -19,7 +20,7 @@ const servePhone = (app: OpenAPIHono, context: AppContext): void => {
       .catch(() => null);
 
     if (minted === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     phoneHandBacks.remember(minted.token, challenge);
@@ -34,7 +35,7 @@ const servePhone = (app: OpenAPIHono, context: AppContext): void => {
     const challenge = phoneHandBacks.take(code);
 
     if (challenge === null || challenge !== theChallengeFor(secret)) {
-      return context.json({ error: 'That sign-in has expired. Try again.' }, 401);
+      return context.json(refuse('error.phone.thatSignInHasExpiredTry'), 401);
     }
 
     const signedIn = await auth.api
@@ -42,7 +43,7 @@ const servePhone = (app: OpenAPIHono, context: AppContext): void => {
       .catch(() => null);
 
     if (signedIn === null || !signedIn.ok) {
-      return context.json({ error: 'That sign-in has expired. Try again.' }, 401);
+      return context.json(refuse('error.phone.thatSignInHasExpiredTry'), 401);
     }
 
     const answer = context.body(null, 200);

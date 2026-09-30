@@ -1,14 +1,15 @@
 import type { ReencodeState } from '@ValenceContracts/schemas/Reencode';
+import { say } from '@ValenceI18n/say';
 
 const WORDS = {
-  queued: 'Waiting its turn',
-  encoding: 'Encoding',
-  verifying: 'Checking what came out',
-  awaitingReview: 'Waiting for you',
-  finished: 'Done',
-  rejected: 'Rejected, original restored',
-  failed: 'Failed',
-  cancelled: 'Stopped',
+  queued: say('client.admin.describeReencodeState.waitingItsTurn'),
+  encoding: say('common.encoding'),
+  verifying: say('client.admin.describeReencodeState.checkingWhatCameOut'),
+  awaitingReview: say('common.waitingForYou'),
+  finished: say('common.done'),
+  rejected: say('client.admin.describeReencodeState.rejectedOriginalRestored'),
+  failed: say('common.failed'),
+  cancelled: say('common.stopped'),
 } as const satisfies Record<ReencodeState, string>;
 
 /**

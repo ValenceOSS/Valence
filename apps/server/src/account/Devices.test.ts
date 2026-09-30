@@ -1,3 +1,4 @@
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
@@ -47,7 +48,7 @@ const DeviceListSchema = z.object({
   devices: z.array(
     z.object({
       id: z.string(),
-      name: z.string(),
+      name: SaidSchema,
       address: z.string().nullable(),
       isCurrent: z.boolean(),
     }),

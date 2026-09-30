@@ -9,6 +9,7 @@ import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { TextField } from '@ValenceUI/TextField';
 import { SESSION_MESSAGE_MAX_LENGTH } from '@ValenceContracts/schemas/SessionMessage';
 import type { SessionMessageDialogProps } from './SessionMessageDialog.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Where an operator types the line a viewer will read.
@@ -46,9 +47,15 @@ const SessionMessageDialog = ({ watcher, isOpen, onSend, onClose }: SessionMessa
   };
 
   return (
-    <Dialog label="Send a message" isOpen={isOpen} onClose={onClose}>
-      <DialogTitle title={`Message ${watcher}`}>
-        <Button isIconOnly variant="ghost" label="Close" size="sm" onClick={onClose}>
+    <Dialog
+      label={say('screens.adminArea.sessionMessageDialog.sendAMessage')}
+      isOpen={isOpen}
+      onClose={onClose}
+    >
+      <DialogTitle
+        title={say('screens.adminArea.sessionMessageDialog.messageWatcher', { watcher })}
+      >
+        <Button isIconOnly variant="ghost" label={say('common.close')} size="sm" onClick={onClose}>
           <Icon of={XIcon} size={16} />
         </Button>
       </DialogTitle>
@@ -56,16 +63,21 @@ const SessionMessageDialog = ({ watcher, isOpen, onSend, onClose }: SessionMessa
       <DialogContent>
         <div className="flex flex-col gap-2">
           <TextField
-            label="What to tell them"
+            label={say('screens.adminArea.sessionMessageDialog.whatToTellThem')}
             value={text}
             onValueChange={setText}
-            placeholder="Restarting in five minutes"
+            placeholder={say('screens.adminArea.sessionMessageDialog.restartingInFiveMinutes')}
             hasFocusOnMount
-            {...(isTooLong ? { error: 'That is too long to fit on the banner.' } : {})}
+            {...(isTooLong
+              ? { error: say('screens.adminArea.sessionMessageDialog.thatIsTooLongToFit') }
+              : {})}
           />
 
           <p className="text-xs text-text-muted">
-            {`${trimmed.length.toString()} of ${SESSION_MESSAGE_MAX_LENGTH.toString()} characters. This will not pause what they are watching.`}
+            {say('screens.adminArea.sessionMessageDialog.lengthOfSESSIONMESSAGEMAXLENGTH', {
+              length: trimmed.length.toString(),
+              SESSION_MESSAGE_MAX_LENGTH: SESSION_MESSAGE_MAX_LENGTH.toString(),
+            })}
           </p>
         </div>
       </DialogContent>
@@ -73,7 +85,7 @@ const SessionMessageDialog = ({ watcher, isOpen, onSend, onClose }: SessionMessa
       <DialogFooter
         dismiss={{ onChoose: onClose }}
         confirm={{
-          label: 'Send',
+          label: say('screens.adminArea.sessionMessageDialog.send'),
           onChoose: () => {
             void send();
           },

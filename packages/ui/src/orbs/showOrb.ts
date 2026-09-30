@@ -18,6 +18,7 @@ type Program = {
   where: Record<string, WebGLUniformLocation | null>;
 };
 
+// eslint-disable-next-line valence/no-hard-coded-strings -- shader source, read by the graphics card
 const VERTEX = 'attribute vec2 aPos;\nvoid main() { gl_Position = vec4(aPos, 0.0, 1.0); }';
 
 const RESTING_OUTPUT = 0.3;
@@ -97,7 +98,9 @@ const programFor = (gl: WebGLRenderingContext, variant: OrbVariant): Program | n
   }
 
   const declarations = [
+    // eslint-disable-next-line valence/no-hard-coded-strings -- shader source, read by the graphics card
     ...variant.params.map((param) => `uniform float uP_${param.key};`),
+    // eslint-disable-next-line valence/no-hard-coded-strings -- shader source, read by the graphics card
     ...variant.colours.map((colour) => `uniform vec3 uC_${colour.key};`),
   ].join('\n');
   const vertex = compile(gl, gl.VERTEX_SHADER, VERTEX);

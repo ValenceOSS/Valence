@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { createApp } from './App';
 import { createMemoryAuth } from './auth/createMemoryAuth';
@@ -130,7 +131,7 @@ describe('what the server says it is working on', () => {
         jobId: 'job-1',
         kind: 'library.scan',
         subject: 'library-1',
-        progress: { phase: 'probing', processed: 3, total: 10, item: 'Arrival' },
+        progress: { phase: sayVerbatim('probing'), processed: 3, total: 10, item: 'Arrival' },
       },
     ]);
 
@@ -477,7 +478,13 @@ describe('job history and load history endpoints', () => {
         ]),
       readIssues: (jobRunId) =>
         Promise.resolve([
-          { id: 'issue-1', jobRunId, path: '/media/a.mkv', reason: 'ffmpeg failed', atMs: 1 },
+          {
+            id: 'issue-1',
+            jobRunId,
+            path: '/media/a.mkv',
+            reason: sayVerbatim('ffmpeg failed'),
+            atMs: 1,
+          },
         ]),
       forgetExpired: () => Promise.resolve(),
     };

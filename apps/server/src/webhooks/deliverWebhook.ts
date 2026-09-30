@@ -2,6 +2,7 @@ import { formatWebhookBody } from './formatWebhookBody';
 import { isSafeWebhookUrl } from './isSafeWebhookUrl';
 import { signWebhookPayload, WEBHOOK_SIGNATURE_HEADER } from './signWebhookPayload';
 import type { WebhookPayload, WebhookPreset } from '@ValenceContracts/schemas/Webhook';
+import { say } from '@ValenceI18n/say';
 
 const WEBHOOK_TIMEOUT_MILLISECONDS = 10_000;
 
@@ -45,7 +46,7 @@ const deliverWebhook = async (
   timeoutMilliseconds: number = WEBHOOK_TIMEOUT_MILLISECONDS,
 ): Promise<WebhookAttempt> => {
   if (!isSafeWebhookUrl(target.url)) {
-    return { ok: false, status: null, error: 'Valence will not send deliveries to that address.' };
+    return { ok: false, status: null, error: say('error.common.valenceWillNotSendDeliveriesTo') };
   }
 
   const call: WebhookFetcher =
@@ -73,13 +74,20 @@ const deliverWebhook = async (
     return {
       ok: response.ok,
       status: response.status,
-      error: response.ok ? null : `The receiver answered ${response.status.toString()}.`,
+      error: response.ok
+        ? null
+        : say('server.webhooks.deliverWebhook.theReceiverAnsweredStatus', {
+            status: response.status.toString(),
+          }),
     };
   } catch (error) {
     return {
       ok: false,
       status: null,
-      error: error instanceof Error ? error.message : 'The delivery could not be made.',
+      error:
+        error instanceof Error
+          ? error.message
+          : say('server.webhooks.deliverWebhook.theDeliveryCouldNotBeMade'),
     };
   }
 };

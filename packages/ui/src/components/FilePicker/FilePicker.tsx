@@ -4,6 +4,7 @@ import { buttonStyles } from '@ValenceUI/Button/buttonStyles';
 import { Spinner } from '@ValenceUI/Spinner';
 import { readDroppedFiles } from './readDroppedFiles';
 import type { FilePickerProps } from './FilePicker.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The one place a file is chosen. Wraps the file input that browsers insist on styling their own
@@ -133,7 +134,9 @@ const FilePicker = ({
         }}
       />
 
-      {isLoading ? <Spinner size={size === 'sm' ? 'sm' : 'md'} label="Working" /> : null}
+      {isLoading ? (
+        <Spinner size={size === 'sm' ? 'sm' : 'md'} label={say('common.working')} />
+      ) : null}
       {children}
     </label>
   );

@@ -42,6 +42,7 @@ import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import type { ComponentRef } from 'react';
 import type { TextPreferences } from '@ValenceClient/books/textPreferences';
 import type { ATextReaderProps } from './ATextReader.types';
+import { say } from '@ValenceI18n/say';
 
 const SLIDER_STEPS = 1000;
 
@@ -60,18 +61,18 @@ const ARRIVES = {
 } as const;
 
 const NAMES: Readonly<Record<string, string>> = {
-  small: 'Small',
-  medium: 'Medium',
-  large: 'Large',
-  larger: 'Larger',
-  tight: 'Tight',
-  normal: 'Normal',
-  loose: 'Loose',
-  narrow: 'Narrow',
-  wide: 'Wide',
-  light: 'Light',
-  sepia: 'Sepia',
-  dark: 'Dark',
+  small: say('common.small'),
+  medium: say('common.medium'),
+  large: say('common.large'),
+  larger: say('common.larger'),
+  tight: say('common.tight'),
+  normal: say('common.normal'),
+  loose: say('common.loose'),
+  narrow: say('common.narrow'),
+  wide: say('common.wide'),
+  light: say('common.light'),
+  sepia: say('common.sepia'),
+  dark: say('common.dark'),
 };
 
 const styles = StyleSheet.create({
@@ -348,7 +349,7 @@ const ATextReader = ({
       footer={
         <View style={styles.foot}>
           <Slider
-            label="Go to a place in the book"
+            label={say('phone.aReader.aTextReader.goToAPlaceInThe')}
             value={Math.round(fraction * SLIDER_STEPS)}
             furthest={SLIDER_STEPS}
             colour={colours.ink}
@@ -361,14 +362,16 @@ const ATextReader = ({
             }}
           />
           <Words size="small" isCentred colour={withAlpha(colours.ink, 0.8)}>
-            {`${Math.round(fraction * 100).toString()}% read`}
+            {say('common.percentRead', { percent: Math.round(fraction * 100).toString() })}
           </Words>
         </View>
       }
     >
       {contents.isError || document.isError ? (
         <View style={[styles.whole, { padding: 24, paddingTop: topRoom }]}>
-          <Words colour={colours.ink}>This book could not be read.</Words>
+          <Words colour={colours.ink}>
+            {say('phone.aReader.aTextReader.thisBookCouldNotBeRead')}
+          </Words>
         </View>
       ) : (
         <View style={styles.whole} {...swiping.panHandlers}>
@@ -417,7 +420,9 @@ const ATextReader = ({
               ) : (
                 <Button
                   tone="bare"
-                  label={isShowingChrome ? 'Hide the controls' : 'Show the controls'}
+                  label={
+                    isShowingChrome ? say('common.hideTheControls') : say('common.showTheControls')
+                  }
                   onPress={({ x }) => {
                     const across =
                       width - Math.max(margin, room.left + 8) - Math.max(margin, room.right + 8);
@@ -449,7 +454,7 @@ const ATextReader = ({
                     onChapter(next.id);
                   }}
                 >
-                  {`On to ${next.title}`}
+                  {say('phone.aReader.aTextReader.onToTitle', { title: next.title })}
                 </Button>
               ) : null}
             </ScrollView>
@@ -476,7 +481,7 @@ const ATextReader = ({
       <AReaderPanel
         isOpen={isPanelOpen}
         title={book.title}
-        placesAre="Contents"
+        placesAre={say('common.contents')}
         places={entries.map((entry, at) => ({
           id: at.toString(),
           label: entry.title,
@@ -497,9 +502,9 @@ const ATextReader = ({
         }}
       >
         <View style={styles.setting}>
-          <Words size="heading">Text size</Words>
+          <Words size="heading">{say('phone.aReader.aTextReader.textSize')}</Words>
           <SegmentedRow
-            label="Text size"
+            label={say('phone.aReader.aTextReader.textSize')}
             items={choicesOf(TEXT_SIZES)}
             value={settings.size}
             onSelect={(id) => {
@@ -512,9 +517,9 @@ const ATextReader = ({
           />
         </View>
         <View style={styles.setting}>
-          <Words size="heading">Line spacing</Words>
+          <Words size="heading">{say('phone.aReader.aTextReader.lineSpacing')}</Words>
           <SegmentedRow
-            label="Line spacing"
+            label={say('phone.aReader.aTextReader.lineSpacing')}
             items={choicesOf(TEXT_SPACINGS)}
             value={settings.spacing}
             onSelect={(id) => {
@@ -527,9 +532,9 @@ const ATextReader = ({
           />
         </View>
         <View style={styles.setting}>
-          <Words size="heading">Margins</Words>
+          <Words size="heading">{say('common.margins')}</Words>
           <SegmentedRow
-            label="Margins"
+            label={say('common.margins')}
             items={choicesOf(TEXT_MARGINS)}
             value={settings.margins}
             onSelect={(id) => {
@@ -542,9 +547,9 @@ const ATextReader = ({
           />
         </View>
         <View style={styles.setting}>
-          <Words size="heading">Page</Words>
+          <Words size="heading">{say('common.page')}</Words>
           <SegmentedRow
-            label="Page colour"
+            label={say('phone.aReader.aTextReader.pageColour')}
             items={choicesOf(TEXT_PAGES)}
             value={settings.page}
             onSelect={(id) => {

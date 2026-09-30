@@ -1,5 +1,6 @@
 import { describeLength } from '@ValenceClient/books/describeLength';
 import type { BookListening } from '@ValenceContracts/schemas/Book';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says how far into an audiobook somebody got: the chapter they are on, and how long is left of
@@ -9,6 +10,8 @@ import type { BookListening } from '@ValenceContracts/schemas/Book';
  * @returns What to say.
  */
 const describeListeningPlace = (listening: BookListening): string =>
-  `${listening.chapterTitle} · ${describeLength(listening.durationSeconds - listening.heardSeconds)} left`;
+  `${listening.chapterTitle} · ${say('common.durationLeft', {
+    timeLeft: describeLength(listening.durationSeconds - listening.heardSeconds),
+  })}`;
 
 export { describeListeningPlace };

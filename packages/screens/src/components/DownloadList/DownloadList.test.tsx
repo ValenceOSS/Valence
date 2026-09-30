@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { screen, waitFor } from '@testing-library/react';
 import { z } from 'zod';
 import userEvent from '@testing-library/user-event';
@@ -39,7 +40,7 @@ const FAILED = {
   ...READY,
   id: '00000000-0000-4000-8000-000000000004',
   state: 'failed',
-  failure: 'The media service could not be reached.',
+  failure: sayVerbatim('The media service could not be reached.'),
 };
 
 const RequestSchema = z.object({ method: z.string().optional() });

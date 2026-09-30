@@ -1,5 +1,6 @@
 import { formatCalendarDate } from '@ValenceCore/functions/formatCalendarDate';
 import { formatMoney } from '@ValenceCore/functions/formatMoney';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Whether a title is an episode, which is whether it belongs to a series.
@@ -40,24 +41,31 @@ const describeTitleDetails = ({
     ? []
     : [
         {
-          label: isAnEpisode(seriesTitle) ? 'Aired' : 'Released',
+          label: isAnEpisode(seriesTitle)
+            ? say('client.library.describeTitleDetails.aired')
+            : say('client.library.describeTitleDetails.released'),
           value: formatCalendarDate(releaseDate),
         },
       ]),
   ...(status === undefined || status === null || status === '' || isAnEpisode(seriesTitle)
     ? []
-    : [{ label: 'Status', value: status }]),
+    : [{ label: say('common.status'), value: status }]),
   ...(budget === undefined || budget === null || budget <= 0
     ? []
-    : [{ label: 'Budget', value: formatMoney(budget) }]),
+    : [{ label: say('client.library.describeTitleDetails.budget'), value: formatMoney(budget) }]),
   ...(revenue === undefined || revenue === null || revenue <= 0
     ? []
-    : [{ label: 'Box office', value: formatMoney(revenue) }]),
+    : [
+        {
+          label: say('client.library.describeTitleDetails.boxOffice'),
+          value: formatMoney(revenue),
+        },
+      ]),
   ...(rottenTomatoes === undefined || rottenTomatoes === null
     ? []
     : [
         {
-          label: 'Rotten Tomatoes',
+          label: say('client.library.describeTitleDetails.rottenTomatoes'),
           value: `${rottenTomatoes.toString()}%`,
           tomato: rottenTomatoes,
         },

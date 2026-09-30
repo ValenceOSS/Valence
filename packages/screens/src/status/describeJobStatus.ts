@@ -1,5 +1,6 @@
 import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
 import type { BadgeTone } from '@ValenceUI/Badge.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says how a piece of background work stands, in the words and colour every other status uses. The
@@ -16,9 +17,9 @@ const describeJobStatus = (
     case 'queued':
       return STATUS_LOOK.queued;
     case 'running':
-      return { ...STATUS_LOOK.working, label: 'Running' };
+      return { ...STATUS_LOOK.working, label: say('common.running') };
     case 'stopping':
-      return { ...STATUS_LOOK.attention, label: 'Stopping' };
+      return { ...STATUS_LOOK.attention, label: say('common.stopping2') };
     case 'stopped':
       return STATUS_LOOK.stopped;
     case 'finished':

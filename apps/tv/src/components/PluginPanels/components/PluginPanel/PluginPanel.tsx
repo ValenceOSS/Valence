@@ -6,6 +6,7 @@ import { ScanToConnect } from '@ValenceTv/components/ScanToConnect/ScanToConnect
 import { useScanToOpen } from '@ValenceTv/plugins/useScanToOpen';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { PluginPanelProps } from './PluginPanel.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   from: { color: tokens.colours.muted, fontSize: tokens.type.small },
@@ -45,7 +46,7 @@ const PluginPanel = ({ pluginId, pluginName, panelId, title, on, subjectId }: Pl
   return (
     <View style={styles.panel}>
       <Text style={styles.title}>{title}</Text>
-      <Text style={styles.from}>{`From ${pluginName}`}</Text>
+      <Text style={styles.from}>{say('common.fromPluginName', { pluginName })}</Text>
       {panel.problem === null ? null : <PluginNotice tone="danger" text={panel.problem} />}
       {scanning.address === null ? (
         <PluginSurface

@@ -1,3 +1,4 @@
+import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { notify } from '@ValenceUI/notify';
 import { useState } from 'react';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
@@ -26,6 +27,7 @@ import {
 import type { TryVerdict } from '@ValenceScreens/components/AdminArea/components/TryItButton/TryItButton.types';
 import type { DownloadClientForm } from './readDownloadClientForm';
 import type { DownloadClientDialogProps } from './DownloadClientDialog.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Adds a download client, or changes one already kept: where it is, how to log in to it, and a
@@ -91,10 +93,10 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
         setVersion(value?.version ?? null);
         setProblem(
           value === null
-            ? (refusal?.message ?? 'It could not be tried.')
+            ? (refusal?.message ?? say('common.itCouldNotBeTried'))
             : value.isWorking
               ? null
-              : (value.problem ?? 'It did not answer.'),
+              : (sayAgainIfAny(value.problem) ?? say('common.itDidNotAnswer')),
         );
       })
       .finally(() => {
@@ -115,12 +117,16 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
     void (client === null ? addDownloadClient(draft) : changeDownloadClient(client.id, draft))
       .then(({ value, refusal }) => {
         if (value === null) {
-          setProblem(refusal?.message ?? 'That could not be saved.');
+          setProblem(refusal?.message ?? say('common.thatCouldNotBeSaved'));
 
           return;
         }
 
-        notify.worked(client === null ? `Added ${value.name}.` : `Saved ${value.name}.`);
+        notify.worked(
+          client === null
+            ? say('common.addedName', { name: value.name })
+            : say('common.savedName', { name: value.name }),
+        );
         onSaved(value);
         onClose();
       })
@@ -129,26 +135,29 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
       });
   };
 
-  const title = client === null ? 'Add a download client' : `Change ${client.name}`;
+  const title =
+    client === null
+      ? say('common.addADownloadClient')
+      : say('common.changeName', { name: client.name });
   const secretDetail = (isKept: boolean, what: string) =>
     isKept
-      ? `A ${what} is kept. Type a new one to replace it, or leave this empty to keep it.`
-      : `Leave this empty for a client that asks for no ${what}.`;
+      ? say('screens.adminArea.downloadClientDialog.aWhatIsKeptTypeA', { what })
+      : say('screens.adminArea.downloadClientDialog.leaveThisEmptyForAClient', { what });
 
   return (
     <DialogCompanion label={title} isOpen={isOpen} onClose={onClose}>
       <DialogTitle
         size="compact"
         title={title}
-        detail="Valence hands torrents to qBittorrent or Transmission, and NZBs to SABnzbd or NZBGet, and follows each download there."
+        detail={say('screens.adminArea.downloadClientDialog.valenceHandsTorrentsToQBittorrentOr')}
       />
 
       <DialogContent className="flex flex-col gap-6">
         <div className="flex flex-col gap-4">
           {client === null ? (
-            <FormField label="Client">
+            <FormField label={say('common.client')}>
               <SegmentedRow
-                label="Client"
+                label={say('common.client')}
                 size="sm"
                 items={CLIENT_KINDS}
                 value={form.kind}
@@ -164,7 +173,7 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
           ) : null}
 
           <TextField
-            label="Name"
+            label={say('common.name')}
             value={form.name}
             onValueChange={(name) => {
               change({ name });
@@ -174,7 +183,7 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
           />
 
           <Switch
-            label="Send releases to this client"
+            label={say('screens.adminArea.downloadClientDialog.sendReleasesToThisClient')}
             isOn={form.isEnabled}
             onToggle={() => {
               change({ isEnabled: !form.isEnabled });
@@ -182,39 +191,44 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
           />
         </div>
 
-        <HeadedSection title="Connection">
+        <HeadedSection title={say('common.connection')}>
           <div className="flex flex-col gap-4">
             <TextField
-              label="Address"
+              label={say('common.address')}
               type="url"
               value={form.url}
               onValueChange={(url) => {
                 change({ url });
               }}
               placeholder={kind?.address ?? ''}
-              description="Where the requests service reaches it, which inside Docker is the container’s name."
+              description={say(
+                'screens.adminArea.downloadClientDialog.whereTheRequestsServiceReachesIt',
+              )}
               required
             />
 
             {isSabnzbd ? (
               <TextField
-                label="API key"
+                label={say('common.aPIKey')}
                 type="password"
                 value={form.apiKey}
                 onValueChange={(apiKey) => {
                   change({ apiKey });
                 }}
-                description={`${secretDetail(client?.hasApiKey === true, 'key')} It is under Config, General.`}
+                description={say(
+                  'screens.adminArea.downloadClientDialog.valueItIsUnderConfigGeneral',
+                  { value: secretDetail(client?.hasApiKey === true, 'key') },
+                )}
                 autoComplete="off"
               />
             ) : (
               <FormField
-                label="Login"
+                label={say('common.login')}
                 description={secretDetail(client?.hasPassword === true, 'password')}
               >
                 <div className="grid gap-4 sm:grid-cols-2">
                   <TextField
-                    label="Username"
+                    label={say('common.username')}
                     value={form.username}
                     onValueChange={(username) => {
                       change({ username });
@@ -223,7 +237,7 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
                   />
 
                   <TextField
-                    label="Password"
+                    label={say('common.password')}
                     type="password"
                     value={form.password}
                     onValueChange={(password) => {
@@ -237,14 +251,18 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
           </div>
         </HeadedSection>
 
-        <HeadedSection title="Downloads">
+        <HeadedSection title={say('common.downloads')}>
           <div className="flex flex-col gap-4">
             <FormField
-              label={form.kind === 'transmission' ? 'Labels' : 'Categories'}
+              label={
+                form.kind === 'transmission'
+                  ? say('screens.adminArea.downloadClientDialog.labels')
+                  : say('common.categories')
+              }
               description={
                 form.kind === 'transmission'
-                  ? 'The label Valence puts on what it sends for each kind of library, and the only torrents it looks at.'
-                  : 'Where Valence files what it sends for each kind of library — give each its own folder in the client — and the only downloads it looks at.'
+                  ? say('screens.adminArea.downloadClientDialog.theLabelValencePutsOnWhat')
+                  : say('screens.adminArea.downloadClientDialog.whereValenceFilesWhatItSends')
               }
             >
               <div className="grid gap-3 sm:grid-cols-2">
@@ -263,12 +281,14 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
             </FormField>
 
             <FormField
-              label="Where it saves downloads"
-              description="Only where the client and Valence see the downloads folder by different names, as two containers mounting it in different places do. Valence files each finished download from here into its library."
+              label={say('screens.adminArea.downloadClientDialog.whereItSavesDownloads')}
+              description={say(
+                'screens.adminArea.downloadClientDialog.onlyWhereTheClientAndValence',
+              )}
             >
               <div className="grid gap-3 sm:grid-cols-2">
                 <TextField
-                  label="As the client sees it"
+                  label={say('screens.adminArea.downloadClientDialog.asTheClientSeesIt')}
                   value={form.remotePath}
                   onValueChange={(remotePath) => {
                     change({ remotePath });
@@ -277,7 +297,7 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
                 />
 
                 <TextField
-                  label="As Valence sees it"
+                  label={say('screens.adminArea.downloadClientDialog.asValenceSeesIt')}
                   value={form.localPath}
                   onValueChange={(localPath) => {
                     change({ localPath });
@@ -288,7 +308,7 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
             </FormField>
 
             <TextField
-              label="Priority"
+              label={say('common.priority')}
               type="number"
               min={1}
               max={50}
@@ -296,13 +316,19 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
               onValueChange={(priority) => {
                 change({ priority });
               }}
-              description="The lowest is sent releases first."
+              description={say(
+                'screens.adminArea.downloadClientDialog.theLowestIsSentReleasesFirst',
+              )}
             />
           </div>
         </HeadedSection>
 
         <p role="status" className="sr-only">
-          {verdict === 'working' ? `It answered, and is ${version ?? 'working'}.` : ''}
+          {verdict !== 'working'
+            ? ''
+            : version === null
+              ? say('screens.adminArea.downloadClientDialog.itAnsweredAndIsWorking')
+              : say('screens.adminArea.downloadClientDialog.itAnsweredAndIsVersion', { version })}
         </p>
       </DialogContent>
 
@@ -310,7 +336,10 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
         note={problem}
         dismiss={{ onChoose: onClose }}
         confirm={{
-          label: client === null ? 'Add client' : 'Save',
+          label:
+            client === null
+              ? say('screens.adminArea.downloadClientDialog.addClient')
+              : say('common.save'),
           onChoose: save,
           isDisabled: isWorking,
         }}

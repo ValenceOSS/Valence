@@ -12,6 +12,7 @@ import { useFitWidth } from '@ValenceUI/useFitWidth';
 import { letterArrival, openSpring, popArrival } from '@ValenceUI/animations/reveal';
 import { useOpenAction } from './useOpenAction';
 import type { NavBarProps } from './NavBar.types';
+import { say } from '@ValenceI18n/say';
 
 const TOOL_STEP = 0.05;
 
@@ -160,7 +161,7 @@ const NavBar = ({
       />
 
       <nav
-        aria-label="Sections"
+        aria-label={say('ui.navBar.sections')}
         onPointerLeave={() => {
           setPointedAt(null);
         }}
@@ -177,7 +178,7 @@ const NavBar = ({
           {brand === undefined ? null : <span className="flex shrink-0 items-center">{brand}</span>}
 
           <ActionMenu
-            label="Places"
+            label={say('common.places')}
             className="shrink-0 md:hidden"
             trigger={<Icon of={MenuIcon} size={20} />}
             groups={[
@@ -186,7 +187,7 @@ const NavBar = ({
                   id: item.id,
                   label: item.label,
                   ...(item.icon === undefined ? {} : { icon: item.icon }),
-                  ...(item.id === selectedId ? { detail: 'Here' } : {}),
+                  ...(item.id === selectedId ? { detail: say('ui.navBar.here') } : {}),
                   onChoose: () => {
                     onSelect(item.id);
                   },

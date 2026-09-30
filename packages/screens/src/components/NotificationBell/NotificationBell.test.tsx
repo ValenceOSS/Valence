@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -7,8 +8,8 @@ import type { Notification } from '@ValenceContracts/schemas/Notification';
 const aNotification = (overrides: Partial<Notification> = {}): Notification => ({
   id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
   event: 'media.added',
-  title: 'Something new to watch',
-  body: '12 episodes — The Office',
+  title: sayVerbatim('Something new to watch'),
+  body: sayVerbatim('12 episodes — The Office'),
   link: '/?show=s1',
   createdAt: new Date().toISOString(),
   readAt: null,

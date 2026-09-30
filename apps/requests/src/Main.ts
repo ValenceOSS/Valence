@@ -60,13 +60,13 @@ const { db, pool } = createDatabase(env.DATABASE_URL);
 /**
  * Writes a line to the log, with what the service is in front of it.
  *
- * @param line - What to say.
+ * @param line - What to write.
  */
-const say = (line: string): void => {
+const log = (line: string): void => {
   process.stdout.write(`[requests] ${line}\n`);
 };
 
-say(
+log(
   becoming === 'became'
     ? `Running as user ${env.PUID.toString()} and group ${env.PGID.toString()}.`
     : becoming === 'stayedRoot'
@@ -80,10 +80,10 @@ const vpn = createVpnWatch({
   read: () => readGluetun({ address: env.VPN_URL, apiKey: env.VPN_API_KEY, fetch }),
   everyMs: env.VPN_CHECK_SECONDS * 1000,
   onChange: (now) => {
-    say(
+    log(
       now.isUp === true
         ? 'The VPN is up.'
-        : `The VPN is down: ${now.problem ?? 'no reason given'}.`,
+        : `The VPN is down: ${now.problem?.message ?? 'no reason given'}.`,
     );
   },
 });
@@ -118,7 +118,7 @@ const solverWatch = createSolverWatch({
 
 const browser = createBrowserKeeper({
   launch: solverWatch.starting(() => {
-    say('Starting the browser that gets past Cloudflare’s check.');
+    log('Starting the browser that gets past Cloudflare’s check.');
 
     return Camoufox({
       headless: true,
@@ -182,7 +182,7 @@ const seeded = await seedStarterProfiles({
 });
 
 if (seeded.length > 0) {
-  say(`Started with the ${seeded.join(', ')} quality profiles.`);
+  log(`Started with the ${seeded.join(', ')} quality profiles.`);
 }
 
 const sentDownloads = createDatabaseSentDownloadStore(db);
@@ -219,7 +219,7 @@ const requestWorker = createRequestWorker({
   profiles,
   events,
   log: requestLog,
-  say,
+  print: log,
   probe: createProbeClient(env.TRANSCODER_URL),
 });
 
@@ -242,8 +242,8 @@ const refreshDefinitions = async (): Promise<void> => {
   if (await definitions.isStale(DEFINITIONS_EVERY_MS)) {
     const read = await definitions.refresh();
 
-    say(
-      read.problem ??
+    log(
+      read.problem?.message ??
         `${read.definitions.length.toString()} indexer definitions from ${read.source}.`,
     );
   }
@@ -285,8 +285,8 @@ const app = createApp({
 });
 
 const server = serve({ fetch: app.fetch, port: env.REQUESTS_PORT }, (info) => {
-  say(`Listening on port ${info.port.toString()}.`);
-  say(env.VPN_URL === '' ? 'No VPN is set up.' : `Watching the VPN at ${env.VPN_URL}.`);
+  log(`Listening on port ${info.port.toString()}.`);
+  log(env.VPN_URL === '' ? 'No VPN is set up.' : `Watching the VPN at ${env.VPN_URL}.`);
 });
 
 /**

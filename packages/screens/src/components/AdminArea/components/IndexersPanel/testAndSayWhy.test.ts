@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { testAndSayWhy } from './testAndSayWhy';
 import type * as Indexers from '@ValenceClient/requests/fetchIndexers';
@@ -35,7 +36,7 @@ describe('testAndSayWhy', () => {
     testIndexer.mockResolvedValue({
       value: {
         isWorking: false,
-        problem: 'Timed out',
+        problem: sayVerbatim('Timed out'),
         problemCode: null,
         capabilities: null,
         captcha: null,

@@ -1,9 +1,11 @@
+import { say } from '@ValenceI18n/say';
+
 type Match = { name: string; pattern: RegExp };
 
 const OPERATING_SYSTEMS: Match[] = [
   { name: 'macOS', pattern: /Mac OS X|Macintosh/ },
-  { name: 'Windows', pattern: /Windows/ },
-  { name: 'Linux', pattern: /Linux|X11/ },
+  { name: say('common.windows'), pattern: /Windows/ },
+  { name: say('common.linux'), pattern: /Linux|X11/ },
 ];
 
 /**
@@ -20,7 +22,9 @@ const OPERATING_SYSTEMS: Match[] = [
 const describeThisDesktop = (userAgent: string): string => {
   const os = OPERATING_SYSTEMS.find((candidate) => candidate.pattern.test(userAgent))?.name ?? null;
 
-  return os === null ? 'Valence for desktop' : `Valence on ${os}`;
+  return os === null
+    ? say('desktop.platform.describeThisDesktop.valenceForDesktop')
+    : say('desktop.platform.describeThisDesktop.valenceOnOs', { os });
 };
 
 export { describeThisDesktop };

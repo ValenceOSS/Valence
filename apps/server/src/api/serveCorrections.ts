@@ -8,8 +8,9 @@ import {
 } from '@ValenceServer/routes/CorrectionRoute';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
+import { refuse } from '@ValenceI18n/refuse';
 
-const NOT_FOR_YOU = { error: 'That is for administrators.' } as const;
+const NOT_FOR_YOU = refuse('common.thatIsForAdministrators');
 
 /**
  * Registers the endpoints an administrator tells a book or an album what it really is with, for one
@@ -43,7 +44,7 @@ const serveCorrections = (app: OpenAPIHono, context: AppContext): void => {
 
     return corrected
       ? context.json({ corrected }, 200)
-      : context.json({ error: 'That book, or that work on Open Library, was not found.' }, 404);
+      : context.json(refuse('error.corrections.thatBookOrThatWorkOn'), 404);
   });
 
   app.openapi(forgetBookCorrectionRoute, async (context) => {
@@ -55,7 +56,7 @@ const serveCorrections = (app: OpenAPIHono, context: AppContext): void => {
 
     return corrected
       ? context.json({ corrected: false }, 200)
-      : context.json({ error: 'No such book.' }, 404);
+      : context.json(refuse('error.common.noSuchBook'), 404);
   });
 
   app.openapi(searchAlbumMatchesRoute, async (context) => {
@@ -81,7 +82,7 @@ const serveCorrections = (app: OpenAPIHono, context: AppContext): void => {
 
     return corrected
       ? context.json({ corrected }, 200)
-      : context.json({ error: 'No such album.' }, 404);
+      : context.json(refuse('error.common.noSuchAlbum'), 404);
   });
 
   app.openapi(forgetAlbumCorrectionRoute, async (context) => {
@@ -93,7 +94,7 @@ const serveCorrections = (app: OpenAPIHono, context: AppContext): void => {
 
     return corrected
       ? context.json({ corrected: false }, 200)
-      : context.json({ error: 'No such album.' }, 404);
+      : context.json(refuse('error.common.noSuchAlbum'), 404);
   });
 };
 

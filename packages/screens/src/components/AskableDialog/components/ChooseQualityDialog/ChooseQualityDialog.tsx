@@ -4,6 +4,7 @@ import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import type { ChooseQualityDialogProps } from './ChooseQualityDialog.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Asks which quality to look for, once somebody has said they want something.
@@ -34,8 +35,15 @@ const ChooseQualityDialog = ({
   onChoose,
   onClose,
 }: ChooseQualityDialogProps) => (
-  <Dialog label={`Which quality for ${title}?`} isOpen={isOpen} onClose={onClose}>
-    <DialogTitle title={`Request ${title}`} detail="We’ll fetch the best release that fits." />
+  <Dialog
+    label={say('screens.askableDialog.chooseQualityDialog.whichQualityForTitle', { title })}
+    isOpen={isOpen}
+    onClose={onClose}
+  >
+    <DialogTitle
+      title={say('screens.askableDialog.chooseQualityDialog.requestTitle', { title })}
+      detail={say('screens.askableDialog.chooseQualityDialog.wellFetchTheBestReleaseThat')}
+    />
 
     <DialogContent>
       <ul className="flex flex-col gap-2">

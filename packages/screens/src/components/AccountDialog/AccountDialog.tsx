@@ -28,6 +28,7 @@ import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { ProfileDraft } from '@ValenceScreens/components/AccountArea/components/ProfileSettings/ProfileSettings.types';
 import type { AccountDialogProps } from './AccountDialog.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Reads a profile as a draft of itself, which is what every control in the dialog changes until
@@ -117,7 +118,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
     setIsSaving(false);
 
     if (!saved) {
-      notify.failed('Those changes were not saved.');
+      notify.failed(say('common.thoseChangesWereNotSaved'));
 
       return;
     }
@@ -136,11 +137,18 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
 
   usePluginWithdrawn(showingPlugin?.pluginId ?? null, (change) => {
     onPanel('profile');
-    notify.say(saidWhenWithdrawn(showingPlugin?.pluginName ?? 'That plugin', change.change));
+    notify.say(
+      saidWhenWithdrawn(showingPlugin?.pluginName ?? say('common.thatPlugin'), change.change),
+    );
   });
 
   return (
-    <Dialog label="Your account" isOpen={panel !== null} onClose={onClose} size="stage">
+    <Dialog
+      label={say('screens.accountDialog.yourAccount')}
+      isOpen={panel !== null}
+      onClose={onClose}
+      size="stage"
+    >
       <Tabs
         value={showing}
         onValueChange={(next) => {
@@ -168,17 +176,25 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
               size="sm"
               groups={[
                 { items: ACCOUNT_PANELS },
-                ...(pluginPages.length === 0 ? [] : [{ label: 'Plugins', items: pluginPages }]),
+                ...(pluginPages.length === 0
+                  ? []
+                  : [{ label: say('common.plugins'), items: pluginPages }]),
               ]}
               value={showing}
-              label="What to change"
+              label={say('common.whatToChange')}
               className="-mx-5 px-5"
             />
           }
         >
-          {mayAdminister ? <Badge size="sm">admin</Badge> : null}
+          {mayAdminister ? <Badge size="sm">{say('screens.accountDialog.admin')}</Badge> : null}
 
-          <Button variant="ghost" size="sm" isIconOnly label="Close" onClick={onClose}>
+          <Button
+            variant="ghost"
+            size="sm"
+            isIconOnly
+            label={say('common.close')}
+            onClick={onClose}
+          >
             <Icon of={XIcon} size={16} />
           </Button>
         </DialogTitle>
@@ -211,7 +227,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
                 }}
               >
                 <Icon of={DoorOpenIcon} size={16} />
-                Sign out
+                {say('common.signOut')}
               </Button>
 
               {showing !== 'profile' ? null : (
@@ -223,7 +239,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
                     void save();
                   }}
                 >
-                  Save
+                  {say('common.save')}
                 </Button>
               )}
             </div>

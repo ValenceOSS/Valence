@@ -1,6 +1,8 @@
+import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { docsFor } from '@ValenceCore/functions/docsFor';
 import type { RequestsOverview } from '@ValenceContracts/schemas/Requests';
 import type { RequestsHealth } from './RequestsHealth.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says how the VPN the requests service downloads through is, as a badge and the line beneath it.
@@ -13,26 +15,27 @@ const describeRequestsVpn = (overview: RequestsOverview): RequestsHealth => {
 
   if (vpn === null) {
     return {
-      label: 'Not checked',
+      label: say('common.notChecked'),
       tone: 'quiet',
-      detail: 'Nothing can be said about the VPN until the requests service answers.',
+      detail: say('screens.requestsPanel.describeRequestsVpn.nothingCanBeSaidAboutThe'),
     };
   }
 
   if (!vpn.isConfigured) {
     return {
-      label: 'Not set up',
+      label: say('screens.requestsPanel.describeRequestsVpn.notSetUp'),
       tone: 'quiet',
-      detail:
-        'Downloads leave from this server’s own address. Set VPN_URL on the requests service to send them through gluetun.',
+      detail: say('screens.requestsPanel.describeRequestsVpn.downloadsLeaveFromThisServersOwn'),
     };
   }
 
   if (vpn.isUp !== true) {
     return {
-      label: 'Down',
+      label: say('screens.requestsPanel.describeRequestsVpn.down'),
       tone: 'danger',
-      detail: vpn.problem ?? 'The tunnel is down.',
+      detail:
+        sayAgainIfAny(vpn.problem) ??
+        say('screens.requestsPanel.describeRequestsVpn.theTunnelIsDown'),
       help: docsFor(vpn.problemCode ?? 'VpnDown'),
     };
   }
@@ -40,12 +43,14 @@ const describeRequestsVpn = (overview: RequestsOverview): RequestsHealth => {
   const where = [vpn.publicAddress, vpn.country].filter((part) => part !== null);
 
   return {
-    label: 'Up',
+    label: say('screens.requestsPanel.describeRequestsVpn.up'),
     tone: 'success',
     detail:
       where.length === 0
-        ? 'The tunnel is up.'
-        : `The tunnel is up, and traffic leaves from ${where.join(', ')}.`,
+        ? say('screens.requestsPanel.describeRequestsVpn.theTunnelIsUp')
+        : say('screens.requestsPanel.describeRequestsVpn.theTunnelIsUpAndTraffic', {
+            value: where.join(', '),
+          }),
   };
 };
 

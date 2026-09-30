@@ -21,6 +21,7 @@ import { releaseFactsOf } from '@ValenceServer/library/releaseFactsOf';
 import { discoverParameters } from '@ValenceServer/library/discoverParameters';
 import { readCertifications } from '@ValenceServer/library/readCertifications';
 import { readRequestCatalogue } from '@ValenceServer/library/readRequestCatalogue';
+import { say } from '@ValenceI18n/say';
 
 const DEFAULT_BASE_URL = 'https://api.themoviedb.org/3';
 
@@ -537,7 +538,12 @@ const createCatalogueMetadataProvider = ({
       }
 
       if (!isWorthRetrying(response.status) || attempt === RETRIES) {
-        onProblem?.(`The catalogue answered ${response.status.toString()} for ${path}.`);
+        onProblem?.(
+          say('server.library.catalogueMetadataProvider.theCatalogueAnsweredStatusForPath', {
+            status: response.status.toString(),
+            path,
+          }),
+        );
 
         return null;
       }
@@ -1156,7 +1162,9 @@ const createCatalogueMetadataProvider = ({
             episodeNumber: next.episode_number,
             title:
               next.name === undefined || next.name === ''
-                ? `Episode ${next.episode_number.toString()}`
+                ? say('server.library.catalogueMetadataProvider.episodeEpisodeNumber', {
+                    episode_number: next.episode_number.toString(),
+                  })
                 : next.name,
             airDate: next.air_date,
           };
@@ -1191,7 +1199,9 @@ const createCatalogueMetadataProvider = ({
                   episodeNumber: episode.episode_number,
                   title:
                     episode.name === undefined || episode.name === ''
-                      ? `Episode ${episode.episode_number.toString()}`
+                      ? say('server.library.catalogueMetadataProvider.episodeEpisodeNumber', {
+                          episode_number: episode.episode_number.toString(),
+                        })
                       : episode.name,
                   stillUrl: imageUrl(imageBaseUrl, episode.still_path, 'w780'),
                   overview:

@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
@@ -232,7 +233,7 @@ describe('createJobQueue', () => {
     const queue: JobQueue = aQueue({
       handlers: {
         [CHECK_DISK]: (jobId) => {
-          queue.reportProgress(jobId, 'checking', 1, 2);
+          queue.reportProgress(jobId, sayVerbatim('checking'), 1, 2);
 
           return gate.passed;
         },
@@ -246,7 +247,7 @@ describe('createJobQueue', () => {
 
     await vi.waitFor(() => {
       expect(queue.readProgress(id ?? '')).toEqual({
-        phase: 'checking',
+        phase: sayVerbatim('checking'),
         processed: 1,
         total: 2,
         item: null,
@@ -255,7 +256,7 @@ describe('createJobQueue', () => {
     expect(queue.listRunning()).toEqual([expect.objectContaining({ jobId: id, kind: CHECK_DISK })]);
     expect(onProgress).toHaveBeenCalledWith({
       jobId: id,
-      phase: 'checking',
+      phase: sayVerbatim('checking'),
       processed: 1,
       total: 2,
       item: null,
@@ -281,7 +282,11 @@ describe('createJobQueue', () => {
       expect(await rowOf(id)).toMatchObject({ state: 'failed', lastError: 'the disk is gone' });
     });
     expect(onFinished).toHaveBeenCalledWith(
-      expect.objectContaining({ jobId: id, reason: 'the disk is gone', wasStopped: false }),
+      expect.objectContaining({
+        jobId: id,
+        reason: sayVerbatim('the disk is gone'),
+        wasStopped: false,
+      }),
     );
     expect(handler).toHaveBeenCalledTimes(1);
   });

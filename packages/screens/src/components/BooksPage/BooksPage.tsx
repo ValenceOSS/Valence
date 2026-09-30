@@ -7,6 +7,7 @@ import { ContinueListening } from '@ValenceScreens/components/ContinueListening/
 import { ContinueReading } from '@ValenceScreens/components/ContinueReading/ContinueReading';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import type { Book } from '@ValenceContracts/schemas/Book';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Everything there is to read.
@@ -37,12 +38,12 @@ const BooksPage = () => {
       exit="gone"
       className="flex flex-col gap-6 px-5 pt-6 pb-16 sm:px-10"
     >
-      <h1 className="sr-only">Books</h1>
+      <h1 className="sr-only">{say('common.books')}</h1>
 
       <motion.section
         variants={revealVariants(prefersReducedMotion)}
         transition={revealTransition(prefersReducedMotion)}
-        aria-label="Books"
+        aria-label={say('common.books')}
         className="flex flex-col gap-5"
       >
         <ContinueReading onOpen={open} />

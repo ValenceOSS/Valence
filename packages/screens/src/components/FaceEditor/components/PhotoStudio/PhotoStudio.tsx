@@ -4,6 +4,7 @@ import { FilePicker } from '@ValenceUI/FilePicker';
 import { Icon } from '@ValenceUI/Icon';
 import { Slider } from '@ValenceUI/Slider';
 import type { PhotoStudioProps } from './PhotoStudio.types';
+import { say } from '@ValenceI18n/say';
 
 const PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif,video/webm,video/mp4';
 
@@ -22,32 +23,38 @@ const UNFRAMED = { zoom: 1, x: 0, y: 0 };
 const PhotoStudio = ({ fileName, hasPicture, frame, onPick, onFrame }: PhotoStudioProps) => (
   <div className="flex flex-col gap-8">
     <section className="flex flex-col gap-3">
-      <h3 className="text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">Picture</h3>
+      <h3 className="text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">
+        {say('common.picture')}
+      </h3>
       <div className="flex items-center gap-3">
         <FilePicker
-          label="Choose a picture, GIF or video"
+          label={say('screens.faceEditor.photoStudio.chooseAPictureGIFOrVideo')}
           accept={PHOTO_TYPES}
           size="sm"
           onPick={onPick}
         >
           <Icon of={ImageIcon} size={15} />
-          {hasPicture ? 'Choose another' : 'Choose a picture'}
+          {hasPicture ? say('common.chooseAnother') : say('common.chooseAPicture')}
         </FilePicker>
         <span className="truncate text-xs text-text-muted">
           {fileName ??
-            (hasPicture ? 'Your current picture' : 'A photograph, a GIF or a short video.')}
+            (hasPicture
+              ? say('screens.faceEditor.photoStudio.yourCurrentPicture')
+              : say('screens.faceEditor.photoStudio.aPhotographAGIFOrA'))}
         </span>
       </div>
     </section>
 
     {hasPicture ? (
       <section className="flex flex-col gap-5">
-        <h3 className="text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">Framing</h3>
+        <h3 className="text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">
+          {say('screens.faceEditor.photoStudio.framing')}
+        </h3>
 
         <div className="flex flex-col gap-1.5">
-          <span className="text-xs text-text">Zoom</span>
+          <span className="text-xs text-text">{say('common.zoom')}</span>
           <Slider
-            label="Zoom"
+            label={say('common.zoom')}
             value={Math.round((frame.zoom - 1) * 100)}
             max={300}
             valueLabel={(at) => `${(1 + at / 100).toFixed(2)}×`}
@@ -58,9 +65,9 @@ const PhotoStudio = ({ fileName, hasPicture, frame, onPick, onFrame }: PhotoStud
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <span className="text-xs text-text">Across</span>
+          <span className="text-xs text-text">{say('screens.faceEditor.photoStudio.across')}</span>
           <Slider
-            label="Across"
+            label={say('screens.faceEditor.photoStudio.across')}
             value={Math.round((frame.x + 1) * 100)}
             max={200}
             valueLabel={(at) => `${(at - 100).toString()}%`}
@@ -72,9 +79,11 @@ const PhotoStudio = ({ fileName, hasPicture, frame, onPick, onFrame }: PhotoStud
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <span className="text-xs text-text">Up and down</span>
+          <span className="text-xs text-text">
+            {say('screens.faceEditor.photoStudio.upAndDown')}
+          </span>
           <Slider
-            label="Up and down"
+            label={say('screens.faceEditor.photoStudio.upAndDown')}
             value={Math.round((frame.y + 1) * 100)}
             max={200}
             valueLabel={(at) => `${(at - 100).toString()}%`}
@@ -94,7 +103,7 @@ const PhotoStudio = ({ fileName, hasPicture, frame, onPick, onFrame }: PhotoStud
             }}
           >
             <Icon of={ResetIcon} size={15} />
-            Fit the whole picture
+            {say('screens.faceEditor.photoStudio.fitTheWholePicture')}
           </Button>
         </div>
       </section>

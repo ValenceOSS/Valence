@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it, vi } from 'vitest';
 import { NO_WORK, SOLVER_NOT_USED } from '@ValenceContracts/schemas/Requests';
 import type { RequestsStatus, RequestsVpn } from '@ValenceContracts/schemas/Requests';
@@ -15,7 +16,7 @@ const aVpn = (isUp: boolean | null): RequestsVpn => ({
   publicAddress: isUp === true ? '203.0.113.7' : null,
   country: isUp === true ? 'Netherlands' : null,
   checkedAt: isUp === null ? null : NOW.toISOString(),
-  problem: isUp === false ? 'The tunnel is stopped' : null,
+  problem: isUp === false ? sayVerbatim('The tunnel is stopped') : null,
   problemCode: isUp === false ? 'VpnDown' : null,
 });
 
@@ -34,7 +35,7 @@ const answered = (isUp: boolean | null): RequestsReading => ({
 
 const SILENT: RequestsReading = {
   kind: 'silent',
-  reason: 'http://requests:8421 did not answer',
+  reason: sayVerbatim('http://requests:8421 did not answer'),
   problemCode: 'RequestsUnreachable',
 };
 
@@ -183,7 +184,7 @@ describe('createRequestsMonitor', () => {
     const JACKETT = {
       id: '0f8fad5b-d9cb-469f-a165-70867728950e',
       name: 'Jackett',
-      problem: 'Timed out',
+      problem: sayVerbatim('Timed out'),
       problemCode: 'CloudflareCheckFailed' as const,
     };
 

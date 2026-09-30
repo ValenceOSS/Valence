@@ -1,6 +1,7 @@
 import { REQUESTS_VIEWS } from '@ValenceScreens/requests/REQUESTS_VIEWS';
 import { requestsViewShown } from '@ValenceScreens/requests/requestsViewShown';
 import type { NavBarChoices } from '@ValenceUI/NavBar.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The choice between the Requests views — Discover, Movies, Shows, Music, Books and your own
@@ -14,7 +15,7 @@ const requestsChoicesFor = (
   requestsView: string | null,
   onSelect: (requestsView: string | null) => void,
 ): NavBarChoices => ({
-  label: 'What to discover',
+  label: say('screens.requests.requestsChoicesFor.whatToDiscover'),
   options: REQUESTS_VIEWS,
   selectedId: requestsViewShown(requestsView),
   onSelect: (id: string) => {

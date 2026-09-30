@@ -11,6 +11,7 @@ import { describeJobStatus } from '@ValenceScreens/status/describeJobStatus';
 import { tallyWork } from './tallyWork';
 import type { Job } from '@ValenceClient/admin/fetchAdmin';
 import type { RunningWorkDialogProps } from './RunningWorkDialog.types';
+import { say } from '@ValenceI18n/say';
 
 const isActive = (task: Job): boolean => task.state === 'running' || task.state === 'queued';
 
@@ -51,17 +52,19 @@ const RunningWorkDialog = ({ title, isOpen, progress, tasks, onClose }: RunningW
           <Button
             variant="ghost"
             size="xs"
-            label={`Run ${task.subject} now`}
+            label={say('screens.adminArea.runningWorkDialog.runSubjectNow', {
+              subject: task.subject,
+            })}
             hasTooltip={false}
             onClick={() => {
               void runQueuedJobNow(task.id);
             }}
           >
-            Run now
+            {say('screens.adminArea.runningWorkDialog.runNow')}
           </Button>
 
           <Badge size="sm" tone="quiet">
-            Waiting
+            {say('common.waiting')}
           </Badge>
         </>
       ) : (
@@ -75,12 +78,16 @@ const RunningWorkDialog = ({ title, isOpen, progress, tasks, onClose }: RunningW
   const ordered = [...tasks].sort((left, right) => ORDER[left.state] - ORDER[right.state]);
 
   return (
-    <Dialog label={`What ${title} is doing`} isOpen={isOpen} onClose={onClose}>
+    <Dialog
+      label={say('screens.adminArea.runningWorkDialog.whatTitleIsDoing', { title })}
+      isOpen={isOpen}
+      onClose={onClose}
+    >
       <DialogTitle
         title={title}
         detail={
           tasks.length === 0 ? (
-            'Nothing in the queue is tied to it yet.'
+            say('screens.adminArea.runningWorkDialog.nothingInTheQueueIsTied')
           ) : (
             <>
               <AnimatedNumber value={running} suffix=" running" /> ·{' '}
@@ -109,8 +116,7 @@ const RunningWorkDialog = ({ title, isOpen, progress, tasks, onClose }: RunningW
 
               {entry.isStopping === true ? (
                 <p className="text-xs text-text-muted">
-                  Finishing what it has already started, then it will stop. What is still queued
-                  behind it is left undone until it is run again.
+                  {say('screens.adminArea.runningWorkDialog.finishingWhatItHasAlreadyStarted')}
                 </p>
               ) : null}
             </div>
@@ -123,11 +129,14 @@ const RunningWorkDialog = ({ title, isOpen, progress, tasks, onClose }: RunningW
               {notYetQueued === 0 ? null : (
                 <li className="flex items-center gap-3 py-3">
                   <span className="min-w-0 flex-1 text-sm text-text-muted">
-                    <AnimatedNumber value={notYetQueued} suffix=" more not started yet" />
+                    <AnimatedNumber
+                      value={notYetQueued}
+                      suffix={say('screens.adminArea.runningWorkDialog.moreNotStartedYet')}
+                    />
                   </span>
 
                   <Badge size="sm" tone="quiet">
-                    Waiting
+                    {say('common.waiting')}
                   </Badge>
                 </li>
               )}

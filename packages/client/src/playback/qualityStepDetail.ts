@@ -1,4 +1,6 @@
-const NO_SMALLER = 'no smaller than the original';
+import { say } from '@ValenceI18n/say';
+
+const NO_SMALLER = say('client.playback.qualityStepDetail.noSmallerThanTheOriginal');
 
 type QualityStepDetailOptions = {
   cost: string | undefined;
@@ -13,9 +15,13 @@ type QualityStepDetailOptions = {
  * @returns The line to show, or nothing where there is nothing to say.
  */
 const qualityStepDetail = ({ cost, isNoSmaller }: QualityStepDetailOptions): string | undefined => {
-  const parts = [cost, isNoSmaller ? NO_SMALLER : undefined].filter((part) => part !== undefined);
+  if (!isNoSmaller) {
+    return cost;
+  }
 
-  return parts.length === 0 ? undefined : parts.join(' · ');
+  return cost === undefined
+    ? NO_SMALLER
+    : say('client.playback.qualityStepDetail.costNoSmallerThanTheOriginal', { cost });
 };
 
 export type { QualityStepDetailOptions };

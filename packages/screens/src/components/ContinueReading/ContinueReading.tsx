@@ -5,6 +5,7 @@ import { BookRow } from '@ValenceScreens/components/BookRow/BookRow';
 import { describeReadingPlace } from '@ValenceClient/books/describeReadingPlace';
 import { readingFractionOf } from '@ValenceClient/books/readingFractionOf';
 import type { ContinueReadingProps } from './ContinueReading.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The books somebody is partway through, most recently opened first, each saying how far they got —
@@ -36,7 +37,7 @@ const ContinueReading = ({ onOpen }: ContinueReadingProps) => {
 
   return (
     <BookRow
-      title="Continue reading"
+      title={say('common.continueReading')}
       books={unfinished.map((reading) => reading.book)}
       progress={progress}
       onOpen={onOpen}

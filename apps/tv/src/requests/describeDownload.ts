@@ -1,5 +1,6 @@
 import { partsOfDownload } from '@ValenceTv/requests/partsOfDownload';
 import type { RequestProgress } from '@ValenceContracts/schemas/CatalogueTitle';
+import { say } from '@ValenceI18n/say';
 
 /**
  * How a download is going, on one line, as the web's request pages say it: how far through it is,
@@ -11,7 +12,12 @@ import type { RequestProgress } from '@ValenceContracts/schemas/CatalogueTitle';
 const describeDownload = (progress: RequestProgress): string => {
   const { percent, arrived, speed, left } = partsOfDownload(progress);
 
-  return [percent, arrived, speed, left === null ? null : `${left} left`]
+  return [
+    percent,
+    arrived,
+    speed,
+    left === null ? null : say('common.durationLeft', { timeLeft: left }),
+  ]
     .filter((part) => part !== null)
     .join(' · ');
 };

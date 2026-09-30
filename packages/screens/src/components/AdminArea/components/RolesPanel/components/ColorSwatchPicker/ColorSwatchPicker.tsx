@@ -4,6 +4,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
 import { ROLE_COLOURS } from '@ValenceUI/tokens/roleColours';
 import type { ColorSwatchPickerProps } from './ColorSwatchPicker.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * A swatch of the colours a role may be given, standing for what its name is drawn in wherever a
@@ -21,7 +22,7 @@ const ColorSwatchPicker = ({ value, onChange, className }: ColorSwatchPickerProp
       size="sm"
       isIconOnly
       isPill
-      label="No colour"
+      label={say('screens.rolesPanel.colorSwatchPicker.noColour')}
       onClick={() => {
         onChange(null);
       }}

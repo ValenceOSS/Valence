@@ -136,7 +136,7 @@ describe('cleanupImageCache', () => {
       nameFor,
       listMediaImageUrls: () => Promise.resolve([]),
       listKeptPictures: () => Promise.resolve([]),
-      onProblem: (path, reason) => problems.push(`${path}: ${reason}`),
+      onProblem: (path, reason) => problems.push(`${path}: ${reason.message}`),
     });
 
     expect(problems).toEqual(['hash-a: permission denied']);

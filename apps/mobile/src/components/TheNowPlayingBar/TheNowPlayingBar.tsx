@@ -24,6 +24,7 @@ import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { SPRINGS } from '@ValenceMobile/theme/SPRINGS';
 import type { TheNowPlayingBarProps } from './TheNowPlayingBar.types';
+import { say } from '@ValenceI18n/say';
 
 const ART = 42;
 
@@ -161,7 +162,7 @@ const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
         <View style={styles.opens}>
           <Button
             tone="bare"
-            label="Open the player"
+            label={say('common.openThePlayer')}
             onPress={() => {
               onOpen('book');
             }}
@@ -191,7 +192,7 @@ const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
 
         <Button
           tone="bare"
-          label={book.state.isPlaying ? 'Pause' : 'Play'}
+          label={book.state.isPlaying ? say('common.pause') : say('common.play')}
           onPress={() => {
             book.player.toggle();
           }}
@@ -207,7 +208,9 @@ const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
 
         <Button
           tone="bare"
-          label={`On ${LISTENING_CHOICES.forwardSeconds.toString()} seconds`}
+          label={say('common.onForwardSecondsSeconds', {
+            forwardSeconds: LISTENING_CHOICES.forwardSeconds.toString(),
+          })}
           onPress={() => {
             book.player.skip(LISTENING_CHOICES.forwardSeconds);
           }}
@@ -231,7 +234,7 @@ const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
       <View style={styles.opens}>
         <Button
           tone="bare"
-          label="Open the player"
+          label={say('common.openThePlayer')}
           onPress={() => {
             onOpen('music');
           }}
@@ -254,20 +257,24 @@ const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
               <Words size="small" tone="muted" lines={1}>
                 {state.remote === null
                   ? track.artists.map((artist) => artist.name).join(', ')
-                  : `Playing on ${state.remote.label}`}
+                  : say('common.playingOnLabel', { label: state.remote.label })}
               </Words>
             </View>
           </View>
         </Button>
       </View>
 
-      <Button tone="bare" label={isPlaying ? 'Pause' : 'Play'} onPress={() => player.toggle()}>
+      <Button
+        tone="bare"
+        label={isPlaying ? say('common.pause') : say('common.play')}
+        onPress={() => player.toggle()}
+      >
         <View style={styles.button}>
           <Icon of={isPlaying ? PauseFilled : PlayFilled} size={24} colour={colours.text} />
         </View>
       </Button>
 
-      <Button tone="bare" label="Next" onPress={() => player.next()}>
+      <Button tone="bare" label={say('common.next')} onPress={() => player.next()}>
         <View style={styles.button}>
           <Icon of={SkipForwardFilled} size={24} colour={colours.text} />
         </View>

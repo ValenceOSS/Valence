@@ -6,6 +6,7 @@ import {
 } from '@ValenceServer/routes/ApiKeyRoute';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
+import { refuse } from '@ValenceI18n/refuse';
 
 /**
  * Registers the api key endpoints.
@@ -21,8 +22,8 @@ const serveApiKey = (app: OpenAPIHono, context: AppContext): void => {
 
     if (holder.refusal !== null) {
       return holder.refusal === 'anonymous'
-        ? context.json({ error: 'Nobody is signed in.' }, 401)
-        : context.json({ error: 'This account may not hold API keys.' }, 403);
+        ? context.json(refuse('error.common.nobodyIsSignedIn'), 401)
+        : context.json(refuse('error.apiKey.thisAccountMayNotHoldAPI'), 403);
     }
 
     return context.json({ keys: await apiKeys.list(context.req.raw.headers) }, 200);
@@ -33,8 +34,8 @@ const serveApiKey = (app: OpenAPIHono, context: AppContext): void => {
 
     if (holder.refusal !== null) {
       return holder.refusal === 'anonymous'
-        ? context.json({ error: 'Nobody is signed in.' }, 401)
-        : context.json({ error: 'This account may not hold API keys.' }, 403);
+        ? context.json(refuse('error.common.nobodyIsSignedIn'), 401)
+        : context.json(refuse('error.apiKey.thisAccountMayNotHoldAPI'), 403);
     }
 
     const account = holder.account;
@@ -59,8 +60,8 @@ const serveApiKey = (app: OpenAPIHono, context: AppContext): void => {
 
     if (holder.refusal !== null) {
       return holder.refusal === 'anonymous'
-        ? context.json({ error: 'Nobody is signed in.' }, 401)
-        : context.json({ error: 'This account may not hold API keys.' }, 403);
+        ? context.json(refuse('error.common.nobodyIsSignedIn'), 401)
+        : context.json(refuse('error.apiKey.thisAccountMayNotHoldAPI'), 403);
     }
 
     const changed = await apiKeys.setEnabled(
@@ -70,7 +71,7 @@ const serveApiKey = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     if (changed === null) {
-      return context.json({ error: 'No such key on this account.' }, 404);
+      return context.json(refuse('error.apiKey.noSuchKeyOnThisAccount'), 404);
     }
 
     return context.json(changed, 200);
@@ -81,12 +82,12 @@ const serveApiKey = (app: OpenAPIHono, context: AppContext): void => {
 
     if (holder.refusal !== null) {
       return holder.refusal === 'anonymous'
-        ? context.json({ error: 'Nobody is signed in.' }, 401)
-        : context.json({ error: 'This account may not hold API keys.' }, 403);
+        ? context.json(refuse('error.common.nobodyIsSignedIn'), 401)
+        : context.json(refuse('error.apiKey.thisAccountMayNotHoldAPI'), 403);
     }
 
     if (!(await apiKeys.revoke(context.req.raw.headers, context.req.valid('param').id))) {
-      return context.json({ error: 'No such key on this account.' }, 404);
+      return context.json(refuse('error.apiKey.noSuchKeyOnThisAccount'), 404);
     }
 
     return context.body(null, 204);

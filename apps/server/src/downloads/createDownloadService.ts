@@ -1,3 +1,5 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import { saying } from '@ValenceI18n/saying';
 import { randomUUID } from 'node:crypto';
 import { isImageSubtitle } from '@ValenceCore/functions/isImageSubtitle';
 import { selectAudioStream } from '@ValenceCore/functions/describeTrack';
@@ -22,6 +24,7 @@ import type { Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
 import type { Download, DownloadQuality, Holding } from '@ValenceContracts/schemas/Download';
 import type { DownloadOffer, DownloadService, FollowedDownload } from './DownloadService';
 import type { MediaForDownload } from './MediaForDownload';
+import { say } from '@ValenceI18n/say';
 
 const DOWNLOAD_NAME = 'download.mp4';
 
@@ -190,7 +193,7 @@ const createDownloadService = ({
   const describe = async (row: typeof preparedDownload.$inferSelect): Promise<Download> =>
     asDownload(
       row,
-      (await media.titleOf(row.mediaItemId)) ?? 'Something',
+      (await media.titleOf(row.mediaItemId)) ?? say('common.something'),
       await media.seriesOf(row.mediaItemId),
     );
 
@@ -208,12 +211,12 @@ const createDownloadService = ({
     }
 
     if (bytes > originalBytes) {
-      return 'bigger than the original';
+      return say('server.downloads.downloadService.biggerThanTheOriginal');
     }
 
     return savesEnough(bytes, originalBytes)
       ? compareToOriginal(bytes, originalBytes)
-      : 'about the same size as the original';
+      : say('common.aboutTheSameSizeAsThe');
   };
 
   /**
@@ -347,6 +350,12 @@ const createDownloadService = ({
         typeof first !== 'string' && (first.failure ?? null) !== null ? await tryIt() : first;
 
       const refused = typeof file === 'string';
+      const refusal =
+        typeof file === 'string'
+          ? saying('server.downloads.downloadService.theMediaServiceWouldNotStart', {
+              reason: sayVerbatim(file),
+            })
+          : null;
 
       const existing = await db
         .select()
@@ -368,7 +377,10 @@ const createDownloadService = ({
           .set({
             ...(clientId === null ? {} : { askedFromClientId: clientId }),
             ...(refused
-              ? { state: 'failed', failure: `The media service would not start it: ${file}` }
+              ? {
+                  state: 'failed',
+                  failure: refusal,
+                }
               : {
                   renditionId: file.id,
                   state: file.isReady ? 'ready' : 'preparing',
@@ -408,7 +420,7 @@ const createDownloadService = ({
         bytesPerSecond: refused || file.isReady ? null : (file.bytesPerSecond ?? null),
         secondsLeft: refused || file.isReady ? null : (file.secondsLeft ?? null),
         sizeBytes: refused ? null : (file.sizeBytes ?? null),
-        ...(refused ? { failure: `The media service would not start it: ${file}` } : {}),
+        ...(refused ? { failure: refusal } : {}),
         ...(!refused && file.isReady ? { readyAt: new Date() } : {}),
       });
 
@@ -528,14 +540,16 @@ const createDownloadService = ({
           asked === null || file === null
             ? {
                 state: 'failed',
-                failure: 'It is no longer in the library, so it cannot be prepared.',
+                failure: saying('server.downloads.downloadService.itIsNoLongerInThe'),
                 bytesPerSecond: null,
                 secondsLeft: null,
               }
             : problem !== null
               ? {
                   state: 'failed',
-                  failure: 'The media service could not prepare it. Ask again to try once more.',
+                  failure: saying(
+                    'server.downloads.downloadService.theMediaServiceCouldNotPrepare',
+                  ),
                   bytesPerSecond: null,
                   secondsLeft: null,
                 }
@@ -572,7 +586,7 @@ const createDownloadService = ({
             accountId,
             download: await describe(updated),
             isNowReady: updated.state === 'ready',
-            problem,
+            problem: problem === null ? null : sayVerbatim(problem),
           });
         }
       }
@@ -607,7 +621,7 @@ const createDownloadService = ({
 
       return file === null
         ? null
-        : { file, title: (await media.titleOf(row.mediaItemId)) ?? 'Download' };
+        : { file, title: (await media.titleOf(row.mediaItemId)) ?? say('common.download') };
     },
 
     forget: async (profileId, id) => {

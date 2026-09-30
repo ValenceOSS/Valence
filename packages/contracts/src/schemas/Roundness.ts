@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { say } from '@ValenceI18n/say';
 
 const ROUNDNESS_LEVELS = ['sharp', 'soft', 'default', 'round'] as const;
 
@@ -14,10 +15,10 @@ const ROUNDNESS_SCALES: Readonly<Record<Roundness, number>> = {
 };
 
 const ROUNDNESS_LABELS: Readonly<Record<Roundness, string>> = {
-  sharp: 'Sharp',
-  soft: 'Soft',
-  default: 'Default',
-  round: 'Round',
+  sharp: say('contracts.schemas.roundness.sharp'),
+  soft: say('contracts.schemas.roundness.soft'),
+  default: say('common.default'),
+  round: say('contracts.schemas.roundness.round'),
 };
 
 const AppearanceSchema = z.object({ roundness: RoundnessSchema.default('default') });

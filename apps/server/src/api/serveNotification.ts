@@ -14,6 +14,7 @@ import {
 } from '@ValenceContracts/schemas/Notification';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
+import { refuse } from '@ValenceI18n/refuse';
 
 /**
  * Registers the notification endpoints.
@@ -28,7 +29,7 @@ const serveNotification = (app: OpenAPIHono, context: AppContext): void => {
     const account = await readAccount(context.req.raw.headers);
 
     if (account === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     return context.json(
@@ -44,7 +45,7 @@ const serveNotification = (app: OpenAPIHono, context: AppContext): void => {
     const account = await readAccount(context.req.raw.headers);
 
     if (account === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     const { id } = context.req.valid('json');
@@ -58,7 +59,7 @@ const serveNotification = (app: OpenAPIHono, context: AppContext): void => {
     const account = await readAccount(context.req.raw.headers);
 
     if (account === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     const { id } = context.req.valid('json');
@@ -72,7 +73,7 @@ const serveNotification = (app: OpenAPIHono, context: AppContext): void => {
     const account = await readAccount(context.req.raw.headers);
 
     if (account === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     const stored = await notifications.readPreferences(account.id);
@@ -90,7 +91,7 @@ const serveNotification = (app: OpenAPIHono, context: AppContext): void => {
     const account = await readAccount(context.req.raw.headers);
 
     if (account === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     await notifications.writePreference(account.id, context.req.valid('json'));
@@ -102,7 +103,7 @@ const serveNotification = (app: OpenAPIHono, context: AppContext): void => {
     const account = await readAccount(context.req.raw.headers);
 
     if (account === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     await notifications.addPushEndpoint(account.id, context.req.valid('json'));
@@ -114,7 +115,7 @@ const serveNotification = (app: OpenAPIHono, context: AppContext): void => {
     const account = await readAccount(context.req.raw.headers);
 
     if (account === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     await notifications.removePushEndpoint(account.id, context.req.valid('json').endpoint);

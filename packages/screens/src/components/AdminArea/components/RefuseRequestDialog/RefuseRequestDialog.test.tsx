@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -13,7 +14,11 @@ vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
     refuseMediaRequest(...given),
 }));
 
-const REFUSED = aMediaRequest({ approval: 'refused', state: 'refused', refusedBecause: 'No room' });
+const REFUSED = aMediaRequest({
+  approval: 'refused',
+  state: 'refused',
+  refusedBecause: sayVerbatim('No room'),
+});
 
 beforeEach(() => {
   refuseMediaRequest.mockReset().mockResolvedValue({ value: REFUSED, refusal: null });

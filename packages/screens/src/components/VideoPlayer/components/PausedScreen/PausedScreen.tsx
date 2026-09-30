@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 import type { PausedScreenProps } from './PausedScreen.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * What is on screen once something has been left paused and nobody has touched anything for a
@@ -21,7 +22,13 @@ const PausedScreen = ({ media, isShown }: PausedScreenProps) => {
   const isAnEpisode = typeof media.seriesTitle === 'string' && media.seriesTitle !== '';
   const episode =
     isAnEpisode && typeof media.episodeNumber === 'number'
-      ? `${media.title}: Ep. ${describeEpisodeNumbers(media.episodeNumber, asked.data?.metadata.episodeNumberEnd)}`
+      ? say('screens.videoPlayer.pausedScreen.titleEpEpisodeNumber', {
+          title: media.title,
+          episodeNumber: describeEpisodeNumbers(
+            media.episodeNumber,
+            asked.data?.metadata.episodeNumberEnd,
+          ),
+        })
       : null;
 
   return (
@@ -42,7 +49,9 @@ const PausedScreen = ({ media, isShown }: PausedScreenProps) => {
             transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
             className="flex max-w-3xl flex-col gap-2"
           >
-            <span className="text-base text-on-scrim/75 sm:text-lg">You&rsquo;re watching</span>
+            <span className="text-base text-on-scrim/75 sm:text-lg">
+              {say('screens.videoPlayer.pausedScreen.youReWatching')}
+            </span>
 
             <span className="text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl">
               {isAnEpisode ? media.seriesTitle : media.title}
@@ -50,7 +59,7 @@ const PausedScreen = ({ media, isShown }: PausedScreenProps) => {
 
             {isAnEpisode && typeof media.seasonNumber === 'number' ? (
               <span className="text-xl font-semibold sm:text-2xl">
-                Season {media.seasonNumber}
+                {say('common.seasonSeasonNumber', { seasonNumber: media.seasonNumber })}
               </span>
             ) : null}
 
@@ -66,7 +75,7 @@ const PausedScreen = ({ media, isShown }: PausedScreenProps) => {
           </motion.div>
 
           <span className="absolute bottom-[clamp(1.5rem,8vh,6rem)] right-[clamp(1.5rem,8vw,8rem)] text-lg text-on-scrim/80">
-            Paused
+            {say('common.paused')}
           </span>
         </motion.div>
       ) : null}

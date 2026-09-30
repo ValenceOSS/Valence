@@ -1,11 +1,13 @@
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { readRefusal } from './readRefusal';
 import type { Refusal } from './readRefusal';
 import { z } from 'zod';
+import { say } from '@ValenceI18n/say';
 
 const AccountSessionSchema = z.object({
   id: z.string(),
-  name: z.string(),
+  name: SaidSchema,
   address: z.string().nullable(),
   signedInAt: z.string(),
   expiresAt: z.string(),
@@ -42,7 +44,7 @@ const endAccountSession = async (userId: string, sessionId: string): Promise<Ref
   }).catch(() => null);
 
   return response === null
-    ? { message: 'The server could not be reached.' }
+    ? { message: say('common.theServerCouldNotBeReached') }
     : readRefusal(response);
 };
 
@@ -59,7 +61,7 @@ const endAccountSessions = async (userId: string): Promise<Refusal> => {
   }).catch(() => null);
 
   return response === null
-    ? { message: 'The server could not be reached.' }
+    ? { message: say('common.theServerCouldNotBeReached') }
     : readRefusal(response);
 };
 

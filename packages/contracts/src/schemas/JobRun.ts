@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 
 const JOB_RUN_STATUSES = ['queued', 'running', 'completed', 'failed', 'stopped'] as const;
 
@@ -11,7 +12,7 @@ const JobRunStatusSchema = z.enum(JOB_RUN_STATUSES);
 const JobRunSortSchema = z.enum(JOB_RUN_SORTS);
 
 const JobRunProgressSchema = z.object({
-  phase: z.string(),
+  phase: SaidSchema,
   processed: z.number().int().nonnegative(),
   total: z.number().int().nonnegative(),
 });
@@ -24,7 +25,7 @@ const JobRunRecordSchema = z.object({
   startedAtMs: z.number().int().nonnegative().nullable(),
   finishedAtMs: z.number().int().nonnegative().nullable(),
   progress: JobRunProgressSchema.nullable(),
-  errorMessage: z.string().nullable(),
+  errorMessage: SaidSchema.nullable(),
   createdAtMs: z.number().int().nonnegative(),
 });
 
@@ -32,7 +33,7 @@ const JobRunIssueSchema = z.object({
   id: z.string(),
   jobRunId: z.string(),
   path: z.string(),
-  reason: z.string(),
+  reason: SaidSchema,
   atMs: z.number().int().nonnegative(),
 });
 
@@ -79,7 +80,7 @@ const JobStartedEventSchema = z.object({
 const JobProgressEventSchema = z.object({
   event: z.literal('progress'),
   jobId: z.string(),
-  phase: z.string(),
+  phase: SaidSchema,
   processed: z.number().int().nonnegative(),
   total: z.number().int().nonnegative(),
   item: z.string().nullable().default(null),
@@ -88,7 +89,7 @@ const JobProgressEventSchema = z.object({
 const JobCompletedEventSchema = z.object({
   event: z.literal('completed'),
   kind: z.string(),
-  label: z.string(),
+  label: SaidSchema,
   jobId: z.string(),
   subject: z.string().nullable(),
   subjectName: z.string().nullable(),
@@ -97,7 +98,7 @@ const JobCompletedEventSchema = z.object({
 const JobStoppedEventSchema = z.object({
   event: z.literal('stopped'),
   kind: z.string(),
-  label: z.string(),
+  label: SaidSchema,
   jobId: z.string(),
   subject: z.string().nullable(),
   subjectName: z.string().nullable(),
@@ -106,11 +107,11 @@ const JobStoppedEventSchema = z.object({
 const JobFailedEventSchema = z.object({
   event: z.literal('failed'),
   kind: z.string(),
-  label: z.string(),
+  label: SaidSchema,
   jobId: z.string(),
   subject: z.string().nullable(),
   subjectName: z.string().nullable(),
-  reason: z.string(),
+  reason: SaidSchema,
 });
 
 const JobEventSchema = z.discriminatedUnion('event', [

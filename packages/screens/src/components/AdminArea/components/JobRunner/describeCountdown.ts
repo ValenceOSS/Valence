@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+
 const SECOND = 1000;
 const MINUTE = 60 * SECOND;
 const HOUR = 60 * MINUTE;
@@ -12,20 +14,29 @@ const DAY = 24 * HOUR;
  */
 const describeCountdown = (remaining: number): string => {
   if (remaining < SECOND) {
-    return 'Due now';
+    return say('screens.jobRunner.describeCountdown.dueNow');
   }
 
   const pad = (value: number): string => value.toString().padStart(2, '0');
 
   if (remaining < HOUR) {
-    return `in ${Math.floor(remaining / MINUTE).toString()}m ${pad(Math.floor((remaining % MINUTE) / SECOND))}s`;
+    return say('screens.jobRunner.describeCountdown.inValueMValue2S', {
+      value: Math.floor(remaining / MINUTE).toString(),
+      value2: pad(Math.floor((remaining % MINUTE) / SECOND)),
+    });
   }
 
   if (remaining < DAY) {
-    return `in ${Math.floor(remaining / HOUR).toString()}h ${pad(Math.floor((remaining % HOUR) / MINUTE))}m`;
+    return say('screens.jobRunner.describeCountdown.inValueHValue2M', {
+      value: Math.floor(remaining / HOUR).toString(),
+      value2: pad(Math.floor((remaining % HOUR) / MINUTE)),
+    });
   }
 
-  return `in ${Math.floor(remaining / DAY).toString()}d ${Math.floor((remaining % DAY) / HOUR).toString()}h`;
+  return say('screens.jobRunner.describeCountdown.inValueDValue2H', {
+    value: Math.floor(remaining / DAY).toString(),
+    value2: Math.floor((remaining % DAY) / HOUR).toString(),
+  });
 };
 
 export { describeCountdown };

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { AnimatedBytes } from '@ValenceScreens/components/AnimatedBytes/AnimatedBytes';
 import { describeTimeLeft } from '@ValenceScreens/components/AdminArea/components/DownloadsPanel/describeTimeLeft';
 import type { RequestProgress } from '@ValenceContracts/schemas/CatalogueTitle';
+import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
 
 /**
  * Says how a download is coming along, for whoever is waiting on it: how much has arrived, how
@@ -19,10 +20,13 @@ const describeDownloadProgress = (progress: RequestProgress): ReactNode => {
       progress.doneBytes === null ? (
         <AnimatedBytes bytes={progress.sizeBytes} />
       ) : (
-        <>
-          <AnimatedBytes bytes={progress.doneBytes} /> of{' '}
-          <AnimatedBytes bytes={progress.sizeBytes} />
-        </>
+        <Sentence
+          words="common.doneOfTotal"
+          fillings={{
+            done: <AnimatedBytes bytes={progress.doneBytes} />,
+            total: <AnimatedBytes bytes={progress.sizeBytes} />,
+          }}
+        />
       ),
     );
   }
@@ -32,7 +36,12 @@ const describeDownloadProgress = (progress: RequestProgress): ReactNode => {
   }
 
   if (progress.secondsLeft !== null) {
-    parts.push(<>{describeTimeLeft(progress.secondsLeft)} left</>);
+    parts.push(
+      <Sentence
+        words="common.durationLeft"
+        fillings={{ timeLeft: describeTimeLeft(progress.secondsLeft) }}
+      />,
+    );
   }
 
   if (parts.length === 0) {

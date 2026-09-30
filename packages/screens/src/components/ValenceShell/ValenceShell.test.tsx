@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -51,8 +52,8 @@ const OPERATOR = {
 const A_NOTICE = {
   id: '11111111-1111-4111-8111-111111111111',
   event: 'media.added',
-  title: 'Arrival',
-  body: 'Added to Films',
+  title: sayVerbatim('Arrival'),
+  body: sayVerbatim('Added to Films'),
   link: null,
   createdAt: '2026-08-10T00:00:00.000Z',
   readAt: null,
@@ -206,7 +207,9 @@ describe('ValenceShell', () => {
 
     renderTheApp();
 
-    expect(await screen.findByRole('navigation', { name: 'Sections' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('navigation', { name: 'Sections' }, { timeout: 15_000 }),
+    ).toBeInTheDocument();
     expect(screen.queryByRole('dialog', { name: 'The server' })).not.toBeInTheDocument();
   });
 

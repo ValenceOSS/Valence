@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { createDatabaseBlockedReleaseStore } from './createDatabaseBlockedReleaseStore';
 import { createDatabaseMediaRequestStore } from './createDatabaseMediaRequestStore';
@@ -9,7 +10,7 @@ const BLOCKED = {
   requestId: aMediaRequest().id,
   title: 'Dune.2021.1080p.BluRay.x264-GRP',
   indexerId: null,
-  reason: 'The tracker is gone',
+  reason: sayVerbatim('The tracker is gone'),
   at: '2026-09-19T00:00:00.000Z',
 };
 
@@ -29,12 +30,17 @@ describe('createDatabaseBlockedReleaseStore', () => {
     expect(await store.list()).toEqual([BLOCKED]);
     expect(await store.find(BLOCKED.id)).toEqual(BLOCKED);
     expect(
-      await store.update(BLOCKED.id, { reason: 'Stalled', at: '2026-09-20T00:00:00.000Z' }),
+      await store.update(BLOCKED.id, {
+        reason: sayVerbatim('Stalled'),
+        at: '2026-09-20T00:00:00.000Z',
+      }),
     ).toMatchObject({ reason: 'Stalled', at: '2026-09-20T00:00:00.000Z' });
-    expect(await store.update(BLOCKED.id, { reason: 'Gone' })).toMatchObject({ reason: 'Gone' });
+    expect(await store.update(BLOCKED.id, { reason: sayVerbatim('Gone') })).toMatchObject({
+      reason: 'Gone',
+    });
     expect(await store.remove(BLOCKED.id)).toBe(true);
     expect(await store.remove(BLOCKED.id)).toBe(false);
     expect(await store.find(BLOCKED.id)).toBeNull();
-    expect(await store.update(BLOCKED.id, { reason: 'x' })).toBeNull();
+    expect(await store.update(BLOCKED.id, { reason: sayVerbatim('x') })).toBeNull();
   });
 });

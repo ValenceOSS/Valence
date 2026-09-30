@@ -6,6 +6,7 @@ import {
 import { SHARE_ENDING_SAID } from '@ValenceContracts/schemas/Share';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
 import type { ShareEnding } from '@ValenceContracts/schemas/Share';
+import { say } from '@ValenceI18n/say';
 
 type EndingTold = {
   said: string;
@@ -15,17 +16,15 @@ type EndingTold = {
 
 const TOLD: Record<ShareEnding, { detail: string; icon: IconGlyph }> = {
   withdrawn: {
-    detail: 'Somebody stopped it working. Whoever sent it can send another.',
+    detail: say('screens.sharing.describeShareEnding.somebodyStoppedItWorkingWhoeverSent'),
     icon: UnlinkIcon,
   },
   expired: {
-    detail:
-      'It was made to last a while, and that while is over. Whoever sent it can send another.',
+    detail: say('screens.sharing.describeShareEnding.itWasMadeToLastA'),
     icon: ClockIcon,
   },
   spent: {
-    detail:
-      'It was made to be opened a set number of times, and it has been. Whoever sent it can send another.',
+    detail: say('screens.sharing.describeShareEnding.itWasMadeToBeOpened'),
     icon: EyeOffIcon,
   },
 };

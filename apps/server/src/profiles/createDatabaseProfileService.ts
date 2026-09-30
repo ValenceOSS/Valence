@@ -22,6 +22,7 @@ import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { ProfileService } from './ProfileService';
 import type { ProfileColour, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { StoredFace } from './pickTheAccountsFace';
+import { say } from '@ValenceI18n/say';
 
 const MOVING_FORMATS = new Set(['.webm', '.mp4']);
 
@@ -253,7 +254,7 @@ const createDatabaseProfileService = (
     const created = {
       id: randomUUID(),
       userId,
-      name: name.trim() === '' ? 'Me' : name.trim(),
+      name: name.trim() === '' ? say('server.profiles.databaseProfileService.me') : name.trim(),
       colour: DEFAULT_COLOUR,
     };
 

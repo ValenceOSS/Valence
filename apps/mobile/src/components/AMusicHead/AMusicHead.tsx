@@ -8,6 +8,7 @@ import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { AMusicHeadProps } from './AMusicHead.types';
+import { say } from '@ValenceI18n/say';
 
 const SIDE = 220;
 
@@ -103,12 +104,12 @@ const AMusicHead = ({
         <View style={styles.buttons}>
           <View style={styles.half}>
             <Button tone="bold" icon={PlayFilled} onPress={onPlay}>
-              Play
+              {say('common.play')}
             </Button>
           </View>
           <View style={styles.half}>
             <Button tone="ghost" icon={Shuffle} isWide onPress={onShuffle}>
-              Shuffle
+              {say('common.shuffle')}
             </Button>
           </View>
         </View>

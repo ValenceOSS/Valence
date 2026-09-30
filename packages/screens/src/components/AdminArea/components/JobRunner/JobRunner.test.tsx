@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -9,8 +10,8 @@ import type { ScanEntry } from '@ValenceScreens/components/AdminArea/scanCoordin
 const DEFINITIONS: JobDefinition[] = [
   {
     kind: 'library.scan',
-    label: 'Scan for changes',
-    description: 'Finds new, changed and removed files.',
+    label: sayVerbatim('Scan for changes'),
+    description: sayVerbatim('Finds new, changed and removed files.'),
     needsLibrary: true,
     destructive: false,
     takesParts: false,
@@ -20,8 +21,8 @@ const DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: 'library.regeneratePreviews',
-    label: 'Generate missing previews',
-    description: 'Renders preview clips for items that have none.',
+    label: sayVerbatim('Generate missing previews'),
+    description: sayVerbatim('Renders preview clips for items that have none.'),
     needsLibrary: true,
     destructive: false,
     takesParts: false,
@@ -31,8 +32,8 @@ const DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: 'library.reset',
-    label: 'Reset and rebuild',
-    description: 'Deletes everything in every library, then scans it from nothing.',
+    label: sayVerbatim('Reset and rebuild'),
+    description: sayVerbatim('Deletes everything in every library, then scans it from nothing.'),
     needsLibrary: true,
     destructive: true,
     takesParts: false,
@@ -144,8 +145,8 @@ describe('JobRunner', () => {
         definitions={[
           {
             kind: 'library.clearParts',
-            label: 'Clear and fetch again',
-            description: 'Erases the chosen parts of a library.',
+            label: sayVerbatim('Clear and fetch again'),
+            description: sayVerbatim('Erases the chosen parts of a library.'),
             needsLibrary: true,
             destructive: true,
             takesParts: true,
@@ -185,8 +186,8 @@ describe('JobRunner', () => {
         definitions={[
           {
             kind: 'history.prune',
-            label: 'Prune old viewing history',
-            description: 'Forgets viewings older than a year.',
+            label: sayVerbatim('Prune old viewing history'),
+            description: sayVerbatim('Forgets viewings older than a year.'),
             needsLibrary: false,
             destructive: true,
             takesParts: false,
@@ -551,8 +552,8 @@ describe('JobRunner', () => {
       ...DEFINITIONS,
       {
         kind: 'server.checkTranscoder',
-        label: 'Check the transcoder',
-        description: 'Asks the transcoder whether it is still answering.',
+        label: sayVerbatim('Check the transcoder'),
+        description: sayVerbatim('Asks the transcoder whether it is still answering.'),
         needsLibrary: false,
         destructive: false,
         takesParts: false,
@@ -603,8 +604,8 @@ describe('JobRunner', () => {
       ...DEFINITIONS,
       {
         kind: 'catalogue.rematch',
-        label: 'Re-match against the catalogue',
-        description: 'Retries metadata matching for every item on the server.',
+        label: sayVerbatim('Re-match against the catalogue'),
+        description: sayVerbatim('Retries metadata matching for every item on the server.'),
         needsLibrary: false,
         destructive: false,
         takesParts: false,
@@ -641,8 +642,8 @@ describe('JobRunner', () => {
       ...DEFINITIONS,
       {
         kind: 'catalogue.rematch',
-        label: 'Re-match against the catalogue',
-        description: 'Retries metadata matching for every item on the server.',
+        label: sayVerbatim('Re-match against the catalogue'),
+        description: sayVerbatim('Retries metadata matching for every item on the server.'),
         needsLibrary: false,
         destructive: false,
         takesParts: false,

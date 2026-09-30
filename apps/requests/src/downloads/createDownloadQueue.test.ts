@@ -1,3 +1,5 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it, vi } from 'vitest';
 import { createMemoryRecordStore } from '@ValenceRequests/stores/createMemoryRecordStore';
 import { aDownloadClient } from '@ValenceRequests/testing/aDownloadClient';
@@ -102,7 +104,7 @@ const aQueue = ({
   adapter?: ReturnType<typeof anAdapter>;
   indexers?: Pick<Indexer, 'id' | 'privacy' | 'removesWhenDone' | 'seedSeconds' | 'seedRatio'>[];
   fetchRelease?: (indexerId: string, url: string) => Promise<ReleaseFile | null>;
-  judgeFiles?: (record: SentDownloadRecord, videos: readonly string[]) => Promise<string | null>;
+  judgeFiles?: (record: SentDownloadRecord, videos: readonly string[]) => Promise<Said | null>;
   refusesUnknownFiles?: () => Promise<boolean>;
 } = {}) => {
   const store = createMemoryRecordStore(clients);
@@ -202,8 +204,8 @@ describe('createDownloadQueue', () => {
 
     it('throws out a torrent whose videos are not what was asked for, saying why', async () => {
       const judgeFiles = vi.fn(() =>
-        Promise.resolve<string | null>(
-          'Its file, Dune.1080p.mkv, is 1080p, which this profile does not take',
+        Promise.resolve<Said | null>(
+          sayVerbatim('Its file, Dune.1080p.mkv, is 1080p, which this profile does not take'),
         ),
       );
       const adapter = aSortingAdapter([
@@ -442,14 +444,14 @@ describe('createDownloadQueue', () => {
       const failing = (error: Error) =>
         aQueue({ fetchRelease: () => Promise.reject(error) }).queue.send(SEND);
 
-      expect(await failing(new IndexerFailure('The site answered 410'))).toEqual({
+      expect(await failing(new IndexerFailure(sayVerbatim('The site answered 410')))).toEqual({
         refused: 'The site answered 410',
         problemCode: null,
       });
       expect(
         await failing(
           new IndexerFailure(
-            'The site’s Cloudflare refuses this address outright',
+            sayVerbatim('The site’s Cloudflare refuses this address outright'),
             'CloudflareRefusesAddress',
           ),
         ),
@@ -471,11 +473,14 @@ describe('createDownloadQueue', () => {
       const refusing = anAdapter();
 
       refusing.add.mockRejectedValueOnce(
-        new DownloadClientFailure('qBittorrent would not take the torrent'),
+        new DownloadClientFailure(sayVerbatim('qBittorrent would not take the torrent')),
       );
       refusing.add.mockRejectedValueOnce(new Error('boom'));
       refusing.add.mockRejectedValueOnce(
-        new DownloadClientFailure('qBittorrent could not be reached', 'DownloadClientUnreachable'),
+        new DownloadClientFailure(
+          sayVerbatim('qBittorrent could not be reached'),
+          'DownloadClientUnreachable',
+        ),
       );
 
       const { queue } = aQueue({ adapter: refusing });
@@ -570,7 +575,7 @@ describe('createDownloadQueue', () => {
       const { queue, events } = aQueue({
         sent: [aSentDownload()],
         adapter: anAdapter([
-          anItem({ state: 'failed', problem: 'qBittorrent cannot find its files' }),
+          anItem({ state: 'failed', problem: sayVerbatim('qBittorrent cannot find its files') }),
         ]),
       });
 
@@ -578,7 +583,10 @@ describe('createDownloadQueue', () => {
       await queue.check();
 
       expect(await events.pending()).toEqual([
-        expect.objectContaining({ kind: 'failed', problem: 'qBittorrent cannot find its files' }),
+        expect.objectContaining({
+          kind: 'failed',
+          problem: sayVerbatim('qBittorrent cannot find its files'),
+        }),
       ]);
     });
 
@@ -656,7 +664,7 @@ describe('createDownloadQueue', () => {
       const unreachable = anAdapter();
 
       unreachable.list.mockRejectedValueOnce(
-        new DownloadClientFailure('qBittorrent could not be reached'),
+        new DownloadClientFailure(sayVerbatim('qBittorrent could not be reached')),
       );
       unreachable.list.mockRejectedValueOnce(new Error('boom'));
 
@@ -673,7 +681,7 @@ describe('createDownloadQueue', () => {
 
       await queue.check();
 
-      expect((await queue.queue()).clients[0]?.problem).toBe('The client could not be asked');
+      expect((await queue.queue()).clients[0]?.problem).toEqual('The client could not be asked');
       expect(await downloads.find(kept.id)).toEqual(kept);
     });
 
@@ -757,14 +765,16 @@ describe('createDownloadQueue', () => {
     it('says why a client would not pause it, and knows nothing of a download it never sent', async () => {
       const refusing = anAdapter();
 
-      refusing.pause.mockRejectedValueOnce(new DownloadClientFailure('qBittorrent answered 409'));
+      refusing.pause.mockRejectedValueOnce(
+        new DownloadClientFailure(sayVerbatim('qBittorrent answered 409')),
+      );
       refusing.pause.mockRejectedValueOnce(new Error('boom'));
 
       const kept = aSentDownload();
       const { queue } = aQueue({ sent: [kept], adapter: refusing });
 
-      expect(await queue.pause(kept.id)).toBe('qBittorrent answered 409');
-      expect(await queue.pause(kept.id)).toBe('The client could not be asked');
+      expect(await queue.pause(kept.id)).toEqual({ refused: 'qBittorrent answered 409' });
+      expect(await queue.pause(kept.id)).toEqual({ refused: 'The client could not be asked' });
       expect(await queue.pause('nothing')).toBeNull();
     });
 
@@ -799,15 +809,19 @@ describe('createDownloadQueue', () => {
       const refusing = anAdapter();
 
       refusing.remove.mockRejectedValueOnce(
-        new DownloadClientFailure('qBittorrent could not be reached'),
+        new DownloadClientFailure(sayVerbatim('qBittorrent could not be reached')),
       );
       refusing.remove.mockRejectedValueOnce(new Error('boom'));
 
       const kept = aSentDownload();
       const { queue, downloads } = aQueue({ sent: [kept], adapter: refusing });
 
-      expect(await queue.remove(kept.id, false)).toBe('qBittorrent could not be reached');
-      expect(await queue.remove(kept.id, false)).toBe('The client could not be asked');
+      expect(await queue.remove(kept.id, false)).toEqual({
+        refused: 'qBittorrent could not be reached',
+      });
+      expect(await queue.remove(kept.id, false)).toEqual({
+        refused: 'The client could not be asked',
+      });
       expect(await downloads.list()).toEqual([kept]);
     });
   });

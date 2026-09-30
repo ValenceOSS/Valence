@@ -6,7 +6,7 @@ describe('saidWhen', () => {
     expect(saidWhen('2026-03-04T15:30:00.000Z')).toMatch(/2026/);
   });
 
-  it('says something vague where the moment cannot be read', () => {
-    expect(saidWhen('not a date')).toBe('at some point');
+  it('says nothing where the moment cannot be read', () => {
+    expect(saidWhen('not a date')).toBeNull();
   });
 });

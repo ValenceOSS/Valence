@@ -1,3 +1,4 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { z } from 'zod';
 import { MediaRequestKindSchema } from '@ValenceContracts/schemas/MediaRequest';
 import { LibraryPartSchema } from '@ValenceContracts/schemas/LibraryPart';
@@ -135,7 +136,7 @@ const scheduleTriggerKind = (kind: string): string => `${kind}.scheduled`;
 type JobState = 'queued' | 'running' | 'completed' | 'failed' | 'unknown';
 
 type JobProgress = {
-  phase: string;
+  phase: Said;
   processed: number;
   total: number;
   item: string | null;
@@ -165,7 +166,7 @@ type JobQueue = {
   readProgress: (jobId: string) => JobProgress | null;
   reportProgress: (
     jobId: string,
-    phase: string,
+    phase: Said,
     processed: number,
     total: number,
     item?: string | null,

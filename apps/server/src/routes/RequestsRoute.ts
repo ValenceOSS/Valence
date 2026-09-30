@@ -1,4 +1,5 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
   RequestsAvailabilitySchema,
   RequestsOverviewSchema,
@@ -62,7 +63,7 @@ import {
   ReleaseSendSchema,
 } from '@ValenceContracts/schemas/DownloadQueue';
 
-const RequestsError = z.object({ error: z.string() }).openapi('RequestsError');
+const RequestsError = RefusalSchema.openapi('RequestsError');
 
 const RequestsAvailabilityAnswer = RequestsAvailabilitySchema.openapi('RequestsAvailability');
 

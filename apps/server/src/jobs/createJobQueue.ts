@@ -6,6 +6,10 @@ import { upsert } from '@ValenceDatabase/upsert';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { jobSchedule, queuedJob } from '#dialect/Schema';
 import { nextFiringOf } from './nextFiringOf';
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import { saying } from '@ValenceI18n/saying';
+import { SaidError } from '@ValenceI18n/SaidError';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { readJobPayload } from './readJobPayload';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { JobProgress, JobQueue, JobState } from './JobQueue';
@@ -17,7 +21,7 @@ type FinishedJob = {
   kind: string;
   jobId: string;
   subject: string | null;
-  reason: string | null;
+  reason: Said | null;
   wasStopped: boolean;
 };
 
@@ -35,7 +39,7 @@ type CreateJobQueueOptions = {
   onStarted?: (entry: { kind: string; jobId: string; subject: string | null }) => Promise<void>;
   onProgress?: (entry: {
     jobId: string;
-    phase: string;
+    phase: Said;
     processed: number;
     total: number;
     item: string | null;
@@ -252,7 +256,12 @@ const createJobQueue = ({
       await settle(job.id, 'completed', null);
     } catch (error) {
       const wasStopped = cancelled.has(job.id);
-      const reason = error instanceof Error ? error.message : 'The job failed.';
+      const reason =
+        error instanceof SaidError
+          ? error.said
+          : error instanceof Error
+            ? sayVerbatim(error.message)
+            : saying('server.jobs.jobQueue.theJobFailed');
 
       onFinished?.({
         kind,
@@ -262,7 +271,7 @@ const createJobQueue = ({
         wasStopped,
       });
 
-      await (wasStopped ? settle(job.id, 'cancelled', null) : retryOrFail(job, reason));
+      await (wasStopped ? settle(job.id, 'cancelled', null) : retryOrFail(job, reason.message));
     } finally {
       running.delete(job.id);
       progressByJobId.delete(job.id);
@@ -454,7 +463,12 @@ const createJobQueue = ({
     startWorking: async () => {
       await db
         .update(queuedJob)
-        .set({ state: 'failed', finishedAt: new Date(), lastError: 'The server stopped.' })
+        .set({
+          state: 'failed',
+          finishedAt: new Date(),
+          // eslint-disable-next-line valence/no-hard-coded-strings -- kept in the queue's own table for whoever reads it, never shown
+          lastError: 'The server stopped.',
+        })
         .where(and(eq(queuedJob.state, 'running'), gt(queuedJob.attempts, queuedJob.retryLimit)));
 
       await db.update(queuedJob).set({ state: 'queued' }).where(eq(queuedJob.state, 'running'));

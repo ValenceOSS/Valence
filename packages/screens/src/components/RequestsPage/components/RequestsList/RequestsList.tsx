@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { groupVariants } from '@ValenceUI/animations/reveal';
@@ -32,6 +33,7 @@ import { costOfRequest } from '@ValenceScreens/requests/costOfRequest';
 import { describeDownloadCost } from '@ValenceScreens/requests/describeDownloadCost';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { RequestsListProps } from './RequestsList.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The requests on this server, newest first, with where each has got to — waiting on approval,
@@ -76,7 +78,7 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
   if (requests.isError) {
     return (
       <CouldNotRead
-        what="The requests"
+        said={say('common.theRequestsCouldNotBeRead')}
         isTryingAgain={requests.isFetching}
         onTryAgain={() => {
           void requests.refetch();
@@ -86,15 +88,15 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
   }
 
   if (requests.data === undefined || me.data === undefined) {
-    return <Spinner isPageCentered label="Reading the requests" />;
+    return <Spinner isPageCentered label={say('common.readingTheRequests')} />;
   }
 
   if (everything.length === 0) {
     return (
       <NothingHere
         of={CompassIcon}
-        title="Nothing has been requested yet"
-        detail="Find something on Discover, or search for it, and request it from its page."
+        title={say('screens.requestsPage.requestsList.nothingHasBeenRequestedYet')}
+        detail={say('screens.requestsPage.requestsList.findSomethingOnDiscoverOrSearch')}
       />
     );
   }
@@ -103,18 +105,18 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
     <>
       <div className="flex flex-wrap items-center gap-2">
         <FilterMenu
-          label="Filter the requests"
+          label={say('common.filterTheRequests')}
           groups={groups}
           selected={filters}
           onChange={setFilters}
         />
 
         <TextField
-          label="Search the requests"
+          label={say('common.searchTheRequests')}
           isLabelHidden
           size="sm"
           type="search"
-          placeholder="A title, or who asked"
+          placeholder={say('common.aTitleOrWhoAsked')}
           value={search}
           onValueChange={setSearch}
           className="w-56 max-w-full"
@@ -130,13 +132,13 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
       {shown.length === 0 ? (
         <NothingHere
           of={CompassIcon}
-          title="Nothing matches that"
-          detail="Clear a filter, or search for something else."
+          title={say('screens.requestsPage.requestsList.nothingMatchesThat')}
+          detail={say('screens.requestsPage.requestsList.clearAFilterOrSearchFor')}
         />
       ) : null}
 
       <motion.ul
-        aria-label="Requests"
+        aria-label={say('common.requests')}
         variants={groupVariants}
         initial="hidden"
         animate="shown"
@@ -155,7 +157,7 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
                 {isMusicRequest(request.kind) ? (
                   <MusicArtwork
                     src={request.posterUrl}
-                    label={`The cover of ${request.title}`}
+                    label={say('common.theCoverOfTitle', { title: request.title })}
                     shape={request.kind === 'artist' ? 'round' : 'square'}
                     className="w-16"
                   />
@@ -187,8 +189,8 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
                   <span className="text-xs text-text-muted">
                     {[
                       request.requestedBy.id === me.data?.id
-                        ? 'Asked by you'
-                        : `Asked by ${request.requestedBy.name}`,
+                        ? say('common.askedByYou')
+                        : say('common.askedByName', { name: request.requestedBy.name }),
                       named.get(request.libraryId) ?? null,
                       request.profileName,
                     ]
@@ -199,7 +201,9 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
                   {said === null ? null : <span className="text-xs text-text-muted">{said}</span>}
                   {request.refusedBecause === null ? null : (
                     <span className="break-words text-xs text-text-muted">
-                      Refused: {request.refusedBecause}
+                      {say('screens.requestsPage.requestsList.refusedRefusedBecause', {
+                        refusedBecause: sayAgain(request.refusedBecause),
+                      })}
                     </span>
                   )}
                   {badge.detail === null ? null : (
@@ -212,7 +216,7 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
 
                   {going === null ? null : (
                     <ProgressBar
-                      label={`How much of ${request.title} has arrived`}
+                      label={say('common.howMuchOfTitleHasArrived', { title: request.title })}
                       value={Math.round(going.progress * 1000) / 10}
                       readout={
                         <DownloadProgressReadout progress={going} className="text-text-muted" />
@@ -232,7 +236,7 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
                         setCancelling(request);
                       }}
                     >
-                      Cancel
+                      {say('common.cancel')}
                     </Button>
                   ) : null}
                   <Button
@@ -253,7 +257,9 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
                       );
                     }}
                   >
-                    {request.state === 'available' && request.mediaId !== null ? 'Open' : 'Details'}
+                    {request.state === 'available' && request.mediaId !== null
+                      ? say('common.open')
+                      : say('common.details')}
                   </Button>
                 </span>
               </Card>
@@ -263,9 +269,13 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
       </motion.ul>
 
       <ConfirmDialog
-        title={`Cancel ${cancelling?.title ?? 'this request'}?`}
-        detail="It will not be fetched, and whatever it had started downloading is deleted. You can request it again whenever you like."
-        confirmLabel="Cancel request"
+        title={
+          cancelling === null
+            ? say('common.cancelThisRequest')
+            : say('common.cancelTitle', { title: cancelling.title })
+        }
+        detail={say('common.itWillNotBeFetchedAnd')}
+        confirmLabel={say('common.cancelRequest')}
         isDestructive
         isOpen={cancelling !== null}
         onClose={() => {

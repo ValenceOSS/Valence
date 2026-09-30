@@ -3,6 +3,7 @@ import { HoverCard } from '@ValenceUI/HoverCard';
 import { Icon } from '@ValenceUI/Icon';
 import { StatTile } from '@ValenceUI/StatTile';
 import type { StatStripProps } from './StatStrip.types';
+import { say } from '@ValenceI18n/say';
 
 const COLUMN_CLASSES: Record<number, string> = {
   1: 'lg:grid-cols-1',
@@ -37,7 +38,11 @@ const StatStrip = ({ stats }: StatStripProps) => (
               icon: (
                 <HoverCard side="bottom" align="start" detail={stat.info}>
                   <span className="text-text-muted hover:text-text">
-                    <Icon of={InfoIcon} size={14} label={`About ${stat.label}`} />
+                    <Icon
+                      of={InfoIcon}
+                      size={14}
+                      label={say('screens.adminArea.statStrip.aboutLabel', { label: stat.label })}
+                    />
                   </span>
                 </HoverCard>
               ),

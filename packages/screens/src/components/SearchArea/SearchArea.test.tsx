@@ -3,6 +3,7 @@ import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SearchArea } from './SearchArea';
+import { readsWhole } from '@ValenceScreens/testing/readsWhole';
 import type { LibraryFacets, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { Book } from '@ValenceContracts/schemas/Book';
 
@@ -280,7 +281,7 @@ describe('SearchArea', () => {
       />,
     );
 
-    expect(await screen.findByText('1 result')).toBeInTheDocument();
+    expect(await screen.findByText(readsWhole('1 result'))).toBeInTheDocument();
   });
 
   it('opens the programme rather than the episode when a programme is chosen', async () => {
@@ -474,7 +475,7 @@ describe('SearchArea', () => {
 
     expect(await screen.findByText('Pride and Prejudice')).toBeInTheDocument();
     expect(findBooks).toHaveBeenCalledWith({ search: 'austen' });
-    expect(screen.getByText('2 results')).toBeInTheDocument();
+    expect(screen.getByText(readsWhole('2 results'))).toBeInTheDocument();
   });
 
   it('opens a book chosen from the results', async () => {

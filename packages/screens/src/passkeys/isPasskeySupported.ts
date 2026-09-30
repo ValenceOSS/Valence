@@ -1,4 +1,5 @@
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Whether this browser's page can make and use passkeys itself, which needs both the credential
@@ -37,7 +38,7 @@ const describePasskeyUnavailability = (): string | null => {
   }
 
   if (passkeys.kind === 'through-a-sign-in-page') {
-    return 'Passkeys are added from Valence in your browser.';
+    return say('screens.passkeys.isPasskeySupported.passkeysAreAddedFromValenceIn');
   }
 
   if (passkeys.kind === 'through-the-system') {
@@ -45,15 +46,15 @@ const describePasskeyUnavailability = (): string | null => {
   }
 
   if (typeof window === 'undefined') {
-    return 'Passkeys are not available here.';
+    return say('screens.passkeys.isPasskeySupported.passkeysAreNotAvailableHere');
   }
 
   if (!window.isSecureContext) {
-    return 'Passkeys need a secure connection. Reach Valence over HTTPS, or on localhost, to add one.';
+    return say('screens.passkeys.isPasskeySupported.passkeysNeedASecureConnectionReach');
   }
 
   if (typeof window.PublicKeyCredential !== 'function') {
-    return 'This browser does not support passkeys.';
+    return say('screens.passkeys.isPasskeySupported.thisBrowserDoesNotSupportPasskeys');
   }
 
   return null;

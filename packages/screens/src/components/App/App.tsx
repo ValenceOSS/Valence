@@ -5,6 +5,7 @@ import { SplashScreen } from '@ValenceUI/SplashScreen';
 import { SetupWizard } from '@ValenceScreens/components/SetupWizard/SetupWizard';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import type { AppProps } from './App.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The application itself, at every address: whether this server has been set up, and the page the
@@ -15,7 +16,7 @@ import type { AppProps } from './App.types';
  *
  * @param initialTitle - What the platform is called, which an operator may have changed.
  */
-const App = ({ initialTitle = 'Valence' }: AppProps) => {
+const App = ({ initialTitle = say('common.valence') }: AppProps) => {
   const cache = useQueryClient();
 
   const server = useQuery(sessionQueries.setup());
@@ -27,16 +28,19 @@ const App = ({ initialTitle = 'Valence' }: AppProps) => {
   );
 
   if (server.isPending) {
-    return <SplashScreen name={initialTitle} label={`Loading ${initialTitle}`} />;
+    return (
+      <SplashScreen
+        name={initialTitle}
+        label={say('screens.app.loadingInitialTitle', { initialTitle })}
+      />
+    );
   }
 
   if (server.isError || status === null) {
     return (
       <main className="mx-auto flex max-w-lg flex-col gap-2 p-8">
-        <h1 className="text-2xl font-semibold text-text">Valence is not reachable</h1>
-        <p className="text-text-muted">
-          The server did not respond. Check that it is running and reload the page.
-        </p>
+        <h1 className="text-2xl font-semibold text-text">{say('common.valenceIsNotReachable')}</h1>
+        <p className="text-text-muted">{say('common.theServerDidNotRespondCheck')}</p>
       </main>
     );
   }

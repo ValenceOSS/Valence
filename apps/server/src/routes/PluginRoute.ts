@@ -1,4 +1,5 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
   CatalogueListingSchema,
   InstalledPluginSchema,
@@ -11,7 +12,7 @@ import {
 import { SurfaceSchema } from '@ValenceSDK/surface/SurfaceSchema';
 import { SurfaceActRequestSchema } from '@ValenceSDK/surface/SurfaceActRequestSchema';
 
-const PluginError = z.object({ error: z.string() }).openapi('PluginError');
+const PluginError = RefusalSchema.openapi('PluginError');
 
 const PluginId = z.string().regex(/^[a-z][a-z0-9-]{2,63}$/);
 

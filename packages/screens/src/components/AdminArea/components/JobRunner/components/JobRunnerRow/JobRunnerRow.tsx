@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { Calendar as CalendarIcon, Info as InfoIcon } from '@keyline-icons/react';
 import { Play as PlayFilledIcon, Stop as StopFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
@@ -8,6 +9,7 @@ import { describeCountdown } from '@ValenceScreens/components/AdminArea/componen
 import { ScanProgressBar } from '@ValenceScreens/components/AdminArea/components/ScanProgressBar/ScanProgressBar';
 import type { JobTrigger } from '@ValenceClient/admin/fetchAdmin';
 import type { JobRunnerRowProps } from './JobRunnerRow.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says when a job runs on its own in a few words: its first trigger, and how many more it has.
@@ -19,7 +21,7 @@ const describeSchedule = (triggers: JobTrigger[]): string => {
   const [first, ...rest] = triggers;
 
   if (first === undefined) {
-    return 'Not scheduled';
+    return say('screens.jobRunner.jobRunnerRow.notScheduled');
   }
 
   const said = describeTrigger(first.trigger);
@@ -69,17 +71,22 @@ const JobRunnerRow = ({
             />
           ) : null}
 
-          <span className="truncate text-sm font-medium text-text">{definition.label}</span>
+          <span className="truncate text-sm font-medium text-text">
+            {sayAgain(definition.label)}
+          </span>
         </span>
 
         {summary === null ? (
-          <span className="truncate text-xs text-text-muted" title={definition.description}>
-            {definition.description}
+          <span
+            className="truncate text-xs text-text-muted"
+            title={sayAgain(definition.description)}
+          >
+            {sayAgain(definition.description)}
           </span>
         ) : (
           <span className="flex min-w-0 items-center gap-1">
             <ScanProgressBar
-              label={definition.label}
+              label={sayAgain(definition.label)}
               phase={summary.phase}
               processed={summary.processed}
               total={summary.total}
@@ -91,7 +98,9 @@ const JobRunnerRow = ({
               variant="subtle"
               size="none"
               isIconOnly
-              label={`What ${definition.label} is doing`}
+              label={say('screens.jobRunner.jobRunnerRow.whatLabelIsDoing', {
+                label: sayAgain(definition.label),
+              })}
               onClick={() => {
                 onWatch(definition);
               }}
@@ -112,7 +121,9 @@ const JobRunnerRow = ({
             variant="secondary"
             size="xs"
             className="w-full justify-start"
-            label={`Edit the schedule for ${definition.label}`}
+            label={say('screens.jobRunner.jobRunnerRow.editTheScheduleForLabel', {
+              label: sayAgain(definition.label),
+            })}
             onClick={() => {
               onOpenSchedule(definition.kind);
             }}
@@ -128,7 +139,9 @@ const JobRunnerRow = ({
             </span>
           </Button>
         ) : (
-          <span className="truncate px-2 text-xs text-text-muted">Run by hand only</span>
+          <span className="truncate px-2 text-xs text-text-muted">
+            {say('screens.jobRunner.jobRunnerRow.runByHandOnly')}
+          </span>
         )}
       </span>
 
@@ -137,7 +150,9 @@ const JobRunnerRow = ({
           <Button
             variant="ghost"
             size="sm"
-            label={`Stop ${definition.label}`}
+            label={say('screens.jobRunner.jobRunnerRow.stopLabel', {
+              label: sayAgain(definition.label),
+            })}
             hasTooltip={false}
             disabled={summary.isStopping}
             onClick={() => {
@@ -145,13 +160,13 @@ const JobRunnerRow = ({
             }}
           >
             <Icon of={StopFilledIcon} size={13} />
-            {summary.isStopping ? 'Stopping' : 'Stop'}
+            {summary.isStopping ? say('common.stopping2') : say('common.stop')}
           </Button>
         ) : (
           <Button
             variant="ghost"
             size="sm"
-            label={`Run ${definition.label}`}
+            label={say('common.runLabel', { label: sayAgain(definition.label) })}
             hasTooltip={false}
             disabled={isRunBlocked}
             onClick={() => {
@@ -159,7 +174,7 @@ const JobRunnerRow = ({
             }}
           >
             <Icon of={PlayFilledIcon} size={13} />
-            Run
+            {say('common.run')}
           </Button>
         )}
       </span>

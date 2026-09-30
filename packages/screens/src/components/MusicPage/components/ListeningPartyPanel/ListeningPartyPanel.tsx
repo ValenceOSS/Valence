@@ -10,6 +10,7 @@ import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import type { ListeningPartyPanelProps } from './ListeningPartyPanel.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Listening together: starting a party from whatever is playing, and — once in one — who is there,
@@ -56,8 +57,8 @@ const ListeningPartyPanel = ({ player: given }: ListeningPartyPanelProps) => {
     return (
       <NothingHere
         of={UsersIcon}
-        title="You are in a watch party"
-        detail="Leave it before starting a party to listen together."
+        title={say('screens.musicPage.listeningPartyPanel.youAreInAWatchParty')}
+        detail={say('screens.musicPage.listeningPartyPanel.leaveItBeforeStartingAParty')}
       />
     );
   }
@@ -67,11 +68,11 @@ const ListeningPartyPanel = ({ player: given }: ListeningPartyPanelProps) => {
   return (
     <NothingHere
       of={HeadphonesIcon}
-      title="Listen together"
+      title={say('screens.musicPage.listeningPartyPanel.listenTogether')}
       detail={
         song === null
-          ? 'Play something, then start a party and send the link to anybody with an account here.'
-          : 'Everybody hears what you play, where you are in it. Each of them keeps their own volume.'
+          ? say('screens.musicPage.listeningPartyPanel.playSomethingThenStartAParty')
+          : say('screens.musicPage.listeningPartyPanel.everybodyHearsWhatYouPlayWhere')
       }
       action={
         <Button
@@ -85,7 +86,7 @@ const ListeningPartyPanel = ({ player: given }: ListeningPartyPanelProps) => {
           }}
         >
           <Icon of={UsersIcon} size={16} />
-          Start a listening party
+          {say('screens.musicPage.listeningPartyPanel.startAListeningParty')}
         </Button>
       }
     />

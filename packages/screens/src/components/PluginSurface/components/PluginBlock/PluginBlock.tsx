@@ -13,6 +13,7 @@ import { PLUGIN_ICONS } from '@ValenceScreens/components/PluginSurface/PLUGIN_IC
 import { PluginMedia } from '@ValenceScreens/components/PluginSurface/components/PluginMedia/PluginMedia';
 import { PluginRow } from '@ValenceScreens/components/PluginSurface/components/PluginRow/PluginRow';
 import type { PluginBlockProps } from './PluginBlock.types';
+import { say } from '@ValenceI18n/say';
 
 const TEXT_TONES = {
   default: 'text-text',
@@ -150,7 +151,7 @@ const PluginBlock = ({ pluginId, block, fields, onField, onAct, isActing }: Plug
     case 'progress':
       return (
         <ProgressBar
-          label={block.label ?? 'Progress'}
+          label={block.label ?? say('common.progress')}
           value={Math.round(block.value * 100)}
           max={100}
           readout={`${Math.round(block.value * 100).toString()}%`}

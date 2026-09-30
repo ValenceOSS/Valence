@@ -8,21 +8,27 @@ import { CAPTION_COLOURS } from '@ValenceUI/captionColours';
 import { CaptionField } from './components/CaptionField/CaptionField';
 import { toCueDeclarations } from '@ValenceScreens/playback/captionStyle';
 import type { CaptionSettingsProps } from './CaptionSettings.types';
+import { say } from '@ValenceI18n/say';
 
 const FONTS = [
-  { id: 'sans', label: 'Sans' },
-  { id: 'serif', label: 'Serif' },
-  { id: 'mono', label: 'Mono' },
-  { id: 'casual', label: 'Casual' },
+  { id: 'sans', label: say('screens.videoPlayer.captionSettings.sans') },
+  { id: 'serif', label: say('screens.videoPlayer.captionSettings.serif') },
+  { id: 'mono', label: say('common.mono') },
+  { id: 'casual', label: say('screens.videoPlayer.captionSettings.casual') },
 ] as const;
 
-const OUTLINE_NAMES = ['Thin', 'Medium', 'Thick', 'Heavy'] as const;
+const OUTLINE_NAMES = [
+  say('screens.videoPlayer.captionSettings.thin'),
+  say('common.medium'),
+  say('screens.videoPlayer.captionSettings.thick'),
+  say('screens.videoPlayer.captionSettings.heavy'),
+] as const;
 
 const EDGES = [
-  { id: 'none', label: 'None' },
-  { id: 'outline', label: 'Outline' },
-  { id: 'shadow', label: 'Shadow' },
-  { id: 'raised', label: 'Raised' },
+  { id: 'none', label: say('common.none') },
+  { id: 'outline', label: say('screens.videoPlayer.captionSettings.outline') },
+  { id: 'shadow', label: say('common.shadow') },
+  { id: 'raised', label: say('screens.videoPlayer.captionSettings.raised') },
 ] as const;
 
 /**
@@ -44,24 +50,27 @@ const colourName = (id: string): string =>
  * @param onReset - Called to put every choice back to its default.
  */
 const CaptionSettings = ({ style, onChange, onReset }: CaptionSettingsProps) => (
-  <section aria-label="Caption settings" className="flex w-full flex-col gap-5 text-sm text-text">
+  <section
+    aria-label={say('common.captionSettings')}
+    className="flex w-full flex-col gap-5 text-sm text-text"
+  >
     <div className="mx-2 flex h-20 items-end justify-center overflow-hidden rounded-md border border-[var(--surface-line)] bg-linear-to-b from-[var(--surface-hover)] to-[var(--surface-active)] p-3">
       <p
-        aria-label="Caption preview"
+        aria-label={say('screens.videoPlayer.captionSettings.captionPreview')}
         className="line-clamp-2 rounded-sm px-1.5 text-center leading-snug [box-decoration-break:clone]"
         style={{
           ...toCueDeclarations(style),
           fontSize: `calc(0.75rem * ${(style.fontScale / 100).toString()})`,
         }}
       >
-        The quick brown fox
+        {say('screens.videoPlayer.captionSettings.theQuickBrownFox')}
       </p>
     </div>
 
     <div className="flex flex-col gap-5 px-2">
-      <CaptionField label="Font">
+      <CaptionField label={say('common.font')}>
         <SegmentedRow
-          label="Caption font"
+          label={say('screens.videoPlayer.captionSettings.captionFont')}
           size="sm"
           fills
           items={FONTS}
@@ -72,9 +81,9 @@ const CaptionSettings = ({ style, onChange, onReset }: CaptionSettingsProps) => 
         />
       </CaptionField>
 
-      <CaptionField label="Size" value={`${style.fontScale.toString()}%`}>
+      <CaptionField label={say('common.size')} value={`${style.fontScale.toString()}%`}>
         <Slider
-          label="Caption size"
+          label={say('screens.videoPlayer.captionSettings.captionSize')}
           tone="glass"
           value={style.fontScale}
           max={300}
@@ -85,9 +94,12 @@ const CaptionSettings = ({ style, onChange, onReset }: CaptionSettingsProps) => 
         />
       </CaptionField>
 
-      <CaptionField label="Text colour" value={colourName(style.color)}>
+      <CaptionField
+        label={say('screens.videoPlayer.captionSettings.textColour')}
+        value={colourName(style.color)}
+      >
         <SwatchRow
-          label="Caption text colour"
+          label={say('screens.videoPlayer.captionSettings.captionTextColour')}
           swatches={CAPTION_COLOURS}
           value={style.color}
           onSelect={(id) => {
@@ -96,9 +108,9 @@ const CaptionSettings = ({ style, onChange, onReset }: CaptionSettingsProps) => 
         />
       </CaptionField>
 
-      <CaptionField label="Background" value={colourName(style.backgroundColor)}>
+      <CaptionField label={say('common.background')} value={colourName(style.backgroundColor)}>
         <SwatchRow
-          label="Caption background colour"
+          label={say('screens.videoPlayer.captionSettings.captionBackgroundColour')}
           swatches={CAPTION_COLOURS}
           value={style.backgroundColor}
           onSelect={(id) => {
@@ -108,11 +120,11 @@ const CaptionSettings = ({ style, onChange, onReset }: CaptionSettingsProps) => 
       </CaptionField>
 
       <CaptionField
-        label="Background opacity"
+        label={say('screens.videoPlayer.captionSettings.backgroundOpacity')}
         value={`${Math.round(style.backgroundOpacity * 100).toString()}%`}
       >
         <Slider
-          label="Caption background opacity"
+          label={say('screens.videoPlayer.captionSettings.captionBackgroundOpacity')}
           tone="glass"
           value={Math.round(style.backgroundOpacity * 100)}
           max={100}
@@ -123,9 +135,9 @@ const CaptionSettings = ({ style, onChange, onReset }: CaptionSettingsProps) => 
         />
       </CaptionField>
 
-      <CaptionField label="Edge">
+      <CaptionField label={say('common.edge')}>
         <SegmentedRow
-          label="Caption edge"
+          label={say('screens.videoPlayer.captionSettings.captionEdge')}
           size="sm"
           fills
           items={EDGES}
@@ -141,11 +153,11 @@ const CaptionSettings = ({ style, onChange, onReset }: CaptionSettingsProps) => 
 
       {style.edgeStyle !== 'outline' ? null : (
         <CaptionField
-          label="Outline thickness"
+          label={say('screens.videoPlayer.captionSettings.outlineThickness')}
           value={OUTLINE_NAMES[style.outlineThickness - 1] ?? ''}
         >
           <Slider
-            label="Caption outline thickness"
+            label={say('screens.videoPlayer.captionSettings.captionOutlineThickness')}
             tone="glass"
             value={style.outlineThickness - 1}
             max={3}
@@ -166,7 +178,7 @@ const CaptionSettings = ({ style, onChange, onReset }: CaptionSettingsProps) => 
         className="items-center gap-4 px-3 py-2.5 text-sm font-semibold"
       >
         <Icon of={RotateCcwIcon} size={18} tone="muted" />
-        Reset to defaults
+        {say('screens.videoPlayer.captionSettings.resetToDefaults')}
       </Button>
     </div>
   </section>

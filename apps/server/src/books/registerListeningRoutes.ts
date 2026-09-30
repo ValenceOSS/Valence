@@ -11,6 +11,7 @@ import type { BookFormat } from '@ValenceContracts/schemas/Book';
 import type { TranscoderStreamedFile } from '@ValenceServer/transcoder/TranscoderClient';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import type { BookService } from './createDatabaseBookService';
+import { refuse } from '@ValenceI18n/refuse';
 
 type ListeningRouteOptions = {
   books: BookService;
@@ -20,7 +21,7 @@ type ListeningRouteOptions = {
   streamFile: (path: string, range: string | null) => Promise<TranscoderStreamedFile | null>;
 };
 
-const NOBODY = { error: 'Nobody is signed in.' } as const;
+const NOBODY = refuse('error.common.nobodyIsSignedIn');
 
 const SOUNDS: Partial<Record<BookFormat, string>> = {
   m4b: 'audio/mp4',
@@ -59,13 +60,13 @@ const registerListeningRoutes = (
       : null;
 
     if (file === null || !isAudiobookFormat(file.format)) {
-      return context.json({ error: 'No such track to listen to.' }, 404);
+      return context.json(refuse('error.listening.noSuchTrackToListenTo'), 404);
     }
 
     const streamed = await streamFile(file.path, context.req.header('range') ?? null);
 
     if (streamed === null) {
-      return context.json({ error: 'That track could not be read.' }, 404);
+      return context.json(refuse('error.common.thatTrackCouldNotBeRead'), 404);
     }
 
     const headers: Record<string, string> = {
@@ -100,7 +101,7 @@ const registerListeningRoutes = (
 
     return isSaved
       ? context.body(null, 204)
-      : context.json({ error: 'No such track in that book.' }, 404);
+      : context.json(refuse('error.listening.noSuchTrackInThatBook'), 404);
   });
 
   app.openapi(readListeningRoute, async (context) => {

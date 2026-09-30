@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { IndexerHealthSchema } from './Indexer';
 import { ProblemCodeFieldSchema } from './ProblemCode';
 
@@ -8,7 +9,7 @@ const RequestsVpnSchema = z.object({
   publicAddress: z.string().nullable(),
   country: z.string().nullable(),
   checkedAt: z.string().datetime().nullable(),
-  problem: z.string().nullable(),
+  problem: SaidSchema.nullable(),
   problemCode: ProblemCodeFieldSchema,
 });
 
@@ -20,8 +21,8 @@ const RequestsSolverSchema = z.object({
   failed: z.number().int().min(0),
   lastPassedAt: z.string().datetime().nullable(),
   lastFailedAt: z.string().datetime().nullable(),
-  problem: z.string().nullable(),
-  startProblem: z.string().nullable(),
+  problem: SaidSchema.nullable(),
+  startProblem: SaidSchema.nullable(),
 });
 
 const SOLVER_NOT_USED: z.infer<typeof RequestsSolverSchema> = {
@@ -57,7 +58,7 @@ const RequestsWorkSchema = z.object({
   clients: z.object({
     total: z.number().int().nonnegative(),
     reachable: z.number().int().nonnegative(),
-    failing: z.array(z.object({ name: z.string(), problem: z.string() })),
+    failing: z.array(z.object({ name: z.string(), problem: SaidSchema })),
   }),
 });
 
@@ -74,7 +75,7 @@ const NO_WORK: z.infer<typeof RequestsWorkSchema> = {
 const RequestsOverviewSchema = z.object({
   address: z.string(),
   isReachable: z.boolean(),
-  problem: z.string().nullable().default(null),
+  problem: SaidSchema.nullable().default(null),
   problemCode: ProblemCodeFieldSchema,
   checkedAt: z.string().datetime().nullable(),
   status: RequestsStatusSchema.nullable(),

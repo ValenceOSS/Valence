@@ -1,8 +1,10 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { sha256Of } from '@ValenceSDK/package/sha256Of';
 import { PACKAGE_LIMITS } from '@ValenceSDK/package/PACKAGE_LIMITS';
 import type { Catalogue, CatalogueEntry } from '@ValenceSDK/package/CatalogueSchema';
 import { isSignedBy } from '@ValenceSDK/package/isSignedBy';
 import { readSignedCatalogue } from '@ValenceSDK/package/readSignedCatalogue';
+import { saying } from '@ValenceI18n/saying';
 
 type Download = (url: string, mostBytes: number) => Promise<Uint8Array | null>;
 
@@ -13,7 +15,7 @@ type CreateCatalogueClientOptions = {
   now?: () => number;
 };
 
-type CatalogueRead = { catalogue: Catalogue | null; problem: string | null };
+type CatalogueRead = { catalogue: Catalogue | null; problem: Said | null };
 
 const KEPT_FOR_MILLISECONDS = 10 * 60 * 1000;
 
@@ -49,7 +51,7 @@ const createCatalogueClient = ({
     ]);
 
     if (bytes === null || signatureBytes === null) {
-      return { catalogue: null, problem: 'The plugin catalogue could not be reached.' };
+      return { catalogue: null, problem: saying('common.thePluginCatalogueCouldNotBe') };
     }
 
     const opened = readSignedCatalogue(bytes, Buffer.from(signatureBytes).toString('utf8'), keys);
@@ -59,8 +61,8 @@ const createCatalogueClient = ({
         catalogue: null,
         problem:
           opened.problem === 'unsigned'
-            ? 'The plugin catalogue is not signed by the Valence project.'
-            : 'The plugin catalogue could not be read.',
+            ? saying('server.catalogue.catalogueClient.thePluginCatalogueIsNotSigned')
+            : saying('server.catalogue.catalogueClient.thePluginCatalogueCouldNotBe'),
       };
     }
 
@@ -73,19 +75,31 @@ const createCatalogueClient = ({
 
   const fetchPackage = async (
     entry: CatalogueEntry,
-  ): Promise<{ bytes: Uint8Array } | { problem: string }> => {
+  ): Promise<{ bytes: Uint8Array } | { problem: Said }> => {
     const bytes = await download(entry.packageUrl, PACKAGE_LIMITS.packageBytes);
 
     if (bytes === null) {
-      return { problem: `${entry.name} could not be downloaded.` };
+      return {
+        problem: saying('server.catalogue.catalogueClient.nameCouldNotBeDownloaded', {
+          name: entry.name,
+        }),
+      };
     }
 
     if (sha256Of(bytes) !== entry.sha256) {
-      return { problem: `${entry.name} is not the package the catalogue describes.` };
+      return {
+        problem: saying('server.catalogue.catalogueClient.nameIsNotThePackageThe', {
+          name: entry.name,
+        }),
+      };
     }
 
     if (isSignedBy(bytes, { keyId: entry.keyId, signature: entry.signature }, keys) === null) {
-      return { problem: `${entry.name} is not signed by the key the catalogue names.` };
+      return {
+        problem: saying('server.catalogue.catalogueClient.nameIsNotSignedByThe', {
+          name: entry.name,
+        }),
+      };
     }
 
     return { bytes };

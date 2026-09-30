@@ -19,6 +19,7 @@ import { DialogHeadline } from '@ValenceScreens/components/DialogHeadline/Dialog
 import { DialogHeadlinePart } from '@ValenceScreens/components/DialogHeadlinePart/DialogHeadlinePart';
 import type { PersonCredits } from '@ValenceContracts/schemas/Person';
 import type { PersonDialogProps } from './PersonDialog.types';
+import { say } from '@ValenceI18n/say';
 
 const NOTHING: PersonCredits = { films: [], shows: [], episodes: [] };
 
@@ -97,14 +98,14 @@ const PersonDialog = ({
 
   return (
     <Dialog
-      label={person?.name ?? 'Somebody in the cast'}
+      label={person?.name ?? say('screens.personDialog.somebodyInTheCast')}
       isOpen={personId !== null}
       onClose={onClose}
       size="stage"
     >
       <DialogContent className="p-0">
         <div className="absolute right-4 top-4 z-10">
-          <Button isIconOnly variant="overlay" label="Close" onClick={onClose}>
+          <Button isIconOnly variant="overlay" label={say('common.close')} onClick={onClose}>
             <Icon of={XIcon} size={18} />
           </Button>
         </div>
@@ -133,12 +134,12 @@ const PersonDialog = ({
                 isTitle
                 className="text-3xl font-semibold tracking-[-0.02em] text-text"
               >
-                {person?.name ?? 'Somebody in the cast'}
+                {person?.name ?? say('screens.personDialog.somebodyInTheCast')}
               </DialogHeadlinePart>
 
               {role === null || role === undefined || role === '' ? null : (
                 <DialogHeadlinePart as="span" className="font-body text-sm text-text-muted">
-                  as {role}
+                  {say('screens.personDialog.asRole', { role })}
                 </DialogHeadlinePart>
               )}
 
@@ -159,14 +160,14 @@ const PersonDialog = ({
           ) : null}
 
           {person?.biography === null || person?.biography === undefined ? null : (
-            <DialogSection heading="Biography">
+            <DialogSection heading={say('screens.personDialog.biography')}>
               <ReadMore lines={6}>{person.biography}</ReadMore>
             </DialogSection>
           )}
 
           {couldNotRead ? (
             <CouldNotRead
-              what="Anything about them"
+              said={say('screens.personDialog.anythingAboutThemCouldNotBeRead')}
               isTryingAgain={asked.isFetching || theirs.isFetching}
               onTryAgain={() => {
                 void asked.refetch();
@@ -177,13 +178,19 @@ const PersonDialog = ({
 
           {isEmpty ? (
             <p className="font-body text-sm text-text-muted">
-              Nothing is known about them, and nothing of theirs is on this server.
+              {say('screens.personDialog.nothingIsKnownAboutThemAnd')}
             </p>
           ) : null}
 
           {credits.films.length === 0 ? null : (
             <DialogSection>
-              <Rail title="Films" sizesCards hasArrows={false} look="section" className="px-0">
+              <Rail
+                title={say('common.films')}
+                sizesCards
+                hasArrows={false}
+                look="section"
+                className="px-0"
+              >
                 {credits.films.map((media, at) => (
                   <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
                     <RailCard media={media} onPlay={onPlay} onInspect={onInspect} />
@@ -195,7 +202,13 @@ const PersonDialog = ({
 
           {credits.shows.length === 0 ? null : (
             <DialogSection>
-              <Rail title="Programmes" sizesCards hasArrows={false} look="section" className="px-0">
+              <Rail
+                title={say('common.programmes')}
+                sizesCards
+                hasArrows={false}
+                look="section"
+                className="px-0"
+              >
                 {credits.shows.map((media, at) => (
                   <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
                     <RailCard
@@ -212,7 +225,13 @@ const PersonDialog = ({
 
           {credits.episodes.length === 0 ? null : (
             <DialogSection>
-              <Rail title="Episodes" sizesCards hasArrows={false} look="section" className="px-0">
+              <Rail
+                title={say('common.episodes')}
+                sizesCards
+                hasArrows={false}
+                look="section"
+                className="px-0"
+              >
                 {credits.episodes.map((media, at) => (
                   <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
                     <RailCard media={media} onPlay={onPlay} onInspect={onInspect} />

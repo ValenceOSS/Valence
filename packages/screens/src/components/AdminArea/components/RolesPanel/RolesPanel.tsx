@@ -42,6 +42,8 @@ import type { Refusal } from '@ValenceClient/admin/fetchRoles';
 import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 import type { GrantedPermission, Permission, Role } from '@ValenceContracts/schemas/Permission';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const NEW_ROLE_POSITION = 50;
 
@@ -229,7 +231,7 @@ const RolesPanel = () => {
     }
 
     setRefusal(null);
-    tellOutcome('Role saved.', null);
+    tellOutcome(say('screens.adminArea.rolesPanel.roleSaved'), null);
     await reload();
   }, [
     selected,
@@ -257,7 +259,7 @@ const RolesPanel = () => {
     () => [
       {
         id: 'name',
-        header: 'Role',
+        header: say('common.role'),
         accessorFn: (role) => role.name,
         cell: ({ row }) => (
           <span className="flex min-w-0 items-center gap-2.5">
@@ -271,10 +273,8 @@ const RolesPanel = () => {
               <span className="truncate font-medium text-text">{row.original.name}</span>
               <span className="truncate text-xs text-text-muted">
                 {row.original.permissions.includes('administrator')
-                  ? 'Everything'
-                  : row.original.permissions.length === 1
-                    ? '1 permission'
-                    : `${row.original.permissions.length.toString()} permissions`}
+                  ? say('common.everything')
+                  : sayCount('common.count.permissions', row.original.permissions.length)}
               </span>
             </span>
           </span>
@@ -282,7 +282,7 @@ const RolesPanel = () => {
       },
       {
         id: 'position',
-        header: 'Rank',
+        header: say('screens.adminArea.rolesPanel.rank'),
         accessorFn: (role) => role.position,
         cell: ({ row }) => <Badge size="sm">{row.original.position.toString()}</Badge>,
       },
@@ -293,14 +293,14 @@ const RolesPanel = () => {
         cell: ({ row }) => (
           <span className="flex justify-end">
             <ActionMenu
-              label={`Actions for ${row.original.name}`}
+              label={say('common.actionsForName', { name: row.original.name })}
               trigger={<Icon of={MoreHorizontalIcon} size={16} />}
               groups={[
                 {
                   items: [
                     {
                       id: 'edit',
-                      label: 'Edit role',
+                      label: say('screens.adminArea.rolesPanel.editRole'),
                       icon: <Icon of={PenLineFilledIcon} size={15} />,
                       onChoose: () => {
                         live.current.onEdit(row.original.id);
@@ -312,7 +312,7 @@ const RolesPanel = () => {
                   items: [
                     {
                       id: 'delete',
-                      label: 'Delete role',
+                      label: say('screens.adminArea.rolesPanel.deleteRole'),
                       icon: <Icon of={BinFilledIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
@@ -343,7 +343,7 @@ const RolesPanel = () => {
       )}
 
       <PanelCard
-        title="Roles"
+        title={say('common.roles')}
         isFlush
         actions={
           <PanelCardAction
@@ -352,13 +352,13 @@ const RolesPanel = () => {
               setIsCreating(true);
             }}
           >
-            Create role
+            {say('screens.adminArea.rolesPanel.createRole')}
           </PanelCardAction>
         }
       >
         {couldNotRead ? (
           <CouldNotRead
-            what="The roles"
+            said={say('screens.adminArea.rolesPanel.theRolesCouldNotBeRead')}
             isTryingAgain={askedRoles.isFetching || askedCatalogue.isFetching}
             onTryAgain={() => {
               void askedRoles.refetch();
@@ -367,17 +367,17 @@ const RolesPanel = () => {
           />
         ) : (
           <DataTable
-            label="Roles"
+            label={say('common.roles')}
             columns={columns}
             rows={roles}
             height="fills"
-            emptyMessage="No roles yet."
+            emptyMessage={say('screens.adminArea.rolesPanel.noRolesYet')}
           />
         )}
       </PanelCard>
 
       <DialogCompanion
-        label="Create a role"
+        label={say('screens.adminArea.rolesPanel.createARole')}
         isOpen={isCreating}
         onClose={() => {
           setIsCreating(false);
@@ -385,22 +385,22 @@ const RolesPanel = () => {
       >
         <DialogTitle
           size="compact"
-          title="Create a role"
-          detail="A role is a name and a set of permissions. Rank decides who may manage whom."
+          title={say('screens.adminArea.rolesPanel.createARole')}
+          detail={say('screens.adminArea.rolesPanel.aRoleIsANameAnd')}
         />
 
         <DialogContent className="flex flex-col gap-5">
           <div className="flex flex-wrap items-end gap-3">
             <TextField
-              label="Name"
+              label={say('common.name')}
               value={newRoleName}
               onValueChange={setNewRoleName}
-              placeholder="Housemate"
+              placeholder={say('screens.adminArea.rolesPanel.housemate')}
               className="min-w-48 flex-1"
             />
 
             <TextField
-              label="Rank"
+              label={say('screens.adminArea.rolesPanel.rank')}
               type="number"
               min={0}
               value={newRolePosition}
@@ -409,7 +409,10 @@ const RolesPanel = () => {
             />
           </div>
 
-          <FormField label="Colour" description="Shown wherever somebody holding this role is.">
+          <FormField
+            label={say('common.colour')}
+            description={say('screens.adminArea.rolesPanel.shownWhereverSomebodyHoldingThisRole')}
+          >
             <ColorSwatchPicker value={newRoleColor} onChange={setNewRoleColor} />
           </FormField>
 
@@ -434,7 +437,7 @@ const RolesPanel = () => {
             },
           }}
           confirm={{
-            label: 'Create role',
+            label: say('screens.adminArea.rolesPanel.createRole'),
             onChoose: () => {
               const position = Number.parseInt(newRolePosition, 10);
 
@@ -446,7 +449,7 @@ const RolesPanel = () => {
                     color: newRoleColor,
                     permissions: newRolePermissions,
                   }),
-                `Created the ${newRoleName} role.`,
+                say('screens.adminArea.rolesPanel.createdTheNewRoleNameRole', { newRoleName }),
               ).then((made) => {
                 if (made !== null) {
                   return;
@@ -465,13 +468,15 @@ const RolesPanel = () => {
       </DialogCompanion>
 
       <ConfirmDialog
-        title="Delete this role?"
+        title={say('screens.adminArea.rolesPanel.deleteThisRole')}
         detail={
           deleting === null
             ? ''
-            : `${deleting.name} will be removed, and anybody holding it loses what it granted. This cannot be undone.`
+            : say('screens.adminArea.rolesPanel.nameWillBeRemovedAndAnybody', {
+                name: deleting.name,
+              })
         }
-        confirmLabel="Delete role"
+        confirmLabel={say('screens.adminArea.rolesPanel.deleteRole')}
         isDestructive
         isOpen={deleting !== null}
         onClose={() => {
@@ -483,13 +488,20 @@ const RolesPanel = () => {
           setDeleting(null);
 
           if (role !== null) {
-            void act(() => deleteRole(role.id), `Deleted the ${role.name} role.`);
+            void act(
+              () => deleteRole(role.id),
+              say('screens.adminArea.rolesPanel.deletedTheNameRole', { name: role.name }),
+            );
           }
         }}
       />
 
       <DialogCompanion
-        label={selected === null ? 'Edit role' : `Edit ${selected.name}`}
+        label={
+          selected === null
+            ? say('screens.adminArea.rolesPanel.editRole')
+            : say('common.editName', { name: selected.name })
+        }
         isOpen={selected !== null}
         onClose={() => {
           setSelectedRoleId(null);
@@ -506,20 +518,28 @@ const RolesPanel = () => {
           >
             <DialogTitle
               size="compact"
-              title={`Edit ${selected.name}`}
-              detail="A higher rank manages a lower one. Nobody may touch a role at or above their own."
+              title={say('common.editName', { name: selected.name })}
+              detail={say('screens.adminArea.rolesPanel.aHigherRankManagesALower')}
               below={
                 <TabRow
-                  label="What to change about this role"
+                  label={say('screens.adminArea.rolesPanel.whatToChangeAboutThisRole')}
                   tone="underlined"
                   size="sm"
                   value={editTab}
                   groups={[
                     {
                       items: [
-                        { id: 'display', label: 'Display' },
-                        { id: 'permissions', label: 'Permissions' },
-                        { id: 'members', label: `Manage members (${memberCount.toString()})` },
+                        { id: 'display', label: say('common.display') },
+                        {
+                          id: 'permissions',
+                          label: say('screens.adminArea.rolesPanel.permissions'),
+                        },
+                        {
+                          id: 'members',
+                          label: say('screens.adminArea.rolesPanel.manageMembersMemberCount', {
+                            memberCount: memberCount.toString(),
+                          }),
+                        },
                       ],
                     },
                   ]}
@@ -547,14 +567,14 @@ const RolesPanel = () => {
                 <div className="flex flex-col gap-5">
                   <div className="flex flex-wrap items-end gap-3">
                     <TextField
-                      label="Name"
+                      label={say('common.name')}
                       value={draftName}
                       onValueChange={setDraftName}
                       className="min-w-48 flex-1"
                     />
 
                     <TextField
-                      label="Rank"
+                      label={say('screens.adminArea.rolesPanel.rank')}
                       type="number"
                       min={0}
                       value={draftPosition}
@@ -564,8 +584,10 @@ const RolesPanel = () => {
                   </div>
 
                   <FormField
-                    label="Colour"
-                    description="Shown wherever somebody holding this role is."
+                    label={say('common.colour')}
+                    description={say(
+                      'screens.adminArea.rolesPanel.shownWhereverSomebodyHoldingThisRole',
+                    )}
                   >
                     <ColorSwatchPicker value={draftColor} onChange={setDraftColor} />
                   </FormField>
@@ -610,13 +632,13 @@ const RolesPanel = () => {
 
             <DialogFooter
               dismiss={{
-                label: 'Close',
+                label: say('common.close'),
                 onChoose: () => {
                   setSelectedRoleId(null);
                 },
               }}
               confirm={{
-                label: 'Save changes',
+                label: say('common.saveChanges'),
                 onChoose: () => {
                   void saveChanges();
                 },

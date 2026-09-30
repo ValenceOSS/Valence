@@ -16,6 +16,8 @@ import type { DownloadClientService } from '@ValenceRequests/downloads/createDow
 import type { DownloadQueueService } from '@ValenceRequests/downloads/createDownloadQueue';
 import type { GiveUpRuleStore } from '@ValenceRequests/downloads/createDatabaseGiveUpRuleStore';
 import type { RequestWorker } from '@ValenceRequests/mediaRequests/createRequestWorker';
+import { refuse } from '@ValenceI18n/refuse';
+import { refuseWith } from '@ValenceI18n/refuseWith';
 
 type CreateDownloadRoutesOptions = {
   filing?: Pick<RequestWorker, 'fileNow'>;
@@ -28,11 +30,11 @@ type CreateDownloadRoutesOptions = {
   keepAliveMs?: number;
 };
 
-const NO_SUCH_CLIENT = { error: 'No such download client.' };
+const NO_SUCH_CLIENT = refuse('error.downloads.noSuchDownloadClient');
 
-const NO_SUCH_DOWNLOAD = { error: 'No such download.' };
+const NO_SUCH_DOWNLOAD = refuse('error.downloads.noSuchDownload');
 
-const NOT_A_CLIENT = { error: 'That is not a download client.' };
+const NOT_A_CLIENT = refuse('error.downloads.thatIsNotADownloadClient');
 
 const KEEP_ALIVE_MS = 15_000;
 
@@ -82,7 +84,7 @@ const createDownloadRoutes = ({
     const change = await readBody(context.req.raw, DownloadClientChangeSchema);
 
     if (change === null) {
-      return context.json({ error: 'That is not a change to a download client.' }, 400);
+      return context.json(refuse('error.downloads.thatIsNotAChangeTo'), 400);
     }
 
     const changed = await clients.change(context.req.param('id'), change);
@@ -116,7 +118,7 @@ const createDownloadRoutes = ({
     const next = await readBody(context.req.raw, GiveUpRulesSchema);
 
     return next === null
-      ? context.json({ error: 'Those are not rules for giving up on a download.' }, 400)
+      ? context.json(refuse('error.downloads.thoseAreNotRulesForGiving'), 400)
       : context.json(await rules.write(next));
   });
 
@@ -126,7 +128,7 @@ const createDownloadRoutes = ({
     const release = await readBody(context.req.raw, ReleaseSendSchema);
 
     if (release === null) {
-      return context.json({ error: 'That is not a release to send.' }, 400);
+      return context.json(refuse('error.downloads.thatIsNotAReleaseTo'), 400);
     }
 
     const sent = await queue.send(release);
@@ -155,7 +157,7 @@ const createDownloadRoutes = ({
     const asked = await readBody(context.req.raw, DownloadWatchSchema);
 
     if (asked === null) {
-      return context.json({ error: 'Say whether anybody is watching.' }, 400);
+      return context.json(refuse('error.downloads.sayWhetherAnybodyIsWatching'), 400);
     }
 
     queue.watch(asked.isWatching);
@@ -167,7 +169,7 @@ const createDownloadRoutes = ({
     const asked = await readBody(context.req.raw, ServiceEventAckSchema);
 
     if (asked === null) {
-      return context.json({ error: 'Say which events were heard.' }, 400);
+      return context.json(refuse('error.downloads.sayWhichEventsWereHeard'), 400);
     }
 
     await queue.acknowledge(asked.ids);
@@ -183,7 +185,7 @@ const createDownloadRoutes = ({
         return context.json(NO_SUCH_DOWNLOAD, 404);
       }
 
-      return typeof done === 'string' ? context.json({ error: done }, 400) : context.json(done);
+      return 'refused' in done ? context.json(refuseWith(done.refused), 400) : context.json(done);
     });
   }
 
@@ -191,17 +193,14 @@ const createDownloadRoutes = ({
     const order = await readBody(context.req.raw, DownloadFilingOrderSchema);
 
     if (order === null) {
-      return context.json({ error: 'Say which library to file it into.' }, 400);
+      return context.json(refuse('error.downloads.sayWhichLibraryToFileIt'), 400);
     }
 
     const id = context.req.param('id');
     const filed = await filing.fileNow(id, order.library);
 
     if (filed === 'claimed') {
-      return context.json(
-        { error: 'It was fetched for a request, which files it by itself.' },
-        400,
-      );
+      return context.json(refuse('error.downloads.itWasFetchedForARequest'), 400);
     }
 
     const shown =
@@ -216,8 +215,8 @@ const createDownloadRoutes = ({
       context.req.query('deleteData') === 'true',
     );
 
-    if (typeof removed === 'string') {
-      return context.json({ error: removed }, 400);
+    if (typeof removed === 'object') {
+      return context.json(refuseWith(removed.refused), 400);
     }
 
     return removed ? context.body(null, 204) : context.json(NO_SUCH_DOWNLOAD, 404);

@@ -13,10 +13,11 @@ import {
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import type { Permission } from '@ValenceContracts/schemas/Permission';
 import type { ReencodeService } from './ReencodeService';
+import { refuse } from '@ValenceI18n/refuse';
 
-const MAY_NOT = { error: 'That is for administrators.' } as const;
+const MAY_NOT = refuse('common.thatIsForAdministrators');
 
-const NO_SUCH = { error: 'No such re-encode.' } as const;
+const NO_SUCH = refuse('error.reencode.noSuchReEncode');
 
 type ReencodeRouteOptions = {
   reencodes: ReencodeService;
@@ -139,7 +140,7 @@ const registerReencodeRoutes = (
     const frame = await reencodes.frame(id, side, seconds, width);
 
     if (frame === null) {
-      return context.json({ error: 'No frame there.' }, 404);
+      return context.json(refuse('error.common.noFrameThere'), 404);
     }
 
     return context.body(frame, 200, {
@@ -166,7 +167,9 @@ const registerReencodeRoutes = (
 
     const done = await reencodes.removeRendition(context.req.valid('param').id);
 
-    return done ? context.json({ done }, 200) : context.json({ error: 'No such rendition.' }, 404);
+    return done
+      ? context.json({ done }, 200)
+      : context.json(refuse('error.reencode.noSuchRendition'), 404);
   });
 };
 

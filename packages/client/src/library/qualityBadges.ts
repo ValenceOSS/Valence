@@ -2,6 +2,7 @@ import { describeChannels } from '@ValenceCore/functions/describeTrack';
 import { sharpestStepOf } from '@ValenceCore/functions/sharpestStepOf';
 import { describeRange } from '@ValenceClient/library/describeRange';
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
+import { say } from '@ValenceI18n/say';
 
 type AudioStreamFacts = Pick<
   MediaItem['audioStreams'][number],
@@ -13,9 +14,9 @@ type AudioStreamFacts = Pick<
 const HIGH_DEFINITION: ReadonlySet<string> = new Set(['1440p', '1080p', '720p']);
 
 const SOUNDS: Readonly<Record<string, string>> = {
-  truehd: 'Dolby TrueHD',
-  eac3: 'Dolby Digital+',
-  ac3: 'Dolby Digital',
+  truehd: say('client.library.qualityBadges.dolbyTrueHD'),
+  eac3: say('client.library.qualityBadges.dolbyDigital2'),
+  ac3: say('client.library.qualityBadges.dolbyDigital'),
 };
 
 /**
@@ -49,7 +50,7 @@ const qualityBadges = (
     richest === undefined
       ? []
       : richest.isAtmos
-        ? ['Dolby Atmos']
+        ? [say('client.library.qualityBadges.dolbyAtmos')]
         : [
             richest.codec === 'dts'
               ? richest.profile?.includes('MA') === true

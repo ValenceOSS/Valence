@@ -1,3 +1,4 @@
+import { saying } from '@ValenceI18n/saying';
 import { negotiatePlayback } from '@ValenceCore/functions/negotiatePlayback';
 import { resolveQualityStep } from '@ValenceCore/functions/resolveQualityStep';
 import { describePlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
@@ -60,7 +61,7 @@ const createMemoryPlaybackService = (
     if (state.unsupported === true) {
       return Promise.resolve({
         kind: 'unsupported' as const,
-        reason: 'This server has no working encoder for h264.',
+        reason: saying('server.playback.memoryPlaybackService.thisServerHasNoWorkingEncoder'),
       });
     }
 

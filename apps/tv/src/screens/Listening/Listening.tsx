@@ -33,6 +33,8 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import type { AudiobookPlayerState } from '@ValenceClient/books/createAudiobookPlayer';
 import type { ListeningPanel } from '@ValenceClient/books/listeningChoices';
 import type { ListeningProps } from './Listening.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const COVER = { width: 400, height: 600 };
 
@@ -55,14 +57,17 @@ const sleepLabel = ({ sleep }: AudiobookPlayerState, now: number): string | null
   }
 
   return sleep.kind === 'endOfChapter'
-    ? 'End of chapter'
-    : `${Math.max(Math.ceil((sleep.endsAtMs - now) / 60_000), 1).toString()} min`;
+    ? say('common.endOfChapter')
+    : sayCount(
+        'common.count.minutesShort',
+        Math.max(Math.ceil((sleep.endsAtMs - now) / 60_000), 1),
+      );
 };
 
 const TITLES: Record<ListeningPanel, string> = {
-  speed: 'Speed',
-  sleep: 'Sleep timer',
-  chapters: 'Chapters',
+  speed: say('common.speed'),
+  sleep: say('common.sleepTimer'),
+  chapters: say('common.chapters'),
 };
 
 /**
@@ -160,7 +165,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
         <View style={styles.back}>
           <Button
             ref={setBackButton}
-            label="Back"
+            label={say('common.back')}
             icon={ChevronLeft}
             variant="overlay"
             size="md"
@@ -207,13 +212,14 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
             />
 
             <Text style={styles.left}>
-              {state.problem ?? `${describeLength(left)} left in the book`}
+              {state.problem ??
+                say('tv.listening.leftLeftInTheBook', { left: describeLength(left) })}
             </Text>
 
             <View style={styles.transport}>
               <Button
                 onFocus={awayFromTheEdges}
-                label="Chapter before"
+                label={say('common.chapterBefore')}
                 icon={SkipBack}
                 variant="ghost"
                 isIconOnly
@@ -224,7 +230,9 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
               />
               <Button
                 onFocus={awayFromTheEdges}
-                label={`Back ${LISTENING_CHOICES.backSeconds.toString()} seconds`}
+                label={say('common.backBackSecondsSeconds', {
+                  backSeconds: LISTENING_CHOICES.backSeconds.toString(),
+                })}
                 icon={Rewind}
                 variant="ghost"
                 isIconOnly
@@ -235,7 +243,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
               />
               <Button
                 onFocus={awayFromTheEdges}
-                label={state.isPlaying ? 'Pause' : 'Play'}
+                label={state.isPlaying ? say('common.pause') : say('common.play')}
                 icon={state.isPlaying ? Pause : Play}
                 variant="ghost"
                 size="xl"
@@ -246,7 +254,9 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
               />
               <Button
                 onFocus={awayFromTheEdges}
-                label={`On ${LISTENING_CHOICES.forwardSeconds.toString()} seconds`}
+                label={say('common.onForwardSecondsSeconds', {
+                  forwardSeconds: LISTENING_CHOICES.forwardSeconds.toString(),
+                })}
                 icon={FastForward}
                 variant="ghost"
                 isIconOnly
@@ -257,7 +267,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
               />
               <Button
                 onFocus={awayFromTheEdges}
-                label="Next chapter"
+                label={say('common.nextChapter')}
                 icon={SkipForward}
                 variant="ghost"
                 isIconOnly
@@ -281,7 +291,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
               />
               <Button
                 onFocus={awayFromTheEdges}
-                label={sleeping ?? 'Sleep timer'}
+                label={sleeping ?? say('common.sleepTimer')}
                 icon={sleeping === null ? Moon : MoonFilled}
                 variant={sleeping === null ? 'ghost' : 'soft'}
                 size="md"
@@ -291,7 +301,7 @@ const Listening = ({ onEmpty, onBack }: ListeningProps) => {
               />
               <Button
                 onFocus={awayFromTheEdges}
-                label="Chapters"
+                label={say('common.chapters')}
                 icon={List}
                 variant="ghost"
                 size="md"

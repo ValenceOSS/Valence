@@ -1,8 +1,10 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { docsFor } from '@ValenceCore/functions/docsFor';
 import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
 import { describeCalendarDay } from '@ValenceClient/requests/describeCalendarDay';
 import type { RequestItem } from '@ValenceContracts/schemas/MediaRequest';
 import type { StateBadge } from '@ValenceClient/status/StateBadge';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says where one episode or album of a request has got to, as a badge and the line beneath it.
@@ -21,39 +23,49 @@ const describeItemBadge = (
         ? {
             ...STATUS_LOOK.queued,
             tone: 'quiet',
-            label: 'Not out yet',
-            detail: `Out ${describeCalendarDay(item.airDate)}.`,
+            label: say('common.notOutYet'),
+            detail: say('client.requests.describeItemBadge.outAirDate', {
+              airDate: describeCalendarDay(item.airDate),
+            }),
           }
-        : { ...STATUS_LOOK.queued, label: 'Queued to search', detail: null };
+        : { ...STATUS_LOOK.queued, label: say('common.queuedToSearch'), detail: null };
     case 'wanted':
       return {
         ...STATUS_LOOK.attention,
-        label: 'Wanted',
-        detail: item.problem,
+        label: say('common.wanted'),
+        detail: item.problem === null ? null : sayAgain(item.problem),
         help: docsFor(item.problemCode),
       };
     case 'searching':
-      return { ...STATUS_LOOK.working, label: 'Searching', detail: null };
+      return { ...STATUS_LOOK.working, label: say('common.searching'), detail: null };
     case 'chosen':
-      return { ...STATUS_LOOK.working, label: 'Release chosen', detail: item.releaseTitle };
+      return {
+        ...STATUS_LOOK.working,
+        label: say('common.releaseChosen'),
+        detail: item.releaseTitle,
+      };
     case 'downloading':
-      return { ...STATUS_LOOK.working, label: 'Downloading', detail: item.releaseTitle };
+      return {
+        ...STATUS_LOOK.working,
+        label: say('common.downloading'),
+        detail: item.releaseTitle,
+      };
     case 'filing':
       return {
         ...STATUS_LOOK.working,
-        label: 'Filing',
-        detail: item.problem,
+        label: say('common.filing'),
+        detail: item.problem === null ? null : sayAgain(item.problem),
         help: docsFor(item.problemCode),
       };
     case 'filed':
-      return { ...STATUS_LOOK.working, label: 'Filed', detail: null };
+      return { ...STATUS_LOOK.working, label: say('common.filed'), detail: null };
     case 'available':
-      return { ...STATUS_LOOK.done, label: 'Available', detail: null };
+      return { ...STATUS_LOOK.done, label: say('common.available'), detail: null };
     case 'failed':
       return {
         ...STATUS_LOOK.failed,
-        label: 'Failed',
-        detail: item.problem,
+        label: say('common.failed'),
+        detail: item.problem === null ? null : sayAgain(item.problem),
         help: docsFor(item.problemCode),
       };
   }

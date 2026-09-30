@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "2bc1c2c1-6166-4dca-bbef-b21939d55fa4",
+  "id": "1db650a4-85bf-4b25-b171-6dd68a76c3fd",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "account": {
@@ -1593,7 +1593,7 @@
         },
         "errorMessage": {
           "name": "errorMessage",
-          "type": "mediumtext",
+          "type": "json",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -1663,7 +1663,7 @@
         },
         "reason": {
           "name": "reason",
-          "type": "mediumtext",
+          "type": "json",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -4254,14 +4254,14 @@
         },
         "title": {
           "name": "title",
-          "type": "mediumtext",
+          "type": "json",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "body": {
           "name": "body",
-          "type": "mediumtext",
+          "type": "json",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -4955,7 +4955,7 @@
         },
         "problem": {
           "name": "problem",
-          "type": "mediumtext",
+          "type": "json",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -5295,7 +5295,7 @@
         },
         "failure": {
           "name": "failure",
-          "type": "mediumtext",
+          "type": "json",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -6078,7 +6078,7 @@
         },
         "failure": {
           "name": "failure",
-          "type": "mediumtext",
+          "type": "json",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false

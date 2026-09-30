@@ -1,3 +1,4 @@
+/* eslint-disable valence/no-hard-coded-strings -- Newznab's standard category names, which indexers answer with and are matched against */
 const STANDARD_CATEGORIES: readonly (readonly [number, string])[] = [
   [0, 'Other'],
   [10, 'Other/Misc'],

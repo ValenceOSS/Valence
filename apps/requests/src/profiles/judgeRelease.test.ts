@@ -104,7 +104,7 @@ describe('judgeRelease', () => {
       sources: ['remux', 'bluray', 'webdl', 'webrip', 'hdtv', 'dvd'],
     });
 
-    expect(judge('Dune.2021.1080p.DVDRip.x264-GRP', profile).reasons).toContain(
+    expect(judge('Dune.2021.1080p.DVDRip.x264-GRP', profile).reasons).toContainEqual(
       'DVD, the number 6 choice',
     );
   });
@@ -126,9 +126,9 @@ describe('judgeRelease', () => {
     const liked = judge('Dune.2021.1080p.WEB-DL.DDP5.1.Atmos.H.265-FLUX', profile);
 
     expect(liked.score).toBe(2000 + 300 + 20);
-    expect(liked.reasons).toContain('It has “Atmos” (+10)');
-    expect(liked.reasons).toContain('It has “FLUX” (+10)');
-    expect(judge('Dune.2021.PROPER.1080p.BluRay.x264-GRP').reasons).toContain(
+    expect(liked.reasons).toContainEqual('It has “Atmos” (+10)');
+    expect(liked.reasons).toContainEqual('It has “FLUX” (+10)');
+    expect(judge('Dune.2021.PROPER.1080p.BluRay.x264-GRP').reasons).toContainEqual(
       'A proper, a better release of the same thing (+5)',
     );
     expect(judge('Dune.2021.REPACK.1080p.BluRay.x264-GRP').score).toBe(2000 + 400 + 5);
@@ -140,7 +140,7 @@ describe('judgeRelease', () => {
     const german = judge('Dune.2021.1080p.GERMAN.BluRay.x264-GRP', profile);
 
     expect(german.score).toBe(plain.score + 50);
-    expect(german.reasons).toContain('In Deutsch (+50)');
+    expect(german.reasons).toContainEqual('In Deutsch (+50)');
   });
 
   it('drops a release that says it is in another language, without refusing it', () => {
@@ -149,7 +149,7 @@ describe('judgeRelease', () => {
     const german = judge('Dune.2021.1080p.GERMAN.BluRay.x264-GRP', profile);
 
     expect(german.score).toBe(plain.score - 50);
-    expect(german.reasons).toContain('Not in English (−50)');
+    expect(german.reasons).toContainEqual('Not in English (−50)');
     expect(german.isRejected).toBe(false);
   });
 
@@ -158,13 +158,15 @@ describe('judgeRelease', () => {
     const judged = judge('Dune.2021.1080p.BluRay.x264-GRP', profile);
 
     expect(judged.score).toBe(judge('Dune.2021.1080p.BluRay.x264-GRP').score);
-    expect(judged.reasons.join(' ')).not.toContain('English');
+    expect(judged.reasons.map((said) => said.message).join(' ')).not.toContain('English');
   });
 
   it('says nothing at all where the profile wants no particular language', () => {
-    expect(judge('Dune.2021.1080p.GERMAN.BluRay.x264-GRP').reasons.join(' ')).not.toContain(
-      'Deutsch',
-    );
+    expect(
+      judge('Dune.2021.1080p.GERMAN.BluRay.x264-GRP')
+        .reasons.map((said) => said.message)
+        .join(' '),
+    ).not.toContain('Deutsch');
   });
 
   it('never lets a wanted language outrank a resolution', () => {
@@ -189,7 +191,7 @@ describe('judgeRelease', () => {
     const profile = aProfile({ smallestMb: 1000, largestMb: 8000 });
     const film = 'Dune.2021.1080p.BluRay.x264-GRP';
 
-    expect(judge(film, profile, { sizeBytes: 10 * GB }).reasons).toContain(
+    expect(judge(film, profile, { sizeBytes: 10 * GB }).reasons).toContainEqual(
       'Its size is not judged without a running time',
     );
     expect(judge(film, profile, { sizeBytes: 10 * GB }, 120).isRejected).toBe(false);
@@ -247,7 +249,7 @@ describe('judgeRelease', () => {
 
     expect(
       judge('Show.S01.1080p.WEB-DL.x264-GRP', profile, { sizeBytes: 40 * GB }, 60).reasons,
-    ).toContain('Its size is not judged without knowing what it holds');
+    ).toContainEqual('Its size is not judged without knowing what it holds');
   });
 
   it('judges nothing by size where there are no limits, or no size', () => {

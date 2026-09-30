@@ -1,6 +1,8 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { docsFor } from '@ValenceCore/functions/docsFor';
 import type { Indexer } from '@ValenceContracts/schemas/Indexer';
 import type { StateBadge } from '@ValenceClient/status/StateBadge';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says how an indexer is, as a badge and the line beneath it: offline because Valence turned it off,
@@ -12,29 +14,38 @@ import type { StateBadge } from '@ValenceClient/status/StateBadge';
 const describeIndexerState = (indexer: Indexer): StateBadge => {
   if (indexer.turnedOffBecause !== null) {
     return {
-      label: 'Offline',
+      label: say('common.offline'),
       tone: 'danger',
-      detail: indexer.turnedOffBecause,
+      detail: sayAgain(indexer.turnedOffBecause),
       help: docsFor(indexer.lastProblemCode),
     };
   }
 
   if (!indexer.isEnabled) {
-    return { label: 'Off', tone: 'quiet', detail: null };
+    return { label: say('common.off'), tone: 'quiet', detail: null };
   }
 
   if (indexer.failures > 0) {
     return {
-      label: indexer.failures === 1 ? 'Failed once' : `Failed ${indexer.failures.toString()} times`,
+      label:
+        indexer.failures === 1
+          ? say('screens.indexersPanel.describeIndexerState.failedOnce')
+          : say('screens.indexersPanel.describeIndexerState.failedFailuresTimes', {
+              failures: indexer.failures.toString(),
+            }),
       tone: 'warning',
-      detail: indexer.lastProblem,
+      detail: indexer.lastProblem === null ? null : sayAgain(indexer.lastProblem),
       help: docsFor(indexer.lastProblemCode),
     };
   }
 
   return indexer.capabilities === null
-    ? { label: 'Not tried', tone: 'quiet', detail: null }
-    : { label: 'Online', tone: 'success', detail: null };
+    ? {
+        label: say('screens.indexersPanel.describeIndexerState.notTried'),
+        tone: 'quiet',
+        detail: null,
+      }
+    : { label: say('common.online'), tone: 'success', detail: null };
 };
 
 export { describeIndexerState };

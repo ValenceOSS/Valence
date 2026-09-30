@@ -20,6 +20,7 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { MusicItem } from '@ValenceTv/music/MusicItem';
 import type { SearchProps } from './Search.types';
+import { say } from '@ValenceI18n/say';
 
 const SETTLES_AFTER_MS = 300;
 
@@ -124,9 +125,9 @@ const Search = ({
   const musicShelves = useMemo(
     () =>
       [
-        { title: 'Artists', items: (music.data?.artists ?? []).map(artistItem) },
-        { title: 'Albums', items: (music.data?.albums ?? []).map(albumItem) },
-        { title: 'Playlists', items: (music.data?.playlists ?? []).map(playlistItem) },
+        { title: say('common.artists'), items: (music.data?.artists ?? []).map(artistItem) },
+        { title: say('common.albums'), items: (music.data?.albums ?? []).map(albumItem) },
+        { title: say('common.playlists'), items: (music.data?.playlists ?? []).map(playlistItem) },
       ].filter((shelf) => shelf.items.length > 0),
     [music.data],
   );
@@ -187,7 +188,7 @@ const Search = ({
 
   return (
     <SystemSearch
-      placeholder={hasMusic ? 'Films, shows and music' : 'Films and shows'}
+      placeholder={hasMusic ? say('tv.search.filmsShowsAndMusic') : say('tv.search.filmsAndShows')}
       onChangeText={setTyped}
       onResultsLayout={setRoom}
       upTo={upTo}
@@ -200,7 +201,9 @@ const Search = ({
             </View>
           ) : isEmpty ? (
             <View style={styles.middle}>
-              <Text style={styles.nothing}>Nothing called “{asked}” here.</Text>
+              <Text style={styles.nothing}>
+                {say('tv.search.nothingCalledAskedHere', { asked })}
+              </Text>
             </View>
           ) : (
             <ScrollView
@@ -222,7 +225,7 @@ const Search = ({
               {rows.length === 0 ? null : (
                 <View style={styles.grid}>
                   {lacking.length === 0 ? null : (
-                    <Text style={styles.heading}>In your library</Text>
+                    <Text style={styles.heading}>{say('common.inYourLibrary')}</Text>
                   )}
 
                   {rows.map((row) => (
@@ -242,7 +245,7 @@ const Search = ({
               )}
 
               {asked === '' || songItems.length === 0 ? null : (
-                <MusicShelf title="Songs" items={songItems} onOpen={playSong} />
+                <MusicShelf title={say('common.songs2')} items={songItems} onOpen={playSong} />
               )}
 
               {asked === ''
@@ -257,7 +260,11 @@ const Search = ({
                   ))}
 
               {asked === '' || lacking.length === 0 ? null : (
-                <CatalogueShelf title="Not in your library yet" titles={lacking} onOpen={onAsk} />
+                <CatalogueShelf
+                  title={say('common.notInYourLibraryYet')}
+                  titles={lacking}
+                  onOpen={onAsk}
+                />
               )}
             </ScrollView>
           )}

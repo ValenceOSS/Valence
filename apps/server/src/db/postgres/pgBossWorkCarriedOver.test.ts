@@ -8,7 +8,7 @@ const MIGRATIONS = fileURLToPath(new URL('../../../drizzle/postgres/', import.me
 
 const STARTING_POSTGRES_MS = 60_000;
 
-const MOVING_OFF = '0092_job_queue';
+const MOVING_OFF = '0093_job_queue';
 
 const JournalSchema = z.object({ entries: z.array(z.object({ tag: z.string() })) });
 

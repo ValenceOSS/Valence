@@ -14,11 +14,13 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { ArtworkTile } from './components/ArtworkTile/ArtworkTile';
 import type { ArtworkKind } from '@ValenceContracts/schemas/ArtworkChoice';
 import type { ArtworkPickerProps } from './ArtworkPicker.types';
+import { say } from '@ValenceI18n/say';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
 const KINDS = [
-  { id: 'poster', label: 'Poster' },
-  { id: 'backdrop', label: 'Backdrop' },
-  { id: 'logo', label: 'Logo' },
+  { id: 'poster', label: say('screens.adminArea.artworkPicker.poster') },
+  { id: 'backdrop', label: say('screens.adminArea.artworkPicker.backdrop') },
+  { id: 'logo', label: say('screens.adminArea.artworkPicker.logo') },
 ] as const;
 
 const COLUMNS = {
@@ -26,6 +28,24 @@ const COLUMNS = {
   backdrop: 'grid-cols-[repeat(auto-fill,minmax(13rem,1fr))]',
   logo: 'grid-cols-[repeat(auto-fill,minmax(13rem,1fr))]',
 } as const;
+
+const WORDS = {
+  poster: {
+    own: 'screens.adminArea.artworkPicker.useTheCataloguesOwnPoster',
+    numbered: 'screens.adminArea.artworkPicker.usePosterNumberLanguage',
+    none: 'screens.adminArea.artworkPicker.theCatalogueHasNoPosters',
+  },
+  backdrop: {
+    own: 'screens.adminArea.artworkPicker.useTheCataloguesOwnBackdrop',
+    numbered: 'screens.adminArea.artworkPicker.useBackdropNumberLanguage',
+    none: 'screens.adminArea.artworkPicker.theCatalogueHasNoBackdrops',
+  },
+  logo: {
+    own: 'screens.adminArea.artworkPicker.useTheCataloguesOwnLogo',
+    numbered: 'screens.adminArea.artworkPicker.useLogoNumberLanguage',
+    none: 'screens.adminArea.artworkPicker.theCatalogueHasNoLogos',
+  },
+} as const satisfies Record<ArtworkKind, Record<'own' | 'numbered' | 'none', StringKey>>;
 
 const LANGUAGES = new Intl.DisplayNames(['en'], { type: 'language' });
 
@@ -37,7 +57,7 @@ const LANGUAGES = new Intl.DisplayNames(['en'], { type: 'language' });
  */
 const languageOf = (language: string | null): string => {
   if (language === null) {
-    return 'No text';
+    return say('screens.adminArea.artworkPicker.noText');
   }
 
   try {
@@ -91,7 +111,11 @@ const ArtworkPicker = ({ subject, onClose, onChanged }: ArtworkPickerProps) => {
     artworkRevisions.bump([subject.mediaId, ...subject.mediaIds]);
     await cache.invalidateQueries({ queryKey: ['artwork-choices', subject.mediaId] });
     await cache.invalidateQueries({ queryKey: libraryQueries.key });
-    notify.worked(url === null ? 'Back to the catalogue’s own picture.' : 'Chosen.');
+    notify.worked(
+      url === null
+        ? say('screens.adminArea.artworkPicker.backToTheCataloguesOwnPicture')
+        : say('screens.adminArea.artworkPicker.chosen'),
+    );
     onChanged(outcome.jobId);
   };
 
@@ -100,20 +124,24 @@ const ArtworkPicker = ({ subject, onClose, onChanged }: ArtworkPickerProps) => {
   const chosen = read === undefined || 'problem' in read ? null : read.chosen[kind];
 
   return (
-    <DialogCompanion label={subject?.name ?? 'Artwork'} isOpen={subject !== null} onClose={onClose}>
+    <DialogCompanion
+      label={subject?.name ?? say('common.artwork')}
+      isOpen={subject !== null}
+      onClose={onClose}
+    >
       <DialogTitle
         size="compact"
-        title={subject?.name ?? 'Artwork'}
+        title={subject?.name ?? say('common.artwork')}
         detail={
           subject?.isSeries === true
-            ? 'Reaches every episode and outlives every scan. Episodes keep their stills.'
-            : 'Draws this film everywhere, and every scan keeps it.'
+            ? say('screens.adminArea.artworkPicker.reachesEveryEpisodeAndOutlivesEvery')
+            : say('screens.adminArea.artworkPicker.drawsThisFilmEverywhereAndEvery')
         }
       />
 
       <DialogContent className="flex flex-col gap-5">
         <SegmentedRow
-          label="Which picture"
+          label={say('screens.adminArea.artworkPicker.whichPicture')}
           items={KINDS}
           value={kind}
           onSelect={(next) => {
@@ -122,19 +150,22 @@ const ArtworkPicker = ({ subject, onClose, onChanged }: ArtworkPickerProps) => {
         />
 
         {choices.isPending ? (
-          <Spinner isCentered label="Asking the catalogue what it has" />
+          <Spinner
+            isCentered
+            label={say('screens.adminArea.artworkPicker.askingTheCatalogueWhatItHas')}
+          />
         ) : read === undefined || 'problem' in read ? (
           <p className="font-body text-sm text-text-muted">
-            {read?.problem ?? 'The catalogue could not be asked what it has.'}
+            {read?.problem ?? say('error.library.catalogueCouldNotBeAsked')}
           </p>
         ) : (
           <ul className={`grid gap-3 ${COLUMNS[kind]}`}>
             <li>
               <ArtworkTile
                 kind={kind}
-                label={`Use the catalogue’s own ${kind}`}
+                label={say(WORDS[kind].own)}
                 previewUrl={null}
-                note="Automatic"
+                note={say('common.automatic')}
                 isChosen={chosen === null}
                 isBusy={busy === 'automatic'}
                 onChoose={() => {
@@ -147,7 +178,10 @@ const ArtworkPicker = ({ subject, onClose, onChanged }: ArtworkPickerProps) => {
               <li key={option.url}>
                 <ArtworkTile
                   kind={kind}
-                  label={`Use ${kind} ${(at + 1).toString()}, ${languageOf(option.language)}`}
+                  label={say(WORDS[kind].numbered, {
+                    number: (at + 1).toString(),
+                    language: languageOf(option.language),
+                  })}
                   previewUrl={option.previewUrl}
                   note={languageOf(option.language)}
                   isChosen={chosen === option.url}
@@ -162,9 +196,7 @@ const ArtworkPicker = ({ subject, onClose, onChanged }: ArtworkPickerProps) => {
         )}
 
         {read !== undefined && !('problem' in read) && offered.length === 0 ? (
-          <p className="font-body text-sm text-text-muted">
-            The catalogue has no {kind === 'logo' ? 'logos' : `${kind}s`} for this.
-          </p>
+          <p className="font-body text-sm text-text-muted">{say(WORDS[kind].none)}</p>
         ) : null}
       </DialogContent>
 

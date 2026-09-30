@@ -4,16 +4,17 @@ import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { buildFilterOptions } from '@ValenceClient/library/buildFilterOptions';
 import type { LibraryFacets } from '@ValenceContracts/schemas/Library';
 import type { FilterGroup } from '@ValenceClient/library/FilterGroup';
+import { say } from '@ValenceI18n/say';
 
 const NO_FACETS: LibraryFacets = { genres: [], decades: [], maxRating: 0 };
 
 const DECADE = 10;
 
 const GROUPS = [
-  { name: 'Genre', prefix: 'genre:' },
-  { name: 'Decade', prefix: 'decade:' },
-  { name: 'Rating', prefix: 'rating:' },
-  { name: 'Your rating', prefix: 'yours:' },
+  { name: say('common.genre'), prefix: 'genre:' },
+  { name: say('common.decade'), prefix: 'decade:' },
+  { name: say('common.rating'), prefix: 'rating:' },
+  { name: say('common.yourRating'), prefix: 'yours:' },
 ] as const;
 
 /**

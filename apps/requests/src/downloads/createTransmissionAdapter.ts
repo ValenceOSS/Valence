@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { z } from 'zod';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { createClientCaller } from '@ValenceRequests/downloads/createClientCaller';
@@ -10,6 +11,7 @@ import type {
 } from '@ValenceRequests/downloads/DownloadClientAdapter';
 import type { QueuedDownloadState } from '@ValenceContracts/schemas/DownloadQueue';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
+import { saying } from '@ValenceI18n/saying';
 
 const AnswerSchema = z.object({
   result: z.string(),
@@ -134,7 +136,8 @@ const readTorrent = (torrent: z.infer<typeof TorrentSchema>): ClientItem => {
     remoteId: torrent.hashString.toLowerCase(),
     title: torrent.name,
     state,
-    problem: torrent.error === 0 || torrent.errorString === '' ? null : torrent.errorString,
+    problem:
+      torrent.error === 0 || torrent.errorString === '' ? null : sayVerbatim(torrent.errorString),
     progress: Math.min(Math.max(torrent.percentDone, 0), 1),
     sizeBytes: state === 'metadata' ? null : torrent.sizeWhenDone,
     doneBytes: torrent.sizeWhenDone - torrent.leftUntilDone,
@@ -194,19 +197,26 @@ const createTransmissionAdapter = (
 
     if (response.status === 401) {
       throw new DownloadClientFailure(
-        `${settings.name} refused the username or password`,
+        saying('common.nameRefusedTheUsernameOrPassword', { name: settings.name }),
         'DownloadClientLoginRefused',
       );
     }
 
     if (!response.ok) {
-      throw new DownloadClientFailure(`${settings.name} answered ${response.status.toString()}`);
+      throw new DownloadClientFailure(
+        saying('requests.downloads.clientAnsweredStatus', {
+          name: settings.name,
+          status: response.status,
+        }),
+      );
     }
 
     const answer = AnswerSchema.parse(await response.json());
 
     if (answer.result !== 'success') {
-      throw new DownloadClientFailure(`${settings.name} said: ${answer.result}`);
+      throw new DownloadClientFailure(
+        saying('requests.downloads.clientSaid', { name: settings.name, said: answer.result }),
+      );
     }
 
     return answer.arguments ?? {};
@@ -220,7 +230,9 @@ const createTransmissionAdapter = (
 
     add: async (file, _title, category) => {
       if (file.kind === 'nzb') {
-        throw new DownloadClientFailure(`${settings.name} takes torrents, not NZBs`);
+        throw new DownloadClientFailure(
+          saying('common.nameTakesTorrentsNotNZBs', { name: settings.name }),
+        );
       }
 
       const added = await rpc(

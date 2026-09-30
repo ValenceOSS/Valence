@@ -1,8 +1,10 @@
+import { say } from '@ValenceI18n/say';
+
 const SHARE_CAPS = [
-  { id: 'any', label: 'Anybody with the link' },
-  { id: '1', label: 'One person' },
-  { id: '2', label: 'Two people' },
-  { id: '5', label: 'Five people' },
+  { id: 'any', label: say('client.sharing.shareCaps.anybodyWithTheLink') },
+  { id: '1', label: say('client.sharing.shareCaps.onePerson') },
+  { id: '2', label: say('client.sharing.shareCaps.twoPeople') },
+  { id: '5', label: say('client.sharing.shareCaps.fivePeople') },
 ] as const;
 
 export { SHARE_CAPS };

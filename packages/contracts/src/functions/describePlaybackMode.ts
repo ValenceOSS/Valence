@@ -1,3 +1,4 @@
+/* eslint-disable valence/no-hard-coded-strings -- the names of playback modes, which the sessions page shows as they are */
 import type { PlaybackPlan } from '@ValenceContracts/schemas/PlaybackPlan';
 
 const PLAYBACK_MODES = ['DirectPlay', 'Remux', 'DirectStream', 'Transcode'] as const;

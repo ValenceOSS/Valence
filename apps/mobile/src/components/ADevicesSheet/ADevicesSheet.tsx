@@ -12,6 +12,7 @@ import { useTheMusic } from '@ValenceMobile/hooks/useTheMusic';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { AGlyph } from '@ValenceMobile/components/Icon/Icon.types';
 import type { ADevicesSheetProps } from './ADevicesSheet.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   row: { alignItems: 'center', flexDirection: 'row', gap: 14, paddingVertical: 12 },
@@ -54,7 +55,7 @@ const ADevicesSheet = ({ isOpen, onClose }: ADevicesSheetProps) => {
     <Button
       key={place.id}
       tone="bare"
-      label={`Play on ${place.label}`}
+      label={say('common.playOnLabel', { label: place.label })}
       isChosen={place.isChosen}
       onPress={() => {
         place.onPick();
@@ -77,11 +78,11 @@ const ADevicesSheet = ({ isOpen, onClose }: ADevicesSheetProps) => {
   );
 
   return (
-    <ASheet isOpen={isOpen} title="Play on" onClose={onClose}>
+    <ASheet isOpen={isOpen} title={say('common.playOn')} onClose={onClose}>
       {aRow({
         id: here,
         label: platformInUse().describeThisClient(),
-        detail: 'This iPhone',
+        detail: say('phone.aDevicesSheet.thisIPhone'),
         of: Smartphone,
         isChosen: playingOn === null,
         onPick: () => {
@@ -97,8 +98,8 @@ const ADevicesSheet = ({ isOpen, onClose }: ADevicesSheetProps) => {
           label: device.label,
           detail:
             device.nowPlaying === null
-              ? 'Not playing'
-              : `${device.nowPlaying.isPlaying ? 'Playing' : 'Paused on'} ${device.nowPlaying.title}`,
+              ? say('common.notPlaying')
+              : `${device.nowPlaying.isPlaying ? say('common.playing') : say('common.pausedOn')} ${device.nowPlaying.title}`,
           of: Cast,
           isChosen: playingOn === device.clientId,
           onPick: () => {
@@ -112,10 +113,7 @@ const ADevicesSheet = ({ isOpen, onClose }: ADevicesSheetProps) => {
       {devices.isPending ? <ActivityIndicator color={colours.textMuted} /> : null}
 
       {!devices.isPending && others.length === 0 ? (
-        <Words tone="muted">
-          No other Valence is open on this profile. Open Valence on a computer, a television or
-          another phone and it will be here.
-        </Words>
+        <Words tone="muted">{say('phone.aDevicesSheet.noOtherValenceIsOpenOn')}</Words>
       ) : null}
     </ASheet>
   );

@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { randomUUID } from 'node:crypto';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
@@ -202,7 +203,10 @@ const createRequestService = ({
       changed(id, { approval: 'approved', refusedBecause: null }),
 
     refuse: (id: string, reason: string): Promise<MediaRequest | null> =>
-      changed(id, { approval: 'refused', refusedBecause: reason.trim() === '' ? null : reason }),
+      changed(id, {
+        approval: 'refused',
+        refusedBecause: reason.trim() === '' ? null : sayVerbatim(reason),
+      }),
 
     change: async (
       id: string,

@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { describeIndexerState } from './describeIndexerState';
 import type { Indexer } from '@ValenceContracts/schemas/Indexer';
@@ -52,7 +53,9 @@ describe('describeIndexerState', () => {
   });
 
   it('says how often one has failed, and why', () => {
-    expect(describeIndexerState({ ...AN_INDEXER, failures: 1, lastProblem: 'Timed out' })).toEqual({
+    expect(
+      describeIndexerState({ ...AN_INDEXER, failures: 1, lastProblem: sayVerbatim('Timed out') }),
+    ).toEqual({
       label: 'Failed once',
       tone: 'warning',
       detail: 'Timed out',
@@ -62,7 +65,7 @@ describe('describeIndexerState', () => {
       describeIndexerState({
         ...AN_INDEXER,
         failures: 1,
-        lastProblem: 'Refused',
+        lastProblem: sayVerbatim('Refused'),
         lastProblemCode: 'CloudflareRefusesAddress',
       }).help,
     ).toBe(
@@ -80,7 +83,7 @@ describe('describeIndexerState', () => {
       describeIndexerState({
         ...AN_INDEXER,
         isEnabled: false,
-        turnedOffBecause: 'Turned off after 5 failures in a row',
+        turnedOffBecause: sayVerbatim('Turned off after 5 failures in a row'),
         removesWhenDone: null,
         seedSeconds: null,
         seedRatio: null,

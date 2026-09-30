@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
@@ -10,8 +11,8 @@ const NOTHING_YET: Notification[] = [];
 const aNotice = (overrides: Partial<Notification> = {}): Notification => ({
   id: 'a-notice',
   event: 'media.added',
-  title: 'Arrival',
-  body: 'Added to Films',
+  title: sayVerbatim('Arrival'),
+  body: sayVerbatim('Added to Films'),
   link: null,
   createdAt: '2026-08-10T00:00:00.000Z',
   readAt: null,

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { sayAgain } from '@ValenceI18n/sayAgain';
+import { Fragment, useCallback, useEffect, useState } from 'react';
 import { Animated, StyleSheet, Text, useTVEventHandler, View } from 'react-native';
 import { Play } from '@keyline-icons/react-native/fill';
 import { Artwork } from '@ValenceTv/components/Artwork/Artwork';
@@ -6,6 +7,7 @@ import { Icon } from '@ValenceTv/components/Icon/Icon';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { HWEvent } from 'react-native';
 import type { ArrivalBannerProps } from './ArrivalBanner.types';
+import { sayParts } from '@ValenceI18n/sayParts';
 
 const STAYS_MS = 10_000;
 
@@ -75,13 +77,21 @@ const ArrivalBanner = ({ arrival, picture, onWatch, onDismiss }: ArrivalBannerPr
 
       <View style={styles.words}>
         <Text numberOfLines={1} style={styles.title}>
-          {arrival.title}
+          {sayAgain(arrival.title)}
         </Text>
 
         <View style={styles.hint}>
-          <Text style={styles.press}>Press</Text>
-          <Icon of={Play} size={22} colour={tokens.colours.text} />
-          <Text style={styles.press}>to watch</Text>
+          {sayParts('tv.arrivalBanner.pressPlayToWatch', {
+            play: <Icon of={Play} size={22} colour={tokens.colours.text} />,
+          }).map((part, at) =>
+            typeof part === 'string' ? (
+              <Text key={at.toString()} style={styles.press}>
+                {part.trim()}
+              </Text>
+            ) : (
+              <Fragment key={at.toString()}>{part}</Fragment>
+            ),
+          )}
         </View>
       </View>
     </Animated.View>

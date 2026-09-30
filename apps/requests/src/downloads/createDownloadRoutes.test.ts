@@ -1,3 +1,5 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { DEFAULT_DOWNLOAD_CATEGORIES } from '@ValenceContracts/schemas/DownloadClient';
 import { GIVE_UP_DEFAULTS } from '@ValenceContracts/schemas/GiveUpRules';
 import { describe, expect, it, vi } from 'vitest';
@@ -91,11 +93,15 @@ const theRoutes = () => {
   const queue = {
     queue: vi.fn(() => Promise.resolve(QUEUE)),
     send: vi.fn((): Promise<QueuedDownload | NotSent> => Promise.resolve(DOWNLOAD)),
-    pause: vi.fn((id: string): Promise<QueuedDownload | string | null> =>
+    pause: vi.fn((id: string): Promise<QueuedDownload | { refused: Said } | null> =>
       Promise.resolve(id === DOWNLOAD.id ? DOWNLOAD : null),
     ),
-    resume: vi.fn((): Promise<QueuedDownload | string | null> => Promise.resolve('It is gone')),
-    remove: vi.fn((id: string): Promise<boolean | string> => Promise.resolve(id === DOWNLOAD.id)),
+    resume: vi.fn((): Promise<QueuedDownload | { refused: Said } | null> =>
+      Promise.resolve({ refused: sayVerbatim('It is gone') }),
+    ),
+    remove: vi.fn((id: string): Promise<boolean | { refused: Said }> =>
+      Promise.resolve(id === DOWNLOAD.id),
+    ),
     watch: vi.fn(),
     listen: vi.fn((listener: (frame: DownloadStreamFrame) => void) => {
       listening = listener;
@@ -205,7 +211,7 @@ describe('createDownloadRoutes', () => {
       const { ask, queue } = theRoutes();
 
       queue.send.mockResolvedValueOnce({
-        refused: 'No torrent client is set up and switched on',
+        refused: sayVerbatim('No torrent client is set up and switched on'),
         problemCode: null,
       });
 
@@ -228,7 +234,7 @@ describe('createDownloadRoutes', () => {
       const refused = await ask(`/downloads/${DOWNLOAD.id}/resume`, 'POST');
 
       expect(refused.status).toBe(400);
-      expect(await refused.json()).toEqual({ error: 'It is gone' });
+      expect(await refused.json()).toEqual({ error: 'It is gone', code: null, values: {} });
     });
 
     it('removes a download, deleting its data only where asked', async () => {
@@ -240,7 +246,9 @@ describe('createDownloadRoutes', () => {
       expect(queue.remove).toHaveBeenLastCalledWith(DOWNLOAD.id, false);
       expect((await ask('/downloads/other', 'DELETE')).status).toBe(404);
 
-      queue.remove.mockResolvedValueOnce('qBittorrent could not be reached');
+      queue.remove.mockResolvedValueOnce({
+        refused: sayVerbatim('qBittorrent could not be reached'),
+      });
 
       expect((await ask(`/downloads/${DOWNLOAD.id}`, 'DELETE')).status).toBe(400);
     });

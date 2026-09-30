@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { serviceEvent } from '#dialect/Schema';
 import { aScratchDatabase } from '#dialect/aScratchDatabase';
@@ -37,12 +38,12 @@ describe('createDatabaseEventStore', () => {
       kind: 'failed',
       title: 'Dune',
       clientName: 'qBittorrent',
-      problem: 'The tracker is gone',
+      problem: sayVerbatim('The tracker is gone'),
     });
     await db.insert(serviceEvent).values({ kind: 'nonsense', title: 'Dune' });
 
     expect(await createDatabaseEventStore(db).pending()).toMatchObject([
-      { kind: 'failed', clientName: 'qBittorrent', problem: 'The tracker is gone' },
+      { kind: 'failed', clientName: 'qBittorrent', problem: sayVerbatim('The tracker is gone') },
     ]);
   });
 });

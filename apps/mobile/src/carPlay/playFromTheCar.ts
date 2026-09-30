@@ -4,6 +4,7 @@ import { sectionsForAnArtist } from '@ValenceMobile/carPlay/sectionsForAnArtist'
 import type { QueryClient } from '@tanstack/react-query';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
 import type { NativeCarPlay } from '@ValenceMobile/carPlay/NativeCarPlay.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Plays some tracks from the first, and shows the car's Now Playing screen over its lists.
@@ -41,7 +42,9 @@ const playFromTheCar = async (id: string, car: NativeCarPlay, cache: QueryClient
   if (kind === 'liked') {
     const tracks = await cache.fetchQuery(musicQueries.liked());
 
-    playInTheCar(car, tracks, 0, { source: { kind: 'liked', id: null, name: 'Liked songs' } });
+    playInTheCar(car, tracks, 0, {
+      source: { kind: 'liked', id: null, name: say('common.likedSongs') },
+    });
     return;
   }
 

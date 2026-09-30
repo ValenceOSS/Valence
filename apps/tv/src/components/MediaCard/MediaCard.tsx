@@ -11,6 +11,7 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import { cardSizes } from './cardSizes';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaCardProps, MediaCardShape } from './MediaCard.types';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * Which of a title's pictures suits a card of this shape, falling back to the other where it has
@@ -114,7 +115,7 @@ const MediaCard = ({
           <View
             style={styles.count}
             accessible
-            accessibilityLabel={`${unwatchedCount.toString()} ${unwatchedCount === 1 ? 'episode' : 'episodes'} left`}
+            accessibilityLabel={sayCount('common.countEpisodesLeft', unwatchedCount)}
           >
             <Text style={styles.countWords}>
               {unwatchedCount > 99 ? '99+' : unwatchedCount.toString()}

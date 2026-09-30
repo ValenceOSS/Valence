@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { act, render, userEvent } from '@testing-library/react-native';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
@@ -10,7 +11,7 @@ jest.mock('@ValenceClient/account/fetchDevices');
 
 const aDevice = (id: string, name: string, isCurrent: boolean) => ({
   id,
-  name,
+  name: sayVerbatim(name),
   address: null,
   signedInAt: '2026-09-20T10:00:00.000Z',
   expiresAt: '2026-10-20T10:00:00.000Z',

@@ -1,3 +1,6 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
+import { saying } from '@ValenceI18n/saying';
 import { randomUUID } from 'node:crypto';
 import { rm, stat } from 'node:fs/promises';
 import { and, asc, count, eq, inArray } from 'drizzle-orm';
@@ -35,6 +38,7 @@ import type {
   Transcoder,
   TranscoderCapabilities,
 } from '@ValenceServer/transcoder/TranscoderClient';
+import { say } from '@ValenceI18n/say';
 
 const SAMPLE_SECONDS = 60;
 
@@ -64,7 +68,7 @@ type CreateDatabaseReencodeServiceOptions = {
   isBeingWatched: (mediaId: string) => boolean;
   awaitingReviewCap: () => Promise<number>;
   afterChange: (mediaItemId: string) => Promise<void>;
-  onProblem?: (what: string, reason: string) => void;
+  onProblem?: (what: string, reason: Said) => void;
   wait?: (milliseconds: number) => Promise<void>;
 };
 
@@ -256,7 +260,7 @@ const createDatabaseReencodeService = ({
     const found = await media.findForReencode(row.mediaItemId);
 
     return {
-      title: found?.title ?? 'A file that is no longer in the library',
+      title: found?.title ?? say('server.reencode.databaseReencodeService.aFileThatIsNoLonger'),
       seriesTitle: found?.seriesTitle ?? null,
       durationSeconds: found?.item.durationSeconds ?? 1,
     };
@@ -303,7 +307,7 @@ const createDatabaseReencodeService = ({
     });
   };
 
-  const failWith = async (id: string, reason: string): Promise<void> => {
+  const failWith = async (id: string, reason: Said): Promise<void> => {
     onProblem?.('reencode', reason);
 
     await db
@@ -397,7 +401,9 @@ const createDatabaseReencodeService = ({
     for (const row of stranded) {
       onProblem?.(
         'reencode',
-        `took ${row.originalPath} back up, since this server stopped while it was being worked on`,
+        saying('server.reencode.databaseReencodeService.tookOriginalPathBackUpSinceThis', {
+          originalPath: row.originalPath,
+        }),
       );
     }
   };
@@ -406,7 +412,10 @@ const createDatabaseReencodeService = ({
     const found = await media.findForReencode(row.mediaItemId);
 
     if (found === null) {
-      await failWith(row.id, 'That file is no longer in the library.');
+      await failWith(
+        row.id,
+        saying('server.reencode.databaseReencodeService.thatFileIsNoLongerIn'),
+      );
 
       return;
     }
@@ -414,13 +423,19 @@ const createDatabaseReencodeService = ({
     const paths = reencodePathsFor(found.libraryPath, found.path, row.id);
 
     if (!(await canWriteInto(paths.directory))) {
-      await failWith(row.id, 'Valence cannot write to the folder this file is in.');
+      await failWith(
+        row.id,
+        saying('server.reencode.databaseReencodeService.valenceCannotWriteToTheFolder'),
+      );
 
       return;
     }
 
     if (isBeingWatched(row.mediaItemId)) {
-      await failWith(row.id, 'Somebody started watching it, so it was left alone.');
+      await failWith(
+        row.id,
+        saying('server.reencode.databaseReencodeService.somebodyStartedWatchingItSoIt'),
+      );
 
       return;
     }
@@ -471,7 +486,12 @@ const createDatabaseReencodeService = ({
     }
 
     if ((answer.failure ?? null) !== null) {
-      await failWith(row.id, answer.failure ?? 'The encode failed.');
+      await failWith(
+        row.id,
+        answer.failure === null || answer.failure === undefined
+          ? saying('server.reencode.databaseReencodeService.theEncodeFailed')
+          : sayVerbatim(answer.failure),
+      );
 
       return;
     }
@@ -601,7 +621,10 @@ const createDatabaseReencodeService = ({
         if (facts === null) {
           refused.push({
             mediaId: candidate.mediaId,
-            refusal: { code: 'NotFound', detail: 'That file could not be read.' },
+            refusal: {
+              code: 'NotFound',
+              detail: saying('server.reencode.databaseReencodeService.thatFileCouldNotBeRead'),
+            },
           });
 
           continue;
@@ -838,7 +861,7 @@ const createDatabaseReencodeService = ({
         onProgress(done, done + 1 + (waiting[0]?.counted ?? 0));
 
         await encode(row, isCancelled).catch(async (error: Error) => {
-          await failWith(row.id, error.message);
+          await failWith(row.id, sayVerbatim(error.message));
         });
 
         done += 1;

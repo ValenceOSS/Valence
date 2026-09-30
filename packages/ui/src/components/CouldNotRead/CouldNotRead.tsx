@@ -3,6 +3,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
 import { TriangleAlert as TriangleAlertIcon } from '@keyline-icons/react';
 import type { CouldNotReadProps } from './CouldNotRead.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says that something could not be read, and offers to try again.
@@ -17,13 +18,13 @@ import type { CouldNotReadProps } from './CouldNotRead.types';
  * a request that timed out, a server part way through starting, a network that dropped. Where it does
  * not pass, pressing it costs nothing.
  *
- * @param what - What could not be read, named as the reader would name it, such as `your library`.
+ * @param said - The sentence saying what could not be read, such as `Your library could not be read.`
  * @param onTryAgain - Asked to read it again.
  * @param isTryingAgain - Whether that is happening now, which the button shows rather than the panel.
  * @param className - Extra classes for the caller's own layout.
  */
 const CouldNotRead = ({
-  what,
+  said,
   onTryAgain,
   isTryingAgain = false,
   className,
@@ -35,11 +36,11 @@ const CouldNotRead = ({
     <Icon of={TriangleAlertIcon} size={24} tone="danger" />
 
     <p className="text-sm text-text-muted">
-      {what} could not be read. The server may be unreachable, or this session may have ended.
+      {said} {say('ui.couldNotRead.theServerMayBeUnreachable')}
     </p>
 
     <Button variant="secondary" size="sm" isLoading={isTryingAgain} onClick={onTryAgain}>
-      Try again
+      {say('common.tryAgain')}
     </Button>
   </div>
 );

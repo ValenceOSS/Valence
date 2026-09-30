@@ -5,6 +5,7 @@ import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 import type { PluginPlace } from '@ValenceClient/plugins/PluginPlace';
 import type { Surface } from '@ValenceSDK/surface/SurfaceSchema';
 import type { SurfaceAction } from '@ValenceSDK/surface/SurfaceActionSchema';
+import { say } from '@ValenceI18n/say';
 
 type PluginSurfaceHost = {
   askToConfirm: (question: string) => Promise<boolean>;
@@ -64,7 +65,7 @@ const usePluginSurface = (place: PluginPlace, host: PluginSurfaceHost): PluginSu
         setProblem(
           failure instanceof Error && failure.message !== ''
             ? failure.message
-            : 'That did not work. Try again in a moment.',
+            : say('client.plugins.usePluginSurface.thatDidNotWorkTryAgain'),
         );
       } finally {
         setIsActing(false);

@@ -8,6 +8,7 @@ import { BookRow } from '@ValenceScreens/components/BookRow/BookRow';
 import { SeriesDialog } from '@ValenceScreens/components/SeriesDialog/SeriesDialog';
 import type { BookSeries } from '@ValenceScreens/reading/gatherSeries';
 import type { BookRailProps } from './BookRail.types';
+import { say } from '@ValenceI18n/say';
 
 const WAITING = 6;
 
@@ -28,7 +29,7 @@ const BookRail = ({ libraryId, title, onOpen }: BookRailProps) => {
     return (
       <Rail title={title}>
         <CouldNotRead
-          what="That shelf"
+          said={say('screens.bookRail.thatShelfCouldNotBeRead')}
           isTryingAgain={asked.isFetching}
           onTryAgain={() => {
             void asked.refetch();

@@ -10,6 +10,7 @@ import { MENU } from '@ValenceUI/tokens/menu';
 import { POPUP_MOTION } from '@ValenceUI/animations/motion';
 import { usePortalContainer } from '@ValenceUI/usePortalContainer';
 import type { FilterMenuProps } from './FilterMenu.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * A filter icon that opens a menu of choices, grouped, where any number can be chosen at once —
@@ -42,7 +43,7 @@ const FilterMenu = ({ label, groups, selected, hasLabel = false, onChange }: Fil
               isActive={selected.size > 0}
               size={16}
             />
-            Filters
+            {say('common.filters')}
             {selected.size === 0 ? null : (
               <Badge tone="solid" size="sm">
                 <AnimatedNumber value={selected.size} />
@@ -137,7 +138,7 @@ const FilterMenu = ({ label, groups, selected, hasLabel = false, onChange }: Fil
                   onChange(new Set());
                 }}
               >
-                Clear filters
+                {say('ui.filterMenu.clearFilters')}
               </RadixMenu.Item>
             </>
           )}

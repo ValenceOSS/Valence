@@ -1,7 +1,10 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { createHash } from 'node:crypto';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { saying } from '@ValenceI18n/saying';
 
 type CachedImage = {
   body: ArrayBuffer;
@@ -18,7 +21,7 @@ type ImageFetcher = (url: string) => Promise<{
 type CreateImageCacheOptions = {
   directory: string;
   fetchImpl?: ImageFetcher;
-  onProblem?: (url: string, reason: string) => void;
+  onProblem?: (url: string, reason: Said) => void;
 };
 
 const MAX_BYTES = 32 * 1024 * 1024;
@@ -57,7 +60,12 @@ const createImageCache = ({ directory, fetchImpl, onProblem }: CreateImageCacheO
         const response = await call(url);
 
         if (!response.ok) {
-          onProblem?.(url, `The catalogue answered ${response.status.toString()}.`);
+          onProblem?.(
+            url,
+            saying('server.images.imageCache.theCatalogueAnsweredStatus', {
+              status: response.status.toString(),
+            }),
+          );
 
           return null;
         }
@@ -65,7 +73,10 @@ const createImageCache = ({ directory, fetchImpl, onProblem }: CreateImageCacheO
         const contentType = response.headers.get('content-type') ?? 'image/jpeg';
 
         if (!IMAGE_TYPES.has(contentType.split(';')[0]?.trim() ?? '')) {
-          onProblem?.(url, `That is not an image: ${contentType}.`);
+          onProblem?.(
+            url,
+            saying('server.images.imageCache.thatIsNotAnImageContentType', { contentType }),
+          );
 
           return null;
         }
@@ -75,7 +86,9 @@ const createImageCache = ({ directory, fetchImpl, onProblem }: CreateImageCacheO
         if (body.byteLength > MAX_BYTES) {
           onProblem?.(
             url,
-            `That image is ${Math.round(body.byteLength / 1024 / 1024).toString()}MB, which is too large to be artwork.`,
+            saying('server.images.imageTooLarge', {
+              megabytes: Math.round(body.byteLength / 1024 / 1024).toString(),
+            }),
           );
 
           return null;
@@ -87,7 +100,12 @@ const createImageCache = ({ directory, fetchImpl, onProblem }: CreateImageCacheO
 
         return { body, contentType };
       } catch (error) {
-        onProblem?.(url, error instanceof Error ? describeFailure(error) : 'Unreachable.');
+        onProblem?.(
+          url,
+          error instanceof Error
+            ? sayVerbatim(describeFailure(error))
+            : saying('server.images.imageCache.unreachable'),
+        );
 
         return null;
       }

@@ -22,6 +22,7 @@ import type { DrawnStyle } from '@ValenceScreens/components/FaceEditor/component
 import type { OrbChoice } from '@ValenceScreens/components/FaceEditor/components/OrbStudio/OrbStudio.types';
 import type { SketchScene } from '@ValenceContracts/schemas/SketchScene';
 import type { FaceEditorProps } from './FaceEditor.types';
+import { say } from '@ValenceI18n/say';
 
 type Mode = (typeof FACE_MODES)[number]['id'];
 
@@ -149,10 +150,15 @@ const FaceEditor = ({ isOpen, onClose, profile, start, onUse }: FaceEditorProps)
   };
 
   return (
-    <Dialog label="Your face" isOpen={isOpen} onClose={onClose} size="stage">
+    <Dialog
+      label={say('screens.faceEditor.yourFace')}
+      isOpen={isOpen}
+      onClose={onClose}
+      size="stage"
+    >
       <DialogTitle
-        title="Your face"
-        detail="How you appear on every screen Valence draws you on."
+        title={say('screens.faceEditor.yourFace')}
+        detail={say('screens.faceEditor.howYouAppearOnEveryScreen')}
         size="compact"
       />
 
@@ -169,7 +175,7 @@ const FaceEditor = ({ isOpen, onClose, profile, start, onUse }: FaceEditorProps)
 
           <div className="flex min-w-0 flex-col gap-8">
             <SegmentedRow
-              label="Kind of face"
+              label={say('screens.faceEditor.kindOfFace')}
               size="sm"
               tone="accent"
               items={FACE_MODES}
@@ -218,7 +224,7 @@ const FaceEditor = ({ isOpen, onClose, profile, start, onUse }: FaceEditorProps)
       <DialogFooter
         dismiss={{ onChoose: onClose }}
         confirm={{
-          label: 'Use this face',
+          label: say('screens.faceEditor.useThisFace'),
           isDisabled: !canUse,
           isLoading: isUsing,
           onChoose: () => {

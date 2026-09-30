@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { useMemo } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
@@ -17,6 +18,7 @@ import { successRate, toneOfSuccessRate } from '@ValenceScreens/admin/successRat
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { JobKindStats } from '@ValenceContracts/schemas/JobRun';
 import type { JobHealthProps } from './JobHealth.types';
+import { say } from '@ValenceI18n/say';
 
 const DAY_MS = 86_400_000;
 
@@ -55,7 +57,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
   const asked = useQuery({ ...adminQueries.jobStats(sinceMs), placeholderData: keepPreviousData });
   const kinds = useMemo(() => asked.data?.kinds ?? [], [asked.data]);
   const labels = useMemo(
-    () => new Map(definitions.map((definition) => [definition.kind, definition.label])),
+    () => new Map(definitions.map((definition) => [definition.kind, sayAgain(definition.label)])),
     [definitions],
   );
 
@@ -74,7 +76,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
     () => [
       {
         id: 'kind',
-        header: 'Job',
+        header: say('common.job'),
         accessorFn: (kind) => describeJobKind(kind.kind, labels),
         cell: ({ row }) => (
           <span className="text-text" title={row.original.kind}>
@@ -84,7 +86,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
       },
       {
         id: 'rate',
-        header: 'Finished well',
+        header: say('screens.observabilityPage.jobHealth.finishedWell'),
         accessorFn: (kind) => successRate(kind.completed, kind.failed) ?? -1,
         cell: ({ row }) => {
           const rate = successRate(row.original.completed, row.original.failed);
@@ -98,7 +100,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
       },
       {
         id: 'runs',
-        header: 'Runs',
+        header: say('screens.observabilityPage.jobHealth.runs'),
         accessorFn: (kind) => kind.runs,
         cell: ({ row }) => (
           <span className="tabular-nums text-text-muted">
@@ -115,7 +117,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
       },
       {
         id: 'failed',
-        header: 'Failed',
+        header: say('common.failed'),
         accessorFn: (kind) => kind.failed,
         cell: ({ row }) => (
           <span
@@ -129,7 +131,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
       },
       {
         id: 'median',
-        header: 'Typical run',
+        header: say('screens.observabilityPage.jobHealth.typicalRun'),
         accessorFn: (kind) => kind.medianMs ?? -1,
         cell: ({ row }) => (
           <span className="whitespace-nowrap tabular-nums text-text-muted">
@@ -139,7 +141,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
       },
       {
         id: 'slowest',
-        header: 'Slowest run',
+        header: say('screens.observabilityPage.jobHealth.slowestRun'),
         accessorFn: (kind) => kind.slowestMs ?? -1,
         cell: ({ row }) => (
           <span className="whitespace-nowrap tabular-nums text-text-muted">
@@ -149,7 +151,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
       },
       {
         id: 'last',
-        header: 'Last run',
+        header: say('screens.observabilityPage.jobHealth.lastRun'),
         accessorFn: (kind) => kind.lastAtMs ?? 0,
         cell: ({ row }) => (
           <span className="whitespace-nowrap tabular-nums text-text-muted">
@@ -167,38 +169,42 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
     <div className="flex flex-col gap-6">
       <HeadedSection
         isInset
-        title="How the jobs are doing"
+        title={say('screens.observabilityPage.jobHealth.howTheJobsAreDoing')}
         actions={<TimeRangeMenu search={search} onSearchChange={onSearchChange} />}
       >
         <StatStrip
-          label="How the jobs are doing overall"
+          label={say('screens.observabilityPage.jobHealth.howTheJobsAreDoingOverall')}
           items={[
-            { id: 'runs', label: 'Runs', value: <AnimatedNumber value={totals.runs} /> },
+            {
+              id: 'runs',
+              label: say('screens.observabilityPage.jobHealth.runs'),
+              value: <AnimatedNumber value={totals.runs} />,
+            },
             {
               id: 'rate',
-              label: 'Finished well',
+              label: say('screens.observabilityPage.jobHealth.finishedWell'),
               value: showRate(overall),
               isAlarming: overall !== null && overall < 0.9,
-              detail: 'Of the runs that have ended',
+              detail: say('screens.observabilityPage.jobHealth.ofTheRunsThatHaveEnded'),
             },
             {
               id: 'failed',
-              label: 'Failed',
+              label: say('common.failed'),
               value: <AnimatedNumber value={totals.failed} />,
               isAlarming: totals.failed > 0,
             },
             {
               id: 'slowest',
-              label: 'Slowest run',
+              label: say('screens.observabilityPage.jobHealth.slowestRun'),
               value: totals.slowest === 0 ? '—' : <ElapsedTime ms={totals.slowest} />,
             },
           ]}
         />
       </HeadedSection>
 
-      <HeadedSection isInset title="By kind of job">
+      <HeadedSection isInset title={say('screens.observabilityPage.jobHealth.byKindOfJob')}>
         <DataTable
-          label="How each kind of job has gone"
+          label={say('screens.observabilityPage.jobHealth.howEachKindOfJobHas')}
           columns={columns}
           rows={kinds}
           getRowId={(kind) => kind.kind}
@@ -209,7 +215,9 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
           height="fill"
           pageSize={12}
           emptyMessage={
-            asked.isPending ? 'Reading how the jobs have gone…' : 'No job has run in this time.'
+            asked.isPending
+              ? say('screens.observabilityPage.jobHealth.readingHowTheJobsHaveGone')
+              : say('screens.observabilityPage.jobHealth.noJobHasRunInThis')
           }
         />
       </HeadedSection>

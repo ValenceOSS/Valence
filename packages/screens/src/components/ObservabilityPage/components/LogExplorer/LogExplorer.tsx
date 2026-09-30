@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import {
@@ -51,16 +52,34 @@ import type { FilterGroup } from '@ValenceUI/FilterMenu.types';
 import type { LogView } from '@ValenceClient/admin/logView.types';
 import type { LogLevel, LogRecord, LogSort } from '@ValenceContracts/schemas/Log';
 import type { LogExplorerProps } from './LogExplorer.types';
+import { say } from '@ValenceI18n/say';
+import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
 
 const LIVE_EVERY_MS = 3000;
 
 const TYPING_MS = 350;
 
 const SORTS: readonly { id: LogSort; label: string; detail: string }[] = [
-  { id: 'newest', label: 'Newest first', detail: 'What just happened' },
-  { id: 'oldest', label: 'Oldest first', detail: 'Read it as a story' },
-  { id: 'severest', label: 'Most serious first', detail: 'Errors, then warnings' },
-  { id: 'busiest', label: 'Most repeated first', detail: 'What keeps happening' },
+  {
+    id: 'newest',
+    label: say('common.newestFirst'),
+    detail: say('screens.observabilityPage.logExplorer.whatJustHappened'),
+  },
+  {
+    id: 'oldest',
+    label: say('common.oldestFirst'),
+    detail: say('screens.observabilityPage.logExplorer.readItAsAStory'),
+  },
+  {
+    id: 'severest',
+    label: say('screens.observabilityPage.logExplorer.mostSeriousFirst'),
+    detail: say('screens.observabilityPage.logExplorer.errorsThenWarnings'),
+  },
+  {
+    id: 'busiest',
+    label: say('screens.observabilityPage.logExplorer.mostRepeatedFirst'),
+    detail: say('screens.observabilityPage.logExplorer.whatKeepsHappening'),
+  },
 ];
 
 const writeToClipboard = async (text: string): Promise<void> => {
@@ -249,7 +268,7 @@ const LogExplorer = ({
     [definitions, view.jobKinds],
   );
   const labels = useMemo(
-    () => new Map(definitions.map((definition) => [definition.kind, definition.label])),
+    () => new Map(definitions.map((definition) => [definition.kind, sayAgain(definition.label)])),
     [definitions],
   );
   const selection = useMemo(
@@ -258,11 +277,11 @@ const LogExplorer = ({
   );
   const groups = useMemo<FilterGroup[]>(() => {
     const identifiers = [
-      ['job', view.ids.jobId, 'Job'],
-      ['library', view.ids.libraryId, 'Library'],
-      ['media', view.ids.mediaId, 'Media'],
-      ['session', view.ids.sessionId, 'Session'],
-      ['request', view.ids.requestId, 'Request'],
+      ['job', view.ids.jobId, say('common.job')],
+      ['library', view.ids.libraryId, say('common.library')],
+      ['media', view.ids.mediaId, say('common.media')],
+      ['session', view.ids.sessionId, say('common.session')],
+      ['request', view.ids.requestId, say('common.request')],
     ].flatMap(([key, value, name]) =>
       key === undefined || value === undefined || name === undefined
         ? []
@@ -271,20 +290,24 @@ const LogExplorer = ({
 
     return [
       {
-        name: 'Source',
+        name: say('common.source'),
         options: LOG_SOURCES.map((source) => ({
           id: logFilterId('source', source),
           label: source,
         })),
       },
       {
-        name: 'Job',
+        name: say('common.job'),
         options: kindOptions.map((kind) => ({
           id: logFilterId('kind', kind),
           label: describeJobKind(kind, labels),
         })),
       },
-      ...(identifiers.length === 0 ? [] : [{ name: 'Identifier', options: identifiers }]),
+      ...(identifiers.length === 0
+        ? []
+        : [
+            { name: say('screens.observabilityPage.logExplorer.identifier'), options: identifiers },
+          ]),
     ];
   }, [kindOptions, labels, view.ids]);
 
@@ -292,7 +315,7 @@ const LogExplorer = ({
 
   const copyVisible = () => {
     void copy(logsAsText(records)).then(() => {
-      notify.worked('Copied to the clipboard.');
+      notify.worked(say('common.copiedToTheClipboard'));
     });
   };
 
@@ -336,7 +359,7 @@ const LogExplorer = ({
         }}
         onCopy={() => {
           void copy(logLineAsText(record)).then(() => {
-            notify.worked('Copied the line.');
+            notify.worked(say('screens.observabilityPage.logExplorer.copiedTheLine'));
           });
         }}
         onTrace={onTraceJob}
@@ -349,11 +372,11 @@ const LogExplorer = ({
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
         <TextField
-          label="Search the log"
+          label={say('screens.observabilityPage.logExplorer.searchTheLog')}
           isLabelHidden
           type="search"
           size="sm"
-          placeholder="Search — or filter with level:error  job:abc123  library:…  session:…"
+          placeholder={say('screens.observabilityPage.logExplorer.searchOrFilterWithLevelError')}
           value={typed}
           className="min-w-64 flex-1"
           onValueChange={(next) => {
@@ -372,12 +395,12 @@ const LogExplorer = ({
         <TimeRangeMenu search={search} onSearchChange={onSearchChange} />
 
         <OptionMenu
-          label="Order"
+          label={say('common.order')}
           triggerShape="field"
           className="w-auto"
           groups={[
             {
-              name: 'Order',
+              name: say('common.order'),
               selectedId: view.sort,
               onSelect: (id) => {
                 const sort = SORTS.find((one) => one.id === id);
@@ -402,7 +425,7 @@ const LogExplorer = ({
         />
 
         <FilterMenu
-          label="Filter the log"
+          label={say('screens.observabilityPage.logExplorer.filterTheLog')}
           hasLabel
           groups={groups}
           selected={selection}
@@ -421,14 +444,14 @@ const LogExplorer = ({
           }}
         >
           <Icon of={RadioIcon} size={15} />
-          Live
+          {say('common.live')}
         </Button>
 
         <Button
           variant="ghost"
           size="sm"
           isIconOnly
-          label="Read the log again"
+          label={say('screens.observabilityPage.logExplorer.readTheLogAgain')}
           onClick={() => {
             setAnchor();
           }}
@@ -437,21 +460,21 @@ const LogExplorer = ({
         </Button>
 
         <ActionMenu
-          label="More about these lines"
+          label={say('screens.observabilityPage.logExplorer.moreAboutTheseLines')}
           trigger={<Icon of={MoreHorizontalIcon} size={16} />}
           groups={[
             {
               items: [
                 {
                   id: 'copy',
-                  label: 'Copy these lines',
+                  label: say('screens.observabilityPage.logExplorer.copyTheseLines'),
                   icon: <Icon of={CopyFilledIcon} size={15} />,
                   isDisabled: records.length === 0,
                   onChoose: copyVisible,
                 },
                 {
                   id: 'download',
-                  label: 'Download these lines',
+                  label: say('screens.observabilityPage.logExplorer.downloadTheseLines'),
                   icon: <Icon of={DownloadFilledIcon} size={15} />,
                   isDisabled: records.length === 0,
                   onChoose: () => {
@@ -464,18 +487,22 @@ const LogExplorer = ({
               ],
             },
             {
-              name: 'View',
+              name: say('common.view'),
               items: [
                 {
                   id: 'wrap',
-                  label: isWrapped ? 'Cut long lines short' : 'Wrap long lines',
+                  label: isWrapped
+                    ? say('screens.observabilityPage.logExplorer.cutLongLinesShort')
+                    : say('screens.observabilityPage.logExplorer.wrapLongLines'),
                   onChoose: () => {
                     setIsWrapped((was) => !was);
                   },
                 },
                 {
                   id: 'time',
-                  label: hasTime ? 'Hide the time' : 'Show the time',
+                  label: hasTime
+                    ? say('screens.observabilityPage.logExplorer.hideTheTime')
+                    : say('screens.observabilityPage.logExplorer.showTheTime'),
                   onChoose: () => {
                     setHasTime((was) => !was);
                   },
@@ -515,7 +542,10 @@ const LogExplorer = ({
                 change({ ...view, zoom: null });
               }}
             >
-              {`Zoomed to ${describeLogTime(view.zoom.fromMs)}–${describeLogTime(view.zoom.untilMs)}`}
+              {say('screens.observabilityPage.logExplorer.zoomedToFromMsUntilMs', {
+                fromMs: describeLogTime(view.zoom.fromMs),
+                untilMs: describeLogTime(view.zoom.untilMs),
+              })}
               <Icon of={XIcon} size={13} />
             </Button>
           )}
@@ -548,7 +578,7 @@ const LogExplorer = ({
               colour: describeLogLevel(level).colour,
             }))}
             bucketMs={histogram.bucketMs}
-            label="How many events the log holds at each level over time"
+            label={say('screens.observabilityPage.logExplorer.howManyEventsTheLogHolds')}
             formatTick={(atMs) => describeLogTick(atMs, spanMs)}
             formatSpan={describeLogSpan}
             onPickRange={(fromMs, untilMs) => {
@@ -561,10 +591,16 @@ const LogExplorer = ({
       <div className="grid gap-x-8 gap-y-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <HeadedSection
           isInset
-          title="Log lines"
+          title={say('screens.observabilityPage.logExplorer.logLines')}
           actions={
             <span aria-live="polite" className="text-xs tabular-nums text-text-muted">
-              Showing <AnimatedNumber value={records.length} /> of <AnimatedNumber value={total} />
+              <Sentence
+                words="screens.observabilityPage.logExplorer.showingShownOfTotal"
+                fillings={{
+                  shown: <AnimatedNumber value={records.length} />,
+                  total: <AnimatedNumber value={total} />,
+                }}
+              />
             </span>
           }
         >
@@ -574,23 +610,25 @@ const LogExplorer = ({
               className="max-h-[70svh] overflow-y-auto overscroll-contain lg:absolute lg:inset-0 lg:max-h-none"
             >
               {askedLogs.isPending ? (
-                <p className="py-6 text-sm text-text-muted">Reading the log…</p>
+                <p className="py-6 text-sm text-text-muted">
+                  {say('screens.observabilityPage.logExplorer.readingTheLog')}
+                </p>
               ) : records.length === 0 ? (
                 <NothingHere
                   of={TerminalIcon}
-                  title="No log lines match this"
-                  detail="Try a longer time range, or take some filters off."
+                  title={say('screens.observabilityPage.logExplorer.noLogLinesMatchThis')}
+                  detail={say('screens.observabilityPage.logExplorer.tryALongerTimeRangeOr')}
                 />
               ) : (
                 <ul
-                  aria-label="Log lines"
+                  aria-label={say('screens.observabilityPage.logExplorer.logLines')}
                   className="flex flex-col divide-y divide-[var(--surface-line)]"
                 >
                   {lines}
 
                   <li ref={sentinel} className="flex justify-center py-3 text-xs text-text-muted">
                     {isFetchingNextPage ? (
-                      'Loading more…'
+                      say('screens.observabilityPage.logExplorer.loadingMore')
                     ) : hasNextPage ? (
                       canWatchTheEnd ? null : (
                         <Button
@@ -600,13 +638,13 @@ const LogExplorer = ({
                             void fetchNextPage();
                           }}
                         >
-                          Show more
+                          {say('common.showMore')}
                         </Button>
                       )
                     ) : records.length < total ? (
-                      'That is as far back as this list reads — narrow it to see the rest.'
+                      say('screens.observabilityPage.logExplorer.thatIsAsFarBackAs')
                     ) : (
-                      'That is everything.'
+                      say('screens.observabilityPage.logExplorer.thatIsEverything')
                     )}
                   </li>
                 </ul>
@@ -616,12 +654,12 @@ const LogExplorer = ({
         </HeadedSection>
 
         <div className="flex flex-col gap-6">
-          <HeadedSection isInset title="Top sources">
+          <HeadedSection isInset title={say('screens.observabilityPage.logExplorer.topSources')}>
             <BarList
-              label="Sources that logged the most"
-              heading="Source"
-              valueHeading="Events"
-              emptyMessage="Nothing logged in this time."
+              label={say('screens.observabilityPage.logExplorer.sourcesThatLoggedTheMost')}
+              heading={say('common.source')}
+              valueHeading={say('common.events')}
+              emptyMessage={say('screens.observabilityPage.logExplorer.nothingLoggedInThisTime')}
               items={(askedFacets.data?.sources ?? []).map((facet) => ({
                 id: logFilterId('source', facet.value),
                 label: facet.value,
@@ -632,12 +670,12 @@ const LogExplorer = ({
             />
           </HeadedSection>
 
-          <HeadedSection isInset title="Top jobs">
+          <HeadedSection isInset title={say('screens.observabilityPage.logExplorer.topJobs')}>
             <BarList
-              label="Kinds of job that logged the most"
-              heading="Job"
-              valueHeading="Events"
-              emptyMessage="No job logged in this time."
+              label={say('screens.observabilityPage.logExplorer.kindsOfJobThatLoggedThe')}
+              heading={say('common.job')}
+              valueHeading={say('common.events')}
+              emptyMessage={say('screens.observabilityPage.logExplorer.noJobLoggedInThisTime')}
               items={(askedFacets.data?.jobKinds ?? []).map((facet) => ({
                 id: logFilterId('kind', facet.value),
                 label: describeJobKind(facet.value, labels),

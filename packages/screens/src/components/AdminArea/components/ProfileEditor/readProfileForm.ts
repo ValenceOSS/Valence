@@ -11,6 +11,7 @@ import type {
   QualitySize,
   ReleaseWait,
 } from '@ValenceContracts/schemas/QualityProfile';
+import { say } from '@ValenceI18n/say';
 
 type ProfileForm = {
   name: string;
@@ -42,7 +43,10 @@ type ReadProfileForm =
   | { draft: QualityProfileDraft; problem: null; at: null }
   | { draft: null; problem: string; at: ProfileTab };
 
-const DEFAULTS = QualityProfileDraftSchema.parse({ name: 'New', kind: 'video' });
+const DEFAULTS = QualityProfileDraftSchema.parse({
+  name: say('screens.profileEditor.readProfileForm.new'),
+  kind: 'video',
+});
 
 const A_NEW_PROFILE: ProfileForm = {
   name: '',
@@ -144,21 +148,37 @@ const readProfileForm = (form: ProfileForm): ReadProfileForm => {
   const largestMb = sizeOf(form.largestMb);
 
   if (name === '') {
-    return { draft: null, problem: 'Give the profile a name.', at: 'quality' };
+    return {
+      draft: null,
+      problem: say('screens.profileEditor.readProfileForm.giveTheProfileAName'),
+      at: 'quality',
+    };
   }
 
   if (form.kind === 'video' && form.resolutions.length === 0) {
-    return { draft: null, problem: 'Allow at least one resolution.', at: 'quality' };
+    return {
+      draft: null,
+      problem: say('screens.profileEditor.readProfileForm.allowAtLeastOneResolution'),
+      at: 'quality',
+    };
   }
 
   if (form.kind === 'music' && form.musicQualities.length === 0) {
-    return { draft: null, problem: 'Allow at least one format.', at: 'quality' };
+    return {
+      draft: null,
+      problem: say('screens.profileEditor.readProfileForm.allowAtLeastOneFormat'),
+      at: 'quality',
+    };
   }
 
   const isMusic = form.kind === 'music';
 
   if (isMusic && (smallestMb === undefined || largestMb === undefined || largestMb === 0)) {
-    return { draft: null, problem: 'A size is a number of megabytes.', at: 'quality' };
+    return {
+      draft: null,
+      problem: say('screens.profileEditor.readProfileForm.aSizeIsANumberOf'),
+      at: 'quality',
+    };
   }
 
   if (
@@ -171,7 +191,7 @@ const readProfileForm = (form: ProfileForm): ReadProfileForm => {
   ) {
     return {
       draft: null,
-      problem: 'The largest size has to be more than the smallest.',
+      problem: say('screens.profileEditor.readProfileForm.theLargestSizeHasToBe'),
       at: 'quality',
     };
   }

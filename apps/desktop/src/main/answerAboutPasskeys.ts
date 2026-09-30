@@ -13,18 +13,22 @@ import {
 import { PasskeyCreationOptionsSchema } from '@ValenceContracts/schemas/PasskeyCreationOptions';
 import { PasskeyRequestOptionsSchema } from '@ValenceContracts/schemas/PasskeyRequestOptions';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
+import { say } from '@ValenceI18n/say';
 
 const ChallengeSchema = z.string().regex(/^[0-9a-f]{64}$/u);
 
 const ProfileSchema = z.string().min(1).nullable().catch(null);
 
-const NO_SERVER = { kind: 'failed', reason: 'No Valence has been chosen yet.' } as const;
+const NO_SERVER = { kind: 'failed', reason: say('common.noValenceHasBeenChosenYet') } as const;
 
-const NO_WINDOW = { kind: 'failed', reason: 'The window asking has gone.' } as const;
+const NO_WINDOW = {
+  kind: 'failed',
+  reason: say('desktop.main.answerAboutPasskeys.theWindowAskingHasGone'),
+} as const;
 
 const NOT_UNDERSTOOD = {
   kind: 'failed',
-  reason: 'Valence asked for a passkey in a way this app does not understand.',
+  reason: say('desktop.main.answerAboutPasskeys.valenceAskedForAPasskeyIn'),
 } as const;
 
 /**

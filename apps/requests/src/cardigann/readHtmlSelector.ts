@@ -69,7 +69,7 @@ const readHtmlSelector = (
 
   if (value === undefined) {
     if (isRequired) {
-      throw new SelectorMiss(block.attribute ?? 'any case');
+      throw new SelectorMiss(block.attribute ?? null);
     }
 
     return null;

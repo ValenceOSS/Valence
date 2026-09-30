@@ -10,6 +10,7 @@ import { readServerAddress } from '@ValenceClient/session/readServerAddress';
 import { reachServer } from './reachServer';
 import { ServerChoices } from './components/ServerChoices/ServerChoices';
 import type { ConnectToServerProps } from './ConnectToServer.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * An address as somebody would say it, without the part a browser adds for them.
@@ -78,7 +79,7 @@ const ConnectToServer = ({
   const [problem, setProblem] = useState<string | null>(
     couldNotReach === undefined
       ? null
-      : `Valence at ${couldNotReach} could not be reached. Check that it is running.`,
+      : say('screens.connectToServer.valenceAtCouldNotReachCouldNotBe', { couldNotReach }),
   );
   const [asking, setAsking] = useState(false);
   const prefersReducedMotion = useReducedMotionConfig();
@@ -94,7 +95,7 @@ const ConnectToServer = ({
     setAsking(false);
 
     if (!answered) {
-      setProblem(`Nothing answered at ${address}. Check the address and that Valence is running.`);
+      setProblem(say('common.nothingAnsweredAtAddressCheckThe', { address }));
 
       return;
     }
@@ -127,7 +128,7 @@ const ConnectToServer = ({
         className="flex w-full max-w-xl flex-col items-center gap-8"
       >
         <motion.span variants={revealVariants(prefersReducedMotion)} transition={arrives}>
-          <Logo size={44} hasEdge isAnimated label="Valence" />
+          <Logo size={44} hasEdge isAnimated label={say('common.valence')} />
         </motion.span>
 
         <motion.div
@@ -136,21 +137,23 @@ const ConnectToServer = ({
           className="flex flex-col items-center gap-2 text-center"
         >
           <h1 className="text-balance text-[clamp(1.75rem,5vw,3rem)] font-semibold leading-tight tracking-[-0.04em] text-text">
-            Which Valence is yours?
+            {say('common.whichValenceIsYours')}
           </h1>
 
-          <p className="text-sm text-text-muted">The address you would open in a browser.</p>
+          <p className="text-sm text-text-muted">
+            {say('screens.connectToServer.theAddressYouWouldOpenIn')}
+          </p>
         </motion.div>
 
         <ServerChoices
-          title="Found on this machine"
+          title={say('screens.connectToServer.foundOnThisMachine')}
           choices={found.map((address) => ({ address, label: withoutScheme(address) }))}
           onChoose={onConnected}
           isDisabled={asking}
         />
 
         <ServerChoices
-          title="Found on your network"
+          title={say('common.foundOnYourNetwork')}
           choices={nearby.map((one) => ({
             address: one.address,
             label: one.name,
@@ -161,7 +164,7 @@ const ConnectToServer = ({
         />
 
         <ServerChoices
-          title="Recently used"
+          title={say('common.recentlyUsed')}
           choices={recent
             .filter((address) => !offered.has(address))
             .map((address) => ({ address, label: withoutScheme(address) }))}
@@ -183,7 +186,7 @@ const ConnectToServer = ({
           }}
         >
           <TextField
-            label="Server address"
+            label={say('common.serverAddress')}
             value={typed}
             onValueChange={setTyped}
             placeholder="valence.example.com"
@@ -193,7 +196,7 @@ const ConnectToServer = ({
           />
 
           <Button type="submit" variant="glossy" size="lg" isLoading={asking}>
-            {asking ? 'Looking for it' : 'Connect'}
+            {asking ? say('screens.connectToServer.lookingForIt') : say('common.connect')}
           </Button>
         </motion.form>
       </motion.div>

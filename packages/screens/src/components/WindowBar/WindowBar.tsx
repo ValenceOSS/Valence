@@ -2,6 +2,7 @@ import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { Download as DownloadIcon } from '@keyline-icons/react';
 import type { WindowBarProps } from './WindowBar.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The strip a frameless window draws along its own top, where the system would otherwise put one.
@@ -38,7 +39,7 @@ const WindowBar = ({ update, onUpdate }: WindowBarProps) => (
         role="status"
         className="px-2 text-[0.6875rem] uppercase tracking-wide text-on-scrim opacity-70"
       >
-        Updating {update.percent.toString()}%
+        {say('screens.windowBar.updatingPercent', { percent: update.percent.toString() })}
       </span>
     ) : (
       <Button
@@ -49,7 +50,9 @@ const WindowBar = ({ update, onUpdate }: WindowBarProps) => (
         className="h-6 gap-1 px-2 text-[0.6875rem] uppercase tracking-wide text-on-scrim opacity-70 hover:opacity-100 [-webkit-app-region:no-drag]"
       >
         <Icon of={DownloadIcon} size={13} />
-        {update.kind === 'failed' ? 'Retry update' : `Update to ${update.version}`}
+        {update.kind === 'failed'
+          ? say('screens.windowBar.retryUpdate')
+          : say('common.updateToVersion', { version: update.version })}
       </Button>
     )}
   </div>

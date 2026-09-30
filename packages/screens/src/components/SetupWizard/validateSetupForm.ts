@@ -1,4 +1,5 @@
 import type { SetupFormErrors } from './SetupWizard.types';
+import { say } from '@ValenceI18n/say';
 
 const MINIMUM_PASSWORD_LENGTH = 10;
 
@@ -36,23 +37,25 @@ const validateSetupForm = (values: SetupFormValues): SetupFormErrors => {
   const errors: SetupFormErrors = {};
 
   if (values.name.trim().length === 0) {
-    errors.name = 'Enter a name for the administrator account.';
+    errors.name = say('screens.setupWizard.validateSetupForm.enterANameForTheAdministrator');
   }
 
   if (!EMAIL_PATTERN.test(values.email)) {
-    errors.email = 'Enter a valid email address.';
+    errors.email = say('screens.setupWizard.validateSetupForm.enterAValidEmailAddress');
   }
 
   if (values.password.length < MINIMUM_PASSWORD_LENGTH) {
-    errors.password = `Use at least ${MINIMUM_PASSWORD_LENGTH.toString()} characters.`;
+    errors.password = say('screens.setupWizard.validateSetupForm.useAtLeastMINIMUMPASSWORDLENGTH', {
+      MINIMUM_PASSWORD_LENGTH: MINIMUM_PASSWORD_LENGTH.toString(),
+    });
   }
 
   const origins = parseOrigins(values.trustedOrigins);
 
   if (origins.length === 0) {
-    errors.trustedOrigins = 'Enter at least one origin.';
+    errors.trustedOrigins = say('screens.setupWizard.validateSetupForm.enterAtLeastOneOrigin');
   } else if (origins.some((origin) => URL.parse(origin) === null)) {
-    errors.trustedOrigins = 'Each origin must be a full URL, such as http://192.168.1.40:8420.';
+    errors.trustedOrigins = say('screens.setupWizard.validateSetupForm.eachOriginMustBeAFull');
   }
 
   return errors;

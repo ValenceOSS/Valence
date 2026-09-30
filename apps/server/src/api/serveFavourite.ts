@@ -8,6 +8,7 @@ import {
 } from '@ValenceServer/routes/FavouriteRoute';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
+import { refuse } from '@ValenceI18n/refuse';
 
 /**
  * Registers the favourite endpoints.
@@ -22,7 +23,7 @@ const serveFavourite = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     return context.json(
@@ -38,7 +39,7 @@ const serveFavourite = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     const { mediaId } = context.req.valid('param');
@@ -46,7 +47,7 @@ const serveFavourite = (app: OpenAPIHono, context: AppContext): void => {
       music !== undefined && (await music.library.listTracks(asTheServer, [mediaId])).length > 0;
 
     if (!isTrack && (await library.getMedia(mediaId)) === null) {
-      return context.json({ error: 'No such media item.' }, 404);
+      return context.json(refuse('error.common.noSuchMediaItem'), 404);
     }
 
     await favourites.keep(profileId, mediaId);
@@ -58,7 +59,7 @@ const serveFavourite = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     await favourites.drop(profileId, context.req.valid('param').mediaId);
@@ -70,13 +71,13 @@ const serveFavourite = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     const { bookId } = context.req.valid('param');
 
     if (!(await bookInReach(context.req.raw.headers, bookId))) {
-      return context.json({ error: 'No such book.' }, 404);
+      return context.json(refuse('error.common.noSuchBook'), 404);
     }
 
     await favourites.keepBook(profileId, bookId);
@@ -88,7 +89,7 @@ const serveFavourite = (app: OpenAPIHono, context: AppContext): void => {
     const profileId = await readProfileId(context.req.raw.headers);
 
     if (profileId === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     await favourites.dropBook(profileId, context.req.valid('param').bookId);

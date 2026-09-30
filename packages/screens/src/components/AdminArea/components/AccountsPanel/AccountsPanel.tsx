@@ -62,6 +62,8 @@ import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { setCeiling, setLibraryAccess } from '@ValenceClient/admin/fetchLibraryAccess';
 import { describeCeiling } from '@ValenceContracts/schemas/LibraryAccess';
 import { AGE_CHOICES } from '@ValenceScreens/components/AdminArea/ageChoices';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 type Asked = { kind: 'ban' | 'remove'; account: Account };
 
@@ -343,7 +345,7 @@ const AccountsPanel = () => {
     }
 
     setRefusal(null);
-    tellOutcome('Changes saved.', null);
+    tellOutcome(say('screens.adminArea.accountsPanel.changesSaved'), null);
     await reload();
   }, [
     picked,
@@ -384,7 +386,7 @@ const AccountsPanel = () => {
     () => [
       {
         id: 'name',
-        header: 'Account',
+        header: say('common.account'),
         accessorFn: (account) => account.name,
         cell: ({ row }) => (
           <span className="flex min-w-0 items-center gap-3">
@@ -394,7 +396,9 @@ const AccountsPanel = () => {
               <span className="truncate font-medium text-text">{row.original.name}</span>
               <span className="truncate text-xs text-text-muted">
                 {row.original.isBanned && row.original.banReason !== null
-                  ? `Banned — ${row.original.banReason}`
+                  ? say('screens.adminArea.accountsPanel.bannedBanReason', {
+                      banReason: row.original.banReason,
+                    })
                   : row.original.email}
               </span>
             </span>
@@ -403,11 +407,13 @@ const AccountsPanel = () => {
       },
       {
         id: 'roles',
-        header: 'Roles',
+        header: say('common.roles'),
         enableSorting: false,
         cell: ({ row }) =>
           row.original.roles.length === 0 ? (
-            <span className="text-xs text-text-muted">No roles</span>
+            <span className="text-xs text-text-muted">
+              {say('screens.adminArea.accountsPanel.noRoles')}
+            </span>
           ) : (
             <span className="flex flex-wrap items-center gap-1.5">
               {row.original.roles.map((role) => (
@@ -420,15 +426,20 @@ const AccountsPanel = () => {
       },
       {
         id: 'state',
-        header: 'State',
-        accessorFn: (account) => (account.isBanned ? 'Banned' : 'Allowed'),
+        header: say('common.state'),
+        accessorFn: (account) =>
+          account.isBanned
+            ? say('screens.adminArea.accountsPanel.banned2')
+            : say('screens.adminArea.accountsPanel.allowed'),
         cell: ({ row }) =>
           row.original.isBanned ? (
             <Badge size="sm" tone="solid">
-              banned
+              {say('screens.adminArea.accountsPanel.banned')}
             </Badge>
           ) : (
-            <span className="text-xs text-text-muted">Allowed</span>
+            <span className="text-xs text-text-muted">
+              {say('screens.adminArea.accountsPanel.allowed')}
+            </span>
           ),
       },
       {
@@ -438,14 +449,14 @@ const AccountsPanel = () => {
         cell: ({ row }) => (
           <span className="flex justify-end">
             <ActionMenu
-              label={`Actions for ${row.original.name}`}
+              label={say('common.actionsForName', { name: row.original.name })}
               trigger={<Icon of={MoreHorizontalIcon} size={16} />}
               groups={[
                 {
                   items: [
                     {
                       id: 'edit',
-                      label: 'Edit account',
+                      label: say('screens.adminArea.accountsPanel.editAccount'),
                       icon: <Icon of={UserCheckFilledIcon} size={15} />,
                       onChoose: () => {
                         setAccountId(row.original.id);
@@ -455,11 +466,16 @@ const AccountsPanel = () => {
                     },
                     {
                       id: 'ban',
-                      label: row.original.isBanned ? 'Let back in' : 'Ban',
+                      label: row.original.isBanned
+                        ? say('screens.adminArea.accountsPanel.letBackIn')
+                        : say('screens.adminArea.accountsPanel.ban'),
                       icon: <Icon of={CircleXFilledIcon} size={15} />,
                       onChoose: () => {
                         if (row.original.isBanned) {
-                          void act(() => unbanAccount(row.original.id), 'Account unbanned.');
+                          void act(
+                            () => unbanAccount(row.original.id),
+                            say('screens.adminArea.accountsPanel.accountUnbanned'),
+                          );
 
                           return;
                         }
@@ -473,7 +489,7 @@ const AccountsPanel = () => {
                   items: [
                     {
                       id: 'remove',
-                      label: 'Delete account',
+                      label: say('screens.adminArea.accountsPanel.deleteAccount'),
                       icon: <Icon of={BinFilledIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
@@ -503,24 +519,38 @@ const AccountsPanel = () => {
     void act(
       () =>
         kind === 'ban'
-          ? banAccount(account.id, 'Banned from the admin area')
+          ? banAccount(account.id, say('screens.adminArea.accountsPanel.bannedFromTheAdminArea'))
           : removeAccount(account.id),
-      kind === 'ban' ? `Banned ${account.name}.` : `Deleted ${account.name}.`,
+      kind === 'ban'
+        ? say('screens.adminArea.accountsPanel.bannedName', { name: account.name })
+        : say('common.deletedName', { name: account.name }),
     );
   };
 
   return (
     <div className="flex flex-col gap-4">
       <ConfirmDialog
-        title={asking?.kind === 'remove' ? 'Delete this account?' : 'Ban this account?'}
+        title={
+          asking?.kind === 'remove'
+            ? say('screens.adminArea.accountsPanel.deleteThisAccount')
+            : say('screens.adminArea.accountsPanel.banThisAccount')
+        }
         detail={
           asking === null
             ? ''
             : asking.kind === 'remove'
-              ? `${asking.account.name} goes, and so does every profile on the account and everything those profiles were watching. Their API keys and share links are revoked at once, so anything using one stops working. Shared playlists stay, marked as a removed profile's. Nothing leaves the library, and this cannot be undone.`
-              : `${asking.account.name} will be signed out and refused entry until you let them back in.`
+              ? say('screens.adminArea.accountsPanel.nameGoesAndSoDoesEvery', {
+                  name: asking.account.name,
+                })
+              : say('screens.adminArea.accountsPanel.nameWillBeSignedOutAnd', {
+                  name: asking.account.name,
+                })
         }
-        confirmLabel={asking?.kind === 'remove' ? 'Delete account' : 'Ban'}
+        confirmLabel={
+          asking?.kind === 'remove'
+            ? say('screens.adminArea.accountsPanel.deleteAccount')
+            : say('screens.adminArea.accountsPanel.ban')
+        }
         isDestructive
         isOpen={asking !== null}
         onClose={() => {
@@ -530,7 +560,7 @@ const AccountsPanel = () => {
       />
 
       <DialogCompanion
-        label="Add user"
+        label={say('screens.adminArea.accountsPanel.addUser')}
         isOpen={isInviting}
         onClose={() => {
           setIsInviting(false);
@@ -538,29 +568,29 @@ const AccountsPanel = () => {
       >
         <DialogTitle
           size="compact"
-          title="Add user"
-          detail="They arrive able to watch and nothing more, until you give them a role."
+          title={say('screens.adminArea.accountsPanel.addUser')}
+          detail={say('screens.adminArea.accountsPanel.theyArriveAbleToWatchAnd')}
         />
 
         <DialogContent className="flex flex-col gap-4">
-          <TextField label="Name" value={inviteName} onValueChange={setInviteName} />
+          <TextField label={say('common.name')} value={inviteName} onValueChange={setInviteName} />
 
           <TextField
-            label="Address"
+            label={say('common.address')}
             type="email"
             value={inviteEmail}
             onValueChange={setInviteEmail}
           />
 
           <TextField
-            label="Password"
+            label={say('common.password')}
             type="password"
             value={invitePassword}
             onValueChange={setInvitePassword}
           />
 
           <p className="text-center font-body text-xs text-text-muted">
-            Valence cannot send email, so tell them this password yourself.
+            {say('screens.adminArea.accountsPanel.valenceCannotSendEmailSoTell')}
           </p>
 
           {refusal === null ? null : (
@@ -577,7 +607,7 @@ const AccountsPanel = () => {
             },
           }}
           confirm={{
-            label: 'Add',
+            label: say('common.add'),
             onChoose: () => {
               void act(
                 () =>
@@ -586,7 +616,7 @@ const AccountsPanel = () => {
                     email: inviteEmail,
                     password: invitePassword,
                   }),
-                `Added ${inviteName}.`,
+                say('screens.adminArea.accountsPanel.addedInviteName', { inviteName }),
               ).then((isAdded) => {
                 if (!isAdded) {
                   return;
@@ -614,16 +644,16 @@ const AccountsPanel = () => {
       )}
 
       <PanelCard
-        title="Accounts"
+        title={say('common.accounts')}
         isFlush
         actions={
           <>
             <TextField
-              label="Find somebody"
+              label={say('common.findSomebody')}
               isLabelHidden
               size="sm"
               type="search"
-              placeholder="Find somebody"
+              placeholder={say('common.findSomebody')}
               value={search}
               onValueChange={setSearch}
               className="w-56 max-w-full"
@@ -635,14 +665,14 @@ const AccountsPanel = () => {
                 setIsInviting(true);
               }}
             >
-              Add user
+              {say('screens.adminArea.accountsPanel.addUser')}
             </PanelCardAction>
           </>
         }
       >
         {askedAccounts.isError ? (
           <CouldNotRead
-            what="The accounts"
+            said={say('screens.adminArea.accountsPanel.theAccountsCouldNotBeRead')}
             isTryingAgain={askedAccounts.isFetching}
             onTryAgain={() => {
               void askedAccounts.refetch();
@@ -651,20 +681,24 @@ const AccountsPanel = () => {
           />
         ) : (
           <DataTable
-            label="Accounts"
+            label={say('common.accounts')}
             columns={columns}
             rows={shown}
             pageSize={10}
             height="fills"
             emptyMessage={
-              accounts.length === 0 ? 'Nobody has an account yet.' : 'Nobody here matches that.'
+              accounts.length === 0
+                ? say('screens.adminArea.accountsPanel.nobodyHasAnAccountYet')
+                : say('common.nobodyHereMatchesThat')
             }
           />
         )}
       </PanelCard>
 
       <DialogCompanion
-        label={picked === null ? 'Account' : `Edit ${picked.name}`}
+        label={
+          picked === null ? say('common.account') : say('common.editName', { name: picked.name })
+        }
         isOpen={picked !== null && accountId !== null}
         onClose={() => {
           setAccountId(null);
@@ -682,22 +716,22 @@ const AccountsPanel = () => {
           >
             <DialogTitle
               size="compact"
-              title={`Edit ${picked.name}`}
-              detail="Changes to their name, picture, roles and libraries apply when you save. Resetting their password and ending sessions happen right away."
+              title={say('common.editName', { name: picked.name })}
+              detail={say('screens.adminArea.accountsPanel.changesToTheirNamePictureRoles')}
               below={
                 <TabRow
-                  label="What to change about this account"
+                  label={say('screens.adminArea.accountsPanel.whatToChangeAboutThisAccount')}
                   tone="underlined"
                   size="sm"
                   value={editTab}
                   groups={[
                     {
                       items: [
-                        { id: 'display', label: 'Display' },
-                        { id: 'security', label: 'Security' },
-                        { id: 'devices', label: 'Devices' },
-                        { id: 'roles', label: 'Roles' },
-                        { id: 'libraries', label: 'Libraries' },
+                        { id: 'display', label: say('common.display') },
+                        { id: 'security', label: say('common.security') },
+                        { id: 'devices', label: say('common.devices') },
+                        { id: 'roles', label: say('common.roles') },
+                        { id: 'libraries', label: say('common.libraries') },
                       ],
                     },
                   ]}
@@ -725,14 +759,14 @@ const AccountsPanel = () => {
                 <div className="flex flex-col gap-5">
                   <div className="flex flex-wrap items-end gap-3">
                     <TextField
-                      label="Name"
+                      label={say('common.name')}
                       value={draftName}
                       onValueChange={setDraftName}
                       className="min-w-48 flex-1"
                     />
 
                     <TextField
-                      label="Address"
+                      label={say('common.address')}
                       type="email"
                       value={draftEmail}
                       onValueChange={setDraftEmail}
@@ -754,17 +788,19 @@ const AccountsPanel = () => {
               <TabPanel value="security" travel={travel}>
                 {!maySecureAccounts ? (
                   <p className="text-sm text-text-muted">
-                    You do not hold the permission to reset passwords or end sessions.
+                    {say('screens.adminArea.accountsPanel.youDoNotHoldThePermission')}
                   </p>
                 ) : (
                   <div className="flex flex-col gap-6">
                     <FormField
-                      label="Reset password"
-                      description="Ends every session this account holds. Valence cannot send email, so tell them the new password yourself."
+                      label={say('screens.adminArea.accountsPanel.resetPassword')}
+                      description={say(
+                        'screens.adminArea.accountsPanel.endsEverySessionThisAccountHolds2',
+                      )}
                     >
                       <div className="flex flex-wrap items-end gap-3">
                         <TextField
-                          label="New password"
+                          label={say('screens.adminArea.accountsPanel.newPassword')}
                           type="password"
                           value={draftPassword}
                           onValueChange={setDraftPassword}
@@ -778,14 +814,16 @@ const AccountsPanel = () => {
                             setConfirmingPasswordReset(true);
                           }}
                         >
-                          Reset password
+                          {say('screens.adminArea.accountsPanel.resetPassword')}
                         </Button>
                       </div>
                     </FormField>
 
                     <FormField
-                      label="Sign out everywhere"
-                      description="Ends every session this account holds, without changing its password."
+                      label={say('screens.adminArea.accountsPanel.signOutEverywhere')}
+                      description={say(
+                        'screens.adminArea.accountsPanel.endsEverySessionThisAccountHolds',
+                      )}
                     >
                       <Button
                         variant="danger"
@@ -793,7 +831,7 @@ const AccountsPanel = () => {
                           setConfirmingSignOutEverywhere(true);
                         }}
                       >
-                        Sign out everywhere
+                        {say('screens.adminArea.accountsPanel.signOutEverywhere')}
                       </Button>
                     </FormField>
                   </div>
@@ -806,7 +844,9 @@ const AccountsPanel = () => {
 
               <TabPanel value="roles" travel={travel}>
                 {roles.length === 0 ? (
-                  <p className="text-sm text-text-muted">There are no roles yet.</p>
+                  <p className="text-sm text-text-muted">
+                    {say('screens.adminArea.accountsPanel.thereAreNoRolesYet')}
+                  </p>
                 ) : (
                   <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
                     {roles.map((role) => (
@@ -827,16 +867,17 @@ const AccountsPanel = () => {
                             </span>
                             <span className="truncate text-xs text-text-muted">
                               {role.permissions.includes('administrator')
-                                ? 'Everything'
-                                : role.permissions.length === 1
-                                  ? '1 permission'
-                                  : `${role.permissions.length.toString()} permissions`}
+                                ? say('common.everything')
+                                : sayCount('common.count.permissions', role.permissions.length)}
                             </span>
                           </span>
                         </div>
 
                         <Switch
-                          label={`Whether ${picked.name} holds ${role.name}`}
+                          label={say('screens.adminArea.accountsPanel.whetherNameHoldsName2', {
+                            name: picked.name,
+                            name2: role.name,
+                          })}
                           isLabelHidden
                           isOn={draftRoleIds.has(role.id)}
                           onToggle={() => {
@@ -862,11 +903,13 @@ const AccountsPanel = () => {
 
               <TabPanel value="libraries" travel={travel}>
                 <FormField
-                  label="Libraries"
-                  description="What they may see, and how old it may be. Everything, until you say otherwise."
+                  label={say('common.libraries')}
+                  description={say('screens.adminArea.accountsPanel.whatTheyMaySeeAndHow')}
                 >
                   {draftLibraryAccess.length === 0 ? (
-                    <p className="text-sm text-text-muted">There are no libraries yet.</p>
+                    <p className="text-sm text-text-muted">
+                      {say('common.thereAreNoLibrariesYet')}
+                    </p>
                   ) : (
                     <ul className="flex flex-col gap-2">
                       {draftLibraryAccess.map((shelf) => (
@@ -877,8 +920,14 @@ const AccountsPanel = () => {
                             aria-pressed={shelf.mayView}
                             label={
                               shelf.mayView
-                                ? `Keep ${shelf.name} from ${picked.name}`
-                                : `Let ${picked.name} see ${shelf.name}`
+                                ? say('screens.adminArea.accountsPanel.keepNameFromName2', {
+                                    name: shelf.name,
+                                    name2: picked.name,
+                                  })
+                                : say('screens.adminArea.accountsPanel.letNameSeeName2', {
+                                    name: picked.name,
+                                    name2: shelf.name,
+                                  })
                             }
                             onClick={() => {
                               updateShelf(shelf.id, { mayView: !shelf.mayView });
@@ -889,10 +938,13 @@ const AccountsPanel = () => {
 
                           {!shelf.mayView ? null : (
                             <OptionMenu
-                              label={`Age limit in ${shelf.name} for ${picked.name}`}
+                              label={say('screens.adminArea.accountsPanel.ageLimitInNameForName2', {
+                                name: shelf.name,
+                                name2: picked.name,
+                              })}
                               groups={[
                                 {
-                                  name: 'Nothing above',
+                                  name: say('screens.adminArea.accountsPanel.nothingAbove'),
                                   selectedId:
                                     shelf.maximumAge === null ? 'none' : String(shelf.maximumAge),
                                   onSelect: (id) => {
@@ -923,7 +975,10 @@ const AccountsPanel = () => {
                               variant={shelf.allowsUnrated ? 'glossy' : 'ghost'}
                               size="sm"
                               aria-pressed={shelf.allowsUnrated}
-                              label={`Allow uncertificated things in ${shelf.name} for ${picked.name}`}
+                              label={say(
+                                'screens.adminArea.accountsPanel.allowUncertificatedThingsInNameFor',
+                                { name: shelf.name, name2: picked.name },
+                              )}
                               onClick={() => {
                                 updateShelf(shelf.id, {
                                   allowsUnrated: !shelf.allowsUnrated,
@@ -931,7 +986,7 @@ const AccountsPanel = () => {
                                 });
                               }}
                             >
-                              Allow unrated
+                              {say('screens.adminArea.accountsPanel.allowUnrated')}
                             </Button>
                           )}
                         </li>
@@ -942,16 +997,13 @@ const AccountsPanel = () => {
                   {draftLibraryAccess.length === 0 ||
                   draftLibraryAccess.some((shelf) => shelf.mayView) ? null : (
                     <p className="pt-2 text-xs text-text-muted">
-                      They can reach nothing at all, which looks broken rather than restricted to
-                      whoever signs in.
+                      {say('screens.adminArea.accountsPanel.theyCanReachNothingAtAll')}
                     </p>
                   )}
 
                   {draftLibraryAccess.every((shelf) => shelf.maximumAge === null) ? null : (
                     <p className="pt-2 text-xs text-text-muted">
-                      A limit applies to this account and so to every face on it. If a parent and a
-                      child share this one, give the child an account of their own and limit that
-                      instead.
+                      {say('screens.adminArea.accountsPanel.aLimitAppliesToThisAccount')}
                     </p>
                   )}
                 </FormField>
@@ -960,13 +1012,13 @@ const AccountsPanel = () => {
 
             <DialogFooter
               dismiss={{
-                label: 'Close',
+                label: say('common.close'),
                 onChoose: () => {
                   setAccountId(null);
                 },
               }}
               confirm={{
-                label: 'Save changes',
+                label: say('common.saveChanges'),
                 onChoose: () => {
                   void saveChanges();
                 },
@@ -978,9 +1030,9 @@ const AccountsPanel = () => {
       </DialogCompanion>
 
       <ConfirmDialog
-        title="Reset this account's password?"
-        detail="Every session it holds will be ended, and it will need the new password to sign in again."
-        confirmLabel="Reset password"
+        title={say('screens.adminArea.accountsPanel.resetThisAccountsPassword')}
+        detail={say('screens.adminArea.accountsPanel.everySessionItHoldsWillBe2')}
+        confirmLabel={say('screens.adminArea.accountsPanel.resetPassword')}
         isDestructive
         isOpen={confirmingPasswordReset}
         onClose={() => {
@@ -993,15 +1045,18 @@ const AccountsPanel = () => {
           setDraftPassword('');
 
           if (accountId !== null) {
-            void act(() => resetAccountPassword(accountId, password), 'Password reset.');
+            void act(
+              () => resetAccountPassword(accountId, password),
+              say('screens.adminArea.accountsPanel.passwordReset'),
+            );
           }
         }}
       />
 
       <ConfirmDialog
-        title="Sign this account out everywhere?"
-        detail="Every session it holds will be ended. Its password is unchanged."
-        confirmLabel="Sign it out"
+        title={say('screens.adminArea.accountsPanel.signThisAccountOutEverywhere')}
+        detail={say('screens.adminArea.accountsPanel.everySessionItHoldsWillBe')}
+        confirmLabel={say('common.signItOut')}
         isDestructive
         isOpen={confirmingSignOutEverywhere}
         onClose={() => {
@@ -1011,7 +1066,10 @@ const AccountsPanel = () => {
           setConfirmingSignOutEverywhere(false);
 
           if (accountId !== null) {
-            void act(() => endAccountSessions(accountId), 'Signed them out everywhere.');
+            void act(
+              () => endAccountSessions(accountId),
+              say('screens.adminArea.accountsPanel.signedThemOutEverywhere'),
+            );
           }
         }}
       />

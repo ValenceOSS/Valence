@@ -18,6 +18,7 @@ import { useSoundPreference } from '@ValenceMobile/hooks/useSoundPreference';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { AFeatureProps } from './AFeature.types';
+import { say } from '@ValenceI18n/say';
 
 const TELL_FOR = 8000;
 
@@ -229,7 +230,7 @@ const AFeature = ({
     media.year === null ? null : media.year.toString(),
     media.seriesTitle === null || media.seriesTitle === undefined
       ? howLongItRuns(media.durationSeconds)
-      : 'Series',
+      : say('common.series'),
     (media.genres ?? []).length === 0 ? null : (media.genres ?? []).slice(0, 2).join(', '),
   ].filter((fact) => fact !== null);
 
@@ -319,15 +320,19 @@ const AFeature = ({
             <Animated.View style={[styles.buttons, risings[3]]}>
               <View style={styles.half}>
                 <Button tone="bright" icon={PlayFilled} isWide onPress={onPlay}>
-                  {resumeAt === null ? 'Play' : `Resume ${howLongItRuns(resumeAt)}`}
+                  {resumeAt === null
+                    ? say('common.play')
+                    : say('phone.theFeatured.aFeature.resumeResumeAt', {
+                        resumeAt: howLongItRuns(resumeAt),
+                      })}
                 </Button>
               </View>
 
               <View style={styles.half}>
-                <Button tone="bare" label="More info" onPress={onMoreInfo}>
+                <Button tone="bare" label={say('common.moreInfo')} onPress={onMoreInfo}>
                   <View style={styles.moreInfo}>
                     <Icon of={Info} size={18} colour="#ffffff" />
-                    <Words tone="onArtwork">More info</Words>
+                    <Words tone="onArtwork">{say('common.moreInfo')}</Words>
                   </View>
                 </Button>
               </View>

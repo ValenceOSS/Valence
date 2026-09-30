@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { createHmac } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 import { packPlugin } from '@ValenceSDK/package/packPlugin';
@@ -103,7 +104,7 @@ const installOver = async (service: ReturnType<typeof build>, bytes: Uint8Array)
   const preview = await service.previewUpload(bytes, null, 'account-1');
 
   if ('problem' in preview) {
-    throw new Error(preview.problem);
+    throw new Error(preview.problem.message);
   }
 
   return service.install(
@@ -126,8 +127,8 @@ const build = (
   extra: Partial<Pick<Parameters<typeof createPluginService>[0], 'store' | 'fetchFor'>> = {},
 ) => {
   const catalogue: CatalogueClient = {
-    read: () => Promise.resolve({ catalogue: null, problem: 'offline' }),
-    fetchPackage: () => Promise.resolve({ problem: 'offline' }),
+    read: () => Promise.resolve({ catalogue: null, problem: sayVerbatim('offline') }),
+    fetchPackage: () => Promise.resolve({ problem: sayVerbatim('offline') }),
   };
   const service = createPluginService({
     store: createMemoryPluginStore(),
@@ -154,7 +155,7 @@ const installed = async (
   const preview = await service.previewUpload(PACKAGE, null, 'account-1');
 
   if ('problem' in preview) {
-    throw new Error(preview.problem);
+    throw new Error(preview.problem.message);
   }
 
   const done = await service.install(
@@ -163,7 +164,7 @@ const installed = async (
   );
 
   if ('refused' in done) {
-    throw new Error(done.refused);
+    throw new Error(done.refused.message);
   }
 
   return service;
@@ -175,7 +176,7 @@ describe('a plugin from upload to use, through its own process', () => {
     const preview = await service.previewUpload(PACKAGE, null, 'account-1');
 
     if ('problem' in preview) {
-      throw new Error(preview.problem);
+      throw new Error(preview.problem.message);
     }
 
     expect(preview.trust).toBe('unsigned');
@@ -285,7 +286,7 @@ describe('a plugin from upload to use, through its own process', () => {
     });
 
     if ('problem' in started) {
-      throw new Error(started.problem);
+      throw new Error(started.problem.message);
     }
 
     const address = new URL(started.location);
@@ -417,7 +418,7 @@ describe('a plugin from upload to use, through its own process', () => {
       ),
     );
 
-    expect('refused' in upgraded ? upgraded.refused : upgraded.previousVersion).toBe('1.0.0');
+    expect('refused' in upgraded ? upgraded.refused : upgraded.previousVersion).toEqual('1.0.0');
     expect((await service.render('counter', HOME, VIEWER))?.surface).toEqual({
       blocks: [{ type: 'text', text: 'Pressed 20' }],
     });
@@ -448,7 +449,7 @@ describe('a plugin from upload to use, through its own process', () => {
       ),
     );
 
-    expect('refused' in upgraded ? upgraded.refused : '').toMatch(
+    expect('refused' in upgraded ? upgraded.refused.message : '').toMatch(
       /Counter 3\.0\.0 could not bring its data up to date, so 1\.0\.0 was put back as it was\..*The old list could not be read\./u,
     );
 

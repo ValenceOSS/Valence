@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { aScratchDatabase } from '#dialect/aScratchDatabase';
 import { createDatabaseIndexerStore } from './createDatabaseIndexerStore';
@@ -54,7 +55,7 @@ describe('createDatabaseIndexerStore', () => {
 
     const failed = await store.update(AN_INDEXER.id, {
       failures: 1,
-      lastProblem: 'Timed out',
+      lastProblem: sayVerbatim('Timed out'),
       lastProblemCode: null,
       lastFailedAt: '2026-09-19T01:00:00.000Z',
       updatedAt: '2026-09-19T01:00:00.000Z',

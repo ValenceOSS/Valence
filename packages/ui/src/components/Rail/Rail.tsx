@@ -17,6 +17,7 @@ import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import type { RailProps } from './Rail.types';
+import { say } from '@ValenceI18n/say';
 
 const TOKENS = ['[--rail-gap:1rem] [--rail-peek:0rem]', RAIL.lane].join(' ');
 
@@ -143,7 +144,7 @@ const Rail = ({
                 variant="secondary"
                 size="xs"
                 isIconOnly
-                label={`Back a page of ${title}`}
+                label={say('ui.rail.backAPageOfTitle', { title })}
                 hasTooltip={false}
                 disabled={isAtStart}
                 onClick={() => {
@@ -157,7 +158,7 @@ const Rail = ({
                 variant="secondary"
                 size="xs"
                 isIconOnly
-                label={`Forward a page of ${title}`}
+                label={say('ui.rail.forwardAPageOfTitle', { title })}
                 hasTooltip={false}
                 disabled={isAtEnd}
                 onClick={() => {

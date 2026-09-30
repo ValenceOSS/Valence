@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { useState } from 'react';
 import { Checkbox } from '@ValenceUI/Checkbox';
 import { Dialog } from '@ValenceUI/Dialog';
@@ -10,12 +11,20 @@ import { LibraryPicker } from '@ValenceScreens/components/AdminArea/components/L
 import { describeLibraryPart } from '@ValenceScreens/components/AdminArea/describeLibraryPart';
 import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
 import type { ClearLibraryPartsDialogProps } from './ClearLibraryPartsDialog.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const GROUPS: { name: string; parts: LibraryPart[] }[] = [
-  { name: 'About each title', parts: ['descriptions', 'cast', 'ageRatings', 'trailers'] },
-  { name: 'Pictures', parts: ['artwork', 'logos'] },
-  { name: 'Made by Valence', parts: ['previews', 'scrubPreviews', 'intros'] },
-  { name: 'Music', parts: ['albumCovers', 'artistPictures', 'lyrics', 'musicVideos'] },
+  {
+    name: say('screens.adminArea.clearLibraryPartsDialog.aboutEachTitle'),
+    parts: ['descriptions', 'cast', 'ageRatings', 'trailers'],
+  },
+  { name: say('screens.adminArea.clearLibraryPartsDialog.pictures'), parts: ['artwork', 'logos'] },
+  {
+    name: say('screens.adminArea.clearLibraryPartsDialog.madeByValence'),
+    parts: ['previews', 'scrubPreviews', 'intros'],
+  },
+  { name: say('common.music'), parts: ['albumCovers', 'artistPictures', 'lyrics', 'musicVideos'] },
 ];
 
 /**
@@ -59,15 +68,17 @@ const ClearLibraryPartsDialog = ({
 
   return (
     <Dialog
-      label={definition === null ? 'Clear and fetch again' : definition.label}
+      label={definition === null ? say('common.clearAndFetchAgain') : sayAgain(definition.label)}
       isOpen={definition !== null}
       onClose={onClose}
     >
       {definition === null ? null : (
         <>
           <DialogTitle
-            title={`${definition.label}?`}
-            detail={`${definition.description} This cannot be undone.`}
+            title={`${sayAgain(definition.label)}?`}
+            detail={say('common.descriptionThisCannotBeUndone', {
+              description: sayAgain(definition.description),
+            })}
           />
 
           <DialogContent className="flex flex-col gap-6">
@@ -75,14 +86,16 @@ const ClearLibraryPartsDialog = ({
 
             <fieldset className="flex flex-col gap-5">
               <legend className="mb-3 text-xs uppercase tracking-[0.14em] text-text-muted">
-                What to clear
+                {say('screens.adminArea.clearLibraryPartsDialog.whatToClear')}
               </legend>
 
               {offered.size === 0 ? (
                 <p className="text-sm text-text-muted">
                   {picked.length === 0
-                    ? 'Choose a library to see what can be cleared.'
-                    : 'Nothing in these libraries is fetched or made, so there is nothing to clear.'}
+                    ? say('screens.adminArea.clearLibraryPartsDialog.chooseALibraryToSeeWhat')
+                    : say(
+                        'screens.adminArea.clearLibraryPartsDialog.nothingInTheseLibrariesIsFetched',
+                      )}
                 </p>
               ) : null}
 
@@ -118,8 +131,7 @@ const ClearLibraryPartsDialog = ({
 
             {readsAgainAfterClearing(parts) ? (
               <p role="note" className="text-sm text-text-muted">
-                Getting these back means reading every file in the chosen libraries again, which can
-                take hours on a large library.
+                {say('screens.adminArea.clearLibraryPartsDialog.gettingTheseBackMeansReadingEvery')}
               </p>
             ) : null}
           </DialogContent>
@@ -127,7 +139,10 @@ const ClearLibraryPartsDialog = ({
           <DialogFooter
             dismiss={{ onChoose: onClose }}
             confirm={{
-              label: parts.length === 1 ? 'Clear 1 part' : `Clear ${parts.length.toString()} parts`,
+              label:
+                parts.length === 1
+                  ? say('screens.adminArea.clearLibraryPartsDialog.clear1Part')
+                  : sayCount('screens.adminArea.clearLibraryPartsDialog.clearParts', parts.length),
               onChoose: () => {
                 onClear(
                   definition.kind,

@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -149,7 +150,7 @@ describe('IndexerCatalogueDialog', () => {
     fetchCatalogue.mockResolvedValue({
       ...CATALOGUE,
       updatedAt: null,
-      problem: 'The definitions could not be fetched',
+      problem: sayVerbatim('The definitions could not be fetched'),
     });
 
     const user = userEvent.setup();

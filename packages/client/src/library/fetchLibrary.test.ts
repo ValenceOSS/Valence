@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   fetchLibraries,
@@ -272,13 +273,19 @@ describe('scanLibrary', () => {
 describe('readScanState', () => {
   it('returns the state, phase and progress of a queued scan', async () => {
     fetchMock.mockResolvedValue(
-      ok({ jobId: 'job-1', state: 'running', phase: 'probing', processed: 4, total: 10 }),
+      ok({
+        jobId: 'job-1',
+        state: 'running',
+        phase: sayVerbatim('probing'),
+        processed: 4,
+        total: 10,
+      }),
     );
 
     await expect(readScanState('job-1')).resolves.toEqual({
       jobId: 'job-1',
       state: 'running',
-      phase: 'probing',
+      phase: sayVerbatim('probing'),
       processed: 4,
       total: 10,
       item: null,
@@ -290,7 +297,7 @@ describe('readScanState', () => {
       ok({
         jobId: 'job-1',
         state: 'running',
-        phase: 'probing',
+        phase: sayVerbatim('probing'),
         processed: 4,
         total: 10,
         item: 'Arrival',

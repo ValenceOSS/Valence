@@ -22,12 +22,13 @@ import { RequestProgressTab } from './components/RequestProgressTab/RequestProgr
 import { RequestReleasesTab } from './components/RequestReleasesTab/RequestReleasesTab';
 import type { Refusal } from '@ValenceClient/admin/readRefusal';
 import type { RequestDetailDialogProps, RequestDetailTab } from './RequestDetailDialog.types';
+import { say } from '@ValenceI18n/say';
 
 const TABS: readonly { id: RequestDetailTab; label: string }[] = [
-  { id: 'going', label: 'How it is going' },
-  { id: 'releases', label: 'Releases' },
-  { id: 'history', label: 'What it has done' },
-  { id: 'blocked', label: 'Never again' },
+  { id: 'going', label: say('screens.adminArea.requestDetailDialog.howItIsGoing') },
+  { id: 'releases', label: say('common.releases') },
+  { id: 'history', label: say('common.whatItHasDone') },
+  { id: 'blocked', label: say('screens.adminArea.requestDetailDialog.neverAgain') },
 ];
 
 const TAB_IDS = TABS.map((tab) => tab.id);
@@ -85,7 +86,8 @@ const RequestDetailDialog = ({
     setTab(openOn);
   }
 
-  const title = request === null ? 'A request' : request.title;
+  const title =
+    request === null ? say('screens.adminArea.requestDetailDialog.aRequest') : request.title;
 
   return (
     <DialogCompanion label={title} isOpen={request !== null} size="stage" onClose={onClose}>
@@ -103,11 +105,17 @@ const RequestDetailDialog = ({
           {...(request === null
             ? {}
             : {
-                detail: `${REQUEST_KIND_NAMES[request.kind]} · requested by ${request.requestedBy.name}`,
+                detail: say(
+                  'screens.adminArea.requestDetailDialog.rEQUESTKINDNAMESRequestedByName',
+                  {
+                    REQUEST_KIND_NAMES: REQUEST_KIND_NAMES[request.kind],
+                    name: request.requestedBy.name,
+                  },
+                ),
               })}
           below={
             <TabRow
-              label="What to show about this request"
+              label={say('screens.adminArea.requestDetailDialog.whatToShowAboutThisRequest')}
               tone="underlined"
               size="sm"
               value={tab}

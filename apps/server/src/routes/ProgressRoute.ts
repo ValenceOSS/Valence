@@ -1,6 +1,7 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 
-const ProgressError = z.object({ error: z.string() }).openapi('ProgressError');
+const ProgressError = RefusalSchema.openapi('ProgressError');
 
 const ProgressSchema = z
   .object({

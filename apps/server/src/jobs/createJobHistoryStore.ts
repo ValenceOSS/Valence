@@ -1,8 +1,13 @@
+import { z } from 'zod';
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { randomUUID } from 'node:crypto';
 import { and, asc, count, desc, eq, gte, isNotNull, lt, lte, or, sql } from 'drizzle-orm';
 import { containsInsensitively } from '@ValenceDatabase/containsInsensitively';
 import { countAffected } from '@ValenceDatabase/countAffected';
 import { countWhere } from '@ValenceDatabase/countWhere';
+import { jsonAsText } from '@ValenceDatabase/jsonAsText';
 import { likeLiterally } from '@ValenceDatabase/likeLiterally';
 import { millisecondsBetween } from '@ValenceDatabase/millisecondsBetween';
 import { nullsLast } from '@ValenceDatabase/nullsLast';
@@ -27,14 +32,14 @@ import type {
 type JobHistoryStore = {
   recordStarted: (entry: { id: string; kind: string; subject: string | null }) => Promise<void>;
   recordProgress: (entry: { id: string; progress: JobRunProgress }) => Promise<void>;
-  recordIssue: (entry: { jobRunId: string; path: string; reason: string }) => Promise<void>;
+  recordIssue: (entry: { jobRunId: string; path: string; reason: Said }) => Promise<void>;
   recordFinished: (entry: {
     id: string;
     status: Extract<JobRunStatus, 'completed' | 'failed' | 'stopped'>;
-    errorMessage: string | null;
+    errorMessage: Said | null;
   }) => Promise<void>;
   read: (query: JobRunQuery) => Promise<{ records: JobRunRecord[]; total: number }>;
-  interruptRunning: (reason: string) => Promise<number>;
+  interruptRunning: (reason: Said) => Promise<number>;
   readOne: (jobRunId: string) => Promise<JobRunRecord | null>;
   readIssues: (jobRunId: string) => Promise<JobRunIssue[]>;
   readStats: (sinceMs: number) => Promise<JobKindStats[]>;
@@ -52,7 +57,7 @@ const asRecord = (row: JobRunRow): JobRunRecord => ({
   subject: row.subject,
   startedAtMs: row.startedAt === null ? null : row.startedAt.getTime(),
   finishedAtMs: row.finishedAt === null ? null : row.finishedAt.getTime(),
-  progress: JobRunProgressSchema.nullable().catch(null).parse(row.progress),
+  progress: StoredProgressSchema.nullable().catch(null).parse(row.progress),
   errorMessage: row.errorMessage,
   createdAtMs: row.createdAt.getTime(),
 });
@@ -83,7 +88,7 @@ const whereFor = (query: JobRunQuery): SQL | undefined => {
           containsInsensitively(jobRun.id, pattern),
           containsInsensitively(jobRun.kind, pattern),
           containsInsensitively(jobRun.subject, pattern),
-          containsInsensitively(jobRun.errorMessage, pattern),
+          containsInsensitively(jsonAsText(jobRun.errorMessage), pattern),
         ),
     query.sinceMs === null
       ? undefined
@@ -165,7 +170,7 @@ const asMilliseconds = (value: string | number | null): number | null => {
  * @param reason - Why the runs were stopped, kept with each.
  * @returns The update query, ready to be awaited.
  */
-const buildInterruptQuery = (db: AnyValenceDatabase, reason: string) =>
+const buildInterruptQuery = (db: AnyValenceDatabase, reason: Said) =>
   db
     .update(jobRun)
     .set({ status: 'stopped', finishedAt: new Date(), errorMessage: reason })
@@ -351,3 +356,6 @@ export {
   asRecord,
   asIssue,
 };
+const StoredProgressSchema = JobRunProgressSchema.extend({
+  phase: z.union([SaidSchema, z.string().transform(sayVerbatim)]),
+});

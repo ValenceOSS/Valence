@@ -1,12 +1,43 @@
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { cn } from '@ValenceUI/cn';
 import type { JobRunMixProps } from './JobRunMix.types';
+import { Fragment } from 'react';
+import type { ReactNode } from 'react';
+import { say } from '@ValenceI18n/say';
+import { sayCountParts } from '@ValenceI18n/sayCountParts';
+import { sayParts } from '@ValenceI18n/sayParts';
 
 const SEGMENTS = [
-  { id: 'completed', dot: 'bg-success' },
-  { id: 'failed', dot: 'bg-danger' },
-  { id: 'stopped', dot: 'bg-text-muted' },
+  {
+    id: 'completed',
+    dot: 'bg-success',
+    counted: 'screens.observabilityPage.jobRunMix.countCompleted',
+  },
+  { id: 'failed', dot: 'bg-danger', counted: 'screens.observabilityPage.jobRunMix.countFailed' },
+  {
+    id: 'stopped',
+    dot: 'bg-text-muted',
+    counted: 'screens.observabilityPage.jobRunMix.countStopped',
+  },
 ] as const;
+
+/**
+ * Puts each run of words from a counted line in a quiet span of its own, so the words sit beside
+ * the number wherever the language puts them.
+ *
+ * @param parts - The words and the number, in the language's order.
+ * @returns The line to draw.
+ */
+const besideTheNumber = (parts: readonly ReactNode[]): ReactNode[] =>
+  parts.map((part, at) =>
+    typeof part === 'string' ? (
+      <span key={at.toString()} className="text-sm text-text-muted">
+        {part.trim()}
+      </span>
+    ) : (
+      <Fragment key={at.toString()}>{part}</Fragment>
+    ),
+  );
 
 /**
  * How the job runs stand, in one line: how many are running now, with a dot that breathes while any
@@ -25,7 +56,10 @@ const JobRunMix = ({ running, completed, failed, stopped }: JobRunMixProps) => {
   const succeeded = finished === 0 ? null : Math.round((completed / finished) * 100);
 
   return (
-    <section aria-label="How the job runs stand" className="flex flex-col gap-3 px-1">
+    <section
+      aria-label={say('screens.observabilityPage.jobRunMix.howTheJobRunsStand')}
+      className="flex flex-col gap-3 px-1"
+    >
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
         <p className="flex items-center gap-2">
           <span
@@ -35,40 +69,62 @@ const JobRunMix = ({ running, completed, failed, stopped }: JobRunMixProps) => {
               running > 0 ? 'animate-pulse bg-busy' : 'bg-text-muted/50',
             )}
           />
-          <span className="text-lg font-semibold tabular-nums text-text">
-            <AnimatedNumber value={running} />
-          </span>
-          <span className="text-sm text-text-muted">running now</span>
+          {besideTheNumber(
+            sayCountParts('screens.observabilityPage.jobRunMix.countRunningNow', running, {
+              count: (
+                <span className="text-lg font-semibold tabular-nums text-text">
+                  <AnimatedNumber value={running} />
+                </span>
+              ),
+            }),
+          )}
         </p>
 
         {SEGMENTS.map((segment) => (
           <p key={segment.id} className="flex items-center gap-2">
             <span aria-hidden className={cn('size-2 rounded-full', segment.dot)} />
-            <span
-              className={cn(
-                'text-lg font-semibold tabular-nums',
-                segment.id === 'failed' && failed > 0 ? 'text-danger' : 'text-text',
-              )}
-            >
-              <AnimatedNumber value={counts[segment.id]} />
-            </span>
-            <span className="text-sm text-text-muted">{segment.id}</span>
+            {besideTheNumber(
+              sayCountParts(segment.counted, counts[segment.id], {
+                count: (
+                  <span
+                    className={cn(
+                      'text-lg font-semibold tabular-nums',
+                      segment.id === 'failed' && failed > 0 ? 'text-danger' : 'text-text',
+                    )}
+                  >
+                    <AnimatedNumber value={counts[segment.id]} />
+                  </span>
+                ),
+              }),
+            )}
           </p>
         ))}
 
         {succeeded === null ? null : (
           <p className="ml-auto flex items-center gap-2">
-            <span className="text-sm text-text-muted">succeeded</span>
-            <span className="text-lg font-semibold tabular-nums text-text">
-              <AnimatedNumber value={succeeded} suffix="%" />
-            </span>
+            {besideTheNumber(
+              sayParts('screens.observabilityPage.jobRunMix.succeededPercent', {
+                percent: (
+                  <span className="text-lg font-semibold tabular-nums text-text">
+                    <AnimatedNumber value={succeeded} suffix="%" />
+                  </span>
+                ),
+              }),
+            )}
           </p>
         )}
       </div>
 
       <div
         role="img"
-        aria-label={`${completed.toString()} completed, ${failed.toString()} failed, ${stopped.toString()} stopped`}
+        aria-label={say(
+          'screens.observabilityPage.jobRunMix.completedCompletedFailedFailedStoppedStopped',
+          {
+            completed: completed.toString(),
+            failed: failed.toString(),
+            stopped: stopped.toString(),
+          },
+        )}
         className="flex h-1.5 w-full gap-0.5 overflow-hidden rounded-full bg-[var(--color-track)]"
       >
         {finished === 0

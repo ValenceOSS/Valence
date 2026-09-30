@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMemoryNotificationStore } from './createMemoryNotificationStore';
 import { notifyHousehold } from './notifyHousehold';
@@ -8,8 +9,8 @@ const keys = { publicKey: 'public', privateKey: 'private' };
 
 const news = {
   event: 'media.added' as const,
-  title: 'Something new to watch',
-  body: '12 episodes — The Office',
+  title: sayVerbatim('Something new to watch'),
+  body: sayVerbatim('12 episodes — The Office'),
   link: '/?show=s1',
 };
 

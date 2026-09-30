@@ -20,22 +20,28 @@ import { TextField } from '@ValenceUI/TextField';
 import { whereTheRoomIs } from '@ValenceCore/functions/whereTheRoomIs';
 import type { PartyMember } from '@ValenceContracts/schemas/WatchParty';
 import type { PartyPanelProps } from './PartyPanel.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
-const ROLE_LABELS = { host: 'Host', coHost: 'Co-host', guest: 'Guest' } as const;
+const ROLE_LABELS = {
+  host: say('screens.partyPanel.host'),
+  coHost: say('screens.partyPanel.coHost'),
+  guest: say('screens.partyPanel.guest'),
+} as const;
 
 const WORDS = {
   watch: {
-    doing: 'watching',
-    isDoing: 'Watching',
-    notDoing: 'Not watching',
-    what: 'watching this',
+    doing: 'screens.partyPanel.countWatching',
+    isDoing: say('common.watching'),
+    notDoing: say('screens.partyPanel.notWatching'),
+    invitation: say('screens.partyPanel.sendThisToWatchAlong'),
     icon: EyeIcon,
   },
   listen: {
-    doing: 'listening',
-    isDoing: 'Listening',
-    notDoing: 'Not listening',
-    what: 'listening along',
+    doing: 'screens.partyPanel.countListening',
+    isDoing: say('screens.partyPanel.listening'),
+    notDoing: say('screens.partyPanel.notListening'),
+    invitation: say('screens.partyPanel.sendThisToListenAlong'),
     icon: HeadphonesIcon,
   },
 } as const;
@@ -120,12 +126,12 @@ const PartyPanel = ({
   return (
     <section className="flex w-96 max-w-[calc(100vw-3rem)] flex-col gap-2 text-text">
       <PanelCard
-        title={`${watching.toString()} ${words.doing}`}
+        title={sayCount(words.doing, watching)}
         isFlush
         actions={
           onLeave === undefined ? undefined : (
             <PanelCardAction icon={DoorOpenIcon} onClick={onLeave}>
-              Leave
+              {say('screens.partyPanel.leave')}
             </PanelCardAction>
           )
         }
@@ -137,8 +143,10 @@ const PartyPanel = ({
               icon={ClockIcon}
               title={
                 waitingFor.length === 1
-                  ? `Waiting for ${waitingFor[0] ?? ''} to catch up`
-                  : `Waiting for ${waitingFor.length.toString()} people to catch up`
+                  ? say('screens.partyPanel.waitingForNameToCatchUp', {
+                      name: waitingFor[0] ?? '',
+                    })
+                  : sayCount('screens.partyPanel.waitingForPeopleToCatchUp', waitingFor.length)
               }
             />
           </div>
@@ -160,7 +168,7 @@ const PartyPanel = ({
                 {member.connectionId === party.timekeeperId && (
                   <Badge size="sm" tone="quiet">
                     <Icon of={ClockIcon} size={12} />
-                    Keeping time
+                    {say('screens.partyPanel.keepingTime')}
                   </Badge>
                 )}
 
@@ -190,19 +198,23 @@ const PartyPanel = ({
                         );
                       }}
                     >
-                      {member.role === 'coHost' ? 'Make a guest' : 'Make a co-host'}
+                      {member.role === 'coHost'
+                        ? say('screens.partyPanel.makeAGuest')
+                        : say('screens.partyPanel.makeACoHost')}
                     </Button>
 
                     {onRemove === undefined ? null : (
                       <Button
                         variant="ghost"
                         size="sm"
-                        label={`Remove ${member.name} from the party`}
+                        label={say('screens.partyPanel.removeNameFromTheParty', {
+                          name: member.name,
+                        })}
                         onClick={() => {
                           onRemove(member.connectionId);
                         }}
                       >
-                        Remove
+                        {say('common.remove')}
                       </Button>
                     )}
                   </span>
@@ -215,7 +227,7 @@ const PartyPanel = ({
 
       {invitation === undefined ? null : (
         <PanelCard
-          title="Invite"
+          title={say('screens.partyPanel.invite')}
           actions={
             <PanelCardAction
               icon={hasCopied ? CircleCheckIcon : CopyIcon}
@@ -225,14 +237,12 @@ const PartyPanel = ({
                 });
               }}
             >
-              {hasCopied ? 'Copied' : 'Copy'}
+              {hasCopied ? say('common.copied') : say('common.copy')}
             </PanelCardAction>
           }
         >
           <div className="flex flex-col gap-2">
-            <p className="text-xs leading-relaxed text-text-muted">
-              Send this to anybody with an account here. It puts them in this party, {words.what}.
-            </p>
+            <p className="text-xs leading-relaxed text-text-muted">{words.invitation}</p>
 
             <code className="min-w-0 select-all truncate rounded-md bg-[var(--surface-hover)] px-3 py-2 font-mono text-xs">
               {invitation}
@@ -242,10 +252,9 @@ const PartyPanel = ({
       )}
 
       {!mayAsk || onAsk === undefined || elsewhere.length === 0 ? null : (
-        <PanelCard title="Ask along" isFlush>
+        <PanelCard title={say('screens.partyPanel.askAlong')} isFlush>
           <p className="px-4 pt-3 text-xs leading-relaxed text-text-muted">
-            Ask somebody along. They are told wherever they asked to be told things, and the message
-            carries this same link.
+            {say('screens.partyPanel.askSomebodyAlongTheyAreTold')}
           </p>
 
           <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
@@ -257,14 +266,16 @@ const PartyPanel = ({
                   variant="ghost"
                   size="sm"
                   disabled={asked.includes(person.id)}
-                  label={`Ask ${person.name} along`}
+                  label={say('screens.partyPanel.askNameAlong', { name: person.name })}
                   onClick={() => {
                     setAsked((already) => [...already, person.id]);
                     onAsk(person.id);
                   }}
                 >
                   <Icon of={UserPlusIcon} size={14} />
-                  {asked.includes(person.id) ? 'Asked' : 'Ask'}
+                  {asked.includes(person.id)
+                    ? say('screens.partyPanel.asked')
+                    : say('screens.partyPanel.ask')}
                 </Button>
               </li>
             ))}
@@ -273,10 +284,10 @@ const PartyPanel = ({
       )}
 
       {me?.role !== 'host' ? null : (
-        <PanelCard title="Controls">
+        <PanelCard title={say('screens.partyPanel.controls')}>
           <div className="flex flex-col gap-3">
             <Switch
-              label="Everyone can play and pause"
+              label={say('screens.partyPanel.everyoneCanPlayAndPause')}
               isOn={party.everyoneMayPlayPause}
               onToggle={() => {
                 onLoosen?.({ everyoneMayPlayPause: !party.everyoneMayPlayPause });
@@ -284,7 +295,7 @@ const PartyPanel = ({
             />
 
             <Switch
-              label="Everyone can skip around"
+              label={say('screens.partyPanel.everyoneCanSkipAround')}
               isOn={party.everyoneMaySeek}
               onToggle={() => {
                 onLoosen?.({ everyoneMaySeek: !party.everyoneMaySeek });
@@ -292,25 +303,28 @@ const PartyPanel = ({
             />
 
             <p className="text-xs leading-relaxed text-text-muted">
-              Skipping is the disruptive one — a stray scrub throws everybody across the film, which
-              is why it can be withheld while pausing stays shared.
+              {say('screens.partyPanel.skippingIsTheDisruptiveOneA')}
             </p>
 
             {onSetPassword === undefined ? null : (
               <div className="flex flex-col gap-2 border-t border-[var(--surface-line)] pt-3">
                 <p className="text-xs leading-relaxed text-text-muted">
                   {party.hasPassword
-                    ? 'This party has a password. Anybody opening the link is asked for it.'
-                    : 'A password asks anybody opening the link for it, for a link that may travel further than you meant.'}
+                    ? say('screens.partyPanel.thisPartyHasAPasswordAnybody')
+                    : say('screens.partyPanel.aPasswordAsksAnybodyOpeningThe')}
                 </p>
 
                 <div className="flex items-end gap-2">
                   <TextField
-                    label="Party password"
+                    label={say('screens.partyPanel.partyPassword')}
                     type="password"
                     size="sm"
                     value={password}
-                    placeholder={party.hasPassword ? 'Set a new one' : 'No password'}
+                    placeholder={
+                      party.hasPassword
+                        ? say('screens.partyPanel.setANewOne')
+                        : say('screens.partyPanel.noPassword')
+                    }
                     autoComplete="off"
                     className="min-w-0 flex-1"
                     onValueChange={setPassword}
@@ -325,7 +339,7 @@ const PartyPanel = ({
                       setPassword('');
                     }}
                   >
-                    Set
+                    {say('screens.partyPanel.set')}
                   </Button>
 
                   {party.hasPassword && (
@@ -337,7 +351,7 @@ const PartyPanel = ({
                         setPassword('');
                       }}
                     >
-                      Clear
+                      {say('common.clear')}
                     </Button>
                   )}
                 </div>

@@ -182,7 +182,7 @@ describe('what a viewer has hidden', () => {
 
     const artwork = await (await me.ask(`/api/media/${ARRIVAL}/image/poster`)).json();
 
-    expect(artwork).not.toEqual({ error: 'No such item.' });
+    expect(artwork).not.toMatchObject({ error: 'No such item.' });
   });
 
   it('takes its genres out of the facets, which would otherwise name it', async () => {

@@ -1,3 +1,5 @@
+import type { NotificationStore } from './NotificationStore';
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import { pushSubscription, user } from '#dialect/Schema';
@@ -7,10 +9,10 @@ const STARTING_POSTGRES_MS = 60_000;
 
 const A_NOTE = {
   event: 'media.added',
-  title: 'New',
-  body: 'Something arrived',
+  title: sayVerbatim('New'),
+  body: sayVerbatim('Something arrived'),
   link: null,
-} as const;
+} satisfies Parameters<NotificationStore['notify']>[1];
 
 /**
  * A database holding two accounts and nothing else.

@@ -25,6 +25,7 @@ import {
 } from '@expo/ui/swift-ui/modifiers';
 import { StyleSheet } from 'react-native';
 import type { AReaderSheetProps } from './AReaderSheet.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   anchor: { height: 1, left: 0, position: 'absolute', top: 0, width: 1 },
@@ -77,8 +78,8 @@ const AReaderSheet = ({
           <Toolbar>
             <Form modifiers={[navigationTitle(title)]}>
               <Section
-                title="Pages turn"
-                footer={<Text>Manga is usually read right to left.</Text>}
+                title={say('phone.aReader.aReaderSheet.pagesTurn')}
+                footer={<Text>{say('phone.aReader.aReaderSheet.mangaIsUsuallyReadRightTo')}</Text>}
               >
                 <Picker
                   selection={isRightToLeft ? 'rightToLeft' : 'leftToRight'}
@@ -87,18 +88,18 @@ const AReaderSheet = ({
                   }}
                   modifiers={[pickerStyle('segmented')]}
                 >
-                  <Text modifiers={[tag('leftToRight')]}>Left to right</Text>
-                  <Text modifiers={[tag('rightToLeft')]}>Right to left</Text>
+                  <Text modifiers={[tag('leftToRight')]}>{say('common.leftToRight')}</Text>
+                  <Text modifiers={[tag('rightToLeft')]}>{say('common.rightToLeft')}</Text>
                 </Picker>
               </Section>
 
               <Section
-                title="Pages at once"
+                title={say('phone.aReader.aReaderSheet.pagesAtOnce')}
                 footer={
                   <Text>
                     {layout === null
-                      ? 'Open the phone out to read two pages side by side.'
-                      : 'Two pages at once turns the phone on its side.'}
+                      ? say('phone.aReader.aReaderSheet.openThePhoneOutToRead')
+                      : say('phone.aReader.aReaderSheet.twoPagesAtOnceTurnsThe')}
                   </Text>
                 }
               >
@@ -110,14 +111,22 @@ const AReaderSheet = ({
                     }}
                     modifiers={[pickerStyle('segmented')]}
                   >
-                    <Text modifiers={[tag('one')]}>One page</Text>
-                    <Text modifiers={[tag('two')]}>Two pages</Text>
+                    <Text modifiers={[tag('one')]}>
+                      {say('phone.aReader.aReaderSheet.onePage')}
+                    </Text>
+                    <Text modifiers={[tag('two')]}>
+                      {say('phone.aReader.aReaderSheet.twoPages')}
+                    </Text>
                   </Picker>
                 )}
-                <Toggle label="Cover on its own" isOn={isCoverAlone} onIsOnChange={onCoverAlone} />
+                <Toggle
+                  label={say('common.coverOnItsOwn')}
+                  isOn={isCoverAlone}
+                  onIsOnChange={onCoverAlone}
+                />
               </Section>
 
-              <Section title="Chapters">
+              <Section title={say('common.chapters')}>
                 {chapters.map((chapter) => (
                   <Button
                     key={chapter.id}
@@ -140,7 +149,7 @@ const AReaderSheet = ({
             </Form>
             <Toolbar.Content>
               <ToolbarItem placement="confirmationAction">
-                <Button label="Done" onPress={onClose} />
+                <Button label={say('common.done')} onPress={onClose} />
               </ToolbarItem>
             </Toolbar.Content>
           </Toolbar>

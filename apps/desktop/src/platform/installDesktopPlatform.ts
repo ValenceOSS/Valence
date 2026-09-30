@@ -9,6 +9,7 @@ import { theDesktopsHeldFiles } from '@ValenceDesktop/platform/theDesktopsHeldFi
 import { theDesktopsReach } from '@ValenceDesktop/platform/theDesktopsReach';
 import { notifyLocally, setUnreadBadge } from '@ValenceDesktop/platform/theDesktopsNotifications';
 import { theDesktopsPasskeys } from '@ValenceDesktop/platform/theDesktopsPasskeys';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Tells the application what it is running on, when what it is running on is this client.
@@ -31,7 +32,15 @@ const installDesktopPlatform = (): void => {
     buildInfo: () => {
       const { version, commit, arch, electron, chrome } = window.valence.about;
 
-      return { version, commit, runsOn: `${arch} · Electron ${electron} · Chromium ${chrome}` };
+      return {
+        version,
+        commit,
+        runsOn: say('desktop.platform.installDesktopPlatform.archElectronElectronChromiumChrome', {
+          arch,
+          electron,
+          chrome,
+        }),
+      };
     },
     notifyLocally,
     setUnreadBadge,

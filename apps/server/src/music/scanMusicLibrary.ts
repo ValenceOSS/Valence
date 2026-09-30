@@ -1,3 +1,5 @@
+import { saying } from '@ValenceI18n/saying';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { isUnderAny } from '@ValenceServer/library/isUnderAny';
 import { basename, dirname } from 'node:path';
 import { isAudioFile } from './isAudioFile';
@@ -100,15 +102,17 @@ type ScanMusicLibraryOptions = {
   artwork: MusicArtwork;
   force?: boolean;
   isPartial?: boolean;
-  onProblem?: (path: string, reason: string) => void;
+  onProblem?: (path: string, reason: Said) => void;
   onProgress?: (processed: number, total: number) => void;
   isCancelled?: () => boolean;
 };
 
+// eslint-disable-next-line valence/no-hard-coded-strings -- stored as an artist's name and matched against file tags
 const VARIOUS_ARTISTS = 'Various Artists';
 
 const LYRIC_FILE = /\.(lrc|txt)$/i;
 
+// eslint-disable-next-line valence/no-hard-coded-strings -- stored as an artist's name and matched against file tags
 const UNKNOWN_ARTIST = 'Unknown Artist';
 
 /**
@@ -221,7 +225,7 @@ const scanMusicLibrary = async (options: ScanMusicLibraryOptions): Promise<ScanR
 
     if (tags === null) {
       failed += 1;
-      onProblem?.(file.path, 'That file could not be read as a track.');
+      onProblem?.(file.path, saying('server.music.couldNotReadTrack'));
 
       continue;
     }

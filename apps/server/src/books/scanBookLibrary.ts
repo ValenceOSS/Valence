@@ -1,3 +1,4 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { isUnderAny } from '@ValenceServer/library/isUnderAny';
 import { basename, dirname, relative, sep } from 'node:path';
 import { bookFormatOf, openBookFile } from './openBookFile';
@@ -8,6 +9,7 @@ import { readChapterNumberFromPath } from './readChapterNumberFromPath';
 import { directionFor, isAudiobookFormat } from '@ValenceContracts/schemas/Book';
 import type { BookFormat, BookLayout, ChapterMark } from '@ValenceContracts/schemas/Book';
 import type { ScanResult } from '@ValenceContracts/schemas/Library';
+import { saying } from '@ValenceI18n/saying';
 
 type ScanFindings = {
   files: ScannedFile[];
@@ -75,7 +77,7 @@ type ScanBookLibraryOptions = {
   files: BookFileSystem;
   store: BookStore;
   force?: boolean;
-  onProblem?: (path: string, reason: string) => void;
+  onProblem?: (path: string, reason: Said) => void;
   onProgress?: (processed: number, total: number) => void;
   onAdded?: (book: ArrivedBook) => void;
   isCancelled?: () => boolean;
@@ -189,7 +191,7 @@ const scanBookLibrary = async (options: ScanBookLibraryOptions): Promise<ScanRes
 
     if (format === null || opened === null) {
       failed += 1;
-      onProblem?.(file.path, 'That file could not be opened as a book.');
+      onProblem?.(file.path, saying('server.books.scanBookLibrary.thatFileCouldNotBeOpened'));
 
       continue;
     }
@@ -199,7 +201,7 @@ const scanBookLibrary = async (options: ScanBookLibraryOptions): Promise<ScanRes
 
     if (opened.layout !== 'audio' && settled !== undefined && settled !== opened.layout) {
       failed += 1;
-      onProblem?.(file.path, 'That book already reads another way, so this was left out of it.');
+      onProblem?.(file.path, saying('server.books.scanBookLibrary.thatBookAlreadyReadsAnotherWay'));
 
       continue;
     }

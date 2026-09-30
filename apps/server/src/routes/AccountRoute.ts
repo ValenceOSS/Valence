@@ -1,10 +1,12 @@
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { AvatarSchema, ProfileColourSchema } from '@ValenceContracts/schemas/ViewerProfile';
 import { AccountSchema } from '@ValenceContracts/schemas/Account';
 
 const Account = AccountSchema.openapi('Account');
 
-const AccountError = z.object({ error: z.string() }).openapi('AccountError');
+const AccountError = RefusalSchema.openapi('AccountError');
 
 const listAccountsRoute = createRoute({
   method: 'get',
@@ -191,7 +193,7 @@ const resetAccountPasswordRoute = createRoute({
 const AccountSession = z
   .object({
     id: z.string(),
-    name: z.string(),
+    name: SaidSchema,
     address: z.string().nullable(),
     signedInAt: z.string(),
     expiresAt: z.string(),

@@ -14,6 +14,7 @@ import { readLanguage, LANGUAGE_NAMES } from '@ValenceCore/functions/describeTra
 import { updateLibrary } from '@ValenceClient/library/fetchLibrary';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { LibrarySettingsDialogProps } from './LibrarySettingsDialog.types';
+import { say } from '@ValenceI18n/say';
 
 const NONE_ID = 'none';
 
@@ -23,10 +24,18 @@ const THE_BEST = 'the-best';
 type LanguageOption = { id: string; label: string; detail?: string };
 
 const AT_ONCE_OPTIONS = [
-  { id: SERVER_ID, label: 'However many the server allows', detail: 'Right for a local disk' },
-  { id: '1', label: 'One at a time', detail: 'Right for a network share' },
-  { id: '2', label: 'Two at a time' },
-  { id: '4', label: 'Four at a time' },
+  {
+    id: SERVER_ID,
+    label: say('screens.adminArea.librarySettingsDialog.howeverManyTheServerAllows'),
+    detail: say('screens.adminArea.librarySettingsDialog.rightForALocalDisk'),
+  },
+  {
+    id: '1',
+    label: say('screens.adminArea.librarySettingsDialog.oneAtATime'),
+    detail: say('screens.adminArea.librarySettingsDialog.rightForANetworkShare'),
+  },
+  { id: '2', label: say('screens.adminArea.librarySettingsDialog.twoAtATime') },
+  { id: '4', label: say('screens.adminArea.librarySettingsDialog.fourAtATime') },
 ];
 
 /**
@@ -43,11 +52,13 @@ const buildLanguageOptions = (): LanguageOption[] => {
   const ordered = browserEntry === undefined ? rest : [browserEntry, ...rest];
 
   return [
-    { id: NONE_ID, label: "Each file's own default" },
+    { id: NONE_ID, label: say('screens.adminArea.librarySettingsDialog.eachFilesOwnDefault') },
     ...ordered.map(([code, label]) => ({
       id: code,
       label,
-      ...(code === browserLanguage ? { detail: 'Your browser' } : {}),
+      ...(code === browserLanguage
+        ? { detail: say('screens.adminArea.librarySettingsDialog.yourBrowser') }
+        : {}),
     })),
   ];
 };
@@ -100,7 +111,10 @@ const LibrarySettingsDialog = ({
   };
 
   const finish = (updated: Library) => {
-    tellOutcome(`Saved the settings of ${updated.name}.`, null);
+    tellOutcome(
+      say('screens.adminArea.librarySettingsDialog.savedTheSettingsOfName', { name: updated.name }),
+      null,
+    );
     onUpdated(updated);
     reset();
     onClose();
@@ -133,7 +147,10 @@ const LibrarySettingsDialog = ({
         finish(updated);
       }
     } catch (thrown) {
-      const said = thrown instanceof Error ? thrown.message : 'The library could not be updated.';
+      const said =
+        thrown instanceof Error
+          ? thrown.message
+          : say('screens.adminArea.librarySettingsDialog.theLibraryCouldNotBeUpdated');
 
       setError(said);
       tellOutcome('', said);
@@ -159,30 +176,37 @@ const LibrarySettingsDialog = ({
   const atOnceLabel = AT_ONCE_OPTIONS.find((option) => option.id === atOnce)?.label ?? atOnce;
   const profileLabel =
     requestProfileId === THE_BEST
-      ? 'Whichever profile names this library'
+      ? say('screens.adminArea.librarySettingsDialog.whicheverProfileNamesThisLibrary')
       : (profiles.find((profile) => profile.id === requestProfileId)?.name ??
-        'Whichever profile names this library');
+        say('screens.adminArea.librarySettingsDialog.whicheverProfileNamesThisLibrary'));
 
   return (
-    <DialogCompanion label={`${library.name} settings`} isOpen={isOpen} onClose={close}>
+    <DialogCompanion
+      label={say('common.nameSettings', { name: library.name })}
+      isOpen={isOpen}
+      onClose={close}
+    >
       <DialogTitle size="compact" title={library.name} />
 
       {confirming === null ? (
         <>
           <DialogContent className="flex flex-col gap-6">
             <fieldset className="flex flex-col gap-2">
-              <legend className="text-sm font-medium text-text">Force default audio track</legend>
+              <legend className="text-sm font-medium text-text">
+                {say('screens.adminArea.librarySettingsDialog.forceDefaultAudioTrack')}
+              </legend>
 
               <p className="text-xs text-text-muted">
-                Previews and playback prefer this language, when a file has a track in it. A file
-                with no matching track keeps its own default.
+                {say(
+                  'screens.adminArea.librarySettingsDialog.previewsAndPlaybackPreferThisLanguage',
+                )}
               </p>
 
               <OptionMenu
-                label="Force default audio track"
+                label={say('screens.adminArea.librarySettingsDialog.forceDefaultAudioTrack')}
                 groups={[
                   {
-                    name: 'Language',
+                    name: say('common.language'),
                     selectedId: selected,
                     onSelect: setSelected,
                     options: languageOptions,
@@ -201,19 +225,19 @@ const LibrarySettingsDialog = ({
             </fieldset>
 
             <fieldset className="flex flex-col gap-2">
-              <legend className="text-sm font-medium text-text">Files at once</legend>
+              <legend className="text-sm font-medium text-text">
+                {say('screens.adminArea.librarySettingsDialog.filesAtOnce')}
+              </legend>
 
               <p className="text-xs text-text-muted">
-                How many of this library&rsquo;s files are rendered at the same time. A library on a
-                local disk wants as many as the machine can feed. A library on a network share wants
-                one: the files come down a single wire, and asking for four divides it four ways.
+                {say('screens.adminArea.librarySettingsDialog.howManyOfThisLibrarysFiles')}
               </p>
 
               <OptionMenu
-                label="Files at once"
+                label={say('screens.adminArea.librarySettingsDialog.filesAtOnce')}
                 groups={[
                   {
-                    name: 'At once',
+                    name: say('screens.adminArea.librarySettingsDialog.atOnce'),
                     selectedId: atOnce,
                     onSelect: setAtOnce,
                     options: AT_ONCE_OPTIONS,
@@ -232,16 +256,14 @@ const LibrarySettingsDialog = ({
             </fieldset>
 
             <fieldset className="flex flex-col gap-3">
-              <legend className="text-sm font-medium text-text">Requests</legend>
+              <legend className="text-sm font-medium text-text">{say('common.requests')}</legend>
 
               <p className="text-xs text-text-muted">
-                Whether what people ask for can be filed here, which profile those releases are
-                judged by, and where they are put. Left alone, they are judged by whichever profile
-                names this library and filed in the library&rsquo;s own folder.
+                {say('screens.adminArea.librarySettingsDialog.whetherWhatPeopleAskForCan')}
               </p>
 
               <Switch
-                label="Takes requests"
+                label={say('screens.adminArea.librarySettingsDialog.takesRequests')}
                 isOn={takesRequests}
                 onToggle={() => {
                   setTakesRequests(!takesRequests);
@@ -251,14 +273,19 @@ const LibrarySettingsDialog = ({
               {!takesRequests ? null : (
                 <>
                   <OptionMenu
-                    label="Quality profile for requests"
+                    label={say('screens.adminArea.librarySettingsDialog.qualityProfileForRequests')}
                     groups={[
                       {
-                        name: 'Quality',
+                        name: say('common.quality'),
                         selectedId: requestProfileId,
                         onSelect: setRequestProfileId,
                         options: [
-                          { id: THE_BEST, label: 'Whichever profile names this library' },
+                          {
+                            id: THE_BEST,
+                            label: say(
+                              'screens.adminArea.librarySettingsDialog.whicheverProfileNamesThisLibrary',
+                            ),
+                          },
                           ...profiles
                             .filter(
                               (profile) =>
@@ -280,11 +307,11 @@ const LibrarySettingsDialog = ({
                   />
 
                   <TextField
-                    label="Where requests are filed"
+                    label={say('screens.adminArea.librarySettingsDialog.whereRequestsAreFiled')}
                     value={requestPath}
                     onValueChange={setRequestPath}
                     placeholder={library.path}
-                    description="A folder of its own for what is fetched, where you want it kept apart. The library’s own folder otherwise."
+                    description={say('screens.adminArea.librarySettingsDialog.aFolderOfItsOwnFor')}
                   />
                 </>
               )}
@@ -300,7 +327,7 @@ const LibrarySettingsDialog = ({
           <DialogFooter
             dismiss={{ onChoose: close, isDisabled: isSaving }}
             confirm={{
-              label: 'Save',
+              label: say('common.save'),
               onChoose: () => {
                 void save();
               },
@@ -312,20 +339,24 @@ const LibrarySettingsDialog = ({
         <>
           <DialogContent>
             <p className="text-sm text-text-muted">
-              This will start a preview generation task for {library.name}&rsquo;s existing media,
-              so previews match {confirming.label}. Progress shows next to the library once started.
-              Continue?
+              {say('screens.adminArea.librarySettingsDialog.thisWillStartAPreviewGeneration', {
+                name: library.name,
+                label: confirming.label,
+              })}
             </p>
           </DialogContent>
 
           <DialogFooter
             dismiss={{
-              label: 'Not now',
+              label: say('common.notNow'),
               onChoose: () => {
                 finish(confirming.saved);
               },
             }}
-            confirm={{ label: 'Regenerate previews', onChoose: regenerate }}
+            confirm={{
+              label: say('screens.adminArea.librarySettingsDialog.regeneratePreviews'),
+              onChoose: regenerate,
+            }}
           />
         </>
       )}

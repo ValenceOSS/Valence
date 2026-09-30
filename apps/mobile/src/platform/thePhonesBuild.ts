@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 import { modelName } from 'expo-device';
 import { z } from 'zod';
 import type { BuildInfo } from '@ValenceClient/platform/Platform.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * What this phone's copy of Valence is, for the line somebody pastes into a bug report: the version
@@ -17,7 +18,14 @@ const thePhonesBuild = (): BuildInfo => ({
   runsOn:
     Platform.OS === 'ios'
       ? `iOS ${String(Platform.Version)} · ${modelName ?? 'iPhone'}`
-      : `Android ${String(Platform.Version)} · ${modelName ?? 'Android phone'}`,
+      : modelName === null
+        ? say('phone.platform.thePhonesBuild.androidVersionAndroidPhone', {
+            version: String(Platform.Version),
+          })
+        : say('phone.platform.thePhonesBuild.androidVersionModel', {
+            version: String(Platform.Version),
+            model: modelName,
+          }),
 });
 
 export { thePhonesBuild };

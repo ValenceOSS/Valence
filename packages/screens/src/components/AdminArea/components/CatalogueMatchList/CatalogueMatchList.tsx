@@ -1,6 +1,7 @@
 import { PosterMatchList } from '@ValenceScreens/components/AdminArea/components/PosterMatchList/PosterMatchList';
 import type { CatalogueMatch } from '@ValenceClient/admin/fetchAdmin';
 import type { CatalogueMatchListProps } from './CatalogueMatchList.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Tells a film from a programme that shares its catalogue number.
@@ -27,7 +28,7 @@ const CatalogueMatchList = ({ matches, busyId = null, onChoose }: CatalogueMatch
         id: keyOf(match),
         title: match.title,
         year: match.year,
-        detail: match.overview ?? 'No synopsis.',
+        detail: match.overview ?? say('common.noSynopsis'),
         posterUrl: match.posterUrl,
       }))}
       busyId={busy === undefined ? null : keyOf(busy)}

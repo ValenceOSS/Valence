@@ -1,3 +1,4 @@
+import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { notify } from '@ValenceUI/notify';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -24,16 +25,17 @@ import type { IndexerCategory, IndexerTest } from '@ValenceContracts/schemas/Ind
 import type { IndexerForm } from './readIndexerForm';
 import type { IndexerDialogProps } from './IndexerDialog.types';
 import type { TryVerdict } from '@ValenceScreens/components/AdminArea/components/TryItButton/TryItButton.types';
+import { say } from '@ValenceI18n/say';
 
 const KEEPING: readonly { id: IndexerForm['removesWhenDone']; label: string }[] = [
-  { id: 'tracker', label: 'Follow the tracker' },
-  { id: 'always', label: 'Always delete' },
-  { id: 'never', label: 'Never delete' },
+  { id: 'tracker', label: say('screens.adminArea.indexerDialog.followTheTracker') },
+  { id: 'always', label: say('screens.adminArea.indexerDialog.alwaysDelete') },
+  { id: 'never', label: say('screens.adminArea.indexerDialog.neverDelete') },
 ];
 
 const KINDS = [
-  { id: 'torznab', label: 'Torznab' },
-  { id: 'newznab', label: 'Newznab' },
+  { id: 'torznab', label: say('common.torznab') },
+  { id: 'newznab', label: say('common.newznab') },
 ] as const;
 
 /**
@@ -141,7 +143,7 @@ const IndexerDialog = ({
 
         if (value === null) {
           setVerdict('failing');
-          setProblem(refusal?.message ?? 'It could not be tried.');
+          setProblem(refusal?.message ?? say('common.itCouldNotBeTried'));
 
           return;
         }
@@ -153,7 +155,9 @@ const IndexerDialog = ({
         }
 
         setVerdict(value.isWorking ? 'working' : 'failing');
-        setProblem(value.isWorking ? null : (value.problem ?? 'It did not answer.'));
+        setProblem(
+          value.isWorking ? null : (sayAgainIfAny(value.problem) ?? say('common.itDidNotAnswer')),
+        );
         setForm((current) => ({ ...current, settings: { ...current.settings, CAPTCHA: '' } }));
       })
       .finally(() => {
@@ -178,12 +182,16 @@ const IndexerDialog = ({
     )
       .then(({ value, refusal }) => {
         if (value === null) {
-          setProblem(refusal?.message ?? 'That could not be saved.');
+          setProblem(refusal?.message ?? say('common.thatCouldNotBeSaved'));
 
           return;
         }
 
-        notify.worked(indexer === null ? `Added ${value.name}.` : `Saved ${value.name}.`);
+        notify.worked(
+          indexer === null
+            ? say('common.addedName', { name: value.name })
+            : say('common.savedName', { name: value.name }),
+        );
         onSaved(value);
         onClose();
       })
@@ -203,10 +211,10 @@ const IndexerDialog = ({
 
   const title =
     indexer !== null
-      ? `Edit ${indexer.name}`
+      ? say('common.editName', { name: indexer.name })
       : start?.kind === 'cardigann'
-        ? `Add ${start.name}`
-        : 'Add an indexer';
+        ? say('screens.adminArea.indexerDialog.addName', { name: start.name })
+        : say('common.addAnIndexer');
 
   return (
     <DialogCompanion label={title} isOpen={isOpen} onClose={onClose}>
@@ -215,25 +223,26 @@ const IndexerDialog = ({
         title={title}
         detail={
           isSite
-            ? (definition?.description ?? 'Reading what this site needs…')
-            : 'Any Torznab or Newznab indexer: a usenet indexer, a tracker, or a feed from Jackett or Prowlarr.'
+            ? (definition?.description ??
+              say('screens.adminArea.indexerDialog.readingWhatThisSiteNeeds2'))
+            : say('screens.adminArea.indexerDialog.anyTorznabOrNewznabIndexerA')
         }
       />
 
       <DialogContent className="flex flex-col gap-6">
         <div className="flex flex-col gap-4">
           <TextField
-            label="Name"
+            label={say('common.name')}
             value={form.name}
             onValueChange={(name) => {
               change({ name });
             }}
-            placeholder="NZBgeek"
+            placeholder={say('screens.adminArea.indexerDialog.nZBgeek')}
             required
           />
 
           <Switch
-            label="Enabled"
+            label={say('common.enabled')}
             isOn={form.isEnabled}
             onToggle={() => {
               change({ isEnabled: !form.isEnabled });
@@ -241,12 +250,17 @@ const IndexerDialog = ({
           />
         </div>
 
-        <HeadedSection title={isSite ? 'Site' : 'Connection'}>
+        <HeadedSection title={isSite ? say('common.site') : say('common.connection')}>
           <div className="flex flex-col gap-4">
             {isSite ? null : (
-              <FormField label="Kind" description="Torznab for torrents, Newznab for usenet.">
+              <FormField
+                label={say('common.kind')}
+                description={say(
+                  'screens.adminArea.indexerDialog.torznabForTorrentsNewznabForUsenet',
+                )}
+              >
                 <SegmentedRow
-                  label="Kind"
+                  label={say('common.kind')}
                   size="sm"
                   items={KINDS}
                   value={form.kind}
@@ -263,24 +277,28 @@ const IndexerDialog = ({
 
             {isSite ? (
               detail.isPending ? (
-                <Spinner isCentered label="Reading what this site needs" size="sm" />
+                <Spinner
+                  isCentered
+                  label={say('screens.adminArea.indexerDialog.readingWhatThisSiteNeeds')}
+                  size="sm"
+                />
               ) : definition === null ? (
                 <p role="alert" className="text-sm text-danger">
-                  This site’s definition is no longer in the catalogue.
+                  {say('screens.adminArea.indexerDialog.thisSitesDefinitionIsNoLonger')}
                 </p>
               ) : (
                 <>
                   <FormField
-                    label="Address"
-                    description="Which of the site’s addresses to use. Try another if one is blocked."
+                    label={say('common.address')}
+                    description={say('screens.adminArea.indexerDialog.whichOfTheSitesAddressesTo')}
                   >
                     <OptionMenu
-                      label="Address"
+                      label={say('common.address')}
                       triggerShape="field"
                       matchTriggerWidth
                       groups={[
                         {
-                          name: 'Address',
+                          name: say('common.address'),
                           selectedId: url,
                           onSelect: (next) => {
                             change({ url: next });
@@ -308,19 +326,19 @@ const IndexerDialog = ({
             ) : (
               <>
                 <TextField
-                  label="Address"
+                  label={say('common.address')}
                   type="url"
                   value={form.url}
                   onValueChange={(next) => {
                     change({ url: next });
                   }}
                   placeholder="http://jackett:9117/api/v2.0/indexers/all/results/torznab/"
-                  description="The indexer’s site, or the Torznab feed Jackett or Prowlarr gives for it."
+                  description={say('screens.adminArea.indexerDialog.theIndexersSiteOrTheTorznab')}
                   required
                 />
 
                 <TextField
-                  label="API key"
+                  label={say('common.aPIKey')}
                   type="password"
                   value={form.apiKey}
                   onValueChange={(apiKey) => {
@@ -328,8 +346,8 @@ const IndexerDialog = ({
                   }}
                   description={
                     indexer?.hasApiKey === true
-                      ? 'A key is kept. Type a new one to replace it, or leave this empty to keep it.'
-                      : 'Leave this empty for an indexer that needs none.'
+                      ? say('screens.adminArea.indexerDialog.aKeyIsKeptTypeA')
+                      : say('screens.adminArea.indexerDialog.leaveThisEmptyForAnIndexer')
                   }
                   autoComplete="off"
                 />
@@ -338,17 +356,17 @@ const IndexerDialog = ({
 
             {tried?.captcha === null || tried?.captcha === undefined ? null : (
               <FormField
-                label="Captcha"
-                description="Type the characters in the picture, then try again."
+                label={say('screens.adminArea.indexerDialog.captcha')}
+                description={say('screens.adminArea.indexerDialog.typeTheCharactersInThePicture')}
               >
                 <div className="flex flex-col items-start gap-2">
                   <img
                     src={tried.captcha.image}
-                    alt="The characters to type"
+                    alt={say('screens.adminArea.indexerDialog.theCharactersToType')}
                     className="rounded border border-[var(--surface-line)]"
                   />
                   <TextField
-                    label="Characters in the picture"
+                    label={say('screens.adminArea.indexerDialog.charactersInThePicture')}
                     isLabelHidden
                     value={
                       typeof form.settings['CAPTCHA'] === 'string' ? form.settings['CAPTCHA'] : ''
@@ -364,11 +382,11 @@ const IndexerDialog = ({
           </div>
         </HeadedSection>
 
-        <HeadedSection title="Searching">
+        <HeadedSection title={say('common.searching')}>
           <div className="flex flex-col gap-4">
             <div className="grid items-end gap-4 sm:grid-cols-3">
               <TextField
-                label="Priority"
+                label={say('common.priority')}
                 type="number"
                 min={1}
                 max={50}
@@ -376,11 +394,11 @@ const IndexerDialog = ({
                 onValueChange={(priority) => {
                   change({ priority });
                 }}
-                description="1 is searched first."
+                description={say('screens.adminArea.indexerDialog.n1IsSearchedFirst')}
               />
 
               <TextField
-                label="Searches per minute"
+                label={say('screens.adminArea.indexerDialog.searchesPerMinute')}
                 type="number"
                 min={1}
                 max={600}
@@ -388,12 +406,12 @@ const IndexerDialog = ({
                 onValueChange={(requestsPerMinute) => {
                   change({ requestsPerMinute });
                 }}
-                placeholder="No limit"
-                description="Leave empty for no limit."
+                placeholder={say('common.noLimit')}
+                description={say('screens.adminArea.indexerDialog.leaveEmptyForNoLimit')}
               />
 
               <TextField
-                label="Timeout (seconds)"
+                label={say('screens.adminArea.indexerDialog.timeoutSeconds')}
                 type="number"
                 min={5}
                 max={120}
@@ -401,14 +419,14 @@ const IndexerDialog = ({
                 onValueChange={(timeoutSeconds) => {
                   change({ timeoutSeconds });
                 }}
-                description="How long to wait for an answer."
+                description={say('screens.adminArea.indexerDialog.howLongToWaitForAn')}
               />
             </div>
 
             {categories.length === 0 ? null : (
               <FormField
-                label="Categories"
-                description="Only search these. Choose none to search every category the indexer has."
+                label={say('common.categories')}
+                description={say('screens.adminArea.indexerDialog.onlySearchTheseChooseNoneTo')}
               >
                 <div className="grid gap-x-4 gap-y-2 sm:grid-cols-3">
                   {categories.map((category) => (
@@ -427,14 +445,16 @@ const IndexerDialog = ({
           </div>
         </HeadedSection>
 
-        <HeadedSection title="After downloading">
+        <HeadedSection title={say('screens.adminArea.indexerDialog.afterDownloading')}>
           <div className="flex flex-col gap-4">
             <FormField
-              label="When a download is done"
-              description="Public trackers default to deleting the torrent. Private ones keep seeding, so you do not lose your account."
+              label={say('screens.adminArea.indexerDialog.whenADownloadIsDone')}
+              description={say(
+                'screens.adminArea.indexerDialog.publicTrackersDefaultToDeletingThe',
+              )}
             >
               <SegmentedRow
-                label="When a download is done"
+                label={say('screens.adminArea.indexerDialog.whenADownloadIsDone')}
                 size="sm"
                 items={KEEPING}
                 value={form.removesWhenDone}
@@ -450,30 +470,30 @@ const IndexerDialog = ({
 
             {form.removesWhenDone === 'never' ? null : (
               <FormField
-                label="Seed limits"
-                description="Keeps seeding until this or the tracker’s own minimum, whichever is higher."
+                label={say('screens.adminArea.indexerDialog.seedLimits')}
+                description={say('screens.adminArea.indexerDialog.keepsSeedingUntilThisOrThe')}
               >
                 <div className="grid gap-4 sm:grid-cols-2">
                   <TextField
-                    label="Seed time (seconds)"
+                    label={say('screens.adminArea.indexerDialog.seedTimeSeconds')}
                     type="number"
                     min={0}
                     value={form.seedSeconds}
                     onValueChange={(seedSeconds) => {
                       change({ seedSeconds });
                     }}
-                    placeholder="What the tracker asks"
+                    placeholder={say('screens.adminArea.indexerDialog.whatTheTrackerAsks')}
                   />
 
                   <TextField
-                    label="Seed ratio"
+                    label={say('screens.adminArea.indexerDialog.seedRatio')}
                     type="number"
                     min={0}
                     value={form.seedRatio}
                     onValueChange={(seedRatio) => {
                       change({ seedRatio });
                     }}
-                    placeholder="What the tracker asks"
+                    placeholder={say('screens.adminArea.indexerDialog.whatTheTrackerAsks')}
                   />
                 </div>
               </FormField>
@@ -483,9 +503,11 @@ const IndexerDialog = ({
 
         <p role="status" className="sr-only">
           {verdict === 'working' && tried !== null
-            ? `It answered, and can search ${
-                (tried.capabilities?.modes ?? []).map((one) => one.mode).join(', ') || 'by words'
-              }.`
+            ? (tried.capabilities?.modes ?? []).length === 0
+              ? say('screens.adminArea.indexerDialog.itAnsweredAndCanSearchByWords')
+              : say('screens.adminArea.indexerDialog.itAnsweredAndCanSearchValue', {
+                  value: (tried.capabilities?.modes ?? []).map((one) => one.mode).join(', '),
+                })
             : ''}
         </p>
       </DialogContent>
@@ -493,11 +515,14 @@ const IndexerDialog = ({
       <DialogFooter
         note={problem}
         dismiss={{
-          label: onBack === undefined ? undefined : 'Back',
+          label: onBack === undefined ? undefined : say('common.back'),
           onChoose: onBack ?? onClose,
         }}
         confirm={{
-          label: indexer === null ? 'Add indexer' : 'Save',
+          label:
+            indexer === null
+              ? say('screens.adminArea.indexerDialog.addIndexer')
+              : say('common.save'),
           onChoose: save,
           isDisabled: isWorking || (isSite && definition === null),
         }}

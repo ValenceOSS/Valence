@@ -34,7 +34,7 @@ const watchADownload = async ({
     }
 
     if (download.state === 'failed') {
-      throw new Error(download.failure ?? 'It could not be prepared.');
+      throw new Error(download.failure?.message ?? 'It could not be prepared.');
     }
 
     if (download.state === 'ready') {

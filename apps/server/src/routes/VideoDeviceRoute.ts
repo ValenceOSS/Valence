@@ -1,11 +1,12 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
   ReportNowWatchingSchema,
   SendVideoCommandSchema,
   VideoDeviceListSchema,
 } from '@ValenceContracts/schemas/VideoRemote';
 
-const VideoDeviceError = z.object({ error: z.string() }).openapi('VideoDeviceError');
+const VideoDeviceError = RefusalSchema.openapi('VideoDeviceError');
 
 const json = <Schema extends z.ZodType>(description: string, schema: Schema) => ({
   description,

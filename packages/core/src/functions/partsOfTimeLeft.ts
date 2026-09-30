@@ -1,3 +1,6 @@
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
+
 const MINUTE = 60;
 const HOUR = 3600;
 const DAY = 86_400;
@@ -15,7 +18,7 @@ const partsOfTimeLeft = (seconds: number): { value: number; unit: string }[] | n
   }
 
   if (seconds < HOUR) {
-    return [{ value: Math.round(seconds / MINUTE), unit: 'min' }];
+    return [{ value: Math.round(seconds / MINUTE), unit: say('core.partsOfTimeLeft.minutes') }];
   }
 
   if (seconds < DAY) {
@@ -23,18 +26,18 @@ const partsOfTimeLeft = (seconds: number): { value: number; unit: string }[] | n
     const minutes = Math.round((seconds % HOUR) / MINUTE);
 
     if (minutes === 0 || minutes === 60) {
-      return [{ value: hours + (minutes === 60 ? 1 : 0), unit: 'h' }];
+      return [{ value: hours + (minutes === 60 ? 1 : 0), unit: say('core.partsOfTimeLeft.hours') }];
     }
 
     return [
-      { value: hours, unit: 'h' },
-      { value: minutes, unit: 'min' },
+      { value: hours, unit: say('core.partsOfTimeLeft.hours') },
+      { value: minutes, unit: say('core.partsOfTimeLeft.minutes') },
     ];
   }
 
   const days = Math.round(seconds / DAY);
 
-  return [{ value: days, unit: days === 1 ? 'day' : 'days' }];
+  return [{ value: days, unit: sayCount('core.partsOfTimeLeft.days', days) }];
 };
 
 export { partsOfTimeLeft };

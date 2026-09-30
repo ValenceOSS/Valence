@@ -1,5 +1,6 @@
 import { DeviceProfileSchema } from '@ValenceContracts/schemas/DeviceProfile';
 import type { DeviceProfile } from '@ValenceContracts/schemas/DeviceProfile';
+import { say } from '@ValenceI18n/say';
 
 const VIDEO = ['h264', 'hevc'];
 
@@ -19,7 +20,7 @@ const AUDIO = ['aac', 'ac3', 'eac3', 'alac', 'mp3'];
 const theTvsProfile = (): DeviceProfile =>
   DeviceProfileSchema.parse({
     schemaVersion: 1,
-    name: 'Apple TV',
+    name: say('common.appleTV'),
     maxWidth: 3840,
     maxHeight: 2160,
     maxAudioChannels: 8,

@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   fetchNotifications,
@@ -12,8 +13,8 @@ const said = (body: object, ok = true) => ({ ok, json: () => Promise.resolve(bod
 const A_NOTICE = {
   id: '9c858901-8a57-4791-81fe-4c455b099bc9',
   event: 'media.added',
-  title: 'Arrival',
-  body: 'Added to Films',
+  title: sayVerbatim('Arrival'),
+  body: sayVerbatim('Added to Films'),
   link: null,
   createdAt: '2026-08-10T00:00:00.000Z',
   readAt: null,

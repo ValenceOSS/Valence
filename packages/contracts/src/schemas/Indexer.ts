@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { ProblemCodeFieldSchema } from './ProblemCode';
 import { JudgementSchema } from './QualityProfile';
 
@@ -51,10 +52,10 @@ const IndexerSchema = z.object({
   timeoutSeconds: z.number().int().min(5).max(120),
   capabilities: IndexerCapabilitiesSchema.nullable(),
   failures: z.number().int().nonnegative(),
-  lastProblem: z.string().nullable(),
+  lastProblem: SaidSchema.nullable(),
   lastProblemCode: ProblemCodeFieldSchema,
   lastFailedAt: z.string().datetime().nullable(),
-  turnedOffBecause: z.string().nullable(),
+  turnedOffBecause: SaidSchema.nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -94,7 +95,7 @@ const IndexerChangeSchema = z.object({
 
 const IndexerTestSchema = z.object({
   isWorking: z.boolean(),
-  problem: z.string().nullable(),
+  problem: SaidSchema.nullable(),
   problemCode: ProblemCodeFieldSchema,
   capabilities: IndexerCapabilitiesSchema.nullable(),
   captcha: z.object({ image: z.string() }).nullable().default(null),
@@ -148,7 +149,7 @@ const IndexerSearchReportSchema = z.object({
   indexerName: z.string(),
   found: z.number().int().nonnegative(),
   tookMs: z.number().int().nonnegative(),
-  problem: z.string().nullable(),
+  problem: SaidSchema.nullable(),
   problemCode: ProblemCodeFieldSchema,
 });
 
@@ -166,7 +167,7 @@ const IndexerHealthSchema = z.object({
     z.object({
       id: z.string().uuid(),
       name: z.string(),
-      problem: z.string(),
+      problem: SaidSchema,
       problemCode: ProblemCodeFieldSchema,
     }),
   ),

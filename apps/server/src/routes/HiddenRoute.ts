@@ -1,7 +1,8 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { HiddenListSchema } from '@ValenceContracts/schemas/Hidden';
 
-const HiddenError = z.object({ error: z.string() }).openapi('HiddenError');
+const HiddenError = RefusalSchema.openapi('HiddenError');
 
 const HiddenList = HiddenListSchema.openapi('HiddenList');
 

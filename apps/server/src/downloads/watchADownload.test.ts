@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it, vi } from 'vitest';
 import { watchADownload } from './watchADownload';
 import type { Download } from '@ValenceContracts/schemas/Download';
@@ -58,7 +59,11 @@ describe('watchADownload', () => {
 
   it('fails the job with the reason the download failed', async () => {
     const { ended } = watching([
-      { ...PREPARING, state: 'failed', failure: 'The media service could not prepare it.' },
+      {
+        ...PREPARING,
+        state: 'failed',
+        failure: sayVerbatim('The media service could not prepare it.'),
+      },
     ]);
 
     await expect(ended).rejects.toThrow('The media service could not prepare it.');

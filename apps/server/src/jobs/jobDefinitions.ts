@@ -1,3 +1,5 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
+import { saying } from '@ValenceI18n/saying';
 import { z } from 'zod';
 import { LibraryPartSchema } from '@ValenceContracts/schemas/LibraryPart';
 import type { JobGroup } from '@ValenceContracts/schemas/JobGroup';
@@ -32,9 +34,9 @@ const RESET_LIBRARY_JOB = 'library.reset';
 
 type JobDefinition = {
   kind: string;
-  label: string;
+  label: Said;
   group: JobGroup;
-  description: string;
+  description: Said;
   needsLibrary: boolean;
   destructive: boolean;
   takesParts: boolean;
@@ -46,9 +48,9 @@ type JobDefinition = {
 const JOB_DEFINITIONS: JobDefinition[] = [
   {
     kind: SCAN_LIBRARY_JOB,
-    label: 'Scan for changes',
+    label: saying('common.scanForChanges'),
     group: 'library',
-    description: 'Finds new, changed and removed files.',
+    description: saying('server.jobs.jobDefinitions.findsNewChangedAndRemovedFiles'),
     needsLibrary: true,
     destructive: false,
     takesParts: false,
@@ -58,9 +60,9 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: REGENERATE_PREVIEWS_JOB,
-    label: 'Generate missing previews',
+    label: saying('common.generateMissingPreviews'),
     group: 'library',
-    description: 'Renders preview clips for items without one.',
+    description: saying('server.jobs.jobDefinitions.rendersPreviewClipsForItemsWithout'),
     needsLibrary: true,
     destructive: false,
     takesParts: false,
@@ -70,9 +72,9 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: REGENERATE_TRICKPLAY_JOB,
-    label: 'Generate missing scrub previews',
+    label: saying('server.jobs.jobDefinitions.generateMissingScrubPreviews'),
     group: 'library',
-    description: 'Renders seek-bar thumbnails for items without them.',
+    description: saying('server.jobs.jobDefinitions.rendersSeekBarThumbnailsForItems'),
     needsLibrary: true,
     destructive: false,
     takesParts: false,
@@ -82,9 +84,9 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: FETCH_LOGOS_JOB,
-    label: 'Fetch missing logos',
+    label: saying('server.jobs.jobDefinitions.fetchMissingLogos'),
     group: 'library',
-    description: 'Fetches title logos from TMDB.',
+    description: saying('server.jobs.jobDefinitions.fetchesTitleLogosFromTMDB'),
     needsLibrary: true,
     destructive: false,
     takesParts: false,
@@ -94,9 +96,9 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: DETECT_SEGMENTS_JOB,
-    label: 'Detect missing intros and outros',
+    label: saying('server.jobs.jobDefinitions.detectMissingIntrosAndOutros'),
     group: 'library',
-    description: 'Finds intros and recaps so viewers can skip them.',
+    description: saying('server.jobs.jobDefinitions.findsIntrosAndRecapsSoViewers'),
     needsLibrary: true,
     destructive: false,
     takesParts: false,
@@ -106,9 +108,9 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: RESET_LIBRARY_JOB,
-    label: 'Reset and rebuild',
+    label: saying('common.resetAndRebuild'),
     group: 'reset',
-    description: 'Deletes every library item and rebuilds from scratch. Takes hours.',
+    description: saying('server.jobs.jobDefinitions.deletesEveryLibraryItemAndRebuilds'),
     needsLibrary: true,
     destructive: true,
     takesParts: false,
@@ -118,10 +120,9 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: CLEAR_LIBRARY_PARTS_JOB,
-    label: 'Clear and fetch again',
+    label: saying('common.clearAndFetchAgain'),
     group: 'reset',
-    description:
-      'Erases chosen parts of a library, like artwork or trailers, and fetches them again.',
+    description: saying('server.jobs.jobDefinitions.erasesChosenPartsOfALibrary'),
     needsLibrary: true,
     destructive: true,
     takesParts: true,
@@ -131,9 +132,9 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: CLEANUP_IMAGE_CACHE_JOB,
-    label: 'Clean up cached images',
+    label: saying('server.jobs.jobDefinitions.cleanUpCachedImages'),
     group: 'housekeeping',
-    description: 'Deletes cached artwork and book pages nothing uses.',
+    description: saying('server.jobs.jobDefinitions.deletesCachedArtworkAndBookPages'),
     needsLibrary: false,
     destructive: false,
     takesParts: false,
@@ -143,9 +144,9 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: CLEANUP_ARTEFACT_CACHE_JOB,
-    label: 'Clean up cached previews',
+    label: saying('server.jobs.jobDefinitions.cleanUpCachedPreviews'),
     group: 'housekeeping',
-    description: 'Deletes preview clips and thumbnails nothing uses.',
+    description: saying('server.jobs.jobDefinitions.deletesPreviewClipsAndThumbnailsNothing'),
     needsLibrary: false,
     destructive: false,
     takesParts: false,
@@ -155,9 +156,9 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: PRUNE_HISTORY_JOB,
-    label: 'Prune old viewing history',
+    label: saying('server.jobs.jobDefinitions.pruneOldViewingHistory'),
     group: 'housekeeping',
-    description: 'Forgets viewings older than a year.',
+    description: saying('server.jobs.jobDefinitions.forgetsViewingsOlderThanAYear'),
     needsLibrary: false,
     destructive: true,
     takesParts: false,
@@ -167,9 +168,9 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: CLEANUP_SESSIONS_JOB,
-    label: 'Clean up sessions',
+    label: saying('server.jobs.jobDefinitions.cleanUpSessions'),
     group: 'housekeeping',
-    description: 'Clears expired sign-ins.',
+    description: saying('server.jobs.jobDefinitions.clearsExpiredSignIns'),
     needsLibrary: false,
     destructive: false,
     takesParts: false,
@@ -179,9 +180,9 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: CLEAR_OLD_DOWNLOADS_JOB,
-    label: 'Clear out old downloads',
+    label: saying('server.jobs.jobDefinitions.clearOutOldDownloads'),
     group: 'housekeeping',
-    description: 'Deletes offline downloads nobody has fetched in a while.',
+    description: saying('server.jobs.jobDefinitions.deletesOfflineDownloadsNobodyHasFetched'),
     needsLibrary: false,
     destructive: true,
     takesParts: false,
@@ -191,9 +192,9 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: CHECK_CATALOGUE_CONNECTIVITY_JOB,
-    label: 'Check catalogue connectivity',
+    label: saying('server.jobs.jobDefinitions.checkCatalogueConnectivity'),
     group: 'health',
-    description: 'Checks the TMDB key still works.',
+    description: saying('server.jobs.jobDefinitions.checksTheTMDBKeyStillWorks'),
     needsLibrary: false,
     destructive: false,
     takesParts: false,
@@ -203,9 +204,9 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: CHECK_TRANSCODER_JOB,
-    label: 'Check the transcoder',
+    label: saying('server.jobs.jobDefinitions.checkTheTranscoder'),
     group: 'health',
-    description: 'Checks the transcoder is still answering.',
+    description: saying('server.jobs.jobDefinitions.checksTheTranscoderIsStillAnswering'),
     needsLibrary: false,
     destructive: false,
     takesParts: false,
@@ -215,9 +216,9 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: CHECK_DISK_SPACE_JOB,
-    label: 'Check disk space',
+    label: saying('server.jobs.jobDefinitions.checkDiskSpace'),
     group: 'health',
-    description: 'Warns before a disk fills up.',
+    description: saying('server.jobs.jobDefinitions.warnsBeforeADiskFillsUp'),
     needsLibrary: false,
     destructive: false,
     takesParts: false,
@@ -227,9 +228,9 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: CHECK_REQUESTS_JOB,
-    label: 'Check the requests service',
+    label: saying('server.jobs.jobDefinitions.checkTheRequestsService'),
     group: 'health',
-    description: 'Checks the requests service and its VPN are up.',
+    description: saying('server.jobs.jobDefinitions.checksTheRequestsServiceAndIts'),
     needsLibrary: false,
     destructive: false,
     takesParts: false,
@@ -239,9 +240,9 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: REFRESH_REQUESTS_JOB,
-    label: 'Bring requests up to date with the catalogue',
+    label: saying('server.jobs.jobDefinitions.bringRequestsUpToDateWith'),
     group: 'requests',
-    description: 'Checks TMDB for new episodes and changed release dates.',
+    description: saying('server.jobs.jobDefinitions.checksTMDBForNewEpisodesAnd'),
     needsLibrary: false,
     destructive: false,
     takesParts: false,
@@ -251,9 +252,9 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: SEND_MEDIA_DIGEST_JOB,
-    label: 'Tell the household about new media',
+    label: saying('server.jobs.jobDefinitions.tellTheHouseholdAboutNewMedia'),
     group: 'notifications',
-    description: 'Sends one notification for everything newly added.',
+    description: saying('server.jobs.jobDefinitions.sendsOneNotificationForEverythingNewly'),
     needsLibrary: false,
     destructive: false,
     takesParts: false,
@@ -263,9 +264,9 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: PRUNE_LOGS_JOB,
-    label: 'Prune old log records',
+    label: saying('server.jobs.jobDefinitions.pruneOldLogRecords'),
     group: 'housekeeping',
-    description: 'Deletes log records past their retention.',
+    description: saying('server.jobs.jobDefinitions.deletesLogRecordsPastTheirRetention'),
     needsLibrary: false,
     destructive: false,
     takesParts: false,
@@ -275,9 +276,9 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: PRUNE_WEBHOOK_DELIVERIES_JOB,
-    label: 'Prune old webhook deliveries',
+    label: saying('server.jobs.jobDefinitions.pruneOldWebhookDeliveries'),
     group: 'housekeeping',
-    description: 'Forgets webhook deliveries older than a week.',
+    description: saying('server.jobs.jobDefinitions.forgetsWebhookDeliveriesOlderThanA'),
     needsLibrary: false,
     destructive: false,
     takesParts: false,
@@ -287,9 +288,9 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: PRUNE_JOB_HISTORY_JOB,
-    label: 'Prune old job history',
+    label: saying('server.jobs.jobDefinitions.pruneOldJobHistory'),
     group: 'housekeeping',
-    description: 'Forgets job runs older than 30 days.',
+    description: saying('server.jobs.jobDefinitions.forgetsJobRunsOlderThan30'),
     needsLibrary: false,
     destructive: false,
     takesParts: false,
@@ -299,9 +300,9 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: REENCODE_JOB,
-    label: 'Work through the re-encoding queue',
+    label: saying('server.jobs.jobDefinitions.workThroughTheReEncodingQueue'),
     group: 'library',
-    description: 'Makes the re-encodes an administrator asked for.',
+    description: saying('server.jobs.jobDefinitions.makesTheReEncodesAnAdministrator'),
     needsLibrary: false,
     destructive: true,
     takesParts: false,
@@ -311,9 +312,9 @@ const JOB_DEFINITIONS: JobDefinition[] = [
   },
   {
     kind: PRUNE_RESOURCE_HISTORY_JOB,
-    label: 'Prune old server load history',
+    label: saying('server.jobs.jobDefinitions.pruneOldServerLoadHistory'),
     group: 'housekeeping',
-    description: 'Forgets server load samples older than a week.',
+    description: saying('server.jobs.jobDefinitions.forgetsServerLoadSamplesOlderThan'),
     needsLibrary: false,
     destructive: false,
     takesParts: false,

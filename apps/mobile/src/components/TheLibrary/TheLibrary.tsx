@@ -57,6 +57,7 @@ import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ShowSummary } from '@ValenceContracts/schemas/Show';
 import type { TheLibraryProps } from './TheLibrary.types';
+import { say } from '@ValenceI18n/say';
 
 type Cell = { kind: 'media'; media: MediaSummary } | { kind: 'programme'; programme: ShowSummary };
 
@@ -335,11 +336,15 @@ const TheLibrary = ({
   const reading = chosen === EVERY ? ofThisKind.map((library) => library.id) : [chosen];
   const isFiltered = filters.selected.size > 0;
   const parts = [
-    { id: 'home', label: 'Home', icon: HomeFilled },
-    ...(films.length > 0 ? [{ id: 'films', label: 'Films', icon: FilmFilled }] : []),
-    ...(programmes.length > 0 ? [{ id: 'shows', label: 'Shows', icon: MonitorFilled }] : []),
-    ...(hasMusic ? [{ id: 'music', label: 'Music', icon: MusicNoteFilled }] : []),
-    ...(bookLibraries.length > 0 ? [{ id: 'books', label: 'Books', icon: BookOpenFilled }] : []),
+    { id: 'home', label: say('common.home'), icon: HomeFilled },
+    ...(films.length > 0 ? [{ id: 'films', label: say('common.films'), icon: FilmFilled }] : []),
+    ...(programmes.length > 0
+      ? [{ id: 'shows', label: say('common.shows'), icon: MonitorFilled }]
+      : []),
+    ...(hasMusic ? [{ id: 'music', label: say('common.music'), icon: MusicNoteFilled }] : []),
+    ...(bookLibraries.length > 0
+      ? [{ id: 'books', label: say('common.books'), icon: BookOpenFilled }]
+      : []),
   ];
 
   const everything = useQuery({
@@ -445,13 +450,17 @@ const TheLibrary = ({
         <View style={styles.topRow}>
           <View style={styles.brand}>
             <ACarriedMark isHandedOn={false} />
-            <Words size="heading">Valence</Words>
+            <Words size="heading">{say('common.valence')}</Words>
           </View>
           <View style={styles.aside}>
             {onRequested === undefined ? null : (
-              <AGlassCircle of={Inbox} label="Requested" onPress={onRequested} />
+              <AGlassCircle of={Inbox} label={say('common.requested')} onPress={onRequested} />
             )}
-            <AGlassCircle of={ScanQrCode} label="Sign in a television" onPress={onScan} />
+            <AGlassCircle
+              of={ScanQrCode}
+              label={say('common.signInATelevision')}
+              onPress={onScan}
+            />
             <TheBell onPress={onNotifications} />
           </View>
         </View>
@@ -477,7 +486,7 @@ const TheLibrary = ({
         >
           <View pointerEvents={isAside ? 'none' : 'auto'}>
             <SegmentedRow
-              label="What to show"
+              label={say('common.whatToShow')}
               fills
               isShown={!isAside && !isBarAway}
               items={parts}
@@ -501,7 +510,7 @@ const TheLibrary = ({
           </View>
           <View pointerEvents={isSearching ? 'auto' : 'none'} style={styles.searchInstead}>
             <TheSearchBox
-              placeholder="Films, programmes, people"
+              placeholder={say('common.filmsProgrammesPeople')}
               onSettle={setSearchingFor}
               isCapsule
               isShown={isSearching}
@@ -509,7 +518,7 @@ const TheLibrary = ({
           </View>
           <View pointerEvents={side === 'downloads' ? 'auto' : 'none'} style={styles.searchInstead}>
             <TheSearchBox
-              placeholder="Find a download"
+              placeholder={say('phone.theLibrary.findADownload')}
               onSettle={setDownloadsFor}
               isCapsule
               isShown={side === 'downloads'}
@@ -517,7 +526,7 @@ const TheLibrary = ({
           </View>
           <View pointerEvents={side === 'account' ? 'auto' : 'none'} style={styles.searchInstead}>
             <SegmentedRow
-              label="What to change"
+              label={say('common.whatToChange')}
               fills
               isShown={side === 'account'}
               items={accountPanels}
@@ -559,13 +568,15 @@ const TheLibrary = ({
 
         {!libraries.isError && !isWaiting && drawsItsOwn ? null : (
           <AnArrival style={styles.arriving}>
-            {libraries.isError ? <Words tone="danger">Those could not be read.</Words> : null}
+            {libraries.isError ? (
+              <Words tone="danger">{say('common.thoseCouldNotBeRead')}</Words>
+            ) : null}
 
             {ofThisKind.length > 1 ? (
               <SegmentedRow
-                label="Which library"
+                label={say('common.whichLibrary')}
                 items={[
-                  { id: EVERY, label: 'All' },
+                  { id: EVERY, label: say('common.all') },
                   ...ofThisKind.map((library) => ({ id: library.id, label: library.name })),
                 ]}
                 value={chosen}
@@ -588,13 +599,13 @@ const TheLibrary = ({
               isFiltered ? (
                 <ANothingHere
                   of={SearchX}
-                  title="Nothing matches those"
-                  detail="Try fewer filters, or clear them."
+                  title={say('phone.theLibrary.nothingMatchesThose')}
+                  detail={say('phone.theLibrary.tryFewerFiltersOrClearThem')}
                 />
               ) : (
                 <ANothingHere
                   of={part === 'films' ? Film : Monitor}
-                  title={part === 'films' ? 'No films yet' : 'No shows yet'}
+                  title={part === 'films' ? say('common.noFilmsYet') : say('common.noShowsYet')}
                   detail={howToFillIt(
                     chosen === EVERY && ofThisKind.length > 1 ? 'every library' : 'one library',
                     false,

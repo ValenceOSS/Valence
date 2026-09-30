@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { aMediaRequest } from '@ValenceRequests/testing/aMediaRequest';
 import { aProfile } from '@ValenceRequests/testing/aProfile';
@@ -58,7 +59,7 @@ describe('judgeForRequest', () => {
     const judged = judgeForRequest({
       ...OPTIONS,
       releases: [aRelease(BLURAY)],
-      blocked: [{ title: BLURAY, reason: 'The tracker is gone' }],
+      blocked: [{ title: BLURAY, reason: sayVerbatim('The tracker is gone') }],
     });
 
     expect(judged.pickedId).toBeNull();

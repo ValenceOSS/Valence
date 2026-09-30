@@ -1,4 +1,5 @@
 import { changeOnServer } from '@ValenceClient/query/changeOnServer';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Installs a plugin the server has already fetched and checked, with the permissions somebody was
@@ -18,7 +19,7 @@ const installPlugin = async (install: {
   await changeOnServer(
     '/api/plugins/install',
     { method: 'POST', json: install },
-    'That plugin could not be installed.',
+    say('client.plugins.installPlugin.thatPluginCouldNotBeInstalled'),
   );
 };
 

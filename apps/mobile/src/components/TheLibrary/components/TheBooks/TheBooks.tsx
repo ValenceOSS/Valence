@@ -16,6 +16,7 @@ import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { Book } from '@ValenceContracts/schemas/Book';
 import type { TheBooksProps } from './TheBooks.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   header: { gap: 20 },
@@ -69,12 +70,14 @@ const TheBooks = ({
           {header}
 
           {carryingOn.length === 0 ? null : (
-            <AShelf title="Continue reading">
+            <AShelf title={say('common.continueReading')}>
               {carryingOn.map((one) => (
                 <Button
                   key={one.book.id}
                   tone="bare"
-                  label={`Carry on reading ${one.book.title}`}
+                  label={say('phone.theLibrary.theBooks.carryOnReadingTitle', {
+                    title: one.book.title,
+                  })}
                   onPress={() => {
                     onRead(one.book.id);
                   }}
@@ -91,12 +94,14 @@ const TheBooks = ({
           )}
 
           {stillHearing.length === 0 ? null : (
-            <AShelf title="Continue listening">
+            <AShelf title={say('common.continueListening')}>
               {stillHearing.map((one) => (
                 <Button
                   key={one.book.id}
                   tone="bare"
-                  label={`Carry on listening to ${one.book.title}`}
+                  label={say('phone.theLibrary.theBooks.carryOnListeningToTitle', {
+                    title: one.book.title,
+                  })}
                   onPress={() => {
                     onListen(one.book.id);
                   }}
@@ -112,15 +117,17 @@ const TheBooks = ({
             </AShelf>
           )}
 
-          {books.length === 0 ? null : <Words size="heading">Every book</Words>}
+          {books.length === 0 ? null : (
+            <Words size="heading">{say('phone.theLibrary.theBooks.everyBook')}</Words>
+          )}
 
           {isReading ? <ActivityIndicator color={colours.textMuted} /> : null}
 
           {!isReading && books.length === 0 ? (
             <ANothingHere
               of={BookOpen}
-              title="No books yet"
-              detail="Once a library of books has been added and scanned, its books will be here."
+              title={say('phone.theLibrary.theBooks.noBooksYet')}
+              detail={say('phone.theLibrary.theBooks.onceALibraryOfBooksHas')}
             />
           ) : null}
         </View>

@@ -38,6 +38,7 @@ import { useMusicRemote } from '@ValenceClient/music/useMusicRemote';
 import { useListenAlong } from '@ValenceScreens/music/useListenAlong';
 import { signedInOnThisPage } from '@ValenceScreens/phone/signedInOnThisPage';
 import type { SignedInProps } from './SignedIn.types';
+import { say } from '@ValenceI18n/say';
 
 const PARTY_NOTICE_LINGERS_MS = 6000;
 
@@ -361,10 +362,8 @@ const SignedIn = ({ title }: SignedInProps) => {
   if (session.isError) {
     return (
       <main className="mx-auto flex max-w-lg flex-col gap-2 p-8">
-        <h1 className="text-2xl font-semibold text-text">Valence is not reachable</h1>
-        <p className="text-text-muted">
-          The server did not respond. Check that it is running and reload the page.
-        </p>
+        <h1 className="text-2xl font-semibold text-text">{say('common.valenceIsNotReachable')}</h1>
+        <p className="text-text-muted">{say('common.theServerDidNotRespondCheck')}</p>
       </main>
     );
   }
@@ -426,7 +425,7 @@ const SignedIn = ({ title }: SignedInProps) => {
       {phase === 'gone' ? null : (
         <SplashScreen
           name={title}
-          label={`Loading ${title}`}
+          label={say('common.loadingTitle', { title })}
           isReady={!isWaiting}
           marksPlace={MARKS_PLACE}
           hasMark={phase === 'holding'}

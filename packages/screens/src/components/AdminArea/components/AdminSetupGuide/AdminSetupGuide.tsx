@@ -5,6 +5,7 @@ import { Card } from '@ValenceUI/Card';
 import { Icon } from '@ValenceUI/Icon';
 import type { ReactNode } from 'react';
 import type { AdminSetupGuideProps } from './AdminSetupGuide.types';
+import { say } from '@ValenceI18n/say';
 
 const CATALOGUE_KEY_PAGE = 'https://www.themoviedb.org/settings/api';
 
@@ -48,21 +49,19 @@ const AdminSetupGuide = ({
   }[] = [
     {
       id: 'library',
-      title: 'Add a library',
-      detail:
-        'A library is a folder of one kind of media: films, shows, music or books. Point Valence at it and it takes care of the rest.',
+      title: say('common.addALibrary'),
+      detail: say('screens.adminArea.adminSetupGuide.aLibraryIsAFolderOf'),
       isDone: hasLibrary,
       actions: (
         <Button variant="glossy" size="sm" onClick={onAddLibrary}>
-          Add library
+          {say('common.addLibrary')}
         </Button>
       ),
     },
     {
       id: 'key',
-      title: 'Add a metadata key',
-      detail:
-        'Titles, artwork, years and ratings come from The Movie Database. A free key takes a minute to get: sign in there, open Settings, then API.',
+      title: say('screens.adminArea.adminSetupGuide.addAMetadataKey'),
+      detail: say('screens.adminArea.adminSetupGuide.titlesArtworkYearsAndRatingsCome'),
       isDone: hasCatalogueKey,
       actions: (
         <>
@@ -73,20 +72,19 @@ const AdminSetupGuide = ({
               window.open(CATALOGUE_KEY_PAGE, '_blank', 'noopener,noreferrer');
             }}
           >
-            Get a free key
+            {say('common.getAFreeKey')}
           </Button>
 
           <Button variant="ghost" size="sm" onClick={onOpenSettings}>
-            Enter it in Settings
+            {say('screens.adminArea.adminSetupGuide.enterItInSettings')}
           </Button>
         </>
       ),
     },
     {
       id: 'scan',
-      title: 'Scan your libraries',
-      detail:
-        'Scanning reads what is in each folder and looks it all up. Nothing can be watched until it has run.',
+      title: say('screens.adminArea.adminSetupGuide.scanYourLibraries'),
+      detail: say('screens.adminArea.adminSetupGuide.scanningReadsWhatIsInEach'),
       isDone: hasScanned,
       actions: (
         <Button
@@ -96,7 +94,7 @@ const AdminSetupGuide = ({
           disabled={!hasLibrary}
           onClick={onScanAll}
         >
-          Scan all
+          {say('screens.adminArea.adminSetupGuide.scanAll')}
         </Button>
       ),
     },
@@ -105,15 +103,24 @@ const AdminSetupGuide = ({
   const next = steps.find((step) => !step.isDone)?.id;
 
   return (
-    <Card as="section" aria-label="Get Valence set up" padding="md" className="flex flex-col gap-4">
+    <Card
+      as="section"
+      aria-label={say('screens.adminArea.adminSetupGuide.getValenceSetUp')}
+      padding="md"
+      className="flex flex-col gap-4"
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h2 className="text-base font-semibold text-text">Get Valence set up</h2>
-          <p className="text-sm text-text-muted">Three steps, and your media is ready to watch.</p>
+          <h2 className="text-base font-semibold text-text">
+            {say('screens.adminArea.adminSetupGuide.getValenceSetUp')}
+          </h2>
+          <p className="text-sm text-text-muted">
+            {say('screens.adminArea.adminSetupGuide.threeStepsAndYourMediaIs')}
+          </p>
         </div>
 
         <Button variant="ghost" size="sm" onClick={onHide}>
-          Hide
+          {say('common.hide')}
         </Button>
       </div>
 
@@ -139,7 +146,7 @@ const AdminSetupGuide = ({
                 {step.title}
                 {step.id === next ? (
                   <Badge tone="accent" size="sm">
-                    Start here
+                    {say('screens.adminArea.adminSetupGuide.startHere')}
                   </Badge>
                 ) : null}
               </span>

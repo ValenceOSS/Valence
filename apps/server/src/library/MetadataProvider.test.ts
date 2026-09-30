@@ -123,7 +123,7 @@ describe('resolveSeriesShape', () => {
 
     await expect(
       resolveSeriesShape(providers, '5', (provider, reason) => {
-        problems.push(`${provider}: ${reason}`);
+        problems.push(`${provider}: ${reason.message}`);
       }),
     ).resolves.toEqual(SHAPE);
 
@@ -140,7 +140,7 @@ describe('resolveSeriesShape', () => {
     ];
 
     await resolveSeriesShape(providers, '5', (provider, reason) => {
-      problems.push(`${provider}: ${reason}`);
+      problems.push(`${provider}: ${reason.message}`);
     });
 
     expect(problems).toEqual(['one: Provider failed.']);
@@ -187,7 +187,7 @@ describe('resolveNextEpisode', () => {
         ],
         '5',
         (provider, reason) => {
-          problems.push(`${provider}: ${reason}`);
+          problems.push(`${provider}: ${reason.message}`);
         },
       ),
     ).resolves.toEqual(NEXT);

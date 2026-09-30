@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { judgeDownload } from '@ValenceRequests/downloads/judgeDownload';
 import type { DownloadRules } from '@ValenceRequests/downloads/judgeDownload';
@@ -47,7 +48,7 @@ describe('judgeDownload', () => {
   it('gives up on one the client says has failed, saying why', () => {
     expect(
       judgeDownload(
-        aDownload({ state: 'failed', problem: 'The tracker is gone' }),
+        aDownload({ state: 'failed', problem: sayVerbatim('The tracker is gone') }),
         at(MINUTE),
         RULES,
       ),
@@ -98,8 +99,8 @@ describe('judgeDownload', () => {
     const crawling = aDownload({ doneBytes: 1_000_000 });
     const judged = judgeDownload(crawling, at(HOUR), RULES);
 
-    expect(judged.isDoomed).toBe(true);
-    expect(judged.reason).toBe('At the rate it is going it would take another 42 days');
+    expect(judged.isDoomed).toEqual(true);
+    expect(judged.reason).toEqual('At the rate it is going it would take another 42 days');
   });
 
   it('spares one that has nearly arrived, however slowly it is going now', () => {
@@ -146,6 +147,6 @@ describe('judgeDownload', () => {
         ...RULES,
         wouldTakeLongerThanMs: HOUR,
       }).reason,
-    ).toBe('At the rate it is going it would take another 1 hour');
+    ).toEqual('At the rate it is going it would take another 1 hour');
   });
 });

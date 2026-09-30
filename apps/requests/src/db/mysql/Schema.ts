@@ -38,6 +38,7 @@ import {
 } from '@ValenceContracts/schemas/MediaRequest';
 import type { ReleaseType, RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
 import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { EMPTY_TEXT } from '@ValenceDatabase/mysql/columns/EMPTY_TEXT';
 import { jsonColumn } from '@ValenceDatabase/mysql/columns/jsonColumn';
 import { jsonDefault } from '@ValenceDatabase/mysql/columns/jsonDefault';
@@ -80,10 +81,10 @@ const indexer = requestsSchema('indexer', {
   seedRatio: double('seed_ratio'),
   capabilities: jsonColumn('capabilities').$type<IndexerCapabilities>(),
   failures: int('failures').notNull().default(0),
-  lastProblem: mediumtext('last_problem'),
+  lastProblem: jsonColumn('last_problem').$type<Said>(),
   lastProblemCode: varchar('last_problem_code', { length: 64 }).$type<ProblemCode>(),
   lastFailedAt: moment('last_failed_at'),
-  turnedOffBecause: mediumtext('turned_off_because'),
+  turnedOffBecause: jsonColumn('turned_off_because').$type<Said>(),
   createdAt: momentNow('created_at').notNull(),
   updatedAt: momentNow('updated_at').notNull(),
 });
@@ -139,7 +140,7 @@ const sentDownload = requestsSchema(
     state: varchar('state', { length: 32, enum: QUEUED_DOWNLOAD_STATES })
       .notNull()
       .default('queued'),
-    problem: mediumtext('problem'),
+    problem: jsonColumn('problem').$type<Said>(),
     problemCode: varchar('problem_code', { length: 64 }).$type<ProblemCode>(),
     progress: double('progress').notNull().default(0),
     sizeBytes: double('size_bytes'),
@@ -149,7 +150,7 @@ const sentDownload = requestsSchema(
     libraryId: varchar('library_id', { length: 64 }),
     libraryPath: mediumtext('library_path'),
     filedInto: mediumtext('filed_into'),
-    filingProblem: mediumtext('filing_problem'),
+    filingProblem: jsonColumn('filing_problem').$type<Said>(),
     filingProblemCode: varchar('filing_problem_code', { length: 64 }).$type<ProblemCode>(),
     filingAttempts: int('filing_attempts').notNull().default(0),
     filesChecked: boolean('files_checked').notNull().default(false),
@@ -173,7 +174,7 @@ const serviceEvent = requestsSchema('download_event', {
   kind: varchar('kind', { length: 64 }).notNull(),
   title: mediumtext('title').notNull(),
   clientName: mediumtext('client_name'),
-  problem: mediumtext('problem'),
+  problem: jsonColumn('problem').$type<Said>(),
   details: jsonColumn('details')
     .$type<Record<string, JsonValue>>()
     .notNull()
@@ -241,7 +242,7 @@ const mediaRequest = requestsSchema(
     approval: varchar('approval', { length: 32, enum: REQUEST_APPROVALS })
       .notNull()
       .default('awaiting'),
-    refusedBecause: mediumtext('refused_because'),
+    refusedBecause: jsonColumn('refused_because').$type<Said>(),
     requestedById: varchar('requested_by_id', { length: 64 }).notNull(),
     requestedByName: mediumtext('requested_by_name').notNull(),
     seasons: jsonColumn('seasons').$type<number[]>(),
@@ -253,7 +254,7 @@ const mediaRequest = requestsSchema(
       .default(jsonDefault({ theatrical: null, digital: null, physical: null })),
     isEnded: boolean('is_ended').notNull().default(false),
     mediaId: varchar('media_id', { length: 64 }),
-    problem: mediumtext('problem'),
+    problem: jsonColumn('problem').$type<Said>(),
     problemCode: varchar('problem_code', { length: 64 }).$type<ProblemCode>(),
     catalogueCheckedAt: momentNow('catalogue_checked_at').notNull(),
     createdAt: momentNow('created_at').notNull(),
@@ -277,7 +278,7 @@ const requestItem = requestsSchema(
     title: mediumtext('title').notNull(),
     airDate: varchar('air_date', { length: 32 }),
     state: varchar('state', { length: 32, enum: REQUEST_ITEM_STATES }).notNull().default('waiting'),
-    problem: mediumtext('problem'),
+    problem: jsonColumn('problem').$type<Said>(),
     problemCode: varchar('problem_code', { length: 64 }).$type<ProblemCode>(),
     releaseTitle: mediumtext('release_title'),
     indexerId: char('indexer_id', { length: 36 }),
@@ -316,7 +317,7 @@ const blocklistedRelease = requestsSchema(
     requestId: char('request_id', { length: 36 }).notNull(),
     title: varchar('title', { length: 700 }).notNull(),
     indexerId: char('indexer_id', { length: 36 }),
-    reason: mediumtext('reason').notNull(),
+    reason: jsonColumn('reason').$type<Said>().notNull(),
     at: momentNow('at').notNull(),
   },
   (table) => [
@@ -334,7 +335,7 @@ const requestLog = requestsSchema(
   {
     id: int('id').primaryKey().autoincrement(),
     requestId: char('request_id', { length: 36 }).notNull(),
-    message: mediumtext('message').notNull(),
+    message: jsonColumn('message').$type<Said>().notNull(),
     problemCode: varchar('problem_code', { length: 64 }).$type<ProblemCode>(),
     at: momentNow('at').notNull(),
   },

@@ -1,5 +1,6 @@
 import { changeOnServer } from '@ValenceClient/query/changeOnServer';
 import { pluginPath } from '@ValenceClient/plugins/pluginPath';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Turns a plugin on or off, or changes its settings. A secret setting left out keeps what it had;
@@ -16,7 +17,7 @@ const changePlugin = async (
   await changeOnServer(
     pluginPath(pluginId),
     { method: 'PATCH', json: change },
-    'That plugin could not be changed.',
+    say('client.plugins.changePlugin.thatPluginCouldNotBeChanged'),
   );
 };
 

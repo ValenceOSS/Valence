@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { z } from 'zod';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -30,7 +31,10 @@ const SentBodySchema = z.object({
 
 const sentBody = () => SentBodySchema.parse(JSON.parse(fetchMock.mock.calls[0]?.[1]?.body ?? '{}'));
 
-const reason: Reason = { code: 'ClientSupportsSource', detail: 'Client declares support' };
+const reason: Reason = {
+  code: 'ClientSupportsSource',
+  detail: sayVerbatim('Client declares support'),
+};
 
 const plan: PlaybackPlan = {
   mediaId: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
@@ -287,7 +291,10 @@ describe('describeWhy', () => {
         maxBitrateKbps: 8000,
         maxWidth: 1920,
         maxHeight: 1080,
-        reason: { code: 'VideoCodecNotSupported', detail: 'Client does not support hevc' },
+        reason: {
+          code: 'VideoCodecNotSupported',
+          detail: sayVerbatim('Client does not support hevc'),
+        },
       },
     });
 
@@ -300,7 +307,7 @@ describe('describeWhy', () => {
       container: {
         kind: 'remux',
         target: 'ts',
-        reason: { code: 'ContainerNotSupported', detail: 'no mkv' },
+        reason: { code: 'ContainerNotSupported', detail: sayVerbatim('no mkv') },
       },
       audio: {
         kind: 'transcode',
@@ -308,7 +315,7 @@ describe('describeWhy', () => {
         codec: 'aac',
         channels: 2,
         maxBitrateKbps: 256,
-        reason: { code: 'AudioCodecNotSupported', detail: 'no truehd' },
+        reason: { code: 'AudioCodecNotSupported', detail: sayVerbatim('no truehd') },
       },
     });
 
@@ -323,7 +330,7 @@ describe('describeWhy', () => {
       subtitles: {
         kind: 'burnIn',
         streamIndex: 2,
-        reason: { code: 'SubtitleFormatNotSupported', detail: 'pgs is image based' },
+        reason: { code: 'SubtitleFormatNotSupported', detail: sayVerbatim('pgs is image based') },
       },
     });
 

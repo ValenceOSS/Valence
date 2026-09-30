@@ -14,6 +14,7 @@ import { fetchTrickplay } from '@ValenceClient/playback/fetchTrickplay';
 import { TrickplayFrame } from '@ValenceScreens/components/VideoPlayer/components/TrickplayFrame/TrickplayFrame';
 import type { Trickplay } from '@ValenceClient/playback/fetchTrickplay';
 import type { PreviewMomentPickerProps } from './PreviewMomentPicker.types';
+import { say } from '@ValenceI18n/say';
 
 const AUTOMATIC_POSITION = 0.2;
 
@@ -117,7 +118,7 @@ const PreviewMomentPicker = ({
       return;
     }
 
-    notify.worked('Saved the preview moment.');
+    notify.worked(say('screens.previewMomentPicker.savedThePreviewMoment'));
     onChanged(answer);
     onClose();
   };
@@ -131,21 +132,21 @@ const PreviewMomentPicker = ({
     setIsSaving(false);
 
     if (cleared === null) {
-      setProblem('The server would not put the preview back to automatic.');
+      setProblem(say('screens.previewMomentPicker.theServerWouldNotPutThe'));
 
       return;
     }
 
-    notify.worked('Put the preview back to automatic.');
+    notify.worked(say('screens.previewMomentPicker.putThePreviewBackToAutomatic'));
     onChanged(null);
     onClose();
   };
 
   return (
-    <Dialog label="Choose the preview moment" isOpen={isOpen} onClose={onClose}>
+    <Dialog label={say('common.chooseThePreviewMoment')} isOpen={isOpen} onClose={onClose}>
       <DialogTitle
-        title={`Preview moment for ${title}`}
-        detail="Where the clip shown while a pointer rests on the card is cut from."
+        title={say('screens.previewMomentPicker.previewMomentForTitle', { title })}
+        detail={say('screens.previewMomentPicker.whereTheClipShownWhileA')}
       />
 
       <DialogContent>
@@ -156,8 +157,11 @@ const PreviewMomentPicker = ({
           </div>
 
           <RangeSlider
-            label="Where the clip starts and ends"
-            thumbLabels={['Where the clip starts', 'Where the clip ends']}
+            label={say('screens.previewMomentPicker.whereTheClipStartsAndEnds')}
+            thumbLabels={[
+              say('screens.previewMomentPicker.whereTheClipStarts'),
+              say('screens.previewMomentPicker.whereTheClipEnds'),
+            ]}
             values={[atSeconds, endsAt]}
             max={lastSecond}
             valueLabel={formatDuration}
@@ -185,7 +189,7 @@ const PreviewMomentPicker = ({
       <DialogFooter
         dismiss={{ onChoose: onClose }}
         confirm={{
-          label: 'Use this moment',
+          label: say('screens.previewMomentPicker.useThisMoment'),
           isDisabled: isSaving,
           onChoose: () => {
             void keep();
@@ -200,7 +204,7 @@ const PreviewMomentPicker = ({
               void backToAutomatic();
             }}
           >
-            Back to automatic
+            {say('screens.previewMomentPicker.backToAutomatic')}
           </Button>
         )}
       </DialogFooter>

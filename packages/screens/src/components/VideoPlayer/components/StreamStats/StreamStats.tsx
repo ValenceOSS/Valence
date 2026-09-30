@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Icon } from '@ValenceUI/Icon';
 import { X as XIcon } from '@keyline-icons/react';
@@ -12,6 +13,7 @@ import { StatsSeconds } from './components/StatsSeconds/StatsSeconds';
 import { PlanAxis } from './components/PlanAxis/PlanAxis';
 import { describeSize } from './describeSize';
 import type { StreamStatsProps } from './StreamStats.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Everything Valence knows about what is on screen and how it got there: what the file is, what the
@@ -66,7 +68,7 @@ const StreamStats = ({
 
   return (
     <section
-      aria-label="Stats for nerds"
+      aria-label={say('common.statsForNerds')}
       className="valence-rail valence-solid pointer-events-auto max-h-[calc(100svh-11rem)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-lg p-3 text-xs text-text"
     >
       <header
@@ -84,11 +86,17 @@ const StreamStats = ({
         )}
       >
         <span className="flex min-w-0 flex-col">
-          <h3 className="text-sm font-medium tracking-tight">Stats for nerds</h3>
+          <h3 className="text-sm font-medium tracking-tight">{say('common.statsForNerds')}</h3>
           <span className="truncate text-[0.6875rem] text-text-muted">{media.title}</span>
         </span>
 
-        <Button isIconOnly variant="ghost" label="Close stats" size="sm" onClick={onClose}>
+        <Button
+          isIconOnly
+          variant="ghost"
+          label={say('screens.videoPlayer.streamStats.closeStats')}
+          size="sm"
+          onClick={onClose}
+        >
           <Icon of={XIcon} size={16} />
         </Button>
       </header>
@@ -96,24 +104,24 @@ const StreamStats = ({
       <div className="flex flex-col gap-2">
         <StatsSummary
           items={[
-            { label: 'Mode', value: session?.mode ?? null },
-            { label: 'Picture', value: picture },
-            { label: 'Video', value: videoCodec },
+            { label: say('common.mode'), value: session?.mode ?? null },
+            { label: say('common.picture'), value: picture },
+            { label: say('common.video'), value: videoCodec },
             {
-              label: 'Audio',
+              label: say('common.audio'),
               value:
                 audioCodec === null
                   ? null
                   : `${audioCodec}${channels === null ? '' : ` ${channels.toString()}ch`}`,
             },
             {
-              label: 'Bitrate',
+              label: say('common.bitrate'),
               value:
                 delivered === null || delivered.bitrateKbps === null ? null : (
                   <AnimatedNumber value={delivered.bitrateKbps} suffix=" kbps" />
                 ),
             },
-            { label: 'Position', value: formatDuration(health.positionSeconds) },
+            { label: say('common.position'), value: formatDuration(health.positionSeconds) },
           ]}
         />
 
@@ -191,32 +199,38 @@ const StreamStats = ({
           <PlanAxis
             name="Container"
             kind={plan?.container.kind ?? null}
-            reason={plan?.container.reason.detail ?? null}
+            reason={plan === null ? null : sayAgain(plan.container.reason.detail)}
           />
           <PlanAxis
             name="Video"
             kind={plan?.video.kind ?? null}
-            reason={plan?.video.reason.detail ?? null}
+            reason={plan === null ? null : sayAgain(plan.video.reason.detail)}
             ceiling={
               plan === null || plan.video.kind === 'passthrough'
                 ? null
-                : `${plan.video.maxWidth.toString()}×${plan.video.maxHeight.toString()} · ${plan.video.maxBitrateKbps.toString()} kbps`
+                : say('screens.videoPlayer.streamStats.widthByHeightAtKbps', {
+                    width: plan.video.maxWidth.toString(),
+                    height: plan.video.maxHeight.toString(),
+                    kbps: plan.video.maxBitrateKbps.toString(),
+                  })
             }
           />
           <PlanAxis
             name="Audio"
             kind={plan?.audio.kind ?? null}
-            reason={plan?.audio.reason.detail ?? null}
+            reason={plan === null ? null : sayAgain(plan.audio.reason.detail)}
             ceiling={
               plan === null || plan.audio.kind === 'passthrough'
                 ? null
-                : `${plan.audio.maxBitrateKbps.toString()} kbps`
+                : say('common.valueKbps', {
+                    value: plan.audio.maxBitrateKbps.toString(),
+                  })
             }
           />
           <PlanAxis
             name="Subtitles"
             kind={plan?.subtitles.kind ?? null}
-            reason={plan?.subtitles.reason.detail ?? null}
+            reason={plan === null ? null : sayAgain(plan.subtitles.reason.detail)}
           />
         </StatsCard>
 
@@ -254,7 +268,13 @@ const StreamStats = ({
             <StatsFact name="Starts at" value={formatDuration(sessionStartSeconds)} />
             <StatsFact
               name="Delivery"
-              value={session === null ? null : session.delivery.kind === 'hls' ? 'HLS' : 'Direct'}
+              value={
+                session === null
+                  ? null
+                  : session.delivery.kind === 'hls'
+                    ? 'HLS'
+                    : say('common.direct')
+              }
             />
             <StatsFact name="Address" value={address} isCode />
             <StatsFact name="Session" value={session?.sessionId ?? null} isCode />
@@ -277,7 +297,7 @@ const StreamStats = ({
               name="Room position"
               value={
                 party.referenceSeconds === null
-                  ? 'this tab keeps time'
+                  ? say('screens.videoPlayer.streamStats.thisTabKeepsTime')
                   : formatDuration(party.referenceSeconds)
               }
             />
@@ -299,7 +319,7 @@ const StreamStats = ({
         {session === null || session.warnings.length === 0 ? null : (
           <StatsCard name="Warnings">
             {session.warnings.map((warning) => (
-              <StatsFact key={warning} name="Server" value={warning} />
+              <StatsFact key={warning.message} name="Server" value={sayAgain(warning)} />
             ))}
           </StatsCard>
         )}

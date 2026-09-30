@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { load } from 'cheerio';
 import { applyFilters } from '@ValenceRequests/cardigann/applyFilters';
 import { buildMagnet } from '@ValenceRequests/cardigann/buildMagnet';
@@ -25,6 +26,8 @@ import type { SiteRequest } from '@ValenceRequests/cardigann/SiteRequest';
 import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
 import type { TemplateValue } from '@ValenceRequests/cardigann/TemplateVariables';
 import type { ReleaseFile } from '@ValenceRequests/indexers/ReleaseFile';
+import { say } from '@ValenceI18n/say';
+import { saying } from '@ValenceI18n/saying';
 
 type CreateCardigannIndexerOptions = {
   definition: CardigannDefinition;
@@ -120,7 +123,7 @@ const createCardigannIndexer = ({
   ) => {
     if (response.status === 401) {
       throw new IndexerFailure(
-        'The site refused the login. Check the username, password or cookie.',
+        saying('requests.cardigann.cardigannIndexer.theSiteRefusedTheLoginCheck'),
       );
     }
 
@@ -142,7 +145,12 @@ const createCardigannIndexer = ({
               );
 
         throw new IndexerFailure(
-          `The site refused the login: ${(message ?? '').trim() || 'no reason given'}`,
+          saying('requests.cardigann.cardigannIndexer.siteRefusedLoginSaying', {
+            reason:
+              (message ?? '').trim() === ''
+                ? saying('common.noReasonGiven')
+                : sayVerbatim((message ?? '').trim()),
+          }),
         );
       }
     }
@@ -251,7 +259,7 @@ const createCardigannIndexer = ({
 
         if (form.length === 0) {
           throw new IndexerFailure(
-            `The site’s login page has no form matching ${block.form ?? 'form'}`,
+            saying('requests.cardigann.loginPageHasNoForm', { form: block.form ?? 'form' }),
           );
         }
 
@@ -275,7 +283,9 @@ const createCardigannIndexer = ({
           const name = block.selectors ? findInHtml(page.$, page.$.root(), key).attr('name') : key;
 
           if (name === undefined) {
-            throw new IndexerFailure(`The site’s login form has no input matching ${key}`);
+            throw new IndexerFailure(
+              saying('requests.cardigann.cardigannIndexer.theSitesLoginFormHasNo', { key }),
+            );
           }
 
           pairs.set(name, value);
@@ -351,7 +361,9 @@ const createCardigannIndexer = ({
       }
       default:
         throw new IndexerFailure(
-          `The definition logs in with ${block.method}, which Valence cannot do`,
+          saying('requests.cardigann.cardigannIndexer.theDefinitionLogsInWithMethod', {
+            method: block.method,
+          }),
         );
     }
 
@@ -364,7 +376,9 @@ const createCardigannIndexer = ({
       );
 
       if (needsLogin(tested)) {
-        throw new IndexerFailure('Logging in to the site did not work. Check the settings.');
+        throw new IndexerFailure(
+          saying('requests.cardigann.cardigannIndexer.loggingInToTheSiteDid'),
+        );
       }
     }
   };
@@ -399,19 +413,25 @@ const createCardigannIndexer = ({
 
         if (needsLogin(response)) {
           throw new IndexerFailure(
-            'The site still asks to log in after logging in. Check the settings.',
+            saying('requests.cardigann.cardigannIndexer.theSiteStillAsksToLog'),
           );
         }
       }
 
       if (response.redirectedTo !== null && !follows) {
         throw new IndexerFailure(
-          `The site sent the search somewhere else: ${response.redirectedTo}`,
+          saying('requests.cardigann.cardigannIndexer.theSiteSentTheSearchSomewhere', {
+            redirectedTo: response.redirectedTo,
+          }),
         );
       }
 
       if (response.status >= 400) {
-        throw new IndexerFailure(`The site answered ${response.status.toString()}`);
+        throw new IndexerFailure(
+          saying('requests.cardigann.cardigannIndexer.theSiteAnsweredStatus', {
+            status: response.status.toString(),
+          }),
+        );
       }
 
       for (const release of readSearchResults({
@@ -493,7 +513,10 @@ const createCardigannIndexer = ({
       '.DownloadUri.PathAndQuery': address.pathname + address.search,
       '.DownloadUri.Query': address.search,
       ...Object.fromEntries(
-        [...address.searchParams].map(([key, value]) => [`.DownloadUri.Query.${key}`, value]),
+        [...address.searchParams].map(([key, value]) => [
+          say('requests.cardigann.cardigannIndexer.downloadUriQueryKey', { key }),
+          value,
+        ]),
       ),
     });
 
@@ -540,7 +563,9 @@ const createCardigannIndexer = ({
       const title = pick(source, block.infohash.title, variables);
 
       if (hash === null || title === null) {
-        throw new IndexerFailure('The release’s page did not give its info hash');
+        throw new IndexerFailure(
+          saying('requests.cardigann.cardigannIndexer.theReleasesPageDidNotGive'),
+        );
       }
 
       return { kind: 'magnet', url: buildMagnet(hash, title) };
@@ -568,7 +593,9 @@ const createCardigannIndexer = ({
     }
 
     if ((block?.selectors ?? []).length > 0) {
-      throw new IndexerFailure('None of the definition’s download links gave a torrent');
+      throw new IndexerFailure(
+        saying('requests.cardigann.cardigannIndexer.noneOfTheDefinitionsDownloadLinks'),
+      );
     }
 
     const fetched = await send({ url: link, method, body: null, headers }, false, null);
@@ -584,7 +611,7 @@ const createCardigannIndexer = ({
 
     if (!isTorrent(final.bytes)) {
       throw new IndexerFailure(
-        'The site answered the download with something that is not a torrent',
+        saying('requests.cardigann.cardigannIndexer.theSiteAnsweredTheDownloadWith'),
       );
     }
 

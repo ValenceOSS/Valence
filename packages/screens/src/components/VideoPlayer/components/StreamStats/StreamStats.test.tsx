@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -8,7 +9,7 @@ import type { MediaDetail } from '@ValenceContracts/schemas/Library';
 
 const reason: Reason = {
   code: 'VideoCodecNotSupported',
-  detail: 'Client does not support hevc',
+  detail: sayVerbatim('Client does not support hevc'),
 };
 
 const plan: PlaybackPlan = {
@@ -245,7 +246,7 @@ describe('StreamStats', () => {
         delivery: { kind: 'direct', url: '/api/playback/media-1/file' },
         mode: 'DirectPlay',
         plan,
-        warnings: ['This server cannot tone map HDR to SDR.'],
+        warnings: [sayVerbatim('This server cannot tone map HDR to SDR.')],
         reuse: null,
       },
     });

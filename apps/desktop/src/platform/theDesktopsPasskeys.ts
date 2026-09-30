@@ -2,6 +2,7 @@ import { serverAddress } from '@ValenceClient/session/serverAddress';
 import { swapTheHandBack } from '@ValenceClient/phone/swapTheHandBack';
 import { aSecretAndItsChallenge } from '@ValenceDesktop/platform/aSecretAndItsChallenge';
 import type { Passkeys } from '@ValenceClient/platform/Platform.types';
+import { say } from '@ValenceI18n/say';
 
 const LOOPBACK = new Set(['localhost', '127.0.0.1', '[::1]']);
 
@@ -52,7 +53,7 @@ const theDesktopsPasskeys = (): Passkeys => {
   if (address !== null && !isSecure(address)) {
     return {
       kind: 'none',
-      why: 'Passkeys need a secure connection. Reach Valence over HTTPS, or on localhost, to use one.',
+      why: say('desktop.platform.theDesktopsPasskeys.passkeysNeedASecureConnectionReach'),
     };
   }
 

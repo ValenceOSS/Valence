@@ -6,6 +6,7 @@ import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { BookRail } from '@ValenceScreens/components/BookRail/BookRail';
 import type { BookShelfProps } from './BookShelf.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Everything there is to read, a shelf at a time.
@@ -40,18 +41,18 @@ const BookShelf = ({ onOpen, onAddLibrary, libraryId = null }: BookShelfProps) =
     return (
       <NothingHere
         of={GalleryVerticalEndIcon}
-        title="No book libraries yet"
+        title={say('screens.bookShelf.noBookLibrariesYet')}
         detail={
           onAddLibrary === undefined
-            ? 'Ask the server admin to add one.'
-            : 'Add one to get started.'
+            ? say('common.askTheServerAdminToAdd')
+            : say('common.addOneToGetStarted')
         }
         {...(onAddLibrary === undefined
           ? {}
           : {
               action: (
                 <Button variant="glossy" onClick={onAddLibrary}>
-                  Add a library
+                  {say('common.addALibrary')}
                 </Button>
               ),
             })}
@@ -63,18 +64,18 @@ const BookShelf = ({ onOpen, onAddLibrary, libraryId = null }: BookShelfProps) =
     return (
       <NothingHere
         of={GalleryVerticalEndIcon}
-        title="Nothing to read yet"
+        title={say('screens.bookShelf.nothingToReadYet')}
         detail={
           onAddLibrary === undefined
-            ? 'Ask the server admin to scan it.'
-            : 'Scan it, or add files to its folder.'
+            ? say('common.askTheServerAdminToScan')
+            : say('common.scanItOrAddFilesTo')
         }
         {...(onAddLibrary === undefined
           ? {}
           : {
               action: (
                 <Button variant="glossy" onClick={onAddLibrary}>
-                  Scan it
+                  {say('common.scanIt')}
                 </Button>
               ),
             })}

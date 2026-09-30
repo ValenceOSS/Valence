@@ -12,6 +12,7 @@ import { useLikedSongsTile } from '@ValenceScreens/music/useLikedSongsTile';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { MusicFeature } from './components/MusicFeature/MusicFeature';
 import type { MusicView } from '@ValenceClient/music/musicView';
+import { say } from '@ValenceI18n/say';
 
 const RECENT = 18;
 
@@ -36,21 +37,21 @@ const MusicHome = () => {
     <Button
       variant="subtle"
       size="none"
-      label={`See all ${what}`}
+      label={say('screens.musicPage.musicHome.seeAllWhat', { what })}
       hasTooltip={false}
       className="text-sm"
       onClick={() => {
         open(view);
       }}
     >
-      See all
+      {say('common.seeAll')}
     </Button>
   );
 
   if (albums.isPending) {
     return (
       <div className={`flex flex-col gap-6 py-8 sm:flex-row sm:items-end ${MUSIC_LANES.page}`}>
-        <Skeleton label="Reading your music" className="size-60" />
+        <Skeleton label={say('screens.musicPage.musicHome.readingYourMusic')} className="size-60" />
         <div className="flex flex-1 flex-col gap-3">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-14 w-2/3" />
@@ -65,8 +66,8 @@ const MusicHome = () => {
     return (
       <NothingHere
         of={MusicNoteIcon}
-        title="No music yet"
-        detail="Once a music library has been added and scanned, its albums and artists will be here."
+        title={say('common.noMusicYet')}
+        detail={say('common.onceAMusicLibraryHasBeen3')}
         fills
       />
     );
@@ -77,25 +78,25 @@ const MusicHome = () => {
       <MusicFeature newest={recent[0] ?? null} />
 
       <PlaylistShelf
-        heading="Your playlists"
+        heading={say('common.yourPlaylists')}
         playlists={mine}
         leading={liked}
         action={seeAll({ kind: 'playlists' }, 'playlists')}
       />
 
       <AlbumShelf
-        heading="Recently added"
+        heading={say('common.recentlyAdded')}
         albums={recent.slice(0, RECENT)}
         action={seeAll({ kind: 'albums' }, 'albums')}
       />
 
       <ArtistShelf
-        heading="Artists"
+        heading={say('common.artists')}
         artists={(artists.data ?? []).slice(0, ARTISTS)}
         action={seeAll({ kind: 'artists' }, 'artists')}
       />
 
-      <PlaylistShelf heading="Shared with you" playlists={shared} />
+      <PlaylistShelf heading={say('common.sharedWithYou')} playlists={shared} />
     </div>
   );
 };

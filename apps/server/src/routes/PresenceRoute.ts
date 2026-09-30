@@ -1,6 +1,7 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 
-const PresenceError = z.object({ error: z.string() }).openapi('PresenceError');
+const PresenceError = RefusalSchema.openapi('PresenceError');
 
 const PresenceHeartbeatRequest = z
   .object({

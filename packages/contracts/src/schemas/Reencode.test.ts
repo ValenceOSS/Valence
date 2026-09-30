@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import {
   REENCODE_MODES,
@@ -126,7 +127,10 @@ describe('ReencodeStartedSchema', () => {
     const result = ReencodeStartedSchema.parse({
       started: [validReencode],
       refused: [
-        { mediaId, refusal: { code: 'BeingWatched', detail: 'Somebody is watching it now.' } },
+        {
+          mediaId,
+          refusal: { code: 'BeingWatched', detail: sayVerbatim('Somebody is watching it now.') },
+        },
       ],
     });
 

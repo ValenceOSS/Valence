@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
@@ -1186,7 +1187,10 @@ describe('an admin page while the media service is not answering', () => {
   }, 20_000);
 });
 
-const REASON: Reason = { code: 'ClientSupportsSource', detail: 'Client declares support' };
+const REASON: Reason = {
+  code: 'ClientSupportsSource',
+  detail: sayVerbatim('Client declares support'),
+};
 
 describe('watching and steering what is being watched', () => {
   const watching = (presence: ReturnType<typeof build>['presence'], clientId = 'tab-1') => {

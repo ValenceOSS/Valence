@@ -1,5 +1,6 @@
 import { TEXT_SUBTITLE_EXTENSIONS } from '@ValenceContracts/constants/TEXT_SUBTITLE_EXTENSIONS';
 import { describeLanguage, readLanguage } from '@ValenceCore/functions/describeTrack';
+import { say } from '@ValenceI18n/say';
 
 const BITMAP_SUBTITLE_EXTENSIONS = new Set(['sup', 'sub', 'idx']);
 
@@ -92,7 +93,7 @@ const describeLabel = (
   isForced: boolean,
   isHearingImpaired: boolean,
 ): string => {
-  const base = describeLanguage(language) ?? 'Unknown';
+  const base = describeLanguage(language) ?? say('server.subtitles.findSidecarSubtitles.unknown');
   const notes = [isForced ? 'forced' : '', isHearingImpaired ? 'SDH' : ''].filter(
     (note) => note !== '',
   );

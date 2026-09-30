@@ -17,6 +17,9 @@
       "path": "../../packages/contracts"
     },
     {
+      "path": "../../packages/i18n"
+    },
+    {
       "path": "../../packages/core"
     },
     {

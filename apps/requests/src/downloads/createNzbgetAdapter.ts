@@ -1,3 +1,4 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { z } from 'zod';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { createClientCaller } from '@ValenceRequests/downloads/createClientCaller';
@@ -11,6 +12,7 @@ import type {
 } from '@ValenceRequests/downloads/DownloadClientAdapter';
 import type { QueuedDownloadState } from '@ValenceContracts/schemas/DownloadQueue';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
+import { saying } from '@ValenceI18n/saying';
 
 const MEBIBYTE = 1024 * 1024;
 
@@ -56,24 +58,34 @@ const GROUP_STATES: Readonly<Record<string, QueuedDownloadState>> = {
  */
 const readHistoryStatus = (
   status: string,
-): { state: QueuedDownloadState; problem: string | null } => {
+): { state: QueuedDownloadState; problem: Said | null } => {
   if (status.startsWith('SUCCESS')) {
     return { state: 'done', problem: null };
   }
 
   if (status.startsWith('WARNING')) {
-    return { state: 'done', problem: `NZBGet finished it with a warning (${status})` };
+    return {
+      state: 'done',
+      problem: saying('requests.downloads.nzbgetAdapter.nZBGetFinishedItWithAWarning', {
+        status,
+      }),
+    };
   }
 
   if (status.startsWith('DELETED')) {
     return {
       state: 'failed',
       problem:
-        status === 'DELETED/DUPE' ? 'NZBGet dropped it as a duplicate' : 'It was deleted in NZBGet',
+        status === 'DELETED/DUPE'
+          ? saying('requests.downloads.nzbgetAdapter.nZBGetDroppedItAsADuplicate')
+          : saying('requests.downloads.nzbgetAdapter.itWasDeletedInNZBGet'),
     };
   }
 
-  return { state: 'failed', problem: `NZBGet could not finish it (${status})` };
+  return {
+    state: 'failed',
+    problem: saying('requests.downloads.nzbgetAdapter.nZBGetCouldNotFinishItStatus', { status }),
+  };
 };
 
 /**
@@ -108,20 +120,34 @@ const createNzbgetAdapter = (
     if (!response.ok) {
       throw response.status === 401 || response.status === 403
         ? new DownloadClientFailure(
-            `${settings.name} refused the username or password`,
+            saying('common.nameRefusedTheUsernameOrPassword', { name: settings.name }),
             'DownloadClientLoginRefused',
           )
-        : new DownloadClientFailure(`${settings.name} answered ${response.status.toString()}`);
+        : new DownloadClientFailure(
+            saying('requests.downloads.clientAnsweredStatus', {
+              name: settings.name,
+              status: response.status,
+            }),
+          );
     }
 
     const answer = AnswerSchema.safeParse(await response.json().catch(() => null));
 
     if (!answer.success) {
-      throw new DownloadClientFailure(`${settings.name} answered, but not as NZBGet`);
+      throw new DownloadClientFailure(
+        saying('requests.downloads.nzbgetAdapter.nameAnsweredButNotAsNZBGet', {
+          name: settings.name,
+        }),
+      );
     }
 
     if ('error' in answer.data) {
-      throw new DownloadClientFailure(`${settings.name} said: ${answer.data.error.message}`);
+      throw new DownloadClientFailure(
+        saying('requests.downloads.clientSaid', {
+          name: settings.name,
+          said: answer.data.error.message,
+        }),
+      );
     }
 
     return answer.data.result;
@@ -138,7 +164,9 @@ const createNzbgetAdapter = (
 
     add: async (file, title, category) => {
       if (file.kind !== 'nzb') {
-        throw new DownloadClientFailure(`${settings.name} takes NZBs, not torrents`);
+        throw new DownloadClientFailure(
+          saying('common.nameTakesNZBsNotTorrents', { name: settings.name }),
+        );
       }
 
       const id = z
@@ -160,7 +188,9 @@ const createNzbgetAdapter = (
         );
 
       if (id <= 0) {
-        throw new DownloadClientFailure(`${settings.name} would not take the NZB`);
+        throw new DownloadClientFailure(
+          saying('common.nameWouldNotTakeTheNZB', { name: settings.name }),
+        );
       }
 
       return id.toString();

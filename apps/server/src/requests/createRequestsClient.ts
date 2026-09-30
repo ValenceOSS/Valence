@@ -1,3 +1,10 @@
+import { refuseWith } from '@ValenceI18n/refuseWith';
+import { saidFrom } from '@ValenceI18n/saidFrom';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
+import { saying } from '@ValenceI18n/saying';
+import type { Said } from '@ValenceI18n/SaidSchema';
+import type { RefusalBody } from '@ValenceI18n/RefusalBody';
+import { refuse } from '@ValenceI18n/refuse';
 import { z } from 'zod';
 import {
   IndexerSchema,
@@ -78,12 +85,12 @@ import type { RequestsStatus } from '@ValenceContracts/schemas/Requests';
 
 type RequestsReading =
   | { kind: 'answered'; status: RequestsStatus }
-  | { kind: 'silent'; reason: string; problemCode: ProblemCode };
+  | { kind: 'silent'; reason: Said; problemCode: ProblemCode };
 
 type RequestsAnswer<Value> =
   | { kind: 'answered'; value: Value }
-  | { kind: 'refused'; status: 400 | 404; error: string }
-  | { kind: 'silent'; reason: string; problemCode: ProblemCode };
+  | { kind: 'refused'; status: 400 | 404; refusal: RefusalBody }
+  | { kind: 'silent'; reason: Said; problemCode: ProblemCode };
 
 type ReleaseDownload =
   { kind: 'magnet'; url: string } | { kind: 'file'; bytes: Uint8Array; contentType: string };
@@ -105,8 +112,6 @@ type CreateRequestsClientOptions = {
   timeoutMs?: number;
   searchTimeoutMs?: number;
 };
-
-const RefusalSchema = z.object({ error: z.string() });
 
 const SEARCH_TIMEOUT_MS = 150_000;
 
@@ -160,7 +165,9 @@ const createRequestsClient = ({
       if (response.status === 401) {
         return {
           kind: 'silent',
-          reason: `${address} refused the secret; REQUESTS_SECRET must be the same on both`,
+          reason: saying('server.requests.requestsClient.secretRefused', {
+            address,
+          }),
           problemCode: 'RequestsSecretRefused',
         };
       }
@@ -171,14 +178,19 @@ const createRequestsClient = ({
         return {
           kind: 'refused',
           status: response.status,
-          error: refusal.success ? refusal.data.error : 'The requests service refused that.',
+          refusal: refusal.success
+            ? refusal.data
+            : refuse('server.requests.requestsClient.theRequestsServiceRefusedThat'),
         };
       }
 
       if (!response.ok) {
         return {
           kind: 'silent',
-          reason: `${address} answered ${response.status.toString()}`,
+          reason: saying('server.requests.addressAnsweredStatus', {
+            address,
+            status: response.status,
+          }),
           problemCode: 'RequestsUnreachable',
         };
       }
@@ -193,8 +205,8 @@ const createRequestsClient = ({
         kind: 'silent',
         reason:
           error instanceof z.ZodError || error instanceof SyntaxError
-            ? `${address} answered, but not as the requests service`
-            : `${address} did not answer`,
+            ? saying('server.requests.requestsClient.addressAnsweredButNotAsThe', { address })
+            : saying('server.requests.requestsClient.addressDidNotAnswer', { address }),
         problemCode: 'RequestsUnreachable',
       };
     }
@@ -221,7 +233,9 @@ const createRequestsClient = ({
         : {
             kind: 'silent',
             reason:
-              answer.kind === 'silent' ? answer.reason : `${address} refused to say how it is`,
+              answer.kind === 'silent'
+                ? answer.reason
+                : saying('server.requests.requestsClient.addressRefusedToSayHowIt', { address }),
             problemCode: answer.kind === 'silent' ? answer.problemCode : 'RequestsUnreachable',
           };
     },
@@ -296,17 +310,17 @@ const createRequestsClient = ({
         }
 
         const refusal = RefusalSchema.safeParse(await response.json().catch(() => ({})));
-        const error = refusal.success
-          ? refusal.data.error
-          : `${address} answered ${response.status.toString()}`;
+        const said = refusal.success
+          ? saidFrom(refusal.data)
+          : saying('server.requests.addressAnsweredStatus', { address, status: response.status });
 
         return response.status === 400 || response.status === 404
-          ? { kind: 'refused', status: response.status, error }
-          : { kind: 'silent', reason: error, problemCode: 'RequestsUnreachable' };
+          ? { kind: 'refused', status: response.status, refusal: refuseWith(said) }
+          : { kind: 'silent', reason: said, problemCode: 'RequestsUnreachable' };
       } catch {
         return {
           kind: 'silent',
-          reason: `${address} did not answer`,
+          reason: saying('server.requests.requestsClient.addressDidNotAnswer', { address }),
           problemCode: 'RequestsUnreachable',
         };
       }
@@ -426,7 +440,7 @@ const createRequestsClient = ({
     streamDownloads: async (
       onFrame: (frame: DownloadStreamFrame) => void,
       signal: AbortSignal,
-    ): Promise<string> => {
+    ): Promise<Said> => {
       let response: Response;
 
       try {
@@ -435,11 +449,14 @@ const createRequestsClient = ({
           signal,
         });
       } catch {
-        return `${address} did not answer`;
+        return saying('server.requests.requestsClient.addressDidNotAnswer', { address });
       }
 
       if (!response.ok || response.body === null) {
-        return `${address} answered ${response.status.toString()}`;
+        return saying('server.requests.addressAnsweredStatus', {
+          address,
+          status: response.status,
+        });
       }
 
       try {
@@ -459,10 +476,14 @@ const createRequestsClient = ({
           }
         });
       } catch {
-        return `${address} stopped streaming the downloads`;
+        return saying('server.requests.requestsClient.addressStoppedStreamingTheDownloads', {
+          address,
+        });
       }
 
-      return `${address} closed the stream of downloads`;
+      return saying('server.requests.requestsClient.addressClosedTheStreamOfDownloads', {
+        address,
+      });
     },
 
     listRequests: (): Promise<RequestsAnswer<MediaRequest[]>> =>

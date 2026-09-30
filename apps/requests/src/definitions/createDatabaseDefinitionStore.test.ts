@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { aScratchDatabase } from '#dialect/aScratchDatabase';
 import { createDatabaseDefinitionStore } from './createDatabaseDefinitionStore';
@@ -65,7 +66,10 @@ describe('createDatabaseDefinitionStore', () => {
     expect(await store.readState()).toEqual({ updatedAt: null, problem: null });
 
     await store.writeState({ updatedAt: '2026-09-19T00:00:00.000Z', problem: null });
-    await store.writeState({ updatedAt: '2026-09-20T00:00:00.000Z', problem: 'Timed out' });
+    await store.writeState({
+      updatedAt: '2026-09-20T00:00:00.000Z',
+      problem: sayVerbatim('Timed out'),
+    });
 
     expect(await store.readState()).toEqual({
       updatedAt: '2026-09-20T00:00:00.000Z',

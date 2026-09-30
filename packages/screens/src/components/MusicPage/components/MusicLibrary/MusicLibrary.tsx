@@ -19,12 +19,12 @@ import { Equaliser } from '@ValenceScreens/components/Equaliser/Equaliser';
 import { isPlayingFrom } from '@ValenceScreens/music/isPlayingFrom';
 import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
 import { musicMenuFor } from '@ValenceScreens/music/musicMenuFor';
-import { nameOfOwner } from '@ValenceScreens/music/nameOfOwner';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { playlistArtworkUrl } from '@ValenceClient/music/fetchPlaylists';
 import type { ReactNode } from 'react';
 import type { MusicView } from '@ValenceClient/music/musicView';
+import { say } from '@ValenceI18n/say';
 
 type Entry = {
   key: string;
@@ -63,8 +63,8 @@ const MusicLibrary = () => {
   const entries = useMemo((): Entry[] => {
     const liked: Entry = {
       key: 'liked',
-      name: 'Liked Songs',
-      detail: 'Playlist',
+      name: say('common.likedSongs2'),
+      detail: say('common.playlist'),
       artwork: (
         <span className="flex size-12 items-center justify-center rounded-md bg-text text-surface">
           <Icon of={HeartFilledIcon} size={20} />
@@ -78,7 +78,10 @@ const MusicLibrary = () => {
       ...(playlists.data ?? []).map((playlist): Entry => ({
         key: `playlist-${playlist.id}`,
         name: playlist.name,
-        detail: `Playlist · ${nameOfOwner(playlist.owner)}`,
+        detail:
+          playlist.owner === null
+            ? say('screens.musicPage.musicLibrary.playlistOfARemovedProfile')
+            : say('screens.musicPage.musicLibrary.playlistOwner', { owner: playlist.owner.name }),
         artwork: (
           <PlaylistCover
             name={playlist.name}
@@ -92,7 +95,7 @@ const MusicLibrary = () => {
       ...(followed.data ?? []).map((artist): Entry => ({
         key: `artist-${artist.id}`,
         name: artist.name,
-        detail: 'Artist',
+        detail: say('common.artist'),
         artwork: (
           <MusicArtwork
             src={pictureOf(artist)}
@@ -106,7 +109,7 @@ const MusicLibrary = () => {
       ...(albums.data ?? []).map((album): Entry => ({
         key: `album-${album.id}`,
         name: album.title,
-        detail: `Album · ${album.artist.name}`,
+        detail: say('screens.musicPage.musicLibrary.albumName', { name: album.artist.name }),
         artwork: (
           <MusicArtwork
             src={album.hasArtwork ? albumArtworkUrl(album.id) : null}
@@ -123,16 +126,18 @@ const MusicLibrary = () => {
   const shown = entries.filter((entry) => typed === '' || entry.name.toLowerCase().includes(typed));
 
   return (
-    <nav aria-label="Your library" className="flex h-full min-h-0 flex-col gap-3">
+    <nav aria-label={say('common.yourLibrary')} className="flex h-full min-h-0 flex-col gap-3">
       <div className="flex items-center justify-between gap-2 px-3 pt-3">
-        <h2 className="text-base font-bold text-text">Your Library</h2>
+        <h2 className="text-base font-bold text-text">
+          {say('screens.musicPage.musicLibrary.yourLibrary')}
+        </h2>
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="sm"
             isIconOnly
             isActive={view.kind === 'search'}
-            label="Search music"
+            label={say('common.searchMusic')}
             onClick={() => {
               open({ kind: 'search', query: '' });
             }}
@@ -148,7 +153,7 @@ const MusicLibrary = () => {
             variant="ghost"
             size="sm"
             isIconOnly
-            label="Create"
+            label={say('common.create')}
             onClick={() => {
               setIsMaking(true);
             }}
@@ -160,11 +165,11 @@ const MusicLibrary = () => {
 
       <div className="px-3">
         <TextField
-          label="Find in your library"
+          label={say('screens.musicPage.musicLibrary.findInYourLibrary')}
           isLabelHidden
           type="search"
           size="sm"
-          placeholder="Find in your library"
+          placeholder={say('screens.musicPage.musicLibrary.findInYourLibrary')}
           value={filter}
           onValueChange={setFilter}
         />
@@ -217,7 +222,7 @@ const MusicLibrary = () => {
                     </span>
                     {isPlayingFrom(entry.view, state) ? (
                       <Equaliser
-                        label="Playing"
+                        label={say('common.playing')}
                         isMoving={state.isPlaying}
                         className="mr-2 shrink-0 text-text"
                       />

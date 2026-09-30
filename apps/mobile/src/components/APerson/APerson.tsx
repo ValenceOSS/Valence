@@ -10,6 +10,7 @@ import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { APersonProps } from './APerson.types';
+import { say } from '@ValenceI18n/say';
 
 const PORTRAIT = 140;
 
@@ -45,9 +46,24 @@ const APerson = ({ personId, onLookAt, onLookAtShow, onBack }: APersonProps) => 
   }
 
   const shelves = [
-    { title: 'Films', items: credits.data?.films ?? [], asProgramme: false, isStill: false },
-    { title: 'Programmes', items: credits.data?.shows ?? [], asProgramme: true, isStill: false },
-    { title: 'Episodes', items: credits.data?.episodes ?? [], asProgramme: false, isStill: true },
+    {
+      title: say('common.films'),
+      items: credits.data?.films ?? [],
+      asProgramme: false,
+      isStill: false,
+    },
+    {
+      title: say('common.programmes'),
+      items: credits.data?.shows ?? [],
+      asProgramme: true,
+      isStill: false,
+    },
+    {
+      title: say('common.episodes'),
+      items: credits.data?.episodes ?? [],
+      asProgramme: false,
+      isStill: true,
+    },
   ];
 
   return (
@@ -63,11 +79,16 @@ const APerson = ({ personId, onLookAt, onLookAtShow, onBack }: APersonProps) => 
           )}
         </View>
 
-        <Words size="title">{who?.name ?? 'Somebody'}</Words>
+        <Words size="title">{who?.name ?? say('common.somebody')}</Words>
 
         {who === null || (who.bornOn === null && who.bornIn === null) ? null : (
           <Words tone="muted">
-            {[who.bornOn === null ? null : `Born ${formatCalendarDate(who.bornOn)}`, who.bornIn]
+            {[
+              who.bornOn === null
+                ? null
+                : say('phone.aPerson.bornBornOn', { bornOn: formatCalendarDate(who.bornOn) }),
+              who.bornIn,
+            ]
               .filter((part) => part !== null)
               .join(' · ')}
           </Words>
@@ -87,7 +108,7 @@ const APerson = ({ personId, onLookAt, onLookAtShow, onBack }: APersonProps) => 
                 setIsAllOfIt(true);
               }}
             >
-              More
+              {say('common.more')}
             </Button>
           )}
         </>

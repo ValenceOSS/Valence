@@ -1,3 +1,4 @@
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { RoundnessSchema } from '@ValenceContracts/schemas/Roundness';
 import type { Roundness } from '@ValenceContracts/schemas/Roundness';
 import { ReleaseTypesSchema } from '@ValenceContracts/schemas/MediaRequest';
@@ -27,6 +28,7 @@ import { getRealtimeClient } from '@ValenceClient/realtime/getRealtimeClient';
 import type { RealtimeClient } from '@ValenceClient/realtime/createRealtimeClient';
 import type { ScanJob } from '@ValenceClient/library/fetchLibrary';
 import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
+import { say } from '@ValenceI18n/say';
 
 const AdminUserSchema = z.object({
   id: z.string(),
@@ -95,10 +97,10 @@ const AdminOverviewSchema = z.object({
         .array(
           z.object({
             kind: z.string(),
-            label: z.string(),
+            label: SaidSchema,
             failures: z.number(),
             everSucceeded: z.boolean(),
-            reason: z.string(),
+            reason: SaidSchema,
           }),
         )
         .default([]),
@@ -241,9 +243,9 @@ const ActiveSessionSchema = z.object({
 
 const JobDefinitionSchema = z.object({
   kind: z.string(),
-  label: z.string(),
+  label: SaidSchema,
   group: JobGroupSchema,
-  description: z.string(),
+  description: SaidSchema,
   needsLibrary: z.boolean(),
   destructive: z.boolean(),
   takesParts: z.boolean(),
@@ -305,7 +307,7 @@ const RunningScansSchema = z.object({
       jobId: z.string(),
       kind: z.string(),
       libraryId: z.string().nullable(),
-      phase: z.string().nullable(),
+      phase: SaidSchema.nullable(),
       processed: z.number().nullable(),
       total: z.number().nullable(),
       item: z.string().nullable().default(null),
@@ -920,7 +922,7 @@ const saveSplashscreen = async (
   }).catch(() => null);
 
   if (response === null) {
-    return { problem: 'The server could not be reached.' };
+    return { problem: say('common.theServerCouldNotBeReached') };
   }
 
   const answer = SplashscreenAnswerSchema.safeParse(await response.json().catch(() => null));
@@ -933,7 +935,7 @@ const saveSplashscreen = async (
     problem:
       answer.success && 'error' in answer.data
         ? answer.data.error
-        : `The server answered ${response.status.toString()}.`,
+        : say('common.theServerAnsweredStatus', { status: response.status.toString() }),
   };
 };
 

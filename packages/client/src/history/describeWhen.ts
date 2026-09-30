@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+
 const A_MINUTE = 60_000;
 const AN_HOUR = 60 * A_MINUTE;
 const A_DAY = 24 * AN_HOUR;
@@ -22,29 +24,31 @@ const describeWhen = (at: Date, now: Date): string => {
   const since = now.getTime() - at.getTime();
 
   if (since < A_MINUTE) {
-    return 'Just now';
+    return say('client.history.describeWhen.justNow');
   }
 
   if (since < AN_HOUR) {
     const minutes = Math.floor(since / A_MINUTE);
 
-    return `${minutes.toString()} min ago`;
+    return say('client.history.describeWhen.minutesMinAgo', { minutes: minutes.toString() });
   }
 
   if (since < A_DAY) {
     const hours = Math.floor(since / AN_HOUR);
 
-    return hours === 1 ? 'An hour ago' : `${hours.toString()} hours ago`;
+    return hours === 1
+      ? say('client.history.describeWhen.anHourAgo')
+      : say('common.hoursHoursAgo', { hours: hours.toString() });
   }
 
   if (since < 2 * A_DAY) {
-    return 'Yesterday';
+    return say('client.history.describeWhen.yesterday');
   }
 
   if (since < A_WEEK) {
     const days = Math.floor(since / A_DAY);
 
-    return `${days.toString()} days ago`;
+    return say('common.daysDaysAgo', { days: days.toString() });
   }
 
   return at.getFullYear() === now.getFullYear() ? dayAndMonth.format(at) : withYear.format(at);

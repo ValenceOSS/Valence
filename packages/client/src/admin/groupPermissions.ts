@@ -1,4 +1,5 @@
 import type { Permission } from '@ValenceContracts/schemas/Permission';
+import { say } from '@ValenceI18n/say';
 
 type PermissionGroup = {
   id: string;
@@ -7,16 +8,16 @@ type PermissionGroup = {
 };
 
 const GROUP_LABELS: Record<string, string> = {
-  administrator: 'Everything',
-  library: 'Libraries',
-  jobs: 'Jobs',
-  media: 'Media',
-  sharing: 'Sharing',
-  streaming: 'Streaming',
-  download: 'Downloads',
-  requests: 'Requests',
-  account: 'Accounts',
-  server: 'Server',
+  administrator: say('common.everything'),
+  library: say('common.libraries'),
+  jobs: say('common.jobs'),
+  media: say('common.media'),
+  sharing: say('client.admin.groupPermissions.sharing'),
+  streaming: say('client.admin.groupPermissions.streaming'),
+  download: say('common.downloads'),
+  requests: say('common.requests'),
+  account: say('common.accounts'),
+  server: say('common.server'),
 };
 
 /**

@@ -20,6 +20,7 @@ import type {
   Release,
   ReleaseSearch,
 } from '@ValenceContracts/schemas/Indexer';
+import { saying } from '@ValenceI18n/saying';
 
 type IndexerConnection = {
   id: string;
@@ -67,7 +68,9 @@ const createIndexerClient = ({ fetch, pacer, definitions, site }: CreateIndexerC
         : await definitions(indexer.definitionId);
 
     if (definition === null || site === undefined) {
-      throw new IndexerFailure('The definition for this indexer is no longer in the catalogue');
+      throw new IndexerFailure(
+        saying('requests.indexers.indexerClient.theDefinitionForThisIndexerIs'),
+      );
     }
 
     indexer.session ??= { cookies: {}, userAgent: null };
@@ -104,21 +107,27 @@ const createIndexerClient = ({ fetch, pacer, definitions, site }: CreateIndexerC
     } catch (error) {
       throw new IndexerFailure(
         error instanceof Error && error.name === 'TimeoutError'
-          ? `The indexer did not answer within ${indexer.timeoutSeconds.toString()} seconds`
-          : 'The indexer could not be reached',
+          ? saying('requests.indexers.indexerClient.theIndexerDidNotAnswerWithin', {
+              timeoutSeconds: indexer.timeoutSeconds.toString(),
+            })
+          : saying('requests.indexers.indexerClient.theIndexerCouldNotBeReached'),
       );
     }
 
     if (response.status === 401 || response.status === 403) {
-      throw new IndexerFailure('The indexer refused the API key');
+      throw new IndexerFailure(saying('common.theIndexerRefusedTheAPIKey'));
     }
 
     if (response.status === 429) {
-      throw new IndexerFailure('The indexer says it has been asked too often');
+      throw new IndexerFailure(saying('requests.indexers.indexerClient.theIndexerSaysItHasBeen'));
     }
 
     if (!response.ok) {
-      throw new IndexerFailure(`The indexer answered ${response.status.toString()}`);
+      throw new IndexerFailure(
+        saying('requests.indexers.indexerClient.theIndexerAnsweredStatus', {
+          status: response.status.toString(),
+        }),
+      );
     }
 
     return readIndexerXml(await response.text());
@@ -186,14 +195,18 @@ const createIndexerClient = ({ fetch, pacer, definitions, site }: CreateIndexerC
           signal: AbortSignal.timeout(indexer.timeoutSeconds * 1000),
         });
       } catch {
-        throw new IndexerFailure('The indexer could not be reached');
+        throw new IndexerFailure(
+          saying('requests.indexers.indexerClient.theIndexerCouldNotBeReached'),
+        );
       }
 
       const bytes = new Uint8Array(await response.arrayBuffer());
 
       if (!response.ok || bytes.length === 0) {
         throw new IndexerFailure(
-          `The indexer answered the download with ${response.status.toString()}`,
+          saying('requests.indexers.indexerClient.theIndexerAnsweredTheDownloadWith', {
+            status: response.status.toString(),
+          }),
         );
       }
 

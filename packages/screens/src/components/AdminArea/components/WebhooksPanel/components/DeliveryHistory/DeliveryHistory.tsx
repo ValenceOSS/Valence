@@ -6,6 +6,7 @@ import { describeSince } from '@ValenceScreens/components/AdminArea/describeSinc
 import type { DeliveryHistoryProps } from './DeliveryHistory.types';
 import { useTicking } from '@ValenceScreens/clock/useTicking';
 import { A_CAPTION_AGES_EVERY } from '@ValenceScreens/clock/A_CAPTION_AGES_EVERY';
+import { say } from '@ValenceI18n/say';
 
 /**
  * What a subscription has been sent lately and how each attempt went, with a way to send any of them
@@ -26,11 +27,20 @@ const DeliveryHistory = ({
   const now = useTicking(A_CAPTION_AGES_EVERY);
 
   if (isLoading) {
-    return <Spinner isCentered label="Reading what has been sent" />;
+    return (
+      <Spinner
+        isCentered
+        label={say('screens.webhooksPanel.deliveryHistory.readingWhatHasBeenSent')}
+      />
+    );
   }
 
   if (deliveries.length === 0) {
-    return <p className="py-2 text-xs text-text-muted">Nothing has been sent to this yet.</p>;
+    return (
+      <p className="py-2 text-xs text-text-muted">
+        {say('screens.webhooksPanel.deliveryHistory.nothingHasBeenSentToThis')}
+      </p>
+    );
   }
 
   return (
@@ -38,7 +48,9 @@ const DeliveryHistory = ({
       {deliveries.map((delivery) => (
         <li key={delivery.id} className="flex flex-wrap items-center gap-2 text-xs">
           <Badge tone={delivery.ok ? 'quiet' : 'danger'} size="sm">
-            {delivery.ok ? 'Delivered' : 'Failed'}
+            {delivery.ok
+              ? say('screens.webhooksPanel.deliveryHistory.delivered')
+              : say('common.failed')}
           </Badge>
 
           <span className="text-text">{WEBHOOK_EVENT_LABELS[delivery.event]}</span>
@@ -46,7 +58,11 @@ const DeliveryHistory = ({
           <span className="text-text-muted">{describeSince(delivery.lastAttemptAt, now)}</span>
 
           {delivery.attempts === 1 ? null : (
-            <span className="text-text-muted">{delivery.attempts.toString()} tries</span>
+            <span className="text-text-muted">
+              {say('screens.webhooksPanel.deliveryHistory.attemptsTries', {
+                attempts: delivery.attempts.toString(),
+              })}
+            </span>
           )}
 
           {delivery.error === null ? null : <span className="text-danger">{delivery.error}</span>}
@@ -60,7 +76,7 @@ const DeliveryHistory = ({
                 onRedeliver(delivery.id);
               }}
             >
-              Send again
+              {say('screens.webhooksPanel.deliveryHistory.sendAgain')}
             </Button>
           )}
         </li>

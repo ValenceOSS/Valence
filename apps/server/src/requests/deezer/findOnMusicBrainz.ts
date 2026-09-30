@@ -1,3 +1,4 @@
+/* eslint-disable valence/no-hard-coded-strings -- a MusicBrainz search query */
 import { z } from 'zod';
 import { quotedForMusicBrainz } from '@ValenceServer/music/web/quotedForMusicBrainz';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';

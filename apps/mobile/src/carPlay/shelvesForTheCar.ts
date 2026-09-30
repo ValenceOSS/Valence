@@ -5,6 +5,8 @@ import { rowForAnAlbum } from '@ValenceMobile/carPlay/rowForAnAlbum';
 import type { MusicAlbum, MusicArtist, MusicTrack } from '@ValenceContracts/schemas/Music';
 import type { PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
 import type { CarRow, CarShelf } from '@ValenceMobile/carPlay/NativeCarPlay.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const NEWEST_SHOWN = 12;
 
@@ -42,16 +44,6 @@ const pictureOfAnArtist = (artist: MusicArtist): string | null => {
 };
 
 /**
- * Counts something in words, as the car reads it.
- *
- * @param count - How many.
- * @param one - What one of them is called.
- * @returns The count and its noun.
- */
-const counted = (count: number, one: string): string =>
-  `${count.toString()} ${count === 1 ? one : `${one}s`}`;
-
-/**
  * The tabs the car shows along its foot: something to play straight away, then every playlist,
  * album and artist this profile has, each list as the phone's own library orders it.
  *
@@ -73,8 +65,8 @@ const shelvesForTheCar = (music: {
   const likedCover = music.liked.find((track) => track.album.hasArtwork)?.album.id;
   const liked: CarRow = {
     id: 'liked',
-    title: 'Liked songs',
-    detail: counted(music.liked.length, 'song'),
+    title: say('common.likedSongs'),
+    detail: sayCount('common.count.songs', music.liked.length),
     artwork: likedCover === undefined ? null : onThisServer(albumArtworkUrl(likedCover)),
     opens: false,
   };
@@ -82,16 +74,19 @@ const shelvesForTheCar = (music: {
   return [
     {
       id: 'listen',
-      title: 'Listen Now',
+      title: say('phone.carPlay.shelvesForTheCar.listenNow'),
       symbol: 'play.circle',
       sections: [
         { title: null, rows: music.liked.length === 0 ? [] : [liked] },
-        { title: 'Recently added', rows: music.newest.slice(0, NEWEST_SHOWN).map(rowForAnAlbum) },
+        {
+          title: say('common.recentlyAdded'),
+          rows: music.newest.slice(0, NEWEST_SHOWN).map(rowForAnAlbum),
+        },
       ],
     },
     {
       id: 'playlists',
-      title: 'Playlists',
+      title: say('common.playlists'),
       symbol: 'music.note.list',
       sections: [
         {
@@ -99,7 +94,7 @@ const shelvesForTheCar = (music: {
           rows: music.playlists.slice(0, MOST_SHOWN).map((playlist) => ({
             id: `playlist:${playlist.id}`,
             title: playlist.name,
-            detail: counted(playlist.entryCount, 'song'),
+            detail: sayCount('common.count.songs', playlist.entryCount),
             artwork: pictureOfAPlaylist(playlist),
             opens: false,
           })),
@@ -108,13 +103,13 @@ const shelvesForTheCar = (music: {
     },
     {
       id: 'albums',
-      title: 'Albums',
+      title: say('common.albums'),
       symbol: 'square.stack',
       sections: [{ title: null, rows: music.albums.slice(0, MOST_SHOWN).map(rowForAnAlbum) }],
     },
     {
       id: 'artists',
-      title: 'Artists',
+      title: say('common.artists'),
       symbol: 'music.mic',
       sections: [
         {
@@ -122,7 +117,7 @@ const shelvesForTheCar = (music: {
           rows: music.artists.slice(0, MOST_SHOWN).map((artist) => ({
             id: `artist:${artist.id}`,
             title: artist.name,
-            detail: counted(artist.albumCount, 'album'),
+            detail: sayCount('common.count.albums', artist.albumCount),
             artwork: pictureOfAnArtist(artist),
             opens: true,
           })),

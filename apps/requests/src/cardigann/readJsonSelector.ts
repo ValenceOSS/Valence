@@ -73,7 +73,7 @@ const readJsonSelector = (
 
     if (matched === undefined) {
       if (isRequired) {
-        throw new SelectorMiss('any case');
+        throw new SelectorMiss(null);
       }
 
       return null;

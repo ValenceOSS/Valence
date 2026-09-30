@@ -5,6 +5,7 @@ import type { SiteRequest } from '@ValenceRequests/cardigann/SiteRequest';
 import type { SiteAgent } from '@ValenceRequests/solver/createSiteAgent';
 import type { SitePool } from '@ValenceRequests/solver/createSitePool';
 import type { SitePage } from '@ValenceRequests/solver/toSitePage';
+import { saying } from '@ValenceI18n/saying';
 
 type Agent = Pick<
   SiteAgent,
@@ -53,7 +54,9 @@ const createSolver = <A extends Agent>({
 }: CreateSolverOptions<A>) => {
   const timedOut = (): IndexerFailure =>
     new IndexerFailure(
-      `Timed out after ${Math.round(timeoutMs / 1000).toString()} seconds getting past the site’s browser check`,
+      saying('requests.solver.timedOutGettingPast', {
+        seconds: Math.round(timeoutMs / 1000).toString(),
+      }),
       'CloudflareCheckFailed',
     );
 

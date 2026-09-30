@@ -8,10 +8,11 @@ import { hashShareToken, makeShareToken } from './shareToken';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { AdminShare, Share, ShareKind } from '@ValenceContracts/schemas/Share';
 import type { ResolvedShare, ShareService } from './ShareService';
+import { say } from '@ValenceI18n/say';
 
 const LIMIT = 500;
 
-const GONE = 'Something no longer here';
+const GONE = say('server.sharing.databaseShareService.somethingNoLongerHere');
 
 /**
  * Reads a stored kind back as one Valence recognises, so a row written by a later version does not

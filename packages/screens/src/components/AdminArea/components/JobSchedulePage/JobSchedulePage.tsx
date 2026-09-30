@@ -7,6 +7,7 @@ import { describeTrigger } from '@ValenceClient/admin/describeTrigger';
 import { describeTriggerInZone } from '@ValenceClient/admin/describeTriggerInZone';
 import type { ScheduleTrigger } from '@ValenceClient/admin/fetchAdmin';
 import type { JobSchedulePageProps } from './JobSchedulePage.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * What makes one job run on its own: the triggers set against it, a way to add another, and a way to
@@ -32,7 +33,9 @@ const JobSchedulePage = ({ triggers, onAdd, onRemove, timezone = null }: JobSche
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-xs uppercase tracking-[0.16em] text-text-muted">Triggers</h3>
+          <h3 className="text-xs uppercase tracking-[0.16em] text-text-muted">
+            {say('screens.adminArea.jobSchedulePage.triggers')}
+          </h3>
 
           <Button
             variant="ghost"
@@ -42,21 +45,24 @@ const JobSchedulePage = ({ triggers, onAdd, onRemove, timezone = null }: JobSche
             }}
           >
             <Icon of={PlusIcon} size={16} />
-            Add trigger
+            {say('common.addTrigger')}
           </Button>
         </div>
 
         {timezone === null ? null : (
           <p className="text-xs text-text-muted">
             {timezone === viewerZone
-              ? `Times are ${timezone}, the same clock you are reading this on.`
-              : `Times are ${timezone}. You are reading this in ${viewerZone}.`}
+              ? say('screens.adminArea.jobSchedulePage.timesAreTimezoneTheSameClock', { timezone })
+              : say('screens.adminArea.jobSchedulePage.timesAreTimezoneYouAreReading', {
+                  timezone,
+                  viewerZone,
+                })}
           </p>
         )}
 
         {triggers.length === 0 ? (
           <p className="rounded-lg border border-[var(--surface-line)] px-4 py-3 text-sm text-text-muted">
-            No triggers. This only runs when you press Run.
+            {say('screens.adminArea.jobSchedulePage.noTriggersThisOnlyRunsWhen')}
           </p>
         ) : (
           <ul className="flex flex-col divide-y divide-[var(--surface-line)] overflow-hidden rounded-lg border border-[var(--surface-line)]">
@@ -84,7 +90,9 @@ const JobSchedulePage = ({ triggers, onAdd, onRemove, timezone = null }: JobSche
                   <Button
                     variant="ghost"
                     size="sm"
-                    aria-label={`Remove ${describeTrigger(entry.trigger)}`}
+                    aria-label={say('screens.adminArea.jobSchedulePage.removeTrigger', {
+                      trigger: describeTrigger(entry.trigger),
+                    })}
                     onClick={() => {
                       onRemove(entry.id);
                     }}

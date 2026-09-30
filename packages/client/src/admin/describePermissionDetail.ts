@@ -1,64 +1,60 @@
 import type { Permission } from '@ValenceContracts/schemas/Permission';
+import { say } from '@ValenceI18n/say';
 
 const DETAILS: Record<Permission, string> = {
-  administrator:
-    'Grants every permission there is, including anything added in a later release. Nothing else on this list needs granting alongside it.',
+  administrator: say('client.admin.describePermissionDetail.grantsEveryPermissionThereIsIncluding'),
 
-  'library.create': 'Point Valence at a new folder of media and add it as a library.',
-  'library.edit':
-    'Change a library’s settings — its name, which languages it prefers, how it scans.',
-  'library.delete': 'Remove a library and forget everything scanned from it.',
+  'library.create': say('client.admin.describePermissionDetail.pointValenceAtANewFolder'),
+  'library.edit': say('client.admin.describePermissionDetail.changeALibrarysSettingsItsName'),
+  'library.delete': say('client.admin.describePermissionDetail.removeALibraryAndForgetEverything'),
 
-  'jobs.run': 'Start a job, such as a scan, by hand rather than waiting for it to run on its own.',
-  'jobs.schedule': 'Change when a recurring job runs, or turn its schedule off.',
-  'jobs.runDestructive':
-    'Run a reset or a full rebuild — the jobs that throw away what is stored and start again.',
+  'jobs.run': say('client.admin.describePermissionDetail.startAJobSuchAsA'),
+  'jobs.schedule': say('client.admin.describePermissionDetail.changeWhenARecurringJobRuns'),
+  'jobs.runDestructive': say('client.admin.describePermissionDetail.runAResetOrAFull'),
 
-  'media.rescan': 'Ask Valence to read one item again, picking up a file or metadata change.',
-  'media.delete': 'Delete a media file from disk, not just from the library.',
-  'media.reencode':
-    'Re-encode media at a chosen quality, either replacing the original file or keeping the result beside it. Replacing destroys the original once it has been reviewed, and nothing brings back what a lossy encoder discarded.',
-  'media.override': 'Correct an item’s metadata by hand when the catalogue matched it wrong.',
-  'media.artwork': 'Replace an item’s poster or backdrop with a different picture.',
-  'media.hide': 'Hide an item from every profile, not only their own.',
+  'media.rescan': say('client.admin.describePermissionDetail.askValenceToReadOneItem'),
+  'media.delete': say('client.admin.describePermissionDetail.deleteAMediaFileFromDisk'),
+  'media.reencode': say('client.admin.describePermissionDetail.reEncodeMediaAtAChosen'),
+  'media.override': say('client.admin.describePermissionDetail.correctAnItemsMetadataByHand'),
+  'media.artwork': say('client.admin.describePermissionDetail.replaceAnItemsPosterOrBackdrop'),
+  'media.hide': say('client.admin.describePermissionDetail.hideAnItemFromEveryProfile'),
 
-  'sharing.link': 'Create a link that lets somebody outside the household watch one thing.',
-  'sharing.party': 'Start a watch party, playing one stream to everybody who joins it.',
-  'sharing.manage': 'See every share link anybody has created, and withdraw any of them.',
+  'sharing.link': say('client.admin.describePermissionDetail.createALinkThatLetsSomebody'),
+  'sharing.party': say('client.admin.describePermissionDetail.startAWatchPartyPlayingOne'),
+  'sharing.manage': say('client.admin.describePermissionDetail.seeEveryShareLinkAnybodyHas'),
 
-  'streaming.view': 'See who is watching right now, and what.',
-  'streaming.stop': 'End somebody else’s stream.',
-  'streaming.pause': 'Pause somebody else’s stream from where they are watching.',
-  'streaming.message': 'Send a message that appears over somebody else’s stream.',
+  'streaming.view': say('client.admin.describePermissionDetail.seeWhoIsWatchingRightNow'),
+  'streaming.stop': say('client.admin.describePermissionDetail.endSomebodyElsesStream'),
+  'streaming.pause': say('client.admin.describePermissionDetail.pauseSomebodyElsesStreamFromWhere'),
+  'streaming.message': say('client.admin.describePermissionDetail.sendAMessageThatAppearsOver'),
 
-  'download.media': 'Save a copy of media to a device, for watching without a connection.',
+  'download.media': say('client.admin.describePermissionDetail.saveACopyOfMediaTo'),
 
-  'requests.ask': 'Ask for a film or series the server does not have yet.',
-  'requests.askMusic': 'Ask for an artist or album the server does not have yet.',
-  'requests.autoApprove':
-    'Have what they ask for searched for and downloaded without waiting for somebody to approve it.',
-  'requests.viewAll': 'See what everybody has asked for, and how each download is getting on.',
-  'requests.approve': 'Approve or turn down what other people have asked for.',
-  'requests.manage':
-    'Set up the indexers, download clients and quality profiles requesting uses, and see the VPN.',
+  'requests.ask': say('client.admin.describePermissionDetail.askForAFilmOrSeries'),
+  'requests.askMusic': say('client.admin.describePermissionDetail.askForAnArtistOrAlbum'),
+  'requests.autoApprove': say('client.admin.describePermissionDetail.haveWhatTheyAskForSearched'),
+  'requests.viewAll': say('client.admin.describePermissionDetail.seeWhatEverybodyHasAskedFor'),
+  'requests.approve': say('client.admin.describePermissionDetail.approveOrTurnDownWhatOther'),
+  'requests.manage': say('client.admin.describePermissionDetail.setUpTheIndexersDownloadClients'),
 
-  'account.invite': 'Invite somebody new to sign in and hold an account.',
-  'account.manage': 'Rename, suspend or remove an existing account.',
-  'account.ban': 'Ban an account, ending its sessions and refusing it a way back in.',
-  'account.roles': 'Create roles and choose which permissions each one grants.',
-  'account.profiles': 'Add, rename or remove another account’s profiles on their behalf.',
-  'account.security':
-    'Reset another account’s password, sign it out everywhere, and see where it is signed in.',
-  'account.keys':
-    'Hold an API key, for reaching Valence from a script or a device outside the browser.',
+  'account.invite': say('client.admin.describePermissionDetail.inviteSomebodyNewToSignIn'),
+  'account.manage': say('client.admin.describePermissionDetail.renameSuspendOrRemoveAnExisting'),
+  'account.ban': say('client.admin.describePermissionDetail.banAnAccountEndingItsSessions'),
+  'account.roles': say(
+    'client.admin.describePermissionDetail.createRolesAndChooseWhichPermissions',
+  ),
+  'account.profiles': say('client.admin.describePermissionDetail.addRenameOrRemoveAnotherAccounts'),
+  'account.security': say(
+    'client.admin.describePermissionDetail.resetAnotherAccountsPasswordSignIt',
+  ),
+  'account.keys': say('client.admin.describePermissionDetail.holdAnAPIKeyForReaching'),
 
-  'server.settings': 'Change server-wide settings, such as hardware acceleration and quality.',
-  'server.backup': 'Start a backup of the server, or restore one.',
-  'server.logs': 'Read the server’s log, including entries from before this account signed in.',
-  'server.monitor': 'See what the server is doing — its load, its memory, what it is encoding.',
-  'server.webhooks': 'Have the server call out to another address when something happens.',
-  'server.plugins':
-    'Install plugins from the catalogue or a file, choose what they may do, change their settings and remove them.',
+  'server.settings': say('client.admin.describePermissionDetail.changeServerWideSettingsSuchAs'),
+  'server.backup': say('client.admin.describePermissionDetail.startABackupOfTheServer'),
+  'server.logs': say('client.admin.describePermissionDetail.readTheServersLogIncludingEntries'),
+  'server.monitor': say('client.admin.describePermissionDetail.seeWhatTheServerIsDoing'),
+  'server.webhooks': say('client.admin.describePermissionDetail.haveTheServerCallOutTo'),
+  'server.plugins': say('client.admin.describePermissionDetail.installPluginsFromTheCatalogueOr'),
 };
 
 /**

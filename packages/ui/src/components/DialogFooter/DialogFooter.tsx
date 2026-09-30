@@ -1,6 +1,7 @@
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import type { DialogFooterProps } from './DialogFooter.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The foot of a dialog, holding the buttons that answer it. Pinned rather than scrolled, so the way
@@ -86,7 +87,7 @@ const DialogFooter = ({ children, lead, dismiss, confirm, note, className }: Dia
           isLoading={dismiss.isLoading ?? false}
           onClick={dismiss.onChoose}
         >
-          {dismiss.label ?? (confirm === undefined ? 'Close' : 'Cancel')}
+          {dismiss.label ?? (confirm === undefined ? say('common.close') : say('common.cancel'))}
         </Button>
       )}
 

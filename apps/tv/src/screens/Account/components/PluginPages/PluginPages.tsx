@@ -6,6 +6,7 @@ import * as Keyline from '@keyline-icons/react-native/fill';
 import { glyphFor } from '@ValenceSDK/surface/glyphFor';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { PluginPagesProps } from './PluginPages.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   heading: { color: tokens.colours.text, fontSize: tokens.type.body, fontWeight: '600' },
@@ -30,7 +31,7 @@ const PluginPages = ({ onOpen, onFocus }: PluginPagesProps) => {
 
   return (
     <View style={styles.pages}>
-      <Text style={styles.heading}>From your plugins</Text>
+      <Text style={styles.heading}>{say('tv.account.pluginPages.fromYourPlugins')}</Text>
 
       <View style={styles.row}>
         {pages.map((page) => (

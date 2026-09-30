@@ -6,6 +6,7 @@ import type {
   WatchParty,
 } from '@ValenceContracts/schemas/WatchParty';
 import type { PartyRegistry } from './createPartyRegistry';
+import { saying } from '@ValenceI18n/saying';
 
 type PartySpeaker = {
   connectionId: string;
@@ -135,13 +136,16 @@ const handlePartyMessage = (
     });
 
     if (joined.kind === 'unknown') {
-      write({ kind: 'refused', why: 'That party is not running.' });
+      write({ kind: 'refused', why: saying('common.thatPartyIsNotRunning') });
 
       return;
     }
 
     if (joined.kind === 'notWelcome') {
-      write({ kind: 'refused', why: 'The host has removed you from that party.' });
+      write({
+        kind: 'refused',
+        why: saying('server.parties.handlePartyMessage.theHostHasRemovedYouFrom'),
+      });
 
       return;
     }
@@ -165,7 +169,10 @@ const handlePartyMessage = (
     const left = registry.leave(who.connectionId);
 
     tellEveryone(binding, left);
-    write({ kind: 'refused', why: 'You have left the party.' });
+    write({
+      kind: 'refused',
+      why: saying('server.parties.handlePartyMessage.youHaveLeftTheParty'),
+    });
 
     return;
   }
@@ -173,7 +180,7 @@ const handlePartyMessage = (
   const mine = registry.partyOf(who.connectionId);
 
   if (mine === null) {
-    write({ kind: 'refused', why: 'You are not in a party.' });
+    write({ kind: 'refused', why: saying('server.parties.handlePartyMessage.youAreNotInAParty') });
 
     return;
   }

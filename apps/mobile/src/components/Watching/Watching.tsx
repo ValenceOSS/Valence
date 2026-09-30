@@ -56,6 +56,7 @@ import type { VideoSource, VideoView as VideoViewRef } from 'expo-video';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { MediaSegment } from '@ValenceClient/playback/fetchSegments';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
+import { say } from '@ValenceI18n/say';
 
 const SAY_IT_IS_ALIVE_EVERY = 30_000;
 
@@ -535,7 +536,7 @@ const Watching = ({
       onPresenceEvent((event) => {
         if (event.kind === 'stopped') {
           player.pause();
-          Alert.alert('Playback was stopped', event.reason);
+          Alert.alert(say('phone.watching.playbackWasStopped'), event.reason);
           onDone();
 
           return;
@@ -672,7 +673,7 @@ const Watching = ({
       <Button
         tone="bare"
         fills
-        label={areControlsUp ? 'Hide the controls' : 'Show the controls'}
+        label={areControlsUp ? say('common.hideTheControls') : say('common.showTheControls')}
         onPress={tapped}
       />
 

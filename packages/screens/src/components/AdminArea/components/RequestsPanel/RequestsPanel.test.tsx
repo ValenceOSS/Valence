@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -151,7 +152,7 @@ describe('RequestsPanel', () => {
             {
               id: '0f8fad5b-d9cb-469f-a165-70867728950e',
               name: 'Jackett',
-              problem: 'Timed out',
+              problem: sayVerbatim('Timed out'),
               problemCode: null,
             },
           ],
@@ -178,7 +179,7 @@ describe('RequestsPanel', () => {
           failing: codes.map((code, at) => ({
             id: `0f8fad5b-d9cb-469f-a165-7086772895${at.toString().padStart(2, '0')}`,
             name: `Indexer ${at.toString()}`,
-            problem: 'It went wrong',
+            problem: sayVerbatim('It went wrong'),
             problemCode: code,
           })),
         },

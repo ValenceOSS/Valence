@@ -17,6 +17,8 @@ import { coverAlbumsOf } from '@ValenceClient/music/coverAlbumsOf';
 import { playlistArtworkUrl } from '@ValenceClient/music/fetchPlaylists';
 import type { PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
 import type { TheMusicProps } from './TheMusic.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const RECENT = 18;
 
@@ -78,7 +80,7 @@ const TheMusic = ({
         title={playlist.name}
         detail={
           playlist.isMine || playlist.owner === null
-            ? `${playlist.entryCount.toString()} songs`
+            ? sayCount('common.count.songs', playlist.entryCount)
             : playlist.owner.name
         }
         artwork={ownCover === null ? null : onThisServer(ownCover)}
@@ -100,22 +102,22 @@ const TheMusic = ({
         {!albums.isPending && recent.length === 0 && mine.length === 0 && shared.length === 0 ? (
           <ANothingHere
             of={MusicNote}
-            title="No music yet"
-            detail="Once a music library has been added and scanned, its albums and artists will be here."
+            title={say('common.noMusicYet')}
+            detail={say('common.onceAMusicLibraryHasBeen3')}
           />
         ) : null}
 
-        <AShelf title="Your playlists">
+        <AShelf title={say('common.yourPlaylists')}>
           <AMusicTile
-            title="Liked songs"
-            detail={`${likedCount.toString()} ${likedCount === 1 ? 'song' : 'songs'}`}
+            title={say('common.likedSongs')}
+            detail={sayCount('common.count.songs', likedCount)}
             artwork={null}
             albumIds={coverAlbumsOf(liked.data ?? [])}
             onPress={onLiked}
           />
           {mine.map(aPlaylist)}
           <AMusicTile
-            title="New playlist"
+            title={say('common.newPlaylist')}
             artwork={null}
             standIn={Plus}
             onPress={() => {
@@ -125,7 +127,7 @@ const TheMusic = ({
         </AShelf>
 
         {recent.length === 0 ? null : (
-          <AShelf title="Recently added" onSeeAll={onAllAlbums}>
+          <AShelf title={say('common.recentlyAdded')} onSeeAll={onAllAlbums}>
             {recent.slice(0, RECENT).map((album) => (
               <AMusicTile
                 key={album.id}
@@ -144,7 +146,7 @@ const TheMusic = ({
         )}
 
         {(artists.data ?? []).length === 0 ? null : (
-          <AShelf title="Artists" onSeeAll={onAllArtists}>
+          <AShelf title={say('common.artists')} onSeeAll={onAllArtists}>
             {(artists.data ?? []).slice(0, ARTISTS).map((artist) => (
               <AMusicTile
                 key={artist.id}
@@ -160,7 +162,7 @@ const TheMusic = ({
         )}
 
         {shared.length === 0 ? null : (
-          <AShelf title="Shared with you">{shared.map(aPlaylist)}</AShelf>
+          <AShelf title={say('common.sharedWithYou')}>{shared.map(aPlaylist)}</AShelf>
         )}
 
         <APlaylistDetails

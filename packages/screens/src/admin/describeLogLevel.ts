@@ -1,5 +1,6 @@
 import type { BadgeTone } from '@ValenceUI/Badge.types';
 import type { LogLevel } from '@ValenceContracts/schemas/Log';
+import { say } from '@ValenceI18n/say';
 
 /**
  * How a level looks wherever it is drawn — its words, the tone of a badge for it and the colour of a
@@ -11,13 +12,25 @@ import type { LogLevel } from '@ValenceContracts/schemas/Log';
 const describeLogLevel = (level: LogLevel): { label: string; tone: BadgeTone; colour: string } => {
   switch (level) {
     case 'debug':
-      return { label: 'Debug', tone: 'quiet', colour: 'var(--color-text-muted)' };
+      return {
+        label: say('screens.admin.describeLogLevel.debug'),
+        tone: 'quiet',
+        colour: 'var(--color-text-muted)',
+      };
     case 'info':
-      return { label: 'Info', tone: 'accent', colour: 'var(--color-accent)' };
+      return {
+        label: say('screens.admin.describeLogLevel.info'),
+        tone: 'accent',
+        colour: 'var(--color-accent)',
+      };
     case 'warn':
-      return { label: 'Warnings', tone: 'warning', colour: 'var(--color-highlight)' };
+      return { label: say('common.warnings'), tone: 'warning', colour: 'var(--color-highlight)' };
     case 'error':
-      return { label: 'Errors', tone: 'danger', colour: 'var(--color-danger)' };
+      return {
+        label: say('screens.admin.describeLogLevel.errors'),
+        tone: 'danger',
+        colour: 'var(--color-danger)',
+      };
   }
 };
 

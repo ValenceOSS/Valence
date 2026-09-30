@@ -1,38 +1,61 @@
 import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
+import { say } from '@ValenceI18n/say';
 
 const PARTS: Record<LibraryPart, { label: string; description: string }> = {
   descriptions: {
-    label: 'Descriptions',
-    description: 'Overviews, taglines, genres and the catalogue score',
+    label: say('screens.adminArea.describeLibraryPart.descriptions'),
+    description: say(
+      'screens.adminArea.describeLibraryPart.overviewsTaglinesGenresAndTheCatalogue',
+    ),
   },
-  cast: { label: 'Cast', description: 'Who is in each film and episode, and who they play' },
+  cast: {
+    label: say('common.cast'),
+    description: say('screens.adminArea.describeLibraryPart.whoIsInEachFilmAnd'),
+  },
   ageRatings: {
-    label: 'Age ratings',
-    description:
-      'Certificates, and the ages they allow. Age-limited profiles treat a title as unrated until they are back',
+    label: say('screens.adminArea.describeLibraryPart.ageRatings'),
+    description: say('screens.adminArea.describeLibraryPart.certificatesAndTheAgesTheyAllow'),
   },
   trailers: {
-    label: 'Trailers',
-    description: 'Trailers found in the catalogue, not trailer files',
+    label: say('screens.adminArea.describeLibraryPart.trailers'),
+    description: say('screens.adminArea.describeLibraryPart.trailersFoundInTheCatalogueNot'),
   },
   artwork: {
-    label: 'Artwork',
-    description: 'Posters, backdrops and episode stills, and the copies kept on this server',
+    label: say('common.artwork'),
+    description: say('screens.adminArea.describeLibraryPart.postersBackdropsAndEpisodeStillsAnd'),
   },
-  logos: { label: 'Logos', description: 'The lettering each title is written in' },
-  previews: { label: 'Preview clips', description: 'The clips that play when hovering a title' },
+  logos: {
+    label: say('screens.adminArea.describeLibraryPart.logos'),
+    description: say('screens.adminArea.describeLibraryPart.theLetteringEachTitleIsWritten'),
+  },
+  previews: {
+    label: say('common.previewClips'),
+    description: say('screens.adminArea.describeLibraryPart.theClipsThatPlayWhenHovering'),
+  },
   scrubPreviews: {
-    label: 'Scrub previews',
-    description: 'The pictures shown when dragging along the seek bar',
+    label: say('screens.adminArea.describeLibraryPart.scrubPreviews'),
+    description: say('screens.adminArea.describeLibraryPart.thePicturesShownWhenDraggingAlong'),
   },
   intros: {
-    label: 'Intros and outros',
-    description: 'Detected intros, recaps and credits. Seasons are listened to again',
+    label: say('screens.adminArea.describeLibraryPart.introsAndOutros'),
+    description: say('screens.adminArea.describeLibraryPart.detectedIntrosRecapsAndCreditsSeasons'),
   },
-  albumCovers: { label: 'Album covers', description: 'Covers from tags, folders and the web' },
-  artistPictures: { label: 'Artist pictures', description: 'Pictures from folders and the web' },
-  lyrics: { label: 'Lyrics', description: 'Lyrics from tags, lyric files and the web' },
-  musicVideos: { label: 'Music videos', description: 'Videos found on the web for each song' },
+  albumCovers: {
+    label: say('screens.adminArea.describeLibraryPart.albumCovers'),
+    description: say('screens.adminArea.describeLibraryPart.coversFromTagsFoldersAndThe'),
+  },
+  artistPictures: {
+    label: say('screens.adminArea.describeLibraryPart.artistPictures'),
+    description: say('screens.adminArea.describeLibraryPart.picturesFromFoldersAndTheWeb'),
+  },
+  lyrics: {
+    label: say('common.lyrics'),
+    description: say('screens.adminArea.describeLibraryPart.lyricsFromTagsLyricFilesAnd'),
+  },
+  musicVideos: {
+    label: say('screens.adminArea.describeLibraryPart.musicVideos'),
+    description: say('screens.adminArea.describeLibraryPart.videosFoundOnTheWebFor'),
+  },
 };
 
 /**

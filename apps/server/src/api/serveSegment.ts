@@ -4,6 +4,7 @@ import { registerVideoDeviceRoutes } from '@ValenceServer/video/registerVideoDev
 import { registerReencodeRoutes } from '@ValenceServer/reencode/registerReencodeRoutes';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
+import { refuse } from '@ValenceI18n/refuse';
 
 /**
  * Registers the segment endpoints.
@@ -28,7 +29,7 @@ const serveSegment = (app: OpenAPIHono, context: AppContext): void => {
     const { mediaId } = context.req.valid('param');
 
     if ((await library.getMedia(mediaId)) === null) {
-      return context.json({ error: 'No such media item.' }, 404);
+      return context.json(refuse('error.common.noSuchMediaItem'), 404);
     }
 
     return context.json({ segments: await segments.list(mediaId) }, 200);

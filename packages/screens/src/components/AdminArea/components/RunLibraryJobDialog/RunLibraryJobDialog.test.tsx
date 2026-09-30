@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -7,8 +8,8 @@ import type { Library } from '@ValenceContracts/schemas/Library';
 
 const SCAN: JobDefinition = {
   kind: 'library.scan',
-  label: 'Scan for changes',
-  description: 'Finds new, changed and removed files.',
+  label: sayVerbatim('Scan for changes'),
+  description: sayVerbatim('Finds new, changed and removed files.'),
   needsLibrary: true,
   destructive: false,
   takesParts: false,
@@ -19,8 +20,8 @@ const SCAN: JobDefinition = {
 
 const RESET: JobDefinition = {
   kind: 'library.reset',
-  label: 'Reset and rebuild',
-  description: 'Deletes every item and starts again.',
+  label: sayVerbatim('Reset and rebuild'),
+  description: sayVerbatim('Deletes every item and starts again.'),
   needsLibrary: true,
   destructive: true,
   takesParts: false,

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { say } from '@ValenceI18n/say';
 
 const SHARE_KINDS = ['item', 'series', 'book'] as const;
 
@@ -44,7 +45,7 @@ const NewShareSchema = z
         : asked.kind === 'series'
           ? asked.seriesId !== undefined
           : asked.bookId !== undefined,
-    { message: 'A share names an item, a series or a book, matching its kind.' },
+    { message: say('contracts.schemas.share.aShareNamesAnItemA') },
   );
 
 const CreatedShareSchema = ShareSchema.extend({ token: z.string().min(1) });
@@ -129,9 +130,9 @@ const howShareEnded = (standing: ShareStanding, now: Date): ShareEnding | null =
 };
 
 const SHARE_ENDING_SAID: Record<ShareEnding, string> = {
-  withdrawn: 'This link was withdrawn.',
-  expired: 'This link has expired.',
-  spent: 'This link has been used up.',
+  withdrawn: say('contracts.schemas.share.thisLinkWasWithdrawn'),
+  expired: say('contracts.schemas.share.thisLinkHasExpired'),
+  spent: say('contracts.schemas.share.thisLinkHasBeenUsedUp'),
 };
 
 /**

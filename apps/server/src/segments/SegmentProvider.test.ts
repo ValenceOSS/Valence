@@ -171,7 +171,7 @@ describe('asking each provider in turn', () => {
       [broken, working],
       [candidate('a')],
       (provider, reason) => {
-        problems.push(`${provider}: ${reason}`);
+        problems.push(`${provider}: ${reason.message}`);
       },
     );
 

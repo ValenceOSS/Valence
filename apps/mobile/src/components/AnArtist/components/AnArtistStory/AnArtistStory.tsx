@@ -14,6 +14,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { pictureOnThisServer } from '@ValenceMobile/platform/pictureOnThisServer';
 import type { MissingAlbum } from '@ValenceContracts/schemas/ArtistStory';
 import type { AnArtistStoryProps } from './AnArtistStory.types';
+import { say } from '@ValenceI18n/say';
 
 const LINES_AT_FIRST = 6;
 
@@ -45,38 +46,42 @@ const AnArtistStory = ({ artistId, name }: AnArtistStoryProps) => {
    * @param album - The album.
    */
   const offer = (album: MissingAlbum) => {
-    Alert.alert(`Request ${album.title}?`, `It is added to your library once it has downloaded.`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Request',
-        onPress: () => {
-          void askForMedia({
-            kind: 'album',
-            musicBrainzId: album.releaseGroupId,
-            seasons: null,
-            isPickedByHand: false,
-          }).then(({ value, refusal }) => {
-            if (value === null) {
-              Alert.alert(refusal?.message ?? 'That could not be requested.');
+    Alert.alert(
+      say('phone.anArtist.anArtistStory.requestTitle', { title: album.title }),
+      say('phone.anArtist.anArtistStory.itIsAddedToYourLibrary'),
+      [
+        { text: say('common.cancel'), style: 'cancel' },
+        {
+          text: say('common.request'),
+          onPress: () => {
+            void askForMedia({
+              kind: 'album',
+              musicBrainzId: album.releaseGroupId,
+              seasons: null,
+              isPickedByHand: false,
+            }).then(({ value, refusal }) => {
+              if (value === null) {
+                Alert.alert(refusal?.message ?? say('common.thatCouldNotBeRequested'));
 
-              return;
-            }
+                return;
+              }
 
-            void cache.invalidateQueries({ queryKey: requestsQueries.key });
-            Alert.alert(
-              `${album.title} is requested`,
-              'You can follow it under Search, Requested.',
-            );
-          });
+              void cache.invalidateQueries({ queryKey: requestsQueries.key });
+              Alert.alert(
+                say('phone.anArtist.anArtistStory.titleIsRequested', { title: album.title }),
+                say('phone.anArtist.anArtistStory.youCanFollowItUnderSearch'),
+              );
+            });
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   return (
     <>
       {missing.length === 0 ? null : (
-        <AShelf title={`More from ${name}`}>
+        <AShelf title={say('common.moreFromName', { name })}>
           {missing.map((album) => (
             <AMusicTile
               key={album.releaseGroupId}
@@ -99,7 +104,7 @@ const AnArtistStory = ({ artistId, name }: AnArtistStoryProps) => {
 
       {bio === null ? null : (
         <View style={styles.story}>
-          <Words size="heading">About</Words>
+          <Words size="heading">{say('common.about')}</Words>
           <Words tone="muted" isProse {...(isWhole ? {} : { lines: LINES_AT_FIRST })}>
             {bio}
           </Words>
@@ -109,10 +114,10 @@ const AnArtistStory = ({ artistId, name }: AnArtistStoryProps) => {
               setIsWhole((was) => !was);
             }}
           >
-            {isWhole ? 'Read less' : 'Read more'}
+            {isWhole ? say('common.readLess') : say('common.readMore')}
           </Button>
           <Words size="small" tone="muted">
-            From Wikipedia
+            {say('common.fromWikipedia')}
           </Words>
         </View>
       )}

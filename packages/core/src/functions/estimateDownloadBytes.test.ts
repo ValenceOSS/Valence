@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { estimateDownloadBytes } from './estimateDownloadBytes';
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
@@ -23,7 +24,7 @@ const FILM: MediaItem = {
   subtitleStreams: [],
 };
 
-const REASON = { code: 'ClientSupportsSource', detail: 'as it is' } as const;
+const REASON = { code: 'ClientSupportsSource', detail: sayVerbatim('as it is') } as const;
 
 const copied: PlaybackPlan = {
   mediaId: FILM.id,

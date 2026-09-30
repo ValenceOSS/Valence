@@ -27,6 +27,7 @@ import { useListeningParty } from '@ValenceScreens/music/listeningParty';
 import { shuffleModeOf } from '@ValenceClient/music/shuffleModeOf';
 import type { Variants } from 'motion/react';
 import type { MusicTransportProps } from './MusicTransport.types';
+import { say } from '@ValenceI18n/say';
 
 const POPPING: Variants = {
   hidden: { opacity: 0, scale: 0.5 },
@@ -35,15 +36,15 @@ const POPPING: Variants = {
 };
 
 const SHUFFLE_LABELS = {
-  off: 'Shuffle',
-  on: 'Smart shuffle',
-  smart: 'Stop shuffling',
+  off: say('common.shuffle'),
+  on: say('common.smartShuffle'),
+  smart: say('common.stopShuffling'),
 } as const;
 
 const REPEAT_LABELS = {
-  off: 'Repeat everything',
-  all: 'Repeat this song',
-  one: 'Stop repeating',
+  off: say('common.repeatEverything'),
+  all: say('common.repeatThisSong'),
+  one: say('common.stopRepeating'),
 } as const;
 
 /**
@@ -107,7 +108,7 @@ const MusicTransport = ({
 
   const scrubber = (
     <Slider
-      label="Where the song is"
+      label={say('screens.musicTransport.whereTheSongIs')}
       tone={isImmersive ? 'overlay' : 'glass'}
       value={Math.min(position, shown.durationSeconds)}
       max={Math.max(shown.durationSeconds, 1)}
@@ -155,7 +156,7 @@ const MusicTransport = ({
   const middle = (
     <>
       <BarButton
-        label="Previous"
+        label={say('common.previous')}
         glyph={SkipBackFilledIcon}
         iconSize={iconSize}
         isDisabled={isIdle || isFollowing}
@@ -168,7 +169,7 @@ const MusicTransport = ({
         variant={isImmersive ? 'ghost' : 'confirm'}
         size={isImmersive ? 'md' : 'sm'}
         isIconOnly
-        label={shown.isPlaying ? 'Pause' : 'Play'}
+        label={shown.isPlaying ? say('common.pause') : say('common.play')}
         className={cn('relative', isImmersive ? 'size-14' : 'size-8')}
         disabled={!mayPlayPause}
         onClick={() => {
@@ -201,7 +202,7 @@ const MusicTransport = ({
             className="flex"
           >
             {shown.isLoading && shown.isPlaying ? (
-              <Spinner size="sm" label="Loading" />
+              <Spinner size="sm" label={say('common.loading')} />
             ) : (
               <Icon
                 of={shown.isPlaying ? PauseFilledIcon : PlayFilledIcon}
@@ -213,7 +214,7 @@ const MusicTransport = ({
       </Button>
 
       <BarButton
-        label="Next"
+        label={say('common.next')}
         glyph={SkipForwardFilledIcon}
         iconSize={iconSize}
         isDisabled={isIdle || isFollowing}

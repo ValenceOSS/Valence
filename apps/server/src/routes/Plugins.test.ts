@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
@@ -75,8 +76,8 @@ const signedInWith = async (granted: readonly Permission[]) => {
     store: createMemoryPluginStore(),
     host: aPluginHostForTest(),
     catalogue: {
-      read: () => Promise.resolve({ catalogue: null, problem: 'offline' }),
-      fetchPackage: () => Promise.resolve({ problem: 'offline' }),
+      read: () => Promise.resolve({ catalogue: null, problem: sayVerbatim('offline') }),
+      fetchPackage: () => Promise.resolve({ problem: sayVerbatim('offline') }),
     },
     keys: {},
     sealingKey: Buffer.alloc(32, 3),

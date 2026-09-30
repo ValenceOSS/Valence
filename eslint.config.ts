@@ -1,11 +1,13 @@
 import tseslint from 'typescript-eslint';
 import { neutralQueries } from './tools/eslint/neutralQueries';
 import { noComments } from './tools/eslint/noComments';
+import { noHardCodedStrings } from './tools/eslint/noHardCodedStrings';
 import { noRawColours } from './tools/eslint/noRawColours';
 
 const valence = {
   rules: {
     'no-comments': noComments,
+    'no-hard-coded-strings': noHardCodedStrings,
     'no-raw-colours': noRawColours,
     'neutral-queries': neutralQueries,
   },
@@ -16,7 +18,7 @@ const NEUTRAL_QUERY_FILES: string[] = ['apps/server/src/**/*.ts', 'apps/requests
 const PARENT_IMPORT_BAN = {
   group: ['../*'],
   message:
-    'Parent-relative imports are banned. Use @ValenceUI/*, @ValenceCore/*, @ValenceContracts/* or @ValenceSDK/*.',
+    'Parent-relative imports are banned. Use @ValenceUI/*, @ValenceCore/*, @ValenceContracts/*, @ValenceSDK/* or @ValenceI18n/*.',
 };
 
 const RETIRED_ICON_SET_BAN = {
@@ -205,6 +207,24 @@ export default tseslint.config(
   },
   {
     files: [
+      'packages/core/src/**/*.{ts,tsx}',
+      'packages/contracts/src/**/*.{ts,tsx}',
+      'apps/server/src/**/*.{ts,tsx}',
+      'apps/requests/src/**/*.{ts,tsx}',
+      'packages/client/src/**/*.{ts,tsx}',
+      'packages/ui/src/**/*.{ts,tsx}',
+      'packages/screens/src/**/*.{ts,tsx}',
+      'apps/web/src/**/*.{ts,tsx}',
+      'apps/desktop/src/**/*.{ts,tsx}',
+      'apps/mobile/src/**/*.{ts,tsx}',
+      'apps/tv/src/**/*.{ts,tsx}',
+    ],
+    rules: {
+      'valence/no-hard-coded-strings': 'error',
+    },
+  },
+  {
+    files: [
       'apps/landing/src/**/*.ts',
       'apps/landing/src/**/*.tsx',
       'apps/docs/src/**/*.ts',
@@ -223,6 +243,7 @@ export default tseslint.config(
     files: ['**/*.test.ts', '**/*.test.tsx'],
     rules: {
       'valence/no-raw-colours': 'off',
+      'valence/no-hard-coded-strings': 'off',
       '@typescript-eslint/no-unnecessary-condition': 'off',
       'no-restricted-syntax': [
         'error',

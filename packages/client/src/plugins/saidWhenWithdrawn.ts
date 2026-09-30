@@ -1,4 +1,5 @@
 import type { PluginChange } from '@ValenceContracts/schemas/Plugin';
+import { say } from '@ValenceI18n/say';
 
 /**
  * What to tell somebody whose plugin page closed because an administrator withdrew the plugin.
@@ -8,6 +9,11 @@ import type { PluginChange } from '@ValenceContracts/schemas/Plugin';
  * @returns The sentence to show.
  */
 const saidWhenWithdrawn = (pluginName: string, change: PluginChange['change']): string =>
-  `${pluginName} was ${change === 'removed' ? 'removed' : 'turned off'} by an administrator.`;
+  say(
+    change === 'removed'
+      ? 'client.plugins.saidWhenWithdrawn.pluginWasRemoved'
+      : 'client.plugins.saidWhenWithdrawn.pluginWasTurnedOff',
+    { pluginName },
+  );
 
 export { saidWhenWithdrawn };

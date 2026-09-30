@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { RealtimeEvent, RealtimeTopic } from '@ValenceContracts/schemas/Realtime';
@@ -237,7 +238,10 @@ describe('saveCatalogueKey', () => {
 });
 
 describe('fetchActiveSessions', () => {
-  const reason: Reason = { code: 'ClientSupportsSource', detail: 'Client declares support' };
+  const reason: Reason = {
+    code: 'ClientSupportsSource',
+    detail: sayVerbatim('Client declares support'),
+  };
   const plan: PlaybackPlan = {
     mediaId: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
     container: { kind: 'passthrough', reason },
@@ -441,8 +445,8 @@ describe('fetchJobDefinitions', () => {
   const DEFINITIONS = [
     {
       kind: 'library.scan',
-      label: 'Scan for changes',
-      description: 'Finds new, changed and removed files.',
+      label: sayVerbatim('Scan for changes'),
+      description: sayVerbatim('Finds new, changed and removed files.'),
       needsLibrary: true,
       destructive: false,
       takesParts: false,
@@ -452,8 +456,8 @@ describe('fetchJobDefinitions', () => {
     },
     {
       kind: 'library.reset',
-      label: 'Reset and rebuild',
-      description: 'Deletes everything in the library, then scans it from nothing.',
+      label: sayVerbatim('Reset and rebuild'),
+      description: sayVerbatim('Deletes everything in the library, then scans it from nothing.'),
       needsLibrary: true,
       destructive: true,
       takesParts: false,
@@ -780,7 +784,7 @@ describe('watchJobs', () => {
     fake.arrive({
       event: 'completed',
       kind: 'library.regeneratePreviews',
-      label: 'Generate missing previews',
+      label: sayVerbatim('Generate missing previews'),
       jobId: 'job-1',
       subject: 'films',
       subjectName: 'Films',
@@ -824,7 +828,7 @@ describe('what the server is working on', () => {
               jobId: 'job-1',
               kind: 'library.scan',
               libraryId: 'lib-1',
-              phase: 'probing',
+              phase: sayVerbatim('probing'),
               processed: 3,
               total: 10,
             },

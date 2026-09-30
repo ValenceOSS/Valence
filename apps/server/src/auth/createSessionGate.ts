@@ -3,6 +3,7 @@ import { isPublicRoute } from '@ValenceServer/auth/isPublicRoute';
 import { readSessionOnce } from '@ValenceServer/auth/readSessionOnce';
 import type { MiddlewareHandler } from 'hono';
 import type { ValenceAuth } from '@ValenceServer/auth/Auth';
+import { refuse } from '@ValenceI18n/refuse';
 
 type SessionGateOptions = {
   auth: ValenceAuth;
@@ -38,7 +39,7 @@ const createSessionGate = ({ auth, showsFaces, shareGate }: SessionGateOptions) 
 
     if (session === null) {
       if (shareGate === undefined) {
-        return context.json({ error: 'Nobody is signed in.' }, 401);
+        return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
       }
 
       return shareGate(context, next);

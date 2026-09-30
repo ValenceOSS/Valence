@@ -1,13 +1,15 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { sendWebPush } from './sendWebPush';
 import type { NotificationEvent } from '@ValenceContracts/schemas/Notification';
 import type { NotificationStore } from './NotificationStore';
 import type { VapidKeys, WebPushSender } from './sendWebPush';
+import { say } from '@ValenceI18n/say';
 
 type NotifyHouseholdOptions = {
   store: NotificationStore;
   event: NotificationEvent;
-  title: string;
-  body: string;
+  title: Said;
+  body: Said;
   link: string | null;
   vapid: VapidKeys | null;
   send?: WebPushSender;
@@ -68,7 +70,12 @@ const notifyHousehold = async ({
 
     for (const userId of wantPush) {
       for (const endpoint of await store.listPushEndpoints(userId)) {
-        const outcome = await sendWebPush(endpoint, { title, body, link }, vapid, send);
+        const outcome = await sendWebPush(
+          endpoint,
+          { title: title.message, body: body.message, link, said: { title, body } },
+          vapid,
+          send,
+        );
 
         if (outcome === 'gone') {
           await store.removePushEndpoint(userId, endpoint.endpoint);
@@ -76,7 +83,11 @@ const notifyHousehold = async ({
       }
     }
   } catch (error) {
-    onProblem?.(error instanceof Error ? error.message : 'The household could not be told.');
+    onProblem?.(
+      error instanceof Error
+        ? error.message
+        : say('server.notifications.notifyHousehold.theHouseholdCouldNotBeTold'),
+    );
   }
 };
 

@@ -1,3 +1,4 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -135,7 +136,7 @@ const aReencoder = async (
 ) => {
   const db = await aMigratedDatabase();
   const libraryPath = await mkdtemp(join(tmpdir(), 'valence-reencode-'));
-  const onProblem = vi.fn<(what: string, reason: string) => void>();
+  const onProblem = vi.fn<(what: string, reason: Said) => void>();
 
   await writeFile(join(libraryPath, 'film.mkv'), 'a film');
   await db.insert(library).values({

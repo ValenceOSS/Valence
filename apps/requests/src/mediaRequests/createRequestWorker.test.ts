@@ -1,3 +1,5 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -54,7 +56,7 @@ type HarnessOptions = {
   blocked?: BlockedReleaseRecord[];
   found?: (search: ReleaseSearch) => Release[];
   profiles?: QualityProfile[];
-  refuseSend?: string;
+  refuseSend?: Said;
   refuseSendCode?: ProblemCode;
   filed?: typeof fileDownload;
   filedMusic?: typeof fileAlbum;
@@ -409,7 +411,7 @@ describe('createRequestWorker', () => {
     });
 
     it('keeps a film wanted, saying why, when the client will not take it', async () => {
-      const { worker, items } = aWorker({ refuseSend: 'No torrent client is set up' });
+      const { worker, items } = aWorker({ refuseSend: sayVerbatim('No torrent client is set up') });
 
       await worker.tick();
 
@@ -422,7 +424,7 @@ describe('createRequestWorker', () => {
 
     it('keeps the kind of problem it was when the client will not take it', async () => {
       const { worker, items } = aWorker({
-        refuseSend: 'qBittorrent could not be reached',
+        refuseSend: sayVerbatim('qBittorrent could not be reached'),
         refuseSendCode: 'DownloadClientUnreachable',
       });
 
@@ -523,7 +525,7 @@ describe('createRequestWorker', () => {
           aSentDownload({
             title: BLURAY,
             state: 'failed',
-            problem: 'The tracker is gone',
+            problem: sayVerbatim('The tracker is gone'),
             problemCode: null,
           }),
         ],
@@ -548,7 +550,7 @@ describe('createRequestWorker', () => {
 
       await worker.tick();
 
-      expect((await blocked.list())[0]?.reason).toBe('It stalled, with nobody to fetch it from');
+      expect((await blocked.list())[0]?.reason).toEqual('It stalled, with nobody to fetch it from');
     });
 
     it('leaves a stalled download alone once that rule is turned off', async () => {
@@ -599,7 +601,7 @@ describe('createRequestWorker', () => {
 
       await worker.tick();
 
-      expect((await blocked.list())[0]?.reason).toBe(
+      expect((await blocked.list())[0]?.reason).toEqual(
         'It never got its file list, so it never started',
       );
     });
@@ -619,7 +621,7 @@ describe('createRequestWorker', () => {
 
       await worker.tick();
 
-      expect((await blocked.list())[0]?.reason).toBe(
+      expect((await blocked.list())[0]?.reason).toEqual(
         'At the rate it is going it would take another 42 days',
       );
       expect(remove).toHaveBeenCalledWith(aSentDownload().id, true);
@@ -691,7 +693,7 @@ describe('createRequestWorker', () => {
 
       await worker.tick();
 
-      expect((await theItem(items))?.problem).toBe(
+      expect((await theItem(items))?.problem).toEqual(
         'It could not be filed: EACCES: permission denied',
       );
     });
@@ -707,7 +709,7 @@ describe('createRequestWorker', () => {
 
       await worker.tick();
 
-      expect((await blocked.list())[0]?.reason).toBe('It held nothing asked for');
+      expect((await blocked.list())[0]?.reason).toEqual('It held nothing asked for');
     });
   });
 
@@ -723,7 +725,7 @@ describe('createRequestWorker', () => {
       aSentDownload({ state: 'done', contentPath: '/downloads/valence-films/Dune' });
 
     it('blocklists a film that turned out not to be what was asked for, and looks for the next best', async () => {
-      const why = 'It is 1080p, which this profile does not take';
+      const why = sayVerbatim('It is 1080p, which this profile does not take');
       const filed = vi.fn<typeof fileDownload>(() =>
         Promise.resolve({
           filed: new Map(),
@@ -794,7 +796,7 @@ describe('createRequestWorker', () => {
 
       const refuses = filed.mock.lastCall?.[5];
 
-      expect(refuses?.({ resolution: '1080p' })).toBe(
+      expect(refuses?.({ resolution: '1080p' })).toEqual(
         'It is 1080p, which this profile does not take',
       );
       expect(refuses?.({ resolution: '2160p' })).toBeNull();
@@ -849,7 +851,7 @@ describe('createRequestWorker', () => {
         profiles: [FOUR_K],
       });
 
-      expect(await worker.judgeFiles(aSentDownload(), [TELESYNC])).toBe(
+      expect(await worker.judgeFiles(aSentDownload(), [TELESYNC])).toEqual(
         `Its file, ${TELESYNC}, is 1080p, which this profile does not take`,
       );
     });
@@ -1045,7 +1047,7 @@ describe('createRequestWorker', () => {
             score: 2200,
           },
         ],
-        sent: [aSentDownload({ state: 'failed', problem: 'Gone', problemCode: null })],
+        sent: [aSentDownload({ state: 'failed', problem: sayVerbatim('Gone'), problemCode: null })],
         profiles: [UPGRADING],
       });
 
@@ -1210,7 +1212,7 @@ describe('createRequestWorker', () => {
 
       await worker.tick();
 
-      expect((await downloads.find(BY_HAND.id))?.filingProblem).toBe(
+      expect((await downloads.find(BY_HAND.id))?.filingProblem).toEqual(
         'It could not be filed: EACCES',
       );
     });
@@ -1412,7 +1414,7 @@ describe('createRequestWorker', () => {
             indexerName: 'Slow Tracker',
             found: 0,
             tookMs: 30_000,
-            problem: 'Timed out getting past the site’s browser check',
+            problem: sayVerbatim('Timed out getting past the site’s browser check'),
             problemCode: 'CloudflareCheckFailed',
           },
         ],
@@ -1421,11 +1423,15 @@ describe('createRequestWorker', () => {
       await worker.tick();
 
       expect(linesOf(said)).toEqual([
-        'Searched for it: 1 found by 2 indexers, none of the 1 found were for it. Slow Tracker could not answer: Timed out getting past the site’s browser check.',
-        `Searched for it as “Dune Part One”: 1 found by 2 indexers, 1 of them for it, and none would do — the best, ${BLURAY}, because Nobody is seeding it. Slow Tracker could not answer: Timed out getting past the site’s browser check.`,
+        'Searched for it: 1 found by 2 indexers, the one found was not for it.',
+        'Slow Tracker could not answer: Timed out getting past the site’s browser check.',
+        `Searched for it as “Dune Part One”: 1 found by 2 indexers, 1 of them for it, and none would do — the best, ${BLURAY}, because Nobody is seeding it.`,
+        'Slow Tracker could not answer: Timed out getting past the site’s browser check.',
       ]);
       expect(said.map((line) => line.problemCode)).toEqual([
+        null,
         'CloudflareCheckFailed',
+        null,
         'CloudflareCheckFailed',
       ]);
     });
@@ -1446,13 +1452,13 @@ describe('createRequestWorker', () => {
     it('says what became of a download, and why one could not be filed, once', async () => {
       const failing = aWorker({
         items: [aRequestItem({ state: 'downloading', downloadId: aSentDownload().id })],
-        sent: [aSentDownload({ state: 'failed', problem: 'Gone', problemCode: null })],
+        sent: [aSentDownload({ state: 'failed', problem: sayVerbatim('Gone'), problemCode: null })],
         found: () => [],
       });
 
       await failing.worker.tick();
 
-      expect(linesOf(failing.said)[0]).toBe(
+      expect(linesOf(failing.said)[0]).toEqual(
         'Dune failed: Gone. It is blocklisted, and the next best is looked for.',
       );
 
@@ -1490,7 +1496,7 @@ describe('createRequestWorker', () => {
 
       await gone.worker.tick();
 
-      expect(linesOf(gone.said)[0]).toBe(
+      expect(linesOf(gone.said)[0]).toEqual(
         'Its download was taken out before it finished, so it is wanted again.',
       );
     });
@@ -1512,11 +1518,11 @@ describe('createRequestWorker', () => {
     });
 
     it('says when it chose a release it could not send', async () => {
-      const { worker, said } = aWorker({ refuseSend: 'No torrent client is set up' });
+      const { worker, said } = aWorker({ refuseSend: sayVerbatim('No torrent client is set up') });
 
       await worker.tick();
 
-      expect(linesOf(said)[0]).toBe(
+      expect(linesOf(said)[0]).toEqual(
         `Searched for it: 2 found by 1 indexer, chose ${BLURAY}, but could not send it: No torrent client is set up.`,
       );
     });
@@ -1576,7 +1582,7 @@ describe('createRequestWorker', () => {
     });
 
     it('keeps what an indexer said wrong beside the kind of problem it was, across searches', async () => {
-      const jackett = (problem: string | null, problemCode: ProblemCode | null) => [
+      const jackett = (problem: Said | null, problemCode: ProblemCode | null) => [
         {
           indexerId: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
           indexerName: 'Jackett',
@@ -1590,10 +1596,13 @@ describe('createRequestWorker', () => {
         requests: [SEVERANCE],
         items: [aRequestItem({ requestId: SEVERANCE.id, season: 1, episode: 1 })],
         reportsInTurn: [
-          jackett('Timed out getting past the site’s browser check', 'CloudflareCheckFailed'),
+          jackett(
+            sayVerbatim('Timed out getting past the site’s browser check'),
+            'CloudflareCheckFailed',
+          ),
           jackett(null, null),
           jackett(
-            'The site’s Cloudflare refuses this address outright',
+            sayVerbatim('The site’s Cloudflare refuses this address outright'),
             'CloudflareRefusesAddress',
           ),
         ],
@@ -1696,24 +1705,24 @@ describe('createRequestWorker', () => {
     it('says why a pick cannot be sent', async () => {
       const busy = aWorker({ items: [aRequestItem({ state: 'downloading' })] });
 
-      expect(await busy.worker.pick(aMediaRequest().id, aRelease(WEB))).toBe(
-        'The film is on its way already',
-      );
+      expect(await busy.worker.pick(aMediaRequest().id, aRelease(WEB))).toEqual({
+        refused: 'The film is on its way already',
+      });
 
-      const refused = aWorker({ refuseSend: 'No torrent client is set up' });
+      const refused = aWorker({ refuseSend: sayVerbatim('No torrent client is set up') });
 
-      expect(await refused.worker.pick(aMediaRequest().id, aRelease(WEB))).toBe(
-        'No torrent client is set up',
-      );
+      expect(await refused.worker.pick(aMediaRequest().id, aRelease(WEB))).toEqual({
+        refused: 'No torrent client is set up',
+      });
 
       const series = aWorker({
         requests: [SEVERANCE],
         items: [aRequestItem({ requestId: SEVERANCE.id, season: 1, episode: 1 })],
       });
 
-      expect(await series.worker.pick(SEVERANCE.id, aRelease('Severance.S02E01.WEB'))).toBe(
-        'That release holds no episode this request is waiting for',
-      );
+      expect(await series.worker.pick(SEVERANCE.id, aRelease('Severance.S02E01.WEB'))).toEqual({
+        refused: 'That release holds no episode this request is waiting for',
+      });
     });
   });
 

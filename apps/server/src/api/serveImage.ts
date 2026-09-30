@@ -2,6 +2,7 @@ import { mediaImageRoute } from '@ValenceServer/routes/ImageRoute';
 import { artworkTagOf } from '@ValenceServer/api/artworkTagOf';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
+import { refuse } from '@ValenceI18n/refuse';
 
 const ARTWORK_CACHING = 'public, max-age=3600, stale-while-revalidate=604800';
 
@@ -29,7 +30,7 @@ const serveImage = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     if (url === null || readImage === undefined) {
-      return context.json({ error: 'No artwork for that item.' }, 404);
+      return context.json(refuse('error.image.noArtworkForThatItem'), 404);
     }
 
     const tag = artworkTagOf(url);
@@ -41,7 +42,7 @@ const serveImage = (app: OpenAPIHono, context: AppContext): void => {
     const image = await readImage(url);
 
     if (image === null) {
-      return context.json({ error: 'That artwork could not be read.' }, 404);
+      return context.json(refuse('error.image.thatArtworkCouldNotBeRead'), 404);
     }
 
     return context.body(image.body, 200, {

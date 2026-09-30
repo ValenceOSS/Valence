@@ -1,6 +1,8 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { sealSecret } from '@ValenceServer/plugins/sealSecret';
 import type { PluginManifest } from '@ValenceSDK/manifest/PluginManifestSchema';
 import type { PluginSettingValues } from '@ValenceServer/plugins/store/PluginStore';
+import { saying } from '@ValenceI18n/saying';
 
 /**
  * Applies an administrator's changes to a plugin's settings: each checked against the kind the
@@ -18,14 +20,16 @@ const changeSettings = (
   kept: PluginSettingValues,
   changes: Record<string, string | boolean | null>,
   key: Buffer,
-): { settings: PluginSettingValues } | { problem: string } => {
+): { settings: PluginSettingValues } | { problem: Said } => {
   const next: Record<string, string | boolean | null> = { ...kept };
 
   for (const [id, value] of Object.entries(changes)) {
     const setting = manifest.settings.find((each) => each.id === id);
 
     if (setting === undefined) {
-      return { problem: `This plugin has no setting called ${id}.` };
+      return {
+        problem: saying('server.service.changeSettings.thisPluginHasNoSettingCalled', { id }),
+      };
     }
 
     if (value === null) {
@@ -34,11 +38,17 @@ const changeSettings = (
     }
 
     if (setting.kind === 'toggle' ? typeof value !== 'boolean' : typeof value !== 'string') {
-      return { problem: `${setting.label} is the wrong kind of value.` };
+      return {
+        problem: saying('server.service.changeSettings.labelIsTheWrongKindOf', {
+          label: setting.label,
+        }),
+      };
     }
 
     if (typeof value === 'string' && value.length > 4000) {
-      return { problem: `${setting.label} is too long.` };
+      return {
+        problem: saying('server.service.changeSettings.labelIsTooLong', { label: setting.label }),
+      };
     }
 
     next[id] =

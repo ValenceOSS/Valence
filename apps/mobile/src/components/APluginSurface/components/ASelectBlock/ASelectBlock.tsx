@@ -5,6 +5,7 @@ import { ASheet } from '@ValenceMobile/components/ASheet/ASheet';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import type { ASelectBlockProps } from './ASelectBlock.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   choices: { gap: 8 },
@@ -34,12 +35,12 @@ const ASelectBlock = ({ label, value, options, onChoose }: ASelectBlockProps) =>
         tone="ghost"
         icon={ChevronDown}
         isWide
-        label={`${label}: ${chosen?.label ?? 'Nothing chosen'}`}
+        label={`${label}: ${chosen?.label ?? say('common.nothingChosen')}`}
         onPress={() => {
           setIsOpen(true);
         }}
       >
-        {chosen?.label ?? 'Choose'}
+        {chosen?.label ?? say('common.choose')}
       </Button>
 
       <ASheet

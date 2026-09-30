@@ -6,13 +6,17 @@ import { PluginActAnswerSchema } from '@ValenceContracts/schemas/Plugin';
 import type { SurfaceActRequest } from '@ValenceSDK/surface/SurfaceActRequestSchema';
 import type { PluginPlace } from '@ValenceClient/plugins/PluginPlace';
 import type { SurfaceAnswer } from '@ValenceClient/plugins/SurfaceAnswer';
+import { say } from '@ValenceI18n/say';
 
 const PluginPathSchema = z
   .string()
-  .regex(/^\/api\/plugins\/[^/?#]+\//u, 'Only this server’s own plugin addresses are followed')
+  .regex(
+    /^\/api\/plugins\/[^/?#]+\//u,
+    say('client.plugins.actOnPluginSurface.onlyThisServersOwnPluginAddresses'),
+  )
   .refine(
     (to) => !to.includes('//') && !to.includes('\\'),
-    'Only a path on this server is followed',
+    say('client.plugins.actOnPluginSurface.onlyAPathOnThisServer'),
   );
 
 /**
@@ -44,7 +48,7 @@ const actOnPluginSurface = async (
         fields: request.fields,
       },
     },
-    'The plugin could not do that.',
+    say('client.plugins.actOnPluginSurface.thePluginCouldNotDoThat'),
   );
 
   const read = PluginActAnswerSchema.parse(answer);

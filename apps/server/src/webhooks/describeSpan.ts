@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+
 const SECONDS_IN_HOUR = 3600;
 
 const SECONDS_IN_MINUTE = 60;
@@ -23,7 +25,9 @@ const describeSpan = (seconds: number | null): string | null => {
   const hours = Math.floor(seconds / SECONDS_IN_HOUR);
   const minutes = Math.round((seconds % SECONDS_IN_HOUR) / SECONDS_IN_MINUTE);
 
-  return hours === 0 ? `${minutes.toString()}m` : `${hours.toString()}h ${minutes.toString()}m`;
+  return hours === 0
+    ? `${minutes.toString()}m`
+    : say('common.hoursHMinutesM', { hours: hours.toString(), minutes: minutes.toString() });
 };
 
 export { describeSpan };

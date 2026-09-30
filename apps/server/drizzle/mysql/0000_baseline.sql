@@ -182,7 +182,7 @@ CREATE TABLE `job_run` (
 	`startedAt` datetime(3),
 	`finishedAt` datetime(3),
 	`progress` json,
-	`errorMessage` mediumtext,
+	`errorMessage` json,
 	`createdAt` datetime(3) NOT NULL DEFAULT (current_timestamp(3)),
 	CONSTRAINT `job_run_id` PRIMARY KEY(`id`)
 );
@@ -191,7 +191,7 @@ CREATE TABLE `job_run_issue` (
 	`id` varchar(64) NOT NULL,
 	`jobRunId` varchar(64) NOT NULL,
 	`path` mediumtext NOT NULL,
-	`reason` mediumtext NOT NULL,
+	`reason` json NOT NULL,
 	`atMs` bigint NOT NULL,
 	CONSTRAINT `job_run_issue_id` PRIMARY KEY(`id`)
 );
@@ -504,8 +504,8 @@ CREATE TABLE `notification` (
 	`id` varchar(64) NOT NULL,
 	`userId` varchar(64) NOT NULL,
 	`event` mediumtext NOT NULL,
-	`title` mediumtext NOT NULL,
-	`body` mediumtext NOT NULL,
+	`title` json NOT NULL,
+	`body` json NOT NULL,
 	`link` mediumtext,
 	`createdAt` datetime(3) NOT NULL DEFAULT (current_timestamp(3)),
 	`readAt` datetime(3),
@@ -589,7 +589,7 @@ CREATE TABLE `plugin_installation` (
 	`installedBy` varchar(64),
 	`installedAt` datetime(3) NOT NULL DEFAULT (current_timestamp(3)),
 	`updatedAt` datetime(3) NOT NULL DEFAULT (current_timestamp(3)),
-	`problem` mediumtext,
+	`problem` json,
 	CONSTRAINT `plugin_installation_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
@@ -633,7 +633,7 @@ CREATE TABLE `prepared_download` (
 	`bytesPerSecond` bigint,
 	`secondsLeft` int,
 	`sizeBytes` bigint,
-	`failure` mediumtext,
+	`failure` json,
 	`askedFromClientId` mediumtext,
 	`askedAt` datetime(3) NOT NULL DEFAULT (current_timestamp(3)),
 	`readyAt` datetime(3),
@@ -719,7 +719,7 @@ CREATE TABLE `reencode_request` (
 	`producedBytes` bigint,
 	`progress` int NOT NULL DEFAULT 0,
 	`bytesPerSecond` bigint,
-	`failure` mediumtext,
+	`failure` json,
 	`askedBy` mediumtext,
 	`askedAt` datetime(3) NOT NULL DEFAULT (current_timestamp(3)),
 	`startedAt` datetime(3),

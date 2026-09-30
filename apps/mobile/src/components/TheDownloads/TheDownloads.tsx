@@ -1,3 +1,4 @@
+import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import {
   Bin,
   Download as DownloadIcon,
@@ -23,6 +24,7 @@ import { ANothingHere } from '@ValenceMobile/components/ANothingHere/ANothingHer
 import type { Download } from '@ValenceContracts/schemas/Download';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { TheDownloadsProps } from './TheDownloads.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   act: { padding: 10 },
@@ -86,12 +88,12 @@ const TheDownloads = ({
 
   const forget = (row: ARow) => {
     Alert.alert(
-      `Forget ${row.title}?`,
-      'It comes off this phone, and the server stops keeping it.',
+      say('common.forgetTitle', { title: row.title }),
+      say('phone.theDownloads.itComesOffThisPhoneAnd'),
       [
-        { text: 'Keep it', style: 'cancel' },
+        { text: say('common.keepIt'), style: 'cancel' },
         {
-          text: 'Forget it',
+          text: say('phone.theDownloads.forgetIt'),
           style: 'destructive',
           onPress: () => {
             void dropAFile(row.id)
@@ -118,28 +120,32 @@ const TheDownloads = ({
           : null;
     const says =
       file?.state === 'here'
-        ? 'On this phone'
+        ? say('common.onThisPhone')
         : file?.state === 'fetching'
           ? [
-              'Fetching',
+              say('phone.theDownloads.fetching'),
               file.ofBytes === null
                 ? null
-                : `${formatBytes(file.bytes)} of ${formatBytes(file.ofBytes)}`,
+                : say('common.doneOfTotal', {
+                    done: formatBytes(file.bytes),
+                    total: formatBytes(file.ofBytes),
+                  }),
               file.bytesPerSecond === null ? null : `${formatBytes(file.bytesPerSecond)}/s`,
             ]
               .filter((part) => part !== null)
               .join(' · ')
           : file?.state === 'paused'
-            ? 'Paused'
+            ? say('common.paused')
             : file?.state === 'failed'
-              ? (file.failure ?? 'Could not be fetched')
+              ? (file.failure ?? say('phone.theDownloads.couldNotBeFetched'))
               : download?.state === 'preparing'
-                ? 'The server is preparing it'
+                ? say('common.theServerIsPreparingIt')
                 : download?.state === 'ready'
-                  ? 'Ready to fetch'
+                  ? say('phone.theDownloads.readyToFetch')
                   : download?.state === 'failed'
-                    ? (download.failure ?? 'Could not be prepared')
-                    : 'Waiting';
+                    ? (sayAgainIfAny(download.failure) ??
+                      say('phone.theDownloads.couldNotBePrepared'))
+                    : say('common.waiting');
 
     return (
       <View key={row.id} style={{ gap: 6 }}>
@@ -154,7 +160,7 @@ const TheDownloads = ({
           {file?.state === 'here' ? (
             <Button
               tone="bare"
-              label={`Watch ${row.title}`}
+              label={say('phone.theDownloads.watchTitle', { title: row.title })}
               onPress={() => {
                 onWatch(file);
               }}
@@ -169,7 +175,9 @@ const TheDownloads = ({
             <Button
               tone="bare"
               label={
-                file.state === 'paused' ? `Carry on fetching ${row.title}` : `Pause ${row.title}`
+                file.state === 'paused'
+                  ? say('common.carryOnFetchingTitle', { title: row.title })
+                  : say('common.pauseTitle', { title: row.title })
               }
               onPress={() => {
                 void pauseAFile(row.id, file.state !== 'paused');
@@ -184,7 +192,7 @@ const TheDownloads = ({
           {file === null && download?.state === 'ready' ? (
             <Button
               tone="bare"
-              label={`Keep ${row.title} on this phone`}
+              label={say('phone.theDownloads.keepTitleOnThisPhone', { title: row.title })}
               onPress={() => {
                 void keepAFile(download);
               }}
@@ -197,7 +205,7 @@ const TheDownloads = ({
 
           <Button
             tone="bare"
-            label={`Forget ${row.title}`}
+            label={say('phone.theDownloads.forgetTitle', { title: row.title })}
             onPress={() => {
               forget(row);
             }}
@@ -209,7 +217,10 @@ const TheDownloads = ({
         </View>
 
         {fraction === null ? null : (
-          <HowFar fraction={fraction} label={`How far ${row.title} has got`} />
+          <HowFar
+            fraction={fraction}
+            label={say('phone.theDownloads.howFarTitleHasGot', { title: row.title })}
+          />
         )}
       </View>
     );
@@ -222,15 +233,15 @@ const TheDownloads = ({
       {...(onBack === undefined ? {} : { onBack })}
       {...(onScrolled === undefined ? {} : { onScrolled })}
     >
-      {header ?? <Words size="title">Downloads</Words>}
+      {header ?? <Words size="title">{say('common.downloads')}</Words>}
 
       {rows.length > 0 && shown.length === 0 ? (
-        <Words tone="muted">No download is called that.</Words>
+        <Words tone="muted">{say('phone.theDownloads.noDownloadIsCalledThat')}</Words>
       ) : rows.length === 0 ? (
         <ANothingHere
           of={DownloadIcon}
-          title="Nothing downloaded yet"
-          detail="Download a film from its page to watch it without the server."
+          title={say('phone.theDownloads.nothingDownloadedYet')}
+          detail={say('phone.theDownloads.downloadAFilmFromItsPage')}
         />
       ) : (
         drawn

@@ -25,6 +25,8 @@ import type { OverviewPanelProps } from './OverviewPanel.types';
 import { describeJobStatus } from '@ValenceScreens/status/describeJobStatus';
 import { useTicking } from '@ValenceScreens/clock/useTicking';
 import { A_CAPTION_AGES_EVERY } from '@ValenceScreens/clock/A_CAPTION_AGES_EVERY';
+import { say } from '@ValenceI18n/say';
+import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
 
 /**
  * One region of the dashboard: a heading, an optional action in its corner, and whatever the region
@@ -138,8 +140,11 @@ const OverviewPanel = ({
       const measured = await measureStorage();
 
       tellOutcome(
-        'Counted the storage again.',
-        failureOfMissing(measured, 'The storage could not be counted.'),
+        say('screens.adminArea.overviewPanel.countedTheStorageAgain'),
+        failureOfMissing(
+          measured,
+          say('screens.adminArea.overviewPanel.theStorageCouldNotBeCounted'),
+        ),
       );
 
       if (measured !== null) {
@@ -160,7 +165,7 @@ const OverviewPanel = ({
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Region
-          title="Server load"
+          title={say('screens.adminArea.overviewPanel.serverLoad')}
           className="sm:col-span-2 xl:col-span-4"
           actions={<LoadRangeToggle value={loadRange} onChange={setLoadRange} />}
         >
@@ -168,20 +173,29 @@ const OverviewPanel = ({
             <TrendChart
               values={history}
               ceiling={100}
-              label="Processor use over the last minute"
+              label={say('screens.adminArea.overviewPanel.processorUseOverTheLastMinute')}
               caption={
                 resources === null ? (
-                  'Waiting for the first reading.'
+                  say('screens.adminArea.overviewPanel.waitingForTheFirstReading')
                 ) : (
-                  <>
-                    Now <AnimatedNumber value={Math.round(resources.systemCpuPercent)} suffix="%" />{' '}
-                    · peak <AnimatedNumber value={Math.round(Math.max(0, ...history))} suffix="%" />{' '}
-                    · <AnimatedNumber value={resources.cpuCount} suffix=" processors" /> · load{' '}
-                    <AnimatedNumber
-                      value={resources.loadAverage}
-                      format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }}
-                    />
-                  </>
+                  <Sentence
+                    words="screens.adminArea.overviewPanel.nowPeakProcessorsLoad"
+                    fillings={{
+                      now: (
+                        <AnimatedNumber value={Math.round(resources.systemCpuPercent)} suffix="%" />
+                      ),
+                      peak: (
+                        <AnimatedNumber value={Math.round(Math.max(0, ...history))} suffix="%" />
+                      ),
+                      processors: <AnimatedNumber value={resources.cpuCount} />,
+                      load: (
+                        <AnimatedNumber
+                          value={resources.loadAverage}
+                          format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }}
+                        />
+                      ),
+                    }}
+                  />
                 )
               }
             />
@@ -189,32 +203,39 @@ const OverviewPanel = ({
             <TrendChart
               values={rangeValues}
               ceiling={100}
-              label={`Processor use over the last ${loadRange}`}
+              label={say('screens.adminArea.overviewPanel.processorUseOverTheLastLoadRange', {
+                loadRange,
+              })}
               {...(rangeValues.length === 0
                 ? {}
                 : {
                     caption: (
-                      <>
-                        Peak{' '}
-                        <AnimatedNumber
-                          value={Math.round(Math.max(0, ...rangeValues))}
-                          suffix="%"
-                        />{' '}
-                        · average{' '}
-                        <AnimatedNumber
-                          value={Math.round(
-                            rangeValues.reduce((sum, value) => sum + value, 0) / rangeValues.length,
-                          )}
-                          suffix="%"
-                        />{' '}
-                        ·{' '}
-                        {latestRangeSample === null ? (
-                          '—'
-                        ) : (
-                          <AnimatedNumber value={latestRangeSample.cpuCount} />
-                        )}{' '}
-                        processors
-                      </>
+                      <Sentence
+                        words="screens.adminArea.overviewPanel.peakAverageProcessors"
+                        fillings={{
+                          peak: (
+                            <AnimatedNumber
+                              value={Math.round(Math.max(0, ...rangeValues))}
+                              suffix="%"
+                            />
+                          ),
+                          average: (
+                            <AnimatedNumber
+                              value={Math.round(
+                                rangeValues.reduce((sum, value) => sum + value, 0) /
+                                  rangeValues.length,
+                              )}
+                              suffix="%"
+                            />
+                          ),
+                          processors:
+                            latestRangeSample === null ? (
+                              '—'
+                            ) : (
+                              <AnimatedNumber value={latestRangeSample.cpuCount} />
+                            ),
+                        }}
+                      />
                     ),
                   })}
             />
@@ -222,14 +243,16 @@ const OverviewPanel = ({
         </Region>
 
         <Region
-          title="Watching now"
-          action="All sessions"
+          title={say('screens.adminArea.overviewPanel.watchingNow')}
+          action={say('screens.adminArea.overviewPanel.allSessions')}
           onAction={() => {
             onOpenPanel('activity');
           }}
         >
           {watching.length === 0 ? (
-            <p className="text-sm text-text-muted">Nobody is watching anything.</p>
+            <p className="text-sm text-text-muted">
+              {say('screens.adminArea.overviewPanel.nobodyIsWatchingAnything')}
+            </p>
           ) : (
             <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
               {watching.map((session) => (
@@ -244,7 +267,9 @@ const OverviewPanel = ({
                   </span>
 
                   <Badge size="sm">
-                    {session.playback?.mode === 'direct' ? 'Direct' : 'Transcode'}
+                    {session.playback?.mode === 'direct'
+                      ? say('common.direct')
+                      : say('common.transcode')}
                   </Badge>
                 </li>
               ))}
@@ -253,8 +278,8 @@ const OverviewPanel = ({
         </Region>
 
         <Region
-          title="Running now"
-          action="All jobs"
+          title={say('screens.adminArea.overviewPanel.runningNow')}
+          action={say('screens.adminArea.overviewPanel.allJobs')}
           onAction={() => {
             onOpenPanel('jobs');
           }}
@@ -262,11 +287,12 @@ const OverviewPanel = ({
           {running.length === 0 ? (
             <p className="text-sm text-text-muted">
               {waiting === 0 ? (
-                'Nothing is running.'
+                say('screens.adminArea.overviewPanel.nothingIsRunning')
               ) : (
-                <>
-                  Nothing running, <AnimatedNumber value={waiting} suffix=" waiting" />.
-                </>
+                <Sentence
+                  words="screens.adminArea.overviewPanel.nothingRunningWaiting"
+                  fillings={{ waiting: <AnimatedNumber value={waiting} /> }}
+                />
               )}
             </p>
           ) : (
@@ -290,15 +316,17 @@ const OverviewPanel = ({
         </Region>
 
         <Region
-          title="Libraries"
+          title={say('common.libraries')}
           className="sm:col-span-2 xl:col-span-2"
-          action="Manage"
+          action={say('screens.adminArea.overviewPanel.manage')}
           onAction={() => {
             onOpenPanel('libraries');
           }}
         >
           {libraries.length === 0 ? (
-            <p className="text-sm text-text-muted">No libraries yet.</p>
+            <p className="text-sm text-text-muted">
+              {say('screens.adminArea.overviewPanel.noLibrariesYet')}
+            </p>
           ) : (
             <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
               {libraries.map((library) => (
@@ -309,14 +337,17 @@ const OverviewPanel = ({
                       <Badge size="sm">{library.kind}</Badge>
                     </span>
                     <span className="text-xs text-text-muted">
-                      Scanned {describeSince(library.lastScannedAt, now)}
+                      {say('screens.adminArea.overviewPanel.scannedLastScannedAt', {
+                        lastScannedAt: describeSince(library.lastScannedAt, now),
+                      })}
                     </span>
                   </span>
 
                   <span className="shrink-0 text-sm tabular-nums text-text-muted">
-                    <AnimatedNumber
-                      value={library.itemCount}
-                      suffix={library.itemCount === 1 ? ' item' : ' items'}
+                    <Sentence
+                      counted="common.count.items"
+                      count={library.itemCount}
+                      fillings={{ count: <AnimatedNumber value={library.itemCount} /> }}
                     />
                   </span>
                 </li>
@@ -326,9 +357,9 @@ const OverviewPanel = ({
         </Region>
 
         <Region
-          title="Storage Valence is using"
+          title={say('screens.adminArea.overviewPanel.storageValenceIsUsing')}
           className="sm:col-span-2 xl:col-span-4"
-          action="Refresh"
+          action={say('screens.adminArea.overviewPanel.refresh')}
           actionIcon={RefreshCwIcon}
           isActionBusy={isCounting}
           onAction={() => {
@@ -352,8 +383,8 @@ const OverviewPanel = ({
         </Region>
 
         <Region
-          title="Recent jobs"
-          action="All work"
+          title={say('screens.adminArea.overviewPanel.recentJobs')}
+          action={say('screens.adminArea.overviewPanel.allWork')}
           onAction={() => {
             onOpenPanel('jobs');
           }}

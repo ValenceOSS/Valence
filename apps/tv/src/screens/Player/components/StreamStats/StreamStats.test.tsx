@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { render } from '@testing-library/react-native';
 import { MediaDetailSchema } from '@ValenceContracts/schemas/Library';
 import { StreamStats } from '@ValenceTv/screens/Player/components/StreamStats/StreamStats';
@@ -34,7 +35,7 @@ const SESSION: StartedSession = {
     container: {
       kind: 'remux',
       target: 'mp4',
-      reason: { code: 'ContainerNotSupported', detail: 'mkv is not played here' },
+      reason: { code: 'ContainerNotSupported', detail: sayVerbatim('mkv is not played here') },
     },
     video: {
       kind: 'transcode',
@@ -43,16 +44,19 @@ const SESSION: StartedSession = {
       maxBitrateKbps: 8000,
       maxWidth: 1920,
       maxHeight: 1080,
-      reason: { code: 'VideoResolutionAboveLimit', detail: 'too large' },
+      reason: { code: 'VideoResolutionAboveLimit', detail: sayVerbatim('too large') },
     },
     audio: {
       kind: 'passthrough',
       streamIndex: 1,
-      reason: { code: 'ClientSupportsSource', detail: 'eac3 plays as it is' },
+      reason: { code: 'ClientSupportsSource', detail: sayVerbatim('eac3 plays as it is') },
     },
-    subtitles: { kind: 'none', reason: { code: 'ClientSupportsSource', detail: 'none chosen' } },
+    subtitles: {
+      kind: 'none',
+      reason: { code: 'ClientSupportsSource', detail: sayVerbatim('none chosen') },
+    },
   },
-  warnings: ['Tone mapped', 'Slow disk'],
+  warnings: [sayVerbatim('Tone mapped'), sayVerbatim('Slow disk')],
   reuse: 'whole',
 };
 

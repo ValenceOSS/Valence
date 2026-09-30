@@ -1,7 +1,8 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { UploadPiecesSchema, UploadStartedSchema } from '@ValenceContracts/schemas/UploadPieces';
 
-const UploadError = z.object({ error: z.string() }).openapi('UploadError');
+const UploadError = RefusalSchema.openapi('UploadError');
 
 const UploadedSchema = z
   .object({ path: z.string(), bytes: z.number().int().nonnegative() })

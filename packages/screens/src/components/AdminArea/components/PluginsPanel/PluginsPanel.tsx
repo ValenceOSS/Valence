@@ -1,3 +1,4 @@
+import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Upload as UploadIcon } from '@keyline-icons/react';
@@ -23,6 +24,7 @@ import { PluginPageDialog } from '@ValenceScreens/components/AdminArea/component
 import { RemovePluginDialog } from '@ValenceScreens/components/AdminArea/components/PluginsPanel/components/RemovePluginDialog/RemovePluginDialog';
 import { PluginSettingsDialog } from '@ValenceScreens/components/AdminArea/components/PluginsPanel/components/PluginSettingsDialog/PluginSettingsDialog';
 import type { InstallPreview, InstalledPlugin } from '@ValenceContracts/schemas/Plugin';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Everything about the plugins on this server: the ones installed and how they are getting on, the
@@ -58,7 +60,9 @@ const PluginsPanel = () => {
     void changePlugin(plugin.id, { isEnabled: !plugin.isEnabled })
       .then(() => {
         tellOutcome(
-          plugin.isEnabled ? `Turned ${plugin.name} off.` : `Turned ${plugin.name} on.`,
+          plugin.isEnabled
+            ? say('screens.adminArea.pluginsPanel.turnedNameOff', { name: plugin.name })
+            : say('screens.adminArea.pluginsPanel.turnedNameOn', { name: plugin.name }),
           null,
         );
       })
@@ -88,11 +92,11 @@ const PluginsPanel = () => {
   return (
     <div className="flex flex-col gap-4">
       <PanelCard
-        title="Installed plugins"
+        title={say('screens.adminArea.pluginsPanel.installedPlugins')}
         isFlush
         actions={
           <FilePicker
-            label="Install from a file"
+            label={say('screens.adminArea.pluginsPanel.installFromAFile')}
             accept=".vplugin,.sig"
             size="sm"
             variant="secondary"
@@ -102,10 +106,7 @@ const PluginsPanel = () => {
               const signature = files.find((file) => file.name.endsWith('.sig')) ?? null;
 
               if (plugin === null) {
-                tellOutcome(
-                  '',
-                  'Choose a .vplugin file, and its .sig file with it where it has one.',
-                );
+                tellOutcome('', say('screens.adminArea.pluginsPanel.chooseAVpluginFileAndIts'));
 
                 return;
               }
@@ -123,24 +124,27 @@ const PluginsPanel = () => {
             }}
           >
             <Icon of={UploadIcon} size={14} />
-            Install from a file
+            {say('screens.adminArea.pluginsPanel.installFromAFile')}
           </FilePicker>
         }
       >
         {installed.isError ? (
           <CouldNotRead
-            what="The plugins"
+            said={say('screens.adminArea.pluginsPanel.thePluginsCouldNotBeRead')}
             isTryingAgain={installed.isFetching}
             onTryAgain={() => {
               void installed.refetch();
             }}
           />
         ) : installed.isPending ? (
-          <Spinner isCentered size="sm" label="Reading the plugins" />
+          <Spinner
+            isCentered
+            size="sm"
+            label={say('screens.adminArea.pluginsPanel.readingThePlugins')}
+          />
         ) : installed.data.plugins.length === 0 ? (
           <p className="px-4 py-6 text-sm text-text-muted">
-            No plugins yet. Plugins run in a sandbox on this server and can only do what you allow
-            when you install them.
+            {say('screens.adminArea.pluginsPanel.noPluginsYetPluginsRunIn')}
           </p>
         ) : (
           <ul className="flex flex-col divide-y divide-border/50">
@@ -173,23 +177,32 @@ const PluginsPanel = () => {
         )}
       </PanelCard>
 
-      <PanelCard title="Official plugins" isFlush>
+      <PanelCard title={say('screens.adminArea.pluginsPanel.officialPlugins')} isFlush>
         {catalogue.isError ? (
           <CouldNotRead
-            what="The catalogue"
+            said={say('common.theCatalogueCouldNotBeRead')}
             isTryingAgain={catalogue.isFetching}
             onTryAgain={() => {
               void catalogue.refetch();
             }}
           />
         ) : catalogue.isPending ? (
-          <Spinner isCentered size="sm" label="Reading the catalogue" />
+          <Spinner isCentered size="sm" label={say('common.readingTheCatalogue')} />
         ) : !catalogue.data.isReachable ? (
-          <Callout title="Official plugins are unavailable" tone="warning" className="m-4">
-            {`${catalogue.data.problem ?? 'The plugin catalogue could not be reached.'} Plugins already installed keep working.`}
+          <Callout
+            title={say('screens.adminArea.pluginsPanel.officialPluginsAreUnavailable')}
+            tone="warning"
+            className="m-4"
+          >
+            {say('screens.adminArea.pluginsPanel.problemPluginsAlreadyInstalledKeepWorking', {
+              problem:
+                sayAgainIfAny(catalogue.data.problem) ?? say('common.thePluginCatalogueCouldNotBe'),
+            })}
           </Callout>
         ) : catalogue.data.plugins.length === 0 ? (
-          <p className="px-4 py-6 text-sm text-text-muted">The catalogue has no plugins yet.</p>
+          <p className="px-4 py-6 text-sm text-text-muted">
+            {say('screens.adminArea.pluginsPanel.theCatalogueHasNoPluginsYet')}
+          </p>
         ) : (
           <ul className="flex flex-col divide-y divide-border/50">
             {catalogue.data.plugins.map((entry) => (
@@ -237,9 +250,19 @@ const PluginsPanel = () => {
       />
 
       <ConfirmDialog
-        title={rollingBack === null ? 'Roll back this plugin?' : `Roll back ${rollingBack.name}?`}
-        detail={`${rollingBack?.previousVersion ?? 'The earlier version'} comes back with what it had kept as it was when the upgrade happened. Anything it kept since the upgrade is lost.`}
-        confirmLabel="Roll back"
+        title={
+          rollingBack === null
+            ? say('screens.adminArea.pluginsPanel.rollBackThisPlugin')
+            : say('screens.adminArea.pluginsPanel.rollBackName', { name: rollingBack.name })
+        }
+        detail={
+          rollingBack === null || rollingBack.previousVersion === null
+            ? say('screens.adminArea.pluginsPanel.theEarlierVersionComesBackWithWhat')
+            : say('screens.adminArea.pluginsPanel.versionComesBackWithWhat', {
+                version: rollingBack.previousVersion,
+              })
+        }
+        confirmLabel={say('screens.adminArea.pluginsPanel.rollBack')}
         isBusy={rollingBack !== null && busy === rollingBack.id}
         isOpen={rollingBack !== null}
         onClose={() => {
@@ -256,7 +279,13 @@ const PluginsPanel = () => {
 
           void rollbackPlugin(plugin.id)
             .then((back) => {
-              tellOutcome(`Rolled ${plugin.name} back to ${back.version}.`, null);
+              tellOutcome(
+                say('screens.adminArea.pluginsPanel.rolledNameBackToVersion', {
+                  name: plugin.name,
+                  version: back.version,
+                }),
+                null,
+              );
             })
             .catch((problem: Error) => {
               tellOutcome('', problem.message);
@@ -293,7 +322,7 @@ const PluginsPanel = () => {
 
           void removePlugin(plugin.id)
             .then(() => {
-              tellOutcome(`Removed ${plugin.name}.`, null);
+              tellOutcome(say('common.removedName', { name: plugin.name }), null);
             })
             .catch((problem: Error) => {
               tellOutcome('', problem.message);

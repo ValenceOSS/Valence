@@ -8,10 +8,11 @@ import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { ArtistShelf } from '@ValenceScreens/components/ArtistShelf/ArtistShelf';
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
+import { say } from '@ValenceI18n/say';
 
 const WHICH = [
-  { id: 'all', label: 'Everyone' },
-  { id: 'followed', label: 'Following' },
+  { id: 'all', label: say('common.everyone') },
+  { id: 'followed', label: say('common.following') },
 ] as const;
 
 /**
@@ -25,7 +26,7 @@ const ArtistsView = () => {
 
   const which = (
     <SegmentedRow
-      label="Which artists to show"
+      label={say('common.whichArtistsToShow')}
       size="sm"
       items={WHICH}
       value={isFollowedOnly ? 'followed' : 'all'}
@@ -38,7 +39,10 @@ const ArtistsView = () => {
   if (artists.isPending) {
     return (
       <div className={`py-8 ${MUSIC_LANES.page}`}>
-        <Skeleton label="Reading your artists" className="h-64 w-full" />
+        <Skeleton
+          label={say('screens.musicPage.artistsView.readingYourArtists')}
+          className="h-64 w-full"
+        />
       </div>
     );
   }
@@ -52,16 +56,18 @@ const ArtistsView = () => {
           <div className={`flex justify-end ${MUSIC_LANES.page}`}>{which}</div>
           <NothingHere
             of={UserIcon}
-            title={isFollowedOnly ? 'Not following anybody yet' : 'No artists yet'}
+            title={
+              isFollowedOnly ? say('common.notFollowingAnybodyYet') : say('common.noArtistsYet')
+            }
             detail={
               isFollowedOnly
-                ? 'Follow an artist from their page and they will be here.'
-                : 'Once a music library has been scanned, its artists will be here.'
+                ? say('common.followAnArtistFromTheirPage')
+                : say('common.onceAMusicLibraryHasBeen2')
             }
           />
         </>
       ) : (
-        <ArtistShelf heading="Artists" layout="grid" artists={found} action={which} />
+        <ArtistShelf heading={say('common.artists')} layout="grid" artists={found} action={which} />
       )}
     </div>
   );

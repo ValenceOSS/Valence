@@ -13,6 +13,7 @@ import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Picks an icon for a device by what it calls itself.
@@ -60,13 +61,13 @@ const DevicesPanel = () => {
       >
         <Icon of={iconFor(platformInUse().describeThisClient())} size={22} />
         <span className="flex min-w-0 flex-1 flex-col">
-          <span className="truncate text-sm font-semibold">This device</span>
+          <span className="truncate text-sm font-semibold">{say('common.thisDevice')}</span>
           <span className="truncate text-xs text-text-muted">
             {isHere
               ? shown === null
-                ? 'Ready to play'
-                : 'Playing here'
-              : `Controlling ${remote.label}`}
+                ? say('screens.musicPage.devicesPanel.readyToPlay')
+                : say('screens.musicPage.devicesPanel.playingHere')
+              : say('screens.musicPage.devicesPanel.controllingLabel', { label: remote.label })}
           </span>
         </span>
         {isHere ? null : (
@@ -77,19 +78,19 @@ const DevicesPanel = () => {
               player.playHere(shown?.positionSeconds ?? 0, shown?.isPlaying ?? true);
             }}
           >
-            Play here
+            {say('common.playHere')}
           </Button>
         )}
       </div>
 
-      <section aria-label="Your other devices" className="flex flex-col gap-1">
+      <section aria-label={say('common.yourOtherDevices')} className="flex flex-col gap-1">
         <h3 className="px-1 text-xs font-semibold uppercase tracking-[0.14em] text-text-muted">
-          Your other devices
+          {say('common.yourOtherDevices')}
         </h3>
 
         {others.length === 0 ? (
           <p className="px-1 text-sm text-text-muted">
-            Open Valence on another device, signed in as you, and it will be here.
+            {say('common.openValenceOnAnotherDeviceSigned')}
           </p>
         ) : (
           <ul className="flex flex-col">
@@ -102,7 +103,7 @@ const DevicesPanel = () => {
                     variant="bare"
                     size="none"
                     hasTooltip={false}
-                    label={`Play on ${device.label}`}
+                    label={say('common.playOnLabel', { label: device.label })}
                     disabled={state.current === null && device.nowPlaying === null}
                     className={cn(
                       'flex w-full items-center gap-3 rounded-lg p-3 text-left transition-colors hover:bg-hover',
@@ -119,8 +120,8 @@ const DevicesPanel = () => {
                       <span className="truncate text-sm font-semibold">{device.label}</span>
                       <span className="truncate text-xs text-text-muted">
                         {device.nowPlaying === null
-                          ? 'Not playing'
-                          : `${device.nowPlaying.isPlaying ? 'Playing' : 'Paused on'} ${device.nowPlaying.title}`}
+                          ? say('common.notPlaying')
+                          : `${device.nowPlaying.isPlaying ? say('common.playing') : say('common.pausedOn')} ${device.nowPlaying.title}`}
                       </span>
                     </span>
                     <Icon of={ChevronRightIcon} size={16} />

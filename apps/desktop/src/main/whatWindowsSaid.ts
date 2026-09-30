@@ -1,9 +1,11 @@
+import { say } from '@ValenceI18n/say';
+
 const CANCELLED = new Set(['NotAllowedError', 'AbortError']);
 
 const SAID = new Map([
-  ['InvalidStateError', 'This device already has a passkey for this account.'],
-  ['NotSupportedError', 'This device cannot make the kind of passkey Valence asks for.'],
-  ['SecurityError', 'Windows would not use a passkey for this server’s address.'],
+  ['InvalidStateError', say('desktop.main.whatWindowsSaid.thisDeviceAlreadyHasAPasskey')],
+  ['NotSupportedError', say('desktop.main.whatWindowsSaid.thisDeviceCannotMakeTheKind')],
+  ['SecurityError', say('desktop.main.whatWindowsSaid.windowsWouldNotUseAPasskey')],
 ]);
 
 /**
@@ -24,7 +26,10 @@ const whatWindowsSaid = (
     return { kind: 'cancelled' };
   }
 
-  return { kind: 'failed', reason: SAID.get(name) ?? 'Windows could not use a passkey just now.' };
+  return {
+    kind: 'failed',
+    reason: SAID.get(name) ?? say('desktop.main.whatWindowsSaid.windowsCouldNotUseAPasskey'),
+  };
 };
 
 export { whatWindowsSaid };

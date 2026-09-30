@@ -173,7 +173,7 @@ describe('ApiKeyPanel', () => {
 
     render(<ApiKeyPanel />);
 
-    expect(await screen.findByText('1 permissions')).toBeInTheDocument();
+    expect(await screen.findByText('1 permission')).toBeInTheDocument();
   });
 
   it('says what a limited key is limited to', async () => {

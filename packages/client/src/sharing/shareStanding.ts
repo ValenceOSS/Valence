@@ -1,4 +1,5 @@
 import type { Share } from '@ValenceContracts/schemas/Share';
+import { say } from '@ValenceI18n/say';
 
 type ShareStanding = { label: string; isLive: boolean; canWithdraw: boolean };
 
@@ -16,16 +17,20 @@ type ShareStanding = { label: string; isLive: boolean; canWithdraw: boolean };
  */
 const shareStanding = (share: Share, now: number): ShareStanding => {
   if (share.isRevoked) {
-    return { label: 'Withdrawn', isLive: false, canWithdraw: false };
+    return {
+      label: say('client.sharing.shareStanding.withdrawn'),
+      isLive: false,
+      canWithdraw: false,
+    };
   }
 
   if (share.expiresAt !== null && Date.parse(share.expiresAt) <= now) {
-    return { label: 'Ran out', isLive: false, canWithdraw: false };
+    return { label: say('client.sharing.shareStanding.ranOut'), isLive: false, canWithdraw: false };
   }
 
   return share.isSpent
-    ? { label: 'All used up', isLive: false, canWithdraw: true }
-    : { label: 'Live', isLive: true, canWithdraw: true };
+    ? { label: say('client.sharing.shareStanding.allUsedUp'), isLive: false, canWithdraw: true }
+    : { label: say('common.live'), isLive: true, canWithdraw: true };
 };
 
 export type { ShareStanding };

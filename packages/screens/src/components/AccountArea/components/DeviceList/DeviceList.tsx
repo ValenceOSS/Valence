@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Icon } from '@ValenceUI/Icon';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
@@ -16,6 +17,8 @@ import { endDevice, endOtherDevices, fetchDevices } from '@ValenceClient/account
 import { saidWhen } from '@ValenceClient/format/saidWhen';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Device } from '@ValenceClient/account/fetchDevices';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * Everywhere this account is signed in — each device, when it was last used, and a way to end it.
@@ -40,16 +43,16 @@ const DeviceList = () => {
     () => [
       {
         id: 'name',
-        header: 'Device',
-        accessorFn: (device) => device.name,
+        header: say('common.device'),
+        accessorFn: (device) => sayAgain(device.name),
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col gap-0.5">
             <span className="flex flex-wrap items-center gap-2">
-              <span className="truncate font-medium text-text">{row.original.name}</span>
+              <span className="truncate font-medium text-text">{sayAgain(row.original.name)}</span>
 
               {!row.original.isCurrent ? null : (
                 <Badge size="sm" tone="accent">
-                  This one
+                  {say('screens.accountArea.deviceList.thisOne')}
                 </Badge>
               )}
             </span>
@@ -62,11 +65,11 @@ const DeviceList = () => {
       },
       {
         id: 'signedIn',
-        header: 'Signed in',
+        header: say('common.signedIn'),
         accessorFn: (device) => device.signedInAt,
         cell: ({ row }) => (
           <span className="whitespace-nowrap text-xs text-text-muted">
-            {saidWhen(row.original.signedInAt)}
+            {saidWhen(row.original.signedInAt) ?? '—'}
           </span>
         ),
       },
@@ -78,14 +81,14 @@ const DeviceList = () => {
           row.original.isCurrent ? null : (
             <span className="flex justify-end">
               <ActionMenu
-                label={`Actions for ${row.original.name}`}
+                label={say('common.actionsForName', { name: sayAgain(row.original.name) })}
                 trigger={<Icon of={MoreHorizontalIcon} size={16} />}
                 groups={[
                   {
                     items: [
                       {
                         id: 'end',
-                        label: 'Sign this out',
+                        label: say('common.signThisOut'),
                         icon: <Icon of={DoorOpenFilledIcon} size={15} />,
                         isDestructive: true,
                         onChoose: () => {
@@ -105,7 +108,7 @@ const DeviceList = () => {
 
   return (
     <PanelCard
-      title="Devices"
+      title={say('common.devices')}
       isFlush
       actions={
         elsewhere.length === 0 ? undefined : (
@@ -115,19 +118,19 @@ const DeviceList = () => {
               setIsEndingRest(true);
             }}
           >
-            Sign out everywhere else
+            {say('common.signOutEverywhereElse')}
           </PanelCardAction>
         )
       }
     >
       <ConfirmDialog
-        title="Sign this device out?"
+        title={say('common.signThisDeviceOut')}
         detail={
           ending === null
             ? ''
-            : `${ending.name} will be signed out and whoever is using it has to sign in again.`
+            : say('common.nameWillBeSignedOutAnd', { name: sayAgain(ending.name) })
         }
-        confirmLabel="Sign it out"
+        confirmLabel={say('common.signItOut')}
         isDestructive
         isOpen={ending !== null}
         onClose={() => {
@@ -145,11 +148,12 @@ const DeviceList = () => {
       />
 
       <ConfirmDialog
-        title="Sign out everywhere else?"
-        detail={`${elsewhere.length.toString()} other ${
-          elsewhere.length === 1 ? 'device' : 'devices'
-        } will be signed out. This one stays as it is.`}
-        confirmLabel="Sign them out"
+        title={say('common.signOutEverywhereElse2')}
+        detail={sayCount(
+          'screens.accountArea.deviceList.countOtherDevicesWillBeSigned',
+          elsewhere.length,
+        )}
+        confirmLabel={say('common.signThemOut')}
         isDestructive
         isBusy={isWorking}
         isOpen={isEndingRest}
@@ -168,13 +172,17 @@ const DeviceList = () => {
       />
 
       {devices === null ? (
-        <Spinner isCentered label="Reading your devices" size="sm" />
+        <Spinner
+          isCentered
+          label={say('screens.accountArea.deviceList.readingYourDevices')}
+          size="sm"
+        />
       ) : (
         <DataTable
-          label="Where you are signed in"
+          label={say('screens.accountArea.deviceList.whereYouAreSignedIn')}
           columns={columns}
           rows={devices}
-          emptyMessage="Nothing is signed in, which cannot be true of the thing you are reading this on. Try again in a moment."
+          emptyMessage={say('screens.accountArea.deviceList.nothingIsSignedInWhichCannot')}
         />
       )}
     </PanelCard>

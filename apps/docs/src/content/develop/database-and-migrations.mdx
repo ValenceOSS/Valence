@@ -136,7 +136,7 @@ Background work runs on a queue Valence keeps in its own database, so it runs on
 - **Schedules** are rows in `job_schedule`, each holding its cron, its time zone and the next moment it fires. They are rebuilt from the stored triggers at start-up, and whichever check moves a schedule's next moment on first is the one that sends its job.
 - **Retention.** Finished jobs are deleted a week after they end.
 
-Valence keeps its history separately: `createJobHistoryStore` records each run, its progress and its outcome in `job_run` so the admin screens can show them after the queue has forgotten the job. Migration `0092_job_queue` carried across whatever pg-boss, the queue before this one, had waiting, and left its `valence_jobs` schema in place for one release so that going back a version still works.
+Valence keeps its history separately: `createJobHistoryStore` records each run, its progress and its outcome in `job_run` so the admin screens can show them after the queue has forgotten the job. Migration `0093_job_queue` carried across whatever pg-boss, the queue before this one, had waiting, and left its `valence_jobs` schema in place for one release so that going back a version still works.
 
 ## Writing a safe migration
 

@@ -1,3 +1,4 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { randomUUID } from 'node:crypto';
 import { IndexerDraftSchema, ReleaseSearchSchema } from '@ValenceContracts/schemas/Indexer';
 import { settingsOf } from '@ValenceRequests/cardigann/settingsOf';
@@ -24,6 +25,7 @@ import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
 import type { IndexerClient } from '@ValenceRequests/indexers/createIndexerClient';
 import type { IndexerRecord, IndexerStore } from '@ValenceRequests/indexers/IndexerRecord';
 import type { ReleaseFile } from '@ValenceRequests/indexers/ReleaseFile';
+import { saying } from '@ValenceI18n/saying';
 
 type CreateIndexerServiceOptions = {
   store: IndexerStore;
@@ -38,7 +40,7 @@ const TURN_OFF_AFTER = 5;
 
 const FAILING_AFTER = 3;
 
-const UNASKABLE = 'The indexer could not be asked';
+const UNASKABLE = saying('requests.indexers.indexerService.theIndexerCouldNotBeAsked');
 
 const CAPTCHA = 'CAPTCHA';
 
@@ -180,11 +182,7 @@ const createIndexerService = ({
     });
   };
 
-  const failed = async (
-    record: IndexerRecord,
-    problem: string,
-    problemCode: ProblemCode | null,
-  ) => {
+  const failed = async (record: IndexerRecord, problem: Said, problemCode: ProblemCode | null) => {
     const failures = record.failures + 1;
     const isTurningOff = record.isEnabled && failures >= turnOffAfter;
 
@@ -197,7 +195,10 @@ const createIndexerService = ({
       ...(isTurningOff
         ? {
             isEnabled: false,
-            turnedOffBecause: `Turned off after ${failures.toString()} failures in a row: ${problem}`,
+            turnedOffBecause: saying(
+              'requests.indexers.indexerService.turnedOffAfterFailuresFailuresIn',
+              { failures: failures.toString(), problem },
+            ),
           }
         : {}),
     });
@@ -215,7 +216,7 @@ const createIndexerService = ({
     } catch (error) {
       return {
         isWorking: false,
-        problem: error instanceof IndexerFailure ? error.message : UNASKABLE,
+        problem: error instanceof IndexerFailure ? error.said : UNASKABLE,
         problemCode: error instanceof IndexerFailure ? error.problemCode : null,
         capabilities: null,
         captcha: error instanceof CaptchaNeeded ? { image: error.image } : null,
@@ -229,7 +230,10 @@ const createIndexerService = ({
 
     if (read.kind === 'cardigann' && definition === null) {
       return {
-        problem: `There is no definition named ${read.definitionId ?? 'nothing'} in the catalogue`,
+        problem:
+          read.definitionId === null
+            ? saying('requests.indexers.noDefinitionNamedAtAll')
+            : saying('requests.indexers.noDefinitionNamed', { definition: read.definitionId }),
       };
     }
 
@@ -246,11 +250,11 @@ const createIndexerService = ({
           .map(shown),
       ),
 
-    add: async (draft: IndexerDraft): Promise<Indexer | string> => {
+    add: async (draft: IndexerDraft): Promise<Indexer | { refused: Said }> => {
       const prepared = await fromDraft(draft, null);
 
       if ('problem' in prepared) {
-        return prepared.problem;
+        return { refused: prepared.problem };
       }
 
       const { read, secrets } = prepared;
@@ -413,7 +417,7 @@ const createIndexerService = ({
               },
             };
           } catch (error) {
-            const problem = error instanceof IndexerFailure ? error.message : UNASKABLE;
+            const problem = error instanceof IndexerFailure ? error.said : UNASKABLE;
             const problemCode = error instanceof IndexerFailure ? error.problemCode : null;
 
             await failed(record, problem, problemCode);
@@ -493,7 +497,8 @@ const createIndexerService = ({
                   {
                     id: record.id,
                     name: record.name,
-                    problem: record.lastProblem ?? 'Failing',
+                    problem:
+                      record.lastProblem ?? saying('requests.indexers.indexerService.failing'),
                     problemCode: record.lastProblemCode ?? 'IndexerFailing',
                   },
                 ]

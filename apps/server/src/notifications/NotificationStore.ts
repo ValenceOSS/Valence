@@ -1,3 +1,4 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import type {
   Notification,
   NotificationEvent,
@@ -6,8 +7,8 @@ import type {
 
 type NewNotification = {
   event: NotificationEvent;
-  title: string;
-  body: string;
+  title: Said;
+  body: Said;
   link: string | null;
 };
 

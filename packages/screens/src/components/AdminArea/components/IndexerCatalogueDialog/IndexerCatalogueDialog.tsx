@@ -1,3 +1,4 @@
+import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { notify } from '@ValenceUI/notify';
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -29,27 +30,32 @@ import type {
 } from '@ValenceContracts/schemas/IndexerDefinition';
 import type { IndexerCatalogueDialogProps } from './IndexerCatalogueDialog.types';
 import { Card } from '@ValenceUI/Card';
+import { say } from '@ValenceI18n/say';
 
 const PRIVACIES = [
-  { id: 'any', label: 'Any' },
-  { id: 'public', label: 'Public' },
+  { id: 'any', label: say('common.any') },
+  { id: 'public', label: say('screens.adminArea.indexerCatalogueDialog.public') },
   { id: 'semi-private', label: 'Semi-private' },
-  { id: 'private', label: 'Private' },
+  { id: 'private', label: say('screens.adminArea.indexerCatalogueDialog.private') },
 ] as const;
 
 const PRIVACY: Readonly<Record<IndexerPrivacy, { label: string; tone: BadgeTone }>> = {
-  public: { label: 'Public', tone: 'success' },
+  public: { label: say('screens.adminArea.indexerCatalogueDialog.public'), tone: 'success' },
   'semi-private': { label: 'Semi-private', tone: 'warning' },
-  private: { label: 'Private', tone: 'accent' },
+  private: { label: say('screens.adminArea.indexerCatalogueDialog.private'), tone: 'accent' },
 };
 
 const GENERIC: readonly { id: 'torznab' | 'newznab'; name: string; description: string }[] = [
   {
     id: 'torznab',
-    name: 'Generic Torznab',
-    description: 'Any torrent indexer with a Torznab feed, such as one from Jackett or Prowlarr.',
+    name: say('screens.adminArea.indexerCatalogueDialog.genericTorznab'),
+    description: say('screens.adminArea.indexerCatalogueDialog.anyTorrentIndexerWithATorznab'),
   },
-  { id: 'newznab', name: 'Generic Newznab', description: 'Any usenet indexer with a Newznab API.' },
+  {
+    id: 'newznab',
+    name: say('screens.adminArea.indexerCatalogueDialog.genericNewznab'),
+    description: say('screens.adminArea.indexerCatalogueDialog.anyUsenetIndexerWithANewznab'),
+  },
 ];
 
 /**
@@ -89,7 +95,7 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
     () => [
       {
         id: 'name',
-        header: 'Site',
+        header: say('common.site'),
         accessorFn: (definition) => definition.name,
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col gap-0.5">
@@ -100,13 +106,13 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
       },
       {
         id: 'language',
-        header: 'Language',
+        header: say('common.language'),
         accessorFn: (definition) => definition.language,
         cell: ({ row }) => <span className="text-xs text-text-muted">{row.original.language}</span>,
       },
       {
         id: 'privacy',
-        header: 'Privacy',
+        header: say('screens.adminArea.indexerCatalogueDialog.privacy'),
         accessorFn: (definition) => definition.privacy,
         cell: ({ row }) => (
           <Badge size="sm" tone={PRIVACY[row.original.privacy].tone}>
@@ -116,7 +122,7 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
       },
       {
         id: 'categories',
-        header: 'Has',
+        header: say('screens.adminArea.indexerCatalogueDialog.has'),
         enableSorting: false,
         cell: ({ row }) => (
           <span className="flex flex-wrap gap-1">
@@ -139,11 +145,13 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
     void refreshCatalogue()
       .then((fresh) => {
         cache.setQueryData(requestsQueries.catalogue().queryKey, fresh);
-        notify.worked('Brought the catalogue up to date.');
+        notify.worked(say('screens.adminArea.indexerCatalogueDialog.broughtTheCatalogueUpToDate'));
       })
       .catch(() => {
-        notify.failed('The catalogue could not be brought up to date.');
-        setProblem('The catalogue could not be brought up to date.');
+        notify.failed(
+          say('screens.adminArea.indexerCatalogueDialog.theCatalogueCouldNotBeBrought'),
+        );
+        setProblem(say('screens.adminArea.indexerCatalogueDialog.theCatalogueCouldNotBeBrought'));
       })
       .finally(() => {
         setIsRefreshing(false);
@@ -157,7 +165,9 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
     onSelect: (next: string) => void,
   ) => (
     <OptionMenu
-      label={`Filter by ${label.toLowerCase()}`}
+      label={say('screens.adminArea.indexerCatalogueDialog.filterByLabel', {
+        label: label.toLowerCase(),
+      })}
       triggerShape="field"
       className="w-40"
       groups={[
@@ -166,14 +176,25 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
           selectedId: value,
           onSelect,
           options: [
-            { id: '', label: `Any ${label.toLowerCase()}` },
+            {
+              id: '',
+              label: say('screens.adminArea.indexerCatalogueDialog.anyLabel', {
+                label: label.toLowerCase(),
+              }),
+            },
             ...options.map((option) => ({ id: option, label: option })),
           ],
         },
       ]}
       trigger={
         <>
-          <span className="truncate">{value === '' ? `Any ${label.toLowerCase()}` : value}</span>
+          <span className="truncate">
+            {value === ''
+              ? say('screens.adminArea.indexerCatalogueDialog.anyLabel', {
+                  label: label.toLowerCase(),
+                })
+              : value}
+          </span>
           <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
         </>
       }
@@ -181,11 +202,16 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
   );
 
   return (
-    <DialogCompanion label="Add an indexer" isOpen={isOpen} onClose={onClose} size="stage">
+    <DialogCompanion
+      label={say('common.addAnIndexer')}
+      isOpen={isOpen}
+      onClose={onClose}
+      size="stage"
+    >
       <DialogTitle
         size="compact"
-        title="Add an indexer"
-        detail="Choose the site to search, or a generic Torznab or Newznab feed for one that is not listed."
+        title={say('common.addAnIndexer')}
+        detail={say('screens.adminArea.indexerCatalogueDialog.chooseTheSiteToSearchOr')}
       />
 
       <DialogContent className="flex min-h-0 flex-col gap-4 overflow-hidden">
@@ -208,19 +234,24 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
 
         <div className="flex shrink-0 flex-wrap items-end gap-3">
           <TextField
-            label="Find a site"
+            label={say('screens.adminArea.indexerCatalogueDialog.findASite')}
             type="search"
             value={words}
             onValueChange={setWords}
-            placeholder="1337x, rutracker, anime…"
+            placeholder={say('screens.adminArea.indexerCatalogueDialog.n1337xRutrackerAnime')}
             className="min-w-[14rem] flex-1"
           />
-          {menu('Category', category, categories, setCategory)}
-          {menu('Language', language, languages, setLanguage)}
+          {menu(
+            say('screens.adminArea.indexerCatalogueDialog.category'),
+            category,
+            categories,
+            setCategory,
+          )}
+          {menu(say('common.language'), language, languages, setLanguage)}
         </div>
 
         <SegmentedRow
-          label="Privacy"
+          label={say('screens.adminArea.indexerCatalogueDialog.privacy')}
           size="sm"
           className="shrink-0 self-start"
           items={PRIVACIES}
@@ -236,18 +267,18 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
 
         {asked.isError ? (
           <CouldNotRead
-            what="The catalogue"
+            said={say('common.theCatalogueCouldNotBeRead')}
             isTryingAgain={asked.isFetching}
             onTryAgain={() => {
               void asked.refetch();
             }}
           />
         ) : asked.isPending ? (
-          <Spinner isCentered label="Reading the catalogue" size="sm" />
+          <Spinner isCentered label={say('common.readingTheCatalogue')} size="sm" />
         ) : (
           <Card padding="none" className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <DataTable
-              label="Sites"
+              label={say('screens.adminArea.indexerCatalogueDialog.sites')}
               columns={columns}
               rows={shown}
               height="parent"
@@ -259,18 +290,21 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
               }}
               emptyMessage={
                 asked.data.definitions.length === 0
-                  ? 'The catalogue is empty. Bring it up to date to fetch the sites Valence can search.'
-                  : 'No site matches. Try fewer words, or another category.'
+                  ? say('screens.adminArea.indexerCatalogueDialog.theCatalogueIsEmptyBringIt')
+                  : say('screens.adminArea.indexerCatalogueDialog.noSiteMatchesTryFewerWords')
               }
             />
           </Card>
         )}
       </DialogContent>
 
-      <DialogFooter note={problem ?? asked.data?.problem} dismiss={{ onChoose: onClose }}>
+      <DialogFooter
+        note={problem ?? sayAgainIfAny(asked.data?.problem)}
+        dismiss={{ onChoose: onClose }}
+      >
         <Button variant="secondary" isLoading={isRefreshing} onClick={refresh}>
           <Icon of={RefreshCwIcon} size={15} />
-          Bring up to date
+          {say('screens.adminArea.indexerCatalogueDialog.bringUpToDate')}
         </Button>
       </DialogFooter>
     </DialogCompanion>

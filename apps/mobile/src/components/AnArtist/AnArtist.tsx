@@ -25,6 +25,8 @@ import { useAskAboutAnAlbum } from '@ValenceMobile/music/useAskAboutAnAlbum';
 import { AnArtistStory } from '@ValenceMobile/components/AnArtist/components/AnArtistStory/AnArtistStory';
 import type { MusicAlbum } from '@ValenceContracts/schemas/Music';
 import type { AnArtistProps } from './AnArtist.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const POPULAR_AT_FIRST = 5;
 
@@ -62,7 +64,7 @@ const AnArtist = ({ artistId, onAlbum, onArtist, onPlaylist, onBack }: AnArtistP
   if (read.data === undefined) {
     return (
       <Screen centres onBack={onBack}>
-        <Words tone="danger">That artist could not be read.</Words>
+        <Words tone="danger">{say('phone.anArtist.thatArtistCouldNotBeRead')}</Words>
       </Screen>
     );
   }
@@ -101,9 +103,9 @@ const AnArtist = ({ artistId, onAlbum, onArtist, onPlaylist, onBack }: AnArtistP
   return (
     <Screen scrolls onBack={onBack} behind={<AMoodBackground palette={lights} />}>
       <AMusicHead
-        kind="Artist"
+        kind={say('common.artist')}
         title={artist.name}
-        detail={`${artist.albumCount.toString()} ${artist.albumCount === 1 ? 'album' : 'albums'}`}
+        detail={sayCount('common.count.albums', artist.albumCount)}
         artwork={artist.hasImage ? onThisServer(artistImageUrl(artist.id)) : null}
         standIn={Mic}
         isRound
@@ -126,13 +128,13 @@ const AnArtist = ({ artistId, onAlbum, onArtist, onPlaylist, onBack }: AnArtistP
             );
           }}
         >
-          {artist.isFavourite ? 'Following' : 'Follow'}
+          {artist.isFavourite ? say('common.following') : say('common.follow')}
         </Button>
       </AMusicHead>
 
       {popular.length === 0 ? null : (
         <>
-          <Words size="heading">Popular</Words>
+          <Words size="heading">{say('common.popular')}</Words>
           <ATrackList
             tracks={shown}
             source={source}
@@ -147,14 +149,14 @@ const AnArtist = ({ artistId, onAlbum, onArtist, onPlaylist, onBack }: AnArtistP
                 setIsAllOfIt((was) => !was);
               }}
             >
-              {isAllOfIt ? 'Show fewer' : 'Show all'}
+              {isAllOfIt ? say('phone.anArtist.showFewer') : say('phone.anArtist.showAll')}
             </Button>
           ) : null}
         </>
       )}
 
-      {shelf('Albums', albums)}
-      {shelf('Appears on', appearsOn)}
+      {shelf(say('common.albums'), albums)}
+      {shelf(say('common.appearsOn'), appearsOn)}
 
       <AnArtistStory artistId={artist.id} name={artist.name} />
 

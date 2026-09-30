@@ -1,11 +1,12 @@
-import { createRoute, z } from '@hono/zod-openapi';
+import { createRoute } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
   HouseholdRequestSchema,
   HouseholdSchema,
   OnboardingSchema,
 } from '@ValenceContracts/schemas/Household';
 
-const HouseholdError = z.object({ error: z.string() }).openapi('HouseholdError');
+const HouseholdError = RefusalSchema.openapi('HouseholdError');
 
 const Household = HouseholdSchema.openapi('Household');
 const Onboarding = OnboardingSchema.openapi('Onboarding');

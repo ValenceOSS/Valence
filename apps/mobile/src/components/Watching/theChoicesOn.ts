@@ -17,6 +17,7 @@ import type { MediaDetail } from '@ValenceContracts/schemas/Library';
 import { QualityPreferenceSchema } from '@ValenceClient/playback/qualityPreference';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { ASetOfChoices } from '@ValenceMobile/components/Watching/components/TheChoices/TheChoices.types';
+import { say } from '@ValenceI18n/say';
 
 const AS_SENT = 'original';
 
@@ -88,10 +89,10 @@ const theChoicesOn = ({
 
   if (subtitles.length > 0) {
     sets.push({
-      heading: 'Subtitles',
+      heading: say('common.subtitles'),
       chosen: chosenSubtitle,
       choices: [
-        { id: SUBTITLES_OFF, label: 'Off' },
+        { id: SUBTITLES_OFF, label: say('common.off') },
         ...subtitles.map((track) => ({
           id: track.id,
           label: track.label,
@@ -104,7 +105,7 @@ const theChoicesOn = ({
 
   if (subtitles.length > 0 && chosenSubtitle !== SUBTITLES_OFF) {
     sets.push({
-      heading: 'Subtitle timing',
+      heading: say('common.subtitleTiming'),
       chosen: subtitleOffset.toString(),
       choices: NUDGES.map((nudge) => ({
         id: nudge.toString(),
@@ -118,7 +119,7 @@ const theChoicesOn = ({
 
   if (streams.length > 1) {
     sets.push({
-      heading: 'Audio',
+      heading: say('common.audio'),
       chosen: (
         chosenAudio ??
         streams.find((one) => one.isDefault)?.index ??
@@ -141,13 +142,13 @@ const theChoicesOn = ({
 
   if (rungs.length > 0) {
     sets.push({
-      heading: 'Quality',
+      heading: say('common.quality'),
       chosen: chosenQuality,
       choices: [
         {
           id: AS_SENT,
-          label: media === null ? 'Original' : originalLabel(media),
-          detail: 'As it is on the server',
+          label: media === null ? say('common.original') : originalLabel(media),
+          detail: say('phone.watching.theChoicesOn.asItIsOnTheServer'),
         },
         ...rungs.flatMap((rung) => {
           const step = QUALITY_STEPS.find((one) => one.id === rung);
@@ -176,7 +177,7 @@ const theChoicesOn = ({
   }
 
   sets.push({
-    heading: 'Speed',
+    heading: say('common.speed'),
     chosen: rate.toString(),
     choices: PLAYBACK_RATES.map((one) => ({
       id: one.toString(),

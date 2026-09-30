@@ -1,3 +1,4 @@
+import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { Icon } from '@ValenceUI/Icon';
 import { TriangleAlert as TriangleAlertIcon } from '@keyline-icons/react';
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
@@ -71,6 +72,7 @@ import { deleteSeries } from '@ValenceClient/library/deleteSeries';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { AnimatedBytes } from '@ValenceScreens/components/AnimatedBytes/AnimatedBytes';
+import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
 import { appearanceQueries } from '@ValenceClient/query/appearanceQueries';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
@@ -96,7 +98,6 @@ import { libraryDisk } from './libraryDisk';
 import { describeGraphics } from './describeGraphics';
 import { describeFfmpeg } from './describeFfmpeg';
 import { describeCpuShare } from './describeCpuShare';
-import { describeValenceMemory } from './describeValenceMemory';
 import { describeAcceleration } from './describeAcceleration';
 import { describeChains } from './describeChains';
 import { describeToneMapping } from './describeToneMapping';
@@ -143,6 +144,7 @@ import { ReleaseSearchPanel } from './components/ReleaseSearchPanel/ReleaseSearc
 import type { AdminAreaProps } from './AdminArea.types';
 import type { ObservabilitySearch } from '@ValenceClient/admin/ObservabilitySearchSchema';
 import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
+import { say } from '@ValenceI18n/say';
 
 const NO_ALBUMS: MusicAlbum[] = [];
 
@@ -404,15 +406,17 @@ const AdminArea = ({
   };
 
   const nameOfLibrary = (libraryId: string): string =>
-    libraries.find((library) => library.id === libraryId)?.name ?? 'The library';
+    libraries.find((library) => library.id === libraryId)?.name ?? say('common.theLibrary');
 
   const rescan = async (libraryId: string, force = false) => {
     const name = nameOfLibrary(libraryId);
     const taken = await startScan(libraryId, force);
 
     tellOutcome(
-      force ? `Read every file of ${name} again.` : `Scanned ${name}.`,
-      failureOfAnswer(taken, `${name} could not be scanned.`),
+      force
+        ? say('screens.adminArea.readEveryFileOfNameAgain', { name })
+        : say('screens.adminArea.scannedName', { name }),
+      failureOfAnswer(taken, say('screens.adminArea.nameCouldNotBeScanned', { name })),
     );
     await reloadLibraries();
   };
@@ -421,8 +425,8 @@ const AdminArea = ({
     const taken = await startScanAll(libraries);
 
     tellOutcome(
-      'Read every file of every library again.',
-      failureOfAnswer(taken, 'Not every library could be read again.'),
+      say('screens.adminArea.readEveryFileOfEveryLibrary'),
+      failureOfAnswer(taken, say('screens.adminArea.notEveryLibraryCouldBeRead')),
     );
     await reloadLibraries();
   };
@@ -431,8 +435,8 @@ const AdminArea = ({
     const taken = await startResetAll(libraries);
 
     tellOutcome(
-      'Rebuilt every library.',
-      failureOfAnswer(taken, 'Not every library could be rebuilt.'),
+      say('screens.adminArea.rebuiltEveryLibrary'),
+      failureOfAnswer(taken, say('screens.adminArea.notEveryLibraryCouldBeRebuilt')),
     );
     await reloadLibraries();
   };
@@ -442,15 +446,15 @@ const AdminArea = ({
     const taken = await startRegeneratePreviews(libraryId);
 
     tellOutcome(
-      `Generated the missing previews of ${name}.`,
-      failureOfAnswer(taken, `The previews of ${name} could not be generated.`),
+      say('screens.adminArea.generatedTheMissingPreviewsOfName', { name }),
+      failureOfAnswer(taken, say('screens.adminArea.thePreviewsOfNameCouldNot', { name })),
     );
   };
 
   const runJob = useCallback(
     async (kind: string, libraryIds?: string[], parts?: LibraryPart[]) => {
       const definition = jobDefinitions.find((candidate) => candidate.kind === kind);
-      const label = definition?.label ?? kind;
+      const label = sayAgainIfAny(definition?.label) ?? kind;
       const chosen =
         libraryIds === undefined
           ? libraries
@@ -463,7 +467,10 @@ const AdminArea = ({
             ? await runDefinedJobAll(kind, chosen)
             : await runDefinedJob(kind);
 
-      tellOutcome(`${label} finished.`, failureOfAnswer(taken, `${label} could not be started.`));
+      tellOutcome(
+        say('common.labelFinished', { label }),
+        failureOfAnswer(taken, say('screens.adminArea.labelCouldNotBeStarted', { label })),
+      );
       await reloadLibraries();
     },
     [jobDefinitions, libraries, reloadLibraries],
@@ -476,8 +483,8 @@ const AdminArea = ({
     const added = await addJobTrigger(kind, trigger);
 
     const isAdded = tellOutcome(
-      'Schedule added.',
-      failureOfMissing(added, 'That schedule could not be added.'),
+      say('screens.adminArea.scheduleAdded'),
+      failureOfMissing(added, say('screens.adminArea.thatScheduleCouldNotBeAdded')),
     );
 
     if (added === null || !isAdded) {
@@ -518,8 +525,8 @@ const AdminArea = ({
 
     if (
       !tellOutcome(
-        'Schedule removed.',
-        failureOfAnswer(removed, 'That schedule could not be removed.'),
+        say('screens.adminArea.scheduleRemoved'),
+        failureOfAnswer(removed, say('screens.adminArea.thatScheduleCouldNotBeRemoved')),
       )
     ) {
       await reloadSchedules();
@@ -548,12 +555,13 @@ const AdminArea = ({
 
   const stopJob = useCallback(
     (kind: string) => {
-      const label = jobDefinitions.find((candidate) => candidate.kind === kind)?.label ?? kind;
+      const label =
+        sayAgainIfAny(jobDefinitions.find((candidate) => candidate.kind === kind)?.label) ?? kind;
 
       void stopJobs(kind).then((stopped) => {
         tellOutcome(
-          `Asked ${label} to stop.`,
-          failureOfAnswer(stopped, `${label} could not be stopped.`),
+          say('screens.adminArea.askedLabelToStop', { label }),
+          failureOfAnswer(stopped, say('screens.adminArea.labelCouldNotBeStopped', { label })),
         );
       });
     },
@@ -565,8 +573,11 @@ const AdminArea = ({
 
     try {
       tellOutcome(
-        'Stopped that stream.',
-        failureOfAnswer(await stopSession(clientId), 'That stream could not be stopped.'),
+        say('screens.adminArea.stoppedThatStream'),
+        failureOfAnswer(
+          await stopSession(clientId),
+          say('screens.adminArea.thatStreamCouldNotBeStopped'),
+        ),
       );
       await reloadSessions();
     } finally {
@@ -579,8 +590,11 @@ const AdminArea = ({
 
     try {
       tellOutcome(
-        'Paused that stream.',
-        failureOfAnswer(await pauseSession(clientId), 'That stream could not be paused.'),
+        say('screens.adminArea.pausedThatStream'),
+        failureOfAnswer(
+          await pauseSession(clientId),
+          say('screens.adminArea.thatStreamCouldNotBePaused'),
+        ),
       );
       await reloadSessions();
     } finally {
@@ -593,8 +607,11 @@ const AdminArea = ({
 
     try {
       tellOutcome(
-        'Sent the message.',
-        failureOfAnswer(await messageSession(clientId, text), 'The message could not be sent.'),
+        say('screens.adminArea.sentTheMessage'),
+        failureOfAnswer(
+          await messageSession(clientId, text),
+          say('screens.adminArea.theMessageCouldNotBeSent'),
+        ),
       );
     } finally {
       setBusyClientId(null);
@@ -606,8 +623,11 @@ const AdminArea = ({
 
     try {
       tellOutcome(
-        'Resumed that stream.',
-        failureOfAnswer(await resumeSession(clientId), 'That stream could not be resumed.'),
+        say('screens.adminArea.resumedThatStream'),
+        failureOfAnswer(
+          await resumeSession(clientId),
+          say('screens.adminArea.thatStreamCouldNotBeResumed'),
+        ),
       );
       await reloadSessions();
     } finally {
@@ -678,17 +698,17 @@ const AdminArea = ({
   const graphicsInfo = (
     <dl className="flex flex-col gap-2 text-xs">
       <div className="flex items-baseline justify-between gap-3">
-        <dt className="shrink-0 text-text-muted">Hardware encoding</dt>
+        <dt className="shrink-0 text-text-muted">{say('screens.adminArea.hardwareEncoding')}</dt>
         <dd className="min-w-0 truncate text-text">{acceleration?.label ?? '—'}</dd>
       </div>
 
       <div className="flex items-baseline justify-between gap-3">
-        <dt className="shrink-0 text-text-muted">Hardware chains</dt>
+        <dt className="shrink-0 text-text-muted">{say('screens.adminArea.hardwareChains')}</dt>
         <dd className="min-w-0 truncate text-text">{chains?.label ?? '—'}</dd>
       </div>
 
       <div className="flex items-baseline justify-between gap-3">
-        <dt className="shrink-0 text-text-muted">HDR conversion</dt>
+        <dt className="shrink-0 text-text-muted">{say('screens.adminArea.hDRConversion')}</dt>
         <dd className="min-w-0 truncate text-text">{toneMapping?.label ?? '—'}</dd>
       </div>
 
@@ -698,14 +718,14 @@ const AdminArea = ({
 
       {ffmpegLine === null ? null : (
         <div className="flex items-baseline justify-between gap-3">
-          <dt className="shrink-0 text-text-muted">Transcoder</dt>
+          <dt className="shrink-0 text-text-muted">{say('screens.adminArea.transcoder')}</dt>
           <dd className="min-w-0 text-right text-text">{ffmpegLine}</dd>
         </div>
       )}
 
       {(resources?.graphicsNotes ?? []).length === 0 ? null : (
         <div className="flex flex-col gap-1 border-t border-[var(--surface-line)] pt-2">
-          <dt className="text-text-muted">Why there is no figure</dt>
+          <dt className="text-text-muted">{say('screens.adminArea.whyThereIsNoFigure')}</dt>
 
           {(resources?.graphicsNotes ?? []).map((note) => (
             <dd key={note} className="text-text">
@@ -830,7 +850,7 @@ const AdminArea = ({
         <StatStrip
           stats={[
             {
-              label: 'Processor',
+              label: say('screens.adminArea.processor'),
               value: (
                 <AnimatedNumber value={Math.round(resources?.systemCpuPercent ?? 0)} suffix="%" />
               ),
@@ -838,52 +858,73 @@ const AdminArea = ({
               detail:
                 resources === null ? (
                   '—'
+                ) : cpuShare === null ? (
+                  <Sentence
+                    counted="screens.adminArea.coresValenceNotMeasured"
+                    count={resources.cpuCount}
+                    fillings={{ count: <AnimatedNumber value={resources.cpuCount} /> }}
+                  />
                 ) : (
-                  <>
-                    <AnimatedNumber value={resources.cpuCount} suffix=" cores" /> · Valence{' '}
-                    {cpuShare !== null && cpuShare >= 1 ? (
-                      <AnimatedNumber value={Math.round(cpuShare)} suffix="%" />
-                    ) : (
-                      describeCpuShare(cpuShare)
-                    )}
-                  </>
+                  <Sentence
+                    counted="screens.adminArea.coresValenceShare"
+                    count={resources.cpuCount}
+                    fillings={{
+                      count: <AnimatedNumber value={resources.cpuCount} />,
+                      share:
+                        cpuShare >= 1 ? (
+                          <AnimatedNumber value={Math.round(cpuShare)} suffix="%" />
+                        ) : (
+                          describeCpuShare(cpuShare)
+                        ),
+                    }}
+                  />
                 ),
             },
             {
-              label: 'Memory',
+              label: say('screens.adminArea.memory'),
               value: memory === null ? '—' : <AnimatedBytes bytes={memory.usedBytes} />,
               fraction: memoryFraction,
               detail:
                 memory === null ? (
                   '—'
+                ) : valenceMemory === null ? (
+                  <Sentence
+                    words={
+                      memory.isLimited
+                        ? 'screens.adminArea.ofTotalAllowedValenceNotMeasured'
+                        : 'screens.adminArea.ofTotalValenceNotMeasured'
+                    }
+                    fillings={{ total: <AnimatedBytes bytes={memory.totalBytes} /> }}
+                  />
                 ) : (
-                  <>
-                    of{' '}
-                    <AnimatedBytes
-                      bytes={memory.totalBytes}
-                      suffix={memory.isLimited ? ' allowed' : ''}
-                    />{' '}
-                    · Valence{' '}
-                    {valenceMemory === null ? (
-                      describeValenceMemory(valenceMemory)
-                    ) : (
-                      <AnimatedBytes bytes={valenceMemory} />
-                    )}
-                  </>
+                  <Sentence
+                    words={
+                      memory.isLimited
+                        ? 'screens.adminArea.ofTotalAllowedValenceUses'
+                        : 'screens.adminArea.ofTotalValenceUses'
+                    }
+                    fillings={{
+                      total: <AnimatedBytes bytes={memory.totalBytes} />,
+                      used: <AnimatedBytes bytes={valenceMemory} />,
+                    }}
+                  />
                 ),
             },
             {
-              label: 'Graphics',
+              label: say('screens.adminArea.graphics'),
               ...describeGraphics(resources?.graphics ?? null, resources?.graphicsNotes ?? []),
               info: graphicsInfo,
             },
             {
-              label: 'Storage',
+              label: say('screens.adminArea.storage'),
               value:
                 mediaDisk === null ? (
                   '—'
                 ) : (
-                  <AnimatedBytes bytes={mediaDisk.availableBytes} suffix=" free" />
+                  <Sentence
+                    words="screens.adminArea.sizeFree"
+                    fillings={{ size: <AnimatedBytes bytes={mediaDisk.availableBytes} /> }}
+                  />
                 ),
               ...(mediaDisk === null
                 ? {}
@@ -893,11 +934,15 @@ const AdminArea = ({
                   }),
               detail:
                 mediaDisk === null ? (
-                  'Not measured'
+                  say('screens.adminArea.notMeasured')
                 ) : (
-                  <>
-                    of <AnimatedBytes bytes={mediaDisk.totalBytes} /> · {mediaDisk.mountPoint}
-                  </>
+                  <Sentence
+                    words="screens.adminArea.ofTotalOnMount"
+                    fillings={{
+                      total: <AnimatedBytes bytes={mediaDisk.totalBytes} />,
+                      mountPoint: mediaDisk.mountPoint,
+                    }}
+                  />
                 ),
             },
           ]}
@@ -912,8 +957,7 @@ const AdminArea = ({
           className="flex flex-wrap items-center gap-3 rounded-xl border border-danger/40 bg-danger/10 px-5 py-4 font-body text-sm text-text"
         >
           <Icon of={TriangleAlertIcon} size={18} tone="danger" className="shrink-0" />
-          Some of this could not be read from the server, so parts of the page may be missing rather
-          than empty.
+          {say('screens.adminArea.someOfThisCouldNotBeRead')}
           <Button
             variant="ghost"
             size="sm"
@@ -921,7 +965,7 @@ const AdminArea = ({
               void loadAll();
             }}
           >
-            Try again
+            {say('common.tryAgain')}
           </Button>
         </motion.p>
       )}
@@ -1013,9 +1057,12 @@ const AdminArea = ({
               onChooseMoment={(item) => {
                 void fetchTrickplay(item.id).then((found) => {
                   if (found === null) {
-                    notify.say(`Scrub previews for ${item.title} have not finished yet.`, {
-                      description: 'A preview moment can be chosen once they have.',
-                    });
+                    notify.say(
+                      say('screens.adminArea.scrubPreviewsForTitleHaveNot', { title: item.title }),
+                      {
+                        description: say('screens.adminArea.aPreviewMomentCanBeChosen'),
+                      },
+                    );
 
                     return;
                   }
@@ -1025,10 +1072,10 @@ const AdminArea = ({
               }}
               onRebuildArtefacts={async (item) =>
                 tellOutcome(
-                  `Rebuilding the previews of ${item.title}.`,
+                  say('screens.adminArea.rebuildingThePreviewsOfTitle', { title: item.title }),
                   failureOfMissing(
                     await rebuildArtefacts(item.id),
-                    `The previews of ${item.title} could not be rebuilt.`,
+                    say('screens.adminArea.thePreviewsOfTitleCouldNot', { title: item.title }),
                   ),
                 )
               }
@@ -1038,10 +1085,15 @@ const AdminArea = ({
                       const seriesId = isWholeSeries ? (item.seriesId ?? null) : null;
                       const name = isWholeSeries ? (item.seriesTitle ?? item.title) : item.title;
                       const isGone = tellOutcome(
-                        `Deleted ${name}.`,
-                        await failureOfThrown(async () => {
-                          await (seriesId === null ? deleteMedia(item.id) : deleteSeries(seriesId));
-                        }, `${name} could not be deleted.`),
+                        say('common.deletedName', { name }),
+                        await failureOfThrown(
+                          async () => {
+                            await (seriesId === null
+                              ? deleteMedia(item.id)
+                              : deleteSeries(seriesId));
+                          },
+                          say('common.nameCouldNotBeDeleted', { name }),
+                        ),
                       );
 
                       if (isGone) {
@@ -1097,10 +1149,10 @@ const AdminArea = ({
               onReview={setReviewing}
               onStop={async (one) => {
                 const stopped = tellOutcome(
-                  'Stopped the re-encode.',
+                  say('screens.adminArea.stoppedTheReEncode'),
                   failureOfAnswer(
                     await cancelReencode(one.id),
-                    'That re-encode could not be stopped.',
+                    say('screens.adminArea.thatReEncodeCouldNotBe'),
                   ),
                 );
 
@@ -1203,7 +1255,9 @@ const AdminArea = ({
               onCreate={async (webhook) => {
                 const { created, refusal } = await createWebhook(webhook);
 
-                if (tellOutcome('Webhook created.', failureOfRefusal(refusal))) {
+                if (
+                  tellOutcome(say('screens.adminArea.webhookCreated'), failureOfRefusal(refusal))
+                ) {
                   setCreatedWebhook(created);
                   await reloadWebhooks();
                 }
@@ -1213,7 +1267,7 @@ const AdminArea = ({
               onEdit={async (id, change) => {
                 const refusal = await changeWebhook(id, change);
 
-                if (tellOutcome('Webhook saved.', failureOfRefusal(refusal))) {
+                if (tellOutcome(say('screens.adminArea.webhookSaved'), failureOfRefusal(refusal))) {
                   await reloadWebhooks();
                 }
 
@@ -1225,7 +1279,9 @@ const AdminArea = ({
               onSetEnabled={(id, enabled) => {
                 void setWebhookEnabled(id, enabled).then((refusal) => {
                   tellOutcome(
-                    enabled ? 'Webhook turned on.' : 'Webhook turned off.',
+                    enabled
+                      ? say('screens.adminArea.webhookTurnedOn')
+                      : say('screens.adminArea.webhookTurnedOff'),
                     failureOfRefusal(refusal),
                   );
 
@@ -1234,14 +1290,17 @@ const AdminArea = ({
               }}
               onDelete={(id) => {
                 void deleteWebhook(id).then((refusal) => {
-                  tellOutcome('Webhook deleted.', failureOfRefusal(refusal));
+                  tellOutcome(say('screens.adminArea.webhookDeleted'), failureOfRefusal(refusal));
 
                   return reloadWebhooks();
                 });
               }}
               onTest={(id) => {
                 void testWebhook(id).then((refusal) => {
-                  tellOutcome('Sent a test delivery.', failureOfRefusal(refusal));
+                  tellOutcome(
+                    say('screens.adminArea.sentATestDelivery'),
+                    failureOfRefusal(refusal),
+                  );
                 });
               }}
               deliveries={deliveries}
@@ -1250,7 +1309,7 @@ const AdminArea = ({
               onOpenHistory={setOpenHistoryId}
               onRedeliver={(subscriptionId, deliveryId) => {
                 void redeliverWebhook(subscriptionId, deliveryId).then((refusal) => {
-                  tellOutcome('Delivered it again.', failureOfRefusal(refusal));
+                  tellOutcome(say('screens.adminArea.deliveredItAgain'), failureOfRefusal(refusal));
 
                   return reloadDeliveries(subscriptionId);
                 });
@@ -1320,8 +1379,8 @@ const AdminArea = ({
 
       <CorrectionPicker<MusicCatalogueHit>
         title={correctingAlbum?.title ?? null}
-        detail="Choosing here says which record this album is and takes that record's cover. Its title and songs stay as its files say, and later scans keep the choice."
-        searchLabel="Search for a record"
+        detail={say('screens.adminArea.choosingHereSaysWhichRecordThis')}
+        searchLabel={say('screens.adminArea.searchForARecord')}
         startingQuery={
           correctingAlbum === null ? '' : `${correctingAlbum.artist.name} ${correctingAlbum.title}`
         }
@@ -1332,12 +1391,12 @@ const AdminArea = ({
         keyOf={(match) => match.musicBrainzId}
         choose={(match) =>
           correctingAlbum === null
-            ? Promise.resolve('No album is being corrected.')
+            ? Promise.resolve(say('screens.adminArea.noAlbumIsBeingCorrected'))
             : correctAlbum(correctingAlbum.id, match)
         }
         forget={() =>
           correctingAlbum === null
-            ? Promise.resolve('No album is being corrected.')
+            ? Promise.resolve(say('screens.adminArea.noAlbumIsBeingCorrected'))
             : forgetAlbumCorrection(correctingAlbum.id)
         }
         onChanged={() => {
@@ -1351,8 +1410,8 @@ const AdminArea = ({
 
       <CorrectionPicker<BookMatch>
         title={correctingBook?.title ?? null}
-        detail="Choosing here takes this book's title, authors, year, description and cover from Open Library, and later scans keep the choice."
-        searchLabel="Search for a book"
+        detail={say('screens.adminArea.choosingHereTakesThisBooksTitle')}
+        searchLabel={say('common.searchForABook')}
         startingQuery={
           correctingBook === null
             ? ''
@@ -1365,7 +1424,7 @@ const AdminArea = ({
               id: match.openLibraryId.toString(),
               title: match.title,
               year: match.year,
-              detail: match.author ?? 'Author unknown',
+              detail: match.author ?? say('screens.adminArea.authorUnknown'),
               posterUrl: match.coverUrl,
             }))}
             busyId={busyId}
@@ -1381,12 +1440,12 @@ const AdminArea = ({
         keyOf={(match) => match.openLibraryId.toString()}
         choose={(match) =>
           correctingBook === null
-            ? Promise.resolve('No book is being corrected.')
+            ? Promise.resolve(say('screens.adminArea.noBookIsBeingCorrected'))
             : correctBook(correctingBook.id, match.openLibraryId)
         }
         forget={() =>
           correctingBook === null
-            ? Promise.resolve('No book is being corrected.')
+            ? Promise.resolve(say('screens.adminArea.noBookIsBeingCorrected'))
             : forgetBookCorrection(correctingBook.id)
         }
         onChanged={() => {
@@ -1428,8 +1487,8 @@ const AdminArea = ({
           const isStarted = started !== null && started.started.length > 0;
 
           tellOutcome(
-            'Started re-encoding.',
-            failureOfAnswer(isStarted, 'Nothing could be re-encoded.'),
+            say('screens.adminArea.startedReEncoding'),
+            failureOfAnswer(isStarted, say('screens.adminArea.nothingCouldBeReEncoded')),
           );
           await reloadReencodes();
 
@@ -1445,8 +1504,11 @@ const AdminArea = ({
         reencode={reviewing}
         onConfirm={async (id) => {
           const done = tellOutcome(
-            'Kept the new encode and removed the original.',
-            failureOfAnswer(await confirmReencode(id), 'That could not be confirmed.'),
+            say('screens.adminArea.keptTheNewEncodeAndRemoved'),
+            failureOfAnswer(
+              await confirmReencode(id),
+              say('screens.adminArea.thatCouldNotBeConfirmed'),
+            ),
           );
 
           await Promise.all([reloadReencodes(), loadAll()]);
@@ -1455,8 +1517,8 @@ const AdminArea = ({
         }}
         onReject={async (id) => {
           const done = tellOutcome(
-            'Put the original back.',
-            failureOfAnswer(await rejectReencode(id), 'That could not be put back.'),
+            say('screens.adminArea.putTheOriginalBack'),
+            failureOfAnswer(await rejectReencode(id), say('common.thatCouldNotBePutBack')),
           );
 
           await Promise.all([reloadReencodes(), loadAll()]);

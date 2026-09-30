@@ -3,6 +3,7 @@ import { Button } from '@ValenceUI/Button';
 import { TextField } from '@ValenceUI/TextField';
 import { confirmItIsYou } from '@ValenceClient/session/auth';
 import type { ConfirmItIsYouProps } from './ConfirmItIsYou.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Asks somebody signed in a while ago for their password before they add a passkey, since the server
@@ -43,12 +44,12 @@ const ConfirmItIsYou = ({ onConfirmed }: ConfirmItIsYouProps) => {
       }}
     >
       <TextField
-        label="Password"
+        label={say('common.password')}
         type="password"
         value={password}
         onValueChange={setPassword}
         autoComplete="current-password"
-        description="You signed in a while ago. Confirm your password to add a passkey."
+        description={say('screens.passkeySetup.confirmItIsYou.youSignedInAWhileAgo')}
         className="min-w-56 flex-1"
         {...(problem === null ? {} : { error: problem })}
       />
@@ -60,7 +61,7 @@ const ConfirmItIsYou = ({ onConfirmed }: ConfirmItIsYouProps) => {
         isLoading={isConfirming}
         disabled={password === ''}
       >
-        Confirm
+        {say('common.confirm')}
       </Button>
     </form>
   );

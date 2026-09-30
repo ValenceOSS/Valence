@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { describeItemBadge } from './describeItemBadge';
 import type { RequestItem } from '@ValenceContracts/schemas/MediaRequest';
@@ -42,7 +43,10 @@ describe('describeItemBadge', () => {
       describeItemBadge(item({ state: 'downloading', releaseTitle: 'Show.S01E01.1080p' }), TODAY),
     ).toMatchObject({ label: 'Downloading', detail: 'Show.S01E01.1080p' });
     expect(
-      describeItemBadge(item({ state: 'failed', problem: 'No release was good enough' }), TODAY),
+      describeItemBadge(
+        item({ state: 'failed', problem: sayVerbatim('No release was good enough') }),
+        TODAY,
+      ),
     ).toMatchObject({ label: 'Failed', tone: 'danger', detail: 'No release was good enough' });
   });
 

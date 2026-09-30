@@ -29,6 +29,7 @@ import { useShell } from '@ValenceClient/shell/useShell';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import type { LibraryKind, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { LibraryBrowserProps } from './LibraryBrowser.types';
+import { say } from '@ValenceI18n/say';
 
 const HERO_COUNT = 5;
 
@@ -213,7 +214,7 @@ const LibraryBrowser = ({
   if (askedFor.isError || page.isError) {
     return (
       <CouldNotRead
-        what="Your library"
+        said={say('common.yourLibraryCouldNotBeRead')}
         isTryingAgain={askedFor.isFetching || page.isFetching}
         onTryAgain={() => {
           void askedFor.refetch();
@@ -227,7 +228,7 @@ const LibraryBrowser = ({
     return onReading !== undefined ? null : (
       <SplashScreen
         {...(name === undefined ? {} : { name })}
-        label="Reading your library"
+        label={say('screens.libraryBrowser.readingYourLibrary')}
         hasMark={false}
       />
     );
@@ -237,11 +238,11 @@ const LibraryBrowser = ({
     return (
       <NothingHere
         of={FolderOpenIcon}
-        title="No libraries yet"
+        title={say('common.noLibrariesYet')}
         detail={
           onAddLibrary === undefined
-            ? 'Ask the server admin to add one.'
-            : 'Add one to get started.'
+            ? say('common.askTheServerAdminToAdd')
+            : say('common.addOneToGetStarted')
         }
         fills
         {...(onAddLibrary === undefined
@@ -249,7 +250,7 @@ const LibraryBrowser = ({
           : {
               action: (
                 <Button variant="glossy" onClick={onAddLibrary}>
-                  Add a library
+                  {say('common.addALibrary')}
                 </Button>
               ),
             })}
@@ -263,8 +264,8 @@ const LibraryBrowser = ({
     return (
       <NothingHere
         of={FolderOpenIcon}
-        title="Nothing to watch yet"
-        detail="This server has no films or programmes yet."
+        title={say('common.nothingToWatchYet')}
+        detail={say('screens.libraryBrowser.thisServerHasNoFilmsOr')}
         fills
         {...(hasMusic
           ? {
@@ -275,7 +276,7 @@ const LibraryBrowser = ({
                     go({ section: 'music' });
                   }}
                 >
-                  Go to Music
+                  {say('screens.libraryBrowser.goToMusic')}
                 </Button>
               ),
             }
@@ -410,7 +411,12 @@ const LibraryBrowser = ({
 
                   {isHome && hasMore ? (
                     <div ref={setEnd} className="flex h-16 items-center justify-center">
-                      {isReadingMore ? <Spinner size="sm" label="Finding more to watch" /> : null}
+                      {isReadingMore ? (
+                        <Spinner
+                          size="sm"
+                          label={say('screens.libraryBrowser.findingMoreToWatch')}
+                        />
+                      ) : null}
                     </div>
                   ) : null}
                 </div>

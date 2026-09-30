@@ -20,6 +20,7 @@ import { saidOpened } from '@ValenceClient/sharing/saidOpened';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { AdminShare } from '@ValenceContracts/schemas/Share';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Every link this server has handed out, whoever handed it out: what each points at, who made it,
@@ -39,25 +40,31 @@ const SharesPanel = () => {
     () => [
       {
         id: 'title',
-        header: 'Link to',
+        header: say('common.linkTo'),
         accessorFn: (share) => share.title,
-        cell: ({ row }) => (
-          <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="flex flex-wrap items-center gap-2">
-              <span className="truncate font-medium text-text">{row.original.title}</span>
+        cell: ({ row }) => {
+          const made = saidWhen(row.original.createdAt);
 
-              {row.original.kind !== 'series' ? null : <Badge size="sm">Whole series</Badge>}
-            </span>
+          return (
+            <span className="flex min-w-0 flex-col gap-0.5">
+              <span className="flex flex-wrap items-center gap-2">
+                <span className="truncate font-medium text-text">{row.original.title}</span>
 
-            <span className="truncate text-xs text-text-muted">
-              Made {saidWhen(row.original.createdAt)}
+                {row.original.kind !== 'series' ? null : (
+                  <Badge size="sm">{say('common.wholeSeries')}</Badge>
+                )}
+              </span>
+
+              <span className="truncate text-xs text-text-muted">
+                {made === null ? null : say('common.madeCreatedAt', { createdAt: made })}
+              </span>
             </span>
-          </span>
-        ),
+          );
+        },
       },
       {
         id: 'createdBy',
-        header: 'Handed out by',
+        header: say('screens.adminArea.sharesPanel.handedOutBy'),
         accessorFn: (share) => share.createdByName,
         cell: ({ row }) => (
           <span className="truncate text-sm text-text">{row.original.createdByName}</span>
@@ -65,7 +72,7 @@ const SharesPanel = () => {
       },
       {
         id: 'standing',
-        header: 'Standing',
+        header: say('common.standing'),
         accessorFn: (share) => shareStanding(share, Date.now()).label,
         cell: ({ row }) => {
           const standing = shareStanding(row.original, Date.now());
@@ -85,7 +92,7 @@ const SharesPanel = () => {
       },
       {
         id: 'opened',
-        header: 'Opened',
+        header: say('common.opened'),
         accessorFn: (share) => share.views,
         cell: ({ row }) => (
           <span className="whitespace-nowrap text-xs text-text-muted">
@@ -104,7 +111,7 @@ const SharesPanel = () => {
                 isIconOnly
                 variant="ghost"
                 size="sm"
-                label={`Withdraw the link to ${row.original.title}`}
+                label={say('common.withdrawTheLinkToTitle', { title: row.original.title })}
                 onClick={() => {
                   setWithdrawing(row.original);
                 }}
@@ -120,7 +127,7 @@ const SharesPanel = () => {
 
   return (
     <PanelCard
-      title="Shared links"
+      title={say('common.sharedLinks')}
       isFlush
       actions={
         <HoverCard
@@ -128,25 +135,31 @@ const SharesPanel = () => {
           align="end"
           detail={
             <p className="max-w-xs text-xs leading-relaxed">
-              Anybody holding one of these can watch what it points at without an account here.
-              Withdrawing a link stops it at once, and tells whoever made it.
+              {say('screens.adminArea.sharesPanel.anybodyHoldingOneOfTheseCan')}
             </p>
           }
         >
           <span className="text-text-muted hover:text-text">
-            <Icon of={InfoIcon} size={14} label="About shared links" />
+            <Icon
+              of={InfoIcon}
+              size={14}
+              label={say('screens.adminArea.sharesPanel.aboutSharedLinks')}
+            />
           </span>
         </HoverCard>
       }
     >
       <ConfirmDialog
-        title="Withdraw this link?"
+        title={say('common.withdrawThisLink')}
         detail={
           withdrawing === null
             ? ''
-            : `${withdrawing.createdByName}’s link to ${withdrawing.title} stops working at once, including for anybody watching through it right now. They will be told it was withdrawn.`
+            : say('screens.adminArea.sharesPanel.createdByNameSLinkToTitleStops', {
+                createdByName: withdrawing.createdByName,
+                title: withdrawing.title,
+              })
         }
-        confirmLabel="Withdraw it"
+        confirmLabel={say('common.withdrawIt')}
         isDestructive
         isBusy={isWorking}
         isOpen={withdrawing !== null}
@@ -165,8 +178,8 @@ const SharesPanel = () => {
           void revokeAnybodysShare(share.id)
             .then(async (revoked) => {
               tellOutcome(
-                'Withdrew the link.',
-                failureOfAnswer(revoked, 'That link could not be withdrawn.'),
+                say('screens.adminArea.sharesPanel.withdrewTheLink'),
+                failureOfAnswer(revoked, say('common.thatLinkCouldNotBeWithdrawn')),
               );
 
               return cache.invalidateQueries({ queryKey: adminQueries.shares().queryKey });
@@ -180,21 +193,25 @@ const SharesPanel = () => {
 
       {asked.isError ? (
         <CouldNotRead
-          what="The links"
+          said={say('screens.adminArea.sharesPanel.theLinksCouldNotBeRead')}
           isTryingAgain={asked.isFetching}
           onTryAgain={() => {
             void asked.refetch();
           }}
         />
       ) : asked.isPending ? (
-        <Spinner isCentered label="Reading the links" size="sm" />
+        <Spinner
+          isCentered
+          label={say('screens.adminArea.sharesPanel.readingTheLinks')}
+          size="sm"
+        />
       ) : (
         <DataTable
           height="fills"
-          label="Links handed out"
+          label={say('screens.adminArea.sharesPanel.linksHandedOut')}
           columns={columns}
           rows={asked.data}
-          emptyMessage="Nobody has handed out a link."
+          emptyMessage={say('screens.adminArea.sharesPanel.nobodyHasHandedOutALink')}
         />
       )}
     </PanelCard>

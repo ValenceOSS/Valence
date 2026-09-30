@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
@@ -28,8 +29,8 @@ const PreferencesSchema = z.object({
 
 const someNews = {
   event: 'media.added' as const,
-  title: 'Something new to watch',
-  body: '12 episodes — The Office',
+  title: sayVerbatim('Something new to watch'),
+  body: sayVerbatim('12 episodes — The Office'),
   link: '/?show=s1',
 };
 
@@ -130,7 +131,7 @@ describe('the notification routes', () => {
 
     const read = ListSchema.parse(await (await request('/api/notifications')).json());
 
-    expect(read.notifications[0]?.body).toContain('The Office');
+    expect(read.notifications[0]?.body.message).toContain('The Office');
     expect(read.unread).toBe(1);
   });
 

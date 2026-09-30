@@ -5,6 +5,7 @@ import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
 import { HouseholdFace } from '@ValenceScreens/components/HouseholdFace/HouseholdFace';
 import type { RoleMembersProps } from './RoleMembers.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Who holds a role, and everybody else it could be given to — the same assignment `AccountsPanel`
@@ -35,17 +36,17 @@ const RoleMembers = ({ accounts, heldIds, onToggle }: RoleMembersProps) => {
   return (
     <div className="flex flex-col gap-4">
       <TextField
-        label="Find somebody"
+        label={say('common.findSomebody')}
         isLabelHidden
         type="search"
         value={search}
         onValueChange={setSearch}
-        placeholder="Find somebody"
+        placeholder={say('common.findSomebody')}
         icon={<Icon of={SearchIcon} size={15} />}
       />
 
       {shown.length === 0 ? (
-        <p className="text-sm text-text-muted">Nobody here matches that.</p>
+        <p className="text-sm text-text-muted">{say('common.nobodyHereMatchesThat')}</p>
       ) : (
         <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
           {shown.map((account) => (
@@ -70,7 +71,9 @@ const RoleMembers = ({ accounts, heldIds, onToggle }: RoleMembersProps) => {
               </div>
 
               <Switch
-                label={`Whether ${account.name} holds this role`}
+                label={say('screens.rolesPanel.roleMembers.whetherNameHoldsThisRole', {
+                  name: account.name,
+                })}
                 isLabelHidden
                 isOn={heldIds.has(account.id)}
                 onToggle={() => {

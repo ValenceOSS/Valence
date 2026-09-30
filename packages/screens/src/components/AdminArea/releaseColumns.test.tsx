@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { DataTable } from '@ValenceUI/DataTable';
@@ -59,8 +60,8 @@ const judged = (releaseId: string, score: number, rejections: string[] = []): Ju
   },
   score,
   isRejected: rejections.length > 0,
-  rejections,
-  reasons: ['1080p, the first choice'],
+  rejections: rejections.map(sayVerbatim),
+  reasons: [sayVerbatim('1080p, the first choice')],
 });
 
 describe('releaseColumns', () => {

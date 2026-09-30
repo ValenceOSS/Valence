@@ -1,3 +1,4 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -10,7 +11,7 @@ const SUB_RIP = '1\n00:00:01,000 --> 00:00:03,000\nHello\n';
 
 const library = async (
   files: Record<string, string | Uint8Array>,
-  onProblem?: (path: string, reason: string) => void,
+  onProblem?: (path: string, reason: Said) => void,
 ) => {
   const root = await mkdtemp(join(tmpdir(), 'valence-subs-'));
   const video = join(root, 'Arrival (2016).mkv');
@@ -98,7 +99,7 @@ describe('createSidecarSubtitleService', () => {
   });
 
   it('reports why a track could not be read', async () => {
-    const onProblem = vi.fn();
+    const onProblem = vi.fn<(path: string, reason: Said) => void>();
     const { service, root, video } = await library({ 'Arrival (2016).en.srt': SUB_RIP });
     const tracks = await service.list(MEDIA_ID);
 
@@ -153,7 +154,7 @@ describe('a subtitle directory holding a folder per video', () => {
 
 describe('a subtitle Valence cannot draw', () => {
   it('says why it is not offered, rather than leaving an empty menu unexplained', async () => {
-    const onProblem = vi.fn();
+    const onProblem = vi.fn<(path: string, reason: Said) => void>();
     const { service } = await library(
       { 'Arrival (2016).en.sup': 'not really a subtitle' },
       onProblem,
@@ -163,12 +164,13 @@ describe('a subtitle Valence cannot draw', () => {
 
     expect(onProblem).toHaveBeenCalledWith(
       expect.stringContaining('Arrival (2016).en.sup'),
-      expect.stringContaining('pictures'),
+      expect.anything(),
     );
+    expect(onProblem.mock.calls[0]?.[1].message).toContain('pictures');
   });
 
   it('says nothing about one belonging to a different film', async () => {
-    const onProblem = vi.fn();
+    const onProblem = vi.fn<(path: string, reason: Said) => void>();
 
     await (
       await library({ 'Dune (2021).en.sup': 'not really a subtitle' }, onProblem)
@@ -193,7 +195,7 @@ describe('a subtitle Valence cannot draw', () => {
   });
 
   it('says which encoding it settled on, so a wrong answer can be seen', async () => {
-    const onProblem = vi.fn();
+    const onProblem = vi.fn<(path: string, reason: Said) => void>();
     const { service, root } = await library(
       { 'Arrival (2016).ru.srt': Uint8Array.from([0xcf, 0xf0, 0xe8, 0xe2, 0xe5, 0xf2]) },
       onProblem,
@@ -210,7 +212,7 @@ describe('a subtitle Valence cannot draw', () => {
   });
 
   it('says nothing about a sidecar that really is UTF-8', async () => {
-    const onProblem = vi.fn();
+    const onProblem = vi.fn<(path: string, reason: Said) => void>();
     const { service } = await library({ 'Arrival (2016).ru.srt': SUB_RIP }, onProblem);
 
     const tracks = await service.list(MEDIA_ID);
