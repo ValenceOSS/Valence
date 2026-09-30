@@ -5,6 +5,7 @@ import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { FormField } from '@ValenceUI/FormField';
+import { HeadedSection } from '@ValenceUI/HeadedSection';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
@@ -142,149 +143,163 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
         detail="Valence hands torrents to qBittorrent or Transmission, and NZBs to SABnzbd or NZBGet, and follows each download there."
       />
 
-      <DialogContent className="flex flex-col gap-4">
-        {client === null ? (
-          <FormField label="Client">
-            <SegmentedRow
-              label="Client"
-              size="sm"
-              items={CLIENT_KINDS}
-              value={form.kind}
-              onSelect={(next) => {
-                const chosen = CLIENT_KINDS.find((one) => one.id === next);
+      <DialogContent className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4">
+          {client === null ? (
+            <FormField label="Client">
+              <SegmentedRow
+                label="Client"
+                size="sm"
+                items={CLIENT_KINDS}
+                value={form.kind}
+                onSelect={(next) => {
+                  const chosen = CLIENT_KINDS.find((one) => one.id === next);
 
-                if (chosen !== undefined) {
-                  change(choosingKind(form, chosen.id));
-                }
-              }}
-            />
-          </FormField>
-        ) : null}
-
-        <TextField
-          label="Name"
-          value={form.name}
-          onValueChange={(name) => {
-            change({ name });
-          }}
-          placeholder={kind?.label ?? ''}
-          required
-        />
-
-        <TextField
-          label="Address"
-          type="url"
-          value={form.url}
-          onValueChange={(url) => {
-            change({ url });
-          }}
-          placeholder={kind?.address ?? ''}
-          description="Where the requests service reaches it, which inside Docker is the container’s name."
-          required
-        />
-
-        {isSabnzbd ? (
-          <TextField
-            label="API key"
-            type="password"
-            value={form.apiKey}
-            onValueChange={(apiKey) => {
-              change({ apiKey });
-            }}
-            description={`${secretDetail(client?.hasApiKey === true, 'key')} It is under Config, General.`}
-            autoComplete="off"
-          />
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <TextField
-              label="Username"
-              value={form.username}
-              onValueChange={(username) => {
-                change({ username });
-              }}
-              autoComplete="off"
-            />
-
-            <TextField
-              label="Password"
-              type="password"
-              value={form.password}
-              onValueChange={(password) => {
-                change({ password });
-              }}
-              description={secretDetail(client?.hasPassword === true, 'password')}
-              autoComplete="new-password"
-            />
-          </div>
-        )}
-
-        <FormField
-          label={form.kind === 'transmission' ? 'Labels' : 'Categories'}
-          description={
-            form.kind === 'transmission'
-              ? 'The label Valence puts on what it sends for each kind of library, and the only torrents it looks at.'
-              : 'Where Valence files what it sends for each kind of library — give each its own folder in the client — and the only downloads it looks at.'
-          }
-        >
-          <div className="grid gap-3 sm:grid-cols-2">
-            {LIBRARY_KINDS.map((libraryKind) => (
-              <TextField
-                key={libraryKind}
-                label={LIBRARY_KIND_NAMES[libraryKind].label}
-                value={form.categories[libraryKind]}
-                onValueChange={(category) => {
-                  change({ categories: { ...form.categories, [libraryKind]: category } });
+                  if (chosen !== undefined) {
+                    change(choosingKind(form, chosen.id));
+                  }
                 }}
-                required
               />
-            ))}
-          </div>
-        </FormField>
+            </FormField>
+          ) : null}
 
-        <FormField
-          label="Where it saves downloads"
-          description="Only where the client and Valence see the downloads folder by different names, as two containers mounting it in different places do. Valence files each finished download from here into its library."
-        >
-          <div className="grid gap-3 sm:grid-cols-2">
+          <TextField
+            label="Name"
+            value={form.name}
+            onValueChange={(name) => {
+              change({ name });
+            }}
+            placeholder={kind?.label ?? ''}
+            required
+          />
+
+          <Switch
+            label="Send releases to this client"
+            isOn={form.isEnabled}
+            onToggle={() => {
+              change({ isEnabled: !form.isEnabled });
+            }}
+          />
+        </div>
+
+        <HeadedSection title="Connection">
+          <div className="flex flex-col gap-4">
             <TextField
-              label="As the client sees it"
-              value={form.remotePath}
-              onValueChange={(remotePath) => {
-                change({ remotePath });
+              label="Address"
+              type="url"
+              value={form.url}
+              onValueChange={(url) => {
+                change({ url });
               }}
-              placeholder="/downloads"
+              placeholder={kind?.address ?? ''}
+              description="Where the requests service reaches it, which inside Docker is the container’s name."
+              required
             />
 
+            {isSabnzbd ? (
+              <TextField
+                label="API key"
+                type="password"
+                value={form.apiKey}
+                onValueChange={(apiKey) => {
+                  change({ apiKey });
+                }}
+                description={`${secretDetail(client?.hasApiKey === true, 'key')} It is under Config, General.`}
+                autoComplete="off"
+              />
+            ) : (
+              <FormField
+                label="Login"
+                description={secretDetail(client?.hasPassword === true, 'password')}
+              >
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <TextField
+                    label="Username"
+                    value={form.username}
+                    onValueChange={(username) => {
+                      change({ username });
+                    }}
+                    autoComplete="off"
+                  />
+
+                  <TextField
+                    label="Password"
+                    type="password"
+                    value={form.password}
+                    onValueChange={(password) => {
+                      change({ password });
+                    }}
+                    autoComplete="new-password"
+                  />
+                </div>
+              </FormField>
+            )}
+          </div>
+        </HeadedSection>
+
+        <HeadedSection title="Downloads">
+          <div className="flex flex-col gap-4">
+            <FormField
+              label={form.kind === 'transmission' ? 'Labels' : 'Categories'}
+              description={
+                form.kind === 'transmission'
+                  ? 'The label Valence puts on what it sends for each kind of library, and the only torrents it looks at.'
+                  : 'Where Valence files what it sends for each kind of library — give each its own folder in the client — and the only downloads it looks at.'
+              }
+            >
+              <div className="grid gap-3 sm:grid-cols-2">
+                {LIBRARY_KINDS.map((libraryKind) => (
+                  <TextField
+                    key={libraryKind}
+                    label={LIBRARY_KIND_NAMES[libraryKind].label}
+                    value={form.categories[libraryKind]}
+                    onValueChange={(category) => {
+                      change({ categories: { ...form.categories, [libraryKind]: category } });
+                    }}
+                    required
+                  />
+                ))}
+              </div>
+            </FormField>
+
+            <FormField
+              label="Where it saves downloads"
+              description="Only where the client and Valence see the downloads folder by different names, as two containers mounting it in different places do. Valence files each finished download from here into its library."
+            >
+              <div className="grid gap-3 sm:grid-cols-2">
+                <TextField
+                  label="As the client sees it"
+                  value={form.remotePath}
+                  onValueChange={(remotePath) => {
+                    change({ remotePath });
+                  }}
+                  placeholder="/downloads"
+                />
+
+                <TextField
+                  label="As Valence sees it"
+                  value={form.localPath}
+                  onValueChange={(localPath) => {
+                    change({ localPath });
+                  }}
+                  placeholder="/downloads"
+                />
+              </div>
+            </FormField>
+
             <TextField
-              label="As Valence sees it"
-              value={form.localPath}
-              onValueChange={(localPath) => {
-                change({ localPath });
+              label="Priority"
+              type="number"
+              min={1}
+              max={50}
+              value={form.priority}
+              onValueChange={(priority) => {
+                change({ priority });
               }}
-              placeholder="/downloads"
+              description="The lowest is sent releases first."
             />
           </div>
-        </FormField>
-
-        <TextField
-          label="Priority"
-          type="number"
-          min={1}
-          max={50}
-          value={form.priority}
-          onValueChange={(priority) => {
-            change({ priority });
-          }}
-          description="The lowest is sent releases first."
-        />
-
-        <Switch
-          label="Send releases to this client"
-          isOn={form.isEnabled}
-          onToggle={() => {
-            change({ isEnabled: !form.isEnabled });
-          }}
-        />
+        </HeadedSection>
 
         <p role="status" className="sr-only">
           {verdict === 'working' ? `It answered, and is ${version ?? 'working'}.` : ''}
