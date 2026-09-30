@@ -2,6 +2,7 @@ import { cn } from '@ValenceUI/cn';
 import fresh from '@ValenceRatings/rotten-tomatoes-fresh.png';
 import rotten from '@ValenceRatings/rotten-tomatoes-rotten.png';
 import type { TomatoMarkProps } from './TomatoMark.types';
+import { say } from '@ValenceI18n/say';
 
 const FRESH_FROM = 60;
 
@@ -18,7 +19,11 @@ const TomatoMark = ({ score, className }: TomatoMarkProps) => {
   return (
     <img
       src={isFresh ? fresh : rotten}
-      alt={isFresh ? 'Fresh on Rotten Tomatoes' : 'Rotten on Rotten Tomatoes'}
+      alt={
+        isFresh
+          ? say('ui.tomatoMark.freshOnRottenTomatoes')
+          : say('ui.tomatoMark.rottenOnRottenTomatoes')
+      }
       draggable={false}
       className={cn('size-4 shrink-0 select-none object-contain', className)}
     />

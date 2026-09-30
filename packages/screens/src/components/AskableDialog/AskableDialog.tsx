@@ -40,6 +40,7 @@ import { DialogHeadlinePart } from '@ValenceScreens/components/DialogHeadlinePar
 import type { MediaRequestAsk, ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 import type { AskableDialogProps } from './AskableDialog.types';
 import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
+import { say } from '@ValenceI18n/say';
 
 const FOLLOWED_EVERY_MS = 5000;
 
@@ -113,7 +114,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
     void askForMedia(asked)
       .then(({ value, refusal }) => {
         if (value === null) {
-          setProblem(refusal?.message ?? 'That could not be requested.');
+          setProblem(refusal?.message ?? say('common.thatCouldNotBeRequested'));
 
           return;
         }
@@ -138,7 +139,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
 
   return (
     <Dialog
-      label={title?.title ?? 'Something to ask for'}
+      label={title?.title ?? say('screens.askableDialog.somethingToAskFor')}
       isOpen={named !== null && heldId === null && (title !== null || !found.isPending)}
       onClose={onClose}
       size="stage"
@@ -146,14 +147,14 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
       <DialogContent className="p-3 sm:p-4">
         {found.isError ? (
           <CouldNotRead
-            what="This title"
+            said={say('screens.askableDialog.thisTitleCouldNotBeRead')}
             isTryingAgain={found.isFetching}
             onTryAgain={() => {
               void found.refetch();
             }}
           />
         ) : title === null ? (
-          <Spinner isCentered label="Reading the catalogue" />
+          <Spinner isCentered label={say('common.readingTheCatalogue')} />
         ) : (
           <DialogArrival key={`${title.kind}:${title.id}`} className="flex flex-col gap-4">
             <div className="relative overflow-hidden rounded-2xl">
@@ -179,7 +180,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
               </div>
 
               <div className="absolute right-4 top-4">
-                <Button isIconOnly variant="overlay" label="Close" onClick={onClose}>
+                <Button isIconOnly variant="overlay" label={say('common.close')} onClick={onClose}>
                   <Icon of={XIcon} size={20} />
                 </Button>
               </div>
@@ -189,7 +190,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                   <DialogHeadlinePart className="hidden w-32 sm:flex">
                     <MusicArtwork
                       src={title.posterUrl}
-                      label={`The cover of ${title.title}`}
+                      label={say('common.theCoverOfTitle', { title: title.title })}
                       shape={title.kind === 'artist' ? 'round' : 'square'}
                       isLifted
                       className="w-full"
@@ -227,7 +228,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                   {going === null ? null : (
                     <DialogHeadlinePart>
                       <ProgressBar
-                        label={`How much of ${title.title} has arrived`}
+                        label={say('common.howMuchOfTitleHasArrived', { title: title.title })}
                         value={Math.round(going.progress * 1000) / 10}
                         className="max-w-md"
                         readout={
@@ -242,7 +243,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
 
             <DialogSections className="flex flex-col gap-3 pb-4">
               {title.overview === null ? null : (
-                <DialogSection heading="Synopsis">
+                <DialogSection heading={say('common.synopsis')}>
                   <p className="max-w-[70ch] text-[0.95rem] leading-relaxed text-text">
                     {title.overview}
                   </p>
@@ -289,8 +290,12 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                           size="xs"
                           label={
                             sample.heard === album.id
-                              ? `Stop the sample of ${album.title}`
-                              : `Play a sample of ${album.title}`
+                              ? say('screens.askableDialog.stopTheSampleOfTitle', {
+                                  title: album.title,
+                                })
+                              : say('screens.askableDialog.playASampleOfTitle', {
+                                  title: album.title,
+                                })
                           }
                           isActive={sample.heard === album.id}
                           isLoading={sample.finding === album.id}
@@ -308,12 +313,13 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                         <span className="flex min-w-0 flex-1 flex-col">
                           <span className="truncate text-sm text-text">{album.title}</span>
                           <span className="text-xs text-text-muted">
-                            {album.firstReleased?.slice(0, 4) ?? 'No year given'}
+                            {album.firstReleased?.slice(0, 4) ??
+                              say('screens.askableDialog.noYearGiven')}
                           </span>
                         </span>
                         {askedAlbums.has(album.id) ? (
                           <Badge size="sm" tone={STATUS_LOOK.queued.tone}>
-                            Requested
+                            {say('common.requested')}
                           </Badge>
                         ) : (
                           <Button
@@ -326,7 +332,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                               });
                             }}
                           >
-                            Request
+                            {say('common.request')}
                           </Button>
                         )}
                       </li>
@@ -352,7 +358,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                   }}
                 >
                   <Icon of={TapeIcon} size={16} />
-                  Watch the trailer
+                  {say('common.watchTheTrailer')}
                 </Button>
               ),
             })}
@@ -362,7 +368,10 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
             ? undefined
             : title.standing.status === 'askable'
               ? {
-                  label: title.kind === 'artist' ? 'Watch this artist' : 'Request',
+                  label:
+                    title.kind === 'artist'
+                      ? say('screens.askableDialog.watchThisArtist')
+                      : say('common.request'),
                   isDisabled: !isReady,
                   isLoading: isAsking,
                   onChoose: () => {
@@ -379,13 +388,17 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
               setIsCancelling(true);
             }}
           >
-            Cancel request
+            {say('common.cancelRequest')}
           </Button>
         ) : null}
       </DialogFooter>
 
       <Dialog
-        label={`${title?.title ?? 'This'}, the trailer`}
+        label={
+          title === null
+            ? say('screens.askableDialog.thisTheTrailer')
+            : say('common.titleTheTrailer', { title: title.title })
+        }
         isOpen={isWatchingTrailer && trailerKey !== null}
         className="sm:w-[min(64rem,94vw)]"
         onClose={() => {
@@ -395,36 +408,46 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
         <DialogContent className="p-0">
           {trailerKey === null ? null : (
             <EmbeddedVideo
-              label={`${title?.title ?? 'This'}, the trailer`}
+              label={
+                title === null
+                  ? say('screens.askableDialog.thisTheTrailer')
+                  : say('common.titleTheTrailer', { title: title.title })
+              }
               src={catalogueTrailerUrl(trailerKey)}
             />
           )}
         </DialogContent>
       </Dialog>
 
-      <ChooseQualityDialog
-        title={title?.title ?? 'this'}
-        choices={choices}
-        isOpen={choosing !== null}
-        isAsking={isAsking}
-        onChoose={(profileId) => {
-          const waiting = choosing;
+      {title === null ? null : (
+        <ChooseQualityDialog
+          title={title.title}
+          choices={choices}
+          isOpen={choosing !== null}
+          isAsking={isAsking}
+          onChoose={(profileId) => {
+            const waiting = choosing;
 
-          setChoosing(null);
+            setChoosing(null);
 
-          if (waiting !== null) {
-            send({ ...waiting.asked, profileId }, waiting.onAsked);
-          }
-        }}
-        onClose={() => {
-          setChoosing(null);
-        }}
-      />
+            if (waiting !== null) {
+              send({ ...waiting.asked, profileId }, waiting.onAsked);
+            }
+          }}
+          onClose={() => {
+            setChoosing(null);
+          }}
+        />
+      )}
 
       <ConfirmDialog
-        title={`Cancel ${title?.title ?? 'this request'}?`}
-        detail="It will not be fetched, and whatever it had started downloading is deleted. You can request it again whenever you like."
-        confirmLabel="Cancel request"
+        title={
+          title === null
+            ? say('common.cancelThisRequest')
+            : say('common.cancelTitle', { title: title.title })
+        }
+        detail={say('common.itWillNotBeFetchedAnd')}
+        confirmLabel={say('common.cancelRequest')}
         isDestructive
         isOpen={isCancelling}
         onClose={() => {

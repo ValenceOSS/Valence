@@ -14,6 +14,7 @@ import { slowWaitChoices } from './slowWaitChoices';
 import { stalledWaitChoices } from './stalledWaitChoices';
 import { WaitRow } from './components/WaitRow/WaitRow';
 import type { GiveUpRules } from '@ValenceContracts/schemas/GiveUpRules';
+import { say } from '@ValenceI18n/say';
 
 /**
  * When Valence gives up on a download: how long each kind of trouble is waited out before the
@@ -35,7 +36,7 @@ const GiveUpRulesList = () => {
   if (rules.isError) {
     return (
       <CouldNotRead
-        what="When downloads are given up on"
+        said={say('screens.downloadsPanel.giveUpRulesList.whenDownloadsAreGivenUpOnCouldNotBeRead')}
         isTryingAgain={rules.isFetching}
         onTryAgain={() => {
           void rules.refetch();
@@ -45,7 +46,13 @@ const GiveUpRulesList = () => {
   }
 
   if (rules.isPending) {
-    return <Spinner isCentered label="Reading when downloads are given up on" size="sm" />;
+    return (
+      <Spinner
+        isCentered
+        label={say('screens.downloadsPanel.giveUpRulesList.readingWhenDownloadsAreGivenUp')}
+        size="sm"
+      />
+    );
   }
 
   const kept = rules.data;
@@ -62,11 +69,17 @@ const GiveUpRulesList = () => {
       .then(() => changeGiveUpRules(changed))
       .then(
         ({ refusal }) => {
-          tellOutcome(`${what} saved.`, failureOfRefusal(refusal));
+          tellOutcome(
+            say('screens.adminArea.giveUpRulesList.whatSaved', { what }),
+            failureOfRefusal(refusal),
+          );
           isOutOfStep.current ||= refusal !== null;
         },
         () => {
-          tellOutcome('', `${what} could not be saved.`);
+          tellOutcome(
+            '',
+            say('screens.downloadsPanel.giveUpRulesList.whatCouldNotBeSaved', { what }),
+          );
           isOutOfStep.current = true;
         },
       )
@@ -83,54 +96,61 @@ const GiveUpRulesList = () => {
   return (
     <div className="flex flex-col gap-2 pt-4">
       <p className="px-5 font-body text-[0.8125rem] leading-snug text-text-muted">
-        When a download runs into one of these, Valence removes it, blocklists the release for that
-        request, and looks for the next best.
+        {say('screens.downloadsPanel.giveUpRulesList.whenADownloadRunsIntoOne')}
       </p>
 
       <SettingList>
         <WaitRow
-          title="Missing metadata"
-          description="A magnet that never learns what files it holds, usually because nobody is sharing it."
+          title={say('screens.downloadsPanel.giveUpRulesList.missingMetadata')}
+          description={say('screens.downloadsPanel.giveUpRulesList.aMagnetThatNeverLearnsWhat')}
           choices={metadataWaitChoices}
           value={kept.metadataMinutes}
           unit="minutes"
           onChange={(metadataMinutes) => {
-            change({ metadataMinutes }, 'Missing metadata');
+            change(
+              { metadataMinutes },
+              say('screens.downloadsPanel.giveUpRulesList.missingMetadata'),
+            );
           }}
         />
 
         <WaitRow
-          title="Stalled"
-          description="It started, but nobody is sending it any more."
+          title={say('common.stalled')}
+          description={say('screens.downloadsPanel.giveUpRulesList.itStartedButNobodyIsSending')}
           choices={stalledWaitChoices}
           value={kept.stalledHours}
           unit="hours"
           onChange={(stalledHours) => {
-            change({ stalledHours }, 'Stalled');
+            change({ stalledHours }, say('common.stalled'));
           }}
         />
 
         <WaitRow
-          title="Too slow"
-          description="At the rate it has averaged, it would still be going after this long."
+          title={say('screens.downloadsPanel.giveUpRulesList.tooSlow')}
+          description={say('screens.downloadsPanel.giveUpRulesList.atTheRateItHasAveraged')}
           choices={slowWaitChoices}
           value={kept.slowDays}
           unit="days"
           onChange={(slowDays) => {
-            change({ slowDays }, 'Too slow');
+            change({ slowDays }, say('screens.downloadsPanel.giveUpRulesList.tooSlow'));
           }}
         />
 
         <SettingRow
-          title="Unrecognised files"
-          description="A torrent holding nothing Valence could file into a library."
+          title={say('screens.downloadsPanel.giveUpRulesList.unrecognisedFiles')}
+          description={say(
+            'screens.downloadsPanel.giveUpRulesList.aTorrentHoldingNothingValenceCould',
+          )}
         >
           <Switch
-            label="Give up on unrecognised files"
+            label={say('screens.downloadsPanel.giveUpRulesList.giveUpOnUnrecognisedFiles')}
             isLabelHidden
             isOn={kept.refusesUnknownFiles}
             onToggle={() => {
-              change({ refusesUnknownFiles: !kept.refusesUnknownFiles }, 'Unrecognised files');
+              change(
+                { refusesUnknownFiles: !kept.refusesUnknownFiles },
+                say('screens.downloadsPanel.giveUpRulesList.unrecognisedFiles'),
+              );
             }}
           />
         </SettingRow>

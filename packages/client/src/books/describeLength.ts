@@ -1,3 +1,6 @@
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
+
 /**
  * Says how long something lasts in hours and minutes, the way a person would round it.
  *
@@ -10,10 +13,15 @@ const describeLength = (seconds: number): string => {
   const over = minutes % 60;
 
   if (hours === 0) {
-    return `${minutes.toString()} min`;
+    return sayCount('common.count.minutesShort', minutes);
   }
 
-  return over === 0 ? `${hours.toString()} h` : `${hours.toString()} h ${over.toString()} min`;
+  return over === 0
+    ? sayCount('common.count.hoursShort', hours)
+    : say('client.books.describeLength.hoursHOverMin', {
+        hours: hours.toString(),
+        over: over.toString(),
+      });
 };
 
 export { describeLength };

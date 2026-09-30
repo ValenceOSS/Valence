@@ -60,8 +60,9 @@ import { SET_UNREAD_BADGE } from '@ValenceDesktop/main/notificationChannels';
 import { SHOW_THE_WINDOW_CONTROLS } from '@ValenceDesktop/main/windowChannels';
 import { showTheWindowControls } from '@ValenceDesktop/main/showTheWindowControls';
 import { z } from 'zod';
+import { say } from '@ValenceI18n/say';
 
-const WHERE_IT_HAS_ALWAYS_BEEN = 'Valence';
+const WHERE_IT_HAS_ALWAYS_BEEN = say('common.valence');
 
 const ASK_AGAIN_EVERY = 15_000;
 
@@ -78,7 +79,7 @@ const ASK_AGAIN_EVERY = 15_000;
  */
 const askValence: AskingTheServer = (where, how) => net.fetch(where, how);
 
-app.setName('Valence');
+app.setName(say('common.valence'));
 
 /**
  * Keeps this client's own files where they already are, under the name it used to have.

@@ -120,7 +120,7 @@ const LANGUAGE_NAMES: Record<string, string> = {
 const UNKNOWN_LANGUAGES = new Set(['', 'und', 'unknown', 'zxx', 'mul', 'mis']);
 
 const CHANNEL_NAMES: Record<number, string> = {
-  1: say('core.track.mono'),
+  1: say('common.mono'),
   2: say('core.track.stereo'),
   3: '2.1',
   4: say('core.track.quad'),
@@ -208,7 +208,7 @@ const describeAudioTrack = (track: AudioTrackFacts, position: number): string =>
 
   const named =
     title === ''
-      ? (language ?? say('core.track.numbered', { number: position }))
+      ? (language ?? say('common.numbered', { number: position }))
       : language === null || saysLanguage
         ? title
         : `${language} · ${title}`;

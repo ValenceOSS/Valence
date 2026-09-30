@@ -22,6 +22,7 @@ describe('describeDownloadCost', () => {
   it('says its half where only one half is known', () => {
     expect(describeDownloadCost(GB, null)).toBe('1.0 GB downloaded');
     expect(describeDownloadCost(null, 600)).toBe('Downloaded in 10 min');
+    expect(describeDownloadCost(null, 20)).toBe('Downloaded in under a minute');
   });
 
   it('says nothing where neither is known', () => {

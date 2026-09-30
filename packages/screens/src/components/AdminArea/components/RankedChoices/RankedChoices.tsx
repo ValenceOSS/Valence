@@ -3,6 +3,7 @@ import { Button } from '@ValenceUI/Button';
 import { Checkbox } from '@ValenceUI/Checkbox';
 import { Icon } from '@ValenceUI/Icon';
 import type { RankedChoicesProps } from './RankedChoices.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * A list of choices somebody both picks from and puts in order: what is ticked is allowed, and its
@@ -53,7 +54,7 @@ const RankedChoices = <Choice extends string>({
             variant="ghost"
             size="xs"
             isIconOnly
-            label={`Move ${labelOf(id)} up`}
+            label={say('screens.adminArea.rankedChoices.moveIdUp', { id: labelOf(id) })}
             disabled={place === 0}
             onClick={() => {
               move(place, place - 1);
@@ -66,7 +67,7 @@ const RankedChoices = <Choice extends string>({
             variant="ghost"
             size="xs"
             isIconOnly
-            label={`Move ${labelOf(id)} down`}
+            label={say('screens.adminArea.rankedChoices.moveIdDown', { id: labelOf(id) })}
             disabled={place === chosen.length - 1}
             onClick={() => {
               move(place, place + 1);

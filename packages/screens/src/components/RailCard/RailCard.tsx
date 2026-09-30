@@ -25,6 +25,8 @@ import { showSlug } from '@ValenceCore/functions/showSlug';
 import { MediaPreview } from '@ValenceScreens/components/MediaPreview/MediaPreview';
 import { MediaFacts } from '@ValenceScreens/components/MediaFacts/MediaFacts';
 import type { RailCardProps } from './RailCard.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const HOVER_DELAY_MILLISECONDS = 600;
 
@@ -185,7 +187,7 @@ const RailCard = ({
       : [
           {
             id: 'again',
-            label: `Start ${media.title} again`,
+            label: say('screens.railCard.startTitleAgain', { title: media.title }),
             icon: <Icon of={ArrowUTurnRightIcon} size={17} />,
             onChoose: () => {
               onPlay(media, 0);
@@ -197,7 +199,9 @@ const RailCard = ({
       : [
           {
             id: 'keep',
-            label: isKept ? `Stop keeping ${media.title}` : `Keep ${media.title}`,
+            label: isKept
+              ? say('common.stopKeepingTitle', { title: media.title })
+              : say('common.keepTitle', { title: media.title }),
             icon: <Icon of={HeartIcon} whenActive={HeartFilledIcon} isActive={isKept} size={17} />,
             isActive: isKept,
             onChoose: () => {
@@ -210,7 +214,7 @@ const RailCard = ({
       : [
           {
             id: 'hide',
-            label: `Hide ${media.title}`,
+            label: say('screens.railCard.hideTitle', { title: media.title }),
             icon: <Icon of={EyeOffIcon} size={17} />,
             onChoose: () => {
               onHide(media);
@@ -317,7 +321,7 @@ const RailCard = ({
             ? {}
             : {
                 count: unwatchedCount,
-                countLabel: `${unwatchedCount.toString()} ${unwatchedCount === 1 ? 'episode' : 'episodes'} left`,
+                countLabel: sayCount('common.countEpisodesLeft', unwatchedCount),
               })}
           {...(restingUrl === undefined ? {} : { imageUrl: restingUrl })}
           onSelect={inspect}
@@ -350,7 +354,9 @@ const RailCard = ({
               <Button
                 variant="bare"
                 size="none"
-                aria-label={`More about ${media.seriesTitle ?? media.title}`}
+                aria-label={say('screens.railCard.moreAboutValue', {
+                  value: media.seriesTitle ?? media.title,
+                })}
                 onClick={inspect}
                 className="absolute inset-0 z-0 rounded-lg"
               />
@@ -374,13 +380,13 @@ const RailCard = ({
                         : [
                             show.seasonCount === 1
                               ? null
-                              : `${show.seasonCount.toString()} seasons`,
-                            `${show.episodeCount.toString()} episodes`,
+                              : sayCount('common.count.seasons', show.seasonCount),
+                            sayCount('common.count.episodes', show.episodeCount),
                             unwatchedCount === undefined
                               ? null
                               : unwatchedCount === 0
-                                ? 'All watched'
-                                : `${unwatchedCount.toString()} left`,
+                                ? say('screens.railCard.allWatched')
+                                : sayCount('screens.railCard.episodesLeft', unwatchedCount),
                           ]
                             .filter((part) => part !== null)
                             .join(' · ')
@@ -400,7 +406,9 @@ const RailCard = ({
                   <Button
                     variant="bare"
                     size="none"
-                    aria-label={`About ${media.seriesTitle}`}
+                    aria-label={say('screens.railCard.aboutSeriesTitle', {
+                      seriesTitle: media.seriesTitle,
+                    })}
                     onClick={(event) => {
                       event.stopPropagation();
                       onOpenShow(media);
@@ -453,14 +461,16 @@ const RailCard = ({
                     <Icon of={PlayFilledIcon} size={15} />
                     <span className="truncate">
                       {resumeSeconds === undefined
-                        ? 'Play'
-                        : `Resume from ${formatDuration(resumeSeconds)}`}
+                        ? say('common.play')
+                        : say('screens.railCard.resumeFromResumeSeconds', {
+                            resumeSeconds: formatDuration(resumeSeconds),
+                          })}
                     </span>
                   </Button>
 
                   {extras.length <= 1 ? null : (
                     <ActionMenu
-                      label={`More to do with ${media.title}`}
+                      label={say('screens.railCard.moreToDoWithTitle', { title: media.title })}
                       align="end"
                       look="raised"
                       className="size-9 @sm:hidden"

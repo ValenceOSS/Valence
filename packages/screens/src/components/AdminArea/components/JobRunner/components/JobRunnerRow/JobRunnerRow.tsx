@@ -9,6 +9,7 @@ import { describeCountdown } from '@ValenceScreens/components/AdminArea/componen
 import { ScanProgressBar } from '@ValenceScreens/components/AdminArea/components/ScanProgressBar/ScanProgressBar';
 import type { JobTrigger } from '@ValenceClient/admin/fetchAdmin';
 import type { JobRunnerRowProps } from './JobRunnerRow.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says when a job runs on its own in a few words: its first trigger, and how many more it has.
@@ -20,7 +21,7 @@ const describeSchedule = (triggers: JobTrigger[]): string => {
   const [first, ...rest] = triggers;
 
   if (first === undefined) {
-    return 'Not scheduled';
+    return say('screens.jobRunner.jobRunnerRow.notScheduled');
   }
 
   const said = describeTrigger(first.trigger);
@@ -97,7 +98,9 @@ const JobRunnerRow = ({
               variant="subtle"
               size="none"
               isIconOnly
-              label={`What ${sayAgain(definition.label)} is doing`}
+              label={say('screens.jobRunner.jobRunnerRow.whatLabelIsDoing', {
+                label: sayAgain(definition.label),
+              })}
               onClick={() => {
                 onWatch(definition);
               }}
@@ -118,7 +121,9 @@ const JobRunnerRow = ({
             variant="secondary"
             size="xs"
             className="w-full justify-start"
-            label={`Edit the schedule for ${sayAgain(definition.label)}`}
+            label={say('screens.jobRunner.jobRunnerRow.editTheScheduleForLabel', {
+              label: sayAgain(definition.label),
+            })}
             onClick={() => {
               onOpenSchedule(definition.kind);
             }}
@@ -134,7 +139,9 @@ const JobRunnerRow = ({
             </span>
           </Button>
         ) : (
-          <span className="truncate px-2 text-xs text-text-muted">Run by hand only</span>
+          <span className="truncate px-2 text-xs text-text-muted">
+            {say('screens.jobRunner.jobRunnerRow.runByHandOnly')}
+          </span>
         )}
       </span>
 
@@ -143,7 +150,9 @@ const JobRunnerRow = ({
           <Button
             variant="ghost"
             size="sm"
-            label={`Stop ${sayAgain(definition.label)}`}
+            label={say('screens.jobRunner.jobRunnerRow.stopLabel', {
+              label: sayAgain(definition.label),
+            })}
             hasTooltip={false}
             disabled={summary.isStopping}
             onClick={() => {
@@ -151,13 +160,13 @@ const JobRunnerRow = ({
             }}
           >
             <Icon of={StopFilledIcon} size={13} />
-            {summary.isStopping ? 'Stopping' : 'Stop'}
+            {summary.isStopping ? say('common.stopping2') : say('common.stop')}
           </Button>
         ) : (
           <Button
             variant="ghost"
             size="sm"
-            label={`Run ${sayAgain(definition.label)}`}
+            label={say('common.runLabel', { label: sayAgain(definition.label) })}
             hasTooltip={false}
             disabled={isRunBlocked}
             onClick={() => {
@@ -165,7 +174,7 @@ const JobRunnerRow = ({
             }}
           >
             <Icon of={PlayFilledIcon} size={13} />
-            Run
+            {say('common.run')}
           </Button>
         )}
       </span>

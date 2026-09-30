@@ -18,6 +18,7 @@ import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThis
 import type { DownloadResumable } from 'expo-file-system/legacy';
 import type { DeviceStore, HeldFiles } from '@ValenceClient/platform/Platform.types';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
+import { say } from '@ValenceI18n/say';
 
 const INDEX = 'valence.held';
 
@@ -214,7 +215,7 @@ const thePhonesHeldFiles = (
       change(row.downloadId, {
         state: 'failed',
         bytesPerSecond: null,
-        failure: 'The file could not be fetched from the server.',
+        failure: say('phone.platform.thePhonesHeldFiles.theFileCouldNotBeFetched'),
       });
 
       return;
@@ -228,7 +229,7 @@ const thePhonesHeldFiles = (
       change(row.downloadId, {
         state: 'failed',
         bytesPerSecond: null,
-        failure: 'The file arrived incomplete.',
+        failure: say('phone.platform.thePhonesHeldFiles.theFileArrivedIncomplete'),
       });
 
       return;

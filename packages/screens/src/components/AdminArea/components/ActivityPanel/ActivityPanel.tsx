@@ -5,6 +5,7 @@ import { SessionMessageDialog } from '@ValenceScreens/components/AdminArea/compo
 import { groupSessionsByViewer } from '@ValenceScreens/components/AdminArea/groupSessionsByViewer';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import type { ActivityPanelProps } from './ActivityPanel.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Who has the app open, what they are watching, and how well it is going for them — grouped by viewer
@@ -29,22 +30,25 @@ const ActivityPanel = ({
   onMessage,
 }: ActivityPanelProps) => {
   const [messaging, setMessaging] = useState<string | null>(null);
+  const [lastMessaged, setLastMessaged] = useState('');
 
   const watcher = sessions.find((session) => session.clientId === messaging);
 
   return (
     <PanelCard
-      title="Sessions"
+      title={say('common.sessions')}
       actions={
         <span className="flex items-center gap-1.5 text-xs text-text-muted">
           <span aria-hidden className="size-1.5 rounded-full bg-accent" />
-          Live
+          {say('common.live')}
         </span>
       }
     >
       <div className="flex flex-col gap-4">
         {sessions.length === 0 ? (
-          <p className="text-sm text-text-muted">Nobody has the app open right now.</p>
+          <p className="text-sm text-text-muted">
+            {say('screens.adminArea.activityPanel.nobodyHasTheAppOpenRight')}
+          </p>
         ) : (
           groupSessionsByViewer(sessions).map((group) => (
             <div key={group.key} className="flex flex-col gap-2">
@@ -67,6 +71,7 @@ const ActivityPanel = ({
                     }}
                     onMessage={() => {
                       setMessaging(session.clientId);
+                      setLastMessaged(nameOfSession(session));
                     }}
                   />
                 ))}
@@ -76,7 +81,7 @@ const ActivityPanel = ({
         )}
       </div>
       <SessionMessageDialog
-        watcher={watcher === undefined ? 'this screen' : nameOfSession(watcher)}
+        watcher={watcher === undefined ? lastMessaged : nameOfSession(watcher)}
         isOpen={watcher !== undefined}
         onSend={async (text) => {
           if (watcher !== undefined) {

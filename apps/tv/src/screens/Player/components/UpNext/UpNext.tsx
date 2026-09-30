@@ -8,6 +8,7 @@ import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { UpNextProps } from './UpNext.types';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
+import { say } from '@ValenceI18n/say';
 
 const COUNTS_FROM = 10;
 
@@ -55,7 +56,10 @@ const UpNext = ({ episode, isAsking, onPlay, onStay }: UpNextProps) => {
 
   const place =
     typeof episode.seasonNumber === 'number' && typeof episode.episodeNumber === 'number'
-      ? `S${episode.seasonNumber.toString()}: E${describeEpisodeNumbers(episode.episodeNumber, episode.episodeNumberEnd)} · `
+      ? say('tv.player.upNext.sSeasonNumberEEpisodeNumber', {
+          seasonNumber: episode.seasonNumber.toString(),
+          episodeNumber: describeEpisodeNumbers(episode.episodeNumber, episode.episodeNumberEnd),
+        })
       : '';
 
   return (
@@ -66,7 +70,9 @@ const UpNext = ({ episode, isAsking, onPlay, onStay }: UpNextProps) => {
           style={[STILL, styles.still]}
         />
 
-        <Text style={styles.label}>{isAsking ? 'Are you still watching?' : 'Up next'}</Text>
+        <Text style={styles.label}>
+          {isAsking ? say('common.areYouStillWatching') : say('common.upNext')}
+        </Text>
         <Text numberOfLines={2} style={styles.name}>
           {place}
           {episode.title}
@@ -74,14 +80,24 @@ const UpNext = ({ episode, isAsking, onPlay, onStay }: UpNextProps) => {
 
         <View style={styles.actions}>
           <Button
-            label={isAsking ? 'Keep watching' : `Play in ${left.toString()}`}
+            label={
+              isAsking
+                ? say('tv.player.upNext.keepWatching')
+                : say('tv.player.upNext.playInLeft', { left: left.toString() })
+            }
             icon={SkipForward}
             variant="confirm"
             size="md"
             hasPreferredFocus
             onPress={onPlay}
           />
-          <Button label="Stay" icon={X} variant="overlay" size="md" onPress={onStay} />
+          <Button
+            label={say('tv.player.upNext.stay')}
+            icon={X}
+            variant="overlay"
+            size="md"
+            onPress={onStay}
+          />
         </View>
       </FadeIn>
     </View>

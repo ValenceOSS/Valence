@@ -8,6 +8,7 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { liftRequestBlock } from '@ValenceClient/requests/fetchMediaRequests';
 import type { RequestBlocklistTabProps } from './RequestBlocklistTab.types';
+import { say } from '@ValenceI18n/say';
 
 const WHEN = new Intl.DateTimeFormat('en-GB', {
   day: 'numeric',
@@ -33,7 +34,9 @@ const RequestBlocklistTab = ({ request, onLifted }: RequestBlocklistTabProps) =>
   if (blocked.isError) {
     return (
       <CouldNotRead
-        what="What it will not try again"
+        said={say(
+          'screens.requestDetailDialog.requestBlocklistTab.whatItWillNotTryAgainCouldNotBeRead',
+        )}
         isTryingAgain={blocked.isFetching}
         onTryAgain={() => {
           void blocked.refetch();
@@ -43,14 +46,19 @@ const RequestBlocklistTab = ({ request, onLifted }: RequestBlocklistTabProps) =>
   }
 
   if (blocked.data === undefined) {
-    return <Spinner isCentered label="Reading what it will not try again" size="sm" />;
+    return (
+      <Spinner
+        isCentered
+        label={say('screens.requestDetailDialog.requestBlocklistTab.readingWhatItWillNotTry')}
+        size="sm"
+      />
+    );
   }
 
   if (blocked.data.length === 0) {
     return (
       <p className="font-body text-sm text-text-muted">
-        It has given up on nothing. A download that fails, or stalls for hours, lands here and is
-        not tried again for this request.
+        {say('screens.requestDetailDialog.requestBlocklistTab.itHasGivenUpOnNothing')}
       </p>
     );
   }
@@ -63,7 +71,10 @@ const RequestBlocklistTab = ({ request, onLifted }: RequestBlocklistTabProps) =>
         </p>
       )}
 
-      <ul aria-label="What it will not try again" className="flex flex-col gap-2">
+      <ul
+        aria-label={say('screens.requestDetailDialog.requestBlocklistTab.whatItWillNotTryAgain')}
+        className="flex flex-col gap-2"
+      >
         {blocked.data.map((block) => (
           <li
             key={block.id}
@@ -92,7 +103,9 @@ const RequestBlocklistTab = ({ request, onLifted }: RequestBlocklistTabProps) =>
                       return;
                     }
 
-                    notify.worked('Lifted the block.');
+                    notify.worked(
+                      say('screens.requestDetailDialog.requestBlocklistTab.liftedTheBlock'),
+                    );
                     onLifted();
 
                     return cache.invalidateQueries({
@@ -104,7 +117,7 @@ const RequestBlocklistTab = ({ request, onLifted }: RequestBlocklistTabProps) =>
                   });
               }}
             >
-              Try it again
+              {say('screens.requestDetailDialog.requestBlocklistTab.tryItAgain')}
             </Button>
           </li>
         ))}

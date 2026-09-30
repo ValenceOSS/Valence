@@ -7,8 +7,9 @@ import { theCar } from '@ValenceMobile/carPlay/theCar';
 import { shelvesForTheCar } from '@ValenceMobile/carPlay/shelvesForTheCar';
 import { playFromTheCar } from '@ValenceMobile/carPlay/playFromTheCar';
 import { CarChoiceSchema } from '@ValenceMobile/carPlay/CarChoiceSchema';
+import { say } from '@ValenceI18n/say';
 
-const SIGN_IN_FIRST = 'Open Valence on your iPhone and sign in to play your music here.';
+const SIGN_IN_FIRST = say('phone.carPlay.useCarPlay.openValenceOnYourIPhoneAnd');
 
 /**
  * Fills CarPlay with whoever is signed in's music, keeps it current as their library changes, and

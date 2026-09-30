@@ -6,6 +6,7 @@ import type {
   IndexerSettings,
 } from '@ValenceContracts/schemas/Indexer';
 import type { IndexerStart } from '@ValenceScreens/components/AdminArea/IndexerStart';
+import { say } from '@ValenceI18n/say';
 
 type IndexerForm = {
   kind: IndexerKind;
@@ -97,43 +98,58 @@ const readIndexerForm = (form: IndexerForm): ReadIndexerForm => {
   const url = form.url.trim();
 
   if (name === '') {
-    return { draft: null, problem: 'Give the indexer a name.' };
+    return {
+      draft: null,
+      problem: say('screens.indexerDialog.readIndexerForm.giveTheIndexerAName'),
+    };
   }
 
   if (!URL.canParse(url) || !/^https?:$/.test(new URL(url).protocol)) {
-    return { draft: null, problem: 'The address needs to be a whole http or https address.' };
+    return { draft: null, problem: say('common.theAddressNeedsToBeA') };
   }
 
   const priority = readWholeNumber(form.priority, 1, 50);
 
   if (priority === null) {
-    return { draft: null, problem: 'Priority is a whole number from 1 to 50.' };
+    return { draft: null, problem: say('common.priorityIsAWholeNumberFrom') };
   }
 
   const perMinute =
     form.requestsPerMinute.trim() === '' ? null : readWholeNumber(form.requestsPerMinute, 1, 600);
 
   if (perMinute === null && form.requestsPerMinute.trim() !== '') {
-    return { draft: null, problem: 'The limit is a whole number of searches a minute, up to 600.' };
+    return {
+      draft: null,
+      problem: say('screens.indexerDialog.readIndexerForm.theLimitIsAWholeNumber'),
+    };
   }
 
   const timeout = readWholeNumber(form.timeoutSeconds, 5, 120);
 
   if (timeout === null) {
-    return { draft: null, problem: 'Wait between 5 and 120 seconds for an answer.' };
+    return {
+      draft: null,
+      problem: say('screens.indexerDialog.readIndexerForm.waitBetween5And120Seconds'),
+    };
   }
 
   const seedSeconds =
     form.seedSeconds.trim() === '' ? null : readWholeNumber(form.seedSeconds, 0, 31_536_000);
 
   if (seedSeconds === null && form.seedSeconds.trim() !== '') {
-    return { draft: null, problem: 'Seed time is a whole number of seconds, up to a year.' };
+    return {
+      draft: null,
+      problem: say('screens.indexerDialog.readIndexerForm.seedTimeIsAWholeNumber'),
+    };
   }
 
   const ratio = form.seedRatio.trim() === '' ? null : Number(form.seedRatio.trim());
 
   if (ratio !== null && (!Number.isFinite(ratio) || ratio < 0 || ratio > 1000)) {
-    return { draft: null, problem: 'A ratio is a number from 0 to 1000.' };
+    return {
+      draft: null,
+      problem: say('screens.indexerDialog.readIndexerForm.aRatioIsANumberFrom'),
+    };
   }
 
   return {

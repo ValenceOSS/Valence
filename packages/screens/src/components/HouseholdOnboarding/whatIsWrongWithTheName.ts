@@ -1,4 +1,5 @@
 import { NAME_MAX } from '@ValenceContracts/schemas/Household';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says why a household cannot be called something, so the step can say it before anybody presses on.
@@ -13,10 +14,14 @@ const whatIsWrongWithTheName = (name: string): string | null => {
   const trimmed = name.trim();
 
   if (trimmed === '') {
-    return 'Give the household a name.';
+    return say('screens.householdOnboarding.whatIsWrongWithTheName.giveTheHouseholdAName');
   }
 
-  return trimmed.length > NAME_MAX ? `Keep it to ${NAME_MAX.toString()} characters.` : null;
+  return trimmed.length > NAME_MAX
+    ? say('screens.householdOnboarding.whatIsWrongWithTheName.keepItToNAMEMAXCharacters', {
+        NAME_MAX: NAME_MAX.toString(),
+      })
+    : null;
 };
 
 export { whatIsWrongWithTheName };

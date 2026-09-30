@@ -5,6 +5,7 @@ import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
 import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { TheLeapProps } from './TheLeap.types';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const OVER_THE_PICTURE = '#ffffff';
 
@@ -141,7 +142,7 @@ const TheLeap = ({ leap }: TheLeapProps) => {
         ))}
       </View>
 
-      <Text style={styles.said}>{`${leap.seconds.toString()} seconds`}</Text>
+      <Text style={styles.said}>{sayCount('common.count.seconds', leap.seconds)}</Text>
     </Animated.View>
   );
 };

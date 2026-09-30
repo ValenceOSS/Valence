@@ -10,18 +10,19 @@ import { TextField } from '@ValenceUI/TextField';
 import { DAY_NAMES } from '@ValenceClient/admin/describeTrigger';
 import type { ScheduleTrigger } from '@ValenceClient/admin/fetchAdmin';
 import type { AddTriggerDialogProps } from './AddTriggerDialog.types';
+import { say } from '@ValenceI18n/say';
 
 const TRIGGER_TYPES = [
-  { id: 'daily', label: 'Daily' },
-  { id: 'weekly', label: 'Weekly' },
-  { id: 'interval', label: 'On an interval' },
-  { id: 'startup', label: 'On application startup' },
+  { id: 'daily', label: say('screens.adminArea.addTriggerDialog.daily') },
+  { id: 'weekly', label: say('common.weekly') },
+  { id: 'interval', label: say('screens.adminArea.addTriggerDialog.onAnInterval') },
+  { id: 'startup', label: say('common.onApplicationStartup') },
 ] as const;
 type TriggerType = (typeof TRIGGER_TYPES)[number]['id'];
 
 const INTERVAL_UNITS = [
-  { id: 'minutes', label: 'Minutes' },
-  { id: 'hours', label: 'Hours' },
+  { id: 'minutes', label: say('screens.adminArea.addTriggerDialog.minutes') },
+  { id: 'hours', label: say('screens.adminArea.addTriggerDialog.hours') },
 ] as const;
 type IntervalUnit = (typeof INTERVAL_UNITS)[number]['id'];
 
@@ -126,12 +127,12 @@ const AddTriggerDialog = ({ isOpen, onAdd, onClose, isSaving = false }: AddTrigg
   );
 
   return (
-    <DialogCompanion label="Add trigger" isOpen={isOpen} onClose={onClose}>
-      <DialogTitle size="compact" title="Add trigger" />
+    <DialogCompanion label={say('common.addTrigger')} isOpen={isOpen} onClose={onClose}>
+      <DialogTitle size="compact" title={say('common.addTrigger')} />
 
       <DialogContent className="flex flex-col gap-5">
         {select(
-          'Trigger type',
+          say('screens.adminArea.addTriggerDialog.triggerType'),
           type,
           TRIGGER_TYPES.find((candidate) => candidate.id === type)?.label ?? '',
           [...TRIGGER_TYPES],
@@ -142,7 +143,7 @@ const AddTriggerDialog = ({ isOpen, onAdd, onClose, isSaving = false }: AddTrigg
 
         {type === 'weekly'
           ? select(
-              'Day',
+              say('screens.adminArea.addTriggerDialog.day'),
               dayOfWeek,
               DAY_NAMES[Number.parseInt(dayOfWeek, 10)] ?? '',
               DAY_NAMES.map((name, index) => ({ id: index.toString(), label: name })),
@@ -151,13 +152,13 @@ const AddTriggerDialog = ({ isOpen, onAdd, onClose, isSaving = false }: AddTrigg
           : null}
 
         {type === 'daily' || type === 'weekly' ? (
-          <TextField label="Time" type="time" value={time} onValueChange={setTime} />
+          <TextField label={say('common.time')} type="time" value={time} onValueChange={setTime} />
         ) : null}
 
         {type === 'interval' ? (
           <div className="flex items-end gap-3">
             <TextField
-              label="Every"
+              label={say('screens.adminArea.addTriggerDialog.every')}
               type="number"
               min={1}
               max={unit === 'minutes' ? 59 : 23}
@@ -167,7 +168,7 @@ const AddTriggerDialog = ({ isOpen, onAdd, onClose, isSaving = false }: AddTrigg
             />
 
             {select(
-              'Unit',
+              say('screens.adminArea.addTriggerDialog.unit'),
               unit,
               INTERVAL_UNITS.find((candidate) => candidate.id === unit)?.label ?? '',
               [...INTERVAL_UNITS],
@@ -180,7 +181,7 @@ const AddTriggerDialog = ({ isOpen, onAdd, onClose, isSaving = false }: AddTrigg
 
         {type === 'startup' ? (
           <p className="text-sm text-text-muted">
-            Runs once every time the server starts, with nothing else to set.
+            {say('screens.adminArea.addTriggerDialog.runsOnceEveryTimeTheServer')}
           </p>
         ) : null}
       </DialogContent>
@@ -188,7 +189,7 @@ const AddTriggerDialog = ({ isOpen, onAdd, onClose, isSaving = false }: AddTrigg
       <DialogFooter
         dismiss={{ onChoose: onClose, isDisabled: isSaving }}
         confirm={{
-          label: 'Add',
+          label: say('common.add'),
           onChoose: () => {
             if (built !== null) {
               onAdd(built);

@@ -14,6 +14,8 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { useAskAboutAnAlbum } from '@ValenceMobile/music/useAskAboutAnAlbum';
 import { playlistArtworkUrl } from '@ValenceClient/music/fetchPlaylists';
 import type { TheMusicResultsProps } from './TheMusicResults.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const SONGS_BESIDE_FILMS = 5;
 
@@ -55,7 +57,11 @@ const TheMusicResultsSection = ({
 
   if (isEmpty) {
     return isOnItsOwn ? (
-      <ANothingHere of={SearchX} title={`Nothing matches “${asked}”`} detail="Try fewer words." />
+      <ANothingHere
+        of={SearchX}
+        title={say('common.nothingMatchesAsked', { asked })}
+        detail={say('common.tryFewerWords')}
+      />
     ) : null;
   }
 
@@ -63,7 +69,7 @@ const TheMusicResultsSection = ({
     <View style={styles.whole}>
       {tracks.length === 0 ? null : (
         <View style={styles.songs}>
-          <Words size="heading">Songs</Words>
+          <Words size="heading">{say('common.songs2')}</Words>
           <ATrackList
             tracks={isOnItsOwn ? tracks : tracks.slice(0, SONGS_BESIDE_FILMS)}
             source={{ kind: 'search', id: null, name: `“${asked}”` }}
@@ -75,7 +81,7 @@ const TheMusicResultsSection = ({
       )}
 
       {artists.length === 0 ? null : (
-        <AShelf title="Artists">
+        <AShelf title={say('common.artists')}>
           {artists.map((artist) => (
             <AMusicTile
               key={artist.id}
@@ -91,7 +97,7 @@ const TheMusicResultsSection = ({
       )}
 
       {albums.length === 0 ? null : (
-        <AShelf title="Albums">
+        <AShelf title={say('common.albums')}>
           {albums.map((album) => (
             <AMusicTile
               key={album.id}
@@ -110,7 +116,7 @@ const TheMusicResultsSection = ({
       )}
 
       {playlists.length === 0 ? null : (
-        <AShelf title="Playlists">
+        <AShelf title={say('common.playlists')}>
           {playlists.map((playlist) => {
             const ownCover = playlistArtworkUrl(playlist);
 
@@ -118,7 +124,7 @@ const TheMusicResultsSection = ({
               <AMusicTile
                 key={playlist.id}
                 title={playlist.name}
-                detail={`${playlist.entryCount.toString()} songs`}
+                detail={sayCount('common.count.songs', playlist.entryCount)}
                 artwork={ownCover === null ? null : onThisServer(ownCover)}
                 {...(ownCover === null ? { albumIds: playlist.artworkAlbumIds } : {})}
                 onPress={() => {

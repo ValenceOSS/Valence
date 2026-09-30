@@ -7,6 +7,7 @@ import { PageReader } from '@ValenceScreens/components/PageReader/PageReader';
 import { TextReader } from '@ValenceScreens/components/TextReader/TextReader';
 import { readGuestPlace, writeGuestPlace } from '@ValenceScreens/reading/guestPlace';
 import type { GuestReaderProps } from './GuestReader.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * A shared book, read by somebody holding the link rather than signed in.
@@ -42,7 +43,7 @@ const GuestReader = ({ book, onClose }: GuestReaderProps) => {
   if (asked.isError) {
     return (
       <CouldNotRead
-        what="That book"
+        said={say('common.thatBookCouldNotBeRead')}
         isTryingAgain={asked.isFetching}
         onTryAgain={() => {
           void asked.refetch();
@@ -54,7 +55,7 @@ const GuestReader = ({ book, onClose }: GuestReaderProps) => {
   if (asked.data === undefined || asked.data === null || chapterId === '') {
     return (
       <div className="flex h-dvh items-center justify-center bg-shade">
-        <Spinner label="Opening the book" />
+        <Spinner label={say('common.openingTheBook')} />
       </div>
     );
   }

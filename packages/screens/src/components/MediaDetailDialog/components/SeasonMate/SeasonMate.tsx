@@ -4,6 +4,7 @@ import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 import type { SeasonMateProps } from './SeasonMate.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Another episode of the season being looked at, as a card: its picture, how far into it somebody got
@@ -26,7 +27,14 @@ const SeasonMate = ({ episode, watched, onSelect }: SeasonMateProps) => {
         variant="bare"
         size="none"
         hasTooltip={false}
-        label={number === null ? episode.title : `Episode ${number}, ${episode.title}`}
+        label={
+          number === null
+            ? episode.title
+            : say('screens.mediaDetailDialog.seasonMate.episodeNumberTitle', {
+                number,
+                title: episode.title,
+              })
+        }
         className="group flex w-full flex-col items-stretch gap-2 text-left"
         onClick={onSelect}
       >

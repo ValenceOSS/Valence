@@ -19,12 +19,13 @@ import { useHandOff } from '@ValenceTv/navigation/useHandOff';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { CatalogueProps } from './Catalogue.types';
+import { say } from '@ValenceI18n/say';
 
 const ACROSS = 6;
 
 const RESTS_AFTER_MS = 600;
 
-const TITLES = { films: 'Films', shows: 'Shows' } as const;
+const TITLES = { films: say('common.films'), shows: say('common.shows') } as const;
 
 /**
  * Every film, or every programme, as a wall of posters in alphabetical order, as the web's Films and
@@ -114,7 +115,9 @@ const CataloguePage = ({ kind, watchable, onOpen, onFeature, upTo }: CataloguePr
     return (
       <View style={styles.waiting}>
         <Text style={styles.empty}>
-          {kind === 'films' ? 'There are no films here yet.' : 'There are no shows here yet.'}
+          {kind === 'films'
+            ? say('tv.catalogue.thereAreNoFilmsHereYet')
+            : say('tv.catalogue.thereAreNoShowsHereYet')}
         </Text>
       </View>
     );

@@ -1,5 +1,6 @@
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import type { SequencedCommand } from '@ValenceContracts/schemas/WatchParty';
+import { say } from '@ValenceI18n/say';
 
 /**
  * What to tell the room about something somebody else just did to the picture.
@@ -23,18 +24,21 @@ const describeCommand = (
   }
 
   if (command.command.kind === 'play') {
-    return `${command.byName} pressed play`;
+    return say('client.party.describeCommand.byNamePressedPlay', { byName: command.byName });
   }
 
   if (command.command.kind === 'pause') {
-    return `${command.byName} paused`;
+    return say('client.party.describeCommand.byNamePaused', { byName: command.byName });
   }
 
   if (command.command.kind === 'seek') {
-    return `${command.byName} skipped to ${formatDuration(command.command.atSeconds)}`;
+    return say('client.party.describeCommand.byNameSkippedToAtSeconds', {
+      byName: command.byName,
+      atSeconds: formatDuration(command.command.atSeconds),
+    });
   }
 
-  return `${command.byName} put something else on`;
+  return say('client.party.describeCommand.byNamePutSomethingElseOn', { byName: command.byName });
 };
 
 export { describeCommand };

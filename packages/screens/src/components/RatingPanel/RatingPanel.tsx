@@ -6,18 +6,10 @@ import { useStars } from '@ValenceClient/library/useStars';
 import { DialogSection } from '@ValenceScreens/components/DialogSection/DialogSection';
 import type { HouseholdRating } from '@ValenceContracts/schemas/Rating';
 import type { RatingPanelProps } from './RatingPanel.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const NOTHING: HouseholdRating = { average: null, count: 0 };
-
-/**
- * Says how many people gave a rating in words that read properly at one, since "1 ratings" is the
- * sort of thing that makes an interface look unfinished.
- *
- * @param count - How many gave it.
- * @returns The phrase to show beside the average.
- */
-const describeCount = (count: number): string =>
-  count === 1 ? 'from 1 rating' : `from ${count.toString()} ratings`;
 
 /**
  * What this viewer thinks of something and what the rest of the household thinks, side by side. The
@@ -46,10 +38,15 @@ const RatingPanel = ({ subject, title, onRate, className }: RatingPanelProps) =>
   const household = asked.data ?? NOTHING;
 
   return (
-    <DialogSection heading="Ratings" {...(className === undefined ? {} : { className })}>
+    <DialogSection
+      heading={say('screens.ratingPanel.ratings')}
+      {...(className === undefined ? {} : { className })}
+    >
       <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
         <div className="flex flex-col gap-1.5">
-          <span className="text-xs uppercase tracking-[0.16em] text-text-muted">You</span>
+          <span className="text-xs uppercase tracking-[0.16em] text-text-muted">
+            {say('screens.ratingPanel.you')}
+          </span>
 
           <StarRating
             stars={stars}
@@ -65,13 +62,19 @@ const RatingPanel = ({ subject, title, onRate, className }: RatingPanelProps) =>
 
         {household.average === null ? null : (
           <div className="flex flex-col gap-1.5">
-            <span className="text-xs uppercase tracking-[0.16em] text-text-muted">Household</span>
+            <span className="text-xs uppercase tracking-[0.16em] text-text-muted">
+              {say('screens.ratingPanel.household')}
+            </span>
 
             <span className="flex items-center gap-2">
-              <StarRating stars={household.average} label={`${title}, household`} size="sm" />
+              <StarRating
+                stars={household.average}
+                label={say('screens.ratingPanel.titleHousehold', { title })}
+                size="sm"
+              />
               <span className="text-sm tabular-nums text-text">{household.average.toFixed(1)}</span>
               <span className="font-body text-xs text-text-muted">
-                {describeCount(household.count)}
+                {sayCount('screens.ratingPanel.fromCountRating', household.count)}
               </span>
             </span>
           </div>

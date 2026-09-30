@@ -32,6 +32,8 @@ import { isAudiobookFormat } from '@ValenceContracts/schemas/Book';
 import type { ReadingProgress } from '@ValenceContracts/schemas/Book';
 import { AChapterToHear } from './components/AChapterToHear/AChapterToHear';
 import type { ABookProps } from './ABook.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const COVER = 128;
 
@@ -65,18 +67,21 @@ const howFarInto = (read: ReadingProgress | undefined, pageCount: number | null)
   }
 
   if (read.isFinished) {
-    return 'Read';
+    return say('common.read');
   }
 
   if (read.fraction !== null) {
-    return `${Math.round(read.fraction * 100).toString()}% read`;
+    return say('common.percentRead', { percent: Math.round(read.fraction * 100).toString() });
   }
 
   const page = (read.pageNumber ?? 0) + 1;
 
   return pageCount === null
-    ? `Page ${page.toString()}`
-    : `Page ${page.toString()} of ${pageCount.toString()}`;
+    ? say('phone.aBook.pagePage', { page: page.toString() })
+    : say('phone.aBook.pagePageOfPageCount', {
+        page: page.toString(),
+        pageCount: pageCount.toString(),
+      });
 };
 
 /**
@@ -120,7 +125,7 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
   if (read.data === undefined || read.data === null) {
     return (
       <Screen centres onBack={onBack}>
-        <Words tone="danger">That book could not be read.</Words>
+        <Words tone="danger">{say('common.thatBookCouldNotBeRead')}</Words>
       </Screen>
     );
   }
@@ -153,11 +158,13 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
   const facts = [
     book.authors === null || book.authors.length === 0 ? null : book.authors.join(', '),
     book.year === null ? null : book.year.toString(),
-    ordered.length > 1 ? `${ordered.length.toString()} chapters` : null,
+    ordered.length > 1 ? sayCount('common.count.chapters', ordered.length) : null,
     tracks.length === 0
       ? null
       : describeLength(tracks.reduce((all, track) => all + track.durationSeconds, 0)),
-    ordered.length === 0 && toHear.length > 1 ? `${toHear.length.toString()} chapters` : null,
+    ordered.length === 0 && toHear.length > 1
+      ? sayCount('common.count.chapters', toHear.length)
+      : null,
   ].filter((fact) => fact !== null);
 
   return (
@@ -183,9 +190,7 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
       {hasAudio && ordered.length === 0 ? listen : null}
 
       {ordered.length === 0 && !hasAudio ? (
-        <Words tone="muted">
-          Nothing in this book yet. Scanning the library again may find it.
-        </Words>
+        <Words tone="muted">{say('common.nothingInThisBookYetScanning')}</Words>
       ) : ordered.length === 0 ? null : (
         <Button
           tone="bold"
@@ -195,7 +200,11 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
             onRead(book.id, null, isFinished);
           }}
         >
-          {isStarted ? 'Continue reading' : isFinished ? 'Read again' : 'Read'}
+          {isStarted
+            ? say('common.continueReading')
+            : isFinished
+              ? say('common.readAgain')
+              : say('common.read')}
         </Button>
       )}
 
@@ -209,12 +218,12 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
           setSharing({ kind: 'book', book });
         }}
       >
-        Share
+        {say('common.share')}
       </Button>
 
       {where === null ? null : (
         <Words tone="muted" isCentred>
-          {isFinished ? 'Finished' : describeReadingPlace(where)}
+          {isFinished ? say('common.finished') : describeReadingPlace(where)}
         </Words>
       )}
 
@@ -230,12 +239,10 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
 
       {ordered.length > 1 ? (
         <View style={styles.chapters}>
-          <Words size="heading">Chapters</Words>
+          <Words size="heading">{say('common.chapters')}</Words>
           {ordered.map((chapter) => {
             const note = [
-              chapter.pageCount === null
-                ? null
-                : `${chapter.pageCount.toString()} ${chapter.pageCount === 1 ? 'page' : 'pages'}`,
+              chapter.pageCount === null ? null : sayCount('common.count.pages', chapter.pageCount),
               howFarInto(held.get(chapter.id), chapter.pageCount),
             ]
               .filter((part) => part !== null)
@@ -245,7 +252,7 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
               <Button
                 key={chapter.id}
                 tone="bare"
-                label={`Read ${chapter.title}`}
+                label={say('common.readTitle', { title: chapter.title })}
                 onPress={() => {
                   onRead(book.id, chapter.id, false);
                 }}
@@ -267,7 +274,9 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
       ) : null}
       {toHear.length > 1 ? (
         <View style={styles.chapters}>
-          <Words size="heading">{ordered.length > 1 ? 'Audiobook chapters' : 'Chapters'}</Words>
+          <Words size="heading">
+            {ordered.length > 1 ? say('phone.aBook.audiobookChapters') : say('common.chapters')}
+          </Words>
           {toHear.map((chapter, at) => (
             <AChapterToHear
               key={`${at.toString()}:${chapter.title}`}

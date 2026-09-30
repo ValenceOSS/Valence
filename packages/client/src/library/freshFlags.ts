@@ -1,4 +1,5 @@
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import { say } from '@ValenceI18n/say';
 
 const FRESH_FOR_MS = 14 * 24 * 60 * 60 * 1000;
 
@@ -34,7 +35,7 @@ const keyOf = (media: Flagged): string =>
 const freshFlags = (
   library: readonly Flagged[],
   now: number,
-): ((media: Flagged) => 'New episode' | 'Recently added' | null) => {
+): ((media: Flagged) => string | null) => {
   const newest = new Map<string, number>();
   const oldest = new Map<string, number>();
 
@@ -51,14 +52,16 @@ const freshFlags = (
     oldest.set(key, Math.min(oldest.get(key) ?? added, added));
   }
 
-  const flags = new Map<string, 'New episode' | 'Recently added'>(
+  const flags = new Map<string, string>(
     [...newest.entries()]
       .filter(([, added]) => now - added <= FRESH_FOR_MS)
       .sort(([, left], [, right]) => right - left)
       .slice(0, MOST_FLAGGED)
       .map(([key]) => [
         key,
-        now - (oldest.get(key) ?? 0) > FRESH_FOR_MS ? 'New episode' : 'Recently added',
+        now - (oldest.get(key) ?? 0) > FRESH_FOR_MS
+          ? say('client.library.freshFlags.newEpisode')
+          : say('common.recentlyAdded'),
       ]),
   );
 

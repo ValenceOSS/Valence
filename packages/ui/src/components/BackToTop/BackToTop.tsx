@@ -7,6 +7,7 @@ import { cn } from '@ValenceUI/cn';
 import { useHasScrolledPast } from '@ValenceUI/useHasScrolledPast';
 import { usePortalContainer } from '@ValenceUI/usePortalContainer';
 import type { BackToTopProps } from './BackToTop.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The way back to the top of a page long enough to have lost it, which a page that goes on for as
@@ -34,7 +35,7 @@ import type { BackToTopProps } from './BackToTop.types';
  * @param label - What it does in words, for anything reading the page aloud.
  * @param className - Extra classes for the caller's own layout.
  */
-const BackToTop = ({ label = 'Back to top', className }: BackToTopProps) => {
+const BackToTop = ({ label = say('ui.backToTop.backToTop'), className }: BackToTopProps) => {
   const { mark, hasPassed } = useHasScrolledPast();
   const prefersReducedMotion = useReducedMotionConfig();
   const portalContainer = usePortalContainer();

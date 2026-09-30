@@ -7,6 +7,8 @@ import { Button } from '@ValenceUI/Button';
 import { describeLogDay, describeLogTime } from '@ValenceClient/admin/describeLogTime';
 import type { ReactNode } from 'react';
 import type { LogDetailDialogProps } from './LogDetailDialog.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 type RowProps = {
   name: string;
@@ -51,9 +53,16 @@ const LogDetailDialog = ({ record, isOpen, onClose, onOpenJob }: LogDetailDialog
         );
 
   return (
-    <DialogCompanion label="Log record" isOpen={isOpen && record !== null} onClose={onClose}>
-      <DialogTitle size="compact" title="Log record">
-        <Button isIconOnly variant="ghost" label="Close" size="sm" onClick={onClose}>
+    <DialogCompanion
+      label={say('screens.observabilityPage.logDetailDialog.logRecord')}
+      isOpen={isOpen && record !== null}
+      onClose={onClose}
+    >
+      <DialogTitle
+        size="compact"
+        title={say('screens.observabilityPage.logDetailDialog.logRecord')}
+      >
+        <Button isIconOnly variant="ghost" label={say('common.close')} size="sm" onClick={onClose}>
           <Icon of={XIcon} size={16} />
         </Button>
       </DialogTitle>
@@ -62,11 +71,20 @@ const LogDetailDialog = ({ record, isOpen, onClose, onOpenJob }: LogDetailDialog
         {record !== null && (
           <div className="flex flex-col gap-4">
             <dl className="flex flex-col divide-y divide-[var(--surface-line)]">
-              <Row name="When">{`${describeLogDay(record.atMs)} at ${describeLogTime(record.atMs)}`}</Row>
-              <Row name="Level">{record.level}</Row>
-              <Row name="Source">{record.source}</Row>
+              <Row name={say('screens.observabilityPage.jobHistory.when')}>
+                {say('common.dayAtTime', {
+                  day: describeLogDay(record.atMs),
+                  time: describeLogTime(record.atMs),
+                })}
+              </Row>
+              <Row name={say('screens.logDetailDialog.level')}>{record.level}</Row>
+              <Row name={say('common.source')}>{record.source}</Row>
 
-              {record.count > 1 && <Row name="Happened">{`${record.count.toString()} times`}</Row>}
+              {record.count > 1 && (
+                <Row name={say('screens.logDetailDialog.happened')}>
+                  {sayCount('common.count.times', record.count)}
+                </Row>
+              )}
 
               {said.map(([name, value]) => (
                 <Row key={name} name={name}>

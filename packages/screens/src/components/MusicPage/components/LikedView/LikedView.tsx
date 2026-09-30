@@ -16,8 +16,10 @@ import { MusicHeader } from '@ValenceScreens/components/MusicHeader/MusicHeader'
 import { TrackList } from '@ValenceScreens/components/TrackList/TrackList';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 
-const SOURCE = { kind: 'liked', id: null, name: 'Liked Songs' } as const;
+const SOURCE = { kind: 'liked', id: null, name: say('common.likedSongs2') } as const;
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * Every song this profile has liked, newest first — a playlist nobody has to make, kept by pressing
@@ -35,7 +37,7 @@ const LikedView = () => {
   if (asked.isError) {
     return (
       <CouldNotRead
-        what="your liked songs"
+        said={say('screens.musicPage.likedView.yourLikedSongsCouldNotBeRead')}
         isTryingAgain={asked.isFetching}
         onTryAgain={() => {
           void asked.refetch();
@@ -47,11 +49,11 @@ const LikedView = () => {
   return (
     <article className="flex flex-col">
       <MusicHeader
-        eyebrow="Playlist"
-        title="Liked Songs"
+        eyebrow={say('common.playlist')}
+        title={say('common.likedSongs2')}
         artwork={
           <PlaylistCover
-            name="Liked Songs"
+            name={say('common.likedSongs2')}
             albumIds={covers}
             standIn={HeartFilledIcon}
             iconSize={72}
@@ -60,8 +62,7 @@ const LikedView = () => {
         }
         details={
           <span>
-            {tracks.length === 1 ? '1 song' : `${tracks.length.toString()} songs`} ·{' '}
-            {formatDuration(total)}
+            {sayCount('common.count.songs', tracks.length)} · {formatDuration(total)}
           </span>
         }
         actions={
@@ -70,7 +71,7 @@ const LikedView = () => {
               variant="confirm"
               size="lg"
               isIconOnly
-              label="Play Liked Songs"
+              label={say('screens.musicPage.likedView.playLikedSongs')}
               className="size-14"
               disabled={tracks.length === 0}
               onClick={() => {
@@ -83,7 +84,7 @@ const LikedView = () => {
               variant="ghost"
               size="md"
               isIconOnly
-              label="Shuffle Liked Songs"
+              label={say('screens.musicPage.likedView.shuffleLikedSongs')}
               disabled={tracks.length === 0}
               onClick={() => {
                 player.play(tracks, Math.floor(Math.random() * tracks.length), {
@@ -100,16 +101,19 @@ const LikedView = () => {
 
       <div className={`pb-10 ${MUSIC_LANES.tracks}`}>
         {asked.isPending ? (
-          <Skeleton label="Reading your liked songs" className="h-40 w-full" />
+          <Skeleton
+            label={say('screens.musicPage.likedView.readingYourLikedSongs')}
+            className="h-40 w-full"
+          />
         ) : tracks.length === 0 ? (
           <NothingHere
             of={HeartIcon}
-            title="Songs you like will be here"
-            detail="Press the heart beside any song to keep it."
+            title={say('screens.musicPage.likedView.songsYouLikeWillBeHere')}
+            detail={say('screens.musicPage.likedView.pressTheHeartBesideAnySong')}
           />
         ) : (
           <TrackList
-            label="Liked Songs"
+            label={say('common.likedSongs2')}
             tracks={tracks}
             showsArtwork
             onPlay={(index) => {

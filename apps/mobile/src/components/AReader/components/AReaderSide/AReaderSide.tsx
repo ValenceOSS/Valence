@@ -16,6 +16,7 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import type { AReaderSideProps } from './AReaderSide.types';
+import { say } from '@ValenceI18n/say';
 
 const TITLE_THICK = 20;
 
@@ -26,9 +27,9 @@ const COVER_TALL = 1.42;
 const FIT_GLYPHS = { both: Scan, height: ChevronsUpDown, width: ChevronsLeftRight } as const;
 
 const FIT_SAYS = {
-  both: 'Showing whole pages. Fill the width instead',
-  height: 'Filling the height. Show whole pages instead',
-  width: 'Filling the width. Fill the height instead',
+  both: say('phone.aReader.aReaderSide.showingWholePagesFillTheWidth'),
+  height: say('phone.aReader.aReaderSide.fillingTheHeightShowWholePages'),
+  width: say('phone.aReader.aReaderSide.fillingTheWidthFillTheHeight'),
 } as const;
 
 const styles = StyleSheet.create({
@@ -107,19 +108,27 @@ const AReaderSide = ({
       <View style={styles.buttons}>
         <AGlassCircle
           of={isRightToLeft ? ArrowLeft : ArrowRight}
-          label="Turn onwards"
+          label={say('phone.aReader.aReaderSide.turnOnwards')}
           onPress={onForward}
           ink={ink}
         />
         <AGlassCircle
           of={isMarked ? BookmarkFilled : Bookmark}
-          label={isMarked ? 'Unmark these pages' : 'Mark these pages'}
+          label={
+            isMarked
+              ? say('phone.aReader.aReaderSide.unmarkThesePages')
+              : say('phone.aReader.aReaderSide.markThesePages')
+          }
           onPress={onMark}
           ink={ink}
         />
         <AGlassCircle
           of={isLocked ? Lock : Unlock}
-          label={isLocked ? 'Let the pages turn' : 'Hold the pages still'}
+          label={
+            isLocked
+              ? say('phone.aReader.aReaderSide.letThePagesTurn')
+              : say('phone.aReader.aReaderSide.holdThePagesStill')
+          }
           onPress={onLock}
           ink={ink}
         />
@@ -177,7 +186,11 @@ const AReaderSide = ({
             {`${Math.round(through * 100).toString()}%`}
           </Words>
         ) : (
-          <Button tone="bare" label={`Read on: ${next.title}`} onPress={onReadOn}>
+          <Button
+            tone="bare"
+            label={say('common.readOnTitle', { title: next.title })}
+            onPress={onReadOn}
+          >
             <View style={styles.foot}>
               <View style={[styles.cover, { height: cover * COVER_TALL, width: cover }]}>
                 <Image
@@ -188,7 +201,7 @@ const AReaderSide = ({
                 />
               </View>
               <Words size="small" isCentred colour={ink}>
-                Read on
+                {say('phone.aReader.aReaderSide.readOn')}
               </Words>
             </View>
           </Button>

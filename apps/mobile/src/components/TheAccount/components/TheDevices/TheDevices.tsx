@@ -8,6 +8,7 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { SignInATelevision } from '@ValenceMobile/components/TheAccount/components/TheDevices/components/SignInATelevision/SignInATelevision';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { say } from '@ValenceI18n/say';
 
 const DEVICES = ['account', 'devices'] as const;
 
@@ -37,29 +38,37 @@ const TheDevices = () => {
   const reread = () => cache.invalidateQueries({ queryKey: DEVICES });
 
   const end = (deviceId: string, name: string) => {
-    Alert.alert(`Sign out ${name}?`, 'Whoever is using it will have to sign in again.', [
-      { text: 'Keep it', style: 'cancel' },
-      {
-        text: 'Sign out',
-        style: 'destructive',
-        onPress: () => {
-          void endDevice(deviceId).then(reread);
+    Alert.alert(
+      say('phone.theAccount.theDevices.signOutName2', { name }),
+      say('phone.theAccount.theDevices.whoeverIsUsingItWillHave'),
+      [
+        { text: say('common.keepIt'), style: 'cancel' },
+        {
+          text: say('common.signOut'),
+          style: 'destructive',
+          onPress: () => {
+            void endDevice(deviceId).then(reread);
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const endTheRest = () => {
-    Alert.alert('Sign out everywhere else?', 'Every other device will have to sign in again.', [
-      { text: 'Keep them', style: 'cancel' },
-      {
-        text: 'Sign them out',
-        style: 'destructive',
-        onPress: () => {
-          void endOtherDevices().then(reread);
+    Alert.alert(
+      say('common.signOutEverywhereElse2'),
+      say('phone.theAccount.theDevices.everyOtherDeviceWillHaveTo'),
+      [
+        { text: say('common.keepThem'), style: 'cancel' },
+        {
+          text: say('common.signThemOut'),
+          style: 'destructive',
+          onPress: () => {
+            void endOtherDevices().then(reread);
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   if (devices.isPending) {
@@ -67,22 +76,31 @@ const TheDevices = () => {
   }
 
   if (devices.isError) {
-    return <Words tone="danger">Those could not be read.</Words>;
+    return <Words tone="danger">{say('common.thoseCouldNotBeRead')}</Words>;
   }
 
   return (
     <>
       <SignInATelevision />
 
-      <AGroup title="Devices">
+      <AGroup title={say('common.devices')}>
         {devices.data.map((device) => (
           <View key={device.id} style={styles.device}>
             <View style={styles.words}>
               <Words>
-                {device.isCurrent ? `${sayAgain(device.name)} · This phone` : sayAgain(device.name)}
+                {device.isCurrent
+                  ? say('phone.theAccount.theDevices.nameThisPhone', {
+                      name: sayAgain(device.name),
+                    })
+                  : sayAgain(device.name)}
               </Words>
               <Words size="small" tone="muted">
-                {[device.address, `Signed in ${saidWhen(device.signedInAt)}`]
+                {[
+                  device.address,
+                  say('phone.theAccount.theDevices.signedInSignedInAt', {
+                    signedInAt: saidWhen(device.signedInAt),
+                  }),
+                ]
                   .filter((part) => part !== null)
                   .join(' · ')}
               </Words>
@@ -91,12 +109,14 @@ const TheDevices = () => {
             {device.isCurrent ? null : (
               <Button
                 tone="quiet"
-                label={`Sign out ${sayAgain(device.name)}`}
+                label={say('phone.theAccount.theDevices.signOutName', {
+                  name: sayAgain(device.name),
+                })}
                 onPress={() => {
                   end(device.id, sayAgain(device.name));
                 }}
               >
-                Sign out
+                {say('common.signOut')}
               </Button>
             )}
           </View>
@@ -104,7 +124,7 @@ const TheDevices = () => {
 
         {elsewhere.length === 0 ? null : (
           <Button tone="ghost" isWide isDestructive onPress={endTheRest}>
-            Sign out everywhere else
+            {say('common.signOutEverywhereElse')}
           </Button>
         )}
       </AGroup>

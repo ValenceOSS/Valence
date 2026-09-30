@@ -18,8 +18,9 @@ import { describeTheBuild } from '@ValenceClient/about/describeTheBuild';
 import type { NearbyValence } from '@ValenceContracts/schemas/NearbyValence';
 import { useServerIsLost } from '@ValenceClient/offline/useServerIsLost';
 import '@ValenceDesktop/TheWindow.types';
+import { say } from '@ValenceI18n/say';
 
-const router = buildRouter('Valence');
+const router = buildRouter(say('common.valence'));
 
 const ASKED_ABOUT = 'valence.update.askedAbout';
 
@@ -121,14 +122,14 @@ const Desktop = () => {
       />
 
       <ConfirmDialog
-        title="Update Valence?"
+        title={say('desktop.desktop.updateValence')}
         detail={
           update.kind === 'available'
-            ? `Valence ${update.version} is out. It downloads in the background, then Valence restarts to install it.`
+            ? say('desktop.desktop.valenceVersionIsOutItDownloads', { version: update.version })
             : ''
         }
-        confirmLabel="Update"
-        dismissLabel="Not now"
+        confirmLabel={say('desktop.desktop.update')}
+        dismissLabel={say('common.notNow')}
         isOpen={isAsking}
         onClose={() => {
           if (update.kind === 'available') {

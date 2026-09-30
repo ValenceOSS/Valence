@@ -4,6 +4,7 @@ import { notify } from '@ValenceUI/notify';
 import { signOut } from '@ValenceClient/session/auth';
 import { useShell } from '@ValenceClient/shell/useShell';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Ends the session and puts the app back at the way in, from anywhere that offers to — the account
@@ -25,7 +26,7 @@ const useSignOut = (): (() => Promise<void>) => {
     const ended = await signOut();
 
     if (!ended) {
-      notify.failed('You are still signed in. The server would not end the session.');
+      notify.failed(say('screens.session.useSignOut.youAreStillSignedInThe'));
 
       return;
     }

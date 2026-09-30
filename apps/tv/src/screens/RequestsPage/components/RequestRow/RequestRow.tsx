@@ -6,6 +6,7 @@ import { DownloadReadout } from '@ValenceTv/components/DownloadReadout/DownloadR
 import { joinFacts } from '@ValenceTv/library/joinFacts';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { RequestRowProps } from './RequestRow.types';
+import { say } from '@ValenceI18n/say';
 
 const POSTER = { width: 80, height: 120 };
 
@@ -61,7 +62,12 @@ const RequestRow = ({
 
               <Text numberOfLines={1} style={[styles.where, isFocused && { color: ink }]}>
                 {isSomeoneElses
-                  ? joinFacts([where, `Asked for by ${request.requestedBy.name}`])
+                  ? joinFacts([
+                      where,
+                      say('tv.requestsPage.requestRow.askedForByName', {
+                        name: request.requestedBy.name,
+                      }),
+                    ])
                   : where}
               </Text>
 

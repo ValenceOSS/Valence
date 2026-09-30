@@ -1,12 +1,13 @@
 import type { JobGroup } from '@ValenceContracts/schemas/JobGroup';
+import { say } from '@ValenceI18n/say';
 
 const HEADINGS: Record<JobGroup, string> = {
-  library: 'Library',
-  requests: 'Requests',
-  notifications: 'Notifications',
-  health: 'Health checks',
-  housekeeping: 'Housekeeping',
-  reset: 'Reset',
+  library: say('common.library'),
+  requests: say('common.requests'),
+  notifications: say('common.notifications'),
+  health: say('screens.jobRunner.describeJobGroup.healthChecks'),
+  housekeeping: say('screens.jobRunner.describeJobGroup.housekeeping'),
+  reset: say('screens.jobRunner.describeJobGroup.reset'),
 };
 
 /**

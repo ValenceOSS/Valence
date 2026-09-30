@@ -54,11 +54,12 @@ import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import { shuffleModeOf } from '@ValenceClient/music/shuffleModeOf';
 import { AShuffleMark } from '@ValenceMobile/components/AShuffleMark/AShuffleMark';
 import type { TheMusicPlayerProps } from './TheMusicPlayer.types';
+import { say } from '@ValenceI18n/say';
 
 const SHUFFLE_LABELS = {
-  off: 'Shuffle',
-  on: 'Smart shuffle',
-  smart: 'Stop shuffling',
+  off: say('common.shuffle'),
+  on: say('common.smartShuffle'),
+  smart: say('common.stopShuffling'),
 } as const;
 
 const RESTING = 0.86;
@@ -419,7 +420,7 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
     return (
       <Screen centres onBack={onBack} goesBackDown>
         <Words tone="muted" isCentred>
-          Nothing is playing.
+          {say('common.nothingIsPlaying')}
         </Words>
       </Screen>
     );
@@ -457,7 +458,7 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
   const liking = (
     <Button
       tone="bare"
-      label={isLiked ? 'Remove from liked songs' : 'Like'}
+      label={isLiked ? say('common.removeFromLikedSongs') : say('common.like')}
       isChosen={isLiked}
       onPress={() => {
         favourites.toggle(track.id);
@@ -480,7 +481,11 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
       </Words>
       <Button
         tone="bare"
-        label={`Open ${firstArtist?.name ?? 'the artist'}`}
+        label={
+          firstArtist === undefined
+            ? say('phone.theMusicPlayer.openTheArtist')
+            : say('common.openName', { name: firstArtist.name })
+        }
         onPress={() => {
           if (firstArtist !== undefined) {
             onArtist(firstArtist.id);
@@ -507,7 +512,7 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
             <View style={styles.head}>
               <Button
                 tone="bare"
-                label="Show the cover"
+                label={say('phone.theMusicPlayer.showTheCover')}
                 onPress={() => {
                   setBeside('nothing');
                 }}
@@ -548,7 +553,7 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
             <View {...turning.panHandlers}>
               <Button
                 tone="bare"
-                label={`Open ${track.album.title}`}
+                label={say('common.openTitle', { title: track.album.title })}
                 onPress={() => {
                   onAlbum(track.album.id);
                 }}
@@ -616,7 +621,7 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
           {sounds === null ? null : (
             <Button
               tone="bare"
-              label={`${sounds}, what it is`}
+              label={say('phone.theMusicPlayer.soundsWhatItIs', { sounds })}
               onPress={() => {
                 Alert.alert(sounds, whatTheFileHolds(track));
               }}
@@ -640,19 +645,23 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
             <AShuffleMark mode={shuffling} size={20} />
           </Button>
 
-          <Button tone="bare" label="Previous" onPress={() => player.previous()}>
+          <Button tone="bare" label={say('common.previous')} onPress={() => player.previous()}>
             <View style={styles.reach}>
               <Icon of={SkipBackFilled} size={32} colour={colours.text} />
             </View>
           </Button>
 
-          <Button tone="bare" label={isPlaying ? 'Pause' : 'Play'} onPress={() => player.toggle()}>
+          <Button
+            tone="bare"
+            label={isPlaying ? say('common.pause') : say('common.play')}
+            onPress={() => player.toggle()}
+          >
             <View style={styles.reach}>
               <Icon of={isPlaying ? PauseFilled : PlayFilled} size={52} colour={colours.text} />
             </View>
           </Button>
 
-          <Button tone="bare" label="Next" onPress={() => player.next()}>
+          <Button tone="bare" label={say('common.next')} onPress={() => player.next()}>
             <View style={styles.reach}>
               <Icon of={SkipForwardFilled} size={32} colour={colours.text} />
             </View>
@@ -662,10 +671,10 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
             tone="bare"
             label={
               repeat === 'off'
-                ? 'Repeat everything'
+                ? say('common.repeatEverything')
                 : repeat === 'all'
-                  ? 'Repeat this song'
-                  : 'Stop repeating'
+                  ? say('common.repeatThisSong')
+                  : say('common.stopRepeating')
             }
             isChosen={repeat !== 'off'}
             onPress={() => player.cycleRepeat()}
@@ -683,7 +692,7 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
         <View style={styles.extras}>
           <Button
             tone="bare"
-            label="Words"
+            label={say('common.words')}
             isChosen={beside === 'lyrics'}
             onPress={() => {
               setBeside((was) => (was === 'lyrics' ? 'nothing' : 'lyrics'));
@@ -697,7 +706,9 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
           <Button
             tone="bare"
             label={
-              state.remote === null ? 'Play on another device' : `Playing on ${state.remote.label}`
+              state.remote === null
+                ? say('common.playOnAnotherDevice')
+                : say('common.playingOnLabel', { label: state.remote.label })
             }
             isChosen={state.remote !== null}
             onPress={() => {
@@ -709,7 +720,7 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
 
           <Button
             tone="bare"
-            label="Up next"
+            label={say('common.upNext')}
             isChosen={beside === 'queue'}
             onPress={() => {
               setBeside((was) => (was === 'queue' ? 'nothing' : 'queue'));
@@ -721,7 +732,7 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
 
         {state.remote === null ? null : (
           <Words size="small" tone="muted" isCentred>
-            {`Playing on ${state.remote.label}`}
+            {say('common.playingOnLabel', { label: state.remote.label })}
           </Words>
         )}
 

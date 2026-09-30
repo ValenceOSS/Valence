@@ -1,4 +1,5 @@
 import { createServer } from 'node:http';
+import { say } from '@ValenceI18n/say';
 
 type Listening = {
   port: number;
@@ -7,16 +8,7 @@ type Listening = {
 
 const LONG_ENOUGH_TO_SIGN_IN = 10 * 60 * 1000;
 
-const SIGNED_IN = `<!doctype html>
-<html lang="en">
-  <meta charset="utf-8">
-  <meta name="color-scheme" content="light dark">
-  <title>Signed in to Valence</title>
-  <body style="margin: 0; min-height: 100vh; display: grid; place-items: center; font: 16px system-ui, sans-serif">
-    <p>Signed in. You can close this tab and go back to Valence.</p>
-  </body>
-</html>
-`;
+const SIGNED_IN = say('desktop.main.listenForTheHandBack.doctypeHtmlHtmlLangEnMeta');
 
 let stopWaiting: (() => void) | null = null;
 
@@ -58,7 +50,9 @@ const listenForTheHandBack = async (waitFor = LONG_ENOUGH_TO_SIGN_IN): Promise<L
     const code = asked.pathname === '/signed-in' ? asked.searchParams.get('code') : null;
 
     if (code === null || code === '') {
-      response.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }).end('Not here.');
+      response
+        .writeHead(404, { 'content-type': 'text/plain; charset=utf-8' })
+        .end(say('desktop.main.listenForTheHandBack.notHere'));
 
       return;
     }

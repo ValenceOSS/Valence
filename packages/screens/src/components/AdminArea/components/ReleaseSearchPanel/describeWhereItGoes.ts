@@ -1,5 +1,6 @@
 import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
 import type { Library, LibraryKind } from '@ValenceContracts/schemas/Library';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says where a release sent by hand ends up: filed into the first library of its kind once it has
@@ -20,8 +21,15 @@ const describeWhereItGoes = (
   const into = libraries.find((library) => library.kind === kind);
 
   return into === undefined
-    ? `As ${one}. There is no library of ${LIBRARY_KIND_NAMES[kind].label.toLowerCase()} to file it into, so it stays in the client under ${category}.`
-    : `As ${one}, filed into ${into.name} once it has downloaded.`;
+    ? say('screens.releaseSearchPanel.describeWhereItGoes.asOneThereIsNoLibrary', {
+        one,
+        label: LIBRARY_KIND_NAMES[kind].label.toLowerCase(),
+        category,
+      })
+    : say('screens.releaseSearchPanel.describeWhereItGoes.asOneFiledIntoNameOnce', {
+        one,
+        name: into.name,
+      });
 };
 
 export { describeWhereItGoes };

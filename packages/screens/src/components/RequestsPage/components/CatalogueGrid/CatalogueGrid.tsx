@@ -14,6 +14,7 @@ import type { CatalogueGridProps } from './CatalogueGrid.types';
 import { BackToTop } from '@ValenceUI/BackToTop';
 import { useIsTitleWatched } from '@ValenceScreens/requests/useIsTitleWatched';
 import { describeCatalogueCard } from '@ValenceScreens/components/AskableDialog/describeCatalogueCard';
+import { say } from '@ValenceI18n/say';
 
 const LEAST_CARD_WIDTH = 170;
 
@@ -68,7 +69,7 @@ const CatalogueGrid = ({ browsing, filters = {}, onAsk }: CatalogueGridProps) =>
   if (pages.isError) {
     return (
       <CouldNotRead
-        what="What there is to ask for"
+        said={say('common.whatThereIsToAskForCouldNotBeRead')}
         isTryingAgain={pages.isFetching}
         onTryAgain={() => {
           void pages.refetch();
@@ -78,7 +79,7 @@ const CatalogueGrid = ({ browsing, filters = {}, onAsk }: CatalogueGridProps) =>
   }
 
   if (pages.data === undefined) {
-    return <Spinner isPageCentered label="Reading what there is to ask for" />;
+    return <Spinner isPageCentered label={say('common.readingWhatThereIsToAsk')} />;
   }
 
   const titles = pages.data.pages.flatMap((page) => page.titles);
@@ -87,11 +88,11 @@ const CatalogueGrid = ({ browsing, filters = {}, onAsk }: CatalogueGridProps) =>
     return (
       <NothingHere
         of={CompassIcon}
-        title="Nothing to ask for here"
+        title={say('screens.requestsPage.catalogueGrid.nothingToAskForHere')}
         detail={
           Object.keys(filters).length === 0
-            ? 'The catalogue listed nothing.'
-            : 'Nothing in the catalogue matches those filters.'
+            ? say('screens.requestsPage.catalogueGrid.theCatalogueListedNothing')
+            : say('screens.requestsPage.catalogueGrid.nothingInTheCatalogueMatchesThose')
         }
       />
     );
@@ -103,7 +104,7 @@ const CatalogueGrid = ({ browsing, filters = {}, onAsk }: CatalogueGridProps) =>
 
       <VirtualGrid
         count={titles.length}
-        label="What there is to ask for"
+        label={say('common.whatThereIsToAskFor')}
         leastCardWidth={LEAST_CARD_WIDTH}
         rowHeight={POSTER_ROW_HEIGHT}
       >
@@ -133,7 +134,9 @@ const CatalogueGrid = ({ browsing, filters = {}, onAsk }: CatalogueGridProps) =>
       </VirtualGrid>
 
       <div ref={setEnd} className="flex justify-center">
-        {isFetchingNextPage ? <Spinner label="Reading more" /> : null}
+        {isFetchingNextPage ? (
+          <Spinner label={say('screens.requestsPage.catalogueGrid.readingMore')} />
+        ) : null}
       </div>
     </div>
   );

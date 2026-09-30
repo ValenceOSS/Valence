@@ -3,6 +3,7 @@ import { Button } from '@ValenceTv/components/Button/Button';
 import { QrCode } from '@ValenceTv/components/QrCode/QrCode';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { ScanToConnectProps } from './ScanToConnect.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   handoff: {
@@ -27,14 +28,11 @@ const styles = StyleSheet.create({
  */
 const ScanToConnect = ({ address, onDone }: ScanToConnectProps) => (
   <View style={styles.handoff}>
-    <QrCode value={address} size={280} label="A code to scan with your phone's camera" />
+    <QrCode value={address} size={280} label={say('common.aCodeToScanWithYour')} />
     <View style={styles.steps}>
-      <Text style={styles.title}>Connect on your phone</Text>
-      <Text style={styles.step}>
-        Scan the code with your phone's camera and sign in there. The code works once and runs out
-        after a few minutes.
-      </Text>
-      <Button label="Done" hasPreferredFocus onPress={onDone} />
+      <Text style={styles.title}>{say('tv.scanToConnect.connectOnYourPhone')}</Text>
+      <Text style={styles.step}>{say('tv.scanToConnect.scanTheCodeWithYourPhones')}</Text>
+      <Button label={say('common.done')} hasPreferredFocus onPress={onDone} />
     </View>
   </View>
 );

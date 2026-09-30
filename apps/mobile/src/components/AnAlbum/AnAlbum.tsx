@@ -18,6 +18,8 @@ import { thePhonesMusicPlayer } from '@ValenceMobile/music/thePhonesMusicPlayer'
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { AnAlbumProps } from './AnAlbum.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * One album, as the web's album page draws it: its cover, who it is by, when it came out and how
@@ -50,7 +52,7 @@ const AnAlbum = ({ albumId, onAlbum, onArtist, onPlaylist, onBack }: AnAlbumProp
   if (read.data === undefined) {
     return (
       <Screen centres onBack={onBack}>
-        <Words tone="danger">That album could not be read.</Words>
+        <Words tone="danger">{say('phone.anAlbum.thatAlbumCouldNotBeRead')}</Words>
       </Screen>
     );
   }
@@ -59,14 +61,14 @@ const AnAlbum = ({ albumId, onAlbum, onArtist, onPlaylist, onBack }: AnAlbumProp
   const source = { kind: 'album' as const, id: album.id, name: album.title };
   const detail = [
     album.year === null ? null : album.year.toString(),
-    `${album.trackCount.toString()} ${album.trackCount === 1 ? 'song' : 'songs'}`,
+    sayCount('common.count.songs', album.trackCount),
     howLongItRuns(album.durationSeconds),
   ].filter((part) => part !== null);
 
   return (
     <Screen scrolls onBack={onBack} behind={<AMoodBackground palette={lights} />}>
       <AMusicHead
-        kind={album.isCompilation ? 'Compilation' : 'Album'}
+        kind={album.isCompilation ? say('common.compilation') : say('common.album')}
         title={album.title}
         detail={detail.join(' · ')}
         artwork={album.hasArtwork ? onThisServer(albumArtworkUrl(album.id)) : null}
@@ -104,7 +106,7 @@ const AnAlbum = ({ albumId, onAlbum, onArtist, onPlaylist, onBack }: AnAlbumProp
               );
             }}
           >
-            Add to playlist
+            {say('common.addToPlaylist')}
           </Button>
         )}
       </AMusicHead>

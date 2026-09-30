@@ -10,6 +10,8 @@ import { RevealItem } from '@ValenceUI/RevealItem';
 import { MusicShelf } from '@ValenceScreens/components/MusicShelf/MusicShelf';
 import type { PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
 import type { PlaylistShelfProps } from './PlaylistShelf.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * The line under a playlist's name: whose it is where it is somebody else's, and how much is in it.
@@ -19,8 +21,10 @@ import type { PlaylistShelfProps } from './PlaylistShelf.types';
  */
 const describePlaylist = (playlist: PlaylistSummary): string =>
   [
-    playlist.isMine ? null : `By ${nameOfOwner(playlist.owner)}`,
-    playlist.entryCount === 1 ? '1 thing' : `${playlist.entryCount.toString()} things`,
+    playlist.isMine
+      ? null
+      : say('screens.playlistShelf.byOwner', { owner: nameOfOwner(playlist.owner) }),
+    sayCount('common.count.things', playlist.entryCount),
   ]
     .filter((part) => part !== null)
     .join(' · ');

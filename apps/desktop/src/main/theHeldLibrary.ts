@@ -7,6 +7,7 @@ import { KEPT_TRICKPLAY_INDEX } from '@ValenceClient/downloads/KEPT_TRICKPLAY_IN
 import { trickplayToKeep } from '@ValenceClient/downloads/trickplayToKeep';
 import { theFileKept, thePosterKept, theTrickplayKept } from '@ValenceDesktop/main/theHeldFolder';
 import type { HeldIndex } from '@ValenceDesktop/main/theHeldIndex';
+import { say } from '@ValenceI18n/say';
 
 type HeldLibrary = {
   all: () => Promise<HeldFile[]>;
@@ -233,7 +234,7 @@ const theHeldLibrary = (needs: WhatTheLibraryNeeds): HeldLibrary => {
     const server = needs.where();
 
     if (server === '') {
-      note(row.downloadId, { state: 'failed', failure: 'No Valence has been chosen yet.' });
+      note(row.downloadId, { state: 'failed', failure: say('common.noValenceHasBeenChosenYet') });
 
       return;
     }
@@ -285,7 +286,7 @@ const theHeldLibrary = (needs: WhatTheLibraryNeeds): HeldLibrary => {
       note(row.downloadId, {
         state: 'failed',
         bytesPerSecond: null,
-        failure: 'This client could not finish keeping it.',
+        failure: say('desktop.main.theHeldLibrary.thisClientCouldNotFinishKeeping'),
       });
     });
   };

@@ -14,11 +14,12 @@ import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { useAskAboutAnAlbum } from '@ValenceMobile/music/useAskAboutAnAlbum';
 import type { AlbumOrder } from '@ValenceClient/music/fetchMusic';
 import type { TheAlbumsProps } from './TheAlbums.types';
+import { say } from '@ValenceI18n/say';
 
 const ORDERS: readonly { id: AlbumOrder; label: string }[] = [
-  { id: 'recent', label: 'Recently added' },
-  { id: 'title', label: 'A–Z' },
-  { id: 'year', label: 'Year' },
+  { id: 'recent', label: say('common.recentlyAdded') },
+  { id: 'title', label: say('common.aZ') },
+  { id: 'year', label: say('common.year') },
 ];
 
 const ACROSS = 2;
@@ -42,9 +43,9 @@ const TheAlbums = ({ onAlbum, onBack }: TheAlbumsProps) => {
       across={ACROSS}
       header={
         <>
-          <Words size="title">Albums</Words>
+          <Words size="title">{say('common.albums')}</Words>
           <SegmentedRow
-            label="Put the albums in order by"
+            label={say('common.putTheAlbumsInOrderBy')}
             items={ORDERS}
             value={order}
             onSelect={(id) => {
@@ -55,8 +56,8 @@ const TheAlbums = ({ onAlbum, onBack }: TheAlbumsProps) => {
           {!albums.isPending && (albums.data ?? []).length === 0 ? (
             <ANothingHere
               of={Record}
-              title="No albums yet"
-              detail="Once a music library has been scanned, its albums will be here."
+              title={say('common.noAlbumsYet')}
+              detail={say('common.onceAMusicLibraryHasBeen')}
             />
           ) : null}
         </>

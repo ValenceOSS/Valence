@@ -1,5 +1,6 @@
 import { changeOnServer } from '@ValenceClient/query/changeOnServer';
 import { pluginPath } from '@ValenceClient/plugins/pluginPath';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Uninstalls a plugin, and with it everything it kept and every account connected to it.
@@ -11,7 +12,7 @@ const removePlugin = async (pluginId: string): Promise<void> => {
   await changeOnServer(
     pluginPath(pluginId),
     { method: 'DELETE' },
-    'That plugin could not be removed.',
+    say('client.plugins.removePlugin.thatPluginCouldNotBeRemoved'),
   );
 };
 

@@ -15,6 +15,7 @@ import { ServerCard } from '@ValenceTv/screens/ChooseServer/components/ServerCar
 import mark from '@ValenceTv/assets/valence-mark.png';
 import type { NearbyValence } from '@ValenceContracts/schemas/NearbyValence';
 import type { ChooseServerProps } from './ChooseServer.types';
+import { say } from '@ValenceI18n/say';
 
 const MARK = { width: 110, height: 80 };
 
@@ -47,7 +48,9 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
   const [recent] = useState(recentServerAddresses);
   const [typed, setTyped] = useState(couldNotReach ?? '');
   const [problem, setProblem] = useState<string | null>(
-    couldNotReach === undefined ? null : `Valence at ${couldNotReach} could not be reached.`,
+    couldNotReach === undefined
+      ? null
+      : say('tv.chooseServer.valenceAtCouldNotReachCouldNotBe', { couldNotReach }),
   );
   const [isAsking, setIsAsking] = useState(false);
   const [isTyping, setIsTyping] = useState(couldNotReach !== undefined && recent.length === 0);
@@ -63,7 +66,7 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
     setIsAsking(false);
 
     if (!answered) {
-      setProblem(`Nothing answered at ${address}. Check the address and that Valence is running.`);
+      setProblem(say('common.nothingAnsweredAtAddressCheckThe', { address }));
 
       return;
     }
@@ -93,8 +96,8 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
       <FadeIn isFilling={false}>
         <View style={styles.top}>
           <Image source={mark} style={MARK} contentFit="contain" />
-          <Text style={styles.title}>Which Valence is yours?</Text>
-          <Text style={styles.lead}>Choose the server this Apple TV watches from.</Text>
+          <Text style={styles.title}>{say('common.whichValenceIsYours')}</Text>
+          <Text style={styles.lead}>{say('tv.chooseServer.chooseTheServerThisAppleTV')}</Text>
         </View>
       </FadeIn>
 
@@ -102,7 +105,7 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
         <FadeIn isFilling={false}>
           <View style={styles.typing}>
             <TextField
-              label="Server address"
+              label={say('common.serverAddress')}
               value={typed}
               onChange={setTyped}
               onSubmit={connect}
@@ -116,7 +119,7 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
             <View style={styles.typingActions}>
               <View style={styles.half}>
                 <Button
-                  label={isAsking ? 'Looking for it…' : 'Connect'}
+                  label={isAsking ? say('tv.chooseServer.lookingForIt') : say('common.connect')}
                   variant="primary"
                   isWide
                   isDisabled={isAsking}
@@ -125,7 +128,7 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
               </View>
               <View style={styles.half}>
                 <Button
-                  label="Back"
+                  label={say('common.back')}
                   variant="secondary"
                   isWide
                   onPress={() => {
@@ -168,7 +171,7 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
               >
                 <ServerCard
                   name={withoutScheme(address)}
-                  address="Used before"
+                  address={say('tv.chooseServer.usedBefore')}
                   icon={Clock}
                   isDisabled={isAsking}
                   hasPreferredFocus={nearby.length === 0 && index === 0}
@@ -182,7 +185,7 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
             <FadeIn isFilling={false} delayMs={STAGGER_MS * (nearby.length + used.length)}>
               <ServerCard
                 name="Another address"
-                address="Type it in"
+                address={say('tv.chooseServer.typeItIn')}
                 icon={Plus}
                 hasPreferredFocus={nearby.length === 0 && used.length === 0}
                 onPress={() => {
@@ -204,10 +207,12 @@ const ChooseServer = ({ onChosen, couldNotReach }: ChooseServerProps) => {
             )}
             <Text style={styles.lookingWords}>
               {nearby.length === 0
-                ? 'Looking on your network…'
+                ? say('tv.chooseServer.lookingOnYourNetwork')
                 : nearby.length === 1
-                  ? 'Found 1 Valence on your network'
-                  : `Found ${nearby.length.toString()} on your network`}
+                  ? say('tv.chooseServer.found1ValenceOnYourNetwork')
+                  : say('tv.chooseServer.foundLengthOnYourNetwork', {
+                      length: nearby.length.toString(),
+                    })}
             </Text>
           </View>
         </>

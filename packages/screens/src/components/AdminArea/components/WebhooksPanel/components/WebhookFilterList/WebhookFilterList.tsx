@@ -5,6 +5,7 @@ import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
 import type { WebhookFilterListProps } from './WebhookFilterList.types';
+import { say } from '@ValenceI18n/say';
 
 const EVERYONE = 'everyone';
 
@@ -64,12 +65,14 @@ const WebhookFilterList = ({
       ) : (
         <>
           <SegmentedRow
-            label={`Which ${title.toLowerCase()}`}
+            label={say('screens.webhooksPanel.webhookFilterList.whichTitle', {
+              title: title.toLowerCase(),
+            })}
             tone="accent"
             size="sm"
             items={[
-              { id: EVERYONE, label: 'Everybody' },
-              { id: SOME, label: 'Only these' },
+              { id: EVERYONE, label: say('screens.webhooksPanel.webhookFilterList.everybody') },
+              { id: SOME, label: say('screens.webhooksPanel.webhookFilterList.onlyThese') },
             ]}
             value={isPicking ? SOME : EVERYONE}
             onSelect={(id) => {
@@ -84,17 +87,21 @@ const WebhookFilterList = ({
           {!isPicking ? null : (
             <div className="flex flex-col gap-2 pt-1">
               <TextField
-                label={`Find in ${title.toLowerCase()}`}
+                label={say('screens.webhooksPanel.webhookFilterList.findInTitle', {
+                  title: title.toLowerCase(),
+                })}
                 isLabelHidden
                 type="search"
                 value={search}
                 onValueChange={setSearch}
-                placeholder={`Find in ${title.toLowerCase()}`}
+                placeholder={say('screens.webhooksPanel.webhookFilterList.findInTitle', {
+                  title: title.toLowerCase(),
+                })}
                 icon={<Icon of={SearchIcon} size={15} />}
               />
 
               {shown.length === 0 ? (
-                <p className="text-sm text-text-muted">Nothing here matches that.</p>
+                <p className="text-sm text-text-muted">{say('common.nothingHereMatchesThat')}</p>
               ) : (
                 <ul
                   role="group"

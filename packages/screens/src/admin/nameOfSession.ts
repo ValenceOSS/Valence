@@ -1,5 +1,6 @@
 import { describeGuest } from '@ValenceCore/functions/describeGuest';
 import type { ActiveSession } from '@ValenceClient/admin/fetchAdmin';
+import { say } from '@ValenceI18n/say';
 
 /**
  * What to call whoever has a tab open, on a screen listing who is watching.
@@ -14,6 +15,8 @@ import type { ActiveSession } from '@ValenceClient/admin/fetchAdmin';
 const nameOfSession = (
   session: Pick<ActiveSession, 'isGuest' | 'guestOf' | 'profileName'>,
 ): string =>
-  session.isGuest ? describeGuest(session.guestOf) : (session.profileName ?? 'Unknown viewer');
+  session.isGuest
+    ? describeGuest(session.guestOf)
+    : (session.profileName ?? say('screens.admin.nameOfSession.unknownViewer'));
 
 export { nameOfSession };

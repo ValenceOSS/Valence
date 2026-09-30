@@ -41,6 +41,7 @@ import {
   Video as VideoFilledIcon,
 } from '@keyline-icons/react/fill';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
+import { say } from '@ValenceI18n/say';
 
 const ADMIN_SECTIONS = [
   {
@@ -48,58 +49,113 @@ const ADMIN_SECTIONS = [
     items: [
       {
         id: 'overview',
-        label: 'Overview',
+        label: say('screens.adminArea.adminSections.overview'),
         icon: LayoutDashboardIcon,
         activeIcon: LayoutDashboardFilledIcon,
       },
     ],
   },
   {
-    label: 'Activity',
+    label: say('screens.adminArea.adminSections.activity'),
     items: [
-      { id: 'activity', label: 'Sessions', icon: ActivityIcon, activeIcon: ActivityFilledIcon },
-      { id: 'shares', label: 'Links', icon: LinkIcon, activeIcon: LinkFilledIcon },
-      { id: 'jobs', label: 'Jobs & logs', icon: TerminalIcon, activeIcon: TerminalFilledIcon },
+      {
+        id: 'activity',
+        label: say('common.sessions'),
+        icon: ActivityIcon,
+        activeIcon: ActivityFilledIcon,
+      },
+      { id: 'shares', label: say('common.links'), icon: LinkIcon, activeIcon: LinkFilledIcon },
+      {
+        id: 'jobs',
+        label: say('common.jobsLogs'),
+        icon: TerminalIcon,
+        activeIcon: TerminalFilledIcon,
+      },
     ],
   },
   {
-    label: 'Content',
+    label: say('screens.adminArea.adminSections.content'),
     items: [
-      { id: 'libraries', label: 'Libraries', icon: FoldersIcon, activeIcon: FoldersFilledIcon },
-      { id: 'media', label: 'Media', icon: VideoIcon, activeIcon: VideoFilledIcon },
-      { id: 'files', label: 'Files', icon: FolderOpenIcon, activeIcon: FolderOpenFilledIcon },
-      { id: 'encoding', label: 'Encoding', icon: TapeIcon, activeIcon: TapeFilledIcon },
+      {
+        id: 'libraries',
+        label: say('common.libraries'),
+        icon: FoldersIcon,
+        activeIcon: FoldersFilledIcon,
+      },
+      { id: 'media', label: say('common.media'), icon: VideoIcon, activeIcon: VideoFilledIcon },
+      {
+        id: 'files',
+        label: say('common.files'),
+        icon: FolderOpenIcon,
+        activeIcon: FolderOpenFilledIcon,
+      },
+      { id: 'encoding', label: say('common.encoding'), icon: TapeIcon, activeIcon: TapeFilledIcon },
     ],
   },
   {
-    label: 'People',
+    label: say('common.people'),
     items: [
-      { id: 'accounts', label: 'Accounts', icon: UsersIcon, activeIcon: UsersFilledIcon },
-      { id: 'roles', label: 'Roles', icon: ShieldIcon, activeIcon: ShieldFilledIcon },
+      {
+        id: 'accounts',
+        label: say('common.accounts'),
+        icon: UsersIcon,
+        activeIcon: UsersFilledIcon,
+      },
+      { id: 'roles', label: say('common.roles'), icon: ShieldIcon, activeIcon: ShieldFilledIcon },
     ],
   },
   {
-    label: 'Requests',
+    label: say('common.requests'),
     items: [
-      { id: 'requests', label: 'Overview', icon: InboxIcon, activeIcon: InboxFilledIcon },
-      { id: 'requested', label: 'Requested', icon: CouponIcon, activeIcon: CouponFilledIcon },
-      { id: 'indexers', label: 'Indexers', icon: DatabaseIcon, activeIcon: DatabaseFilledIcon },
-      { id: 'search', label: 'Search', icon: SearchIcon, activeIcon: SearchFilledIcon },
+      {
+        id: 'requests',
+        label: say('screens.adminArea.adminSections.overview'),
+        icon: InboxIcon,
+        activeIcon: InboxFilledIcon,
+      },
+      {
+        id: 'requested',
+        label: say('common.requested'),
+        icon: CouponIcon,
+        activeIcon: CouponFilledIcon,
+      },
+      {
+        id: 'indexers',
+        label: say('common.indexers'),
+        icon: DatabaseIcon,
+        activeIcon: DatabaseFilledIcon,
+      },
+      { id: 'search', label: say('common.search'), icon: SearchIcon, activeIcon: SearchFilledIcon },
       {
         id: 'profiles',
-        label: 'Profiles',
+        label: say('common.profiles'),
         icon: SlidersHorizontalIcon,
         activeIcon: SlidersHorizontalFilledIcon,
       },
-      { id: 'downloads', label: 'Downloads', icon: DownloadIcon, activeIcon: DownloadFilledIcon },
+      {
+        id: 'downloads',
+        label: say('common.downloads'),
+        icon: DownloadIcon,
+        activeIcon: DownloadFilledIcon,
+      },
     ],
   },
   {
-    label: 'System',
+    label: say('common.system'),
     items: [
-      { id: 'settings', label: 'Settings', icon: SettingsIcon, activeIcon: SettingsFilledIcon },
-      { id: 'webhooks', label: 'Webhooks', icon: RouteIcon, activeIcon: RouteFilledIcon },
-      { id: 'plugins', label: 'Plugins', icon: PlugIcon, activeIcon: PlugFilledIcon },
+      {
+        id: 'settings',
+        label: say('common.settings'),
+        icon: SettingsIcon,
+        activeIcon: SettingsFilledIcon,
+      },
+      {
+        id: 'webhooks',
+        label: say('common.webhooks'),
+        icon: RouteIcon,
+        activeIcon: RouteFilledIcon,
+      },
+      { id: 'plugins', label: say('common.plugins'), icon: PlugIcon, activeIcon: PlugFilledIcon },
     ],
   },
 ] as const;

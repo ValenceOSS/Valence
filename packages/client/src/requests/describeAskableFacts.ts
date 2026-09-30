@@ -1,4 +1,6 @@
 import type { CatalogueTitleDetail } from '@ValenceContracts/schemas/CatalogueTitle';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * The facts said under a title's name: its year, how long it runs, and what kind of thing it is.
@@ -13,8 +15,13 @@ const describeAskableFacts = (
     title.runtimeMinutes === null
       ? null
       : title.runtimeMinutes < 60
-        ? `${title.runtimeMinutes.toString()} min`
-        : `${Math.floor(title.runtimeMinutes / 60).toString()} h${title.runtimeMinutes % 60 === 0 ? '' : ` ${(title.runtimeMinutes % 60).toString()} min`}`;
+        ? sayCount('common.count.minutesShort', title.runtimeMinutes)
+        : title.runtimeMinutes % 60 === 0
+          ? sayCount('common.count.hoursShort', Math.floor(title.runtimeMinutes / 60))
+          : say('client.books.describeLength.hoursHOverMin', {
+              hours: Math.floor(title.runtimeMinutes / 60).toString(),
+              over: (title.runtimeMinutes % 60).toString(),
+            });
 
   return [
     title.subtitle,

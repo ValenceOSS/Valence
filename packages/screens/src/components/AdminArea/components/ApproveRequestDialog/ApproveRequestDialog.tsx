@@ -21,6 +21,7 @@ import { ReleaseTypeChooser } from '@ValenceScreens/components/ReleaseTypeChoose
 import { SeasonChooser } from '@ValenceScreens/components/SeasonChooser/SeasonChooser';
 import type { ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 import type { ApproveRequestDialogProps } from './ApproveRequestDialog.types';
+import { say } from '@ValenceI18n/say';
 
 const THE_LIBRARYS = 'library';
 
@@ -57,7 +58,7 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
   const isMusic = request !== null && isMusicRequest(request.kind);
 
   const qualities = [
-    { id: THE_LIBRARYS, label: 'The library’s own profile' },
+    { id: THE_LIBRARYS, label: say('common.theLibrarysOwnProfile') },
     ...(profiles.data ?? [])
       .filter((profile) => profile.kind === (isMusic ? 'music' : 'video'))
       .map((profile) => ({ id: profile.id, label: profile.name })),
@@ -72,7 +73,10 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
           .map((entry) => ({ id: entry.id, label: entry.name }));
   const place = places.find((one) => one.id === libraryId);
 
-  const title = `Approve ${request?.title ?? 'this request'}?`;
+  const title =
+    request === null
+      ? say('screens.adminArea.approveRequestDialog.approveThisRequest')
+      : say('screens.adminArea.approveRequestDialog.approveTitle', { title: request.title });
 
   const approve = () => {
     if (request === null) {
@@ -101,12 +105,14 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
       )
       .then(({ value, refusal }) => {
         if (value === null) {
-          setProblem(refusal?.message ?? 'It could not be approved.');
+          setProblem(
+            refusal?.message ?? say('screens.adminArea.approveRequestDialog.itCouldNotBeApproved'),
+          );
 
           return;
         }
 
-        notify.worked(`Approved ${request.title}.`);
+        notify.worked(say('common.approvedTitle', { title: request.title }));
         onApproved(value);
         onClose();
       })
@@ -120,21 +126,21 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
       <DialogTitle
         size="compact"
         title={title}
-        detail="It is searched for as soon as it is approved. Change what it asks for first if you like."
+        detail={say('screens.adminArea.approveRequestDialog.itIsSearchedForAsSoon')}
       />
 
       <DialogContent className="flex flex-col gap-4">
         <FormField
-          label="Quality"
-          description="The profile its releases are judged by. Profiles are kept on the Profiles page."
+          label={say('common.quality')}
+          description={say('common.theProfileItsReleasesAreJudged')}
         >
           <OptionMenu
-            label="Quality"
+            label={say('common.quality')}
             triggerShape="field"
             matchTriggerWidth
             groups={[
               {
-                name: 'Quality',
+                name: say('common.quality'),
                 selectedId: profileId ?? THE_LIBRARYS,
                 onSelect: (next) => {
                   setProfileId(next === THE_LIBRARYS ? null : next);
@@ -144,7 +150,9 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
             ]}
             trigger={
               <>
-                <span className="truncate">{quality?.label ?? 'The library’s own profile'}</span>
+                <span className="truncate">
+                  {quality?.label ?? say('common.theLibrarysOwnProfile')}
+                </span>
                 <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
               </>
             }
@@ -152,14 +160,17 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
         </FormField>
 
         {places.length < 2 ? null : (
-          <FormField label="Library" description="Where it is filed once it arrives.">
+          <FormField
+            label={say('common.library')}
+            description={say('screens.adminArea.approveRequestDialog.whereItIsFiledOnceIt')}
+          >
             <OptionMenu
-              label="Library"
+              label={say('common.library')}
               triggerShape="field"
               matchTriggerWidth
               groups={[
                 {
-                  name: 'Library',
+                  name: say('common.library'),
                   selectedId: libraryId ?? '',
                   onSelect: setLibraryId,
                   options: places,
@@ -167,7 +178,9 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
               ]}
               trigger={
                 <>
-                  <span className="truncate">{place?.label ?? 'Choose a library'}</span>
+                  <span className="truncate">
+                    {place?.label ?? say('screens.adminArea.approveRequestDialog.chooseALibrary')}
+                  </span>
                   <Icon of={ChevronsUpDownIcon} size={15} className="shrink-0" />
                 </>
               }
@@ -187,7 +200,7 @@ const ApproveRequestDialog = ({ request, onClose, onApproved }: ApproveRequestDi
       <DialogFooter
         note={problem}
         dismiss={{ onChoose: onClose }}
-        confirm={{ label: 'Approve', onChoose: approve, isLoading: isApproving }}
+        confirm={{ label: say('common.approve'), onChoose: approve, isLoading: isApproving }}
       />
     </DialogCompanion>
   );

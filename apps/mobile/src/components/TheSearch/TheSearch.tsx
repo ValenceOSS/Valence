@@ -14,20 +14,21 @@ import { TheSearchBox } from '@ValenceMobile/components/TheSearch/components/The
 import { TheBookResults } from '@ValenceMobile/components/TheSearch/components/TheBookResults/TheBookResults';
 import { TheMusicResults } from '@ValenceMobile/components/TheSearch/components/TheMusicResults/TheMusicResults';
 import type { TheSearchProps } from './TheSearch.types';
+import { say } from '@ValenceI18n/say';
 
 const KINDS = [
-  { id: 'everything', label: 'Everything' },
-  { id: 'films', label: 'Films' },
-  { id: 'shows', label: 'Shows' },
+  { id: 'everything', label: say('common.everything') },
+  { id: 'films', label: say('common.films') },
+  { id: 'shows', label: say('common.shows') },
 ] as const;
 
-const MUSIC = { id: 'music', label: 'Music' } as const;
+const MUSIC = { id: 'music', label: say('common.music') } as const;
 
-const BOOKS = { id: 'books', label: 'Books' } as const;
+const BOOKS = { id: 'books', label: say('common.books') } as const;
 
 const SIDES = [
-  { id: 'discover', label: 'Discover' },
-  { id: 'asked', label: 'Requested' },
+  { id: 'discover', label: say('common.discover') },
+  { id: 'asked', label: say('common.requested') },
 ] as const;
 
 /**
@@ -105,11 +106,11 @@ const TheSearch = ({
 
       {isTypedAbove ? null : (
         <>
-          <Words size="title">Search</Words>
+          <Words size="title">{say('common.search')}</Words>
 
           <TheSearchBox
             placeholder={[
-              'Films, programmes, people',
+              say('common.filmsProgrammesPeople'),
               ...(hasMusic ? ['music'] : []),
               ...(hasBooks ? ['books'] : []),
             ].join(', ')}
@@ -120,10 +121,15 @@ const TheSearch = ({
 
       {searchingFor === '' ? (
         onAsk === null ? (
-          <Words tone="muted">Everything in every library.</Words>
+          <Words tone="muted">{say('phone.theSearch.everythingInEveryLibrary')}</Words>
         ) : (
           <>
-            <SegmentedRow label="What to show" items={SIDES} value={side} onSelect={onSide} />
+            <SegmentedRow
+              label={say('common.whatToShow')}
+              items={SIDES}
+              value={side}
+              onSelect={onSide}
+            />
 
             {side === 'asked' ? (
               <Asked onAsk={onAsk} />
@@ -135,7 +141,7 @@ const TheSearch = ({
       ) : (
         <>
           <SegmentedRow
-            label="What to look for"
+            label={say('phone.theSearch.whatToLookFor')}
             fills
             items={[...KINDS, ...(hasMusic ? [MUSIC] : []), ...(hasBooks ? [BOOKS] : [])]}
             value={kind}

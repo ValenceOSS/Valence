@@ -1,14 +1,18 @@
+import { say } from '@ValenceI18n/say';
+
 const WORDS: Record<string, string> = {
-  scan: 'Scanning',
-  rescan: 'Reading every file in',
-  regeneratePreviews: 'Regenerating previews for',
-  'library.scan': 'Scanning',
-  'library.readAgain': 'Reading the corrected files in',
-  'library.regeneratePreviews': 'Regenerating previews for',
-  'library.regenerateTrickplay': 'Regenerating thumbnails for',
-  'library.detectSegments': 'Detecting intros in',
-  'library.reset': 'Rebuilding',
-  'library.clearParts': 'Clearing parts of',
+  scan: say('screens.adminArea.describeScanKind.scanning'),
+  rescan: say('screens.adminArea.describeScanKind.readingEveryFileIn'),
+  regeneratePreviews: say('screens.adminArea.describeScanKind.regeneratingPreviewsFor'),
+  'library.scan': say('screens.adminArea.describeScanKind.scanning'),
+  'library.readAgain': say('screens.adminArea.describeScanKind.readingTheCorrectedFilesIn'),
+  'library.regeneratePreviews': say('screens.adminArea.describeScanKind.regeneratingPreviewsFor'),
+  'library.regenerateTrickplay': say(
+    'screens.adminArea.describeScanKind.regeneratingThumbnailsFor',
+  ),
+  'library.detectSegments': say('screens.adminArea.describeScanKind.detectingIntrosIn'),
+  'library.reset': say('screens.adminArea.describeScanKind.rebuilding'),
+  'library.clearParts': say('screens.adminArea.describeScanKind.clearingPartsOf'),
 };
 
 /**
@@ -20,6 +24,6 @@ const WORDS: Record<string, string> = {
  * @returns The phrase to show.
  */
 const describeScanKind = (kind: string, libraryName: string): string =>
-  `${WORDS[kind] ?? 'Working on'} ${libraryName}`;
+  `${WORDS[kind] ?? say('screens.adminArea.describeScanKind.workingOn')} ${libraryName}`;
 
 export { describeScanKind };

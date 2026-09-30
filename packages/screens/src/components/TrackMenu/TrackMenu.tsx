@@ -18,6 +18,7 @@ import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
 import { playlistGroupFor } from '@ValenceScreens/music/playlistGroupFor';
 import type { TrackMenuProps } from './TrackMenu.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Everything that can be done with one song besides playing it: queue it, put it in a playlist, go
@@ -40,7 +41,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
 
   return (
     <ActionMenu
-      label={`More for ${track.title}`}
+      label={say('common.moreForTitle', { title: track.title })}
       align="end"
       size="sm"
       {...(className === undefined ? {} : { className })}
@@ -50,20 +51,20 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
           items: [
             {
               id: 'next',
-              label: 'Play next',
+              label: say('common.playNext'),
               icon: <Icon of={SkipForwardFilledIcon} size={16} />,
               onChoose: () => {
                 player.playNext([track]);
-                notify.say(`${track.title} plays next`);
+                notify.say(say('screens.trackMenu.titlePlaysNext', { title: track.title }));
               },
             },
             {
               id: 'queue',
-              label: 'Add to queue',
+              label: say('common.addToQueue'),
               icon: <Icon of={ListOrderedFilledIcon} size={16} />,
               onChoose: () => {
                 player.addToQueue([track]);
-                notify.say(`Added ${track.title} to the queue`);
+                notify.say(say('screens.trackMenu.addedTitleToTheQueue', { title: track.title }));
               },
             },
           ],
@@ -76,7 +77,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
               : [
                   {
                     id: 'video',
-                    label: 'Watch the video',
+                    label: say('common.watchTheVideo'),
                     icon: <Icon of={VideoFilledIcon} size={16} />,
                     onChoose: () => {
                       if (track.videoKey !== null) {
@@ -88,7 +89,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
                 ]),
             {
               id: 'album',
-              label: 'Go to album',
+              label: say('common.goToAlbum'),
               icon: <Icon of={RecordFilledIcon} size={16} />,
               onChoose: () => {
                 open({ kind: 'album', id: track.album.id });
@@ -99,7 +100,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
               : [
                   {
                     id: 'artist',
-                    label: 'Go to artist',
+                    label: say('common.goToArtist'),
                     icon: <Icon of={UserFilledIcon} size={16} />,
                     onChoose: () => {
                       open({ kind: 'artist', id: artist.id });
@@ -111,7 +112,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
               : [
                   {
                     id: 'up',
-                    label: 'Move up',
+                    label: say('common.moveUp'),
                     icon: <Icon of={ChevronUpFilledIcon} size={16} />,
                     onChoose: onMoveUp,
                   },
@@ -121,7 +122,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
               : [
                   {
                     id: 'down',
-                    label: 'Move down',
+                    label: say('common.moveDown'),
                     icon: <Icon of={ChevronDownFilledIcon} size={16} />,
                     onChoose: onMoveDown,
                   },
@@ -131,7 +132,7 @@ const TrackMenu = ({ track, onRemove, onMoveUp, onMoveDown, className }: TrackMe
               : [
                   {
                     id: 'remove',
-                    label: 'Remove from this playlist',
+                    label: say('common.removeFromThisPlaylist'),
                     icon: <Icon of={BinFilledIcon} size={16} />,
                     isDestructive: true,
                     onChoose: onRemove,

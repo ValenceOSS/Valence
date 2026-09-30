@@ -3,6 +3,7 @@ import { listenForTheHandBack } from '@ValenceDesktop/main/listenForTheHandBack'
 import { theServerAddress } from '@ValenceDesktop/main/theServerAddress';
 import type { BrowserWindow } from 'electron';
 import type { HandBackReply } from '@ValenceDesktop/main/HandBackReply';
+import { say } from '@ValenceI18n/say';
 
 type SigningInFrom = Pick<BrowserWindow, 'isDestroyed' | 'show' | 'focus'>;
 
@@ -30,7 +31,7 @@ const signInOnAPage = async (
   const server = theServerAddress();
 
   if (server === '') {
-    return { kind: 'failed', reason: 'No Valence has been chosen yet.' };
+    return { kind: 'failed', reason: say('common.noValenceHasBeenChosenYet') };
   }
 
   const { port, handedBack } = await listenForTheHandBack();

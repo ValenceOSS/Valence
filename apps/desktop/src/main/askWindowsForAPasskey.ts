@@ -5,6 +5,7 @@ import { theNativeModule } from '@ValenceDesktop/main/theNativeModule';
 import { whatWindowsSaid } from '@ValenceDesktop/main/whatWindowsSaid';
 import type { AskReply } from '@ValenceDesktop/main/AskReply';
 import type { PasskeyRequestOptions } from '@ValenceContracts/schemas/PasskeyRequestOptions';
+import { say } from '@ValenceI18n/say';
 
 const AnswerSchema = z.object({
   credentialId: z.instanceof(Buffer),
@@ -33,7 +34,10 @@ const askWindowsForAPasskey = async (
   const ask = theNativeModule().askForAPasskey;
 
   if (ask === undefined) {
-    return { kind: 'failed', reason: 'This build cannot ask Windows for a passkey.' };
+    return {
+      kind: 'failed',
+      reason: say('desktop.main.askWindowsForAPasskey.thisBuildCannotAskWindowsFor'),
+    };
   }
 
   const clientData = aClientData('webauthn.get', options.challenge, server);

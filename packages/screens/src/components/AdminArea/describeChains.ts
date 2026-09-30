@@ -1,4 +1,5 @@
 import type { HardwareChain } from '@ValenceClient/admin/fetchAdmin';
+import { say } from '@ValenceI18n/say';
 
 type Refusal = {
   id: string;
@@ -12,10 +13,10 @@ type Chains = {
   refusals: Refusal[];
 };
 
-const WORK = {
-  preview: 'scrub previews',
-  sheet: 'thumbnail sheets',
-  transcode: 'transcodes',
+const REFUSED = {
+  preview: 'screens.adminArea.describeChains.accelCannotDrawScrubPreviews',
+  sheet: 'screens.adminArea.describeChains.accelCannotDrawThumbnailSheets',
+  transcode: 'screens.adminArea.describeChains.accelCannotDrawTranscodes',
 } as const;
 
 /**
@@ -31,7 +32,7 @@ const WORK = {
  */
 const describeChains = (chains: HardwareChain[]): Chains => {
   if (chains.length === 0) {
-    return { label: 'Not checked', tone: 'quiet', refusals: [] };
+    return { label: say('common.notChecked'), tone: 'quiet', refusals: [] };
   }
 
   const proved = chains.filter((chain) => chain.works);
@@ -39,15 +40,21 @@ const describeChains = (chains: HardwareChain[]): Chains => {
     .filter((chain) => !chain.works)
     .map((chain) => ({
       id: `${chain.accel}-${chain.shape}-${chain.bitDepth}`,
-      what: `${chain.accel} cannot draw ${WORK[chain.shape]} at ${chain.bitDepth} bits`,
+      what: say(REFUSED[chain.shape], {
+        accel: chain.accel,
+        bitDepth: chain.bitDepth,
+      }),
       reason:
         chain.reason === null || chain.reason === ''
-          ? 'It produced nothing, and said nothing about why.'
+          ? say('screens.adminArea.describeChains.itProducedNothingAndSaidNothing')
           : chain.reason,
     }));
 
   return {
-    label: `${proved.length} of ${chains.length} proved`,
+    label: say('screens.adminArea.describeChains.lengthOfLength2Proved', {
+      length: proved.length,
+      length2: chains.length,
+    }),
     tone: refusals.length === 0 ? 'quiet' : 'warning',
     refusals,
   };

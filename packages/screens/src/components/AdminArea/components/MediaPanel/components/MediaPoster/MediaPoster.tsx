@@ -2,6 +2,7 @@ import { ImageX as ImageXIcon } from '@keyline-icons/react';
 import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
 import type { MediaPosterProps } from './MediaPoster.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * A title's poster or cover at the size of a row in a list, read from the server's own copy. Where
@@ -21,7 +22,12 @@ const MediaPoster = ({ src, isSquare = false, className }: MediaPosterProps) => 
     )}
   >
     {src === null ? (
-      <Icon of={ImageXIcon} size={14} tone="muted" label="No artwork" />
+      <Icon
+        of={ImageXIcon}
+        size={14}
+        tone="muted"
+        label={say('screens.mediaPanel.mediaPoster.noArtwork')}
+      />
     ) : (
       <img src={src} alt="" loading="lazy" className="h-full w-full object-cover" />
     )}

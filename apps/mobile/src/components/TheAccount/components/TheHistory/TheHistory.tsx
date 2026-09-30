@@ -16,6 +16,7 @@ import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { BookReading } from '@ValenceContracts/schemas/Book';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   forget: { padding: 10 },
@@ -71,12 +72,12 @@ const TheHistory = () => {
 
   const forgetEverything = () => {
     Alert.alert(
-      'Forget everything you have watched and read?',
-      'Your history is cleared, and every book comes off the shelf of what you are reading. Where you are in each film and programme is kept.',
+      say('phone.theAccount.theHistory.forgetEverythingYouHaveWatchedAnd'),
+      say('phone.theAccount.theHistory.yourHistoryIsClearedAndEvery'),
       [
-        { text: 'Keep it', style: 'cancel' },
+        { text: say('common.keepIt'), style: 'cancel' },
         {
-          text: 'Forget everything',
+          text: say('common.forgetEverything'),
           style: 'destructive',
           onPress: () => {
             void Promise.all([forgetHistory(), forgetReading()]).then(reread);
@@ -91,34 +92,40 @@ const TheHistory = () => {
   }
 
   if (history.isError) {
-    return <Words tone="danger">Your history could not be read.</Words>;
+    return (
+      <Words tone="danger">{say('phone.theAccount.theHistory.yourHistoryCouldNotBeRead')}</Words>
+    );
   }
 
   if (entries.length === 0) {
-    return <Words tone="muted">Nothing watched or read yet.</Words>;
+    return <Words tone="muted">{say('phone.theAccount.theHistory.nothingWatchedOrReadYet')}</Words>;
   }
 
   return (
     <>
       {entries.length === 0 ? null : (
-        <AGroup title="Watch history">
+        <AGroup title={say('common.watchHistory')}>
           {entries.map((entry) => {
             const name =
               entry.kind === 'reading'
                 ? entry.reading.book.title
                 : entry.viewing.seriesTitle === null
-                  ? (entry.viewing.title ?? 'Something')
+                  ? (entry.viewing.title ?? say('common.something'))
                   : `${entry.viewing.seriesTitle} — ${entry.viewing.title ?? ''}`;
             const said =
               entry.kind === 'reading'
                 ? [
                     describeWhen(entry.at, now),
-                    entry.reading.isFinished ? 'Finished' : describeReadingPlace(entry.reading),
+                    entry.reading.isFinished
+                      ? say('common.finished')
+                      : describeReadingPlace(entry.reading),
                   ]
                 : [
                     describeWhen(entry.at, now),
-                    `${formatDuration(entry.viewing.secondsWatched)} watched`,
-                    entry.viewing.isFinished ? 'Finished' : null,
+                    say('common.durationWatched', {
+                      duration: formatDuration(entry.viewing.secondsWatched),
+                    }),
+                    entry.viewing.isFinished ? say('common.finished') : null,
                   ];
 
             return (
@@ -135,7 +142,7 @@ const TheHistory = () => {
 
                 <Button
                   tone="bare"
-                  label={`Forget ${name}`}
+                  label={say('common.forgetName', { name })}
                   onPress={() => {
                     if (entry.kind === 'reading') {
                       void forgetABook(entry.reading.book.id);
@@ -164,16 +171,16 @@ const TheHistory = () => {
             void history.fetchNextPage();
           }}
         >
-          Show more
+          {say('common.showMore')}
         </Button>
       ) : (
         <Words size="small" tone="muted">
-          Viewings are forgotten automatically after a year.
+          {say('phone.theAccount.theHistory.viewingsAreForgottenAutomaticallyAfterA')}
         </Words>
       )}
 
       <Button tone="ghost" isWide isDestructive onPress={forgetEverything}>
-        Forget everything
+        {say('common.forgetEverything')}
       </Button>
     </>
   );

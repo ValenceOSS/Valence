@@ -17,9 +17,10 @@ import { saidWhen } from '@ValenceClient/format/saidWhen';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { describeRequestsSolver } from './describeRequestsSolver';
 import { describeRequestsVpn } from './describeRequestsVpn';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
-const SOLVER_DOES =
-  'Opens sites protected by Cloudflare in a hidden browser, so their indexers can be searched.';
+const SOLVER_DOES = say('screens.adminArea.requestsPanel.opensSitesProtectedByCloudflareIn');
 
 /**
  * The requests service as whoever set it up sees it: whether the server can reach it, which release
@@ -38,10 +39,10 @@ const RequestsPanel = () => {
     void checkRequestsNow()
       .then((fresh) => {
         cache.setQueryData(requestsQueries.overview().queryKey, fresh);
-        notify.worked('Checked the requests.');
+        notify.worked(say('screens.adminArea.requestsPanel.checkedTheRequests'));
       })
       .catch(() => {
-        notify.failed('The requests could not be checked.');
+        notify.failed(say('screens.adminArea.requestsPanel.theRequestsCouldNotBeChecked'));
 
         return asked.refetch();
       })
@@ -56,33 +57,48 @@ const RequestsPanel = () => {
 
   return (
     <PanelCard
-      title="Requests"
+      title={say('common.requests')}
       isFlush
       actions={
         <PanelCardAction icon={RefreshCwIcon} isLoading={isChecking} onClick={checkNow}>
-          Check now
+          {say('screens.adminArea.requestsPanel.checkNow')}
         </PanelCardAction>
       }
     >
       {asked.isError ? (
         <CouldNotRead
-          what="The requests service"
+          said={say('screens.adminArea.requestsPanel.theRequestsServiceCouldNotBeRead')}
           isTryingAgain={asked.isFetching}
           onTryAgain={() => {
             void asked.refetch();
           }}
         />
       ) : overview === null || vpn === null || solver === null ? (
-        <Spinner isCentered label="Reading the requests service" size="sm" />
+        <Spinner
+          isCentered
+          label={say('screens.adminArea.requestsPanel.readingTheRequestsService')}
+          size="sm"
+        />
       ) : (
         <>
           <SettingList>
             <SettingRow
-              title="Requests service"
+              title={say('screens.adminArea.requestsPanel.requestsService')}
               description={
                 overview.checkedAt === null
-                  ? `Not checked yet. Looking for it at ${overview.address}.`
-                  : `At ${overview.address}. Last checked ${saidWhen(overview.checkedAt)}.${overview.problem === null ? '' : ` ${sayAgain(overview.problem)}.`}`
+                  ? say('screens.adminArea.requestsPanel.notCheckedYetLookingForIt', {
+                      address: overview.address,
+                    })
+                  : overview.problem === null
+                    ? say('screens.adminArea.requestsPanel.atAddressLastCheckedWhen', {
+                        address: overview.address,
+                        when: saidWhen(overview.checkedAt),
+                      })
+                    : say('screens.adminArea.requestsPanel.atAddressLastCheckedWhenProblem', {
+                        address: overview.address,
+                        when: saidWhen(overview.checkedAt),
+                        problem: sayAgain(overview.problem),
+                      })
               }
             >
               {overview.checkedAt === null || overview.isReachable ? null : (
@@ -90,28 +106,30 @@ const RequestsPanel = () => {
               )}
 
               {overview.checkedAt === null ? (
-                <Badge size="sm">Not checked</Badge>
+                <Badge size="sm">{say('common.notChecked')}</Badge>
               ) : overview.isReachable ? (
                 <Badge size="sm" tone="success">
-                  Answering
+                  {say('screens.adminArea.requestsPanel.answering')}
                 </Badge>
               ) : (
                 <Badge size="sm" tone="danger">
-                  Unreachable
+                  {say('screens.adminArea.requestsPanel.unreachable')}
                 </Badge>
               )}
             </SettingRow>
 
             {overview.status === null ? null : (
               <SettingRow
-                title="Release"
-                description="Which version of the requests service is running."
+                title={say('common.release')}
+                description={say(
+                  'screens.adminArea.requestsPanel.whichVersionOfTheRequestsService',
+                )}
               >
                 <Badge size="sm">{overview.status.version}</Badge>
               </SettingRow>
             )}
 
-            <SettingRow title="VPN" description={vpn.detail}>
+            <SettingRow title={say('screens.adminArea.requestsPanel.vPN')} description={vpn.detail}>
               <HowToFix href={vpn.help} />
 
               <Badge size="sm" tone={vpn.tone}>
@@ -120,7 +138,7 @@ const RequestsPanel = () => {
             </SettingRow>
 
             <SettingRow
-              title="Cloudflare solver"
+              title={say('screens.adminArea.requestsPanel.cloudflareSolver')}
               description={[SOLVER_DOES, solver.detail].filter((part) => part !== '').join(' ')}
             >
               <HowToFix href={solver.help} />
@@ -132,11 +150,27 @@ const RequestsPanel = () => {
 
             {overview.status === null ? null : (
               <SettingRow
-                title="Indexers"
+                title={say('common.indexers')}
                 description={
                   overview.status.indexers.total === 0
-                    ? 'None yet. Add one on the Indexers page to have something to search.'
-                    : `${overview.status.indexers.enabled.toString()} of ${overview.status.indexers.total.toString()} switched on.${overview.status.indexers.failing.map((one) => ` ${one.name}: ${sayAgain(one.problem)}`).join('')}`
+                    ? say('screens.adminArea.requestsPanel.noneYetAddOneOnThe')
+                    : overview.status.indexers.failing.length === 0
+                      ? say('screens.adminArea.requestsPanel.enabledOfTotalSwitchedOn', {
+                          enabled: overview.status.indexers.enabled.toString(),
+                          total: overview.status.indexers.total.toString(),
+                        })
+                      : say('screens.adminArea.requestsPanel.enabledOfTotalSwitchedOnFailures', {
+                          enabled: overview.status.indexers.enabled.toString(),
+                          total: overview.status.indexers.total.toString(),
+                          failures: overview.status.indexers.failing
+                            .map((one) =>
+                              say('screens.adminArea.downloadsPanel.nameProblem', {
+                                name: one.name,
+                                problem: sayAgain(one.problem),
+                              }),
+                            )
+                            .join(' '),
+                        })
                 }
               >
                 {overview.status.indexers.failing.length > 0 ? (
@@ -151,13 +185,16 @@ const RequestsPanel = () => {
 
                 {overview.status.indexers.failing.length > 0 ? (
                   <Badge size="sm" tone="warning">
-                    {`${overview.status.indexers.failing.length.toString()} failing`}
+                    {sayCount(
+                      'screens.adminArea.requestsPanel.countFailing',
+                      overview.status.indexers.failing.length,
+                    )}
                   </Badge>
                 ) : overview.status.indexers.total === 0 ? (
-                  <Badge size="sm">None</Badge>
+                  <Badge size="sm">{say('common.none')}</Badge>
                 ) : (
                   <Badge size="sm" tone="success">
-                    Working
+                    {say('common.working')}
                   </Badge>
                 )}
               </SettingRow>

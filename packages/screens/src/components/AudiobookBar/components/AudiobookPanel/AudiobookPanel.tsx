@@ -16,6 +16,8 @@ import { chapterPlaying } from '@ValenceClient/books/chapterPlaying';
 import { goToChapterBeside } from '@ValenceClient/books/goToChapterBeside';
 import { LISTENING_CHOICES } from '@ValenceClient/books/LISTENING_CHOICES';
 import type { AudiobookPanelProps } from './AudiobookPanel.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * Says a speed the way the menu lists it.
@@ -47,7 +49,7 @@ const AudiobookPanel = ({ state, player }: AudiobookPanelProps) => {
     <div className="flex w-80 max-w-[calc(100vw-3rem)] flex-col gap-4">
       <div className="flex flex-col gap-1">
         <Slider
-          label="Where the book is"
+          label={say('screens.audiobookBar.audiobookPanel.whereTheBookIs')}
           value={Math.min(position, state.durationSeconds)}
           max={Math.max(state.durationSeconds, 1)}
           step={1}
@@ -68,7 +70,7 @@ const AudiobookPanel = ({ state, player }: AudiobookPanelProps) => {
 
       <div className="flex items-center justify-between gap-2">
         <BarButton
-          label="Previous chapter"
+          label={say('common.previousChapter')}
           glyph={SkipBackIcon}
           isDisabled={state.chapters.length === 0}
           onClick={() => {
@@ -78,7 +80,7 @@ const AudiobookPanel = ({ state, player }: AudiobookPanelProps) => {
 
         <div className="flex items-center gap-1">
           <OptionMenu
-            label="Speed"
+            label={say('common.speed')}
             triggerShape="field"
             className="w-auto"
             trigger={
@@ -89,7 +91,7 @@ const AudiobookPanel = ({ state, player }: AudiobookPanelProps) => {
             }
             groups={[
               {
-                name: 'Speed',
+                name: say('common.speed'),
                 selectedId: state.speed.toString(),
                 onSelect: (id) => {
                   player.setSpeed(Number(id));
@@ -103,7 +105,7 @@ const AudiobookPanel = ({ state, player }: AudiobookPanelProps) => {
           />
 
           <OptionMenu
-            label="Sleep timer"
+            label={say('common.sleepTimer')}
             triggerShape="field"
             className="w-auto"
             trigger={
@@ -115,27 +117,32 @@ const AudiobookPanel = ({ state, player }: AudiobookPanelProps) => {
               >
                 <Icon of={MoonIcon} size={14} />
                 {sleeping === 'off'
-                  ? 'Sleep'
+                  ? say('screens.audiobookBar.audiobookPanel.sleep')
                   : sleeping === 'endOfChapter'
-                    ? 'End of chapter'
-                    : `${sleeping} min`}
+                    ? say('common.endOfChapter')
+                    : sayCount('common.count.minutesShort', Number(sleeping))}
               </span>
             }
             groups={[
               {
-                name: 'Sleep timer',
+                name: say('common.sleepTimer'),
                 selectedId: sleeping,
                 onSelect: (id) => {
                   setSleepChoice(id);
                   player.setSleep(id === 'off' || id === 'endOfChapter' ? id : Number(id));
                 },
                 options: [
-                  { id: 'off', label: 'Off' },
+                  { id: 'off', label: say('common.off') },
                   ...LISTENING_CHOICES.sleepMinutes.map((minutes) => ({
                     id: minutes.toString(),
-                    label: `In ${minutes.toString()} minutes`,
+                    label: say('screens.audiobookBar.audiobookPanel.inMinutesMinutes', {
+                      minutes: minutes.toString(),
+                    }),
                   })),
-                  { id: 'endOfChapter', label: 'At the end of this chapter' },
+                  {
+                    id: 'endOfChapter',
+                    label: say('screens.audiobookBar.audiobookPanel.atTheEndOfThisChapter'),
+                  },
                 ],
               },
             ]}
@@ -143,7 +150,7 @@ const AudiobookPanel = ({ state, player }: AudiobookPanelProps) => {
         </div>
 
         <BarButton
-          label="Next chapter"
+          label={say('common.nextChapter')}
           glyph={SkipForwardIcon}
           isDisabled={state.chapters.length === 0 || playing >= state.chapters.length - 1}
           onClick={() => {
@@ -158,7 +165,7 @@ const AudiobookPanel = ({ state, player }: AudiobookPanelProps) => {
         </p>
       )}
 
-      <ol aria-label="Chapters" className="flex flex-col gap-0.5">
+      <ol aria-label={say('common.chapters')} className="flex flex-col gap-0.5">
         {state.chapters.map((chapter, at) => (
           <li key={`${chapter.trackAt.toString()}-${chapter.bookStartSeconds.toString()}`}>
             <Button

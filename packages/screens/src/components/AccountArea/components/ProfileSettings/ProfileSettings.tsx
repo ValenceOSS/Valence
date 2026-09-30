@@ -21,6 +21,7 @@ import { FaceEditor } from '@ValenceScreens/components/FaceEditor/FaceEditor';
 import { ColourChoice } from '@ValenceScreens/components/ColourChoice/ColourChoice';
 import { PluginThemeRow } from '@ValenceScreens/components/AccountArea/components/PluginThemeRow/PluginThemeRow';
 import type { ProfileSettingsProps } from './ProfileSettings.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Everything about how somebody appears: their name, their picture, the colour behind it, and how
@@ -48,17 +49,17 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
   return (
     <>
       <SettingRow
-        title="Display name"
-        description="What everybody sharing this server sees when they pick who is watching."
+        title={say('screens.accountArea.profileSettings.displayName')}
+        description={say('screens.accountArea.profileSettings.whatEverybodySharingThisServerSees')}
       >
         <TextField
-          label="Display name"
+          label={say('screens.accountArea.profileSettings.displayName')}
           isLabelHidden
           value={draft?.name ?? ''}
           onValueChange={(next) => {
             onDraft({ name: next });
           }}
-          placeholder={profile?.name ?? 'Your name'}
+          placeholder={profile?.name ?? say('common.yourName')}
           disabled={!isReady}
           size="sm"
           className="w-56"
@@ -66,11 +67,11 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
       </SettingRow>
 
       <SettingRow
-        title="Profile picture"
+        title={say('screens.accountArea.profileSettings.profilePicture')}
         description={
           draft?.photo === null || draft?.photo === undefined
-            ? 'An orb, a photograph or GIF, a drawn face, or the first letter of your name.'
-            : 'Your new face is saved when you press Save.'
+            ? say('screens.accountArea.profileSettings.anOrbAPhotographOrGIF')
+            : say('screens.accountArea.profileSettings.yourNewFaceIsSavedWhen')
         }
       >
         {profile === null || draft === null ? null : (
@@ -91,7 +92,7 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
           }}
         >
           <Icon of={EditIcon} size={15} />
-          Edit
+          {say('common.edit')}
         </Button>
 
         {profile === null || draft === null ? null : (
@@ -111,13 +112,13 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
       </SettingRow>
 
       <SettingRow
-        title="Theme"
-        description="Kept on this device rather than on your account, and applied as soon as you choose it."
+        title={say('common.theme')}
+        description={say('screens.accountArea.profileSettings.keptOnThisDeviceRatherThan')}
       >
         <SegmentedRow
           size="sm"
           tone="accent"
-          label="Theme"
+          label={say('common.theme')}
           value={theme}
           items={THEME_CHOICES}
           onSelect={(chosen) => {
@@ -129,13 +130,13 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
       <PluginThemeRow />
 
       <SettingRow
-        title="Movement"
-        description="Following the machine uses whatever your system asks for. Reduced stills the interface here without changing anything else you run."
+        title={say('common.movement')}
+        description={say('screens.accountArea.profileSettings.followingTheMachineUsesWhateverYour')}
       >
         <SegmentedRow
           size="sm"
           tone="accent"
-          label="Movement"
+          label={say('common.movement')}
           value={motion}
           items={MOTION_CHOICES}
           onSelect={(chosen) => {
@@ -145,11 +146,11 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
       </SettingRow>
 
       <SettingRow
-        title="Colour"
-        description="The background behind your initial, and the tint on your drawn face."
+        title={say('common.colour')}
+        description={say('screens.accountArea.profileSettings.theBackgroundBehindYourInitialAnd')}
       >
         <ColourChoice
-          label="Colour"
+          label={say('common.colour')}
           value={draft?.colour ?? PROFILE_COLOURS[3]}
           presets={PROFILE_COLOURS.slice(0, 6)}
           onChange={(colour) => {
@@ -159,13 +160,13 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
       </SettingRow>
 
       <SettingRow
-        title="Ask if you are still watching"
-        description="After this many episodes play by themselves, Valence checks before starting another."
+        title={say('common.askIfYouAreStillWatching')}
+        description={say('screens.accountArea.profileSettings.afterThisManyEpisodesPlayBy')}
       >
         <SegmentedRow
           size="sm"
           tone="accent"
-          label="Ask if you are still watching"
+          label={say('common.askIfYouAreStillWatching')}
           items={STILL_WATCHING_CHOICES}
           value={
             draft === null || draft.askStillWatchingAfter === STILL_WATCHING_OFF
@@ -182,11 +183,11 @@ const ProfileSettings = ({ profile, draft, onDraft }: ProfileSettingsProps) => {
 
       {canShowOnDiscord() ? (
         <SettingRow
-          title="Show what I am playing on Discord"
-          description="The title, and the series and episode or the artist where there is one, appear in your Discord status while something is playing. It needs Valence open on the same machine as Discord."
+          title={say('screens.accountArea.profileSettings.showWhatIAmPlayingOn')}
+          description={say('screens.accountArea.profileSettings.theTitleAndTheSeriesAnd')}
         >
           <Switch
-            label="Show what I am playing on Discord"
+            label={say('screens.accountArea.profileSettings.showWhatIAmPlayingOn')}
             isLabelHidden
             isOn={draft?.showsWhatIamWatching ?? false}
             disabled={!isReady}

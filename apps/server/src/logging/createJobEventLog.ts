@@ -87,6 +87,7 @@ const createJobEventLog = (
 
     finished: ({ kind, jobId, reason, wasStopped = false }) => {
       const run = runs.get(jobId);
+      // eslint-disable-next-line valence/no-hard-coded-strings -- part of a log line, which stays in English
       const took = run === undefined ? '' : ` after ${seconds(nowMs() - run.startedAtMs)}`;
       const context = { jobId, jobKind: kind };
 

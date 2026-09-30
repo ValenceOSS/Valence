@@ -2,6 +2,7 @@ import { TomatoMark } from '@ValenceUI/TomatoMark';
 import { describeTitleDetails } from '@ValenceClient/library/describeTitleDetails';
 import { DialogSection } from '@ValenceScreens/components/DialogSection/DialogSection';
 import type { TitleDetailsProps } from './TitleDetails.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The facts of a title beyond what a card carries: when it came out, whether it is out or still
@@ -39,7 +40,7 @@ const TitleDetails = ({
   }
 
   return (
-    <DialogSection heading="Details">
+    <DialogSection heading={say('common.details')}>
       <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
         {facts.map((fact) => (
           <div key={fact.label} className="flex flex-col gap-0.5">

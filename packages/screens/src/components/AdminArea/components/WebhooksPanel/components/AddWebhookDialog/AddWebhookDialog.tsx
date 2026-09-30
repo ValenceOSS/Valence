@@ -15,6 +15,7 @@ import {
 } from '@ValenceScreens/components/AdminArea/components/WebhookFields/webhookPanes';
 import type { WebhookDraft } from '@ValenceScreens/components/AdminArea/components/WebhookFields/WebhookFields.types';
 import type { AddWebhookDialogProps } from './AddWebhookDialog.types';
+import { say } from '@ValenceI18n/say';
 
 const A_NEW_WEBHOOK: WebhookDraft = {
   name: '',
@@ -85,7 +86,7 @@ const AddWebhookDialog = ({
   };
 
   return (
-    <DialogCompanion label="Create webhook" isOpen={isOpen} onClose={close}>
+    <DialogCompanion label={say('common.createWebhook')} isOpen={isOpen} onClose={close}>
       <Tabs
         value={pane}
         onValueChange={(next) => {
@@ -96,11 +97,11 @@ const AddWebhookDialog = ({
       >
         <DialogTitle
           size="compact"
-          title="Create webhook"
-          detail="Valence will post to this address when something you have chosen happens."
+          title={say('common.createWebhook')}
+          detail={say('screens.webhooksPanel.addWebhookDialog.valenceWillPostToThisAddress')}
           below={
             <TabRow
-              label="What to change"
+              label={say('common.whatToChange')}
               tone="underlined"
               size="sm"
               value={pane}
@@ -124,7 +125,9 @@ const AddWebhookDialog = ({
           note={refusal}
           dismiss={{ onChoose: close }}
           confirm={{
-            label: isSaving ? 'Creating…' : 'Create webhook',
+            label: isSaving
+              ? say('screens.webhooksPanel.addWebhookDialog.creating')
+              : say('common.createWebhook'),
             onChoose: save,
             isDisabled: !isReady || isSaving,
           }}

@@ -12,6 +12,7 @@ import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { frameAt } from './frameAt';
 import type { ReencodeReviewProps } from './ReencodeReview.types';
+import { say } from '@ValenceI18n/say';
 
 const A_SCENE_WITH_MOTION = 0.4;
 
@@ -81,14 +82,19 @@ const ReencodeReview = ({
   };
 
   return (
-    <Dialog label="Review a re-encode" isOpen={requested !== null} onClose={onClose} size="stage">
+    <Dialog
+      label={say('screens.reencodeReview.reviewAReEncode')}
+      isOpen={requested !== null}
+      onClose={onClose}
+      size="stage"
+    >
       <DialogTitle
         title={
           reencode.seriesTitle === null
             ? reencode.title
             : `${reencode.seriesTitle} — ${reencode.title}`
         }
-        detail="Both files are still here. Nothing is discarded until you say so."
+        detail={say('screens.reencodeReview.bothFilesAreStillHereNothing')}
       />
 
       <DialogContent>
@@ -97,25 +103,32 @@ const ReencodeReview = ({
             <figure className="flex flex-col gap-2">
               <img
                 src={frameAt(reencode.id, 'original', atSeconds)}
-                alt={`The original at ${formatDuration(atSeconds)}`}
+                alt={say('screens.reencodeReview.theOriginalAtAtSeconds', {
+                  atSeconds: formatDuration(atSeconds),
+                })}
                 className="w-full rounded-lg border border-line bg-shade/40"
               />
               <figcaption className="font-body text-xs text-text-muted">
-                The original · {formatBytes(reencode.originalSizeBytes)}
+                {say('screens.reencodeReview.theOriginalOriginalSizeBytes', {
+                  originalSizeBytes: formatBytes(reencode.originalSizeBytes),
+                })}
               </figcaption>
             </figure>
 
             <figure className="flex flex-col gap-2">
               <img
                 src={frameAt(reencode.id, 'encode', atSeconds)}
-                alt={`The new encode at ${formatDuration(atSeconds)}`}
+                alt={say('screens.reencodeReview.theNewEncodeAtAtSeconds', {
+                  atSeconds: formatDuration(atSeconds),
+                })}
                 className="w-full rounded-lg border border-line bg-shade/40"
               />
               <figcaption className="font-body text-xs text-text-muted">
-                The new encode ·{' '}
                 {reencode.producedBytes === null
-                  ? 'size unknown'
-                  : formatBytes(reencode.producedBytes)}
+                  ? say('screens.reencodeReview.theNewEncodeSizeUnknown')
+                  : say('screens.reencodeReview.theNewEncodeSize', {
+                      size: formatBytes(reencode.producedBytes),
+                    })}
                 {reencode.quality === null ? '' : ` · ${reencode.quality}`}
                 {reencode.videoCodec === null ? '' : ` ${reencode.videoCodec}`}
               </figcaption>
@@ -123,7 +136,7 @@ const ReencodeReview = ({
           </div>
 
           <Slider
-            label="Where in the film to look"
+            label={say('screens.reencodeReview.whereInTheFilmToLook')}
             max={Math.max(1, Math.floor(reencode.durationSeconds))}
             value={atSeconds}
             valueLabel={(seconds) => formatDuration(seconds)}
@@ -131,20 +144,23 @@ const ReencodeReview = ({
           />
 
           <p className="font-body text-xs text-text-muted">
-            {formatDuration(atSeconds)} — pick a scene with motion rather than the opening titles.
-            Grain, banding and a grey picture all show up there and nowhere else.
+            {say('screens.reencodeReview.atSecondsPickASceneWithMotion', {
+              atSeconds: formatDuration(atSeconds),
+            })}
           </p>
 
-          <Callout title="What a still cannot tell you">
-            Compression that only shows while things move, and audio, need the real player. Both
-            files are on disk, so nothing about this is final until you choose.
+          <Callout title={say('screens.reencodeReview.whatAStillCannotTellYou')}>
+            {say('screens.reencodeReview.compressionThatOnlyShowsWhileThings')}
           </Callout>
         </div>
       </DialogContent>
 
       <DialogFooter
         confirm={{
-          label: freed === null ? 'Confirm' : `Confirm and free ${formatBytes(freed)}`,
+          label:
+            freed === null
+              ? say('common.confirm')
+              : say('screens.reencodeReview.confirmAndFreeFreed', { freed: formatBytes(freed) }),
           isDisabled: isDeciding,
           onChoose: () => {
             setIsConfirming(true);
@@ -158,7 +174,7 @@ const ReencodeReview = ({
               onWatch(reencode);
             }}
           >
-            Watch it
+            {say('screens.reencodeReview.watchIt')}
           </Button>
         )}
 
@@ -169,7 +185,7 @@ const ReencodeReview = ({
             void decide(false);
           }}
         >
-          Reject and put the original back
+          {say('screens.reencodeReview.rejectAndPutTheOriginalBack')}
         </Button>
       </DialogFooter>
 
@@ -177,10 +193,12 @@ const ReencodeReview = ({
         isOpen={isConfirming}
         isDestructive
         isBusy={isDeciding}
-        title="Dispose of the original?"
-        detail="The original file is deleted. What the encoder discarded cannot be recovered, and if this was the only copy, nothing brings it back."
+        title={say('screens.reencodeReview.disposeOfTheOriginal')}
+        detail={say('screens.reencodeReview.theOriginalFileIsDeletedWhat')}
         confirmLabel={
-          freed === null ? 'Dispose of it' : `Dispose of it and free ${formatBytes(freed)}`
+          freed === null
+            ? say('screens.reencodeReview.disposeOfIt')
+            : say('screens.reencodeReview.disposeOfItAndFreeFreed', { freed: formatBytes(freed) })
         }
         onClose={() => {
           setIsConfirming(false);

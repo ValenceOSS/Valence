@@ -12,14 +12,15 @@ import { useRoomToFill } from '@ValenceTv/layout/useRoomToFill';
 import { tokens } from '@ValenceTv/theme/tokens';
 import { useCollection } from './useCollection';
 import type { MusicCollectionProps } from './MusicCollection.types';
+import { say } from '@ValenceI18n/say';
 
 const COVER = 360;
 
 const KINDS = {
-  album: 'Album',
-  artist: 'Artist',
-  playlist: 'Playlist',
-  liked: 'Playlist',
+  album: say('common.album'),
+  artist: say('common.artist'),
+  playlist: say('common.playlist'),
+  liked: say('common.playlist'),
 } as const;
 
 /**
@@ -87,7 +88,7 @@ const MusicCollection = ({ view, onPlayed, onOpen, onLight }: MusicCollectionPro
 
         <View style={styles.actions}>
           <Button
-            label="Play"
+            label={say('common.play')}
             icon={Play}
             variant="primary"
             hasPreferredFocus
@@ -97,7 +98,7 @@ const MusicCollection = ({ view, onPlayed, onOpen, onLight }: MusicCollectionPro
             }}
           />
           <Button
-            label="Shuffle"
+            label={say('common.shuffle')}
             icon={Shuffle}
             variant="secondary"
             isDisabled={collection.tracks.length === 0 || collection.isOrdered}
@@ -124,7 +125,11 @@ const MusicCollection = ({ view, onPlayed, onOpen, onLight }: MusicCollectionPro
             ListFooterComponent={
               collection.albums.length === 0 ? null : (
                 <View style={styles.footer}>
-                  <MusicShelf title="Albums" items={collection.albums} onOpen={onOpen} />
+                  <MusicShelf
+                    title={say('common.albums')}
+                    items={collection.albums}
+                    onOpen={onOpen}
+                  />
                 </View>
               )
             }

@@ -13,10 +13,11 @@ import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRo
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import type { AShareSheetProps } from './AShareSheet.types';
+import { say } from '@ValenceI18n/say';
 
 const WHAT = [
-  { id: 'item', label: 'Just this episode' },
-  { id: 'series', label: 'The whole programme' },
+  { id: 'item', label: say('common.justThisEpisode') },
+  { id: 'series', label: say('common.theWholeProgramme') },
 ] as const;
 
 const styles = StyleSheet.create({
@@ -79,7 +80,7 @@ const AShareSheet = ({ subject, onClose }: AShareSheetProps) => {
     setIsWorking(false);
 
     if (made === null) {
-      setRefusal('That could not be shared. You may not have permission to hand out links.');
+      setRefusal(say('common.thatCouldNotBeSharedYou'));
 
       return;
     }
@@ -89,20 +90,29 @@ const AShareSheet = ({ subject, onClose }: AShareSheetProps) => {
   };
 
   return (
-    <ASheet isOpen={subject !== null} title={`Share ${named}`} onClose={onClose}>
+    <ASheet
+      isOpen={subject !== null}
+      title={say('phone.aShareSheet.shareNamed', { named })}
+      onClose={onClose}
+    >
       {link === null ? (
         <>
           {isEpisode ? (
             <View style={styles.choice}>
-              <Words size="heading">What to share</Words>
-              <SegmentedRow label="What to share" items={WHAT} value={what} onSelect={setWhat} />
+              <Words size="heading">{say('common.whatToShare')}</Words>
+              <SegmentedRow
+                label={say('common.whatToShare')}
+                items={WHAT}
+                value={what}
+                onSelect={setWhat}
+              />
             </View>
           ) : null}
 
           <View style={styles.choice}>
-            <Words size="heading">Lasts</Words>
+            <Words size="heading">{say('common.lasts')}</Words>
             <SegmentedRow
-              label="How long the link lasts"
+              label={say('phone.aShareSheet.howLongTheLinkLasts')}
               items={SHARE_LASTS}
               value={lasts}
               onSelect={setLasts}
@@ -110,15 +120,15 @@ const AShareSheet = ({ subject, onClose }: AShareSheetProps) => {
           </View>
 
           <View style={styles.choice}>
-            <Words size="heading">Who can open it</Words>
+            <Words size="heading">{say('phone.aShareSheet.whoCanOpenIt')}</Words>
             <SegmentedRow
-              label="How many people can open it"
+              label={say('phone.aShareSheet.howManyPeopleCanOpenIt')}
               items={SHARE_CAPS}
               value={cap}
               onSelect={setCap}
             />
             <Words size="small" tone="muted">
-              Whichever runs out first ends the link.
+              {say('phone.aShareSheet.whicheverRunsOutFirstEndsThe')}
             </Words>
           </View>
 
@@ -131,12 +141,12 @@ const AShareSheet = ({ subject, onClose }: AShareSheetProps) => {
               void make();
             }}
           >
-            Make a link
+            {say('common.makeALink')}
           </Button>
         </>
       ) : (
         <>
-          <Words tone="muted">This link is shown only once. Share or copy it now.</Words>
+          <Words tone="muted">{say('phone.aShareSheet.thisLinkIsShownOnlyOnce')}</Words>
           <Words isSelectable>{link}</Words>
           <Button
             isWide
@@ -145,7 +155,7 @@ const AShareSheet = ({ subject, onClose }: AShareSheetProps) => {
               void Share.share({ url: link, message: link });
             }}
           >
-            Share the link
+            {say('phone.aShareSheet.shareTheLink')}
           </Button>
         </>
       )}

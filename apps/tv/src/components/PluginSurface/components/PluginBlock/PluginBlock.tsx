@@ -11,6 +11,7 @@ import * as Keyline from '@keyline-icons/react-native/fill';
 import { glyphFor } from '@ValenceSDK/surface/glyphFor';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { PluginBlockProps } from './PluginBlock.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   group: { gap: tokens.space.sm },
@@ -84,7 +85,7 @@ const PluginBlock = ({ block, pluginId, fields, onField, onAct, isActing }: Plug
       return (
         <Button
           label={block.label}
-          detail={isOn ? 'On' : 'Off'}
+          detail={isOn ? say('common.on') : say('common.off')}
           variant="secondary"
           isWide
           onPress={() => {
@@ -120,7 +121,7 @@ const PluginBlock = ({ block, pluginId, fields, onField, onAct, isActing }: Plug
       return (
         <Button
           label={block.label}
-          detail={block.options[at]?.label ?? 'Nothing chosen'}
+          detail={block.options[at]?.label ?? say('common.nothingChosen')}
           variant="secondary"
           isWide
           onPress={() => {

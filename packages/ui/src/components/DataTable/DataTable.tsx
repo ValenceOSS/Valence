@@ -28,6 +28,7 @@ import type {
 } from '@tanstack/react-table';
 import type { ReactNode } from 'react';
 import type { DataTableProps } from './DataTable.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Whether a column draws something with a function of its own, rather than handing over something
@@ -105,7 +106,7 @@ const DataTable = <Row extends RowData>({
   columns,
   rows,
   totalRows,
-  emptyMessage = 'Nothing here yet.',
+  emptyMessage = say('ui.dataTable.nothingHereYet'),
   onChooseRow,
   getRowId,
   toolbar,
@@ -258,7 +259,7 @@ const DataTable = <Row extends RowData>({
 
                         {filterOptions === undefined ? null : (
                           <OptionMenu
-                            label={`Filter by ${header.column.id}`}
+                            label={say('ui.dataTable.filterById', { id: header.column.id })}
                             align="start"
                             trigger={
                               <Icon
@@ -269,8 +270,11 @@ const DataTable = <Row extends RowData>({
                             }
                             groups={[
                               {
-                                name: 'Filter',
-                                options: [{ id: 'all', label: 'All' }, ...filterOptions],
+                                name: say('ui.dataTable.filter'),
+                                options: [
+                                  { id: 'all', label: say('common.all') },
+                                  ...filterOptions,
+                                ],
                                 selectedId: typeof filterValue === 'string' ? filterValue : 'all',
                                 onSelect: (id) => {
                                   header.column.setFilterValue(id === 'all' ? undefined : id);
@@ -385,13 +389,20 @@ const DataTable = <Row extends RowData>({
       {growsOnScroll ? (
         holding >= rows.length ? null : (
           <p className="px-5 pt-3 font-body text-xs text-text-muted">
-            {`Showing ${holding.toString()} of ${rows.length.toString()} · scroll for more`}
+            {say('ui.dataTable.showingHoldingOfLengthScrollFor', {
+              holding: holding.toString(),
+              length: rows.length.toString(),
+            })}
           </p>
         )
       ) : pageCount <= 1 ? null : (
         <div className="flex items-center justify-between gap-4 px-5 pt-3">
           <p className="font-body text-xs text-text-muted">
-            {`Page ${(page + 1).toString()} of ${pageCount.toString()} · ${everyRow.toString()} in total`}
+            {say('ui.dataTable.pageValueOfPageCountEveryRowIn', {
+              value: (page + 1).toString(),
+              pageCount: pageCount.toString(),
+              everyRow: everyRow.toString(),
+            })}
           </p>
 
           <div className="flex items-center gap-1.5">
@@ -399,7 +410,7 @@ const DataTable = <Row extends RowData>({
               variant="secondary"
               size="sm"
               isIconOnly
-              label="Previous page"
+              label={say('common.previousPage')}
               disabled={page === 0}
               onClick={() => {
                 setPage(Math.max(0, page - 1));
@@ -412,7 +423,7 @@ const DataTable = <Row extends RowData>({
               variant="secondary"
               size="sm"
               isIconOnly
-              label="Next page"
+              label={say('common.nextPage')}
               disabled={page >= pageCount - 1}
               onClick={() => {
                 setPage(Math.min(pageCount - 1, page + 1));

@@ -99,9 +99,11 @@ const QUIET_KEYS = new Set([
   'kind',
   'onDelete',
   'onUpdate',
+  'rel',
   'sameSite',
   'tags',
   'textAlign',
+  'transform',
   'transformOrigin',
   'user-agent',
   'User-Agent',
@@ -116,7 +118,7 @@ const HEADER_NAME = /^[A-Z][a-z]*(?:-[A-Z][a-z]*)+$/u;
 
 const LETTER = /\p{L}/u;
 
-const STRING_KEY = /^[a-z][a-zA-Z0-9]*(?:\.[a-zA-Z0-9]+)+$/u;
+const STRING_KEY = /^[a-z][a-zA-Z0-9]*(?:\.[a-zA-Z0-9]+)*\.[a-zA-Z0-9]*$/u;
 
 const CAPITALISED = /^\s*[\p{Lu}][\p{Ll}’']/u;
 
@@ -126,7 +128,12 @@ const CLASSES = /(?:^|\s)[\w[\]!/.%-]*[-:[][\w[\]!/.%:()'#,-]*(?:\s|$)/u;
 
 const PLAIN_WORD = /^[\p{L}’']+[,.!?…:;]?$/u;
 
-const MEASURE = /^[\d.,]+\s?(?:p|K|k|i|MB|GB|TB|kbps|Mbps|fps|Hz|kHz|x)$/u;
+const MEASURE = /^[\d.,]+\s?(?:p|K|k|i|MB|GB|TB|kbps|Mbps|fps|Hz|kHz|x|ms|s)$/u;
+
+const STYLE_VALUE =
+  /^[a-z][\w-]*\(|(?:^|,\s*)(?:serif|sans-serif|monospace|cursive|system-ui|ui-serif|ui-monospace)$/u;
+
+const DISPOSITION = /^(?:attachment|inline);/u;
 
 const DIRECTIVES = /^(?=.*=)[a-z-]+(?:=[\w-]+)?(?:,\s*[a-z-]+(?:=[\w-]+)?)*$/u;
 
@@ -139,14 +146,20 @@ const createRule = ESLintUtils.RuleCreator(() => 'https://valence.local/no-hard-
 
 /**
  * Whether a piece of text is plainly for a machine: an identifier, a path, a list of directives
- * such as a cache policy, or a run of class names.
+ * such as a cache policy, a style value such as a font stack, or a run of class names.
  *
  * @param text - The text.
  */
 const readsAsCode = (text: string): boolean => {
   const trimmed = text.trim();
 
-  if (STRING_KEY.test(trimmed) || MEASURE.test(trimmed) || DIRECTIVES.test(trimmed)) {
+  if (
+    STRING_KEY.test(trimmed) ||
+    MEASURE.test(trimmed) ||
+    DIRECTIVES.test(trimmed) ||
+    STYLE_VALUE.test(trimmed) ||
+    DISPOSITION.test(trimmed)
+  ) {
     return true;
   }
 
@@ -162,6 +175,33 @@ const readsAsCode = (text: string): boolean => {
  *
  * @param text - The text.
  */
+/**
+ * Whether a condition asks if a number is one, the way code picks between one of something and
+ * several of it.
+ *
+ * @param test - The condition.
+ */
+const asksWhetherOne = (test: TSESTree.Expression): boolean =>
+  test.type === AST_NODE_TYPES.BinaryExpression &&
+  (test.operator === '===' || test.operator === '!==') &&
+  [test.left, test.right].some((side) => side.type === AST_NODE_TYPES.Literal && side.value === 1);
+
+/**
+ * Whether the words written around a template's values read as a phrase for a person, such as
+ * `${count} episodes` or `${time} left`, which a single lower-case word alone would not be taken
+ * for. Each value stands as a number, so a unit written against one, such as `${width}px`, stays
+ * code.
+ *
+ * @param node - The template.
+ */
+const wordsAroundValues = (node: TSESTree.TemplateLiteral): boolean => {
+  const text = node.quasis.map((quasi) => quasi.value.cooked).join('0');
+
+  return (
+    !readsAsCode(text) && text.split(/\s+/u).some((token) => /^\p{Ll}{2,}[,.!?…:;]?$/u.test(token))
+  );
+};
+
 const readsAsWords = (text: string): boolean => {
   if (!LETTER.test(text) || readsAsCode(text) || /^\p{Ll}[\p{Ll}\d]*[.!?]?$/u.test(text.trim())) {
     return false;
@@ -253,6 +293,10 @@ const PASSES_THROUGH = new Set<AST_NODE_TYPES>([
 const placeInACall = (call: TSESTree.CallExpression, child: TSESTree.Node): Place => {
   if (child === call.callee) {
     return 'open';
+  }
+
+  if (call.callee.type === AST_NODE_TYPES.Super) {
+    return 'quiet';
   }
 
   const { name, on } = calledAs(call.callee);
@@ -370,14 +414,37 @@ const noHardCodedStrings = createRule({
     messages: {
       words:
         'Words a person reads come from the strings file: say("{{ hint }}…") from @ValenceI18n/say, with the words added to packages/i18n/strings-en.json along with where they are used, then pnpm i18n:write.',
+      counted:
+        'Words that change with a number come from the strings file as a counted pair: sayCount("handler", count) from @ValenceI18n/sayCount, with handler.one and handler.other in packages/i18n/strings-en.json, then pnpm i18n:write.',
     },
     schema: [],
   },
   defaultOptions: [],
-  create: (context: Readonly<TSESLint.RuleContext<'words', []>>) => {
+  create: (context: Readonly<TSESLint.RuleContext<'words' | 'counted', []>>) => {
     if (ALLOWED_IN.test(context.filename)) {
       return {};
     }
+
+    const services = ESLintUtils.getParserServices(context, true);
+    const checker = services.program?.getTypeChecker() ?? null;
+
+    /**
+     * Whether a string is one of the exact values its type allows, which makes it a key rather
+     * than words: a lower-case member of a union of string literals, such as `'every library'`.
+     *
+     * @param node - The string.
+     * @param text - What it says.
+     */
+    const isAChoiceOfItsType = (node: TSESTree.Literal, text: string): boolean => {
+      if (checker === null || CAPITALISED.test(text)) {
+        return false;
+      }
+
+      const type = checker.getContextualType(services.esTreeNodeToTSNodeMap.get(node));
+      const members = type === undefined ? [] : type.isUnion() ? type.types : [type];
+
+      return members.some((member) => member.isStringLiteral() && member.value === text);
+    };
 
     const report = (node: TSESTree.Node, text: string): void => {
       context.report({ node, messageId: 'words', data: { hint: text.trim().slice(0, 24) } });
@@ -395,19 +462,52 @@ const noHardCodedStrings = createRule({
       }
     };
 
+    /**
+     * The words one branch of a choice says, or null where it says none: a literal whose type does
+     * not make it a key, or a template, with each value in it standing as a number.
+     *
+     * @param branch - The branch.
+     */
+    const wordsOfBranch = (branch: TSESTree.Expression): string | null => {
+      if (branch.type === AST_NODE_TYPES.Literal && typeof branch.value === 'string') {
+        return isAChoiceOfItsType(branch, branch.value) ? null : branch.value;
+      }
+
+      return branch.type === AST_NODE_TYPES.TemplateLiteral
+        ? branch.quasis.map((quasi) => quasi.value.cooked).join('0')
+        : null;
+    };
+
     return {
+      ConditionalExpression: (node) => {
+        if (!asksWhetherOne(node.test) || placeOf(node) === 'quiet') {
+          return;
+        }
+
+        const said = [node.consequent, node.alternate].map(wordsOfBranch);
+
+        if (said.some((text) => text !== null && LETTER.test(text) && !readsAsCode(text))) {
+          context.report({ node, messageId: 'counted' });
+        }
+      },
       JSXText: (node) => {
         if (LETTER.test(node.value)) {
           report(node, node.value);
         }
       },
       Literal: (node) => {
-        if (typeof node.value === 'string') {
+        if (typeof node.value === 'string' && !isAChoiceOfItsType(node, node.value)) {
           look(node, node.value);
         }
       },
       TemplateLiteral: (node) => {
         const text = node.quasis.map((quasi) => quasi.value.cooked).join(' ');
+
+        if (node.expressions.length > 0 && placeOf(node) !== 'quiet' && wordsAroundValues(node)) {
+          report(node, text);
+
+          return;
+        }
 
         look(node, text);
       },

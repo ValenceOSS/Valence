@@ -9,6 +9,8 @@ import { DownloadQueueTable } from '@ValenceScreens/components/AdminArea/compone
 import { describeRequestBadge } from '@ValenceClient/requests/describeRequestBadge';
 import { describeRequestProgress } from '@ValenceClient/requests/describeRequestProgress';
 import type { RequestProgressTabProps } from './RequestProgressTab.types';
+import { say } from '@ValenceI18n/say';
+import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
 
 /**
  * How a request is going: where it stands, what it is waiting on, which release was chosen for
@@ -60,13 +62,23 @@ const RequestProgressTab = ({
 
       {request.refusedBecause === null ? null : (
         <p className="font-body text-sm text-text-muted">
-          Refused because: <span className="text-text">{sayAgain(request.refusedBecause)}</span>
+          <Sentence
+            words="screens.requestDetailDialog.requestProgressTab.refusedBecauseReason"
+            fillings={{
+              reason: <span className="text-text">{sayAgain(request.refusedBecause)}</span>,
+            }}
+          />
         </p>
       )}
 
       {chosen.length === 0 ? null : (
-        <section aria-label="What was chosen" className="flex flex-col gap-2">
-          <h4 className="text-xs uppercase tracking-[0.16em] text-text-muted">What was chosen</h4>
+        <section
+          aria-label={say('screens.requestDetailDialog.requestProgressTab.whatWasChosen')}
+          className="flex flex-col gap-2"
+        >
+          <h4 className="text-xs uppercase tracking-[0.16em] text-text-muted">
+            {say('screens.requestDetailDialog.requestProgressTab.whatWasChosen')}
+          </h4>
 
           <ul className="flex flex-col gap-1.5">
             {chosen.map((item) => (
@@ -75,7 +87,9 @@ const RequestProgressTab = ({
                 <span className="min-w-0 break-all text-text">{item.releaseTitle}</span>
                 {item.score === null ? null : (
                   <span className="tabular-nums text-text-muted">
-                    scored {item.score.toString()}
+                    {say('screens.requestDetailDialog.requestProgressTab.scoredScore', {
+                      score: item.score.toString(),
+                    })}
                   </span>
                 )}
               </li>
@@ -84,14 +98,19 @@ const RequestProgressTab = ({
         </section>
       )}
 
-      <section aria-label="What is coming down" className="flex flex-col gap-2">
-        <h4 className="text-xs uppercase tracking-[0.16em] text-text-muted">What is coming down</h4>
+      <section
+        aria-label={say('screens.requestDetailDialog.requestProgressTab.whatIsComingDown')}
+        className="flex flex-col gap-2"
+      >
+        <h4 className="text-xs uppercase tracking-[0.16em] text-text-muted">
+          {say('screens.requestDetailDialog.requestProgressTab.whatIsComingDown')}
+        </h4>
 
         {queue.isPending ? (
-          <Spinner isCentered label="Reading the downloads" size="sm" />
+          <Spinner isCentered label={say('common.readingTheDownloads')} size="sm" />
         ) : downloads.length === 0 ? (
           <p className="font-body text-sm text-text-muted">
-            Nothing is downloading for this just now.
+            {say('screens.requestDetailDialog.requestProgressTab.nothingIsDownloadingForThisJust')}
           </p>
         ) : (
           <DownloadQueueTable

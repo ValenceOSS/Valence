@@ -36,12 +36,13 @@ import { PlaylistView } from './components/PlaylistView/PlaylistView';
 import { PlaylistsView } from './components/PlaylistsView/PlaylistsView';
 import { QueuePanel } from './components/QueuePanel/QueuePanel';
 import type { MusicView } from '@ValenceClient/music/musicView';
+import { say } from '@ValenceI18n/say';
 
 const PANEL_TITLES = {
-  queue: 'Queue',
-  lyrics: 'Lyrics',
-  devices: 'Play on another device',
-  party: 'Listening party',
+  queue: say('common.queue'),
+  lyrics: say('common.lyrics'),
+  devices: say('common.playOnAnotherDevice'),
+  party: say('common.listeningParty'),
 } as const;
 
 const PANEL_WIDTH = '20.5rem';
@@ -118,7 +119,7 @@ const MusicPage = () => {
 
   return (
     <main className="px-2 pt-2 sm:px-3 sm:pt-3">
-      <h1 className="sr-only">Music</h1>
+      <h1 className="sr-only">{say('common.music')}</h1>
 
       <div className="flex flex-col h-[calc(100svh-var(--nav-clearance)-var(--valence-window-bar,0px)-var(--music-bar-room,0px)-1rem)] min-h-[28rem] sm:h-[calc(100svh-var(--nav-clearance)-var(--valence-window-bar,0px)-var(--music-bar-room,0px)-1.5rem)]">
         {isWide ? null : (
@@ -130,7 +131,7 @@ const MusicPage = () => {
                 setIsLibraryOpen(true);
               }}
             >
-              Your library
+              {say('common.yourLibrary')}
               <Icon of={MenuIcon} size={16} />
             </Button>
           </div>
@@ -155,7 +156,10 @@ const MusicPage = () => {
             </div>
           ) : null}
 
-          <section aria-label="Music" className="valence-card-shell flex min-h-0 min-w-0 flex-1">
+          <section
+            aria-label={say('common.music')}
+            className="valence-card-shell flex min-h-0 min-w-0 flex-1"
+          >
             <div className="valence-card-face valence-card-face--raised relative min-h-0 flex-1 overflow-y-auto overscroll-contain [container-type:size] [--music-lane:1.25rem] sm:[--music-lane:2rem]">
               <MusicWash />
 
@@ -207,7 +211,9 @@ const MusicPage = () => {
                             variant="ghost"
                             size="xs"
                             isIconOnly
-                            label={`Close ${PANEL_TITLES[panel].toLowerCase()}`}
+                            label={say('screens.musicPage.closePANELTITLES', {
+                              PANEL_TITLES: PANEL_TITLES[panel].toLowerCase(),
+                            })}
                             onClick={() => {
                               setMusicPanel(null);
                             }}
@@ -237,7 +243,7 @@ const MusicPage = () => {
       </div>
 
       <Dialog
-        label="Your library"
+        label={say('common.yourLibrary')}
         isOpen={!isWide && isLibraryOpen}
         onClose={() => {
           setIsLibraryOpen(false);
@@ -250,7 +256,7 @@ const MusicPage = () => {
       </Dialog>
 
       <Dialog
-        label={panel === null ? 'Music' : PANEL_TITLES[panel]}
+        label={panel === null ? say('common.music') : PANEL_TITLES[panel]}
         isOpen={!isWide && panel !== null}
         onClose={() => {
           setMusicPanel(null);

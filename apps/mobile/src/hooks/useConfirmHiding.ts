@@ -4,6 +4,7 @@ import { Alert } from 'react-native';
 import { describeHiding } from '@ValenceClient/library/describeHiding';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import type { Hiding } from '@ValenceClient/library/useHidden';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Asks, in the system's own alert, before something is hidden, whenever something is waiting to be.
@@ -24,9 +25,9 @@ const useConfirmHiding = (hiding: Hiding, onHidden?: () => void): void => {
     const { title, detail } = describeHiding(asking, isShared);
 
     Alert.alert(title, detail, [
-      { text: 'Keep it', style: 'cancel', onPress: dismiss },
+      { text: say('common.keepIt'), style: 'cancel', onPress: dismiss },
       {
-        text: 'Hide it',
+        text: say('common.hideIt'),
         style: 'destructive',
         onPress: () => {
           confirm();

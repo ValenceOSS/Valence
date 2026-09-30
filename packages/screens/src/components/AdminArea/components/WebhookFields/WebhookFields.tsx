@@ -16,16 +16,17 @@ import { WebhookFilterList } from '@ValenceScreens/components/AdminArea/componen
 import type { MediaKind } from '@ValenceContracts/schemas/MediaKind';
 import type { WebhookPreset, WebhookSubscribableEvent } from '@ValenceContracts/schemas/Webhook';
 import type { WebhookFieldsProps } from './WebhookFields.types';
+import { say } from '@ValenceI18n/say';
 
 const PRESET_LABELS: Record<WebhookPreset, string> = {
-  generic: 'Valence’s own envelope, as JSON — build against this one',
-  discord: 'A message in a Discord channel',
-  ntfy: 'A notification through ntfy',
+  generic: say('screens.adminArea.webhookFields.valencesOwnEnvelopeAsJSONBuild'),
+  discord: say('screens.adminArea.webhookFields.aMessageInADiscordChannel'),
+  ntfy: say('screens.adminArea.webhookFields.aNotificationThroughNtfy'),
 };
 
 const ARRIVAL_CHOICES = [
-  { id: 'perScan', label: 'Once per scan' },
-  { id: 'perItem', label: 'One for each thing' },
+  { id: 'perScan', label: say('screens.adminArea.webhookFields.oncePerScan') },
+  { id: 'perItem', label: say('screens.adminArea.webhookFields.oneForEachThing') },
 ] as const;
 
 const ITEM_TYPE_CHOICES = MEDIA_KINDS.map((kind) => ({
@@ -80,31 +81,31 @@ const WebhookFields = ({
       <TabPanel value="where" travel={travel}>
         <div className="flex flex-col gap-4">
           <TextField
-            label="Name"
+            label={say('common.name')}
             value={draft.name}
             onValueChange={(name) => {
               onChange({ ...draft, name });
             }}
-            placeholder="Discord"
-            description="What this is called in the list. Only you see it."
+            placeholder={say('screens.adminArea.webhookFields.discord')}
+            description={say('screens.adminArea.webhookFields.whatThisIsCalledInThe')}
             required
           />
 
           <TextField
-            label="Address"
+            label={say('common.address')}
             type="url"
             value={draft.url}
             onValueChange={(url) => {
               onChange({ ...draft, url });
             }}
             placeholder="https://discord.com/api/webhooks/…"
-            description="Where the deliveries are posted."
+            description={say('screens.adminArea.webhookFields.whereTheDeliveriesArePosted')}
             required
           />
 
           <FormField
-            label="Shape"
-            description="What Valence sends, so the other end understands it."
+            label={say('screens.adminArea.webhookFields.shape')}
+            description={say('screens.adminArea.webhookFields.whatValenceSendsSoTheOther')}
           >
             <div className="flex flex-col gap-1.5">
               {WEBHOOK_PRESETS.map((candidate) => (
@@ -153,7 +154,7 @@ const WebhookFields = ({
                         );
                       }}
                     >
-                      {isEveryOne ? 'None' : 'All'}
+                      {isEveryOne ? say('common.none') : say('common.all')}
                     </Button>
                   </div>
 
@@ -212,15 +213,16 @@ const WebhookFields = ({
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
             <div className="flex flex-col gap-0.5">
-              <span className="text-sm font-medium text-text">When things arrive</span>
+              <span className="text-sm font-medium text-text">
+                {say('screens.adminArea.webhookFields.whenThingsArrive')}
+              </span>
               <span className="text-xs text-text-muted">
-                A first scan of a large library arrives all at once. One message per scan keeps that
-                readable; one for each thing does not.
+                {say('screens.adminArea.webhookFields.aFirstScanOfALarge')}
               </span>
             </div>
 
             <SegmentedRow
-              label="How arrivals are reported"
+              label={say('screens.adminArea.webhookFields.howArrivalsAreReported')}
               tone="accent"
               size="sm"
               items={ARRIVAL_CHOICES}
@@ -238,33 +240,33 @@ const WebhookFields = ({
           </div>
 
           <WebhookFilterList
-            title="Accounts"
-            governs="Decides whose sign-ins and account changes are reported."
+            title={say('common.accounts')}
+            governs={say('screens.adminArea.webhookFields.decidesWhoseSignInsAndAccount')}
             choices={accounts}
             chosen={draft.filters.accounts}
-            nothingToChoose="This server has no other accounts yet."
+            nothingToChoose={say('screens.adminArea.webhookFields.thisServerHasNoOtherAccounts')}
             onChange={(chosen) => {
               onChange({ ...draft, filters: { ...draft.filters, accounts: chosen } });
             }}
           />
 
           <WebhookFilterList
-            title="Profiles"
-            governs="Decides whose watching is reported."
+            title={say('common.profiles')}
+            governs={say('screens.adminArea.webhookFields.decidesWhoseWatchingIsReported')}
             choices={profiles}
             chosen={draft.filters.profiles}
-            nothingToChoose="This server has no profiles yet."
+            nothingToChoose={say('screens.adminArea.webhookFields.thisServerHasNoProfilesYet')}
             onChange={(chosen) => {
               onChange({ ...draft, filters: { ...draft.filters, profiles: chosen } });
             }}
           />
 
           <WebhookFilterList
-            title="Kinds"
-            governs="Decides which kinds of thing are reported, arriving or being watched."
+            title={say('screens.adminArea.webhookFields.kinds')}
+            governs={say('screens.adminArea.webhookFields.decidesWhichKindsOfThingAre')}
             choices={ITEM_TYPE_CHOICES}
             chosen={draft.filters.itemTypes}
-            nothingToChoose="Nothing to choose from."
+            nothingToChoose={say('screens.adminArea.webhookFields.nothingToChooseFrom')}
             onChange={(chosen) => {
               onChange({
                 ...draft,

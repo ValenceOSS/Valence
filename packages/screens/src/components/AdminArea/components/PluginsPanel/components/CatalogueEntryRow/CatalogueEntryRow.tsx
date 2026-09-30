@@ -4,6 +4,7 @@ import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { Link } from '@ValenceUI/Link';
 import type { CatalogueEntryRowProps } from './CatalogueEntryRow.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * One official plugin in the catalogue: what it does, whether it is a theme, whether this server can
@@ -30,28 +31,30 @@ const CatalogueEntryRow = ({ entry, isBusy, onInstall }: CatalogueEntryRowProps)
         <div className="flex flex-wrap items-center gap-2">
           <span className="truncate font-medium text-text">{entry.name}</span>
           <span className="text-xs text-text-muted">{entry.version}</span>
-          {entry.kinds.includes('theme') ? <Badge size="sm">Theme</Badge> : null}
+          {entry.kinds.includes('theme') ? <Badge size="sm">{say('common.theme')}</Badge> : null}
         </div>
 
         <p className="text-xs leading-relaxed text-text-muted">{entry.description}</p>
 
         <p className="flex flex-wrap items-center gap-x-3 text-xs text-text-muted/80">
-          <span>By {entry.author}</span>
-          <Link href={entry.sourceUrl}>Source</Link>
+          <span>{say('common.byAuthor', { author: entry.author })}</span>
+          <Link href={entry.sourceUrl}>{say('common.source')}</Link>
         </p>
       </div>
 
       {!entry.isCompatible ? (
         <Badge size="sm" tone="warning">
-          Needs a newer Valence
+          {say('screens.pluginsPanel.catalogueEntryRow.needsANewerValence')}
         </Badge>
       ) : isCurrent ? (
         <Badge size="sm" tone="success">
-          Installed
+          {say('screens.pluginsPanel.catalogueEntryRow.installed')}
         </Badge>
       ) : (
         <Button size="sm" variant="confirm" isLoading={isBusy} onClick={onInstall}>
-          {entry.installedVersion === null ? 'Install' : `Update to ${entry.version}`}
+          {entry.installedVersion === null
+            ? say('common.install')
+            : say('common.updateToVersion', { version: entry.version })}
         </Button>
       )}
     </li>

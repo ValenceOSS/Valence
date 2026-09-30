@@ -31,6 +31,7 @@ import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { ListeningPanel } from '@ValenceClient/books/listeningChoices';
 import type { TheListeningPlayerProps } from './TheListeningPlayer.types';
+import { say } from '@ValenceI18n/say';
 
 const TALL = 1.5;
 
@@ -85,7 +86,7 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
     return (
       <Screen centres onBack={onBack} goesBackDown>
         <Words tone="muted" isCentred>
-          Nothing is playing.
+          {say('common.nothingIsPlaying')}
         </Words>
       </Screen>
     );
@@ -142,7 +143,7 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
         <View style={styles.controls}>
           <Button
             tone="bare"
-            label="Chapter before"
+            label={say('common.chapterBefore')}
             onPress={() => {
               goToChapterBeside(player, -1);
             }}
@@ -154,7 +155,9 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
 
           <Button
             tone="bare"
-            label={`Back ${LISTENING_CHOICES.backSeconds.toString()} seconds`}
+            label={say('common.backBackSecondsSeconds', {
+              backSeconds: LISTENING_CHOICES.backSeconds.toString(),
+            })}
             onPress={() => {
               player.skip(-LISTENING_CHOICES.backSeconds);
             }}
@@ -166,7 +169,7 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
 
           <Button
             tone="bare"
-            label={state.isPlaying ? 'Pause' : 'Play'}
+            label={state.isPlaying ? say('common.pause') : say('common.play')}
             onPress={() => {
               player.toggle();
             }}
@@ -182,7 +185,9 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
 
           <Button
             tone="bare"
-            label={`On ${LISTENING_CHOICES.forwardSeconds.toString()} seconds`}
+            label={say('common.onForwardSecondsSeconds', {
+              forwardSeconds: LISTENING_CHOICES.forwardSeconds.toString(),
+            })}
             onPress={() => {
               player.skip(LISTENING_CHOICES.forwardSeconds);
             }}
@@ -194,7 +199,7 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
 
           <Button
             tone="bare"
-            label="Next chapter"
+            label={say('common.nextChapter')}
             onPress={() => {
               goToChapterBeside(player, 1);
             }}
@@ -210,7 +215,7 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
         <View style={styles.extras}>
           <Button
             tone="bare"
-            label={`Speed, ${state.speed.toString()}×`}
+            label={say('phone.theListeningPlayer.speedSpeed', { speed: state.speed.toString() })}
             isChosen={isFaster}
             onPress={() => {
               setPanel('speed');
@@ -221,7 +226,9 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
 
           <Button
             tone="bare"
-            label={isSleeping ? 'Sleep timer, on' : 'Sleep timer'}
+            label={
+              isSleeping ? say('phone.theListeningPlayer.sleepTimerOn2') : say('common.sleepTimer')
+            }
             isChosen={isSleeping}
             onPress={() => {
               setPanel('sleep');
@@ -234,7 +241,7 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
 
           <Button
             tone="bare"
-            label="Chapters"
+            label={say('common.chapters')}
             isChosen={panel === 'chapters'}
             onPress={() => {
               setPanel('chapters');
@@ -249,9 +256,9 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
             {[
               isFaster ? `${state.speed.toString()}×` : null,
               state.sleep.kind === 'endOfChapter'
-                ? 'Stops at the end of this chapter'
+                ? say('phone.theListeningPlayer.stopsAtTheEndOfThis')
                 : isSleeping
-                  ? 'Sleep timer on'
+                  ? say('phone.theListeningPlayer.sleepTimerOn')
                   : null,
             ]
               .filter((part) => part !== null)

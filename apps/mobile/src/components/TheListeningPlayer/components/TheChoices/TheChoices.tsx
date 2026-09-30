@@ -10,13 +10,14 @@ import { useTheBook } from '@ValenceMobile/hooks/useTheBook';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { ListeningPanel } from '@ValenceClient/books/listeningChoices';
 import type { TheChoicesProps } from './TheChoices.types';
+import { say } from '@ValenceI18n/say';
 
 const TICK = 20;
 
 const TITLES: Record<ListeningPanel, string> = {
-  speed: 'Speed',
-  sleep: 'Sleep timer',
-  chapters: 'Chapters',
+  speed: say('common.speed'),
+  sleep: say('common.sleepTimer'),
+  chapters: say('common.chapters'),
 };
 
 const styles = StyleSheet.create({

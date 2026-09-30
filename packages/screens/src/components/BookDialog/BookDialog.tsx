@@ -33,6 +33,8 @@ import { DialogHeadlinePart } from '@ValenceScreens/components/DialogHeadlinePar
 import type { Book } from '@ValenceContracts/schemas/Book';
 import type { ActionBarAction } from '@ValenceUI/ActionBar.types';
 import type { BookDialogProps } from './BookDialog.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * What kind of book something is, for the line above its title.
@@ -43,14 +45,12 @@ import type { BookDialogProps } from './BookDialog.types';
  */
 const kindOf = (book: Book): string =>
   book.layout === 'audio'
-    ? 'Audiobook'
+    ? say('common.audiobook')
     : book.layout === 'reflow'
       ? book.hasAudio === true
-        ? 'Ebook and audiobook'
-        : 'Ebook'
-      : book.chapterCount === 1
-        ? 'One chapter'
-        : `${book.chapterCount.toString()} chapters`;
+        ? say('screens.bookDialog.ebookAndAudiobook')
+        : say('common.ebook')
+      : sayCount('common.count.chapters', book.chapterCount);
 
 /**
  * Everything a book can do, gathered where a film's are: its cover, who wrote it and what it is
@@ -116,7 +116,7 @@ const BookDialog = ({
           {
             id: 'keep',
             isPinned: true,
-            label: isKept ? 'Stop keeping' : 'Keep',
+            label: isKept ? say('screens.bookDialog.stopKeeping') : say('screens.bookDialog.keep'),
             icon: <KeepHeart isKept={isKept} size={18} />,
             onChoose: () => {
               onToggleKept(book);
@@ -139,7 +139,7 @@ const BookDialog = ({
                 {
                   id: 'share',
                   isPinned: true,
-                  label: 'Share',
+                  label: say('common.share'),
                   icon: <Icon of={ShareIcon} size={18} />,
                   onChoose: () => {
                     onShare(book);
@@ -149,17 +149,27 @@ const BookDialog = ({
         ];
 
   return (
-    <Dialog label={book?.title ?? 'A book'} isOpen={bookId !== null} onClose={onClose}>
+    <Dialog
+      label={book?.title ?? say('screens.bookDialog.aBook')}
+      isOpen={bookId !== null}
+      onClose={onClose}
+    >
       <DialogContent className="flex flex-col gap-4 p-4 sm:p-6">
         <div className="flex justify-end">
-          <Button isIconOnly variant="ghost" size="sm" label="Close" onClick={onClose}>
+          <Button
+            isIconOnly
+            variant="ghost"
+            size="sm"
+            label={say('common.close')}
+            onClick={onClose}
+          >
             <Icon of={XIcon} size={18} />
           </Button>
         </div>
 
         {asked.isError ? (
           <CouldNotRead
-            what="That book"
+            said={say('common.thatBookCouldNotBeRead')}
             isTryingAgain={asked.isFetching}
             onTryAgain={() => {
               void asked.refetch();
@@ -219,9 +229,11 @@ const BookDialog = ({
                 {where === null ? null : (
                   <DialogHeadlinePart className="mt-2">
                     <ProgressBar
-                      label="How far through"
+                      label={say('screens.bookDialog.howFarThrough')}
                       value={Math.round(readingFractionOf(where) * 100)}
-                      readout={where.isFinished ? 'Finished' : describeReadingPlace(where)}
+                      readout={
+                        where.isFinished ? say('common.finished') : describeReadingPlace(where)
+                      }
                     />
                   </DialogHeadlinePart>
                 )}
@@ -236,9 +248,9 @@ const BookDialog = ({
               }}
             />
 
-            <DialogSection heading="About">
+            <DialogSection heading={say('common.about')}>
               <p className="text-[0.95rem] leading-relaxed text-text">
-                {book.overview ?? 'Nothing is written about this book yet.'}
+                {book.overview ?? say('screens.bookDialog.nothingIsWrittenAboutThisBook')}
               </p>
 
               {(book.genres ?? []).length === 0 ? null : (
@@ -253,7 +265,7 @@ const BookDialog = ({
             </DialogSection>
 
             {readable.length < 2 || onReadChapter === undefined ? null : (
-              <DialogSection heading="Chapters">
+              <DialogSection heading={say('common.chapters')}>
                 <ChapterList
                   chapters={readable}
                   read={read}
@@ -269,7 +281,7 @@ const BookDialog = ({
 
       <DialogFooter>
         <ActionBar
-          label="More to do with this book"
+          label={say('screens.bookDialog.moreToDoWithThisBook')}
           primary={
             isOnlyHeard ? (
               <Button
@@ -295,10 +307,10 @@ const BookDialog = ({
               >
                 <Icon of={BookOpenIcon} size={18} />
                 {isStarted
-                  ? 'Continue reading'
+                  ? say('common.continueReading')
                   : where?.isFinished === true
-                    ? 'Read again'
-                    : 'Read'}
+                    ? say('common.readAgain')
+                    : say('common.read')}
               </Button>
             )
           }

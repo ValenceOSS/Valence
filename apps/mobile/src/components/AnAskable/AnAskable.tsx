@@ -16,6 +16,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { TheSeasons } from '@ValenceMobile/components/AnAskable/components/TheSeasons/TheSeasons';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { AnAskableProps } from './AnAskable.types';
+import { say } from '@ValenceI18n/say';
 
 const WHILE_IT_MOVES = 5000;
 
@@ -90,19 +91,23 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
   };
 
   const takeBack = (requestId: string) => {
-    Alert.alert('Cancel this request?', 'Anything already downloaded for it is deleted.', [
-      { text: 'Keep it', style: 'cancel' },
-      {
-        text: 'Cancel request',
-        style: 'destructive',
-        onPress: () => {
-          void removeMediaRequest(requestId, true).then(async (refused) => {
-            setRefusal(refused?.message ?? null);
-            await cache.invalidateQueries({ queryKey: requestsQueries.key });
-          });
+    Alert.alert(
+      say('common.cancelThisRequest'),
+      say('phone.anAskable.anythingAlreadyDownloadedForItIs'),
+      [
+        { text: say('common.keepIt'), style: 'cancel' },
+        {
+          text: say('common.cancelRequest'),
+          style: 'destructive',
+          onPress: () => {
+            void removeMediaRequest(requestId, true).then(async (refused) => {
+              setRefusal(refused?.message ?? null);
+              await cache.invalidateQueries({ queryKey: requestsQueries.key });
+            });
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   if (asking.isPending) {
@@ -116,7 +121,7 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
   if (title === undefined) {
     return (
       <Screen centres onBack={onBack}>
-        <Words tone="danger">That title could not be read.</Words>
+        <Words tone="danger">{say('common.thatTitleCouldNotBeRead')}</Words>
       </Screen>
     );
   }
@@ -144,7 +149,10 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
       )}
 
       {going === null ? null : (
-        <HowFar fraction={going.progress} label={`How far ${title.title} has downloaded`} />
+        <HowFar
+          fraction={going.progress}
+          label={say('common.howFarTitleHasDownloaded', { title: title.title })}
+        />
       )}
 
       {saidOfGoing === null ? null : (
@@ -161,7 +169,7 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
 
           {choices.length > 1 ? (
             <SegmentedRow
-              label="Quality"
+              label={say('common.quality')}
               items={choices.map((choice) => ({ id: choice.id, label: choice.name }))}
               value={quality}
               onSelect={setQuality}
@@ -175,7 +183,7 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
               void send();
             }}
           >
-            Request
+            {say('common.request')}
           </Button>
         </>
       ) : null}
@@ -189,7 +197,7 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
             takeBack(request.id);
           }}
         >
-          Cancel request
+          {say('common.cancelRequest')}
         </Button>
       ) : null}
 

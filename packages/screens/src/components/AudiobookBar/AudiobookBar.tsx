@@ -22,6 +22,7 @@ import { LISTENING_CHOICES } from '@ValenceClient/books/LISTENING_CHOICES';
 import { useAudiobookSession } from '@ValenceScreens/listening/useAudiobookSession';
 import { AudiobookPanel } from './components/AudiobookPanel/AudiobookPanel';
 import type { AudiobookBarProps } from './AudiobookBar.types';
+import { say } from '@ValenceI18n/say';
 
 const ARRIVING = {
   hidden: { opacity: 0, y: '20%' },
@@ -62,7 +63,10 @@ const AudiobookBar = ({ player: given }: AudiobookBarProps) => {
           transition={arriving}
           className="pointer-events-none fixed right-4 bottom-[calc(var(--music-bar-room,0px)+1rem)] z-40 max-w-[calc(100vw-2rem)] pb-[env(safe-area-inset-bottom,0px)]"
         >
-          <section aria-label="Listening to" className="valence-card-shell pointer-events-auto">
+          <section
+            aria-label={say('screens.audiobookBar.listeningTo')}
+            className="valence-card-shell pointer-events-auto"
+          >
             <div className="valence-card-face valence-card-face--raised flex items-center gap-2 p-2">
               <MusicArtwork
                 src={book.hasCover ? bookCoverUrl(book.id) : null}
@@ -81,7 +85,9 @@ const AudiobookBar = ({ player: given }: AudiobookBarProps) => {
 
               <div className="flex shrink-0 items-center">
                 <BarButton
-                  label={`Back ${LISTENING_CHOICES.backSeconds.toString()} seconds`}
+                  label={say('common.backBackSecondsSeconds', {
+                    backSeconds: LISTENING_CHOICES.backSeconds.toString(),
+                  })}
                   glyph={RotateCcwFilledIcon}
                   onClick={() => {
                     player.skip(-LISTENING_CHOICES.backSeconds);
@@ -92,21 +98,23 @@ const AudiobookBar = ({ player: given }: AudiobookBarProps) => {
                   variant="confirm"
                   size="sm"
                   isIconOnly
-                  label={state.isPlaying ? 'Pause' : 'Play'}
+                  label={state.isPlaying ? say('common.pause') : say('common.play')}
                   className="size-8"
                   onClick={() => {
                     player.toggle();
                   }}
                 >
                   {state.isLoading && state.isPlaying ? (
-                    <Spinner size="sm" label="Loading" />
+                    <Spinner size="sm" label={say('common.loading')} />
                   ) : (
                     <Icon of={state.isPlaying ? PauseFilledIcon : PlayFilledIcon} size={16} />
                   )}
                 </Button>
 
                 <BarButton
-                  label={`On ${LISTENING_CHOICES.forwardSeconds.toString()} seconds`}
+                  label={say('common.onForwardSecondsSeconds', {
+                    forwardSeconds: LISTENING_CHOICES.forwardSeconds.toString(),
+                  })}
                   glyph={RotateCwFilledIcon}
                   onClick={() => {
                     player.skip(LISTENING_CHOICES.forwardSeconds);
@@ -114,7 +122,7 @@ const AudiobookBar = ({ player: given }: AudiobookBarProps) => {
                 />
 
                 <PopoverPanel
-                  label="Open the player"
+                  label={say('common.openThePlayer')}
                   heading={book.title}
                   trigger={<Icon of={ChevronUpIcon} size={18} />}
                 >
@@ -122,7 +130,7 @@ const AudiobookBar = ({ player: given }: AudiobookBarProps) => {
                 </PopoverPanel>
 
                 <BarButton
-                  label="Stop listening"
+                  label={say('screens.audiobookBar.stopListening')}
                   glyph={XIcon}
                   onClick={() => {
                     player.close();

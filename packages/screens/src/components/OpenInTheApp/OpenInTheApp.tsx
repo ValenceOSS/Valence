@@ -4,6 +4,7 @@ import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { linkIntoTheApp } from '@ValenceClient/session/linkIntoTheApp';
+import { say } from '@ValenceI18n/say';
 
 const PUT_AWAY = 'valence.openInTheApp.putAway';
 
@@ -64,10 +65,12 @@ const OpenInTheApp = () => {
 
   return (
     <aside
-      aria-label="Open in the Valence app"
+      aria-label={say('screens.openInTheApp.openInTheValenceApp')}
       className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-50 flex items-center gap-3 rounded-xl bg-surface-raised p-3 pl-4 shadow-lg ring-1 ring-line"
     >
-      <p className="min-w-0 flex-1 text-sm text-text">Have the Valence app?</p>
+      <p className="min-w-0 flex-1 text-sm text-text">
+        {say('screens.openInTheApp.haveTheValenceApp')}
+      </p>
 
       <Button
         variant="glossy"
@@ -84,14 +87,14 @@ const OpenInTheApp = () => {
           );
         }}
       >
-        Open in the app
+        {say('screens.openInTheApp.openInTheApp')}
       </Button>
 
       <Button
         isIconOnly
         variant="ghost"
         size="sm"
-        label="Not now"
+        label={say('common.notNow')}
         onClick={() => {
           rememberPutAway();
           setIsPutAway(true);

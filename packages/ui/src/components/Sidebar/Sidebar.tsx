@@ -7,6 +7,7 @@ import { SidebarGroup } from '@ValenceUI/SidebarGroup';
 import { cn } from '@ValenceUI/cn';
 import { scrollDeltaToReveal } from './scrollDeltaToReveal';
 import type { SidebarProps } from './Sidebar.types';
+import { say } from '@ValenceI18n/say';
 
 const REVEAL_MARGIN = 16;
 
@@ -109,7 +110,7 @@ const Sidebar = ({
             variant="ghost"
             size="sm"
             isIconOnly
-            label="Close the sidebar"
+            label={say('common.closeTheSidebar')}
             onClick={() => {
               onCollapsedChange(true);
             }}

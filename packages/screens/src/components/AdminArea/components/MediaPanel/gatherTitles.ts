@@ -1,5 +1,6 @@
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaTitle } from './MediaTitle.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Orders episodes as they are watched: by season, then by number, with anything unnumbered last.
@@ -50,7 +51,7 @@ const editionRow = (edition: MediaSummary, at: number): MediaTitle => ({
   id: `edition ${edition.id}`,
   libraryId: edition.libraryId,
   kind: 'version',
-  name: edition.versionLabel ?? 'Original',
+  name: edition.versionLabel ?? say('common.original'),
   order: inOrder(at),
   year: null,
   lead: edition,
@@ -99,7 +100,11 @@ const episodeRow = (episode: MediaSummary, others: readonly MediaSummary[] = [])
  * @returns What to call it.
  */
 const nameOfSeason = (season: number | null): string =>
-  season === null ? 'No season' : season === 0 ? 'Specials' : `Season ${season.toString()}`;
+  season === null
+    ? say('screens.mediaPanel.gatherTitles.noSeason')
+    : season === 0
+      ? say('common.specials')
+      : say('screens.mediaPanel.gatherTitles.seasonSeason', { season: season.toString() });
 
 /**
  * Where a season sorts among the others: numbered seasons in order, then the specials, then

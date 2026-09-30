@@ -1,4 +1,5 @@
 import { describeWords } from './describeWords';
+import { say } from '@ValenceI18n/say';
 
 const SCHEDULED = '.scheduled';
 
@@ -20,7 +21,9 @@ const describeJobKind = (kind: string, labels: ReadonlyMap<string, string>): str
   }
 
   if (kind.endsWith(SCHEDULED)) {
-    return `${describeJobKind(kind.slice(0, -SCHEDULED.length), labels)} (on its schedule)`;
+    return say('client.admin.describeJobKind.onItsSchedule', {
+      kind: describeJobKind(kind.slice(0, -SCHEDULED.length), labels),
+    });
   }
 
   const words = describeWords(kind.slice(kind.lastIndexOf('.') + 1));

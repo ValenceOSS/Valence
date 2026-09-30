@@ -7,8 +7,15 @@ import {
 } from '@keyline-icons/react';
 import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
+import { say } from '@ValenceI18n/say';
 
-const BROWSERS = ['Edge', 'Opera', 'Chromium', 'Chrome', 'Firefox'] as const;
+const BROWSERS = [
+  say('common.edge'),
+  say('common.opera'),
+  say('common.chromium'),
+  say('screens.sessionCard.deviceIcon.chrome'),
+  say('common.firefox'),
+] as const;
 
 /**
  * Picks the icon for a device, so a list of sessions can be read by shape as well as by name.

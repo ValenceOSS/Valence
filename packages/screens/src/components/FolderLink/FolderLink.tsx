@@ -2,6 +2,7 @@ import { FolderOpen as FolderOpenIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import type { FolderLinkProps } from './FolderLink.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * A path on the server's disk, written small beneath whatever it belongs to, that opens its folder
@@ -16,7 +17,7 @@ const FolderLink = ({ shown, folder, onOpen }: FolderLinkProps) => (
     variant="subtle"
     size="none"
     className="min-w-0 max-w-full justify-start gap-1 text-xs underline-offset-4 hover:underline"
-    label={`Open ${folder} in Files`}
+    label={say('screens.folderLink.openFolderInFiles', { folder })}
     onClick={() => {
       onOpen(folder);
     }}

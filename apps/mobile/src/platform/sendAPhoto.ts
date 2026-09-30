@@ -2,6 +2,7 @@ import { FileSystemUploadType, uploadAsync } from 'expo-file-system/legacy';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
+import { say } from '@ValenceI18n/say';
 
 const KINDS: Record<string, string> = {
   avif: 'image/avif',
@@ -13,7 +14,7 @@ const KINDS: Record<string, string> = {
   webp: 'image/webp',
 };
 
-const NOT_SENT = 'That photo could not be sent.';
+const NOT_SENT = say('phone.platform.sendAPhoto.thatPhotoCouldNotBeSent');
 
 /**
  * Sends a photo on this phone to the server straight from its file, rather than reading it into

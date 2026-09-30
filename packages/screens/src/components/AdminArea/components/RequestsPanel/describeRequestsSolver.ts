@@ -4,6 +4,7 @@ import { docsFor } from '@ValenceCore/functions/docsFor';
 import { saidWhen } from '@ValenceClient/format/saidWhen';
 import type { RequestsOverview } from '@ValenceContracts/schemas/Requests';
 import type { RequestsHealth } from './RequestsHealth.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says how the browser that gets past Cloudflare's check is, as a badge in the same words and
@@ -20,7 +21,7 @@ const describeRequestsSolver = (overview: RequestsOverview): RequestsHealth => {
 
   if (solver === null) {
     return {
-      label: 'Not checked',
+      label: say('common.notChecked'),
       tone: 'quiet',
       detail: '',
     };
@@ -28,9 +29,11 @@ const describeRequestsSolver = (overview: RequestsOverview): RequestsHealth => {
 
   if (solver.startProblem !== null) {
     return {
-      label: 'Can’t start',
+      label: say('screens.requestsPanel.describeRequestsSolver.cantStart'),
       tone: 'danger',
-      detail: `It would not start: ${sayAgain(solver.startProblem)}`,
+      detail: say('screens.requestsPanel.describeRequestsSolver.itWouldNotStartStartProblem', {
+        startProblem: sayAgain(solver.startProblem),
+      }),
       help: docsFor('CloudflareCheckFailed'),
     };
   }
@@ -40,15 +43,18 @@ const describeRequestsSolver = (overview: RequestsOverview): RequestsHealth => {
     (solver.lastPassedAt === null || solver.lastFailedAt > solver.lastPassedAt)
   ) {
     return {
-      label: 'Offline',
+      label: say('common.offline'),
       tone: 'danger',
-      detail: `Last failed ${saidWhen(solver.lastFailedAt)}: ${sayAgainIfAny(solver.problem) ?? 'no reason given'}.`,
+      detail: say('screens.requestsPanel.describeRequestsSolver.lastFailedWhenProblem', {
+        when: saidWhen(solver.lastFailedAt),
+        problem: sayAgainIfAny(solver.problem) ?? say('common.noReasonGiven'),
+      }),
       help: docsFor('CloudflareCheckFailed'),
     };
   }
 
   return {
-    label: 'Online',
+    label: say('common.online'),
     tone: 'success',
     detail: '',
   };

@@ -2,6 +2,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { partsOfDownload } from '@ValenceTv/requests/partsOfDownload';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { DownloadPanelProps } from './DownloadPanel.types';
+import { say } from '@ValenceI18n/say';
 
 const BAR_HEIGHT = 10;
 
@@ -19,9 +20,9 @@ const DownloadPanel = ({ label, progress }: DownloadPanelProps) => {
   const { percent, arrived, speed, left } = partsOfDownload(progress);
   const done = Math.min(Math.max(progress.progress, 0), 1);
   const facts = [
-    { name: 'Downloaded', value: arrived },
-    { name: 'Speed', value: speed },
-    { name: 'Time left', value: left },
+    { name: say('common.downloaded'), value: arrived },
+    { name: say('common.speed'), value: speed },
+    { name: say('common.timeLeft'), value: left },
   ].filter((fact) => fact.value !== null);
 
   return (

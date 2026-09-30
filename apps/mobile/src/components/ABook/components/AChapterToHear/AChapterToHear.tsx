@@ -3,6 +3,7 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { asAClock } from '@ValenceMobile/components/Watching/asAClock';
 import type { AChapterToHearProps } from './AChapterToHear.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   lead: { alignItems: 'center', justifyContent: 'center', minWidth: 24 },
@@ -23,7 +24,7 @@ const styles = StyleSheet.create({
 const AChapterToHear = ({ title, at, lasts, isCurrent, onListen }: AChapterToHearProps) => (
   <Button
     tone="bare"
-    label={`Listen from ${title}`}
+    label={say('phone.aBook.aChapterToHear.listenFromTitle', { title })}
     isChosen={isCurrent}
     onPress={() => {
       onListen(at);

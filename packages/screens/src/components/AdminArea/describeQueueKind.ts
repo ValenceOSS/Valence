@@ -1,7 +1,9 @@
+import { say } from '@ValenceI18n/say';
+
 const QUEUE_KIND_LABELS: Record<string, string> = {
-  preview: 'Making a preview',
-  thumbnails: 'Drawing scrub previews',
-  fingerprint: 'Comparing episode audio',
+  preview: say('screens.adminArea.describeQueueKind.makingAPreview'),
+  thumbnails: say('screens.adminArea.describeQueueKind.drawingScrubPreviews'),
+  fingerprint: say('screens.adminArea.describeQueueKind.comparingEpisodeAudio'),
 };
 
 /**

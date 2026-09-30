@@ -10,7 +10,6 @@ const NODE_LEVEL_FOR: Readonly<Record<(typeof TRANSCODER_LEVELS)[number], LogLev
   debug: 'debug',
   info: 'info',
   warn: 'warn',
-  // eslint-disable-next-line valence/no-hard-coded-strings -- a log level's name
   error: 'error',
 };
 

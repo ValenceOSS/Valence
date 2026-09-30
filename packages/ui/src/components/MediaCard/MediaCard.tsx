@@ -10,6 +10,7 @@ import { revealTransition } from '@ValenceUI/animations/reveal';
 import { CARD_HOVER, CARD_PRESS } from '@ValenceUI/animations/motion';
 import { WatchedBar } from '@ValenceUI/WatchedBar';
 import type { MediaCardProps, MediaCardShape } from './MediaCard.types';
+import { say } from '@ValenceI18n/say';
 
 const SHAPE_CLASSES: Record<MediaCardShape, string> = {
   poster: 'aspect-[2/3]',
@@ -160,10 +161,10 @@ const MediaCard = ({
 
             {watchedFraction === undefined || watchedFraction < 1 ? null : (
               <span className="absolute bottom-3 right-3">
-                <Tooltip label="Watched">
+                <Tooltip label={say('common.watched')}>
                   <span
                     role="img"
-                    aria-label="Watched"
+                    aria-label={say('common.watched')}
                     className="flex size-6 items-center justify-center rounded-full bg-success text-surface"
                   >
                     <Icon of={CheckIcon} size={14} />

@@ -2,12 +2,13 @@ import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { RESOURCE_SAMPLE_RANGES } from '@ValenceContracts/schemas/ResourceSample';
 import type { SegmentedItem } from '@ValenceUI/SegmentedRow.types';
 import type { LoadRange, LoadRangeToggleProps } from './LoadRangeToggle.types';
+import { say } from '@ValenceI18n/say';
 
 const VALID_RANGES: readonly LoadRange[] = ['minute', ...RESOURCE_SAMPLE_RANGES];
 
 const ITEMS: SegmentedItem[] = VALID_RANGES.map((range) => ({
   id: range,
-  label: range === 'minute' ? 'Last minute' : range,
+  label: range === 'minute' ? say('screens.overviewPanel.loadRangeToggle.lastMinute') : range,
 }));
 
 /**
@@ -29,7 +30,7 @@ const isLoadRange = (value: string): value is LoadRange =>
  */
 const LoadRangeToggle = ({ value, onChange }: LoadRangeToggleProps) => (
   <SegmentedRow
-    label="How far back to show the load"
+    label={say('screens.overviewPanel.loadRangeToggle.howFarBackToShowThe')}
     size="xs"
     tone="accent"
     items={ITEMS}

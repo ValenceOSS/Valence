@@ -10,6 +10,7 @@ import { thisTvsId } from '@ValenceTv/platform/thisTvsId';
 import { theServersOrigin } from '@ValenceTv/platform/theServersOrigin';
 import { theTvsMusicAudio } from '@ValenceTv/music/theTvsMusicAudio';
 import { theTvsListeningAudio } from '@ValenceTv/books/theTvsListeningAudio';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Tells the application it is running on a television, which is the first thing that has to happen.
@@ -38,7 +39,10 @@ const installTvPlatform = (): void => {
     setUnreadBadge: () => undefined,
     musicAudio: theTvsMusicAudio,
     listeningAudio: theTvsListeningAudio,
-    passkeys: () => ({ kind: 'none', why: 'A television is signed in from a phone.' }),
+    passkeys: () => ({
+      kind: 'none',
+      why: say('tv.platform.installTvPlatform.aTelevisionIsSignedInFrom'),
+    }),
   });
 };
 

@@ -7,6 +7,7 @@ import { AComingTrack } from '@ValenceMobile/components/TheMusicPlayer/component
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { useTheMusic } from '@ValenceMobile/hooks/useTheMusic';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
+import { say } from '@ValenceI18n/say';
 
 const FADES_IN_OVER = 16;
 
@@ -44,16 +45,23 @@ const TheUpNext = () => {
   const askAbout = useCallback(
     (at: number, title: string) => {
       const choices = [
-        { label: 'Play now', run: () => player.jumpTo(at) },
-        ...(at > first ? [{ label: 'Move up', run: () => player.moveInQueue(at, at - 1) }] : []),
-        ...(at < last ? [{ label: 'Move down', run: () => player.moveInQueue(at, at + 1) }] : []),
-        { label: 'Take out of the queue', run: () => player.removeFromQueue(at) },
+        { label: say('phone.theMusicPlayer.theUpNext.playNow'), run: () => player.jumpTo(at) },
+        ...(at > first
+          ? [{ label: say('common.moveUp'), run: () => player.moveInQueue(at, at - 1) }]
+          : []),
+        ...(at < last
+          ? [{ label: say('common.moveDown'), run: () => player.moveInQueue(at, at + 1) }]
+          : []),
+        {
+          label: say('phone.theMusicPlayer.theUpNext.takeOutOfTheQueue'),
+          run: () => player.removeFromQueue(at),
+        },
       ];
 
       ActionSheetIOS.showActionSheetWithOptions(
         {
           title,
-          options: [...choices.map((choice) => choice.label), 'Cancel'],
+          options: [...choices.map((choice) => choice.label), say('common.cancel')],
           cancelButtonIndex: choices.length,
           destructiveButtonIndex: choices.length - 1,
         },
@@ -68,32 +76,44 @@ const TheUpNext = () => {
   if (queue === null || coming.length === 0) {
     return (
       <Words tone="muted">
-        {queue?.repeat === 'all' ? 'The queue starts again after this.' : 'Nothing after this.'}
+        {queue?.repeat === 'all'
+          ? say('common.theQueueStartsAgainAfterThis')
+          : say('common.nothingAfterThis')}
       </Words>
     );
   }
 
   const clear = () => {
-    Alert.alert('Clear up next?', 'Everything after this song comes off the queue.', [
-      { text: 'Keep it', style: 'cancel' },
-      {
-        text: 'Clear',
-        style: 'destructive',
-        onPress: () => {
-          player.clearUpNext();
+    Alert.alert(
+      say('phone.theMusicPlayer.theUpNext.clearUpNext2'),
+      say('phone.theMusicPlayer.theUpNext.everythingAfterThisSongComesOff'),
+      [
+        { text: say('common.keepIt'), style: 'cancel' },
+        {
+          text: say('common.clear'),
+          style: 'destructive',
+          onPress: () => {
+            player.clearUpNext();
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   return (
     <View style={styles.whole}>
       <View style={styles.head}>
         <Words size="heading">
-          {queue.source === null ? 'Next up' : `Next from ${queue.source.name}`}
+          {queue.source === null
+            ? say('common.nextUp')
+            : say('common.nextFromName', { name: queue.source.name })}
         </Words>
-        <Button tone="quiet" label="Clear up next" onPress={clear}>
-          Clear
+        <Button
+          tone="quiet"
+          label={say('phone.theMusicPlayer.theUpNext.clearUpNext')}
+          onPress={clear}
+        >
+          {say('common.clear')}
         </Button>
       </View>
 

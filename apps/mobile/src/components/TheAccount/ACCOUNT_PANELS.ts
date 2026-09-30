@@ -6,14 +6,15 @@ import {
   ShieldCheck as ShieldCheckFilled,
   Smartphone as SmartphoneFilled,
 } from '@keyline-icons/react-native/fill';
+import { say } from '@ValenceI18n/say';
 
 const ACCOUNT_PANELS = [
-  { id: 'profile', label: 'Profile', icon: CircleUserFilled },
-  { id: 'security', label: 'Security', icon: ShieldCheckFilled },
-  { id: 'devices', label: 'Devices', icon: SmartphoneFilled },
-  { id: 'history', label: 'History', icon: ClockFilled },
-  { id: 'hidden', label: 'Hidden', icon: EyeOffFilled },
-  { id: 'shares', label: 'Shares', icon: LinkFilled },
+  { id: 'profile', label: say('common.profile'), icon: CircleUserFilled },
+  { id: 'security', label: say('common.security'), icon: ShieldCheckFilled },
+  { id: 'devices', label: say('common.devices'), icon: SmartphoneFilled },
+  { id: 'history', label: say('common.history'), icon: ClockFilled },
+  { id: 'hidden', label: say('common.hidden'), icon: EyeOffFilled },
+  { id: 'shares', label: say('phone.theAccount.accountPanels.shares'), icon: LinkFilled },
 ] as const;
 
 export { ACCOUNT_PANELS };

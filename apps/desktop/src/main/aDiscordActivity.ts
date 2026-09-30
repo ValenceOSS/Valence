@@ -1,16 +1,19 @@
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
+
 const WATCHING = 3;
 
 const LISTENING = 2;
 
 const LOGO = 'valence-desktop';
 
-const VALENCE = 'Valence';
+const VALENCE = say('common.valence');
 
-const BROWSING = 'Browsing libraries';
+const BROWSING = say('desktop.main.aDiscordActivity.browsingLibraries');
 
 const ARTWORK_HOST = 'image.tmdb.org';
 
-const PAUSED = 'Paused';
+const PAUSED = say('common.paused');
 
 const BETWEEN = ' · ';
 
@@ -71,7 +74,8 @@ type DiscordActivity = {
  * @param isPaused - Whether the track has stopped.
  * @returns What the badge says when somebody rests on it.
  */
-const theBadgeTextFor = (isPaused: boolean): string => (isPaused ? 'Paused' : 'Playing');
+const theBadgeTextFor = (isPaused: boolean): string =>
+  isPaused ? say('common.paused') : say('common.playing');
 
 /**
  * Says how many other people are watching this together.
@@ -88,9 +92,7 @@ const theCompanyIn = (party: { id: string; size: number } | null): string | null
     return null;
   }
 
-  const others = party.size - 1;
-
-  return others === 1 ? 'with 1 other' : `with ${others.toString()} others`;
+  return sayCount('desktop.main.aDiscordActivity.withOthers', party.size - 1);
 };
 
 /**
@@ -133,7 +135,13 @@ const theStateLine = (
   const body = [line, together].filter((part) => part !== null).join(BETWEEN);
   const said = body === '' ? null : body;
 
-  return (isPaused ? (said === null ? PAUSED : `${PAUSED} — ${said}`) : said) ?? undefined;
+  return (
+    (isPaused
+      ? said === null
+        ? PAUSED
+        : say('desktop.main.aDiscordActivity.pausedLine', { line: said })
+      : said) ?? undefined
+  );
 };
 
 /**
@@ -282,14 +290,17 @@ const aDiscordActivity = (
 
   const episode =
     typeof playing.season === 'number' && typeof playing.episode === 'number'
-      ? `Series ${playing.season.toString()}, Episode ${playing.episode.toString()}`
+      ? say('desktop.main.aDiscordActivity.seriesSeasonEpisodeEpisode', {
+          season: playing.season.toString(),
+          episode: playing.episode.toString(),
+        })
       : null;
 
   const tmdb =
     playing.tmdbId === null
       ? null
       : {
-          label: 'View on TMDB',
+          label: say('desktop.main.aDiscordActivity.viewOnTMDB'),
           url: `https://www.themoviedb.org/${playing.isSeries ? 'tv' : 'movie'}/${playing.tmdbId}`,
         };
 

@@ -75,6 +75,7 @@ import type { Heard } from '@ValenceClient/books/heardLast';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
 import type { APage, SignedInProps } from './SignedIn.types';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+import { say } from '@ValenceI18n/say';
 
 const A_SERVER = /^[a-z][a-z0-9+.-]*:\/\/[^/?#\s]+/iu;
 
@@ -169,12 +170,17 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   const episodes = series.data?.seasons.flatMap((season) => season.episodes) ?? [];
   const mayRequest = useMayRequest();
   const tabs = [
-    { id: 'home', label: 'Home', icon: Home, symbol: 'house' },
-    { id: 'search', label: 'Search', icon: Search, symbol: 'magnifyingglass' },
-    { id: 'downloads', label: 'Downloads', icon: Download, symbol: 'arrow.down.circle' },
+    { id: 'home', label: say('common.home'), icon: Home, symbol: 'house' },
+    { id: 'search', label: say('common.search'), icon: Search, symbol: 'magnifyingglass' },
+    {
+      id: 'downloads',
+      label: say('common.downloads'),
+      icon: Download,
+      symbol: 'arrow.down.circle',
+    },
     {
       id: 'account',
-      label: 'Account',
+      label: say('common.account'),
       icon: CircleUser,
       symbol: 'person.crop.circle',
       ...(watcher.data === null || watcher.data === undefined

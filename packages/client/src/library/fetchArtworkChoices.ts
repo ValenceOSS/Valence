@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ArtworkChoicesSchema } from '@ValenceContracts/schemas/ArtworkChoice';
 import type { ArtworkChoices } from '@ValenceContracts/schemas/ArtworkChoice';
+import { say } from '@ValenceI18n/say';
 
 const AnswerSchema = z.union([ArtworkChoicesSchema, z.object({ error: z.string() })]);
 
@@ -19,7 +20,7 @@ const fetchArtworkChoices = async (
   }).catch(() => null);
 
   if (response === null) {
-    return { problem: 'The server could not be reached.' };
+    return { problem: say('common.theServerCouldNotBeReached') };
   }
 
   const answer = AnswerSchema.safeParse(await response.json().catch(() => null));
@@ -32,7 +33,7 @@ const fetchArtworkChoices = async (
     problem:
       answer.success && 'error' in answer.data
         ? answer.data.error
-        : `The server answered ${response.status.toString()}.`,
+        : say('common.theServerAnsweredStatus', { status: response.status.toString() }),
   };
 };
 

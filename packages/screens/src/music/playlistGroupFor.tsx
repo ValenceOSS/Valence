@@ -8,6 +8,7 @@ import { addToPlaylist, createPlaylist } from '@ValenceClient/music/fetchPlaylis
 import type { ActionMenuGroup } from '@ValenceUI/ActionMenu.types';
 import type { MusicView } from '@ValenceClient/music/musicView';
 import type { MyPlaylists } from '@ValenceClient/music/useMyPlaylists.types';
+import { say } from '@ValenceI18n/say';
 
 const MOST_AT_ONCE = 500;
 
@@ -30,7 +31,7 @@ const playlistGroupFor = (
   const withSongs = (then: (ids: string[]) => void) => {
     void songIds().then((ids) => {
       if (ids.length === 0) {
-        notify.failed(`There is nothing in ${name} to add.`);
+        notify.failed(say('common.thereIsNothingInNameTo', { name }));
 
         return;
       }
@@ -40,11 +41,11 @@ const playlistGroupFor = (
   };
 
   return {
-    name: 'Add to playlist',
+    name: say('common.addToPlaylist'),
     items: [
       {
         id: 'new',
-        label: 'New playlist',
+        label: say('common.newPlaylist'),
         icon: <Icon of={PlusFilledIcon} size={16} />,
         onChoose: () => {
           withSongs((mediaItemIds) => {
@@ -52,7 +53,7 @@ const playlistGroupFor = (
               playlists.changed();
 
               if (made === null) {
-                notify.failed('That playlist could not be made.');
+                notify.failed(say('common.thatPlaylistCouldNotBeMade'));
 
                 return;
               }
@@ -72,9 +73,11 @@ const playlistGroupFor = (
               playlists.changed();
 
               if (isAdded) {
-                notify.worked(`Added to ${playlist.name}`);
+                notify.worked(
+                  say('screens.music.playlistGroupFor.addedToName', { name: playlist.name }),
+                );
               } else {
-                notify.failed(`That could not be added to ${playlist.name}.`);
+                notify.failed(say('common.thatCouldNotBeAddedTo', { name: playlist.name }));
               }
             });
           });

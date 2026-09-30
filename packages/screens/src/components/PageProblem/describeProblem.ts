@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+
 type ProblemWords = { headline: string; reason: string };
 
 /**
@@ -12,9 +14,8 @@ const describeProblem = (message: string | null): ProblemWords => {
 
   if (said.includes('dynamically imported module') || said.includes('importing a module script')) {
     return {
-      headline: 'Valence has been updated',
-      reason:
-        'This page belongs to an older version than the one now running. Loading it again fetches the new one.',
+      headline: say('screens.pageProblem.describeProblem.valenceHasBeenUpdated'),
+      reason: say('screens.pageProblem.describeProblem.thisPageBelongsToAnOlder'),
     };
   }
 
@@ -24,31 +25,28 @@ const describeProblem = (message: string | null): ProblemWords => {
     said.includes('load failed')
   ) {
     return {
-      headline: 'Valence could not be reached',
-      reason:
-        'The server may be restarting, or this device may be offline. Check the connection and try again.',
+      headline: say('screens.pageProblem.describeProblem.valenceCouldNotBeReached'),
+      reason: say('screens.pageProblem.describeProblem.theServerMayBeRestartingOr'),
     };
   }
 
   if (said.includes('401') || said.includes('403') || said.includes('not allowed')) {
     return {
-      headline: 'You are not allowed to see this page',
-      reason:
-        'Ask whoever runs this Valence to give you access, or sign in as somebody who has it.',
+      headline: say('screens.pageProblem.describeProblem.youAreNotAllowedToSee'),
+      reason: say('screens.pageProblem.describeProblem.askWhoeverRunsThisValenceTo'),
     };
   }
 
   if (said.includes('404') || said.includes('not found')) {
     return {
-      headline: 'This page could not be found',
-      reason: 'It may have been moved or removed. Go back to the start and look for it from there.',
+      headline: say('screens.pageProblem.describeProblem.thisPageCouldNotBeFound'),
+      reason: say('screens.pageProblem.describeProblem.itMayHaveBeenMovedOr'),
     };
   }
 
   return {
-    headline: 'This page stopped working',
-    reason:
-      'Something on this page went wrong. The rest of Valence is still running, so try it again or go somewhere else.',
+    headline: say('screens.pageProblem.describeProblem.thisPageStoppedWorking'),
+    reason: say('screens.pageProblem.describeProblem.somethingOnThisPageWentWrong'),
   };
 };
 

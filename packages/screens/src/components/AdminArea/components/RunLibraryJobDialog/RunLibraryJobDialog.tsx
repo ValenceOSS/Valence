@@ -6,6 +6,8 @@ import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { LibraryPicker } from '@ValenceScreens/components/AdminArea/components/LibraryPicker/LibraryPicker';
 import type { RunLibraryJobDialogProps } from './RunLibraryJobDialog.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * Asks which libraries a library job should run against before it starts, every one of them ticked
@@ -38,7 +40,11 @@ const RunLibraryJobDialog = ({
 
   return (
     <Dialog
-      label={definition === null ? 'Run this job' : `Run ${sayAgain(definition.label)}`}
+      label={
+        definition === null
+          ? say('screens.adminArea.runLibraryJobDialog.runThisJob')
+          : say('common.runLabel', { label: sayAgain(definition.label) })
+      }
       isOpen={definition !== null}
       onClose={onClose}
     >
@@ -46,11 +52,17 @@ const RunLibraryJobDialog = ({
         <>
           <DialogTitle
             title={
-              definition.destructive ? `${sayAgain(definition.label)}?` : sayAgain(definition.label)
+              definition.destructive
+                ? say('screens.adminArea.runLibraryJobDialog.actionQuestion', {
+                    action: sayAgain(definition.label),
+                  })
+                : sayAgain(definition.label)
             }
             detail={
               definition.destructive
-                ? `${sayAgain(definition.description)} This cannot be undone.`
+                ? say('common.descriptionThisCannotBeUndone', {
+                    description: sayAgain(definition.description),
+                  })
                 : sayAgain(definition.description)
             }
           />
@@ -64,8 +76,23 @@ const RunLibraryJobDialog = ({
             confirm={{
               label:
                 picked.length === libraries.length
-                  ? `${definition.destructive ? sayAgain(definition.label) : 'Run'} on every library`
-                  : `${definition.destructive ? sayAgain(definition.label) : 'Run'} on ${picked.length.toString()} ${picked.length === 1 ? 'library' : 'libraries'}`,
+                  ? definition.destructive
+                    ? say('screens.adminArea.runLibraryJobDialog.actionOnEveryLibrary', {
+                        action: sayAgain(definition.label),
+                      })
+                    : say('screens.adminArea.runLibraryJobDialog.runOnEveryLibrary')
+                  : definition.destructive
+                    ? sayCount(
+                        'screens.adminArea.runLibraryJobDialog.actionOnCountLibraries',
+                        picked.length,
+                        {
+                          action: sayAgain(definition.label),
+                        },
+                      )
+                    : sayCount(
+                        'screens.adminArea.runLibraryJobDialog.runOnCountLibraries',
+                        picked.length,
+                      ),
               onChoose: () => {
                 onRun(definition.kind, picked);
               },

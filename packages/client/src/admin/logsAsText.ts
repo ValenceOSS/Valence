@@ -1,10 +1,11 @@
 import { logLineAsText } from './logLineAsText';
 import type { LogRecord } from '@ValenceContracts/schemas/Log';
+import { say } from '@ValenceI18n/say';
 
 const WARNING = [
-  '# Valence log export',
-  '# These lines quote file paths, which disclose the layout of the library and the',
-  '# titles on the disk. Read what you are about to send before sending it.',
+  say('client.admin.logsAsText.valenceLogExport'),
+  say('client.admin.logsAsText.theseLinesQuoteFilePathsWhich'),
+  say('client.admin.logsAsText.titlesOnTheDiskReadWhat'),
   '',
 ].join('\n');
 

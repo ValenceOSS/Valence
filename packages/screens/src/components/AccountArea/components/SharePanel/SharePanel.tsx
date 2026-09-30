@@ -17,6 +17,7 @@ import { untilWhen } from '@ValenceClient/sharing/untilWhen';
 import { saidOpened } from '@ValenceClient/sharing/saidOpened';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Share } from '@ValenceContracts/schemas/Share';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The links this account has handed out: what each points at, when it was made, what will end it,
@@ -35,25 +36,27 @@ const SharePanel = () => {
     () => [
       {
         id: 'title',
-        header: 'Link to',
+        header: say('common.linkTo'),
         accessorFn: (share) => share.title,
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col gap-0.5">
             <span className="flex flex-wrap items-center gap-2">
               <span className="truncate font-medium text-text">{row.original.title}</span>
 
-              {row.original.kind !== 'series' ? null : <Badge size="sm">Whole series</Badge>}
+              {row.original.kind !== 'series' ? null : (
+                <Badge size="sm">{say('common.wholeSeries')}</Badge>
+              )}
             </span>
 
             <span className="truncate text-xs text-text-muted">
-              Made {saidWhen(row.original.createdAt)}
+              {say('common.madeCreatedAt', { createdAt: saidWhen(row.original.createdAt) })}
             </span>
           </span>
         ),
       },
       {
         id: 'standing',
-        header: 'Standing',
+        header: say('common.standing'),
         accessorFn: (share) => shareStanding(share, Date.now()).label,
         cell: ({ row }) => {
           const standing = shareStanding(row.original, Date.now());
@@ -73,7 +76,7 @@ const SharePanel = () => {
       },
       {
         id: 'opened',
-        header: 'Opened',
+        header: say('common.opened'),
         accessorFn: (share) => share.views,
         cell: ({ row }) => (
           <span className="whitespace-nowrap text-xs text-text-muted">
@@ -92,7 +95,7 @@ const SharePanel = () => {
                 isIconOnly
                 variant="ghost"
                 size="sm"
-                label={`Withdraw the link to ${row.original.title}`}
+                label={say('common.withdrawTheLinkToTitle', { title: row.original.title })}
                 onClick={() => {
                   setWithdrawing(row.original);
                 }}
@@ -107,15 +110,17 @@ const SharePanel = () => {
   );
 
   return (
-    <PanelCard title="Your links" isFlush>
+    <PanelCard title={say('screens.accountArea.sharePanel.yourLinks')} isFlush>
       <ConfirmDialog
-        title="Withdraw this link?"
+        title={say('common.withdrawThisLink')}
         detail={
           withdrawing === null
             ? ''
-            : `The link to ${withdrawing.title} stops working at once, including for anybody watching through it right now.`
+            : say('screens.accountArea.sharePanel.theLinkToTitleStopsWorking', {
+                title: withdrawing.title,
+              })
         }
-        confirmLabel="Withdraw it"
+        confirmLabel={say('common.withdrawIt')}
         isDestructive
         isBusy={isWorking}
         isOpen={withdrawing !== null}
@@ -141,26 +146,29 @@ const SharePanel = () => {
       />
 
       <p className="px-4 pt-4 text-sm text-text-muted">
-        Anybody holding one of these can watch what it points at without an account here.
-        Withdrawing a link stops it at once, including for anybody watching through it.
+        {say('screens.accountArea.sharePanel.anybodyHoldingOneOfTheseCan')}
       </p>
 
       {asked.isError ? (
         <CouldNotRead
-          what="Your links"
+          said={say('common.yourLinksCouldNotBeRead')}
           isTryingAgain={asked.isFetching}
           onTryAgain={() => {
             void asked.refetch();
           }}
         />
       ) : asked.isPending ? (
-        <Spinner isCentered label="Reading your links" size="sm" />
+        <Spinner
+          isCentered
+          label={say('screens.accountArea.sharePanel.readingYourLinks')}
+          size="sm"
+        />
       ) : (
         <DataTable
-          label="Links you have handed out"
+          label={say('screens.accountArea.sharePanel.linksYouHaveHandedOut')}
           columns={columns}
           rows={asked.data}
-          emptyMessage="You have not handed out any links. Sharing something from its page makes one."
+          emptyMessage={say('screens.accountArea.sharePanel.youHaveNotHandedOutAny')}
         />
       )}
     </PanelCard>

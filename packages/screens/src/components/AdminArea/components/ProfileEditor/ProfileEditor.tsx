@@ -33,11 +33,13 @@ import { formFor, readProfileForm } from './readProfileForm';
 import type { ProfileKind, ReleaseWait } from '@ValenceContracts/schemas/QualityProfile';
 import type { ProfileForm, ProfileTab } from './readProfileForm';
 import type { ProfileEditorProps } from './ProfileEditor.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const TABS: readonly { id: ProfileTab; label: string }[] = [
-  { id: 'quality', label: 'Quality' },
-  { id: 'matching', label: 'Matching' },
-  { id: 'access', label: 'Access' },
+  { id: 'quality', label: say('common.quality') },
+  { id: 'matching', label: say('screens.adminArea.profileEditor.matching') },
+  { id: 'access', label: say('common.access') },
 ];
 
 /**
@@ -49,8 +51,8 @@ const TABS: readonly { id: ProfileTab; label: string }[] = [
 const isProfileTab = (value: string): value is ProfileTab => TABS.some((tab) => tab.id === value);
 
 const KINDS: readonly { id: ProfileKind; label: string }[] = [
-  { id: 'video', label: 'Films and series' },
-  { id: 'music', label: 'Music' },
+  { id: 'video', label: say('common.filmsAndSeries') },
+  { id: 'music', label: say('common.music') },
 ];
 
 const LANGUAGES: readonly { id: string; label: string }[] = Object.entries(LANGUAGE_NAMES)
@@ -58,8 +60,8 @@ const LANGUAGES: readonly { id: string; label: string }[] = Object.entries(LANGU
   .toSorted((left, right) => left.label.localeCompare(right.label));
 
 const WAITS: readonly { id: ReleaseWait; label: string }[] = [
-  { id: 'digital', label: 'Out digitally' },
-  { id: 'physical', label: 'Out on disc' },
+  { id: 'digital', label: say('screens.adminArea.profileEditor.outDigitally') },
+  { id: 'physical', label: say('screens.adminArea.profileEditor.outOnDisc') },
 ];
 
 /**
@@ -116,7 +118,7 @@ const Choosing = <Value extends string>({
   value,
   options,
   onChoose,
-  anything = 'The best there is',
+  anything = say('screens.adminArea.profileEditor.theBestThereIs'),
 }: {
   label: string;
   value: Value | null;
@@ -207,12 +209,16 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
     void (profile === null ? addProfile(outcome.draft) : changeProfile(profile.id, outcome.draft))
       .then(({ value, refusal }) => {
         if (value === null) {
-          setProblem(refusal?.message ?? 'That could not be saved.');
+          setProblem(refusal?.message ?? say('common.thatCouldNotBeSaved'));
 
           return;
         }
 
-        notify.worked(profile === null ? `Added ${value.name}.` : `Saved ${value.name}.`);
+        notify.worked(
+          profile === null
+            ? say('common.addedName', { name: value.name })
+            : say('common.savedName', { name: value.name }),
+        );
         onSaved(value);
         onClose();
       })
@@ -221,7 +227,10 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
       });
   };
 
-  const title = profile === null ? 'Add media profile' : `Change ${profile.name}`;
+  const title =
+    profile === null
+      ? say('common.addMediaProfile')
+      : say('common.changeName', { name: profile.name });
 
   return (
     <Dialog label={title} isOpen={isOpen} onClose={onClose} size="stage">
@@ -235,10 +244,10 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
       >
         <DialogTitle
           title={title}
-          detail="Every release a search finds is judged against a profile: what it may not be is refused, and the rest are ranked by how well they fit."
+          detail={say('screens.adminArea.profileEditor.everyReleaseASearchFindsIs')}
           below={
             <TabRow
-              label="Which part of the profile to edit"
+              label={say('screens.adminArea.profileEditor.whichPartOfTheProfileTo')}
               tone="underlined"
               size="sm"
               value={tab}
@@ -249,21 +258,23 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
 
         <DialogContent>
           <TabPanel value="quality" className="flex w-full flex-col gap-6">
-            <Section title="Profile">
+            <Section title={say('common.profile')}>
               <div className="grid gap-4 sm:grid-cols-2">
                 <TextField
-                  label="Name"
+                  label={say('common.name')}
                   value={form.name}
                   onValueChange={(name) => {
                     change({ name });
                   }}
-                  placeholder={isVideo ? 'HD' : 'Lossless'}
+                  placeholder={
+                    isVideo ? say('screens.adminArea.profileEditor.hD') : say('common.lossless')
+                  }
                   required
                 />
 
-                <FormField label="For">
+                <FormField label={say('screens.adminArea.profileEditor.for')}>
                   <SegmentedRow
-                    label="For"
+                    label={say('screens.adminArea.profileEditor.for')}
                     size="sm"
                     items={KINDS}
                     value={form.kind}
@@ -280,14 +291,14 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
             </Section>
 
             <Section
-              title="What it takes"
-              detail="Tick what may be taken, best first. The order is what ranks releases before anything else."
+              title={say('screens.adminArea.profileEditor.whatItTakes')}
+              detail={say('screens.adminArea.profileEditor.tickWhatMayBeTakenBest')}
             >
               {isVideo ? (
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <FormField label="Resolutions">
+                  <FormField label={say('screens.adminArea.profileEditor.resolutions')}>
                     <RankedChoices
-                      label="Resolutions"
+                      label={say('screens.adminArea.profileEditor.resolutions')}
                       options={optionsOf(RESOLUTIONS)}
                       chosen={form.resolutions}
                       onChange={(resolutions) => {
@@ -297,11 +308,11 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
                   </FormField>
 
                   <FormField
-                    label="Sources"
-                    description="A release that does not say is let through."
+                    label={say('screens.adminArea.profileEditor.sources')}
+                    description={say('screens.adminArea.profileEditor.aReleaseThatDoesNotSay')}
                   >
                     <RankedChoices
-                      label="Sources"
+                      label={say('screens.adminArea.profileEditor.sources')}
                       options={optionsOf(RELEASE_SOURCES)}
                       chosen={form.sources}
                       onChange={(sources) => {
@@ -311,9 +322,9 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
                   </FormField>
                 </div>
               ) : (
-                <FormField label="Formats">
+                <FormField label={say('screens.adminArea.profileEditor.formats')}>
                   <RankedChoices
-                    label="Formats"
+                    label={say('screens.adminArea.profileEditor.formats')}
                     options={optionsOf(MUSIC_QUALITIES)}
                     chosen={form.musicQualities}
                     onChange={(musicQualities) => {
@@ -325,11 +336,11 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
             </Section>
 
             <Section
-              title="Sizes"
+              title={say('screens.adminArea.profileEditor.sizes')}
               detail={
                 isVideo
-                  ? 'How large a release of each quality may be, an hour of it, so a whole season is judged by its episodes. A handle at either end is no limit.'
-                  : 'How large an album may be.'
+                  ? say('screens.adminArea.profileEditor.howLargeAReleaseOfEach')
+                  : say('screens.adminArea.profileEditor.howLargeAnAlbumMayBe')
               }
             >
               {isVideo ? (
@@ -344,25 +355,25 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2">
                   <TextField
-                    label="Smallest (MB an album)"
+                    label={say('screens.adminArea.profileEditor.smallestMBAnAlbum')}
                     type="number"
                     min={0}
                     value={form.smallestMb}
                     onValueChange={(smallestMb) => {
                       change({ smallestMb });
                     }}
-                    placeholder="No limit"
+                    placeholder={say('common.noLimit')}
                   />
 
                   <TextField
-                    label="Largest (MB an album)"
+                    label={say('screens.adminArea.profileEditor.largestMBAnAlbum')}
                     type="number"
                     min={1}
                     value={form.largestMb}
                     onValueChange={(largestMb) => {
                       change({ largestMb });
                     }}
-                    placeholder="No limit"
+                    placeholder={say('common.noLimit')}
                   />
                 </div>
               )}
@@ -372,12 +383,12 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
           <TabPanel value="matching" className="flex w-full flex-col gap-6">
             {isVideo ? (
               <Section
-                title="Films"
-                detail="A film is held until then before it is searched for, so nothing is fetched from cinemas."
+                title={say('common.films')}
+                detail={say('screens.adminArea.profileEditor.aFilmIsHeldUntilThen')}
               >
-                <FormField label="Search films once they are">
+                <FormField label={say('screens.adminArea.profileEditor.searchFilmsOnceTheyAre')}>
                   <SegmentedRow
-                    label="Search films once they are"
+                    label={say('screens.adminArea.profileEditor.searchFilmsOnceTheyAre')}
                     size="sm"
                     items={WAITS}
                     value={form.releaseWait}
@@ -393,40 +404,40 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
               </Section>
             ) : null}
 
-            <Section title="Words">
+            <Section title={say('common.words')}>
               <TextField
-                label="Preferred words"
+                label={say('screens.adminArea.profileEditor.preferredWords')}
                 value={form.preferredWords}
                 onValueChange={(preferredWords) => {
                   change({ preferredWords });
                 }}
-                description="Each one a release has adds to its score. Separate them with commas; a word between slashes, such as /hdr10\+?/, is a pattern."
+                description={say('screens.adminArea.profileEditor.eachOneAReleaseHasAdds')}
               />
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <TextField
-                  label="Required words"
+                  label={say('screens.adminArea.profileEditor.requiredWords')}
                   value={form.requiredWords}
                   onValueChange={(requiredWords) => {
                     change({ requiredWords });
                   }}
-                  description="A release needs at least one."
+                  description={say('screens.adminArea.profileEditor.aReleaseNeedsAtLeastOne')}
                 />
 
                 <TextField
-                  label="Banned words"
+                  label={say('screens.adminArea.profileEditor.bannedWords')}
                   value={form.bannedWords}
                   onValueChange={(bannedWords) => {
                     change({ bannedWords });
                   }}
-                  description="A release with any is refused."
+                  description={say('screens.adminArea.profileEditor.aReleaseWithAnyIsRefused')}
                 />
               </div>
             </Section>
 
-            <Section title="Upgrades">
+            <Section title={say('common.upgrades')}>
               <Switch
-                label="Upgrade to a better release later"
+                label={say('screens.adminArea.profileEditor.upgradeToABetterReleaseLater')}
                 isOn={form.isUpgrading}
                 onToggle={() => {
                   change({ isUpgrading: !form.isUpgrading });
@@ -436,7 +447,7 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
               {!form.isUpgrading ? null : isVideo ? (
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Choosing
-                    label="Until the resolution is"
+                    label={say('screens.adminArea.profileEditor.untilTheResolutionIs')}
                     value={form.upgradeUntilResolution}
                     options={optionsOf(form.resolutions)}
                     onChoose={(upgradeUntilResolution) => {
@@ -445,7 +456,7 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
                   />
 
                   <Choosing
-                    label="And the source is"
+                    label={say('screens.adminArea.profileEditor.andTheSourceIs')}
                     value={form.upgradeUntilSource}
                     options={optionsOf(form.sources)}
                     onChoose={(upgradeUntilSource) => {
@@ -455,7 +466,7 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
                 </div>
               ) : (
                 <Choosing
-                  label="Until the format is"
+                  label={say('screens.adminArea.profileEditor.untilTheFormatIs')}
                   value={form.upgradeUntilMusicQuality}
                   options={optionsOf(form.musicQualities)}
                   onChoose={(upgradeUntilMusicQuality) => {
@@ -466,28 +477,28 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
             </Section>
 
             <Section
-              title="Language"
-              detail="Prefers releases that say they are in this language. Most releases say nothing, and those are left alone."
+              title={say('common.language')}
+              detail={say('screens.adminArea.profileEditor.prefersReleasesThatSayTheyAre')}
             >
               <Choosing
-                label="Preferred language"
+                label={say('screens.adminArea.profileEditor.preferredLanguage')}
                 value={form.preferredLanguage}
                 options={LANGUAGES}
                 onChoose={(preferredLanguage) => {
                   change({ preferredLanguage });
                 }}
-                anything="Use the library’s language"
+                anything={say('screens.adminArea.profileEditor.useTheLibrarysLanguage')}
               />
             </Section>
           </TabPanel>
 
           <TabPanel value="access" className="flex w-full flex-col gap-6">
             <Section
-              title="Who can use it"
-              detail="Leave both empty and anyone can pick this profile. Tick roles or people to keep it to them."
+              title={say('common.whoCanUseIt')}
+              detail={say('screens.adminArea.profileEditor.leaveBothEmptyAndAnyoneCan')}
             >
               <Switch
-                label="Always use this profile"
+                label={say('screens.adminArea.profileEditor.alwaysUseThisProfile')}
                 isOn={form.isDefault}
                 onToggle={() => {
                   change({ isDefault: !form.isDefault });
@@ -496,15 +507,17 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
 
               <p className="font-body text-sm text-text-muted">
                 {form.isDefault
-                  ? `Every ${isVideo ? 'film and series' : 'music'} request uses this profile. Only one ${isVideo ? 'video' : 'music'} profile can do this.`
-                  : 'Leave off to let people pick a quality themselves.'}
+                  ? isVideo
+                    ? say('screens.adminArea.profileEditor.everyFilmAndSeriesRequestUsesThis')
+                    : say('screens.adminArea.profileEditor.everyMusicRequestUsesThis')
+                  : say('screens.adminArea.profileEditor.leaveOffToLetPeoplePick')}
               </p>
 
               {form.isDefault ? null : (
                 <div className="grid gap-6 sm:grid-cols-2">
                   <AskerPicker
-                    legend="Roles"
-                    everyLabel="Any role"
+                    legend={say('common.roles')}
+                    everyLabel={say('screens.adminArea.profileEditor.anyRole')}
                     askers={(roles.data ?? []).map((role) => ({ id: role.id, name: role.name }))}
                     chosen={new Set(form.roleIds)}
                     onChange={(chosen) => {
@@ -513,8 +526,8 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
                   />
 
                   <AskerPicker
-                    legend="People"
-                    everyLabel="Anybody"
+                    legend={say('common.people')}
+                    everyLabel={say('common.anybody')}
                     askers={(accounts.data ?? []).map((account) => ({
                       id: account.id,
                       name: account.name,
@@ -530,24 +543,26 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
             </Section>
 
             <Section
-              title="Used for"
+              title={say('common.usedFor')}
               detail={
                 forKind.length === 0
-                  ? `There are no ${isVideo ? 'film or series' : 'music'} libraries yet.`
-                  : 'Which libraries offer this profile when somebody asks. Tick none and it is offered for all of them.'
+                  ? isVideo
+                    ? say('screens.adminArea.profileEditor.thereAreNoFilmOrSeriesLibraries')
+                    : say('screens.adminArea.profileEditor.thereAreNoMusicLibraries')
+                  : say('screens.adminArea.profileEditor.whichLibrariesOfferThisProfileWhen')
               }
             >
               {forKind.length === 0 ? null : (
                 <AskerPicker
-                  legend="Libraries"
-                  everyLabel="Every library"
+                  legend={say('common.libraries')}
+                  everyLabel={say('common.everyLibrary2')}
                   askers={forKind.map((entry) => ({
                     id: entry.id,
                     name: entry.name,
                     detail:
                       entry.itemCount === 1
-                        ? '1 item'
-                        : `${entry.itemCount.toLocaleString()} items`,
+                        ? say('common.n1Item')
+                        : sayCount('common.count.items', entry.itemCount),
                   }))}
                   chosen={new Set(form.libraryIds)}
                   onChange={(chosen) => {
@@ -563,7 +578,10 @@ const ProfileEditor = ({ isOpen, profile, onClose, onSaved }: ProfileEditorProps
           note={problem}
           dismiss={{ onChoose: onClose }}
           confirm={{
-            label: profile === null ? 'Add profile' : 'Save',
+            label:
+              profile === null
+                ? say('screens.adminArea.profileEditor.addProfile')
+                : say('common.save'),
             onChoose: save,
             isLoading: isSaving,
           }}

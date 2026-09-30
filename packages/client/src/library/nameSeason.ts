@@ -1,3 +1,5 @@
+import { say } from '@ValenceI18n/say';
+
 /**
  * Names a season the way somebody would say it, giving specials their own name rather than calling
  * them season zero.
@@ -10,10 +12,12 @@
  */
 const nameSeason = (seasonNumber: number | null): string => {
   if (seasonNumber === null) {
-    return 'Other';
+    return say('common.otherChoice');
   }
 
-  return seasonNumber === 0 ? 'Specials' : `Season ${seasonNumber.toString()}`;
+  return seasonNumber === 0
+    ? say('common.specials')
+    : say('common.seasonSeasonNumber', { seasonNumber: seasonNumber.toString() });
 };
 
 export { nameSeason };

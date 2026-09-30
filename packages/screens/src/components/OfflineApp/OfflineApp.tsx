@@ -19,6 +19,7 @@ import {
   isTheDesktopClient,
 } from '@ValenceScreens/desktop/theDesktopShell';
 import type { OfflineAppProps } from './OfflineApp.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Valence with no server: what is on this machine, and something to play it with.
@@ -78,7 +79,7 @@ const OfflineApp = ({ title }: OfflineAppProps) => {
           <>
             <Badge size="sm" tone="quiet">
               <Icon of={CloudOffIcon} size={14} />
-              Offline
+              {say('common.offline')}
             </Badge>
 
             {!isTheDesktopClient() ? null : (
@@ -90,7 +91,7 @@ const OfflineApp = ({ title }: OfflineAppProps) => {
                 }}
               >
                 <Icon of={ServerIcon} size={15} />
-                Change server
+                {say('screens.offlineApp.changeServer')}
               </Button>
             )}
 
@@ -103,7 +104,9 @@ const OfflineApp = ({ title }: OfflineAppProps) => {
                 }}
               >
                 <Icon of={WifiIcon} size={15} />
-                {isByChoice ? 'Go back online' : 'Reconnect'}
+                {isByChoice
+                  ? say('screens.offlineApp.goBackOnline')
+                  : say('screens.offlineApp.reconnect')}
               </Button>
             )}
           </>
@@ -113,13 +116,13 @@ const OfflineApp = ({ title }: OfflineAppProps) => {
       <main className="flex min-h-screen flex-col gap-10 px-4 pb-16 pt-28 sm:px-6">
         <header className="flex flex-col gap-1.5">
           <h1 className="font-sans text-3xl font-semibold tracking-tight text-text">
-            On this device
+            {say('common.onThisDevice')}
           </h1>
 
           <p className="font-body text-sm text-text-muted">
             {isReachable
-              ? 'You are offline because you asked to be, so only what is on this device is shown.'
-              : 'Valence cannot be reached, so only what is on this device is shown.'}
+              ? say('screens.offlineApp.youAreOfflineBecauseYouAsked')
+              : say('screens.offlineApp.valenceCannotBeReachedSoOnly')}
           </p>
         </header>
 

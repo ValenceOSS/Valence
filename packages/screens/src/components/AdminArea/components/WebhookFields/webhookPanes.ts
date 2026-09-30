@@ -1,11 +1,13 @@
+import { say } from '@ValenceI18n/say';
+
 const WEBHOOK_PANES = ['where', 'events', 'who'] as const;
 
 type WebhookPane = (typeof WEBHOOK_PANES)[number];
 
 const WEBHOOK_PANE_ITEMS = [
-  { id: 'where', label: 'Where' },
-  { id: 'events', label: 'Events' },
-  { id: 'who', label: 'Who' },
+  { id: 'where', label: say('screens.webhookFields.webhookPanes.where') },
+  { id: 'events', label: say('common.events') },
+  { id: 'who', label: say('screens.webhookFields.webhookPanes.who') },
 ] as const;
 
 /**

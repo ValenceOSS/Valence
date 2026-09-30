@@ -4,6 +4,7 @@ import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { PluginSurfaceView } from '@ValenceScreens/components/PluginSurfaceView/PluginSurfaceView';
 import type { PluginPageDialogProps } from './PluginPageDialog.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * A page a plugin adds for administrators, raised over the plugins list.
@@ -12,7 +13,11 @@ import type { PluginPageDialogProps } from './PluginPageDialog.types';
  * @param onClose - Told it was dismissed.
  */
 const PluginPageDialog = ({ page, onClose }: PluginPageDialogProps) => (
-  <Dialog label={page?.title ?? 'Plugin page'} isOpen={page !== null} onClose={onClose}>
+  <Dialog
+    label={page?.title ?? say('screens.pluginsPanel.pluginPageDialog.pluginPage')}
+    isOpen={page !== null}
+    onClose={onClose}
+  >
     {page === null ? null : (
       <>
         <DialogTitle title={page.title} />
@@ -23,7 +28,7 @@ const PluginPageDialog = ({ page, onClose }: PluginPageDialogProps) => (
           />
         </DialogContent>
 
-        <DialogFooter dismiss={{ label: 'Done', onChoose: onClose }} />
+        <DialogFooter dismiss={{ label: say('common.done'), onChoose: onClose }} />
       </>
     )}
   </Dialog>

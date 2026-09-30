@@ -11,6 +11,7 @@ import { Button } from '@ValenceUI/Button';
 import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import type { ConcernTone } from '@ValenceScreens/components/AdminArea/collectConcerns';
 import type { ConcernsBannerProps } from './ConcernsBanner.types';
+import { say } from '@ValenceI18n/say';
 
 const TONE_CLASSES: Record<ConcernTone, string> = {
   broken: 'text-danger',
@@ -40,9 +41,9 @@ const ConcernsBanner = ({ concerns, onOpenPanel, onDismiss }: ConcernsBannerProp
   }
 
   return (
-    <section aria-label="Needs attention" className="valence-card-shell flex flex-col">
+    <section aria-label={say('common.needsAttention')} className="valence-card-shell flex flex-col">
       <span className="flex items-center justify-between px-2.5 pb-1.5 pt-1.5 text-[0.6875rem] uppercase tracking-[0.16em] text-text-muted">
-        <span>Needs attention</span>
+        <span>{say('common.needsAttention')}</span>
         <span className="tabular-nums">{concerns.length}</span>
       </span>
 
@@ -95,7 +96,9 @@ const ConcernsBanner = ({ concerns, onOpenPanel, onDismiss }: ConcernsBannerProp
                 variant="ghost"
                 size="sm"
                 isIconOnly
-                label={`Dismiss “${concern.title}”`}
+                label={say('screens.adminArea.concernsBanner.dismissTitle', {
+                  title: concern.title,
+                })}
                 onClick={() => {
                   onDismiss(concern);
                 }}
@@ -132,7 +135,7 @@ const ConcernsBanner = ({ concerns, onOpenPanel, onDismiss }: ConcernsBannerProp
                         onOpenPanel(concern.panel, concern.search);
                       }}
                     >
-                      Go to {concern.panel}
+                      {say('screens.adminArea.concernsBanner.goToPanel', { panel: concern.panel })}
                     </Button>
                   </div>
                 </motion.div>

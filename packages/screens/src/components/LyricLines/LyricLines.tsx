@@ -7,14 +7,15 @@ import { cn } from '@ValenceUI/cn';
 import { lyricStanding } from '@ValenceClient/music/lyricStanding';
 import { liquidSpring, stillTransition } from '@ValenceUI/animations/reveal';
 import type { LyricLinesProps } from './LyricLines.types';
+import { say } from '@ValenceI18n/say';
 
 const SCROLLING_KEYS: ReadonlySet<string> = new Set([
   'ArrowUp',
   'ArrowDown',
   'PageUp',
   'PageDown',
-  'Home',
-  'End',
+  say('common.home'),
+  say('screens.lyricLines.end'),
   ' ',
 ]);
 
@@ -193,7 +194,7 @@ const LyricLines = ({ lyrics, at, onSeek, look = 'page' }: LyricLinesProps) => {
               setIsDetached(false);
             }}
           >
-            Sync
+            {say('screens.lyricLines.sync')}
             <Icon of={AudioLinesFilledIcon} size={16} />
           </Button>
         </div>

@@ -6,6 +6,7 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { usePluginSurface } from '@ValenceClient/plugins/usePluginSurface';
 import { PluginSurface } from '@ValenceScreens/components/PluginSurface/PluginSurface';
 import type { PluginSurfaceViewProps } from './PluginSurfaceView.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * A plugin's page or panel on the web, read from the server and kept current as somebody uses it,
@@ -43,21 +44,23 @@ const PluginSurfaceView = ({ place, className }: PluginSurfaceViewProps) => {
   if (view.isError) {
     return (
       <Callout
-        title="This plugin could not draw its page"
+        title={say('screens.pluginSurfaceView.thisPluginCouldNotDrawIts')}
         tone="warning"
         action={
           <Button size="sm" variant="secondary" onClick={view.retry}>
-            Try again
+            {say('common.tryAgain')}
           </Button>
         }
       >
-        It may be turned off, or still starting.
+        {say('screens.pluginSurfaceView.itMayBeTurnedOffOr')}
       </Callout>
     );
   }
 
   if (view.surface === undefined) {
-    return <Spinner size="sm" label="Asking the plugin" isCentered />;
+    return (
+      <Spinner size="sm" label={say('screens.pluginSurfaceView.askingThePlugin')} isCentered />
+    );
   }
 
   return (
@@ -73,9 +76,9 @@ const PluginSurfaceView = ({ place, className }: PluginSurfaceViewProps) => {
       />
 
       <ConfirmDialog
-        title="Are you sure?"
+        title={say('common.areYouSure')}
         detail={question ?? ''}
-        confirmLabel="Go ahead"
+        confirmLabel={say('screens.pluginSurfaceView.goAhead')}
         isOpen={question !== null}
         onClose={() => {
           answer(false);

@@ -1,6 +1,7 @@
 import { Badge } from '@ValenceUI/Badge';
 import type { BadgeTone } from '@ValenceUI/Badge.types';
 import type { PlanAxisProps } from './PlanAxis.types';
+import { say } from '@ValenceI18n/say';
 
 const TONES: Record<string, BadgeTone> = {
   passthrough: 'success',
@@ -12,7 +13,7 @@ const TONES: Record<string, BadgeTone> = {
 };
 
 const WORDS: Record<string, string> = {
-  burnIn: 'burn in',
+  burnIn: say('screens.streamStats.planAxis.burnIn'),
 };
 
 /**
@@ -29,7 +30,7 @@ const PlanAxis = ({ name, kind, reason, ceiling = null }: PlanAxisProps) => (
     <dt className="text-[0.6875rem] leading-5 text-text-muted">{name}</dt>
     <dd className="flex min-w-0 items-center justify-end gap-1.5">
       {kind === null ? (
-        <span className="text-[0.75rem] leading-5 text-text-muted">deciding</span>
+        <span className="text-[0.75rem] leading-5 text-text-muted">{say('common.deciding')}</span>
       ) : (
         <>
           {ceiling === null ? null : (

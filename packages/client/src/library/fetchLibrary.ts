@@ -14,6 +14,7 @@ import type {
   MediaPage,
   PreviewMoment,
 } from '@ValenceContracts/schemas/Library';
+import { say } from '@ValenceI18n/say';
 
 const LibraryListSchema = z.array(LibrarySchema);
 const ErrorBodySchema = z.object({ error: z.string() });
@@ -200,9 +201,15 @@ const fetchLibraryItems = async (
     query.set('versions', 'all');
   }
 
-  const response = await fetch(`/api/libraries/${libraryId}/items?${query.toString()}`, {
-    headers: { accept: 'application/json' },
-  });
+  const response = await fetch(
+    say('client.library.fetchLibrary.apiLibrariesLibraryIdItemsQuery', {
+      libraryId,
+      query: query.toString(),
+    }),
+    {
+      headers: { accept: 'application/json' },
+    },
+  );
 
   if (!response.ok) {
     throw new Error(`Items request failed with status ${response.status.toString()}`);
@@ -253,7 +260,7 @@ const correctMatch = async (
   }).catch(() => null);
 
   if (response === null) {
-    return { problem: 'The server could not be reached.' };
+    return { problem: say('common.theServerCouldNotBeReached') };
   }
 
   const answer = AnswerSchema.safeParse(await response.json().catch(() => null));
@@ -266,7 +273,7 @@ const correctMatch = async (
     problem:
       answer.success && 'error' in answer.data
         ? answer.data.error
-        : `The server answered ${response.status.toString()}.`,
+        : say('common.theServerAnsweredStatus', { status: response.status.toString() }),
   };
 };
 
@@ -342,7 +349,7 @@ const setPreviewMoment = async (
   }).catch(() => null);
 
   if (response === null) {
-    return { problem: 'The server could not be reached.' };
+    return { problem: say('common.theServerCouldNotBeReached') };
   }
 
   const answer = PreviewMomentAnswerSchema.safeParse(await response.json().catch(() => null));
@@ -355,7 +362,7 @@ const setPreviewMoment = async (
     problem:
       answer.success && 'error' in answer.data
         ? answer.data.error
-        : `The server answered ${response.status.toString()}.`,
+        : say('common.theServerAnsweredStatus', { status: response.status.toString() }),
   };
 };
 

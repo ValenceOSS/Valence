@@ -7,6 +7,7 @@ import { usePluginSurface } from '@ValenceClient/plugins/usePluginSurface';
 import { PHONE_SURFACE_HOST } from '@ValenceMobile/plugins/PHONE_SURFACE_HOST';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import type { APluginPageProps } from './APluginPage.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   page: { gap: 14 },
@@ -32,14 +33,17 @@ const APluginPage = ({ pluginId, pageId, onLookAt }: APluginPageProps) => {
         {page.isError ? (
           <>
             <Words tone="muted" isCentred>
-              This page could not be read from the plugin.
+              {say('phone.aPluginPage.thisPageCouldNotBeRead')}
             </Words>
             <Button tone="ghost" onPress={page.retry}>
-              Try again
+              {say('common.tryAgain')}
             </Button>
           </>
         ) : (
-          <ActivityIndicator color={colours.textMuted} accessibilityLabel="Reading the page" />
+          <ActivityIndicator
+            color={colours.textMuted}
+            accessibilityLabel={say('phone.aPluginPage.readingThePage')}
+          />
         )}
       </View>
     );

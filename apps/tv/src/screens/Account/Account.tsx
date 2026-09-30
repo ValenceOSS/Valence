@@ -15,6 +15,7 @@ import { useHandOff } from '@ValenceTv/navigation/useHandOff';
 import { theServersOrigin } from '@ValenceTv/platform/theServersOrigin';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { AccountProps } from './Account.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Who is watching on this television and which Valence it is, with the two ways out: signing out,
@@ -47,19 +48,24 @@ const AccountPage = ({
   const profile = watching.data ?? null;
   const server = useQuery(aboutQueries.server());
   const mayRequest = useMayRequest();
+  const origin = theServersOrigin();
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.screen}>
       {profile === null ? null : <Face profile={profile} size={160} />}
 
       <Text style={styles.name}>{profile?.name ?? user.name}</Text>
-      <Text style={styles.server}>Watching on {theServersOrigin() ?? 'this Valence'}</Text>
+      <Text style={styles.server}>
+        {origin === null
+          ? say('tv.account.watchingOnThisValence')
+          : say('common.watchingOnAddress', { address: origin })}
+      </Text>
 
       <TVFocusGuideView autoFocus style={styles.catches}>
         <View style={styles.actions}>
           <Button
-            label="Sign out"
-            detail="Choose another profile"
+            label={say('common.signOut')}
+            detail={say('tv.account.chooseAnotherProfile')}
             variant="secondary"
             isWide
             onFocus={upToBar.arrive}
@@ -71,7 +77,7 @@ const AccountPage = ({
           />
           {mayRequest ? (
             <Button
-              label="All requests"
+              label={say('tv.account.allRequests')}
               variant="secondary"
               isWide
               onFocus={upToBar.leave}
@@ -79,7 +85,7 @@ const AccountPage = ({
             />
           ) : null}
           <Button
-            label="Use a different server"
+            label={say('common.useADifferentServer')}
             variant="ghost"
             onFocus={upToBar.leave}
             onPress={onChangeServer}

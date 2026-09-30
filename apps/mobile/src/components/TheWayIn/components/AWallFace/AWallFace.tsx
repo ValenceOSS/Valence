@@ -3,6 +3,7 @@ import { AFace } from '@ValenceMobile/components/AFace/AFace';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { useArrivingFrom } from '@ValenceMobile/hooks/useArrivingFrom';
 import type { AWallFaceProps } from './AWallFace.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * One face on the wall, which says where it is on the screen when it is picked, so the password
@@ -24,7 +25,7 @@ const AWallFace = ({ profile, arrivingFrom, onPicked }: AWallFaceProps) => {
       <Animated.View style={{ opacity: flying.opacity }}>
         <Button
           tone="bare"
-          label={`Sign in as ${profile.name}`}
+          label={say('phone.theWayIn.aWallFace.signInAsName', { name: profile.name })}
           onPress={() => {
             if (placed.current === null) {
               onPicked(profile, null);

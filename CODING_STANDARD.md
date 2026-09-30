@@ -704,8 +704,13 @@ format and the helpers.
 - **Text from elsewhere is passed on as it came.** A download client's error or a
   plugin's message goes through `sayVerbatim`, with a `null` code.
 
+- **Elements inside a sentence go in its gaps.** A link, a bold name or a number that
+  rolls fills a gap of one entry: in `packages/screens` through `Sentence`, elsewhere
+  through `sayParts` or `sayCountParts`. Never split a sentence around an element.
+
 ESLint's `valence/no-hard-coded-strings` reports string literals that read like
-words for a person. A machine value that happens to read like words, such as a user
+words for a person, templates with words around their values, and choices made on
+whether a number is one. A machine value that happens to read like words, such as a user
 agent or a mode a client matches on, takes a disable comment with its reason:
 
 ```ts

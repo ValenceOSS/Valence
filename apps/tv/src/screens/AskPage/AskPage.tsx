@@ -17,6 +17,8 @@ import { joinFacts } from '@ValenceTv/library/joinFacts';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { CatalogueSeason, MediaRequestAsk } from '@ValenceContracts/schemas/MediaRequest';
 import type { AskPageProps } from './AskPage.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const FOLLOWED_EVERY_MS = 5000;
 
@@ -24,9 +26,9 @@ const STARRING = 4;
 
 const SEASON_SAYS: Record<CatalogueSeason['standing'], string | null> = {
   askable: null,
-  partly: 'Partly here',
-  requested: 'Requested',
-  library: 'In the library',
+  partly: say('common.partlyHere'),
+  requested: say('common.requested'),
+  library: say('common.inTheLibrary'),
 };
 
 /**
@@ -94,7 +96,7 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
         {found.isPending ? (
           <ActivityIndicator size="large" color={tokens.colours.text} />
         ) : (
-          <Text style={styles.problem}>This title could not be found.</Text>
+          <Text style={styles.problem}>{say('tv.askPage.thisTitleCouldNotBeFound')}</Text>
         )}
       </View>
     );
@@ -126,7 +128,7 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
     void askForMedia(asked)
       .then(({ value, refusal }) => {
         if (value === null) {
-          setProblem(refusal?.message ?? 'That could not be requested.');
+          setProblem(refusal?.message ?? say('common.thatCouldNotBeRequested'));
           setAsking(null);
           refresh();
 
@@ -194,7 +196,7 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
       stillPath={backdrop}
       facts={joinFacts([
         title.year?.toString(),
-        kind === 'series' ? 'Series' : null,
+        kind === 'series' ? say('common.series') : null,
         title.runtimeMinutes === null ? null : formatDuration(title.runtimeMinutes * 60),
         title.genres.slice(0, 2).join(', '),
       ])}
@@ -203,10 +205,15 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
         going === null && title.standing.status !== 'library' ? (standing?.label ?? null) : null
       }
       overview={title.overview}
-      credits={starring.length === 0 ? [] : [`Starring ${starring.join(', ')}`]}
+      credits={
+        starring.length === 0 ? [] : [say('common.starringValue', { value: starring.join(', ') })]
+      }
     >
       {going === null ? null : (
-        <DownloadPanel label={standing?.label ?? 'Downloading to library'} progress={going} />
+        <DownloadPanel
+          label={standing?.label ?? say('common.downloadingToLibrary')}
+          progress={going}
+        />
       )}
 
       {asking !== null && canRequest ? (
@@ -214,7 +221,7 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
           {choices.map((choice, at) => (
             <ActionRow
               key={choice.id}
-              label={`Request in ${choice.name}`}
+              label={say('tv.askPage.requestInName', { name: choice.name })}
               icon={Plus}
               hasPreferredFocus={at === 0}
               onPress={() => {
@@ -225,7 +232,7 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
             />
           ))}
           <ActionRow
-            label="Not now"
+            label={say('common.notNow')}
             icon={X}
             onPress={() => {
               setAsking(null);
@@ -238,7 +245,7 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
           kind === 'film' &&
           title.standing.mediaId !== null ? (
             <ActionRow
-              label="Open"
+              label={say('common.open')}
               icon={Play}
               hasPreferredFocus
               onPress={() => {
@@ -251,7 +258,7 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
 
           {isAskable && kind === 'film' ? (
             <ActionRow
-              label={isBusy ? 'Requesting…' : 'Request'}
+              label={isBusy ? say('tv.askPage.requesting') : say('common.request')}
               icon={Plus}
               hasPreferredFocus
               onPress={() => {
@@ -266,7 +273,9 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
             ? (seasons.data ?? []).map((season) => {
                 const says = SEASON_SAYS[season.standing];
                 const isChoosable = season.standing === 'askable' || season.standing === 'partly';
-                const label = `Season ${season.season.toString()} · ${season.episodeCount.toString()} episodes`;
+                const label = sayCount('tv.askPage.seasonEpisodes', season.episodeCount, {
+                  season: season.season.toString(),
+                });
 
                 return (
                   <ActionRow
@@ -287,10 +296,10 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
             <ActionRow
               label={
                 isBusy
-                  ? 'Requesting…'
+                  ? say('tv.askPage.requesting')
                   : picked.size === 1
-                    ? 'Request 1 season'
-                    : `Request ${picked.size.toString()} seasons`
+                    ? say('tv.askPage.request1Season')
+                    : say('tv.askPage.requestSizeSeasons', { size: picked.size.toString() })
               }
               icon={Plus}
               hasPreferredFocus
@@ -310,7 +319,7 @@ const AskPage = ({ kind, id, onOpenFilm, onLight }: AskPageProps) => {
 
           {mayCancel ? (
             <ActionRow
-              label="Cancel request"
+              label={say('common.cancelRequest')}
               icon={X}
               hasPreferredFocus={!isAskable && !isOpenable}
               onPress={() => {

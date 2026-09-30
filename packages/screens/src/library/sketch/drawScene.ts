@@ -2,8 +2,9 @@ import { SKETCH_SPACE } from '@ValenceContracts/schemas/SketchScene';
 import { LETTER_FONT_LOOKS } from '@ValenceScreens/library/LETTER_FONT_LOOKS';
 import { STROKE_LOOKS } from '@ValenceClient/sketch/STROKE_LOOKS';
 import type { SketchItem, SketchScene, SketchStroke } from '@ValenceContracts/schemas/SketchScene';
+import { say } from '@ValenceI18n/say';
 
-const EMOJI_FONT = "'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif";
+const EMOJI_FONT = say('screens.sketch.drawScene.appleColorEmojiSegoeUIEmoji');
 
 /**
  * Draws one stroke, each stretch of it as thick as the pressure there, so a pen pressed harder

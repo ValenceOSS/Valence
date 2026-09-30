@@ -14,6 +14,7 @@ import { describeJobGroup } from './describeJobGroup';
 import { summariseProgress } from './summariseProgress';
 import type { JobDefinition, JobTrigger } from '@ValenceClient/admin/fetchAdmin';
 import type { JobRunnerProps } from './JobRunner.types';
+import { say } from '@ValenceI18n/say';
 
 const NO_TRIGGERS: JobTrigger[] = [];
 
@@ -228,11 +229,19 @@ const JobRunner = ({
 
       <ConfirmDialog
         isOpen={confirming !== null}
-        title={confirming === null ? 'Run this job?' : `${sayAgain(confirming.label)}?`}
-        detail={
-          confirming === null ? '' : `${sayAgain(confirming.description)} This cannot be undone.`
+        title={
+          confirming === null
+            ? say('screens.adminArea.jobRunner.runThisJob')
+            : `${sayAgain(confirming.label)}?`
         }
-        confirmLabel={sayAgainIfAny(confirming?.label) ?? 'Run'}
+        detail={
+          confirming === null
+            ? ''
+            : say('common.descriptionThisCannotBeUndone', {
+                description: sayAgain(confirming.description),
+              })
+        }
+        confirmLabel={sayAgainIfAny(confirming?.label) ?? say('common.run')}
         isDestructive
         onClose={() => {
           setConfirming(null);
@@ -249,9 +258,13 @@ const JobRunner = ({
 
       <ConfirmDialog
         isOpen={stopping !== null}
-        title={stopping === null ? 'Stop this job?' : `Stop ${sayAgain(stopping.label)}?`}
-        detail="What it has done so far is kept, and the rest is left undone until it is run again."
-        confirmLabel="Stop it"
+        title={
+          stopping === null
+            ? say('screens.adminArea.jobRunner.stopThisJob')
+            : say('screens.adminArea.jobRunner.stopLabel', { label: sayAgain(stopping.label) })
+        }
+        detail={say('screens.adminArea.jobRunner.whatItHasDoneSoFar')}
+        confirmLabel={say('screens.adminArea.jobRunner.stopIt')}
         isDestructive
         onClose={() => {
           setStopping(null);

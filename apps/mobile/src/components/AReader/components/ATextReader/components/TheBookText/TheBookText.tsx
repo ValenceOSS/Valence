@@ -8,6 +8,7 @@ import type { BookNode } from '@ValenceClient/books/readBookDocument.types';
 import type { ReactNode } from 'react';
 import type { TextStyle } from 'react-native';
 import type { TheBookTextProps } from './TheBookText.types';
+import { say } from '@ValenceI18n/say';
 
 const BLOCKS: ReadonlySet<string> = new Set([
   'p',
@@ -186,7 +187,11 @@ const TheBookTextDrawn = ({ nodes, size, leading, ink, onLink, onAnchors }: TheB
         <Button
           key={key}
           tone="bare"
-          label={`Follow the link to ${textOf(node) || 'another place'}`}
+          label={
+            textOf(node) === ''
+              ? say('phone.aTextReader.theBookText.followTheLink')
+              : say('phone.aTextReader.theBookText.followTheLinkToValue', { value: textOf(node) })
+          }
           onPress={() => {
             onLink(href);
           }}

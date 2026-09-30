@@ -3,6 +3,8 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import type { StillWatchingProps } from './StillWatching.types';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const A_SECOND = 1000;
 
@@ -41,22 +43,22 @@ const StillWatching = ({ upNext, secondsToAnswer, onCarryOn, onStop }: StillWatc
 
   return (
     <Screen centres>
-      <Words size="title">Are you still watching?</Words>
+      <Words size="title">{say('common.areYouStillWatching')}</Words>
 
-      <Words>
-        {`${upNext} is up next. Nothing will be played, and nothing marked as watched, unless you say so.`}
-      </Words>
+      <Words>{say('phone.stillWatching.upNextIsUpNextNothingWill', { upNext })}</Words>
 
       <Words size="small" tone="muted">
         {left <= 0
-          ? 'Stopping…'
-          : `Stopping in ${Math.max(0, left).toString()} second${left === 1 ? '' : 's'}.`}
+          ? say('common.stopping')
+          : sayCount('common.stoppingInValueSeconds', left, {
+              value: Math.max(0, left).toString(),
+            })}
       </Words>
 
-      <Button onPress={onCarryOn}>Still watching</Button>
+      <Button onPress={onCarryOn}>{say('common.stillWatching')}</Button>
 
       <Button tone="quiet" onPress={onStop}>
-        Stop
+        {say('common.stop')}
       </Button>
     </Screen>
   );

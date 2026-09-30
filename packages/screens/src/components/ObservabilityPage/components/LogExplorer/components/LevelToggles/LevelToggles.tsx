@@ -4,6 +4,8 @@ import { Skeleton } from '@ValenceUI/Skeleton';
 import { describeLogLevel } from '@ValenceScreens/admin/describeLogLevel';
 import { LOG_LEVELS } from '@ValenceContracts/schemas/Log';
 import type { LevelTogglesProps } from './LevelToggles.types';
+import { say } from '@ValenceI18n/say';
+import { Sentence } from '@ValenceScreens/components/Sentence/Sentence';
 
 /**
  * Says how many events of each level there were over the stretch of time being looked at, and lets
@@ -36,13 +38,23 @@ const LevelToggles = ({ histogram, levels, isReading, onToggle }: LevelTogglesPr
       className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2"
     >
       <p className="text-sm text-text-muted">
-        <span className="text-lg font-semibold tabular-nums text-text">
-          <AnimatedNumber value={events} />
-        </span>{' '}
-        events
+        <Sentence
+          counted="screens.observabilityPage.logExplorer.levelToggles.countEvents"
+          count={events}
+          fillings={{
+            count: (
+              <span className="text-lg font-semibold tabular-nums text-text">
+                <AnimatedNumber value={events} />
+              </span>
+            ),
+          }}
+        />
       </p>
 
-      <ul aria-label="Levels" className="flex flex-wrap items-center justify-end gap-1">
+      <ul
+        aria-label={say('screens.logExplorer.levelToggles.levels')}
+        className="flex flex-wrap items-center justify-end gap-1"
+      >
         {totals.map(({ level, count }) => {
           const look = describeLogLevel(level);
           const isOn = levels.includes(level);

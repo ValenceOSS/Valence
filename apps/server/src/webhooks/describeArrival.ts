@@ -1,4 +1,5 @@
 import type { ArrivedTitle } from '@ValenceContracts/schemas/Webhook';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 /**
  * Says what arrived under one title, as a line in a notification.
@@ -16,6 +17,6 @@ import type { ArrivedTitle } from '@ValenceContracts/schemas/Webhook';
 const describeArrival = (arrival: ArrivedTitle): string =>
   arrival.episodes <= 1
     ? arrival.title
-    : `${arrival.title} — ${arrival.episodes.toString()} episodes`;
+    : sayCount('common.titleCountEpisodes', arrival.episodes, { title: arrival.title });
 
 export { describeArrival };

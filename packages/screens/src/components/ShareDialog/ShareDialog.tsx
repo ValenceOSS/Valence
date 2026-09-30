@@ -16,6 +16,7 @@ import { newShareFor } from '@ValenceClient/sharing/newShareFor';
 import { createShare, shareAddress } from '@ValenceClient/sharing/fetchShares';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import type { ShareDialogProps } from './ShareDialog.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Hands out a link to something, and shows it once. The token is shown here and nowhere else ever
@@ -100,7 +101,7 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
     setIsWorking(false);
 
     if (made === null) {
-      setRefusal('That could not be shared. You may not have permission to hand out links.');
+      setRefusal(say('common.thatCouldNotBeSharedYou'));
 
       return;
     }
@@ -109,7 +110,7 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
   };
 
   return (
-    <Dialog label="Share" isOpen={isOpen} onClose={onClose}>
+    <Dialog label={say('common.share')} isOpen={isOpen} onClose={onClose}>
       <DialogContent className="p-2.5 sm:p-3">
         <div className="relative h-28 overflow-hidden rounded-xl sm:h-32">
           {backdrop === null ? (
@@ -121,14 +122,20 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
           <BackdropScrim />
 
           <div className="absolute right-3 top-3">
-            <Button isIconOnly variant="overlay" size="sm" label="Close" onClick={onClose}>
+            <Button
+              isIconOnly
+              variant="overlay"
+              size="sm"
+              label={say('common.close')}
+              onClick={onClose}
+            >
               <Icon of={XIcon} size={16} />
             </Button>
           </div>
 
           <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1 p-4">
             <span className="text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-on-scrim/75">
-              Share
+              {say('common.share')}
             </span>
 
             <h2 className="max-w-[24ch] truncate text-xl font-semibold leading-tight tracking-[-0.02em] text-on-scrim">
@@ -153,21 +160,25 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
             <div className="valence-card-face grid grid-cols-[max-content_minmax(0,1fr)] gap-x-6 divide-y divide-[var(--surface-line)] px-3 py-1 [&>span]:col-span-2 [&>span]:grid [&>span]:grid-cols-subgrid [&>span]:items-center [&>span]:py-2">
               {subject?.kind === 'series' || subject?.kind === 'book' ? (
                 <span className="flex items-center justify-between gap-4">
-                  <span className="shrink-0 text-sm text-text-muted">What to share</span>
+                  <span className="shrink-0 text-sm text-text-muted">
+                    {say('common.whatToShare')}
+                  </span>
 
                   <span className="flex h-9 min-w-0 items-center truncate text-sm font-medium text-text">
-                    {subject.kind === 'book' ? 'The whole book' : 'The whole programme'}
+                    {subject.kind === 'book'
+                      ? say('screens.shareDialog.theWholeBook')
+                      : say('common.theWholeProgramme')}
                   </span>
                 </span>
               ) : null}
 
               {isEpisode ? (
                 <Choice
-                  label="What to share"
+                  label={say('common.whatToShare')}
                   value={kind}
                   options={[
-                    { id: 'item', label: 'Just this episode' },
-                    { id: 'series', label: 'The whole programme' },
+                    { id: 'item', label: say('common.justThisEpisode') },
+                    { id: 'series', label: say('common.theWholeProgramme') },
                   ]}
                   onSelect={(chosen) => {
                     setKind(chosen === 'series' ? 'series' : 'item');
@@ -175,10 +186,19 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
                 />
               ) : null}
 
-              <Choice label="Lasts" value={lasts} options={SHARE_LASTS} onSelect={setLasts} />
+              <Choice
+                label={say('common.lasts')}
+                value={lasts}
+                options={SHARE_LASTS}
+                onSelect={setLasts}
+              />
 
               <Choice
-                label={subject?.kind === 'book' ? 'Who can read' : 'Who can watch'}
+                label={
+                  subject?.kind === 'book'
+                    ? say('screens.shareDialog.whoCanRead')
+                    : say('screens.shareDialog.whoCanWatch')
+                }
                 value={cap}
                 options={SHARE_CAPS}
                 onSelect={setCap}
@@ -190,8 +210,8 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
             <div className="flex flex-wrap items-center justify-between gap-3 px-1">
               <p className="min-w-0 flex-1 basis-56 font-body text-xs text-text-muted">
                 {subject?.kind === 'book'
-                  ? 'Only this book, and you can withdraw it at any time.'
-                  : 'Only what you share, and you can withdraw it at any time, even mid-watch.'}
+                  ? say('screens.shareDialog.onlyThisBookAndYouCan')
+                  : say('screens.shareDialog.onlyWhatYouShareAndYou')}
               </p>
 
               <Button
@@ -201,17 +221,21 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
                   void hand();
                 }}
               >
-                Make a link
+                {say('common.makeALink')}
               </Button>
             </div>
           </div>
         ) : (
           <div className="flex flex-col gap-3 px-1 pt-4">
             <p className="font-body text-sm text-text-muted">
-              Copy it now — this is the only time it is shown.
+              {say('screens.shareDialog.copyItNowThisIsThe')}
             </p>
 
-            <TextField label="The link" value={link} onValueChange={() => undefined} />
+            <TextField
+              label={say('screens.shareDialog.theLink')}
+              value={link}
+              onValueChange={() => undefined}
+            />
 
             <Button
               variant="confirm"
@@ -223,7 +247,7 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
               }}
             >
               <Icon of={CopyIcon} size={16} />
-              {isCopied ? 'Copied' : 'Copy the link'}
+              {isCopied ? say('common.copied') : say('screens.shareDialog.copyTheLink')}
             </Button>
           </div>
         )}

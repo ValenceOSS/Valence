@@ -8,6 +8,7 @@ import { joinFacts } from '@ValenceTv/library/joinFacts';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { EpisodeCardProps } from './EpisodeCard.types';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
+import { say } from '@ValenceI18n/say';
 
 const WIDTH = 420;
 
@@ -66,7 +67,10 @@ const EpisodeCard = ({
         </Text>
 
         <Text style={styles.facts}>
-          {joinFacts([formatDuration(episode.durationSeconds), isWatched ? 'Watched' : null])}
+          {joinFacts([
+            formatDuration(episode.durationSeconds),
+            isWatched ? say('common.watched') : null,
+          ])}
         </Text>
 
         {overview === undefined || overview === null ? null : (

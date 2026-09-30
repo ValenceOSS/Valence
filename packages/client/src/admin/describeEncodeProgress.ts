@@ -1,29 +1,35 @@
 import type { Reencode } from '@ValenceContracts/schemas/Reencode';
+import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const A_MINUTE = 60;
 
 const AN_HOUR = 60 * A_MINUTE;
 
 /**
- * How long is left, in the roundest words that are still true.
+ * Says how fast an encode runs and how long is left, the wait in the roundest words that are still
+ * true.
  *
+ * @param speed - How many times faster than watching it, already written out.
  * @param seconds - How much longer it has to run.
- * @returns The wait, said the way somebody would say it.
+ * @returns The speed and the wait, said the way somebody would say them.
  */
-const roughly = (seconds: number): string => {
+const roughly = (speed: string, seconds: number): string => {
   if (seconds < A_MINUTE) {
-    return 'less than a minute left';
+    return say('client.admin.describeEncodeProgress.speedLessThanAMinuteLeft', { speed });
   }
 
   if (seconds < AN_HOUR) {
     const minutes = Math.round(seconds / A_MINUTE);
 
-    return `about ${minutes.toString()} ${minutes === 1 ? 'minute' : 'minutes'} left`;
+    return sayCount('client.admin.describeEncodeProgress.speedAboutMinutesLeft', minutes, {
+      speed,
+    });
   }
 
   const hours = Math.round(seconds / AN_HOUR);
 
-  return `about ${hours.toString()} ${hours === 1 ? 'hour' : 'hours'} left`;
+  return sayCount('client.admin.describeEncodeProgress.speedAboutHoursLeft', hours, { speed });
 };
 
 /**
@@ -56,7 +62,7 @@ const describeEncodeProgress = (reencode: Reencode, now = Date.now()): string =>
   const speed = (reencode.progress * reencode.durationSeconds) / elapsed;
   const left = elapsed * ((1 - reencode.progress) / reencode.progress);
 
-  return `${speed.toFixed(1)}× real time · ${roughly(left)}`;
+  return roughly(speed.toFixed(1), left);
 };
 
 export { describeEncodeProgress };

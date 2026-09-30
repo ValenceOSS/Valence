@@ -2,6 +2,7 @@ import { InstalledPluginSchema } from '@ValenceContracts/schemas/Plugin';
 import { changeOnServer } from '@ValenceClient/query/changeOnServer';
 import { pluginPath } from '@ValenceClient/plugins/pluginPath';
 import type { InstalledPlugin } from '@ValenceContracts/schemas/Plugin';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Puts back the version of a plugin an upgrade replaced, with what it kept as it was then.
@@ -15,7 +16,7 @@ const rollbackPlugin = async (pluginId: string): Promise<InstalledPlugin> =>
     await changeOnServer(
       `${pluginPath(pluginId)}/rollback`,
       { method: 'POST' },
-      'The earlier version could not be put back.',
+      say('common.theEarlierVersionCouldNotBe'),
     ),
   );
 

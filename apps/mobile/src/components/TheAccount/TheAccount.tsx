@@ -21,6 +21,7 @@ import { useAccountPanels } from '@ValenceMobile/components/TheAccount/useAccoun
 import { APluginPage } from '@ValenceMobile/components/APluginPage/APluginPage';
 import { pluginPageOf } from '@ValenceMobile/plugins/pluginPageOf';
 import type { TheAccountProps } from './TheAccount.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   leaving: { alignItems: 'center', gap: 10, marginTop: 12 },
@@ -49,7 +50,7 @@ const TheAccount = ({ onOut, onElsewhere, header, onScrolled, shown, onShow }: T
   const contributions = useQuery(pluginQueries.contributions());
   const pluginName =
     contributions.data?.pages.find((page) => page.pluginId === pluginPage?.pluginId)?.pluginName ??
-    'That plugin';
+    say('common.thatPlugin');
 
   usePluginWithdrawn(pluginPage?.pluginId ?? null, (change) => {
     (onShow ?? setChosen)('profile');
@@ -63,14 +64,19 @@ const TheAccount = ({ onOut, onElsewhere, header, onScrolled, shown, onShow }: T
       isSeeThrough={header !== undefined}
       {...(onScrolled === undefined ? {} : { onScrolled })}
     >
-      {header ?? <Words size="title">Account</Words>}
+      {header ?? <Words size="title">{say('common.account')}</Words>}
 
       {who.data === null || who.data === undefined ? null : (
         <Words tone="muted">{who.data.email}</Words>
       )}
 
       {shown === undefined ? (
-        <SegmentedRow label="What to change" items={panels} value={panel} onSelect={setChosen} />
+        <SegmentedRow
+          label={say('common.whatToChange')}
+          items={panels}
+          value={panel}
+          onSelect={setChosen}
+        />
       ) : null}
 
       {pluginPage !== null ? (
@@ -91,15 +97,17 @@ const TheAccount = ({ onOut, onElsewhere, header, onScrolled, shown, onShow }: T
 
       <View style={styles.leaving}>
         <Button tone="ghost" icon={Server} isWide onPress={onElsewhere}>
-          Use a different server
+          {say('common.useADifferentServer')}
         </Button>
 
         <Button tone="ghost" icon={DoorOpen} isWide isDestructive onPress={onOut}>
-          Sign out
+          {say('common.signOut')}
         </Button>
 
         {address === null ? null : (
-          <Words size="small" tone="muted">{`Watching on ${address}`}</Words>
+          <Words size="small" tone="muted">
+            {say('common.watchingOnAddress', { address })}
+          </Words>
         )}
       </View>
     </Screen>

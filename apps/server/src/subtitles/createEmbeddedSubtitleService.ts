@@ -51,7 +51,7 @@ const describeSubtitle = (stream: EmbeddedStream, position: number): string => {
 
   const named =
     title === ''
-      ? (language ?? say('core.track.numbered', { number: position }))
+      ? (language ?? say('common.numbered', { number: position }))
       : language === null || saysLanguage
         ? title
         : `${language} · ${title}`;

@@ -1,4 +1,5 @@
 import { Alert } from 'react-native';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Asks somebody to confirm a press a plugin marked as needing it, in the system's own alert, with
@@ -10,11 +11,11 @@ import { Alert } from 'react-native';
 const askBeforeActing = (question: string): Promise<boolean> =>
   new Promise((settle) => {
     Alert.alert(
-      'Are you sure?',
+      say('common.areYouSure'),
       question,
       [
-        { text: 'Cancel', style: 'cancel', onPress: () => settle(false) },
-        { text: 'Continue', onPress: () => settle(true) },
+        { text: say('common.cancel'), style: 'cancel', onPress: () => settle(false) },
+        { text: say('common.continue'), onPress: () => settle(true) },
       ],
       { cancelable: true, onDismiss: () => settle(false) },
     );

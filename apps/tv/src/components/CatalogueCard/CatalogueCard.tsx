@@ -10,6 +10,7 @@ import { Icon } from '@ValenceTv/components/Icon/Icon';
 import { cardSizes } from '@ValenceTv/components/MediaCard/cardSizes';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { CatalogueCardProps } from './CatalogueCard.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * A film or show from the film database rather than the library: its poster, named beneath while
@@ -39,7 +40,7 @@ const CatalogueCard = ({ title, onPress, width }: CatalogueCardProps) => {
         <Artwork path={title.posterUrl} style={StyleSheet.absoluteFill} />
 
         {isWatched ? (
-          <View style={styles.had} accessible accessibilityLabel="Watched">
+          <View style={styles.had} accessible accessibilityLabel={say('common.watched')}>
             <Icon of={Check} size={26} colour={tokens.colours.onWhite} />
           </View>
         ) : null}

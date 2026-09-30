@@ -37,14 +37,15 @@ import { testAndSayWhy } from './testAndSayWhy';
 import { whichToTest } from './whichToTest';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { Indexer } from '@ValenceContracts/schemas/Indexer';
+import { say } from '@ValenceI18n/say';
 
 const KIND_LABELS: Readonly<Record<string, string>> = {
-  torznab: 'Torznab',
-  newznab: 'Newznab',
-  cardigann: 'Site',
-  public: 'Public site',
-  'semi-private': 'Semi-private site',
-  private: 'Private site',
+  torznab: say('common.torznab'),
+  newznab: say('common.newznab'),
+  cardigann: say('common.site'),
+  public: say('screens.adminArea.indexersPanel.publicSite'),
+  'semi-private': say('screens.adminArea.indexersPanel.semiPrivateSite'),
+  private: say('screens.adminArea.indexersPanel.privateSite'),
 };
 
 const TESTED_AT_ONCE = 4;
@@ -114,7 +115,7 @@ const IndexersPanel = () => {
 
       void testAndSayWhy(indexer)
         .then((failure) => {
-          tellOutcome(`${indexer.name} answered.`, failure);
+          tellOutcome(say('common.nameAnswered', { name: indexer.name }), failure);
           setProblem(failure);
         })
         .then(reread)
@@ -129,7 +130,9 @@ const IndexersPanel = () => {
       void changeIndexer(indexer.id, { isEnabled: !indexer.isEnabled })
         .then(({ refusal }) => {
           tellOutcome(
-            indexer.isEnabled ? `Turned off ${indexer.name}.` : `Turned on ${indexer.name}.`,
+            indexer.isEnabled
+              ? say('common.turnedOffName', { name: indexer.name })
+              : say('common.turnedOnName', { name: indexer.name }),
             failureOfRefusal(refusal),
           );
           setProblem(refusal?.message ?? null);
@@ -140,7 +143,7 @@ const IndexersPanel = () => {
     return [
       {
         id: 'name',
-        header: 'Indexer',
+        header: say('screens.adminArea.indexersPanel.indexer'),
         accessorFn: (indexer) => indexer.name,
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col gap-0.5">
@@ -155,13 +158,13 @@ const IndexersPanel = () => {
       },
       {
         id: 'priority',
-        header: 'Priority',
+        header: say('common.priority'),
         accessorFn: (indexer) => indexer.priority,
         cell: ({ row }) => <span className="text-sm text-text">{row.original.priority}</span>,
       },
       {
         id: 'searches',
-        header: 'Searches',
+        header: say('screens.adminArea.indexersPanel.searches'),
         accessorFn: describeIndexerSearches,
         cell: ({ row }) => (
           <span className="text-xs text-text-muted">{describeIndexerSearches(row.original)}</span>
@@ -169,13 +172,13 @@ const IndexersPanel = () => {
       },
       {
         id: 'state',
-        header: 'State',
+        header: say('common.state'),
         accessorFn: (indexer) => describeIndexerState(indexer).label,
         cell: ({ row }) => {
           const state = describeIndexerState(row.original);
 
           return testing.has(row.original.id) ? (
-            <Spinner size="sm" label={`Testing ${row.original.name}`} />
+            <Spinner size="sm" label={say('common.testingName', { name: row.original.name })} />
           ) : (
             <span className="flex min-w-0 flex-col items-start gap-1">
               <Badge size="sm" tone={state.tone}>
@@ -198,14 +201,14 @@ const IndexersPanel = () => {
         cell: ({ row }) => (
           <span className="flex justify-end">
             <ActionMenu
-              label={`Actions for ${row.original.name}`}
+              label={say('common.actionsForName', { name: row.original.name })}
               trigger={<Icon of={MoreHorizontalIcon} size={16} />}
               groups={[
                 {
                   items: [
                     {
                       id: 'edit',
-                      label: 'Change',
+                      label: say('common.change'),
                       icon: <Icon of={PenFilledIcon} size={15} />,
                       onChoose: () => {
                         setEditing(row.original);
@@ -213,7 +216,7 @@ const IndexersPanel = () => {
                     },
                     {
                       id: 'test',
-                      label: 'Test',
+                      label: say('common.test'),
                       icon: <Icon of={PlugFilledIcon} size={15} />,
                       isDisabled: testing.size > 0 || isTestingAll,
                       onChoose: () => {
@@ -222,7 +225,9 @@ const IndexersPanel = () => {
                     },
                     {
                       id: 'switch',
-                      label: row.original.isEnabled ? 'Switch off' : 'Switch on',
+                      label: row.original.isEnabled
+                        ? say('common.switchOff')
+                        : say('common.switchOn'),
                       icon: (
                         <Icon
                           of={row.original.isEnabled ? ToggleOffIcon : ToggleOnIcon}
@@ -239,7 +244,7 @@ const IndexersPanel = () => {
                   items: [
                     {
                       id: 'remove',
-                      label: 'Remove',
+                      label: say('common.remove'),
                       icon: <Icon of={BinFilledIcon} size={15} />,
                       isDestructive: true,
                       onChoose: () => {
@@ -258,7 +263,7 @@ const IndexersPanel = () => {
 
   return (
     <PanelCard
-      title="Indexers"
+      title={say('common.indexers')}
       isFlush
       actions={
         <>
@@ -268,7 +273,7 @@ const IndexersPanel = () => {
             isDisabled={toTest.length === 0 || testing.size > 0}
             onClick={testAll}
           >
-            Test all
+            {say('screens.adminArea.indexersPanel.testAll')}
           </PanelCardAction>
 
           <PanelCardAction
@@ -277,7 +282,7 @@ const IndexersPanel = () => {
               setIsChoosing(true);
             }}
           >
-            Add an indexer
+            {say('common.addAnIndexer')}
           </PanelCardAction>
         </>
       }
@@ -315,9 +320,13 @@ const IndexersPanel = () => {
       />
 
       <ConfirmDialog
-        title={`Remove ${removing?.name ?? 'this indexer'}?`}
-        detail="It will not be searched again, and its key is forgotten. Adding it back means typing the key again."
-        confirmLabel="Remove"
+        title={
+          removing === null
+            ? say('screens.adminArea.indexersPanel.removeThisIndexer')
+            : say('common.removeName', { name: removing.name })
+        }
+        detail={say('screens.adminArea.indexersPanel.itWillNotBeSearchedAgain')}
+        confirmLabel={say('common.remove')}
         isDestructive
         isOpen={removing !== null}
         onClose={() => {
@@ -331,7 +340,10 @@ const IndexersPanel = () => {
           if (gone !== null) {
             void removeIndexer(gone.id)
               .then((refusal) => {
-                tellOutcome(`Removed ${gone.name}.`, failureOfRefusal(refusal));
+                tellOutcome(
+                  say('common.removedName', { name: gone.name }),
+                  failureOfRefusal(refusal),
+                );
                 setProblem(refusal?.message ?? null);
               })
               .then(reread);
@@ -347,22 +359,26 @@ const IndexersPanel = () => {
 
       {asked.isError ? (
         <CouldNotRead
-          what="The indexers"
+          said={say('screens.adminArea.indexersPanel.theIndexersCouldNotBeRead')}
           isTryingAgain={asked.isFetching}
           onTryAgain={() => {
             void asked.refetch();
           }}
         />
       ) : asked.isPending ? (
-        <Spinner isCentered label="Reading the indexers" size="sm" />
+        <Spinner
+          isCentered
+          label={say('screens.adminArea.indexersPanel.readingTheIndexers')}
+          size="sm"
+        />
       ) : (
         <DataTable
           height="fills"
-          label="Indexers"
+          label={say('common.indexers')}
           columns={columns}
           rows={asked.data}
           getRowId={(indexer) => indexer.id}
-          emptyMessage="No indexers yet. Add a site from the catalogue, or any Torznab or Newznab indexer, to have something to search."
+          emptyMessage={say('screens.adminArea.indexersPanel.noIndexersYetAddASite')}
         />
       )}
     </PanelCard>

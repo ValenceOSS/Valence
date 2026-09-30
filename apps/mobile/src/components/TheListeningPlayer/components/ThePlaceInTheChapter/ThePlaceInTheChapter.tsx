@@ -8,6 +8,7 @@ import { useTheBook } from '@ValenceMobile/hooks/useTheBook';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import type { ThePlaceInTheChapterProps } from './ThePlaceInTheChapter.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   lasts: { alignItems: 'flex-end' },
@@ -35,7 +36,7 @@ const ThePlaceInTheChapter = ({ title }: ThePlaceInTheChapterProps) => {
   return (
     <View>
       <Slider
-        label={`Move through ${title}`}
+        label={say('common.moveThroughTitle', { title })}
         value={position}
         furthest={lasts}
         colour={colours.text}
@@ -53,7 +54,7 @@ const ThePlaceInTheChapter = ({ title }: ThePlaceInTheChapterProps) => {
         </View>
         <View style={styles.left}>
           <Words size="small" tone="muted">
-            {`${describeLength(left)} left`}
+            {say('common.durationLeft', { timeLeft: describeLength(left) })}
           </Words>
         </View>
         <View style={[styles.time, styles.lasts]}>

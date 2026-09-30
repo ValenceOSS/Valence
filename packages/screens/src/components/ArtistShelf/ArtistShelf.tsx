@@ -9,6 +9,7 @@ import { RevealItem } from '@ValenceUI/RevealItem';
 import { MusicShelf } from '@ValenceScreens/components/MusicShelf/MusicShelf';
 import type { MusicArtist } from '@ValenceContracts/schemas/Music';
 import type { ArtistShelfProps } from './ArtistShelf.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Where an artist's picture comes from: their own where one is kept, otherwise the cover of their
@@ -49,7 +50,7 @@ const ArtistShelf = ({ heading, artists, layout = 'rail', action }: ArtistShelfP
         <RevealItem key={artist.id} index={at}>
           <MusicTile
             title={artist.name}
-            detail="Artist"
+            detail={say('common.artist')}
             artwork={
               <MusicArtwork
                 src={pictureOf(artist)}

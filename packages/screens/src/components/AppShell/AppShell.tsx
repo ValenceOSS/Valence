@@ -56,6 +56,7 @@ import type { IconGesture } from '@ValenceUI/AnimatedIcon.types';
 import type { NavBarAction, NavBarItem } from '@ValenceUI/NavBar.types';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { AppShellProps, ShellSection } from './AppShell.types';
+import { say } from '@ValenceI18n/say';
 
 const HELP_ADDRESS = 'https://docs.getvalence.app/start/faq';
 
@@ -94,10 +95,10 @@ const howSolid = (travelled: number): number => {
 const STOCKED_ONLY: ReadonlySet<ShellSection> = new Set(['shows', 'films', 'read', 'music']);
 
 const SURPRISE_LABELS: Record<LibraryKind, string> = {
-  movies: 'A film',
-  shows: 'A programme',
-  music: 'Something to listen to',
-  books: 'Something to read',
+  movies: say('common.aFilm2'),
+  shows: say('screens.appShell.aProgramme'),
+  music: say('screens.appShell.somethingToListenTo'),
+  books: say('screens.appShell.somethingToRead'),
 };
 
 const SECTION_ICONS: Record<ShellSection, ReactNode> = {
@@ -140,16 +141,16 @@ const SECTION_GESTURES: Record<ShellSection, IconGesture> = {
 };
 
 const SECTION_LABELS: Record<ShellSection, string> = {
-  home: 'Home',
-  shows: 'Shows',
-  films: 'Films',
-  new: 'New & Popular',
-  favourites: 'Favourites',
-  read: 'Books',
-  music: 'Music',
-  requests: 'Discover',
-  search: 'Search',
-  account: 'Account',
+  home: say('common.home'),
+  shows: say('common.shows'),
+  films: say('common.films'),
+  new: say('common.newPopular'),
+  favourites: say('common.favourites'),
+  read: say('common.books'),
+  music: say('common.music'),
+  requests: say('common.discover'),
+  search: say('common.search'),
+  account: say('common.account'),
 };
 
 /**
@@ -325,7 +326,7 @@ const AppShell = ({
   const actions: NavBarAction[] = [
     {
       id: 'downloads',
-      label: 'Downloads',
+      label: say('common.downloads'),
       icon: <Icon of={DownloadFilledIcon} size={20} />,
       activeIcon: <Icon of={DownloadFilledIcon} size={20} />,
       gesture: 'settle' as const,
@@ -334,7 +335,7 @@ const AppShell = ({
     },
     {
       id: 'search',
-      label: 'Search',
+      label: say('common.search'),
       icon: <Icon of={SearchFilledIcon} size={20} />,
       activeIcon: <Icon of={SearchIcon} size={20} />,
       gesture: 'settle' as const,
@@ -346,14 +347,14 @@ const AppShell = ({
       : [
           {
             id: 'surprise',
-            label: 'Randomiser',
+            label: say('screens.appShell.randomiser'),
             icon: <Icon of={Dice5FilledIcon} size={20} />,
             gesture: 'tumble' as const,
             ...(kinds.length > 1
               ? {
                   control: (
                     <ActionMenu
-                      label="Choose something at random"
+                      label={say('screens.appShell.chooseSomethingAtRandom')}
                       align="center"
                       look="face"
                       trigger={<Icon of={Dice5FilledIcon} size={20} />}
@@ -362,7 +363,7 @@ const AppShell = ({
                           items: [
                             {
                               id: 'anything',
-                              label: 'Anything',
+                              label: say('common.anything'),
                               onChoose: () => {
                                 onSurprise();
                               },
@@ -392,21 +393,21 @@ const AppShell = ({
       : [
           {
             id: 'notifications',
-            label: 'Notifications',
+            label: say('common.notifications'),
             icon: <Icon of={BellFilledIcon} size={20} />,
             control: notifications,
           },
         ]),
     {
       id: 'account',
-      label: 'Account',
+      label: say('common.account'),
       icon: face,
       arrivesOnItsOwn: avatar !== undefined,
       gesture: avatar === undefined ? ('settle' as const) : ('none' as const),
       isCurrent: isAccountOpen,
       control: (
         <ActionMenu
-          label="Account"
+          label={say('common.account')}
           align="end"
           look={accountName === undefined ? 'face' : 'pill'}
           trigger={face}
@@ -418,7 +419,7 @@ const AppShell = ({
                   : [
                       {
                         id: 'favourites',
-                        label: 'Favourites',
+                        label: say('common.favourites'),
                         icon: <Icon of={HeartFilledIcon} size={16} />,
                         onChoose: onOpenFavourites,
                       },
@@ -427,7 +428,7 @@ const AppShell = ({
                   ? [
                       {
                         id: 'my-requests',
-                        label: 'My requests',
+                        label: say('screens.appShell.myRequests'),
                         icon: <Icon of={CompassFilledIcon} size={16} />,
                         onChoose: onOpenMyRequests,
                       },
@@ -437,7 +438,7 @@ const AppShell = ({
               [
                 {
                   id: 'account',
-                  label: 'My Account',
+                  label: say('screens.appShell.myAccount'),
                   icon: <Icon of={CircleUserFilledIcon} size={16} />,
                   onChoose: onOpenAccount,
                 },
@@ -445,7 +446,7 @@ const AppShell = ({
                   ? [
                       {
                         id: 'admin',
-                        label: 'Admin',
+                        label: say('screens.appShell.admin'),
                         icon: <Icon of={SettingsFilledIcon} size={16} />,
                         onChoose: onOpenAdmin,
                       },
@@ -453,7 +454,7 @@ const AppShell = ({
                   : []),
                 {
                   id: 'help',
-                  label: 'Help',
+                  label: say('screens.appShell.help'),
                   icon: <Icon of={QuestionFilledIcon} size={16} />,
                   onChoose: () => {
                     window.open(HELP_ADDRESS, '_blank', 'noopener,noreferrer');
@@ -464,11 +465,11 @@ const AppShell = ({
               .filter((items) => items.length > 0)
               .map((items) => ({ items })),
             {
-              name: 'Theme',
+              name: say('common.theme'),
               items: [],
               control: (
                 <SegmentedRow
-                  label="Theme"
+                  label={say('common.theme')}
                   size="sm"
                   items={THEME_CHOICES.map((choice) => ({ id: choice.id, label: choice.label }))}
                   value={theme}
@@ -484,11 +485,11 @@ const AppShell = ({
               ),
             },
             {
-              name: 'Movement',
+              name: say('common.movement'),
               items: [],
               control: (
                 <SegmentedRow
-                  label="Movement"
+                  label={say('common.movement')}
                   size="sm"
                   items={MOTION_CHOICES.map((choice) => ({ id: choice.id, label: choice.label }))}
                   value={movement}
@@ -510,7 +511,7 @@ const AppShell = ({
                     items: [
                       {
                         id: 'sign-out',
-                        label: 'Sign out',
+                        label: say('common.signOut'),
                         icon: <Icon of={DoorOpenFilledIcon} size={16} />,
                         isDestructive: true,
                         onChoose: onSignOut,
@@ -540,7 +541,7 @@ const AppShell = ({
             <Button
               variant="bare"
               size="none"
-              label="Valence, back to the start"
+              label={say('screens.appShell.valenceBackToTheStart')}
               hasTooltip={false}
               onClick={() => {
                 onSectionChange('home');

@@ -5,6 +5,7 @@ import { APageScrubber } from '@ValenceMobile/components/APageScrubber/APageScru
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import type { AReaderRailProps } from './AReaderRail.types';
+import { say } from '@ValenceI18n/say';
 
 const OUTLINES = {
   buttons: 'rgba(0, 110, 255, 0.28)',
@@ -70,8 +71,13 @@ const AReaderRail = ({
       ]}
     >
       <View style={[styles.buttons, buttonsAcross, outline(OUTLINES.buttons)]}>
-        <AGlassCircle of={ChevronLeft} label="Back" onPress={onBack} ink={ink} />
-        <AGlassCircle of={List} label="Contents and settings" onPress={onPanel} ink={ink} />
+        <AGlassCircle of={ChevronLeft} label={say('common.back')} onPress={onBack} ink={ink} />
+        <AGlassCircle
+          of={List}
+          label={say('common.contentsAndSettings')}
+          onPress={onPanel}
+          ink={ink}
+        />
       </View>
 
       <View
@@ -99,7 +105,12 @@ const AReaderRail = ({
             {`${(page + 1).toString()}/${pictures.length.toString()}`}
           </Words>
         ) : (
-          <AGlassCircle of={ArrowRight} label="Next chapter" onPress={onReadOn} ink={ink} />
+          <AGlassCircle
+            of={ArrowRight}
+            label={say('common.nextChapter')}
+            onPress={onReadOn}
+            ink={ink}
+          />
         )}
       </View>
     </View>

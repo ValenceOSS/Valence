@@ -10,6 +10,7 @@ import {
 } from '@keyline-icons/react';
 import type { Place } from '@ValenceClient/navigation/readLocation';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
+import { say } from '@ValenceI18n/say';
 
 type TourStop = {
   section: Place['section'];
@@ -21,53 +22,50 @@ type TourStop = {
 const TOUR_STOPS: readonly TourStop[] = [
   {
     section: 'home',
-    title: 'Home',
-    detail:
-      'Pick up where you left off, see what has just been added, and find something to watch next.',
+    title: say('common.home'),
+    detail: say('screens.tour.tourStops.pickUpWhereYouLeftOff'),
     icon: HomeIcon,
   },
   {
     section: 'films',
-    title: 'Films',
-    detail:
-      'Every film in the library. Press one to see more, watch it, or watch it with somebody.',
+    title: say('common.films'),
+    detail: say('screens.tour.tourStops.everyFilmInTheLibraryPress'),
     icon: TapeIcon,
   },
   {
     section: 'shows',
-    title: 'Shows',
-    detail: 'Series and their seasons. Valence remembers which episode you are on.',
+    title: say('common.shows'),
+    detail: say('screens.tour.tourStops.seriesAndTheirSeasonsValenceRemembers'),
     icon: MonitorIcon,
   },
   {
     section: 'music',
-    title: 'Music',
-    detail:
-      'Your music, with playlists, a queue you can drag into order, lyrics, and the option to play it on another device.',
+    title: say('common.music'),
+    detail: say('screens.tour.tourStops.yourMusicWithPlaylistsAQueue'),
     icon: MusicNoteIcon,
   },
   {
     section: 'read',
-    title: 'Read',
-    detail: 'Books and comics, with your place kept wherever you read them.',
+    title: say('common.read'),
+    detail: say('screens.tour.tourStops.booksAndComicsWithYourPlace'),
     icon: BookIcon,
   },
   {
     section: 'requests',
-    title: 'Requests',
-    detail: 'Ask for something that is not here yet and follow it until it arrives.',
+    title: say('common.requests'),
+    detail: say('screens.tour.tourStops.askForSomethingThatIsNot'),
     icon: PlusIcon,
   },
   {
     section: 'favourites',
-    title: 'Favourites',
-    detail: 'Press the heart on anything to keep it here, where it is easy to find again.',
+    title: say('common.favourites'),
+    detail: say('screens.tour.tourStops.pressTheHeartOnAnythingTo'),
     icon: HeartIcon,
   },
   {
     section: 'search',
-    title: 'Search',
-    detail: 'Look across films, shows, music and books at once.',
+    title: say('common.search'),
+    detail: say('screens.tour.tourStops.lookAcrossFilmsShowsMusicAnd'),
     icon: SearchIcon,
   },
 ];

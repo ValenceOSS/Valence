@@ -8,6 +8,7 @@ import { pickMediaRelease } from '@ValenceClient/requests/fetchMediaRequests';
 import { ReleasePickTable } from '@ValenceScreens/components/AdminArea/components/ReleasePickTable/ReleasePickTable';
 import type { Release } from '@ValenceContracts/schemas/Indexer';
 import type { RequestReleasesTabProps } from './RequestReleasesTab.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Every release the indexers have for a request, judged against its quality profile and in the
@@ -31,12 +32,15 @@ const RequestReleasesTab = ({ request, onPicked }: RequestReleasesTabProps) => {
       void pickMediaRelease(id, release)
         .then(({ value, refusal }) => {
           if (value === null) {
-            setProblem(refusal?.message ?? 'That release could not be fetched.');
+            setProblem(
+              refusal?.message ??
+                say('screens.requestDetailDialog.requestReleasesTab.thatReleaseCouldNotBeFetched'),
+            );
 
             return;
           }
 
-          notify.worked('Fetching that release.');
+          notify.worked(say('screens.requestDetailDialog.requestReleasesTab.fetchingThatRelease'));
           onPicked(value);
         })
         .finally(() => {
@@ -49,7 +53,7 @@ const RequestReleasesTab = ({ request, onPicked }: RequestReleasesTabProps) => {
   if (found.isError) {
     return (
       <CouldNotRead
-        what="The releases"
+        said={say('screens.requestDetailDialog.requestReleasesTab.theReleasesCouldNotBeRead')}
         isTryingAgain={found.isFetching}
         onTryAgain={() => {
           void found.refetch();
@@ -67,13 +71,15 @@ const RequestReleasesTab = ({ request, onPicked }: RequestReleasesTabProps) => {
       )}
 
       {found.data === undefined ? (
-        <Spinner isCentered label="Asking every indexer" size="sm" />
+        <Spinner isCentered label={say('common.askingEveryIndexer')} size="sm" />
       ) : (
         <ReleasePickTable
           found={found.data}
           foundAt={found.dataUpdatedAt}
           pickingId={picking}
-          emptyMessage="Nothing the indexers have is for this request."
+          emptyMessage={say(
+            'screens.requestDetailDialog.requestReleasesTab.nothingTheIndexersHaveIsFor',
+          )}
           onPick={pick}
         />
       )}

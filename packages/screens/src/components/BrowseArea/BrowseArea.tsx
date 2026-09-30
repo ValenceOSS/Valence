@@ -40,6 +40,7 @@ import { AppliedFilters } from '@ValenceUI/AppliedFilters';
 import { BackToTop } from '@ValenceUI/BackToTop';
 import { FilterMenu } from '@ValenceUI/FilterMenu';
 import { useLibraryFilters } from '@ValenceClient/library/useLibraryFilters';
+import { say } from '@ValenceI18n/say';
 
 const PAGE_SIZE = 120;
 
@@ -53,26 +54,26 @@ const PAGES: Record<
   }
 > = {
   shows: {
-    title: 'Shows',
-    empty: 'No shows yet',
+    title: say('common.shows'),
+    empty: say('common.noShowsYet'),
     emptyIsAbout: 'one library',
     of: MonitorIcon,
   },
   films: {
-    title: 'Films',
-    empty: 'No films yet',
+    title: say('common.films'),
+    empty: say('common.noFilmsYet'),
     emptyIsAbout: 'one library',
     of: FilmIcon,
   },
   new: {
-    title: 'New & Popular',
-    empty: 'Nothing new yet',
+    title: say('common.newPopular'),
+    empty: say('screens.browseArea.nothingNewYet'),
     emptyIsAbout: 'every library',
     of: FlameIcon,
   },
   favourites: {
-    title: 'Favourites',
-    empty: 'Nothing has been favourited yet',
+    title: say('common.favourites'),
+    empty: say('screens.browseArea.nothingHasBeenFavouritedYet'),
     emptyIsAbout: 'nothing anybody scanned',
     of: HeartIcon,
   },
@@ -81,11 +82,11 @@ const PAGES: Record<
 const BROWSE_ORDERS: readonly BrowseOrder[] = ['added', 'released', 'title', 'rating', 'size'];
 
 const ORDER_NAMES: Record<BrowseOrder, string> = {
-  added: 'Recently added',
-  released: 'Release date',
-  title: 'Title',
-  rating: 'Rating',
-  size: 'Size',
+  added: say('common.recentlyAdded'),
+  released: say('screens.browseArea.releaseDate'),
+  title: say('common.title'),
+  rating: say('common.rating'),
+  size: say('common.size'),
 };
 /**
  * A page of the library asked one question — the films, the programmes, what arrived recently, what
@@ -241,7 +242,7 @@ const BrowseArea = ({
 
         {!isFilterable || filters.groups.length === 0 ? null : (
           <FilterMenu
-            label={`Filter ${page.title.toLowerCase()}`}
+            label={say('screens.browseArea.filterTitle', { title: page.title.toLowerCase() })}
             hasLabel
             groups={filters.groups}
             selected={filters.selected}
@@ -251,7 +252,7 @@ const BrowseArea = ({
 
         {!isFilterable || isReading || items.length === 0 ? null : (
           <OptionMenu
-            label={`Order ${page.title.toLowerCase()}`}
+            label={say('screens.browseArea.orderTitle', { title: page.title.toLowerCase() })}
             align="end"
             triggerShape="button"
             trigger={
@@ -262,7 +263,7 @@ const BrowseArea = ({
             }
             groups={[
               {
-                name: 'Order',
+                name: say('common.order'),
                 options: BROWSE_ORDERS.map((order) => ({ id: order, label: ORDER_NAMES[order] })),
                 selectedId: arrangement.order,
                 onSelect: (id) => {
@@ -274,10 +275,10 @@ const BrowseArea = ({
                 },
               },
               {
-                name: 'Show',
+                name: say('common.show'),
                 options: [
-                  { id: 'everything', label: 'Everything' },
-                  { id: 'unwatched', label: 'Only what you have not watched' },
+                  { id: 'everything', label: say('common.everything') },
+                  { id: 'unwatched', label: say('screens.browseArea.onlyWhatYouHaveNotWatched') },
                 ],
                 selectedId: arrangement.isHidingWatched ? 'unwatched' : 'everything',
                 onSelect: (id) => {
@@ -321,7 +322,7 @@ const BrowseArea = ({
       >
         {libraries.isError || found.isError ? (
           <CouldNotRead
-            what={page.title}
+            said={say('screens.browseArea.titleCouldNotBeRead', { title: page.title })}
             isTryingAgain={libraries.isFetching || found.isFetching}
             onTryAgain={() => {
               void libraries.refetch();
@@ -329,19 +330,23 @@ const BrowseArea = ({
             }}
           />
         ) : isReading ? (
-          <Spinner isCentered label={`Reading ${page.title.toLowerCase()}`} size="sm" />
+          <Spinner
+            isCentered
+            label={say('screens.browseArea.readingTitle', { title: page.title.toLowerCase() })}
+            size="sm"
+          />
         ) : items.length === 0 && books.length === 0 ? (
           hasNoLibraries ? (
             <NothingHere
               of={FolderOpenIcon}
-              title="No libraries yet"
+              title={say('common.noLibrariesYet')}
               detail={howToFillIt('no libraries', onAddLibrary !== undefined)}
               {...(onAddLibrary === undefined
                 ? {}
                 : {
                     action: (
                       <Button variant="glossy" onClick={onAddLibrary}>
-                        Add a library
+                        {say('common.addALibrary')}
                       </Button>
                     ),
                   })}
@@ -358,7 +363,7 @@ const BrowseArea = ({
                 : {
                     action: (
                       <Button variant="glossy" onClick={onAddLibrary}>
-                        Scan it
+                        {say('common.scanIt')}
                       </Button>
                     ),
                   })}
@@ -390,7 +395,7 @@ const BrowseArea = ({
             )}
 
             {books.length === 0 || onOpenBook === undefined ? null : (
-              <BookRow title="Books" books={books} onOpen={onOpenBook} />
+              <BookRow title={say('common.books')} books={books} onOpen={onOpenBook} />
             )}
           </>
         )}

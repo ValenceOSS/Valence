@@ -8,6 +8,7 @@ import { musicMenuFor } from './musicMenuFor';
 import { useMusicNavigation } from './useMusicNavigation';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import type { MusicTileProps } from '@ValenceScreens/components/MusicTile/MusicTile.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * The tile that opens somebody's liked songs, which sits at the front of their playlists wherever
@@ -22,8 +23,8 @@ const useLikedSongsTile = (): MusicTileProps => {
   const addingTo = useMyPlaylists();
 
   return {
-    title: 'Liked Songs',
-    detail: 'Every song you have liked',
+    title: say('common.likedSongs2'),
+    detail: say('common.everySongYouHaveLiked'),
     artwork: (
       <PlaylistCover
         name="Liked Songs"
@@ -36,7 +37,7 @@ const useLikedSongsTile = (): MusicTileProps => {
     onOpen: () => {
       open({ kind: 'liked' });
     },
-    menu: musicMenuFor({ kind: 'liked' }, 'Liked Songs', player, open, addingTo),
+    menu: musicMenuFor({ kind: 'liked' }, say('common.likedSongs2'), player, open, addingTo),
   };
 };
 

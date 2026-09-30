@@ -12,6 +12,7 @@ import { upcomingIn } from '@ValenceClient/music/playQueue';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import type { MusicTrack } from '@ValenceContracts/schemas/Music';
+import { say } from '@ValenceI18n/say';
 
 /**
  * One song in the queue: its cover, its name and who it is by, marked where smart shuffle mixed it
@@ -48,7 +49,7 @@ const QueuedSong = ({
         {isPick ? (
           <span className="flex shrink-0 items-center gap-0.5 text-accent">
             <Icon of={SparkleFilledIcon} size={10} />
-            Smart shuffle ·
+            {say('screens.musicPage.queuePanel.smartShuffle')}
           </span>
         ) : null}
         <span className="truncate">{track.artists.map((artist) => artist.name).join(', ')}</span>
@@ -82,29 +83,33 @@ const QueuePanel = () => {
     return (
       <NothingHere
         of={ListOrderedIcon}
-        title="Nothing queued"
-        detail="Play something and what comes next will be here."
+        title={say('screens.musicPage.queuePanel.nothingQueued')}
+        detail={say('screens.musicPage.queuePanel.playSomethingAndWhatComesNext')}
       />
     );
   }
 
   return (
     <div className="flex flex-col gap-5">
-      <section aria-label="Now playing" className="flex flex-col gap-2">
-        <h3 className="px-2 text-sm font-semibold text-text">Now playing</h3>
+      <section aria-label={say('common.nowPlaying')} className="flex flex-col gap-2">
+        <h3 className="px-2 text-sm font-semibold text-text">{say('common.nowPlaying')}</h3>
         <div className="rounded-md px-2 py-1.5">
           <QueuedSong track={current} isCurrent isPick={queue.picks.includes(current.id)} />
         </div>
       </section>
 
-      <section aria-label="Next up" className="flex flex-col gap-2">
+      <section aria-label={say('common.nextUp')} className="flex flex-col gap-2">
         <h3 className="px-2 text-sm font-semibold text-text">
-          {queue.source === null ? 'Next up' : `Next from ${queue.source.name}`}
+          {queue.source === null
+            ? say('common.nextUp')
+            : say('common.nextFromName', { name: queue.source.name })}
         </h3>
 
         {upcoming.length === 0 ? (
           <p className="px-2 text-sm text-text-muted">
-            {queue.repeat === 'all' ? 'The queue starts again after this.' : 'Nothing after this.'}
+            {queue.repeat === 'all'
+              ? say('common.theQueueStartsAgainAfterThis')
+              : say('common.nothingAfterThis')}
           </p>
         ) : (
           <div
@@ -154,7 +159,7 @@ const QueuePanel = () => {
                     <Button
                       variant="bare"
                       size="none"
-                      label={`Play ${track.title} now`}
+                      label={say('common.playTitleNow', { title: track.title })}
                       hasTooltip={false}
                       className="min-w-0 flex-1"
                       onClick={() => {
@@ -171,7 +176,9 @@ const QueuePanel = () => {
                       variant="ghost"
                       size="xs"
                       isIconOnly
-                      label={`Take ${track.title} out of the queue`}
+                      label={say('screens.musicPage.queuePanel.takeTitleOutOfTheQueue', {
+                        title: track.title,
+                      })}
                       className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
                       onClick={() => {
                         player.removeFromQueue(at);

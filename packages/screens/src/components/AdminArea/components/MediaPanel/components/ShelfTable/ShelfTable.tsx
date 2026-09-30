@@ -10,6 +10,7 @@ import { MediaPoster } from '@ValenceScreens/components/AdminArea/components/Med
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { ShelfItem } from '@ValenceScreens/components/AdminArea/components/MediaPanel/ShelfItem.types';
 import type { ShelfTableProps } from './ShelfTable.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * A library of albums or books as the media panel lists it: each with its cover, its name and year,
@@ -27,7 +28,7 @@ const ShelfTable = ({ label, items, toolbar, emptyMessage, onOpenFolder }: Shelf
     () => [
       {
         id: 'title',
-        header: 'Title',
+        header: say('common.title'),
         accessorFn: (item) => item.name,
         cell: ({ row }) => (
           <span className="flex min-w-0 items-center gap-3">
@@ -57,7 +58,7 @@ const ShelfTable = ({ label, items, toolbar, emptyMessage, onOpenFolder }: Shelf
       },
       {
         id: 'size',
-        header: 'Size',
+        header: say('common.size'),
         accessorFn: (item) => item.sizeBytes ?? 0,
         cell: ({ row }) => (
           <span className="whitespace-nowrap tabular-nums text-text-muted">
@@ -67,7 +68,7 @@ const ShelfTable = ({ label, items, toolbar, emptyMessage, onOpenFolder }: Shelf
       },
       {
         id: 'added',
-        header: 'Added',
+        header: say('common.added'),
         accessorFn: (item) => item.addedAt,
         cell: ({ row }) => (
           <span className="whitespace-nowrap tabular-nums text-text-muted">
@@ -85,14 +86,14 @@ const ShelfTable = ({ label, items, toolbar, emptyMessage, onOpenFolder }: Shelf
           return correct === null ? null : (
             <span className="flex justify-end">
               <ActionMenu
-                label={`Actions for ${row.original.name}`}
+                label={say('common.actionsForName', { name: row.original.name })}
                 trigger={<Icon of={MoreHorizontalIcon} size={16} />}
                 groups={[
                   {
                     items: [
                       {
                         id: 'wrong-match',
-                        label: 'Wrong match?',
+                        label: say('common.wrongMatch'),
                         icon: <Icon of={SearchFilledIcon} size={15} />,
                         onChoose: correct,
                       },

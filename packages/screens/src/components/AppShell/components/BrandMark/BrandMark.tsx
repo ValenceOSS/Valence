@@ -9,8 +9,9 @@ import {
   stillTransition,
 } from '@ValenceUI/animations/reveal';
 import type { BrandMarkProps } from './BrandMark.types';
+import { say } from '@ValenceI18n/say';
 
-const WORD = 'Valence';
+const WORD = say('common.valence');
 
 const LETTER_STEP = 0.035;
 

@@ -4,6 +4,7 @@ import mark from '@ValenceMobile/assets/valence-mark.png';
 import { theColours } from '@ValenceMobile/theme/theColours';
 import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { ASplashProps } from './ASplash.types';
+import { say } from '@ValenceI18n/say';
 
 const MARK_WIDE = 100;
 
@@ -91,7 +92,7 @@ const ASplash = ({ isDone, onGone }: ASplashProps) => {
         source={mark}
         resizeMode="contain"
         accessibilityRole="image"
-        accessibilityLabel="Valence"
+        accessibilityLabel={say('common.valence')}
         style={[
           styles.mark,
           {

@@ -13,16 +13,17 @@ import { tokens } from '@ValenceTv/theme/tokens';
 import mark from '@ValenceTv/assets/valence-mark.png';
 import type { Tab } from '@ValenceTv/navigation/Tab';
 import type { TopBarProps } from './TopBar.types';
+import { say } from '@ValenceI18n/say';
 
 const TABS: readonly { id: Tab; label: string; icon: typeof Home }[] = [
-  { id: 'home', label: 'Home', icon: Home },
-  { id: 'films', label: 'Films', icon: Film },
-  { id: 'shows', label: 'Shows', icon: Monitor },
+  { id: 'home', label: say('common.home'), icon: Home },
+  { id: 'films', label: say('common.films'), icon: Film },
+  { id: 'shows', label: say('common.shows'), icon: Monitor },
 ];
 
-const MUSIC: (typeof TABS)[number] = { id: 'music', label: 'Music', icon: MusicNote };
+const MUSIC: (typeof TABS)[number] = { id: 'music', label: say('common.music'), icon: MusicNote };
 
-const BOOKS: (typeof TABS)[number] = { id: 'books', label: 'Books', icon: Headphones };
+const BOOKS: (typeof TABS)[number] = { id: 'books', label: say('common.books'), icon: Headphones };
 
 const MARK = { width: 54, height: 40 };
 
@@ -98,7 +99,7 @@ const TopBar = ({
         <TVFocusGuideView autoFocus style={styles.capsule}>
           <Focusable
             ref={searchRef}
-            label="Search"
+            label={say('common.search')}
             scale={1.08}
             onFocus={() => {
               onChoose('search');
@@ -136,7 +137,7 @@ const TopBar = ({
           {profile === null ? null : (
             <Focusable
               ref={faceRef}
-              label={`${profile.name}'s profile`}
+              label={say('tv.topBar.nameSProfile', { name: profile.name })}
               scale={1.08}
               onFocus={() => {
                 onChoose('account');

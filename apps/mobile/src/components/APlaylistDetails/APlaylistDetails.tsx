@@ -7,6 +7,7 @@ import { TextField } from '@ValenceMobile/components/TextField/TextField';
 import { Toggle } from '@ValenceMobile/components/Toggle/Toggle';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import type { APlaylistDetailsProps } from './APlaylistDetails.types';
+import { say } from '@ValenceI18n/say';
 
 const styles = StyleSheet.create({
   ordered: { alignItems: 'center', flexDirection: 'row', gap: 12 },
@@ -44,7 +45,7 @@ const APlaylistDetails = ({ isOpen, editing, onClose, onDone }: APlaylistDetails
     const called = name.trim();
 
     if (called === '') {
-      setProblem('A playlist needs a name.');
+      setProblem(say('common.aPlaylistNeedsAName'));
 
       return;
     }
@@ -63,7 +64,7 @@ const APlaylistDetails = ({ isOpen, editing, onClose, onDone }: APlaylistDetails
       setIsSaving(false);
 
       if (made === null) {
-        setProblem('That playlist could not be made.');
+        setProblem(say('common.thatPlaylistCouldNotBeMade'));
 
         return;
       }
@@ -82,7 +83,7 @@ const APlaylistDetails = ({ isOpen, editing, onClose, onDone }: APlaylistDetails
     setIsSaving(false);
 
     if (!isSaved) {
-      setProblem('That could not be saved.');
+      setProblem(say('common.thatCouldNotBeSaved'));
 
       return;
     }
@@ -93,27 +94,31 @@ const APlaylistDetails = ({ isOpen, editing, onClose, onDone }: APlaylistDetails
   return (
     <ASheet
       isOpen={isOpen}
-      title={editing === null ? 'New playlist' : 'Edit playlist'}
-      closeLabel="Cancel"
+      title={editing === null ? say('common.newPlaylist') : say('common.editPlaylist')}
+      closeLabel={say('common.cancel')}
       onClose={onClose}
     >
-      <TextField label="Name" value={name} onValueChange={setName} placeholder="Name" />
       <TextField
-        label="Description"
+        label={say('common.name')}
+        value={name}
+        onValueChange={setName}
+        placeholder={say('common.name')}
+      />
+      <TextField
+        label={say('common.description')}
         value={description}
         onValueChange={setDescription}
-        placeholder="What it is for"
+        placeholder={say('common.whatItIsFor')}
       />
 
       <View style={styles.ordered}>
         <View style={styles.orderedWords}>
-          <Words>The order matters</Words>
+          <Words>{say('common.theOrderMatters')}</Words>
           <Words size="small" tone="muted">
-            For chapters, a series in release order, or anything that should never shuffle or
-            repeat.
+            {say('common.forChaptersASeriesInRelease')}
           </Words>
         </View>
-        <Toggle label="The order matters" isOn={isOrdered} onToggle={setIsOrdered} />
+        <Toggle label={say('common.theOrderMatters')} isOn={isOrdered} onToggle={setIsOrdered} />
       </View>
 
       {problem === null ? null : <Words tone="danger">{problem}</Words>}
@@ -124,7 +129,7 @@ const APlaylistDetails = ({ isOpen, editing, onClose, onDone }: APlaylistDetails
           void save();
         }}
       >
-        {editing === null ? 'Make it' : 'Save'}
+        {editing === null ? say('common.makeIt') : say('common.save')}
       </Button>
     </ASheet>
   );

@@ -3,6 +3,7 @@ import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { SettingRow } from '@ValenceUI/SettingRow';
 import { usePluginThemeChoice } from '@ValenceClient/plugins/usePluginThemeChoice';
 import { pluginQueries } from '@ValenceClient/query/pluginQueries';
+import { say } from '@ValenceI18n/say';
 
 const OWN = 'valence';
 
@@ -20,28 +21,32 @@ const PluginThemeRow = () => {
   }
 
   const options = [
-    { id: OWN, label: 'Valence', detail: 'The colours Valence comes with' },
+    {
+      id: OWN,
+      label: say('common.valence'),
+      detail: say('screens.accountArea.pluginThemeRow.theColoursValenceComesWith'),
+    },
     ...themes.map((theme) => ({
       id: `${theme.pluginId}/${theme.id}`,
       label: theme.name,
-      detail: `From ${theme.pluginName}`,
+      detail: say('common.fromPluginName', { pluginName: theme.pluginName }),
     })),
   ];
   const selected = options.some((option) => option.id === choice) ? (choice ?? OWN) : OWN;
 
   return (
     <SettingRow
-      title="Colours"
-      description="A theme from a plugin replaces Valence’s colours and corners on this device. It follows the light or dark choice above where it offers both."
+      title={say('common.colours')}
+      description={say('screens.accountArea.pluginThemeRow.aThemeFromAPluginReplaces')}
     >
       <OptionMenu
-        label="Colours"
+        label={say('common.colours')}
         triggerShape="field"
         align="end"
-        trigger={options.find((option) => option.id === selected)?.label ?? 'Valence'}
+        trigger={options.find((option) => option.id === selected)?.label ?? say('common.valence')}
         groups={[
           {
-            name: 'Colours',
+            name: say('common.colours'),
             options,
             selectedId: selected,
             onSelect: (id) => {

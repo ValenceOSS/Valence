@@ -16,6 +16,7 @@ import {
 } from '@ValenceScreens/components/AdminArea/components/WebhookFields/webhookPanes';
 import type { WebhookDraft } from '@ValenceScreens/components/AdminArea/components/WebhookFields/WebhookFields.types';
 import type { EditWebhookDialogProps } from './EditWebhookDialog.types';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Changes a subscription that already exists, so that trying a different set of events is a matter of
@@ -90,7 +91,11 @@ const EditWebhookDialog = ({
   };
 
   return (
-    <DialogCompanion label={`Edit ${webhook.name}`} isOpen={requested !== null} onClose={onClose}>
+    <DialogCompanion
+      label={say('common.editName', { name: webhook.name })}
+      isOpen={requested !== null}
+      onClose={onClose}
+    >
       <Tabs
         value={pane}
         onValueChange={(next) => {
@@ -101,11 +106,11 @@ const EditWebhookDialog = ({
       >
         <DialogTitle
           size="compact"
-          title={`Edit ${webhook.name}`}
-          detail="Its signing secret stays as it is, so anything already checking deliveries keeps working."
+          title={say('common.editName', { name: webhook.name })}
+          detail={say('screens.webhooksPanel.editWebhookDialog.itsSigningSecretStaysAsIt')}
           below={
             <TabRow
-              label="What to change"
+              label={say('common.whatToChange')}
               tone="underlined"
               size="sm"
               value={pane}
@@ -129,7 +134,9 @@ const EditWebhookDialog = ({
           note={refusal}
           dismiss={{ onChoose: onClose }}
           confirm={{
-            label: isSaving ? 'Saving…' : 'Save changes',
+            label: isSaving
+              ? say('screens.webhooksPanel.editWebhookDialog.saving')
+              : say('common.saveChanges'),
             onChoose: save,
             isDisabled: !isReady || isSaving,
           }}

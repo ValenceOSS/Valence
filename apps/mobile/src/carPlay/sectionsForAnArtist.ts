@@ -3,6 +3,7 @@ import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { rowForAnAlbum } from '@ValenceMobile/carPlay/rowForAnAlbum';
 import type { MusicArtistDetail } from '@ValenceContracts/schemas/Music';
 import type { CarSection } from '@ValenceMobile/carPlay/NativeCarPlay.types';
+import { say } from '@ValenceI18n/say';
 
 const POPULAR_SHOWN = 10;
 
@@ -14,7 +15,7 @@ const POPULAR_SHOWN = 10;
  */
 const sectionsForAnArtist = (detail: MusicArtistDetail): CarSection[] => [
   {
-    title: 'Popular',
+    title: say('common.popular'),
     rows: detail.popular.slice(0, POPULAR_SHOWN).map((track, index) => ({
       id: `song:${detail.artist.id}:${index.toString()}`,
       title: track.title,
@@ -23,7 +24,7 @@ const sectionsForAnArtist = (detail: MusicArtistDetail): CarSection[] => [
       opens: false,
     })),
   },
-  { title: 'Albums', rows: detail.albums.map(rowForAnAlbum) },
+  { title: say('common.albums'), rows: detail.albums.map(rowForAnAlbum) },
 ];
 
 export { sectionsForAnArtist };

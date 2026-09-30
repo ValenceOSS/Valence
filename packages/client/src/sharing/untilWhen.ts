@@ -1,5 +1,6 @@
 import { saidWhen } from '@ValenceClient/format/saidWhen';
 import type { Share } from '@ValenceContracts/schemas/Share';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Says what still holds a link open, for one that is still working — or used up, which stops only
@@ -14,15 +15,21 @@ import type { Share } from '@ValenceContracts/schemas/Share';
 const untilWhen = (share: Share): string => {
   if (share.isSpent) {
     return share.expiresAt === null
-      ? 'Whoever opened it can still watch'
-      : `Whoever opened it can still watch until ${saidWhen(share.expiresAt)}`;
+      ? say('client.sharing.untilWhen.whoeverOpenedItCanStillWatch2')
+      : say('client.sharing.untilWhen.whoeverOpenedItCanStillWatch', {
+          expiresAt: saidWhen(share.expiresAt),
+        });
   }
 
   if (share.expiresAt !== null) {
-    return `Runs out ${saidWhen(share.expiresAt)}`;
+    return say('client.sharing.untilWhen.runsOutExpiresAt', {
+      expiresAt: saidWhen(share.expiresAt),
+    });
   }
 
-  return share.viewCap === null ? 'Until it is withdrawn' : 'Until it has been opened enough times';
+  return share.viewCap === null
+    ? say('client.sharing.untilWhen.untilItIsWithdrawn')
+    : say('client.sharing.untilWhen.untilItHasBeenOpenedEnough');
 };
 
 export { untilWhen };

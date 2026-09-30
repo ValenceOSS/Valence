@@ -4,14 +4,15 @@ import { Icon } from '@ValenceUI/Icon';
 import { cn } from '@ValenceUI/cn';
 import { AVATAR_STYLES } from '@ValenceContracts/schemas/ViewerProfile';
 import type { DrawnStudioProps } from './DrawnStudio.types';
+import { say } from '@ValenceI18n/say';
 
 const STYLE_NAMES: Record<(typeof AVATAR_STYLES)[number], string> = {
-  adventurer: 'Adventurer',
-  lorelei: 'Lorelei',
-  notionists: 'Notionists',
-  bottts: 'Bottts',
-  funEmoji: 'Fun emoji',
-  thumbs: 'Thumbs',
+  adventurer: say('screens.faceEditor.drawnStudio.adventurer'),
+  lorelei: say('screens.faceEditor.drawnStudio.lorelei'),
+  notionists: say('screens.faceEditor.drawnStudio.notionists'),
+  bottts: say('screens.faceEditor.drawnStudio.bottts'),
+  funEmoji: say('screens.faceEditor.drawnStudio.funEmoji'),
+  thumbs: say('screens.faceEditor.drawnStudio.thumbs'),
 };
 
 /**
@@ -25,14 +26,18 @@ const STYLE_NAMES: Record<(typeof AVATAR_STYLES)[number], string> = {
 const DrawnStudio = ({ style, seed, onChange }: DrawnStudioProps) => (
   <div className="flex flex-col gap-8">
     <section className="flex flex-col gap-3">
-      <h3 className="text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">Style</h3>
+      <h3 className="text-[0.65rem] uppercase tracking-[0.18em] text-text-muted">
+        {say('screens.faceEditor.drawnStudio.style')}
+      </h3>
       <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
         {AVATAR_STYLES.map((one) => (
           <Button
             key={one}
             variant="bare"
             size="none"
-            label={`Draw it in the ${STYLE_NAMES[one]} style`}
+            label={say('screens.faceEditor.drawnStudio.drawItInTheSTYLENAMES', {
+              STYLE_NAMES: STYLE_NAMES[one],
+            })}
             hasTooltip={false}
             isActive={one === style}
             onClick={() => {
@@ -66,7 +71,7 @@ const DrawnStudio = ({ style, seed, onChange }: DrawnStudioProps) => (
         }}
       >
         <Icon of={ShuffleIcon} size={15} />
-        Another face
+        {say('screens.faceEditor.drawnStudio.anotherFace')}
       </Button>
     </div>
   </div>

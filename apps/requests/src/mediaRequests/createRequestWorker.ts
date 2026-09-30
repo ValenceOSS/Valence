@@ -512,7 +512,7 @@ const createRequestWorker = ({
       ? saying('requests.mediaRequests.searchWhat.it')
       : search.episode === undefined
         ? saying('requests.mediaRequests.searchWhat.season', { season: search.season })
-        : saying('requests.mediaRequests.searchWhat.episode', {
+        : saying('common.searchWhatEpisode', {
             season: search.season.toString().padStart(2, '0'),
             episode: search.episode.toString().padStart(2, '0'),
           });

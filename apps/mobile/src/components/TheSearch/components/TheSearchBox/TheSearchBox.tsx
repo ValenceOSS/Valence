@@ -9,6 +9,7 @@ import { hasLiquidGlass } from '@ValenceMobile/platform/hasLiquidGlass';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { TheSearchBoxProps } from './TheSearchBox.types';
+import { say } from '@ValenceI18n/say';
 
 const HOLD_STILL_FOR = 250;
 
@@ -66,7 +67,7 @@ const TheSearchBox = ({
 
   const field = (
     <TextField
-      label="Search"
+      label={say('common.search')}
       value={typed}
       onValueChange={setTyped}
       placeholder={placeholder}

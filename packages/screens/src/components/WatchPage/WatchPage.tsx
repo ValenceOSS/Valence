@@ -16,6 +16,7 @@ import { HOME } from '@ValenceClient/navigation/readLocation';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
 import { useShell } from '@ValenceClient/shell/useShell';
 import { useQuietMusic } from '@ValenceScreens/music/useQuietMusic';
+import { say } from '@ValenceI18n/say';
 
 const PROGRESS_EVERY_SECONDS = 5;
 
@@ -128,11 +129,11 @@ const WatchPage = () => {
   );
 
   if (playing === null) {
-    return <SplashScreen name={title} label={`Loading ${title}`} />;
+    return <SplashScreen name={title} label={say('common.loadingTitle', { title })} />;
   }
 
   if (!isProgressReady && startOverride?.mediaId !== playing.id) {
-    return <SplashScreen name={title} label={`Loading ${title}`} />;
+    return <SplashScreen name={title} label={say('common.loadingTitle', { title })} />;
   }
 
   const found = progress.get(playing.id);
@@ -157,7 +158,7 @@ const WatchPage = () => {
         });
 
   if (beginning.kind === 'wait') {
-    return <SplashScreen name={title} label="Joining the watch party" />;
+    return <SplashScreen name={title} label={say('screens.watchPage.joiningTheWatchParty')} />;
   }
 
   if (begun === null || begun.mediaId !== playing.id || begun.atSeconds !== beginning.atSeconds) {
