@@ -1,3 +1,4 @@
+import { RESOLUTIONS } from '@ValenceContracts/schemas/ParsedRelease';
 import type {
   AudioCodec,
   ParsedRelease,
@@ -42,31 +43,34 @@ const AUDIO_CODECS: Readonly<Record<string, AudioCodec>> = {
 };
 
 /**
- * The resolution a frame of that size is called, by its height, with the nearest one below taken
- * for anything between — an anamorphic or cropped frame is a few lines short of the name it goes
- * by, and every release calls a 1920x804 film 1080p.
+ * The resolution a frame is sold as, from whichever of its sides says more.
  *
- * @param height - How many lines the frame has.
- * @returns What it is called, or nothing for a frame smaller than any of them.
+ * Height alone undersells a film shot wide: a 4K picture letterboxed to 2.39:1 is 3840 by 1608, and
+ * a 1080p one 1920 by 804. So the width is read as well, down to 720p, below which widths are shared
+ * across standards and only the height tells them apart.
+ *
+ * @param width - The frame's width in pixels.
+ * @param height - Its height in pixels.
+ * @returns The resolution, or null for a frame smaller than any a release is named for.
  */
-const resolutionOf = (height: number): Resolution | null => {
-  if (height >= 1800) {
-    return '2160p';
-  }
+const resolutionOf = (width: number, height: number): Resolution | null => {
+  const byHeight =
+    height >= 1800
+      ? 0
+      : height >= 900
+        ? 1
+        : height >= 650
+          ? 2
+          : height >= 530
+            ? 3
+            : height >= 400
+              ? 4
+              : null;
+  const byWidth = width >= 3200 ? 0 : width >= 1700 ? 1 : width >= 1150 ? 2 : null;
+  const best =
+    byHeight === null ? byWidth : byWidth === null ? byHeight : Math.min(byHeight, byWidth);
 
-  if (height >= 900) {
-    return '1080p';
-  }
-
-  if (height >= 650) {
-    return '720p';
-  }
-
-  if (height >= 530) {
-    return '576p';
-  }
-
-  return height >= 400 ? '480p' : null;
+  return best === null ? null : (RESOLUTIONS[best] ?? null);
 };
 
 /**
@@ -104,7 +108,7 @@ const qualityFromProbe = (
   const video = probed.video ?? null;
   const track = probed.audioStreams[0] ?? null;
   const codec = video === null ? undefined : VIDEO_CODECS[video.codec.toLowerCase()];
-  const resolution = video === null ? null : resolutionOf(video.height);
+  const resolution = video === null ? null : resolutionOf(video.width, video.height);
   const named = track === null ? undefined : AUDIO_CODECS[track.codec.toLowerCase()];
   const audio =
     track === null || named === undefined

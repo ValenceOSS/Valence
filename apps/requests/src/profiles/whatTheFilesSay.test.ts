@@ -22,6 +22,22 @@ describe('whatTheFilesSay', () => {
     );
   });
 
+  it('lets a file call its source something the title did not, which is only labelling', () => {
+    const webOnly = aProfile({ resolutions: ['2160p'], sources: ['webdl'] });
+
+    expect(whatTheFilesSay(['Film.2026.2160p.WEBRip.x265-GRP.mkv'], webOnly)).toBeNull();
+    expect(whatTheFilesSay(['Film.2026.2160p.BluRay.x265-GRP.mkv'], webOnly)).toBeNull();
+  });
+
+  it('takes a cinema recording where the profile asks for one', () => {
+    expect(
+      whatTheFilesSay(
+        ['Film.2026.2160p.TELESYNC.mkv'],
+        aProfile({ resolutions: ['2160p'], sources: ['telesync'] }),
+      ),
+    ).toBeNull();
+  });
+
   it('takes a file that says what the profile asked for', () => {
     expect(whatTheFilesSay(['Film.2026.2160p.WEB-DL.DDP5.1.H.265-GRP.mkv'], FOUR_K)).toBeNull();
   });

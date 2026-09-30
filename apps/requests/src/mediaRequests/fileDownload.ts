@@ -19,7 +19,11 @@ type Fileable = Pick<
   'id' | 'season' | 'episode' | 'title' | 'airDate' | 'filePath' | 'releaseTitle'
 >;
 
-type Filed = { filed: ReadonlyMap<string, string>; missing: readonly string[] };
+type Filed = {
+  filed: ReadonlyMap<string, string>;
+  missing: readonly string[];
+  refused: ReadonlyMap<string, string>;
+};
 
 /**
  * A file's extension, lower case and without its dot.
@@ -128,7 +132,10 @@ const videoFor = (
  * @param contentPath - Where the download is, as this service sees it.
  * @param isKeepingSource - Whether the download must keep its files, as a seeding torrent must.
  * @param probe - How to ask what a filed video actually is; answers nothing where none is set up.
- * @returns Where each was filed, and which could not be found in it.
+ * @param refuses - Says why a video is not what was asked for, judged by what it is found to be —
+ *   its resolution measured where it could be probed, and otherwise as its name says — or nothing
+ *   where it is. A refused video is taken back out of the library, with nothing placed beside it.
+ * @returns Where each was filed, which could not be found in it, and which were refused and why.
  */
 const fileDownload = async (
   request: Pick<MediaRequestRecord, 'libraryPath' | 'title' | 'year'>,
@@ -136,11 +143,13 @@ const fileDownload = async (
   contentPath: string,
   isKeepingSource: boolean,
   probe: ProbeClient = () => Promise.resolve(null),
+  refuses: (found: Partial<ParsedRelease>) => string | null = () => null,
 ): Promise<Filed> => {
   const files = await findDownloadedFiles(contentPath);
   const videos = files.filter(isFeature);
   const filed = new Map<string, string>();
   const missing: string[] = [];
+  const refused = new Map<string, string>();
 
   for (const item of items) {
     const video = videoFor(item, videos, items.length === 1);
@@ -158,6 +167,14 @@ const fileDownload = async (
     await placeFile(video.path, placed, isKeepingSource);
 
     const probed = await probe(placed);
+    const refusal = refuses({ ...said, ...(probed === null ? {} : qualityFromProbe(probed)) });
+
+    if (refusal !== null) {
+      await unlink(placed).catch(() => undefined);
+      refused.set(item.id, refusal);
+      continue;
+    }
+
     const destination =
       probed === null
         ? placed
@@ -192,7 +209,7 @@ const fileDownload = async (
     filed.set(item.id, destination);
   }
 
-  return { filed, missing };
+  return { filed, missing, refused };
 };
 
 export { fileDownload };

@@ -1,3 +1,4 @@
+import { basename, extname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
@@ -38,6 +39,9 @@ import type {
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { ProbeClient } from '@ValenceRequests/media/createProbeClient';
 import { whatTheFilesSay } from '@ValenceRequests/profiles/whatTheFilesSay';
+import { qualityRefusedBy } from '@ValenceRequests/profiles/qualityRefusedBy';
+import { QUALITY_LABELS } from '@ValenceRequests/profiles/QUALITY_LABELS';
+import type { ParsedRelease } from '@ValenceContracts/schemas/ParsedRelease';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import type { DownloadClientService } from '@ValenceRequests/downloads/createDownloadClientService';
 import type { DownloadQueueService } from '@ValenceRequests/downloads/createDownloadQueue';
@@ -92,6 +96,8 @@ type CreateRequestWorkerOptions = {
 };
 
 type Found = { request: MediaRequestRecord; items: RequestItemRecord[] };
+
+const NOTHING_REFUSED: ReadonlyMap<string, string> = new Map();
 
 const TICK_EVERY_MS = 30_000;
 
@@ -712,26 +718,52 @@ const createRequestWorker = ({
       const path = mapClientPath(download.contentPath, client);
 
       try {
-        const { filed, missing } = await (isMusicRequest(request.kind)
-          ? fileMusic(request, filing, path, download.protocol === 'torrent')
+        const { filed, missing, refused } = isMusicRequest(request.kind)
+          ? {
+              ...(await fileMusic(request, filing, path, download.protocol === 'torrent')),
+              refused: NOTHING_REFUSED,
+            }
           : isBookRequest(request.kind)
-            ? fileBooks(request, filing, path, download.protocol === 'torrent')
-            : file(request, filing, path, download.protocol === 'torrent', probe));
+            ? {
+                ...(await fileBooks(request, filing, path, download.protocol === 'torrent')),
+                refused: NOTHING_REFUSED,
+              }
+            : await file(
+                request,
+                filing,
+                path,
+                download.protocol === 'torrent',
+                probe,
+                await refusalsFor(request),
+              );
 
         for (const item of filing) {
           const path = filed.get(item.id);
+          const why = refused.get(item.id);
 
-          await (path === undefined
-            ? update(item, letGo(item, 'It was not in what was downloaded'))
-            : update(item, {
-                state: 'filed',
-                problem: null,
-                filePath: path,
-                filedTitle: item.releaseTitle,
-                filedScore: item.score,
-                attempts: 0,
-                ...downloadFacts(download),
-              }));
+          await (why !== undefined
+            ? update(item, letGo(item, why))
+            : path === undefined
+              ? update(item, letGo(item, 'It was not in what was downloaded'))
+              : update(item, {
+                  state: 'filed',
+                  problem: null,
+                  filePath: path,
+                  filedTitle: filedAs(path, item.releaseTitle),
+                  filedScore: item.score,
+                  attempts: 0,
+                  ...downloadFacts(download),
+                }));
+        }
+
+        const firstRefusal = [...refused.values()][0];
+
+        if (firstRefusal !== undefined) {
+          await block(request.id, download.title, filing[0]?.indexerId ?? null, firstRefusal);
+          await note(
+            request,
+            `${download.title} was not filed: ${firstRefusal}. It is blocklisted, and the next best is looked for.`,
+          );
         }
 
         if (missing.length === filing.length) {
@@ -1116,6 +1148,47 @@ const createRequestWorker = ({
     };
 
     next(firstMs);
+  };
+
+  /**
+   * What a filed copy is remembered as, for judging later whether to upgrade it: its file's own
+   * name, which says what it was found to be, where that name says its resolution, and otherwise the
+   * release it came from.
+   *
+   * @param path - Where it was filed.
+   * @param releaseTitle - The release it came from.
+   * @returns The name to judge it by.
+   */
+  const filedAs = (path: string, releaseTitle: string | null): string | null => {
+    const named = basename(path, extname(path));
+
+    return parseReleaseName(named).resolution === null ? releaseTitle : named;
+  };
+
+  /**
+   * How a request's films and episodes are judged as they are filed, by what each video is found to
+   * be rather than what its release was called. A request whose release was picked by hand is left
+   * as it was picked.
+   *
+   * @param request - What was asked for.
+   * @returns Why a video is refused, or nothing where it is what was asked for.
+   */
+  const refusalsFor = async (
+    request: MediaRequestRecord,
+  ): Promise<(found: Partial<ParsedRelease>) => string | null> => {
+    if (request.isPickedByHand) {
+      return () => null;
+    }
+
+    const profile = await profileFor(request);
+
+    return (found) => {
+      const refused = qualityRefusedBy(found, profile);
+
+      return refused === null
+        ? null
+        : `It is ${QUALITY_LABELS[refused]}, which this profile does not take`;
+    };
   };
 
   /**

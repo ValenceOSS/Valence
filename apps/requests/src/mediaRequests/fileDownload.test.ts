@@ -190,6 +190,64 @@ describe('fileDownload', () => {
     ]);
   });
 
+  it('refuses a video that turns out not to be what was asked for, and takes it back out', async () => {
+    const { downloads, library } = await aPlace();
+    const release = join(downloads, 'Film.2026.2160p.WEB-DL-GRP');
+
+    await mkdir(release);
+    await writeFile(join(release, 'Film.2026.2160p.WEB-DL-GRP.mkv'), 'the film');
+    await writeFile(join(release, 'Film.2026.2160p.WEB-DL-GRP.en.srt'), 'words');
+
+    const seen: object[] = [];
+    const { filed, refused } = await fileDownload(
+      { libraryPath: library, title: 'Film', year: 2026 },
+      [anItem('film', null, null)],
+      release,
+      true,
+      () =>
+        Promise.resolve({
+          video: { codec: 'h264', width: 1920, height: 800 },
+          audioStreams: [],
+        }),
+      (found) => {
+        seen.push(found);
+
+        return found.resolution === '2160p'
+          ? null
+          : 'It is 1080p, which this profile does not take';
+      },
+    );
+
+    expect(seen).toEqual([expect.objectContaining({ resolution: '1080p', source: 'webdl' })]);
+    expect(refused.get('film')).toBe('It is 1080p, which this profile does not take');
+    expect(filed.has('film')).toBe(false);
+    expect(await readdir(join(library, 'Film (2026)'))).toEqual([]);
+  });
+
+  it('files a video that is what was asked for', async () => {
+    const { downloads, library } = await aPlace();
+    const release = join(downloads, 'Film.2026.2160p.WEB-DL-GRP');
+
+    await mkdir(release);
+    await writeFile(join(release, 'Film.2026.2160p.WEB-DL-GRP.mkv'), 'the film');
+
+    const { filed, refused } = await fileDownload(
+      { libraryPath: library, title: 'Film', year: 2026 },
+      [anItem('film', null, null)],
+      release,
+      true,
+      () =>
+        Promise.resolve({
+          video: { codec: 'hevc', width: 3840, height: 1608 },
+          audioStreams: [],
+        }),
+      (found) => (found.resolution === '2160p' ? null : 'It is not 4K'),
+    );
+
+    expect(refused.size).toBe(0);
+    expect(filed.has('film')).toBe(true);
+  });
+
   it('keeps what the name said where nothing answers the probe', async () => {
     const { downloads, library } = await aPlace();
 

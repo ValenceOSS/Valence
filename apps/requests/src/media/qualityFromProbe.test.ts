@@ -4,8 +4,11 @@ import { qualityFromProbe } from './qualityFromProbe';
 /**
  * A probe of a file, with only what a test cares about given.
  */
-const probed = (video: { codec: string; height: number } | null, audio: object[] = []) => ({
-  video: video === null ? null : { ...video, width: 1920 },
+const probed = (
+  video: { codec: string; height: number; width?: number } | null,
+  audio: object[] = [],
+) => ({
+  video: video === null ? null : { width: 1920, ...video },
   audioStreams: audio.map((one) => ({ codec: 'aac', channels: 2, profile: null, ...one })),
 });
 
@@ -22,9 +25,31 @@ describe('qualityFromProbe', () => {
   });
 
   it('calls a frame a few lines short by the name every release gives it', () => {
-    expect(qualityFromProbe(probed({ codec: 'h264', height: 804 })).resolution).toBe('720p');
     expect(qualityFromProbe(probed({ codec: 'h264', height: 1038 })).resolution).toBe('1080p');
-    expect(qualityFromProbe(probed({ codec: 'h264', height: 240 })).resolution).toBeUndefined();
+    expect(
+      qualityFromProbe(probed({ codec: 'h264', width: 320, height: 240 })).resolution,
+    ).toBeUndefined();
+  });
+
+  it('reads a film shot wide by its width, which its letterboxed height undersells', () => {
+    expect(qualityFromProbe(probed({ codec: 'hevc', width: 3840, height: 1608 })).resolution).toBe(
+      '2160p',
+    );
+    expect(qualityFromProbe(probed({ codec: 'h264', width: 1920, height: 804 })).resolution).toBe(
+      '1080p',
+    );
+    expect(qualityFromProbe(probed({ codec: 'h264', width: 1280, height: 534 })).resolution).toBe(
+      '720p',
+    );
+  });
+
+  it('tells standard definition apart by height, where widths are shared', () => {
+    expect(
+      qualityFromProbe(probed({ codec: 'mpeg2video', width: 720, height: 576 })).resolution,
+    ).toBe('576p');
+    expect(
+      qualityFromProbe(probed({ codec: 'mpeg2video', width: 720, height: 480 })).resolution,
+    ).toBe('480p');
   });
 
   it('names the audio on the first track, and its channels', () => {
