@@ -10,6 +10,10 @@ import { artworkUrl } from '@ValenceClient/library/artworkUrl';
  * @param mediaId - The item.
  * @returns The address to load.
  */
-const titleLogoUrl = (mediaId: string): string => `${artworkUrl(mediaId, 'logo')}?at=full`;
+const titleLogoUrl = (mediaId: string): string => {
+  const url = artworkUrl(mediaId, 'logo');
+
+  return `${url}${url.includes('?') ? '&' : '?'}at=full`;
+};
 
 export { titleLogoUrl };
