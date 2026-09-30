@@ -1,10 +1,10 @@
 import type { SentDownloadRecord } from '@ValenceRequests/downloads/SentDownloadRecord';
 
 type DownloadRules = {
-  metadataForMs: number;
-  stalledForMs: number;
+  metadataForMs: number | null;
+  stalledForMs: number | null;
   settlesForMs: number;
-  wouldTakeLongerThanMs: number;
+  wouldTakeLongerThanMs: number | null;
 };
 
 type Judged = {
@@ -62,6 +62,9 @@ const roughly = (ms: number): string => {
  * Nothing is judged before it has had time to settle. Every torrent starts at nought bytes a
  * second, and a rule that did not wait would drop every one of them.
  *
+ * Any of the last three can be turned off by leaving its wait empty, and a download it would have
+ * given up on is left to carry on.
+ *
  * @param download - The download as the client last left it.
  * @param now - The clock.
  * @param rules - How long to allow for each of those.
@@ -86,12 +89,12 @@ const judgeDownload = (
   const since = now.getTime() - Date.parse(download.sentAt);
   const done = download.doneBytes ?? 0;
 
-  if (
+  const isWithoutMetadata =
     download.protocol === 'torrent' &&
-    download.sizeBytes === null &&
-    done === 0 &&
-    since >= rules.metadataForMs
-  ) {
+    (download.state === 'metadata' || download.sizeBytes === null) &&
+    done === 0;
+
+  if (isWithoutMetadata && rules.metadataForMs !== null && since >= rules.metadataForMs) {
     return {
       isDoomed: true,
       reason: 'It never got its file list, so it never started',
@@ -99,12 +102,18 @@ const judgeDownload = (
   }
 
   if (download.state === 'stalled') {
-    return now.getTime() - Date.parse(download.updatedAt) >= rules.stalledForMs
+    return rules.stalledForMs !== null &&
+      now.getTime() - Date.parse(download.updatedAt) >= rules.stalledForMs
       ? { isDoomed: true, reason: 'It stalled, with nobody to fetch it from' }
       : FINE;
   }
 
-  if (since < rules.settlesForMs || download.sizeBytes === null || done <= 0) {
+  if (
+    rules.wouldTakeLongerThanMs === null ||
+    since < rules.settlesForMs ||
+    download.sizeBytes === null ||
+    done <= 0
+  ) {
     return FINE;
   }
 

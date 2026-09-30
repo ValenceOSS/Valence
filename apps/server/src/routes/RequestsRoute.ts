@@ -21,6 +21,7 @@ import {
   DownloadClientSchema,
   DownloadClientTestSchema,
 } from '@ValenceContracts/schemas/DownloadClient';
+import { GiveUpRulesSchema } from '@ValenceContracts/schemas/GiveUpRules';
 import {
   ProfilesOnOfferSchema,
   QualityProfileChangeSchema,
@@ -451,6 +452,37 @@ const tryDownloadClientChangeRoute = createRoute({
     200: {
       description: 'Whether it answered, and which version it is',
       content: { 'application/json': { schema: DownloadClientTestAnswer } },
+    },
+  }),
+});
+
+const GiveUpRulesAnswer = GiveUpRulesSchema.openapi('GiveUpRules');
+
+const readGiveUpRulesRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/requests/give-up-rules',
+  tags: ['Admin'],
+  summary: 'Read when a download is given up on and the next best release tried',
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'The rules. A wait that is null never gives up',
+      content: { 'application/json': { schema: GiveUpRulesAnswer } },
+    },
+  }),
+});
+
+const changeGiveUpRulesRoute = createRoute({
+  method: 'put',
+  path: '/api/admin/requests/give-up-rules',
+  tags: ['Admin'],
+  summary: 'Change when a download is given up on and the next best release tried',
+  request: { body: { content: { 'application/json': { schema: GiveUpRulesSchema } } } },
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'The rules, as kept',
+      content: { 'application/json': { schema: GiveUpRulesAnswer } },
     },
   }),
 });
@@ -1059,6 +1091,8 @@ export {
   addDownloadClientRoute,
   changeDownloadClientRoute,
   listDownloadClientsRoute,
+  readGiveUpRulesRoute,
+  changeGiveUpRulesRoute,
   fileQueuedDownloadRoute,
   pauseQueuedDownloadRoute,
   readDownloadQueueRoute,

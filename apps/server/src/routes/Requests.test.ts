@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
+import { GIVE_UP_DEFAULTS } from '@ValenceContracts/schemas/GiveUpRules';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
 import { signUpForTest, makeAdministrator, TEST_ORIGIN } from '@ValenceServer/auth/signUpForTest';
 import { createMemoryPermissionService } from '@ValenceServer/auth/createMemoryPermissionService';
@@ -718,6 +719,10 @@ describe('download clients and the queue, through the server', () => {
       return method === 'POST' ? answer(201, CLIENT) : answer(200, [CLIENT]);
     }
 
+    if (url.endsWith('/api/give-up-rules')) {
+      return answer(200, GIVE_UP_DEFAULTS);
+    }
+
     return answer(200, CLIENT);
   };
 
@@ -729,6 +734,8 @@ describe('download clients and the queue, through the server', () => {
     ['POST', `/api/admin/requests/clients/${CLIENT.id}/test`, undefined, 200],
     ['POST', `/api/admin/requests/clients/${CLIENT.id}/try`, DRAFT, 200],
     ['DELETE', `/api/admin/requests/clients/${CLIENT.id}`, undefined, 204],
+    ['GET', '/api/admin/requests/give-up-rules', undefined, 200],
+    ['PUT', '/api/admin/requests/give-up-rules', GIVE_UP_DEFAULTS, 200],
     ['GET', '/api/admin/requests/downloads', undefined, 200],
     ['POST', '/api/admin/requests/downloads', SEND, 201],
     ['POST', `/api/admin/requests/downloads/${DOWNLOAD.id}/pause`, undefined, 200],

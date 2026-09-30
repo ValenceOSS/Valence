@@ -27,7 +27,7 @@ import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { QueuedDownload } from '@ValenceContracts/schemas/DownloadQueue';
 import type { DownloadQueueTableProps } from './DownloadQueueTable.types';
 
-const PAUSABLE = new Set(['queued', 'downloading', 'stalled']);
+const PAUSABLE = new Set(['queued', 'metadata', 'downloading', 'stalled']);
 
 /**
  * Says how much of a download has arrived, in the size it is going to be.

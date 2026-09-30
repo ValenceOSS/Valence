@@ -13,6 +13,8 @@ import { aSentDownload } from '@ValenceRequests/testing/aSentDownload';
 import { createMemoryRequestLogStore } from './createMemoryRequestLogStore';
 import { NotAllowedThere } from '@ValenceRequests/mediaRequests/NotAllowedThere';
 import { createRequestWorker } from './createRequestWorker';
+import { GIVE_UP_DEFAULTS } from '@ValenceContracts/schemas/GiveUpRules';
+import type { GiveUpRules } from '@ValenceContracts/schemas/GiveUpRules';
 import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
 import type { NotSent } from '@ValenceRequests/downloads/NotSent';
 import type {
@@ -59,6 +61,7 @@ type HarnessOptions = {
   localPath?: string;
   reports?: IndexerSearchReport[];
   reportsInTurn?: IndexerSearchReport[][];
+  rules?: GiveUpRules;
 };
 
 /**
@@ -92,6 +95,7 @@ const aWorker = ({
     },
   ],
   reportsInTurn,
+  rules = GIVE_UP_DEFAULTS,
 }: HarnessOptions = {}) => {
   const requestStore = createMemoryRecordStore(requests);
   const itemStore = createMemoryRecordStore(items);
@@ -157,6 +161,7 @@ const aWorker = ({
     file: filed,
     fileMusic: filedMusic,
     now: () => AT,
+    giveUpRules: () => Promise.resolve(rules),
     schedule: (run, afterMs) => {
       const entry = { run, afterMs };
 
@@ -450,7 +455,7 @@ describe('createRequestWorker', () => {
           refused: new Map(),
         }),
       );
-      const { worker, items, events } = aWorker({
+      const { worker, items, events, downloads } = aWorker({
         items: [
           aRequestItem({
             state: 'downloading',
@@ -489,6 +494,9 @@ describe('createRequestWorker', () => {
           folder: '/media/Films/Dune (2021)',
         },
       ]);
+      expect((await downloads.find(aSentDownload().id))?.filedInto).toBe(
+        '/media/Films/Dune (2021)',
+      );
     });
 
     it('waits while a download is under way', async () => {
@@ -543,6 +551,39 @@ describe('createRequestWorker', () => {
       expect((await blocked.list())[0]?.reason).toBe('It stalled, with nobody to fetch it from');
     });
 
+    it('leaves a stalled download alone once that rule is turned off', async () => {
+      const { worker, blocked, remove } = aWorker({
+        items: [aRequestItem({ state: 'downloading', downloadId: aSentDownload().id })],
+        sent: [aSentDownload({ state: 'stalled', updatedAt: '2026-09-18T12:00:00.000Z' })],
+        rules: { ...GIVE_UP_DEFAULTS, stalledHours: null },
+      });
+
+      await worker.tick();
+
+      expect(await blocked.list()).toEqual([]);
+      expect(remove).not.toHaveBeenCalled();
+    });
+
+    it('waits as long as it was told for a torrent to learn what it holds', async () => {
+      const { worker, blocked } = aWorker({
+        items: [aRequestItem({ state: 'downloading', downloadId: aSentDownload().id })],
+        sent: [
+          aSentDownload({
+            state: 'metadata',
+            sizeBytes: 0,
+            doneBytes: 0,
+            progress: 0,
+            sentAt: '2026-09-18T22:50:00.000Z',
+          }),
+        ],
+        rules: { ...GIVE_UP_DEFAULTS, metadataMinutes: 180 },
+      });
+
+      await worker.tick();
+
+      expect(await blocked.list()).toEqual([]);
+    });
+
     it('gives up on a torrent that never learned what it holds', async () => {
       const { worker, blocked } = aWorker({
         items: [aRequestItem({ state: 'downloading', downloadId: aSentDownload().id })],
@@ -551,7 +592,7 @@ describe('createRequestWorker', () => {
             sizeBytes: null,
             doneBytes: null,
             progress: 0,
-            sentAt: '2026-09-18T23:50:00.000Z',
+            sentAt: '2026-09-18T22:50:00.000Z',
           }),
         ],
       });

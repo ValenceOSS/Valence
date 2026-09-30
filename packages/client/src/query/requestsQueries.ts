@@ -7,6 +7,7 @@ import { fetchIndexers, searchReleases } from '@ValenceClient/requests/fetchInde
 import { fetchCatalogue, fetchDefinition } from '@ValenceClient/requests/fetchDefinitions';
 import { fetchDownloadClients } from '@ValenceClient/requests/fetchDownloadClients';
 import { fetchDownloadQueue } from '@ValenceClient/requests/fetchDownloadQueue';
+import { fetchGiveUpRules } from '@ValenceClient/requests/fetchGiveUpRules';
 import { fetchProfiles, fetchProfilesOnOffer } from '@ValenceClient/requests/fetchProfiles';
 import {
   fetchRequestBlocklist,
@@ -150,6 +151,15 @@ const downloadQueue = () =>
   queryOptions({
     queryKey: [...REQUESTS, 'downloads'],
     queryFn: () => fetchDownloadQueue(),
+  });
+
+/**
+ * When a download is given up on and the next best release tried.
+ */
+const giveUpRules = () =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'give-up-rules'],
+    queryFn: () => fetchGiveUpRules(),
   });
 
 /**
@@ -369,6 +379,7 @@ const requestsQueries = {
   definition,
   downloadClients,
   downloadQueue,
+  giveUpRules,
   profiles,
   profilesOnOffer,
   mediaRequests,

@@ -1,3 +1,4 @@
+import { GIVE_UP_DEFAULTS } from '@ValenceContracts/schemas/GiveUpRules';
 import { describe, expect, it, vi } from 'vitest';
 import { createRequestsClient } from './createRequestsClient';
 import { SOLVER_NOT_USED } from '@ValenceContracts/schemas/Requests';
@@ -478,6 +479,18 @@ describe('createRequestsClient with download clients', () => {
    */
   const addressed = (fetch: ReturnType<typeof aClient>['fetch']) =>
     fetch.mock.calls.map(([url, init]) => `${init.method ?? 'GET'} ${url}`);
+
+  it('reads and changes when a download is given up on', async () => {
+    const rules = { ...GIVE_UP_DEFAULTS, stalledHours: null };
+    const { client, fetch } = aClient(200, rules);
+
+    expect(await client.readGiveUpRules()).toEqual({ kind: 'answered', value: rules });
+    expect(await client.changeGiveUpRules(rules)).toEqual({ kind: 'answered', value: rules });
+    expect(addressed(fetch)).toEqual([
+      'GET http://requests:8421/api/give-up-rules',
+      'PUT http://requests:8421/api/give-up-rules',
+    ]);
+  });
 
   it('keeps, changes, tests and removes download clients', async () => {
     const listing = aClient(200, [A_CLIENT]);

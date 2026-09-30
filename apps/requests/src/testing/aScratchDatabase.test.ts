@@ -18,6 +18,7 @@ describe('aScratchDatabase', () => {
       { table_name: 'download' },
       { table_name: 'download_client' },
       { table_name: 'download_event' },
+      { table_name: 'give_up_rules' },
       { table_name: 'indexer' },
       { table_name: 'indexer_definition' },
       { table_name: 'media_request' },

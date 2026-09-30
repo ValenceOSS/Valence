@@ -14,6 +14,18 @@ const describeDownloadState = (download: QueuedDownload): StateBadge => {
   switch (download.state) {
     case 'queued':
       return { ...STATUS_LOOK.queued, detail: download.problem };
+    case 'metadata':
+      return download.seeds === 0
+        ? {
+            ...STATUS_LOOK.attention,
+            label: 'Fetching metadata',
+            detail: download.problem ?? 'Nobody is sharing it yet.',
+          }
+        : {
+            ...STATUS_LOOK.working,
+            label: 'Fetching metadata',
+            detail: download.problem ?? 'Learning what files it holds.',
+          };
     case 'downloading':
       return { ...STATUS_LOOK.working, label: 'Downloading', detail: download.problem };
     case 'stalled':

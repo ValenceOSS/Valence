@@ -293,6 +293,17 @@ describe('DownloadClientDialog', () => {
     });
   });
 
+  it('sets the login and the downloads under headings of their own', () => {
+    open(KEPT);
+
+    expect(screen.getByRole('region', { name: 'Connection' })).toContainElement(
+      screen.getByLabelText(/Password/),
+    );
+    expect(screen.getByRole('region', { name: 'Downloads' })).toContainElement(
+      screen.getByRole('textbox', { name: 'Films' }),
+    );
+  });
+
   it('says a kept SABnzbd has its key', () => {
     open({ ...KEPT, kind: 'sabnzbd', hasPassword: false, hasApiKey: true });
 

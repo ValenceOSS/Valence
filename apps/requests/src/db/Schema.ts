@@ -47,6 +47,15 @@ const setting = requestsSchema.table('setting', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+const giveUpRules = requestsSchema.table('give_up_rules', {
+  id: integer('id').primaryKey().default(1),
+  metadataMinutes: integer('metadata_minutes'),
+  stalledHours: integer('stalled_hours'),
+  slowDays: integer('slow_days'),
+  refusesUnknownFiles: boolean('refuses_unknown_files').notNull().default(true),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 const indexer = requestsSchema.table('indexer', {
   id: uuid('id').primaryKey(),
   name: text('name').notNull(),
@@ -293,6 +302,7 @@ export {
   qualityProfile,
   requestItem,
   downloadClient,
+  giveUpRules,
   serviceEvent,
   indexer,
   indexerDefinition,

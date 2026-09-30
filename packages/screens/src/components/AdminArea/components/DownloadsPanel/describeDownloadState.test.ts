@@ -55,6 +55,19 @@ describe('describeDownloadState', () => {
     ).toBe('Tracker gone');
   });
 
+  it('says a magnet is fetching its metadata, and warns when nobody is sharing it', () => {
+    expect(describeDownloadState({ ...A_DOWNLOAD, state: 'metadata', seeds: 3 })).toEqual({
+      label: 'Fetching metadata',
+      tone: 'busy',
+      detail: 'Learning what files it holds.',
+    });
+    expect(describeDownloadState({ ...A_DOWNLOAD, state: 'metadata', seeds: 0 })).toEqual({
+      label: 'Fetching metadata',
+      tone: 'warning',
+      detail: 'Nobody is sharing it yet.',
+    });
+  });
+
   it('says what finishing means for each kind', () => {
     expect(describeDownloadState({ ...A_DOWNLOAD, state: 'processing' }).detail).toBe('Checking.');
     expect(

@@ -227,6 +227,29 @@ describe('createTransmissionAdapter', () => {
     expect(listed[7]?.problem).toBe('Tracker gone');
   });
 
+  it('reads a magnet still fetching its metadata as that, with no size yet', async () => {
+    const { fetch } = aTransmission({
+      'torrent-get': {
+        torrents: [
+          {
+            ...TORRENT,
+            status: 4,
+            metadataPercentComplete: 0,
+            sizeWhenDone: 0,
+            leftUntilDone: 0,
+            rateDownload: 0,
+            peersSendingToUs: 0,
+          },
+        ],
+      },
+    });
+
+    const [dune] = await createTransmissionAdapter(SETTINGS, fetch).list();
+
+    expect(dune?.state).toBe('metadata');
+    expect(dune?.sizeBytes).toBeNull();
+  });
+
   it('lists a torrent carrying any of its labels', async () => {
     const { fetch } = aTransmission({
       'torrent-get': {

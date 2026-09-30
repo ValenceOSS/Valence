@@ -130,7 +130,7 @@ The request detail dialog holds four tabs:
 
 Anything still wanted is searched for again by itself every few hours, and again shortly after the service starts, which also catches things that came out while it was down. **Refetch media** on the Requested panel runs that search now. The service also reads the newest releases on every indexer about every quarter of an hour, so a release appearing on an indexer can be picked up without waiting for the full search.
 
-If a download fails or stalls for hours, Valence blocklists that release for that request and looks for the next best at once. If filing fails, it tries a few times before marking the item as **Failed** for you to look at.
+If a download fails, or runs into trouble that the **Rules** tab of the **Downloads** panel gives up on, Valence removes it, blocklists that release for that request and looks for the next best at once. If filing fails, it tries a few times before marking the item as **Failed** for you to look at.
 
 ### Releases, quality profiles and libraries
 
@@ -153,7 +153,16 @@ The **Search** panel searches every enabled indexer at once, by title, mode (any
 
 ### Downloads
 
-The **Downloads** panel has two tabs. **Queue** lists every download Valence has sent, with its state (queued, downloading, stalled, paused, finishing, done, not filed or failed), speed and time left. Each row can be paused, resumed, filed by hand into a library if automatic filing did not, or removed. **Clients** lists your download clients. Valence works with qBittorrent, Transmission, SABnzbd and NZBGet. For each one you set the address, credentials, the category or label Valence puts on what it sends for each kind of library, a priority (the lowest is sent releases first), and, where the client and Valence see the downloads folder by different names, a path mapping.
+The **Downloads** panel has three tabs. **Queue** lists every download Valence has sent, with its state (queued, fetching metadata, downloading, stalled, paused, finishing, done, not filed or failed), speed and time left. Each row can be paused, resumed, filed by hand into a library if automatic filing did not, or removed. **Clients** lists your download clients. Valence works with qBittorrent, Transmission, SABnzbd and NZBGet. For each one you set the address, credentials, the category or label Valence puts on what it sends for each kind of library, a priority (the lowest is sent releases first), and, where the client and Valence see the downloads folder by different names, a path mapping.
+
+**Rules** says when Valence gives up on a download. Each rule can be set to **Never**, which leaves the download alone however long it takes:
+
+- **Missing metadata**: a magnet that never learns what files it holds, usually because nobody is sharing it. An hour by default.
+- **Stalled**: it started, but nobody is sending it any more. Six hours by default.
+- **Too slow**: at the rate it has averaged, it would still be going after this long. A week by default.
+- **Unrecognised files**: a torrent holding nothing Valence could file into a library. On by default.
+
+A torrent holding a program, or one its client says has failed, is always given up on.
 
 Removing a client stops Valence sending to it and following what it sent. What it is already downloading carries on in the client.
 
