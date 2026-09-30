@@ -28,13 +28,13 @@ The application itself, meaning everything a viewer sees, is not in `apps/web`. 
         +--------------------------------------------------------+
         |                    apps/server (Hono)                  |
         |  session gate, zod-openapi routes, better-auth,        |
-        |  realtime registry, job queue (pg-boss), plugin seam   |
+        |  realtime registry, job queue, plugin seam             |
         +---------+------------------+---------------+-----------+
                   |                  |               |
                   | SQL              | unix socket   | HTTP + shared secret
                   v                  v               v
              Postgres          apps/transcoder   apps/requests (optional)
-        (public + valence_jobs)   (Rust)            (valence_requests schema)
+        (public schema)         (Rust)            (valence_requests schema)
                                      |
                                      | child process
                                      v
@@ -54,7 +54,7 @@ That split is what makes the server testable. Tests call `createApp` with in-mem
 | API reference   | Scalar at `/api/reference`, document at `/api/openapi.json`                                               | `App.ts`                     |
 | Authentication  | better-auth with two factor, passkey, device authorisation, JWT, API key, admin and generic OAuth plugins | `apps/server/src/auth`       |
 | Database        | Postgres through Drizzle ORM and the `pg` pool                                                            | `apps/server/src/db`         |
-| Background work | pg-boss, in its own `valence_jobs` schema                                                                 | `apps/server/src/jobs`       |
+| Background work | Valence's own queue, in the `queued_job` and `job_schedule` tables                                        | `apps/server/src/jobs`       |
 | Realtime        | `@hono/node-ws`, one route at `/api/realtime`                                                             | `apps/server/src/realtime`   |
 | Configuration   | Zod-validated environment                                                                                 | `apps/server/src/env/Env.ts` |
 
@@ -81,7 +81,7 @@ Anything that is not `/api` and looks like an application address falls through 
 
 ### Background jobs
 
-Scans, previews, thumbnails, artwork and webhook deliveries are pg-boss jobs. Work outlives the request that asked for it and survives a restart, which is why a queue exists rather than a promise. Job runs, their progress and their outcomes are written to history tables and surfaced to administrators over the realtime `jobs` topic. The `MEDIA_JOBS` variable sets how many media jobs run at once.
+Scans, previews, thumbnails, artwork and webhook deliveries are jobs on Valence's own queue, which keeps them in two tables of its database. Work outlives the request that asked for it and survives a restart, which is why a queue exists rather than a promise. Job runs, their progress and their outcomes are written to history tables and surfaced to administrators over the realtime `jobs` topic. The `MEDIA_JOBS` variable sets how many media jobs run at once.
 
 ## The media service
 

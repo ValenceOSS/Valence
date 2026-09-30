@@ -1,6 +1,6 @@
 ---
 title: Database and migrations
-description: How the Drizzle schema, migrations, start-up migration, snapshots, rollback and the pg-boss queue work, and how to write a safe migration.
+description: How the Drizzle schema, migrations, start-up migration, snapshots, rollback and the job queue work, and how to write a safe migration.
 order: 6
 ---
 
@@ -127,9 +127,16 @@ docker compose run --rm valence node apps/server/dist/Rollback.js --restore
 
 ## The job queue
 
-Background work runs on pg-boss, which keeps its tables in Postgres in a schema named `valence_jobs`. `createJobQueue` in `apps/server/src/jobs` starts it and registers a worker for every kind of job (scans, previews, thumbnails, artwork, webhook deliveries). Work survives restarts, which is the reason it is a queue and not a promise.
+Background work runs on a queue Valence keeps in its own database, so it runs on whichever database the server does. `createJobQueue` in `apps/server/src/jobs` starts it and registers a worker for every kind of job (scans, previews, thumbnails, artwork, webhook deliveries). Work survives restarts, which is the reason it is a queue and not a promise.
 
-Valence keeps its own history alongside pg-boss's state: `createJobHistoryStore` records each run, its progress and its outcome so the admin screens can show them, and pg-boss states are mapped onto the ones Valence shows (`created` and `retry` become queued, `active` becomes running, `cancelled` and `failed` become failed). Scan jobs expire after two hours. pg-boss manages its own schema, so its tables are not in `Schema.ts` and are not part of Drizzle migrations.
+- **Jobs** are rows in `queued_job`. A worker takes the oldest one that is due with `SELECT … FOR UPDATE SKIP LOCKED`, so two claims never take the same job, and each kind runs as many at once as it is configured for (one, unless it says otherwise).
+- **Keys.** A job sent with a key waits under it in `waitingKey`, and a unique index on the kind and that column means a second job with the same key is refused while the first waits. The key is given up the moment the job starts, so the next one can queue behind it.
+- **Retries.** A job that throws is tried again up to its kind's limit (two, unless it says otherwise), waiting twice as long each time from ten seconds and never more than five minutes. A job that was asked to stop is not tried again.
+- **Restarts.** A job the last server left running is put back to wait when the next one starts, or marked failed once it has had every try it was allowed.
+- **Schedules** are rows in `job_schedule`, each holding its cron, its time zone and the next moment it fires. They are rebuilt from the stored triggers at start-up, and whichever check moves a schedule's next moment on first is the one that sends its job.
+- **Retention.** Finished jobs are deleted a week after they end.
+
+Valence keeps its history separately: `createJobHistoryStore` records each run, its progress and its outcome in `job_run` so the admin screens can show them after the queue has forgotten the job. Migration `0092_job_queue` carried across whatever pg-boss, the queue before this one, had waiting, and left its `valence_jobs` schema in place for one release so that going back a version still works.
 
 ## Writing a safe migration
 
