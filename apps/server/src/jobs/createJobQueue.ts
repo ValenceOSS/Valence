@@ -607,7 +607,7 @@ const createJobQueue = ({
       }
 
       await Promise.race([
-        Promise.allSettled([...inFlight]),
+        Promise.allSettled(inFlight),
         new Promise((resolve) => {
           setTimeout(resolve, STOPPING_WAITS_MS).unref();
         }),
