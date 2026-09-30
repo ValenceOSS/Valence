@@ -3,5 +3,6 @@
   "compilerOptions": {
     "customConditions": ["mysql"],
     "noEmit": true
-  }
+  },
+  "exclude": ["node_modules", "dist", "coverage", "src/postgres"]
 }

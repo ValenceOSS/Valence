@@ -36,6 +36,15 @@ describe('findEngineTests', () => {
     ]);
   });
 
+  it('finds every test of the mysql dialect, which is only ever run against one', () => {
+    const root = aPackage({
+      'src/mysql/incoming.test.ts': "import { incoming } from './incoming';",
+      'src/mysqlish/pure.test.ts': "import { describe } from 'vitest';",
+    });
+
+    expect(findEngineTests(root)).toEqual([join('src', 'mysql', 'incoming.test.ts')]);
+  });
+
   it('leaves out tests that never reach a database, and files that are not tests', () => {
     const root = aPackage({
       'src/pure.test.ts': "import { describe } from 'vitest';",
