@@ -63,6 +63,7 @@ const howMuchIsThere = async (path: string): Promise<number> => {
  */
 const theHeldLibrary = (needs: WhatTheLibraryNeeds): HeldLibrary => {
   const busy = new Map<string, Fetching>();
+  const thumbnailing = new Map<string, Promise<boolean>>();
   const listeners = new Set<(held: HeldFile[]) => void>();
 
   const all = async (): Promise<HeldFile[]> => {
@@ -137,12 +138,37 @@ const theHeldLibrary = (needs: WhatTheLibraryNeeds): HeldLibrary => {
    *
    * Kept whole or not at all: an index naming sheets that never arrived would draw holes. Like the
    * poster, not getting them is not failing to keep the film, and the server may simply not have
-   * made them yet — asking is what has it start, and a later attempt picks them up.
+   * made them yet — asking is what has it start, and a later attempt picks them up. A fetch already
+   * under way for the film is shared rather than started again.
    *
    * @param row - What was kept.
    * @returns Whether there are now thumbnails to draw.
    */
   const fetchTheTrickplay = async (row: HeldFile): Promise<boolean> => {
+    const already = thumbnailing.get(row.downloadId);
+
+    if (already !== undefined) {
+      return already;
+    }
+
+    const fetching = fetchTheSheets(row).finally(() => {
+      thumbnailing.delete(row.downloadId);
+    });
+
+    thumbnailing.set(row.downloadId, fetching);
+
+    return fetching;
+  };
+
+  /**
+   * Fetches the index and every sheet it names into the film's thumbnail folder, for one fetch at a
+   * time per film: two at once would share the folder, and one failing would empty it under the
+   * other.
+   *
+   * @param row - What was kept.
+   * @returns Whether there are now thumbnails to draw.
+   */
+  const fetchTheSheets = async (row: HeldFile): Promise<boolean> => {
     const server = needs.where();
 
     if (server === '') {

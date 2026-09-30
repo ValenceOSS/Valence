@@ -333,6 +333,22 @@ describe('theHeldLibrary', () => {
     ).toBe(true);
   });
 
+  it('asks once for a film’s thumbnails, however many times it is told to look', async () => {
+    const serving: Serving = { trickplay: 'not yet' };
+    const { library, seen } = aLibrary(serving);
+
+    await library.keep(asked);
+    await settle();
+
+    serving.trickplay = 'made';
+    await Promise.all([library.carryOnWhereItLeftOff(), library.carryOnWhereItLeftOff()]);
+
+    await vi.waitFor(async () => {
+      expect((await library.all())[0]?.hasTrickplay).toBe(true);
+    });
+    expect(seen.filter((address) => address.endsWith(INDEX))).toHaveLength(1);
+  });
+
   it('keeps no thumbnails for a film forgotten while they were being fetched', async () => {
     const serving: Serving = { trickplay: 'made' };
     const { library } = aLibrary(serving);
