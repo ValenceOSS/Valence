@@ -35,7 +35,8 @@ const ANSWERS_WITHIN = 5000;
  * drops what is sent rather than refusing it. No request ever fails, so nothing is ever missed. So
  * a request left waiting can ask for a check, which gives the server a few seconds to say it is
  * there before counting it gone; the request itself is left to go on waiting, since some answers
- * are slow by nature and slow is not gone.
+ * are slow by nature and slow is not gone. What a check finds is set aside where something newer
+ * was heard while it was out, or the server it asked is no longer the one chosen.
  *
  * While it is out of reach this asks quietly on a timer, because nothing else will. Offline mode
  * stops the application making the requests that would otherwise notice the server coming back, so
@@ -52,6 +53,7 @@ const theServerReach = (needs: WhatReachNeeds): ServerReach => {
   let isReachable = true;
   let asking: ReturnType<typeof setTimeout> | null = null;
   let isChecking = false;
+  let heardSince = 0;
 
   const within = needs.within ?? ANSWERS_WITHIN;
 
@@ -119,9 +121,11 @@ const theServerReach = (needs: WhatReachNeeds): ServerReach => {
   return {
     isReachable: () => isReachable,
     noteReached: () => {
+      heardSince += 1;
       settle(true);
     },
     noteMissed: () => {
+      heardSince += 1;
       settle(false);
     },
     checkNow: () => {
@@ -133,9 +137,14 @@ const theServerReach = (needs: WhatReachNeeds): ServerReach => {
 
       isChecking = true;
 
+      const heardBefore = heardSince;
+
       void isAnswering(server).then((isThere) => {
         isChecking = false;
-        settle(isThere);
+
+        if (heardSince === heardBefore && needs.where() === server) {
+          settle(isThere);
+        }
       });
     },
     whenChanged: (listener) => {

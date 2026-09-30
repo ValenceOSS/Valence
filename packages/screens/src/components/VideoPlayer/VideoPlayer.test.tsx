@@ -380,6 +380,18 @@ describe('VideoPlayer', () => {
     expect(segmentsMock).toHaveBeenCalledWith('media-1');
   });
 
+  it('says nothing about stopping when it closes because the app has just gone offline', async () => {
+    installATestClient({ canKeepFiles: () => true });
+    const { unmount } = renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+    await settled();
+    stopWatchingMock.mockClear();
+    chooseOffline(true);
+    unmount();
+
+    expect(stopWatchingMock).not.toHaveBeenCalled();
+  });
+
   it('attaches the media engine to the returned manifest', async () => {
     renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
 

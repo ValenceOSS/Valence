@@ -102,6 +102,7 @@ import { PausedScreen } from './components/PausedScreen/PausedScreen';
 import type { CastContext } from '@ValenceScreens/playback/castSender.types';
 import { aKeptSession } from '@ValenceClient/downloads/aKeptSession';
 import { useOfflineMode } from '@ValenceClient/offline/useOfflineMode';
+import { isOfflineNow } from '@ValenceClient/offline/isOfflineNow';
 import type { StartedSession } from '@ValenceClient/playback/startPlaybackSession';
 import type { MediaDetail } from '@ValenceContracts/schemas/Library';
 import { subtitleCuesUrl } from '@ValenceClient/playback/fetchSubtitleCues';
@@ -849,7 +850,7 @@ const VideoPlayer = ({
     const clientId = platformInUse().thisClientId();
 
     const onPageHide = () => {
-      if (isOfflineRef.current) {
+      if (isOfflineNow()) {
         return;
       }
 
@@ -1066,7 +1067,7 @@ const VideoPlayer = ({
 
   useEffect(
     () => () => {
-      if (!isOfflineRef.current) {
+      if (!isOfflineNow()) {
         void stopWatching(platformInUse().thisClientId());
       }
     },
