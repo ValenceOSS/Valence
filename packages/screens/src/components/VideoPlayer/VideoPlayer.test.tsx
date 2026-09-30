@@ -3,6 +3,9 @@ import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import userEvent from '@testing-library/user-event';
 import { SKIP_SECONDS } from './components/PlayerControls/PlayerControls.types';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { onlineManager } from '@tanstack/react-query';
+import { chooseOffline } from '@ValenceClient/offline/chosenOffline';
+import { installATestClient } from '@ValenceScreens/testing/installATestClient';
 import { gainFor } from '@ValenceCore/functions/gainFor';
 import { notify } from '@ValenceUI/notify';
 import { VideoPlayer } from './VideoPlayer';
@@ -263,6 +266,8 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+  onlineManager.setOnline(true);
 });
 
 describe('VideoPlayer', () => {
@@ -305,6 +310,86 @@ describe('VideoPlayer', () => {
       expect(container.querySelector('video')?.getAttribute('src')).toBe('valence-kept://arrival');
     });
     expect(startMock).not.toHaveBeenCalled();
+  });
+
+  it('offers smaller qualities of a film the server is sending', async () => {
+    detailMock.mockResolvedValue(detailWithTwoAudioTracks);
+    const actor = userEvent.setup();
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+    await settled();
+    await actor.click(screen.getByRole('button', { name: 'Settings' }));
+
+    expect(await screen.findByText('Quality')).toBeInTheDocument();
+  });
+
+  it('offers no qualities or sound tracks for a copy kept on this device, which is one file', async () => {
+    detailMock.mockResolvedValue(detailWithTwoAudioTracks);
+    const actor = userEvent.setup();
+    renderInAnAddress(
+      <VideoPlayer media={media} onClose={vi.fn()} keptSource="valence-kept://arrival" />,
+    );
+
+    await waitFor(() => {
+      expect(detailMock).toHaveBeenCalled();
+    });
+    await actor.click(await screen.findByRole('button', { name: 'Settings' }));
+
+    expect(await screen.findByRole('switch', { name: /Stats for nerds/ })).toBeInTheDocument();
+    expect(screen.queryByText('Quality')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Audio track/ })).not.toBeInTheDocument();
+  });
+
+  it('asks the server for nothing while playing a kept copy offline', async () => {
+    installATestClient({ canKeepFiles: () => true });
+    chooseOffline(true);
+    onlineManager.setOnline(false);
+    presenceHeartbeatMock.mockClear();
+    const fetchMock = vi.fn<(input: string, options?: RequestInit) => Promise<Response>>();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { container, unmount } = renderInAnAddress(
+      <VideoPlayer media={media} onClose={vi.fn()} keptSource="valence-kept://arrival" />,
+    );
+
+    await waitFor(() => {
+      expect(container.querySelector('video')?.getAttribute('src')).toBe('valence-kept://arrival');
+    });
+    fireEvent.play(await screen.findByLabelText('Arrival'));
+    unmount();
+
+    expect(trickplayMock).not.toHaveBeenCalled();
+    expect(detailMock).not.toHaveBeenCalled();
+    expect(segmentsMock).not.toHaveBeenCalled();
+    expect(subtitlesMock).not.toHaveBeenCalled();
+    expect(presenceHeartbeatMock).not.toHaveBeenCalled();
+    expect(stopWatchingMock).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('still asks for thumbnails and skip times for a kept copy while online', async () => {
+    const { container } = renderInAnAddress(
+      <VideoPlayer media={media} onClose={vi.fn()} keptSource="valence-kept://arrival" />,
+    );
+
+    await waitFor(() => {
+      expect(container.querySelector('video')?.getAttribute('src')).toBe('valence-kept://arrival');
+    });
+
+    expect(trickplayMock).toHaveBeenCalledWith('media-1');
+    expect(segmentsMock).toHaveBeenCalledWith('media-1');
+  });
+
+  it('says nothing about stopping when it closes because the app has just gone offline', async () => {
+    installATestClient({ canKeepFiles: () => true });
+    const { unmount } = renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
+
+    await settled();
+    stopWatchingMock.mockClear();
+    chooseOffline(true);
+    unmount();
+
+    expect(stopWatchingMock).not.toHaveBeenCalled();
   });
 
   it('attaches the media engine to the returned manifest', async () => {
@@ -1809,7 +1894,7 @@ describe('VideoPlayer', () => {
     });
     Object.defineProperty(element, 'duration', { configurable: true, value: 7200 });
 
-    await actor.keyboard('{ArrowRight}');
+    await actor.keyboard('.');
 
     const at = element instanceof HTMLVideoElement ? element.currentTime : 0;
 
@@ -1825,9 +1910,58 @@ describe('VideoPlayer', () => {
     renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} isImmersive />);
     await settled();
 
-    await actor.keyboard('{ArrowLeft}');
+    await actor.keyboard(',');
 
     expect(pause).toHaveBeenCalled();
+  });
+
+  it('skips as far as the buttons do on the arrow keys, and keeps playing', async () => {
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined);
+    const actor = userEvent.setup();
+
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} isImmersive />);
+    await settled();
+
+    const element = await screen.findByLabelText('Arrival');
+    seekableTo(element, 600);
+    Object.defineProperty(element, 'currentTime', {
+      configurable: true,
+      writable: true,
+      value: 60,
+    });
+    fireEvent.timeUpdate(element);
+
+    await actor.keyboard('{ArrowRight}');
+
+    expect(element).toHaveProperty('currentTime', 70);
+
+    fireEvent.timeUpdate(element);
+    await actor.keyboard('{ArrowLeft}');
+
+    expect(element).toHaveProperty('currentTime', 60);
+    expect(pause).not.toHaveBeenCalled();
+    expect(startMock).toHaveBeenCalledOnce();
+  });
+
+  it('leaves the arrow keys to a slider that has them', async () => {
+    const actor = userEvent.setup();
+
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} isImmersive />);
+    await settled();
+
+    const element = await screen.findByLabelText('Arrival');
+    seekableTo(element, 600);
+    Object.defineProperty(element, 'currentTime', {
+      configurable: true,
+      writable: true,
+      value: 60,
+    });
+    fireEvent.timeUpdate(element);
+
+    screen.getByRole('slider', { name: 'Volume' }).focus();
+    await actor.keyboard('{ArrowLeft}');
+
+    expect(element).toHaveProperty('currentTime', 60);
   });
 
   it('offers the rest of the season, and nothing at all for a film', async () => {

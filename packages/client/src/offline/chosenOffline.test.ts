@@ -5,7 +5,7 @@ import {
   installPlatform,
   platformInUse,
 } from '@ValenceClient/platform/installPlatform';
-import { STORAGE_KEY, chooseOffline, chosenOffline } from './chosenOffline';
+import { STORAGE_KEY, chooseOffline, chosenOffline, followChosenOffline } from './chosenOffline';
 
 beforeEach(() => {
   installPlatform(aFakePlatform());
@@ -39,5 +39,26 @@ describe('chosenOffline', () => {
     installPlatform(aFakePlatform());
 
     expect(chosenOffline()).toBe(false);
+  });
+
+  it('tells whoever is following when somebody goes offline or comes back', () => {
+    const heard: boolean[] = [];
+
+    followChosenOffline((isChosen) => heard.push(isChosen));
+    chooseOffline(true);
+    chooseOffline(false);
+
+    expect(heard).toEqual([true, false]);
+  });
+
+  it('stops telling a listener that has stopped following', () => {
+    const heard: boolean[] = [];
+
+    const stop = followChosenOffline((isChosen) => heard.push(isChosen));
+
+    stop();
+    chooseOffline(true);
+
+    expect(heard).toEqual([]);
   });
 });

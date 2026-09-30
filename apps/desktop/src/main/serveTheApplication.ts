@@ -14,6 +14,8 @@ const ORIGIN = `${SCHEME}://${HOST}`;
 
 const SLICE_BYTES = 2 * 1024 * 1024;
 
+const SLOW_ANSWER_MS = 10_000;
+
 const OPEN_ENDED = /^bytes=(\d+)-$/;
 
 const CARRIED = ['accept', 'content-type', 'range', 'x-valence-profile', 'authorization'];
@@ -357,6 +359,8 @@ const serveTheApplication = (reach: ServerReach, heldFolder: string): void => {
         upstream.abort();
       });
 
+      const slow = setTimeout(reach.checkNow, SLOW_ANSWER_MS);
+
       try {
         const answer = await net.fetch(onward.toString(), {
           method: request.method,
@@ -366,6 +370,7 @@ const serveTheApplication = (reach: ServerReach, heldFolder: string): void => {
           credentials: 'include',
         });
 
+        clearTimeout(slow);
         reach.noteReached();
 
         const letGo = (): void => {
@@ -389,6 +394,8 @@ const serveTheApplication = (reach: ServerReach, heldFolder: string): void => {
 
         return stitched ?? untilLetGo(answer, letGo);
       } catch {
+        clearTimeout(slow);
+
         if (upstream.signal.aborted) {
           return said(499, 'The page stopped waiting.');
         }

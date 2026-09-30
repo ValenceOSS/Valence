@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { MotionConfig } from 'motion/react';
 import { useOfflineMode } from '@ValenceClient/offline/useOfflineMode';
+import { useQueriesHeldOffline } from '@ValenceClient/offline/useQueriesHeldOffline';
 import { useAppliedTheme } from '@ValenceScreens/theme/useAppliedTheme';
 import { useAppliedRoundness } from '@ValenceScreens/roundness/useAppliedRoundness';
 import { useAppliedPluginTheme } from '@ValenceScreens/theme/useAppliedPluginTheme';
@@ -34,6 +35,8 @@ import type { ValenceRootProps } from './ValenceRoot.types';
 const ValenceRoot = ({ initialTitle }: ValenceRootProps) => {
   const { isOffline } = useOfflineMode();
   const wasOffline = useRef(isOffline);
+
+  useQueriesHeldOffline();
 
   useAppliedTheme();
   useAppliedRoundness();
