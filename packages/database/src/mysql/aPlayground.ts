@@ -1,6 +1,6 @@
-import { randomBytes } from 'node:crypto';
 import { drizzle } from 'drizzle-orm/mysql2';
 import { createConnection, createPool } from 'mysql2/promise';
+import { scratchDatabaseName } from './scratchDatabaseName';
 import type { AnyDatabase } from './AnyDatabase';
 
 /**
@@ -18,7 +18,7 @@ const aPlayground = async (): Promise<AnyDatabase> => {
     );
   }
 
-  const database = `valence_test_${randomBytes(8).toString('hex')}`;
+  const database = scratchDatabaseName();
   const setup = await createConnection({ uri: url });
 
   await setup.query(`CREATE DATABASE \`${database}\``);

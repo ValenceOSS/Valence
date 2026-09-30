@@ -43,6 +43,7 @@ const engineProject = async (name: string): Promise<TestProjectInlineConfigurati
 export default defineConfig({
   test: {
     fileParallelism: false,
+    globalSetup: [fileURLToPath(new URL('vitest/scratch/setup.ts', import.meta.url))],
     projects: await Promise.all(PACKAGES.map(engineProject)),
   },
 });

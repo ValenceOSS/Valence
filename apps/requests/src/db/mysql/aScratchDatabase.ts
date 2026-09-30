@@ -1,8 +1,8 @@
-import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
 import { createConnection } from 'mysql2/promise';
 import { onTestFinished } from 'vitest';
 import { z } from 'zod';
+import { scratchDatabaseName } from '@ValenceDatabase/mysql/scratchDatabaseName';
 import { applyMigrations } from '@ValenceRequests/db/mysql/applyMigrations';
 import { createDatabase } from '@ValenceRequests/db/mysql/createDatabase';
 import { readConnectionOptions } from '@ValenceRequests/db/mysql/connection/readConnectionOptions';
@@ -27,7 +27,7 @@ const aScratchDatabase = async (): Promise<RequestsDatabase> => {
     );
   }
 
-  const name = `valence_test_${randomBytes(6).toString('hex')}`;
+  const name = scratchDatabaseName();
   const admin = await createConnection(readConnectionOptions(server));
   const [rows] = await admin.query('select version() as version');
   const [{ version }] = VersionSchema.parse(rows);

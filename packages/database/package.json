@@ -12,7 +12,7 @@
   "scripts": {
     "build": "tsc --build",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.mysql.json"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
