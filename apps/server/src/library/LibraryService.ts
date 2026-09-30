@@ -1,3 +1,4 @@
+import type { ArtworkChoices, ArtworkKind } from '@ValenceContracts/schemas/ArtworkChoice';
 import type {
   Library,
   LibraryFacets,
@@ -158,7 +159,20 @@ type LibraryService = ShowService & {
     total: number | null;
     item: string | null;
   }>;
-  readArtworkUrl: (mediaId: string, kind: 'poster' | 'backdrop' | 'logo') => Promise<string | null>;
+  readArtworkUrl: (
+    mediaId: string,
+    kind: 'poster' | 'backdrop' | 'logo',
+    isOfTitle?: boolean,
+  ) => Promise<string | null>;
+  readArtworkChoices: (
+    mediaId: string,
+  ) => Promise<ArtworkChoices | 'missing' | 'unmatched' | 'unavailable'>;
+  chooseArtwork: (
+    mediaId: string,
+    kind: ArtworkKind,
+    url: string | null,
+    by: string | null,
+  ) => Promise<{ jobId: string | null } | 'missing' | 'unmatched' | 'unavailable' | 'refused'>;
 };
 
 const DEFAULT_LIMIT = 60;

@@ -277,6 +277,13 @@ const WHAT_DELETION_REMOVES: readonly OwnedThing[] = [
     rule: 'isShared',
   },
   {
+    table: 'media_artwork_choice',
+    column: 'libraryId',
+    owner: 'library',
+    fate: 'goesWithIt',
+    rule: 'meansNothingWithoutIt',
+  },
+  {
     table: 'media_item',
     column: 'libraryId',
     owner: 'library',

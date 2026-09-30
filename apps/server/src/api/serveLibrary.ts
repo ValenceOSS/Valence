@@ -23,6 +23,9 @@ import {
   resetLibraryRoute,
   deleteLibraryRoute,
   regeneratePreviewsRoute,
+  artworkChoicesRoute,
+  chooseArtworkRoute,
+  forgetArtworkRoute,
 } from '@ValenceServer/routes/LibraryRoute';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
@@ -251,6 +254,77 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     return corrected === null
       ? context.json({ error: 'No such item.' }, 404)
       : context.json(corrected, 200);
+  });
+
+  app.openapi(artworkChoicesRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json({ error: 'That is for administrators.' }, 404);
+    }
+
+    const read = await library.readArtworkChoices(context.req.valid('param').id);
+
+    if (read === 'missing') {
+      return context.json({ error: 'No such item.' }, 404);
+    }
+
+    if (read === 'unmatched') {
+      return context.json(
+        { error: 'This is not matched to the catalogue yet. Correct the match first.' },
+        404,
+      );
+    }
+
+    if (read === 'unavailable') {
+      return context.json({ error: 'The catalogue could not be asked what it has.' }, 503);
+    }
+
+    return context.json(read, 200);
+  });
+
+  app.openapi(chooseArtworkRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json({ error: 'That is for administrators.' }, 404);
+    }
+
+    const { id, kind } = context.req.valid('param');
+    const chosen = await library.chooseArtwork(
+      id,
+      kind,
+      context.req.valid('json').url,
+      (await readAccount(context.req.raw.headers))?.id ?? null,
+    );
+
+    if (chosen === 'missing' || chosen === 'unmatched') {
+      return context.json({ error: 'No such item matched to the catalogue.' }, 404);
+    }
+
+    if (chosen === 'unavailable') {
+      return context.json({ error: 'The catalogue could not be asked what it has.' }, 503);
+    }
+
+    if (chosen === 'refused') {
+      return context.json({ error: 'That picture is not one the catalogue has for this.' }, 400);
+    }
+
+    return context.json(chosen, 200);
+  });
+
+  app.openapi(forgetArtworkRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'media.override'))) {
+      return context.json({ error: 'That is for administrators.' }, 404);
+    }
+
+    const { id, kind } = context.req.valid('param');
+    const forgotten = await library.chooseArtwork(
+      id,
+      kind,
+      null,
+      (await readAccount(context.req.raw.headers))?.id ?? null,
+    );
+
+    return typeof forgotten === 'string'
+      ? context.json({ error: 'No such item matched to the catalogue.' }, 404)
+      : context.json(forgotten, 200);
   });
 
   app.openapi(forgetCorrectionRoute, async (context) => {

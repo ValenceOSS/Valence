@@ -1,9 +1,17 @@
 import { mediaImageRoute } from '@ValenceServer/routes/ImageRoute';
+import { artworkTagOf } from '@ValenceServer/api/artworkTagOf';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 
+const ARTWORK_CACHING = 'public, max-age=3600, stale-while-revalidate=604800';
+
 /**
  * Registers the image endpoints.
+ *
+ * Artwork is kept for an hour and then checked again against a tag drawn from the picture's own
+ * address, rather than held for a week as unchanging: an administrator can now choose a different
+ * picture for a title at the same address, and a week-long promise meant nobody saw it. A check
+ * costs a reply with no body, and the stale picture is shown while it is made.
  *
  * @param app - The application to register them on.
  * @param context - What they are answered with.
@@ -14,10 +22,20 @@ const serveImage = (app: OpenAPIHono, context: AppContext): void => {
   app.openapi(mediaImageRoute, async (context) => {
     const { mediaId, kind } = context.req.valid('param');
 
-    const url = await library.readArtworkUrl(mediaId, kind);
+    const url = await library.readArtworkUrl(
+      mediaId,
+      kind,
+      context.req.valid('query').of === 'title',
+    );
 
     if (url === null || readImage === undefined) {
       return context.json({ error: 'No artwork for that item.' }, 404);
+    }
+
+    const tag = artworkTagOf(url);
+
+    if (context.req.header('if-none-match') === tag) {
+      return context.body(null, 304, { etag: tag, 'cache-control': ARTWORK_CACHING });
     }
 
     const image = await readImage(url);
@@ -28,7 +46,8 @@ const serveImage = (app: OpenAPIHono, context: AppContext): void => {
 
     return context.body(image.body, 200, {
       'content-type': image.contentType,
-      'cache-control': 'public, max-age=604800, immutable',
+      'cache-control': ARTWORK_CACHING,
+      etag: tag,
     });
   });
 };

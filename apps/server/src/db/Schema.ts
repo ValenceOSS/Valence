@@ -642,6 +642,30 @@ const mediaPreviewOverride = pgTable(
   ],
 );
 
+const mediaArtworkChoice = pgTable(
+  'media_artwork_choice',
+  {
+    id: text('id').primaryKey(),
+    libraryId: text('libraryId')
+      .notNull()
+      .references(() => library.id, { onDelete: 'cascade' }),
+    externalKind: text('externalKind').notNull(),
+    externalId: text('externalId').notNull(),
+    kind: text('kind').notNull(),
+    url: text('url').notNull(),
+    updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+    updatedBy: text('updatedBy'),
+  },
+  (table) => [
+    uniqueIndex('media_artwork_choice_title_idx').on(
+      table.libraryId,
+      table.externalKind,
+      table.externalId,
+      table.kind,
+    ),
+  ],
+);
+
 const series = pgTable(
   'series',
   {
@@ -1414,6 +1438,7 @@ export {
   library,
   mediaOverride,
   mediaPreviewOverride,
+  mediaArtworkChoice,
   mediaItem,
   mediaRendition,
   mediaSegment,

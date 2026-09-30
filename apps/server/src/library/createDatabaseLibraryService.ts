@@ -1,5 +1,6 @@
 import { readStoredCertifications } from '@ValenceServer/library/readStoredCertifications';
 import { askForLibraryWork } from '@ValenceServer/library/askForLibraryWork';
+import { createArtworkChoices } from '@ValenceServer/library/createArtworkChoices';
 import { jobBehindTheKey } from '@ValenceServer/library/jobBehindTheKey';
 import { randomUUID } from 'node:crypto';
 import { rm, stat } from 'node:fs/promises';
@@ -610,6 +611,14 @@ const createDatabaseLibraryService = ({
 
     return jobId ?? (await jobs.liveJob(READ_AGAIN_JOB, libraryId));
   };
+
+  const artworkChoices = createArtworkChoices({
+    db,
+    readOptions: (providers ?? []).find((provider) => provider.readArtworkOptions !== undefined)
+      ?.readArtworkOptions,
+    readAgain: queueReadAgain,
+    fetchLogos: (libraryId) => askForLibraryWork(jobs, FETCH_LOGOS_JOB, libraryId, { libraryId }),
+  });
 
   const findLibrary = async (id: string) => {
     const rows = await db.select().from(library).where(eq(library.id, id)).limit(1);
@@ -1792,7 +1801,17 @@ const createDatabaseLibraryService = ({
       return detail;
     },
 
-    readArtworkUrl: async (mediaId, kind) => {
+    readArtworkChoices: (mediaId) => artworkChoices.read(mediaId),
+
+    chooseArtwork: (mediaId, kind, url, by) => artworkChoices.choose(mediaId, kind, url, by),
+
+    readArtworkUrl: async (mediaId, kind, isOfTitle = false) => {
+      const chosen = await artworkChoices.urlFor(mediaId, kind, isOfTitle);
+
+      if (chosen !== null) {
+        return chosen;
+      }
+
       const rows = await db
         .select({
           poster: mediaItem.posterUrl,

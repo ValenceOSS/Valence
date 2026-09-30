@@ -753,7 +753,15 @@ describe('library routes', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toBe('image/jpeg');
-    expect(response.headers.get('cache-control')).toContain('immutable');
+    expect(response.headers.get('cache-control')).toContain('max-age=3600');
+    expect(response.headers.get('cache-control')).not.toContain('immutable');
+    expect(response.headers.get('etag')).toMatch(/^".+"$/);
+
+    const again = await app.request(`${BASE}/api/media/${MEDIA_ID}/image/poster`, {
+      headers: { 'if-none-match': response.headers.get('etag') ?? '' },
+    });
+
+    expect(again.status).toBe(304);
   });
 
   it('serves the lettering a title is written in, the same way as its poster', async () => {
@@ -981,6 +989,63 @@ describe('narrowing a library down', () => {
     const body = z.object({ items: z.array(MediaSummarySchema) }).parse(await response.json());
 
     expect(body.items).toEqual([]);
+  });
+});
+
+describe('choosing the artwork a title is drawn with', () => {
+  it('says the catalogue could not be asked, rather than offering nothing', async () => {
+    const { app } = build([detail()]);
+
+    const response = await app.request(`${BASE}/api/media/${MEDIA_ID}/artwork`);
+
+    expect(response.status).toBe(503);
+  });
+
+  it('has no artwork to offer for an item that is not there', async () => {
+    const { app } = build([]);
+
+    const response = await app.request(
+      `${BASE}/api/media/11111111-1111-4111-8111-111111111111/artwork`,
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  it('asks for a picture to choose', async () => {
+    const { app } = build([detail()]);
+
+    const response = await app.request(`${BASE}/api/media/${MEDIA_ID}/artwork/poster`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ url: 'not an address' }),
+    });
+
+    expect(response.status).toBe(400);
+  });
+
+  it('only chooses a kind of picture there is', async () => {
+    const { app } = build([detail()]);
+
+    const response = await app.request(`${BASE}/api/media/${MEDIA_ID}/artwork/banner`, {
+      method: 'DELETE',
+    });
+
+    expect(response.status).toBe(400);
+  });
+
+  it('has nothing to choose for an item that is not there', async () => {
+    const { app } = build([]);
+
+    const response = await app.request(
+      `${BASE}/api/media/11111111-1111-4111-8111-111111111111/artwork/logo`,
+      {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ url: 'https://image.tmdb.org/t/p/original/a.png' }),
+      },
+    );
+
+    expect(response.status).toBe(404);
   });
 });
 

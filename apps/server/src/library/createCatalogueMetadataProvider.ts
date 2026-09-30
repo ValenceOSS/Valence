@@ -7,6 +7,7 @@ import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import { episodeNumbersOf } from '@ValenceCore/functions/episodeNumbersOf';
 import { parseName } from './naming/parseName';
 import { nameOfFile } from './nameOfFile';
+import { artworkOptionsOf } from '@ValenceServer/library/artworkOptionsOf';
 import { pickLogo } from './pickLogo';
 import { createCatalogueGate } from './createCatalogueGate';
 import type {
@@ -120,7 +121,13 @@ const LogoSchema = z.object({
   vote_count: z.number().default(0),
 });
 
-const ImagesResponseSchema = z.object({ logos: z.array(LogoSchema).default([]) });
+const PictureSchema = LogoSchema.extend({ height: z.number().default(0) });
+
+const ImagesResponseSchema = z.object({
+  logos: z.array(PictureSchema).default([]),
+  posters: z.array(PictureSchema).default([]),
+  backdrops: z.array(PictureSchema).default([]),
+});
 
 type SearchResult = z.infer<typeof SearchResultSchema>;
 
@@ -942,6 +949,28 @@ const createCatalogueMetadataProvider = ({
       );
 
       return chosen === null ? null : imageUrl(imageBaseUrl, chosen.filePath, 'original');
+    },
+
+    readArtworkOptions: async ({ externalId, isSeries }) => {
+      const key = await readApiKey();
+
+      if (key === null || key === '') {
+        return null;
+      }
+
+      const images = ImagesResponseSchema.safeParse(
+        await request(`/${isSeries ? 'tv' : 'movie'}/${externalId}/images`, key, {}),
+      );
+
+      if (!images.success) {
+        return null;
+      }
+
+      return {
+        poster: artworkOptionsOf(images.data.posters, 'poster', imageBaseUrl),
+        backdrop: artworkOptionsOf(images.data.backdrops, 'backdrop', imageBaseUrl),
+        logo: artworkOptionsOf(images.data.logos, 'logo', imageBaseUrl),
+      };
     },
 
     search: async (query, kind) => {

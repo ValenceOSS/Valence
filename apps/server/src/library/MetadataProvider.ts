@@ -1,3 +1,4 @@
+import type { ArtworkChoices } from '@ValenceContracts/schemas/ArtworkChoice';
 import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
 import type { ExternalIds } from '@ValenceServer/library/naming/ExternalIds.types';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
@@ -114,6 +115,10 @@ type MetadataProvider = {
   describeSeries?: (externalId: string) => Promise<SeriesShape | null>;
   describeNextEpisode?: (externalId: string) => Promise<NextEpisode | null>;
   readLogoUrl?: (options: { externalId: string; isSeries: boolean }) => Promise<string | null>;
+  readArtworkOptions?: (options: {
+    externalId: string;
+    isSeries: boolean;
+  }) => Promise<ArtworkChoices['options'] | null>;
   readPerson?: (personId: number) => Promise<Person | null>;
   search?: (query: string, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
   browse?: (browsing: CatalogueBrowsing) => Promise<CataloguePaged>;
