@@ -25,6 +25,7 @@
       "@ValenceServer/*": ["./apps/server/src/*"],
       "@ValenceTv/*": ["./apps/tv/src/*"],
       "@ValenceRequests/*": ["./apps/requests/src/*"],
+      "@ValenceTools/*": ["./tools/*"],
       "@ValenceUI/ActionBar": ["./packages/ui/src/components/ActionBar/ActionBar.tsx"],
       "@ValenceUI/ActionBar.types": ["./packages/ui/src/components/ActionBar/ActionBar.types.ts"],
       "@ValenceUI/ActionMenu": ["./packages/ui/src/components/ActionMenu/ActionMenu.tsx"],
