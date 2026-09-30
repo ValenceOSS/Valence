@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { onlineManager } from '@tanstack/react-query';
 import { chooseOffline } from '@ValenceClient/offline/chosenOffline';
 import { installATestClient } from '@ValenceScreens/testing/installATestClient';
+import { aFakeHeldFiles } from '@ValenceClient/testing/aFakeHeldFiles';
 import { gainFor } from '@ValenceCore/functions/gainFor';
 import { notify } from '@ValenceUI/notify';
 import { VideoPlayer } from './VideoPlayer';
@@ -318,12 +319,13 @@ describe('VideoPlayer', () => {
   });
 
   it('plays a copy kept on this device without asking the server for a session', async () => {
+    installATestClient({ held: aFakeHeldFiles().held });
     const { container } = renderInAnAddress(
-      <VideoPlayer media={media} onClose={vi.fn()} keptSource="valence-kept://arrival" />,
+      <VideoPlayer media={media} onClose={vi.fn()} keptDownloadId="arrival" />,
     );
 
     await waitFor(() => {
-      expect(container.querySelector('video')?.getAttribute('src')).toBe('valence-kept://arrival');
+      expect(container.querySelector('video')?.getAttribute('src')).toBe('/held/arrival');
     });
     expect(startMock).not.toHaveBeenCalled();
   });
@@ -340,11 +342,10 @@ describe('VideoPlayer', () => {
   });
 
   it('offers no qualities or sound tracks for a copy kept on this device, which is one file', async () => {
+    installATestClient({ held: aFakeHeldFiles().held });
     detailMock.mockResolvedValue(detailWithTwoAudioTracks);
     const actor = userEvent.setup();
-    renderInAnAddress(
-      <VideoPlayer media={media} onClose={vi.fn()} keptSource="valence-kept://arrival" />,
-    );
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} keptDownloadId="arrival" />);
 
     await waitFor(() => {
       expect(detailMock).toHaveBeenCalled();
@@ -357,7 +358,7 @@ describe('VideoPlayer', () => {
   });
 
   it('asks the server for nothing while playing a kept copy offline', async () => {
-    installATestClient({ canKeepFiles: () => true });
+    installATestClient({ canKeepFiles: () => true, held: aFakeHeldFiles().held });
     chooseOffline(true);
     onlineManager.setOnline(false);
     presenceHeartbeatMock.mockClear();
@@ -365,11 +366,11 @@ describe('VideoPlayer', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const { container, unmount } = renderInAnAddress(
-      <VideoPlayer media={media} onClose={vi.fn()} keptSource="valence-kept://arrival" />,
+      <VideoPlayer media={media} onClose={vi.fn()} keptDownloadId="arrival" />,
     );
 
     await waitFor(() => {
-      expect(container.querySelector('video')?.getAttribute('src')).toBe('valence-kept://arrival');
+      expect(container.querySelector('video')?.getAttribute('src')).toBe('/held/arrival');
     });
     fireEvent.play(await screen.findByLabelText('Arrival'));
     unmount();
@@ -383,13 +384,42 @@ describe('VideoPlayer', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it('scrubs a kept copy with the thumbnails kept beside it, even offline', async () => {
+    const trickplayFor = vi.fn(() => Promise.resolve({ thumbnails: [], width: 320, height: 180 }));
+
+    installATestClient({
+      canKeepFiles: () => true,
+      held: { ...aFakeHeldFiles().held, trickplayFor },
+    });
+    chooseOffline(true);
+    onlineManager.setOnline(false);
+
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} keptDownloadId="arrival" />);
+
+    await waitFor(() => {
+      expect(trickplayFor).toHaveBeenCalledWith('arrival');
+    });
+    expect(trickplayMock).not.toHaveBeenCalled();
+  });
+
+  it('asks the server for thumbnails a kept copy came without, while online', async () => {
+    installATestClient({ held: aFakeHeldFiles().held });
+
+    renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} keptDownloadId="arrival" />);
+
+    await waitFor(() => {
+      expect(trickplayMock).toHaveBeenCalledWith('media-1');
+    });
+  });
+
   it('still asks for thumbnails and skip times for a kept copy while online', async () => {
+    installATestClient({ held: aFakeHeldFiles().held });
     const { container } = renderInAnAddress(
-      <VideoPlayer media={media} onClose={vi.fn()} keptSource="valence-kept://arrival" />,
+      <VideoPlayer media={media} onClose={vi.fn()} keptDownloadId="arrival" />,
     );
 
     await waitFor(() => {
-      expect(container.querySelector('video')?.getAttribute('src')).toBe('valence-kept://arrival');
+      expect(container.querySelector('video')?.getAttribute('src')).toBe('/held/arrival');
     });
 
     expect(trickplayMock).toHaveBeenCalledWith('media-1');

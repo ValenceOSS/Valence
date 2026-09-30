@@ -1,8 +1,11 @@
 import { mkdir, rm, stat, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import type { HeldFile, WhatToKeep } from '@ValenceContracts/schemas/HeldFile';
 import { keepADownload } from '@ValenceDesktop/main/keepADownload';
 import type { AskingTheServer, Fetching, Outcome } from '@ValenceDesktop/main/keepADownload';
-import { theFileKept, thePosterKept } from '@ValenceDesktop/main/theHeldFolder';
+import { KEPT_TRICKPLAY_INDEX } from '@ValenceClient/downloads/KEPT_TRICKPLAY_INDEX';
+import { trickplayToKeep } from '@ValenceClient/downloads/trickplayToKeep';
+import { theFileKept, thePosterKept, theTrickplayKept } from '@ValenceDesktop/main/theHeldFolder';
 import type { HeldIndex } from '@ValenceDesktop/main/theHeldIndex';
 
 type HeldLibrary = {
@@ -60,6 +63,7 @@ const howMuchIsThere = async (path: string): Promise<number> => {
  */
 const theHeldLibrary = (needs: WhatTheLibraryNeeds): HeldLibrary => {
   const busy = new Map<string, Fetching>();
+  const thumbnailing = new Map<string, Promise<boolean>>();
   const listeners = new Set<(held: HeldFile[]) => void>();
 
   const all = async (): Promise<HeldFile[]> => {
@@ -129,6 +133,85 @@ const theHeldLibrary = (needs: WhatTheLibraryNeeds): HeldLibrary => {
   };
 
   /**
+   * Fetches the thumbnails shown while scrubbing, so a film watched on a plane can be scrubbed
+   * through the way it can at home.
+   *
+   * Kept whole or not at all: an index naming sheets that never arrived would draw holes. Like the
+   * poster, not getting them is not failing to keep the film, and the server may simply not have
+   * made them yet — asking is what has it start, and a later attempt picks them up. A fetch already
+   * under way for the film is shared rather than started again.
+   *
+   * @param row - What was kept.
+   * @returns Whether there are now thumbnails to draw.
+   */
+  const fetchTheTrickplay = async (row: HeldFile): Promise<boolean> => {
+    const already = thumbnailing.get(row.downloadId);
+
+    if (already !== undefined) {
+      return already;
+    }
+
+    const fetching = fetchTheSheets(row).finally(() => {
+      thumbnailing.delete(row.downloadId);
+    });
+
+    thumbnailing.set(row.downloadId, fetching);
+
+    return fetching;
+  };
+
+  /**
+   * Fetches the index and every sheet it names into the film's thumbnail folder, for one fetch at a
+   * time per film: two at once would share the folder, and one failing would empty it under the
+   * other.
+   *
+   * @param row - What was kept.
+   * @returns Whether there are now thumbnails to draw.
+   */
+  const fetchTheSheets = async (row: HeldFile): Promise<boolean> => {
+    const server = needs.where();
+
+    if (server === '') {
+      return row.hasTrickplay;
+    }
+
+    const ask = (path: string, how?: RequestInit) =>
+      needs.fetching(new URL(path, server).toString(), how);
+    const wanted = await trickplayToKeep(ask, row.mediaId);
+
+    if (wanted === null) {
+      return row.hasTrickplay;
+    }
+
+    const kept = theTrickplayKept(needs.folder, row.downloadId);
+
+    try {
+      await mkdir(kept, { recursive: true });
+      await writeFile(join(kept, KEPT_TRICKPLAY_INDEX), wanted.vtt);
+
+      for (const sheet of wanted.sheets) {
+        const answer = await ask(sheet.from);
+
+        if (!answer.ok) {
+          throw new Error(`The sheet ${sheet.name} did not come.`);
+        }
+
+        await writeFile(join(kept, sheet.name), Buffer.from(await answer.arrayBuffer()));
+      }
+
+      if (needs.index.read(row.downloadId) === null) {
+        throw new Error('It was forgotten while its thumbnails were fetched.');
+      }
+
+      return true;
+    } catch {
+      await rm(kept, { recursive: true, force: true });
+
+      return false;
+    }
+  };
+
+  /**
    * Records where a transfer got to, and what happened to it.
    *
    * Read from the index again rather than written over the row this started with, because the row
@@ -181,11 +264,13 @@ const theHeldLibrary = (needs: WhatTheLibraryNeeds): HeldLibrary => {
       }
 
       const hasPoster = outcome.isComplete ? await fetchThePoster(row) : row.hasPoster;
+      const hasTrickplay = outcome.isComplete ? await fetchTheTrickplay(row) : row.hasTrickplay;
 
       note(row.downloadId, {
         bytes: outcome.bytes,
         bytesPerSecond: null,
         hasPoster,
+        hasTrickplay,
         ...(outcome.isComplete
           ? { state: 'here', failure: null }
           : outcome.failure === null
@@ -203,6 +288,23 @@ const theHeldLibrary = (needs: WhatTheLibraryNeeds): HeldLibrary => {
         failure: 'This client could not finish keeping it.',
       });
     });
+  };
+
+  /**
+   * Fetches the thumbnails of films kept before the server had made them, one at a time and after
+   * any interrupted film has been set going again, so nothing a person is waiting for waits on them.
+   */
+  const fillInTheThumbnails = async (): Promise<void> => {
+    for (const row of needs.index.all()) {
+      if (row.state === 'here' && !row.hasTrickplay && !busy.has(row.downloadId)) {
+        const hasTrickplay = await fetchTheTrickplay(row);
+
+        if (hasTrickplay) {
+          note(row.downloadId, { hasTrickplay });
+          await announce();
+        }
+      }
+    }
   };
 
   return {
@@ -230,6 +332,7 @@ const theHeldLibrary = (needs: WhatTheLibraryNeeds): HeldLibrary => {
         failure: null,
         keptAt: already?.keptAt ?? needs.now(),
         hasPoster: already?.hasPoster ?? false,
+        hasTrickplay: already?.hasTrickplay ?? false,
       };
 
       needs.index.write(row);
@@ -249,6 +352,7 @@ const theHeldLibrary = (needs: WhatTheLibraryNeeds): HeldLibrary => {
 
       await rm(theFileKept(needs.folder, downloadId), { force: true });
       await rm(thePosterKept(needs.folder, downloadId), { force: true });
+      await rm(theTrickplayKept(needs.folder, downloadId), { recursive: true, force: true });
 
       await announce();
     },
@@ -291,6 +395,8 @@ const theHeldLibrary = (needs: WhatTheLibraryNeeds): HeldLibrary => {
       }
 
       await announce();
+
+      void fillInTheThumbnails();
     },
     whenChanged: (listener) => {
       listeners.add(listener);

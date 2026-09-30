@@ -6,7 +6,7 @@ import { AskForThePassword } from '@ValenceMobile/components/AskForThePassword/A
 import { SignedIn } from '@ValenceMobile/components/SignedIn/SignedIn';
 import { TheWayIn } from '@ValenceMobile/components/TheWayIn/TheWayIn';
 import { TheDownloads } from '@ValenceMobile/components/TheDownloads/TheDownloads';
-import { WatchingHeld } from '@ValenceMobile/components/WatchingHeld/WatchingHeld';
+import { Watching } from '@ValenceMobile/components/Watching/Watching';
 import { AMoodBackground } from '@ValenceMobile/components/AMoodBackground/AMoodBackground';
 import { thePictureFor } from '@ValenceMobile/components/AFace/thePictureFor';
 import { AFaceFlight } from '@ValenceMobile/components/TheHousehold/components/AFaceFlight/AFaceFlight';
@@ -130,8 +130,10 @@ const TheHousehold = ({ onElsewhere }: TheHouseholdProps) => {
 
   if (watchingHeld !== null) {
     return (
-      <WatchingHeld
-        file={watchingHeld}
+      <Watching
+        key={watchingHeld.downloadId}
+        mediaId={watchingHeld.mediaId}
+        kept={watchingHeld}
         onDone={() => {
           setWatchingHeld(null);
         }}

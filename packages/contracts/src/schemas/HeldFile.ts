@@ -23,6 +23,7 @@ const HeldFileSchema = WhatToKeepSchema.extend({
   failure: z.string().nullable().default(null),
   keptAt: z.string().datetime(),
   hasPoster: z.boolean().default(false),
+  hasTrickplay: z.boolean().default(false),
 });
 
 const HeldFileListSchema = z.object({ held: z.array(HeldFileSchema) });

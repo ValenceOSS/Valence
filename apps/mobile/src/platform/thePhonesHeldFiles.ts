@@ -5,8 +5,13 @@ import {
   downloadAsync,
   getInfoAsync,
   makeDirectoryAsync,
+  readAsStringAsync,
+  writeAsStringAsync,
 } from 'expo-file-system/legacy';
 import { HeldFileListSchema } from '@ValenceContracts/schemas/HeldFile';
+import { KEPT_TRICKPLAY_INDEX } from '@ValenceClient/downloads/KEPT_TRICKPLAY_INDEX';
+import { keptTrickplayFrom } from '@ValenceClient/downloads/keptTrickplayFrom';
+import { trickplayToKeep } from '@ValenceClient/downloads/trickplayToKeep';
 import { HELD_RESUMES } from '@ValenceMobile/platform/HELD_RESUMES';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { theCookiesThisPhoneHolds } from '@ValenceMobile/platform/theCookiesThisPhoneHolds';
@@ -37,9 +42,31 @@ const filmOf = (downloadId: string): string => `${FOLDER}${downloadId}.mp4`;
 const posterOf = (downloadId: string): string => `${FOLDER}${downloadId}.jpg`;
 
 /**
+ * Where a kept film's scrubbing thumbnails are, on this phone: a folder of their own beside it.
+ *
+ * @param downloadId - The prepared download it came from.
+ * @returns The folder's address, ending in a slash.
+ */
+const trickplayOf = (downloadId: string): string => `${FOLDER}${downloadId}.trickplay/`;
+
+/**
+ * Asks this phone's server something, given a path on it, as the rest of the application does: the
+ * session travels in the phone's own cookie jar, which a cookie set by hand on a request would get
+ * in the way of.
+ *
+ * @param path - Where on the server.
+ * @param how - The rest of the request.
+ * @returns The answer.
+ */
+const askTheServer = (path: string, how: RequestInit = {}): Promise<Response> =>
+  fetch(onThisServer(path), how);
+
+/**
  * The files this phone keeps for watching without the server, as the desktop keeps them: each
- * fetched from what the server prepared, with its poster beside it, and a list of them kept in the
- * phone's store so they are known again after the app has closed.
+ * fetched from what the server prepared, with its poster and its scrubbing thumbnails beside it, and
+ * a list of them kept in the phone's store so they are known again after the app has closed.
+ * Thumbnails the server had not made yet when a film arrived are asked for again once the app has
+ * started.
  *
  * A fetch can be paused and picked up again, and one the app closed partway through is picked up
  * where it stopped once the app has started. Each carries this phone's session, which the server
@@ -93,6 +120,41 @@ const thePhonesHeldFiles = (
     ).catch(() => null);
 
     change(row.downloadId, { hasPoster: fetched !== null && fetched.status === 200 });
+  };
+
+  const fetchTheTrickplay = async (row: HeldFile, cookie: string | null) => {
+    const wanted = await trickplayToKeep(askTheServer, row.mediaId);
+
+    if (wanted === null) {
+      return;
+    }
+
+    const kept = trickplayOf(row.downloadId);
+
+    try {
+      await makeDirectoryAsync(kept, { intermediates: true });
+      await writeAsStringAsync(`${kept}${KEPT_TRICKPLAY_INDEX}`, wanted.vtt);
+
+      for (const sheet of wanted.sheets) {
+        const fetched = await downloadAsync(
+          onThisServer(sheet.from),
+          `${kept}${sheet.name}`,
+          cookie === null ? {} : { headers: { Cookie: cookie } },
+        );
+
+        if (fetched.status !== 200) {
+          throw new Error(`The sheet ${sheet.name} did not come.`);
+        }
+      }
+
+      if (!rows.some((one) => one.downloadId === row.downloadId)) {
+        throw new Error('It was forgotten while its thumbnails were fetched.');
+      }
+
+      change(row.downloadId, { hasTrickplay: true });
+    } catch {
+      await deleteAsync(kept, { idempotent: true }).catch(() => undefined);
+    }
   };
 
   const fetchTheFilm = async (row: HeldFile) => {
@@ -175,9 +237,21 @@ const thePhonesHeldFiles = (
     store.forget(`${HELD_RESUMES}${row.downloadId}`);
     change(row.downloadId, { state: 'here', bytesPerSecond: null, failure: null });
     await fetchThePoster(now, cookie);
+    await fetchTheTrickplay(now, cookie);
   };
 
   const leftFetching = rows.filter((row) => row.state === 'fetching').map((row) => row.downloadId);
+  const leftWithoutThumbnails = rows.filter((row) => row.state === 'here' && !row.hasTrickplay);
+
+  if (leftWithoutThumbnails.length > 0) {
+    whenSettled(() => {
+      void theCookiesThisPhoneHolds(onThisServer('/api/playback')).then(async (cookie) => {
+        for (const row of leftWithoutThumbnails) {
+          await fetchTheTrickplay(row, cookie);
+        }
+      });
+    });
+  }
 
   if (leftFetching.length > 0) {
     whenSettled(() => {
@@ -226,6 +300,7 @@ const thePhonesHeldFiles = (
         failure: null,
         keptAt: new Date().toISOString(),
         hasPoster: false,
+        hasTrickplay: false,
       };
 
       rows = [row, ...rows];
@@ -244,6 +319,7 @@ const thePhonesHeldFiles = (
       await transfer?.pauseAsync().catch(() => undefined);
       await deleteAsync(filmOf(downloadId), { idempotent: true }).catch(() => undefined);
       await deleteAsync(posterOf(downloadId), { idempotent: true }).catch(() => undefined);
+      await deleteAsync(trickplayOf(downloadId), { idempotent: true }).catch(() => undefined);
     },
 
     pause: async (downloadId, isPaused) => {
@@ -274,6 +350,13 @@ const thePhonesHeldFiles = (
     sourceFor: filmOf,
 
     posterFor: posterOf,
+
+    trickplayFor: async (downloadId) => {
+      const index = `${trickplayOf(downloadId)}${KEPT_TRICKPLAY_INDEX}`;
+      const vtt = await readAsStringAsync(index).catch(() => null);
+
+      return vtt === null ? null : keptTrickplayFrom(vtt, index);
+    },
 
     whenChanged: (listener) => {
       listeners.add(listener);

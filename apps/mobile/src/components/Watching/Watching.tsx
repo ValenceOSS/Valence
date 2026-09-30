@@ -9,6 +9,12 @@ import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { fetchSubtitleTracks, SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
 import { fetchSegments } from '@ValenceClient/playback/fetchSegments';
 import { namePlaying } from '@ValenceClient/playback/namePlaying';
+import {
+  posterForAFile,
+  sourceForAFile,
+  trickplayForAFile,
+} from '@ValenceClient/downloads/keepingFiles';
+import { rememberWatchedOffline, watchedOffline } from '@ValenceClient/offline/watchedOffline';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { onPresenceEvent } from '@ValenceClient/presence/presenceEvents';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
@@ -162,6 +168,9 @@ const styles = StyleSheet.create({
  * @param onEnded - Told the film has played to its end, so whoever opened it can decide what follows.
  * @param seasons - The programme's seasons, where this is an episode of one, to offer the others.
  * @param onChooseEpisode - Told which other episode somebody picked.
+ * @param kept - A copy this phone keeps, played straight from the file with nothing asked of the
+ * server: named from what was kept, scrubbed with the thumbnails kept beside it, resumed from where
+ * it was left on this phone, and remembered there until the server can be told.
  */
 const Watching = ({
   mediaId,
@@ -170,6 +179,7 @@ const Watching = ({
   onEnded,
   seasons = NO_SEASONS,
   onChooseEpisode,
+  kept,
 }: WatchingProps) => {
   const colours = useTheColours();
   const [source, setSource] = useState<VideoSource | null>(null);
@@ -189,11 +199,20 @@ const Watching = ({
   const [isChoosing, setIsChoosing] = useState(false);
   const [isPickingAnEpisode, setIsPickingAnEpisode] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const isKept = kept !== undefined;
   const frames = useQuery({
     queryKey: ['playback', 'trickplay', mediaId],
     queryFn: () => fetchTrickplay(mediaId),
     staleTime: Infinity,
+    enabled: !isKept,
     refetchInterval: (query) => (query.state.data === null ? ASK_FOR_FRAMES_AGAIN_EVERY : false),
+  });
+  const keptFrames = useQuery({
+    queryKey: ['held', 'trickplay', kept?.downloadId],
+    queryFn: () => (kept === undefined ? null : trickplayForAFile(kept.downloadId)),
+    staleTime: Infinity,
+    enabled: isKept,
+    networkMode: 'always',
   });
   const [rate, setRate] = useState(1);
   const [subtitleOffset, setSubtitleOffset] = useState(0);
@@ -202,13 +221,21 @@ const Watching = ({
     audioStreamIndex?: number;
     requestedQuality?: QualityPreference;
     subtitleStreamIndex?: number | undefined;
-  }>({ from: startSeconds });
+  }>(() => ({
+    from:
+      kept === undefined
+        ? startSeconds
+        : (watchedOffline().find((one) => one.mediaId === mediaId)?.positionSeconds ??
+          startSeconds),
+  }));
   const clientId = platformInUse().thisClientId();
-  const title = useQuery(libraryQueries.detail(mediaId));
+  const title = useQuery({ ...libraryQueries.detail(mediaId), enabled: !isKept });
   const called =
-    title.data === undefined || title.data === null
-      ? null
-      : namePlaying({ ...title.data.metadata, title: title.data.title, year: title.data.year });
+    kept !== undefined
+      ? namePlaying({ title: kept.title, seriesTitle: kept.seriesTitle })
+      : title.data === undefined || title.data === null
+        ? null
+        : namePlaying({ ...title.data.metadata, title: title.data.title, year: title.data.year });
   const named = useRef<string | undefined>(undefined);
 
   useEffect(() => {
@@ -217,16 +244,39 @@ const Watching = ({
   const tracks = useQuery({
     queryKey: ['subtitles', mediaId],
     queryFn: () => fetchSubtitleTracks(mediaId),
+    enabled: !isKept,
   });
   const marked = useQuery({
     queryKey: ['segments', mediaId],
     queryFn: () => fetchSegments(mediaId),
+    enabled: !isKept,
   });
   const [reading, setReading] = useState(SUBTITLES_OFF);
   const beingRead = (tracks.data ?? []).find((track) => track.id === reading) ?? null;
   const cues = useTheSubtitles(mediaId, reading, beingRead?.delivery === 'burnIn');
 
   useEffect(() => {
+    if (kept === undefined) {
+      return undefined;
+    }
+
+    setSeekTo(asking.from);
+    setSource({
+      uri: sourceForAFile(kept.downloadId),
+      metadata: {
+        ...(named.current === undefined ? {} : { title: named.current }),
+        ...(kept.hasPoster ? { artwork: posterForAFile(kept.downloadId) } : {}),
+      },
+    });
+
+    return undefined;
+  }, [kept, asking]);
+
+  useEffect(() => {
+    if (isKept) {
+      return undefined;
+    }
+
     let started: string | null = null;
     let leftAlready = false;
 
@@ -288,7 +338,7 @@ const Watching = ({
 
       void stopWatching(clientId);
     };
-  }, [mediaId, asking, clientId]);
+  }, [mediaId, asking, clientId, isKept]);
 
   const player = useVideoPlayer(source, (ready) => {
     ready.timeUpdateEventInterval = HOW_OFTEN_IT_SAYS_WHERE_IT_IS;
@@ -431,7 +481,7 @@ const Watching = ({
   }, [areControlsUp, moving.isPlaying, isChoosing, lastTouched]);
 
   useEffect(() => {
-    if (sessionId === null) {
+    if (sessionId === null && !isKept) {
       return;
     }
 
@@ -446,6 +496,12 @@ const Watching = ({
 
     const bookmark = (isLeaving: boolean) => {
       const seen = whereTheyGotTo.current;
+
+      if (seen !== null && isKept) {
+        rememberWatchedOffline(mediaId, seen.positionSeconds, seen.durationSeconds);
+
+        return;
+      }
 
       if (seen !== null) {
         void reportWatchProgress(
@@ -468,7 +524,7 @@ const Watching = ({
       clearInterval(saving);
       bookmark(true);
     };
-  }, [sessionId, mediaId, player]);
+  }, [sessionId, mediaId, player, isKept]);
 
   useEffect(() => {
     setThePace(player, rate);
@@ -539,11 +595,11 @@ const Watching = ({
   const settings = useMemo(
     () =>
       theChoicesOn({
-        streams: title.data?.audioStreams ?? [],
-        subtitles: tracks.data ?? [],
+        streams: isKept ? [] : (title.data?.audioStreams ?? []),
+        subtitles: isKept ? [] : (tracks.data ?? []),
         chosenSubtitle: reading,
         onSubtitle: readInstead,
-        media: title.data ?? null,
+        media: isKept ? null : (title.data ?? null),
         profile: thePhonesProfile(),
         chosenAudio: asking.audioStreamIndex ?? null,
         chosenQuality: asking.requestedQuality ?? 'original',
@@ -559,6 +615,7 @@ const Watching = ({
         onSubtitleOffset: setSubtitleOffset,
       }),
     [
+      isKept,
       title.data,
       tracks.data,
       reading,
@@ -639,7 +696,7 @@ const Watching = ({
           title: called?.name ?? '',
           year: called?.year ?? null,
           isPlaying: moving.isPlaying,
-          trickplay: frames.data ?? null,
+          trickplay: (isKept ? keptFrames.data : frames.data) ?? null,
           onPlayPause: () => {
             keepThemUp();
 

@@ -48,4 +48,15 @@ const theFileKept = (folder: string, downloadId: string): string =>
 const thePosterKept = (folder: string, downloadId: string): string =>
   join(folder, `${downloadId}.jpg`);
 
-export { theFileKept, theHeldFolder, thePosterKept };
+/**
+ * Where a kept film's scrubbing thumbnails are: a folder of its own beside the film, holding the
+ * index and the sheets it names.
+ *
+ * @param folder - Where kept films are.
+ * @param downloadId - The prepared download.
+ * @returns The folder.
+ */
+const theTrickplayKept = (folder: string, downloadId: string): string =>
+  join(folder, `${downloadId}.trickplay`);
+
+export { theFileKept, theHeldFolder, thePosterKept, theTrickplayKept };

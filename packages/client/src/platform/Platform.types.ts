@@ -2,6 +2,7 @@ import type { AudioLike } from '@ValenceClient/music/createMusicPlayer';
 import type { ListeningAudio } from '@ValenceClient/books/createAudiobookPlayer';
 import type { Connect } from '@ValenceClient/realtime/createRealtimeClient';
 import type { HeldFile, WhatToKeep } from '@ValenceContracts/schemas/HeldFile';
+import type { Trickplay } from '@ValenceClient/playback/fetchTrickplay';
 import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
 import type { PasskeyAssertion } from '@ValenceContracts/schemas/PasskeyAssertion';
 import type { PasskeyAttestation } from '@ValenceContracts/schemas/PasskeyAttestation';
@@ -21,6 +22,7 @@ type HeldFiles = {
   pause: (downloadId: string, isPaused: boolean) => Promise<void>;
   sourceFor: (downloadId: string) => string;
   posterFor: (downloadId: string) => string;
+  trickplayFor: (downloadId: string) => Promise<Trickplay | null>;
   whenChanged: (listener: (held: HeldFile[]) => void) => () => void;
 };
 

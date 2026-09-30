@@ -1,10 +1,12 @@
 import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
+import { join } from 'node:path';
 import type { Readable } from 'node:stream';
 import { z } from 'zod';
-import { theFileKept, thePosterKept } from '@ValenceDesktop/main/theHeldFolder';
+import { theFileKept, thePosterKept, theTrickplayKept } from '@ValenceDesktop/main/theHeldFolder';
 
-const HELD = /^\/held\/(?<downloadId>[0-9a-fA-F-]{36})(?<what>\/poster)?$/u;
+const HELD =
+  /^\/held\/(?<downloadId>[0-9a-fA-F-]{36})(?:(?<what>\/poster)|\/trickplay\/(?<sheet>[A-Za-z0-9_-][A-Za-z0-9._-]*))?$/u;
 
 const RANGE = /^bytes=(?<from>\d*)-(?<to>\d*)$/u;
 
@@ -61,7 +63,9 @@ const asABody = (from: Readable): ReadableStream<Uint8Array> =>
  *
  * The download id is insisted upon rather than trimmed, and this is the reason the check exists: a
  * path built out of whatever the renderer sent is how a renderer reads the rest of the machine. A
- * name shaped like a download id cannot climb out of the folder, whatever else is wrong with it.
+ * name shaped like a download id cannot climb out of the folder, whatever else is wrong with it. A
+ * thumbnail's name is held to letters, digits, dots, dashes and underscores, and may not start with
+ * a dot, so it cannot either.
  *
  * @param folder - Where held files are kept.
  * @param pathname - What was asked for.
@@ -73,6 +77,15 @@ const whatWasAsked = (folder: string, pathname: string): Asked | null => {
 
   if (!downloadId.success) {
     return null;
+  }
+
+  const sheet = found?.['sheet'];
+
+  if (sheet !== undefined) {
+    return {
+      path: join(theTrickplayKept(folder, downloadId.data), sheet),
+      kind: sheet.endsWith('.vtt') ? 'text/vtt' : 'image/jpeg',
+    };
   }
 
   return found?.['what'] === undefined

@@ -1,6 +1,7 @@
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import type { Download } from '@ValenceContracts/schemas/Download';
 import type { WhatToKeep } from '@ValenceContracts/schemas/HeldFile';
+import type { Trickplay } from '@ValenceClient/playback/fetchTrickplay';
 
 /**
  * What this device needs to know about a prepared download in order to keep a copy of it.
@@ -78,4 +79,23 @@ const sourceForAFile = (downloadId: string): string => platformInUse().held.sour
  */
 const posterForAFile = (downloadId: string): string => platformInUse().held.posterFor(downloadId);
 
-export { asSomethingToKeep, dropAFile, keepAFile, pauseAFile, posterForAFile, sourceForAFile };
+/**
+ * The thumbnails kept beside a film on this device, for scrubbing through it without the server.
+ *
+ * @param downloadId - The prepared download.
+ * @returns The thumbnails, or null where none were kept.
+ */
+const trickplayForAFile = async (downloadId: string): Promise<Trickplay | null> =>
+  platformInUse()
+    .held.trickplayFor(downloadId)
+    .catch(() => null);
+
+export {
+  asSomethingToKeep,
+  dropAFile,
+  keepAFile,
+  pauseAFile,
+  posterForAFile,
+  sourceForAFile,
+  trickplayForAFile,
+};

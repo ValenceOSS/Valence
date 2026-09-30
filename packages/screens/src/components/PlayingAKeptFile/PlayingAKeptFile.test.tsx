@@ -37,6 +37,7 @@ const HERE: HeldFile = {
   failure: null,
   keptAt: '2026-01-01T00:20:00.000Z',
   hasPoster: false,
+  hasTrickplay: false,
 };
 
 afterEach(() => {
@@ -54,7 +55,7 @@ describe('PlayingAKeptFile', () => {
       media: { id: HERE.mediaId, title: 'Arrival' },
       isImmersive: true,
     });
-    expect(drawn.player?.keptSource).toBe(`/held/${HERE.downloadId}`);
+    expect(drawn.player?.keptDownloadId).toBe(HERE.downloadId);
 
     await userEvent.setup().click(screen.getByRole('button', { name: 'Stop playing Arrival' }));
 
