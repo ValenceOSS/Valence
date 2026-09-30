@@ -50,6 +50,8 @@ const letterSpring: Transition = {
 
 const LETTER_REST = { opacity: 1, y: 0 };
 
+const POP_REST = { opacity: 1, scale: 1, y: 0, rotate: 0 };
+
 const settleTween: Transition = {
   duration: 0.32,
   ease: [0.2, 0, 0, 1],
@@ -99,15 +101,20 @@ const revealVariants = (prefersReducedMotion: boolean | null): Variants =>
  * arriving as fast as a card does.
  *
  * @param prefersReducedMotion - What the system reports, which is null until it has been read.
- * @param weight - Whether this is a large thing arriving or an ordinary one.
+ * @param weight - Whether this is a large thing arriving, an ordinary one, or one that should land
+ *   with a little overshoot.
  * @returns The transition to hand a Motion component.
  */
 const revealTransition = (
   prefersReducedMotion: boolean | null,
-  weight: 'light' | 'heavy' = 'light',
+  weight: 'light' | 'heavy' | 'bouncy' = 'light',
 ): Transition => {
   if (prefersReducedMotion === true) {
     return stillTransition;
+  }
+
+  if (weight === 'bouncy') {
+    return bounceSpring;
   }
 
   return weight === 'heavy' ? heavySpring : spring;
@@ -185,8 +192,31 @@ const letterArrival = (
         transition: { ...letterSpring, delay },
       };
 
+/**
+ * How something small arrives with a bounce — a tool in a bar, a button in a row: popping up from
+ * small with a little turn after the given wait, overshooting a touch as it lands. For somebody who
+ * asked for less motion, or something that draws its own arrival, it is simply there, and never left
+ * halfway.
+ *
+ * @param delay - How long it waits, in seconds.
+ * @param isStill - Whether it should simply be there.
+ * @returns The Motion props for the thing arriving.
+ */
+const popArrival = (
+  delay: number,
+  isStill: boolean,
+): Pick<MotionProps, 'initial' | 'animate' | 'transition'> =>
+  isStill
+    ? { initial: false as const, animate: POP_REST, transition: { duration: 0 } }
+    : {
+        initial: { opacity: 0, scale: 0.4, y: 6, rotate: -18 },
+        animate: POP_REST,
+        transition: { ...bounceSpring, delay },
+      };
+
 export {
   spring,
+  popArrival,
   popSpring,
   openSpring,
   letterArrival,

@@ -9,7 +9,7 @@ import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { SlidingMark } from '@ValenceUI/SlidingMark';
 import { cn } from '@ValenceUI/cn';
 import { useFitWidth } from '@ValenceUI/useFitWidth';
-import { bounceSpring, letterArrival, openSpring } from '@ValenceUI/animations/reveal';
+import { letterArrival, openSpring, popArrival } from '@ValenceUI/animations/reveal';
 import { useOpenAction } from './useOpenAction';
 import type { NavBarProps } from './NavBar.types';
 
@@ -26,28 +26,6 @@ const LETTER_STEP = 0.022;
 const MARK_POPS_AFTER = 0.18;
 
 const ARRIVAL_MS = 1400;
-
-const AT_REST = { opacity: 1, scale: 1, y: 0, rotate: 0 };
-
-/**
- * How one of the tools at the right arrives when the bar first appears: popping up from small with a
- * little turn, a moment after the one before it, so the row lands left to right with a bounce. A
- * tool that draws its own arrival, or anybody who asked for less motion, simply has it there — and a
- * tool that turns out to draw its own only after it has started is put straight at rest, never left
- * halfway.
- *
- * @param at - Where the tool sits in the row, counting from the left.
- * @param isStill - Whether it should simply be there.
- * @returns The Motion props for the tool's icon.
- */
-const arrivalOf = (at: number, isStill: boolean) =>
-  isStill
-    ? { initial: false as const, animate: AT_REST, transition: { duration: 0 } }
-    : {
-        initial: { opacity: 0, scale: 0.4, y: 6, rotate: -18 },
-        animate: AT_REST,
-        transition: { ...bounceSpring, delay: TOOL_LEAD + at * TOOL_STEP },
-      };
 
 const MOVES = 'transition-colors duration-[var(--duration-fast)] ease-[var(--ease-soft)]';
 
@@ -383,7 +361,10 @@ const NavBar = ({
 
                 <motion.span
                   className="relative z-10 flex"
-                  {...arrivalOf(at, isStill || action.arrivesOnItsOwn === true)}
+                  {...popArrival(
+                    TOOL_LEAD + at * TOOL_STEP,
+                    isStill || action.arrivesOnItsOwn === true,
+                  )}
                 >
                   <AnimatedIcon
                     isPlaying={pointedAt === action.id}
@@ -418,7 +399,10 @@ const NavBar = ({
 
                 <motion.span
                   className="relative z-10 flex"
-                  {...arrivalOf(at, isStill || action.arrivesOnItsOwn === true)}
+                  {...popArrival(
+                    TOOL_LEAD + at * TOOL_STEP,
+                    isStill || action.arrivesOnItsOwn === true,
+                  )}
                 >
                   <AnimatedIcon
                     isPlaying={pointedAt === action.id}
