@@ -11,11 +11,17 @@ const FONT_FAMILIES = {
  * Builds the edge drawn behind caption lettering at a chosen strength — an outline, a shadow, a
  * raised or depressed edge — which is what keeps white text readable over a white shirt.
  *
+ * An outline is drawn as copies of the lettering pushed out all the way round, sixteen directions
+ * rather than four, so a thick one stays solid instead of breaking up at the diagonals. Its reach is
+ * measured against the lettering itself rather than in pixels, so the same setting reads the same on
+ * a small preview and on a large screen instead of swallowing small text.
+ *
  * @param edge - Which edge to draw.
  * @param opacity - How strongly to draw it.
+ * @param thickness - How thick an outline is, in steps from one to four.
  * @returns The CSS that draws it.
  */
-const edgeStyle = (edge: CaptionStyle['edgeStyle'], opacity: number): string => {
+const edgeStyle = (edge: CaptionStyle['edgeStyle'], opacity: number, thickness: number): string => {
   const ink = (strength: number): string => `rgba(0, 0, 0, ${(strength * opacity).toFixed(2)})`;
 
   if (edge === 'none') {
@@ -30,14 +36,29 @@ const edgeStyle = (edge: CaptionStyle['edgeStyle'], opacity: number): string => 
     return `1px 1px 0 rgba(255, 255, 255, ${(0.4 * opacity).toFixed(2)}), 2px 2px 3px ${ink(0.9)}`;
   }
 
+  const reach = thickness * OUTLINE_STEP_EM;
+
   return [
-    `-1px -1px 0 ${ink(1)}`,
-    `1px -1px 0 ${ink(1)}`,
-    `-1px 1px 0 ${ink(1)}`,
-    `1px 1px 0 ${ink(1)}`,
-    `0 0 3px ${ink(0.9)}`,
+    ...Array.from({ length: OUTLINE_DIRECTIONS }, (_, at) => {
+      const turn = (at / OUTLINE_DIRECTIONS) * Math.PI * 2;
+
+      return `${em(Math.cos(turn) * reach)} ${em(Math.sin(turn) * reach)} 0 ${ink(1)}`;
+    }),
+    `0 0 ${em(reach * 2)} ${ink(0.9)}`,
   ].join(', ');
 };
+
+const OUTLINE_DIRECTIONS = 16;
+
+const OUTLINE_STEP_EM = 0.025;
+
+/**
+ * Writes a length in ems, rounded so the rule stays readable.
+ *
+ * @param value - The length, as a fraction of the lettering's size.
+ * @returns The length, as CSS.
+ */
+const em = (value: number): string => `${(Math.round(value * 1000) / 1000).toString()}em`;
 
 const CaptionStyleSchema = z.object({
   fontFamily: z.enum(['sans', 'serif', 'mono', 'casual']).default('sans'),
@@ -47,6 +68,7 @@ const CaptionStyleSchema = z.object({
   backgroundColor: z.string().default('#000000'),
   backgroundOpacity: z.number().min(0).max(1).default(0.75),
   edgeStyle: z.enum(['none', 'outline', 'shadow', 'raised']).default('outline'),
+  outlineThickness: z.number().int().min(1).max(4).default(1),
 });
 
 type CaptionStyle = z.infer<typeof CaptionStyleSchema>;
@@ -103,7 +125,7 @@ const toCueDeclarations = (style: CaptionStyle): CueDeclarations => ({
   fontSize: `${style.fontScale.toString()}%`,
   color: withOpacity(style.color, style.opacity),
   backgroundColor: withOpacity(style.backgroundColor, style.backgroundOpacity),
-  textShadow: edgeStyle(style.edgeStyle, style.opacity),
+  textShadow: edgeStyle(style.edgeStyle, style.opacity, style.outlineThickness),
 });
 
 /**

@@ -8,7 +8,8 @@ import { whereToBegin, WAIT_FOR_THE_ROOM_MS } from '@ValenceClient/party/whereTo
 import { invitationTo } from '@ValenceScreens/party/invitationTo';
 import { countCarriedOn } from '@ValenceClient/playback/countCarriedOn';
 import { decideWhatFollows } from '@ValenceClient/playback/decideWhatFollows';
-import { findSiblings, nextEpisode } from '@ValenceClient/library/pickFeatured';
+import { nextEpisode } from '@ValenceClient/library/pickFeatured';
+import { useSeasonMates } from '@ValenceScreens/library/useSeasonMates';
 import { watchedFraction, FINISHED_WITHIN_SECONDS } from '@ValenceContracts/schemas/WatchProgress';
 import { STILL_WATCHING_OFF } from '@ValenceContracts/schemas/StillWatching';
 import { HOME } from '@ValenceClient/navigation/readLocation';
@@ -50,6 +51,13 @@ const WatchPage = () => {
   const joinedRef = useRef<string | null>(null);
 
   const playing = place.playing === null ? null : (known.get(place.playing) ?? null);
+  const seasonMates = useSeasonMates(playing, [...known.values()]);
+  const season =
+    playing === null || playing.seriesTitle === null || playing.seriesTitle === undefined
+      ? []
+      : [playing, ...seasonMates].sort(
+          (left, right) => (left.episodeNumber ?? 0) - (right.episodeNumber ?? 0),
+        );
 
   useEffect(() => {
     markedAtRef.current = 0;
@@ -200,13 +208,7 @@ const WatchPage = () => {
           />
         )}
         {...(partyPlayback === null ? {} : { party: partyPlayback })}
-        episodes={
-          playing.seriesTitle === null || playing.seriesTitle === undefined
-            ? []
-            : [playing, ...findSiblings([...known.values()], playing)].sort(
-                (left, right) => (left.episodeNumber ?? 0) - (right.episodeNumber ?? 0),
-              )
-        }
+        episodes={season}
         onSelectEpisode={(episode) => {
           go({ playing: episode.id });
         }}
@@ -234,7 +236,7 @@ const WatchPage = () => {
         }}
         onEnded={() => {
           const decided = decideWhatFollows({
-            following: nextEpisode([...known.values()], playing),
+            following: nextEpisode(season, playing),
             carriedOn: carriedOnRef.current,
             askAfter: watcher?.askStillWatchingAfter ?? STILL_WATCHING_OFF,
           });

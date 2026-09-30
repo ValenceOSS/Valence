@@ -115,28 +115,30 @@ describe('StreamStats', () => {
   it('reports the session and how it is being delivered', () => {
     draw();
 
-    expect(screen.getByText('abc')).toBeInTheDocument();
-    expect(screen.getByText(/HLS — \/api\/playback\/session\/abc/)).toBeInTheDocument();
+    expect(screen.getByTitle('abc')).toBeInTheDocument();
+    expect(screen.getByText('HLS')).toBeInTheDocument();
+    expect(screen.getByTitle('/api/playback/session/abc/index.m3u8')).toBeInTheDocument();
   });
 
   it('reports the decision on every axis with the reason behind it', () => {
     draw();
 
-    expect(screen.getByText(/^remux —/)).toBeInTheDocument();
-    expect(screen.getAllByText(/^transcode — Client does not support hevc/)).toHaveLength(2);
-    expect(screen.getByText(/^none —/)).toBeInTheDocument();
+    expect(screen.getByText('remux')).toBeInTheDocument();
+    expect(screen.getAllByText('transcode')).toHaveLength(2);
+    expect(screen.getByText('none')).toBeInTheDocument();
+    expect(screen.getAllByText('Client does not support hevc')).toHaveLength(4);
   });
 
   it('shows the resolution and bitrate ceiling a video transcode is targeting', () => {
     draw();
 
-    expect(screen.getByText(/\(1920x1080 @ 8000kbps\)/)).toBeInTheDocument();
+    expect(screen.getByText('1920×1080 · 8000 kbps')).toBeInTheDocument();
   });
 
   it('shows the bitrate ceiling an audio transcode is targeting', () => {
     draw();
 
-    expect(screen.getByText(/\(192kbps\)/)).toBeInTheDocument();
+    expect(screen.getByText('192 kbps')).toBeInTheDocument();
   });
 
   it('shows no ceiling for an axis that passes through', () => {
@@ -155,26 +157,28 @@ describe('StreamStats', () => {
       },
     });
 
-    expect(screen.queryByText(/kbps\)/)).not.toBeInTheDocument();
+    expect(screen.queryByText('192 kbps')).not.toBeInTheDocument();
+    expect(screen.queryByText(/8000 kbps/)).not.toBeInTheDocument();
   });
 
   it('reports what the source actually is', () => {
     draw();
 
-    expect(screen.getByText(/1920x1040 HDR10/)).toBeInTheDocument();
-    expect(screen.getByText(/aac 6ch/)).toBeInTheDocument();
+    expect(screen.getByText('hevc 1920×1040')).toBeInTheDocument();
+    expect(screen.getByText('HDR10')).toBeInTheDocument();
+    expect(screen.getByText('aac 6ch eng')).toBeInTheDocument();
   });
 
   it('reports how many frames the browser is dropping', () => {
     draw();
 
-    expect(screen.getByText('4').parentElement).toHaveTextContent('4 of 900');
+    expect(screen.getByText('Dropped').nextElementSibling).toHaveTextContent('4 / 900');
   });
 
-  it('says frames are not counted rather than claiming none were dropped', () => {
+  it('shows a dash for frames nobody counted rather than claiming none were dropped', () => {
     draw({ health: { ...health, droppedFrames: null, decodedFrames: null } });
 
-    expect(screen.getByText('not reported')).toBeInTheDocument();
+    expect(screen.getByText('Dropped').nextElementSibling).toHaveTextContent('—');
   });
 
   it('reports how much is buffered and how much exists', () => {
@@ -193,9 +197,9 @@ describe('StreamStats', () => {
   it('says what it does not know yet rather than showing blanks', () => {
     draw({ session: null, detail: null });
 
-    expect(screen.getByText('not started')).toBeInTheDocument();
-    expect(screen.getAllByText('deciding').length).toBeGreaterThan(0);
-    expect(screen.getByText('unknown')).toBeInTheDocument();
+    expect(screen.getByText('Mode').nextElementSibling).toHaveTextContent('—');
+    expect(screen.getAllByText('deciding')).toHaveLength(4);
+    expect(screen.getByText('Range').nextElementSibling).toHaveTextContent('—');
   });
 
   it('says a transcode is being made now where nothing was reused', () => {
@@ -219,7 +223,7 @@ describe('StreamStats', () => {
     expect(screen.getByText('Yes — the whole transcode was already made')).toBeInTheDocument();
   });
 
-  it('says the question does not apply to a stream nothing transcodes', () => {
+  it('leaves the reuse question blank for a stream nothing transcodes', () => {
     draw({
       session: {
         sessionId: 'abc',
@@ -231,7 +235,7 @@ describe('StreamStats', () => {
       },
     });
 
-    expect(screen.getByText('n/a — nothing is being transcoded')).toBeInTheDocument();
+    expect(screen.getByText('Reused').nextElementSibling).toHaveTextContent('—');
   });
 
   it('surfaces warnings the server attached to the session', () => {

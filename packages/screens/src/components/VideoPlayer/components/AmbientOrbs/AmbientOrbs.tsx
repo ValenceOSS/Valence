@@ -1,30 +1,56 @@
+import { AMBIENT_GRID } from '@ValenceScreens/playback/AMBIENT_GRID';
+import { useAmbientLights } from '@ValenceScreens/playback/useAmbientLights';
 import type { AmbientOrbsProps } from './AmbientOrbs.types';
 
-const PLACES = [
-  'left-[-10%] top-[-15%]',
-  'right-[-10%] top-[-15%]',
-  'left-[-10%] bottom-[-15%]',
-  'right-[-10%] bottom-[-15%]',
-] as const;
+const REACH = 1.05;
+
+const EDGE = Array.from({ length: AMBIENT_GRID.columns * AMBIENT_GRID.rows }, (_, cell) => ({
+  cell,
+  column: cell % AMBIENT_GRID.columns,
+  row: Math.floor(cell / AMBIENT_GRID.columns),
+}))
+  .filter(
+    ({ column, row }) =>
+      column === 0 ||
+      row === 0 ||
+      column === AMBIENT_GRID.columns - 1 ||
+      row === AMBIENT_GRID.rows - 1,
+  )
+  .map(({ cell, column, row }) => ({
+    cell,
+    left: 50 + (((column + 0.5) / AMBIENT_GRID.columns) * 100 - 50) * REACH,
+    top: 50 + (((row + 0.5) / AMBIENT_GRID.rows) * 100 - 50) * REACH,
+  }));
 
 /**
- * The glow behind the picture: four soft orbs of light, one in each corner, each the colour of the
- * quarter of the picture nearest it. They ease from one colour to the next rather than jumping, so
- * a cut in the film reads as the room changing colour and not as flicker.
+ * The glow behind the picture: a ring of soft orbs of light around its edge, each the colour of the
+ * part of the picture nearest it. They follow the film several times a second and ease between
+ * colours rather than jumping, so light moving across the picture moves across the room with it.
  *
- * @param lights - The colour of each quarter of the picture, top left first.
+ * Reads the picture itself rather than being handed its colours, so the player around it is not
+ * redrawn on every look.
+ *
+ * @param videoRef - The video whose picture the glow follows.
  */
-const AmbientOrbs = ({ lights }: AmbientOrbsProps) => (
-  <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-    {PLACES.map((place, at) => (
-      <span
-        key={place}
-        className={`absolute size-[70vmax] rounded-full opacity-55 blur-[8rem] transition-[background-color] duration-[900ms] ease-linear motion-reduce:transition-none ${place}`}
-        style={{ backgroundColor: lights[at] ?? 'transparent' }}
-      />
-    ))}
-  </div>
-);
+const AmbientOrbs = ({ videoRef }: AmbientOrbsProps) => {
+  const lights = useAmbientLights(videoRef, true);
+
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+      {EDGE.map(({ cell, left, top }) => (
+        <span
+          key={cell}
+          className="absolute size-[36vmax] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60 blur-[4.5rem] transition-[background-color] duration-[120ms] ease-linear motion-reduce:transition-none"
+          style={{
+            left: `${left.toString()}%`,
+            top: `${top.toString()}%`,
+            backgroundColor: lights[cell] ?? 'transparent',
+          }}
+        />
+      ))}
+    </div>
+  );
+};
 
 AmbientOrbs.displayName = 'AmbientOrbs';
 

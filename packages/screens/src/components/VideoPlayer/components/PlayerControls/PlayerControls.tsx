@@ -15,6 +15,7 @@ import {
   RotateCcw as RotateCcwIcon,
   RotateCw as RotateCwIcon,
   Settings as SettingsIcon,
+  SkipForward as SkipForwardIcon,
   Subtitles as SubtitlesIcon,
   TypeOutline as TypeOutlineIcon,
   Volume as VolumeIcon,
@@ -32,6 +33,8 @@ import { Button } from '@ValenceUI/Button';
 import { Slider } from '@ValenceUI/Slider';
 import { SettingsMenu } from '@ValenceUI/SettingsMenu';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
+import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
+import { nextEpisode } from '@ValenceClient/library/pickFeatured';
 import { SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
 import { qualityStepDetail } from '@ValenceClient/playback/qualityStepDetail';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
@@ -90,7 +93,7 @@ const rateLabel = (rate: number): string => `${rate.toString()}x`;
  * @param onAudioChange - Called with the audio track they chose.
  * @param onQualityChange - Called with the quality they chose.
  * @param episodes - The rest of the season, where there is one.
- * @param playingId - Which of those episodes is on now.
+ * @param playingId - Which of those episodes is on now, which also decides the next one offered.
  * @param onSelectEpisode - Called with an episode they chose to play instead.
  * @param watchedFractionFor - How to ask how far through a given episode they are.
  * @param onMenuOpenChange - Called as a menu opens or closes, so the bar is not hidden beneath one.
@@ -167,403 +170,436 @@ const PlayerControls = ({
   onSubtitleOffsetChange,
   renderPreview,
   partyMenu,
-}: PlayerControlsProps) => (
-  <div className="valence-solid flex flex-col gap-1 rounded-lg px-3 py-2 text-text sm:px-4">
-    <div className="flex items-center gap-3">
-      <Slider
-        label={`Seek through ${title}`}
-        value={position}
-        max={duration}
-        onValueChange={onSeek}
-        tone="glass"
-        className="min-w-0 flex-1"
-        {...(renderPreview === undefined ? {} : { renderPreview })}
-      />
+}: PlayerControlsProps) => {
+  const playing = episodes.find((episode) => episode.id === playingId);
+  const following = playing === undefined ? null : nextEpisode(episodes, playing);
 
-      <Button
-        variant="ghost"
-        size="none"
-        aria-label={isShowingRemaining ? 'Show the time played' : 'Show the time remaining'}
-        onClick={onToggleTimeDisplay}
-        className="shrink-0 px-1 text-xs tabular-nums sm:text-sm"
-      >
-        {isShowingRemaining
-          ? `-${formatDuration(Math.max(duration - position, 0))}`
-          : formatDuration(position)}{' '}
-        <span className="text-text-muted">/ {formatDuration(duration)}</span>
-      </Button>
-    </div>
-
-    <div className="flex items-center gap-1 sm:gap-2">
-      <Button
-        isIconOnly
-        variant="ghost"
-        label={`Back ${SKIP_SECONDS.toString()} seconds`}
-        onClick={() => {
-          onSkip(-SKIP_SECONDS);
-        }}
-        disabled={isDisabled}
-        size="md"
-      >
-        <Icon of={RotateCcwIcon} size={22} />
-      </Button>
-
-      <Button
-        isIconOnly
-        variant="ghost"
-        label={isPlaying ? 'Pause' : 'Play'}
-        onClick={onTogglePlay}
-        disabled={isDisabled}
-        size="md"
-      >
-        {isPlaying ? (
-          <Icon of={PauseFilledIcon} size={22} />
-        ) : (
-          <Icon of={PlayFilledIcon} size={22} />
-        )}
-      </Button>
-
-      <Button
-        isIconOnly
-        variant="ghost"
-        label={`Forward ${SKIP_SECONDS.toString()} seconds`}
-        onClick={() => {
-          onSkip(SKIP_SECONDS);
-        }}
-        disabled={isDisabled}
-        size="md"
-      >
-        <Icon of={RotateCwIcon} size={22} />
-      </Button>
-
-      <span className="flex-1" />
-
-      <div className="group/volume hidden items-center gap-1 sm:flex">
-        <Button
-          isIconOnly
-          variant="ghost"
-          label={isMuted ? 'Unmute' : 'Mute'}
-          onClick={onToggleMute}
-          size="md"
-        >
-          {isMuted || volume === 0 ? (
-            <Icon of={VolumeOffIcon} size={20} />
-          ) : (
-            <Icon of={VolumeIcon} size={20} />
-          )}
-        </Button>
-
+  return (
+    <div className="valence-solid flex flex-col gap-1 rounded-lg px-3 py-2 text-text sm:px-4">
+      <div className="flex items-center gap-3">
         <Slider
-          label="Volume"
-          value={isMuted ? 0 : Math.round(volume * 100)}
-          max={100}
+          label={`Seek through ${title}`}
+          value={position}
+          max={duration}
+          onValueChange={onSeek}
           tone="glass"
-          onValueChange={(next) => {
-            onVolumeChange(next / 100);
-          }}
-          valueLabel={(loudness) => `${Math.round(loudness).toString()}%`}
-          className="w-0 overflow-hidden px-0 transition-[width,padding] duration-[var(--duration-fast)] ease-[var(--ease-out)] motion-reduce:transition-none group-hover/volume:w-24 group-hover/volume:px-2 group-focus-within/volume:w-24 group-focus-within/volume:px-2"
+          className="min-w-0 flex-1"
+          {...(renderPreview === undefined ? {} : { renderPreview })}
         />
+
+        <Button
+          variant="ghost"
+          size="none"
+          aria-label={isShowingRemaining ? 'Show the time played' : 'Show the time remaining'}
+          onClick={onToggleTimeDisplay}
+          className="shrink-0 px-1 text-xs tabular-nums sm:text-sm"
+        >
+          {isShowingRemaining
+            ? `-${formatDuration(Math.max(duration - position, 0))}`
+            : formatDuration(position)}{' '}
+          <span className="text-text-muted">/ {formatDuration(duration)}</span>
+        </Button>
       </div>
 
-      {partyMenu}
-
-      {onSelectEpisode === undefined ? null : (
-        <EpisodeMenu
-          {...(onMenuOpenChange === undefined ? {} : { onOpenChange: onMenuOpenChange })}
-          episodes={episodes}
-          playingId={playingId}
-          onSelect={onSelectEpisode}
-          isDisabled={isDisabled}
-          {...(watchedFractionFor === undefined ? {} : { watchedFractionFor })}
-        />
-      )}
-
-      {subtitleTracks.length === 0 ? null : (
+      <div className="flex items-center gap-1 sm:gap-2">
         <Button
           isIconOnly
           variant="ghost"
-          label={selectedSubtitleId === SUBTITLES_OFF ? 'Turn subtitles on' : 'Turn subtitles off'}
-          isActive={selectedSubtitleId !== SUBTITLES_OFF}
+          label={`Back ${SKIP_SECONDS.toString()} seconds`}
           onClick={() => {
-            onSubtitleChange(
-              selectedSubtitleId === SUBTITLES_OFF
-                ? (subtitleTracks[0]?.id ?? SUBTITLES_OFF)
-                : SUBTITLES_OFF,
-            );
+            onSkip(-SKIP_SECONDS);
           }}
           disabled={isDisabled}
           size="md"
         >
-          <Icon
-            of={SubtitlesIcon}
-            whenActive={SubtitlesFilledIcon}
+          <Icon of={RotateCcwIcon} size={22} />
+        </Button>
+
+        <Button
+          isIconOnly
+          variant="ghost"
+          label={isPlaying ? 'Pause' : 'Play'}
+          onClick={onTogglePlay}
+          disabled={isDisabled}
+          size="md"
+        >
+          {isPlaying ? (
+            <Icon of={PauseFilledIcon} size={22} />
+          ) : (
+            <Icon of={PlayFilledIcon} size={22} />
+          )}
+        </Button>
+
+        <Button
+          isIconOnly
+          variant="ghost"
+          label={`Forward ${SKIP_SECONDS.toString()} seconds`}
+          onClick={() => {
+            onSkip(SKIP_SECONDS);
+          }}
+          disabled={isDisabled}
+          size="md"
+        >
+          <Icon of={RotateCwIcon} size={22} />
+        </Button>
+
+        {following === null || onSelectEpisode === undefined ? null : (
+          <Button
+            isIconOnly
+            variant="ghost"
+            label={`Next episode: ${
+              following.episodeNumber === null || following.episodeNumber === undefined
+                ? following.title
+                : `${describeEpisodeNumbers(following.episodeNumber, following.episodeNumberEnd)}. ${following.title}`
+            }`}
+            onClick={() => {
+              onSelectEpisode(following);
+            }}
+            disabled={isDisabled}
+            size="md"
+          >
+            <Icon of={SkipForwardIcon} size={22} />
+          </Button>
+        )}
+
+        <span className="flex-1" />
+
+        <div className="group/volume hidden items-center gap-1 sm:flex">
+          <Button
+            isIconOnly
+            variant="ghost"
+            label={isMuted ? 'Unmute' : 'Mute'}
+            onClick={onToggleMute}
+            size="md"
+          >
+            {isMuted || volume === 0 ? (
+              <Icon of={VolumeOffIcon} size={20} />
+            ) : (
+              <Icon of={VolumeIcon} size={20} />
+            )}
+          </Button>
+
+          <Slider
+            label="Volume"
+            value={isMuted ? 0 : Math.round(volume * 100)}
+            max={100}
+            tone="glass"
+            onValueChange={(next) => {
+              onVolumeChange(next / 100);
+            }}
+            valueLabel={(loudness) => `${Math.round(loudness).toString()}%`}
+            className="w-0 overflow-hidden px-0 transition-[width,padding] duration-[var(--duration-fast)] ease-[var(--ease-out)] motion-reduce:transition-none group-hover/volume:w-24 group-hover/volume:px-2 group-focus-within/volume:w-24 group-focus-within/volume:px-2"
+          />
+        </div>
+
+        {partyMenu}
+
+        {onSelectEpisode === undefined ? null : (
+          <EpisodeMenu
+            {...(onMenuOpenChange === undefined ? {} : { onOpenChange: onMenuOpenChange })}
+            episodes={episodes}
+            playingId={playingId}
+            onSelect={onSelectEpisode}
+            isDisabled={isDisabled}
+            {...(watchedFractionFor === undefined ? {} : { watchedFractionFor })}
+          />
+        )}
+
+        {subtitleTracks.length === 0 ? null : (
+          <Button
+            isIconOnly
+            variant="ghost"
+            label={
+              selectedSubtitleId === SUBTITLES_OFF ? 'Turn subtitles on' : 'Turn subtitles off'
+            }
             isActive={selectedSubtitleId !== SUBTITLES_OFF}
-            size={20}
-          />
-        </Button>
-      )}
+            onClick={() => {
+              onSubtitleChange(
+                selectedSubtitleId === SUBTITLES_OFF
+                  ? (subtitleTracks[0]?.id ?? SUBTITLES_OFF)
+                  : SUBTITLES_OFF,
+              );
+            }}
+            disabled={isDisabled}
+            size="md"
+          >
+            <Icon
+              of={SubtitlesIcon}
+              whenActive={SubtitlesFilledIcon}
+              isActive={selectedSubtitleId !== SUBTITLES_OFF}
+              size={20}
+            />
+          </Button>
+        )}
 
-      <SettingsMenu
-        label="Settings"
-        tone="default"
-        {...(onMenuOpenChange === undefined ? {} : { onOpenChange: onMenuOpenChange })}
-        isDisabled={isDisabled}
-        trigger={<Icon of={SettingsIcon} size={20} />}
-        triggerWhenOpen={<Icon of={SettingsIcon} size={20} />}
-        rows={[
-          ...(audioTracks.length < 2
-            ? []
-            : [
-                {
-                  kind: 'choice' as const,
-                  id: 'audio',
-                  label: 'Audio track',
-                  icon: <Icon of={HeadphonesIcon} size={18} />,
-                  selectedId: (selectedAudioIndex ?? audioTracks[0]?.index ?? 0).toString(),
-                  onSelect: (id: string) => {
-                    onAudioChange(Number(id));
-                  },
-                  choices: audioTracks.map((track) => ({
-                    id: track.index.toString(),
-                    label: track.label,
-                  })),
-                },
-              ]),
-          ...(subtitleTracks.length === 0
-            ? []
-            : [
-                {
-                  kind: 'choice' as const,
-                  id: 'subtitles',
-                  label: 'Subtitles/CC',
-                  icon: <Icon of={SubtitlesIcon} size={18} />,
-                  selectedId: selectedSubtitleId,
-                  onSelect: onSubtitleChange,
-                  choices: [
-                    { id: SUBTITLES_OFF, label: 'Off' },
-                    ...subtitleTracks.map((track) => ({
-                      id: track.id,
-                      label: track.label,
-                      ...(track.format === '' ? {} : { detail: track.format.toUpperCase() }),
-                    })),
-                  ],
-                },
-              ]),
-          ...(selectedSubtitleId === SUBTITLES_OFF || onSubtitleOffsetChange === undefined
-            ? []
-            : [
-                {
-                  kind: 'custom' as const,
-                  id: 'timing',
-                  label: 'Subtitle timing',
-                  icon: <Icon of={ClockIcon} size={18} />,
-                  detail: describeSubtitleOffset(subtitleOffsetSeconds),
-                  control: (
-                    <span className="flex items-center gap-1">
-                      <Button
-                        isIconOnly
-                        variant="ghost"
-                        label="Subtitles earlier"
-                        size="sm"
-                        onClick={() => {
-                          onSubtitleOffsetChange(subtitleOffsetSeconds - SUBTITLE_STEP_SECONDS);
-                        }}
-                      >
-                        <Icon of={MinusIcon} size={16} />
-                      </Button>
-
-                      <Button
-                        isIconOnly
-                        variant="ghost"
-                        label="Subtitles in time"
-                        size="sm"
-                        onClick={() => {
-                          onSubtitleOffsetChange(0);
-                        }}
-                      >
-                        <Icon of={RefreshCwIcon} size={16} />
-                      </Button>
-
-                      <Button
-                        isIconOnly
-                        variant="ghost"
-                        label="Subtitles later"
-                        size="sm"
-                        onClick={() => {
-                          onSubtitleOffsetChange(subtitleOffsetSeconds + SUBTITLE_STEP_SECONDS);
-                        }}
-                      >
-                        <Icon of={PlusIcon} size={16} />
-                      </Button>
-                    </span>
-                  ),
-                },
-              ]),
-          ...(subtitleTracks.length === 0
-            ? []
-            : [
-                {
-                  kind: 'panel' as const,
-                  id: 'appearance',
-                  label: 'Caption settings',
-                  icon: <Icon of={TypeOutlineIcon} size={18} />,
-                  content: (
-                    <CaptionSettings
-                      style={captionStyle}
-                      onChange={onCaptionStyleChange}
-                      onReset={onCaptionStyleReset}
-                    />
-                  ),
-                },
-              ]),
-          {
-            kind: 'choice' as const,
-            id: 'speed',
-            label: 'Playback speed',
-            icon: <Icon of={GaugeIcon} size={18} />,
-            selectedId: playbackRate.toString(),
-            onSelect: (id: string) => {
-              onPlaybackRateChange(Number(id));
-            },
-            choices: PLAYBACK_RATES.map((rate) => ({
-              id: rate.toString(),
-              label: describePlaybackRate(rate),
-            })),
-          },
-          {
-            kind: 'choice' as const,
-            id: 'boost',
-            label: 'Volume boost',
-            icon: <Icon of={VolumeIcon} size={18} />,
-            selectedId: boost.toString(),
-            onSelect: (id: string) => {
-              onBoostChange(Number(id));
-            },
-            choices: BOOST_STEPS.map((step) => ({
-              id: step.toString(),
-              label: step === 1 ? 'Off' : rateLabel(step),
-            })),
-          },
-          ...(availableQualitySteps.length === 0
-            ? []
-            : [
-                {
-                  kind: 'choice' as const,
-                  id: 'quality',
-                  label: 'Quality',
-                  icon: <Icon of={MonitorIcon} size={18} />,
-                  selectedId: selectedQuality,
-                  onSelect: (id: string) => {
-                    onQualityChange(
-                      availableQualitySteps.find((step) => step === id) ?? 'original',
-                    );
-                  },
-                  choices: [
-                    {
-                      id: 'original',
-                      label: originalLabel,
-                      ...(qualityStepCosts.original === undefined
-                        ? {}
-                        : { detail: qualityStepCosts.original }),
+        <SettingsMenu
+          label="Settings"
+          tone="default"
+          {...(onMenuOpenChange === undefined ? {} : { onOpenChange: onMenuOpenChange })}
+          isDisabled={isDisabled}
+          trigger={<Icon of={SettingsIcon} size={20} />}
+          triggerWhenOpen={<Icon of={SettingsIcon} size={20} />}
+          rows={[
+            ...(audioTracks.length < 2
+              ? []
+              : [
+                  {
+                    kind: 'choice' as const,
+                    id: 'audio',
+                    label: 'Audio track',
+                    icon: <Icon of={HeadphonesIcon} size={18} />,
+                    selectedId: (selectedAudioIndex ?? audioTracks[0]?.index ?? 0).toString(),
+                    onSelect: (id: string) => {
+                      onAudioChange(Number(id));
                     },
-                    ...availableQualitySteps.map((id) => {
-                      const isNoSmaller = qualityStepsSavingNothing.includes(id);
-                      const detail = qualityStepDetail({ cost: qualityStepCosts[id], isNoSmaller });
+                    choices: audioTracks.map((track) => ({
+                      id: track.index.toString(),
+                      label: track.label,
+                    })),
+                  },
+                ]),
+            ...(subtitleTracks.length === 0
+              ? []
+              : [
+                  {
+                    kind: 'choice' as const,
+                    id: 'subtitles',
+                    label: 'Subtitles/CC',
+                    icon: <Icon of={SubtitlesIcon} size={18} />,
+                    selectedId: selectedSubtitleId,
+                    onSelect: onSubtitleChange,
+                    choices: [
+                      { id: SUBTITLES_OFF, label: 'Off' },
+                      ...subtitleTracks.map((track) => ({
+                        id: track.id,
+                        label: track.label,
+                        ...(track.format === '' ? {} : { detail: track.format.toUpperCase() }),
+                      })),
+                    ],
+                  },
+                ]),
+            ...(selectedSubtitleId === SUBTITLES_OFF || onSubtitleOffsetChange === undefined
+              ? []
+              : [
+                  {
+                    kind: 'custom' as const,
+                    id: 'timing',
+                    label: 'Subtitle timing',
+                    icon: <Icon of={ClockIcon} size={18} />,
+                    detail: describeSubtitleOffset(subtitleOffsetSeconds),
+                    control: (
+                      <span className="flex items-center gap-1">
+                        <Button
+                          isIconOnly
+                          variant="ghost"
+                          label="Subtitles earlier"
+                          size="sm"
+                          onClick={() => {
+                            onSubtitleOffsetChange(subtitleOffsetSeconds - SUBTITLE_STEP_SECONDS);
+                          }}
+                        >
+                          <Icon of={MinusIcon} size={16} />
+                        </Button>
 
-                      return {
-                        id,
-                        label: QUALITY_STEPS.find((entry) => entry.id === id)?.label ?? id,
-                        ...(detail === undefined ? {} : { detail }),
-                        ...(isNoSmaller ? { isDisabled: true } : {}),
-                      };
-                    }),
-                  ],
-                },
-              ]),
-          {
-            kind: 'toggle' as const,
-            id: 'stats',
-            label: 'Stats for nerds',
-            icon: <Icon of={CircleActivityIcon} size={18} />,
-            isOn: isShowingStats,
-            onToggle: onToggleStats,
-          },
-        ]}
-      />
+                        <Button
+                          isIconOnly
+                          variant="ghost"
+                          label="Subtitles in time"
+                          size="sm"
+                          onClick={() => {
+                            onSubtitleOffsetChange(0);
+                          }}
+                        >
+                          <Icon of={RefreshCwIcon} size={16} />
+                        </Button>
 
-      {onPlayOnTv === undefined ? null : (
-        <Button isIconOnly variant="ghost" label="Play on TV" onClick={onPlayOnTv} size="md">
-          <Icon of={MonitorIcon} size={20} />
-        </Button>
-      )}
+                        <Button
+                          isIconOnly
+                          variant="ghost"
+                          label="Subtitles later"
+                          size="sm"
+                          onClick={() => {
+                            onSubtitleOffsetChange(subtitleOffsetSeconds + SUBTITLE_STEP_SECONDS);
+                          }}
+                        >
+                          <Icon of={PlusIcon} size={16} />
+                        </Button>
+                      </span>
+                    ),
+                  },
+                ]),
+            ...(subtitleTracks.length === 0
+              ? []
+              : [
+                  {
+                    kind: 'panel' as const,
+                    id: 'appearance',
+                    label: 'Caption settings',
+                    icon: <Icon of={TypeOutlineIcon} size={18} />,
+                    content: (
+                      <CaptionSettings
+                        style={captionStyle}
+                        onChange={onCaptionStyleChange}
+                        onReset={onCaptionStyleReset}
+                      />
+                    ),
+                  },
+                ]),
+            {
+              kind: 'choice' as const,
+              id: 'speed',
+              label: 'Playback speed',
+              icon: <Icon of={GaugeIcon} size={18} />,
+              selectedId: playbackRate.toString(),
+              onSelect: (id: string) => {
+                onPlaybackRateChange(Number(id));
+              },
+              choices: PLAYBACK_RATES.map((rate) => ({
+                id: rate.toString(),
+                label: describePlaybackRate(rate),
+              })),
+            },
+            {
+              kind: 'choice' as const,
+              id: 'boost',
+              label: 'Volume boost',
+              icon: <Icon of={VolumeIcon} size={18} />,
+              selectedId: boost.toString(),
+              onSelect: (id: string) => {
+                onBoostChange(Number(id));
+              },
+              choices: BOOST_STEPS.map((step) => ({
+                id: step.toString(),
+                label: step === 1 ? 'Off' : rateLabel(step),
+              })),
+            },
+            ...(availableQualitySteps.length === 0
+              ? []
+              : [
+                  {
+                    kind: 'choice' as const,
+                    id: 'quality',
+                    label: 'Quality',
+                    icon: <Icon of={MonitorIcon} size={18} />,
+                    selectedId: selectedQuality,
+                    onSelect: (id: string) => {
+                      onQualityChange(
+                        availableQualitySteps.find((step) => step === id) ?? 'original',
+                      );
+                    },
+                    choices: [
+                      {
+                        id: 'original',
+                        label: originalLabel,
+                        ...(qualityStepCosts.original === undefined
+                          ? {}
+                          : { detail: qualityStepCosts.original }),
+                      },
+                      ...availableQualitySteps.map((id) => {
+                        const isNoSmaller = qualityStepsSavingNothing.includes(id);
+                        const detail = qualityStepDetail({
+                          cost: qualityStepCosts[id],
+                          isNoSmaller,
+                        });
 
-      {onCast === undefined || castState === 'unavailable' ? null : (
-        <Button
-          isIconOnly
-          variant="ghost"
-          label={
-            castState === 'connected'
-              ? 'Playing on another device'
-              : 'Play on a device — your browser will ask which'
-          }
-          isActive={castState === 'connected'}
-          disabled={castState === 'connecting'}
-          onClick={onCast}
-          size="md"
-        >
-          <Icon
-            of={CastIcon}
-            whenActive={CastFilledIcon}
+                        return {
+                          id,
+                          label: QUALITY_STEPS.find((entry) => entry.id === id)?.label ?? id,
+                          ...(detail === undefined ? {} : { detail }),
+                          ...(isNoSmaller ? { isDisabled: true } : {}),
+                        };
+                      }),
+                    ],
+                  },
+                ]),
+            {
+              kind: 'toggle' as const,
+              id: 'stats',
+              label: 'Stats for nerds',
+              icon: <Icon of={CircleActivityIcon} size={18} />,
+              isOn: isShowingStats,
+              onToggle: onToggleStats,
+            },
+          ]}
+        />
+
+        {onPlayOnTv === undefined ? null : (
+          <Button isIconOnly variant="ghost" label="Play on TV" onClick={onPlayOnTv} size="md">
+            <Icon of={MonitorIcon} size={20} />
+          </Button>
+        )}
+
+        {onCast === undefined || castState === 'unavailable' ? null : (
+          <Button
+            isIconOnly
+            variant="ghost"
+            label={
+              castState === 'connected'
+                ? 'Playing on another device'
+                : 'Play on a device — your browser will ask which'
+            }
             isActive={castState === 'connected'}
-            size={20}
-          />
-        </Button>
-      )}
+            disabled={castState === 'connecting'}
+            onClick={onCast}
+            size="md"
+          >
+            <Icon
+              of={CastIcon}
+              whenActive={CastFilledIcon}
+              isActive={castState === 'connected'}
+              size={20}
+            />
+          </Button>
+        )}
 
-      {onPopOut === undefined ? null : (
-        <Button
-          isIconOnly
-          variant="ghost"
-          label="Pop out"
-          onClick={onPopOut}
-          isActive={isPoppedOut}
-          size="md"
-        >
-          <Icon
-            of={PictureInPictureIcon}
-            whenActive={PictureInPictureFilledIcon}
+        {onPopOut === undefined ? null : (
+          <Button
+            isIconOnly
+            variant="ghost"
+            label="Pop out"
+            onClick={onPopOut}
             isActive={isPoppedOut}
-            size={20}
-          />
-        </Button>
-      )}
+            size="md"
+          >
+            <Icon
+              of={PictureInPictureIcon}
+              whenActive={PictureInPictureFilledIcon}
+              isActive={isPoppedOut}
+              size={20}
+            />
+          </Button>
+        )}
 
-      {onToggleGlow === undefined ? null : (
+        {onToggleGlow === undefined ? null : (
+          <Button
+            isIconOnly
+            variant="ghost"
+            label={isGlowing ? 'Leave the immersive view' : 'Immersive view'}
+            isActive={isGlowing}
+            onClick={onToggleGlow}
+            size="md"
+          >
+            <Icon of={MonitorIcon} whenActive={MonitorFilledIcon} isActive={isGlowing} size={20} />
+          </Button>
+        )}
+
         <Button
           isIconOnly
           variant="ghost"
-          label={isGlowing ? 'Leave the immersive view' : 'Immersive view'}
-          isActive={isGlowing}
-          onClick={onToggleGlow}
+          label={isFullscreen ? 'Exit full screen' : 'Full screen'}
+          onClick={onToggleFullscreen}
           size="md"
         >
-          <Icon of={MonitorIcon} whenActive={MonitorFilledIcon} isActive={isGlowing} size={20} />
+          {isFullscreen ? (
+            <Icon of={MinimizeIcon} size={20} />
+          ) : (
+            <Icon of={MaximizeIcon} size={20} />
+          )}
         </Button>
-      )}
-
-      <Button
-        isIconOnly
-        variant="ghost"
-        label={isFullscreen ? 'Exit full screen' : 'Full screen'}
-        onClick={onToggleFullscreen}
-        size="md"
-      >
-        {isFullscreen ? <Icon of={MinimizeIcon} size={20} /> : <Icon of={MaximizeIcon} size={20} />}
-      </Button>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 PlayerControls.displayName = 'PlayerControls';
 

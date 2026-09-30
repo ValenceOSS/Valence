@@ -58,9 +58,28 @@ describe('toCueCss', () => {
   });
 
   it('draws an outline by default, which reads on a busy scene', () => {
-    expect(toCueCss(DEFAULT_CAPTION_STYLE)).toContain(
-      'text-shadow: -1px -1px 0 rgba(0, 0, 0, 1.00)',
-    );
+    const css = toCueCss(DEFAULT_CAPTION_STYLE);
+
+    expect(DEFAULT_CAPTION_STYLE.edgeStyle).toBe('outline');
+    expect(css).toContain('text-shadow: ');
+    expect(css).toContain('em 0 rgba(0, 0, 0, 1.00)');
+  });
+
+  it('draws an outline all the way round, so a thick one stays solid', () => {
+    const shadow = /text-shadow: ([^;]+);/.exec(toCueCss(DEFAULT_CAPTION_STYLE))?.[1] ?? '';
+
+    expect(shadow.split('), ')).toHaveLength(17);
+  });
+
+  it('draws a thicker outline further from the lettering, measured against it', () => {
+    const reachOf = (thickness: number): number =>
+      Number(
+        /text-shadow: (-?[\d.]+)em/.exec(
+          toCueCss({ ...DEFAULT_CAPTION_STYLE, outlineThickness: thickness }),
+        )?.[1],
+      );
+
+    expect(reachOf(4)).toBeCloseTo(reachOf(1) * 4);
   });
 
   it('draws no edge when asked for none', () => {
@@ -77,6 +96,15 @@ describe('toCueCss', () => {
 describe('readCaptionStyle', () => {
   it('answers with the defaults when nothing has been chosen', () => {
     expect(readCaptionStyle()).toEqual(DEFAULT_CAPTION_STYLE);
+  });
+
+  it('reads settings saved before outlines had a thickness as the thinnest outline', () => {
+    window.localStorage.setItem(
+      'valence.captionStyle',
+      JSON.stringify({ fontScale: 120, edgeStyle: 'outline' }),
+    );
+
+    expect(readCaptionStyle()).toMatchObject({ fontScale: 120, outlineThickness: 1 });
   });
 
   it('reads back what was saved', () => {

@@ -4,6 +4,29 @@ import { describe, expect, it, vi } from 'vitest';
 import { DEFAULT_CAPTION_STYLE } from '@ValenceScreens/playback/captionStyle';
 import { PlayerControls } from './PlayerControls';
 import type { PlayerControlsProps } from './PlayerControls.types';
+import type { MediaSummary } from '@ValenceContracts/schemas/Library';
+
+const anEpisode = (id: string, episodeNumber: number, title: string): MediaSummary => ({
+  id,
+  title,
+  durationSeconds: 1400,
+  libraryId: 'lib',
+  year: null,
+  width: 1920,
+  height: 1080,
+  videoCodec: 'h264',
+  videoRange: 'SDR',
+  addedAt: '2026-01-01T00:00:00.000Z',
+  hasPoster: false,
+  hasBackdrop: false,
+  hasLogo: false,
+  seriesId: null,
+  seriesTitle: 'Show',
+  seasonNumber: 1,
+  episodeNumber,
+});
+
+const SEASON = [anEpisode('media-1', 1, 'I Was Stolen Away'), anEpisode('media-2', 2, 'I Died')];
 
 const draw = (overrides: Partial<PlayerControlsProps> = {}) => {
   const props: PlayerControlsProps = {
@@ -538,5 +561,29 @@ describe('PlayerControls', () => {
 
     expect(volumeGroup?.className).toContain('hidden');
     expect(volumeGroup?.className).toContain('sm:flex');
+  });
+  describe('the next episode', () => {
+    it('offers the next episode of the season, named by its number and title', async () => {
+      const user = userEvent.setup();
+      const onSelectEpisode = vi.fn();
+
+      draw({ episodes: SEASON, playingId: 'media-1', onSelectEpisode });
+
+      await user.click(screen.getByRole('button', { name: 'Next episode: 2. I Died' }));
+
+      expect(onSelectEpisode).toHaveBeenCalledWith(SEASON[1]);
+    });
+
+    it('offers nothing after the last episode', () => {
+      draw({ episodes: SEASON, playingId: 'media-2', onSelectEpisode: vi.fn() });
+
+      expect(screen.queryByRole('button', { name: /^Next episode/ })).not.toBeInTheDocument();
+    });
+
+    it('offers nothing for a film', () => {
+      draw({ episodes: [], playingId: 'media-1', onSelectEpisode: vi.fn() });
+
+      expect(screen.queryByRole('button', { name: /^Next episode/ })).not.toBeInTheDocument();
+    });
   });
 });

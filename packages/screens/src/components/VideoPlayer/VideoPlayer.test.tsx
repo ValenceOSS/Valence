@@ -142,6 +142,22 @@ const transcodingPlan: PlaybackPlan = {
 const media = { id: 'media-1', title: 'Arrival', durationSeconds: 7200 };
 
 /**
+ * Finds the stage a video is drawn on, which holds the video's sizing box and the video within it.
+ *
+ * @param video - The video.
+ * @returns The stage.
+ */
+const stageOf = (video: HTMLElement): HTMLElement => {
+  const stage = video.parentElement?.parentElement;
+
+  if (stage === null || stage === undefined) {
+    throw new Error('The video is not on a stage');
+  }
+
+  return stage;
+};
+
+/**
  * Stands in for how a browser answers a request to start playing.
  */
 const replacePlay = (play: () => Promise<void>): PropertyDescriptor | undefined => {
@@ -1338,7 +1354,7 @@ describe('VideoPlayer', () => {
     await settled();
     await actor.click(screen.getByRole('button', { name: 'Settings' }));
     await actor.click(await screen.findByRole('button', { name: /Caption settings/ }));
-    await actor.click(await screen.findByRole('button', { name: 'Drop shadow' }));
+    await actor.click(await screen.findByRole('button', { name: 'Shadow' }));
 
     unmount();
     renderInAnAddress(<VideoPlayer media={media} onClose={vi.fn()} />);
@@ -1347,7 +1363,7 @@ describe('VideoPlayer', () => {
     await actor.click(screen.getByRole('button', { name: 'Settings' }));
     await actor.click(await screen.findByRole('button', { name: /Caption settings/ }));
 
-    expect(await screen.findByRole('button', { name: 'Drop shadow' })).toHaveAttribute(
+    expect(await screen.findByRole('button', { name: 'Shadow' })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
@@ -1488,7 +1504,7 @@ describe('VideoPlayer', () => {
         vi.advanceTimersByTime(4000);
       });
 
-      expect(screen.getByLabelText('Arrival').parentElement?.className).toContain('cursor-none');
+      expect(stageOf(screen.getByLabelText('Arrival')).className).toContain('cursor-none');
     } finally {
       vi.useRealTimers();
     }
@@ -1516,7 +1532,7 @@ describe('VideoPlayer', () => {
       expect(await screen.findByText('You’re watching')).toBeInTheDocument();
       expect(screen.getByText('Paused')).toBeInTheDocument();
 
-      const stage = screen.getByLabelText('Arrival').parentElement;
+      const stage = stageOf(screen.getByLabelText('Arrival'));
 
       if (stage !== null) {
         fireEvent.pointerMove(stage, { clientX: 10, clientY: 10 });
@@ -1564,7 +1580,7 @@ describe('VideoPlayer', () => {
         vi.advanceTimersByTime(4000);
       });
 
-      const stage = screen.getByLabelText('Arrival').parentElement;
+      const stage = stageOf(screen.getByLabelText('Arrival'));
 
       if (stage !== null) {
         fireEvent.pointerMove(stage);
@@ -1585,7 +1601,7 @@ describe('VideoPlayer', () => {
 
     seekableTo(element, 7200);
 
-    const stage = element.parentElement;
+    const stage = stageOf(element);
 
     if (stage !== null) {
       stage.getBoundingClientRect = () => new DOMRect(0, 0, 1000, 500);
@@ -1608,7 +1624,7 @@ describe('VideoPlayer', () => {
 
     seekableTo(element, 7200);
 
-    const stage = element.parentElement;
+    const stage = stageOf(element);
 
     if (stage !== null) {
       stage.getBoundingClientRect = () => new DOMRect(0, 0, 1000, 500);
@@ -1628,7 +1644,7 @@ describe('VideoPlayer', () => {
 
     seekableTo(element, 7200);
 
-    const stage = element.parentElement;
+    const stage = stageOf(element);
 
     if (stage !== null) {
       stage.getBoundingClientRect = () => new DOMRect(0, 0, 1000, 500);
@@ -1651,7 +1667,7 @@ describe('VideoPlayer', () => {
 
     seekableTo(element, 7200);
 
-    const stage = element.parentElement;
+    const stage = stageOf(element);
 
     if (stage !== null) {
       stage.getBoundingClientRect = () => new DOMRect(0, 0, 1000, 500);
@@ -1677,7 +1693,7 @@ describe('VideoPlayer', () => {
         vi.advanceTimersByTime(4000);
       });
 
-      const stage = element.parentElement;
+      const stage = stageOf(element);
 
       expect(stage?.className).toContain('cursor-none');
 
@@ -1705,7 +1721,7 @@ describe('VideoPlayer', () => {
 
       fireEvent.play(element);
 
-      const stage = element.parentElement;
+      const stage = stageOf(element);
 
       if (stage !== null) {
         fireEvent.pointerMove(stage.parentElement ?? stage, { clientX: 10, clientY: 10 });
@@ -1735,7 +1751,7 @@ describe('VideoPlayer', () => {
         vi.advanceTimersByTime(4000);
       });
 
-      const stage = element.parentElement;
+      const stage = stageOf(element);
 
       expect(stage?.className).toContain('cursor-none');
 
