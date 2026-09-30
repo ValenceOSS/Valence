@@ -12,9 +12,9 @@ const DIALECT_SQL = [
   {
     pattern: /::/u,
     found: '::',
-    instead: 'a helper from #dialect/*, such as jsonLiteral or jsonAsText',
+    instead: 'a helper from @ValenceDatabase/*, such as jsonLiteral or jsonAsText',
   },
-  { pattern: /\|\|/u, found: '||', instead: 'concatenated from #dialect/concatenated' },
+  { pattern: /\|\|/u, found: '||', instead: 'concatenated from @ValenceDatabase/concatenated' },
   { pattern: /\bnulls\s+(?:first|last)\b/iu, found: 'nulls last', instead: 'nullsLast' },
   { pattern: /\bfilter\s*\(\s*where\b/iu, found: 'filter (where', instead: 'countWhere' },
   {

@@ -1,0 +1,26 @@
+{
+  "name": "@valence/database",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#dialect/*": {
+      "mysql": "./src/mysql/*.ts",
+      "default": "./src/postgres/*.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.2",
+    "zod": "^4.6.4"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@vitest/coverage-v8": "^4.1.11",
+    "vitest": "^4.1.11"
+  }
+}

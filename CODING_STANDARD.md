@@ -252,16 +252,18 @@ exception for the config files that tooling insists on reading a default from.
 ### One query, several databases
 
 Valence is gaining MySQL 8 and MariaDB 10.6+ beside Postgres (VAL-306). Query code is written
-once, against `#dialect/*`, a package subpath import that resolves by build condition: the
-default resolves to `src/db/postgres`, and the `mysql` condition will resolve to `src/db/mysql`
-once that folder exists. Only files inside a dialect folder may import `drizzle-orm/pg-core`,
+once. The helpers it needs live in `packages/database` and are imported through
+`@ValenceDatabase/*`; each entry there re-exports from `#dialect/*`, a package subpath import that
+resolves by build condition: the default resolves to `src/postgres`, and the `mysql` condition
+will resolve to `src/mysql` once that folder exists. Each app's own `src/db/postgres` (its
+schema) resolves the same way through the app's `#dialect/*`. Only files inside a dialect folder may import `drizzle-orm/pg-core`,
 `drizzle-orm/node-postgres`, `drizzle-orm/pglite`, `pg` or `@electric-sql/pglite` (and, later,
 `drizzle-orm/mysql-core` and `mysql2`); ESLint enforces it outside tests, and each dialect folder
 holds the same files exporting the same members. When the MySQL folder arrives, the two
 `Schema.ts` files are the one sanctioned exception to "no duplication": they describe the same
 tables in two dialects' DDL, and a parity test fails when they disagree. From then on shared code
 uses no `.returning()`, no `onConflictDo*`, no `ilike`, no `::` casts, no double-quoted
-identifiers inside `sql`, and no `||`; it uses the helpers in `#dialect` or the neutral forms
+identifiers inside `sql`, and no `||`; it uses the helpers in `@ValenceDatabase/*` or the neutral forms
 listed in the database docs.
 
 ### The tooling note that survives it

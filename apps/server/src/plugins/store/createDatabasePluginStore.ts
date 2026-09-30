@@ -12,7 +12,7 @@ import {
   pluginStorage,
   rolePermission,
 } from '#dialect/Schema';
-import { likeLiterally } from '@ValenceServer/db/likeLiterally';
+import { likeLiterally } from '@ValenceDatabase/likeLiterally';
 import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { ConnectionRecord, InstalledRecord, PluginStore } from './PluginStore';
 

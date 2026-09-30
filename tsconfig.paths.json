@@ -14,6 +14,7 @@
       "@ValenceClient/*": ["./packages/client/src/*"],
       "@ValenceContracts/*": ["./packages/contracts/src/*"],
       "@ValenceCore/*": ["./packages/core/src/*"],
+      "@ValenceDatabase/*": ["./packages/database/src/*"],
       "@ValenceDesktop/*": ["./apps/desktop/src/*"],
       "@ValenceDocs/*": ["./apps/docs/src/*"],
       "@ValenceLanding/*": ["./apps/landing/src/*"],

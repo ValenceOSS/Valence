@@ -61,7 +61,11 @@ const DIALECT_IMPORT_BANS = [
       'Only a dialect folder speaks to one database. Reach it through #dialect/* — see "One query, several databases" in the coding standard.',
   },
   {
-    group: ['@ValenceServer/db/postgres/*', '@ValenceRequests/db/postgres/*'],
+    group: [
+      '@ValenceServer/db/postgres/*',
+      '@ValenceRequests/db/postgres/*',
+      '@ValenceDatabase/postgres/*',
+    ],
     message:
       'Import a dialect file through #dialect/*, which the build resolves to the database it is for.',
   },
@@ -297,8 +301,17 @@ export default tseslint.config(
     },
   },
   {
-    files: ['apps/server/src/**/*.ts', 'apps/requests/src/**/*.ts'],
-    ignores: ['apps/server/src/db/postgres/**', 'apps/requests/src/db/postgres/**', '**/*.test.ts'],
+    files: [
+      'apps/server/src/**/*.ts',
+      'apps/requests/src/**/*.ts',
+      'packages/database/src/**/*.ts',
+    ],
+    ignores: [
+      'apps/server/src/db/postgres/**',
+      'apps/requests/src/db/postgres/**',
+      'packages/database/src/postgres/**',
+      '**/*.test.ts',
+    ],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -316,6 +329,7 @@ export default tseslint.config(
           ignores: [
             'apps/server/src/db/postgres/**',
             'apps/requests/src/db/postgres/**',
+            'packages/database/src/postgres/**',
             '**/*.test.ts',
           ],
           rules: {

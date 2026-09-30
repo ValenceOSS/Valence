@@ -8,7 +8,7 @@ import {
   musicTrackArtist,
   series,
 } from '#dialect/Schema';
-import { likeLiterally } from '@ValenceServer/db/likeLiterally';
+import { likeLiterally } from '@ValenceDatabase/likeLiterally';
 import type { MediaRef } from '@ValenceSDK/host/ValenceHost';
 import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { PluginHost } from '@ValenceServer/plugins/broker/PluginHost';
