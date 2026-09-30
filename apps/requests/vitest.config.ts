@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 
 export default defineConfig({
   resolve: { tsconfigPaths: true },
@@ -6,6 +6,7 @@ export default defineConfig({
     environment: 'node',
     testTimeout: 20_000,
     include: ['src/**/*.test.ts'],
+    exclude: [...configDefaults.exclude, '**/mysql/**'],
     env: {
       NODE_ENV: 'production',
     },

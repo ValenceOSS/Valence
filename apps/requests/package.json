@@ -33,6 +33,7 @@
     "hono": "^4.13.7",
     "iconv-lite": "^0.7.3",
     "music-metadata": "^11.15.0",
+    "mysql2": "^3.24.5",
     "pg": "^8.23.0",
     "playwright-core": "1.60.0",
     "yaml": "^2.9.1",

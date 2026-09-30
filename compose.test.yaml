@@ -1,0 +1,33 @@
+# Throwaway databases for the engine tests, kept in memory so nothing outlives them:
+#   docker compose -f compose.test.yaml up -d --wait
+# then MYSQL_TEST_URL=mysql://root:valence@127.0.0.1:3307 or mysql://root:valence@127.0.0.1:3308.
+name: valence-test
+
+services:
+  mysql:
+    image: mysql:8.4
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_0900_bin
+    environment:
+      MYSQL_ROOT_PASSWORD: valence
+    ports:
+      - '3307:3306'
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-pvalence']
+      interval: 2s
+      retries: 60
+
+  mariadb:
+    image: mariadb:11.4
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_nopad_bin
+    environment:
+      MARIADB_ROOT_PASSWORD: valence
+    ports:
+      - '3308:3306'
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'healthcheck.sh', '--connect', '--innodb_initialized']
+      interval: 2s
+      retries: 60

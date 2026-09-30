@@ -1,10 +1,11 @@
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 
 export default defineConfig({
   resolve: { tsconfigPaths: true },
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts'],
+    exclude: [...configDefaults.exclude, '**/mysql/**'],
     env: {
       NODE_ENV: 'production',
     },

@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
+    "mysql2": "^3.24.5",
     "zod": "^4.6.4"
   },
   "devDependencies": {

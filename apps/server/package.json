@@ -41,6 +41,7 @@
     "hono": "^4.13.7",
     "mupdf": "^1.28.1",
     "music-metadata": "^11.15.0",
+    "mysql2": "^3.24.5",
     "node-unrar-js": "^2.0.2",
     "pg": "^8.23.0",
     "quickjs-emscripten": "0.32.0",
