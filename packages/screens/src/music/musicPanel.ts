@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 
-type MusicPanel = 'queue' | 'devices' | 'party' | null;
+type MusicPanel = 'queue' | 'lyrics' | 'devices' | 'party' | null;
 
 let open: MusicPanel = null;
 
@@ -34,7 +34,7 @@ const subscribe = (listener: () => void): (() => void) => {
 };
 
 /**
- * Reads which panel sits beside the music section — the queue or the devices — so the player bar
+ * Reads which panel sits beside the music section — the queue, the lyrics or the devices — so the player bar
  * that opens it and the section that draws it agree, wherever each is on the page.
  *
  * @returns The panel open, or nothing.

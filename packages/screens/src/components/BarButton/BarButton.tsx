@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, useReducedMotionConfig } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
 import { AnimatedIcon } from '@ValenceUI/AnimatedIcon';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
@@ -17,7 +17,10 @@ const SWELL = [1, 1.25, 1];
  * @param label - What pressing it does, which is also its tooltip.
  * @param litGlyph - The filled drawing to show while it is lit.
  * @param glyph - The icon.
- * @param badge - A small mark at the icon's corner, for a setting with more than on and off.
+ * @param face - Instead of a glyph, a drawing that animates itself, such as the heart that pops as a
+ *   song is liked; it is left to move on its own rather than swelled as well.
+ * @param badge - A small mark at the icon's corner, for a setting with more than on and off, which
+ *   springs in with a turn as that setting comes on and shrinks away as it goes.
  * @param gesture - How the icon moves when pointed at.
  * @param iconSize - How large the icon is.
  * @param isLit - Whether the thing it stands for is on, which colours it and swells it as it comes on.
@@ -29,6 +32,7 @@ const BarButton = ({
   label,
   glyph,
   litGlyph,
+  face,
   badge,
   gesture = 'settle',
   iconSize = 18,
@@ -59,7 +63,9 @@ const BarButton = ({
     >
       <motion.span
         initial={false}
-        animate={{ scale: isLit && prefersReducedMotion !== true ? SWELL : 1 }}
+        animate={{
+          scale: isLit && face === undefined && prefersReducedMotion !== true ? SWELL : 1,
+        }}
         transition={settleTween}
         className="relative flex"
       >
@@ -67,19 +73,32 @@ const BarButton = ({
           gesture={gesture}
           isPlaying={isPointedAt && !isDisabled}
           icon={
-            <Icon
-              of={glyph}
-              {...(litGlyph === undefined ? {} : { whenActive: litGlyph })}
-              size={iconSize}
-              isActive={isLit}
-            />
+            glyph === undefined ? (
+              face
+            ) : (
+              <Icon
+                of={glyph}
+                {...(litGlyph === undefined ? {} : { whenActive: litGlyph })}
+                size={iconSize}
+                isActive={isLit}
+              />
+            )
           }
         />
-        {badge === undefined ? null : (
-          <span className="absolute -top-1.5 -right-1.5 flex text-accent">
-            <Icon of={badge} size={Math.round(iconSize / 2)} />
-          </span>
-        )}
+        <AnimatePresence initial={false}>
+          {badge === undefined ? null : (
+            <motion.span
+              key="badge"
+              className="absolute -top-1.5 -right-1.5 flex text-current"
+              initial={prefersReducedMotion === true ? { opacity: 0 } : { scale: 0, rotate: -120 }}
+              animate={prefersReducedMotion === true ? { opacity: 1 } : { scale: 1, rotate: 0 }}
+              exit={prefersReducedMotion === true ? { opacity: 0 } : { scale: 0, rotate: 90 }}
+              transition={{ type: 'spring', stiffness: 520, damping: 17 }}
+            >
+              <Icon of={badge} size={Math.round(iconSize / 2)} />
+            </motion.span>
+          )}
+        </AnimatePresence>
       </motion.span>
     </Button>
   );

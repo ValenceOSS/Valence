@@ -1,7 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { Heart as HeartIcon, Shuffle as ShuffleIcon } from '@keyline-icons/react';
+import {
+  Heart as HeartIcon,
+  Shuffle as ShuffleIcon,
+  Sparkle as SparkleIcon,
+} from '@keyline-icons/react';
 import { Heart as HeartFilledIcon } from '@keyline-icons/react/fill';
 import { BarButton } from './BarButton';
 
@@ -61,5 +65,29 @@ describe('BarButton', () => {
 
   it('sets a display name so devtools can identify it', () => {
     expect(BarButton.displayName).toBe('BarButton');
+  });
+  it('draws a drawing of its own in place of a glyph, such as a heart that animates itself', () => {
+    render(<BarButton label="Like" face={<span data-testid="heart" />} isLit onClick={vi.fn()} />);
+
+    expect(screen.getByTestId('heart')).toBeInTheDocument();
+  });
+
+  it('marks a setting with more than on and off with a badge at its corner', () => {
+    const { container, rerender } = render(
+      <BarButton label="Smart shuffle" glyph={ShuffleIcon} isLit onClick={vi.fn()} />,
+    );
+    const plain = container.querySelectorAll('svg').length;
+
+    rerender(
+      <BarButton
+        label="Smart shuffle"
+        glyph={ShuffleIcon}
+        badge={SparkleIcon}
+        isLit
+        onClick={vi.fn()}
+      />,
+    );
+
+    expect(container.querySelectorAll('svg').length).toBe(plain + 1);
   });
 });

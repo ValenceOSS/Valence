@@ -1,16 +1,12 @@
-import { useQuery } from '@tanstack/react-query';
 import { Mic as MicIcon, MusicNote as MusicNoteIcon } from '@keyline-icons/react';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { Skeleton } from '@ValenceUI/Skeleton';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
-import { lyricLineAt } from '@ValenceClient/music/lyricLineAt';
-import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { CoverGlow } from '@ValenceScreens/components/CoverGlow/CoverGlow';
 import { LyricLines } from '@ValenceScreens/components/LyricLines/LyricLines';
 import { MUSIC_LANES } from '@ValenceScreens/music/musicLanes';
 import { useLightTheMusic } from '@ValenceScreens/music/useLightTheMusic';
-import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
-import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
+import { useSongLyrics } from '@ValenceScreens/music/useSongLyrics';
 
 /**
  * The words of the song playing, following along with it.
@@ -21,15 +17,7 @@ import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
  * are not timed are simply shown. A song with none says so, plainly.
  */
 const LyricsView = () => {
-  const { state, player } = useMusicPlayer(undefined, { followsPosition: true });
-  const shown = useWhatIsPlaying(state);
-  const trackId = shown?.trackId ?? null;
-  const asked = useQuery({ ...musicQueries.lyrics(trackId ?? ''), enabled: trackId !== null });
-  const lyrics = asked.data ?? null;
-  const at =
-    lyrics === null || !lyrics.isSynced
-      ? -1
-      : lyricLineAt(lyrics.lines, (shown?.positionSeconds ?? 0) * 1000);
+  const { player, shown, lyrics, isReading, at } = useSongLyrics();
 
   const cover = shown !== null && shown.hasArtwork ? albumArtworkUrl(shown.albumId) : null;
 
@@ -46,7 +34,7 @@ const LyricsView = () => {
     );
   }
 
-  if (asked.isPending) {
+  if (isReading) {
     return (
       <div className={`flex flex-col gap-6 py-10 ${MUSIC_LANES.page}`}>
         <Skeleton label="Reading the lyrics" className="h-12 w-3/4" />

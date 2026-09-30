@@ -26,6 +26,7 @@ import { DevicesPanel } from './components/DevicesPanel/DevicesPanel';
 import { LikedView } from './components/LikedView/LikedView';
 import { ListeningPartyPanel } from './components/ListeningPartyPanel/ListeningPartyPanel';
 import { LyricsView } from './components/LyricsView/LyricsView';
+import { LyricsPanel } from './components/LyricsPanel/LyricsPanel';
 import { MusicHome } from './components/MusicHome/MusicHome';
 import { MusicLibrary } from './components/MusicLibrary/MusicLibrary';
 import { MusicVideoDialog } from './components/MusicVideoDialog/MusicVideoDialog';
@@ -38,6 +39,7 @@ import type { MusicView } from '@ValenceClient/music/musicView';
 
 const PANEL_TITLES = {
   queue: 'Queue',
+  lyrics: 'Lyrics',
   devices: 'Play on another device',
   party: 'Listening party',
 } as const;
@@ -216,6 +218,8 @@ const MusicPage = () => {
                         <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
                           {panel === 'queue' ? (
                             <QueuePanel />
+                          ) : panel === 'lyrics' ? (
+                            <LyricsPanel />
                           ) : panel === 'devices' ? (
                             <DevicesPanel />
                           ) : (
@@ -260,6 +264,8 @@ const MusicPage = () => {
             <DialogContent>
               {panel === 'queue' ? (
                 <QueuePanel />
+              ) : panel === 'lyrics' ? (
+                <LyricsPanel />
               ) : panel === 'devices' ? (
                 <DevicesPanel />
               ) : (

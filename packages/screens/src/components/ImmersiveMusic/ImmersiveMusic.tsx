@@ -1,32 +1,21 @@
 import { useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react';
-import {
-  AudioLines as AudioLinesIcon,
-  Heart as HeartIcon,
-  Volume as VolumeIcon,
-  VolumeLow as VolumeLowIcon,
-  X as XIcon,
-} from '@keyline-icons/react';
-import { Heart as HeartFilledIcon } from '@keyline-icons/react/fill';
+import { Volume as VolumeIcon, VolumeLow as VolumeLowIcon, X as XIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
 import { Slider } from '@ValenceUI/Slider';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
-import { lyricLineAt } from '@ValenceClient/music/lyricLineAt';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
-import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { BarButton } from '@ValenceScreens/components/BarButton/BarButton';
 import { CoverGlow } from '@ValenceScreens/components/CoverGlow/CoverGlow';
 import { LyricLines } from '@ValenceScreens/components/LyricLines/LyricLines';
 import { MusicTransport } from '@ValenceScreens/components/MusicTransport/MusicTransport';
 import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwork';
 import { setMusicImmersive, useMusicImmersive } from '@ValenceScreens/music/musicImmersive';
+import { useSongLyrics } from '@ValenceScreens/music/useSongLyrics';
 import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
-import { setMusicVisualiser, useMusicVisualiser } from '@ValenceScreens/music/musicVisualiser';
-import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
-import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
+import { KeepHeart } from '@ValenceScreens/components/KeepHeart/KeepHeart';
 import type { ImmersiveMusicProps } from './ImmersiveMusic.types';
 
 const OPENING = { duration: 0.28, ease: [0.23, 1, 0.32, 1] } as const;
@@ -45,9 +34,6 @@ const CHANGING = { duration: 0.35, ease: [0.23, 1, 0.32, 1] } as const;
  * dissolves into the next cover's, a new album's cover gives way to the old through a moment of
  * blur, the name rises in, and the old song's words fall away as the new one's come up.
  *
- * A button beside the close button takes the whole screen over for the visualiser page, which is
- * drawn by `MusicVisualiser` on top of this view.
- *
  * It opens from the cover on the player bar, and the bar steps aside while it is open — the view
  * carries its own quiet controls, so nothing but the music is on the screen. Escape, the close button or the cover again
  * put it away. It closes itself when nothing is playing.
@@ -56,25 +42,16 @@ const CHANGING = { duration: 0.35, ease: [0.23, 1, 0.32, 1] } as const;
  */
 const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
   const isOpen = useMusicImmersive();
-  const isVisualising = useMusicVisualiser();
-  const { state, player } = useMusicPlayer(given ?? theMusicPlayer(), { followsPosition: true });
-  const shown = useWhatIsPlaying(state);
+  const { state, player, shown, lyrics, isReading, at } = useSongLyrics(
+    given ?? theMusicPlayer(),
+    isOpen,
+  );
   const favourites = useFavourites(useWatchingProfile());
   const prefersReducedMotion = useReducedMotionConfig();
-  const trackId = shown?.trackId ?? null;
-  const asked = useQuery({
-    ...musicQueries.lyrics(trackId ?? ''),
-    enabled: isOpen && trackId !== null,
-  });
-  const lyrics = asked.data ?? null;
-  const at =
-    lyrics === null || !lyrics.isSynced
-      ? -1
-      : lyricLineAt(lyrics.lines, (shown?.positionSeconds ?? 0) * 1000);
   const cover = shown !== null && shown.hasArtwork ? albumArtworkUrl(shown.albumId) : null;
 
   useEffect(() => {
-    if (!isOpen || isVisualising) {
+    if (!isOpen) {
       return;
     }
 
@@ -91,7 +68,7 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
     return () => {
       window.removeEventListener('keydown', onKey, { capture: true });
     };
-  }, [isOpen, isVisualising]);
+  }, [isOpen]);
 
   useEffect(() => {
     if (shown === null && isOpen) {
@@ -121,18 +98,6 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
           <CoverGlow src={cover} className="absolute inset-0" />
 
           <div className="absolute top-[calc(1rem+env(safe-area-inset-top,0px))] right-4 z-10 flex items-center gap-2">
-            {isStill ? null : (
-              <Button
-                variant="overlay"
-                isIconOnly
-                label="Visualiser"
-                onClick={() => {
-                  setMusicVisualiser(true);
-                }}
-              >
-                <Icon of={AudioLinesIcon} size={20} />
-              </Button>
-            )}
             <Button
               variant="overlay"
               isIconOnly
@@ -191,8 +156,7 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
 
                 <BarButton
                   label={isLiked ? `Unlike ${shown.title}` : `Like ${shown.title}`}
-                  glyph={HeartIcon}
-                  litGlyph={HeartFilledIcon}
+                  face={<KeepHeart isKept={isLiked} size={18} />}
                   gesture="fill"
                   isLit={isLiked}
                   onClick={() => {
@@ -232,7 +196,7 @@ const ImmersiveMusic = ({ player: given }: ImmersiveMusicProps) => {
                 >
                   {lyrics === null || lyrics.lines.length === 0 ? (
                     <p className="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-on-scrim/60">
-                      {asked.isPending ? '' : 'No lyrics found'}
+                      {isReading ? '' : 'No lyrics found'}
                     </p>
                   ) : (
                     <LyricLines
