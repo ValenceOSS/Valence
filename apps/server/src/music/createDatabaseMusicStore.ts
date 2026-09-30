@@ -7,11 +7,11 @@ import {
   musicArtist,
   musicTrack,
   musicTrackArtist,
-} from '@ValenceServer/db/Schema';
+} from '#dialect/Schema';
 import { nameKey } from './nameKey';
 import { sortNameFor } from './sortNameFor';
 import { isStillThere } from '@ValenceServer/music/isStillThere';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { MusicStore } from './scanMusicLibrary';
 import type { EnrichingStore } from './web/EnrichingStore';
 import type { AlbumCorrectingStore } from './web/AlbumCorrectingStore';

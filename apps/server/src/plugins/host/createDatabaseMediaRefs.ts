@@ -7,10 +7,10 @@ import {
   musicTrack,
   musicTrackArtist,
   series,
-} from '@ValenceServer/db/Schema';
+} from '#dialect/Schema';
 import { likeLiterally } from '@ValenceServer/db/likeLiterally';
 import type { MediaRef } from '@ValenceSDK/host/ValenceHost';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { PluginHost } from '@ValenceServer/plugins/broker/PluginHost';
 
 const MOST_FOUND = 25;

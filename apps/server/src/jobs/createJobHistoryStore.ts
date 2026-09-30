@@ -1,13 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import { and, asc, count, desc, eq, gte, ilike, lt, lte, or, sql } from 'drizzle-orm';
-import { jobRun, jobRunIssue } from '@ValenceServer/db/Schema';
+import { jobRun, jobRunIssue } from '#dialect/Schema';
 import {
   JOB_RUN_KEPT_FOR_DAYS,
   JobRunProgressSchema,
   JobRunStatusSchema,
 } from '@ValenceContracts/schemas/JobRun';
 import type { SQL } from 'drizzle-orm';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type {
   JobKindStats,
   JobRunIssue,

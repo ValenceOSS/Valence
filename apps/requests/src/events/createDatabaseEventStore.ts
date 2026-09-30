@@ -1,8 +1,8 @@
 import { asc, inArray } from 'drizzle-orm';
 import { ServiceEventSchema } from '@ValenceContracts/schemas/DownloadQueue';
-import { serviceEvent } from '@ValenceRequests/db/Schema';
+import { serviceEvent } from '#dialect/Schema';
 import type { ServiceEvent } from '@ValenceContracts/schemas/DownloadQueue';
-import type { RequestsDatabase } from '@ValenceRequests/db/Database';
+import type { RequestsDatabase } from '#dialect/RequestsDatabase';
 import type { EventStore } from '@ValenceRequests/events/EventStore';
 
 type ServiceEventRow = typeof serviceEvent.$inferSelect;

@@ -3,15 +3,21 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "imports": {
+    "#dialect/*": {
+      "mysql": "./src/db/mysql/*.ts",
+      "default": "./src/db/postgres/*.ts"
+    }
+  },
   "scripts": {
     "dev": "tsx watch --env-file-if-exists=../../.env src/Main.ts",
     "build": "tsc --build",
     "start": "node dist/Main.js",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push",
+    "db:generate": "drizzle-kit generate --config drizzle.postgres.config.ts",
+    "db:migrate": "drizzle-kit migrate --config drizzle.postgres.config.ts",
+    "db:push": "drizzle-kit push --config drizzle.postgres.config.ts",
     "bundle": "esbuild src/Main.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=dist/Main.js"
   },
   "dependencies": {

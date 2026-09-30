@@ -33,7 +33,7 @@ import {
   mediaPreviewOverride,
   rating,
   series,
-} from '@ValenceServer/db/Schema';
+} from '#dialect/Schema';
 import {
   LibraryKindSchema,
   MediaDetailSchema,
@@ -84,7 +84,7 @@ import {
   TRICKPLAY_COLUMNS,
   TRICKPLAY_ROWS,
 } from '@ValenceServer/playback/PlaybackService';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type {
   Library,
   LibraryKind,

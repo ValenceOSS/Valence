@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { and, desc, eq, isNotNull, sql } from 'drizzle-orm';
-import { favourite } from '@ValenceServer/db/Schema';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import { favourite } from '#dialect/Schema';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { FavouriteService } from './FavouriteService';
 
 const LIMIT = 500;

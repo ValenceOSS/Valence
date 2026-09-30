@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { GIVE_UP_DEFAULTS } from '@ValenceContracts/schemas/GiveUpRules';
-import { aScratchDatabase } from '@ValenceRequests/testing/aScratchDatabase';
+import { aScratchDatabase } from '#dialect/aScratchDatabase';
 import { createDatabaseGiveUpRuleStore } from './createDatabaseGiveUpRuleStore';
 
 describe('createDatabaseGiveUpRuleStore', () => {

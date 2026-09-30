@@ -1,7 +1,7 @@
 import { and, desc, isNotNull, sql } from 'drizzle-orm';
-import { logRecord } from '@ValenceServer/db/Schema';
+import { logRecord } from '#dialect/Schema';
 import { logFilterFor } from './logFilterFor';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { LogFilters } from './logFilterFor';
 
 const TOP = 10;

@@ -2,13 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { and, asc, count, desc, eq, ilike, inArray, max, notExists, or, sql } from 'drizzle-orm';
-import {
-  book,
-  bookChapter,
-  library,
-  listeningProgress,
-  readingProgress,
-} from '@ValenceServer/db/Schema';
+import { book, bookChapter, library, listeningProgress, readingProgress } from '#dialect/Schema';
 import { z } from 'zod';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { chapterHeardAt } from '@ValenceServer/books/chapterHeardAt';
@@ -24,7 +18,7 @@ import { createBookPageCache } from './createBookPageCache';
 import { drawBookCover } from './drawBookCover';
 import { readFolderArt } from './readFolderArt';
 import { openBookFile } from './openBookFile';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { ChapterShelf, ComicChapters } from './createChapterNamer';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type {

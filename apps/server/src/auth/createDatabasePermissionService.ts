@@ -7,8 +7,8 @@ import type {
   PermissionGrant,
   Role,
 } from '@ValenceContracts/schemas/Permission';
-import { role, rolePermission, userPermissionOverride, userRole } from '@ValenceServer/db/Schema';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import { role, rolePermission, userPermissionOverride, userRole } from '#dialect/Schema';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import { readPermission } from './readPermission';
 import { readGrantedPermission } from './readGrantedPermission';
 import type { PermissionService } from './PermissionService';

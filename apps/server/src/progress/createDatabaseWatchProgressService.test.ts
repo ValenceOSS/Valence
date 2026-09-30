@@ -1,7 +1,7 @@
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { authSchema, valenceSchema } from '@ValenceServer/db/Schema';
+import { authSchema, valenceSchema } from '#dialect/Schema';
 import { createDatabaseWatchProgressService } from './createDatabaseWatchProgressService';
 
 const STARTING_POSTGRES_MS = 30_000;

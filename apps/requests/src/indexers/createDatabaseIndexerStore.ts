@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
-import { indexer } from '@ValenceRequests/db/Schema';
-import type { RequestsDatabase } from '@ValenceRequests/db/Database';
+import { indexer } from '#dialect/Schema';
+import type { RequestsDatabase } from '#dialect/RequestsDatabase';
 import type { IndexerRecord, IndexerStore } from '@ValenceRequests/indexers/IndexerRecord';
 
 type IndexerRow = typeof indexer.$inferSelect;

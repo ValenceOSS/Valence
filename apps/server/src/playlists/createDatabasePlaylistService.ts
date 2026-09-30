@@ -10,7 +10,7 @@ import {
   playlist,
   playlistEntry,
   viewerProfile,
-} from '@ValenceServer/db/Schema';
+} from '#dialect/Schema';
 import { librariesVisibleToViewer } from '@ValenceServer/visibility/librariesVisibleToViewer';
 import { visibleToViewer } from '@ValenceServer/visibility/visibleToViewer';
 import { STEP, positionBetween } from './positionBetween';
@@ -20,7 +20,7 @@ import {
   extensionFor,
   whatIsWrongWithThePicture,
 } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { MediaKind } from '@ValenceContracts/schemas/MediaKind';
 import type { PlaylistEntry, PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
 import type { MusicService } from '@ValenceServer/music/MusicService';

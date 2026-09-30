@@ -4,14 +4,9 @@ import {
   DEFAULT_NOTIFICATION_PREFERENCE,
   NotificationEventSchema,
 } from '@ValenceContracts/schemas/Notification';
-import {
-  notification,
-  notificationPreference,
-  pushSubscription,
-  user,
-} from '@ValenceServer/db/Schema';
+import { notification, notificationPreference, pushSubscription, user } from '#dialect/Schema';
 import { toIso } from '@ValenceCore/functions/toIso';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { Notification } from '@ValenceContracts/schemas/Notification';
 import { A_MINUTE, LASTS_FOR_MINUTES } from './hasExpired';
 import type { NotificationStore } from './NotificationStore';

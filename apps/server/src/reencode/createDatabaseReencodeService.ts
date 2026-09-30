@@ -5,7 +5,7 @@ import { estimateReencodeBytes } from '@ValenceCore/functions/estimateReencodeBy
 import { planReencodeSpec } from '@ValenceCore/functions/planReencodeSpec';
 import { renditionLabel } from '@ValenceCore/functions/renditionLabel';
 import { MonitorDisksSchema } from '@ValenceServer/maintenance/DiskUse';
-import { mediaItem, mediaRendition, reencodeRequest } from '@ValenceServer/db/Schema';
+import { mediaItem, mediaRendition, reencodeRequest } from '#dialect/Schema';
 import { RenditionSchema } from '@ValenceContracts/schemas/Rendition';
 import {
   REENCODES_STILL_TO_BE_WRITTEN,
@@ -23,7 +23,7 @@ import { restoreOriginal } from './restoreOriginal';
 import { swapIntoPlace } from './swapIntoPlace';
 import type { MediaFacts } from './MediaFacts';
 import type { ReencodeService } from './ReencodeService';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
 import type {
   Reencode,

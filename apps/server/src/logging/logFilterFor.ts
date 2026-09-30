@@ -1,5 +1,5 @@
 import { and, eq, gte, inArray, lte } from 'drizzle-orm';
-import { logRecord } from '@ValenceServer/db/Schema';
+import { logRecord } from '#dialect/Schema';
 import { logSearchFilter } from './logSearchFilter';
 import type { SQL } from 'drizzle-orm';
 import type { LogHistogramQuery } from '@ValenceContracts/schemas/Log';

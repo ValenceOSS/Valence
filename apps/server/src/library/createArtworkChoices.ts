@@ -1,15 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import { and, eq, isNotNull, isNull } from 'drizzle-orm';
-import { mediaArtworkChoice, mediaItem } from '@ValenceServer/db/Schema';
-import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
-import type { ValenceSchema } from '@ValenceServer/db/Database';
+import { mediaArtworkChoice, mediaItem } from '#dialect/Schema';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { ArtworkChoices, ArtworkKind } from '@ValenceContracts/schemas/ArtworkChoice';
 import type { MetadataProvider } from './MetadataProvider';
 
 type ArtworkRefusal = 'missing' | 'unmatched' | 'unavailable' | 'refused';
 
 type ArtworkChoicesOptions = {
-  db: PgDatabase<PgQueryResultHKT, ValenceSchema>;
+  db: AnyValenceDatabase;
   readOptions?: MetadataProvider['readArtworkOptions'];
   readAgain: (libraryId: string, paths: string[]) => Promise<string | null>;
   fetchLogos: (libraryId: string) => Promise<{ jobId: string } | null>;

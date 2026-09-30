@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { and, asc, eq } from 'drizzle-orm';
-import { jobTrigger } from '@ValenceServer/db/Schema';
+import { jobTrigger } from '#dialect/Schema';
 import { ScheduleTriggerSchema } from './scheduleTrigger';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { JobTriggerStore } from './JobTriggerStore';
 
 /**

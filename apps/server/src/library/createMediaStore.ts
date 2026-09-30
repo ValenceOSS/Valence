@@ -12,12 +12,12 @@ import {
   hidden,
   ageException,
   share,
-} from '@ValenceServer/db/Schema';
+} from '#dialect/Schema';
 import { AudioStreamSchema } from '@ValenceContracts/schemas/MediaItem';
 import { isNotATrack } from '@ValenceServer/music/isNotATrack';
 import { describeQuality } from './describeQuality';
 import { groupSameFilms } from './placement/groupSameFilms';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { PreviewMoment } from '@ValenceContracts/schemas/Library';
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 import { resolveSeriesKey } from './resolveSeriesKey';

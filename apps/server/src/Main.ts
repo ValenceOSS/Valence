@@ -53,7 +53,9 @@ import type { RealtimeSession } from '@ValenceServer/realtime/createRealtimeHand
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import { createDatabaseHiddenService } from '@ValenceServer/hiding/createDatabaseHiddenService';
 import { createDatabaseUploadSessions } from '@ValenceServer/uploads/createDatabaseUploadSessions';
-import { createDatabase } from '@ValenceServer/db/Database';
+import { AUTH_PROVIDER } from '#dialect/AUTH_PROVIDER';
+import { createDatabase } from '#dialect/createDatabase';
+import { DIALECT } from '#dialect/DIALECT';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { createSnapshotBeforeMigrating } from '@ValenceServer/db/createSnapshotBeforeMigrating';
 import { findNewerMigrations } from '@ValenceServer/db/findNewerMigrations';
@@ -80,7 +82,7 @@ import {
   musicArtist,
   musicTrack,
   apikey,
-} from '@ValenceServer/db/Schema';
+} from '#dialect/Schema';
 import { readEnv } from '@ValenceServer/env/Env';
 import { createDatabaseSettingsStore } from '@ValenceServer/settings/createDatabaseSettingsStore';
 import { createDatabaseLibraryService } from '@ValenceServer/library/createDatabaseLibraryService';
@@ -308,7 +310,7 @@ const MonitorResourceSampleSchema = z.object({
 const env = readEnv(process.env);
 const { db, pool, schema } = createDatabase(env.DATABASE_URL);
 
-const MIGRATIONS_FOLDER = join(import.meta.dirname, '..', 'drizzle');
+const MIGRATIONS_FOLDER = join(import.meta.dirname, '..', 'drizzle', DIALECT);
 
 const MIGRATION_JOURNAL = join(MIGRATIONS_FOLDER, 'meta', '_journal.json');
 
@@ -441,7 +443,7 @@ const shareService = createDatabaseShareService(db);
 
 const auth = createAuth({
   env,
-  database: drizzleAdapter(db, { provider: 'pg', schema }),
+  database: drizzleAdapter(db, { provider: AUTH_PROVIDER, schema }),
   settings,
   cookieSecure: persisted.cookieSecure,
   onUserCreated: async (userId) => {

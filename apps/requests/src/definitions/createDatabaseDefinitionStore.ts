@@ -1,7 +1,7 @@
 import { eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
-import { indexerDefinition, setting } from '@ValenceRequests/db/Schema';
-import type { RequestsDatabase } from '@ValenceRequests/db/Database';
+import { indexerDefinition, setting } from '#dialect/Schema';
+import type { RequestsDatabase } from '#dialect/RequestsDatabase';
 import type { DefinitionStore } from '@ValenceRequests/definitions/DefinitionRecord';
 
 const STATE_KEY = 'definitions';

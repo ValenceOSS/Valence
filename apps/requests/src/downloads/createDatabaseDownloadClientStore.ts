@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
-import { downloadClient } from '@ValenceRequests/db/Schema';
-import type { RequestsDatabase } from '@ValenceRequests/db/Database';
+import { downloadClient } from '#dialect/Schema';
+import type { RequestsDatabase } from '#dialect/RequestsDatabase';
 import type {
   DownloadClientRecord,
   DownloadClientStore,

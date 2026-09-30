@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { describe, expect, it } from 'vitest';
-import { authSchema, valenceSchema } from '@ValenceServer/db/Schema';
+import { authSchema, valenceSchema } from '#dialect/Schema';
 import { createDatabaseUploadSessions } from './createDatabaseUploadSessions';
 
 const STARTING_POSTGRES_MS = 30_000;
@@ -24,7 +24,14 @@ const UPLOAD = {
 const aScratchDatabase = async () => {
   const client = new PGlite();
   const migration = await readFile(
-    join(import.meta.dirname, '..', '..', 'drizzle', '0081_uploads_that_outlive_a_restart.sql'),
+    join(
+      import.meta.dirname,
+      '..',
+      '..',
+      'drizzle',
+      'postgres',
+      '0081_uploads_that_outlive_a_restart.sql',
+    ),
     'utf8',
   );
 

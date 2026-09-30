@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createDatabase } from '@ValenceServer/db/Database';
+import { createDatabase } from '#dialect/createDatabase';
 import {
   asIssue,
   asMilliseconds,

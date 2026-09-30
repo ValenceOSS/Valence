@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, it } from 'vitest';
-import { createDatabase } from '@ValenceServer/db/Database';
-import { mediaItem } from '@ValenceServer/db/Schema';
+import { createDatabase } from '#dialect/createDatabase';
+import { mediaItem } from '#dialect/Schema';
 import { withinTheCeiling } from './withinTheCeiling';
 
 const { db, pool } = createDatabase('postgres://nobody@localhost:1/none');

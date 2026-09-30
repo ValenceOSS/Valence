@@ -1,8 +1,8 @@
 import { and, isNull } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
-import { createDatabase } from '@ValenceServer/db/Database';
-import { mediaItem } from '@ValenceServer/db/Schema';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import { createDatabase } from '#dialect/createDatabase';
+import { mediaItem } from '#dialect/Schema';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 
 const NOWHERE = 'postgres://nobody@localhost:1/none';
 

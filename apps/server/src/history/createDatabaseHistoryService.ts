@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { and, desc, eq, lt } from 'drizzle-orm';
-import { watchHistory, mediaItem } from '@ValenceServer/db/Schema';
+import { watchHistory, mediaItem } from '#dialect/Schema';
 import { decideViewing } from './decideViewing';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { HistoryService, Viewing } from './HistoryService';
 import { visibleToViewer } from '@ValenceServer/visibility/visibleToViewer';
 

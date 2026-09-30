@@ -1,7 +1,7 @@
 import { and, eq, exists, gt, isNull, notExists, or, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
-import { ageCeiling, ageException, mediaItem } from '@ValenceServer/db/Schema';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import { ageCeiling, ageException, mediaItem } from '#dialect/Schema';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import { isNotATrack } from '@ValenceServer/music/isNotATrack';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 

@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 import { eq } from 'drizzle-orm';
-import { userProfile } from '@ValenceServer/db/Schema';
+import { userProfile } from '#dialect/Schema';
 import { drawAvatar, isAvatarStyle } from '@ValenceServer/profiles/drawAvatar';
 import {
   extensionFor,
@@ -9,7 +9,7 @@ import {
 } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
 import { PROFILE_COLOURS, ProfileColourSchema } from '@ValenceContracts/schemas/ViewerProfile';
 import { HOUSEHOLD_LIMITS, householdPhotoName } from './HouseholdPicture';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { Household, HouseholdRequest } from '@ValenceContracts/schemas/Household';
 import type { HouseholdService } from './HouseholdService';
 

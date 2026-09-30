@@ -1,6 +1,6 @@
 import { eq, sql } from 'drizzle-orm';
-import { accountActivity } from '@ValenceServer/db/Schema';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import { accountActivity } from '#dialect/Schema';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { SignInStore } from './recordSignIn';
 
 /**

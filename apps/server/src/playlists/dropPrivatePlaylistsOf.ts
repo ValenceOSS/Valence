@@ -1,6 +1,6 @@
 import { and, eq, inArray } from 'drizzle-orm';
-import { playlist } from '@ValenceServer/db/Schema';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import { playlist } from '#dialect/Schema';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 
 /**
  * Removes the playlists that belonged to profiles which are about to go, keeping the ones the rest

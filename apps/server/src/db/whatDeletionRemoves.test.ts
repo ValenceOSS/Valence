@@ -1,7 +1,7 @@
 import { getTableName, is } from 'drizzle-orm';
 import { getTableConfig, PgTable } from 'drizzle-orm/pg-core';
 import { describe, expect, it } from 'vitest';
-import * as Schema from './Schema';
+import * as Schema from '#dialect/Schema';
 import {
   NAMES_AN_OWNER,
   ownerOfTable,

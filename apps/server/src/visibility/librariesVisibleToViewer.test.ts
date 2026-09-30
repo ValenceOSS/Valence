@@ -1,7 +1,7 @@
 import { and, asc } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
-import { createDatabase } from '@ValenceServer/db/Database';
-import { library } from '@ValenceServer/db/Schema';
+import { createDatabase } from '#dialect/createDatabase';
+import { library } from '#dialect/Schema';
 import { librariesVisibleToViewer } from './librariesVisibleToViewer';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 

@@ -2,8 +2,8 @@ import { join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { migrate } from 'drizzle-orm/pglite/migrator';
-import { schema } from '@ValenceRequests/db/Database';
-import type { RequestsDatabase } from '@ValenceRequests/db/Database';
+import { REQUESTS_SCHEMA } from '@ValenceRequests/db/postgres/REQUESTS_SCHEMA';
+import type { RequestsDatabase } from '@ValenceRequests/db/postgres/RequestsDatabase';
 
 /**
  * A Postgres of its own, in memory, migrated exactly as the service migrates a real one — so a test
@@ -13,10 +13,10 @@ import type { RequestsDatabase } from '@ValenceRequests/db/Database';
  * @returns The database.
  */
 const aScratchDatabase = async (): Promise<RequestsDatabase> => {
-  const db = drizzle(new PGlite(), { schema });
+  const db = drizzle(new PGlite(), { schema: REQUESTS_SCHEMA });
 
   await migrate(db, {
-    migrationsFolder: join(import.meta.dirname, '..', '..', 'drizzle'),
+    migrationsFolder: join(import.meta.dirname, '..', '..', '..', 'drizzle', 'postgres'),
     migrationsSchema: 'valence_requests',
     migrationsTable: '__migrations',
   });

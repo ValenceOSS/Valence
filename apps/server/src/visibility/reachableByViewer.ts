@@ -1,7 +1,7 @@
 import { and, eq, notExists, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
-import { libraryBlock, mediaItem } from '@ValenceServer/db/Schema';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import { libraryBlock, mediaItem } from '#dialect/Schema';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import { withinTheCeiling } from '@ValenceServer/visibility/withinTheCeiling';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { serviceEvent } from '@ValenceRequests/db/Schema';
-import { aScratchDatabase } from '@ValenceRequests/testing/aScratchDatabase';
+import { serviceEvent } from '#dialect/Schema';
+import { aScratchDatabase } from '#dialect/aScratchDatabase';
 import { createDatabaseEventStore } from './createDatabaseEventStore';
 
 describe('createDatabaseEventStore', () => {

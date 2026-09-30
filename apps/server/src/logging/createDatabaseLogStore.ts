@@ -1,5 +1,5 @@
 import { count, eq, lt, min, sql } from 'drizzle-orm';
-import { logRecord } from '@ValenceServer/db/Schema';
+import { logRecord } from '#dialect/Schema';
 import { binHistogram } from './binHistogram';
 import { buildLogFacetQuery } from './buildLogFacetQuery';
 import { buildLogHistogramQuery } from './buildLogHistogramQuery';
@@ -7,7 +7,7 @@ import { buildLogReadQuery } from './buildLogReadQuery';
 import { histogramWindow } from './histogramWindow';
 import { logFilterFor } from './logFilterFor';
 import { LogLevelSchema, LogSourceSchema } from '@ValenceContracts/schemas/Log';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { LogQuery, LogRecord } from '@ValenceContracts/schemas/Log';
 import type { LogStore, StoredLog } from './Logger';
 

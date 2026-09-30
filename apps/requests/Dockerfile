@@ -54,7 +54,7 @@ ENV CAMOUFOX_INSTALL_DIR=/opt/camoufox
 RUN cd apps/requests && node node_modules/camoufox-js/dist/__main__.js fetch \
  && rm -rf /opt/camoufox/fonts/windows /opt/camoufox/fonts/macos /opt/camoufox/GeoLite2-City.mmdb
 
-COPY apps/requests/drizzle ./apps/requests/drizzle
+COPY apps/requests/drizzle/postgres ./apps/requests/drizzle/postgres
 COPY --from=build /build/apps/requests/dist ./apps/requests/dist
 
 ENV NODE_ENV=production \

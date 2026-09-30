@@ -23,12 +23,12 @@ import {
   musicArtist,
   musicTrack,
   musicTrackArtist,
-} from '@ValenceServer/db/Schema';
+} from '#dialect/Schema';
 import { librariesVisibleToViewer } from '@ValenceServer/visibility/librariesVisibleToViewer';
 import { visibleToViewer } from '@ValenceServer/visibility/visibleToViewer';
 import { hasRealWords } from './hasRealWords';
 import { parseLyrics } from './parseLyrics';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { MusicAlbum, MusicArtist, MusicTrack } from '@ValenceContracts/schemas/Music';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import type { MusicService } from './MusicService';

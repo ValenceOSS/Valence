@@ -1,7 +1,7 @@
 import { and, eq, exists, or, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
-import { hidden, mediaItem } from '@ValenceServer/db/Schema';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import { hidden, mediaItem } from '#dialect/Schema';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 /**

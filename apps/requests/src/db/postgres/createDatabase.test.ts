@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createDatabase } from './Database';
+import { createDatabase } from './createDatabase';
 
 describe('createDatabase', () => {
   it('opens a pool without dialling until something is asked', async () => {

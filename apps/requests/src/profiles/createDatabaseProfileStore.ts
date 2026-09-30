@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
-import { qualityProfile } from '@ValenceRequests/db/Schema';
+import { qualityProfile } from '#dialect/Schema';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
-import type { RequestsDatabase } from '@ValenceRequests/db/Database';
+import type { RequestsDatabase } from '#dialect/RequestsDatabase';
 import type { RecordStore } from '@ValenceRequests/stores/RecordStore';
 
 type ProfileRow = typeof qualityProfile.$inferSelect;

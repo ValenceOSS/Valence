@@ -1,10 +1,10 @@
 import { asc, gte, lt } from 'drizzle-orm';
-import { resourceSample } from '@ValenceServer/db/Schema';
+import { resourceSample } from '#dialect/Schema';
 import {
   RESOURCE_SAMPLE_KEPT_FOR_DAYS,
   sinceMsForRange,
 } from '@ValenceContracts/schemas/ResourceSample';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type {
   ResourceSampleRange,
   ResourceSampleRecord,

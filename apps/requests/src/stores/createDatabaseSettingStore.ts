@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { setting } from '@ValenceRequests/db/Schema';
-import type { RequestsDatabase } from '@ValenceRequests/db/Database';
+import { setting } from '#dialect/Schema';
+import type { RequestsDatabase } from '#dialect/RequestsDatabase';
 
 type SettingStore = {
   read: (key: string) => Promise<string | null>;

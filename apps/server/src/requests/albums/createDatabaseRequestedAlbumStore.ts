@@ -1,6 +1,6 @@
 import { and, eq, sql } from 'drizzle-orm';
-import { mediaItem, musicAlbum, musicTrack } from '@ValenceServer/db/Schema';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import { mediaItem, musicAlbum, musicTrack } from '#dialect/Schema';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { RequestedAlbumStore } from '@ValenceServer/requests/albums/RequestedAlbumStore';
 
 /**

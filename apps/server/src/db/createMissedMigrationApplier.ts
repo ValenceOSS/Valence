@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { applyMissedMigrations } from '@ValenceServer/db/applyMissedMigrations';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 
 const AppliedMigrationSchema = z.object({ created_at: z.union([z.string(), z.number()]) });
 

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { and, avg, count, desc, eq, inArray } from 'drizzle-orm';
-import { rating } from '@ValenceServer/db/Schema';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import { rating } from '#dialect/Schema';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { HouseholdRating } from '@ValenceContracts/schemas/Rating';
 import type { RatingService, RatingSubject } from './RatingService';
 

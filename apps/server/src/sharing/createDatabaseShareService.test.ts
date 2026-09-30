@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
-import { createDatabase } from '@ValenceServer/db/Database';
-import { book, mediaItem, series, share, user } from '@ValenceServer/db/Schema';
+import { createDatabase } from '#dialect/createDatabase';
+import { book, mediaItem, series, share, user } from '#dialect/Schema';
 import { columnsFor } from './createDatabaseShareService';
 
 const NOWHERE = 'postgres://nobody@localhost:1/none';

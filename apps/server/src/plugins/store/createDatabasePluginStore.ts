@@ -11,9 +11,9 @@ import {
   pluginProfile,
   pluginStorage,
   rolePermission,
-} from '@ValenceServer/db/Schema';
+} from '#dialect/Schema';
 import { likeLiterally } from '@ValenceServer/db/likeLiterally';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { ConnectionRecord, InstalledRecord, PluginStore } from './PluginStore';
 
 const SettingsSchema = z.record(z.string(), z.union([z.string(), z.boolean()]));

@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { MediaSegmentSchema } from '@ValenceContracts/schemas/MediaSegment';
-import { mediaSegment } from '@ValenceServer/db/Schema';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import { mediaSegment } from '#dialect/Schema';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { SegmentService } from './SegmentService';
 import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
 

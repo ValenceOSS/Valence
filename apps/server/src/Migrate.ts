@@ -3,7 +3,8 @@ import { join } from 'node:path';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { createDatabase } from '@ValenceServer/db/Database';
+import { createDatabase } from '#dialect/createDatabase';
+import { DIALECT } from '#dialect/DIALECT';
 import { createSnapshotBeforeMigrating } from '@ValenceServer/db/createSnapshotBeforeMigrating';
 import { findNewerMigrations } from '@ValenceServer/db/findNewerMigrations';
 import { findPendingMigrations } from '@ValenceServer/db/findPendingMigrations';
@@ -11,7 +12,7 @@ import { migrateToLatest } from '@ValenceServer/db/migrateToLatest';
 import { createMissedMigrationApplier } from '@ValenceServer/db/createMissedMigrationApplier';
 import { readEnv } from '@ValenceServer/env/Env';
 
-const MIGRATIONS_FOLDER = join(import.meta.dirname, '..', 'drizzle');
+const MIGRATIONS_FOLDER = join(import.meta.dirname, '..', 'drizzle', DIALECT);
 
 const MIGRATION_JOURNAL = join(MIGRATIONS_FOLDER, 'meta', '_journal.json');
 

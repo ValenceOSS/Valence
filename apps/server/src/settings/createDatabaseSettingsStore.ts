@@ -1,8 +1,8 @@
 import { eq } from 'drizzle-orm';
-import { serverSetting } from '@ValenceServer/db/Schema';
+import { serverSetting } from '#dialect/Schema';
 import { ServerSettingsSchema, SETTINGS_KEY } from './ServerSettings';
 import type { ServerSettings, SettingsStore } from './ServerSettings';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 
 type CreateDatabaseSettingsStoreOptions = {
   db: ValenceDatabase;

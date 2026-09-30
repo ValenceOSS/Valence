@@ -1,9 +1,9 @@
 import { eq, isNotNull } from 'drizzle-orm';
-import { mediaItem } from '@ValenceServer/db/Schema';
+import { mediaItem } from '#dialect/Schema';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { certificationAgeOf } from '@ValenceServer/library/certificationAgeOf';
 import { readStoredCertifications } from '@ValenceServer/library/readStoredCertifications';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 
 /**
  * Works out again what every stored certificate means, in whichever region the server now reads

@@ -1,6 +1,6 @@
 import { getTableConfig } from 'drizzle-orm/pg-core';
 import { describe, expect, it } from 'vitest';
-import { mediaItem } from './Schema';
+import { mediaItem } from '#dialect/Schema';
 
 const columnNamed = (name: string) =>
   getTableConfig(mediaItem).columns.find((column) => column.name === name);

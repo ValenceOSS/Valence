@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
-import { requestItem } from '@ValenceRequests/db/Schema';
-import type { RequestsDatabase } from '@ValenceRequests/db/Database';
+import { requestItem } from '#dialect/Schema';
+import type { RequestsDatabase } from '#dialect/RequestsDatabase';
 import type {
   RequestItemRecord,
   RequestItemStore,

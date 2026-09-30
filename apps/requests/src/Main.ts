@@ -2,9 +2,10 @@ import { join } from 'node:path';
 import { serve } from '@hono/node-server';
 import { Camoufox } from 'camoufox-js';
 import { sql } from 'drizzle-orm';
-import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { createApp } from '@ValenceRequests/App';
-import { createDatabase } from '@ValenceRequests/db/Database';
+import { applyMigrations } from '#dialect/applyMigrations';
+import { createDatabase } from '#dialect/createDatabase';
+import { DIALECT } from '#dialect/DIALECT';
 import { readEnv } from '@ValenceRequests/env/Env';
 import { becomeTheUser } from '@ValenceRequests/env/becomeTheUser';
 import { createVpnWatch } from '@ValenceRequests/vpn/createVpnWatch';
@@ -46,7 +47,7 @@ import { createProbeClient } from '@ValenceRequests/media/createProbeClient';
 import { createRequestWorker } from '@ValenceRequests/mediaRequests/createRequestWorker';
 import { z } from 'zod';
 
-const MIGRATIONS_FOLDER = join(import.meta.dirname, '..', 'drizzle');
+const MIGRATIONS_FOLDER = join(import.meta.dirname, '..', 'drizzle', DIALECT);
 
 const SEEDED_PROFILES = 'seededProfileNames';
 
@@ -73,11 +74,7 @@ say(
       : 'Running as the user it was started as.',
 );
 
-await migrate(db, {
-  migrationsFolder: MIGRATIONS_FOLDER,
-  migrationsSchema: 'valence_requests',
-  migrationsTable: '__migrations',
-});
+await applyMigrations(db, MIGRATIONS_FOLDER);
 
 const vpn = createVpnWatch({
   read: () => readGluetun({ address: env.VPN_URL, apiKey: env.VPN_API_KEY, fetch }),

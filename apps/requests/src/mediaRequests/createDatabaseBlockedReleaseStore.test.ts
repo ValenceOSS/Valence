@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createDatabaseBlockedReleaseStore } from './createDatabaseBlockedReleaseStore';
 import { createDatabaseMediaRequestStore } from './createDatabaseMediaRequestStore';
 import { aMediaRequest } from '@ValenceRequests/testing/aMediaRequest';
-import { aScratchDatabase } from '@ValenceRequests/testing/aScratchDatabase';
+import { aScratchDatabase } from '#dialect/aScratchDatabase';
 
 const BLOCKED = {
   id: '5a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d',

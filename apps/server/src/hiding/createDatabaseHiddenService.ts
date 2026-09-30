@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { and, desc, eq } from 'drizzle-orm';
-import { hidden, library, mediaItem, series } from '@ValenceServer/db/Schema';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import { hidden, library, mediaItem, series } from '#dialect/Schema';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { Hidden, HiddenKind } from '@ValenceContracts/schemas/Hidden';
 import type { HiddenService, HiddenSubject } from '@ValenceServer/hiding/HiddenService';
 

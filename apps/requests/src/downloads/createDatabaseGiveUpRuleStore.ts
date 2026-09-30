@@ -1,7 +1,7 @@
 import { GIVE_UP_DEFAULTS } from '@ValenceContracts/schemas/GiveUpRules';
-import { giveUpRules } from '@ValenceRequests/db/Schema';
+import { giveUpRules } from '#dialect/Schema';
 import type { GiveUpRules } from '@ValenceContracts/schemas/GiveUpRules';
-import type { RequestsDatabase } from '@ValenceRequests/db/Database';
+import type { RequestsDatabase } from '#dialect/RequestsDatabase';
 
 type GiveUpRuleStore = {
   read: () => Promise<GiveUpRules>;

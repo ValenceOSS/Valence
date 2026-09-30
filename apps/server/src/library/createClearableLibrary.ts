@@ -8,7 +8,7 @@ import {
   musicAlbum,
   musicArtist,
   musicTrack,
-} from '@ValenceServer/db/Schema';
+} from '#dialect/Schema';
 import { AudioStreamSchema } from '@ValenceContracts/schemas/MediaItem';
 import {
   DETECT_SEGMENTS_JOB,
@@ -16,7 +16,7 @@ import {
   REGENERATE_TRICKPLAY_JOB,
 } from '@ValenceServer/jobs/JobQueue';
 import { clearJobCompletions } from './createMediaStore';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { ClearableLibrary } from './clearLibraryParts';
 
 /**

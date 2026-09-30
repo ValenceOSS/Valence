@@ -1,8 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { and, desc, eq } from 'drizzle-orm';
-import { watchProgress } from '@ValenceServer/db/Schema';
-import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
-import type { ValenceSchema } from '@ValenceServer/db/Database';
+import { watchProgress } from '#dialect/Schema';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { WatchProgressService } from './WatchProgressService';
 
 /**
@@ -12,9 +11,7 @@ import type { WatchProgressService } from './WatchProgressService';
  * @param db - The database to read and write.
  * @returns The watch progress service.
  */
-const createDatabaseWatchProgressService = (
-  db: PgDatabase<PgQueryResultHKT, ValenceSchema>,
-): WatchProgressService => ({
+const createDatabaseWatchProgressService = (db: AnyValenceDatabase): WatchProgressService => ({
   read: async (profileId, mediaId) => {
     const [row] = await db
       .select()

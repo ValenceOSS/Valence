@@ -1,8 +1,8 @@
 import { inArray } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
-import { book, library } from '@ValenceServer/db/Schema';
+import { book, library } from '#dialect/Schema';
 import { librariesVisibleToViewer } from '@ValenceServer/visibility/librariesVisibleToViewer';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 /**

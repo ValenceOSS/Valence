@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { and, count, desc, eq, isNull } from 'drizzle-orm';
-import { book, mediaItem, series, share, shareVisit, user } from '@ValenceServer/db/Schema';
+import { book, mediaItem, series, share, shareVisit, user } from '#dialect/Schema';
 import { isShareLive } from '@ValenceContracts/schemas/Share';
 import { hashShareToken, makeShareToken } from './shareToken';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { AdminShare, Share, ShareKind } from '@ValenceContracts/schemas/Share';
 import type { ResolvedShare, ShareService } from './ShareService';
 

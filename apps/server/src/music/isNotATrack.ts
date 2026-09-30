@@ -1,7 +1,7 @@
 import { eq, notExists, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
-import { mediaItem, musicTrack } from '@ValenceServer/db/Schema';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import { mediaItem, musicTrack } from '#dialect/Schema';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 
 /**
  * A condition that holds for every media item that is not a song.

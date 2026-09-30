@@ -1,7 +1,7 @@
 import { and, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
-import { book, mediaItem, musicAlbum, musicArtist, series } from '@ValenceServer/db/Schema';
+import { book, mediaItem, musicAlbum, musicArtist, series } from '#dialect/Schema';
 import { nameKey } from '@ValenceServer/music/nameKey';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { CatalogueLookup, NamedBook } from '@ValenceServer/requests/catalogue/CatalogueLookup';
 
 /**

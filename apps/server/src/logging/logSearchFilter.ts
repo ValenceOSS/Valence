@@ -1,5 +1,5 @@
 import { ilike, or } from 'drizzle-orm';
-import { logRecord } from '@ValenceServer/db/Schema';
+import { logRecord } from '#dialect/Schema';
 import type { SQL } from 'drizzle-orm';
 
 /**

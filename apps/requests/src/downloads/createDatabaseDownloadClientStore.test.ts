@@ -1,6 +1,6 @@
 import { DEFAULT_DOWNLOAD_CATEGORIES } from '@ValenceContracts/schemas/DownloadClient';
 import { describe, expect, it } from 'vitest';
-import { aScratchDatabase } from '@ValenceRequests/testing/aScratchDatabase';
+import { aScratchDatabase } from '#dialect/aScratchDatabase';
 import { createDatabaseDownloadClientStore } from './createDatabaseDownloadClientStore';
 import type { DownloadClientRecord } from './DownloadClientRecord';
 

@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
-import { mediaRequest } from '@ValenceRequests/db/Schema';
-import type { RequestsDatabase } from '@ValenceRequests/db/Database';
+import { mediaRequest } from '#dialect/Schema';
+import type { RequestsDatabase } from '#dialect/RequestsDatabase';
 import type {
   MediaRequestRecord,
   MediaRequestStore,

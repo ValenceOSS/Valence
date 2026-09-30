@@ -14,10 +14,9 @@ import { savesEnough } from '@ValenceCore/functions/savesEnough';
 import { sourcesOf } from '@ValenceCore/functions/sourcesOf';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
 import { DownloadQualitySchema, DownloadStateSchema } from '@ValenceContracts/schemas/Download';
-import { downloadHolding, preparedDownload, viewerProfile } from '@ValenceServer/db/Schema';
+import { downloadHolding, preparedDownload, viewerProfile } from '#dialect/Schema';
 import { theEpisodesAskedFor } from './theEpisodesAskedFor';
-import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
-import type { ValenceSchema } from '@ValenceServer/db/Database';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
 import type { Download, DownloadQuality, Holding } from '@ValenceContracts/schemas/Download';
 import type { DownloadOffer, DownloadService, FollowedDownload } from './DownloadService';
@@ -42,7 +41,7 @@ const qualityOf = (stored: string): DownloadQuality =>
   DownloadQualitySchema.safeParse(stored).data ?? 'original';
 
 type CreateDownloadServiceOptions = {
-  db: PgDatabase<PgQueryResultHKT, ValenceSchema>;
+  db: AnyValenceDatabase;
   media: MediaForDownload;
   transcoder: Pick<
     Transcoder,

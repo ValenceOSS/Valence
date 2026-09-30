@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
-import { blocklistedRelease } from '@ValenceRequests/db/Schema';
-import type { RequestsDatabase } from '@ValenceRequests/db/Database';
+import { blocklistedRelease } from '#dialect/Schema';
+import type { RequestsDatabase } from '#dialect/RequestsDatabase';
 import type {
   BlockedReleaseRecord,
   BlockedReleaseStore,

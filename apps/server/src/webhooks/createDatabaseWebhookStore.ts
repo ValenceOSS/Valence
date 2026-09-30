@@ -2,7 +2,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { and, asc, desc, eq, lt, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { toIso } from '@ValenceCore/functions/toIso';
-import { webhookDelivery, webhookSubscription } from '@ValenceServer/db/Schema';
+import { webhookDelivery, webhookSubscription } from '#dialect/Schema';
 import {
   DEFAULT_WEBHOOK_FILTERS,
   WebhookEventSchema,
@@ -10,7 +10,7 @@ import {
   WebhookPresetSchema,
 } from '@ValenceContracts/schemas/Webhook';
 import { subscriptionWants } from './subscriptionWants';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { WebhookSubscription } from '@ValenceContracts/schemas/Webhook';
 import type { WebhookStore } from './WebhookStore';
 

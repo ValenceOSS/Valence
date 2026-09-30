@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { describe, expect, it, vi } from 'vitest';
-import { authSchema, valenceSchema } from '@ValenceServer/db/Schema';
+import { authSchema, valenceSchema } from '#dialect/Schema';
 import { keepingProfile } from './keepingProfile';
 import { createDownloadService } from './createDownloadService';
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
@@ -100,7 +100,9 @@ const aScratchDatabase = async () => {
       '0046_download_speed.sql',
       '0083_the_device_that_asked.sql',
       '0084_the_time_a_download_has_left.sql',
-    ].map((name) => readFile(join(import.meta.dirname, '..', '..', 'drizzle', name), 'utf8')),
+    ].map((name) =>
+      readFile(join(import.meta.dirname, '..', '..', 'drizzle', 'postgres', name), 'utf8'),
+    ),
   );
 
   await client.exec(

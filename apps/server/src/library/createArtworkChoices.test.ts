@@ -1,7 +1,7 @@
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { describe, expect, it, vi } from 'vitest';
-import { authSchema, valenceSchema } from '@ValenceServer/db/Schema';
+import { authSchema, valenceSchema } from '#dialect/Schema';
 import { createArtworkChoices } from './createArtworkChoices';
 import type { ArtworkChoices } from '@ValenceContracts/schemas/ArtworkChoice';
 

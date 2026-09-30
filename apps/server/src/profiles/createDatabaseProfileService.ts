@@ -6,7 +6,7 @@ import { drawAvatar, isAvatarStyle } from './drawAvatar';
 import { extensionFor, whatIsWrongWithThePicture } from './whatIsWrongWithThePicture';
 import { pickOneFaceEach } from './pickOneFaceEach';
 import { pickTheAccountsFace } from './pickTheAccountsFace';
-import { viewerProfile, user, userProfile } from '@ValenceServer/db/Schema';
+import { viewerProfile, user, userProfile } from '#dialect/Schema';
 import { dropPrivatePlaylistsOf } from '@ValenceServer/playlists/dropPrivatePlaylistsOf';
 import {
   STILL_WATCHING_DEFAULT,
@@ -17,7 +17,7 @@ import {
   ProfileColourSchema,
   PROFILE_COLOURS,
 } from '@ValenceContracts/schemas/ViewerProfile';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { ProfileService } from './ProfileService';
 import type { ProfileColour, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { StoredFace } from './pickTheAccountsFace';

@@ -1,9 +1,8 @@
 import { and, eq, lt, sql } from 'drizzle-orm';
 import { UPLOAD_PIECE_BYTES } from '@ValenceContracts/schemas/UploadPieces';
-import { uploadSession } from '@ValenceServer/db/Schema';
+import { uploadSession } from '#dialect/Schema';
 import { beginUploadSession } from '@ValenceServer/uploads/beginUploadSession';
-import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
-import type { ValenceSchema } from '@ValenceServer/db/Database';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { UploadSession, UploadSessions } from '@ValenceServer/uploads/UploadSession';
 
 const LEFT_FOR = 6 * 60 * 60 * 1000;
@@ -43,7 +42,7 @@ const sessionOf = (row: typeof uploadSession.$inferSelect): UploadSession => ({
  * @returns The uploads.
  */
 const createDatabaseUploadSessions = (
-  db: PgDatabase<PgQueryResultHKT, ValenceSchema>,
+  db: AnyValenceDatabase,
   leftFor = LEFT_FOR,
   pieceBytes = UPLOAD_PIECE_BYTES,
 ): UploadSessions => ({

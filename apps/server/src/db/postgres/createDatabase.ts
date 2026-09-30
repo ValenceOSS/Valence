@@ -1,12 +1,6 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
-import { authSchema, valenceSchema } from '@ValenceServer/db/Schema';
-
-const schema = { ...authSchema, ...valenceSchema };
-
-type ValenceDatabase = ReturnType<typeof createDatabase>['db'];
-
-type ValenceSchema = typeof schema;
+import { VALENCE_SCHEMA } from '@ValenceServer/db/postgres/VALENCE_SCHEMA';
 
 /**
  * Opens the connection pool and binds the schema to it, which is the one place the server learns
@@ -17,11 +11,9 @@ type ValenceSchema = typeof schema;
  */
 const createDatabase = (databaseUrl: string) => {
   const pool = new Pool({ connectionString: databaseUrl });
-  const db = drizzle(pool, { schema });
+  const db = drizzle(pool, { schema: VALENCE_SCHEMA });
 
-  return { db, pool, schema };
+  return { db, pool, schema: VALENCE_SCHEMA };
 };
-
-export type { ValenceDatabase, ValenceSchema };
 
 export { createDatabase };

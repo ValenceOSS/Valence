@@ -1,8 +1,8 @@
 import { asc, desc, sql } from 'drizzle-orm';
-import { logRecord } from '@ValenceServer/db/Schema';
+import { logRecord } from '#dialect/Schema';
 import { logFilterFor } from './logFilterFor';
 import type { SQL } from 'drizzle-orm';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { ValenceDatabase } from '#dialect/ValenceDatabase';
 import type { LogQuery, LogSort } from '@ValenceContracts/schemas/Log';
 
 const SEVERITY = sql`case ${logRecord.level} when 'error' then 3 when 'warn' then 2 when 'info' then 1 else 0 end`;

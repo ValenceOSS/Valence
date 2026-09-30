@@ -24,8 +24,8 @@ const loadRootEnvironment = (): void => {
 loadRootEnvironment();
 
 export default defineConfig({
-  schema: './src/db/Schema.ts',
-  out: './drizzle',
+  schema: './src/db/postgres/Schema.ts',
+  out: './drizzle/postgres',
   dialect: 'postgresql',
   dbCredentials: {
     url: process.env.DATABASE_URL ?? 'postgres://valence:valence@localhost:5432/valence',

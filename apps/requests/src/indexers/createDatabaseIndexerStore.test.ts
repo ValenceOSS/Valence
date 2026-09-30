@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aScratchDatabase } from '@ValenceRequests/testing/aScratchDatabase';
+import { aScratchDatabase } from '#dialect/aScratchDatabase';
 import { createDatabaseIndexerStore } from './createDatabaseIndexerStore';
 import type { IndexerRecord } from './IndexerRecord';
 
