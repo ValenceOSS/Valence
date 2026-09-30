@@ -21,13 +21,16 @@ import type { GiveUpRules } from '@ValenceContracts/schemas/GiveUpRules';
  *
  * A change shows at once and is saved as it is made. Saves go one after another in the order they
  * were made, since each sends every rule and a slower earlier one landing last would undo a later
- * change. If the service refuses one, what it holds is read again, so the page never shows a rule
- * that is not the one in force.
+ * change. If the service refuses one, what it holds is read again once every save still waiting has
+ * gone, so the page settles on the rules in force without a read landing between two saves and
+ * putting back what a later one changed.
  */
 const GiveUpRulesList = () => {
   const cache = useQueryClient();
   const rules = useQuery(requestsQueries.giveUpRules());
   const saving = useRef<Promise<void>>(Promise.resolve());
+  const waiting = useRef(0);
+  const isOutOfStep = useRef(false);
 
   if (rules.isError) {
     return (
@@ -51,23 +54,30 @@ const GiveUpRulesList = () => {
     const changed = { ...kept, ...next };
     const { queryKey } = requestsQueries.giveUpRules();
 
+    void cache.cancelQueries({ queryKey });
     cache.setQueryData(queryKey, changed);
+    waiting.current += 1;
 
     saving.current = saving.current
       .then(() => changeGiveUpRules(changed))
       .then(
         ({ refusal }) => {
           tellOutcome(`${what} saved.`, failureOfRefusal(refusal));
-
-          if (refusal !== null) {
-            void cache.invalidateQueries({ queryKey });
-          }
+          isOutOfStep.current ||= refusal !== null;
         },
         () => {
           tellOutcome('', `${what} could not be saved.`);
-          void cache.invalidateQueries({ queryKey });
+          isOutOfStep.current = true;
         },
-      );
+      )
+      .then(() => {
+        waiting.current -= 1;
+
+        if (waiting.current === 0 && isOutOfStep.current) {
+          isOutOfStep.current = false;
+          void cache.invalidateQueries({ queryKey });
+        }
+      });
   };
 
   return (

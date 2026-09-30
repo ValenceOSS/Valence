@@ -85,6 +85,38 @@ describe('GiveUpRulesList', () => {
     });
   });
 
+  it('reads the rules again only once the saves still waiting have gone', async () => {
+    const actor = userEvent.setup();
+    let failFirst: (why: Error) => void = () => undefined;
+    const bothSaved = { ...GIVE_UP_DEFAULTS, stalledHours: null, refusesUnknownFiles: false };
+
+    changeGiveUpRules.mockImplementationOnce(
+      () =>
+        new Promise((resolve, reject) => {
+          void resolve;
+          failFirst = reject;
+        }),
+    );
+    renderInAnAddress(<GiveUpRulesList />);
+
+    await actor.click(await screen.findByRole('button', { name: /Stalled/ }));
+    await actor.click(await screen.findByRole('menuitemradio', { name: /Never/ }));
+    await actor.click(screen.getByRole('switch', { name: 'Give up on unrecognised files' }));
+
+    fetchGiveUpRules.mockResolvedValue(bothSaved);
+    failFirst(new Error('unreadable'));
+
+    await waitFor(() => {
+      expect(fetchGiveUpRules).toHaveBeenCalledTimes(2);
+    });
+    expect(changeGiveUpRules).toHaveBeenLastCalledWith(bothSaved);
+    expect(fetchGiveUpRules.mock.invocationCallOrder[1]).toBeGreaterThan(
+      changeGiveUpRules.mock.invocationCallOrder[1] ?? Infinity,
+    );
+    expect(screen.getByRole('button', { name: /Stalled/ })).toHaveTextContent('Never');
+    expect(screen.getByRole('switch', { name: 'Give up on unrecognised files' })).not.toBeChecked();
+  });
+
   it('carries on saving after a save that went wrong', async () => {
     const actor = userEvent.setup();
 
