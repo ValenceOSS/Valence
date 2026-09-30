@@ -11,11 +11,18 @@ const ROOT = join(import.meta.dirname, '..', '..');
 const APPS = [
   { app: 'server', dialect: 'postgres' },
   { app: 'requests', dialect: 'postgres' },
+  { app: 'requests', dialect: 'mysql' },
 ] as const;
+
+const NOWHERE: Readonly<Record<string, string>> = {
+  postgres: 'postgres://nobody:nobody@127.0.0.1:1/nothing',
+  mysql: 'mysql://nobody:nobody@127.0.0.1:1/nothing',
+};
 
 const ALREADY_OUT_OF_ORDER: Readonly<Record<string, readonly string[]>> = {
   'server/postgres': ['0071_grant_requests', '0072_albums_known_by_their_release_group'],
   'requests/postgres': [],
+  'requests/mysql': [],
 };
 
 const JournalSchema = z.object({
@@ -48,7 +55,7 @@ const whatIsThere = (migrations: string): string[] =>
  *
  * @param app - The app whose schema to generate from.
  * @param dialect - Which of its databases, naming the drizzle config to generate with.
- * @throws If drizzle-kit could not be run at all.
+ * @throws If drizzle-kit could not be run, or failed.
  */
 const generate = (app: string, dialect: string): void => {
   const outcome = spawnSync(
@@ -57,12 +64,18 @@ const generate = (app: string, dialect: string): void => {
     {
       cwd: app,
       stdio: 'pipe',
-      env: { ...process.env, DATABASE_URL: 'postgres://nobody:nobody@127.0.0.1:1/nothing' },
+      env: { ...process.env, DATABASE_URL: NOWHERE[dialect] },
     },
   );
 
   if (outcome.error !== undefined) {
     throw new Error('drizzle-kit could not be run, so the snapshot could not be checked.');
+  }
+
+  if (outcome.status !== 0) {
+    throw new Error(
+      `drizzle-kit failed on ${app}/${dialect}, so the snapshot could not be checked:\n${outcome.stderr.toString()}`,
+    );
   }
 };
 

@@ -56,6 +56,11 @@ const DIALECT_IMPORT_BANS = [
       'pg',
       '@electric-sql/pglite',
       '@electric-sql/pglite/*',
+      'drizzle-orm/mysql-core',
+      'drizzle-orm/mysql2',
+      'drizzle-orm/mysql2/*',
+      'mysql2',
+      'mysql2/*',
     ],
     message:
       'Only a dialect folder speaks to one database. Reach it through #dialect/* — see "One query, several databases" in the coding standard.',
@@ -65,6 +70,9 @@ const DIALECT_IMPORT_BANS = [
       '@ValenceServer/db/postgres/*',
       '@ValenceRequests/db/postgres/*',
       '@ValenceDatabase/postgres/*',
+      '@ValenceServer/db/mysql/*',
+      '@ValenceRequests/db/mysql/*',
+      '@ValenceDatabase/mysql/*',
     ],
     message:
       'Import a dialect file through #dialect/*, which the build resolves to the database it is for.',
@@ -310,6 +318,9 @@ export default tseslint.config(
       'apps/server/src/db/postgres/**',
       'apps/requests/src/db/postgres/**',
       'packages/database/src/postgres/**',
+      'apps/server/src/db/mysql/**',
+      'apps/requests/src/db/mysql/**',
+      'packages/database/src/mysql/**',
       '**/*.test.ts',
     ],
     rules: {
@@ -330,6 +341,9 @@ export default tseslint.config(
             'apps/server/src/db/postgres/**',
             'apps/requests/src/db/postgres/**',
             'packages/database/src/postgres/**',
+            'apps/server/src/db/mysql/**',
+            'apps/requests/src/db/mysql/**',
+            'packages/database/src/mysql/**',
             '**/*.test.ts',
           ],
           rules: {
