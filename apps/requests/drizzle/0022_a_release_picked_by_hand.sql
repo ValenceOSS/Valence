@@ -1,0 +1,1 @@
+ALTER TABLE "valence_requests"."request_item" ADD COLUMN "is_picked_by_hand" boolean DEFAULT false NOT NULL;

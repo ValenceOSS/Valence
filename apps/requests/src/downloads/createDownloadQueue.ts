@@ -37,6 +37,7 @@ type CreateDownloadQueueOptions = {
   events: EventStore;
   indexers?: { records: () => Promise<SeedingIndexer[]> };
   fetchRelease: (indexerId: string, url: string) => Promise<ReleaseFile | null>;
+  judgeFiles?: (record: SentDownloadRecord, videos: readonly string[]) => Promise<string | null>;
   now?: () => Date;
   schedule?: Schedule;
   watchedEveryMs?: number;
@@ -119,6 +120,9 @@ const NOTHING_LIVE: Omit<Live, 'progress' | 'doneBytes'> = {
  * @param events - Where events wait for the server.
  * @param indexers - The indexers, for what each asks a torrent to give back.
  * @param fetchRelease - How to fetch a release from the indexer that found it.
+ * @param judgeFiles - Asked whether the videos a torrent turns out to hold are what was asked for,
+ *   once its client can list them: a reason throws it out as a failure, as a program in it does,
+ *   and a question it could not answer leaves the files to be looked at again on the next pass.
  * @param now - The clock.
  * @param schedule - How to wait before asking again.
  * @param watchedEveryMs - How often to ask while somebody watches.
@@ -131,6 +135,7 @@ const createDownloadQueue = ({
   events,
   indexers = { records: () => Promise.resolve([]) },
   fetchRelease,
+  judgeFiles,
   now = () => new Date(),
   schedule = waitThenRun,
   watchedEveryMs = WATCHED_EVERY_MS,
@@ -314,11 +319,23 @@ const createDownloadQueue = ({
 
     const sorted = sortTorrentFiles(files, record.libraryKind);
     const at = now().toISOString();
+    const judged =
+      sorted.program !== null || !sorted.hasWanted || sorted.videos.length === 0
+        ? { isAnswered: true, refusal: null }
+        : await (judgeFiles?.(record, sorted.videos) ?? Promise.resolve(null)).then(
+            (refusal) => ({ isAnswered: true, refusal }),
+            () => ({ isAnswered: false, refusal: null }),
+          );
+
+    if (!judged.isAnswered) {
+      return;
+    }
+
     const problem =
       sorted.program !== null
         ? `It holds a program, ${sorted.program}, which no film, series, album or book comes with`
         : sorted.hasWanted
-          ? null
+          ? judged.refusal
           : 'It holds nothing Valence can file';
 
     if (problem === null) {

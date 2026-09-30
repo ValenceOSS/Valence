@@ -32,6 +32,7 @@ const itemFromDraft = (
   downloadedBytes: null,
   downloadSeconds: null,
   attempts: 0,
+  isPickedByHand: false,
   lastSearchedAt: null,
   updatedAt: at,
 });

@@ -197,9 +197,8 @@ const downloadQueue = createDownloadQueue({
   events,
   indexers: { records: () => indexers.list() },
   fetchRelease: (indexerId, url) => indexers.download(indexerId, url),
+  judgeFiles: async (download, videos) => requestWorker.judgeFiles(download, videos),
 });
-
-downloadQueue.start();
 
 const requestStore = createDatabaseMediaRequestStore(db);
 
@@ -221,6 +220,8 @@ const requestWorker = createRequestWorker({
   say,
   probe: createProbeClient(env.TRANSCODER_URL),
 });
+
+downloadQueue.start();
 
 const mediaRequests = createRequestService({
   requests: requestStore,

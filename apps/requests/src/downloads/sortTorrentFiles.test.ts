@@ -21,7 +21,12 @@ describe('sortTorrentFiles', () => {
         ),
         'movies',
       ),
-    ).toEqual({ unwanted: [2, 3, 4, 5, 6], program: null, hasWanted: true });
+    ).toEqual({
+      unwanted: [2, 3, 4, 5, 6],
+      program: null,
+      hasWanted: true,
+      videos: ['Dune (2021)/Dune.2021.1080p.mkv'],
+    });
   });
 
   it('keeps an album’s tracks and its cover', () => {
@@ -30,7 +35,7 @@ describe('sortTorrentFiles', () => {
         filesOf('The Wall/01 - In the Flesh.flac', 'The Wall/cover.jpg', 'The Wall/rip.log'),
         'music',
       ),
-    ).toEqual({ unwanted: [2], program: null, hasWanted: true });
+    ).toEqual({ unwanted: [2], program: null, hasWanted: true, videos: [] });
   });
 
   it('keeps a book, a PDF among them', () => {
@@ -38,6 +43,7 @@ describe('sortTorrentFiles', () => {
       unwanted: [2],
       program: null,
       hasWanted: true,
+      videos: [],
     });
   });
 
@@ -53,7 +59,7 @@ describe('sortTorrentFiles', () => {
         ),
         'books',
       ),
-    ).toEqual({ unwanted: [3, 4], program: null, hasWanted: true });
+    ).toEqual({ unwanted: [3, 4], program: null, hasWanted: true, videos: [] });
   });
 
   it('keeps an audiobook of one track a chapter', () => {
@@ -71,10 +77,29 @@ describe('sortTorrentFiles', () => {
   it('names the program in a torrent that passes for a film', () => {
     expect(
       sortTorrentFiles(filesOf('Dune.2021.1080p.mkv.exe', 'Codec/Install.bat'), 'movies'),
-    ).toEqual({ unwanted: [0, 1], program: 'Dune.2021.1080p.mkv.exe', hasWanted: false });
+    ).toEqual({
+      unwanted: [0, 1],
+      program: 'Dune.2021.1080p.mkv.exe',
+      hasWanted: false,
+      videos: [],
+    });
   });
 
   it('says where nothing in a torrent can be filed, as with one packed in archives', () => {
     expect(sortTorrentFiles(filesOf('Dune.rar', 'Dune.r00'), 'movies').hasWanted).toBe(false);
+  });
+
+  it('names the videos worth fetching, leaving out samples and subtitles', () => {
+    expect(
+      sortTorrentFiles(
+        [
+          { index: 0, name: 'Dune/Dune.2021.2160p.mkv' },
+          { index: 1, name: 'Dune/Sample/Dune.sample.mkv' },
+          { index: 2, name: 'Dune/Dune.srt' },
+          { index: 3, name: 'Dune/Comparison 1.png' },
+        ],
+        'movies',
+      ).videos,
+    ).toEqual(['Dune/Dune.2021.2160p.mkv']);
   });
 });

@@ -251,6 +251,7 @@ const requestItem = requestsSchema.table(
     downloadedBytes: doublePrecision('downloaded_bytes'),
     downloadSeconds: doublePrecision('download_seconds'),
     attempts: integer('attempts').notNull().default(0),
+    isPickedByHand: boolean('is_picked_by_hand').notNull().default(false),
     lastSearchedAt: timestamp('last_searched_at', { withTimezone: true }),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

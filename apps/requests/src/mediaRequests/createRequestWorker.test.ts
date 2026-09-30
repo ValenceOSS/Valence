@@ -74,8 +74,12 @@ const aWorker = ({
   profiles = [],
   refuseSend,
   refuseSendCode,
-  filed = vi.fn<typeof fileDownload>(() => Promise.resolve({ filed: new Map(), missing: [] })),
-  filedMusic = vi.fn<typeof fileAlbum>(() => Promise.resolve({ filed: new Map(), missing: [] })),
+  filed = vi.fn<typeof fileDownload>(() =>
+    Promise.resolve({ filed: new Map(), missing: [], refused: new Map() }),
+  ),
+  filedMusic = vi.fn<typeof fileAlbum>(() =>
+    Promise.resolve({ filed: new Map(), missing: [], refused: new Map() }),
+  ),
   localPath = '',
   reports = [
     {
@@ -443,6 +447,7 @@ describe('createRequestWorker', () => {
         Promise.resolve({
           filed: new Map([[aRequestItem().id, '/media/Films/Dune (2021)/Dune (2021).mkv']]),
           missing: [],
+          refused: new Map(),
         }),
       );
       const { worker, items, events } = aWorker({
@@ -466,6 +471,7 @@ describe('createRequestWorker', () => {
         [expect.objectContaining({ state: 'filing' })],
         '/srv/downloads/valence-films/Dune',
         true,
+        expect.any(Function),
         expect.any(Function),
       );
       expect(await theItem(items)).toMatchObject({
@@ -653,13 +659,214 @@ describe('createRequestWorker', () => {
       const { worker, blocked } = aWorker({
         items: [aRequestItem({ state: 'filing', downloadId: aSentDownload().id })],
         sent: [aSentDownload({ state: 'done', contentPath: '/downloads/Dune' })],
-        filed: () => Promise.resolve({ filed: new Map(), missing: [aRequestItem().id] }),
+        filed: () =>
+          Promise.resolve({ filed: new Map(), missing: [aRequestItem().id], refused: new Map() }),
         found: () => [],
       });
 
       await worker.tick();
 
       expect((await blocked.list())[0]?.reason).toBe('It held nothing asked for');
+    });
+  });
+
+  describe('judging what is filed', () => {
+    const downloading = () =>
+      aRequestItem({
+        state: 'downloading',
+        downloadId: aSentDownload().id,
+        releaseTitle: BLURAY,
+        score: 2200,
+      });
+    const done = () =>
+      aSentDownload({ state: 'done', contentPath: '/downloads/valence-films/Dune' });
+
+    it('blocklists a film that turned out not to be what was asked for, and looks for the next best', async () => {
+      const why = 'It is 1080p, which this profile does not take';
+      const filed = vi.fn<typeof fileDownload>(() =>
+        Promise.resolve({
+          filed: new Map(),
+          missing: [],
+          refused: new Map([[aRequestItem().id, why]]),
+        }),
+      );
+      const { worker, blocked, send } = aWorker({
+        items: [downloading()],
+        sent: [done()],
+        filed,
+        localPath: '/srv/downloads',
+      });
+
+      await worker.tick();
+
+      expect((await blocked.list())[0]).toMatchObject({
+        title: aSentDownload().title,
+        reason: why,
+      });
+      expect(send).toHaveBeenCalled();
+    });
+
+    it('remembers and scores a filed copy as what its file was found to be, for judging an upgrade', async () => {
+      const path = '/media/Films/Dune (2021)/Dune (2021) [1080p][WEBDL][x264].mkv';
+      const filed = vi.fn<typeof fileDownload>(() =>
+        Promise.resolve({
+          filed: new Map([[aRequestItem().id, path]]),
+          missing: [],
+          refused: new Map(),
+        }),
+      );
+      const { worker, items } = aWorker({
+        items: [downloading()],
+        sent: [done()],
+        filed,
+        localPath: '/srv/downloads',
+      });
+
+      await worker.tick();
+
+      const item = await theItem(items);
+
+      expect(item).toMatchObject({
+        state: 'filed',
+        filedTitle: 'Dune (2021) [1080p][WEBDL][x264]',
+      });
+      expect(item?.score).toBe(item?.filedScore);
+      expect(item?.score).not.toBe(2200);
+    });
+
+    it('judges what is filed against the request’s profile', async () => {
+      const filed = vi.fn<typeof fileDownload>(() =>
+        Promise.resolve({ filed: new Map(), missing: [], refused: new Map() }),
+      );
+      const { worker } = aWorker({
+        requests: [aMediaRequest({ profileId: '6ba7b810-9dad-11d1-80b4-00c04fd430ca' })],
+        profiles: [
+          aProfile({ id: '6ba7b810-9dad-11d1-80b4-00c04fd430ca', resolutions: ['2160p'] }),
+        ],
+        items: [downloading()],
+        sent: [done()],
+        filed,
+        localPath: '/srv/downloads',
+      });
+
+      await worker.tick();
+
+      const refuses = filed.mock.lastCall?.[5];
+
+      expect(refuses?.({ resolution: '1080p' })).toBe(
+        'It is 1080p, which this profile does not take',
+      );
+      expect(refuses?.({ resolution: '2160p' })).toBeNull();
+    });
+
+    it('files whatever an episode picked by hand turns out to be', async () => {
+      const filed = vi.fn<typeof fileDownload>(() =>
+        Promise.resolve({ filed: new Map(), missing: [], refused: new Map() }),
+      );
+      const { worker } = aWorker({
+        items: [{ ...downloading(), isPickedByHand: true }],
+        sent: [done()],
+        filed,
+        localPath: '/srv/downloads',
+      });
+
+      await worker.tick();
+
+      expect(filed.mock.lastCall?.[5]?.({ resolution: '480p', source: 'cam' })).toBeNull();
+    });
+
+    it('files whatever a release picked by hand turns out to be', async () => {
+      const filed = vi.fn<typeof fileDownload>(() =>
+        Promise.resolve({ filed: new Map(), missing: [], refused: new Map() }),
+      );
+      const { worker } = aWorker({
+        requests: [aMediaRequest({ isPickedByHand: true })],
+        items: [downloading()],
+        sent: [done()],
+        filed,
+        localPath: '/srv/downloads',
+      });
+
+      await worker.tick();
+
+      expect(filed.mock.lastCall?.[5]?.({ resolution: '480p', source: 'cam' })).toBeNull();
+    });
+  });
+
+  describe('judging what a download holds', () => {
+    const FOUR_K = aProfile({
+      id: '6ba7b810-9dad-11d1-80b4-00c04fd430c9',
+      name: '4K',
+      resolutions: ['2160p'],
+    });
+    const TELESYNC = 'Spider-Man.Brand.New.Day.2026.V3.1080p.TELESYNC.x264-DKS_rxl1.mp4';
+
+    it('refuses what a release holds where its files are not what the request asked for', async () => {
+      const { worker } = aWorker({
+        requests: [aMediaRequest({ profileId: FOUR_K.id })],
+        items: [aRequestItem({ state: 'downloading', downloadId: aSentDownload().id })],
+        profiles: [FOUR_K],
+      });
+
+      expect(await worker.judgeFiles(aSentDownload(), [TELESYNC])).toBe(
+        `Its file, ${TELESYNC}, is 1080p, which this profile does not take`,
+      );
+    });
+
+    it('takes what a release holds where its files are what was asked for', async () => {
+      const { worker } = aWorker({
+        requests: [aMediaRequest({ profileId: FOUR_K.id })],
+        items: [aRequestItem({ state: 'downloading', downloadId: aSentDownload().id })],
+        profiles: [FOUR_K],
+      });
+
+      expect(
+        await worker.judgeFiles(aSentDownload(), ['Film.2026.2160p.WEB-DL.H.265-GRP.mkv']),
+      ).toBeNull();
+    });
+
+    it('leaves a release somebody picked by hand as they picked it', async () => {
+      const { worker } = aWorker({
+        requests: [aMediaRequest({ profileId: FOUR_K.id, isPickedByHand: true })],
+        items: [aRequestItem({ state: 'downloading', downloadId: aSentDownload().id })],
+        profiles: [FOUR_K],
+      });
+
+      expect(await worker.judgeFiles(aSentDownload(), [TELESYNC])).toBeNull();
+    });
+
+    it('cannot say yet while a release is still being sent', async () => {
+      const { worker } = aWorker({
+        requests: [aMediaRequest({ profileId: FOUR_K.id })],
+        items: [aRequestItem({ state: 'chosen', downloadId: null })],
+        profiles: [FOUR_K],
+      });
+
+      await expect(worker.judgeFiles(aSentDownload(), [TELESYNC])).rejects.toThrow(
+        'It is not yet known which request it was sent for',
+      );
+    });
+
+    it('leaves a release picked by hand for one episode as it was picked', async () => {
+      const { worker } = aWorker({
+        requests: [aMediaRequest({ profileId: FOUR_K.id })],
+        items: [
+          aRequestItem({
+            state: 'downloading',
+            downloadId: aSentDownload().id,
+            isPickedByHand: true,
+          }),
+        ],
+        profiles: [FOUR_K],
+      });
+
+      expect(await worker.judgeFiles(aSentDownload(), [TELESYNC])).toBeNull();
+    });
+
+    it('says nothing of a download no request is waiting on', async () => {
+      const { worker } = aWorker({ items: [], profiles: [FOUR_K] });
+
+      expect(await worker.judgeFiles(aSentDownload(), [TELESYNC])).toBeNull();
     });
   });
 
@@ -714,7 +921,11 @@ describe('createRequestWorker', () => {
     it('files a finished album by its tags, and says which album arrived where', async () => {
       const folder = '/media/Music/Pink Floyd/The Wall (1979)';
       const filedMusic = vi.fn<typeof fileAlbum>(() =>
-        Promise.resolve({ filed: new Map([[THE_WALL.id, folder]]), missing: [] }),
+        Promise.resolve({
+          filed: new Map([[THE_WALL.id, folder]]),
+          missing: [],
+          refused: new Map(),
+        }),
       );
       const { worker, items, events, filed } = aWorker({
         requests: [PINK_FLOYD],
@@ -834,6 +1045,7 @@ describe('createRequestWorker', () => {
         Promise.resolve({
           filed: new Map([['film', '/media/Films/The Matrix (1999)/The Matrix (1999).mp4']]),
           missing: [],
+          refused: new Map(),
         }),
       );
       const { worker, downloads, events } = aWorker({
@@ -876,7 +1088,7 @@ describe('createRequestWorker', () => {
     it('files a finished album into the music library it was sent for, by its tags', async () => {
       const folder = '/media/Music/Pink Floyd/The Wall (1979)';
       const filedMusic = vi.fn<typeof fileAlbum>(() =>
-        Promise.resolve({ filed: new Map([['album', folder]]), missing: [] }),
+        Promise.resolve({ filed: new Map([['album', folder]]), missing: [], refused: new Map() }),
       );
       const { worker, downloads } = aWorker({
         requests: [],
@@ -932,7 +1144,7 @@ describe('createRequestWorker', () => {
           { ...BY_HAND, id: '3f2504e0-4f89-41d3-9a0c-0305e82c3303' },
           { ...BY_HAND, id: '3f2504e0-4f89-41d3-9a0c-0305e82c3304', filingAttempts: 5 },
         ],
-        filed: () => Promise.resolve({ filed: new Map(), missing: ['film'] }),
+        filed: () => Promise.resolve({ filed: new Map(), missing: ['film'], refused: new Map() }),
       });
 
       await worker.tick();
@@ -1055,7 +1267,7 @@ describe('createRequestWorker', () => {
 
     it('files a download now, into the library asked for, whenever it was sent', async () => {
       const filed = vi.fn<typeof fileDownload>(() =>
-        Promise.resolve({ filed: new Map([['film', '/x']]), missing: [] }),
+        Promise.resolve({ filed: new Map([['film', '/x']]), missing: [], refused: new Map() }),
       );
       const { worker, downloads } = aWorker({
         requests: [],
@@ -1085,7 +1297,7 @@ describe('createRequestWorker', () => {
     it('files the episodes a series download holds', async () => {
       const root = await mkdtemp(join(tmpdir(), 'valence-by-hand-'));
       const filed = vi.fn<typeof fileDownload>(() =>
-        Promise.resolve({ filed: new Map([['1x2', '/x']]), missing: [] }),
+        Promise.resolve({ filed: new Map([['1x2', '/x']]), missing: [], refused: new Map() }),
       );
 
       await writeFile(join(root, 'Severance.S01E02.1080p.mkv'), 'two');
@@ -1218,7 +1430,12 @@ describe('createRequestWorker', () => {
       const filed = aWorker({
         items: [aRequestItem({ state: 'filing', downloadId: aSentDownload().id })],
         sent: [aSentDownload({ state: 'done', contentPath: '/downloads/Dune' })],
-        filed: () => Promise.resolve({ filed: new Map([[aRequestItem().id, '/x']]), missing: [] }),
+        filed: () =>
+          Promise.resolve({
+            filed: new Map([[aRequestItem().id, '/x']]),
+            missing: [],
+            refused: new Map(),
+          }),
       });
 
       await filed.worker.tick();
@@ -1422,7 +1639,7 @@ describe('createRequestWorker', () => {
     });
 
     it('sends the release an admin picked, whatever it is called', async () => {
-      const { worker, send } = aWorker();
+      const { worker, send, items } = aWorker();
 
       const picked = await worker.pick(
         aMediaRequest().id,
@@ -1431,6 +1648,7 @@ describe('createRequestWorker', () => {
 
       expect(picked).toMatchObject({ state: 'downloading' });
       expect(send).toHaveBeenCalled();
+      expect((await theItem(items))?.isPickedByHand).toBe(true);
       expect(await worker.pick('missing', aRelease(WEB))).toBeNull();
     });
 

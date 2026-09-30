@@ -6,7 +6,12 @@ import { BOOK_FORMATS } from '@ValenceContracts/schemas/Book';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { TorrentFile } from '@ValenceRequests/downloads/TorrentFile';
 
-type SortedFiles = { unwanted: number[]; program: string | null; hasWanted: boolean };
+type SortedFiles = {
+  unwanted: number[];
+  program: string | null;
+  hasWanted: boolean;
+  videos: string[];
+};
 
 const WANTED: Readonly<Record<LibraryKind, ReadonlySet<string>>> = {
   movies: new Set([...VIDEO_FILE_EXTENSIONS, ...TEXT_SUBTITLE_EXTENSIONS]),
@@ -74,8 +79,8 @@ const extensionOf = (name: string): string => {
  *
  * @param files - The torrent's files.
  * @param kind - The kind of library it is for.
- * @returns Which files to leave out, the first program where there is one, and whether anything
- *   is left worth fetching.
+ * @returns Which files to leave out, the first program where there is one, whether anything
+ *   is left worth fetching, and the names of the videos that are.
  */
 const sortTorrentFiles = (files: readonly TorrentFile[], kind: LibraryKind): SortedFiles => {
   const isWanted = (file: TorrentFile) =>
@@ -86,6 +91,9 @@ const sortTorrentFiles = (files: readonly TorrentFile[], kind: LibraryKind): Sor
     unwanted: files.filter((file) => !isWanted(file)).map((file) => file.index),
     program: files.find((file) => PROGRAMS.has(extensionOf(file.name)))?.name ?? null,
     hasWanted: files.some((file) => isWanted(file) && !ALONGSIDE.has(extensionOf(file.name))),
+    videos: files
+      .filter((file) => isWanted(file) && VIDEO_FILE_EXTENSIONS.has(extensionOf(file.name)))
+      .map((file) => file.name),
   };
 };
 

@@ -1,3 +1,4 @@
+import { basename, extname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
@@ -37,6 +38,11 @@ import type {
 } from '@ValenceContracts/schemas/MediaRequest';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { ProbeClient } from '@ValenceRequests/media/createProbeClient';
+import { whatTheFilesSay } from '@ValenceRequests/profiles/whatTheFilesSay';
+import { judgeRelease } from '@ValenceRequests/profiles/judgeRelease';
+import { qualityRefusedBy } from '@ValenceRequests/profiles/qualityRefusedBy';
+import { QUALITY_LABELS } from '@ValenceRequests/profiles/QUALITY_LABELS';
+import type { ParsedRelease } from '@ValenceContracts/schemas/ParsedRelease';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import type { DownloadClientService } from '@ValenceRequests/downloads/createDownloadClientService';
 import type { DownloadQueueService } from '@ValenceRequests/downloads/createDownloadQueue';
@@ -91,6 +97,8 @@ type CreateRequestWorkerOptions = {
 };
 
 type Found = { request: MediaRequestRecord; items: RequestItemRecord[] };
+
+const NOTHING_REFUSED: ReadonlyMap<string, string> = new Map();
 
 const TICK_EVERY_MS = 30_000;
 
@@ -365,6 +373,7 @@ const createRequestWorker = ({
     release: Release,
     holding: readonly RequestItemRecord[],
     score: number,
+    isPickedByHand = false,
   ): Promise<string | null> => {
     const url = release.magnetUrl ?? release.downloadUrl;
 
@@ -410,6 +419,7 @@ const createRequestWorker = ({
         downloadId: sent.id,
         score,
         attempts: 0,
+        isPickedByHand,
         lastSearchedAt: at(),
       });
     }
@@ -606,6 +616,7 @@ const createRequestWorker = ({
           downloadId: null,
           releaseTitle: null,
           score: null,
+          isPickedByHand: false,
           lastSearchedAt: null,
         }
       : {
@@ -614,6 +625,7 @@ const createRequestWorker = ({
           downloadId: null,
           releaseTitle: item.filedTitle,
           score: item.filedScore,
+          isPickedByHand: false,
         };
 
   const follow = async ({ request, items: all }: Found) => {
@@ -711,26 +723,60 @@ const createRequestWorker = ({
       const path = mapClientPath(download.contentPath, client);
 
       try {
-        const { filed, missing } = await (isMusicRequest(request.kind)
-          ? fileMusic(request, filing, path, download.protocol === 'torrent')
+        const { filed, missing, refused } = isMusicRequest(request.kind)
+          ? {
+              ...(await fileMusic(request, filing, path, download.protocol === 'torrent')),
+              refused: NOTHING_REFUSED,
+            }
           : isBookRequest(request.kind)
-            ? fileBooks(request, filing, path, download.protocol === 'torrent')
-            : file(request, filing, path, download.protocol === 'torrent', probe));
+            ? {
+                ...(await fileBooks(request, filing, path, download.protocol === 'torrent')),
+                refused: NOTHING_REFUSED,
+              }
+            : await file(
+                request,
+                filing,
+                path,
+                download.protocol === 'torrent',
+                probe,
+                await refusalsFor(request, filing),
+              );
 
         for (const item of filing) {
           const path = filed.get(item.id);
+          const why = refused.get(item.id);
 
-          await (path === undefined
-            ? update(item, letGo(item, 'It was not in what was downloaded'))
-            : update(item, {
-                state: 'filed',
-                problem: null,
-                filePath: path,
-                filedTitle: item.releaseTitle,
-                filedScore: item.score,
-                attempts: 0,
-                ...downloadFacts(download),
-              }));
+          if (why !== undefined || path === undefined) {
+            await update(item, letGo(item, why ?? 'It was not in what was downloaded'));
+            continue;
+          }
+
+          const filedTitle = filedAs(path, item.releaseTitle);
+          const score =
+            filedTitle === null || filedTitle === item.releaseTitle
+              ? item.score
+              : await scoreOfFiled(filedTitle, download, request, filing.length);
+
+          await update(item, {
+            state: 'filed',
+            problem: null,
+            filePath: path,
+            filedTitle,
+            score,
+            filedScore: score,
+            attempts: 0,
+            ...downloadFacts(download),
+          });
+        }
+
+        const firstRefusal = [...refused.values()][0];
+
+        if (firstRefusal !== undefined) {
+          await block(request.id, download.title, filing[0]?.indexerId ?? null, firstRefusal);
+          await note(
+            request,
+            `${download.title} was not filed: ${firstRefusal}. It is blocklisted, and the next best is looked for.`,
+          );
         }
 
         if (missing.length === filing.length) {
@@ -1117,8 +1163,128 @@ const createRequestWorker = ({
     next(firstMs);
   };
 
+  /**
+   * What a filed copy is remembered as, for judging later whether to upgrade it: its file's own
+   * name, which says what it was found to be, where that name says its resolution, and otherwise the
+   * release it came from.
+   *
+   * @param path - Where it was filed.
+   * @param releaseTitle - The release it came from.
+   * @returns The name to judge it by.
+   */
+  const filedAs = (path: string, releaseTitle: string | null): string | null => {
+    const named = basename(path, extname(path));
+
+    return parseReleaseName(named).resolution === null ? releaseTitle : named;
+  };
+
+  /**
+   * What a filed copy scores, judged as a release would be but by the name it was filed under,
+   * which says what it was found to be, so a better release is weighed against the copy on disk
+   * rather than against what the title it came under claimed.
+   *
+   * @param filedTitle - The name it was filed under.
+   * @param download - The download it came from, for its size and where it was found.
+   * @param request - What was asked for.
+   * @param episodes - How many of the request's films or episodes the download held.
+   * @returns Its score.
+   */
+  const scoreOfFiled = async (
+    filedTitle: string,
+    download: SentDownloadRecord,
+    request: MediaRequestRecord,
+    episodes: number,
+  ): Promise<number> =>
+    judgeRelease(
+      {
+        id: filedTitle,
+        title: filedTitle,
+        indexerId: '',
+        indexerName: download.indexerName ?? '',
+        protocol: download.protocol,
+        sizeBytes: download.sizeBytes,
+        seeders: null,
+        leechers: null,
+        grabs: null,
+        publishedAt: null,
+        categories: [],
+        downloadUrl: null,
+        magnetUrl: null,
+        infoUrl: null,
+        infoHash: null,
+        downloadFactor: null,
+        uploadFactor: null,
+        minimumRatio: null,
+        minimumSeedSeconds: null,
+      },
+      parseReleaseName(filedTitle),
+      await profileFor(request),
+      request.runtimeMinutes ?? undefined,
+      episodes,
+    ).score;
+
+  /**
+   * How a request's films and episodes are judged as they are filed, by what each video is found to
+   * be rather than what its release was called. A release picked by hand is left as it was picked.
+   *
+   * @param request - What was asked for.
+   * @param filing - The films or episodes being filed from one download.
+   * @returns Why a video is refused, or nothing where it is what was asked for.
+   */
+  const refusalsFor = async (
+    request: MediaRequestRecord,
+    filing: readonly RequestItemRecord[],
+  ): Promise<(found: Partial<ParsedRelease>) => string | null> => {
+    if (request.isPickedByHand || filing.some((item) => item.isPickedByHand)) {
+      return () => null;
+    }
+
+    const profile = await profileFor(request);
+
+    return (found) => {
+      const refused = qualityRefusedBy(found, profile);
+
+      return refused === null
+        ? null
+        : `It is ${QUALITY_LABELS[refused]}, which this profile does not take`;
+    };
+  };
+
+  /**
+   * Whether the videos a download turned out to hold are what its request asked for, judged by their
+   * own names against the request's profile, so a release whose title said more than its files do
+   * is thrown out and the next best looked for. A release somebody picked by hand is left as they
+   * picked it. Asked while a release is still being sent, before its request knows which download
+   * it became, it says so by failing, so the question is asked again rather than answered wrongly.
+   *
+   * @param download - The download, once its client can list what it holds.
+   * @param videos - The names of the videos it holds.
+   * @returns Why it is not wanted, or null.
+   */
+  const judgeFiles = async (
+    download: Pick<SentDownloadRecord, 'id'>,
+    videos: readonly string[],
+  ): Promise<string | null> => {
+    const all = await items.list();
+    const held = all.find((item) => item.downloadId === download.id);
+
+    if (held === undefined && all.some((item) => item.state === 'chosen')) {
+      throw new Error('It is not yet known which request it was sent for');
+    }
+
+    const request = held === undefined ? null : await requests.find(held.requestId);
+
+    if (request === null || request.isPickedByHand || held?.isPickedByHand === true) {
+      return null;
+    }
+
+    return whatTheFilesSay(videos, await profileFor(request));
+  };
+
   return {
     tick,
+
+    judgeFiles,
 
     searchMissing,
 
@@ -1202,6 +1368,7 @@ const createRequestWorker = ({
           picked,
           holding,
           judged.judgements[0]?.score ?? 0,
+          true,
         );
 
         if (problem !== null) {
