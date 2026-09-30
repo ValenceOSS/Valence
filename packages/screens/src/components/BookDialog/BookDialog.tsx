@@ -6,11 +6,9 @@ import { ChapterList } from './components/ChapterList/ChapterList';
 import {
   BookOpen as BookOpenIcon,
   Headphones as HeadphonesIcon,
-  Heart as HeartIcon,
   Share as ShareIcon,
   X as XIcon,
 } from '@keyline-icons/react';
-import { Heart as HeartFilledIcon } from '@keyline-icons/react/fill';
 import { ActionBar } from '@ValenceUI/ActionBar';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
@@ -27,6 +25,11 @@ import { RatingPanel } from '@ValenceScreens/components/RatingPanel/RatingPanel'
 import { describeReadingPlace } from '@ValenceClient/books/describeReadingPlace';
 import { readingFractionOf } from '@ValenceClient/books/readingFractionOf';
 import { listenLabel } from '@ValenceClient/books/listenLabel';
+import { KeepHeart } from '@ValenceScreens/components/KeepHeart/KeepHeart';
+import { DialogSection } from '@ValenceScreens/components/DialogSection/DialogSection';
+import { DialogSections } from '@ValenceScreens/components/DialogSections/DialogSections';
+import { DialogHeadline } from '@ValenceScreens/components/DialogHeadline/DialogHeadline';
+import { DialogHeadlinePart } from '@ValenceScreens/components/DialogHeadlinePart/DialogHeadlinePart';
 import type { Book } from '@ValenceContracts/schemas/Book';
 import type { ActionBarAction } from '@ValenceUI/ActionBar.types';
 import type { BookDialogProps } from './BookDialog.types';
@@ -114,7 +117,7 @@ const BookDialog = ({
             id: 'keep',
             isPinned: true,
             label: isKept ? 'Stop keeping' : 'Keep',
-            icon: <Icon of={HeartIcon} whenActive={HeartFilledIcon} isActive={isKept} size={18} />,
+            icon: <KeepHeart isKept={isKept} size={18} />,
             onChoose: () => {
               onToggleKept(book);
             },
@@ -147,7 +150,7 @@ const BookDialog = ({
 
   return (
     <Dialog label={book?.title ?? 'A book'} isOpen={bookId !== null} onClose={onClose}>
-      <DialogContent className="flex flex-col gap-7 p-4 sm:p-6">
+      <DialogContent className="flex flex-col gap-4 p-4 sm:p-6">
         <div className="flex justify-end">
           <Button isIconOnly variant="ghost" size="sm" label="Close" onClick={onClose}>
             <Icon of={XIcon} size={18} />
@@ -172,51 +175,58 @@ const BookDialog = ({
             </div>
           </div>
         ) : (
-          <>
-            <div className="flex gap-5">
+          <DialogSections key={book.id} className="flex flex-col gap-4">
+            <DialogHeadline className="flex gap-5">
               {book.hasCover ? (
-                <img
-                  src={bookCoverUrl(book.id)}
-                  alt=""
-                  className="aspect-[2/3] w-32 shrink-0 rounded-lg object-cover shadow-lg sm:w-40"
-                />
+                <DialogHeadlinePart className="w-32 shrink-0 sm:w-40">
+                  <img
+                    src={bookCoverUrl(book.id)}
+                    alt=""
+                    className="aspect-[2/3] w-full rounded-lg object-cover shadow-lg"
+                  />
+                </DialogHeadlinePart>
               ) : (
-                <div
-                  aria-hidden
-                  className="flex aspect-[2/3] w-32 shrink-0 items-center justify-center rounded-lg bg-surface-raised sm:w-40"
-                >
+                <DialogHeadlinePart className="flex aspect-[2/3] w-32 shrink-0 items-center justify-center rounded-lg bg-surface-raised sm:w-40">
                   <Icon of={BookOpenIcon} size={32} tone="muted" />
-                </div>
+                </DialogHeadlinePart>
               )}
 
               <div className="flex min-w-0 flex-1 flex-col justify-end gap-2">
-                <span className="text-xs font-medium uppercase tracking-[0.18em] text-text-muted">
+                <DialogHeadlinePart
+                  as="span"
+                  className="text-xs font-medium uppercase tracking-[0.18em] text-text-muted"
+                >
                   {kindOf(book)}
-                </span>
+                </DialogHeadlinePart>
 
-                <h2 className="text-[clamp(1.5rem,4vw,2.25rem)] font-semibold leading-tight tracking-[-0.02em] text-text">
+                <DialogHeadlinePart
+                  as="h2"
+                  isTitle
+                  className="text-[clamp(1.5rem,4vw,2.25rem)] font-semibold leading-tight tracking-[-0.02em] text-text"
+                >
                   {book.title}
-                </h2>
+                </DialogHeadlinePart>
 
-                <p className="text-sm text-text-muted">
+                <DialogHeadlinePart className="text-sm text-text-muted">
                   {[
                     book.authors === null ? null : book.authors.join(', '),
                     book.year === null ? null : book.year.toString(),
                   ]
                     .filter((part) => part !== null)
                     .join(' · ')}
-                </p>
+                </DialogHeadlinePart>
 
                 {where === null ? null : (
-                  <ProgressBar
-                    label="How far through"
-                    value={Math.round(readingFractionOf(where) * 100)}
-                    readout={where.isFinished ? 'Finished' : describeReadingPlace(where)}
-                    className="mt-2"
-                  />
+                  <DialogHeadlinePart className="mt-2">
+                    <ProgressBar
+                      label="How far through"
+                      value={Math.round(readingFractionOf(where) * 100)}
+                      readout={where.isFinished ? 'Finished' : describeReadingPlace(where)}
+                    />
+                  </DialogHeadlinePart>
                 )}
               </div>
-            </div>
+            </DialogHeadline>
 
             <RatingPanel
               subject={{ bookId: book.id }}
@@ -226,11 +236,7 @@ const BookDialog = ({
               }}
             />
 
-            <section className="flex flex-col gap-3">
-              <h3 className="text-sm font-medium uppercase tracking-[0.18em] text-text-muted">
-                About
-              </h3>
-
+            <DialogSection heading="About">
               <p className="text-[0.95rem] leading-relaxed text-text">
                 {book.overview ?? 'Nothing is written about this book yet.'}
               </p>
@@ -244,14 +250,10 @@ const BookDialog = ({
                   ))}
                 </div>
               )}
-            </section>
+            </DialogSection>
 
             {readable.length < 2 || onReadChapter === undefined ? null : (
-              <section className="flex flex-col gap-3">
-                <h3 className="text-sm font-medium uppercase tracking-[0.18em] text-text-muted">
-                  Chapters
-                </h3>
-
+              <DialogSection heading="Chapters">
                 <ChapterList
                   chapters={readable}
                   read={read}
@@ -259,9 +261,9 @@ const BookDialog = ({
                     onReadChapter(book, chapterId);
                   }}
                 />
-              </section>
+              </DialogSection>
             )}
-          </>
+          </DialogSections>
         )}
       </DialogContent>
 
@@ -270,7 +272,12 @@ const BookDialog = ({
           label="More to do with this book"
           primary={
             isOnlyHeard ? (
-              <Button variant="confirm" size="lg" className="w-full" onClick={listen}>
+              <Button
+                variant="confirm"
+                size="lg"
+                className="min-w-0 flex-1 shrink"
+                onClick={listen}
+              >
                 <Icon of={HeadphonesIcon} size={18} />
                 {listenLabel(heard.data)}
               </Button>
@@ -278,7 +285,7 @@ const BookDialog = ({
               <Button
                 variant="confirm"
                 size="lg"
-                className="w-full"
+                className="min-w-0 flex-1 shrink"
                 disabled={book === null || book.hasText === false}
                 onClick={() => {
                   if (book !== null) {

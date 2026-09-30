@@ -1,9 +1,12 @@
+import { TomatoMark } from '@ValenceUI/TomatoMark';
 import { describeTitleDetails } from '@ValenceClient/library/describeTitleDetails';
+import { DialogSection } from '@ValenceScreens/components/DialogSection/DialogSection';
 import type { TitleDetailsProps } from './TitleDetails.types';
 
 /**
  * The facts of a title beyond what a card carries: when it came out, whether it is out or still
- * being made, what it cost and what it took. Each appears only where the catalogue knew it, and the
+ * being made, what it cost and what it took, and the Rotten Tomatoes score with its tomato or splat.
+ * Each appears only where the catalogue knew it, and the
  * whole thing not at all where it knew none of them, so a title it knew little about is not given a
  * row of dashes.
  *
@@ -36,18 +39,19 @@ const TitleDetails = ({
   }
 
   return (
-    <section className="flex flex-col gap-3">
-      <h3 className="text-sm font-medium uppercase tracking-[0.18em] text-text-muted">Details</h3>
-
+    <DialogSection heading="Details">
       <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
         {facts.map((fact) => (
           <div key={fact.label} className="flex flex-col gap-0.5">
             <dt className="text-xs text-text-muted">{fact.label}</dt>
-            <dd className="text-sm font-medium tabular-nums text-text">{fact.value}</dd>
+            <dd className="flex items-center gap-1.5 text-sm font-medium tabular-nums text-text">
+              {fact.tomato === undefined ? null : <TomatoMark score={fact.tomato} />}
+              {fact.value}
+            </dd>
           </div>
         ))}
       </dl>
-    </section>
+    </DialogSection>
   );
 };
 

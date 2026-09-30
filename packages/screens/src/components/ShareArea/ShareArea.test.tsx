@@ -141,8 +141,8 @@ describe('a series that was shared', () => {
     opened();
 
     expect(await screen.findByRole('heading', { name: 'Season 1' })).toBeInTheDocument();
-    expect(screen.getByText('System')).toBeInTheDocument();
-    expect(screen.getByText('Hands')).toBeInTheDocument();
+    expect(screen.getByText('1. System')).toBeInTheDocument();
+    expect(screen.getByText('2. Hands')).toBeInTheDocument();
   });
 
   it('separates the seasons, so episode one after episode seven reads as a beginning', async () => {
@@ -180,7 +180,7 @@ describe('a series that was shared', () => {
 
     opened({ onPlay });
 
-    await userEvent.click(await screen.findByText('Hands'));
+    await userEvent.click(await screen.findByText('2. Hands'));
 
     expect(onPlay).toHaveBeenCalledWith(expect.objectContaining({ title: 'Hands' }), 0);
   });

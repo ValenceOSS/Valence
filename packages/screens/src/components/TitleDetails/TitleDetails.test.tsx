@@ -24,12 +24,14 @@ describe('TitleDetails', () => {
 
     expect(screen.getByText('Rotten Tomatoes')).toBeInTheDocument();
     expect(screen.getByText('93%')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Fresh on Rotten Tomatoes' })).toBeInTheDocument();
   });
 
   it('states a score of nothing, which is a real score and not an absent one', () => {
     render(<TitleDetails rottenTomatoes={0} />);
 
     expect(screen.getByText('0%')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Rotten on Rotten Tomatoes' })).toBeInTheDocument();
   });
 
   it('shows only what is known', () => {

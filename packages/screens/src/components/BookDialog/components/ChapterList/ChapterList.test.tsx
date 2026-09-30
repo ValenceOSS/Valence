@@ -42,7 +42,7 @@ describe('ChapterList', () => {
 
     const [first, second, third] = screen.getAllByRole('listitem');
 
-    expect(within(first ?? document.body).getByText('The Journey Begins')).toBeInTheDocument();
+    expect(within(first ?? document.body).getByText('1. The Journey Begins')).toBeInTheDocument();
     expect(within(first ?? document.body).getByText('24 pages')).toBeInTheDocument();
     expect(within(first ?? document.body).getByRole('img', { name: 'Read' })).toBeInTheDocument();
     expect(within(second ?? document.body).getByText('50% read')).toBeInTheDocument();

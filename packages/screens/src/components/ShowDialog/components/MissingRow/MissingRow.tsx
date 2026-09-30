@@ -14,10 +14,6 @@ import type { MissingRowProps } from './MissingRow.types';
 const MissingRow = ({ episodeNumber, title, stillUrl, airs }: MissingRowProps) => (
   <div className="flex items-center gap-3 py-3">
     <span className="flex min-w-0 flex-1 items-center gap-4 text-left">
-      <span className="w-8 shrink-0 text-center text-sm tabular-nums text-text-muted">
-        {episodeNumber}
-      </span>
-
       <span className="relative aspect-video w-28 shrink-0 overflow-hidden rounded-lg bg-surface-raised ring-1 ring-dashed ring-line sm:w-36">
         {stillUrl === null || stillUrl === undefined ? null : (
           <img
@@ -35,7 +31,9 @@ const MissingRow = ({ episodeNumber, title, stillUrl, airs }: MissingRowProps) =
 
       <span className="flex min-w-0 flex-col gap-1">
         <span className="truncate text-sm font-medium text-text-muted">
-          {title ?? `Episode ${episodeNumber.toString()}`}
+          {title === undefined
+            ? `Episode ${episodeNumber.toString()}`
+            : `${episodeNumber.toString()}. ${title}`}
         </span>
         <span className="font-body text-xs text-text-muted">
           Not in this library{airs === undefined || airs === '' ? '' : ` · ${airs}`}

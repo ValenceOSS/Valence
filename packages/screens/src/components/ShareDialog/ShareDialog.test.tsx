@@ -100,13 +100,13 @@ describe('handing out a link', () => {
   it('says plainly what the link lets somebody do', () => {
     draw();
 
-    expect(screen.getByText(/watch what you shared, and nothing else/)).toBeInTheDocument();
+    expect(screen.getByText(/Only what you share/)).toBeInTheDocument();
   });
 
   it('says a link can be withdrawn while somebody is watching', () => {
     draw();
 
-    expect(screen.getByText(/while somebody is watching/)).toBeInTheDocument();
+    expect(screen.getByText(/withdraw it at any time, even mid-watch/)).toBeInTheDocument();
   });
 
   it('makes a link and shows it once', async () => {
@@ -267,7 +267,7 @@ describe('sharing an episode', () => {
     );
 
     expect(screen.getByText('The whole book')).toBeInTheDocument();
-    expect(screen.getByText(/can read this book/)).toBeInTheDocument();
+    expect(screen.getByText(/Only this book/)).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: /Make a link/ }));
 

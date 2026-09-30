@@ -35,6 +35,7 @@ const CastGrid = ({ members, onOpenPerson }: CastGridProps) => (
     sizesCards
     cards="portrait"
     hasArrows={false}
+    look="section"
     className="px-0"
   >
     {members.map((member) => (

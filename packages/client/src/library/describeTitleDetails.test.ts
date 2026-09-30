@@ -4,7 +4,7 @@ import { describeTitleDetails } from './describeTitleDetails';
 describe('describeTitleDetails', () => {
   it('names what the critics thought', () => {
     expect(describeTitleDetails({ rottenTomatoes: 93 })).toEqual([
-      { label: 'Rotten Tomatoes', value: '93%' },
+      { label: 'Rotten Tomatoes', value: '93%', tomato: 93 },
     ]);
   });
 

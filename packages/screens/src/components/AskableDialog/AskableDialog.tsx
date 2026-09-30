@@ -32,6 +32,11 @@ import { readAsking } from './readAsking';
 import { progressOfRequest } from '@ValenceClient/requests/progressOfRequest';
 import { catalogueTrailerUrl } from '@ValenceScreens/library/catalogueTrailerUrl';
 import { groupReleases } from '@ValenceScreens/requests/groupReleases';
+import { DialogSection } from '@ValenceScreens/components/DialogSection/DialogSection';
+import { DialogSections } from '@ValenceScreens/components/DialogSections/DialogSections';
+import { DialogArrival } from '@ValenceScreens/components/DialogArrival/DialogArrival';
+import { DialogHeadline } from '@ValenceScreens/components/DialogHeadline/DialogHeadline';
+import { DialogHeadlinePart } from '@ValenceScreens/components/DialogHeadlinePart/DialogHeadlinePart';
 import type { MediaRequestAsk, ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 import type { AskableDialogProps } from './AskableDialog.types';
 import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
@@ -150,7 +155,7 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
         ) : title === null ? (
           <Spinner isCentered label="Reading the catalogue" />
         ) : (
-          <div className="flex flex-col gap-8">
+          <DialogArrival key={`${title.kind}:${title.id}`} className="flex flex-col gap-4">
             <div className="relative overflow-hidden rounded-2xl">
               <div className="relative h-[34vh] min-h-[14rem] sm:h-[22rem]">
                 {title.backdropUrl === null ? (
@@ -179,73 +184,73 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                 </Button>
               </div>
 
-              <div className="absolute inset-x-0 bottom-0 flex items-end gap-5 p-5 sm:p-8">
+              <DialogHeadline className="absolute inset-x-0 bottom-0 flex items-end gap-5 p-5 sm:p-8">
                 {isMusicRequest(title.kind) ? (
-                  <MusicArtwork
-                    src={title.posterUrl}
-                    label={`The cover of ${title.title}`}
-                    shape={title.kind === 'artist' ? 'round' : 'square'}
-                    isLifted
-                    className="hidden w-32 sm:flex"
-                  />
+                  <DialogHeadlinePart className="hidden w-32 sm:flex">
+                    <MusicArtwork
+                      src={title.posterUrl}
+                      label={`The cover of ${title.title}`}
+                      shape={title.kind === 'artist' ? 'round' : 'square'}
+                      isLifted
+                      className="w-full"
+                    />
+                  </DialogHeadlinePart>
                 ) : title.posterUrl === null ? null : (
-                  <img
-                    src={title.posterUrl}
-                    alt=""
-                    className="hidden aspect-[2/3] w-32 rounded-lg object-cover shadow-[var(--shadow-artwork)] sm:block"
-                  />
+                  <DialogHeadlinePart className="hidden w-32 sm:block">
+                    <img
+                      src={title.posterUrl}
+                      alt=""
+                      className="aspect-[2/3] w-full rounded-lg object-cover shadow-[var(--shadow-artwork)]"
+                    />
+                  </DialogHeadlinePart>
                 )}
 
                 <div className="flex min-w-0 flex-col gap-2">
                   {standing === null ? null : (
-                    <span>
+                    <DialogHeadlinePart as="span">
                       <Badge size="sm" tone={standing.tone}>
                         {standing.label}
                       </Badge>
-                    </span>
+                    </DialogHeadlinePart>
                   )}
-                  <h2 className="text-[clamp(1.75rem,5vw,3.25rem)] font-semibold leading-[0.95] tracking-[-0.03em] text-on-scrim">
+                  <DialogHeadlinePart
+                    as="h2"
+                    isTitle
+                    className="text-[clamp(1.75rem,5vw,3.25rem)] font-semibold leading-[0.95] tracking-[-0.03em] text-on-scrim"
+                  >
                     {title.title}
-                  </h2>
-                  <span className="text-sm text-on-scrim/75">{describeAskableFacts(title)}</span>
+                  </DialogHeadlinePart>
+                  <DialogHeadlinePart as="span" className="text-sm text-on-scrim/75">
+                    {describeAskableFacts(title)}
+                  </DialogHeadlinePart>
 
-                  {trailerKey === null ? null : (
-                    <span>
-                      <Button
-                        variant="overlay"
-                        size="sm"
-                        onClick={() => {
-                          setIsWatchingTrailer(true);
-                        }}
-                      >
-                        <Icon of={TapeIcon} size={16} />
-                        Watch the trailer
-                      </Button>
-                    </span>
-                  )}
                   {going === null ? null : (
-                    <ProgressBar
-                      label={`How much of ${title.title} has arrived`}
-                      value={Math.round(going.progress * 1000) / 10}
-                      className="max-w-md"
-                      readout={
-                        <DownloadProgressReadout progress={going} className="text-on-scrim/75" />
-                      }
-                    />
+                    <DialogHeadlinePart>
+                      <ProgressBar
+                        label={`How much of ${title.title} has arrived`}
+                        value={Math.round(going.progress * 1000) / 10}
+                        className="max-w-md"
+                        readout={
+                          <DownloadProgressReadout progress={going} className="text-on-scrim/75" />
+                        }
+                      />
+                    </DialogHeadlinePart>
                   )}
                 </div>
-              </div>
+              </DialogHeadline>
             </div>
 
-            <div className="flex flex-col gap-8 px-2 sm:px-4">
+            <DialogSections className="flex flex-col gap-3 pb-4">
               {title.overview === null ? null : (
-                <p className="max-w-[70ch] font-body text-sm leading-relaxed text-text-muted">
-                  {title.overview}
-                </p>
+                <DialogSection heading="Synopsis">
+                  <p className="max-w-[70ch] text-[0.95rem] leading-relaxed text-text">
+                    {title.overview}
+                  </p>
+                </DialogSection>
               )}
 
               {title.cast.length === 0 ? null : (
-                <section aria-label="Cast" className="flex flex-col gap-3">
+                <DialogSection>
                   <CastGrid
                     members={title.cast.map((member) => ({
                       name: member.name,
@@ -253,20 +258,25 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                       imageUrl: member.photoUrl,
                     }))}
                   />
-                </section>
+                </DialogSection>
               )}
 
               {title.standing.status !== 'askable' ? null : title.kind === 'series' ? (
-                <SeasonChooser tmdbId={Number(title.id)} seasons={seasons} onChange={setSeasons} />
+                <DialogSection>
+                  <SeasonChooser
+                    tmdbId={Number(title.id)}
+                    seasons={seasons}
+                    onChange={setSeasons}
+                  />
+                </DialogSection>
               ) : title.kind === 'artist' ? (
-                <ReleaseTypeChooser value={releaseTypes} onChange={setReleaseTypes} />
+                <DialogSection>
+                  <ReleaseTypeChooser value={releaseTypes} onChange={setReleaseTypes} />
+                </DialogSection>
               ) : null}
 
               {groupReleases(title.albums).map((group) => (
-                <section key={group.id} aria-label={group.title} className="flex flex-col gap-3">
-                  <h3 className="text-xs uppercase tracking-[0.16em] text-text-muted">
-                    {group.title}
-                  </h3>
+                <DialogSection key={group.id} heading={group.title}>
                   <ul className="flex flex-col gap-1">
                     {group.albums.map((album) => (
                       <li
@@ -322,15 +332,30 @@ const AskableDialog = ({ asking, onClose, onOpen }: AskableDialogProps) => {
                       </li>
                     ))}
                   </ul>
-                </section>
+                </DialogSection>
               ))}
-            </div>
-          </div>
+            </DialogSections>
+          </DialogArrival>
         )}
       </DialogContent>
 
       <DialogFooter
         note={problem}
+        {...(trailerKey === null
+          ? {}
+          : {
+              lead: (
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setIsWatchingTrailer(true);
+                  }}
+                >
+                  <Icon of={TapeIcon} size={16} />
+                  Watch the trailer
+                </Button>
+              ),
+            })}
         dismiss={{ onChoose: onClose }}
         confirm={
           title === null

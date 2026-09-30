@@ -15,7 +15,7 @@ import {
   Play as PlayFilledIcon,
 } from '@keyline-icons/react/fill';
 import { useEffect, useRef, useState } from 'react';
-import { motion, useReducedMotionConfig } from 'motion/react';
+import { useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
 import { Dialog } from '@ValenceUI/Dialog';
@@ -34,7 +34,8 @@ import { DownloadDialog } from '@ValenceScreens/components/DownloadDialog/Downlo
 import { EmbeddedVideo } from '@ValenceUI/EmbeddedVideo';
 import { catalogueTrailerUrl } from '@ValenceScreens/library/catalogueTrailerUrl';
 import { Spinner } from '@ValenceUI/Spinner';
-import { revealVariants, revealTransition, staggerVariants } from '@ValenceUI/animations/reveal';
+import { DialogHeadline } from '@ValenceScreens/components/DialogHeadline/DialogHeadline';
+import { DialogHeadlinePart } from '@ValenceScreens/components/DialogHeadlinePart/DialogHeadlinePart';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { useQuery } from '@tanstack/react-query';
@@ -47,6 +48,9 @@ import { pickUpFrom } from '@ValenceClient/library/pickUpFrom';
 import { SeasonPicker } from './components/SeasonPicker/SeasonPicker';
 import { EpisodeRow } from './components/EpisodeRow/EpisodeRow';
 import { MissingRow } from './components/MissingRow/MissingRow';
+import { RAIL } from '@ValenceUI/tokens/rail';
+import { DialogSection } from '@ValenceScreens/components/DialogSection/DialogSection';
+import { SlidingList } from '@ValenceScreens/components/SlidingList/SlidingList';
 import { ChooseEpisodes } from './components/ChooseEpisodes/ChooseEpisodes';
 import { laySeasonsOut } from '@ValenceClient/library/laySeasonsOut';
 import { describeAirDate } from '@ValenceCore/functions/describeAirDate';
@@ -206,17 +210,8 @@ const ShowDialog = ({
             </Button>
           </div>
 
-          <motion.div
-            variants={staggerVariants}
-            initial="hidden"
-            animate="shown"
-            className="absolute inset-x-0 bottom-0 flex flex-col gap-3 p-5 sm:p-8"
-          >
-            <motion.div
-              variants={revealVariants(prefersReducedMotion)}
-              transition={revealTransition(prefersReducedMotion)}
-              className="flex flex-wrap items-center gap-3"
-            >
+          <DialogHeadline className="absolute inset-x-0 bottom-0 flex flex-col gap-3 p-5 sm:p-8">
+            <DialogHeadlinePart className="flex flex-wrap items-center gap-3">
               <span className="text-sm font-medium uppercase tracking-[0.2em] text-on-scrim/75">
                 {shown.seasonCount === 1
                   ? `${shown.episodeCount.toString()} episodes`
@@ -240,11 +235,11 @@ const ShowDialog = ({
                   {`Next: S${detail.nextEpisode.seasonNumber.toString()} E${detail.nextEpisode.episodeNumber.toString()} · ${describeAirDate(detail.nextEpisode.airDate, today)}`}
                 </span>
               )}
-            </motion.div>
+            </DialogHeadlinePart>
 
-            <motion.h2
-              variants={revealVariants(prefersReducedMotion)}
-              transition={revealTransition(prefersReducedMotion, 'heavy')}
+            <DialogHeadlinePart
+              as="h2"
+              isTitle
               className={
                 lettered === null || unlettered === lettered.id
                   ? 'max-w-[16ch] text-[clamp(2rem,6vw,3.75rem)] font-semibold leading-[0.95] tracking-[-0.03em] text-on-scrim'
@@ -263,27 +258,23 @@ const ShowDialog = ({
                   }}
                 />
               )}
-            </motion.h2>
+            </DialogHeadlinePart>
 
             {(shown.genres ?? []).length === 0 ? null : (
-              <motion.span
-                variants={revealVariants(prefersReducedMotion)}
-                transition={revealTransition(prefersReducedMotion)}
-                className="flex flex-wrap gap-1.5"
-              >
+              <DialogHeadlinePart as="span" className="flex flex-wrap gap-1.5">
                 {(shown.genres ?? []).slice(0, 3).map((genre) => (
                   <Badge key={genre} size="sm" tone="solid">
                     {genre}
                   </Badge>
                 ))}
-              </motion.span>
+              </DialogHeadlinePart>
             )}
-          </motion.div>
+          </DialogHeadline>
         </div>
 
         <span ref={pastTheArtwork} aria-hidden className="block h-px" />
 
-        <div className="flex flex-col gap-8 px-2 pb-4 pt-7 sm:px-4">
+        <div className="flex flex-col gap-3 px-0 pb-4 pt-4">
           {onRate === undefined || (shown.seriesId ?? null) === null ? null : (
             <RatingPanel
               subject={{ seriesId: shown.seriesId ?? '' }}
@@ -294,16 +285,14 @@ const ShowDialog = ({
             />
           )}
 
-          <section className="flex flex-col gap-4">
+          <DialogSection>
             <header className="flex flex-wrap items-center justify-between gap-3">
-              <h3 className="text-sm font-medium uppercase tracking-[0.18em] text-text-muted">
-                Episodes
-              </h3>
+              <h3 className={RAIL.sectionTitle}>Episodes</h3>
 
               <span className="flex flex-wrap items-center gap-2">
                 {onMarkWatched === undefined || shownEpisodes.length === 0 ? null : (
                   <Button
-                    variant="ghost"
+                    variant="secondary"
                     size="xs"
                     onClick={() => {
                       onMarkWatched(shownEpisodes, !isSeasonWatched);
@@ -344,44 +333,45 @@ const ShowDialog = ({
                 Nothing here yet. Episodes appear as they are scanned.
               </p>
             ) : (
-              <ul className="flex flex-col divide-y divide-divider">
-                {inOrder.map(({ key, at, episode, listed, airs }) => (
-                  <li key={key}>
-                    {episode === null ? (
-                      <MissingRow
-                        episodeNumber={at}
-                        {...(airs === '' ? {} : { airs })}
-                        {...(listed === null ? {} : { title: listed.title })}
-                        {...(listed?.stillUrl === null || listed?.stillUrl === undefined
-                          ? {}
-                          : { stillUrl: listed.stillUrl })}
-                      />
-                    ) : (
-                      <EpisodeRow
-                        episode={episode}
-                        onPlay={onPlay}
-                        {...(airs === '' ? {} : { airs })}
-                        {...(onInspect === undefined ? {} : { onInspect })}
-                        {...(onMarkWatched === undefined
-                          ? {}
-                          : {
-                              onMarkWatched: (one: MediaSummary, isWatched: boolean) => {
-                                onMarkWatched([one], isWatched);
-                              },
-                            })}
-                        {...(watchedFractionFor?.(episode.id) === undefined
-                          ? {}
-                          : { watchedFraction: watchedFractionFor(episode.id) ?? 0 })}
-                        {...(resumeFor === undefined || resumeFor(episode.id) === null
-                          ? {}
-                          : { resumeSeconds: Math.floor(resumeFor(episode.id) ?? 0) })}
-                      />
-                    )}
-                  </li>
-                ))}
-              </ul>
+              <SlidingList
+                label="Episodes"
+                items={inOrder}
+                keyOf={(row) => row.key}
+                renderItem={({ at, episode, listed, airs }) =>
+                  episode === null ? (
+                    <MissingRow
+                      episodeNumber={at}
+                      {...(airs === '' ? {} : { airs })}
+                      {...(listed === null ? {} : { title: listed.title })}
+                      {...(listed?.stillUrl === null || listed?.stillUrl === undefined
+                        ? {}
+                        : { stillUrl: listed.stillUrl })}
+                    />
+                  ) : (
+                    <EpisodeRow
+                      episode={episode}
+                      onPlay={onPlay}
+                      {...(airs === '' ? {} : { airs })}
+                      {...(onInspect === undefined ? {} : { onInspect })}
+                      {...(onMarkWatched === undefined
+                        ? {}
+                        : {
+                            onMarkWatched: (one: MediaSummary, isWatched: boolean) => {
+                              onMarkWatched([one], isWatched);
+                            },
+                          })}
+                      {...(watchedFractionFor?.(episode.id) === undefined
+                        ? {}
+                        : { watchedFraction: watchedFractionFor(episode.id) ?? 0 })}
+                      {...(resumeFor === undefined || resumeFor(episode.id) === null
+                        ? {}
+                        : { resumeSeconds: Math.floor(resumeFor(episode.id) ?? 0) })}
+                    />
+                  )
+                }
+              />
             )}
-          </section>
+          </DialogSection>
 
           {(shown.seriesId ?? null) === null ? null : (
             <PluginPanels on="series" subjectId={shown.seriesId ?? ''} />
