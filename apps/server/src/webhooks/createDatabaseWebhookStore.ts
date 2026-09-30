@@ -1,6 +1,8 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { and, asc, desc, eq, lt, sql } from 'drizzle-orm';
 import { z } from 'zod';
+import { countAffected } from '@ValenceDatabase/countAffected';
+import { upsert } from '@ValenceDatabase/upsert';
 import { toIso } from '@ValenceCore/functions/toIso';
 import { webhookDelivery, webhookSubscription } from '#dialect/Schema';
 import {
@@ -10,7 +12,7 @@ import {
   WebhookPresetSchema,
 } from '@ValenceContracts/schemas/Webhook';
 import { subscriptionWants } from './subscriptionWants';
-import type { ValenceDatabase } from '#dialect/ValenceDatabase';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { WebhookSubscription } from '@ValenceContracts/schemas/Webhook';
 import type { WebhookStore } from './WebhookStore';
 
@@ -21,13 +23,13 @@ const WEBHOOK_SECRET_BYTES = 32;
 const StoredEventsSchema = z.array(WebhookEventSchema);
 
 /**
- * Webhook subscriptions and their delivery history, held in Postgres — who asked about what, and
+ * Webhook subscriptions and their delivery history, held in the database — who asked about what, and
  * what happened when Valence tried to tell them.
  *
  * @param db - The database to read and write.
  * @returns The webhook store.
  */
-const createDatabaseWebhookStore = (db: ValenceDatabase): WebhookStore => {
+const createDatabaseWebhookStore = (db: AnyValenceDatabase): WebhookStore => {
   const readRow = (row: typeof webhookSubscription.$inferSelect): WebhookSubscription[] => {
     const events = StoredEventsSchema.safeParse(row.events);
     const preset = WebhookPresetSchema.safeParse(row.preset);
@@ -92,29 +94,29 @@ const createDatabaseWebhookStore = (db: ValenceDatabase): WebhookStore => {
     },
 
     update: async (id, change) => {
-      const changed = await db
-        .update(webhookSubscription)
-        .set({
-          ...(change.name === undefined ? {} : { name: change.name }),
-          ...(change.url === undefined ? {} : { url: change.url }),
-          ...(change.preset === undefined ? {} : { preset: change.preset }),
-          ...(change.events === undefined ? {} : { events: change.events }),
-          ...(change.filters === undefined ? {} : { filters: change.filters }),
-          ...(change.enabled === undefined ? {} : { enabled: change.enabled }),
-        })
-        .where(eq(webhookSubscription.id, id))
-        .returning();
+      const changed = await db.transaction(async (transaction) => {
+        await transaction
+          .update(webhookSubscription)
+          .set({
+            ...(change.name === undefined ? {} : { name: change.name }),
+            ...(change.url === undefined ? {} : { url: change.url }),
+            ...(change.preset === undefined ? {} : { preset: change.preset }),
+            ...(change.events === undefined ? {} : { events: change.events }),
+            ...(change.filters === undefined ? {} : { filters: change.filters }),
+            ...(change.enabled === undefined ? {} : { enabled: change.enabled }),
+          })
+          .where(eq(webhookSubscription.id, id));
+
+        return transaction.select().from(webhookSubscription).where(eq(webhookSubscription.id, id));
+      });
 
       return changed.flatMap((row) => readRow(row))[0] ?? null;
     },
 
     remove: async (id) => {
-      const removed = await db
-        .delete(webhookSubscription)
-        .where(eq(webhookSubscription.id, id))
-        .returning({ id: webhookSubscription.id });
+      const removed = await db.delete(webhookSubscription).where(eq(webhookSubscription.id, id));
 
-      return removed.length > 0;
+      return countAffected(removed) > 0;
     },
 
     listenersFor: async (occurrence) => {
@@ -160,31 +162,31 @@ const createDatabaseWebhookStore = (db: ValenceDatabase): WebhookStore => {
     recordDelivery: async ({ subscriptionId, eventId, event, body }, attempt) => {
       const at = new Date();
 
-      await db
-        .insert(webhookDelivery)
-        .values({
-          id: randomUUID(),
-          subscriptionId,
-          eventId,
-          event,
-          body,
-          attempts: 1,
-          firstAttemptAt: at,
-          lastAttemptAt: at,
-          ok: attempt.ok,
-          status: attempt.status,
-          error: attempt.error,
-        })
-        .onConflictDoUpdate({
-          target: [webhookDelivery.subscriptionId, webhookDelivery.eventId],
-          set: {
-            attempts: sql`${webhookDelivery.attempts} + 1`,
+      await upsert(db, webhookDelivery, {
+        values: [
+          {
+            id: randomUUID(),
+            subscriptionId,
+            eventId,
+            event,
+            body,
+            attempts: 1,
+            firstAttemptAt: at,
             lastAttemptAt: at,
             ok: attempt.ok,
             status: attempt.status,
             error: attempt.error,
           },
-        });
+        ],
+        target: [webhookDelivery.subscriptionId, webhookDelivery.eventId],
+        set: {
+          attempts: sql`${webhookDelivery.attempts} + 1`,
+          lastAttemptAt: at,
+          ok: attempt.ok,
+          status: attempt.status,
+          error: attempt.error,
+        },
+      });
     },
 
     listDeliveries: async (subscriptionId, limit) => {
@@ -233,10 +235,9 @@ const createDatabaseWebhookStore = (db: ValenceDatabase): WebhookStore => {
     pruneDeliveries: async (before) => {
       const removed = await db
         .delete(webhookDelivery)
-        .where(lt(webhookDelivery.lastAttemptAt, before))
-        .returning({ id: webhookDelivery.id });
+        .where(lt(webhookDelivery.lastAttemptAt, before));
 
-      return removed.length;
+      return countAffected(removed);
     },
   };
 };

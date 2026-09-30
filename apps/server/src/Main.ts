@@ -21,6 +21,8 @@ import { serveStatic } from '@hono/node-server/serve-static';
 import { isAppAddress } from '@ValenceServer/web/isAppAddress';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { and, count, eq, gt, isNull, lt, lte, sql } from 'drizzle-orm';
+import { countAffected } from '@ValenceDatabase/countAffected';
+import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
 import { createApp } from './App';
 import { announceOnTheNetwork } from '@ValenceServer/discovery/announceOnTheNetwork';
 import { stopAnnouncingOnExit } from '@ValenceServer/discovery/stopAnnouncingOnExit';
@@ -404,7 +406,10 @@ const auth = createAuth({
   settings,
   cookieSecure: persisted.cookieSecure,
   onUserCreated: async (userId) => {
-    await db.insert(userProfile).values({ userId }).onConflictDoNothing();
+    await insertUnlessPresent(db, userProfile, {
+      values: [{ userId }],
+      target: userProfile.userId,
+    });
     await giveDefaultRole(userId);
 
     const [made] = await db
@@ -458,7 +463,7 @@ const countUsers = async (): Promise<number> => {
  */
 const readLibraryBytes = async (): Promise<number> => {
   const rows = await db
-    .select({ total: sql<number>`coalesce(sum(${mediaItem.sizeBytes}), 0)::bigint` })
+    .select({ total: sql<number>`coalesce(sum(${mediaItem.sizeBytes}), 0)` })
     .from(mediaItem);
 
   return Number(rows[0]?.total ?? 0);
@@ -695,11 +700,13 @@ const giveDefaultRole = async (userId: string): Promise<void> => {
  * @param email - The account to promote.
  */
 const promoteToAdmin = async (email: string): Promise<string | null> => {
-  const promoted = await db
-    .update(user)
-    .set({ role: 'admin' })
-    .where(sql`lower(${user.email}) = lower(${email})`)
-    .returning({ id: user.id });
+  const promoted = await db.transaction(async (transaction) => {
+    const matching = sql`lower(${user.email}) = lower(${email})`;
+
+    await transaction.update(user).set({ role: 'admin' }).where(matching);
+
+    return transaction.select({ id: user.id }).from(user).where(matching);
+  });
 
   if (promoted.length === 0) {
     log.warn('auth', `no account at ${email} to make an administrator`);
@@ -1727,20 +1734,12 @@ const jobs = await createJobQueue({
       [CLEANUP_SESSIONS_JOB]: async (jobId) => {
         const removed = await cleanupSessions({
           deleteExpiredSessions: async () => {
-            const rows = await db
-              .delete(session)
-              .where(lt(session.expiresAt, new Date()))
-              .returning({ id: session.id });
-
-            return rows.length;
+            return countAffected(await db.delete(session).where(lt(session.expiresAt, new Date())));
           },
           deleteExpiredDeviceCodes: async () => {
-            const rows = await db
-              .delete(deviceCode)
-              .where(lt(deviceCode.expiresAt, new Date()))
-              .returning({ id: deviceCode.id });
-
-            return rows.length;
+            return countAffected(
+              await db.delete(deviceCode).where(lt(deviceCode.expiresAt, new Date())),
+            );
           },
           onProgress: (phase, processed, total) => {
             jobs.reportProgress(jobId, phase, processed, total);
@@ -2948,10 +2947,16 @@ const app = createApp({
       theirs.map((one) => one.id),
     );
 
-    const [removed] = await db
-      .delete(user)
-      .where(eq(user.id, userId))
-      .returning({ id: user.id, name: user.name });
+    const [removed] = await db.transaction(async (transaction) => {
+      const found = await transaction
+        .select({ id: user.id, name: user.name })
+        .from(user)
+        .where(eq(user.id, userId));
+
+      await transaction.delete(user).where(eq(user.id, userId));
+
+      return found;
+    });
 
     if (removed === undefined) {
       return false;

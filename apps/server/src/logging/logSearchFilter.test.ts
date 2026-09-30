@@ -29,7 +29,7 @@ describe('logSearchFilter', () => {
       'sessionId',
       'requestId',
     ]) {
-      expect(sql).toContain(`"${column}" ilike`);
+      expect(sql).toContain(`"${column}") like lower(`);
     }
   });
 

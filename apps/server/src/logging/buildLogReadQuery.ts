@@ -2,7 +2,7 @@ import { asc, desc, sql } from 'drizzle-orm';
 import { logRecord } from '#dialect/Schema';
 import { logFilterFor } from './logFilterFor';
 import type { SQL } from 'drizzle-orm';
-import type { ValenceDatabase } from '#dialect/ValenceDatabase';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { LogQuery, LogSort } from '@ValenceContracts/schemas/Log';
 
 const SEVERITY = sql`case ${logRecord.level} when 'error' then 3 when 'warn' then 2 when 'info' then 1 else 0 end`;
@@ -34,7 +34,7 @@ const orderingFor = (sort: LogSort): SQL[] => {
  * @param query - What to filter, order and page the listing by.
  * @returns The select query, ready to be awaited.
  */
-const buildLogReadQuery = (db: ValenceDatabase, query: LogQuery) =>
+const buildLogReadQuery = (db: AnyValenceDatabase, query: LogQuery) =>
   db
     .select()
     .from(logRecord)

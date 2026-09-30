@@ -1,7 +1,7 @@
 import { and, eq, exists, or, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 import { hidden, mediaItem } from '#dialect/Schema';
-import type { ValenceDatabase } from '#dialect/ValenceDatabase';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 /**
@@ -29,7 +29,7 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
  * @param viewer - Who is asking.
  * @returns The condition, or nothing where none applies.
  */
-const hiddenByViewer = (db: ValenceDatabase, viewer: Viewer): SQL | undefined => {
+const hiddenByViewer = (db: AnyValenceDatabase, viewer: Viewer): SQL | undefined => {
   if (viewer.kind !== 'account' || viewer.profileId === null) {
     return undefined;
   }

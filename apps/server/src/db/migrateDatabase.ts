@@ -1,9 +1,9 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { applyMigrations } from '#dialect/applyMigrations';
+import { createMissedMigrationApplier } from '#dialect/createMissedMigrationApplier';
 import { readAppliedStamps } from '#dialect/readAppliedStamps';
 import type { ValenceDatabase } from '#dialect/ValenceDatabase';
-import { createMissedMigrationApplier } from '@ValenceServer/db/createMissedMigrationApplier';
 import { createSnapshotBeforeMigrating } from '@ValenceServer/db/createSnapshotBeforeMigrating';
 import { findNewerMigrations } from '@ValenceServer/db/findNewerMigrations';
 import { findPendingMigrations } from '@ValenceServer/db/findPendingMigrations';

@@ -2,7 +2,7 @@ import { inArray } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 import { book, library } from '#dialect/Schema';
 import { librariesVisibleToViewer } from '@ValenceServer/visibility/librariesVisibleToViewer';
-import type { ValenceDatabase } from '#dialect/ValenceDatabase';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 /**
@@ -17,7 +17,7 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
  * @param viewer - Who is looking.
  * @returns The condition to add to a query of books, or nothing where every book is in sight.
  */
-const booksVisibleToViewer = (db: ValenceDatabase, viewer: Viewer): SQL | undefined => {
+const booksVisibleToViewer = (db: AnyValenceDatabase, viewer: Viewer): SQL | undefined => {
   const visible = librariesVisibleToViewer(db, viewer);
 
   return visible === undefined

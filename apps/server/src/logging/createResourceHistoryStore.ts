@@ -4,7 +4,7 @@ import {
   RESOURCE_SAMPLE_KEPT_FOR_DAYS,
   sinceMsForRange,
 } from '@ValenceContracts/schemas/ResourceSample';
-import type { ValenceDatabase } from '#dialect/ValenceDatabase';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type {
   ResourceSampleRange,
   ResourceSampleRecord,
@@ -44,7 +44,7 @@ const asRecord = (row: ResourceSampleRow): ResourceSampleRecord => ({
  * @param nowMs - The moment the range is measured from.
  * @returns The select query, ready to be awaited.
  */
-const buildReadQuery = (db: ValenceDatabase, range: ResourceSampleRange, nowMs: number) =>
+const buildReadQuery = (db: AnyValenceDatabase, range: ResourceSampleRange, nowMs: number) =>
   db
     .select()
     .from(resourceSample)
@@ -62,7 +62,7 @@ const buildReadQuery = (db: ValenceDatabase, range: ResourceSampleRange, nowMs: 
  * @param db - The database.
  * @returns The store.
  */
-const createResourceHistoryStore = (db: ValenceDatabase): ResourceHistoryStore => ({
+const createResourceHistoryStore = (db: AnyValenceDatabase): ResourceHistoryStore => ({
   record: async (sample) => {
     await db.insert(resourceSample).values(sample);
   },

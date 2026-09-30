@@ -2,8 +2,9 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
+import { readRows } from '@ValenceDatabase/readRows';
 import { applyMissedMigrations } from '@ValenceServer/db/applyMissedMigrations';
-import type { ValenceDatabase } from '#dialect/ValenceDatabase';
+import type { AnyValenceDatabase } from '@ValenceServer/db/postgres/AnyValenceDatabase';
 
 const AppliedMigrationSchema = z.object({ created_at: z.union([z.string(), z.number()]) });
 
@@ -19,13 +20,17 @@ const AppliedMigrationSchema = z.object({ created_at: z.union([z.string(), z.num
  * @returns What to call to apply them, which answers with the tags it applied.
  */
 const createMissedMigrationApplier =
-  (db: ValenceDatabase, folder: string) => (): Promise<readonly string[]> =>
+  (db: AnyValenceDatabase, folder: string) => (): Promise<readonly string[]> =>
     applyMissedMigrations({
       readJournal: () => readFile(join(folder, 'meta', '_journal.json'), 'utf8'),
       readAppliedAt: async () => {
-        const applied = await db.execute(sql`select created_at from drizzle.__drizzle_migrations`);
+        const applied = await readRows(
+          db,
+          sql`select created_at from drizzle.__drizzle_migrations`,
+          AppliedMigrationSchema,
+        );
 
-        return applied.rows.map((row) => Number(AppliedMigrationSchema.parse(row).created_at));
+        return applied.map((row) => Number(row.created_at));
       },
       readSql: (tag) => readFile(join(folder, `${tag}.sql`), 'utf8'),
       applyOne: (migration) =>

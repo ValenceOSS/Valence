@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { narrowedForTest } from '@ValenceServer/visibility/narrowedForTest';
 import { hiddenByViewer } from './hiddenByViewer';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
+import { aVisibilityPlayground } from '@ValenceServer/visibility/aVisibilityPlayground';
+
+const STARTING_POSTGRES_MS = 60_000;
 
 const WATCHER: Viewer = {
   kind: 'account',
@@ -49,4 +52,35 @@ describe('what a profile has put out of its own sight', () => {
 
     expect(sql).not.toContain('"hidden"');
   });
+});
+
+describe('what a profile has put out of its own sight, on a database', () => {
+  it(
+    'catches an item, a programme and a library the profile hid, and nothing else',
+    async () => {
+      const { viewers, itemsKeptBy } = await aVisibilityPlayground();
+
+      expect(await itemsKeptBy((db) => hiddenByViewer(db, viewers.kid))).toStrictEqual([
+        'episode-15',
+        'film-unrated',
+        'song',
+      ]);
+      expect(
+        await itemsKeptBy((db) => hiddenByViewer(db, viewers.adminWatchingAsKid)),
+      ).toStrictEqual(['episode-15', 'film-unrated', 'song']);
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
+    'asks nothing of a viewer with no profile, a share guest or the server',
+    async () => {
+      const { viewers, itemsKeptBy } = await aVisibilityPlayground();
+
+      for (const viewer of [viewers.kidWithoutProfiles, viewers.guest, viewers.server]) {
+        expect(await itemsKeptBy((db) => hiddenByViewer(db, viewer))).toHaveLength(7);
+      }
+    },
+    STARTING_POSTGRES_MS,
+  );
 });

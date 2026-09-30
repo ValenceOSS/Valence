@@ -1,16 +1,17 @@
 import { eq } from 'drizzle-orm';
+import { upsert } from '@ValenceDatabase/upsert';
 import { serverSetting } from '#dialect/Schema';
 import { ServerSettingsSchema, SETTINGS_KEY } from './ServerSettings';
 import type { ServerSettings, SettingsStore } from './ServerSettings';
-import type { ValenceDatabase } from '#dialect/ValenceDatabase';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 
 type CreateDatabaseSettingsStoreOptions = {
-  db: ValenceDatabase;
+  db: AnyValenceDatabase;
   defaults: ServerSettings;
 };
 
 /**
- * The server's own settings, held in one row of Postgres — everything an operator configures that is
+ * The server's own settings, held in one row of the database — everything an operator configures that is
  * not an environment variable, from the catalogue key to what this instance calls itself.
  *
  * @param db - The database to read and write.
@@ -41,13 +42,11 @@ const createDatabaseSettingsStore = ({
   const write = async (patch: Partial<ServerSettings>): Promise<ServerSettings> => {
     const next = ServerSettingsSchema.parse({ ...(await read()), ...patch });
 
-    await db
-      .insert(serverSetting)
-      .values({ key: SETTINGS_KEY, value: next, updatedAt: new Date() })
-      .onConflictDoUpdate({
-        target: serverSetting.key,
-        set: { value: next, updatedAt: new Date() },
-      });
+    await upsert(db, serverSetting, {
+      values: [{ key: SETTINGS_KEY, value: next, updatedAt: new Date() }],
+      target: serverSetting.key,
+      set: { value: next, updatedAt: new Date() },
+    });
 
     return next;
   };

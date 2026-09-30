@@ -4,6 +4,9 @@ import { createDatabase } from '#dialect/createDatabase';
 import { library } from '#dialect/Schema';
 import { librariesVisibleToViewer } from './librariesVisibleToViewer';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
+import { aVisibilityPlayground } from '@ValenceServer/visibility/aVisibilityPlayground';
+
+const STARTING_POSTGRES_MS = 60_000;
 
 const NOWHERE = 'postgres://nobody@localhost:1/none';
 
@@ -57,4 +60,37 @@ describe('which libraries a viewer is offered', () => {
     expect(sql).not.toContain('"library_block"');
     expect(sql).not.toContain('"hidden"');
   });
+});
+
+describe('which libraries a viewer is offered, on a database', () => {
+  it(
+    'leaves out a library the account is kept from and one the profile hid',
+    async () => {
+      const { viewers, librariesKeptBy } = await aVisibilityPlayground();
+      const kept = (viewer: Viewer) =>
+        librariesKeptBy((db) => librariesVisibleToViewer(db, viewer));
+
+      expect(await kept(viewers.kid)).toStrictEqual(['films', 'kids']);
+      expect(await kept(viewers.kidWithoutProfiles)).toStrictEqual(['films', 'kids', 'music']);
+      expect(await kept(viewers.adminWatchingAsKid)).toStrictEqual(['films', 'kids', 'locked']);
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
+    'offers every library to an administrator, a share guest and the server',
+    async () => {
+      const { viewers, librariesKeptBy } = await aVisibilityPlayground();
+
+      for (const viewer of [viewers.admin, viewers.guest, viewers.server]) {
+        expect(await librariesKeptBy((db) => librariesVisibleToViewer(db, viewer))).toStrictEqual([
+          'films',
+          'kids',
+          'locked',
+          'music',
+        ]);
+      }
+    },
+    STARTING_POSTGRES_MS,
+  );
 });

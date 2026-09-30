@@ -2,7 +2,7 @@ import { and, isNull } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 import { createDatabase } from '#dialect/createDatabase';
 import { mediaItem } from '#dialect/Schema';
-import type { ValenceDatabase } from '#dialect/ValenceDatabase';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 
 const NOWHERE = 'postgres://nobody@localhost:1/none';
 
@@ -19,7 +19,7 @@ const NOWHERE = 'postgres://nobody@localhost:1/none';
  * @param build - Given the database, and asked for the condition under test.
  * @returns The SQL of a query narrowed by it.
  */
-const narrowedForTest = (build: (db: ValenceDatabase) => SQL | undefined): string => {
+const narrowedForTest = (build: (db: AnyValenceDatabase) => SQL | undefined): string => {
   const { db } = createDatabase(NOWHERE);
 
   return db
