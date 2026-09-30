@@ -141,7 +141,13 @@ fn source_file() -> PathBuf {
 /// from the last one is taken for this one's: its playlist named segments this
 /// run never made, and every test after the first run failed on this machine.
 fn registry(name: &str) -> SessionRegistry {
-    let _ = std::fs::remove_dir_all(cache_root(name));
+    if let Err(error) = std::fs::remove_dir_all(cache_root(name)) {
+        assert_eq!(
+            error.kind(),
+            std::io::ErrorKind::NotFound,
+            "empties the cache for {name}"
+        );
+    }
 
     SessionRegistry::new(SessionConfig {
         device: valence_transcoder::transcode_plan::DEFAULT_DEVICE.to_owned(),
