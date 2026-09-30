@@ -1,4 +1,5 @@
 import tseslint from 'typescript-eslint';
+import { neutralQueries } from './tools/eslint/neutralQueries';
 import { noComments } from './tools/eslint/noComments';
 import { noRawColours } from './tools/eslint/noRawColours';
 
@@ -6,8 +7,11 @@ const valence = {
   rules: {
     'no-comments': noComments,
     'no-raw-colours': noRawColours,
+    'neutral-queries': neutralQueries,
   },
 };
+
+const NEUTRAL_QUERY_FILES: string[] = [];
 
 const PARENT_IMPORT_BAN = {
   group: ['../*'],
@@ -304,6 +308,21 @@ export default tseslint.config(
       ],
     },
   },
+  ...(NEUTRAL_QUERY_FILES.length === 0
+    ? []
+    : [
+        {
+          files: NEUTRAL_QUERY_FILES,
+          ignores: [
+            'apps/server/src/db/postgres/**',
+            'apps/requests/src/db/postgres/**',
+            '**/*.test.ts',
+          ],
+          rules: {
+            'valence/neutral-queries': 'error' as const,
+          },
+        },
+      ]),
   {
     files: ['**/*.config.ts', '**/vitest.setup.ts'],
     ...tseslint.configs.disableTypeChecked,
