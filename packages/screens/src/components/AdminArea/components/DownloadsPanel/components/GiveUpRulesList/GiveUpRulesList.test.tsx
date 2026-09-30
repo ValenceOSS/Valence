@@ -54,6 +54,57 @@ describe('GiveUpRulesList', () => {
     });
   });
 
+  it('saves one change after another, so a slow first save cannot undo a second', async () => {
+    const actor = userEvent.setup();
+    let finishFirst: (sent: Awaited<ReturnType<typeof Rules.changeGiveUpRules>>) => void = () =>
+      undefined;
+
+    changeGiveUpRules.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishFirst = resolve;
+        }),
+    );
+    renderInAnAddress(<GiveUpRulesList />);
+
+    await actor.click(await screen.findByRole('button', { name: /Stalled/ }));
+    await actor.click(await screen.findByRole('menuitemradio', { name: /Never/ }));
+    await actor.click(screen.getByRole('switch', { name: 'Give up on unrecognised files' }));
+
+    expect(changeGiveUpRules).toHaveBeenCalledTimes(1);
+
+    finishFirst({ value: { ...GIVE_UP_DEFAULTS, stalledHours: null }, refusal: null });
+
+    await waitFor(() => {
+      expect(changeGiveUpRules).toHaveBeenCalledTimes(2);
+    });
+    expect(changeGiveUpRules).toHaveBeenLastCalledWith({
+      ...GIVE_UP_DEFAULTS,
+      stalledHours: null,
+      refusesUnknownFiles: false,
+    });
+  });
+
+  it('carries on saving after a save that went wrong', async () => {
+    const actor = userEvent.setup();
+
+    changeGiveUpRules.mockRejectedValueOnce(new Error('unreadable'));
+    renderInAnAddress(<GiveUpRulesList />);
+
+    await actor.click(await screen.findByRole('button', { name: /Stalled/ }));
+    await actor.click(await screen.findByRole('menuitemradio', { name: /Never/ }));
+
+    await waitFor(() => {
+      expect(fetchGiveUpRules).toHaveBeenCalledTimes(2);
+    });
+
+    await actor.click(screen.getByRole('switch', { name: 'Give up on unrecognised files' }));
+
+    await waitFor(() => {
+      expect(changeGiveUpRules).toHaveBeenCalledTimes(2);
+    });
+  });
+
   it('reads the rules again when a change is refused', async () => {
     const actor = userEvent.setup();
 
