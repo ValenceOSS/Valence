@@ -1,3 +1,4 @@
+import { upsert } from '@ValenceDatabase/upsert';
 import { randomUUID } from 'node:crypto';
 import { and, desc, eq } from 'drizzle-orm';
 import { watchProgress } from '#dialect/Schema';
@@ -47,26 +48,26 @@ const createDatabaseWatchProgressService = (db: AnyValenceDatabase): WatchProgre
   },
 
   record: async (profileId, report) => {
-    await db
-      .insert(watchProgress)
-      .values({
-        id: randomUUID(),
-        profileId,
-        mediaItemId: report.mediaId,
-        positionSeconds: report.positionSeconds,
-        durationSeconds: report.durationSeconds,
-        isFinished: report.isFinished,
-        updatedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: [watchProgress.profileId, watchProgress.mediaItemId],
-        set: {
+    await upsert(db, watchProgress, {
+      values: [
+        {
+          id: randomUUID(),
+          profileId,
+          mediaItemId: report.mediaId,
           positionSeconds: report.positionSeconds,
           durationSeconds: report.durationSeconds,
           isFinished: report.isFinished,
           updatedAt: new Date(),
         },
-      });
+      ],
+      target: [watchProgress.profileId, watchProgress.mediaItemId],
+      set: {
+        positionSeconds: report.positionSeconds,
+        durationSeconds: report.durationSeconds,
+        isFinished: report.isFinished,
+        updatedAt: new Date(),
+      },
+    });
   },
 
   forget: async (profileId, mediaId) => {

@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, isNotNull } from 'drizzle-orm';
+import { countAffected } from '@ValenceDatabase/countAffected';
+import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
 import { hidden, library, mediaItem, series } from '#dialect/Schema';
-import type { ValenceDatabase } from '#dialect/ValenceDatabase';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { Hidden, HiddenKind } from '@ValenceContracts/schemas/Hidden';
 import type { HiddenService, HiddenSubject } from '@ValenceServer/hiding/HiddenService';
 
@@ -26,7 +28,7 @@ const columnFor = (kind: HiddenKind) =>
  * @param db - The database.
  * @returns The service.
  */
-const createDatabaseHiddenService = (db: ValenceDatabase): HiddenService => {
+const createDatabaseHiddenService = (db: AnyValenceDatabase): HiddenService => {
   /**
    * Whether the thing somebody is trying to hide is a thing at all.
    *
@@ -106,17 +108,22 @@ const createDatabaseHiddenService = (db: ValenceDatabase): HiddenService => {
         return false;
       }
 
-      await db
-        .insert(hidden)
-        .values({
-          id: randomUUID(),
-          profileId,
-          mediaItemId: subject.kind === 'item' ? subject.subjectId : null,
-          seriesId: subject.kind === 'series' ? subject.subjectId : null,
-          libraryId: subject.kind === 'library' ? subject.subjectId : null,
-          hiddenAt: new Date(),
-        })
-        .onConflictDoNothing();
+      const column = columnFor(subject.kind);
+
+      await insertUnlessPresent(db, hidden, {
+        values: [
+          {
+            id: randomUUID(),
+            profileId,
+            mediaItemId: subject.kind === 'item' ? subject.subjectId : null,
+            seriesId: subject.kind === 'series' ? subject.subjectId : null,
+            libraryId: subject.kind === 'library' ? subject.subjectId : null,
+            hiddenAt: new Date(),
+          },
+        ],
+        target: [hidden.profileId, column],
+        targetWhere: isNotNull(column),
+      });
 
       return true;
     },
@@ -124,10 +131,11 @@ const createDatabaseHiddenService = (db: ValenceDatabase): HiddenService => {
     show: async (profileId, subject) => {
       const gone = await db
         .delete(hidden)
-        .where(and(eq(hidden.profileId, profileId), eq(columnFor(subject.kind), subject.subjectId)))
-        .returning({ id: hidden.id });
+        .where(
+          and(eq(hidden.profileId, profileId), eq(columnFor(subject.kind), subject.subjectId)),
+        );
 
-      return gone.length > 0;
+      return countAffected(gone) > 0;
     },
   };
 };

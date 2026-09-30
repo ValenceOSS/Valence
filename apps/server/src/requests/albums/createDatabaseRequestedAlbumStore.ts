@@ -1,6 +1,6 @@
 import { and, eq, sql } from 'drizzle-orm';
 import { mediaItem, musicAlbum, musicTrack } from '#dialect/Schema';
-import type { ValenceDatabase } from '#dialect/ValenceDatabase';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { RequestedAlbumStore } from '@ValenceServer/requests/albums/RequestedAlbumStore';
 
 /**
@@ -10,7 +10,7 @@ import type { RequestedAlbumStore } from '@ValenceServer/requests/albums/Request
  * @param db - The database.
  * @returns The store.
  */
-const createDatabaseRequestedAlbumStore = (db: ValenceDatabase): RequestedAlbumStore => ({
+const createDatabaseRequestedAlbumStore = (db: AnyValenceDatabase): RequestedAlbumStore => ({
   findByReleaseGroup: async (libraryId, releaseGroupId) => {
     const [found] = await db
       .select({ id: musicAlbum.id })

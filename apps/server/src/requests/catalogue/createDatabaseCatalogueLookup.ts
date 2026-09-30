@@ -1,7 +1,8 @@
+import { concatenated } from '@ValenceDatabase/concatenated';
 import { and, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
 import { book, mediaItem, musicAlbum, musicArtist, series } from '#dialect/Schema';
 import { nameKey } from '@ValenceServer/music/nameKey';
-import type { ValenceDatabase } from '#dialect/ValenceDatabase';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { CatalogueLookup, NamedBook } from '@ValenceServer/requests/catalogue/CatalogueLookup';
 
 /**
@@ -38,7 +39,7 @@ const byKey = async (
  * @param db - The database.
  * @returns The lookup.
  */
-const createDatabaseCatalogueLookup = (db: ValenceDatabase): CatalogueLookup => ({
+const createDatabaseCatalogueLookup = (db: AnyValenceDatabase): CatalogueLookup => ({
   films: (tmdbIds) =>
     byKey(tmdbIds, (wanted) =>
       db
@@ -65,7 +66,9 @@ const createDatabaseCatalogueLookup = (db: ValenceDatabase): CatalogueLookup => 
     const rows = await db
       .select({
         season: mediaItem.seasonNumber,
-        held: sql<number>`sum(case when ${mediaItem.episodeNumberEnd} > ${mediaItem.episodeNumber} then ${mediaItem.episodeNumberEnd} - ${mediaItem.episodeNumber} + 1 else 1 end)::int`,
+        held: sql<number>`sum(case when ${mediaItem.episodeNumberEnd} > ${mediaItem.episodeNumber} then ${mediaItem.episodeNumberEnd} - ${mediaItem.episodeNumber} + 1 else 1 end)`.mapWith(
+          Number,
+        ),
       })
       .from(mediaItem)
       .innerJoin(series, eq(mediaItem.seriesId, series.id))
@@ -114,12 +117,12 @@ const createDatabaseCatalogueLookup = (db: ValenceDatabase): CatalogueLookup => 
     byKey(titleKeys, (wanted) =>
       db
         .select({
-          key: sql<string>`${musicArtist.nameKey} || '/' || ${musicAlbum.titleKey}`,
+          key: concatenated(musicArtist.nameKey, '/', musicAlbum.titleKey),
           id: musicAlbum.id,
         })
         .from(musicAlbum)
         .innerJoin(musicArtist, eq(musicArtist.id, musicAlbum.artistId))
-        .where(inArray(sql`${musicArtist.nameKey} || '/' || ${musicAlbum.titleKey}`, wanted)),
+        .where(inArray(concatenated(musicArtist.nameKey, '/', musicAlbum.titleKey), wanted)),
     ),
 
   booksNamed: async (wanted: readonly NamedBook[]) => {

@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { and, desc, eq, lt } from 'drizzle-orm';
+import { countAffected } from '@ValenceDatabase/countAffected';
 import { watchHistory, mediaItem } from '#dialect/Schema';
 import { decideViewing } from './decideViewing';
-import type { ValenceDatabase } from '#dialect/ValenceDatabase';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { HistoryService, Viewing } from './HistoryService';
 import { visibleToViewer } from '@ValenceServer/visibility/visibleToViewer';
 
@@ -42,116 +43,124 @@ const shown = (row: Row): Viewing => ({
  * @param db - The database to read and write.
  * @returns The history service.
  */
-const createDatabaseHistoryService = (db: ValenceDatabase): HistoryService => ({
-  record: async (profileId, mediaItemId, seen) => {
-    const [open] = await db
-      .select({
-        id: watchHistory.id,
-        mediaItemId: watchHistory.mediaItemId,
-        startedAt: watchHistory.startedAt,
-        lastWatchedAt: watchHistory.lastWatchedAt,
-        secondsWatched: watchHistory.secondsWatched,
-        isFinished: watchHistory.isFinished,
-      })
-      .from(watchHistory)
-      .where(and(eq(watchHistory.profileId, profileId), eq(watchHistory.mediaItemId, mediaItemId)))
-      .orderBy(desc(watchHistory.lastWatchedAt))
-      .limit(1);
+const createDatabaseHistoryService = (db: AnyValenceDatabase): HistoryService => {
+  /**
+   * Reads one viewing back after it was written, since not every database hands the row back from
+   * the write itself.
+   *
+   * @param id - The viewing.
+   * @returns The viewing as the contract carries it, or null where it has gone.
+   */
+  const readViewing = async (id: string): Promise<Viewing | null> => {
+    const [row] = await db.select().from(watchHistory).where(eq(watchHistory.id, id));
 
-    const decided = decideViewing(
-      open === undefined
-        ? null
-        : {
-            id: open.id,
-            lastWatchedAt: open.lastWatchedAt,
-            secondsWatched: open.secondsWatched,
-            isFinished: open.isFinished,
-          },
-      seen,
-    );
+    return row === undefined ? null : shown({ ...row, title: null, seriesTitle: null });
+  };
 
-    if (decided.kind === 'ignore') {
-      return null;
-    }
-
-    if (decided.kind === 'extend') {
-      const [changed] = await db
-        .update(watchHistory)
-        .set({
-          secondsWatched: decided.secondsWatched,
-          isFinished: decided.isFinished,
-          lastWatchedAt: seen.at,
+  return {
+    record: async (profileId, mediaItemId, seen) => {
+      const [open] = await db
+        .select({
+          id: watchHistory.id,
+          mediaItemId: watchHistory.mediaItemId,
+          startedAt: watchHistory.startedAt,
+          lastWatchedAt: watchHistory.lastWatchedAt,
+          secondsWatched: watchHistory.secondsWatched,
+          isFinished: watchHistory.isFinished,
         })
-        .where(eq(watchHistory.id, decided.id))
-        .returning();
+        .from(watchHistory)
+        .where(
+          and(eq(watchHistory.profileId, profileId), eq(watchHistory.mediaItemId, mediaItemId)),
+        )
+        .orderBy(desc(watchHistory.lastWatchedAt))
+        .limit(1);
 
-      return changed === undefined ? null : shown({ ...changed, title: null, seriesTitle: null });
-    }
+      const decided = decideViewing(
+        open === undefined
+          ? null
+          : {
+              id: open.id,
+              lastWatchedAt: open.lastWatchedAt,
+              secondsWatched: open.secondsWatched,
+              isFinished: open.isFinished,
+            },
+        seen,
+      );
 
-    const [made] = await db
-      .insert(watchHistory)
-      .values({
-        id: randomUUID(),
+      if (decided.kind === 'ignore') {
+        return null;
+      }
+
+      if (decided.kind === 'extend') {
+        await db
+          .update(watchHistory)
+          .set({
+            secondsWatched: decided.secondsWatched,
+            isFinished: decided.isFinished,
+            lastWatchedAt: seen.at,
+          })
+          .where(eq(watchHistory.id, decided.id));
+
+        return readViewing(decided.id);
+      }
+
+      const id = randomUUID();
+
+      await db.insert(watchHistory).values({
+        id,
         profileId,
         mediaItemId,
         startedAt: seen.at,
         lastWatchedAt: seen.at,
         secondsWatched: decided.secondsWatched,
         isFinished: decided.isFinished,
-      })
-      .returning();
+      });
 
-    return made === undefined ? null : shown({ ...made, title: null, seriesTitle: null });
-  },
+      return readViewing(id);
+    },
 
-  list: async (viewer, profileId, options = {}) => {
-    const rows = await db
-      .select({
-        id: watchHistory.id,
-        mediaItemId: watchHistory.mediaItemId,
-        title: mediaItem.title,
-        seriesTitle: mediaItem.seriesTitle,
-        startedAt: watchHistory.startedAt,
-        lastWatchedAt: watchHistory.lastWatchedAt,
-        secondsWatched: watchHistory.secondsWatched,
-        isFinished: watchHistory.isFinished,
-      })
-      .from(watchHistory)
-      .innerJoin(mediaItem, eq(mediaItem.id, watchHistory.mediaItemId))
-      .where(and(eq(watchHistory.profileId, profileId), visibleToViewer(db, viewer)))
-      .orderBy(desc(watchHistory.lastWatchedAt))
-      .limit(options.limit ?? 50)
-      .offset(options.offset ?? 0);
+    list: async (viewer, profileId, options = {}) => {
+      const rows = await db
+        .select({
+          id: watchHistory.id,
+          mediaItemId: watchHistory.mediaItemId,
+          title: mediaItem.title,
+          seriesTitle: mediaItem.seriesTitle,
+          startedAt: watchHistory.startedAt,
+          lastWatchedAt: watchHistory.lastWatchedAt,
+          secondsWatched: watchHistory.secondsWatched,
+          isFinished: watchHistory.isFinished,
+        })
+        .from(watchHistory)
+        .innerJoin(mediaItem, eq(mediaItem.id, watchHistory.mediaItemId))
+        .where(and(eq(watchHistory.profileId, profileId), visibleToViewer(db, viewer)))
+        .orderBy(desc(watchHistory.lastWatchedAt))
+        .limit(options.limit ?? 50)
+        .offset(options.offset ?? 0);
 
-    return rows.map(shown);
-  },
+      return rows.map(shown);
+    },
 
-  forget: async (profileId, viewingId) => {
-    const gone = await db
-      .delete(watchHistory)
-      .where(and(eq(watchHistory.id, viewingId), eq(watchHistory.profileId, profileId)))
-      .returning({ id: watchHistory.id });
+    forget: async (profileId, viewingId) => {
+      const gone = await db
+        .delete(watchHistory)
+        .where(and(eq(watchHistory.id, viewingId), eq(watchHistory.profileId, profileId)));
 
-    return gone.length > 0;
-  },
+      return countAffected(gone) > 0;
+    },
 
-  prune: async (before) => {
-    const gone = await db
-      .delete(watchHistory)
-      .where(lt(watchHistory.lastWatchedAt, before))
-      .returning({ id: watchHistory.id });
+    prune: async (before) => {
+      const gone = await db.delete(watchHistory).where(lt(watchHistory.lastWatchedAt, before));
 
-    return gone.length;
-  },
+      return countAffected(gone);
+    },
 
-  forgetAll: async (profileId) => {
-    const gone = await db
-      .delete(watchHistory)
-      .where(eq(watchHistory.profileId, profileId))
-      .returning({ id: watchHistory.id });
+    forgetAll: async (profileId) => {
+      const gone = await db.delete(watchHistory).where(eq(watchHistory.profileId, profileId));
 
-    return gone.length;
-  },
-});
+      return countAffected(gone);
+    },
+  };
+};
 
 export { createDatabaseHistoryService };

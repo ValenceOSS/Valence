@@ -99,4 +99,26 @@ describe('createDatabaseWatchProgressService', { timeout: STARTING_POSTGRES_MS }
     await expect(progress.read('dan', 'episode-0')).resolves.toBeNull();
     await expect(progress.read('dan', 'episode-1')).resolves.toMatchObject({ isFinished: true });
   });
+
+  it('moves the one record of an item on, rather than adding another', async () => {
+    const progress = createDatabaseWatchProgressService(await aScratchDatabase());
+
+    await progress.record('dan', {
+      mediaId: 'film',
+      positionSeconds: 60,
+      durationSeconds: 5400,
+      isFinished: false,
+    });
+    await progress.record('dan', {
+      mediaId: 'film',
+      positionSeconds: 3000,
+      durationSeconds: 5400,
+      isFinished: false,
+    });
+
+    const listed = await progress.list('dan');
+
+    expect(listed).toHaveLength(1);
+    expect(listed[0]).toMatchObject({ positionSeconds: 3000 });
+  });
 });
