@@ -1,3 +1,4 @@
+import { checkServerVersion } from '@ValenceDatabase/checkServerVersion';
 import { checkDialect } from '@ValenceDatabase/checkDialect';
 import { join } from 'node:path';
 import { serve } from '@hono/node-server';
@@ -78,6 +79,7 @@ log(
       : 'Running as the user it was started as.',
 );
 
+await checkServerVersion(db);
 await applyMigrations(db, MIGRATIONS_FOLDER);
 
 const vpn = createVpnWatch({

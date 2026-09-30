@@ -1539,8 +1539,13 @@ const ENGLISH = {
   'core.track.stereo': 'Stereo',
   'database.builtForAnotherDatabase':
     'This build of Valence is for {built}, but DATABASE_URL is a {asked} address. Start it with Main.js, which chooses the build for the database it is given.',
+  'database.mysqlTooOld':
+    'Valence needs MySQL 8.0.21 or newer, or MariaDB 10.6 or newer, and this server is {version}.',
+  'database.postgresTooOld': 'Valence needs Postgres 15 or newer, and this server is {version}.',
   'database.urlIsForAnotherDatabase':
     'DATABASE_URL must start with postgres://, mysql:// or mariadb://, not {protocol}//. Valence keeps its data in Postgres, MySQL or MariaDB, and MongoDB is not one it can use.',
+  'database.wrongCollation':
+    'The database {database} compares text as {collation}, and Valence needs {needed}. Before Valence first starts, run: ALTER DATABASE `{database}` CHARACTER SET utf8mb4 COLLATE {needed};',
   'desktop.desktop.update': 'Update',
   'desktop.desktop.updateValence': 'Update Valence?',
   'desktop.desktop.valenceVersionIsOutItDownloads':

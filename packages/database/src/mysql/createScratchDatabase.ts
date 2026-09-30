@@ -1,12 +1,11 @@
 import { createConnection } from 'mysql2/promise';
 import { z } from 'zod';
 import { readMysqlAddress } from './connection/readMysqlAddress';
+import { COLLATIONS } from './COLLATIONS';
 import { flavourOfVersion } from './flavourOfVersion';
 import { scratchDatabaseName } from './scratchDatabaseName';
 
 const VersionSchema = z.tuple([z.object({ version: z.string() })]);
-
-const COLLATIONS = { mysql: 'utf8mb4_0900_bin', mariadb: 'utf8mb4_nopad_bin' } as const;
 
 /**
  * Opens a connection to the engine the tests run against, outside any database of its own.

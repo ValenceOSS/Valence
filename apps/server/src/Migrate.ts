@@ -1,3 +1,4 @@
+import { checkServerVersion } from '@ValenceDatabase/checkServerVersion';
 import { checkDialect } from '@ValenceDatabase/checkDialect';
 import { join } from 'node:path';
 import { createDatabase } from '#dialect/createDatabase';
@@ -24,6 +25,7 @@ const run = async (): Promise<void> => {
   const { db, pool } = createDatabase(env.DATABASE_URL);
 
   try {
+    await checkServerVersion(db);
     await migrateDatabase({
       db,
       databaseUrl: env.DATABASE_URL,

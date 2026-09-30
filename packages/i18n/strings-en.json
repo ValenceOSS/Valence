@@ -6665,9 +6665,24 @@
     "context": "Printed when one of Valence's two builds is started directly with the address of the other kind of database. {built} and {asked} are each postgres or mysql."
   },
   {
+    "handler": "database.mysqlTooOld",
+    "text": "Valence needs MySQL 8.0.21 or newer, or MariaDB 10.6 or newer, and this server is {version}.",
+    "context": "Printed when Valence starts against a MySQL or MariaDB too old for it. {version} is the server's version as it reports it."
+  },
+  {
+    "handler": "database.postgresTooOld",
+    "text": "Valence needs Postgres 15 or newer, and this server is {version}.",
+    "context": "Printed when Valence starts against a Postgres too old for it. {version} is the server's version, such as 14.9."
+  },
+  {
     "handler": "database.urlIsForAnotherDatabase",
     "text": "DATABASE_URL must start with postgres://, mysql:// or mariadb://, not {protocol}//. Valence keeps its data in Postgres, MySQL or MariaDB, and MongoDB is not one it can use.",
     "context": "Printed when Valence starts with a DATABASE_URL for a database it does not support. {protocol} is the start of the address, such as mongodb:."
+  },
+  {
+    "handler": "database.wrongCollation",
+    "text": "The database {database} compares text as {collation}, and Valence needs {needed}. Before Valence first starts, run: ALTER DATABASE `{database}` CHARACTER SET utf8mb4 COLLATE {needed};",
+    "context": "Printed when Valence starts against a MySQL or MariaDB database in the wrong collation. {database} is its name, {collation} the one it has and {needed} the one Valence needs."
   },
   {
     "handler": "desktop.desktop.update",
