@@ -774,6 +774,11 @@ body[data-scroll-locked] .valence-navbar {
     var(--glass-shadow);
 }
 
+.valence-glass--edgeless {
+  border: 0;
+  box-shadow: none;
+}
+
 .valence-glass--film {
   --glass-tint: color-mix(in oklab, black 45%, transparent);
   --glass-edge: color-mix(in oklab, white 16%, transparent);

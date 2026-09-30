@@ -56,6 +56,7 @@ const config: ExpoConfig = {
     icon: './assets/icon/android-icon.png',
     adaptiveIcon: {
       foregroundImage: './assets/icon/android-icon-foreground.png',
+      backgroundImage: './assets/icon/android-icon-background.png',
       backgroundColor: '#0088FF',
     },
     permissions: ['ACCESS_NETWORK_STATE', 'ACCESS_WIFI_STATE'],

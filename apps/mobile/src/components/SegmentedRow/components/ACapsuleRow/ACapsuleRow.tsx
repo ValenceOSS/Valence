@@ -7,8 +7,12 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { hasLiquidGlass } from '@ValenceMobile/platform/hasLiquidGlass';
 import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
+import { theColours } from '@ValenceMobile/theme/theColours';
+import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { ACapsuleRowProps } from './ACapsuleRow.types';
+
+const LIGHT_TRACK = 0.6;
 
 const INSET = 4;
 
@@ -56,6 +60,9 @@ const styles = StyleSheet.create({
  * icon — so the whole of it moves on the native side in one animation, with nothing redrawn from
  * JavaScript frame by frame. Where somebody has asked for less motion it simply moves.
  *
+ * In the light its track is tinted with the page's border colour: clear glass over a white card is
+ * a track nobody can see.
+ *
  * @param label - What is being chosen, for anyone who cannot see the row.
  * @param items - What there is to choose from.
  * @param value - Which one is picked, or none yet.
@@ -74,6 +81,8 @@ const ACapsuleRow = ({
   isShown = true,
 }: ACapsuleRowProps) => {
   const colours = useTheColours();
+  const track =
+    colours.surface === theColours.dark.surface ? null : withAlpha(colours.border, LIGHT_TRACK);
   const isStill = usePrefersStillness();
   const isGlass = hasLiquidGlass();
   const [places, setPlaces] = useState<ReadonlyMap<string, Place>>(new Map());
@@ -96,13 +105,13 @@ const ACapsuleRow = ({
       accessibilityLabel={label}
     >
       {isGlass ? (
-        <AGlass roundness={999} isShown={isShown} />
+        <AGlass roundness={999} isShown={isShown} {...(track === null ? {} : { tint: track })} />
       ) : (
         <Animated.View
           pointerEvents="none"
           style={[
             StyleSheet.absoluteFill,
-            { backgroundColor: colours.surfaceRaised, opacity: seen },
+            { backgroundColor: track ?? colours.surfaceRaised, opacity: seen },
           ]}
         />
       )}

@@ -202,4 +202,40 @@ describe('theServerReach', () => {
 
     expect(reach.isReachable()).toBe(true);
   });
+
+  it('sets aside a check overtaken by a request that was answered while it was out', async () => {
+    const silent: typeof globalThis.fetch = (_where, how) =>
+      new Promise((_answer, fail) => {
+        how?.signal?.addEventListener('abort', () => {
+          fail(new Error('gave up'));
+        });
+      });
+
+    reach = theServerReach({ where: () => WHERE, fetching: silent, every: 10_000, within: 20 });
+
+    reach.checkNow();
+    reach.noteReached();
+    await soon(60);
+
+    expect(reach.isReachable()).toBe(true);
+  });
+
+  it('sets aside a check of a server that is no longer the one chosen', async () => {
+    let where = WHERE;
+
+    const silent: typeof globalThis.fetch = (_where, how) =>
+      new Promise((_answer, fail) => {
+        how?.signal?.addEventListener('abort', () => {
+          fail(new Error('gave up'));
+        });
+      });
+
+    reach = theServerReach({ where: () => where, fetching: silent, every: 10_000, within: 20 });
+
+    reach.checkNow();
+    where = 'https://another.test';
+    await soon(60);
+
+    expect(reach.isReachable()).toBe(true);
+  });
 });

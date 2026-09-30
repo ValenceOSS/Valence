@@ -1,4 +1,8 @@
+import { useEffect } from 'react';
 import { Image, Linking, StyleSheet, View } from 'react-native';
+import { useQueryClient } from '@tanstack/react-query';
+import { requestsQueries } from '@ValenceClient/query/requestsQueries';
+import { mayBeInTheLibrary } from '@ValenceClient/requests/mayBeInTheLibrary';
 import { describeRequestBadge } from '@ValenceClient/requests/describeRequestBadge';
 import { describeRequestProgress } from '@ValenceClient/requests/describeRequestProgress';
 import { progressOfRequest } from '@ValenceClient/requests/progressOfRequest';
@@ -22,7 +26,9 @@ const styles = StyleSheet.create({
  * One thing somebody asked for — a film, a programme, music or a book — and how far it has got: while
  * it downloads, a bar and how much has come, how fast and how long is left; and a link to what
  * explains its problem where it has one. A film or a programme opens its page when pressed; music
- * and books have no page on a phone, so they are only shown.
+ * and books have no page on a phone, so they are only shown. Where some of it may have arrived, its
+ * standing is read ahead, so pressing it opens its page in the library straight away rather than the
+ * page that would ask for it.
  *
  * @param request - What was asked for.
  * @param progress - Everything downloading, of which this may be some.
@@ -37,6 +43,17 @@ const ARequest = ({ request, progress, myId, onAsk }: ARequestProps) => {
   const saidOfGoing = going === null ? null : describeDownloadLine(going);
   const { kind, tmdbId } = request;
   const { help } = badge;
+  const cache = useQueryClient();
+  const readAheadAs =
+    whatAPhoneAsksFor(kind) && tmdbId !== null && mayBeInTheLibrary(request)
+      ? tmdbId.toString()
+      : null;
+
+  useEffect(() => {
+    if (readAheadAs !== null) {
+      void cache.prefetchQuery(requestsQueries.askable(kind, readAheadAs));
+    }
+  }, [cache, kind, readAheadAs]);
   const card = (
     <View style={styles.row}>
       <Image

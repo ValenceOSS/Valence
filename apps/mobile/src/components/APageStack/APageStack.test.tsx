@@ -56,4 +56,29 @@ describe('APageStack', () => {
 
     springing.mockRestore();
   });
+
+  it('slides a page swapped in on top into place, even while the one it replaced was arriving', async () => {
+    const springing = jest.spyOn(Animated, 'spring');
+    const drawn = await render(<APageStack pages={[aPage('Home')]} onBack={jest.fn()} />);
+
+    await act(async () => {
+      await drawn.rerender(
+        <APageStack pages={[aPage('Home'), aPage('Asking')]} onBack={jest.fn()} />,
+      );
+    });
+
+    springing.mockClear();
+
+    await act(async () => {
+      await drawn.rerender(
+        <APageStack pages={[aPage('Home'), aPage('Title')]} onBack={jest.fn()} />,
+      );
+    });
+
+    expect(drawn.getByText('Title on top')).toBeTruthy();
+    expect(drawn.queryByText('Asking on top', { includeHiddenElements: true })).toBeNull();
+    expect(springing.mock.calls.map(([, config]) => config.toValue)).toEqual([0]);
+
+    springing.mockRestore();
+  });
 });

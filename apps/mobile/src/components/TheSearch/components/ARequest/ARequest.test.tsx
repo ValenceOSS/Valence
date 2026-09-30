@@ -1,11 +1,22 @@
+import type { ReactElement, ReactNode } from 'react';
 import { render, userEvent } from '@testing-library/react-native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Linking } from 'react-native';
 import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
 import { ARequest } from './ARequest';
 
+const cache = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+const renderIt = (drawing: ReactElement) =>
+  render(drawing, {
+    wrapper: ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={cache}>{children}</QueryClientProvider>
+    ),
+  });
+
 describe('ARequest', () => {
   it('names what was asked for, and when it is from', async () => {
-    const drawn = await render(
+    const drawn = await renderIt(
       <ARequest request={aMediaRequest()} progress={[]} myId={null} onAsk={jest.fn()} />,
     );
 
@@ -13,7 +24,7 @@ describe('ARequest', () => {
   });
 
   it('says who asked, and says so plainly where it was you', async () => {
-    const drawn = await render(
+    const drawn = await renderIt(
       <ARequest request={aMediaRequest()} progress={[]} myId="someone" onAsk={jest.fn()} />,
     );
 
@@ -21,7 +32,7 @@ describe('ARequest', () => {
   });
 
   it('names somebody else who asked', async () => {
-    const drawn = await render(
+    const drawn = await renderIt(
       <ARequest request={aMediaRequest()} progress={[]} myId="me" onAsk={jest.fn()} />,
     );
 
@@ -29,7 +40,7 @@ describe('ARequest', () => {
   });
 
   it('shows how far a download has got', async () => {
-    const drawn = await render(
+    const drawn = await renderIt(
       <ARequest
         request={aMediaRequest({
           state: 'downloading',
@@ -76,7 +87,7 @@ describe('ARequest', () => {
 
   it('opens what explains its problem, where it has one', async () => {
     const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
-    const drawn = await render(
+    const drawn = await renderIt(
       <ARequest
         request={aMediaRequest({
           state: 'filing',
@@ -97,7 +108,7 @@ describe('ARequest', () => {
   });
 
   it('offers nothing to read where its problem has nowhere', async () => {
-    const drawn = await render(
+    const drawn = await renderIt(
       <ARequest request={aMediaRequest()} progress={[]} myId={null} onAsk={jest.fn()} />,
     );
 
@@ -106,12 +117,34 @@ describe('ARequest', () => {
 
   it('opens its page by the catalogue id', async () => {
     const onAsk = jest.fn();
-    const drawn = await render(
+    const drawn = await renderIt(
       <ARequest request={aMediaRequest()} progress={[]} myId={null} onAsk={onAsk} />,
     );
 
     await userEvent.press(drawn.getByRole('button', { name: 'Dune' }));
 
     expect(onAsk).toHaveBeenCalledWith('film', '438631');
+  });
+
+  it('reads ahead where some of it may have arrived, so pressing it opens it in the library', async () => {
+    const reading = jest.spyOn(cache, 'prefetchQuery').mockResolvedValue(undefined);
+
+    await renderIt(
+      <ARequest
+        request={aMediaRequest({ kind: 'series', tmdbId: 154524, mediaId: 'hearts' })}
+        progress={[]}
+        myId={null}
+        onAsk={jest.fn()}
+      />,
+    );
+    await renderIt(
+      <ARequest request={aMediaRequest()} progress={[]} myId={null} onAsk={jest.fn()} />,
+    );
+
+    expect(reading.mock.calls.map(([options]) => options.queryKey)).toEqual([
+      ['requests', 'askable', 'series', '154524'],
+    ]);
+
+    reading.mockRestore();
   });
 });
