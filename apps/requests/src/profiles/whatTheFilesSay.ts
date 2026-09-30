@@ -17,7 +17,7 @@ import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
  */
 const whatTheFilesSay = (videos: readonly string[], profile: QualityProfile): string | null => {
   for (const video of videos) {
-    const named = video.slice(video.lastIndexOf('/') + 1);
+    const named = video.slice(Math.max(video.lastIndexOf('/'), video.lastIndexOf('\\')) + 1);
     const stem = named.includes('.') ? named.slice(0, named.lastIndexOf('.')) : named;
     const refused = qualityRefusedBy(parseReleaseName(stem), profile);
 

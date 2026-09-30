@@ -222,6 +222,21 @@ describe('createDownloadQueue', () => {
       });
     });
 
+    it('looks at the files again later where they could not be judged', async () => {
+      const adapter = aSortingAdapter([{ index: 0, name: 'Dune/Dune.1080p.mkv' }]);
+      const { queue, downloads } = aQueue({
+        sent: [aSentDownload()],
+        adapter,
+        judgeFiles: () => Promise.reject(new Error('the request is not known yet')),
+      });
+
+      await queue.check();
+
+      expect(adapter.remove).not.toHaveBeenCalled();
+      expect(adapter.skip).not.toHaveBeenCalled();
+      expect((await downloads.find(aSentDownload().id))?.filesChecked).toBe(false);
+    });
+
     it('keeps a torrent whose videos are what was asked for', async () => {
       const adapter = aSortingAdapter([{ index: 0, name: 'Dune/Dune.2160p.mkv' }]);
       const { queue, downloads } = aQueue({

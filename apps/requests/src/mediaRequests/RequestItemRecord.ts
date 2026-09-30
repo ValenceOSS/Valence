@@ -7,6 +7,7 @@ type RequestItemRecord = RequestItem & {
   filedTitle: string | null;
   filedScore: number | null;
   attempts: number;
+  isPickedByHand: boolean;
 };
 
 type RequestItemStore = RecordStore<RequestItemRecord>;

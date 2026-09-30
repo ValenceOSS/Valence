@@ -52,6 +52,10 @@ describe('whatTheFilesSay', () => {
     );
   });
 
+  it('reads the file, not its folder, on a client that lists Windows paths', () => {
+    expect(whatTheFilesSay(['Film.2026.1080p.WEB-DL\\Episode 03.mkv'], FOUR_K)).toBeNull();
+  });
+
   it('leaves music alone, which has no resolution to be wrong about', () => {
     expect(whatTheFilesSay(['01 - Track 1080p.flac'], aProfile({ kind: 'music' }))).toBeNull();
   });

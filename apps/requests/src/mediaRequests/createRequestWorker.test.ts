@@ -755,6 +755,22 @@ describe('createRequestWorker', () => {
       expect(refuses?.({ resolution: '2160p' })).toBeNull();
     });
 
+    it('files whatever an episode picked by hand turns out to be', async () => {
+      const filed = vi.fn<typeof fileDownload>(() =>
+        Promise.resolve({ filed: new Map(), missing: [], refused: new Map() }),
+      );
+      const { worker } = aWorker({
+        items: [{ ...downloading(), isPickedByHand: true }],
+        sent: [done()],
+        filed,
+        localPath: '/srv/downloads',
+      });
+
+      await worker.tick();
+
+      expect(filed.mock.lastCall?.[5]?.({ resolution: '480p', source: 'cam' })).toBeNull();
+    });
+
     it('files whatever a release picked by hand turns out to be', async () => {
       const filed = vi.fn<typeof fileDownload>(() =>
         Promise.resolve({ filed: new Map(), missing: [], refused: new Map() }),
@@ -809,6 +825,34 @@ describe('createRequestWorker', () => {
       const { worker } = aWorker({
         requests: [aMediaRequest({ profileId: FOUR_K.id, isPickedByHand: true })],
         items: [aRequestItem({ state: 'downloading', downloadId: aSentDownload().id })],
+        profiles: [FOUR_K],
+      });
+
+      expect(await worker.judgeFiles(aSentDownload(), [TELESYNC])).toBeNull();
+    });
+
+    it('cannot say yet while a release is still being sent', async () => {
+      const { worker } = aWorker({
+        requests: [aMediaRequest({ profileId: FOUR_K.id })],
+        items: [aRequestItem({ state: 'chosen', downloadId: null })],
+        profiles: [FOUR_K],
+      });
+
+      await expect(worker.judgeFiles(aSentDownload(), [TELESYNC])).rejects.toThrow(
+        'It is not yet known which request it was sent for',
+      );
+    });
+
+    it('leaves a release picked by hand for one episode as it was picked', async () => {
+      const { worker } = aWorker({
+        requests: [aMediaRequest({ profileId: FOUR_K.id })],
+        items: [
+          aRequestItem({
+            state: 'downloading',
+            downloadId: aSentDownload().id,
+            isPickedByHand: true,
+          }),
+        ],
         profiles: [FOUR_K],
       });
 
@@ -1591,7 +1635,7 @@ describe('createRequestWorker', () => {
     });
 
     it('sends the release an admin picked, whatever it is called', async () => {
-      const { worker, send } = aWorker();
+      const { worker, send, items } = aWorker();
 
       const picked = await worker.pick(
         aMediaRequest().id,
@@ -1600,6 +1644,7 @@ describe('createRequestWorker', () => {
 
       expect(picked).toMatchObject({ state: 'downloading' });
       expect(send).toHaveBeenCalled();
+      expect((await theItem(items))?.isPickedByHand).toBe(true);
       expect(await worker.pick('missing', aRelease(WEB))).toBeNull();
     });
 

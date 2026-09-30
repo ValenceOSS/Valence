@@ -372,6 +372,7 @@ const createRequestWorker = ({
     release: Release,
     holding: readonly RequestItemRecord[],
     score: number,
+    isPickedByHand = false,
   ): Promise<string | null> => {
     const url = release.magnetUrl ?? release.downloadUrl;
 
@@ -417,6 +418,7 @@ const createRequestWorker = ({
         downloadId: sent.id,
         score,
         attempts: 0,
+        isPickedByHand,
         lastSearchedAt: at(),
       });
     }
@@ -613,6 +615,7 @@ const createRequestWorker = ({
           downloadId: null,
           releaseTitle: null,
           score: null,
+          isPickedByHand: false,
           lastSearchedAt: null,
         }
       : {
@@ -621,6 +624,7 @@ const createRequestWorker = ({
           downloadId: null,
           releaseTitle: item.filedTitle,
           score: item.filedScore,
+          isPickedByHand: false,
         };
 
   const follow = async ({ request, items: all }: Found) => {
@@ -734,7 +738,7 @@ const createRequestWorker = ({
                 path,
                 download.protocol === 'torrent',
                 probe,
-                await refusalsFor(request),
+                await refusalsFor(request, filing),
               );
 
         for (const item of filing) {
@@ -1167,16 +1171,17 @@ const createRequestWorker = ({
 
   /**
    * How a request's films and episodes are judged as they are filed, by what each video is found to
-   * be rather than what its release was called. A request whose release was picked by hand is left
-   * as it was picked.
+   * be rather than what its release was called. A release picked by hand is left as it was picked.
    *
    * @param request - What was asked for.
+   * @param filing - The films or episodes being filed from one download.
    * @returns Why a video is refused, or nothing where it is what was asked for.
    */
   const refusalsFor = async (
     request: MediaRequestRecord,
+    filing: readonly RequestItemRecord[],
   ): Promise<(found: Partial<ParsedRelease>) => string | null> => {
-    if (request.isPickedByHand) {
+    if (request.isPickedByHand || filing.some((item) => item.isPickedByHand)) {
       return () => null;
     }
 
@@ -1195,7 +1200,8 @@ const createRequestWorker = ({
    * Whether the videos a download turned out to hold are what its request asked for, judged by their
    * own names against the request's profile, so a release whose title said more than its files do
    * is thrown out and the next best looked for. A release somebody picked by hand is left as they
-   * picked it.
+   * picked it. Asked while a release is still being sent, before its request knows which download
+   * it became, it says so by failing, so the question is asked again rather than answered wrongly.
    *
    * @param download - The download, once its client can list what it holds.
    * @param videos - The names of the videos it holds.
@@ -1205,10 +1211,16 @@ const createRequestWorker = ({
     download: Pick<SentDownloadRecord, 'id'>,
     videos: readonly string[],
   ): Promise<string | null> => {
-    const held = (await items.list()).find((item) => item.downloadId === download.id);
+    const all = await items.list();
+    const held = all.find((item) => item.downloadId === download.id);
+
+    if (held === undefined && all.some((item) => item.state === 'chosen')) {
+      throw new Error('It is not yet known which request it was sent for');
+    }
+
     const request = held === undefined ? null : await requests.find(held.requestId);
 
-    if (request === null || request.isPickedByHand) {
+    if (request === null || request.isPickedByHand || held?.isPickedByHand === true) {
       return null;
     }
 
@@ -1302,6 +1314,7 @@ const createRequestWorker = ({
           picked,
           holding,
           judged.judgements[0]?.score ?? 0,
+          true,
         );
 
         if (problem !== null) {
