@@ -88,6 +88,8 @@ describe('GiveUpRulesList', () => {
   it('reads the rules again only once the saves still waiting have gone', async () => {
     const actor = userEvent.setup();
     let failFirst: (why: Error) => void = () => undefined;
+    let finishSecond: (sent: Awaited<ReturnType<typeof Rules.changeGiveUpRules>>) => void = () =>
+      undefined;
     const bothSaved = { ...GIVE_UP_DEFAULTS, stalledHours: null, refusesUnknownFiles: false };
 
     changeGiveUpRules.mockImplementationOnce(
@@ -95,6 +97,12 @@ describe('GiveUpRulesList', () => {
         new Promise((resolve, reject) => {
           void resolve;
           failFirst = reject;
+        }),
+    );
+    changeGiveUpRules.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishSecond = resolve;
         }),
     );
     renderInAnAddress(<GiveUpRulesList />);
@@ -105,6 +113,13 @@ describe('GiveUpRulesList', () => {
 
     fetchGiveUpRules.mockResolvedValue(bothSaved);
     failFirst(new Error('unreadable'));
+
+    await waitFor(() => {
+      expect(changeGiveUpRules).toHaveBeenCalledTimes(2);
+    });
+    expect(fetchGiveUpRules).toHaveBeenCalledTimes(1);
+
+    finishSecond({ value: bothSaved, refusal: null });
 
     await waitFor(() => {
       expect(fetchGiveUpRules).toHaveBeenCalledTimes(2);
