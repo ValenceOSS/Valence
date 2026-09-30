@@ -94,12 +94,14 @@ const aQueue = ({
 
     return Promise.resolve<ReleaseFile | null>({ kind: 'torrent', bytes: new Uint8Array([1]) });
   }),
+  judgeFiles,
 }: {
   clients?: DownloadClientRecord[];
   sent?: SentDownloadRecord[];
   adapter?: ReturnType<typeof anAdapter>;
   indexers?: Pick<Indexer, 'id' | 'privacy' | 'removesWhenDone' | 'seedSeconds' | 'seedRatio'>[];
   fetchRelease?: (indexerId: string, url: string) => Promise<ReleaseFile | null>;
+  judgeFiles?: (record: SentDownloadRecord, videos: readonly string[]) => Promise<string | null>;
 } = {}) => {
   const store = createMemoryRecordStore(clients);
   const downloads = createMemoryRecordStore(sent);
@@ -120,6 +122,7 @@ const aQueue = ({
     events,
     indexers: { records: () => Promise.resolve(indexers) },
     fetchRelease,
+    ...(judgeFiles === undefined ? {} : { judgeFiles }),
     now: () => AT,
     schedule,
   });
@@ -192,6 +195,45 @@ describe('createDownloadQueue', () => {
       expect(adapter.skip).not.toHaveBeenCalled();
       expect(await downloads.find(aSentDownload().id)).toMatchObject({ state: 'failed', problem });
       expect(await events.pending()).toMatchObject([{ kind: 'failed', problem }]);
+    });
+
+    it('throws out a torrent whose videos are not what was asked for, saying why', async () => {
+      const judgeFiles = vi.fn(() =>
+        Promise.resolve<string | null>(
+          'Its file, Dune.1080p.mkv, is 1080p, which this profile does not take',
+        ),
+      );
+      const adapter = aSortingAdapter([
+        { index: 0, name: 'Dune/Dune.1080p.mkv' },
+        { index: 1, name: 'Dune/Sample/Dune.sample.mkv' },
+        { index: 2, name: 'Dune/Dune.srt' },
+      ]);
+      const { queue, downloads } = aQueue({ sent: [aSentDownload()], adapter, judgeFiles });
+
+      await queue.check();
+
+      expect(judgeFiles).toHaveBeenCalledWith(expect.objectContaining({ id: aSentDownload().id }), [
+        'Dune/Dune.1080p.mkv',
+      ]);
+      expect(adapter.remove).toHaveBeenCalledWith(HASH, true);
+      expect(await downloads.find(aSentDownload().id)).toMatchObject({
+        state: 'failed',
+        problem: 'Its file, Dune.1080p.mkv, is 1080p, which this profile does not take',
+      });
+    });
+
+    it('keeps a torrent whose videos are what was asked for', async () => {
+      const adapter = aSortingAdapter([{ index: 0, name: 'Dune/Dune.2160p.mkv' }]);
+      const { queue, downloads } = aQueue({
+        sent: [aSentDownload()],
+        adapter,
+        judgeFiles: () => Promise.resolve(null),
+      });
+
+      await queue.check();
+
+      expect(adapter.remove).not.toHaveBeenCalled();
+      expect((await downloads.find(aSentDownload().id))?.filesChecked).toBe(true);
     });
 
     it('throws out a torrent that holds nothing a library takes', async () => {

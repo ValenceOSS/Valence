@@ -663,6 +663,55 @@ describe('createRequestWorker', () => {
     });
   });
 
+  describe('judging what a download holds', () => {
+    const FOUR_K = aProfile({
+      id: '6ba7b810-9dad-11d1-80b4-00c04fd430c9',
+      name: '4K',
+      resolutions: ['2160p'],
+    });
+    const TELESYNC = 'Spider-Man.Brand.New.Day.2026.V3.1080p.TELESYNC.x264-DKS_rxl1.mp4';
+
+    it('refuses what a release holds where its files are not what the request asked for', async () => {
+      const { worker } = aWorker({
+        requests: [aMediaRequest({ profileId: FOUR_K.id })],
+        items: [aRequestItem({ state: 'downloading', downloadId: aSentDownload().id })],
+        profiles: [FOUR_K],
+      });
+
+      expect(await worker.judgeFiles(aSentDownload(), [TELESYNC])).toBe(
+        `Its file, ${TELESYNC}, is 1080p, which this profile does not take`,
+      );
+    });
+
+    it('takes what a release holds where its files are what was asked for', async () => {
+      const { worker } = aWorker({
+        requests: [aMediaRequest({ profileId: FOUR_K.id })],
+        items: [aRequestItem({ state: 'downloading', downloadId: aSentDownload().id })],
+        profiles: [FOUR_K],
+      });
+
+      expect(
+        await worker.judgeFiles(aSentDownload(), ['Film.2026.2160p.WEB-DL.H.265-GRP.mkv']),
+      ).toBeNull();
+    });
+
+    it('leaves a release somebody picked by hand as they picked it', async () => {
+      const { worker } = aWorker({
+        requests: [aMediaRequest({ profileId: FOUR_K.id, isPickedByHand: true })],
+        items: [aRequestItem({ state: 'downloading', downloadId: aSentDownload().id })],
+        profiles: [FOUR_K],
+      });
+
+      expect(await worker.judgeFiles(aSentDownload(), [TELESYNC])).toBeNull();
+    });
+
+    it('says nothing of a download no request is waiting on', async () => {
+      const { worker } = aWorker({ items: [], profiles: [FOUR_K] });
+
+      expect(await worker.judgeFiles(aSentDownload(), [TELESYNC])).toBeNull();
+    });
+  });
+
   describe('music', () => {
     const PINK_FLOYD = aMediaRequest({
       kind: 'artist',

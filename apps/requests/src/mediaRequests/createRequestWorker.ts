@@ -37,6 +37,7 @@ import type {
 } from '@ValenceContracts/schemas/MediaRequest';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { ProbeClient } from '@ValenceRequests/media/createProbeClient';
+import { whatTheFilesSay } from '@ValenceRequests/profiles/whatTheFilesSay';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import type { DownloadClientService } from '@ValenceRequests/downloads/createDownloadClientService';
 import type { DownloadQueueService } from '@ValenceRequests/downloads/createDownloadQueue';
@@ -1117,8 +1118,34 @@ const createRequestWorker = ({
     next(firstMs);
   };
 
+  /**
+   * Whether the videos a download turned out to hold are what its request asked for, judged by their
+   * own names against the request's profile, so a release whose title said more than its files do
+   * is thrown out and the next best looked for. A release somebody picked by hand is left as they
+   * picked it.
+   *
+   * @param download - The download, once its client can list what it holds.
+   * @param videos - The names of the videos it holds.
+   * @returns Why it is not wanted, or null.
+   */
+  const judgeFiles = async (
+    download: Pick<SentDownloadRecord, 'id'>,
+    videos: readonly string[],
+  ): Promise<string | null> => {
+    const held = (await items.list()).find((item) => item.downloadId === download.id);
+    const request = held === undefined ? null : await requests.find(held.requestId);
+
+    if (request === null || request.isPickedByHand) {
+      return null;
+    }
+
+    return whatTheFilesSay(videos, await profileFor(request));
+  };
+
   return {
     tick,
+
+    judgeFiles,
 
     searchMissing,
 
