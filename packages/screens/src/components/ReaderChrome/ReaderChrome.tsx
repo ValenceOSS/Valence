@@ -122,7 +122,10 @@ const ReaderChrome = ({
           </Button>
         </header>
 
-        <div className={cn('relative flex min-h-0 flex-1 overflow-hidden', className)}>
+        <div
+          data-reader-surface
+          className={cn('relative flex min-h-0 flex-1 overflow-hidden', className)}
+        >
           {children}
 
           {isScrolling ? null : (

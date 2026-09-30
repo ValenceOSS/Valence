@@ -9,6 +9,7 @@ type RailProps = {
   sizesCards?: boolean | undefined;
   cards?: 'wide' | 'portrait' | undefined;
   hasArrows?: boolean | undefined;
+  look?: 'title' | 'section' | undefined;
   className?: string;
 };
 

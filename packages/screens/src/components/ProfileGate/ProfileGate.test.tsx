@@ -183,7 +183,7 @@ describe('ProfileGate', () => {
 
       await actor.type(screen.getByLabelText('Email'), 'operator@valence.test');
       await actor.type(screen.getByLabelText('Password'), 'a-password');
-      await actor.click(screen.getByRole('button', { name: /Watch/ }));
+      await actor.click(screen.getByRole('button', { name: /Login/ }));
 
       await waitFor(() => {
         expect(onSignedIn).toHaveBeenCalled();
@@ -212,7 +212,7 @@ describe('ProfileGate', () => {
     await arrive();
     await actor.click(screen.getByRole('button', { name: /Marques/ }));
     await actor.type(screen.getByLabelText('Password'), 'a password');
-    await actor.click(screen.getByRole('button', { name: /Watch/ }));
+    await actor.click(screen.getByRole('button', { name: /Login/ }));
 
     await waitFor(() => {
       expect(onSignedIn).toHaveBeenCalledOnce();
@@ -230,7 +230,7 @@ describe('ProfileGate', () => {
     await arrive();
     await actor.click(screen.getByRole('button', { name: /Marques/ }));
     await actor.type(screen.getByLabelText('Password'), 'a password');
-    await actor.click(screen.getByRole('button', { name: /Watch/ }));
+    await actor.click(screen.getByRole('button', { name: /Login/ }));
 
     await waitFor(() => {
       expect(screen.getByLabelText('Authenticator code')).toBeInTheDocument();
@@ -249,7 +249,7 @@ describe('ProfileGate', () => {
     await arrive();
     await actor.click(screen.getByRole('button', { name: /Marques/ }));
     await actor.type(screen.getByLabelText('Password'), 'a password');
-    await actor.click(screen.getByRole('button', { name: /Watch/ }));
+    await actor.click(screen.getByRole('button', { name: /Login/ }));
 
     await waitFor(() => {
       expect(screen.getByText('Marques')).toBeInTheDocument();
@@ -266,7 +266,7 @@ describe('ProfileGate', () => {
     await arrive();
     await actor.click(screen.getByRole('button', { name: /Marques/ }));
     await actor.type(screen.getByLabelText('Password'), 'wrong');
-    await actor.click(screen.getByRole('button', { name: /Watch/ }));
+    await actor.click(screen.getByRole('button', { name: /Login/ }));
 
     expect(await screen.findByText('That password is not right.')).toBeInTheDocument();
   });
@@ -279,7 +279,7 @@ describe('ProfileGate', () => {
     await arrive();
     await actor.click(screen.getByRole('button', { name: /Marques/ }));
 
-    expect(screen.getByRole('button', { name: /Watch/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Login/ })).toBeDisabled();
   });
 
   it('asks straight away for the profile somebody already chose elsewhere', async () => {

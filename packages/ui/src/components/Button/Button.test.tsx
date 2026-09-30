@@ -328,7 +328,7 @@ describe('Button', () => {
 
       const button = screen.getByRole('button', { name: 'Close' });
 
-      expect(button).toHaveClass('bg-scrim');
+      expect(button).toHaveClass('bg-overlay');
       expect(button).toHaveClass('text-on-scrim');
     });
 

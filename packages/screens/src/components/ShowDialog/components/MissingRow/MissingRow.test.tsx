@@ -21,16 +21,16 @@ describe('MissingRow', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
-  it('keeps its number in the column the real rows use', () => {
-    render(<MissingRow episodeNumber={12} />);
+  it('leads its title with its number, as the real rows do', () => {
+    render(<MissingRow episodeNumber={12} title="The Answer" />);
 
-    expect(screen.getByText('12')).toBeInTheDocument();
+    expect(screen.getByText('12. The Answer')).toBeInTheDocument();
   });
 
   it('calls the episode what the catalogue calls it, when it said', () => {
     render(<MissingRow episodeNumber={3} title="Someone Is Thinking of Someone" />);
 
-    expect(screen.getByText('Someone Is Thinking of Someone')).toBeInTheDocument();
+    expect(screen.getByText('3. Someone Is Thinking of Someone')).toBeInTheDocument();
   });
 
   it('falls back to the number when nothing named it', () => {

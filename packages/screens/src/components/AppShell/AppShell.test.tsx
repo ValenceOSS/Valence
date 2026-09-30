@@ -282,13 +282,29 @@ describe('AppShell', () => {
     expect(screen.queryByRole('menuitem', { name: 'Sign out' })).not.toBeInTheDocument();
   });
 
+  it('draws the account as a pill with the name of whoever is watching beside their face', () => {
+    draw({ avatar: <span>face</span>, accountName: 'Marques' });
+
+    const account = screen.getByRole('button', { name: 'Account' });
+
+    expect(account).toHaveClass('rounded-full');
+    expect(account).toHaveTextContent('Marques');
+  });
+
+  it('draws the face alone where no name was given', () => {
+    draw({ avatar: <span>face</span> });
+
+    expect(screen.getByRole('button', { name: 'Account' })).not.toHaveTextContent('Marques');
+  });
+
   it('lights the page with the colour of what is being shown', () => {
     const { view } = draw({ moodLights: [{ color: '#5a3c8c', at: '20% 30%' }] });
 
     const bloom = view.container.querySelector<HTMLElement>('.valence-bloom');
 
-    expect(bloom?.style.background).toContain('rgb(90, 60, 140)');
-    expect(bloom?.style.background).toContain('20% 30%');
+    expect(bloom?.style.getPropertyValue('--bloom-color')).toBe('#5a3c8c');
+    expect(bloom?.style.getPropertyValue('--bloom-x')).toBe('20%');
+    expect(bloom?.style.getPropertyValue('--bloom-y')).toBe('30%');
   });
 
   it('leaves room above every page for the bar laid over its top', () => {

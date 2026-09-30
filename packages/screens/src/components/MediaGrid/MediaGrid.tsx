@@ -1,4 +1,6 @@
+import { motion } from 'motion/react';
 import { VirtualGrid } from '@ValenceUI/VirtualGrid';
+import { useArrivals } from '@ValenceScreens/motion/useArrivals';
 import { RailCard } from '@ValenceScreens/components/RailCard/RailCard';
 import type { MediaGridProps, MediaGridSize } from './MediaGrid.types';
 
@@ -28,6 +30,9 @@ const UNDER_A_CARD = 64;
  * @param onHide - Told to hide something from this viewer.
  * @param size - How large the cards are.
  * @param shape - Whether each card stands upright as a poster or lies flat; posters sit more to a row.
+ *
+ * The first screenful of cards arrives one after another, and each card loaded after that as its
+ * page comes in; a card scrolled away and back just appears.
  */
 const MediaGrid = ({
   items,
@@ -43,50 +48,55 @@ const MediaGrid = ({
   isSeries = false,
   onOpenShow,
   shape = 'wide',
-}: MediaGridProps) => (
-  <VirtualGrid
-    count={items.length}
-    label="What is here"
-    leastCardWidth={(shape === 'poster' ? POSTER_WIDTHS : WIDE_WIDTHS)[size]}
-    rowHeight={
-      (shape === 'poster'
-        ? POSTER_WIDTHS[size] * POSTER_TO_WIDTH
-        : WIDE_WIDTHS[size] * WIDE_TO_WIDTH) + UNDER_A_CARD
-    }
-  >
-    {(at) => {
-      const media = items[at];
+}: MediaGridProps) => {
+  const arrivalOf = useArrivals();
 
-      if (media === undefined) {
-        return null;
+  return (
+    <VirtualGrid
+      count={items.length}
+      label="What is here"
+      leastCardWidth={(shape === 'poster' ? POSTER_WIDTHS : WIDE_WIDTHS)[size]}
+      rowHeight={
+        (shape === 'poster'
+          ? POSTER_WIDTHS[size] * POSTER_TO_WIDTH
+          : WIDE_WIDTHS[size] * WIDE_TO_WIDTH) + UNDER_A_CARD
       }
+    >
+      {(at) => {
+        const media = items[at];
 
-      return (
-        <RailCard
-          key={media.id}
-          media={media}
-          {...(unwatchedFor?.(media) === undefined
-            ? {}
-            : { unwatchedCount: unwatchedFor(media) ?? 0 })}
-          {...(watchedFractionFor?.(media.id) === undefined
-            ? {}
-            : { watchedFraction: watchedFractionFor(media.id) ?? 0 })}
-          {...(resumeFor === undefined || resumeFor(media.id) === null
-            ? {}
-            : { resumeSeconds: Math.floor(resumeFor(media.id) ?? 0) })}
-          onPlay={onPlay}
-          onInspect={onInspect}
-          isSeries={typeof isSeries === 'function' ? isSeries(media) : isSeries}
-          shape={shape}
-          {...(onOpenShow === undefined ? {} : { onOpenShow })}
-          {...(isKept === undefined ? {} : { isKept: isKept(media.id) })}
-          {...(onToggleKept === undefined ? {} : { onToggleKept })}
-          {...(onHide === undefined ? {} : { onHide })}
-        />
-      );
-    }}
-  </VirtualGrid>
-);
+        if (media === undefined) {
+          return null;
+        }
+
+        return (
+          <motion.div key={media.id} {...arrivalOf(media.id)}>
+            <RailCard
+              media={media}
+              {...(unwatchedFor?.(media) === undefined
+                ? {}
+                : { unwatchedCount: unwatchedFor(media) ?? 0 })}
+              {...(watchedFractionFor?.(media.id) === undefined
+                ? {}
+                : { watchedFraction: watchedFractionFor(media.id) ?? 0 })}
+              {...(resumeFor === undefined || resumeFor(media.id) === null
+                ? {}
+                : { resumeSeconds: Math.floor(resumeFor(media.id) ?? 0) })}
+              onPlay={onPlay}
+              onInspect={onInspect}
+              isSeries={typeof isSeries === 'function' ? isSeries(media) : isSeries}
+              shape={shape}
+              {...(onOpenShow === undefined ? {} : { onOpenShow })}
+              {...(isKept === undefined ? {} : { isKept: isKept(media.id) })}
+              {...(onToggleKept === undefined ? {} : { onToggleKept })}
+              {...(onHide === undefined ? {} : { onHide })}
+            />
+          </motion.div>
+        );
+      }}
+    </VirtualGrid>
+  );
+};
 
 MediaGrid.displayName = 'MediaGrid';
 

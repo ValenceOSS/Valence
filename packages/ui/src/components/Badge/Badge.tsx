@@ -8,7 +8,7 @@ const TONE_CLASSES: Record<BadgeTone, string> = {
   accent: 'bg-accent text-accent-contrast',
   success: 'bg-success text-surface',
   highlight: 'bg-highlight text-highlight-contrast',
-  solid: 'bg-shade text-on-scrim',
+  solid: 'bg-overlay text-on-scrim',
   busy: 'bg-busy text-surface',
   waiting: 'bg-busy text-surface',
   warning: 'bg-highlight text-highlight-contrast',

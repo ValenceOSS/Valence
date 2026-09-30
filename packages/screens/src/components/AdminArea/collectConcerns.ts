@@ -19,6 +19,7 @@ type Concern = {
   panel: string;
   search?: ObservabilitySearch;
   help?: string | null;
+  items?: { name: string; problem: string }[];
 };
 
 type CollectConcernsOptions = {
@@ -103,8 +104,16 @@ const collectConcerns = ({
       detail:
         failingIndexers.length === 1
           ? (first?.problem ?? '')
-          : failingIndexers.map((indexer) => `${indexer.name}: ${indexer.problem}`).join(' · '),
+          : failingIndexers.map((indexer) => indexer.name).join(', '),
       panel: 'indexers',
+      ...(failingIndexers.length === 1
+        ? {}
+        : {
+            items: failingIndexers.map((indexer) => ({
+              name: indexer.name,
+              problem: indexer.problem,
+            })),
+          }),
       help: docsFor(failingIndexers.length === 1 ? first?.problemCode : null),
     });
   }

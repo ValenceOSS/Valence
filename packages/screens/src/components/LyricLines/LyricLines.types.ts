@@ -1,6 +1,6 @@
 import type { Lyrics } from '@ValenceContracts/schemas/Music';
 
-type LyricLinesLook = 'page' | 'immersive';
+type LyricLinesLook = 'page' | 'immersive' | 'panel';
 
 type LyricLinesProps = {
   lyrics: Lyrics;

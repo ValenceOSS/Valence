@@ -207,7 +207,7 @@ describe('ShowDialog', () => {
       fetchShowMock.mockResolvedValue(detail([{ seasonNumber: 1, episodes: [1] }]));
       renderInAnAddress(<ShowDialog show={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-      await screen.findByText('Episode 1');
+      await screen.findByText('1. Episode 1');
 
       expect(screen.queryByRole('button', { name: /as watched/ })).not.toBeInTheDocument();
     });
@@ -458,8 +458,8 @@ describe('ShowDialog', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Season 2' }));
 
-    expect(screen.getByText('A Fresh Start')).toBeInTheDocument();
-    expect(screen.getByText('The Second')).toBeInTheDocument();
+    expect(screen.getByText('1. A Fresh Start')).toBeInTheDocument();
+    expect(screen.getByText('2. The Second')).toBeInTheDocument();
     expect(screen.getAllByText('Not in this library')).toHaveLength(2);
   });
 
@@ -499,9 +499,9 @@ describe('ShowDialog', () => {
     });
     renderInAnAddress(<ShowDialog show={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
 
-    await screen.findByText('Someone Is Thinking');
+    await screen.findByText('3. Someone Is Thinking');
 
-    expect(screen.getByText('What Kind of Voice?')).toBeInTheDocument();
+    expect(screen.getByText('4. What Kind of Voice?')).toBeInTheDocument();
   });
 
   it('offers the specials a series has and this library does not', async () => {

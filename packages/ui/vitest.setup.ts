@@ -54,6 +54,55 @@ const answerPointerCapture = (): void => {
 
 answerPointerCapture();
 
+class AlwaysInView implements IntersectionObserver {
+  readonly root = null;
+
+  readonly rootMargin = '0px';
+
+  readonly thresholds = [0];
+
+  private readonly report: IntersectionObserverCallback;
+
+  constructor(report: IntersectionObserverCallback) {
+    this.report = report;
+  }
+
+  observe(target: Element): void {
+    const bounds = target.getBoundingClientRect();
+
+    this.report(
+      [
+        {
+          target,
+          isIntersecting: true,
+          intersectionRatio: 1,
+          boundingClientRect: bounds,
+          intersectionRect: bounds,
+          rootBounds: null,
+          time: 0,
+        },
+      ],
+      this,
+    );
+  }
+
+  unobserve(): void {
+    return undefined;
+  }
+
+  disconnect(): void {
+    return undefined;
+  }
+
+  takeRecords(): IntersectionObserverEntry[] {
+    return [];
+  }
+}
+
+if (!('IntersectionObserver' in globalThis)) {
+  globalThis.IntersectionObserver = AlwaysInView;
+}
+
 if (!('ResizeObserver' in globalThis)) {
   globalThis.ResizeObserver = LayoutlessResizeObserver;
 }

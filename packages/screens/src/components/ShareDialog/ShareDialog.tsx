@@ -110,35 +110,33 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
 
   return (
     <Dialog label="Share" isOpen={isOpen} onClose={onClose}>
-      <DialogContent className="p-3 sm:p-4">
-        <div className="relative overflow-hidden rounded-2xl">
-          <div className="relative h-48 sm:h-56">
-            {backdrop === null ? (
-              <div aria-hidden className="absolute inset-0 bg-surface-raised" />
-            ) : (
-              <img src={backdrop} alt="" className="absolute inset-0 h-full w-full object-cover" />
-            )}
+      <DialogContent className="p-2.5 sm:p-3">
+        <div className="relative h-28 overflow-hidden rounded-xl sm:h-32">
+          {backdrop === null ? (
+            <div aria-hidden className="absolute inset-0 bg-surface-raised" />
+          ) : (
+            <img src={backdrop} alt="" className="absolute inset-0 h-full w-full object-cover" />
+          )}
 
-            <BackdropScrim />
-          </div>
+          <BackdropScrim />
 
-          <div className="absolute right-4 top-4">
-            <Button isIconOnly variant="overlay" label="Close" onClick={onClose}>
-              <Icon of={XIcon} size={20} />
+          <div className="absolute right-3 top-3">
+            <Button isIconOnly variant="overlay" size="sm" label="Close" onClick={onClose}>
+              <Icon of={XIcon} size={16} />
             </Button>
           </div>
 
-          <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-5 sm:p-6">
-            <span className="text-sm font-medium uppercase tracking-[0.2em] text-on-scrim/75">
+          <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1 p-4">
+            <span className="text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-on-scrim/75">
               Share
             </span>
 
-            <h2 className="max-w-[18ch] text-[clamp(1.5rem,4vw,2.5rem)] font-semibold leading-[0.95] tracking-[-0.03em] text-on-scrim">
+            <h2 className="max-w-[24ch] truncate text-xl font-semibold leading-tight tracking-[-0.02em] text-on-scrim">
               {isLettered ? (
                 <TitleLogo
                   src={titleLogoUrl(media.id)}
                   alt={named}
-                  className="max-h-[6svh] w-auto max-w-[min(55vw,13rem)] object-contain object-left"
+                  className="max-h-9 w-auto max-w-[min(50vw,11rem)] object-contain object-left"
                   onError={() => {
                     setIsUnlettered(true);
                   }}
@@ -151,60 +149,64 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
         </div>
 
         {link === null ? (
-          <div className="flex flex-col gap-5 px-2 pb-2 pt-6 sm:px-3">
-            {subject?.kind === 'series' || subject?.kind === 'book' ? (
-              <span className="flex items-center justify-between gap-4">
-                <span className="shrink-0 text-sm text-text-muted">What to share</span>
+          <div className="flex flex-col gap-3 pt-3">
+            <div className="valence-card-face grid grid-cols-[max-content_minmax(0,1fr)] gap-x-6 divide-y divide-[var(--surface-line)] px-3 py-1 [&>span]:col-span-2 [&>span]:grid [&>span]:grid-cols-subgrid [&>span]:items-center [&>span]:py-2">
+              {subject?.kind === 'series' || subject?.kind === 'book' ? (
+                <span className="flex items-center justify-between gap-4">
+                  <span className="shrink-0 text-sm text-text-muted">What to share</span>
 
-                <span className="flex h-9 min-w-0 items-center truncate text-sm font-medium text-text">
-                  {subject.kind === 'book' ? 'The whole book' : 'The whole programme'}
+                  <span className="flex h-9 min-w-0 items-center truncate text-sm font-medium text-text">
+                    {subject.kind === 'book' ? 'The whole book' : 'The whole programme'}
+                  </span>
                 </span>
-              </span>
-            ) : null}
+              ) : null}
 
-            {isEpisode ? (
+              {isEpisode ? (
+                <Choice
+                  label="What to share"
+                  value={kind}
+                  options={[
+                    { id: 'item', label: 'Just this episode' },
+                    { id: 'series', label: 'The whole programme' },
+                  ]}
+                  onSelect={(chosen) => {
+                    setKind(chosen === 'series' ? 'series' : 'item');
+                  }}
+                />
+              ) : null}
+
+              <Choice label="Lasts" value={lasts} options={SHARE_LASTS} onSelect={setLasts} />
+
               <Choice
-                label="What to share"
-                value={kind}
-                options={[
-                  { id: 'item', label: 'Just this episode' },
-                  { id: 'series', label: 'The whole programme' },
-                ]}
-                onSelect={(chosen) => {
-                  setKind(chosen === 'series' ? 'series' : 'item');
-                }}
+                label={subject?.kind === 'book' ? 'Who can read' : 'Who can watch'}
+                value={cap}
+                options={SHARE_CAPS}
+                onSelect={setCap}
               />
-            ) : null}
+            </div>
 
-            <Choice label="Lasts" value={lasts} options={SHARE_LASTS} onSelect={setLasts} />
+            {refusal === null ? null : <p className="px-1 text-sm text-danger">{refusal}</p>}
 
-            <Choice
-              label={subject?.kind === 'book' ? 'Who can read' : 'Who can watch'}
-              value={cap}
-              options={SHARE_CAPS}
-              onSelect={setCap}
-            />
+            <div className="flex flex-wrap items-center justify-between gap-3 px-1">
+              <p className="min-w-0 flex-1 basis-56 font-body text-xs text-text-muted">
+                {subject?.kind === 'book'
+                  ? 'Only this book, and you can withdraw it at any time.'
+                  : 'Only what you share, and you can withdraw it at any time, even mid-watch.'}
+              </p>
 
-            <p className="font-body text-xs text-text-muted">
-              {subject?.kind === 'book'
-                ? 'Anybody holding the link can read this book, and nothing else. Where they are up to stays on their own device. You can withdraw it at any time.'
-                : 'Anybody holding the link can watch what you shared, and nothing else. You can withdraw it at any time, including while somebody is watching.'}
-            </p>
-
-            {refusal === null ? null : <p className="text-sm text-danger">{refusal}</p>}
-
-            <Button
-              variant="confirm"
-              isLoading={isWorking}
-              onClick={() => {
-                void hand();
-              }}
-            >
-              Make a link
-            </Button>
+              <Button
+                variant="confirm"
+                isLoading={isWorking}
+                onClick={() => {
+                  void hand();
+                }}
+              >
+                Make a link
+              </Button>
+            </div>
           </div>
         ) : (
-          <div className="flex flex-col gap-4 px-2 pb-2 pt-6 sm:px-3">
+          <div className="flex flex-col gap-3 px-1 pt-4">
             <p className="font-body text-sm text-text-muted">
               Copy it now — this is the only time it is shown.
             </p>
@@ -213,6 +215,7 @@ const ShareDialog = ({ subject, isOpen, onClose, origin }: ShareDialogProps) => 
 
             <Button
               variant="confirm"
+              className="self-end"
               onClick={() => {
                 void navigator.clipboard.writeText(link).then(() => {
                   setIsCopied(true);

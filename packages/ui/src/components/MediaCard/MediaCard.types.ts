@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { IconGlyph } from '@ValenceUI/Icon.types';
 
-type MediaCardShape = 'poster' | 'wide';
+type MediaCardShape = 'poster' | 'wide' | 'book';
 
 type MediaCardEmphasis = 'lead' | 'standard';
 

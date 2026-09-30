@@ -25,8 +25,6 @@ import { ReaderPicker } from '@ValenceScreens/components/ReaderPicker/ReaderPick
 import { readPanelPinned, writePanelPinned } from '@ValenceScreens/reading/panelPreference';
 import type { PageReaderProps } from './PageReader.types';
 
-const A_SWIPE = 48;
-
 /**
  * Names a spread of pages the way somebody would say it: one page, or two with a dash between.
  *
@@ -110,7 +108,6 @@ const PageReader = ({
   const { isShown: isChromeShown, wake, keep } = useChromeThatHides();
   const [isPanelPinned, setIsPanelPinned] = useState(readPanelPinned);
   const [isPanelOpen, setIsPanelOpen] = useState(isPanelPinned);
-  const startedAt = useRef<number | null>(null);
   const [scale, setScale] = useState(CLOSEST);
   const [moved, setMoved] = useState({ x: 0, y: 0 });
   const pinch = useRef<{ from: number; base: number } | null>(null);
@@ -232,7 +229,6 @@ const PageReader = ({
 
         if (one !== undefined && other !== undefined) {
           pinch.current = { from: distanceBetween(one, other), base: scale };
-          startedAt.current = null;
           setIsBeingMoved(true);
 
           return;
@@ -241,11 +237,7 @@ const PageReader = ({
         if (scale > CLOSEST && one !== undefined) {
           dragged.current = { x: one.clientX, y: one.clientY, from: moved };
           setIsBeingMoved(true);
-
-          return;
         }
-
-        startedAt.current = one?.clientX ?? null;
       }}
       onTouchMove={(event) => {
         const [one, other] = [event.touches[0], event.touches[1]];
@@ -269,25 +261,11 @@ const PageReader = ({
           });
         }
       }}
-      onTouchEnd={(event) => {
-        const from = startedAt.current;
-        const to = event.changedTouches[0]?.clientX ?? null;
-
+      onTouchEnd={() => {
         pinch.current = null;
         dragged.current = null;
-        startedAt.current = null;
         setIsBeingMoved(false);
-
-        if (from === null || to === null || Math.abs(to - from) < A_SWIPE) {
-          wake();
-
-          return;
-        }
-
-        const wentLeft = to < from;
-        const isRightToLeft = settings.direction === 'rightToLeft';
-
-        (wentLeft === isRightToLeft ? back : forward)();
+        wake();
       }}
     >
       <ReaderChrome
@@ -562,6 +540,10 @@ const PageReader = ({
               gap={settings.gap}
               isRightToLeft={settings.direction === 'rightToLeft'}
               isAnimated={settings.isAnimated}
+              isHeld={scale > CLOSEST}
+              canGoBack={which > 0}
+              canGoOn={which < ordering.length - 1}
+              onTurn={turn}
               onLoaded={noted}
             />
           </div>

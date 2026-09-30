@@ -38,7 +38,7 @@ const describeRequestsSolver = (overview: RequestsOverview): RequestsHealth => {
     (solver.lastPassedAt === null || solver.lastFailedAt > solver.lastPassedAt)
   ) {
     return {
-      label: 'Failing',
+      label: 'Offline',
       tone: 'danger',
       detail: `Last failed ${saidWhen(solver.lastFailedAt)}: ${solver.problem ?? 'no reason given'}.`,
       help: docsFor('CloudflareCheckFailed'),
@@ -46,7 +46,7 @@ const describeRequestsSolver = (overview: RequestsOverview): RequestsHealth => {
   }
 
   return {
-    label: 'Working',
+    label: 'Online',
     tone: 'success',
     detail: '',
   };

@@ -14,6 +14,7 @@ type DialogConfirmation = DialogAnswer & {
 
 type DialogFooterProps = {
   children?: ReactNode;
+  lead?: ReactNode;
   dismiss?: DialogAnswer;
   confirm?: DialogConfirmation | undefined;
   note?: string | null | undefined;

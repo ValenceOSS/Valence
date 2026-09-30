@@ -357,7 +357,7 @@ const MediaPreview = ({
           {!hasStarted ? null : (
             <Button
               isIconOnly
-              variant="ghost"
+              variant="overlay"
               label={isPaused ? 'Play the preview' : 'Pause the preview'}
               onClick={() => {
                 const element = videoRef.current;
@@ -372,7 +372,6 @@ const MediaPreview = ({
                   element.pause();
                 }
               }}
-              className="bg-shade/50 text-on-scrim backdrop-blur"
             >
               {isPaused ? (
                 <Icon of={PlayFilledIcon} size={18} />
@@ -386,7 +385,7 @@ const MediaPreview = ({
             <>
               <Button
                 isIconOnly
-                variant="ghost"
+                variant="overlay"
                 label={isMuted ? 'Turn sound on' : 'Turn sound off'}
                 onClick={() => {
                   const element = videoRef.current;
@@ -401,7 +400,6 @@ const MediaPreview = ({
                   setIsMuted(isSilenced);
                   saveSoundPreference(isSilenced ? 'muted' : 'audible');
                 }}
-                className="bg-shade/50 text-on-scrim backdrop-blur"
               >
                 {isMuted ? (
                   <Icon of={VolumeOffIcon} size={18} />

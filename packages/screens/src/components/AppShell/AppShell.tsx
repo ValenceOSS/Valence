@@ -42,20 +42,15 @@ import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { NavBar } from '@ValenceUI/NavBar';
-import { Logo } from '@ValenceUI/Logo';
 import { MoodBackground } from '@ValenceUI/MoodBackground';
-import {
-  revealVariants,
-  revealTransition,
-  staggerVariants,
-  liquidSpring,
-  stillTransition,
-} from '@ValenceUI/animations/reveal';
+import { revealVariants, revealTransition, staggerVariants } from '@ValenceUI/animations/reveal';
 import { useTheme } from '@ValenceClient/shell/useTheme';
 import { THEME_CHOICES } from '@ValenceScreens/theme/themeChoices';
 import { useMotion } from '@ValenceClient/shell/useMotion';
 import { MOTION_CHOICES } from '@ValenceScreens/motion/motionChoices';
 import { BROWSE_SECTIONS } from './AppShell.types';
+import { BrandMark } from '@ValenceScreens/components/AppShell/components/BrandMark/BrandMark';
+import { AccountFace } from '@ValenceScreens/components/AppShell/components/AccountFace/AccountFace';
 import type { ReactNode } from 'react';
 import type { IconGesture } from '@ValenceUI/AnimatedIcon.types';
 import type { NavBarAction, NavBarItem } from '@ValenceUI/NavBar.types';
@@ -181,12 +176,14 @@ const SECTION_LABELS: Record<ShellSection, string> = {
  * @param isAccountOpen - Whether the account dialog is raised, which lights the bar's face.
  * @param onOpenAccount - Told to raise the account dialog.
  * @param avatar - The face to draw on the account control.
+ * @param accountName - The name of whoever is watching, drawn beside their face.
  * @param onSignOut - Told to end the session.
  * @param onSurprise - Told to choose something at random, optionally from one kind of library.
  * @param libraryKinds - Which kinds of library there are, which decides whether the dice offer a
  *   menu or simply act.
  * @param libraryChoices - For films, programmes and books, a choice between the libraries that hold
  *   them, given only where there are several to choose from.
+ * @param requestsChoices - For Discover, the choice between its views, offered from the bar.
  * @param stocked - Which of films, programmes and books have anything in them, once known. A place
  *   in the bar is offered only where there is something to find there — an empty library is not a
  *   place to go — and every place is offered until the answer arrives, rather than places
@@ -217,10 +214,12 @@ const AppShell = ({
   isSearchOpen,
   onOpenSearch,
   avatar,
+  accountName,
   onSignOut,
   onSurprise,
   libraryKinds,
   libraryChoices = {},
+  requestsChoices,
   stocked,
   mayRequest = false,
   onOpenFavourites,
@@ -300,7 +299,11 @@ const AppShell = ({
 
   const items: NavBarItem[] = places.map((id) => {
     const choices =
-      id === 'films' || id === 'shows' || id === 'read' ? libraryChoices[id] : undefined;
+      id === 'films' || id === 'shows' || id === 'read'
+        ? libraryChoices[id]
+        : id === 'requests'
+          ? requestsChoices
+          : undefined;
 
     return {
       id,
@@ -316,9 +319,7 @@ const AppShell = ({
     avatar === undefined ? (
       <Icon of={CircleUserIcon} size={22} />
     ) : (
-      <span data-face-lands className="flex [html[data-face-arriving]_&]:opacity-0">
-        {avatar}
-      </span>
+      <AccountFace avatar={avatar} {...(accountName === undefined ? {} : { name: accountName })} />
     );
 
   const actions: NavBarAction[] = [
@@ -400,13 +401,14 @@ const AppShell = ({
       id: 'account',
       label: 'Account',
       icon: face,
+      arrivesOnItsOwn: avatar !== undefined,
       gesture: avatar === undefined ? ('settle' as const) : ('none' as const),
       isCurrent: isAccountOpen,
       control: (
         <ActionMenu
           label="Account"
           align="end"
-          look="face"
+          look={accountName === undefined ? 'face' : 'pill'}
           trigger={face}
           groups={[
             ...[
@@ -543,27 +545,9 @@ const AppShell = ({
               onClick={() => {
                 onSectionChange('home');
               }}
-              className="flex items-center gap-2.5 rounded-md coarse:min-h-11"
+              className="flex items-center rounded-md coarse:min-h-11"
             >
-              {hasMark ? (
-                <motion.span
-                  layoutId={MARKS_PLACE}
-                  transition={{
-                    layout: prefersReducedMotion === true ? stillTransition : liquidSpring,
-                  }}
-                  className="flex items-center"
-                >
-                  <Logo size={28} isSolid />
-                </motion.span>
-              ) : (
-                <span aria-hidden className="flex items-center opacity-0">
-                  <Logo size={28} isSolid />
-                </span>
-              )}
-
-              <span className="hidden font-sans text-xl font-medium tracking-tight text-text sm:inline">
-                Valence
-              </span>
+              <BrandMark hasMark={hasMark} marksPlace={MARKS_PLACE} />
             </Button>
           }
           solidity={solidity}

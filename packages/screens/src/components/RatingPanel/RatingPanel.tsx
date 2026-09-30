@@ -1,9 +1,9 @@
 import { StarRating } from '@ValenceUI/StarRating';
-import { cn } from '@ValenceUI/cn';
 import { useQuery } from '@tanstack/react-query';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
-import { useShell } from '@ValenceClient/shell/useShell';
+import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
 import { useStars } from '@ValenceClient/library/useStars';
+import { DialogSection } from '@ValenceScreens/components/DialogSection/DialogSection';
 import type { HouseholdRating } from '@ValenceContracts/schemas/Rating';
 import type { RatingPanelProps } from './RatingPanel.types';
 
@@ -30,7 +30,8 @@ const describeCount = (count: number): string =>
  * Reads its own star rather than being handed one. Handed down, the star had to be looked up by
  * whoever drew the dialog — which meant the shell subscribing to every rating in the library in
  * order to find one, and redrawing the page behind the dialog each time a star was pressed. Asked
- * for here, and narrowed to this subject, the only thing a press redraws is this panel.
+ * for here, and narrowed to this subject, the only thing a press redraws is this panel. Read for the
+ * profile being watched as, which is whose ratings a press writes, so the star it fills is this one.
  *
  * @param subject - The item, programme or book being rated.
  * @param title - What is being rated, for anybody not looking at the screen.
@@ -38,17 +39,14 @@ const describeCount = (count: number): string =>
  * @param className - Extra classes for the caller's own layout.
  */
 const RatingPanel = ({ subject, title, onRate, className }: RatingPanelProps) => {
-  const { user } = useShell();
-  const stars = useStars(user.id, subject);
+  const stars = useStars(useWatchingProfile(), subject);
 
   const asked = useQuery(viewingQueries.household(subject));
 
   const household = asked.data ?? NOTHING;
 
   return (
-    <section className={cn('flex flex-col gap-3', className)}>
-      <h3 className="text-sm font-medium uppercase tracking-[0.18em] text-text-muted">Ratings</h3>
-
+    <DialogSection heading="Ratings" {...(className === undefined ? {} : { className })}>
       <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
         <div className="flex flex-col gap-1.5">
           <span className="text-xs uppercase tracking-[0.16em] text-text-muted">You</span>
@@ -79,7 +77,7 @@ const RatingPanel = ({ subject, title, onRate, className }: RatingPanelProps) =>
           </div>
         )}
       </div>
-    </section>
+    </DialogSection>
   );
 };
 

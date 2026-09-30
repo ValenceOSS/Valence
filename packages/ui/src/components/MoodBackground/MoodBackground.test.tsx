@@ -29,7 +29,8 @@ describe('MoodBackground', () => {
       <MoodBackground lights={[{ color: 'rgb(10, 20, 30)', at: '77% 12%' }]} />,
     );
 
-    expect(blooms(container)[0]?.style.background).toContain('77% 12%');
+    expect(blooms(container)[0]?.style.getPropertyValue('--bloom-x')).toBe('77%');
+    expect(blooms(container)[0]?.style.getPropertyValue('--bloom-y')).toBe('12%');
   });
 
   it('lights the page from each colour it is given', () => {
@@ -37,15 +38,15 @@ describe('MoodBackground', () => {
       <MoodBackground lights={[{ color: 'rgb(120, 40, 200)' }, { color: 'rgb(20, 160, 120)' }]} />,
     );
 
-    expect(blooms(container)[0]?.style.background).toContain('rgb(120, 40, 200)');
-    expect(blooms(container)[1]?.style.background).toContain('rgb(20, 160, 120)');
+    expect(blooms(container)[0]?.style.getPropertyValue('--bloom-color')).toBe('rgb(120, 40, 200)');
+    expect(blooms(container)[1]?.style.getPropertyValue('--bloom-color')).toBe('rgb(20, 160, 120)');
   });
 
   it('falls back to the house colour when nothing on screen has any light to give', () => {
     const { container } = render(<MoodBackground />);
 
     expect(blooms(container).length).toBeGreaterThan(0);
-    expect(blooms(container)[0]?.style.background).toContain('rgb(56, 68, 150)');
+    expect(blooms(container)[0]?.style.getPropertyValue('--bloom-color')).toBe('rgb(56 68 150)');
   });
 
   it('ignores a colour that is not one', () => {
@@ -53,14 +54,14 @@ describe('MoodBackground', () => {
       <MoodBackground lights={[{ color: '' }, { color: 'rgb(20, 160, 120)' }]} />,
     );
 
-    expect(blooms(container)[0]?.style.background).toContain('rgb(20, 160, 120)');
+    expect(blooms(container)[0]?.style.getPropertyValue('--bloom-color')).toBe('rgb(20, 160, 120)');
   });
 
   it('keeps a bloom for every place, dark past the lights it was given', () => {
     const { container } = render(<MoodBackground lights={[{ color: 'rgb(20, 160, 120)' }]} />);
 
     expect(blooms(container)).toHaveLength(12);
-    expect(blooms(container)[5]?.style.background).toContain('0%, transparent');
+    expect(blooms(container)[5]?.style.getPropertyValue('--bloom-mix')).toBe('0%');
   });
 
   it('draws no more lights than it has places to put them', () => {

@@ -22,7 +22,7 @@ const buttonStyles = cva(
         soft: `${FLAT} border-transparent bg-accent/15 text-accent hover:bg-accent/25`,
         ghost: 'bg-transparent text-foreground hover:bg-[var(--surface-hover)]',
         danger: `${FLAT} border-transparent bg-danger text-destructive-foreground hover:brightness-110`,
-        overlay: 'bg-scrim text-on-scrim backdrop-blur-md hover:brightness-125',
+        overlay: `${FLAT} border-overlay-line bg-overlay text-on-scrim backdrop-blur-md hover:bg-overlay-hover`,
         link: 'bg-transparent text-foreground underline-offset-4 hover:underline',
         discord: `${FLAT} border-transparent bg-[#5865f2] text-accent-contrast hover:brightness-110`,
         subtle: 'bg-transparent text-text-muted hover:text-text',
@@ -86,6 +86,10 @@ const buttonStyles = cva(
       { isIconOnly: true, size: 'lg', class: 'size-10 coarse:size-11' },
       { isIconOnly: true, size: 'xl', class: 'size-11' },
       { variant: 'bare', class: 'shadow-none active:translate-y-0' },
+      {
+        variant: ['bare', 'row', 'link', 'subtle'],
+        class: 'hover-hover:hover:scale-100 active:scale-100',
+      },
       { variant: ['ghost', 'link', 'overlay'], class: 'shadow-none' },
     ],
     defaultVariants: {

@@ -1,5 +1,4 @@
 import {
-  Heart as HeartIcon,
   Laptop as LaptopIcon,
   ListOrdered as ListOrderedIcon,
   Mic as MicIcon,
@@ -10,7 +9,6 @@ import {
   VolumeX as VolumeXIcon,
 } from '@keyline-icons/react';
 import {
-  Heart as HeartFilledIcon,
   Laptop as LaptopFilledIcon,
   ListOrdered as ListOrderedFilledIcon,
   Mic as MicFilledIcon,
@@ -50,6 +48,7 @@ import { idleWhatIsPlaying } from '@ValenceScreens/music/idleWhatIsPlaying';
 import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 import { describeAudioQuality } from '@ValenceClient/music/describeAudioQuality';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';
+import { KeepHeart } from '@ValenceScreens/components/KeepHeart/KeepHeart';
 import type { MusicPanel } from '@ValenceScreens/music/musicPanel';
 import type { Variants } from 'motion/react';
 import type { NowPlayingBarProps } from './NowPlayingBar.types';
@@ -92,7 +91,7 @@ const ROOM: Variants = {
 const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
   const { state, player } = useMusicPlayer(given ?? theMusicPlayer(), { followsPosition: true });
   const playing = useWhatIsPlaying(state);
-  const { view, open } = useMusicNavigation();
+  const { open } = useMusicNavigation();
   const { place, go } = usePlace();
   const panel = useMusicPanel();
   const favourites = useFavourites(useWatchingProfile());
@@ -253,8 +252,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
 
                 <BarButton
                   label={isLiked ? `Unlike ${shown.title}` : `Like ${shown.title}`}
-                  glyph={HeartIcon}
-                  litGlyph={HeartFilledIcon}
+                  face={<KeepHeart isKept={isLiked} size={18} />}
                   gesture="fill"
                   isLit={isLiked}
                   isDisabled={isIdle}
@@ -278,11 +276,7 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                         icon: <Icon of={MicFilledIcon} size={16} />,
                         isDisabled: isIdle,
                         onChoose: () => {
-                          open(
-                            view.kind === 'lyrics' && place.section === 'music'
-                              ? { kind: 'album', id: shown.albumId }
-                              : { kind: 'lyrics' },
-                          );
+                          togglePanel('lyrics');
                         },
                       },
                       {
@@ -333,14 +327,10 @@ const NowPlayingBar = ({ player: given }: NowPlayingBarProps) => {
                   glyph={MicIcon}
                   litGlyph={MicFilledIcon}
                   gesture="ring"
-                  isLit={view.kind === 'lyrics' && place.section === 'music'}
+                  isLit={panel === 'lyrics'}
                   isDisabled={isIdle}
                   onClick={() => {
-                    open(
-                      view.kind === 'lyrics' && place.section === 'music'
-                        ? { kind: 'album', id: shown.albumId }
-                        : { kind: 'lyrics' },
-                    );
+                    togglePanel('lyrics');
                   }}
                 />
 

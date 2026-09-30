@@ -8,7 +8,6 @@ import {
   Download as DownloadIcon,
   EyeOff as EyeOffIcon,
   Film as FilmIcon,
-  Heart as HeartIcon,
   Info as InfoIcon,
   Share as ShareIcon,
   Tape as TapeIcon,
@@ -17,9 +16,9 @@ import {
   X as XIcon,
   Monitor as MonitorIcon,
 } from '@keyline-icons/react';
-import { Heart as HeartFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
+import { Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { useEffect, useRef, useState } from 'react';
-import { motion, useReducedMotionConfig } from 'motion/react';
+import { useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -37,7 +36,10 @@ import { Badge } from '@ValenceUI/Badge';
 import { Skeleton } from '@ValenceUI/Skeleton';
 import { MediaCard } from '@ValenceUI/MediaCard';
 import { Rail } from '@ValenceUI/Rail';
-import { revealVariants, revealTransition, staggerVariants } from '@ValenceUI/animations/reveal';
+import { DialogArrival } from '@ValenceScreens/components/DialogArrival/DialogArrival';
+import { DialogSections } from '@ValenceScreens/components/DialogSections/DialogSections';
+import { DialogHeadline } from '@ValenceScreens/components/DialogHeadline/DialogHeadline';
+import { DialogHeadlinePart } from '@ValenceScreens/components/DialogHeadlinePart/DialogHeadlinePart';
 import { editionOptionsOf } from '@ValenceClient/library/editionOptionsOf';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
@@ -58,6 +60,9 @@ import { EmbeddedVideo } from '@ValenceUI/EmbeddedVideo';
 import { catalogueTrailerUrl } from '@ValenceScreens/library/catalogueTrailerUrl';
 import { CastGrid } from './components/CastGrid/CastGrid';
 import { EXTRA_KIND_LABELS } from '@ValenceContracts/schemas/Library';
+import { KeepHeart } from '@ValenceScreens/components/KeepHeart/KeepHeart';
+import { DialogSection } from '@ValenceScreens/components/DialogSection/DialogSection';
+import { SeasonMate } from './components/SeasonMate/SeasonMate';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaDetailDialogProps } from './MediaDetailDialog.types';
 
@@ -186,12 +191,7 @@ const MediaDetailDialog = ({
           </Button>
         </ScrolledTitle>
 
-        <motion.div
-          key={shown.id}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: prefersReducedMotion === true ? 0 : 0.35, ease: 'easeOut' }}
-        >
+        <DialogArrival key={shown.id}>
           <div ref={topRef} className="relative overflow-hidden rounded-2xl">
             <div className="relative h-[42vh] min-h-[16rem] sm:h-[26rem]">
               <MediaPreview
@@ -212,12 +212,7 @@ const MediaDetailDialog = ({
                             onToggleKept(shown);
                           }}
                         >
-                          <Icon
-                            of={HeartIcon}
-                            whenActive={HeartFilledIcon}
-                            isActive={isKept}
-                            size={18}
-                          />
+                          <KeepHeart isKept={isKept} size={18} />
                         </Button>
                       ),
                     })}
@@ -243,15 +238,10 @@ const MediaDetailDialog = ({
               </Button>
             </div>
 
-            <motion.div
-              variants={staggerVariants}
-              initial="hidden"
-              animate="shown"
-              className="absolute inset-x-0 bottom-0 flex flex-col gap-4 p-5 sm:p-8"
-            >
-              <motion.h2
-                variants={revealVariants(prefersReducedMotion)}
-                transition={revealTransition(prefersReducedMotion, 'heavy')}
+            <DialogHeadline className="absolute inset-x-0 bottom-0 flex flex-col gap-4 p-5 sm:p-8">
+              <DialogHeadlinePart
+                as="h2"
+                isTitle
                 className={
                   isLettered
                     ? 'flex'
@@ -270,22 +260,18 @@ const MediaDetailDialog = ({
                 ) : (
                   (shown.seriesTitle ?? shown.title)
                 )}
-              </motion.h2>
+              </DialogHeadlinePart>
 
               {shown.seriesTitle === null || shown.seriesTitle === undefined ? null : (
-                <motion.span
-                  variants={revealVariants(prefersReducedMotion)}
-                  transition={revealTransition(prefersReducedMotion)}
+                <DialogHeadlinePart
+                  as="span"
                   className="text-sm font-medium uppercase tracking-[0.2em] text-on-scrim/75"
                 >
                   {shown.title}
-                </motion.span>
+                </DialogHeadlinePart>
               )}
 
-              <motion.div
-                variants={revealVariants(prefersReducedMotion)}
-                transition={revealTransition(prefersReducedMotion)}
-              >
+              <DialogHeadlinePart>
                 <MediaFacts
                   media={detail === null ? shown : { ...shown, sizeBytes: detail.sizeBytes }}
                   hasRuntime
@@ -293,21 +279,17 @@ const MediaDetailDialog = ({
                   size="sm"
                   tone="scrim"
                 />
-              </motion.div>
+              </DialogHeadlinePart>
 
-              <motion.div
-                variants={revealVariants(prefersReducedMotion)}
-                transition={revealTransition(prefersReducedMotion)}
-                className="text-on-scrim/85"
-              >
+              <DialogHeadlinePart className="text-on-scrim/85">
                 <TitleBadges detail={detail} />
-              </motion.div>
-            </motion.div>
+              </DialogHeadlinePart>
+            </DialogHeadline>
           </div>
 
           <span ref={pastTheArtwork} aria-hidden className="block h-px" />
 
-          <div className="flex flex-col gap-8 px-2 pb-4 pt-7 sm:px-4">
+          <DialogSections className="flex flex-col gap-3 px-0 pb-4 pt-4">
             {onRate === undefined ? null : (
               <RatingPanel
                 subject={{ mediaId: shown.id }}
@@ -328,11 +310,7 @@ const MediaDetailDialog = ({
               />
             ) : null}
 
-            <section className="flex flex-col gap-3">
-              <h3 className="text-sm font-medium uppercase tracking-[0.18em] text-text-muted">
-                Synopsis
-              </h3>
-
+            <DialogSection heading="Synopsis">
               {isLoading ? (
                 <div aria-hidden className="flex flex-col gap-2">
                   <Skeleton className="h-4 w-full" />
@@ -357,7 +335,7 @@ const MediaDetailDialog = ({
                   ))}
                 </span>
               )}
-            </section>
+            </DialogSection>
 
             <TitleDetails
               seriesTitle={metadata?.seriesTitle}
@@ -370,13 +348,9 @@ const MediaDetailDialog = ({
 
             <PluginPanels on="title" subjectId={shown.id} />
 
-            <section className="flex flex-col gap-3">
+            <DialogSection {...(isLoading || cast.length === 0 ? { heading: 'Cast' } : {})}>
               {isLoading ? (
                 <>
-                  <h3 className="text-sm font-medium uppercase tracking-[0.18em] text-text-muted">
-                    Cast
-                  </h3>
-
                   <ul aria-hidden className="flex gap-4">
                     {Array.from({ length: CAST_PLACEHOLDERS }, (_, index) => index).map((index) => (
                       <li key={index} className="flex min-w-0 flex-1 flex-col items-center gap-3">
@@ -389,10 +363,6 @@ const MediaDetailDialog = ({
                 </>
               ) : cast.length === 0 ? (
                 <>
-                  <h3 className="text-sm font-medium uppercase tracking-[0.18em] text-text-muted">
-                    Cast
-                  </h3>
-
                   <p className="flex items-center gap-2 text-sm text-text-muted">
                     <Icon of={InfoIcon} size={16} />
                     Nobody is credited yet. A metadata provider supplies the cast.
@@ -404,7 +374,7 @@ const MediaDetailDialog = ({
                   {...(onOpenPerson === undefined ? {} : { onOpenPerson })}
                 />
               )}
-            </section>
+            </DialogSection>
 
             {extras.length === 0 ? null : (
               <Rail title="Extras" sizesCards hasArrows={false} className="px-0">
@@ -428,41 +398,30 @@ const MediaDetailDialog = ({
             )}
 
             {shownSiblings.length === 0 ? null : (
-              <Rail
-                title={
+              <DialogSection
+                heading={
                   season === null
                     ? 'More from this series'
                     : `More from season ${season.toString()}`
                 }
-                sizesCards
-                hasArrows={false}
-                className="px-0"
               >
-                {shownSiblings.map((sibling) => (
-                  <li key={sibling.id}>
-                    <MediaCard
-                      {...(sibling.seriesTitle === null || sibling.seriesTitle === undefined
-                        ? {}
-                        : { eyebrow: sibling.title })}
-                      title={sibling.seriesTitle ?? sibling.title}
-                      subtitle={<MediaFacts media={sibling} hasRuntime hasSize />}
-                      shape="wide"
-                      {...(watchedFractionFor?.(sibling.id) === undefined
-                        ? {}
-                        : { watchedFraction: watchedFractionFor(sibling.id) ?? 0 })}
-                      {...(sibling.hasBackdrop
-                        ? { imageUrl: artworkUrl(sibling.id, 'backdrop') }
-                        : {})}
-                      onSelect={() => {
-                        onSelectSibling?.(sibling);
-                      }}
-                    />
-                  </li>
-                ))}
-              </Rail>
+                <ul className="-mx-1 flex snap-x gap-3 overflow-x-auto px-1 pb-1">
+                  {shownSiblings.map((sibling) => (
+                    <li key={sibling.id} className="flex">
+                      <SeasonMate
+                        episode={sibling}
+                        watched={watchedFractionFor?.(sibling.id)}
+                        onSelect={() => {
+                          onSelectSibling?.(sibling);
+                        }}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </DialogSection>
             )}
-          </div>
-        </motion.div>
+          </DialogSections>
+        </DialogArrival>
       </DialogContent>
 
       <DialogFooter>

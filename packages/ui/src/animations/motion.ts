@@ -11,10 +11,14 @@ const POPUP_MOTION = [
 ].join(' ');
 
 const PRESS_MOTION = [
-  'transition-[transform,background-color,border-color,color,box-shadow,filter]',
-  'duration-[var(--duration-instant)] ease-[var(--ease-out)]',
-  'active:translate-y-px',
-  'motion-reduce:transition-none motion-reduce:active:translate-y-0',
+  'transition-[translate,scale,background-color,border-color,color,box-shadow,filter]',
+  'duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)]',
+  'hover-hover:hover:scale-[1.02] active:translate-y-px active:scale-[0.98]',
+  'still:transition-none still:hover:scale-100 still:active:translate-y-0 still:active:scale-100',
 ].join(' ');
 
-export { POPUP_MOTION, PRESS_MOTION };
+const CARD_HOVER = { y: -6 } as const;
+
+const CARD_PRESS = { scale: 0.985 } as const;
+
+export { CARD_HOVER, CARD_PRESS, POPUP_MOTION, PRESS_MOTION };

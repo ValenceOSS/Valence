@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import { cn } from '@ValenceUI/cn';
 import type { VideoSurfaceProps } from './VideoSurface.types';
 
+const HAS_FUTURE_DATA = 3;
+
 /**
  * The one place a `<video>` element is written. Owns the element and its events and nothing else —
  * no controls, no chrome, no session handling — so the player above it can be rebuilt without the
@@ -21,6 +23,8 @@ import type { VideoSurfaceProps } from './VideoSurface.types';
  * @param onDurationChange - Told the length once the file says what it is.
  * @param onPlayingChange - Told when playback starts or stops.
  * @param onBufferingChange - Told when the picture is waiting for data and when it has some again.
+ *   A download going quiet is not waiting: the picture plays on from what it holds, so only the
+ *   picture stopping counts, and it counts as over the moment the picture moves again.
  * @param onEnded - Told when the file reaches its end.
  * @param loops - Whether to start again at the end, for a preview rather than a film.
  * @param className - Extra classes for the caller's own layout.
@@ -80,7 +84,13 @@ const VideoSurface = ({
       {...(poster === undefined ? {} : { poster })}
       className={cn('w-full bg-shade', className)}
       onTimeUpdate={(event) => {
-        onTimeUpdate?.(event.currentTarget.currentTime);
+        const element = event.currentTarget;
+
+        onTimeUpdate?.(element.currentTime);
+
+        if (!element.paused && !element.seeking && element.readyState >= HAS_FUTURE_DATA) {
+          onBufferingChange?.(false);
+        }
       }}
       onDurationChange={(event) => {
         onDurationChange?.(event.currentTarget.duration);
@@ -99,9 +109,6 @@ const VideoSurface = ({
         onBufferingChange?.(true);
       }}
       onSeeking={() => {
-        onBufferingChange?.(true);
-      }}
-      onStalled={() => {
         onBufferingChange?.(true);
       }}
       onPlaying={() => {

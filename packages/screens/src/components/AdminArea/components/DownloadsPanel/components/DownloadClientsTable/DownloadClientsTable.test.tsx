@@ -81,7 +81,7 @@ describe('DownloadClientsTable', () => {
 
     expect(seedbox.getByText('qBittorrent')).toBeInTheDocument();
     expect(seedbox.getByText('http://seedbox:8080')).toBeInTheDocument();
-    expect(seedbox.getByText('Answering')).toBeInTheDocument();
+    expect(seedbox.getByText('Online')).toBeInTheDocument();
     expect(seedbox.getByText('↓ 1.0 MB/s')).toBeInTheDocument();
     expect(seedbox.getByText('↑ 1.0 KB/s')).toBeInTheDocument();
     expect(within(rowOf('Usenet')).getByText('Off')).toBeInTheDocument();

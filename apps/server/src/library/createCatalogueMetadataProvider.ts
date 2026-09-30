@@ -108,9 +108,7 @@ const GenreListSchema = z.object({
 
 const STUDIO_IDS = [2, 420, 174, 33, 4, 5, 127928, 3, 1, 521, 10342, 41077] as const;
 
-const STUDIO_LOGO_ON_DARK = 'w300_filter(duotone,e9f3ef,a5a5a5)';
-
-const STUDIO_LOGO_ON_LIGHT = 'w300_filter(duotone,303c51,c4cbd4)';
+const STUDIO_LOGO = 'w300';
 
 const CAST_DESCRIBED = 12;
 
@@ -1032,8 +1030,8 @@ const createCatalogueMetadataProvider = ({
             ? {
                 id: company.data.id.toString(),
                 name: company.data.name,
-                logoUrl: imageUrl(imageBaseUrl, company.data.logo_path, STUDIO_LOGO_ON_DARK),
-                lightLogoUrl: imageUrl(imageBaseUrl, company.data.logo_path, STUDIO_LOGO_ON_LIGHT),
+                logoUrl: imageUrl(imageBaseUrl, company.data.logo_path, STUDIO_LOGO),
+                lightLogoUrl: imageUrl(imageBaseUrl, company.data.logo_path, STUDIO_LOGO),
               }
             : null;
         }),

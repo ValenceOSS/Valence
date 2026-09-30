@@ -1,4 +1,4 @@
-import type { Transition, Variants } from 'motion/react';
+import type { MotionProps, Transition, Variants } from 'motion/react';
 
 const spring: Transition = {
   type: 'spring',
@@ -20,6 +20,35 @@ const liquidSpring: Transition = {
   damping: 34,
   mass: 1,
 };
+
+const bounceSpring: Transition = {
+  type: 'spring',
+  stiffness: 420,
+  damping: 22,
+  mass: 0.8,
+};
+
+const popSpring: Transition = {
+  type: 'spring',
+  stiffness: 420,
+  damping: 18,
+};
+
+const openSpring: Transition = {
+  type: 'spring',
+  stiffness: 260,
+  damping: 24,
+  restDelta: 0.5,
+  restSpeed: 2,
+};
+
+const letterSpring: Transition = {
+  type: 'spring',
+  stiffness: 380,
+  damping: 22,
+};
+
+const LETTER_REST = { opacity: 1, y: 0 };
 
 const settleTween: Transition = {
   duration: 0.32,
@@ -88,6 +117,10 @@ const STAGGER_STEP = 0.045;
 
 const STAGGER_CEILING = 0.42;
 
+const HEADING_LEAD = 0.06;
+
+const POP = 0.92;
+
 /**
  * Works out how long the card at a given place in a row waits before arriving, so a row assembles
  * left to right rather than appearing at once. The wait stops growing past a ceiling: a row of
@@ -103,27 +136,61 @@ const groupVariants: Variants = { hidden: {}, shown: {}, gone: {} };
 /**
  * Builds the variants for one card of a row, each arriving after the one before it and leaving in
  * the same order at twice the speed. Leaving faster than arriving is deliberate: an exit that takes
- * as long as an entrance reads as the interface hesitating.
+ * as long as an entrance reads as the interface hesitating. Cards come in just after their row's
+ * heading, rising from a little smaller on a spring that overshoots a touch, so a row lands rather
+ * than fades up.
  *
  * @param prefersReducedMotion - What the system reports, which is null until it has been read.
  * @returns The variants to hand a Motion component, which take the card's index.
  */
 const revealItemVariants = (prefersReducedMotion: boolean | null): Variants => ({
-  hidden: prefersReducedMotion === true ? { opacity: 0 } : { opacity: 0, y: RISE },
+  hidden: prefersReducedMotion === true ? { opacity: 0 } : { opacity: 0, y: RISE, scale: POP },
   shown: (index: number) => ({
     opacity: 1,
     y: 0,
-    transition: { ...revealTransition(prefersReducedMotion), delay: staggerDelay(index) },
+    scale: 1,
+    transition:
+      prefersReducedMotion === true
+        ? { ...stillTransition, delay: staggerDelay(index) }
+        : { ...bounceSpring, delay: HEADING_LEAD + staggerDelay(index) },
   }),
-  gone: (index: number) => ({
-    opacity: 0,
-    y: prefersReducedMotion === true ? 0 : -RISE,
-    transition: { ...stillTransition, delay: staggerDelay(index) / 2 },
-  }),
+  gone: (index: number) => {
+    return {
+      opacity: 0,
+      y: prefersReducedMotion === true ? 0 : -RISE,
+      transition: { ...stillTransition, delay: staggerDelay(index) / 2 },
+    };
+  },
 });
+
+/**
+ * How one letter of a name arrives: rising a little into place as it fades up, after the given wait,
+ * so a word can be written in one letter at a time. It moves and fades only — a blur on every letter
+ * at once is costly enough to stutter. For somebody who asked for less motion, or once
+ * the arrival has been and gone, the letter is simply there.
+ *
+ * @param delay - How long this letter waits, in seconds.
+ * @param isStill - Whether it should simply be there.
+ * @returns The Motion props for the letter.
+ */
+const letterArrival = (
+  delay: number,
+  isStill: boolean,
+): Pick<MotionProps, 'initial' | 'animate' | 'transition'> =>
+  isStill
+    ? { initial: false as const, animate: LETTER_REST }
+    : {
+        initial: { opacity: 0, y: 8 },
+        animate: LETTER_REST,
+        transition: { ...letterSpring, delay },
+      };
 
 export {
   spring,
+  popSpring,
+  openSpring,
+  letterArrival,
+  bounceSpring,
   liquidSpring,
   settleTween,
   stillTransition,

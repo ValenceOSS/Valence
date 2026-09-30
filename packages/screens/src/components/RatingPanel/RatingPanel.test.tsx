@@ -15,6 +15,10 @@ vi.mock('@ValenceClient/library/fetchRatings', () => ({
   setRating: () => Promise.resolve(true),
 }));
 
+vi.mock('@ValenceClient/profiles/useWatchingProfile', () => ({
+  useWatchingProfile: () => 'profile-watching',
+}));
+
 const MEDIA_ID = '9c858901-8a57-4791-81fe-4c455b099bc9';
 
 const TED_ID = '22222222-2222-4222-8222-222222222222';

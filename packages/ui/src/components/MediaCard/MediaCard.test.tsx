@@ -129,7 +129,7 @@ describe('MediaCard', () => {
       <MediaCard title="Arrival" subtitle="2016" badges={['4K', 'HDR10']} onSelect={vi.fn()} />,
     );
 
-    expect(screen.getByText('4K')).toHaveClass('bg-shade');
+    expect(screen.getByText('4K')).toHaveClass('bg-overlay');
   });
 
   it('draws the card without its motion for somebody who asked for less', () => {
@@ -161,12 +161,20 @@ describe('MediaCard', () => {
 
   it('shows a count in the corner, says what it means, and draws nothing for none', () => {
     const { rerender } = render(
-      <MediaCard title="Severance" subtitle="" count={3} countLabel="3 episodes left" onSelect={() => {}} />,
+      <MediaCard
+        title="Severance"
+        subtitle=""
+        count={3}
+        countLabel="3 episodes left"
+        onSelect={() => {}}
+      />,
     );
 
     expect(screen.getByRole('img', { name: '3 episodes left' })).toHaveTextContent('3');
 
-    rerender(<MediaCard title="Severance" subtitle="" count={0} countLabel="" onSelect={() => {}} />);
+    rerender(
+      <MediaCard title="Severance" subtitle="" count={0} countLabel="" onSelect={() => {}} />,
+    );
 
     expect(screen.queryByRole('img', { name: /left/ })).not.toBeInTheDocument();
   });

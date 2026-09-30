@@ -765,10 +765,10 @@ describe('JobHistory', () => {
       const strip = await screen.findByLabelText('How the job runs stand');
 
       await waitFor(() => {
-        expect(within(strip).getByText('Completed').nextElementSibling).toHaveTextContent('2');
+        expect(within(strip).getByText('completed').previousElementSibling).toHaveTextContent('2');
       });
-      expect(within(strip).getByText('Running now').nextElementSibling).toHaveTextContent('1');
-      expect(within(strip).getByText('Failed').nextElementSibling).toHaveTextContent('1');
+      expect(within(strip).getByText('running now').previousElementSibling).toHaveTextContent('1');
+      expect(within(strip).getByText('failed').previousElementSibling).toHaveTextContent('1');
     });
 
     it('says how long a finished run took', async () => {

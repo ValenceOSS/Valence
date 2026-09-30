@@ -85,7 +85,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { TrickplayPreview } from './components/TrickplayPreview/TrickplayPreview';
 import { AmbientOrbs } from '@ValenceScreens/components/VideoPlayer/components/AmbientOrbs/AmbientOrbs';
-import { useAmbientLights } from '@ValenceScreens/playback/useAmbientLights';
+import { useLetterbox } from '@ValenceScreens/playback/useLetterbox';
+import { featherOf } from '@ValenceScreens/playback/featherOf';
 import { PlayerControls } from './components/PlayerControls/PlayerControls';
 import { StreamStats } from './components/StreamStats/StreamStats';
 import { cn } from '@ValenceUI/cn';
@@ -288,9 +289,9 @@ const VideoPlayer = ({
   );
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isGlowing, setIsGlowing] = useState(false);
+  const letterbox = useLetterbox(videoRef, isGlowing);
   const [isShowingStats, setIsShowingStats] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const lights = useAmbientLights(videoRef, isGlowing);
   const [health, setHealth] = useState<PlaybackHealth>(EMPTY_HEALTH);
   const [delivered, setDelivered] = useState<DeliveredFormat | null>(null);
   const [isIdle, setIsIdle] = useState(false);
@@ -1876,11 +1877,11 @@ const VideoPlayer = ({
       <div
         className={
           isGlowing
-            ? 'relative flex min-h-0 flex-1 items-center justify-center bg-shade p-[clamp(1rem,4vw,4rem)]'
+            ? 'relative flex min-h-0 flex-1 items-center justify-center bg-shade p-[clamp(1rem,4vw,4rem)] [container-type:size]'
             : 'contents'
         }
       >
-        {isGlowing ? <AmbientOrbs lights={lights} /> : null}
+        {isGlowing ? <AmbientOrbs videoRef={videoRef} /> : null}
 
         <div
           ref={stageRef}
@@ -1888,31 +1889,61 @@ const VideoPlayer = ({
           onPointerUp={onTapStage}
           className={`${
             isGlowing
-              ? 'relative flex aspect-video max-h-full w-full max-w-[90rem] items-center justify-center overflow-hidden rounded-2xl bg-shade shadow-[var(--shadow-overlay)]'
+              ? 'relative flex items-center justify-center overflow-hidden transition-[width] duration-500 ease-out motion-reduce:transition-none'
               : isImmersive
                 ? 'relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-shade'
                 : 'relative overflow-hidden rounded-lg bg-shade'
           } ${isIdle && !isShowingStats && !isMenuOpen ? 'cursor-none' : 'cursor-default'} outline-none`}
+          {...(isGlowing
+            ? {
+                style: {
+                  aspectRatio: letterbox.ratio.toString(),
+                  width: `min(100cqw, calc(100cqh * ${letterbox.ratio.toString()}), 90rem)`,
+                },
+              }
+            : {})}
         >
           {isImmersive ? theTitleBar : null}
 
-          <VideoSurface
-            label={media.title}
-            videoRef={videoRef}
-            className={isImmersive ? 'h-full w-full object-contain' : ''}
-            {...(fetchableTrack === null
-              ? {}
-              : {
-                  textTrack: {
-                    id: fetchableTrack.id,
-                    label: fetchableTrack.label,
-                    language: fetchableTrack.language ?? 'und',
-                    src: subtitleTrackUrl(media.id, fetchableTrack.id),
+          <div
+            className={
+              isGlowing ? 'absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2' : 'contents'
+            }
+            {...(isGlowing
+              ? {
+                  style: {
+                    width: `${(100 / (1 - letterbox.columns * 2)).toString()}%`,
+                    height: `${(100 / (1 - letterbox.rows * 2)).toString()}%`,
+                    maskImage: `${featherOf('right', (letterbox.columns * 100) / (1 - letterbox.columns * 2))}, ${featherOf('bottom', (letterbox.rows * 100) / (1 - letterbox.rows * 2))}`,
+                    maskComposite: 'intersect',
                   },
-                })}
-            isDrawnElsewhere
-            {...asItPlays}
-          />
+                }
+              : {})}
+          >
+            <VideoSurface
+              label={media.title}
+              videoRef={videoRef}
+              className={
+                isGlowing
+                  ? 'h-full w-full object-fill'
+                  : isImmersive
+                    ? 'h-full w-full object-contain'
+                    : ''
+              }
+              {...(fetchableTrack === null
+                ? {}
+                : {
+                    textTrack: {
+                      id: fetchableTrack.id,
+                      label: fetchableTrack.label,
+                      language: fetchableTrack.language ?? 'und',
+                      src: subtitleTrackUrl(media.id, fetchableTrack.id),
+                    },
+                  })}
+              isDrawnElsewhere
+              {...asItPlays}
+            />
+          </div>
 
           {fetchableTrack === null ? null : (
             <SubtitleCues
@@ -2055,7 +2086,7 @@ const VideoPlayer = ({
             >
               <Button
                 size="lg"
-                variant="secondary"
+                variant="overlay"
                 className="px-6"
                 onClick={() => {
                   seek(skippable.endSeconds);

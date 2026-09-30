@@ -41,7 +41,7 @@ const AN_INDEXER: Indexer = {
 describe('describeIndexerState', () => {
   it('says an indexer that answers is working', () => {
     expect(describeIndexerState(AN_INDEXER)).toEqual({
-      label: 'Working',
+      label: 'Online',
       tone: 'success',
       detail: null,
     });
@@ -86,7 +86,7 @@ describe('describeIndexerState', () => {
         seedRatio: null,
       }),
     ).toEqual({
-      label: 'Turned off',
+      label: 'Offline',
       tone: 'danger',
       detail: 'Turned off after 5 failures in a row',
       help: null,

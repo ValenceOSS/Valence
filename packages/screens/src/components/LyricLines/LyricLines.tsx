@@ -54,7 +54,8 @@ const scrollerOf = (line: HTMLElement): HTMLElement | null => {
  * @param lyrics - The words, and whether they are timed.
  * @param at - The line being sung, or -1.
  * @param onSeek - Told to go to a line's moment in the song.
- * @param look - On a page of its own, or immersive over the song's cover.
+ * @param look - On a page of its own, immersive over the song's cover, or small in the panel beside
+ *   the music.
  */
 const LyricLines = ({ lyrics, at, onSeek, look = 'page' }: LyricLinesProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
@@ -121,7 +122,10 @@ const LyricLines = ({ lyrics, at, onSeek, look = 'page' }: LyricLinesProps) => {
 
   return (
     <>
-      <ol ref={listRef} className="flex flex-col gap-4 sm:gap-6">
+      <ol
+        ref={listRef}
+        className={cn('flex flex-col', look === 'panel' ? 'gap-3' : 'gap-4 sm:gap-6')}
+      >
         {lyrics.lines.map((line, index) => {
           const { atMs } = line;
           const standing = lyricStanding(index, at, lyrics.isSynced, look === 'immersive');
@@ -130,7 +134,9 @@ const LyricLines = ({ lyrics, at, onSeek, look = 'page' }: LyricLinesProps) => {
             'origin-left text-left font-bold leading-[1.12] tracking-[-0.025em]',
             look === 'immersive'
               ? 'text-[clamp(1.75rem,4vw,3.5rem)]'
-              : 'text-[clamp(1.5rem,3.6vw,3rem)]',
+              : look === 'panel'
+                ? 'text-xl'
+                : 'text-[clamp(1.5rem,3.6vw,3rem)]',
           );
 
           return (

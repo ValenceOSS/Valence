@@ -103,24 +103,82 @@ describe('VideoSurface', () => {
     expect(onEnded).toHaveBeenCalledOnce();
   });
 
-  it.each(['waiting', 'seeking', 'stalled'] as const)(
-    'reports buffering while it is %s',
-    (moment) => {
-      const onBufferingChange = vi.fn();
+  it.each(['waiting', 'seeking'] as const)('reports buffering while it is %s', (moment) => {
+    const onBufferingChange = vi.fn();
 
-      render(
-        <VideoSurface
-          label="Arrival"
-          videoRef={createRef<HTMLVideoElement>()}
-          onBufferingChange={onBufferingChange}
-        />,
-      );
+    render(
+      <VideoSurface
+        label="Arrival"
+        videoRef={createRef<HTMLVideoElement>()}
+        onBufferingChange={onBufferingChange}
+      />,
+    );
 
-      fireEvent[moment](screen.getByLabelText('Arrival'));
+    fireEvent[moment](screen.getByLabelText('Arrival'));
 
-      expect(onBufferingChange).toHaveBeenCalledWith(true);
-    },
-  );
+    expect(onBufferingChange).toHaveBeenCalledWith(true);
+  });
+
+  it('does not report buffering when the download merely goes quiet', () => {
+    const onBufferingChange = vi.fn();
+
+    render(
+      <VideoSurface
+        label="Arrival"
+        videoRef={createRef<HTMLVideoElement>()}
+        onBufferingChange={onBufferingChange}
+      />,
+    );
+
+    fireEvent.stalled(screen.getByLabelText('Arrival'));
+
+    expect(onBufferingChange).not.toHaveBeenCalled();
+  });
+
+  it('reports buffering over as soon as the picture moves on with data in hand', () => {
+    const onBufferingChange = vi.fn();
+
+    render(
+      <VideoSurface
+        label="Arrival"
+        videoRef={createRef<HTMLVideoElement>()}
+        onBufferingChange={onBufferingChange}
+      />,
+    );
+
+    const video = screen.getByLabelText<HTMLVideoElement>('Arrival');
+
+    Object.defineProperty(video, 'paused', { configurable: true, value: false });
+    Object.defineProperty(video, 'seeking', { configurable: true, value: false });
+    Object.defineProperty(video, 'readyState', { configurable: true, value: 4 });
+
+    fireEvent.waiting(video);
+    fireEvent.timeUpdate(video);
+
+    expect(onBufferingChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('keeps reporting buffering while the picture has nothing to play ahead', () => {
+    const onBufferingChange = vi.fn();
+
+    render(
+      <VideoSurface
+        label="Arrival"
+        videoRef={createRef<HTMLVideoElement>()}
+        onBufferingChange={onBufferingChange}
+      />,
+    );
+
+    const video = screen.getByLabelText<HTMLVideoElement>('Arrival');
+
+    Object.defineProperty(video, 'paused', { configurable: true, value: false });
+    Object.defineProperty(video, 'readyState', { configurable: true, value: 2 });
+
+    fireEvent.waiting(video);
+    fireEvent.timeUpdate(video);
+
+    expect(onBufferingChange).toHaveBeenLastCalledWith(true);
+  });
 
   it.each(['playing', 'canPlay', 'seeked'] as const)(
     'reports buffering over once it can play again, on %s',

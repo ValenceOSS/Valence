@@ -1,5 +1,7 @@
+import type { RefObject } from 'react';
+
 type AmbientOrbsProps = {
-  lights: readonly string[];
+  videoRef: RefObject<HTMLVideoElement | null>;
 };
 
 export type { AmbientOrbsProps };

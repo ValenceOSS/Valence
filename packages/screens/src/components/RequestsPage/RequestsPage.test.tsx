@@ -1,5 +1,4 @@
 import { screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderInAShell } from '@ValenceScreens/testing/renderInAShell';
 import { RequestsPage } from './RequestsPage';
@@ -42,26 +41,28 @@ beforeEach(() => {
 });
 
 describe('RequestsPage', () => {
-  it('opens on Discover, and keeps which side is showing in the address', async () => {
+  it('opens on Discover, with no row of tabs of its own — the bar chooses the view', async () => {
     renderInAShell(<RequestsPage />);
 
-    expect(screen.getByRole('tab', { name: 'Discover' })).toHaveAttribute('aria-selected', 'true');
+    expect(await screen.findByRole('button', { name: 'Walt Disney Pictures' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+  });
 
-    await userEvent.click(screen.getByRole('tab', { name: 'Movies' }));
+  it('shows the whole list the address names', async () => {
+    window.history.replaceState(null, '', '/requests?view=film%3Apopular');
 
-    await vi.waitFor(() => {
-      expect(window.location.search).toContain('view=film%3Apopular');
-    });
+    renderInAShell(<RequestsPage />);
+
+    expect(await screen.findByText('a grid')).toBeInTheDocument();
     expect(drawn.browsing).toEqual({ kind: 'film', list: 'popular', studio: null });
   });
 
-  it('shows a whole list the address names, under the tab it belongs to', async () => {
+  it('heads a whole list with what it is', async () => {
     window.history.replaceState(null, '', '/requests?view=series:trending');
 
     renderInAShell(<RequestsPage />);
 
     expect(await screen.findByRole('heading', { name: 'Trending series' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Shows' })).toHaveAttribute('aria-selected', 'true');
   });
 
   it('names the studio whose films are showing', async () => {
@@ -74,33 +75,29 @@ describe('RequestsPage', () => {
     ).toBeInTheDocument();
   });
 
-  it('has a tab for music, kept in the address like the others', async () => {
+  it('shows music to ask for where the address asks for it', async () => {
+    window.history.replaceState(null, '', '/requests?view=music');
+
     renderInAShell(<RequestsPage />);
 
-    await userEvent.click(screen.getByRole('tab', { name: 'Music' }));
-
-    await vi.waitFor(() => {
-      expect(window.location.search).toContain('view=music');
-    });
-    expect(screen.getByRole('tab', { name: 'Music' })).toHaveAttribute('aria-selected', 'true');
+    expect(
+      await screen.findByRole('status', { name: 'Reading what music there is to ask for' }),
+    ).toBeInTheDocument();
   });
 
-  it('has a tab for books, kept in the address like the others', async () => {
+  it('shows books to ask for where the address asks for them', async () => {
+    window.history.replaceState(null, '', '/requests?view=books');
+
     renderInAShell(<RequestsPage />);
 
-    await userEvent.click(screen.getByRole('tab', { name: 'Books' }));
-
-    await vi.waitFor(() => {
-      expect(window.location.search).toContain('view=books');
-    });
-    expect(screen.getByRole('tab', { name: 'Books' })).toHaveAttribute('aria-selected', 'true');
+    expect(await screen.findByRole('textbox', { name: 'Search for a book' })).toBeInTheDocument();
   });
 
-  it('shows your own requests where the address asks for them', () => {
+  it('shows your own requests where the address asks for them', async () => {
     window.history.replaceState(null, '', '/requests?view=mine');
 
     renderInAShell(<RequestsPage />);
 
-    expect(screen.getByText('your requests')).toBeInTheDocument();
+    expect(await screen.findByText('your requests')).toBeInTheDocument();
   });
 });

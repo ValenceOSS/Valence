@@ -100,7 +100,7 @@ describe('IndexersPanel', () => {
 
     expect(await screen.findByText('Jackett')).toBeInTheDocument();
     expect(screen.getByText('Torznab')).toBeInTheDocument();
-    expect(screen.getByText('Working')).toBeInTheDocument();
+    expect(screen.getByText('Online')).toBeInTheDocument();
     expect(screen.getByText('Films')).toBeInTheDocument();
   });
 
@@ -117,7 +117,7 @@ describe('IndexersPanel', () => {
 
     renderInAnAddress(<IndexersPanel />);
 
-    expect(await screen.findByText('Turned off')).toBeInTheDocument();
+    expect(await screen.findByText('Offline')).toBeInTheDocument();
     expect(screen.getByText('Turned off after 5 failures in a row: Timed out')).toBeInTheDocument();
   });
 

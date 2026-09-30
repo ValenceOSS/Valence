@@ -9,11 +9,12 @@ import { TextField } from '@ValenceUI/TextField';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { AskableBookTile } from '@ValenceScreens/components/RequestsPage/components/AskableBookTile/AskableBookTile';
+import { Reveal } from '@ValenceUI/Reveal';
+import { RevealItem } from '@ValenceUI/RevealItem';
+import { RevealGrid } from '@ValenceScreens/components/RequestsPage/components/RevealGrid/RevealGrid';
+import { SHELF_STEP } from '@ValenceScreens/components/RequestsPage/SHELF_STEP';
 import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { BooksDiscoverProps } from './BooksDiscover.types';
-
-const GRID =
-  'grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6';
 
 /**
  * Everything to read there is to ask for, laid out as on the pages for films, shows and music: a
@@ -28,12 +29,14 @@ const BooksDiscover = ({ onAsk }: BooksDiscoverProps) => {
   const discovered = useQuery(requestsQueries.discover());
   const found = useQuery(requestsQueries.askableSearch(query, 'book'));
 
-  const grid = (titles: readonly CatalogueTitle[]) => (
-    <div className={GRID}>
-      {titles.map((title) => (
-        <AskableBookTile key={title.id} title={title} onAsk={onAsk} />
+  const grid = (titles: readonly CatalogueTitle[], label: string) => (
+    <RevealGrid label={label}>
+      {titles.map((title, at) => (
+        <RevealItem key={title.id} index={at}>
+          <AskableBookTile title={title} onAsk={onAsk} />
+        </RevealItem>
       ))}
-    </div>
+    </RevealGrid>
   );
 
   const search = (
@@ -70,7 +73,7 @@ const BooksDiscover = ({ onAsk }: BooksDiscoverProps) => {
             detail="Try the title, or the author, another way."
           />
         ) : (
-          grid(found.data)
+          grid(found.data, 'Books found')
         )}
       </div>
     );
@@ -89,7 +92,7 @@ const BooksDiscover = ({ onAsk }: BooksDiscoverProps) => {
   }
 
   if (discovered.data === undefined) {
-    return <Spinner isCentered label="Reading what books there are to ask for" />;
+    return <Spinner isPageCentered label="Reading what books there are to ask for" />;
   }
 
   const shelves = discovered.data.shelves.filter(
@@ -107,12 +110,14 @@ const BooksDiscover = ({ onAsk }: BooksDiscoverProps) => {
           detail="Open Library could not be reached, or has nothing to suggest just now. You can still search for a book."
         />
       ) : (
-        shelves.map((shelf) => (
-          <section key={shelf.id} aria-label={shelf.title} className="flex flex-col gap-4">
-            <h2 className="text-2xl font-semibold tracking-tight text-text">{shelf.title}</h2>
+        shelves.map((shelf, at) => (
+          <Reveal key={shelf.id} delay={at * SHELF_STEP}>
+            <section aria-label={shelf.title} className="flex flex-col gap-4">
+              <h2 className="text-2xl font-semibold tracking-tight text-text">{shelf.title}</h2>
 
-            {grid(shelf.titles)}
-          </section>
+              {grid(shelf.titles, shelf.title)}
+            </section>
+          </Reveal>
         ))
       )}
     </div>

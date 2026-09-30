@@ -59,3 +59,28 @@ describe('lightsOfAFrame', () => {
     expect(light).toBe('rgb(150 150 150)');
   });
 });
+
+describe('lightsOfAFrame over a grid', () => {
+  const stripes = (): Uint8ClampedArray =>
+    frame(
+      Array.from({ length: 4 * 2 }, (_, at): [number, number, number] =>
+        at % 4 < 2 ? [255, 0, 0] : [0, 0, 255],
+      ),
+    );
+
+  it('gives a colour for each cell, row by row from the top left', () => {
+    const lights = lightsOfAFrame(stripes(), 4, 2, 2, 2);
+
+    expect(lights).toHaveLength(4);
+    expect(lights[0]).toMatch(/^rgb\(255 /);
+    expect(lights[1]).toMatch(/ 255\)$/);
+  });
+
+  it('blends neighbouring cells in, so one dark patch does not darken its light alone', () => {
+    const [left] = lightsOfAFrame(stripes(), 4, 2, 2, 1, 1);
+    const [alone] = lightsOfAFrame(stripes(), 4, 2, 2, 1, 0);
+
+    expect(left).not.toBe(alone);
+    expect(left).toMatch(/^rgb\(\d+ 40 \d+\)$/);
+  });
+});

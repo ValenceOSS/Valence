@@ -6,8 +6,10 @@ import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
 import { MENU } from '@ValenceUI/tokens/menu';
 import { JOINED_LOOKS } from '@ValenceUI/tokens/joinedLooks';
-import { POPUP_MOTION } from '@ValenceUI/animations/motion';
+import { POPUP_MOTION, PRESS_MOTION } from '@ValenceUI/animations/motion';
 import { usePortalContainer } from '@ValenceUI/usePortalContainer';
+import { HoverHighlight } from '@ValenceUI/HoverHighlight';
+import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
 import type { OptionMenuProps } from './OptionMenu.types';
 
 const HOVER_OPENS_MS = 120;
@@ -46,6 +48,7 @@ const OptionMenu = ({
   const [isOpen, setIsOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const openedBy = useRef<'pointer' | 'keyboard'>('pointer');
+  const { containerRef, rect, follow, clear } = useSlidingHighlight();
 
   useEffect(
     () => () => {
@@ -93,7 +96,7 @@ const OptionMenu = ({
         disabled={isDisabled}
         className={cn(
           'inline-flex shrink-0 items-center text-current',
-          'transition-colors duration-[var(--duration-fast)] ease-[var(--ease-soft)]',
+          PRESS_MOTION,
           'disabled:cursor-not-allowed disabled:opacity-50',
           triggerShape === 'confirmJoined'
             ? JOINED_LOOKS.confirm
@@ -170,7 +173,14 @@ const OptionMenu = ({
             POPUP_MOTION,
           )}
         >
-          <div className="valence-rail flex overflow-x-auto">
+          <div
+            ref={containerRef}
+            className="valence-rail relative flex overflow-x-auto"
+            onPointerMove={follow}
+            onPointerLeave={clear}
+            onFocusCapture={follow}
+            onBlurCapture={clear}
+          >
             {groups.map((group) => (
               <RadixMenu.Group
                 key={group.name}
@@ -189,10 +199,10 @@ const OptionMenu = ({
                     <RadixMenu.RadioItem
                       key={option.id}
                       value={option.id}
+                      data-highlight={`${group.name}:${option.id}`}
                       className={cn(
-                        'flex cursor-default items-center justify-between gap-4 rounded-sm px-3 py-2.5',
+                        'relative z-10 flex cursor-default items-center justify-between gap-4 rounded-sm px-3 py-2.5',
                         'outline-none transition-colors duration-[var(--duration-fast)]',
-                        'data-[highlighted]:bg-[var(--surface-hover)]',
                         'data-[checked]:text-text',
                       )}
                     >
@@ -211,6 +221,8 @@ const OptionMenu = ({
                 </RadixMenu.RadioGroup>
               </RadixMenu.Group>
             ))}
+
+            <HoverHighlight rect={rect} radius="nested" />
           </div>
 
           {footer === undefined ? null : (

@@ -26,6 +26,7 @@ type NavBarAction = {
   gesture?: IconGesture;
   isCurrent?: boolean;
   badge?: ReactNode;
+  arrivesOnItsOwn?: boolean;
 } & (
   | {
       control: ReactNode;

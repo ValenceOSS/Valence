@@ -10,6 +10,10 @@ type SpreadStageProps = {
   gap: number;
   isRightToLeft: boolean;
   isAnimated: boolean;
+  isHeld?: boolean;
+  canGoBack?: boolean;
+  canGoOn?: boolean;
+  onTurn?: (by: 1 | -1) => void;
   onLoaded: (page: number, element: HTMLImageElement) => void;
 };
 

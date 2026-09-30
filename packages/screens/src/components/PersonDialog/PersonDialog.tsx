@@ -13,6 +13,10 @@ import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { RailCard } from '@ValenceScreens/components/RailCard/RailCard';
+import { DialogSection } from '@ValenceScreens/components/DialogSection/DialogSection';
+import { DialogSections } from '@ValenceScreens/components/DialogSections/DialogSections';
+import { DialogHeadline } from '@ValenceScreens/components/DialogHeadline/DialogHeadline';
+import { DialogHeadlinePart } from '@ValenceScreens/components/DialogHeadlinePart/DialogHeadlinePart';
 import type { PersonCredits } from '@ValenceContracts/schemas/Person';
 import type { PersonDialogProps } from './PersonDialog.types';
 
@@ -105,9 +109,12 @@ const PersonDialog = ({
           </Button>
         </div>
 
-        <div className="flex flex-col gap-8 p-5 pb-10 sm:p-8">
-          <header className="flex flex-wrap items-start gap-5">
-            <span className="flex size-28 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface-raised ring-1 ring-line">
+        <DialogSections key={personId ?? 'nobody'} className="flex flex-col gap-4 p-5 pb-10 sm:p-8">
+          <DialogHeadline className="flex flex-wrap items-start gap-5">
+            <DialogHeadlinePart
+              as="span"
+              className="flex size-28 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface-raised ring-1 ring-line"
+            >
               {person?.portraitUrl === null || person?.portraitUrl === undefined ? (
                 <Icon of={UserIcon} size={36} tone="muted" />
               ) : (
@@ -118,22 +125,30 @@ const PersonDialog = ({
                   loading="lazy"
                 />
               )}
-            </span>
+            </DialogHeadlinePart>
 
             <span className="flex min-w-0 flex-col gap-2">
-              <h2 className="text-3xl font-semibold tracking-[-0.02em] text-text">
+              <DialogHeadlinePart
+                as="h2"
+                isTitle
+                className="text-3xl font-semibold tracking-[-0.02em] text-text"
+              >
                 {person?.name ?? 'Somebody in the cast'}
-              </h2>
+              </DialogHeadlinePart>
 
               {role === null || role === undefined || role === '' ? null : (
-                <span className="font-body text-sm text-text-muted">as {role}</span>
+                <DialogHeadlinePart as="span" className="font-body text-sm text-text-muted">
+                  as {role}
+                </DialogHeadlinePart>
               )}
 
               {said.length === 0 ? null : (
-                <span className="font-body text-sm text-text-muted">{said.join(' · ')}</span>
+                <DialogHeadlinePart as="span" className="font-body text-sm text-text-muted">
+                  {said.join(' · ')}
+                </DialogHeadlinePart>
               )}
             </span>
-          </header>
+          </DialogHeadline>
 
           {isLoading ? (
             <div aria-hidden className="flex flex-col gap-2">
@@ -144,7 +159,9 @@ const PersonDialog = ({
           ) : null}
 
           {person?.biography === null || person?.biography === undefined ? null : (
-            <ReadMore lines={6}>{person.biography}</ReadMore>
+            <DialogSection heading="Biography">
+              <ReadMore lines={6}>{person.biography}</ReadMore>
+            </DialogSection>
           )}
 
           {couldNotRead ? (
@@ -165,40 +182,46 @@ const PersonDialog = ({
           ) : null}
 
           {credits.films.length === 0 ? null : (
-            <Rail title="Films" sizesCards className="px-0">
-              {credits.films.map((media, at) => (
-                <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
-                  <RailCard media={media} onPlay={onPlay} onInspect={onInspect} />
-                </RevealItem>
-              ))}
-            </Rail>
+            <DialogSection>
+              <Rail title="Films" sizesCards hasArrows={false} look="section" className="px-0">
+                {credits.films.map((media, at) => (
+                  <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
+                    <RailCard media={media} onPlay={onPlay} onInspect={onInspect} />
+                  </RevealItem>
+                ))}
+              </Rail>
+            </DialogSection>
           )}
 
           {credits.shows.length === 0 ? null : (
-            <Rail title="Programmes" sizesCards className="px-0">
-              {credits.shows.map((media, at) => (
-                <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
-                  <RailCard
-                    media={media}
-                    onPlay={onPlay}
-                    onInspect={onInspect}
-                    {...(onOpenShow === undefined ? {} : { onOpenShow })}
-                  />
-                </RevealItem>
-              ))}
-            </Rail>
+            <DialogSection>
+              <Rail title="Programmes" sizesCards hasArrows={false} look="section" className="px-0">
+                {credits.shows.map((media, at) => (
+                  <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
+                    <RailCard
+                      media={media}
+                      onPlay={onPlay}
+                      onInspect={onInspect}
+                      {...(onOpenShow === undefined ? {} : { onOpenShow })}
+                    />
+                  </RevealItem>
+                ))}
+              </Rail>
+            </DialogSection>
           )}
 
           {credits.episodes.length === 0 ? null : (
-            <Rail title="Episodes" sizesCards className="px-0">
-              {credits.episodes.map((media, at) => (
-                <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
-                  <RailCard media={media} onPlay={onPlay} onInspect={onInspect} />
-                </RevealItem>
-              ))}
-            </Rail>
+            <DialogSection>
+              <Rail title="Episodes" sizesCards hasArrows={false} look="section" className="px-0">
+                {credits.episodes.map((media, at) => (
+                  <RevealItem key={media.id} index={at} className="shrink-0 snap-start">
+                    <RailCard media={media} onPlay={onPlay} onInspect={onInspect} />
+                  </RevealItem>
+                ))}
+              </Rail>
+            </DialogSection>
           )}
-        </div>
+        </DialogSections>
       </DialogContent>
     </Dialog>
   );

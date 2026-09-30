@@ -1,11 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Reorder } from 'motion/react';
-import { Heart as HeartIcon } from '@keyline-icons/react';
-import {
-  Heart as HeartFilledIcon,
-  Pause as PauseFilledIcon,
-  Play as PlayFilledIcon,
-} from '@keyline-icons/react/fill';
+import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { Icon } from '@ValenceUI/Icon';
@@ -21,6 +16,7 @@ import { MusicArtwork } from '@ValenceScreens/components/MusicArtwork/MusicArtwo
 import { TrackMenu } from '@ValenceScreens/components/TrackMenu/TrackMenu';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
+import { KeepHeart } from '@ValenceScreens/components/KeepHeart/KeepHeart';
 import type { TrackListProps } from './TrackList.types';
 
 /**
@@ -245,7 +241,7 @@ const TrackList = ({
                   favourites.toggle(track.id);
                 }}
               >
-                <Icon of={HeartIcon} whenActive={HeartFilledIcon} size={16} isActive={isLiked} />
+                <KeepHeart isKept={isLiked} size={16} />
               </Button>
 
               <span className="text-right text-sm tabular-nums text-text-muted">

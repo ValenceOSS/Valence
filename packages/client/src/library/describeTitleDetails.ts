@@ -35,7 +35,7 @@ const describeTitleDetails = ({
   budget?: number | null | undefined;
   revenue?: number | null | undefined;
   rottenTomatoes?: number | null | undefined;
-}): { label: string; value: string }[] => [
+}): { label: string; value: string; tomato?: number }[] => [
   ...(releaseDate === undefined || releaseDate === null || releaseDate === ''
     ? []
     : [
@@ -55,7 +55,13 @@ const describeTitleDetails = ({
     : [{ label: 'Box office', value: formatMoney(revenue) }]),
   ...(rottenTomatoes === undefined || rottenTomatoes === null
     ? []
-    : [{ label: 'Rotten Tomatoes', value: `${rottenTomatoes.toString()}%` }]),
+    : [
+        {
+          label: 'Rotten Tomatoes',
+          value: `${rottenTomatoes.toString()}%`,
+          tomato: rottenTomatoes,
+        },
+      ]),
 ];
 
 export { describeTitleDetails };

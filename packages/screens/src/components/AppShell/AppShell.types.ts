@@ -26,6 +26,7 @@ type AppShellProps = {
   moodLights?: MoodLight[];
   isAdministrator?: boolean;
   avatar?: ReactNode;
+  accountName?: string;
   onSignOut?: () => void;
   isAccountOpen: boolean;
   onOpenAccount: () => void;
@@ -37,6 +38,7 @@ type AppShellProps = {
   onSurprise?: (only?: LibraryKind) => void;
   libraryKinds?: LibraryKind[];
   libraryChoices?: Partial<Record<'films' | 'shows' | 'read', NavBarChoices>>;
+  requestsChoices?: NavBarChoices;
   stocked?: ShellSection[];
   mayRequest?: boolean;
   onOpenFavourites?: () => void;

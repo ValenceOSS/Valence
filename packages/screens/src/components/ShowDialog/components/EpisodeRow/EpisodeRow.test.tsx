@@ -25,16 +25,16 @@ const episode: MediaSummary = {
 };
 
 describe('EpisodeRow', () => {
-  it('names the episode', () => {
+  it('names the episode, led by its number, which is what a list of episodes is read by', () => {
     render(<EpisodeRow episode={episode} onPlay={vi.fn()} />);
 
-    expect(screen.getByText("Yuki's World")).toBeInTheDocument();
+    expect(screen.getByText("1. Yuki's World")).toBeInTheDocument();
   });
 
-  it('leads with the number, which is what a list of episodes is read by', () => {
-    render(<EpisodeRow episode={episode} onPlay={vi.fn()} />);
+  it('names an episode with no number by its title alone', () => {
+    render(<EpisodeRow episode={{ ...episode, episodeNumber: null }} onPlay={vi.fn()} />);
 
-    expect(screen.getByText('1')).toBeInTheDocument();
+    expect(screen.getByText("Yuki's World")).toBeInTheDocument();
   });
 
   it('plays the episode when the line is pressed', async () => {
@@ -89,6 +89,57 @@ describe('EpisodeRow', () => {
     render(<EpisodeRow episode={episode} watchedFraction={0.5} onPlay={vi.fn()} />);
 
     expect(screen.queryByRole('img', { name: 'Watched' })).not.toBeInTheDocument();
+  });
+
+  it('offers to mark an unwatched episode as watched, in the white button', async () => {
+    const user = userEvent.setup();
+    const onMarkWatched = vi.fn();
+
+    render(<EpisodeRow episode={episode} onPlay={vi.fn()} onMarkWatched={onMarkWatched} />);
+
+    const mark = screen.getByRole('button', { name: "Mark Yuki's World as watched" });
+
+    expect(mark).toHaveTextContent('Mark as watched');
+    expect(mark).toHaveClass('bg-white');
+
+    await user.click(mark);
+
+    expect(onMarkWatched).toHaveBeenCalledWith(episode, true);
+  });
+
+  it('says a watched episode is watched, and unmarks it when pressed again', async () => {
+    const user = userEvent.setup();
+    const onMarkWatched = vi.fn();
+
+    render(
+      <EpisodeRow
+        episode={episode}
+        watchedFraction={1}
+        onPlay={vi.fn()}
+        onMarkWatched={onMarkWatched}
+      />,
+    );
+
+    const mark = screen.getByRole('button', { name: "Mark Yuki's World as unwatched" });
+
+    expect(mark).toHaveTextContent('Watched');
+    expect(mark).not.toHaveClass('bg-white');
+
+    await user.click(mark);
+
+    expect(onMarkWatched).toHaveBeenCalledWith(episode, false);
+  });
+
+  it('draws how far it was watched beneath the picture, only for an episode part watched', () => {
+    const { rerender } = render(
+      <EpisodeRow episode={episode} watchedFraction={0.25} onPlay={vi.fn()} />,
+    );
+
+    expect(screen.getByRole('img', { name: '25% watched' })).toBeInTheDocument();
+
+    rerender(<EpisodeRow episode={episode} watchedFraction={0} onPlay={vi.fn()} />);
+
+    expect(screen.queryByRole('img', { name: /% watched/ })).not.toBeInTheDocument();
   });
 
   it('sets a display name so devtools can identify it', () => {

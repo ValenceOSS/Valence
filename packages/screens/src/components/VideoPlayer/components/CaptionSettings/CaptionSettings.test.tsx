@@ -28,10 +28,10 @@ describe('CaptionSettings', () => {
   it('shows a preview drawn the way the captions will be', () => {
     draw({ style: { ...DEFAULT_CAPTION_STYLE, color: '#ffff00', fontScale: 200 } });
 
-    expect(screen.getByLabelText('Caption preview')).toHaveStyle({
-      color: 'rgba(255, 255, 0, 1)',
-      fontSize: '32px',
-    });
+    const preview = screen.getByLabelText('Caption preview');
+
+    expect(preview).toHaveStyle({ color: 'rgba(255, 255, 0, 1)' });
+    expect(preview.style.fontSize).toBe('calc(1.5rem)');
   });
 
   it('reports a change of size', async () => {
@@ -70,7 +70,7 @@ describe('CaptionSettings', () => {
     const user = userEvent.setup();
     const props = draw();
 
-    await user.click(screen.getByRole('button', { name: 'Monospace' }));
+    await user.click(screen.getByRole('button', { name: 'Mono' }));
 
     expect(props.onChange).toHaveBeenCalledWith(expect.objectContaining({ fontFamily: 'mono' }));
   });
@@ -79,9 +79,29 @@ describe('CaptionSettings', () => {
     const user = userEvent.setup();
     const props = draw();
 
-    await user.click(screen.getByRole('button', { name: 'Drop shadow' }));
+    await user.click(screen.getByRole('button', { name: 'Shadow' }));
 
     expect(props.onChange).toHaveBeenCalledWith(expect.objectContaining({ edgeStyle: 'shadow' }));
+  });
+
+  it('offers an outline thickness only while the edge is an outline', () => {
+    draw({ style: { ...DEFAULT_CAPTION_STYLE, edgeStyle: 'shadow' } });
+
+    expect(
+      screen.queryByRole('slider', { name: 'Caption outline thickness' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('names the outline thickness in words and reports a change of it', async () => {
+    const user = userEvent.setup();
+    const props = draw({ style: { ...DEFAULT_CAPTION_STYLE, outlineThickness: 2 } });
+
+    expect(screen.getByText('Medium')).toBeInTheDocument();
+
+    screen.getByRole('slider', { name: 'Caption outline thickness' }).focus();
+    await user.keyboard('{ArrowRight}');
+
+    expect(props.onChange).toHaveBeenCalledWith(expect.objectContaining({ outlineThickness: 3 }));
   });
 
   it('separates the text colour from the background colour', async () => {

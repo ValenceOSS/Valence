@@ -93,6 +93,7 @@ const SettingsMenu = ({
   const travel = prefersReducedMotion === true ? 0 : SLIDE;
 
   const close = () => {
+    clear();
     setOpenId(null);
   };
 
@@ -209,6 +210,7 @@ const SettingsMenu = ({
                             return;
                           }
 
+                          clear();
                           setOpenId(row.id);
                         }}
                         className={cn(ROW, 'shrink-0 ')}
