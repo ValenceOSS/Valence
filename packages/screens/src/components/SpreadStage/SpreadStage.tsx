@@ -1,17 +1,14 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { animate, useMotionValue, useReducedMotionConfig } from 'motion/react';
+import { useReducedMotionConfig } from 'motion/react';
 import { bookPageUrl } from '@ValenceClient/books/fetchBooks';
-import { PageCurl } from '@ValenceScreens/components/PageCurl/PageCurl';
+import { PageCurl } from '@ValenceUI/PageCurl';
+import { useCurlTurn } from '@ValenceUI/useCurlTurn';
 import { PAGE_TURN } from '@ValenceCore/tokens/PAGE_TURN';
 import { turnOfPageSwipe } from '@ValenceCore/functions/turnOfPageSwipe';
-import { clampCurl } from '@ValenceCore/functions/clampCurl';
-import { curlArcAt } from '@ValenceCore/functions/curlArcAt';
-import { curlAwayOf } from '@ValenceCore/functions/curlAwayOf';
-import { curlCornerOf } from '@ValenceCore/functions/curlCornerOf';
 import { isCurlPull } from '@ValenceCore/functions/isCurlPull';
-import { usePageDrag } from '@ValenceScreens/reading/usePageDrag';
+import { usePageDrag } from '@ValenceUI/usePageDrag';
 import { widthFor } from '@ValenceScreens/reading/widthFor';
-import type { CurlLeaf, CurlPoint } from '@ValenceCore/functions/pageCurl.types';
+import type { CurlHold, CurlLeaf } from '@ValenceCore/functions/pageCurl.types';
 import type { SpreadStageProps } from './SpreadStage.types';
 
 const FIT_CLASSES = {
@@ -26,13 +23,7 @@ const QUICKEST_SECONDS = 0.14;
 
 const MOST_STEPS = 6;
 
-type Turning = {
-  base: number;
-  heading: 1 | -1;
-  leaf: CurlLeaf;
-  corner: CurlPoint;
-  away: CurlPoint;
-};
+type Turning = CurlHold & { base: number };
 
 /**
  * How long one turn should take when others are waiting behind it: the more turns are stacked up,
@@ -103,9 +94,8 @@ const SpreadStage = ({
   const [turning, setTurning] = useState<Turning | null>(null);
   const turningRef = useRef<Turning | null>(null);
   const stage = useRef<HTMLDivElement | null>(null);
-  const generation = useRef(0);
-  const cornerX = useMotionValue(0);
-  const cornerY = useMotionValue(0);
+  const curl = useCurlTurn();
+  const { x: cornerX, y: cornerY } = curl;
   const onward = isRightToLeft ? 1 : -1;
 
   const settle = (next: Turning | null) => {
@@ -124,10 +114,8 @@ const SpreadStage = ({
   }, [chapterId]);
 
   useLayoutEffect(() => {
-    generation.current += 1;
-    cornerX.stop();
-    cornerY.stop();
-  }, [chapterId, cornerX, cornerY]);
+    curl.stop();
+  }, [chapterId, curl]);
 
   const mayGo = (by: 1 | -1): boolean =>
     by === 1 ? shownAt < spreads.length - 1 || canGoOn : shownAt > 0 || canGoBack;
@@ -174,17 +162,7 @@ const SpreadStage = ({
       return null;
     }
 
-    const leaf = leafNow();
-    const corner = curlCornerOf(leaf, heldAt);
-    const away = curlAwayOf(leaf, corner);
-    const start = by === 1 ? corner : away;
-
-    cornerX.stop();
-    cornerY.stop();
-    cornerX.set(start.x);
-    cornerY.set(start.y);
-
-    return { base, heading: by, leaf, corner, away };
+    return { ...curl.lift(leafNow(), heldAt, by), base };
   };
 
   const land = (by: 1 | -1) => {
@@ -196,21 +174,6 @@ const SpreadStage = ({
 
     settle(null);
     onTurn?.(by);
-  };
-
-  const carry = (to: CurlPoint, onComplete: () => void) => {
-    const began = generation.current;
-    const how = { duration: TURN_SECONDS, ease: PAGE_TURN.curls.ease };
-
-    void animate(cornerY, to.y, how);
-    void animate(cornerX, to.x, {
-      ...how,
-      onComplete: () => {
-        if (generation.current === began) {
-          onComplete();
-        }
-      },
-    });
   };
 
   const surface = useCallback(
@@ -249,14 +212,7 @@ const SpreadStage = ({
         settle(held);
       }
 
-      const pulled =
-        held.heading === 1
-          ? { x: held.corner.x + moved, y: held.corner.y + down }
-          : { x: held.away.x + 2 * moved, y: held.away.y + down };
-      const reached = clampCurl(held.leaf, held.corner, pulled);
-
-      cornerX.set(reached.x);
-      cornerY.set(reached.y);
+      curl.pull(held, moved, down);
     },
     onRelease: (offset, velocity) => {
       const towards = turnOfPageSwipe(offset, velocity);
@@ -273,7 +229,7 @@ const SpreadStage = ({
 
       const turns = by === held.heading;
 
-      carry((held.heading === 1) === turns ? held.away : held.corner, () => {
+      curl.carry(held, turns, () => {
         if (turns) {
           land(held.heading);
         } else {
@@ -323,30 +279,12 @@ const SpreadStage = ({
       return;
     }
 
-    const from = step === 1 ? held.corner : held.away;
-    const to = step === 1 ? held.away : held.corner;
-    const rise =
-      (held.corner.y === held.leaf.y ? 1 : -1) * held.leaf.height * PAGE_TURN.curls.rises;
-    const began = generation.current;
-
     settleTurn(held);
-    void animate(0, 1, {
-      duration: secondsFor(Math.abs(away) - 1),
-      ease: PAGE_TURN.curls.ease,
-      onUpdate: (share) => {
-        const at = curlArcAt(from, to, rise, share);
-
-        cornerX.set(at.x);
-        cornerY.set(at.y);
-      },
-      onComplete: () => {
-        if (generation.current === began) {
-          setShownAt(shownAt + step);
-          settleTurn(null);
-        }
-      },
+    curl.sweep(held, secondsFor(Math.abs(away) - 1), () => {
+      setShownAt(shownAt + step);
+      settleTurn(null);
     });
-  }, [turning, spreadAt, shownAt, isMoving, cornerX, cornerY]);
+  }, [turning, spreadAt, shownAt, isMoving, curl]);
 
   const askedWidth = widthFor(across);
 

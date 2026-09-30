@@ -184,7 +184,7 @@ const ShowDialog = ({
       <DialogContent className="p-3 sm:p-4">
         <ScrolledTitle
           title={shown.title}
-          artwork={artworkUrl(shown.coverMediaId, 'backdrop')}
+          artwork={artworkUrl(shown.coverMediaId, 'backdrop', { isOfTitle: true })}
           isShowing={hasScrolledPast}
         >
           <Button isIconOnly variant="ghost" size="sm" label="Close" onClick={onClose}>
@@ -196,7 +196,7 @@ const ShowDialog = ({
           <div className="relative h-[34vh] min-h-[14rem] sm:h-[22rem]">
             <MediaPreview
               mediaId={shown.coverMediaId}
-              backdropUrl={artworkUrl(shown.coverMediaId, 'backdrop')}
+              backdropUrl={artworkUrl(shown.coverMediaId, 'backdrop', { isOfTitle: true })}
               durationSeconds={0}
               fills
             />

@@ -21,6 +21,8 @@ import {
   startReencodes,
 } from '@ValenceClient/admin/fetchReencodes';
 import { MatchPicker } from './components/MatchPicker/MatchPicker';
+import { ArtworkPicker } from './components/ArtworkPicker/ArtworkPicker';
+import type { ArtworkSubject } from './components/ArtworkPicker/ArtworkPicker.types';
 import { CorrectionPicker } from '@ValenceScreens/components/AdminArea/components/CorrectionPicker/CorrectionPicker';
 import { PosterMatchList } from '@ValenceScreens/components/AdminArea/components/PosterMatchList/PosterMatchList';
 import { MusicMatchList } from '@ValenceScreens/components/AdminArea/components/MusicMatchList/MusicMatchList';
@@ -186,6 +188,7 @@ const AdminArea = ({
   const [encoderHistory, setEncoderHistory] = useState<number[]>([]);
   const [viewingJobKind, setViewingJobKind] = useState<string | null>(initialJob ?? null);
   const [correcting, setCorrecting] = useState<MediaSummary | null>(null);
+  const [dressing, setDressing] = useState<ArtworkSubject | null>(null);
   const [correctingAlbum, setCorrectingAlbum] = useState<MusicAlbum | null>(null);
   const [correctingBook, setCorrectingBook] = useState<Book | null>(null);
   const [choosingMoment, setChoosingMoment] = useState<MediaSummary | null>(null);
@@ -1004,6 +1007,7 @@ const AdminArea = ({
                 onOpenFolder?.(path);
               }}
               onCorrect={setCorrecting}
+              onChooseArtwork={setDressing}
               onCorrectAlbum={setCorrectingAlbum}
               onCorrectBook={setCorrectingBook}
               onChooseMoment={(item) => {
@@ -1281,6 +1285,18 @@ const AdminArea = ({
           </TabPanel>
         </section>
       </motion.div>
+
+      <ArtworkPicker
+        subject={dressing}
+        onClose={() => {
+          setDressing(null);
+        }}
+        onChanged={() => {
+          void cache.invalidateQueries({
+            queryKey: adminQueries.everyFile(libraries.map((library) => library.id)).queryKey,
+          });
+        }}
+      />
 
       <MatchPicker
         media={correcting}
