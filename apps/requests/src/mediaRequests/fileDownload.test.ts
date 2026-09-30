@@ -224,6 +224,30 @@ describe('fileDownload', () => {
     expect(await readdir(join(library, 'Film (2026)'))).toEqual([]);
   });
 
+  it('keeps the copy already filed where one that would replace it is refused', async () => {
+    const { downloads, library } = await aPlace();
+    const release = join(downloads, 'Film.2026.2160p.WEB-DL-GRP');
+    const kept = join(library, 'Film (2026)', 'Film (2026) [2160p][WEBDL].mkv');
+
+    await mkdir(release);
+    await mkdir(join(library, 'Film (2026)'));
+    await writeFile(kept, 'the copy already here');
+    await writeFile(join(release, 'Film.2026.2160p.WEB-DL-GRP.mkv'), 'a copy that lies');
+
+    const { refused } = await fileDownload(
+      { libraryPath: library, title: 'Film', year: 2026 },
+      [{ ...anItem('film', null, null), filePath: kept }],
+      release,
+      true,
+      () => Promise.resolve(null),
+      () => 'It is not what was asked for',
+    );
+
+    expect(refused.has('film')).toBe(true);
+    expect(await readFile(kept, 'utf8')).toBe('the copy already here');
+    expect(await readdir(join(library, 'Film (2026)'))).toEqual(['Film (2026) [2160p][WEBDL].mkv']);
+  });
+
   it('files a video that is what was asked for', async () => {
     const { downloads, library } = await aPlace();
     const release = join(downloads, 'Film.2026.2160p.WEB-DL-GRP');

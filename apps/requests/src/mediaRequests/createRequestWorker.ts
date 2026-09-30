@@ -39,6 +39,7 @@ import type {
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { ProbeClient } from '@ValenceRequests/media/createProbeClient';
 import { whatTheFilesSay } from '@ValenceRequests/profiles/whatTheFilesSay';
+import { judgeRelease } from '@ValenceRequests/profiles/judgeRelease';
 import { qualityRefusedBy } from '@ValenceRequests/profiles/qualityRefusedBy';
 import { QUALITY_LABELS } from '@ValenceRequests/profiles/QUALITY_LABELS';
 import type { ParsedRelease } from '@ValenceContracts/schemas/ParsedRelease';
@@ -745,19 +746,27 @@ const createRequestWorker = ({
           const path = filed.get(item.id);
           const why = refused.get(item.id);
 
-          await (why !== undefined
-            ? update(item, letGo(item, why))
-            : path === undefined
-              ? update(item, letGo(item, 'It was not in what was downloaded'))
-              : update(item, {
-                  state: 'filed',
-                  problem: null,
-                  filePath: path,
-                  filedTitle: filedAs(path, item.releaseTitle),
-                  filedScore: item.score,
-                  attempts: 0,
-                  ...downloadFacts(download),
-                }));
+          if (why !== undefined || path === undefined) {
+            await update(item, letGo(item, why ?? 'It was not in what was downloaded'));
+            continue;
+          }
+
+          const filedTitle = filedAs(path, item.releaseTitle);
+          const score =
+            filedTitle === null || filedTitle === item.releaseTitle
+              ? item.score
+              : await scoreOfFiled(filedTitle, download, request, filing.length);
+
+          await update(item, {
+            state: 'filed',
+            problem: null,
+            filePath: path,
+            filedTitle,
+            score,
+            filedScore: score,
+            attempts: 0,
+            ...downloadFacts(download),
+          });
         }
 
         const firstRefusal = [...refused.values()][0];
@@ -1168,6 +1177,51 @@ const createRequestWorker = ({
 
     return parseReleaseName(named).resolution === null ? releaseTitle : named;
   };
+
+  /**
+   * What a filed copy scores, judged as a release would be but by the name it was filed under,
+   * which says what it was found to be, so a better release is weighed against the copy on disk
+   * rather than against what the title it came under claimed.
+   *
+   * @param filedTitle - The name it was filed under.
+   * @param download - The download it came from, for its size and where it was found.
+   * @param request - What was asked for.
+   * @param episodes - How many of the request's films or episodes the download held.
+   * @returns Its score.
+   */
+  const scoreOfFiled = async (
+    filedTitle: string,
+    download: SentDownloadRecord,
+    request: MediaRequestRecord,
+    episodes: number,
+  ): Promise<number> =>
+    judgeRelease(
+      {
+        id: filedTitle,
+        title: filedTitle,
+        indexerId: '',
+        indexerName: download.indexerName ?? '',
+        protocol: download.protocol,
+        sizeBytes: download.sizeBytes,
+        seeders: null,
+        leechers: null,
+        grabs: null,
+        publishedAt: null,
+        categories: [],
+        downloadUrl: null,
+        magnetUrl: null,
+        infoUrl: null,
+        infoHash: null,
+        downloadFactor: null,
+        uploadFactor: null,
+        minimumRatio: null,
+        minimumSeedSeconds: null,
+      },
+      parseReleaseName(filedTitle),
+      await profileFor(request),
+      request.runtimeMinutes ?? undefined,
+      episodes,
+    ).score;
 
   /**
    * How a request's films and episodes are judged as they are filed, by what each video is found to

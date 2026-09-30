@@ -706,7 +706,7 @@ describe('createRequestWorker', () => {
       expect(send).toHaveBeenCalled();
     });
 
-    it('remembers a filed copy as what its file was found to be, for judging an upgrade', async () => {
+    it('remembers and scores a filed copy as what its file was found to be, for judging an upgrade', async () => {
       const path = '/media/Films/Dune (2021)/Dune (2021) [1080p][WEBDL][x264].mkv';
       const filed = vi.fn<typeof fileDownload>(() =>
         Promise.resolve({
@@ -724,10 +724,14 @@ describe('createRequestWorker', () => {
 
       await worker.tick();
 
-      expect(await theItem(items)).toMatchObject({
+      const item = await theItem(items);
+
+      expect(item).toMatchObject({
         state: 'filed',
         filedTitle: 'Dune (2021) [1080p][WEBDL][x264]',
       });
+      expect(item?.score).toBe(item?.filedScore);
+      expect(item?.score).not.toBe(2200);
     });
 
     it('judges what is filed against the request’s profile', async () => {

@@ -14,6 +14,8 @@ import type { ParsedRelease } from '@ValenceContracts/schemas/ParsedRelease';
 import type { RequestItemRecord } from '@ValenceRequests/mediaRequests/RequestItemRecord';
 import type { ProbeClient } from '@ValenceRequests/media/createProbeClient';
 
+const BEING_CHECKED = '.checking';
+
 type Fileable = Pick<
   RequestItemRecord,
   'id' | 'season' | 'episode' | 'title' | 'airDate' | 'filePath' | 'releaseTitle'
@@ -134,7 +136,8 @@ const videoFor = (
  * @param probe - How to ask what a filed video actually is; answers nothing where none is set up.
  * @param refuses - Says why a video is not what was asked for, judged by what it is found to be —
  *   its resolution measured where it could be probed, and otherwise as its name says — or nothing
- *   where it is. A refused video is taken back out of the library, with nothing placed beside it.
+ *   where it is. Each video is checked beside where it goes, under a name of its own, and moved into
+ *   place only once it is taken, so a copy it would replace is never lost to one that is refused.
  * @returns Where each was filed, which could not be found in it, and which were refused and why.
  */
 const fileDownload = async (
@@ -164,13 +167,15 @@ const fileDownload = async (
     const placed = libraryFileOf(request, item, extension, qualityTagOf(said));
     const videoStem = stemOf(video.name);
 
-    await placeFile(video.path, placed, isKeepingSource);
+    const checking = `${placed}${BEING_CHECKED}`;
 
-    const probed = await probe(placed);
+    await placeFile(video.path, checking, isKeepingSource);
+
+    const probed = await probe(checking);
     const refusal = refuses({ ...said, ...(probed === null ? {} : qualityFromProbe(probed)) });
 
     if (refusal !== null) {
-      await unlink(placed).catch(() => undefined);
+      await unlink(checking).catch(() => undefined);
       refused.set(item.id, refusal);
       continue;
     }
@@ -185,9 +190,7 @@ const fileDownload = async (
             qualityTagOf({ ...said, ...qualityFromProbe(probed) }),
           );
 
-    if (destination !== placed) {
-      await rename(placed, destination);
-    }
+    await rename(checking, destination);
 
     for (const subtitle of files.filter(
       (file) =>
