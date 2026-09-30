@@ -192,7 +192,7 @@ This runs `apps/server/src/writeOpenApiDocument.ts`, which builds the API over i
 
 ## Database tooling
 
-Valence uses [Drizzle](https://orm.drizzle.team). The schema of the server is `apps/server/src/db/Schema.ts`, and its migrations are the SQL files in `apps/server/drizzle`. The requests service has its own schema and migration folder. Both read `DATABASE_URL`, loading the `.env` at the repository root, and fall back to the local development database.
+Valence uses [Drizzle](https://orm.drizzle.team). The schema of the server is `apps/server/src/db/postgres/Schema.ts`, and its migrations are the SQL files in `apps/server/drizzle/postgres`. The requests service has its own schema and migration folder. Both read `DATABASE_URL`, loading the `.env` at the repository root, and fall back to the local development database.
 
 | Command                                       | Effect                                                                                                                     |
 | :-------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------- |

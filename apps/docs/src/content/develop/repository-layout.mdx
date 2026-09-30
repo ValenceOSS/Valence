@@ -143,7 +143,7 @@ The rules that keep this honest:
 
 ### Server and requests layout
 
-`apps/server/src` holds `App.ts` (the application factory), `Main.ts` (the composition root), `Migrate.ts` and `Rollback.ts` (operator entry points, described in [Database and migrations](/develop/database-and-migrations)) and `writeOpenApiDocument.ts` (used by the docs build). Drizzle output lives in `apps/server/drizzle`. `apps/requests` follows the same shape with its own `drizzle` folder and its own `Dockerfile`.
+`apps/server/src` holds `App.ts` (the application factory), `Main.ts` (the composition root), `Migrate.ts` and `Rollback.ts` (operator entry points, described in [Database and migrations](/develop/database-and-migrations)) and `writeOpenApiDocument.ts` (used by the docs build). Drizzle output lives in `apps/server/drizzle/postgres`, one folder per database. `apps/requests` follows the same shape with its own `drizzle` folder and its own `Dockerfile`.
 
 ### The media service
 

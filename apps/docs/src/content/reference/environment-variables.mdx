@@ -235,7 +235,7 @@ These variables affect building and testing rather than running a server.
 | `VALENCE_FIXTURES_DIR` | Fixture tools and transcoder tests | Where the media test corpus lives. Defaults to a folder under your home directory.                                           |
 | `VALENCE_MKVMERGE`     | `pnpm fixtures:sync`               | The `mkvmerge` binary used to build Dolby Vision fixtures. Defaults to `mkvmerge`.                                           |
 | `VALENCE_LOCAL_MEDIA`  | Transcoder tests                   | A folder of real media for the range tests. Defaults to a `Valence` folder in your home directory.                           |
-| `DATABASE_URL`         | `drizzle-kit`                      | Read by the `drizzle.config.ts` of the server and requests packages. Defaults to the local development database.             |
+| `DATABASE_URL`         | `drizzle-kit`                      | Read by the `drizzle.postgres.config.ts` of the server and requests packages. Defaults to the local development database.    |
 | `VITEST`               | Vitest                             | Set by the test runner.                                                                                                      |
 
 ## Image build arguments

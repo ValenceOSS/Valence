@@ -68,7 +68,7 @@ Each package sets its own thresholds in its `vitest.config.ts`. Lines, functions
 | `@valence/desktop`                                           | 90    | 83        | 84       | 90         | jsdom       |
 | `@valence/landing`, `@valence/docs`                          | 90    | 90        | 83       | 90         | jsdom       |
 
-The server excludes `src/db/Schema.ts` and `src/jobs/createInertJobQueue.ts` from coverage, and the requests service excludes its `Schema.ts` and `Main.ts`. Everything else counts. A drop below a threshold fails the package's test job.
+The server excludes `src/db/postgres/Schema.ts` and `src/jobs/createInertJobQueue.ts` from coverage, and the requests service excludes its `Schema.ts` and `Main.ts`. Everything else counts. A drop below a threshold fails the package's test job.
 
 ## Testing components
 
@@ -169,8 +169,8 @@ Some faults are in the text of a query rather than in anything the database does
 ```ts
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
-import { createDatabase } from '@ValenceServer/db/Database';
-import { share } from '@ValenceServer/db/Schema';
+import { createDatabase } from '#dialect/createDatabase';
+import { share } from '#dialect/Schema';
 
 const NOWHERE = 'postgres://nobody@localhost:1/none';
 
