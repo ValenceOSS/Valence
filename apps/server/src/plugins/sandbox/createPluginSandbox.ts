@@ -218,6 +218,7 @@ const createPluginSandbox = <TScope>(
 
           return;
         case 'stopped':
+          isRunning = false;
           options.onStopped?.(saidBySandbox(message.reason));
           failEverything(saidBySandbox(message.reason));
 
