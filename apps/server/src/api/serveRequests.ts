@@ -32,6 +32,8 @@ import {
   addDownloadClientRoute,
   changeDownloadClientRoute,
   listDownloadClientsRoute,
+  readGiveUpRulesRoute,
+  changeGiveUpRulesRoute,
   fileQueuedDownloadRoute,
   pauseQueuedDownloadRoute,
   readDownloadQueueRoute,
@@ -754,6 +756,26 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(listDownloadClientsRoute, async (context) => {
     const answer = await throughRequests(context.req.raw.headers, (client) => client.listClients());
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(readGiveUpRulesRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.readGiveUpRules(),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json({ error: answer.error }, answer.status);
+  });
+
+  app.openapi(changeGiveUpRulesRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.changeGiveUpRules(context.req.valid('json')),
+    );
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)

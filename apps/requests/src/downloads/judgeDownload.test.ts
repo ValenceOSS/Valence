@@ -64,6 +64,16 @@ describe('judgeDownload', () => {
     });
   });
 
+  it('gives up on a magnet still fetching its metadata, which qBittorrent sizes at nought', () => {
+    const stuck = aDownload({ state: 'metadata', sizeBytes: 0 });
+
+    expect(judgeDownload(stuck, at(4 * MINUTE), RULES).isDoomed).toBe(false);
+    expect(judgeDownload(stuck, at(5 * MINUTE), RULES)).toEqual({
+      isDoomed: true,
+      reason: 'It never got its file list, so it never started',
+    });
+  });
+
   it('does not ask that of usenet, which has no such step', () => {
     expect(
       judgeDownload(
@@ -102,6 +112,25 @@ describe('judgeDownload', () => {
     expect(judgeDownload(aDownload({ doneBytes: 1000 }), at(5 * MINUTE), RULES).isDoomed).toBe(
       false,
     );
+  });
+
+  it('leaves each kind of trouble alone once its rule is turned off', () => {
+    const off: DownloadRules = {
+      ...RULES,
+      metadataForMs: null,
+      stalledForMs: null,
+      wouldTakeLongerThanMs: null,
+    };
+
+    expect(judgeDownload(aDownload({ state: 'metadata', sizeBytes: 0 }), at(HOUR), off)).toEqual({
+      isDoomed: false,
+      reason: null,
+    });
+    expect(
+      judgeDownload(aDownload({ state: 'stalled', doneBytes: 1_000_000 }), at(48 * HOUR), off)
+        .isDoomed,
+    ).toBe(false);
+    expect(judgeDownload(aDownload({ doneBytes: 1_000_000 }), at(HOUR), off).isDoomed).toBe(false);
   });
 
   it('leaves alone what is finished or deliberately paused', () => {

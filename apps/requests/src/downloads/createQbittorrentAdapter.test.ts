@@ -317,6 +317,24 @@ describe('createQbittorrentAdapter', () => {
     expect(alien?.progress).toBe(1);
   });
 
+  it('reads a magnet still fetching its metadata as that, with no size yet', async () => {
+    const { fetch } = aFakeClient({
+      'POST /api/v2/auth/login': loggingIn(),
+      'GET /api/v2/torrents/info': () =>
+        Response.json([
+          { hash: 'a', name: 'Dune', state: 'metaDL', progress: 0, size: 0, num_seeds: 0 },
+          { hash: 'b', name: 'Heat', state: 'forcedMetaDL', progress: 0, size: 0 },
+        ]),
+    });
+
+    const [dune, heat] = await createQbittorrentAdapter(SETTINGS, fetch).list();
+
+    expect(dune?.state).toBe('metadata');
+    expect(dune?.sizeBytes).toBeNull();
+    expect(dune?.seeds).toBe(0);
+    expect(heat?.state).toBe('metadata');
+  });
+
   it('lists every one of its categories', async () => {
     const { fetch, asked } = aFakeClient({
       'POST /api/v2/auth/login': loggingIn(),

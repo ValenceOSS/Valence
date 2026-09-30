@@ -10,9 +10,11 @@ import {
   DownloadWatchSchema,
   ReleaseSendSchema,
 } from '@ValenceContracts/schemas/DownloadQueue';
+import { GiveUpRulesSchema } from '@ValenceContracts/schemas/GiveUpRules';
 import { readBody } from '@ValenceRequests/readBody';
 import type { DownloadClientService } from '@ValenceRequests/downloads/createDownloadClientService';
 import type { DownloadQueueService } from '@ValenceRequests/downloads/createDownloadQueue';
+import type { GiveUpRuleStore } from '@ValenceRequests/downloads/createDatabaseGiveUpRuleStore';
 import type { RequestWorker } from '@ValenceRequests/mediaRequests/createRequestWorker';
 
 type CreateDownloadRoutesOptions = {
@@ -22,6 +24,7 @@ type CreateDownloadRoutesOptions = {
     DownloadQueueService,
     'queue' | 'send' | 'pause' | 'resume' | 'remove' | 'watch' | 'listen' | 'acknowledge'
   >;
+  rules: GiveUpRuleStore;
   keepAliveMs?: number;
 };
 
@@ -44,6 +47,7 @@ const KEEP_ALIVE_MS = 15_000;
  * @param filing - What files a finished download into a library.
  * @param clients - The download clients.
  * @param queue - The queue.
+ * @param rules - When a download is given up on, so the next best release can be tried.
  * @param keepAliveMs - How long the stream may be quiet before it says something.
  * @returns The routes.
  */
@@ -51,6 +55,7 @@ const createDownloadRoutes = ({
   filing = { fileNow: () => Promise.resolve(null) },
   clients,
   queue,
+  rules,
   keepAliveMs = KEEP_ALIVE_MS,
 }: CreateDownloadRoutesOptions) => {
   const routes = new Hono();
@@ -103,6 +108,16 @@ const createDownloadRoutes = ({
     return draft === null
       ? context.json(NOT_A_CLIENT, 400)
       : context.json(await clients.tryDraft(draft, context.req.param('id')));
+  });
+
+  routes.get('/give-up-rules', async (context) => context.json(await rules.read()));
+
+  routes.put('/give-up-rules', async (context) => {
+    const next = await readBody(context.req.raw, GiveUpRulesSchema);
+
+    return next === null
+      ? context.json({ error: 'Those are not rules for giving up on a download.' }, 400)
+      : context.json(await rules.write(next));
   });
 
   routes.get('/downloads', async (context) => context.json(await queue.queue()));

@@ -30,12 +30,13 @@ import { DownloadClientDialog } from '@ValenceScreens/components/AdminArea/compo
 import { RemoveDownloadDialog } from '@ValenceScreens/components/AdminArea/components/RemoveDownloadDialog/RemoveDownloadDialog';
 import { DownloadClientsTable } from './components/DownloadClientsTable/DownloadClientsTable';
 import { DownloadQueueTable } from './components/DownloadQueueTable/DownloadQueueTable';
+import { GiveUpRulesList } from './components/GiveUpRulesList/GiveUpRulesList';
 import { describeSpeeds } from './describeSpeeds';
 import type { DownloadClient } from '@ValenceContracts/schemas/DownloadClient';
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type { QueuedDownload } from '@ValenceContracts/schemas/DownloadQueue';
 
-const DOWNLOADS_TABS = ['queue', 'clients'] as const;
+const DOWNLOADS_TABS = ['queue', 'clients', 'rules'] as const;
 
 const NO_LIBRARIES: readonly Library[] = [];
 
@@ -51,8 +52,8 @@ const isDownloadsTab = (value: string): value is DownloadsTab =>
   DOWNLOADS_TABS.some((tab) => tab === value);
 
 /**
- * The Downloads page: everything Valence has sent to a download client, moving as it downloads, and
- * the clients themselves.
+ * The Downloads page: everything Valence has sent to a download client, moving as it downloads, the
+ * clients themselves, and when a download is given up on.
  *
  * The queue is read once and then kept up to date by the live connection. Holding that open is also
  * what tells the requests service somebody is watching, so the clients are asked every couple of
@@ -229,6 +230,7 @@ const DownloadsPanel = () => {
                 items: [
                   { id: 'queue', label: 'Queue' },
                   { id: 'clients', label: 'Clients' },
+                  { id: 'rules', label: 'Rules' },
                 ],
               },
             ]}
@@ -346,6 +348,10 @@ const DownloadsPanel = () => {
               onRemove={setRemovingClient}
             />
           )}
+        </TabPanel>
+
+        <TabPanel value="rules" travel={travel}>
+          <GiveUpRulesList />
         </TabPanel>
       </PanelCard>
     </Tabs>

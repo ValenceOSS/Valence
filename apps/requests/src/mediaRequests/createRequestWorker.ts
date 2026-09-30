@@ -2,6 +2,7 @@ import { basename, extname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
+import { GIVE_UP_DEFAULTS } from '@ValenceContracts/schemas/GiveUpRules';
 import { QualityProfileDraftSchema } from '@ValenceContracts/schemas/QualityProfile';
 import { fileAlbum } from '@ValenceRequests/mediaRequests/fileAlbum';
 import { fileBook } from '@ValenceRequests/mediaRequests/fileBook';
@@ -24,6 +25,7 @@ import { wantsUpgrade } from '@ValenceRequests/mediaRequests/wantsUpgrade';
 import { waitThenRun } from '@ValenceRequests/timing/waitThenRun';
 import { downloadFacts } from '@ValenceRequests/mediaRequests/downloadFacts';
 import { judgeDownload } from '@ValenceRequests/downloads/judgeDownload';
+import type { GiveUpRules } from '@ValenceContracts/schemas/GiveUpRules';
 import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
 import type {
   IndexerSearchReport,
@@ -89,10 +91,8 @@ type CreateRequestWorkerOptions = {
   missingEveryMs?: number;
   firstMissingAfterMs?: number;
   feedsEveryMs?: number;
-  stalledForMs?: number;
-  metadataForMs?: number;
+  giveUpRules?: () => Promise<GiveUpRules>;
   settlesForMs?: number;
-  wouldTakeLongerThanMs?: number;
   say?: (line: string) => void;
 };
 
@@ -108,13 +108,13 @@ const FIRST_MISSING_AFTER_MS = 2 * 60 * 1000;
 
 const FEEDS_EVERY_MS = 15 * 60 * 1000;
 
-const STALLED_FOR_MS = 6 * 60 * 60 * 1000;
+const MINUTE_MS = 60 * 1000;
 
-const METADATA_FOR_MS = 5 * 60 * 1000;
+const HOUR_MS = 60 * MINUTE_MS;
+
+const DAY_MS = 24 * HOUR_MS;
 
 const SETTLES_FOR_MS = 15 * 60 * 1000;
-
-const WOULD_TAKE_LONGER_THAN_MS = 7 * 24 * 60 * 60 * 1000;
 
 const NUDGE_AFTER_MS = 1000;
 
@@ -255,10 +255,8 @@ const groupedByDownload = (
  * @param missingEveryMs - How often to search for everything missing.
  * @param firstMissingAfterMs - How long after starting to search for everything missing first.
  * @param feedsEveryMs - How often to read the indexers' newest releases.
- * @param stalledForMs - How long a download may stall before another release is tried.
- * @param metadataForMs - How long a torrent has to learn what it holds before it is given up on.
+ * @param giveUpRules - When a download is given up on and the next best release tried.
  * @param settlesForMs - How long a download runs before it is judged on how fast it is going.
- * @param wouldTakeLongerThanMs - How long a download may still have left before it is given up on.
  * @param say - Where to say what happened.
  * @returns The worker.
  */
@@ -283,10 +281,8 @@ const createRequestWorker = ({
   missingEveryMs = MISSING_EVERY_MS,
   firstMissingAfterMs = FIRST_MISSING_AFTER_MS,
   feedsEveryMs = FEEDS_EVERY_MS,
-  stalledForMs = STALLED_FOR_MS,
-  metadataForMs = METADATA_FOR_MS,
+  giveUpRules = () => Promise.resolve(GIVE_UP_DEFAULTS),
   settlesForMs = SETTLES_FOR_MS,
-  wouldTakeLongerThanMs = WOULD_TAKE_LONGER_THAN_MS,
   say = () => undefined,
 }: CreateRequestWorkerOptions) => {
   let working: Promise<void> = Promise.resolve();
@@ -629,6 +625,10 @@ const createRequestWorker = ({
         };
 
   const follow = async ({ request, items: all }: Found) => {
+    const rules = await giveUpRules();
+    const within = (count: number | null, unitMs: number) =>
+      count === null ? null : count * unitMs;
+
     for (const [downloadId, fetching] of groupedByDownload(all, 'downloading')) {
       const download = downloadId === null ? null : await downloads.find(downloadId);
 
@@ -653,10 +653,10 @@ const createRequestWorker = ({
       }
 
       const judged = judgeDownload(download, now(), {
-        metadataForMs,
-        stalledForMs,
+        metadataForMs: within(rules.metadataMinutes, MINUTE_MS),
+        stalledForMs: within(rules.stalledHours, HOUR_MS),
         settlesForMs,
-        wouldTakeLongerThanMs,
+        wouldTakeLongerThanMs: within(rules.slowDays, DAY_MS),
       });
 
       if (!judged.isDoomed) {
@@ -800,6 +800,7 @@ const createRequestWorker = ({
               : (filed.get(album.id) ?? '');
 
         if (filed.size > 0) {
+          await downloads.update(download.id, { filedInto: folder, updatedAt: at() });
           await events.add({
             kind: 'filed',
             title: request.title,

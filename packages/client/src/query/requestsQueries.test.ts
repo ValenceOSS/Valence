@@ -27,6 +27,10 @@ vi.mock('@ValenceClient/requests/fetchDownloadClients', () => ({ fetchDownloadCl
 
 vi.mock('@ValenceClient/requests/fetchDownloadQueue', () => ({ fetchDownloadQueue }));
 
+const fetchGiveUpRules = vi.hoisted(() => vi.fn());
+
+vi.mock('@ValenceClient/requests/fetchGiveUpRules', () => ({ fetchGiveUpRules }));
+
 const fetchProfiles = vi.hoisted(() => vi.fn());
 
 vi.mock('@ValenceClient/requests/fetchProfiles', () => ({ fetchProfiles }));
@@ -128,6 +132,14 @@ describe('requestsQueries', () => {
       clients: [],
       downloads: [],
       checkedAt: null,
+    });
+  });
+
+  it('asks for when a download is given up on', async () => {
+    fetchGiveUpRules.mockResolvedValue({ stalledHours: 6 });
+
+    await expect(aCache().fetchQuery(requestsQueries.giveUpRules())).resolves.toEqual({
+      stalledHours: 6,
     });
   });
 

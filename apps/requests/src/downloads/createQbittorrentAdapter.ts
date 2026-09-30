@@ -48,8 +48,8 @@ const STATES: Readonly<Record<string, QueuedDownloadState>> = {
   checkingUP: 'done',
   downloading: 'downloading',
   forcedDL: 'downloading',
-  metaDL: 'downloading',
-  forcedMetaDL: 'downloading',
+  metaDL: 'metadata',
+  forcedMetaDL: 'metadata',
   stalledDL: 'stalled',
   pausedDL: 'paused',
   stoppedDL: 'paused',
@@ -73,7 +73,7 @@ const PROBLEMS: Readonly<Record<string, string>> = {
  */
 const readTorrent = (torrent: z.infer<typeof TorrentSchema>): ClientItem => {
   const state = STATES[torrent.state] ?? 'queued';
-  const sizeBytes = torrent.size ?? torrent.total_size ?? null;
+  const sizeBytes = state === 'metadata' ? null : (torrent.size ?? torrent.total_size ?? null);
 
   return {
     remoteId: torrent.hash.toLowerCase(),

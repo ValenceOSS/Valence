@@ -1,9 +1,11 @@
 import { DEFAULT_DOWNLOAD_CATEGORIES } from '@ValenceContracts/schemas/DownloadClient';
+import { GIVE_UP_DEFAULTS } from '@ValenceContracts/schemas/GiveUpRules';
 import { describe, expect, it, vi } from 'vitest';
 import { aSentDownload } from '@ValenceRequests/testing/aSentDownload';
 import { createDownloadRoutes } from './createDownloadRoutes';
 import type { NotSent } from '@ValenceRequests/downloads/NotSent';
 import type { DownloadClient, DownloadClientTest } from '@ValenceContracts/schemas/DownloadClient';
+import type { GiveUpRules } from '@ValenceContracts/schemas/GiveUpRules';
 import type {
   DownloadQueue,
   DownloadStreamFrame,
@@ -109,7 +111,11 @@ const theRoutes = () => {
       ),
     ),
   };
-  const routes = createDownloadRoutes({ clients, queue, filing, keepAliveMs: 5 });
+  const rules = {
+    read: vi.fn(() => Promise.resolve(GIVE_UP_DEFAULTS)),
+    write: vi.fn((next: GiveUpRules) => Promise.resolve(next)),
+  };
+  const routes = createDownloadRoutes({ clients, queue, filing, rules, keepAliveMs: 5 });
 
   const ask = (path: string, method = 'GET', body?: object | string) =>
     routes.request(path, {
@@ -126,6 +132,7 @@ const theRoutes = () => {
     clients,
     queue,
     filing,
+    rules,
     stopListening,
     tell: (frame: DownloadStreamFrame) => listening?.(frame),
   };
@@ -287,6 +294,23 @@ describe('createDownloadRoutes', () => {
       await vi.waitFor(() => {
         expect(stopListening).toHaveBeenCalled();
       });
+    });
+  });
+
+  describe('give-up rules', () => {
+    it('reads the rules', async () => {
+      const { ask } = theRoutes();
+
+      expect(await (await ask('/give-up-rules')).json()).toEqual(GIVE_UP_DEFAULTS);
+    });
+
+    it('keeps changed rules, and refuses what is not rules', async () => {
+      const { ask, rules } = theRoutes();
+      const next = { ...GIVE_UP_DEFAULTS, stalledHours: null };
+
+      expect(await (await ask('/give-up-rules', 'PUT', next)).json()).toEqual(next);
+      expect(rules.write).toHaveBeenCalledWith(next);
+      expect((await ask('/give-up-rules', 'PUT', { stalledHours: 'soon' })).status).toBe(400);
     });
   });
 });

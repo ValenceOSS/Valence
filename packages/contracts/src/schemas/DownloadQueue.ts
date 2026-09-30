@@ -7,6 +7,7 @@ import { MediaRequestKindSchema } from './MediaRequest';
 
 const QUEUED_DOWNLOAD_STATES = [
   'queued',
+  'metadata',
   'downloading',
   'stalled',
   'paused',

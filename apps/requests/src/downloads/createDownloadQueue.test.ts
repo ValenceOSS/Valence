@@ -95,6 +95,7 @@ const aQueue = ({
     return Promise.resolve<ReleaseFile | null>({ kind: 'torrent', bytes: new Uint8Array([1]) });
   }),
   judgeFiles,
+  refusesUnknownFiles,
 }: {
   clients?: DownloadClientRecord[];
   sent?: SentDownloadRecord[];
@@ -102,6 +103,7 @@ const aQueue = ({
   indexers?: Pick<Indexer, 'id' | 'privacy' | 'removesWhenDone' | 'seedSeconds' | 'seedRatio'>[];
   fetchRelease?: (indexerId: string, url: string) => Promise<ReleaseFile | null>;
   judgeFiles?: (record: SentDownloadRecord, videos: readonly string[]) => Promise<string | null>;
+  refusesUnknownFiles?: () => Promise<boolean>;
 } = {}) => {
   const store = createMemoryRecordStore(clients);
   const downloads = createMemoryRecordStore(sent);
@@ -123,6 +125,7 @@ const aQueue = ({
     indexers: { records: () => Promise.resolve(indexers) },
     fetchRelease,
     ...(judgeFiles === undefined ? {} : { judgeFiles }),
+    ...(refusesUnknownFiles === undefined ? {} : { refusesUnknownFiles }),
     now: () => AT,
     schedule,
   });
@@ -262,6 +265,24 @@ describe('createDownloadQueue', () => {
       expect(await downloads.find(aSentDownload().id)).toMatchObject({
         state: 'failed',
         problem: 'It holds nothing Valence can file',
+      });
+    });
+
+    it('keeps a torrent of files it does not know once that rule is turned off', async () => {
+      const adapter = aSortingAdapter([{ index: 0, name: 'Dune.rar' }]);
+      const { queue, downloads } = aQueue({
+        sent: [aSentDownload()],
+        adapter,
+        refusesUnknownFiles: () => Promise.resolve(false),
+      });
+
+      await queue.check();
+
+      expect(adapter.remove).not.toHaveBeenCalled();
+      expect(adapter.skip).not.toHaveBeenCalled();
+      expect(await downloads.find(aSentDownload().id)).toMatchObject({
+        state: 'downloading',
+        filesChecked: true,
       });
     });
 

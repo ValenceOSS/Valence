@@ -25,6 +25,7 @@ const TorrentSchema = z.object({
   error: z.number().int().default(0),
   errorString: z.string().default(''),
   percentDone: z.number(),
+  metadataPercentComplete: z.number().default(1),
   sizeWhenDone: z.number(),
   leftUntilDone: z.number(),
   rateDownload: z.number(),
@@ -51,6 +52,7 @@ const FIELDS = [
   'error',
   'errorString',
   'percentDone',
+  'metadataPercentComplete',
   'sizeWhenDone',
   'leftUntilDone',
   'rateDownload',
@@ -85,7 +87,8 @@ const rpcAddressOf = (url: string): string => {
 
 /**
  * Reads what a torrent is doing from Transmission's status number: 0 stopped, 1 and 2 checking,
- * 3 waiting to download, 4 downloading, 5 and 6 seeding.
+ * 3 waiting to download, 4 downloading, 5 and 6 seeding. A magnet downloading before it has its
+ * metadata is still learning what it holds, and has nothing to download yet.
  *
  * @param torrent - The torrent.
  * @returns Its state.
@@ -106,6 +109,10 @@ const stateOf = (torrent: z.infer<typeof TorrentSchema>): QueuedDownloadState =>
     case 2:
       return 'processing';
     case 4:
+      if (torrent.metadataPercentComplete < 1) {
+        return 'metadata';
+      }
+
       return torrent.rateDownload === 0 && torrent.peersSendingToUs === 0
         ? 'stalled'
         : 'downloading';
@@ -129,7 +136,7 @@ const readTorrent = (torrent: z.infer<typeof TorrentSchema>): ClientItem => {
     state,
     problem: torrent.error === 0 || torrent.errorString === '' ? null : torrent.errorString,
     progress: Math.min(Math.max(torrent.percentDone, 0), 1),
-    sizeBytes: torrent.sizeWhenDone,
+    sizeBytes: state === 'metadata' ? null : torrent.sizeWhenDone,
     doneBytes: torrent.sizeWhenDone - torrent.leftUntilDone,
     downloadBytesPerSecond: torrent.rateDownload,
     uploadBytesPerSecond: torrent.rateUpload,

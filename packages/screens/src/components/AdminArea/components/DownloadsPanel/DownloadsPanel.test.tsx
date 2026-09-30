@@ -1,6 +1,7 @@
 import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { GIVE_UP_DEFAULTS } from '@ValenceContracts/schemas/GiveUpRules';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import { DownloadsPanel } from './DownloadsPanel';
 import type { DownloadClient } from '@ValenceContracts/schemas/DownloadClient';
@@ -36,6 +37,11 @@ vi.mock('@ValenceClient/requests/fetchDownloadClients', () => ({
   testDownloadClient: (id: string) => testDownloadClient(id),
   addDownloadClient: vi.fn(),
   tryDownloadClient: vi.fn(),
+}));
+
+vi.mock('@ValenceClient/requests/fetchGiveUpRules', () => ({
+  fetchGiveUpRules: () => Promise.resolve(GIVE_UP_DEFAULTS),
+  changeGiveUpRules: vi.fn(),
 }));
 
 vi.mock('@ValenceClient/requests/fetchDownloadQueue', () => ({
@@ -437,6 +443,16 @@ describe('DownloadsPanel', () => {
     expect(
       await screen.findByRole('status', { name: 'Reading the download clients' }),
     ).toBeInTheDocument();
+  });
+
+  it('says when a download is given up on under its own tab', async () => {
+    const user = userEvent.setup();
+
+    renderInAnAddress(<DownloadsPanel />);
+
+    await user.click(screen.getByRole('tab', { name: 'Rules' }));
+
+    expect(await screen.findByRole('button', { name: /Stalled/ })).toHaveTextContent('Six hours');
   });
 
   it('sets a display name so devtools can identify it', () => {

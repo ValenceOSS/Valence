@@ -25,6 +25,8 @@ import {
   QueuedDownloadSchema,
 } from '@ValenceContracts/schemas/DownloadQueue';
 import { readServerSentEvents } from '@ValenceServer/requests/readServerSentEvents';
+import { GiveUpRulesSchema } from '@ValenceContracts/schemas/GiveUpRules';
+import type { GiveUpRules } from '@ValenceContracts/schemas/GiveUpRules';
 import { QualityProfileSchema } from '@ValenceContracts/schemas/QualityProfile';
 import type {
   QualityProfile,
@@ -330,6 +332,15 @@ const createRequestsClient = ({
 
     removeProfile: (id: string): Promise<RequestsAnswer<null>> =>
       call(withProfile(id), () => null, { method: 'DELETE' }),
+
+    readGiveUpRules: (): Promise<RequestsAnswer<GiveUpRules>> =>
+      call('/api/give-up-rules', (body) => GiveUpRulesSchema.parse(body)),
+
+    changeGiveUpRules: (rules: GiveUpRules): Promise<RequestsAnswer<GiveUpRules>> =>
+      call('/api/give-up-rules', (body) => GiveUpRulesSchema.parse(body), {
+        method: 'PUT',
+        body: rules,
+      }),
 
     listClients: (): Promise<RequestsAnswer<DownloadClient[]>> =>
       call('/api/clients', (body) => z.array(DownloadClientSchema).parse(body)),

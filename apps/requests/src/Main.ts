@@ -30,6 +30,7 @@ import { createDatabaseSentDownloadStore } from '@ValenceRequests/downloads/crea
 import { createDownloadClientService } from '@ValenceRequests/downloads/createDownloadClientService';
 import { createDownloadQueue } from '@ValenceRequests/downloads/createDownloadQueue';
 import { createDownloadRoutes } from '@ValenceRequests/downloads/createDownloadRoutes';
+import { createDatabaseGiveUpRuleStore } from '@ValenceRequests/downloads/createDatabaseGiveUpRuleStore';
 import { createDatabaseProfileStore } from '@ValenceRequests/profiles/createDatabaseProfileStore';
 import { seedStarterProfiles } from '@ValenceRequests/profiles/seedStarterProfiles';
 import { createDatabaseSettingStore } from '@ValenceRequests/stores/createDatabaseSettingStore';
@@ -191,6 +192,8 @@ const sentDownloads = createDatabaseSentDownloadStore(db);
 
 const events = createDatabaseEventStore(db);
 
+const giveUpRules = createDatabaseGiveUpRuleStore(db);
+
 const downloadQueue = createDownloadQueue({
   clients: downloadClients,
   downloads: sentDownloads,
@@ -198,6 +201,7 @@ const downloadQueue = createDownloadQueue({
   indexers: { records: () => indexers.list() },
   fetchRelease: (indexerId, url) => indexers.download(indexerId, url),
   judgeFiles: async (download, videos) => requestWorker.judgeFiles(download, videos),
+  refusesUnknownFiles: async () => (await giveUpRules.read()).refusesUnknownFiles,
 });
 
 const requestStore = createDatabaseMediaRequestStore(db);
@@ -213,6 +217,7 @@ const requestWorker = createRequestWorker({
   downloads: sentDownloads,
   clients: downloadClients,
   queue: downloadQueue,
+  giveUpRules: giveUpRules.read,
   indexers,
   profiles,
   events,
@@ -258,7 +263,12 @@ const app = createApp({
   definitions,
   profiles,
   routes: [
-    createDownloadRoutes({ clients: downloadClients, queue: downloadQueue, filing: requestWorker }),
+    createDownloadRoutes({
+      clients: downloadClients,
+      queue: downloadQueue,
+      filing: requestWorker,
+      rules: giveUpRules,
+    }),
     createProfileRoutes(profiles),
     createRequestRoutes({ service: mediaRequests, log: requestLog, worker: requestWorker }),
   ],
