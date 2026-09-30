@@ -2,7 +2,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readSiteTheme } from './readSiteTheme';
 
 const prefers = (isLight: boolean) => {
-  vi.stubGlobal('matchMedia', () => ({ matches: isLight }));
+  vi.stubGlobal('matchMedia', () => ({
+    matches: isLight,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  }));
 };
 
 afterEach(() => {

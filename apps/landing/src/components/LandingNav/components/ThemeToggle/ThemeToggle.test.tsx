@@ -4,7 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ThemeToggle } from './ThemeToggle';
 
 beforeEach(() => {
-  vi.stubGlobal('matchMedia', () => ({ matches: false }));
+  vi.stubGlobal('matchMedia', () => ({
+    matches: false,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  }));
 });
 
 afterEach(() => {
