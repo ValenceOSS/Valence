@@ -20,7 +20,9 @@ reference, not a substitute for reading it.
    capability for TypeScript to use — see the standard for their limits.
 2. **No duplication across modules.** Needed twice means extracted and shared.
 3. **No `../` imports.** Use `@ValenceUI/*`, `@ValenceClient/*`, `@ValenceContracts/*`,
-   `@ValenceCore/*`, `@ValenceSDK/*`.
+   `@ValenceCore/*`, `@ValenceSDK/*`. The one exception is `#dialect/*` inside
+   `apps/server` and `apps/requests`, a package subpath import resolved by build
+   condition to `src/db/postgres` (and, once VAL-306 lands it, `src/db/mysql`).
 4. **No `index.ts` / `index.tsx`.** No barrel files, ever.
 5. **`export { ComponentName }`** — named exports only, no default exports and
    no module objects. One member per file, filename matches the member. Set
@@ -68,7 +70,7 @@ standalone functions. snake_case for Rust modules.
 | API contract  | Hono + `@hono/zod-openapi`          |
 | API reference | Scalar, served at `/api/reference`  |
 | Auth          | better-auth                         |
-| Data          | Postgres + Drizzle + pg-boss        |
+| Data          | Postgres + Drizzle + pg-boss; MySQL/MariaDB under way (VAL-306) |
 | Plugins       | Process-per-plugin, brokered        |
 | Media         | Rust + FFmpeg child process         |
 | UI            | Radix + Tailwind + CVA + Motion     |
@@ -79,7 +81,7 @@ standalone functions. snake_case for Rust modules.
 | Web state     | TanStack Query + TanStack Router    |
 
 **Not used:** the shadcn registry (its conventions are adopted, its generated code
-is not), Redis, SQLite, tRPC as a primary API, barrel files.
+is not), Redis, SQLite, MongoDB, tRPC as a primary API, barrel files.
 
 ## Where front-end code goes
 
