@@ -1,3 +1,4 @@
+import { upsert } from '@ValenceDatabase/upsert';
 import { eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { indexerDefinition, setting } from '#dialect/Schema';
@@ -65,10 +66,11 @@ const createDatabaseDefinitionStore = (db: RequestsDatabase): DefinitionStore =>
         fetchedAt: new Date(fetchedAt),
       };
 
-      await db
-        .insert(indexerDefinition)
-        .values(values)
-        .onConflictDoUpdate({ target: indexerDefinition.id, set: values });
+      await upsert(db, indexerDefinition, {
+        values: [values],
+        target: indexerDefinition.id,
+        set: values,
+      });
     }
   },
 
@@ -85,10 +87,11 @@ const createDatabaseDefinitionStore = (db: RequestsDatabase): DefinitionStore =>
   },
 
   writeState: async (state) => {
-    await db
-      .insert(setting)
-      .values({ key: STATE_KEY, value: state })
-      .onConflictDoUpdate({ target: setting.key, set: { value: state, updatedAt: new Date() } });
+    await upsert(db, setting, {
+      values: [{ key: STATE_KEY, value: state }],
+      target: setting.key,
+      set: { value: state, updatedAt: new Date() },
+    });
   },
 });
 

@@ -1,3 +1,5 @@
+import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
+import { countAffected } from '@ValenceDatabase/countAffected';
 import { eq } from 'drizzle-orm';
 import { blocklistedRelease } from '#dialect/Schema';
 import type { RequestsDatabase } from '#dialect/RequestsDatabase';
@@ -37,33 +39,31 @@ const createDatabaseBlockedReleaseStore = (db: RequestsDatabase): BlockedRelease
   },
 
   insert: async (record) => {
+    await insertUnlessPresent(db, blocklistedRelease, {
+      values: [{ ...record, at: new Date(record.at) }],
+      target: [blocklistedRelease.requestId, blocklistedRelease.title],
+    });
     const [row] = await db
-      .insert(blocklistedRelease)
-      .values({ ...record, at: new Date(record.at) })
-      .onConflictDoNothing()
-      .returning();
+      .select()
+      .from(blocklistedRelease)
+      .where(eq(blocklistedRelease.id, record.id));
 
     return row === undefined ? record : asRecord(row);
   },
 
   update: async (id, changes) => {
     const { at, ...rest } = changes;
-    const [row] = await db
+    await db
       .update(blocklistedRelease)
       .set({ ...rest, ...(at === undefined ? {} : { at: new Date(at) }) })
-      .where(eq(blocklistedRelease.id, id))
-      .returning();
+      .where(eq(blocklistedRelease.id, id));
+    const [row] = await db.select().from(blocklistedRelease).where(eq(blocklistedRelease.id, id));
 
     return row === undefined ? null : asRecord(row);
   },
 
   remove: async (id) =>
-    (
-      await db
-        .delete(blocklistedRelease)
-        .where(eq(blocklistedRelease.id, id))
-        .returning({ id: blocklistedRelease.id })
-    ).length > 0,
+    countAffected(await db.delete(blocklistedRelease).where(eq(blocklistedRelease.id, id))) > 0,
 });
 
 export { createDatabaseBlockedReleaseStore };

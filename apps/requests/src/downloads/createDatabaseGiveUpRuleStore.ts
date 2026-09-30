@@ -1,3 +1,4 @@
+import { upsert } from '@ValenceDatabase/upsert';
 import { GIVE_UP_DEFAULTS } from '@ValenceContracts/schemas/GiveUpRules';
 import { giveUpRules } from '#dialect/Schema';
 import type { GiveUpRules } from '@ValenceContracts/schemas/GiveUpRules';
@@ -32,10 +33,11 @@ const createDatabaseGiveUpRuleStore = (db: RequestsDatabase): GiveUpRuleStore =>
   },
 
   write: async (rules) => {
-    await db
-      .insert(giveUpRules)
-      .values({ id: THE_ROW, ...rules })
-      .onConflictDoUpdate({ target: giveUpRules.id, set: { ...rules, updatedAt: new Date() } });
+    await upsert(db, giveUpRules, {
+      values: [{ id: THE_ROW, ...rules }],
+      target: giveUpRules.id,
+      set: { ...rules, updatedAt: new Date() },
+    });
 
     return rules;
   },

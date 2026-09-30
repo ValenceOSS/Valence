@@ -1,3 +1,4 @@
+import { countAffected } from '@ValenceDatabase/countAffected';
 import { eq } from 'drizzle-orm';
 import { requestItem } from '#dialect/Schema';
 import type { RequestsDatabase } from '#dialect/RequestsDatabase';
@@ -38,21 +39,19 @@ const createDatabaseRequestItemStore = (db: RequestsDatabase): RequestItemStore 
   },
 
   insert: async (record) => {
-    const [row] = await db
-      .insert(requestItem)
-      .values({
-        ...record,
-        lastSearchedAt: record.lastSearchedAt === null ? null : new Date(record.lastSearchedAt),
-        updatedAt: new Date(record.updatedAt),
-      })
-      .returning();
+    await db.insert(requestItem).values({
+      ...record,
+      lastSearchedAt: record.lastSearchedAt === null ? null : new Date(record.lastSearchedAt),
+      updatedAt: new Date(record.updatedAt),
+    });
+    const [row] = await db.select().from(requestItem).where(eq(requestItem.id, record.id));
 
     return row === undefined ? record : asRecord(row);
   },
 
   update: async (id, changes) => {
     const { lastSearchedAt, updatedAt, ...rest } = changes;
-    const [row] = await db
+    await db
       .update(requestItem)
       .set({
         ...rest,
@@ -61,15 +60,14 @@ const createDatabaseRequestItemStore = (db: RequestsDatabase): RequestItemStore 
           : { lastSearchedAt: lastSearchedAt === null ? null : new Date(lastSearchedAt) }),
         ...(updatedAt === undefined ? {} : { updatedAt: new Date(updatedAt) }),
       })
-      .where(eq(requestItem.id, id))
-      .returning();
+      .where(eq(requestItem.id, id));
+    const [row] = await db.select().from(requestItem).where(eq(requestItem.id, id));
 
     return row === undefined ? null : asRecord(row);
   },
 
   remove: async (id) =>
-    (await db.delete(requestItem).where(eq(requestItem.id, id)).returning({ id: requestItem.id }))
-      .length > 0,
+    countAffected(await db.delete(requestItem).where(eq(requestItem.id, id))) > 0,
 });
 
 export { createDatabaseRequestItemStore };

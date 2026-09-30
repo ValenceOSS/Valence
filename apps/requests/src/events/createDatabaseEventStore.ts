@@ -1,4 +1,5 @@
-import { asc, inArray } from 'drizzle-orm';
+import { insertForNewId } from '@ValenceDatabase/insertForNewId';
+import { asc, eq, inArray } from 'drizzle-orm';
 import { ServiceEventSchema } from '@ValenceContracts/schemas/DownloadQueue';
 import { serviceEvent } from '#dialect/Schema';
 import type { ServiceEvent } from '@ValenceContracts/schemas/DownloadQueue';
@@ -40,10 +41,13 @@ const asEvent = (row: ServiceEventRow): ServiceEvent | null => {
  */
 const createDatabaseEventStore = (db: RequestsDatabase): EventStore => ({
   add: async ({ kind, title, ...details }) => {
-    const [row] = await db
-      .insert(serviceEvent)
-      .values({ kind, title, details, clientName: null, problem: null })
-      .returning();
+    const id = await insertForNewId(
+      db,
+      serviceEvent,
+      { kind, title, details, clientName: null, problem: null },
+      serviceEvent.id,
+    );
+    const [row] = await db.select().from(serviceEvent).where(eq(serviceEvent.id, id));
     const event = row === undefined ? null : asEvent(row);
 
     if (event === null) {

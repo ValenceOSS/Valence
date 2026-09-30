@@ -1,3 +1,4 @@
+import { upsert } from '@ValenceDatabase/upsert';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { setting } from '#dialect/Schema';
@@ -29,10 +30,11 @@ const createDatabaseSettingStore = (db: RequestsDatabase): SettingStore => ({
   },
 
   write: async (key, value) => {
-    await db
-      .insert(setting)
-      .values({ key, value })
-      .onConflictDoUpdate({ target: setting.key, set: { value, updatedAt: new Date() } });
+    await upsert(db, setting, {
+      values: [{ key, value }],
+      target: setting.key,
+      set: { value, updatedAt: new Date() },
+    });
   },
 });
 

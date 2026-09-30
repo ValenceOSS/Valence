@@ -1,3 +1,4 @@
+import { countAffected } from '@ValenceDatabase/countAffected';
 import { eq } from 'drizzle-orm';
 import { qualityProfile } from '#dialect/Schema';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
@@ -35,40 +36,33 @@ const createDatabaseProfileStore = (db: RequestsDatabase): RecordStore<QualityPr
   },
 
   insert: async (profile) => {
-    const [row] = await db
-      .insert(qualityProfile)
-      .values({
-        ...profile,
-        createdAt: new Date(profile.createdAt),
-        updatedAt: new Date(profile.updatedAt),
-      })
-      .returning();
+    await db.insert(qualityProfile).values({
+      ...profile,
+      createdAt: new Date(profile.createdAt),
+      updatedAt: new Date(profile.updatedAt),
+    });
+    const [row] = await db.select().from(qualityProfile).where(eq(qualityProfile.id, profile.id));
 
     return row === undefined ? profile : asProfile(row);
   },
 
   update: async (id, changes) => {
     const { createdAt, updatedAt, ...rest } = changes;
-    const [row] = await db
+    await db
       .update(qualityProfile)
       .set({
         ...rest,
         ...(createdAt === undefined ? {} : { createdAt: new Date(createdAt) }),
         ...(updatedAt === undefined ? {} : { updatedAt: new Date(updatedAt) }),
       })
-      .where(eq(qualityProfile.id, id))
-      .returning();
+      .where(eq(qualityProfile.id, id));
+    const [row] = await db.select().from(qualityProfile).where(eq(qualityProfile.id, id));
 
     return row === undefined ? null : asProfile(row);
   },
 
   remove: async (id) =>
-    (
-      await db
-        .delete(qualityProfile)
-        .where(eq(qualityProfile.id, id))
-        .returning({ id: qualityProfile.id })
-    ).length > 0,
+    countAffected(await db.delete(qualityProfile).where(eq(qualityProfile.id, id))) > 0,
 });
 
 export { createDatabaseProfileStore };
