@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  animate,
+  motion,
+  useMotionValue,
+  useReducedMotionConfig,
+  useTransform,
+} from 'motion/react';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { SettingList } from '@ValenceUI/SettingList';
@@ -27,6 +34,9 @@ import {
 } from '@ValenceClient/books/textPreferences';
 import { useChromeThatHides } from '@ValenceScreens/reading/useChromeThatHides';
 import { useTurnKeys } from '@ValenceScreens/reading/useTurnKeys';
+import { PAGE_TURN } from '@ValenceCore/tokens/PAGE_TURN';
+import { turnOfPageSwipe } from '@ValenceCore/functions/turnOfPageSwipe';
+import { usePageDrag } from '@ValenceScreens/reading/usePageDrag';
 import type { TextPreferences } from '@ValenceClient/books/textPreferences';
 import type { TextReaderProps } from './TextReader.types';
 
@@ -41,8 +51,6 @@ const GAP = 48;
 const SERIF = 'ui-serif, "Iowan Old Style", "Palatino Linotype", Georgia, serif';
 
 const TWO_COLUMNS_FROM = 960;
-
-const A_SWIPE = 48;
 
 const SLIDER_STEPS = 1000;
 
@@ -111,7 +119,9 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
   const [dragged, setDragged] = useState<number | null>(null);
   const viewport = useRef<HTMLDivElement | null>(null);
   const flow = useRef<HTMLDivElement | null>(null);
-  const touchedAt = useRef<number | null>(null);
+  const sliding = useMotionValue(0);
+  const isTurning = useRef(false);
+  const isStill = useReducedMotionConfig() === true;
   const lastPart = Math.max(sizes.length - 1, 0);
 
   const text = useQuery({
@@ -263,13 +273,78 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
     [goTo, lastPart, page, pages, part, keep],
   );
 
+  const mayGo = (by: 1 | -1): boolean =>
+    by === 1
+      ? page < pages - 1 || (part !== null && part < lastPart)
+      : page > 0 || (part !== null && part > 0);
+
+  const slidesBy = useTransform(sliding, (at) => at * box.width * PAGE_TURN.slidesBy);
+  const showing = useTransform(sliding, (at) => 1 - Math.min(Math.abs(at), 1));
+
+  /**
+   * Turns a page the way the phone does: the one leaving slides a little aside and fades, and the
+   * next slides in from the other side, with the phone's own timings and eases from `PAGE_TURN`.
+   * Where there is nothing further, or somebody has asked for less movement, it simply turns.
+   *
+   * @param by - One on, or one back.
+   */
+  const slide = (by: 1 | -1) => {
+    if (!mayGo(by) || isTurning.current) {
+      return;
+    }
+
+    if (isStill) {
+      turn(by);
+
+      return;
+    }
+
+    isTurning.current = true;
+
+    animate(sliding, -by, {
+      duration: PAGE_TURN.leaves.ms / 1000,
+      ease: PAGE_TURN.leaves.ease,
+      onComplete: () => {
+        turn(by);
+        sliding.set(by);
+        animate(sliding, 0, {
+          duration: PAGE_TURN.arrives.ms / 1000,
+          ease: PAGE_TURN.arrives.ease,
+          onComplete: () => {
+            isTurning.current = false;
+          },
+        });
+      },
+    });
+  };
+
+  const latestSlide = useRef(slide);
+
+  useLayoutEffect(() => {
+    latestSlide.current = slide;
+  });
+
+  const swipe = usePageDrag({
+    isOn: isLaidOut,
+    isMouseAllowed: false,
+    reach: () => step,
+    mayMove: () => true,
+    onRelease: (offset, velocity) => {
+      const swiped = turnOfPageSwipe(offset, velocity);
+
+      if (swiped !== 0) {
+        latestSlide.current(swiped < 0 ? 1 : -1);
+      }
+    },
+  });
+
   const forward = useCallback(() => {
-    turn(1);
-  }, [turn]);
+    latestSlide.current(1);
+  }, []);
 
   const back = useCallback(() => {
-    turn(-1);
-  }, [turn]);
+    latestSlide.current(-1);
+  }, []);
 
   useTurnKeys({ isRightToLeft: book.direction === 'rightToLeft', forward, back, onClose });
 
@@ -328,23 +403,6 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
     <div
       className={cn('valence-below-the-bar z-50 flex flex-col', PAGE[settings.page])}
       onPointerMove={wake}
-      onTouchStart={(event) => {
-        touchedAt.current = event.touches[0]?.clientX ?? null;
-      }}
-      onTouchEnd={(event) => {
-        const from = touchedAt.current;
-        const to = event.changedTouches[0]?.clientX ?? null;
-
-        touchedAt.current = null;
-
-        if (from === null || to === null || Math.abs(to - from) < A_SWIPE) {
-          return;
-        }
-
-        const wentLeft = to < from;
-
-        (wentLeft === (book.direction === 'rightToLeft') ? back : forward)();
-      }}
     >
       <ReaderChrome
         title={heading === null ? book.title : `${book.title} — ${heading}`}
@@ -518,33 +576,38 @@ const TextReader = ({ book, chapterId, startAt = 0, onPlaceChange, onClose }: Te
             paddingBlock: '3.5rem',
           }}
         >
-          <div ref={viewport} className="relative min-h-0 flex-1 overflow-hidden">
+          <div
+            ref={viewport}
+            className="relative min-h-0 flex-1 touch-pan-y overflow-hidden"
+            {...swipe}
+          >
             {text.data === undefined || part === null ? (
               <Spinner isCentered label="Opening the book" />
             ) : (
-              <div
-                ref={flow}
-                onLoadCapture={measure}
-                className={cn(
-                  'h-full [hyphens:auto]',
-                  'transition-transform duration-[var(--duration-normal)] ease-[var(--ease-out)] motion-reduce:transition-none',
-                  isLaidOut ? 'opacity-100' : 'opacity-0',
-                  '[&_p]:mb-[0.8em] [&_h1]:mb-[0.6em] [&_h1]:text-[1.6em] [&_h1]:font-semibold [&_h2]:mb-[0.6em] [&_h2]:text-[1.35em] [&_h2]:font-semibold [&_h3]:mb-[0.5em] [&_h3]:text-[1.15em] [&_h3]:font-semibold',
-                  '[&_img]:mx-auto [&_img]:my-[0.8em] [&_img]:block [&_img]:h-auto [&_img]:max-w-full [&_img]:max-h-[var(--page-height)] [&_img]:[break-inside:avoid]',
-                  '[&_blockquote]:mx-[1.5em] [&_blockquote]:italic [&_a]:underline [&_a]:underline-offset-2 [&_li]:ml-[1.25em] [&_ul]:list-disc [&_ol]:list-decimal [&_figcaption]:text-center [&_figcaption]:text-[0.85em]',
-                )}
-                style={{
-                  columnWidth: `${columnWidth.toString()}px`,
-                  columnGap: `${GAP.toString()}px`,
-                  columnFill: 'auto',
-                  fontSize: `${TEXT_LOOK.size[settings.size].toString()}px`,
-                  lineHeight: TEXT_LOOK.leading[settings.spacing],
-                  transform: `translateX(${(-page * step).toString()}px)`,
-                  fontFamily: SERIF,
-                }}
-              >
-                <BookText html={text.data} onFollow={follow} />
-              </div>
+              <motion.div className="h-full" style={{ x: slidesBy, opacity: showing }}>
+                <div
+                  ref={flow}
+                  onLoadCapture={measure}
+                  className={cn(
+                    'h-full [hyphens:auto]',
+                    isLaidOut ? 'opacity-100' : 'opacity-0',
+                    '[&_p]:mb-[0.8em] [&_h1]:mb-[0.6em] [&_h1]:text-[1.6em] [&_h1]:font-semibold [&_h2]:mb-[0.6em] [&_h2]:text-[1.35em] [&_h2]:font-semibold [&_h3]:mb-[0.5em] [&_h3]:text-[1.15em] [&_h3]:font-semibold',
+                    '[&_img]:mx-auto [&_img]:my-[0.8em] [&_img]:block [&_img]:h-auto [&_img]:max-w-full [&_img]:max-h-[var(--page-height)] [&_img]:[break-inside:avoid]',
+                    '[&_blockquote]:mx-[1.5em] [&_blockquote]:italic [&_a]:underline [&_a]:underline-offset-2 [&_li]:ml-[1.25em] [&_ul]:list-disc [&_ol]:list-decimal [&_figcaption]:text-center [&_figcaption]:text-[0.85em]',
+                  )}
+                  style={{
+                    columnWidth: `${columnWidth.toString()}px`,
+                    columnGap: `${GAP.toString()}px`,
+                    columnFill: 'auto',
+                    fontSize: `${TEXT_LOOK.size[settings.size].toString()}px`,
+                    lineHeight: TEXT_LOOK.leading[settings.spacing],
+                    transform: `translateX(${(-page * step).toString()}px)`,
+                    fontFamily: SERIF,
+                  }}
+                >
+                  <BookText html={text.data} onFollow={follow} />
+                </div>
+              </motion.div>
             )}
           </div>
         </div>

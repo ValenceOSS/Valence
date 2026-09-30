@@ -1,8 +1,8 @@
 import {
   Book as BookIcon,
   File as FileIcon,
-  MapPin as MapPinIcon,
-  MapPinOff as MapPinOffIcon,
+  Lock as LockIcon,
+  Unlock as UnlockIcon,
   X as XIcon,
 } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
@@ -54,7 +54,7 @@ const ReaderPanel = ({
             onPinnedChange(!isPinned);
           }}
         >
-          <Icon of={isPinned ? MapPinOffIcon : MapPinIcon} size={16} />
+          <Icon of={isPinned ? LockIcon : UnlockIcon} size={16} />
         </Button>
       </div>
 

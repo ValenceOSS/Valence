@@ -12,6 +12,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { READING_PAGES } from '@ValenceCore/tokens/READING_PAGES';
+import { PAGE_TURN } from '@ValenceCore/tokens/PAGE_TURN';
+import { isPageSwipe } from '@ValenceCore/functions/isPageSwipe';
+import { turnOfPageSwipe } from '@ValenceCore/functions/turnOfPageSwipe';
 import { bookPlaceIn } from '@ValenceContracts/schemas/Book';
 import { TEXT_LOOK } from '@ValenceClient/books/TEXT_LOOK';
 import { contentsEntryAt } from '@ValenceClient/books/contentsEntryAt';
@@ -36,7 +39,6 @@ import { Slider } from '@ValenceMobile/components/Slider/Slider';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { usePrefersStillness } from '@ValenceMobile/hooks/usePrefersStillness';
 import { withAlpha } from '@ValenceMobile/theme/withAlpha';
-import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { ComponentRef } from 'react';
 import type { TextPreferences } from '@ValenceClient/books/textPreferences';
 import type { ATextReaderProps } from './ATextReader.types';
@@ -45,13 +47,17 @@ const SLIDER_STEPS = 1000;
 
 const CLEAR_OF_THE_BARS = 64;
 
-const A_SWIPE = 40;
+const LEAVES = {
+  duration: PAGE_TURN.leaves.ms,
+  easing: PAGE_TURN.leaves.ease,
+  useNativeDriver: true,
+} as const;
 
-const SLIDES_BY = 0.12;
-
-const LEAVES = { duration: 110, easing: EASINGS.inQuad, useNativeDriver: true } as const;
-
-const ARRIVES = { duration: 200, easing: EASINGS.outCubic, useNativeDriver: true } as const;
+const ARRIVES = {
+  duration: PAGE_TURN.arrives.ms,
+  easing: PAGE_TURN.arrives.ease,
+  useNativeDriver: true,
+} as const;
 
 const NAMES: Readonly<Record<string, string>> = {
   small: 'Small',
@@ -272,11 +278,12 @@ const ATextReader = ({
 
   const [swiping] = useState(() =>
     PanResponder.create({
-      onMoveShouldSetPanResponderCapture: (_, gesture) =>
-        Math.abs(gesture.dx) > 12 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.5,
+      onMoveShouldSetPanResponderCapture: (_, gesture) => isPageSwipe(gesture.dx, gesture.dy),
       onPanResponderRelease: (_, gesture) => {
-        if (Math.abs(gesture.dx) > A_SWIPE || Math.abs(gesture.vx) > 0.3) {
-          latest.get('turn')?.(gesture.dx < 0 ? 1 : -1);
+        const swiped = turnOfPageSwipe(gesture.dx, gesture.vx);
+
+        if (swiped !== 0) {
+          latest.get('turn')?.(swiped < 0 ? 1 : -1);
         }
       },
     }),
@@ -377,7 +384,7 @@ const ATextReader = ({
                   {
                     translateX: sliding.interpolate({
                       inputRange: [-1, 1],
-                      outputRange: [-width * SLIDES_BY, width * SLIDES_BY],
+                      outputRange: [-width * PAGE_TURN.slidesBy, width * PAGE_TURN.slidesBy],
                     }),
                   },
                 ],
