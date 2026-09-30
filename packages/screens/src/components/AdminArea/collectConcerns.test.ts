@@ -986,7 +986,11 @@ describe('collectConcerns', () => {
       });
 
       expect(concern?.title).toBe('2 indexers keep failing');
-      expect(concern?.detail).toBe('Jackett: Timed out · NZBgeek: Refused the key');
+      expect(concern?.detail).toBe('Jackett, NZBgeek');
+      expect(concern?.items).toEqual([
+        { name: 'Jackett', problem: 'Timed out' },
+        { name: 'NZBgeek', problem: 'Refused the key' },
+      ]);
     });
 
     it('says nothing about indexers while the service cannot be reached', () => {

@@ -1,4 +1,5 @@
 import { Bookmark as BookmarkFilledIcon } from '@keyline-icons/react/fill';
+import { JobRunMix } from '@ValenceScreens/components/ObservabilityPage/components/JobRunMix/JobRunMix';
 import { cn } from '@ValenceUI/cn';
 import { Icon } from '@ValenceUI/Icon';
 import {
@@ -15,7 +16,6 @@ import { DataTable } from '@ValenceUI/DataTable';
 import { FilterMenu } from '@ValenceUI/FilterMenu';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { ProgressBar } from '@ValenceUI/ProgressBar';
-import { StatStrip } from '@ValenceUI/StatStrip';
 import { TextField } from '@ValenceUI/TextField';
 import { Well } from '@ValenceUI/Well';
 import { HoverCard } from '@ValenceUI/HoverCard';
@@ -319,7 +319,7 @@ const JobHistoryPanel = ({
     () => (
       <>
         <span className="truncate">{SORTS.find((one) => one.id === sort)?.label}</span>
-        <Icon of={ChevronDownIcon} size={14} className="shrink-0" />
+        <Icon of={ChevronDownIcon} size={14} className="valence-chevron shrink-0" />
       </>
     ),
     [sort],
@@ -654,31 +654,11 @@ const JobHistoryPanel = ({
       </div>
 
       <Well>
-        <StatStrip
-          label="How the job runs stand"
-          items={[
-            {
-              id: 'running',
-              label: 'Running now',
-              value: <AnimatedNumber value={counts.running} />,
-            },
-            {
-              id: 'completed',
-              label: 'Completed',
-              value: <AnimatedNumber value={counts.completed} />,
-            },
-            {
-              id: 'failed',
-              label: 'Failed',
-              value: <AnimatedNumber value={counts.failed} />,
-              isAlarming: counts.failed > 0,
-            },
-            {
-              id: 'stopped',
-              label: 'Stopped',
-              value: <AnimatedNumber value={counts.stopped} />,
-            },
-          ]}
+        <JobRunMix
+          running={counts.running}
+          completed={counts.completed}
+          failed={counts.failed}
+          stopped={counts.stopped}
         />
       </Well>
 

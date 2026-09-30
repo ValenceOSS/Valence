@@ -3,8 +3,8 @@ import type { Indexer } from '@ValenceContracts/schemas/Indexer';
 import type { StateBadge } from '@ValenceClient/status/StateBadge';
 
 /**
- * Says how an indexer is, as a badge and the line beneath it: turned off by Valence and why,
- * switched off by somebody, failing and why, working, or never tried.
+ * Says how an indexer is, as a badge and the line beneath it: offline because Valence turned it off,
+ * and why, switched off by somebody, failing and why, online, or never tried.
  *
  * @param indexer - The indexer.
  * @returns The badge's words and tone, and the reason where there is one.
@@ -12,7 +12,7 @@ import type { StateBadge } from '@ValenceClient/status/StateBadge';
 const describeIndexerState = (indexer: Indexer): StateBadge => {
   if (indexer.turnedOffBecause !== null) {
     return {
-      label: 'Turned off',
+      label: 'Offline',
       tone: 'danger',
       detail: indexer.turnedOffBecause,
       help: docsFor(indexer.lastProblemCode),
@@ -34,7 +34,7 @@ const describeIndexerState = (indexer: Indexer): StateBadge => {
 
   return indexer.capabilities === null
     ? { label: 'Not tried', tone: 'quiet', detail: null }
-    : { label: 'Working', tone: 'success', detail: null };
+    : { label: 'Online', tone: 'success', detail: null };
 };
 
 export { describeIndexerState };

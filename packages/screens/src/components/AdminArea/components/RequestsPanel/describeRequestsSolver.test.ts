@@ -49,7 +49,7 @@ describe('describeRequestsSolver', () => {
 
   it('calls a solver nothing has asked for yet working rather than broken', () => {
     expect(describeRequestsSolver(hearing(SOLVER_NOT_USED))).toMatchObject({
-      label: 'Working',
+      label: 'Online',
       tone: 'success',
     });
   });
@@ -76,7 +76,7 @@ describe('describeRequestsSolver', () => {
       }),
     );
 
-    expect(described).toMatchObject({ label: 'Failing', tone: 'danger' });
+    expect(described).toMatchObject({ label: 'Offline', tone: 'danger' });
     expect(described.detail).toContain('Timed out');
   });
 
@@ -92,7 +92,7 @@ describe('describeRequestsSolver', () => {
           lastPassedAt: '2026-09-28T11:30:00.000Z',
         }),
       ),
-    ).toEqual({ label: 'Working', tone: 'success', detail: '' });
+    ).toEqual({ label: 'Online', tone: 'success', detail: '' });
   });
 
   it('calls a closed browser whose last request got through working, not down', () => {
@@ -100,6 +100,6 @@ describe('describeRequestsSolver', () => {
       describeRequestsSolver(
         hearing({ ...SOLVER_NOT_USED, passed: 1, lastPassedAt: '2026-09-28T11:30:00.000Z' }),
       ),
-    ).toMatchObject({ label: 'Working', tone: 'success' });
+    ).toMatchObject({ label: 'Online', tone: 'success' });
   });
 });

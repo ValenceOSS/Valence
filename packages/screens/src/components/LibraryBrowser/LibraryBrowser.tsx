@@ -332,7 +332,7 @@ const LibraryBrowser = ({
               : '',
           )}
         >
-          <AnimatePresence mode="wait" initial={false}>
+          <AnimatePresence mode="wait">
             <motion.div
               key={appliedSearch}
               variants={staggerVariants}

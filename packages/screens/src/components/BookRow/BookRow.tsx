@@ -1,5 +1,6 @@
 import { Rail } from '@ValenceUI/Rail';
 import { MediaCard } from '@ValenceUI/MediaCard';
+import { RevealItem } from '@ValenceUI/RevealItem';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { gatherSeries } from '@ValenceScreens/reading/gatherSeries';
 import type { Book } from '@ValenceContracts/schemas/Book';
@@ -70,24 +71,25 @@ const BookRow = ({
     {(onOpenSeries === undefined
       ? books.map((book) => ({ kind: 'book' as const, book }))
       : gatherSeries(books)
-    ).map((shown) => {
+    ).map((shown, at) => {
       if (shown.kind === 'series') {
         const { series } = shown;
         const [first] = series.books;
         const authors = [...new Set(series.books.flatMap((book) => book.authors ?? []))];
 
         return (
-          <MediaCard
-            key={`series-${series.name}`}
-            title={series.name}
-            shape="poster"
-            {...(first === undefined ? {} : { imageUrl: bookCoverUrl(first.id) })}
-            subtitle={[`${series.books.length.toString()} books`, ...authors].join(' · ')}
-            onSelect={() => {
-              onOpenSeries?.(series);
-            }}
-            className="w-40 shrink-0"
-          />
+          <RevealItem key={`series-${series.name}`} index={at} className="shrink-0">
+            <MediaCard
+              title={series.name}
+              shape="book"
+              {...(first === undefined ? {} : { imageUrl: bookCoverUrl(first.id) })}
+              subtitle={[`${series.books.length.toString()} books`, ...authors].join(' · ')}
+              onSelect={() => {
+                onOpenSeries?.(series);
+              }}
+              className="w-40"
+            />
+          </RevealItem>
         );
       }
 
@@ -96,19 +98,20 @@ const BookRow = ({
       const eyebrow = eyebrowOf(book, isNumbered);
 
       return (
-        <MediaCard
-          key={book.id}
-          title={book.title}
-          shape="poster"
-          imageUrl={bookCoverUrl(book.id)}
-          subtitle={where?.detail ?? describeOnShelf(book)}
-          {...(where === undefined ? {} : { watchedFraction: where.fraction })}
-          {...(eyebrow === null ? {} : { eyebrow })}
-          onSelect={() => {
-            onOpen(book);
-          }}
-          className="w-40 shrink-0"
-        />
+        <RevealItem key={book.id} index={at} className="shrink-0">
+          <MediaCard
+            title={book.title}
+            shape="book"
+            imageUrl={bookCoverUrl(book.id)}
+            subtitle={where?.detail ?? describeOnShelf(book)}
+            {...(where === undefined ? {} : { watchedFraction: where.fraction })}
+            {...(eyebrow === null ? {} : { eyebrow })}
+            onSelect={() => {
+              onOpen(book);
+            }}
+            className="w-40"
+          />
+        </RevealItem>
       );
     })}
   </Rail>

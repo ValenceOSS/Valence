@@ -4,7 +4,7 @@ import type { StateBadge } from '@ValenceClient/status/StateBadge';
 
 /**
  * Says how a download client is, as a badge and the line beneath it: switched off, not asked yet,
- * out of reach and why, or answering.
+ * offline and why, or online.
  *
  * @param isEnabled - Whether it is switched on.
  * @param reading - What the queue last heard from it, where it has heard anything.
@@ -23,9 +23,9 @@ const describeClientState = (
   }
 
   return reading.isReachable
-    ? { label: 'Answering', tone: 'success', detail: null }
+    ? { label: 'Online', tone: 'success', detail: null }
     : {
-        label: 'Unreachable',
+        label: 'Offline',
         tone: 'danger',
         detail: reading.problem,
         help: docsFor(reading.problemCode),

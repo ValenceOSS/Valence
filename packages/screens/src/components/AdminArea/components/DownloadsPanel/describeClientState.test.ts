@@ -29,7 +29,7 @@ describe('describeClientState', () => {
 
   it('says a client answers, or why it could not be reached', () => {
     expect(describeClientState(true, A_READING)).toEqual({
-      label: 'Answering',
+      label: 'Online',
       tone: 'success',
       detail: null,
     });
@@ -41,7 +41,7 @@ describe('describeClientState', () => {
         problemCode: 'DownloadClientUnreachable',
       }),
     ).toEqual({
-      label: 'Unreachable',
+      label: 'Offline',
       tone: 'danger',
       detail: 'qBittorrent could not be reached',
       help: 'https://docs.getvalence.app/install/requesting#a-download-client-cannot-be-reached',

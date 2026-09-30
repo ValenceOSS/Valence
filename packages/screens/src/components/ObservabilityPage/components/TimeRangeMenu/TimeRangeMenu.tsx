@@ -50,7 +50,7 @@ const TimeRangeMenu = ({ search, onSearchChange }: TimeRangeMenuProps) => {
           <span className="truncate">
             {isZoomed ? 'Zoomed in' : (LOG_RANGES.find((one) => one.id === range)?.label ?? 'Time')}
           </span>
-          <Icon of={ChevronDownIcon} size={14} className="shrink-0" />
+          <Icon of={ChevronDownIcon} size={14} className="valence-chevron shrink-0" />
         </>
       }
     />

@@ -27,14 +27,13 @@ describe('StudiosRail', () => {
     expect(onOpen).toHaveBeenCalledWith('420');
   });
 
-  it('has a mark coloured for each theme, so the one shown sits in the colours of the text', () => {
+  it('shows each mark once, in its own colours on a white plate, whatever the theme', () => {
     render(<StudiosRail studios={STUDIOS} onOpen={vi.fn()} />);
 
-    const [onDark, onLight] = screen.getAllByRole('img', { name: 'Walt Disney Pictures' });
+    const marks = screen.getAllByRole('img', { name: 'Walt Disney Pictures' });
 
-    expect(onDark).toHaveAttribute('src', 'https://image/disney.png');
-    expect(onDark).toHaveClass('valence-mark-on-dark');
-    expect(onLight).toHaveAttribute('src', 'https://image/disney-light.png');
-    expect(onLight).toHaveClass('valence-mark-on-light');
+    expect(marks).toHaveLength(1);
+    expect(marks[0]).toHaveAttribute('src', 'https://image/disney.png');
+    expect(screen.getByRole('button', { name: 'Walt Disney Pictures' })).toHaveClass('bg-plate');
   });
 });

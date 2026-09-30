@@ -396,7 +396,7 @@ const LogExplorer = ({
           trigger={
             <>
               <span className="truncate">{SORTS.find((one) => one.id === view.sort)?.label}</span>
-              <Icon of={ChevronDownIcon} size={14} className="shrink-0" />
+              <Icon of={ChevronDownIcon} size={14} className="valence-chevron shrink-0" />
             </>
           }
         />

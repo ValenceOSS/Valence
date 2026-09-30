@@ -214,7 +214,6 @@ const IndexersPanel = () => {
                     {
                       id: 'test',
                       label: 'Test',
-                      detail: 'Asks it what it can search, and clears its failures if it answers.',
                       icon: <Icon of={PlugFilledIcon} size={15} />,
                       isDisabled: testing.size > 0 || isTestingAll,
                       onChoose: () => {

@@ -271,7 +271,7 @@ describe('ObservabilityPage', () => {
     await waitFor(() => {
       expect(fetchJobHistory).toHaveBeenCalled();
     });
-    expect(screen.queryByText(/failed/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/[1-9]\d* failed/)).not.toBeInTheDocument();
   });
 
   it('counts the runs that failed in the last day, not the media service’s own work', async () => {

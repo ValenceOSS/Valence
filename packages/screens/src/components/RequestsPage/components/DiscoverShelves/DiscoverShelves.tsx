@@ -7,6 +7,8 @@ import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { AskableMusicShelf } from '@ValenceScreens/components/RequestsPage/components/AskableMusicShelf/AskableMusicShelf';
 import { StudiosRail } from '@ValenceScreens/components/RequestsPage/components/StudiosRail/StudiosRail';
 import { TitleShelf } from '@ValenceScreens/components/RequestsPage/components/TitleShelf/TitleShelf';
+import { Reveal } from '@ValenceUI/Reveal';
+import { SHELF_STEP } from '@ValenceScreens/components/RequestsPage/SHELF_STEP';
 import type { CatalogueShelf } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { DiscoverShelvesProps } from './DiscoverShelves.types';
 
@@ -56,26 +58,33 @@ const DiscoverShelves = ({ onAsk, onBrowse, onBrowseStudio }: DiscoverShelvesPro
   }
 
   if (discovered.data === undefined) {
-    return <Spinner isCentered label="Reading what there is to ask for" />;
+    return <Spinner isPageCentered label="Reading what there is to ask for" />;
   }
 
   const { shelves, studios } = discovered.data;
 
+  const films = shelves.filter((shelf) => !isMusicShelf(shelf) && !isBookShelf(shelf));
+  const music = shelves.filter((shelf) => isMusicShelf(shelf));
+
   return (
     <div className="flex flex-col gap-10">
-      {shelves
-        .filter((shelf) => !isMusicShelf(shelf) && !isBookShelf(shelf))
-        .map((shelf) => (
-          <TitleShelf key={shelf.id} shelf={shelf} onAsk={onAsk} onBrowse={onBrowse} />
-        ))}
+      {studios.length === 0 ? null : (
+        <Reveal delay={0}>
+          <StudiosRail studios={studios} onOpen={onBrowseStudio} />
+        </Reveal>
+      )}
 
-      {studios.length === 0 ? null : <StudiosRail studios={studios} onOpen={onBrowseStudio} />}
+      {films.map((shelf, at) => (
+        <Reveal key={shelf.id} delay={(at + 1) * SHELF_STEP}>
+          <TitleShelf shelf={shelf} onAsk={onAsk} onBrowse={onBrowse} />
+        </Reveal>
+      ))}
 
-      {shelves
-        .filter((shelf) => isMusicShelf(shelf))
-        .map((shelf) => (
-          <AskableMusicShelf key={shelf.id} shelf={shelf} onAsk={onAsk} />
-        ))}
+      {music.map((shelf, at) => (
+        <Reveal key={shelf.id} delay={(films.length + 1 + at) * SHELF_STEP}>
+          <AskableMusicShelf shelf={shelf} onAsk={onAsk} />
+        </Reveal>
+      ))}
     </div>
   );
 };

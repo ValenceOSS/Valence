@@ -6,6 +6,10 @@ import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { AskableMusicTile } from '@ValenceScreens/components/RequestsPage/components/AskableMusicTile/AskableMusicTile';
 import { Record as RecordIcon } from '@keyline-icons/react';
+import { Reveal } from '@ValenceUI/Reveal';
+import { RevealItem } from '@ValenceUI/RevealItem';
+import { RevealGrid } from '@ValenceScreens/components/RequestsPage/components/RevealGrid/RevealGrid';
+import { SHELF_STEP } from '@ValenceScreens/components/RequestsPage/SHELF_STEP';
 import type { MusicDiscoverProps } from './MusicDiscover.types';
 
 /**
@@ -31,7 +35,7 @@ const MusicDiscover = ({ onAsk }: MusicDiscoverProps) => {
   }
 
   if (discovered.data === undefined) {
-    return <Spinner isCentered label="Reading what music there is to ask for" />;
+    return <Spinner isPageCentered label="Reading what music there is to ask for" />;
   }
 
   const shelves = discovered.data.shelves.filter(
@@ -50,16 +54,20 @@ const MusicDiscover = ({ onAsk }: MusicDiscoverProps) => {
 
   return (
     <div className="flex flex-col gap-10">
-      {shelves.map((shelf) => (
-        <section key={shelf.id} aria-label={shelf.title} className="flex flex-col gap-4">
-          <h2 className="text-2xl font-semibold tracking-tight text-text">{shelf.title}</h2>
+      {shelves.map((shelf, at) => (
+        <Reveal key={shelf.id} delay={at * SHELF_STEP}>
+          <section aria-label={shelf.title} className="flex flex-col gap-4">
+            <h2 className="text-2xl font-semibold tracking-tight text-text">{shelf.title}</h2>
 
-          <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-            {shelf.titles.map((title) => (
-              <AskableMusicTile key={title.id} title={title} onAsk={onAsk} />
-            ))}
-          </div>
-        </section>
+            <RevealGrid label={shelf.title}>
+              {shelf.titles.map((title, place) => (
+                <RevealItem key={title.id} index={place}>
+                  <AskableMusicTile title={title} onAsk={onAsk} />
+                </RevealItem>
+              ))}
+            </RevealGrid>
+          </section>
+        </Reveal>
       ))}
     </div>
   );

@@ -11,6 +11,7 @@ import { AccountDialog } from '@ValenceScreens/components/AccountDialog/AccountD
 import { DownloadsDialog } from '@ValenceScreens/components/DownloadsDialog/DownloadsDialog';
 import { ShareDialog } from '@ValenceScreens/components/ShareDialog/ShareDialog';
 import { useMayRequest } from '@ValenceClient/requests/useMayRequest';
+import { useSeasonMates } from '@ValenceScreens/library/useSeasonMates';
 import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';
 import { StillWatchingDialog } from '@ValenceScreens/components/StillWatchingDialog/StillWatchingDialog';
 import { NotificationBell } from '@ValenceScreens/components/NotificationBell/NotificationBell';
@@ -38,7 +39,6 @@ import { ConfirmHiding } from '@ValenceScreens/components/ConfirmHiding/ConfirmH
 import { DecideForSomebody } from '@ValenceScreens/components/DecideForSomebody/DecideForSomebody';
 import { useRate } from '@ValenceClient/library/useRate';
 import { pickAnything } from '@ValenceClient/library/pickAnything';
-import { findSiblings } from '@ValenceClient/library/pickFeatured';
 import { showSlug } from '@ValenceCore/functions/showSlug';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { STILL_WATCHING_ANSWER_SECONDS } from '@ValenceContracts/schemas/StillWatching';
@@ -50,7 +50,6 @@ import { useShell } from '@ValenceClient/shell/useShell';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import type { ShowSummary } from '@ValenceContracts/schemas/Show';
 import { ImmersiveMusic } from '@ValenceScreens/components/ImmersiveMusic/ImmersiveMusic';
-import { MusicVisualiser } from '@ValenceScreens/components/MusicVisualiser/MusicVisualiser';
 import { NowPlayingBar } from '@ValenceScreens/components/NowPlayingBar/NowPlayingBar';
 import { useMusicLights } from '@ValenceScreens/music/musicLights';
 import { AskableDialog } from '@ValenceScreens/components/AskableDialog/AskableDialog';
@@ -70,6 +69,7 @@ import { theAudiobookPlayer } from '@ValenceClient/books/theAudiobookPlayer';
 import { useSurprise } from '@ValenceScreens/library/useSurprise';
 import { writeMusicView } from '@ValenceClient/music/musicView';
 import { libraryChoicesFor } from '@ValenceScreens/library/libraryChoicesFor';
+import { requestsChoicesFor } from '@ValenceScreens/requests/requestsChoicesFor';
 
 const NOTHING_WAITING = { notifications: [], unread: 0 };
 
@@ -181,6 +181,14 @@ const ValenceShell = () => {
     [libraries.data, place.library, go],
   );
 
+  const requestsChoices = useMemo(
+    () =>
+      requestsChoicesFor(place.requestsView, (requestsView) => {
+        go({ section: 'requests', requestsView });
+      }),
+    [place.requestsView, go],
+  );
+
   const watchableIds = useMemo(
     () =>
       (libraries.data ?? [])
@@ -210,6 +218,7 @@ const ValenceShell = () => {
   ];
 
   const inspecting = place.inspecting === null ? null : (known.get(place.inspecting) ?? null);
+  const seasonMates = useSeasonMates(inspecting, [...known.values()]);
 
   useEffect(() => {
     if (place.show === null) {
@@ -256,7 +265,6 @@ const ValenceShell = () => {
       dock={
         <>
           <ImmersiveMusic />
-          <MusicVisualiser />
           <NowPlayingBar />
           <VideoRemoteBar
             onOpen={() => {
@@ -295,6 +303,7 @@ const ValenceShell = () => {
       isAdministrator={mayAdminister}
       hasMark={!isHoldingTheScreen}
       libraryChoices={libraryChoices}
+      requestsChoices={requestsChoices}
       {...(libraries.data === undefined ? {} : { libraryKinds })}
       {...(isStockKnown ? { stocked } : {})}
       mayRequest={mayRequest}
@@ -362,7 +371,10 @@ const ValenceShell = () => {
       }}
       {...(watcher === null
         ? {}
-        : { avatar: <ProfileFace profile={watcher} className="size-7 text-xs" /> })}
+        : {
+            avatar: <ProfileFace profile={watcher} className="size-7 text-xs" />,
+            accountName: watcher.name,
+          })}
     >
       <ShowDialog
         show={openShow}
@@ -425,7 +437,7 @@ const ValenceShell = () => {
 
       <MediaDetailDialog
         media={inspecting}
-        siblings={inspecting === null ? [] : findSiblings([...known.values()], inspecting)}
+        siblings={seasonMates}
         watchedFractionFor={(mediaId) => {
           const found = progress.get(mediaId);
 
@@ -623,7 +635,7 @@ const ValenceShell = () => {
         }}
       />
 
-      <AnimatePresence mode="wait" initial={false}>
+      <AnimatePresence mode="wait">
         <motion.div
           key={place.section}
           variants={groupVariants}

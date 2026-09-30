@@ -78,7 +78,6 @@ const FACE: Variants = {
 const Portrait = ({ profile, isLarge = false }: { profile: ViewerProfile; isLarge?: boolean }) => (
   <ProfileFace
     profile={profile}
-    shape="tile"
     isLifted
     className={
       isLarge ? 'size-32 text-5xl sm:size-36' : 'aspect-square w-full text-4xl sm:text-5xl'
@@ -476,12 +475,12 @@ const ProfileGate = ({
 
               <Button
                 type="submit"
-                variant="glossy"
+                variant="confirm"
                 size="lg"
                 isLoading={isSubmitting}
                 disabled={email === '' || password === ''}
               >
-                Watch
+                Login
                 <Icon of={ChevronRightIcon} size={18} />
               </Button>
 
@@ -677,12 +676,12 @@ const ProfileGate = ({
 
                   <Button
                     type="submit"
-                    variant="glossy"
+                    variant="confirm"
                     size="lg"
                     isLoading={isSubmitting}
                     disabled={password === ''}
                   >
-                    Watch
+                    Login
                     <Icon of={ChevronRightIcon} size={18} />
                   </Button>
 
