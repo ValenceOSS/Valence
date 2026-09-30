@@ -46,6 +46,7 @@ import { ABlur } from '@ValenceMobile/components/ABlur/ABlur';
 import { SCREEN_EDGE } from '@ValenceMobile/components/Screen/SCREEN_EDGE';
 import { useTheSideStrip } from '@ValenceMobile/hooks/useTheSideStrip';
 import { theColours } from '@ValenceMobile/theme/theColours';
+import { theVeilFor } from '@ValenceMobile/components/TheLibrary/theVeilFor';
 import { ACCOUNT_PANELS } from '@ValenceMobile/components/TheAccount/ACCOUNT_PANELS';
 import { useAccountPanels } from '@ValenceMobile/components/TheAccount/useAccountPanels';
 import { usePluginThemeInStep } from '@ValenceMobile/plugins/usePluginThemeInStep';
@@ -123,7 +124,6 @@ const PARTS_BELOW_BY = 12;
 
 const styles = StyleSheet.create({
   brand: { alignItems: 'center', flexDirection: 'row', gap: 10 },
-  dimmed: { backgroundColor: 'rgba(0, 0, 0, 0.28)' },
   arriving: { gap: 20 },
   hidden: { opacity: 0 },
   aside: { alignItems: 'center', flexDirection: 'row', gap: 10 },
@@ -390,7 +390,10 @@ const TheLibrary = ({
       <TheClipBehind player={part === 'home' ? clip : null}>
         <AMoodBackground palette={palette} />
       </TheClipBehind>
-      <View style={[StyleSheet.absoluteFill, styles.dimmed]} pointerEvents="none" />
+      <View
+        style={[StyleSheet.absoluteFill, { backgroundColor: theVeilFor(colours) }]}
+        pointerEvents="none"
+      />
       <ARRIVING.Provider value={arriving}>{drawn}</ARRIVING.Provider>
       {bar}
     </View>
