@@ -53,4 +53,20 @@ describe('findEngineTests', () => {
 
     expect(findEngineTests(root)).toEqual([]);
   });
+
+  it('counts a test that opens its database through a test helper', () => {
+    const root = aPackage({
+      'src/testing/aHousehold.ts':
+        "import { aMigratedDatabase } from '#dialect/aMigratedDatabase';",
+      'src/history/history.test.ts':
+        "import { aHousehold } from '@ValenceServer/testing/aHousehold';",
+      'src/visibility/near.test.ts': "import { aHousehold } from '../testing/aHousehold';",
+      'src/pure.test.ts': "import { aHouse } from './aHouse';",
+    });
+
+    expect(findEngineTests(root)).toEqual([
+      join('src', 'history', 'history.test.ts'),
+      join('src', 'visibility', 'near.test.ts'),
+    ]);
+  });
 });

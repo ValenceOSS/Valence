@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/mysql2';
 import { REQUESTS_SCHEMA } from '@ValenceRequests/db/mysql/REQUESTS_SCHEMA';
-import { openPool } from '@ValenceRequests/db/mysql/connection/openPool';
+import { openPool } from '@ValenceDatabase/mysql/connection/openPool';
 
 /**
  * Opens the connection pool and binds the service's own tables to it.

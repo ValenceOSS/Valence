@@ -38,11 +38,11 @@ import {
 } from '@ValenceContracts/schemas/MediaRequest';
 import type { ReleaseType, RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
 import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
-import { EMPTY_TEXT } from '@ValenceRequests/db/mysql/columns/EMPTY_TEXT';
-import { jsonColumn } from '@ValenceRequests/db/mysql/columns/jsonColumn';
-import { jsonDefault } from '@ValenceRequests/db/mysql/columns/jsonDefault';
-import { moment } from '@ValenceRequests/db/mysql/columns/moment';
-import { momentNow } from '@ValenceRequests/db/mysql/columns/momentNow';
+import { EMPTY_TEXT } from '@ValenceDatabase/mysql/columns/EMPTY_TEXT';
+import { jsonColumn } from '@ValenceDatabase/mysql/columns/jsonColumn';
+import { jsonDefault } from '@ValenceDatabase/mysql/columns/jsonDefault';
+import { moment } from '@ValenceDatabase/mysql/columns/moment';
+import { momentNow } from '@ValenceDatabase/mysql/columns/momentNow';
 
 const requestsSchema = mysqlTableCreator((name) => `requests_${name}`);
 

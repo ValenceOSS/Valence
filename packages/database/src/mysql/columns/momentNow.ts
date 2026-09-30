@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { moment } from '@ValenceRequests/db/mysql/columns/moment';
+import { moment } from './moment';
 
 /**
  * A moment column the database fills with the time the row was written, where nothing is given.
