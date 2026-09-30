@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { docsFor } from '@ValenceCore/functions/docsFor';
 import type { DownloadClientState } from '@ValenceContracts/schemas/DownloadQueue';
 import type { StateBadge } from '@ValenceClient/status/StateBadge';
@@ -27,7 +28,7 @@ const describeClientState = (
     : {
         label: 'Offline',
         tone: 'danger',
-        detail: reading.problem,
+        detail: reading.problem === null ? null : sayAgain(reading.problem),
         help: docsFor(reading.problemCode),
       };
 };

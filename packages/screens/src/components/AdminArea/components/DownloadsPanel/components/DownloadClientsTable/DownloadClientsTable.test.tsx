@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -93,7 +94,7 @@ describe('DownloadClientsTable', () => {
       {
         ...READING,
         isReachable: false,
-        problem: 'Seedbox could not be reached',
+        problem: sayVerbatim('Seedbox could not be reached'),
         problemCode: null,
       },
     ]);

@@ -1,3 +1,5 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
+import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { useCallback, useEffect, useState } from 'react';
 import { ConfirmDialog } from '@ValenceUI/ConfirmDialog';
 import { HeadedSection } from '@ValenceUI/HeadedSection';
@@ -204,10 +206,12 @@ const JobRunner = ({
       />
 
       <RunningWorkDialog
-        title={watching?.label ?? ''}
+        title={sayAgainIfAny(watching?.label) ?? ''}
         isOpen={watching !== null}
         progress={
-          watchedSummary === null ? [] : [{ label: watching?.label ?? '', ...watchedSummary }]
+          watchedSummary === null
+            ? []
+            : [{ label: sayAgainIfAny(watching?.label) ?? '', ...watchedSummary }]
         }
         tasks={
           watching === null
@@ -224,9 +228,11 @@ const JobRunner = ({
 
       <ConfirmDialog
         isOpen={confirming !== null}
-        title={confirming === null ? 'Run this job?' : `${confirming.label}?`}
-        detail={confirming === null ? '' : `${confirming.description} This cannot be undone.`}
-        confirmLabel={confirming?.label ?? 'Run'}
+        title={confirming === null ? 'Run this job?' : `${sayAgain(confirming.label)}?`}
+        detail={
+          confirming === null ? '' : `${sayAgain(confirming.description)} This cannot be undone.`
+        }
+        confirmLabel={sayAgainIfAny(confirming?.label) ?? 'Run'}
         isDestructive
         onClose={() => {
           setConfirming(null);
@@ -243,7 +249,7 @@ const JobRunner = ({
 
       <ConfirmDialog
         isOpen={stopping !== null}
-        title={stopping === null ? 'Stop this job?' : `Stop ${stopping.label}?`}
+        title={stopping === null ? 'Stop this job?' : `Stop ${sayAgain(stopping.label)}?`}
         detail="What it has done so far is kept, and the rest is left undone until it is run again."
         confirmLabel="Stop it"
         isDestructive

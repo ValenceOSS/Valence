@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { groupVariants } from '@ValenceUI/animations/reveal';
@@ -199,7 +200,7 @@ const RequestsList = ({ onAsk, onOpen }: RequestsListProps) => {
                   {said === null ? null : <span className="text-xs text-text-muted">{said}</span>}
                   {request.refusedBecause === null ? null : (
                     <span className="break-words text-xs text-text-muted">
-                      Refused: {request.refusedBecause}
+                      Refused: {sayAgain(request.refusedBecause)}
                     </span>
                   )}
                   {badge.detail === null ? null : (

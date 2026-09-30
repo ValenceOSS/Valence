@@ -1,3 +1,4 @@
+import { bodyOf } from '@ValenceI18n/bodyOf';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import {
   deleteLibraryFileRoute,
@@ -13,6 +14,7 @@ import { deleteLibraryEntry } from '@ValenceServer/files/deleteLibraryEntry';
 import { moveLibraryEntry } from '@ValenceServer/files/moveLibraryEntry';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
+import { refuse } from '@ValenceI18n/refuse';
 
 /**
  * Registers the files endpoints.
@@ -25,7 +27,7 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(listLibraryFilesRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'library.edit'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
     const listed = await listLibraryFolder(
@@ -38,19 +40,19 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
       case 'listed':
         return context.json(listed.folder, 200);
       case 'missing':
-        return context.json({ error: 'There is no such folder.' }, 404);
+        return context.json(refuse('error.common.thereIsNoSuchFolder'), 404);
       case 'outside':
-        return context.json({ error: 'That is not inside a library.' }, 403);
+        return context.json(refuse('error.common.thatIsNotInsideALibrary'), 403);
       case 'readOnly':
       case 'denied':
       case 'failed':
-        return context.json({ error: 'Valence is not allowed to read that folder.' }, 403);
+        return context.json(refuse('error.common.valenceIsNotAllowedToRead'), 403);
     }
   });
 
   app.openapi(listMediaPathsRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'library.edit'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
     return context.json(
@@ -61,7 +63,7 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(searchLibraryFilesRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'library.edit'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
     const { words, within } = context.req.valid('query');
@@ -75,12 +77,12 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
 
     return found.kind === 'found'
       ? context.json(found.search, 200)
-      : context.json({ error: 'That is not inside a library.' }, 403);
+      : context.json(refuse('error.common.thatIsNotInsideALibrary'), 403);
   });
 
   app.openapi(deleteLibraryFileRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.delete'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
     const settled = await settleChange(
@@ -92,13 +94,13 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     return settled.status === 409
-      ? context.json({ error: settled.error }, 500)
-      : context.json({ error: settled.error }, settled.status);
+      ? context.json(bodyOf(settled), 500)
+      : context.json(bodyOf(settled), settled.status);
   });
 
   app.openapi(renameLibraryFileRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'library.edit'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
     const { path, name } = context.req.valid('json');
@@ -109,12 +111,12 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
 
     return 'path' in settled
       ? context.json({ path: settled.path }, 200)
-      : context.json({ error: settled.error }, settled.status);
+      : context.json(bodyOf(settled), settled.status);
   });
 
   app.openapi(moveLibraryFileRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'library.edit'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
     const { path, into } = context.req.valid('json');
@@ -125,7 +127,7 @@ const serveFiles = (app: OpenAPIHono, context: AppContext): void => {
 
     return 'path' in settled
       ? context.json({ path: settled.path }, 200)
-      : context.json({ error: settled.error }, settled.status);
+      : context.json(bodyOf(settled), settled.status);
   });
 };
 

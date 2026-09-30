@@ -1,4 +1,5 @@
 import type { Permission } from '@ValenceContracts/schemas/Permission';
+import { say } from '@ValenceI18n/say';
 
 type DefaultRole = {
   name: string;
@@ -10,16 +11,16 @@ type DefaultRole = {
 
 const DEFAULT_ROLES: readonly DefaultRole[] = [
   {
-    name: 'Administrator',
+    name: say('common.administrator'),
     position: 300,
-    description: 'Runs the server. Everything, including anything added later.',
+    description: say('core.defaultRoles.runsTheServerEverythingIncludingAnything'),
     color: '#ED4245',
     permissions: ['administrator'],
   },
   {
-    name: 'Manager',
+    name: say('core.defaultRoles.manager'),
     position: 200,
-    description: 'Looks after the libraries and what is in them, but not the server itself.',
+    description: say('core.defaultRoles.looksAfterTheLibrariesAndWhat'),
     color: '#5865F2',
     permissions: [
       'library.create',
@@ -49,9 +50,9 @@ const DEFAULT_ROLES: readonly DefaultRole[] = [
     ],
   },
   {
-    name: 'Member',
+    name: say('core.defaultRoles.member'),
     position: 100,
-    description: 'Watches, shares and downloads. What everybody in the house gets.',
+    description: say('core.defaultRoles.watchesSharesAndDownloadsWhatEverybody'),
     color: '#99AAB5',
     permissions: [
       'sharing.link',
@@ -62,16 +63,16 @@ const DEFAULT_ROLES: readonly DefaultRole[] = [
     ],
   },
   {
-    name: 'Restricted',
+    name: say('core.defaultRoles.restricted'),
     position: 0,
-    description: 'Watches, and nothing else. For an account somebody wants kept narrow.',
+    description: say('core.defaultRoles.watchesAndNothingElseForAn'),
     color: '#747F8D',
     permissions: [],
   },
 ];
 
-const ADMINISTRATOR_ROLE_NAME = 'Administrator';
+const ADMINISTRATOR_ROLE_NAME = say('common.administrator');
 
-const DEFAULT_ROLE_NAME = 'Member';
+const DEFAULT_ROLE_NAME = say('core.defaultRoles.member');
 
 export { ADMINISTRATOR_ROLE_NAME, DEFAULT_ROLES, DEFAULT_ROLE_NAME };

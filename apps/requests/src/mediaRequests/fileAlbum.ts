@@ -1,3 +1,4 @@
+/* eslint-disable valence/no-hard-coded-strings -- file and folder names on disk, which media servers read in English */
 import { readdir, unlink } from 'node:fs/promises';
 import { basename, dirname, extname, join } from 'node:path';
 import { AUDIO_FILE_EXTENSIONS } from '@ValenceContracts/constants/AUDIO_FILE_EXTENSIONS';

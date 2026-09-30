@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
@@ -103,7 +104,7 @@ const JobTraceDialog = ({
   const run = askedRun.data ?? null;
   const lines = askedLines.data?.records ?? [];
   const bars = askedBars.data;
-  const labels = new Map(definitions.map((one) => [one.kind, one.label]));
+  const labels = new Map(definitions.map((one) => [one.kind, sayAgain(one.label)]));
   const label = run === null ? 'Job run' : describeJobKind(run.kind, labels);
   const status = run === null ? null : describeJobStatus(run.status);
   const startedAt = run?.startedAtMs ?? run?.createdAtMs ?? lines[0]?.atMs ?? 0;
@@ -185,7 +186,7 @@ const JobTraceDialog = ({
                   max={Math.max(progress.total, 1)}
                   readout={
                     <span>
-                      {describeWords(progress.phase)} ·{' '}
+                      {describeWords(sayAgain(progress.phase))} ·{' '}
                       <AnimatedNumber value={progress.processed} /> of{' '}
                       <AnimatedNumber value={progress.total} />
                     </span>
@@ -195,7 +196,7 @@ const JobTraceDialog = ({
 
               {run.errorMessage === null ? null : (
                 <Callout title="How it failed" tone="danger">
-                  {run.errorMessage}
+                  {sayAgain(run.errorMessage)}
                 </Callout>
               )}
 

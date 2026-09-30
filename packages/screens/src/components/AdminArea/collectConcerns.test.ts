@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { RequestsSolver, RequestsVpn } from '@ValenceContracts/schemas/Requests';
 import { describe, expect, it } from 'vitest';
 import { NO_WORK, SOLVER_NOT_USED } from '@ValenceContracts/schemas/Requests';
@@ -108,13 +109,16 @@ const failedRuns = (total: number, errorMessage: string | null = null): JobRunPa
       startedAtMs: 0,
       finishedAtMs: 1,
       progress: null,
-      errorMessage,
+      errorMessage: errorMessage === null ? null : sayVerbatim(errorMessage),
       createdAtMs: 0,
     },
   ],
 });
 
-const reason: Reason = { code: 'ClientSupportsSource', detail: 'Client declares support' };
+const reason: Reason = {
+  code: 'ClientSupportsSource',
+  detail: sayVerbatim('Client declares support'),
+};
 
 const PLAN: PlaybackPlan = {
   mediaId: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
@@ -377,10 +381,10 @@ describe('collectConcerns', () => {
             stalled: [
               {
                 kind: 'library.scan.scheduled',
-                label: 'Scan for changes',
+                label: sayVerbatim('Scan for changes'),
                 failures: 457,
                 everSucceeded: false,
-                reason: "Cannot read properties of null (reading 'libraryId')",
+                reason: sayVerbatim("Cannot read properties of null (reading 'libraryId')"),
               },
             ],
           },
@@ -402,10 +406,10 @@ describe('collectConcerns', () => {
             stalled: [
               {
                 kind: 'server.checkDiskSpace',
-                label: 'Check disk space',
+                label: sayVerbatim('Check disk space'),
                 failures: 12,
                 everSucceeded: true,
-                reason: 'the disk is gone',
+                reason: sayVerbatim('the disk is gone'),
               },
             ],
           },
@@ -420,10 +424,10 @@ describe('collectConcerns', () => {
     it('counts them rather than listing every stalled kind', () => {
       const stall = (kind: string, label: string) => ({
         kind,
-        label,
+        label: sayVerbatim(label),
         failures: 3,
         everSucceeded: false,
-        reason: 'no',
+        reason: sayVerbatim('no'),
       });
 
       const concerns = collectConcerns({
@@ -805,7 +809,7 @@ describe('collectConcerns', () => {
       publicAddress: null,
       country: null,
       checkedAt: null,
-      problem,
+      problem: problem === null ? null : sayVerbatim(problem),
       problemCode: problem === null ? null : 'VpnKeyRefused',
     });
 
@@ -894,7 +898,7 @@ describe('collectConcerns', () => {
         ...healthy,
         requests: answering(aVpn(true), {
           ...SOLVER_NOT_USED,
-          startProblem: 'No browser installed',
+          startProblem: sayVerbatim('No browser installed'),
         }),
       });
 
@@ -911,7 +915,7 @@ describe('collectConcerns', () => {
             ...SOLVER_NOT_USED,
             failed: 1,
             lastFailedAt: '2026-09-19T12:00:00.000Z',
-            problem: 'Timed out',
+            problem: sayVerbatim('Timed out'),
           }),
         }),
       ).toEqual([]);
@@ -932,7 +936,7 @@ describe('collectConcerns', () => {
                 {
                   id: '0f8fad5b-d9cb-469f-a165-70867728950e',
                   name: 'Jackett',
-                  problem: 'Timed out',
+                  problem: sayVerbatim('Timed out'),
                   problemCode: null,
                 },
               ],
@@ -969,13 +973,13 @@ describe('collectConcerns', () => {
                 {
                   id: '0f8fad5b-d9cb-469f-a165-70867728950e',
                   name: 'Jackett',
-                  problem: 'Timed out',
+                  problem: sayVerbatim('Timed out'),
                   problemCode: null,
                 },
                 {
                   id: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
                   name: 'NZBgeek',
-                  problem: 'Refused the key',
+                  problem: sayVerbatim('Refused the key'),
                   problemCode: null,
                 },
               ],

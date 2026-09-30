@@ -6,6 +6,7 @@ import type {
 } from '@ValenceContracts/schemas/MusicRemote';
 import type { DeviceOwner } from '@ValenceServer/devices/createDeviceRegistry';
 import type { PresenceService } from '@ValenceServer/presence/PresenceService';
+import { say } from '@ValenceI18n/say';
 
 type Listener = DeviceOwner;
 
@@ -59,7 +60,7 @@ const createMusicDevices = ({ presence, onChanged }: MusicDevicesOptions): Music
         kind: 'music',
         command,
         fromClientId: 'server',
-        fromLabel: 'An administrator',
+        fromLabel: say('server.music.musicDevices.anAdministrator'),
       }),
 
     command: (listener, fromClientId, toClientId, command) =>

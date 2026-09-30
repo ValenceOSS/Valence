@@ -3,7 +3,9 @@ import {
   ArtworkKindSchema,
   ChooseArtworkSchema,
 } from '@ValenceContracts/schemas/ArtworkChoice';
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
   LibrarySchema,
   UpdateLibraryRequestSchema,
@@ -23,8 +25,8 @@ const Library = LibrarySchema.openapi('Library');
 const MediaSummary = MediaSummarySchema.openapi('MediaSummary');
 const MediaDetail = MediaDetailSchema.openapi('MediaDetail');
 const LibraryFacets = LibraryFacetsSchema.openapi('LibraryFacets');
-const NotFound = z.object({ error: z.string() }).openapi('LibraryNotFound');
-const Forbidden = z.object({ error: z.string() }).openapi('LibraryForbidden');
+const NotFound = RefusalSchema.openapi('LibraryNotFound');
+const Forbidden = RefusalSchema.openapi('LibraryForbidden');
 
 const ShowListSchema = ShowListContract.openapi('ShowList');
 const ShowDetailSchema = ShowDetailContract.openapi('ShowDetail');
@@ -53,7 +55,7 @@ const listLibrariesRoute = createRoute({
     },
     401: {
       description: 'Not signed in',
-      content: { 'application/json': { schema: z.object({ error: z.string() }) } },
+      content: { 'application/json': { schema: RefusalSchema } },
     },
   },
 });
@@ -96,7 +98,7 @@ const updateLibraryRoute = createRoute({
     },
     401: {
       description: 'Not signed in',
-      content: { 'application/json': { schema: z.object({ error: z.string() }) } },
+      content: { 'application/json': { schema: RefusalSchema } },
     },
     404: {
       description: 'No such library',
@@ -121,7 +123,7 @@ const listFacetsRoute = createRoute({
     },
     401: {
       description: 'Not signed in',
-      content: { 'application/json': { schema: z.object({ error: z.string() }) } },
+      content: { 'application/json': { schema: RefusalSchema } },
     },
   },
 });
@@ -159,7 +161,7 @@ const listItemsRoute = createRoute({
     },
     401: {
       description: 'Not signed in',
-      content: { 'application/json': { schema: z.object({ error: z.string() }) } },
+      content: { 'application/json': { schema: RefusalSchema } },
     },
     404: {
       description: 'No such library',
@@ -192,7 +194,7 @@ const ScanState = z
   .object({
     jobId: z.string(),
     state: z.string(),
-    phase: z.string().nullable(),
+    phase: SaidSchema.nullable(),
     processed: z.number().int().nonnegative().nullable(),
     total: z.number().int().nonnegative().nullable(),
     item: z.string().nullable().default(null),
@@ -380,7 +382,7 @@ const deleteMediaRoute = createRoute({
     },
     500: {
       description: 'The file could not be deleted',
-      content: { 'application/json': { schema: z.object({ error: z.string() }) } },
+      content: { 'application/json': { schema: RefusalSchema } },
     },
   },
 });
@@ -408,7 +410,7 @@ const deleteSeriesRoute = createRoute({
     },
     500: {
       description: 'The files could not be deleted',
-      content: { 'application/json': { schema: z.object({ error: z.string() }) } },
+      content: { 'application/json': { schema: RefusalSchema } },
     },
   },
 });
@@ -502,7 +504,7 @@ const runningScansRoute = createRoute({
                   jobId: z.string(),
                   kind: z.string(),
                   libraryId: z.string().nullable(),
-                  phase: z.string().nullable(),
+                  phase: SaidSchema.nullable(),
                   processed: z.number().nullable(),
                   total: z.number().nullable(),
                   item: z.string().nullable().default(null),
@@ -551,7 +553,7 @@ const listShowsRoute = createRoute({
     },
     401: {
       description: 'Not signed in',
-      content: { 'application/json': { schema: z.object({ error: z.string() }) } },
+      content: { 'application/json': { schema: RefusalSchema } },
     },
     404: {
       description: 'No such library',
@@ -575,7 +577,7 @@ const getShowRoute = createRoute({
     },
     401: {
       description: 'Not signed in',
-      content: { 'application/json': { schema: z.object({ error: z.string() }) } },
+      content: { 'application/json': { schema: RefusalSchema } },
     },
     404: {
       description: 'No such library or series',
@@ -597,7 +599,7 @@ const comingUpRoute = createRoute({
     },
     401: {
       description: 'Not signed in',
-      content: { 'application/json': { schema: z.object({ error: z.string() }) } },
+      content: { 'application/json': { schema: RefusalSchema } },
     },
   },
 });

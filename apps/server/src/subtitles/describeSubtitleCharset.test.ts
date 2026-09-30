@@ -13,13 +13,13 @@ describe('saying what a subtitle file was read as', () => {
   it('names the encoding and the language that chose it', () => {
     expect(
       describeSubtitleCharset({ text: '', charset: 'windows-1251', decidedBy: 'language' }),
-    ).toBe('read as windows-1251 (from the track language; not valid UTF-8)');
+    ).toEqual('read as windows-1251 (from the track language; not valid UTF-8)');
   });
 
   it('admits it is a guess where the file named no language', () => {
     expect(
       describeSubtitleCharset({ text: '', charset: 'windows-1252', decidedBy: 'fallback' }),
-    ).toBe(
+    ).toEqual(
       'read as windows-1252 (a guess, since the file does not name its language; not valid UTF-8)',
     );
   });

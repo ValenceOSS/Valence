@@ -1,3 +1,4 @@
+import { bodyOf } from '@ValenceI18n/bodyOf';
 import {
   cancelUploadRoute,
   finishUploadRoute,
@@ -9,6 +10,7 @@ import {
 import { planUpload } from '@ValenceServer/uploads/planUpload';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
+import { refuse } from '@ValenceI18n/refuse';
 
 /**
  * Registers the upload endpoints.
@@ -24,35 +26,32 @@ const serveUpload = (app: OpenAPIHono, context: AppContext): void => {
     const found = await libraryToUploadInto(context.req.raw.headers, context.req.valid('param').id);
 
     if (found.kind === 'forbidden') {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
     if (found.kind === 'signedOut') {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     if (found.kind === 'missing') {
-      return context.json({ error: 'No such library.' }, 404);
+      return context.json(refuse('error.common.noSuchLibrary'), 404);
     }
 
     const relativePath = context.req.valid('query').path;
     const plan = planUpload(found.target.path, relativePath, found.target.kind);
 
     if (plan.kind === 'badPath') {
-      return context.json(
-        { error: 'A file goes at a plain path inside the library, with no dots or empty names.' },
-        400,
-      );
+      return context.json(refuse('error.upload.aFileGoesAtAPlain'), 400);
     }
 
     if (plan.kind === 'refused') {
-      return context.json({ error: 'That is not something this library reads.' }, 415);
+      return context.json(refuse('error.upload.thatIsNotSomethingThisLibrary'), 415);
     }
 
     const body = context.req.raw.body;
 
     if (body === null) {
-      return context.json({ error: 'No file was sent.' }, 400);
+      return context.json(refuse('error.upload.noFileWasSent'), 400);
     }
 
     const written = await uploadDisk.write(plan.destination, body);
@@ -62,12 +61,12 @@ const serveUpload = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     if (written.kind === 'exists') {
-      return context.json({ error: 'There is already a file called that.' }, 409);
+      return context.json(refuse('error.upload.thereIsAlreadyAFileCalled'), 409);
     }
 
     const said = sayRefused(written);
 
-    return context.json({ error: said.error }, said.status);
+    return context.json(bodyOf(said), said.status);
   });
 
   app.openapi(startUploadRoute, async (context) => {
@@ -76,29 +75,26 @@ const serveUpload = (app: OpenAPIHono, context: AppContext): void => {
     const found = await libraryToUploadInto(context.req.raw.headers, context.req.valid('param').id);
 
     if (found.kind === 'forbidden') {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
     if (found.kind === 'signedOut') {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     if (found.kind === 'missing') {
-      return context.json({ error: 'No such library.' }, 404);
+      return context.json(refuse('error.common.noSuchLibrary'), 404);
     }
 
     const { path: relativePath, bytes } = context.req.valid('query');
     const plan = planUpload(found.target.path, relativePath, found.target.kind);
 
     if (plan.kind === 'badPath') {
-      return context.json(
-        { error: 'A file goes at a plain path inside the library, with no dots or empty names.' },
-        400,
-      );
+      return context.json(refuse('error.upload.aFileGoesAtAPlain'), 400);
     }
 
     if (plan.kind === 'refused') {
-      return context.json({ error: 'That is not something this library reads.' }, 415);
+      return context.json(refuse('error.upload.thatIsNotSomethingThisLibrary'), 415);
     }
 
     const session = await uploadSessions.open({
@@ -119,12 +115,12 @@ const serveUpload = (app: OpenAPIHono, context: AppContext): void => {
     await uploadSessions.close(session.uploadId);
 
     if (begun.kind === 'exists') {
-      return context.json({ error: 'There is already a file called that.' }, 409);
+      return context.json(refuse('error.upload.thereIsAlreadyAFileCalled'), 409);
     }
 
     const said = sayRefused(begun);
 
-    return context.json({ error: said.error }, said.status);
+    return context.json(bodyOf(said), said.status);
   });
 
   app.openapi(uploadPieceRoute, async (context) => {
@@ -132,23 +128,23 @@ const serveUpload = (app: OpenAPIHono, context: AppContext): void => {
     const found = await libraryToUploadInto(context.req.raw.headers, id);
 
     if (found.kind === 'forbidden') {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
     if (found.kind === 'signedOut') {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     const session = found.kind === 'found' ? await uploadSessions.find(uploadId, id) : null;
 
     if (session === null) {
-      return context.json({ error: 'No such upload.' }, 404);
+      return context.json(refuse('error.upload.noSuchUpload'), 404);
     }
 
     const body = context.req.raw.body;
 
     if (index >= session.pieces || body === null) {
-      return context.json({ error: 'That is not a piece of this upload.' }, 400);
+      return context.json(refuse('error.upload.thatIsNotAPieceOf'), 400);
     }
 
     const offset = index * session.pieceBytes;
@@ -158,16 +154,17 @@ const serveUpload = (app: OpenAPIHono, context: AppContext): void => {
     if (written.kind !== 'written') {
       const said = sayRefused(written);
 
-      return context.json({ error: said.error }, said.status);
+      return context.json(bodyOf(said), said.status);
     }
 
     if (written.bytes !== expected) {
       await uploadSessions.receive(uploadId, index, false);
 
       return context.json(
-        {
-          error: `That piece was ${written.bytes.toString()} bytes, where ${expected.toString()} were expected.`,
-        },
+        refuse('error.upload.thatPieceWasBytesBytesWhere', {
+          bytes: written.bytes.toString(),
+          expected: expected.toString(),
+        }),
         400,
       );
     }
@@ -182,17 +179,17 @@ const serveUpload = (app: OpenAPIHono, context: AppContext): void => {
     const found = await libraryToUploadInto(context.req.raw.headers, id);
 
     if (found.kind === 'forbidden') {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
     if (found.kind === 'signedOut') {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     const session = found.kind === 'found' ? await uploadSessions.find(uploadId, id) : null;
 
     if (session === null) {
-      return context.json({ error: 'No such upload.' }, 404);
+      return context.json(refuse('error.upload.noSuchUpload'), 404);
     }
 
     return context.json({ received: [...session.received], pieces: session.pieces }, 200);
@@ -203,24 +200,24 @@ const serveUpload = (app: OpenAPIHono, context: AppContext): void => {
     const found = await libraryToUploadInto(context.req.raw.headers, id);
 
     if (found.kind === 'forbidden') {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
     if (found.kind === 'signedOut') {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     const session = found.kind === 'found' ? await uploadSessions.find(uploadId, id) : null;
 
     if (session === null) {
-      return context.json({ error: 'No such upload.' }, 404);
+      return context.json(refuse('error.upload.noSuchUpload'), 404);
     }
 
     if (session.received.length < session.pieces) {
       return context.json(
-        {
-          error: `${(session.pieces - session.received.length).toString()} of its pieces have not arrived yet.`,
-        },
+        refuse('error.upload.piecesStillMissing', {
+          count: (session.pieces - session.received.length).toString(),
+        }),
         400,
       );
     }
@@ -236,12 +233,12 @@ const serveUpload = (app: OpenAPIHono, context: AppContext): void => {
     await uploadDisk.discard(session.staging);
 
     if (finished.kind === 'exists') {
-      return context.json({ error: 'There is already a file called that.' }, 409);
+      return context.json(refuse('error.upload.thereIsAlreadyAFileCalled'), 409);
     }
 
     const said = sayRefused(finished);
 
-    return context.json({ error: said.error }, said.status);
+    return context.json(bodyOf(said), said.status);
   });
 
   app.openapi(cancelUploadRoute, async (context) => {
@@ -249,11 +246,11 @@ const serveUpload = (app: OpenAPIHono, context: AppContext): void => {
     const found = await libraryToUploadInto(context.req.raw.headers, id);
 
     if (found.kind === 'forbidden') {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
     if (found.kind === 'signedOut') {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     const session = found.kind === 'found' ? await uploadSessions.find(uploadId, id) : null;

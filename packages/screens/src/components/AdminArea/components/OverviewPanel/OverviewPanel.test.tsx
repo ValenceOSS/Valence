@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -37,7 +38,10 @@ const renderPanel = (element: ReactElement) =>
     </QueryClientProvider>,
   );
 
-const reason: Reason = { code: 'ClientSupportsSource', detail: 'Client declares support' };
+const reason: Reason = {
+  code: 'ClientSupportsSource',
+  detail: sayVerbatim('Client declares support'),
+};
 
 const PLAN: PlaybackPlan = {
   mediaId: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',

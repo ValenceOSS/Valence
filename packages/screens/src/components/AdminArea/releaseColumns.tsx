@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { Badge } from '@ValenceUI/Badge';
 import { describeAge } from '@ValenceCore/functions/describeAge';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
@@ -71,7 +72,9 @@ const releaseColumns = ({
                 </Badge>
 
                 <span className="text-xs text-text-muted">
-                  {(judgement.isRejected ? judgement.rejections : judgement.reasons).join('. ')}
+                  {(judgement.isRejected ? judgement.rejections : judgement.reasons)
+                    .map(sayAgain)
+                    .join('. ')}
                 </span>
               </span>
             );

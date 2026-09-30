@@ -1,3 +1,5 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { join } from 'node:path';
 
 type CacheFileSystem = {
@@ -19,7 +21,7 @@ type CleanupImageCacheOptions = {
   listKeptPictures: () => Promise<(string | null)[]>;
   musicDir?: string;
   listMusicArtwork?: () => Promise<(string | null)[]>;
-  onProblem?: (path: string, reason: string) => void;
+  onProblem?: (path: string, reason: Said) => void;
   onProgress?: (phase: SweepPhase, processed: number, total: number) => void;
 };
 
@@ -68,7 +70,7 @@ const sweep = async (
           removed += 1;
         })
         .catch((error: Error) => {
-          onProblem?.(name, error.message);
+          onProblem?.(name, sayVerbatim(error.message));
         });
     }
 

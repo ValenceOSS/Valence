@@ -1,4 +1,6 @@
 import type { ArtworkChoices } from '@ValenceContracts/schemas/ArtworkChoice';
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
 import type { ExternalIds } from '@ValenceServer/library/naming/ExternalIds.types';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
@@ -11,6 +13,7 @@ import type {
   CatalogueList,
   CatalogueStudio,
 } from '@ValenceContracts/schemas/CatalogueTitle';
+import { saying } from '@ValenceI18n/saying';
 
 type MediaFacts = {
   path: string;
@@ -147,7 +150,7 @@ type MetadataProvider = {
 const resolveNextEpisode = async (
   providers: MetadataProvider[],
   externalId: string,
-  onProblem?: (provider: string, reason: string) => void,
+  onProblem?: (provider: string, reason: Said) => void,
 ): Promise<NextEpisode | null> => {
   for (const provider of providers) {
     if (provider.describeNextEpisode === undefined) {
@@ -163,7 +166,9 @@ const resolveNextEpisode = async (
     } catch (error) {
       onProblem?.(
         provider.name,
-        error instanceof Error ? describeFailure(error) : 'Provider failed.',
+        error instanceof Error
+          ? sayVerbatim(describeFailure(error))
+          : saying('server.library.metadataProvider.providerFailed'),
       );
     }
   }
@@ -184,7 +189,7 @@ const resolveNextEpisode = async (
 const resolveSeriesShape = async (
   providers: MetadataProvider[],
   externalId: string,
-  onProblem?: (provider: string, reason: string) => void,
+  onProblem?: (provider: string, reason: Said) => void,
 ): Promise<SeriesShape | null> => {
   for (const provider of providers) {
     if (provider.describeSeries === undefined) {
@@ -200,7 +205,9 @@ const resolveSeriesShape = async (
     } catch (error) {
       onProblem?.(
         provider.name,
-        error instanceof Error ? describeFailure(error) : 'Provider failed.',
+        error instanceof Error
+          ? sayVerbatim(describeFailure(error))
+          : saying('server.library.metadataProvider.providerFailed'),
       );
     }
   }
@@ -222,7 +229,7 @@ const resolveSeriesShape = async (
 const resolveMetadata = async (
   providers: MetadataProvider[],
   facts: MediaFacts,
-  onProblem?: (provider: string, reason: string) => void,
+  onProblem?: (provider: string, reason: Said) => void,
 ): Promise<Metadata | null> => {
   for (const provider of providers) {
     try {
@@ -234,7 +241,9 @@ const resolveMetadata = async (
     } catch (error) {
       onProblem?.(
         provider.name,
-        error instanceof Error ? describeFailure(error) : 'Provider failed.',
+        error instanceof Error
+          ? sayVerbatim(describeFailure(error))
+          : saying('server.library.metadataProvider.providerFailed'),
       );
     }
   }

@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { docsFor } from '@ValenceCore/functions/docsFor';
 import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import { notify } from '@ValenceUI/notify';
@@ -81,7 +82,7 @@ const RequestsPanel = () => {
               description={
                 overview.checkedAt === null
                   ? `Not checked yet. Looking for it at ${overview.address}.`
-                  : `At ${overview.address}. Last checked ${saidWhen(overview.checkedAt)}.${overview.problem === null ? '' : ` ${overview.problem}.`}`
+                  : `At ${overview.address}. Last checked ${saidWhen(overview.checkedAt)}.${overview.problem === null ? '' : ` ${sayAgain(overview.problem)}.`}`
               }
             >
               {overview.checkedAt === null || overview.isReachable ? null : (
@@ -135,7 +136,7 @@ const RequestsPanel = () => {
                 description={
                   overview.status.indexers.total === 0
                     ? 'None yet. Add one on the Indexers page to have something to search.'
-                    : `${overview.status.indexers.enabled.toString()} of ${overview.status.indexers.total.toString()} switched on.${overview.status.indexers.failing.map((one) => ` ${one.name}: ${one.problem}`).join('')}`
+                    : `${overview.status.indexers.enabled.toString()} of ${overview.status.indexers.total.toString()} switched on.${overview.status.indexers.failing.map((one) => ` ${one.name}: ${sayAgain(one.problem)}`).join('')}`
                 }
               >
                 {overview.status.indexers.failing.length > 0 ? (

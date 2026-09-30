@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { STANDARD_CATEGORIES } from '@ValenceRequests/cardigann/STANDARD_CATEGORIES';
 import type { CardigannDefinition } from '@ValenceRequests/cardigann/CardigannDefinitionSchema';
 import type { IndexerCategory } from '@ValenceContracts/schemas/Indexer';
+import { say } from '@ValenceI18n/say';
 
 type Mapping = { tracker: string; description: string | null; standard: number };
 
@@ -121,7 +122,7 @@ const createCategoryMap = (caps: CardigannDefinition['caps']) => {
           mapping.standard < OWN_CATEGORY_BASE ? familyOf(mapping.standard) : mapping.standard;
         const name =
           mapping.standard < OWN_CATEGORY_BASE
-            ? (STANDARD_CATEGORIES.find(([id]) => id === family)?.[1] ?? 'Other')
+            ? (STANDARD_CATEGORIES.find(([id]) => id === family)?.[1] ?? say('common.otherChoice'))
             : (mapping.description ?? mapping.tracker);
         const entry = families.get(family) ?? { id: family, name, subcategories: [] };
 

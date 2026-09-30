@@ -1,6 +1,10 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { StartedSession } from '@ValenceClient/playback/startPlaybackSession';
 
-const AS_IT_IS = { code: 'ClientSupportsSource', detail: 'Kept on this device.' } as const;
+const AS_IT_IS = {
+  code: 'ClientSupportsSource',
+  detail: sayVerbatim('Kept on this device.'),
+} as const;
 
 /**
  * A session for a file already on this device, so the ordinary player can play it without asking

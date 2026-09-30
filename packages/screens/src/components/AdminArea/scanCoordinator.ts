@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import {
   scanLibrary,
   resetLibrary,
@@ -163,7 +164,7 @@ const runAndTrack = async (
       track(key, {
         libraryId,
         kind,
-        phase: found.phase,
+        phase: found.phase === null ? null : sayAgain(found.phase),
         item: found.item,
         processed: found.processed,
         total: found.total,
@@ -201,7 +202,7 @@ const resumeRunning = async (): Promise<void> => {
         track(key, {
           libraryId,
           kind: scan.kind,
-          phase: scan.phase,
+          phase: scan.phase === null ? null : sayAgain(scan.phase),
           item: scan.item,
           processed: scan.processed,
           total: scan.total,
@@ -213,7 +214,7 @@ const resumeRunning = async (): Promise<void> => {
             track(key, {
               libraryId,
               kind: scan.kind,
-              phase: found.phase,
+              phase: found.phase === null ? null : sayAgain(found.phase),
               item: found.item,
               processed: found.processed,
               total: found.total,

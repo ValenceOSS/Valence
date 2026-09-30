@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { failureOfTest } from './failureOfTest';
 
@@ -13,7 +14,7 @@ describe('failureOfTest', () => {
   it('names the indexer and its problem where it did not answer', () => {
     expect(
       failureOfTest('Jackett', {
-        value: { ...ANSWERED, isWorking: false, problem: 'Timed out' },
+        value: { ...ANSWERED, isWorking: false, problem: sayVerbatim('Timed out') },
         refusal: null,
       }),
     ).toBe('Jackett: Timed out');

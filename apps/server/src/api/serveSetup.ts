@@ -2,6 +2,7 @@ import { suggestTrustedOrigins } from '@ValenceServer/setup/suggestTrustedOrigin
 import { setupStatusRoute, setupCompleteRoute } from '@ValenceServer/routes/SetupRoute';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
+import { refuse } from '@ValenceI18n/refuse';
 
 /**
  * Registers the setup endpoints.
@@ -28,7 +29,7 @@ const serveSetup = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(setupCompleteRoute, async (context) => {
     if ((await countUsers()) > 0) {
-      return context.json({ error: 'Setup has already been completed.' }, 409);
+      return context.json(refuse('error.setup.setupHasAlreadyBeenCompleted'), 409);
     }
 
     const { admin, trustedOrigins, cookieSecure } = context.req.valid('json');
@@ -39,7 +40,7 @@ const serveSetup = (app: OpenAPIHono, context: AppContext): void => {
     });
 
     if (!created.ok) {
-      return context.json({ error: 'The administrator account could not be created.' }, 400);
+      return context.json(refuse('error.setup.theAdministratorAccountCouldNotBe'), 400);
     }
 
     const ownerAccountId = await promoteToAdmin(admin.email);

@@ -1,3 +1,4 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import type { DeviceProfile } from '@ValenceContracts/schemas/DeviceProfile';
 import type { PlaybackPlan } from '@ValenceContracts/schemas/PlaybackPlan';
 import type { PlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
@@ -13,15 +14,15 @@ type Delivery = { kind: 'hls'; manifestUrl: string } | { kind: 'direct'; url: st
 type StartedSession = Explanation & {
   sessionId: string;
   delivery: Delivery;
-  warnings: string[];
+  warnings: Said[];
   reuse: TranscodeReuse | null;
 };
 
 type StartOutcome =
   | { kind: 'started'; session: StartedSession }
   | { kind: 'notFound' }
-  | { kind: 'unsupported'; reason: string }
-  | { kind: 'failed'; reason: string };
+  | { kind: 'unsupported'; reason: Said }
+  | { kind: 'failed'; reason: Said };
 
 type SessionFile = {
   body: ReadableStream<Uint8Array>;

@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { notify } from '@ValenceUI/notify';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -71,7 +72,7 @@ const RequestBlocklistTab = ({ request, onLifted }: RequestBlocklistTabProps) =>
             <span className="flex min-w-0 flex-col gap-0.5">
               <span className="min-w-0 break-all text-sm text-text">{block.title}</span>
               <span className="text-xs text-text-muted">
-                {block.reason} · {WHEN.format(new Date(block.at))}
+                {sayAgain(block.reason)} · {WHEN.format(new Date(block.at))}
               </span>
             </span>
 

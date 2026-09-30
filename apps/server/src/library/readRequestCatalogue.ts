@@ -1,3 +1,4 @@
+/* eslint-disable valence/no-hard-coded-strings -- the catalogue's own status values, matched rather than shown */
 import { z } from 'zod';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type { RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';

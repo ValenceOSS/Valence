@@ -1,8 +1,12 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it, vi } from 'vitest';
 import { createPresenceService } from './PresenceService';
 import type { PlaybackPlan, Reason } from '@ValenceContracts/schemas/PlaybackPlan';
 
-const reason: Reason = { code: 'ClientSupportsSource', detail: 'Client declares support' };
+const reason: Reason = {
+  code: 'ClientSupportsSource',
+  detail: sayVerbatim('Client declares support'),
+};
 
 const plan: PlaybackPlan = {
   mediaId: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',

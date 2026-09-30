@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -98,7 +99,7 @@ describe('DownloadQueueTable', () => {
         secondsLeft: null,
         seeds: null,
         peers: null,
-        problem: 'NZBGet finished it with a warning (WARNING/SCRIPT)',
+        problem: sayVerbatim('NZBGet finished it with a warning (WARNING/SCRIPT)'),
         problemCode: null,
       }),
     ]);

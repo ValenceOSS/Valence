@@ -1,6 +1,7 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 
-const RatingError = z.object({ error: z.string() }).openapi('RatingError');
+const RatingError = RefusalSchema.openapi('RatingError');
 
 const RatingSchema = z
   .object({

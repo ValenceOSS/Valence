@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   startScan,
@@ -66,8 +67,18 @@ describe('scanCoordinator', () => {
   it('tracks a scan until it completes', async () => {
     scanLibraryMock.mockResolvedValue({ jobId: 'job-1', state: 'queued' });
     readScanStateMock
-      .mockResolvedValueOnce({ state: 'running', phase: 'probing', processed: 1, total: 4 })
-      .mockResolvedValueOnce({ state: 'completed', phase: 'probing', processed: 4, total: 4 });
+      .mockResolvedValueOnce({
+        state: 'running',
+        phase: sayVerbatim('probing'),
+        processed: 1,
+        total: 4,
+      })
+      .mockResolvedValueOnce({
+        state: 'completed',
+        phase: sayVerbatim('probing'),
+        processed: 4,
+        total: 4,
+      });
 
     const seen: boolean[] = [];
     const stop = subscribe(() => {
@@ -133,13 +144,13 @@ describe('scanCoordinator', () => {
     regenerateLibraryPreviewsMock.mockResolvedValue({ jobId: 'job-5', state: 'queued' });
     readScanStateMock.mockResolvedValueOnce({
       state: 'running',
-      phase: 'previews',
+      phase: sayVerbatim('previews'),
       processed: 1,
       total: 2,
     });
     readScanStateMock.mockResolvedValueOnce({
       state: 'completed',
-      phase: 'previews',
+      phase: sayVerbatim('previews'),
       processed: 2,
       total: 2,
     });
@@ -176,8 +187,18 @@ describe('scanCoordinator', () => {
   it('tracks a job started by kind, from the Work tab picker', async () => {
     runJobMock.mockResolvedValue({ jobId: 'job-6', state: 'queued' });
     readScanStateMock
-      .mockResolvedValueOnce({ state: 'running', phase: 'probing', processed: 1, total: 2 })
-      .mockResolvedValueOnce({ state: 'completed', phase: 'probing', processed: 2, total: 2 });
+      .mockResolvedValueOnce({
+        state: 'running',
+        phase: sayVerbatim('probing'),
+        processed: 1,
+        total: 2,
+      })
+      .mockResolvedValueOnce({
+        state: 'completed',
+        phase: sayVerbatim('probing'),
+        processed: 2,
+        total: 2,
+      });
 
     let sawKind: string | null = null;
     const stop = subscribe(() => {
@@ -239,7 +260,7 @@ describe('a page opened while a scan is already running', () => {
         jobId: 'job-9',
         kind: 'scan',
         libraryId: 'library-1',
-        phase: 'probing',
+        phase: sayVerbatim('probing'),
         processed: 3,
         total: 12,
       },
@@ -254,7 +275,7 @@ describe('a page opened while a scan is already running', () => {
           resolve({
             jobId: 'job-9',
             state: 'completed',
-            phase: 'probing',
+            phase: sayVerbatim('probing'),
             processed: 12,
             total: 12,
           });
@@ -326,7 +347,7 @@ describe('stopping a job', () => {
         jobId: 'job-9',
         kind: 'scan',
         libraryId: 'library-1',
-        phase: 'probing',
+        phase: sayVerbatim('probing'),
         processed: 3,
         total: 12,
       },
@@ -429,7 +450,7 @@ describe('reading a library again', () => {
         jobId: 'job-reading',
         kind: 'scan',
         libraryId: 'library-1',
-        phase: 'probing',
+        phase: sayVerbatim('probing'),
         processed: 2,
         total: 9,
       },
@@ -437,7 +458,7 @@ describe('reading a library again', () => {
         jobId: 'job-sheets',
         kind: 'library.regenerateTrickplay',
         libraryId: 'library-1',
-        phase: 'trickplay',
+        phase: sayVerbatim('trickplay'),
         processed: 1,
         total: 300,
       },
@@ -477,7 +498,7 @@ describe('reading a library again', () => {
         jobId: 'job-sheets',
         kind: 'library.regenerateTrickplay',
         libraryId: 'library-1',
-        phase: 'trickplay',
+        phase: sayVerbatim('trickplay'),
         processed: 1,
         total: 300,
       },

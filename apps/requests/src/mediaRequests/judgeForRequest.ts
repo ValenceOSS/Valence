@@ -1,3 +1,4 @@
+import { saying } from '@ValenceI18n/saying';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { albumsInRelease } from '@ValenceRequests/mediaRequests/albumsInRelease';
@@ -111,15 +112,22 @@ const judgeForRequest = ({
       isWholeRun && fetched.length > 0 && fetched.length / covered.length < WORTH_ITS_BYTES;
     const rejections = [
       ...judgement.rejections,
-      ...(reason === undefined ? [] : [`It failed before: ${reason}`]),
-      ...(fetched.length === 0 ? ['Everything it holds is here or on its way already'] : []),
+      ...(reason === undefined
+        ? []
+        : [saying('requests.mediaRequests.judgeForRequest.itFailedBeforeReason', { reason })]),
+      ...(fetched.length === 0
+        ? [saying('requests.mediaRequests.judgeForRequest.everythingItHoldsIsHereOr')]
+        : []),
       ...(isMostlyUnwanted
         ? [
-            `Only ${fetched.length.toString()} of the ${covered.length.toString()} episodes it holds are wanted`,
+            saying('requests.mediaRequests.judgeForRequest.onlySomeEpisodesWanted', {
+              wanted: fetched.length.toString(),
+              held: covered.length.toString(),
+            }),
           ]
         : []),
       ...(fetched.some((item) => item.score !== null && judgement.score <= item.score)
-        ? ['It is no better than what is here already']
+        ? [saying('requests.mediaRequests.judgeForRequest.itIsNoBetterThanWhat')]
         : []),
     ];
 

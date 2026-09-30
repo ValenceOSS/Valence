@@ -1,3 +1,5 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { mapWithLimit } from '@ValenceCore/functions/mapWithLimit';
 import { askUntilReady } from './askUntilReady';
 import { previewRequestFor } from './previewRequestFor';
@@ -28,7 +30,7 @@ type RegeneratePreviewsOptions = {
   quality: PreviewQuality;
   hardwareAccel?: string;
   atOnce?: number;
-  onProblem?: (path: string, reason: string) => void;
+  onProblem?: (path: string, reason: Said) => void;
   onProgress?: (processed: number, total: number) => void;
   isCancelled?: () => boolean;
 };
@@ -96,7 +98,7 @@ const regeneratePreviews = async ({
         isCancelled,
       }).catch((error: Error) => {
         if (isCancelled?.() !== true) {
-          onProblem?.(item.path, error.message);
+          onProblem?.(item.path, sayVerbatim(error.message));
         }
 
         return false;

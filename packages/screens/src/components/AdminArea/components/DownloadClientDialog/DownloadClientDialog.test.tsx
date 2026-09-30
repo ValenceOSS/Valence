@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -160,7 +161,7 @@ describe('DownloadClientDialog', () => {
     tryDownloadClient.mockResolvedValue({
       value: {
         isWorking: false,
-        problem: 'qBittorrent refused the username or password',
+        problem: sayVerbatim('qBittorrent refused the username or password'),
         problemCode: null,
         version: null,
       },

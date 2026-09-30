@@ -1,3 +1,4 @@
+import { refuseWith } from '@ValenceI18n/refuseWith';
 import type { PreviewRead } from '@ValenceServer/playback/PlaybackService';
 import {
   explainRoute,
@@ -14,6 +15,8 @@ import { SHARE_COOKIE } from '@ValenceServer/sharing/createShareGate';
 import { getCookie } from 'hono/cookie';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
+import { refuse } from '@ValenceI18n/refuse';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Registers the playback endpoints.
@@ -43,7 +46,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     const explanation = await playback.explain(mediaId, deviceProfile, requestedQuality);
 
     if (explanation === null) {
-      return context.json({ error: 'No such media item.' }, 404);
+      return context.json(refuse('error.common.noSuchMediaItem'), 404);
     }
 
     return context.json(explanation, 200);
@@ -71,15 +74,15 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     if (outcome.kind === 'notFound') {
-      return context.json({ error: 'No such media item.' }, 404);
+      return context.json(refuse('error.common.noSuchMediaItem'), 404);
     }
 
     if (outcome.kind === 'unsupported') {
-      return context.json({ error: outcome.reason }, 422);
+      return context.json(refuseWith(outcome.reason), 422);
     }
 
     if (outcome.kind === 'failed') {
-      return context.json({ error: outcome.reason }, 500);
+      return context.json(refuseWith(outcome.reason), 500);
     }
 
     const openedBy = getCookie(context, SHARE_COOKIE);
@@ -125,13 +128,13 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     const { sessionId, name } = context.req.valid('param');
 
     if (!(await isTheSessionOfWhoeverIsAsking(context.req.raw.headers, sessionId))) {
-      return context.json({ error: 'That session belongs to somebody else.' }, 403);
+      return context.json(refuse('error.playback.thatSessionBelongsToSomebodyElse'), 403);
     }
 
     const file = await playback.readSessionFile(sessionId, name);
 
     if (file === null) {
-      return context.json({ error: 'No such session or segment.' }, 404);
+      return context.json(refuse('error.playback.noSuchSessionOrSegment'), 404);
     }
 
     return context.body(file.body, 200, forwardedFileHeaders(file, neverKeep()));
@@ -144,7 +147,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     const file = await playback.readDirectFile(mediaId, range);
 
     if (file === null) {
-      return context.json({ error: 'No such media item.' }, 404);
+      return context.json(refuse('error.common.noSuchMediaItem'), 404);
     }
 
     return context.body(file.body, file.status === 206 ? 206 : 200, forwardedFileHeaders(file));
@@ -157,12 +160,12 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
       const thumbnails = await playback.trickplay(mediaId);
 
       if (thumbnails === null) {
-        return context.json({ error: 'No such media item.' }, 404);
+        return context.json(refuse('error.common.noSuchMediaItem'), 404);
       }
 
       return context.json(thumbnails, 200);
     } catch {
-      return context.json({ error: 'The thumbnails could not be rendered.' }, 500);
+      return context.json(refuse('error.playback.theThumbnailsCouldNotBeRendered'), 500);
     }
   });
 
@@ -173,12 +176,12 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     const frame = await playback.readFrame(mediaId, seconds, width);
 
     if (frame === null) {
-      return context.json({ error: 'No frame there.' }, 404);
+      return context.json(refuse('error.common.noFrameThere'), 404);
     }
 
     return context.body(frame, 200, {
       'content-type': 'image/jpeg',
-      'cache-control': 'public, max-age=31536000, immutable',
+      'cache-control': say('server.playback.publicMaxAge31536000Immutable'),
     });
   });
 
@@ -192,7 +195,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     if (read.kind === 'absent') {
-      return context.json({ error: 'No preview yet.' }, 404);
+      return context.json(refuse('error.playback.noPreviewYet'), 404);
     }
 
     return context.body(
@@ -208,7 +211,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     const file = await playback.readTrickplayFile(trickplayId, name);
 
     if (file === null) {
-      return context.json({ error: 'No such thumbnails.' }, 404);
+      return context.json(refuse('error.playback.noSuchThumbnails'), 404);
     }
 
     return context.body(file.body, 200, { 'content-type': file.contentType });
@@ -219,7 +222,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     const { clientId } = context.req.valid('query');
 
     if (!(await isTheDeviceOfWhoeverIsAsking(context.req.raw.headers, clientId))) {
-      return context.json({ error: 'That is not your device.' }, 403);
+      return context.json(refuse('error.common.thatIsNotYourDevice'), 403);
     }
 
     const stopped = await playback.stop(sessionId, clientId);
@@ -241,7 +244,7 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     if (!stopped) {
-      return context.json({ error: 'No such session.' }, 404);
+      return context.json(refuse('error.playback.noSuchSession'), 404);
     }
 
     return context.body(null, 204);
@@ -253,13 +256,13 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
     const { isPlaying } = context.req.valid('json');
 
     if (!(await isTheDeviceOfWhoeverIsAsking(context.req.raw.headers, clientId))) {
-      return context.json({ error: 'That is not your device.' }, 403);
+      return context.json(refuse('error.common.thatIsNotYourDevice'), 403);
     }
 
     const known = await playback.heartbeat(sessionId, isPlaying);
 
     if (!known) {
-      return context.json({ error: 'No such session.' }, 404);
+      return context.json(refuse('error.playback.noSuchSession'), 404);
     }
 
     return context.body(null, 204);

@@ -7,6 +7,7 @@ import { handlePartyMessage, tellEveryone } from '@ValenceServer/parties/handleP
 import type { RealtimeRegistry } from './createRealtimeRegistry';
 import type { PartyBinding } from '@ValenceServer/parties/handlePartyMessage';
 import type { PresenceControlEvent } from '@ValenceServer/presence/PresenceService';
+import { say } from '@ValenceI18n/say';
 
 type RealtimeSocket = {
   send: (raw: string) => void;
@@ -81,7 +82,7 @@ const asPayload = (event: PresenceControl): JsonValue => {
   return { kind: event.kind, reason: event.reason };
 };
 
-const UNNAMED = 'Someone';
+const UNNAMED = say('server.realtime.realtimeHandler.someone');
 
 const readMessage = (raw: string) => {
   try {
@@ -234,7 +235,7 @@ const createRealtimeHandler = ({
           profileName: named,
           guestOf: who.guestOf ?? null,
           viaShare: who.viaShare ?? null,
-          deviceLabel: deviceLabel ?? 'Unknown device',
+          deviceLabel: deviceLabel ?? say('server.realtime.realtimeHandler.unknownDevice'),
           clientKind: clientKind ?? null,
           address: who.address ?? null,
           send: (event) => {

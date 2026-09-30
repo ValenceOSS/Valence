@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { docsFor } from '@ValenceCore/functions/docsFor';
 import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import { useQuery } from '@tanstack/react-query';
@@ -53,7 +54,7 @@ const RequestHistoryTab = ({ request }: RequestHistoryTabProps) => {
             {WHEN.format(new Date(line.at))}
           </time>
           <span className="flex min-w-0 flex-col items-start gap-0.5">
-            <span className="break-words text-text">{line.message}</span>
+            <span className="break-words text-text">{sayAgain(line.message)}</span>
             <HowToFix href={docsFor(line.problemCode)} />
           </span>
         </li>

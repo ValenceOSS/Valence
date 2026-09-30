@@ -223,8 +223,8 @@ describe('createTransmissionAdapter', () => {
       ['g', 'failed'],
       ['h', 'downloading'],
     ]);
-    expect(listed[6]?.problem).toBe('No data found!');
-    expect(listed[7]?.problem).toBe('Tracker gone');
+    expect(listed[6]?.problem).toEqual('No data found!');
+    expect(listed[7]?.problem).toEqual('Tracker gone');
   });
 
   it('reads a magnet still fetching its metadata as that, with no size yet', async () => {

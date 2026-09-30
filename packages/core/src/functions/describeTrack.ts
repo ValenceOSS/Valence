@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 const LANGUAGE_CODES: Record<string, string> = {
   english: 'en',
   eng: 'en',
@@ -85,6 +86,7 @@ const LANGUAGE_CODES: Record<string, string> = {
   vi: 'vi',
 };
 
+/* eslint-disable valence/no-hard-coded-strings -- each language named in its own language, the way a track menu shows it */
 const LANGUAGE_NAMES: Record<string, string> = {
   en: 'English',
   fr: 'Français',
@@ -113,14 +115,15 @@ const LANGUAGE_NAMES: Record<string, string> = {
   uk: 'Українська',
   vi: 'Tiếng Việt',
 };
+/* eslint-enable valence/no-hard-coded-strings */
 
 const UNKNOWN_LANGUAGES = new Set(['', 'und', 'unknown', 'zxx', 'mul', 'mis']);
 
 const CHANNEL_NAMES: Record<number, string> = {
-  1: 'Mono',
-  2: 'Stereo',
+  1: say('core.track.mono'),
+  2: say('core.track.stereo'),
   3: '2.1',
-  4: 'Quad',
+  4: say('core.track.quad'),
   6: '5.1',
   7: '6.1',
   8: '7.1',
@@ -205,13 +208,14 @@ const describeAudioTrack = (track: AudioTrackFacts, position: number): string =>
 
   const named =
     title === ''
-      ? (language ?? `Track ${position.toString()}`)
+      ? (language ?? say('core.track.numbered', { number: position }))
       : language === null || saysLanguage
         ? title
         : `${language} · ${title}`;
 
   const qualities = [
     describeChannels(track.channels),
+    // eslint-disable-next-line valence/no-hard-coded-strings -- a sound format's own name
     track.isAtmos === true ? 'Atmos' : track.codec.toUpperCase(),
   ];
 

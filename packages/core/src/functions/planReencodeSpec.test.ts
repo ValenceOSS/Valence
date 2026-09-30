@@ -66,7 +66,7 @@ describe('planReencodeSpec', () => {
     const outcome = ask({ ...replacing, videoCodec: 'av1' });
 
     expect(outcome.kind).toBe('unsupported');
-    expect(outcome.kind === 'unsupported' ? outcome.reason : '').toContain('av1');
+    expect(outcome.kind === 'unsupported' ? outcome.reason.message : '').toContain('av1');
   });
 
   it('carries every track, with a decision each', () => {
@@ -109,7 +109,7 @@ describe('planReencodeSpec', () => {
     );
 
     expect(outcome.kind).toBe('unsupported');
-    expect(outcome.kind === 'unsupported' ? outcome.reason : '').toContain('eac3');
+    expect(outcome.kind === 'unsupported' ? outcome.reason.message : '').toContain('eac3');
   });
 
   it('asks for keyframes at playback spacing, so the result can be segmented by copying', () => {

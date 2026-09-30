@@ -1,4 +1,5 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
   CreateFolderRequestSchema,
   FolderListingSchema,
@@ -6,7 +7,7 @@ import {
   FolderSearchSchema,
 } from '@ValenceContracts/schemas/Folder';
 
-const FolderError = z.object({ error: z.string() }).openapi('FolderError');
+const FolderError = RefusalSchema.openapi('FolderError');
 
 const listFoldersRoute = createRoute({
   method: 'get',

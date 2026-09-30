@@ -1,11 +1,13 @@
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 
-const DeviceError = z.object({ error: z.string() }).openapi('DeviceError');
+const DeviceError = RefusalSchema.openapi('DeviceError');
 
 const DeviceSchema = z
   .object({
     id: z.string(),
-    name: z.string(),
+    name: SaidSchema,
     address: z.string().nullable(),
     signedInAt: z.string(),
     expiresAt: z.string(),

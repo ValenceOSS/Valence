@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchInstalledPlugins } from './fetchInstalledPlugins';
 import { fetchPluginCatalogue } from './fetchPluginCatalogue';
@@ -36,11 +37,11 @@ describe('plugin reads', () => {
   });
 
   it('reads the catalogue, reachable or not', async () => {
-    answer({ isReachable: false, problem: 'Offline', plugins: [] });
+    answer({ isReachable: false, problem: sayVerbatim('Offline'), plugins: [] });
 
     await expect(fetchPluginCatalogue()).resolves.toEqual({
       isReachable: false,
-      problem: 'Offline',
+      problem: sayVerbatim('Offline'),
       plugins: [],
     });
   });

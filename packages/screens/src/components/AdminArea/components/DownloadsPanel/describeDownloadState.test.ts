@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { describeDownloadState } from './describeDownloadState';
 import type { QueuedDownload } from '@ValenceContracts/schemas/DownloadQueue';
@@ -49,7 +50,7 @@ describe('describeDownloadState', () => {
       describeDownloadState({
         ...A_DOWNLOAD,
         state: 'stalled',
-        problem: 'Tracker gone',
+        problem: sayVerbatim('Tracker gone'),
         problemCode: null,
       }).detail,
     ).toBe('Tracker gone');
@@ -80,7 +81,7 @@ describe('describeDownloadState', () => {
       describeDownloadState({
         ...A_DOWNLOAD,
         state: 'failed',
-        problem: 'Out of retention',
+        problem: sayVerbatim('Out of retention'),
         problemCode: null,
       }),
     ).toEqual({
@@ -108,7 +109,7 @@ describe('describeDownloadState', () => {
       describeDownloadState({
         ...A_DOWNLOAD,
         state: 'done',
-        filingProblem: 'qBittorrent has not said where it put the download',
+        filingProblem: sayVerbatim('qBittorrent has not said where it put the download'),
         filingProblemCode: null,
       }),
     ).toEqual({
@@ -121,7 +122,7 @@ describe('describeDownloadState', () => {
       describeDownloadState({
         ...A_DOWNLOAD,
         state: 'done',
-        filingProblem: 'The requests service may not write to /media/Films.',
+        filingProblem: sayVerbatim('The requests service may not write to /media/Films.'),
         filingProblemCode: 'MayNotWriteToLibrary',
       }).help,
     ).toBe('https://docs.getvalence.app/install/requesting#it-may-not-write-to-a-folder');

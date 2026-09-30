@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { whichToTest } from './whichToTest';
 import type { Indexer } from '@ValenceContracts/schemas/Indexer';
@@ -40,7 +41,7 @@ describe('whichToTest', () => {
     const turnedOff = anIndexer({
       id: 'turned-off',
       isEnabled: false,
-      turnedOffBecause: 'Turned off after 5 failures in a row: Timed out',
+      turnedOffBecause: sayVerbatim('Turned off after 5 failures in a row: Timed out'),
     });
     const switchedOff = anIndexer({ id: 'switched-off', isEnabled: false });
 

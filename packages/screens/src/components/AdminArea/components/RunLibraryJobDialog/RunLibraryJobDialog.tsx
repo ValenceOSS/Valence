@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { useState } from 'react';
 import { Dialog } from '@ValenceUI/Dialog';
 import { DialogContent } from '@ValenceUI/DialogContent';
@@ -37,18 +38,20 @@ const RunLibraryJobDialog = ({
 
   return (
     <Dialog
-      label={definition === null ? 'Run this job' : `Run ${definition.label}`}
+      label={definition === null ? 'Run this job' : `Run ${sayAgain(definition.label)}`}
       isOpen={definition !== null}
       onClose={onClose}
     >
       {definition === null ? null : (
         <>
           <DialogTitle
-            title={definition.destructive ? `${definition.label}?` : definition.label}
+            title={
+              definition.destructive ? `${sayAgain(definition.label)}?` : sayAgain(definition.label)
+            }
             detail={
               definition.destructive
-                ? `${definition.description} This cannot be undone.`
-                : definition.description
+                ? `${sayAgain(definition.description)} This cannot be undone.`
+                : sayAgain(definition.description)
             }
           />
 
@@ -61,8 +64,8 @@ const RunLibraryJobDialog = ({
             confirm={{
               label:
                 picked.length === libraries.length
-                  ? `${definition.destructive ? definition.label : 'Run'} on every library`
-                  : `${definition.destructive ? definition.label : 'Run'} on ${picked.length.toString()} ${picked.length === 1 ? 'library' : 'libraries'}`,
+                  ? `${definition.destructive ? sayAgain(definition.label) : 'Run'} on every library`
+                  : `${definition.destructive ? sayAgain(definition.label) : 'Run'} on ${picked.length.toString()} ${picked.length === 1 ? 'library' : 'libraries'}`,
               onChoose: () => {
                 onRun(definition.kind, picked);
               },

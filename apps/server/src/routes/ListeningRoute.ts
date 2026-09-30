@@ -1,11 +1,12 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
   BookListeningListSchema,
   ListeningProgressAnswerSchema,
   SaveListeningProgressSchema,
 } from '@ValenceContracts/schemas/Book';
 
-const ListeningError = z.object({ error: z.string() }).openapi('ListeningError');
+const ListeningError = RefusalSchema.openapi('ListeningError');
 
 const json = <Schema extends z.ZodType>(description: string, schema: Schema) => ({
   description,

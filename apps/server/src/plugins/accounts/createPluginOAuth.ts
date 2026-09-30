@@ -1,8 +1,10 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { createHash, randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import type { AccountProvider } from '@ValenceSDK/manifest/AccountProviderSchema';
 import type { AccountTokens } from '@ValenceServer/plugins/broker/createPluginBroker';
 import type { ConnectionRecord, PluginStore } from '@ValenceServer/plugins/store/PluginStore';
+import { saying } from '@ValenceI18n/saying';
 
 type Exchange = (
   pluginId: string,
@@ -35,7 +37,7 @@ type Pending = {
 
 type Finished =
   | { ok: true; pluginId: string; profileId: string; provider: string; returnTo: string | null }
-  | { ok: false; problem: string; returnTo: string | null };
+  | { ok: false; problem: Said; returnTo: string | null };
 
 const TokenAnswerSchema = z.object({
   access_token: z.string().min(1).max(8000),
@@ -157,7 +159,11 @@ const createPluginOAuth = ({
       const started = pending.get(answer.state);
 
       if (started === undefined) {
-        return { ok: false, problem: 'That connection had expired. Try again.', returnTo: null };
+        return {
+          ok: false,
+          problem: saying('server.accounts.pluginOAuth.thatConnectionHadExpiredTryAgain'),
+          returnTo: null,
+        };
       }
 
       pending.delete(answer.state);
@@ -165,7 +171,7 @@ const createPluginOAuth = ({
       if (started.browser !== answer.browser) {
         return {
           ok: false,
-          problem: 'That connection was started somewhere else.',
+          problem: saying('server.accounts.pluginOAuth.thatConnectionWasStartedSomewhereElse'),
           returnTo: started.returnTo,
         };
       }
@@ -180,7 +186,9 @@ const createPluginOAuth = ({
       if (tokens === null) {
         return {
           ok: false,
-          problem: `${started.provider.name} did not accept the connection.`,
+          problem: saying('server.accounts.pluginOAuth.nameDidNotAcceptTheConnection', {
+            name: started.provider.name,
+          }),
           returnTo: started.returnTo,
         };
       }

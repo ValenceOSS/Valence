@@ -1,3 +1,5 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { previewRequestFor } from '@ValenceServer/library/previewRequestFor';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
 import type { PreviewMoment } from '@ValenceContracts/schemas/Library';
@@ -32,7 +34,7 @@ type SweepArtefactCacheOptions = {
     sweepPreviews: (keep: PreviewSweepSubject[]) => Promise<SweepReport>;
     sweepTrickplay: (keep: TrickplayRequest[]) => Promise<SweepReport>;
   };
-  onProblem?: (what: string, reason: string) => void;
+  onProblem?: (what: string, reason: Said) => void;
 };
 
 const nothing: SweepReport = { removed: 0, freedBytes: 0, kept: 0, tooNew: 0 };
@@ -76,7 +78,7 @@ const sweepArtefactCache = async ({
       ),
     )
     .catch((error: Error) => {
-      onProblem?.('previews', error.message);
+      onProblem?.('previews', sayVerbatim(error.message));
 
       return nothing;
     });
@@ -90,7 +92,7 @@ const sweepArtefactCache = async ({
       })),
     )
     .catch((error: Error) => {
-      onProblem?.('trickplay', describeFailure(error));
+      onProblem?.('trickplay', sayVerbatim(describeFailure(error)));
 
       return nothing;
     });

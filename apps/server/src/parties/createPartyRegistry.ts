@@ -1,3 +1,5 @@
+import { saying } from '@ValenceI18n/saying';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { partyAllows, powersOf, whoKeepsTime } from '@ValenceContracts/schemas/WatchParty';
 import { whoIsHoldingUp } from '@ValenceCore/functions/whoIsHoldingUp';
 import type {
@@ -25,8 +27,7 @@ type Joined =
   | { kind: 'unknown' };
 
 type Issued =
-  | { kind: 'sent'; party: WatchParty; command?: SequencedCommand }
-  | { kind: 'refused'; why: string };
+  { kind: 'sent'; party: WatchParty; command?: SequencedCommand } | { kind: 'refused'; why: Said };
 
 type PartyRegistry = {
   open: (options: {
@@ -65,11 +66,11 @@ type PartyRegistry = {
   count: () => number;
 };
 
-type Asking = { kind: 'may'; party: WatchParty; byName: string } | { kind: 'refused'; why: string };
+type Asking = { kind: 'may'; party: WatchParty; byName: string } | { kind: 'refused'; why: Said };
 
 type Removed =
   | { kind: 'removed'; party: WatchParty | null; connectionId: string; byName: string }
-  | { kind: 'refused'; why: string };
+  | { kind: 'refused'; why: Said };
 
 type Held = {
   party: WatchParty;
@@ -82,13 +83,13 @@ type Held = {
 
 const WAIT_MOST_MS = 20_000;
 
-const REFUSED_UNKNOWN = 'That party is not running.';
+const REFUSED_UNKNOWN = saying('common.thatPartyIsNotRunning');
 
-const REFUSED_NOT_IN = 'You are not in that party.';
+const REFUSED_NOT_IN = saying('server.parties.partyRegistry.youAreNotInThatParty');
 
-const REFUSED_NOT_ALLOWED = 'The host has not given you that.';
+const REFUSED_NOT_ALLOWED = saying('server.parties.partyRegistry.theHostHasNotGivenYou');
 
-const REFUSED_ONESELF = 'You cannot remove yourself from a party you can simply leave.';
+const REFUSED_ONESELF = saying('server.parties.partyRegistry.youCannotRemoveYourselfFromA');
 
 /**
  * Every watch party running, who is in each, and what each of them may do.

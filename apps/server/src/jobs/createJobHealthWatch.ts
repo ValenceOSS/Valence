@@ -1,10 +1,12 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import type { FinishedJob } from './createJobQueue';
 
 type JobStall = {
   kind: string;
   failures: number;
   everSucceeded: boolean;
-  reason: string;
+  reason: Said;
 };
 
 type CreateJobHealthWatchOptions = {
@@ -39,18 +41,28 @@ const createJobHealthWatch = ({
 }: CreateJobHealthWatchOptions) => {
   const health = new Map<
     string,
-    { failures: number; everSucceeded: boolean; stalled: boolean; reason: string }
+    { failures: number; everSucceeded: boolean; stalled: boolean; reason: Said }
   >();
 
   const healthOf = (kind: string) =>
-    health.get(kind) ?? { failures: 0, everSucceeded: false, stalled: false, reason: '' };
+    health.get(kind) ?? {
+      failures: 0,
+      everSucceeded: false,
+      stalled: false,
+      reason: sayVerbatim(''),
+    };
 
   return {
     record: ({ kind, reason }: FinishedJob): void => {
       const current = healthOf(kind);
 
       if (reason === null) {
-        health.set(kind, { failures: 0, everSucceeded: true, stalled: false, reason: '' });
+        health.set(kind, {
+          failures: 0,
+          everSucceeded: true,
+          stalled: false,
+          reason: sayVerbatim(''),
+        });
 
         if (current.stalled) {
           onWorking(kind);

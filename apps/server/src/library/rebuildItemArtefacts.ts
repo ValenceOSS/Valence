@@ -1,3 +1,5 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { previewRequestFor } from './previewRequestFor';
 import type { PreviewMoment } from '@ValenceContracts/schemas/Library';
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
@@ -30,7 +32,7 @@ type RebuildItemArtefactsOptions = {
     forgetPreview: (request: PreviewSweepSubject) => Promise<boolean>;
     forgetTrickplay: (request: TrickplayRequest) => Promise<boolean>;
   };
-  onProblem?: (what: string, reason: string) => void;
+  onProblem?: (what: string, reason: Said) => void;
 };
 
 type Rebuilt = {
@@ -57,7 +59,7 @@ const rebuildItemArtefacts = async ({
   const preview = await transcoder
     .forgetPreview(previewRequestFor(item, item.generation, item.defaultAudioLanguage, quality))
     .catch((error: Error) => {
-      onProblem?.('preview', error.message);
+      onProblem?.('preview', sayVerbatim(error.message));
 
       return false;
     });
@@ -65,7 +67,7 @@ const rebuildItemArtefacts = async ({
   const sheets = await transcoder
     .forgetTrickplay({ inputPath: item.path, generation: item.generation, ...trickplay })
     .catch((error: Error) => {
-      onProblem?.('trickplay', error.message);
+      onProblem?.('trickplay', sayVerbatim(error.message));
 
       return false;
     });

@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -61,7 +62,7 @@ describe('InstalledPluginCard', () => {
           plugin={aPlugin({
             trust: 'unsigned',
             state: 'failed',
-            problem: 'It ran out of memory.',
+            problem: sayVerbatim('It ran out of memory.'),
             settings: [],
             iconUrl: 'https://evil.example/x.png',
           })}

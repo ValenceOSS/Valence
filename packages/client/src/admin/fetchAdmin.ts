@@ -1,3 +1,4 @@
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { RoundnessSchema } from '@ValenceContracts/schemas/Roundness';
 import type { Roundness } from '@ValenceContracts/schemas/Roundness';
 import { ReleaseTypesSchema } from '@ValenceContracts/schemas/MediaRequest';
@@ -95,10 +96,10 @@ const AdminOverviewSchema = z.object({
         .array(
           z.object({
             kind: z.string(),
-            label: z.string(),
+            label: SaidSchema,
             failures: z.number(),
             everSucceeded: z.boolean(),
-            reason: z.string(),
+            reason: SaidSchema,
           }),
         )
         .default([]),
@@ -241,9 +242,9 @@ const ActiveSessionSchema = z.object({
 
 const JobDefinitionSchema = z.object({
   kind: z.string(),
-  label: z.string(),
+  label: SaidSchema,
   group: JobGroupSchema,
-  description: z.string(),
+  description: SaidSchema,
   needsLibrary: z.boolean(),
   destructive: z.boolean(),
   takesParts: z.boolean(),
@@ -305,7 +306,7 @@ const RunningScansSchema = z.object({
       jobId: z.string(),
       kind: z.string(),
       libraryId: z.string().nullable(),
-      phase: z.string().nullable(),
+      phase: SaidSchema.nullable(),
       processed: z.number().nullable(),
       total: z.number().nullable(),
       item: z.string().nullable().default(null),

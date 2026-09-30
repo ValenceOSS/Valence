@@ -30,7 +30,7 @@ describe('changeSettings', () => {
     );
 
     if ('problem' in changed) {
-      throw new Error(changed.problem);
+      throw new Error(changed.problem.message);
     }
 
     expect(changed.settings['username']).toBe('ada');
@@ -53,6 +53,6 @@ describe('changeSettings', () => {
   ])('refuses %o', (changes, problem) => {
     const answer = changeSettings(MANIFEST, {}, changes, KEY);
 
-    expect('problem' in answer ? answer.problem : '').toContain(problem);
+    expect('problem' in answer ? answer.problem.message : '').toContain(problem);
   });
 });

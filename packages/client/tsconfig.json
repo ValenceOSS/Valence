@@ -13,6 +13,9 @@
       "path": "../plugin-sdk"
     },
     {
+      "path": "../i18n"
+    },
+    {
       "path": "../contracts"
     },
     {

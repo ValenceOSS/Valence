@@ -2,10 +2,11 @@ import type {
   CardigannDefinition,
   CardigannSetting,
 } from '@ValenceRequests/cardigann/CardigannDefinitionSchema';
+import { say } from '@ValenceI18n/say';
 
 const SIGN_IN: readonly CardigannSetting[] = [
-  { name: 'username', type: 'text', label: 'Username' },
-  { name: 'password', type: 'password', label: 'Password' },
+  { name: 'username', type: 'text', label: say('common.username') },
+  { name: 'password', type: 'password', label: say('common.password') },
 ];
 
 /**

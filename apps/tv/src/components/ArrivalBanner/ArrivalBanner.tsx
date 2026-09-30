@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { useCallback, useEffect, useState } from 'react';
 import { Animated, StyleSheet, Text, useTVEventHandler, View } from 'react-native';
 import { Play } from '@keyline-icons/react-native/fill';
@@ -75,7 +76,7 @@ const ArrivalBanner = ({ arrival, picture, onWatch, onDismiss }: ArrivalBannerPr
 
       <View style={styles.words}>
         <Text numberOfLines={1} style={styles.title}>
-          {arrival.title}
+          {sayAgain(arrival.title)}
         </Text>
 
         <View style={styles.hint}>

@@ -1,3 +1,5 @@
+import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Pause as PauseFilledIcon, Play as PlayFilledIcon } from '@keyline-icons/react/fill';
@@ -127,13 +129,17 @@ const ObservabilityPage = ({
   return (
     <div className="flex flex-col gap-4">
       <DialogCompanion
-        label={viewing?.label ?? 'Schedule'}
+        label={sayAgainIfAny(viewing?.label) ?? 'Schedule'}
         isOpen={viewing !== null}
         onClose={onCloseSchedule}
       >
         {viewing === null ? null : (
           <>
-            <DialogTitle size="compact" title={viewing.label} detail={viewing.description} />
+            <DialogTitle
+              size="compact"
+              title={sayAgain(viewing.label)}
+              detail={sayAgain(viewing.description)}
+            />
 
             <DialogContent>
               <JobSchedulePage

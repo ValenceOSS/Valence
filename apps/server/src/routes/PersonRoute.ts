@@ -1,9 +1,10 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { PersonSchema, PersonCreditsSchema } from '@ValenceContracts/schemas/Person';
 
 const Person = PersonSchema.openapi('Person');
 const PersonCredits = PersonCreditsSchema.openapi('PersonCredits');
-const PersonError = z.object({ error: z.string() }).openapi('PersonError');
+const PersonError = RefusalSchema.openapi('PersonError');
 
 const readPersonRoute = createRoute({
   method: 'get',

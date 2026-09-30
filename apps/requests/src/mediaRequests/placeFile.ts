@@ -1,6 +1,7 @@
 import { copyFile, link, mkdir, rename, stat, unlink } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { NotAllowedThere } from '@ValenceRequests/mediaRequests/NotAllowedThere';
+import { say } from '@ValenceI18n/say';
 
 type FileSystem = {
   copyFile: typeof copyFile;
@@ -30,8 +31,11 @@ const isErrorOf = (error: Error, codes: readonly string[]): boolean =>
  */
 const runningAs = (): string =>
   process.getuid === undefined || process.getgid === undefined
-    ? 'this user'
-    : `user ${process.getuid().toString()} and group ${process.getgid().toString()}`;
+    ? say('requests.mediaRequests.placeFile.thisUser')
+    : say('requests.mediaRequests.placeFile.userAndGroup', {
+        user: process.getuid().toString(),
+        group: process.getgid().toString(),
+      });
 
 /**
  * Links, copies or moves a file into place, as {@link placeFile} describes.

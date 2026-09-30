@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { say } from '@ValenceI18n/say';
 
 const AUDIO_QUALITIES = ['lossless', 'high', 'normal', 'low'] as const;
 
@@ -12,14 +13,14 @@ const AUDIO_QUALITY_KBPS = { high: 320, normal: 160, low: 96 } as const satisfie
 >;
 
 const AUDIO_QUALITY_LABELS: Record<AudioQuality, string> = {
-  lossless: 'Lossless',
-  high: 'High',
-  normal: 'Normal',
-  low: 'Data saver',
+  lossless: say('common.lossless'),
+  high: say('common.high'),
+  normal: say('common.normal'),
+  low: say('contracts.schemas.music.dataSaver'),
 };
 
 const AUDIO_QUALITY_DETAILS: Record<AudioQuality, string> = {
-  lossless: 'The file as it is on the server',
+  lossless: say('contracts.schemas.music.theFileAsItIsOn'),
   high: '320 kbps',
   normal: '160 kbps',
   low: '96 kbps',

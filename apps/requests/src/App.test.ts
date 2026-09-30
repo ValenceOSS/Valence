@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
 import {
@@ -73,7 +74,7 @@ const DETAIL = {
  */
 const fetchRelease = (url: string) => {
   if (url === 'gone') {
-    return Promise.reject(new IndexerFailure('The site answered 410'));
+    return Promise.reject(new IndexerFailure(sayVerbatim('The site answered 410')));
   }
 
   if (url === 'broken') {
@@ -299,7 +300,7 @@ describe('createApp', () => {
       const refused = await search('7c9e6679-7425-40de-944b-e07fc1f90ae7');
 
       expect(refused.status).toBe(400);
-      expect(await refused.json()).toEqual({ error: 'No such profile.' });
+      expect(await refused.json()).toMatchObject({ error: 'No such profile.' });
     });
 
     it('refuses a search that is not one', async () => {
@@ -338,7 +339,7 @@ describe('createApp', () => {
       });
 
       expect(response.status).toBe(400);
-      expect(await response.json()).toEqual({
+      expect(await response.json()).toMatchObject({
         error: 'There is no definition named nope in the catalogue',
       });
     });

@@ -1,5 +1,6 @@
 import { DownloadClientFailure } from '@ValenceRequests/downloads/DownloadClientFailure';
 import type { ClientFetch } from '@ValenceRequests/downloads/DownloadClientAdapter';
+import { saying } from '@ValenceI18n/saying';
 
 type ClientCall = {
   method?: string;
@@ -35,8 +36,11 @@ const createClientCaller =
     } catch (error) {
       throw new DownloadClientFailure(
         error instanceof Error && error.name === 'TimeoutError'
-          ? `${name} did not answer within ${waitSeconds.toString()} seconds`
-          : `${name} could not be reached`,
+          ? saying('requests.downloads.clientCaller.nameDidNotAnswerWithinWaitSeconds', {
+              name,
+              waitSeconds: waitSeconds.toString(),
+            })
+          : saying('requests.downloads.clientCaller.nameCouldNotBeReached', { name }),
         'DownloadClientUnreachable',
       );
     }

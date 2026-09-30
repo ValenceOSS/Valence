@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -132,7 +133,7 @@ describe('EncodingPanel', () => {
     render(
       <EncodingPanel
         {...props}
-        reencodes={[at('a', 'failed', { failure: 'The file would not decode' })]}
+        reencodes={[at('a', 'failed', { failure: sayVerbatim('The file would not decode') })]}
       />,
     );
 

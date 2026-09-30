@@ -2,6 +2,7 @@ import { WebhookPayloadSchema } from '@ValenceContracts/schemas/Webhook';
 import { deliverWebhook } from './deliverWebhook';
 import type { WebhookFetcher } from './deliverWebhook';
 import type { WebhookStore } from './WebhookStore';
+import { say } from '@ValenceI18n/say';
 
 type RunWebhookDeliveryOptions = {
   subscriptions: WebhookStore;
@@ -36,7 +37,7 @@ const runWebhookDelivery = async ({
     await subscriptions.recordAttempt(subscriptionId, {
       ok: false,
       status: null,
-      error: 'The queued event could not be read.',
+      error: say('server.webhooks.theQueuedEventCouldNotBe'),
     });
 
     return true;

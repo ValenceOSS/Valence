@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { screen, waitFor, within } from '@testing-library/react';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import userEvent from '@testing-library/user-event';
@@ -209,7 +210,10 @@ type FakeSession = {
   } | null;
 };
 
-const planReason: Reason = { code: 'ClientSupportsSource', detail: 'Client declares support' };
+const planReason: Reason = {
+  code: 'ClientSupportsSource',
+  detail: sayVerbatim('Client declares support'),
+};
 
 const FAKE_PLAN: PlaybackPlan = {
   mediaId: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
@@ -222,8 +226,8 @@ const FAKE_PLAN: PlaybackPlan = {
 const JOB_DEFINITIONS = [
   {
     kind: 'library.scan',
-    label: 'Scan for changes',
-    description: 'Finds new, changed and removed files.',
+    label: sayVerbatim('Scan for changes'),
+    description: sayVerbatim('Finds new, changed and removed files.'),
     needsLibrary: true,
     destructive: false,
     takesParts: false,
@@ -233,8 +237,8 @@ const JOB_DEFINITIONS = [
   },
   {
     kind: 'library.regeneratePreviews',
-    label: 'Regenerate previews',
-    description: "Rebuilds preview clips using the library's forced audio language.",
+    label: sayVerbatim('Regenerate previews'),
+    description: sayVerbatim("Rebuilds preview clips using the library's forced audio language."),
     needsLibrary: true,
     destructive: false,
     takesParts: false,
@@ -244,8 +248,8 @@ const JOB_DEFINITIONS = [
   },
   {
     kind: 'library.regenerateTrickplay',
-    label: 'Regenerate thumbnails',
-    description: 'Rebuilds scrubbing thumbnail sheets for every item.',
+    label: sayVerbatim('Regenerate thumbnails'),
+    description: sayVerbatim('Rebuilds scrubbing thumbnail sheets for every item.'),
     needsLibrary: true,
     destructive: false,
     takesParts: false,
@@ -255,8 +259,8 @@ const JOB_DEFINITIONS = [
   },
   {
     kind: 'library.detectSegments',
-    label: 'Detect intros and outros',
-    description: 'Finds skippable segments using chapters and audio fingerprints.',
+    label: sayVerbatim('Detect intros and outros'),
+    description: sayVerbatim('Finds skippable segments using chapters and audio fingerprints.'),
     needsLibrary: true,
     destructive: false,
     takesParts: false,
@@ -266,8 +270,8 @@ const JOB_DEFINITIONS = [
   },
   {
     kind: 'library.reset',
-    label: 'Reset and rebuild',
-    description: 'Deletes everything in the library, then scans it from nothing.',
+    label: sayVerbatim('Reset and rebuild'),
+    description: sayVerbatim('Deletes everything in the library, then scans it from nothing.'),
     needsLibrary: true,
     destructive: true,
     takesParts: false,
@@ -338,7 +342,7 @@ const respondWith =
           Promise.resolve({
             jobId: 'scan-job',
             state: 'completed',
-            phase: 'previews',
+            phase: sayVerbatim('previews'),
             processed: 1,
             total: 1,
           }),
@@ -651,7 +655,7 @@ describe('AdminArea', () => {
           publicAddress: null,
           country: null,
           checkedAt: '2026-09-19T12:00:00.000Z',
-          problem: 'The tunnel is stopped',
+          problem: sayVerbatim('The tunnel is stopped'),
         },
         indexers: { total: 0, enabled: 0, failing: [] },
       },
@@ -744,7 +748,7 @@ describe('AdminArea', () => {
                     startedAtMs: 0,
                     finishedAtMs: 900,
                     progress: null,
-                    errorMessage: 'no such encoder',
+                    errorMessage: sayVerbatim('no such encoder'),
                     createdAtMs: 0,
                   },
                 ],
@@ -781,7 +785,7 @@ describe('AdminArea', () => {
                     startedAtMs: 0,
                     finishedAtMs: 900,
                     progress: null,
-                    errorMessage: 'no such encoder',
+                    errorMessage: sayVerbatim('no such encoder'),
                     createdAtMs: 0,
                   },
                 ],
@@ -1262,11 +1266,17 @@ describe('AdminArea', () => {
           json: () =>
             Promise.resolve(
               readings === 1
-                ? { jobId: 'scan-job', state: 'running', phase: 'probing', processed: 3, total: 10 }
+                ? {
+                    jobId: 'scan-job',
+                    state: 'running',
+                    phase: sayVerbatim('probing'),
+                    processed: 3,
+                    total: 10,
+                  }
                 : {
                     jobId: 'scan-job',
                     state: 'completed',
-                    phase: 'previews',
+                    phase: sayVerbatim('previews'),
                     processed: 10,
                     total: 10,
                   },
@@ -1313,13 +1323,25 @@ describe('AdminArea', () => {
 
         const reading =
           readings === 1
-            ? { jobId: 'scan-job', state: 'running', phase: 'probing', processed: 1, total: 1 }
+            ? {
+                jobId: 'scan-job',
+                state: 'running',
+                phase: sayVerbatim('probing'),
+                processed: 1,
+                total: 1,
+              }
             : readings === 2
-              ? { jobId: 'scan-job', state: 'running', phase: 'previews', processed: 0, total: 1 }
+              ? {
+                  jobId: 'scan-job',
+                  state: 'running',
+                  phase: sayVerbatim('previews'),
+                  processed: 0,
+                  total: 1,
+                }
               : {
                   jobId: 'scan-job',
                   state: 'completed',
-                  phase: 'previews',
+                  phase: sayVerbatim('previews'),
                   processed: 1,
                   total: 1,
                 };

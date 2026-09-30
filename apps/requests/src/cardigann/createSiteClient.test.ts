@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import iconv from 'iconv-lite';
 import { describe, expect, it, vi } from 'vitest';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
@@ -345,7 +346,9 @@ describe('createSiteClient', () => {
       await client.send(aGet('https://x.example/s'), { ...OPTIONS, session: aSession() });
 
       solver.fetch.mockRejectedValueOnce(
-        new IndexerFailure('The site’s browser check would not let the request through'),
+        new IndexerFailure(
+          sayVerbatim('The site’s browser check would not let the request through'),
+        ),
       );
 
       await expect(

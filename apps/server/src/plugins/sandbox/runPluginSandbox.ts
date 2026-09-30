@@ -1,7 +1,7 @@
 import { getQuickJS } from 'quickjs-emscripten';
 import type { QuickJSContext, QuickJSDeferredPromise, QuickJSHandle } from 'quickjs-emscripten';
 import { ToSandboxSchema } from './SandboxProtocol.ts';
-import type { FromSandbox, ToSandbox } from './SandboxProtocol.ts';
+import type { FromSandbox, SandboxWords, ToSandbox } from './SandboxProtocol.ts';
 
 type SandboxChannel = {
   send: (message: FromSandbox) => void;
@@ -14,6 +14,7 @@ type Loaded = {
   invoke: QuickJSHandle;
 };
 
+// eslint-disable-next-line valence/no-hard-coded-strings -- code that runs inside the sandbox
 const PRELUDE = `
 (() => {
   const host = globalThis.__valenceHost;
@@ -100,20 +101,20 @@ const PRELUDE = `
 const MOST_ERROR_CHARACTERS = 500;
 
 /**
- * Reads what went wrong inside the sandbox as a sentence, from the error's own name and message,
- * without trusting it to be an error at all.
+ * Reads what went wrong inside the sandbox, from the error's own name and message, without trusting
+ * it to be an error at all.
  *
  * @param vm - The sandbox.
  * @param handle - What was thrown.
- * @returns The sentence, cut short where a plugin wrote an essay.
+ * @returns What it said, cut short where a plugin wrote an essay, or that it said nothing.
  */
-const sayWhatWasThrown = (vm: QuickJSContext, handle: QuickJSHandle): string => {
+const sayWhatWasThrown = (vm: QuickJSContext, handle: QuickJSHandle): SandboxWords => {
   if (vm.typeof(handle) === 'string') {
-    return vm.getString(handle).slice(0, MOST_ERROR_CHARACTERS);
+    return { kind: 'thrown', text: vm.getString(handle).slice(0, MOST_ERROR_CHARACTERS) };
   }
 
   if (vm.typeof(handle) !== 'object') {
-    return 'The plugin failed.';
+    return { kind: 'failed' };
   }
 
   const read = (key: string): string => {
@@ -127,21 +128,20 @@ const sayWhatWasThrown = (vm: QuickJSContext, handle: QuickJSHandle): string => 
   const name = read('name');
   const message = read('message');
 
-  return (
-    (name === '' ? message : `${name}: ${message}`).slice(0, MOST_ERROR_CHARACTERS) ||
-    'The plugin failed.'
-  );
+  const text = (name === '' ? message : `${name}: ${message}`).slice(0, MOST_ERROR_CHARACTERS);
+
+  return text === '' ? { kind: 'failed' } : { kind: 'thrown', text };
 };
 
 /**
  * Whether a failure means the sandbox itself can no longer be trusted to carry on — a plugin that
  * ran out of time or memory — rather than an ordinary error its code threw.
  *
- * @param problem - The failure, as a sentence.
+ * @param problem - The failure.
  * @returns Whether to stop the sandbox.
  */
-const isFatal = (problem: string): boolean =>
-  /interrupted|out of memory|stack overflow/i.test(problem);
+const isFatal = (problem: SandboxWords): boolean =>
+  problem.kind === 'thrown' && /interrupted|out of memory|stack overflow/i.test(problem.text);
 
 /**
  * Runs one plugin inside QuickJS, compiled to WebAssembly, for the process it was started in. The
@@ -164,7 +164,7 @@ const runPluginSandbox = async (channel: SandboxChannel): Promise<void> => {
   let nextHostCall = 0;
   let cpuMilliseconds = 1000;
 
-  const stop = (reason: string): void => {
+  const stop = (reason: SandboxWords): void => {
     channel.send({ type: 'stopped', reason });
     channel.close(1);
   };
@@ -258,7 +258,7 @@ const runPluginSandbox = async (channel: SandboxChannel): Promise<void> => {
 
     if (!isDefined) {
       vm.dispose();
-      channel.send({ type: 'loadFailed', problem: 'The plugin never called definePlugin.' });
+      channel.send({ type: 'loadFailed', problem: { kind: 'neverDefined' } });
 
       return;
     }
@@ -273,7 +273,7 @@ const runPluginSandbox = async (channel: SandboxChannel): Promise<void> => {
         type: 'answer',
         id: message.id,
         ok: false,
-        error: 'The plugin is not loaded.',
+        error: { kind: 'notLoaded' },
       });
 
       return;
@@ -347,6 +347,7 @@ const runPluginSandbox = async (channel: SandboxChannel): Promise<void> => {
       deferred.resolve(value);
       value.dispose();
     } else {
+      // eslint-disable-next-line valence/no-hard-coded-strings -- thrown into the plugin's own code, for its author to read
       const error = vm.newError(message.error ?? 'Valence refused that.');
 
       deferred.reject(error);

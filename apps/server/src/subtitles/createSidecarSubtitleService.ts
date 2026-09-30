@@ -1,3 +1,5 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { readdir, readFile } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
 import { toWebVtt } from '@ValenceCore/functions/toWebVtt';
@@ -13,6 +15,7 @@ import {
 import { trackId } from './SubtitleService';
 import type { SubtitleService, SubtitleTrack } from './SubtitleService';
 import type { SidecarFile, SidecarSubtitle } from './findSidecarSubtitles';
+import { saying } from '@ValenceI18n/saying';
 
 const STYLED_FORMATS = new Set(['ass', 'ssa']);
 
@@ -22,7 +25,7 @@ type MediaPathLookup = {
 
 type CreateSidecarSubtitleServiceOptions = {
   media: MediaPathLookup;
-  onProblem?: (path: string, reason: string) => void;
+  onProblem?: (path: string, reason: Said) => void;
 };
 
 /**
@@ -113,7 +116,12 @@ const createSidecarSubtitleService = ({
 
       return { text: decoded.text };
     } catch (error) {
-      onProblem?.(track.path, error instanceof Error ? error.message : 'Unreadable.');
+      onProblem?.(
+        track.path,
+        error instanceof Error
+          ? sayVerbatim(error.message)
+          : saying('server.subtitles.sidecarSubtitleService.unreadable'),
+      );
 
       return null;
     }
@@ -166,7 +174,7 @@ const createSidecarSubtitleService = ({
       for (const picture of found.pictures) {
         onProblem?.(
           picture.path,
-          'A subtitle held as pictures rather than text, which cannot be shown yet.',
+          saying('server.subtitles.sidecarSubtitleService.aSubtitleHeldAsPicturesRather'),
         );
       }
 

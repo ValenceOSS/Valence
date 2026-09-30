@@ -1,3 +1,5 @@
+import { saidFrom } from '@ValenceI18n/saidFrom';
+import { refuseWith } from '@ValenceI18n/refuseWith';
 import { PACKAGE_LIMITS } from '@ValenceSDK/package/PACKAGE_LIMITS';
 import { readSessionOnce } from '@ValenceServer/auth/readSessionOnce';
 import { connectionPage } from '@ValenceServer/plugins/accounts/connectionPage';
@@ -29,14 +31,16 @@ import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { PluginViewer } from '@ValenceServer/plugins/service/PluginViewer';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import type { OpenAPIHono } from '@hono/zod-openapi';
+import { refuse } from '@ValenceI18n/refuse';
+import { say } from '@ValenceI18n/say';
 
-const NOT_SET_UP = { error: 'Plugins are not set up on this server.' } as const;
+const NOT_SET_UP = refuse('error.plugins.pluginsAreNotSetUpOn');
 
-const NOT_SIGNED_IN = { error: 'Sign in first.' } as const;
+const NOT_SIGNED_IN = refuse('error.plugins.signInFirst');
 
-const NOT_ALLOWED = { error: 'That is for administrators who manage plugins.' } as const;
+const NOT_ALLOWED = refuse('error.plugins.thatIsForAdministratorsWhoManage');
 
-const NO_SUCH = { error: 'There is no such plugin, or it is turned off.' } as const;
+const NO_SUCH = refuse('error.plugins.thereIsNoSuchPluginOr');
 
 const BROWSER_COOKIE = 'valence-plugin-connect';
 
@@ -123,7 +127,7 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
 
     return context.json(
       plugins === undefined
-        ? { isReachable: false, problem: NOT_SET_UP.error, plugins: [] }
+        ? { isReachable: false, problem: saidFrom(NOT_SET_UP), plugins: [] }
         : await plugins.readCatalogue(),
       200,
     );
@@ -148,7 +152,7 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     return 'problem' in preview
-      ? context.json({ error: preview.problem }, 422)
+      ? context.json(refuseWith(preview.problem), 422)
       : context.json(preview, 200);
   });
 
@@ -168,13 +172,13 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
     const declared = Number(context.req.header('content-length') ?? '0');
 
     if (declared > PACKAGE_LIMITS.packageBytes) {
-      return context.json({ error: 'That is larger than a plugin may be.' }, 413);
+      return context.json(refuse('error.plugins.thatIsLargerThanAPlugin'), 413);
     }
 
     const bytes = new Uint8Array(await context.req.arrayBuffer());
 
     if (bytes.byteLength > PACKAGE_LIMITS.packageBytes) {
-      return context.json({ error: 'That is larger than a plugin may be.' }, 413);
+      return context.json(refuse('error.plugins.thatIsLargerThanAPlugin'), 413);
     }
 
     const preview = await plugins.previewUpload(
@@ -184,7 +188,7 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     return 'problem' in preview
-      ? context.json({ error: preview.problem }, 422)
+      ? context.json(refuseWith(preview.problem), 422)
       : context.json(preview, 200);
   });
 
@@ -212,7 +216,7 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     return 'refused' in installed
-      ? context.json({ error: installed.refused }, 422)
+      ? context.json(refuseWith(installed.refused), 422)
       : context.json(installed, 201);
   });
 
@@ -238,7 +242,7 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     return 'refused' in changed
-      ? context.json({ error: changed.refused }, 422)
+      ? context.json(refuseWith(changed.refused), 422)
       : context.json(changed, 200);
   });
 
@@ -247,13 +251,13 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
     const declared = Number(context.req.header('content-length') ?? '0');
 
     if (declared > MOST_WEBHOOK_BYTES) {
-      return context.json({ error: 'That message is too large.' }, 413);
+      return context.json(refuse('error.plugins.thatMessageIsTooLarge'), 413);
     }
 
     const bytes = new Uint8Array(await context.req.arrayBuffer());
 
     if (bytes.byteLength > MOST_WEBHOOK_BYTES) {
-      return context.json({ error: 'That message is too large.' }, 413);
+      return context.json(refuse('error.plugins.thatMessageIsTooLarge'), 413);
     }
 
     const headers = Object.fromEntries(
@@ -275,9 +279,9 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
       case 'unknown':
         return context.json(NO_SUCH, 404);
       case 'limited':
-        return context.json({ error: 'Too many messages. Try again in a minute.' }, 429);
+        return context.json(refuse('error.plugins.tooManyMessagesTryAgainIn'), 429);
       case 'failed':
-        return context.json({ error: 'The plugin could not handle that message.' }, 502);
+        return context.json(refuse('error.plugins.thePluginCouldNotHandleThat'), 502);
     }
   });
 
@@ -296,7 +300,7 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     return 'refused' in rolled
-      ? context.json({ error: rolled.refused }, 422)
+      ? context.json(refuseWith(rolled.refused), 422)
       : context.json(rolled, 200);
   });
 
@@ -477,7 +481,10 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
 
     if (started === undefined || 'problem' in started) {
       return context.html(
-        connectionPage('That account was not connected', started?.problem ?? NOT_SET_UP.error),
+        connectionPage(
+          say('server.plugins.thatAccountWasNotConnected'),
+          started?.problem.message ?? NOT_SET_UP.error,
+        ),
         422,
         PAGE_HEADERS,
       );
@@ -503,10 +510,10 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
     if (plugins === undefined || state === undefined || code === undefined) {
       return context.html(
         connectionPage(
-          'That account was not connected',
+          say('server.plugins.thatAccountWasNotConnected'),
           error === undefined
-            ? 'The connection did not finish. Go back to Valence and try again.'
-            : 'The connection was turned down. Go back to Valence to try again.',
+            ? say('server.plugins.theConnectionDidNotFinishGo')
+            : say('server.plugins.theConnectionWasTurnedDownGo'),
         ),
         422,
         PAGE_HEADERS,
@@ -517,7 +524,7 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
 
     if (!finished.ok) {
       return context.html(
-        connectionPage('That account was not connected', finished.problem),
+        connectionPage(say('server.plugins.thatAccountWasNotConnected'), finished.problem.message),
         422,
         PAGE_HEADERS,
       );
@@ -528,7 +535,10 @@ const servePlugins = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     return context.html(
-      connectionPage('Connected', 'You can close this and return to Valence.'),
+      connectionPage(
+        say('server.plugins.connected'),
+        say('server.plugins.youCanCloseThisAndReturn'),
+      ),
       200,
       PAGE_HEADERS,
     );

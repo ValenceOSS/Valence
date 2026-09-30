@@ -1,3 +1,5 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { z } from 'zod';
 import { PlaybackPlanSchema } from '@ValenceContracts/schemas/PlaybackPlan';
 import { TranscodeReuseSchema } from '@ValenceContracts/schemas/TranscodeReuse';
@@ -18,7 +20,7 @@ const StartedSessionSchema = z.object({
   delivery: DeliverySchema,
   mode: z.string(),
   plan: PlaybackPlanSchema,
-  warnings: z.array(z.string()).default([]),
+  warnings: z.array(SaidSchema).default([]),
   reuse: TranscodeReuseSchema.nullable().default(null),
 });
 
@@ -191,19 +193,19 @@ const describeWhy = (plan: PlaybackPlan): string[] => {
   const reasons: string[] = [];
 
   if (plan.video.kind === 'transcode') {
-    reasons.push(`Video: ${plan.video.reason.detail}`);
+    reasons.push(`Video: ${sayAgain(plan.video.reason.detail)}`);
   }
 
   if (plan.audio.kind === 'transcode') {
-    reasons.push(`Audio: ${plan.audio.reason.detail}`);
+    reasons.push(`Audio: ${sayAgain(plan.audio.reason.detail)}`);
   }
 
   if (plan.container.kind === 'remux') {
-    reasons.push(`Container: ${plan.container.reason.detail}`);
+    reasons.push(`Container: ${sayAgain(plan.container.reason.detail)}`);
   }
 
   if (plan.subtitles.kind === 'burnIn') {
-    reasons.push(`Subtitles: ${plan.subtitles.reason.detail}`);
+    reasons.push(`Subtitles: ${sayAgain(plan.subtitles.reason.detail)}`);
   }
 
   return reasons.length > 0 ? reasons : ['Playing without any conversion.'];

@@ -1,3 +1,4 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import type { QueuedDownloadState } from '@ValenceContracts/schemas/DownloadQueue';
 import type { TorrentFile } from '@ValenceRequests/downloads/TorrentFile';
 import type { ReleaseFile } from '@ValenceRequests/indexers/ReleaseFile';
@@ -6,7 +7,7 @@ type ClientItem = {
   remoteId: string;
   title: string;
   state: QueuedDownloadState;
-  problem: string | null;
+  problem: Said | null;
   progress: number;
   sizeBytes: number | null;
   doneBytes: number | null;

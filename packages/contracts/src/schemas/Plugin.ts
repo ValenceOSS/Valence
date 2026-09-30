@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { PermissionSchema as PluginPermissionSchema } from '@ValenceSDK/manifest/PermissionSchema';
 import { PluginNodeSchema } from './Permission';
 import { IconNameSchema } from '@ValenceSDK/surface/IconNameSchema';
@@ -38,7 +39,7 @@ const PluginSummarySchema = z.object({
 const InstalledPluginSchema = PluginSummarySchema.extend({
   isEnabled: z.boolean(),
   state: z.enum(['running', 'stopped', 'failed', 'idle']),
-  problem: z.string().nullable(),
+  problem: SaidSchema.nullable(),
   settings: z.array(PluginSettingSchema),
   installedAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
@@ -54,7 +55,7 @@ const InstalledPluginsSchema = z.object({
 
 const CatalogueListingSchema = z.object({
   isReachable: z.boolean(),
-  problem: z.string().nullable(),
+  problem: SaidSchema.nullable(),
   plugins: z.array(
     z.object({
       id: z.string(),

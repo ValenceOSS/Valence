@@ -13,7 +13,9 @@ const NOT_PLAIN = /[^\x20-\x7e]/gu;
  * @returns The value of a `Content-Disposition` header.
  */
 const asAnAttachment = (title: string): string => {
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a file name, for a title with nothing usable in it
   const cleaned = title.replace(UNSAFE, ' ').replace(/\s+/gu, ' ').trim() || 'Download';
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a file name, for a title with nothing usable in it
   const plain = cleaned.replace(NOT_PLAIN, '').replace(/\s+/gu, ' ').trim() || 'Download';
 
   return `attachment; filename="${plain}.mp4"; filename*=UTF-8''${encodeURIComponent(`${cleaned}.mp4`)}`;

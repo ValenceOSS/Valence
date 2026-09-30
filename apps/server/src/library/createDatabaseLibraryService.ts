@@ -1,3 +1,6 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
+import { saying } from '@ValenceI18n/saying';
 import { readStoredCertifications } from '@ValenceServer/library/readStoredCertifications';
 import { askForLibraryWork } from '@ValenceServer/library/askForLibraryWork';
 import { createArtworkChoices } from '@ValenceServer/library/createArtworkChoices';
@@ -154,7 +157,7 @@ type CreateDatabaseLibraryServiceOptions = {
     artwork: MusicArtwork;
     files: Omit<MusicFileSystem, 'listFiles'>;
   };
-  onProblem?: (path: string, reason: string) => void;
+  onProblem?: (path: string, reason: Said) => void;
   onArrived?: (libraryId: string, item: ScannedItem) => void;
   onDeparted?: (libraryId: string, items: ScannedItem[]) => void;
 };
@@ -481,7 +484,7 @@ const createDatabaseLibraryService = ({
       );
 
     await transcoder.forgetPreview(requestWith(from)).catch((error: Error) => {
-      onProblem?.(subject.path, error.message);
+      onProblem?.(subject.path, sayVerbatim(error.message));
 
       return false;
     });
@@ -495,7 +498,7 @@ const createDatabaseLibraryService = ({
         wait: false,
       })
       .catch((error: Error) => {
-        onProblem?.(subject.path, error.message);
+        onProblem?.(subject.path, sayVerbatim(error.message));
 
         return null;
       });
@@ -789,7 +792,13 @@ const createDatabaseLibraryService = ({
         ? {}
         : {
             onProgress: (phase, processed, total, item) =>
-              jobs.reportProgress(jobId, phase, processed, total, item ?? null),
+              jobs.reportProgress(
+                jobId,
+                saying(`server.jobs.phase.${phase}`),
+                processed,
+                total,
+                item ?? null,
+              ),
             isCancelled: () => jobs.isCancelled(jobId),
           }),
     });
@@ -847,13 +856,16 @@ const createDatabaseLibraryService = ({
         ? {}
         : {
             onProgress: (processed, total) =>
-              jobs.reportProgress(jobId, 'probing', processed, total),
+              jobs.reportProgress(jobId, saying('server.jobs.phase.probing'), processed, total),
             isCancelled: () => jobs.isCancelled(jobId),
           }),
     });
 
     void nameChapters?.(found.id).catch(() =>
-      onProblem?.(found.path, 'its chapter names could not be looked up'),
+      onProblem?.(
+        found.path,
+        saying('server.library.databaseLibraryService.itsChapterNamesCouldNotBe'),
+      ),
     );
 
     return result;
@@ -895,7 +907,7 @@ const createDatabaseLibraryService = ({
         ? {}
         : {
             onProgress: (processed, total) =>
-              jobs.reportProgress(jobId, 'probing', processed, total),
+              jobs.reportProgress(jobId, saying('server.jobs.phase.probing'), processed, total),
             isCancelled: () => jobs.isCancelled(jobId),
           }),
     });
@@ -1992,7 +2004,8 @@ const createDatabaseLibraryService = ({
         ...(jobId === undefined
           ? {}
           : {
-              onProgress: (done, total) => jobs.reportProgress(jobId, 'clearing', done, total),
+              onProgress: (done, total) =>
+                jobs.reportProgress(jobId, saying('server.jobs.phase.clearing'), done, total),
               isCancelled: () => jobs.isCancelled(jobId),
             }),
       });
@@ -2049,7 +2062,8 @@ const createDatabaseLibraryService = ({
         paths,
         jobId === undefined
           ? undefined
-          : (phase, processed, total) => jobs.reportProgress(jobId, phase, processed, total),
+          : (phase, processed, total) =>
+              jobs.reportProgress(jobId, saying(`server.jobs.phase.${phase}`), processed, total),
       );
     },
 
@@ -2083,7 +2097,7 @@ const createDatabaseLibraryService = ({
           ? {}
           : {
               onProgress: (phase, processed, total) =>
-                jobs.reportProgress(jobId, phase, processed, total),
+                jobs.reportProgress(jobId, saying(`server.jobs.phase.${phase}`), processed, total),
             }),
       });
     },
@@ -2162,7 +2176,7 @@ const createDatabaseLibraryService = ({
           ? {}
           : {
               onProgress: (processed, total) =>
-                jobs.reportProgress(jobId, 'previews', processed, total),
+                jobs.reportProgress(jobId, saying('server.jobs.phase.previews'), processed, total),
               isCancelled: () => jobs.isCancelled(jobId),
             }),
       });
@@ -2207,7 +2221,8 @@ const createDatabaseLibraryService = ({
         ...(jobId === undefined
           ? {}
           : {
-              onProgress: (done, total) => jobs.reportProgress(jobId, 'logos', done, total),
+              onProgress: (done, total) =>
+                jobs.reportProgress(jobId, saying('server.jobs.phase.logos'), done, total),
               isCancelled: () => jobs.isCancelled(jobId),
             }),
       });
@@ -2238,7 +2253,7 @@ const createDatabaseLibraryService = ({
           ? {}
           : {
               onProgress: (processed, total) =>
-                jobs.reportProgress(jobId, 'trickplay', processed, total),
+                jobs.reportProgress(jobId, saying('server.jobs.phase.trickplay'), processed, total),
               isCancelled: () => jobs.isCancelled(jobId),
             }),
       });

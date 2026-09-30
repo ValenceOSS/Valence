@@ -1,4 +1,5 @@
 import { createMiddleware } from 'hono/factory';
+import { refuse } from '@ValenceI18n/refuse';
 
 /**
  * Keeps better-auth's one-time tokens out of reach over the network.
@@ -12,7 +13,7 @@ import { createMiddleware } from 'hono/factory';
  */
 const createOneTimeTokenBlock = () =>
   createMiddleware((context) =>
-    Promise.resolve(context.json({ error: 'A phone signs in at /api/phone.' }, 404)),
+    Promise.resolve(context.json(refuse('error.phone.aPhoneSignsInAtApi'), 404)),
   );
 
 export { createOneTimeTokenBlock };

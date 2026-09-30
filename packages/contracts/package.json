@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "zod": "^4.6.4",
-    "@valence/plugin-sdk": "workspace:*"
+    "@valence/plugin-sdk": "workspace:*",
+    "@valence/i18n": "workspace:*"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.11",

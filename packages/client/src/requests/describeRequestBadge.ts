@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { docsFor } from '@ValenceCore/functions/docsFor';
 import { describeCalendarDay } from '@ValenceClient/requests/describeCalendarDay';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
@@ -66,7 +67,11 @@ const describeRequestBadge = (request: MediaRequest, today = calendarToday()): S
     case 'awaitingApproval':
       return { ...STATUS_LOOK.attention, label: 'Awaiting approval', detail: null };
     case 'refused':
-      return { ...STATUS_LOOK.failed, label: 'Refused', detail: request.refusedBecause };
+      return {
+        ...STATUS_LOOK.failed,
+        label: 'Refused',
+        detail: request.refusedBecause === null ? null : sayAgain(request.refusedBecause),
+      };
     case 'waiting': {
       if (request.kind !== 'film' && request.items.length === 0) {
         return {
@@ -131,7 +136,7 @@ const describeRequestBadge = (request: MediaRequest, today = calendarToday()): S
         ...STATUS_LOOK.attention,
         label: 'Wanted',
         detail:
-          request.problem ??
+          (request.problem === null ? null : sayAgain(request.problem)) ??
           (request.isPickedByHand
             ? 'Waiting for a release to be picked by hand.'
             : 'Searched for again every few hours.'),
@@ -151,7 +156,7 @@ const describeRequestBadge = (request: MediaRequest, today = calendarToday()): S
       return {
         ...STATUS_LOOK.working,
         label: 'Filing',
-        detail: request.problem,
+        detail: request.problem === null ? null : sayAgain(request.problem),
         help: docsFor(request.problemCode),
       };
     case 'filed':
@@ -165,7 +170,7 @@ const describeRequestBadge = (request: MediaRequest, today = calendarToday()): S
     case 'failed':
       return {
         ...STATUS_LOOK.failed,
-        detail: request.problem ?? 'It failed.',
+        detail: (request.problem === null ? null : sayAgain(request.problem)) ?? 'It failed.',
         help: docsFor(request.problemCode),
       };
   }

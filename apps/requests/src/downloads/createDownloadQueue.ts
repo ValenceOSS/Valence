@@ -1,3 +1,4 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { randomUUID } from 'node:crypto';
 import { PROTOCOL_OF_CLIENT } from '@ValenceContracts/schemas/DownloadClient';
 import { ReleaseSendSchema } from '@ValenceContracts/schemas/DownloadQueue';
@@ -30,6 +31,8 @@ import type {
 import type { ReleaseFile } from '@ValenceRequests/indexers/ReleaseFile';
 import type { Schedule } from '@ValenceRequests/timing/Schedule';
 import type { Indexer } from '@ValenceContracts/schemas/Indexer';
+import { say } from '@ValenceI18n/say';
+import { saying } from '@ValenceI18n/saying';
 
 type CreateDownloadQueueOptions = {
   clients: Pick<DownloadClientService, 'records' | 'adapterOf'>;
@@ -37,7 +40,7 @@ type CreateDownloadQueueOptions = {
   events: EventStore;
   indexers?: { records: () => Promise<SeedingIndexer[]> };
   fetchRelease: (indexerId: string, url: string) => Promise<ReleaseFile | null>;
-  judgeFiles?: (record: SentDownloadRecord, videos: readonly string[]) => Promise<string | null>;
+  judgeFiles?: (record: SentDownloadRecord, videos: readonly string[]) => Promise<Said | null>;
   refusesUnknownFiles?: () => Promise<boolean>;
   now?: () => Date;
   schedule?: Schedule;
@@ -63,7 +66,7 @@ type Live = Pick<
 
 type ClientReading = {
   isReachable: boolean;
-  problem: string | null;
+  problem: Said | null;
   problemCode: ProblemCode | null;
   downloadBytesPerSecond: number | null;
   uploadBytesPerSecond: number | null;
@@ -74,7 +77,7 @@ const WATCHED_EVERY_MS = 2000;
 
 const IDLE_EVERY_MS = 30_000;
 
-const UNASKABLE = 'The client could not be asked';
+const UNASKABLE = saying('common.theClientCouldNotBeAsked');
 
 const PROGRESS_WORTH_KEEPING = 0.01;
 
@@ -166,7 +169,9 @@ const createDownloadQueue = ({
     return {
       id: record.id,
       clientId: record.clientId,
-      clientName: named.get(record.clientId)?.name ?? 'A client that has gone',
+      clientName:
+        named.get(record.clientId)?.name ??
+        say('requests.downloads.downloadQueue.aClientThatHasGone'),
       protocol: record.protocol,
       libraryKind: record.libraryKind,
       title: record.title,
@@ -262,7 +267,12 @@ const createDownloadQueue = ({
 
     const next =
       item === null
-        ? { state: 'failed' as const, problem: `It is no longer in ${clientName}` }
+        ? {
+            state: 'failed' as const,
+            problem: saying('requests.downloads.downloadQueue.itIsNoLongerInClientName', {
+              clientName,
+            }),
+          }
         : {
             state: item.state,
             problem: item.problem,
@@ -277,7 +287,11 @@ const createDownloadQueue = ({
         next.sizeBytes !== record.sizeBytes ||
         next.contentPath !== record.contentPath);
 
-    if (next.state === record.state && next.problem === record.problem && !hasMoved) {
+    if (
+      next.state === record.state &&
+      next.problem?.message === record.problem?.message &&
+      !hasMoved
+    ) {
       return;
     }
 
@@ -293,7 +307,9 @@ const createDownloadQueue = ({
         kind: 'failed',
         title: record.title,
         clientName,
-        problem: next.problem ?? `${clientName} says it failed`,
+        problem:
+          next.problem ??
+          saying('requests.downloads.downloadQueue.clientNameSaysItFailed', { clientName }),
       });
     }
   };
@@ -342,10 +358,12 @@ const createDownloadQueue = ({
 
     const problem =
       sorted.program !== null
-        ? `It holds a program, ${sorted.program}, which no film, series, album or book comes with`
+        ? saying('requests.downloads.downloadQueue.itHoldsAProgramProgramWhich', {
+            program: sorted.program,
+          })
         : sorted.hasWanted
           ? judged.refusal
-          : 'It holds nothing Valence can file';
+          : saying('requests.downloads.downloadQueue.itHoldsNothingValenceCanFile');
 
     if (problem === null) {
       await adapter.skip?.(record.remoteId, sorted.unwanted);
@@ -439,7 +457,7 @@ const createDownloadQueue = ({
           } catch (error) {
             readings.set(client.id, {
               isReachable: false,
-              problem: error instanceof DownloadClientFailure ? error.message : UNASKABLE,
+              problem: error instanceof DownloadClientFailure ? error.said : UNASKABLE,
               problemCode: error instanceof DownloadClientFailure ? error.problemCode : null,
               downloadBytesPerSecond: null,
               uploadBytesPerSecond: null,
@@ -487,7 +505,7 @@ const createDownloadQueue = ({
   const act = async (
     id: string,
     what: (found: { record: SentDownloadRecord; client: DownloadClientRecord }) => Promise<void>,
-  ): Promise<QueuedDownload | string | null> => {
+  ): Promise<QueuedDownload | { refused: Said } | null> => {
     const found = await find(id);
 
     if (found === null) {
@@ -497,7 +515,7 @@ const createDownloadQueue = ({
     try {
       await what(found);
     } catch (error) {
-      return error instanceof DownloadClientFailure ? error.message : UNASKABLE;
+      return { refused: error instanceof DownloadClientFailure ? error.said : UNASKABLE };
     }
 
     await check();
@@ -526,15 +544,22 @@ const createDownloadQueue = ({
         return {
           refused:
             read.clientId === undefined
-              ? `No ${read.protocol === 'torrent' ? 'torrent' : 'usenet'} client is set up and switched on`
-              : 'That download client is not set up, or is switched off',
+              ? saying(
+                  read.protocol === 'torrent'
+                    ? 'requests.downloads.noTorrentClient'
+                    : 'requests.downloads.noUsenetClient',
+                )
+              : saying('requests.downloads.downloadQueue.thatDownloadClientIsNotSet'),
           problemCode: null,
         };
       }
 
       if (PROTOCOL_OF_CLIENT[client.kind] !== read.protocol) {
         return {
-          refused: `${client.name} cannot take a ${read.protocol} release`,
+          refused: saying('requests.downloads.downloadQueue.nameCannotTakeAProtocolRelease', {
+            name: client.name,
+            protocol: read.protocol,
+          }),
           problemCode: null,
         };
       }
@@ -547,12 +572,18 @@ const createDownloadQueue = ({
           : await fetchRelease(read.indexerId, read.url);
       } catch (error) {
         return error instanceof IndexerFailure
-          ? { refused: error.message, problemCode: error.problemCode }
-          : { refused: 'The release could not be fetched', problemCode: null };
+          ? { refused: error.said, problemCode: error.problemCode }
+          : {
+              refused: saying('requests.downloads.downloadQueue.theReleaseCouldNotBeFetched'),
+              problemCode: null,
+            };
       }
 
       if (file === null) {
-        return { refused: 'The indexer that found it is no longer set up', problemCode: null };
+        return {
+          refused: saying('requests.downloads.downloadQueue.theIndexerThatFoundItIs'),
+          problemCode: null,
+        };
       }
 
       let remoteId: string;
@@ -563,7 +594,7 @@ const createDownloadQueue = ({
           .add(file, read.title, client.categories[read.libraryKind]);
       } catch (error) {
         return error instanceof DownloadClientFailure
-          ? { refused: error.message, problemCode: error.problemCode }
+          ? { refused: error.said, problemCode: error.problemCode }
           : { refused: UNASKABLE, problemCode: null };
       }
 
@@ -634,7 +665,7 @@ const createDownloadQueue = ({
     resume: (id: string) =>
       act(id, ({ record, client }) => clients.adapterOf(client).resume(record.remoteId)),
 
-    remove: async (id: string, deleteData: boolean): Promise<boolean | string> => {
+    remove: async (id: string, deleteData: boolean): Promise<boolean | { refused: Said }> => {
       const found = await find(id);
 
       if (found === null) {
@@ -644,7 +675,7 @@ const createDownloadQueue = ({
       try {
         await clients.adapterOf(found.client).remove(found.record.remoteId, deleteData);
       } catch (error) {
-        return error instanceof DownloadClientFailure ? error.message : UNASKABLE;
+        return { refused: error instanceof DownloadClientFailure ? error.said : UNASKABLE };
       }
 
       live.delete(id);

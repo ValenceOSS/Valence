@@ -1,3 +1,5 @@
+import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { docsFor } from '@ValenceCore/functions/docsFor';
 import { saidWhen } from '@ValenceClient/format/saidWhen';
 import type { RequestsOverview } from '@ValenceContracts/schemas/Requests';
@@ -28,7 +30,7 @@ const describeRequestsSolver = (overview: RequestsOverview): RequestsHealth => {
     return {
       label: 'Can’t start',
       tone: 'danger',
-      detail: `It would not start: ${solver.startProblem}`,
+      detail: `It would not start: ${sayAgain(solver.startProblem)}`,
       help: docsFor('CloudflareCheckFailed'),
     };
   }
@@ -40,7 +42,7 @@ const describeRequestsSolver = (overview: RequestsOverview): RequestsHealth => {
     return {
       label: 'Offline',
       tone: 'danger',
-      detail: `Last failed ${saidWhen(solver.lastFailedAt)}: ${solver.problem ?? 'no reason given'}.`,
+      detail: `Last failed ${saidWhen(solver.lastFailedAt)}: ${sayAgainIfAny(solver.problem) ?? 'no reason given'}.`,
       help: docsFor('CloudflareCheckFailed'),
     };
   }

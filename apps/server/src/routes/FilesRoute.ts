@@ -1,4 +1,5 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
   ChangedEntrySchema,
   LibraryFileSearchSchema,
@@ -8,7 +9,7 @@ import {
   RenameEntryRequestSchema,
 } from '@ValenceContracts/schemas/LibraryFiles';
 
-const FilesError = z.object({ error: z.string() }).openapi('FilesError');
+const FilesError = RefusalSchema.openapi('FilesError');
 
 const refused = (description: string) => ({
   description,

@@ -4,6 +4,7 @@ import {
 } from '@ValenceServer/routes/PresenceRoute';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
+import { refuse } from '@ValenceI18n/refuse';
 
 /**
  * Registers the presence endpoints.
@@ -19,7 +20,7 @@ const servePresence = (app: OpenAPIHono, context: AppContext): void => {
     const { isPlaying, health } = context.req.valid('json');
 
     if (!(await isTheDeviceOfWhoeverIsAsking(context.req.raw.headers, clientId))) {
-      return context.json({ error: 'That is not your device.' }, 403);
+      return context.json(refuse('error.common.thatIsNotYourDevice'), 403);
     }
 
     presence.heartbeatPlayback(clientId, isPlaying, health);
@@ -31,7 +32,7 @@ const servePresence = (app: OpenAPIHono, context: AppContext): void => {
     const { clientId } = context.req.valid('param');
 
     if (!(await isTheDeviceOfWhoeverIsAsking(context.req.raw.headers, clientId))) {
-      return context.json({ error: 'That is not your device.' }, 403);
+      return context.json(refuse('error.common.thatIsNotYourDevice'), 403);
     }
 
     presence.stopPlayback(clientId);

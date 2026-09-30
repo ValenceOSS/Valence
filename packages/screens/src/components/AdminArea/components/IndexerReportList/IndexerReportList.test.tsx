@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { IndexerReportList } from './IndexerReportList';
@@ -20,7 +21,7 @@ describe('IndexerReportList', () => {
             indexerName: 'Nyaa',
             found: 0,
             tookMs: 30_000,
-            problem: 'Timed out',
+            problem: sayVerbatim('Timed out'),
             problemCode: null,
           },
         ]}

@@ -1,3 +1,4 @@
+/* eslint-disable valence/no-hard-coded-strings -- Cardigann templates spell a set flag as True */
 import type { ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
 import type { TemplateValue } from '@ValenceRequests/cardigann/TemplateVariables';
 

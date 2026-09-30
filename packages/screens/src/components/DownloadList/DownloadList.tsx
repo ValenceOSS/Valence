@@ -1,3 +1,4 @@
+import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Icon } from '@ValenceUI/Icon';
@@ -33,7 +34,7 @@ const describeState = (download: Download, isKeepable: boolean): string => {
   const done = `${Math.round(download.progress * 100).toString()}%`;
 
   if (download.state === 'failed') {
-    return download.failure ?? 'That could not be prepared.';
+    return sayAgainIfAny(download.failure) ?? 'That could not be prepared.';
   }
 
   if (download.state === 'queued') {

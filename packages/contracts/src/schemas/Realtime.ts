@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { ClientKindSchema } from './ClientKind';
 import { JsonValueSchema } from './JsonValue';
 import { PartyCommandSchema, PartyKindSchema, PartyRoleSchema } from './WatchParty';
@@ -164,7 +165,7 @@ const ClockTellSchema = z.object({
   serverAtMs: z.number().int(),
 });
 
-const RefusedSchema = z.object({ kind: z.literal('refused'), why: z.string().min(1) });
+const RefusedSchema = z.object({ kind: z.literal('refused'), why: SaidSchema });
 
 const PartyNeedsPasswordSchema = z.object({
   kind: z.literal('partyNeedsPassword'),

@@ -1,3 +1,4 @@
+import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { notify } from '@ValenceUI/notify';
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -267,7 +268,10 @@ const IndexerCatalogueDialog = ({ isOpen, onClose, onChoose }: IndexerCatalogueD
         )}
       </DialogContent>
 
-      <DialogFooter note={problem ?? asked.data?.problem} dismiss={{ onChoose: onClose }}>
+      <DialogFooter
+        note={problem ?? sayAgainIfAny(asked.data?.problem)}
+        dismiss={{ onChoose: onClose }}
+      >
         <Button variant="secondary" isLoading={isRefreshing} onClick={refresh}>
           <Icon of={RefreshCwIcon} size={15} />
           Bring up to date

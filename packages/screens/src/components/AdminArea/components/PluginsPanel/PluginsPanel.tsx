@@ -1,3 +1,4 @@
+import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Upload as UploadIcon } from '@keyline-icons/react';
@@ -186,7 +187,7 @@ const PluginsPanel = () => {
           <Spinner isCentered size="sm" label="Reading the catalogue" />
         ) : !catalogue.data.isReachable ? (
           <Callout title="Official plugins are unavailable" tone="warning" className="m-4">
-            {`${catalogue.data.problem ?? 'The plugin catalogue could not be reached.'} Plugins already installed keep working.`}
+            {`${sayAgainIfAny(catalogue.data.problem) ?? 'The plugin catalogue could not be reached.'} Plugins already installed keep working.`}
           </Callout>
         ) : catalogue.data.plugins.length === 0 ? (
           <p className="px-4 py-6 text-sm text-text-muted">The catalogue has no plugins yet.</p>

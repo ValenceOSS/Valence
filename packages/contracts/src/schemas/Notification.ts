@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 
 const NOTIFICATION_EVENTS = [
   'media.added',
@@ -16,8 +17,8 @@ type NotificationEvent = (typeof NOTIFICATION_EVENTS)[number];
 const NotificationSchema = z.object({
   id: z.string().uuid(),
   event: NotificationEventSchema,
-  title: z.string(),
-  body: z.string(),
+  title: SaidSchema,
+  body: SaidSchema,
   link: z.string().nullable(),
   createdAt: z.string().datetime(),
   readAt: z.string().datetime().nullable(),

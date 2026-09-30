@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   addIndexer,
@@ -40,7 +41,7 @@ const AN_INDEXER = {
 
 const A_TEST = {
   isWorking: false,
-  problem: 'The indexer refused the API key',
+  problem: sayVerbatim('The indexer refused the API key'),
   problemCode: null,
   capabilities: null,
   captcha: null,

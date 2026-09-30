@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { aMediaRequest } from '@ValenceClient/testing/aMediaRequest';
 import { describeRequestBadge } from '@ValenceClient/requests/describeRequestBadge';
@@ -106,7 +107,9 @@ describe('describeRequestBadge', () => {
 
   it('says what went wrong, or what is on its way', () => {
     expect(
-      describeRequestBadge(aMediaRequest({ state: 'refused', refusedBecause: 'No room' })),
+      describeRequestBadge(
+        aMediaRequest({ state: 'refused', refusedBecause: sayVerbatim('No room') }),
+      ),
     ).toEqual({ label: 'Refused', tone: 'danger', detail: 'No room' });
     expect(describeRequestBadge(aMediaRequest()).detail).toBe(
       'Searched for again every few hours.',
@@ -115,7 +118,9 @@ describe('describeRequestBadge', () => {
       'Waiting for a release to be picked by hand.',
     );
     expect(
-      describeRequestBadge(aMediaRequest({ problem: 'Nothing yet', problemCode: null })).detail,
+      describeRequestBadge(
+        aMediaRequest({ problem: sayVerbatim('Nothing yet'), problemCode: null }),
+      ).detail,
     ).toBe('Nothing yet');
     expect(
       describeRequestBadge(
@@ -134,7 +139,7 @@ describe('describeRequestBadge', () => {
       describeRequestBadge(
         aMediaRequest({
           state: 'filing',
-          problem: 'The requests service may not write to /media/Films.',
+          problem: sayVerbatim('The requests service may not write to /media/Films.'),
           problemCode: 'MayNotWriteToLibrary',
         }),
       ),
@@ -146,7 +151,7 @@ describe('describeRequestBadge', () => {
       describeRequestBadge(
         aMediaRequest({
           state: 'failed',
-          problem: 'Refused',
+          problem: sayVerbatim('Refused'),
           problemCode: 'CloudflareRefusesAddress',
         }),
       ).help,

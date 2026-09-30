@@ -8,5 +8,5 @@
     "types": ["node", "vitest/globals", "@testing-library/jest-dom"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "references": [{ "path": "../core" }]
+  "references": [{ "path": "../core" }, { "path": "../i18n" }]
 }

@@ -1,3 +1,6 @@
+import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
+import type { Said } from '@ValenceI18n/SaidSchema';
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { RequestsSolver } from '@ValenceContracts/schemas/Requests';
 import type { Solver } from '@ValenceRequests/solver/createSolver';
 
@@ -30,8 +33,8 @@ const createSolverWatch = ({
   let failed = 0;
   let lastPassedAt: number | null = null;
   let lastFailedAt: number | null = null;
-  let problem: string | null = null;
-  let startProblem: string | null = null;
+  let problem: Said | null = null;
+  let startProblem: Said | null = null;
 
   const starting =
     <T>(launch: () => Promise<T>) =>
@@ -43,7 +46,10 @@ const createSolverWatch = ({
 
         return browser;
       } catch (cause) {
-        startProblem = cause instanceof Error ? cause.message : String(cause);
+        startProblem =
+          cause instanceof IndexerFailure
+            ? cause.said
+            : sayVerbatim(cause instanceof Error ? cause.message : String(cause));
 
         throw cause;
       }
@@ -61,7 +67,10 @@ const createSolverWatch = ({
       } catch (cause) {
         failed += 1;
         lastFailedAt = now();
-        problem = cause instanceof Error ? cause.message : String(cause);
+        problem =
+          cause instanceof IndexerFailure
+            ? cause.said
+            : sayVerbatim(cause instanceof Error ? cause.message : String(cause));
 
         throw cause;
       }

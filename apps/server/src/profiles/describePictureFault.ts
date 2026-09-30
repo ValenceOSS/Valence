@@ -1,5 +1,7 @@
+import type { RefusalBody } from '@ValenceI18n/RefusalBody';
 import { FACE_LIMITS } from './whatIsWrongWithThePicture';
 import type { PictureFault, PictureLimits } from './whatIsWrongWithThePicture';
+import { refuse } from '@ValenceI18n/refuse';
 
 const STATUS: Record<PictureFault, 400 | 404 | 413> = {
   notAPicture: 400,
@@ -24,19 +26,21 @@ const STATUS: Record<PictureFault, 400 | 404 | 413> = {
 const describePictureFault = (
   fault: PictureFault,
   limits: PictureLimits = FACE_LIMITS,
-): { error: string; status: 400 | 404 | 413 } => {
+): RefusalBody & { status: 400 | 404 | 413 } => {
   const megabytes = (limits.mostBytes / (1024 * 1024)).toString();
   const edge = limits.mostPixelsAnEdge.toString();
 
-  const said: Record<PictureFault, string> = {
-    notAPicture: 'A picture has to be a JPEG, PNG, WebP, AVIF or GIF.',
-    tooLarge: `A picture has to be ${megabytes} MB or smaller.`,
-    tooDetailed: `A picture has to be ${edge} by ${edge} or smaller.`,
-    unreadable: 'That file could not be read as a picture.',
-    notYours: 'No such profile on this account.',
+  const said: Record<PictureFault, RefusalBody> = {
+    notAPicture: refuse('server.profiles.describePictureFault.aPictureHasToBeA'),
+    tooLarge: refuse('server.profiles.describePictureFault.aPictureHasToBeMegabytes', {
+      megabytes,
+    }),
+    tooDetailed: refuse('server.profiles.describePictureFault.aPictureHasToBeEdge', { edge }),
+    unreadable: refuse('server.profiles.describePictureFault.thatFileCouldNotBeRead'),
+    notYours: refuse('error.common.noSuchProfileOnThisAccount'),
   };
 
-  return { error: said[fault], status: STATUS[fault] };
+  return { ...said[fault], status: STATUS[fault] };
 };
 
 export { describePictureFault };

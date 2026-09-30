@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Icon } from '@ValenceUI/Icon';
 import { X as XIcon } from '@keyline-icons/react';
@@ -191,12 +192,12 @@ const StreamStats = ({
           <PlanAxis
             name="Container"
             kind={plan?.container.kind ?? null}
-            reason={plan?.container.reason.detail ?? null}
+            reason={plan === null ? null : sayAgain(plan.container.reason.detail)}
           />
           <PlanAxis
             name="Video"
             kind={plan?.video.kind ?? null}
-            reason={plan?.video.reason.detail ?? null}
+            reason={plan === null ? null : sayAgain(plan.video.reason.detail)}
             ceiling={
               plan === null || plan.video.kind === 'passthrough'
                 ? null
@@ -206,7 +207,7 @@ const StreamStats = ({
           <PlanAxis
             name="Audio"
             kind={plan?.audio.kind ?? null}
-            reason={plan?.audio.reason.detail ?? null}
+            reason={plan === null ? null : sayAgain(plan.audio.reason.detail)}
             ceiling={
               plan === null || plan.audio.kind === 'passthrough'
                 ? null
@@ -216,7 +217,7 @@ const StreamStats = ({
           <PlanAxis
             name="Subtitles"
             kind={plan?.subtitles.kind ?? null}
-            reason={plan?.subtitles.reason.detail ?? null}
+            reason={plan === null ? null : sayAgain(plan.subtitles.reason.detail)}
           />
         </StatsCard>
 
@@ -299,7 +300,7 @@ const StreamStats = ({
         {session === null || session.warnings.length === 0 ? null : (
           <StatsCard name="Warnings">
             {session.warnings.map((warning) => (
-              <StatsFact key={warning} name="Server" value={warning} />
+              <StatsFact key={warning.message} name="Server" value={sayAgain(warning)} />
             ))}
           </StatsCard>
         )}

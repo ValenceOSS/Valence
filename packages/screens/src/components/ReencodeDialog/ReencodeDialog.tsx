@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { useEffect, useMemo, useState } from 'react';
 import { Callout } from '@ValenceUI/Callout';
 import { Checkbox } from '@ValenceUI/Checkbox';
@@ -171,8 +172,11 @@ const ReencodeDialog = ({
     setChosen(next);
   };
 
-  const refusalFor = (mediaId: string): string | null =>
-    estimate?.candidates.find((one) => one.mediaId === mediaId)?.refusal?.detail ?? null;
+  const refusalFor = (mediaId: string): string | null => {
+    const refusal = estimate?.candidates.find((one) => one.mediaId === mediaId)?.refusal;
+
+    return refusal === undefined || refusal === null ? null : sayAgain(refusal.detail);
+  };
 
   const start = async () => {
     setIsStarting(true);

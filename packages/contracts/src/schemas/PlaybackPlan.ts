@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import {
   ContainerSchema,
   VideoCodecSchema,
@@ -34,7 +35,7 @@ const ReasonCodeSchema = z.enum([
 
 const ReasonSchema = z.object({
   code: ReasonCodeSchema,
-  detail: z.string().min(1),
+  detail: SaidSchema,
 });
 
 const ContainerDecisionSchema = z.discriminatedUnion('kind', [

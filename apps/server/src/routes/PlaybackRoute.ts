@@ -1,10 +1,12 @@
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { PlaybackPlanSchema } from '@ValenceContracts/schemas/PlaybackPlan';
 import { DeviceProfileSchema } from '@ValenceContracts/schemas/DeviceProfile';
 import { QualityStepIdSchema } from '@ValenceContracts/schemas/QualityStep';
 import { TranscodeReuseSchema } from '@ValenceContracts/schemas/TranscodeReuse';
 import { PLAYBACK_MODES } from '@ValenceContracts/functions/describePlaybackMode';
-const PlaybackError = z.object({ error: z.string() }).openapi('PlaybackError');
+const PlaybackError = RefusalSchema.openapi('PlaybackError');
 
 const ExplainResponse = z
   .object({ mode: z.enum(PLAYBACK_MODES), plan: PlaybackPlanSchema })
@@ -34,7 +36,7 @@ const StartResponse = z
     delivery: DeliverySchema,
     mode: z.enum(PLAYBACK_MODES),
     plan: PlaybackPlanSchema,
-    warnings: z.array(z.string()),
+    warnings: z.array(SaidSchema),
     reuse: TranscodeReuseSchema.nullable(),
   })
   .openapi('PlaybackStartResponse');

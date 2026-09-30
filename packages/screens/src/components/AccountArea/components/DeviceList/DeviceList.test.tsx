@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -16,7 +17,7 @@ vi.mock('@ValenceClient/account/fetchDevices', () => ({
 
 const device = (overrides: Partial<Device> = {}): Device => ({
   id: 'session-1',
-  name: 'Chrome on macOS',
+  name: sayVerbatim('Chrome on macOS'),
   address: '10.0.0.2',
   signedInAt: '2026-08-10T09:00:00.000Z',
   expiresAt: '2026-09-10T00:00:00.000Z',
@@ -43,7 +44,7 @@ describe('DeviceList', () => {
   it('lists everywhere this account is signed in', async () => {
     fetchDevices.mockResolvedValue([
       device(),
-      device({ id: 'session-2', name: 'Safari on iPhone' }),
+      device({ id: 'session-2', name: sayVerbatim('Safari on iPhone') }),
     ]);
 
     render(<DeviceList />);

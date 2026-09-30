@@ -1,6 +1,8 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { z } from 'zod';
 import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
 import type { RequestsVpn } from '@ValenceContracts/schemas/Requests';
+import { saying } from '@ValenceI18n/saying';
 
 const TunnelSchema = z.object({ status: z.string() });
 
@@ -57,7 +59,7 @@ const readGluetun = async ({
 
   const headers: Record<string, string> = apiKey === '' ? {} : { 'X-API-Key': apiKey };
   const checkedAt = now().toISOString();
-  const down = (problem: string, problemCode: ProblemCode = 'VpnDown'): RequestsVpn => ({
+  const down = (problem: Said, problemCode: ProblemCode = 'VpnDown'): RequestsVpn => ({
     isConfigured: true,
     isUp: false,
     publicAddress: null,
@@ -74,17 +76,21 @@ const readGluetun = async ({
     });
 
     if (tunnel.status === 401 || tunnel.status === 403) {
-      return down('gluetun refused the question; check VPN_API_KEY', 'VpnKeyRefused');
+      return down(saying('requests.vpn.readGluetun.keyRefused'), 'VpnKeyRefused');
     }
 
     if (!tunnel.ok) {
-      return down(`gluetun answered ${tunnel.status.toString()}`);
+      return down(
+        saying('requests.vpn.readGluetun.gluetunAnsweredStatus', {
+          status: tunnel.status.toString(),
+        }),
+      );
     }
 
     const { status } = TunnelSchema.parse(await tunnel.json());
 
     if (status !== 'running') {
-      return down(`The tunnel is ${status}`);
+      return down(saying('requests.vpn.readGluetun.theTunnelIsStatus', { status }));
     }
 
     const leaving = await fetch(`${address}/v1/publicip/ip`, {
@@ -105,8 +111,8 @@ const readGluetun = async ({
   } catch (error) {
     return down(
       error instanceof z.ZodError
-        ? 'gluetun answered something that was not a status'
-        : `gluetun could not be reached at ${address}`,
+        ? saying('requests.vpn.readGluetun.gluetunAnsweredSomethingThatWasNot')
+        : saying('requests.vpn.readGluetun.gluetunCouldNotBeReachedAt', { address }),
     );
   }
 };

@@ -4,6 +4,7 @@ import { standingOf } from '@ValenceRequests/solver/standingOf';
 import type { PageAnswer } from '@ValenceRequests/solver/PageAnswerSchema';
 import type { PageRequest } from '@ValenceRequests/solver/PageRequest';
 import type { SitePage } from '@ValenceRequests/solver/toSitePage';
+import { saying } from '@ValenceI18n/saying';
 
 type SolveRequestOptions = {
   page: SitePage;
@@ -19,7 +20,7 @@ const AFTER_A_CLICK_MS = 3000;
 
 const BETWEEN_LOOKS_MS = 1000;
 
-const BLOCKED = 'The site’s Cloudflare refuses this address outright, which no browser gets past';
+const BLOCKED = saying('requests.solver.solveRequest.theSitesCloudflareRefusesThisAddress');
 
 /**
  * Waits.
@@ -74,7 +75,7 @@ const solveRequest = async ({
 
       if (now() >= deadline) {
         throw new IndexerFailure(
-          'Timed out getting past the site’s browser check',
+          saying('requests.solver.solveRequest.timedOutGettingPastTheSites'),
           'CloudflareCheckFailed',
         );
       }
@@ -107,7 +108,7 @@ const solveRequest = async ({
 
     if (asked.isChallenge) {
       throw new IndexerFailure(
-        'The site’s browser check would not let the request through',
+        saying('requests.solver.solveRequest.theSitesBrowserCheckWouldNot'),
         'CloudflareCheckFailed',
       );
     }

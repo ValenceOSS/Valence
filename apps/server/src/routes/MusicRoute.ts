@@ -1,4 +1,5 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
   AudioQualitySchema,
   LyricsSchema,
@@ -24,7 +25,7 @@ import {
   UpdatePlaylistSchema,
 } from '@ValenceContracts/schemas/Playlist';
 
-const MusicError = z.object({ error: z.string() }).openapi('MusicError');
+const MusicError = RefusalSchema.openapi('MusicError');
 
 const json = <Schema extends z.ZodType>(description: string, schema: Schema) => ({
   description,

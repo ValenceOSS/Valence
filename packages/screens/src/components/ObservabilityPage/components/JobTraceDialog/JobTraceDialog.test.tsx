@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -24,8 +25,8 @@ vi.mock('@ValenceClient/admin/fetchLogHistogram', () => ({ fetchLogHistogram: vi
 const DEFINITIONS: JobDefinition[] = [
   {
     kind: 'library.scan',
-    label: 'Scan for changes',
-    description: 'Looks for new files.',
+    label: sayVerbatim('Scan for changes'),
+    description: sayVerbatim('Looks for new files.'),
     needsLibrary: true,
     destructive: false,
     takesParts: false,
@@ -44,7 +45,7 @@ const run = (over: Partial<JobRunRecord> = {}): JobRunRecord => ({
   subject: null,
   startedAtMs: START,
   finishedAtMs: START + 125_000,
-  progress: { phase: 'files', processed: 40, total: 50 },
+  progress: { phase: sayVerbatim('files'), processed: 40, total: 50 },
   errorMessage: null,
   createdAtMs: START,
   ...over,
@@ -158,14 +159,14 @@ describe('JobTraceDialog', () => {
           run({
             status: 'running',
             finishedAtMs: null,
-            progress: { phase: 'files', processed: 1, total: 50 },
+            progress: { phase: sayVerbatim('files'), processed: 1, total: 50 },
           }),
         )
         .mockResolvedValue(
           run({
             status: 'running',
             finishedAtMs: null,
-            progress: { phase: 'files', processed: 30, total: 50 },
+            progress: { phase: sayVerbatim('files'), processed: 30, total: 50 },
           }),
         );
       vi.mocked(fetchLogs)
@@ -203,7 +204,7 @@ describe('JobTraceDialog', () => {
 
   it('says how it failed', async () => {
     vi.mocked(fetchJobRun).mockResolvedValue(
-      run({ status: 'failed', errorMessage: 'no such encoder' }),
+      run({ status: 'failed', errorMessage: sayVerbatim('no such encoder') }),
     );
 
     draw();
@@ -214,8 +215,8 @@ describe('JobTraceDialog', () => {
 
   it('says how many issues were recorded', async () => {
     vi.mocked(fetchJobHistoryIssues).mockResolvedValue([
-      { id: 'i1', jobRunId: 'run-1', path: '/a', reason: 'bad', atMs: 1 },
-      { id: 'i2', jobRunId: 'run-1', path: '/b', reason: 'bad', atMs: 2 },
+      { id: 'i1', jobRunId: 'run-1', path: '/a', reason: sayVerbatim('bad'), atMs: 1 },
+      { id: 'i2', jobRunId: 'run-1', path: '/b', reason: sayVerbatim('bad'), atMs: 2 },
     ]);
 
     draw();

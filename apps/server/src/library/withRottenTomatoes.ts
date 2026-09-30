@@ -3,6 +3,7 @@ import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { createExpiringCache } from '@ValenceServer/library/createExpiringCache';
 import type { MetadataProvider } from '@ValenceServer/library/MetadataProvider';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
+import { say } from '@ValenceI18n/say';
 
 const SCORE_KEPT_FOR_MS = 24 * 60 * 60 * 1000;
 
@@ -98,7 +99,9 @@ const withRottenTomatoes = (
       );
 
       if (!answered.ok) {
-        onProblem?.(`OMDb answered ${imdbId} with an error`);
+        onProblem?.(
+          say('server.library.withRottenTomatoes.oMDbAnsweredImdbIdWithAnError', { imdbId }),
+        );
 
         return null;
       }
@@ -109,7 +112,7 @@ const withRottenTomatoes = (
 
       return score;
     } catch {
-      onProblem?.(`OMDb could not be reached for ${imdbId}`);
+      onProblem?.(say('server.library.withRottenTomatoes.oMDbCouldNotBeReachedFor', { imdbId }));
 
       return null;
     }

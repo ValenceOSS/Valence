@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -316,7 +317,7 @@ describe('DownloadsPanel', () => {
     testDownloadClient.mockResolvedValueOnce({
       value: {
         isWorking: false,
-        problem: 'refused the password',
+        problem: sayVerbatim('refused the password'),
         problemCode: null,
         version: null,
       },

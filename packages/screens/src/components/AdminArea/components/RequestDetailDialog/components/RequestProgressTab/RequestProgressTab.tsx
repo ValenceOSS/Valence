@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@ValenceUI/Badge';
@@ -59,7 +60,7 @@ const RequestProgressTab = ({
 
       {request.refusedBecause === null ? null : (
         <p className="font-body text-sm text-text-muted">
-          Refused because: <span className="text-text">{request.refusedBecause}</span>
+          Refused because: <span className="text-text">{sayAgain(request.refusedBecause)}</span>
         </p>
       )}
 

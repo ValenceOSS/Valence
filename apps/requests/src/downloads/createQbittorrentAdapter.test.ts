@@ -307,10 +307,10 @@ describe('createQbittorrentAdapter', () => {
     });
     expect(arrival?.path).toBeNull();
     expect(arrival?.state).toBe('stalled');
-    expect(arrival?.doneBytes).toBe(5);
+    expect(arrival?.doneBytes).toEqual(5);
     expect(arrival?.secondsLeft).toBeNull();
-    expect(heat?.state).toBe('failed');
-    expect(heat?.problem).toBe('qBittorrent cannot find its files');
+    expect(heat?.state).toEqual('failed');
+    expect(heat?.problem).toEqual('qBittorrent cannot find its files');
     expect(heat?.sizeBytes).toBeNull();
     expect(heat?.doneBytes).toBeNull();
     expect(alien?.state).toBe('queued');

@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { createDatabase } from '@ValenceServer/db/Database';
 import {
@@ -166,7 +167,7 @@ describe('asIssue', () => {
       id: 'issue-1',
       jobRunId: 'run-1',
       path: '/media/a.mkv',
-      reason: 'ffmpeg failed',
+      reason: sayVerbatim('ffmpeg failed'),
       atMs: 1234,
     });
 
@@ -232,7 +233,7 @@ describe('buildInterruptQuery', () => {
   const queryFor = (reason: string) => {
     const { db } = createDatabase(NOWHERE);
 
-    return buildInterruptQuery(db, reason).toSQL();
+    return buildInterruptQuery(db, sayVerbatim(reason)).toSQL();
   };
 
   it('stops every run still marked as running or waiting, and no other', () => {
@@ -243,8 +244,10 @@ describe('buildInterruptQuery', () => {
   });
 
   it('marks them stopped rather than failed, saying why', () => {
-    expect(queryFor('The server restarted').params).toContain('stopped');
-    expect(queryFor('The server restarted').params).toContain('The server restarted');
+    expect(queryFor('The server restarted').params).toContainEqual('stopped');
+    expect(JSON.stringify(queryFor('The server restarted').params)).toContain(
+      'The server restarted',
+    );
   });
 
   it('says which runs it stopped', () => {

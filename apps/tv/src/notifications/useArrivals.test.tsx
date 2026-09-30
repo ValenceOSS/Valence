@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useArrivals } from '@ValenceTv/notifications/useArrivals';
@@ -21,8 +22,8 @@ jest.mock('@ValenceClient/notifications/fetchNotifications', () => ({
 const aNotice = (id: string, overrides: Partial<Notification> = {}): Notification => ({
   id,
   event: 'requests.available',
-  title: 'Dune is here',
-  body: 'Ready to watch',
+  title: sayVerbatim('Dune is here'),
+  body: sayVerbatim('Ready to watch'),
   link: '/?item=dune',
   createdAt: '2026-09-23T00:00:00.000Z',
   readAt: null,

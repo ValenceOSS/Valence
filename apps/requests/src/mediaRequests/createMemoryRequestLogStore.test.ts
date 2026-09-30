@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { createMemoryRequestLogStore } from './createMemoryRequestLogStore';
 
@@ -5,9 +6,9 @@ describe('createMemoryRequestLogStore', () => {
   it('keeps what each request did, newest first', async () => {
     const { store, said } = createMemoryRequestLogStore(() => new Date('2026-09-19T00:00:00.000Z'));
 
-    await store.add('dune', 'Searched');
-    await store.add('dune', 'Chose one', 'CloudflareCheckFailed');
-    await store.add('heat', 'Searched');
+    await store.add('dune', sayVerbatim('Searched'));
+    await store.add('dune', sayVerbatim('Chose one'), 'CloudflareCheckFailed');
+    await store.add('heat', sayVerbatim('Searched'));
 
     expect(await store.list('dune')).toEqual([
       {
@@ -24,7 +25,7 @@ describe('createMemoryRequestLogStore', () => {
   it('keeps the time by the clock by default', async () => {
     const { store } = createMemoryRequestLogStore();
 
-    await store.add('dune', 'Searched');
+    await store.add('dune', sayVerbatim('Searched'));
 
     expect(Date.parse((await store.list('dune'))[0]?.at ?? '')).not.toBeNaN();
   });

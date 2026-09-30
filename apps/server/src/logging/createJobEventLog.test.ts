@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { createJobEventLog } from './createJobEventLog';
 import type { Logger } from './Logger';
@@ -82,7 +83,13 @@ describe('createJobEventLog', () => {
     said.length = 0;
 
     for (const processed of [1, 5, 10, 11, 20, 22, 107]) {
-      events.progress({ jobId: 'j1', phase: 'segments', processed, total: 107, item: null });
+      events.progress({
+        jobId: 'j1',
+        phase: sayVerbatim('segments'),
+        processed,
+        total: 107,
+        item: null,
+      });
     }
 
     expect(said.map((line) => line.message)).toStrictEqual([
@@ -98,8 +105,20 @@ describe('createJobEventLog', () => {
 
     events.started({ kind: KIND, jobId: 'j1', subject: null });
     said.length = 0;
-    events.progress({ jobId: 'j1', phase: 'reading', processed: 5, total: 10, item: null });
-    events.progress({ jobId: 'j1', phase: 'writing', processed: 0, total: 10, item: null });
+    events.progress({
+      jobId: 'j1',
+      phase: sayVerbatim('reading'),
+      processed: 5,
+      total: 10,
+      item: null,
+    });
+    events.progress({
+      jobId: 'j1',
+      phase: sayVerbatim('writing'),
+      processed: 0,
+      total: 10,
+      item: null,
+    });
 
     expect(said.map((line) => line.message)).toStrictEqual([
       'Detect missing intros and outros: reading — 5 of 10',
@@ -114,7 +133,7 @@ describe('createJobEventLog', () => {
     said.length = 0;
     events.progress({
       jobId: 'j1',
-      phase: 'previews',
+      phase: sayVerbatim('previews'),
       processed: 1,
       total: 4,
       item: 'Dune (2021)',
@@ -127,7 +146,13 @@ describe('createJobEventLog', () => {
     const { events, said } = build();
 
     events.started({ kind: KIND, jobId: 'j1', subject: null });
-    events.progress({ jobId: 'j1', phase: 'segments', processed: 1, total: 2, item: null });
+    events.progress({
+      jobId: 'j1',
+      phase: sayVerbatim('segments'),
+      processed: 1,
+      total: 2,
+      item: null,
+    });
     events.finished({ kind: KIND, jobId: 'j1', reason: null });
 
     expect(said.every((line) => line.context?.jobId === 'j1')).toBe(true);
@@ -165,7 +190,7 @@ describe('createJobEventLog', () => {
 
     events.started({ kind: KIND, jobId: 'j1', subject: null });
     later(2000);
-    events.finished({ kind: KIND, jobId: 'j1', reason: 'no such encoder' });
+    events.finished({ kind: KIND, jobId: 'j1', reason: sayVerbatim('no such encoder') });
 
     expect(said.at(-1)).toMatchObject({
       level: 'error',
@@ -184,7 +209,13 @@ describe('createJobEventLog', () => {
   it('picks up a job it did not see start, at its first report of progress', () => {
     const { events, said } = build();
 
-    events.progress({ jobId: 'unseen', phase: 'previews', processed: 28, total: 107, item: null });
+    events.progress({
+      jobId: 'unseen',
+      phase: sayVerbatim('previews'),
+      processed: 28,
+      total: 107,
+      item: null,
+    });
 
     expect(said).toStrictEqual([
       {
@@ -202,7 +233,7 @@ describe('createJobEventLog', () => {
     events.started({ kind: KIND, jobId: 'j1', subject: null });
     events.finished({ kind: KIND, jobId: 'j1', reason: null });
     said.length = 0;
-    events.progress({ jobId: 'j1', phase: 'x', processed: 1, total: 2, item: null });
+    events.progress({ jobId: 'j1', phase: sayVerbatim('x'), processed: 1, total: 2, item: null });
 
     expect(said[0]?.message).toBe('A background job: x — 1 of 2');
   });
@@ -213,8 +244,8 @@ describe('createJobEventLog', () => {
     events.started({ kind: KIND, jobId: 'a', subject: null });
     events.started({ kind: 'library.scan', jobId: 'b', subject: null });
     said.length = 0;
-    events.progress({ jobId: 'a', phase: 'p', processed: 5, total: 10, item: null });
-    events.progress({ jobId: 'b', phase: 'p', processed: 1, total: 10, item: null });
+    events.progress({ jobId: 'a', phase: sayVerbatim('p'), processed: 5, total: 10, item: null });
+    events.progress({ jobId: 'b', phase: sayVerbatim('p'), processed: 1, total: 10, item: null });
 
     expect(said.map((line) => line.context?.jobId)).toStrictEqual(['a', 'b']);
   });
@@ -224,7 +255,7 @@ describe('createJobEventLog', () => {
 
     events.started({ kind: KIND, jobId: 'j1', subject: null });
     said.length = 0;
-    events.progress({ jobId: 'j1', phase: 'p', processed: 0, total: 0, item: null });
+    events.progress({ jobId: 'j1', phase: sayVerbatim('p'), processed: 0, total: 0, item: null });
 
     expect(said).toHaveLength(1);
   });

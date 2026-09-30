@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { generateTrickplay } from './generateTrickplay';
 import type { TrickplayParams, TrickplayStore } from './generateTrickplay';
@@ -253,7 +254,7 @@ describe('generateTrickplay', () => {
       store,
       transcoder,
       trickplay: PARAMS,
-      onProblem: (path, reason) => problems.push(`${path}: ${reason}`),
+      onProblem: (path, reason) => problems.push(`${path}: ${reason.message}`),
     });
 
     expect(problems).toEqual(['/media/a.mkv: ffmpeg failed']);
@@ -370,7 +371,7 @@ describe('generateTrickplay', () => {
       },
       transcoder,
       trickplay: PARAMS,
-      onProblem: (_path, reason) => problems.push(reason),
+      onProblem: (_path, reason) => problems.push(sayAgain(reason)),
     });
 
     await vi.advanceTimersByTimeAsync(45 * 60 * 1_000);
@@ -411,7 +412,7 @@ describe('generateTrickplay', () => {
       },
       transcoder,
       trickplay: PARAMS,
-      onProblem: (_path, reason) => problems.push(reason),
+      onProblem: (_path, reason) => problems.push(sayAgain(reason)),
     });
 
     await vi.advanceTimersByTimeAsync(20_000);
@@ -545,7 +546,7 @@ describe('generateTrickplay', () => {
       },
       transcoder,
       trickplay: PARAMS,
-      onProblem: (_path, reason) => problems.push(reason),
+      onProblem: (_path, reason) => problems.push(sayAgain(reason)),
     });
 
     expect(drawn).toEqual(['/media/broken.mkv']);

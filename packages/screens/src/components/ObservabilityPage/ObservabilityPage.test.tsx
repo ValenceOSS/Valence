@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -27,7 +28,7 @@ vi.mock('@ValenceClient/admin/fetchAdmin', async (importOriginal) => ({
         startedAtMs: 1_700_000_000_000,
         finishedAtMs: 1_700_000_005_000,
         progress: null,
-        errorMessage: 'no such encoder',
+        errorMessage: sayVerbatim('no such encoder'),
         createdAtMs: 1_700_000_000_000,
       },
     ],
@@ -58,8 +59,8 @@ vi.mock('@ValenceClient/admin/fetchJobRun', () => ({
 
 const definition: JobDefinition = {
   kind: 'library.scan',
-  label: 'Scan for changes',
-  description: 'Looks for new and changed files.',
+  label: sayVerbatim('Scan for changes'),
+  description: sayVerbatim('Looks for new and changed files.'),
   needsLibrary: true,
   destructive: false,
   takesParts: false,
@@ -326,7 +327,7 @@ describe('ObservabilityPage', () => {
       startedAtMs: 1_700_000_000_000,
       finishedAtMs: 1_700_000_005_000,
       progress: null,
-      errorMessage: 'no such encoder',
+      errorMessage: sayVerbatim('no such encoder'),
       createdAtMs: 1_700_000_000_000,
     });
 

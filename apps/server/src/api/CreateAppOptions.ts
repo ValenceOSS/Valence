@@ -1,3 +1,4 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import type {
   QueueControl,
   TranscoderStreamedFile,
@@ -171,7 +172,7 @@ type CreateAppOptions = {
     }[];
   }>;
   monitor?: () => Promise<JsonValue>;
-  stalledJobs?: () => (JobStall & { label: string })[];
+  stalledJobs?: () => (JobStall & { label: Said })[];
   artworkUsage?: () => { count: number; bytes: number; atMs: number } | null;
   bookPageUsage?: () => { count: number; bytes: number; atMs: number } | null;
   libraryBytes?: () => Promise<number>;

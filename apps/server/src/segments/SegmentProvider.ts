@@ -1,5 +1,8 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import type { MediaSegment, SegmentKind } from '@ValenceContracts/schemas/MediaSegment';
 import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
+import { saying } from '@ValenceI18n/saying';
 
 type SegmentCandidate = {
   mediaId: string;
@@ -90,7 +93,7 @@ type Detection = {
 const resolveSegments = async (
   providers: SegmentProvider[],
   group: SegmentCandidate[],
-  onProblem?: (provider: string, reason: string) => void,
+  onProblem?: (provider: string, reason: Said) => void,
   onItemDone?: () => void,
   correlationId?: string,
 ): Promise<Detection> => {
@@ -105,7 +108,12 @@ const resolveSegments = async (
       found = await provider.detect(group, onItemDone, correlationId);
       answered = true;
     } catch (error) {
-      onProblem?.(provider.name, error instanceof Error ? error.message : 'Detection failed.');
+      onProblem?.(
+        provider.name,
+        error instanceof Error
+          ? sayVerbatim(error.message)
+          : saying('server.segments.segmentProvider.detectionFailed'),
+      );
 
       continue;
     }

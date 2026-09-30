@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import {
   DownloadRemovalSchema,
@@ -46,7 +47,7 @@ describe('DownloadStreamFrameSchema', () => {
           kind: 'failed',
           title: 'Dune',
           clientName: 'qBittorrent',
-          problem: 'The tracker is gone',
+          problem: sayVerbatim('The tracker is gone'),
           at: '2026-09-19T00:00:00.000Z',
         },
       ],

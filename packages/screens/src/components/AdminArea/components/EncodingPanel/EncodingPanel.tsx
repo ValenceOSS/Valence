@@ -1,3 +1,4 @@
+import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { useCallback, useMemo, useState } from 'react';
 import { Badge } from '@ValenceUI/Badge';
@@ -130,7 +131,9 @@ const EncodingPanel = ({
         header: 'Why',
         enableSorting: false,
         cell: ({ row }) => (
-          <span className="font-body text-xs text-text-muted">{row.original.failure ?? '—'}</span>
+          <span className="font-body text-xs text-text-muted">
+            {sayAgainIfAny(row.original.failure) ?? '—'}
+          </span>
         ),
       },
     ],

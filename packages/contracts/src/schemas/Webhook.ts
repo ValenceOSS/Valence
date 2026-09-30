@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { MediaRequestKindSchema } from '@ValenceContracts/schemas/MediaRequest';
 import { MediaKindSchema } from './MediaKind';
 import { PLAYBACK_MODES } from '@ValenceContracts/functions/describePlaybackMode';
+import { say } from '@ValenceI18n/say';
 
 const WEBHOOK_EVENTS = [
   'webhook.test',
@@ -66,58 +67,56 @@ const isSubscribableEvent = (event: WebhookEvent): event is WebhookSubscribableE
   WebhookSubscribableEventSchema.safeParse(event).success;
 
 const WEBHOOK_EVENT_LABELS: Record<WebhookEvent, string> = {
-  'webhook.test': 'Test delivery',
-  'job.completed': 'Job finished',
-  'job.failed': 'Job failed',
-  'job.stalled': 'Job failing every time',
-  'job.working': 'Job working again',
-  'library.scanned': 'Library scanned',
-  'catalogue.unreachable': 'Catalogue unreachable',
-  'catalogue.reachable': 'Catalogue reachable',
-  'transcoder.unreachable': 'Transcoder unreachable',
-  'transcoder.reachable': 'Transcoder answering',
-  'disk.low': 'Disk low on room',
-  'disk.recovered': 'Disk has room',
-  'requests.unreachable': 'Requests unreachable',
-  'requests.reachable': 'Requests answering',
-  'requests.vpnDown': 'VPN down',
-  'requests.vpnUp': 'VPN up',
-  'requests.indexerFailing': 'Indexer failing',
-  'requests.indexerWorking': 'Indexer working again',
-  'requests.downloadStarted': 'Download started',
-  'requests.downloadFailed': 'Download failed',
-  'requests.made': 'Request made',
-  'requests.approved': 'Request approved',
-  'requests.refused': 'Request refused',
-  'requests.chosen': 'Release chosen',
-  'requests.filed': 'Request filed',
-  'requests.available': 'Request ready',
-  'auth.succeeded': 'Signed in',
-  'auth.failed': 'Sign-in refused',
-  'account.created': 'Account made',
-  'account.deleted': 'Account deleted',
-  'account.roleChanged': 'Role changed',
-  'session.started': 'Opened Valence',
-  'session.ended': 'Left Valence',
-  'media.added': 'Something arrived',
-  'media.removed': 'Something left',
-  'playback.started': 'Started watching',
-  'playback.stopped': 'Stopped watching',
-  'plugin.event': 'Plugin reported',
+  'webhook.test': say('contracts.schemas.webhook.testDelivery'),
+  'job.completed': say('contracts.schemas.webhook.jobFinished'),
+  'job.failed': say('contracts.schemas.webhook.jobFailed'),
+  'job.stalled': say('contracts.schemas.webhook.jobFailingEveryTime'),
+  'job.working': say('contracts.schemas.webhook.jobWorkingAgain'),
+  'library.scanned': say('contracts.schemas.webhook.libraryScanned'),
+  'catalogue.unreachable': say('contracts.schemas.webhook.catalogueUnreachable'),
+  'catalogue.reachable': say('contracts.schemas.webhook.catalogueReachable'),
+  'transcoder.unreachable': say('contracts.schemas.webhook.transcoderUnreachable'),
+  'transcoder.reachable': say('contracts.schemas.webhook.transcoderAnswering'),
+  'disk.low': say('contracts.schemas.webhook.diskLowOnRoom'),
+  'disk.recovered': say('contracts.schemas.webhook.diskHasRoom'),
+  'requests.unreachable': say('contracts.schemas.webhook.requestsUnreachable'),
+  'requests.reachable': say('contracts.schemas.webhook.requestsAnswering'),
+  'requests.vpnDown': say('contracts.schemas.webhook.vPNDown'),
+  'requests.vpnUp': say('contracts.schemas.webhook.vPNUp'),
+  'requests.indexerFailing': say('contracts.schemas.webhook.indexerFailing'),
+  'requests.indexerWorking': say('contracts.schemas.webhook.indexerWorkingAgain'),
+  'requests.downloadStarted': say('contracts.schemas.webhook.downloadStarted'),
+  'requests.downloadFailed': say('contracts.schemas.webhook.downloadFailed'),
+  'requests.made': say('contracts.schemas.webhook.requestMade'),
+  'requests.approved': say('contracts.schemas.webhook.requestApproved'),
+  'requests.refused': say('contracts.schemas.webhook.requestRefused'),
+  'requests.chosen': say('common.releaseChosen'),
+  'requests.filed': say('contracts.schemas.webhook.requestFiled'),
+  'requests.available': say('contracts.schemas.webhook.requestReady'),
+  'auth.succeeded': say('common.signedIn'),
+  'auth.failed': say('contracts.schemas.webhook.signInRefused'),
+  'account.created': say('contracts.schemas.webhook.accountMade'),
+  'account.deleted': say('contracts.schemas.webhook.accountDeleted'),
+  'account.roleChanged': say('contracts.schemas.webhook.roleChanged'),
+  'session.started': say('contracts.schemas.webhook.openedValence'),
+  'session.ended': say('contracts.schemas.webhook.leftValence'),
+  'media.added': say('contracts.schemas.webhook.somethingArrived'),
+  'media.removed': say('contracts.schemas.webhook.somethingLeft'),
+  'playback.started': say('contracts.schemas.webhook.startedWatching'),
+  'playback.stopped': say('contracts.schemas.webhook.stoppedWatching'),
+  'plugin.event': say('contracts.schemas.webhook.pluginReported'),
 };
 
 const WEBHOOK_EVENT_NOTES: Partial<Record<WebhookEvent, string>> = {
-  'auth.failed': 'Rate-limited attempts are refused before Valence sees them.',
-  'requests.indexerFailing': 'Sent after three failures in a row. Five turn the indexer off.',
-  'requests.downloadStarted': 'Sent when a release is handed to a download client.',
-  'requests.available': 'Sent once the library has found what was filed.',
-  'playback.started': 'Names the person and what they are watching.',
-  'playback.stopped': 'Names the person and what they were watching.',
-  'session.started':
-    'Sent when somebody opens Valence, not when they sign in, and says where from.',
-  'session.ended': 'Sent a minute after the tab goes, so a reload is not a leaving.',
-  'plugin.event':
-    'Sent when an installed plugin reports something it said it would, such as an import finishing.',
+  'auth.failed': say('contracts.schemas.webhook.rateLimitedAttemptsAreRefusedBefore'),
+  'requests.indexerFailing': say('contracts.schemas.webhook.sentAfterThreeFailuresInA'),
+  'requests.downloadStarted': say('contracts.schemas.webhook.sentWhenAReleaseIsHanded'),
+  'requests.available': say('contracts.schemas.webhook.sentOnceTheLibraryHasFound'),
+  'playback.started': say('contracts.schemas.webhook.namesThePersonAndWhatThey2'),
+  'playback.stopped': say('contracts.schemas.webhook.namesThePersonAndWhatThey'),
+  'session.started': say('contracts.schemas.webhook.sentWhenSomebodyOpensValenceNot'),
+  'session.ended': say('contracts.schemas.webhook.sentAMinuteAfterTheTab'),
+  'plugin.event': say('contracts.schemas.webhook.sentWhenAnInstalledPluginReports'),
 };
 
 type WebhookEventGroup = {
@@ -129,7 +128,7 @@ type WebhookEventGroup = {
 const WEBHOOK_EVENT_GROUPS: readonly WebhookEventGroup[] = [
   {
     id: 'server',
-    label: 'The server',
+    label: say('contracts.schemas.webhook.theServer'),
     events: [
       'job.completed',
       'job.failed',
@@ -146,7 +145,7 @@ const WEBHOOK_EVENT_GROUPS: readonly WebhookEventGroup[] = [
   },
   {
     id: 'requests',
-    label: 'Requests',
+    label: say('common.requests'),
     events: [
       'requests.unreachable',
       'requests.reachable',
@@ -166,7 +165,7 @@ const WEBHOOK_EVENT_GROUPS: readonly WebhookEventGroup[] = [
   },
   {
     id: 'people',
-    label: 'People',
+    label: say('common.people'),
     events: [
       'auth.succeeded',
       'auth.failed',
@@ -179,17 +178,17 @@ const WEBHOOK_EVENT_GROUPS: readonly WebhookEventGroup[] = [
   },
   {
     id: 'library',
-    label: 'The library',
+    label: say('common.theLibrary'),
     events: ['media.added', 'media.removed'],
   },
   {
     id: 'watching',
-    label: 'Watching',
+    label: say('common.watching'),
     events: ['playback.started', 'playback.stopped'],
   },
   {
     id: 'plugins',
-    label: 'Plugins',
+    label: say('common.plugins'),
     events: ['plugin.event'],
   },
 ];

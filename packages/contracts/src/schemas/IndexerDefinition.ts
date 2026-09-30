@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { IndexerCategorySchema } from './Indexer';
 
 const IndexerPrivacySchema = z.enum(['public', 'semi-private', 'private']);
@@ -35,7 +36,7 @@ const IndexerCatalogueSchema = z.object({
   definitions: z.array(IndexerDefinitionSummarySchema),
   updatedAt: z.string().datetime().nullable(),
   source: z.string(),
-  problem: z.string().nullable(),
+  problem: SaidSchema.nullable(),
 });
 
 type IndexerPrivacy = z.infer<typeof IndexerPrivacySchema>;

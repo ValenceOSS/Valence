@@ -1,3 +1,4 @@
+import { bodyOf } from '@ValenceI18n/bodyOf';
 import { describePictureFault } from '@ValenceServer/profiles/describePictureFault';
 import { ARTWORK_LIMITS } from '@ValenceServer/playlists/ARTWORK_LIMITS';
 import type { OpenAPIHono } from '@hono/zod-openapi';
@@ -33,6 +34,7 @@ import { deviceOwnerOf } from '@ValenceServer/devices/deviceOwnerOf';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import type { Permission } from '@ValenceContracts/schemas/Permission';
 import type { MusicServices } from './MusicServices';
+import { refuse } from '@ValenceI18n/refuse';
 
 type MusicRouteOptions = {
   viewerOf: (headers: Headers) => Promise<Viewer | null>;
@@ -40,9 +42,9 @@ type MusicRouteOptions = {
   requires: (headers: Headers, permission: Permission) => Promise<boolean>;
 };
 
-const NOBODY = { error: 'Nobody is signed in.' } as const;
+const NOBODY = refuse('error.common.nobodyIsSignedIn');
 
-const NO_PROFILE = { error: 'Choose a profile first.' } as const;
+const NO_PROFILE = refuse('error.music.chooseAProfileFirst');
 
 const PICKS_LIMIT = 30;
 
@@ -120,7 +122,7 @@ const registerMusicRoutes = (
     const found = await music.library.readAlbum(viewer, context.req.valid('param').albumId);
 
     return found === null
-      ? context.json({ error: 'No such album.' }, 404)
+      ? context.json(refuse('error.common.noSuchAlbum'), 404)
       : context.json(found, 200);
   });
 
@@ -135,7 +137,7 @@ const registerMusicRoutes = (
     const bytes = path === null ? null : await music.readImage(path);
 
     if (bytes === null) {
-      return context.json({ error: 'No cover for that album.' }, 404);
+      return context.json(refuse('error.music.noCoverForThatAlbum'), 404);
     }
 
     return context.body(bytes.slice().buffer, 200, {
@@ -154,7 +156,7 @@ const registerMusicRoutes = (
     const found = await music.library.readArtist(viewer, context.req.valid('param').artistId);
 
     return found === null
-      ? context.json({ error: 'No such artist.' }, 404)
+      ? context.json(refuse('error.music.noSuchArtist'), 404)
       : context.json(found, 200);
   });
 
@@ -169,7 +171,7 @@ const registerMusicRoutes = (
     const bytes = path === null ? null : await music.readImage(path);
 
     if (bytes === null) {
-      return context.json({ error: 'No picture of that artist.' }, 404);
+      return context.json(refuse('error.music.noPictureOfThatArtist'), 404);
     }
 
     return context.body(bytes.slice().buffer, 200, {
@@ -189,7 +191,7 @@ const registerMusicRoutes = (
 
     return kept
       ? context.json({ isFavourite: true }, 200)
-      : context.json({ error: 'No such artist.' }, 404);
+      : context.json(refuse('error.music.noSuchArtist'), 404);
   });
 
   app.openapi(unfollowArtistRoute, async (context) => {
@@ -237,7 +239,7 @@ const registerMusicRoutes = (
     const detail = await music.library.readArtist(viewer, context.req.param('artistId'));
 
     if (detail === null) {
-      return context.json({ error: 'No such artist.' }, 404);
+      return context.json(refuse('error.music.noSuchArtist'), 404);
     }
 
     return context.json(
@@ -262,7 +264,7 @@ const registerMusicRoutes = (
     );
 
     return picture === null
-      ? context.json({ error: 'No cover was found for that record.' }, 404)
+      ? context.json(refuse('error.music.noCoverWasFoundForThat'), 404)
       : context.body(picture.body, 200, {
           'content-type': picture.contentType,
           'cache-control': 'private, max-age=604800',
@@ -281,7 +283,7 @@ const registerMusicRoutes = (
         : await music.pictures.artistPicture(name, context.req.query('cover') ?? null);
 
     return picture === null
-      ? context.json({ error: 'No picture was found for that artist.' }, 404)
+      ? context.json(refuse('error.music.noPictureWasFoundForThat'), 404)
       : context.body(picture.body, 200, {
           'content-type': picture.contentType,
           'cache-control': 'private, max-age=604800',
@@ -298,7 +300,7 @@ const registerMusicRoutes = (
     const artwork = await music.playlists.readArtwork(viewer, context.req.param('playlistId'));
 
     if (artwork === null) {
-      return context.json({ error: 'That playlist has no cover of its own.' }, 404);
+      return context.json(refuse('error.music.thatPlaylistHasNoCoverOf'), 404);
     }
 
     return context.body(artwork.body.slice().buffer, 200, {
@@ -327,13 +329,13 @@ const registerMusicRoutes = (
     });
 
     if (wrong === 'notYours') {
-      return context.json({ error: 'That playlist is not yours to change.' }, 404);
+      return context.json(refuse('error.music.thatPlaylistIsNotYoursTo'), 404);
     }
 
     if (wrong !== null) {
       const said = describePictureFault(wrong, ARTWORK_LIMITS);
 
-      return context.json({ error: said.error }, said.status);
+      return context.json(bodyOf(said), said.status);
     }
 
     return context.body(null, 204);
@@ -348,7 +350,7 @@ const registerMusicRoutes = (
 
     return (await music.playlists.dropArtwork(viewer, context.req.param('playlistId')))
       ? context.body(null, 204)
-      : context.json({ error: 'That playlist is not yours to change.' }, 404);
+      : context.json(refuse('error.music.thatPlaylistIsNotYoursTo'), 404);
   });
 
   app.openapi(listPicksRoute, async (context) => {
@@ -398,7 +400,7 @@ const registerMusicRoutes = (
     const lyrics = await music.library.readLyrics(viewer, context.req.valid('param').trackId);
 
     return lyrics === null
-      ? context.json({ error: 'No lyrics for that track.' }, 404)
+      ? context.json(refuse('error.music.noLyricsForThatTrack'), 404)
       : context.json(lyrics, 200);
   });
 
@@ -412,7 +414,7 @@ const registerMusicRoutes = (
     const file = await music.library.readTrackFile(viewer, context.req.valid('param').trackId);
 
     if (file === null) {
-      return context.json({ error: 'No such track.' }, 404);
+      return context.json(refuse('error.common.noSuchTrack'), 404);
     }
 
     const streamed = await music.stream(
@@ -422,7 +424,7 @@ const registerMusicRoutes = (
     );
 
     if (streamed === null) {
-      return context.json({ error: 'That track could not be read.' }, 404);
+      return context.json(refuse('error.common.thatTrackCouldNotBeRead'), 404);
     }
 
     const headers: Record<string, string> = {
@@ -463,7 +465,7 @@ const registerMusicRoutes = (
 
     return music.devices.report(listener, clientId, nowPlaying)
       ? context.json({ ok: true }, 200)
-      : context.json({ error: 'That device is not connected.' }, 404);
+      : context.json(refuse('error.common.thatDeviceIsNotConnected'), 404);
   });
 
   app.openapi(commandDeviceRoute, async (context) => {
@@ -483,7 +485,7 @@ const registerMusicRoutes = (
 
     return sent
       ? context.json({ ok: true }, 200)
-      : context.json({ error: 'That device is not one of yours, or is not there.' }, 404);
+      : context.json(refuse('error.common.thatDeviceIsNotOneOf'), 404);
   });
 
   app.openapi(listPlaylistsRoute, async (context) => {
@@ -518,7 +520,7 @@ const registerMusicRoutes = (
     const found = await music.playlists.read(viewer, context.req.valid('param').playlistId);
 
     return found === null
-      ? context.json({ error: 'No such playlist.' }, 404)
+      ? context.json(refuse('error.music.noSuchPlaylist'), 404)
       : context.json(found, 200);
   });
 
@@ -536,7 +538,7 @@ const registerMusicRoutes = (
     );
 
     return changed === null
-      ? context.json({ error: 'That playlist is not yours to change.' }, 404)
+      ? context.json(refuse('error.music.thatPlaylistIsNotYoursTo'), 404)
       : context.json(changed, 200);
   });
 
@@ -555,7 +557,7 @@ const registerMusicRoutes = (
 
     return removed
       ? context.json({ removed: true }, 200)
-      : context.json({ error: 'That playlist is not yours to delete.' }, 404);
+      : context.json(refuse('error.music.thatPlaylistIsNotYoursTo2'), 404);
   });
 
   app.openapi(addPlaylistEntriesRoute, async (context) => {
@@ -572,7 +574,7 @@ const registerMusicRoutes = (
     );
 
     return added === null
-      ? context.json({ error: 'That playlist is not yours to change.' }, 404)
+      ? context.json(refuse('error.music.thatPlaylistIsNotYoursTo'), 404)
       : context.json({ added }, 200);
   });
 
@@ -593,7 +595,7 @@ const registerMusicRoutes = (
 
     return moved
       ? context.json({ moved: true }, 200)
-      : context.json({ error: 'That entry could not be moved.' }, 404);
+      : context.json(refuse('error.music.thatEntryCouldNotBeMoved'), 404);
   });
 
   app.openapi(dropPlaylistEntryRoute, async (context) => {
@@ -608,7 +610,7 @@ const registerMusicRoutes = (
 
     return removed
       ? context.json({ removed: true }, 200)
-      : context.json({ error: 'That entry is not in a playlist of yours.' }, 404);
+      : context.json(refuse('error.music.thatEntryIsNotInA'), 404);
   });
 };
 

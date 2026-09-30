@@ -1,8 +1,13 @@
+import { saidBySandbox } from '@ValenceServer/plugins/sandbox/saidBySandbox';
+import { saying } from '@ValenceI18n/saying';
+import { SaidError } from '@ValenceI18n/SaidError';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { fork } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
 import { FromSandboxSchema } from './SandboxProtocol';
 import { sandboxEntryPath } from './sandboxEntryPath';
 import type { FromSandbox, SandboxHandler, ToSandbox } from './SandboxProtocol';
+import { say } from '@ValenceI18n/say';
 
 type SandboxLimits = {
   memoryBytes: number;
@@ -16,7 +21,7 @@ type CreatePluginSandboxOptions<TScope> = {
   methods: readonly string[];
   onHostCall: (method: string, args: string, scope: TScope | null) => Promise<string>;
   onLog?: (level: 'info' | 'warn' | 'error', message: string) => void;
-  onStopped?: (reason: string) => void;
+  onStopped?: (reason: Said) => void;
   limits?: Partial<SandboxLimits>;
   spawn?: () => ChildProcess;
 };
@@ -95,9 +100,9 @@ const createPluginSandbox = <TScope>(
     }
   };
 
-  const failEverything = (reason: string): void => {
+  const failEverything = (reason: Said): void => {
     for (const [, pending] of waiting) {
-      pending.reject(new Error(reason));
+      pending.reject(new SaidError(reason));
     }
 
     waiting.clear();
@@ -150,7 +155,7 @@ const createPluginSandbox = <TScope>(
         if (isRunning) {
           isRunning = false;
           child.kill('SIGKILL');
-          failEverything('The plugin was stopped.');
+          failEverything(saying('server.sandbox.pluginSandbox.thePluginWasStopped'));
         }
       },
       isRunning: () => isRunning,
@@ -167,7 +172,7 @@ const createPluginSandbox = <TScope>(
         case 'loadFailed':
           clearTimeout(loading);
           sandbox.stop();
-          reject(new Error(message.problem));
+          reject(new SaidError(saidBySandbox(message.problem)));
 
           return;
         case 'answer': {
@@ -178,7 +183,7 @@ const createPluginSandbox = <TScope>(
           if (message.ok) {
             pending?.resolve(message.value ?? 'null');
           } else {
-            pending?.reject(new Error(message.error ?? 'The plugin failed.'));
+            pending?.reject(new SaidError(saidBySandbox(message.error ?? { kind: 'failed' })));
           }
 
           return;
@@ -200,7 +205,10 @@ const createPluginSandbox = <TScope>(
               type: 'hostAnswer',
               id: message.id,
               ok: false,
-              error: error instanceof Error ? error.message : 'Valence refused that.',
+              error:
+                error instanceof Error
+                  ? error.message
+                  : say('server.sandbox.pluginSandbox.valenceRefusedThat'),
             });
           }
 
@@ -210,8 +218,8 @@ const createPluginSandbox = <TScope>(
 
           return;
         case 'stopped':
-          options.onStopped?.(message.reason);
-          failEverything(message.reason);
+          options.onStopped?.(saidBySandbox(message.reason));
+          failEverything(saidBySandbox(message.reason));
 
           return;
       }
@@ -240,12 +248,16 @@ const createPluginSandbox = <TScope>(
 
       isRunning = false;
       clearTimeout(loading);
-      failEverything('The plugin stopped.');
+      failEverything(saying('server.sandbox.pluginSandbox.thePluginStopped'));
 
       if (!isLoaded) {
         reject(new Error(`The plugin's process ended before it loaded (${String(code)}).`));
       } else if (wasRunning) {
-        options.onStopped?.(`The plugin's process ended (${String(code)}).`);
+        options.onStopped?.(
+          saying('server.sandbox.pluginSandbox.thePluginsProcessEndedCode', {
+            code: String(code),
+          }),
+        );
       }
     });
 

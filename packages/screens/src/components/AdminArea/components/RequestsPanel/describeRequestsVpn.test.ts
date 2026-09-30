@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { NO_WORK, SOLVER_NOT_USED } from '@ValenceContracts/schemas/Requests';
 import { describeRequestsVpn } from './describeRequestsVpn';
@@ -52,7 +53,12 @@ describe('describeRequestsVpn', () => {
   it('says why the tunnel is down', () => {
     expect(
       describeRequestsVpn(
-        hearing({ ...A_VPN, isUp: false, problem: 'The tunnel is stopped', problemCode: null }),
+        hearing({
+          ...A_VPN,
+          isUp: false,
+          problem: sayVerbatim('The tunnel is stopped'),
+          problemCode: null,
+        }),
       ),
     ).toEqual({
       label: 'Down',

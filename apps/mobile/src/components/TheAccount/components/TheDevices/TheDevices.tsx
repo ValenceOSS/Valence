@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AGroup } from '@ValenceMobile/components/AGroup/AGroup';
 import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
@@ -77,7 +78,9 @@ const TheDevices = () => {
         {devices.data.map((device) => (
           <View key={device.id} style={styles.device}>
             <View style={styles.words}>
-              <Words>{device.isCurrent ? `${device.name} · This phone` : device.name}</Words>
+              <Words>
+                {device.isCurrent ? `${sayAgain(device.name)} · This phone` : sayAgain(device.name)}
+              </Words>
               <Words size="small" tone="muted">
                 {[device.address, `Signed in ${saidWhen(device.signedInAt)}`]
                   .filter((part) => part !== null)
@@ -88,9 +91,9 @@ const TheDevices = () => {
             {device.isCurrent ? null : (
               <Button
                 tone="quiet"
-                label={`Sign out ${device.name}`}
+                label={`Sign out ${sayAgain(device.name)}`}
                 onPress={() => {
-                  end(device.id, device.name);
+                  end(device.id, sayAgain(device.name));
                 }}
               >
                 Sign out

@@ -1,9 +1,10 @@
 import type { ReencodeCodec } from '@ValenceContracts/schemas/Reencode';
+import { say } from '@ValenceI18n/say';
 
 const TRADES = {
-  h264: 'Played by everything, including a fifteen year old television. The largest of the three for the same picture.',
-  hevc: 'About half the size of H.264 for the same picture, and played by most things made since about 2016. Anything older converts it on every play.',
-  av1: 'The smallest of the three, and the least widely played. A device that cannot decode it converts on every play — which trades disk once for processor for ever.',
+  h264: say('core.describeCodecTrade.playedByEverythingIncludingAFifteen'),
+  hevc: say('core.describeCodecTrade.aboutHalfTheSizeOfH'),
+  av1: say('core.describeCodecTrade.theSmallestOfTheThreeAnd'),
 } as const satisfies Record<ReencodeCodec, string>;
 
 /**

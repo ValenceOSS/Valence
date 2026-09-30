@@ -1,3 +1,4 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import type { DeviceProfile } from '@ValenceContracts/schemas/DeviceProfile';
 import type { Download, DownloadQuality, Holding } from '@ValenceContracts/schemas/Download';
 import type { TranscoderStreamedFile } from '@ValenceServer/transcoder/TranscoderClient';
@@ -24,7 +25,7 @@ type FollowedDownload = {
   accountId: string;
   download: Download;
   isNowReady: boolean;
-  problem: string | null;
+  problem: Said | null;
 };
 
 type DownloadService = {

@@ -3,6 +3,7 @@ import type {
   PresenceEntry,
   PresenceService,
 } from '@ValenceServer/presence/PresenceService';
+import { say } from '@ValenceI18n/say';
 
 type DeviceOwner = {
   accountId: string;
@@ -114,7 +115,10 @@ const createDeviceRegistry = <Report>({
 
       const from = devices.find((entry) => entry.clientId === fromClientId);
 
-      return presence.tell(toClientId, event(from?.deviceLabel ?? 'Another device'));
+      return presence.tell(
+        toClientId,
+        event(from?.deviceLabel ?? say('server.devices.deviceRegistry.anotherDevice')),
+      );
     },
   };
 };

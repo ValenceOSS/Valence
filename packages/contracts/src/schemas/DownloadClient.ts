@@ -1,8 +1,10 @@
 import { z } from 'zod';
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { ProblemCodeFieldSchema } from './ProblemCode';
 import { LibraryKindSchema } from './Library';
 import type { ReleaseProtocol } from './Indexer';
 import type { LibraryKind } from './Library';
+import { say } from '@ValenceI18n/say';
 
 const DOWNLOAD_CLIENT_KINDS = ['qbittorrent', 'transmission', 'sabnzbd', 'nzbget'] as const;
 
@@ -22,7 +24,7 @@ const CategorySchema = z
   .trim()
   .min(1)
   .max(60)
-  .regex(/^[\w .-]+$/, 'Letters, numbers, spaces, dots, dashes and underscores only');
+  .regex(/^[\w .-]+$/, say('contracts.schemas.downloadClient.lettersNumbersSpacesDotsDashesAnd'));
 
 const PathSchema = z
   .string()
@@ -48,7 +50,7 @@ const DownloadCategoriesSchema = z
     (categories) =>
       new Set(Object.values(categories).map((category) => category.toLowerCase())).size ===
       LibraryKindSchema.options.length,
-    'Each kind needs a category of its own',
+    say('contracts.schemas.downloadClient.eachKindNeedsACategoryOf'),
   );
 
 const DownloadClientSchema = z.object({
@@ -103,7 +105,7 @@ const DownloadClientChangeSchema = z.object({
 
 const DownloadClientTestSchema = z.object({
   isWorking: z.boolean(),
-  problem: z.string().nullable(),
+  problem: SaidSchema.nullable(),
   problemCode: ProblemCodeFieldSchema,
   version: z.string().nullable(),
 });

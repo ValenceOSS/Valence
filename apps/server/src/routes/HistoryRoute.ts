@@ -1,6 +1,7 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 
-const HistoryError = z.object({ error: z.string() }).openapi('HistoryError');
+const HistoryError = RefusalSchema.openapi('HistoryError');
 
 const Viewing = z
   .object({

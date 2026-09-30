@@ -114,7 +114,7 @@ describe('checking a surface before a client sees it', () => {
   });
 
   it('replaces an answer that is not JSON', () => {
-    expect(cleanSurface('not json', manifest, assets).problem).toBe(
+    expect(cleanSurface('not json', manifest, assets).problem).toEqual(
       'The plugin answered with something that is not JSON.',
     );
   });

@@ -1,3 +1,4 @@
+/* eslint-disable valence/no-hard-coded-strings -- a definition written out for tests */
 /**
  * A small definition, written out, for tests of everything that keeps or describes definitions.
  *

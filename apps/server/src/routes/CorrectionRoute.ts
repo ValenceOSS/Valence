@@ -1,8 +1,9 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { BookMatchListSchema } from '@ValenceContracts/schemas/BookMatch';
 import { MusicCatalogueHitSchema } from '@ValenceContracts/schemas/MediaRequest';
 
-const CorrectionError = z.object({ error: z.string() }).openapi('CorrectionError');
+const CorrectionError = RefusalSchema.openapi('CorrectionError');
 
 const json = <Schema extends z.ZodType>(description: string, schema: Schema) => ({
   description,

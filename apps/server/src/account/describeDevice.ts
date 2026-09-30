@@ -1,3 +1,7 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
+import { saying } from '@ValenceI18n/saying';
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+/* eslint-disable valence/no-hard-coded-strings -- browsers' and systems' own names, and the marks their user agents carry */
 const BROWSERS = [
   { named: 'Edge', marks: ['Edg/'] },
   { named: 'Opera', marks: ['OPR/', 'Opera'] },
@@ -14,6 +18,7 @@ const SYSTEMS = [
   { named: 'Windows', marks: ['Windows'] },
   { named: 'Linux', marks: ['Linux', 'X11'] },
 ] as const;
+/* eslint-enable valence/no-hard-coded-strings */
 
 const KEPT = 40;
 
@@ -31,12 +36,12 @@ const OUR_APP = /^Valence \((?<device>[^)]+)\)/u;
  * @param userAgent - What the browser sent, if it sent anything.
  * @returns The browser and system, as a person would say them.
  */
-const describeDevice = (userAgent: string | null | undefined): string => {
+const describeDevice = (userAgent: string | null | undefined): Said => {
   const said = userAgent ?? '';
   const app = OUR_APP.exec(said)?.groups?.['device'];
 
   if (app !== undefined) {
-    return `Valence on ${app}`;
+    return saying('server.account.device.valenceOn', { device: app });
   }
 
   const browser = BROWSERS.find((candidate) =>
@@ -48,26 +53,34 @@ const describeDevice = (userAgent: string | null | undefined): string => {
   )?.named;
 
   if (said.includes('Electron/')) {
-    return system === undefined ? 'Valence desktop app' : `Valence desktop app on ${system}`;
+    return system === undefined
+      ? saying('server.account.device.desktopApp')
+      : saying('server.account.device.desktopAppOn', { system });
   }
 
   if (said.startsWith('Valence/') && said.includes('CFNetwork/')) {
-    return 'Valence on an Apple device';
+    return saying('server.account.device.appleDevice');
   }
 
   if (said.startsWith('okhttp/')) {
-    return 'Valence on Android';
+    return saying('server.account.device.android');
   }
 
   if (browser === undefined && system === undefined) {
-    return said.trim() === '' ? 'Unknown device' : said.slice(0, KEPT);
+    return said.trim() === ''
+      ? saying('server.realtime.realtimeHandler.unknownDevice')
+      : sayVerbatim(said.slice(0, KEPT));
   }
 
   if (browser === undefined) {
-    return system ?? 'Unknown device';
+    return system === undefined
+      ? saying('server.realtime.realtimeHandler.unknownDevice')
+      : sayVerbatim(system);
   }
 
-  return system === undefined ? browser : `${browser} on ${system}`;
+  return system === undefined
+    ? sayVerbatim(browser)
+    : saying('server.account.device.browserOn', { browser, system });
 };
 
 export { describeDevice };

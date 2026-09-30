@@ -1,6 +1,7 @@
 import { APIError, createAuthEndpoint, sessionMiddleware } from 'better-auth/api';
 import { z } from 'zod';
 import type { BetterAuthPlugin } from 'better-auth';
+import { say } from '@ValenceI18n/say';
 
 const CONFIRMATION = '/confirmation';
 
@@ -61,7 +62,7 @@ const confirmItIsYou = () =>
             (await context.context.password.verify({ hash, password: context.body.password }));
 
           if (!isRight) {
-            throw new APIError('BAD_REQUEST', { message: 'That is not your password.' });
+            throw new APIError('BAD_REQUEST', { message: say('common.thatIsNotYourPassword') });
           }
 
           await context.context.internalAdapter.updateSession(session.token, {

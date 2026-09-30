@@ -1,5 +1,7 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
+import type { FinishedJob } from './createJobQueue';
 
 type DeliveredJob = { id: string; data: JsonValue };
 
@@ -249,7 +251,7 @@ describe('createJobQueue', () => {
       connectionString: 'postgres://flux',
       handlers: {
         [CHECK_DISK]: (jobId) => {
-          queue.reportProgress(jobId, 'checking', 1, 2);
+          queue.reportProgress(jobId, sayVerbatim('checking'), 1, 2);
 
           return Promise.resolve();
         },
@@ -270,7 +272,7 @@ describe('createJobQueue', () => {
   });
 
   it('hands the failure on where the handler is what failed', async () => {
-    const onFinished = vi.fn();
+    const onFinished = vi.fn<(finished: FinishedJob) => void>();
 
     await (
       await createJobQueue({
@@ -283,9 +285,8 @@ describe('createJobQueue', () => {
     await expect(deliver(CHECK_DISK, [{ id: 'job-3', data: null }])).rejects.toThrow(
       'the disk is gone',
     );
-    expect(onFinished).toHaveBeenCalledWith(
-      expect.objectContaining({ jobId: 'job-3', reason: 'the disk is gone' }),
-    );
+    expect(onFinished).toHaveBeenCalledWith(expect.objectContaining({ jobId: 'job-3' }));
+    expect(onFinished.mock.calls.at(-1)?.[0].reason?.message).toBe('the disk is gone');
   });
 
   it('runs nothing until it is told to start, so a handler cannot fire mid-assembly', async () => {

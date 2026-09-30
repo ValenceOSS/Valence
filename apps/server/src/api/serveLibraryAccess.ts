@@ -12,6 +12,7 @@ import {
 } from '@ValenceServer/routes/LibraryAccessRoute';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
+import { refuse } from '@ValenceI18n/refuse';
 
 /**
  * Registers the library access endpoints.
@@ -27,7 +28,7 @@ const serveLibraryAccess = (app: OpenAPIHono, context: AppContext): void => {
     const refusal = await mayDecideAccess(context.req.raw.headers, userId);
 
     if (refusal !== null) {
-      return context.json({ error: refusal }, 403);
+      return context.json(refusal, 403);
     }
 
     const [shelves, refused, ceilings] = await Promise.all([
@@ -59,11 +60,11 @@ const serveLibraryAccess = (app: OpenAPIHono, context: AppContext): void => {
     const refusal = await mayDecideAccess(context.req.raw.headers, userId);
 
     if (refusal !== null) {
-      return context.json({ error: refusal }, 403);
+      return context.json(refusal, 403);
     }
 
     if ((await library.list(asTheServer)).every((shelf) => shelf.id !== libraryId)) {
-      return context.json({ error: 'No such library.' }, 404);
+      return context.json(refuse('error.common.noSuchLibrary'), 404);
     }
 
     await library.allowLibrary(userId, libraryId);
@@ -76,11 +77,11 @@ const serveLibraryAccess = (app: OpenAPIHono, context: AppContext): void => {
     const refusal = await mayDecideAccess(context.req.raw.headers, userId);
 
     if (refusal !== null) {
-      return context.json({ error: refusal }, 403);
+      return context.json(refusal, 403);
     }
 
     if ((await library.list(asTheServer)).every((shelf) => shelf.id !== libraryId)) {
-      return context.json({ error: 'No such library.' }, 404);
+      return context.json(refuse('error.common.noSuchLibrary'), 404);
     }
 
     await library.refuseLibrary(userId, libraryId);
@@ -93,11 +94,11 @@ const serveLibraryAccess = (app: OpenAPIHono, context: AppContext): void => {
     const refusal = await mayDecideAccess(context.req.raw.headers, userId);
 
     if (refusal !== null) {
-      return context.json({ error: refusal }, 403);
+      return context.json(refusal, 403);
     }
 
     if ((await library.list(asTheServer)).every((shelf) => shelf.id !== libraryId)) {
-      return context.json({ error: 'No such library.' }, 404);
+      return context.json(refuse('error.common.noSuchLibrary'), 404);
     }
 
     const { maximumAge, allowsUnrated } = context.req.valid('json');
@@ -112,7 +113,7 @@ const serveLibraryAccess = (app: OpenAPIHono, context: AppContext): void => {
     const refusal = await mayDecideAccess(context.req.raw.headers, userId);
 
     if (refusal !== null) {
-      return context.json({ error: refusal }, 403);
+      return context.json(refusal, 403);
     }
 
     await library.clearCeiling(userId, libraryId);
@@ -125,7 +126,7 @@ const serveLibraryAccess = (app: OpenAPIHono, context: AppContext): void => {
     const refusal = await mayDecideAccess(context.req.raw.headers, userId);
 
     if (refusal !== null) {
-      return context.json({ error: refusal }, 403);
+      return context.json(refusal, 403);
     }
 
     return context.json({ exceptions: await library.exceptionsFor(userId) }, 200);
@@ -133,7 +134,7 @@ const serveLibraryAccess = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(readExceptionsOnRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'account.manage'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
     const { kind, subjectId } = context.req.valid('param');
@@ -146,14 +147,14 @@ const serveLibraryAccess = (app: OpenAPIHono, context: AppContext): void => {
     const refusal = await mayDecideAccess(context.req.raw.headers, userId);
 
     if (refusal !== null) {
-      return context.json({ error: refusal }, 403);
+      return context.json(refusal, 403);
     }
 
     const { kind, subjectId, effect } = context.req.valid('json');
     const actor = await readAccount(context.req.raw.headers);
 
     if (!(await library.setException(userId, { kind, subjectId }, effect, actor?.id ?? null))) {
-      return context.json({ error: 'No such thing to make an exception of.' }, 404);
+      return context.json(refuse('error.libraryAccess.noSuchThingToMakeAn'), 404);
     }
 
     return context.body(null, 204);
@@ -164,7 +165,7 @@ const serveLibraryAccess = (app: OpenAPIHono, context: AppContext): void => {
     const refusal = await mayDecideAccess(context.req.raw.headers, userId);
 
     if (refusal !== null) {
-      return context.json({ error: refusal }, 403);
+      return context.json(refusal, 403);
     }
 
     await library.clearException(userId, { kind, subjectId });

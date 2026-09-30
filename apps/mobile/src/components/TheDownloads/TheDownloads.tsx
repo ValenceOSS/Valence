@@ -1,3 +1,4 @@
+import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import {
   Bin,
   Download as DownloadIcon,
@@ -138,7 +139,7 @@ const TheDownloads = ({
                 : download?.state === 'ready'
                   ? 'Ready to fetch'
                   : download?.state === 'failed'
-                    ? (download.failure ?? 'Could not be prepared')
+                    ? (sayAgainIfAny(download.failure) ?? 'Could not be prepared')
                     : 'Waiting';
 
     return (

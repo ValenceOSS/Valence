@@ -1,13 +1,17 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { SurfaceSchema } from '@ValenceSDK/surface/SurfaceSchema';
 import type { PluginManifest } from '@ValenceSDK/manifest/PluginManifestSchema';
 import type { ImageRef } from '@ValenceSDK/surface/ImageRefSchema';
 import type { Surface } from '@ValenceSDK/surface/SurfaceSchema';
 import type { SurfaceBlock } from '@ValenceSDK/surface/SurfaceBlockSchema';
 import { serviceNotice } from './serviceNotice';
+import { say } from '@ValenceI18n/say';
+import { saying } from '@ValenceI18n/saying';
 
 const NOT_SHOWN = serviceNotice(
-  'This could not be shown',
-  'The plugin sent something Valence does not draw. Its author has been told in the server log.',
+  say('server.surfaces.cleanSurface.thisCouldNotBeShown'),
+  say('server.surfaces.cleanSurface.thePluginSentSomethingValenceDoes'),
 );
 
 /**
@@ -25,7 +29,7 @@ const cleanSurface = (
   text: string,
   manifest: PluginManifest,
   assets: ReadonlySet<string>,
-): { surface: Surface; problem: string | null } => {
+): { surface: Surface; problem: Said | null } => {
   const hosts = new Set(
     manifest.permissions.flatMap((permission) =>
       permission.kind === 'network' ? permission.hosts : [],
@@ -76,16 +80,21 @@ const cleanSurface = (
   try {
     read = SurfaceSchema.safeParse(JSON.parse(text));
   } catch {
-    return { surface: NOT_SHOWN, problem: 'The plugin answered with something that is not JSON.' };
+    return {
+      surface: NOT_SHOWN,
+      problem: saying('server.surfaces.cleanSurface.thePluginAnsweredWithSomethingThat'),
+    };
   }
 
   if (!read.success) {
     return {
       surface: NOT_SHOWN,
-      problem: read.error.issues
-        .slice(0, 3)
-        .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
-        .join('; '),
+      problem: sayVerbatim(
+        read.error.issues
+          .slice(0, 3)
+          .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+          .join('; '),
+      ),
     };
   }
 

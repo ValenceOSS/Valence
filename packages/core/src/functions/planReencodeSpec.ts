@@ -1,8 +1,10 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { planReencode } from '@ValenceCore/functions/planReencode';
 import { selectEncoder } from '@ValenceCore/functions/selectEncoder';
 import type { Capabilities } from '@ValenceCore/functions/selectEncoder';
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
 import type { ReencodeSettings } from '@ValenceContracts/schemas/Reencode';
+import { saying } from '@ValenceI18n/saying';
 
 const SEGMENT_SECONDS = 4;
 
@@ -55,7 +57,7 @@ type RenditionSpec = {
 };
 
 type PlanReencodeSpecOutcome =
-  { kind: 'ok'; request: RenditionSpec } | { kind: 'unsupported'; reason: string };
+  { kind: 'ok'; request: RenditionSpec } | { kind: 'unsupported'; reason: Said };
 
 type PlanReencodeSpecOptions = {
   item: MediaItem;
@@ -106,7 +108,9 @@ const planReencodeSpec = ({
   if (missingAudio !== undefined && missingAudio.kind === 'encode') {
     return {
       kind: 'unsupported',
-      reason: `This server has no encoder for ${missingAudio.codec} audio.`,
+      reason: saying('core.planReencodeSpec.thisServerHasNoEncoderFor2', {
+        codec: missingAudio.codec,
+      }),
     };
   }
 
@@ -157,7 +161,9 @@ const planReencodeSpec = ({
   if (encoder === null) {
     return {
       kind: 'unsupported',
-      reason: `This server has no encoder for ${plan.video.codec} video.`,
+      reason: saying('core.planReencodeSpec.thisServerHasNoEncoderFor', {
+        codec: plan.video.codec,
+      }),
     };
   }
 

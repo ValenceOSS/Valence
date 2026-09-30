@@ -12,6 +12,8 @@ import type { MediaRequestAdded } from '@ValenceContracts/schemas/MediaRequest';
 import type { RequestService } from '@ValenceRequests/mediaRequests/createRequestService';
 import type { RequestWorker } from '@ValenceRequests/mediaRequests/createRequestWorker';
 import type { RequestLogStore } from '@ValenceRequests/mediaRequests/RequestLogStore';
+import { refuse } from '@ValenceI18n/refuse';
+import { refuseWith } from '@ValenceI18n/refuseWith';
 
 type CreateRequestRoutesOptions = {
   service: RequestService;
@@ -28,7 +30,7 @@ type CreateRequestRoutesOptions = {
   >;
 };
 
-const NO_SUCH_REQUEST = { error: 'No such request.' };
+const NO_SUCH_REQUEST = refuse('error.requests.noSuchRequest');
 
 /**
  * Requests for films and series, as routes under `/api`: making and listing them, approving and
@@ -55,7 +57,7 @@ const createRequestRoutes = ({ service, log, worker }: CreateRequestRoutesOption
     const draft = await readBody(context.req.raw, MediaRequestDraftSchema);
 
     if (draft === null) {
-      return context.json({ error: 'That is not a request.' }, 400);
+      return context.json(refuse('error.requests.thatIsNotARequest'), 400);
     }
 
     const added: MediaRequestAdded = await service.add(draft);
@@ -67,7 +69,7 @@ const createRequestRoutes = ({ service, log, worker }: CreateRequestRoutesOption
     const draft = await readBody(context.req.raw, MediaRequestDraftSchema);
 
     return draft === null
-      ? context.json({ error: 'That is not a request.' }, 400)
+      ? context.json(refuse('error.requests.thatIsNotARequest'), 400)
       : context.json(await worker.releasesForDraft(draft));
   });
 
@@ -83,7 +85,7 @@ const createRequestRoutes = ({ service, log, worker }: CreateRequestRoutesOption
     const revision = await readBody(context.req.raw, MediaRequestRevisionSchema);
 
     return revision === null
-      ? context.json({ error: 'That is not a change to a request.' }, 400)
+      ? context.json(refuse('error.requests.thatIsNotAChangeTo'), 400)
       : answer(await service.change(context.req.param('id'), revision.change, revision.catalogue));
   });
 
@@ -107,7 +109,7 @@ const createRequestRoutes = ({ service, log, worker }: CreateRequestRoutesOption
     const refusal = await readBody(context.req.raw, MediaRequestRefusalSchema);
 
     return refusal === null
-      ? context.json({ error: 'Say why it was refused, or nothing.' }, 400)
+      ? context.json(refuse('error.requests.sayWhyItWasRefusedOr'), 400)
       : answer(await service.refuse(context.req.param('id'), refusal.reason));
   });
 
@@ -123,7 +125,7 @@ const createRequestRoutes = ({ service, log, worker }: CreateRequestRoutesOption
     const arrival = await readBody(context.req.raw, MediaRequestArrivalSchema);
 
     return arrival === null
-      ? context.json({ error: 'Say which item it became.' }, 400)
+      ? context.json(refuse('error.requests.sayWhichItemItBecame'), 400)
       : answer(await service.arrived(context.req.param('id'), arrival.mediaId));
   });
 
@@ -131,7 +133,7 @@ const createRequestRoutes = ({ service, log, worker }: CreateRequestRoutesOption
     const update = await readBody(context.req.raw, RequestCatalogueUpdateSchema);
 
     return update === null
-      ? context.json({ error: 'That is not what the catalogue says.' }, 400)
+      ? context.json(refuse('error.requests.thatIsNotWhatTheCatalogue'), 400)
       : answer(await service.updateCatalogue(context.req.param('id'), update));
   });
 
@@ -146,7 +148,7 @@ const createRequestRoutes = ({ service, log, worker }: CreateRequestRoutesOption
   routes.delete('/requests/:id/blocklist/:blockId', async (context) =>
     (await worker.unblock(context.req.param('blockId')))
       ? context.body(null, 204)
-      : context.json({ error: 'No such blocked release.' }, 404),
+      : context.json(refuse('error.requests.noSuchBlockedRelease'), 404),
   );
 
   routes.get('/requests/:id/log', async (context) => {
@@ -165,12 +167,14 @@ const createRequestRoutes = ({ service, log, worker }: CreateRequestRoutesOption
     const pick = await readBody(context.req.raw, MediaRequestPickSchema);
 
     if (pick === null) {
-      return context.json({ error: 'Say which release to fetch.' }, 400);
+      return context.json(refuse('error.common.sayWhichReleaseToFetch'), 400);
     }
 
     const picked = await worker.pick(context.req.param('id'), pick.release);
 
-    return typeof picked === 'string' ? context.json({ error: picked }, 400) : answer(picked);
+    return picked !== null && 'refused' in picked
+      ? context.json(refuseWith(picked.refused), 400)
+      : answer(picked);
   });
 
   return routes;

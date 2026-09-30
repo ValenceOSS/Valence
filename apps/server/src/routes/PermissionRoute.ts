@@ -1,7 +1,8 @@
-import { createRoute, z } from '@hono/zod-openapi';
+import { createRoute } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { MyPermissionsSchema } from '@ValenceContracts/schemas/Permission';
 
-const PermissionError = z.object({ error: z.string() }).openapi('PermissionError');
+const PermissionError = RefusalSchema.openapi('PermissionError');
 
 const MyPermissionsAnswer = MyPermissionsSchema.openapi('MyPermissions');
 

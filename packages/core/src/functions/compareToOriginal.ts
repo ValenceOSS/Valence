@@ -1,16 +1,18 @@
+import { say } from '@ValenceI18n/say';
+
 const FRACTIONS: readonly (readonly [share: number, words: string])[] = [
-  [1, 'about the same size as the original'],
+  [1, say('common.aboutTheSameSizeAsThe')],
   [3 / 4, 'about three-quarters of the original'],
   [2 / 3, 'about two-thirds of the original'],
-  [1 / 2, 'about half the size of the original'],
-  [1 / 3, 'about a third of the original'],
-  [1 / 4, 'about a quarter of the original'],
-  [1 / 5, 'about a fifth of the original'],
-  [1 / 6, 'about a sixth of the original'],
-  [1 / 7, 'about a seventh of the original'],
-  [1 / 8, 'about an eighth of the original'],
-  [1 / 9, 'about a ninth of the original'],
-  [1 / 10, 'about a tenth of the original'],
+  [1 / 2, say('core.compareToOriginal.aboutHalfTheSizeOfThe')],
+  [1 / 3, say('core.compareToOriginal.aboutAThirdOfTheOriginal')],
+  [1 / 4, say('core.compareToOriginal.aboutAQuarterOfTheOriginal')],
+  [1 / 5, say('core.compareToOriginal.aboutAFifthOfTheOriginal')],
+  [1 / 6, say('core.compareToOriginal.aboutASixthOfTheOriginal')],
+  [1 / 7, say('core.compareToOriginal.aboutASeventhOfTheOriginal')],
+  [1 / 8, say('core.compareToOriginal.aboutAnEighthOfTheOriginal')],
+  [1 / 9, say('core.compareToOriginal.aboutANinthOfTheOriginal')],
+  [1 / 10, say('core.compareToOriginal.aboutATenthOfTheOriginal')],
 ];
 
 const A_LOT_SMALLER = 10;
@@ -40,7 +42,7 @@ const compareToOriginal = (bytes: number, originalBytes: number): string | null 
   const times = Math.round(originalBytes / bytes);
 
   if (times >= A_LOT_SMALLER) {
-    return `a small fraction of the original — about a ${times.toString()}th`;
+    return say('core.compareToOriginal.aSmallFractionOfTheOriginal', { times: times.toString() });
   }
 
   const share = bytes / originalBytes;

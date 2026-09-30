@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { DEFAULT_DOWNLOAD_CATEGORIES } from '@ValenceContracts/schemas/DownloadClient';
 import { describe, expect, it, vi } from 'vitest';
 import { createMemoryRecordStore } from '@ValenceRequests/stores/createMemoryRecordStore';
@@ -165,7 +166,7 @@ describe('createDownloadClientService', () => {
         anAdapter(() =>
           Promise.reject(
             new DownloadClientFailure(
-              'qBittorrent refused the password',
+              sayVerbatim('qBittorrent refused the password'),
               'DownloadClientLoginRefused',
             ),
           ),
@@ -185,7 +186,7 @@ describe('createDownloadClientService', () => {
       vi.fn(() => anAdapter(() => Promise.reject(new Error('x')))),
     );
 
-    expect((await breaking.service.test(QBITTORRENT.id))?.problem).toBe(
+    expect((await breaking.service.test(QBITTORRENT.id))?.problem).toEqual(
       'The client could not be asked',
     );
   });

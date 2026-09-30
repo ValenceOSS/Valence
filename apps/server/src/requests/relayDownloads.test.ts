@@ -1,3 +1,5 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it, vi } from 'vitest';
 import { relayDownloads } from './relayDownloads';
 import type {
@@ -29,7 +31,7 @@ const aRelay = (streams: DownloadStreamFrame[][]) => {
     events: ServiceEvent[];
     acknowledged: number[][];
     connected: number;
-    lost: string[];
+    lost: Said[];
     waited: number[];
   } = { queues: [], events: [], acknowledged: [], connected: 0, lost: [], waited: [] };
 
@@ -41,7 +43,7 @@ const aRelay = (streams: DownloadStreamFrame[][]) => {
 
       opened += 1;
 
-      return Promise.resolve(`stream ${opened.toString()} ended`);
+      return Promise.resolve(sayVerbatim(`stream ${opened.toString()} ended`));
     },
     onQueue: (queue) => heard.queues.push(queue),
     onEvent: (event) => heard.events.push(event),
@@ -108,7 +110,7 @@ describe('relayDownloads', () => {
         onFrame({ kind: 'events', events: opened === 0 ? many : [anEvent(1), anEvent(1001)] });
         opened += 1;
 
-        return Promise.resolve('ended');
+        return Promise.resolve(sayVerbatim('ended'));
       },
       onQueue: () => undefined,
       onEvent,

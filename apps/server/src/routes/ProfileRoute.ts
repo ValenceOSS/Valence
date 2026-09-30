@@ -1,11 +1,12 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
   ViewerProfileSchema,
   ViewerProfileRequestSchema,
   ViewerProfileListSchema,
 } from '@ValenceContracts/schemas/ViewerProfile';
 
-const ProfileError = z.object({ error: z.string() }).openapi('ProfileError');
+const ProfileError = RefusalSchema.openapi('ProfileError');
 
 const ProfileSchema = ViewerProfileSchema.openapi('ViewerProfile');
 const ProfileListSchema = ViewerProfileListSchema.openapi('ViewerProfileList');

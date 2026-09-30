@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { act, renderHook } from '@testing-library/react-native';
 import {
   heartbeatPlaybackSession,
@@ -21,7 +22,7 @@ jest.mock('@ValenceClient/playback/startPlaybackSession', () => ({
 
 const MEDIA = '00000000-0000-4000-8000-000000000001';
 
-const REASON = { code: 'ClientSupportsSource', detail: 'Plays as it is' } as const;
+const REASON = { code: 'ClientSupportsSource', detail: sayVerbatim('Plays as it is') } as const;
 
 const aSession = (delivery: StartedSession['delivery']): StartedSession => ({
   sessionId: 'session-1',

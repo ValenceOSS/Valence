@@ -1,9 +1,13 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { planToSessionSpec, selectEncoder } from './planToSessionSpec';
 import type { Capabilities } from './planToSessionSpec';
 import type { PlaybackPlan, Reason } from '@ValenceContracts/schemas/PlaybackPlan';
 
-const reason: Reason = { code: 'ClientSupportsSource', detail: 'Client declares support' };
+const reason: Reason = {
+  code: 'ClientSupportsSource',
+  detail: sayVerbatim('Client declares support'),
+};
 
 const directPlay: PlaybackPlan = {
   mediaId: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
@@ -226,7 +230,7 @@ describe('planToSessionSpec', () => {
     const outcome = build({ ...directPlay, video: transcodeVideo }, noToneMapping, 'HDR10');
 
     expect(outcome).toMatchObject({ kind: 'ok' });
-    expect(outcome.kind === 'ok' && outcome.warnings[0]).toMatch(/washed out/);
+    expect(outcome.kind === 'ok' && outcome.warnings[0]?.message).toMatch(/washed out/);
   });
 
   it('still produces a stream when it cannot tone map', () => {
@@ -248,7 +252,9 @@ describe('planToSessionSpec', () => {
     );
 
     expect(outcome).toMatchObject({ kind: 'ok', spec: { subtitles: { kind: 'none' } } });
-    expect(outcome.kind === 'ok' && outcome.warnings[0]).toMatch(/cannot burn in text subtitles/);
+    expect(outcome.kind === 'ok' && outcome.warnings[0]?.message).toMatch(
+      /cannot burn in text subtitles/,
+    );
   });
 
   it('does not encode the video when the subtitles it would burn cannot be drawn', () => {
@@ -445,7 +451,9 @@ describe('the range the output really carries', () => {
   it('says so rather than claiming a conversion it did not do', () => {
     const outcome = build(hdrTranscode, noToneMapping, 'HDR10');
 
-    expect(outcome.kind === 'ok' && outcome.warnings[0]).toContain('keeps its original range');
+    expect(outcome.kind === 'ok' && outcome.warnings[0]?.message).toContain(
+      'keeps its original range',
+    );
   });
 
   it('becomes SDR once the conversion can actually be done', () => {

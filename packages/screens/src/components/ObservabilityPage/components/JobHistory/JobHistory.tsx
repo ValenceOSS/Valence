@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { Bookmark as BookmarkFilledIcon } from '@keyline-icons/react/fill';
 import { JobRunMix } from '@ValenceScreens/components/ObservabilityPage/components/JobRunMix/JobRunMix';
 import { cn } from '@ValenceUI/cn';
@@ -137,7 +138,7 @@ const JobHistoryPanel = ({
   const [openWorkFor, setOpenWorkFor] = useState<string | null>(null);
 
   const labels = useMemo(
-    () => new Map(definitions.map((definition) => [definition.kind, definition.label])),
+    () => new Map(definitions.map((definition) => [definition.kind, sayAgain(definition.label)])),
     [definitions],
   );
 
@@ -252,7 +253,7 @@ const JobHistoryPanel = ({
   const issues = askedIssues.data ?? [];
   const openRun = records.find((record) => record.id === openIssuesFor);
   const failure = openRun?.errorMessage ?? null;
-  const issuesText = describeRunIssues(failure, issues);
+  const issuesText = describeRunIssues(failure === null ? null : sayAgain(failure), issues);
   const openWork = records.find((record) => record.id === openWorkFor);
   const counts = {
     running: askedRunning?.data?.total ?? 0,
@@ -275,7 +276,7 @@ const JobHistoryPanel = ({
         isSingle: true,
         options: definitions.map((definition) => ({
           id: `kind:${definition.kind}`,
-          label: definition.label,
+          label: sayAgain(definition.label),
         })),
       },
     ],
@@ -511,9 +512,9 @@ const JobHistoryPanel = ({
                     'truncate text-xs',
                     row.original.status === 'failed' ? 'text-danger' : 'text-text-muted',
                   )}
-                  title={row.original.errorMessage}
+                  title={sayAgain(row.original.errorMessage)}
                 >
-                  {row.original.errorMessage}
+                  {sayAgain(row.original.errorMessage)}
                 </span>
               )}
             </span>
@@ -534,7 +535,9 @@ const JobHistoryPanel = ({
           return (
             <span className="flex w-52 flex-col gap-1.5">
               <span className="flex items-baseline justify-between gap-3 whitespace-nowrap text-xs">
-                <span className="truncate text-text-muted">{describeWords(progress.phase)}</span>
+                <span className="truncate text-text-muted">
+                  {describeWords(sayAgain(progress.phase))}
+                </span>
 
                 <span className="tabular-nums text-text">
                   <AnimatedNumber value={progress.processed} />
@@ -692,7 +695,13 @@ const JobHistoryPanel = ({
         progress={
           openWork === undefined || openWork.progress === null
             ? []
-            : [{ label: describeJobKind(openWork.kind, labels), ...openWork.progress }]
+            : [
+                {
+                  label: describeJobKind(openWork.kind, labels),
+                  ...openWork.progress,
+                  phase: sayAgain(openWork.progress.phase),
+                },
+              ]
         }
         tasks={working.filter((task) => task.correlationId === openWorkFor)}
         onClose={() => {

@@ -72,7 +72,7 @@ jobs:
           EVENT: ${{ github.event_name }}
           BASE: ${{ github.base_ref }}
         run: |
-          testable='["@valence/contracts","@valence/core","@valence/plugin-sdk","@valence/tools","@valence/ui","@valence/client","@valence/server","@valence/requests","@valence/web","@valence/desktop","@valence/landing","@valence/docs"]'
+          testable='["@valence/i18n","@valence/contracts","@valence/core","@valence/plugin-sdk","@valence/tools","@valence/ui","@valence/client","@valence/server","@valence/requests","@valence/web","@valence/desktop","@valence/landing","@valence/docs"]'
 
           if [ "$EVENT" != "pull_request" ]; then
             {
@@ -179,6 +179,7 @@ jobs:
       # build and its typecheck script, worth its own fix).
       - run: >-
           pnpm turbo run build
+          --filter=@valence/i18n
           --filter=@valence/contracts
           --filter=@valence/core
           --filter=@valence/plugin-sdk

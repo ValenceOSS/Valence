@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { Bell } from '@keyline-icons/react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
@@ -90,7 +91,7 @@ const TheNotifications = ({ onOpen, onBack }: TheNotificationsProps) => {
           <Button
             key={notification.id}
             tone="bare"
-            label={notification.title}
+            label={sayAgain(notification.title)}
             onPress={() => {
               if (isUnread) {
                 void markNotificationsRead(notification.id).then(reread);
@@ -106,9 +107,9 @@ const TheNotifications = ({ onOpen, onBack }: TheNotificationsProps) => {
                 style={[styles.dot, { backgroundColor: isUnread ? colours.accent : 'transparent' }]}
               />
               <View style={styles.words}>
-                <Words>{notification.title}</Words>
+                <Words>{sayAgain(notification.title)}</Words>
                 <Words size="small" tone="muted">
-                  {notification.body}
+                  {sayAgain(notification.body)}
                 </Words>
                 <Words size="small" tone="muted">
                   {describeWhen(new Date(notification.createdAt), now)}

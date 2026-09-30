@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { describeRequestState } from './describeRequestState';
 import type { RequestItemState } from '@ValenceContracts/schemas/MediaRequest';
@@ -10,7 +11,7 @@ const APPROVED = { approval: 'approved' as const, problem: null, problemCode: nu
 const items = (...states: RequestItemState[]) =>
   states.map((state) => ({
     state,
-    problem: state === 'failed' ? 'It went wrong' : null,
+    problem: state === 'failed' ? sayVerbatim('It went wrong') : null,
     problemCode: null,
   }));
 
@@ -60,7 +61,7 @@ describe('describeRequestState', () => {
   it('says what went wrong with the request itself first', () => {
     expect(
       describeRequestState(
-        { approval: 'approved', problem: 'No library', problemCode: null },
+        { approval: 'approved', problem: sayVerbatim('No library'), problemCode: null },
         items('wanted'),
       ),
     ).toEqual({ state: 'wanted', problem: 'No library', problemCode: null });
@@ -69,12 +70,20 @@ describe('describeRequestState', () => {
   it('says what kind of problem it is, beside what went wrong', () => {
     expect(
       describeRequestState(APPROVED, [
-        { state: 'filing', problem: 'May not write', problemCode: 'MayNotWriteToLibrary' },
+        {
+          state: 'filing',
+          problem: sayVerbatim('May not write'),
+          problemCode: 'MayNotWriteToLibrary',
+        },
       ]),
     ).toEqual({ state: 'filing', problem: 'May not write', problemCode: 'MayNotWriteToLibrary' });
     expect(
       describeRequestState(
-        { approval: 'approved', problem: 'Refused', problemCode: 'CloudflareRefusesAddress' },
+        {
+          approval: 'approved',
+          problem: sayVerbatim('Refused'),
+          problemCode: 'CloudflareRefusesAddress',
+        },
         items('wanted'),
       ).problemCode,
     ).toBe('CloudflareRefusesAddress');

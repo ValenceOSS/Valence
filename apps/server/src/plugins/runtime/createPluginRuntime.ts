@@ -1,3 +1,6 @@
+import { SaidError } from '@ValenceI18n/SaidError';
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { createPluginSandbox } from '@ValenceServer/plugins/sandbox/createPluginSandbox';
 import { HOST_METHODS } from '@ValenceServer/plugins/broker/HOST_METHODS';
 import type {
@@ -8,12 +11,13 @@ import type { SandboxHandler } from '@ValenceServer/plugins/sandbox/SandboxProto
 import type { BrokerScope } from '@ValenceServer/plugins/broker/BrokerScope';
 import type { PluginBroker } from '@ValenceServer/plugins/broker/createPluginBroker';
 import type { InstalledRecord } from '@ValenceServer/plugins/store/PluginStore';
+import { saying } from '@ValenceI18n/saying';
 
 type RunnablePlugin = { record: InstalledRecord; code: string };
 
 type CreatePluginRuntimeOptions = {
   brokerFor: (record: InstalledRecord) => PluginBroker;
-  onProblem: (pluginId: string, problem: string) => void;
+  onProblem: (pluginId: string, problem: Said) => void;
   onLog: (pluginId: string, level: 'info' | 'warn' | 'error', message: string) => void;
   start?: (options: CreatePluginSandboxOptions<BrokerScope>) => Promise<PluginSandbox<BrokerScope>>;
   now?: () => number;
@@ -55,9 +59,9 @@ const createPluginRuntime = ({
     string,
     { stamp: string; sandbox: Promise<PluginSandbox<BrokerScope>> }
   >();
-  const failures = new Map<string, { count: number; retryAt: number; problem: string }>();
+  const failures = new Map<string, { count: number; retryAt: number; problem: Said }>();
 
-  const fail = (pluginId: string, problem: string): void => {
+  const fail = (pluginId: string, problem: Said): void => {
     const was = failures.get(pluginId);
     const count = (was?.count ?? 0) + 1;
 
@@ -91,7 +95,7 @@ const createPluginRuntime = ({
     const failed = failures.get(record.id);
 
     if (failed !== undefined && failed.retryAt > now()) {
-      return Promise.reject(new Error(failed.problem));
+      return Promise.reject(new SaidError(failed.problem));
     }
 
     const broker = brokerFor(record);
@@ -118,7 +122,14 @@ const createPluginRuntime = ({
       },
       (error) => {
         if (running.get(record.id)?.stamp === stamp) {
-          fail(record.id, error instanceof Error ? error.message : 'The plugin would not start.');
+          fail(
+            record.id,
+            error instanceof SaidError
+              ? error.said
+              : error instanceof Error
+                ? sayVerbatim(error.message)
+                : saying('server.runtime.pluginRuntime.thePluginWouldNotStart'),
+          );
         }
       },
     );

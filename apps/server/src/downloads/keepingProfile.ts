@@ -1,4 +1,5 @@
 import type { DeviceProfile } from '@ValenceContracts/schemas/DeviceProfile';
+import { say } from '@ValenceI18n/say';
 
 /**
  * What a file being kept is encoded for.
@@ -21,7 +22,7 @@ import type { DeviceProfile } from '@ValenceContracts/schemas/DeviceProfile';
  */
 const keepingProfile = (): DeviceProfile => ({
   schemaVersion: 1,
-  name: 'A file to keep',
+  name: say('server.downloads.keepingProfile.aFileToKeep'),
   directPlayProfiles: [{ container: 'mp4', videoCodecs: ['h264'], audioCodecs: ['aac', 'mp3'] }],
   transcodingProfiles: [
     { container: 'mp4', videoCodec: 'h264', audioCodec: 'aac', protocol: 'http' },

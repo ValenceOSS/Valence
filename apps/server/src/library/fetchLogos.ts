@@ -1,3 +1,7 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
+import { saying } from '@ValenceI18n/saying';
+
 type LogolessItem = {
   id: string;
   externalId: string;
@@ -11,7 +15,7 @@ type FetchLogosOptions = {
     save: (mediaItemIds: string[], logoUrl: string) => Promise<void>;
   };
   readLogoUrl?: (options: { externalId: string; isSeries: boolean }) => Promise<string | null>;
-  onProblem?: (mediaItemId: string, reason: string) => void;
+  onProblem?: (mediaItemId: string, reason: Said) => void;
   onProgress?: (done: number, total: number) => void;
   isCancelled?: () => Promise<boolean> | boolean;
 };
@@ -115,7 +119,9 @@ const fetchLogos = async ({
       missing += 1;
       onProblem?.(
         title.firstId,
-        cause instanceof Error ? cause.message : 'The catalogue did not answer.',
+        cause instanceof Error
+          ? sayVerbatim(cause.message)
+          : saying('server.library.fetchLogos.theCatalogueDidNotAnswer'),
       );
     }
 

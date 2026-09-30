@@ -49,9 +49,7 @@ const PausedScreen = ({ media, isShown }: PausedScreenProps) => {
             </span>
 
             {isAnEpisode && typeof media.seasonNumber === 'number' ? (
-              <span className="text-xl font-semibold sm:text-2xl">
-                Season {media.seasonNumber}
-              </span>
+              <span className="text-xl font-semibold sm:text-2xl">Season {media.seasonNumber}</span>
             ) : null}
 
             {episode === null ? null : (

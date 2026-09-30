@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { say } from '@ValenceI18n/say';
 
 const LibraryReachSchema = z.object({
   id: z.string().uuid(),
@@ -51,10 +52,10 @@ type ExceptionHolder = z.infer<typeof ExceptionHolderSchema>;
  */
 const describeCeiling = (maximumAge: number | null): string =>
   maximumAge === null
-    ? 'No ceiling'
+    ? say('common.noCeiling')
     : maximumAge === 0
-      ? 'Suitable for all'
-      : `Up to ${String(maximumAge)}`;
+      ? say('common.suitableForAll')
+      : say('contracts.schemas.libraryAccess.upToMaximumAge', { maximumAge: String(maximumAge) });
 
 /**
  * Whether an operator is about to take away the last library an account could reach.

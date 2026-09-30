@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { QualityStepIdSchema } from './QualityStep';
 
 const REENCODE_MODES = ['replace', 'keep', 'audioOnly'] as const;
@@ -46,7 +47,7 @@ const ReencodeRefusalCodeSchema = z.enum(REENCODE_REFUSALS);
 
 const ReencodeRefusalSchema = z.object({
   code: ReencodeRefusalCodeSchema,
-  detail: z.string().min(1),
+  detail: SaidSchema,
 });
 
 const ReencodeSettingsSchema = z.object({
@@ -98,7 +99,7 @@ const ReencodeSchema = ReencodeSettingsSchema.extend({
   producedBytes: z.number().nonnegative().nullable(),
   progress: z.number().min(0).max(1),
   bytesPerSecond: z.number().int().nonnegative().nullable(),
-  failure: z.string().nullable(),
+  failure: SaidSchema.nullable(),
   hasSample: z.boolean().default(false),
   askedAt: z.string().datetime(),
   startedAt: z.string().datetime().nullable(),

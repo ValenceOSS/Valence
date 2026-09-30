@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   describeAudioAxis,
@@ -116,7 +117,7 @@ const StreamStats = ({
           'Container',
           plan === null
             ? 'deciding'
-            : describeAxis(plan.container.kind, plan.container.reason.detail),
+            : describeAxis(plan.container.kind, sayAgain(plan.container.reason.detail)),
         ],
         ['Video', plan === null ? 'deciding' : describeVideoAxis(plan.video)],
         ['Audio', plan === null ? 'deciding' : describeAudioAxis(plan.audio)],
@@ -124,7 +125,7 @@ const StreamStats = ({
           'Subtitles',
           plan === null
             ? 'deciding'
-            : describeAxis(plan.subtitles.kind, plan.subtitles.reason.detail),
+            : describeAxis(plan.subtitles.kind, sayAgain(plan.subtitles.reason.detail)),
         ],
       ],
     },
@@ -143,7 +144,10 @@ const StreamStats = ({
       : [
           {
             name: 'Warnings',
-            rows: [['From the server', session.warnings.join(' · ')]] satisfies [string, string][],
+            rows: [['From the server', session.warnings.map(sayAgain).join(' · ')]] satisfies [
+              string,
+              string,
+            ][],
           },
         ]),
   ];

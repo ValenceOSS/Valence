@@ -5,6 +5,7 @@ import { isCloudflareChallenge } from '@ValenceRequests/cardigann/isCloudflareCh
 import type { SiteRequest } from '@ValenceRequests/cardigann/SiteRequest';
 import type { SiteSession } from '@ValenceRequests/cardigann/SiteSession';
 import type { Solver } from '@ValenceRequests/solver/createSolver';
+import { saying } from '@ValenceI18n/saying';
 
 type SiteFetch = (
   url: string,
@@ -40,6 +41,7 @@ type CreateSiteClientOptions = {
 };
 
 const USER_AGENT =
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a user agent, read by sites rather than by people
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36';
 
 const MOST_REDIRECTS = 10;
@@ -134,7 +136,7 @@ const createSiteClient = ({ fetch, solver = null }: CreateSiteClientOptions) => 
   ): Promise<SiteResponse> => {
     if (solver === null) {
       throw new IndexerFailure(
-        'The site is behind Cloudflare’s browser check, and this service has no browser to get past it.',
+        saying('requests.cardigann.siteClient.theSiteIsBehindCloudflaresBrowser'),
         'CloudflareCheckFailed',
       );
     }
@@ -149,7 +151,7 @@ const createSiteClient = ({ fetch, solver = null }: CreateSiteClientOptions) => 
       throw error instanceof IndexerFailure
         ? error
         : new IndexerFailure(
-            'The browser that gets past Cloudflare’s check could not be started',
+            saying('requests.cardigann.siteClient.theBrowserThatGetsPastCloudflares'),
             'CloudflareCheckFailed',
           );
     }
@@ -206,8 +208,10 @@ const createSiteClient = ({ fetch, solver = null }: CreateSiteClientOptions) => 
       } catch (error) {
         throw new IndexerFailure(
           error instanceof Error && error.name === 'TimeoutError'
-            ? `The site did not answer within ${options.timeoutSeconds.toString()} seconds`
-            : 'The site could not be reached',
+            ? saying('requests.cardigann.siteClient.theSiteDidNotAnswerWithin', {
+                timeoutSeconds: options.timeoutSeconds.toString(),
+              })
+            : saying('requests.cardigann.siteClient.theSiteCouldNotBeReached'),
         );
       }
 
@@ -254,7 +258,7 @@ const createSiteClient = ({ fetch, solver = null }: CreateSiteClientOptions) => 
       };
     }
 
-    throw new IndexerFailure('The site redirected too many times');
+    throw new IndexerFailure(saying('requests.cardigann.siteClient.theSiteRedirectedTooManyTimes'));
   };
 
   return { send };

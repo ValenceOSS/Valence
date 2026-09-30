@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { createMemoryEventStore } from './createMemoryEventStore';
 
@@ -10,7 +11,7 @@ describe('createMemoryEventStore', () => {
       kind: 'failed',
       title: 'Dune',
       clientName: 'q',
-      problem: 'x',
+      problem: sayVerbatim('x'),
     });
 
     expect(first).toEqual({

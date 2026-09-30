@@ -98,7 +98,7 @@ describe('the official plugin catalogue', () => {
           [`${URL_OF}.sig`]: signed(bytes, STRANGER.privateKey),
         }).client.read()
       ).problem,
-    ).toBe('The plugin catalogue is not signed by the Valence project.');
+    ).toEqual('The plugin catalogue is not signed by the Valence project.');
     expect(
       (
         await build({
@@ -106,8 +106,8 @@ describe('the official plugin catalogue', () => {
           [`${URL_OF}.sig`]: new TextEncoder().encode('!!'),
         }).client.read()
       ).problem,
-    ).toBe('The plugin catalogue is not signed by the Valence project.');
-    expect((await build({ [URL_OF]: bytes }).client.read()).problem).toBe(
+    ).toEqual('The plugin catalogue is not signed by the Valence project.');
+    expect((await build({ [URL_OF]: bytes }).client.read()).problem).toEqual(
       'The plugin catalogue could not be reached.',
     );
   });
@@ -118,11 +118,11 @@ describe('the official plugin catalogue', () => {
 
     expect(
       (await build({ [URL_OF]: junk, [`${URL_OF}.sig`]: signed(junk) }).client.read()).problem,
-    ).toBe('The plugin catalogue could not be read.');
+    ).toEqual('The plugin catalogue could not be read.');
     expect(
       (await build({ [URL_OF]: notJson, [`${URL_OF}.sig`]: signed(notJson) }).client.read())
         .problem,
-    ).toBe('The plugin catalogue could not be read.');
+    ).toEqual('The plugin catalogue could not be read.');
   });
 
   it('fetches a package only when it hashes and is signed as the catalogue says', async () => {

@@ -3,6 +3,7 @@ import { isShareLive } from '@ValenceContracts/schemas/Share';
 import { hashShareToken, makeShareToken } from './shareToken';
 import type { ShareKind } from '@ValenceContracts/schemas/Share';
 import type { ResolvedShare, ShareService } from './ShareService';
+import { say } from '@ValenceI18n/say';
 
 type MemoryShare = {
   id: string;
@@ -119,7 +120,7 @@ const createMemoryShareService = (
         state.shares.map((held) => ({
           ...describe(held, new Date()),
           createdBy: held.createdBy,
-          createdByName: state.names?.[held.createdBy] ?? 'Somebody',
+          createdByName: state.names?.[held.createdBy] ?? say('common.somebody'),
         })),
       ),
 

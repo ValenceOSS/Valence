@@ -1,3 +1,4 @@
+import { bodyOf } from '@ValenceI18n/bodyOf';
 import {
   listWebhooksRoute,
   createWebhookRoute,
@@ -13,6 +14,7 @@ import { queueWebhookTest } from '@ValenceServer/webhooks/queueWebhookTest';
 import { queueWebhookRedelivery } from '@ValenceServer/webhooks/queueWebhookRedelivery';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
+import { refuse } from '@ValenceI18n/refuse';
 
 /**
  * Registers the webhook endpoints.
@@ -29,7 +31,7 @@ const serveWebhook = (app: OpenAPIHono, context: AppContext): void => {
     if (keeper !== 'allowed') {
       const refusal = refuseWebhookKeeper(keeper);
 
-      return context.json({ error: refusal.error }, refusal.status);
+      return context.json(bodyOf(refusal), refusal.status);
     }
 
     return context.json({ webhooks: await webhooks.list() }, 200);
@@ -41,13 +43,13 @@ const serveWebhook = (app: OpenAPIHono, context: AppContext): void => {
     if (keeper !== 'allowed') {
       const refusal = refuseWebhookKeeper(keeper);
 
-      return context.json({ error: refusal.error }, refusal.status);
+      return context.json(bodyOf(refusal), refusal.status);
     }
 
     const asked = context.req.valid('json');
 
     if (!isSafeWebhookUrl(asked.url)) {
-      return context.json({ error: 'Valence will not send deliveries to that address.' }, 400);
+      return context.json(refuse('error.common.valenceWillNotSendDeliveriesTo'), 400);
     }
 
     const made = await webhooks.create(asked);
@@ -61,19 +63,19 @@ const serveWebhook = (app: OpenAPIHono, context: AppContext): void => {
     if (keeper !== 'allowed') {
       const refusal = refuseWebhookKeeper(keeper);
 
-      return context.json({ error: refusal.error }, refusal.status);
+      return context.json(bodyOf(refusal), refusal.status);
     }
 
     const asked = context.req.valid('json');
 
     if (asked.url !== undefined && !isSafeWebhookUrl(asked.url)) {
-      return context.json({ error: 'Valence will not send deliveries to that address.' }, 400);
+      return context.json(refuse('error.common.valenceWillNotSendDeliveriesTo'), 400);
     }
 
     const changed = await webhooks.update(context.req.valid('param').id, asked);
 
     return changed === null
-      ? context.json({ error: 'No such subscription.' }, 404)
+      ? context.json(refuse('error.webhook.noSuchSubscription'), 404)
       : context.json(changed, 200);
   });
 
@@ -83,11 +85,11 @@ const serveWebhook = (app: OpenAPIHono, context: AppContext): void => {
     if (keeper !== 'allowed') {
       const refusal = refuseWebhookKeeper(keeper);
 
-      return context.json({ error: refusal.error }, refusal.status);
+      return context.json(bodyOf(refusal), refusal.status);
     }
 
     if (!(await webhooks.remove(context.req.valid('param').id))) {
-      return context.json({ error: 'No such subscription.' }, 404);
+      return context.json(refuse('error.webhook.noSuchSubscription'), 404);
     }
 
     return context.body(null, 204);
@@ -99,7 +101,7 @@ const serveWebhook = (app: OpenAPIHono, context: AppContext): void => {
     if (keeper !== 'allowed') {
       const refusal = refuseWebhookKeeper(keeper);
 
-      return context.json({ error: refusal.error }, refusal.status);
+      return context.json(bodyOf(refusal), refusal.status);
     }
 
     const queued = await queueWebhookTest({
@@ -110,7 +112,7 @@ const serveWebhook = (app: OpenAPIHono, context: AppContext): void => {
 
     return queued
       ? context.json({ queued }, 202)
-      : context.json({ error: 'No such subscription, or it is turned off.' }, 404);
+      : context.json(refuse('error.webhook.noSuchSubscriptionOrItIs'), 404);
   });
 
   app.openapi(listWebhookDeliveriesRoute, async (context) => {
@@ -119,7 +121,7 @@ const serveWebhook = (app: OpenAPIHono, context: AppContext): void => {
     if (keeper !== 'allowed') {
       const refusal = refuseWebhookKeeper(keeper);
 
-      return context.json({ error: refusal.error }, refusal.status);
+      return context.json(bodyOf(refusal), refusal.status);
     }
 
     const { id } = context.req.valid('param');
@@ -127,7 +129,7 @@ const serveWebhook = (app: OpenAPIHono, context: AppContext): void => {
     const exists = (await webhooks.list()).some((webhook) => webhook.id === id);
 
     if (!exists) {
-      return context.json({ error: 'No such subscription.' }, 404);
+      return context.json(refuse('error.webhook.noSuchSubscription'), 404);
     }
 
     return context.json({ deliveries: await webhooks.listDeliveries(id, DELIVERY_PAGE) }, 200);
@@ -139,7 +141,7 @@ const serveWebhook = (app: OpenAPIHono, context: AppContext): void => {
     if (keeper !== 'allowed') {
       const refusal = refuseWebhookKeeper(keeper);
 
-      return context.json({ error: refusal.error }, refusal.status);
+      return context.json(bodyOf(refusal), refusal.status);
     }
 
     const { id, deliveryId } = context.req.valid('param');
@@ -153,10 +155,7 @@ const serveWebhook = (app: OpenAPIHono, context: AppContext): void => {
 
     return queued
       ? context.json({ queued }, 202)
-      : context.json(
-          { error: 'No such delivery, or the subscription is gone or turned off.' },
-          404,
-        );
+      : context.json(refuse('error.webhook.noSuchDeliveryOrTheSubscription'), 404);
   });
 };
 

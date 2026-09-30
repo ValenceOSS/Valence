@@ -8,16 +8,15 @@ import type {
   IndexerDefinitionDetail,
   IndexerDefinitionSetting,
 } from '@ValenceContracts/schemas/IndexerDefinition';
+import { say } from '@ValenceI18n/say';
 
 const GUIDANCE: Readonly<Record<string, string>> = {
-  info_cookie:
-    'Sign in to the site in a browser, open its developer tools, and copy the Cookie header a page request sends. Paste the whole value here.',
-  info_flaresolverr:
-    'This site sits behind Cloudflare’s browser check. The requests service gets past it with a browser of its own, so its first search can take a few seconds longer.',
-  info_useragent:
-    'Some sites tie a cookie to the browser that got it. Copy your browser’s user agent too, where the site asks for one.',
-  info_category_8000:
-    'Some of this site’s results have no category it recognises, so they appear as Other.',
+  info_cookie: say('requests.definitions.describeDefinition.signInToTheSiteIn'),
+  info_flaresolverr: say(
+    'requests.definitions.describeDefinition.thisSiteSitsBehindCloudflaresBrowser',
+  ),
+  info_useragent: say('requests.definitions.describeDefinition.someSitesTieACookieTo'),
+  info_category_8000: say('requests.definitions.describeDefinition.someOfThisSitesResultsHave'),
 };
 
 /**

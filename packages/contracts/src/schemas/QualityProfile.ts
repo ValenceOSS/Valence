@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import {
   MusicQualitySchema,
   ParsedReleaseSchema,
@@ -164,8 +165,8 @@ const JudgementSchema = z.object({
   parsed: ParsedReleaseSchema,
   score: z.number(),
   isRejected: z.boolean(),
-  rejections: z.array(z.string()),
-  reasons: z.array(z.string()),
+  rejections: z.array(SaidSchema),
+  reasons: z.array(SaidSchema),
 });
 
 type ProfileKind = (typeof PROFILE_KINDS)[number];

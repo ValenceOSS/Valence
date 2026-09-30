@@ -1,3 +1,4 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import type { MediaRequestState } from '@ValenceContracts/schemas/MediaRequest';
 import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
 import type { MediaRequestRecord } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
@@ -18,7 +19,7 @@ const UNDER_WAY = ['downloading', 'filing', 'filed', 'chosen', 'searching'] as c
 const describeRequestState = (
   request: Pick<MediaRequestRecord, 'approval' | 'problem' | 'problemCode'>,
   items: readonly Pick<RequestItemRecord, 'state' | 'problem' | 'problemCode'>[],
-): { state: MediaRequestState; problem: string | null; problemCode: ProblemCode | null } => {
+): { state: MediaRequestState; problem: Said | null; problemCode: ProblemCode | null } => {
   if (request.approval !== 'approved') {
     return {
       state: request.approval === 'awaiting' ? 'awaitingApproval' : 'refused',

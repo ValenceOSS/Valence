@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -184,7 +185,7 @@ describe('RequestsList', () => {
         ...MINE,
         approval: 'refused',
         state: 'awaitingApproval',
-        refusedBecause: 'There is no room for it',
+        refusedBecause: sayVerbatim('There is no room for it'),
       },
     ]);
 

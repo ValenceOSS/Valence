@@ -1,4 +1,8 @@
 import { followUpReading } from '@ValenceServer/library/followUpReading';
+import type { Said } from '@ValenceI18n/SaidSchema';
+import { sayingCount } from '@ValenceI18n/sayingCount';
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import { saying } from '@ValenceI18n/saying';
 import { docsFor } from '@ValenceCore/functions/docsFor';
 import { fileURLToPath } from 'node:url';
 import { join, relative } from 'node:path';
@@ -288,6 +292,7 @@ import { createDatabaseReencodeService } from '@ValenceServer/reencode/createDat
 import { keepingProfile } from '@ValenceServer/downloads/keepingProfile';
 import { watchADownload } from '@ValenceServer/downloads/watchADownload';
 import { readCertificatesAgain } from '@ValenceServer/library/readCertificatesAgain';
+import { say } from '@ValenceI18n/say';
 const ChapterListSchema = z.array(
   z.object({
     title: z.string().nullable(),
@@ -456,7 +461,7 @@ const auth = createAuth({
 
     void events.publish({
       event: 'account.created',
-      data: { accountId: userId, name: made?.name ?? 'Somebody' },
+      data: { accountId: userId, name: made?.name ?? say('common.somebody') },
     });
   },
   onSignInSettled: (attempt) => {
@@ -615,7 +620,7 @@ const describeViewing = async (viewing: PresenceViewing): Promise<ViewingData | 
       year: item.year ?? null,
       posterUrl: await libraryService.readArtworkUrl(viewing.mediaId, 'poster'),
       libraryId: item.libraryId,
-      libraryName: shelf?.name ?? 'A library',
+      libraryName: shelf?.name ?? say('common.aLibrary'),
       overview: item.metadata.overview ?? null,
       durationSeconds: item.durationSeconds,
       genres: item.metadata.genres ?? [],
@@ -793,7 +798,7 @@ await movePhotographsOnce({
     },
   },
   onProblem: (name, reason) => {
-    log.error('server', `profiles: ${name} could not be moved — ${reason}`);
+    log.error('server', `profiles: ${name} could not be moved — ${reason.message}`);
   },
 });
 
@@ -863,7 +868,10 @@ const lookUpMusic = async (libraryId: string, jobId: string, isAgain: boolean): 
     onProgress: (done, total) => {
       jobs.reportProgress(
         jobId,
-        `${done.toString()} of ${total.toString()} looked up`,
+        saying('server.main.doneOfTotalLookedUp', {
+          done: done.toString(),
+          total: total.toString(),
+        }),
         done,
         total,
       );
@@ -986,10 +994,10 @@ const runDetectSegments = async (libraryId: string, jobId: string): Promise<void
     },
     markComplete: (mediaId) => markJobComplete(db, mediaId, DETECT_SEGMENTS_JOB),
     onProblem: (provider, reason) => {
-      log.warn('scanner', `segments: ${provider}: ${reason}`);
+      log.warn('scanner', `segments: ${provider}: ${reason.message}`);
     },
     onProgress: (processed, total) => {
-      jobs.reportProgress(jobId, 'segments', processed, total);
+      jobs.reportProgress(jobId, saying('server.jobs.phase.segments'), processed, total);
     },
     isCancelled: () => jobs.isCancelled(jobId),
   });
@@ -1082,7 +1090,11 @@ const transcoderWatch = createReachabilityWatch({
 
     void events.publish({
       event: 'transcoder.unreachable',
-      data: { reason: `${env.TRANSCODER_URL} did not answer a health check.` },
+      data: {
+        reason: say('server.main.transcoderDidNotAnswer', {
+          address: env.TRANSCODER_URL,
+        }),
+      },
     });
   },
   onRegained: () => {
@@ -1112,11 +1124,11 @@ const requests =
         address: requestsSetup.address,
         client: requestsClient,
         onLost: (reason, problemCode) => {
-          log.warn('requests', `the requests service stopped answering — ${reason}`);
+          log.warn('requests', `the requests service stopped answering — ${reason.message}`);
 
           void events.publish({
             event: 'requests.unreachable',
-            data: { reason, docs: docsFor(problemCode) },
+            data: { reason: reason.message, docs: docsFor(problemCode) },
           });
         },
         onRegained: () => {
@@ -1125,11 +1137,11 @@ const requests =
           void events.publish({ event: 'requests.reachable', data: {} });
         },
         onVpnDown: (reason, problemCode) => {
-          log.warn('requests', `the VPN is down — ${reason}`);
+          log.warn('requests', `the VPN is down — ${reason.message}`);
 
           void events.publish({
             event: 'requests.vpnDown',
-            data: { reason, docs: docsFor(problemCode) },
+            data: { reason: reason.message, docs: docsFor(problemCode) },
           });
         },
         onVpnUp: (vpn) => {
@@ -1141,11 +1153,11 @@ const requests =
           });
         },
         onIndexerFailing: ({ name, problem, problemCode }) => {
-          log.warn('requests', `the indexer ${name} keeps failing — ${problem}`);
+          log.warn('requests', `the indexer ${name} keeps failing — ${problem.message}`);
 
           void events.publish({
             event: 'requests.indexerFailing',
-            data: { name, problem, docs: docsFor(problemCode) },
+            data: { name, problem: problem.message, docs: docsFor(problemCode) },
           });
         },
         onIndexerWorking: ({ name }) => {
@@ -1196,21 +1208,21 @@ const jobHealth = createJobHealthWatch({
     log.error(
       'jobs',
       everSucceeded
-        ? `${label} has failed every time it has run since it last worked — ${failures.toString()} attempts, most recently: ${reason}`
-        : `${label} has never once succeeded — ${failures.toString()} attempts, most recently: ${reason}`,
+        ? `${label.message} has failed every time it has run since it last worked — ${failures.toString()} attempts, most recently: ${reason.message}`
+        : `${label.message} has never once succeeded — ${failures.toString()} attempts, most recently: ${reason.message}`,
     );
 
     void events.publish({
       event: 'job.stalled',
-      data: { kind, label, failures, everSucceeded, reason },
+      data: { kind, label: label.message, failures, everSucceeded, reason: reason.message },
     });
   },
   onWorking: (kind) => {
     const label = labelForQueue(kind);
 
-    log.info('jobs', `${label} has run without failing.`);
+    log.info('jobs', `${label.message} has run without failing.`);
 
-    void events.publish({ event: 'job.working', data: { kind, label } });
+    void events.publish({ event: 'job.working', data: { kind, label: label.message } });
   },
 });
 
@@ -1273,8 +1285,11 @@ const announceFinishedJob = (finished: FinishedJob): void => {
 
     await events.publish(
       reason === null
-        ? { event: 'job.completed', data: about }
-        : { event: 'job.failed', data: { ...about, reason } },
+        ? { event: 'job.completed', data: { ...about, label: about.label.message } }
+        : {
+            event: 'job.failed',
+            data: { ...about, label: about.label.message, reason: reason.message },
+          },
     );
 
     realtime.publish(
@@ -1288,7 +1303,7 @@ const announceFinishedJob = (finished: FinishedJob): void => {
 };
 
 const interrupted = await jobHistory.interruptRunning(
-  'The server restarted while this was running. What it finished is kept, and the rest is picked up the next time it runs.',
+  saying('server.main.theServerRestartedWhileThisWas'),
 );
 
 if (interrupted > 0) {
@@ -1300,7 +1315,7 @@ if (interrupted > 0) {
 
 const jobEventLog = createJobEventLog(
   log,
-  (kind) => JOB_DEFINITIONS.find((definition) => definition.kind === kind)?.label ?? kind,
+  (kind) => JOB_DEFINITIONS.find((definition) => definition.kind === kind)?.label.message ?? kind,
 );
 
 const jobs = await createJobQueue({
@@ -1337,12 +1352,16 @@ const jobs = await createJobQueue({
             onScanned: async (result) => {
               jobs.reportProgress(
                 jobId,
-                `added ${result.added.toString()}, updated ${result.updated.toString()}, removed ${result.removed.toString()}`,
+                saying('server.main.addedAddedUpdatedUpdatedRemovedRemoved', {
+                  added: result.added.toString(),
+                  updated: result.updated.toString(),
+                  removed: result.removed.toString(),
+                }),
                 1,
                 1,
               );
 
-              const libraryName = scanned?.name ?? 'A library';
+              const libraryName = scanned?.name ?? say('common.aLibrary');
               const arrived = await sayWhatAScanChanged(
                 libraryId,
                 { name: libraryName, kind: scanned?.kind ?? 'movies' },
@@ -1399,7 +1418,7 @@ const jobs = await createJobQueue({
           const { request } = filed;
 
           if (request === null) {
-            jobs.reportProgress(jobId, `added ${result.added.toString()}`, 1, 1);
+            jobs.reportProgress(jobId, sayingCount('server.jobs.phase.added', result.added), 1, 1);
 
             return;
           }
@@ -1422,7 +1441,12 @@ const jobs = await createJobQueue({
                   request.tmdbId.toString(),
                 );
 
-          jobs.reportProgress(jobId, mediaId === null ? 'not found' : 'found', 1, 1);
+          jobs.reportProgress(
+            jobId,
+            mediaId === null ? saying('server.main.notFound') : saying('server.jobs.phase.found'),
+            1,
+            1,
+          );
 
           if (mediaId === null) {
             log.warn(
@@ -1456,7 +1480,12 @@ const jobs = await createJobQueue({
         let done = 0;
 
         for (const request of followed.value) {
-          jobs.reportProgress(jobId, 'asking the catalogue', done, followed.value.length);
+          jobs.reportProgress(
+            jobId,
+            saying('server.main.askingTheCatalogue'),
+            done,
+            followed.value.length,
+          );
 
           const catalogue = await catalogueForRequest(
             { describeForRequest, describeMusicForRequest, describeBookForRequest: describeBook },
@@ -1474,7 +1503,12 @@ const jobs = await createJobQueue({
           done += 1;
         }
 
-        jobs.reportProgress(jobId, `${done.toString()} brought up to date`, done, done);
+        jobs.reportProgress(
+          jobId,
+          saying('server.main.doneBroughtUpToDate', { done: done.toString() }),
+          done,
+          done,
+        );
       },
       [READ_AGAIN_JOB]: async (jobId, payload) => {
         const parsed = ReadAgainJobSchema.safeParse(payload);
@@ -1606,11 +1640,11 @@ const jobs = await createJobQueue({
             return [...albums, ...artists].map((row) => row.path);
           },
           onProblem: (path, reason) => {
-            log.error('server', `image cache: ${path}: ${reason}`);
+            log.error('server', `image cache: ${path}: ${reason.message}`);
             void jobHistory.recordIssue({ jobRunId: jobId, path, reason }).catch(() => {});
           },
           onProgress: (phase, processed, total) => {
-            jobs.reportProgress(jobId, phase, processed, total);
+            jobs.reportProgress(jobId, saying(`server.jobs.phase.${phase}`), processed, total);
           },
         });
 
@@ -1640,11 +1674,11 @@ const jobs = await createJobQueue({
           listChapterIds: async () =>
             (await db.select({ id: bookChapter.id }).from(bookChapter)).map((row) => row.id),
           onProblem: (path, reason) => {
-            log.error('server', `book pages: ${path}: ${reason}`);
+            log.error('server', `book pages: ${path}: ${reason.message}`);
             void jobHistory.recordIssue({ jobRunId: jobId, path, reason }).catch(() => {});
           },
           onProgress: (processed, total) => {
-            jobs.reportProgress(jobId, 'books', processed, total);
+            jobs.reportProgress(jobId, saying('server.jobs.phase.books'), processed, total);
           },
         });
 
@@ -1657,7 +1691,7 @@ const jobs = await createJobQueue({
       [REENCODE_JOB]: async (jobId) => {
         await reencodeService.work(
           (processed, total) => {
-            jobs.reportProgress(jobId, 'encoding', processed, total);
+            jobs.reportProgress(jobId, saying('server.jobs.phase.encoding'), processed, total);
           },
           () => jobs.isCancelled(jobId),
         );
@@ -1704,7 +1738,7 @@ const jobs = await createJobQueue({
           },
           transcoder,
           onProblem: (what, reason) => {
-            log.error('server', `artefact cache: ${what}: ${reason}`);
+            log.error('server', `artefact cache: ${what}: ${reason.message}`);
 
             const jobRunId = jobIdInScope();
 
@@ -1747,7 +1781,7 @@ const jobs = await createJobQueue({
         await watchADownload({
           find: () => downloadService.find(parsed.data.downloadId),
           report: (percent, item) => {
-            jobs.reportProgress(jobId, 'preparing', percent, 100, item);
+            jobs.reportProgress(jobId, saying('server.jobs.phase.preparing'), percent, 100, item);
           },
           isCancelled: () => jobs.isCancelled(jobId),
         });
@@ -1784,30 +1818,44 @@ const jobs = await createJobQueue({
             return rows.length;
           },
           onProgress: (phase, processed, total) => {
-            jobs.reportProgress(jobId, phase, processed, total);
+            jobs.reportProgress(jobId, saying(`server.jobs.phase.${phase}`), processed, total);
           },
         });
 
         log.info('server', `session cleanup: removed ${removed.toString()} row(s)`);
       },
       [CHECK_CATALOGUE_CONNECTIVITY_JOB]: async (jobId) => {
-        jobs.reportProgress(jobId, 'checking', 0, 1);
+        jobs.reportProgress(jobId, saying('server.jobs.phase.checking'), 0, 1);
 
         const reachable = await checkCatalogueConnectivity({
           readApiKey: async () => (await settings.read()).catalogueApiKey,
         });
 
-        jobs.reportProgress(jobId, reachable ? 'reachable' : 'unreachable', 1, 1);
+        jobs.reportProgress(
+          jobId,
+          reachable
+            ? saying('server.jobs.phase.reachable')
+            : saying('server.jobs.phase.unreachable'),
+          1,
+          1,
+        );
         log.info('catalogue', `catalogue connectivity: ${reachable ? 'reachable' : 'unreachable'}`);
 
         catalogueWatch.record(reachable);
       },
       [CHECK_TRANSCODER_JOB]: async (jobId) => {
-        jobs.reportProgress(jobId, 'checking', 0, 1);
+        jobs.reportProgress(jobId, saying('server.jobs.phase.checking'), 0, 1);
 
         const reachable = await transcoder.isReachable();
 
-        jobs.reportProgress(jobId, reachable ? 'reachable' : 'unreachable', 1, 1);
+        jobs.reportProgress(
+          jobId,
+          reachable
+            ? saying('server.jobs.phase.reachable')
+            : saying('server.jobs.phase.unreachable'),
+          1,
+          1,
+        );
 
         transcoderWatch.record(reachable);
       },
@@ -1816,14 +1864,21 @@ const jobs = await createJobQueue({
           return;
         }
 
-        jobs.reportProgress(jobId, 'checking', 0, 1);
+        jobs.reportProgress(jobId, saying('server.jobs.phase.checking'), 0, 1);
 
         const reachable = await requests.check();
 
-        jobs.reportProgress(jobId, reachable ? 'reachable' : 'unreachable', 1, 1);
+        jobs.reportProgress(
+          jobId,
+          reachable
+            ? saying('server.jobs.phase.reachable')
+            : saying('server.jobs.phase.unreachable'),
+          1,
+          1,
+        );
       },
       [CHECK_DISK_SPACE_JOB]: async (jobId) => {
-        jobs.reportProgress(jobId, 'reading', 0, 1);
+        jobs.reportProgress(jobId, saying('server.jobs.phase.reading'), 0, 1);
 
         const reading = MonitorDisksSchema.safeParse(await transcoder.readMonitor());
 
@@ -1839,10 +1894,10 @@ const jobs = await createJobQueue({
 
         diskWatch.record(mounts, findDisksUnderPressure(paths, disks));
 
-        jobs.reportProgress(jobId, `${mounts.length.toString()} checked`, 1, 1);
+        jobs.reportProgress(jobId, sayingCount('server.jobs.phase.checked', mounts.length), 1, 1);
       },
       [SEND_MEDIA_DIGEST_JOB]: async (jobId) => {
-        jobs.reportProgress(jobId, 'reading', 0, 1);
+        jobs.reportProgress(jobId, saying('server.jobs.phase.reading'), 0, 1);
 
         const now = new Date();
         const { since, announce } = readDigestWindow(
@@ -1881,7 +1936,7 @@ const jobs = await createJobQueue({
 
         const summary = summariseNewMedia(arrived);
 
-        jobs.reportProgress(jobId, `${arrived.length.toString()} arrived`, 1, 1);
+        jobs.reportProgress(jobId, sayingCount('server.jobs.phase.arrived', arrived.length), 1, 1);
 
         if (summary === null) {
           return;
@@ -2078,7 +2133,7 @@ const remember = (held: Map<string, ScannedItem[]>, libraryId: string, items: Sc
 
 const SCAN_GIVES_UP_AFTER_MILLISECONDS = 600_000;
 
-const LONE_SCAN = 'a scan on its own';
+const LONE_SCAN = say('server.main.aScanOnItsOwn');
 
 const scanRuns = collectScanRuns({
   givesUpAfterMilliseconds: SCAN_GIVES_UP_AFTER_MILLISECONDS,
@@ -2123,7 +2178,7 @@ const libraryService = createDatabaseLibraryService({
   previewQuality: async () => (await settings.read()).previewQuality,
   certificationRegion: async () => (await settings.read()).certificationRegion,
   onProblem: (path, reason) => {
-    log.warn('scanner', `skipped ${path}: ${reason}`);
+    log.warn('scanner', `skipped ${path}: ${reason.message}`);
 
     const jobRunId = jobIdInScope();
 
@@ -2360,8 +2415,8 @@ const sayARequestArrived = async (
   await notifyHousehold({
     store: notifications,
     event: 'requests.available',
-    title: `${filed.title} is ready`,
-    body: `${filed.title}, which you asked for, is in the library now.`,
+    title: saying('server.main.titleIsReady', { title: filed.title }),
+    body: saying('server.main.titleWhichYouAskedForIs', { title: filed.title }),
     link: LINKS_TO_ARRIVALS[filed.kind](mediaId),
     vapid: await readPushKeys(),
     only: [requestedBy.id],
@@ -2402,8 +2457,8 @@ const findMediaPath = async (mediaId: string): Promise<string | null> => {
  * @param path - The file the problem was in.
  * @param reason - What went wrong.
  */
-const reportSubtitleProblem = (path: string, reason: string): void => {
-  log.warn('scanner', `subtitles: ${path}: ${reason}`);
+const reportSubtitleProblem = (path: string, reason: Said): void => {
+  log.warn('scanner', `subtitles: ${path}: ${reason.message}`);
 };
 
 const subtitleService = createLayeredSubtitleService([
@@ -2436,7 +2491,7 @@ const segmentProviders = [
   createFingerprintSegmentProvider({
     transcoder,
     onProblem: (path, reason) => {
-      log.warn('scanner', `segments ${path}: ${reason}`);
+      log.warn('scanner', `segments ${path}: ${reason.message}`);
 
       const jobRunId = jobIdInScope();
 
@@ -2450,7 +2505,7 @@ const segmentProviders = [
 const images = createImageCache({
   directory: env.IMAGE_CACHE_DIR,
   onProblem: (url, reason) => {
-    log.warn('scanner', `artwork ${url}: ${reason}`);
+    log.warn('scanner', `artwork ${url}: ${reason.message}`);
 
     const jobRunId = jobIdInScope();
 
@@ -2629,7 +2684,7 @@ followTheDownloads({
       if (download.state === 'failed') {
         log.warn(
           'playback',
-          `downloads: ${download.title} could not be prepared: ${problem ?? download.failure ?? 'no reason given'}`,
+          `downloads: ${download.title} could not be prepared: ${problem?.message ?? download.failure?.message ?? 'no reason given'}`,
         );
       } else if (download.state === 'ready') {
         log.info('playback', `downloads: ${download.title} is ready to keep`);
@@ -2640,8 +2695,8 @@ followTheDownloads({
       await notifyHousehold({
         store: notifications,
         event: 'downloads.ready',
-        title: `${download.title} is ready to keep`,
-        body: `${download.title} has been prepared, and the device you asked on is fetching it.`,
+        title: saying('server.main.titleIsReadyToKeep', { title: download.title }),
+        body: saying('server.main.titleHasBeenPreparedAndThe', { title: download.title }),
         link: null,
         vapid: await readPushKeys(),
         only: [accountId],
@@ -2710,7 +2765,7 @@ const reencodeService = createDatabaseReencodeService({
     realtime.publish('media', { event: 'changed', mediaId: mediaItemId }, { kind: 'everyone' });
   },
   onProblem: (what, reason) => {
-    log.warn('jobs', `re-encoding ${what}: ${reason}`);
+    log.warn('jobs', `re-encoding ${what}: ${reason.message}`);
   },
 });
 
@@ -2781,8 +2836,8 @@ const startPlugins = (
         await notifyHousehold({
           store: notifications,
           event: 'plugins.message',
-          title: note.title,
-          body: note.body,
+          title: sayVerbatim(note.title),
+          body: sayVerbatim(note.body),
           link: null,
           vapid: await readPushKeys(),
           only: [accountId],
@@ -2878,8 +2933,8 @@ const app = createApp({
     await notifyHousehold({
       store: notifications,
       event: 'sharing.withdrawn',
-      title: 'A link you handed out was withdrawn',
-      body: `${byName} withdrew your link to ${title}. Anybody watching through it has stopped.`,
+      title: saying('server.main.aLinkYouHandedOutWas'),
+      body: saying('server.main.byNameWithdrewYourLinkToTitle', { byName, title }),
       link: null,
       vapid: await readPushKeys(),
       only: [accountId],
@@ -3269,11 +3324,19 @@ const askSomebodyToTheParty = async (
   await notifyHousehold({
     store: notifications,
     event: 'party.invited',
-    title: `${byName} wants to ${isListening ? 'listen' : 'watch'} with you`,
+    title: saying(
+      isListening ? 'server.parties.invite.listenTitle' : 'server.parties.invite.watchTitle',
+      { name: byName },
+    ),
     body:
       found === undefined
-        ? `They have a ${isListening ? 'listening' : 'watch'} party running.`
-        : `They are ${isListening ? 'listening to' : 'watching'} ${found.title}.`,
+        ? saying(isListening ? 'server.parties.invite.listening' : 'server.parties.invite.watching')
+        : saying(
+            isListening
+              ? 'server.parties.invite.listeningTo'
+              : 'server.parties.invite.watchingTitle',
+            { title: found.title },
+          ),
     link: isListening ? `/music?party=${party.id}` : `/watch/${party.mediaId}?party=${party.id}`,
     vapid: await readPushKeys(),
     only: [accountId],
@@ -3375,11 +3438,18 @@ if (requestsClient !== null) {
         }
 
         case 'failed': {
-          log.warn('requests', `${event.title} failed in ${event.clientName} — ${event.problem}`);
+          log.warn(
+            'requests',
+            `${event.title} failed in ${event.clientName} — ${event.problem.message}`,
+          );
 
           void events.publish({
             event: 'requests.downloadFailed',
-            data: { title: event.title, client: event.clientName, problem: event.problem },
+            data: {
+              title: event.title,
+              client: event.clientName,
+              problem: event.problem.message,
+            },
           });
 
           return;
@@ -3445,7 +3515,7 @@ if (requestsClient !== null) {
         }
 
         case 'stuck': {
-          log.warn('requests', `${event.title} is stuck — ${event.problem}`);
+          log.warn('requests', `${event.title} is stuck — ${event.problem.message}`);
         }
       }
     },

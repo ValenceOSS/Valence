@@ -2,6 +2,7 @@ import { stampWebhookEnvelope } from './stampWebhookEnvelope';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
 import type { EventBus } from './EventBus';
 import type { WebhookStore } from '@ValenceServer/webhooks/WebhookStore';
+import { say } from '@ValenceI18n/say';
 
 type CreateWebhookEventBusOptions = {
   subscriptions: WebhookStore;
@@ -37,7 +38,9 @@ const createWebhookEventBus = ({
       }
     } catch (error) {
       onProblem?.(
-        error instanceof Error ? describeFailure(error) : 'An event could not be published.',
+        error instanceof Error
+          ? describeFailure(error)
+          : say('server.events.webhookEventBus.anEventCouldNotBePublished'),
       );
     }
   },

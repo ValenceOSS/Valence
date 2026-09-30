@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { useEffect, useRef } from 'react';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import type { Notification } from '@ValenceClient/notifications/fetchNotifications';
@@ -45,8 +46,8 @@ const useDeviceNotifications = ({ notifications, unread, onOpen }: DeviceNotific
     for (const notification of notifications) {
       if (notification.readAt === null && !already.has(notification.id)) {
         platformInUse().notifyLocally({
-          title: notification.title,
-          body: notification.body,
+          title: sayAgain(notification.title),
+          body: sayAgain(notification.body),
           onOpen: () => {
             onOpen(notification.link);
           },

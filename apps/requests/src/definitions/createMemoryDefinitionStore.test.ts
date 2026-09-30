@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { createMemoryDefinitionStore } from './createMemoryDefinitionStore';
 import type { DefinitionRecord } from './DefinitionRecord';
@@ -50,7 +51,7 @@ describe('createMemoryDefinitionStore', () => {
 
     expect(await store.readState()).toEqual({ updatedAt: null, problem: null });
 
-    await store.writeState({ updatedAt: '2026-09-19T00:00:00.000Z', problem: 'x' });
+    await store.writeState({ updatedAt: '2026-09-19T00:00:00.000Z', problem: sayVerbatim('x') });
 
     expect(await store.readState()).toEqual({
       updatedAt: '2026-09-19T00:00:00.000Z',

@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -229,7 +230,7 @@ describe('IndexerDialog', () => {
     tryIndexer.mockResolvedValue({
       value: {
         isWorking: false,
-        problem: 'The indexer refused the API key',
+        problem: sayVerbatim('The indexer refused the API key'),
         problemCode: null,
         capabilities: null,
         captcha: null,
@@ -500,7 +501,7 @@ describe('IndexerDialog', () => {
       tryIndexer.mockResolvedValueOnce({
         value: {
           isWorking: false,
-          problem: 'Type the characters in the picture to log in',
+          problem: sayVerbatim('Type the characters in the picture to log in'),
           problemCode: null,
           capabilities: null,
           captcha: { image: 'data:image/png;base64,AQID' },

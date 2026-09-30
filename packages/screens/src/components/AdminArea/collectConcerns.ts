@@ -1,3 +1,5 @@
+import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { docsFor } from '@ValenceCore/functions/docsFor';
 import type { ActiveSession, AdminOverview, Monitor } from '@ValenceClient/admin/fetchAdmin';
 import type { Library } from '@ValenceContracts/schemas/Library';
@@ -82,7 +84,7 @@ const collectConcerns = ({
       id: 'requests',
       tone: 'broken',
       title: 'The requests service is unreachable',
-      detail: `Nothing requested will be searched for or downloaded until it is back. ${requests.problem ?? `Looked for it at ${requests.address}`}.`,
+      detail: `Nothing requested will be searched for or downloaded until it is back. ${sayAgainIfAny(requests.problem) ?? `Looked for it at ${requests.address}`}.`,
       panel: 'requests',
       help: docsFor(requests.problemCode ?? 'RequestsUnreachable'),
     });
@@ -103,7 +105,7 @@ const collectConcerns = ({
           : `${failingIndexers.length.toString()} indexers keep failing`,
       detail:
         failingIndexers.length === 1
-          ? (first?.problem ?? '')
+          ? (sayAgainIfAny(first?.problem) ?? '')
           : failingIndexers.map((indexer) => indexer.name).join(', '),
       panel: 'indexers',
       ...(failingIndexers.length === 1
@@ -111,7 +113,7 @@ const collectConcerns = ({
         : {
             items: failingIndexers.map((indexer) => ({
               name: indexer.name,
-              problem: indexer.problem,
+              problem: sayAgain(indexer.problem),
             })),
           }),
       help: docsFor(failingIndexers.length === 1 ? first?.problemCode : null),
@@ -125,7 +127,9 @@ const collectConcerns = ({
       id: 'requests-vpn',
       tone: 'broken',
       title: 'The VPN is down',
-      detail: vpn.problem ?? 'The requests service cannot reach the tunnel it downloads through.',
+      detail:
+        sayAgainIfAny(vpn.problem) ??
+        'The requests service cannot reach the tunnel it downloads through.',
       panel: 'requests',
       help: docsFor(vpn.problemCode ?? 'VpnDown'),
     });
@@ -138,7 +142,7 @@ const collectConcerns = ({
       id: 'requests-solver',
       tone: 'broken',
       title: 'The Cloudflare solver will not start',
-      detail: solver.startProblem,
+      detail: sayAgain(solver.startProblem),
       panel: 'requests',
       help: docsFor('CloudflareCheckFailed'),
     });
@@ -188,7 +192,9 @@ const collectConcerns = ({
         failed === 1
           ? 'A job failed in the last 24 hours'
           : `${failed.toString()} jobs failed in the last 24 hours`,
-      detail: recentFailures?.records[0]?.errorMessage ?? 'Open the list to see what went wrong.',
+      detail:
+        sayAgainIfAny(recentFailures?.records[0]?.errorMessage) ??
+        'Open the list to see what went wrong.',
       panel: 'jobs',
       search: { view: 'jobs', rstatus: 'failed', range: '24h' },
     });
@@ -204,10 +210,10 @@ const collectConcerns = ({
       title:
         stalled.length === 1
           ? worst.everSucceeded
-            ? `${worst.label} fails every time it runs`
-            : `${worst.label} has never once succeeded`
+            ? `${sayAgain(worst.label)} fails every time it runs`
+            : `${sayAgain(worst.label)} has never once succeeded`
           : `${stalled.length.toString()} kinds of job fail every time they run`,
-      detail: `Nothing on its schedule has happened since. Last failure: ${worst.reason}`,
+      detail: `Nothing on its schedule has happened since. Last failure: ${sayAgain(worst.reason)}`,
       panel: 'jobs',
     });
   }
