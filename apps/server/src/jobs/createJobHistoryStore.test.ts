@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import { createDatabase } from '#dialect/createDatabase';
+import { NOWHERE } from '#dialect/NOWHERE';
+import { sqlAsPostgresQuotes } from '@ValenceServer/testing/sqlAsPostgresQuotes';
 import { jobRun } from '#dialect/Schema';
 import {
   asIssue,
@@ -13,16 +15,14 @@ import {
   createJobHistoryStore,
 } from './createJobHistoryStore';
 
-const NOWHERE = 'postgres://nobody@localhost:1/none';
-
 /**
  * Builds the read query without running it, so its SQL can be inspected on a machine with no
- * Postgres — a pool connects at its first query and `.toSQL()` never makes one.
+ * database — a pool connects at its first query and `.toSQL()` never makes one.
  */
 const sqlFor = (query: Parameters<typeof buildReadQuery>[1]): string => {
   const { db } = createDatabase(NOWHERE);
 
-  return buildReadQuery(db, query).toSQL().sql;
+  return sqlAsPostgresQuotes(buildReadQuery(db, query).toSQL().sql);
 };
 
 const NO_FILTERS = {
@@ -80,7 +80,9 @@ describe('reading a page of job history', () => {
   it('keeps a run that began before the window in view while it is still going', () => {
     const sql = sqlFor({ ...NO_FILTERS, runningFirst: true, sinceMs: 1000 });
 
-    expect(sql).toMatch(/\("job_run"\."createdAt" >= \$\d+ or "job_run"\."status" = \$\d+\)/);
+    expect(sql).toMatch(
+      /\("job_run"\."createdAt" >= (?:\$\d+|\?) or "job_run"\."status" = (?:\$\d+|\?)\)/,
+    );
   });
 
   it('orders exactly as asked where the history has not asked for running runs first', () => {
@@ -104,7 +106,9 @@ describe('reading a page of job history', () => {
   it('puts the run that took longest first when asked, unfinished runs last', () => {
     const sql = sqlFor({ ...NO_FILTERS, sort: 'longest' });
 
-    expect(sql).toContain('"finishedAt" - "job_run"."startedAt"');
+    expect(sql).toMatch(
+      /order by .*"job_run"\."(?:finishedAt|startedAt)".*"job_run"\."(?:startedAt|finishedAt)"/,
+    );
     expect(sql).toMatch(/is null\), .* desc/);
   });
 
@@ -119,7 +123,7 @@ describe('reading a page of job history', () => {
   it('groups the alternatives of a search, so they cannot widen the filters beside them', () => {
     const sql = sqlFor({ ...NO_FILTERS, status: 'failed', search: 'abc' });
 
-    expect(sql).toMatch(/"status" = \$\d+ and \(/);
+    expect(sql).toMatch(/"status" = (?:\$\d+|\?) and \(/);
   });
 });
 
@@ -188,7 +192,7 @@ describe('buildStatsQuery', () => {
   const statsSql = (): string => {
     const { db } = createDatabase(NOWHERE);
 
-    return buildStatsQuery(db, 1000).toSQL().sql;
+    return sqlAsPostgresQuotes(buildStatsQuery(db, 1000).toSQL().sql);
   };
 
   it('summarises each kind of job on its own', () => {
@@ -233,13 +237,15 @@ describe('buildInterruptQuery', () => {
   const queryFor = (reason: string) => {
     const { db } = createDatabase(NOWHERE);
 
-    return buildInterruptQuery(db, reason).toSQL();
+    const { sql, params } = buildInterruptQuery(db, reason).toSQL();
+
+    return { sql: sqlAsPostgresQuotes(sql), params };
   };
 
   it('stops every run still marked as running or waiting, and no other', () => {
     const { sql: text } = queryFor('why');
 
-    expect(text).toContain('update "job_run" set "status" = $1');
+    expect(text).toContain('update "job_run" set "status" = ');
     expect(text).toContain("\"status\" in ('running', 'queued')");
   });
 

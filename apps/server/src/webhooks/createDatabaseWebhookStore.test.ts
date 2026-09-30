@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aMigratedDatabase } from '@ValenceServer/db/postgres/aMigratedDatabase';
+import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import { createDatabaseWebhookStore } from './createDatabaseWebhookStore';
 
 const STARTING_POSTGRES_MS = 60_000;

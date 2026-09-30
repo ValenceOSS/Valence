@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { asc } from 'drizzle-orm';
 import { describe, expect, it, vi } from 'vitest';
+import { nullsLast } from '@ValenceDatabase/nullsLast';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import { library, mediaItem, reencodeRequest } from '#dialect/Schema';
 import { createDatabaseReencodeService } from './createDatabaseReencodeService';
@@ -247,7 +248,7 @@ describe('createDatabaseReencodeService', { timeout: STARTING_POSTGRES_MS }, () 
     const rows = await db
       .select({ id: reencodeRequest.id, state: reencodeRequest.state })
       .from(reencodeRequest)
-      .orderBy(asc(reencodeRequest.startedAt), asc(reencodeRequest.id));
+      .orderBy(nullsLast(reencodeRequest.startedAt, 'asc'), asc(reencodeRequest.id));
 
     expect(rows).toEqual([
       { id: 'stranded', state: 'failed' },

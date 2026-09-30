@@ -1,11 +1,11 @@
 import { and } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { createDatabase } from '#dialect/createDatabase';
+import { NOWHERE } from '#dialect/NOWHERE';
+import { sqlAsPostgresQuotes } from '@ValenceServer/testing/sqlAsPostgresQuotes';
 import { book } from '#dialect/Schema';
 import { booksVisibleToViewer } from './booksVisibleToViewer';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
-
-const NOWHERE = 'postgres://nobody@localhost:1/none';
 
 const WATCHER: Viewer = {
   kind: 'account',
@@ -17,11 +17,13 @@ const WATCHER: Viewer = {
 const asked = (viewer: Viewer): string => {
   const { db } = createDatabase(NOWHERE);
 
-  return db
-    .select({ id: book.id })
-    .from(book)
-    .where(and(booksVisibleToViewer(db, viewer)))
-    .toSQL().sql;
+  return sqlAsPostgresQuotes(
+    db
+      .select({ id: book.id })
+      .from(book)
+      .where(and(booksVisibleToViewer(db, viewer)))
+      .toSQL().sql,
+  );
 };
 
 describe('which books a viewer can see', () => {

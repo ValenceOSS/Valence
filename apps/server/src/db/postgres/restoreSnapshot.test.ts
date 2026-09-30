@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { restoreSnapshot } from '@ValenceServer/db/restoreSnapshot';
+import { restoreSnapshot } from '@ValenceServer/db/postgres/restoreSnapshot';
 
 describe('restoreSnapshot', () => {
   it('replaces the database, connecting through the postgres one', async () => {

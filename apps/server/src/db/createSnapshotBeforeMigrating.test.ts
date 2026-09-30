@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
   rm: vi.fn(),
 }));
 
-vi.mock('@ValenceServer/db/takeSnapshot', () => ({ takeSnapshot: mocks.takeSnapshot }));
+vi.mock('#dialect/takeSnapshot', () => ({ takeSnapshot: mocks.takeSnapshot }));
 vi.mock('@ValenceServer/db/listSnapshots', () => ({ listSnapshots: mocks.listSnapshots }));
 vi.mock('node:fs/promises', () => ({ rm: mocks.rm }));
 

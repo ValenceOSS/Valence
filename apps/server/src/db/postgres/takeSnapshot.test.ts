@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { takeSnapshot } from '@ValenceServer/db/takeSnapshot';
+import { takeSnapshot } from '@ValenceServer/db/postgres/takeSnapshot';
 
 describe('takeSnapshot', () => {
   it('dumps the whole database, created afresh on restore, into the folder', async () => {

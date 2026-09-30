@@ -1,57 +1,23 @@
 import { asc } from 'drizzle-orm';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
-import { createDatabase } from '#dialect/createDatabase';
-import { library, mediaItem } from '#dialect/Schema';
+import {
+  ageCeiling,
+  ageException,
+  hidden,
+  library,
+  libraryBlock,
+  mediaItem,
+  musicAlbum,
+  musicArtist,
+  musicTrack,
+  series,
+  user,
+  viewerProfile,
+} from '#dialect/Schema';
 import type { SQL } from 'drizzle-orm';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
+import { aMediaItemRow } from '@ValenceServer/testing/aMediaItemRow';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
-
-const NOWHERE = 'postgres://nobody@localhost:1/none';
-
-const ITEM_COLUMNS =
-  '"id", "libraryId", "seriesId", "certificationAge", "path", "title", "sizeBytes", "modifiedAtMs", "container", "durationSeconds", "videoCodec", "videoRange", "width", "height", "audioStreams", "subtitleStreams"';
-
-const anItem = (id: string, libraryId: string, seriesId: string | null, age: number | null) =>
-  `('${id}', '${libraryId}', ${seriesId === null ? 'NULL' : `'${seriesId}'`}, ${age === null ? 'NULL' : String(age)}, '/${id}', '${id}', 1, 1, 'mkv', 1, 'h264', 'SDR', 1, 1, '[]', '[]')`;
-
-const SEED = `
-  INSERT INTO "user" ("id", "name", "email") VALUES
-    ('kid', 'Kid', 'kid@example.com'),
-    ('teen', 'Teen', 'teen@example.com'),
-    ('admin', 'Admin', 'admin@example.com');
-  INSERT INTO "viewer_profile" ("id", "userId", "name", "colour") VALUES ('kid-face', 'kid', 'Kid', 'red');
-  INSERT INTO "library" ("id", "name", "kind", "path") VALUES
-    ('films', 'Films', 'movies', '/films'),
-    ('kids', 'Kids', 'movies', '/kids'),
-    ('music', 'Music', 'music', '/music'),
-    ('locked', 'Locked', 'movies', '/locked');
-  INSERT INTO "series" ("id", "libraryId", "key", "title") VALUES ('show', 'films', 'show', 'Show');
-  INSERT INTO "media_item" (${ITEM_COLUMNS}) VALUES
-    ${[
-      anItem('film-12', 'films', null, 12),
-      anItem('film-18', 'films', null, 18),
-      anItem('film-unrated', 'films', null, null),
-      anItem('episode-15', 'films', 'show', 15),
-      anItem('cartoon', 'kids', null, null),
-      anItem('song', 'music', null, null),
-      anItem('locked-film', 'locked', null, 0),
-    ].join(',\n    ')};
-  INSERT INTO "music_artist" ("id", "libraryId", "name", "nameKey", "sortName") VALUES ('artist', 'music', 'Artist', 'artist', 'Artist');
-  INSERT INTO "music_album" ("id", "libraryId", "artistId", "title", "titleKey") VALUES ('album', 'music', 'artist', 'Album', 'album');
-  INSERT INTO "music_track" ("mediaItemId", "albumId", "codec") VALUES ('song', 'album', 'flac');
-  INSERT INTO "library_block" ("userId", "libraryId") VALUES ('kid', 'locked');
-  INSERT INTO "age_ceiling" ("userId", "libraryId", "maximumAge", "allowsUnrated") VALUES
-    ('kid', 'films', 12, false),
-    ('kid', 'music', 12, false),
-    ('teen', 'films', 15, true);
-  INSERT INTO "age_exception" ("id", "userId", "mediaItemId", "seriesId", "effect") VALUES
-    ('allow-show', 'kid', NULL, 'show', 'allow'),
-    ('deny-film', 'kid', 'film-12', NULL, 'deny');
-  INSERT INTO "hidden" ("id", "profileId", "mediaItemId", "seriesId", "libraryId") VALUES
-    ('hide-film', 'kid-face', 'film-unrated', NULL, NULL),
-    ('hide-show', 'kid-face', NULL, 'show', NULL),
-    ('hide-music', 'kid-face', NULL, NULL, 'music');
-`;
 
 /**
  * A database of films, a programme, a children's library, a song and a library one account is kept
@@ -63,9 +29,91 @@ const SEED = `
  */
 const aVisibilityPlayground = async () => {
   const db = await aMigratedDatabase();
-  const { db: builder } = createDatabase(NOWHERE);
 
-  await db.$client.exec(SEED);
+  await db.insert(user).values([
+    { id: 'kid', name: 'Kid', email: 'kid@example.com' },
+    { id: 'teen', name: 'Teen', email: 'teen@example.com' },
+    { id: 'admin', name: 'Admin', email: 'admin@example.com' },
+  ]);
+  await db
+    .insert(viewerProfile)
+    .values({ id: 'kid-face', userId: 'kid', name: 'Kid', colour: 'red' });
+  await db.insert(library).values([
+    { id: 'films', name: 'Films', kind: 'movies', path: '/films' },
+    { id: 'kids', name: 'Kids', kind: 'movies', path: '/kids' },
+    { id: 'music', name: 'Music', kind: 'music', path: '/music' },
+    { id: 'locked', name: 'Locked', kind: 'movies', path: '/locked' },
+  ]);
+  await db.insert(series).values({ id: 'show', libraryId: 'films', key: 'show', title: 'Show' });
+  await db.insert(mediaItem).values([
+    {
+      ...aMediaItemRow('film-12', 'films'),
+      path: '/film-12',
+      seriesId: null,
+      certificationAge: 12,
+    },
+    {
+      ...aMediaItemRow('film-18', 'films'),
+      path: '/film-18',
+      seriesId: null,
+      certificationAge: 18,
+    },
+    {
+      ...aMediaItemRow('film-unrated', 'films'),
+      path: '/film-unrated',
+      seriesId: null,
+      certificationAge: null,
+    },
+    {
+      ...aMediaItemRow('episode-15', 'films'),
+      path: '/episode-15',
+      seriesId: 'show',
+      certificationAge: 15,
+    },
+    {
+      ...aMediaItemRow('cartoon', 'kids'),
+      path: '/cartoon',
+      seriesId: null,
+      certificationAge: null,
+    },
+    { ...aMediaItemRow('song', 'music'), path: '/song', seriesId: null, certificationAge: null },
+    {
+      ...aMediaItemRow('locked-film', 'locked'),
+      path: '/locked-film',
+      seriesId: null,
+      certificationAge: 0,
+    },
+  ]);
+  await db.insert(musicArtist).values({
+    id: 'artist',
+    libraryId: 'music',
+    name: 'Artist',
+    nameKey: 'artist',
+    sortName: 'Artist',
+  });
+  await db.insert(musicAlbum).values({
+    id: 'album',
+    libraryId: 'music',
+    artistId: 'artist',
+    title: 'Album',
+    titleKey: 'album',
+  });
+  await db.insert(musicTrack).values({ mediaItemId: 'song', albumId: 'album', codec: 'flac' });
+  await db.insert(libraryBlock).values({ userId: 'kid', libraryId: 'locked' });
+  await db.insert(ageCeiling).values([
+    { userId: 'kid', libraryId: 'films', maximumAge: 12, allowsUnrated: false },
+    { userId: 'kid', libraryId: 'music', maximumAge: 12, allowsUnrated: false },
+    { userId: 'teen', libraryId: 'films', maximumAge: 15, allowsUnrated: true },
+  ]);
+  await db.insert(ageException).values([
+    { id: 'allow-show', userId: 'kid', mediaItemId: null, seriesId: 'show', effect: 'allow' },
+    { id: 'deny-film', userId: 'kid', mediaItemId: 'film-12', seriesId: null, effect: 'deny' },
+  ]);
+  await db.insert(hidden).values([
+    { id: 'hide-film', profileId: 'kid-face', mediaItemId: 'film-unrated' },
+    { id: 'hide-show', profileId: 'kid-face', seriesId: 'show' },
+    { id: 'hide-music', profileId: 'kid-face', libraryId: 'music' },
+  ]);
 
   const viewers = {
     kid: { kind: 'account', accountId: 'kid', profileId: 'kid-face', isAdministrator: false },
@@ -94,16 +142,12 @@ const aVisibilityPlayground = async () => {
         await db
           .select({ id: mediaItem.id })
           .from(mediaItem)
-          .where(build(builder))
+          .where(build(db))
           .orderBy(asc(mediaItem.id))
       ).map((row) => row.id),
     librariesKeptBy: async (build: (db: AnyValenceDatabase) => SQL | undefined) =>
       (
-        await db
-          .select({ id: library.id })
-          .from(library)
-          .where(build(builder))
-          .orderBy(asc(library.id))
+        await db.select({ id: library.id }).from(library).where(build(db)).orderBy(asc(library.id))
       ).map((row) => row.id),
   };
 };

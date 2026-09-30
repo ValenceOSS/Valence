@@ -10,6 +10,7 @@ const ROOT = join(import.meta.dirname, '..', '..');
 
 const APPS = [
   { app: 'server', dialect: 'postgres' },
+  { app: 'server', dialect: 'mysql' },
   { app: 'requests', dialect: 'postgres' },
   { app: 'requests', dialect: 'mysql' },
 ] as const;
@@ -21,6 +22,7 @@ const NOWHERE: Readonly<Record<string, string>> = {
 
 const ALREADY_OUT_OF_ORDER: Readonly<Record<string, readonly string[]>> = {
   'server/postgres': ['0071_grant_requests', '0072_albums_known_by_their_release_group'],
+  'server/mysql': [],
   'requests/postgres': [],
   'requests/mysql': [],
 };

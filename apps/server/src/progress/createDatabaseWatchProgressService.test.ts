@@ -1,35 +1,38 @@
-import { PGlite } from '@electric-sql/pglite';
-import { drizzle } from 'drizzle-orm/pglite';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { authSchema, valenceSchema } from '#dialect/Schema';
+import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
+import { library, mediaItem, user, viewerProfile } from '#dialect/Schema';
+import { aMediaItemRow } from '@ValenceServer/testing/aMediaItemRow';
 import { createDatabaseWatchProgressService } from './createDatabaseWatchProgressService';
 
-const STARTING_POSTGRES_MS = 30_000;
+const STARTING_THE_DATABASE_MS = 60_000;
 
 const EPISODES = 80;
 
 /**
- * A Postgres of its own, in memory, holding the progress table and nothing it refers to.
+ * A migrated database holding two viewers and the episodes and film they watch, which is what a
+ * progress record refers to.
  *
  * @returns The database.
  */
 const aScratchDatabase = async () => {
-  const client = new PGlite();
+  const db = await aMigratedDatabase();
 
-  await client.exec(`
-    CREATE TABLE "watch_progress" (
-      "id" text PRIMARY KEY,
-      "profileId" text NOT NULL,
-      "mediaItemId" text NOT NULL,
-      "positionSeconds" real NOT NULL,
-      "durationSeconds" real NOT NULL,
-      "isFinished" boolean NOT NULL DEFAULT false,
-      "updatedAt" timestamp NOT NULL DEFAULT now()
-    );
-    CREATE UNIQUE INDEX "watch_progress_profile_idx" ON "watch_progress" ("profileId", "mediaItemId");
-  `);
+  await db.insert(user).values({ id: 'account', name: 'Dan', email: 'dan@example.test' });
+  await db.insert(viewerProfile).values([
+    { id: 'dan', userId: 'account', name: 'Dan', colour: 'red' },
+    { id: 'somebody else', userId: 'account', name: 'Somebody', colour: 'blue' },
+  ]);
+  await db.insert(library).values({ id: 'shows', name: 'Shows', kind: 'shows', path: '/shows' });
+  await db
+    .insert(mediaItem)
+    .values([
+      ...Array.from({ length: EPISODES }, (_, episode) =>
+        aMediaItemRow(`episode-${episode.toString()}`, 'shows'),
+      ),
+      aMediaItemRow('film', 'shows'),
+    ]);
 
-  return drizzle(client, { schema: { ...authSchema, ...valenceSchema } });
+  return db;
 };
 
 /**
@@ -55,7 +58,7 @@ const finishEpisodes = async (
   }
 };
 
-describe('createDatabaseWatchProgressService', { timeout: STARTING_POSTGRES_MS }, () => {
+describe('createDatabaseWatchProgressService', { timeout: STARTING_THE_DATABASE_MS }, () => {
   afterEach(() => {
     vi.useRealTimers();
   });

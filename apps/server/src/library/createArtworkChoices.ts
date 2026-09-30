@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { and, eq, isNotNull, isNull } from 'drizzle-orm';
+import { and, asc, eq, isNotNull, isNull } from 'drizzle-orm';
 import { mediaArtworkChoice, mediaItem } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import { upsert } from '@ValenceDatabase/upsert';
@@ -187,7 +187,11 @@ const createArtworkChoices = ({
         return { jobId: (await fetchLogos(title.libraryId))?.jobId ?? null };
       }
 
-      const files = await db.select({ path: mediaItem.path }).from(mediaItem).where(filesOf(title));
+      const files = await db
+        .select({ path: mediaItem.path })
+        .from(mediaItem)
+        .where(filesOf(title))
+        .orderBy(asc(mediaItem.path));
 
       return {
         jobId: await readAgain(

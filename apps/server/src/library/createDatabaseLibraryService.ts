@@ -168,6 +168,24 @@ type CreateDatabaseLibraryServiceOptions = {
   onDeparted?: (libraryId: string, items: ScannedItem[]) => void;
 };
 
+const LIBRARY_COLUMNS = {
+  id: library.id,
+  name: library.name,
+  kind: library.kind,
+  flavour: library.flavour,
+  path: library.path,
+  lastScannedAt: library.lastScannedAt,
+  lastScanAdded: library.lastScanAdded,
+  lastScanUpdated: library.lastScanUpdated,
+  lastScanRemoved: library.lastScanRemoved,
+  lastScanFailed: library.lastScanFailed,
+  defaultAudioLanguage: library.defaultAudioLanguage,
+  filesAtOnce: library.filesAtOnce,
+  takesRequests: library.takesRequests,
+  requestProfileId: library.requestProfileId,
+  requestPath: library.requestPath,
+};
+
 /**
  * Builds the condition a typed search matches on: the title, the series title, the description, the
  * tagline and the cast. Somebody typing into a search box is naming whatever they can remember, and
@@ -186,7 +204,7 @@ const matchesSearch = (search: string) => {
     containsInsensitively(mediaItem.seriesTitle, like),
     containsInsensitively(mediaItem.overview, like),
     containsInsensitively(mediaItem.tagline, like),
-    sql`exists (select 1 from ${member.rows} where ${containsInsensitively(member.field('name'), like)})`,
+    sql`(select count(*) from ${member.rows} where ${containsInsensitively(member.field('name'), like)}) > 0`,
   );
 };
 
@@ -966,21 +984,7 @@ const createDatabaseLibraryService = ({
     list: async (viewer) => {
       const rows = await db
         .select({
-          id: library.id,
-          name: library.name,
-          kind: library.kind,
-          flavour: library.flavour,
-          path: library.path,
-          lastScannedAt: library.lastScannedAt,
-          lastScanAdded: library.lastScanAdded,
-          lastScanUpdated: library.lastScanUpdated,
-          lastScanRemoved: library.lastScanRemoved,
-          lastScanFailed: library.lastScanFailed,
-          defaultAudioLanguage: library.defaultAudioLanguage,
-          filesAtOnce: library.filesAtOnce,
-          takesRequests: library.takesRequests,
-          requestProfileId: library.requestProfileId,
-          requestPath: library.requestPath,
+          ...LIBRARY_COLUMNS,
           itemCount:
             sql<number>`case when ${library.kind} = 'books' then count(distinct ${bookChapter.id}) else count(distinct case when ${mediaItem.parentId} is null then ${mediaItem.id} end) end`.mapWith(
               Number,
@@ -991,7 +995,7 @@ const createDatabaseLibraryService = ({
         .leftJoin(book, eq(book.libraryId, library.id))
         .leftJoin(bookChapter, eq(bookChapter.bookId, book.id))
         .where(librariesVisibleToViewer(db, viewer))
-        .groupBy(library.id)
+        .groupBy(...Object.values(LIBRARY_COLUMNS))
         .orderBy(asc(library.name));
 
       return rows.map((row) => ({
@@ -1066,17 +1070,7 @@ const createDatabaseLibraryService = ({
 
       const [row] = await db
         .select({
-          id: library.id,
-          name: library.name,
-          kind: library.kind,
-          flavour: library.flavour,
-          path: library.path,
-          lastScannedAt: library.lastScannedAt,
-          defaultAudioLanguage: library.defaultAudioLanguage,
-          filesAtOnce: library.filesAtOnce,
-          takesRequests: library.takesRequests,
-          requestProfileId: library.requestProfileId,
-          requestPath: library.requestPath,
+          ...LIBRARY_COLUMNS,
           itemCount:
             sql<number>`case when ${library.kind} = 'books' then count(distinct ${bookChapter.id}) else count(distinct case when ${mediaItem.parentId} is null then ${mediaItem.id} end) end`.mapWith(
               Number,
@@ -1087,7 +1081,7 @@ const createDatabaseLibraryService = ({
         .leftJoin(book, eq(book.libraryId, library.id))
         .leftJoin(bookChapter, eq(bookChapter.bookId, book.id))
         .where(eq(library.id, libraryId))
-        .groupBy(library.id);
+        .groupBy(...Object.values(LIBRARY_COLUMNS));
 
       if (row === undefined) {
         return null;

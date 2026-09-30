@@ -58,6 +58,7 @@ import { createDatabaseUploadSessions } from '@ValenceServer/uploads/createDatab
 import { AUTH_PROVIDER } from '#dialect/AUTH_PROVIDER';
 import { createDatabase } from '#dialect/createDatabase';
 import { DIALECT } from '#dialect/DIALECT';
+import { openLockSession } from '#dialect/openLockSession';
 import { migrateDatabase } from '@ValenceServer/db/migrateDatabase';
 import { settleTheOwner } from '@ValenceServer/auth/settleTheOwner';
 import { movePhotographsOnce } from '@ValenceServer/profiles/movePhotographsOnce';
@@ -991,7 +992,9 @@ const scheduleAcrossLibraries =
 
 const libraryWork = createWorkLock();
 
-const librariesAcrossProcesses = createDatabaseWorkLock({ sessions: pool });
+const librariesAcrossProcesses = createDatabaseWorkLock({
+  sessions: { connect: () => openLockSession(pool) },
+});
 
 const webhookSubscriptions = createDatabaseWebhookStore(db);
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aMigratedDatabase } from '@ValenceServer/db/postgres/aMigratedDatabase';
+import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import { serverSetting } from '#dialect/Schema';
 import { ServerSettingsSchema } from './ServerSettings';
 import { createDatabaseSettingsStore } from './createDatabaseSettingsStore';

@@ -2,7 +2,7 @@ import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { eq } from 'drizzle-orm';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import { book, library, user, viewerProfile } from '#dialect/Schema';
 import { createDatabaseBookService } from './createDatabaseBookService';
@@ -84,6 +84,10 @@ const aShelf = async () => {
 };
 
 describe('createDatabaseBookService', { timeout: STARTING_POSTGRES_MS }, () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('hands back the same id when a book is scanned again, keeping a correction over the file', async () => {
     const { service } = await aShelf();
     const first = await service.upsertBook(DUNE);
@@ -153,16 +157,21 @@ describe('createDatabaseBookService', { timeout: STARTING_POSTGRES_MS }, () => {
     const chapters = (await service.read(bookId))?.chapters ?? [];
     const [one, two] = chapters.map((chapter) => chapter.id);
 
+    vi.useFakeTimers({ toFake: ['Date'] });
+
+    vi.setSystemTime(Date.UTC(2026, 8, 30, 20, 0));
     await service.saveProgress('reader', one ?? '', {
       pageNumber: 5,
       fraction: null,
       isFinished: false,
     });
+    vi.setSystemTime(Date.UTC(2026, 8, 30, 20, 1));
     await service.saveProgress('reader', two ?? '', {
       pageNumber: 2,
       fraction: null,
       isFinished: false,
     });
+    vi.setSystemTime(Date.UTC(2026, 8, 30, 20, 2));
     await service.saveProgress('reader', one ?? '', {
       pageNumber: 9,
       fraction: null,

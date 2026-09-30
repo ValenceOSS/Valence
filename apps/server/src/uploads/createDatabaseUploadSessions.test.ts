@@ -1,12 +1,9 @@
-import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
-import { PGlite } from '@electric-sql/pglite';
-import { drizzle } from 'drizzle-orm/pglite';
 import { describe, expect, it } from 'vitest';
-import { authSchema, valenceSchema } from '#dialect/Schema';
+import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
+import { library } from '#dialect/Schema';
 import { createDatabaseUploadSessions } from './createDatabaseUploadSessions';
 
-const STARTING_POSTGRES_MS = 30_000;
+const STARTING_THE_DATABASE_MS = 60_000;
 
 const UPLOAD = {
   libraryId: 'films',
@@ -16,34 +13,20 @@ const UPLOAD = {
 };
 
 /**
- * A Postgres of its own, in memory, holding a library and the upload table exactly as the migration
- * makes it — so what is tested is the migration and the queries together.
+ * A migrated database holding the library an upload lands in, so what is tested is the migrations
+ * and the queries together.
  *
  * @returns The database.
  */
 const aScratchDatabase = async () => {
-  const client = new PGlite();
-  const migration = await readFile(
-    join(
-      import.meta.dirname,
-      '..',
-      '..',
-      'drizzle',
-      'postgres',
-      '0081_uploads_that_outlive_a_restart.sql',
-    ),
-    'utf8',
-  );
+  const db = await aMigratedDatabase();
 
-  await client.exec(
-    `CREATE TABLE "library" ("id" text PRIMARY KEY); INSERT INTO "library" VALUES ('films');`,
-  );
-  await client.exec(migration.replaceAll('--> statement-breakpoint', ''));
+  await db.insert(library).values({ id: 'films', name: 'Films', kind: 'movies', path: '/films' });
 
-  return drizzle(client, { schema: { ...authSchema, ...valenceSchema } });
+  return db;
 };
 
-describe('createDatabaseUploadSessions', { timeout: STARTING_POSTGRES_MS }, () => {
+describe('createDatabaseUploadSessions', { timeout: STARTING_THE_DATABASE_MS }, () => {
   it('keeps an upload, file sizes past four gigabytes and all, and finds it again', async () => {
     const sessions = createDatabaseUploadSessions(await aScratchDatabase(), 60_000, 1024 ** 3);
     const opened = await sessions.open(UPLOAD);

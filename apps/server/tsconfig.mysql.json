@@ -2,6 +2,8 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "customConditions": ["mysql"],
+    "rootDir": "../..",
     "noEmit": true
-  }
+  },
+  "exclude": ["node_modules", "dist", "coverage", "src/db/postgres"]
 }

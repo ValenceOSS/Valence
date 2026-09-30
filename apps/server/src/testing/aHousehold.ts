@@ -1,5 +1,6 @@
 import { library, mediaItem, user, viewerProfile } from '#dialect/Schema';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
+import { aMediaItemRow } from '@ValenceServer/testing/aMediaItemRow';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 /**
@@ -20,22 +21,9 @@ const aHousehold = async () => {
     { id: 'films', name: 'Films', kind: 'movies', path: '/films' },
     { id: 'music', name: 'Music', kind: 'music', path: '/music' },
   ]);
-  await db.insert(mediaItem).values({
-    id: 'film',
-    libraryId: 'films',
-    path: '/films/film.mkv',
-    title: 'A Film',
-    sizeBytes: 1000,
-    modifiedAtMs: 0,
-    container: 'mkv',
-    durationSeconds: 5400,
-    videoCodec: 'h264',
-    videoRange: 'sdr',
-    width: 1920,
-    height: 1080,
-    audioStreams: [],
-    subtitleStreams: [],
-  });
+  await db
+    .insert(mediaItem)
+    .values({ ...aMediaItemRow('film', 'films'), path: '/films/film.mkv', title: 'A Film' });
 
   const viewer = {
     kind: 'account',

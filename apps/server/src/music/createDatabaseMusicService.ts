@@ -29,6 +29,7 @@ import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
 import { jsonTextElements } from '@ValenceDatabase/jsonTextElements';
 import { likeLiterally } from '@ValenceDatabase/likeLiterally';
 import { nullsLast } from '@ValenceDatabase/nullsLast';
+import { random } from '@ValenceDatabase/random';
 import { truth } from '@ValenceDatabase/truth';
 import { librariesVisibleToViewer } from '@ValenceServer/visibility/librariesVisibleToViewer';
 import { visibleToViewer } from '@ValenceServer/visibility/visibleToViewer';
@@ -528,10 +529,10 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
       const inTheirGenres =
         genres.length === 0
           ? sql`false`
-          : sql`exists (select 1 from ${albumGenre.rows} where ${albumGenre.value} in (${sql.join(
+          : sql`(select count(*) from ${albumGenre.rows} where ${albumGenre.value} in (${sql.join(
               genres.map((genre) => sql`${genre}`),
               sql`, `,
-            )}))`;
+            )})) > 0`;
       const isLiked =
         profileId === null
           ? sql`false`
@@ -567,7 +568,7 @@ const createDatabaseMusicService = (db: AnyValenceDatabase): MusicService => {
         ),
         [
           desc(
-            sql`(case when ${byTheirArtists} then 3 else 0 end) + (case when ${inTheirGenres} then 2 else 0 end) + (case when ${isLiked} then 2 else 0 end) + (case when ${byFollowed} then 1 else 0 end) + random() * 3`,
+            sql`(case when ${byTheirArtists} then 3 else 0 end) + (case when ${inTheirGenres} then 2 else 0 end) + (case when ${isLiked} then 2 else 0 end) + (case when ${byFollowed} then 1 else 0 end) + ${random()} * 3`,
           ),
         ],
         limit,

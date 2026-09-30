@@ -2,10 +2,10 @@ import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import { createDatabase } from '#dialect/createDatabase';
+import { NOWHERE } from '#dialect/NOWHERE';
+import { sqlAsPostgresQuotes } from '@ValenceServer/testing/sqlAsPostgresQuotes';
 import { book, library, mediaItem, series, share, shareVisit, user } from '#dialect/Schema';
 import { columnsFor, createDatabaseShareService } from './createDatabaseShareService';
-
-const NOWHERE = 'postgres://nobody@localhost:1/none';
 
 const STARTING_POSTGRES_MS = 60_000;
 
@@ -54,23 +54,27 @@ const aSharedFilm = async () => {
 const asked = () => {
   const { db } = createDatabase(NOWHERE);
 
-  const mine = db
-    .select(columnsFor(db))
-    .from(share)
-    .leftJoin(mediaItem, eq(mediaItem.id, share.mediaItemId))
-    .leftJoin(series, eq(series.id, share.seriesId))
-    .leftJoin(book, eq(book.id, share.bookId))
-    .where(eq(share.createdBy, 'ada'))
-    .toSQL().sql;
+  const mine = sqlAsPostgresQuotes(
+    db
+      .select(columnsFor(db))
+      .from(share)
+      .leftJoin(mediaItem, eq(mediaItem.id, share.mediaItemId))
+      .leftJoin(series, eq(series.id, share.seriesId))
+      .leftJoin(book, eq(book.id, share.bookId))
+      .where(eq(share.createdBy, 'ada'))
+      .toSQL().sql,
+  );
 
-  const everybody = db
-    .select({ ...columnsFor(db), createdByName: user.name })
-    .from(share)
-    .innerJoin(user, eq(user.id, share.createdBy))
-    .leftJoin(mediaItem, eq(mediaItem.id, share.mediaItemId))
-    .leftJoin(series, eq(series.id, share.seriesId))
-    .leftJoin(book, eq(book.id, share.bookId))
-    .toSQL().sql;
+  const everybody = sqlAsPostgresQuotes(
+    db
+      .select({ ...columnsFor(db), createdByName: user.name })
+      .from(share)
+      .innerJoin(user, eq(user.id, share.createdBy))
+      .leftJoin(mediaItem, eq(mediaItem.id, share.mediaItemId))
+      .leftJoin(series, eq(series.id, share.seriesId))
+      .leftJoin(book, eq(book.id, share.bookId))
+      .toSQL().sql,
+  );
 
   return { mine, everybody };
 };

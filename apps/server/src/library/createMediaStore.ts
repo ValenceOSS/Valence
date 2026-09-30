@@ -355,8 +355,9 @@ const createMediaStore = (
         const kept = survivor.id;
         const other = sql.identifier('kept');
 
-        await db
-          .delete(rating)
+        const doubledRatings = await db
+          .select({ id: rating.id })
+          .from(rating)
           .where(
             and(
               inArray(rating.seriesId, losers),
@@ -364,8 +365,18 @@ const createMediaStore = (
             ),
           );
 
-        await db
-          .delete(hidden)
+        if (doubledRatings.length > 0) {
+          await db.delete(rating).where(
+            inArray(
+              rating.id,
+              doubledRatings.map((row) => row.id),
+            ),
+          );
+        }
+
+        const doubledHidings = await db
+          .select({ id: hidden.id })
+          .from(hidden)
           .where(
             and(
               inArray(hidden.seriesId, losers),
@@ -373,14 +384,33 @@ const createMediaStore = (
             ),
           );
 
-        await db
-          .delete(ageException)
+        if (doubledHidings.length > 0) {
+          await db.delete(hidden).where(
+            inArray(
+              hidden.id,
+              doubledHidings.map((row) => row.id),
+            ),
+          );
+        }
+
+        const doubledExceptions = await db
+          .select({ id: ageException.id })
+          .from(ageException)
           .where(
             and(
               inArray(ageException.seriesId, losers),
               sql`exists (select 1 from ${ageException} as ${other} where ${onCopy(other, ageException.userId)} = ${ageException.userId} and ${onCopy(other, ageException.seriesId)} = ${kept})`,
             ),
           );
+
+        if (doubledExceptions.length > 0) {
+          await db.delete(ageException).where(
+            inArray(
+              ageException.id,
+              doubledExceptions.map((row) => row.id),
+            ),
+          );
+        }
 
         await db.update(rating).set({ seriesId: kept }).where(inArray(rating.seriesId, losers));
         await db.update(hidden).set({ seriesId: kept }).where(inArray(hidden.seriesId, losers));
@@ -439,18 +469,31 @@ const createMediaStore = (
   },
 
   forgetStaleVersions: async (libraryId, stillVersions) => {
-    await db
-      .update(mediaItem)
-      .set({ parentId: null, versionLabel: null })
+    const parent = sql.identifier('parent');
+    const stale = await db
+      .select({ id: mediaItem.id })
+      .from(mediaItem)
       .where(
         and(
           eq(mediaItem.libraryId, libraryId),
           isNull(mediaItem.extraKind),
           isNotNull(mediaItem.parentId),
-          sql`not exists (select 1 from ${mediaItem} as ${sql.identifier('parent')} where ${onCopy(sql.identifier('parent'), mediaItem.id)} = ${mediaItem.parentId} and ${onCopy(sql.identifier('parent'), mediaItem.externalId)} = ${mediaItem.externalId})`,
+          sql`not exists (select 1 from ${mediaItem} as ${parent} where ${onCopy(parent, mediaItem.id)} = ${mediaItem.parentId} and ${onCopy(parent, mediaItem.externalId)} = ${mediaItem.externalId})`,
           stillVersions.length === 0 ? undefined : notInArray(mediaItem.path, stillVersions),
         ),
       );
+
+    if (stale.length > 0) {
+      await db
+        .update(mediaItem)
+        .set({ parentId: null, versionLabel: null })
+        .where(
+          inArray(
+            mediaItem.id,
+            stale.map((row) => row.id),
+          ),
+        );
+    }
   },
 
   linkSameFilms: async (libraryId) => {

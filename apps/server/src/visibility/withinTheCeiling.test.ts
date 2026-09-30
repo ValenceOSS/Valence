@@ -1,12 +1,14 @@
 import { afterAll, describe, expect, it } from 'vitest';
 import { createDatabase } from '#dialect/createDatabase';
+import { NOWHERE } from '#dialect/NOWHERE';
+import { sqlAsPostgresQuotes } from '@ValenceServer/testing/sqlAsPostgresQuotes';
 import { mediaItem } from '#dialect/Schema';
 import { withinTheCeiling } from './withinTheCeiling';
 import { aVisibilityPlayground } from '@ValenceServer/visibility/aVisibilityPlayground';
 
 const STARTING_POSTGRES_MS = 60_000;
 
-const { db, pool } = createDatabase('postgres://nobody@localhost:1/none');
+const { db, pool } = createDatabase(NOWHERE);
 
 const ACCOUNT = {
   kind: 'account',
@@ -29,11 +31,10 @@ describe('withinTheCeiling', () => {
   });
 
   it('refuses the unrated only where it is not a song, since nothing certificates music', () => {
-    const asked = db
-      .select({ id: mediaItem.id })
-      .from(mediaItem)
-      .where(withinTheCeiling(db, ACCOUNT))
-      .toSQL().sql;
+    const asked = sqlAsPostgresQuotes(
+      db.select({ id: mediaItem.id }).from(mediaItem).where(withinTheCeiling(db, ACCOUNT)).toSQL()
+        .sql,
+    );
 
     expect(asked).toContain('"age_ceiling"."allowsUnrated"');
     expect(asked).toContain('"music_track"."mediaItemId" = "media_item"."id"');

@@ -1,6 +1,6 @@
 import { parseArgs } from 'node:util';
 import { listSnapshots } from '@ValenceServer/db/listSnapshots';
-import { restoreSnapshot } from '@ValenceServer/db/restoreSnapshot';
+import { restoreSnapshot } from '#dialect/restoreSnapshot';
 import { readEnv } from '@ValenceServer/env/Env';
 
 /**

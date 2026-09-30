@@ -577,6 +577,8 @@ const createDatabaseBookService = (
         return false;
       }
 
+      const now = new Date();
+
       await upsert(db, readingProgress, {
         values: [
           {
@@ -587,6 +589,7 @@ const createDatabaseBookService = (
             pageNumber: where.pageNumber,
             fraction: where.fraction,
             isFinished: where.isFinished,
+            updatedAt: now,
           },
         ],
         target: [readingProgress.profileId, readingProgress.chapterId],
@@ -594,7 +597,7 @@ const createDatabaseBookService = (
           pageNumber: where.pageNumber,
           fraction: where.fraction,
           isFinished: where.isFinished,
-          updatedAt: new Date(),
+          updatedAt: now,
         },
       });
 

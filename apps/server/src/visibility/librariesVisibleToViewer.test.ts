@@ -1,14 +1,14 @@
 import { and, asc } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { createDatabase } from '#dialect/createDatabase';
+import { NOWHERE } from '#dialect/NOWHERE';
+import { sqlAsPostgresQuotes } from '@ValenceServer/testing/sqlAsPostgresQuotes';
 import { library } from '#dialect/Schema';
 import { librariesVisibleToViewer } from './librariesVisibleToViewer';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import { aVisibilityPlayground } from '@ValenceServer/visibility/aVisibilityPlayground';
 
 const STARTING_POSTGRES_MS = 60_000;
-
-const NOWHERE = 'postgres://nobody@localhost:1/none';
 
 const WATCHER: Viewer = {
   kind: 'account',
@@ -20,12 +20,14 @@ const WATCHER: Viewer = {
 const asked = (viewer: Viewer): string => {
   const { db } = createDatabase(NOWHERE);
 
-  return db
-    .select({ id: library.id })
-    .from(library)
-    .where(and(librariesVisibleToViewer(db, viewer)))
-    .orderBy(asc(library.name))
-    .toSQL().sql;
+  return sqlAsPostgresQuotes(
+    db
+      .select({ id: library.id })
+      .from(library)
+      .where(and(librariesVisibleToViewer(db, viewer)))
+      .orderBy(asc(library.name))
+      .toSQL().sql,
+  );
 };
 
 describe('which libraries a viewer is offered', () => {

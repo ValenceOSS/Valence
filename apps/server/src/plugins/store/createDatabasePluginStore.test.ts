@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aMigratedDatabase } from '@ValenceServer/db/postgres/aMigratedDatabase';
+import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import { PluginManifestSchema } from '@ValenceSDK/manifest/PluginManifestSchema';
 import { pluginHook, pluginProfile, user, viewerProfile } from '#dialect/Schema';
 import { createDatabasePluginStore } from './createDatabasePluginStore';

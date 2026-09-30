@@ -1,6 +1,6 @@
 import { getTableConfig } from 'drizzle-orm/pg-core';
 import { describe, expect, it } from 'vitest';
-import { library } from '#dialect/Schema';
+import { library } from '@ValenceServer/db/postgres/Schema';
 
 const generation = () =>
   getTableConfig(library).columns.find((column) => column.name === 'generation');
