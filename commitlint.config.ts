@@ -34,6 +34,7 @@ const config: UserConfig = {
         'ui',
         'contracts',
         'core',
+        'i18n',
         'plugin-sdk',
         'auth',
         'docs',

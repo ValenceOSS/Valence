@@ -1,4 +1,5 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
   ShareEndingSchema,
   AdminShareListSchema,
@@ -13,7 +14,7 @@ const ShareList = ShareListSchema.openapi('ShareList');
 const CreatedShare = CreatedShareSchema.openapi('CreatedShare');
 const NewShare = NewShareSchema.openapi('NewShare');
 const AdminShareList = AdminShareListSchema.openapi('AdminShareList');
-const ShareError = z.object({ error: z.string() }).openapi('ShareError');
+const ShareError = RefusalSchema.openapi('ShareError');
 
 const ShareEnded = z.object({ error: z.string(), ended: ShareEndingSchema }).openapi('ShareEnded');
 

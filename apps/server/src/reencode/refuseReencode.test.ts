@@ -55,7 +55,7 @@ describe('refuseReencode', () => {
     const refusal = refuseReencode({ ...fine, isFolderWritable: false });
 
     expect(refusal?.code).toBe('FolderIsReadOnly');
-    expect(refusal?.detail).toContain('read only');
+    expect(refusal?.detail?.message).toContain('read only');
   });
 
   it('refuses work that would buy nothing', () => {

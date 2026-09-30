@@ -1,3 +1,4 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type { PluginTrust } from '@ValenceContracts/schemas/Plugin';
 import type { PluginManifest } from '@ValenceSDK/manifest/PluginManifestSchema';
@@ -16,7 +17,7 @@ type InstalledRecord = {
   installedBy: string | null;
   installedAt: string;
   updatedAt: string;
-  problem: string | null;
+  problem: Said | null;
   previousVersion: string | null;
 };
 

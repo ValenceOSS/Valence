@@ -1,3 +1,4 @@
+import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { docsFor } from '@ValenceCore/functions/docsFor';
 import type { RequestsOverview } from '@ValenceContracts/schemas/Requests';
 import type { RequestsHealth } from './RequestsHealth.types';
@@ -32,7 +33,7 @@ const describeRequestsVpn = (overview: RequestsOverview): RequestsHealth => {
     return {
       label: 'Down',
       tone: 'danger',
-      detail: vpn.problem ?? 'The tunnel is down.',
+      detail: sayAgainIfAny(vpn.problem) ?? 'The tunnel is down.',
       help: docsFor(vpn.problemCode ?? 'VpnDown'),
     };
   }

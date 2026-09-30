@@ -1,3 +1,7 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import { saying } from '@ValenceI18n/saying';
+import { SaidError } from '@ValenceI18n/SaidError';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { PgBoss } from 'pg-boss';
 import type { Job } from 'pg-boss';
 import { scheduleSendOptions } from './scheduleSendOptions';
@@ -11,7 +15,7 @@ type FinishedJob = {
   kind: string;
   jobId: string;
   subject: string | null;
-  reason: string | null;
+  reason: Said | null;
   wasStopped: boolean;
 };
 
@@ -28,7 +32,7 @@ type CreateJobQueueOptions = {
   onStarted?: (entry: { kind: string; jobId: string; subject: string | null }) => Promise<void>;
   onProgress?: (entry: {
     jobId: string;
-    phase: string;
+    phase: Said;
     processed: number;
     total: number;
     item: string | null;
@@ -165,9 +169,11 @@ const createJobQueue = async ({
                 subject,
                 reason: wasStopped
                   ? null
-                  : error instanceof Error
-                    ? error.message
-                    : 'The job failed.',
+                  : error instanceof SaidError
+                    ? error.said
+                    : error instanceof Error
+                      ? sayVerbatim(error.message)
+                      : saying('server.jobs.jobQueue.theJobFailed'),
                 wasStopped,
               });
 

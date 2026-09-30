@@ -3,15 +3,32 @@ import { openLibraryCover } from '@ValenceServer/requests/openLibrary/openLibrar
 import { openLibraryIdOf } from '@ValenceServer/requests/openLibrary/openLibraryIdOf';
 import type { MusicWeb } from '@ValenceServer/music/web/createMusicWeb';
 import type { OpenLibraryBook } from '@ValenceServer/requests/openLibrary/OpenLibraryBook';
+import { say } from '@ValenceI18n/say';
 
 const MOST_ON_A_SHELF = 20;
 
 const SHELVES = [
-  { id: 'trending-books', title: 'Trending books', from: 'trending' },
-  { id: 'science-fiction-books', title: 'Science fiction', from: 'science_fiction' },
-  { id: 'fantasy-books', title: 'Fantasy', from: 'fantasy' },
-  { id: 'mystery-books', title: 'Mystery and thrillers', from: 'mystery_and_detective_stories' },
-  { id: 'history-books', title: 'History', from: 'history' },
+  {
+    id: 'trending-books',
+    title: say('server.openLibrary.readOpenLibraryShelves.trendingBooks'),
+    from: 'trending',
+  },
+  {
+    id: 'science-fiction-books',
+    title: say('server.openLibrary.readOpenLibraryShelves.scienceFiction'),
+    from: 'science_fiction',
+  },
+  {
+    id: 'fantasy-books',
+    title: say('server.openLibrary.readOpenLibraryShelves.fantasy'),
+    from: 'fantasy',
+  },
+  {
+    id: 'mystery-books',
+    title: say('server.openLibrary.readOpenLibraryShelves.mysteryAndThrillers'),
+    from: 'mystery_and_detective_stories',
+  },
+  { id: 'history-books', title: say('common.history'), from: 'history' },
 ] as const;
 
 const TrendingSchema = z.object({

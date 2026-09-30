@@ -7,13 +7,14 @@ import {
 } from '@ValenceServer/routes/VideoDeviceRoute';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import type { VideoDevices } from './createVideoDevices';
+import { refuse } from '@ValenceI18n/refuse';
 
 type VideoDeviceRouteOptions = {
   viewerOf: (headers: Headers) => Promise<Viewer | null>;
   devices: VideoDevices;
 };
 
-const NOBODY = { error: 'Nobody is signed in.' } as const;
+const NOBODY = refuse('error.common.nobodyIsSignedIn');
 
 /**
  * Serves the list of somebody's devices to send a film to, what each says it is watching, and the
@@ -47,7 +48,7 @@ const registerVideoDeviceRoutes = (
 
     return devices.report(owner, clientId, nowWatching)
       ? context.json({ ok: true }, 200)
-      : context.json({ error: 'That device is not connected.' }, 404);
+      : context.json(refuse('error.common.thatDeviceIsNotConnected'), 404);
   });
 
   app.openapi(commandVideoDeviceRoute, async (context) => {
@@ -62,7 +63,7 @@ const registerVideoDeviceRoutes = (
 
     return sent
       ? context.json({ ok: true }, 200)
-      : context.json({ error: 'That device is not one of yours, or is not there.' }, 404);
+      : context.json(refuse('error.common.thatDeviceIsNotOneOf'), 404);
   });
 };
 

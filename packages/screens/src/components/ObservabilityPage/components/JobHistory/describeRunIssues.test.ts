@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { describeRunIssues } from './describeRunIssues';
 import type { JobRunIssue } from '@ValenceContracts/schemas/JobRun';
@@ -6,7 +7,7 @@ const issue = (path: string, reason: string): JobRunIssue => ({
   id: path,
   jobRunId: 'run-1',
   path,
-  reason,
+  reason: sayVerbatim(reason),
   atMs: 0,
 });
 

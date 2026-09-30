@@ -12,6 +12,7 @@ import type {
   DownloadClientRecord,
   DownloadClientStore,
 } from '@ValenceRequests/downloads/DownloadClientRecord';
+import { saying } from '@ValenceI18n/saying';
 
 type CreateDownloadClientServiceOptions = {
   store: DownloadClientStore;
@@ -19,7 +20,7 @@ type CreateDownloadClientServiceOptions = {
   now?: () => Date;
 };
 
-const UNASKABLE = 'The client could not be asked';
+const UNASKABLE = saying('common.theClientCouldNotBeAsked');
 
 /**
  * A client as it may be shown: whether it has a password or key, and never what they are.
@@ -88,7 +89,7 @@ const createDownloadClientService = ({
     } catch (error) {
       return {
         isWorking: false,
-        problem: error instanceof DownloadClientFailure ? error.message : UNASKABLE,
+        problem: error instanceof DownloadClientFailure ? error.said : UNASKABLE,
         problemCode: error instanceof DownloadClientFailure ? error.problemCode : null,
         version: null,
       };

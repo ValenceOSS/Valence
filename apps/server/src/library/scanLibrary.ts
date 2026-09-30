@@ -1,3 +1,5 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { isUnderAny } from '@ValenceServer/library/isUnderAny';
 import { isMediaFile } from './isMediaFile';
 import { resolveMetadata } from './MetadataProvider';
@@ -15,6 +17,7 @@ import type { EpisodeNumbering } from './EpisodeNumbering.types';
 import type { ExternalIds } from './naming/ExternalIds.types';
 import type { MediaProbe, Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
 import type { ExtraKind, ScanResult } from '@ValenceContracts/schemas/Library';
+import { saying } from '@ValenceI18n/saying';
 
 type ScannedFile = {
   path: string;
@@ -105,7 +108,7 @@ type ScanLibraryOptions = {
   force?: boolean;
   isPartial?: boolean;
   atOnce?: number;
-  onProblem?: (path: string, reason: string) => void;
+  onProblem?: (path: string, reason: Said) => void;
   onProgress?: (phase: ScanPhase, processed: number, total: number, item?: string) => void;
   onAdded?: (item: ScannedItem) => void;
   onRemoved?: (items: ScannedItem[]) => void;
@@ -456,7 +459,7 @@ const scanLibrary = async ({
 
       if (probe.video === null) {
         failed += 1;
-        onProblem?.(file.path, 'No video stream.');
+        onProblem?.(file.path, saying('server.library.scanLibrary.noVideoStream'));
 
         return false;
       }
@@ -502,13 +505,22 @@ const scanLibrary = async ({
                 rememberedExternalId: remembered,
               },
               (name, reason) =>
-                onProblem?.(file.path, `Metadata provider ${name} failed: ${reason}`),
+                onProblem?.(
+                  file.path,
+                  saying('server.library.scanLibrary.metadataProviderNameFailedReason', {
+                    name,
+                    reason,
+                  }),
+                ),
             )
           : { title: placement?.title ?? nameOfFile(file.path), year: placement?.year ?? null };
 
       if (metadata === null) {
         failed += 1;
-        onProblem?.(file.path, 'No metadata provider could name this file.');
+        onProblem?.(
+          file.path,
+          saying('server.library.scanLibrary.noMetadataProviderCouldNameThis'),
+        );
 
         return false;
       }
@@ -519,7 +531,7 @@ const scanLibrary = async ({
         failed += 1;
         onProblem?.(
           file.path,
-          'The catalogue did not answer. Keeping what was already known about this file.',
+          saying('server.library.scanLibrary.theCatalogueDidNotAnswerKeeping'),
         );
 
         return false;
@@ -569,7 +581,12 @@ const scanLibrary = async ({
     } catch (error) {
       failed += 1;
       failedInARow += 1;
-      onProblem?.(file.path, error instanceof Error ? describeFailure(error) : 'Probe failed.');
+      onProblem?.(
+        file.path,
+        error instanceof Error
+          ? sayVerbatim(describeFailure(error))
+          : saying('server.library.scanLibrary.probeFailed'),
+      );
 
       if (failedInARow >= GIVE_UP_AFTER && !(await isReachable(transcoder))) {
         stopping = true;
@@ -587,26 +604,17 @@ const scanLibrary = async ({
   const hasGone = outcomes.some((gaveUp) => gaveUp);
 
   if (hasVanished) {
-    onProblem?.(
-      within,
-      'Nothing was found where this library reads from, so what it already held has been left alone. Check the folder is still there — a network share that is not mounted looks exactly like an empty one.',
-    );
+    onProblem?.(within, saying('server.library.scanLibrary.nothingWasFoundWhereThisLibrary'));
   }
 
   if (hasGone) {
-    onProblem?.(
-      within,
-      'The media service stopped answering, so this scan gave up rather than reporting the rest of the library as unreadable. Nothing was deleted, and the files it never reached are still waiting to be read.',
-    );
+    onProblem?.(within, saying('server.library.scanLibrary.theMediaServiceStoppedAnsweringSo'));
 
     return { added, updated, removed: 0, failed };
   }
 
   if (isCancelled?.() === true) {
-    onProblem?.(
-      within,
-      'This scan was stopped before it finished. What it had already read is kept; nothing was deleted, and the library still counts as unscanned.',
-    );
+    onProblem?.(within, saying('server.library.scanLibrary.thisScanWasStoppedBeforeIt'));
 
     return { added, updated, removed: 0, failed };
   }

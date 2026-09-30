@@ -1,3 +1,7 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
+import { saidFrom } from '@ValenceI18n/saidFrom';
+import { refuseWith } from '@ValenceI18n/refuseWith';
+import { bodyOf } from '@ValenceI18n/bodyOf';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import {
   approveMediaRequestRoute,
@@ -70,6 +74,7 @@ import { standTitles } from '@ValenceServer/requests/catalogue/standTitles';
 import { progressOf } from '@ValenceServer/requests/progressOf';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
+import { refuse } from '@ValenceI18n/refuse';
 
 /**
  * Registers the requests endpoints.
@@ -111,7 +116,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(requestsAvailabilityRoute, async (context) => {
     if ((await readSessionOnce(auth, context.req.raw.headers)) === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     return context.json({ isEnabled: requests !== null }, 200);
@@ -119,23 +124,23 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(adminRequestsOverviewRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'requests.manage'))) {
-      return context.json({ error: 'That is for whoever sets up requesting.' }, 403);
+      return context.json(refuse('error.common.thatIsForWhoeverSetsUp'), 403);
     }
 
     const overview = await requestsOverview();
 
     return overview === null
-      ? context.json({ error: 'Requesting is off.' }, 404)
+      ? context.json(refuse('error.common.requestingIsOff'), 404)
       : context.json(overview, 200);
   });
 
   app.openapi(adminCheckRequestsRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'requests.manage'))) {
-      return context.json({ error: 'That is for whoever sets up requesting.' }, 403);
+      return context.json(refuse('error.common.thatIsForWhoeverSetsUp'), 403);
     }
 
     if (requests === null) {
-      return context.json({ error: 'Requesting is off.' }, 404);
+      return context.json(refuse('error.common.requestingIsOff'), 404);
     }
 
     await requests.check();
@@ -143,7 +148,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const overview = await requestsOverview();
 
     return overview === null
-      ? context.json({ error: 'Requesting is off.' }, 404)
+      ? context.json(refuse('error.common.requestingIsOff'), 404)
       : context.json(overview, 200);
   });
 
@@ -156,7 +161,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     ]);
 
     if (answer.kind !== 'answered') {
-      return context.json({ error: answer.error }, answer.status);
+      return context.json(bodyOf(answer), answer.status);
     }
 
     const seesAll = (
@@ -177,25 +182,31 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const isByHand = asked.isPickedByHand || asked.release !== undefined;
 
     if (isByHand && !(await requires(headers, 'requests.manage'))) {
-      return context.json({ error: 'Picking a release is for whoever manages requesting.' }, 403);
+      return context.json(refuse('error.requests.pickingAReleaseIsForWhoever'), 403);
     }
 
     const profile = await profileForAsk(headers, asked);
 
     if (profile.kind === 'refused') {
-      return context.json({ error: profile.error }, profile.status);
+      return context.json(bodyOf(profile), profile.status);
     }
 
     const drafted = await draftFor(headers, asked, profile.profileId);
     const answer = await throughRequests(
       headers,
       (client) =>
-        drafted.kind === 'refused' ? Promise.resolve(drafted) : client.addRequest(drafted.draft),
+        drafted.kind === 'refused'
+          ? Promise.resolve({
+              kind: 'refused' as const,
+              status: drafted.status,
+              refusal: bodyOf(drafted),
+            })
+          : client.addRequest(drafted.draft),
       [isMusicRequest(asked.kind) ? 'requests.askMusic' : 'requests.ask'],
     );
 
     if (answer.kind !== 'answered') {
-      return context.json({ error: answer.error }, answer.status);
+      return context.json(bodyOf(answer), answer.status);
     }
 
     const { request, isNew } = answer.value;
@@ -210,9 +221,9 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     if (picked.kind !== 'answered') {
       return context.json(
-        {
-          error: `It was asked for, but that release could not be fetched: ${picked.kind === 'silent' ? picked.reason : picked.error}`,
-        },
+        refuse('error.requests.askedButNotFetched', {
+          problem: picked.kind === 'silent' ? picked.reason : saidFrom(picked.refusal),
+        }),
         400,
       );
     }
@@ -226,19 +237,23 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const profile = await profileForAsk(headers, asked);
 
     if (profile.kind === 'refused') {
-      return context.json({ error: profile.error }, profile.status);
+      return context.json(bodyOf(profile), profile.status);
     }
 
     const drafted = await draftFor(headers, asked, profile.profileId);
     const answer = await throughRequests(headers, (client) =>
       drafted.kind === 'refused'
-        ? Promise.resolve(drafted)
+        ? Promise.resolve({
+            kind: 'refused' as const,
+            status: drafted.status,
+            refusal: bodyOf(drafted),
+          })
         : client.releasesForDraft(drafted.draft),
     );
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(seriesSeasonsRoute, async (context) => {
@@ -261,7 +276,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     ]);
 
     return catalogue === null
-      ? context.json({ error: 'The catalogue does not know that series, or cannot be asked.' }, 404)
+      ? context.json(refuse('error.requests.theCatalogueDoesNotKnowThat'), 404)
       : context.json(
           seasonsOf(
             catalogue.episodes,
@@ -419,10 +434,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const described = await describeCatalogueTitle(discovery, kind, id);
 
     if (described === null) {
-      return context.json(
-        { error: 'The catalogue does not know that, or cannot be asked just now.' },
-        404,
-      );
+      return context.json(refuse('error.common.theCatalogueDoesNotKnowThat'), 404);
     }
 
     const [stood] = await standTitles([described], discovery.lookup, await everyRequest());
@@ -457,7 +469,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(searchMissingRoute, async (context) => {
@@ -467,7 +479,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(changeMediaRequestRoute, async (context) => {
@@ -493,7 +505,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(removeMediaRequestRoute, async (context) => {
@@ -516,14 +528,18 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
         }
 
         if (found.value.requestedBy.id !== session?.user.id) {
-          return { kind: 'refused', status: 404, error: 'There is no such request.' };
+          return {
+            kind: 'refused',
+            status: 404,
+            refusal: refuse('error.requests.thereIsNoSuchRequest'),
+          };
         }
 
         return found.value.state === 'filed' || found.value.state === 'available'
           ? {
               kind: 'refused',
               status: 400,
-              error: 'It is in the library already, so there is nothing left to cancel.',
+              refusal: refuse('error.requests.itIsInTheLibraryAlready'),
             }
           : client.removeRequest(id, true);
       },
@@ -536,7 +552,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.body(null, 204)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(approveMediaRequestRoute, async (context) => {
@@ -549,7 +565,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     if (answer.kind !== 'answered') {
-      return context.json({ error: answer.error }, answer.status);
+      return context.json(bodyOf(answer), answer.status);
     }
 
     sayOfRequest({
@@ -569,12 +585,12 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     if (answer.kind !== 'answered') {
-      return context.json({ error: answer.error }, answer.status);
+      return context.json(bodyOf(answer), answer.status);
     }
 
     sayOfRequest({
       event: 'requests.refused',
-      data: { title: answer.value.title, reason: answer.value.refusedBecause },
+      data: { title: answer.value.title, reason: answer.value.refusedBecause?.message ?? null },
     });
 
     return context.json(answer.value, 200);
@@ -591,7 +607,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(fulfilMediaRequestRoute, async (context) => {
@@ -605,7 +621,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(mediaRequestLogRoute, async (context) => {
@@ -617,7 +633,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(mediaRequestBlocklistRoute, async (context) => {
@@ -629,7 +645,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(liftMediaBlockRoute, async (context) => {
@@ -642,7 +658,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.body(null, 204)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(decideMediaRequestsRoute, async (context) => {
@@ -661,7 +677,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     const { ids, decision, reason } = context.req.valid('json');
     const decided: MediaRequest[] = [];
-    const refused: { id: string; problem: string }[] = [];
+    const refused: { id: string; problem: Said }[] = [];
 
     for (const id of ids) {
       const answer = await throughRequests(
@@ -674,12 +690,17 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
       if (answer.kind === 'answered') {
         decided.push(answer.value);
       } else {
-        refused.push({ id, problem: answer.error });
+        refused.push({ id, problem: saidFrom(answer) });
       }
     }
 
     if (decided.length === 0 && refused.length > 0) {
-      return context.json({ error: refused[0]?.problem ?? 'Nothing could be decided.' }, 502);
+      return context.json(
+        refused[0] === undefined
+          ? refuse('server.requests.nothingCouldBeDecided')
+          : refuseWith(refused[0].problem),
+        502,
+      );
     }
 
     return context.json({ decided, refused }, 200);
@@ -692,7 +713,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(pickMediaReleaseRoute, async (context) => {
@@ -702,7 +723,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(profilesOnOfferRoute, async (context) => {
@@ -711,7 +732,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(listQualityProfilesRoute, async (context) => {
@@ -721,7 +742,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(addQualityProfileRoute, async (context) => {
@@ -731,7 +752,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 201)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(changeQualityProfileRoute, async (context) => {
@@ -741,7 +762,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(removeQualityProfileRoute, async (context) => {
@@ -751,7 +772,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.body(null, 204)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(listDownloadClientsRoute, async (context) => {
@@ -759,7 +780,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(readGiveUpRulesRoute, async (context) => {
@@ -769,7 +790,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(changeGiveUpRulesRoute, async (context) => {
@@ -779,7 +800,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(addDownloadClientRoute, async (context) => {
@@ -789,7 +810,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 201)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(tryDownloadClientRoute, async (context) => {
@@ -799,7 +820,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(changeDownloadClientRoute, async (context) => {
@@ -809,7 +830,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(removeDownloadClientRoute, async (context) => {
@@ -819,7 +840,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.body(null, 204)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(testDownloadClientRoute, async (context) => {
@@ -829,7 +850,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(tryDownloadClientChangeRoute, async (context) => {
@@ -839,7 +860,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(readDownloadQueueRoute, async (context) => {
@@ -847,7 +868,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(sendReleaseRoute, async (context) => {
@@ -868,7 +889,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 201)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(fileQueuedDownloadRoute, async (context) => {
@@ -879,14 +900,14 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
         ? Promise.resolve({
             kind: 'refused' as const,
             status: 400 as const,
-            error: 'There is no such library.',
+            refusal: refuse('error.requests.thereIsNoSuchLibrary'),
           })
         : client.fileDownload(context.req.valid('param').id, { id: into.id, path: into.path }),
     );
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(pauseQueuedDownloadRoute, async (context) => {
@@ -896,7 +917,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(resumeQueuedDownloadRoute, async (context) => {
@@ -906,7 +927,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(removeQueuedDownloadRoute, async (context) => {
@@ -919,7 +940,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.body(null, 204)
-      : context.json({ error: answer.error }, answer.status);
+      : context.json(bodyOf(answer), answer.status);
   });
 
   app.openapi(listIndexersRoute, async (context) => {
@@ -937,7 +958,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.kind === 'silent' ? answer.reason : answer.error }, 502);
+      : context.json(answer.kind === 'silent' ? refuseWith(answer.reason) : answer.refusal, 502);
   });
 
   app.openapi(addIndexerRoute, async (context) => {
@@ -954,11 +975,11 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const answer = await client.addIndexer(context.req.valid('json'));
 
     if (answer.kind === 'silent') {
-      return context.json({ error: answer.reason }, 502);
+      return context.json(refuseWith(answer.reason), 502);
     }
 
     if (answer.kind === 'refused') {
-      return context.json({ error: answer.error }, 400);
+      return context.json(answer.refusal, 400);
     }
 
     await recheckRequests();
@@ -980,11 +1001,11 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const answer = await client.tryIndexer(context.req.valid('json'));
 
     if (answer.kind === 'silent') {
-      return context.json({ error: answer.reason }, 502);
+      return context.json(refuseWith(answer.reason), 502);
     }
 
     return answer.kind === 'refused'
-      ? context.json({ error: answer.error }, 400)
+      ? context.json(answer.refusal, 400)
       : context.json(answer.value, 200);
   });
 
@@ -1005,13 +1026,13 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     if (answer.kind === 'silent') {
-      return context.json({ error: answer.reason }, 502);
+      return context.json(refuseWith(answer.reason), 502);
     }
 
     if (answer.kind === 'refused') {
       return answer.status === 404
-        ? context.json({ error: answer.error }, 404)
-        : context.json({ error: answer.error }, 400);
+        ? context.json(answer.refusal, 404)
+        : context.json(answer.refusal, 400);
     }
 
     await recheckRequests();
@@ -1033,11 +1054,11 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const answer = await client.removeIndexer(context.req.valid('param').id);
 
     if (answer.kind === 'silent') {
-      return context.json({ error: answer.reason }, 502);
+      return context.json(refuseWith(answer.reason), 502);
     }
 
     if (answer.kind === 'refused') {
-      return context.json({ error: answer.error }, 404);
+      return context.json(answer.refusal, 404);
     }
 
     await recheckRequests();
@@ -1059,11 +1080,11 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const answer = await client.testIndexer(context.req.valid('param').id);
 
     if (answer.kind === 'silent') {
-      return context.json({ error: answer.reason }, 502);
+      return context.json(refuseWith(answer.reason), 502);
     }
 
     if (answer.kind === 'refused') {
-      return context.json({ error: answer.error }, 404);
+      return context.json(answer.refusal, 404);
     }
 
     await recheckRequests();
@@ -1088,11 +1109,11 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     if (answer.kind === 'silent') {
-      return context.json({ error: answer.reason }, 502);
+      return context.json(refuseWith(answer.reason), 502);
     }
 
     return answer.kind === 'refused'
-      ? context.json({ error: answer.error }, 400)
+      ? context.json(answer.refusal, 400)
       : context.json(answer.value, 200);
   });
 
@@ -1111,7 +1132,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.kind === 'silent' ? answer.reason : answer.error }, 502);
+      : context.json(answer.kind === 'silent' ? refuseWith(answer.reason) : answer.refusal, 502);
   });
 
   app.openapi(refreshDefinitionsRoute, async (context) => {
@@ -1129,7 +1150,7 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)
-      : context.json({ error: answer.kind === 'silent' ? answer.reason : answer.error }, 502);
+      : context.json(answer.kind === 'silent' ? refuseWith(answer.reason) : answer.refusal, 502);
   });
 
   app.openapi(readDefinitionRoute, async (context) => {
@@ -1146,11 +1167,11 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const answer = await client.definition(context.req.valid('param').id);
 
     if (answer.kind === 'silent') {
-      return context.json({ error: answer.reason }, 502);
+      return context.json(refuseWith(answer.reason), 502);
     }
 
     return answer.kind === 'refused'
-      ? context.json({ error: answer.error }, 404)
+      ? context.json(answer.refusal, 404)
       : context.json(answer.value, 200);
   });
 
@@ -1170,17 +1191,17 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     if (!asked.success) {
-      return context.json({ error: 'Say which release to fetch.' }, 400);
+      return context.json(refuse('error.common.sayWhichReleaseToFetch'), 400);
     }
 
     const answer = await client.download(context.req.param('id'), asked.data.url);
 
     if (answer.kind === 'silent') {
-      return context.json({ error: answer.reason }, 502);
+      return context.json(refuseWith(answer.reason), 502);
     }
 
     if (answer.kind === 'refused') {
-      return context.json({ error: answer.error }, answer.status);
+      return context.json(answer.refusal, answer.status);
     }
 
     if (answer.value.kind === 'magnet') {
@@ -1209,11 +1230,11 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
     const answer = await client.search(context.req.valid('json'));
 
     if (answer.kind === 'silent') {
-      return context.json({ error: answer.reason }, 502);
+      return context.json(refuseWith(answer.reason), 502);
     }
 
     return answer.kind === 'refused'
-      ? context.json({ error: answer.error }, 400)
+      ? context.json(answer.refusal, 400)
       : context.json(answer.value, 200);
   });
 };

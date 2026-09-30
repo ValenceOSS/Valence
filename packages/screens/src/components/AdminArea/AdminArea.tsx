@@ -1,3 +1,4 @@
+import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { Icon } from '@ValenceUI/Icon';
 import { TriangleAlert as TriangleAlertIcon } from '@keyline-icons/react';
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
@@ -450,7 +451,7 @@ const AdminArea = ({
   const runJob = useCallback(
     async (kind: string, libraryIds?: string[], parts?: LibraryPart[]) => {
       const definition = jobDefinitions.find((candidate) => candidate.kind === kind);
-      const label = definition?.label ?? kind;
+      const label = sayAgainIfAny(definition?.label) ?? kind;
       const chosen =
         libraryIds === undefined
           ? libraries
@@ -548,7 +549,8 @@ const AdminArea = ({
 
   const stopJob = useCallback(
     (kind: string) => {
-      const label = jobDefinitions.find((candidate) => candidate.kind === kind)?.label ?? kind;
+      const label =
+        sayAgainIfAny(jobDefinitions.find((candidate) => candidate.kind === kind)?.label) ?? kind;
 
       void stopJobs(kind).then((stopped) => {
         tellOutcome(

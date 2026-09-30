@@ -1,3 +1,4 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { resolveSegments } from './SegmentProvider';
 import type { SegmentCandidate, SegmentProvider } from './SegmentProvider';
 import type { SegmentService } from './SegmentService';
@@ -14,7 +15,7 @@ type DetectLibrarySegmentsOptions = {
   segments: SegmentService;
   listCandidates: (libraryId: string) => Promise<GroupedCandidate[]>;
   markComplete: (mediaId: string) => Promise<void>;
-  onProblem?: (provider: string, reason: string) => void;
+  onProblem?: (provider: string, reason: Said) => void;
   onProgress?: (processed: number, total: number) => void;
   isCancelled?: () => boolean;
 };

@@ -1,3 +1,4 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { rename, unlink } from 'node:fs/promises';
 import { dirname, extname } from 'node:path';
 import { TEXT_SUBTITLE_EXTENSIONS } from '@ValenceContracts/constants/TEXT_SUBTITLE_EXTENSIONS';
@@ -24,7 +25,7 @@ type Fileable = Pick<
 type Filed = {
   filed: ReadonlyMap<string, string>;
   missing: readonly string[];
-  refused: ReadonlyMap<string, string>;
+  refused: ReadonlyMap<string, Said>;
 };
 
 /**
@@ -146,13 +147,13 @@ const fileDownload = async (
   contentPath: string,
   isKeepingSource: boolean,
   probe: ProbeClient = () => Promise.resolve(null),
-  refuses: (found: Partial<ParsedRelease>) => string | null = () => null,
+  refuses: (found: Partial<ParsedRelease>) => Said | null = () => null,
 ): Promise<Filed> => {
   const files = await findDownloadedFiles(contentPath);
   const videos = files.filter(isFeature);
   const filed = new Map<string, string>();
   const missing: string[] = [];
-  const refused = new Map<string, string>();
+  const refused = new Map<string, Said>();
 
   for (const item of items) {
     const video = videoFor(item, videos, items.length === 1);

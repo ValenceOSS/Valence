@@ -1,21 +1,17 @@
 {
-  "extends": [
-    "../../tsconfig.base.json",
-    "../../tsconfig.paths.json"
-  ],
+  "extends": ["../../tsconfig.base.json", "../../tsconfig.paths.json"],
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "types": [
-      "node"
-    ]
+    "types": ["node"]
   },
-  "include": [
-    "src/**/*.ts"
-  ],
+  "include": ["src/**/*.ts"],
   "references": [
     {
       "path": "../plugin-sdk"
+    },
+    {
+      "path": "../i18n"
     }
   ]
 }

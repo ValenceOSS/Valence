@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { z } from 'zod';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { createClientCaller } from '@ValenceRequests/downloads/createClientCaller';
@@ -11,6 +12,7 @@ import type {
 } from '@ValenceRequests/downloads/DownloadClientAdapter';
 import type { QueuedDownloadState } from '@ValenceContracts/schemas/DownloadQueue';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
+import { saying } from '@ValenceI18n/saying';
 
 const MEBIBYTE = 1024 * 1024;
 
@@ -102,13 +104,20 @@ const createSabnzbdAdapter = (
   const read = async (response: Response) => {
     if (response.status === 401 || response.status === 403) {
       throw new DownloadClientFailure(
-        `${settings.name} refused the API key`,
+        saying('requests.downloads.sabnzbdAdapter.nameRefusedTheAPIKey', {
+          name: settings.name,
+        }),
         'DownloadClientLoginRefused',
       );
     }
 
     if (!response.ok) {
-      throw new DownloadClientFailure(`${settings.name} answered ${response.status.toString()}`);
+      throw new DownloadClientFailure(
+        saying('requests.downloads.clientAnsweredStatus', {
+          name: settings.name,
+          status: response.status,
+        }),
+      );
     }
 
     const said = await response.text();
@@ -123,10 +132,16 @@ const createSabnzbdAdapter = (
     if (body === null || typeof body !== 'object') {
       throw /api key/i.test(said)
         ? new DownloadClientFailure(
-            `${settings.name} refused the API key`,
+            saying('requests.downloads.sabnzbdAdapter.nameRefusedTheAPIKey', {
+              name: settings.name,
+            }),
             'DownloadClientLoginRefused',
           )
-        : new DownloadClientFailure(`${settings.name} answered, but not as SABnzbd`);
+        : new DownloadClientFailure(
+            saying('requests.downloads.sabnzbdAdapter.nameAnsweredButNotAsSABnzbd', {
+              name: settings.name,
+            }),
+          );
     }
 
     const refusal = RefusalSchema.safeParse(body);
@@ -134,10 +149,17 @@ const createSabnzbdAdapter = (
     if (refusal.success) {
       throw /api key/i.test(refusal.data.error)
         ? new DownloadClientFailure(
-            `${settings.name} refused the API key`,
+            saying('requests.downloads.sabnzbdAdapter.nameRefusedTheAPIKey', {
+              name: settings.name,
+            }),
             'DownloadClientLoginRefused',
           )
-        : new DownloadClientFailure(`${settings.name} said: ${refusal.data.error}`);
+        : new DownloadClientFailure(
+            saying('requests.downloads.clientSaid', {
+              name: settings.name,
+              said: refusal.data.error,
+            }),
+          );
     }
 
     return body;
@@ -164,7 +186,9 @@ const createSabnzbdAdapter = (
 
     add: async (file, title, category) => {
       if (file.kind !== 'nzb') {
-        throw new DownloadClientFailure(`${settings.name} takes NZBs, not torrents`);
+        throw new DownloadClientFailure(
+          saying('common.nameTakesNZBsNotTorrents', { name: settings.name }),
+        );
       }
 
       const { categories } = CategoriesSchema.parse(await ask({ mode: 'get_cats' }));
@@ -191,7 +215,9 @@ const createSabnzbdAdapter = (
       );
 
       if (!added.success) {
-        throw new DownloadClientFailure(`${settings.name} would not take the NZB`);
+        throw new DownloadClientFailure(
+          saying('common.nameWouldNotTakeTheNZB', { name: settings.name }),
+        );
       }
 
       return added.data.nzo_ids[0] ?? '';
@@ -241,7 +267,12 @@ const createSabnzbdAdapter = (
             remoteId: slot.nzo_id,
             title: slot.name,
             state,
-            problem: state === 'failed' ? slot.fail_message || 'SABnzbd could not finish it' : null,
+            problem:
+              state === 'failed'
+                ? slot.fail_message === ''
+                  ? saying('requests.downloads.sabnzbdAdapter.sABnzbdCouldNotFinishIt')
+                  : sayVerbatim(slot.fail_message)
+                : null,
             progress: state === 'failed' ? 0 : 1,
             sizeBytes: slot.bytes,
             doneBytes: state === 'failed' ? null : slot.bytes,

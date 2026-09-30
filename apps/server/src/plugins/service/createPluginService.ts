@@ -1,3 +1,5 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { readPluginPackage } from '@ValenceSDK/package/readPluginPackage';
 import { sha256Of } from '@ValenceSDK/package/sha256Of';
@@ -42,6 +44,8 @@ import type { BrokerScope } from '@ValenceServer/plugins/broker/BrokerScope';
 import type { InstalledRecord, PluginStore } from '@ValenceServer/plugins/store/PluginStore';
 import type { CreatePluginRuntimeOptions } from '@ValenceServer/plugins/runtime/createPluginRuntime';
 import type { PluginViewer } from './PluginViewer';
+import { say } from '@ValenceI18n/say';
+import { saying } from '@ValenceI18n/saying';
 
 type FetchFor = (
   pluginId: string,
@@ -229,7 +233,7 @@ const createPluginService = ({
         },
       }),
     onProblem: (pluginId, problem) => {
-      log('warn', `plugin ${pluginId}: ${problem}`);
+      log('warn', `plugin ${pluginId}: ${problem.message}`);
       void store.change(pluginId, { problem });
     },
     onLog: (pluginId, level, message) => {
@@ -275,7 +279,9 @@ const createPluginService = ({
 
       return null;
     } catch (error) {
-      return error instanceof Error && error.message !== '' ? error.message : 'It failed.';
+      return error instanceof Error && error.message !== ''
+        ? error.message
+        : say('common.itFailed');
     }
   };
 
@@ -351,12 +357,16 @@ const createPluginService = ({
     trust: PluginTrust,
     accountId: string,
     extraWarnings: string[],
-  ): Promise<InstallPreview | { problem: string }> => {
+  ): Promise<InstallPreview | { problem: Said }> => {
     const { manifest } = plugin;
 
     if (!satisfiesApiRange(manifest.apiVersion, apiVersion)) {
       return {
-        problem: `${manifest.name} was written for plugin API ${manifest.apiVersion}, and this server offers ${apiVersion}.`,
+        problem: saying('server.service.pluginService.nameWasWrittenForPluginAPI', {
+          plugin: manifest.name,
+          wanted: manifest.apiVersion,
+          offered: apiVersion,
+        }),
       };
     }
 
@@ -375,7 +385,9 @@ const createPluginService = ({
       ...(widened.length === 0
         ? []
         : [
-            `This version asks for more than the one installed: ${widened.map((each) => each.kind).join(', ')}.`,
+            say('server.service.pluginService.thisVersionAsksForMoreThan', {
+              permissions: widened.map((each) => each.kind).join(', '),
+            }),
           ]),
     ];
     const token = randomBytes(24).toString('base64url');
@@ -462,7 +474,7 @@ const createPluginService = ({
         if (cleaned.problem !== null) {
           log(
             'warn',
-            `plugin ${record.id}: sent a ${at.kind} Valence would not draw: ${cleaned.problem}`,
+            `plugin ${record.id}: sent a ${at.kind} Valence would not draw: ${cleaned.problem.message}`,
           );
         }
 
@@ -473,7 +485,12 @@ const createPluginService = ({
           `plugin ${record.id}: ${error instanceof Error ? error.message : 'failed to draw'}`,
         );
 
-        return serviceNotice(`${record.manifest.name} is not answering`, 'Try again in a moment.');
+        return serviceNotice(
+          say('server.service.pluginService.nameIsNotAnswering', {
+            name: record.manifest.name,
+          }),
+          say('server.service.pluginService.tryAgainInAMoment'),
+        );
       }
     };
 
@@ -524,7 +541,7 @@ const createPluginService = ({
       if (cleaned.problem !== null) {
         log(
           'warn',
-          `plugin ${record.id}: answered an action with something Valence would not draw: ${cleaned.problem}`,
+          `plugin ${record.id}: answered an action with something Valence would not draw: ${cleaned.problem.message}`,
         );
       }
 
@@ -537,8 +554,10 @@ const createPluginService = ({
 
       return {
         surface: serviceNotice(
-          `${record.manifest.name} could not do that`,
-          'Try again in a moment.',
+          say('server.service.pluginService.nameCouldNotDoThat', {
+            name: record.manifest.name,
+          }),
+          say('server.service.pluginService.tryAgainInAMoment'),
         ),
         navigate: null,
       };
@@ -583,12 +602,14 @@ const createPluginService = ({
     previewFromCatalogue: async (
       id: string,
       accountId: string,
-    ): Promise<InstallPreview | { problem: string }> => {
+    ): Promise<InstallPreview | { problem: Said }> => {
       const read = await catalogue.read();
       const entry = read.catalogue?.plugins.find((each) => each.id === id);
 
       if (entry === undefined) {
-        return { problem: read.problem ?? 'The catalogue has no plugin by that name.' };
+        return {
+          problem: read.problem ?? saying('server.service.pluginService.theCatalogueHasNoPluginBy'),
+        };
       }
 
       const fetched = await catalogue.fetchPackage(entry);
@@ -600,14 +621,18 @@ const createPluginService = ({
       const opened = readPluginPackage(fetched.bytes);
 
       if (!opened.ok) {
-        return { problem: opened.problem };
+        return { problem: sayVerbatim(opened.problem) };
       }
 
       if (
         opened.plugin.manifest.id !== entry.id ||
         opened.plugin.manifest.version !== entry.version
       ) {
-        return { problem: `${entry.name} is not the plugin the catalogue describes.` };
+        return {
+          problem: saying('server.service.pluginService.nameIsNotThePluginThe', {
+            name: entry.name,
+          }),
+        };
       }
 
       return prepare(fetched.bytes, opened.plugin, 'official', accountId, []);
@@ -616,11 +641,11 @@ const createPluginService = ({
       bytes: Uint8Array,
       signature: string | null,
       accountId: string,
-    ): Promise<InstallPreview | { problem: string }> => {
+    ): Promise<InstallPreview | { problem: Said }> => {
       const opened = readPluginPackage(bytes);
 
       if (!opened.ok) {
-        return { problem: opened.problem };
+        return { problem: sayVerbatim(opened.problem) };
       }
 
       const read = signature === null ? null : readSignatureFile(signature);
@@ -632,28 +657,32 @@ const createPluginService = ({
         signedBy === null ? 'unsigned' : 'official',
         accountId,
         signature !== null && signedBy === null
-          ? ['The signature that came with it is not from a key Valence recognises.']
+          ? [say('server.service.pluginService.theSignatureThatCameWithIt')]
           : [],
       );
     },
     install: async (
       asked: { token: string; permissionsHash: string; acceptUnsigned: boolean },
       accountId: string,
-    ): Promise<InstalledPlugin | { refused: string }> => {
+    ): Promise<InstalledPlugin | { refused: Said }> => {
       const waiting = pending.get(asked.token);
 
       if (waiting === undefined || waiting.expiresAt < now() || waiting.accountId !== accountId) {
         return {
-          refused: 'That preview has expired. Look at the plugin again before installing it.',
+          refused: saying('server.service.pluginService.thatPreviewHasExpiredLookAt'),
         };
       }
 
       if (waiting.permissionsHash !== asked.permissionsHash) {
-        return { refused: 'The permissions accepted are not the ones this plugin asks for.' };
+        return {
+          refused: saying('server.service.pluginService.thePermissionsAcceptedAreNotThe'),
+        };
       }
 
       if (waiting.trust === 'unsigned' && !asked.acceptUnsigned) {
-        return { refused: 'An unsigned plugin is only installed once its risk is accepted.' };
+        return {
+          refused: saying('server.service.pluginService.anUnsignedPluginIsOnlyInstalled'),
+        };
       }
 
       pending.delete(asked.token);
@@ -684,7 +713,7 @@ const createPluginService = ({
       const saved = await store.read(manifest.id);
 
       if (saved === null) {
-        return { refused: 'The plugin could not be kept.' };
+        return { refused: saying('server.service.pluginService.thePluginCouldNotBeKept') };
       }
 
       if (upgradesFrom !== null) {
@@ -703,7 +732,12 @@ const createPluginService = ({
           announce({ pluginId: manifest.id, change: 'updated' });
 
           return {
-            refused: `${manifest.name} ${manifest.version} could not bring its data up to date, so ${upgradesFrom} was put back as it was. ${problem}`,
+            refused: saying('server.service.pluginService.nameVersionCouldNotBringIts', {
+              name: manifest.name,
+              version: manifest.version,
+              upgradesFrom,
+              problem,
+            }),
           };
         }
       }
@@ -722,7 +756,7 @@ const createPluginService = ({
         isEnabled?: boolean | undefined;
         settings?: Record<string, string | boolean | null> | undefined;
       },
-    ): Promise<InstalledPlugin | { refused: string } | null> => {
+    ): Promise<InstalledPlugin | { refused: Said } | null> => {
       const record = await store.read(id);
 
       if (record === null) {
@@ -769,7 +803,7 @@ const createPluginService = ({
 
       return summarise(saved, null);
     },
-    rollback: async (id: string): Promise<InstalledPlugin | { refused: string } | null> => {
+    rollback: async (id: string): Promise<InstalledPlugin | { refused: Said } | null> => {
       const record = await store.read(id);
 
       if (record === null) {
@@ -777,13 +811,13 @@ const createPluginService = ({
       }
 
       if (record.previousVersion === null) {
-        return { refused: 'No earlier version of this plugin is kept to go back to.' };
+        return { refused: saying('server.service.pluginService.noEarlierVersionOfThisPlugin') };
       }
 
       runtime.stop(id);
 
       if (!(await store.restorePrevious(id))) {
-        return { refused: 'The earlier version could not be put back.' };
+        return { refused: saying('common.theEarlierVersionCouldNotBe') };
       }
 
       const saved = await store.read(id);
@@ -968,35 +1002,43 @@ const createPluginService = ({
       pluginId: string,
       providerId: string,
       asked: { ticket: string | null; viewer: PluginViewer | null; returnTo: string },
-    ): Promise<{ location: string; browser: string } | { problem: string }> => {
+    ): Promise<{ location: string; browser: string } | { problem: Said }> => {
       const ticket =
         asked.ticket === null ? null : tickets.redeem(asked.ticket, pluginId, providerId);
 
       if (asked.ticket !== null && ticket === null) {
-        return { problem: 'That link has expired. Go back to Valence and try again.' };
+        return { problem: saying('server.service.pluginService.thatLinkHasExpiredGoBack') };
       }
 
       const profileId = ticket?.profileId ?? asked.viewer?.profileId ?? null;
 
       if (profileId === null) {
-        return { problem: 'Sign in to Valence first.' };
+        return { problem: saying('server.service.pluginService.signInToValenceFirst') };
       }
 
       const record = await store.read(pluginId);
 
       if (record === null || !record.isEnabled) {
-        return { problem: 'There is no such plugin.' };
+        return { problem: saying('server.service.pluginService.thereIsNoSuchPlugin') };
       }
 
       const found = credentialsFor(record, providerId);
 
       if (found === null) {
-        return { problem: `${record.manifest.name} has no account called ${providerId}.` };
+        return {
+          problem: saying('server.service.pluginService.nameHasNoAccountCalledProviderId', {
+            name: record.manifest.name,
+            providerId,
+          }),
+        };
       }
 
       if (found.credentials === null) {
         return {
-          problem: `An administrator has not given ${record.manifest.name} its ${found.provider.name} client id yet.`,
+          problem: saying('server.service.pluginService.anAdministratorHasNotGivenName', {
+            plugin: record.manifest.name,
+            service: found.provider.name,
+          }),
         };
       }
 

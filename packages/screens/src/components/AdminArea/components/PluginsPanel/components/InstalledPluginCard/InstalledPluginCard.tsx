@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import {
   Bin as BinIcon,
   Plug as PlugIcon,
@@ -85,7 +86,7 @@ const InstalledPluginCard = ({
 
       {plugin.problem === null ? null : (
         <Callout title="It stopped working" tone="danger">
-          {plugin.problem}
+          {sayAgain(plugin.problem)}
         </Callout>
       )}
 

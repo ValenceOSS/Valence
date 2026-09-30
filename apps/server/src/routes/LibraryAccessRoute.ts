@@ -1,4 +1,5 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
   AgeExceptionListSchema,
   ExceptionHolderListSchema,
@@ -7,7 +8,7 @@ import {
   SetExceptionSchema,
 } from '@ValenceContracts/schemas/LibraryAccess';
 
-const AccessError = z.object({ error: z.string() }).openapi('LibraryAccessError');
+const AccessError = RefusalSchema.openapi('LibraryAccessError');
 
 const Access = LibraryAccessSchema.openapi('LibraryAccess');
 

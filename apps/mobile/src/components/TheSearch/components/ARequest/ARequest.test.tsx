@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { ReactElement, ReactNode } from 'react';
 import { render, userEvent } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -91,7 +92,7 @@ describe('ARequest', () => {
       <ARequest
         request={aMediaRequest({
           state: 'filing',
-          problem: 'May not write to /media/Films',
+          problem: sayVerbatim('May not write to /media/Films'),
           problemCode: 'MayNotWriteToLibrary',
         })}
         progress={[]}

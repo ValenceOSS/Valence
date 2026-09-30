@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { NO_WORK, SOLVER_NOT_USED } from '@ValenceContracts/schemas/Requests';
 import { describeRequestsSolver } from './describeRequestsSolver';
@@ -56,7 +57,9 @@ describe('describeRequestsSolver', () => {
 
   it('says why the browser will not start', () => {
     expect(
-      describeRequestsSolver(hearing({ ...SOLVER_NOT_USED, startProblem: 'No browser installed' })),
+      describeRequestsSolver(
+        hearing({ ...SOLVER_NOT_USED, startProblem: sayVerbatim('No browser installed') }),
+      ),
     ).toMatchObject({
       label: 'Can’t start',
       tone: 'danger',
@@ -72,7 +75,7 @@ describe('describeRequestsSolver', () => {
         failed: 1,
         lastPassedAt: '2026-09-28T11:00:00.000Z',
         lastFailedAt: '2026-09-28T11:30:00.000Z',
-        problem: 'Timed out',
+        problem: sayVerbatim('Timed out'),
       }),
     );
 

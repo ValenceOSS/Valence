@@ -744,7 +744,7 @@ describe('giving a profile a picture of its own', () => {
     );
 
     expect(response.status).toBe(404);
-    expect(await response.json()).toEqual({ error: 'No such profile on this account.' });
+    expect(await response.json()).toMatchObject({ error: 'No such profile on this account.' });
   });
 
   it('says a file that is not a picture at all is not one', async () => {
@@ -757,7 +757,7 @@ describe('giving a profile a picture of its own', () => {
     });
 
     expect(response.status).toBe(400);
-    expect(await response.json()).toEqual({
+    expect(await response.json()).toMatchObject({
       error: 'A picture has to be a JPEG, PNG, WebP, AVIF or GIF.',
     });
   });
@@ -784,7 +784,7 @@ describe('giving a profile a picture of its own', () => {
     });
 
     expect(response.status).toBe(413);
-    expect(await response.json()).toEqual({ error: 'A picture has to be 6 MB or smaller.' });
+    expect(await response.json()).toMatchObject({ error: 'A picture has to be 6 MB or smaller.' });
   });
 
   it('says how much detail a picture may hold, when one holds more', async () => {
@@ -797,7 +797,7 @@ describe('giving a profile a picture of its own', () => {
     });
 
     expect(response.status).toBe(400);
-    expect(await response.json()).toEqual({
+    expect(await response.json()).toMatchObject({
       error: 'A picture has to be 4096 by 4096 or smaller.',
     });
   });
@@ -812,7 +812,9 @@ describe('giving a profile a picture of its own', () => {
     });
 
     expect(response.status).toBe(400);
-    expect(await response.json()).toEqual({ error: 'That file could not be read as a picture.' });
+    expect(await response.json()).toMatchObject({
+      error: 'That file could not be read as a picture.',
+    });
   });
 
   it('turns away nobody trying to upload a picture', async () => {

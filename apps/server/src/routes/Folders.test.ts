@@ -167,7 +167,9 @@ describe('choosing a folder over HTTP', () => {
     const response = await ask(built, cookie, '/root');
 
     expect(response.status).toBe(403);
-    expect(await response.json()).toEqual({ error: 'Valence is not allowed to read that folder.' });
+    expect(await response.json()).toMatchObject({
+      error: 'Valence is not allowed to read that folder.',
+    });
   });
 
   it('refuses a path that does not start from the root', async () => {
@@ -290,7 +292,7 @@ describe('making a folder over HTTP', () => {
     const response = await make(built, cookie, '/mnt/ro', 'anime');
 
     expect(response.status).toBe(403);
-    expect(await response.json()).toEqual({
+    expect(await response.json()).toMatchObject({
       error: 'That disk is read-only to Valence. Give it read-write access to make folders there.',
     });
   });

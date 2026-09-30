@@ -1,4 +1,5 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
   ReencodeEstimateSchema,
   ReencodeListSchema,
@@ -9,7 +10,7 @@ import {
 } from '@ValenceContracts/schemas/Reencode';
 import { RenditionListSchema } from '@ValenceContracts/schemas/Rendition';
 
-const ReencodeError = z.object({ error: z.string() }).openapi('ReencodeError');
+const ReencodeError = RefusalSchema.openapi('ReencodeError');
 
 const ReencodeDone = z.object({ done: z.boolean() }).openapi('ReencodeDone');
 

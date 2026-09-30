@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { ProblemCodeFieldSchema } from './ProblemCode';
 import { DownloadClientKindSchema } from './DownloadClient';
 import { ReleaseProtocolSchema } from './Indexer';
@@ -27,7 +28,7 @@ const QueuedDownloadSchema = z.object({
   title: z.string(),
   indexerName: z.string().nullable(),
   state: QueuedDownloadStateSchema,
-  problem: z.string().nullable(),
+  problem: SaidSchema.nullable(),
   problemCode: ProblemCodeFieldSchema,
   progress: z.number().min(0).max(1),
   sizeBytes: z.number().nonnegative().nullable(),
@@ -40,7 +41,7 @@ const QueuedDownloadSchema = z.object({
   sentAt: z.string().datetime(),
   finishedAt: z.string().datetime().nullable(),
   filedInto: z.string().nullable().default(null),
-  filingProblem: z.string().nullable().default(null),
+  filingProblem: SaidSchema.nullable().default(null),
   filingProblemCode: ProblemCodeFieldSchema,
 });
 
@@ -50,7 +51,7 @@ const DownloadClientStateSchema = z.object({
   kind: DownloadClientKindSchema,
   isEnabled: z.boolean(),
   isReachable: z.boolean(),
-  problem: z.string().nullable(),
+  problem: SaidSchema.nullable(),
   problemCode: ProblemCodeFieldSchema,
   downloadBytesPerSecond: z.number().nonnegative().nullable(),
   uploadBytesPerSecond: z.number().nonnegative().nullable(),
@@ -102,7 +103,7 @@ const ServiceEventSchema = z.discriminatedUnion('kind', [
   EventBaseSchema.extend({
     kind: z.literal('failed'),
     clientName: z.string(),
-    problem: z.string(),
+    problem: SaidSchema,
   }),
   RequestEventBaseSchema.extend({ kind: z.literal('chosen'), releaseTitle: z.string() }),
   RequestEventBaseSchema.extend({
@@ -113,7 +114,7 @@ const ServiceEventSchema = z.discriminatedUnion('kind', [
     libraryId: z.string(),
     folder: z.string(),
   }),
-  RequestEventBaseSchema.extend({ kind: z.literal('stuck'), problem: z.string() }),
+  RequestEventBaseSchema.extend({ kind: z.literal('stuck'), problem: SaidSchema }),
   EventBaseSchema.extend({ kind: z.literal('sweptUp'), clientName: z.string() }),
   EventBaseSchema.extend({
     kind: z.literal('imported'),

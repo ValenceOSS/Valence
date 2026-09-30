@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { useMemo } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
@@ -55,7 +56,7 @@ const JobHealth = ({ definitions, search, onSearchChange }: JobHealthProps) => {
   const asked = useQuery({ ...adminQueries.jobStats(sinceMs), placeholderData: keepPreviousData });
   const kinds = useMemo(() => asked.data?.kinds ?? [], [asked.data]);
   const labels = useMemo(
-    () => new Map(definitions.map((definition) => [definition.kind, definition.label])),
+    () => new Map(definitions.map((definition) => [definition.kind, sayAgain(definition.label)])),
     [definitions],
   );
 

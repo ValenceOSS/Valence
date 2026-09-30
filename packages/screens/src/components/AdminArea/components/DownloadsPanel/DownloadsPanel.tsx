@@ -1,3 +1,4 @@
+import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { failureOfRefusal } from '@ValenceScreens/admin/failureOf';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
@@ -147,7 +148,7 @@ const DownloadsPanel = () => {
           const failure =
             refusal?.message ??
             (value?.isWorking === false
-              ? `${client.name}: ${value.problem ?? 'did not answer'}`
+              ? `${client.name}: ${sayAgainIfAny(value.problem) ?? 'did not answer'}`
               : null);
 
           tellOutcome(`${client.name} answered.`, failure);

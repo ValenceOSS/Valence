@@ -1,3 +1,4 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { mkdtemp, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -25,7 +26,7 @@ const respondWith = (options: {
   return fetchImpl;
 };
 
-const cache = async (fetchImpl: ImageFetcher, onProblem?: (url: string, why: string) => void) => {
+const cache = async (fetchImpl: ImageFetcher, onProblem?: (url: string, why: Said) => void) => {
   const directory = await mkdtemp(join(tmpdir(), 'valence-images-'));
 
   return {
@@ -81,23 +82,25 @@ describe('createImageCache', () => {
   });
 
   it('leaves a gap rather than failing when the catalogue has no such image', async () => {
-    const onProblem = vi.fn();
+    const onProblem = vi.fn<(path: string, reason: Said) => void>();
     const { instance } = await cache(respondWith({ ok: false, status: 404 }), onProblem);
 
     await expect(instance.read(POSTER)).resolves.toBeNull();
-    expect(onProblem).toHaveBeenCalledWith(POSTER, expect.stringContaining('404'));
+    expect(onProblem).toHaveBeenCalledWith(POSTER, expect.anything());
+    expect(onProblem.mock.calls[0]?.[1].message).toContain('404');
   });
 
   it('refuses something that is not an image', async () => {
-    const onProblem = vi.fn();
+    const onProblem = vi.fn<(path: string, reason: Said) => void>();
     const { instance } = await cache(respondWith({ contentType: 'text/html' }), onProblem);
 
     await expect(instance.read(POSTER)).resolves.toBeNull();
-    expect(onProblem).toHaveBeenCalledWith(POSTER, expect.stringContaining('not an image'));
+    expect(onProblem).toHaveBeenCalledWith(POSTER, expect.anything());
+    expect(onProblem.mock.calls[0]?.[1].message).toContain('not an image');
   });
 
   it('refuses something that is a film rather than a poster, and says how big', async () => {
-    const onProblem = vi.fn();
+    const onProblem = vi.fn<(path: string, reason: Said) => void>();
     const { instance } = await cache(respondWith({ bytes: 40 * 1024 * 1024 }), onProblem);
 
     await expect(instance.read(POSTER)).resolves.toBeNull();
@@ -108,7 +111,7 @@ describe('createImageCache', () => {
   });
 
   it('keeps the full-size lettering the catalogue actually serves', async () => {
-    const onProblem = vi.fn();
+    const onProblem = vi.fn<(path: string, reason: Said) => void>();
     const { instance } = await cache(respondWith({ bytes: 10 * 1024 * 1024 }), onProblem);
 
     await expect(instance.read(POSTER)).resolves.not.toBeNull();
@@ -116,7 +119,7 @@ describe('createImageCache', () => {
   });
 
   it('reports an unreachable catalogue rather than throwing', async () => {
-    const onProblem = vi.fn();
+    const onProblem = vi.fn<(path: string, reason: Said) => void>();
     const { instance } = await cache(
       () => Promise.reject(new Error('getaddrinfo failed')),
       onProblem,
@@ -166,7 +169,7 @@ describe('what the cache does with an answer it cannot use', () => {
   });
 
   it('says so, and keeps nothing, when the catalogue cannot be reached', async () => {
-    const onProblem = vi.fn();
+    const onProblem = vi.fn<(path: string, reason: Said) => void>();
     const fetchImpl = vi.fn<ImageFetcher>(() => Promise.reject(new Error('the network went away')));
 
     const { instance } = await cache(fetchImpl, onProblem);

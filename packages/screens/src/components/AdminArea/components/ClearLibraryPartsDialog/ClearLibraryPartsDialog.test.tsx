@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -7,8 +8,8 @@ import type { Library } from '@ValenceContracts/schemas/Library';
 
 const CLEAR: JobDefinition = {
   kind: 'library.clearParts',
-  label: 'Clear and fetch again',
-  description: 'Erases the chosen parts of a library.',
+  label: sayVerbatim('Clear and fetch again'),
+  description: sayVerbatim('Erases the chosen parts of a library.'),
   needsLibrary: true,
   destructive: true,
   takesParts: true,

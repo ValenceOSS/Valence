@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -37,8 +38,8 @@ const STARTED_EVENT: JobEvent = {
 const DEFINITIONS: JobDefinition[] = [
   {
     kind: 'library.regeneratePreviews',
-    label: 'Generate missing previews',
-    description: 'Renders preview clips for items that have none.',
+    label: sayVerbatim('Generate missing previews'),
+    description: sayVerbatim('Renders preview clips for items that have none.'),
     needsLibrary: true,
     destructive: false,
     takesParts: false,
@@ -55,7 +56,7 @@ const record = (overrides: Partial<JobRunRecord> = {}): JobRunRecord => ({
   subject: 'Movies',
   startedAtMs: 1_700_000_000_000,
   finishedAtMs: 1_700_000_005_000,
-  progress: { phase: 'previews', processed: 4, total: 10 },
+  progress: { phase: sayVerbatim('previews'), processed: 4, total: 10 },
   errorMessage: null,
   createdAtMs: 1_700_000_000_000,
   ...overrides,
@@ -67,7 +68,7 @@ const issue = (overrides: Partial<JobRunIssue> = {}): JobRunIssue => ({
   id: 'issue-1',
   jobRunId: 'run-1',
   path: '/media/movies/broken.mkv',
-  reason: 'ffmpeg exited with a non-zero status',
+  reason: sayVerbatim('ffmpeg exited with a non-zero status'),
   atMs: 1_700_000_001_000,
   ...overrides,
 });
@@ -142,7 +143,7 @@ describe('JobHistory', () => {
 
   it('shows why a run failed alongside its subject', async () => {
     askedHistory.mockResolvedValue(
-      page([record({ status: 'failed', errorMessage: 'no such path' })]),
+      page([record({ status: 'failed', errorMessage: sayVerbatim('no such path') })]),
     );
 
     renderHistory(
@@ -164,7 +165,10 @@ describe('JobHistory', () => {
   it('says a stopped run was stopped, and why, without painting it as a failure', async () => {
     askedHistory.mockResolvedValue(
       page([
-        record({ status: 'stopped', errorMessage: 'The server restarted while this was running.' }),
+        record({
+          status: 'stopped',
+          errorMessage: sayVerbatim('The server restarted while this was running.'),
+        }),
       ]),
     );
 
@@ -440,7 +444,9 @@ describe('JobHistory', () => {
     const message =
       'Failed query: select "path", "sizeBytes" from "media_item" where "libraryId" = $1';
 
-    askedHistory.mockResolvedValue(page([record({ status: 'failed', errorMessage: message })]));
+    askedHistory.mockResolvedValue(
+      page([record({ status: 'failed', errorMessage: sayVerbatim(message) })]),
+    );
     askedIssues.mockResolvedValue([]);
 
     renderHistory(
@@ -473,7 +479,7 @@ describe('JobHistory', () => {
     const actor = userEvent.setup();
 
     askedHistory.mockResolvedValue(
-      page([record({ status: 'failed', errorMessage: 'It stopped.' })]),
+      page([record({ status: 'failed', errorMessage: sayVerbatim('It stopped.') })]),
     );
     askedIssues.mockResolvedValue([issue()]);
 
@@ -612,7 +618,7 @@ describe('JobHistory', () => {
     vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText: copied } });
 
     askedHistory.mockResolvedValue(
-      page([record({ status: 'failed', errorMessage: 'It stopped.' })]),
+      page([record({ status: 'failed', errorMessage: sayVerbatim('It stopped.') })]),
     );
     askedIssues.mockResolvedValue([issue()]);
 
@@ -792,8 +798,8 @@ describe('JobHistory', () => {
     it('pins a run to the top from its menu, marks it, and keeps it there', async () => {
       askedHistory.mockResolvedValue(
         page([
-          record({ id: 'a', errorMessage: 'first one' }),
-          record({ id: 'b', errorMessage: 'second one' }),
+          record({ id: 'a', errorMessage: sayVerbatim('first one') }),
+          record({ id: 'b', errorMessage: sayVerbatim('second one') }),
         ]),
       );
 
@@ -822,8 +828,8 @@ describe('JobHistory', () => {
       window.localStorage.setItem('valence.pinnedJobRuns', '["b"]');
       askedHistory.mockResolvedValue(
         page([
-          record({ id: 'a', errorMessage: 'first one' }),
-          record({ id: 'b', errorMessage: 'second one' }),
+          record({ id: 'a', errorMessage: sayVerbatim('first one') }),
+          record({ id: 'b', errorMessage: sayVerbatim('second one') }),
         ]),
       );
 

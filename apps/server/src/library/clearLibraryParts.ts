@@ -1,3 +1,5 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { previewRequestFor } from './previewRequestFor';
 import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
 import type { PreviewQuality } from '@ValenceContracts/schemas/PreviewQuality';
@@ -29,7 +31,7 @@ type ClearLibraryPartsOptions = {
   };
   quality: PreviewQuality;
   trickplay: { intervalSeconds: number; tileWidth: number; columns: number; rows: number };
-  onProblem?: (what: string, reason: string) => void;
+  onProblem?: (what: string, reason: Said) => void;
   onProgress?: (done: number, total: number) => Promise<void> | void;
   isCancelled?: () => Promise<boolean> | boolean;
 };
@@ -105,7 +107,7 @@ const clearLibraryParts = async ({
               });
 
         await forgotten.catch((error: Error) => {
-          onProblem?.(item.path, error.message);
+          onProblem?.(item.path, sayVerbatim(error.message));
 
           return false;
         });
@@ -127,7 +129,7 @@ const clearLibraryParts = async ({
           : images.forget(where);
 
       await forgotten.catch((error: Error) => {
-        onProblem?.(where, error.message);
+        onProblem?.(where, sayVerbatim(error.message));
       });
     }
 

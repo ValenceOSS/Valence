@@ -1,11 +1,12 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMemoryNotificationStore } from './createMemoryNotificationStore';
 import type { NotificationStore } from './NotificationStore';
 
 const someNews = {
   event: 'media.added' as const,
-  title: 'Something new to watch',
-  body: '12 episodes — The Office',
+  title: sayVerbatim('Something new to watch'),
+  body: sayVerbatim('12 episodes — The Office'),
   link: '/?show=s1',
 };
 
@@ -49,12 +50,12 @@ describe('createMemoryNotificationStore', () => {
 
   it('lists what somebody has been told, newest first', async () => {
     await store.notify(['alice'], someNews);
-    await store.notify(['alice'], { ...someNews, body: 'later' });
+    await store.notify(['alice'], { ...someNews, body: sayVerbatim('later') });
 
     const listed = await store.list('alice', 10);
 
     expect(listed).toHaveLength(2);
-    expect(listed[0]?.body).toBe('later');
+    expect(listed[0]?.body).toEqual('later');
   });
 
   it('shows nobody else what they were told', async () => {
@@ -65,7 +66,7 @@ describe('createMemoryNotificationStore', () => {
 
   it('marks one without marking the rest', async () => {
     await store.notify(['alice'], someNews);
-    await store.notify(['alice'], { ...someNews, body: 'second' });
+    await store.notify(['alice'], { ...someNews, body: sayVerbatim('second') });
 
     const [newest] = await store.list('alice', 10);
 
@@ -110,8 +111,8 @@ describe('clearing and expiring', () => {
     const store = createMemoryNotificationStore({ listAccountIds: () => Promise.resolve(['a']) });
     const [written] = await store.notify(['a'], {
       event: 'media.added',
-      title: 'A film',
-      body: 'arrived',
+      title: sayVerbatim('A film'),
+      body: sayVerbatim('arrived'),
       link: null,
     });
 
@@ -123,8 +124,18 @@ describe('clearing and expiring', () => {
   it('takes all of them off when asked for none in particular', async () => {
     const store = createMemoryNotificationStore({ listAccountIds: () => Promise.resolve(['a']) });
 
-    await store.notify(['a'], { event: 'media.added', title: 'One', body: '', link: null });
-    await store.notify(['a'], { event: 'media.added', title: 'Two', body: '', link: null });
+    await store.notify(['a'], {
+      event: 'media.added',
+      title: sayVerbatim('One'),
+      body: sayVerbatim(''),
+      link: null,
+    });
+    await store.notify(['a'], {
+      event: 'media.added',
+      title: sayVerbatim('Two'),
+      body: sayVerbatim(''),
+      link: null,
+    });
 
     await store.clear('a');
 
@@ -136,7 +147,12 @@ describe('clearing and expiring', () => {
       listAccountIds: () => Promise.resolve(['a', 'b']),
     });
 
-    await store.notify(['a', 'b'], { event: 'media.added', title: 'One', body: '', link: null });
+    await store.notify(['a', 'b'], {
+      event: 'media.added',
+      title: sayVerbatim('One'),
+      body: sayVerbatim(''),
+      link: null,
+    });
 
     await store.clear('a');
 
@@ -149,7 +165,12 @@ describe('clearing and expiring', () => {
 
     const store = createMemoryNotificationStore({ listAccountIds: () => Promise.resolve(['a']) });
 
-    await store.notify(['a'], { event: 'media.added', title: 'One', body: '', link: null });
+    await store.notify(['a'], {
+      event: 'media.added',
+      title: sayVerbatim('One'),
+      body: sayVerbatim(''),
+      link: null,
+    });
 
     vi.setSystemTime(new Date('2026-08-21T12:06:00.000Z'));
 
@@ -165,7 +186,12 @@ describe('clearing and expiring', () => {
 
     const store = createMemoryNotificationStore({ listAccountIds: () => Promise.resolve(['a']) });
 
-    await store.notify(['a'], { event: 'media.added', title: 'One', body: '', link: null });
+    await store.notify(['a'], {
+      event: 'media.added',
+      title: sayVerbatim('One'),
+      body: sayVerbatim(''),
+      link: null,
+    });
 
     vi.setSystemTime(new Date('2026-08-21T12:04:00.000Z'));
 

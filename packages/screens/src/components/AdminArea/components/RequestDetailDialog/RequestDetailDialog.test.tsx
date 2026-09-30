@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -58,18 +59,21 @@ const DUNE = aMediaRequest({
 });
 
 beforeEach(() => {
-  fetchMediaRequestLog
-    .mockReset()
-    .mockResolvedValue([
-      { id: 1, at: '2026-09-19T00:00:00.000Z', message: 'Searched for it.', problemCode: null },
-    ]);
+  fetchMediaRequestLog.mockReset().mockResolvedValue([
+    {
+      id: 1,
+      at: '2026-09-19T00:00:00.000Z',
+      message: sayVerbatim('Searched for it.'),
+      problemCode: null,
+    },
+  ]);
   fetchRequestBlocklist.mockReset().mockResolvedValue([
     {
       id: '9f2504e0-4f89-41d3-9a0c-0305e82c3309',
       requestId: DUNE.id,
       title: 'Dune.2021.2160p.BAD',
       indexerId: null,
-      reason: 'It stalled',
+      reason: sayVerbatim('It stalled'),
       at: '2026-09-19T00:00:00.000Z',
     },
   ]);
@@ -134,10 +138,15 @@ describe('RequestDetailDialog', () => {
       {
         id: 2,
         at: '2026-09-19T00:05:00.000Z',
-        message: 'Could not be filed.',
+        message: sayVerbatim('Could not be filed.'),
         problemCode: 'MayNotWriteToLibrary',
       },
-      { id: 1, at: '2026-09-19T00:00:00.000Z', message: 'Searched for it.', problemCode: null },
+      {
+        id: 1,
+        at: '2026-09-19T00:00:00.000Z',
+        message: sayVerbatim('Searched for it.'),
+        problemCode: null,
+      },
     ]);
 
     renderInAnAddress(

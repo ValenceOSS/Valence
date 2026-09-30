@@ -1,3 +1,4 @@
+import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import type { Sent } from '@ValenceClient/requests/sendToRequests';
 import type { IndexerTest } from '@ValenceContracts/schemas/Indexer';
 
@@ -12,7 +13,7 @@ import type { IndexerTest } from '@ValenceContracts/schemas/Indexer';
 const failureOfTest = (name: string, { value, refusal }: Sent<IndexerTest>): string | null =>
   refusal === null
     ? value?.isWorking === false
-      ? `${name}: ${value.problem ?? 'did not answer'}`
+      ? `${name}: ${sayAgainIfAny(value.problem) ?? 'did not answer'}`
       : null
     : `${name}: ${refusal.message}`;
 

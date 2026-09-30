@@ -1,3 +1,7 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
+import { saying } from '@ValenceI18n/saying';
+
 type PhotographFileSystem = {
   list: (directory: string) => Promise<string[]>;
   ensure: (directory: string) => Promise<void>;
@@ -9,7 +13,7 @@ type MovePhotographsOnceOptions = {
   from: string;
   to: string;
   files: PhotographFileSystem;
-  onProblem?: (name: string, reason: string) => void;
+  onProblem?: (name: string, reason: Said) => void;
 };
 
 /**
@@ -59,7 +63,12 @@ const movePhotographsOnce = async ({
 
       moved += 1;
     } catch (error) {
-      onProblem?.(name, error instanceof Error ? error.message : 'It could not be moved.');
+      onProblem?.(
+        name,
+        error instanceof Error
+          ? sayVerbatim(error.message)
+          : saying('server.profiles.movePhotographsOnce.itCouldNotBeMoved'),
+      );
     }
   }
 

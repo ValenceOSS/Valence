@@ -1,4 +1,5 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { GrantedPermissionSchema, PERMISSIONS } from '@ValenceContracts/schemas/Permission';
 
 const PermissionName = z.enum(PERMISSIONS);
@@ -22,7 +23,7 @@ const Role = z
   })
   .openapi('Role');
 
-const RoleError = z.object({ error: z.string() }).openapi('RoleError');
+const RoleError = RefusalSchema.openapi('RoleError');
 
 const RoleBody = z
   .object({

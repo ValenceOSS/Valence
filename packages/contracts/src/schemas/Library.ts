@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { MediaItemSchema } from './MediaItem';
+import { say } from '@ValenceI18n/say';
 const LIBRARY_KINDS = ['movies', 'shows', 'music', 'books'] as const;
 
 const EXTRA_KINDS = [
@@ -18,16 +19,16 @@ const EXTRA_KINDS = [
 const ExtraKindSchema = z.enum(EXTRA_KINDS);
 
 const EXTRA_KIND_LABELS: Record<z.infer<typeof ExtraKindSchema>, string> = {
-  trailer: 'Trailer',
-  behindTheScenes: 'Behind the scenes',
-  deletedScene: 'Deleted scene',
-  featurette: 'Featurette',
-  interview: 'Interview',
-  scene: 'Scene',
-  clip: 'Clip',
-  short: 'Short',
-  sample: 'Sample',
-  other: 'Extra',
+  trailer: say('common.trailer'),
+  behindTheScenes: say('contracts.schemas.library.behindTheScenes'),
+  deletedScene: say('contracts.schemas.library.deletedScene'),
+  featurette: say('contracts.schemas.library.featurette'),
+  interview: say('contracts.schemas.library.interview'),
+  scene: say('contracts.schemas.library.scene'),
+  clip: say('contracts.schemas.library.clip'),
+  short: say('contracts.schemas.library.short'),
+  sample: say('contracts.schemas.library.sample'),
+  other: say('contracts.schemas.library.extra'),
 };
 
 const SELECTABLE_LIBRARY_KINDS = ['movies', 'shows', 'music', 'books'] as const;

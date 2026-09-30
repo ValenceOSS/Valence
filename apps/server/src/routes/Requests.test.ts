@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
@@ -489,7 +490,7 @@ describe('indexers and searching, through the server', () => {
       const response = await ask(path, method, body);
 
       expect(response.status).toBe(404);
-      expect(await response.json()).toEqual({ error: 'No such indexer.' });
+      expect(await response.json()).toMatchObject({ error: 'No such indexer.' });
     }
 
     expect((await ask('/api/admin/requests/indexers')).status).toBe(502);
@@ -817,7 +818,9 @@ describe('download clients and the queue, through the server', () => {
     const sent = await refusing.ask('/api/admin/requests/downloads', 'POST', SEND);
 
     expect(sent.status).toBe(400);
-    expect(await sent.json()).toEqual({ error: 'No torrent client is set up and switched on' });
+    expect(await sent.json()).toMatchObject({
+      error: 'No torrent client is set up and switched on',
+    });
 
     const missing = await build({
       isOn: true,
@@ -875,7 +878,7 @@ describe('download clients and the queue, through the server', () => {
           libraryId: 'elsewhere',
         })
       ).json(),
-    ).toEqual({ error: 'There is no such library.' });
+    ).toMatchObject({ error: 'There is no such library.' });
   });
 
   it('sends a release for the library of its kind it will be filed into, and for none where there is none', async () => {
@@ -1044,7 +1047,7 @@ describe('requests for films and series, through the server', () => {
     problem: null,
     problemCode: null,
     approval: 'approved',
-    refusedBecause: 'No room',
+    refusedBecause: sayVerbatim('No room'),
     requestedBy: { id: 'someone-else', name: 'Someone' },
     seasons: null,
     releaseTypes: null,
@@ -1148,14 +1151,16 @@ describe('requests for films and series, through the server', () => {
           requestId: REQUEST.id,
           title: 'Dune.2021.2160p',
           indexerId: null,
-          reason: 'It stalled',
+          reason: sayVerbatim('It stalled'),
           at: '2026-09-19T00:00:00.000Z',
         },
       ]);
     }
 
     if (url.endsWith('/log')) {
-      return Response.json([{ id: 1, at: '2026-09-19T00:00:00.000Z', message: 'Searched.' }]);
+      return Response.json([
+        { id: 1, at: '2026-09-19T00:00:00.000Z', message: sayVerbatim('Searched.') },
+      ]);
     }
 
     if (url.endsWith('/api/profiles')) {
@@ -1234,7 +1239,7 @@ describe('requests for films and series, through the server', () => {
 
     expect(
       await (await unknown.ask('/api/requests/media', 'POST', { kind: 'film', tmdbId: 1 })).json(),
-    ).toEqual({ error: 'The catalogue does not know that, or cannot be asked just now.' });
+    ).toMatchObject({ error: 'The catalogue does not know that, or cannot be asked just now.' });
 
     const nowhere = await build({
       isOn: true,
@@ -1247,7 +1252,7 @@ describe('requests for films and series, through the server', () => {
       await (
         await nowhere.ask('/api/requests/media', 'POST', { kind: 'series', tmdbId: 1 })
       ).json(),
-    ).toEqual({ error: 'There is no library of series to put it in.' });
+    ).toMatchObject({ error: 'There is no library of series to put it in.' });
     expect(
       (await nowhere.ask('/api/requests/media', 'POST', { kind: 'film', tmdbId: 1 })).status,
     ).toBe(201);
@@ -1323,7 +1328,7 @@ describe('requests for films and series, through the server', () => {
           musicBrainzId: '83d91898-7763-47d7-b03b-b92132375c47',
         })
       ).json(),
-    ).toEqual({ error: 'There is no library of music to put it in.' });
+    ).toMatchObject({ error: 'There is no library of music to put it in.' });
   });
 
   it('searches MusicBrainz for artists and albums, for whoever may ask', async () => {
@@ -1533,7 +1538,7 @@ describe('requests for films and series, through the server', () => {
           release: RELEASE,
         })
       ).json(),
-    ).toEqual({
+    ).toMatchObject({
       error: 'It was asked for, but that release could not be fetched: No torrent client is set up',
     });
 
@@ -2021,7 +2026,7 @@ describe('requests for films and series, through the server', () => {
 
       expect(
         await (await ask('/api/requests/media', 'POST', { kind: 'book', openLibraryId: 1 })).json(),
-      ).toEqual({ error: 'There is no library of books to put it in.' });
+      ).toMatchObject({ error: 'There is no library of books to put it in.' });
     });
 
     it('will not ask for a book by a TMDB id, nor for a film by an Open Library one', async () => {
@@ -2054,7 +2059,7 @@ describe('requests for films and series, through the server', () => {
         await (
           await ask('/api/requests/media', 'POST', { kind: 'book', openLibraryId: 99 })
         ).json(),
-      ).toEqual({ error: 'The catalogue does not know that, or cannot be asked just now.' });
+      ).toMatchObject({ error: 'The catalogue does not know that, or cannot be asked just now.' });
     });
 
     it('shelves books for anybody who may ask for films, and for nobody who may not', async () => {
@@ -2300,7 +2305,7 @@ describe('requests for films and series, through the server', () => {
 
     state = 'available';
 
-    expect(await (await ask(`/api/requests/media/${REQUEST.id}`, 'DELETE')).json()).toEqual({
+    expect(await (await ask(`/api/requests/media/${REQUEST.id}`, 'DELETE')).json()).toMatchObject({
       error: 'It is in the library already, so there is nothing left to cancel.',
     });
 
@@ -2443,7 +2448,9 @@ describe('requests for films and series, through the server', () => {
       });
 
       expect(refused.status).toBe(403);
-      expect(await refused.json()).toEqual({ error: 'That quality is not available to you.' });
+      expect(await refused.json()).toMatchObject({
+        error: 'That quality is not available to you.',
+      });
       expect(sent.some(({ url }) => url.endsWith('/api/requests'))).toBe(false);
     });
 

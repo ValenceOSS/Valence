@@ -93,11 +93,7 @@ const QueuePanel = () => {
       <section aria-label="Now playing" className="flex flex-col gap-2">
         <h3 className="px-2 text-sm font-semibold text-text">Now playing</h3>
         <div className="rounded-md px-2 py-1.5">
-          <QueuedSong
-            track={current}
-            isCurrent
-            isPick={queue.picks.includes(current.id)}
-          />
+          <QueuedSong track={current} isCurrent isPick={queue.picks.includes(current.id)} />
         </div>
       </section>
 

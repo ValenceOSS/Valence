@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { followRunningJobs } from './followRunningJobs';
 import type { JobEvent } from '@ValenceContracts/schemas/JobRun';
@@ -53,7 +54,7 @@ describe('followRunningJobs', () => {
     onEvent({
       event: 'progress',
       jobId: 'job-1',
-      phase: 'previews',
+      phase: sayVerbatim('previews'),
       processed: 1,
       total: 4,
       item: null,
@@ -61,7 +62,7 @@ describe('followRunningJobs', () => {
     onEvent({
       event: 'completed',
       kind: 'library.regeneratePreviews',
-      label: 'Generate missing previews',
+      label: sayVerbatim('Generate missing previews'),
       jobId: 'job-1',
       subject: 'library-1',
       subjectName: 'Movies',

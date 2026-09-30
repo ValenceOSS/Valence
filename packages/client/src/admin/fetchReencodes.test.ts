@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   cancelReencode,
@@ -94,7 +95,10 @@ describe('startReencodes', () => {
         {
           started: [aReencode],
           refused: [
-            { mediaId: MEDIA_ID, refusal: { code: 'BeingWatched', detail: 'Somebody is.' } },
+            {
+              mediaId: MEDIA_ID,
+              refusal: { code: 'BeingWatched', detail: sayVerbatim('Somebody is.') },
+            },
           ],
         },
         202,

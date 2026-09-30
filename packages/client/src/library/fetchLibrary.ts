@@ -1,3 +1,4 @@
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { readFromServerOrAbsent } from '@ValenceClient/query/readFromServerOrAbsent';
 import { z } from 'zod';
 import {
@@ -22,7 +23,7 @@ const ScanJobSchema = z.object({ jobId: z.string(), state: ScanStateSchema });
 const ScanProgressSchema = z.object({
   jobId: z.string(),
   state: ScanStateSchema,
-  phase: z.string().nullable(),
+  phase: SaidSchema.nullable(),
   processed: z.number().int().nonnegative().nullable(),
   total: z.number().int().nonnegative().nullable(),
   item: z.string().nullable().default(null),

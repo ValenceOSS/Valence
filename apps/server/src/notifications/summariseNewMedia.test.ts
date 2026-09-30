@@ -41,8 +41,8 @@ describe('summariseNewMedia', () => {
 
     const summary = summariseNewMedia(items);
 
-    expect(summary?.body).toContain('12 episodes');
-    expect(summary?.body).toContain('The Office');
+    expect(summary?.body.message).toContain('12 episodes');
+    expect(summary?.body.message).toContain('The Office');
   });
 
   it('does not turn four hundred files into four hundred messages', () => {
@@ -57,7 +57,7 @@ describe('summariseNewMedia', () => {
     const summary = summariseNewMedia(items);
 
     expect(summary).not.toBeNull();
-    expect(summary?.body).toContain('400 episodes');
+    expect(summary?.body.message).toContain('400 episodes');
   });
 
   it('names a few and counts the rest', () => {
@@ -71,29 +71,29 @@ describe('summariseNewMedia', () => {
 
     const summary = summariseNewMedia(items);
 
-    expect(summary?.body).toContain('The Office, Taskmaster and Poirot');
-    expect(summary?.body).toContain('2 more');
-    expect(summary?.body).not.toContain('Peep Show');
+    expect(summary?.body.message).toContain('The Office, Taskmaster and Poirot');
+    expect(summary?.body.message).toContain('2 more');
+    expect(summary?.body.message).not.toContain('Peep Show');
   });
 
   it('counts films and episodes as the different things they are', () => {
     const summary = summariseNewMedia([film('f1', 'Heat'), episode('e1', 's1', 'The Office')]);
 
-    expect(summary?.body).toContain('1 episode and 1 film');
+    expect(summary?.body.message).toContain('1 episode and 1 film');
   });
 
   it('speaks of one film in the singular', () => {
     const summary = summariseNewMedia([film('f1', 'Heat')]);
 
-    expect(summary?.body).toContain('1 film');
-    expect(summary?.body).toContain('Heat');
+    expect(summary?.body.message).toContain('1 film');
+    expect(summary?.body.message).toContain('Heat');
   });
 
   it('speaks of several films in the plural', () => {
     const summary = summariseNewMedia([film('f1', 'Heat'), film('f2', 'Sicario')]);
 
-    expect(summary?.body).toContain('2 films');
-    expect(summary?.body).toContain('Heat and Sicario');
+    expect(summary?.body.message).toContain('2 films');
+    expect(summary?.body.message).toContain('Heat and Sicario');
   });
 
   it('points at the one film it is about', () => {
@@ -122,7 +122,7 @@ describe('summariseNewMedia', () => {
       albumTitle: null,
     };
 
-    expect(summariseNewMedia([orphan])?.body).toContain('Unnamed episode');
+    expect(summariseNewMedia([orphan])?.body?.message).toContain('Unnamed episode');
   });
 
   it('counts songs as songs and names the album they came on', () => {
@@ -140,8 +140,8 @@ describe('summariseNewMedia', () => {
   it('says only that something is new when songs arrive with films', () => {
     const summary = summariseNewMedia([film('f1', 'Arrival'), song('s1', 'a1', 'Even In Arcadia')]);
 
-    expect(summary?.title).toBe('Something new');
-    expect(summary?.body).toBe('1 film and 1 song — Even In Arcadia and Arrival');
+    expect(summary?.title).toEqual('Something new');
+    expect(summary?.body).toEqual('1 film and 1 song — Even In Arcadia and Arrival');
     expect(summary?.link).toBeNull();
   });
 });

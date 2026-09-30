@@ -1,7 +1,8 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { PERMISSIONS } from '@ValenceContracts/schemas/Permission';
 
-const ApiKeyError = z.object({ error: z.string() }).openapi('ApiKeyError');
+const ApiKeyError = RefusalSchema.openapi('ApiKeyError');
 
 const Permission = z.enum(PERMISSIONS);
 

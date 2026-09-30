@@ -1,20 +1,23 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { createReachabilityWatch } from '@ValenceServer/events/createReachabilityWatch';
 import { NO_WORK } from '@ValenceContracts/schemas/Requests';
 import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
 import type { RequestsOverview, RequestsVpn } from '@ValenceContracts/schemas/Requests';
 import type { RequestsClient } from '@ValenceServer/requests/createRequestsClient';
+import { saying } from '@ValenceI18n/saying';
 
 type CreateRequestsMonitorOptions = {
   address: string;
   client: Pick<RequestsClient, 'readStatus'>;
   now?: () => Date;
-  onLost: (reason: string, problemCode: ProblemCode) => void;
+  onLost: (reason: Said, problemCode: ProblemCode) => void;
   onRegained: () => void;
-  onVpnDown: (reason: string, problemCode: ProblemCode) => void;
+  onVpnDown: (reason: Said, problemCode: ProblemCode) => void;
   onVpnUp: (vpn: RequestsVpn) => void;
   onIndexerFailing?: (indexer: {
     name: string;
-    problem: string;
+    problem: Said;
     problemCode: ProblemCode | null;
   }) => void;
   onIndexerWorking?: (indexer: { name: string }) => void;
@@ -62,8 +65,8 @@ const createRequestsMonitor = ({
     status: null,
     work: NO_WORK,
   };
-  let silence: { reason: string; problemCode: ProblemCode } = {
-    reason: '',
+  let silence: { reason: Said; problemCode: ProblemCode } = {
+    reason: sayVerbatim(''),
     problemCode: 'RequestsUnreachable',
   };
   let lastVpn: RequestsVpn | null = null;
@@ -77,7 +80,10 @@ const createRequestsMonitor = ({
 
   const vpn = createReachabilityWatch({
     onLost: () => {
-      onVpnDown(lastVpn?.problem ?? 'The tunnel is down', lastVpn?.problemCode ?? 'VpnDown');
+      onVpnDown(
+        lastVpn?.problem ?? saying('server.requests.requestsMonitor.theTunnelIsDown'),
+        lastVpn?.problemCode ?? 'VpnDown',
+      );
     },
     onRegained: () => {
       if (lastVpn !== null) {

@@ -1,6 +1,7 @@
 import { XMLParser } from 'fast-xml-parser';
 import { z } from 'zod';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
+import { saying } from '@ValenceI18n/saying';
 
 const LISTED = new Set(['category', 'subcat', 'item', 'attr']);
 
@@ -32,7 +33,9 @@ const readIndexerXml = (xml: string): object => {
   const trimmed = xml.trim();
 
   if (!trimmed.startsWith('<')) {
-    throw new IndexerFailure('The indexer answered something that was not Torznab or Newznab');
+    throw new IndexerFailure(
+      saying('requests.indexers.readIndexerXml.theIndexerAnsweredSomethingThatWas'),
+    );
   }
 
   const document = z.looseObject({}).parse(parser.parse(trimmed));
@@ -43,8 +46,12 @@ const readIndexerXml = (xml: string): object => {
 
     throw new IndexerFailure(
       code === '100' || code === '101' || code === '102'
-        ? 'The indexer refused the API key'
-        : `The indexer said: ${description ?? `error ${code ?? 'without a code'}`}`,
+        ? saying('common.theIndexerRefusedTheAPIKey')
+        : description !== undefined
+          ? saying('requests.indexers.indexerSaid', { said: description })
+          : code !== undefined
+            ? saying('requests.indexers.indexerAnsweredError', { code })
+            : saying('requests.indexers.indexerAnsweredAnError'),
     );
   }
 

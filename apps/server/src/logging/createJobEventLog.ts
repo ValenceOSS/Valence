@@ -1,10 +1,12 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import type { Logger } from './Logger';
+import { say } from '@ValenceI18n/say';
 
 type JobEventLog = {
   started: (entry: { kind: string; jobId: string; subject: string | null }) => void;
   progress: (entry: {
     jobId: string;
-    phase: string;
+    phase: Said;
     processed: number;
     total: number;
     item: string | null;
@@ -12,12 +14,12 @@ type JobEventLog = {
   finished: (entry: {
     kind: string;
     jobId: string;
-    reason: string | null;
+    reason: Said | null;
     wasStopped?: boolean;
   }) => void;
 };
 
-type Run = { kind: string | null; startedAtMs: number; phase: string | null; step: number };
+type Run = { kind: string | null; startedAtMs: number; phase: Said | null; step: number };
 
 const STEPS = 10;
 
@@ -62,21 +64,22 @@ const createJobEventLog = (
       runs.set(jobId, run);
 
       const context = run.kind === null ? { jobId } : { jobId, jobKind: run.kind };
-      const name = run.kind === null ? 'A background job' : labelFor(run.kind);
+      const name =
+        run.kind === null ? say('server.logging.jobEventLog.aBackgroundJob') : labelFor(run.kind);
 
       if (item !== null) {
-        log.debug('jobs', `${phase}: ${item}`, { context });
+        log.debug('jobs', `${phase.message}: ${item}`, { context });
       }
 
       const step = total === 0 ? 0 : Math.floor((processed / total) * STEPS);
-      const isNewPhase = run.phase !== phase;
+      const isNewPhase = run.phase?.message !== phase.message;
 
       if (isNewPhase || step > run.step) {
         run.phase = phase;
         run.step = isNewPhase ? step : Math.max(run.step, step);
         log.info(
           'jobs',
-          `${name}: ${phase} — ${processed.toLocaleString('en')} of ${total.toLocaleString('en')}`,
+          `${name}: ${phase.message} — ${processed.toLocaleString('en')} of ${total.toLocaleString('en')}`,
           { context },
         );
       }
@@ -94,7 +97,7 @@ const createJobEventLog = (
       } else if (reason === null) {
         log.info('jobs', `${labelFor(kind)} finished${took}`, { context });
       } else {
-        log.error('jobs', `${labelFor(kind)} failed${took}: ${reason}`, { context });
+        log.error('jobs', `${labelFor(kind)} failed${took}: ${reason.message}`, { context });
       }
     },
   };

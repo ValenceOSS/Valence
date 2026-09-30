@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import {
   NO_WORK,
@@ -24,7 +25,7 @@ const A_STATUS = {
       {
         id: '0f8fad5b-d9cb-469f-a165-70867728950e',
         name: 'Jackett',
-        problem: 'The site’s Cloudflare refuses this address outright',
+        problem: sayVerbatim('The site’s Cloudflare refuses this address outright'),
         problemCode: 'CloudflareRefusesAddress',
       },
     ],
@@ -37,7 +38,7 @@ const A_STATUS = {
     failed: 1,
     lastPassedAt: '2026-09-19T00:05:00.000Z',
     lastFailedAt: '2026-09-19T00:01:00.000Z',
-    problem: 'Timed out after 60 seconds getting past the site’s browser check',
+    problem: sayVerbatim('Timed out after 60 seconds getting past the site’s browser check'),
     startProblem: null,
   },
 };
@@ -93,13 +94,13 @@ describe('Requests', () => {
       RequestsOverviewSchema.parse({
         address: 'http://requests:8421',
         isReachable: false,
-        problem: 'http://requests:8421 refused the secret',
+        problem: sayVerbatim('http://requests:8421 refused the secret'),
         problemCode: 'RequestsSecretRefused',
         checkedAt: null,
         status: null,
       }),
     ).toMatchObject({
-      problem: 'http://requests:8421 refused the secret',
+      problem: sayVerbatim('http://requests:8421 refused the secret'),
       problemCode: 'RequestsSecretRefused',
     });
   });
@@ -112,7 +113,11 @@ describe('Requests', () => {
       failed: 0,
       arrivedToday: 4,
       downloadBytesPerSecond: 12_582_912,
-      clients: { total: 2, reachable: 1, failing: [{ name: 'qBittorrent', problem: 'No answer' }] },
+      clients: {
+        total: 2,
+        reachable: 1,
+        failing: [{ name: 'qBittorrent', problem: sayVerbatim('No answer') }],
+      },
     };
 
     expect(

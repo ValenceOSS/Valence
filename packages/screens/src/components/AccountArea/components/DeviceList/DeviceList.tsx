@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
 import { Icon } from '@ValenceUI/Icon';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
@@ -41,11 +42,11 @@ const DeviceList = () => {
       {
         id: 'name',
         header: 'Device',
-        accessorFn: (device) => device.name,
+        accessorFn: (device) => sayAgain(device.name),
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col gap-0.5">
             <span className="flex flex-wrap items-center gap-2">
-              <span className="truncate font-medium text-text">{row.original.name}</span>
+              <span className="truncate font-medium text-text">{sayAgain(row.original.name)}</span>
 
               {!row.original.isCurrent ? null : (
                 <Badge size="sm" tone="accent">
@@ -78,7 +79,7 @@ const DeviceList = () => {
           row.original.isCurrent ? null : (
             <span className="flex justify-end">
               <ActionMenu
-                label={`Actions for ${row.original.name}`}
+                label={`Actions for ${sayAgain(row.original.name)}`}
                 trigger={<Icon of={MoreHorizontalIcon} size={16} />}
                 groups={[
                   {
@@ -125,7 +126,7 @@ const DeviceList = () => {
         detail={
           ending === null
             ? ''
-            : `${ending.name} will be signed out and whoever is using it has to sign in again.`
+            : `${sayAgain(ending.name)} will be signed out and whoever is using it has to sign in again.`
         }
         confirmLabel="Sign it out"
         isDestructive

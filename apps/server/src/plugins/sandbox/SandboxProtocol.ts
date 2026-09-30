@@ -37,9 +37,16 @@ const ToSandboxSchema = z.discriminatedUnion('type', [
   }),
 ]);
 
+const SandboxWordsSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('thrown'), text: z.string() }),
+  z.object({ kind: z.literal('failed') }),
+  z.object({ kind: z.literal('neverDefined') }),
+  z.object({ kind: z.literal('notLoaded') }),
+]);
+
 const FromSandboxSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('loaded') }),
-  z.object({ type: z.literal('loadFailed'), problem: z.string() }),
+  z.object({ type: z.literal('loadFailed'), problem: SandboxWordsSchema }),
   z.object({
     type: z.literal('hostCall'),
     id: z.number().int(),
@@ -52,14 +59,14 @@ const FromSandboxSchema = z.discriminatedUnion('type', [
     id: z.number().int(),
     ok: z.boolean(),
     value: z.string().optional(),
-    error: z.string().optional(),
+    error: SandboxWordsSchema.optional(),
   }),
   z.object({
     type: z.literal('log'),
     level: z.enum(['info', 'warn', 'error']),
     message: z.string(),
   }),
-  z.object({ type: z.literal('stopped'), reason: z.string() }),
+  z.object({ type: z.literal('stopped'), reason: SandboxWordsSchema }),
 ]);
 
 type SandboxHandler = (typeof HANDLERS)[number];
@@ -68,6 +75,8 @@ type ToSandbox = z.infer<typeof ToSandboxSchema>;
 
 type FromSandbox = z.infer<typeof FromSandboxSchema>;
 
-export type { FromSandbox, SandboxHandler, ToSandbox };
+type SandboxWords = z.infer<typeof SandboxWordsSchema>;
+
+export type { FromSandbox, SandboxHandler, SandboxWords, ToSandbox };
 
 export { FromSandboxSchema, ToSandboxSchema };

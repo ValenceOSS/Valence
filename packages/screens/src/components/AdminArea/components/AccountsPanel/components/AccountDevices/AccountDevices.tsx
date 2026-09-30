@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { Icon } from '@ValenceUI/Icon';
 import { MoreHorizontal as MoreHorizontalIcon } from '@keyline-icons/react';
 import { DoorOpen as DoorOpenFilledIcon } from '@keyline-icons/react/fill';
@@ -38,10 +39,10 @@ const AccountDevices = ({ accountId }: AccountDevicesProps) => {
       {
         id: 'name',
         header: 'Device',
-        accessorFn: (device) => device.name,
+        accessorFn: (device) => sayAgain(device.name),
         cell: ({ row }) => (
           <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="truncate font-medium text-text">{row.original.name}</span>
+            <span className="truncate font-medium text-text">{sayAgain(row.original.name)}</span>
 
             {row.original.address === null ? null : (
               <span className="truncate text-xs text-text-muted">{row.original.address}</span>
@@ -66,7 +67,7 @@ const AccountDevices = ({ accountId }: AccountDevicesProps) => {
         cell: ({ row }) => (
           <span className="flex justify-end">
             <ActionMenu
-              label={`Actions for ${row.original.name}`}
+              label={`Actions for ${sayAgain(row.original.name)}`}
               trigger={<Icon of={MoreHorizontalIcon} size={16} />}
               groups={[
                 {
@@ -98,7 +99,7 @@ const AccountDevices = ({ accountId }: AccountDevicesProps) => {
         detail={
           ending === null
             ? ''
-            : `${ending.name} will be signed out and whoever is using it has to sign in again.`
+            : `${sayAgain(ending.name)} will be signed out and whoever is using it has to sign in again.`
         }
         confirmLabel="Sign it out"
         isDestructive

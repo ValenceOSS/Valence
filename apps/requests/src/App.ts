@@ -1,3 +1,4 @@
+import { saying } from '@ValenceI18n/saying';
 import { Hono } from 'hono';
 import { bearerAuth } from 'hono/bearer-auth';
 import {
@@ -16,6 +17,9 @@ import type {
 } from '@ValenceContracts/schemas/Requests';
 import type { IndexerService } from '@ValenceRequests/indexers/createIndexerService';
 import type { ProfileService } from '@ValenceRequests/profiles/createProfileService';
+import { refuse } from '@ValenceI18n/refuse';
+import { refuseWith } from '@ValenceI18n/refuseWith';
+import { say } from '@ValenceI18n/say';
 
 type CreateAppOptions = {
   secret: string;
@@ -29,7 +33,7 @@ type CreateAppOptions = {
   profiles?: Pick<ProfileService, 'find'>;
 };
 
-const NO_SUCH_INDEXER = { error: 'No such indexer.' };
+const NO_SUCH_INDEXER = refuse('error.indexers.noSuchIndexer');
 
 /**
  * Builds the service's HTTP surface: an open health check for the container runtime, and
@@ -62,7 +66,7 @@ const createApp = ({
   app.get('/health', async (context) =>
     (await isDatabaseUp())
       ? context.json({ ok: true })
-      : context.json({ ok: false, problem: 'The database is not answering' }, 503),
+      : context.json({ ok: false, problem: saying('requests.app.theDatabaseIsNotAnswering') }, 503),
   );
 
   app.use('/api/*', bearerAuth({ token: secret }));
@@ -86,13 +90,13 @@ const createApp = ({
     const draft = await readBody(context.req.raw, IndexerDraftSchema);
 
     if (draft === null) {
-      return context.json({ error: 'That is not an indexer.' }, 400);
+      return context.json(refuse('error.indexers.thatIsNotAnIndexer'), 400);
     }
 
     const added = await indexers.add(draft);
 
-    return typeof added === 'string'
-      ? context.json({ error: added }, 400)
+    return 'refused' in added
+      ? context.json(refuseWith(added.refused), 400)
       : context.json(added, 201);
   });
 
@@ -100,7 +104,7 @@ const createApp = ({
     const draft = await readBody(context.req.raw, IndexerDraftSchema);
 
     return draft === null
-      ? context.json({ error: 'That is not an indexer.' }, 400)
+      ? context.json(refuse('error.indexers.thatIsNotAnIndexer'), 400)
       : context.json(await indexers.tryDraft(draft));
   });
 
@@ -108,7 +112,7 @@ const createApp = ({
     const change = await readBody(context.req.raw, IndexerChangeSchema);
 
     if (change === null) {
-      return context.json({ error: 'That is not a change to an indexer.' }, 400);
+      return context.json(refuse('error.indexers.thatIsNotAChangeTo'), 400);
     }
 
     const changed = await indexers.change(context.req.param('id'), change);
@@ -132,7 +136,7 @@ const createApp = ({
     const draft = await readBody(context.req.raw, IndexerDraftSchema);
 
     return draft === null
-      ? context.json({ error: 'That is not an indexer.' }, 400)
+      ? context.json(refuse('error.indexers.thatIsNotAnIndexer'), 400)
       : context.json(await indexers.tryDraft(draft, context.req.param('id')));
   });
 
@@ -140,7 +144,7 @@ const createApp = ({
     const asked = await readBody(context.req.raw, ReleaseDownloadRequestSchema);
 
     if (asked === null) {
-      return context.json({ error: 'Say which release to fetch.' }, 400);
+      return context.json(refuse('error.common.sayWhichReleaseToFetch'), 400);
     }
 
     try {
@@ -159,7 +163,9 @@ const createApp = ({
       return context.json(
         {
           error:
-            error instanceof IndexerFailure ? error.message : 'The release could not be fetched.',
+            error instanceof IndexerFailure
+              ? error.message
+              : say('requests.app.theReleaseCouldNotBeFetched'),
         },
         502,
       );
@@ -176,7 +182,7 @@ const createApp = ({
     const detail = await definitions.detail(context.req.param('id'));
 
     return detail === null
-      ? context.json({ error: 'No such definition.' }, 404)
+      ? context.json(refuse('error.indexers.noSuchDefinition'), 404)
       : context.json(detail);
   });
 
@@ -184,13 +190,13 @@ const createApp = ({
     const search = await readBody(context.req.raw, ReleaseSearchSchema);
 
     if (search === null) {
-      return context.json({ error: 'That is not a search.' }, 400);
+      return context.json(refuse('error.indexers.thatIsNotASearch'), 400);
     }
 
     const profile = search.profileId === undefined ? null : await profiles.find(search.profileId);
 
     if (search.profileId !== undefined && profile === null) {
-      return context.json({ error: 'No such profile.' }, 400);
+      return context.json(refuse('error.common.noSuchProfile'), 400);
     }
 
     return context.json(await indexers.search(search, profile));

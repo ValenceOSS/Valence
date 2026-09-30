@@ -7,6 +7,7 @@ import { readZipDirectory } from './readZipDirectory';
 import { readZipEntry } from './readZipEntry';
 import type { ContentsPlace, ReflowBook, SpineEntry } from './BookFile';
 import type { ZipEntry } from './readZipDirectory';
+import { say } from '@ValenceI18n/say';
 
 const CONTAINER = 'META-INF/container.xml';
 
@@ -16,7 +17,8 @@ const CONTAINER = 'META-INF/container.xml';
  * @param at - Which part of the book this is.
  * @returns What to call it.
  */
-const nameFor = (at: number): string => `Part ${(at + 1).toString()}`;
+const nameFor = (at: number): string =>
+  say('server.books.partNumbered', { number: (at + 1).toString() });
 
 /**
  * The folder a path inside the archive sits in.

@@ -1,4 +1,6 @@
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { ReleaseTypesSchema } from '@ValenceContracts/schemas/MediaRequest';
 import { ListeningSessionSchema } from '@ValenceContracts/schemas/MusicRemote';
 import { PlaybackPlanSchema } from '@ValenceContracts/schemas/PlaybackPlan';
@@ -31,7 +33,7 @@ import {
 import { SessionMessageSchema } from '@ValenceContracts/schemas/SessionMessage';
 import { ScanAccepted } from './LibraryRoute';
 
-const AdminError = z.object({ error: z.string() }).openapi('AdminError');
+const AdminError = RefusalSchema.openapi('AdminError');
 
 const AdminUserSchema = z
   .object({
@@ -114,10 +116,10 @@ const AdminOverviewSchema = z
         stalled: z.array(
           z.object({
             kind: z.string(),
-            label: z.string(),
+            label: SaidSchema,
             failures: z.number().int().positive(),
             everSucceeded: z.boolean(),
-            reason: z.string(),
+            reason: SaidSchema,
           }),
         ),
       })
@@ -177,7 +179,7 @@ const searchCatalogueRoute = createRoute({
     },
     403: {
       description: 'Only an administrator may ask',
-      content: { 'application/json': { schema: z.object({ error: z.string() }) } },
+      content: { 'application/json': { schema: RefusalSchema } },
     },
   },
 });
@@ -359,9 +361,9 @@ const adminSettingsRoute = createRoute({
 const AdminJobDefinitionSchema = z
   .object({
     kind: z.string(),
-    label: z.string(),
+    label: SaidSchema,
     group: JobGroupSchema,
-    description: z.string(),
+    description: SaidSchema,
     needsLibrary: z.boolean(),
     destructive: z.boolean(),
     takesParts: z.boolean(),

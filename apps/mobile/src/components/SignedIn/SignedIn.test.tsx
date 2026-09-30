@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { act, render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
@@ -317,15 +318,21 @@ describe('SignedIn', () => {
             mediaId: THREE[0]!.id,
             container: {
               kind: 'passthrough',
-              reason: { code: 'ClientSupportsSource', detail: '' },
+              reason: { code: 'ClientSupportsSource', detail: sayVerbatim('') },
             },
-            video: { kind: 'passthrough', reason: { code: 'ClientSupportsSource', detail: '' } },
+            video: {
+              kind: 'passthrough',
+              reason: { code: 'ClientSupportsSource', detail: sayVerbatim('') },
+            },
             audio: {
               kind: 'passthrough',
               streamIndex: 1,
-              reason: { code: 'ClientSupportsSource', detail: '' },
+              reason: { code: 'ClientSupportsSource', detail: sayVerbatim('') },
             },
-            subtitles: { kind: 'none', reason: { code: 'ClientSupportsSource', detail: '' } },
+            subtitles: {
+              kind: 'none',
+              reason: { code: 'ClientSupportsSource', detail: sayVerbatim('') },
+            },
           },
           warnings: [],
           reuse: null,

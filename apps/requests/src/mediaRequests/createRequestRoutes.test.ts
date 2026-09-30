@@ -1,3 +1,5 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it, vi } from 'vitest';
 import { MediaRequestAddedSchema } from '@ValenceContracts/schemas/MediaRequest';
 import { createMemoryRecordStore } from '@ValenceRequests/stores/createMemoryRecordStore';
@@ -22,7 +24,7 @@ const DUNE = {
 /**
  * The routes over no requests to begin with, and a worker that answers as told.
  */
-const theRoutes = (picked: MediaRequest | string | null = null) => {
+const theRoutes = (picked: MediaRequest | { refused: Said } | null = null) => {
   const worker = {
     searchMissing: vi.fn(() =>
       Promise.resolve({ searched: 2, startedAt: '2026-09-19T00:00:00.000Z' }),
@@ -44,7 +46,7 @@ const theRoutes = (picked: MediaRequest | string | null = null) => {
           requestId: id,
           title: 'Dune.2021.2160p',
           indexerId: null,
-          reason: 'It stalled',
+          reason: sayVerbatim('It stalled'),
           at: '2026-09-19T00:00:00.000Z',
         },
       ]),
@@ -153,7 +155,7 @@ describe('createRequestRoutes', () => {
     const { ask, log } = theRoutes();
     const id = await madeDune(ask);
 
-    await log.store.add(id, 'Searched for it.');
+    await log.store.add(id, sayVerbatim('Searched for it.'));
 
     expect(await (await ask(`/requests/${id}/log`)).json()).toMatchObject([
       { message: 'Searched for it.' },
@@ -208,7 +210,7 @@ describe('createRequestRoutes', () => {
   });
 
   it('searches for what is missing, and by hand, and sends a pick', async () => {
-    const { ask, worker } = theRoutes('No torrent client is set up');
+    const { ask, worker } = theRoutes({ refused: sayVerbatim('No torrent client is set up') });
 
     expect(await (await ask('/requests/missing', 'POST')).json()).toEqual({
       searched: 2,
@@ -218,7 +220,7 @@ describe('createRequestRoutes', () => {
     expect((await ask('/requests/missing/releases')).status).toBe(404);
     expect(
       await (await ask('/requests/some/pick', 'POST', { release: aRelease('Dune') })).json(),
-    ).toEqual({ error: 'No torrent client is set up' });
+    ).toEqual({ error: 'No torrent client is set up', code: null, values: {} });
     expect((await ask('/requests/some/pick', 'POST', {})).status).toBe(400);
     expect(worker.pick).toHaveBeenCalledTimes(1);
   });

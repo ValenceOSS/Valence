@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -108,7 +109,7 @@ describe('IndexersPanel', () => {
     fetchIndexers.mockResolvedValue([
       anIndexer({
         isEnabled: false,
-        turnedOffBecause: 'Turned off after 5 failures in a row: Timed out',
+        turnedOffBecause: sayVerbatim('Turned off after 5 failures in a row: Timed out'),
         removesWhenDone: null,
         seedSeconds: null,
         seedRatio: null,
@@ -220,7 +221,7 @@ describe('IndexersPanel', () => {
         id: 'turned-off',
         name: 'Prowlarr',
         isEnabled: false,
-        turnedOffBecause: 'Turned off after 5 failures in a row: Timed out',
+        turnedOffBecause: sayVerbatim('Turned off after 5 failures in a row: Timed out'),
       }),
       anIndexer({ id: 'switched-off', name: 'Torrents', isEnabled: false }),
     ]);
@@ -247,7 +248,7 @@ describe('IndexersPanel', () => {
       Promise.resolve({
         value: {
           isWorking: id === 'on',
-          problem: id === 'on' ? null : 'Timed out',
+          problem: id === 'on' ? null : sayVerbatim('Timed out'),
           problemCode: null,
           capabilities: null,
           captcha: null,
@@ -336,7 +337,7 @@ describe('IndexersPanel', () => {
     testIndexer.mockResolvedValue({
       value: {
         isWorking: false,
-        problem: 'The indexer refused the API key',
+        problem: sayVerbatim('The indexer refused the API key'),
         problemCode: null,
         capabilities: null,
         captcha: null,

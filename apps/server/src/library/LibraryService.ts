@@ -1,4 +1,5 @@
 import type { ArtworkChoices, ArtworkKind } from '@ValenceContracts/schemas/ArtworkChoice';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import type {
   Library,
   LibraryFacets,
@@ -154,7 +155,7 @@ type LibraryService = ShowService & {
   detectSegments: (libraryId: string) => Promise<{ jobId: string; state: string } | null>;
   readScanState: (jobId: string) => Promise<{
     state: string;
-    phase: string | null;
+    phase: Said | null;
     processed: number | null;
     total: number | null;
     item: string | null;

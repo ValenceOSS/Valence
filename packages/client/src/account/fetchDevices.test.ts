@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchDevices, endDevice, endOtherDevices } from './fetchDevices';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
@@ -13,7 +14,7 @@ const ok = (body: JsonValue) => ({ ok: true, status: 200, json: () => Promise.re
 
 const device = {
   id: 'session-1',
-  name: 'Chrome on macOS',
+  name: sayVerbatim('Chrome on macOS'),
   address: '10.0.0.2',
   signedInAt: '2026-08-10T00:00:00.000Z',
   expiresAt: '2026-09-10T00:00:00.000Z',
@@ -33,7 +34,7 @@ describe('fetchDevices', () => {
   it('answers with everywhere this account is signed in', async () => {
     fetchMock.mockResolvedValue(ok({ devices: [device] }));
 
-    await expect(fetchDevices()).resolves.toMatchObject([{ name: 'Chrome on macOS' }]);
+    await expect(fetchDevices()).resolves.toMatchObject([{ name: sayVerbatim('Chrome on macOS') }]);
   });
 
   it('says so when the server refuses, rather than answering with nothing', async () => {

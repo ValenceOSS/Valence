@@ -11,13 +11,13 @@ describe('whatTheFilesSay', () => {
         ['Spider-Man.Brand.New.Day.2026.V3.1080p.TELESYNC.x264-DKS_rxl1.mp4'],
         FOUR_K,
       ),
-    ).toBe(
+    ).toEqual(
       'Its file, Spider-Man.Brand.New.Day.2026.V3.1080p.TELESYNC.x264-DKS_rxl1.mp4, is 1080p, which this profile does not take',
     );
   });
 
   it('refuses a source the profile does not take, at a resolution it does', () => {
-    expect(whatTheFilesSay(['Film.2026.2160p.HDCAM.x265.mkv'], FOUR_K)).toMatch(
+    expect(whatTheFilesSay(['Film.2026.2160p.HDCAM.x265.mkv'], FOUR_K)?.message).toMatch(
       /a cinema recording/u,
     );
   });
@@ -47,7 +47,7 @@ describe('whatTheFilesSay', () => {
   });
 
   it('reads the file, not the folders it is in', () => {
-    expect(whatTheFilesSay(['Film.2026.2160p.WEB-DL/Film.1080p.mkv'], FOUR_K)).toMatch(
+    expect(whatTheFilesSay(['Film.2026.2160p.WEB-DL/Film.1080p.mkv'], FOUR_K)?.message).toMatch(
       /Its file, Film\.1080p\.mkv, is 1080p/u,
     );
   });

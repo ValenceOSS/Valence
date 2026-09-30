@@ -1,3 +1,5 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import { saying } from '@ValenceI18n/saying';
 import { z } from 'zod';
 import { readDefinition } from '@ValenceRequests/cardigann/readDefinition';
 import { describeDefinition } from '@ValenceRequests/definitions/describeDefinition';
@@ -127,7 +129,11 @@ const createDefinitionCatalogue = ({
 
       await store.writeState({
         updatedAt,
-        problem: `The definitions could not be fetched from ${label}: ${error instanceof Error ? error.message : 'no reason given'}`,
+        problem: saying('requests.definitions.couldNotBeFetched', {
+          source: label,
+          reason:
+            error instanceof Error ? sayVerbatim(error.message) : saying('common.noReasonGiven'),
+        }),
       });
     }
 

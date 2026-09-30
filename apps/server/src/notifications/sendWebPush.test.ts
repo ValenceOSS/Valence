@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it, vi } from 'vitest';
 import { sendWebPush } from './sendWebPush';
 import type { PushEndpoint } from './NotificationStore';
@@ -9,7 +10,12 @@ const aBrowser: PushEndpoint = {
   auth: 'an-auth',
 };
 
-const aPayload = { title: 'Something new to watch', body: '12 episodes', link: null };
+const aPayload = {
+  title: 'Something new to watch',
+  body: '12 episodes',
+  link: null,
+  said: { title: sayVerbatim('Something new to watch'), body: sayVerbatim('12 episodes') },
+};
 
 const keys = { publicKey: 'public', privateKey: 'private' };
 

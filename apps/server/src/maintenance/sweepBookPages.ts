@@ -1,3 +1,5 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { join } from 'node:path';
 import { PAGE_WIDTHS } from '@ValenceServer/books/snapWidth';
 
@@ -20,7 +22,7 @@ type SweepBookPagesOptions = {
   listChapterIds: () => Promise<string[]>;
   nowMs: number;
   unreadForMs?: number;
-  onProblem?: (path: string, reason: string) => void;
+  onProblem?: (path: string, reason: Said) => void;
   onProgress?: (processed: number, total: number) => void;
 };
 
@@ -78,7 +80,7 @@ const sweepBookPages = async ({
           removed += 1;
         })
         .catch((error: Error) => {
-          onProblem?.(at, error.message);
+          onProblem?.(at, sayVerbatim(error.message));
         });
     } else {
       const stray = (await files.listPages(at)).filter((name) => !isKeptPage(name));
@@ -90,7 +92,7 @@ const sweepBookPages = async ({
             removed += 1;
           })
           .catch((error: Error) => {
-            onProblem?.(join(at, name), error.message);
+            onProblem?.(join(at, name), sayVerbatim(error.message));
           });
       }
 

@@ -1,6 +1,7 @@
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
 import { inTime } from '@ValenceRequests/solver/inTime';
 import type { Gate } from '@ValenceRequests/solver/createGate';
+import { saying } from '@ValenceI18n/saying';
 
 const OPENING_MS = 30_000;
 
@@ -22,7 +23,10 @@ const openInTurn = <T extends { close(): Promise<void> }>(
   opening.run(() =>
     inTime(open(), ms, {
       failure: () =>
-        new IndexerFailure('The browser did not open a tab in time', 'CloudflareCheckFailed'),
+        new IndexerFailure(
+          saying('requests.solver.openInTurn.theBrowserDidNotOpenA'),
+          'CloudflareCheckFailed',
+        ),
       discard: (late) => {
         void late.close().catch(() => {});
       },

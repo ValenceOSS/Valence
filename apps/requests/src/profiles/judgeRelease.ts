@@ -1,6 +1,7 @@
 import { describeLanguage } from '@ValenceCore/functions/describeTrack';
 import { hasWord } from '@ValenceRequests/profiles/hasWord';
 import { QUALITY_LABELS } from '@ValenceRequests/profiles/QUALITY_LABELS';
+import { QUALITY_NAMES } from '@ValenceRequests/profiles/QUALITY_NAMES';
 import type { Release } from '@ValenceContracts/schemas/Indexer';
 import type {
   MusicQuality,
@@ -9,10 +10,19 @@ import type {
   Resolution,
 } from '@ValenceContracts/schemas/ParsedRelease';
 import type { Judgement, QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
+import { saying } from '@ValenceI18n/saying';
+import type { Said } from '@ValenceI18n/SaidSchema';
+import type { StringKey } from '@ValenceI18n/StringKey';
 
-type Verdict = { score: number; rejections: string[]; reasons: string[] };
+type Verdict = { score: number; rejections: Said[]; reasons: Said[] };
 
-const ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth'];
+const CHOICES: readonly StringKey[] = [
+  'requests.profiles.judgeRelease.firstChoice',
+  'requests.profiles.judgeRelease.secondChoice',
+  'requests.profiles.judgeRelease.thirdChoice',
+  'requests.profiles.judgeRelease.fourthChoice',
+  'requests.profiles.judgeRelease.fifthChoice',
+];
 
 const MEGABYTE = 1024 * 1024;
 
@@ -46,11 +56,17 @@ const judgeLanguage = (languages: readonly string[], wanted: string | null): Ver
   const name = describeLanguage(wanted) ?? wanted;
 
   return languages.includes(wanted)
-    ? { score: LANGUAGE, rejections: [], reasons: [`In ${name} (+${LANGUAGE.toString()})`] }
+    ? {
+        score: LANGUAGE,
+        rejections: [],
+        reasons: [saying('requests.profiles.judgeRelease.inLanguage', { name, points: LANGUAGE })],
+      }
     : {
         score: -LANGUAGE,
         rejections: [],
-        reasons: [`Not in ${name} (−${LANGUAGE.toString()})`],
+        reasons: [
+          saying('requests.profiles.judgeRelease.notInLanguage', { name, points: LANGUAGE }),
+        ],
       };
 };
 
@@ -68,7 +84,7 @@ const judgeChoice = <Quality extends Resolution | ReleaseSource | MusicQuality>(
   value: Quality | null,
   choices: readonly Quality[],
   weight: number,
-  unsaid: string | null,
+  unsaid: Said | null,
 ): Verdict => {
   if (value === null) {
     return unsaid === null
@@ -77,17 +93,25 @@ const judgeChoice = <Quality extends Resolution | ReleaseSource | MusicQuality>(
   }
 
   const place = choices.indexOf(value);
-  const label = QUALITY_LABELS[value];
-  const opening = `${label.charAt(0).toUpperCase()}${label.slice(1)}`;
+  const quality = QUALITY_NAMES[value];
+  const choice = CHOICES[place];
 
   if (place === -1) {
-    return { score: 0, rejections: [`${opening} is not one this profile takes`], reasons: [] };
+    return {
+      score: 0,
+      rejections: [saying('requests.profiles.judgeRelease.notTaken', { quality })],
+      reasons: [],
+    };
   }
 
   return {
     score: (choices.length - place) * weight,
     rejections: [],
-    reasons: [`${opening}, the ${ORDINALS[place] ?? `number ${(place + 1).toString()}`} choice`],
+    reasons: [
+      choice === undefined
+        ? saying('requests.profiles.judgeRelease.laterChoice', { quality, number: place + 1 })
+        : saying(choice, { quality }),
+    ],
   };
 };
 
@@ -131,41 +155,62 @@ const judgeSize = (
   const megabytes = release.sizeBytes / MEGABYTE;
 
   if (isVideo && runtimeMinutes === undefined) {
-    return { ...nothing, reasons: ['Its size is not judged without a running time'] };
+    return {
+      ...nothing,
+      reasons: [saying('requests.profiles.judgeRelease.itsSizeIsNotJudgedWithout2')],
+    };
   }
 
   const isPack = isVideo && parsed.seasons.length > 0 && parsed.episodes.length === 0;
   const held = parsed.episodes.length > 0 ? parsed.episodes.length : (episodesHeld ?? 0);
 
   if (isPack && held === 0) {
-    return { ...nothing, reasons: ['Its size is not judged without knowing what it holds'] };
+    return {
+      ...nothing,
+      reasons: [saying('requests.profiles.judgeRelease.itsSizeIsNotJudgedWithout')],
+    };
   }
 
   const hours = ((runtimeMinutes ?? 60) * Math.max(held, 1)) / 60;
   const measured = isVideo ? megabytes / hours : megabytes;
-  const said = `${Math.round(measured).toLocaleString('en-GB')} MB${isVideo ? ' an hour' : ''}`;
+  const size = Math.round(measured).toLocaleString('en-GB');
+  const outOfBounds = (limit: number, isLarger: boolean): Said => {
+    const values = { size, limit: limit.toLocaleString('en-GB') };
 
-  const quality =
-    ownSize === undefined
-      ? ''
-      : ` for ${QUALITY_LABELS[ownSize.resolution]} from ${QUALITY_LABELS[ownSize.source]}`;
+    if (!isVideo) {
+      return saying(
+        isLarger
+          ? 'requests.profiles.judgeRelease.larger'
+          : 'requests.profiles.judgeRelease.smaller',
+        values,
+      );
+    }
+
+    return ownSize === undefined
+      ? saying(
+          isLarger
+            ? 'requests.profiles.judgeRelease.largerAnHour'
+            : 'requests.profiles.judgeRelease.smallerAnHour',
+          values,
+        )
+      : saying(
+          isLarger
+            ? 'requests.profiles.judgeRelease.largerAnHourFor'
+            : 'requests.profiles.judgeRelease.smallerAnHourFor',
+          {
+            ...values,
+            resolution: QUALITY_LABELS[ownSize.resolution],
+            source: QUALITY_LABELS[ownSize.source],
+          },
+        );
+  };
 
   if (largest !== null && measured > largest) {
-    return {
-      ...nothing,
-      rejections: [
-        `At ${said} it is larger than this profile takes${quality}, ${largest.toLocaleString('en-GB')}`,
-      ],
-    };
+    return { ...nothing, rejections: [outOfBounds(largest, true)] };
   }
 
   if (smallest !== null && measured < smallest) {
-    return {
-      ...nothing,
-      rejections: [
-        `At ${said} it is smaller than this profile takes${quality}, ${smallest.toLocaleString('en-GB')}`,
-      ],
-    };
+    return { ...nothing, rejections: [outOfBounds(smallest, false)] };
   }
 
   return nothing;
@@ -208,7 +253,7 @@ const judgeRelease = (
           rejections:
             parsed.resolution === null && parsed.codec === null
               ? []
-              : ['It is a video, not a book'],
+              : [saying('requests.profiles.judgeRelease.itIsAVideoNotA')],
           reasons: [],
         },
       ]
@@ -218,7 +263,7 @@ const judgeRelease = (
             parsed.resolution,
             profile.resolutions,
             1000,
-            'It does not say its resolution',
+            saying('requests.profiles.judgeRelease.itDoesNotSayItsResolution'),
           ),
           judgeChoice(parsed.source, profile.sources, 100, null),
         ]
@@ -228,14 +273,14 @@ const judgeRelease = (
             rejections:
               parsed.resolution === null && parsed.codec === null
                 ? []
-                : ['It is a video, not music'],
+                : [saying('requests.profiles.judgeRelease.itIsAVideoNotMusic')],
             reasons: [],
           },
           judgeChoice(
             parsed.musicQuality,
             profile.musicQualities,
             1000,
-            'It does not say how it was encoded',
+            saying('requests.profiles.judgeRelease.itDoesNotSayHowIt'),
           ),
         ];
   const banned = profile.bannedWords.filter((word) => hasWord(release.title, word));
@@ -248,12 +293,18 @@ const judgeRelease = (
     {
       score: 0,
       rejections: [
-        ...banned.map((word) => `It has “${word}”, which is banned`),
+        ...banned.map((word) =>
+          saying('requests.profiles.judgeRelease.itHasWordWhichIsBanned', { word }),
+        ),
         ...(isMissingRequired
-          ? [`It has none of the words it must: ${profile.requiredWords.join(', ')}`]
+          ? [
+              saying('requests.profiles.judgeRelease.missingRequiredWords', {
+                words: profile.requiredWords.join(', '),
+              }),
+            ]
           : []),
         ...(release.protocol === 'torrent' && release.seeders === 0
-          ? ['Nobody is seeding it']
+          ? [saying('requests.profiles.judgeRelease.nobodyIsSeedingIt')]
           : []),
       ],
       reasons: [],
@@ -261,15 +312,17 @@ const judgeRelease = (
     {
       score: preferred.length * PREFERRED_WORD,
       rejections: [],
-      reasons: preferred.map((word) => `It has “${word}” (+${PREFERRED_WORD.toString()})`),
+      reasons: preferred.map((word) =>
+        saying('requests.profiles.judgeRelease.hasPreferredWord', { word, points: PREFERRED_WORD }),
+      ),
     },
     {
       score: parsed.isProper || parsed.isRepack ? REVISION : 0,
       rejections: [],
       reasons: parsed.isProper
-        ? [`A proper, a better release of the same thing (+${REVISION.toString()})`]
+        ? [saying('requests.profiles.judgeRelease.proper', { points: REVISION })]
         : parsed.isRepack
-          ? [`A repack, fixing an earlier release (+${REVISION.toString()})`]
+          ? [saying('requests.profiles.judgeRelease.repack', { points: REVISION })]
           : [],
     },
     judgeLanguage(parsed.languages, profile.preferredLanguage),

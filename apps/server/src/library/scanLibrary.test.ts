@@ -1,3 +1,4 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { describe, expect, it, vi } from 'vitest';
 import { scanLibrary, selectChanged } from './scanLibrary';
 import type { MediaRow, ScanPhase, ScannedFile, ScannedItem, StoredItem } from './scanLibrary';
@@ -89,7 +90,7 @@ const harness = (options: {
   force?: boolean;
   isPartial?: boolean;
   isCancelled?: () => boolean;
-  onProblem?: (path: string, reason: string) => void;
+  onProblem?: (path: string, reason: Said) => void;
   onProgress?: (phase: ScanPhase, processed: number, total: number) => void;
   trickplay?: { intervalSeconds: number; tileWidth: number; columns: number; rows: number };
   overrides?: { path: string; externalId: string; externalKind: 'tv' | 'movie' }[];
@@ -250,7 +251,7 @@ describe('a library whose files have gone from under it', () => {
       found: [],
       existing: [stored('/a.mkv')],
       onProblem: (_path, reason) => {
-        problems.push(reason);
+        problems.push(reason.message);
       },
     });
 
@@ -310,7 +311,7 @@ describe('a library whose files have gone from under it', () => {
       found: [],
       existing: [],
       onProblem: (_path, reason) => {
-        problems.push(reason);
+        problems.push(reason.message);
       },
     });
 
@@ -663,7 +664,7 @@ describe('scanLibrary', () => {
             chains: [],
           }),
       },
-      onProblem: (path, reason) => problems.push(`${path}: ${reason}`),
+      onProblem: (path, reason) => problems.push(`${path}: ${reason.message}`),
     });
 
     expect(problems).toEqual(['/broken.mkv: moov atom not found']);
@@ -784,7 +785,7 @@ describe('scanLibrary', () => {
           describe: () => Promise.resolve({ title: 'arrival.2016.1080p', year: null }),
         },
       ],
-      onProblem: (_path, reason) => problems.push(reason),
+      onProblem: (_path, reason) => problems.push(reason.message),
     });
 
     await run();
@@ -1119,7 +1120,7 @@ describe('a scan somebody stopped partway', () => {
       found: [file('/a.mkv')],
       isCancelled: () => true,
       onProblem: (_path, reason) => {
-        problems.push(reason);
+        problems.push(reason.message);
       },
     });
 
@@ -1314,7 +1315,7 @@ describe('a media service that goes away mid-scan', () => {
       found: many(),
       probeImpl: () => Promise.reject(new Error('fetch failed')),
       capabilitiesImpl: () => Promise.reject(new Error('fetch failed')),
-      onProblem: (_path, reason) => problems.push(reason),
+      onProblem: (_path, reason) => problems.push(reason.message),
     }).run();
 
     expect(problems.some((reason) => reason.includes('media service stopped answering'))).toBe(
@@ -1349,7 +1350,7 @@ describe('a media service that goes away mid-scan', () => {
       found: [file('/media/films/One.mkv')],
       probeImpl: () =>
         Promise.reject(new Error('fetch failed', { cause: new Error('read ECONNRESET') })),
-      onProblem: (_path, reason) => problems.push(reason),
+      onProblem: (_path, reason) => problems.push(reason.message),
     }).run();
 
     expect(problems[0]).toBe('fetch failed: read ECONNRESET');

@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it, vi } from 'vitest';
 import { IndexerFailure } from './IndexerFailure';
 import { CaptchaNeeded } from './CaptchaNeeded';
@@ -153,7 +154,7 @@ describe('createIndexerService', () => {
       hasApiKey: true,
       createdAt: NOW.toISOString(),
     });
-    expect((await store.find(typeof added === 'string' ? '' : added.id))?.apiKey).toBe('secret');
+    expect((await store.find('refused' in added ? '' : added.id))?.apiKey).toBe('secret');
   });
 
   it('changes only what it is told, and keeps the key when none is given', async () => {
@@ -182,7 +183,11 @@ describe('createIndexerService', () => {
 
   it('clears why an indexer was turned off when somebody switches it back on', async () => {
     const { service } = aService([
-      anIndexer({ isEnabled: false, failures: 5, turnedOffBecause: 'Turned off after 5 failures' }),
+      anIndexer({
+        isEnabled: false,
+        failures: 5,
+        turnedOffBecause: sayVerbatim('Turned off after 5 failures'),
+      }),
     ]);
 
     expect(await service.change(anIndexer().id, { isEnabled: true })).toMatchObject({
@@ -201,7 +206,9 @@ describe('createIndexerService', () => {
   });
 
   it('tests an indexer, keeping what it can do and clearing its failures', async () => {
-    const { service, store } = aService([anIndexer({ failures: 2, lastProblem: 'Timed out' })]);
+    const { service, store } = aService([
+      anIndexer({ failures: 2, lastProblem: sayVerbatim('Timed out') }),
+    ]);
 
     expect(await service.test(anIndexer().id)).toEqual({
       isWorking: true,
@@ -223,7 +230,9 @@ describe('createIndexerService', () => {
       anIndexer({
         isEnabled: false,
         failures: 5,
-        turnedOffBecause: 'Turned off after 5 failures in a row: The site could not be reached',
+        turnedOffBecause: sayVerbatim(
+          'Turned off after 5 failures in a row: The site could not be reached',
+        ),
       }),
     ]);
 
@@ -245,7 +254,9 @@ describe('createIndexerService', () => {
   });
 
   it('keeps why Valence turned an indexer off when it is saved still off', async () => {
-    const reason = 'Turned off after 5 failures in a row: The site could not be reached';
+    const reason = sayVerbatim(
+      'Turned off after 5 failures in a row: The site could not be reached',
+    );
     const { service, store } = aService([
       anIndexer({ isEnabled: false, failures: 5, turnedOffBecause: reason }),
     ]);
@@ -261,7 +272,7 @@ describe('createIndexerService', () => {
   it('counts a failed test against an indexer, saying why', async () => {
     const { service, store } = aService(
       [anIndexer()],
-      aClient({ capabilities: new IndexerFailure('The indexer refused the API key') }),
+      aClient({ capabilities: new IndexerFailure(sayVerbatim('The indexer refused the API key')) }),
     );
 
     expect(await service.test(anIndexer().id)).toEqual({
@@ -281,7 +292,7 @@ describe('createIndexerService', () => {
 
   it('keeps what kind of failure it was, from the test and from a search', async () => {
     const blocked = new IndexerFailure(
-      'The site’s Cloudflare refuses this address outright',
+      sayVerbatim('The site’s Cloudflare refuses this address outright'),
       'CloudflareRefusesAddress',
     );
     const { service, store } = aService(
@@ -307,7 +318,7 @@ describe('createIndexerService', () => {
   it('says something even for a failure it did not expect', async () => {
     const { service } = aService([anIndexer()], aClient({ capabilities: new Error('boom') }));
 
-    expect((await service.test(anIndexer().id))?.problem).toBe('The indexer could not be asked');
+    expect((await service.test(anIndexer().id))?.problem).toEqual('The indexer could not be asked');
   });
 
   it('tries an indexer before it is kept, keeping nothing', async () => {
@@ -436,7 +447,7 @@ describe('createIndexerService', () => {
       aClient({
         search: (indexer) => {
           if (indexer.id === SECOND) {
-            throw new IndexerFailure('The indexer did not answer within 30 seconds');
+            throw new IndexerFailure(sayVerbatim('The indexer did not answer within 30 seconds'));
           }
 
           return [aRelease(indexer, 'Dune')];
@@ -447,7 +458,7 @@ describe('createIndexerService', () => {
     const outcome = await service.search({ query: 'dune' });
 
     expect(outcome.releases).toHaveLength(1);
-    expect(outcome.indexers.find((one) => one.indexerId === SECOND)?.problem).toBe(
+    expect(outcome.indexers.find((one) => one.indexerId === SECOND)?.problem).toEqual(
       'The indexer did not answer within 30 seconds',
     );
     expect((await store.find(SECOND))?.failures).toBe(1);
@@ -463,7 +474,7 @@ describe('createIndexerService', () => {
       }),
     );
 
-    expect((await service.search({ query: 'x' })).indexers[0]?.problem).toBe(
+    expect((await service.search({ query: 'x' })).indexers[0]?.problem).toEqual(
       'The indexer could not be asked',
     );
   });
@@ -471,7 +482,9 @@ describe('createIndexerService', () => {
   it('turns an indexer off after too many failures in a row, saying why', async () => {
     const { service, store } = aService(
       [anIndexer({ failures: 4 })],
-      aClient({ capabilities: new IndexerFailure('The indexer could not be reached') }),
+      aClient({
+        capabilities: new IndexerFailure(sayVerbatim('The indexer could not be reached')),
+      }),
     );
 
     await service.test(anIndexer().id);
@@ -498,7 +511,7 @@ describe('createIndexerService', () => {
         id: SECOND,
         name: 'Flaky',
         failures: 3,
-        lastProblem: 'Timed out',
+        lastProblem: sayVerbatim('Timed out'),
         lastProblemCode: 'CloudflareCheckFailed',
       }),
       anIndexer({
@@ -506,7 +519,7 @@ describe('createIndexerService', () => {
         name: 'Off',
         isEnabled: false,
         failures: 5,
-        turnedOffBecause: 'Turned off after 5 failures',
+        turnedOffBecause: sayVerbatim('Turned off after 5 failures'),
       }),
       anIndexer({ id: '1b4e28ba-2fa1-41d2-883f-0016d3cca427', name: 'Quiet', failures: 3 }),
     ]);
@@ -588,12 +601,12 @@ search:
     it('refuses to add an indexer whose definition is not in the catalogue', async () => {
       const { service } = withDefinitions();
 
-      expect(await service.add({ ...A_DRAFT, definitionId: 'nope' })).toBe(
-        'There is no definition named nope in the catalogue',
-      );
-      expect(await service.add({ ...A_DRAFT, definitionId: null })).toBe(
-        'There is no definition named nothing in the catalogue',
-      );
+      expect(await service.add({ ...A_DRAFT, definitionId: 'nope' })).toEqual({
+        refused: 'There is no definition named nope in the catalogue',
+      });
+      expect(await service.add({ ...A_DRAFT, definitionId: null })).toEqual({
+        refused: 'The indexer names no definition from the catalogue',
+      });
     });
 
     it('adds one, showing its settings but never its secrets, and never keeping a captcha answer', async () => {
@@ -773,7 +786,7 @@ search:
     it('passes on why a release could not be fetched', async () => {
       const { service } = withDefinitions(
         [kept()],
-        aClient({ download: new IndexerFailure('Gone') }),
+        aClient({ download: new IndexerFailure(sayVerbatim('Gone')) }),
       );
 
       await expect(service.download(kept().id, 'https://alpha.example/dl/1')).rejects.toThrow(

@@ -1,7 +1,9 @@
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { NOTIFICATION_EVENTS } from '@ValenceContracts/schemas/Notification';
 
-const NotificationError = z.object({ error: z.string() }).openapi('NotificationError');
+const NotificationError = RefusalSchema.openapi('NotificationError');
 
 const NotificationEvent = z.enum(NOTIFICATION_EVENTS);
 
@@ -9,8 +11,8 @@ const Notification = z
   .object({
     id: z.string().uuid(),
     event: NotificationEvent,
-    title: z.string(),
-    body: z.string(),
+    title: SaidSchema,
+    body: SaidSchema,
     link: z.string().nullable(),
     createdAt: z.string().datetime(),
     readAt: z.string().datetime().nullable(),

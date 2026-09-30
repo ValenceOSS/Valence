@@ -10,6 +10,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import {
   DEFAULT_DOWNLOAD_CATEGORIES,
   DOWNLOAD_CLIENT_KINDS,
@@ -75,10 +76,10 @@ const indexer = requestsSchema.table('indexer', {
   seedRatio: doublePrecision('seed_ratio'),
   capabilities: jsonb('capabilities').$type<IndexerCapabilities>(),
   failures: integer('failures').notNull().default(0),
-  lastProblem: text('last_problem'),
+  lastProblem: jsonb('last_problem').$type<Said>(),
   lastProblemCode: text('last_problem_code').$type<ProblemCode>(),
   lastFailedAt: timestamp('last_failed_at', { withTimezone: true }),
-  turnedOffBecause: text('turned_off_because'),
+  turnedOffBecause: jsonb('turned_off_because').$type<Said>(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -129,7 +130,7 @@ const sentDownload = requestsSchema.table(
     title: text('title').notNull(),
     indexerName: text('indexer_name'),
     state: text('state', { enum: QUEUED_DOWNLOAD_STATES }).notNull().default('queued'),
-    problem: text('problem'),
+    problem: jsonb('problem').$type<Said>(),
     problemCode: text('problem_code').$type<ProblemCode>(),
     progress: doublePrecision('progress').notNull().default(0),
     sizeBytes: doublePrecision('size_bytes'),
@@ -139,7 +140,7 @@ const sentDownload = requestsSchema.table(
     libraryId: text('library_id'),
     libraryPath: text('library_path'),
     filedInto: text('filed_into'),
-    filingProblem: text('filing_problem'),
+    filingProblem: jsonb('filing_problem').$type<Said>(),
     filingProblemCode: text('filing_problem_code').$type<ProblemCode>(),
     filingAttempts: integer('filing_attempts').notNull().default(0),
     filesChecked: boolean('files_checked').notNull().default(false),
@@ -156,7 +157,7 @@ const serviceEvent = requestsSchema.table('download_event', {
   kind: text('kind').notNull(),
   title: text('title').notNull(),
   clientName: text('client_name'),
-  problem: text('problem'),
+  problem: jsonb('problem').$type<Said>(),
   details: jsonb('details').$type<Record<string, JsonValue>>().notNull().default({}),
   at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -208,7 +209,7 @@ const mediaRequest = requestsSchema.table(
     libraryLanguage: text('library_language'),
     isPickedByHand: boolean('is_picked_by_hand').notNull().default(false),
     approval: text('approval', { enum: REQUEST_APPROVALS }).notNull().default('awaiting'),
-    refusedBecause: text('refused_because'),
+    refusedBecause: jsonb('refused_because').$type<Said>(),
     requestedById: text('requested_by_id').notNull(),
     requestedByName: text('requested_by_name').notNull(),
     seasons: jsonb('seasons').$type<number[]>(),
@@ -220,7 +221,7 @@ const mediaRequest = requestsSchema.table(
       .default({ theatrical: null, digital: null, physical: null }),
     isEnded: boolean('is_ended').notNull().default(false),
     mediaId: text('media_id'),
-    problem: text('problem'),
+    problem: jsonb('problem').$type<Said>(),
     problemCode: text('problem_code').$type<ProblemCode>(),
     catalogueCheckedAt: timestamp('catalogue_checked_at', { withTimezone: true })
       .notNull()
@@ -248,7 +249,7 @@ const requestItem = requestsSchema.table(
     title: text('title').notNull(),
     airDate: text('air_date'),
     state: text('state', { enum: REQUEST_ITEM_STATES }).notNull().default('waiting'),
-    problem: text('problem'),
+    problem: jsonb('problem').$type<Said>(),
     problemCode: text('problem_code').$type<ProblemCode>(),
     releaseTitle: text('release_title'),
     indexerId: uuid('indexer_id'),
@@ -279,7 +280,7 @@ const blocklistedRelease = requestsSchema.table(
       .references(() => mediaRequest.id, { onDelete: 'cascade' }),
     title: text('title').notNull(),
     indexerId: uuid('indexer_id'),
-    reason: text('reason').notNull(),
+    reason: jsonb('reason').$type<Said>().notNull(),
     at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [unique('blocklisted_release_title').on(table.requestId, table.title)],
@@ -290,7 +291,7 @@ const requestLog = requestsSchema.table('request_log', {
   requestId: uuid('request_id')
     .notNull()
     .references(() => mediaRequest.id, { onDelete: 'cascade' }),
-  message: text('message').notNull(),
+  message: jsonb('message').$type<Said>().notNull(),
   problemCode: text('problem_code').$type<ProblemCode>(),
   at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
 });

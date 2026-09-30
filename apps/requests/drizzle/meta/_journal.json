@@ -169,6 +169,13 @@
       "when": 1790765371986,
       "tag": "0023_when_to_give_up_on_a_download",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790778023997,
+      "tag": "0024_messages_carry_their_code",
+      "breakpoints": true
     }
   ]
 }

@@ -1,3 +1,4 @@
+import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { notify } from '@ValenceUI/notify';
 import { useState } from 'react';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
@@ -94,7 +95,7 @@ const DownloadClientDialog = ({ isOpen, client, onClose, onSaved }: DownloadClie
             ? (refusal?.message ?? 'It could not be tried.')
             : value.isWorking
               ? null
-              : (value.problem ?? 'It did not answer.'),
+              : (sayAgainIfAny(value.problem) ?? 'It did not answer.'),
         );
       })
       .finally(() => {

@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
 import type { IndexerKind, Release } from '@ValenceContracts/schemas/Indexer';
+import { saying } from '@ValenceI18n/saying';
 
 const TextSchema = z.union([
   z.string(),
@@ -84,7 +85,9 @@ const readReleases = (document: object, indexer: ReleaseSource): Release[] => {
   const feed = FeedSchema.safeParse(document);
 
   if (!feed.success) {
-    throw new IndexerFailure('The indexer answered a search with something that was not results');
+    throw new IndexerFailure(
+      saying('requests.indexers.readReleases.theIndexerAnsweredASearchWith'),
+    );
   }
 
   return feed.data.rss.channel.item.flatMap((raw) => {

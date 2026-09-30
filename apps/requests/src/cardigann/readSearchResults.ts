@@ -25,6 +25,7 @@ import type { JsonNode } from '@ValenceRequests/cardigann/JsonNode';
 import type { ReleaseDraft } from '@ValenceRequests/cardigann/ReleaseDraft';
 import type { SearchRequest } from '@ValenceRequests/cardigann/buildSearchRequests';
 import type { TemplateValue } from '@ValenceRequests/cardigann/TemplateVariables';
+import { saying } from '@ValenceI18n/saying';
 
 type ReadSearchResultsOptions = {
   definition: CardigannDefinition;
@@ -311,7 +312,9 @@ const readJson = (options: ReadSearchResultsOptions): ReleaseDraft[] => {
   try {
     root = JsonNodeSchema.parse(JSON.parse(options.body));
   } catch {
-    throw new IndexerFailure('The site answered a search with JSON that could not be read');
+    throw new IndexerFailure(
+      saying('requests.cardigann.readSearchResults.theSiteAnsweredASearchWith'),
+    );
   }
 
   const context: FilterContext = {
@@ -339,7 +342,9 @@ const readJson = (options: ReadSearchResultsOptions): ReleaseDraft[] => {
       return [];
     }
 
-    throw new IndexerFailure('The site answered a search without the rows its definition expects');
+    throw new IndexerFailure(
+      saying('requests.cardigann.readSearchResults.theSiteAnsweredASearchWithout'),
+    );
   }
 
   return list.flatMap((row: JsonNode) => {

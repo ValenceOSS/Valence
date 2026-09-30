@@ -1,3 +1,5 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { indexerDefinition, setting } from '@ValenceRequests/db/Schema';
@@ -8,7 +10,10 @@ const STATE_KEY = 'definitions';
 
 const StateSchema = z.object({
   updatedAt: z.string().nullable().default(null),
-  problem: z.string().nullable().default(null),
+  problem: z
+    .union([SaidSchema, z.string().transform(sayVerbatim)])
+    .nullable()
+    .default(null),
 });
 
 /**

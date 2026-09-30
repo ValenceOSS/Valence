@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import userEvent from '@testing-library/user-event';
@@ -122,7 +123,10 @@ vi.mock('@ValenceClient/playback/fetchTrickplay', async () => {
   };
 });
 
-const reason: Reason = { code: 'ClientSupportsSource', detail: 'Client declares support' };
+const reason: Reason = {
+  code: 'ClientSupportsSource',
+  detail: sayVerbatim('Client declares support'),
+};
 
 const transcodingPlan: PlaybackPlan = {
   mediaId: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
@@ -134,7 +138,7 @@ const transcodingPlan: PlaybackPlan = {
     maxBitrateKbps: 8000,
     maxWidth: 1920,
     maxHeight: 1080,
-    reason: { code: 'VideoCodecNotSupported', detail: 'Client does not support hevc' },
+    reason: { code: 'VideoCodecNotSupported', detail: sayVerbatim('Client does not support hevc') },
   },
   audio: { kind: 'passthrough', streamIndex: 1, reason },
   subtitles: { kind: 'none', reason },

@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import type { ClientKind } from '@ValenceContracts/schemas/ClientKind';
 import { FromServerSchema } from '@ValenceContracts/schemas/Realtime';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
@@ -191,7 +192,7 @@ const createRealtimeClient = ({
 
     if (read.data.kind === 'refused') {
       for (const heard of refusals) {
-        heard(read.data.why);
+        heard(sayAgain(read.data.why));
       }
 
       return;

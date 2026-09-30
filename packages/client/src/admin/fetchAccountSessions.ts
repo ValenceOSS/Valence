@@ -1,3 +1,4 @@
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { readRefusal } from './readRefusal';
 import type { Refusal } from './readRefusal';
@@ -5,7 +6,7 @@ import { z } from 'zod';
 
 const AccountSessionSchema = z.object({
   id: z.string(),
-  name: z.string(),
+  name: SaidSchema,
   address: z.string().nullable(),
   signedInAt: z.string(),
   expiresAt: z.string(),

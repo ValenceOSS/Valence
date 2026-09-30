@@ -1,3 +1,4 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import type { RecordStore } from '@ValenceRequests/stores/RecordStore';
 
 type BlockedReleaseRecord = {
@@ -5,7 +6,7 @@ type BlockedReleaseRecord = {
   requestId: string;
   title: string;
   indexerId: string | null;
-  reason: string;
+  reason: Said;
   at: string;
 };
 

@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import {
@@ -249,7 +250,7 @@ const LogExplorer = ({
     [definitions, view.jobKinds],
   );
   const labels = useMemo(
-    () => new Map(definitions.map((definition) => [definition.kind, definition.label])),
+    () => new Map(definitions.map((definition) => [definition.kind, sayAgain(definition.label)])),
     [definitions],
   );
   const selection = useMemo(

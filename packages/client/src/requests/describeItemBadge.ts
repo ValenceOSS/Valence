@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { docsFor } from '@ValenceCore/functions/docsFor';
 import { STATUS_LOOK } from '@ValenceClient/status/STATUS_LOOK';
 import { describeCalendarDay } from '@ValenceClient/requests/describeCalendarDay';
@@ -29,7 +30,7 @@ const describeItemBadge = (
       return {
         ...STATUS_LOOK.attention,
         label: 'Wanted',
-        detail: item.problem,
+        detail: item.problem === null ? null : sayAgain(item.problem),
         help: docsFor(item.problemCode),
       };
     case 'searching':
@@ -42,7 +43,7 @@ const describeItemBadge = (
       return {
         ...STATUS_LOOK.working,
         label: 'Filing',
-        detail: item.problem,
+        detail: item.problem === null ? null : sayAgain(item.problem),
         help: docsFor(item.problemCode),
       };
     case 'filed':
@@ -53,7 +54,7 @@ const describeItemBadge = (
       return {
         ...STATUS_LOOK.failed,
         label: 'Failed',
-        detail: item.problem,
+        detail: item.problem === null ? null : sayAgain(item.problem),
         help: docsFor(item.problemCode),
       };
   }

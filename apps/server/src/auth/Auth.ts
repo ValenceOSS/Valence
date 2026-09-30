@@ -41,6 +41,7 @@ const IdentifierSchema = z
 
 const RefusalSchema = z.instanceof(APIError);
 
+// eslint-disable-next-line valence/no-hard-coded-strings -- the product's name
 const VALENCE_APP_NAME = 'Valence';
 
 const DEVICE_TOKEN_PATH = '/device/token';

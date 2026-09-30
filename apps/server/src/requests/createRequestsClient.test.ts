@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { GIVE_UP_DEFAULTS } from '@ValenceContracts/schemas/GiveUpRules';
 import { describe, expect, it, vi } from 'vitest';
 import { createRequestsClient } from './createRequestsClient';
@@ -224,20 +225,20 @@ describe('createRequestsClient', () => {
     it('passes on what the service said when it refused', async () => {
       const { client } = aClient(404, { error: 'No such indexer.' });
 
-      expect(await client.testIndexer(AN_INDEXER.id)).toEqual({
+      expect(await client.testIndexer(AN_INDEXER.id)).toMatchObject({
         kind: 'refused',
         status: 404,
-        error: 'No such indexer.',
+        refusal: { error: 'No such indexer.' },
       });
     });
 
     it('still says it refused where the service gave no reason', async () => {
       const { client } = aClient(400, null);
 
-      expect(await client.addIndexer(A_DRAFT)).toEqual({
+      expect(await client.addIndexer(A_DRAFT)).toMatchObject({
         kind: 'refused',
         status: 400,
-        error: 'The requests service refused that.',
+        refusal: { error: 'The requests service refused that.' },
       });
     });
 
@@ -362,10 +363,10 @@ describe('createRequestsClient', () => {
     it('passes on why a release could not be fetched', async () => {
       expect(
         await aClient(404, { error: 'No such indexer.' }).client.download(AN_INDEXER.id, 'x'),
-      ).toEqual({
+      ).toMatchObject({
         kind: 'refused',
         status: 404,
-        error: 'No such indexer.',
+        refusal: { error: 'No such indexer.' },
       });
       expect(
         await aClient(502, { error: 'The site answered 410' }).client.download(AN_INDEXER.id, 'x'),
@@ -593,10 +594,10 @@ describe('createRequestsClient with download clients', () => {
         protocol: 'torrent',
         libraryKind: 'movies',
       }),
-    ).toEqual({
+    ).toMatchObject({
       kind: 'refused',
       status: 400,
-      error: 'No torrent client is set up and switched on',
+      refusal: { error: 'No torrent client is set up and switched on' },
     });
   });
 
@@ -625,14 +626,14 @@ describe('createRequestsClient with download clients', () => {
         await streaming(
           `data: ${JSON.stringify(frame)}\n\ndata: not json\n\ndata: {"kind":"gossip"}\n\n`,
         ).streamDownloads((read) => heard.push(read), new AbortController().signal),
-      ).toBe('http://requests:8421 closed the stream of downloads');
+      ).toEqual('http://requests:8421 closed the stream of downloads');
       expect(heard).toEqual([frame]);
     });
 
     it('says why the stream could not be followed', async () => {
       const signal = new AbortController().signal;
 
-      expect(await streaming('', 401).streamDownloads(() => undefined, signal)).toBe(
+      expect(await streaming('', 401).streamDownloads(() => undefined, signal)).toEqual(
         'http://requests:8421 answered 401',
       );
 
@@ -642,7 +643,7 @@ describe('createRequestsClient with download clients', () => {
         fetch: () => Promise.reject(new TypeError('offline')),
       });
 
-      expect(await offline.streamDownloads(() => undefined, signal)).toBe(
+      expect(await offline.streamDownloads(() => undefined, signal)).toEqual(
         'http://requests:8421 did not answer',
       );
 
@@ -661,7 +662,7 @@ describe('createRequestsClient with download clients', () => {
           ),
       });
 
-      expect(await breaking.streamDownloads(() => undefined, signal)).toBe(
+      expect(await breaking.streamDownloads(() => undefined, signal)).toEqual(
         'http://requests:8421 stopped streaming the downloads',
       );
     });
@@ -849,7 +850,7 @@ describe('createRequestsClient with requests for films and series', () => {
   it('reads what a request has done', async () => {
     expect(
       await aClient(200, [
-        { id: 1, at: '2026-09-19T00:00:00.000Z', message: 'Searched for it.' },
+        { id: 1, at: '2026-09-19T00:00:00.000Z', message: sayVerbatim('Searched for it.') },
       ]).client.requestLog(REQUEST.id),
     ).toMatchObject({ kind: 'answered', value: [{ message: 'Searched for it.' }] });
   });

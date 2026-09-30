@@ -14,6 +14,8 @@ import { getCookie, setCookie } from 'hono/cookie';
 import { randomUUID } from 'node:crypto';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
+import { refuse } from '@ValenceI18n/refuse';
+import { say } from '@ValenceI18n/say';
 
 /**
  * Registers the share endpoints.
@@ -39,11 +41,11 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
     const account = await readAccount(context.req.raw.headers);
 
     if (account === null || shares === undefined) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     if (!(await requires(context.req.raw.headers, 'sharing.link'))) {
-      return context.json({ error: 'This account may not share.' }, 403);
+      return context.json(refuse('error.share.thisAccountMayNotShare'), 403);
     }
 
     const asked = context.req.valid('json');
@@ -55,7 +57,7 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
           : await shares.create(account.id, asked);
 
       return made === null
-        ? context.json({ error: 'There is nothing here to share.' }, 404)
+        ? context.json(refuse('error.share.thereIsNothingHereToShare'), 404)
         : context.json(made, 201);
     }
 
@@ -69,13 +71,13 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
           : { kind: 'series', seriesId: subjectId };
 
     if (await isOutOfReach(account.id, wanted)) {
-      return context.json({ error: 'There is nothing here to share.' }, 404);
+      return context.json(refuse('error.share.thereIsNothingHereToShare'), 404);
     }
 
     const made = await shares.create(account.id, asked);
 
     if (made === null) {
-      return context.json({ error: 'There is nothing here to share.' }, 404);
+      return context.json(refuse('error.share.thereIsNothingHereToShare'), 404);
     }
 
     return context.json(made, 201);
@@ -85,7 +87,7 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
     const account = await readAccount(context.req.raw.headers);
 
     if (account === null || shares === undefined) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     return context.json({ shares: await shares.list(account.id) }, 200);
@@ -95,11 +97,11 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
     const account = await readAccount(context.req.raw.headers);
 
     if (account === null || shares === undefined) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     if (!(await requires(context.req.raw.headers, 'sharing.manage'))) {
-      return context.json({ error: 'This account may not look at everybody’s links.' }, 403);
+      return context.json(refuse('error.share.thisAccountMayNotLookAt'), 403);
     }
 
     return context.json({ shares: await shares.listEverybody() }, 200);
@@ -109,17 +111,17 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
     const account = await readAccount(context.req.raw.headers);
 
     if (account === null || shares === undefined) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     if (!(await requires(context.req.raw.headers, 'sharing.manage'))) {
-      return context.json({ error: 'This account may not withdraw somebody else’s link.' }, 403);
+      return context.json(refuse('error.share.thisAccountMayNotWithdrawSomebody'), 403);
     }
 
     const withdrawn = await shares.revokeAnybody(context.req.valid('param').shareId);
 
     if (withdrawn === null) {
-      return context.json({ error: 'No such link.' }, 404);
+      return context.json(refuse('error.share.noSuchLink'), 404);
     }
 
     if (withdrawn.createdBy !== account.id) {
@@ -137,13 +139,13 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
     const account = await readAccount(context.req.raw.headers);
 
     if (account === null || shares === undefined) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     const withdrawn = await shares.revoke(account.id, context.req.valid('param').shareId);
 
     if (!withdrawn) {
-      return context.json({ error: 'No such link.' }, 404);
+      return context.json(refuse('error.share.noSuchLink'), 404);
     }
 
     return context.body(null, 204);
@@ -151,14 +153,14 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(openShareRoute, async (context) => {
     if (shares === undefined) {
-      return context.json({ error: 'This link does not work.' }, 404);
+      return context.json(refuse('error.common.thisLinkDoesNotWork'), 404);
     }
 
     const { token } = context.req.valid('param');
     const found = await shares.resolve(token);
 
     if (found === null) {
-      return context.json({ error: 'This link does not work.' }, 404);
+      return context.json(refuse('error.common.thisLinkDoesNotWork'), 404);
     }
 
     const held = getCookie(context, SHARE_JOINER);
@@ -175,7 +177,7 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
     if (!isShareLive(standing, new Date())) {
       return context.json(
         {
-          error: whyShareEnded(standing, new Date()) ?? 'This link no longer works.',
+          error: whyShareEnded(standing, new Date()) ?? say('common.thisLinkNoLongerWorks'),
           ended: howShareEnded(standing, new Date()) ?? 'withdrawn',
         },
         410,
@@ -185,7 +187,12 @@ const serveShare = (app: OpenAPIHono, context: AppContext): void => {
     await shares.join(found.id, joiner);
 
     const keptFor = rememberGuestFor(found.expiresAt, new Date(), GUEST_REMEMBERED_FOR_SECONDS);
-    const kept = { path: '/', httpOnly: true, sameSite: 'Lax', maxAge: keptFor } as const;
+    const kept = {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'Lax',
+      maxAge: keptFor,
+    } as const;
 
     setCookie(context, SHARE_JOINER, joiner, kept);
     setCookie(context, SHARE_COOKIE, token, kept);

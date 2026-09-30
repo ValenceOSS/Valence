@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it, vi } from 'vitest';
 import { createMemoryRecordStore } from '@ValenceRequests/stores/createMemoryRecordStore';
 import { aProfile } from '@ValenceRequests/testing/aProfile';
@@ -387,7 +388,11 @@ describe('createRequestService', () => {
     const { request } = await service.add({ ...DUNE, isApproved: true });
     const [item] = await items.list();
 
-    await items.update(item?.id ?? '', { state: 'failed', problem: 'It went wrong', attempts: 3 });
+    await items.update(item?.id ?? '', {
+      state: 'failed',
+      problem: sayVerbatim('It went wrong'),
+      attempts: 3,
+    });
 
     expect((await service.retry(request.id))?.items[0]).toMatchObject({
       state: 'wanted',

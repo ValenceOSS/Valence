@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { act, fireEvent, render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fetchMediaDetail } from '@ValenceClient/library/fetchLibrary';
@@ -36,7 +37,10 @@ jest.mock('@ValenceClient/playback/watchProgress', () => ({
   reportWatchProgress: jest.fn(),
 }));
 
-const reason = { code: 'ClientSupportsSource', detail: 'Client declares support' } as const;
+const reason = {
+  code: 'ClientSupportsSource',
+  detail: sayVerbatim('Client declares support'),
+} as const;
 
 const A_PLAN: PlaybackPlan = {
   mediaId: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',

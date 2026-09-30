@@ -1,3 +1,4 @@
+import { say } from '@ValenceI18n/say';
 type AgeRatingPicture =
   | 'bbfc-u'
   | 'bbfc-pg'
@@ -111,6 +112,7 @@ const BOARDS: Readonly<Record<string, string>> = {
   US: 'MPA',
   AU: 'ACB',
   DE: 'FSK',
+  // eslint-disable-next-line valence/no-hard-coded-strings -- a ratings board's own name
   NL: 'Kijkwijzer',
   FR: 'CNC',
   ES: 'ICAA',
@@ -135,7 +137,10 @@ const ageRatingOf = (region: string, certification: string): AgeRating => {
   return {
     said,
     picture: PICTURES[place]?.[said] ?? null,
-    label: `Rated ${said}${board === undefined ? '' : ` by the ${board}`}`,
+    label:
+      board === undefined
+        ? say('core.ageRating.rated', { rating: said })
+        : say('core.ageRating.ratedBy', { rating: said, board }),
   };
 };
 

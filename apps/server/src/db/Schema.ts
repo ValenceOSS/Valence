@@ -14,6 +14,7 @@ import {
   timestamp,
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
 
@@ -416,7 +417,7 @@ const preparedDownload = pgTable(
     bytesPerSecond: bigint('bytesPerSecond', { mode: 'number' }),
     secondsLeft: integer('secondsLeft'),
     sizeBytes: bigint('sizeBytes', { mode: 'number' }),
-    failure: text('failure'),
+    failure: jsonb('failure').$type<Said>(),
     askedFromClientId: text('askedFromClientId'),
     askedAt: timestamp('askedAt').notNull().defaultNow(),
     readyAt: timestamp('readyAt'),
@@ -531,7 +532,7 @@ const jobRun = pgTable(
     startedAt: timestamp('startedAt'),
     finishedAt: timestamp('finishedAt'),
     progress: jsonb('progress'),
-    errorMessage: text('errorMessage'),
+    errorMessage: jsonb('errorMessage').$type<Said>(),
     createdAt: timestamp('createdAt').notNull().defaultNow(),
   },
   (table) => [
@@ -548,7 +549,7 @@ const jobRunIssue = pgTable(
       .notNull()
       .references(() => jobRun.id, { onDelete: 'cascade' }),
     path: text('path').notNull(),
-    reason: text('reason').notNull(),
+    reason: jsonb('reason').$type<Said>().notNull(),
     atMs: bigint('atMs', { mode: 'number' }).notNull(),
   },
   (table) => [index('job_run_issue_run_idx').on(table.jobRunId)],
@@ -828,7 +829,7 @@ const reencodeRequest = pgTable(
     producedBytes: bigint('producedBytes', { mode: 'number' }),
     progress: integer('progress').notNull().default(0),
     bytesPerSecond: bigint('bytesPerSecond', { mode: 'number' }),
-    failure: text('failure'),
+    failure: jsonb('failure').$type<Said>(),
     askedBy: text('askedBy'),
     askedAt: timestamp('askedAt').notNull().defaultNow(),
     startedAt: timestamp('startedAt'),
@@ -1210,8 +1211,8 @@ const notification = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
     event: text('event').notNull(),
-    title: text('title').notNull(),
-    body: text('body').notNull(),
+    title: jsonb('title').$type<Said>().notNull(),
+    body: jsonb('body').$type<Said>().notNull(),
     link: text('link'),
     createdAt: timestamp('createdAt').notNull().defaultNow(),
     readAt: timestamp('readAt'),
@@ -1333,7 +1334,7 @@ const pluginInstallation = pgTable('plugin_installation', {
   installedBy: text('installedBy').references(() => user.id, { onDelete: 'set null' }),
   installedAt: timestamp('installedAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow(),
-  problem: text('problem'),
+  problem: jsonb('problem').$type<Said>(),
 });
 
 const pluginStorage = pgTable(

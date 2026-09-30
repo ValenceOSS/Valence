@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { describe, expect, it, vi } from 'vitest';
 import { regeneratePreviews } from './regeneratePreviews';
 import type { PreviewStore } from './regeneratePreviews';
@@ -257,7 +258,7 @@ describe('regeneratePreviews', () => {
       transcoder,
       defaultAudioLanguage: 'en',
       quality: 'high',
-      onProblem: (path, reason) => problems.push(`${path}: ${reason}`),
+      onProblem: (path, reason) => problems.push(`${path}: ${reason.message}`),
     });
 
     expect(problems).toEqual(['/media/a.mkv: ffmpeg failed']);
@@ -568,7 +569,7 @@ describe('regeneratePreviews', () => {
       transcoder,
       defaultAudioLanguage: null,
       quality: 'high',
-      onProblem: (_path, reason) => problems.push(reason),
+      onProblem: (_path, reason) => problems.push(sayAgain(reason)),
     });
 
     expect(cut).toEqual(['/media/broken.mkv']);

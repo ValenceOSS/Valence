@@ -1,3 +1,5 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { JOB_DEFINITIONS, scheduleQueueNameFor } from './jobDefinitions';
 
 /**
@@ -8,13 +10,13 @@ import { JOB_DEFINITIONS, scheduleQueueNameFor } from './jobDefinitions';
  * @param queueName - The queue the job ran on.
  * @returns What that work is called, or the queue's own name where nothing claims it.
  */
-const labelForQueue = (queueName: string): string => {
+const labelForQueue = (queueName: string): Said => {
   const definition = JOB_DEFINITIONS.find(
     (candidate) =>
       candidate.kind === queueName || scheduleQueueNameFor(candidate.kind) === queueName,
   );
 
-  return definition?.label ?? queueName;
+  return definition?.label ?? sayVerbatim(queueName);
 };
 
 export { labelForQueue };

@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { Calendar as CalendarIcon, Info as InfoIcon } from '@keyline-icons/react';
 import { Play as PlayFilledIcon, Stop as StopFilledIcon } from '@keyline-icons/react/fill';
 import { Button } from '@ValenceUI/Button';
@@ -69,17 +70,22 @@ const JobRunnerRow = ({
             />
           ) : null}
 
-          <span className="truncate text-sm font-medium text-text">{definition.label}</span>
+          <span className="truncate text-sm font-medium text-text">
+            {sayAgain(definition.label)}
+          </span>
         </span>
 
         {summary === null ? (
-          <span className="truncate text-xs text-text-muted" title={definition.description}>
-            {definition.description}
+          <span
+            className="truncate text-xs text-text-muted"
+            title={sayAgain(definition.description)}
+          >
+            {sayAgain(definition.description)}
           </span>
         ) : (
           <span className="flex min-w-0 items-center gap-1">
             <ScanProgressBar
-              label={definition.label}
+              label={sayAgain(definition.label)}
               phase={summary.phase}
               processed={summary.processed}
               total={summary.total}
@@ -91,7 +97,7 @@ const JobRunnerRow = ({
               variant="subtle"
               size="none"
               isIconOnly
-              label={`What ${definition.label} is doing`}
+              label={`What ${sayAgain(definition.label)} is doing`}
               onClick={() => {
                 onWatch(definition);
               }}
@@ -112,7 +118,7 @@ const JobRunnerRow = ({
             variant="secondary"
             size="xs"
             className="w-full justify-start"
-            label={`Edit the schedule for ${definition.label}`}
+            label={`Edit the schedule for ${sayAgain(definition.label)}`}
             onClick={() => {
               onOpenSchedule(definition.kind);
             }}
@@ -137,7 +143,7 @@ const JobRunnerRow = ({
           <Button
             variant="ghost"
             size="sm"
-            label={`Stop ${definition.label}`}
+            label={`Stop ${sayAgain(definition.label)}`}
             hasTooltip={false}
             disabled={summary.isStopping}
             onClick={() => {
@@ -151,7 +157,7 @@ const JobRunnerRow = ({
           <Button
             variant="ghost"
             size="sm"
-            label={`Run ${definition.label}`}
+            label={`Run ${sayAgain(definition.label)}`}
             hasTooltip={false}
             disabled={isRunBlocked}
             onClick={() => {

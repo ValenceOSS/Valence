@@ -1,3 +1,4 @@
+import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { notify } from '@ValenceUI/notify';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -153,7 +154,7 @@ const IndexerDialog = ({
         }
 
         setVerdict(value.isWorking ? 'working' : 'failing');
-        setProblem(value.isWorking ? null : (value.problem ?? 'It did not answer.'));
+        setProblem(value.isWorking ? null : (sayAgainIfAny(value.problem) ?? 'It did not answer.'));
         setForm((current) => ({ ...current, settings: { ...current.settings, CAPTCHA: '' } }));
       })
       .finally(() => {

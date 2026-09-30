@@ -1,10 +1,11 @@
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
+import { saying } from '@ValenceI18n/saying';
 
 class CaptchaNeeded extends IndexerFailure {
   public readonly image: string;
 
   public constructor(image: string) {
-    super('Type the characters in the picture to log in');
+    super(saying('requests.indexers.captchaNeeded.typeTheCharactersInThePicture'));
     this.name = 'CaptchaNeeded';
     this.image = image;
   }

@@ -1,3 +1,4 @@
+/* eslint-disable valence/no-hard-coded-strings -- MusicBrainz's own release types, matched rather than shown */
 import type { ReleaseType } from '@ValenceContracts/schemas/MediaRequest';
 
 const PRIMARY_TYPES: ReadonlyMap<string, ReleaseType> = new Map([

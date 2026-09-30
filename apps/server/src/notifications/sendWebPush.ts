@@ -1,3 +1,4 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import webPush from 'web-push';
 import type { PushEndpoint } from './NotificationStore';
 
@@ -7,6 +8,7 @@ type PushPayload = {
   title: string;
   body: string;
   link: string | null;
+  said: { title: Said; body: Said };
 };
 
 type PushOutcome = 'delivered' | 'gone' | 'failed';

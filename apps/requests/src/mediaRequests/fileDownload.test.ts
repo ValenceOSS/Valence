@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { mkdir, mkdtemp, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -214,12 +215,12 @@ describe('fileDownload', () => {
 
         return found.resolution === '2160p'
           ? null
-          : 'It is 1080p, which this profile does not take';
+          : sayVerbatim('It is 1080p, which this profile does not take');
       },
     );
 
     expect(seen).toEqual([expect.objectContaining({ resolution: '1080p', source: 'webdl' })]);
-    expect(refused.get('film')).toBe('It is 1080p, which this profile does not take');
+    expect(refused.get('film')).toEqual('It is 1080p, which this profile does not take');
     expect(filed.has('film')).toBe(false);
     expect(await readdir(join(library, 'Film (2026)'))).toEqual([]);
   });
@@ -240,7 +241,7 @@ describe('fileDownload', () => {
       release,
       true,
       () => Promise.resolve(null),
-      () => 'It is not what was asked for',
+      () => sayVerbatim('It is not what was asked for'),
     );
 
     expect(refused.has('film')).toBe(true);
@@ -265,7 +266,7 @@ describe('fileDownload', () => {
           video: { codec: 'hevc', width: 3840, height: 1608 },
           audioStreams: [],
         }),
-      (found) => (found.resolution === '2160p' ? null : 'It is not 4K'),
+      (found) => (found.resolution === '2160p' ? null : sayVerbatim('It is not 4K')),
     );
 
     expect(refused.size).toBe(0);

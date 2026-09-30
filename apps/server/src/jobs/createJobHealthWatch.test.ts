@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it, vi } from 'vitest';
 import { createJobHealthWatch } from './createJobHealthWatch';
 
@@ -5,7 +6,7 @@ const finished = (kind: string, reason: string | null) => ({
   kind,
   jobId: 'job',
   subject: null,
-  reason,
+  reason: reason === null ? null : sayVerbatim(reason),
   wasStopped: false,
 });
 

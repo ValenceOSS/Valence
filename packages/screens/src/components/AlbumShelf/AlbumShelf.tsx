@@ -62,7 +62,13 @@ const AlbumShelf = ({
             onOpen={() => {
               open({ kind: 'album', id: album.id });
             }}
-            menu={musicMenuFor({ kind: 'album', id: album.id }, album.title, player, open, addingTo)}
+            menu={musicMenuFor(
+              { kind: 'album', id: album.id },
+              album.title,
+              player,
+              open,
+              addingTo,
+            )}
             onPlay={() => {
               void fetchAlbum(album.id).then((read) => {
                 player.play(read.tracks, 0, {

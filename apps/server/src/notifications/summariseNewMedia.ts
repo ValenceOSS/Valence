@@ -1,3 +1,9 @@
+import type { CountedKey } from '@ValenceI18n/CountedKey';
+import type { Said } from '@ValenceI18n/SaidSchema';
+import { saying } from '@ValenceI18n/saying';
+import { sayingAll } from '@ValenceI18n/sayingAll';
+import { sayingCount } from '@ValenceI18n/sayingCount';
+
 type AddedItem = {
   id: string;
   title: string;
@@ -8,8 +14,8 @@ type AddedItem = {
 };
 
 type NewMediaSummary = {
-  title: string;
-  body: string;
+  title: Said;
+  body: Said;
   link: string | null;
 };
 
@@ -22,15 +28,11 @@ const NAMED_AT_MOST = 3;
  * @param names - The names to join.
  * @returns The names as a phrase.
  */
-const inWords = (names: string[]): string => {
-  const shown = names.slice(0, NAMED_AT_MOST);
-  const rest = names.length - shown.length;
-  const listed =
-    shown.length <= 1
-      ? (shown[0] ?? '')
-      : `${shown.slice(0, -1).join(', ')} and ${shown[shown.length - 1] ?? ''}`;
+const inWords = ([first, ...others]: readonly [string, ...string[]]): Said => {
+  const listed = sayingAll([first, ...others.slice(0, NAMED_AT_MOST - 1)]);
+  const rest = others.length - (NAMED_AT_MOST - 1);
 
-  return rest === 0 ? listed : `${listed} and ${rest.toString()} more`;
+  return rest > 0 ? sayingCount('common.list.andMore', rest, { listed }) : listed;
 };
 
 /**
@@ -60,15 +62,14 @@ const gather = (
 };
 
 /**
- * Says how many of something there were, in the singular or the plural as the count needs.
+ * Says how many of something there were, or nothing where there were none.
  *
  * @param count - How many.
- * @param one - The word for one.
- * @param many - The word for several.
- * @returns The count in words, or nothing where there were none.
+ * @param key - The words for that many.
+ * @returns The count in words, or nothing.
  */
-const counted = (count: number, one: string, many: string): string[] =>
-  count === 0 ? [] : [`${count.toString()} ${count === 1 ? one : many}`];
+const counted = (count: number, key: CountedKey): Said[] =>
+  count === 0 ? [] : [sayingCount(key, count)];
 
 /**
  * Turns everything imported in a window into the one thing worth saying about it — a film by name, or
@@ -102,7 +103,7 @@ const summariseNewMedia = (items: AddedItem[]): NewMediaSummary | null => {
   const programmes = [...series.values()];
   const records = [...albums.values()];
 
-  const names = [
+  const [firstName, ...otherNames] = [
     ...programmes.map((one) => one.title),
     ...records.map((one) => one.title),
     ...films.map((film) => film.title),
@@ -115,19 +116,26 @@ const summariseNewMedia = (items: AddedItem[]): NewMediaSummary | null => {
   const onlyAlbum =
     records.length === 1 && isAlone(songs.length) ? [...albums.keys()][0] : undefined;
 
-  const words = [
-    ...counted(episodes.length, 'episode', 'episodes'),
-    ...counted(films.length, 'film', 'films'),
-    ...counted(songs.length, 'song', 'songs'),
+  const [firstCount, ...otherCounts] = [
+    ...counted(episodes.length, 'common.count.episodes'),
+    ...counted(films.length, 'common.count.films'),
+    ...counted(songs.length, 'common.count.songs'),
   ];
+
+  if (firstName === undefined || firstCount === undefined) {
+    return null;
+  }
 
   return {
     title: isAlone(songs.length)
-      ? 'Something new to listen to'
+      ? saying('server.notifications.summariseNewMedia.somethingNewToListenTo')
       : songs.length === 0
-        ? 'Something new to watch'
-        : 'Something new',
-    body: `${words.join(' and ')} — ${inWords(names)}`,
+        ? saying('common.somethingNewToWatch')
+        : saying('server.notifications.summariseNewMedia.somethingNew'),
+    body: saying('server.notifications.digestBody', {
+      counts: sayingAll([firstCount, ...otherCounts]),
+      names: inWords([firstName, ...otherNames]),
+    }),
     link:
       only !== undefined
         ? `/?item=${only.id}`

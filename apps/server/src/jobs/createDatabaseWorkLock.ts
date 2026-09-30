@@ -1,3 +1,4 @@
+/* eslint-disable valence/no-hard-coded-strings -- SQL */
 type LockAnswer = { locked: boolean };
 
 type LockSession = {

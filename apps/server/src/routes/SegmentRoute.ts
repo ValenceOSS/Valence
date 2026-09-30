@@ -1,7 +1,8 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { SEGMENT_KINDS, SEGMENT_SOURCES } from '@ValenceContracts/schemas/MediaSegment';
 
-const SegmentError = z.object({ error: z.string() }).openapi('SegmentError');
+const SegmentError = RefusalSchema.openapi('SegmentError');
 
 const SegmentSchema = z
   .object({

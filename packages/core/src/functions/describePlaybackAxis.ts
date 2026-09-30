@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import type { AudioDecision, VideoDecision } from '@ValenceContracts/schemas/PlaybackPlan';
 
 /**
@@ -21,8 +22,8 @@ const describeAxis = (kind: string, detail: string): string => `${kind} — ${de
  */
 const describeVideoAxis = (video: VideoDecision): string =>
   video.kind === 'passthrough'
-    ? describeAxis(video.kind, video.reason.detail)
-    : `${describeAxis(video.kind, video.reason.detail)} (${video.maxWidth.toString()}x${video.maxHeight.toString()} @ ${video.maxBitrateKbps.toString()}kbps)`;
+    ? describeAxis(video.kind, sayAgain(video.reason.detail))
+    : `${describeAxis(video.kind, sayAgain(video.reason.detail))} (${video.maxWidth.toString()}x${video.maxHeight.toString()} @ ${video.maxBitrateKbps.toString()}kbps)`;
 
 /**
  * Writes the audio axis of a plan, adding the bitrate actually being encoded to where the sound is
@@ -33,7 +34,7 @@ const describeVideoAxis = (video: VideoDecision): string =>
  */
 const describeAudioAxis = (audio: AudioDecision): string =>
   audio.kind === 'passthrough'
-    ? describeAxis(audio.kind, audio.reason.detail)
-    : `${describeAxis(audio.kind, audio.reason.detail)} (${audio.maxBitrateKbps.toString()}kbps)`;
+    ? describeAxis(audio.kind, sayAgain(audio.reason.detail))
+    : `${describeAxis(audio.kind, sayAgain(audio.reason.detail))} (${audio.maxBitrateKbps.toString()}kbps)`;
 
 export { describeAxis, describeVideoAxis, describeAudioAxis };

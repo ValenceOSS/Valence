@@ -1,3 +1,4 @@
+/* eslint-disable valence/no-hard-coded-strings -- stands in for media in tests */
 import type { MediaRef } from '@ValenceSDK/host/ValenceHost';
 
 const A_PLUGIN_MEDIA_FOR_TEST: MediaRef = {

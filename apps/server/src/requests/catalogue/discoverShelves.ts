@@ -13,6 +13,7 @@ import type {
   CatalogueList,
   CatalogueStudio,
 } from '@ValenceContracts/schemas/CatalogueTitle';
+import { say } from '@ValenceI18n/say';
 
 type UnstoodShelf = {
   id: string;
@@ -34,12 +35,42 @@ const VIDEO_SHELVES: readonly {
   list: CatalogueList;
   kind: 'tv' | 'movie';
 }[] = [
-  { id: 'trending-films', title: 'Trending films', list: 'trending', kind: 'movie' },
-  { id: 'trending-series', title: 'Trending series', list: 'trending', kind: 'tv' },
-  { id: 'popular-films', title: 'Popular films', list: 'popular', kind: 'movie' },
-  { id: 'popular-series', title: 'Popular series', list: 'popular', kind: 'tv' },
-  { id: 'coming-films', title: 'Coming soon', list: 'upcoming', kind: 'movie' },
-  { id: 'airing-series', title: 'On the air', list: 'upcoming', kind: 'tv' },
+  {
+    id: 'trending-films',
+    title: say('server.catalogue.discoverShelves.trendingFilms'),
+    list: 'trending',
+    kind: 'movie',
+  },
+  {
+    id: 'trending-series',
+    title: say('server.catalogue.discoverShelves.trendingSeries'),
+    list: 'trending',
+    kind: 'tv',
+  },
+  {
+    id: 'popular-films',
+    title: say('server.catalogue.discoverShelves.popularFilms'),
+    list: 'popular',
+    kind: 'movie',
+  },
+  {
+    id: 'popular-series',
+    title: say('server.catalogue.discoverShelves.popularSeries'),
+    list: 'popular',
+    kind: 'tv',
+  },
+  {
+    id: 'coming-films',
+    title: say('server.catalogue.discoverShelves.comingSoon'),
+    list: 'upcoming',
+    kind: 'movie',
+  },
+  {
+    id: 'airing-series',
+    title: say('server.catalogue.discoverShelves.onTheAir'),
+    list: 'upcoming',
+    kind: 'tv',
+  },
 ];
 
 /**
@@ -115,7 +146,7 @@ const discoverShelves = async (
     ...video,
     {
       id: 'popular-albums',
-      title: 'Popular albums',
+      title: say('server.catalogue.discoverShelves.popularAlbums'),
       browse: null,
       titles: charts.albums.map((album) => ({
         kind: 'album' as const,
@@ -129,7 +160,7 @@ const discoverShelves = async (
     },
     {
       id: 'popular-artists',
-      title: 'Popular artists',
+      title: say('server.catalogue.discoverShelves.popularArtists'),
       browse: null,
       titles: charts.artists.map((artist) => ({
         kind: 'artist' as const,

@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   approveMediaRequest,
@@ -155,7 +156,12 @@ describe('fetchMediaRequests', () => {
 
   it('reads what a request has done', async () => {
     const said = [
-      { id: 1, at: '2026-09-19T00:00:00.000Z', message: 'Searched for it.', problemCode: null },
+      {
+        id: 1,
+        at: '2026-09-19T00:00:00.000Z',
+        message: sayVerbatim('Searched for it.'),
+        problemCode: null,
+      },
     ];
     const asked = answering(said);
 

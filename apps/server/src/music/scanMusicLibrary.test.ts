@@ -361,7 +361,7 @@ describe('scanMusicLibrary', () => {
     });
 
     expect(result.failed).toBe(1);
-    expect(onProblem).toHaveBeenCalledWith('/music/broken.mp3', expect.any(String));
+    expect(onProblem).toHaveBeenCalledWith('/music/broken.mp3', expect.anything());
   });
 
   it('keeps an album’s cover from inside its first track, once', async () => {

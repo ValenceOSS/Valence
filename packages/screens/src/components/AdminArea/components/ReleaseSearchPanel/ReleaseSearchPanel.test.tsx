@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -69,8 +70,8 @@ const aJudgement = (
   },
   score,
   isRejected: rejections.length > 0,
-  rejections,
-  reasons,
+  rejections: rejections.map(sayVerbatim),
+  reasons: reasons.map(sayVerbatim),
 });
 const sendRelease = vi.fn<typeof Queue.sendRelease>();
 
@@ -172,7 +173,7 @@ const FOUND: ReleaseSearchOutcome = {
       indexerName: 'Flaky',
       found: 0,
       tookMs: 30000,
-      problem: 'The indexer did not answer within 30 seconds',
+      problem: sayVerbatim('The indexer did not answer within 30 seconds'),
       problemCode: null,
     },
   ],

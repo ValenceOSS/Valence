@@ -1,6 +1,7 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 
-const SubtitleError = z.object({ error: z.string() }).openapi('SubtitleError');
+const SubtitleError = RefusalSchema.openapi('SubtitleError');
 
 const SubtitleTrackSchema = z
   .object({

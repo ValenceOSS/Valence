@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import {
   JobEventSchema,
@@ -63,7 +64,7 @@ describe('a run that was stopped', () => {
       JobEventSchema.parse({
         event: 'stopped',
         kind: 'library.regeneratePreviews',
-        label: 'Generate missing previews',
+        label: sayVerbatim('Generate missing previews'),
         jobId: 'job-1',
         subject: 'films',
         subjectName: 'Films',

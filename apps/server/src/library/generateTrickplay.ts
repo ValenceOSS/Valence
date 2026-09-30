@@ -1,3 +1,5 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { mapWithLimit } from '@ValenceCore/functions/mapWithLimit';
 import { askUntilReady } from './askUntilReady';
 import type { Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
@@ -23,7 +25,7 @@ type GenerateTrickplayOptions = {
   trickplay: TrickplayParams;
   hardwareAccel?: string;
   atOnce?: number;
-  onProblem?: (path: string, reason: string) => void;
+  onProblem?: (path: string, reason: Said) => void;
   onProgress?: (processed: number, total: number) => void;
   isCancelled?: () => boolean;
 };
@@ -91,7 +93,7 @@ const generateTrickplay = async ({
         isCancelled,
       }).catch((error: Error) => {
         if (isCancelled?.() !== true) {
-          onProblem?.(item.path, error.message);
+          onProblem?.(item.path, sayVerbatim(error.message));
         }
 
         return false;

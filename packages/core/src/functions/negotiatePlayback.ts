@@ -1,3 +1,4 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import type { MediaItem, VideoRange } from '@ValenceContracts/schemas/MediaItem';
 import type { DeviceProfile } from '@ValenceContracts/schemas/DeviceProfile';
 import type {
@@ -13,6 +14,7 @@ import { isImageSubtitle } from './isImageSubtitle';
 import { selectForcedSubtitle } from './selectForcedSubtitle';
 import { encodeBitrateFor } from './encodeBitrateFor';
 import { ladderBitrateFor } from './ladderBitrateFor';
+import { saying } from '@ValenceI18n/saying';
 /**
  * Decides what the file should be delivered in: the container it is already in where the device
  * says it can play that container holding this file's codecs, and the fallback the device asked for
@@ -57,7 +59,9 @@ const decideContainer = (
       kind: 'passthrough',
       reason: {
         code: 'ClientSupportsSource',
-        detail: `Client direct plays the ${media.container} container`,
+        detail: saying('core.negotiatePlayback.clientDirectPlaysTheContainerContainer', {
+          container: media.container,
+        }),
       },
     };
   }
@@ -71,8 +75,13 @@ const decideContainer = (
       code: 'ContainerNotSupported',
       detail:
         entries.length === 0
-          ? `Client does not support the ${media.container} container`
-          : `Client does not play ${media.videoCodec} with this sound in the ${media.container} container`,
+          ? saying('core.negotiatePlayback.clientDoesNotSupportTheContainer', {
+              container: media.container,
+            })
+          : saying('core.negotiatePlayback.clientDoesNotPlayVideoCodecWith', {
+              videoCodec: media.videoCodec,
+              container: media.container,
+            }),
     },
   };
 };
@@ -169,7 +178,7 @@ const decideVideo = (
       | 'AnamorphicVideoNotSupported'
       | 'VideoRotationNotSupported'
       | 'UserForcedTranscode',
-    detail: string,
+    detail: Said,
   ): VideoDecision => ({
     kind: 'transcode',
     codec: targetCodec,
@@ -202,14 +211,16 @@ const decideVideo = (
   if (!codecSupported) {
     return transcodeTo(
       'VideoCodecNotSupported',
-      `Client does not support the ${media.videoCodec} video codec`,
+      saying('core.negotiatePlayback.clientDoesNotSupportTheVideoCodec', {
+        videoCodec: media.videoCodec,
+      }),
     );
   }
 
   if (!media.canCopySegments) {
     return transcodeTo(
       'VideoNotSegmentable',
-      'The source cannot be cut into segments a player can start at',
+      saying('core.negotiatePlayback.theSourceCannotBeCutInto'),
     );
   }
 
@@ -223,7 +234,11 @@ const decideVideo = (
   ) {
     return transcodeTo(
       'VideoLevelNotSupported',
-      `Client decodes ${media.videoCodec} to level ${levelCeiling.toString()} and the source is level ${media.videoLevel.toString()}`,
+      saying('core.negotiatePlayback.clientDecodesVideoCodecToLevelLevelCeiling', {
+        videoCodec: media.videoCodec,
+        levelCeiling: levelCeiling.toString(),
+        videoLevel: media.videoLevel.toString(),
+      }),
     );
   }
 
@@ -236,14 +251,17 @@ const decideVideo = (
   ) {
     return transcodeTo(
       'VideoFramerateNotSupported',
-      `Source runs at ${media.videoFrameRate.toFixed(3)}fps and the client tops out at ${profile.maxFrameRate.toString()}fps`,
+      saying('core.negotiatePlayback.sourceRunsAtVideoFrameRateFpsAnd', {
+        videoFrameRate: media.videoFrameRate.toFixed(3),
+        maxFrameRate: profile.maxFrameRate.toString(),
+      }),
     );
   }
 
   if (media.videoIsInterlaced && !profile.canPlayInterlaced) {
     return transcodeTo(
       'InterlacedVideoNotSupported',
-      'Source is interlaced and the client cannot deinterlace it',
+      saying('core.negotiatePlayback.sourceIsInterlacedAndTheClient'),
     );
   }
 
@@ -256,7 +274,10 @@ const decideVideo = (
   ) {
     return transcodeTo(
       'RefFramesNotSupported',
-      `Source keeps ${media.videoRefFrames.toString()} reference frames and the client manages ${profile.maxRefFrames.toString()}`,
+      saying('core.negotiatePlayback.sourceKeepsVideoRefFramesReferenceFramesAnd', {
+        videoRefFrames: media.videoRefFrames.toString(),
+        maxRefFrames: profile.maxRefFrames.toString(),
+      }),
     );
   }
 
@@ -268,7 +289,7 @@ const decideVideo = (
   if (isAnamorphic && !profile.canPlayAnamorphic) {
     return transcodeTo(
       'AnamorphicVideoNotSupported',
-      `Source has ${media.videoPixelAspect ?? ''} pixels and the client shows every picture square`,
+      saying('core.negotiatePlayback.anamorphicSource', { aspect: media.videoPixelAspect ?? '' }),
     );
   }
 
@@ -280,21 +301,28 @@ const decideVideo = (
   if (isRotated && !profile.canRotate) {
     return transcodeTo(
       'VideoRotationNotSupported',
-      `Source is rotated ${(media.videoRotationDegrees ?? 0).toString()} degrees and the client cannot turn it back`,
+      saying('core.negotiatePlayback.sourceIsRotated', {
+        degrees: (media.videoRotationDegrees ?? 0).toString(),
+      }),
     );
   }
 
   if (media.videoBitDepth > 8 && !profile.tenBitVideoCodecs.includes(media.videoCodec)) {
     return transcodeTo(
       'VideoProfileNotSupported',
-      `Client does not support ${media.videoCodec} at ${media.videoBitDepth.toString()} bits`,
+      saying('core.negotiatePlayback.clientDoesNotSupportVideoCodecAt', {
+        videoCodec: media.videoCodec,
+        videoBitDepth: media.videoBitDepth.toString(),
+      }),
     );
   }
 
   if (rangeFor(media, profile) === null) {
     return transcodeTo(
       'VideoRangeNotSupported',
-      `Client does not support the ${media.videoRange} video range`,
+      saying('core.negotiatePlayback.clientDoesNotSupportTheVideoRange', {
+        videoRange: media.videoRange,
+      }),
     );
   }
 
@@ -305,18 +333,26 @@ const decideVideo = (
     return forcedByQuality
       ? transcodeTo(
           'UserForcedTranscode',
-          `Quality step limits bitrate to ${maxBitrateKbps.toString()}kbps`,
+          saying('core.negotiatePlayback.qualityStepLimitsBitrateToMaxBitrateKbps', {
+            maxBitrateKbps: maxBitrateKbps.toString(),
+          }),
         )
       : transcodeTo(
           'VideoBitrateAboveLimit',
-          `Source bitrate ${media.bitrateKbps.toString()}kbps exceeds the client limit of ${maxBitrateKbps.toString()}kbps`,
+          saying('core.negotiatePlayback.sourceBitrateBitrateKbpsKbpsExceedsThe', {
+            bitrateKbps: media.bitrateKbps.toString(),
+            maxBitrateKbps: maxBitrateKbps.toString(),
+          }),
         );
   }
 
   if (clamp !== null && (media.width > clamp.maxWidth || media.height > clamp.maxHeight)) {
     return transcodeTo(
       'UserForcedTranscode',
-      `Quality step limits resolution to ${clamp.maxWidth.toString()}x${clamp.maxHeight.toString()}`,
+      saying('core.negotiatePlayback.qualityStepLimitsResolutionToMaxWidth', {
+        maxWidth: clamp.maxWidth.toString(),
+        maxHeight: clamp.maxHeight.toString(),
+      }),
     );
   }
 
@@ -324,7 +360,9 @@ const decideVideo = (
     kind: 'passthrough',
     reason: {
       code: 'ClientSupportsSource',
-      detail: `Client direct plays ${media.videoCodec} at this bitrate, resolution and range`,
+      detail: saying('core.negotiatePlayback.clientDirectPlaysVideoCodecAtThis', {
+        videoCodec: media.videoCodec,
+      }),
     },
   };
 };
@@ -370,7 +408,10 @@ const decideAudio = (
     return {
       kind: 'passthrough',
       streamIndex: null,
-      reason: { code: 'ClientSupportsSource', detail: 'Source has no audio stream' },
+      reason: {
+        code: 'ClientSupportsSource',
+        detail: saying('core.negotiatePlayback.sourceHasNoAudioStream'),
+      },
     };
   }
 
@@ -380,7 +421,7 @@ const decideAudio = (
 
   const transcodeAudio = (
     code: 'AudioSampleRateNotSupported' | 'AudioProfileNotSupported',
-    detail: string,
+    detail: Said,
   ): AudioDecision => ({
     kind: 'transcode',
     streamIndex: stream.index,
@@ -399,7 +440,9 @@ const decideAudio = (
       maxBitrateKbps,
       reason: {
         code: 'AudioCodecNotSupported',
-        detail: `Client does not support the ${stream.codec} audio codec`,
+        detail: saying('core.negotiatePlayback.clientDoesNotSupportTheCodec', {
+          codec: stream.codec,
+        }),
       },
     };
   }
@@ -413,7 +456,10 @@ const decideAudio = (
   ) {
     return transcodeAudio(
       'AudioSampleRateNotSupported',
-      `Track is ${stream.sampleRate.toString()}Hz and the client tops out at ${profile.maxAudioSampleRate.toString()}Hz`,
+      saying('core.negotiatePlayback.trackIsSampleRateHzAndThe', {
+        sampleRate: stream.sampleRate.toString(),
+        maxAudioSampleRate: profile.maxAudioSampleRate.toString(),
+      }),
     );
   }
 
@@ -424,7 +470,10 @@ const decideAudio = (
   ) {
     return transcodeAudio(
       'AudioProfileNotSupported',
-      `Client does not decode the ${stream.profile} profile of ${stream.codec}`,
+      saying('core.negotiatePlayback.clientDoesNotDecodeTheProfile', {
+        profile: stream.profile,
+        codec: stream.codec,
+      }),
     );
   }
 
@@ -437,7 +486,9 @@ const decideAudio = (
       maxBitrateKbps: compressedBitrateKbps,
       reason: {
         code: 'UserForcedTranscode',
-        detail: `Quality step compresses audio to ${compressedBitrateKbps.toString()}kbps`,
+        detail: saying('core.negotiatePlayback.qualityStepCompressesAudioToCompressedBitrateKbps', {
+          compressedBitrateKbps: compressedBitrateKbps.toString(),
+        }),
       },
     };
   }
@@ -447,7 +498,10 @@ const decideAudio = (
     streamIndex: stream.index,
     reason: {
       code: 'ClientSupportsSource',
-      detail: `Client direct plays ${stream.codec} at ${stream.channels.toString()} channels`,
+      detail: saying('core.negotiatePlayback.clientDirectPlaysCodecAtChannels', {
+        codec: stream.codec,
+        channels: stream.channels.toString(),
+      }),
     },
   };
 };
@@ -492,8 +546,8 @@ const decideSubtitles = (
         code: 'ClientSupportsSource',
         detail:
           media.subtitleStreams.length === 0
-            ? 'Source has no subtitle stream'
-            : 'No subtitle was asked for, and none is forced in the language being heard',
+            ? saying('core.negotiatePlayback.sourceHasNoSubtitleStream')
+            : saying('core.negotiatePlayback.noSubtitleWasAskedForAnd'),
       },
     };
   }
@@ -504,7 +558,9 @@ const decideSubtitles = (
       streamIndex: stream.index,
       reason: {
         code: 'ClientSupportsSource',
-        detail: `Client renders ${stream.format} subtitles`,
+        detail: saying('core.negotiatePlayback.clientRendersFormatSubtitles', {
+          format: stream.format,
+        }),
       },
     };
   }
@@ -515,7 +571,9 @@ const decideSubtitles = (
       streamIndex: stream.index,
       reason: {
         code: 'SubtitleFormatNotSupported',
-        detail: `${stream.format} is image based and cannot be converted, so it must be burned in`,
+        detail: saying('core.negotiatePlayback.formatIsImageBasedAndCannot', {
+          format: stream.format,
+        }),
       },
     };
   }
@@ -526,7 +584,9 @@ const decideSubtitles = (
     format: 'webvtt',
     reason: {
       code: 'SubtitleFormatNotSupported',
-      detail: `Client does not render ${stream.format}, delivering as a WebVTT sidecar instead`,
+      detail: saying('core.negotiatePlayback.clientDoesNotRenderFormatDelivering', {
+        format: stream.format,
+      }),
     },
   };
 };

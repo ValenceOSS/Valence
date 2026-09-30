@@ -1,6 +1,7 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 
-const PhoneError = z.object({ error: z.string() }).openapi('PhoneError');
+const PhoneError = RefusalSchema.openapi('PhoneError');
 
 const A_CHALLENGE = z.string().regex(/^[0-9a-f]{64}$/u);
 

@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { docsFor } from '@ValenceCore/functions/docsFor';
 import type { Indexer } from '@ValenceContracts/schemas/Indexer';
 import type { StateBadge } from '@ValenceClient/status/StateBadge';
@@ -14,7 +15,7 @@ const describeIndexerState = (indexer: Indexer): StateBadge => {
     return {
       label: 'Offline',
       tone: 'danger',
-      detail: indexer.turnedOffBecause,
+      detail: sayAgain(indexer.turnedOffBecause),
       help: docsFor(indexer.lastProblemCode),
     };
   }
@@ -27,7 +28,7 @@ const describeIndexerState = (indexer: Indexer): StateBadge => {
     return {
       label: indexer.failures === 1 ? 'Failed once' : `Failed ${indexer.failures.toString()} times`,
       tone: 'warning',
-      detail: indexer.lastProblem,
+      detail: indexer.lastProblem === null ? null : sayAgain(indexer.lastProblem),
       help: docsFor(indexer.lastProblemCode),
     };
   }

@@ -1,9 +1,14 @@
+import { say } from '@ValenceI18n/say';
+import { saying } from '@ValenceI18n/saying';
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { describeLanguage, readLanguage } from '@ValenceCore/functions/describeTrack';
 import { isImageSubtitle } from '@ValenceCore/functions/isImageSubtitle';
 import { trackId } from './SubtitleService';
 import type { SubtitleService, SubtitleTrack } from './SubtitleService';
 import { describeFailure } from '@ValenceServer/logging/describeFailure';
 
+// eslint-disable-next-line valence/no-hard-coded-strings -- words matched in a track's title
 const HEARING_IMPAIRED_MARKERS = ['sdh', 'cc', 'hearing', 'hard of hearing'];
 
 const UNREADABLE = new Set(['unknown']);
@@ -28,7 +33,7 @@ type CreateEmbeddedSubtitleServiceOptions = {
   media: EmbeddedLookup;
   transcoder: Extractor;
   canBurnImageSubtitles: () => Promise<boolean>;
-  onProblem?: (path: string, reason: string) => void;
+  onProblem?: (path: string, reason: Said) => void;
 };
 
 /**
@@ -46,7 +51,7 @@ const describeSubtitle = (stream: EmbeddedStream, position: number): string => {
 
   const named =
     title === ''
-      ? (language ?? `Track ${position.toString()}`)
+      ? (language ?? say('core.track.numbered', { number: position }))
       : language === null || saysLanguage
         ? title
         : `${language} · ${title}`;
@@ -170,7 +175,12 @@ const createEmbeddedSubtitleService = ({
           streamIndex: stream.index,
         });
       } catch (error) {
-        onProblem?.(found.path, error instanceof Error ? describeFailure(error) : 'Unreadable.');
+        onProblem?.(
+          found.path,
+          error instanceof Error
+            ? sayVerbatim(describeFailure(error))
+            : saying('server.subtitles.sidecarSubtitleService.unreadable'),
+        );
 
         return null;
       }

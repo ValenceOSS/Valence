@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RequestsVpn } from '@ValenceContracts/schemas/Requests';
 import { createVpnWatch } from './createVpnWatch';
@@ -11,7 +12,7 @@ const aVpn = (isUp: boolean): RequestsVpn => ({
   publicAddress: isUp ? '203.0.113.7' : null,
   country: null,
   checkedAt: '2026-09-19T12:00:00.000Z',
-  problem: isUp ? null : 'The tunnel is stopped',
+  problem: isUp ? null : sayVerbatim('The tunnel is stopped'),
   problemCode: null,
 });
 

@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { act, render } from '@testing-library/react-native';
 import { ArrivalBanner } from '@ValenceTv/components/ArrivalBanner/ArrivalBanner';
 import type { Notification } from '@ValenceContracts/schemas/Notification';
@@ -24,8 +25,8 @@ jest.mock('react-native/Libraries/Components/TV/TVEventHandler', () => ({
 const ARRIVAL: Notification = {
   id: '00000000-0000-4000-8000-000000000001',
   event: 'requests.available',
-  title: 'Arrival is ready to watch',
-  body: 'The film you asked for has arrived.',
+  title: sayVerbatim('Arrival is ready to watch'),
+  body: sayVerbatim('The film you asked for has arrived.'),
   link: '/media/00000000-0000-4000-8000-000000000002',
   createdAt: '2026-09-23T00:00:00.000Z',
   readAt: null,

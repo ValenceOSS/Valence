@@ -1,4 +1,7 @@
+import { sayingCount } from '@ValenceI18n/sayingCount';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import type { SentDownloadRecord } from '@ValenceRequests/downloads/SentDownloadRecord';
+import { saying } from '@ValenceI18n/saying';
 
 type DownloadRules = {
   metadataForMs: number | null;
@@ -9,7 +12,7 @@ type DownloadRules = {
 
 type Judged = {
   isDoomed: boolean;
-  reason: string | null;
+  reason: Said | null;
 };
 
 const SECOND = 1000;
@@ -22,18 +25,12 @@ const FINE: Judged = { isDoomed: false, reason: null };
  * @param ms - How long.
  * @returns Such as `3 hours` or `11 days`.
  */
-const roughly = (ms: number): string => {
+const roughly = (ms: number): Said => {
   const hours = ms / (60 * 60 * SECOND);
 
-  if (hours < 48) {
-    const whole = Math.max(1, Math.round(hours));
-
-    return `${whole.toString()} ${whole === 1 ? 'hour' : 'hours'}`;
-  }
-
-  const days = Math.round(hours / 24);
-
-  return `${days.toString()} ${days === 1 ? 'day' : 'days'}`;
+  return hours < 48
+    ? sayingCount('common.count.hours', Math.max(1, Math.round(hours)))
+    : sayingCount('common.count.days', Math.round(hours / 24));
 };
 
 /**
@@ -83,7 +80,7 @@ const judgeDownload = (
   }
 
   if (download.state === 'failed') {
-    return { isDoomed: true, reason: download.problem ?? 'The download failed' };
+    return { isDoomed: true, reason: download.problem ?? saying('common.theDownloadFailed') };
   }
 
   const since = now.getTime() - Date.parse(download.sentAt);
@@ -97,14 +94,17 @@ const judgeDownload = (
   if (isWithoutMetadata && rules.metadataForMs !== null && since >= rules.metadataForMs) {
     return {
       isDoomed: true,
-      reason: 'It never got its file list, so it never started',
+      reason: saying('requests.downloads.judgeDownload.itNeverGotItsFileList'),
     };
   }
 
   if (download.state === 'stalled') {
     return rules.stalledForMs !== null &&
       now.getTime() - Date.parse(download.updatedAt) >= rules.stalledForMs
-      ? { isDoomed: true, reason: 'It stalled, with nobody to fetch it from' }
+      ? {
+          isDoomed: true,
+          reason: saying('requests.downloads.judgeDownload.itStalledWithNobodyToFetch'),
+        }
       : FINE;
   }
 
@@ -129,7 +129,9 @@ const judgeDownload = (
     ? FINE
     : {
         isDoomed: true,
-        reason: `At the rate it is going it would take another ${roughly(wouldTake)}`,
+        reason: saying('requests.downloads.judgeDownload.atTheRateItIsGoing', {
+          wouldTake: roughly(wouldTake),
+        }),
       };
 };
 

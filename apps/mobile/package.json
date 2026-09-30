@@ -20,6 +20,7 @@
     "@valence/client": "workspace:*",
     "@valence/contracts": "workspace:*",
     "@valence/core": "workspace:*",
+    "@valence/i18n": "workspace:*",
     "expo": "58.0.0-preview.7",
     "expo-build-properties": "^58.0.7",
     "expo-crypto": "^58.0.2",

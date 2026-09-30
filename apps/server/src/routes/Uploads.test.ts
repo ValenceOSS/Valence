@@ -172,7 +172,7 @@ describe('uploading media over HTTP', () => {
     const response = await upload(built, cookie, 'Arrival.mkv');
 
     expect(response.status).toBe(403);
-    expect(await response.json()).toEqual({
+    expect(await response.json()).toMatchObject({
       error: 'That disk is read-only to Valence. Give it read-write access to upload media there.',
     });
   });

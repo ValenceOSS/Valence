@@ -1,4 +1,5 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
   BookContentsSchema,
   BookDetailSchema,
@@ -8,7 +9,7 @@ import {
   SaveReadingProgressSchema,
 } from '@ValenceContracts/schemas/Book';
 
-const BookError = z.object({ error: z.string() }).openapi('BookError');
+const BookError = RefusalSchema.openapi('BookError');
 
 const BookListSchema = z.object({ books: z.array(BookSchema) }).openapi('BookList');
 

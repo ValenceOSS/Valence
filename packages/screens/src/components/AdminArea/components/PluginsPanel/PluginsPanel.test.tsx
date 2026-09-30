@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -190,7 +191,7 @@ describe('PluginsPanel', () => {
     fetchInstalledPlugins.mockResolvedValue({ plugins: [], redirectUri: null });
     fetchPluginCatalogue.mockResolvedValue({
       isReachable: false,
-      problem: 'GitHub did not answer.',
+      problem: sayVerbatim('GitHub did not answer.'),
       plugins: [],
     });
 

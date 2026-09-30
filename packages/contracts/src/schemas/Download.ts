@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { QualityStepIdSchema } from '@ValenceContracts/schemas/QualityStep';
 
 const DOWNLOAD_STATES = ['queued', 'preparing', 'paused', 'ready', 'failed'] as const;
@@ -20,7 +21,7 @@ const DownloadSchema = z.object({
   bytesPerSecond: z.number().int().nonnegative().nullable(),
   secondsLeft: z.number().int().nonnegative().nullable().default(null),
   sizeBytes: z.number().int().nonnegative().nullable(),
-  failure: z.string().nullable(),
+  failure: SaidSchema.nullable(),
   askedFrom: z.string().nullable().default(null),
   askedAt: z.string().datetime(),
   readyAt: z.string().datetime().nullable(),

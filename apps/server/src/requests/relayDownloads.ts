@@ -1,3 +1,4 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import type {
   ServiceEvent,
   DownloadQueue,
@@ -7,12 +8,12 @@ import type {
 const REMEMBERED = 1000;
 
 type RelayDownloadsOptions = {
-  stream: (onFrame: (frame: DownloadStreamFrame) => void, signal: AbortSignal) => Promise<string>;
+  stream: (onFrame: (frame: DownloadStreamFrame) => void, signal: AbortSignal) => Promise<Said>;
   onQueue: (queue: DownloadQueue) => void;
   onEvent: (event: ServiceEvent) => void;
   acknowledge: (ids: number[]) => Promise<void>;
   onConnected: () => void;
-  onLost: (reason: string) => void;
+  onLost: (reason: Said) => void;
   wait: (afterMs: number) => Promise<void>;
   retryMs: number;
   keepGoing: () => boolean;

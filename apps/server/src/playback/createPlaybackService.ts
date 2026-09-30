@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { chooseSource } from '@ValenceCore/functions/chooseSource';
 import { sourcesOf } from '@ValenceCore/functions/sourcesOf';
 import type { negotiatePlayback } from '@ValenceCore/functions/negotiatePlayback';
@@ -24,6 +25,7 @@ import type {
   Transcoder,
   TranscoderCapabilities,
 } from '@ValenceServer/transcoder/TranscoderClient';
+import { saying } from '@ValenceI18n/saying';
 
 const TRICKPLAY_INDEX_NAME = 'thumbnails.vtt';
 
@@ -79,8 +81,7 @@ const asDelivered = (plan: PlaybackPlan, item: MediaItem, encodesVideo: boolean)
       maxHeight: item.height,
       reason: {
         code: 'VideoNotSegmentable',
-        detail:
-          'The source cannot be cut into segments a player can start at, so it is encoded instead',
+        detail: saying('server.playback.playbackService.theSourceCannotBeCutInto'),
       },
     },
   };
@@ -261,7 +262,10 @@ const createPlaybackService = ({
       } catch (error) {
         return {
           kind: 'failed',
-          reason: error instanceof Error ? describeFailure(error) : 'The media service failed.',
+          reason:
+            error instanceof Error
+              ? sayVerbatim(describeFailure(error))
+              : saying('server.playback.playbackService.theMediaServiceFailed'),
         };
       }
     },

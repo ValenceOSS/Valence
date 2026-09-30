@@ -1,4 +1,5 @@
 import { createMiddleware } from 'hono/factory';
+import { refuse } from '@ValenceI18n/refuse';
 
 /**
  * Closes better-auth's own administration endpoints, which would otherwise sit alongside Valence's and
@@ -7,9 +8,7 @@ import { createMiddleware } from 'hono/factory';
  */
 const createBetterAuthAdminBlock = () =>
   createMiddleware((context) =>
-    Promise.resolve(
-      context.json({ error: 'Account administration is at /api/admin/accounts.' }, 404),
-    ),
+    Promise.resolve(context.json(refuse('error.account.accountAdministrationIsAtApiAdmin'), 404)),
   );
 
 export { createBetterAuthAdminBlock };

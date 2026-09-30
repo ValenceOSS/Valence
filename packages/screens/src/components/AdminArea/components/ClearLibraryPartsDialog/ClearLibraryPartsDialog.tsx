@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { useState } from 'react';
 import { Checkbox } from '@ValenceUI/Checkbox';
 import { Dialog } from '@ValenceUI/Dialog';
@@ -59,15 +60,15 @@ const ClearLibraryPartsDialog = ({
 
   return (
     <Dialog
-      label={definition === null ? 'Clear and fetch again' : definition.label}
+      label={definition === null ? 'Clear and fetch again' : sayAgain(definition.label)}
       isOpen={definition !== null}
       onClose={onClose}
     >
       {definition === null ? null : (
         <>
           <DialogTitle
-            title={`${definition.label}?`}
-            detail={`${definition.description} This cannot be undone.`}
+            title={`${sayAgain(definition.label)}?`}
+            detail={`${sayAgain(definition.description)} This cannot be undone.`}
           />
 
           <DialogContent className="flex flex-col gap-6">

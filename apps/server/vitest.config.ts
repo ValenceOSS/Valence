@@ -4,6 +4,7 @@ export default defineConfig({
   resolve: { tsconfigPaths: true },
   test: {
     environment: 'node',
+    setupFiles: ['./src/vitest.setup.ts'],
     include: ['src/**/*.test.ts'],
     env: {
       NODE_ENV: 'production',

@@ -1,3 +1,4 @@
+/* eslint-disable valence/no-hard-coded-strings -- stands in for a library in tests */
 import type { Library } from '@ValenceContracts/schemas/Library';
 
 /**

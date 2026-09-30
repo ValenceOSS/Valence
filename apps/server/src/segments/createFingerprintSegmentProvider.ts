@@ -1,3 +1,5 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { mapWithLimit } from '@ValenceCore/functions/mapWithLimit';
 import { findSharedAudio, agreeRange } from '@ValenceCore/functions/findSharedAudio';
 import { INTRO_BOUNDS } from './SegmentProvider';
@@ -5,6 +7,7 @@ import type { SegmentCandidate, SegmentProvider } from './SegmentProvider';
 import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
 import type { Range } from '@ValenceCore/functions/findSharedAudio';
 import type { Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
+import { saying } from '@ValenceI18n/saying';
 
 const LONGEST_WINDOW_SECONDS = 600;
 
@@ -27,7 +30,7 @@ type Listened = {
 type CreateFingerprintSegmentProviderOptions = {
   transcoder: Transcoder;
   atOnce?: number;
-  onProblem?: (path: string, reason: string) => void;
+  onProblem?: (path: string, reason: Said) => void;
 };
 
 /**
@@ -125,7 +128,9 @@ const createFingerprintSegmentProvider = ({
       } catch (error) {
         onProblem?.(
           item.path,
-          error instanceof Error ? error.message : 'Could not be listened to.',
+          error instanceof Error
+            ? sayVerbatim(error.message)
+            : saying('server.segments.fingerprintSegmentProvider.couldNotBeListenedTo'),
         );
 
         return null;

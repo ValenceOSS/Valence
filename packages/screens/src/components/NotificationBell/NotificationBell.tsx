@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { Icon } from '@ValenceUI/Icon';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Bell as BellFilledIcon } from '@keyline-icons/react/fill';
@@ -124,7 +125,7 @@ const NotificationBell = ({
                             : 'truncate text-sm text-text-muted'
                         }
                       >
-                        {notification.title}
+                        {sayAgain(notification.title)}
                       </span>
 
                       <span className="ml-auto shrink-0 text-xs tabular-nums text-text-muted">
@@ -132,7 +133,7 @@ const NotificationBell = ({
                       </span>
                     </span>
 
-                    <span className="text-xs text-text-muted">{notification.body}</span>
+                    <span className="text-xs text-text-muted">{sayAgain(notification.body)}</span>
                   </span>
                 </Button>
               </li>

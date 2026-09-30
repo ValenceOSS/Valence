@@ -1,3 +1,4 @@
+import { bodyOf } from '@ValenceI18n/bodyOf';
 import { readCatalogueReference } from '@ValenceCore/functions/readCatalogueReference';
 import { DEFAULT_LIMIT } from '@ValenceServer/library/LibraryService';
 import {
@@ -29,6 +30,7 @@ import {
 } from '@ValenceServer/routes/LibraryRoute';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
+import { refuse } from '@ValenceI18n/refuse';
 
 /**
  * Registers the library endpoints.
@@ -51,7 +53,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     return context.json(await library.list(viewer), 200);
@@ -59,7 +61,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(createLibraryRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'library.create'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
     const { name, kind, path, flavour } = context.req.valid('json');
@@ -72,7 +74,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     });
 
     if (created === null) {
-      return context.json({ error: 'That path is not a readable directory.' }, 400);
+      return context.json(refuse('error.library.thatPathIsNotAReadable'), 400);
     }
 
     return context.json(created, 201);
@@ -80,7 +82,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(updateLibraryRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'library.edit'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
     const { defaultAudioLanguage, filesAtOnce, takesRequests, requestProfileId, requestPath } =
@@ -97,7 +99,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     });
 
     if (updated === null) {
-      return context.json({ error: 'No such library.' }, 404);
+      return context.json(refuse('error.common.noSuchLibrary'), 404);
     }
 
     return context.json(updated, 200);
@@ -107,7 +109,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     return context.json(await library.listFacets(viewer), 200);
@@ -123,7 +125,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     const page = await library.listItems(viewer, id, {
@@ -143,7 +145,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     });
 
     if (page === null) {
-      return context.json({ error: 'No such library.' }, 404);
+      return context.json(refuse('error.common.noSuchLibrary'), 404);
     }
 
     return context.json(page, 200);
@@ -153,13 +155,13 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     const shows = await library.listShows(viewer, context.req.valid('param').id);
 
     if (shows === null) {
-      return context.json({ error: 'No such library.' }, 404);
+      return context.json(refuse('error.common.noSuchLibrary'), 404);
     }
 
     return context.json({ shows }, 200);
@@ -170,13 +172,13 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     const show = await library.getShow(viewer, id, showId);
 
     if (show === null) {
-      return context.json({ error: 'No such series.' }, 404);
+      return context.json(refuse('error.library.noSuchSeries'), 404);
     }
 
     return context.json(show, 200);
@@ -186,7 +188,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     const viewer = await viewerOf(context.req.raw.headers);
 
     if (viewer === null) {
-      return context.json({ error: 'Nobody is signed in.' }, 401);
+      return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
     return context.json({ shows: await library.comingUp(viewer) }, 200);
@@ -196,7 +198,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     const item = await library.getMedia(context.req.valid('param').id);
 
     if (item === null) {
-      return context.json({ error: 'No such item.' }, 404);
+      return context.json(refuse('error.common.noSuchItem'), 404);
     }
 
     return context.json(item, 200);
@@ -204,7 +206,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(scanLibraryRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
     const asked = context.req.valid('query');
@@ -218,7 +220,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     if (queued === null) {
-      return context.json({ error: 'No such library.' }, 404);
+      return context.json(refuse('error.common.noSuchLibrary'), 404);
     }
 
     return context.json(queued, 202);
@@ -226,23 +228,20 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(correctMatchRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.override'))) {
-      return context.json({ error: 'That is for administrators.' }, 404);
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
     }
 
     const { reference, kind } = context.req.valid('json');
     const read = readCatalogueReference(reference);
 
     if (read === null) {
-      return context.json({ error: 'That does not look like a catalogue address or id.' }, 400);
+      return context.json(refuse('error.library.thatDoesNotLookLikeA'), 400);
     }
 
     const externalKind = read.kind ?? kind ?? null;
 
     if (externalKind === null) {
-      return context.json(
-        { error: 'Say whether that id is a series or a film — the same number is both.' },
-        400,
-      );
+      return context.json(refuse('error.library.sayWhetherThatIdIsA'), 400);
     }
 
     const corrected = await library.correctMatch(
@@ -252,30 +251,27 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     return corrected === null
-      ? context.json({ error: 'No such item.' }, 404)
+      ? context.json(refuse('error.common.noSuchItem'), 404)
       : context.json(corrected, 200);
   });
 
   app.openapi(artworkChoicesRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.override'))) {
-      return context.json({ error: 'That is for administrators.' }, 404);
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
     }
 
     const read = await library.readArtworkChoices(context.req.valid('param').id);
 
     if (read === 'missing') {
-      return context.json({ error: 'No such item.' }, 404);
+      return context.json(refuse('error.common.noSuchItem'), 404);
     }
 
     if (read === 'unmatched') {
-      return context.json(
-        { error: 'This is not matched to the catalogue yet. Correct the match first.' },
-        404,
-      );
+      return context.json(refuse('error.library.notMatchedToTheCatalogueYet'), 404);
     }
 
     if (read === 'unavailable') {
-      return context.json({ error: 'The catalogue could not be asked what it has.' }, 503);
+      return context.json(refuse('error.library.catalogueCouldNotBeAsked'), 503);
     }
 
     return context.json(read, 200);
@@ -283,7 +279,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(chooseArtworkRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.override'))) {
-      return context.json({ error: 'That is for administrators.' }, 404);
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
     }
 
     const { id, kind } = context.req.valid('param');
@@ -295,15 +291,15 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     if (chosen === 'missing' || chosen === 'unmatched') {
-      return context.json({ error: 'No such item matched to the catalogue.' }, 404);
+      return context.json(refuse('error.library.noSuchItemMatchedToTheCatalogue'), 404);
     }
 
     if (chosen === 'unavailable') {
-      return context.json({ error: 'The catalogue could not be asked what it has.' }, 503);
+      return context.json(refuse('error.library.catalogueCouldNotBeAsked'), 503);
     }
 
     if (chosen === 'refused') {
-      return context.json({ error: 'That picture is not one the catalogue has for this.' }, 400);
+      return context.json(refuse('error.library.pictureIsNotOneTheCatalogueHas'), 400);
     }
 
     return context.json(chosen, 200);
@@ -311,7 +307,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(forgetArtworkRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.override'))) {
-      return context.json({ error: 'That is for administrators.' }, 404);
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
     }
 
     const { id, kind } = context.req.valid('param');
@@ -323,37 +319,37 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     return typeof forgotten === 'string'
-      ? context.json({ error: 'No such item matched to the catalogue.' }, 404)
+      ? context.json(refuse('error.library.noSuchItemMatchedToTheCatalogue'), 404)
       : context.json(forgotten, 200);
   });
 
   app.openapi(forgetCorrectionRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.override'))) {
-      return context.json({ error: 'That is for administrators.' }, 404);
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
     }
 
     const forgotten = await library.forgetCorrection(context.req.valid('param').id);
 
     return forgotten === null
-      ? context.json({ error: 'No such item.' }, 404)
+      ? context.json(refuse('error.common.noSuchItem'), 404)
       : context.json(forgotten, 200);
   });
 
   app.openapi(rebuildArtefactsRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.override'))) {
-      return context.json({ error: 'That is for administrators.' }, 404);
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
     }
 
     const rebuilt = await library.rebuildArtefacts(context.req.valid('param').id);
 
     return rebuilt === null
-      ? context.json({ error: 'No such item.' }, 404)
+      ? context.json(refuse('error.common.noSuchItem'), 404)
       : context.json(rebuilt, 200);
   });
 
   app.openapi(deleteMediaRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.delete'))) {
-      return context.json({ error: 'That is for administrators.' }, 404);
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
     }
 
     const deleted = await library.deleteMedia(context.req.valid('param').id);
@@ -363,17 +359,17 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     if (deleted.kind === 'absent') {
-      return context.json({ error: 'No such item.' }, 404);
+      return context.json(refuse('error.common.noSuchItem'), 404);
     }
 
     const said = sayWhyNotDeleted(deleted);
 
-    return context.json({ error: said.error }, said.status);
+    return context.json(bodyOf(said), said.status);
   });
 
   app.openapi(deleteSeriesRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.delete'))) {
-      return context.json({ error: 'That is for administrators.' }, 404);
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
     }
 
     const deleted = await library.deleteSeries(context.req.valid('param').seriesId);
@@ -383,17 +379,17 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     if (deleted.kind === 'absent') {
-      return context.json({ error: 'No such series.' }, 404);
+      return context.json(refuse('error.library.noSuchSeries'), 404);
     }
 
     const said = sayWhyNotDeleted(deleted);
 
-    return context.json({ error: said.error }, said.status);
+    return context.json(bodyOf(said), said.status);
   });
 
   app.openapi(setPreviewMomentRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.override'))) {
-      return context.json({ error: 'That is for administrators.' }, 404);
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
     }
 
     const { atSeconds, durationSeconds } = context.req.valid('json');
@@ -404,14 +400,14 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     );
 
     if (outcome.kind === 'absent') {
-      return context.json({ error: 'No such item.' }, 404);
+      return context.json(refuse('error.common.noSuchItem'), 404);
     }
 
     if (outcome.kind === 'beyondTheEnd') {
       return context.json(
-        {
-          error: `That is past the end — the file runs ${outcome.durationSeconds.toString()} seconds.`,
-        },
+        refuse('error.library.thatIsPastTheEndThe', {
+          durationSeconds: outcome.durationSeconds.toString(),
+        }),
         400,
       );
     }
@@ -421,19 +417,19 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(clearPreviewMomentRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.override'))) {
-      return context.json({ error: 'That is for administrators.' }, 404);
+      return context.json(refuse('common.thatIsForAdministrators'), 404);
     }
 
     const cleared = await library.clearPreviewMoment(context.req.valid('param').id);
 
     return cleared === null
-      ? context.json({ error: 'No such item.' }, 404)
+      ? context.json(refuse('error.common.noSuchItem'), 404)
       : context.json(cleared, 200);
   });
 
   app.openapi(runningScansRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
     return context.json(
@@ -454,7 +450,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(scanStateRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
     const { jobId } = context.req.valid('param');
@@ -465,13 +461,13 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(resetLibraryRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'jobs.runDestructive'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
     const reset = await library.reset(context.req.valid('param').id);
 
     if (reset === null) {
-      return context.json({ error: 'No such library.' }, 404);
+      return context.json(refuse('error.common.noSuchLibrary'), 404);
     }
 
     return context.json(reset, 202);
@@ -479,11 +475,11 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(deleteLibraryRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'library.delete'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
     if (!(await library.remove(context.req.valid('param').id))) {
-      return context.json({ error: 'No such library.' }, 404);
+      return context.json(refuse('error.common.noSuchLibrary'), 404);
     }
 
     return context.body(null, 204);
@@ -491,13 +487,13 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(regeneratePreviewsRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'jobs.run'))) {
-      return context.json({ error: 'That is for administrators.' }, 403);
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
     const queued = await library.regeneratePreviews(context.req.valid('param').id);
 
     if (queued === null) {
-      return context.json({ error: 'No such library.' }, 404);
+      return context.json(refuse('error.common.noSuchLibrary'), 404);
     }
 
     return context.json(queued, 202);

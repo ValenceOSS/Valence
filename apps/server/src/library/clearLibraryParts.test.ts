@@ -1,3 +1,4 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { describe, expect, it, vi } from 'vitest';
 import { clearLibraryParts } from './clearLibraryParts';
 import type { ClearableLibrary } from './clearLibraryParts';
@@ -48,7 +49,7 @@ const clear = (
   extra: {
     onProgress?: (done: number, total: number) => void;
     isCancelled?: () => Promise<boolean>;
-    onProblem?: (what: string, reason: string) => void;
+    onProblem?: (what: string, reason: Said) => void;
   } = {},
 ) =>
   clearLibraryParts({

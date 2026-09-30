@@ -146,6 +146,7 @@ component importing its own co-located types is not crossing a boundary.
 | `@ValenceContracts/*` | `packages/contracts/src/*`                     |
 | `@ValenceCore/*`      | `packages/core/src/*`                          |
 | `@ValenceSDK/*`       | `packages/plugin-sdk/src/*`                    |
+| `@ValenceI18n/*`      | `packages/i18n/src/*`                          |
 
 ### How `@ValenceUI/Button` resolves without index files
 
@@ -629,7 +630,7 @@ Types: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `perf`, `build`,
 `ci`, `style`, `revert`.
 
 Scopes are workspace module names: `web`, `server`, `transcoder`, `ui`,
-`contracts`, `plugin-sdk`, `docs`.
+`contracts`, `i18n`, `plugin-sdk`, `docs`.
 
 Breaking changes use `!` and a `BREAKING CHANGE:` footer. For anything affecting
 the API contract or a plugin extension point, this is
@@ -675,3 +676,38 @@ analysis that cannot model them, and reviewing eighty-eight warnings a week in
 the hope of noticing the one that matters. Section 6 already names the
 principle: a rule that fights the linter is a rule that gets disabled. This is
 that, pointed the other way.
+
+---
+
+## 15. Strings
+
+**No words a person reads are written in the code.** Each one is an entry in
+`packages/i18n/strings-en.json`, with a handler, the English and a context for the
+translator, and the code refers to it by its handler. `pnpm i18n:write` sorts the
+file, updates every other language's file to match, and regenerates the type that
+makes a mistyped handler a compile error. `packages/i18n/README.md` describes the
+format and the helpers.
+
+- **One entry per string.** No two entries share a handler or a text. Words needed
+  in two places use one entry, the same way rule 2 treats code.
+- **Whole sentences, not fragments.** A sentence is one entry with `{gaps}`.
+  Translators need to reorder a sentence, so it is never assembled from pieces in
+  code. A count takes a `.one` and an `.other` entry and is said with `sayCount` or
+  `sayingCount`, never with a ternary on the number.
+- **A server sends the code and the English.** Anything a server stores or sends for
+  a person to read is a `Said`, `{ code, message, values }`, built with `saying`. An
+  error response is `{ error, code, values }`, built with `refuse`. A client shows
+  either one with `sayAgain`, and falls back to the English when it doesn't know
+  the code.
+- **Logs and webhooks stay English.** They are read by an administrator or by another
+  program, not shown in the app, so they use `say` or `.message`.
+- **Text from elsewhere is passed on as it came.** A download client's error or a
+  plugin's message goes through `sayVerbatim`, with a `null` code.
+
+ESLint's `valence/no-hard-coded-strings` reports string literals that read like
+words for a person. A machine value that happens to read like words, such as a user
+agent or a mode a client matches on, takes a disable comment with its reason:
+
+```ts
+// eslint-disable-next-line valence/no-hard-coded-strings -- a user agent, read by sites rather than by people
+```

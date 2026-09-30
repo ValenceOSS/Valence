@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { describeClientState } from './describeClientState';
 import type { DownloadClientState } from '@ValenceContracts/schemas/DownloadQueue';
@@ -37,7 +38,7 @@ describe('describeClientState', () => {
       describeClientState(true, {
         ...A_READING,
         isReachable: false,
-        problem: 'qBittorrent could not be reached',
+        problem: sayVerbatim('qBittorrent could not be reached'),
         problemCode: 'DownloadClientUnreachable',
       }),
     ).toEqual({

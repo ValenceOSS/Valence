@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -424,7 +425,10 @@ describe('ReencodeDialog', () => {
           candidates: [
             candidate({
               estimatedBytes: null,
-              refusal: { code: 'BeingWatched', detail: 'Somebody is watching it now.' },
+              refusal: {
+                code: 'BeingWatched',
+                detail: sayVerbatim('Somebody is watching it now.'),
+              },
             }),
           ],
         })}

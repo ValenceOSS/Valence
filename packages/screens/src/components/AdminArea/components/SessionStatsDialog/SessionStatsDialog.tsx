@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { describeSessionDelivery } from '@ValenceScreens/admin/describeSessionDelivery';
 import { nameOfSession } from '@ValenceScreens/admin/nameOfSession';
 import { Icon } from '@ValenceUI/Icon';
@@ -77,12 +78,18 @@ const SessionStatsDialog = ({ session, isOpen, onClose }: SessionStatsDialogProp
               <Row name="Started">{new Date(playback.startedAt).toLocaleTimeString()}</Row>
 
               <Row name="Container">
-                {describeAxis(playback.plan.container.kind, playback.plan.container.reason.detail)}
+                {describeAxis(
+                  playback.plan.container.kind,
+                  sayAgain(playback.plan.container.reason.detail),
+                )}
               </Row>
               <Row name="Video">{describeVideoAxis(playback.plan.video)}</Row>
               <Row name="Audio">{describeAudioAxis(playback.plan.audio)}</Row>
               <Row name="Subtitles">
-                {describeAxis(playback.plan.subtitles.kind, playback.plan.subtitles.reason.detail)}
+                {describeAxis(
+                  playback.plan.subtitles.kind,
+                  sayAgain(playback.plan.subtitles.reason.detail),
+                )}
               </Row>
 
               {playback.health === null ? (

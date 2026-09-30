@@ -1,4 +1,5 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
   WEBHOOK_EVENTS,
   WEBHOOK_PRESETS,
@@ -6,7 +7,7 @@ import {
   WebhookFiltersSchema,
 } from '@ValenceContracts/schemas/Webhook';
 
-const WebhookError = z.object({ error: z.string() }).openapi('WebhookError');
+const WebhookError = RefusalSchema.openapi('WebhookError');
 
 const WebhookEvent = z.enum(WEBHOOK_EVENTS);
 

@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -24,8 +25,8 @@ const askedFacets = vi.mocked(fetchLogFacets);
 const DEFINITIONS: JobDefinition[] = [
   {
     kind: 'library.scan',
-    label: 'Scan for changes',
-    description: 'Looks for new files.',
+    label: sayVerbatim('Scan for changes'),
+    description: sayVerbatim('Looks for new files.'),
     needsLibrary: true,
     destructive: false,
     takesParts: false,

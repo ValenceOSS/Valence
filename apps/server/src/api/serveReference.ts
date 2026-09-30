@@ -1,3 +1,4 @@
+/* eslint-disable valence/no-hard-coded-strings -- the API reference is written for developers, in English, like the OpenAPI document it shows */
 import { apiReference } from '@scalar/hono-api-reference';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';

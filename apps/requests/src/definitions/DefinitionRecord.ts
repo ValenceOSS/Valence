@@ -1,8 +1,9 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import type { IndexerDefinitionSummary } from '@ValenceContracts/schemas/IndexerDefinition';
 
 type DefinitionRecord = IndexerDefinitionSummary & { yaml: string; sha: string; fetchedAt: string };
 
-type CatalogueState = { updatedAt: string | null; problem: string | null };
+type CatalogueState = { updatedAt: string | null; problem: Said | null };
 
 type DefinitionStore = {
   list: () => Promise<(IndexerDefinitionSummary & { sha: string })[]>;

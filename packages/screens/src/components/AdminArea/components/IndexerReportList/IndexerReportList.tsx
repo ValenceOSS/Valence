@@ -1,3 +1,4 @@
+import { sayAgain } from '@ValenceI18n/sayAgain';
 import { docsFor } from '@ValenceCore/functions/docsFor';
 import { HowToFix } from '@ValenceScreens/components/HowToFix/HowToFix';
 import { Badge } from '@ValenceUI/Badge';
@@ -16,7 +17,7 @@ const IndexerReportList = ({ reports }: IndexerReportListProps) => (
         <Badge size="sm" tone={report.problem === null ? 'quiet' : 'danger'}>
           {report.problem === null
             ? `${report.indexerName}: ${report.found.toString()} in ${(report.tookMs / 1000).toFixed(1)}s`
-            : `${report.indexerName}: ${report.problem}`}
+            : `${report.indexerName}: ${sayAgain(report.problem)}`}
         </Badge>
 
         <HowToFix href={docsFor(report.problemCode)} />

@@ -1,3 +1,4 @@
+import type { Said } from '@ValenceI18n/SaidSchema';
 import { z } from 'zod';
 import { createClientCaller } from '@ValenceRequests/downloads/createClientCaller';
 import { DownloadClientFailure } from '@ValenceRequests/downloads/DownloadClientFailure';
@@ -11,6 +12,7 @@ import type {
   DownloadClientAdapter,
 } from '@ValenceRequests/downloads/DownloadClientAdapter';
 import type { QueuedDownloadState } from '@ValenceContracts/schemas/DownloadQueue';
+import { saying } from '@ValenceI18n/saying';
 
 const TorrentSchema = z.object({
   hash: z.string(),
@@ -37,6 +39,7 @@ const TransferSchema = z.object({ dl_info_speed: z.number(), up_info_speed: z.nu
 const NEVER_SECONDS = 8_640_000;
 
 const STATES: Readonly<Record<string, QueuedDownloadState>> = {
+  // eslint-disable-next-line valence/no-hard-coded-strings -- qBittorrent's name for a state, not words
   error: 'failed',
   missingFiles: 'failed',
   uploading: 'done',
@@ -60,9 +63,9 @@ const STATES: Readonly<Record<string, QueuedDownloadState>> = {
   moving: 'processing',
 };
 
-const PROBLEMS: Readonly<Record<string, string>> = {
-  error: 'qBittorrent reports an error with this torrent',
-  missingFiles: 'qBittorrent cannot find its files',
+const PROBLEMS: Readonly<Record<string, Said>> = {
+  error: saying('requests.downloads.qbittorrentAdapter.qBittorrentReportsAnErrorWithThis'),
+  missingFiles: saying('requests.downloads.qbittorrentAdapter.qBittorrentCannotFindItsFiles'),
 };
 
 /**
@@ -137,7 +140,9 @@ const createQbittorrentAdapter = (
 
     if (response.status === 403) {
       throw new DownloadClientFailure(
-        `${settings.name} has banned this address after too many wrong passwords`,
+        saying('requests.downloads.qbittorrentAdapter.nameHasBannedThisAddressAfter', {
+          name: settings.name,
+        }),
         'DownloadClientLoginRefused',
       );
     }
@@ -146,7 +151,7 @@ const createQbittorrentAdapter = (
 
     if (!response.ok || said.trim() === 'Fails.') {
       throw new DownloadClientFailure(
-        `${settings.name} refused the username or password`,
+        saying('common.nameRefusedTheUsernameOrPassword', { name: settings.name }),
         'DownloadClientLoginRefused',
       );
     }
@@ -183,7 +188,7 @@ const createQbittorrentAdapter = (
 
     if (response.status === 403) {
       throw new DownloadClientFailure(
-        `${settings.name} refused the username or password`,
+        saying('common.nameRefusedTheUsernameOrPassword', { name: settings.name }),
         'DownloadClientLoginRefused',
       );
     }
@@ -195,7 +200,12 @@ const createQbittorrentAdapter = (
     const response = await ask(path, form);
 
     if (!response.ok) {
-      throw new DownloadClientFailure(`${settings.name} answered ${response.status.toString()}`);
+      throw new DownloadClientFailure(
+        saying('requests.downloads.clientAnsweredStatus', {
+          name: settings.name,
+          status: response.status,
+        }),
+      );
     }
 
     return response;
@@ -211,7 +221,12 @@ const createQbittorrentAdapter = (
     }
 
     if (!response.ok) {
-      throw new DownloadClientFailure(`${settings.name} answered ${response.status.toString()}`);
+      throw new DownloadClientFailure(
+        saying('requests.downloads.clientAnsweredStatus', {
+          name: settings.name,
+          status: response.status,
+        }),
+      );
     }
   };
 
@@ -220,13 +235,17 @@ const createQbittorrentAdapter = (
 
     add: async (file, _title, category) => {
       if (file.kind === 'nzb') {
-        throw new DownloadClientFailure(`${settings.name} takes torrents, not NZBs`);
+        throw new DownloadClientFailure(
+          saying('common.nameTakesTorrentsNotNZBs', { name: settings.name }),
+        );
       }
 
       const hash = file.kind === 'magnet' ? readMagnetHash(file.url) : readTorrentHash(file.bytes);
 
       if (hash === null) {
-        throw new DownloadClientFailure('The release is not a torrent Valence can read');
+        throw new DownloadClientFailure(
+          saying('requests.downloads.qbittorrentAdapter.theReleaseIsNotATorrent'),
+        );
       }
 
       const made = await ask(
@@ -235,7 +254,12 @@ const createQbittorrentAdapter = (
       );
 
       if (!made.ok && made.status !== 409) {
-        throw new DownloadClientFailure(`${settings.name} would not make the category ${category}`);
+        throw new DownloadClientFailure(
+          saying('requests.downloads.qbittorrentAdapter.nameWouldNotMakeTheCategory', {
+            name: settings.name,
+            category,
+          }),
+        );
       }
 
       const form = new FormData();
@@ -264,7 +288,11 @@ const createQbittorrentAdapter = (
       }
 
       if (!response.ok || (await response.text()).trim() === 'Fails.') {
-        throw new DownloadClientFailure(`${settings.name} would not take the torrent`);
+        throw new DownloadClientFailure(
+          saying('requests.downloads.qbittorrentAdapter.nameWouldNotTakeTheTorrent', {
+            name: settings.name,
+          }),
+        );
       }
 
       return hash;

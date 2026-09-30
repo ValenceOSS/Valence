@@ -1,8 +1,12 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { describeAxis, describeVideoAxis, describeAudioAxis } from './describePlaybackAxis';
 import type { AudioDecision, Reason, VideoDecision } from '@ValenceContracts/schemas/PlaybackPlan';
 
-const reason: Reason = { code: 'ClientSupportsSource', detail: 'Client declares support' };
+const reason: Reason = {
+  code: 'ClientSupportsSource',
+  detail: sayVerbatim('Client declares support'),
+};
 
 describe('describeAxis', () => {
   it('joins the decision and its reason', () => {
@@ -27,7 +31,10 @@ describe('describeVideoAxis', () => {
       maxBitrateKbps: 8000,
       maxWidth: 1920,
       maxHeight: 1080,
-      reason: { code: 'VideoCodecNotSupported', detail: 'Client does not support hevc' },
+      reason: {
+        code: 'VideoCodecNotSupported',
+        detail: sayVerbatim('Client does not support hevc'),
+      },
     };
 
     expect(describeVideoAxis(video)).toBe(
@@ -50,7 +57,10 @@ describe('describeAudioAxis', () => {
       codec: 'aac',
       channels: 2,
       maxBitrateKbps: 192,
-      reason: { code: 'AudioCodecNotSupported', detail: 'Client does not support truehd' },
+      reason: {
+        code: 'AudioCodecNotSupported',
+        detail: sayVerbatim('Client does not support truehd'),
+      },
     };
 
     expect(describeAudioAxis(audio)).toBe('transcode — Client does not support truehd (192kbps)');

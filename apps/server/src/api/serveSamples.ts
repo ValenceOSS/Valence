@@ -3,6 +3,7 @@ import { findASample } from '@ValenceServer/samples/findASample';
 import { createExpiringCache } from '@ValenceServer/library/createExpiringCache';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import type { AppContext } from '@ValenceServer/api/AppContext';
+import { refuse } from '@ValenceI18n/refuse';
 
 const KEPT_FOR = 24 * 60 * 60 * 1000;
 
@@ -21,7 +22,7 @@ const serveSamples = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(findASampleRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'requests.askMusic'))) {
-      return context.json({ error: 'That is for somebody who may ask for music.' }, 403);
+      return context.json(refuse('error.samples.thatIsForSomebodyWhoMay'), 403);
     }
 
     const { artist, album } = context.req.valid('query');

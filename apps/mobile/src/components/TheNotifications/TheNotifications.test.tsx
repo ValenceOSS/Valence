@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { render, userEvent } from '@testing-library/react-native';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
@@ -22,8 +23,8 @@ describe('TheNotifications', () => {
         {
           id: '00000000-0000-4000-8000-0000000000d1',
           event: 'media.added',
-          title: 'Dune is here',
-          body: 'Added to Books.',
+          title: sayVerbatim('Dune is here'),
+          body: sayVerbatim('Added to Books.'),
           link: '/?book=dune',
           createdAt: '2026-09-23T10:00:00.000Z',
           readAt: null,

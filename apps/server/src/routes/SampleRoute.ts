@@ -1,6 +1,7 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 
-const SampleError = z.object({ error: z.string() }).openapi('SampleError');
+const SampleError = RefusalSchema.openapi('SampleError');
 
 const findASampleRoute = createRoute({
   method: 'get',

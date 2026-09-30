@@ -1,3 +1,6 @@
+import { bodyOf } from '@ValenceI18n/bodyOf';
+import { refuseWith } from '@ValenceI18n/refuseWith';
+import type { RefusalBody } from '@ValenceI18n/RefusalBody';
 import { commitThisIsRunning } from '@ValenceServer/about/commitThisIsRunning';
 import { z } from '@hono/zod-openapi';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
@@ -59,6 +62,8 @@ import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { CatalogueStanding } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { GrantedPermission, Permission } from '@ValenceContracts/schemas/Permission';
 import type { CreateAppOptions } from '@ValenceServer/api/CreateAppOptions';
+import { refuse } from '@ValenceI18n/refuse';
+import { say } from '@ValenceI18n/say';
 
 const SHARE_JOINER = 'valence_share_joiner';
 
@@ -75,8 +80,7 @@ const SHARE_JOINER = 'valence_share_joiner';
 const tooBigToRead = (limits: PictureLimits = FACE_LIMITS) =>
   bodyLimit({
     maxSize: limits.mostBytes,
-    onError: (context) =>
-      context.json({ error: describePictureFault('tooLarge', limits).error }, 413),
+    onError: (context) => context.json(bodyOf(describePictureFault('tooLarge', limits)), 413),
   });
 
 const GUEST_REMEMBERED_FOR_SECONDS = 30 * 86_400;
@@ -157,18 +161,18 @@ const within = async <Answer>(work: Promise<Answer>, fallback: Answer): Promise<
 /**
  * What to tell somebody whose action on an account was refused.
  */
-const describeAccountRefusal = (refusal: AccountActionRefusal): string =>
+const describeAccountRefusal = (refusal: AccountActionRefusal): RefusalBody =>
   refusal === 'self'
-    ? 'You cannot do that to your own account.'
-    : 'That account is at or above your own rank.';
+    ? refuse('server.appContext.youCannotDoThatToYour')
+    : refuse('server.appContext.thatAccountIsAtOrAbove');
 
 /**
  * What to tell somebody whose change to a role was refused.
  */
-const describeRefusal = (refusal: RoleChangeRefusal): string =>
+const describeRefusal = (refusal: RoleChangeRefusal): RefusalBody =>
   refusal === 'outranked'
-    ? 'That role is at or above your own.'
-    : 'You cannot grant a permission you do not hold.';
+    ? refuse('server.appContext.thatRoleIsAtOrAbove')
+    : refuse('server.appContext.youCannotGrantAPermissionYou');
 
 /**
  * Builds the Valence HTTP application.
@@ -292,7 +296,7 @@ const createAppContext = (options: CreateAppOptions) => {
 
     void events.publish({
       event: 'account.roleChanged',
-      data: { accountId: userId, name: named?.name ?? 'Somebody', role, change },
+      data: { accountId: userId, name: named?.name ?? say('common.somebody'), role, change },
     });
   };
 
@@ -453,7 +457,7 @@ const createAppContext = (options: CreateAppOptions) => {
     }
 
     if (await isOutOfReach(session.user.id, subject)) {
-      return context.json({ error: 'No such item.' }, 404);
+      return context.json(refuse('error.common.noSuchItem'), 404);
     }
 
     return next();
@@ -468,39 +472,46 @@ const createAppContext = (options: CreateAppOptions) => {
   const sayWhyUnchanged = (change: Exclude<LibraryEntryChange, { kind: 'changed' }>) => {
     switch (change.kind) {
       case 'outside':
-        return { error: 'That is not inside a library.', status: 403 } as const;
+        return { ...refuse('error.common.thatIsNotInsideALibrary'), status: 403 } as const;
       case 'root':
         return {
-          error: 'That is a library’s own folder. Change the library itself instead.',
+          ...refuse('error.server.thatIsALibrarysOwnFolder'),
           status: 400,
         } as const;
       case 'exists':
-        return { error: 'Something of that name is already there.', status: 409 } as const;
+        return {
+          ...refuse('error.server.somethingOfThatNameIsAlready'),
+          status: 409,
+        } as const;
       case 'badName':
         return {
-          error: 'A name is one plain name, with no slashes and no space at either end.',
+          ...refuse('error.server.aNameIsOnePlainName'),
           status: 400,
         } as const;
       case 'intoItself':
-        return { error: 'A folder cannot be moved into itself.', status: 400 } as const;
+        return {
+          ...refuse('error.server.aFolderCannotBeMovedInto'),
+          status: 400,
+        } as const;
       case 'otherDisk':
         return {
-          error:
-            'That would move it onto another disk, which Valence does not do. Copy it across on the machine instead.',
+          ...refuse('error.server.thatWouldMoveItOntoAnother'),
           status: 400,
         } as const;
       case 'missing':
-        return { error: 'There is nothing there.', status: 404 } as const;
+        return { ...refuse('error.server.thereIsNothingThere'), status: 404 } as const;
       case 'readOnly':
         return {
-          error:
-            'That disk is read-only to Valence. Give it read-write access to change files there.',
+          ...refuse('error.server.thatDiskIsReadOnlyTo3'),
           status: 403,
         } as const;
       case 'denied':
-        return { error: 'Valence is not allowed to change files there.', status: 403 } as const;
+        return {
+          ...refuse('error.server.valenceIsNotAllowedToChange'),
+          status: 403,
+        } as const;
       case 'failed':
-        return { error: 'That could not be done.', status: 500 } as const;
+        return { ...refuse('error.common.thatCouldNotBeDone'), status: 500 } as const;
     }
   };
 
@@ -513,7 +524,7 @@ const createAppContext = (options: CreateAppOptions) => {
    */
   const settleChange = async (
     change: LibraryEntryChange,
-  ): Promise<{ path: string } | { error: string; status: 400 | 403 | 404 | 409 | 500 }> => {
+  ): Promise<{ path: string } | (RefusalBody & { status: 400 | 403 | 404 | 409 | 500 })> => {
     if (change.kind !== 'changed') {
       return sayWhyUnchanged(change);
     }
@@ -557,13 +568,15 @@ const createAppContext = (options: CreateAppOptions) => {
   const sayRefused = (refusal: UploadRefusal) =>
     refusal.kind === 'readOnly'
       ? ({
-          error:
-            'That disk is read-only to Valence. Give it read-write access to upload media there.',
+          ...refuse('error.server.thatDiskIsReadOnlyTo2'),
           status: 403,
         } as const)
       : refusal.kind === 'denied'
-        ? ({ error: 'Valence is not allowed to write there.', status: 403 } as const)
-        : ({ error: 'The file could not be written.', status: 500 } as const);
+        ? ({
+            ...refuse('error.server.valenceIsNotAllowedToWrite'),
+            status: 403,
+          } as const)
+        : ({ ...refuse('error.server.theFileCouldNotBeWritten'), status: 500 } as const);
 
   /**
    * Throws away the staging files of uploads left untouched for long enough to count as abandoned,
@@ -585,19 +598,21 @@ const createAppContext = (options: CreateAppOptions) => {
     switch (refusal.kind) {
       case 'outside':
         return {
-          error: 'That file is not inside its library, so Valence will not delete it.',
+          ...refuse('error.server.thatFileIsNotInsideIts'),
           status: 403,
         } as const;
       case 'readOnly':
         return {
-          error:
-            'That disk is read-only to Valence. Give it read-write access to delete media there.',
+          ...refuse('error.server.thatDiskIsReadOnlyTo'),
           status: 403,
         } as const;
       case 'denied':
-        return { error: 'Valence is not allowed to delete files there.', status: 403 } as const;
+        return {
+          ...refuse('error.server.valenceIsNotAllowedToDelete'),
+          status: 403,
+        } as const;
       case 'failed':
-        return { error: 'The file could not be deleted.', status: 500 } as const;
+        return { ...refuse('error.common.theFileCouldNotBeDeleted'), status: 500 } as const;
     }
   };
 
@@ -751,8 +766,11 @@ const createAppContext = (options: CreateAppOptions) => {
 
   const refuseWebhookKeeper = (keeper: 'anonymous' | 'forbidden') =>
     keeper === 'anonymous'
-      ? ({ error: 'Nobody is signed in.', status: 401 } as const)
-      : ({ error: 'This account may not manage webhooks.', status: 403 } as const);
+      ? ({ ...refuse('error.common.nobodyIsSignedIn'), status: 401 } as const)
+      : ({
+          ...refuse('error.server.thisAccountMayNotManageWebhooks'),
+          status: 403,
+        } as const);
 
   /**
    * Who is asking, and what they may do — resolved once for the role routes, which need both their
@@ -830,11 +848,11 @@ const createAppContext = (options: CreateAppOptions) => {
    * @param userId - Whose access is being changed.
    * @returns Why they may not, or nothing where they may.
    */
-  const mayDecideAccess = async (headers: Headers, userId: string): Promise<string | null> => {
+  const mayDecideAccess = async (headers: Headers, userId: string): Promise<RefusalBody | null> => {
     const actor = await readActor(headers);
 
     if (actor === null || !actor.permissions.has('account.manage')) {
-      return 'That is for administrators.';
+      return refuse('common.thatIsForAdministrators');
     }
 
     if (outranks(actor, userId, await permissions.rolesFor(userId), await theOwner())) {
@@ -876,7 +894,7 @@ const createAppContext = (options: CreateAppOptions) => {
     };
   };
 
-  const NOT_YOURS = { error: 'That is for whoever sets up requesting.' };
+  const NOT_YOURS = refuse('error.common.thatIsForWhoeverSetsUp');
 
   const DATE_LENGTH = 10;
 
@@ -888,7 +906,7 @@ const createAppContext = (options: CreateAppOptions) => {
     await requests?.check();
   };
 
-  const REQUESTING_OFF = { error: 'Requesting is off.' };
+  const REQUESTING_OFF = refuse('error.common.requestingIsOff');
 
   /**
    * Whether somebody may reach through to the requests service, and the client to do it with.
@@ -927,7 +945,7 @@ const createAppContext = (options: CreateAppOptions) => {
     allowed: readonly Permission[] = ['requests.manage'],
   ): Promise<
     | { kind: 'answered'; value: Value }
-    | { kind: 'refused'; status: 400 | 403 | 404 | 502; error: string }
+    | ({ kind: 'refused'; status: 400 | 403 | 404 | 502 } & RefusalBody)
   > => {
     const client = await reachRequests(who, allowed);
 
@@ -942,11 +960,11 @@ const createAppContext = (options: CreateAppOptions) => {
     const answer = await ask(client);
 
     if (answer.kind === 'silent') {
-      return { kind: 'refused', status: 502, error: answer.reason };
+      return { kind: 'refused', status: 502, ...refuseWith(answer.reason) };
     }
 
     return answer.kind === 'refused'
-      ? { kind: 'refused', status: answer.status, error: answer.error }
+      ? { kind: 'refused', status: answer.status, ...answer.refusal }
       : answer;
   };
 
@@ -1082,7 +1100,7 @@ const createAppContext = (options: CreateAppOptions) => {
     asked: MediaRequestAsk,
   ): Promise<
     | { kind: 'chosen'; profileId: string | undefined }
-    | { kind: 'refused'; status: 400 | 403 | 404 | 502; error: string }
+    | ({ kind: 'refused'; status: 400 | 403 | 404 | 502 } & RefusalBody)
   > => {
     const isMusic = isMusicRequest(asked.kind);
     const offered = await profilesFor(who, asked.kind, asked.libraryId, [
@@ -1091,7 +1109,7 @@ const createAppContext = (options: CreateAppOptions) => {
     ]);
 
     if (offered.kind !== 'answered') {
-      return { kind: 'refused', status: offered.status, error: offered.error };
+      return { ...offered, kind: 'refused' };
     }
 
     if (isBookRequest(asked.kind)) {
@@ -1106,19 +1124,24 @@ const createAppContext = (options: CreateAppOptions) => {
         : {
             kind: 'refused',
             status: 403,
-            error: 'This server uses one quality for every request.',
+            ...refuse('error.server.thisServerUsesOneQualityFor'),
           };
     }
 
     if (asked.profileId !== undefined && !choices.some(({ id }) => id === asked.profileId)) {
-      return { kind: 'refused', status: 403, error: 'That quality is not available to you.' };
+      return {
+        kind: 'refused',
+        status: 403,
+        ...refuse('error.server.thatQualityIsNotAvailableTo'),
+      };
     }
 
     return { kind: 'chosen', profileId: asked.profileId };
   };
 
   type Drafted =
-    { kind: 'drafted'; draft: MediaRequestDraft } | { kind: 'refused'; status: 400; error: string };
+    | { kind: 'drafted'; draft: MediaRequestDraft }
+    | ({ kind: 'refused'; status: 400 } & RefusalBody);
 
   const catalogueFor = (asked: Parameters<typeof catalogueForRequest>[1]) =>
     catalogueForRequest(
@@ -1165,7 +1188,7 @@ const createAppContext = (options: CreateAppOptions) => {
       return {
         kind: 'refused',
         status: 400,
-        error: 'The catalogue does not know that, or cannot be asked just now.',
+        ...refuse('error.common.theCatalogueDoesNotKnowThat'),
       };
     }
 
@@ -1173,7 +1196,9 @@ const createAppContext = (options: CreateAppOptions) => {
       return {
         kind: 'refused',
         status: 400,
-        error: `There is no library of ${LIBRARY_KIND_WORDS[libraryKind]} to put it in.`,
+        ...refuse('error.server.noLibraryOfKind', {
+          kind: LIBRARY_KIND_WORDS[libraryKind],
+        }),
       };
     }
 
@@ -1326,7 +1351,13 @@ const createAppContext = (options: CreateAppOptions) => {
       const answer = await throughRequests(
         asker,
         (client) =>
-          drafted.kind === 'refused' ? Promise.resolve(drafted) : client.addRequest(drafted.draft),
+          drafted.kind === 'refused'
+            ? Promise.resolve({
+                kind: 'refused' as const,
+                status: drafted.status,
+                refusal: bodyOf(drafted),
+              })
+            : client.addRequest(drafted.draft),
         [isMusicRequest(read.data.kind) ? 'requests.askMusic' : 'requests.ask'],
       );
 

@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { workOf } from './workOf';
 import type { DownloadClientState, QueuedDownload } from '@ValenceContracts/schemas/DownloadQueue';
@@ -30,7 +31,7 @@ const aClient = (
   name,
   isReachable,
   isEnabled,
-  problem: isReachable ? null : 'No answer',
+  problem: isReachable ? null : sayVerbatim('No answer'),
 });
 
 describe('workOf', () => {

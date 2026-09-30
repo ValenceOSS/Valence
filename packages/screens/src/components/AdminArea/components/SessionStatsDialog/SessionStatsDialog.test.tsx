@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -5,14 +6,17 @@ import { SessionStatsDialog } from './SessionStatsDialog';
 import type { ActiveSession } from '@ValenceClient/admin/fetchAdmin';
 import type { PlaybackPlan, Reason } from '@ValenceContracts/schemas/PlaybackPlan';
 
-const reason: Reason = { code: 'ClientSupportsSource', detail: 'Client declares support' };
+const reason: Reason = {
+  code: 'ClientSupportsSource',
+  detail: sayVerbatim('Client declares support'),
+};
 
 const PLAN: PlaybackPlan = {
   mediaId: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
   container: {
     kind: 'remux',
     target: 'mp4',
-    reason: { code: 'ContainerNotSupported', detail: 'Client does not support mkv' },
+    reason: { code: 'ContainerNotSupported', detail: sayVerbatim('Client does not support mkv') },
   },
   video: {
     kind: 'transcode',
@@ -21,7 +25,7 @@ const PLAN: PlaybackPlan = {
     maxBitrateKbps: 8000,
     maxWidth: 1920,
     maxHeight: 1080,
-    reason: { code: 'VideoCodecNotSupported', detail: 'Client does not support hevc' },
+    reason: { code: 'VideoCodecNotSupported', detail: sayVerbatim('Client does not support hevc') },
   },
   audio: { kind: 'passthrough', streamIndex: 1, reason },
   subtitles: { kind: 'none', reason },

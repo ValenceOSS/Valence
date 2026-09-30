@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { createApp } from '@ValenceServer/App';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
@@ -1040,7 +1041,8 @@ describe('telling presence what is being watched', () => {
         ratings: createMemoryRatingService(),
         playback: {
           ...playback,
-          start: () => Promise.resolve({ kind: 'failed', reason: 'ffmpeg would not start' }),
+          start: () =>
+            Promise.resolve({ kind: 'failed', reason: sayVerbatim('ffmpeg would not start') }),
         },
       }),
       { store, permissions, isAdministrator: true },

@@ -1,3 +1,4 @@
+import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, userEvent } from '@testing-library/react-native';
 import { showIdOf } from '@ValenceClient/library/showIdOf';
@@ -206,14 +207,23 @@ const STARTED: StartedSession = {
   mode: 'direct',
   plan: {
     mediaId: MEDIA_ID,
-    container: { kind: 'passthrough', reason: { code: 'ClientSupportsSource', detail: 'fine' } },
-    video: { kind: 'passthrough', reason: { code: 'ClientSupportsSource', detail: 'fine' } },
+    container: {
+      kind: 'passthrough',
+      reason: { code: 'ClientSupportsSource', detail: sayVerbatim('fine') },
+    },
+    video: {
+      kind: 'passthrough',
+      reason: { code: 'ClientSupportsSource', detail: sayVerbatim('fine') },
+    },
     audio: {
       kind: 'passthrough',
       streamIndex: 1,
-      reason: { code: 'ClientSupportsSource', detail: 'fine' },
+      reason: { code: 'ClientSupportsSource', detail: sayVerbatim('fine') },
     },
-    subtitles: { kind: 'none', reason: { code: 'ClientSupportsSource', detail: 'none' } },
+    subtitles: {
+      kind: 'none',
+      reason: { code: 'ClientSupportsSource', detail: sayVerbatim('none') },
+    },
   },
   warnings: [],
   reuse: null,

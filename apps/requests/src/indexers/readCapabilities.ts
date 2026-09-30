@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { IndexerFailure } from '@ValenceRequests/indexers/IndexerFailure';
 import type { IndexerCapabilities, IndexerSearchMode } from '@ValenceContracts/schemas/Indexer';
+import { saying } from '@ValenceI18n/saying';
 
 const NamedSchema = z.object({ '@id': z.string(), '@name': z.string().default('') });
 
@@ -64,7 +65,7 @@ const readCapabilities = (document: object): IndexerCapabilities => {
   const read = CapsSchema.safeParse(document);
 
   if (!read.success) {
-    throw new IndexerFailure('The indexer did not say what it can search');
+    throw new IndexerFailure(saying('requests.indexers.readCapabilities.theIndexerDidNotSayWhat'));
   }
 
   const { caps } = read.data;

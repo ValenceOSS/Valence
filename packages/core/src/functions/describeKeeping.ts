@@ -1,5 +1,6 @@
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import type { HeldFile } from '@ValenceContracts/schemas/HeldFile';
+import { say } from '@ValenceI18n/say';
 
 /**
  * How far through a transfer something is, as a fraction.
@@ -34,24 +35,27 @@ const describeKeeping = (file: HeldFile): string => {
   const done = fraction === null ? null : `${Math.round(fraction * 100).toString()}%`;
 
   if (file.state === 'failed') {
-    return file.failure ?? 'That could not be fetched to this device.';
+    return file.failure ?? say('core.describeKeeping.thatCouldNotBeFetchedTo');
   }
 
   if (file.state === 'paused') {
     return done === null
-      ? `Paused at ${formatBytes(file.bytes)}. What is here is kept.`
-      : `Paused at ${done}. What is here is kept.`;
+      ? say('core.describeKeeping.pausedAtBytesWhatIsHere', { bytes: formatBytes(file.bytes) })
+      : say('core.describeKeeping.pausedAtDoneWhatIsHere', { done });
   }
 
   if (file.state === 'fetching') {
     const speed = file.bytesPerSecond === null ? '' : `, ${formatBytes(file.bytesPerSecond)}/s`;
 
     return done === null
-      ? `Fetching — ${formatBytes(file.bytes)} so far${speed}.`
-      : `Fetching — ${done}${speed}.`;
+      ? say('core.describeKeeping.fetchingBytesSoFarSpeed', {
+          bytes: formatBytes(file.bytes),
+          speed,
+        })
+      : say('core.describeKeeping.fetchingDoneSpeed', { done, speed });
   }
 
-  return `On this device — ${formatBytes(file.bytes)}.`;
+  return say('core.describeKeeping.onThisDeviceBytes', { bytes: formatBytes(file.bytes) });
 };
 
 export { describeKeeping, keptFraction };

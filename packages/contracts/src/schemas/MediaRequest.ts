@@ -1,8 +1,10 @@
 import { z } from 'zod';
+import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { ProblemCodeFieldSchema } from './ProblemCode';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { ReleaseSchema } from './Indexer';
+import { say } from '@ValenceI18n/say';
 
 const MEDIA_REQUEST_KINDS = ['film', 'series', 'artist', 'album', 'book'] as const;
 
@@ -109,10 +111,10 @@ const needsItsId = (
       code: 'custom',
       path: [isBook ? 'openLibraryId' : isMusic ? 'musicBrainzId' : 'tmdbId'],
       message: isBook
-        ? 'A book is asked for by its Open Library id.'
+        ? say('contracts.schemas.mediaRequest.aBookIsAskedForBy')
         : isMusic
-          ? 'Music is asked for by its MusicBrainz id.'
-          : 'A film or series is asked for by its TMDB id.',
+          ? say('contracts.schemas.mediaRequest.musicIsAskedForByIts')
+          : say('contracts.schemas.mediaRequest.aFilmOrSeriesIsAsked'),
     });
   }
 };
@@ -159,7 +161,7 @@ const RequestItemSchema = z.object({
   title: z.string(),
   airDate: CalendarDateSchema.nullable(),
   state: RequestItemStateSchema,
-  problem: z.string().nullable(),
+  problem: SaidSchema.nullable(),
   problemCode: ProblemCodeFieldSchema,
   releaseTitle: z.string().nullable(),
   downloadId: z.string().uuid().nullable(),
@@ -187,10 +189,10 @@ const MediaRequestSchema = z.object({
   profileName: z.string().nullish(),
   isPickedByHand: z.boolean(),
   state: MediaRequestStateSchema,
-  problem: z.string().nullable(),
+  problem: SaidSchema.nullable(),
   problemCode: ProblemCodeFieldSchema,
   approval: RequestApprovalSchema,
-  refusedBecause: z.string().nullable(),
+  refusedBecause: SaidSchema.nullable(),
   requestedBy: RequesterSchema,
   seasons: SeasonsSchema,
   releaseTypes: ReleaseTypesSchema.nullable(),
@@ -220,7 +222,7 @@ const MediaRequestDecisionSchema = z.object({
 
 const MediaRequestDecidedSchema = z.object({
   decided: z.array(MediaRequestSchema),
-  refused: z.array(z.object({ id: z.string().uuid(), problem: z.string() })),
+  refused: z.array(z.object({ id: z.string().uuid(), problem: SaidSchema })),
 });
 
 const BlockedReleaseSchema = z.object({
@@ -228,7 +230,7 @@ const BlockedReleaseSchema = z.object({
   requestId: z.string().uuid(),
   title: z.string(),
   indexerId: z.string().nullable(),
-  reason: z.string(),
+  reason: SaidSchema,
   at: z.string().datetime(),
 });
 
@@ -286,7 +288,7 @@ const MusicCatalogueHitSchema = z.object({
 const RequestLogEntrySchema = z.object({
   id: z.number().int().positive(),
   at: z.string().datetime(),
-  message: z.string(),
+  message: SaidSchema,
   problemCode: ProblemCodeFieldSchema,
 });
 

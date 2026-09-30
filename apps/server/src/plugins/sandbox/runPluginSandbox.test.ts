@@ -196,7 +196,9 @@ describe('the plugin sandbox', () => {
     const answer = await sandbox.next('answer');
 
     expect(answer).toMatchObject({ ok: false });
-    expect(answer.type === 'answer' ? answer.error : '').toMatch(/interrupted/i);
+    expect(
+      answer.type === 'answer' && answer.error?.kind === 'thrown' ? answer.error.text : '',
+    ).toMatch(/interrupted/i);
     expect((await sandbox.next('stopped')).type).toBe('stopped');
     expect(sandbox.closedWith()).toBe(1);
   });
@@ -214,7 +216,9 @@ describe('the plugin sandbox', () => {
 
     const answer = await sandbox.next('answer');
 
-    expect(answer.type === 'answer' ? answer.error : '').toMatch(/memory|interrupted/i);
+    expect(
+      answer.type === 'answer' && answer.error?.kind === 'thrown' ? answer.error.text : '',
+    ).toMatch(/memory|interrupted/i);
   });
 
   it('refuses to load code that throws, or that never defines itself', async () => {
@@ -223,24 +227,21 @@ describe('the plugin sandbox', () => {
     throwing.tell(load('throw new Error("broken at the top")'));
     const failed = await throwing.next('loadFailed');
 
-    expect(failed.type === 'loadFailed' ? failed.problem : '').toContain('broken at the top');
+    expect(
+      failed.type === 'loadFailed' && failed.problem.kind === 'thrown' ? failed.problem.text : '',
+    ).toContain('broken at the top');
 
     const empty = await start();
 
     empty.tell(load('const nothing = 1;'));
-    expect(await empty.next('loadFailed')).toMatchObject({
-      problem: 'The plugin never called definePlugin.',
-    });
+    expect(await empty.next('loadFailed')).toMatchObject({ problem: { kind: 'neverDefined' } });
   });
 
   it('answers that nothing is loaded before a load, and ignores what it cannot read', async () => {
     const sandbox = await start();
 
     sandbox.tell({ type: 'invoke', id: 7, handler: 'describe', args: '{}' });
-    expect(await sandbox.next('answer')).toMatchObject({
-      ok: false,
-      error: 'The plugin is not loaded.',
-    });
+    expect(await sandbox.next('answer')).toMatchObject({ ok: false, error: { kind: 'notLoaded' } });
 
     sandbox.tell({ type: 'hostAnswer', id: 99, ok: true, value: '1' });
     expect(sandbox.heard).toHaveLength(0);
@@ -269,6 +270,8 @@ describe('the plugin sandbox', () => {
     const missing = await sandbox.next('answer');
 
     expect(missing).toMatchObject({ ok: false });
-    expect(missing.type === 'answer' ? missing.error : '').toContain('nothing called missing');
+    expect(
+      missing.type === 'answer' && missing.error?.kind === 'thrown' ? missing.error.text : '',
+    ).toContain('nothing called missing');
   });
 });
