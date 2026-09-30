@@ -639,7 +639,7 @@ const runQueuedJobNow = async (jobId: number): Promise<boolean> => {
 };
 
 /**
- * Reads the persisted history of pg-boss job runs, filtered, so the Jobs page can show what actually
+ * Reads the persisted history of job runs, filtered, so the Jobs page can show what actually
  * happened rather than only what the queue is doing this instant.
  *
  * @param query - What to filter the history by.

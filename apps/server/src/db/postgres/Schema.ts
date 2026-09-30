@@ -554,6 +554,42 @@ const jobRunIssue = pgTable(
   (table) => [index('job_run_issue_run_idx').on(table.jobRunId)],
 );
 
+const queuedJob = pgTable(
+  'queued_job',
+  {
+    id: text('id').primaryKey(),
+    kind: text('kind').notNull(),
+    payload: jsonb('payload').notNull(),
+    subject: text('subject'),
+    state: text('state').notNull(),
+    waitingKey: text('waitingKey'),
+    attempts: integer('attempts').notNull().default(0),
+    retryLimit: integer('retryLimit').notNull(),
+    lastError: text('lastError'),
+    runAfter: timestamp('runAfter').notNull(),
+    finishedAt: timestamp('finishedAt'),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('queued_job_waiting_key_idx').on(table.kind, table.waitingKey),
+    index('queued_job_next_idx').on(table.kind, table.state, table.runAfter),
+    index('queued_job_subject_idx').on(table.subject, table.state),
+    index('queued_job_finished_idx').on(table.state, table.finishedAt),
+  ],
+);
+
+const jobSchedule = pgTable(
+  'job_schedule',
+  {
+    queueName: text('queueName').notNull(),
+    key: text('key').notNull(),
+    cron: text('cron').notNull(),
+    timezone: text('timezone').notNull(),
+    nextRunAt: timestamp('nextRunAt').notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.queueName, table.key] })],
+);
+
 const resourceSample = pgTable(
   'resource_sample',
   {
@@ -1459,6 +1495,8 @@ export {
   logRecord,
   jobRun,
   jobRunIssue,
+  queuedJob,
+  jobSchedule,
   resourceSample,
   rating,
   hidden,

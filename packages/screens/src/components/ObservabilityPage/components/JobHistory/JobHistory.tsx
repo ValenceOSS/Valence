@@ -111,7 +111,7 @@ const describeWhen = (record: JobRunRecord): string => {
 };
 
 /**
- * The persisted record of what pg-boss has actually run: not only what the queue is doing this
+ * The persisted record of what the job queue has actually run: not only what the queue is doing this
  * instant, but what happened, searchable and kept once the job itself is long gone. This is the
  * answer to the Jobs page looking empty while work was genuinely happening — the queue only ever
  * showed the last moment, and this shows the history behind it.
@@ -664,7 +664,7 @@ const JobHistoryPanel = ({
 
       <Well isFlush className="p-1">
         <DataTable
-          label="What pg-boss has run"
+          label="What the job queue has run"
           columns={columns}
           rows={records}
           totalRows={askedHistory.data?.total ?? records.length}

@@ -105,7 +105,7 @@ const jobs = () =>
   });
 
 /**
- * The persisted history of pg-boss job runs, filtered — what actually happened, rather than only
+ * The persisted history of job runs, filtered — what actually happened, rather than only
  * what the queue is doing this instant.
  *
  * @param query - What to filter the history by.

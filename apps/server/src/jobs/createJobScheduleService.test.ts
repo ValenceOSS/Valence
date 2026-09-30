@@ -36,7 +36,7 @@ describe('createJobScheduleService', () => {
     );
   });
 
-  it('schedules in the configured zone rather than leaving pg-boss to assume UTC', async () => {
+  it('schedules in the configured zone rather than leaving the queue to assume UTC', async () => {
     const setSchedule = vi.fn(() => Promise.resolve());
     const schedules = build({ setSchedule }, 'America/New_York');
 

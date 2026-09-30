@@ -1269,8 +1269,8 @@ const jobEventLog = createJobEventLog(
   (kind) => JOB_DEFINITIONS.find((definition) => definition.kind === kind)?.label ?? kind,
 );
 
-const jobs = await createJobQueue({
-  connectionString: env.DATABASE_URL,
+const jobs = createJobQueue({
+  db,
   perKind: { [PREPARE_DOWNLOAD_JOB]: { atOnce: 16, retries: 0 } },
   handlers: traceJobs(
     {

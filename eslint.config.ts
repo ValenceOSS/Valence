@@ -330,8 +330,6 @@ export default tseslint.config(
             'apps/server/src/db/postgres/**',
             'apps/requests/src/db/postgres/**',
             'packages/database/src/postgres/**',
-            'apps/server/src/jobs/createDatabaseJobTriggerStore.ts',
-            'apps/server/src/jobs/createJobHistoryStore.ts',
             '**/*.test.ts',
           ],
           rules: {

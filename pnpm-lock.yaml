@@ -550,6 +550,9 @@ importers:
       bonjour-service:
         specifier: ^1.4.4
         version: 1.4.4
+      cron-parser:
+        specifier: ^5.10.1
+        version: 5.10.1
       drizzle-orm:
         specifier: ^0.45.2
         version: 0.45.2(@electric-sql/pglite@0.5.8)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/pg@8.23.1)(better-sqlite3@12.11.1)(kysely@0.29.4)(pg@8.23.0)
@@ -571,9 +574,6 @@ importers:
       pg:
         specifier: ^8.23.0
         version: 8.23.0
-      pg-boss:
-        specifier: ^12.31.0
-        version: 12.31.0
       quickjs-emscripten:
         specifier: 0.32.0
         version: 0.32.0
@@ -14625,13 +14625,6 @@ packages:
       }
     engines: { node: '>=10.0.0' }
 
-  non-error@0.1.0:
-    resolution:
-      {
-        integrity: sha512-TMB1uHiGsHRGv1uYclfhivcnf0/PdFp2pNqRxXjncaAsjYMoisaQJI+SSZCqRq+VliwRTC8tsMQfmrWjDMhkPQ==,
-      }
-    engines: { node: '>=20' }
-
   nopt@9.0.0:
     resolution:
       {
@@ -15023,14 +15016,6 @@ packages:
         integrity: sha512-eRWB5LBz7PpDu4PUlwT0PhnQfTQJlDDdPa35urV4Osrm0t0AqQFGn+UIkU3klZvwJ8KPO3VbBFsXquA6p6kqZw==,
       }
     engines: { node: '>=12', npm: '>=6' }
-
-  pg-boss@12.31.0:
-    resolution:
-      {
-        integrity: sha512-xHeUE9GWHYCqpOeCAjYJQtL/49DbbUGXxaWYFl4q9SkMVY7sRbqTAqh5VDY7R4BfM2Duk/dBGz6wZufhLCGGAQ==,
-      }
-    engines: { node: '>=22.12.0' }
-    hasBin: true
 
   pg-cloudflare@1.4.0:
     resolution:
@@ -16017,12 +16002,6 @@ packages:
         integrity: sha512-3SOzvaAg8rkHrXtRjpCvCvbyO5to9oOO27Z/XqHEYXfMRVSw/qMIVdmaOk9W2lcRLtR6dlqTjo9hDeJk70QBYQ==,
       }
 
-  rrule-temporal@2.2.5:
-    resolution:
-      {
-        integrity: sha512-jBa4T38+6LslTJv/calJiphIRrcU6vFV2Icx3XCe377uz79IT7Fr4h/chLWifYERvXjQkR/6BeQPKl89O1s5Vw==,
-      }
-
   safe-buffer@5.1.2:
     resolution:
       {
@@ -16130,13 +16109,6 @@ packages:
         integrity: sha512-VMbMxbDeehAxpOtWJXlcUS5E8iXh6QmN+BkRX1GARS3wRaXEEgzCcB10gTQazO42tpNIya8xIyNx8fll1OFPrg==,
       }
     engines: { node: '>= 0.8.0' }
-
-  serialize-error@13.0.1:
-    resolution:
-      {
-        integrity: sha512-bBZaRwLH9PN5HbLCjPId4dP5bNGEtumcErgOX952IsvOhVPrm3/AeK1y0UHA/QaPG701eg0yEnOKsCOC6X/kaA==,
-      }
-    engines: { node: '>=20' }
 
   serialize-error@2.1.0:
     resolution:
@@ -16816,12 +16788,6 @@ packages:
         integrity: sha512-yYrrsWnrXMcdsnu/7YMYAofM1ktpL5By7vZhf15CrXijWWrEYZks5AXBudalfSWJLlnen/QUJUB5aoB0kqZUGA==,
       }
     engines: { node: '>=6.0.0' }
-
-  temporal-spec@1.0.1:
-    resolution:
-      {
-        integrity: sha512-wxVoanmDeavXie1vu2JaQ3WIc3JZnWAOYFBsJyATaVsXsycKYUflGsyBmrRSnoCpZJpwPyr38VpgSUlQ8CbFxg==,
-      }
 
   terminal-link@2.1.1:
     resolution:
@@ -28199,8 +28165,6 @@ snapshots:
 
   node-unrar-js@2.0.2: {}
 
-  non-error@0.1.0: {}
-
   nopt@9.0.0:
     dependencies:
       abbrev: 4.0.0
@@ -28445,15 +28409,6 @@ snapshots:
   pathe@2.0.3: {}
 
   pe-library@0.4.1: {}
-
-  pg-boss@12.31.0:
-    dependencies:
-      cron-parser: 5.10.1
-      pg: 8.23.0
-      rrule-temporal: 2.2.5
-      serialize-error: 13.0.1
-    transitivePeerDependencies:
-      - pg-native
 
   pg-cloudflare@1.4.0:
     optional: true
@@ -29266,10 +29221,6 @@ snapshots:
 
   rou3@0.9.2: {}
 
-  rrule-temporal@2.2.5:
-    dependencies:
-      temporal-spec: 1.0.1
-
   safe-buffer@5.1.2: {}
 
   safe-buffer@5.2.1: {}
@@ -29330,11 +29281,6 @@ snapshots:
       statuses: 2.0.2
     transitivePeerDependencies:
       - supports-color
-
-  serialize-error@13.0.1:
-    dependencies:
-      non-error: 0.1.0
-      type-fest: 5.9.0
 
   serialize-error@2.1.0: {}
 
@@ -29720,8 +29666,6 @@ snapshots:
     dependencies:
       mkdirp: 0.5.6
       rimraf: 2.6.3
-
-  temporal-spec@1.0.1: {}
 
   terminal-link@2.1.1:
     dependencies:

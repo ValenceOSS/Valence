@@ -17,7 +17,7 @@ type ResolveJobsTimezoneOptions = {
  * the operator actually is. The host's own zone is right for a native install and is the last
  * source rather than the first for that reason.
  *
- * Falls back to UTC, which is what pg-boss would have assumed anyway — so an unresolvable setting
+ * Falls back to UTC, which is what the queue would have assumed anyway — so an unresolvable setting
  * leaves behaviour exactly as it was rather than failing to schedule.
  *
  * @param options - The configured setting, the environment's `TZ`, and the host's own zone.

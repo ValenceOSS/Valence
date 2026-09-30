@@ -24,7 +24,7 @@ describe('resolveJobsTimezone', () => {
     ).toBe('Europe/London');
   });
 
-  it('ends at UTC, which is what pg-boss assumed before any of this', () => {
+  it('ends at UTC, which is what the queue assumed before any of this', () => {
     expect(resolveJobsTimezone({ configured: '', environment: undefined, host: undefined })).toBe(
       'UTC',
     );

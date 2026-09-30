@@ -753,7 +753,7 @@ const adminJobHistoryRoute = createRoute({
   method: 'get',
   path: '/api/admin/jobs/history',
   tags: ['Admin'],
-  summary: 'Read the history of pg-boss job runs, filtered',
+  summary: 'Read the history of job runs, filtered',
   request: {
     query: z.object({
       kind: z.string().optional(),
