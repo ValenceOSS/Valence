@@ -1,6 +1,6 @@
 ---
 title: Local setup
-description: Install the toolchain, start Postgres, run the server, web client, media service and desktop app, and know which checks guard every commit.
+description: Install the toolchain, start Postgres (or MySQL or MariaDB), run the server, web client, media service and desktop app, and know which checks guard every commit.
 order: 2
 ---
 
@@ -12,7 +12,7 @@ This page takes you from a fresh clone to a running Valence development environm
 | ------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | Node.js | The version in `.nvmrc` (currently 24)             | Runs the server, the tooling and every build. `package.json` requires `node` at 24 or newer.                         |
 | pnpm    | 10.34.5, from the `packageManager` field           | The workspace manager. Enable it with `corepack enable`.                                                             |
-| Docker  | Any recent Docker with Compose                     | Runs Postgres for development.                                                                                       |
+| Docker  | Any recent Docker with Compose                     | Runs Postgres for development, and MySQL and MariaDB for the engine tests.                                           |
 | Rust    | Stable, through [rustup](https://rustup.rs)        | Builds the media service, and the desktop app's native module on Windows. Optional if you only touch the web client. |
 | FFmpeg  | Valence's own build, fetched by `pnpm ffmpeg:sync` | The media service drives it as a child process.                                                                      |
 
@@ -81,6 +81,25 @@ docker compose -f compose.dev.yaml up -d db
 ```
 
 Data lives in a named volume, `db-data`, so it survives restarts. The optional service is `requests`, behind the `requests` profile and built from `apps/requests/Dockerfile`. You normally run the requests service from source instead, as described below.
+
+### On MySQL or MariaDB
+
+Postgres is what development runs on by default. To run the server or the requests service on MySQL or MariaDB instead, point `DATABASE_URL` in `.env` at a MySQL 8.0.21 or newer or MariaDB 10.6 or newer server whose database uses `utf8mb4_0900_bin` (MySQL) or `utf8mb4_nopad_bin` (MariaDB), and start them with the `mysql` condition:
+
+```bash
+pnpm --filter @valence/server dev:mysql
+pnpm --filter @valence/requests dev:mysql
+```
+
+The plain `dev` scripts run the Postgres build, and a build refuses a database of the other kind, so the script has to match the address.
+
+For the tests that run on MySQL and MariaDB, `compose.test.yaml` starts throwaway engines kept in memory:
+
+```bash
+docker compose -f compose.test.yaml up -d --wait
+```
+
+It starts MySQL 8.4 on `127.0.0.1:3307` and MariaDB 11.4 on `127.0.0.1:3308`, and MariaDB 10.6 on `127.0.0.1:3309` with `--profile oldest`. [Testing](/develop/testing#tests-on-mysql-and-mariadb) says how to run the tests against them.
 
 ## Migrations
 

@@ -4,7 +4,7 @@ description: What a Valence server needs in hardware, software, network ports an
 order: 2
 ---
 
-Valence runs as a Docker Compose stack: a Postgres database and one Valence container that holds the server, the web client and the media service. This page separates what the repository states or enforces from what is only a sensible recommendation. Anything marked **Recommendation** is our guidance and is not checked by Valence.
+Valence runs as a Docker Compose stack: a database, Postgres by default, and one Valence container that holds the server, the web client and the media service. This page separates what the repository states or enforces from what is only a sensible recommendation. Anything marked **Recommendation** is our guidance and is not checked by Valence.
 
 ## Server hardware
 
@@ -13,7 +13,7 @@ The repository does not publish a minimum specification, so the figures below ar
 | Resource | Minimum (recommendation)                    | Comfortable (recommendation)                    | Notes                                                                                                |
 | -------- | ------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | CPU      | 64-bit x86, 2 cores                         | 4 or more cores                                 | Software transcoding is the heaviest thing Valence does. Direct play needs almost no processor.      |
-| RAM      | 2 GB free for the stack                     | 4 GB or more                                    | Postgres, the Node server and FFmpeg all run on the same machine.                                    |
+| RAM      | 2 GB free for the stack                     | 4 GB or more                                    | The database, the Node server and FFmpeg all run on the same machine.                                |
 | GPU      | None                                        | An Intel, AMD or NVIDIA GPU that FFmpeg can use | Optional. See [Hardware transcoding](/install/hardware-transcoding).                                 |
 | Disk     | Local disk for `db-data`, `config`, `cache` | An SSD for `transcodes` and `db-data`           | See [Storage and volumes](/install/storage-and-volumes) for what each volume holds and how it grows. |
 
@@ -43,10 +43,24 @@ The Valence Settings page offers these encoders: VAAPI (Intel and AMD on Linux),
 | Software      | Requirement                                                                                                                                                      |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Docker        | Docker Engine with the Compose plugin (`docker compose`). The repository does not state a minimum version; use a current release.                                |
-| Postgres      | **18.** `compose.yaml` runs `postgres:18-alpine`, and the Valence image installs the Postgres 18 client so that snapshots can be taken.                          |
+| Database      | Postgres 15 or newer, which is the default, or MySQL 8.0.21 or newer, or MariaDB 10.6 or newer. See [Database](#database) below.                                 |
 | Reverse proxy | Anything that terminates TLS and can pass WebSocket upgrades: nginx, Caddy, Traefik, Nginx Proxy Manager, a tunnel. See [Reverse proxy](/install/reverse-proxy). |
 
-Postgres 18 is a hard requirement of the shipped stack rather than a preference. A major Postgres version cannot read the data directory that the previous one wrote. If you are coming from an older release that used Postgres 17, follow the migration steps in [Updating](/install/updating).
+### Database
+
+Postgres is the default and the recommendation. MySQL and MariaDB are supported alternatives, each started from an override file laid over `compose.yaml`, as [Choosing a database](/install/docker-compose#choosing-a-database) describes. The server checks the version, and on MySQL and MariaDB the collation, before it runs any migration, and stops with a message saying what is wrong.
+
+| Database | Oldest accepted | What the shipped files run | Collation                                                          |
+| -------- | --------------- | -------------------------- | ------------------------------------------------------------------ |
+| Postgres | 15              | `postgres:18-alpine`       | Nothing to set.                                                    |
+| MySQL    | 8.0.21          | `mysql:8.4`                | `utf8mb4_0900_bin`. `compose.mysql.yaml` sets it on the server.    |
+| MariaDB  | 10.6            | `mariadb:11.4`             | `utf8mb4_nopad_bin`. `compose.mariadb.yaml` sets it on the server. |
+
+The collations are binary and do not pad, so text compares exactly as it does on Postgres: an upper case letter is not its lower case, and a trailing space counts. A database made by hand with another collation is refused until you change it. The message gives the `ALTER DATABASE` statement to run, and [Troubleshooting](/reference/troubleshooting#the-database-is-refused-at-start) has the details.
+
+Every test that touches the database runs in CI on MySQL 8.4, MariaDB 10.6 and MariaDB 11.4, and the whole suite on Postgres. MySQL 8.0 itself reached the end of its life in April 2026, so on MySQL use 8.4, the long-term release the tests run against. On MariaDB, 10.6 and 11.4 are both tested.
+
+The snapshots taken before a migration need a client tool that matches the server, and the Valence image carries them: the Postgres 18 client, the MariaDB client, and the MySQL 8.4 `mysqldump` and `mysql`. A major Postgres version cannot read the data directory that the previous one wrote. If you are coming from an older release that used Postgres 17, follow the migration steps in [Updating](/install/updating).
 
 Node.js and pnpm matter only if you build from source. The repository requires **Node 24 or newer** (`engines` in `package.json` and `.nvmrc`) and pins pnpm 10 through `packageManager`. The container carries its own Node, so a plain server install needs neither.
 
@@ -66,12 +80,13 @@ Other devices, such as televisions, sign in with a device authorisation code flo
 
 ## Network ports
 
-| Port | Service                | Published by default | Purpose                                                                                          |
-| ---- | ---------------------- | -------------------- | ------------------------------------------------------------------------------------------------ |
-| 8420 | Valence                | Yes (`VALENCE_PORT`) | The web client, the API and the WebSocket at `/api/realtime`. Your reverse proxy points here.    |
-| 5432 | Postgres               | No                   | Reached over the stack's own network only. `compose.dev.yaml` publishes it for development.      |
-| 8421 | Requests service       | No                   | Only with the `requests` profile. Valence reaches it at `http://requests:8421` inside the stack. |
-| 8000 | gluetun control server | No                   | Only with the `vpn` profile.                                                                     |
+| Port | Service                | Published by default | Purpose                                                                                            |
+| ---- | ---------------------- | -------------------- | -------------------------------------------------------------------------------------------------- |
+| 8420 | Valence                | Yes (`VALENCE_PORT`) | The web client, the API and the WebSocket at `/api/realtime`. Your reverse proxy points here.      |
+| 5432 | Postgres               | No                   | Reached over the stack's own network only. `compose.dev.yaml` publishes it for development.        |
+| 3306 | MySQL or MariaDB       | No                   | Only with `compose.mysql.yaml` or `compose.mariadb.yaml`, in place of 5432. Inside the stack only. |
+| 8421 | Requests service       | No                   | Only with the `requests` profile. Valence reaches it at `http://requests:8421` inside the stack.   |
+| 8000 | gluetun control server | No                   | Only with the `vpn` profile.                                                                       |
 
 The media service inside the Valence container listens on a Unix socket (`/run/valence-transcoder.sock`), not a network port. Nothing else needs to be open. The full list is in [Ports](/reference/ports).
 
@@ -79,13 +94,13 @@ The container needs outbound internet access if you use a catalogue key, where i
 
 ## Storage layout
 
-| Volume       | Mounted at    | Holds                                                                                           |
-| ------------ | ------------- | ----------------------------------------------------------------------------------------------- |
-| `db-data`    | Postgres data | The database: accounts, libraries, history, settings.                                           |
-| `config`     | `/config`     | Settings, **profile pictures** (`/config/profiles`) and database snapshots (`/config/backups`). |
-| `cache`      | `/cache`      | Fetched artwork (`/cache/images`) and rendered previews and sheets (`/cache/artefacts`).        |
-| `transcodes` | `/transcodes` | Scratch space for video segments while someone is watching.                                     |
-| Your library | `/media`      | Mounted from `MEDIA_PATH`, read only unless you change `MEDIA_ACCESS`.                          |
+| Volume       | Mounted at    | Holds                                                                                                                                             |
+| ------------ | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `db-data`    | Postgres data | The database: accounts, libraries, history, settings. `db-data-mysql` or `db-data-mariadb`, at `/var/lib/mysql`, in its place on those databases. |
+| `config`     | `/config`     | Settings, **profile pictures** (`/config/profiles`) and database snapshots (`/config/backups`).                                                   |
+| `cache`      | `/cache`      | Fetched artwork (`/cache/images`) and rendered previews and sheets (`/cache/artefacts`).                                                          |
+| `transcodes` | `/transcodes` | Scratch space for video segments while someone is watching.                                                                                       |
+| Your library | `/media`      | Mounted from `MEDIA_PATH`, read only unless you change `MEDIA_ACCESS`.                                                                            |
 
 The library must be on a path the Docker host can read. A network share works, and is discussed in [Storage and volumes](/install/storage-and-volumes).
 

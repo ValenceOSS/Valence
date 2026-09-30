@@ -10,7 +10,8 @@ Valence migrations only go forward. Once a newer release has changed the databas
 
 Before a migration changes the database, Valence copies the whole database into a file. The copy is made while the database is still exactly as the older release left it, which is what makes it a way back.
 
-- It is made with `pg_dump` in Postgres's custom format, with the create option, so restoring drops the database and builds it again. That is the only way a rollback also removes the tables a later migration added.
+- On Postgres it is made with `pg_dump` in Postgres's custom format, with the create option, so restoring drops the database and builds it again. That is the only way a rollback also removes the tables a later migration added.
+- On MySQL it is made with `mysqldump`, and on MariaDB with `mariadb-dump`, and gzipped. Valence asks the server its version to tell which one it is talking to. The dump reads every table as it was at one moment, with `--single-transaction`, and it too drops the database and builds it again when restored.
 - It is only taken when a migration is about to run. A restart with nothing to migrate takes none, so snapshots are a way back from upgrades and are not a backup schedule.
 - A database that has never run a migration, as on a fresh install, gets none, because there is nothing in it to lose.
 - The file name starts with the time and ends with the newest migration that was about to run, so you can tell which upgrade each one came before:
@@ -18,6 +19,8 @@ Before a migration changes the database, Valence copies the whole database into 
   ```text
   valence-2026-09-21T16-30-05-123Z-before-0078_more.dump
   ```
+
+  A snapshot of a MySQL or MariaDB database ends in `.sql.gz` in place of `.dump`.
 
 - Names sort by age, and Valence keeps only the newest few.
 
@@ -29,7 +32,11 @@ Before a migration changes the database, Valence copies the whole database into 
 
 Only `BACKUPS_KEPT` is passed through by the shipped `compose.yaml`. To set the other two, add them to the `valence` service's `environment:` block. See [Configuration](/install/configuration).
 
-If the snapshot cannot be taken because `pg_dump` is not installed, Valence logs that rolling back to this point will not be possible and carries on. The published image includes the Postgres 18 client. If `pg_dump` is installed and fails, the migration does **not** run.
+If the snapshot cannot be taken because the dump tool is not installed, Valence logs that rolling back to this point will not be possible and carries on. The published image includes the Postgres 18 client, the MariaDB client and MySQL 8.4's `mysqldump` and `mysql`. If the tool is installed and fails, the migration does **not** run.
+
+### A migration that fails on MySQL or MariaDB
+
+On MySQL and MariaDB, changes to the schema are not transactional. Each one takes effect as it runs, so a migration that fails part way can leave the schema half changed. The snapshot taken before migrating is the way back: restore it as below, then start the release that was running before, or fix the cause and try the newer one again.
 
 Snapshots take disk space equal to a full database dump each. See [Storage and volumes](/install/storage-and-volumes).
 
@@ -58,6 +65,8 @@ Restoring **replaces the database as it is now**. Anything written since the sna
      valence-2026-09-21T16-30-05-123Z-before-0078_more.dump
      valence-2026-08-02T09-12-44-901Z-before-0071_earlier.dump
    ```
+
+   `--list` and `--restore` work the same on every database. On MySQL and MariaDB the names end in `.sql.gz`, and restoring feeds the file to `mysql` or `mariadb`.
 
    The number after `before-` is the newest migration that was about to run, so it tells you which release each snapshot precedes. If none exist, it says `There are no snapshots in /config/backups.`
 
@@ -117,8 +126,8 @@ Do not try to bypass the check by editing the database's migration table. That i
 
 Snapshots are not always available: `BACKUP_BEFORE_MIGRATE` may have been `false`, the `config` volume may have been lost, or more upgrades than `BACKUPS_KEPT` may have happened since. In that case the only ways back are your own backups.
 
-- A `pg_dumpall` dump taken before the upgrade, restored the way [Updating](/install/updating#moving-to-postgres-18) restores one.
-- A copy of the `db-data` volume taken while Valence was stopped.
+- A `pg_dumpall` dump taken before the upgrade, restored the way [Updating](/install/updating#moving-to-postgres-18) restores one, or on MySQL and MariaDB a dump made with their own tool.
+- A copy of the database volume (`db-data`, `db-data-mysql` or `db-data-mariadb`) taken while Valence was stopped.
 
 This is why the upgrade routine says to take your own copy before a major upgrade. See [Storage and volumes](/install/storage-and-volumes#backups).
 

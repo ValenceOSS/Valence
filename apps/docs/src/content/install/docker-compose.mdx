@@ -29,12 +29,12 @@ Each GitHub release attaches a `compose.yaml` and an `env.example` (the reposito
 
 `compose.yaml` defines four services. Only `db` and `valence` start by default. The other two use Compose profiles and start only when you ask for them.
 
-| Service    | Image                                           | Starts by default  | Purpose                              |
-| ---------- | ----------------------------------------------- | ------------------ | ------------------------------------ |
-| `db`       | `postgres:18-alpine`                            | Yes                | The database                         |
-| `valence`  | `ghcr.io/marquescoding/valence:latest`          | Yes                | Server, web client and media service |
-| `requests` | `ghcr.io/marquescoding/valence-requests:latest` | Profile `requests` | Optional requesting service          |
-| `gluetun`  | `qmcgaw/gluetun:latest`                         | Profile `vpn`      | Optional VPN for a download client   |
+| Service    | Image                                           | Starts by default  | Purpose                                                        |
+| ---------- | ----------------------------------------------- | ------------------ | -------------------------------------------------------------- |
+| `db`       | `postgres:18-alpine`                            | Yes                | The database, unless [another is chosen](#choosing-a-database) |
+| `valence`  | `ghcr.io/marquescoding/valence:latest`          | Yes                | Server, web client and media service                           |
+| `requests` | `ghcr.io/marquescoding/valence-requests:latest` | Profile `requests` | Optional requesting service                                    |
+| `gluetun`  | `qmcgaw/gluetun:latest`                         | Profile `vpn`      | Optional VPN for a download client                             |
 
 ### db
 
@@ -145,6 +145,33 @@ The `requests` service sets `shm_size: 512m`, for the browser built into its ima
 ### Volumes
 
 The file ends by declaring `db-data`, `config`, `cache` and `transcodes` as named volumes.
+
+## Choosing a database
+
+Valence keeps its data in Postgres, MySQL or MariaDB. Postgres is the default and the recommendation, and it is what `compose.yaml` runs. For either of the others, two override files sit beside it in the repository, and you lay one over `compose.yaml` rather than editing it:
+
+```bash
+docker compose -f compose.yaml -f compose.mariadb.yaml up -d
+docker compose -f compose.yaml -f compose.mysql.yaml up -d
+```
+
+| File                   | Image                | Volume            | `DATABASE_URL`                           |
+| ---------------------- | -------------------- | ----------------- | ---------------------------------------- |
+| `compose.yaml` alone   | `postgres:18-alpine` | `db-data`         | `postgres://valence:...@db:5432/valence` |
+| `compose.mariadb.yaml` | `mariadb:11.4`       | `db-data-mariadb` | `mariadb://valence:...@db:3306/valence`  |
+| `compose.mysql.yaml`   | `mysql:8.4`          | `db-data-mysql`   | `mysql://valence:...@db:3306/valence`    |
+
+An override file replaces the `db` service and points `DATABASE_URL` at it for both `valence` and `requests`. What stays the same:
+
+- **The password is still `POSTGRES_PASSWORD`.** The name is kept so that one setting serves whichever database you choose.
+- **The port stays private.** The database listens on 3306 inside the stack and publishes nothing, as Postgres does.
+- **The collation is set for you.** The server is started with `utf8mb4` and a binary collation, `utf8mb4_0900_bin` on MySQL and `utf8mb4_nopad_bin` on MariaDB, which Valence checks for when it starts. See [System requirements](/start/system-requirements#database).
+
+The data lives in a volume of its own, mounted at `/var/lib/mysql`, because a Postgres data directory is no use to MySQL or MariaDB and the other way round.
+
+**Choose before the first start.** Valence moves no data from one kind of database to another. There is no export from one and import into another, so switching later means starting again from the setup wizard.
+
+Use the same `-f` pair on every later `docker compose` command, including `pull`, `logs` and `down`, or Compose falls back to `compose.yaml` alone and starts a Postgres beside your data. Setting `COMPOSE_FILE=compose.yaml:compose.mariadb.yaml` in `.env` does the same once for every command.
 
 ## Create the settings file
 

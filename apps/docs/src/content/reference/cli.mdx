@@ -19,6 +19,8 @@ The image contains the server, the web client and the media service. Its entrypo
 
 The image runs `node` from `/app`, which is why the paths are relative to it.
 
+`Main.js`, `Migrate.js` and `Rollback.js` are the same commands on every database. Each is a small launcher that reads `DATABASE_URL` and starts the build for that kind of database: the image carries a Postgres build and a MySQL build of each, such as `Main.postgres.js` and `Main.mysql.js`, and the MySQL build serves MariaDB too. Run the launchers rather than those builds. A build started directly against the other kind of database refuses to run.
+
 ### Migrate.js
 
 ```bash
@@ -30,7 +32,7 @@ Applies every migration the release carries that the database has not run yet. Y
 It behaves as follows.
 
 - If the database is already up to date, it prints nothing and exits.
-- Otherwise it prints `Applying N migrations this database has not run: ...`, takes a snapshot with `pg_dump` (unless the database is new or `BACKUP_BEFORE_MIGRATE` is `false`), applies the migrations and ends with `The database is up to date with this release.`
+- Otherwise it prints `Applying N migrations this database has not run: ...`, takes a snapshot with `pg_dump`, `mysqldump` or `mariadb-dump` (unless the database is new or `BACKUP_BEFORE_MIGRATE` is `false`), applies the migrations and ends with `The database is up to date with this release.`
 - If the database has run migrations the release does not carry, because a newer Valence used it, it refuses. See [Rolling back](/install/rolling-back).
 - On failure it prints `The migrations could not be applied:` followed by the reason to standard error, and exits with status 1.
 
@@ -54,12 +56,21 @@ Both flags are booleans, and the snapshot name is a positional argument. If the 
 Failures print `The rollback did not complete:` and the reason, and exit with status 1.
 
 <Callout title="A restore replaces the database" tone="danger">
-  Restoring drops and recreates the database from the snapshot with `pg_restore`, so everything
-  written since that snapshot is lost. Stop Valence first, and start the older image afterwards.
-  Snapshots are full copies of the database, so keep them as private as the database itself.
+  Restoring drops and recreates the database from the snapshot, with `pg_restore` on Postgres and
+  `mysql` or `mariadb` on the others, so everything written since that snapshot is lost. Stop
+  Valence first, and start the older image afterwards. Snapshots are full copies of the database, so
+  keep them as private as the database itself.
 </Callout>
 
-The snapshots are named `valence-` followed by a timestamp, `-before-` and the last migration they were taken ahead of, ending in `.dump`. They use the `pg_dump` custom format. The image installs `postgresql-client` at the major version of its `POSTGRES_MAJOR` build argument, which must match the Postgres in your compose file.
+The snapshots are named `valence-` followed by a timestamp, `-before-` and the last migration they were taken ahead of. The ending says which database made them:
+
+| Database | Ending    | Made with                                                       | Restored with |
+| :------- | :-------- | :-------------------------------------------------------------- | :------------ |
+| Postgres | `.dump`   | `pg_dump`, in its custom format                                 | `pg_restore`  |
+| MySQL    | `.sql.gz` | `mysqldump --single-transaction --set-gtid-purged=OFF`, gzipped | `mysql`       |
+| MariaDB  | `.sql.gz` | `mariadb-dump --single-transaction`, gzipped                    | `mariadb`     |
+
+Valence tells MySQL from MariaDB by asking the server its version. The image installs `postgresql-client` at the major version of its `POSTGRES_MAJOR` build argument, which must be at least as new as the Postgres in your compose file, along with Debian's MariaDB client and the `mysqldump` and `mysql` of MySQL 8.4.
 
 ### The media service binary
 
@@ -97,7 +108,7 @@ These are the commands the documentation uses. Run them in the folder that holds
 | `docker compose stop valence`                                  | Stop the server, for example before a rollback.                                                                |
 | `docker compose exec valence node apps/server/dist/Migrate.js` | Run migrations by hand.                                                                                        |
 | `docker compose exec valence valence-transcoder capabilities`  | Inspect hardware acceleration.                                                                                 |
-| `docker compose exec db pg_dumpall -U valence`                 | Dump the whole database, as used when [upgrading Postgres](/reference/troubleshooting).                        |
+| `docker compose exec db pg_dumpall -U valence`                 | Dump the whole Postgres database, as used when [upgrading Postgres](/reference/troubleshooting).               |
 | `docker compose down`                                          | Stop and remove the containers, keeping the volumes.                                                           |
 | `docker compose down -v`                                       | Also removes the volumes. This deletes your database and settings.                                             |
 
@@ -105,6 +116,8 @@ These are the commands the documentation uses. Run them in the folder that holds
   The four volumes hold different things. `config` cannot be rebuilt, since it holds settings,
   snapshots and profile pictures. Removing volumes is never needed to update Valence.
 </Callout>
+
+On MySQL or MariaDB, put `-f compose.yaml -f compose.mysql.yaml` or `-f compose.yaml -f compose.mariadb.yaml` after `docker compose` in each of these. See [Choosing a database](/install/docker-compose#choosing-a-database).
 
 The development file is used with `-f`:
 
@@ -192,15 +205,15 @@ This runs `apps/server/src/writeOpenApiDocument.ts`, which builds the API over i
 
 ## Database tooling
 
-Valence uses [Drizzle](https://orm.drizzle.team). The schema of the server is `apps/server/src/db/postgres/Schema.ts`, and its migrations are the SQL files in `apps/server/drizzle/postgres`. The requests service has its own schema and migration folder. Both read `DATABASE_URL`, loading the `.env` at the repository root, and fall back to the local development database.
+Valence uses [Drizzle](https://orm.drizzle.team). The server has one schema per kind of database, `apps/server/src/db/postgres/Schema.ts` and `apps/server/src/db/mysql/Schema.ts`, and its migrations are the SQL files in `apps/server/drizzle/postgres` and `apps/server/drizzle/mysql`. The requests service has its own schemas and migration folders, laid out the same way. Both read `DATABASE_URL`, loading the `.env` at the repository root, and fall back to the local development database.
 
-| Command                                       | Effect                                                                                                                     |
-| :-------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm --filter @valence/server db:generate`   | Writes a new migration from the difference between the schema and the last snapshot. Commit both the SQL and the snapshot. |
-| `pnpm --filter @valence/server db:migrate`    | Applies pending migrations with drizzle-kit, for development. A running server does this itself at start.                  |
-| `pnpm --filter @valence/server db:push`       | Pushes the schema straight to the database without a migration file. Use it for throwaway experiments only.                |
-| `pnpm --filter @valence/requests db:generate` | The same as the first, for the requests service.                                                                           |
-| `pnpm db:check`                               | Checks that no snapshot has drifted from the schema and that migrations are stamped in order.                              |
+| Command                                       | Effect                                                                                                                                                                                                                 |
+| :-------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm --filter @valence/server db:generate`   | Writes a new migration from the difference between the schema and the last snapshot, for Postgres and then MySQL. Commit both the SQL and the snapshot of each. `db:generate:postgres` and `db:generate:mysql` do one. |
+| `pnpm --filter @valence/server db:migrate`    | Applies pending Postgres migrations with drizzle-kit, for development. `db:migrate:mysql` does MySQL. A running server does this itself at start.                                                                      |
+| `pnpm --filter @valence/server db:push`       | Pushes the Postgres schema straight to the database without a migration file, and `db:push:mysql` the MySQL one. Use it for throwaway experiments only.                                                                |
+| `pnpm --filter @valence/requests db:generate` | The same as the first, for the requests service, with the same `:postgres` and `:mysql` forms.                                                                                                                         |
+| `pnpm db:check`                               | Checks that no snapshot has drifted from the schema and that migrations are stamped in order, for all four sets: the server and the requests service, each on Postgres and MySQL.                                      |
 
 `drizzle-kit` is a development dependency, so it is not in the image. That is why `Migrate.js` exists. See [Database and migrations](/develop/database-and-migrations).
 

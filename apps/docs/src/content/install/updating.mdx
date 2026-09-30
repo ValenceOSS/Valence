@@ -35,7 +35,7 @@ If you run the requests service, it has its own image, `ghcr.io/marquescoding/va
 ## The routine
 
 1. **Read the release notes.** They are on the [GitHub releases page](https://github.com/ValenceOSS/Valence/releases). Look for anything marked as breaking, and for changes to `compose.yaml` that you need to copy across.
-2. **Take a copy of the `db-data` volume before a major upgrade.** Migrations run on start and are not reversed automatically. The automatic snapshot described below is a safety net, not a replacement for your own backup. See [Storage and volumes](/install/storage-and-volumes#backups).
+2. **Take a copy of the database volume before a major upgrade**, `db-data` on Postgres or `db-data-mysql` or `db-data-mariadb` on the others. Migrations run on start and are not reversed automatically. The automatic snapshot described below is a safety net, not a replacement for your own backup. See [Storage and volumes](/install/storage-and-volumes#backups).
 3. **Pull and recreate:**
 
    ```bash
@@ -43,7 +43,7 @@ If you run the requests service, it has its own image, `ghcr.io/marquescoding/va
    docker compose up -d
    ```
 
-   In Dockge, use the update button. If you follow `latest`, this is all it takes. If you pin a tag, edit the tag first.
+   On MySQL or MariaDB, give both commands the same `-f` pair you started with, as [Choosing a database](/install/docker-compose#choosing-a-database) describes. In Dockge, use the update button. If you follow `latest`, this is all it takes. If you pin a tag, edit the tag first.
 
 4. **Watch the start.** Follow the logs while the new container migrates and comes up:
 
@@ -72,6 +72,10 @@ A brand new database has never run a migration and so has no snapshot taken: the
 
 If a migration fails, the server does not start. Read the log, fix the cause, and start again. Do not delete a snapshot or your database to make the message go away.
 
+On Postgres a migration that fails is undone, because changes to the schema happen inside a transaction there. On MySQL and MariaDB they do not: each change to a table takes effect as it runs, so a migration that fails part way can leave the schema half changed. The snapshot taken before migrating is the way back. See [Rolling back](/install/rolling-back).
+
+Before it migrates anything, the server also checks the database itself: Postgres 15 or newer, MySQL 8.0.21 or newer or MariaDB 10.6 or newer, and on MySQL and MariaDB the collation Valence needs. It stops with a message saying what to change otherwise. See [Troubleshooting](/reference/troubleshooting#the-database-is-refused-at-start).
+
 ### MIGRATE_ON_START
 
 `MIGRATE_ON_START` controls whether the server applies pending migrations itself. It is `true` by default, because updating should mean pulling the image and restarting. Turning it off leaves a server that comes up against a schema a release behind, where a missing column breaks reads of one table while the rest of the API answers normally, which reads as a bug in a screen rather than an update that has not landed.
@@ -91,6 +95,10 @@ docker compose exec valence node apps/server/dist/Migrate.js
 
 `Migrate.js` ships in the image next to the server, because the person reading the instruction can only run what is inside the container. Running it is the consent that `MIGRATE_ON_START` withholds, so it ignores that setting. It applies exactly what starting the server would have applied, including the snapshot beforehand, and prints what it did.
 
+### The job queue leaves pg-boss
+
+Background work used to run on pg-boss, and now runs on a queue Valence keeps in its own tables, so that it works on every database Valence does. The upgrade to that release carries across whatever was waiting in pg-boss, so work that was queued is not lost. It leaves pg-boss's own `valence_jobs` schema in place for one release, so that going back a version still works. Nothing needs doing by hand.
+
 ### Snapshots before migrating
 
 | Setting                 | Default           | Meaning                                                  |
@@ -99,11 +107,11 @@ docker compose exec valence node apps/server/dist/Migrate.js
 | `BACKUP_DIR`            | `/config/backups` | Where snapshots are kept, inside the `config` volume.    |
 | `BACKUPS_KEPT`          | `3`               | How many to keep. The oldest are removed.                |
 
-If the snapshot cannot be made because the Postgres client tool is missing, Valence says so and carries on. If the tool is present and fails, the migration does **not** run, because a database changed with no way back is the thing this exists to prevent. The full procedure is in [Rolling back](/install/rolling-back).
+The snapshot is taken with `pg_dump` on Postgres, `mysqldump` on MySQL and `mariadb-dump` on MariaDB, all of which the image carries. If the snapshot cannot be made because the client tool is missing, Valence says so and carries on. If the tool is present and fails, the migration does **not** run, because a database changed with no way back is the thing this exists to prevent. The full procedure is in [Rolling back](/install/rolling-back).
 
 ## Moving to Postgres 18
 
-`compose.yaml` now asks for `postgres:18-alpine`, where it used to ask for `postgres:17-alpine`. A major Postgres version cannot read the data directory that the previous one wrote. So pulling the new image over an existing `db-data` volume upgrades nothing: the container starts, finds a directory it does not recognise, and stops again. The data has to be carried across by hand. A fresh install needs none of this.
+This applies only to Postgres installs. `compose.yaml` now asks for `postgres:18-alpine`, where it used to ask for `postgres:17-alpine`. A major Postgres version cannot read the data directory that the previous one wrote. So pulling the new image over an existing `db-data` volume upgrades nothing: the container starts, finds a directory it does not recognise, and stops again. The data has to be carried across by hand. A fresh install needs none of this.
 
 Dump the data while the old version is still the one running, then bring it back into the new one.
 
@@ -145,7 +153,7 @@ Remove the database volume alone. `config`, `cache` and `transcodes` carry setti
 
 `config` is the one that cannot be rebuilt. Alongside the settings it holds `/config/profiles`, the household's uploaded profile pictures, which are the only copy of each. `cache` and `transcodes` hold nothing that cannot be made again, so losing either costs a re-render and nothing else.
 
-Keep `valence-backup.sql` until you are sure everything works. The Valence image installs the Postgres 18 client for its snapshots, which is why the two versions have to match.
+Keep `valence-backup.sql` until you are sure everything works. The Valence image installs the Postgres 18 client for its snapshots, and `pg_dump` refuses a server newer than itself, which is why the server must not run ahead of 18.
 
 ## After an upgrade
 
@@ -153,7 +161,7 @@ Keep `valence-backup.sql` until you are sure everything works. The Valence image
 | -------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | The server is healthy            | `curl -s http://localhost:8420/api/health`                                                             |
 | The migration completed          | `docker compose logs valence`, looking for the up to date line                                         |
-| A snapshot exists                | `docker compose run --rm valence node apps/server/dist/Rollback.js --list`                             |
+| A snapshot exists                | `docker compose run --rm valence node apps/server/dist/Rollback.js --list`, on every database          |
 | Hardware transcoding still works | The Hardware acceleration card on Settings. See [Hardware transcoding](/install/hardware-transcoding). |
 | Playback works                   | Play something.                                                                                        |
 
