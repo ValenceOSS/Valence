@@ -42,13 +42,19 @@ const describeRequestsSolver = (overview: RequestsOverview): RequestsHealth => {
     solver.lastFailedAt !== null &&
     (solver.lastPassedAt === null || solver.lastFailedAt > solver.lastPassedAt)
   ) {
+    const failedWhen = saidWhen(solver.lastFailedAt);
+    const problem = sayAgainIfAny(solver.problem) ?? say('common.noReasonGiven');
+
     return {
       label: say('common.offline'),
       tone: 'danger',
-      detail: say('screens.requestsPanel.describeRequestsSolver.lastFailedWhenProblem', {
-        when: saidWhen(solver.lastFailedAt),
-        problem: sayAgainIfAny(solver.problem) ?? say('common.noReasonGiven'),
-      }),
+      detail:
+        failedWhen === null
+          ? say('screens.requestsPanel.describeRequestsSolver.failedProblem', { problem })
+          : say('screens.requestsPanel.describeRequestsSolver.lastFailedWhenProblem', {
+              when: failedWhen,
+              problem,
+            }),
       help: docsFor('CloudflareCheckFailed'),
     };
   }

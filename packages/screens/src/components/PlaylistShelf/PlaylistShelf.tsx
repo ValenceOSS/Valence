@@ -5,7 +5,6 @@ import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
 import { musicMenuFor } from '@ValenceScreens/music/musicMenuFor';
-import { nameOfOwner } from '@ValenceScreens/music/nameOfOwner';
 import { RevealItem } from '@ValenceUI/RevealItem';
 import { MusicShelf } from '@ValenceScreens/components/MusicShelf/MusicShelf';
 import type { PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
@@ -23,7 +22,9 @@ const describePlaylist = (playlist: PlaylistSummary): string =>
   [
     playlist.isMine
       ? null
-      : say('screens.playlistShelf.byOwner', { owner: nameOfOwner(playlist.owner) }),
+      : playlist.owner === null
+        ? say('screens.playlistShelf.byARemovedProfile')
+        : say('screens.playlistShelf.byOwner', { owner: playlist.owner.name }),
     sayCount('common.count.things', playlist.entryCount),
   ]
     .filter((part) => part !== null)

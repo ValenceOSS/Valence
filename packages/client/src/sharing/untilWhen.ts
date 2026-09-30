@@ -13,18 +13,16 @@ import { say } from '@ValenceI18n/say';
  * @returns The phrase to show.
  */
 const untilWhen = (share: Share): string => {
+  const expiresAt = share.expiresAt === null ? null : saidWhen(share.expiresAt);
+
   if (share.isSpent) {
-    return share.expiresAt === null
+    return expiresAt === null
       ? say('client.sharing.untilWhen.whoeverOpenedItCanStillWatch2')
-      : say('client.sharing.untilWhen.whoeverOpenedItCanStillWatch', {
-          expiresAt: saidWhen(share.expiresAt),
-        });
+      : say('client.sharing.untilWhen.whoeverOpenedItCanStillWatch', { expiresAt });
   }
 
-  if (share.expiresAt !== null) {
-    return say('client.sharing.untilWhen.runsOutExpiresAt', {
-      expiresAt: saidWhen(share.expiresAt),
-    });
+  if (expiresAt !== null) {
+    return say('client.sharing.untilWhen.runsOutExpiresAt', { expiresAt });
   }
 
   return share.viewCap === null

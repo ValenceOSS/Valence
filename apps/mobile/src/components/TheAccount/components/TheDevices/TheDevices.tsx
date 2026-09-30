@@ -84,43 +84,49 @@ const TheDevices = () => {
       <SignInATelevision />
 
       <AGroup title={say('common.devices')}>
-        {devices.data.map((device) => (
-          <View key={device.id} style={styles.device}>
-            <View style={styles.words}>
-              <Words>
-                {device.isCurrent
-                  ? say('phone.theAccount.theDevices.nameThisPhone', {
-                      name: sayAgain(device.name),
-                    })
-                  : sayAgain(device.name)}
-              </Words>
-              <Words size="small" tone="muted">
-                {[
-                  device.address,
-                  say('phone.theAccount.theDevices.signedInSignedInAt', {
-                    signedInAt: saidWhen(device.signedInAt),
-                  }),
-                ]
-                  .filter((part) => part !== null)
-                  .join(' · ')}
-              </Words>
-            </View>
+        {devices.data.map((device) => {
+          const signedIn = saidWhen(device.signedInAt);
 
-            {device.isCurrent ? null : (
-              <Button
-                tone="quiet"
-                label={say('phone.theAccount.theDevices.signOutName', {
-                  name: sayAgain(device.name),
-                })}
-                onPress={() => {
-                  end(device.id, sayAgain(device.name));
-                }}
-              >
-                {say('common.signOut')}
-              </Button>
-            )}
-          </View>
-        ))}
+          return (
+            <View key={device.id} style={styles.device}>
+              <View style={styles.words}>
+                <Words>
+                  {device.isCurrent
+                    ? say('phone.theAccount.theDevices.nameThisPhone', {
+                        name: sayAgain(device.name),
+                      })
+                    : sayAgain(device.name)}
+                </Words>
+                <Words size="small" tone="muted">
+                  {[
+                    device.address,
+                    signedIn === null
+                      ? null
+                      : say('phone.theAccount.theDevices.signedInSignedInAt', {
+                          signedInAt: signedIn,
+                        }),
+                  ]
+                    .filter((part) => part !== null)
+                    .join(' · ')}
+                </Words>
+              </View>
+
+              {device.isCurrent ? null : (
+                <Button
+                  tone="quiet"
+                  label={say('phone.theAccount.theDevices.signOutName', {
+                    name: sayAgain(device.name),
+                  })}
+                  onPress={() => {
+                    end(device.id, sayAgain(device.name));
+                  }}
+                >
+                  {say('common.signOut')}
+                </Button>
+              )}
+            </View>
+          );
+        })}
 
         {elsewhere.length === 0 ? null : (
           <Button tone="ghost" isWide isDestructive onPress={endTheRest}>

@@ -190,7 +190,6 @@ const ENGLISH = {
   'client.downloads.useFetchWhatThisDeviceAsked.titleIsOnThisDevice': '{title} is on this device',
   'client.downloads.waysToDownloadAProgramme.chooseEpisodes': 'Choose episodes…',
   'client.downloads.waysToDownloadAProgramme.everyEpisode': 'Every episode',
-  'client.format.saidWhen.atSomePoint': 'at some point',
   'client.history.describeWhen.anHourAgo': 'An hour ago',
   'client.history.describeWhen.justNow': 'Just now',
   'client.history.describeWhen.minutesMinAgo': '{minutes} min ago',
@@ -455,7 +454,6 @@ const ENGLISH = {
   'common.addToQueue': 'Add to queue',
   'common.addTrigger': 'Add trigger',
   'common.administrator': 'Administrator',
-  'common.aFilm': 'a film',
   'common.aFilm2': 'A film',
   'common.album': 'Album',
   'common.albums': 'Albums',
@@ -481,7 +479,6 @@ const ENGLISH = {
   'common.artist': 'Artist',
   'common.artists': 'Artists',
   'common.artwork': 'Artwork',
-  'common.aSeries': 'a series',
   'common.aSeries2': 'A series',
   'common.askedByName': 'Asked by {name}',
   'common.askedByYou': 'Asked by you',
@@ -3106,7 +3103,6 @@ const ENGLISH = {
   'screens.adminArea.librariesPanel.valenceForgetsThisLibraryAndEverything':
     'Valence forgets this library and everything it knows about what is in it — watch progress, ratings, favourites, previews and thumbnails. Playlists holding anything from it keep their place and say what they lost. The files on disk are not touched. Anything running for it now is stopped.',
   'screens.adminArea.librariesPanel.whatNameIsDoing': 'What {name} is doing',
-  'screens.adminArea.libraryKindNames.aBook': 'a book',
   'screens.adminArea.librarySettingsDialog.aFolderOfItsOwnFor':
     'A folder of its own for what is fetched, where you want it kept apart. The library’s own folder otherwise.',
   'screens.adminArea.librarySettingsDialog.atOnce': 'At once',
@@ -3427,7 +3423,8 @@ const ENGLISH = {
   'screens.adminArea.releaseSearchPanel.dunePartTwo2160p': 'Dune Part Two 2160p',
   'screens.adminArea.releaseSearchPanel.fetchedThroughValenceWithWhateverThe':
     'Fetched through Valence, with whatever the site needs to hand it over.',
-  'screens.adminArea.releaseSearchPanel.fetchingTheKind': 'Fetching the {kind}…',
+  'screens.adminArea.releaseSearchPanel.fetchingTheNzb': 'Fetching the NZB…',
+  'screens.adminArea.releaseSearchPanel.fetchingTheTorrent': 'Fetching the torrent…',
   'screens.adminArea.releaseSearchPanel.forJudgingSize': 'For judging size',
   'screens.adminArea.releaseSearchPanel.judgeAgainst': 'Judge against',
   'screens.adminArea.releaseSearchPanel.judgedAgainstName': 'Judged against {name}',
@@ -3443,7 +3440,8 @@ const ENGLISH = {
   'screens.adminArea.releaseSearchPanel.openItsPage': 'Open its page',
   'screens.adminArea.releaseSearchPanel.runningTimeMinutes': 'Running time (minutes)',
   'screens.adminArea.releaseSearchPanel.savedTitle': 'Saved {title}.',
-  'screens.adminArea.releaseSearchPanel.saveTheKind': 'Save the {kind}',
+  'screens.adminArea.releaseSearchPanel.saveTheNzb': 'Save the NZB',
+  'screens.adminArea.releaseSearchPanel.saveTheTorrent': 'Save the torrent',
   'screens.adminArea.releaseSearchPanel.searchEveryEnabledIndexerAtOnce':
     'Search every enabled indexer at once. What each finds is listed together, most widely shared first.',
   'screens.adminArea.releaseSearchPanel.searchFor': 'Search for',
@@ -3451,14 +3449,18 @@ const ENGLISH = {
   'screens.adminArea.releaseSearchPanel.sendToATorrentClient': 'Send to a torrent client',
   'screens.adminArea.releaseSearchPanel.sendToAUsenetClient': 'Send to a usenet client',
   'screens.adminArea.releaseSearchPanel.sendToName': 'Send to {name}',
-  'screens.adminArea.releaseSearchPanel.sendToNameAsOne': 'Send to {name} as {one}',
+  'screens.adminArea.releaseSearchPanel.sendToNameAsABook': 'Send to {name} as a book',
+  'screens.adminArea.releaseSearchPanel.sendToNameAsAFilm': 'Send to {name} as a film',
+  'screens.adminArea.releaseSearchPanel.sendToNameAsASeries': 'Send to {name} as a series',
+  'screens.adminArea.releaseSearchPanel.sendToNameAsMusic': 'Send to {name} as music',
   'screens.adminArea.releaseSearchPanel.sentTitleToClientName': 'Sent {title} to {clientName}.',
   'screens.adminArea.releaseSearchPanel.thatReleaseIsAMagnetLink':
     'That release is a magnet link, which has been copied.',
-  'screens.adminArea.releaseSearchPanel.theKindCouldNotBeFetched':
-    'The {kind} could not be fetched.',
   'screens.adminArea.releaseSearchPanel.theMagnetLinkHasBeenCopied':
     'The magnet link has been copied.',
+  'screens.adminArea.releaseSearchPanel.theNzbCouldNotBeFetched': 'The NZB could not be fetched.',
+  'screens.adminArea.releaseSearchPanel.theTorrentCouldNotBeFetched':
+    'The torrent could not be fetched.',
   'screens.adminArea.releaseSearchPanel.titleCouldNotBeSent': '{title} could not be sent.',
   'screens.adminArea.releaseSearchPanel.whatItIs': 'What it is',
   'screens.adminArea.removeDownloadDialog.deleteWhatItDownloadedAsWell':
@@ -4260,7 +4262,7 @@ const ENGLISH = {
   'screens.mediaPreview.turnSoundOn': 'Turn sound on',
   'screens.motion.motionChoices.full': 'Full',
   'screens.motion.motionChoices.reduced': 'Reduced',
-  'screens.music.nameOfOwner.aRemovedProfile': 'a removed profile',
+  'screens.music.nameOfOwner.removedProfile': 'A removed profile',
   'screens.music.playlistGroupFor.addedToName': 'Added to {name}',
   'screens.musicHome.musicFeature.newestInYourLibrary': 'Newest in your library',
   'screens.musicPage.albumsView.readingYourAlbums': 'Reading your albums',
@@ -4298,6 +4300,7 @@ const ENGLISH = {
   'screens.musicPage.musicHome.seeAllWhat': 'See all {what}',
   'screens.musicPage.musicLibrary.albumName': 'Album · {name}',
   'screens.musicPage.musicLibrary.findInYourLibrary': 'Find in your library',
+  'screens.musicPage.musicLibrary.playlistOfARemovedProfile': 'Playlist · a removed profile',
   'screens.musicPage.musicLibrary.playlistOwner': 'Playlist · {owner}',
   'screens.musicPage.musicLibrary.yourLibrary': 'Your Library',
   'screens.musicPage.musicSearchView.everyAlbum': 'Every album',
@@ -4645,6 +4648,7 @@ const ENGLISH = {
   'screens.playback.toSpanStyle.verdanaGenevaSansSerif': 'Verdana, Geneva, sans-serif',
   'screens.playback.useNowPlaying.seriesSeasonNumberEpisodeEpisodeNumber':
     'Series {seasonNumber}, Episode {episodeNumber}',
+  'screens.playlistShelf.byARemovedProfile': 'By a removed profile',
   'screens.playlistShelf.byOwner': 'By {owner}',
   'screens.playOnDialog.notPlayingAnything': 'Not playing anything',
   'screens.playOnDialog.openValenceOnYourAppleTV':
@@ -4841,10 +4845,22 @@ const ENGLISH = {
   'screens.reencodeReview.watchIt': 'Watch it',
   'screens.reencodeReview.whatAStillCannotTellYou': 'What a still cannot tell you',
   'screens.reencodeReview.whereInTheFilmToLook': 'Where in the film to look',
-  'screens.releaseSearchPanel.describeWhereItGoes.asOneFiledIntoNameOnce':
-    'As {one}, filed into {name} once it has downloaded.',
-  'screens.releaseSearchPanel.describeWhereItGoes.asOneThereIsNoLibrary':
-    'As {one}. There is no library of {label} to file it into, so it stays in the client under {category}.',
+  'screens.releaseSearchPanel.describeWhereItGoes.asABookFiledIntoName':
+    'As a book, filed into {name} once it has downloaded.',
+  'screens.releaseSearchPanel.describeWhereItGoes.asABookNoLibrary':
+    'As a book. There is no library of books to file it into, so it stays in the client under {category}.',
+  'screens.releaseSearchPanel.describeWhereItGoes.asAFilmFiledIntoName':
+    'As a film, filed into {name} once it has downloaded.',
+  'screens.releaseSearchPanel.describeWhereItGoes.asAFilmNoLibrary':
+    'As a film. There is no library of films to file it into, so it stays in the client under {category}.',
+  'screens.releaseSearchPanel.describeWhereItGoes.asASeriesFiledIntoName':
+    'As a series, filed into {name} once it has downloaded.',
+  'screens.releaseSearchPanel.describeWhereItGoes.asASeriesNoLibrary':
+    'As a series. There is no library of series to file it into, so it stays in the client under {category}.',
+  'screens.releaseSearchPanel.describeWhereItGoes.asMusicFiledIntoName':
+    'As music, filed into {name} once it has downloaded.',
+  'screens.releaseSearchPanel.describeWhereItGoes.asMusicNoLibrary':
+    'As music. There is no library of music to file it into, so it stays in the client under {category}.',
   'screens.releaseTypeChooser.whichOfTheirReleasesAreFetched':
     'Which of their releases are fetched, now and as new ones come out.',
   'screens.releaseTypeChooser.whichReleases': 'Which releases',
@@ -4929,6 +4945,7 @@ const ENGLISH = {
   'screens.requestsPage.studiosRail.studios': 'Studios',
   'screens.requestsPage.titleShelf.seeAllOfTitle': 'See all of {title}',
   'screens.requestsPanel.describeRequestsSolver.cantStart': 'Can’t start',
+  'screens.requestsPanel.describeRequestsSolver.failedProblem': 'It failed: {problem}.',
   'screens.requestsPanel.describeRequestsSolver.itWouldNotStartStartProblem':
     'It would not start: {startProblem}',
   'screens.requestsPanel.describeRequestsSolver.lastFailedWhenProblem':

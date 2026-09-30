@@ -25,8 +25,8 @@ import { fetchRelease } from '@ValenceClient/requests/fetchIndexers';
 import { sendRelease } from '@ValenceClient/requests/fetchDownloadQueue';
 import { PROTOCOL_OF_CLIENT } from '@ValenceContracts/schemas/DownloadClient';
 import { LIBRARY_KINDS } from '@ValenceContracts/schemas/Library';
-import { LIBRARY_KIND_NAMES } from '@ValenceScreens/components/AdminArea/LIBRARY_KIND_NAMES';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
+import type { StringKey } from '@ValenceI18n/StringKey';
 import { downloadFile } from '@ValenceScreens/admin/downloadFile';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { releaseColumns } from '@ValenceScreens/components/AdminArea/releaseColumns';
@@ -38,6 +38,13 @@ import { profilesForMode } from './profilesForMode';
 import type { DataTableColumn } from '@ValenceUI/DataTable.types';
 import type { IndexerSearchMode, Release, ReleaseSearch } from '@ValenceContracts/schemas/Indexer';
 import { say } from '@ValenceI18n/say';
+
+const SEND_AS = {
+  movies: 'screens.adminArea.releaseSearchPanel.sendToNameAsAFilm',
+  shows: 'screens.adminArea.releaseSearchPanel.sendToNameAsASeries',
+  music: 'screens.adminArea.releaseSearchPanel.sendToNameAsMusic',
+  books: 'screens.adminArea.releaseSearchPanel.sendToNameAsABook',
+} as const satisfies Readonly<Record<LibraryKind, StringKey>>;
 
 const MODES: readonly { id: IndexerSearchMode; label: string }[] = [
   { id: 'search', label: say('common.anything') },
@@ -102,7 +109,7 @@ const ReleaseSearchPanel = () => {
         enableSorting: false,
         cell: ({ row }) => {
           const { magnetUrl, downloadUrl, infoUrl, title, indexerId, protocol } = row.original;
-          const kind = protocol === 'usenet' ? 'NZB' : 'torrent';
+          const isUsenet = protocol === 'usenet';
           const target = (clients.data ?? []).find(
             (client) => client.isEnabled && PROTOCOL_OF_CLIENT[client.kind] === protocol,
           );
@@ -153,7 +160,9 @@ const ReleaseSearchPanel = () => {
 
           const save = () => {
             setSaid({
-              text: say('screens.adminArea.releaseSearchPanel.fetchingTheKind', { kind }),
+              text: isUsenet
+                ? say('screens.adminArea.releaseSearchPanel.fetchingTheNzb')
+                : say('screens.adminArea.releaseSearchPanel.fetchingTheTorrent'),
               isProblem: false,
             });
 
@@ -162,7 +171,9 @@ const ReleaseSearchPanel = () => {
                 setSaid({
                   text:
                     refusal?.message ??
-                    say('screens.adminArea.releaseSearchPanel.theKindCouldNotBeFetched', { kind }),
+                    (isUsenet
+                      ? say('screens.adminArea.releaseSearchPanel.theNzbCouldNotBeFetched')
+                      : say('screens.adminArea.releaseSearchPanel.theTorrentCouldNotBeFetched')),
                   isProblem: true,
                 });
 
@@ -222,10 +233,7 @@ const ReleaseSearchPanel = () => {
                             id: `send-${sending}`,
                             label:
                               libraryKind === null
-                                ? say('screens.adminArea.releaseSearchPanel.sendToNameAsOne', {
-                                    name: target.name,
-                                    one: LIBRARY_KIND_NAMES[sending].one,
-                                  })
+                                ? say(SEND_AS[sending], { name: target.name })
                                 : say('screens.adminArea.releaseSearchPanel.sendToName', {
                                     name: target.name,
                                   }),
@@ -258,7 +266,9 @@ const ReleaseSearchPanel = () => {
                       },
                       {
                         id: 'download',
-                        label: say('screens.adminArea.releaseSearchPanel.saveTheKind', { kind }),
+                        label: isUsenet
+                          ? say('screens.adminArea.releaseSearchPanel.saveTheNzb')
+                          : say('screens.adminArea.releaseSearchPanel.saveTheTorrent'),
                         detail: say(
                           'screens.adminArea.releaseSearchPanel.fetchedThroughValenceWithWhateverThe',
                         ),

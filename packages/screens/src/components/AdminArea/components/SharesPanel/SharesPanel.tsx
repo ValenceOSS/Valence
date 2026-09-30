@@ -42,21 +42,25 @@ const SharesPanel = () => {
         id: 'title',
         header: say('common.linkTo'),
         accessorFn: (share) => share.title,
-        cell: ({ row }) => (
-          <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="flex flex-wrap items-center gap-2">
-              <span className="truncate font-medium text-text">{row.original.title}</span>
+        cell: ({ row }) => {
+          const made = saidWhen(row.original.createdAt);
 
-              {row.original.kind !== 'series' ? null : (
-                <Badge size="sm">{say('common.wholeSeries')}</Badge>
-              )}
-            </span>
+          return (
+            <span className="flex min-w-0 flex-col gap-0.5">
+              <span className="flex flex-wrap items-center gap-2">
+                <span className="truncate font-medium text-text">{row.original.title}</span>
 
-            <span className="truncate text-xs text-text-muted">
-              {say('common.madeCreatedAt', { createdAt: saidWhen(row.original.createdAt) })}
+                {row.original.kind !== 'series' ? null : (
+                  <Badge size="sm">{say('common.wholeSeries')}</Badge>
+                )}
+              </span>
+
+              <span className="truncate text-xs text-text-muted">
+                {made === null ? null : say('common.madeCreatedAt', { createdAt: made })}
+              </span>
             </span>
-          </span>
-        ),
+          );
+        },
       },
       {
         id: 'createdBy',

@@ -54,6 +54,7 @@ const RequestsPanel = () => {
   const overview = asked.data ?? null;
   const vpn = overview === null ? null : describeRequestsVpn(overview);
   const solver = overview === null ? null : describeRequestsSolver(overview);
+  const checkedWhen = overview === null ? null : saidWhen(overview.checkedAt ?? '');
 
   return (
     <PanelCard
@@ -85,18 +86,18 @@ const RequestsPanel = () => {
             <SettingRow
               title={say('screens.adminArea.requestsPanel.requestsService')}
               description={
-                overview.checkedAt === null
+                checkedWhen === null
                   ? say('screens.adminArea.requestsPanel.notCheckedYetLookingForIt', {
                       address: overview.address,
                     })
                   : overview.problem === null
                     ? say('screens.adminArea.requestsPanel.atAddressLastCheckedWhen', {
                         address: overview.address,
-                        when: saidWhen(overview.checkedAt),
+                        when: checkedWhen,
                       })
                     : say('screens.adminArea.requestsPanel.atAddressLastCheckedWhenProblem', {
                         address: overview.address,
-                        when: saidWhen(overview.checkedAt),
+                        when: checkedWhen,
                         problem: sayAgain(overview.problem),
                       })
               }

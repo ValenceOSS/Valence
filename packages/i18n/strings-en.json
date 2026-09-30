@@ -670,11 +670,6 @@
     "context": "Shown in the downloads (from `waysToDownloadAProgramme`)."
   },
   {
-    "handler": "client.format.saidWhen.atSomePoint",
-    "text": "at some point",
-    "context": "Shown in the format (from `saidWhen`)."
-  },
-  {
     "handler": "client.history.describeWhen.anHourAgo",
     "text": "An hour ago",
     "context": "Shown in the history (from `describeWhen`)."
@@ -1670,11 +1665,6 @@
     "context": "Shown, used in the app (from `defaultRoles`) and in the setup wizard."
   },
   {
-    "handler": "common.aFilm",
-    "text": "a film",
-    "context": "Shown, used in the library kind names in the admin area and in the ask for media dialog in the admin area."
-  },
-  {
     "handler": "common.aFilm2",
     "text": "A film",
     "context": "The label, used in the ask for media dialog in the admin area and in the app shell."
@@ -1798,11 +1788,6 @@
     "handler": "common.artwork",
     "text": "Artwork",
     "context": "Shown, used in several places, among them the artwork picker in the admin area and the cache breakdown (from `cacheRows`)."
-  },
-  {
-    "handler": "common.aSeries",
-    "text": "a series",
-    "context": "Shown, used in the library kind names in the admin area and in the ask for media dialog in the admin area."
   },
   {
     "handler": "common.aSeries2",
@@ -12600,11 +12585,6 @@
     "context": "The label of a button in the libraries panel in the admin area. {name} is filled in by the app."
   },
   {
-    "handler": "screens.adminArea.libraryKindNames.aBook",
-    "text": "a book",
-    "context": "Shown in the library kind names in the admin area."
-  },
-  {
     "handler": "screens.adminArea.librarySettingsDialog.aFolderOfItsOwnFor",
     "text": "A folder of its own for what is fetched, where you want it kept apart. The library’s own folder otherwise.",
     "context": "The description of a text field in the library settings dialog in the admin area."
@@ -13870,9 +13850,14 @@
     "context": "The detail in the release search panel in the admin area."
   },
   {
-    "handler": "screens.adminArea.releaseSearchPanel.fetchingTheKind",
-    "text": "Fetching the {kind}…",
-    "context": "The text in the release search panel in the admin area. {kind} is filled in by the app."
+    "handler": "screens.adminArea.releaseSearchPanel.fetchingTheNzb",
+    "text": "Fetching the NZB…",
+    "context": "While the NZB file for a release found by hand is being fetched from its indexer."
+  },
+  {
+    "handler": "screens.adminArea.releaseSearchPanel.fetchingTheTorrent",
+    "text": "Fetching the torrent…",
+    "context": "While the torrent file for a release found by hand is being fetched from its indexer."
   },
   {
     "handler": "screens.adminArea.releaseSearchPanel.forJudgingSize",
@@ -13930,9 +13915,14 @@
     "context": "The text in the release search panel in the admin area. {title} is filled in by the app."
   },
   {
-    "handler": "screens.adminArea.releaseSearchPanel.saveTheKind",
-    "text": "Save the {kind}",
-    "context": "The label in the release search panel in the admin area. {kind} is filled in by the app."
+    "handler": "screens.adminArea.releaseSearchPanel.saveTheNzb",
+    "text": "Save the NZB",
+    "context": "A menu item that saves the NZB file for a release found by hand."
+  },
+  {
+    "handler": "screens.adminArea.releaseSearchPanel.saveTheTorrent",
+    "text": "Save the torrent",
+    "context": "A menu item that saves the torrent file for a release found by hand."
   },
   {
     "handler": "screens.adminArea.releaseSearchPanel.searchEveryEnabledIndexerAtOnce",
@@ -13965,9 +13955,24 @@
     "context": "Shown in the release search panel in the admin area. {name} is filled in by the app."
   },
   {
-    "handler": "screens.adminArea.releaseSearchPanel.sendToNameAsOne",
-    "text": "Send to {name} as {one}",
-    "context": "Shown in the release search panel in the admin area. {name} is filled in by the app; {one} is filled in by the app."
+    "handler": "screens.adminArea.releaseSearchPanel.sendToNameAsABook",
+    "text": "Send to {name} as a book",
+    "context": "A menu item that sends a release found by hand to a download client, to be filed as a book. {name} is the download client."
+  },
+  {
+    "handler": "screens.adminArea.releaseSearchPanel.sendToNameAsAFilm",
+    "text": "Send to {name} as a film",
+    "context": "A menu item that sends a release found by hand to a download client, to be filed as a film. {name} is the download client."
+  },
+  {
+    "handler": "screens.adminArea.releaseSearchPanel.sendToNameAsASeries",
+    "text": "Send to {name} as a series",
+    "context": "A menu item that sends a release found by hand to a download client, to be filed as a series. {name} is the download client."
+  },
+  {
+    "handler": "screens.adminArea.releaseSearchPanel.sendToNameAsMusic",
+    "text": "Send to {name} as music",
+    "context": "A menu item that sends a release found by hand to a download client, to be filed as music. {name} is the download client."
   },
   {
     "handler": "screens.adminArea.releaseSearchPanel.sentTitleToClientName",
@@ -13980,14 +13985,19 @@
     "context": "The text in the release search panel in the admin area."
   },
   {
-    "handler": "screens.adminArea.releaseSearchPanel.theKindCouldNotBeFetched",
-    "text": "The {kind} could not be fetched.",
-    "context": "Shown in the release search panel in the admin area. {kind} is filled in by the app."
-  },
-  {
     "handler": "screens.adminArea.releaseSearchPanel.theMagnetLinkHasBeenCopied",
     "text": "The magnet link has been copied.",
     "context": "The text in the release search panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.releaseSearchPanel.theNzbCouldNotBeFetched",
+    "text": "The NZB could not be fetched.",
+    "context": "When the NZB file for a release found by hand could not be fetched from its indexer."
+  },
+  {
+    "handler": "screens.adminArea.releaseSearchPanel.theTorrentCouldNotBeFetched",
+    "text": "The torrent could not be fetched.",
+    "context": "When the torrent file for a release found by hand could not be fetched from its indexer."
   },
   {
     "handler": "screens.adminArea.releaseSearchPanel.titleCouldNotBeSent",
@@ -17178,9 +17188,9 @@
     "context": "The label in the motion (from `motionChoices`)."
   },
   {
-    "handler": "screens.music.nameOfOwner.aRemovedProfile",
-    "text": "a removed profile",
-    "context": "Shown in the music (from `nameOfOwner`)."
+    "handler": "screens.music.nameOfOwner.removedProfile",
+    "text": "A removed profile",
+    "context": "In place of the owner's name on a shared playlist whose owner's profile has been removed."
   },
   {
     "handler": "screens.music.playlistGroupFor.addedToName",
@@ -17346,6 +17356,11 @@
     "handler": "screens.musicPage.musicLibrary.findInYourLibrary",
     "text": "Find in your library",
     "context": "Shown in an empty text field until something is typed in the music library in the music page."
+  },
+  {
+    "handler": "screens.musicPage.musicLibrary.playlistOfARemovedProfile",
+    "text": "Playlist · a removed profile",
+    "context": "Under a shared playlist in the music library whose owner's profile has been removed."
   },
   {
     "handler": "screens.musicPage.musicLibrary.playlistOwner",
@@ -18780,6 +18795,11 @@
     "context": "Shown in the use now playing in the playback. {seasonNumber} is filled in by the app; {episodeNumber} is filled in by the app."
   },
   {
+    "handler": "screens.playlistShelf.byARemovedProfile",
+    "text": "By a removed profile",
+    "context": "Under a shared playlist on a shelf, when the profile that made it has been removed."
+  },
+  {
     "handler": "screens.playlistShelf.byOwner",
     "text": "By {owner}",
     "context": "Shown in the playlist shelf. {owner} is filled in by the app."
@@ -19565,14 +19585,44 @@
     "context": "The label of a slider in the reencode review."
   },
   {
-    "handler": "screens.releaseSearchPanel.describeWhereItGoes.asOneFiledIntoNameOnce",
-    "text": "As {one}, filed into {name} once it has downloaded.",
-    "context": "Shown in the release search panel (from `describeWhereItGoes`). {one} is filled in by the app; {name} is filled in by the app."
+    "handler": "screens.releaseSearchPanel.describeWhereItGoes.asABookFiledIntoName",
+    "text": "As a book, filed into {name} once it has downloaded.",
+    "context": "Under a choice of how to send a release found by hand. {name} is the library it will be filed into."
   },
   {
-    "handler": "screens.releaseSearchPanel.describeWhereItGoes.asOneThereIsNoLibrary",
-    "text": "As {one}. There is no library of {label} to file it into, so it stays in the client under {category}.",
-    "context": "Shown in the release search panel (from `describeWhereItGoes`). {one} is filled in by the app; {label} is filled in by the app; {category} is filled in by the app."
+    "handler": "screens.releaseSearchPanel.describeWhereItGoes.asABookNoLibrary",
+    "text": "As a book. There is no library of books to file it into, so it stays in the client under {category}.",
+    "context": "Under a choice of how to send a release found by hand, when there is no library for it. {category} is the download client's category."
+  },
+  {
+    "handler": "screens.releaseSearchPanel.describeWhereItGoes.asAFilmFiledIntoName",
+    "text": "As a film, filed into {name} once it has downloaded.",
+    "context": "Under a choice of how to send a release found by hand. {name} is the library it will be filed into."
+  },
+  {
+    "handler": "screens.releaseSearchPanel.describeWhereItGoes.asAFilmNoLibrary",
+    "text": "As a film. There is no library of films to file it into, so it stays in the client under {category}.",
+    "context": "Under a choice of how to send a release found by hand, when there is no library for it. {category} is the download client's category."
+  },
+  {
+    "handler": "screens.releaseSearchPanel.describeWhereItGoes.asASeriesFiledIntoName",
+    "text": "As a series, filed into {name} once it has downloaded.",
+    "context": "Under a choice of how to send a release found by hand. {name} is the library it will be filed into."
+  },
+  {
+    "handler": "screens.releaseSearchPanel.describeWhereItGoes.asASeriesNoLibrary",
+    "text": "As a series. There is no library of series to file it into, so it stays in the client under {category}.",
+    "context": "Under a choice of how to send a release found by hand, when there is no library for it. {category} is the download client's category."
+  },
+  {
+    "handler": "screens.releaseSearchPanel.describeWhereItGoes.asMusicFiledIntoName",
+    "text": "As music, filed into {name} once it has downloaded.",
+    "context": "Under a choice of how to send a release found by hand. {name} is the library it will be filed into."
+  },
+  {
+    "handler": "screens.releaseSearchPanel.describeWhereItGoes.asMusicNoLibrary",
+    "text": "As music. There is no library of music to file it into, so it stays in the client under {category}.",
+    "context": "Under a choice of how to send a release found by hand, when there is no library for it. {category} is the download client's category."
   },
   {
     "handler": "screens.releaseTypeChooser.whichOfTheirReleasesAreFetched",
@@ -19893,6 +19943,11 @@
     "handler": "screens.requestsPanel.describeRequestsSolver.cantStart",
     "text": "Can’t start",
     "context": "The label in the requests panel (from `describeRequestsSolver`)."
+  },
+  {
+    "handler": "screens.requestsPanel.describeRequestsSolver.failedProblem",
+    "text": "It failed: {problem}.",
+    "context": "Under the Cloudflare solver's status when it last failed and the time it failed is not known. {problem} is why."
   },
   {
     "handler": "screens.requestsPanel.describeRequestsSolver.itWouldNotStartStartProblem",

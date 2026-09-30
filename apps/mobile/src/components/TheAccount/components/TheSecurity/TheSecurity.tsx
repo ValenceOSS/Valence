@@ -233,16 +233,18 @@ const TheSecurity = () => {
 
         {(passkeys.data ?? []).map((passkey) => {
           const name = passkey.name ?? say('phone.theAccount.theSecurity.aPasskey');
+          const added =
+            passkey.createdAt === null || passkey.createdAt === undefined
+              ? null
+              : saidWhen(passkey.createdAt);
 
           return (
             <View key={passkey.id} style={styles.row}>
               <View style={styles.words}>
                 <Words>{name}</Words>
-                {passkey.createdAt === null || passkey.createdAt === undefined ? null : (
+                {added === null ? null : (
                   <Words size="small" tone="muted">
-                    {say('phone.theAccount.theSecurity.addedCreatedAt', {
-                      createdAt: saidWhen(passkey.createdAt),
-                    })}
+                    {say('phone.theAccount.theSecurity.addedCreatedAt', { createdAt: added })}
                   </Words>
                 )}
               </View>

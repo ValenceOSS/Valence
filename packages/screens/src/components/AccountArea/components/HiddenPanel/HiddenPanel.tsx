@@ -51,21 +51,25 @@ const HiddenPanel = () => {
         id: 'title',
         header: say('common.hidden'),
         accessorFn: (entry) => entry.title,
-        cell: ({ row }) => (
-          <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="flex flex-wrap items-center gap-2">
-              <span className="truncate font-medium text-text">{row.original.title}</span>
+        cell: ({ row }) => {
+          const hidden = saidWhen(row.original.hiddenAt);
 
-              {WHAT_IT_IS[row.original.kind] === null ? null : (
-                <Badge size="sm">{WHAT_IT_IS[row.original.kind]}</Badge>
-              )}
-            </span>
+          return (
+            <span className="flex min-w-0 flex-col gap-0.5">
+              <span className="flex flex-wrap items-center gap-2">
+                <span className="truncate font-medium text-text">{row.original.title}</span>
 
-            <span className="truncate text-xs text-text-muted">
-              {say('common.hiddenHiddenAt', { hiddenAt: saidWhen(row.original.hiddenAt) })}
+                {WHAT_IT_IS[row.original.kind] === null ? null : (
+                  <Badge size="sm">{WHAT_IT_IS[row.original.kind]}</Badge>
+                )}
+              </span>
+
+              <span className="truncate text-xs text-text-muted">
+                {hidden === null ? null : say('common.hiddenHiddenAt', { hiddenAt: hidden })}
+              </span>
             </span>
-          </span>
-        ),
+          );
+        },
       },
       {
         id: 'act',

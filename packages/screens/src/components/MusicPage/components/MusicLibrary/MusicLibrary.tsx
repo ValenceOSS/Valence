@@ -19,7 +19,6 @@ import { Equaliser } from '@ValenceScreens/components/Equaliser/Equaliser';
 import { isPlayingFrom } from '@ValenceScreens/music/isPlayingFrom';
 import { useMyPlaylists } from '@ValenceClient/music/useMyPlaylists';
 import { musicMenuFor } from '@ValenceScreens/music/musicMenuFor';
-import { nameOfOwner } from '@ValenceScreens/music/nameOfOwner';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { playlistArtworkUrl } from '@ValenceClient/music/fetchPlaylists';
@@ -79,9 +78,10 @@ const MusicLibrary = () => {
       ...(playlists.data ?? []).map((playlist): Entry => ({
         key: `playlist-${playlist.id}`,
         name: playlist.name,
-        detail: say('screens.musicPage.musicLibrary.playlistOwner', {
-          owner: nameOfOwner(playlist.owner),
-        }),
+        detail:
+          playlist.owner === null
+            ? say('screens.musicPage.musicLibrary.playlistOfARemovedProfile')
+            : say('screens.musicPage.musicLibrary.playlistOwner', { owner: playlist.owner.name }),
         artwork: (
           <PlaylistCover
             name={playlist.name}

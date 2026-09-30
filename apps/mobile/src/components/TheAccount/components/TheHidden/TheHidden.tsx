@@ -77,28 +77,34 @@ const TheHidden = () => {
             <Words tone="muted">{say('phone.theAccount.theHidden.nothingHidden')}</Words>
           </View>
         ) : (
-          titles.map((entry) => (
-            <View key={`${entry.kind}:${entry.subjectId}`} style={styles.row}>
-              <View style={styles.words}>
-                <Words lines={2}>{entry.title}</Words>
-                <Words size="small" tone="muted">
-                  {say('common.hiddenHiddenAt', { hiddenAt: saidWhen(entry.hiddenAt) })}
-                </Words>
-              </View>
+          titles.map((entry) => {
+            const hidden = saidWhen(entry.hiddenAt);
 
-              <Button
-                tone="bare"
-                label={say('common.bringTitleBack', { title: entry.title })}
-                onPress={() => {
-                  hiding.show({ kind: entry.kind, subjectId: entry.subjectId });
-                }}
-              >
-                <View style={styles.bringBack}>
-                  <Icon of={Eye} size={18} colour={colours.textMuted} />
+            return (
+              <View key={`${entry.kind}:${entry.subjectId}`} style={styles.row}>
+                <View style={styles.words}>
+                  <Words lines={2}>{entry.title}</Words>
+                  {hidden === null ? null : (
+                    <Words size="small" tone="muted">
+                      {say('common.hiddenHiddenAt', { hiddenAt: hidden })}
+                    </Words>
+                  )}
                 </View>
-              </Button>
-            </View>
-          ))
+
+                <Button
+                  tone="bare"
+                  label={say('common.bringTitleBack', { title: entry.title })}
+                  onPress={() => {
+                    hiding.show({ kind: entry.kind, subjectId: entry.subjectId });
+                  }}
+                >
+                  <View style={styles.bringBack}>
+                    <Icon of={Eye} size={18} colour={colours.textMuted} />
+                  </View>
+                </Button>
+              </View>
+            );
+          })
         )}
       </AGroup>
     </>

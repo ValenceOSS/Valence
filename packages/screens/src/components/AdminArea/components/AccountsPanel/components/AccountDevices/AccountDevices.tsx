@@ -57,7 +57,7 @@ const AccountDevices = ({ accountId }: AccountDevicesProps) => {
         accessorFn: (device) => device.signedInAt,
         cell: ({ row }) => (
           <span className="whitespace-nowrap text-xs text-text-muted">
-            {saidWhen(row.original.signedInAt)}
+            {saidWhen(row.original.signedInAt) ?? '—'}
           </span>
         ),
       },
