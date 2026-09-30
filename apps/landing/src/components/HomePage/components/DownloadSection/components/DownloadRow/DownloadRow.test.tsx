@@ -1,9 +1,14 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
 import { DownloadRow } from './DownloadRow';
 
 describe('DownloadRow', () => {
-  it('names the computer and the file, and links to the download', () => {
+  it('names the computer and the file, and fetches the download when pressed', async () => {
+    const assign = vi.fn();
+
+    vi.stubGlobal('location', { ...window.location, assign });
+
     render(
       <ul>
         <DownloadRow
@@ -20,9 +25,12 @@ describe('DownloadRow', () => {
     );
 
     expect(screen.getByText(/Valence-Setup-1\.1\.2\.exe/u)).toBeInTheDocument();
-    expect(
-      screen.getByRole('link', { name: 'Download for Windows, 64-bit installer' }),
-    ).toHaveAttribute('href', 'https://example.test/setup.exe');
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Download for Windows, 64-bit installer' }),
+    );
+
+    expect(assign).toHaveBeenCalledWith('https://example.test/setup.exe');
+    vi.unstubAllGlobals();
   });
 
   it('sends a download the release does not carry to its page', () => {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { IconCheck, IconCopy } from '@tabler/icons-react';
+import { IconCheckFilled, IconCopyFilled } from '@tabler/icons-react';
 import { Button } from '@ValenceUI/Button';
 import type { CopyableCommandsProps } from './CopyableCommands.types';
 
@@ -37,7 +37,7 @@ const CopyableCommands = ({ commands, label }: CopyableCommandsProps) => {
           label={isCopied ? 'Copied' : 'Copy the commands'}
           onClick={copy}
         >
-          {isCopied ? <IconCheck size={14} /> : <IconCopy size={14} />}
+          {isCopied ? <IconCheckFilled size={14} /> : <IconCopyFilled size={14} />}
           <span>{isCopied ? 'Copied' : 'Copy'}</span>
         </Button>
       </figcaption>

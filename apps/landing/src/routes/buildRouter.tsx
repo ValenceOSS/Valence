@@ -25,8 +25,21 @@ const buildRouter = () => {
 
   const terms = createRoute({ getParentRoute: () => root, path: '/terms' });
 
+  const ui = createRoute({ getParentRoute: () => root, path: '/ui' });
+
+  const uiComponent = createRoute({ getParentRoute: () => root, path: '/ui/$component' });
+
   return createRouter({
-    routeTree: root.addChildren([home, changelog, release, plugins, privacy, terms]),
+    routeTree: root.addChildren([
+      home,
+      changelog,
+      release,
+      plugins,
+      privacy,
+      terms,
+      ui,
+      uiComponent,
+    ]),
     defaultErrorComponent: PageProblem,
     scrollRestoration: true,
   });

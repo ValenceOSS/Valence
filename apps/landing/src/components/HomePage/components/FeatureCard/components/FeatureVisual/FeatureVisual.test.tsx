@@ -25,14 +25,19 @@ const KINDS: FeatureVisualKind[] = [
 
 describe('FeatureVisual', () => {
   it.each(KINDS)(
-    'draws the %s picture, hidden from assistive technology and out of reach',
+    'draws the %s picture, hidden from assistive technology and out of reach unless it is for playing with',
     (kind) => {
       const { container } = render(<FeatureVisual kind={kind} />);
       const picture = container.firstElementChild;
 
       expect(picture).toHaveAttribute('aria-hidden', 'true');
-      expect(picture).toHaveAttribute('inert');
       expect(picture?.textContent).not.toBe('');
+
+      if (kind === 'reader') {
+        expect(picture).not.toHaveAttribute('inert');
+      } else {
+        expect(picture).toHaveAttribute('inert');
+      }
     },
   );
 

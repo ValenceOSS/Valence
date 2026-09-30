@@ -16,6 +16,8 @@ import { PluginsVignette } from '@ValenceLanding/components/HomePage/components/
 import { TerminalVignette } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/TerminalVignette/TerminalVignette';
 import { HouseholdVignette } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/HouseholdVignette/HouseholdVignette';
 import { AuthVignette } from '@ValenceLanding/components/HomePage/components/FeatureCard/components/FeatureVisual/components/AuthVignette/AuthVignette';
+import { cn } from '@ValenceUI/cn';
+import { IsometricStage } from '@ValenceLanding/components/IsometricStage/IsometricStage';
 import type { FeatureVisualKind, FeatureVisualProps } from './FeatureVisual.types';
 
 const VIGNETTES: Record<FeatureVisualKind, ComponentType> = {
@@ -38,26 +40,33 @@ const VIGNETTES: Record<FeatureVisualKind, ComponentType> = {
   auth: AuthVignette,
 };
 
+const TOUCHABLE: ReadonlySet<FeatureVisualKind> = new Set(['reader']);
+
 /**
  * A feature shown rather than illustrated: a small, true-to-life piece of the product doing the
  * thing the card describes, drawn in the theme's own colours and fading into the page rather than
  * sitting in a box of its own. Left for the eye rather than the screen reader, since the card's
- * words already say it.
+ * words already say it. Most can't be touched; the few worth playing with, such as the book whose
+ * page can be turned by hand, take the pointer.
  *
  * @param kind - Which feature's piece of the product to draw.
  */
 const FeatureVisual = ({ kind }: FeatureVisualProps) => {
   const Vignette = VIGNETTES[kind];
+  const isTouchable = TOUCHABLE.has(kind);
 
   return (
     <div
       aria-hidden
-      inert
-      className="pointer-events-none relative flex h-full select-none items-center-safe justify-center overflow-hidden [--vignette-width:28rem] mask-b-from-80%"
+      {...(isTouchable ? {} : { inert: true })}
+      className={cn(
+        'relative flex h-full select-none items-center-safe justify-center overflow-hidden [--vignette-width:28rem] mask-b-from-80%',
+        isTouchable ? '' : 'pointer-events-none',
+      )}
     >
-      <span className="flex w-full justify-center">
+      <IsometricStage>
         <Vignette />
-      </span>
+      </IsometricStage>
     </div>
   );
 };

@@ -23,7 +23,7 @@ const ComparisonTable = () => {
         whileInView="shown"
         viewport={{ once: true, margin: '-80px' }}
         variants={revealVariants(prefersReducedMotion)}
-        transition={revealTransition(prefersReducedMotion, 'heavy')}
+        transition={revealTransition(prefersReducedMotion, 'bouncy')}
         className="flex flex-col gap-2"
       >
         <h2 className="text-3xl font-semibold tracking-tight text-text lg:text-4xl">
@@ -39,7 +39,7 @@ const ComparisonTable = () => {
         whileInView="shown"
         viewport={{ once: true, margin: '-80px' }}
         variants={revealVariants(prefersReducedMotion)}
-        transition={revealTransition(prefersReducedMotion)}
+        transition={revealTransition(prefersReducedMotion, 'bouncy')}
         className="mt-8 overflow-x-auto rounded-2xl border border-border/60"
       >
         <table className="w-full min-w-[640px] border-collapse">

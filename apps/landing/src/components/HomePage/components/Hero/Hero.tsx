@@ -1,5 +1,12 @@
 import { motion, useReducedMotionConfig } from 'motion/react';
-import { revealTransition, revealVariants, staggerVariants } from '@ValenceUI/animations/reveal';
+import {
+  letterArrival,
+  popArrival,
+  revealTransition,
+  revealVariants,
+  staggerVariants,
+} from '@ValenceUI/animations/reveal';
+import { PRESS_MOTION } from '@ValenceUI/animations/motion';
 import { Link } from '@tanstack/react-router';
 import {
   ArrowRight as ArrowRightIcon,
@@ -31,13 +38,25 @@ const PLATFORMS = [
 
 const LEGIBLE = 'drop-shadow-[var(--shadow-legible)]';
 
+const HEADLINE = 'Your films and programmes, on every screen in the house.';
+
+const HEADLINE_LEAD = 0.2;
+
+const WORD_STEP = 0.045;
+
+const BUTTONS_LEAD = 0.55;
+
+const BUTTON_STEP = 0.07;
+
 /**
  * The first thing anybody sees: the release that is out, what Valence is in one line, where to go
- * next, and the app itself rather than a description of it. Its own shader background lives in `LandingShell` instead of
+ * next, and the app itself rather than a description of it. It lands as the app does: the heading
+ * writes itself in a word at a time, and the buttons pop up after it. Its own shader background lives in `LandingShell` instead of
  * here, so it isn't torn down and rebuilt every time this mounts.
  */
 const Hero = () => {
   const prefersReducedMotion = useReducedMotionConfig();
+  const isStill = prefersReducedMotion === true;
 
   return (
     <section className="relative overflow-hidden pb-16 pt-32 sm:pt-40 lg:flex lg:min-h-svh lg:items-center lg:pb-24 lg:pt-28">
@@ -51,11 +70,14 @@ const Hero = () => {
           {LATEST === null ? null : (
             <motion.div
               variants={revealVariants(prefersReducedMotion)}
-              transition={revealTransition(prefersReducedMotion)}
+              transition={revealTransition(prefersReducedMotion, 'bouncy')}
             >
               <Link
                 to="/changelog"
-                className="valence-glass--film group inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm text-on-scrim/80 transition-colors hover:text-on-scrim"
+                className={cn(
+                  'valence-glass--film group inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm text-on-scrim/80 hover:text-on-scrim',
+                  PRESS_MOTION,
+                )}
               >
                 <span className="font-semibold text-on-scrim">{LATEST.version}</span>
                 <span>is out</span>
@@ -74,7 +96,7 @@ const Hero = () => {
 
           <motion.p
             variants={revealVariants(prefersReducedMotion)}
-            transition={revealTransition(prefersReducedMotion)}
+            transition={revealTransition(prefersReducedMotion, 'bouncy')}
             className={cn(
               'text-sm font-semibold uppercase tracking-[0.16em] text-on-scrim/80 lg:text-base',
               LEGIBLE,
@@ -91,49 +113,64 @@ const Hero = () => {
               LEGIBLE,
             )}
           >
-            Your films and programmes, on every screen in the house.
+            <span className="sr-only">{HEADLINE}</span>
+            {HEADLINE.split(' ').map((word, at) => (
+              <span key={`${word}-${at.toString()}`} aria-hidden>
+                {at === 0 ? null : ' '}
+                <motion.span
+                  className="inline-block"
+                  {...letterArrival(HEADLINE_LEAD + at * WORD_STEP, isStill)}
+                >
+                  {word}
+                </motion.span>
+              </span>
+            ))}
           </motion.h1>
 
           <motion.p
             variants={revealVariants(prefersReducedMotion)}
-            transition={revealTransition(prefersReducedMotion)}
+            transition={revealTransition(prefersReducedMotion, 'bouncy')}
             className={cn('max-w-xl text-lg text-on-scrim/75 lg:text-xl', LEGIBLE)}
           >
-            Valence is a streaming platform you run yourself, from a server you own. Point it at
-            your library and it plays what's already there. Nothing rewritten, nothing phoned home.
+            A streaming platform you run on your own server.{' '}
+            <strong className="font-bold text-on-scrim">We do not run servers for users.</strong>
           </motion.p>
 
           <motion.div
             variants={revealVariants(prefersReducedMotion)}
-            transition={revealTransition(prefersReducedMotion)}
+            transition={revealTransition(prefersReducedMotion, 'bouncy')}
             className="flex flex-wrap items-center gap-3 pt-2 lg:gap-4"
           >
-            <Button
-              variant="confirm"
-              size="xl"
-              onClick={() => {
-                document.getElementById('download')?.scrollIntoView({
-                  behavior: prefersReducedMotion === true ? 'auto' : 'smooth',
-                });
-              }}
-            >
-              Get started
-            </Button>
+            <motion.span className="flex" {...popArrival(BUTTONS_LEAD, isStill)}>
+              <Button
+                variant="confirm"
+                size="xl"
+                onClick={() => {
+                  document.getElementById('download')?.scrollIntoView({
+                    behavior: prefersReducedMotion === true ? 'auto' : 'smooth',
+                  });
+                }}
+              >
+                Get started
+              </Button>
+            </motion.span>
 
-            <Button
-              variant="glossy"
-              size="xl"
-              onClick={() => {
-                window.location.assign(`${DOCS_URL}/start/quick-start`);
-              }}
-            >
-              Read the docs
-            </Button>
+            <motion.span className="flex" {...popArrival(BUTTONS_LEAD + BUTTON_STEP, isStill)}>
+              <Button
+                variant="overlay"
+                size="xl"
+                onClick={() => {
+                  window.location.assign(`${DOCS_URL}/start/quick-start`);
+                }}
+              >
+                Read the docs
+              </Button>
+            </motion.span>
           </motion.div>
 
           <motion.p
             variants={revealVariants(prefersReducedMotion)}
-            transition={revealTransition(prefersReducedMotion)}
+            transition={revealTransition(prefersReducedMotion, 'bouncy')}
             className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-3 text-sm text-on-scrim/60"
           >
             <span>Runs on</span>

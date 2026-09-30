@@ -11,8 +11,8 @@ const SHAPES: Record<number, readonly FeatureCardShape[]> = {
 
 /**
  * One themed group of features — Viewing, Sharing, and so on — its heading and a line about it set
- * side by side over a grid ruled with hairlines, which arrives feature by feature as it scrolls into
- * view. A group of three sits in three equal columns, and a group of
+ * side by side over a grid of rounded cards set apart from one another, which arrives feature by
+ * feature as it scrolls into view. A group of three sits in three equal columns, and a group of
  * four alternates a wide feature with a square one.
  *
  * @param group - The group's title, its one-line description, and its features.
@@ -31,7 +31,7 @@ const FeatureSection = ({ group, number }: FeatureSectionProps) => {
         whileInView="shown"
         viewport={{ once: true, margin: '-80px' }}
         variants={revealVariants(prefersReducedMotion)}
-        transition={revealTransition(prefersReducedMotion, 'heavy')}
+        transition={revealTransition(prefersReducedMotion, 'bouncy')}
         className="mb-12 grid gap-4 lg:grid-cols-2 lg:items-end lg:gap-16"
       >
         <h2 className="max-w-md text-balance text-4xl font-semibold tracking-tight text-text lg:text-5xl">
@@ -45,7 +45,7 @@ const FeatureSection = ({ group, number }: FeatureSectionProps) => {
         whileInView="shown"
         viewport={{ once: true, margin: '-80px' }}
         variants={groupVariants}
-        className="grid grid-flow-row-dense grid-cols-1 gap-px border border-border/60 bg-border/60 sm:grid-cols-2 lg:grid-cols-3"
+        className="grid grid-flow-row-dense grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
       >
         {group.features.map((feature, index) => (
           <FeatureCard
