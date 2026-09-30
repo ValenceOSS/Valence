@@ -11,7 +11,7 @@ const valence = {
   },
 };
 
-const NEUTRAL_QUERY_FILES: string[] = [];
+const NEUTRAL_QUERY_FILES: string[] = ['apps/server/src/**/*.ts', 'apps/requests/src/**/*.ts'];
 
 const PARENT_IMPORT_BAN = {
   group: ['../*'],
@@ -330,6 +330,8 @@ export default tseslint.config(
             'apps/server/src/db/postgres/**',
             'apps/requests/src/db/postgres/**',
             'packages/database/src/postgres/**',
+            'apps/server/src/jobs/createDatabaseJobTriggerStore.ts',
+            'apps/server/src/jobs/createJobHistoryStore.ts',
             '**/*.test.ts',
           ],
           rules: {
