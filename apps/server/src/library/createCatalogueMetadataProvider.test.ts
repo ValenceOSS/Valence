@@ -1047,8 +1047,8 @@ describe('discovering and describing titles to ask for', () => {
       {
         id: '2',
         name: 'Walt Disney Pictures',
-        logoUrl: 'https://image.tmdb.org/t/p/w300_filter(duotone,e9f3ef,a5a5a5)/disney.png',
-        lightLogoUrl: 'https://image.tmdb.org/t/p/w300_filter(duotone,303c51,c4cbd4)/disney.png',
+        logoUrl: 'https://image.tmdb.org/t/p/w300/disney.png',
+        lightLogoUrl: 'https://image.tmdb.org/t/p/w300/disney.png',
       },
     ]);
   });
