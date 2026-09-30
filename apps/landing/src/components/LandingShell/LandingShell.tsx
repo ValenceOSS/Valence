@@ -12,6 +12,7 @@ import { ChangelogEntryPage } from '@ValenceLanding/components/ChangelogEntryPag
 import { PrivacyPage } from '@ValenceLanding/components/PrivacyPage/PrivacyPage';
 import { TermsPage } from '@ValenceLanding/components/TermsPage/TermsPage';
 import { PageProblem } from '@ValenceLanding/components/PageProblem/PageProblem';
+import { UiLibraryPage } from '@ValenceLanding/components/UiLibraryPage/UiLibraryPage';
 import type { ComponentType } from 'react';
 
 const PAGES: Record<string, ComponentType> = {
@@ -20,6 +21,7 @@ const PAGES: Record<string, ComponentType> = {
   '/plugins': PluginsPage,
   '/privacy': PrivacyPage,
   '/terms': TermsPage,
+  '/ui': UiLibraryPage,
 };
 
 /**
@@ -37,15 +39,21 @@ const LandingShell = () => {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const prefersReducedMotion = useReducedMotionConfig();
   const isHome = pathname === '/';
+  const isUiLibrary = pathname.startsWith('/ui/');
   const Page =
-    PAGES[pathname] ?? (pathname.startsWith('/changelog/') ? ChangelogEntryPage : PageProblem);
+    PAGES[pathname] ??
+    (pathname.startsWith('/changelog/')
+      ? ChangelogEntryPage
+      : isUiLibrary
+        ? UiLibraryPage
+        : PageProblem);
 
   return (
     <div className="relative z-0 flex min-h-dvh flex-col bg-surface text-text">
       <div
         aria-hidden
         className={cn(
-          'absolute inset-x-0 top-0 -z-10 h-svh overflow-hidden transition-opacity duration-500',
+          'absolute inset-x-0 top-0 -z-10 h-svh overflow-hidden bg-shade transition-opacity duration-500',
           isHome ? 'opacity-100' : 'opacity-0',
         )}
       >
@@ -53,14 +61,14 @@ const LandingShell = () => {
           className="h-full w-full opacity-60"
           speed={isHome && prefersReducedMotion !== true ? 1 : 0}
         />
-        <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-surface" />
+        <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-shade" />
       </div>
 
       <LandingNav />
 
       <AnimatePresence mode="wait">
         <motion.main
-          key={pathname}
+          key={isUiLibrary ? '/ui' : pathname}
           variants={revealVariants(prefersReducedMotion)}
           initial="hidden"
           animate="shown"

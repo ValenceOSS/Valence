@@ -1,0 +1,24 @@
+import { describe, expect, it } from 'vitest';
+import { artworkRevisions } from './artworkRevisions';
+import { artworkUrl } from './artworkUrl';
+
+describe('artworkUrl', () => {
+  it('names where an item’s picture is served from', () => {
+    expect(artworkUrl('film-1', 'poster')).toBe('/api/media/film-1/image/poster');
+  });
+
+  it('asks for the title’s own picture when that is what is wanted', () => {
+    expect(artworkUrl('episode-1', 'backdrop', { isOfTitle: true })).toBe(
+      '/api/media/episode-1/image/backdrop?of=title',
+    );
+  });
+
+  it('asks again under a new address once the picture has been changed from here', () => {
+    artworkRevisions.bump(['changed']);
+
+    expect(artworkUrl('changed', 'logo')).toBe('/api/media/changed/image/logo?v=1');
+    expect(artworkUrl('changed', 'backdrop', { isOfTitle: true })).toBe(
+      '/api/media/changed/image/backdrop?of=title&v=1',
+    );
+  });
+});

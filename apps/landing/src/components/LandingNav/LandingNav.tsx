@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import {
   motion,
   useMotionValueEvent,
@@ -10,15 +10,18 @@ import {
 import {
   IconBrandDiscordFilled,
   IconBrandGithubFilled,
-  IconMenu2,
+  IconMenu2Filled,
   IconStarFilled,
 } from '@tabler/icons-react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { Logo } from '@ValenceUI/Logo';
 import { Button } from '@ValenceUI/Button';
+import { letterArrival, popArrival } from '@ValenceUI/animations/reveal';
 import { cn } from '@ValenceUI/cn';
 import { readStarCount } from '@ValenceLanding/content/githubStars';
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
+import { ThemeToggle } from '@ValenceLanding/components/LandingNav/components/ThemeToggle/ThemeToggle';
+import { useSiteTheme } from '@ValenceLanding/components/LandingNav/components/ThemeToggle/useSiteTheme';
 import repository from 'virtual:github-stars';
 
 const NAV_LINK = 'text-sm font-semibold transition-colors';
@@ -26,6 +29,7 @@ const NAV_LINK = 'text-sm font-semibold transition-colors';
 const LINKS = [
   { to: '/changelog', label: 'Changelog' },
   { to: '/plugins', label: 'Plugins' },
+  { to: '/ui', label: 'UI' },
   { to: '/privacy', label: 'Privacy' },
   { to: '/terms', label: 'Terms' },
 ] as const;
@@ -48,6 +52,18 @@ const STAR_COUNT_LABEL = new Intl.NumberFormat('en', {
   maximumFractionDigits: 1,
 }).format(STAR_COUNT);
 
+const WORDMARK = 'Valence';
+
+const WORDMARK_LEAD = 0.18;
+
+const LETTER_STEP = 0.03;
+
+const LINKS_LEAD = 0.12;
+
+const SOCIAL_LEAD = 0.42;
+
+const STEP = 0.05;
+
 const SHRINK_OVER_PIXELS = 140;
 
 const CONDENSED_PAST = 0.6;
@@ -55,10 +71,12 @@ const CONDENSED_PAST = 0.6;
 /**
  * The bar every page carries: the mark, the way to the other pages, and the way out to the code —
  * riding over the hero at the top of the page and drawing itself into a condensed pill once it has
- * scrolled clear of it.
+ * scrolled clear of it. As the page opens the mark pops in, its name writes itself in beside it, and
+ * the links and buttons pop up one after another, as the app's own bar arrives.
  */
 const LandingNav = () => {
   const prefersReducedMotion = useReducedMotionConfig();
+  const isStill = prefersReducedMotion === true;
   const navigate = useNavigate();
   const { scrollY } = useScroll();
   const progress = useTransform(scrollY, [0, SHRINK_OVER_PIXELS], [0, 1], { clamp: true });
@@ -73,6 +91,8 @@ const LandingNav = () => {
     setIsCondensed(value > CONDENSED_PAST);
   });
 
+  const isHome = useRouterState({ select: (state) => state.location.pathname }) === '/';
+  const theme = useSiteTheme();
   const isFloating = prefersReducedMotion !== true && !isCondensed;
 
   return (
@@ -81,11 +101,11 @@ const LandingNav = () => {
         aria-label="Valence"
         {...(prefersReducedMotion === true ? {} : { style: { maxWidth, marginTop } })}
         className={cn(
-          'relative flex w-full items-center justify-between gap-6 px-3 py-2 sm:px-5',
+          'relative flex w-full min-w-fit items-center justify-between gap-6 px-2 py-2',
           prefersReducedMotion === true
             ? 'mt-1.5 max-w-6xl border-b border-border/60 bg-surface/85 backdrop-blur-md'
             : '',
-          isFloating ? 'valence-glass--film' : '',
+          isFloating && isHome ? 'valence-glass--film' : '',
         )}
       >
         {prefersReducedMotion === true ? null : (
@@ -97,58 +117,86 @@ const LandingNav = () => {
         )}
 
         <Link to="/" className="relative z-10 flex items-center gap-2.5">
-          <Logo size={24} isSolid />
-          <span className="text-base font-semibold tracking-tight text-text">Valence</span>
+          <motion.span className="flex" {...popArrival(0, isStill)}>
+            <Logo size={24} isSolid />
+          </motion.span>
+          <span className="sr-only">{WORDMARK}</span>
+          <span
+            aria-hidden
+            className="flex whitespace-pre text-base font-semibold tracking-tight text-text"
+          >
+            {[...WORDMARK].map((letter, at) => (
+              <motion.span
+                key={`${letter}-${at.toString()}`}
+                className="inline-block"
+                {...letterArrival(WORDMARK_LEAD + at * LETTER_STEP, isStill)}
+              >
+                {letter}
+              </motion.span>
+            ))}
+          </span>
         </Link>
 
         <div className="relative z-10 hidden items-center gap-6 sm:flex">
-          <a href={DOCS_URL} className={cn(NAV_LINK, 'text-text-muted hover:text-text')}>
-            Docs
-          </a>
+          <motion.span className="flex" {...popArrival(LINKS_LEAD, isStill)}>
+            <a href={DOCS_URL} className={cn(NAV_LINK, 'text-text-muted hover:text-text')}>
+              Docs
+            </a>
+          </motion.span>
 
-          {LINKS.map((link) => (
-            <Link
+          {LINKS.map((link, at) => (
+            <motion.span
               key={link.to}
-              to={link.to}
-              className={cn(NAV_LINK, 'text-text-muted hover:text-text')}
+              className="flex"
+              {...popArrival(LINKS_LEAD + (at + 1) * STEP, isStill)}
             >
-              {link.label}
-            </Link>
+              <Link to={link.to} className={cn(NAV_LINK, 'text-text-muted hover:text-text')}>
+                {link.label}
+              </Link>
+            </motion.span>
           ))}
         </div>
 
         <div className="relative z-10 flex items-center gap-2">
-          <Button
-            variant="glossy"
-            size="sm"
-            label="View the source on GitHub"
-            className={SOCIAL_BUTTON}
-            onClick={() => {
-              window.open(GITHUB_URL, '_blank', 'noopener,noreferrer');
-            }}
-          >
-            <IconBrandGithubFilled size={16} />
-            <IconStarFilled size={13} />
-            <span>{STAR_COUNT_LABEL}</span>
-          </Button>
+          <motion.span className="flex" {...popArrival(SOCIAL_LEAD - STEP, isStill)}>
+            <ThemeToggle className="rounded-2xl" />
+          </motion.span>
 
-          <Button
-            variant="glossy"
-            size="sm"
-            label="Join the Discord"
-            className={SOCIAL_BUTTON}
-            onClick={() => {
-              window.open(DISCORD_URL, '_blank', 'noopener,noreferrer');
-            }}
-          >
-            <IconBrandDiscordFilled size={16} />
-            <span>Discord</span>
-          </Button>
+          <motion.span className="hidden sm:flex" {...popArrival(SOCIAL_LEAD, isStill)}>
+            <Button
+              variant={theme === 'dark' ? 'secondary' : 'confirm'}
+              size="sm"
+              label="View the source on GitHub"
+              className={SOCIAL_BUTTON}
+              onClick={() => {
+                window.open(GITHUB_URL, '_blank', 'noopener,noreferrer');
+              }}
+            >
+              <IconBrandGithubFilled size={16} />
+              <IconStarFilled size={13} />
+              <span>{STAR_COUNT_LABEL}</span>
+            </Button>
+          </motion.span>
+
+          <motion.span className="hidden sm:flex" {...popArrival(SOCIAL_LEAD + STEP, isStill)}>
+            <Button
+              variant="discord"
+              size="sm"
+              label="Join the Discord"
+              className={SOCIAL_BUTTON}
+              onClick={() => {
+                window.open(DISCORD_URL, '_blank', 'noopener,noreferrer');
+              }}
+            >
+              <IconBrandDiscordFilled size={16} />
+              <span>Discord</span>
+            </Button>
+          </motion.span>
 
           <ActionMenu
             label="Navigation"
             className="sm:hidden"
-            trigger={<IconMenu2 size={18} />}
+            trigger={<IconMenu2Filled size={18} />}
             groups={[
               {
                 items: [

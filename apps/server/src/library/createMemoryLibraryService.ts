@@ -873,6 +873,12 @@ const createMemoryLibraryService = (
         ? `https://images.test/${kind}/${mediaId}.jpg`
         : null,
     ),
+
+  readArtworkChoices: (mediaId) =>
+    Promise.resolve(state.media.some((item) => item.id === mediaId) ? 'unavailable' : 'missing'),
+
+  chooseArtwork: (mediaId) =>
+    Promise.resolve(state.media.some((item) => item.id === mediaId) ? 'unavailable' : 'missing'),
 });
 
 export type { MemoryState };

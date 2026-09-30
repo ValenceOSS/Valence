@@ -1,22 +1,23 @@
 import {
-  IconBrandApple,
-  IconBrandWindows,
-  IconDeviceDesktop,
-  IconDownload,
+  IconBrandAppleFilled,
+  IconBrandWindowsFilled,
+  IconDeviceDesktopFilled,
+  IconDownloadFilled,
 } from '@tabler/icons-react';
+import { Button } from '@ValenceUI/Button';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import type { DownloadRowProps } from './DownloadRow.types';
 
 const ICONS = {
-  macAppleSilicon: IconBrandApple,
-  macIntel: IconBrandApple,
-  windows: IconBrandWindows,
-  linux: IconDeviceDesktop,
+  macAppleSilicon: IconBrandAppleFilled,
+  macIntel: IconBrandAppleFilled,
+  windows: IconBrandWindowsFilled,
+  linux: IconDeviceDesktopFilled,
 } as const;
 
 /**
  * One of the other desktop downloads, as a line in a list: which computer it is for, the file it
- * is and how big, and the way to fetch it.
+ * is and how big, and a button that fetches it.
  *
  * @param choice - The download.
  */
@@ -38,14 +39,18 @@ const DownloadRow = ({ choice }: DownloadRowProps) => {
         </span>
       </span>
 
-      <a
-        href={choice.url}
+      <Button
+        variant="secondary"
+        size="sm"
         aria-label={`Download for ${choice.system}, ${choice.detail}`}
-        className="flex items-center gap-1.5 text-sm font-semibold text-accent underline-offset-4 hover:underline"
+        hasTooltip={false}
+        onClick={() => {
+          window.location.assign(choice.url);
+        }}
       >
-        <IconDownload size={15} />
+        <IconDownloadFilled size={15} />
         Download
-      </a>
+      </Button>
     </li>
   );
 };

@@ -18,7 +18,7 @@ describe('DataOwnershipStatement', () => {
     const collapsed = (region.textContent ?? '').replace(WHITESPACE_RUN, ' ').trim();
 
     expect(collapsed).toBe(
-      'Your #library is yours. Your history is yours. Nothing about how you watch should leave the server you run, so with Valence, it never does.',
+      'Your #library stays yours. So does what you watch, when you watch it, and who with. It all lives on your server, and with Valence, it never leaves.',
     );
   });
 

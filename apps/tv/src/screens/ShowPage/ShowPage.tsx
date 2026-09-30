@@ -137,7 +137,7 @@ const ShowPage = ({ libraryId, showId, onPlay }: ShowPageProps) => {
       mediaId={show.coverMediaId}
       name={show.title}
       hasLogo={cover.data?.metadata.hasLogo ?? false}
-      stillPath={artworkUrl(show.coverMediaId, 'backdrop')}
+      stillPath={artworkUrl(show.coverMediaId, 'backdrop', { isOfTitle: true })}
       facts={joinFacts([
         show.year?.toString(),
         show.seasonCount === 1 ? '1 season' : `${show.seasonCount.toString()} seasons`,

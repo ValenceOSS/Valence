@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  bounceSpring,
+  popArrival,
   revealVariants,
   revealTransition,
   riseVariants,
@@ -46,6 +48,29 @@ describe('revealTransition', () => {
   it('drops the spring entirely when movement is unwelcome', () => {
     expect(revealTransition(true)).not.toHaveProperty('type', 'spring');
     expect(revealTransition(true, 'heavy')).not.toHaveProperty('type', 'spring');
+    expect(revealTransition(true, 'bouncy')).not.toHaveProperty('type', 'spring');
+  });
+
+  it('lands with an overshoot when asked to bounce', () => {
+    expect(revealTransition(false, 'bouncy')).toBe(bounceSpring);
+  });
+});
+
+describe('popArrival', () => {
+  it('pops up from small with a turn, on the bouncy spring, after its wait', () => {
+    const arrival = popArrival(0.2, false);
+
+    expect(arrival.initial).toMatchObject({ opacity: 0, scale: 0.4 });
+    expect(arrival.animate).toMatchObject({ opacity: 1, scale: 1, rotate: 0 });
+    expect(arrival.transition).toMatchObject({ ...bounceSpring, delay: 0.2 });
+  });
+
+  it('is simply there for somebody who asked for less motion', () => {
+    const arrival = popArrival(0.2, true);
+
+    expect(arrival.initial).toBe(false);
+    expect(arrival.animate).toMatchObject({ opacity: 1, scale: 1 });
+    expect(arrival.transition).toMatchObject({ duration: 0 });
   });
 });
 

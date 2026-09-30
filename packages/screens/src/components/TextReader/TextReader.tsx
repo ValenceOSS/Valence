@@ -36,7 +36,7 @@ import { useChromeThatHides } from '@ValenceScreens/reading/useChromeThatHides';
 import { useTurnKeys } from '@ValenceScreens/reading/useTurnKeys';
 import { PAGE_TURN } from '@ValenceCore/tokens/PAGE_TURN';
 import { turnOfPageSwipe } from '@ValenceCore/functions/turnOfPageSwipe';
-import { usePageDrag } from '@ValenceScreens/reading/usePageDrag';
+import { usePageDrag } from '@ValenceUI/usePageDrag';
 import type { TextPreferences } from '@ValenceClient/books/textPreferences';
 import type { TextReaderProps } from './TextReader.types';
 

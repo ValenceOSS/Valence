@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { artworkRevisions } from './artworkRevisions';
 import { titleLogoUrl } from './titleLogoUrl';
 
 describe('titleLogoUrl', () => {
@@ -8,5 +9,11 @@ describe('titleLogoUrl', () => {
 
   it('marks it as the full-size logo, so a browser holding the smaller one asks again', () => {
     expect(titleLogoUrl('abc')).toBe('/api/media/abc/image/logo?at=full');
+  });
+
+  it('keeps the full-size mark beside a new address for changed artwork', () => {
+    artworkRevisions.bump(['changed-logo']);
+
+    expect(titleLogoUrl('changed-logo')).toBe('/api/media/changed-logo/image/logo?v=1&at=full');
   });
 });

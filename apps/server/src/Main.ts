@@ -1,3 +1,4 @@
+import { followUpReading } from '@ValenceServer/library/followUpReading';
 import { docsFor } from '@ValenceCore/functions/docsFor';
 import { fileURLToPath } from 'node:url';
 import { join, relative } from 'node:path';
@@ -1331,18 +1332,7 @@ const jobs = await createJobQueue({
             },
             isCancelled: () => jobs.isCancelled(jobId),
             onRead: async () => {
-              if (isMusic) {
-                return;
-              }
-
-              await libraryService.fetchLogos(libraryId);
-
-              if (scanned?.kind === 'shows') {
-                await libraryService.detectSegments(libraryId);
-              }
-
-              await libraryService.regeneratePreviews(libraryId);
-              await libraryService.regenerateTrickplay(libraryId);
+              await followUpReading(libraryService, libraryId, scanned?.kind);
             },
             onScanned: async (result) => {
               jobs.reportProgress(
@@ -1403,8 +1393,7 @@ const jobs = await createJobQueue({
           if (scanned.kind === 'music') {
             await lookUpMusic(filed.libraryId, jobId, false);
           } else {
-            await libraryService.regeneratePreviews(filed.libraryId);
-            await libraryService.regenerateTrickplay(filed.libraryId);
+            await followUpReading(libraryService, filed.libraryId, scanned.kind);
           }
 
           const { request } = filed;

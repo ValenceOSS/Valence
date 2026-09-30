@@ -26,7 +26,7 @@ describe('DownloadSection', () => {
     render(<DownloadSection />);
 
     expect(screen.getByRole('button', { name: 'Download for macOS' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Download for Intel' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Download for Intel' })).toBeInTheDocument();
   });
 
   it('asks which computer where it cannot tell, and shows a phone the phone first', () => {
@@ -55,6 +55,18 @@ describe('DownloadSection', () => {
     expect(screen.getByRole('link', { name: 'The complete compose file' })).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: 'Set it up with an AI assistant' }),
+    ).toBeInTheDocument();
+  });
+
+  it('sets each place to get it in a card of its own, headed by the picture', () => {
+    onA('Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
+
+    render(<DownloadSection />);
+
+    expect(screen.getByRole('article', { name: 'Valence for Windows' })).toBeInTheDocument();
+    expect(screen.getByRole('article', { name: 'One compose file' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('article', { name: 'Valence for iPhone and Android' }),
     ).toBeInTheDocument();
   });
 

@@ -7,6 +7,7 @@ import {
 import {
   Bin as BinFilledIcon,
   Film as FilmFilledIcon,
+  Image as ImageFilledIcon,
   RefreshCw as RefreshCwFilledIcon,
   Search as SearchFilledIcon,
   Tape as TapeFilledIcon,
@@ -153,6 +154,7 @@ const MediaPanel = ({
   albums = NO_ALBUMS,
   books = NO_BOOKS,
   onCorrect,
+  onChooseArtwork,
   onCorrectAlbum,
   onCorrectBook,
   onChooseMoment,
@@ -395,6 +397,28 @@ const MediaPanel = ({
     [onChooseMoment, onDelete, onOpenFolder, onReencode, paths, rebuilding, rebuilt],
   );
 
+  const artworkAction = useCallback(
+    (title: MediaTitle): ActionMenuItem[] =>
+      onChooseArtwork === undefined || !title.isMatched
+        ? []
+        : [
+            {
+              id: 'artwork',
+              label: 'Choose artwork…',
+              icon: <Icon of={ImageFilledIcon} size={15} />,
+              onChoose: () => {
+                onChooseArtwork({
+                  mediaId: title.lead.id,
+                  name: title.name,
+                  isSeries: title.kind === 'series',
+                  mediaIds: title.episodes.map((episode) => episode.id),
+                });
+              },
+            },
+          ],
+    [onChooseArtwork],
+  );
+
   const seriesActions = useCallback(
     (title: MediaTitle): ActionMenuItem[][] => [
       [
@@ -406,6 +430,7 @@ const MediaPanel = ({
             onCorrect(title.lead);
           },
         },
+        ...artworkAction(title),
         ...(onReencode === undefined
           ? []
           : [
@@ -435,7 +460,7 @@ const MediaPanel = ({
             ],
           ]),
     ],
-    [onCorrect, onDelete, onReencode],
+    [artworkAction, onCorrect, onDelete, onReencode],
   );
 
   const actionsFor = useCallback(
@@ -473,12 +498,13 @@ const MediaPanel = ({
                   onCorrect(title.lead);
                 },
               },
+              ...artworkAction(title),
             ],
             ...fileActions(title.lead, title.name),
           ];
       }
     },
-    [fileActions, onCorrect, onReencode, seriesActions],
+    [artworkAction, fileActions, onCorrect, onReencode, seriesActions],
   );
 
   const columns = useMemo<DataTableColumn<MediaTitle>[]>(

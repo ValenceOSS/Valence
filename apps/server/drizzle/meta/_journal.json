@@ -638,6 +638,13 @@
       "when": 1790697808699,
       "tag": "0090_plugin_hooks",
       "breakpoints": true
+    },
+    {
+      "idx": 91,
+      "version": "7",
+      "when": 1790772948043,
+      "tag": "0091_artwork_choices",
+      "breakpoints": true
     }
   ]
 }

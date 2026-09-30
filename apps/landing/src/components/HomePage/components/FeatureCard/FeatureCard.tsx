@@ -25,9 +25,9 @@ const PICTURES: Record<FeatureCardShape, string> = {
  * One feature in a ruled grid of them, the way a figure sits in a paper: its number, a working
  * piece of the product doing what the feature says, and the words for it beneath or beside.
  *
- * There is no box around it. The grid's hairlines separate one feature from the next, and the
- * picture fades into the page rather than ending at an edge, so the product is what is looked at
- * rather than the frame it came in. Pointed at, a soft light follows the pointer across it and its
+ * It is a rounded card of its own, set apart from its neighbours, and its picture stands on an
+ * isometric plane inside it, so the product reads as an object on the page rather than a flat
+ * screenshot. Pointed at, a soft light follows the pointer across it and its
  * picture acts the feature out. In a group of four, two are drawn wide, the words beside
  * the picture rather than beneath it.
  *
@@ -61,7 +61,13 @@ const FeatureCard = ({ feature, index, figure, shape = 'square' }: FeatureCardPr
   }, []);
 
   return (
-    <RevealItem index={index} className={cn('list-none bg-surface', SPANS[shape])}>
+    <RevealItem
+      index={index}
+      className={cn(
+        'valence-surface valence-surface--flat list-none overflow-hidden rounded-3xl',
+        SPANS[shape],
+      )}
+    >
       <article
         ref={cellRef}
         className={cn('group relative isolate flex h-full gap-6 p-6 sm:p-8', LAYOUTS[shape])}

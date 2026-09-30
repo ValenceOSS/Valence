@@ -12,9 +12,16 @@ const mediaImageRoute = createRoute({
       mediaId: z.string().uuid(),
       kind: z.enum(['poster', 'backdrop', 'logo']),
     }),
+    query: z.object({
+      of: z.enum(['title']).optional().openapi({
+        description:
+          'Asks for the title’s own picture rather than this file’s: a programme’s chosen backdrop in place of an episode still',
+      }),
+    }),
   },
   responses: {
     200: { description: 'The artwork' },
+    304: { description: 'The artwork has not changed since it was last fetched' },
     404: {
       description: 'No such item, or no artwork for it',
       content: { 'application/json': { schema: ImageError } },

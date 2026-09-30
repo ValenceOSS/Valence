@@ -1,3 +1,5 @@
+import { readdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
@@ -255,6 +257,70 @@ const pluginCatalogueContent = (): Plugin => ({
   },
 });
 
+const UI_CATALOGUE_VIRTUAL_ID = 'virtual:ui-catalogue';
+
+const RESOLVED_UI_CATALOGUE_VIRTUAL_ID = `\0${UI_CATALOGUE_VIRTUAL_ID}`;
+
+const REPOSITORY_ROOT = fileURLToPath(new URL('../..', import.meta.url));
+
+const UI_COMPONENTS = fileURLToPath(new URL('../../packages/ui/src/components', import.meta.url));
+
+const UiPropSchema = z.object({
+  name: z.string(),
+  type: z.string(),
+  values: z.array(z.string()),
+  isRequired: z.boolean(),
+  defaultValue: z.string().nullable(),
+  description: z.string().nullable(),
+});
+
+const UiCatalogueSchema = z.array(
+  z.object({
+    name: z.string(),
+    summary: z.string(),
+    props: z.array(UiPropSchema),
+    inherits: z.array(z.string()),
+    builtOn: z.array(z.object({ name: z.string(), url: z.string().url() })),
+  }),
+);
+
+const UiCatalogueToolSchema = z.object({
+  buildUiCatalogue: z.custom<(root: string) => z.input<typeof UiCatalogueSchema>>(
+    (value) => typeof value === 'function',
+  ),
+});
+
+/**
+ * Hands the UI library page what every ValenceUI component documents about itself — summary, props,
+ * types, defaults — read straight from the components' source each time the site is built or the
+ * dev server asks, so the page can never list a prop that no longer exists or miss one that does.
+ * It watches the components folder, so editing a component's props shows up without a restart.
+ */
+const uiCatalogueContent = (): Plugin => ({
+  name: 'valence-ui-catalogue-content',
+
+  resolveId: (id) =>
+    id === UI_CATALOGUE_VIRTUAL_ID ? RESOLVED_UI_CATALOGUE_VIRTUAL_ID : undefined,
+
+  load: async function load(id) {
+    if (id !== RESOLVED_UI_CATALOGUE_VIRTUAL_ID) {
+      return undefined;
+    }
+
+    for (const entry of readdirSync(UI_COMPONENTS, { recursive: true, encoding: 'utf8' })) {
+      if (entry.endsWith('.tsx') || entry.endsWith('.types.ts')) {
+        this.addWatchFile(`${UI_COMPONENTS}/${entry}`);
+      }
+    }
+
+    const tool = UiCatalogueToolSchema.parse(
+      await tsImport('../../tools/uiCatalogue/buildUiCatalogue.ts', import.meta.url),
+    );
+
+    return `export default ${JSON.stringify(UiCatalogueSchema.parse(tool.buildUiCatalogue(REPOSITORY_ROOT)))};`;
+  },
+});
+
 export default defineConfig({
   resolve: { tsconfigPaths: true },
   plugins: [
@@ -263,6 +329,7 @@ export default defineConfig({
     changelogContent(),
     githubStarsContent(),
     pluginCatalogueContent(),
+    uiCatalogueContent(),
   ],
   server: {
     port: 5174,
@@ -270,4 +337,4 @@ export default defineConfig({
   },
 });
 
-export { changelogContent, githubStarsContent, pluginCatalogueContent };
+export { changelogContent, githubStarsContent, pluginCatalogueContent, uiCatalogueContent };

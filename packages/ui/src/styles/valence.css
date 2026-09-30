@@ -265,7 +265,7 @@
   --color-accent: oklch(0.5635 0.2408 260.8);
   --color-accent-hover: oklch(0.52 0.2408 260.8);
   --color-accent-contrast: oklch(0.99 0 0);
-  --color-on-white: oklch(0.3285 0.0832 259.3);
+  --color-on-white: oklch(0.16 0 0);
   --color-white-hover: oklch(0.9765 0.0054 275);
   --color-plate: oklch(1 0 0);
   --color-highlight: oklch(0.54 0.115 85);

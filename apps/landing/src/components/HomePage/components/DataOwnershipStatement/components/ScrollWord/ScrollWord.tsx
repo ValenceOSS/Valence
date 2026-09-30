@@ -45,6 +45,18 @@ const fadeInOver =
     `color-mix(in oklab, ${token} ${(value * atFull * 100).toString()}%, transparent)`;
 
 /**
+ * Builds a transform that turns a word from the muted grey of unread text to a token colour as its
+ * input goes from nothing to everything, so a tagged word warms into its colour as it is reached.
+ *
+ * @param token - The CSS colour token to end on, such as `var(--color-pink)`.
+ * @returns A function `useTransform` can call with the reveal value.
+ */
+const greyToward =
+  (token: string) =>
+  (value: number): string =>
+    `color-mix(in oklab, ${token} ${(value * 100).toString()}%, var(--color-text-muted))`;
+
+/**
  * Grows a length from nothing to a fixed size as its input goes from nothing to everything, for
  * space — a hidden character, the mark before a word — that should open up rather than sit
  * reserved from the start.
@@ -81,6 +93,7 @@ const ScrollWord = ({ children, index, total, progress, annotation }: ScrollWord
 
   const fontWeight = useTransform(reveal, [0, 1], [REGULAR_WEIGHT, BOLD_WEIGHT]);
   const tagBackground = useTransform(reveal, fadeInOver('var(--color-pink)', 0.15));
+  const tagColour = useTransform(reveal, greyToward('var(--color-pink)'));
   const hashWidth = useTransform(reveal, (value) => `${(value * HASH_WIDTH_EM).toString()}em`);
   const emphasisBackground = useTransform(reveal, fadeInOver('var(--color-accent)', 0.15));
   const emphasisDecoration = useTransform(reveal, fadeInOver('var(--color-accent)', 1));
@@ -91,7 +104,7 @@ const ScrollWord = ({ children, index, total, progress, annotation }: ScrollWord
     return (
       <motion.span style={{ opacity }} className="text-text">
         <motion.span
-          style={{ backgroundColor: tagBackground, fontWeight }}
+          style={{ backgroundColor: tagBackground, color: tagColour, fontWeight }}
           className="mx-0.5 rounded-md px-2 py-0.5 font-mono text-[0.85em]"
         >
           <motion.span

@@ -4,14 +4,16 @@ import { motion, useReducedMotionConfig } from 'motion/react';
 import {
   IconArrowRight,
   IconBrandAndroid,
-  IconBrandApple,
+  IconBrandAppleFilled,
   IconBrandDocker,
-  IconBrandWindows,
-  IconDeviceDesktop,
-  IconDeviceMobile,
+  IconBrandWindowsFilled,
+  IconDeviceDesktopFilled,
+  IconDeviceMobileFilled,
 } from '@tabler/icons-react';
 import { revealTransition, revealVariants } from '@ValenceUI/animations/reveal';
+import { PRESS_MOTION } from '@ValenceUI/animations/motion';
 import { Button } from '@ValenceUI/Button';
+import { Link as TextLink } from '@ValenceUI/Link';
 import { cn } from '@ValenceUI/cn';
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { DOCS_URL } from '@ValenceLanding/content/DOCS_URL';
@@ -21,27 +23,28 @@ import { detectPlatform } from '@ValenceLanding/content/downloads/detectPlatform
 import { downloadChoicesFor } from '@ValenceLanding/content/downloads/downloadChoicesFor';
 import { latestRelease } from '@ValenceLanding/content/downloads/latestRelease';
 import { CopyableCommands } from './components/CopyableCommands/CopyableCommands';
+import { DownloadCard } from './components/DownloadCard/DownloadCard';
 import { DownloadRow } from './components/DownloadRow/DownloadRow';
 import rawReleases from 'virtual:changelog';
 
 const LATEST = latestRelease(rawReleases);
 
 const LEAD_GLYPHS = {
-  macAppleSilicon: IconBrandApple,
-  macIntel: IconBrandApple,
-  windows: IconBrandWindows,
-  linux: IconDeviceDesktop,
+  macAppleSilicon: IconBrandAppleFilled,
+  macIntel: IconBrandAppleFilled,
+  windows: IconBrandWindowsFilled,
+  linux: IconDeviceDesktopFilled,
 } as const;
 
 const DOC_LINK =
-  'inline-flex items-center gap-1 text-sm font-semibold text-accent underline-offset-4 hover:underline';
+  'inline-flex items-center gap-1 text-sm font-semibold text-text-muted no-underline hover:text-text';
 
 const HEADING = 'font-mono text-xs uppercase tracking-[0.14em] text-text-muted';
 
 /**
- * Where to get Valence: the latest release and what is new in it, the desktop app for the
- * visitor's own computer first and every other one beneath it, the few commands that start a
- * server, and what there is for a phone. A visitor on a phone is shown the phone first.
+ * Where to get Valence: the latest release and what is new in it, then a card each for the desktop
+ * app — the visitor's own computer first and every other one beneath it — the few commands that
+ * start a server, and what there is for a phone. A visitor on a phone is shown the phone first.
  */
 const DownloadSection = () => {
   const prefersReducedMotion = useReducedMotionConfig();
@@ -52,28 +55,29 @@ const DownloadSection = () => {
   const LeadGlyph = lead === null ? null : LEAD_GLYPHS[lead.id];
 
   const phones = (
-    <div className={cn('flex flex-col gap-3 p-6 sm:p-8', isOnAPhone ? 'bg-surface-raised/40' : '')}>
-      <p className={HEADING}>Phones</p>
-
-      <p className="flex items-center gap-3 text-lg font-semibold text-text">
-        <IconDeviceMobile size={20} className="text-text-muted" />
-        Valence for iPhone and Android
-      </p>
-
-      <p className="max-w-md text-sm leading-relaxed text-text-muted">
-        The phone app finds your server on the network, downloads films to watch without it and
-        plays music and audiobooks. It is not in the App Store or Google Play yet.
+    <DownloadCard
+      eyebrow="Phones"
+      title="Valence for iPhone and Android"
+      glyph={IconDeviceMobileFilled}
+      focus="50% 20%"
+      index={isOnAPhone ? 0 : 2}
+      isLit={isOnAPhone}
+      className="lg:col-span-2"
+    >
+      <p className="max-w-xl text-sm leading-relaxed text-text-muted">
+        Finds your server on the network, downloads films to watch without it, and plays music and
+        audiobooks. Not in the App Store or Google Play yet.
       </p>
 
       <span className="flex items-center gap-3 text-text-muted">
-        <IconBrandApple size={18} />
+        <IconBrandAppleFilled size={18} />
         <IconBrandAndroid size={18} />
-        <a href={`${DOCS_URL}/use/the-phone-app`} className={DOC_LINK}>
+        <TextLink href={`${DOCS_URL}/use/the-phone-app`} className={DOC_LINK}>
           How to get it
           <IconArrowRight size={14} />
-        </a>
+        </TextLink>
       </span>
-    </div>
+    </DownloadCard>
   );
 
   return (
@@ -87,7 +91,7 @@ const DownloadSection = () => {
         whileInView="shown"
         viewport={{ once: true, margin: '-80px' }}
         variants={revealVariants(prefersReducedMotion)}
-        transition={revealTransition(prefersReducedMotion, 'heavy')}
+        transition={revealTransition(prefersReducedMotion, 'bouncy')}
         className="flex flex-col gap-10"
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -103,13 +107,16 @@ const DownloadSection = () => {
           {LATEST === null ? null : (
             <Link
               to="/changelog"
-              className="group inline-flex items-center gap-2 self-start rounded-full border border-border/60 px-3 py-1.5 text-sm text-text-muted transition-colors hover:text-text sm:self-auto"
+              className={cn(
+                'group inline-flex items-center gap-2 self-start rounded-full border border-border/60 px-3 py-1.5 text-sm text-text-muted hover:text-text sm:self-auto',
+                PRESS_MOTION,
+              )}
             >
               <span className="font-semibold text-text">{LATEST.version}</span>
               {LATEST.publishedAt === null ? null : (
                 <span>{describeReleaseDate(LATEST.publishedAt)}</span>
               )}
-              <span className="inline-flex items-center gap-1 text-accent">
+              <span className="inline-flex items-center gap-1 font-semibold text-text">
                 What&rsquo;s new
                 <IconArrowRight
                   size={14}
@@ -120,55 +127,55 @@ const DownloadSection = () => {
           )}
         </div>
 
-        <div className="grid grid-cols-1 overflow-hidden rounded-2xl border border-border/60 lg:grid-cols-2">
-          {isOnAPhone ? (
-            <div className="border-b border-border/60 lg:col-span-2">{phones}</div>
-          ) : null}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {isOnAPhone ? phones : null}
 
-          <div className="flex flex-col gap-6 border-b border-border/60 p-6 sm:p-8 lg:border-b-0 lg:border-r">
-            <p className={HEADING}>Desktop</p>
-
-            {lead === null || LeadGlyph === null ? (
-              <p className="text-lg font-semibold text-text">Choose your computer</p>
-            ) : (
+          <DownloadCard
+            eyebrow="Desktop"
+            title={lead === null ? 'Choose your computer' : `Valence for ${lead.system}`}
+            glyph={LeadGlyph ?? IconDeviceDesktopFilled}
+            focus="30% 35%"
+            index={isOnAPhone ? 1 : 0}
+            isLit={!isOnAPhone && lead !== null}
+          >
+            {lead === null ? null : (
               <div className="flex flex-col gap-3">
-                <p className="flex items-center gap-3 text-lg font-semibold text-text">
-                  <LeadGlyph size={20} className="text-text-muted" />
-                  Valence for {lead.system}
-                </p>
+                <span className="flex flex-wrap items-center gap-3">
+                  <Button
+                    variant="confirm"
+                    size="lg"
+                    onClick={() => {
+                      window.location.assign(lead.url);
+                    }}
+                  >
+                    Download for {lead.system}
+                  </Button>
 
-                <Button
-                  variant="primary"
-                  size="lg"
-                  className="self-start"
-                  onClick={() => {
-                    window.location.assign(lead.url);
-                  }}
-                >
-                  Download for {lead.system}
-                </Button>
+                  {intel === undefined ? null : (
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      onClick={() => {
+                        window.location.assign(intel.url);
+                      }}
+                    >
+                      Download for Intel
+                    </Button>
+                  )}
+                </span>
 
                 <p className="font-mono text-xs text-text-muted/80">
                   {lead.detail}
                   {lead.sizeBytes === null ? '' : ` · ${formatBytes(lead.sizeBytes)}`}
                   {lead.fileName === null ? '' : ` · ${lead.fileName}`}
                 </p>
-
-                {intel === undefined ? null : (
-                  <p className="text-sm text-text-muted">
-                    On an Intel Mac?{' '}
-                    <a href={intel.url} className={DOC_LINK}>
-                      Download for Intel
-                    </a>
-                  </p>
-                )}
               </div>
             )}
 
             <div className="flex flex-col">
-              {lead === null ? null : <p className={cn(HEADING, 'pt-2')}>Other platforms</p>}
+              {lead === null ? null : <p className={cn(HEADING, 'pt-1')}>Other platforms</p>}
 
-              <ul className="divide-y divide-border/60">
+              <ul className="divide-y divide-[var(--surface-line)]">
                 {others
                   .filter((choice) => choice !== intel)
                   .map((choice) => (
@@ -176,19 +183,17 @@ const DownloadSection = () => {
                   ))}
               </ul>
             </div>
-          </div>
+          </DownloadCard>
 
-          <div className="flex flex-col gap-5 p-6 sm:p-8">
-            <p className={HEADING}>Your server</p>
-
-            <p className="flex items-center gap-3 text-lg font-semibold text-text">
-              <IconBrandDocker size={20} className="text-text-muted" />
-              One compose file
-            </p>
-
+          <DownloadCard
+            eyebrow="Your server"
+            title="One compose file"
+            glyph={IconBrandDocker}
+            focus="75% 40%"
+            index={isOnAPhone ? 2 : 1}
+          >
             <p className="max-w-md text-sm leading-relaxed text-text-muted">
-              Download the compose file and its settings, fill in the four that are required, and
-              start it. Your library is mounted read only.
+              Fill in the four required settings and start it. Your library is mounted read only.
             </p>
 
             <CopyableCommands
@@ -197,20 +202,18 @@ const DownloadSection = () => {
             />
 
             <span className="flex flex-wrap gap-x-5 gap-y-2">
-              <a href={`${DOCS_URL}/install/complete-compose-file`} className={DOC_LINK}>
+              <TextLink href={`${DOCS_URL}/install/complete-compose-file`} className={DOC_LINK}>
                 The complete compose file
                 <IconArrowRight size={14} />
-              </a>
-              <a href={`${DOCS_URL}/start/set-up-with-an-ai`} className={DOC_LINK}>
+              </TextLink>
+              <TextLink href={`${DOCS_URL}/start/set-up-with-an-ai`} className={DOC_LINK}>
                 Set it up with an AI assistant
                 <IconArrowRight size={14} />
-              </a>
+              </TextLink>
             </span>
-          </div>
+          </DownloadCard>
 
-          {isOnAPhone ? null : (
-            <div className="border-t border-border/60 lg:col-span-2">{phones}</div>
-          )}
+          {isOnAPhone ? null : phones}
         </div>
       </motion.div>
     </section>

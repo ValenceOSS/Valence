@@ -271,7 +271,7 @@ const RailCard = ({
   useEffect(() => cancel, [cancel]);
 
   const wideUrl = media.hasBackdrop
-    ? artworkUrl(media.id, 'backdrop')
+    ? artworkUrl(media.id, 'backdrop', { isOfTitle: isSeries })
     : media.hasPoster
       ? artworkUrl(media.id, 'poster')
       : undefined;

@@ -10,6 +10,13 @@ type CurlLeaf = {
 
 type CurlFold = { at: CurlPoint; normal: CurlPoint };
 
+type CurlHold = {
+  heading: 1 | -1;
+  leaf: CurlLeaf;
+  corner: CurlPoint;
+  away: CurlPoint;
+};
+
 type CurlMatrix = readonly [number, number, number, number, number, number];
 
 type PageCurl = {
@@ -19,4 +26,4 @@ type PageCurl = {
   reflect: CurlMatrix;
 };
 
-export type { CurlFold, CurlLeaf, CurlMatrix, CurlPoint, PageCurl };
+export type { CurlFold, CurlHold, CurlLeaf, CurlMatrix, CurlPoint, PageCurl };

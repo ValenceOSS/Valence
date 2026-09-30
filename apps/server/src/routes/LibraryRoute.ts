@@ -1,3 +1,8 @@
+import {
+  ArtworkChoicesSchema,
+  ArtworkKindSchema,
+  ChooseArtworkSchema,
+} from '@ValenceContracts/schemas/ArtworkChoice';
 import { createRoute, z } from '@hono/zod-openapi';
 import {
   LibrarySchema,
@@ -257,6 +262,79 @@ const correctMatchRoute = createRoute({
     },
     404: {
       description: 'No such item',
+      content: { 'application/json': { schema: NotFound } },
+    },
+  },
+});
+
+const artworkChoicesRoute = createRoute({
+  method: 'get',
+  path: '/api/media/{id}/artwork',
+  tags: ['Library'],
+  summary: 'List the posters, backdrops and logos the catalogue has for an item’s title',
+  request: { params: z.object({ id: z.string().uuid() }) },
+  responses: {
+    200: {
+      description: 'What there is to choose from, and what is chosen now',
+      content: { 'application/json': { schema: ArtworkChoicesSchema.openapi('ArtworkChoices') } },
+    },
+    404: {
+      description: 'No such item, or it is not matched to the catalogue',
+      content: { 'application/json': { schema: NotFound } },
+    },
+    503: {
+      description: 'The catalogue could not be asked',
+      content: { 'application/json': { schema: NotFound } },
+    },
+  },
+});
+
+const ArtworkChosen = z.object({ jobId: z.string().nullable() }).openapi('ArtworkChosen');
+
+const chooseArtworkRoute = createRoute({
+  method: 'put',
+  path: '/api/media/{id}/artwork/{kind}',
+  tags: ['Library'],
+  summary: 'Choose one of the catalogue’s pictures for an item’s title, for every file of it',
+  request: {
+    params: z.object({ id: z.string().uuid(), kind: ArtworkKindSchema }),
+    body: {
+      content: { 'application/json': { schema: ChooseArtworkSchema.openapi('ChooseArtwork') } },
+    },
+  },
+  responses: {
+    200: {
+      description: 'The picture is chosen',
+      content: { 'application/json': { schema: ArtworkChosen } },
+    },
+    400: {
+      description: 'That picture is not one the catalogue offers for this title',
+      content: { 'application/json': { schema: NotFound } },
+    },
+    404: {
+      description: 'No such item, or it is not matched to the catalogue',
+      content: { 'application/json': { schema: NotFound } },
+    },
+    503: {
+      description: 'The catalogue could not be asked',
+      content: { 'application/json': { schema: NotFound } },
+    },
+  },
+});
+
+const forgetArtworkRoute = createRoute({
+  method: 'delete',
+  path: '/api/media/{id}/artwork/{kind}',
+  tags: ['Library'],
+  summary: 'Go back to the catalogue’s own picture for an item’s title',
+  request: { params: z.object({ id: z.string().uuid(), kind: ArtworkKindSchema }) },
+  responses: {
+    200: {
+      description: 'The choice is gone, with the job putting the catalogue’s pick back',
+      content: { 'application/json': { schema: ArtworkChosen } },
+    },
+    404: {
+      description: 'No such item, or it is not matched to the catalogue',
       content: { 'application/json': { schema: NotFound } },
     },
   },
@@ -612,4 +690,7 @@ export {
   setPreviewMomentRoute,
   clearPreviewMomentRoute,
   regeneratePreviewsRoute,
+  artworkChoicesRoute,
+  chooseArtworkRoute,
+  forgetArtworkRoute,
 };

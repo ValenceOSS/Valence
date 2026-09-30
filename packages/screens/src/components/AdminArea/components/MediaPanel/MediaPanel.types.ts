@@ -1,6 +1,7 @@
 import type { Book } from '@ValenceContracts/schemas/Book';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MusicAlbum } from '@ValenceContracts/schemas/Music';
+import type { ArtworkSubject } from '@ValenceScreens/components/AdminArea/components/ArtworkPicker/ArtworkPicker.types';
 
 type MediaPanelProps = {
   isUnreachable?: boolean;
@@ -9,6 +10,7 @@ type MediaPanelProps = {
   albums?: readonly MusicAlbum[];
   books?: readonly Book[];
   onCorrect: (media: MediaSummary) => void;
+  onChooseArtwork?: (subject: ArtworkSubject) => void;
   onCorrectAlbum?: (album: MusicAlbum) => void;
   onCorrectBook?: (book: Book) => void;
   onChooseMoment: (media: MediaSummary) => void;

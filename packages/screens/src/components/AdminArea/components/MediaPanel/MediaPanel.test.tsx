@@ -109,6 +109,32 @@ describe('MediaPanel', () => {
     expect(onCorrect).toHaveBeenCalledWith(item());
   });
 
+  it('offers to choose the artwork of a matched title', async () => {
+    const onChooseArtwork = vi.fn();
+    const user = userEvent.setup();
+
+    render(<MediaPanel {...props} media={[item()]} onChooseArtwork={onChooseArtwork} />);
+
+    await user.click(screen.getByRole('button', { name: /Actions for/ }));
+    await user.click(screen.getByRole('menuitem', { name: /Choose artwork/ }));
+
+    expect(onChooseArtwork).toHaveBeenCalledWith(
+      expect.objectContaining({ mediaId: item().id, isSeries: false }),
+    );
+  });
+
+  it('has no artwork to choose for a title the catalogue never matched', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MediaPanel {...props} media={[item({ externalId: null })]} onChooseArtwork={vi.fn()} />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /Actions for/ }));
+
+    expect(screen.queryByRole('menuitem', { name: /Choose artwork/ })).not.toBeInTheDocument();
+  });
+
   it('asks for the item whose preview moment is to be chosen', async () => {
     const onChooseMoment = vi.fn();
     const user = userEvent.setup();

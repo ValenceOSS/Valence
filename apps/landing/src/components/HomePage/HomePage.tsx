@@ -3,7 +3,6 @@ import { DataOwnershipStatement } from '@ValenceLanding/components/HomePage/comp
 import { FeatureSection } from '@ValenceLanding/components/HomePage/components/FeatureSection/FeatureSection';
 import { ComparisonTable } from '@ValenceLanding/components/HomePage/components/ComparisonTable/ComparisonTable';
 import { DownloadSection } from '@ValenceLanding/components/HomePage/components/DownloadSection/DownloadSection';
-import { CallToAction } from '@ValenceLanding/components/HomePage/components/CallToAction/CallToAction';
 import { FEATURE_GROUPS } from '@ValenceLanding/content/features';
 
 /**
@@ -22,8 +21,6 @@ const HomePage = () => (
     <ComparisonTable />
 
     <DownloadSection />
-
-    <CallToAction />
   </>
 );
 

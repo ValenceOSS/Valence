@@ -1,5 +1,10 @@
 @import '@valence/ui/src/styles/valence.css';
 
+body {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 .hljs {
   color: var(--color-text);
 }

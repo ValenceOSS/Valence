@@ -42,12 +42,6 @@ describe('HomePage', () => {
     expect(screen.getByRole('region', { name: 'How it compares' })).toBeInTheDocument();
   });
 
-  it('closes with a call to action', () => {
-    render(<HomePage />);
-
-    expect(screen.getByText('Run it on what you already have')).toBeInTheDocument();
-  });
-
   it('sets a display name so devtools can identify it', () => {
     expect(HomePage.displayName).toBe('HomePage');
   });
