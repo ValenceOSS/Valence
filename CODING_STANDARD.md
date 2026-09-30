@@ -252,24 +252,26 @@ exception for the config files that tooling insists on reading a default from.
 
 ### One query, several databases
 
-Valence is gaining MySQL 8 and MariaDB 10.6+ beside Postgres (VAL-306). Query code is written
-once. The helpers it needs live in `packages/database` and are imported through
-`@ValenceDatabase/*`; each entry there re-exports from `#dialect/*`, a package subpath import that
-resolves by build condition: the default resolves to `src/postgres`, and the `mysql` condition
-will resolve to `src/mysql` once that folder exists. Each app's own `src/db/postgres` (its
-schema) resolves the same way through the app's `#dialect/*`. Only files inside a dialect folder may import `drizzle-orm/pg-core`,
-`drizzle-orm/node-postgres`, `drizzle-orm/pglite`, `pg` or `@electric-sql/pglite` (and, later,
-`drizzle-orm/mysql-core` and `mysql2`); ESLint enforces it outside tests, and each dialect folder
-holds the same files exporting the same members. When the MySQL folder arrives, the two
-`Schema.ts` files are the one sanctioned exception to "no duplication": they describe the same
-tables in two dialects' DDL, and a parity test fails when they disagree. From then on shared code
-uses no `.returning()`, no `onConflictDo*`, no `ilike`, no `::` casts, no double-quoted
-identifiers inside `sql`, and no `||`; it uses the helpers in `@ValenceDatabase/*` or the neutral forms
-listed in the database docs.
+Valence runs on Postgres, MySQL 8.0.21+ and MariaDB 10.6+. Query code is written once, against
+`#dialect/*` and `@ValenceDatabase/*`, and typechecked twice: each package's `tsconfig.json`
+resolves `#dialect/*` to its postgres folder, and its `tsconfig.mysql.json` resolves it to its
+mysql folder by the `mysql` build condition. The helpers shared code needs live in
+`packages/database`, whose entries re-export from its own `#dialect/*`; each app keeps its schema
+and its migration plumbing in `src/db/postgres` and `src/db/mysql`. Only files inside a dialect
+folder may import `drizzle-orm/pg-core`, `drizzle-orm/node-postgres`, `drizzle-orm/pglite`, `pg`,
+`@electric-sql/pglite`, `drizzle-orm/mysql-core`, `drizzle-orm/mysql2` or `mysql2`; ESLint
+enforces it outside tests, and each dialect folder holds the same files exporting the same members,
+which a test checks. The two `Schema.ts` files of an app are the one sanctioned exception to "no
+duplication": they describe the same tables in two dialects' DDL, and a parity test fails when
+their tables, columns, keys or row types disagree. Shared code uses no `.returning()`, no
+`onConflictDo*`, no `ilike`, no `::` casts, no double-quoted identifiers inside `sql`, and no
+`||` (the `valence/neutral-queries` rule); it uses the helpers in `@ValenceDatabase/*` or the
+neutral forms listed in the database docs. Every test that opens a database of its own runs again
+on each MySQL-family engine in CI.
 
 ### The tooling note that survives it
 
-`apps/server/src/db/postgres/Schema.ts` exports each table by name because drizzle-kit
+Each `Schema.ts`, `apps/<app>/src/db/<dialect>/Schema.ts`, exports each table by name because drizzle-kit
 discovers tables by scanning a module's named exports; given anything else it
 reports `0 tables` and generates an empty migration, silently. Under this rule
 that file is no longer an exception — it is simply the rule applied.
@@ -287,9 +289,9 @@ anyone ran it (VAL-193).
 
 So: write the SQL by hand where that is clearer, then run
 `pnpm --filter @valence/server db:generate` and commit **the snapshot it leaves**
-while discarding the SQL it writes. Once a second dialect exists, a schema change carries a
-migration and a snapshot in each dialect's folder. `pnpm db:check` fails when the two are out of
-step, and CI runs it.
+while discarding the SQL it writes. A schema change carries a migration and a snapshot in each
+dialect's folder, `drizzle/postgres` and `drizzle/mysql`, and both `Schema.ts` files change
+together. `pnpm db:check` fails when a snapshot is out of step with its schema, and CI runs it.
 
 ---
 
