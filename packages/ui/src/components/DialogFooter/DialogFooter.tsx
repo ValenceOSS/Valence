@@ -35,55 +35,67 @@ import type { DialogFooterProps } from './DialogFooter.types';
  * where stacking only moves the problem down the page.
  *
  * @param children - The buttons answering the dialog, where its answers are its own.
+ * @param lead - Something more to offer, such as a way to watch a trailer. The answer then comes
+ *   first and stands wider, with this after it and the way out last.
  * @param dismiss - The way out, painted in the default gray. Says Cancel beside an answer and Close alone.
  * @param confirm - The answer, painted white, or red where it destroys something.
  * @param note - Why the last attempt was refused, in red above the answers, when it was.
  * @param className - Extra classes for the caller's own layout.
  */
-const DialogFooter = ({ children, dismiss, confirm, note, className }: DialogFooterProps) => (
-  <footer
-    className={cn(
-      'grid shrink-0 gap-3',
-      'sm:grid-flow-col sm:[grid-auto-columns:1fr]',
-      'border-t border-[var(--surface-line)] bg-[var(--color-surface-raised)] p-4',
-      '[&>*]:w-full',
-      className,
-    )}
-  >
-    {note === undefined || note === null || note === '' ? null : (
-      <span
-        role="alert"
-        className="self-center text-sm text-danger sm:[grid-column:1/-1] sm:justify-self-start"
-      >
-        {note}
-      </span>
-    )}
-
-    {dismiss === undefined ? null : (
-      <Button
-        variant="glossy"
-        disabled={dismiss.isDisabled ?? false}
-        isLoading={dismiss.isLoading ?? false}
-        onClick={dismiss.onChoose}
-      >
-        {dismiss.label ?? (confirm === undefined ? 'Close' : 'Cancel')}
-      </Button>
-    )}
-
-    {children}
-
-    {confirm === undefined ? null : (
+const DialogFooter = ({ children, lead, dismiss, confirm, note, className }: DialogFooterProps) => {
+  const confirmButton =
+    confirm === undefined ? null : (
       <Button
         variant={confirm.isDestructive === true ? 'danger' : 'confirm'}
+        className={lead === undefined ? '' : 'sm:col-span-2'}
         disabled={confirm.isDisabled ?? false}
         isLoading={confirm.isLoading ?? false}
         onClick={confirm.onChoose}
       >
         {confirm.label}
       </Button>
-    )}
-  </footer>
-);
+    );
+
+  return (
+    <footer
+      className={cn(
+        'grid shrink-0 gap-3',
+        'sm:grid-flow-col sm:[grid-auto-columns:1fr]',
+        'border-t border-[var(--surface-line)] bg-[var(--color-surface-raised)] p-4',
+        '[&>*]:w-full',
+        className,
+      )}
+    >
+      {note === undefined || note === null || note === '' ? null : (
+        <span
+          role="alert"
+          className="self-center text-sm text-danger sm:[grid-column:1/-1] sm:justify-self-start"
+        >
+          {note}
+        </span>
+      )}
+
+      {lead === undefined ? null : confirmButton}
+
+      {lead}
+
+      {dismiss === undefined ? null : (
+        <Button
+          variant="glossy"
+          disabled={dismiss.isDisabled ?? false}
+          isLoading={dismiss.isLoading ?? false}
+          onClick={dismiss.onChoose}
+        >
+          {dismiss.label ?? (confirm === undefined ? 'Close' : 'Cancel')}
+        </Button>
+      )}
+
+      {children}
+
+      {lead === undefined ? confirmButton : null}
+    </footer>
+  );
+};
 
 DialogFooter.displayName = 'DialogFooter';
 

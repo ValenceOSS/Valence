@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { motion } from 'motion/react';
+import { useEffect, useRef, useState } from 'react';
+import { motion, useReducedMotionConfig } from 'motion/react';
 import { ChevronDown as ChevronDownIcon, Menu as MenuIcon } from '@keyline-icons/react';
 import { ActionMenu } from '@ValenceUI/ActionMenu';
 import { AnimatedIcon } from '@ValenceUI/AnimatedIcon';
@@ -8,8 +8,46 @@ import { Icon } from '@ValenceUI/Icon';
 import { OptionMenu } from '@ValenceUI/OptionMenu';
 import { SlidingMark } from '@ValenceUI/SlidingMark';
 import { cn } from '@ValenceUI/cn';
+import { useFitWidth } from '@ValenceUI/useFitWidth';
+import { bounceSpring, letterArrival, openSpring } from '@ValenceUI/animations/reveal';
 import { useOpenAction } from './useOpenAction';
 import type { NavBarProps } from './NavBar.types';
+
+const TOOL_STEP = 0.05;
+
+const TOOL_LEAD = 0.08;
+
+const CAPSULE_LEAD = 0.05;
+
+const PLACE_STEP = 0.07;
+
+const LETTER_STEP = 0.022;
+
+const MARK_POPS_AFTER = 0.18;
+
+const ARRIVAL_MS = 1400;
+
+const AT_REST = { opacity: 1, scale: 1, y: 0, rotate: 0 };
+
+/**
+ * How one of the tools at the right arrives when the bar first appears: popping up from small with a
+ * little turn, a moment after the one before it, so the row lands left to right with a bounce. A
+ * tool that draws its own arrival, or anybody who asked for less motion, simply has it there — and a
+ * tool that turns out to draw its own only after it has started is put straight at rest, never left
+ * halfway.
+ *
+ * @param at - Where the tool sits in the row, counting from the left.
+ * @param isStill - Whether it should simply be there.
+ * @returns The Motion props for the tool's icon.
+ */
+const arrivalOf = (at: number, isStill: boolean) =>
+  isStill
+    ? { initial: false as const, animate: AT_REST, transition: { duration: 0 } }
+    : {
+        initial: { opacity: 0, scale: 0.4, y: 6, rotate: -18 },
+        animate: AT_REST,
+        transition: { ...bounceSpring, delay: TOOL_LEAD + at * TOOL_STEP },
+      };
 
 const MOVES = 'transition-colors duration-[var(--duration-fast)] ease-[var(--ease-soft)]';
 
@@ -73,10 +111,13 @@ const OPENS = [
  * the dialog had gone.
  *
  * @param brand - The mark at the left of the bar.
- * @param items - The places, in the order they are shown.
+ * @param items - The places, in the order they are shown, in a capsule that springs open when the bar
+ *   first appears, each name then written in a letter at a time and the place being stood on popping
+ *   in behind its name.
  * @param selectedId - Which place is being stood on.
  * @param onSelect - Told which place was chosen.
- * @param actions - The tools at the right.
+ * @param actions - The tools at the right. They pop in one after another, left to right, when the bar first
+ *   appears; a tool marked as arriving on its own draws that itself.
  * @param trailing - Anything else to stand at the far right, after the tools, such as words a
  *   screen with nowhere to go needs said.
  * @param solidity - How far painted in it is, from clear at nothing to solid at one. Solid where
@@ -96,6 +137,20 @@ const NavBar = ({
 }: NavBarProps) => {
   const [pointedAt, setPointedAt] = useState<string | null>(null);
   const { actionsRef, openAction } = useOpenAction();
+  const isStill = useReducedMotionConfig() === true;
+  const placesRef = useRef<HTMLUListElement | null>(null);
+  const placesWidth = useFitWidth(placesRef);
+  const [isArriving, setIsArriving] = useState(true);
+
+  useEffect(() => {
+    const done = setTimeout(() => {
+      setIsArriving(false);
+    }, ARRIVAL_MS);
+
+    return () => {
+      clearTimeout(done);
+    };
+  }, []);
 
   const isInThePlaces = items.some((item) => item.id === pointedAt);
   const litPlace = isInThePlaces ? pointedAt : selectedId;
@@ -105,6 +160,7 @@ const NavBar = ({
       group="nav-bar-places"
       feel="liquid"
       className="rounded-full bg-[var(--color-text)]"
+      {...(isArriving ? { popsInAfter: MARK_POPS_AFTER } : {})}
     />
   );
 
@@ -169,108 +225,135 @@ const NavBar = ({
             items.length === 0 ? null : 'md:flex',
           )}
         >
-          <ul className="valence-rail flex min-w-0 items-center gap-0.5 overflow-x-auto">
-            {items.map((item) => {
-              const isCurrent = item.id === selectedId;
+          <motion.div
+            className="flex min-w-0 overflow-hidden rounded-full"
+            initial={isStill ? false : { width: 0 }}
+            animate={{ width: placesWidth ?? 0 }}
+            transition={{ ...openSpring, delay: CAPSULE_LEAD }}
+          >
+            <ul
+              ref={placesRef}
+              className="valence-rail flex min-w-0 items-center gap-0.5 overflow-x-auto"
+            >
+              {items.map((item, place) => {
+                const isCurrent = item.id === selectedId;
 
-              const button = (
-                <Button
-                  variant="bare"
-                  size="none"
-                  label={item.label}
-                  hasTooltip={false}
-                  aria-current={isCurrent ? 'page' : undefined}
-                  onPointerEnter={() => {
-                    setPointedAt(item.id);
-                  }}
-                  onFocus={(event) => {
-                    if (event.target.matches(':focus-visible')) {
+                const button = (
+                  <Button
+                    variant="bare"
+                    size="none"
+                    label={item.label}
+                    hasTooltip={false}
+                    aria-current={isCurrent ? 'page' : undefined}
+                    onPointerEnter={() => {
                       setPointedAt(item.id);
-                    }
-                  }}
-                  onClick={() => {
-                    setPointedAt(item.id);
-                    onSelect(item.id);
-                  }}
-                  className={cn(
-                    'relative flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[0.9375rem] font-semibold',
-                    'coarse:h-11',
-                    MOVES,
-                    litPlace === item.id ? 'text-[var(--color-surface)]' : 'text-text',
-                  )}
-                >
-                  {litPlace === item.id ? placeMark : null}
+                    }}
+                    onFocus={(event) => {
+                      if (event.target.matches(':focus-visible')) {
+                        setPointedAt(item.id);
+                      }
+                    }}
+                    onClick={() => {
+                      setPointedAt(item.id);
+                      onSelect(item.id);
+                    }}
+                    className={cn(
+                      'relative flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[0.9375rem] font-semibold',
+                      'coarse:h-11',
+                      MOVES,
+                      litPlace === item.id ? 'text-[var(--color-surface)]' : 'text-text',
+                    )}
+                  >
+                    {litPlace === item.id ? placeMark : null}
 
-                  {item.icon === undefined ? null : (
-                    <span
-                      className={cn(
-                        'relative z-10 flex overflow-hidden',
-                        OPENS,
-                        isCurrent
-                          ? 'md:-mx-0.5 md:w-[22px] md:px-0.5 md:opacity-100'
-                          : 'md:-ml-2 md:w-0 md:opacity-0',
-                      )}
-                    >
-                      <AnimatedIcon
-                        isPlaying={!isCurrent && pointedAt === item.id}
-                        icon={isCurrent ? (item.activeIcon ?? item.icon) : item.icon}
-                        {...(isCurrent || item.gesture === undefined
-                          ? {}
-                          : { gesture: item.gesture })}
-                        {...(isCurrent || item.activeIcon === undefined
-                          ? {}
-                          : { activeIcon: item.activeIcon })}
-                      />
+                    {item.icon === undefined ? null : (
+                      <span
+                        className={cn(
+                          'relative z-10 flex overflow-hidden',
+                          OPENS,
+                          isCurrent
+                            ? 'md:-mx-0.5 md:w-[22px] md:px-0.5 md:opacity-100'
+                            : 'md:-ml-2 md:w-0 md:opacity-0',
+                        )}
+                      >
+                        <AnimatedIcon
+                          isPlaying={!isCurrent && pointedAt === item.id}
+                          icon={isCurrent ? (item.activeIcon ?? item.icon) : item.icon}
+                          {...(isCurrent || item.gesture === undefined
+                            ? {}
+                            : { gesture: item.gesture })}
+                          {...(isCurrent || item.activeIcon === undefined
+                            ? {}
+                            : { activeIcon: item.activeIcon })}
+                        />
+                      </span>
+                    )}
+
+                    <span className="relative z-10 hidden md:inline-flex">
+                      <span className="sr-only">{item.label}</span>
+
+                      <span aria-hidden className="flex whitespace-pre">
+                        {[...item.label].map((letter, at) => (
+                          <motion.span
+                            key={`${letter}-${at.toString()}`}
+                            className="inline-block"
+                            {...letterArrival(
+                              CAPSULE_LEAD + 0.15 + place * PLACE_STEP + at * LETTER_STEP,
+                              isStill,
+                            )}
+                          >
+                            {letter}
+                          </motion.span>
+                        ))}
+                      </span>
                     </span>
-                  )}
+                  </Button>
+                );
 
-                  <span className="relative z-10 hidden md:inline">{item.label}</span>
-                </Button>
-              );
+                const groups =
+                  item.choices === undefined
+                    ? []
+                    : [
+                        {
+                          name: item.choices.label,
+                          options: [...item.choices.options],
+                          selectedId: item.choices.selectedId,
+                          onSelect: item.choices.onSelect,
+                        },
+                      ];
 
-              const groups =
-                item.choices === undefined
-                  ? []
-                  : [
-                      {
-                        name: item.choices.label,
-                        options: [...item.choices.options],
-                        selectedId: item.choices.selectedId,
-                        onSelect: item.choices.onSelect,
-                      },
-                    ];
+                return (
+                  <li key={item.id} className="flex shrink-0 items-center">
+                    {item.choices === undefined ? (
+                      button
+                    ) : (
+                      <OptionMenu
+                        label={item.choices.label}
+                        align="start"
+                        anchor={button}
+                        groups={groups}
+                      />
+                    )}
 
-              return (
-                <li key={item.id} className="flex shrink-0 items-center">
-                  {item.choices === undefined ? (
-                    button
-                  ) : (
-                    <OptionMenu
-                      label={item.choices.label}
-                      align="start"
-                      anchor={button}
-                      groups={groups}
-                    />
-                  )}
-
-                  {item.choices === undefined ? null : (
-                    <OptionMenu
-                      label={item.choices.label}
-                      triggerShape="icon"
-                      align="start"
-                      className="hidden coarse:inline-flex"
-                      trigger={<Icon of={ChevronDownIcon} size={14} />}
-                      groups={groups}
-                    />
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+                    {item.choices === undefined ? null : (
+                      <OptionMenu
+                        label={item.choices.label}
+                        triggerShape="icon"
+                        align="start"
+                        className="hidden coarse:inline-flex"
+                        trigger={<Icon of={ChevronDownIcon} size={14} />}
+                        groups={groups}
+                      />
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </motion.div>
         </div>
 
         <div ref={actionsRef} className="flex flex-1 basis-0 items-center justify-end gap-0.5">
-          {actions.map((action) =>
+          {actions.map((action, at) =>
             action.control === undefined ? (
               <Button
                 key={action.id}
@@ -298,7 +381,10 @@ const NavBar = ({
               >
                 {pointedAt === action.id ? toolMark : null}
 
-                <span className="relative z-10 flex">
+                <motion.span
+                  className="relative z-10 flex"
+                  {...arrivalOf(at, isStill || action.arrivesOnItsOwn === true)}
+                >
                   <AnimatedIcon
                     isPlaying={pointedAt === action.id}
                     isStilled={openAction === action.id}
@@ -308,7 +394,7 @@ const NavBar = ({
                     {...(action.gesture === undefined ? {} : { gesture: action.gesture })}
                     {...(action.activeIcon === undefined ? {} : { activeIcon: action.activeIcon })}
                   />
-                </span>
+                </motion.span>
 
                 {action.badge === undefined ? null : (
                   <span className="absolute -right-0.5 -top-0.5 z-10">{action.badge}</span>
@@ -330,14 +416,17 @@ const NavBar = ({
               >
                 {pointedAt === action.id ? toolMark : null}
 
-                <span className="relative z-10 flex">
+                <motion.span
+                  className="relative z-10 flex"
+                  {...arrivalOf(at, isStill || action.arrivesOnItsOwn === true)}
+                >
                   <AnimatedIcon
                     isPlaying={pointedAt === action.id}
                     isStilled={openAction === action.id}
                     icon={action.control}
                     {...(action.gesture === undefined ? {} : { gesture: action.gesture })}
                   />
-                </span>
+                </motion.span>
               </div>
             ),
           )}

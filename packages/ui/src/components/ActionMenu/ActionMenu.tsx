@@ -3,7 +3,7 @@ import { Info as InfoIcon } from '@keyline-icons/react/fill';
 import { cn } from '@ValenceUI/cn';
 import { Icon } from '@ValenceUI/Icon';
 import { Tooltip } from '@ValenceUI/Tooltip';
-import { POPUP_MOTION } from '@ValenceUI/animations/motion';
+import { POPUP_MOTION, PRESS_MOTION } from '@ValenceUI/animations/motion';
 import { MENU } from '@ValenceUI/tokens/menu';
 import { HoverHighlight } from '@ValenceUI/HoverHighlight';
 import { useSlidingHighlight } from '@ValenceUI/useSlidingHighlight';
@@ -19,6 +19,7 @@ const TRIGGER_SIZES: Record<ActionMenuSize, string> = {
 const LOOKS = {
   plain: '',
   face: 'rounded-full hover:bg-transparent data-[state=open]:bg-transparent',
+  pill: 'size-auto rounded-full bg-[var(--surface-hover)] p-1 hover:bg-[var(--surface-active)] data-[state=open]:bg-[var(--surface-active)]',
   raised: 'border border-[var(--surface-line)] bg-[var(--surface-hover)]',
 } as const;
 
@@ -79,8 +80,9 @@ const ActionMenu = ({
         className={cn(
           'inline-flex shrink-0 items-center justify-center rounded-md outline-none',
           TRIGGER_SIZES[size],
-          'text-current transition-colors duration-[var(--duration-instant)] ease-[var(--ease-out)]',
-          'motion-reduce:transition-none focus-visible:ring-[3px] focus-visible:ring-ring',
+          'text-current',
+          PRESS_MOTION,
+          'focus-visible:ring-[3px] focus-visible:ring-ring',
           'hover:bg-[var(--surface-hover)] data-[state=open]:bg-[var(--surface-hover)]',
           'disabled:cursor-not-allowed disabled:opacity-50',
           LOOKS[look],

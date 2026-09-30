@@ -1,12 +1,17 @@
 import { Children } from 'react';
-import { motion } from 'motion/react';
+import { motion, useReducedMotionConfig } from 'motion/react';
 import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
 } from '@keyline-icons/react';
 import { cn } from '@ValenceUI/cn';
 import { RAIL } from '@ValenceUI/tokens/rail';
-import { groupVariants } from '@ValenceUI/animations/reveal';
+import {
+  bounceSpring,
+  groupVariants,
+  revealVariants,
+  stillTransition,
+} from '@ValenceUI/animations/reveal';
 import { usePagedScroller } from '@ValenceUI/usePagedScroller';
 import { AnimatedNumber } from '@ValenceUI/AnimatedNumber';
 import { Button } from '@ValenceUI/Button';
@@ -27,6 +32,8 @@ const FITTED = [
 ].join(' ');
 
 const LANE = 'px-[var(--rail-lane)] scroll-px-[var(--rail-lane)]';
+
+const VIEWED = { once: true, amount: 0.15 } as const;
 
 /**
  * One titled row of a library, scrolling sideways rather than wrapping, which is how a shelf is
@@ -57,7 +64,13 @@ const LANE = 'px-[var(--rail-lane)] scroll-px-[var(--rail-lane)]';
  * @param onOpenTitle - Told when the title was pressed, where the row leads somewhere fuller.
  * @param hasArrows - Whether the row is laid out in step with the page's gutters. A row inside a dialog
  *   sits within the dialog's own padding, and holding a page's gutter open there reads as a stray margin.
+ * @param look - Whether the row is headed as a title of its own, or as one section of a panel, in the
+ *   small capitals such a panel's other sections wear.
  * @param className - Extra classes for the caller's own layout.
+ *
+ * The heading springs in first and the cards follow it one by one, the first time the row comes into
+ * view — a row further down the page lands as it is scrolled to, and never again after that.
+
  */
 const Rail = ({
   title,
@@ -68,12 +81,14 @@ const Rail = ({
   sizesCards = false,
   cards = 'wide',
   hasArrows = true,
+  look = 'title',
   className,
 }: RailProps) => {
   const { trackRef, pages, isAtStart, isAtEnd, measure, scrollTo } =
     usePagedScroller<HTMLUListElement>(Children.count(children));
 
   const hasPages = pages.count > 1;
+  const prefersReducedMotion = useReducedMotionConfig();
 
   return (
     <section
@@ -84,13 +99,25 @@ const Rail = ({
       )}
       aria-label={title}
     >
-      <header
+      <motion.header
+        variants={revealVariants(prefersReducedMotion)}
+        initial="hidden"
+        whileInView="shown"
+        viewport={VIEWED}
+        transition={prefersReducedMotion === true ? stillTransition : bounceSpring}
         className={cn(
           'relative z-10 flex items-end justify-between gap-4',
           sizesCards ? (hasArrows ? 'px-[var(--rail-lane)]' : 'pr-2') : 'px-1',
         )}
       >
-        <h2 className="flex items-baseline gap-2 text-lg font-semibold tracking-tight text-text">
+        <h2
+          className={cn(
+            'flex items-baseline gap-2',
+            look === 'section'
+              ? RAIL.sectionTitle
+              : 'text-lg font-semibold tracking-tight text-text',
+          )}
+        >
           {onOpenTitle === undefined ? (
             title
           ) : (
@@ -113,7 +140,7 @@ const Rail = ({
           {!hasPages ? null : (
             <>
               <Button
-                variant="glossy"
+                variant="secondary"
                 size="xs"
                 isIconOnly
                 label={`Back a page of ${title}`}
@@ -127,7 +154,7 @@ const Rail = ({
               </Button>
 
               <Button
-                variant="glossy"
+                variant="secondary"
                 size="xs"
                 isIconOnly
                 label={`Forward a page of ${title}`}
@@ -142,7 +169,7 @@ const Rail = ({
             </>
           )}
         </div>
-      </header>
+      </motion.header>
 
       <div className="relative">
         <motion.ul
@@ -150,7 +177,8 @@ const Rail = ({
           onScroll={measure}
           variants={groupVariants}
           initial="hidden"
-          animate="shown"
+          whileInView="shown"
+          viewport={VIEWED}
           className={cn(
             'valence-rail -my-6 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth py-6',
             sizesCards ? cn(FITTED, hasArrows ? LANE : '') : 'scroll-p-1 px-1',

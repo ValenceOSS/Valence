@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent, PointerEvent } from 'react';
-import { Button } from '@ValenceUI/Button';
+import { SwatchRow } from '@ValenceUI/SwatchRow';
 import { TextField } from '@ValenceUI/TextField';
 import { cn } from '@ValenceUI/cn';
 import { hexOfHsv } from '@ValenceUI/hexOfHsv';
@@ -101,29 +101,16 @@ const ColourPicker = ({ label, value, onChange, presets = [], className }: Colou
   return (
     <div className={cn('flex w-60 flex-col gap-3', className)}>
       {presets.length === 0 ? null : (
-        <div className="grid grid-cols-8 gap-1.5">
-          {presets.map((preset) => (
-            <Button
-              key={preset}
-              variant="bare"
-              size="none"
-              label={`Use ${preset}`}
-              isActive={preset.toLowerCase() === value.toLowerCase()}
-              style={{ backgroundColor: preset }}
-              className={cn(
-                'aspect-square w-full rounded-full ring-1 ring-line transition-transform',
-                preset.toLowerCase() === value.toLowerCase()
-                  ? 'ring-2 ring-accent'
-                  : 'hover-hover:hover:scale-110',
-              )}
-              onClick={() => {
-                sent.current = preset;
-                setHsv(hsvOf(preset));
-                onChange(preset);
-              }}
-            />
-          ))}
-        </div>
+        <SwatchRow
+          label={`${label}: ready colours`}
+          swatches={presets.map((preset) => ({ id: preset, label: `Use ${preset}` }))}
+          value={presets.find((preset) => preset.toLowerCase() === value.toLowerCase()) ?? ''}
+          onSelect={(preset) => {
+            sent.current = preset;
+            setHsv(hsvOf(preset));
+            onChange(preset);
+          }}
+        />
       )}
 
       <div

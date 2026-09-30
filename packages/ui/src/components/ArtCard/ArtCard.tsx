@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@ValenceUI/Button';
 import { cn } from '@ValenceUI/cn';
+import { WatchedBar } from '@ValenceUI/WatchedBar';
 import type { ArtCardProps } from './ArtCard.types';
 
 /**
@@ -75,25 +76,14 @@ const ArtCard = ({
           )}
 
           {flag === undefined ? null : (
-            <span className="valence-glass valence-glass--film valence-glass--edgeless absolute bottom-0 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-t-lg px-3 py-1 text-xs font-semibold">
+            <span className="absolute bottom-0 left-1/2 bg-primary text-primary-foreground -translate-x-1/2 whitespace-nowrap rounded-t-lg px-3 py-1 text-xs font-semibold">
               {flag}
             </span>
           )}
         </span>
       </Button>
 
-      {watched === null || watched <= 0 ? null : (
-        <span
-          role="img"
-          aria-label={`${Math.round(watched * 100).toString()}% watched`}
-          className="mx-auto block h-1 w-3/5 overflow-hidden rounded-full bg-on-scrim/25"
-        >
-          <span
-            className="block h-full rounded-full bg-primary"
-            style={{ width: `${(watched * 100).toString()}%` }}
-          />
-        </span>
-      )}
+      {watched === null || watched <= 0 ? null : <WatchedBar watched={watched} />}
     </div>
   );
 };

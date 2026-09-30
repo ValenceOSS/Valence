@@ -1,6 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { useReducedMotionConfig } from 'motion/react';
-import { blendLights } from '@ValenceUI/blendLights';
 import type { MoodBackgroundProps, MoodLight } from './MoodBackground.types';
 import { HOUSE_LIGHTS } from '@ValenceCore/tokens/houseLights';
 
@@ -39,8 +38,6 @@ const HOUSE = HOUSE_LIGHTS;
 
 const DEFAULT_LIGHTS: MoodLight[] = HOUSE.map((color) => ({ color }));
 
-const EASE = 0.03;
-
 const PARALLAX = 0.34;
 
 /**
@@ -63,18 +60,22 @@ const everyBloom = (lights: readonly MoodLight[]): MoodLight[] =>
   });
 
 /**
- * Writes one light as the CSS gradient that paints it, at the position and colour it was given.
+ * Hands one light to the bloom that draws it, as the values its gradient is written in terms of,
+ * so the browser can carry the bloom from its last light to this one on its own.
  *
- * @param light - The colour, where it sits and how strongly it shines.
- * @param at - Which of the lights this is, which decides how large and strong its bloom is.
- * @returns The gradient, as CSS.
+ * @param element - The bloom.
+ * @param given - The colour, where it sits and how strongly it shines.
+ * @param at - Which of the lights this is, which decides how strong its bloom is.
  */
-const paint = (light: MoodLight, at: number): string => {
+const lightBloom = (element: HTMLElement, given: MoodLight, at: number): void => {
   const bloom = BLOOMS[at] ?? FALLBACK_BLOOM;
+  const [across = '50%', down = '45%'] = (given.at ?? bloom.at).trim().split(/\s+/);
+  const strength = Math.round(bloom.strength * (given.weight ?? 1) * 100) / 100;
 
-  const strength = Math.round(bloom.strength * (light.weight ?? 1) * 100) / 100;
-
-  return `radial-gradient(${bloom.size} at ${light.at ?? bloom.at}, color-mix(in oklab, ${light.color} ${strength.toString()}%, transparent), transparent 70%)`;
+  element.style.setProperty('--bloom-color', given.color);
+  element.style.setProperty('--bloom-x', across);
+  element.style.setProperty('--bloom-y', down);
+  element.style.setProperty('--bloom-mix', `${strength.toString()}%`);
 };
 
 /**
@@ -93,58 +94,50 @@ const MoodBackground = ({
   isLively = false,
 }: MoodBackgroundProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
-  const given = lights.filter((light) => light.color !== '');
+  const given = lights.filter((one) => one.color !== '');
   const lit = everyBloom(given.length === 0 ? DEFAULT_LIGHTS : given);
-  const heldRef = useRef<MoodLight[]>([]);
-  const wantedRef = useRef<MoodLight[]>(lit);
-  const paintedRef = useRef<string[]>([]);
+  const key = lit
+    .map((one) => `${one.color}@${one.at ?? ''}*${(one.weight ?? 1).toString()}`)
+    .join('|');
+  const litRef = useRef(lit);
   const driftingRef = useRef<HTMLDivElement | null>(null);
-  const shiftedRef = useRef(-1);
 
-  useEffect(() => {
-    wantedRef.current = lit;
+  useLayoutEffect(() => {
+    litRef.current = lit;
   });
 
   useEffect(() => {
-    if (heldRef.current.length === 0) {
-      heldRef.current = wantedRef.current;
-    }
+    const drifting = driftingRef.current;
 
-    let frame = 0;
+    litRef.current.forEach((one, at) => {
+      const element = drifting?.children.item(at);
 
-    const carry = () => {
-      const wanted = wantedRef.current;
+      if (element instanceof HTMLElement) {
+        lightBloom(element, one, at);
+      }
+    });
+  }, [key]);
 
-      heldRef.current =
-        prefersReducedMotion === true ? wanted : blendLights(heldRef.current, wanted, EASE);
+  useEffect(() => {
+    let shifted = -1;
 
+    const follow = () => {
       const shift = Math.round(window.scrollY * PARALLAX);
       const drifting = driftingRef.current;
 
-      if (drifting !== null && shiftedRef.current !== shift) {
-        shiftedRef.current = shift;
+      if (drifting !== null && shift !== shifted) {
+        shifted = shift;
         drifting.style.transform = `translate3d(0, ${shift.toString()}px, 0)`;
       }
-
-      heldRef.current.forEach((light, at) => {
-        const element = drifting?.children.item(at);
-        const painted = paint(light, at);
-
-        if (element instanceof HTMLElement && paintedRef.current[at] !== painted) {
-          paintedRef.current[at] = painted;
-          element.style.background = painted;
-        }
-      });
-
-      frame = requestAnimationFrame(carry);
     };
 
-    frame = requestAnimationFrame(carry);
+    follow();
+    window.addEventListener('scroll', follow, { passive: true });
 
     return () => {
-      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', follow);
     };
-  }, [prefersReducedMotion]);
+  }, []);
 
   return (
     <div
@@ -152,7 +145,7 @@ const MoodBackground = ({
       className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[140svh] overflow-hidden"
     >
       <div ref={driftingRef} className="absolute inset-0 will-change-transform">
-        {lit.map((light, at) => (
+        {lit.map((_, at) => (
           <span
             key={`bloom-${at.toString()}`}
             className={
@@ -161,7 +154,6 @@ const MoodBackground = ({
                 : 'valence-bloom'
             }
             style={{
-              background: paint(light, at),
               animationDuration: `${(Number.parseFloat(DRIFTS[at] ?? '40') * (isLively ? LIVELY : 1)).toString()}s`,
             }}
           />

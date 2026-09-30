@@ -270,7 +270,7 @@ describe('NavBar', () => {
     render(<NavBar {...props} />);
 
     expect(screen.getByRole('button', { name: 'Home' })).toHaveTextContent('Home');
-    expect(screen.getByText('Films')).toHaveClass('hidden', 'md:inline');
+    expect(screen.getByText('Films').parentElement).toHaveClass('hidden', 'md:inline-flex');
   });
 
   it('draws each tool as a round button of one size, so a face sits in it as well as a glyph', () => {

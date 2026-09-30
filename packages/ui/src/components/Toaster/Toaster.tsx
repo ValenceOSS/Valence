@@ -1,4 +1,6 @@
 import { Toaster as SonnerToaster } from 'sonner';
+import { cn } from '@ValenceUI/cn';
+import { PRESS_MOTION } from '@ValenceUI/animations/motion';
 import type { ToasterProps } from './Toaster.types';
 
 /**
@@ -8,7 +10,8 @@ import type { ToasterProps } from './Toaster.types';
  * Sonner is wrapped rather than reached for directly so that a toast is a Valence component like any
  * other: callers say what happened and this decides how it looks, which is what stops sixty screens
  * each inventing their own banner. It carries the product's own surface, border and radius rather
- * than the library's defaults.
+ * than the library's defaults, and its answer is the product's grey secondary button, never a
+ * coloured one: a toast reports, it does not ask to be the loudest thing on the screen.
  *
  * There is normally one, at the root. The exception is the player: it goes fullscreen, and a toast
  * portalled to the document is drawn behind a fullscreen video, which is to say not drawn. A named
@@ -38,10 +41,16 @@ const Toaster = ({ theme = 'system', id, position = 'bottom-right' }: ToasterPro
         ].join(' '),
         title: '!text-sm !font-medium',
         description: '!text-xs !text-[var(--color-muted-foreground)]',
-        actionButton:
-          '!rounded-pill !bg-[var(--color-primary)] !text-[var(--color-primary-foreground)] !text-xs !font-medium',
-        cancelButton:
-          '!rounded-pill !bg-[var(--surface-hover)] !text-[var(--color-foreground)] !text-xs',
+        actionButton: cn(
+          '!h-8 !rounded-md !border !border-[var(--surface-line)] !bg-[var(--surface-hover)] !px-3',
+          '!text-xs !font-medium !text-text hover:!bg-[var(--surface-active)]',
+          PRESS_MOTION,
+        ),
+        cancelButton: cn(
+          '!h-8 !rounded-md !border !border-transparent !bg-transparent !px-3',
+          '!text-xs !font-medium !text-[var(--color-muted-foreground)] hover:!bg-[var(--surface-hover)]',
+          PRESS_MOTION,
+        ),
         closeButton:
           '!rounded-pill !border-[var(--glass-edge)] !bg-[var(--surface-hover)] !text-[var(--color-muted-foreground)]',
         error: '!text-[var(--color-destructive)]',
