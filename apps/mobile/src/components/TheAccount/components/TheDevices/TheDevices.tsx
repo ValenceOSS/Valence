@@ -100,7 +100,7 @@ const TheDevices = () => {
         ))}
 
         {elsewhere.length === 0 ? null : (
-          <Button tone="quiet" onPress={endTheRest}>
+          <Button tone="ghost" isWide isDestructive onPress={endTheRest}>
             Sign out everywhere else
           </Button>
         )}

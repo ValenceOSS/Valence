@@ -172,7 +172,7 @@ const TheHistory = () => {
         </Words>
       )}
 
-      <Button tone="quiet" onPress={forgetEverything}>
+      <Button tone="ghost" isWide isDestructive onPress={forgetEverything}>
         Forget everything
       </Button>
     </>

@@ -1,5 +1,8 @@
 import { LayoutAnimation } from 'react-native';
 import { render, userEvent } from '@testing-library/react-native';
+import { chooseTheme } from '@ValenceClient/shell/theme';
+import { theColours } from '@ValenceMobile/theme/theColours';
+import { withAlpha } from '@ValenceMobile/theme/withAlpha';
 import { ACapsuleRow } from './ACapsuleRow';
 
 const PARTS = [
@@ -52,5 +55,25 @@ describe('ACapsuleRow, as a choice changes', () => {
 
     expect(configureNext).not.toHaveBeenCalled();
     configureNext.mockRestore();
+  });
+
+  it('draws its track darker than a light page, so it can be seen on a white card', async () => {
+    chooseTheme('light');
+
+    const drawn = await render(
+      <ACapsuleRow label="What to show" items={PARTS} value="films" onSelect={jest.fn()} />,
+    );
+
+    expect(JSON.stringify(drawn.toJSON())).toContain(withAlpha(theColours.light.border, 0.6));
+  });
+
+  it('leaves its track as it was in the dark', async () => {
+    chooseTheme('dark');
+
+    const drawn = await render(
+      <ACapsuleRow label="What to show" items={PARTS} value="films" onSelect={jest.fn()} />,
+    );
+
+    expect(JSON.stringify(drawn.toJSON())).toContain(theColours.dark.surfaceRaised);
   });
 });

@@ -130,7 +130,7 @@ const TheSecurity = () => {
 
         {step === 'resting' ? (
           <Button
-            tone="quiet"
+            tone="ghost"
             onPress={() => {
               setStep('password');
             }}
