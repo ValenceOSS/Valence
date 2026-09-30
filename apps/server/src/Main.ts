@@ -56,12 +56,7 @@ import { createDatabaseUploadSessions } from '@ValenceServer/uploads/createDatab
 import { AUTH_PROVIDER } from '#dialect/AUTH_PROVIDER';
 import { createDatabase } from '#dialect/createDatabase';
 import { DIALECT } from '#dialect/DIALECT';
-import { migrate } from 'drizzle-orm/node-postgres/migrator';
-import { createSnapshotBeforeMigrating } from '@ValenceServer/db/createSnapshotBeforeMigrating';
-import { findNewerMigrations } from '@ValenceServer/db/findNewerMigrations';
-import { findPendingMigrations } from '@ValenceServer/db/findPendingMigrations';
-import { migrateToLatest } from '@ValenceServer/db/migrateToLatest';
-import { createMissedMigrationApplier } from '@ValenceServer/db/createMissedMigrationApplier';
+import { migrateDatabase } from '@ValenceServer/db/migrateDatabase';
 import { settleTheOwner } from '@ValenceServer/auth/settleTheOwner';
 import { movePhotographsOnce } from '@ValenceServer/profiles/movePhotographsOnce';
 import { dropPrivatePlaylistsOf } from '@ValenceServer/playlists/dropPrivatePlaylistsOf';
@@ -310,53 +305,15 @@ const MonitorResourceSampleSchema = z.object({
 const env = readEnv(process.env);
 const { db, pool, schema } = createDatabase(env.DATABASE_URL);
 
-const MIGRATIONS_FOLDER = join(import.meta.dirname, '..', 'drizzle', DIALECT);
-
-const MIGRATION_JOURNAL = join(MIGRATIONS_FOLDER, 'meta', '_journal.json');
-
-const AppliedMigrationSchema = z.object({ created_at: z.union([z.string(), z.number()]) });
-
-/**
- * The stamps of the migrations this database has run, or none where it has never run any.
- *
- * A database nobody has migrated has no ledger table to read, which is not a fault — it is what
- * every first start looks like. Drizzle creates it as part of applying the first migration.
- *
- * @returns The stamps.
- */
-const readAppliedStamps = async (): Promise<number[]> => {
-  try {
-    const applied = await db.execute(sql`select created_at from drizzle.__drizzle_migrations`);
-
-    return applied.rows.map((row) => Number(AppliedMigrationSchema.parse(row).created_at));
-  } catch {
-    return [];
-  }
-};
-
-await migrateToLatest({
-  pending: () =>
-    findPendingMigrations({
-      readJournal: () => readFile(MIGRATION_JOURNAL, 'utf8'),
-      readAppliedAt: readAppliedStamps,
-    }),
-  apply: () => migrate(db, { migrationsFolder: MIGRATIONS_FOLDER }),
-  applyMissed: createMissedMigrationApplier(db, MIGRATIONS_FOLDER),
-  newer: () =>
-    findNewerMigrations({
-      readJournal: () => readFile(MIGRATION_JOURNAL, 'utf8'),
-      readAppliedAt: readAppliedStamps,
-    }),
-  beforeApply: createSnapshotBeforeMigrating({
-    databaseUrl: env.DATABASE_URL,
+await migrateDatabase({
+  db,
+  databaseUrl: env.DATABASE_URL,
+  migrations: join(import.meta.dirname, '..', 'drizzle', DIALECT),
+  backups: {
     folder: env.BACKUP_DIR,
     keep: env.BACKUPS_KEPT,
     isEnabled: env.BACKUP_BEFORE_MIGRATE,
-    readAppliedAt: readAppliedStamps,
-    say: (_level, line) => {
-      process.stdout.write(`${line}\n`);
-    },
-  }),
+  },
   isAllowed: env.MIGRATE_ON_START,
   say: (_level, line) => {
     process.stdout.write(`${line}\n`);
