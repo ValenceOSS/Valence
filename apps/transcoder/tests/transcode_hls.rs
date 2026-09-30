@@ -131,12 +131,24 @@ fn source_file() -> PathBuf {
     path
 }
 
-/// A registry with its own cache directory.
+/// A registry with its own cache directory, emptied before it is handed over.
 ///
 /// Session ids are content addressed, so two tests asking for the same output
 /// would otherwise share a directory and run competing ffmpeg processes into
 /// it. Production has a single registry that deduplicates; tests do not.
+///
+/// Emptied because the directory outlives the run, and a session found there
+/// from the last one is taken for this one's: its playlist named segments this
+/// run never made, and every test after the first run failed on this machine.
 fn registry(name: &str) -> SessionRegistry {
+    if let Err(error) = std::fs::remove_dir_all(cache_root(name)) {
+        assert_eq!(
+            error.kind(),
+            std::io::ErrorKind::NotFound,
+            "empties the cache for {name}"
+        );
+    }
+
     SessionRegistry::new(SessionConfig {
         device: valence_transcoder::transcode_plan::DEFAULT_DEVICE.to_owned(),
         ffmpeg: ffmpeg(),
@@ -465,7 +477,7 @@ async fn re_encodes_video_when_asked() {
 
 #[tokio::test]
 async fn the_same_specification_reuses_one_session() {
-    let registry = registry("reuse");
+    let registry = registry("one-plan");
     let app = app(registry.clone());
     let subject = spec(VideoAction::Copy, AudioAction::Copy);
 
@@ -529,8 +541,6 @@ async fn stopping_a_session_forgets_it() {
 /// rather than a rare collision.
 #[tokio::test]
 async fn starts_one_transcode_when_two_viewers_ask_at_once() {
-    let _ = std::fs::remove_dir_all(cache_root("together"));
-
     let registry = registry("together");
     let app = app(registry.clone());
     let subject = spec(VideoAction::Copy, AudioAction::Copy);
@@ -569,8 +579,6 @@ async fn starts_one_transcode_when_two_viewers_ask_at_once() {
 /// The newest asker steers. The older one takes what it can get.
 #[tokio::test]
 async fn answers_the_newest_request_when_a_viewer_scrubs_past_an_older_one() {
-    let _ = std::fs::remove_dir_all(cache_root("scrubbing"));
-
     let app = app(registry("scrubbing"));
     let subject = SessionSpec {
         input_path: long_source_file().to_string_lossy().into_owned(),
@@ -627,8 +635,6 @@ async fn answers_the_newest_request_when_a_viewer_scrubs_past_an_older_one() {
 /// and the request for 439 was refused thirty seconds later.
 #[tokio::test]
 async fn serves_a_segment_beyond_a_transcode_that_has_run_ahead() {
-    let _ = std::fs::remove_dir_all(cache_root("throttled"));
-
     let app = app(registry("throttled"));
     let subject = SessionSpec {
         input_path: long_source_file().to_string_lossy().into_owned(),
@@ -687,8 +693,6 @@ async fn serves_a_segment_beyond_a_transcode_that_has_run_ahead() {
 /// thirty seconds for a transcode that had already finished.
 #[tokio::test]
 async fn produces_a_segment_again_after_the_run_that_wrote_it_has_ended() {
-    let _ = std::fs::remove_dir_all(cache_root("ended"));
-
     let app = app(registry("ended"));
     let (_, body) = start(&app, &spec(VideoAction::Copy, AudioAction::Copy)).await;
     let id = body["id"].as_str().expect("has an id").to_owned();
@@ -877,8 +881,6 @@ async fn reports_capabilities_over_http() {
 /// film runs before any of it has been produced.
 #[tokio::test]
 async fn describes_the_whole_film_before_transcoding_it() {
-    let _ = std::fs::remove_dir_all(cache_root("growing"));
-
     let app = app(registry("growing"));
     let spec = SessionSpec {
         input_path: long_source_file().to_string_lossy().into_owned(),
@@ -943,8 +945,6 @@ async fn describes_the_whole_film_before_transcoding_it() {
 /// stopped.
 #[tokio::test]
 async fn starts_a_run_where_a_viewer_seeked_to() {
-    let _ = std::fs::remove_dir_all(cache_root("far-seek"));
-
     let app = app(registry("far-seek"));
     let subject = SessionSpec {
         input_path: long_source_file().to_string_lossy().into_owned(),
