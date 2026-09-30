@@ -1,3 +1,4 @@
+import { countAffected } from '@ValenceDatabase/countAffected';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 import { eq } from 'drizzle-orm';
@@ -9,7 +10,7 @@ import {
 } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
 import { PROFILE_COLOURS, ProfileColourSchema } from '@ValenceContracts/schemas/ViewerProfile';
 import { HOUSEHOLD_LIMITS, householdPhotoName } from './HouseholdPicture';
-import type { ValenceDatabase } from '#dialect/ValenceDatabase';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { Household, HouseholdRequest } from '@ValenceContracts/schemas/Household';
 import type { HouseholdService } from './HouseholdService';
 
@@ -97,7 +98,7 @@ const avatarColumns = (
  * @returns The household store.
  */
 const createDatabaseHouseholdService = (
-  db: ValenceDatabase,
+  db: AnyValenceDatabase,
   pictureDirectory: string,
 ): HouseholdService => {
   const rowFor = async (userId: string): Promise<HouseholdRow | undefined> => {
@@ -140,28 +141,30 @@ const createDatabaseHouseholdService = (
     change: async (userId, request: HouseholdRequest) => {
       const chosen = avatarColumns(request.avatar);
 
-      const changed = await db
-        .update(userProfile)
-        .set({
-          ...(request.name === undefined ? {} : { displayName: request.name }),
-          ...(request.colour === undefined ? {} : { colour: request.colour }),
-          ...chosen,
-          updatedAt: new Date(),
-        })
-        .where(eq(userProfile.userId, userId))
-        .returning({ userId: userProfile.userId });
+      const changed = countAffected(
+        await db
+          .update(userProfile)
+          .set({
+            ...(request.name === undefined ? {} : { displayName: request.name }),
+            ...(request.colour === undefined ? {} : { colour: request.colour }),
+            ...chosen,
+            updatedAt: new Date(),
+          })
+          .where(eq(userProfile.userId, userId)),
+      );
 
-      return changed.length > 0;
+      return changed > 0;
     },
 
     finishOnboarding: async (userId) => {
-      const changed = await db
-        .update(userProfile)
-        .set({ onboardedAt: new Date(), updatedAt: new Date() })
-        .where(eq(userProfile.userId, userId))
-        .returning({ userId: userProfile.userId });
+      const changed = countAffected(
+        await db
+          .update(userProfile)
+          .set({ onboardedAt: new Date(), updatedAt: new Date() })
+          .where(eq(userProfile.userId, userId)),
+      );
 
-      return changed.length > 0;
+      return changed > 0;
     },
 
     readAvatar: async (userId) => {
@@ -207,13 +210,14 @@ const createDatabaseHouseholdService = (
 
       await writeFile(join(pictureDirectory, name), photo.body);
 
-      const changed = await db
-        .update(userProfile)
-        .set({ photoPath: name, avatarStyle: null, avatarSeed: null, updatedAt: new Date() })
-        .where(eq(userProfile.userId, userId))
-        .returning({ userId: userProfile.userId });
+      const changed = countAffected(
+        await db
+          .update(userProfile)
+          .set({ photoPath: name, avatarStyle: null, avatarSeed: null, updatedAt: new Date() })
+          .where(eq(userProfile.userId, userId)),
+      );
 
-      return changed.length > 0 ? null : 'notYours';
+      return changed > 0 ? null : 'notYours';
     },
   };
 };

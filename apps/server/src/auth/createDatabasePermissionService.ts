@@ -7,8 +7,11 @@ import type {
   PermissionGrant,
   Role,
 } from '@ValenceContracts/schemas/Permission';
+import { countAffected } from '@ValenceDatabase/countAffected';
+import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
+import { upsert } from '@ValenceDatabase/upsert';
 import { role, rolePermission, userPermissionOverride, userRole } from '#dialect/Schema';
-import type { ValenceDatabase } from '#dialect/ValenceDatabase';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import { readPermission } from './readPermission';
 import { readGrantedPermission } from './readGrantedPermission';
 import type { PermissionService } from './PermissionService';
@@ -39,7 +42,7 @@ const readGrants = (rows: readonly { permission: string; effect: string }[]): Pe
  * @param db - The database to read and write.
  * @returns The permission service.
  */
-const createDatabasePermissionService = (db: ValenceDatabase): PermissionService => {
+const createDatabasePermissionService = (db: AnyValenceDatabase): PermissionService => {
   const permissionsByRole = async (
     roleIds: readonly string[],
   ): Promise<Map<string, GrantedPermission[]>> => {
@@ -161,15 +164,16 @@ const createDatabasePermissionService = (db: ValenceDatabase): PermissionService
     },
 
     deleteRole: async (id) => {
-      const deleted = await db.delete(role).where(eq(role.id, id)).returning({ id: role.id });
-
-      return deleted.length > 0;
+      return countAffected(await db.delete(role).where(eq(role.id, id))) > 0;
     },
 
     rolesFor,
 
     assignRole: async (userId, roleId) => {
-      await db.insert(userRole).values({ userId, roleId }).onConflictDoNothing();
+      await insertUnlessPresent(db, userRole, {
+        values: [{ userId, roleId }],
+        target: [userRole.userId, userRole.roleId],
+      });
     },
 
     removeRole: async (userId, roleId) => {
@@ -181,13 +185,11 @@ const createDatabasePermissionService = (db: ValenceDatabase): PermissionService
     overridesFor,
 
     setOverride: async (userId, grant) => {
-      await db
-        .insert(userPermissionOverride)
-        .values({ userId, permission: grant.permission, effect: grant.effect })
-        .onConflictDoUpdate({
-          target: [userPermissionOverride.userId, userPermissionOverride.permission],
-          set: { effect: grant.effect },
-        });
+      await upsert(db, userPermissionOverride, {
+        values: [{ userId, permission: grant.permission, effect: grant.effect }],
+        target: [userPermissionOverride.userId, userPermissionOverride.permission],
+        set: { effect: grant.effect },
+      });
     },
 
     clearOverride: async (userId, permission) => {

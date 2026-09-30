@@ -1,10 +1,50 @@
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
+import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import { createDatabase } from '#dialect/createDatabase';
-import { book, mediaItem, series, share, user } from '#dialect/Schema';
-import { columnsFor } from './createDatabaseShareService';
+import { book, library, mediaItem, series, share, shareVisit, user } from '#dialect/Schema';
+import { columnsFor, createDatabaseShareService } from './createDatabaseShareService';
 
 const NOWHERE = 'postgres://nobody@localhost:1/none';
+
+const STARTING_POSTGRES_MS = 60_000;
+
+/**
+ * A share service over a fresh database holding one account, one film and one link to it.
+ *
+ * @returns The service, the database under it and the link's id.
+ */
+const aSharedFilm = async () => {
+  const db = await aMigratedDatabase();
+
+  await db.insert(user).values({ id: 'ada', name: 'Ada', email: 'ada@example.com' });
+  await db.insert(library).values({ id: 'films', name: 'Films', kind: 'movies', path: '/films' });
+  await db.insert(mediaItem).values({
+    id: 'film',
+    libraryId: 'films',
+    path: '/films/film.mkv',
+    title: 'The Film',
+    sizeBytes: 1,
+    modifiedAtMs: 1,
+    container: 'mkv',
+    durationSeconds: 60,
+    videoCodec: 'h264',
+    videoRange: 'sdr',
+    width: 1920,
+    height: 1080,
+    audioStreams: [],
+    subtitleStreams: [],
+  });
+
+  const service = createDatabaseShareService(db);
+  const made = await service.create('ada', { kind: 'item', mediaId: 'film' });
+
+  if (made === null) {
+    throw new Error('The link was not made');
+  }
+
+  return { db, service, shareId: made.id };
+};
 
 /**
  * Builds the queries without running them. A pool connects at its first query and these never make
@@ -78,4 +118,52 @@ describe('reading what a link points at', () => {
     expect(everybody).toContain('left join "media_item"');
     expect(everybody).toContain('left join "series"');
   });
+});
+
+describe('ending a link', () => {
+  it(
+    'ends a link of one’s own once, and not somebody else’s',
+    async () => {
+      const { service, shareId } = await aSharedFilm();
+
+      await expect(service.revoke('grace', shareId)).resolves.toBe(false);
+      await expect(service.revoke('ada', shareId)).resolves.toBe(true);
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
+    'tells an administrator whose link they ended and what it pointed at, the first time only',
+    async () => {
+      const { service, shareId } = await aSharedFilm();
+
+      await expect(service.revokeAnybody(shareId)).resolves.toEqual({
+        createdBy: 'ada',
+        title: 'The Film',
+      });
+      await expect(service.revokeAnybody(shareId)).resolves.toBeNull();
+      await expect(service.revokeAnybody('missing')).resolves.toBeNull();
+    },
+    STARTING_POSTGRES_MS,
+  );
+});
+
+describe('joining through a link', () => {
+  it(
+    'keeps one visit for somebody who comes back, moving only when they were last seen',
+    async () => {
+      const { db, service, shareId } = await aSharedFilm();
+
+      await service.join(shareId, 'grace');
+      const [first] = await db.select().from(shareVisit);
+      await service.join(shareId, 'grace');
+      const visits = await db.select().from(shareVisit);
+
+      expect(visits).toHaveLength(1);
+      expect(visits[0]?.id).toBe(first?.id);
+      expect(visits[0]?.firstSeenAt).toEqual(first?.firstSeenAt);
+      await expect(service.hasJoined(shareId, 'grace')).resolves.toBe(true);
+    },
+    STARTING_POSTGRES_MS,
+  );
 });
