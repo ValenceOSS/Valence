@@ -9,7 +9,8 @@ import type { ArtCardProps } from './ArtCard.types';
  * there is no logo the name is written into the picture in its place, so the card still says what
  * it is.
  *
- * A flag along the bottom edge says what is new about it — just added, or a new episode — and a
+ * A flag along the bottom edge says what is new about it — just added, or a new episode — in the
+ * same glass the player's menus wear over a picture, without an edge, and a
  * thin bar beneath the picture says how far through it this viewer is.
  *
  * @param title - What it is called, which a reader hears and which stands in for a missing logo.
@@ -74,7 +75,7 @@ const ArtCard = ({
           )}
 
           {flag === undefined ? null : (
-            <span className="absolute bottom-0 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-t-md bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
+            <span className="valence-glass valence-glass--film valence-glass--edgeless absolute bottom-0 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-t-lg px-3 py-1 text-xs font-semibold">
               {flag}
             </span>
           )}
