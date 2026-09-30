@@ -379,16 +379,14 @@ describe('createJobHistoryStore', () => {
       const db = await aMigratedDatabase();
       const store = createJobHistoryStore(db);
 
-      await db
-        .insert(jobRun)
-        .values([
-          {
-            ...aRun('a', 'library.scan', 100),
-            status: 'failed',
-            errorMessage: sayVerbatim('The disk is full'),
-          },
-          aRun('b', 'library.scan', 100),
-        ]);
+      await db.insert(jobRun).values([
+        {
+          ...aRun('a', 'library.scan', 100),
+          status: 'failed',
+          errorMessage: sayVerbatim('The disk is full'),
+        },
+        aRun('b', 'library.scan', 100),
+      ]);
 
       const read = await store.read({
         kind: null,

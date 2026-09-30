@@ -11,7 +11,7 @@ const SessionSchema = z.tuple([
 describe('openPool', () => {
   it('runs every connection in UTC and in strict mode, and hands JSON back as text', async () => {
     const scratch = await createScratchDatabase();
-    const pool = openPool(scratch.url, 2);
+    const pool = openPool(scratch.url, { poolMax: 2, tls: { mode: 'off', ca: null } });
 
     try {
       const [[session]] = SessionSchema.parse(

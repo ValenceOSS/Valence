@@ -1,9 +1,13 @@
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
+import { NO_TLS } from '@ValenceDatabase/NO_TLS';
+import type { DatabaseTls } from '@ValenceDatabase/DatabaseTls';
+import { postgresTlsEnvironment } from '@ValenceServer/db/postgresTlsEnvironment';
 import { runTool } from '@ValenceServer/db/runTool';
 
 type TakeSnapshotOptions = {
   databaseUrl: string;
+  tls?: DatabaseTls;
   folder: string;
   name: string;
   run?: typeof runTool;
@@ -17,6 +21,7 @@ type TakeSnapshotOptions = {
  * way a rollback also removes the tables a later migration added.
  *
  * @param databaseUrl - The database to dump.
+ * @param tls - How the tool is to encrypt its connection, as the server's pool does.
  * @param folder - Where to put the file.
  * @param name - What to call it.
  * @param run - How to run a tool.
@@ -26,6 +31,7 @@ type TakeSnapshotOptions = {
  */
 const takeSnapshot = async ({
   databaseUrl,
+  tls = NO_TLS,
   folder,
   name,
   run = runTool,
@@ -33,12 +39,11 @@ const takeSnapshot = async ({
 }: TakeSnapshotOptions): Promise<'taken' | 'missing'> => {
   await makeFolder(folder);
 
-  const outcome = await run('pg_dump', [
-    '--format=custom',
-    '--create',
-    `--file=${join(folder, name)}`,
-    `--dbname=${databaseUrl}`,
-  ]);
+  const outcome = await run(
+    'pg_dump',
+    ['--format=custom', '--create', `--file=${join(folder, name)}`, `--dbname=${databaseUrl}`],
+    postgresTlsEnvironment(tls),
+  );
 
   return outcome === 'ran' ? 'taken' : 'missing';
 };

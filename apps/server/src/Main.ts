@@ -1,4 +1,5 @@
 import { checkServerVersion } from '@ValenceDatabase/checkServerVersion';
+import { databaseConnectionOf } from '@ValenceDatabase/databaseConnectionOf';
 import { checkDialect } from '@ValenceDatabase/checkDialect';
 import { followUpReading } from '@ValenceServer/library/followUpReading';
 import type { Said } from '@ValenceI18n/SaidSchema';
@@ -316,13 +317,15 @@ const env = readEnv(process.env);
 
 checkDialect(env.DATABASE_URL, DIALECT);
 
-const { db, pool, schema } = createDatabase(env.DATABASE_URL);
+const connection = databaseConnectionOf(env);
+const { db, pool, schema } = createDatabase(env.DATABASE_URL, connection);
 
 await checkServerVersion(db);
 
 await migrateDatabase({
   db,
   databaseUrl: env.DATABASE_URL,
+  tls: connection.tls,
   migrations: join(import.meta.dirname, '..', 'drizzle', DIALECT),
   backups: {
     folder: env.BACKUP_DIR,

@@ -2,15 +2,19 @@ import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { readMysqlFlavour } from '@ValenceServer/db/mysql/server/readMysqlFlavour';
 import { readMysqlAddress } from '@ValenceDatabase/mysql/connection/readMysqlAddress';
+import { NO_TLS } from '@ValenceDatabase/NO_TLS';
+import type { DatabaseTls } from '@ValenceDatabase/DatabaseTls';
+import { mysqlTlsArguments } from '@ValenceServer/db/mysql/server/mysqlTlsArguments';
 import { runToolInto } from '@ValenceServer/db/runToolInto';
 import type { MysqlFlavour } from '@ValenceDatabase/mysql/flavourOfVersion';
 
 type TakeSnapshotOptions = {
   databaseUrl: string;
+  tls?: DatabaseTls;
   folder: string;
   name: string;
   run?: typeof runToolInto;
-  flavourOf?: (databaseUrl: string) => Promise<MysqlFlavour>;
+  flavourOf?: (databaseUrl: string, tls: DatabaseTls) => Promise<MysqlFlavour>;
   makeFolder?: (folder: string) => Promise<string | undefined>;
 };
 
@@ -31,6 +35,7 @@ const DUMP_TOOLS = {
  * machine can read.
  *
  * @param databaseUrl - The database to dump.
+ * @param tls - How the tool is to encrypt its connection, as the server's pool does.
  * @param folder - Where to put the file.
  * @param name - What to call it.
  * @param run - How to run a tool into a file.
@@ -41,6 +46,7 @@ const DUMP_TOOLS = {
  */
 const takeSnapshot = async ({
   databaseUrl,
+  tls = NO_TLS,
   folder,
   name,
   run = runToolInto,
@@ -50,13 +56,15 @@ const takeSnapshot = async ({
   await makeFolder(folder);
 
   const { host, port, user, password, database } = readMysqlAddress(databaseUrl);
-  const tool = DUMP_TOOLS[await flavourOf(databaseUrl)];
+  const flavour = await flavourOf(databaseUrl, tls);
+  const tool = DUMP_TOOLS[flavour];
   const outcome = await run({
     command: tool.command,
     args: [
       `--host=${host}`,
       `--port=${port.toString()}`,
       `--user=${user}`,
+      ...mysqlTlsArguments(tls, flavour),
       '--single-transaction',
       '--routines',
       '--triggers',

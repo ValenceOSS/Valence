@@ -12,14 +12,18 @@ describe('restoreSnapshot', () => {
       run,
     });
 
-    expect(run).toHaveBeenCalledWith('pg_restore', [
-      '--clean',
-      '--create',
-      '--if-exists',
-      '--no-owner',
-      '--dbname=postgres://valence:secret@db:5432/postgres',
-      '/backups/one.dump',
-    ]);
+    expect(run).toHaveBeenCalledWith(
+      'pg_restore',
+      [
+        '--clean',
+        '--create',
+        '--if-exists',
+        '--no-owner',
+        '--dbname=postgres://valence:secret@db:5432/postgres',
+        '/backups/one.dump',
+      ],
+      {},
+    );
   });
 
   it('fails where pg_restore is not installed', async () => {

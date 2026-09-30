@@ -146,9 +146,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
 
     return context.body(picture.body.slice().buffer, 200, {
       'content-type': picture.contentType,
-      'cache-control': isVersioned
-        ? 'private, max-age=31536000, immutable'
-        : 'private, max-age=60',
+      'cache-control': isVersioned ? 'private, max-age=31536000, immutable' : 'private, max-age=60',
     });
   });
 
@@ -178,9 +176,7 @@ const serveHousehold = (app: OpenAPIHono, context: AppContext): void => {
 
     return context.body(picture.body.slice().buffer, 200, {
       'content-type': picture.contentType,
-      'cache-control': isVersioned
-        ? 'private, max-age=31536000, immutable'
-        : 'private, max-age=60',
+      'cache-control': isVersioned ? 'private, max-age=31536000, immutable' : 'private, max-age=60',
     });
   });
 

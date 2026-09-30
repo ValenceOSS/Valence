@@ -1,10 +1,12 @@
 import { z } from 'zod';
+import { DATABASE_ENV } from '@ValenceDatabase/DATABASE_ENV';
 import { defaultMediaJobs } from '@ValenceServer/env/defaultMediaJobs';
 
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(8420),
   DATABASE_URL: z.string().url().default('postgres://valence:valence@localhost:5432/valence'),
+  ...DATABASE_ENV,
   MIGRATE_ON_START: z
     .enum(['true', 'false'])
     .default('true')

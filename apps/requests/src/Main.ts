@@ -1,4 +1,5 @@
 import { checkServerVersion } from '@ValenceDatabase/checkServerVersion';
+import { databaseConnectionOf } from '@ValenceDatabase/databaseConnectionOf';
 import { checkDialect } from '@ValenceDatabase/checkDialect';
 import { join } from 'node:path';
 import { serve } from '@hono/node-server';
@@ -60,7 +61,7 @@ const env = readEnv(process.env);
 checkDialect(env.DATABASE_URL, DIALECT);
 
 const becoming = becomeTheUser({ uid: env.PUID, gid: env.PGID });
-const { db, pool } = createDatabase(env.DATABASE_URL);
+const { db, pool } = createDatabase(env.DATABASE_URL, databaseConnectionOf(env));
 
 /**
  * Writes a line to the log, with what the service is in front of it.

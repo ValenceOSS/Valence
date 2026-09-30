@@ -1,3 +1,5 @@
+import { NO_TLS } from '@ValenceDatabase/NO_TLS';
+import type { DatabaseTls } from '@ValenceDatabase/DatabaseTls';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { applyMigrations } from '#dialect/applyMigrations';
@@ -13,6 +15,7 @@ import type { MigrationPlan } from '@ValenceServer/db/planMigration';
 type MigrateDatabaseOptions = {
   db: ValenceDatabase;
   databaseUrl: string;
+  tls?: DatabaseTls;
   migrations: string;
   backups: { folder: string; keep: number; isEnabled: boolean };
   isAllowed: boolean;
@@ -25,6 +28,7 @@ type MigrateDatabaseOptions = {
  *
  * @param db - The database to bring up to date.
  * @param databaseUrl - Where it is, for the copy taken beforehand.
+ * @param tls - How the copy connects to it, as the server's pool does.
  * @param migrations - The directory holding this dialect's migrations and their journal.
  * @param backups - Where copies are kept, how many, and whether to take one at all.
  * @param isAllowed - Whether the migrations may be applied.
@@ -34,6 +38,7 @@ type MigrateDatabaseOptions = {
 const migrateDatabase = ({
   db,
   databaseUrl,
+  tls = NO_TLS,
   migrations,
   backups,
   isAllowed,
@@ -49,6 +54,7 @@ const migrateDatabase = ({
     newer: () => findNewerMigrations({ readJournal, readAppliedAt }),
     beforeApply: createSnapshotBeforeMigrating({
       databaseUrl,
+      tls,
       folder: backups.folder,
       keep: backups.keep,
       isEnabled: backups.isEnabled,

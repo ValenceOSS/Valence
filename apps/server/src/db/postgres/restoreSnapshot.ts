@@ -1,8 +1,12 @@
 import { join } from 'node:path';
+import { NO_TLS } from '@ValenceDatabase/NO_TLS';
+import type { DatabaseTls } from '@ValenceDatabase/DatabaseTls';
+import { postgresTlsEnvironment } from '@ValenceServer/db/postgresTlsEnvironment';
 import { runTool } from '@ValenceServer/db/runTool';
 
 type RestoreSnapshotOptions = {
   databaseUrl: string;
+  tls?: DatabaseTls;
   folder: string;
   name: string;
   run?: typeof runTool;
@@ -16,6 +20,7 @@ type RestoreSnapshotOptions = {
  * be stopped first.
  *
  * @param databaseUrl - The database to replace.
+ * @param tls - How the tool is to encrypt its connection, as the server's pool does.
  * @param folder - Where the snapshots are kept.
  * @param name - Which snapshot.
  * @returns Nothing; it resolves once the database is back.
@@ -23,6 +28,7 @@ type RestoreSnapshotOptions = {
  */
 const restoreSnapshot = async ({
   databaseUrl,
+  tls = NO_TLS,
   folder,
   name,
   run = runTool,
@@ -31,14 +37,18 @@ const restoreSnapshot = async ({
 
   maintenance.pathname = '/postgres';
 
-  const outcome = await run('pg_restore', [
-    '--clean',
-    '--create',
-    '--if-exists',
-    '--no-owner',
-    `--dbname=${maintenance.toString()}`,
-    join(folder, name),
-  ]);
+  const outcome = await run(
+    'pg_restore',
+    [
+      '--clean',
+      '--create',
+      '--if-exists',
+      '--no-owner',
+      `--dbname=${maintenance.toString()}`,
+      join(folder, name),
+    ],
+    postgresTlsEnvironment(tls),
+  );
 
   if (outcome === 'missing') {
     throw new Error('pg_restore is not installed here, so nothing could be restored.');

@@ -1,4 +1,5 @@
 import { checkServerVersion } from '@ValenceDatabase/checkServerVersion';
+import { databaseConnectionOf } from '@ValenceDatabase/databaseConnectionOf';
 import { checkDialect } from '@ValenceDatabase/checkDialect';
 import { join } from 'node:path';
 import { createDatabase } from '#dialect/createDatabase';
@@ -22,13 +23,15 @@ const run = async (): Promise<void> => {
 
   checkDialect(env.DATABASE_URL, DIALECT);
 
-  const { db, pool } = createDatabase(env.DATABASE_URL);
+  const connection = databaseConnectionOf(env);
+  const { db, pool } = createDatabase(env.DATABASE_URL, connection);
 
   try {
     await checkServerVersion(db);
     await migrateDatabase({
       db,
       databaseUrl: env.DATABASE_URL,
+      tls: connection.tls,
       migrations: join(import.meta.dirname, '..', 'drizzle', DIALECT),
       backups: {
         folder: env.BACKUP_DIR,

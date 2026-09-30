@@ -1,15 +1,19 @@
 import { join } from 'node:path';
 import { readMysqlFlavour } from '@ValenceServer/db/mysql/server/readMysqlFlavour';
 import { readMysqlAddress } from '@ValenceDatabase/mysql/connection/readMysqlAddress';
+import { NO_TLS } from '@ValenceDatabase/NO_TLS';
+import type { DatabaseTls } from '@ValenceDatabase/DatabaseTls';
+import { mysqlTlsArguments } from '@ValenceServer/db/mysql/server/mysqlTlsArguments';
 import { runToolFrom } from '@ValenceServer/db/runToolFrom';
 import type { MysqlFlavour } from '@ValenceDatabase/mysql/flavourOfVersion';
 
 type RestoreSnapshotOptions = {
   databaseUrl: string;
+  tls?: DatabaseTls;
   folder: string;
   name: string;
   run?: typeof runToolFrom;
-  flavourOf?: (databaseUrl: string) => Promise<MysqlFlavour>;
+  flavourOf?: (databaseUrl: string, tls: DatabaseTls) => Promise<MysqlFlavour>;
 };
 
 const CLIENTS = { mysql: 'mysql', mariadb: 'mariadb' } as const;
@@ -22,6 +26,7 @@ const CLIENTS = { mysql: 'mysql', mariadb: 'mariadb' } as const;
  * Valence has to be stopped first.
  *
  * @param databaseUrl - The database to replace.
+ * @param tls - How the tool is to encrypt its connection, as the server's pool does.
  * @param folder - Where the snapshots are kept.
  * @param name - Which snapshot.
  * @param run - How to run a tool fed from a file.
@@ -31,16 +36,23 @@ const CLIENTS = { mysql: 'mysql', mariadb: 'mariadb' } as const;
  */
 const restoreSnapshot = async ({
   databaseUrl,
+  tls = NO_TLS,
   folder,
   name,
   run = runToolFrom,
   flavourOf = readMysqlFlavour,
 }: RestoreSnapshotOptions): Promise<void> => {
   const { host, port, user, password } = readMysqlAddress(databaseUrl);
-  const command = CLIENTS[await flavourOf(databaseUrl)];
+  const flavour = await flavourOf(databaseUrl, tls);
+  const command = CLIENTS[flavour];
   const outcome = await run({
     command,
-    args: [`--host=${host}`, `--port=${port.toString()}`, `--user=${user}`],
+    args: [
+      `--host=${host}`,
+      `--port=${port.toString()}`,
+      `--user=${user}`,
+      ...mysqlTlsArguments(tls, flavour),
+    ],
     env: { MYSQL_PWD: password },
     file: join(folder, name),
   });

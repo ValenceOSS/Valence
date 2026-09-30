@@ -15,12 +15,11 @@ describe('takeSnapshot', () => {
 
     expect(outcome).toBe('taken');
     expect(makeFolder).toHaveBeenCalledWith('/backups');
-    expect(run).toHaveBeenCalledWith('pg_dump', [
-      '--format=custom',
-      '--create',
-      '--file=/backups/one.dump',
-      '--dbname=postgres://db/valence',
-    ]);
+    expect(run).toHaveBeenCalledWith(
+      'pg_dump',
+      ['--format=custom', '--create', '--file=/backups/one.dump', '--dbname=postgres://db/valence'],
+      {},
+    );
   });
 
   it('says so where pg_dump is not installed', async () => {
@@ -33,5 +32,23 @@ describe('takeSnapshot', () => {
     });
 
     expect(outcome).toBe('missing');
+  });
+
+  it('connects the way the server does where the database wants TLS', async () => {
+    const run = vi.fn(() => Promise.resolve('ran' as const));
+
+    await takeSnapshot({
+      databaseUrl: 'postgres://db/valence',
+      tls: { mode: 'verify-full', ca: '/certs/ca.pem' },
+      folder: '/backups',
+      name: 'one.dump',
+      run,
+      makeFolder: () => Promise.resolve(undefined),
+    });
+
+    expect(run).toHaveBeenCalledWith('pg_dump', expect.any(Array), {
+      PGSSLMODE: 'verify-full',
+      PGSSLROOTCERT: '/certs/ca.pem',
+    });
   });
 });

@@ -9,12 +9,17 @@ import { execFile } from 'node:child_process';
  *
  * @param command - The program to run.
  * @param args - Its arguments.
+ * @param env - Variables to run it with, beside the server's own.
  * @returns Whether it ran, or that it is not installed.
  * @throws If it ran and failed, with what it said.
  */
-const runTool = (command: string, args: readonly string[]): Promise<'ran' | 'missing'> =>
+const runTool = (
+  command: string,
+  args: readonly string[],
+  env: Record<string, string> = {},
+): Promise<'ran' | 'missing'> =>
   new Promise((resolve, reject) => {
-    execFile(command, [...args], (error, _output, said) => {
+    execFile(command, [...args], { env: { ...process.env, ...env } }, (error, _output, said) => {
       if (error === null) {
         resolve('ran');
 

@@ -1,3 +1,4 @@
+import type { ToolRun } from '@ValenceServer/db/ToolRun';
 import { describe, expect, it, vi } from 'vitest';
 import { takeSnapshot } from './takeSnapshot';
 
@@ -66,5 +67,30 @@ describe('takeSnapshot', () => {
     });
 
     expect(outcome).toBe('missing');
+  });
+
+  it('connects the way the server does where the database wants TLS, and asks the server so too', async () => {
+    const seen: ToolRun[] = [];
+    const run = (tool: ToolRun): Promise<'ran'> => {
+      seen.push(tool);
+
+      return Promise.resolve('ran');
+    };
+    const flavourOf = vi.fn(() => Promise.resolve('mysql' as const));
+    const tls = { mode: 'verify-full', ca: '/certs/ca.pem' } as const;
+
+    await takeSnapshot({
+      databaseUrl: 'mysql://valence:secret@db:3306/valence',
+      tls,
+      folder: '/backups',
+      name: 'one.sql.gz',
+      run,
+      flavourOf,
+      makeFolder: () => Promise.resolve(undefined),
+    });
+
+    expect(flavourOf).toHaveBeenCalledWith('mysql://valence:secret@db:3306/valence', tls);
+    expect(seen[0]?.args).toContain('--ssl-mode=VERIFY_IDENTITY');
+    expect(seen[0]?.args).toContain('--ssl-ca=/certs/ca.pem');
   });
 });
