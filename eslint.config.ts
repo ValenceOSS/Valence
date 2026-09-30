@@ -41,6 +41,28 @@ const LANDING_IMPORT_BANS = [
   RETIRED_ICON_SET_BAN,
 ];
 
+const DIALECT_IMPORT_BANS = [
+  {
+    group: [
+      'drizzle-orm/pg-core',
+      'drizzle-orm/node-postgres',
+      'drizzle-orm/node-postgres/*',
+      'drizzle-orm/pglite',
+      'drizzle-orm/pglite/*',
+      'pg',
+      '@electric-sql/pglite',
+      '@electric-sql/pglite/*',
+    ],
+    message:
+      'Only a dialect folder speaks to one database. Reach it through #dialect/* — see "One query, several databases" in the coding standard.',
+  },
+  {
+    group: ['@ValenceServer/db/postgres/*', '@ValenceRequests/db/postgres/*'],
+    message:
+      'Import a dialect file through #dialect/*, which the build resolves to the database it is for.',
+  },
+];
+
 const SYNTAX_BANS = [
   {
     selector: 'JSXOpeningElement[name.name=/^(button|input|select|textarea|dialog|iframe)$/]',
@@ -266,6 +288,18 @@ export default tseslint.config(
                 'A screen cannot reach into a client. Anything it needs from one is a port on Platform.',
             },
           ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['apps/server/src/**/*.ts', 'apps/requests/src/**/*.ts'],
+    ignores: ['apps/server/src/db/postgres/**', 'apps/requests/src/db/postgres/**', '**/*.test.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [...SHARED_IMPORT_BANS, ...DIALECT_IMPORT_BANS],
         },
       ],
     },
