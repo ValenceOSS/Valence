@@ -147,6 +147,10 @@ const thePhonesHeldFiles = (
         }
       }
 
+      if (!rows.some((one) => one.downloadId === row.downloadId)) {
+        throw new Error('It was forgotten while its thumbnails were fetched.');
+      }
+
       change(row.downloadId, { hasTrickplay: true });
     } catch {
       await deleteAsync(kept, { idempotent: true }).catch(() => undefined);

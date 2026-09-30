@@ -1,7 +1,7 @@
-import { mkdir, mkdtemp, readFile, rm, stat } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { HeldFile, WhatToKeep } from '@ValenceContracts/schemas/HeldFile';
 import { theHeldLibrary } from './theHeldLibrary';
 import type { HeldIndex } from './theHeldIndex';
@@ -56,7 +56,8 @@ type Serving = {
   status?: number;
   poster?: string | null;
   pauseFor?: number;
-  trickplay?: 'made' | 'not yet' | 'missing a sheet';
+  trickplay?: 'made' | 'not yet' | 'missing a sheet' | 'hangs';
+  whileSheetsArrive?: () => Promise<void>;
 };
 
 const INDEX = '/api/playback/trickplay/t1/thumbnails.vtt';
@@ -130,10 +131,16 @@ const aServer = (serving: Serving = {}) => {
 
     seen.push(address);
 
+    if (serving.trickplay === 'hangs' && address.endsWith('/trickplay')) {
+      return new Promise<Response>(() => undefined);
+    }
+
     const aboutThumbnails = thumbnailsAnswer(address, serving);
 
     if (aboutThumbnails !== null) {
-      return Promise.resolve(aboutThumbnails);
+      const arriving = address.includes('sheet-') ? serving.whileSheetsArrive : undefined;
+
+      return (arriving?.() ?? Promise.resolve()).then(() => aboutThumbnails);
     }
 
     if (address.includes('/image/poster')) {
@@ -293,9 +300,58 @@ describe('theHeldLibrary', () => {
     serving.trickplay = 'made';
     await library.carryOnWhereItLeftOff();
 
-    const [held] = await library.all();
+    await vi.waitFor(async () => {
+      expect((await library.all())[0]?.hasTrickplay).toBe(true);
+    });
+  });
 
-    expect(held?.hasTrickplay).toBe(true);
+  it('sets an interrupted film going again before asking after anybody’s thumbnails', async () => {
+    const serving: Serving = { trickplay: 'hangs' };
+    const index = aMemoryIndex();
+    const here: HeldFile = {
+      ...asked,
+      downloadId: '3c3c7f7e-2f0e-4a5e-9c2f-2b9b1e1f0a12',
+      state: 'here',
+      bytes: 11,
+      bytesPerSecond: null,
+      failure: null,
+      keptAt: '2026-08-22T00:00:00.000Z',
+      hasPoster: true,
+      hasTrickplay: false,
+    };
+
+    index.write(here);
+    index.write({ ...here, downloadId: asked.downloadId, state: 'fetching', bytes: 0 });
+    await writeFile(join(folder, `${here.downloadId}.mp4`), 'hello world');
+
+    const { library, seen } = aLibrary(serving, index);
+
+    await library.carryOnWhereItLeftOff();
+
+    expect(
+      seen.some((address) => address.includes(`/api/downloads/${asked.downloadId}/file`)),
+    ).toBe(true);
+  });
+
+  it('keeps no thumbnails for a film forgotten while they were being fetched', async () => {
+    const serving: Serving = { trickplay: 'made' };
+    const { library } = aLibrary(serving);
+    let isForgotten = false;
+
+    serving.whileSheetsArrive = async () => {
+      if (!isForgotten) {
+        isForgotten = true;
+        await library.drop(asked.downloadId);
+      }
+    };
+
+    await library.keep(asked);
+    await settle();
+
+    await vi.waitFor(async () => {
+      await expect(stat(join(folder, `${asked.downloadId}.trickplay`))).rejects.toThrow();
+    });
+    expect(await library.all()).toEqual([]);
   });
 
   it('keeps all the thumbnails or none, so the scrubber never draws holes', async () => {

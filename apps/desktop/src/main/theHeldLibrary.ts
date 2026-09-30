@@ -173,6 +173,10 @@ const theHeldLibrary = (needs: WhatTheLibraryNeeds): HeldLibrary => {
         await writeFile(join(kept, sheet.name), Buffer.from(await answer.arrayBuffer()));
       }
 
+      if (needs.index.read(row.downloadId) === null) {
+        throw new Error('It was forgotten while its thumbnails were fetched.');
+      }
+
       return true;
     } catch {
       await rm(kept, { recursive: true, force: true });
@@ -260,6 +264,23 @@ const theHeldLibrary = (needs: WhatTheLibraryNeeds): HeldLibrary => {
     });
   };
 
+  /**
+   * Fetches the thumbnails of films kept before the server had made them, one at a time and after
+   * any interrupted film has been set going again, so nothing a person is waiting for waits on them.
+   */
+  const fillInTheThumbnails = async (): Promise<void> => {
+    for (const row of needs.index.all()) {
+      if (row.state === 'here' && !row.hasTrickplay && !busy.has(row.downloadId)) {
+        const hasTrickplay = await fetchTheTrickplay(row);
+
+        if (hasTrickplay) {
+          note(row.downloadId, { hasTrickplay });
+          await announce();
+        }
+      }
+    }
+  };
+
   return {
     all,
     keep: async (what) => {
@@ -334,12 +355,6 @@ const theHeldLibrary = (needs: WhatTheLibraryNeeds): HeldLibrary => {
     },
     carryOnWhereItLeftOff: async () => {
       for (const row of needs.index.all()) {
-        if (row.state === 'here' && !row.hasTrickplay && !busy.has(row.downloadId)) {
-          note(row.downloadId, { hasTrickplay: await fetchTheTrickplay(row) });
-
-          continue;
-        }
-
         if (busy.has(row.downloadId) || row.state === 'here' || row.state === 'paused') {
           continue;
         }
@@ -354,6 +369,8 @@ const theHeldLibrary = (needs: WhatTheLibraryNeeds): HeldLibrary => {
       }
 
       await announce();
+
+      void fillInTheThumbnails();
     },
     whenChanged: (listener) => {
       listeners.add(listener);

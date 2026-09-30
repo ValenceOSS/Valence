@@ -213,6 +213,27 @@ describe('thePhonesHeldFiles', () => {
     );
   });
 
+  it('keeps no thumbnails for a film forgotten while they were being fetched', async () => {
+    aServerWhoseThumbnails(true);
+    const held = thePhonesHeldFiles(aFakePlatform().store);
+
+    jest
+      .mocked(downloadAsync)
+      .mockResolvedValueOnce({ status: 200, uri: '', headers: {}, mimeType: null })
+      .mockImplementationOnce(async () => {
+        await held.drop(ARRIVAL.downloadId);
+
+        return { status: 200, uri: '', headers: {}, mimeType: null };
+      });
+
+    await held.keep(ARRIVAL);
+
+    const folder = `file:///phone/held/${ARRIVAL.downloadId}.trickplay/`;
+
+    expect(await held.all()).toEqual([]);
+    expect(jest.mocked(deleteAsync).mock.calls.filter(([what]) => what === folder)).toHaveLength(2);
+  });
+
   it('asks again for thumbnails a film came without, once the app has settled', async () => {
     const store = aFakePlatform().store;
 
