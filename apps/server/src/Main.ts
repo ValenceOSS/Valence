@@ -1400,7 +1400,9 @@ const jobs = await createJobQueue({
 
           await sayWhatAScanChanged(filed.libraryId, scanned, result);
 
-          if (scanned.kind !== 'music') {
+          if (scanned.kind === 'music') {
+            await lookUpMusic(filed.libraryId, jobId, false);
+          } else {
             await libraryService.regeneratePreviews(filed.libraryId);
             await libraryService.regenerateTrickplay(filed.libraryId);
           }
