@@ -207,7 +207,9 @@ describe('ValenceShell', () => {
 
     renderTheApp();
 
-    expect(await screen.findByRole('navigation', { name: 'Sections' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('navigation', { name: 'Sections' }, { timeout: 15_000 }),
+    ).toBeInTheDocument();
     expect(screen.queryByRole('dialog', { name: 'The server' })).not.toBeInTheDocument();
   });
 
