@@ -98,6 +98,7 @@ const aScratchDatabase = async () => {
     [
       '0045_offline_downloads.sql',
       '0046_download_speed.sql',
+      '0053_holdings_belong_to_a_profile.sql',
       '0083_the_device_that_asked.sql',
       '0084_the_time_a_download_has_left.sql',
     ].map((name) =>
@@ -243,6 +244,29 @@ describe('createDownloadService', { timeout: STARTING_POSTGRES_MS }, () => {
 
     await expect(service.follow()).resolves.toEqual([]);
     expect((await service.list('a-profile'))[0]?.state).toBe('preparing');
+  });
+
+  it('holds a film for a device once however often it is held, and lets it go', async () => {
+    const { service } = await build([]);
+
+    await service.hold('a-profile', 'a-laptop', MEDIA_ID, 'original');
+    await service.hold('a-profile', 'a-laptop', MEDIA_ID, 'original');
+
+    await expect(service.held('a-profile')).resolves.toMatchObject([
+      { mediaId: MEDIA_ID, quality: 'original' },
+    ]);
+
+    await service.release('a-profile', 'a-laptop', MEDIA_ID, 'original');
+
+    await expect(service.held('a-profile')).resolves.toEqual([]);
+  });
+
+  it('hands back the download as it now stands each time it is asked for again', async () => {
+    const { service } = await build([preparing(10), READY]);
+    const first = await service.ask('a-profile', 'a-laptop', MEDIA_ID, 'original', []);
+    const again = await service.ask('a-profile', 'a-phone', MEDIA_ID, 'original', []);
+
+    expect(again).toMatchObject({ id: first?.id, state: 'ready' });
   });
 
   it('clears out what was ready before the cutoff, and deletes the file nobody else points at', async () => {

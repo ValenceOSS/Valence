@@ -16,6 +16,7 @@ import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
 import { DownloadQualitySchema, DownloadStateSchema } from '@ValenceContracts/schemas/Download';
 import { downloadHolding, preparedDownload, viewerProfile } from '#dialect/Schema';
 import { theEpisodesAskedFor } from './theEpisodesAskedFor';
+import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
 import type { Download, DownloadQuality, Holding } from '@ValenceContracts/schemas/Download';
@@ -362,7 +363,7 @@ const createDownloadService = ({
       const held = existing[0];
 
       if (held !== undefined) {
-        const [updated] = await db
+        await db
           .update(preparedDownload)
           .set({
             ...(clientId === null ? {} : { askedFromClientId: clientId }),
@@ -379,33 +380,43 @@ const createDownloadService = ({
                   readyAt: file.isReady ? new Date() : null,
                 }),
           })
+          .where(eq(preparedDownload.id, held.id));
+
+        const [updated] = await db
+          .select()
+          .from(preparedDownload)
           .where(eq(preparedDownload.id, held.id))
-          .returning();
+          .limit(1);
 
         return updated === undefined
           ? null
           : asDownload(updated, asked.title, await media.seriesOf(mediaId));
       }
 
+      const madeId = randomUUID();
+
+      await db.insert(preparedDownload).values({
+        id: madeId,
+        profileId,
+        mediaItemId: mediaId,
+        quality,
+        audioLanguages,
+        askedFromClientId: clientId,
+        renditionId: refused ? '' : file.id,
+        state: refused ? 'failed' : file.isReady ? 'ready' : 'preparing',
+        progress: refused ? 0 : file.progress,
+        bytesPerSecond: refused || file.isReady ? null : (file.bytesPerSecond ?? null),
+        secondsLeft: refused || file.isReady ? null : (file.secondsLeft ?? null),
+        sizeBytes: refused ? null : (file.sizeBytes ?? null),
+        ...(refused ? { failure: `The media service would not start it: ${file}` } : {}),
+        ...(!refused && file.isReady ? { readyAt: new Date() } : {}),
+      });
+
       const [made] = await db
-        .insert(preparedDownload)
-        .values({
-          id: randomUUID(),
-          profileId,
-          mediaItemId: mediaId,
-          quality,
-          audioLanguages,
-          askedFromClientId: clientId,
-          renditionId: refused ? '' : file.id,
-          state: refused ? 'failed' : file.isReady ? 'ready' : 'preparing',
-          progress: refused ? 0 : file.progress,
-          bytesPerSecond: refused || file.isReady ? null : (file.bytesPerSecond ?? null),
-          secondsLeft: refused || file.isReady ? null : (file.secondsLeft ?? null),
-          sizeBytes: refused ? null : (file.sizeBytes ?? null),
-          ...(refused ? { failure: `The media service would not start it: ${file}` } : {}),
-          ...(!refused && file.isReady ? { readyAt: new Date() } : {}),
-        })
-        .returning();
+        .select()
+        .from(preparedDownload)
+        .where(eq(preparedDownload.id, madeId))
+        .limit(1);
 
       return made === undefined
         ? null
@@ -547,11 +558,13 @@ const createDownloadService = ({
           continue;
         }
 
+        await db.update(preparedDownload).set(change).where(eq(preparedDownload.id, row.id));
+
         const [updated] = await db
-          .update(preparedDownload)
-          .set(change)
+          .select()
+          .from(preparedDownload)
           .where(eq(preparedDownload.id, row.id))
-          .returning();
+          .limit(1);
 
         if (updated !== undefined) {
           followed.push({
@@ -624,15 +637,29 @@ const createDownloadService = ({
     },
 
     clearOutBefore: async (cutoff) => {
-      const cleared = await db
-        .delete(preparedDownload)
-        .where(
-          and(
-            inArray(preparedDownload.state, ['ready', 'failed']),
-            lt(preparedDownload.askedAt, cutoff),
-          ),
-        )
-        .returning({ renditionId: preparedDownload.renditionId });
+      const cleared = await db.transaction(async (tx) => {
+        const found = await tx
+          .select({ id: preparedDownload.id, renditionId: preparedDownload.renditionId })
+          .from(preparedDownload)
+          .where(
+            and(
+              inArray(preparedDownload.state, ['ready', 'failed']),
+              lt(preparedDownload.askedAt, cutoff),
+            ),
+          )
+          .for('update');
+
+        if (found.length > 0) {
+          await tx.delete(preparedDownload).where(
+            inArray(
+              preparedDownload.id,
+              found.map((row) => row.id),
+            ),
+          );
+        }
+
+        return found;
+      });
 
       const renditions = [...new Set(cleared.map((row) => row.renditionId))];
       const stillWanted =
@@ -654,10 +681,15 @@ const createDownloadService = ({
     },
 
     hold: async (profileId, clientId, mediaId, quality) => {
-      await db
-        .insert(downloadHolding)
-        .values({ id: randomUUID(), profileId, clientId, mediaItemId: mediaId, quality })
-        .onConflictDoNothing();
+      await insertUnlessPresent(db, downloadHolding, {
+        values: [{ id: randomUUID(), profileId, clientId, mediaItemId: mediaId, quality }],
+        target: [
+          downloadHolding.profileId,
+          downloadHolding.clientId,
+          downloadHolding.mediaItemId,
+          downloadHolding.quality,
+        ],
+      });
     },
 
     release: async (profileId, clientId, mediaId, quality) => {

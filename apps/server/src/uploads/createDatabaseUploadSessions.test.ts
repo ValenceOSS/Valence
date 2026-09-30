@@ -91,5 +91,15 @@ describe('createDatabaseUploadSessions', { timeout: STARTING_POSTGRES_MS }, () =
     const later = createDatabaseUploadSessions(db, -1, 1024 ** 3);
 
     expect((await later.stale()).map((one) => one.uploadId)).toEqual([kept.uploadId]);
+    await expect(sessions.find(kept.uploadId, 'films')).resolves.toBeNull();
+    await expect(later.stale()).resolves.toEqual([]);
+  });
+
+  it('counts an upload as touched each time it is found', async () => {
+    const sessions = createDatabaseUploadSessions(await aScratchDatabase(), 60_000, 1024 ** 3);
+    const opened = await sessions.open(UPLOAD);
+    const found = await sessions.find(opened.uploadId, 'films');
+
+    expect(found?.touchedAt).toBeGreaterThanOrEqual(opened.touchedAt);
   });
 });

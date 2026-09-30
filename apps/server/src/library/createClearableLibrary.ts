@@ -16,7 +16,7 @@ import {
   REGENERATE_TRICKPLAY_JOB,
 } from '@ValenceServer/jobs/JobQueue';
 import { clearJobCompletions } from './createMediaStore';
-import type { ValenceDatabase } from '#dialect/ValenceDatabase';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { ClearableLibrary } from './clearLibraryParts';
 
 /**
@@ -41,7 +41,7 @@ const distinct = (held: (string | null)[]): string[] => [
  * @param db - The database.
  * @returns The library's parts, as the clearing work reaches them.
  */
-const createClearableLibrary = (db: ValenceDatabase): ClearableLibrary => {
+const createClearableLibrary = (db: AnyValenceDatabase): ClearableLibrary => {
   const inLibrary = (libraryId: string) => eq(mediaItem.libraryId, libraryId);
 
   const itemsIn = (libraryId: string) =>

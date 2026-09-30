@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { and, eq, isNotNull, isNull } from 'drizzle-orm';
 import { mediaArtworkChoice, mediaItem } from '#dialect/Schema';
 import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
+import { upsert } from '@ValenceDatabase/upsert';
 import type { ArtworkChoices, ArtworkKind } from '@ValenceContracts/schemas/ArtworkChoice';
 import type { MetadataProvider } from './MetadataProvider';
 
@@ -209,26 +210,26 @@ const createArtworkChoices = ({
       return 'refused';
     }
 
-    await db
-      .insert(mediaArtworkChoice)
-      .values({
-        id: randomUUID(),
-        libraryId: title.libraryId,
-        externalKind: title.externalKind,
-        externalId: title.externalId,
-        kind,
-        url,
-        updatedBy: by,
-      })
-      .onConflictDoUpdate({
-        target: [
-          mediaArtworkChoice.libraryId,
-          mediaArtworkChoice.externalKind,
-          mediaArtworkChoice.externalId,
-          mediaArtworkChoice.kind,
-        ],
-        set: { url, updatedBy: by, updatedAt: new Date() },
-      });
+    await upsert(db, mediaArtworkChoice, {
+      values: [
+        {
+          id: randomUUID(),
+          libraryId: title.libraryId,
+          externalKind: title.externalKind,
+          externalId: title.externalId,
+          kind,
+          url,
+          updatedBy: by,
+        },
+      ],
+      target: [
+        mediaArtworkChoice.libraryId,
+        mediaArtworkChoice.externalKind,
+        mediaArtworkChoice.externalId,
+        mediaArtworkChoice.kind,
+      ],
+      set: { url, updatedBy: by, updatedAt: new Date() },
+    });
 
     if (isTitleWide) {
       await db

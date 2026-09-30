@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { and, eq, inArray, isNotNull, isNull, notInArray, sql } from 'drizzle-orm';
+import type { Column, Name, SQL } from 'drizzle-orm';
 import {
   mediaItem,
   mediaItemJob,
@@ -17,12 +18,17 @@ import { AudioStreamSchema } from '@ValenceContracts/schemas/MediaItem';
 import { isNotATrack } from '@ValenceServer/music/isNotATrack';
 import { describeQuality } from './describeQuality';
 import { groupSameFilms } from './placement/groupSameFilms';
-import type { ValenceDatabase } from '#dialect/ValenceDatabase';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { PreviewMoment } from '@ValenceContracts/schemas/Library';
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 import { resolveSeriesKey } from './resolveSeriesKey';
 import type { MediaStore } from './scanLibrary';
 import { certificationAgeOf } from '@ValenceServer/library/certificationAgeOf';
+import { countAffected } from '@ValenceDatabase/countAffected';
+import { incoming } from '@ValenceDatabase/incoming';
+import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
+import { isNotDistinctFrom } from '@ValenceDatabase/isNotDistinctFrom';
+import { upsert } from '@ValenceDatabase/upsert';
 
 type SeriesPlacement = {
   path: string;
@@ -75,6 +81,48 @@ const groupSeriesByFolder = (
 };
 
 /**
+ * Files a programme under its key in a library, or finds the one already there, and says which it
+ * is. A programme already held keeps the catalogue identity it has, and only takes a new title
+ * where it has none yet or the incoming one agrees with it.
+ *
+ * @param db - The database to write to.
+ * @param wanted - The library, the key it is filed under, its title and its catalogue identity.
+ * @returns The programme's id.
+ */
+const placeSeries = async (
+  db: AnyValenceDatabase,
+  wanted: { libraryId: string; key: string; title: string; externalId: string | null },
+): Promise<string | null> => {
+  await upsert(db, series, {
+    values: [{ id: randomUUID(), ...wanted }],
+    target: [series.libraryId, series.key],
+    set: {
+      title: sql`case when ${series.externalId} is null or ${isNotDistinctFrom(incoming(series.externalId), series.externalId)} then ${incoming(series.title)} else ${series.title} end`,
+      externalId: sql`coalesce(${series.externalId}, ${incoming(series.externalId)})`,
+      updatedAt: new Date(),
+    },
+  });
+
+  const [placed] = await db
+    .select({ id: series.id })
+    .from(series)
+    .where(and(eq(series.libraryId, wanted.libraryId), eq(series.key, wanted.key)))
+    .limit(1);
+
+  return placed?.id ?? null;
+};
+
+/**
+ * Names a column on a second copy of its table, for a query that compares a row with another row
+ * of the same table.
+ *
+ * @param copy - What the second copy is called in the query.
+ * @param column - The column.
+ * @returns The column on that copy.
+ */
+const onCopy = (copy: Name, column: Column): SQL => sql`${copy}.${sql.identifier(column.name)}`;
+
+/**
  * The library's tables as the scanner uses them: what is stored now, what to write, what to remove,
  * and the corrections an operator has made. Everything the scanner needs of the database and nothing
  * else, so the scan itself can be tested against a store held in memory.
@@ -83,7 +131,7 @@ const groupSeriesByFolder = (
  * @returns The store, plus the operations only a real library performs.
  */
 const createMediaStore = (
-  db: ValenceDatabase,
+  db: AnyValenceDatabase,
   certificationRegion: () => Promise<string> = () => Promise.resolve('GB'),
 ): MediaStore & {
   clear: (libraryId: string) => Promise<number>;
@@ -148,26 +196,12 @@ const createMediaStore = (
     const seriesId =
       seriesKey === null || seriesTitle === null
         ? null
-        : ((
-            await db
-              .insert(series)
-              .values({
-                id: randomUUID(),
-                libraryId: row.libraryId,
-                key: seriesKey,
-                title: seriesTitle,
-                externalId: row.metadata.externalId ?? null,
-              })
-              .onConflictDoUpdate({
-                target: [series.libraryId, series.key],
-                set: {
-                  title: sql`case when ${series.externalId} is null or excluded."externalId" is not distinct from ${series.externalId} then excluded."title" else ${series.title} end`,
-                  externalId: sql`coalesce(${series.externalId}, excluded."externalId")`,
-                  updatedAt: new Date(),
-                },
-              })
-              .returning({ id: series.id })
-          )[0]?.id ?? null);
+        : await placeSeries(db, {
+            libraryId: row.libraryId,
+            key: seriesKey,
+            title: seriesTitle,
+            externalId: row.metadata.externalId ?? null,
+          });
 
     const changeable = {
       libraryId: row.libraryId,
@@ -227,14 +261,17 @@ const createMediaStore = (
       updatedAt: new Date(),
     };
 
+    await upsert(db, mediaItem, {
+      values: [{ id: randomUUID(), ...changeable }],
+      target: [mediaItem.libraryId, mediaItem.path],
+      set: changeable,
+    });
+
     const [saved] = await db
-      .insert(mediaItem)
-      .values({ id: randomUUID(), ...changeable })
-      .onConflictDoUpdate({
-        target: [mediaItem.libraryId, mediaItem.path],
-        set: changeable,
-      })
-      .returning({ id: mediaItem.id });
+      .select({ id: mediaItem.id })
+      .from(mediaItem)
+      .where(and(eq(mediaItem.libraryId, row.libraryId), eq(mediaItem.path, row.path)))
+      .limit(1);
 
     if (saved === undefined) {
       return null;
@@ -250,24 +287,31 @@ const createMediaStore = (
       return [];
     }
 
-    const removed = await db
-      .delete(mediaItem)
-      .where(and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, paths)))
-      .returning({
-        itemId: mediaItem.id,
-        title: mediaItem.title,
-        seriesTitle: mediaItem.seriesTitle,
-        seasonNumber: mediaItem.seasonNumber,
-        episodeNumber: mediaItem.episodeNumber,
-        year: mediaItem.year,
-        posterUrl: mediaItem.posterUrl,
-        overview: mediaItem.overview,
-        durationSeconds: mediaItem.durationSeconds,
-        rating: mediaItem.rating,
-        width: mediaItem.width,
-        height: mediaItem.height,
-        videoRange: mediaItem.videoRange,
-      });
+    const leaving = and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, paths));
+    const removed = await db.transaction(async (tx) => {
+      const found = await tx
+        .select({
+          itemId: mediaItem.id,
+          title: mediaItem.title,
+          seriesTitle: mediaItem.seriesTitle,
+          seasonNumber: mediaItem.seasonNumber,
+          episodeNumber: mediaItem.episodeNumber,
+          year: mediaItem.year,
+          posterUrl: mediaItem.posterUrl,
+          overview: mediaItem.overview,
+          durationSeconds: mediaItem.durationSeconds,
+          rating: mediaItem.rating,
+          width: mediaItem.width,
+          height: mediaItem.height,
+          videoRange: mediaItem.videoRange,
+        })
+        .from(mediaItem)
+        .where(leaving);
+
+      await tx.delete(mediaItem).where(leaving);
+
+      return found;
+    });
 
     return removed.map(({ width, height, videoRange, ...one }) => ({
       ...one,
@@ -309,13 +353,14 @@ const createMediaStore = (
 
       if (losers.length > 0) {
         const kept = survivor.id;
+        const other = sql.identifier('kept');
 
         await db
           .delete(rating)
           .where(
             and(
               inArray(rating.seriesId, losers),
-              sql`exists (select 1 from ${rating} as kept where kept."profileId" = ${rating.profileId} and kept."seriesId" = ${kept})`,
+              sql`exists (select 1 from ${rating} as ${other} where ${onCopy(other, rating.profileId)} = ${rating.profileId} and ${onCopy(other, rating.seriesId)} = ${kept})`,
             ),
           );
 
@@ -324,7 +369,7 @@ const createMediaStore = (
           .where(
             and(
               inArray(hidden.seriesId, losers),
-              sql`exists (select 1 from ${hidden} as kept where kept."profileId" = ${hidden.profileId} and kept."seriesId" = ${kept})`,
+              sql`exists (select 1 from ${hidden} as ${other} where ${onCopy(other, hidden.profileId)} = ${hidden.profileId} and ${onCopy(other, hidden.seriesId)} = ${kept})`,
             ),
           );
 
@@ -333,7 +378,7 @@ const createMediaStore = (
           .where(
             and(
               inArray(ageException.seriesId, losers),
-              sql`exists (select 1 from ${ageException} as kept where kept."userId" = ${ageException.userId} and kept."seriesId" = ${kept})`,
+              sql`exists (select 1 from ${ageException} as ${other} where ${onCopy(other, ageException.userId)} = ${ageException.userId} and ${onCopy(other, ageException.seriesId)} = ${kept})`,
             ),
           );
 
@@ -402,7 +447,7 @@ const createMediaStore = (
           eq(mediaItem.libraryId, libraryId),
           isNull(mediaItem.extraKind),
           isNotNull(mediaItem.parentId),
-          sql`not exists (select 1 from ${mediaItem} as parent where parent."id" = ${mediaItem.parentId} and parent."externalId" = ${mediaItem.externalId})`,
+          sql`not exists (select 1 from ${mediaItem} as ${sql.identifier('parent')} where ${onCopy(sql.identifier('parent'), mediaItem.id)} = ${mediaItem.parentId} and ${onCopy(sql.identifier('parent'), mediaItem.externalId)} = ${mediaItem.externalId})`,
           stillVersions.length === 0 ? undefined : notInArray(mediaItem.path, stillVersions),
         ),
       );
@@ -469,13 +514,11 @@ const createMediaStore = (
       updatedBy: row.updatedBy,
     };
 
-    await db
-      .insert(mediaOverride)
-      .values({ id: randomUUID(), ...changeable })
-      .onConflictDoUpdate({
-        target: [mediaOverride.libraryId, mediaOverride.path],
-        set: changeable,
-      });
+    await upsert(db, mediaOverride, {
+      values: [{ id: randomUUID(), ...changeable }],
+      target: [mediaOverride.libraryId, mediaOverride.path],
+      set: changeable,
+    });
   },
 
   removeOverrides: async (libraryId, paths) => {
@@ -483,12 +526,11 @@ const createMediaStore = (
       return 0;
     }
 
-    const removed = await db
-      .delete(mediaOverride)
-      .where(and(eq(mediaOverride.libraryId, libraryId), inArray(mediaOverride.path, paths)))
-      .returning({ id: mediaOverride.id });
-
-    return removed.length;
+    return countAffected(
+      await db
+        .delete(mediaOverride)
+        .where(and(eq(mediaOverride.libraryId, libraryId), inArray(mediaOverride.path, paths))),
+    );
   },
 
   savePreviewMoment: async (row) => {
@@ -501,13 +543,11 @@ const createMediaStore = (
       updatedBy: row.updatedBy,
     };
 
-    await db
-      .insert(mediaPreviewOverride)
-      .values({ id: randomUUID(), ...changeable })
-      .onConflictDoUpdate({
-        target: [mediaPreviewOverride.libraryId, mediaPreviewOverride.path],
-        set: changeable,
-      });
+    await upsert(db, mediaPreviewOverride, {
+      values: [{ id: randomUUID(), ...changeable }],
+      target: [mediaPreviewOverride.libraryId, mediaPreviewOverride.path],
+      set: changeable,
+    });
   },
 
   readPreviewMoment: async (libraryId, path) => {
@@ -526,23 +566,19 @@ const createMediaStore = (
   },
 
   removePreviewMoment: async (libraryId, path) => {
-    const removed = await db
-      .delete(mediaPreviewOverride)
-      .where(
-        and(eq(mediaPreviewOverride.libraryId, libraryId), eq(mediaPreviewOverride.path, path)),
-      )
-      .returning({ id: mediaPreviewOverride.id });
+    const removed = countAffected(
+      await db
+        .delete(mediaPreviewOverride)
+        .where(
+          and(eq(mediaPreviewOverride.libraryId, libraryId), eq(mediaPreviewOverride.path, path)),
+        ),
+    );
 
-    return removed.length > 0;
+    return removed > 0;
   },
 
   clear: async (libraryId) => {
-    const removed = await db
-      .delete(mediaItem)
-      .where(eq(mediaItem.libraryId, libraryId))
-      .returning({ id: mediaItem.id });
-
-    return removed.length;
+    return countAffected(await db.delete(mediaItem).where(eq(mediaItem.libraryId, libraryId)));
   },
 });
 
@@ -561,7 +597,7 @@ const createMediaStore = (
  * @param kind - The job being asked about.
  * @returns The query, unrun.
  */
-const outstandingFor = (db: ValenceDatabase, libraryId: string, kind: string) =>
+const outstandingFor = (db: AnyValenceDatabase, libraryId: string, kind: string) =>
   db
     .select({
       id: mediaItem.id,
@@ -601,7 +637,7 @@ const outstandingFor = (db: ValenceDatabase, libraryId: string, kind: string) =>
  * @returns The items still outstanding, with what each needs to be worked on.
  */
 const listOutstandingFor = async (
-  db: ValenceDatabase,
+  db: AnyValenceDatabase,
   libraryId: string,
   kind: string,
 ): Promise<
@@ -628,11 +664,14 @@ const listOutstandingFor = async (
  * @param kind - The job that finished.
  */
 const markJobComplete = async (
-  db: ValenceDatabase,
+  db: AnyValenceDatabase,
   mediaItemId: string,
   kind: string,
 ): Promise<void> => {
-  await db.insert(mediaItemJob).values({ mediaItemId, kind }).onConflictDoNothing();
+  await insertUnlessPresent(db, mediaItemJob, {
+    values: [{ mediaItemId, kind }],
+    target: [mediaItemJob.mediaItemId, mediaItemJob.kind],
+  });
 };
 
 /**
@@ -645,7 +684,7 @@ const markJobComplete = async (
  * @param kind - The job whose completions to forget.
  */
 const clearJobCompletions = async (
-  db: ValenceDatabase,
+  db: AnyValenceDatabase,
   libraryId: string,
   kind: string,
 ): Promise<void> => {
@@ -678,7 +717,7 @@ const clearJobCompletions = async (
  * @param kind - The job whose completion to forget.
  */
 const clearJobCompletion = async (
-  db: ValenceDatabase,
+  db: AnyValenceDatabase,
   mediaItemId: string,
   kind: string,
 ): Promise<void> => {
