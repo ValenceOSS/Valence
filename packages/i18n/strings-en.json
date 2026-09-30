@@ -6660,6 +6660,16 @@
     "context": "A sound track's channels, in the player's sound menu: two channels."
   },
   {
+    "handler": "database.builtForAnotherDatabase",
+    "text": "This build of Valence is for {built}, but DATABASE_URL is a {asked} address. Start it with Main.js, which chooses the build for the database it is given.",
+    "context": "Printed when one of Valence's two builds is started directly with the address of the other kind of database. {built} and {asked} are each postgres or mysql."
+  },
+  {
+    "handler": "database.urlIsForAnotherDatabase",
+    "text": "DATABASE_URL must start with postgres://, mysql:// or mariadb://, not {protocol}//. Valence keeps its data in Postgres, MySQL or MariaDB, and MongoDB is not one it can use.",
+    "context": "Printed when Valence starts with a DATABASE_URL for a database it does not support. {protocol} is the start of the address, such as mongodb:."
+  },
+  {
     "handler": "desktop.desktop.update",
     "text": "Update",
     "context": "The confirm label of a confirm dialog in the desktop of the desktop app."

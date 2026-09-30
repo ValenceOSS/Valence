@@ -81,10 +81,17 @@ RUN apt-get update \
   && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/keyrings/pgdg.gpg \
   && echo "deb [signed-by=/usr/share/keyrings/pgdg.gpg] https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
   && apt-get update \
-  && apt-get install -y --no-install-recommends postgresql-client-${POSTGRES_MAJOR} \
+  && apt-get install -y --no-install-recommends postgresql-client-${POSTGRES_MAJOR} mariadb-client \
   && apt-get purge -y curl gnupg \
   && apt-get autoremove -y \
   && rm -rf /var/lib/apt/lists/*
+
+# The same snapshots on MySQL and MariaDB. MariaDB's client comes from Debian above and dumps
+# MariaDB; MySQL needs its own, since mariadb-dump writes out the values of MySQL's generated
+# columns and MySQL then refuses to load them back. Oracle packages no MySQL client for Debian on
+# arm64, so the two tools are taken from the official image, which is built for both and whose
+# binaries need nothing bookworm does not already have.
+COPY --from=mysql:8.4 /usr/bin/mysqldump /usr/bin/mysql /usr/local/bin/
 
 ADD https://github.com/ValenceOSS/valence-ffmpeg/releases/download/v${VALENCE_FFMPEG_VERSION}/valence-ffmpeg_${VALENCE_FFMPEG_VERSION}-bookworm_${TARGETARCH}.deb /tmp/valence-ffmpeg.deb
 

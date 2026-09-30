@@ -24,7 +24,11 @@
     "db:push": "drizzle-kit push --config drizzle.postgres.config.ts",
     "db:push:postgres": "drizzle-kit push --config drizzle.postgres.config.ts",
     "db:push:mysql": "drizzle-kit push --config drizzle.mysql.config.ts",
-    "bundle": "esbuild src/Main.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=dist/Main.js"
+    "bundle": "pnpm bundle:postgres && pnpm bundle:mysql && pnpm bundle:launch",
+    "bundle:postgres": "esbuild --bundle --platform=node --format=esm --target=node22 --packages=external src/Main.ts src/Migrate.ts src/Rollback.ts --outdir=dist --entry-names=[name].postgres",
+    "bundle:mysql": "esbuild --bundle --platform=node --format=esm --target=node22 --packages=external --conditions=mysql src/Main.ts src/Migrate.ts src/Rollback.ts --outdir=dist --entry-names=[name].mysql",
+    "bundle:launch": "esbuild --bundle --platform=node --format=esm --target=node22 --packages=external src/Launch.ts --outfile=dist/Main.js && esbuild --bundle --platform=node --format=esm --target=node22 --packages=external src/Launch.ts --outfile=dist/Migrate.js && esbuild --bundle --platform=node --format=esm --target=node22 --packages=external src/Launch.ts --outfile=dist/Rollback.js",
+    "dev:mysql": "tsx watch --conditions=mysql --env-file-if-exists=../../.env src/Main.ts"
   },
   "dependencies": {
     "@better-auth/api-key": "^1.7.4",

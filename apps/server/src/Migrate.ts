@@ -1,3 +1,4 @@
+import { checkDialect } from '@ValenceDatabase/checkDialect';
 import { join } from 'node:path';
 import { createDatabase } from '#dialect/createDatabase';
 import { DIALECT } from '#dialect/DIALECT';
@@ -17,6 +18,9 @@ import { readEnv } from '@ValenceServer/env/Env';
  */
 const run = async (): Promise<void> => {
   const env = readEnv(process.env);
+
+  checkDialect(env.DATABASE_URL, DIALECT);
+
   const { db, pool } = createDatabase(env.DATABASE_URL);
 
   try {

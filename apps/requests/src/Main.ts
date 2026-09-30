@@ -1,3 +1,4 @@
+import { checkDialect } from '@ValenceDatabase/checkDialect';
 import { join } from 'node:path';
 import { serve } from '@hono/node-server';
 import { Camoufox } from 'camoufox-js';
@@ -54,6 +55,9 @@ const SEEDED_PROFILES = 'seededProfileNames';
 const SeededProfilesSchema = z.array(z.string());
 
 const env = readEnv(process.env);
+
+checkDialect(env.DATABASE_URL, DIALECT);
+
 const becoming = becomeTheUser({ uid: env.PUID, gid: env.PGID });
 const { db, pool } = createDatabase(env.DATABASE_URL);
 

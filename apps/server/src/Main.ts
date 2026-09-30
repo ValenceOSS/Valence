@@ -1,3 +1,4 @@
+import { checkDialect } from '@ValenceDatabase/checkDialect';
 import { followUpReading } from '@ValenceServer/library/followUpReading';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { sayingCount } from '@ValenceI18n/sayingCount';
@@ -311,6 +312,9 @@ const MonitorResourceSampleSchema = z.object({
   }),
 });
 const env = readEnv(process.env);
+
+checkDialect(env.DATABASE_URL, DIALECT);
+
 const { db, pool, schema } = createDatabase(env.DATABASE_URL);
 
 await migrateDatabase({

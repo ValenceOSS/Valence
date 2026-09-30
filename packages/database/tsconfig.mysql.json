@@ -4,5 +4,10 @@
     "customConditions": ["mysql"],
     "noEmit": true
   },
-  "exclude": ["node_modules", "dist", "coverage", "src/postgres"]
+  "exclude": ["node_modules", "dist", "coverage", "src/postgres"],
+  "references": [
+    {
+      "path": "../i18n"
+    }
+  ]
 }

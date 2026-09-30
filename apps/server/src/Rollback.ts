@@ -1,3 +1,5 @@
+import { DIALECT } from '#dialect/DIALECT';
+import { checkDialect } from '@ValenceDatabase/checkDialect';
 import { parseArgs } from 'node:util';
 import { listSnapshots } from '@ValenceServer/db/listSnapshots';
 import { restoreSnapshot } from '#dialect/restoreSnapshot';
@@ -15,6 +17,9 @@ import { readEnv } from '@ValenceServer/env/Env';
  */
 const run = async (): Promise<void> => {
   const env = readEnv(process.env);
+
+  checkDialect(env.DATABASE_URL, DIALECT);
+
   const { values, positionals } = parseArgs({
     options: { list: { type: 'boolean' }, restore: { type: 'boolean' } },
     allowPositionals: true,

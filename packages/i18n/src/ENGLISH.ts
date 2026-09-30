@@ -1537,6 +1537,10 @@ const ENGLISH = {
     'This server has no working encoder for {targetCodec}.',
   'core.track.quad': 'Quad',
   'core.track.stereo': 'Stereo',
+  'database.builtForAnotherDatabase':
+    'This build of Valence is for {built}, but DATABASE_URL is a {asked} address. Start it with Main.js, which chooses the build for the database it is given.',
+  'database.urlIsForAnotherDatabase':
+    'DATABASE_URL must start with postgres://, mysql:// or mariadb://, not {protocol}//. Valence keeps its data in Postgres, MySQL or MariaDB, and MongoDB is not one it can use.',
   'desktop.desktop.update': 'Update',
   'desktop.desktop.updateValence': 'Update Valence?',
   'desktop.desktop.valenceVersionIsOutItDownloads':
