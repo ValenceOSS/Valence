@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MINIMUM_PASSWORD_LENGTH } from '@ValenceContracts/constants/MINIMUM_PASSWORD_LENGTH';
 
 const SetupStatusSchema = z.object({
   isComplete: z.boolean(),
@@ -10,7 +11,7 @@ const SetupStatusSchema = z.object({
 const SetupAdminSchema = z.object({
   name: z.string().min(1).max(100),
   email: z.string().email(),
-  password: z.string().min(10),
+  password: z.string().min(MINIMUM_PASSWORD_LENGTH),
 });
 
 const SetupRequestSchema = z.object({

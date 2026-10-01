@@ -3,6 +3,7 @@ import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { AvatarSchema, ProfileColourSchema } from '@ValenceContracts/schemas/ViewerProfile';
 import { AccountSchema } from '@ValenceContracts/schemas/Account';
+import { MINIMUM_PASSWORD_LENGTH } from '@ValenceContracts/constants/MINIMUM_PASSWORD_LENGTH';
 
 const Account = AccountSchema.openapi('Account');
 
@@ -107,7 +108,7 @@ const inviteAccountRoute = createRoute({
           schema: z.object({
             name: z.string().min(1).max(100),
             email: z.string().email(),
-            password: z.string().min(8).max(200),
+            password: z.string().min(MINIMUM_PASSWORD_LENGTH).max(200),
           }),
         },
       },
@@ -119,7 +120,11 @@ const inviteAccountRoute = createRoute({
       content: { 'application/json': { schema: Account } },
     },
     400: {
-      description: 'The account could not be created',
+      description: 'That address is already in use',
+      content: { 'application/json': { schema: AccountError } },
+    },
+    500: {
+      description: 'The account could not be created for another reason, which the log says',
       content: { 'application/json': { schema: AccountError } },
     },
     403: {
@@ -173,7 +178,9 @@ const resetAccountPasswordRoute = createRoute({
     params: z.object({ userId: z.string().min(1) }),
     body: {
       content: {
-        'application/json': { schema: z.object({ password: z.string().min(8).max(200) }) },
+        'application/json': {
+          schema: z.object({ password: z.string().min(MINIMUM_PASSWORD_LENGTH).max(200) }),
+        },
       },
     },
   },

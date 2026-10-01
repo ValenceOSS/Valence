@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { AccountCreation } from '@ValenceServer/auth/createAccount';
 import { z } from 'zod';
 import { createApp } from '@ValenceServer/App';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
@@ -34,14 +35,10 @@ const build = () => {
   const { auth, settings, store } = createMemoryAuth();
   const permissions = createMemoryPermissionService();
   const banAccount = vi.fn<(userId: string, reason: string) => Promise<boolean>>();
-  const inviteAccount = vi.fn<
-    (request: { name: string; email: string; password: string }) => Promise<{
-      id: string;
-      name: string;
-      email: string;
-      createdAt: string;
-    } | null>
-  >();
+  const inviteAccount =
+    vi.fn<
+      (request: { name: string; email: string; password: string }) => Promise<AccountCreation>
+    >();
   const editAccount =
     vi.fn<
       (
@@ -54,10 +51,13 @@ const build = () => {
 
   banAccount.mockResolvedValue(true);
   inviteAccount.mockResolvedValue({
-    id: 'usr_new',
-    name: 'Alex',
-    email: 'alex@valence.local',
-    createdAt: '2026-01-01T00:00:00.000Z',
+    kind: 'created',
+    account: {
+      id: 'usr_new',
+      name: 'Alex',
+      email: 'alex@valence.local',
+      createdAt: '2026-01-01T00:00:00.000Z',
+    },
   });
   editAccount.mockResolvedValue('changed');
   unbanAccount.mockResolvedValue(true);
@@ -416,11 +416,24 @@ describe('account administration', () => {
       });
 
       expect(response.status).toBe(201);
+      expect(await response.json()).toMatchObject({ id: 'usr_new', email: 'alex@valence.local' });
       expect(context.inviteAccount).toHaveBeenCalledWith({
         name: 'Alex',
         email: 'alex@valence.local',
         password: 'a-long-enough-password',
       });
+    });
+
+    it('refuses a password one character shorter than signing in needs', async () => {
+      const context = await signedInWith(['account.invite']);
+      const response = await context.request('/api/admin/accounts', 'POST', {
+        name: 'Alex',
+        email: 'alex@valence.local',
+        password: '123456789',
+      });
+
+      expect(response.status).toBe(400);
+      expect(context.inviteAccount).not.toHaveBeenCalled();
     });
 
     it('refuses a password too short to be one', async () => {
@@ -449,7 +462,7 @@ describe('account administration', () => {
     it('reports an address already in use', async () => {
       const context = await signedInWith(['account.invite']);
 
-      context.inviteAccount.mockResolvedValue(null);
+      context.inviteAccount.mockResolvedValue({ kind: 'taken' });
 
       const response = await context.request('/api/admin/accounts', 'POST', {
         name: 'Alex',
@@ -459,6 +472,23 @@ describe('account administration', () => {
 
       expect(response.status).toBe(400);
       expect(await response.text()).toContain('already in use');
+    });
+
+    it('does not blame the address for anything else that goes wrong', async () => {
+      const context = await signedInWith(['account.invite']);
+
+      context.inviteAccount.mockResolvedValue({ kind: 'failed', reason: 'the database is away' });
+
+      const response = await context.request('/api/admin/accounts', 'POST', {
+        name: 'Alex',
+        email: 'alex@valence.local',
+        password: 'a-long-enough-password',
+      });
+      const said = await response.text();
+
+      expect(response.status).toBe(500);
+      expect(said).toContain('could not be made');
+      expect(said).not.toContain('already in use');
     });
   });
 
@@ -653,7 +683,8 @@ describe('a server with no way to act on accounts', () => {
       password: 'a-long-enough-password',
     });
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(500);
+    expect(await response.text()).not.toContain('already in use');
   });
 
   it('reports no accounts at all rather than failing', async () => {

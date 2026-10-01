@@ -1840,6 +1840,16 @@
     "context": "Shown in an empty text field until something is typed, used in the media requests panel in the admin area and in the requests list in the requests page."
   },
   {
+    "handler": "common.atLeastCountCharacters.one",
+    "text": "At least {count} character.",
+    "context": "The hint beneath a password field, in the setup wizard and when adding an account or resetting its password in the admin area. {count} is the shortest a password may be."
+  },
+  {
+    "handler": "common.atLeastCountCharacters.other",
+    "text": "At least {count} characters.",
+    "context": "The hint beneath a password field, in the setup wizard and when adding an account or resetting its password in the admin area. {count} is the shortest a password may be."
+  },
+  {
     "handler": "common.audio",
     "text": "Audio",
     "context": "The heading, used in several places, among them the watching of the phone app (from `theChoicesOn`) and the player of the television app."
@@ -7143,6 +7153,11 @@
     "handler": "error.common.thatWouldLeaveNobodyAbleTo",
     "text": "That would leave nobody able to administer this server.",
     "context": "An error the server answers with (HTTP 400), used in the app on the server (from `serveAccount`) and in the app on the server (from `serveRole`)."
+  },
+  {
+    "handler": "error.common.theAccountCouldNotBeMade",
+    "text": "The account could not be made. The server's log says why.",
+    "context": "An error the server answers with (HTTP 500) when adding an account or giving a profile an account of its own fails for a reason other than the address being taken."
   },
   {
     "handler": "error.common.theCatalogueDoesNotKnowThat",
@@ -20853,11 +20868,6 @@
     "handler": "screens.sessionCard.deviceIcon.chrome",
     "text": "Chrome",
     "context": "Shown in the session card (from `deviceIcon`)."
-  },
-  {
-    "handler": "screens.setupWizard.atLeast10Characters",
-    "text": "At least 10 characters.",
-    "context": "The description of a text field in the setup wizard."
   },
   {
     "handler": "screens.setupWizard.cookiesWillNotBeMarkedSecure",

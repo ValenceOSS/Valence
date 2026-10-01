@@ -1,4 +1,5 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { MINIMUM_PASSWORD_LENGTH } from '@ValenceContracts/constants/MINIMUM_PASSWORD_LENGTH';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import {
   ViewerProfileSchema,
@@ -95,7 +96,7 @@ const deleteProfileRoute = createRoute({
 const PromoteRequestSchema = z
   .object({
     email: z.string().email(),
-    password: z.string().min(8),
+    password: z.string().min(MINIMUM_PASSWORD_LENGTH),
   })
   .openapi('PromoteProfileRequest');
 
@@ -123,6 +124,10 @@ const promoteProfileRoute = createRoute({
     },
     409: {
       description: 'That address already has an account',
+      content: { 'application/json': { schema: ProfileError } },
+    },
+    500: {
+      description: 'The account could not be created for another reason, which the log says',
       content: { 'application/json': { schema: ProfileError } },
     },
   },

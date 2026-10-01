@@ -20,6 +20,7 @@ import { apiKey } from '@better-auth/api-key';
 import { passkey } from '@better-auth/passkey';
 import { trustedOriginsFor } from '@ValenceServer/auth/trustedOriginsFor';
 import type { Env } from '@ValenceServer/env/Env';
+import { MINIMUM_PASSWORD_LENGTH } from '@ValenceContracts/constants/MINIMUM_PASSWORD_LENGTH';
 import type { SettingsStore } from '@ValenceServer/settings/ServerSettings';
 
 type AuthDatabase = DBAdapter | DBAdapterInstance;
@@ -82,7 +83,7 @@ const createAuth = ({
     }),
     emailAndPassword: {
       enabled: true,
-      minPasswordLength: 10,
+      minPasswordLength: MINIMUM_PASSWORD_LENGTH,
       sendResetPassword: async ({ user, url }) => {
         await onPasswordResetRequested?.(user.email, url);
       },
