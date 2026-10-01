@@ -4,14 +4,16 @@
   "customManagers": [
     {
       "customType": "regex",
-      "description": "The valence-ffmpeg build the image installs, which local development syncs from too, and the default the docs give for it",
+      "description": "The valence-ffmpeg build the image installs, which local development syncs from too, the default the docs give for it, and the build each workflow installs",
       "managerFilePatterns": [
         "/(^|/)Dockerfile$/",
-        "/(^|/)apps/docs/src/content/reference/environment-variables\\.mdx$/"
+        "/(^|/)apps/docs/src/content/reference/environment-variables\\.mdx$/",
+        "/(^|/)\\.github/workflows/[^/]+\\.ya?ml$/"
       ],
       "matchStrings": [
         "ARG VALENCE_FFMPEG_VERSION=(?<currentValue>\\S+)",
-        "\\| `VALENCE_FFMPEG_VERSION` \\| `(?<currentValue>[^`]+)`"
+        "\\| `VALENCE_FFMPEG_VERSION` \\| `(?<currentValue>[^`]+)`",
+        "VALENCE_FFMPEG_VERSION: (?<currentValue>\\S+)"
       ],
       "depNameTemplate": "ValenceOSS/Valence-FFMPEG",
       "datasourceTemplate": "github-releases",
