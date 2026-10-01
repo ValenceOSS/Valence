@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator } from 'react-native';
 import { saveReadingProgress } from '@ValenceClient/books/fetchBooks';
 import { whereToOpen } from '@ValenceClient/books/whereToOpen';
+import { useNowReading } from '@ValenceClient/books/useNowReading';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { APageReader } from '@ValenceMobile/components/AReader/components/APageReader/APageReader';
 import { ATextReader } from '@ValenceMobile/components/AReader/components/ATextReader/ATextReader';
@@ -48,18 +49,24 @@ const AReader = ({ bookId, chapterId, isFromTheStart, onBack }: AReaderProps) =>
     [cache],
   );
 
+  const isReading =
+    asked.data !== undefined && asked.data !== null && read.data !== undefined && open !== '';
+  const tellReading = useNowReading(isReading ? bookId : null);
+
   const rememberPage = useCallback(
     (page: number, isFinished: boolean) => {
       void saveReadingProgress(bookId, open, { pageNumber: page }, isFinished);
+      tellReading({ fraction: null, pageNumber: page });
     },
-    [bookId, open],
+    [bookId, open, tellReading],
   );
 
   const rememberFraction = useCallback(
     (fraction: number, isFinished: boolean) => {
       void saveReadingProgress(bookId, open, { fraction }, isFinished);
+      tellReading({ fraction, pageNumber: null });
     },
-    [bookId, open],
+    [bookId, open, tellReading],
   );
 
   if (asked.isError) {

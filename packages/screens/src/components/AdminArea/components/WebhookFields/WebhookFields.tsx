@@ -263,7 +263,12 @@ const WebhookFields = ({
 
           <WebhookFilterList
             title={say('screens.adminArea.webhookFields.kinds')}
-            governs={say('screens.adminArea.webhookFields.decidesWhichKindsOfThingAre')}
+            governs={say(
+              'screens.adminArea.webhookFields.decidesWhichKindsAreReportedSongsByName',
+              {
+                song: MEDIA_KIND_LABELS.song,
+              },
+            )}
             choices={ITEM_TYPE_CHOICES}
             chosen={draft.filters.itemTypes}
             nothingToChoose={say('screens.adminArea.webhookFields.nothingToChooseFrom')}

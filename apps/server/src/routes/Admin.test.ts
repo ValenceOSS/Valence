@@ -9,6 +9,8 @@ import { createMemoryLibraryService } from '@ValenceServer/library/createMemoryL
 import { createMemoryPlaybackService } from '@ValenceServer/playback/createMemoryPlaybackService';
 import { createMemoryProfileService } from '@ValenceServer/profiles/createMemoryProfileService';
 import { createPresenceService } from '@ValenceServer/presence/PresenceService';
+import { createMemoryBookService } from '@ValenceServer/books/createMemoryBookService';
+import { createBookDevices } from '@ValenceServer/books/createBookDevices';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type { Reason } from '@ValenceContracts/schemas/PlaybackPlan';
 import { createMemoryWatchProgressService } from '@ValenceServer/progress/createMemoryWatchProgressService';
@@ -1334,6 +1336,151 @@ describe('watching and steering what is being watched', () => {
     const response = await app.request(`${BASE}/api/admin/sessions/nobody`, {
       method: 'DELETE',
       headers: { cookie, origin: BASE },
+    });
+
+    expect(response.status).toBe(404);
+  });
+});
+
+describe('books in the active sessions', () => {
+  const BOOK_ID = '00000000-0000-4000-8000-0000000000b1';
+  const CHAPTER_ID = '00000000-0000-4000-8000-0000000000c1';
+
+  const withBooks = () => {
+    const { auth, settings, store } = createMemoryAuth();
+    const permissions = createMemoryPermissionService();
+    const presence = createPresenceService();
+    const app = createApp({
+      auth,
+      settings,
+      permissions,
+      countUsers: () => Promise.resolve(1),
+      promoteToAdmin: () => Promise.resolve(null),
+      library: createMemoryLibraryService({ libraries: [LIBRARY], media: [] }),
+      playback: createMemoryPlaybackService(),
+      segments: createMemorySegmentService(),
+      subtitles: createMemorySubtitleService({}),
+      progress: createMemoryWatchProgressService(),
+      favourites: createMemoryFavouriteService(),
+      ratings: createMemoryRatingService(),
+      presence,
+      books: createMemoryBookService({
+        books: [
+          {
+            id: BOOK_ID,
+            libraryId: 'library-1',
+            title: 'Dune',
+            layout: 'audio',
+            direction: 'leftToRight',
+            year: 1965,
+            overview: null,
+            genres: null,
+            authors: ['Frank Herbert'],
+            rating: null,
+            hasCover: true,
+            chapterCount: 1,
+            addedAt: '2026-09-18T00:00:00.000Z',
+            updatedAt: '2026-09-18T00:00:00.000Z',
+          },
+        ],
+        chapters: [],
+      }),
+      bookDevices: createBookDevices({ presence }),
+    });
+
+    return { app, store, permissions, presence };
+  };
+
+  it('shows who is listening to an audiobook and who is reading, and stops the audiobook', async () => {
+    const { app, store, permissions, presence } = withBooks();
+    const cookie = await signedInAsAdmin(app, store, permissions);
+    const accountId = store.user[0]?.id ?? null;
+    const sent = vi.fn();
+
+    presence.connect({
+      clientId: 'phone',
+      socketId: 'socket-1',
+      accountId,
+      profileId: null,
+      profileName: 'Marques',
+      deviceLabel: 'iPhone',
+      send: sent,
+    });
+    presence.connect({
+      clientId: 'tablet',
+      socketId: 'socket-2',
+      accountId,
+      profileId: null,
+      profileName: 'Marques',
+      deviceLabel: 'iPad',
+      send: vi.fn(),
+    });
+
+    const heard = await app.request(`${BASE}/api/books/now-listening`, {
+      method: 'POST',
+      headers: { cookie, origin: BASE, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        clientId: 'phone',
+        nowListening: {
+          bookId: BOOK_ID,
+          chapterId: CHAPTER_ID,
+          positionSeconds: 600,
+          durationSeconds: 3600,
+          isPlaying: true,
+          reportedAtMs: 1,
+        },
+      }),
+    });
+    const read = await app.request(`${BASE}/api/books/now-reading`, {
+      method: 'POST',
+      headers: { cookie, origin: BASE, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        clientId: 'tablet',
+        nowReading: { bookId: BOOK_ID, fraction: 0.25, pageNumber: null, reportedAtMs: 1 },
+      }),
+    });
+
+    expect(heard.status).toBe(200);
+    expect(read.status).toBe(200);
+
+    const listed = await app.request(`${BASE}/api/admin/sessions`, {
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(await listed.json()).toMatchObject([
+      {
+        clientId: 'phone',
+        bookListening: {
+          bookId: BOOK_ID,
+          title: 'Dune',
+          authors: ['Frank Herbert'],
+          isPlaying: true,
+        },
+        reading: null,
+      },
+      { clientId: 'tablet', bookListening: null, reading: { title: 'Dune', fraction: 0.25 } },
+    ]);
+
+    const stopped = await app.request(`${BASE}/api/admin/sessions/phone`, {
+      method: 'DELETE',
+      headers: { cookie, origin: BASE },
+    });
+
+    expect(stopped.status).toBe(204);
+    expect(sent).toHaveBeenCalledWith({ kind: 'book', command: 'stop' });
+  });
+
+  it('will not hear about a device that is not the person’s own', async () => {
+    const { app, store, permissions } = withBooks();
+    const cookie = await signedInAsAdmin(app, store, permissions);
+
+    const response = await app.request(`${BASE}/api/books/now-reading`, {
+      method: 'POST',
+      headers: { cookie, origin: BASE, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        clientId: 'not-open',
+        nowReading: { bookId: BOOK_ID, fraction: 0.25, pageNumber: null, reportedAtMs: 1 },
+      }),
     });
 
     expect(response.status).toBe(404);

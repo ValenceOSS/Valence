@@ -156,7 +156,13 @@ const OverviewPanel = ({
   };
 
   const now = useTicking(A_CAPTION_AGES_EVERY);
-  const watching = sessions.filter((session) => session.playback !== null);
+  const watching = sessions.filter(
+    (session) =>
+      session.playback !== null ||
+      session.listening !== null ||
+      session.bookListening !== null ||
+      session.reading !== null,
+  );
   const running = (monitor?.queue.jobs ?? []).filter((job) => job.state === 'running');
   const waiting = monitor?.queue.queued ?? 0;
   const resources = monitor?.resources ?? null;
@@ -243,7 +249,7 @@ const OverviewPanel = ({
         </Region>
 
         <Region
-          title={say('screens.adminArea.overviewPanel.watchingNow')}
+          title={say('screens.adminArea.overviewPanel.activeNow')}
           action={say('screens.adminArea.overviewPanel.allSessions')}
           onAction={() => {
             onOpenPanel('activity');
@@ -251,7 +257,7 @@ const OverviewPanel = ({
         >
           {watching.length === 0 ? (
             <p className="text-sm text-text-muted">
-              {say('screens.adminArea.overviewPanel.nobodyIsWatchingAnything')}
+              {say('screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading')}
             </p>
           ) : (
             <ul className="flex flex-col divide-y divide-[var(--surface-line)]">
@@ -259,7 +265,11 @@ const OverviewPanel = ({
                 <li key={session.clientId} className="flex items-center gap-4 py-3 first:pt-0">
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <span className="truncate text-sm text-text">
-                      {session.playback?.mediaTitle ?? ''}
+                      {session.playback?.mediaTitle ??
+                        session.listening?.title ??
+                        session.bookListening?.title ??
+                        session.reading?.title ??
+                        ''}
                     </span>
                     <span className="truncate text-xs text-text-muted">
                       {nameOfSession(session)} · {session.deviceLabel}
@@ -267,9 +277,12 @@ const OverviewPanel = ({
                   </span>
 
                   <Badge size="sm">
-                    {session.playback?.mode === 'direct'
-                      ? say('common.direct')
-                      : say('common.transcode')}
+                    {session.reading !== null && session.bookListening === null
+                      ? say('common.reading')
+                      : session.playback?.mode === 'transcode' ||
+                          session.listening?.delivery === 'encoded'
+                        ? say('common.transcode')
+                        : say('common.direct')}
                   </Badge>
                 </li>
               ))}

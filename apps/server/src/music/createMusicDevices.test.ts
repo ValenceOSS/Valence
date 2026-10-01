@@ -87,6 +87,26 @@ describe('createMusicDevices', () => {
     expect(devices.list(ME)[0]?.nowPlaying).toEqual(NOW_PLAYING);
   });
 
+  it('tells of each song a device starts and stops playing', () => {
+    const { presence, change } = presenceWith([entry('laptop', 'me')]);
+    const onStarted = vi.fn();
+    const onStopped = vi.fn();
+    const devices = createMusicDevices({ presence, plays: { now: () => 0, onStarted, onStopped } });
+
+    devices.report(ME, 'laptop', NOW_PLAYING);
+    change([]);
+
+    expect(onStarted).toHaveBeenCalledWith({
+      device: entry('laptop', 'me'),
+      report: NOW_PLAYING,
+      startedAtMs: 0,
+    });
+    expect(onStopped).toHaveBeenCalledWith(
+      { device: entry('laptop', 'me'), report: NOW_PLAYING, startedAtMs: 0 },
+      { positionSeconds: 12, durationSeconds: 300 },
+    );
+  });
+
   it('does not take a report from a device that is not the profile’s', () => {
     const { presence } = presenceWith([entry('theirs', 'them')]);
 

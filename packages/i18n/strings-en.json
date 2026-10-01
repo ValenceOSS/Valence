@@ -13255,6 +13255,11 @@
     "context": "Under the memory figure at the top of the admin area, after the memory in use. {total} is all the machine's memory, and {used} how much Valence itself uses, such as 1.2 GB."
   },
   {
+    "handler": "screens.adminArea.overviewPanel.activeNow",
+    "text": "Active now",
+    "context": "The title of a region in the overview panel in the admin area, listing everybody watching, listening to or reading something on the server right now."
+  },
+  {
     "handler": "screens.adminArea.overviewPanel.allJobs",
     "text": "All jobs",
     "context": "Shown in the overview panel in the admin area."
@@ -13280,9 +13285,9 @@
     "context": "Shown in the overview panel in the admin area."
   },
   {
-    "handler": "screens.adminArea.overviewPanel.nobodyIsWatchingAnything",
-    "text": "Nobody is watching anything.",
-    "context": "Text shown in the overview panel in the admin area."
+    "handler": "screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading",
+    "text": "Nobody is watching, listening to or reading anything.",
+    "context": "Text shown in the overview panel in the admin area when nobody is playing or reading anything."
   },
   {
     "handler": "screens.adminArea.overviewPanel.noLibrariesYet",
@@ -13358,11 +13363,6 @@
     "handler": "screens.adminArea.overviewPanel.waitingForTheFirstReading",
     "text": "Waiting for the first reading.",
     "context": "Shown in the overview panel in the admin area."
-  },
-  {
-    "handler": "screens.adminArea.overviewPanel.watchingNow",
-    "text": "Watching now",
-    "context": "The title of a region in the overview panel in the admin area."
   },
   {
     "handler": "screens.adminArea.pausedThatStream",
@@ -15180,9 +15180,9 @@
     "context": "Shown in the webhook fields in the admin area."
   },
   {
-    "handler": "screens.adminArea.webhookFields.decidesWhichKindsOfThingAre",
-    "text": "Decides which kinds of thing are reported, arriving or being watched.",
-    "context": "Shown in the webhook fields in the admin area."
+    "handler": "screens.adminArea.webhookFields.decidesWhichKindsAreReportedSongsByName",
+    "text": "Decides which kinds of thing are reported as they arrive or are played. A song being played is only reported where {song} is chosen.",
+    "context": "Shown under the kinds filter in the webhook fields in the admin area. {song} is the name of the song kind in the list, as it is shown there."
   },
   {
     "handler": "screens.adminArea.webhookFields.decidesWhoseSignInsAndAccount",
@@ -22525,9 +22525,19 @@
     "context": "The title in the webhooks on the server (from `discordEmbedFor`). {viewer} is filled in by the app."
   },
   {
+    "handler": "server.webhooks.discordEmbedFor.viewerStartedListening",
+    "text": "{viewer} started listening",
+    "context": "The description in the webhooks on the server (from `discordEmbedFor`), for a song or an audiobook. {viewer} is filled in by the app."
+  },
+  {
     "handler": "server.webhooks.discordEmbedFor.viewerStartedWatching",
     "text": "{viewer} started watching",
     "context": "The description in the webhooks on the server (from `discordEmbedFor`). {viewer} is filled in by the app."
+  },
+  {
+    "handler": "server.webhooks.discordEmbedFor.viewerStoppedListening",
+    "text": "{viewer} stopped listening",
+    "context": "The description in the webhooks on the server (from `discordEmbedFor`), for a song or an audiobook. {viewer} is filled in by the app."
   },
   {
     "handler": "server.webhooks.discordEmbedFor.viewerStoppedWatching",
@@ -22643,6 +22653,11 @@
     "handler": "server.webhooks.formatWebhookBody.signInRefusedOnDeviceFromAddress",
     "text": "A sign-in as {identifier} was refused on {deviceLabel} from {address} — {reason}",
     "context": "A webhook message when a sign-in is refused. {identifier} is the name or email tried; {deviceLabel} is the device; {address} is the network address it came from; {reason} is why."
+  },
+  {
+    "handler": "server.webhooks.formatWebhookBody.startedListening",
+    "text": "{viewer} started listening to {item} on {device}, {how}.",
+    "context": "Shown in the webhooks on the server (from `formatWebhookBody`), for a song or an audiobook. {viewer} is who; {item} is what; {device} is the device; {how} is how it is reaching the device."
   },
   {
     "handler": "server.webhooks.formatWebhookBody.startedWatching",
@@ -22773,6 +22788,16 @@
     "handler": "server.webhooks.openedValenceFrom",
     "text": "{viewer} opened Valence on {device} from {address}.",
     "context": "A webhook message sent when somebody opens Valence. {viewer} is who; {device} is the device, such as Firefox on Windows; {address} is the network address they came from."
+  },
+  {
+    "handler": "server.webhooks.stoppedListening",
+    "text": "{viewer} stopped listening to {item}.",
+    "context": "A webhook message sent when somebody stops listening to a song or an audiobook. {viewer} is who; {item} is what they listened to."
+  },
+  {
+    "handler": "server.webhooks.stoppedListeningPartWay",
+    "text": "{viewer} stopped listening to {item} {percent}% of the way through.",
+    "context": "A webhook message sent when somebody stops listening to a song or an audiobook part of the way through. {viewer} is who; {item} is what they listened to; {percent} is how far through they got."
   },
   {
     "handler": "server.webhooks.stoppedWatching",

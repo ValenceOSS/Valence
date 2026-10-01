@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { MusicCommandSchema } from '@ValenceContracts/schemas/MusicRemote';
 import { VideoCommandSchema } from '@ValenceContracts/schemas/VideoRemote';
+import { BookCommandSchema } from '@ValenceContracts/schemas/BookRemote';
 
 const PresenceEventSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('stopped'), reason: z.string() }),
@@ -13,6 +14,7 @@ const PresenceEventSchema = z.discriminatedUnion('kind', [
     fromClientId: z.string(),
     fromLabel: z.string(),
   }),
+  z.object({ kind: z.literal('book'), command: BookCommandSchema }),
   z.object({
     kind: z.literal('video'),
     command: VideoCommandSchema,

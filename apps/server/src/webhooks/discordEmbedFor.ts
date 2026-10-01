@@ -1,6 +1,7 @@
 import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { describeArrival } from './describeArrival';
 import { describeSpan } from './describeSpan';
+import { isListenedTo } from './isListenedTo';
 import { nameOfItem } from './nameOfItem';
 import { nameOfViewer } from './nameOfViewer';
 import { MEDIA_KIND_LABELS } from '@ValenceContracts/schemas/MediaKind';
@@ -158,9 +159,12 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
     case 'playback.started': {
       return {
         title: nameOfItem(payload.data.item),
-        description: say('server.webhooks.discordEmbedFor.viewerStartedWatching', {
-          viewer: nameOfViewer(payload.data),
-        }),
+        description: say(
+          isListenedTo(payload.data.item.kind)
+            ? 'server.webhooks.discordEmbedFor.viewerStartedListening'
+            : 'server.webhooks.discordEmbedFor.viewerStartedWatching',
+          { viewer: nameOfViewer(payload.data) },
+        ),
         colour: COLOURS.viewing,
         posterUrl: payload.data.item.posterUrl,
         fields: [
@@ -178,9 +182,12 @@ const partsFor = (payload: WebhookPayload, sentence: string): EmbedParts => {
     case 'playback.stopped': {
       return {
         title: nameOfItem(payload.data.item),
-        description: say('server.webhooks.discordEmbedFor.viewerStoppedWatching', {
-          viewer: nameOfViewer(payload.data),
-        }),
+        description: say(
+          isListenedTo(payload.data.item.kind)
+            ? 'server.webhooks.discordEmbedFor.viewerStoppedListening'
+            : 'server.webhooks.discordEmbedFor.viewerStoppedWatching',
+          { viewer: nameOfViewer(payload.data) },
+        ),
         colour: COLOURS.viewing,
         posterUrl: payload.data.item.posterUrl,
         fields: [

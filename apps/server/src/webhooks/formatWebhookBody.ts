@@ -2,6 +2,7 @@ import { formatBytes } from '@ValenceCore/functions/formatBytes';
 import { describeArrival } from './describeArrival';
 import { describeSpan } from './describeSpan';
 import { discordEmbedFor } from './discordEmbedFor';
+import { isListenedTo } from './isListenedTo';
 import { nameOfItem } from './nameOfItem';
 import { nameOfViewer } from './nameOfViewer';
 import type { PlaybackMode } from '@ValenceContracts/functions/describePlaybackMode';
@@ -298,24 +299,37 @@ const sentenceFor = (payload: WebhookPayload): string => {
     }
 
     case 'playback.started': {
-      return say('server.webhooks.formatWebhookBody.startedWatching', {
-        viewer: nameOfViewer(payload.data),
-        item: nameOfItem(payload.data.item),
-        device: payload.data.deviceLabel,
-        how: HOW_PLAYED[payload.data.mode],
-      });
+      return say(
+        isListenedTo(payload.data.item.kind)
+          ? 'server.webhooks.formatWebhookBody.startedListening'
+          : 'server.webhooks.formatWebhookBody.startedWatching',
+        {
+          viewer: nameOfViewer(payload.data),
+          item: nameOfItem(payload.data.item),
+          device: payload.data.deviceLabel,
+          how: HOW_PLAYED[payload.data.mode],
+        },
+      );
     }
 
     case 'playback.stopped': {
       const { positionSeconds, durationSeconds } = payload.data;
       const watched = { viewer: nameOfViewer(payload.data), item: nameOfItem(payload.data.item) };
+      const isListening = isListenedTo(payload.data.item.kind);
 
-      return positionSeconds === null || durationSeconds === null || durationSeconds === 0
-        ? say('server.webhooks.stoppedWatching', watched)
-        : say('server.webhooks.stoppedWatchingPartWay', {
-            ...watched,
-            percent: Math.round((positionSeconds / durationSeconds) * 100),
-          });
+      if (positionSeconds === null || durationSeconds === null || durationSeconds === 0) {
+        return say(
+          isListening ? 'server.webhooks.stoppedListening' : 'server.webhooks.stoppedWatching',
+          watched,
+        );
+      }
+
+      return say(
+        isListening
+          ? 'server.webhooks.stoppedListeningPartWay'
+          : 'server.webhooks.stoppedWatchingPartWay',
+        { ...watched, percent: Math.round((positionSeconds / durationSeconds) * 100) },
+      );
     }
 
     case 'session.started': {

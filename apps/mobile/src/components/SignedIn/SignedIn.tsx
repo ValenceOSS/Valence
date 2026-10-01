@@ -31,6 +31,7 @@ import { AnArtist } from '@ValenceMobile/components/AnArtist/AnArtist';
 import { APlaylist } from '@ValenceMobile/components/APlaylist/APlaylist';
 import { TheLikedSongs } from '@ValenceMobile/components/TheLikedSongs/TheLikedSongs';
 import { TheMusicRemote } from '@ValenceMobile/components/TheMusicRemote/TheMusicRemote';
+import { TheAudiobookRemote } from '@ValenceMobile/components/TheAudiobookRemote/TheAudiobookRemote';
 import { TheMusicPlayer } from '@ValenceMobile/components/TheMusicPlayer/TheMusicPlayer';
 import { ABook } from '@ValenceMobile/components/ABook/ABook';
 import { AReader } from '@ValenceMobile/components/AReader/AReader';
@@ -698,6 +699,7 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
           onBack={back}
         />
         <TheMusicRemote />
+        <TheAudiobookRemote />
         <TheFloatingPlayer
           isShown={MUSIC_PAGES.has(pages.at(-1)?.kind ?? 'playing')}
           onOpen={openWhatIsHeard}

@@ -7,6 +7,7 @@ import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { bookQueries } from '@ValenceClient/query/bookQueries';
 import { saveReadingProgress } from '@ValenceClient/books/fetchBooks';
 import { whereToOpen } from '@ValenceClient/books/whereToOpen';
+import { useNowReading } from '@ValenceClient/books/useNowReading';
 import { PageReader } from '@ValenceScreens/components/PageReader/PageReader';
 import { TextReader } from '@ValenceScreens/components/TextReader/TextReader';
 import { say } from '@ValenceI18n/say';
@@ -45,18 +46,24 @@ const ReadPage = () => {
     chosen,
   );
 
+  const isReading =
+    asked.data !== undefined && asked.data !== null && read.data !== undefined && chapterId !== '';
+  const tellReading = useNowReading(isReading ? id : null);
+
   const remember = useCallback(
     (page: number, isFinished: boolean) => {
       void saveReadingProgress(id, chapterId, { pageNumber: page }, isFinished);
+      tellReading({ fraction: null, pageNumber: page });
     },
-    [chapterId, id],
+    [chapterId, id, tellReading],
   );
 
   const rememberFraction = useCallback(
     (fraction: number, isFinished: boolean) => {
       void saveReadingProgress(id, chapterId, { fraction }, isFinished);
+      tellReading({ fraction, pageNumber: null });
     },
-    [chapterId, id],
+    [chapterId, id, tellReading],
   );
 
   const close = useCallback(() => {

@@ -87,6 +87,8 @@ On a playback event, `durationSeconds` is how long the thing is, and on `playbac
 
 An event about a profile reaches your plugin only if that profile connected an account to it or used its page. A plugin that did not list a topic never hears of it.
 
+Playback events come from films, episodes, songs and audiobooks alike. For a song, `playback.stopped` comes when the device moves on, stops, goes away or starts the song again, and `positionSeconds` is the furthest it was heard to. For an audiobook, `mediaId` is the book's id.
+
 An event names what it is about by id alone. [`valence.library.get(event.mediaId)`](/plugins/host-api#library) reads what that is: its title, its kind and the ids it is known by elsewhere. It needs the `library` permission, and after `media.removed` it reads `null`, because the thing has gone.
 
 ## Keep it quick

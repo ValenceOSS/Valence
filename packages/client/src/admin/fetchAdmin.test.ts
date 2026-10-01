@@ -278,6 +278,8 @@ describe('fetchActiveSessions', () => {
       {
         ...SESSION,
         listening: null,
+        bookListening: null,
+        reading: null,
         isGuest: false,
         guestOf: null,
         accountId: null,

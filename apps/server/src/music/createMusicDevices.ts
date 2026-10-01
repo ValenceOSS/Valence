@@ -1,10 +1,12 @@
 import { createDeviceRegistry } from '@ValenceServer/devices/createDeviceRegistry';
+import { createPlayTracker } from '@ValenceServer/devices/createPlayTracker';
 import type {
   MusicCommand,
   MusicDevice,
   MusicNowPlaying,
 } from '@ValenceContracts/schemas/MusicRemote';
 import type { DeviceOwner } from '@ValenceServer/devices/createDeviceRegistry';
+import type { PlayWatchers } from '@ValenceServer/devices/createPlayTracker';
 import type { PresenceService } from '@ValenceServer/presence/PresenceService';
 import { say } from '@ValenceI18n/say';
 
@@ -13,6 +15,7 @@ type Listener = DeviceOwner;
 type MusicDevicesOptions = {
   presence: Pick<PresenceService, 'list' | 'tell' | 'watch'>;
   onChanged?: (accountId: string) => void;
+  plays?: PlayWatchers<MusicNowPlaying> & { now: () => number };
 };
 
 type MusicDevices = {
@@ -33,13 +36,27 @@ type MusicDevices = {
  * device" is chosen from for music. Which devices are whose, and what each last said, is the
  * shared device registry's; this adds what a song's report and a music command are.
  *
- * @param options - Presence, and who to tell when a profile's devices change.
+ * @param options - Presence, who to tell when a profile's devices change, and who to tell as each
+ *   song starts and stops playing.
  * @returns The registry.
  */
-const createMusicDevices = ({ presence, onChanged }: MusicDevicesOptions): MusicDevices => {
+const createMusicDevices = ({ presence, onChanged, plays }: MusicDevicesOptions): MusicDevices => {
+  const tracker =
+    plays === undefined
+      ? null
+      : createPlayTracker<MusicNowPlaying>({
+          ...plays,
+          read: (nowPlaying) => ({
+            itemId: nowPlaying.trackId,
+            positionSeconds: nowPlaying.positionSeconds,
+            durationSeconds: nowPlaying.durationSeconds,
+            isPlaying: nowPlaying.isPlaying,
+          }),
+        });
   const devices = createDeviceRegistry<MusicNowPlaying>({
     presence,
     ...(onChanged === undefined ? {} : { onChanged }),
+    ...(tracker === null ? {} : { onReport: tracker.report }),
   });
 
   return {

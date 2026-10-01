@@ -5,10 +5,13 @@ import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { heardLast } from '@ValenceClient/books/heardLast';
 import { listeningKept } from '@ValenceClient/books/listeningKept';
 import { takeTurns } from '@ValenceClient/books/takeTurns';
+import { watchNowListening } from '@ValenceClient/books/watchNowListening';
+import { reportNowListening } from '@ValenceClient/books/bookDevices';
 import type { AudiobookPlayer } from '@ValenceClient/books/createAudiobookPlayer';
 
 let made: AudiobookPlayer | null = null;
 let stopTakingTurns: (() => void) | null = null;
+let stopReporting: (() => void) | null = null;
 
 /**
  * The client's audiobook player, made the first time anything asks for it.
@@ -16,7 +19,8 @@ let stopTakingTurns: (() => void) | null = null;
  * One player for the whole client, playing through whatever audio the host hands over beside the
  * music's own, so a book carries on while somebody browses. It takes turns with the music, each
  * pausing the other as it starts, and remembers which was heard last. Each place it keeps is told
- * once the server has it, for whatever shows where somebody is to read it again.
+ * once the server has it, for whatever shows where somebody is to read it again, and what it is
+ * playing is reported as it plays, for an administrator watching the server.
  *
  * @returns The player.
  */
@@ -40,6 +44,13 @@ const theAudiobookPlayer = (): AudiobookPlayer => {
   stopTakingTurns = takeTurns(made, theMusicPlayer(), (which) => {
     heardLast.hear(which === 'one' ? 'book' : 'music');
   });
+  stopReporting = watchNowListening(
+    made,
+    (nowListening) => {
+      void reportNowListening(nowListening);
+    },
+    () => Date.now(),
+  );
 
   return made;
 };
@@ -52,6 +63,8 @@ const forgetTheAudiobookPlayer = (): void => {
   stopTakingTurns?.();
   stopTakingTurns = null;
   made?.close();
+  stopReporting?.();
+  stopReporting = null;
   made = null;
   heardLast.forget();
 };

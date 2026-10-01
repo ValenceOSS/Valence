@@ -70,6 +70,10 @@ const asPayload = (event: PresenceControl): JsonValue => {
     return { kind: 'message', text: event.text };
   }
 
+  if (event.kind === 'book') {
+    return { kind: 'book', command: event.command };
+  }
+
   if (event.kind === 'music' || event.kind === 'video') {
     return {
       kind: event.kind,

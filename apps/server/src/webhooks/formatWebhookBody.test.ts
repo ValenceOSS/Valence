@@ -47,6 +47,38 @@ const aServerWideCompletion: WebhookPayload = {
   },
 };
 
+const aSongStopped: WebhookPayload = {
+  ...anEnvelope,
+  event: 'playback.stopped',
+  data: {
+    accountId: 'account-1',
+    accountName: 'Ada',
+    profileId: 'profile-1',
+    profileName: 'Ada',
+    item: {
+      itemId: 'track-1',
+      kind: 'song',
+      title: 'Running Up That Hill',
+      seriesTitle: null,
+      seasonNumber: null,
+      episodeNumber: null,
+      year: 1985,
+      posterUrl: null,
+      libraryId: 'library-2',
+      libraryName: 'Music',
+      overview: null,
+      durationSeconds: 300,
+      genres: [],
+      rating: null,
+      quality: null,
+    },
+    deviceLabel: 'iPhone',
+    mode: 'DirectPlay',
+    positionSeconds: 150,
+    durationSeconds: 300,
+  },
+};
+
 describe('formatWebhookBody', () => {
   it('sends the whole envelope to a generic receiver', () => {
     const written = formatWebhookBody('generic', aFailure);
@@ -75,6 +107,12 @@ describe('formatWebhookBody', () => {
   it('leaves the other presets alone, which is the whole of what changed', () => {
     expect(formatWebhookBody('generic', aFailure).body).toBe(JSON.stringify(aFailure));
     expect(formatWebhookBody('ntfy', aFailure).contentType).toBe('text/plain');
+  });
+
+  it('says somebody stopped listening to a song, not watching it', () => {
+    expect(formatWebhookBody('ntfy', aSongStopped).body).toContain(
+      'Ada stopped listening to Running Up That Hill (1985) 50% of the way through.',
+    );
   });
 
   it('gives ntfy plain text, because JSON would be printed verbatim', () => {
