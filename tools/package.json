@@ -15,7 +15,11 @@
     "@vitest/coverage-v8": "^4.1.11",
     "sharp": "^0.35.4",
     "tsx": "^4.23.13",
+    "vite": "^8.3.0",
     "vitest": "^4.1.11",
     "zod": "^4.6.4"
+  },
+  "dependencies": {
+    "mysql2": "^3.24.5"
   }
 }

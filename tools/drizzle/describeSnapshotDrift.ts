@@ -21,8 +21,8 @@ const describeSnapshotDrift = (produced: readonly string[]): string | null => {
 
   return [
     'Generating a migration on a clean tree produced files, which means the newest snapshot in',
-    'drizzle/meta does not describe the current schema. Whatever generate writes next will recreate',
-    'everything added since the last snapshot it can see.',
+    'drizzle/<dialect>/meta does not describe the current schema. Whatever generate writes next',
+    'will recreate everything added since the last snapshot it can see.',
     '',
     ...listed,
     '',
@@ -30,8 +30,8 @@ const describeSnapshotDrift = (produced: readonly string[]): string | null => {
     '',
     '  pnpm --filter @valence/server db:generate',
     '',
-    'and commit the snapshot it leaves in drizzle/meta, keeping your own SQL rather than the SQL it',
-    'generates. See VAL-193.',
+    'and commit the snapshot it leaves in drizzle/<dialect>/meta, keeping your own SQL rather than',
+    'the SQL it generates. See VAL-193.',
   ].join('\n');
 };
 

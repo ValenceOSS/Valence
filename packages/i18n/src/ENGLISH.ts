@@ -1537,6 +1537,15 @@ const ENGLISH = {
     'This server has no working encoder for {targetCodec}.',
   'core.track.quad': 'Quad',
   'core.track.stereo': 'Stereo',
+  'database.builtForAnotherDatabase':
+    'This build of Valence is for {built}, but DATABASE_URL is a {asked} address. Start it with Main.js, which chooses the build for the database it is given.',
+  'database.mysqlTooOld':
+    'Valence needs MySQL 8.0.21 or newer, or MariaDB 10.6 or newer, and this server is {version}.',
+  'database.postgresTooOld': 'Valence needs Postgres 15 or newer, and this server is {version}.',
+  'database.urlIsForAnotherDatabase':
+    'DATABASE_URL must start with postgres://, mysql:// or mariadb://, not {protocol}//. Valence keeps its data in Postgres, MySQL or MariaDB, and MongoDB is not one it can use.',
+  'database.wrongCollation':
+    'The database {database} compares text as {collation}, and Valence needs {needed}. Before Valence first starts, run: ALTER DATABASE `{database}` CHARACTER SET utf8mb4 COLLATE {needed};',
   'desktop.desktop.update': 'Update',
   'desktop.desktop.updateValence': 'Update Valence?',
   'desktop.desktop.valenceVersionIsOutItDownloads':
@@ -4391,7 +4400,7 @@ const ENGLISH = {
   'screens.observabilityPage.jobHistory.viewLogs': 'View logs',
   'screens.observabilityPage.jobHistory.whatJustRan': 'What just ran',
   'screens.observabilityPage.jobHistory.whatKindIsDoing': 'What {kind} is doing',
-  'screens.observabilityPage.jobHistory.whatPgBossHasRun': 'What pg-boss has run',
+  'screens.observabilityPage.jobHistory.whatTheJobQueueHasRun': 'What the job queue has run',
   'screens.observabilityPage.jobHistory.whatTookTheMostTime': 'What took the most time',
   'screens.observabilityPage.jobHistory.when': 'When',
   'screens.observabilityPage.jobRunMix.completedCompletedFailedFailedStoppedStopped':

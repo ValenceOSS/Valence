@@ -1,6 +1,6 @@
 import { getTableConfig } from 'drizzle-orm/pg-core';
 import { describe, expect, it } from 'vitest';
-import { mediaItem, mediaOverride } from './Schema';
+import { mediaItem, mediaOverride } from '@ValenceServer/db/postgres/Schema';
 
 describe('a correction, which a reset must not destroy', () => {
   it('does not hang off the rows that a reset deletes', () => {

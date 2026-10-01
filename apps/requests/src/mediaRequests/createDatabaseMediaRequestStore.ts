@@ -1,6 +1,7 @@
+import { countAffected } from '@ValenceDatabase/countAffected';
 import { eq } from 'drizzle-orm';
-import { mediaRequest } from '@ValenceRequests/db/Schema';
-import type { RequestsDatabase } from '@ValenceRequests/db/Database';
+import { mediaRequest } from '#dialect/Schema';
+import type { RequestsDatabase } from '#dialect/RequestsDatabase';
 import type {
   MediaRequestRecord,
   MediaRequestStore,
@@ -38,22 +39,20 @@ const createDatabaseMediaRequestStore = (db: RequestsDatabase): MediaRequestStor
   },
 
   insert: async (record) => {
-    const [row] = await db
-      .insert(mediaRequest)
-      .values({
-        ...record,
-        catalogueCheckedAt: new Date(record.catalogueCheckedAt),
-        createdAt: new Date(record.createdAt),
-        updatedAt: new Date(record.updatedAt),
-      })
-      .returning();
+    await db.insert(mediaRequest).values({
+      ...record,
+      catalogueCheckedAt: new Date(record.catalogueCheckedAt),
+      createdAt: new Date(record.createdAt),
+      updatedAt: new Date(record.updatedAt),
+    });
+    const [row] = await db.select().from(mediaRequest).where(eq(mediaRequest.id, record.id));
 
     return row === undefined ? record : asRecord(row);
   },
 
   update: async (id, changes) => {
     const { catalogueCheckedAt, createdAt, updatedAt, ...rest } = changes;
-    const [row] = await db
+    await db
       .update(mediaRequest)
       .set({
         ...rest,
@@ -63,19 +62,14 @@ const createDatabaseMediaRequestStore = (db: RequestsDatabase): MediaRequestStor
         ...(createdAt === undefined ? {} : { createdAt: new Date(createdAt) }),
         ...(updatedAt === undefined ? {} : { updatedAt: new Date(updatedAt) }),
       })
-      .where(eq(mediaRequest.id, id))
-      .returning();
+      .where(eq(mediaRequest.id, id));
+    const [row] = await db.select().from(mediaRequest).where(eq(mediaRequest.id, id));
 
     return row === undefined ? null : asRecord(row);
   },
 
   remove: async (id) =>
-    (
-      await db
-        .delete(mediaRequest)
-        .where(eq(mediaRequest.id, id))
-        .returning({ id: mediaRequest.id })
-    ).length > 0,
+    countAffected(await db.delete(mediaRequest).where(eq(mediaRequest.id, id))) > 0,
 });
 
 export { createDatabaseMediaRequestStore };

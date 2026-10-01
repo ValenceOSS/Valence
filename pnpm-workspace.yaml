@@ -26,3 +26,10 @@ packageExtensions:
       react-native: '*'
 patchedDependencies:
   '@react-native-cookies/cookies': patches/@react-native-cookies__cookies.patch
+
+# drizzle-orm is resolved once per set of optional peers it finds. better-auth brings
+# better-sqlite3 12 into the server, while the database package and the requests service would pick
+# 13, which made two drizzle-orm copies whose types don't match. Nothing here uses SQLite; one
+# version keeps one drizzle-orm.
+overrides:
+  better-sqlite3: 12.11.1

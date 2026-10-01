@@ -250,18 +250,37 @@ paid once.
 This rule is enforced: `import/no-default-export` is on in oxlint, with an
 exception for the config files that tooling insists on reading a default from.
 
+### One query, several databases
+
+Valence runs on Postgres, MySQL 8.0.21+ and MariaDB 10.6+. Query code is written once, against
+`#dialect/*` and `@ValenceDatabase/*`, and typechecked twice: each package's `tsconfig.json`
+resolves `#dialect/*` to its postgres folder, and its `tsconfig.mysql.json` resolves it to its
+mysql folder by the `mysql` build condition. The helpers shared code needs live in
+`packages/database`, whose entries re-export from its own `#dialect/*`; each app keeps its schema
+and its migration plumbing in `src/db/postgres` and `src/db/mysql`. Only files inside a dialect
+folder may import `drizzle-orm/pg-core`, `drizzle-orm/node-postgres`, `drizzle-orm/pglite`, `pg`,
+`@electric-sql/pglite`, `drizzle-orm/mysql-core`, `drizzle-orm/mysql2` or `mysql2`; ESLint
+enforces it outside tests, and each dialect folder holds the same files exporting the same members,
+which a test checks. The two `Schema.ts` files of an app are the one sanctioned exception to "no
+duplication": they describe the same tables in two dialects' DDL, and a parity test fails when
+their tables, columns, keys or row types disagree. Shared code uses no `.returning()`, no
+`onConflictDo*`, no `ilike`, no `::` casts, no double-quoted identifiers inside `sql`, and no
+`||` (the `valence/neutral-queries` rule); it uses the helpers in `@ValenceDatabase/*` or the
+neutral forms listed in the database docs. Every test that opens a database of its own runs again
+on each MySQL-family engine in CI.
+
 ### The tooling note that survives it
 
-`apps/server/src/db/Schema.ts` exports each table by name because drizzle-kit
+Each `Schema.ts`, `apps/<app>/src/db/<dialect>/Schema.ts`, exports each table by name because drizzle-kit
 discovers tables by scanning a module's named exports; given anything else it
 reports `0 tables` and generates an empty migration, silently. Under this rule
 that file is no longer an exception — it is simply the rule applied.
 
 ### A migration written by hand still needs a snapshot
 
-`drizzle-kit generate` diffs the schema against the newest snapshot in
-`apps/server/drizzle/meta`, so a migration written by hand — which is the usual
-way one gets written here — leaves no snapshot and the next generation diffs
+Migrations live in `apps/<app>/drizzle/<dialect>`. `drizzle-kit generate` diffs the schema
+against the newest snapshot in that folder's `meta`, so a migration written by hand — which is
+the usual way one gets written here — leaves no snapshot and the next generation diffs
 against a stale one. It then writes SQL that recreates every table added since,
 plausibly enough to be committed and destructively enough to fail on the first
 `CREATE TABLE`. This is not theoretical: snapshots `0039`, `0040` and `0043` to
@@ -270,8 +289,9 @@ anyone ran it (VAL-193).
 
 So: write the SQL by hand where that is clearer, then run
 `pnpm --filter @valence/server db:generate` and commit **the snapshot it leaves**
-while discarding the SQL it writes. `pnpm db:check` fails when the two are out of
-step, and CI runs it.
+while discarding the SQL it writes. A schema change carries a migration and a snapshot in each
+dialect's folder, `drizzle/postgres` and `drizzle/mysql`, and both `Schema.ts` files change
+together. `pnpm db:check` fails when a snapshot is out of step with its schema, and CI runs it.
 
 ---
 

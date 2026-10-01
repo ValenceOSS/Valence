@@ -65,7 +65,7 @@ describe('logFilterFor', () => {
   });
 
   it('searches the words and identifiers of a record when text is typed', () => {
-    expect(sqlFor({ search: 'unreadable' })?.sql).toContain('ilike');
+    expect(sqlFor({ search: 'unreadable' })?.sql).toContain('like lower(');
   });
 
   it('joins everything as one condition, so each filter narrows the rest', () => {

@@ -1,6 +1,7 @@
+import { countAffected } from '@ValenceDatabase/countAffected';
 import { eq } from 'drizzle-orm';
-import { sentDownload } from '@ValenceRequests/db/Schema';
-import type { RequestsDatabase } from '@ValenceRequests/db/Database';
+import { sentDownload } from '#dialect/Schema';
+import type { RequestsDatabase } from '#dialect/RequestsDatabase';
 import type {
   SentDownloadRecord,
   SentDownloadStore,
@@ -39,22 +40,20 @@ const createDatabaseSentDownloadStore = (db: RequestsDatabase): SentDownloadStor
   },
 
   insert: async (record) => {
-    const [row] = await db
-      .insert(sentDownload)
-      .values({
-        ...record,
-        sentAt: new Date(record.sentAt),
-        finishedAt: record.finishedAt === null ? null : new Date(record.finishedAt),
-        updatedAt: new Date(record.updatedAt),
-      })
-      .returning();
+    await db.insert(sentDownload).values({
+      ...record,
+      sentAt: new Date(record.sentAt),
+      finishedAt: record.finishedAt === null ? null : new Date(record.finishedAt),
+      updatedAt: new Date(record.updatedAt),
+    });
+    const [row] = await db.select().from(sentDownload).where(eq(sentDownload.id, record.id));
 
     return row === undefined ? record : asRecord(row);
   },
 
   update: async (id, changes) => {
     const { sentAt, finishedAt, updatedAt, ...rest } = changes;
-    const [row] = await db
+    await db
       .update(sentDownload)
       .set({
         ...rest,
@@ -64,19 +63,14 @@ const createDatabaseSentDownloadStore = (db: RequestsDatabase): SentDownloadStor
           : { finishedAt: finishedAt === null ? null : new Date(finishedAt) }),
         ...(updatedAt === undefined ? {} : { updatedAt: new Date(updatedAt) }),
       })
-      .where(eq(sentDownload.id, id))
-      .returning();
+      .where(eq(sentDownload.id, id));
+    const [row] = await db.select().from(sentDownload).where(eq(sentDownload.id, id));
 
     return row === undefined ? null : asRecord(row);
   },
 
   remove: async (id) =>
-    (
-      await db
-        .delete(sentDownload)
-        .where(eq(sentDownload.id, id))
-        .returning({ id: sentDownload.id })
-    ).length > 0,
+    countAffected(await db.delete(sentDownload).where(eq(sentDownload.id, id))) > 0,
 });
 
 export { createDatabaseSentDownloadStore };

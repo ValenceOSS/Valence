@@ -1,6 +1,7 @@
 import { eq, sql } from 'drizzle-orm';
-import { accountActivity } from '@ValenceServer/db/Schema';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import { upsert } from '@ValenceDatabase/upsert';
+import { accountActivity } from '#dialect/Schema';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { SignInStore } from './recordSignIn';
 
 /**
@@ -11,7 +12,7 @@ import type { SignInStore } from './recordSignIn';
  * @returns The sign-in store.
  */
 const createDatabaseSignInStore = (
-  db: ValenceDatabase,
+  db: AnyValenceDatabase,
 ): SignInStore & { lastSignInAt: (userId: string) => Promise<Date | null> } => ({
   lastSignInAt: async (userId) => {
     const [found] = await db
@@ -24,17 +25,20 @@ const createDatabaseSignInStore = (
   },
 
   record: async (userId, at) => {
+    await upsert(db, accountActivity, {
+      values: [{ userId, lastSignInAt: at, signInCount: 1 }],
+      target: accountActivity.userId,
+      set: {
+        lastSignInAt: at,
+        signInCount: sql`${accountActivity.signInCount} + 1`,
+      },
+    });
+
     const [saved] = await db
-      .insert(accountActivity)
-      .values({ userId, lastSignInAt: at, signInCount: 1 })
-      .onConflictDoUpdate({
-        target: accountActivity.userId,
-        set: {
-          lastSignInAt: at,
-          signInCount: sql`${accountActivity.signInCount} + 1`,
-        },
-      })
-      .returning({ count: accountActivity.signInCount });
+      .select({ count: accountActivity.signInCount })
+      .from(accountActivity)
+      .where(eq(accountActivity.userId, userId))
+      .limit(1);
 
     return saved?.count ?? 1;
   },

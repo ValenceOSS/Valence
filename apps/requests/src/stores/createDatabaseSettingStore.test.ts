@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aScratchDatabase } from '@ValenceRequests/testing/aScratchDatabase';
+import { aScratchDatabase } from '#dialect/aScratchDatabase';
 import { createDatabaseSettingStore } from './createDatabaseSettingStore';
 
 describe('createDatabaseSettingStore', () => {
@@ -29,7 +29,7 @@ describe('createDatabaseSettingStore', () => {
   it('says nothing for a key holding something that is not a string', async () => {
     const db = await aScratchDatabase();
     const store = createDatabaseSettingStore(db);
-    const { setting } = await import('@ValenceRequests/db/Schema');
+    const { setting } = await import('#dialect/Schema');
 
     await db.insert(setting).values({ key: 'shaped', value: { some: 'object' } });
 

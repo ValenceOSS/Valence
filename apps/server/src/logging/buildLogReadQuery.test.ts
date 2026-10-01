@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createDatabase } from '@ValenceServer/db/Database';
+import { createDatabase } from '#dialect/createDatabase';
 import { LogQuerySchema } from '@ValenceContracts/schemas/Log';
 import { buildLogReadQuery } from './buildLogReadQuery';
 import type { LogQuery } from '@ValenceContracts/schemas/Log';

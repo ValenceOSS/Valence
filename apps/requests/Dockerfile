@@ -13,6 +13,7 @@ COPY tsconfig.base.json tsconfig.json tsconfig.paths.json ./
 COPY packages/contracts ./packages/contracts
 COPY packages/core ./packages/core
 COPY packages/i18n ./packages/i18n
+COPY packages/database ./packages/database
 COPY apps/requests ./apps/requests
 RUN pnpm install --frozen-lockfile --filter @valence/requests...
 
@@ -22,8 +23,8 @@ RUN pnpm --filter @valence/requests bundle
 # An alias whose package was not copied in above does not fail the bundle: esbuild cannot resolve
 # it, takes it for a package from npm, and leaves the import for Node to find at start-up. So the
 # build refuses one here instead, where it is a failed build rather than a service that will not start.
-RUN if grep -Eo "from ?[\"']@Valence[A-Za-z]+/[^\"']+" apps/requests/dist/Main.js; then \
-      echo "unbundled path alias in apps/requests/dist/Main.js; copy its package into the build stage" >&2; exit 1; \
+RUN if grep -Eo "from ?[\"']@Valence[A-Za-z]+/[^\"']+" apps/requests/dist/*.js; then \
+      echo "unbundled path alias in apps/requests/dist; copy its package into the build stage" >&2; exit 1; \
     fi
 
 FROM node:24-bookworm-slim AS runtime
@@ -45,6 +46,7 @@ COPY patches ./patches
 COPY packages/contracts ./packages/contracts
 COPY packages/core ./packages/core
 COPY packages/i18n ./packages/i18n
+COPY packages/database ./packages/database
 COPY apps/requests/package.json ./apps/requests/package.json
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts --filter @valence/requests...
 
@@ -56,7 +58,8 @@ ENV CAMOUFOX_INSTALL_DIR=/opt/camoufox
 RUN cd apps/requests && node node_modules/camoufox-js/dist/__main__.js fetch \
  && rm -rf /opt/camoufox/fonts/windows /opt/camoufox/fonts/macos /opt/camoufox/GeoLite2-City.mmdb
 
-COPY apps/requests/drizzle ./apps/requests/drizzle
+COPY apps/requests/drizzle/postgres ./apps/requests/drizzle/postgres
+COPY apps/requests/drizzle/mysql ./apps/requests/drizzle/mysql
 COPY --from=build /build/apps/requests/dist ./apps/requests/dist
 
 ENV NODE_ENV=production \

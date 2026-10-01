@@ -1,3 +1,6 @@
+import { checkServerVersion } from '@ValenceDatabase/checkServerVersion';
+import { databaseConnectionOf } from '@ValenceDatabase/databaseConnectionOf';
+import { checkDialect } from '@ValenceDatabase/checkDialect';
 import { followUpReading } from '@ValenceServer/library/followUpReading';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { sayingCount } from '@ValenceI18n/sayingCount';
@@ -25,6 +28,8 @@ import { serveStatic } from '@hono/node-server/serve-static';
 import { isAppAddress } from '@ValenceServer/web/isAppAddress';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { and, count, eq, gt, isNull, lt, lte, sql } from 'drizzle-orm';
+import { countAffected } from '@ValenceDatabase/countAffected';
+import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
 import { createApp } from './App';
 import { announceOnTheNetwork } from '@ValenceServer/discovery/announceOnTheNetwork';
 import { stopAnnouncingOnExit } from '@ValenceServer/discovery/stopAnnouncingOnExit';
@@ -57,13 +62,11 @@ import type { RealtimeSession } from '@ValenceServer/realtime/createRealtimeHand
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
 import { createDatabaseHiddenService } from '@ValenceServer/hiding/createDatabaseHiddenService';
 import { createDatabaseUploadSessions } from '@ValenceServer/uploads/createDatabaseUploadSessions';
-import { createDatabase } from '@ValenceServer/db/Database';
-import { migrate } from 'drizzle-orm/node-postgres/migrator';
-import { createSnapshotBeforeMigrating } from '@ValenceServer/db/createSnapshotBeforeMigrating';
-import { findNewerMigrations } from '@ValenceServer/db/findNewerMigrations';
-import { findPendingMigrations } from '@ValenceServer/db/findPendingMigrations';
-import { migrateToLatest } from '@ValenceServer/db/migrateToLatest';
-import { createMissedMigrationApplier } from '@ValenceServer/db/createMissedMigrationApplier';
+import { AUTH_PROVIDER } from '#dialect/AUTH_PROVIDER';
+import { createDatabase } from '#dialect/createDatabase';
+import { DIALECT } from '#dialect/DIALECT';
+import { openLockSession } from '#dialect/openLockSession';
+import { migrateDatabase } from '@ValenceServer/db/migrateDatabase';
 import { settleTheOwner } from '@ValenceServer/auth/settleTheOwner';
 import { movePhotographsOnce } from '@ValenceServer/profiles/movePhotographsOnce';
 import { dropPrivatePlaylistsOf } from '@ValenceServer/playlists/dropPrivatePlaylistsOf';
@@ -84,7 +87,7 @@ import {
   musicArtist,
   musicTrack,
   apikey,
-} from '@ValenceServer/db/Schema';
+} from '#dialect/Schema';
 import { readEnv } from '@ValenceServer/env/Env';
 import { createDatabaseSettingsStore } from '@ValenceServer/settings/createDatabaseSettingsStore';
 import { createDatabaseLibraryService } from '@ValenceServer/library/createDatabaseLibraryService';
@@ -311,55 +314,24 @@ const MonitorResourceSampleSchema = z.object({
   }),
 });
 const env = readEnv(process.env);
-const { db, pool, schema } = createDatabase(env.DATABASE_URL);
 
-const MIGRATIONS_FOLDER = join(import.meta.dirname, '..', 'drizzle');
+checkDialect(env.DATABASE_URL, DIALECT);
 
-const MIGRATION_JOURNAL = join(MIGRATIONS_FOLDER, 'meta', '_journal.json');
+const connection = databaseConnectionOf(env);
+const { db, pool, schema } = createDatabase(env.DATABASE_URL, connection);
 
-const AppliedMigrationSchema = z.object({ created_at: z.union([z.string(), z.number()]) });
+await checkServerVersion(db);
 
-/**
- * The stamps of the migrations this database has run, or none where it has never run any.
- *
- * A database nobody has migrated has no ledger table to read, which is not a fault — it is what
- * every first start looks like. Drizzle creates it as part of applying the first migration.
- *
- * @returns The stamps.
- */
-const readAppliedStamps = async (): Promise<number[]> => {
-  try {
-    const applied = await db.execute(sql`select created_at from drizzle.__drizzle_migrations`);
-
-    return applied.rows.map((row) => Number(AppliedMigrationSchema.parse(row).created_at));
-  } catch {
-    return [];
-  }
-};
-
-await migrateToLatest({
-  pending: () =>
-    findPendingMigrations({
-      readJournal: () => readFile(MIGRATION_JOURNAL, 'utf8'),
-      readAppliedAt: readAppliedStamps,
-    }),
-  apply: () => migrate(db, { migrationsFolder: MIGRATIONS_FOLDER }),
-  applyMissed: createMissedMigrationApplier(db, MIGRATIONS_FOLDER),
-  newer: () =>
-    findNewerMigrations({
-      readJournal: () => readFile(MIGRATION_JOURNAL, 'utf8'),
-      readAppliedAt: readAppliedStamps,
-    }),
-  beforeApply: createSnapshotBeforeMigrating({
-    databaseUrl: env.DATABASE_URL,
+await migrateDatabase({
+  db,
+  databaseUrl: env.DATABASE_URL,
+  tls: connection.tls,
+  migrations: join(import.meta.dirname, '..', 'drizzle', DIALECT),
+  backups: {
     folder: env.BACKUP_DIR,
     keep: env.BACKUPS_KEPT,
     isEnabled: env.BACKUP_BEFORE_MIGRATE,
-    readAppliedAt: readAppliedStamps,
-    say: (_level, line) => {
-      process.stdout.write(`${line}\n`);
-    },
-  }),
+  },
   isAllowed: env.MIGRATE_ON_START,
   say: (_level, line) => {
     process.stdout.write(`${line}\n`);
@@ -446,11 +418,14 @@ const shareService = createDatabaseShareService(db);
 
 const auth = createAuth({
   env,
-  database: drizzleAdapter(db, { provider: 'pg', schema }),
+  database: drizzleAdapter(db, { provider: AUTH_PROVIDER, schema }),
   settings,
   cookieSecure: persisted.cookieSecure,
   onUserCreated: async (userId) => {
-    await db.insert(userProfile).values({ userId }).onConflictDoNothing();
+    await insertUnlessPresent(db, userProfile, {
+      values: [{ userId }],
+      target: userProfile.userId,
+    });
     await giveDefaultRole(userId);
 
     const [made] = await db
@@ -504,7 +479,7 @@ const countUsers = async (): Promise<number> => {
  */
 const readLibraryBytes = async (): Promise<number> => {
   const rows = await db
-    .select({ total: sql<number>`coalesce(sum(${mediaItem.sizeBytes}), 0)::bigint` })
+    .select({ total: sql<number>`coalesce(sum(${mediaItem.sizeBytes}), 0)` })
     .from(mediaItem);
 
   return Number(rows[0]?.total ?? 0);
@@ -741,11 +716,13 @@ const giveDefaultRole = async (userId: string): Promise<void> => {
  * @param email - The account to promote.
  */
 const promoteToAdmin = async (email: string): Promise<string | null> => {
-  const promoted = await db
-    .update(user)
-    .set({ role: 'admin' })
-    .where(sql`lower(${user.email}) = lower(${email})`)
-    .returning({ id: user.id });
+  const promoted = await db.transaction(async (transaction) => {
+    const matching = sql`lower(${user.email}) = lower(${email})`;
+
+    await transaction.update(user).set({ role: 'admin' }).where(matching);
+
+    return transaction.select({ id: user.id }).from(user).where(matching);
+  });
 
   if (promoted.length === 0) {
     log.warn('auth', `no account at ${email} to make an administrator`);
@@ -1033,7 +1010,9 @@ const scheduleAcrossLibraries =
 
 const libraryWork = createWorkLock();
 
-const librariesAcrossProcesses = createDatabaseWorkLock({ sessions: pool });
+const librariesAcrossProcesses = createDatabaseWorkLock({
+  sessions: { connect: () => openLockSession(pool) },
+});
 
 const webhookSubscriptions = createDatabaseWebhookStore(db);
 
@@ -1318,8 +1297,8 @@ const jobEventLog = createJobEventLog(
   (kind) => JOB_DEFINITIONS.find((definition) => definition.kind === kind)?.label.message ?? kind,
 );
 
-const jobs = await createJobQueue({
-  connectionString: env.DATABASE_URL,
+const jobs = createJobQueue({
+  db,
   perKind: { [PREPARE_DOWNLOAD_JOB]: { atOnce: 16, retries: 0 } },
   handlers: traceJobs(
     {
@@ -1802,20 +1781,12 @@ const jobs = await createJobQueue({
       [CLEANUP_SESSIONS_JOB]: async (jobId) => {
         const removed = await cleanupSessions({
           deleteExpiredSessions: async () => {
-            const rows = await db
-              .delete(session)
-              .where(lt(session.expiresAt, new Date()))
-              .returning({ id: session.id });
-
-            return rows.length;
+            return countAffected(await db.delete(session).where(lt(session.expiresAt, new Date())));
           },
           deleteExpiredDeviceCodes: async () => {
-            const rows = await db
-              .delete(deviceCode)
-              .where(lt(deviceCode.expiresAt, new Date()))
-              .returning({ id: deviceCode.id });
-
-            return rows.length;
+            return countAffected(
+              await db.delete(deviceCode).where(lt(deviceCode.expiresAt, new Date())),
+            );
           },
           onProgress: (phase, processed, total) => {
             jobs.reportProgress(jobId, saying(`server.jobs.phase.${phase}`), processed, total);
@@ -3044,10 +3015,16 @@ const app = createApp({
       theirs.map((one) => one.id),
     );
 
-    const [removed] = await db
-      .delete(user)
-      .where(eq(user.id, userId))
-      .returning({ id: user.id, name: user.name });
+    const [removed] = await db.transaction(async (transaction) => {
+      const found = await transaction
+        .select({ id: user.id, name: user.name })
+        .from(user)
+        .where(eq(user.id, userId));
+
+      await transaction.delete(user).where(eq(user.id, userId));
+
+      return found;
+    });
 
     if (removed === undefined) {
       return false;

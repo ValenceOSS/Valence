@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { and, desc, eq, isNotNull, sql } from 'drizzle-orm';
-import { favourite } from '@ValenceServer/db/Schema';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
+import { favourite } from '#dialect/Schema';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { FavouriteService } from './FavouriteService';
 
 const LIMIT = 500;
@@ -15,7 +16,7 @@ const LIMIT = 500;
  * @param db - The database to read and write.
  * @returns The favourite service.
  */
-const createDatabaseFavouriteService = (db: ValenceDatabase): FavouriteService => ({
+const createDatabaseFavouriteService = (db: AnyValenceDatabase): FavouriteService => ({
   list: async (profileId) => {
     const rows = await db
       .select()
@@ -32,15 +33,10 @@ const createDatabaseFavouriteService = (db: ValenceDatabase): FavouriteService =
   },
 
   keep: async (profileId, mediaId) => {
-    await db
-      .insert(favourite)
-      .values({
-        id: randomUUID(),
-        profileId,
-        mediaItemId: mediaId,
-        keptAt: new Date(),
-      })
-      .onConflictDoNothing({ target: [favourite.profileId, favourite.mediaItemId] });
+    await insertUnlessPresent(db, favourite, {
+      values: [{ id: randomUUID(), profileId, mediaItemId: mediaId, keptAt: new Date() }],
+      target: [favourite.profileId, favourite.mediaItemId],
+    });
   },
 
   drop: async (profileId, mediaId) => {
@@ -63,13 +59,11 @@ const createDatabaseFavouriteService = (db: ValenceDatabase): FavouriteService =
   },
 
   keepBook: async (profileId, bookId) => {
-    await db
-      .insert(favourite)
-      .values({ id: randomUUID(), profileId, bookId, keptAt: new Date() })
-      .onConflictDoNothing({
-        target: [favourite.profileId, favourite.bookId],
-        where: sql`${favourite.bookId} is not null`,
-      });
+    await insertUnlessPresent(db, favourite, {
+      values: [{ id: randomUUID(), profileId, bookId, keptAt: new Date() }],
+      target: [favourite.profileId, favourite.bookId],
+      targetWhere: sql`${favourite.bookId} is not null`,
+    });
   },
 
   dropBook: async (profileId, bookId) => {

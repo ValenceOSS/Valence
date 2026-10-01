@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { narrowedForTest } from '@ValenceServer/visibility/narrowedForTest';
 import { reachableByViewer } from './reachableByViewer';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
+import { aVisibilityPlayground } from '@ValenceServer/visibility/aVisibilityPlayground';
+
+const STARTING_POSTGRES_MS = 60_000;
 
 const WATCHER: Viewer = {
   kind: 'account',
@@ -51,4 +54,45 @@ describe('which libraries an account may reach', () => {
 
     expect(sql).toContain('"library_block"');
   });
+});
+
+describe('what an account may reach, on a database', () => {
+  it(
+    'keeps a child out of a library they were kept from and above their ceiling',
+    async () => {
+      const { viewers, itemsKeptBy } = await aVisibilityPlayground();
+
+      expect(await itemsKeptBy((db) => reachableByViewer(db, viewers.kid))).toStrictEqual([
+        'cartoon',
+        'episode-15',
+        'song',
+      ]);
+      expect(await itemsKeptBy((db) => reachableByViewer(db, viewers.teen))).toStrictEqual([
+        'cartoon',
+        'episode-15',
+        'film-12',
+        'film-unrated',
+        'locked-film',
+        'song',
+      ]);
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
+    'lets an administrator, a share guest and the server reach everything',
+    async () => {
+      const { viewers, itemsKeptBy } = await aVisibilityPlayground();
+
+      for (const viewer of [
+        viewers.admin,
+        viewers.adminWatchingAsKid,
+        viewers.guest,
+        viewers.server,
+      ]) {
+        expect(await itemsKeptBy((db) => reachableByViewer(db, viewer))).toHaveLength(7);
+      }
+    },
+    STARTING_POSTGRES_MS,
+  );
 });

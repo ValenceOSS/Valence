@@ -8,7 +8,7 @@ import {
   musicAlbum,
   musicArtist,
   musicTrack,
-} from '@ValenceServer/db/Schema';
+} from '#dialect/Schema';
 import { AudioStreamSchema } from '@ValenceContracts/schemas/MediaItem';
 import {
   DETECT_SEGMENTS_JOB,
@@ -16,7 +16,7 @@ import {
   REGENERATE_TRICKPLAY_JOB,
 } from '@ValenceServer/jobs/JobQueue';
 import { clearJobCompletions } from './createMediaStore';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { ClearableLibrary } from './clearLibraryParts';
 
 /**
@@ -41,7 +41,7 @@ const distinct = (held: (string | null)[]): string[] => [
  * @param db - The database.
  * @returns The library's parts, as the clearing work reaches them.
  */
-const createClearableLibrary = (db: ValenceDatabase): ClearableLibrary => {
+const createClearableLibrary = (db: AnyValenceDatabase): ClearableLibrary => {
   const inLibrary = (libraryId: string) => eq(mediaItem.libraryId, libraryId);
 
   const itemsIn = (libraryId: string) =>

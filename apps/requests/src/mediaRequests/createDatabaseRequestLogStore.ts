@@ -1,6 +1,6 @@
 import { and, desc, eq, lt } from 'drizzle-orm';
-import { requestLog } from '@ValenceRequests/db/Schema';
-import type { RequestsDatabase } from '@ValenceRequests/db/Database';
+import { requestLog } from '#dialect/Schema';
+import type { RequestsDatabase } from '#dialect/RequestsDatabase';
 import type { RequestLogStore } from '@ValenceRequests/mediaRequests/RequestLogStore';
 
 const KEPT = 200;

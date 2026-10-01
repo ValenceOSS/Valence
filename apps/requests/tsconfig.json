@@ -12,6 +12,7 @@
   "references": [
     { "path": "../../packages/contracts" },
     { "path": "../../packages/i18n" },
-    { "path": "../../packages/core" }
+    { "path": "../../packages/core" },
+    { "path": "../../packages/database" }
   ]
 }

@@ -1,13 +1,14 @@
 import { count, eq, lt, min, sql } from 'drizzle-orm';
-import { logRecord } from '@ValenceServer/db/Schema';
+import { logRecord } from '#dialect/Schema';
 import { binHistogram } from './binHistogram';
 import { buildLogFacetQuery } from './buildLogFacetQuery';
 import { buildLogHistogramQuery } from './buildLogHistogramQuery';
 import { buildLogReadQuery } from './buildLogReadQuery';
 import { histogramWindow } from './histogramWindow';
 import { logFilterFor } from './logFilterFor';
+import { countAffected } from '@ValenceDatabase/countAffected';
 import { LogLevelSchema, LogSourceSchema } from '@ValenceContracts/schemas/Log';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { LogQuery, LogRecord } from '@ValenceContracts/schemas/Log';
 import type { LogStore, StoredLog } from './Logger';
 
@@ -32,7 +33,7 @@ const asRecord = (row: Row): LogRecord => ({
 });
 
 /**
- * Keeps log records in Postgres, where they can be searched with the tools already in use rather
+ * Keeps log records in the database, where they can be searched with the tools already in use rather
  * than needing a reading path of their own.
  *
  * Reads are bounded and ordered newest first unless asked otherwise, because the question an operator has is almost always
@@ -42,7 +43,7 @@ const asRecord = (row: Row): LogRecord => ({
  * @param db - The database.
  * @returns The store.
  */
-const createDatabaseLogStore = (db: ValenceDatabase): LogStore => ({
+const createDatabaseLogStore = (db: AnyValenceDatabase): LogStore => ({
   save: async (records: readonly StoredLog[]) => {
     if (records.length === 0) {
       return;
@@ -128,12 +129,9 @@ const createDatabaseLogStore = (db: ValenceDatabase): LogStore => ({
   },
 
   forgetExpired: async (nowMs: number) => {
-    const gone = await db
-      .delete(logRecord)
-      .where(lt(logRecord.forgetAfter, new Date(nowMs)))
-      .returning({ id: logRecord.id });
+    const gone = await db.delete(logRecord).where(lt(logRecord.forgetAfter, new Date(nowMs)));
 
-    return gone.length;
+    return countAffected(gone);
   },
 });
 

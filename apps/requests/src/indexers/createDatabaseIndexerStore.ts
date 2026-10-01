@@ -1,6 +1,7 @@
+import { countAffected } from '@ValenceDatabase/countAffected';
 import { eq } from 'drizzle-orm';
-import { indexer } from '@ValenceRequests/db/Schema';
-import type { RequestsDatabase } from '@ValenceRequests/db/Database';
+import { indexer } from '#dialect/Schema';
+import type { RequestsDatabase } from '#dialect/RequestsDatabase';
 import type { IndexerRecord, IndexerStore } from '@ValenceRequests/indexers/IndexerRecord';
 
 type IndexerRow = typeof indexer.$inferSelect;
@@ -35,22 +36,20 @@ const createDatabaseIndexerStore = (db: RequestsDatabase): IndexerStore => ({
   },
 
   insert: async (record) => {
-    const [row] = await db
-      .insert(indexer)
-      .values({
-        ...record,
-        lastFailedAt: record.lastFailedAt === null ? null : new Date(record.lastFailedAt),
-        createdAt: new Date(record.createdAt),
-        updatedAt: new Date(record.updatedAt),
-      })
-      .returning();
+    await db.insert(indexer).values({
+      ...record,
+      lastFailedAt: record.lastFailedAt === null ? null : new Date(record.lastFailedAt),
+      createdAt: new Date(record.createdAt),
+      updatedAt: new Date(record.updatedAt),
+    });
+    const [row] = await db.select().from(indexer).where(eq(indexer.id, record.id));
 
     return row === undefined ? record : asRecord(row);
   },
 
   update: async (id, changes) => {
     const { lastFailedAt, createdAt, updatedAt, ...rest } = changes;
-    const [row] = await db
+    await db
       .update(indexer)
       .set({
         ...rest,
@@ -60,14 +59,13 @@ const createDatabaseIndexerStore = (db: RequestsDatabase): IndexerStore => ({
         ...(createdAt === undefined ? {} : { createdAt: new Date(createdAt) }),
         ...(updatedAt === undefined ? {} : { updatedAt: new Date(updatedAt) }),
       })
-      .where(eq(indexer.id, id))
-      .returning();
+      .where(eq(indexer.id, id));
+    const [row] = await db.select().from(indexer).where(eq(indexer.id, id));
 
     return row === undefined ? null : asRecord(row);
   },
 
-  remove: async (id) =>
-    (await db.delete(indexer).where(eq(indexer.id, id)).returning({ id: indexer.id })).length > 0,
+  remove: async (id) => countAffected(await db.delete(indexer).where(eq(indexer.id, id))) > 0,
 });
 
 export { createDatabaseIndexerStore };

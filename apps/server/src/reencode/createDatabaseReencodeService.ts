@@ -3,12 +3,12 @@ import type { Said } from '@ValenceI18n/SaidSchema';
 import { saying } from '@ValenceI18n/saying';
 import { randomUUID } from 'node:crypto';
 import { rm, stat } from 'node:fs/promises';
-import { and, asc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, count, eq, inArray } from 'drizzle-orm';
 import { estimateReencodeBytes } from '@ValenceCore/functions/estimateReencodeBytes';
 import { planReencodeSpec } from '@ValenceCore/functions/planReencodeSpec';
 import { renditionLabel } from '@ValenceCore/functions/renditionLabel';
 import { MonitorDisksSchema } from '@ValenceServer/maintenance/DiskUse';
-import { mediaItem, mediaRendition, reencodeRequest } from '@ValenceServer/db/Schema';
+import { mediaItem, mediaRendition, reencodeRequest } from '#dialect/Schema';
 import { RenditionSchema } from '@ValenceContracts/schemas/Rendition';
 import {
   REENCODES_STILL_TO_BE_WRITTEN,
@@ -26,7 +26,7 @@ import { restoreOriginal } from './restoreOriginal';
 import { swapIntoPlace } from './swapIntoPlace';
 import type { MediaFacts } from './MediaFacts';
 import type { ReencodeService } from './ReencodeService';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
 import type {
   Reencode,
@@ -60,7 +60,7 @@ type ReencodeMedia = {
 };
 
 type CreateDatabaseReencodeServiceOptions = {
-  db: ValenceDatabase;
+  db: AnyValenceDatabase;
   media: ReencodeMedia;
   transcoder: Transcoder;
   capabilities: () => Promise<TranscoderCapabilities>;
@@ -181,7 +181,7 @@ const createDatabaseReencodeService = ({
 
   const awaitingReviewCount = async (): Promise<number> => {
     const rows = await db
-      .select({ counted: sql<number>`count(*)::int` })
+      .select({ counted: count() })
       .from(reencodeRequest)
       .where(eq(reencodeRequest.state, 'awaitingReview'));
 
@@ -321,8 +321,9 @@ const createDatabaseReencodeService = ({
    *
    * Reading a row and then marking it is two steps, and two workers reading between each other's
    * steps both believe they have it — so one film is encoded twice, onto one path, by two processes
-   * writing over each other. `for update skip locked` makes the taking the same statement as the
-   * finding: whoever gets there second finds nothing rather than finding the same thing.
+   * writing over each other. So the finding locks the row it found, skipping any another worker
+   * holds, and the taking happens before the lock lets go: whoever gets there second finds nothing
+   * rather than finding the same thing.
    *
    * One at a time and oldest first, deliberately. At its peak a replacement holds the original, the
    * new file and whatever ffmpeg is still writing, so running a batch in parallel multiplies the
@@ -332,21 +333,32 @@ const createDatabaseReencodeService = ({
    * @returns The request now being worked on, or nothing where none was waiting.
    */
   const claimTheNextOne = async (): Promise<RequestRow | undefined> => {
-    const taken = await db
-      .update(reencodeRequest)
-      .set({ state: 'encoding', startedAt: new Date(), failure: null })
-      .where(
-        sql`${reencodeRequest.id} = (
-          select ${reencodeRequest.id} from ${reencodeRequest}
-          where ${reencodeRequest.state} = 'queued'
-          order by ${reencodeRequest.askedAt} asc
-          limit 1
-          for update skip locked
-        )`,
-      )
-      .returning();
+    return db.transaction(async (tx) => {
+      const [next] = await tx
+        .select({ id: reencodeRequest.id })
+        .from(reencodeRequest)
+        .where(eq(reencodeRequest.state, 'queued'))
+        .orderBy(asc(reencodeRequest.askedAt))
+        .limit(1)
+        .for('update', { skipLocked: true });
 
-    return taken[0];
+      if (next === undefined) {
+        return undefined;
+      }
+
+      await tx
+        .update(reencodeRequest)
+        .set({ state: 'encoding', startedAt: new Date(), failure: null })
+        .where(eq(reencodeRequest.id, next.id));
+
+      const [taken] = await tx
+        .select()
+        .from(reencodeRequest)
+        .where(eq(reencodeRequest.id, next.id))
+        .limit(1);
+
+      return taken;
+    });
   };
 
   /**
@@ -364,11 +376,27 @@ const createDatabaseReencodeService = ({
    * a special one.
    */
   const pickUpWhereItWasLeft = async (): Promise<void> => {
-    const stranded = await db
-      .update(reencodeRequest)
-      .set({ state: 'queued', progress: 0, bytesPerSecond: null })
-      .where(inArray(reencodeRequest.state, ['encoding', 'verifying']))
-      .returning({ originalPath: reencodeRequest.originalPath });
+    const stranded = await db.transaction(async (tx) => {
+      const found = await tx
+        .select({ id: reencodeRequest.id, originalPath: reencodeRequest.originalPath })
+        .from(reencodeRequest)
+        .where(inArray(reencodeRequest.state, ['encoding', 'verifying']))
+        .for('update');
+
+      if (found.length > 0) {
+        await tx
+          .update(reencodeRequest)
+          .set({ state: 'queued', progress: 0, bytesPerSecond: null })
+          .where(
+            inArray(
+              reencodeRequest.id,
+              found.map((row) => row.id),
+            ),
+          );
+      }
+
+      return found;
+    });
 
     for (const row of stranded) {
       onProblem?.(
@@ -602,25 +630,28 @@ const createDatabaseReencodeService = ({
           continue;
         }
 
+        await db.insert(reencodeRequest).values({
+          id,
+          mediaItemId: candidate.mediaId,
+          libraryId: found.libraryId,
+          mode: settings.mode,
+          state: 'queued',
+          quality: settings.quality,
+          videoCodec: settings.videoCodec,
+          audio: settings.audio,
+          originalPath: found.path,
+          originalSizeBytes: facts.sizeBytes,
+          originalProbe: facts,
+          workingPath: paths.output,
+          estimatedBytes: candidate.estimatedBytes,
+          askedBy,
+        });
+
         const [row] = await db
-          .insert(reencodeRequest)
-          .values({
-            id,
-            mediaItemId: candidate.mediaId,
-            libraryId: found.libraryId,
-            mode: settings.mode,
-            state: 'queued',
-            quality: settings.quality,
-            videoCodec: settings.videoCodec,
-            audio: settings.audio,
-            originalPath: found.path,
-            originalSizeBytes: facts.sizeBytes,
-            originalProbe: facts,
-            workingPath: paths.output,
-            estimatedBytes: candidate.estimatedBytes,
-            askedBy,
-          })
-          .returning();
+          .select()
+          .from(reencodeRequest)
+          .where(eq(reencodeRequest.id, id))
+          .limit(1);
 
         if (row !== undefined) {
           started.push(
@@ -823,7 +854,7 @@ const createDatabaseReencodeService = ({
         }
 
         const waiting = await db
-          .select({ counted: sql<number>`count(*)::int` })
+          .select({ counted: count() })
           .from(reencodeRequest)
           .where(eq(reencodeRequest.state, 'queued'));
 

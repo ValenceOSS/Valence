@@ -1,15 +1,15 @@
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { and, asc, count, desc, eq, ilike, inArray, max, notExists, or, sql } from 'drizzle-orm';
-import {
-  book,
-  bookChapter,
-  library,
-  listeningProgress,
-  readingProgress,
-} from '@ValenceServer/db/Schema';
+import { and, asc, count, desc, eq, inArray, max, notExists, or, sql } from 'drizzle-orm';
+import { book, bookChapter, library, listeningProgress, readingProgress } from '#dialect/Schema';
 import { z } from 'zod';
+import { containsInsensitively } from '@ValenceDatabase/containsInsensitively';
+import { countAffected } from '@ValenceDatabase/countAffected';
+import { countWhere } from '@ValenceDatabase/countWhere';
+import { jsonAsText } from '@ValenceDatabase/jsonAsText';
+import { jsonLiteral } from '@ValenceDatabase/jsonLiteral';
+import { upsert } from '@ValenceDatabase/upsert';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { chapterHeardAt } from '@ValenceServer/books/chapterHeardAt';
 import {
@@ -24,7 +24,7 @@ import { createBookPageCache } from './createBookPageCache';
 import { drawBookCover } from './drawBookCover';
 import { readFolderArt } from './readFolderArt';
 import { openBookFile } from './openBookFile';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { ChapterShelf, ComicChapters } from './createChapterNamer';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type {
@@ -162,7 +162,7 @@ const toBook = (
  * @returns The service, which the scan writes through and the routes read through.
  */
 const createDatabaseBookService = (
-  db: ValenceDatabase,
+  db: AnyValenceDatabase,
   cacheDir: string,
   matching: BookMatching | null = null,
 ): BookService => {
@@ -217,43 +217,48 @@ const createDatabaseBookService = (
     },
 
     upsertBook: async (row) => {
-      const [saved] = await db
-        .insert(book)
-        .values({
-          id: randomUUID(),
-          libraryId: row.libraryId,
-          path: row.path,
-          title: row.title,
-          layout: row.layout,
-          direction: row.direction,
-          year: row.year,
-          authors: row.authors.length === 0 ? null : row.authors,
-          overview: row.overview,
-          seriesName: row.series?.name ?? null,
-          seriesPosition: row.series?.position ?? null,
-        })
-        .onConflictDoUpdate({
-          target: [book.libraryId, book.path],
-          set: {
-            title: sql`case when ${book.isCorrected} then ${book.title} else ${row.title} end`,
-            ...(row.layout === 'audio' ? {} : { layout: row.layout, direction: row.direction }),
-            year: sql`case when ${book.isCorrected} then ${book.year} else ${row.year} end`,
+      await upsert(db, book, {
+        values: [
+          {
+            id: randomUUID(),
+            libraryId: row.libraryId,
+            path: row.path,
+            title: row.title,
+            layout: row.layout,
+            direction: row.direction,
+            year: row.year,
+            authors: row.authors.length === 0 ? null : row.authors,
+            overview: row.overview,
             seriesName: row.series?.name ?? null,
             seriesPosition: row.series?.position ?? null,
-            updatedAt: new Date(),
-            ...(row.authors.length === 0
-              ? {}
-              : {
-                  authors: sql`case when ${book.isCorrected} then ${book.authors} else ${JSON.stringify(row.authors)}::jsonb end`,
-                }),
-            ...(row.overview === null
-              ? {}
-              : {
-                  overview: sql`case when ${book.isCorrected} then ${book.overview} else ${row.overview} end`,
-                }),
           },
-        })
-        .returning({ id: book.id });
+        ],
+        target: [book.libraryId, book.path],
+        set: {
+          title: sql`case when ${book.isCorrected} then ${book.title} else ${row.title} end`,
+          ...(row.layout === 'audio' ? {} : { layout: row.layout, direction: row.direction }),
+          year: sql`case when ${book.isCorrected} then ${book.year} else ${row.year} end`,
+          seriesName: row.series?.name ?? null,
+          seriesPosition: row.series?.position ?? null,
+          updatedAt: new Date(),
+          ...(row.authors.length === 0
+            ? {}
+            : {
+                authors: sql`case when ${book.isCorrected} then ${book.authors} else ${jsonLiteral(row.authors)} end`,
+              }),
+          ...(row.overview === null
+            ? {}
+            : {
+                overview: sql`case when ${book.isCorrected} then ${book.overview} else ${row.overview} end`,
+              }),
+        },
+      });
+
+      const [saved] = await db
+        .select({ id: book.id })
+        .from(book)
+        .where(and(eq(book.libraryId, row.libraryId), eq(book.path, row.path)))
+        .limit(1);
 
       return saved?.id ?? null;
     },
@@ -269,24 +274,12 @@ const createDatabaseBookService = (
         return;
       }
 
-      await db
-        .insert(bookChapter)
-        .values({
-          id: randomUUID(),
-          bookId: owner.id,
-          path: row.path,
-          number: row.number,
-          title: row.title,
-          format: row.format,
-          pageCount: row.pageCount,
-          durationSeconds: row.durationSeconds,
-          marks: row.marks.length === 0 ? null : row.marks,
-          sizeBytes: row.sizeBytes,
-          modifiedAtMs: row.modifiedAtMs,
-        })
-        .onConflictDoUpdate({
-          target: [bookChapter.bookId, bookChapter.path],
-          set: {
+      await upsert(db, bookChapter, {
+        values: [
+          {
+            id: randomUUID(),
+            bookId: owner.id,
+            path: row.path,
             number: row.number,
             title: row.title,
             format: row.format,
@@ -296,7 +289,19 @@ const createDatabaseBookService = (
             sizeBytes: row.sizeBytes,
             modifiedAtMs: row.modifiedAtMs,
           },
-        });
+        ],
+        target: [bookChapter.bookId, bookChapter.path],
+        set: {
+          number: row.number,
+          title: row.title,
+          format: row.format,
+          pageCount: row.pageCount,
+          durationSeconds: row.durationSeconds,
+          marks: row.marks.length === 0 ? null : row.marks,
+          sizeBytes: row.sizeBytes,
+          modifiedAtMs: row.modifiedAtMs,
+        },
+      });
     },
 
     removeByPaths: async (libraryId, paths) => {
@@ -391,9 +396,9 @@ const createDatabaseBookService = (
             like === null
               ? undefined
               : or(
-                  ilike(book.title, like),
-                  ilike(book.overview, like),
-                  sql`${book.authors}::text ilike ${like}`,
+                  containsInsensitively(book.title, like),
+                  containsInsensitively(book.overview, like),
+                  containsInsensitively(jsonAsText(book.authors), like),
                 ),
             booksVisibleToViewer(db, viewer),
           ),
@@ -408,10 +413,7 @@ const createDatabaseBookService = (
               .select({
                 bookId: bookChapter.bookId,
                 count: count(),
-                heard:
-                  sql<number>`count(*) filter (where ${inArray(bookChapter.format, [...AUDIOBOOK_FORMATS])})`.mapWith(
-                    Number,
-                  ),
+                heard: countWhere(inArray(bookChapter.format, [...AUDIOBOOK_FORMATS])),
                 bytes: sql<number>`coalesce(sum(${bookChapter.sizeBytes}), 0)`.mapWith(Number),
               })
               .from(bookChapter)
@@ -575,26 +577,29 @@ const createDatabaseBookService = (
         return false;
       }
 
-      await db
-        .insert(readingProgress)
-        .values({
-          id: randomUUID(),
-          profileId,
-          bookId: chapter.bookId,
-          chapterId,
-          pageNumber: where.pageNumber,
-          fraction: where.fraction,
-          isFinished: where.isFinished,
-        })
-        .onConflictDoUpdate({
-          target: [readingProgress.profileId, readingProgress.chapterId],
-          set: {
+      const now = new Date();
+
+      await upsert(db, readingProgress, {
+        values: [
+          {
+            id: randomUUID(),
+            profileId,
+            bookId: chapter.bookId,
+            chapterId,
             pageNumber: where.pageNumber,
             fraction: where.fraction,
             isFinished: where.isFinished,
-            updatedAt: new Date(),
+            updatedAt: now,
           },
-        });
+        ],
+        target: [readingProgress.profileId, readingProgress.chapterId],
+        set: {
+          pageNumber: where.pageNumber,
+          fraction: where.fraction,
+          isFinished: where.isFinished,
+          updatedAt: now,
+        },
+      });
 
       return true;
     },
@@ -616,8 +621,8 @@ const createDatabaseBookService = (
     },
 
     listReading: async (viewer, profileId, limit) => {
-      const latest = await db
-        .selectDistinctOn([readingProgress.bookId], {
+      const everyPlace = await db
+        .select({
           bookId: readingProgress.bookId,
           chapterId: readingProgress.chapterId,
           chapterTitle: bookChapter.title,
@@ -632,8 +637,11 @@ const createDatabaseBookService = (
         .innerJoin(bookChapter, eq(bookChapter.id, readingProgress.chapterId))
         .where(eq(readingProgress.profileId, profileId))
         .orderBy(readingProgress.bookId, desc(readingProgress.updatedAt));
+      const latest = everyPlace.filter(
+        (row, at) => at === 0 || everyPlace[at - 1]?.bookId !== row.bookId,
+      );
 
-      const recent = [...latest]
+      const recent = latest
         .sort((one, other) => other.updatedAt.getTime() - one.updatedAt.getTime())
         .slice(0, limit);
 
@@ -705,25 +713,25 @@ const createDatabaseBookService = (
         return false;
       }
 
-      await db
-        .insert(listeningProgress)
-        .values({
-          id: randomUUID(),
-          profileId,
-          bookId,
-          chapterId: where.chapterId,
-          positionSeconds: where.positionSeconds,
-          isFinished: where.isFinished,
-        })
-        .onConflictDoUpdate({
-          target: [listeningProgress.profileId, listeningProgress.bookId],
-          set: {
+      await upsert(db, listeningProgress, {
+        values: [
+          {
+            id: randomUUID(),
+            profileId,
+            bookId,
             chapterId: where.chapterId,
             positionSeconds: where.positionSeconds,
             isFinished: where.isFinished,
-            updatedAt: new Date(),
           },
-        });
+        ],
+        target: [listeningProgress.profileId, listeningProgress.bookId],
+        set: {
+          chapterId: where.chapterId,
+          positionSeconds: where.positionSeconds,
+          isFinished: where.isFinished,
+          updatedAt: new Date(),
+        },
+      });
 
       return true;
     },
@@ -864,10 +872,9 @@ const createDatabaseBookService = (
           isCorrected: true,
           updatedAt: new Date(),
         })
-        .where(eq(book.id, bookId))
-        .returning({ id: book.id });
+        .where(eq(book.id, bookId));
 
-      return changed.length > 0;
+      return countAffected(changed) > 0;
     },
 
     forgetCorrection: async (bookId) => {
@@ -876,10 +883,9 @@ const createDatabaseBookService = (
       const changed = await db
         .update(book)
         .set({ isCorrected: false, externalId: null, posterUrl: null, updatedAt: new Date() })
-        .where(eq(book.id, bookId))
-        .returning({ id: book.id });
+        .where(eq(book.id, bookId));
 
-      return changed.length > 0;
+      return countAffected(changed) > 0;
     },
   };
 

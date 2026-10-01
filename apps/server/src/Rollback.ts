@@ -1,6 +1,9 @@
+import { DIALECT } from '#dialect/DIALECT';
+import { databaseConnectionOf } from '@ValenceDatabase/databaseConnectionOf';
+import { checkDialect } from '@ValenceDatabase/checkDialect';
 import { parseArgs } from 'node:util';
 import { listSnapshots } from '@ValenceServer/db/listSnapshots';
-import { restoreSnapshot } from '@ValenceServer/db/restoreSnapshot';
+import { restoreSnapshot } from '#dialect/restoreSnapshot';
 import { readEnv } from '@ValenceServer/env/Env';
 
 /**
@@ -15,6 +18,9 @@ import { readEnv } from '@ValenceServer/env/Env';
  */
 const run = async (): Promise<void> => {
   const env = readEnv(process.env);
+
+  checkDialect(env.DATABASE_URL, DIALECT);
+
   const { values, positionals } = parseArgs({
     options: { list: { type: 'boolean' }, restore: { type: 'boolean' } },
     allowPositionals: true,
@@ -42,7 +48,12 @@ const run = async (): Promise<void> => {
   }
 
   process.stdout.write(`Restoring ${chosen}...\n`);
-  await restoreSnapshot({ databaseUrl: env.DATABASE_URL, folder: env.BACKUP_DIR, name: chosen });
+  await restoreSnapshot({
+    databaseUrl: env.DATABASE_URL,
+    tls: databaseConnectionOf(env).tls,
+    folder: env.BACKUP_DIR,
+    name: chosen,
+  });
   process.stdout.write(
     'Restored. Start the release that was running when it was taken; starting a newer one applies its migrations again.\n',
   );

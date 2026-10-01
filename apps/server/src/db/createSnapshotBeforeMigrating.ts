@@ -1,12 +1,16 @@
+import { NO_TLS } from '@ValenceDatabase/NO_TLS';
+import type { DatabaseTls } from '@ValenceDatabase/DatabaseTls';
 import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
+import { SNAPSHOT_TOOL } from '#dialect/SNAPSHOT_TOOL';
+import { takeSnapshot } from '#dialect/takeSnapshot';
 import { listSnapshots } from '@ValenceServer/db/listSnapshots';
 import { nameSnapshot } from '@ValenceServer/db/nameSnapshot';
 import { pruneSnapshots } from '@ValenceServer/db/pruneSnapshots';
-import { takeSnapshot } from '@ValenceServer/db/takeSnapshot';
 
 type CreateSnapshotBeforeMigratingOptions = {
   databaseUrl: string;
+  tls?: DatabaseTls;
   folder: string;
   keep: number;
   isEnabled: boolean;
@@ -22,11 +26,12 @@ type CreateSnapshotBeforeMigratingOptions = {
  * older release left it. A database that has never run a migration is left alone, since there is
  * nothing in it to lose.
  *
- * Where the postgres client is not installed, as on a development machine, it says so and the
+ * Where the database's dump tool is not installed, as on a development machine, it says so and the
  * migration goes ahead. Where it is installed and fails, the migration does not: a database
  * changed with no way back is the thing this exists to prevent.
  *
  * @param databaseUrl - The database to copy.
+ * @param tls - How the copy connects to it, as the server's pool does.
  * @param folder - Where the copies are kept.
  * @param keep - How many copies to leave, newest first.
  * @param isEnabled - Whether to take one at all.
@@ -39,6 +44,7 @@ type CreateSnapshotBeforeMigratingOptions = {
 const createSnapshotBeforeMigrating =
   ({
     databaseUrl,
+    tls = NO_TLS,
     folder,
     keep,
     isEnabled,
@@ -54,12 +60,12 @@ const createSnapshotBeforeMigrating =
     }
 
     const name = nameSnapshot(now(), last);
-    const outcome = await takeSnapshot({ databaseUrl, folder, name });
+    const outcome = await takeSnapshot({ databaseUrl, tls, folder, name });
 
     if (outcome === 'missing') {
       say(
         'error',
-        'pg_dump is not installed here, so no snapshot was taken before migrating. Rolling back to this point will not be possible.',
+        `${SNAPSHOT_TOOL} is not installed here, so no snapshot was taken before migrating. Rolling back to this point will not be possible.`,
       );
 
       return;

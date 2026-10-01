@@ -3,18 +3,20 @@ import { describeOutOfOrderMigrations } from './describeOutOfOrderMigrations';
 
 describe('describeOutOfOrderMigrations', () => {
   it('says nothing where nothing was out of order', () => {
-    expect(describeOutOfOrderMigrations('server', [])).toBeNull();
+    expect(describeOutOfOrderMigrations('server', 'postgres', [])).toBeNull();
   });
 
   it('names each migration, the app it belongs to and what to change', () => {
-    const said = describeOutOfOrderMigrations('server', ['0071_grant_requests']);
+    const said = describeOutOfOrderMigrations('server', 'postgres', ['0071_grant_requests']);
 
-    expect(said).toContain('server:');
+    expect(said).toContain('server/postgres:');
     expect(said).toContain('0071_grant_requests');
-    expect(said).toContain('apps/server/drizzle/meta/_journal.json');
+    expect(said).toContain('apps/server/drizzle/postgres/meta/_journal.json');
   });
 
   it('warns against restamping one a database has already run', () => {
-    expect(describeOutOfOrderMigrations('server', ['0071_a'])).toContain('never change the stamp');
+    expect(describeOutOfOrderMigrations('server', 'postgres', ['0071_a'])).toContain(
+      'never change the stamp',
+    );
   });
 });

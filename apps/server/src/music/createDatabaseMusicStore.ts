@@ -7,11 +7,14 @@ import {
   musicArtist,
   musicTrack,
   musicTrackArtist,
-} from '@ValenceServer/db/Schema';
+} from '#dialect/Schema';
+import { countAffected } from '@ValenceDatabase/countAffected';
+import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
+import { upsert } from '@ValenceDatabase/upsert';
 import { nameKey } from './nameKey';
 import { sortNameFor } from './sortNameFor';
 import { isStillThere } from '@ValenceServer/music/isStillThere';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { MusicStore } from './scanMusicLibrary';
 import type { EnrichingStore } from './web/EnrichingStore';
 import type { AlbumCorrectingStore } from './web/AlbumCorrectingStore';
@@ -23,7 +26,7 @@ import type { AlbumCorrectingStore } from './web/AlbumCorrectingStore';
  * @param db - The database.
  * @param libraryId - The library that was scanned.
  */
-const pruneEmpty = async (db: ValenceDatabase, libraryId: string): Promise<void> => {
+const pruneEmpty = async (db: AnyValenceDatabase, libraryId: string): Promise<void> => {
   await db.delete(musicAlbum).where(
     and(
       eq(musicAlbum.libraryId, libraryId),
@@ -72,7 +75,7 @@ const pruneEmpty = async (db: ValenceDatabase, libraryId: string): Promise<void>
  * @returns The store.
  */
 const createDatabaseMusicStore = (
-  db: ValenceDatabase,
+  db: AnyValenceDatabase,
 ): MusicStore & EnrichingStore & AlbumCorrectingStore => ({
   listStored: (libraryId) =>
     db
@@ -109,17 +112,19 @@ const createDatabaseMusicStore = (
       return { id: known.id, hasImage: known.imagePath !== null };
     }
 
-    await db
-      .insert(musicArtist)
-      .values({
-        id: randomUUID(),
-        libraryId,
-        name: name.trim(),
-        nameKey: key,
-        sortName: sortNameFor(name),
-        musicbrainzId,
-      })
-      .onConflictDoNothing();
+    await insertUnlessPresent(db, musicArtist, {
+      values: [
+        {
+          id: randomUUID(),
+          libraryId,
+          name: name.trim(),
+          nameKey: key,
+          sortName: sortNameFor(name),
+          musicbrainzId,
+        },
+      ],
+      target: [musicArtist.libraryId, musicArtist.nameKey],
+    });
 
     const [made] = await found();
 
@@ -173,21 +178,23 @@ const createDatabaseMusicStore = (
       };
     }
 
-    await db
-      .insert(musicAlbum)
-      .values({
-        id: randomUUID(),
-        libraryId: row.libraryId,
-        artistId: row.artistId,
-        title: row.title.trim(),
-        titleKey: key,
-        year: row.year,
-        genres: row.genres,
-        isCompilation: row.isCompilation,
-        musicbrainzId: row.musicbrainzId,
-        releaseGroupMusicbrainzId: row.releaseGroupMusicbrainzId,
-      })
-      .onConflictDoNothing();
+    await insertUnlessPresent(db, musicAlbum, {
+      values: [
+        {
+          id: randomUUID(),
+          libraryId: row.libraryId,
+          artistId: row.artistId,
+          title: row.title.trim(),
+          titleKey: key,
+          year: row.year,
+          genres: row.genres,
+          isCompilation: row.isCompilation,
+          musicbrainzId: row.musicbrainzId,
+          releaseGroupMusicbrainzId: row.releaseGroupMusicbrainzId,
+        },
+      ],
+      target: [musicAlbum.libraryId, musicAlbum.artistId, musicAlbum.titleKey],
+    });
 
     const [made] = await found();
 
@@ -211,22 +218,29 @@ const createDatabaseMusicStore = (
       updatedAt: new Date(),
     };
 
+    await upsert(db, mediaItem, {
+      values: [
+        {
+          id: randomUUID(),
+          libraryId: row.libraryId,
+          path: row.path,
+          ...described,
+          videoCodec: 'none',
+          videoRange: 'none',
+          width: 0,
+          height: 0,
+          audioStreams: [],
+          subtitleStreams: [],
+        },
+      ],
+      target: [mediaItem.libraryId, mediaItem.path],
+      set: described,
+    });
+
     const [saved] = await db
-      .insert(mediaItem)
-      .values({
-        id: randomUUID(),
-        libraryId: row.libraryId,
-        path: row.path,
-        ...described,
-        videoCodec: 'none',
-        videoRange: 'none',
-        width: 0,
-        height: 0,
-        audioStreams: [],
-        subtitleStreams: [],
-      })
-      .onConflictDoUpdate({ target: [mediaItem.libraryId, mediaItem.path], set: described })
-      .returning({ id: mediaItem.id });
+      .select({ id: mediaItem.id })
+      .from(mediaItem)
+      .where(and(eq(mediaItem.libraryId, row.libraryId), eq(mediaItem.path, row.path)));
 
     if (saved === undefined) {
       return;
@@ -259,19 +273,22 @@ const createDatabaseMusicStore = (
           }
         : ownLyrics;
 
-    await db
-      .insert(musicTrack)
-      .values({ mediaItemId: saved.id, ...music, ...ownLyrics })
-      .onConflictDoUpdate({ target: musicTrack.mediaItemId, set: { ...music, ...keptLyrics } });
+    await upsert(db, musicTrack, {
+      values: [{ mediaItemId: saved.id, ...music, ...ownLyrics }],
+      target: musicTrack.mediaItemId,
+      set: { ...music, ...keptLyrics },
+    });
 
     await db.delete(musicTrackArtist).where(eq(musicTrackArtist.mediaItemId, saved.id));
 
-    await db
-      .insert(musicTrackArtist)
-      .values(
-        row.artistIds.map((artistId, position) => ({ mediaItemId: saved.id, artistId, position })),
-      )
-      .onConflictDoNothing();
+    await insertUnlessPresent(db, musicTrackArtist, {
+      values: row.artistIds.map((artistId, position) => ({
+        mediaItemId: saved.id,
+        artistId,
+        position,
+      })),
+      target: [musicTrackArtist.mediaItemId, musicTrackArtist.artistId],
+    });
   },
 
   forgetMissingArtwork: async (libraryId) => {
@@ -344,20 +361,18 @@ const createDatabaseMusicStore = (
         lookedUpAt: new Date(),
         ...(artworkPath === null ? {} : { artworkPath }),
       })
-      .where(eq(musicAlbum.id, albumId))
-      .returning({ id: musicAlbum.id });
+      .where(eq(musicAlbum.id, albumId));
 
-    return changed.length > 0;
+    return countAffected(changed) > 0;
   },
 
   forgetAlbumCorrection: async (albumId) => {
     const changed = await db
       .update(musicAlbum)
       .set({ isCorrected: false, artworkPath: null, lookedUpAt: null })
-      .where(eq(musicAlbum.id, albumId))
-      .returning({ id: musicAlbum.id });
+      .where(eq(musicAlbum.id, albumId));
 
-    return changed.length > 0;
+    return countAffected(changed) > 0;
   },
 
   setAlbumArtwork: async (albumId, path) => {
@@ -411,10 +426,9 @@ const createDatabaseMusicStore = (
 
     const removed = await db
       .delete(mediaItem)
-      .where(and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, paths)))
-      .returning({ id: mediaItem.id });
+      .where(and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, paths)));
 
-    return removed.length;
+    return countAffected(removed);
   },
 
   prune: (libraryId) => pruneEmpty(db, libraryId),
@@ -485,7 +499,7 @@ const createDatabaseMusicStore = (
         title: mediaItem.title,
         durationSeconds: mediaItem.durationSeconds,
         albumTitle: musicAlbum.title,
-        artistName: sql<string>`coalesce((select a.name from ${musicTrackArtist} ta join ${musicArtist} a on a.id = ta."artistId" where ta."mediaItemId" = ${mediaItem.id} order by ta.position limit 1), '')`,
+        artistName: sql<string>`coalesce((select ${musicArtist.name} from ${musicTrackArtist} join ${musicArtist} on ${musicArtist.id} = ${musicTrackArtist.artistId} where ${musicTrackArtist.mediaItemId} = ${mediaItem.id} order by ${musicTrackArtist.position} limit 1), '')`,
       })
       .from(musicTrack)
       .innerJoin(mediaItem, eq(mediaItem.id, musicTrack.mediaItemId))

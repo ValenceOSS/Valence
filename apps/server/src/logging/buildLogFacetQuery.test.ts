@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createDatabase } from '@ValenceServer/db/Database';
-import { logRecord } from '@ValenceServer/db/Schema';
+import { createDatabase } from '#dialect/createDatabase';
+import { logRecord } from '#dialect/Schema';
 import { buildLogFacetQuery } from './buildLogFacetQuery';
 import type { LogFilters } from './logFilterFor';
 

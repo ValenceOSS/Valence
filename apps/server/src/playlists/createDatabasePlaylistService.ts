@@ -3,14 +3,16 @@ import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 import { and, asc, desc, eq, gt, inArray, isNull, max, or, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
+import { countAffected } from '@ValenceDatabase/countAffected';
 import {
   library,
   mediaItem,
+  musicAlbum,
   musicTrack,
   playlist,
   playlistEntry,
   viewerProfile,
-} from '@ValenceServer/db/Schema';
+} from '#dialect/Schema';
 import { librariesVisibleToViewer } from '@ValenceServer/visibility/librariesVisibleToViewer';
 import { visibleToViewer } from '@ValenceServer/visibility/visibleToViewer';
 import { STEP, positionBetween } from './positionBetween';
@@ -20,7 +22,7 @@ import {
   extensionFor,
   whatIsWrongWithThePicture,
 } from '@ValenceServer/profiles/whatIsWrongWithThePicture';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { MediaKind } from '@ValenceContracts/schemas/MediaKind';
 import type { PlaylistEntry, PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
 import type { MusicService } from '@ValenceServer/music/MusicService';
@@ -75,7 +77,7 @@ const kindOf = (libraryKind: string, seriesTitle: string | null): MediaKind => {
  * @returns The service.
  */
 const createDatabasePlaylistService = (
-  db: ValenceDatabase,
+  db: AnyValenceDatabase,
   music: MusicService,
   artworkDirectory: string,
 ): PlaylistService => {
@@ -121,8 +123,10 @@ const createDatabasePlaylistService = (
     const tallies = await db
       .select({
         playlistId: playlistEntry.playlistId,
-        entryCount: sql<number>`count(*)::int`,
-        durationSeconds: sql<number>`coalesce(sum(${mediaItem.durationSeconds}), 0)::float`,
+        entryCount: sql<number>`count(*)`.mapWith(Number),
+        durationSeconds: sql<number>`coalesce(sum(${mediaItem.durationSeconds}), 0)`.mapWith(
+          Number,
+        ),
       })
       .from(playlistEntry)
       .innerJoin(mediaItem, eq(mediaItem.id, playlistEntry.mediaItemId))
@@ -151,7 +155,7 @@ const createDatabasePlaylistService = (
             rows.map((row) => row.id),
           ),
           entryVisible(viewer),
-          sql`exists (select 1 from music_album a where a.id = ${musicTrack.albumId} and a."artworkPath" is not null)`,
+          sql`exists (select 1 from ${musicAlbum} where ${musicAlbum.id} = ${musicTrack.albumId} and ${musicAlbum.artworkPath} is not null)`,
         ),
       )
       .orderBy(asc(playlistEntry.position));
@@ -160,7 +164,10 @@ const createDatabasePlaylistService = (
     const tiled = new Map<string, string[]>();
 
     const losses = await db
-      .select({ playlistId: playlistEntry.playlistId, lostCount: sql<number>`count(*)::int` })
+      .select({
+        playlistId: playlistEntry.playlistId,
+        lostCount: sql<number>`count(*)`.mapWith(Number),
+      })
       .from(playlistEntry)
       .where(
         and(
@@ -506,14 +513,14 @@ const createDatabasePlaylistService = (
 
       const dropped = await db
         .delete(playlistEntry)
-        .where(and(eq(playlistEntry.id, entryId), eq(playlistEntry.playlistId, playlistId)))
-        .returning({ id: playlistEntry.id });
+        .where(and(eq(playlistEntry.id, entryId), eq(playlistEntry.playlistId, playlistId)));
+      const isDropped = countAffected(dropped) > 0;
 
-      if (dropped.length > 0) {
+      if (isDropped) {
         await touch(playlistId);
       }
 
-      return dropped.length > 0;
+      return isDropped;
     },
 
     readArtwork: async (viewer, playlistId) => {

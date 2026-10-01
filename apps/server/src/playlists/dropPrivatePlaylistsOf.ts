@@ -1,6 +1,7 @@
+import { countAffected } from '@ValenceDatabase/countAffected';
 import { and, eq, inArray } from 'drizzle-orm';
-import { playlist } from '@ValenceServer/db/Schema';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import { playlist } from '#dialect/Schema';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 
 /**
  * Removes the playlists that belonged to profiles which are about to go, keeping the ones the rest
@@ -16,7 +17,7 @@ import type { ValenceDatabase } from '@ValenceServer/db/Database';
  * @returns How many playlists were removed.
  */
 const dropPrivatePlaylistsOf = async (
-  db: ValenceDatabase,
+  db: AnyValenceDatabase,
   profileIds: readonly string[],
 ): Promise<number> => {
   if (profileIds.length === 0) {
@@ -25,10 +26,9 @@ const dropPrivatePlaylistsOf = async (
 
   const dropped = await db
     .delete(playlist)
-    .where(and(inArray(playlist.profileId, [...profileIds]), eq(playlist.isShared, false)))
-    .returning({ id: playlist.id });
+    .where(and(inArray(playlist.profileId, [...profileIds]), eq(playlist.isShared, false)));
 
-  return dropped.length;
+  return countAffected(dropped);
 };
 
 export { dropPrivatePlaylistsOf };

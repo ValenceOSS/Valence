@@ -82,7 +82,7 @@ export { Button };
 
 The reasoning: React Fast Refresh tracks a named component but not one buried in an object literal, so the old default-object form remounted whole subtrees on every edit and lost local state. `React.lazy` also works directly with a named export.
 
-The one tooling note worth knowing is that `apps/server/src/db/Schema.ts` exports each table by name because drizzle-kit discovers tables by scanning a module's named exports. Anything else generates an empty migration silently.
+The one tooling note worth knowing is that `apps/server/src/db/postgres/Schema.ts` exports each table by name because drizzle-kit discovers tables by scanning a module's named exports. Anything else generates an empty migration silently.
 
 ## Comments
 

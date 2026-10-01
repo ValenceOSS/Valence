@@ -20,7 +20,10 @@ reference, not a substitute for reading it.
    capability for TypeScript to use — see the standard for their limits.
 2. **No duplication across modules.** Needed twice means extracted and shared.
 3. **No `../` imports.** Use `@ValenceUI/*`, `@ValenceClient/*`, `@ValenceContracts/*`,
-   `@ValenceCore/*`, `@ValenceSDK/*`, `@ValenceI18n/*`.
+   `@ValenceCore/*`, `@ValenceSDK/*`, `@ValenceDatabase/*`, `@ValenceI18n/*`. The one
+   exception is `#dialect/*` inside `apps/server`, `apps/requests` and
+   `packages/database`, a package subpath import resolved by build condition to the
+   package's postgres folder, or its mysql folder under the `mysql` condition.
 4. **No `index.ts` / `index.tsx`.** No barrel files, ever.
 5. **`export { ComponentName }`** — named exports only, no default exports and
    no module objects. One member per file, filename matches the member. Set
@@ -68,23 +71,23 @@ standalone functions. snake_case for Rust modules.
 
 ## Stack
 
-| Layer         | Choice                              |
-| ------------- | ----------------------------------- |
-| API contract  | Hono + `@hono/zod-openapi`          |
-| API reference | Scalar, served at `/api/reference`  |
-| Auth          | better-auth                         |
-| Data          | Postgres + Drizzle + pg-boss        |
-| Plugins       | Process-per-plugin, brokered        |
-| Media         | Rust + FFmpeg child process         |
-| UI            | Radix + Tailwind + CVA + Motion     |
-| Desktop       | Electron, a window onto the server  |
-| Phone         | Expo + React Native, no admin       |
-| Lint          | oxlint + ESLint + husky             |
-| Realtime      | One WebSocket, viewer + admin feeds |
-| Web state     | TanStack Query + TanStack Router    |
+| Layer         | Choice                                                          |
+| ------------- | --------------------------------------------------------------- |
+| API contract  | Hono + `@hono/zod-openapi`                                      |
+| API reference | Scalar, served at `/api/reference`                              |
+| Auth          | better-auth                                                     |
+| Data          | Postgres, MySQL or MariaDB + Drizzle; jobs in-house             |
+| Plugins       | Process-per-plugin, brokered                                    |
+| Media         | Rust + FFmpeg child process                                     |
+| UI            | Radix + Tailwind + CVA + Motion                                 |
+| Desktop       | Electron, a window onto the server                              |
+| Phone         | Expo + React Native, no admin                                   |
+| Lint          | oxlint + ESLint + husky                                         |
+| Realtime      | One WebSocket, viewer + admin feeds                             |
+| Web state     | TanStack Query + TanStack Router                                |
 
 **Not used:** the shadcn registry (its conventions are adopted, its generated code
-is not), Redis, SQLite, tRPC as a primary API, barrel files.
+is not), Redis, SQLite, MongoDB, pg-boss, tRPC as a primary API, barrel files.
 
 ## Where front-end code goes
 

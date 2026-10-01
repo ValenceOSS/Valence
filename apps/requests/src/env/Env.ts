@@ -1,9 +1,11 @@
 import { z } from 'zod';
+import { DATABASE_ENV } from '@ValenceDatabase/DATABASE_ENV';
 
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   REQUESTS_PORT: z.coerce.number().int().positive().default(8421),
   DATABASE_URL: z.string().url().default('postgres://valence:valence@localhost:5432/valence'),
+  ...DATABASE_ENV,
   REQUESTS_SECRET: z.string().min(32),
   VPN_URL: z
     .string()

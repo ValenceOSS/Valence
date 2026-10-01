@@ -1,5 +1,7 @@
-import { ilike, or } from 'drizzle-orm';
-import { logRecord } from '@ValenceServer/db/Schema';
+import { or } from 'drizzle-orm';
+import { logRecord } from '#dialect/Schema';
+import { containsInsensitively } from '@ValenceDatabase/containsInsensitively';
+import { likeLiterally } from '@ValenceDatabase/likeLiterally';
 import type { SQL } from 'drizzle-orm';
 
 /**
@@ -20,19 +22,19 @@ const logSearchFilter = (search: string): SQL | undefined => {
     return undefined;
   }
 
-  const pattern = `%${looking.replace(/[\\%_]/g, (character) => `\\${character}`)}%`;
+  const pattern = `%${likeLiterally(looking)}%`;
 
   return or(
-    ilike(logRecord.message, pattern),
-    ilike(logRecord.detail, pattern),
-    ilike(logRecord.source, pattern),
-    ilike(logRecord.jobKind, pattern),
-    ilike(logRecord.id, pattern),
-    ilike(logRecord.jobId, pattern),
-    ilike(logRecord.libraryId, pattern),
-    ilike(logRecord.mediaId, pattern),
-    ilike(logRecord.sessionId, pattern),
-    ilike(logRecord.requestId, pattern),
+    containsInsensitively(logRecord.message, pattern),
+    containsInsensitively(logRecord.detail, pattern),
+    containsInsensitively(logRecord.source, pattern),
+    containsInsensitively(logRecord.jobKind, pattern),
+    containsInsensitively(logRecord.id, pattern),
+    containsInsensitively(logRecord.jobId, pattern),
+    containsInsensitively(logRecord.libraryId, pattern),
+    containsInsensitively(logRecord.mediaId, pattern),
+    containsInsensitively(logRecord.sessionId, pattern),
+    containsInsensitively(logRecord.requestId, pattern),
   );
 };
 

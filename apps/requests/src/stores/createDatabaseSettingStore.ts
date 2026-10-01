@@ -1,7 +1,8 @@
+import { upsert } from '@ValenceDatabase/upsert';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { setting } from '@ValenceRequests/db/Schema';
-import type { RequestsDatabase } from '@ValenceRequests/db/Database';
+import { setting } from '#dialect/Schema';
+import type { RequestsDatabase } from '#dialect/RequestsDatabase';
 
 type SettingStore = {
   read: (key: string) => Promise<string | null>;
@@ -29,10 +30,11 @@ const createDatabaseSettingStore = (db: RequestsDatabase): SettingStore => ({
   },
 
   write: async (key, value) => {
-    await db
-      .insert(setting)
-      .values({ key, value })
-      .onConflictDoUpdate({ target: setting.key, set: { value, updatedAt: new Date() } });
+    await upsert(db, setting, {
+      values: [{ key, value }],
+      target: setting.key,
+      set: { value, updatedAt: new Date() },
+    });
   },
 });
 

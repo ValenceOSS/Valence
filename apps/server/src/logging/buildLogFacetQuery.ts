@@ -1,7 +1,7 @@
 import { and, desc, isNotNull, sql } from 'drizzle-orm';
-import { logRecord } from '@ValenceServer/db/Schema';
+import { logRecord } from '#dialect/Schema';
 import { logFilterFor } from './logFilterFor';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { LogFilters } from './logFilterFor';
 
 const TOP = 10;
@@ -19,7 +19,7 @@ const TOP = 10;
  * @returns The select query, ready to be awaited.
  */
 const buildLogFacetQuery = (
-  db: ValenceDatabase,
+  db: AnyValenceDatabase,
   filters: LogFilters,
   field: typeof logRecord.source | typeof logRecord.jobKind,
 ) => {

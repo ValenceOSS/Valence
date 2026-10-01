@@ -1,4 +1,5 @@
 import tseslint from 'typescript-eslint';
+import { neutralQueries } from './tools/eslint/neutralQueries';
 import { noComments } from './tools/eslint/noComments';
 import { noHardCodedStrings } from './tools/eslint/noHardCodedStrings';
 import { noRawColours } from './tools/eslint/noRawColours';
@@ -8,8 +9,11 @@ const valence = {
     'no-comments': noComments,
     'no-hard-coded-strings': noHardCodedStrings,
     'no-raw-colours': noRawColours,
+    'neutral-queries': neutralQueries,
   },
 };
+
+const NEUTRAL_QUERY_FILES: string[] = ['apps/server/src/**/*.ts', 'apps/requests/src/**/*.ts'];
 
 const PARENT_IMPORT_BAN = {
   group: ['../*'],
@@ -41,6 +45,40 @@ const LANDING_IMPORT_BANS = [
       'getvalence.app draws its icons from @tabler/icons-react — see code standards section 10 for why the product itself uses @keyline-icons/react instead.',
   },
   RETIRED_ICON_SET_BAN,
+];
+
+const DIALECT_IMPORT_BANS = [
+  {
+    group: [
+      'drizzle-orm/pg-core',
+      'drizzle-orm/node-postgres',
+      'drizzle-orm/node-postgres/*',
+      'drizzle-orm/pglite',
+      'drizzle-orm/pglite/*',
+      'pg',
+      '@electric-sql/pglite',
+      '@electric-sql/pglite/*',
+      'drizzle-orm/mysql-core',
+      'drizzle-orm/mysql2',
+      'drizzle-orm/mysql2/*',
+      'mysql2',
+      'mysql2/*',
+    ],
+    message:
+      'Only a dialect folder speaks to one database. Reach it through #dialect/* — see "One query, several databases" in the coding standard.',
+  },
+  {
+    group: [
+      '@ValenceServer/db/postgres/*',
+      '@ValenceRequests/db/postgres/*',
+      '@ValenceDatabase/postgres/*',
+      '@ValenceServer/db/mysql/*',
+      '@ValenceRequests/db/mysql/*',
+      '@ValenceDatabase/mysql/*',
+    ],
+    message:
+      'Import a dialect file through #dialect/*, which the build resolves to the database it is for.',
+  },
 ];
 
 const SYNTAX_BANS = [
@@ -291,6 +329,49 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    files: [
+      'apps/server/src/**/*.ts',
+      'apps/requests/src/**/*.ts',
+      'packages/database/src/**/*.ts',
+    ],
+    ignores: [
+      'apps/server/src/db/postgres/**',
+      'apps/requests/src/db/postgres/**',
+      'packages/database/src/postgres/**',
+      'apps/server/src/db/mysql/**',
+      'apps/requests/src/db/mysql/**',
+      'packages/database/src/mysql/**',
+      '**/*.test.ts',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [...SHARED_IMPORT_BANS, ...DIALECT_IMPORT_BANS],
+        },
+      ],
+    },
+  },
+  ...(NEUTRAL_QUERY_FILES.length === 0
+    ? []
+    : [
+        {
+          files: NEUTRAL_QUERY_FILES,
+          ignores: [
+            'apps/server/src/db/postgres/**',
+            'apps/requests/src/db/postgres/**',
+            'packages/database/src/postgres/**',
+            'apps/server/src/db/mysql/**',
+            'apps/requests/src/db/mysql/**',
+            'packages/database/src/mysql/**',
+            '**/*.test.ts',
+          ],
+          rules: {
+            'valence/neutral-queries': 'error' as const,
+          },
+        },
+      ]),
   {
     files: ['**/*.config.ts', '**/vitest.setup.ts'],
     ...tseslint.configs.disableTypeChecked,

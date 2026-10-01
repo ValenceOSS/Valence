@@ -1,14 +1,14 @@
 ---
 title: Database and migrations
-description: How the Drizzle schema, migrations, start-up migration, snapshots, rollback and the pg-boss queue work, and how to write a safe migration.
+description: How the Drizzle schemas for Postgres and MySQL, migrations, start-up migration, snapshots, rollback and the job queue work, and how to write a safe migration and a query every database reads.
 order: 6
 ---
 
-Valence keeps its state in Postgres. The schema is written in TypeScript with Drizzle, migrations are plain SQL files checked into the repository, and the server applies them itself when it starts. This page covers the schema, how you change it, what happens at start-up, how an operator gets back to an older release, and what the job queue stores.
+Valence keeps its state in Postgres, MySQL or MariaDB, with Postgres the default. The schema is written in TypeScript with Drizzle, once for Postgres and once for MySQL, migrations are plain SQL files checked into the repository for each, and the server applies them itself when it starts. This page covers the schemas, how you change them, how to write a query that runs on all three, what happens at start-up, how an operator gets back to an older release, and what the job queue stores.
 
 ## The schema
 
-The server's schema lives in one file, `apps/server/src/db/Schema.ts`. Each table is a `pgTable` and is exported by name.
+The server has two schemas, one per dialect: `apps/server/src/db/postgres/Schema.ts` for Postgres and `apps/server/src/db/mysql/Schema.ts` for MySQL and MariaDB. Each sits in a dialect folder that holds the same files exporting the same members, the database's own plumbing: opening it, snapshots, restores, the ledger. Code outside those folders reaches them through `#dialect/*`, a package import the build resolves to the folder for the database it is built for, by the `mysql` build condition or its absence. In the Postgres file each table is a `pgTable`, in the MySQL one a `mysqlTable`, and both export each table by name.
 
 ```ts
 const library = pgTable('library', {
@@ -20,56 +20,105 @@ const library = pgTable('library', {
 });
 ```
 
-Two things about the file are load bearing.
+Two things about each file are load bearing.
 
 - Every table is a named export, including the last ones added. drizzle-kit discovers tables by scanning a module's named exports. Given a default export or a module object it reports `0 tables` and generates an empty migration, silently.
-- The file groups tables into `authSchema` (the tables better-auth owns: `user`, `session`, `account`, `verification`, `twoFactor`, `passkey`, `deviceCode`, `jwks`, `apikey`) and `valenceSchema` (everything else). `apps/server/src/db/Database.ts` spreads both into the `schema` handed to Drizzle, so a query sees every table.
+- The file groups tables into `authSchema` (the tables better-auth owns: `user`, `session`, `account`, `verification`, `twoFactor`, `passkey`, `deviceCode`, `jwks`, `apikey`) and `valenceSchema` (everything else). `apps/server/src/db/postgres/VALENCE_SCHEMA.ts` spreads both into the `schema` handed to Drizzle, so a query sees every table.
 
-`createDatabase(databaseUrl)` opens a `pg` pool and binds the schema to it, and it is the one place the server learns where its database is. The pool connects lazily at its first query, which is what lets tests build queries against an unreachable address. See [Testing](/develop/testing).
+`createDatabase(databaseUrl)` opens a `pg` pool, or a `mysql2` one in the MySQL folder, and binds the schema to it, and it is the one place the server learns where its database is. The pool connects lazily at its first query, which is what lets tests build queries against an unreachable address. See [Testing](/develop/testing).
 
-The requests service has its own schema and migrations in `apps/requests`, kept in a Postgres schema named `valence_requests` with its own ledger table, so the two never collide in one database.
+The requests service has its own schemas and migrations in `apps/requests`, laid out the same way. On Postgres its tables are kept in a Postgres schema named `valence_requests` with its own ledger table. MySQL has no schemas inside a database, so there its tables are prefixed `requests_` and its ledger is `__requests_migrations`. Either way the two never collide in one database.
+
+### Two schemas that must agree
+
+The two `Schema.ts` files of an app are the one place the repository allows the same thing written twice, because they describe the same tables in two dialects' DDL. `apps/server/src/db/schemaParity.test.ts` holds them together: it fails when their tables, columns, primary keys, foreign keys, indexes, unique keys or the TypeScript row types disagree. A change to one schema is a change to both.
+
+A few differences are allowed on purpose, and the parity test knows each of them.
+
+| Difference                         | Why                                                                                                                                                                                                                         |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Stored SHA-256 `*Hash` columns     | MySQL limits how long a key may be, too short for a long path, so `pathHash` and the other `*Hash` columns hold a SHA-256 of the column they stand in for, and the key is on the hash. The test reads `pathHash` as `path`. |
+| No `*_one_subject` checks on MySQL | The five check constraints that insist on exactly one subject, such as `favourite_one_subject`, exist only on Postgres.                                                                                                     |
+| No GIN indexes on MySQL            | The Postgres GIN indexes on genres and cast, `media_item_genres_idx` and `media_item_cast_idx`, have no MySQL counterpart.                                                                                                  |
+
+### Typechecking both
+
+Each of `apps/server`, `apps/requests` and `packages/database` typechecks twice. `tsconfig.json` resolves `#dialect/*` to the postgres folder, and `tsconfig.mysql.json` resolves it to the mysql one:
+
+```bash
+pnpm --filter @valence/server exec tsc --noEmit -p tsconfig.mysql.json
+```
+
+Their `typecheck` scripts run both, so `pnpm typecheck` catches code that only compiles against one dialect.
+
+## Writing a query every database reads
+
+Query code outside the dialect folders is written once and runs on Postgres, MySQL and MariaDB. The `valence/neutral-queries` ESLint rule bans what only one of them reads, and names what to use instead. The helpers live in `packages/database` and are imported as `@ValenceDatabase/*`.
+
+| Not in shared code                  | Instead                                                   |
+| ----------------------------------- | --------------------------------------------------------- |
+| `.returning()`                      | `countAffected`, or a transaction that reads the row back |
+| `.onConflictDoUpdate()`             | `upsert`                                                  |
+| `.onConflictDoNothing()`            | `insertUnlessPresent`                                     |
+| `.selectDistinctOn()`               | A grouped query                                           |
+| `ilike`                             | `containsInsensitively`                                   |
+| `::` casts in `sql`                 | A helper such as `jsonLiteral` or `jsonAsText`            |
+| `\|\|` in `sql`                     | `concatenated`                                            |
+| `nulls last` in `sql`               | `nullsLast`                                               |
+| `filter (where ...)` in `sql`       | `countWhere`                                              |
+| A double-quoted identifier in `sql` | `sql.identifier`, or the column itself                    |
+
+Others cover what the dialects spell differently: `jsonContains` and `jsonTextElements` for JSON arrays, `millisecondsBetween` and `epochMilliseconds` for time, and more beside them in `packages/database/src`. Only files inside a dialect folder may import a driver or a dialect's own Drizzle module, such as `drizzle-orm/pg-core`, `pg`, `drizzle-orm/mysql-core` or `mysql2`, and ESLint enforces that outside tests.
+
+The rules are in [Coding standard](/develop/coding-standard), and the tests that prove a query on every engine are in [Testing](/develop/testing#tests-on-mysql-and-mariadb).
 
 ## Generating a migration
 
-Migrations are generated by drizzle-kit into `apps/server/drizzle`, next to a `meta` folder that holds a snapshot of the schema after each migration and a `_journal.json` that lists them in order. `apps/server/drizzle.config.ts` reads your root `.env` for `DATABASE_URL`, so the command works from the repository root or from the app.
+Migrations are generated by drizzle-kit into `apps/server/drizzle/postgres` and `apps/server/drizzle/mysql`, each next to a `meta` folder that holds a snapshot of that schema after each migration and a `_journal.json` that lists them in order. `apps/server/drizzle.postgres.config.ts` and `drizzle.mysql.config.ts` read your root `.env` for `DATABASE_URL`, so the command works from the repository root or from the app.
 
-1. Edit `apps/server/src/db/Schema.ts`.
-2. Generate:
+1. Edit both `apps/server/src/db/postgres/Schema.ts` and `apps/server/src/db/mysql/Schema.ts`, the same change in each dialect.
+2. Generate, which runs both dialects in turn:
 
    ```bash
    pnpm --filter @valence/server db:generate
    ```
 
-3. Read the SQL it wrote and check it does what you mean.
-4. Restart the server, or run `pnpm --filter @valence/server dev` again. The migration is applied at start-up.
-5. Commit the SQL file, the new snapshot in `drizzle/meta` and the journal change together.
+   `db:generate:postgres` and `db:generate:mysql` run one each.
 
-The server package also has `db:migrate` (`drizzle-kit migrate`) and `db:push` (`drizzle-kit push`). Prefer letting the server apply migrations, because that is the path production takes. Avoid `db:push` on a database you care about: it changes tables without writing a migration, so nobody else can reproduce it.
+3. Read the SQL it wrote in both folders and check it does what you mean.
+4. Restart the server, or run `pnpm --filter @valence/server dev` again. The migration is applied at start-up.
+5. Commit both SQL files, the new snapshots in `drizzle/postgres/meta` and `drizzle/mysql/meta` and both journal changes together. A schema change with a migration in only one folder fails `pnpm db:check` or the parity test.
+
+To try the change on MySQL, run the server from source with the `mysql` condition, `pnpm --filter @valence/server dev:mysql`, against a MySQL or MariaDB `DATABASE_URL`. See [Local setup](/develop/local-setup).
+
+The server package also has `db:migrate` (`drizzle-kit migrate`) and `db:push` (`drizzle-kit push`), for Postgres, each with a `:mysql` form. Prefer letting the server apply migrations, because that is the path production takes. Avoid `db:push` on a database you care about: it changes tables without writing a migration, so nobody else can reproduce it.
 
 ### A hand written migration still needs a snapshot
 
-`drizzle-kit generate` diffs the schema against the newest snapshot in `drizzle/meta`. A migration written by hand, which is often how one gets written here, leaves no snapshot, so the next generation diffs against a stale one and writes SQL that recreates every table added since. It reads plausibly and fails on the first `CREATE TABLE`. Several migrations once went unsnapshotted before anyone noticed.
+`drizzle-kit generate` diffs each schema against the newest snapshot in its own `meta` folder. A migration written by hand, which is often how one gets written here, leaves no snapshot, so the next generation diffs against a stale one and writes SQL that recreates every table added since. It reads plausibly and fails on the first `CREATE TABLE`. Several migrations once went unsnapshotted before anyone noticed.
 
 So write the SQL by hand where that is clearer, then run `pnpm --filter @valence/server db:generate` and commit the snapshot it leaves, while discarding the SQL it writes.
 
-`pnpm db:check` guards this. It runs generation against a database address nothing answers on (generation needs no database), removes whatever was produced, restores the journal and fails if generation wrote anything, meaning the newest snapshot no longer describes the schema. It checks the server and the requests service each on their own, and CI runs it in the lint job.
+`pnpm db:check` guards this. It runs generation against a database address nothing answers on (generation needs no database), removes whatever was produced, restores the journal and fails if generation wrote anything, meaning the newest snapshot no longer describes the schema. It checks four snapshot sets each on their own, the server and the requests service on Postgres and on MySQL, and CI runs it in the lint job.
 
 ### Migration order
 
 Drizzle treats the newest stamp the database has applied as a high-water mark and runs only what is stamped above it. Each journal entry carries a `when` timestamp. If two branches each add a migration, whichever merges second can end up listed after a newer stamp while carrying an older one, and every database that ran the newer one first would skip it without an error.
 
-`pnpm db:check` also catches this. If it names a migration, raise that entry's `when` in `apps/<app>/drizzle/meta/_journal.json` above the newest stamp in the journal. That is safe for a migration nobody has applied yet, which is what one that has just merged is. Never change the stamp of a migration a database has already run.
+`pnpm db:check` also catches this. If it names a migration, raise that entry's `when` in `apps/<app>/drizzle/<dialect>/meta/_journal.json` above the newest stamp in the journal. That is safe for a migration nobody has applied yet, which is what one that has just merged is. Never change the stamp of a migration a database has already run.
 
 ## How migrations are applied at start-up
 
 `Main.ts` calls `migrateToLatest` before anything else reads the database, and before the job queue starts. The order is the point. A scan is enqueued as soon as the queue starts, and a scan against a half migrated schema is a failure on record: `column does not exist` and `relation does not exist` errors, showing up as bugs in one endpoint while the rest of the API answers normally.
 
+Before that, the server checks the database server itself, and stops with a message naming what to change: Postgres older than 15, MySQL older than 8.0.21 or MariaDB older than 10.6 is refused, and so is a MySQL database not in `utf8mb4_0900_bin` or a MariaDB one not in `utf8mb4_nopad_bin`. Those collations are binary and do not pad, so text compares exactly as it does on Postgres, case and trailing spaces included. The messages are in [Troubleshooting](/reference/troubleshooting#the-database-is-refused-at-start).
+
 `migrateToLatest` takes its behaviour as arguments, so it is tested with fakes. In order, it:
 
 1. **Checks for a newer database.** `findNewerMigrations` counts stamps the database has applied that this release's journal does not list. That happens when a newer release migrated the database and an older one was started over it. The server refuses to start, with a message explaining how to roll back, because reading tables it does not understand is worse than not running.
-2. **Works out what is pending.** `findPendingMigrations` reads the journal and the ledger table `drizzle.__drizzle_migrations` and compares by stamp. A database nobody has migrated has no ledger table, which is treated as nothing applied.
+2. **Works out what is pending.** `findPendingMigrations` reads the journal and the ledger table, `drizzle.__drizzle_migrations` on Postgres and `__drizzle_migrations` on MySQL, and compares by stamp. A database nobody has migrated has no ledger table, which is treated as nothing applied.
 3. **Decides what to do.** `planMigration` answers `inStep` (nothing to do), `apply` or `refuse`. It refuses when `MIGRATE_ON_START` is `false`, logs what is waiting and names the command to run by hand.
-4. **Takes a snapshot.** `createSnapshotBeforeMigrating` runs `pg_dump` (see below).
+4. **Takes a snapshot.** `createSnapshotBeforeMigrating` runs `pg_dump`, `mysqldump` or `mariadb-dump` (see below).
 5. **Applies.** Drizzle's own `migrate` runs the pending migrations.
 6. **Applies what Drizzle skipped.** `applyMissedMigrations` re-checks the ledger and runs anything still missing, one migration at a time, each with its ledger entry inside one transaction.
 7. **Fails loudly if anything is still missing**, since coming up on a schema that half moved is worse than not coming up.
@@ -78,7 +127,7 @@ Drizzle treats the newest stamp the database has applied as a high-water mark an
 
 Drizzle decides what to run by comparing each migration's timestamp with the newest one the database has already applied. A migration stamped earlier than that is skipped for good, with no error, and the server would then say the database is up to date. That is what happens to any database that ran a later migration before an earlier stamped one arrived, which is any two branches adding migrations at once, and it shows up as a column that does not exist.
 
-So the result of `apply` is checked rather than trusted. `applyMissedMigrations` runs what was skipped, in the journal's order rather than by stamp, because a migration is written against the ones listed before it. It splits each file on Drizzle's `--> statement-breakpoint` marker, executes the statements in a transaction and inserts the ledger row with the file's SHA-256 hash and its journal stamp. A migration that fails leaves neither half behind, and the next start tries it again.
+So the result of `apply` is checked rather than trusted. `applyMissedMigrations` runs what was skipped, in the journal's order rather than by stamp, because a migration is written against the ones listed before it. It splits each file on Drizzle's `--> statement-breakpoint` marker, executes the statements in a transaction and inserts the ledger row with the file's SHA-256 hash and its journal stamp. On Postgres a migration that fails leaves neither half behind, and the next start tries it again. MySQL and MariaDB cannot put a schema change inside a transaction, so there the statements before the failure stay applied.
 
 ### MIGRATE_ON_START
 
@@ -99,11 +148,13 @@ An operator who wants a manual backup first sets `MIGRATE_ON_START=false`, resta
 
 Migrations only go forward. The way back is a copy taken while the database is still as the older release left it.
 
-Before applying, and only if the database has already run at least one migration, the server runs `pg_dump --format=custom --create` into a file named like this:
+Before applying, and only if the database has already run at least one migration, the server takes a snapshot. On Postgres it runs `pg_dump --format=custom --create` into a file named like this:
 
 ```
 valence-2026-09-16T10-30-00-000Z-before-0077_log_context_indexes.dump
 ```
+
+On MySQL and MariaDB it asks the server its version to tell which it is, then runs `mysqldump` or `mariadb-dump` with `--single-transaction` and `--add-drop-database` (and `--set-gtid-purged=OFF` for `mysqldump`) and gzips the result into a file ending `.sql.gz`. Each server needs its own tool: `mysqldump` refuses a MariaDB server, and MySQL cannot read back the generated columns `mariadb-dump` writes out.
 
 The timestamp comes first so names sort by age, and the newest migration about to run is in the name, so an operator can tell which release each snapshot was taken ahead of. Three environment variables control it.
 
@@ -113,7 +164,7 @@ The timestamp comes first so names sort by age, and the newest migration about t
 | `BACKUP_DIR`            | `/config/backups` | Where snapshots are written                                                |
 | `BACKUPS_KEPT`          | `3`               | How many to keep, newest first. Older ones are deleted after each new one. |
 
-If `pg_dump` is not installed, as on a typical development machine, the server says so and the migration goes ahead. If it is installed and fails, the migration does not run, because a database changed with no way back is what the snapshot exists to prevent.
+If the dump tool is not installed, as on a typical development machine, the server says so and the migration goes ahead. If it is installed and fails, the migration does not run, because a database changed with no way back is what the snapshot exists to prevent.
 
 `apps/server/dist/Rollback.js` lists and restores snapshots. It ships in the image for the same reason `Migrate.js` does.
 
@@ -123,25 +174,33 @@ docker compose run --rm valence node apps/server/dist/Rollback.js --list
 docker compose run --rm valence node apps/server/dist/Rollback.js --restore
 ```
 
-`--restore` puts back the newest snapshot, and `--restore <name>` a specific one. It uses `pg_restore --clean --create --if-exists --no-owner`, connecting to the server's `postgres` database because a database cannot be dropped from inside itself, so nothing else may be connected. Everything written since the snapshot is lost. After restoring, start the release that was running when the snapshot was taken, since a newer one would apply its migrations again. See [Rolling back](/install/rolling-back).
+`--restore` puts back the newest snapshot, and `--restore <name>` a specific one. On Postgres it uses `pg_restore --clean --create --if-exists --no-owner`, connecting to the server's `postgres` database because a database cannot be dropped from inside itself. On MySQL and MariaDB it feeds the file to `mysql` or `mariadb`, which drops the database and creates it again from the dump. Either way nothing else may be connected. Everything written since the snapshot is lost. After restoring, start the release that was running when the snapshot was taken, since a newer one would apply its migrations again. See [Rolling back](/install/rolling-back).
 
 ## The job queue
 
-Background work runs on pg-boss, which keeps its tables in Postgres in a schema named `valence_jobs`. `createJobQueue` in `apps/server/src/jobs` starts it and registers a worker for every kind of job (scans, previews, thumbnails, artwork, webhook deliveries). Work survives restarts, which is the reason it is a queue and not a promise.
+Background work runs on a queue Valence keeps in its own database, so it runs on whichever database the server does. `createJobQueue` in `apps/server/src/jobs` starts it and registers a worker for every kind of job (scans, previews, thumbnails, artwork, webhook deliveries). Work survives restarts, which is the reason it is a queue and not a promise.
 
-Valence keeps its own history alongside pg-boss's state: `createJobHistoryStore` records each run, its progress and its outcome so the admin screens can show them, and pg-boss states are mapped onto the ones Valence shows (`created` and `retry` become queued, `active` becomes running, `cancelled` and `failed` become failed). Scan jobs expire after two hours. pg-boss manages its own schema, so its tables are not in `Schema.ts` and are not part of Drizzle migrations.
+- **Jobs** are rows in `queued_job`. A worker takes the oldest one that is due with `SELECT … FOR UPDATE SKIP LOCKED`, so two claims never take the same job, and each kind runs as many at once as it is configured for (one, unless it says otherwise).
+- **Keys.** A job sent with a key waits under it in `waitingKey`, and a unique index on the kind and that column means a second job with the same key is refused while the first waits. The key is given up the moment the job starts, so the next one can queue behind it.
+- **Retries.** A job that throws is tried again up to its kind's limit (two, unless it says otherwise), waiting twice as long each time from ten seconds and never more than five minutes. A job that was asked to stop is not tried again.
+- **Restarts.** A job the last server left running is put back to wait when the next one starts, or marked failed once it has had every try it was allowed.
+- **Schedules** are rows in `job_schedule`, each holding its cron, its time zone and the next moment it fires. They are rebuilt from the stored triggers at start-up, and whichever check moves a schedule's next moment on first is the one that sends its job.
+- **Retention.** Finished jobs are deleted a week after they end.
+
+Valence keeps its history separately: `createJobHistoryStore` records each run, its progress and its outcome in `job_run` so the admin screens can show them after the queue has forgotten the job. Migration `0093_job_queue` carried across whatever pg-boss, the queue before this one, had waiting, and left its `valence_jobs` schema in place for one release so that going back a version still works.
 
 ## Writing a safe migration
 
 A migration runs against a real household's library while the server is starting. Write it so that a failure part way through cannot strand the database.
 
 - **Prefer additive changes.** Adding a nullable column or a table is safe for the release before yours to read over. Dropping or renaming a column breaks a rollback to the previous release, because that release still selects it. Do it in two releases: stop reading the column, then drop it.
-- **Make it idempotent where you can.** Existing migrations use `ADD COLUMN IF NOT EXISTS` and `ON CONFLICT DO NOTHING` so re-running is harmless.
+- **Write it for both dialects.** Each change is a migration in `drizzle/postgres` and another in `drizzle/mysql`, each in that database's own SQL. The neutral-query rule covers TypeScript, not these files.
+- **Make it idempotent where you can.** Existing Postgres migrations use `ADD COLUMN IF NOT EXISTS` and `ON CONFLICT DO NOTHING` so re-running is harmless.
 - **Write data migrations as SQL.** `0071_grant_requests.sql` grants a permission to existing roles with an `INSERT ... SELECT ... ON CONFLICT DO NOTHING`, so an upgrade gives existing roles what a fresh install seeds.
 - **One migration, one purpose.** Small files are easier to reason about when one fails.
 - **Give new columns a default or make them nullable**, or the migration fails on a table that already has rows.
 - **Index large tables deliberately.** A `CREATE INDEX` on a big log table takes time at start-up. Say so in the pull request.
-- **Think about the second start.** The server may restart mid-upgrade. Because each missed migration commits with its ledger row in one transaction, a failure leaves the migration wholly unapplied, and the next start retries it.
+- **Think about the second start.** The server may restart mid-upgrade. On Postgres each missed migration commits with its ledger row in one transaction, so a failure leaves the migration wholly unapplied, and the next start retries it. On MySQL and MariaDB schema changes are not transactional, so keep each migration small enough that a half applied one is easy to reason about, and remember the snapshot is an operator's way back.
 - **Never edit a migration that has shipped.** Databases have applied it under its hash and stamp. Add a new one.
 - **Never change the stamp of a migration a database has already run.**
 - **Snapshot and journal go with the SQL.** `pnpm db:check` fails the build otherwise.

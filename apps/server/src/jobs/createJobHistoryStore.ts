@@ -3,15 +3,23 @@ import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { randomUUID } from 'node:crypto';
-import { and, asc, count, desc, eq, gte, ilike, lt, lte, or, sql } from 'drizzle-orm';
-import { jobRun, jobRunIssue } from '@ValenceServer/db/Schema';
+import { and, asc, count, desc, eq, gte, isNotNull, lt, lte, or, sql } from 'drizzle-orm';
+import { containsInsensitively } from '@ValenceDatabase/containsInsensitively';
+import { countAffected } from '@ValenceDatabase/countAffected';
+import { countWhere } from '@ValenceDatabase/countWhere';
+import { jsonAsText } from '@ValenceDatabase/jsonAsText';
+import { likeLiterally } from '@ValenceDatabase/likeLiterally';
+import { millisecondsBetween } from '@ValenceDatabase/millisecondsBetween';
+import { nullsLast } from '@ValenceDatabase/nullsLast';
+import { upsert } from '@ValenceDatabase/upsert';
+import { jobRun, jobRunIssue } from '#dialect/Schema';
 import {
   JOB_RUN_KEPT_FOR_DAYS,
   JobRunProgressSchema,
   JobRunStatusSchema,
 } from '@ValenceContracts/schemas/JobRun';
 import type { SQL } from 'drizzle-orm';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type {
   JobKindStats,
   JobRunIssue,
@@ -70,16 +78,17 @@ const asIssue = (row: JobRunIssueRow): JobRunIssue => ({
  * @returns The condition every matching row satisfies, or nothing where the query filters by nothing.
  */
 const whereFor = (query: JobRunQuery): SQL | undefined => {
+  const pattern = `%${likeLiterally(query.search)}%`;
   const wheres = [
     query.kind === null ? undefined : eq(jobRun.kind, query.kind),
     query.status === null ? undefined : eq(jobRun.status, query.status),
     query.search === ''
       ? undefined
       : or(
-          ilike(jobRun.id, `%${query.search}%`),
-          ilike(jobRun.kind, `%${query.search}%`),
-          ilike(jobRun.subject, `%${query.search}%`),
-          ilike(jobRun.errorMessage, `%${query.search}%`),
+          containsInsensitively(jobRun.id, pattern),
+          containsInsensitively(jobRun.kind, pattern),
+          containsInsensitively(jobRun.subject, pattern),
+          containsInsensitively(jsonAsText(jobRun.errorMessage), pattern),
         ),
     query.sinceMs === null
       ? undefined
@@ -92,7 +101,7 @@ const whereFor = (query: JobRunQuery): SQL | undefined => {
   return wheres.length === 0 ? undefined : and(...wheres);
 };
 
-const TOOK = sql`extract(epoch from (${jobRun.finishedAt} - ${jobRun.startedAt})) * 1000`;
+const TOOK = millisecondsBetween(jobRun.finishedAt, jobRun.startedAt);
 
 const RUNNING_FIRST = sql`case when ${jobRun.status} = 'running' then 0 else 1 end`;
 
@@ -114,7 +123,7 @@ const orderingFor = (query: JobRunQuery): SQL[] => {
     case 'oldest':
       return [...leading, asc(jobRun.createdAt), asc(jobRun.id)];
     case 'longest':
-      return [...leading, sql`${TOOK} desc nulls last`, desc(jobRun.createdAt), desc(jobRun.id)];
+      return [...leading, nullsLast(TOOK, 'desc'), desc(jobRun.createdAt), desc(jobRun.id)];
     case 'newest':
       return [...leading, desc(jobRun.createdAt), desc(jobRun.id)];
   }
@@ -127,7 +136,7 @@ const orderingFor = (query: JobRunQuery): SQL[] => {
  * @param query - What to filter the listing by.
  * @returns The select query, ready to be awaited.
  */
-const buildReadQuery = (db: ValenceDatabase, query: JobRunQuery) =>
+const buildReadQuery = (db: AnyValenceDatabase, query: JobRunQuery) =>
   db
     .select()
     .from(jobRun)
@@ -161,12 +170,11 @@ const asMilliseconds = (value: string | number | null): number | null => {
  * @param reason - Why the runs were stopped, kept with each.
  * @returns The update query, ready to be awaited.
  */
-const buildInterruptQuery = (db: ValenceDatabase, reason: Said) =>
+const buildInterruptQuery = (db: AnyValenceDatabase, reason: Said) =>
   db
     .update(jobRun)
     .set({ status: 'stopped', finishedAt: new Date(), errorMessage: reason })
-    .where(sql`${jobRun.status} in ('running', 'queued')`)
-    .returning({ id: jobRun.id });
+    .where(sql`${jobRun.status} in ('running', 'queued')`);
 
 /**
  * Builds the query that summarises how each kind of job has gone since a moment, without running it:
@@ -176,20 +184,14 @@ const buildInterruptQuery = (db: ValenceDatabase, reason: Said) =>
  * @param sinceMs - The earliest a counted run was created.
  * @returns The select query, ready to be awaited.
  */
-const buildStatsQuery = (db: ValenceDatabase, sinceMs: number) =>
+const buildStatsQuery = (db: AnyValenceDatabase, sinceMs: number) =>
   db
     .select({
       kind: jobRun.kind,
       runs: count(),
-      completed: sql<number>`count(*) filter (where ${jobRun.status} = 'completed')`.mapWith(
-        Number,
-      ),
-      failed: sql<number>`count(*) filter (where ${jobRun.status} = 'failed')`.mapWith(Number),
-      running:
-        sql<number>`count(*) filter (where ${jobRun.status} in ('running', 'queued'))`.mapWith(
-          Number,
-        ),
-      medianMs: sql<string | number | null>`percentile_cont(0.5) within group (order by ${TOOK})`,
+      completed: countWhere(sql`${jobRun.status} = 'completed'`),
+      failed: countWhere(sql`${jobRun.status} = 'failed'`),
+      running: countWhere(sql`${jobRun.status} in ('running', 'queued')`),
       slowestMs: sql<string | number | null>`max(${TOOK})`,
       lastAt: sql<Date | null>`max(${jobRun.createdAt})`,
     })
@@ -199,9 +201,51 @@ const buildStatsQuery = (db: ValenceDatabase, sinceMs: number) =>
     .orderBy(jobRun.kind);
 
 /**
- * Keeps pg-boss job runs in Postgres, so what a job did survives the job finishing and a restart.
+ * Builds the query that reads how long each finished run since a moment took, without running it,
+ * for the typical run of each kind to be worked out from — a median, which not every database can
+ * take for itself.
  *
- * pg-boss forgets a job once it settles, which is why the "Running" badge could show nothing was
+ * @param db - The database to query.
+ * @param sinceMs - The earliest a counted run was created.
+ * @returns The select query, ready to be awaited.
+ */
+const buildDurationsQuery = (db: AnyValenceDatabase, sinceMs: number) =>
+  db
+    .select({ kind: jobRun.kind, took: TOOK })
+    .from(jobRun)
+    .where(
+      and(
+        gte(jobRun.createdAt, new Date(sinceMs)),
+        isNotNull(jobRun.startedAt),
+        isNotNull(jobRun.finishedAt),
+      ),
+    );
+
+/**
+ * Finds the middle of some durations, halfway between the two middle ones where there is an even
+ * number of them.
+ *
+ * @param durations - The durations, in any order.
+ * @returns The median, or nothing where there were none.
+ */
+const medianOf = (durations: number[]): number | null => {
+  const sorted = durations.toSorted((left, right) => left - right);
+  const middle = Math.floor(sorted.length / 2);
+  const upper = sorted[middle];
+
+  if (upper === undefined) {
+    return null;
+  }
+
+  const lower = sorted.length % 2 === 0 ? sorted[middle - 1] : upper;
+
+  return lower === undefined ? upper : (lower + upper) / 2;
+};
+
+/**
+ * Keeps job runs in the database, so what a job did survives the job finishing and a restart.
+ *
+ * The queue forgets a job once it settles, which is why the "Running" badge could show nothing was
  * queued while work was genuinely happening: there was nowhere to read it back from. This is that
  * place, plus the per-item issues a bulk job accumulates, which previously only ever became a log
  * line and were never gathered against the run that produced them.
@@ -209,27 +253,27 @@ const buildStatsQuery = (db: ValenceDatabase, sinceMs: number) =>
  * @param db - The database.
  * @returns The store.
  */
-const createJobHistoryStore = (db: ValenceDatabase): JobHistoryStore => ({
+const createJobHistoryStore = (db: AnyValenceDatabase): JobHistoryStore => ({
   recordStarted: async (entry) => {
-    await db
-      .insert(jobRun)
-      .values({
-        id: entry.id,
-        kind: entry.kind,
-        status: 'running',
-        subject: entry.subject,
-        startedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: jobRun.id,
-        set: {
+    await upsert(db, jobRun, {
+      values: [
+        {
+          id: entry.id,
+          kind: entry.kind,
           status: 'running',
           subject: entry.subject,
           startedAt: new Date(),
-          finishedAt: null,
-          errorMessage: null,
         },
-      });
+      ],
+      target: jobRun.id,
+      set: {
+        status: 'running',
+        subject: entry.subject,
+        startedAt: new Date(),
+        finishedAt: null,
+        errorMessage: null,
+      },
+    });
   },
 
   recordProgress: async (entry) => {
@@ -260,7 +304,7 @@ const createJobHistoryStore = (db: ValenceDatabase): JobHistoryStore => ({
     return { records: rows.map(asRecord), total: Number(counted?.total ?? 0) };
   },
 
-  interruptRunning: async (reason) => (await buildInterruptQuery(db, reason)).length,
+  interruptRunning: async (reason) => countAffected(await buildInterruptQuery(db, reason)),
 
   readOne: async (jobRunId) => {
     const [row] = await db.select().from(jobRun).where(eq(jobRun.id, jobRunId)).limit(1);
@@ -270,6 +314,7 @@ const createJobHistoryStore = (db: ValenceDatabase): JobHistoryStore => ({
 
   readStats: async (sinceMs) => {
     const rows = await buildStatsQuery(db, sinceMs);
+    const durations = await buildDurationsQuery(db, sinceMs);
 
     return rows.map((row) => ({
       kind: row.kind,
@@ -277,7 +322,7 @@ const createJobHistoryStore = (db: ValenceDatabase): JobHistoryStore => ({
       completed: row.completed,
       failed: row.failed,
       running: row.running,
-      medianMs: asMilliseconds(row.medianMs),
+      medianMs: medianOf(durations.filter((one) => one.kind === row.kind).map((one) => one.took)),
       slowestMs: asMilliseconds(row.slowestMs),
       lastAtMs: row.lastAt === null ? null : new Date(row.lastAt).getTime(),
     }));

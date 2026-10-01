@@ -1,29 +1,25 @@
 import { randomUUID } from 'node:crypto';
-import { and, desc, eq, isNull, lt, sql } from 'drizzle-orm';
+import { and, count, desc, eq, isNull, lt } from 'drizzle-orm';
+import { upsert } from '@ValenceDatabase/upsert';
 import {
   DEFAULT_NOTIFICATION_PREFERENCE,
   NotificationEventSchema,
 } from '@ValenceContracts/schemas/Notification';
-import {
-  notification,
-  notificationPreference,
-  pushSubscription,
-  user,
-} from '@ValenceServer/db/Schema';
+import { notification, notificationPreference, pushSubscription, user } from '#dialect/Schema';
 import { toIso } from '@ValenceCore/functions/toIso';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { Notification } from '@ValenceContracts/schemas/Notification';
 import { A_MINUTE, LASTS_FOR_MINUTES } from './hasExpired';
 import type { NotificationStore } from './NotificationStore';
 
 /**
- * Notifications and their read state, held in Postgres, along with the preferences saying which
+ * Notifications and their read state, held in the database, along with the preferences saying which
  * kinds each account wants and where.
  *
  * @param db - The database to read and write.
  * @returns The notification store.
  */
-const createDatabaseNotificationStore = (db: ValenceDatabase): NotificationStore => {
+const createDatabaseNotificationStore = (db: AnyValenceDatabase): NotificationStore => {
   const readRow = (row: typeof notification.$inferSelect): Notification[] => {
     const event = NotificationEventSchema.safeParse(row.event);
 
@@ -117,7 +113,7 @@ const createDatabaseNotificationStore = (db: ValenceDatabase): NotificationStore
       await sweep();
 
       const rows = await db
-        .select({ total: sql<number>`count(*)::int` })
+        .select({ total: count() })
         .from(notification)
         .where(and(eq(notification.userId, userId), isNull(notification.readAt)));
 
@@ -162,23 +158,19 @@ const createDatabaseNotificationStore = (db: ValenceDatabase): NotificationStore
     },
 
     writePreference: async (userId, { event, inApp, push }) => {
-      await db
-        .insert(notificationPreference)
-        .values({ userId, event, inApp, push })
-        .onConflictDoUpdate({
-          target: [notificationPreference.userId, notificationPreference.event],
-          set: { inApp, push },
-        });
+      await upsert(db, notificationPreference, {
+        values: [{ userId, event, inApp, push }],
+        target: [notificationPreference.userId, notificationPreference.event],
+        set: { inApp, push },
+      });
     },
 
     addPushEndpoint: async (userId, { endpoint, p256dh, auth }) => {
-      await db
-        .insert(pushSubscription)
-        .values({ id: randomUUID(), userId, endpoint, p256dh, auth })
-        .onConflictDoUpdate({
-          target: pushSubscription.endpoint,
-          set: { userId, p256dh, auth },
-        });
+      await upsert(db, pushSubscription, {
+        values: [{ id: randomUUID(), userId, endpoint, p256dh, auth }],
+        target: pushSubscription.endpoint,
+        set: { userId, p256dh, auth },
+      });
     },
 
     listPushEndpoints: async (userId) => {

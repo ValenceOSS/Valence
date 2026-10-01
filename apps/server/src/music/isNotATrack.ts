@@ -1,7 +1,7 @@
 import { eq, notExists, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
-import { mediaItem, musicTrack } from '@ValenceServer/db/Schema';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import { mediaItem, musicTrack } from '#dialect/Schema';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 
 /**
  * A condition that holds for every media item that is not a song.
@@ -13,7 +13,7 @@ import type { ValenceDatabase } from '@ValenceServer/db/Database';
  * @param db - The database the condition is built against.
  * @returns The condition, correlated on the media item being read.
  */
-const isNotATrack = (db: ValenceDatabase): SQL =>
+const isNotATrack = (db: AnyValenceDatabase): SQL =>
   notExists(
     db
       .select({ one: sql`1` })

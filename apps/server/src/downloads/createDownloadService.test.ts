@@ -1,15 +1,13 @@
-import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
-import { PGlite } from '@electric-sql/pglite';
-import { drizzle } from 'drizzle-orm/pglite';
 import { describe, expect, it, vi } from 'vitest';
-import { authSchema, valenceSchema } from '@ValenceServer/db/Schema';
+import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
+import { library, mediaItem, user, viewerProfile } from '#dialect/Schema';
+import { aMediaItemRow } from '@ValenceServer/testing/aMediaItemRow';
 import { keepingProfile } from './keepingProfile';
 import { createDownloadService } from './createDownloadService';
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
 import type { DownloadFile, Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
 
-const STARTING_POSTGRES_MS = 30_000;
+const STARTING_THE_DATABASE_MS = 60_000;
 
 const MEDIA_ID = '9c858901-8a57-4791-81fe-4c455b099bc9';
 
@@ -87,34 +85,22 @@ const READY: DownloadFile = {
 };
 
 /**
- * A Postgres of its own, in memory, holding the download tables exactly as their migrations make
- * them, beside the profile and item they belong to.
+ * A migrated database holding the profile that asks for downloads and the items it asks for.
  *
+ * @param mediaIds - The items the library holds.
  * @returns The database.
  */
-const aScratchDatabase = async () => {
-  const client = new PGlite();
-  const migrations = await Promise.all(
-    [
-      '0045_offline_downloads.sql',
-      '0046_download_speed.sql',
-      '0083_the_device_that_asked.sql',
-      '0084_the_time_a_download_has_left.sql',
-    ].map((name) => readFile(join(import.meta.dirname, '..', '..', 'drizzle', name), 'utf8')),
-  );
+const aScratchDatabase = async (mediaIds: readonly string[]) => {
+  const db = await aMigratedDatabase();
 
-  await client.exec(
-    `CREATE TABLE "viewer_profile" ("id" text PRIMARY KEY, "userId" text NOT NULL);
-     CREATE TABLE "media_item" ("id" text PRIMARY KEY);
-     INSERT INTO "viewer_profile" VALUES ('a-profile', 'an-account');
-     INSERT INTO "media_item" VALUES ('${MEDIA_ID}');`,
-  );
+  await db.insert(user).values({ id: 'an-account', name: 'Ada', email: 'ada@example.test' });
+  await db
+    .insert(viewerProfile)
+    .values({ id: 'a-profile', userId: 'an-account', name: 'Ada', colour: 'red' });
+  await db.insert(library).values({ id: 'films', name: 'Films', kind: 'movies', path: '/films' });
+  await db.insert(mediaItem).values(mediaIds.map((id) => aMediaItemRow(id, 'films')));
 
-  for (const migration of migrations) {
-    await client.exec(migration.replaceAll('--> statement-breakpoint', ''));
-  }
-
-  return drizzle(client, { schema: { ...authSchema, ...valenceSchema } });
+  return db;
 };
 
 /**
@@ -148,7 +134,7 @@ const build = async (
     stopDownload: vi.fn<Transcoder['stopDownload']>(() => Promise.resolve(true)),
   };
   const service = createDownloadService({
-    db: await aScratchDatabase(),
+    db: await aScratchDatabase([MEDIA_ID, ...Object.keys(laterEpisodes)]),
     transcoder,
     capabilities: () => Promise.resolve(CAPABILITIES),
     media: {
@@ -182,7 +168,7 @@ const build = async (
   return { service, transcoder };
 };
 
-describe('createDownloadService', { timeout: STARTING_POSTGRES_MS }, () => {
+describe('createDownloadService', { timeout: STARTING_THE_DATABASE_MS }, () => {
   it('remembers which device asked', async () => {
     const { service } = await build([preparing(0)]);
 
@@ -241,6 +227,29 @@ describe('createDownloadService', { timeout: STARTING_POSTGRES_MS }, () => {
 
     await expect(service.follow()).resolves.toEqual([]);
     expect((await service.list('a-profile'))[0]?.state).toBe('preparing');
+  });
+
+  it('holds a film for a device once however often it is held, and lets it go', async () => {
+    const { service } = await build([]);
+
+    await service.hold('a-profile', 'a-laptop', MEDIA_ID, 'original');
+    await service.hold('a-profile', 'a-laptop', MEDIA_ID, 'original');
+
+    await expect(service.held('a-profile')).resolves.toMatchObject([
+      { mediaId: MEDIA_ID, quality: 'original' },
+    ]);
+
+    await service.release('a-profile', 'a-laptop', MEDIA_ID, 'original');
+
+    await expect(service.held('a-profile')).resolves.toEqual([]);
+  });
+
+  it('hands back the download as it now stands each time it is asked for again', async () => {
+    const { service } = await build([preparing(10), READY]);
+    const first = await service.ask('a-profile', 'a-laptop', MEDIA_ID, 'original', []);
+    const again = await service.ask('a-profile', 'a-phone', MEDIA_ID, 'original', []);
+
+    expect(again).toMatchObject({ id: first?.id, state: 'ready' });
   });
 
   it('clears out what was ready before the cutoff, and deletes the file nobody else points at', async () => {
@@ -342,7 +351,7 @@ describe('createDownloadService', { timeout: STARTING_POSTGRES_MS }, () => {
   });
 });
 
-describe('what a download is offered at', { timeout: STARTING_POSTGRES_MS }, () => {
+describe('what a download is offered at', { timeout: STARTING_THE_DATABASE_MS }, () => {
   const AN_EPISODE: MediaItem = {
     ...FILM,
     title: 'My Two Dads',

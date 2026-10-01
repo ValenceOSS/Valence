@@ -1,9 +1,9 @@
 import { eq, isNotNull } from 'drizzle-orm';
-import { mediaItem } from '@ValenceServer/db/Schema';
+import { mediaItem } from '#dialect/Schema';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { certificationAgeOf } from '@ValenceServer/library/certificationAgeOf';
 import { readStoredCertifications } from '@ValenceServer/library/readStoredCertifications';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 
 /**
  * Works out again what every stored certificate means, in whichever region the server now reads
@@ -23,7 +23,7 @@ import type { ValenceDatabase } from '@ValenceServer/db/Database';
  * @returns How many items were looked at, and how many ended up with an age.
  */
 const readCertificatesAgain = async (
-  db: ValenceDatabase,
+  db: AnyValenceDatabase,
   region: string,
   onProgress?: (done: number, total: number) => void,
 ): Promise<{ looked: number; rated: number }> => {

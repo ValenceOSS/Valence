@@ -1,4 +1,4 @@
-import { and, asc, eq, ilike, inArray, isNull, or } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, or } from 'drizzle-orm';
 import {
   library,
   mediaItem,
@@ -7,10 +7,11 @@ import {
   musicTrack,
   musicTrackArtist,
   series,
-} from '@ValenceServer/db/Schema';
-import { likeLiterally } from '@ValenceServer/db/likeLiterally';
+} from '#dialect/Schema';
+import { containsInsensitively } from '@ValenceDatabase/containsInsensitively';
+import { likeLiterally } from '@ValenceDatabase/likeLiterally';
 import type { MediaRef } from '@ValenceSDK/host/ValenceHost';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { PluginHost } from '@ValenceServer/plugins/broker/PluginHost';
 
 const MOST_FOUND = 25;
@@ -26,7 +27,7 @@ const ITEM_KINDS: readonly MediaRef['kind'][] = ['film', 'episode', 'track', 'bo
  * @returns How a plugin searches the library and finds things in it.
  */
 const createDatabaseMediaRefs = (
-  db: ValenceDatabase,
+  db: AnyValenceDatabase,
 ): PluginHost['library'] & { findTrack: PluginHost['music']['findTrack'] } => {
   const itemColumns = {
     id: mediaItem.id,
@@ -172,10 +173,17 @@ const createDatabaseMediaRefs = (
       const found = await Promise.all([
         itemKinds.length === 0
           ? Promise.resolve([])
-          : items(and(inArray(library.kind, itemKinds), ilike(mediaItem.title, pattern))),
-        wanted.includes('series') ? seriesRefs(ilike(series.title, pattern)) : Promise.resolve([]),
+          : items(
+              and(
+                inArray(library.kind, itemKinds),
+                containsInsensitively(mediaItem.title, pattern),
+              ),
+            ),
+        wanted.includes('series')
+          ? seriesRefs(containsInsensitively(series.title, pattern))
+          : Promise.resolve([]),
         wanted.includes('album')
-          ? albumRefs(ilike(musicAlbum.title, pattern))
+          ? albumRefs(containsInsensitively(musicAlbum.title, pattern))
           : Promise.resolve([]),
       ]);
 
@@ -231,8 +239,8 @@ const createDatabaseMediaRefs = (
         .innerJoin(musicArtist, eq(musicArtist.id, musicTrackArtist.artistId))
         .where(
           and(
-            ilike(mediaItem.title, likeLiterally(track.title)),
-            ilike(musicArtist.name, likeLiterally(track.artist)),
+            containsInsensitively(mediaItem.title, likeLiterally(track.title)),
+            containsInsensitively(musicArtist.name, likeLiterally(track.artist)),
           ),
         )
         .limit(MOST_FOUND);

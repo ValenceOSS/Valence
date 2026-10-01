@@ -1,7 +1,7 @@
 import { and, eq, notExists, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
-import { libraryBlock, mediaItem } from '@ValenceServer/db/Schema';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import { libraryBlock, mediaItem } from '#dialect/Schema';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import { withinTheCeiling } from '@ValenceServer/visibility/withinTheCeiling';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
@@ -31,7 +31,7 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
  * @param viewer - Who is asking.
  * @returns The condition, or nothing where none applies.
  */
-const reachableByViewer = (db: ValenceDatabase, viewer: Viewer): SQL | undefined => {
+const reachableByViewer = (db: AnyValenceDatabase, viewer: Viewer): SQL | undefined => {
   if (viewer.kind !== 'account' || viewer.isAdministrator) {
     return undefined;
   }

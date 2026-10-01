@@ -1,7 +1,8 @@
+import { countAffected } from '@ValenceDatabase/countAffected';
 import { randomUUID } from 'node:crypto';
 import { and, avg, count, desc, eq, inArray } from 'drizzle-orm';
-import { rating } from '@ValenceServer/db/Schema';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import { rating } from '#dialect/Schema';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { HouseholdRating } from '@ValenceContracts/schemas/Rating';
 import type { RatingService, RatingSubject } from './RatingService';
 
@@ -48,7 +49,7 @@ const readAverage = (reported: string | null, howMany: number): HouseholdRating 
  * @param db - The database to read and write.
  * @returns The rating service.
  */
-const createDatabaseRatingService = (db: ValenceDatabase): RatingService => ({
+const createDatabaseRatingService = (db: AnyValenceDatabase): RatingService => ({
   list: async (profileId) => {
     const rows = await db
       .select()
@@ -70,10 +71,9 @@ const createDatabaseRatingService = (db: ValenceDatabase): RatingService => ({
     const changed = await db
       .update(rating)
       .set({ stars, updatedAt: new Date() })
-      .where(and(eq(rating.profileId, profileId), matching(subject)))
-      .returning({ id: rating.id });
+      .where(and(eq(rating.profileId, profileId), matching(subject)));
 
-    if (changed.length > 0) {
+    if (countAffected(changed) > 0) {
       return;
     }
 

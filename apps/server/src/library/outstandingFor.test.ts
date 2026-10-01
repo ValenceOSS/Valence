@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, it } from 'vitest';
-import { createDatabase } from '@ValenceServer/db/Database';
+import { createDatabase } from '#dialect/createDatabase';
 import { outstandingFor } from './createMediaStore';
 
 const LIBRARY_ID = '2b6f0cc9-04f0-4f26-9f1a-1d5b2ea92d9f';

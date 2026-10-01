@@ -1,9 +1,11 @@
+import { countAffected } from '@ValenceDatabase/countAffected';
+import { upsert } from '@ValenceDatabase/upsert';
 import { randomUUID } from 'node:crypto';
 import { and, count, desc, eq, isNull } from 'drizzle-orm';
-import { book, mediaItem, series, share, shareVisit, user } from '@ValenceServer/db/Schema';
+import { book, mediaItem, series, share, shareVisit, user } from '#dialect/Schema';
 import { isShareLive } from '@ValenceContracts/schemas/Share';
 import { hashShareToken, makeShareToken } from './shareToken';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { AdminShare, Share, ShareKind } from '@ValenceContracts/schemas/Share';
 import type { ResolvedShare, ShareService } from './ShareService';
 import { say } from '@ValenceI18n/say';
@@ -39,7 +41,7 @@ const readKind = (stored: string): ShareKind | null =>
  * @param db - The database, which is what knows how to build the count.
  * @returns The selection both listings read.
  */
-const columnsFor = (db: ValenceDatabase) => ({
+const columnsFor = (db: AnyValenceDatabase) => ({
   id: share.id,
   kind: share.kind,
   mediaItemId: share.mediaItemId,
@@ -81,7 +83,7 @@ type ShareRow = {
  * @param db - The database to read and write.
  * @returns The share service.
  */
-const createDatabaseShareService = (db: ValenceDatabase): ShareService => {
+const createDatabaseShareService = (db: AnyValenceDatabase): ShareService => {
   const COLUMNS = columnsFor(db);
 
   const countViews = async (shareId: string): Promise<number> => {
@@ -286,29 +288,39 @@ const createDatabaseShareService = (db: ValenceDatabase): ShareService => {
     },
 
     revoke: async (createdBy, shareId) => {
-      const changed = await db
-        .update(share)
-        .set({ revokedAt: new Date() })
-        .where(and(eq(share.id, shareId), eq(share.createdBy, createdBy)))
-        .returning({ id: share.id });
+      const changed = countAffected(
+        await db
+          .update(share)
+          .set({ revokedAt: new Date() })
+          .where(and(eq(share.id, shareId), eq(share.createdBy, createdBy))),
+      );
 
-      return changed.length > 0;
+      return changed > 0;
     },
 
     revokeAnybody: async (shareId) => {
-      const changed = await db
-        .update(share)
-        .set({ revokedAt: new Date() })
-        .where(and(eq(share.id, shareId), isNull(share.revokedAt)))
-        .returning({
+      const changed = countAffected(
+        await db
+          .update(share)
+          .set({ revokedAt: new Date() })
+          .where(and(eq(share.id, shareId), isNull(share.revokedAt))),
+      );
+
+      if (changed === 0) {
+        return null;
+      }
+
+      const [row] = await db
+        .select({
           createdBy: share.createdBy,
           kind: share.kind,
           mediaItemId: share.mediaItemId,
           seriesId: share.seriesId,
           bookId: share.bookId,
-        });
-
-      const row = changed[0];
+        })
+        .from(share)
+        .where(eq(share.id, shareId))
+        .limit(1);
 
       if (row === undefined) {
         return null;
@@ -369,19 +381,19 @@ const createDatabaseShareService = (db: ValenceDatabase): ShareService => {
     },
 
     join: async (shareId, joiner) => {
-      await db
-        .insert(shareVisit)
-        .values({
-          id: randomUUID(),
-          shareId,
-          joiner,
-          firstSeenAt: new Date(),
-          lastSeenAt: new Date(),
-        })
-        .onConflictDoUpdate({
-          target: [shareVisit.shareId, shareVisit.joiner],
-          set: { lastSeenAt: new Date() },
-        });
+      await upsert(db, shareVisit, {
+        values: [
+          {
+            id: randomUUID(),
+            shareId,
+            joiner,
+            firstSeenAt: new Date(),
+            lastSeenAt: new Date(),
+          },
+        ],
+        target: [shareVisit.shareId, shareVisit.joiner],
+        set: { lastSeenAt: new Date() },
+      });
     },
   };
 };

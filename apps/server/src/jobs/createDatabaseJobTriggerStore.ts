@@ -1,18 +1,19 @@
 import { randomUUID } from 'node:crypto';
 import { and, asc, eq } from 'drizzle-orm';
-import { jobTrigger } from '@ValenceServer/db/Schema';
+import { countAffected } from '@ValenceDatabase/countAffected';
+import { jobTrigger } from '#dialect/Schema';
 import { ScheduleTriggerSchema } from './scheduleTrigger';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { JobTriggerStore } from './JobTriggerStore';
 
 /**
- * Keeps job triggers in Postgres, so what an operator scheduled survives a restart rather than
+ * Keeps job triggers in the database, so what an operator scheduled survives a restart rather than
  * living in the queue alone.
  *
  * @param db - The database to read and write.
  * @returns The trigger store.
  */
-const createDatabaseJobTriggerStore = (db: ValenceDatabase): JobTriggerStore => ({
+const createDatabaseJobTriggerStore = (db: AnyValenceDatabase): JobTriggerStore => ({
   list: async () => {
     const rows = await db.select().from(jobTrigger).orderBy(asc(jobTrigger.createdAt));
 
@@ -34,10 +35,9 @@ const createDatabaseJobTriggerStore = (db: ValenceDatabase): JobTriggerStore => 
   remove: async (kind, triggerId) => {
     const removed = await db
       .delete(jobTrigger)
-      .where(and(eq(jobTrigger.id, triggerId), eq(jobTrigger.kind, kind)))
-      .returning({ id: jobTrigger.id });
+      .where(and(eq(jobTrigger.id, triggerId), eq(jobTrigger.kind, kind)));
 
-    return removed.length > 0;
+    return countAffected(removed) > 0;
   },
 });
 

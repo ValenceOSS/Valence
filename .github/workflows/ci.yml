@@ -72,7 +72,7 @@ jobs:
           EVENT: ${{ github.event_name }}
           BASE: ${{ github.base_ref }}
         run: |
-          testable='["@valence/i18n","@valence/contracts","@valence/core","@valence/plugin-sdk","@valence/tools","@valence/ui","@valence/client","@valence/server","@valence/requests","@valence/web","@valence/desktop","@valence/landing","@valence/docs"]'
+          testable='["@valence/i18n","@valence/contracts","@valence/core","@valence/plugin-sdk","@valence/tools","@valence/ui","@valence/client","@valence/server","@valence/requests","@valence/database","@valence/web","@valence/desktop","@valence/landing","@valence/docs"]'
 
           if [ "$EVENT" != "pull_request" ]; then
             {
@@ -148,9 +148,11 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # Type-aware ESLint holds the whole repository's program in memory at once, and outgrew 6 GB
+      # once two database dialects were typechecked. The runner has 16.
       - run: pnpm lint
         env:
-          NODE_OPTIONS: --max-old-space-size=6144
+          NODE_OPTIONS: --max-old-space-size=12288
 
       # A hand-written migration with no snapshot beside it leaves generation silent and recreating
       # tables that already exist. See VAL-193.
@@ -281,6 +283,69 @@ jobs:
       - run: pnpm turbo run build --filter=@valence/screens
 
       - run: pnpm --filter @valence/screens exec vitest run --shard=${{ matrix.shard }}/4
+
+  # Every test that opens a database of its own, run again on each MySQL-family engine Valence
+  # supports. The ordinary test jobs already run them on Postgres, in memory. The engine is started
+  # by hand rather than as a service container because a service cannot be given the arguments that
+  # set the server's collation, and Valence needs the binary, no-pad one each engine names
+  # differently. The scratch databases the tests make live on tmpfs and go with the runner.
+  test-engines:
+    name: Test on ${{ matrix.engine.image }}
+    needs: [changes, build]
+    if: >-
+      contains(needs.changes.outputs.packages, '@valence/server') ||
+      contains(needs.changes.outputs.packages, '@valence/requests') ||
+      contains(needs.changes.outputs.packages, '@valence/database')
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        engine:
+          - image: mysql:8.4
+            collation: utf8mb4_0900_bin
+            ready: mysqladmin ping -h 127.0.0.1 -uroot -pvalence
+          - image: mariadb:10.6
+            collation: utf8mb4_nopad_bin
+            ready: healthcheck.sh --connect --innodb_initialized
+          - image: mariadb:11.4
+            collation: utf8mb4_nopad_bin
+            ready: healthcheck.sh --connect --innodb_initialized
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: actions/cache/restore@v4
+        with:
+          path: .turbo/cache
+          key: turbo-build-${{ github.sha }}
+          fail-on-cache-miss: true
+
+      - run: pnpm turbo run build --filter=@valence/server --filter=@valence/requests
+
+      - name: Start ${{ matrix.engine.image }}
+        run: |
+          docker run -d --name engine -p 3306:3306 --tmpfs /var/lib/mysql \
+            -e MYSQL_ROOT_PASSWORD=valence -e MARIADB_ROOT_PASSWORD=valence \
+            "${{ matrix.engine.image }}" \
+            --character-set-server=utf8mb4 --collation-server=${{ matrix.engine.collation }}
+          for _ in $(seq 1 60); do
+            if docker exec engine ${{ matrix.engine.ready }} > /dev/null 2>&1; then exit 0; fi
+            sleep 2
+          done
+          docker logs engine
+          exit 1
+
+      - run: pnpm --filter @valence/tools exec vitest run --config vitest.mysql.config.ts
+        env:
+          MYSQL_TEST_URL: mysql://root:valence@127.0.0.1:3306
 
   rust:
     name: Rust format, lint and test

@@ -2,7 +2,7 @@ import { and, not } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 import { hiddenByViewer } from '@ValenceServer/visibility/hiddenByViewer';
 import { reachableByViewer } from '@ValenceServer/visibility/reachableByViewer';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 /**
@@ -21,7 +21,7 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
  * @param viewer - Who is asking.
  * @returns The condition, or nothing where this viewer is restricted in no way at all.
  */
-const visibleToViewer = (db: ValenceDatabase, viewer: Viewer): SQL | undefined => {
+const visibleToViewer = (db: AnyValenceDatabase, viewer: Viewer): SQL | undefined => {
   const hiding = hiddenByViewer(db, viewer);
 
   return and(reachableByViewer(db, viewer), hiding === undefined ? undefined : not(hiding));

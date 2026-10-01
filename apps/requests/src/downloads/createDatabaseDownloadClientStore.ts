@@ -1,6 +1,7 @@
+import { countAffected } from '@ValenceDatabase/countAffected';
 import { eq } from 'drizzle-orm';
-import { downloadClient } from '@ValenceRequests/db/Schema';
-import type { RequestsDatabase } from '@ValenceRequests/db/Database';
+import { downloadClient } from '#dialect/Schema';
+import type { RequestsDatabase } from '#dialect/RequestsDatabase';
 import type {
   DownloadClientRecord,
   DownloadClientStore,
@@ -37,40 +38,33 @@ const createDatabaseDownloadClientStore = (db: RequestsDatabase): DownloadClient
   },
 
   insert: async (record) => {
-    const [row] = await db
-      .insert(downloadClient)
-      .values({
-        ...record,
-        createdAt: new Date(record.createdAt),
-        updatedAt: new Date(record.updatedAt),
-      })
-      .returning();
+    await db.insert(downloadClient).values({
+      ...record,
+      createdAt: new Date(record.createdAt),
+      updatedAt: new Date(record.updatedAt),
+    });
+    const [row] = await db.select().from(downloadClient).where(eq(downloadClient.id, record.id));
 
     return row === undefined ? record : asRecord(row);
   },
 
   update: async (id, changes) => {
     const { createdAt, updatedAt, ...rest } = changes;
-    const [row] = await db
+    await db
       .update(downloadClient)
       .set({
         ...rest,
         ...(createdAt === undefined ? {} : { createdAt: new Date(createdAt) }),
         ...(updatedAt === undefined ? {} : { updatedAt: new Date(updatedAt) }),
       })
-      .where(eq(downloadClient.id, id))
-      .returning();
+      .where(eq(downloadClient.id, id));
+    const [row] = await db.select().from(downloadClient).where(eq(downloadClient.id, id));
 
     return row === undefined ? null : asRecord(row);
   },
 
   remove: async (id) =>
-    (
-      await db
-        .delete(downloadClient)
-        .where(eq(downloadClient.id, id))
-        .returning({ id: downloadClient.id })
-    ).length > 0,
+    countAffected(await db.delete(downloadClient).where(eq(downloadClient.id, id))) > 0,
 });
 
 export { createDatabaseDownloadClientStore };

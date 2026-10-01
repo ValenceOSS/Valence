@@ -1,7 +1,7 @@
 import { and, eq, notExists, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
-import { hidden, library, libraryBlock } from '@ValenceServer/db/Schema';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import { hidden, library, libraryBlock } from '#dialect/Schema';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 /**
@@ -20,7 +20,7 @@ import type { Viewer } from '@ValenceServer/visibility/Viewer';
  * @param viewer - Who is asking.
  * @returns The condition, or nothing where this viewer is offered everything.
  */
-const librariesVisibleToViewer = (db: ValenceDatabase, viewer: Viewer): SQL | undefined => {
+const librariesVisibleToViewer = (db: AnyValenceDatabase, viewer: Viewer): SQL | undefined => {
   if (viewer.kind !== 'account') {
     return undefined;
   }

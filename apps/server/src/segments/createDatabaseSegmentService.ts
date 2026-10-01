@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { MediaSegmentSchema } from '@ValenceContracts/schemas/MediaSegment';
-import { mediaSegment } from '@ValenceServer/db/Schema';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import { mediaSegment } from '#dialect/Schema';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { SegmentService } from './SegmentService';
 import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
 
@@ -13,7 +13,7 @@ import type { MediaSegment } from '@ValenceContracts/schemas/MediaSegment';
  * @param db - The database to read and write.
  * @returns The segment service.
  */
-const createDatabaseSegmentService = (db: ValenceDatabase): SegmentService => ({
+const createDatabaseSegmentService = (db: AnyValenceDatabase): SegmentService => ({
   list: async (mediaId) => {
     const rows = await db.select().from(mediaSegment).where(eq(mediaSegment.mediaItemId, mediaId));
 

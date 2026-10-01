@@ -1,7 +1,9 @@
 import { sql } from 'drizzle-orm';
-import { logRecord } from '@ValenceServer/db/Schema';
+import { epochMilliseconds } from '@ValenceDatabase/epochMilliseconds';
+import { floorDivided } from '@ValenceDatabase/floorDivided';
+import { logRecord } from '#dialect/Schema';
 import { logFilterFor } from './logFilterFor';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { LogFilters } from './logFilterFor';
 
 /**
@@ -17,13 +19,13 @@ import type { LogFilters } from './logFilterFor';
  *   it is so that the grouping and the selecting are the same expression to the database.
  * @returns The select query, ready to be awaited.
  */
-const buildLogHistogramQuery = (db: ValenceDatabase, filters: LogFilters, bucketMs: number) => {
+const buildLogHistogramQuery = (db: AnyValenceDatabase, filters: LogFilters, bucketMs: number) => {
   const width = sql.raw(String(Math.max(1, Math.trunc(bucketMs))));
-  const bucket = sql<number>`floor(extract(epoch from ${logRecord.at}) * 1000 / ${width})`;
+  const bucket = floorDivided(epochMilliseconds(logRecord.at), width);
 
   return db
     .select({
-      bucket: bucket.mapWith(Number),
+      bucket,
       level: logRecord.level,
       events: sql<number>`sum(${logRecord.count})`.mapWith(Number),
     })

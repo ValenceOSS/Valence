@@ -13,7 +13,7 @@ Every function and every component in Valence has a test, written with Vitest an
 - The coding rules apply to tests as well. `any`, `unknown` and `as` are banned in test files too, and only the colour rule is relaxed for them. See [Coding standard](/develop/coding-standard).
 - Coverage thresholds are enforced in CI and are never lowered to make a build pass. Raising them is a pull request of its own.
 - Tests that need media fixtures skip with a message naming the command that builds the missing tier. They never silently pass.
-- Nothing in a unit test talks to a real network, a real Postgres or a real FFmpeg. Those live in the Rust integration tests and the media pipeline workflow.
+- Nothing in a unit test talks to a real network, a database server or a real FFmpeg. A test that needs a real database opens PGlite, Postgres in memory, and runs again on MySQL and MariaDB in CI, as [Tests on MySQL and MariaDB](#tests-on-mysql-and-mariadb) describes. The rest live in the Rust integration tests and the media pipeline workflow.
 
 ## Running tests
 
@@ -68,7 +68,7 @@ Each package sets its own thresholds in its `vitest.config.ts`. Lines, functions
 | `@valence/desktop`                                           | 90    | 83        | 84       | 90         | jsdom       |
 | `@valence/landing`, `@valence/docs`                          | 90    | 90        | 83       | 90         | jsdom       |
 
-The server excludes `src/db/Schema.ts` and `src/jobs/createInertJobQueue.ts` from coverage, and the requests service excludes its `Schema.ts` and `Main.ts`. Everything else counts. A drop below a threshold fails the package's test job.
+The server excludes `src/db/postgres/Schema.ts` and `src/jobs/createInertJobQueue.ts` from coverage, and the requests service excludes its `Schema.ts` and `Main.ts`. Everything else counts. A drop below a threshold fails the package's test job.
 
 ## Testing components
 
@@ -169,8 +169,8 @@ Some faults are in the text of a query rather than in anything the database does
 ```ts
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
-import { createDatabase } from '@ValenceServer/db/Database';
-import { share } from '@ValenceServer/db/Schema';
+import { createDatabase } from '#dialect/createDatabase';
+import { share } from '#dialect/Schema';
 
 const NOWHERE = 'postgres://nobody@localhost:1/none';
 
@@ -185,13 +185,41 @@ describe('the share listing', () => {
 });
 ```
 
-This runs on any machine with no Postgres, which is why the server's suite needs no database service in CI. Migration logic is tested the same way, as pure functions over injected readers: `findPendingMigrations`, `planMigration`, `migrateToLatest` and the snapshot helpers all take their I/O as arguments. See [Database and migrations](/develop/database-and-migrations).
+This runs on any machine with no database server, which is why the ordinary suite needs no database service in CI. Migration logic is tested the same way, as pure functions over injected readers: `findPendingMigrations`, `planMigration`, `migrateToLatest` and the snapshot helpers all take their I/O as arguments. See [Database and migrations](/develop/database-and-migrations).
 
-The requests service uses PGlite (`@electric-sql/pglite`) as a dev dependency for tests that need a database engine in process.
+Tests that need a database engine open PGlite (`@electric-sql/pglite`), Postgres in memory, in process. `aMigratedDatabase` in the server's dialect folder hands a test a database with every migration applied.
 
 ### Injecting the world
 
 Where a function needs the clock, timers, the network or a child process, it takes them as parameters and the test passes fakes. That is why so many functions in this codebase read like `createThing({ now, schedule, send })`. Prefer this to module mocks. When you do need a network stand-in, `apps/server/src/testing/aWebThatAnswers.ts` builds a web that answers each address from a table.
+
+## Tests on MySQL and MariaDB
+
+The ordinary suite runs every test on Postgres, through PGlite. Every test that opens a database, directly or through a test helper, runs a second time under the `mysql` condition against a real MySQL or MariaDB server, from its own Vitest config at `tools/vitest.mysql.config.ts`. It covers `packages/database`, `apps/server` and `apps/requests`.
+
+Start the engines from `compose.test.yaml`. They keep their data in memory, so nothing outlives them:
+
+```bash
+docker compose -f compose.test.yaml up -d --wait
+```
+
+| Engine       | Address          | Starts                  |
+| ------------ | ---------------- | ----------------------- |
+| MySQL 8.4    | `127.0.0.1:3307` | By default              |
+| MariaDB 11.4 | `127.0.0.1:3308` | By default              |
+| MariaDB 10.6 | `127.0.0.1:3309` | With `--profile oldest` |
+
+Then, from the `tools` folder, point `MYSQL_TEST_URL` at one of them and run the config:
+
+```bash
+cd tools
+MYSQL_TEST_URL=mysql://root:valence@127.0.0.1:3307 pnpm exec vitest run --config vitest.mysql.config.ts
+MYSQL_TEST_URL=mysql://root:valence@127.0.0.1:3308 pnpm exec vitest run --config vitest.mysql.config.ts --project apps/server
+```
+
+`--project apps/server`, `apps/requests` or `packages/database` narrows the run to one package. Each run makes scratch databases for its tests and drops them when it ends. Without `MYSQL_TEST_URL` those tests fail loudly rather than skip, so a run that forgot the address cannot pass.
+
+In CI, the **Test on** job runs this config against `mysql:8.4`, `mariadb:10.6` and `mariadb:11.4`, one job per engine, while the whole suite runs on Postgres.
 
 ## Testing Rust
 

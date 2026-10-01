@@ -1,3 +1,4 @@
+import { countAffected } from '@ValenceDatabase/countAffected';
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
@@ -6,7 +7,7 @@ import { drawAvatar, isAvatarStyle } from './drawAvatar';
 import { extensionFor, whatIsWrongWithThePicture } from './whatIsWrongWithThePicture';
 import { pickOneFaceEach } from './pickOneFaceEach';
 import { pickTheAccountsFace } from './pickTheAccountsFace';
-import { viewerProfile, user, userProfile } from '@ValenceServer/db/Schema';
+import { viewerProfile, user, userProfile } from '#dialect/Schema';
 import { dropPrivatePlaylistsOf } from '@ValenceServer/playlists/dropPrivatePlaylistsOf';
 import {
   STILL_WATCHING_DEFAULT,
@@ -17,7 +18,7 @@ import {
   ProfileColourSchema,
   PROFILE_COLOURS,
 } from '@ValenceContracts/schemas/ViewerProfile';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { ProfileService } from './ProfileService';
 import type { ProfileColour, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { StoredFace } from './pickTheAccountsFace';
@@ -205,7 +206,7 @@ const COLUMNS = {
  * @returns The profile service.
  */
 const createDatabaseProfileService = (
-  db: ValenceDatabase,
+  db: AnyValenceDatabase,
   photoDirectory: string,
 ): ProfileService => {
   /**
@@ -307,28 +308,29 @@ const createDatabaseProfileService = (
     rename: async (userId, profileId, request) => {
       const chosen = avatarColumns(request.avatar);
 
-      const changed = await db
-        .update(viewerProfile)
-        .set({
-          ...(request.askStillWatchingAfter === undefined
-            ? {}
-            : { askStillWatchingAfter: request.askStillWatchingAfter }),
-          ...(request.showsWhatIamWatching === undefined
-            ? {}
-            : { showsWhatIamWatching: request.showsWhatIamWatching }),
-          name: request.name,
-          colour: request.colour,
-          updatedAt: new Date(),
-          ...chosen,
-        })
-        .where(and(eq(viewerProfile.id, profileId), eq(viewerProfile.userId, userId)))
-        .returning({ id: viewerProfile.id });
+      const changed = countAffected(
+        await db
+          .update(viewerProfile)
+          .set({
+            ...(request.askStillWatchingAfter === undefined
+              ? {}
+              : { askStillWatchingAfter: request.askStillWatchingAfter }),
+            ...(request.showsWhatIamWatching === undefined
+              ? {}
+              : { showsWhatIamWatching: request.showsWhatIamWatching }),
+            name: request.name,
+            colour: request.colour,
+            updatedAt: new Date(),
+            ...chosen,
+          })
+          .where(and(eq(viewerProfile.id, profileId), eq(viewerProfile.userId, userId))),
+      );
 
-      if (changed.length > 0 && chosen !== null) {
+      if (changed > 0 && chosen !== null) {
         await letTheProfilesFaceShow(userId);
       }
 
-      return changed.length > 0;
+      return changed > 0;
     },
 
     remove: async (userId, profileId) => {
@@ -340,12 +342,13 @@ const createDatabaseProfileService = (
 
       await dropPrivatePlaylistsOf(db, [profileId]);
 
-      const removed = await db
-        .delete(viewerProfile)
-        .where(and(eq(viewerProfile.id, profileId), eq(viewerProfile.userId, userId)))
-        .returning({ id: viewerProfile.id });
+      const removed = countAffected(
+        await db
+          .delete(viewerProfile)
+          .where(and(eq(viewerProfile.id, profileId), eq(viewerProfile.userId, userId))),
+      );
 
-      return removed.length > 0;
+      return removed > 0;
     },
 
     belongsTo: async (userId, profileId) => {
@@ -485,13 +488,14 @@ const createDatabaseProfileService = (
     },
 
     moveTo: async (profileId, newOwnerId) => {
-      const moved = await db
-        .update(viewerProfile)
-        .set({ userId: newOwnerId, updatedAt: new Date() })
-        .where(eq(viewerProfile.id, profileId))
-        .returning({ id: viewerProfile.id });
+      const moved = countAffected(
+        await db
+          .update(viewerProfile)
+          .set({ userId: newOwnerId, updatedAt: new Date() })
+          .where(eq(viewerProfile.id, profileId)),
+      );
 
-      return moved.length > 0;
+      return moved > 0;
     },
   };
 };

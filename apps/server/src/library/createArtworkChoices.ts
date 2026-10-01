@@ -1,15 +1,15 @@
 import { randomUUID } from 'node:crypto';
-import { and, eq, isNotNull, isNull } from 'drizzle-orm';
-import { mediaArtworkChoice, mediaItem } from '@ValenceServer/db/Schema';
-import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
-import type { ValenceSchema } from '@ValenceServer/db/Database';
+import { and, asc, eq, isNotNull, isNull } from 'drizzle-orm';
+import { mediaArtworkChoice, mediaItem } from '#dialect/Schema';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
+import { upsert } from '@ValenceDatabase/upsert';
 import type { ArtworkChoices, ArtworkKind } from '@ValenceContracts/schemas/ArtworkChoice';
 import type { MetadataProvider } from './MetadataProvider';
 
 type ArtworkRefusal = 'missing' | 'unmatched' | 'unavailable' | 'refused';
 
 type ArtworkChoicesOptions = {
-  db: PgDatabase<PgQueryResultHKT, ValenceSchema>;
+  db: AnyValenceDatabase;
   readOptions?: MetadataProvider['readArtworkOptions'];
   readAgain: (libraryId: string, paths: string[]) => Promise<string | null>;
   fetchLogos: (libraryId: string) => Promise<{ jobId: string } | null>;
@@ -187,7 +187,11 @@ const createArtworkChoices = ({
         return { jobId: (await fetchLogos(title.libraryId))?.jobId ?? null };
       }
 
-      const files = await db.select({ path: mediaItem.path }).from(mediaItem).where(filesOf(title));
+      const files = await db
+        .select({ path: mediaItem.path })
+        .from(mediaItem)
+        .where(filesOf(title))
+        .orderBy(asc(mediaItem.path));
 
       return {
         jobId: await readAgain(
@@ -210,26 +214,26 @@ const createArtworkChoices = ({
       return 'refused';
     }
 
-    await db
-      .insert(mediaArtworkChoice)
-      .values({
-        id: randomUUID(),
-        libraryId: title.libraryId,
-        externalKind: title.externalKind,
-        externalId: title.externalId,
-        kind,
-        url,
-        updatedBy: by,
-      })
-      .onConflictDoUpdate({
-        target: [
-          mediaArtworkChoice.libraryId,
-          mediaArtworkChoice.externalKind,
-          mediaArtworkChoice.externalId,
-          mediaArtworkChoice.kind,
-        ],
-        set: { url, updatedBy: by, updatedAt: new Date() },
-      });
+    await upsert(db, mediaArtworkChoice, {
+      values: [
+        {
+          id: randomUUID(),
+          libraryId: title.libraryId,
+          externalKind: title.externalKind,
+          externalId: title.externalId,
+          kind,
+          url,
+          updatedBy: by,
+        },
+      ],
+      target: [
+        mediaArtworkChoice.libraryId,
+        mediaArtworkChoice.externalKind,
+        mediaArtworkChoice.externalId,
+        mediaArtworkChoice.kind,
+      ],
+      set: { url, updatedBy: by, updatedAt: new Date() },
+    });
 
     if (isTitleWide) {
       await db

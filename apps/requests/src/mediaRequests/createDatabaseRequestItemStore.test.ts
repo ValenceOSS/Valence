@@ -3,7 +3,7 @@ import { createDatabaseMediaRequestStore } from './createDatabaseMediaRequestSto
 import { createDatabaseRequestItemStore } from './createDatabaseRequestItemStore';
 import { aMediaRequest } from '@ValenceRequests/testing/aMediaRequest';
 import { aRequestItem } from '@ValenceRequests/testing/aRequestItem';
-import { aScratchDatabase } from '@ValenceRequests/testing/aScratchDatabase';
+import { aScratchDatabase } from '#dialect/aScratchDatabase';
 
 describe('createDatabaseRequestItemStore', () => {
   it('keeps, finds, changes and removes what a request waits for', async () => {

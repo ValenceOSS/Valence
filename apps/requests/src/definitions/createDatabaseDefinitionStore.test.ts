@@ -1,6 +1,6 @@
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
-import { aScratchDatabase } from '@ValenceRequests/testing/aScratchDatabase';
+import { aScratchDatabase } from '#dialect/aScratchDatabase';
 import { createDatabaseDefinitionStore } from './createDatabaseDefinitionStore';
 import type { DefinitionRecord } from './DefinitionRecord';
 

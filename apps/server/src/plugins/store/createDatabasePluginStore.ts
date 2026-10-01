@@ -11,9 +11,12 @@ import {
   pluginProfile,
   pluginStorage,
   rolePermission,
-} from '@ValenceServer/db/Schema';
-import { likeLiterally } from '@ValenceServer/db/likeLiterally';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+} from '#dialect/Schema';
+import { countAffected } from '@ValenceDatabase/countAffected';
+import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
+import { likeLiterally } from '@ValenceDatabase/likeLiterally';
+import { upsert } from '@ValenceDatabase/upsert';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { ConnectionRecord, InstalledRecord, PluginStore } from './PluginStore';
 
 const SettingsSchema = z.record(z.string(), z.union([z.string(), z.boolean()]));
@@ -23,14 +26,14 @@ const KeptStorageSchema = z.array(
 );
 
 /**
- * Installed plugins, what each keeps and who connected to it, held in Postgres. A row whose manifest
+ * Installed plugins, what each keeps and who connected to it, held in the database. A row whose manifest
  * no longer reads is left out rather than trusted, which is what an older server does with a plugin
  * written for a newer one.
  *
  * @param db - The database.
  * @returns The store.
  */
-const createDatabasePluginStore = (db: ValenceDatabase): PluginStore => {
+const createDatabasePluginStore = (db: AnyValenceDatabase): PluginStore => {
   const readRow = (
     row: typeof pluginInstallation.$inferSelect,
     previousVersion: string | null,
@@ -113,10 +116,11 @@ const createDatabasePluginStore = (db: ValenceDatabase): PluginStore => {
         problem: null,
       };
 
-      await db
-        .insert(pluginInstallation)
-        .values(row)
-        .onConflictDoUpdate({ target: pluginInstallation.id, set: row });
+      await upsert(db, pluginInstallation, {
+        values: [row],
+        target: pluginInstallation.id,
+        set: row,
+      });
     },
     readHooks: async (pluginId) =>
       Object.fromEntries(
@@ -128,10 +132,11 @@ const createDatabasePluginStore = (db: ValenceDatabase): PluginStore => {
         ).map((row) => [row.hookId, row.secret]),
       ),
     saveHook: async (pluginId, hookId, secret) => {
-      await db
-        .insert(pluginHook)
-        .values({ pluginId, hookId, secret })
-        .onConflictDoUpdate({ target: [pluginHook.pluginId, pluginHook.hookId], set: { secret } });
+      await upsert(db, pluginHook, {
+        values: [{ pluginId, hookId, secret }],
+        target: [pluginHook.pluginId, pluginHook.hookId],
+        set: { secret },
+      });
     },
     forgetHooksExcept: async (pluginId, keep) => {
       await db
@@ -171,10 +176,11 @@ const createDatabasePluginStore = (db: ValenceDatabase): PluginStore => {
           keptAt: new Date(),
         };
 
-        await tx
-          .insert(pluginPrevious)
-          .values({ pluginId: id, ...kept })
-          .onConflictDoUpdate({ target: pluginPrevious.pluginId, set: kept });
+        await upsert(tx, pluginPrevious, {
+          values: [{ pluginId: id, ...kept }],
+          target: pluginPrevious.pluginId,
+          set: kept,
+        });
 
         return true;
       }),
@@ -201,10 +207,9 @@ const createDatabasePluginStore = (db: ValenceDatabase): PluginStore => {
             problem: null,
             updatedAt: new Date(),
           })
-          .where(eq(pluginInstallation.id, id))
-          .returning({ id: pluginInstallation.id });
+          .where(eq(pluginInstallation.id, id));
 
-        if (restored.length === 0) {
+        if (countAffected(restored) === 0) {
           return false;
         }
 
@@ -224,19 +229,15 @@ const createDatabasePluginStore = (db: ValenceDatabase): PluginStore => {
       const changed = await db
         .update(pluginInstallation)
         .set({ ...changes, updatedAt: new Date() })
-        .where(eq(pluginInstallation.id, id))
-        .returning({ id: pluginInstallation.id });
+        .where(eq(pluginInstallation.id, id));
 
-      return changed.length > 0;
+      return countAffected(changed) > 0;
     },
     remove: async (id) =>
       db.transaction(async (tx) => {
-        const removed = await tx
-          .delete(pluginInstallation)
-          .where(eq(pluginInstallation.id, id))
-          .returning({ id: pluginInstallation.id });
+        const removed = await tx.delete(pluginInstallation).where(eq(pluginInstallation.id, id));
 
-        if (removed.length === 0) {
+        if (countAffected(removed) === 0) {
           return false;
         }
 
@@ -256,13 +257,11 @@ const createDatabasePluginStore = (db: ValenceDatabase): PluginStore => {
       return read.success ? read.data : null;
     },
     writeValue: async (pluginId, key, value, bytes) => {
-      await db
-        .insert(pluginStorage)
-        .values({ pluginId, key, value, bytes })
-        .onConflictDoUpdate({
-          target: [pluginStorage.pluginId, pluginStorage.key],
-          set: { value, bytes, updatedAt: new Date() },
-        });
+      await upsert(db, pluginStorage, {
+        values: [{ pluginId, key, value, bytes }],
+        target: [pluginStorage.pluginId, pluginStorage.key],
+        set: { value, bytes, updatedAt: new Date() },
+      });
     },
     forgetValue: async (pluginId, key) => {
       await db
@@ -322,20 +321,14 @@ const createDatabasePluginStore = (db: ValenceDatabase): PluginStore => {
         expiresAt: connection.expiresAt === null ? null : new Date(connection.expiresAt),
       };
 
-      await db
-        .insert(pluginConnection)
-        .values(row)
-        .onConflictDoUpdate({
-          target: [
-            pluginConnection.pluginId,
-            pluginConnection.profileId,
-            pluginConnection.provider,
-          ],
-          set: row,
-        });
+      await upsert(db, pluginConnection, {
+        values: [row],
+        target: [pluginConnection.pluginId, pluginConnection.profileId, pluginConnection.provider],
+        set: row,
+      });
     },
     forgetConnection: async (pluginId, profileId, provider) =>
-      (
+      countAffected(
         await db
           .delete(pluginConnection)
           .where(
@@ -344,11 +337,13 @@ const createDatabasePluginStore = (db: ValenceDatabase): PluginStore => {
               eq(pluginConnection.profileId, profileId),
               eq(pluginConnection.provider, provider),
             ),
-          )
-          .returning({ pluginId: pluginConnection.pluginId })
-      ).length > 0,
+          ),
+      ) > 0,
     rememberProfile: async (pluginId, profileId) => {
-      await db.insert(pluginProfile).values({ pluginId, profileId }).onConflictDoNothing();
+      await insertUnlessPresent(db, pluginProfile, {
+        values: [{ pluginId, profileId }],
+        target: [pluginProfile.pluginId, pluginProfile.profileId],
+      });
     },
     profilesOf: async (pluginId) => {
       const used = await db

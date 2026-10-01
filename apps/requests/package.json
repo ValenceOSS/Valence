@@ -3,20 +3,33 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "imports": {
+    "#dialect/*": {
+      "mysql": "./src/db/mysql/*.ts",
+      "default": "./src/db/postgres/*.ts"
+    }
+  },
   "scripts": {
     "dev": "tsx watch --env-file-if-exists=../../.env src/Main.ts",
     "browser": "camoufox-js fetch",
     "build": "tsc --build",
     "start": "node dist/Main.js",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit",
-    "db:generate": "drizzle-kit generate",
-    "bundle": "esbuild src/Main.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=dist/Main.js"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.mysql.json",
+    "db:generate": "drizzle-kit generate --config drizzle.postgres.config.ts && drizzle-kit generate --config drizzle.mysql.config.ts",
+    "db:generate:postgres": "drizzle-kit generate --config drizzle.postgres.config.ts",
+    "db:generate:mysql": "drizzle-kit generate --config drizzle.mysql.config.ts",
+    "bundle": "pnpm bundle:postgres && pnpm bundle:mysql && pnpm bundle:launch",
+    "bundle:postgres": "esbuild --bundle --platform=node --format=esm --target=node22 --packages=external src/Main.ts --outdir=dist --entry-names=[name].postgres",
+    "bundle:mysql": "esbuild --bundle --platform=node --format=esm --target=node22 --packages=external --conditions=mysql src/Main.ts --outdir=dist --entry-names=[name].mysql",
+    "bundle:launch": "esbuild --bundle --platform=node --format=esm --target=node22 --packages=external src/Launch.ts --outfile=dist/Main.js",
+    "dev:mysql": "tsx watch --conditions=mysql --env-file-if-exists=../../.env src/Main.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.17",
     "@valence/contracts": "workspace:*",
     "@valence/core": "workspace:*",
+    "@valence/database": "workspace:*",
     "@valence/i18n": "workspace:*",
     "camoufox-js": "0.12.0",
     "cheerio": "^1.2.0",
@@ -27,6 +40,7 @@
     "hono": "^4.13.7",
     "iconv-lite": "^0.7.3",
     "music-metadata": "^11.15.0",
+    "mysql2": "^3.24.5",
     "pg": "^8.23.0",
     "playwright-core": "1.60.0",
     "yaml": "^2.9.1",

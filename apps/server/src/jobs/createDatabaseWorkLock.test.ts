@@ -2,13 +2,13 @@ import { describe, expect, it, vi } from 'vitest';
 import { createDatabaseWorkLock } from './createDatabaseWorkLock';
 import type { LockSession, LockSessions } from './createDatabaseWorkLock';
 
-type FakePostgres = {
+type FakeDatabase = {
   sessions: LockSessions;
   opened: () => number;
   breakTheConnection: () => void;
 };
 
-const createFakePostgres = (): FakePostgres => {
+const createFakeDatabase = (): FakeDatabase => {
   const heldBy = new Map<string, object>();
   const broken: (() => void)[] = [];
 
@@ -20,25 +20,23 @@ const createFakePostgres = (): FakePostgres => {
     opened += 1;
 
     return Promise.resolve({
-      query: (text: string, values: (string | number)[]) => {
-        const key = String(values[1]);
+      take: (key: string) => {
         const owner = heldBy.get(key);
 
-        if (text.includes('pg_try_advisory_lock')) {
-          if (owner !== undefined && owner !== session) {
-            return Promise.resolve({ rows: [{ locked: false }] });
-          }
-
-          heldBy.set(key, session);
-
-          return Promise.resolve({ rows: [{ locked: true }] });
+        if (owner !== undefined && owner !== session) {
+          return Promise.resolve(false);
         }
 
-        if (owner === session) {
+        heldBy.set(key, session);
+
+        return Promise.resolve(true);
+      },
+      release: (key: string) => {
+        if (heldBy.get(key) === session) {
           heldBy.delete(key);
         }
 
-        return Promise.resolve({ rows: [{ locked: true }] });
+        return Promise.resolve();
       },
       on: (_event: 'error', listener: () => void) => {
         broken.push(listener);
@@ -67,8 +65,8 @@ const held = <T>(attempted: { held: false } | { held: true; result: T }): T => {
 
 describe('a library lock every process can see', () => {
   it('runs the work and hands back what it made, where the library is nobody else’s', async () => {
-    const postgres = createFakePostgres();
-    const lock = createDatabaseWorkLock({ sessions: postgres.sessions });
+    const database = createFakeDatabase();
+    const lock = createDatabaseWorkLock({ sessions: database.sessions });
 
     const attempted = await lock.attempt('reading:one', () => Promise.resolve('scanned'));
 
@@ -76,9 +74,9 @@ describe('a library lock every process can see', () => {
   });
 
   it('will not run the work while another process is doing it', async () => {
-    const postgres = createFakePostgres();
-    const first = createDatabaseWorkLock({ sessions: postgres.sessions });
-    const second = createDatabaseWorkLock({ sessions: postgres.sessions });
+    const database = createFakeDatabase();
+    const first = createDatabaseWorkLock({ sessions: database.sessions });
+    const second = createDatabaseWorkLock({ sessions: database.sessions });
 
     let letTheFirstFinish = (): void => {};
 
@@ -101,9 +99,9 @@ describe('a library lock every process can see', () => {
   });
 
   it('hands the library on once the process that had it is done', async () => {
-    const postgres = createFakePostgres();
-    const first = createDatabaseWorkLock({ sessions: postgres.sessions });
-    const second = createDatabaseWorkLock({ sessions: postgres.sessions });
+    const database = createFakeDatabase();
+    const first = createDatabaseWorkLock({ sessions: database.sessions });
+    const second = createDatabaseWorkLock({ sessions: database.sessions });
 
     await first.attempt('reading:one', () => Promise.resolve());
 
@@ -113,9 +111,9 @@ describe('a library lock every process can see', () => {
   });
 
   it('lets a different library be worked on at the same time', async () => {
-    const postgres = createFakePostgres();
-    const first = createDatabaseWorkLock({ sessions: postgres.sessions });
-    const second = createDatabaseWorkLock({ sessions: postgres.sessions });
+    const database = createFakeDatabase();
+    const first = createDatabaseWorkLock({ sessions: database.sessions });
+    const second = createDatabaseWorkLock({ sessions: database.sessions });
 
     let letTheFirstFinish = (): void => {};
 
@@ -135,9 +133,9 @@ describe('a library lock every process can see', () => {
   });
 
   it('gives the library up when the work fails, rather than holding it', async () => {
-    const postgres = createFakePostgres();
-    const first = createDatabaseWorkLock({ sessions: postgres.sessions });
-    const second = createDatabaseWorkLock({ sessions: postgres.sessions });
+    const database = createFakeDatabase();
+    const first = createDatabaseWorkLock({ sessions: database.sessions });
+    const second = createDatabaseWorkLock({ sessions: database.sessions });
 
     await expect(
       first.attempt('reading:one', () => Promise.reject(new Error('the scan broke'))),
@@ -147,25 +145,25 @@ describe('a library lock every process can see', () => {
   });
 
   it('takes every lock on one connection, rather than one for each job', async () => {
-    const postgres = createFakePostgres();
-    const lock = createDatabaseWorkLock({ sessions: postgres.sessions });
+    const database = createFakeDatabase();
+    const lock = createDatabaseWorkLock({ sessions: database.sessions });
 
     await lock.attempt('reading:one', () => Promise.resolve());
     await lock.attempt('library.detectSegments:one', () => Promise.resolve());
     await lock.attempt('reading:two', () => Promise.resolve());
 
-    expect(postgres.opened()).toBe(1);
+    expect(database.opened()).toBe(1);
   });
 
   it('opens another connection after the one it had broke', async () => {
-    const postgres = createFakePostgres();
-    const lock = createDatabaseWorkLock({ sessions: postgres.sessions });
+    const database = createFakeDatabase();
+    const lock = createDatabaseWorkLock({ sessions: database.sessions });
 
     await lock.attempt('reading:one', () => Promise.resolve());
 
-    postgres.breakTheConnection();
+    database.breakTheConnection();
 
     expect(held(await lock.attempt('reading:one', () => Promise.resolve('again')))).toBe('again');
-    expect(postgres.opened()).toBe(2);
+    expect(database.opened()).toBe(2);
   });
 });

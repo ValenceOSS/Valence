@@ -13,8 +13,8 @@ import {
   asc,
   desc,
   eq,
+  count,
   gte,
-  ilike,
   inArray,
   isNotNull,
   isNull,
@@ -23,6 +23,15 @@ import {
   sql,
 } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
+import { containsInsensitively } from '@ValenceDatabase/containsInsensitively';
+import { countAffected } from '@ValenceDatabase/countAffected';
+import { floorDivided } from '@ValenceDatabase/floorDivided';
+import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
+import { jsonContains } from '@ValenceDatabase/jsonContains';
+import { jsonObjectElements } from '@ValenceDatabase/jsonObjectElements';
+import { jsonTextElements } from '@ValenceDatabase/jsonTextElements';
+import { nullsLast } from '@ValenceDatabase/nullsLast';
+import { upsert } from '@ValenceDatabase/upsert';
 import {
   ageCeiling,
   ageException,
@@ -36,7 +45,7 @@ import {
   mediaPreviewOverride,
   rating,
   series,
-} from '@ValenceServer/db/Schema';
+} from '#dialect/Schema';
 import {
   LibraryKindSchema,
   MediaDetailSchema,
@@ -87,7 +96,7 @@ import {
   TRICKPLAY_COLUMNS,
   TRICKPLAY_ROWS,
 } from '@ValenceServer/playback/PlaybackService';
-import type { ValenceDatabase } from '@ValenceServer/db/Database';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type {
   Library,
   LibraryKind,
@@ -141,7 +150,7 @@ type PreviewSubject = {
 
 type CreateDatabaseLibraryServiceOptions = {
   atOnce?: number;
-  db: ValenceDatabase;
+  db: AnyValenceDatabase;
   files: MediaFileSystem;
   transcoder: Transcoder;
   forcedAccel?: () => Promise<string>;
@@ -162,6 +171,24 @@ type CreateDatabaseLibraryServiceOptions = {
   onDeparted?: (libraryId: string, items: ScannedItem[]) => void;
 };
 
+const LIBRARY_COLUMNS = {
+  id: library.id,
+  name: library.name,
+  kind: library.kind,
+  flavour: library.flavour,
+  path: library.path,
+  lastScannedAt: library.lastScannedAt,
+  lastScanAdded: library.lastScanAdded,
+  lastScanUpdated: library.lastScanUpdated,
+  lastScanRemoved: library.lastScanRemoved,
+  lastScanFailed: library.lastScanFailed,
+  defaultAudioLanguage: library.defaultAudioLanguage,
+  filesAtOnce: library.filesAtOnce,
+  takesRequests: library.takesRequests,
+  requestProfileId: library.requestProfileId,
+  requestPath: library.requestPath,
+};
+
 /**
  * Builds the condition a typed search matches on: the title, the series title, the description, the
  * tagline and the cast. Somebody typing into a search box is naming whatever they can remember, and
@@ -173,17 +200,14 @@ type CreateDatabaseLibraryServiceOptions = {
  */
 const matchesSearch = (search: string) => {
   const like = `%${search.trim()}%`;
+  const member = jsonObjectElements(mediaItem.castMembers, 'member', { name: 'text' });
 
   return or(
-    ilike(mediaItem.title, like),
-    ilike(mediaItem.seriesTitle, like),
-    ilike(mediaItem.overview, like),
-    ilike(mediaItem.tagline, like),
-    sql`exists (
-      select 1
-      from jsonb_array_elements(coalesce(${mediaItem.castMembers}, '[]'::jsonb)) as member
-      where member->>'name' ilike ${like}
-    )`,
+    containsInsensitively(mediaItem.title, like),
+    containsInsensitively(mediaItem.seriesTitle, like),
+    containsInsensitively(mediaItem.overview, like),
+    containsInsensitively(mediaItem.tagline, like),
+    sql`(select count(*) from ${member.rows} where ${containsInsensitively(member.field('name'), like)}) > 0`,
   );
 };
 
@@ -254,7 +278,7 @@ const yourStars = (profileId: string) =>
 const orderingFor = (options: ListItemsOptions) => {
   if (options.order === 'yourRating' && options.profileId !== undefined) {
     return [
-      sql`${yourStars(options.profileId)} desc nulls last`,
+      nullsLast(yourStars(options.profileId), 'desc'),
       asc(mediaItem.title),
       asc(mediaItem.id),
     ];
@@ -972,29 +996,18 @@ const createDatabaseLibraryService = ({
     list: async (viewer) => {
       const rows = await db
         .select({
-          id: library.id,
-          name: library.name,
-          kind: library.kind,
-          flavour: library.flavour,
-          path: library.path,
-          lastScannedAt: library.lastScannedAt,
-          lastScanAdded: library.lastScanAdded,
-          lastScanUpdated: library.lastScanUpdated,
-          lastScanRemoved: library.lastScanRemoved,
-          lastScanFailed: library.lastScanFailed,
-          defaultAudioLanguage: library.defaultAudioLanguage,
-          filesAtOnce: library.filesAtOnce,
-          takesRequests: library.takesRequests,
-          requestProfileId: library.requestProfileId,
-          requestPath: library.requestPath,
-          itemCount: sql<number>`(case when ${library.kind} = 'books' then count(distinct ${bookChapter.id}) else count(distinct ${mediaItem.id}) filter (where ${mediaItem.parentId} is null) end)::int`,
+          ...LIBRARY_COLUMNS,
+          itemCount:
+            sql<number>`case when ${library.kind} = 'books' then count(distinct ${bookChapter.id}) else count(distinct case when ${mediaItem.parentId} is null then ${mediaItem.id} end) end`.mapWith(
+              Number,
+            ),
         })
         .from(library)
         .leftJoin(mediaItem, eq(mediaItem.libraryId, library.id))
         .leftJoin(book, eq(book.libraryId, library.id))
         .leftJoin(bookChapter, eq(bookChapter.bookId, book.id))
         .where(librariesVisibleToViewer(db, viewer))
-        .groupBy(library.id)
+        .groupBy(...Object.values(LIBRARY_COLUMNS))
         .orderBy(asc(library.name));
 
       return rows.map((row) => ({
@@ -1069,25 +1082,18 @@ const createDatabaseLibraryService = ({
 
       const [row] = await db
         .select({
-          id: library.id,
-          name: library.name,
-          kind: library.kind,
-          flavour: library.flavour,
-          path: library.path,
-          lastScannedAt: library.lastScannedAt,
-          defaultAudioLanguage: library.defaultAudioLanguage,
-          filesAtOnce: library.filesAtOnce,
-          takesRequests: library.takesRequests,
-          requestProfileId: library.requestProfileId,
-          requestPath: library.requestPath,
-          itemCount: sql<number>`(case when ${library.kind} = 'books' then count(distinct ${bookChapter.id}) else count(distinct ${mediaItem.id}) filter (where ${mediaItem.parentId} is null) end)::int`,
+          ...LIBRARY_COLUMNS,
+          itemCount:
+            sql<number>`case when ${library.kind} = 'books' then count(distinct ${bookChapter.id}) else count(distinct case when ${mediaItem.parentId} is null then ${mediaItem.id} end) end`.mapWith(
+              Number,
+            ),
         })
         .from(library)
         .leftJoin(mediaItem, eq(mediaItem.libraryId, library.id))
         .leftJoin(book, eq(book.libraryId, library.id))
         .leftJoin(bookChapter, eq(bookChapter.bookId, book.id))
         .where(eq(library.id, libraryId))
-        .groupBy(library.id);
+        .groupBy(...Object.values(LIBRARY_COLUMNS));
 
       if (row === undefined) {
         return null;
@@ -1110,11 +1116,10 @@ const createDatabaseLibraryService = ({
     },
 
     listFacets: async (viewer) => {
+      const genre = jsonTextElements(mediaItem.genres, 'genre');
       const genreRows = await db
-        .select({ value: sql<string>`genre` })
-        .from(
-          sql`${mediaItem}, jsonb_array_elements_text(coalesce(${mediaItem.genres}, '[]'::jsonb)) as genre`,
-        )
+        .select({ value: genre.value })
+        .from(sql`${mediaItem}, ${genre.rows}`)
         .where(
           and(
             isNull(mediaItem.extraKind),
@@ -1123,11 +1128,12 @@ const createDatabaseLibraryService = ({
             visibleToViewer(db, viewer),
           ),
         )
-        .groupBy(sql`genre`)
-        .orderBy(sql`genre asc`);
+        .groupBy(genre.value)
+        .orderBy(asc(genre.value));
 
+      const decade = sql<number>`${floorDivided(mediaItem.year, sql`10`)} * 10`.mapWith(Number);
       const decadeRows = await db
-        .select({ value: sql<number>`((${mediaItem.year} / 10) * 10)::int` })
+        .select({ value: decade })
         .from(mediaItem)
         .where(
           and(
@@ -1138,11 +1144,11 @@ const createDatabaseLibraryService = ({
             visibleToViewer(db, viewer),
           ),
         )
-        .groupBy(sql`(${mediaItem.year} / 10) * 10`)
-        .orderBy(sql`(${mediaItem.year} / 10) * 10 desc`);
+        .groupBy(decade)
+        .orderBy(desc(decade));
 
       const [best] = await db
-        .select({ rating: sql<number>`coalesce(max(${mediaItem.rating}), 0)::float` })
+        .select({ rating: sql<number>`coalesce(max(${mediaItem.rating}), 0)`.mapWith(Number) })
         .from(mediaItem)
         .where(
           and(
@@ -1183,7 +1189,7 @@ const createDatabaseLibraryService = ({
               : [isNull(mediaItem.seriesTitle)]),
         ...(options.genre === undefined || options.genre === ''
           ? []
-          : [sql`${mediaItem.genres} @> ${JSON.stringify([options.genre])}::jsonb`]),
+          : [jsonContains(mediaItem.genres, [options.genre])]),
         ...(options.yearFrom === undefined ? [] : [gte(mediaItem.year, options.yearFrom)]),
         ...(options.yearTo === undefined ? [] : [lte(mediaItem.year, options.yearTo)]),
         ...(options.minRating === undefined ? [] : [gte(mediaItem.rating, options.minRating)]),
@@ -1203,10 +1209,7 @@ const createDatabaseLibraryService = ({
 
       const filters = and(...asked);
 
-      const [totals] = await db
-        .select({ total: sql<number>`count(*)::int` })
-        .from(mediaItem)
-        .where(filters);
+      const [totals] = await db.select({ total: count() }).from(mediaItem).where(filters);
 
       const rows = await db
         .select({
@@ -1461,7 +1464,7 @@ const createDatabaseLibraryService = ({
         .from(mediaItem)
         .where(
           and(
-            sql`${mediaItem.castMembers} @> ${JSON.stringify([{ personId }])}::jsonb`,
+            jsonContains(mediaItem.castMembers, [{ personId }]),
             isNull(mediaItem.extraKind),
             isNull(mediaItem.parentId),
             visibleToViewer(db, viewer),
@@ -1537,10 +1540,10 @@ const createDatabaseLibraryService = ({
     },
 
     refuseLibrary: async (accountId, libraryId) => {
-      await db
-        .insert(libraryBlock)
-        .values({ userId: accountId, libraryId, blockedAt: new Date() })
-        .onConflictDoNothing();
+      await insertUnlessPresent(db, libraryBlock, {
+        values: [{ userId: accountId, libraryId, blockedAt: new Date() }],
+        target: [libraryBlock.userId, libraryBlock.libraryId],
+      });
     },
 
     ceilingsFor: async (accountId) => {
@@ -1557,19 +1560,19 @@ const createDatabaseLibraryService = ({
     },
 
     setCeiling: async (accountId, ceiling) => {
-      await db
-        .insert(ageCeiling)
-        .values({
-          userId: accountId,
-          libraryId: ceiling.libraryId,
-          maximumAge: ceiling.maximumAge,
-          allowsUnrated: ceiling.allowsUnrated,
-          setAt: new Date(),
-        })
-        .onConflictDoUpdate({
-          target: [ageCeiling.userId, ageCeiling.libraryId],
-          set: { maximumAge: ceiling.maximumAge, allowsUnrated: ceiling.allowsUnrated },
-        });
+      await upsert(db, ageCeiling, {
+        values: [
+          {
+            userId: accountId,
+            libraryId: ceiling.libraryId,
+            maximumAge: ceiling.maximumAge,
+            allowsUnrated: ceiling.allowsUnrated,
+            setAt: new Date(),
+          },
+        ],
+        target: [ageCeiling.userId, ageCeiling.libraryId],
+        set: { maximumAge: ceiling.maximumAge, allowsUnrated: ceiling.allowsUnrated },
+      });
     },
 
     clearCeiling: async (accountId, libraryId) => {
@@ -1634,24 +1637,28 @@ const createDatabaseLibraryService = ({
         return false;
       }
 
-      await db
-        .insert(ageException)
-        .values({
-          id: randomUUID(),
-          userId: accountId,
-          mediaItemId: subject.kind === 'item' ? subject.subjectId : null,
-          seriesId: subject.kind === 'series' ? subject.subjectId : null,
-          effect,
-          grantedBy,
-          grantedAt: new Date(),
-        })
-        .onConflictDoUpdate({
-          target:
-            subject.kind === 'item'
-              ? [ageException.userId, ageException.mediaItemId]
-              : [ageException.userId, ageException.seriesId],
-          set: { effect, grantedBy, grantedAt: new Date() },
-        });
+      await upsert(db, ageException, {
+        values: [
+          {
+            id: randomUUID(),
+            userId: accountId,
+            mediaItemId: subject.kind === 'item' ? subject.subjectId : null,
+            seriesId: subject.kind === 'series' ? subject.subjectId : null,
+            effect,
+            grantedBy,
+            grantedAt: new Date(),
+          },
+        ],
+        target:
+          subject.kind === 'item'
+            ? [ageException.userId, ageException.mediaItemId]
+            : [ageException.userId, ageException.seriesId],
+        set: { effect, grantedBy, grantedAt: new Date() },
+        targetWhere:
+          subject.kind === 'item'
+            ? isNotNull(ageException.mediaItemId)
+            : isNotNull(ageException.seriesId),
+      });
 
       return true;
     },
@@ -1682,10 +1689,9 @@ const createDatabaseLibraryService = ({
               ? eq(ageException.mediaItemId, subject.subjectId)
               : eq(ageException.seriesId, subject.subjectId),
           ),
-        )
-        .returning({ id: ageException.id });
+        );
 
-      return gone.length > 0;
+      return countAffected(gone) > 0;
     },
 
     isLibraryOutOfReach: async (accountId, libraryId) => {

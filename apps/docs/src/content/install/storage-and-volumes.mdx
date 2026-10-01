@@ -16,6 +16,8 @@ Valence keeps several different kinds of data, and they deserve different treatm
 | `transcodes`    | `/transcodes`           | Video segments written while somebody is watching.                                                             | Yes. It is scratch.                                 |
 | Your library    | `/media`                | The media itself, from `MEDIA_PATH`.                                                                           | It is your data. Valence does not copy it.          |
 
+On MySQL or MariaDB, the database lives in `db-data-mysql` or `db-data-mariadb` instead, mounted at `/var/lib/mysql` in the `db` container, and `db-data` goes unused. Everything said about `db-data` on this page applies to whichever one you have. See [Choosing a database](/install/docker-compose#choosing-a-database).
+
 Losing `cache` or `transcodes` costs a re-render and nothing else. Losing `config` costs the household's profile pictures, and you cannot get them back. Losing `db-data` costs the database.
 
 ### Where each path is set
@@ -91,7 +93,7 @@ Valence separates the things that want fast disk from the things that want big d
 
 - **`transcodes`** wants the fastest disk you have, or memory backed storage, because segments are written while somebody watches and thrown away behind them. Keep it local.
 - **Artefacts** (previews and sheets) cost minutes of decoding per title and are read for as long as the title exists, so they want a disk that is kept, which is often a larger, slower, network attached one. Point `VALENCE_ARTEFACT_DIR` at network storage if that is where the space is.
-- **`db-data`** wants a local disk with reliable writes. Postgres over a network filesystem is asking for trouble, and this page does not recommend it.
+- **`db-data`** wants a local disk with reliable writes. A database over a network filesystem is asking for trouble, whichever database it is, and this page does not recommend it.
 
 To place a volume on a specific disk, replace the named volume with a bind mount in `compose.yaml`:
 
@@ -130,7 +132,7 @@ Back up what cannot be made again.
    docker compose exec db pg_dumpall -U valence > valence-backup.sql
    ```
 
-   Restore with `docker compose exec -T db psql -U valence -d postgres < valence-backup.sql` into an empty database. Test that you can.
+   Restore with `docker compose exec -T db psql -U valence -d postgres < valence-backup.sql` into an empty database. Test that you can. On MySQL or MariaDB, use that database's own dump tool in the `db` container instead.
 
 2. **The `config` volume.** It holds the profile pictures and the snapshots. Copy the volume's contents out with a throwaway container:
 

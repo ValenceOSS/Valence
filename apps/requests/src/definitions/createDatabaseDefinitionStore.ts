@@ -1,9 +1,10 @@
+import { upsert } from '@ValenceDatabase/upsert';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
-import { indexerDefinition, setting } from '@ValenceRequests/db/Schema';
-import type { RequestsDatabase } from '@ValenceRequests/db/Database';
+import { indexerDefinition, setting } from '#dialect/Schema';
+import type { RequestsDatabase } from '#dialect/RequestsDatabase';
 import type { DefinitionStore } from '@ValenceRequests/definitions/DefinitionRecord';
 
 const STATE_KEY = 'definitions';
@@ -70,10 +71,11 @@ const createDatabaseDefinitionStore = (db: RequestsDatabase): DefinitionStore =>
         fetchedAt: new Date(fetchedAt),
       };
 
-      await db
-        .insert(indexerDefinition)
-        .values(values)
-        .onConflictDoUpdate({ target: indexerDefinition.id, set: values });
+      await upsert(db, indexerDefinition, {
+        values: [values],
+        target: indexerDefinition.id,
+        set: values,
+      });
     }
   },
 
@@ -90,10 +92,11 @@ const createDatabaseDefinitionStore = (db: RequestsDatabase): DefinitionStore =>
   },
 
   writeState: async (state) => {
-    await db
-      .insert(setting)
-      .values({ key: STATE_KEY, value: state })
-      .onConflictDoUpdate({ target: setting.key, set: { value: state, updatedAt: new Date() } });
+    await upsert(db, setting, {
+      values: [{ key: STATE_KEY, value: state }],
+      target: setting.key,
+      set: { value: state, updatedAt: new Date() },
+    });
   },
 });
 

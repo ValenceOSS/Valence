@@ -1,534 +1,539 @@
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
-import type { FinishedJob } from './createJobQueue';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { eq } from 'drizzle-orm';
+import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
+import { jobSchedule, queuedJob } from '#dialect/Schema';
+import { createJobQueue } from './createJobQueue';
+import type { JobQueue } from './JobQueue';
 
-type DeliveredJob = { id: string; data: JsonValue };
-
-type WorkHandler = (jobs: DeliveredJob[]) => Promise<void>;
-
-type Schedule = { queueName: string; cron: string; data: JsonValue };
-
-const boss = vi.hoisted(() => {
-  const workers = new Map<string, WorkHandler>();
-  const scheduled: Schedule[] = [];
-  const queued: { kind: string; id: string; libraryId: string }[] = [];
-  const dropped: string[] = [];
-  const sent: {
-    kind: string;
-    options: { startAfter?: number; singletonKey?: string; retryLimit?: number };
-  }[] = [];
-  const atOnce = new Map<string, number>();
-
-  return { workers, scheduled, queued, dropped, sent, atOnce };
-});
-
-vi.mock('pg-boss', () => ({
-  PgBoss: class {
-    on() {}
-
-    start() {
-      return Promise.resolve();
-    }
-
-    createQueue() {
-      return Promise.resolve();
-    }
-
-    work(kind: string, options: { localConcurrency?: number }, handler: WorkHandler) {
-      boss.workers.set(kind, handler);
-      boss.atOnce.set(kind, options.localConcurrency ?? 1);
-
-      return Promise.resolve('worker');
-    }
-
-    schedule(queueName: string, cron: string, data: JsonValue) {
-      boss.scheduled.push({ queueName, cron, data });
-
-      return Promise.resolve();
-    }
-
-    send(
-      kind: string,
-      _data: JsonValue,
-      options: { startAfter?: number; singletonKey?: string; retryLimit?: number },
-    ) {
-      boss.sent.push({ kind, options });
-
-      return Promise.resolve('job');
-    }
-
-    findJobs(kind: string, options: { data?: { libraryId?: string } }) {
-      return Promise.resolve(
-        boss.queued
-          .filter((job) => job.kind === kind && job.libraryId === options.data?.libraryId)
-          .map((job) => ({ id: job.id })),
-      );
-    }
-
-    cancel(kind: string, id: string) {
-      boss.dropped.push(`${kind}:${id}`);
-
-      return Promise.resolve();
-    }
-
-    stop() {
-      return Promise.resolve();
-    }
-  },
-}));
-
-const { createJobQueue } = await import('./createJobQueue');
+const STARTING_POSTGRES_MS = 60_000;
 
 const CHECK_DISK = 'server.checkDiskSpace';
 
-const deliver = async (kind: string, jobs: DeliveredJob[]): Promise<void> => {
-  const worker = boss.workers.get(kind);
+const SCAN = 'library.scan';
 
-  if (worker === undefined) {
-    throw new Error(`nothing is working ${kind}`);
-  }
+const TRICKPLAY = 'library.regenerateTrickplay';
 
-  await worker(jobs);
+type Database = Awaited<ReturnType<typeof aMigratedDatabase>>;
+
+type Gate = { passed: Promise<void>; open: () => void; fail: (error: Error) => void };
+
+/**
+ * Builds a promise a test opens or breaks when it chooses, to hold a job running for as long as the
+ * test needs it to be.
+ *
+ * @returns The promise, and the two ways to settle it.
+ */
+const aGate = (): Gate => {
+  let open = (): void => {};
+  let fail: (error: Error) => void = () => {};
+  const passed = new Promise<void>((resolve, reject) => {
+    open = resolve;
+    fail = reject;
+  });
+
+  return { passed, open, fail };
 };
 
-beforeEach(() => {
-  boss.workers.clear();
-  boss.scheduled.length = 0;
-  boss.queued.length = 0;
-  boss.dropped.length = 0;
-  boss.sent.length = 0;
-  boss.atOnce.clear();
+let db: Database;
+
+const started: JobQueue[] = [];
+
+/**
+ * Starts a queue on the test's database that looks for work every few milliseconds, and remembers it
+ * so it is stopped after the test.
+ *
+ * @param options - Everything but the database.
+ * @returns The queue.
+ */
+const aQueue = (options: Omit<Parameters<typeof createJobQueue>[0], 'db'>): JobQueue => {
+  const queue = createJobQueue({ db, pollEveryMs: 5, ...options });
+
+  started.push(queue);
+
+  return queue;
+};
+
+/**
+ * Reads a job's row as it stands.
+ *
+ * @param id - The job.
+ * @returns Its row.
+ */
+const rowOf = async (id: string | null) => {
+  const [row] = await db
+    .select()
+    .from(queuedJob)
+    .where(eq(queuedJob.id, id ?? ''))
+    .limit(1);
+
+  return row;
+};
+
+beforeAll(async () => {
+  db = await aMigratedDatabase();
+}, STARTING_POSTGRES_MS);
+
+beforeEach(async () => {
+  await db.delete(queuedJob);
+  await db.delete(jobSchedule);
+});
+
+afterEach(async () => {
+  await Promise.all(started.map((queue) => queue.stop()));
+  started.length = 0;
 });
 
 describe('createJobQueue', () => {
-  it('runs a job that carries no data at all, which is every job on a clock', async () => {
+  it('runs a job that carries nothing, which is every job on a clock', async () => {
     const handler = vi.fn(() => Promise.resolve());
+    const queue = aQueue({ handlers: { [CHECK_DISK]: handler } });
 
-    await (
-      await createJobQueue({
-        connectionString: 'postgres://flux',
-        handlers: { [CHECK_DISK]: handler },
-      })
-    ).startWorking();
+    await queue.startWorking();
 
-    await deliver(CHECK_DISK, [{ id: 'job-1', data: null }]);
+    const id = await queue.enqueue(CHECK_DISK, {});
 
-    expect(handler).toHaveBeenCalledWith('job-1', {});
+    await vi.waitFor(() => {
+      expect(handler).toHaveBeenCalledWith(id, {});
+    });
   });
 
-  it('reports a job that carried nothing as finished rather than as failed', async () => {
+  it('reports a job that finished as finished, and remembers that it did', async () => {
     const onFinished = vi.fn();
+    const queue = aQueue({ handlers: { [CHECK_DISK]: () => Promise.resolve() }, onFinished });
 
-    await (
-      await createJobQueue({
-        connectionString: 'postgres://flux',
-        handlers: { [CHECK_DISK]: () => Promise.resolve() },
-        onFinished,
-      })
-    ).startWorking();
+    await queue.startWorking();
 
-    await deliver(CHECK_DISK, [{ id: 'job-1', data: null }]);
+    const id = await queue.enqueue(CHECK_DISK, {});
 
+    await vi.waitFor(async () => {
+      expect(await queue.readState(id ?? '')).toBe('completed');
+    });
     expect(onFinished).toHaveBeenCalledWith({
       kind: CHECK_DISK,
-      jobId: 'job-1',
+      jobId: id,
       subject: null,
       reason: null,
       wasStopped: false,
     });
   });
 
-  it('counts a stopped job that threw on its way out as stopped, and does not have it tried again', async () => {
+  it('counts a stopped job that threw on its way out as stopped, and does not try it again', async () => {
     const onFinished = vi.fn();
-    let fail: (error: Error) => void = () => {};
-    const running = new Promise<void>((_resolve, reject) => {
-      fail = reject;
-    });
-
-    const queue = await createJobQueue({
-      connectionString: 'postgres://flux',
-      handlers: { 'library.regenerateTrickplay': () => running },
-      onFinished,
-    });
+    const gate = aGate();
+    const handler = vi.fn(() => gate.passed);
+    const queue = aQueue({ handlers: { [TRICKPLAY]: handler }, onFinished });
 
     await queue.startWorking();
 
-    const delivered = deliver('library.regenerateTrickplay', [
-      { id: 'job-sheets', data: { libraryId: 'films' } },
-    ]);
+    const id = await queue.enqueue(TRICKPLAY, { libraryId: 'films' });
 
-    await expect(queue.cancel('job-sheets')).resolves.toBe(true);
+    await vi.waitFor(() => {
+      expect(handler).toHaveBeenCalled();
+    });
+    await expect(queue.cancel(id ?? '')).resolves.toBe(true);
 
-    fail(new Error('The media service rejected /trickplay.'));
+    gate.fail(new Error('The media service rejected /trickplay.'));
 
-    await expect(delivered).resolves.toBeUndefined();
+    await vi.waitFor(async () => {
+      expect((await rowOf(id))?.state).toBe('cancelled');
+    });
     expect(onFinished).toHaveBeenCalledWith(
-      expect.objectContaining({ jobId: 'job-sheets', reason: null, wasStopped: true }),
+      expect.objectContaining({ jobId: id, reason: null, wasStopped: true }),
     );
+    expect(handler).toHaveBeenCalledTimes(1);
   });
 
-  it('says a job that ended because it was asked to stop was stopped, not that it finished', async () => {
+  it('says a job that ended because it was asked to stop was stopped', async () => {
     const onFinished = vi.fn();
-    let finish: () => void = () => {};
-    const started = new Promise<void>((resolve) => {
-      finish = resolve;
-    });
-
-    const queue = await createJobQueue({
-      connectionString: 'postgres://flux',
-      handlers: { 'library.regeneratePreviews': () => started },
-      onFinished,
-    });
+    const gate = aGate();
+    const handler = vi.fn(() => gate.passed);
+    const queue = aQueue({ handlers: { [SCAN]: handler }, onFinished });
 
     await queue.startWorking();
 
-    const running = deliver('library.regeneratePreviews', [
-      { id: 'job-previews', data: { libraryId: 'films' } },
-    ]);
+    const id = await queue.enqueue(SCAN, { libraryId: 'films' });
 
-    await expect(queue.cancel('job-previews')).resolves.toBe(true);
+    await vi.waitFor(() => {
+      expect(handler).toHaveBeenCalled();
+    });
+    await queue.cancel(id ?? '');
+    gate.open();
 
-    finish();
-    await running;
-
-    expect(onFinished).toHaveBeenCalledWith(
-      expect.objectContaining({ jobId: 'job-previews', reason: null, wasStopped: true }),
-    );
+    await vi.waitFor(() => {
+      expect(onFinished).toHaveBeenCalledWith(
+        expect.objectContaining({ jobId: id, reason: null, wasStopped: true }),
+      );
+    });
   });
 
-  it('still says what a job is about where its payload names something', async () => {
+  it('says what a job is about, from the library its payload names or else its subject', async () => {
     const onFinished = vi.fn();
     const handler = vi.fn(() => Promise.resolve());
+    const queue = aQueue({
+      handlers: { [SCAN]: handler, 'server.prepareDownload': () => Promise.resolve() },
+      onFinished,
+    });
 
-    await (
-      await createJobQueue({
-        connectionString: 'postgres://flux',
-        handlers: { 'library.scan': handler },
-        onFinished,
-      })
-    ).startWorking();
+    await queue.startWorking();
 
-    await deliver('library.scan', [{ id: 'job-2', data: { libraryId: 'films', force: true } }]);
+    const scan = await queue.enqueue(SCAN, { libraryId: 'films', force: true });
+    const download = await queue.enqueue('server.prepareDownload', { subject: 'Arrival' });
 
-    expect(handler).toHaveBeenCalledWith('job-2', { libraryId: 'films', force: true });
+    await vi.waitFor(() => {
+      expect(onFinished).toHaveBeenCalledTimes(2);
+    });
+    expect(handler).toHaveBeenCalledWith(scan, { libraryId: 'films', force: true });
     expect(onFinished).toHaveBeenCalledWith(
-      expect.objectContaining({ jobId: 'job-2', subject: 'films' }),
+      expect.objectContaining({ jobId: scan, subject: 'films' }),
+    );
+    expect(onFinished).toHaveBeenCalledWith(
+      expect.objectContaining({ jobId: download, subject: 'Arrival' }),
     );
   });
 
-  it('says a job has started before the handler runs', async () => {
-    const onStarted = vi.fn();
-    const seenBeforeHandler: number[] = [];
+  it('has the run on record before the work that amends it begins', async () => {
+    const order: string[] = [];
+    const recorded = aGate();
     const handler = vi.fn(() => {
-      seenBeforeHandler.push(onStarted.mock.calls.length);
+      order.push('handler');
 
       return Promise.resolve();
     });
-
-    await (
-      await createJobQueue({
-        connectionString: 'postgres://flux',
-        handlers: { 'library.scan': handler },
-        onStarted,
-      })
-    ).startWorking();
-
-    await deliver('library.scan', [{ id: 'job-4', data: { libraryId: 'films' } }]);
-
-    expect(onStarted).toHaveBeenCalledWith({
-      kind: 'library.scan',
-      jobId: 'job-4',
-      subject: 'films',
+    const queue = aQueue({
+      handlers: { [CHECK_DISK]: handler },
+      onStarted: async () => {
+        order.push('started');
+        await recorded.passed;
+        order.push('recorded');
+      },
+      onFinished: () => {
+        order.push('finished');
+      },
     });
-    expect(seenBeforeHandler).toEqual([1]);
+
+    await queue.startWorking();
+    await queue.enqueue(CHECK_DISK, {});
+
+    await vi.waitFor(() => {
+      expect(order).toEqual(['started']);
+    });
+    expect(handler).not.toHaveBeenCalled();
+
+    recorded.open();
+
+    await vi.waitFor(() => {
+      expect(order).toEqual(['started', 'recorded', 'handler', 'finished']);
+    });
   });
 
   it('reports progress as the running job announces it', async () => {
     const onProgress = vi.fn();
-
-    const queue = await createJobQueue({
-      connectionString: 'postgres://flux',
+    const gate = aGate();
+    const queue: JobQueue = aQueue({
       handlers: {
         [CHECK_DISK]: (jobId) => {
           queue.reportProgress(jobId, sayVerbatim('checking'), 1, 2);
 
-          return Promise.resolve();
+          return gate.passed;
         },
       },
       onProgress,
     });
 
     await queue.startWorking();
-    await deliver(CHECK_DISK, [{ id: 'job-5', data: null }]);
 
+    const id = await queue.enqueue(CHECK_DISK, {});
+
+    await vi.waitFor(() => {
+      expect(queue.readProgress(id ?? '')).toEqual({
+        phase: sayVerbatim('checking'),
+        processed: 1,
+        total: 2,
+        item: null,
+      });
+    });
+    expect(queue.listRunning()).toEqual([expect.objectContaining({ jobId: id, kind: CHECK_DISK })]);
     expect(onProgress).toHaveBeenCalledWith({
-      jobId: 'job-5',
-      phase: 'checking',
+      jobId: id,
+      phase: sayVerbatim('checking'),
       processed: 1,
       total: 2,
       item: null,
     });
+
+    gate.open();
   });
 
-  it('hands the failure on where the handler is what failed', async () => {
-    const onFinished = vi.fn<(finished: FinishedJob) => void>();
+  it('fails a job that has had every try its kind allows, saying why', async () => {
+    const onFinished = vi.fn();
+    const handler = vi.fn(() => Promise.reject(new Error('the disk is gone')));
+    const queue = aQueue({
+      handlers: { [CHECK_DISK]: handler },
+      perKind: { [CHECK_DISK]: { retries: 0 } },
+      onFinished,
+    });
 
-    await (
-      await createJobQueue({
-        connectionString: 'postgres://flux',
-        handlers: { [CHECK_DISK]: () => Promise.reject(new Error('the disk is gone')) },
-        onFinished,
-      })
-    ).startWorking();
+    await queue.startWorking();
 
-    await expect(deliver(CHECK_DISK, [{ id: 'job-3', data: null }])).rejects.toThrow(
-      'the disk is gone',
+    const id = await queue.enqueue(CHECK_DISK, {});
+
+    await vi.waitFor(async () => {
+      expect(await rowOf(id)).toMatchObject({ state: 'failed', lastError: 'the disk is gone' });
+    });
+    expect(onFinished).toHaveBeenCalledWith(
+      expect.objectContaining({
+        jobId: id,
+        reason: sayVerbatim('the disk is gone'),
+        wasStopped: false,
+      }),
     );
-    expect(onFinished).toHaveBeenCalledWith(expect.objectContaining({ jobId: 'job-3' }));
-    expect(onFinished.mock.calls.at(-1)?.[0].reason?.message).toBe('the disk is gone');
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it('puts a job that failed back to wait a while, where its kind allows another try', async () => {
+    const queue = aQueue({
+      handlers: { [CHECK_DISK]: () => Promise.reject(new Error('not yet')) },
+    });
+
+    await queue.startWorking();
+
+    const id = await queue.enqueue(CHECK_DISK, {});
+
+    await vi.waitFor(async () => {
+      expect(await rowOf(id)).toMatchObject({ state: 'queued', attempts: 1, lastError: 'not yet' });
+    });
+    expect((await rowOf(id))?.runAfter.getTime()).toBeGreaterThan(Date.now());
   });
 
   it('runs nothing until it is told to start, so a handler cannot fire mid-assembly', async () => {
     const handler = vi.fn(() => Promise.resolve());
+    const queue = aQueue({ handlers: { [CHECK_DISK]: handler } });
 
-    await createJobQueue({
-      connectionString: 'postgres://flux',
-      handlers: { [CHECK_DISK]: handler },
+    await queue.enqueue(CHECK_DISK, {});
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
     });
 
-    expect(boss.workers.size).toBe(0);
     expect(handler).not.toHaveBeenCalled();
-  });
-
-  it('schedules with the same shape of payload the startup path sends', async () => {
-    const queue = await createJobQueue({
-      connectionString: 'postgres://flux',
-      handlers: { [CHECK_DISK]: () => Promise.resolve() },
-    });
-
-    await queue.setSchedule(CHECK_DISK, 'default', '*/15 * * * *', 'Europe/London');
-
-    expect(boss.scheduled).toEqual([{ queueName: CHECK_DISK, cron: '*/15 * * * *', data: {} }]);
-  });
-
-  it('stops what a library has running, and drops what it has waiting', async () => {
-    let finish: () => void = () => {};
-    const queue = await createJobQueue({
-      connectionString: 'postgres://flux',
-      handlers: {
-        'library.scan': () =>
-          new Promise<void>((resolve) => {
-            finish = resolve;
-          }),
-      },
-    });
 
     await queue.startWorking();
 
-    const running = deliver('library.scan', [{ id: 'job-running', data: { libraryId: 'films' } }]);
-
-    boss.queued.push(
-      { kind: 'library.scan', id: 'job-waiting', libraryId: 'films' },
-      { kind: 'library.scan', id: 'job-elsewhere', libraryId: 'shows' },
-    );
-
-    await expect(queue.cancelFor('films')).resolves.toBe(2);
-    expect(queue.isCancelled('job-running')).toBe(true);
-    expect(boss.dropped).toEqual(['library.scan:job-waiting']);
-
-    finish();
-    await running;
-  });
-
-  it('names the job already holding a key, rather than leaving a caller to invent one', async () => {
-    let finish: () => void = () => {};
-    const queue = await createJobQueue({
-      connectionString: 'postgres://flux',
-      handlers: {
-        'library.scan': () =>
-          new Promise<void>((resolve) => {
-            finish = resolve;
-          }),
-      },
+    await vi.waitFor(() => {
+      expect(handler).toHaveBeenCalled();
     });
-
-    await queue.startWorking();
-
-    const running = deliver('library.scan', [{ id: 'job-running', data: { libraryId: 'films' } }]);
-
-    await expect(queue.liveJob('library.scan', 'films')).resolves.toBe('job-running');
-    await expect(queue.liveJob('library.scan', 'shows')).resolves.toBeNull();
-
-    finish();
-    await running;
-  });
-
-  it('finds one that is only waiting, which is a collision just the same', async () => {
-    const queue = await createJobQueue({
-      connectionString: 'postgres://flux',
-      handlers: { 'library.scan': () => Promise.resolve() },
-    });
-
-    boss.queued.push({ kind: 'library.scan', id: 'job-waiting', libraryId: 'films' });
-
-    await expect(queue.liveJob('library.scan', 'films')).resolves.toBe('job-waiting');
-  });
-
-  it('finds a job of a kind that is about no library at all', async () => {
-    let finish: () => void = () => {};
-    const queue = await createJobQueue({
-      connectionString: 'postgres://flux',
-      handlers: {
-        [CHECK_DISK]: () =>
-          new Promise<void>((resolve) => {
-            finish = resolve;
-          }),
-      },
-    });
-
-    await queue.startWorking();
-
-    const running = deliver(CHECK_DISK, [{ id: 'job-housekeeping', data: {} }]);
-
-    await expect(queue.liveJob(CHECK_DISK)).resolves.toBe('job-housekeeping');
-
-    finish();
-    await running;
-  });
-
-  it('still stops every kind a library has going, not just one of them', async () => {
-    let finish: () => void = () => {};
-    const queue = await createJobQueue({
-      connectionString: 'postgres://flux',
-      handlers: {
-        'library.scan': () =>
-          new Promise<void>((resolve) => {
-            finish = resolve;
-          }),
-        'library.regenerateTrickplay': () => new Promise<void>(() => {}),
-      },
-    });
-
-    await queue.startWorking();
-
-    const scanning = deliver('library.scan', [{ id: 'job-scan', data: { libraryId: 'films' } }]);
-
-    void deliver('library.regenerateTrickplay', [
-      { id: 'job-sheets', data: { libraryId: 'films' } },
-    ]);
-
-    await expect(queue.cancelFor('films')).resolves.toBeGreaterThanOrEqual(2);
-    expect(queue.isCancelled('job-scan')).toBe(true);
-    expect(queue.isCancelled('job-sheets')).toBe(true);
-
-    finish();
-    await scanning;
-  });
-
-  it('names a job after what its payload says it is about, where no library is named', async () => {
-    const onFinished = vi.fn();
-
-    await (
-      await createJobQueue({
-        connectionString: 'postgres://flux',
-        handlers: { 'server.prepareDownload': () => Promise.resolve() },
-        onFinished,
-      })
-    ).startWorking();
-
-    await deliver('server.prepareDownload', [{ id: 'job-3', data: { subject: 'Arrival' } }]);
-
-    expect(onFinished).toHaveBeenCalledWith(
-      expect.objectContaining({ jobId: 'job-3', subject: 'Arrival' }),
-    );
-  });
-
-  it('runs as many of a kind at once, and retries it as often, as that kind is set to', async () => {
-    const queue = await createJobQueue({
-      connectionString: 'postgres://flux',
-      handlers: {
-        'server.prepareDownload': () => Promise.resolve(),
-        'library.scan': () => Promise.resolve(),
-      },
-      perKind: { 'server.prepareDownload': { atOnce: 8, retries: 0 } },
-    });
-
-    await queue.startWorking();
-    await queue.enqueue('server.prepareDownload', { subject: 'Arrival' });
-    await queue.enqueue('library.scan', { libraryId: 'films' });
-
-    expect(boss.atOnce.get('server.prepareDownload')).toBe(8);
-    expect(boss.atOnce.get('library.scan')).toBe(1);
-    expect(boss.sent.map((one) => one.options.retryLimit)).toEqual([0, 2]);
-  });
-
-  it('sends a job to be picked up now, where nothing says to hold it back', async () => {
-    const queue = await createJobQueue({
-      connectionString: 'postgres://flux',
-      handlers: { 'library.scan': () => Promise.resolve() },
-    });
-
-    await queue.enqueue('library.scan', { libraryId: 'films' }, 'films');
-
-    expect(boss.sent[0]?.options.startAfter).toBeUndefined();
-    expect(boss.sent[0]?.options.singletonKey).toBe('films');
   });
 
   it('holds a job back for a while, for work that has to be asked for again later', async () => {
-    const queue = await createJobQueue({
-      connectionString: 'postgres://flux',
-      handlers: { 'library.scan': () => Promise.resolve() },
-    });
+    const handler = vi.fn(() => Promise.resolve());
+    const queue = aQueue({ handlers: { [SCAN]: handler } });
 
-    await queue.enqueueAfter('library.scan', { libraryId: 'films' }, 30, 'films');
+    await queue.startWorking();
 
-    expect(boss.sent[0]?.options.startAfter).toBe(30);
-    expect(boss.sent[0]?.options.singletonKey).toBe('films');
-  });
-  it('has the run on record before the work that amends it begins', async () => {
-    const order: string[] = [];
-    let release = (): void => {};
+    const id = await queue.enqueueAfter(SCAN, { libraryId: 'films' }, 30, 'films');
 
-    const recorded = new Promise<void>((resolve) => {
-      release = resolve;
-    });
-
-    const handler = vi.fn(() => {
-      order.push('handler');
-
-      return Promise.resolve();
-    });
-
-    await (
-      await createJobQueue({
-        connectionString: 'postgres://flux',
-        handlers: { [CHECK_DISK]: handler },
-        onStarted: async () => {
-          order.push('started');
-
-          await recorded;
-
-          order.push('recorded');
-        },
-        onFinished: () => {
-          order.push('finished');
-        },
-      })
-    ).startWorking();
-
-    const working = deliver(CHECK_DISK, [{ id: 'job-1', data: null }]);
-
-    await new Promise((settle) => {
-      setTimeout(settle, 0);
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
     });
 
     expect(handler).not.toHaveBeenCalled();
+    expect((await rowOf(id))?.runAfter.getTime()).toBeGreaterThan(Date.now() + 25_000);
+  });
 
-    release();
+  it('keeps one job waiting under a key, and gives the key up once that job starts', async () => {
+    const gate = aGate();
+    const handler = vi.fn(() => gate.passed);
+    const queue = aQueue({ handlers: { [SCAN]: handler } });
 
-    await working;
+    const first = await queue.enqueue(SCAN, { libraryId: 'films' }, 'films');
 
-    expect(order).toEqual(['started', 'recorded', 'handler', 'finished']);
+    await expect(queue.enqueue(SCAN, { libraryId: 'films' }, 'films')).resolves.toBeNull();
+    await expect(queue.enqueue(SCAN, { libraryId: 'shows' }, 'shows')).resolves.not.toBeNull();
+
+    await queue.startWorking();
+
+    await vi.waitFor(() => {
+      expect(handler).toHaveBeenCalledWith(first, { libraryId: 'films' });
+    });
+    await expect(queue.enqueue(SCAN, { libraryId: 'films' }, 'films')).resolves.not.toBeNull();
+
+    gate.open();
+  });
+
+  it('runs as many of a kind at once as that kind is set to', async () => {
+    const gate = aGate();
+    const handler = vi.fn(() => gate.passed);
+    const queue = aQueue({
+      handlers: { 'server.prepareDownload': handler },
+      perKind: { 'server.prepareDownload': { atOnce: 2 } },
+    });
+
+    await queue.startWorking();
+
+    for (const subject of ['Arrival', 'Heat', 'Alien']) {
+      await queue.enqueue('server.prepareDownload', { subject });
+    }
+
+    await vi.waitFor(() => {
+      expect(handler).toHaveBeenCalledTimes(2);
+    });
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
+    });
+
+    expect(handler).toHaveBeenCalledTimes(2);
+
+    gate.open();
+
+    await vi.waitFor(() => {
+      expect(handler).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  it('stops what a library has running, and drops what it has waiting', async () => {
+    const gate = aGate();
+    const handler = vi.fn(() => gate.passed);
+    const queue = aQueue({ handlers: { [SCAN]: handler, [TRICKPLAY]: () => gate.passed } });
+
+    await queue.startWorking();
+
+    const scanning = await queue.enqueue(SCAN, { libraryId: 'films' });
+    const sheets = await queue.enqueue(TRICKPLAY, { libraryId: 'films' });
+
+    await vi.waitFor(() => {
+      expect(queue.listRunning()).toHaveLength(2);
+    });
+
+    const waiting = await queue.enqueue(SCAN, { libraryId: 'films' });
+    const elsewhere = await queue.enqueue(SCAN, { libraryId: 'shows' });
+
+    await expect(queue.cancelFor('films')).resolves.toBe(3);
+    expect(queue.isCancelled(scanning ?? '')).toBe(true);
+    expect(queue.isCancelled(sheets ?? '')).toBe(true);
+    expect((await rowOf(waiting))?.state).toBe('cancelled');
+    expect((await rowOf(elsewhere))?.state).toBe('queued');
+
+    gate.open();
+  });
+
+  it('drops a job that is only waiting, and says so only where there was one to drop', async () => {
+    const handler = vi.fn(() => Promise.resolve());
+    const queue = aQueue({ handlers: { [SCAN]: handler } });
+    const id = await queue.enqueue(SCAN, { libraryId: 'films' });
+
+    await expect(queue.cancel(id ?? '')).resolves.toBe(true);
+    await expect(queue.cancel(id ?? '')).resolves.toBe(false);
+    await expect(queue.cancel('nothing-by-that-name')).resolves.toBe(false);
+    await expect(queue.readState(id ?? '')).resolves.toBe('failed');
+
+    await queue.startWorking();
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
+    });
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('names the job a library already has going, running or waiting', async () => {
+    const gate = aGate();
+    const queue = aQueue({
+      handlers: { [SCAN]: () => gate.passed, [CHECK_DISK]: () => gate.passed },
+    });
+
+    const waiting = await queue.enqueue(SCAN, { libraryId: 'shows' }, 'shows');
+
+    await expect(queue.liveJob(SCAN, 'shows')).resolves.toBe(waiting);
+
+    await queue.startWorking();
+
+    const housekeeping = await queue.enqueue(CHECK_DISK, {});
+
+    await vi.waitFor(() => {
+      expect(queue.listRunning()).toHaveLength(2);
+    });
+    await expect(queue.liveJob(SCAN, 'shows')).resolves.toBe(waiting);
+    await expect(queue.liveJob(SCAN, 'films')).resolves.toBeNull();
+    await expect(queue.liveJob(CHECK_DISK)).resolves.toBe(housekeeping);
+
+    gate.open();
+  });
+
+  it('keeps one schedule per key, and forgets it when told to', async () => {
+    const queue = aQueue({ handlers: { [CHECK_DISK]: () => Promise.resolve() } });
+
+    await queue.setSchedule(CHECK_DISK, 'default', '0 * * * *', 'UTC');
+    await queue.setSchedule(CHECK_DISK, 'default', '*/15 * * * *', 'Europe/London');
+
+    await expect(queue.listSchedules()).resolves.toEqual([
+      { queueName: CHECK_DISK, key: 'default', cron: '*/15 * * * *', timezone: 'Europe/London' },
+    ]);
+
+    await queue.clearSchedule(CHECK_DISK, 'default');
+
+    await expect(queue.listSchedules()).resolves.toEqual([]);
+  });
+
+  it('sends the job for a schedule whose moment has come, and moves it on to the next', async () => {
+    const handler = vi.fn(() => Promise.resolve());
+    const queue = aQueue({ handlers: { [CHECK_DISK]: handler } });
+
+    await db.insert(jobSchedule).values({
+      queueName: CHECK_DISK,
+      key: 'default',
+      cron: '*/15 * * * *',
+      timezone: 'UTC',
+      nextRunAt: new Date(Date.now() - 1000),
+    });
+
+    await queue.startWorking();
+
+    await vi.waitFor(() => {
+      expect(handler).toHaveBeenCalledWith(expect.any(String), {});
+    });
+
+    const [schedule] = await db.select().from(jobSchedule);
+
+    expect(schedule?.nextRunAt.getTime()).toBeGreaterThan(Date.now());
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it('takes up again what the last server left running, unless it had used every try', async () => {
+    const handler = vi.fn(() => Promise.resolve());
+    const queue = aQueue({ handlers: { [SCAN]: handler } });
+    const left = { kind: SCAN, payload: {}, state: 'running', runAfter: new Date(0) };
+
+    await db.insert(queuedJob).values([
+      { ...left, id: 'interrupted', attempts: 1, retryLimit: 2 },
+      { ...left, id: 'worn-out', attempts: 3, retryLimit: 2 },
+    ]);
+
+    await queue.startWorking();
+
+    await vi.waitFor(() => {
+      expect(handler).toHaveBeenCalledWith('interrupted', {});
+    });
+    expect(handler).not.toHaveBeenCalledWith('worn-out', {});
+    expect((await rowOf('worn-out'))?.state).toBe('failed');
+  });
+
+  it('forgets jobs that ended more than a week ago', async () => {
+    const queue = aQueue({ handlers: { [SCAN]: () => Promise.resolve() } });
+    const ended = {
+      kind: SCAN,
+      payload: {},
+      state: 'completed',
+      retryLimit: 2,
+      runAfter: new Date(0),
+    };
+
+    await db.insert(queuedJob).values([
+      { ...ended, id: 'old', finishedAt: new Date(Date.now() - 8 * 86_400_000) },
+      { ...ended, id: 'recent', finishedAt: new Date(Date.now() - 86_400_000) },
+    ]);
+
+    await queue.startWorking();
+
+    expect(await rowOf('old')).toBeUndefined();
+    expect(await rowOf('recent')).toBeDefined();
   });
 });

@@ -10,13 +10,13 @@ A handful of ideas explain most of what you see in Valence. This page defines th
 
 A running Valence stack has these parts, each with one job.
 
-| Part             | What it does                                                                                                 |
-| ---------------- | ------------------------------------------------------------------------------------------------------------ |
-| Server           | The API, the sign-in system, the job queue and the web client, in one Node process listening on port 8420.   |
-| Media service    | A Rust program that probes files, transcodes with FFmpeg, and renders previews. It listens on a Unix socket. |
-| Database         | Postgres. Holds accounts, libraries, watch history, settings and the job queue.                              |
-| Requests service | Optional. Searches indexers, drives a download client and files what arrives into a library.                 |
-| Clients          | The web app in a browser, or the desktop app. Both are windows onto the server.                              |
+| Part             | What it does                                                                                                    |
+| ---------------- | --------------------------------------------------------------------------------------------------------------- |
+| Server           | The API, the sign-in system, the job queue and the web client, in one Node process listening on port 8420.      |
+| Media service    | A Rust program that probes files, transcodes with FFmpeg, and renders previews. It listens on a Unix socket.    |
+| Database         | Postgres by default, or MySQL or MariaDB. Holds accounts, libraries, watch history, settings and the job queue. |
+| Requests service | Optional. Searches indexers, drives a download client and files what arrives into a library.                    |
+| Clients          | The web app in a browser, or the desktop app. Both are windows onto the server.                                 |
 
 The server and the media service run together inside the single `valence` container. If either stops, the container stops so that the orchestrator restarts both, rather than leaving an API that cannot play anything.
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { QualityProfileDraftSchema } from '@ValenceContracts/schemas/QualityProfile';
-import { aScratchDatabase } from '@ValenceRequests/testing/aScratchDatabase';
+import { aScratchDatabase } from '#dialect/aScratchDatabase';
 import { createDatabaseProfileStore } from './createDatabaseProfileStore';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 

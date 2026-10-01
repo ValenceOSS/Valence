@@ -26,15 +26,19 @@ The published release image is built for linux/amd64. The bundled FFmpeg and Rus
 
 ### Which Postgres version do I need?
 
-Postgres 18. The shipped `compose.yaml` runs `postgres:18-alpine`, and the Valence image includes the matching client so it can take snapshots. Pointing the new image at an older Postgres data directory does not upgrade anything. The steps for moving an existing install are in [Updating](/install/updating).
+Postgres 15 or newer, and Valence refuses an older server when it starts. The shipped `compose.yaml` runs `postgres:18-alpine`, and the Valence image includes the Postgres 18 client so it can take snapshots. Pointing the new image at an older Postgres data directory does not upgrade anything. The steps for moving an existing install are in [Updating](/install/updating).
 
 ### Can I run it without Docker?
 
-The supported way to run Valence is the Docker image. The repository also describes running from source for development, which needs Node 24 or newer, pnpm, the Rust toolchain and a Postgres database. See [Local setup](/develop/local-setup). It is a route for contributors and not a documented production install.
+The supported way to run Valence is the Docker image. The repository also describes running from source for development, which needs Node 24 or newer, pnpm, the Rust toolchain and a database, Postgres by default. See [Local setup](/develop/local-setup). It is a route for contributors and not a documented production install.
 
 ### Can I use a database other than Postgres?
 
-No. Postgres is the only supported data store. SQLite and Redis are deliberately not used.
+Yes: MySQL 8.0.21 or newer, or MariaDB 10.6 or newer. Postgres stays the default and the recommendation, and it is what `compose.yaml` runs. Each of the others comes with an override file laid over it, and `DATABASE_URL` tells Valence which kind of database it is talking to. Choose before the first start, because Valence moves no data from one kind of database to another. See [Choosing a database](/install/docker-compose#choosing-a-database). SQLite and Redis are deliberately not used.
+
+### Can I use MongoDB?
+
+No. Valence is relational throughout: about 70 tables, foreign keys with cascading deletes, unique constraints, transactions that span several rows, and `SELECT ... FOR UPDATE SKIP LOCKED` for the job queue and for claiming re-encodes. Drizzle, the library Valence reaches its database through, has no MongoDB dialect, and better-auth's Drizzle adapter works only with SQL databases. A `DATABASE_URL` starting `mongodb://` is refused when the server starts.
 
 ## Setting up
 
@@ -92,7 +96,7 @@ Pull the new image and recreate the container. Migrations run on start, and befo
 
 ### What should I back up?
 
-The `config` volume above all: it holds the settings and the only copy of the household's profile pictures. Also the database, either through the snapshots in `/config/backups` or with `pg_dumpall`. The `cache` and `transcodes` volumes hold nothing that cannot be made again. See [Storage and volumes](/install/storage-and-volumes).
+The `config` volume above all: it holds the settings and the only copy of the household's profile pictures. Also the database, either through the snapshots in `/config/backups` or with `pg_dumpall` (on MySQL or MariaDB, their own dump tool). The `cache` and `transcodes` volumes hold nothing that cannot be made again. See [Storage and volumes](/install/storage-and-volumes).
 
 ### Can I use network storage for my media?
 

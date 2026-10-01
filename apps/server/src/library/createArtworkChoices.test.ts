@@ -1,11 +1,12 @@
-import { PGlite } from '@electric-sql/pglite';
-import { drizzle } from 'drizzle-orm/pglite';
+import { eq } from 'drizzle-orm';
 import { describe, expect, it, vi } from 'vitest';
-import { authSchema, valenceSchema } from '@ValenceServer/db/Schema';
+import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
+import { library, mediaItem } from '#dialect/Schema';
+import { aMediaItemRow } from '@ValenceServer/testing/aMediaItemRow';
 import { createArtworkChoices } from './createArtworkChoices';
 import type { ArtworkChoices } from '@ValenceContracts/schemas/ArtworkChoice';
 
-const STARTING_POSTGRES_MS = 30_000;
+const STARTING_THE_DATABASE_MS = 60_000;
 
 const BASE = 'https://image.tmdb.org/t/p';
 
@@ -25,55 +26,54 @@ const OFFERED: ArtworkChoices['options'] = {
 };
 
 /**
- * A Postgres of its own, in memory, holding a programme of two episodes, a film, a file the catalogue
- * never matched, and nowhere yet to keep choices.
+ * A migrated database holding a programme of two episodes, a film, a file the catalogue never
+ * matched, and no choices yet.
  *
  * @returns The database.
  */
 const aScratchDatabase = async () => {
-  const client = new PGlite();
+  const db = await aMigratedDatabase();
+  const episode = { seriesTitle: 'A Show', externalId: '100', posterUrl: 'p.jpg' };
 
-  await client.exec(`
-    CREATE TABLE "media_item" (
-      "id" text PRIMARY KEY,
-      "libraryId" text NOT NULL,
-      "path" text NOT NULL,
-      "seriesTitle" text,
-      "externalId" text,
-      "posterUrl" text,
-      "backdropUrl" text,
-      "logoUrl" text
-    );
-    CREATE TABLE "media_artwork_choice" (
-      "id" text PRIMARY KEY,
-      "libraryId" text NOT NULL,
-      "externalKind" text NOT NULL,
-      "externalId" text NOT NULL,
-      "kind" text NOT NULL,
-      "url" text NOT NULL,
-      "updatedAt" timestamp NOT NULL DEFAULT now(),
-      "updatedBy" text
-    );
-    CREATE UNIQUE INDEX "media_artwork_choice_title_idx"
-      ON "media_artwork_choice" ("libraryId", "externalKind", "externalId", "kind");
-    INSERT INTO "media_item" VALUES
-      ('ep-1', 'shows', '/shows/a/1.mkv', 'A Show', '100', 'p.jpg', 'still-1.jpg', NULL),
-      ('ep-2', 'shows', '/shows/a/2.mkv', 'A Show', '100', 'p.jpg', 'still-2.jpg', NULL),
-      ('film', 'films', '/films/f.mkv', NULL, '100', 'fp.jpg', 'fb.jpg', 'fl.png'),
-      ('stray', 'films', '/films/s.mkv', NULL, NULL, NULL, NULL, NULL);
-  `);
+  await db.insert(library).values([
+    { id: 'shows', name: 'Shows', kind: 'shows', path: '/shows' },
+    { id: 'films', name: 'Films', kind: 'movies', path: '/films' },
+  ]);
+  await db.insert(mediaItem).values([
+    {
+      ...aMediaItemRow('ep-1', 'shows'),
+      ...episode,
+      path: '/shows/a/1.mkv',
+      backdropUrl: 'still-1.jpg',
+    },
+    {
+      ...aMediaItemRow('ep-2', 'shows'),
+      ...episode,
+      path: '/shows/a/2.mkv',
+      backdropUrl: 'still-2.jpg',
+    },
+    {
+      ...aMediaItemRow('film', 'films'),
+      path: '/films/f.mkv',
+      externalId: '100',
+      posterUrl: 'fp.jpg',
+      backdropUrl: 'fb.jpg',
+      logoUrl: 'fl.png',
+    },
+    { ...aMediaItemRow('stray', 'films'), path: '/films/s.mkv' },
+  ]);
 
-  return { client, db: drizzle(client, { schema: { ...authSchema, ...valenceSchema } }) };
+  return db;
 };
 
 /**
  * Builds the choices over a scratch database, with a catalogue that offers the pictures above and
  * work that records what it was asked to do.
  *
- * @returns The choices, the database's own client, and what was asked of the library.
+ * @returns The choices, a way to read a picture column back, and what was asked of the library.
  */
 const someChoices = async () => {
-  const { client, db } = await aScratchDatabase();
+  const db = await aScratchDatabase();
   const readAgain = vi.fn(() => Promise.resolve('read-again-job'));
   const fetchLogos = vi.fn(() => Promise.resolve({ jobId: 'logos-job' }));
   const choices = createArtworkChoices({
@@ -82,18 +82,13 @@ const someChoices = async () => {
     readAgain,
     fetchLogos,
   });
-  const column = async (id: string, name: string) =>
-    (
-      await client.query<Record<string, string | null>>(
-        `SELECT "${name}" FROM "media_item" WHERE "id" = $1`,
-        [id],
-      )
-    ).rows[0]?.[name] ?? null;
+  const column = async (id: string, name: 'posterUrl' | 'backdropUrl' | 'logoUrl') =>
+    (await db.select().from(mediaItem).where(eq(mediaItem.id, id)))[0]?.[name] ?? null;
 
   return { choices, readAgain, fetchLogos, column };
 };
 
-describe('createArtworkChoices', { timeout: STARTING_POSTGRES_MS }, () => {
+describe('createArtworkChoices', { timeout: STARTING_THE_DATABASE_MS }, () => {
   it('offers what the catalogue has, and what is chosen now', async () => {
     const { choices } = await someChoices();
 
@@ -187,7 +182,7 @@ describe('createArtworkChoices', { timeout: STARTING_POSTGRES_MS }, () => {
   });
 
   it('says the catalogue could not be asked, rather than choosing blind', async () => {
-    const { db } = await aScratchDatabase();
+    const db = await aScratchDatabase();
     const choices = createArtworkChoices({
       db,
       readOptions: () => Promise.resolve(null),

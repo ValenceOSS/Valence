@@ -350,7 +350,7 @@ describe('JobHistory', () => {
 
     await screen.findByText('Movies');
 
-    const table = screen.getByRole('table', { name: 'What pg-boss has run' });
+    const table = screen.getByRole('table', { name: 'What the job queue has run' });
 
     expect(within(table).queryByRole('button', { name: /Job|Status|Subject|When/ })).toBeNull();
     expect(within(table).queryByRole('button', { name: 'Filter by status' })).toBeNull();

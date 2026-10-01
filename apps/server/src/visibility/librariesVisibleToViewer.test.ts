@@ -1,11 +1,14 @@
 import { and, asc } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
-import { createDatabase } from '@ValenceServer/db/Database';
-import { library } from '@ValenceServer/db/Schema';
+import { createDatabase } from '#dialect/createDatabase';
+import { NOWHERE } from '#dialect/NOWHERE';
+import { sqlAsPostgresQuotes } from '@ValenceServer/testing/sqlAsPostgresQuotes';
+import { library } from '#dialect/Schema';
 import { librariesVisibleToViewer } from './librariesVisibleToViewer';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
+import { aVisibilityPlayground } from '@ValenceServer/visibility/aVisibilityPlayground';
 
-const NOWHERE = 'postgres://nobody@localhost:1/none';
+const STARTING_POSTGRES_MS = 60_000;
 
 const WATCHER: Viewer = {
   kind: 'account',
@@ -17,12 +20,14 @@ const WATCHER: Viewer = {
 const asked = (viewer: Viewer): string => {
   const { db } = createDatabase(NOWHERE);
 
-  return db
-    .select({ id: library.id })
-    .from(library)
-    .where(and(librariesVisibleToViewer(db, viewer)))
-    .orderBy(asc(library.name))
-    .toSQL().sql;
+  return sqlAsPostgresQuotes(
+    db
+      .select({ id: library.id })
+      .from(library)
+      .where(and(librariesVisibleToViewer(db, viewer)))
+      .orderBy(asc(library.name))
+      .toSQL().sql,
+  );
 };
 
 describe('which libraries a viewer is offered', () => {
@@ -57,4 +62,37 @@ describe('which libraries a viewer is offered', () => {
     expect(sql).not.toContain('"library_block"');
     expect(sql).not.toContain('"hidden"');
   });
+});
+
+describe('which libraries a viewer is offered, on a database', () => {
+  it(
+    'leaves out a library the account is kept from and one the profile hid',
+    async () => {
+      const { viewers, librariesKeptBy } = await aVisibilityPlayground();
+      const kept = (viewer: Viewer) =>
+        librariesKeptBy((db) => librariesVisibleToViewer(db, viewer));
+
+      expect(await kept(viewers.kid)).toStrictEqual(['films', 'kids']);
+      expect(await kept(viewers.kidWithoutProfiles)).toStrictEqual(['films', 'kids', 'music']);
+      expect(await kept(viewers.adminWatchingAsKid)).toStrictEqual(['films', 'kids', 'locked']);
+    },
+    STARTING_POSTGRES_MS,
+  );
+
+  it(
+    'offers every library to an administrator, a share guest and the server',
+    async () => {
+      const { viewers, librariesKeptBy } = await aVisibilityPlayground();
+
+      for (const viewer of [viewers.admin, viewers.guest, viewers.server]) {
+        expect(await librariesKeptBy((db) => librariesVisibleToViewer(db, viewer))).toStrictEqual([
+          'films',
+          'kids',
+          'locked',
+          'music',
+        ]);
+      }
+    },
+    STARTING_POSTGRES_MS,
+  );
 });

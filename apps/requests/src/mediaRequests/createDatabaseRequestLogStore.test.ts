@@ -1,7 +1,7 @@
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { describe, expect, it } from 'vitest';
 import { aMediaRequest } from '@ValenceRequests/testing/aMediaRequest';
-import { aScratchDatabase } from '@ValenceRequests/testing/aScratchDatabase';
+import { aScratchDatabase } from '#dialect/aScratchDatabase';
 import { createDatabaseMediaRequestStore } from './createDatabaseMediaRequestStore';
 import { createDatabaseRequestLogStore } from './createDatabaseRequestLogStore';
 

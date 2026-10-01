@@ -12,6 +12,13 @@ This is the complete `compose.yaml` that ships with Valence, with its explanatio
   does not exist stops the container from starting, and the error does not say why.
 </Callout>
 
+<Callout title="MySQL or MariaDB?">
+  This file runs Postgres, the default. To keep the data in MariaDB or MySQL instead, lay
+  `compose.mariadb.yaml` or `compose.mysql.yaml` from the repository over it, with `docker compose
+  -f compose.yaml -f compose.mariadb.yaml up -d`, and do so before the first start. See [Choosing a
+  database](/install/docker-compose#choosing-a-database).
+</Callout>
+
 ## compose.yaml
 
 ```yaml
@@ -283,7 +290,7 @@ VPN_SERVER_COUNTRIES=
 
 | Setting                                                                             | Required | What it does                                                                                                               |
 | ----------------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `POSTGRES_PASSWORD`                                                                 | Yes      | The database password. Only Valence uses it, so any long random string.                                                    |
+| `POSTGRES_PASSWORD`                                                                 | Yes      | The database password, whichever database you run. Only Valence uses it, so any long random string.                        |
 | `BETTER_AUTH_SECRET`                                                                | Yes      | Seals sign-in cookies. At least 32 characters. Changing it signs everybody out.                                            |
 | `PUBLIC_URL`                                                                        | Yes      | The address a browser reaches Valence at — the reverse proxy's, not this machine's. Sign-in is refused from anywhere else. |
 | `MEDIA_PATH`                                                                        | Yes      | Your library on the host, mounted read only at `/media`.                                                                   |

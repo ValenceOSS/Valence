@@ -1,9 +1,10 @@
-import { and, eq, lt, sql } from 'drizzle-orm';
+import { and, eq, inArray, lt } from 'drizzle-orm';
 import { UPLOAD_PIECE_BYTES } from '@ValenceContracts/schemas/UploadPieces';
-import { uploadSession } from '@ValenceServer/db/Schema';
+import { uploadSession } from '#dialect/Schema';
 import { beginUploadSession } from '@ValenceServer/uploads/beginUploadSession';
-import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
-import type { ValenceSchema } from '@ValenceServer/db/Database';
+import { uploadPiecesWith } from '@ValenceDatabase/uploadPiecesWith';
+import { uploadPiecesWithout } from '@ValenceDatabase/uploadPiecesWithout';
+import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { UploadSession, UploadSessions } from '@ValenceServer/uploads/UploadSession';
 
 const LEFT_FOR = 6 * 60 * 60 * 1000;
@@ -43,7 +44,7 @@ const sessionOf = (row: typeof uploadSession.$inferSelect): UploadSession => ({
  * @returns The uploads.
  */
 const createDatabaseUploadSessions = (
-  db: PgDatabase<PgQueryResultHKT, ValenceSchema>,
+  db: AnyValenceDatabase,
   leftFor = LEFT_FOR,
   pieceBytes = UPLOAD_PIECE_BYTES,
 ): UploadSessions => ({
@@ -66,26 +67,31 @@ const createDatabaseUploadSessions = (
   },
 
   find: async (uploadId, libraryId) => {
-    const [row] = await db
-      .update(uploadSession)
-      .set({ touchedAt: new Date() })
-      .where(and(eq(uploadSession.id, uploadId), eq(uploadSession.libraryId, libraryId)))
-      .returning();
+    const theOne = and(eq(uploadSession.id, uploadId), eq(uploadSession.libraryId, libraryId));
+
+    await db.update(uploadSession).set({ touchedAt: new Date() }).where(theOne);
+
+    const [row] = await db.select().from(uploadSession).where(theOne).limit(1);
 
     return row === undefined ? null : sessionOf(row);
   },
 
   receive: async (uploadId, index, isWhole) => {
-    const [row] = await db
+    await db
       .update(uploadSession)
       .set({
         received: isWhole
-          ? sql`(select coalesce(array_agg(distinct piece order by piece), '{}') from unnest(array_append(${uploadSession.received}, ${index}::integer)) as piece)`
-          : sql`array_remove(${uploadSession.received}, ${index}::integer)`,
+          ? uploadPiecesWith(uploadSession.received, index)
+          : uploadPiecesWithout(uploadSession.received, index),
         touchedAt: new Date(),
       })
+      .where(eq(uploadSession.id, uploadId));
+
+    const [row] = await db
+      .select({ received: uploadSession.received })
+      .from(uploadSession)
       .where(eq(uploadSession.id, uploadId))
-      .returning({ received: uploadSession.received });
+      .limit(1);
 
     return row === undefined ? [] : [...row.received].sort((one, other) => one - other);
   },
@@ -95,10 +101,24 @@ const createDatabaseUploadSessions = (
   },
 
   stale: async () => {
-    const left = await db
-      .delete(uploadSession)
-      .where(lt(uploadSession.touchedAt, new Date(Date.now() - leftFor)))
-      .returning();
+    const left = await db.transaction(async (tx) => {
+      const found = await tx
+        .select()
+        .from(uploadSession)
+        .where(lt(uploadSession.touchedAt, new Date(Date.now() - leftFor)))
+        .for('update');
+
+      if (found.length > 0) {
+        await tx.delete(uploadSession).where(
+          inArray(
+            uploadSession.id,
+            found.map((row) => row.id),
+          ),
+        );
+      }
+
+      return found;
+    });
 
     return left.map(sessionOf);
   },
