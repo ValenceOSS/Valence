@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { STILL_WIDTH } from '@ValenceMobile/components/APoster/STILL_WIDTH';
 import { HowFar } from '@ValenceMobile/components/HowFar/HowFar';
 import { Words } from '@ValenceMobile/components/Words/Words';
@@ -75,13 +76,12 @@ const AnArtCard = ({
     <View style={[styles.whole, { width: wide }]}>
       <View style={[styles.tile, size, { backgroundColor: colours.surfaceRaised }]}>
         {hasPicture ? (
-          <Image
+          <ARemotePicture
             style={styles.picture}
-            source={{ uri: artwork }}
-            onError={() => {
+            uri={artwork}
+            onMissing={() => {
               setIsPictureMissing(true);
             }}
-            accessibilityIgnoresInvertColors
           />
         ) : (
           <View style={[styles.fills, styles.standIn]}>
@@ -99,14 +99,13 @@ const AnArtCard = ({
         ) : null}
 
         {hasPicture && logo !== null && !isLogoMissing ? (
-          <Image
+          <ARemotePicture
             style={styles.logo}
-            source={{ uri: logo }}
-            resizeMode="contain"
-            onError={() => {
+            uri={logo}
+            fit="contain"
+            onMissing={() => {
               setIsLogoMissing(true);
             }}
-            accessibilityIgnoresInvertColors
           />
         ) : hasPicture ? (
           <Text style={styles.name} numberOfLines={2}>

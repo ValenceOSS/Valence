@@ -6,7 +6,8 @@ import {
   SkipForward as SkipForwardFilled,
 } from '@keyline-icons/react-native/fill';
 import { useEffect, useMemo, useState } from 'react';
-import { Animated, Image, PanResponder, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Animated, PanResponder, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { LISTENING_CHOICES } from '@ValenceClient/books/LISTENING_CHOICES';
 import { useWhatIsHeard } from '@ValenceClient/books/useWhatIsHeard';
@@ -170,10 +171,9 @@ const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
             <View style={[styles.row, { paddingHorizontal: 0 }]}>
               <View style={[styles.art, styles.cover, { backgroundColor: colours.surfaceRaised }]}>
                 {listening.hasCover ? (
-                  <Image
+                  <ARemotePicture
                     style={styles.fills}
-                    source={{ uri: onThisServer(bookCoverUrl(listening.id)) }}
-                    accessibilityIgnoresInvertColors
+                    uri={onThisServer(bookCoverUrl(listening.id))}
                   />
                 ) : (
                   <Icon of={BookOpen} size={20} colour={colours.textMuted} />
@@ -242,10 +242,9 @@ const TheNowPlayingBar = ({ onOpen }: TheNowPlayingBarProps) => {
           <View style={[styles.row, { paddingHorizontal: 0 }]}>
             <View style={[styles.art, { backgroundColor: colours.surfaceRaised }]}>
               {track.album.hasArtwork ? (
-                <Image
+                <ARemotePicture
                   style={styles.fills}
-                  source={{ uri: onThisServer(albumArtworkUrl(track.album.id)) }}
-                  accessibilityIgnoresInvertColors
+                  uri={onThisServer(albumArtworkUrl(track.album.id))}
                 />
               ) : (
                 <Icon of={MusicNote} size={20} colour={colours.textMuted} />

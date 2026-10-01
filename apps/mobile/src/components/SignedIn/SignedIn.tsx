@@ -17,6 +17,7 @@ import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { signOut } from '@ValenceClient/session/auth';
+import { forgetThePictures } from '@ValenceMobile/platform/forgetThePictures';
 import { watchPresence } from '@ValenceClient/presence/watchPresence';
 import { allowRealtimeClientToStart } from '@ValenceClient/realtime/getRealtimeClient';
 import { useFreshFromTheSocket } from '@ValenceClient/query/useFreshFromTheSocket';
@@ -359,9 +360,11 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
         shown={shown}
         onShow={onShow}
         onOut={() => {
-          void signOut().then(() => {
-            latest.get('now')?.onOut();
-          });
+          void signOut()
+            .then(forgetThePictures)
+            .then(() => {
+              latest.get('now')?.onOut();
+            });
         }}
         onElsewhere={() => {
           latest.get('now')?.onElsewhere();

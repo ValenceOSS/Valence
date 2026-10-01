@@ -1,4 +1,5 @@
-import { Image, Linking, StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { ArrowUpRight } from '@keyline-icons/react-native';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { HowFar } from '@ValenceMobile/components/HowFar/HowFar';
@@ -146,12 +147,11 @@ const ABlock = ({ block, pluginId, fields, onField, onAct, isActing, onLookAt }:
 
     case 'image':
       return (
-        <Image
-          source={{ uri: onThisServer(pluginImageUrl(pluginId, block.image)) }}
+        <ARemotePicture
+          uri={onThisServer(pluginImageUrl(pluginId, block.image))}
           style={[styles.picture, { backgroundColor: colours.surfaceRaised }]}
-          resizeMode="contain"
-          accessibilityLabel={block.alt}
-          accessibilityIgnoresInvertColors
+          fit="contain"
+          label={block.alt}
         />
       );
 

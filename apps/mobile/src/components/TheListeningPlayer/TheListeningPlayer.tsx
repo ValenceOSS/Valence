@@ -8,7 +8,8 @@ import {
   SkipBack as SkipBackFilled,
   SkipForward as SkipForwardFilled,
 } from '@keyline-icons/react-native/fill';
-import { Image, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { goToChapterBeside } from '@ValenceClient/books/goToChapterBeside';
 import { LISTENING_CHOICES } from '@ValenceClient/books/LISTENING_CHOICES';
@@ -115,11 +116,7 @@ const TheListeningPlayer = ({ onBack }: TheListeningPlayerProps) => {
               {cover === null ? (
                 <Icon of={BookOpen} size={64} colour={colours.textMuted} />
               ) : (
-                <Image
-                  style={styles.fills}
-                  source={{ uri: cover }}
-                  accessibilityIgnoresInvertColors
-                />
+                <ARemotePicture style={styles.fills} uri={cover} />
               )}
             </View>
           </View>

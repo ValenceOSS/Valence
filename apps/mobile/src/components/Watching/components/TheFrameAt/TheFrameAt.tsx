@@ -1,4 +1,5 @@
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { thumbnailAt } from '@ValenceClient/playback/fetchTrickplay';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import type { TheFrameAtProps } from './TheFrameAt.types';
@@ -38,8 +39,8 @@ const TheFrameAt = ({ trickplay, seconds, wide }: TheFrameAtProps) => {
 
   return (
     <View style={[styles.frame, { height: thumbnail.height * scale, width: wide }]}>
-      <Image
-        source={{ uri: onThisServer(thumbnail.sheetUrl) }}
+      <ARemotePicture
+        uri={onThisServer(thumbnail.sheetUrl)}
         style={{
           height: sheetHigh * scale,
           left: -thumbnail.x * scale,
@@ -47,7 +48,6 @@ const TheFrameAt = ({ trickplay, seconds, wide }: TheFrameAtProps) => {
           top: -thumbnail.y * scale,
           width: sheetWide * scale,
         }}
-        accessibilityIgnoresInvertColors
       />
     </View>
   );

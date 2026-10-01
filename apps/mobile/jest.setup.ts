@@ -4,10 +4,13 @@ import type { FakePlayer } from '@ValenceMobile/testing/theFakePlayer';
 import mockAsyncStorage from '@react-native-async-storage/async-storage/jest/async-storage-mock';
 import {
   createContext as mockCreateContext,
+  createElement as mockCreateElement,
   useEffect as mockUseEffect,
   useState as mockUseState,
 } from 'react';
 import type { ReactNode } from 'react';
+import { Image as mockNativeImage } from 'react-native';
+import type { ImageStyle, StyleProp } from 'react-native';
 
 jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
 
@@ -78,6 +81,33 @@ jest.mock('expo', () => ({
 
 jest.mock('@react-native-cookies/cookies', () => ({
   get: jest.fn(() => Promise.resolve({})),
+}));
+
+jest.mock('expo-image', () => ({
+  Image: Object.assign(
+    (props: {
+      source: { uri: string; headers?: Record<string, string> };
+      style?: StyleProp<ImageStyle>;
+      accessible?: boolean;
+      accessibilityLabel?: string;
+      onError?: () => void;
+      onLoad?: (event: { source: { width: number; height: number } }) => void;
+    }) =>
+      mockCreateElement(mockNativeImage, {
+        source: props.source,
+        style: props.style,
+        accessible: props.accessible,
+        accessibilityLabel: props.accessibilityLabel,
+        onError: props.onError,
+        onLoad: (event?: { nativeEvent?: { source?: { width: number; height: number } } }) => {
+          props.onLoad?.({ source: event?.nativeEvent?.source ?? { width: 0, height: 0 } });
+        },
+      }),
+    {
+      clearMemoryCache: jest.fn(() => Promise.resolve(true)),
+      clearDiskCache: jest.fn(() => Promise.resolve(true)),
+    },
+  ),
 }));
 
 jest.mock('expo-video', () => ({

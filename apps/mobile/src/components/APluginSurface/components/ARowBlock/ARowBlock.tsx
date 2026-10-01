@@ -1,4 +1,5 @@
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { ChevronRight } from '@keyline-icons/react-native';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
@@ -36,10 +37,9 @@ const ARowBlock = ({ row, pluginId, onAct, isActing }: ARowBlockProps) => {
           <Icon of={glyphFor(Keyline, row.icon)} size={22} colour={colours.text} />
         )
       ) : (
-        <Image
-          source={{ uri: onThisServer(pluginImageUrl(pluginId, row.image)) }}
+        <ARemotePicture
+          uri={onThisServer(pluginImageUrl(pluginId, row.image))}
           style={[styles.picture, { backgroundColor: colours.surfaceRaised }]}
-          accessibilityIgnoresInvertColors
         />
       )}
 

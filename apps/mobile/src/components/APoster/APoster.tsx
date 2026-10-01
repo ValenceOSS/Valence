@@ -1,6 +1,7 @@
 import { Check } from '@keyline-icons/react-native';
 import { useState } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { POSTER_WIDTH } from '@ValenceMobile/components/APoster/POSTER_WIDTH';
 import { STILL_WIDTH } from '@ValenceMobile/components/APoster/STILL_WIDTH';
 import { HowFar } from '@ValenceMobile/components/HowFar/HowFar';
@@ -92,13 +93,12 @@ const APoster = ({
             </Words>
           </View>
         ) : (
-          <Image
+          <ARemotePicture
             style={styles.poster}
-            source={{ uri: artwork }}
-            onError={() => {
+            uri={artwork}
+            onMissing={() => {
               setIsMissing(true);
             }}
-            accessibilityIgnoresInvertColors
           />
         )}
 

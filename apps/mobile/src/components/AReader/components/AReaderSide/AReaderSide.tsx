@@ -10,7 +10,8 @@ import {
   Unlock,
 } from '@keyline-icons/react-native';
 import { Bookmark as BookmarkFilled } from '@keyline-icons/react-native/fill';
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { AGlassCircle } from '@ValenceMobile/components/AGlassCircle/AGlassCircle';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Words } from '@ValenceMobile/components/Words/Words';
@@ -193,12 +194,7 @@ const AReaderSide = ({
           >
             <View style={styles.foot}>
               <View style={[styles.cover, { height: cover * COVER_TALL, width: cover }]}>
-                <Image
-                  source={{ uri: next.cover }}
-                  style={{ height: '100%', width: '100%' }}
-                  resizeMode="cover"
-                  accessibilityIgnoresInvertColors
-                />
+                <ARemotePicture uri={next.cover} style={{ height: '100%', width: '100%' }} />
               </View>
               <Words size="small" isCentred colour={ink}>
                 {say('phone.aReader.aReaderSide.readOn')}

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Image, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import type { ABookPictureProps } from './ABookPicture.types';
 
 const UNTIL_LOADED = 1.5;
@@ -21,19 +22,16 @@ const ABookPicture = ({ address, label, ratio }: ABookPictureProps) => {
   const [loaded, setLoaded] = useState<number | null>(null);
 
   return (
-    <Image
+    <ARemotePicture
       style={[styles.picture, { aspectRatio: ratio ?? loaded ?? UNTIL_LOADED }]}
-      resizeMode="contain"
-      source={{ uri: address }}
-      onLoad={({ nativeEvent }) => {
-        const { width, height } = nativeEvent.source;
-
+      fit="contain"
+      uri={address}
+      onLoad={({ width, height }) => {
         if (width > 0 && height > 0) {
           setLoaded(width / height);
         }
       }}
-      {...(label === null ? { accessibilityElementsHidden: true } : { accessibilityLabel: label })}
-      accessibilityIgnoresInvertColors
+      {...(label === null ? {} : { label })}
     />
   );
 };

@@ -1,5 +1,6 @@
 import { User } from '@keyline-icons/react-native';
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { canOpenPerson } from '@ValenceContracts/schemas/Person';
 import { AShelf } from '@ValenceMobile/components/AShelf/AShelf';
 import { POSTER_WIDTH } from '@ValenceMobile/components/APoster/POSTER_WIDTH';
@@ -54,11 +55,7 @@ const TheCast = ({ cast, onLookAtPerson }: TheCastProps) => {
               {member.imageUrl === null ? (
                 <Icon of={User} size={36} colour={colours.textMuted} />
               ) : (
-                <Image
-                  style={styles.photo}
-                  source={{ uri: member.imageUrl }}
-                  accessibilityIgnoresInvertColors
-                />
+                <ARemotePicture style={styles.photo} uri={member.imageUrl} />
               )}
             </View>
             <View style={styles.said}>

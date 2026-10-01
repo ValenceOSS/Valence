@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, Image, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { formatCalendarDate } from '@ValenceCore/functions/formatCalendarDate';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { ACard } from '@ValenceMobile/components/ACard/ACard';
@@ -71,11 +72,7 @@ const APerson = ({ personId, onLookAt, onLookAtShow, onBack }: APersonProps) => 
       <View style={styles.top}>
         <View style={[styles.portrait, { backgroundColor: colours.surfaceRaised }]}>
           {who?.portraitUrl === null || who === null ? null : (
-            <Image
-              style={styles.photo}
-              source={{ uri: who.portraitUrl }}
-              accessibilityIgnoresInvertColors
-            />
+            <ARemotePicture style={styles.photo} uri={who.portraitUrl} />
           )}
         </View>
 

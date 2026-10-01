@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useEvent, useEventListener } from 'expo';
-import { Animated, Image, StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { readPreviewState } from '@ValenceClient/playback/readPreviewState';
 import { hushThePlayer } from '@ValenceMobile/playback/hushThePlayer';
@@ -155,10 +156,9 @@ const APreview = ({
   return (
     <View style={styles.fills} pointerEvents="none">
       {hasBackdrop ? (
-        <Image
+        <ARemotePicture
           style={styles.fills}
-          source={{ uri: onThisServer(`/api/media/${mediaId}/image/backdrop`) }}
-          accessibilityIgnoresInvertColors
+          uri={onThisServer(`/api/media/${mediaId}/image/backdrop`)}
         />
       ) : null}
 

@@ -1,6 +1,7 @@
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import { act, render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Image } from 'expo-image';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { fetchSession, signOut } from '@ValenceClient/session/auth';
@@ -140,6 +141,30 @@ describe('SignedIn', () => {
     await waitFor(() => {
       expect(signOut).toHaveBeenCalled();
       expect(onOut).toHaveBeenCalled();
+    });
+  });
+
+  it('forgets the pictures it kept before saying somebody has signed out', async () => {
+    const happened: string[] = [];
+    jest.spyOn(Image, 'clearDiskCache').mockImplementationOnce(
+      () =>
+        new Promise((emptied) => {
+          setTimeout(() => {
+            happened.push('emptied');
+            emptied(true);
+          }, 10);
+        }),
+    );
+    const onOut = jest.fn(() => {
+      happened.push('out');
+    });
+    const drawn = await render(around(<SignedIn onOut={onOut} onElsewhere={jest.fn()} />));
+
+    await userEvent.press(await drawn.findByText('Account'));
+    await userEvent.press(await drawn.findByText('Sign out'));
+
+    await waitFor(() => {
+      expect(happened).toEqual(['emptied', 'out']);
     });
   });
 
