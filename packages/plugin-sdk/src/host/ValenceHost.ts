@@ -42,59 +42,6 @@ type CatalogueHit = {
   isRequested: boolean;
 };
 
-type TranscodeTarget = {
-  quality: '2160p' | '1440p' | '1080p' | '720p' | '480p' | '360p';
-  videoCodec: 'h264' | 'hevc' | 'av1';
-  container: 'mp4' | 'mkv';
-  maxBitrateKbps: number | null;
-  audio: 'keep' | 'compress';
-};
-
-type KeptCopy = {
-  id: string;
-  quality: string | null;
-  container: string;
-  videoCodec: string;
-  width: number | null;
-  height: number | null;
-  bitrateKbps: number;
-  sizeBytes: number;
-  fileName: string;
-};
-
-type TranscodeCandidate = {
-  mediaId: string;
-  kind: 'film' | 'episode';
-  title: string;
-  seriesTitle: string | null;
-  width: number;
-  height: number;
-  videoCodec: string;
-  bitrateKbps: number;
-  sizeBytes: number;
-  durationSeconds: number;
-  copies: KeptCopy[];
-};
-
-type TranscodeQueued = {
-  requestId: string;
-  mediaId: string;
-  title: string;
-  state: 'queued' | 'encoding' | 'verifying';
-  progress: number;
-};
-
-type TranscodeOutcome =
-  { status: 'queued'; requestId: string } | { status: 'refused'; code: string; reason: string };
-
-type ClockReading = {
-  iso: string;
-  timeZone: string;
-  weekday: number;
-  hour: number;
-  minute: number;
-};
-
 type ValenceHost = {
   plugin: { id: string; version: string };
   settings: { read: () => Promise<Record<string, string | boolean>> };
@@ -178,31 +125,14 @@ type ValenceHost = {
   notifications: {
     send: (profileId: string, note: { title: string; body: string }) => Promise<void>;
   };
-  transcoding: {
-    candidates: (page: {
-      after: string | null;
-      limit: number;
-    }) => Promise<{ items: TranscodeCandidate[]; next: string | null }>;
-    keep: (mediaId: string, target: TranscodeTarget) => Promise<TranscodeOutcome>;
-    underWay: () => Promise<TranscodeQueued[]>;
-    cancel: (requestId: string) => Promise<void>;
-    removeCopy: (copyId: string) => Promise<void>;
-  };
-  clock: { now: () => Promise<ClockReading> };
 };
 
 export type {
   CatalogueHit,
-  ClockReading,
-  KeptCopy,
   MediaRef,
   PlaylistContents,
   ProgressEntry,
   Scalar,
   Stored,
-  TranscodeCandidate,
-  TranscodeOutcome,
-  TranscodeQueued,
-  TranscodeTarget,
   ValenceHost,
 };
