@@ -3,6 +3,10 @@ import { createRoute, z } from '@hono/zod-openapi';
 import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { ReleaseTypesSchema } from '@ValenceContracts/schemas/MediaRequest';
 import { ListeningSessionSchema } from '@ValenceContracts/schemas/MusicRemote';
+import {
+  BookListeningSessionSchema,
+  ReadingSessionSchema,
+} from '@ValenceContracts/schemas/BookRemote';
 import { PlaybackPlanSchema } from '@ValenceContracts/schemas/PlaybackPlan';
 import { RoundnessSchema } from '@ValenceContracts/schemas/Roundness';
 import { PREVIEW_QUALITIES } from '@ValenceContracts/schemas/PreviewQuality';
@@ -235,6 +239,8 @@ const AdminSessionSchema = z
       })
       .nullable(),
     listening: ListeningSessionSchema.nullable().default(null),
+    bookListening: BookListeningSessionSchema.nullable().default(null),
+    reading: ReadingSessionSchema.nullable().default(null),
   })
   .openapi('AdminSession');
 

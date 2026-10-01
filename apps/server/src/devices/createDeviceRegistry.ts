@@ -10,9 +10,10 @@ type DeviceOwner = {
   profileId: string | null;
 };
 
-type DeviceRegistryOptions = {
+type DeviceRegistryOptions<Report> = {
   presence: Pick<PresenceService, 'list' | 'tell' | 'watch'>;
   onChanged?: (accountId: string) => void;
+  onReport?: (device: PresenceEntry, report: Report | null) => void;
 };
 
 type DeviceRegistry<Report> = {
@@ -39,15 +40,18 @@ type DeviceRegistry<Report> = {
  * guessing an identifier. A window that has not yet said which profile it is counts as the
  * account's, since a freshly opened tab is still somebody's.
  *
- * @param options - Presence, and who to tell when a person's devices change.
+ * @param options - Presence, who to tell when a person's devices change, and who to tell of each
+ *   report, including the nothing a device that goes away leaves behind.
  * @returns The registry.
  */
 const createDeviceRegistry = <Report>({
   presence,
   onChanged,
-}: DeviceRegistryOptions): DeviceRegistry<Report> => {
+  onReport,
+}: DeviceRegistryOptions<Report>): DeviceRegistry<Report> => {
   const reports = new Map<string, Report>();
-  let known = new Map<string, string | null>();
+  const reporters = new Map<string, PresenceEntry>();
+  let known = new Map(presence.list().map((entry) => [entry.clientId, entry.accountId]));
 
   const owned = ({ accountId, profileId }: DeviceOwner): PresenceEntry[] =>
     presence
@@ -64,7 +68,14 @@ const createDeviceRegistry = <Report>({
 
     for (const [clientId, accountId] of known) {
       if (!now.has(clientId)) {
+        const reporter = reporters.get(clientId);
+
         reports.delete(clientId);
+        reporters.delete(clientId);
+
+        if (reporter !== undefined) {
+          onReport?.(reporter, null);
+        }
 
         if (accountId !== null) {
           touched.add(accountId);
@@ -89,15 +100,21 @@ const createDeviceRegistry = <Report>({
     owned,
 
     report: (owner, clientId, report) => {
-      if (!owned(owner).some((entry) => entry.clientId === clientId)) {
+      const device = owned(owner).find((entry) => entry.clientId === clientId);
+
+      if (device === undefined) {
         return false;
       }
 
       if (report === null) {
         reports.delete(clientId);
+        reporters.delete(clientId);
       } else {
         reports.set(clientId, report);
+        reporters.set(clientId, device);
       }
+
+      onReport?.(device, report);
 
       onChanged?.(owner.accountId);
 

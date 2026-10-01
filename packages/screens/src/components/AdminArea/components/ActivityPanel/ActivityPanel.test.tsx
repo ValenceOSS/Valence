@@ -15,6 +15,8 @@ const session = (overrides: Partial<ActiveSession> = {}): ActiveSession => ({
   connectedAt: 0,
   playback: null,
   listening: null,
+  bookListening: null,
+  reading: null,
   ...overrides,
 });
 

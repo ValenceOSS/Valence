@@ -151,6 +151,8 @@ const session = (overrides: Partial<ActiveSession> = {}): ActiveSession => ({
   connectedAt: 0,
   playback: null,
   listening: null,
+  bookListening: null,
+  reading: null,
   ...overrides,
 });
 
@@ -198,13 +200,7 @@ describe('OverviewPanel', () => {
   it('shows every card even on a server with nothing wrong', () => {
     renderPanel(<OverviewPanel {...props} />);
 
-    for (const title of [
-      'Watching now',
-      'Running now',
-      'Libraries',
-      'Server load',
-      'Recent jobs',
-    ]) {
+    for (const title of ['Active now', 'Running now', 'Libraries', 'Server load', 'Recent jobs']) {
       expect(screen.getByRole('heading', { name: title })).toBeInTheDocument();
     }
   });
@@ -213,13 +209,15 @@ describe('OverviewPanel', () => {
     it('says when nobody is', () => {
       renderPanel(<OverviewPanel {...props} />);
 
-      expect(screen.getByText('Nobody is watching anything.')).toBeInTheDocument();
+      expect(
+        screen.getByText('Nobody is watching, listening to or reading anything.'),
+      ).toBeInTheDocument();
     });
 
     it('names what is playing, and who is playing it', () => {
       renderPanel(<OverviewPanel {...props} sessions={[watching()]} />);
 
-      const region = card('Watching now');
+      const region = card('Active now');
 
       expect(within(region).getByText('Arrival')).toBeInTheDocument();
       expect(within(region).getByText(/Dan · Chrome on macOS/)).toBeInTheDocument();
@@ -228,13 +226,41 @@ describe('OverviewPanel', () => {
     it('says whether a stream is costing the box anything', () => {
       renderPanel(<OverviewPanel {...props} sessions={[watching('transcode')]} />);
 
-      expect(within(card('Watching now')).getByText('Transcode')).toBeInTheDocument();
+      expect(within(card('Active now')).getByText('Transcode')).toBeInTheDocument();
+    });
+
+    it('counts somebody reading a book, and says they are reading', () => {
+      renderPanel(
+        <OverviewPanel
+          {...props}
+          sessions={[
+            session({
+              reading: {
+                bookId: '00000000-0000-4000-8000-0000000000b1',
+                title: 'Dune',
+                authors: ['Frank Herbert'],
+                hasCover: false,
+                fraction: 0.5,
+                pageNumber: null,
+                reportedAtMs: 1,
+              },
+            }),
+          ]}
+        />,
+      );
+
+      const region = card('Active now');
+
+      expect(within(region).getByText('Dune')).toBeInTheDocument();
+      expect(within(region).getByText('Reading')).toBeInTheDocument();
     });
 
     it('ignores a session with the app open but nothing playing', () => {
       renderPanel(<OverviewPanel {...props} sessions={[session()]} />);
 
-      expect(screen.getByText('Nobody is watching anything.')).toBeInTheDocument();
+      expect(
+        screen.getByText('Nobody is watching, listening to or reading anything.'),
+      ).toBeInTheDocument();
     });
   });
 

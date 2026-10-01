@@ -60,6 +60,8 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     presence,
     splashscreen,
     music,
+    books,
+    bookDevices,
     listUsers,
     capabilities,
     artworkUsage,
@@ -297,6 +299,48 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
       );
     };
 
+    const bookOnShow = async (bookId: string) => {
+      const found = (await books?.read(bookId)) ?? null;
+
+      return found === null
+        ? null
+        : {
+            bookId,
+            title: found.book.title,
+            authors: found.book.authors ?? [],
+            hasCover: found.book.hasCover,
+          };
+    };
+
+    const bookListeningOn = async (clientId: string) => {
+      const nowListening = bookDevices?.listeningOn(clientId) ?? null;
+      const shown = nowListening === null ? null : await bookOnShow(nowListening.bookId);
+
+      return nowListening === null || shown === null
+        ? null
+        : {
+            ...shown,
+            isPlaying: nowListening.isPlaying,
+            positionSeconds: nowListening.positionSeconds,
+            durationSeconds: nowListening.durationSeconds,
+            reportedAtMs: nowListening.reportedAtMs,
+          };
+    };
+
+    const readingOn = async (clientId: string) => {
+      const nowReading = bookDevices?.readingOn(clientId) ?? null;
+      const shown = nowReading === null ? null : await bookOnShow(nowReading.bookId);
+
+      return nowReading === null || shown === null
+        ? null
+        : {
+            ...shown,
+            fraction: nowReading.fraction,
+            pageNumber: nowReading.pageNumber,
+            reportedAtMs: nowReading.reportedAtMs,
+          };
+    };
+
     return context.json(
       await Promise.all(
         presence.list().map(async (entry) => ({
@@ -311,6 +355,8 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
           connectedAt: entry.connectedAt,
           playback: entry.playback,
           listening: await listeningOn(entry.clientId),
+          bookListening: await bookListeningOn(entry.clientId),
+          reading: await readingOn(entry.clientId),
         })),
       ),
       200,
@@ -324,7 +370,10 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
     const { clientId } = context.req.valid('param');
 
-    if (music?.devices.order(clientId, { kind: 'stop' }) === true) {
+    if (
+      music?.devices.order(clientId, { kind: 'stop' }) === true ||
+      bookDevices?.order(clientId, 'stop') === true
+    ) {
       return context.body(null, 204);
     }
 
@@ -356,7 +405,8 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
     if (
       !presence.pause(clientId, say('server.admin.thisStreamWasPausedByAn')) &&
-      music?.devices.order(clientId, { kind: 'pause' }) !== true
+      music?.devices.order(clientId, { kind: 'pause' }) !== true &&
+      bookDevices?.order(clientId, 'pause') !== true
     ) {
       return context.json(refuse('error.admin.thatTabIsNotWatchingAnything'), 409);
     }
@@ -385,8 +435,9 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
 
     const { clientId } = context.req.valid('param');
     const isListening = music?.devices.order(clientId, { kind: 'resume' }) === true;
+    const isListeningToABook = bookDevices?.order(clientId, 'resume') === true;
 
-    if (!presence.resume(clientId) && !isListening) {
+    if (!presence.resume(clientId) && !isListening && !isListeningToABook) {
       return context.json(refuse('error.admin.thatTabIsNotOpen'), 404);
     }
 

@@ -31,6 +31,8 @@ const IDLE_SESSION: ActiveSession = {
   connectedAt: 1000,
   playback: null,
   listening: null,
+  bookListening: null,
+  reading: null,
 };
 
 const LISTENING_SESSION: ActiveSession = {
@@ -70,6 +72,68 @@ const WATCHING_SESSION: ActiveSession = {
 };
 
 describe('SessionCard', () => {
+  it('shows an audiobook being listened to, with its authors, and offers to pause it', async () => {
+    const onPause = vi.fn();
+
+    render(
+      <SessionCard
+        session={{
+          ...IDLE_SESSION,
+          bookListening: {
+            bookId: '00000000-0000-4000-8000-0000000000b1',
+            title: 'Dune',
+            authors: ['Frank Herbert'],
+            hasCover: false,
+            isPlaying: true,
+            positionSeconds: 600,
+            durationSeconds: 3600,
+            reportedAtMs: 1,
+          },
+        }}
+        isBusy={false}
+        onStop={vi.fn()}
+        onPause={onPause}
+        onResume={vi.fn()}
+        onMessage={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Dune · Frank Herbert')).toBeInTheDocument();
+    expect(screen.getByText('10:00 / 1:00:00')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Pause' }));
+
+    expect(onPause).toHaveBeenCalled();
+  });
+
+  it('shows somebody reading a book and how far through, with nothing to pause', () => {
+    render(
+      <SessionCard
+        session={{
+          ...IDLE_SESSION,
+          reading: {
+            bookId: '00000000-0000-4000-8000-0000000000b1',
+            title: 'Dune',
+            authors: ['Frank Herbert'],
+            hasCover: false,
+            fraction: 0.42,
+            pageNumber: null,
+            reportedAtMs: 1,
+          },
+        }}
+        isBusy={false}
+        onStop={vi.fn()}
+        onPause={vi.fn()}
+        onResume={vi.fn()}
+        onMessage={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Dune · Frank Herbert')).toBeInTheDocument();
+    expect(screen.getByText(/Reading · 42% read/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Pause|Stop/ })).not.toBeInTheDocument();
+  });
+
   it('shows the device for a tab that is not watching anything', () => {
     render(
       <SessionCard

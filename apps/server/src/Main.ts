@@ -93,6 +93,8 @@ import { createDatabaseSettingsStore } from '@ValenceServer/settings/createDatab
 import { createDatabaseLibraryService } from '@ValenceServer/library/createDatabaseLibraryService';
 import { mediaKindOf } from '@ValenceServer/library/mediaKindOf';
 import { describeQuality } from '@ValenceServer/library/describeQuality';
+import { listeningFor } from '@ValenceServer/music/listeningFor';
+import { createBookDevices } from '@ValenceServer/books/createBookDevices';
 import { describeSignInAttempt } from '@ValenceServer/auth/describeSignInAttempt';
 import { ARRIVED_TITLES_KEPT } from '@ValenceContracts/schemas/Webhook';
 import { summariseArrivals } from '@ValenceServer/events/summariseArrivals';
@@ -123,6 +125,9 @@ import type { Context } from 'hono';
 import { readCallerAddress } from '@ValenceServer/web/readCallerAddress';
 import { createSessionWatch } from '@ValenceServer/presence/createSessionWatch';
 import type { PresenceSession, PresenceViewing } from '@ValenceServer/presence/PresenceService';
+import type { Play } from '@ValenceServer/devices/createPlayTracker';
+import type { MusicNowPlaying } from '@ValenceContracts/schemas/MusicRemote';
+import type { NowListening } from '@ValenceContracts/schemas/BookRemote';
 import type { WebhookPayload } from '@ValenceContracts/schemas/Webhook';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
@@ -576,6 +581,10 @@ const describeViewing = async (viewing: PresenceViewing): Promise<ViewingData | 
   }
 
   const shelf = (await libraryService.list(asTheServer)).find((one) => one.id === item.libraryId);
+  const kind = mediaKindOf(
+    { seriesTitle: item.metadata.seriesTitle ?? null },
+    shelf?.kind ?? 'movies',
+  );
 
   return {
     accountId: viewing.accountId,
@@ -584,10 +593,7 @@ const describeViewing = async (viewing: PresenceViewing): Promise<ViewingData | 
     profileName: viewing.profileName,
     item: {
       itemId: item.id,
-      kind: mediaKindOf(
-        { seriesTitle: item.metadata.seriesTitle ?? null },
-        shelf?.kind ?? 'movies',
-      ),
+      kind,
       title: item.title,
       seriesTitle: item.metadata.seriesTitle ?? null,
       seasonNumber: item.metadata.seasonNumber ?? null,
@@ -600,11 +606,40 @@ const describeViewing = async (viewing: PresenceViewing): Promise<ViewingData | 
       durationSeconds: item.durationSeconds,
       genres: item.metadata.genres ?? [],
       rating: item.metadata.rating ?? null,
-      quality: describeQuality(item.width, item.height, item.videoRange),
+      quality: kind === 'song' ? null : describeQuality(item.width, item.height, item.videoRange),
     },
     deviceLabel: viewing.deviceLabel,
     mode: viewing.mode,
   };
+};
+
+/**
+ * Fills out what a device was playing when it played a song, in the shape a viewing is told in.
+ *
+ * @param play - The song, and the device it played on.
+ * @returns The listening as a subscriber reads it, or nothing where the song has since gone.
+ */
+const describeListening = async ({
+  device,
+  report,
+}: Play<MusicNowPlaying>): Promise<ViewingData | null> => {
+  const listening = listeningFor(
+    report,
+    await musicLibrary.readTrackFile(asTheServer, report.trackId),
+  );
+
+  return describeViewing({
+    accountId: device.accountId,
+    profileId: device.profileId,
+    profileName: device.profileName,
+    deviceLabel: device.deviceLabel,
+    clientKind: device.clientKind ?? 'browser',
+    mediaId: report.trackId,
+    // eslint-disable-next-line valence/no-hard-coded-strings -- a playback mode a subscriber matches on, not words a person reads
+    mode: listening.delivery === 'encoded' ? 'Transcode' : 'DirectPlay',
+    positionSeconds: null,
+    durationSeconds: null,
+  });
 };
 
 /**
@@ -862,6 +897,77 @@ const lookUpMusic = async (libraryId: string, jobId: string, isAgain: boolean): 
   );
 };
 
+/**
+ * Fills out what a device was playing when it played an audiobook, in the shape a viewing is told
+ * in, from the book itself, which is not one of the library's media items.
+ *
+ * @param play - The audiobook, and the device it played on.
+ * @returns The listening as a subscriber reads it, or nothing where the book has since gone.
+ */
+const describeBookListening = async ({
+  device,
+  report,
+}: Play<NowListening>): Promise<ViewingData | null> => {
+  const found = await bookService.read(report.bookId);
+
+  if (found === null) {
+    return null;
+  }
+
+  const { book: heard } = found;
+  const shelf = (await libraryService.list(asTheServer)).find((one) => one.id === heard.libraryId);
+
+  return {
+    accountId: device.accountId,
+    accountName: await nameOfAccount(device.accountId),
+    profileId: device.profileId,
+    profileName: device.profileName,
+    item: {
+      itemId: heard.id,
+      kind: 'book',
+      title: heard.title,
+      seriesTitle: null,
+      seasonNumber: null,
+      episodeNumber: null,
+      year: heard.year,
+      posterUrl: heard.posterUrl ?? null,
+      libraryId: heard.libraryId,
+      libraryName: shelf?.name ?? say('common.aLibrary'),
+      overview: heard.overview,
+      durationSeconds: report.durationSeconds,
+      genres: heard.genres ?? [],
+      rating: heard.rating,
+      quality: null,
+    },
+    deviceLabel: device.deviceLabel,
+    mode: 'DirectPlay',
+  };
+};
+
+const bookDevices = createBookDevices({
+  presence,
+  onChanged: () => {
+    realtime.publish('sessions', { changed: true }, { kind: 'everyone' });
+  },
+  plays: {
+    now: () => Date.now(),
+    onStarted: (play) => {
+      void describeBookListening(play).then((described) => {
+        if (described !== null) {
+          void events.publish({ event: 'playback.started', data: described });
+        }
+      });
+    },
+    onStopped: (play, reached) => {
+      void describeBookListening(play).then((described) => {
+        if (described !== null) {
+          void events.publish({ event: 'playback.stopped', data: { ...described, ...reached } });
+        }
+      });
+    },
+  },
+});
+
 const videoDevices = createVideoDevices({
   presence,
   onChanged: (accountId) => {
@@ -900,6 +1006,26 @@ const musicServices: MusicServices = {
         { kind: 'accounts', accountIds: [accountId] },
       );
       realtime.publish('sessions', { changed: true }, { kind: 'everyone' });
+    },
+    plays: {
+      now: () => Date.now(),
+      onStarted: (play) => {
+        void describeListening(play).then((described) => {
+          if (described !== null) {
+            void events.publish({ event: 'playback.started', data: described });
+          }
+        });
+      },
+      onStopped: (play, reached) => {
+        void describeListening(play).then((described) => {
+          if (described !== null) {
+            void events.publish({
+              event: 'playback.stopped',
+              data: { ...described, ...reached },
+            });
+          }
+        });
+      },
     },
   }),
   stream: (file, rendition, range) =>
@@ -2927,6 +3053,7 @@ const app = createApp({
   books: bookService,
   music: musicServices,
   videoDevices,
+  bookDevices,
   streamBookFile: (path, range) => transcoder.readFile(path, range),
   promoteProfile: async ({ profileId, email, password }) => {
     const rows = await db

@@ -206,6 +206,34 @@ describe('discordEmbedFor', () => {
     expect(drawn.fields).toContainEqual({ name: 'Playing', value: 'Transcode', inline: true });
   });
 
+  it('says somebody was listening, not watching, to a song or an audiobook', () => {
+    const listening = {
+      accountId: 'account-1',
+      accountName: 'Ada',
+      profileId: 'profile-1',
+      profileName: 'Ada',
+      item: { ...anItem, kind: 'song' as const },
+      deviceLabel: 'iPhone',
+      mode: 'DirectPlay' as const,
+    };
+
+    expect(embed({ ...anEnvelope, event: 'playback.started', data: listening }).description).toBe(
+      'Ada started listening',
+    );
+    expect(
+      embed({
+        ...anEnvelope,
+        event: 'playback.stopped',
+        data: {
+          ...listening,
+          item: { ...anItem, kind: 'book' as const },
+          positionSeconds: null,
+          durationSeconds: null,
+        },
+      }).description,
+    ).toBe('Ada stopped listening');
+  });
+
   it('names nobody for a share link rather than leaving the sentence broken', () => {
     const drawn = embed({
       ...anEnvelope,

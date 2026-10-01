@@ -35,6 +35,7 @@ import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 import type { JobStall } from '@ValenceServer/jobs/createJobHealthWatch';
 import type { ProfileService } from '@ValenceServer/profiles/ProfileService';
 import type { BookService } from '@ValenceServer/books/createDatabaseBookService';
+import type { BookDevices } from '@ValenceServer/books/createBookDevices';
 import type { Avatar, ProfileColour, ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import type { NotificationStore } from '@ValenceServer/notifications/NotificationStore';
 import type { PermissionService } from '@ValenceServer/auth/PermissionService';
@@ -144,6 +145,7 @@ type CreateAppOptions = {
   streamBookFile?: (path: string, range: string | null) => Promise<TranscoderStreamedFile | null>;
   music?: MusicServices;
   videoDevices?: VideoDevices;
+  bookDevices?: BookDevices;
   reencodes?: ReencodeService;
   onReencodeQueued?: () => void;
   promoteProfile?: (request: {

@@ -177,6 +177,45 @@ describe('subscriptionWants, filtering by what kind of thing it is', () => {
     ).toBe(true);
   });
 
+  it('sends a song’s playback only where songs are asked for by name', () => {
+    const aSong: WebhookOccurrence = {
+      event: 'playback.stopped',
+      data: {
+        accountId: 'account-1',
+        accountName: 'Ada',
+        profileId: 'profile-1',
+        profileName: 'Ada',
+        item: { ...anItem, kind: 'song' },
+        deviceLabel: 'Chrome on macOS',
+        mode: 'DirectPlay',
+        positionSeconds: 200,
+        durationSeconds: 200,
+      },
+    };
+
+    expect(subscriptionWants(asking(['playback.stopped']), aSong)).toBe(false);
+    expect(subscriptionWants(asking(['playback.stopped'], { itemTypes: ['movie'] }), aSong)).toBe(
+      false,
+    );
+    expect(
+      subscriptionWants(asking(['playback.stopped'], { itemTypes: ['movie', 'song'] }), aSong),
+    ).toBe(true);
+    expect(
+      subscriptionWants(asking(['playback.started']), {
+        event: 'playback.started',
+        data: {
+          accountId: 'account-1',
+          accountName: 'Ada',
+          profileId: 'profile-1',
+          profileName: 'Ada',
+          item: { ...anItem, kind: 'book' },
+          deviceLabel: 'iPhone',
+          mode: 'DirectPlay',
+        },
+      }),
+    ).toBe(true);
+  });
+
   it('filters a viewing by the kind of thing being watched', () => {
     expect(
       subscriptionWants(asking(['playback.started'], { itemTypes: ['episode'] }), aViewing()),

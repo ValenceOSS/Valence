@@ -158,6 +158,8 @@ const streaming = (bufferedAheadSeconds: number, isPlaying = true): ActiveSessio
     },
   },
   listening: null,
+  bookListening: null,
+  reading: null,
 });
 
 const healthy = {

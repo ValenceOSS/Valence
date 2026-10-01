@@ -192,6 +192,20 @@ describe('createDeviceRegistry', () => {
     expect(presence.tell).not.toHaveBeenCalled();
   });
 
+  it('tells of every report, and of nothing once a device that reported goes away', () => {
+    const { presence, change } = presenceWith([entry('laptop', 'me'), entry('phone', 'me')]);
+    const onReport = vi.fn();
+    const registry = createDeviceRegistry<string>({ presence, onReport });
+
+    registry.report(ME, 'laptop', 'song');
+    change([entry('phone', 'me')]);
+
+    expect(onReport.mock.calls).toEqual([
+      [entry('laptop', 'me'), 'song'],
+      [entry('laptop', 'me'), null],
+    ]);
+  });
+
   it('says an event did not arrive where presence could not deliver it', () => {
     const { presence } = presenceWith([entry('tv', 'me')], false);
 

@@ -5,6 +5,7 @@ import type { PlaybackPlan } from '@ValenceContracts/schemas/PlaybackPlan';
 import type { TranscodeReuse } from '@ValenceContracts/schemas/TranscodeReuse';
 import type { MusicCommand } from '@ValenceContracts/schemas/MusicRemote';
 import type { VideoCommand } from '@ValenceContracts/schemas/VideoRemote';
+import type { BookCommand } from '@ValenceContracts/schemas/BookRemote';
 
 type PresencePlayback = {
   mediaId: string;
@@ -64,7 +65,8 @@ type PresenceControlEvent =
   | { kind: 'resumed' }
   | { kind: 'message'; text: string }
   | { kind: 'music'; command: MusicCommand; fromClientId: string; fromLabel: string }
-  | { kind: 'video'; command: VideoCommand; fromClientId: string; fromLabel: string };
+  | { kind: 'video'; command: VideoCommand; fromClientId: string; fromLabel: string }
+  | { kind: 'book'; command: BookCommand };
 
 type PresenceStartPlaybackInput = Omit<
   PresencePlayback,

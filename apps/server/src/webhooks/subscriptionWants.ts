@@ -76,6 +76,10 @@ const kindOf = (occurrence: WebhookOccurrence): MediaKind | null => {
  * because two implementations of the same judgement drift and the drift is invisible — deliveries
  * simply stop, which looks exactly like nothing having happened.
  *
+ * A song's playback reaches only a subscription that names songs among the kinds it wants, even
+ * though wanting no kind in particular otherwise means wanting every kind: an album played through
+ * would post every track to a channel that was set up to hear about films.
+ *
  * @param subscription - What this subscriber asked for.
  * @param occurrence - What happened.
  * @returns Whether it should be delivered.
@@ -89,6 +93,14 @@ const subscriptionWants = (
   }
 
   if (occurrence.event === 'media.added' && subscription.filters.mediaAdded !== 'perItem') {
+    return false;
+  }
+
+  if (
+    (occurrence.event === 'playback.started' || occurrence.event === 'playback.stopped') &&
+    occurrence.data.item.kind === 'song' &&
+    !subscription.filters.itemTypes.includes('song')
+  ) {
     return false;
   }
 

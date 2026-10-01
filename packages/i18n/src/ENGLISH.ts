@@ -3278,12 +3278,14 @@ const ENGLISH = {
   'screens.adminArea.ofTotalOnMount': 'of {total} · {mountPoint}',
   'screens.adminArea.ofTotalValenceNotMeasured': 'of {total} · Valence not measured',
   'screens.adminArea.ofTotalValenceUses': 'of {total} · Valence {used}',
+  'screens.adminArea.overviewPanel.activeNow': 'Active now',
   'screens.adminArea.overviewPanel.allJobs': 'All jobs',
   'screens.adminArea.overviewPanel.allSessions': 'All sessions',
   'screens.adminArea.overviewPanel.allWork': 'All work',
   'screens.adminArea.overviewPanel.countedTheStorageAgain': 'Counted the storage again.',
   'screens.adminArea.overviewPanel.manage': 'Manage',
-  'screens.adminArea.overviewPanel.nobodyIsWatchingAnything': 'Nobody is watching anything.',
+  'screens.adminArea.overviewPanel.nobodyIsWatchingListeningOrReading':
+    'Nobody is watching, listening to or reading anything.',
   'screens.adminArea.overviewPanel.noLibrariesYet': 'No libraries yet.',
   'screens.adminArea.overviewPanel.nothingIsRunning': 'Nothing is running.',
   'screens.adminArea.overviewPanel.nothingRunningWaiting': 'Nothing running, {waiting} waiting.',
@@ -3304,7 +3306,6 @@ const ENGLISH = {
   'screens.adminArea.overviewPanel.theStorageCouldNotBeCounted':
     'The storage could not be counted.',
   'screens.adminArea.overviewPanel.waitingForTheFirstReading': 'Waiting for the first reading.',
-  'screens.adminArea.overviewPanel.watchingNow': 'Watching now',
   'screens.adminArea.pausedThatStream': 'Paused that stream.',
   'screens.adminArea.pluginsPanel.chooseAVpluginFileAndIts':
     'Choose a .vplugin file, and its .sig file with it where it has one.',
@@ -3777,8 +3778,8 @@ const ENGLISH = {
     'A first scan of a large library arrives all at once. One message per scan keeps that readable; one for each thing does not.',
   'screens.adminArea.webhookFields.aMessageInADiscordChannel': 'A message in a Discord channel',
   'screens.adminArea.webhookFields.aNotificationThroughNtfy': 'A notification through ntfy',
-  'screens.adminArea.webhookFields.decidesWhichKindsOfThingAre':
-    'Decides which kinds of thing are reported, arriving or being watched.',
+  'screens.adminArea.webhookFields.decidesWhichKindsAreReportedSongsByName':
+    'Decides which kinds of thing are reported as they arrive or are played. A song being played is only reported where {song} is chosen.',
   'screens.adminArea.webhookFields.decidesWhoseSignInsAndAccount':
     'Decides whose sign-ins and account changes are reported.',
   'screens.adminArea.webhookFields.decidesWhoseWatchingIsReported':
@@ -5611,7 +5612,9 @@ const ENGLISH = {
   'server.webhooks.discordEmbedFor.updated': 'Updated',
   'server.webhooks.discordEmbedFor.viewerClosedValence': '{viewer} closed Valence',
   'server.webhooks.discordEmbedFor.viewerOpenedValence': '{viewer} opened Valence',
+  'server.webhooks.discordEmbedFor.viewerStartedListening': '{viewer} started listening',
   'server.webhooks.discordEmbedFor.viewerStartedWatching': '{viewer} started watching',
+  'server.webhooks.discordEmbedFor.viewerStoppedListening': '{viewer} stopped listening',
   'server.webhooks.discordEmbedFor.viewerStoppedWatching': '{viewer} stopped watching',
   'server.webhooks.episodeName': '{series} S{season}E{episode} — {title}',
   'server.webhooks.formatWebhookBody.approvedByApprovedTitle': '{approvedBy} approved {title}.',
@@ -5643,6 +5646,8 @@ const ENGLISH = {
     'A sign-in as {identifier} was refused on {deviceLabel} — {reason}',
   'server.webhooks.formatWebhookBody.signInRefusedOnDeviceFromAddress':
     'A sign-in as {identifier} was refused on {deviceLabel} from {address} — {reason}',
+  'server.webhooks.formatWebhookBody.startedListening':
+    '{viewer} started listening to {item} on {device}, {how}.',
   'server.webhooks.formatWebhookBody.startedWatching':
     '{viewer} started watching {item} on {device}, {how}.',
   'server.webhooks.formatWebhookBody.theCatalogueCanBeReachedAgain':
@@ -5685,6 +5690,9 @@ const ENGLISH = {
   'server.webhooks.nameOfViewer.somebodyWithAShareLink': 'Somebody with a share link',
   'server.webhooks.openedValence': '{viewer} opened Valence on {device}.',
   'server.webhooks.openedValenceFrom': '{viewer} opened Valence on {device} from {address}.',
+  'server.webhooks.stoppedListening': '{viewer} stopped listening to {item}.',
+  'server.webhooks.stoppedListeningPartWay':
+    '{viewer} stopped listening to {item} {percent}% of the way through.',
   'server.webhooks.stoppedWatching': '{viewer} stopped watching {item}.',
   'server.webhooks.stoppedWatchingPartWay':
     '{viewer} stopped watching {item} {percent}% of the way through.',

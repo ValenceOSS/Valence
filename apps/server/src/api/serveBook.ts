@@ -1,3 +1,4 @@
+import { registerBookDeviceRoutes } from '@ValenceServer/books/registerBookDeviceRoutes';
 import {
   listBooksRoute,
   findBooksRoute,
@@ -26,7 +27,7 @@ import { say } from '@ValenceI18n/say';
  * @param context - What they are answered with.
  */
 const serveBook = (app: OpenAPIHono, context: AppContext): void => {
-  const { books, streamBookFile, viewerOf, bookInReach, readProfileId } = context;
+  const { books, streamBookFile, viewerOf, bookInReach, readProfileId, bookDevices } = context;
 
   app.openapi(findBooksRoute, async (context) => {
     const viewer = await viewerOf(context.req.raw.headers);
@@ -197,6 +198,10 @@ const serveBook = (app: OpenAPIHono, context: AppContext): void => {
       'cache-control': say('server.book.privateMaxAge604800Immutable'),
     });
   });
+
+  if (bookDevices !== undefined) {
+    registerBookDeviceRoutes(app, { devices: bookDevices, viewerOf });
+  }
 
   if (books !== undefined && streamBookFile !== undefined) {
     registerListeningRoutes(app, {

@@ -9,6 +9,7 @@ import { getRealtimeClient } from '@ValenceClient/realtime/getRealtimeClient';
 import { watchPresence } from '@ValenceClient/presence/watchPresence';
 import { onPresenceEvent } from '@ValenceClient/presence/presenceEvents';
 import { useMusicRemote } from '@ValenceClient/music/useMusicRemote';
+import { useAudiobookRemote } from '@ValenceClient/books/useAudiobookRemote';
 import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
 import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { theAudiobookPlayer } from '@ValenceClient/books/theAudiobookPlayer';
@@ -162,6 +163,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
   useFreshFromTheSocket(getRealtimeClient());
   useEffect(() => watchPresence(), [user]);
   useMusicRemote();
+  useAudiobookRemote();
   useListeningKeptFresh();
 
   const heard = useWhatIsHeard();

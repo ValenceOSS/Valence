@@ -2,6 +2,8 @@ import { describeSessionDelivery } from '@ValenceScreens/admin/describeSessionDe
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { Icon } from '@ValenceUI/Icon';
 import {
+  BookOpen as BookOpenIcon,
+  Headphones as HeadphonesIcon,
   Info as InfoIcon,
   MessageSquare as MessageSquareIcon,
   Monitor as MonitorIcon,
@@ -16,12 +18,13 @@ import { Card } from '@ValenceUI/Card';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { deviceIconFor } from './deviceIcon';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
+import { bookCoverUrl } from '@ValenceClient/books/fetchBooks';
 import { SessionStatsDialog } from '@ValenceScreens/components/AdminArea/components/SessionStatsDialog/SessionStatsDialog';
 import type { SessionCardProps } from './SessionCard.types';
 import { say } from '@ValenceI18n/say';
 
 /**
- * One open session: who has it, on what device, what they are watching, how far through they are, and
+ * One open session: who has it, on what device, what they are watching, hearing or reading, how far through they are, and
  * how the stream is faring. Carries the controls for intervening in it, and a way through to
  * everything the server knows about the stream for anybody asking why it is struggling.
  *
@@ -40,22 +43,32 @@ const SessionCard = ({
   onResume,
   onMessage,
 }: SessionCardProps) => {
-  const { playback, listening } = session;
+  const { playback, listening, bookListening, reading } = session;
+  const book = bookListening ?? reading;
   const deviceGlyph = deviceIconFor(session.deviceLabel, session.clientKind);
   const [isShowingStats, setIsShowingStats] = useState(false);
 
+  const heard = listening ?? bookListening;
   const health =
     playback?.health ??
-    (listening === null
+    (heard === null
       ? null
       : {
-          positionSeconds: listening.positionSeconds,
-          durationSeconds: listening.durationSeconds,
+          positionSeconds: heard.positionSeconds,
+          durationSeconds: heard.durationSeconds,
           bufferedAheadSeconds: 0,
         });
   const hasProgress = health !== null && health.durationSeconds > 0;
-  const isActive = playback !== null || listening !== null;
-  const isPlaying = playback?.isPlaying ?? listening?.isPlaying ?? false;
+  const isActive = playback !== null || heard !== null;
+  const isPlaying = playback?.isPlaying ?? heard?.isPlaying ?? false;
+  const fallbackGlyph =
+    listening !== null
+      ? MusicNoteIcon
+      : bookListening !== null
+        ? HeadphonesIcon
+        : reading !== null
+          ? BookOpenIcon
+          : MonitorIcon;
 
   return (
     <Card as="article" padding="sm" radius="md" className="flex w-full min-w-0 items-center gap-3">
@@ -72,8 +85,10 @@ const SessionCard = ({
             alt=""
             className="h-full w-full object-cover"
           />
+        ) : book !== null && book.hasCover ? (
+          <img src={bookCoverUrl(book.bookId)} alt="" className="h-full w-full object-cover" />
         ) : (
-          <Icon of={listening === null ? MonitorIcon : MusicNoteIcon} size={20} tone="muted" />
+          <Icon of={fallbackGlyph} size={20} tone="muted" />
         )}
       </span>
 
@@ -81,9 +96,11 @@ const SessionCard = ({
         <span className="flex min-w-0 items-center gap-2">
           <span className="truncate text-sm font-medium text-text">
             {playback?.mediaTitle ??
-              (listening === null
-                ? say('screens.adminArea.sessionCard.notWatchingAnything')
-                : `${listening.title} · ${listening.artists.join(', ')}`)}
+              (listening !== null
+                ? `${listening.title} · ${listening.artists.join(', ')}`
+                : book !== null
+                  ? [book.title, ...book.authors].join(' · ')
+                  : say('screens.adminArea.sessionCard.notWatchingAnything'))}
           </span>
 
           {listening === null || playback !== null ? null : (
@@ -115,6 +132,17 @@ const SessionCard = ({
           {!isActive ? null : (
             <span className="shrink-0">
               · {isPlaying ? say('common.playing') : say('common.paused')}
+            </span>
+          )}
+
+          {reading === null || isActive ? null : (
+            <span className="shrink-0">
+              · {say('common.reading')}
+              {reading.fraction !== null
+                ? ` · ${say('common.percentRead', { percent: Math.round(reading.fraction * 100) })}`
+                : reading.pageNumber !== null
+                  ? ` · ${say('common.pageValue', { value: reading.pageNumber + 1 })}`
+                  : null}
             </span>
           )}
 

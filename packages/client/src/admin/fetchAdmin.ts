@@ -1,3 +1,7 @@
+import {
+  BookListeningSessionSchema,
+  ReadingSessionSchema,
+} from '@ValenceContracts/schemas/BookRemote';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { RoundnessSchema } from '@ValenceContracts/schemas/Roundness';
 import type { Roundness } from '@ValenceContracts/schemas/Roundness';
@@ -239,6 +243,8 @@ const ActiveSessionSchema = z.object({
     })
     .nullable(),
   listening: ListeningSessionSchema.nullable().default(null),
+  bookListening: BookListeningSessionSchema.nullable().default(null),
+  reading: ReadingSessionSchema.nullable().default(null),
 });
 
 const JobDefinitionSchema = z.object({
