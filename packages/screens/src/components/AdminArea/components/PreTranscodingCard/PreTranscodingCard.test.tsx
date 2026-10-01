@@ -147,6 +147,24 @@ describe('PreTranscodingCard', () => {
     expect(savePreTranscodingMock).toHaveBeenCalledWith({ ...ON, isPaused: true });
   });
 
+  it('keeps what was being changed when it is paused, and saves it without undoing the pause', async () => {
+    draw();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Until everything is done' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Pause' }));
+
+    expect(savePreTranscodingMock).toHaveBeenLastCalledWith({ ...ON, isPaused: true });
+    expect(await screen.findByRole('button', { name: 'Resume' })).toBeVisible();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(savePreTranscodingMock).toHaveBeenLastCalledWith({
+      ...ON,
+      isPaused: true,
+      schedule: 'untilDone',
+    });
+  });
+
   it('asks for the next copy now', async () => {
     runPreTranscodingNowMock.mockResolvedValue(true);
     draw();

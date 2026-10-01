@@ -77,11 +77,16 @@ const PreTranscodingCard = ({ libraries }: PreTranscodingCardProps) => {
   const [bitrate, setBitrate] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
+  const [isEdited, setIsEdited] = useState(false);
 
   useEffect(() => {
+    if (isEdited) {
+      return;
+    }
+
     setDraft(saved);
     setBitrate(saved.maxBitrateKbps === null ? '' : saved.maxBitrateKbps.toString());
-  }, [saved]);
+  }, [saved, isEdited]);
 
   const videoLibraries = useMemo(
     () => libraries.filter((one) => VIDEO_LIBRARY_KINDS.includes(one.kind)),
@@ -91,15 +96,17 @@ const PreTranscodingCard = ({ libraries }: PreTranscodingCardProps) => {
   const reading = readBitrate(bitrate);
   const chosen: PreTranscodingSettings = {
     ...draft,
+    isPaused: saved.isPaused,
     maxBitrateKbps: reading.kind === 'kbps' ? reading.kbps : null,
   };
   const isChanged = JSON.stringify(chosen) !== JSON.stringify(saved);
 
   const change = (patch: Partial<PreTranscodingSettings>) => {
+    setIsEdited(true);
     setDraft((before) => ({ ...before, ...patch }));
   };
 
-  const store = async (next: PreTranscodingSettings, done: string) => {
+  const store = async (next: PreTranscodingSettings, done: string): Promise<boolean> => {
     setIsSaving(true);
 
     const answer = await savePreTranscoding(next);
@@ -109,7 +116,11 @@ const PreTranscodingCard = ({ libraries }: PreTranscodingCardProps) => {
     if (tellOutcome(done, failureOfMissing(answer)) && answer !== null) {
       cache.setQueryData(adminQueries.preTranscoding().queryKey, answer);
       void cache.invalidateQueries({ queryKey: adminQueries.reencodes().queryKey });
+
+      return true;
     }
+
+    return false;
   };
 
   const runNow = async () => {
@@ -286,7 +297,10 @@ const PreTranscodingCard = ({ libraries }: PreTranscodingCardProps) => {
               min={100}
               placeholder={say('common.noCeiling')}
               value={bitrate}
-              onValueChange={setBitrate}
+              onValueChange={(next) => {
+                setIsEdited(true);
+                setBitrate(next);
+              }}
               {...(reading.kind === 'invalid'
                 ? { error: say('screens.adminArea.preTranscodingCard.aWholeNumberFrom100') }
                 : {})}
@@ -385,7 +399,14 @@ const PreTranscodingCard = ({ libraries }: PreTranscodingCardProps) => {
             isLoading={isSaving}
             disabled={!isChanged || reading.kind === 'invalid'}
             onClick={() => {
-              void store(chosen, say('screens.adminArea.preTranscodingCard.savedPreTranscoding'));
+              void store(
+                chosen,
+                say('screens.adminArea.preTranscodingCard.savedPreTranscoding'),
+              ).then((isStored) => {
+                if (isStored) {
+                  setIsEdited(false);
+                }
+              });
             }}
           >
             {say('common.save')}
