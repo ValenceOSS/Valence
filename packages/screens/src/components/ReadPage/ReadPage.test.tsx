@@ -74,6 +74,21 @@ const serve = (book: Book, chapters: BookChapter[]) => {
   );
 };
 
+/**
+ * The books the page told the server somebody is reading.
+ *
+ * @returns Each book named in a report, in the order they were made.
+ */
+const readingReported = (): string[] =>
+  vi
+    .mocked(fetch)
+    .mock.calls.filter(([input]) => input === '/api/books/now-reading')
+    .flatMap(([, init]) => {
+      const sent = typeof init?.body === 'string' ? init.body : '';
+
+      return sent.includes(BOOK_ID) ? [BOOK_ID] : [];
+    });
+
 beforeEach(() => {
   installATestClient();
 });
@@ -147,6 +162,26 @@ describe('ReadPage', () => {
     renderInAnAddress(<ReadPage />);
 
     expect(await screen.findByText('Nothing in this book yet')).toBeInTheDocument();
+  });
+
+  it('tells the server somebody is reading once the book opens', async () => {
+    serve(A_BOOK, [A_CHAPTER]);
+
+    renderInAnAddress(<ReadPage />);
+
+    await screen.findByText('It is a truth universally acknowledged.');
+
+    expect(readingReported()).toContain(BOOK_ID);
+  });
+
+  it('tells the server nothing about reading a book with nothing in it', async () => {
+    serve(A_BOOK, []);
+
+    renderInAnAddress(<ReadPage />);
+
+    await screen.findByText('Nothing in this book yet');
+
+    expect(readingReported()).toEqual([]);
   });
 
   it('sets a display name so devtools can identify it', () => {

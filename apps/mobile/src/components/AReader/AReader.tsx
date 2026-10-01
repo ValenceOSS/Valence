@@ -49,7 +49,9 @@ const AReader = ({ bookId, chapterId, isFromTheStart, onBack }: AReaderProps) =>
     [cache],
   );
 
-  const tellReading = useNowReading(bookId);
+  const isReading =
+    asked.data !== undefined && asked.data !== null && read.data !== undefined && open !== '';
+  const tellReading = useNowReading(isReading ? bookId : null);
 
   const rememberPage = useCallback(
     (page: number, isFinished: boolean) => {

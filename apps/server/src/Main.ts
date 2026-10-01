@@ -95,6 +95,7 @@ import { mediaKindOf } from '@ValenceServer/library/mediaKindOf';
 import { describeQuality } from '@ValenceServer/library/describeQuality';
 import { listeningFor } from '@ValenceServer/music/listeningFor';
 import { createBookDevices } from '@ValenceServer/books/createBookDevices';
+import { createQueuePerKey } from '@ValenceServer/devices/createQueuePerKey';
 import { describeSignInAttempt } from '@ValenceServer/auth/describeSignInAttempt';
 import { ARRIVED_TITLES_KEPT } from '@ValenceContracts/schemas/Webhook';
 import { summariseArrivals } from '@ValenceServer/events/summariseArrivals';
@@ -944,6 +945,8 @@ const describeBookListening = async ({
   };
 };
 
+const inTurnPerDevice = createQueuePerKey();
+
 const bookDevices = createBookDevices({
   presence,
   onChanged: () => {
@@ -952,16 +955,20 @@ const bookDevices = createBookDevices({
   plays: {
     now: () => Date.now(),
     onStarted: (play) => {
-      void describeBookListening(play).then((described) => {
+      inTurnPerDevice(play.device.clientId, async () => {
+        const described = await describeBookListening(play);
+
         if (described !== null) {
-          void events.publish({ event: 'playback.started', data: described });
+          await events.publish({ event: 'playback.started', data: described });
         }
       });
     },
     onStopped: (play, reached) => {
-      void describeBookListening(play).then((described) => {
+      inTurnPerDevice(play.device.clientId, async () => {
+        const described = await describeBookListening(play);
+
         if (described !== null) {
-          void events.publish({ event: 'playback.stopped', data: { ...described, ...reached } });
+          await events.publish({ event: 'playback.stopped', data: { ...described, ...reached } });
         }
       });
     },
@@ -1010,19 +1017,20 @@ const musicServices: MusicServices = {
     plays: {
       now: () => Date.now(),
       onStarted: (play) => {
-        void describeListening(play).then((described) => {
+        inTurnPerDevice(play.device.clientId, async () => {
+          const described = await describeListening(play);
+
           if (described !== null) {
-            void events.publish({ event: 'playback.started', data: described });
+            await events.publish({ event: 'playback.started', data: described });
           }
         });
       },
       onStopped: (play, reached) => {
-        void describeListening(play).then((described) => {
+        inTurnPerDevice(play.device.clientId, async () => {
+          const described = await describeListening(play);
+
           if (described !== null) {
-            void events.publish({
-              event: 'playback.stopped',
-              data: { ...described, ...reached },
-            });
+            await events.publish({ event: 'playback.stopped', data: { ...described, ...reached } });
           }
         });
       },

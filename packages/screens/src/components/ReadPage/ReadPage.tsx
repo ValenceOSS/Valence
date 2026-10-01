@@ -46,7 +46,9 @@ const ReadPage = () => {
     chosen,
   );
 
-  const tellReading = useNowReading(id === '' ? null : id);
+  const isReading =
+    asked.data !== undefined && asked.data !== null && read.data !== undefined && chapterId !== '';
+  const tellReading = useNowReading(isReading ? id : null);
 
   const remember = useCallback(
     (page: number, isFinished: boolean) => {
