@@ -1,7 +1,8 @@
 import { Check, CircleCheck, Info } from '@keyline-icons/react-native';
 import { CircleCheck as CircleCheckFilled } from '@keyline-icons/react-native/fill';
 import { useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { HowFar } from '@ValenceMobile/components/HowFar/HowFar';
@@ -94,13 +95,12 @@ const AnEpisode = ({
               ]}
             >
               {!episode.hasBackdrop || isMissing ? null : (
-                <Image
+                <ARemotePicture
                   style={styles.picture}
-                  source={{ uri: onThisServer(`/api/media/${episode.id}/image/backdrop`) }}
-                  onError={() => {
+                  uri={onThisServer(`/api/media/${episode.id}/image/backdrop`)}
+                  onMissing={() => {
                     setIsMissing(true);
                   }}
-                  accessibilityIgnoresInvertColors
                 />
               )}
 

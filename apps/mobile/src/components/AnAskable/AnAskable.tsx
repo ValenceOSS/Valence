@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ActivityIndicator, Alert, Image, StyleSheet } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet } from 'react-native';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { askForMedia, removeMediaRequest } from '@ValenceClient/requests/fetchMediaRequests';
@@ -133,10 +134,9 @@ const AnAskable = ({ kind, id, onOpen, onBack }: AnAskableProps) => {
   return (
     <Screen scrolls onBack={onBack}>
       {title.backdropUrl === null ? null : (
-        <Image
+        <ARemotePicture
           style={[styles.backdrop, { backgroundColor: colours.surfaceRaised }]}
-          source={{ uri: title.backdropUrl }}
-          accessibilityIgnoresInvertColors
+          uri={title.backdropUrl}
         />
       )}
 

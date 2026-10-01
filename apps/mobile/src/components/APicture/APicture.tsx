@@ -1,4 +1,5 @@
-import { Image, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { ADrawing } from '@ValenceMobile/components/APicture/components/ADrawing/ADrawing';
 import type { APictureProps } from './APicture.types';
 
@@ -24,12 +25,11 @@ const APicture = ({ picture, onMissing, onLoad }: APictureProps) =>
       {...(onLoad === undefined ? {} : { onLoad })}
     />
   ) : (
-    <Image
+    <ARemotePicture
       style={styles.whole}
-      source={{ uri: picture.uri }}
-      onError={onMissing}
+      uri={picture.uri}
+      onMissing={onMissing}
       {...(onLoad === undefined ? {} : { onLoad })}
-      accessibilityIgnoresInvertColors
     />
   );
 

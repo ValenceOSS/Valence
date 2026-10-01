@@ -1,7 +1,8 @@
 import { MoreHorizontal } from '@keyline-icons/react-native';
 import { Heart as HeartFilled } from '@keyline-icons/react-native/fill';
 import { memo } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
@@ -69,11 +70,7 @@ const OneTrack = ({
                 </Words>
               </View>
             ) : (
-              <Image
-                style={styles.art}
-                source={{ uri: artwork }}
-                accessibilityIgnoresInvertColors
-              />
+              <ARemotePicture style={styles.art} uri={artwork} />
             )}
 
             <View style={styles.said}>

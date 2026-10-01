@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
@@ -38,12 +39,11 @@ const ACoverGrid = ({ albumIds, standIn, iconSize }: ACoverGridProps) => {
   return (
     <View style={styles.grid}>
       {tiles.map((albumId) => (
-        <Image
+        <ARemotePicture
           key={albumId}
           style={tiles.length === 4 ? styles.quarter : styles.fills}
-          source={{ uri: onThisServer(albumArtworkUrl(albumId)) }}
-          accessibilityIgnoresInvertColors
-          onError={() => {
+          uri={onThisServer(albumArtworkUrl(albumId))}
+          onMissing={() => {
             setIsMissing(tiles.length === 1);
           }}
         />

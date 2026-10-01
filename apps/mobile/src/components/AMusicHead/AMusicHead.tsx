@@ -1,7 +1,8 @@
 import { Shuffle } from '@keyline-icons/react-native';
 import { Play as PlayFilled } from '@keyline-icons/react-native/fill';
 import { useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { ACoverGrid } from '@ValenceMobile/components/ACoverGrid/ACoverGrid';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
@@ -74,11 +75,10 @@ const AMusicHead = ({
         ) : artwork === null || isMissing ? (
           <Icon of={standIn} size={64} colour={colours.textMuted} />
         ) : (
-          <Image
+          <ARemotePicture
             style={styles.fills}
-            source={{ uri: artwork }}
-            accessibilityIgnoresInvertColors
-            onError={() => {
+            uri={artwork}
+            onMissing={() => {
               setIsMissing(true);
             }}
           />

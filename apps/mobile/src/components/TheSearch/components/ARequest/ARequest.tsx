@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { Image, Linking, StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { useQueryClient } from '@tanstack/react-query';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { mayBeInTheLibrary } from '@ValenceClient/requests/mayBeInTheLibrary';
@@ -57,13 +58,14 @@ const ARequest = ({ request, progress, myId, onAsk }: ARequestProps) => {
   }, [cache, kind, readAheadAs]);
   const card = (
     <View style={styles.row}>
-      <Image
-        style={[styles.poster, { backgroundColor: colours.surfaceRaised }]}
-        {...(request.posterUrl === null
-          ? {}
-          : { source: { uri: pictureOnThisServer(request.posterUrl) } })}
-        accessibilityIgnoresInvertColors
-      />
+      {request.posterUrl === null ? (
+        <View style={[styles.poster, { backgroundColor: colours.surfaceRaised }]} />
+      ) : (
+        <ARemotePicture
+          style={[styles.poster, { backgroundColor: colours.surfaceRaised }]}
+          uri={pictureOnThisServer(request.posterUrl)}
+        />
+      )}
 
       <View style={styles.words}>
         <Words lines={1}>

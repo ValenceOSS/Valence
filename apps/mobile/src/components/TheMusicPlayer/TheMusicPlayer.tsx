@@ -15,15 +15,8 @@ import {
   SkipForward as SkipForwardFilled,
 } from '@keyline-icons/react-native/fill';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
-import {
-  Alert,
-  Animated,
-  Image,
-  PanResponder,
-  StyleSheet,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { Alert, Animated, PanResponder, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { howTheFileSounds } from '@ValenceClient/music/howTheFileSounds';
 import { whatTheFileHolds } from '@ValenceClient/music/whatTheFileHolds';
@@ -449,7 +442,7 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
         {of === null ? (
           <Icon of={MusicNote} size={80} colour={colours.textMuted} />
         ) : (
-          <Image style={styles.fills} source={{ uri: of }} accessibilityIgnoresInvertColors />
+          <ARemotePicture style={styles.fills} uri={of} />
         )}
       </View>
     </View>

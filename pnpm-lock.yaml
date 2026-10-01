@@ -383,6 +383,9 @@ importers:
       expo-font:
         specifier: ~58.0.2
         version: 58.0.2(expo@58.0.0-preview.7)(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0)
+      expo-image:
+        specifier: ~58.0.9
+        version: 58.0.9(expo@58.0.0-preview.7)(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0)
       expo-image-picker:
         specifier: ~58.0.7
         version: 58.0.7(expo@58.0.0-preview.7)
@@ -11017,6 +11020,20 @@ packages:
     resolution:
       {
         integrity: sha512-jOm5lofaIKXhQ7i0Hz3I5JuNULw/aghmpIPZXddwQcEtw8+wUhlozq3M7LbsOrcsBEapcG4jFs85DsfuFoz1tQ==,
+      }
+    peerDependencies:
+      expo: '*'
+      react: '*'
+      react-native: '*'
+      react-native-web: '*'
+    peerDependenciesMeta:
+      react-native-web:
+        optional: true
+
+  expo-image@58.0.9:
+    resolution:
+      {
+        integrity: sha512-dIiGinmYGHeH/eHohpV1ZfPDbmYnzkkAME7Yk8wPKGiJnEc7yFMGtvlFKk02OOlruzHo0l1TMP55wJaMddbGVw==,
       }
     peerDependencies:
       expo: '*'
@@ -25201,6 +25218,13 @@ snapshots:
       expo: 57.0.24(@babel/core@7.29.7)(@expo/dom-webview@57.0.1)(react-dom@19.3.0(react@19.2.3))(react-native-tvos@0.86.3-0)(react@19.2.3)(typescript@5.9.3)
       react: 19.2.3
       react-native: react-native-tvos@0.86.3-0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react-native-tvos@0.86.3-0)(react@19.2.3)
+      sf-symbols-typescript: 2.2.0
+
+  expo-image@58.0.9(expo@58.0.0-preview.7)(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0):
+    dependencies:
+      expo: 58.0.0-preview.7(@babel/core@7.29.7)(@expo/dom-webview@57.0.1)(react-dom@19.3.0(react@19.3.0))(react-native@0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0))(react@19.3.0)(typescript@5.9.3)
+      react: 19.3.0
+      react-native: 0.88.0-rc.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.3.0)
       sf-symbols-typescript: 2.2.0
 
   expo-keep-awake@57.0.2(expo@57.0.24)(react@19.2.3):

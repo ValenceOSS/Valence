@@ -5,7 +5,8 @@ import {
   Headphones as HeadphonesFilled,
 } from '@keyline-icons/react-native/fill';
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, Image, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { describeReadingPlace } from '@ValenceClient/books/describeReadingPlace';
 import { chaptersOf } from '@ValenceClient/books/createAudiobookPlayer';
 import { describeLength } from '@ValenceClient/books/describeLength';
@@ -172,11 +173,7 @@ const ABook = ({ bookId, onRead, onListen, onBack }: ABookProps) => {
       <View style={styles.head}>
         <View style={[styles.cover, { backgroundColor: colours.surfaceRaised }]}>
           {book.hasCover ? (
-            <Image
-              style={styles.fills}
-              source={{ uri: onThisServer(bookCoverUrl(book.id)) }}
-              accessibilityIgnoresInvertColors
-            />
+            <ARemotePicture style={styles.fills} uri={onThisServer(bookCoverUrl(book.id))} />
           ) : (
             <Icon of={BookOpen} size={40} colour={colours.textMuted} />
           )}

@@ -1,6 +1,7 @@
 import { Download } from '@keyline-icons/react-native';
 import { useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { EPISODE_STILL } from '@ValenceMobile/components/AShow/components/EPISODE_STILL';
@@ -47,13 +48,12 @@ const AMissingEpisode = ({ at, title, stillUrl, airs }: AMissingEpisodeProps) =>
         ]}
       >
         {stillUrl === null || isMissing ? null : (
-          <Image
+          <ARemotePicture
             style={styles.faded}
-            source={{ uri: stillUrl }}
-            onError={() => {
+            uri={stillUrl}
+            onMissing={() => {
               setIsMissing(true);
             }}
-            accessibilityIgnoresInvertColors
           />
         )}
         <Icon of={Download} size={20} colour={colours.textMuted} />

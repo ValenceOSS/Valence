@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Image } from 'react-native';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import type { ATitleLogoProps } from './ATitleLogo.types';
@@ -31,19 +31,17 @@ const ATitleLogo = ({ mediaId, title, high, widest, isOnArtwork = false }: ATitl
   }
 
   return (
-    <Image
+    <ARemotePicture
       style={{ height: high, width: Math.min(wide ?? widest, widest) }}
-      resizeMode="contain"
-      source={{ uri: onThisServer(`/api/media/${mediaId}/image/logo?at=full`) }}
-      accessibilityLabel={title}
-      onLoad={(event) => {
-        const { width, height } = event.nativeEvent.source;
-
+      fit="contain"
+      uri={onThisServer(`/api/media/${mediaId}/image/logo?at=full`)}
+      label={title}
+      onLoad={({ width, height }) => {
         if (height > 0) {
           setWide((width / height) * high);
         }
       }}
-      onError={() => {
+      onMissing={() => {
         setIsUnlettered(true);
       }}
     />

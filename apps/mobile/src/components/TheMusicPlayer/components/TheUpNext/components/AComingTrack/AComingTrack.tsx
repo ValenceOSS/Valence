@@ -1,7 +1,8 @@
 import { MoreHorizontal, MusicNote } from '@keyline-icons/react-native';
 import { Sparkle as SparkleFilled } from '@keyline-icons/react-native/fill';
 import { memo } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
@@ -57,10 +58,9 @@ const OneComingTrack = ({ track, at, isPick, onPlay, onMenu }: AComingTrackProps
           <View style={styles.track}>
             <View style={[styles.art, { backgroundColor: colours.surfaceRaised }]}>
               {track.album.hasArtwork ? (
-                <Image
+                <ARemotePicture
                   style={styles.fills}
-                  source={{ uri: onThisServer(albumArtworkUrl(track.album.id)) }}
-                  accessibilityIgnoresInvertColors
+                  uri={onThisServer(albumArtworkUrl(track.album.id))}
                 />
               ) : (
                 <Icon of={MusicNote} size={18} colour={colours.textMuted} />
