@@ -207,6 +207,7 @@ import {
   PRUNE_JOB_HISTORY_JOB,
   PRUNE_RESOURCE_HISTORY_JOB,
   REENCODE_JOB,
+  PRE_TRANSCODE_JOB,
   DeliverWebhookJobSchema,
   scheduleTriggerKind,
   RUN_PLUGIN_SCHEDULE_JOB,
@@ -298,6 +299,8 @@ import { createDatabasePermissionService } from '@ValenceServer/auth/createDatab
 import { followTheDownloads } from '@ValenceServer/downloads/followTheDownloads';
 import { createDownloadService } from '@ValenceServer/downloads/createDownloadService';
 import { createDatabaseReencodeService } from '@ValenceServer/reencode/createDatabaseReencodeService';
+import { createPreTranscodingService } from '@ValenceServer/preTranscoding/createPreTranscodingService';
+import { PRE_TRANSCODING_DEFAULTS } from '@ValenceContracts/schemas/PreTranscoding';
 import { keepingProfile } from '@ValenceServer/downloads/keepingProfile';
 import { watchADownload } from '@ValenceServer/downloads/watchADownload';
 import { readCertificatesAgain } from '@ValenceServer/library/readCertificatesAgain';
@@ -371,6 +374,7 @@ const settings = createDatabaseSettingsStore({
     reencodesAwaitingReviewCap: 5,
     keepsDownloadsForDays: 14,
     roundness: 'default',
+    preTranscoding: PRE_TRANSCODING_DEFAULTS,
   },
 });
 
@@ -1802,12 +1806,21 @@ const jobs = createJobQueue({
         void bookPageUsage.refresh();
       },
       [REENCODE_JOB]: async (jobId) => {
-        await reencodeService.work(
+        const finished = await reencodeService.work(
           (processed, total) => {
             jobs.reportProgress(jobId, saying('server.jobs.phase.encoding'), processed, total);
           },
           () => jobs.isCancelled(jobId),
         );
+
+        if (finished > 0) {
+          void jobs.enqueue(PRE_TRANSCODE_JOB, {}, PRE_TRANSCODE_JOB);
+        }
+      },
+      [PRE_TRANSCODE_JOB]: async (jobId) => {
+        const ticked = await preTranscodingService.tick();
+
+        jobs.reportProgress(jobId, saying(PRE_TRANSCODE_PHASES[ticked.kind]), 1, 1);
       },
       [CLEANUP_ARTEFACT_CACHE_JOB]: async () => {
         const swept = await sweepArtefactCache({
@@ -2201,16 +2214,18 @@ const queueWebhookDelivery = async (subscriptionId: string, payload: string): Pr
 openDeliveries = queueWebhookDelivery;
 
 const maintenance = createDatabaseMaintenanceService({ jobs });
+const readJobsTimezone = async (): Promise<string> =>
+  resolveJobsTimezone({
+    configured: (await settings.read()).jobsTimezone,
+    environment: process.env['TZ'],
+    host: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  });
+
 const schedules = createJobScheduleService({
   store: createDatabaseJobTriggerStore(db),
   jobs,
   definitions: jobDefinitions,
-  readTimezone: async () =>
-    resolveJobsTimezone({
-      configured: (await settings.read()).jobsTimezone,
-      environment: process.env['TZ'],
-      host: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    }),
+  readTimezone: readJobsTimezone,
 });
 
 const catalogueProvider = createCatalogueMetadataProvider({
@@ -2251,6 +2266,11 @@ const libraryService = createDatabaseLibraryService({
   db,
   files: createMediaFileSystem(),
   transcoder,
+  forgetKeptCopies: async (paths) => {
+    for (const path of paths) {
+      await transcoder.forgetRendition(path).catch(() => false);
+    }
+  },
   forcedAccel: async () => (await settings.read()).hardwareAccel,
   jobs,
   providers: [
@@ -2823,6 +2843,15 @@ followTheDownloads({
   },
 });
 
+const PRE_TRANSCODE_PHASES = {
+  off: 'server.jobs.phase.preTranscodeOff',
+  paused: 'server.jobs.phase.preTranscodePaused',
+  outsideTheWindow: 'server.jobs.phase.preTranscodeOutsideTheWindow',
+  underWay: 'server.jobs.phase.preTranscodeUnderWay',
+  queued: 'server.jobs.phase.preTranscodeQueued',
+  nothingLeft: 'server.jobs.phase.preTranscodeNothingLeft',
+} as const;
+
 const reencodeService = createDatabaseReencodeService({
   db,
   media: {
@@ -2871,6 +2900,21 @@ const reencodeService = createDatabaseReencodeService({
   },
   onProblem: (what, reason) => {
     log.warn('jobs', `re-encoding ${what}: ${reason.message}`);
+  },
+});
+
+const preTranscodingService = createPreTranscodingService({
+  db,
+  reencodes: reencodeService,
+  settings: {
+    read: async () => (await settings.read()).preTranscoding,
+    write: async (next) => {
+      await settings.write({ preTranscoding: next });
+    },
+  },
+  timezone: readJobsTimezone,
+  onQueued: () => {
+    void jobs.enqueue(REENCODE_JOB, {}, REENCODE_JOB);
   },
 });
 
@@ -3028,6 +3072,7 @@ const app = createApp({
   onReencodeQueued: () => {
     void jobs.enqueue(REENCODE_JOB, {}, REENCODE_JOB);
   },
+  preTranscoding: preTranscodingService,
   favourites: createDatabaseFavouriteService(db),
   hiding: createDatabaseHiddenService(db),
   ratings: createDatabaseRatingService(db),

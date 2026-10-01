@@ -16,4 +16,11 @@ describe('isMediaFile', () => {
     expect(isMediaFile('/movies/.valence/renditions/abc.mkv')).toBe(false);
     expect(isMediaFile('C:\\movies\\.valence\\renditions\\abc.mkv')).toBe(false);
   });
+
+  it('leaves out the copies Valence keeps beside a film', () => {
+    expect(isMediaFile('/movies/Arrival (2016)/Arrival (2016) - 1080p H264.valence.mp4')).toBe(
+      false,
+    );
+    expect(isMediaFile('/movies/Arrival (2016)/Arrival (2016).mkv')).toBe(true);
+  });
 });

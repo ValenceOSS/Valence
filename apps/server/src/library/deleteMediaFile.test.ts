@@ -45,6 +45,34 @@ describe('deleteMediaFile', () => {
     ]);
   });
 
+  it('deletes the copies Valence kept of it, beside it or in its own folder', async () => {
+    await place('Arrival (2016)/Arrival (2016).mkv');
+    await place('Arrival (2016)/Arrival (2016) - 1080p H264.valence.mp4');
+    await place('.valence/0b5c.mkv');
+    await place('.valence/other.mkv');
+
+    await expect(
+      deleteMediaFile(root, join(root, 'Arrival (2016)/Arrival (2016).mkv'), [
+        join(root, 'Arrival (2016)/Arrival (2016) - 1080p H264.valence.mp4'),
+        join(root, '.valence/0b5c.mkv'),
+      ]),
+    ).resolves.toEqual({ kind: 'deleted' });
+    expect((await readdir(root)).sort()).toEqual(['.valence']);
+    expect(await readdir(join(root, '.valence'))).toEqual(['other.mkv']);
+  });
+
+  it('never deletes a kept copy said to be outside the library', async () => {
+    const elsewhere = await mkdtemp(join(tmpdir(), 'valence-elsewhere-'));
+
+    await writeFile(join(elsewhere, 'keep.mp4'), 'x');
+    await place('Film/Film.mkv');
+
+    await deleteMediaFile(root, join(root, 'Film/Film.mkv'), [join(elsewhere, 'keep.mp4')]);
+
+    expect(await readdir(elsewhere)).toEqual(['keep.mp4']);
+    await rm(elsewhere, { recursive: true, force: true });
+  });
+
   it('takes away the folders it leaves empty, and never the library itself', async () => {
     await place('Show/Season 1/S01E01.mkv');
     await place('Show/poster.jpg');

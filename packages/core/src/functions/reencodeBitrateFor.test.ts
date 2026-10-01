@@ -63,4 +63,17 @@ describe('reencodeBitrateFor', () => {
 
     expect(reencodeBitrateFor(hevcSource, null, 'h264').expectedKbps).toBe(66000);
   });
+
+  it('holds both figures under a ceiling somebody named where it is the lower', () => {
+    expect(reencodeBitrateFor(remux, '1080p', 'h264', 3000)).toEqual({
+      capKbps: 3000,
+      expectedKbps: 3000,
+    });
+  });
+
+  it('leaves the rung in charge where the named ceiling is higher', () => {
+    expect(reencodeBitrateFor(remux, '1080p', 'h264', 20000)).toEqual(
+      reencodeBitrateFor(remux, '1080p', 'h264'),
+    );
+  });
 });

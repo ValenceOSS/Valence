@@ -132,7 +132,7 @@ const planReencodeSpec = ({
     }),
     subtitleStreamIndexes: plan.subtitleIndexes,
     colour: {},
-    keepsChapters,
+    keepsChapters: keepsChapters && !(settings.mode === 'keep' && settings.container === 'mp4'),
   };
 
   const shared = {

@@ -22,6 +22,7 @@ import type { AnyValenceDatabase } from '#dialect/AnyValenceDatabase';
 import type { PreviewMoment } from '@ValenceContracts/schemas/Library';
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 import { resolveSeriesKey } from './resolveSeriesKey';
+import { keptCopiesOf } from './keptCopiesOf';
 import type { MediaStore } from './scanLibrary';
 import { certificationAgeOf } from '@ValenceServer/library/certificationAgeOf';
 import { countAffected } from '@ValenceDatabase/countAffected';
@@ -127,12 +128,17 @@ const onCopy = (copy: Name, column: Column): SQL => sql`${copy}.${sql.identifier
  * and the corrections an operator has made. Everything the scanner needs of the database and nothing
  * else, so the scan itself can be tested against a store held in memory.
  *
+ * Whatever leaves takes the copies Valence kept of it along, once its rows are gone.
+ *
  * @param db - The database to read and write.
+ * @param certificationRegion - Whose age certificates to read.
+ * @param forgetKeptCopies - Deletes the files of copies kept alongside items that have gone.
  * @returns The store, plus the operations only a real library performs.
  */
 const createMediaStore = (
   db: AnyValenceDatabase,
   certificationRegion: () => Promise<string> = () => Promise.resolve('GB'),
+  forgetKeptCopies: (paths: string[]) => Promise<void> = () => Promise.resolve(),
 ): MediaStore & {
   clear: (libraryId: string) => Promise<number>;
   saveOverride: (row: {
@@ -288,6 +294,7 @@ const createMediaStore = (
     }
 
     const leaving = and(eq(mediaItem.libraryId, libraryId), inArray(mediaItem.path, paths));
+    const keptCopies = await keptCopiesOf(db, leaving);
     const removed = await db.transaction(async (tx) => {
       const found = await tx
         .select({
@@ -312,6 +319,8 @@ const createMediaStore = (
 
       return found;
     });
+
+    await forgetKeptCopies(keptCopies);
 
     return removed.map(({ width, height, videoRange, ...one }) => ({
       ...one,
@@ -621,7 +630,13 @@ const createMediaStore = (
   },
 
   clear: async (libraryId) => {
-    return countAffected(await db.delete(mediaItem).where(eq(mediaItem.libraryId, libraryId)));
+    const inTheLibrary = eq(mediaItem.libraryId, libraryId);
+    const keptCopies = await keptCopiesOf(db, inTheLibrary);
+    const cleared = countAffected(await db.delete(mediaItem).where(inTheLibrary));
+
+    await forgetKeptCopies(keptCopies);
+
+    return cleared;
   },
 });
 

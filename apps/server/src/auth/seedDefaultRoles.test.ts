@@ -1,3 +1,4 @@
+import { PRE_TRANSCODING_DEFAULTS } from '@ValenceContracts/schemas/PreTranscoding';
 import { describe, expect, it } from 'vitest';
 import { createMemorySettingsStore } from '@ValenceServer/settings/createMemorySettingsStore';
 import { createMemoryPermissionService } from './createMemoryPermissionService';
@@ -30,6 +31,7 @@ const emptySettings = () =>
     reencodesAwaitingReviewCap: 5,
     roundness: 'default',
     keepsDownloadsForDays: 14,
+    preTranscoding: PRE_TRANSCODING_DEFAULTS,
   });
 
 /**

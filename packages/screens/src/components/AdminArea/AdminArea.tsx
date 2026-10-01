@@ -10,6 +10,9 @@ import { ActivityPanel } from './components/ActivityPanel/ActivityPanel';
 import { ObservabilityPage } from '@ValenceScreens/components/ObservabilityPage/ObservabilityPage';
 import { LibrariesPanel } from './components/LibrariesPanel/LibrariesPanel';
 import { EncodingPanel } from './components/EncodingPanel/EncodingPanel';
+import { KeptCopiesDialog } from './components/KeptCopiesDialog/KeptCopiesDialog';
+import { PreTranscodingCard } from './components/PreTranscodingCard/PreTranscodingCard';
+import type { KeptCopiesSubject } from './components/KeptCopiesDialog/KeptCopiesDialog.types';
 import { FilesPanel } from '@ValenceScreens/components/AdminArea/components/FilesPanel/FilesPanel';
 import { MediaPanel } from './components/MediaPanel/MediaPanel';
 import { ReencodeDialog } from '@ValenceScreens/components/ReencodeDialog/ReencodeDialog';
@@ -205,6 +208,7 @@ const AdminArea = ({
 
   const [busyClientId, setBusyClientId] = useState<string | null>(null);
   const [isChoosingReencode, setIsChoosingReencode] = useState(false);
+  const [showingCopies, setShowingCopies] = useState<KeptCopiesSubject | null>(null);
   const [reviewing, setReviewing] = useState<Reencode | null>(null);
   const [reencodeEstimate, setReencodeEstimate] = useState<ReencodeEstimate | null>(null);
   const [isWeighingReencode, setIsWeighingReencode] = useState(false);
@@ -1124,6 +1128,9 @@ const AdminArea = ({
                   },
                 );
               }}
+              onShowCopies={(item, name) => {
+                setShowingCopies({ mediaId: item.id, name });
+              }}
             />
           </TabPanel>
 
@@ -1143,27 +1150,31 @@ const AdminArea = ({
           </TabPanel>
 
           <TabPanel value="encoding" travel={travel}>
-            <EncodingPanel
-              isUnreachable={askedReencodes.isError}
-              reencodes={reencodes}
-              onReview={setReviewing}
-              onStop={async (one) => {
-                const stopped = tellOutcome(
-                  say('screens.adminArea.stoppedTheReEncode'),
-                  failureOfAnswer(
-                    await cancelReencode(one.id),
-                    say('screens.adminArea.thatReEncodeCouldNotBe'),
-                  ),
-                );
+            <div className="flex flex-col gap-5">
+              <PreTranscodingCard libraries={libraries} />
 
-                await reloadReencodes();
+              <EncodingPanel
+                isUnreachable={askedReencodes.isError}
+                reencodes={reencodes}
+                onReview={setReviewing}
+                onStop={async (one) => {
+                  const stopped = tellOutcome(
+                    say('screens.adminArea.stoppedTheReEncode'),
+                    failureOfAnswer(
+                      await cancelReencode(one.id),
+                      say('screens.adminArea.thatReEncodeCouldNotBe'),
+                    ),
+                  );
 
-                return stopped;
-              }}
-              onChoose={() => {
-                setIsChoosingReencode(true);
-              }}
-            />
+                  await reloadReencodes();
+
+                  return stopped;
+                }}
+                onChoose={() => {
+                  setIsChoosingReencode(true);
+                }}
+              />
+            </div>
           </TabPanel>
 
           {hasRequests ? (
@@ -1472,6 +1483,13 @@ const AdminArea = ({
               queryKey: libraryQueries.detail(choosingMoment.id).queryKey,
             });
           }
+        }}
+      />
+
+      <KeptCopiesDialog
+        subject={showingCopies}
+        onClose={() => {
+          setShowingCopies(null);
         }}
       />
 

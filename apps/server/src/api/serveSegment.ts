@@ -2,6 +2,7 @@ import { listSegmentsRoute } from '@ValenceServer/routes/SegmentRoute';
 import { registerMusicRoutes } from '@ValenceServer/music/registerMusicRoutes';
 import { registerVideoDeviceRoutes } from '@ValenceServer/video/registerVideoDeviceRoutes';
 import { registerReencodeRoutes } from '@ValenceServer/reencode/registerReencodeRoutes';
+import { registerPreTranscodingRoutes } from '@ValenceServer/preTranscoding/registerPreTranscodingRoutes';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
@@ -20,6 +21,7 @@ const serveSegment = (app: OpenAPIHono, context: AppContext): void => {
     videoDevices,
     reencodes,
     onReencodeQueued,
+    preTranscoding,
     requires,
     viewerOf,
     readAccount,
@@ -49,6 +51,14 @@ const serveSegment = (app: OpenAPIHono, context: AppContext): void => {
       requires,
       accountOf: async (headers) => (await readAccount(headers))?.id ?? null,
       ...(onReencodeQueued === undefined ? {} : { onQueued: onReencodeQueued }),
+    });
+  }
+
+  if (preTranscoding !== undefined) {
+    registerPreTranscodingRoutes(app, {
+      preTranscoding,
+      requires,
+      accountOf: async (headers) => (await readAccount(headers))?.id ?? null,
     });
   }
 };

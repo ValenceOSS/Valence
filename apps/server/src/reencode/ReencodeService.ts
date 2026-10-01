@@ -1,6 +1,7 @@
 import type {
   Reencode,
   ReencodeEstimate,
+  ReencodeOrigin,
   ReencodeSettings,
   ReencodeStarted,
   ReviewSide,
@@ -13,6 +14,7 @@ type ReencodeService = {
     mediaIds: string[],
     settings: ReencodeSettings,
     askedBy: string | null,
+    origin?: ReencodeOrigin,
   ) => Promise<ReencodeStarted>;
   list: () => Promise<Reencode[]>;
   cancel: (id: string) => Promise<boolean>;
@@ -30,7 +32,7 @@ type ReencodeService = {
   work: (
     onProgress: (processed: number, total: number) => void,
     isCancelled: () => boolean,
-  ) => Promise<void>;
+  ) => Promise<number>;
 };
 
 export type { ReencodeService };

@@ -53,7 +53,7 @@ const frameRateAllowance = (frameRate: number | null | undefined): number => {
  * @returns The ceiling to encode under, or null where the file should be left alone.
  */
 const resolveQualityStep = (
-  media: MediaItem,
+  media: Pick<MediaItem, 'height' | 'bitrateKbps' | 'videoFrameRate'>,
   requested: QualityStepId | 'original',
 ): QualityClamp | null => {
   if (requested === 'original') {

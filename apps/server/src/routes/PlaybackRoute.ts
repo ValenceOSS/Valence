@@ -167,8 +167,11 @@ const directFileRoute = createRoute({
   method: 'get',
   path: '/api/playback/{mediaId}/file',
   tags: ['Playback'],
-  summary: 'Stream the original file for direct play',
-  request: { params: z.object({ mediaId: z.string().uuid() }) },
+  summary: 'Stream the original file, or a copy kept alongside it, for direct play',
+  request: {
+    params: z.object({ mediaId: z.string().uuid() }),
+    query: z.object({ rendition: z.string().uuid().optional() }),
+  },
   responses: {
     200: { description: 'The whole file' },
     206: { description: 'The requested byte range' },

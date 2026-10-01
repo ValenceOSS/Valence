@@ -13,6 +13,7 @@ const at = (id: string, state: ReencodeState, overrides: Partial<Reencode> = {})
   seriesTitle: null,
   mode: 'replace',
   state,
+  origin: 'admin',
   quality: '1080p',
   videoCodec: 'hevc',
   audio: 'keep',
@@ -107,6 +108,17 @@ describe('EncodingPanel', () => {
 
     expect(screen.getByText(/× real time/)).toBeVisible();
     expect(screen.queryByText(/MB\/s/)).toBeNull();
+  });
+
+  it('marks an encode pre-transcoding queued, so it is not taken for one somebody asked for', () => {
+    render(
+      <EncodingPanel
+        {...props}
+        reencodes={[at('a', 'encoding', { origin: 'preTranscode', progress: 0.2 })]}
+      />,
+    );
+
+    expect(screen.getByText('Pre-transcoding')).toBeVisible();
   });
 
   it('stops one that has not finished', async () => {

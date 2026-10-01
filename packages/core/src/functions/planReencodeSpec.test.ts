@@ -131,4 +131,20 @@ describe('planReencodeSpec', () => {
     expect(whole.kind === 'ok' ? whole.request.carry.keepsChapters : false).toBe(true);
     expect(sample.kind === 'ok' ? sample.request.carry.keepsChapters : true).toBe(false);
   });
+
+  it('leaves chapters and attachments out of a copy kept as MP4, which cannot carry attachments', () => {
+    const planned = ask({ ...replacing, mode: 'keep', container: 'mp4', videoCodec: 'h264' });
+
+    expect(planned.kind === 'ok' ? planned.request.carry.keepsChapters : null).toBe(false);
+    expect(planned.kind === 'ok' ? planned.request.carry.subtitleStreamIndexes : null).toEqual([]);
+  });
+
+  it('caps the encoder at a bitrate somebody named', () => {
+    const planned = ask({ ...replacing, mode: 'keep', videoCodec: 'h264', maxBitrateKbps: 2000 });
+
+    expect(planned.kind === 'ok' ? planned.request.spec.video : null).toMatchObject({
+      kind: 'encode',
+      maxBitrateKbps: 2000,
+    });
+  });
 });

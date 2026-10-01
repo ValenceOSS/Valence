@@ -229,7 +229,15 @@ const EncodingPanel = ({
             {underWay.map((one) => (
               <li key={one.id} className="flex items-center gap-4">
                 <span className="flex min-w-0 flex-1 flex-col gap-1">
-                  <span className="truncate text-sm text-text">{nameOf(one)}</span>
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span className="truncate text-sm text-text">{nameOf(one)}</span>
+
+                    {one.origin === 'preTranscode' ? (
+                      <Badge size="sm" tone="quiet">
+                        {say('common.preTranscoding')}
+                      </Badge>
+                    ) : null}
+                  </span>
 
                   <ProgressBar
                     label={`${nameOf(one)}: ${describeReencodeState(one.state)}`}

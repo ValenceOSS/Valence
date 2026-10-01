@@ -124,6 +124,8 @@ const PRUNE_RESOURCE_HISTORY_JOB = 'server.pruneResourceHistory';
 
 const REENCODE_JOB = 'library.reencode';
 
+const PRE_TRANSCODE_JOB = 'library.preTranscode';
+
 /**
  * Names the queue a library-scoped kind's schedule fires on, which is a queue of its own rather than
  * the job's, since one schedule has to fan out across every library.
@@ -223,6 +225,7 @@ export {
   PRUNE_JOB_HISTORY_JOB,
   PRUNE_RESOURCE_HISTORY_JOB,
   REENCODE_JOB,
+  PRE_TRANSCODE_JOB,
   DeliverWebhookJobSchema,
   RUN_PLUGIN_SCHEDULE_JOB,
   RunPluginScheduleJobSchema,

@@ -134,6 +134,11 @@ describe('adminQueries', () => {
     expect(typeof adminQueries.reencodes().refetchInterval).toBe('function');
   });
 
+  it('watches a pre-transcoded copy being made on a timer, the same way', () => {
+    expect(typeof adminQueries.preTranscoding().refetchInterval).toBe('function');
+    expect(adminQueries.preTranscoding().queryKey).toContain('preTranscoding');
+  });
+
   it('reads a running scan', async () => {
     await expect(aCache().fetchQuery(adminQueries.scans())).resolves.toEqual([]);
   });

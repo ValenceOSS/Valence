@@ -73,6 +73,34 @@ describe('ReencodeRequestSchema', () => {
     ).toThrow();
   });
 
+  it('carries a container, a bitrate ceiling and a place for a copy kept alongside', () => {
+    const result = ReencodeRequestSchema.parse({
+      mediaIds: [mediaId],
+      mode: 'keep',
+      quality: '1080p',
+      videoCodec: 'h264',
+      audio: 'keep',
+      container: 'mp4',
+      maxBitrateKbps: 3000,
+      placement: 'beside',
+    });
+
+    expect(result).toMatchObject({ container: 'mp4', maxBitrateKbps: 3000, placement: 'beside' });
+  });
+
+  it('refuses a bitrate ceiling too low to be a picture', () => {
+    expect(() =>
+      ReencodeRequestSchema.parse({
+        mediaIds: [mediaId],
+        mode: 'keep',
+        quality: '1080p',
+        videoCodec: 'h264',
+        audio: 'keep',
+        maxBitrateKbps: 10,
+      }),
+    ).toThrow();
+  });
+
   it('offers replacing, keeping alongside, and audio alone', () => {
     expect(REENCODE_MODES).toEqual(['replace', 'keep', 'audioOnly']);
   });
@@ -84,6 +112,13 @@ describe('ReencodeSchema', () => {
 
     expect(result.state).toBe('awaitingReview');
     expect(result.hasSample).toBe(false);
+  });
+
+  it('counts an encode nobody says the origin of as one an administrator asked for', () => {
+    expect(ReencodeSchema.parse(validReencode).origin).toBe('admin');
+    expect(ReencodeSchema.parse({ ...validReencode, origin: 'preTranscode' }).origin).toBe(
+      'preTranscode',
+    );
   });
 
   it('refuses progress beyond the whole of it', () => {

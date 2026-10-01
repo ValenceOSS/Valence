@@ -120,4 +120,16 @@ describe('wouldGainNothing', () => {
   it('does not refuse a file it cannot weigh, leaving the decision to whoever asked', () => {
     expect(wouldGainNothing({ ...remux, sizeBytes: null }, replacing)).toBe(false);
   });
+
+  it('allows keeping a copy at the same picture held to fewer bits than the original spends', () => {
+    const settings: ReencodeSettings = {
+      mode: 'keep',
+      quality: '720p',
+      videoCodec: 'h264',
+      audio: 'keep',
+      maxBitrateKbps: 100,
+    };
+
+    expect(wouldGainNothing(alreadySmall, settings)).toBe(false);
+  });
 });

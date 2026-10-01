@@ -1,3 +1,4 @@
+import { PRE_TRANSCODING_DEFAULTS } from '@ValenceContracts/schemas/PreTranscoding';
 import { describe, expect, it } from 'vitest';
 import { createMemoryJobScheduleService } from './createMemoryJobScheduleService';
 import { createMemorySettingsStore } from '@ValenceServer/settings/createMemorySettingsStore';
@@ -30,6 +31,7 @@ const SETTINGS: ServerSettings = {
   reencodesAwaitingReviewCap: 5,
   roundness: 'default',
   keepsDownloadsForDays: 14,
+  preTranscoding: PRE_TRANSCODING_DEFAULTS,
 };
 
 const build = (seededJobTriggerKinds: string[] = []) => ({

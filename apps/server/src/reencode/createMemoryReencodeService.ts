@@ -114,7 +114,7 @@ const createMemoryReencodeService = ({
       });
     },
 
-    start: (mediaIds, settings, askedBy) => {
+    start: (mediaIds, settings, askedBy, origin = 'admin') => {
       const candidates = weigh(mediaIds, settings);
       const started: Reencode[] = [];
 
@@ -131,6 +131,7 @@ const createMemoryReencodeService = ({
           seriesTitle: candidate.seriesTitle,
           mode: settings.mode,
           state: 'queued',
+          origin,
           quality: settings.quality,
           videoCodec: settings.videoCodec,
           audio: settings.audio,
@@ -234,7 +235,7 @@ const createMemoryReencodeService = ({
         }
       }
 
-      return Promise.resolve();
+      return Promise.resolve(queued.length);
     },
   };
 };

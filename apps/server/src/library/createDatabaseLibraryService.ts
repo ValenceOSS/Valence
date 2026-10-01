@@ -83,6 +83,7 @@ import { regeneratePreviews } from './regeneratePreviews';
 import { generateTrickplay } from './generateTrickplay';
 import { rebuildItemArtefacts } from './rebuildItemArtefacts';
 import { deleteMediaFile } from '@ValenceServer/library/deleteMediaFile';
+import { keptCopiesOf } from '@ValenceServer/library/keptCopiesOf';
 import type { MediaFileDeletion } from '@ValenceServer/library/deleteMediaFile';
 import { clearLibraryParts } from './clearLibraryParts';
 import { createClearableLibrary } from './createClearableLibrary';
@@ -169,6 +170,7 @@ type CreateDatabaseLibraryServiceOptions = {
   onProblem?: (path: string, reason: Said) => void;
   onArrived?: (libraryId: string, item: ScannedItem) => void;
   onDeparted?: (libraryId: string, items: ScannedItem[]) => void;
+  forgetKeptCopies?: (paths: string[]) => Promise<void>;
 };
 
 const LIBRARY_COLUMNS = {
@@ -317,8 +319,9 @@ const createDatabaseLibraryService = ({
   onProblem,
   onArrived,
   onDeparted,
+  forgetKeptCopies = () => Promise.resolve(),
 }: CreateDatabaseLibraryServiceOptions): DatabaseLibraryService => {
-  const store = createMediaStore(db, certificationRegion);
+  const store = createMediaStore(db, certificationRegion, forgetKeptCopies);
 
   const shapes = createExpiringCache<SeriesShape | null>(SERIES_SHAPE_LIVES_FOR_MS);
 
@@ -688,7 +691,7 @@ const createDatabaseLibraryService = ({
    */
   const deleteFilesWhere = async (which: SQL): Promise<SeriesDeletion> => {
     const items = await db
-      .select({ path: mediaItem.path, libraryId: mediaItem.libraryId })
+      .select({ id: mediaItem.id, path: mediaItem.path, libraryId: mediaItem.libraryId })
       .from(mediaItem)
       .where(which);
 
@@ -709,7 +712,11 @@ const createDatabaseLibraryService = ({
       let refusal: Exclude<MediaFileDeletion, { kind: 'deleted' }> | null = null;
 
       for (const item of items.filter((one) => one.libraryId === libraryId)) {
-        const deleted = await deleteMediaFile(found.path, item.path);
+        const deleted = await deleteMediaFile(
+          found.path,
+          item.path,
+          await keptCopiesOf(db, eq(mediaItem.id, item.id)),
+        );
 
         if (deleted.kind !== 'deleted') {
           refusal = deleted;
@@ -1896,7 +1903,11 @@ const createDatabaseLibraryService = ({
       }
 
       await jobs.cancelFor(libraryId);
+
+      const keptCopies = await keptCopiesOf(db, eq(mediaItem.libraryId, libraryId));
+
       await db.delete(library).where(eq(library.id, libraryId));
+      await forgetKeptCopies(keptCopies);
       await jobs.enqueue(CLEANUP_ARTEFACT_CACHE_JOB, {}, CLEANUP_ARTEFACT_CACHE_JOB);
 
       return true;

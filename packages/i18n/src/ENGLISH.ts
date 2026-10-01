@@ -969,6 +969,7 @@ const ENGLISH = {
   'common.plugins': 'Plugins',
   'common.popular': 'Popular',
   'common.position': 'Position',
+  'common.preTranscoding': 'Pre-transcoding',
   'common.previewClips': 'Preview clips',
   'common.previous': 'Previous',
   'common.previousChapter': 'Previous chapter',
@@ -3083,6 +3084,17 @@ const ENGLISH = {
   'screens.adminArea.jobSchedulePage.timesAreTimezoneYouAreReading':
     'Times are {timezone}. You are reading this in {viewerZone}.',
   'screens.adminArea.jobSchedulePage.triggers': 'Triggers',
+  'screens.adminArea.keptCopiesDialog.aCopyIsMadeByKeeping':
+    'A copy is made by re-encoding with Keep alongside, or by pre-transcoding.',
+  'screens.adminArea.keptCopiesDialog.aDevicePlaysTheLargestCopy':
+    'A device is given the largest of these it plays as it is, before the original is converted for it. Removing a copy deletes its file.',
+  'screens.adminArea.keptCopiesDialog.copiesKeptOfName': 'Copies kept of {name}',
+  'screens.adminArea.keptCopiesDialog.keptCopies': 'Kept copies',
+  'screens.adminArea.keptCopiesDialog.noCopiesAreKept': 'No copies are kept of this',
+  'screens.adminArea.keptCopiesDialog.removedTheCopy': 'Removed the copy, and its file.',
+  'screens.adminArea.keptCopiesDialog.thatCopyCouldNotBeRemoved': 'That copy could not be removed.',
+  'screens.adminArea.keptCopiesDialog.theCopiesCouldNotBeRead':
+    'The copies kept of this could not be read.',
   'screens.adminArea.keptTheNewEncodeAndRemoved': 'Kept the new encode and removed the original.',
   'screens.adminArea.labelCouldNotBeStarted': '{label} could not be started.',
   'screens.adminArea.labelCouldNotBeStopped': '{label} could not be stopped.',
@@ -3332,6 +3344,48 @@ const ENGLISH = {
   'screens.adminArea.pluginsPanel.turnedNameOn': 'Turned {name} on.',
   'screens.adminArea.pluginsPanel.versionComesBackWithWhat':
     '{version} comes back with what it had kept as it was when the upgrade happened. Anything it kept since the upgrade is lost.',
+  'screens.adminArea.preTranscodingCard.aCopyIsNeverLargerThan':
+    'H.264 in MP4 plays as it is on the most devices. A copy is never larger than its original, and a file already that small is left alone.',
+  'screens.adminArea.preTranscodingCard.atAnyHourUntilEveryFile':
+    'At any hour, a copy at a time, until every file has one.',
+  'screens.adminArea.preTranscodingCard.aWholeNumberFrom100': 'A whole number from 100 to 200000.',
+  'screens.adminArea.preTranscodingCard.bitrateCeiling': 'Bitrate ceiling',
+  'screens.adminArea.preTranscodingCard.container': 'Container format',
+  'screens.adminArea.preTranscodingCard.copiesMade': 'Copies made',
+  'screens.adminArea.preTranscodingCard.eachCopyTakesDiskBesideIts':
+    "Each copy takes disk beside its original, and Valence needs to be able to write to the library's folders.",
+  'screens.adminArea.preTranscodingCard.endingAt': 'Ending at',
+  'screens.adminArea.preTranscodingCard.everyLibraryOfFilmsAndShows':
+    'Every library of films and shows',
+  'screens.adminArea.preTranscodingCard.includingOnesAddedLater': 'Including ones added later.',
+  'screens.adminArea.preTranscodingCard.inKilobitsASecondLeaveEmpty':
+    'In kilobits a second. Leave it empty to use the ceiling of the picture size chosen.',
+  'screens.adminArea.preTranscodingCard.inQuietHours': 'In quiet hours',
+  'screens.adminArea.preTranscodingCard.keepsACopyOfEachFilm':
+    'Keeps a copy of each film and episode beside it, at a size and in a format modest devices play as it is, so the server does not have to convert it while somebody watches. Copies are named like “Arrival (2016) - 1080p H264.valence.mp4”, and Valence never adds a file named that way to a library.',
+  'screens.adminArea.preTranscodingCard.makeTheNextCopyNow': 'Make the next copy now',
+  'screens.adminArea.preTranscodingCard.makingACopyOfTitle': 'Making a copy of {title}',
+  'screens.adminArea.preTranscodingCard.onlyBetweenTheseHoursOnThe':
+    'Only between these hours, on the {timezone} clock the scheduled jobs keep. What is being made stops when they end.',
+  'screens.adminArea.preTranscodingCard.passedOver': 'Passed over',
+  'screens.adminArea.preTranscodingCard.preTranscodingCarriesOn': 'Pre-transcoding carries on.',
+  'screens.adminArea.preTranscodingCard.preTranscodingCouldNotBeRead':
+    'The pre-transcoding settings could not be read.',
+  'screens.adminArea.preTranscodingCard.preTranscodingIsPaused':
+    'Pre-transcoding is paused, and the copy being made has stopped.',
+  'screens.adminArea.preTranscodingCard.refusedOrFailedTwice':
+    'Refused, or failed twice. Saving the settings tries the refused ones again, and changing what each copy is tries them all.',
+  'screens.adminArea.preTranscodingCard.rightNow': 'Right now',
+  'screens.adminArea.preTranscodingCard.savedPreTranscoding': 'Saved the pre-transcoding settings.',
+  'screens.adminArea.preTranscodingCard.startingAt': 'Starting at',
+  'screens.adminArea.preTranscodingCard.stillToMake': 'Still to make',
+  'screens.adminArea.preTranscodingCard.theNextCopyIsBeingMade': 'The next copy is being made.',
+  'screens.adminArea.preTranscodingCard.thereIsNothingToMakeA':
+    'There is nothing to make a copy of, or pre-transcoding is off.',
+  'screens.adminArea.preTranscodingCard.untilEverythingIsDone': 'Until everything is done',
+  'screens.adminArea.preTranscodingCard.waitingForQuietHours': 'Waiting for quiet hours',
+  'screens.adminArea.preTranscodingCard.whatEachCopyIs': 'What each copy is',
+  'screens.adminArea.preTranscodingCard.whenToWork': 'When to work',
   'screens.adminArea.processor': 'Processor',
   'screens.adminArea.profileEditor.addProfile': 'Add profile',
   'screens.adminArea.profileEditor.aFilmIsHeldUntilThen':
@@ -4777,10 +4831,12 @@ const ENGLISH = {
   'screens.readPage.scanningTheLibraryAgainMayFind':
     'Scanning the library again may find its chapters.',
   'screens.reencodeDialog.anyTitle': 'Any title',
+  'screens.reencodeDialog.asTheOriginalIs': 'As the original is',
   'screens.reencodeDialog.aTrueHDOrDTSHDTrack':
     'A TrueHD or DTS-HD track is often a large share of a remux. Compressing it narrows 7.1 to 5.1.',
   'screens.reencodeDialog.awaitingReviewEncodesAreAlreadyWaitingTo':
     '{awaitingReview} encodes are already waiting to be judged. Review some before adding more.',
+  'screens.reencodeDialog.besideTheOriginal': 'Beside the original',
   'screens.reencodeDialog.chooseSomethingFirst': 'Choose something first',
   'screens.reencodeDialog.codec': 'Codec',
   'screens.reencodeDialog.compressTheLosslessAudioToo': 'Compress the lossless audio too',
@@ -4811,6 +4867,7 @@ const ENGLISH = {
   'screens.reencodeDialog.freeSpaceCouldNotBeRead': 'Free space could not be read.',
   'screens.reencodeDialog.freeSpaceCouldNotBeReadAndCommitted':
     'Free space could not be read, and {committed} is already promised to work in the queue.',
+  'screens.reencodeDialog.inValencesOwnFolder': "In Valence's own folder",
   'screens.reencodeDialog.keepAcceptedCountAlongside': 'Keep {acceptedCount} alongside',
   'screens.reencodeDialog.keepAlongside': 'Keep alongside',
   'screens.reencodeDialog.largerThanGB': 'Larger than (GB)',
@@ -4832,6 +4889,7 @@ const ENGLISH = {
   'screens.reencodeDialog.whatToDoWithTheEncode': 'What to do with the encode',
   'screens.reencodeDialog.whatToDoWithThem': 'What to do with them',
   'screens.reencodeDialog.whatToWorkOn': 'What to work on',
+  'screens.reencodeDialog.whereItIsKept': 'Where it is kept',
   'screens.reencodeDialog.whichLibraryToLookIn': 'Which library to look in',
   'screens.reencodeReview.atSecondsPickASceneWithMotion':
     '{atSeconds} — pick a scene with motion rather than the opening titles. Grain, banding and a grey picture all show up there and nowhere else.',
@@ -5331,8 +5389,11 @@ const ENGLISH = {
   'server.jobs.jobDefinitions.forgetsWebhookDeliveriesOlderThanA':
     'Forgets webhook deliveries older than a week.',
   'server.jobs.jobDefinitions.generateMissingScrubPreviews': 'Generate missing scrub previews',
+  'server.jobs.jobDefinitions.keepsACopyBesideEachFilm':
+    'Keeps a copy beside each film and episode that modest devices play without converting it, in the hours chosen under Encoding.',
   'server.jobs.jobDefinitions.makesTheReEncodesAnAdministrator':
     'Makes the re-encodes an administrator asked for.',
+  'server.jobs.jobDefinitions.preTranscodeTheLibraries': 'Pre-transcode the libraries',
   'server.jobs.jobDefinitions.pruneOldJobHistory': 'Prune old job history',
   'server.jobs.jobDefinitions.pruneOldLogRecords': 'Prune old log records',
   'server.jobs.jobDefinitions.pruneOldServerLoadHistory': 'Prune old server load history',
@@ -5364,6 +5425,12 @@ const ENGLISH = {
   'server.jobs.phase.logos': 'logos',
   'server.jobs.phase.music': 'music',
   'server.jobs.phase.preparing': 'preparing',
+  'server.jobs.phase.preTranscodeNothingLeft': 'Every file has its copy',
+  'server.jobs.phase.preTranscodeOff': 'Pre-transcoding is off',
+  'server.jobs.phase.preTranscodeOutsideTheWindow': 'Outside the hours chosen for it',
+  'server.jobs.phase.preTranscodePaused': 'Pre-transcoding is paused',
+  'server.jobs.phase.preTranscodeQueued': 'Queued the next copy',
+  'server.jobs.phase.preTranscodeUnderWay': 'A copy is already being made',
   'server.jobs.phase.previews': 'previews',
   'server.jobs.phase.probing': 'probing',
   'server.jobs.phase.profiles': 'profiles',
@@ -5482,8 +5549,12 @@ const ENGLISH = {
     'took {originalPath} back up, since this server stopped while it was being worked on',
   'server.reencode.databaseReencodeService.valenceCannotWriteToTheFolder':
     'Valence cannot write to the folder this file is in.',
+  'server.reencode.refuseReencode.aFileOfThatNameIsAlready':
+    'A file called {fileName} is already beside this one, and Valence did not make it. It is never written over.',
   'server.reencode.refuseReencode.somebodyIsWatchingThisNowReplacing':
     'Somebody is watching this now. Replacing a file underneath a stream would end it.',
+  'server.reencode.refuseReencode.thisCopyIsAlreadyKept':
+    'A copy just like this one is already kept beside it.',
   'server.reencode.refuseReencode.thisFileCarriesSubtitlesThatA':
     'This file carries subtitles that a {container} file cannot hold, and the container is never changed. Re-encoding it would lose them.',
   'server.reencode.refuseReencode.thisFileIsAlreadyAtOr':

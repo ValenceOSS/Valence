@@ -11,6 +11,8 @@ type ReencodeConditions = {
   isAlreadyUnderWay: boolean;
   isBeingWatched: boolean;
   isFolderWritable: boolean;
+  isAlreadyKept?: boolean;
+  takenName?: string | null;
 };
 
 /**
@@ -23,7 +25,8 @@ type ReencodeConditions = {
  *
  * Ordered most decisive first, so the reason somebody is given is the one they would act on. A file
  * already being worked on is not also read-only; a file nobody can write is not also too small to
- * bother with.
+ * bother with. A copy kept beside the film is refused where the same copy is already kept, and where
+ * its name belongs to a file Valence did not make, which is never written over.
  *
  * Whether there is room, and whether too many encodes are already waiting to be judged, are
  * deliberately not here. Both are facts about the whole queue rather than about this file, and
@@ -38,6 +41,8 @@ const refuseReencode = ({
   isAlreadyUnderWay,
   isBeingWatched,
   isFolderWritable,
+  isAlreadyKept = false,
+  takenName = null,
 }: ReencodeConditions): ReencodeRefusal | null => {
   if (isAlreadyUnderWay) {
     return {
@@ -60,7 +65,29 @@ const refuseReencode = ({
     };
   }
 
-  if (item.subtitleStreams.length > 0 && CANNOT_CARRY_SUBTITLES.has(item.container.toLowerCase())) {
+  if (isAlreadyKept) {
+    return {
+      code: 'AlreadyKept',
+      detail: saying('server.reencode.refuseReencode.thisCopyIsAlreadyKept'),
+    };
+  }
+
+  if (takenName !== null) {
+    return {
+      code: 'NameIsTaken',
+      detail: saying('server.reencode.refuseReencode.aFileOfThatNameIsAlready', {
+        fileName: takenName,
+      }),
+    };
+  }
+
+  const keepsTheContainer = settings.mode !== 'keep' || settings.container === undefined;
+
+  if (
+    keepsTheContainer &&
+    item.subtitleStreams.length > 0 &&
+    CANNOT_CARRY_SUBTITLES.has(item.container.toLowerCase())
+  ) {
     return {
       code: 'SubtitlesWouldNotSurvive',
       detail: saying('server.reencode.refuseReencode.thisFileCarriesSubtitlesThatA', {

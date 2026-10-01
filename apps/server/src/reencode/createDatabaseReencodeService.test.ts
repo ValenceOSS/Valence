@@ -1,12 +1,12 @@
 import type { Said } from '@ValenceI18n/SaidSchema';
-import { mkdtemp, writeFile } from 'node:fs/promises';
+import { mkdtemp, readdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { asc } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 import { describe, expect, it, vi } from 'vitest';
 import { nullsLast } from '@ValenceDatabase/nullsLast';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
-import { library, mediaItem, reencodeRequest } from '#dialect/Schema';
+import { library, mediaItem, mediaRendition, reencodeRequest } from '#dialect/Schema';
 import { createDatabaseReencodeService } from './createDatabaseReencodeService';
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
 import type { ReencodeSettings } from '@ValenceContracts/schemas/Reencode';
@@ -128,11 +128,17 @@ const TRANSCODER: Transcoder = {
  *
  * @param findForReencode - What the rest of the server says about the film.
  * @param awaitingReviewCap - How many encodes may wait to be judged at once.
+ * @param overrides - A media service that does more, who is watching, and how to wait.
  * @returns The service, the database under it, and what it complained about.
  */
 const aReencoder = async (
   findForReencode: (libraryPath: string) => ReencodeSubject | null,
   awaitingReviewCap = 10,
+  overrides: {
+    transcoder?: Transcoder;
+    isBeingWatched?: () => boolean;
+    wait?: () => Promise<void>;
+  } = {},
 ) => {
   const db = await aMigratedDatabase();
   const libraryPath = await mkdtemp(join(tmpdir(), 'valence-reencode-'));
@@ -162,20 +168,99 @@ const aReencoder = async (
     subtitleStreams: [],
   });
 
+  const transcoder = overrides.transcoder ?? TRANSCODER;
   const service = createDatabaseReencodeService({
     db,
     media: { findForReencode: () => Promise.resolve(findForReencode(libraryPath)) },
-    transcoder: TRANSCODER,
-    capabilities: TRANSCODER.capabilities,
+    transcoder,
+    capabilities: transcoder.capabilities,
     forcedAccel: () => Promise.resolve('none'),
-    isBeingWatched: () => false,
+    isBeingWatched: overrides.isBeingWatched ?? (() => false),
     awaitingReviewCap: () => Promise.resolve(awaitingReviewCap),
     afterChange: () => Promise.resolve(),
     onProblem,
+    ...(overrides.wait === undefined ? {} : { wait: overrides.wait }),
   });
 
-  return { db, service, onProblem };
+  return { db, service, onProblem, libraryPath };
 };
+
+const KEEPING_BESIDE: ReencodeSettings = {
+  mode: 'keep',
+  quality: '1080p',
+  videoCodec: 'h264',
+  audio: 'keep',
+  container: 'mp4',
+  maxBitrateKbps: 3000,
+  placement: 'beside',
+};
+
+/**
+ * The film as the rest of the server describes it, in whichever library it was put in.
+ *
+ * @param libraryPath - The library's folder.
+ * @returns The film.
+ */
+const theFilm = (libraryPath: string): ReencodeSubject => ({
+  item: REMUX,
+  title: 'The Film',
+  seriesTitle: null,
+  path: join(libraryPath, 'film.mkv'),
+  libraryId: LIBRARY_ID,
+  libraryPath,
+});
+
+/**
+ * A media service that writes every rendition it is asked for at once, noting where.
+ *
+ * @param written - Where each was asked to go, in order.
+ * @param isReadyAt - Whether an ask is answered as finished, by how many asks came before.
+ * @returns The media service.
+ */
+const aWorkingTranscoder = (
+  written: string[],
+  isReadyAt: (asked: number) => boolean = () => true,
+): Transcoder => ({
+  ...TRANSCODER,
+  capabilities: async () => ({
+    ...(await TRANSCODER.capabilities()),
+    encoders: [
+      { codec: 'h264', encoder: 'libx264', accel: 'none', verified: true },
+      { codec: 'hevc', encoder: 'libx265', accel: 'none', verified: true },
+      { codec: 'eac3', encoder: 'eac3', accel: 'none', verified: true },
+    ],
+  }),
+  probe: () =>
+    Promise.resolve({
+      ...PROBE,
+      container: 'mov,mp4,m4a,3gp,3g2,mj2',
+      video: PROBE.video === null ? null : { ...PROBE.video, width: 1920, height: 1080 },
+      audioStreams: [
+        {
+          index: 1,
+          codec: 'eac3',
+          channels: 6,
+          sampleRate: 48000,
+          profile: null,
+          language: 'eng',
+          title: null,
+          isDefault: true,
+          isAtmos: false,
+        },
+      ],
+    }),
+  requestRendition: async (request) => {
+    written.push(request.outputPath);
+
+    const isReady = isReadyAt(written.length - 1);
+
+    if (isReady) {
+      await writeFile(request.outputPath, 'a copy');
+    }
+
+    return { id: request.outputPath, isReady, progress: isReady ? 100 : 10 };
+  },
+});
 
 /**
  * A request as it would be stored, in whatever state and asked for at whatever time.
@@ -283,5 +368,154 @@ describe('createDatabaseReencodeService', { timeout: STARTING_POSTGRES_MS }, () 
       { id: 'judging', state: 'awaitingReview' },
       { id: 'waiting', state: 'queued' },
     ]);
+  });
+
+  it('keeps a copy beside the film under its readable name, and remembers it as a rendition', async () => {
+    const written: string[] = [];
+    const { db, service, libraryPath } = await aReencoder(theFilm, 10, {
+      transcoder: aWorkingTranscoder(written),
+    });
+
+    const { started } = await service.start([FILM_ID], KEEPING_BESIDE, null);
+
+    await service.work(
+      () => undefined,
+      () => false,
+    );
+
+    const expected = join(libraryPath, 'film - 1080p H264 3000kbps.valence.mp4');
+    const [request] = await db.select().from(reencodeRequest);
+    const kept = await service.renditionsFor(FILM_ID);
+
+    expect(started[0]).toMatchObject({
+      container: 'mp4',
+      maxBitrateKbps: 3000,
+      placement: 'beside',
+    });
+    expect(written).toEqual([expected]);
+    expect(request).toMatchObject({ state: 'finished', workingPath: expected, origin: 'admin' });
+    expect(kept).toMatchObject([
+      { id: request?.renditionId, fileName: 'film - 1080p H264 3000kbps.valence.mp4' },
+    ]);
+  });
+
+  it('refuses a copy just like one already kept, and a name a file Valence did not make has taken', async () => {
+    const written: string[] = [];
+    const { db, service, libraryPath } = await aReencoder(theFilm, 10, {
+      transcoder: aWorkingTranscoder(written),
+    });
+
+    await writeFile(join(libraryPath, 'film - 1080p H264.valence.mp4'), 'somebody else');
+
+    const taken = await service.estimate([FILM_ID], {
+      ...KEEPING_BESIDE,
+      maxBitrateKbps: undefined,
+    });
+
+    expect(taken.candidates[0]?.refusal?.code).toBe('NameIsTaken');
+
+    await service.start([FILM_ID], KEEPING_BESIDE, null);
+    await service.work(
+      () => undefined,
+      () => false,
+    );
+
+    const again = await service.estimate([FILM_ID], KEEPING_BESIDE);
+
+    expect(again.candidates[0]?.refusal?.code).toBe('AlreadyKept');
+    await expect(db.select().from(mediaRendition)).resolves.toHaveLength(1);
+  });
+
+  it('works through what an administrator asked for before what pre-transcoding queued', async () => {
+    const written: string[] = [];
+    const { db, service } = await aReencoder(theFilm, 10, {
+      transcoder: aWorkingTranscoder(written),
+    });
+
+    await service.start(
+      [FILM_ID],
+      { ...KEEPING_BESIDE, placement: 'hidden' },
+      null,
+      'preTranscode',
+    );
+    await db.update(reencodeRequest).set({ askedAt: new Date(1000) });
+    await db
+      .insert(reencodeRequest)
+      .values({ ...aRequest('asked', 'queued', new Date(5000)), mediaItemId: FILM_ID });
+
+    await service.work(
+      () => undefined,
+      () => false,
+    );
+
+    const rows = await db
+      .select({ id: reencodeRequest.id, origin: reencodeRequest.origin })
+      .from(reencodeRequest)
+      .orderBy(asc(reencodeRequest.startedAt));
+
+    expect(rows.map((row) => row.origin)).toEqual(['admin', 'preTranscode']);
+  });
+
+  it('puts a pre-transcode back rather than failing it while somebody watches the film', async () => {
+    const written: string[] = [];
+    let isWatched = false;
+    const { db, service } = await aReencoder(theFilm, 10, {
+      transcoder: aWorkingTranscoder(written),
+      isBeingWatched: () => isWatched,
+    });
+
+    await service.start([FILM_ID], KEEPING_BESIDE, null, 'preTranscode');
+    isWatched = true;
+
+    await service.work(
+      () => undefined,
+      () => false,
+    );
+
+    await expect(
+      db
+        .select({ state: reencodeRequest.state, origin: reencodeRequest.origin })
+        .from(reencodeRequest),
+    ).resolves.toEqual([{ state: 'queued', origin: 'preTranscode' }]);
+    expect(written).toEqual([]);
+  });
+
+  it('stops an encode that was cancelled while it ran, and leaves it cancelled', async () => {
+    const written: string[] = [];
+    const stopped: string[] = [];
+    const transcoder: Transcoder = {
+      ...aWorkingTranscoder(written, () => false),
+      stopRendition: (outputPath) => {
+        stopped.push(outputPath);
+
+        return Promise.resolve(true);
+      },
+    };
+    let cancelling: (() => Promise<void>) | null = null;
+    const { db, service, libraryPath } = await aReencoder(theFilm, 10, {
+      transcoder,
+      wait: () => cancelling?.() ?? Promise.resolve(),
+    });
+
+    const { started } = await service.start([FILM_ID], KEEPING_BESIDE, null);
+    const id = started[0]?.id ?? '';
+
+    cancelling = async () => {
+      await service.cancel(id);
+    };
+
+    await service.work(
+      () => undefined,
+      () => false,
+    );
+
+    await expect(
+      db
+        .select({ state: reencodeRequest.state })
+        .from(reencodeRequest)
+        .where(eq(reencodeRequest.id, id)),
+    ).resolves.toEqual([{ state: 'cancelled' }]);
+    expect(stopped).toContain(join(libraryPath, 'film - 1080p H264 3000kbps.valence.mp4'));
+    expect((await readdir(libraryPath)).filter((name) => name.includes('.valence.'))).toEqual([]);
   });
 });

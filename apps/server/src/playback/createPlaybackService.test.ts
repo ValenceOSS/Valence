@@ -826,3 +826,60 @@ describe('the details a conversion has to be told', () => {
     });
   });
 });
+
+describe('playing a copy kept alongside', () => {
+  const RENDITION_ID = '3f2504e0-4f89-41d3-9a0c-0305e82c3399';
+
+  const withACopy = {
+    item: item({
+      container: 'mkv',
+      videoCodec: 'hevc',
+      width: 3840,
+      height: 2160,
+      bitrateKbps: 40000,
+    }),
+    path: '/media/arrival.mkv',
+    defaultAudioLanguage: null,
+    generation: 0,
+    renditions: [
+      {
+        id: RENDITION_ID,
+        item: item({ id: RENDITION_ID, bitrateKbps: 3000 }),
+        path: '/media/arrival - 1080p H264.valence.mp4',
+      },
+    ],
+  };
+
+  it('serves the copy as it is where the device plays it untouched, rather than encoding the original', async () => {
+    const { service } = build({}, withACopy);
+
+    await expect(service.start(MEDIA_ID, profile(), 0)).resolves.toMatchObject({
+      kind: 'started',
+      session: {
+        delivery: {
+          kind: 'direct',
+          url: `/api/media/${MEDIA_ID}/file?rendition=${RENDITION_ID}`,
+        },
+      },
+    });
+  });
+
+  it('reads the copy at the path the library holds for it', async () => {
+    const readFile = vi.fn(() => Promise.resolve(null));
+    const { service } = build({ readFile }, withACopy);
+
+    await service.readDirectFile(MEDIA_ID, null, RENDITION_ID);
+
+    expect(readFile).toHaveBeenCalledWith('/media/arrival - 1080p H264.valence.mp4', null);
+  });
+
+  it('reads nothing for a copy that is not one of the item’s own', async () => {
+    const readFile = vi.fn(() => Promise.resolve(null));
+    const { service } = build({ readFile }, withACopy);
+
+    await expect(
+      service.readDirectFile(MEDIA_ID, null, '3f2504e0-4f89-41d3-9a0c-0305e82c3398'),
+    ).resolves.toBeNull();
+    expect(readFile).not.toHaveBeenCalled();
+  });
+});

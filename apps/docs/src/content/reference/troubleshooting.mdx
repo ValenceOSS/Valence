@@ -173,6 +173,8 @@ To turn them on, set `MEDIA_ACCESS` to an empty string in the environment, and r
 
 Re-encoding writes into a `.valence` folder at the top of each library. That folder has to be on the same filesystem as the library, since swapping the finished file in is a rename.
 
+[Pre-transcoding](/use/pre-transcoding) refuses the same way, and passes over each film it could not write beside. Once the folder is writable, save the pre-transcoding settings again to have it try those films again.
+
 ## Requests are not downloading
 
 1. **Is requesting on?** Setting only one of `REQUESTS_URL` and `REQUESTS_SECRET`, or a secret shorter than 32 characters, leaves it off. The server log says `requesting is left off, since ... is missing or too short; it needs REQUESTS_URL and a REQUESTS_SECRET of at least 32 characters`. Set both, the same secret on the server and the service.

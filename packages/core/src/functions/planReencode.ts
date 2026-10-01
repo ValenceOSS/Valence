@@ -5,6 +5,16 @@ import { resolveQualityStep } from '@ValenceCore/functions/resolveQualityStep';
 import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
 import type { ReencodeSettings } from '@ValenceContracts/schemas/Reencode';
 
+const CODECS_AN_MP4_HOLDS: ReadonlySet<string> = new Set([
+  'aac',
+  'ac3',
+  'eac3',
+  'mp3',
+  'alac',
+  'flac',
+  'opus',
+]);
+
 type ReencodeVideo =
   | { kind: 'copy' }
   | {
@@ -36,8 +46,10 @@ type ReencodePlan = {
  * and a stereo commentary are not both forced through the same encoder at the same channel count,
  * which is what a single `-c:a` would do.
  *
- * Every subtitle track is carried, always. The container never changes, so there is nothing a
- * subtitle track could be that the destination cannot hold.
+ * Every subtitle track is carried wherever the container stays what it was, since there is nothing
+ * a subtitle track could be that the destination cannot hold. A copy kept alongside as MP4 carries
+ * none, and has any audio track MP4 cannot hold encoded rather than copied: the original keeps them
+ * all, and the copy exists to be played untouched by something modest.
  *
  * @param item - The file, as the catalogue holds it.
  * @param settings - What was chosen: replacing, keeping alongside, or audio alone.
@@ -45,6 +57,7 @@ type ReencodePlan = {
  */
 const planReencode = (item: MediaItem, settings: ReencodeSettings): ReencodePlan => {
   const clamp = settings.quality === null ? null : resolveQualityStep(item, settings.quality);
+  const isMp4 = settings.mode === 'keep' && settings.container === 'mp4';
 
   const video: ReencodeVideo =
     settings.mode === 'audioOnly' || settings.videoCodec === null
@@ -54,13 +67,20 @@ const planReencode = (item: MediaItem, settings: ReencodeSettings): ReencodePlan
           codec: settings.videoCodec,
           maxWidth: clamp?.maxWidth ?? item.width,
           maxHeight: clamp?.maxHeight ?? item.height,
-          maxBitrateKbps: reencodeBitrateFor(item, settings.quality, settings.videoCodec).capKbps,
+          maxBitrateKbps: reencodeBitrateFor(
+            item,
+            settings.quality,
+            settings.videoCodec,
+            settings.maxBitrateKbps ?? null,
+          ).capKbps,
         };
 
   const compresses = settings.audio === 'compress' || settings.mode === 'audioOnly';
 
   const audioTracks = item.audioStreams.map((stream): ReencodeAudioTrack => {
-    if (!compresses || !isLosslessAudio(stream)) {
+    const mustChange = isMp4 && !CODECS_AN_MP4_HOLDS.has(stream.codec.toLowerCase());
+
+    if (!mustChange && (!compresses || !isLosslessAudio(stream))) {
       return { kind: 'copy', index: stream.index };
     }
 
@@ -72,7 +92,7 @@ const planReencode = (item: MediaItem, settings: ReencodeSettings): ReencodePlan
   return {
     video,
     audioTracks,
-    subtitleIndexes: item.subtitleStreams.map((stream) => stream.index),
+    subtitleIndexes: isMp4 ? [] : item.subtitleStreams.map((stream) => stream.index),
   };
 };
 

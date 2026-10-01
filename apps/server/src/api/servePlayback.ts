@@ -142,9 +142,10 @@ const servePlayback = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(directFileRoute, async (context) => {
     const { mediaId } = context.req.valid('param');
+    const { rendition } = context.req.valid('query');
     const range = context.req.header('range') ?? null;
 
-    const file = await playback.readDirectFile(mediaId, range);
+    const file = await playback.readDirectFile(mediaId, range, rendition ?? null);
 
     if (file === null) {
       return context.json(refuse('error.common.noSuchMediaItem'), 404);

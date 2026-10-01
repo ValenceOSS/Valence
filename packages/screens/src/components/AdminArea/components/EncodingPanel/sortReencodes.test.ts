@@ -10,6 +10,7 @@ const at = (id: string, state: ReencodeState): Reencode => ({
   seriesTitle: null,
   mode: 'replace',
   state,
+  origin: 'admin',
   quality: '1080p',
   videoCodec: 'hevc',
   audio: 'keep',

@@ -66,7 +66,12 @@ const estimateReencodeBytes = (item: MediaItem, settings: ReencodeSettings): num
   }, 0);
 
   if (plan.video.kind === 'encode') {
-    const { expectedKbps } = reencodeBitrateFor(item, settings.quality, plan.video.codec);
+    const { expectedKbps } = reencodeBitrateFor(
+      item,
+      settings.quality,
+      plan.video.codec,
+      settings.maxBitrateKbps ?? null,
+    );
 
     return bytesFor(expectedKbps, durationSeconds) + audioAfter;
   }

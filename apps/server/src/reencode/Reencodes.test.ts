@@ -371,6 +371,7 @@ describe('re-encoding over the API', () => {
       mediaItemId: MEDIA_ID,
       kind: 'pinned',
       label: '1080p HEVC',
+      fileName: '0b5c.mkv',
       quality: '1080p',
       sizeBytes: 6_000_000_000,
       container: 'mkv',

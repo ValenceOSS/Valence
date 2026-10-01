@@ -63,7 +63,7 @@ Nothing after the equals sign: any other value is appended to the mount as is. T
 
 ### Where the work happens
 
-Re-encoding writes into a folder called `.valence` at the top of each library, one per library and not one per film. It holds the new file while it is made, and the original once it has been swapped aside.
+Re-encoding writes into a folder called `.valence` at the top of each library, one per library and not one per film. It holds the new file while it is made, and the original once it has been swapped aside. A copy kept beside the original, which is where [pre-transcoding](/use/pre-transcoding) puts every copy, is written into the film's own folder instead, so that folder has to be writable too.
 
 It sits under the library root rather than somewhere else on purpose. Swapping an encode into place is a rename, and a rename is only instant and atomic within one filesystem. Across a volume boundary it would become a copy of the whole file, needing the disk twice over and able to half finish. This also means the drive holding a library needs room for a full second copy of the largest file being re-encoded, plus the originals waiting for review.
 
@@ -119,6 +119,7 @@ The repository does not publish sizing figures, so treat these as guidance to ch
 | Transcodes          | Bounded by how many people are watching transcoded video at once, and cleaned up by a timer.                        |
 | Snapshots           | One full database dump each, times `BACKUPS_KEPT` (3 by default).                                                   |
 | `.valence` folders  | Only if you re-encode. Room for one large file per encode, plus originals awaiting review.                          |
+| Kept copies         | Only if you keep copies alongside or pre-transcode. One copy per film and episode, beside each original.            |
 
 The admin area breaks the cache down by kind, so you can see where the space went. Filling the disk that a media server sits on takes down streaming, transcoding and the database with it, so leave headroom.
 

@@ -849,18 +849,36 @@ const reencodeRequest = mysqlTable(
     startedAt: moment('startedAt'),
     encodedAt: moment('encodedAt'),
     reviewedAt: moment('reviewedAt'),
+    container: varchar('container', { length: 8 }),
+    maxBitrateKbps: int('maxBitrateKbps'),
+    placement: varchar('placement', { length: 16 }).notNull().default('hidden'),
+    origin: varchar('origin', { length: 16 }).notNull().default('admin'),
   },
   (table) => [
     index('reencode_request_state_idx').on(table.state, table.askedAt),
     index('reencode_request_item_idx').on(table.mediaItemId),
     index('reencode_request_library_idx').on(table.libraryId),
+    index('reencode_request_origin_idx').on(table.origin, table.state),
     check('reencode_request_mode', sql`${table.mode} in ('replace', 'keep', 'audioOnly')`),
     check(
       'reencode_request_state',
       sql`${table.state} in ('queued', 'encoding', 'verifying', 'awaitingReview', 'finished', 'rejected', 'failed', 'cancelled')`,
     ),
+    check('reencode_request_container', sql`${table.container} in ('mp4', 'mkv')`),
+    check('reencode_request_placement', sql`${table.placement} in ('hidden', 'beside')`),
+    check('reencode_request_origin', sql`${table.origin} in ('admin', 'preTranscode')`),
   ],
 );
+
+const preTranscodeRefusal = mysqlTable('pre_transcode_refusal', {
+  mediaItemId: identifier('mediaItemId')
+    .primaryKey()
+    .references(() => mediaItem.id, { onDelete: 'cascade' }),
+  target: mediumtext('target').notNull(),
+  code: varchar('code', { length: 64 }).notNull(),
+  detail: jsonColumn('detail').$type<Said>().notNull(),
+  refusedAt: momentNow('refusedAt').notNull(),
+});
 
 const book = mysqlTable(
   'book',
@@ -1466,6 +1484,7 @@ export {
   mediaRendition,
   mediaSegment,
   reencodeRequest,
+  preTranscodeRefusal,
   mediaItemJob,
   jobTrigger,
   webhookSubscription,

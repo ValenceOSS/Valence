@@ -112,4 +112,32 @@ describe('refuseReencode', () => {
       })?.code,
     ).toBe('AlreadyUnderWay');
   });
+
+  it('refuses a copy just like one already kept', () => {
+    expect(refuseReencode({ ...fine, isAlreadyKept: true })?.code).toBe('AlreadyKept');
+  });
+
+  it('refuses to write over a file of the same name that Valence did not make', () => {
+    const refusal = refuseReencode({ ...fine, takenName: 'Azkaban - 1080p H264.valence.mp4' });
+
+    expect(refusal?.code).toBe('NameIsTaken');
+    expect(refusal?.detail.values).toMatchObject({ fileName: 'Azkaban - 1080p H264.valence.mp4' });
+  });
+
+  it('lets a copy kept in another container leave behind subtitles its original keeps', () => {
+    const avi: MediaItem = {
+      ...remux,
+      container: 'avi',
+      subtitleStreams: [{ index: 2, format: 'srt', language: 'eng', isForced: false }],
+    };
+
+    expect(
+      refuseReencode({
+        ...fine,
+        item: avi,
+        settings: { ...replacing, mode: 'keep', container: 'mp4' },
+      }),
+    ).toBeNull();
+    expect(refuseReencode({ ...fine, item: avi })?.code).toBe('SubtitlesWouldNotSurvive');
+  });
 });

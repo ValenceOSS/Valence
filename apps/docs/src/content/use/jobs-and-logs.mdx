@@ -36,17 +36,18 @@ Every job has a kind, shown in logs and filters, and a friendly label. Some run 
 
 ### Library work
 
-| Label                              | Kind                          | What it does                                                                                                                                                                                                    |
-| ---------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Scan for changes                   | `library.scan`                | Finds new, changed and removed files, then makes whatever they are still missing.                                                                                                                               |
-| Generate missing previews          | `library.regeneratePreviews`  | Renders preview clips for items that have none.                                                                                                                                                                 |
-| Generate missing scrub previews    | `library.regenerateTrickplay` | Renders the strip of images shown when scrubbing the seek bar.                                                                                                                                                  |
-| Fetch missing logos                | `library.fetchLogos`          | Collects each title's own lettering, so a hero shows the programme's logo.                                                                                                                                      |
-| Detect missing intros and outros   | `library.detectSegments`      | Finds intros and recaps in episodes by comparing audio across a season, so viewers can skip them.                                                                                                               |
-| Reset and rebuild                  | `library.reset`               | Deletes every item in every library and starts again from nothing. Hours of work on a large library.                                                                                                            |
-| Clear and fetch again              | `library.clearParts`          | Erases the chosen parts of a library, such as descriptions, artwork, trailers or previews, then fetches or makes them again.                                                                                    |
-| Prune old viewing history          | `library.pruneHistory`        | Forgets viewings older than a year.                                                                                                                                                                             |
-| Work through the re-encoding queue | `library.reencode`            | Produces the encodes an administrator asked for, one file at a time. Each replacement waits for somebody to approve it before the original is disposed of, so it pauses once too many are waiting to be judged. |
+| Label                              | Kind                          | What it does                                                                                                                                                                                                                                       |
+| ---------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Scan for changes                   | `library.scan`                | Finds new, changed and removed files, then makes whatever they are still missing.                                                                                                                                                                  |
+| Generate missing previews          | `library.regeneratePreviews`  | Renders preview clips for items that have none.                                                                                                                                                                                                    |
+| Generate missing scrub previews    | `library.regenerateTrickplay` | Renders the strip of images shown when scrubbing the seek bar.                                                                                                                                                                                     |
+| Fetch missing logos                | `library.fetchLogos`          | Collects each title's own lettering, so a hero shows the programme's logo.                                                                                                                                                                         |
+| Detect missing intros and outros   | `library.detectSegments`      | Finds intros and recaps in episodes by comparing audio across a season, so viewers can skip them.                                                                                                                                                  |
+| Reset and rebuild                  | `library.reset`               | Deletes every item in every library and starts again from nothing. Hours of work on a large library.                                                                                                                                               |
+| Clear and fetch again              | `library.clearParts`          | Erases the chosen parts of a library, such as descriptions, artwork, trailers or previews, then fetches or makes them again.                                                                                                                       |
+| Prune old viewing history          | `library.pruneHistory`        | Forgets viewings older than a year.                                                                                                                                                                                                                |
+| Work through the re-encoding queue | `library.reencode`            | Produces the encodes an administrator asked for, one file at a time. Each replacement waits for somebody to approve it before the original is disposed of, so it pauses once too many are waiting to be judged.                                    |
+| Pre-transcode the libraries        | `library.preTranscode`        | Keeps a copy beside each film and episode that modest devices play without converting it, in the hours chosen under Encoding. Queues one copy at a time, and stops what it queued when the hours end. See [Pre-transcoding](/use/pre-transcoding). |
 
 ### Server work
 
@@ -132,6 +133,7 @@ The first time Valence sees a job it gives it a default schedule. It never does 
 | Prune old log records                        | Daily at 05:55   |
 | Prune old job history                        | Daily at 06:05   |
 | Prune old server load history                | Daily at 06:10   |
+| Pre-transcode the libraries                  | Every 15 minutes |
 | Clean up cached images                       | Sundays at 06:00 |
 | Clean up cached previews                     | Sundays at 06:30 |
 

@@ -12,6 +12,7 @@ const waiting: Reencode = {
   seriesTitle: null,
   mode: 'replace',
   state: 'awaitingReview',
+  origin: 'admin',
   quality: '1080p',
   videoCodec: 'hevc',
   audio: 'keep',
