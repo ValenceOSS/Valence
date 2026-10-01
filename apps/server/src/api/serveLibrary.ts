@@ -31,6 +31,8 @@ import {
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
+import { asTheServer } from '@ValenceServer/visibility/asTheServer';
+import { arrKindOf } from '@ValenceContracts/functions/arrKindOf';
 
 /**
  * Registers the library endpoints.
@@ -47,6 +49,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
     sayWhyNotDeleted,
     readProfileId,
     readAccount,
+    requestsClient,
   } = context;
 
   app.openapi(listLibrariesRoute, async (context) => {
@@ -85,10 +88,30 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
-    const { defaultAudioLanguage, filesAtOnce, takesRequests, requestProfileId, requestPath } =
-      context.req.valid('json');
+    const {
+      defaultAudioLanguage,
+      filesAtOnce,
+      takesRequests,
+      requestProfileId,
+      requestPath,
+      fulfilment,
+    } = context.req.valid('json');
+    const libraryId = context.req.valid('param').id;
 
-    const updated = await library.update(context.req.valid('param').id, {
+    if (fulfilment !== undefined && fulfilment !== null) {
+      const kind = (await library.list(asTheServer)).find((entry) => entry.id === libraryId)?.kind;
+      const apps = await requestsClient?.listArrApps();
+      const app =
+        apps?.kind === 'answered'
+          ? apps.value.find((one) => one.id === fulfilment.appId)
+          : undefined;
+
+      if (kind !== undefined && (app === undefined || app.kind !== arrKindOf(kind))) {
+        return context.json(refuse('error.library.thatAppCannotFulfilThisLibrary'), 400);
+      }
+    }
+
+    const updated = await library.update(libraryId, {
       defaultAudioLanguage,
       ...(filesAtOnce === undefined ? {} : { filesAtOnce }),
       ...(takesRequests === undefined ? {} : { takesRequests }),
@@ -96,6 +119,7 @@ const serveLibrary = (app: OpenAPIHono, context: AppContext): void => {
       ...(requestPath === undefined
         ? {}
         : { requestPath: requestPath === '' ? null : requestPath }),
+      ...(fulfilment === undefined ? {} : { fulfilment }),
     });
 
     if (updated === null) {

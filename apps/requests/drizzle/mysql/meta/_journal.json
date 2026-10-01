@@ -8,6 +8,20 @@
       "when": 1790807967015,
       "tag": "0000_baseline",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1790867306707,
+      "tag": "0001_connected_apps",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1790886331052,
+      "tag": "0002_one_indexer_per_prowlarr_indexer",
+      "breakpoints": true
     }
   ]
 }

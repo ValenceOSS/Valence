@@ -15,6 +15,7 @@ import {
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import type { Said } from '@ValenceI18n/SaidSchema';
+import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
 
@@ -179,6 +180,7 @@ const library = pgTable('library', {
   takesRequests: boolean('takesRequests').notNull().default(true),
   requestProfileId: text('requestProfileId'),
   requestPath: text('requestPath'),
+  requestFulfilment: jsonb('requestFulfilment').$type<Fulfilment>(),
 });
 
 const viewerProfile = pgTable(

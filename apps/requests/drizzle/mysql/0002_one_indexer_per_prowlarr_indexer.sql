@@ -1,0 +1,1 @@
+ALTER TABLE `requests_indexer` ADD CONSTRAINT `indexer_source` UNIQUE(`source_app_id`,`source_indexer_id`);

@@ -17,6 +17,7 @@ describe('aScratchDatabase', () => {
         .toSorted((one, other) => (one.name < other.name ? -1 : 1)),
     ).toEqual([
       { name: '__requests_migrations' },
+      { name: 'requests_arr_app' },
       { name: 'requests_blocklisted_release' },
       { name: 'requests_download' },
       { name: 'requests_download_client' },

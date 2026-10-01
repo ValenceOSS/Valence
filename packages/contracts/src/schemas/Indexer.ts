@@ -56,6 +56,8 @@ const IndexerSchema = z.object({
   lastProblemCode: ProblemCodeFieldSchema,
   lastFailedAt: z.string().datetime().nullable(),
   turnedOffBecause: SaidSchema.nullable(),
+  sourceAppId: z.string().uuid().nullable().default(null),
+  sourceIndexerId: z.number().int().nullable().default(null),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });

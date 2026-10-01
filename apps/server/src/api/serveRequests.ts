@@ -33,6 +33,16 @@ import {
   listQualityProfilesRoute,
   profilesOnOfferRoute,
   removeQualityProfileRoute,
+  addArrAppRoute,
+  changeArrAppRoute,
+  importArrIndexersRoute,
+  listArrAppsRoute,
+  readArrAppChoicesRoute,
+  readArrQueueRoute,
+  removeArrAppRoute,
+  testArrAppRoute,
+  tryArrAppChangeRoute,
+  tryArrAppRoute,
   addDownloadClientRoute,
   changeDownloadClientRoute,
   listDownloadClientsRoute,
@@ -777,6 +787,108 @@ const serveRequests = (app: OpenAPIHono, context: AppContext): void => {
 
   app.openapi(listDownloadClientsRoute, async (context) => {
     const answer = await throughRequests(context.req.raw.headers, (client) => client.listClients());
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(listArrAppsRoute, async (context) => {
+    const answer = await throughRequests(
+      context.req.raw.headers,
+      (client) => client.listArrApps(),
+      ['requests.manage', 'library.edit'],
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(addArrAppRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.addArrApp(context.req.valid('json')),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 201)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(tryArrAppRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.tryArrApp(context.req.valid('json')),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(readArrQueueRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) => client.arrQueue());
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(changeArrAppRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.changeArrApp(context.req.valid('param').id, context.req.valid('json')),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(removeArrAppRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.removeArrApp(context.req.valid('param').id),
+    );
+
+    return answer.kind === 'answered'
+      ? context.body(null, 204)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(testArrAppRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.testArrApp(context.req.valid('param').id),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(tryArrAppChangeRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.tryArrApp(context.req.valid('json'), context.req.valid('param').id),
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(readArrAppChoicesRoute, async (context) => {
+    const answer = await throughRequests(
+      context.req.raw.headers,
+      (client) => client.arrAppChoices(context.req.valid('param').id),
+      ['requests.manage', 'library.edit'],
+    );
+
+    return answer.kind === 'answered'
+      ? context.json(answer.value, 200)
+      : context.json(bodyOf(answer), answer.status);
+  });
+
+  app.openapi(importArrIndexersRoute, async (context) => {
+    const answer = await throughRequests(context.req.raw.headers, (client) =>
+      client.importArrIndexers(context.req.valid('param').id),
+    );
 
     return answer.kind === 'answered'
       ? context.json(answer.value, 200)

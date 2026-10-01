@@ -103,7 +103,7 @@ describe('createRequestRoutes', () => {
     expect((await ask(`/requests/${id}/retry`, 'POST')).status).toBe(200);
     expect(
       await (await ask(`/requests/${id}/arrived`, 'POST', { mediaId: 'media-1' })).json(),
-    ).toMatchObject({ mediaId: 'media-1' });
+    ).toMatchObject({ request: { mediaId: 'media-1' }, newlyAvailable: 0 });
     expect((await ask(`/requests/${id}/arrived`, 'POST', {})).status).toBe(400);
     expect((await ask('/requests/missing/approve', 'POST')).status).toBe(404);
   });

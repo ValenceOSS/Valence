@@ -3,12 +3,47 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LibrarySettingsDialog } from './LibrarySettingsDialog';
 import type { Library } from '@ValenceContracts/schemas/Library';
+import type { ArrApp } from '@ValenceContracts/schemas/ArrApp';
+import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 
 const updateLibraryMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@ValenceClient/library/fetchLibrary', () => ({
   updateLibrary: updateLibraryMock,
 }));
+
+const fetchArrAppChoicesMock = vi.hoisted(() => vi.fn());
+
+vi.mock('@ValenceClient/requests/fetchArrApps', () => ({
+  fetchArrAppChoices: fetchArrAppChoicesMock,
+  fetchArrApps: vi.fn(),
+  fetchArrQueue: vi.fn(),
+}));
+
+const RADARR: ArrApp = {
+  id: '3f0e8a52-7b1c-4d2e-9f3a-5b6c7d8e9f01',
+  name: 'Films app',
+  kind: 'radarr',
+  url: 'http://radarr:7878',
+  hasApiKey: true,
+  remotePath: '',
+  localPath: '',
+  isEnabled: true,
+  isWorking: true,
+  version: null,
+  lastCheckedAt: null,
+  lastProblem: null,
+  lastProblemCode: null,
+  createdAt: '2026-09-30T00:00:00.000Z',
+  updatedAt: '2026-09-30T00:00:00.000Z',
+};
+
+const LIDARR: ArrApp = {
+  ...RADARR,
+  id: '6b2e3d4c-5f6a-4b7c-9d8e-0f1a2b3c4d5e',
+  name: 'Music app',
+  kind: 'lidarr',
+};
 
 const films = (overrides: Partial<Library> = {}): Library => ({
   id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
@@ -120,6 +155,7 @@ describe('LibrarySettingsDialog', () => {
         takesRequests: true,
         requestProfileId: null,
         requestPath: null,
+        fulfilment: null,
       });
     });
 
@@ -346,6 +382,7 @@ describe('LibrarySettingsDialog', () => {
         takesRequests: true,
         requestProfileId: null,
         requestPath: '/media/asked-for',
+        fulfilment: null,
       });
     });
   });
@@ -379,5 +416,104 @@ describe('LibrarySettingsDialog', () => {
         expect.objectContaining({ takesRequests: false }),
       );
     });
+  });
+
+  it('hands a library’s requests to a connected app of its kind, with its folder and profile', async () => {
+    const user = userEvent.setup();
+
+    updateLibraryMock.mockResolvedValue(films());
+    fetchArrAppChoicesMock.mockResolvedValue({
+      rootFolders: [
+        { id: 1, path: '/movies', freeBytes: null, isAccessible: true },
+        { id: 2, path: '/old', freeBytes: null, isAccessible: false },
+      ],
+      qualityProfiles: [{ id: 4, name: 'HD-1080p' }],
+      metadataProfiles: [],
+    });
+
+    renderInAnAddress(
+      <LibrarySettingsDialog
+        library={films({ itemCount: 0 })}
+        arrApps={[RADARR, LIDARR]}
+        isOpen
+        onClose={vi.fn()}
+        onUpdated={vi.fn()}
+        onRegenerate={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /Who fetches what is asked for/ }));
+
+    expect(screen.queryByRole('menuitemradio', { name: /Music app/ })).not.toBeInTheDocument();
+
+    await user.click(await screen.findByRole('menuitemradio', { name: /Films app/ }));
+
+    expect(
+      screen.queryByRole('textbox', { name: 'Where requests are filed' }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Choose a root folder and a quality profile in the app.',
+    );
+
+    await user.click(await screen.findByRole('button', { name: /Root folder/ }));
+    expect(await screen.findByText('The app cannot reach this folder')).toBeInTheDocument();
+    await user.click(await screen.findByRole('menuitemradio', { name: '/movies' }));
+    await user.click(screen.getByRole('button', { name: /Quality profile in the app/ }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'HD-1080p' }));
+    await user.click(screen.getByRole('switch', { name: 'Search as soon as it is added' }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(updateLibraryMock).toHaveBeenCalledWith(
+        films().id,
+        expect.objectContaining({
+          fulfilment: {
+            appId: RADARR.id,
+            rootFolderPath: '/movies',
+            qualityProfileId: 4,
+            metadataProfileId: null,
+            searchesOnAdd: false,
+          },
+        }),
+      );
+    });
+  });
+
+  it('asks Lidarr for a metadata profile too, and says where the choices could not be read', async () => {
+    const user = userEvent.setup();
+
+    fetchArrAppChoicesMock.mockResolvedValue({
+      rootFolders: [{ id: 1, path: '/music', freeBytes: null, isAccessible: true }],
+      qualityProfiles: [{ id: 2, name: 'Lossless' }],
+      metadataProfiles: [{ id: 1, name: 'Standard' }],
+    });
+
+    renderInAnAddress(
+      <LibrarySettingsDialog
+        library={films({
+          kind: 'music',
+          fulfilment: {
+            appId: LIDARR.id,
+            rootFolderPath: '/music',
+            qualityProfileId: 2,
+            metadataProfileId: null,
+            searchesOnAdd: true,
+          },
+        })}
+        arrApps={[LIDARR]}
+        isOpen
+        onClose={vi.fn()}
+        onUpdated={vi.fn()}
+        onRegenerate={vi.fn()}
+      />,
+    );
+
+    await user.click(await screen.findByRole('button', { name: /Metadata profile/ }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Standard' }));
+
+    expect(screen.getByRole('button', { name: /Metadata profile/ })).toHaveTextContent('Standard');
   });
 });

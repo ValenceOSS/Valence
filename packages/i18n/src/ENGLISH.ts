@@ -777,6 +777,7 @@ const ENGLISH = {
   'common.lens': 'Lens',
   'common.libraries': 'Libraries',
   'common.library': 'Library',
+  'common.lidarr': 'Lidarr',
   'common.light': 'Light',
   'common.like': 'Like',
   'common.likedSongs': 'Liked songs',
@@ -980,6 +981,7 @@ const ENGLISH = {
   'common.profiles': 'Profiles',
   'common.programmes': 'Programmes',
   'common.progress': 'Progress',
+  'common.prowlarr': 'Prowlarr',
   'common.pulseDepth': 'Pulse depth',
   'common.putTheAlbumsInOrderBy': 'Put the albums in order by',
   'common.putThePanelAway': 'Put the panel away',
@@ -987,6 +989,7 @@ const ENGLISH = {
   'common.queue': 'Queue',
   'common.queued': 'Queued',
   'common.queuedToSearch': 'Queued to search',
+  'common.radarr': 'Radarr',
   'common.radius': 'Radius',
   'common.rating': 'Rating',
   'common.read': 'Read',
@@ -1102,6 +1105,7 @@ const ENGLISH = {
   'common.somebodyElse': 'Somebody else',
   'common.something': 'Something',
   'common.somethingNewToWatch': 'Something new to watch',
+  'common.sonarr': 'Sonarr',
   'common.songs2': 'Songs',
   'common.songsAndMinutes': '{songs}, {minutes} min',
   'common.source': 'Source',
@@ -1617,6 +1621,9 @@ const ENGLISH = {
   'error.admin.theMediaServiceCouldNotBe': 'The media service could not be reached.',
   'error.apiKey.noSuchKeyOnThisAccount': 'No such key on this account.',
   'error.apiKey.thisAccountMayNotHoldAPI': 'This account may not hold API keys.',
+  'error.arrApps.noSuchConnectedApp': 'No such connected app.',
+  'error.arrApps.thatIsNotAChangeToAConnectedApp': 'That is not a change to a connected app.',
+  'error.arrApps.thatIsNotAConnectedApp': 'That is not a connected app.',
   'error.book.noCoverForThatBook': 'No cover for that book.',
   'error.book.noSuchChapter': 'No such chapter.',
   'error.book.noSuchPage': 'No such page.',
@@ -1697,6 +1704,8 @@ const ENGLISH = {
     'That picture is not one the catalogue has for this.',
   'error.library.sayWhetherThatIdIsA':
     'Say whether that id is a series or a film — the same number is both.',
+  'error.library.thatAppCannotFulfilThisLibrary':
+    'That connected app cannot fulfil requests for this library. Films go to Radarr, series to Sonarr and music to Lidarr.',
   'error.library.thatDoesNotLookLikeA': 'That does not look like a catalogue address or id.',
   'error.library.thatIsPastTheEndThe':
     'That is past the end — the file runs {durationSeconds} seconds.',
@@ -2059,6 +2068,35 @@ const ENGLISH = {
   'phone.whereIsYourValence.whereIsYourValence': 'Where is your Valence?',
   'requests.app.theDatabaseIsNotAnswering': 'The database is not answering',
   'requests.app.theReleaseCouldNotBeFetched': 'The release could not be fetched.',
+  'requests.arrApps.arrAppService.onlyProwlarrHasIndexersToImport':
+    'Only Prowlarr has indexers to import.',
+  'requests.arrApps.arrAppService.prowlarrTakesNoRequests':
+    'Prowlarr keeps indexers and takes no requests.',
+  'requests.arrApps.arrAppService.thatAddressIsAppNotKind':
+    'That address answers as {app}, not {kind}.',
+  'requests.arrApps.arrAppService.theAppCouldNotBeAsked': 'The app could not be asked.',
+  'requests.arrApps.arrCaller.nameAnsweredInAShapeValenceCannotRead':
+    '{name} answered, but not in a shape Valence can read',
+  'requests.arrApps.arrCaller.nameAnsweredStatus': '{name} answered with HTTP {status}',
+  'requests.arrApps.arrCaller.nameAnsweredStatusComplaint':
+    '{name} answered with HTTP {status}: {complaint}',
+  'requests.arrApps.arrCaller.nameRefusedItsApiKey': '{name} refused its API key',
+  'requests.arrApps.handOff.handedToName': 'Handed to {name}.',
+  'requests.arrApps.handOff.itHasNoMusicBrainzIdToHandOver':
+    'It has no MusicBrainz id to hand over.',
+  'requests.arrApps.handOff.itHasNoTmdbIdToHandOver': 'It has no TMDB id to hand over.',
+  'requests.arrApps.handOff.lidarrCannotFindIt': 'Lidarr cannot find it by its MusicBrainz id.',
+  'requests.arrApps.handOff.lidarrNeedsAMetadataProfile':
+    'Lidarr needs a metadata profile. Choose one in the library’s settings.',
+  'requests.arrApps.handOff.nameImportedItIntoFolder': '{name} imported it into {folder}.',
+  'requests.arrApps.handOff.nameIsDownloadingTitle': '{name} is downloading {title}.',
+  'requests.arrApps.handOff.nameIsSwitchedOffOrCannotTakeRequests':
+    '{name} is switched off, or cannot take requests.',
+  'requests.arrApps.handOff.nameSaidProblem': '{name} could not take it: {problem}',
+  'requests.arrApps.handOff.sonarrCannotFindItsTvdbId':
+    'Sonarr cannot find it by its TVDB or TMDB id.',
+  'requests.arrApps.handOff.theAppItWasHandedToIsGone':
+    'The connected app it was handed to has been removed.',
   'requests.cardigann.cardigannIndexer.downloadUriQueryKey': '.DownloadUri.Query.{key}',
   'requests.cardigann.cardigannIndexer.loggingInToTheSiteDid':
     'Logging in to the site did not work. Check the settings.',
@@ -2227,6 +2265,8 @@ const ENGLISH = {
   'requests.mediaRequests.requestWorker.forItOfThemForItAnd':
     '{forIt} of them for it, and none would do — the best, {title}, because {why}',
   'requests.mediaRequests.requestWorker.itHeldNothingAskedFor': 'It held nothing asked for',
+  'requests.mediaRequests.requestWorker.itIsHandedToAConnectedApp':
+    'It is handed to a connected app, which picks its own releases.',
   'requests.mediaRequests.requestWorker.itIsOutAndWanted': 'It is out, and wanted.',
   'requests.mediaRequests.requestWorker.itsDownloadWasTakenOutBefore':
     'Its download was taken out before it finished, so it is wanted again.',
@@ -2564,6 +2604,41 @@ const ENGLISH = {
   'screens.adminArea.approveRequestDialog.whereItIsFiledOnceIt':
     'Where it is filed once it arrives.',
   'screens.adminArea.aPreviewMomentCanBeChosen': 'A preview moment can be chosen once they have.',
+  'screens.adminArea.arrAppDialog.app': 'App',
+  'screens.adminArea.arrAppDialog.asTheAppSeesIt': 'As the app sees it',
+  'screens.adminArea.arrAppDialog.connectAnApp': 'Connect an app',
+  'screens.adminArea.arrAppDialog.giveTheAppAName': 'Give the app a name.',
+  'screens.adminArea.arrAppDialog.handItRequests': 'Hand it requests',
+  'screens.adminArea.arrAppDialog.itIsUnderSettingsGeneral':
+    'It is under Settings → General in the app.',
+  'screens.adminArea.arrAppDialog.itNeedsItsApiKey':
+    'It needs its API key, from Settings → General in the app.',
+  'screens.adminArea.arrAppDialog.keepItsIndexersInStep': 'Keep its indexers in step',
+  'screens.adminArea.arrAppDialog.keepTheAppsYouAlreadyRun':
+    'Keep the apps you already run. A library handed to Radarr, Sonarr or Lidarr is fetched by that app alone, and Prowlarr’s indexers can be brought in.',
+  'screens.adminArea.arrAppDialog.mapItsFoldersOntoValences': 'Its library folder, both ways',
+  'screens.adminArea.arrAppDialog.onlyWhereTheAppAndValence':
+    'Only where the app and Valence see the library under different paths, as two containers mounting it in different places do.',
+  'screens.adminArea.arrAppDialog.sayWhereItsLibraryIsBothWays':
+    'Say where its library is both as the app sees it and as Valence does, or neither.',
+  'screens.adminArea.arrAppDialog.whereItsLibraryIs': 'Where its library is',
+  'screens.adminArea.arrAppDialog.whereTheRequestsServiceReachesIt':
+    'Where the requests service reaches it, with any URL base it is set to.',
+  'screens.adminArea.arrAppsPanel.connectedApps': 'Connected apps',
+  'screens.adminArea.arrAppsPanel.disconnect': 'Disconnect',
+  'screens.adminArea.arrAppsPanel.disconnectedName': 'Disconnected {name}.',
+  'screens.adminArea.arrAppsPanel.disconnectName': 'Disconnect {name}?',
+  'screens.adminArea.arrAppsPanel.noneYetConnectARadarrSonarr':
+    'None yet. Connect a Radarr, Sonarr, Lidarr or Prowlarr you already run.',
+  'screens.adminArea.arrAppsPanel.nothingIsRemovedFromTheApp':
+    'Nothing is removed from the app itself. A library handed to it fetches nothing until it is handed to another, or to Valence.',
+  'screens.adminArea.arrAppsPanel.radarrSonarrLidarrAndProwlarrYou':
+    'Radarr, Sonarr, Lidarr and Prowlarr you already run. Choose in a library’s settings whether Valence or one of these fetches what is asked for.',
+  'screens.adminArea.arrAppsPanel.readingTheConnectedApps': 'Reading the connected apps…',
+  'screens.adminArea.arrAppsPanel.theConnectedAppsCouldNotBe':
+    'The connected apps could not be read.',
+  'screens.adminArea.arrAppsPanel.theIndexersItBroughtInAre':
+    'The indexers it brought in are removed with it. Nothing is removed from Prowlarr itself.',
   'screens.adminArea.artworkPicker.askingTheCatalogueWhatItHas': 'Asking the catalogue what it has',
   'screens.adminArea.artworkPicker.backdrop': 'Backdrop',
   'screens.adminArea.artworkPicker.backToTheCataloguesOwnPicture':
@@ -2888,11 +2963,15 @@ const ENGLISH = {
   'screens.adminArea.downloadsPanel.nothingWillBeSentToIt':
     'Nothing will be sent to it again, and Valence stops following what it already sent there. What it is downloading carries on in the client.',
   'screens.adminArea.downloadsPanel.pausedTitle': 'Paused {title}.',
+  'screens.adminArea.downloadsPanel.readingTheConnectedAppsQueues':
+    'Reading the connected apps’ queues…',
   'screens.adminArea.downloadsPanel.readingTheDownloadClients': 'Reading the download clients',
   'screens.adminArea.downloadsPanel.removedTitle': 'Removed {title}.',
   'screens.adminArea.downloadsPanel.removeThisClient': 'Remove this client?',
   'screens.adminArea.downloadsPanel.resumedTitle': 'Resumed {title}.',
   'screens.adminArea.downloadsPanel.rules': 'Rules',
+  'screens.adminArea.downloadsPanel.theConnectedAppsQueuesCouldNot':
+    'The connected apps’ queues could not be read.',
   'screens.adminArea.downloadsPanel.theDownloadClientsCouldNotBeRead':
     'The download clients could not be read.',
   'screens.adminArea.downloadsPanel.theDownloadsCouldNotBeRead': 'The downloads could not be read.',
@@ -3057,6 +3136,10 @@ const ENGLISH = {
   'screens.adminArea.indexerDialog.whichOfTheSitesAddressesTo':
     'Which of the site’s addresses to use. Try another if one is blocked.',
   'screens.adminArea.indexerReportList.whatEachIndexerSaid': 'What each indexer said',
+  'screens.adminArea.indexersPanel.fromName': 'From {name}',
+  'screens.adminArea.indexersPanel.fromNameAddedUpdatedRemoved':
+    'From {name}: {added} added, {updated} changed, {removed} removed.',
+  'screens.adminArea.indexersPanel.importFromProwlarr': 'Import from Prowlarr',
   'screens.adminArea.indexersPanel.indexer': 'Indexer',
   'screens.adminArea.indexersPanel.itWillNotBeSearchedAgain':
     'It will not be searched again, and its key is forgotten. Adding it back means typing the key again.',
@@ -3127,6 +3210,11 @@ const ENGLISH = {
   'screens.adminArea.librarySettingsDialog.aFolderOfItsOwnFor':
     'A folder of its own for what is fetched, where you want it kept apart. The library’s own folder otherwise.',
   'screens.adminArea.librarySettingsDialog.atOnce': 'At once',
+  'screens.adminArea.librarySettingsDialog.chooseAMetadataProfileForLidarr':
+    'Choose a metadata profile for Lidarr.',
+  'screens.adminArea.librarySettingsDialog.chooseARootFolderAndA':
+    'Choose a root folder and a quality profile in the app.',
+  'screens.adminArea.librarySettingsDialog.chooseOne': 'Choose one',
   'screens.adminArea.librarySettingsDialog.eachFilesOwnDefault': "Each file's own default",
   'screens.adminArea.librarySettingsDialog.filesAtOnce': 'Files at once',
   'screens.adminArea.librarySettingsDialog.forceDefaultAudioTrack': 'Force default audio track',
@@ -3135,26 +3223,42 @@ const ENGLISH = {
     'However many the server allows',
   'screens.adminArea.librarySettingsDialog.howManyOfThisLibrarysFiles':
     'How many of this library’s files are rendered at the same time. A library on a local disk wants as many as the machine can feed. A library on a network share wants one: the files come down a single wire, and asking for four divides it four ways.',
+  'screens.adminArea.librarySettingsDialog.kindSearchesDownloadsAndImports':
+    '{kind} searches, downloads and imports it.',
+  'screens.adminArea.librarySettingsDialog.metadataProfile': 'Metadata profile',
   'screens.adminArea.librarySettingsDialog.oneAtATime': 'One at a time',
   'screens.adminArea.librarySettingsDialog.previewsAndPlaybackPreferThisLanguage':
     'Previews and playback prefer this language, when a file has a track in it. A file with no matching track keeps its own default.',
   'screens.adminArea.librarySettingsDialog.qualityProfileForRequests':
     'Quality profile for requests',
+  'screens.adminArea.librarySettingsDialog.qualityProfileInTheApp': 'Quality profile in the app',
+  'screens.adminArea.librarySettingsDialog.readingTheAppsFoldersAndProfiles':
+    'Reading the app’s folders and profiles…',
   'screens.adminArea.librarySettingsDialog.regeneratePreviews': 'Regenerate previews',
   'screens.adminArea.librarySettingsDialog.rightForALocalDisk': 'Right for a local disk',
   'screens.adminArea.librarySettingsDialog.rightForANetworkShare': 'Right for a network share',
+  'screens.adminArea.librarySettingsDialog.rootFolder': 'Root folder',
   'screens.adminArea.librarySettingsDialog.savedTheSettingsOfName': 'Saved the settings of {name}.',
+  'screens.adminArea.librarySettingsDialog.searchAsSoonAsItIsAdded':
+    'Search as soon as it is added',
   'screens.adminArea.librarySettingsDialog.takesRequests': 'Takes requests',
+  'screens.adminArea.librarySettingsDialog.theAppCannotReachThisFolder':
+    'The app cannot reach this folder',
+  'screens.adminArea.librarySettingsDialog.theAppsFoldersAndProfilesCould':
+    'The app’s folders and profiles could not be read.',
   'screens.adminArea.librarySettingsDialog.theLibraryCouldNotBeUpdated':
     'The library could not be updated.',
   'screens.adminArea.librarySettingsDialog.thisWillStartAPreviewGeneration':
     'This will start a preview generation task for {name}’s existing media, so previews match {label}. Progress shows next to the library once started. Continue?',
   'screens.adminArea.librarySettingsDialog.twoAtATime': 'Two at a time',
+  'screens.adminArea.librarySettingsDialog.valenceSearchesDownloadsAndFilesIt':
+    'Valence searches, downloads and files it itself.',
   'screens.adminArea.librarySettingsDialog.whereRequestsAreFiled': 'Where requests are filed',
   'screens.adminArea.librarySettingsDialog.whetherWhatPeopleAskForCan':
     'Whether what people ask for can be filed here, which profile those releases are judged by, and where they are put. Left alone, they are judged by whichever profile names this library and filed in the library’s own folder.',
   'screens.adminArea.librarySettingsDialog.whicheverProfileNamesThisLibrary':
     'Whichever profile names this library',
+  'screens.adminArea.librarySettingsDialog.whoFulfilsRequests': 'Who fetches what is asked for',
   'screens.adminArea.librarySettingsDialog.yourBrowser': 'Your browser',
   'screens.adminArea.matchPicker.choosingHereCorrectsEveryEpisodeOf':
     'Choosing here corrects every episode of this series, and every scan after it.',
@@ -3625,6 +3729,36 @@ const ENGLISH = {
   'screens.adminArea.scrubPreviewsForTitleHaveNot':
     'Scrub previews for {title} have not finished yet.',
   'screens.adminArea.searchForARecord': 'Search for a record',
+  'screens.adminArea.seerrCard.answerOverseerrAndJellyseerr': 'Answer Overseerr and Jellyseerr',
+  'screens.adminArea.seerrCard.askAs': 'Ask as',
+  'screens.adminArea.seerrCard.asRadarrForFilms': 'Radarr server, for films',
+  'screens.adminArea.seerrCard.asSonarrForSeries': 'Sonarr server, for series',
+  'screens.adminArea.seerrCard.chooseAnAccountBeforeTheySend':
+    'Choose an account to ask as. Until you do, what they send is turned away.',
+  'screens.adminArea.seerrCard.everythingTheySendIsAsked':
+    "Everything they send is asked for in this account's name, and shows as its request.",
+  'screens.adminArea.seerrCard.hostnamePortSslUrlBase':
+    'Hostname {hostname}, port {port}, Use SSL {ssl}, URL Base {urlBase}.',
+  'screens.adminArea.seerrCard.keepAskingInOverseerrOr':
+    'Already ask for films and series in Overseerr or Jellyseerr? Keep doing so. Add Valence there as a Radarr server and as a Sonarr server, and whatever is approved there is asked for here, approved, and fetched the way its library fetches.',
+  'screens.adminArea.seerrCard.madeANewKey':
+    'Made a new key. Paste it into both servers in Overseerr or Jellyseerr.',
+  'screens.adminArea.seerrCard.makeANewKey': 'Make a new key',
+  'screens.adminArea.seerrCard.nobodyYet': 'Nobody yet',
+  'screens.adminArea.seerrCard.overseerrAndJellyseerr': 'Overseerr and Jellyseerr',
+  'screens.adminArea.seerrCard.pasteItIntoBothDialogs': 'Paste it as the API key of both servers.',
+  'screens.adminArea.seerrCard.readingTheLink': 'Reading the link to Overseerr and Jellyseerr',
+  'screens.adminArea.seerrCard.requestingIsOffSoThere':
+    'Requesting is off on this server, so there is nothing for Overseerr or Jellyseerr to send to. Set up requesting first, then come back here.',
+  'screens.adminArea.seerrCard.savedWhoTheyAskAs': 'Saved who Overseerr and Jellyseerr ask as.',
+  'screens.adminArea.seerrCard.theLinkCouldNotBeRead':
+    'The link to Overseerr and Jellyseerr could not be read.',
+  'screens.adminArea.seerrCard.valenceAnswersThemAsRadarr':
+    'Valence answers them as if it were Radarr and Sonarr, to anything holding the key below.',
+  'screens.adminArea.seerrCard.valenceNoLongerAnswersThem':
+    'Valence no longer answers Overseerr or Jellyseerr.',
+  'screens.adminArea.seerrCard.valenceNowAnswersThem':
+    'Valence now answers Overseerr and Jellyseerr.',
   'screens.adminArea.sentATestDelivery': 'Sent a test delivery.',
   'screens.adminArea.sentTheMessage': 'Sent the message.',
   'screens.adminArea.sessionCard.cached': 'Cached',
@@ -3908,6 +4042,7 @@ const ENGLISH = {
   'screens.appShell.somethingToListenTo': 'Something to listen to',
   'screens.appShell.somethingToRead': 'Something to read',
   'screens.appShell.valenceBackToTheStart': 'Valence, back to the start',
+  'screens.arrAppsPanel.describeArrAppState.versionVersion': 'Version {version}',
   'screens.artworkPicker.artworkTile.choosingThisPicture': 'Choosing this picture',
   'screens.artworkPicker.artworkTile.chosen': 'Chosen',
   'screens.artworkPicker.artworkTile.theCataloguesPick': 'The catalogue’s pick',
@@ -4061,6 +4196,12 @@ const ENGLISH = {
     'Show only what is on this device. Worth turning on before you lose the connection rather than after.',
   'screens.downloadsDialog.whatYouHaveAskedForOn':
     'What you have asked for on your other devices, and how far along each is.',
+  'screens.downloadsPanel.arrQueueTable.noRadarrSonarrOrLidarrIs':
+    'No Radarr, Sonarr or Lidarr is connected and switched on.',
+  'screens.downloadsPanel.arrQueueTable.nothingIsDownloadingInTheConnected':
+    'Nothing is downloading in the connected apps.',
+  'screens.downloadsPanel.arrQueueTable.whatTheConnectedAppsAreDownloading':
+    'What the connected apps are downloading',
   'screens.downloadsPanel.describeClientState.notAskedYet': 'Not asked yet',
   'screens.downloadsPanel.describeDownloadState.checking': 'Checking.',
   'screens.downloadsPanel.describeDownloadState.checkingAndUnpacking': 'Checking and unpacking.',
@@ -5299,6 +5440,18 @@ const ENGLISH = {
   'server.appContext.youCannotDoThatToYour': 'You cannot do that to your own account.',
   'server.appContext.youCannotGrantAPermissionYou':
     'You cannot grant a permission you do not hold.',
+  'server.arrEmulation.answeringSeerrIsOff':
+    'Valence is not answering Overseerr or Jellyseerr. Turn it on in the admin area, under Requests.',
+  'server.arrEmulation.chooseTheAccountSeerrAsksAs':
+    'Choose the account Overseerr and Jellyseerr ask as in Valence first.',
+  'server.arrEmulation.english': 'English',
+  'server.arrEmulation.thatIsNotWhatWasExpected': 'That is not what Valence expected to be sent.',
+  'server.arrEmulation.thatKeyIsNotTheOne':
+    'That API key is not the one Valence made for Overseerr or Jellyseerr.',
+  'server.arrEmulation.theCatalogueKnowsNoSeriesByThat':
+    'The catalogue knows no series by that TVDB id.',
+  'server.arrEmulation.valenceHasNothingByThatId': 'Valence has nothing by that id.',
+  'server.arrEmulation.whateverTheLibraryUses': 'Whatever the library uses',
   'server.auth.describeSignInAttempt.somebodyWhoGaveNoAddress': 'somebody who gave no address',
   'server.auth.describeSignInAttempt.thoseDetailsWereNotAccepted':
     'those details were not accepted.',

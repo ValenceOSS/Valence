@@ -1933,3 +1933,21 @@ describe('a file holding two episodes', () => {
     expect(found?.backdropUrl).toContain('/one.jpg');
   });
 });
+
+describe('finding a series by its TVDB id', () => {
+  it('reads the series the catalogue files under that TVDB id', async () => {
+    const { instance, calls } = provider({
+      '/find/305288': { movie_results: [], tv_results: [{ id: 66732 }] },
+    });
+
+    await expect(instance.seriesOfTvdbId?.(305288)).resolves.toBe(66732);
+    expect(calls[0]).toContain('external_source=tvdb_id');
+  });
+
+  it('has nothing to say without a key, or about a TVDB id it does not know', async () => {
+    await expect(provider({}, { key: null }).instance.seriesOfTvdbId?.(1)).resolves.toBeNull();
+    await expect(
+      provider({ '/find/1': { movie_results: [], tv_results: [] } }).instance.seriesOfTvdbId?.(1),
+    ).resolves.toBeNull();
+  });
+});

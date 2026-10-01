@@ -10,13 +10,14 @@ Valence does not supply content, indexers or a download client. You choose and c
 
 ## How the pieces fit
 
-| Piece            | Provided by                      | Job                                                                                  |
-| ---------------- | -------------------------------- | ------------------------------------------------------------------------------------ |
-| Valence          | The `valence` service            | The interface, permissions, approval and notifications.                              |
-| Requests service | The `requests` service (profile) | Searches indexers, judges releases, drives the download client and files the result. |
-| Indexers         | You                              | Torznab or Newznab feeds, or sites from the built-in catalogue.                      |
-| Download client  | You                              | qBittorrent, Transmission, SABnzbd or NZBGet.                                        |
-| gluetun          | Optional profile                 | A VPN that your download client sits behind.                                         |
+| Piece            | Provided by                      | Job                                                                                                             |
+| ---------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Valence          | The `valence` service            | The interface, permissions, approval and notifications.                                                         |
+| Requests service | The `requests` service (profile) | Searches indexers, judges releases, drives the download client and files the result.                            |
+| Indexers         | You                              | Torznab or Newznab feeds, or sites from the built-in catalogue.                                                 |
+| Download client  | You                              | qBittorrent, Transmission, SABnzbd or NZBGet.                                                                   |
+| gluetun          | Optional profile                 | A VPN that your download client sits behind.                                                                    |
+| Radarr and co.   | You, if you already run them     | Radarr, Sonarr, Lidarr and Prowlarr can be connected and kept. See [below](#radarr-sonarr-lidarr-and-prowlarr). |
 
 ## Switching it on
 
@@ -133,6 +134,55 @@ Point each category's folder somewhere under `DOWNLOADS_PATH`. Where the client 
 
 Filing hard links where it can, so a film takes no extra room and a torrent goes on seeding. A hard link only works within one filesystem as a container sees it. `MEDIA_PATH` and `DOWNLOADS_PATH` are mounted separately, so as the compose file stands a torrent's files are copied and a usenet download's files are moved. To hard link instead, keep both on one disk, mount their common parent into the download client and the requests service at the same place, and point your libraries and the client's folders inside it.
 
+## Radarr, Sonarr, Lidarr and Prowlarr
+
+If you already run Radarr for films, Sonarr for series, Lidarr for music or Prowlarr for indexers, keep them. Connect them on the admin area's **Requests** page, under **Connected apps**, and then choose per library whether Valence fulfils its requests itself or hands them to one of these.
+
+### Connecting an app
+
+Press **Connect an app**, choose which it is, and give:
+
+| Field        | What to give                                                                                                                                                  |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Address      | Where the requests service reaches it, inside the compose network usually its container's name, such as `http://radarr:7878`, with any URL base it is set to. |
+| API key      | From **Settings → General** in the app. It is kept by the requests service and never shown again.                                                             |
+| Library path | As the app sees its library and as Valence does, where the two differ. See [Paths for connected apps](#paths-for-connected-apps).                             |
+
+**Test** asks the app for its version (`/api/v3/system/status`, or `/api/v1` for Lidarr and Prowlarr), and says so where the address answers as a different app.
+
+### Handing a library to an app
+
+A library's settings, on the **Libraries** page, have **Who fetches what is asked for**. **Valence** is how requesting has always worked. Choosing a connected app of the library's kind, Radarr for films, Sonarr for series and Lidarr for music, hands its requests over completely. Books are always Valence's own.
+
+With an app chosen, also choose its **root folder**, its **quality profile**, for Lidarr its **metadata profile**, and whether it should **search as soon as it is added**. These are read from the app itself.
+
+Handed off means:
+
+- Once a request is approved, Valence adds it to the app: a film by its TMDB id, a series by its TVDB id with only the seasons asked for monitored, an album by its MusicBrainz release group (its artist added beside it, unmonitored, where Lidarr lacks it) and an artist with every album its metadata profile takes. Something the app already has is monitored and searched for instead.
+- The app searches, downloads and imports. Valence never searches, sends to a download client, files or reads RSS for that library.
+- Valence follows the app every minute: its queue for what is downloading, and whether each film, episode or album has a file. Each moves from wanted to downloading to filed, the request page says what the app is doing, and the usual `requests.chosen`, `requests.downloadStarted`, `requests.downloadFailed` and `requests.filed` webhooks follow.
+- Once the app has imported something, Valence reads that folder and tells whoever asked, exactly as it does for what it files itself.
+- A series stays followed. Sonarr's monitoring fetches new episodes, and each is marked available as Sonarr imports it. A season added to the request later is monitored in Sonarr too.
+- Cancelling or refusing a request removes nothing from the app.
+
+The series a request names is found in Sonarr by the TVDB id the catalogue gives. Where the catalogue gives none, Sonarr is asked to find it by its TMDB id.
+
+### Paths for connected apps
+
+Valence reads what the app imported, so the app's root folder must be inside the library's folder as Valence sees it. Where the app mounts that folder somewhere else, for example Radarr at `/movies` and Valence at `/media/Films`, give both in the app's dialog under **Where its library is**, and Valence maps the app's paths onto its own.
+
+Anything that reaches the library some other way, a file an app imported while Valence was not looking, something you copied there by hand, or a library brought over from another server, is matched too: whenever a library is scanned, anything requested that is now in it, a film or series by its catalogue id, an episode by its season and number, an album by its release group, is marked available.
+
+### Prowlarr's indexers
+
+Connect a Prowlarr, then press **Import from Prowlarr** on the **Indexers** page. Each of Prowlarr's indexers becomes a Torznab or Newznab indexer in Valence, searched through Prowlarr's own feed for it (`http://prowlarr:9696/<id>/api`) with Prowlarr's key, carrying its name, categories, priority and whether it is on. Each is marked **From Prowlarr**.
+
+They are kept in step every hour: indexers added in Prowlarr are added, removed ones removed and changed ones changed. Indexers you added by hand are never touched. One that Valence switched off for failing stays off until a test passes. Disconnecting the Prowlarr removes the indexers it brought in.
+
+### Following the apps' queues
+
+The **Downloads** page has a **Connected apps** tab while a Radarr, Sonarr or Lidarr is connected. It shows each one's queue as the app reports it, read-only: title, progress, size, time left and status.
+
 ## A VPN for the download client
 
 The `vpn` profile starts [gluetun](https://github.com/qdm12/gluetun). Fill in its provider settings from gluetun's wiki, put your download client on its network with `network_mode: service:gluetun`, and publish the client's web port on gluetun rather than on the client.
@@ -191,11 +241,12 @@ A **quality profile** is what releases are judged by. The admin area's **Profile
 
 A library's own settings, on the **Libraries** page, say how requesting treats it:
 
-| Setting                      | What it does                                                                                                                                |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Takes requests               | Off, and nothing is filed there and it is not offered when somebody asks. A library of things you ripped yourself can be left out entirely. |
-| Quality profile for requests | The profile releases for it are judged by. Left alone, whichever profile names this library is used, and failing that the defaults.         |
-| Where requests are filed     | A folder of its own for what is fetched, where you want it kept apart from what you already had. The library's own folder otherwise.        |
+| Setting                       | What it does                                                                                                                                                     |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Takes requests                | Off, and nothing is filed there and it is not offered when somebody asks. A library of things you ripped yourself can be left out entirely.                      |
+| Quality profile for requests  | The profile releases for it are judged by. Left alone, whichever profile names this library is used, and failing that the defaults.                              |
+| Where requests are filed      | A folder of its own for what is fetched, where you want it kept apart from what you already had. The library's own folder otherwise.                             |
+| Who fetches what is asked for | Valence, or a connected Radarr, Sonarr or Lidarr. See [Handing a library to an app](#handing-a-library-to-an-app). The two settings above apply to Valence only. |
 
 One server-wide setting sits beside them, on the **Settings** page: **what a request for an artist watches**. Albums alone unless you say otherwise.
 
@@ -248,12 +299,12 @@ Left empty, the requests service takes a release name at its word, which is righ
 
 ## Troubleshooting
 
-| Symptom                                 | Likely cause                                                                                                    |
-| --------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| No requesting anywhere in Valence       | `REQUESTS_URL` or `REQUESTS_SECRET` is missing or the secrets differ. The log says which.                       |
-| The requests container refuses to start | `REQUESTS_SECRET` is empty or shorter than 32 characters.                                                       |
-| Files are copied instead of hard linked | `MEDIA_PATH` and `DOWNLOADS_PATH` are on separate mounts. See [Hard links](#hard-links).                        |
-| The VPN status is missing               | `VPN_URL` and `VPN_API_KEY` are not set on the requests service.                                                |
+| Symptom                                 | Likely cause                                                                              |
+| --------------------------------------- | ----------------------------------------------------------------------------------------- |
+| No requesting anywhere in Valence       | `REQUESTS_URL` or `REQUESTS_SECRET` is missing or the secrets differ. The log says which. |
+| The requests container refuses to start | `REQUESTS_SECRET` is empty or shorter than 32 characters.                                 |
+| Files are copied instead of hard linked | `MEDIA_PATH` and `DOWNLOADS_PATH` are on separate mounts. See [Hard links](#hard-links).  |
+| The VPN status is missing               | `VPN_URL` and `VPN_API_KEY` are not set on the requests service.                          |
 
 See [Troubleshooting](/reference/troubleshooting) for more.
 
@@ -293,6 +344,18 @@ The download client and the requests service see the download folder under diffe
 1. Check the client is running.
 2. Use its container name as the address, such as `http://qbittorrent:8080`, or `http://gluetun:8080` where it sits behind the VPN. `localhost` is the requests service's own container, not the client's.
 3. Press **Test** on the client in the admin area's **Downloads** page.
+
+### A connected app cannot be reached
+
+1. Check the app is running.
+2. Use its container name as the address, such as `http://sonarr:8989`, with its URL base if it has one, such as `http://sonarr:8989/sonarr`. `localhost` is the requests service's own container.
+3. Press **Test** on the app under **Connected apps** on the admin area's **Requests** page.
+
+### A connected app refuses its key
+
+1. Copy the API key from **Settings → General** in the app.
+2. Change the app under **Connected apps** and paste the key. A key left empty keeps the one it has.
+3. Press **Test**.
 
 ### A download client refuses its login
 

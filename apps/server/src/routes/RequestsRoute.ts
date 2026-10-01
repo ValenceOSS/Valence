@@ -24,6 +24,15 @@ import {
 } from '@ValenceContracts/schemas/DownloadClient';
 import { GiveUpRulesSchema } from '@ValenceContracts/schemas/GiveUpRules';
 import {
+  ArrAppChangeSchema,
+  ArrAppChoicesSchema,
+  ArrAppDraftSchema,
+  ArrAppSchema,
+  ArrAppTestSchema,
+  ArrQueueSchema,
+  ProwlarrImportSchema,
+} from '@ValenceContracts/schemas/ArrApp';
+import {
   ProfilesOnOfferSchema,
   QualityProfileChangeSchema,
   QualityProfileDraftSchema,
@@ -453,6 +462,160 @@ const tryDownloadClientChangeRoute = createRoute({
     200: {
       description: 'Whether it answered, and which version it is',
       content: { 'application/json': { schema: DownloadClientTestAnswer } },
+    },
+  }),
+});
+
+const ArrAppAnswer = ArrAppSchema.openapi('ConnectedApp');
+
+const ArrAppTestAnswer = ArrAppTestSchema.openapi('ConnectedAppTest');
+
+const listArrAppsRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/requests/arr-apps',
+  tags: ['Admin'],
+  summary: 'List the connected Radarr, Sonarr, Lidarr and Prowlarr apps',
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'Every connected app, without its API key',
+      content: { 'application/json': { schema: z.array(ArrAppAnswer) } },
+    },
+  }),
+});
+
+const addArrAppRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/requests/arr-apps',
+  tags: ['Admin'],
+  summary: 'Connect a Radarr, Sonarr, Lidarr or Prowlarr',
+  request: { body: { content: { 'application/json': { schema: ArrAppDraftSchema } } } },
+  responses: failures({
+    ...REFUSED_BODY,
+    201: {
+      description: 'The app, as kept',
+      content: { 'application/json': { schema: ArrAppAnswer } },
+    },
+  }),
+});
+
+const tryArrAppRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/requests/arr-apps/try',
+  tags: ['Admin'],
+  summary: 'Try a connected app before keeping it',
+  request: { body: { content: { 'application/json': { schema: ArrAppDraftSchema } } } },
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'Whether it answered, and which version it is',
+      content: { 'application/json': { schema: ArrAppTestAnswer } },
+    },
+  }),
+});
+
+const readArrQueueRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/requests/arr-apps/queue',
+  tags: ['Admin'],
+  summary: 'Read what each connected Radarr, Sonarr and Lidarr has in its queue',
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'Each app, whether it answered, and its queue',
+      content: { 'application/json': { schema: ArrQueueSchema.openapi('ConnectedAppQueue') } },
+    },
+  }),
+});
+
+const changeArrAppRoute = createRoute({
+  method: 'patch',
+  path: '/api/admin/requests/arr-apps/{id}',
+  tags: ['Admin'],
+  summary: 'Change a connected app. A key left blank is kept as it is',
+  request: {
+    params: RecordIdParameter,
+    body: { content: { 'application/json': { schema: ArrAppChangeSchema } } },
+  },
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'The app, as changed',
+      content: { 'application/json': { schema: ArrAppAnswer } },
+    },
+  }),
+});
+
+const removeArrAppRoute = createRoute({
+  method: 'delete',
+  path: '/api/admin/requests/arr-apps/{id}',
+  tags: ['Admin'],
+  summary: 'Disconnect an app, and remove the indexers a Prowlarr brought in',
+  request: { params: RecordIdParameter },
+  responses: failures({ ...REFUSED_BODY, 204: { description: 'Disconnected' } }),
+});
+
+const testArrAppRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/requests/arr-apps/{id}/test',
+  tags: ['Admin'],
+  summary: 'Test a connected app, and remember how it went',
+  request: { params: RecordIdParameter },
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'Whether it answered, and which version it is',
+      content: { 'application/json': { schema: ArrAppTestAnswer } },
+    },
+  }),
+});
+
+const tryArrAppChangeRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/requests/arr-apps/{id}/try',
+  tags: ['Admin'],
+  summary: 'Try a change to a connected app, with the key it already has',
+  request: {
+    params: RecordIdParameter,
+    body: { content: { 'application/json': { schema: ArrAppDraftSchema } } },
+  },
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'Whether it answered, and which version it is',
+      content: { 'application/json': { schema: ArrAppTestAnswer } },
+    },
+  }),
+});
+
+const readArrAppChoicesRoute = createRoute({
+  method: 'get',
+  path: '/api/admin/requests/arr-apps/{id}/choices',
+  tags: ['Admin'],
+  summary: 'Read the root folders and profiles a library handed to an app may choose from',
+  request: { params: RecordIdParameter },
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'Its root folders, quality profiles and, for Lidarr, metadata profiles',
+      content: {
+        'application/json': { schema: ArrAppChoicesSchema.openapi('ConnectedAppChoices') },
+      },
+    },
+  }),
+});
+
+const importArrIndexersRoute = createRoute({
+  method: 'post',
+  path: '/api/admin/requests/arr-apps/{id}/import-indexers',
+  tags: ['Admin'],
+  summary: 'Bring a Prowlarr’s indexers in now, as they are brought in every hour',
+  request: { params: RecordIdParameter },
+  responses: failures({
+    ...REFUSED_BODY,
+    200: {
+      description: 'How many were added, changed, removed and left as they were',
+      content: { 'application/json': { schema: ProwlarrImportSchema.openapi('ProwlarrImport') } },
     },
   }),
 });
@@ -1089,6 +1252,16 @@ export {
   listQualityProfilesRoute,
   profilesOnOfferRoute,
   removeQualityProfileRoute,
+  addArrAppRoute,
+  changeArrAppRoute,
+  importArrIndexersRoute,
+  listArrAppsRoute,
+  readArrAppChoicesRoute,
+  readArrQueueRoute,
+  removeArrAppRoute,
+  testArrAppRoute,
+  tryArrAppChangeRoute,
+  tryArrAppRoute,
   addDownloadClientRoute,
   changeDownloadClientRoute,
   listDownloadClientsRoute,

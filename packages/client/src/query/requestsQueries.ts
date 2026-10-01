@@ -6,8 +6,14 @@ import {
 import { fetchIndexers, searchReleases } from '@ValenceClient/requests/fetchIndexers';
 import { fetchCatalogue, fetchDefinition } from '@ValenceClient/requests/fetchDefinitions';
 import { fetchDownloadClients } from '@ValenceClient/requests/fetchDownloadClients';
+import {
+  fetchArrAppChoices,
+  fetchArrApps,
+  fetchArrQueue,
+} from '@ValenceClient/requests/fetchArrApps';
 import { fetchDownloadQueue } from '@ValenceClient/requests/fetchDownloadQueue';
 import { fetchGiveUpRules } from '@ValenceClient/requests/fetchGiveUpRules';
+import { fetchSeerrLink } from '@ValenceClient/requests/fetchSeerrLink';
 import { fetchProfiles, fetchProfilesOnOffer } from '@ValenceClient/requests/fetchProfiles';
 import {
   fetchRequestBlocklist,
@@ -369,6 +375,60 @@ const requestProgress = (isEnabled = true) =>
     enabled: isEnabled,
   });
 
+/**
+ * How Overseerr or Jellyseerr reaches Valence as Radarr and Sonarr.
+ *
+ * @returns The query.
+ */
+const seerrLink = () =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'seerrLink'],
+    queryFn: () => fetchSeerrLink(),
+  });
+
+const ARR_QUEUE_EVERY_MS = 5000;
+
+/**
+ * The connected Radarr, Sonarr, Lidarr and Prowlarr apps.
+ *
+ * @param isEnabled - Whether to ask at all.
+ * @returns The query.
+ */
+const arrApps = (isEnabled = true) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'arr-apps'],
+    queryFn: () => fetchArrApps(),
+    enabled: isEnabled,
+  });
+
+/**
+ * The root folders and profiles a library handed to an app may choose from.
+ *
+ * @param id - The app, where one is chosen.
+ * @returns The query.
+ */
+const arrAppChoices = (id: string | null) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'arr-apps', id, 'choices'],
+    queryFn: () => fetchArrAppChoices(id ?? ''),
+    enabled: id !== null,
+  });
+
+/**
+ * What each connected Radarr, Sonarr and Lidarr has in its queue, read again every few seconds
+ * while it is shown.
+ *
+ * @param isEnabled - Whether to ask at all.
+ * @returns The query.
+ */
+const arrQueue = (isEnabled = true) =>
+  queryOptions({
+    queryKey: [...REQUESTS, 'arr-apps', 'queue'],
+    queryFn: () => fetchArrQueue(),
+    refetchInterval: ARR_QUEUE_EVERY_MS,
+    enabled: isEnabled,
+  });
+
 const requestsQueries = {
   key: REQUESTS,
   availability,
@@ -393,6 +453,10 @@ const requestsQueries = {
   askableSearch,
   askable,
   requestProgress,
+  seerrLink,
+  arrApps,
+  arrAppChoices,
+  arrQueue,
 };
 
 export { requestsQueries };

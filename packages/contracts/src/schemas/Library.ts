@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { MediaItemSchema } from './MediaItem';
+import { FulfilmentSchema } from './ArrApp';
 import { say } from '@ValenceI18n/say';
 const LIBRARY_KINDS = ['movies', 'shows', 'music', 'books'] as const;
 
@@ -56,6 +57,7 @@ const LibrarySchema = z.object({
   takesRequests: z.boolean().default(true),
   requestProfileId: z.string().uuid().nullable().default(null),
   requestPath: z.string().nullable().default(null),
+  fulfilment: FulfilmentSchema.nullable().optional(),
 });
 
 const UpdateLibraryRequestSchema = z.object({
@@ -64,6 +66,7 @@ const UpdateLibraryRequestSchema = z.object({
   takesRequests: z.boolean().optional(),
   requestProfileId: z.string().uuid().nullable().optional(),
   requestPath: z.string().trim().nullable().optional(),
+  fulfilment: FulfilmentSchema.nullable().optional(),
 });
 
 const MediaSummarySchema = z.object({

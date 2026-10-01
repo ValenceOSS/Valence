@@ -27,6 +27,16 @@ vi.mock('@ValenceClient/requests/fetchDownloadClients', () => ({ fetchDownloadCl
 
 vi.mock('@ValenceClient/requests/fetchDownloadQueue', () => ({ fetchDownloadQueue }));
 
+const fetchArrApps = vi.hoisted(() => vi.fn());
+const fetchArrAppChoices = vi.hoisted(() => vi.fn());
+const fetchArrQueue = vi.hoisted(() => vi.fn());
+
+vi.mock('@ValenceClient/requests/fetchArrApps', () => ({
+  fetchArrApps,
+  fetchArrAppChoices,
+  fetchArrQueue,
+}));
+
 const fetchGiveUpRules = vi.hoisted(() => vi.fn());
 
 vi.mock('@ValenceClient/requests/fetchGiveUpRules', () => ({ fetchGiveUpRules }));
@@ -87,6 +97,25 @@ describe('requestsQueries', () => {
   it('keeps everything about requesting under one key', () => {
     expect(requestsQueries.overview().queryKey.slice(0, 1)).toEqual(requestsQueries.key);
     expect(requestsQueries.availability().queryKey.slice(0, 1)).toEqual(requestsQueries.key);
+  });
+
+  it('asks for the connected apps, their queues, and an app’s choices once one is chosen', async () => {
+    fetchArrApps.mockResolvedValue([]);
+    fetchArrQueue.mockResolvedValue({ apps: [], items: [] });
+    fetchArrAppChoices.mockResolvedValue({ rootFolders: [] });
+
+    await expect(aCache().fetchQuery(requestsQueries.arrApps())).resolves.toEqual([]);
+    await expect(aCache().fetchQuery(requestsQueries.arrQueue())).resolves.toEqual({
+      apps: [],
+      items: [],
+    });
+    await expect(aCache().fetchQuery(requestsQueries.arrAppChoices('radarr'))).resolves.toEqual({
+      rootFolders: [],
+    });
+    expect(fetchArrAppChoices).toHaveBeenCalledWith('radarr');
+    expect(requestsQueries.arrAppChoices(null).enabled).toBe(false);
+    expect(requestsQueries.arrApps(false).enabled).toBe(false);
+    expect(requestsQueries.arrQueue().refetchInterval).toBe(5000);
   });
 
   it('asks for the indexers', async () => {
@@ -199,5 +228,9 @@ describe('requestsQueries', () => {
   it('asks how downloads are going every few seconds, and only while asked to', () => {
     expect(requestsQueries.requestProgress().refetchInterval).toBe(5000);
     expect(requestsQueries.requestProgress(false).enabled).toBe(false);
+  });
+
+  it('keeps the link to Overseerr and Jellyseerr among the requests', () => {
+    expect(requestsQueries.seerrLink().queryKey).toEqual(['requests', 'seerrLink']);
   });
 });

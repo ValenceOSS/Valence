@@ -1,3 +1,4 @@
+import type { ArrApp } from '@ValenceContracts/schemas/ArrApp';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import type { Job } from '@ValenceClient/admin/fetchAdmin';
 import type { Library } from '@ValenceContracts/schemas/Library';
@@ -5,6 +6,7 @@ import type { ScanEntry } from '@ValenceScreens/components/AdminArea/scanCoordin
 
 type LibrariesPanelProps = {
   profiles?: readonly QualityProfile[];
+  arrApps?: readonly ArrApp[];
   isUnreachable?: boolean;
   libraries: Library[];
   progress: ReadonlyMap<string, ScanEntry>;

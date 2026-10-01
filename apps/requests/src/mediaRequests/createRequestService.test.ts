@@ -402,10 +402,75 @@ describe('createRequestService', () => {
     await items.update(item?.id ?? '', { state: 'filed' });
 
     expect(await service.arrived(request.id, 'media-1')).toMatchObject({
-      state: 'available',
-      mediaId: 'media-1',
+      request: { state: 'available', mediaId: 'media-1' },
+      newlyAvailable: 1,
     });
+    expect(await service.arrived(request.id, 'media-1')).toMatchObject({ newlyAvailable: 0 });
     expect(await service.retry('missing')).toBeNull();
+  });
+
+  it('marks what the library holds arrived, however it got there, and only once', async () => {
+    const { service, items } = aService();
+    const { request } = await service.add({ ...SEVERANCE, seasons: [1, 2] });
+    const [first, second] = (await items.list()).toSorted(
+      (left, right) => (left.season ?? 0) - (right.season ?? 0),
+    );
+
+    await items.update(second?.id ?? '', { state: 'downloading' });
+
+    const arrived = await service.arrivedInLibrary(request.id, {
+      mediaId: 'severance',
+      episodes: [
+        { season: 1, episode: 1 },
+        { season: 2, episode: 1 },
+      ],
+    });
+
+    expect(arrived?.newlyAvailable).toBe(1);
+    expect(arrived?.request.mediaId).toBe('severance');
+    expect(await items.find(first?.id ?? '')).toMatchObject({ state: 'available' });
+    expect(await items.find(second?.id ?? '')).toMatchObject({ state: 'downloading' });
+    expect(
+      await service.arrivedInLibrary(request.id, {
+        mediaId: 'severance',
+        episodes: [{ season: 1, episode: 1 }],
+      }),
+    ).toMatchObject({ newlyAvailable: 0 });
+    expect(await service.arrivedInLibrary('missing', { mediaId: 'x' })).toBeNull();
+  });
+
+  it('marks even what is downloading arrived for a request handed to a connected app', async () => {
+    const { service, items } = aService();
+    const handOff = {
+      appId: '3f0e8a52-7b1c-4d2e-9f3a-5b6c7d8e9f01',
+      rootFolderPath: '/movies',
+      qualityProfileId: 4,
+    };
+    const { request } = await service.add({ ...DUNE, isApproved: true, handOff });
+    const [item] = await items.list();
+
+    await items.update(item?.id ?? '', { state: 'downloading' });
+
+    expect(await service.arrivedInLibrary(request.id, { mediaId: 'dune' })).toMatchObject({
+      newlyAvailable: 1,
+      request: { state: 'available' },
+    });
+  });
+
+  it('marks albums arrived by their release groups', async () => {
+    const { service } = aService();
+    const { request } = await service.add(PINK_FLOYD);
+
+    expect(
+      await service.arrivedInLibrary(request.id, {
+        mediaId: 'the-wall',
+        albums: ['a4c2e8f0-9d1b-3c5e-8f7a-2b4d6e8f0a1c'],
+      }),
+    ).toMatchObject({ newlyAvailable: 1 });
+    expect(await service.arrivedInLibrary(request.id, { mediaId: 'the-wall' })).toMatchObject({
+      newlyAvailable: 0,
+      request: { mediaId: 'the-wall' },
+    });
   });
 
   it('removes a request and what it waited for', async () => {

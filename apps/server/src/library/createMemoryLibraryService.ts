@@ -331,6 +331,7 @@ const createMemoryLibraryService = (
       takesRequests: true,
       requestProfileId: null,
       requestPath: null,
+      fulfilment: null,
     };
 
     state.libraries.push(created);
@@ -357,6 +358,10 @@ const createMemoryLibraryService = (
 
     if (input.requestPath !== undefined) {
       found.requestPath = input.requestPath;
+    }
+
+    if (input.fulfilment !== undefined) {
+      found.fulfilment = input.fulfilment;
     }
 
     if (input.filesAtOnce !== undefined) {

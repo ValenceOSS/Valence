@@ -27,6 +27,8 @@ const anIndexer = (overrides: Partial<Indexer>): Indexer => ({
   lastProblemCode: null,
   lastFailedAt: null,
   turnedOffBecause: null,
+  sourceAppId: null,
+  sourceIndexerId: null,
   removesWhenDone: null,
   seedSeconds: null,
   seedRatio: null,

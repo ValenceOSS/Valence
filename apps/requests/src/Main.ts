@@ -48,6 +48,13 @@ import { createRequestRoutes } from '@ValenceRequests/mediaRequests/createReques
 import { createRequestService } from '@ValenceRequests/mediaRequests/createRequestService';
 import { createProbeClient } from '@ValenceRequests/media/createProbeClient';
 import { createRequestWorker } from '@ValenceRequests/mediaRequests/createRequestWorker';
+import { createArrAppRoutes } from '@ValenceRequests/arrApps/createArrAppRoutes';
+import { createArrAppService } from '@ValenceRequests/arrApps/createArrAppService';
+import { createArrCaller } from '@ValenceRequests/arrApps/createArrCaller';
+import { createDatabaseArrAppStore } from '@ValenceRequests/arrApps/createDatabaseArrAppStore';
+import { createProwlarrSync } from '@ValenceRequests/arrApps/createProwlarrSync';
+import { createHandOffWorker } from '@ValenceRequests/arrApps/handOff/createHandOffWorker';
+import type { ArrAppRecord } from '@ValenceRequests/arrApps/ArrAppRecord';
 import { z } from 'zod';
 
 const MIGRATIONS_FOLDER = join(import.meta.dirname, '..', 'drizzle', DIALECT);
@@ -214,6 +221,32 @@ const requestItems = createDatabaseRequestItemStore(db);
 
 const requestLog = createDatabaseRequestLogStore(db);
 
+const arrAppStore = createDatabaseArrAppStore(db);
+
+/**
+ * How to ask a connected app, with the key it was given.
+ *
+ * @param app - The app.
+ * @returns How to ask it.
+ */
+const connectArr = (app: ArrAppRecord) => createArrCaller(fetch, app);
+
+const arrApps = createArrAppService({
+  store: arrAppStore,
+  connect: connectArr,
+  prowlarr: createProwlarrSync({ indexers: createDatabaseIndexerStore(db), connect: connectArr }),
+});
+
+const handOff = createHandOffWorker({
+  requests: requestStore,
+  items: requestItems,
+  apps: arrAppStore,
+  connect: connectArr,
+  events,
+  log: requestLog,
+  print: log,
+});
+
 const requestWorker = createRequestWorker({
   requests: requestStore,
   items: requestItems,
@@ -228,6 +261,7 @@ const requestWorker = createRequestWorker({
   log: requestLog,
   print: log,
   probe: createProbeClient(env.TRANSCODER_URL),
+  handOff,
 });
 
 downloadQueue.start();
@@ -262,6 +296,27 @@ const definitionTimer = setInterval(() => {
   void refreshDefinitions();
 }, DEFINITIONS_EVERY_MS);
 
+const PROWLARR_EVERY_MS = 60 * 60 * 1000;
+
+/**
+ * Brings Valence's indexers in step with every connected Prowlarr, saying how it went.
+ */
+const syncProwlarr = async (): Promise<void> => {
+  for (const { app, outcome } of await arrApps.syncProwlarr()) {
+    log(
+      'message' in outcome
+        ? `${app.name}: ${outcome.message}`
+        : `${app.name}: ${outcome.added.toString()} indexers added, ${outcome.updated.toString()} changed, ${outcome.removed.toString()} removed.`,
+    );
+  }
+};
+
+void syncProwlarr();
+
+const prowlarrTimer = setInterval(() => {
+  void syncProwlarr();
+}, PROWLARR_EVERY_MS);
+
 const app = createApp({
   indexers,
   definitions,
@@ -275,6 +330,7 @@ const app = createApp({
     }),
     createProfileRoutes(profiles),
     createRequestRoutes({ service: mediaRequests, log: requestLog, worker: requestWorker }),
+    createArrAppRoutes({ apps: arrApps }),
   ],
   secret: env.REQUESTS_SECRET,
   version: env.VALENCE_VERSION,
@@ -304,6 +360,7 @@ const leave = (): void => {
   downloadQueue.stop();
   requestWorker.stop();
   clearInterval(definitionTimer);
+  clearInterval(prowlarrTimer);
   server.close();
   void Promise.all([pool.end(), sites.closeAll()]).then(() => process.exit(0));
 };

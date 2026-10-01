@@ -3250,6 +3250,11 @@
     "context": "Shown, used in several places, among them the webhooks on the server (from `discordEmbedFor`) and the approve request dialog in the admin area."
   },
   {
+    "handler": "common.lidarr",
+    "text": "Lidarr",
+    "context": "The name of Lidarr, the music app Valence can hand requests to. A product name; usually left as it is."
+  },
+  {
     "handler": "common.light",
     "text": "Light",
     "context": "Shown, used in several places, among them the text reader in the reader of the phone app and the theme choice of the phone app."
@@ -4225,6 +4230,11 @@
     "context": "Shown, used in several places, among them the block in the plugin surface of the phone app and the download queue table in the downloads panel."
   },
   {
+    "handler": "common.prowlarr",
+    "text": "Prowlarr",
+    "context": "The name of Prowlarr, the indexer manager Valence can bring indexers in from. A product name; usually left as it is."
+  },
+  {
     "handler": "common.pulseDepth",
     "text": "Pulse depth",
     "context": "The label, used in the led wall in the variants and in the terminal in the variants."
@@ -4258,6 +4268,11 @@
     "handler": "common.queuedToSearch",
     "text": "Queued to search",
     "context": "The label, used in several places, among them the requests (from `describeItemBadge`) and the requests (from `describeRequestBadge`)."
+  },
+  {
+    "handler": "common.radarr",
+    "text": "Radarr",
+    "context": "The name of Radarr, the films app Valence can hand requests to. A product name; usually left as it is."
   },
   {
     "handler": "common.radius",
@@ -4828,6 +4843,11 @@
     "handler": "common.somethingNewToWatch",
     "text": "Something new to watch",
     "context": "Shown, used in the notifications on the server (from `summariseNewMedia`) and in the notifications (from `pushWorker`)."
+  },
+  {
+    "handler": "common.sonarr",
+    "text": "Sonarr",
+    "context": "The name of Sonarr, the series app Valence can hand requests to. A product name; usually left as it is."
   },
   {
     "handler": "common.songs2",
@@ -6960,6 +6980,21 @@
     "context": "An error the server answers with (HTTP 403) in the app on the server (from `serveApiKey`)."
   },
   {
+    "handler": "error.arrApps.noSuchConnectedApp",
+    "text": "No such connected app.",
+    "context": "An error the server answers with (HTTP 404) in the connected apps in the requests service (from `createArrAppRoutes`)."
+  },
+  {
+    "handler": "error.arrApps.thatIsNotAChangeToAConnectedApp",
+    "text": "That is not a change to a connected app.",
+    "context": "An error the server answers with (HTTP 400) in the connected apps in the requests service (from `createArrAppRoutes`)."
+  },
+  {
+    "handler": "error.arrApps.thatIsNotAConnectedApp",
+    "text": "That is not a connected app.",
+    "context": "An error the server answers with (HTTP 400) in the connected apps in the requests service (from `createArrAppRoutes`)."
+  },
+  {
     "handler": "error.book.noCoverForThatBook",
     "text": "No cover for that book.",
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveBook`)."
@@ -7313,6 +7348,11 @@
     "handler": "error.library.sayWhetherThatIdIsA",
     "text": "Say whether that id is a series or a film — the same number is both.",
     "context": "An error the server answers with (HTTP 400) in the app on the server (from `serveLibrary`)."
+  },
+  {
+    "handler": "error.library.thatAppCannotFulfilThisLibrary",
+    "text": "That connected app cannot fulfil requests for this library. Films go to Radarr, series to Sonarr and music to Lidarr.",
+    "context": "An error the server answers with (HTTP 400) when a library's settings hand its requests to a connected app of the wrong kind, or one that is not there (from `serveLibrary`)."
   },
   {
     "handler": "error.library.thatDoesNotLookLikeA",
@@ -8820,6 +8860,101 @@
     "context": "Shown in the app in the requests service."
   },
   {
+    "handler": "requests.arrApps.arrAppService.onlyProwlarrHasIndexersToImport",
+    "text": "Only Prowlarr has indexers to import.",
+    "context": "An error shown when asking to import indexers from Radarr, Sonarr or Lidarr (from `createArrAppService`)."
+  },
+  {
+    "handler": "requests.arrApps.arrAppService.prowlarrTakesNoRequests",
+    "text": "Prowlarr keeps indexers and takes no requests.",
+    "context": "An error shown when asking a Prowlarr for root folders and profiles a library could choose (from `createArrAppService`)."
+  },
+  {
+    "handler": "requests.arrApps.arrAppService.thatAddressIsAppNotKind",
+    "text": "That address answers as {app}, not {kind}.",
+    "context": "Shown when testing a connected app whose address belongs to a different kind of app (from `createArrAppService`). {app} is what the app there calls itself, such as Sonarr; {kind} is the kind chosen, such as radarr."
+  },
+  {
+    "handler": "requests.arrApps.arrAppService.theAppCouldNotBeAsked",
+    "text": "The app could not be asked.",
+    "context": "Shown in the connected apps in the requests admin, when testing Radarr, Sonarr, Lidarr or Prowlarr fails for no reason it gave (from `createArrAppService`)."
+  },
+  {
+    "handler": "requests.arrApps.arrCaller.nameAnsweredInAShapeValenceCannotRead",
+    "text": "{name} answered, but not in a shape Valence can read",
+    "context": "Shown in the connected apps in the requests service (from `createArrCaller`), when Radarr, Sonarr, Lidarr or Prowlarr answers with something unexpected. {name} is what the admin called the app."
+  },
+  {
+    "handler": "requests.arrApps.arrCaller.nameAnsweredStatus",
+    "text": "{name} answered with HTTP {status}",
+    "context": "Shown in the connected apps in the requests service (from `createArrCaller`). {name} is what the admin called the app; {status} is the HTTP status code."
+  },
+  {
+    "handler": "requests.arrApps.arrCaller.nameAnsweredStatusComplaint",
+    "text": "{name} answered with HTTP {status}: {complaint}",
+    "context": "Shown in the connected apps in the requests service (from `createArrCaller`). {name} is what the admin called the app; {status} is the HTTP status code; {complaint} is the app's own error message, untranslated."
+  },
+  {
+    "handler": "requests.arrApps.arrCaller.nameRefusedItsApiKey",
+    "text": "{name} refused its API key",
+    "context": "Shown in the connected apps (Radarr, Sonarr, Lidarr, Prowlarr) in the requests service (from `createArrCaller`). {name} is what the admin called the app."
+  },
+  {
+    "handler": "requests.arrApps.handOff.handedToName",
+    "text": "Handed to {name}.",
+    "context": "An entry in a request's activity log, when Valence adds the request to a connected app (from `createHandOffWorker`). {name} is the app as the admin named it."
+  },
+  {
+    "handler": "requests.arrApps.handOff.itHasNoMusicBrainzIdToHandOver",
+    "text": "It has no MusicBrainz id to hand over.",
+    "context": "A request's problem, shown in the requests admin, when music handed to Lidarr lacks the id Lidarr finds it by (from `createLidarrHandOff`)."
+  },
+  {
+    "handler": "requests.arrApps.handOff.itHasNoTmdbIdToHandOver",
+    "text": "It has no TMDB id to hand over.",
+    "context": "A request's problem, shown in the requests admin, when a film handed to Radarr lacks the catalogue id Radarr finds films by (from `createRadarrHandOff`)."
+  },
+  {
+    "handler": "requests.arrApps.handOff.lidarrCannotFindIt",
+    "text": "Lidarr cannot find it by its MusicBrainz id.",
+    "context": "A request's problem, shown in the requests admin, when Lidarr does not know the artist or album asked for (from `createLidarrHandOff`)."
+  },
+  {
+    "handler": "requests.arrApps.handOff.lidarrNeedsAMetadataProfile",
+    "text": "Lidarr needs a metadata profile. Choose one in the library's settings.",
+    "context": "A request's problem, shown in the requests admin, when a music library handed to Lidarr has no metadata profile chosen (from `createLidarrHandOff`)."
+  },
+  {
+    "handler": "requests.arrApps.handOff.nameImportedItIntoFolder",
+    "text": "{name} imported it into {folder}.",
+    "context": "An entry in a request's activity log (from `createHandOffWorker`). {name} is the connected app as the admin named it; {folder} is the folder in the library."
+  },
+  {
+    "handler": "requests.arrApps.handOff.nameIsDownloadingTitle",
+    "text": "{name} is downloading {title}.",
+    "context": "An entry in a request's activity log (from `createHandOffWorker`). {name} is the connected app (Radarr, Sonarr or Lidarr) as the admin named it; {title} is the release it is downloading."
+  },
+  {
+    "handler": "requests.arrApps.handOff.nameIsSwitchedOffOrCannotTakeRequests",
+    "text": "{name} is switched off, or cannot take requests.",
+    "context": "A request's problem, shown in the requests admin (from `createHandOffWorker`). {name} is the connected app as the admin named it."
+  },
+  {
+    "handler": "requests.arrApps.handOff.nameSaidProblem",
+    "text": "{name} could not take it: {problem}",
+    "context": "A request's problem, shown in the requests admin (from `createHandOffWorker`). {name} is the connected app as the admin named it; {problem} is why, itself a sentence."
+  },
+  {
+    "handler": "requests.arrApps.handOff.sonarrCannotFindItsTvdbId",
+    "text": "Sonarr cannot find it by its TVDB or TMDB id.",
+    "context": "A request's problem, shown in the requests admin, when Sonarr does not know the series asked for (from `createSonarrHandOff`)."
+  },
+  {
+    "handler": "requests.arrApps.handOff.theAppItWasHandedToIsGone",
+    "text": "The connected app it was handed to has been removed.",
+    "context": "A request's problem, shown in the requests admin (from `createHandOffWorker`)."
+  },
+  {
     "handler": "requests.cardigann.cardigannIndexer.downloadUriQueryKey",
     "text": ".DownloadUri.Query.{key}",
     "context": "Shown in the cardigann in the requests service (from `createCardigannIndexer`). {key} is filled in by the app."
@@ -9343,6 +9478,11 @@
     "handler": "requests.mediaRequests.requestWorker.itHeldNothingAskedFor",
     "text": "It held nothing asked for",
     "context": "Shown in the media requests in the requests service (from `createRequestWorker`)."
+  },
+  {
+    "handler": "requests.mediaRequests.requestWorker.itIsHandedToAConnectedApp",
+    "text": "It is handed to a connected app, which picks its own releases.",
+    "context": "An error shown when an admin picks a release by hand for a request its library hands to Radarr, Sonarr or Lidarr (from `createRequestWorker`)."
   },
   {
     "handler": "requests.mediaRequests.requestWorker.itIsOutAndWanted",
@@ -10585,6 +10725,126 @@
     "context": "The description in the admin area."
   },
   {
+    "handler": "screens.adminArea.arrAppDialog.app",
+    "text": "App",
+    "context": "Shown in the admin area: the label of the choice of which kind of connected app, and the column heading of the connected apps table."
+  },
+  {
+    "handler": "screens.adminArea.arrAppDialog.asTheAppSeesIt",
+    "text": "As the app sees it",
+    "context": "Shown in the admin area: the label of the library folder path as Radarr, Sonarr or Lidarr sees it."
+  },
+  {
+    "handler": "screens.adminArea.arrAppDialog.connectAnApp",
+    "text": "Connect an app",
+    "context": "Shown in the admin area: the button and dialog title for connecting a Radarr, Sonarr, Lidarr or Prowlarr."
+  },
+  {
+    "handler": "screens.adminArea.arrAppDialog.giveTheAppAName",
+    "text": "Give the app a name.",
+    "context": "Shown in the admin area: shown when the connected app's name is left empty."
+  },
+  {
+    "handler": "screens.adminArea.arrAppDialog.handItRequests",
+    "text": "Hand it requests",
+    "context": "Shown in the admin area: a switch saying whether a connected Radarr, Sonarr or Lidarr is used."
+  },
+  {
+    "handler": "screens.adminArea.arrAppDialog.itIsUnderSettingsGeneral",
+    "text": "It is under Settings → General in the app.",
+    "context": "Shown in the admin area: where to find a connected app's API key."
+  },
+  {
+    "handler": "screens.adminArea.arrAppDialog.itNeedsItsApiKey",
+    "text": "It needs its API key, from Settings → General in the app.",
+    "context": "Shown in the admin area: shown when a connected app is saved without its API key."
+  },
+  {
+    "handler": "screens.adminArea.arrAppDialog.keepItsIndexersInStep",
+    "text": "Keep its indexers in step",
+    "context": "Shown in the admin area: a switch saying whether a connected Prowlarr's indexers are brought in every hour."
+  },
+  {
+    "handler": "screens.adminArea.arrAppDialog.keepTheAppsYouAlreadyRun",
+    "text": "Keep the apps you already run. A library handed to Radarr, Sonarr or Lidarr is fetched by that app alone, and Prowlarr's indexers can be brought in.",
+    "context": "Shown in the admin area: the detail under the title of the dialog connecting an app."
+  },
+  {
+    "handler": "screens.adminArea.arrAppDialog.mapItsFoldersOntoValences",
+    "text": "Its library folder, both ways",
+    "context": "Shown in the admin area: the label of the pair of paths mapping a connected app's folders onto what Valence sees."
+  },
+  {
+    "handler": "screens.adminArea.arrAppDialog.onlyWhereTheAppAndValence",
+    "text": "Only where the app and Valence see the library under different paths, as two containers mounting it in different places do.",
+    "context": "Shown in the admin area: the description under the path mapping of a connected app."
+  },
+  {
+    "handler": "screens.adminArea.arrAppDialog.sayWhereItsLibraryIsBothWays",
+    "text": "Say where its library is both as the app sees it and as Valence does, or neither.",
+    "context": "Shown in the admin area: shown when only one side of a connected app's path mapping is filled in."
+  },
+  {
+    "handler": "screens.adminArea.arrAppDialog.whereItsLibraryIs",
+    "text": "Where its library is",
+    "context": "Shown in the admin area: the heading over a connected app's path mapping."
+  },
+  {
+    "handler": "screens.adminArea.arrAppDialog.whereTheRequestsServiceReachesIt",
+    "text": "Where the requests service reaches it, with any URL base it is set to.",
+    "context": "Shown in the admin area: the description under a connected app's address."
+  },
+  {
+    "handler": "screens.adminArea.arrAppsPanel.connectedApps",
+    "text": "Connected apps",
+    "context": "Shown in the admin area: the title of the panel listing the connected Radarr, Sonarr, Lidarr and Prowlarr apps, and a tab of the Downloads page."
+  },
+  {
+    "handler": "screens.adminArea.arrAppsPanel.disconnect",
+    "text": "Disconnect",
+    "context": "Shown in the admin area: the action disconnecting a connected app."
+  },
+  {
+    "handler": "screens.adminArea.arrAppsPanel.disconnectedName",
+    "text": "Disconnected {name}.",
+    "context": "Shown in the admin area: said once a connected app is disconnected. {name} is what the admin called it."
+  },
+  {
+    "handler": "screens.adminArea.arrAppsPanel.disconnectName",
+    "text": "Disconnect {name}?",
+    "context": "Shown in the admin area: the title of the confirmation before disconnecting a connected app. {name} is what the admin called it."
+  },
+  {
+    "handler": "screens.adminArea.arrAppsPanel.noneYetConnectARadarrSonarr",
+    "text": "None yet. Connect a Radarr, Sonarr, Lidarr or Prowlarr you already run.",
+    "context": "Shown in the admin area: the empty state of the connected apps table."
+  },
+  {
+    "handler": "screens.adminArea.arrAppsPanel.nothingIsRemovedFromTheApp",
+    "text": "Nothing is removed from the app itself. A library handed to it fetches nothing until it is handed to another, or to Valence.",
+    "context": "Shown in the admin area: the detail of the confirmation before disconnecting a Radarr, Sonarr or Lidarr."
+  },
+  {
+    "handler": "screens.adminArea.arrAppsPanel.radarrSonarrLidarrAndProwlarrYou",
+    "text": "Radarr, Sonarr, Lidarr and Prowlarr you already run. Choose in a library's settings whether Valence or one of these fetches what is asked for.",
+    "context": "Shown in the admin area: the line at the top of the connected apps panel."
+  },
+  {
+    "handler": "screens.adminArea.arrAppsPanel.readingTheConnectedApps",
+    "text": "Reading the connected apps…",
+    "context": "Shown in the admin area: shown while the connected apps load."
+  },
+  {
+    "handler": "screens.adminArea.arrAppsPanel.theConnectedAppsCouldNotBe",
+    "text": "The connected apps could not be read.",
+    "context": "Shown in the admin area: shown when the connected apps fail to load."
+  },
+  {
+    "handler": "screens.adminArea.arrAppsPanel.theIndexersItBroughtInAre",
+    "text": "The indexers it brought in are removed with it. Nothing is removed from Prowlarr itself.",
+    "context": "Shown in the admin area: the detail of the confirmation before disconnecting a Prowlarr."
+  },
+  {
     "handler": "screens.adminArea.artworkPicker.askingTheCatalogueWhatItHas",
     "text": "Asking the catalogue what it has",
     "context": "The label of a spinner in the artwork picker in the admin area."
@@ -11720,6 +11980,11 @@
     "context": "A short message shown once something is done in the downloads panel in the admin area. {title} is filled in by the app."
   },
   {
+    "handler": "screens.adminArea.downloadsPanel.readingTheConnectedAppsQueues",
+    "text": "Reading the connected apps' queues…",
+    "context": "Shown in the admin area: shown while the queues of Radarr, Sonarr and Lidarr load on the Downloads page."
+  },
+  {
     "handler": "screens.adminArea.downloadsPanel.readingTheDownloadClients",
     "text": "Reading the download clients",
     "context": "The label of a spinner in the downloads panel in the admin area."
@@ -11743,6 +12008,11 @@
     "handler": "screens.adminArea.downloadsPanel.rules",
     "text": "Rules",
     "context": "The label in the downloads panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.downloadsPanel.theConnectedAppsQueuesCouldNot",
+    "text": "The connected apps' queues could not be read.",
+    "context": "Shown in the admin area: shown when the queues of Radarr, Sonarr and Lidarr fail to load."
   },
   {
     "handler": "screens.adminArea.downloadsPanel.theDownloadClientsCouldNotBeRead",
@@ -12395,6 +12665,21 @@
     "context": "Read aloud by screen readers as the name in the indexer report list in the admin area."
   },
   {
+    "handler": "screens.adminArea.indexersPanel.fromName",
+    "text": "From {name}",
+    "context": "Shown in the admin area: a badge on an indexer brought in from a connected Prowlarr. {name} is what the admin called the Prowlarr."
+  },
+  {
+    "handler": "screens.adminArea.indexersPanel.fromNameAddedUpdatedRemoved",
+    "text": "From {name}: {added} added, {updated} changed, {removed} removed.",
+    "context": "Shown in the admin area: said after bringing a Prowlarr's indexers in. {name} is the Prowlarr; the others are counts."
+  },
+  {
+    "handler": "screens.adminArea.indexersPanel.importFromProwlarr",
+    "text": "Import from Prowlarr",
+    "context": "Shown in the admin area: the action bringing a connected Prowlarr's indexers in now."
+  },
+  {
     "handler": "screens.adminArea.indexersPanel.indexer",
     "text": "Indexer",
     "context": "Shown in the indexers panel in the admin area."
@@ -12665,6 +12950,21 @@
     "context": "The name in the library settings dialog in the admin area."
   },
   {
+    "handler": "screens.adminArea.librarySettingsDialog.chooseAMetadataProfileForLidarr",
+    "text": "Choose a metadata profile for Lidarr.",
+    "context": "Shown in the admin area: shown when a music library is handed to Lidarr without a metadata profile."
+  },
+  {
+    "handler": "screens.adminArea.librarySettingsDialog.chooseARootFolderAndA",
+    "text": "Choose a root folder and a quality profile in the app.",
+    "context": "Shown in the admin area: shown when a library is handed to a connected app without choosing where and at what quality."
+  },
+  {
+    "handler": "screens.adminArea.librarySettingsDialog.chooseOne",
+    "text": "Choose one",
+    "context": "Shown in the admin area: what a menu in a library's settings says while nothing is chosen."
+  },
+  {
     "handler": "screens.adminArea.librarySettingsDialog.eachFilesOwnDefault",
     "text": "Each file's own default",
     "context": "The label in the library settings dialog in the admin area."
@@ -12695,6 +12995,16 @@
     "context": "Text shown in the library settings dialog in the admin area."
   },
   {
+    "handler": "screens.adminArea.librarySettingsDialog.kindSearchesDownloadsAndImports",
+    "text": "{kind} searches, downloads and imports it.",
+    "context": "Shown in the admin area: the detail of choosing a connected app to fulfil a library's requests. {kind} is Radarr, Sonarr or Lidarr."
+  },
+  {
+    "handler": "screens.adminArea.librarySettingsDialog.metadataProfile",
+    "text": "Metadata profile",
+    "context": "Shown in the admin area: the label of the Lidarr metadata profile a music library's requests use."
+  },
+  {
     "handler": "screens.adminArea.librarySettingsDialog.oneAtATime",
     "text": "One at a time",
     "context": "The label in the library settings dialog in the admin area."
@@ -12708,6 +13018,16 @@
     "handler": "screens.adminArea.librarySettingsDialog.qualityProfileForRequests",
     "text": "Quality profile for requests",
     "context": "The label of a option menu in the library settings dialog in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.librarySettingsDialog.qualityProfileInTheApp",
+    "text": "Quality profile in the app",
+    "context": "Shown in the admin area: the label of the connected app's quality profile a library's requests use."
+  },
+  {
+    "handler": "screens.adminArea.librarySettingsDialog.readingTheAppsFoldersAndProfiles",
+    "text": "Reading the app's folders and profiles…",
+    "context": "Shown in the admin area: shown while a connected app's choices load in a library's settings."
   },
   {
     "handler": "screens.adminArea.librarySettingsDialog.regeneratePreviews",
@@ -12725,14 +13045,34 @@
     "context": "The detail in the library settings dialog in the admin area."
   },
   {
+    "handler": "screens.adminArea.librarySettingsDialog.rootFolder",
+    "text": "Root folder",
+    "context": "Shown in the admin area: the label of the connected app's root folder a library's requests go into."
+  },
+  {
     "handler": "screens.adminArea.librarySettingsDialog.savedTheSettingsOfName",
     "text": "Saved the settings of {name}.",
     "context": "Shown in the library settings dialog in the admin area. {name} is filled in by the app."
   },
   {
+    "handler": "screens.adminArea.librarySettingsDialog.searchAsSoonAsItIsAdded",
+    "text": "Search as soon as it is added",
+    "context": "Shown in the admin area: a switch saying whether the connected app searches for a request the moment it is handed over."
+  },
+  {
     "handler": "screens.adminArea.librarySettingsDialog.takesRequests",
     "text": "Takes requests",
     "context": "The label of a switch in the library settings dialog in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.librarySettingsDialog.theAppCannotReachThisFolder",
+    "text": "The app cannot reach this folder",
+    "context": "Shown in the admin area: a note on a root folder the connected app says it cannot reach."
+  },
+  {
+    "handler": "screens.adminArea.librarySettingsDialog.theAppsFoldersAndProfilesCould",
+    "text": "The app's folders and profiles could not be read.",
+    "context": "Shown in the admin area: shown when a connected app's choices fail to load in a library's settings."
   },
   {
     "handler": "screens.adminArea.librarySettingsDialog.theLibraryCouldNotBeUpdated",
@@ -12750,6 +13090,11 @@
     "context": "The label in the library settings dialog in the admin area."
   },
   {
+    "handler": "screens.adminArea.librarySettingsDialog.valenceSearchesDownloadsAndFilesIt",
+    "text": "Valence searches, downloads and files it itself.",
+    "context": "Shown in the admin area: the detail of choosing Valence to fulfil a library's requests."
+  },
+  {
     "handler": "screens.adminArea.librarySettingsDialog.whereRequestsAreFiled",
     "text": "Where requests are filed",
     "context": "The label of a text field in the library settings dialog in the admin area."
@@ -12763,6 +13108,11 @@
     "handler": "screens.adminArea.librarySettingsDialog.whicheverProfileNamesThisLibrary",
     "text": "Whichever profile names this library",
     "context": "The label in the library settings dialog in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.librarySettingsDialog.whoFulfilsRequests",
+    "text": "Who fetches what is asked for",
+    "context": "Shown in the admin area: the label of the choice between Valence and a connected app for a library's requests."
   },
   {
     "handler": "screens.adminArea.librarySettingsDialog.yourBrowser",
@@ -14610,6 +14960,106 @@
     "context": "Shown in the admin area."
   },
   {
+    "handler": "screens.adminArea.seerrCard.answerOverseerrAndJellyseerr",
+    "text": "Answer Overseerr and Jellyseerr",
+    "context": "A switch that turns the feature on. On the Overseerr and Jellyseerr card in the admin area's requests tab (from `SeerrCard`). Overseerr and Jellyseerr are product names; Radarr and Sonarr are too."
+  },
+  {
+    "handler": "screens.adminArea.seerrCard.askAs",
+    "text": "Ask as",
+    "context": "Labels the choice of the account requests are made in the name of. On the Overseerr and Jellyseerr card in the admin area's requests tab (from `SeerrCard`). Overseerr and Jellyseerr are product names; Radarr and Sonarr are too."
+  },
+  {
+    "handler": "screens.adminArea.seerrCard.asRadarrForFilms",
+    "text": "Radarr server, for films",
+    "context": "Heads the address to add in Overseerr or Jellyseerr as a Radarr server. On the Overseerr and Jellyseerr card in the admin area's requests tab (from `SeerrCard`). Overseerr and Jellyseerr are product names; Radarr and Sonarr are too."
+  },
+  {
+    "handler": "screens.adminArea.seerrCard.asSonarrForSeries",
+    "text": "Sonarr server, for series",
+    "context": "Heads the address to add in Overseerr or Jellyseerr as a Sonarr server. On the Overseerr and Jellyseerr card in the admin area's requests tab (from `SeerrCard`). Overseerr and Jellyseerr are product names; Radarr and Sonarr are too."
+  },
+  {
+    "handler": "screens.adminArea.seerrCard.chooseAnAccountBeforeTheySend",
+    "text": "Choose an account to ask as. Until you do, what they send is turned away.",
+    "context": "On the Overseerr and Jellyseerr card in the admin area's requests tab (from `SeerrCard`). Overseerr and Jellyseerr are product names; Radarr and Sonarr are too."
+  },
+  {
+    "handler": "screens.adminArea.seerrCard.everythingTheySendIsAsked",
+    "text": "Everything they send is asked for in this account's name, and shows as its request.",
+    "context": "On the Overseerr and Jellyseerr card in the admin area's requests tab (from `SeerrCard`). Overseerr and Jellyseerr are product names; Radarr and Sonarr are too."
+  },
+  {
+    "handler": "screens.adminArea.seerrCard.hostnamePortSslUrlBase",
+    "text": "Hostname {hostname}, port {port}, Use SSL {ssl}, URL Base {urlBase}.",
+    "context": "What to type into Overseerr's or Jellyseerr's dialog; {hostname} and {port} are where Valence is reached, {ssl} is On or Off, {urlBase} a path such as /arr/radarr. Hostname, port, Use SSL and URL Base name the fields of that dialog. On the Overseerr and Jellyseerr card in the admin area's requests tab (from `SeerrCard`). Overseerr and Jellyseerr are product names; Radarr and Sonarr are too."
+  },
+  {
+    "handler": "screens.adminArea.seerrCard.keepAskingInOverseerrOr",
+    "text": "Already ask for films and series in Overseerr or Jellyseerr? Keep doing so. Add Valence there as a Radarr server and as a Sonarr server, and whatever is approved there is asked for here, approved, and fetched the way its library fetches.",
+    "context": "The card's introduction. On the Overseerr and Jellyseerr card in the admin area's requests tab (from `SeerrCard`). Overseerr and Jellyseerr are product names; Radarr and Sonarr are too."
+  },
+  {
+    "handler": "screens.adminArea.seerrCard.madeANewKey",
+    "text": "Made a new key. Paste it into both servers in Overseerr or Jellyseerr.",
+    "context": "A toast after a new key was made. On the Overseerr and Jellyseerr card in the admin area's requests tab (from `SeerrCard`). Overseerr and Jellyseerr are product names; Radarr and Sonarr are too."
+  },
+  {
+    "handler": "screens.adminArea.seerrCard.makeANewKey",
+    "text": "Make a new key",
+    "context": "A button that replaces the API key. On the Overseerr and Jellyseerr card in the admin area's requests tab (from `SeerrCard`). Overseerr and Jellyseerr are product names; Radarr and Sonarr are too."
+  },
+  {
+    "handler": "screens.adminArea.seerrCard.nobodyYet",
+    "text": "Nobody yet",
+    "context": "The choice of account before one has been chosen. On the Overseerr and Jellyseerr card in the admin area's requests tab (from `SeerrCard`). Overseerr and Jellyseerr are product names; Radarr and Sonarr are too."
+  },
+  {
+    "handler": "screens.adminArea.seerrCard.overseerrAndJellyseerr",
+    "text": "Overseerr and Jellyseerr",
+    "context": "The card's title. On the Overseerr and Jellyseerr card in the admin area's requests tab (from `SeerrCard`). Overseerr and Jellyseerr are product names; Radarr and Sonarr are too."
+  },
+  {
+    "handler": "screens.adminArea.seerrCard.pasteItIntoBothDialogs",
+    "text": "Paste it as the API key of both servers.",
+    "context": "On the Overseerr and Jellyseerr card in the admin area's requests tab (from `SeerrCard`). Overseerr and Jellyseerr are product names; Radarr and Sonarr are too."
+  },
+  {
+    "handler": "screens.adminArea.seerrCard.readingTheLink",
+    "text": "Reading the link to Overseerr and Jellyseerr",
+    "context": "Shown while the card loads. On the Overseerr and Jellyseerr card in the admin area's requests tab (from `SeerrCard`). Overseerr and Jellyseerr are product names; Radarr and Sonarr are too."
+  },
+  {
+    "handler": "screens.adminArea.seerrCard.requestingIsOffSoThere",
+    "text": "Requesting is off on this server, so there is nothing for Overseerr or Jellyseerr to send to. Set up requesting first, then come back here.",
+    "context": "On the Overseerr and Jellyseerr card in the admin area's requests tab (from `SeerrCard`). Overseerr and Jellyseerr are product names; Radarr and Sonarr are too."
+  },
+  {
+    "handler": "screens.adminArea.seerrCard.savedWhoTheyAskAs",
+    "text": "Saved who Overseerr and Jellyseerr ask as.",
+    "context": "A toast. On the Overseerr and Jellyseerr card in the admin area's requests tab (from `SeerrCard`). Overseerr and Jellyseerr are product names; Radarr and Sonarr are too."
+  },
+  {
+    "handler": "screens.adminArea.seerrCard.theLinkCouldNotBeRead",
+    "text": "The link to Overseerr and Jellyseerr could not be read.",
+    "context": "On the Overseerr and Jellyseerr card in the admin area's requests tab (from `SeerrCard`). Overseerr and Jellyseerr are product names; Radarr and Sonarr are too."
+  },
+  {
+    "handler": "screens.adminArea.seerrCard.valenceAnswersThemAsRadarr",
+    "text": "Valence answers them as if it were Radarr and Sonarr, to anything holding the key below.",
+    "context": "On the Overseerr and Jellyseerr card in the admin area's requests tab (from `SeerrCard`). Overseerr and Jellyseerr are product names; Radarr and Sonarr are too."
+  },
+  {
+    "handler": "screens.adminArea.seerrCard.valenceNoLongerAnswersThem",
+    "text": "Valence no longer answers Overseerr or Jellyseerr.",
+    "context": "A toast. On the Overseerr and Jellyseerr card in the admin area's requests tab (from `SeerrCard`). Overseerr and Jellyseerr are product names; Radarr and Sonarr are too."
+  },
+  {
+    "handler": "screens.adminArea.seerrCard.valenceNowAnswersThem",
+    "text": "Valence now answers Overseerr and Jellyseerr.",
+    "context": "A toast. On the Overseerr and Jellyseerr card in the admin area's requests tab (from `SeerrCard`). Overseerr and Jellyseerr are product names; Radarr and Sonarr are too."
+  },
+  {
     "handler": "screens.adminArea.sentATestDelivery",
     "text": "Sent a test delivery.",
     "context": "Shown in the admin area."
@@ -15686,6 +16136,11 @@
     "context": "The label of a button in the app shell."
   },
   {
+    "handler": "screens.arrAppsPanel.describeArrAppState.versionVersion",
+    "text": "Version {version}",
+    "context": "Shown in the admin area: the line under a working connected app. {version} is its version."
+  },
+  {
     "handler": "screens.artworkPicker.artworkTile.choosingThisPicture",
     "text": "Choosing this picture",
     "context": "The label of a spinner in the artwork tile in the artwork picker."
@@ -16315,6 +16770,21 @@
     "handler": "screens.downloadsDialog.whatYouHaveAskedForOn",
     "text": "What you have asked for on your other devices, and how far along each is.",
     "context": "Shown in the downloads dialog."
+  },
+  {
+    "handler": "screens.downloadsPanel.arrQueueTable.noRadarrSonarrOrLidarrIs",
+    "text": "No Radarr, Sonarr or Lidarr is connected and switched on.",
+    "context": "Shown in the admin area: the empty state of the connected apps' queue on the Downloads page."
+  },
+  {
+    "handler": "screens.downloadsPanel.arrQueueTable.nothingIsDownloadingInTheConnected",
+    "text": "Nothing is downloading in the connected apps.",
+    "context": "Shown in the admin area: the empty state of the connected apps' queue on the Downloads page."
+  },
+  {
+    "handler": "screens.downloadsPanel.arrQueueTable.whatTheConnectedAppsAreDownloading",
+    "text": "What the connected apps are downloading",
+    "context": "Shown in the admin area: the accessible label of the connected apps' queue table."
   },
   {
     "handler": "screens.downloadsPanel.describeClientState.notAskedYet",
@@ -21358,6 +21828,46 @@
     "handler": "server.appContext.youCannotGrantAPermissionYou",
     "text": "You cannot grant a permission you do not hold.",
     "context": "Shown in the app on the server (from `createAppContext`)."
+  },
+  {
+    "handler": "server.arrEmulation.answeringSeerrIsOff",
+    "text": "Valence is not answering Overseerr or Jellyseerr. Turn it on in the admin area, under Requests.",
+    "context": "A message Valence answers Overseerr or Jellyseerr with when it stands in for Radarr or Sonarr (from `registerArrCommon`). Read by an administrator in their logs."
+  },
+  {
+    "handler": "server.arrEmulation.chooseTheAccountSeerrAsksAs",
+    "text": "Choose the account Overseerr and Jellyseerr ask as in Valence first.",
+    "context": "A message Valence answers Overseerr or Jellyseerr with when it stands in for Radarr or Sonarr (from `arrEmulationOf`). Read by an administrator in their logs."
+  },
+  {
+    "handler": "server.arrEmulation.english",
+    "text": "English",
+    "context": "The one language profile Valence offers Overseerr or Jellyseerr when it stands in for Sonarr (from `registerSonarrEmulation`)."
+  },
+  {
+    "handler": "server.arrEmulation.thatIsNotWhatWasExpected",
+    "text": "That is not what Valence expected to be sent.",
+    "context": "A message Valence answers Overseerr or Jellyseerr with when it stands in for Radarr or Sonarr (from `registerArrCommon`). Read by an administrator in their logs."
+  },
+  {
+    "handler": "server.arrEmulation.thatKeyIsNotTheOne",
+    "text": "That API key is not the one Valence made for Overseerr or Jellyseerr.",
+    "context": "A message Valence answers Overseerr or Jellyseerr with when it stands in for Radarr or Sonarr (from `registerArrCommon`). Read by an administrator in their logs."
+  },
+  {
+    "handler": "server.arrEmulation.theCatalogueKnowsNoSeriesByThat",
+    "text": "The catalogue knows no series by that TVDB id.",
+    "context": "A message Valence answers Overseerr or Jellyseerr with when it stands in for Radarr or Sonarr (from `registerSonarrEmulation`). Read by an administrator in their logs."
+  },
+  {
+    "handler": "server.arrEmulation.valenceHasNothingByThatId",
+    "text": "Valence has nothing by that id.",
+    "context": "A message Valence answers Overseerr or Jellyseerr with when it stands in for Radarr or Sonarr (from `registerRadarrEmulation`). Read by an administrator in their logs."
+  },
+  {
+    "handler": "server.arrEmulation.whateverTheLibraryUses",
+    "text": "Whatever the library uses",
+    "context": "The first quality profile Valence offers Overseerr or Jellyseerr, which leaves the choice to the library a request is filed into (from `LIBRARY_DEFAULT_PROFILE`)."
   },
   {
     "handler": "server.auth.describeSignInAttempt.somebodyWhoGaveNoAddress",

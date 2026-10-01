@@ -5,8 +5,9 @@ import type { z } from 'zod';
 
 /**
  * A request as it is first kept, from what was asked: approved or waiting on approval as the asker
- * may be, and with the facts the catalogue gave. Only a series keeps the seasons asked for, and
- * only an artist the kinds of release, albums alone where none were named.
+ * may be, with the facts the catalogue gave, and with the connected app it is handed to where its
+ * library hands requests off. Only a series keeps the seasons asked for, and only an artist the
+ * kinds of release, albums alone where none were named.
  *
  * @param draft - What was asked, read.
  * @param id - Its id.
@@ -39,6 +40,9 @@ const recordFromDraft = (
   problem: null,
   problemCode: null,
   catalogueCheckedAt: at,
+  tvdbId: draft.catalogue.tvdbId ?? null,
+  handOff: draft.handOff,
+  handOffId: null,
   createdAt: at,
   updatedAt: at,
 });

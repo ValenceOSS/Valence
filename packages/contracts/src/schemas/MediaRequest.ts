@@ -4,6 +4,7 @@ import { ProblemCodeFieldSchema } from './ProblemCode';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import { ReleaseSchema } from './Indexer';
+import { FulfilmentSchema } from './ArrApp';
 import { say } from '@ValenceI18n/say';
 
 const MEDIA_REQUEST_KINDS = ['film', 'series', 'artist', 'album', 'book'] as const;
@@ -80,6 +81,7 @@ const RequestCatalogueSchema = z.object({
   isEnded: z.boolean().default(false),
   artist: z.string().nullable().default(null),
   albums: z.array(CatalogueAlbumSchema).max(2000).default([]),
+  tvdbId: z.number().int().positive().nullish(),
 });
 
 const RequesterSchema = z.object({ id: z.string().min(1), name: z.string() });
@@ -150,6 +152,7 @@ const MediaRequestDraftSchema = z
     requestedBy: RequesterSchema,
     isApproved: z.boolean(),
     catalogue: RequestCatalogueSchema,
+    handOff: FulfilmentSchema.nullable().default(null),
   })
   .superRefine(needsItsId);
 
@@ -254,6 +257,22 @@ const RequestCatalogueUpdateSchema = z.object({
 
 const MediaRequestArrivalSchema = z.object({ mediaId: z.string().min(1) });
 
+const HeldEpisodeSchema = z.object({
+  season: z.number().int().nonnegative(),
+  episode: z.number().int().nonnegative(),
+});
+
+const MediaRequestArrivalsSchema = z.object({
+  mediaId: z.string().min(1),
+  episodes: z.array(HeldEpisodeSchema).max(10_000).nullable().default(null),
+  albums: z.array(MusicBrainzIdSchema).max(2000).nullable().default(null),
+});
+
+const MediaRequestArrivedSchema = z.object({
+  request: MediaRequestSchema,
+  newlyAvailable: z.number().int().nonnegative(),
+});
+
 const FollowedRequestSchema = z.object({
   id: z.string().uuid(),
   kind: MediaRequestKindSchema,
@@ -320,6 +339,9 @@ type MediaRequestRevision = z.input<typeof MediaRequestRevisionSchema>;
 type MediaRequestAdded = z.infer<typeof MediaRequestAddedSchema>;
 type RequestCatalogueUpdate = z.input<typeof RequestCatalogueUpdateSchema>;
 type FollowedRequest = z.infer<typeof FollowedRequestSchema>;
+type HeldEpisode = z.infer<typeof HeldEpisodeSchema>;
+type MediaRequestArrivals = z.input<typeof MediaRequestArrivalsSchema>;
+type MediaRequestArrived = z.infer<typeof MediaRequestArrivedSchema>;
 type MissingSearch = z.infer<typeof MissingSearchSchema>;
 type RequestLogEntry = z.infer<typeof RequestLogEntrySchema>;
 type CatalogueSeason = z.infer<typeof CatalogueSeasonSchema>;
@@ -333,7 +355,10 @@ export type {
   CatalogueSeason,
   SeasonStanding,
   FollowedRequest,
+  HeldEpisode,
   MediaRequest,
+  MediaRequestArrivals,
+  MediaRequestArrived,
   MediaRequestAdded,
   MediaRequestAsk,
   MediaRequestChange,
@@ -373,7 +398,10 @@ export {
   SeasonStandingSchema,
   FollowedRequestSchema,
   MediaRequestAddedSchema,
+  HeldEpisodeSchema,
   MediaRequestArrivalSchema,
+  MediaRequestArrivalsSchema,
+  MediaRequestArrivedSchema,
   MediaRequestAskSchema,
   MediaRequestChangeSchema,
   MediaRequestDecidedSchema,

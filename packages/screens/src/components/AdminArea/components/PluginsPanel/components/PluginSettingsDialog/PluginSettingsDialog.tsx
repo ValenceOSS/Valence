@@ -7,7 +7,7 @@ import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
 import { changePlugin } from '@ValenceClient/plugins/changePlugin';
 import { tellOutcome } from '@ValenceScreens/admin/tellOutcome';
-import { CopyableAddress } from './components/CopyableAddress/CopyableAddress';
+import { CopyableAddress } from '@ValenceScreens/components/CopyableAddress/CopyableAddress';
 import type { PluginSettingsDialogProps } from './PluginSettingsDialog.types';
 import { say } from '@ValenceI18n/say';
 

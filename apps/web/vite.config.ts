@@ -109,6 +109,7 @@ export default defineConfig({
     ...(cert === null || key === null ? {} : { https: { cert, key } }),
     proxy: {
       '/api': { target: 'http://localhost:8420', ws: true },
+      '/arr': { target: 'http://localhost:8420' },
     },
   },
 });

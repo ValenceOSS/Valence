@@ -1,4 +1,5 @@
 import { PRE_TRANSCODING_DEFAULTS } from '@ValenceContracts/schemas/PreTranscoding';
+import { SEERR_DEFAULTS } from '@ValenceContracts/schemas/SeerrLink';
 import { memoryAdapter } from 'better-auth/adapters/memory';
 import { createAuth } from './Auth';
 import type { ValenceAuth } from './Auth';
@@ -97,6 +98,7 @@ const createMemoryAuth = (
     keepsDownloadsForDays: 14,
     roundness: 'default',
     preTranscoding: PRE_TRANSCODING_DEFAULTS,
+    seerr: SEERR_DEFAULTS,
   });
 
   const auth = createAuth({

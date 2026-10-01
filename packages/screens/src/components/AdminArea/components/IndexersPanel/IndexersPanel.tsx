@@ -4,6 +4,7 @@ import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/Pane
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  Download as DownloadIcon,
   MoreHorizontal as MoreHorizontalIcon,
   Plug as PlugIcon,
   Plus as PlusIcon,
@@ -25,6 +26,7 @@ import { Spinner } from '@ValenceUI/Spinner';
 import { mapWithLimit } from '@ValenceCore/functions/mapWithLimit';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { changeIndexer, removeIndexer } from '@ValenceClient/requests/fetchIndexers';
+import { importArrIndexers } from '@ValenceClient/requests/fetchArrApps';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { IndexerDialog } from '@ValenceScreens/components/AdminArea/components/IndexerDialog/IndexerDialog';
 import { IndexerCatalogueDialog } from '@ValenceScreens/components/AdminArea/components/IndexerCatalogueDialog/IndexerCatalogueDialog';
@@ -57,12 +59,17 @@ const NONE_TESTING: ReadonlySet<string> = new Set();
  * things that can be done to it — changing it, testing it, switching it on or off, and removing it.
  * Testing them all asks every one that is on, or that Valence turned off, a few at a time.
  *
+ * Indexers brought in from a connected Prowlarr say so, and can be brought in again at once rather
+ * than at the next hourly sync.
+ *
  * Whatever the server said went wrong is shown above the table rather than swallowed, and the list
  * is read again after anything is done so what it shows is what the service now holds.
  */
 const IndexersPanel = () => {
   const cache = useQueryClient();
   const asked = useQuery(requestsQueries.indexers());
+  const apps = useQuery(requestsQueries.arrApps());
+  const [isImporting, setIsImporting] = useState(false);
   const [editing, setEditing] = useState<Indexer | null>(null);
   const [isChoosing, setIsChoosing] = useState(false);
   const [start, setStart] = useState<IndexerStart | null>(null);
@@ -81,6 +88,56 @@ const IndexersPanel = () => {
   );
 
   const toTest = whichToTest(asked.data ?? []);
+  const prowlarrs = (apps.data ?? []).filter((app) => app.kind === 'prowlarr');
+  const appNames = useMemo(
+    () => new Map((apps.data ?? []).map((app) => [app.id, app.name])),
+    [apps.data],
+  );
+
+  const importFromProwlarr = () => {
+    setIsImporting(true);
+    setProblem(null);
+
+    void Promise.all(
+      prowlarrs.map(async (prowlarr) => ({ prowlarr, sent: await importArrIndexers(prowlarr.id) })),
+    )
+      .then((outcomes) => {
+        const failure =
+          outcomes
+            .flatMap(({ prowlarr, sent }) =>
+              sent.refusal === null
+                ? []
+                : [
+                    say('screens.adminArea.downloadsPanel.nameProblem', {
+                      name: prowlarr.name,
+                      problem: sent.refusal.message,
+                    }),
+                  ],
+            )
+            .join(' ') || null;
+        const done = outcomes
+          .flatMap(({ prowlarr, sent }) =>
+            sent.value === null
+              ? []
+              : [
+                  say('screens.adminArea.indexersPanel.fromNameAddedUpdatedRemoved', {
+                    name: prowlarr.name,
+                    added: sent.value.added.toString(),
+                    updated: sent.value.updated.toString(),
+                    removed: sent.value.removed.toString(),
+                  }),
+                ],
+          )
+          .join(' ');
+
+        tellOutcome(done, failure);
+        setProblem(failure);
+      })
+      .then(reread)
+      .finally(() => {
+        setIsImporting(false);
+      });
+  };
 
   const testAll = () => {
     setIsTestingAll(true);
@@ -150,6 +207,14 @@ const IndexersPanel = () => {
             <span className="flex flex-wrap items-center gap-2">
               <span className="truncate font-medium text-text">{row.original.name}</span>
               <Badge size="sm">{KIND_LABELS[row.original.privacy ?? row.original.kind]}</Badge>
+
+              {row.original.sourceAppId === null ? null : (
+                <Badge size="sm" tone="outline">
+                  {say('screens.adminArea.indexersPanel.fromName', {
+                    name: appNames.get(row.original.sourceAppId) ?? say('common.prowlarr'),
+                  })}
+                </Badge>
+              )}
             </span>
 
             <span className="truncate text-xs text-text-muted">{row.original.url}</span>
@@ -259,7 +324,7 @@ const IndexersPanel = () => {
         ),
       },
     ];
-  }, [isTestingAll, reread, testing]);
+  }, [appNames, isTestingAll, reread, testing]);
 
   return (
     <PanelCard
@@ -275,6 +340,16 @@ const IndexersPanel = () => {
           >
             {say('screens.adminArea.indexersPanel.testAll')}
           </PanelCardAction>
+
+          {prowlarrs.length === 0 ? null : (
+            <PanelCardAction
+              icon={DownloadIcon}
+              isLoading={isImporting}
+              onClick={importFromProwlarr}
+            >
+              {say('screens.adminArea.indexersPanel.importFromProwlarr')}
+            </PanelCardAction>
+          )}
 
           <PanelCardAction
             icon={PlusIcon}

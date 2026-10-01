@@ -24,7 +24,32 @@ describe('recordFromDraft', () => {
       seasons: [1],
       requestedByName: 'Someone',
       createdAt: '2026-09-19T00:00:00.000Z',
+      tvdbId: null,
+      handOff: null,
+      handOffId: null,
     });
+  });
+
+  it('keeps the app it is handed to, and the TVDB id Sonarr knows it by', () => {
+    const handOff = {
+      appId: '3f0e8a52-7b1c-4d2e-9f3a-5b6c7d8e9f01',
+      rootFolderPath: '/tv',
+      qualityProfileId: 4,
+      metadataProfileId: null,
+      searchesOnAdd: true,
+    };
+
+    expect(
+      recordFromDraft(
+        MediaRequestDraftSchema.parse({
+          ...DRAFT,
+          handOff,
+          catalogue: { ...DRAFT.catalogue, tvdbId: 371_980 },
+        }),
+        'id',
+        '2026-09-19T00:00:00.000Z',
+      ),
+    ).toMatchObject({ handOff, tvdbId: 371_980, handOffId: null });
   });
 
   it('waits on approval, and names no seasons for a film', () => {

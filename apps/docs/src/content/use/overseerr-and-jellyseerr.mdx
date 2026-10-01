@@ -1,0 +1,100 @@
+---
+title: Using Overseerr or Jellyseerr with Valence
+description: Keep asking for films and series in Overseerr or Jellyseerr, and have Valence fetch them, by adding Valence there as a Radarr and a Sonarr server.
+order: 14
+---
+
+If the people on your server already ask for films and series in Overseerr or Jellyseerr, they can go on doing so. Valence answers Overseerr and Jellyseerr as if it were Radarr, for films, and Sonarr, for series. Add it there as a Radarr server and as a Sonarr server, and whatever is approved in Overseerr or Jellyseerr becomes an ordinary Valence [request](/use/requests): already approved, in the name of an account you choose, and fetched the way its library fetches, whether that is Valence's own downloader or a Radarr or Sonarr of your own.
+
+Nothing changes on the Overseerr or Jellyseerr side. Its users, its approvals and its request limits all stay where they are. Valence only stands in for the Radarr and Sonarr it sends approved requests to.
+
+## Before you start
+
+- **Requesting must be on.** Overseerr and Jellyseerr send their requests into Valence's requesting, which needs the requests service. If the admin area has no **Requests** tab, set requesting up first: see [Requesting](/install/requesting).
+- **A library of films, a library of series, or both, must take requests.** Each one is offered to Overseerr and Jellyseerr as a root folder. A library that does not take requests is not offered. See [Libraries](/use/libraries).
+- **Pick the account the requests are made as.** Everything Overseerr or Jellyseerr sends shows in Valence as that account's request. A dedicated account, such as one called "Requests from Seerr", keeps them easy to tell apart from requests made in Valence itself. Make it under **Accounts** first if you want one. It needs no permissions of its own, because what Overseerr or Jellyseerr sends is approved already.
+- **Overseerr or Jellyseerr must be able to reach Valence.** Use the address Valence is reached at from where Overseerr or Jellyseerr runs: on the same Docker network that is usually the service name and port, such as `valence` and `8420`.
+
+## Turn it on in Valence
+
+1. Open the admin area and choose **Requests**.
+2. Find the **Overseerr and Jellyseerr** card, below the requests service.
+3. Turn on **Answer Overseerr and Jellyseerr**. Valence makes an API key the first time.
+4. Under **Ask as**, choose the account the requests are made as. Until you do, whatever Overseerr or Jellyseerr sends is turned away.
+
+The card then shows three things to copy: the **API key**, the **Radarr server** address and the **Sonarr server** address. Under each address it spells out the hostname, port, whether to use SSL and the URL base, which are the fields Overseerr's and Jellyseerr's dialogs ask for. They are worked out from the address you opened the admin area at. If Overseerr or Jellyseerr reaches Valence by another name, such as a Docker service name, use that hostname and port instead and keep the URL base as it is.
+
+| Server | URL base      | For    |
+| ------ | ------------- | ------ |
+| Radarr | `/arr/radarr` | Films  |
+| Sonarr | `/arr/sonarr` | Series |
+
+**Make a new key** replaces the key at once. The old one stops working, so paste the new one into both servers in Overseerr or Jellyseerr straight away.
+
+## Add Valence as a Radarr server
+
+In Overseerr or Jellyseerr, open **Settings**, then **Services**, and choose **Add Radarr Server**.
+
+1. Tick **Default Server**. Leave **4K Server** unticked.
+2. **Server Name**: anything, such as `Valence films`.
+3. **Hostname or IP Address** and **Port**: where Valence is reached, from the card.
+4. **Use SSL**: on only if you reach Valence over `https`.
+5. **API Key**: the key from the card.
+6. **URL Base**: `/arr/radarr`.
+7. Press **Test**. It should say it connected, and fill in the lists below.
+8. **Quality Profile**: **Whatever the library uses** leaves the choice to the library, the same as asking in Valence. Any other entry is one of Valence's quality profiles.
+9. **Root Folder**: the film library to file into.
+10. **Minimum Availability**: anything. Valence decides when to look for a film itself.
+11. Tick **Enable Scan**, so Overseerr or Jellyseerr reads back where each film has got to.
+12. Save.
+
+## Add Valence as a Sonarr server
+
+Choose **Add Sonarr Server** and fill it in the same way, with these differences:
+
+- **Server Name**: such as `Valence series`.
+- **URL Base**: `/arr/sonarr`.
+- **Quality Profile** and **Root Folder**: as for films, with the series library as the folder.
+- **Language Profile**: **English**. It is the only one offered and changes nothing, because Valence picks a release's language by the library's own setting.
+- **Anime** settings: leave them as they are, or point them at the same library.
+- **Season Folders**: either. Valence files episodes its own way.
+- Tick **Enable Scan**.
+
+## What happens to a request
+
+When a request is approved in Overseerr or Jellyseerr, it sends the film or series to Valence:
+
+- **A film** becomes a Valence request for that film, approved, in the name of the account chosen, filed into the library chosen as the root folder.
+- **A series** becomes a Valence request for the seasons asked for. Overseerr and Jellyseerr name a series by its TVDB id, which Valence turns into the catalogue's own, so a catalogue key must be set: see [Configuration](/install/configuration). Asking for more seasons later adds them to the same request.
+- **Asking twice never makes two requests.** A film or series already asked for in Valence, by anybody, gains the new seasons and is approved, rather than being asked for again.
+- **A title already in the library** is reported as there already, and Overseerr or Jellyseerr marks it available without asking for it.
+
+Each request then goes the way every request does: searched for, downloaded and filed by Valence, or handed to your own Radarr or Sonarr where the library is set to. Follow it in the admin area under **Requested**.
+
+## What Overseerr and Jellyseerr see
+
+With **Enable Scan** on, they read back from Valence every so often:
+
+- **Processing** while a film or season is asked for and not yet in the library, with the download's progress and time left, shown on the title's page as Radarr's or Sonarr's queue would be.
+- **Available** once the film is in the library, or once every episode of a season is. A season with some of its episodes is **partially available**.
+
+They read only what is asked for in Valence: refused requests are left out, and a request still awaiting approval in Valence is not counted as being fetched.
+
+## What is not carried across
+
+- **Tags** are accepted and ignored. Turn **Tag Requests** off; it changes nothing.
+- **Search commands** are accepted and ignored. Valence searches for what is asked for by itself, as soon as it is approved.
+- **A 4K server** is not a separate copy. Valence keeps one request per title, so pointing a second server at it asks for the same title again, which merges into the first request. Use a quality profile instead.
+- **Removing from Radarr or Sonarr** in Jellyseerr withdraws a Valence request that has not been filed yet. It never deletes anything that is already in the library.
+
+## Troubleshooting
+
+| What you see                                                              | What it means                                                                                                                                                              |
+| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Test** fails, and Valence's logs show nothing                           | Overseerr or Jellyseerr cannot reach Valence at that hostname and port. Try the address from the machine Overseerr or Jellyseerr runs on.                                  |
+| **Test** fails with a 401                                                 | The API key is not the current one. Copy it from the card again; making a new key retires the old one.                                                                     |
+| **Test** fails with a 404                                                 | Answering Overseerr and Jellyseerr is turned off, or the URL base is wrong. It is `/arr/radarr` or `/arr/sonarr`, without anything after it.                               |
+| **Test** fails with a 503                                                 | Requesting is off. See [Requesting](/install/requesting).                                                                                                                  |
+| Requests fail with "Choose the account…"                                  | No account is chosen under **Ask as**.                                                                                                                                     |
+| A series fails with "The catalogue knows no series…"                      | The catalogue has no series under the TVDB id Overseerr or Jellyseerr sent, or no catalogue key is set.                                                                    |
+| **Test** works from Valence's own address but not through a reverse proxy | The proxy has to pass `/arr` through to Valence, as it does `/api`. A proxy that forwards only some paths needs `/arr` added. See [Reverse proxy](/install/reverse-proxy). |
