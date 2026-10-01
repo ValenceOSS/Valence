@@ -186,9 +186,42 @@ describe('createSonarrHandOff', () => {
     ]);
   });
 
+  it('monitors a series Sonarr has but does not monitor, so its episodes are searched for', async () => {
+    const arr = aFakeArr({
+      'GET /api/v3/series': { body: [{ ...LOOKED_UP, id: 3, monitored: false }] },
+      'PUT /api/v3/series/editor': { status: 202, body: [] },
+      'GET /api/v3/episode': { body: [anEpisode({})] },
+      'PUT /api/v3/episode/monitor': { status: 202, body: null },
+      'POST /api/v3/command': { status: 201, body: { name: 'EpisodeSearch', id: 9 } },
+    });
+
+    await createSonarrHandOff(createArrCaller(arr.fetch, SONARR)).place(
+      SEVERANCE_REQUEST,
+      [aRequestItem({ season: 2, episode: 1 })],
+      HAND_OFF,
+    );
+
+    expect(arr.sent('PUT', '/api/v3/series/editor')).toEqual([{ seriesIds: [3], monitored: true }]);
+  });
+
+  it('leaves a series Sonarr already monitors as it is', async () => {
+    const arr = aFakeArr({
+      'GET /api/v3/series': { body: [{ ...LOOKED_UP, id: 3, monitored: true }] },
+      'GET /api/v3/episode': { body: [] },
+    });
+
+    await createSonarrHandOff(createArrCaller(arr.fetch, SONARR)).place(
+      SEVERANCE_REQUEST,
+      [],
+      HAND_OFF,
+    );
+
+    expect(arr.sent('PUT', '/api/v3/series/editor')).toEqual([]);
+  });
+
   it('does not search where the library says not to', async () => {
     const arr = aFakeArr({
-      'GET /api/v3/series': { body: [{ ...LOOKED_UP, id: 3 }] },
+      'GET /api/v3/series': { body: [{ ...LOOKED_UP, id: 3, monitored: true }] },
       'GET /api/v3/episode': { body: [anEpisode({})] },
       'PUT /api/v3/episode/monitor': { status: 202, body: null },
     });

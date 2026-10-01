@@ -125,6 +125,38 @@ describe('ArrAppDialog', () => {
     );
   });
 
+  it('says nothing of a try still answering once another app is opened', async () => {
+    const user = userEvent.setup();
+    let answer: (given: Awaited<ReturnType<typeof Apps.tryArrApp>>) => void = () => undefined;
+
+    tryArrApp.mockReturnValue(
+      new Promise((answered) => {
+        answer = answered;
+      }),
+    );
+
+    const handlers = { onClose: vi.fn(), onSaved: vi.fn() };
+    const { rerender } = renderInAnAddress(<ArrAppDialog isOpen app={KEPT} {...handlers} />);
+
+    await user.click(screen.getByRole('button', { name: /^Test/ }));
+    rerender(
+      <ArrAppDialog
+        isOpen
+        app={{ ...KEPT, id: '4a1f9b63-8c2d-4e3f-a04b-6c7d8e9f0a12', name: 'Programmes' }}
+        {...handlers}
+      />,
+    );
+    answer({
+      value: { isWorking: true, problem: null, problemCode: null, version: '5.14' },
+      refusal: null,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /^Test/ })).toBeEnabled();
+    });
+    expect(screen.queryByText('It answered, and is 5.14.')).toBeNull();
+  });
+
   it('says why a try or a save did not go through', async () => {
     const user = userEvent.setup();
 

@@ -96,6 +96,32 @@ const aSync = (indexers: JsonValue[], keeping: IndexerRecord[] = []) => {
 };
 
 describe('createProwlarrSync', () => {
+  it('makes each indexer once where two syncs of the same Prowlarr run at once', async () => {
+    const { store, sync } = aSync([listed({}), listed({ id: 2, name: 'NZBgeek' })]);
+
+    await Promise.all([sync.sync(PROWLARR), sync.sync(PROWLARR)]);
+
+    expect((await store.list()).map((record) => record.sourceIndexerId)).toEqual([1, 2]);
+  });
+
+  it('carries on syncing a Prowlarr after a sync of it failed', async () => {
+    const store = createMemoryRecordStore<IndexerRecord>([]);
+    let isUp = false;
+    const arr = aFakeArr({
+      'GET /api/v1/indexer': () =>
+        isUp ? { body: [listed({})] } : { status: 503, body: { message: 'Down' } },
+    });
+    const sync = createProwlarrSync({
+      indexers: store,
+      connect: (app) => createArrCaller(arr.fetch, app),
+    });
+
+    await expect(sync.sync(PROWLARR)).rejects.toThrow();
+    isUp = true;
+
+    expect(await sync.sync(PROWLARR)).toEqual({ added: 1, updated: 0, removed: 0, unchanged: 0 });
+  });
+
   it('makes an indexer for each of Prowlarr’s, through Prowlarr’s own feed for it', async () => {
     const { store, sync } = aSync([
       listed({}),

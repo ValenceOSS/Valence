@@ -935,7 +935,6 @@ describe('createRequestsClient with requests for films and series', () => {
       one.client.refuseRequest(REQUEST.id, 'No room'),
       one.client.retryRequest(REQUEST.id),
       one.client.fulfilRequest(REQUEST.id),
-      one.client.requestArrived(REQUEST.id, 'media-1'),
       one.client.updateRequestCatalogue(REQUEST.id, { catalogue: { title: 'Dune', year: 2021 } }),
     ]) {
       expect((await asked).kind).toBe('answered');
@@ -948,8 +947,19 @@ describe('createRequestsClient with requests for films and series', () => {
       `POST http://requests:8421/api/requests/${REQUEST.id}/refuse`,
       `POST http://requests:8421/api/requests/${REQUEST.id}/retry`,
       `POST http://requests:8421/api/requests/${REQUEST.id}/fulfil`,
-      `POST http://requests:8421/api/requests/${REQUEST.id}/arrived`,
       `PUT http://requests:8421/api/requests/${REQUEST.id}/catalogue`,
+    ]);
+  });
+
+  it('says how much of a request arriving made ready', async () => {
+    const { client, fetch } = aClient(200, { request: REQUEST, newlyAvailable: 1 });
+
+    expect(await client.requestArrived(REQUEST.id, 'media-1')).toEqual({
+      kind: 'answered',
+      value: { request: REQUEST, newlyAvailable: 1 },
+    });
+    expect(fetch.mock.calls.map(([url, init]) => `${init.method ?? 'GET'} ${url}`)).toEqual([
+      `POST http://requests:8421/api/requests/${REQUEST.id}/arrived`,
     ]);
   });
 

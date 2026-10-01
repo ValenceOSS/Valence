@@ -341,16 +341,17 @@ const createRequestService = ({
       return changed(id, { problem: null });
     },
 
-    arrived: async (id: string, mediaId: string): Promise<MediaRequest | null> => {
+    arrived: async (id: string, mediaId: string): Promise<MediaRequestArrived | null> => {
       const at = now().toISOString();
+      const filed = (await itemsOf(id)).filter((item) => item.state === 'filed');
 
-      for (const item of await itemsOf(id)) {
-        if (item.state === 'filed') {
-          await items.update(item.id, { state: 'available', problem: null, updatedAt: at });
-        }
+      for (const item of filed) {
+        await items.update(item.id, { state: 'available', problem: null, updatedAt: at });
       }
 
-      return changed(id, { mediaId });
+      const shownNow = await changed(id, { mediaId });
+
+      return shownNow === null ? null : { request: shownNow, newlyAvailable: filed.length };
     },
 
     arrivedInLibrary: async (

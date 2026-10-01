@@ -6,11 +6,7 @@ import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { MediaRequestAsk } from '@ValenceContracts/schemas/MediaRequest';
 import type { Permission } from '@ValenceContracts/schemas/Permission';
 
-const SEERR_GRANTS: readonly Permission[] = [
-  'requests.ask',
-  'requests.autoApprove',
-  'requests.manage',
-];
+const SEERR_GRANTS: readonly Permission[] = ['requests.ask', 'requests.autoApprove'];
 
 const LIBRARY_KIND_OF = { film: 'movies', series: 'shows' } as const;
 
@@ -32,7 +28,8 @@ const roomOn = async (path: string): Promise<{ freeBytes: number; totalBytes: nu
  * What Valence answers Overseerr and Jellyseerr with when it stands in for Radarr and Sonarr, made
  * from the server's own requests, libraries and catalogue. A film or series sent to it is asked for
  * as the account whoever manages requesting chose, approved, because Overseerr or Jellyseerr has
- * approved it already.
+ * approved it already. It may ask and nothing more, so the quality profiles that account is held to
+ * hold for whatever Overseerr or Jellyseerr sends.
  *
  * @param context - What the server's endpoints are answered with.
  * @param seriesOfTvdbId - Finds the catalogue's series for a TVDB id, which is all Sonarr is sent.

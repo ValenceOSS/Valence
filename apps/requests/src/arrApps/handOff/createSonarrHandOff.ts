@@ -26,7 +26,7 @@ const SETTLED = new Set<RequestItemRecord['state']>(['filed', 'available']);
 /**
  * Hands series to Sonarr by their TVDB id — or, where the catalogue gave none, by asking Sonarr to
  * find them by their TMDB id — adding one with only the seasons asked for monitored, or monitoring
- * the episodes asked for in one it has, then reading which episodes it has imported or queued and
+ * one it has, and the episodes asked for in it, then reading which episodes it has imported or queued and
  * monitoring any asked for since, so new episodes and seasons are fetched too.
  *
  * @param caller - How to ask Sonarr.
@@ -109,6 +109,15 @@ const createSonarrHandOff = (
       });
 
       if (kept !== undefined) {
+        if (!kept.monitored) {
+          await caller.send(
+            'PUT',
+            '/series/editor',
+            { seriesIds: [kept.id], monitored: true },
+            ArrAcknowledgementSchema,
+          );
+        }
+
         await monitorAsked(
           items,
           await caller.read('/episode', SonarrEpisodesSchema, { seriesId: kept.id.toString() }),

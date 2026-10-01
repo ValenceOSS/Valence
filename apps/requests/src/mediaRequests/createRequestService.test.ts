@@ -402,9 +402,10 @@ describe('createRequestService', () => {
     await items.update(item?.id ?? '', { state: 'filed' });
 
     expect(await service.arrived(request.id, 'media-1')).toMatchObject({
-      state: 'available',
-      mediaId: 'media-1',
+      request: { state: 'available', mediaId: 'media-1' },
+      newlyAvailable: 1,
     });
+    expect(await service.arrived(request.id, 'media-1')).toMatchObject({ newlyAvailable: 0 });
     expect(await service.retry('missing')).toBeNull();
   });
 

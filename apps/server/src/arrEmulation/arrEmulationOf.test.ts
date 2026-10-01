@@ -15,6 +15,8 @@ import { aSeerrRequest } from './testing/aSeerrRequest';
 import { FILMS_LIBRARY, SEERR_KEY } from './testing/anArrEmulation';
 import type { MediaRequestDraft, RequestCatalogue } from '@ValenceContracts/schemas/MediaRequest';
 import type { Library } from '@ValenceContracts/schemas/Library';
+import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
+import { arrIdOf } from './arrIdOf';
 
 const FILMS: Library = {
   id: FILMS_LIBRARY.id,
@@ -46,11 +48,39 @@ const ARRIVAL: RequestCatalogue = {
 
 const SEERR = { id: 'seerr-account', name: 'Requests from Seerr' };
 
+const REMUX: QualityProfile = {
+  id: '7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d',
+  name: 'Remux',
+  kind: 'video',
+  resolutions: [],
+  sources: [],
+  musicQualities: [],
+  smallestMb: null,
+  largestMb: null,
+  sizes: [],
+  preferredWords: [],
+  requiredWords: [],
+  bannedWords: [],
+  isUpgrading: false,
+  releaseWait: 'digital',
+  upgradeUntilResolution: null,
+  upgradeUntilSource: null,
+  upgradeUntilMusicQuality: null,
+  libraryIds: [],
+  preferredLanguage: null,
+  isDefault: false,
+  roleIds: [],
+  accountIds: [],
+  createdAt: '2026-10-01T00:00:00.000Z',
+  updatedAt: '2026-10-01T00:00:00.000Z',
+};
+
 /**
- * The whole server, with a requests service that keeps every request it is sent, standing in for
- * Radarr for an account chosen to ask as — or for nobody, where none is.
+ * The whole server, with a requests service that keeps every request it is sent and has the quality
+ * profiles given, standing in for Radarr for an account chosen to ask as — or for nobody, where none
+ * is.
  */
-const build = async (accountId = SEERR.id) => {
+const build = async (accountId = SEERR.id, profiles: QualityProfile[] = []) => {
   const { auth, settings } = createMemoryAuth();
   const sent: MediaRequestDraft[] = [];
 
@@ -80,7 +110,11 @@ const build = async (accountId = SEERR.id) => {
           );
         }
 
-        return Promise.resolve(new Response(JSON.stringify([]), { status: 200 }));
+        return Promise.resolve(
+          new Response(JSON.stringify(url.endsWith('/api/profiles') ? profiles : []), {
+            status: 200,
+          }),
+        );
       },
     }),
     countUsers: () => Promise.resolve(1),
@@ -104,14 +138,14 @@ const build = async (accountId = SEERR.id) => {
     describeForRequest: (tmdbId) => Promise.resolve(tmdbId === 329865 ? ARRIVAL : null),
   });
 
-  const addArrival = () =>
+  const addArrival = (qualityProfileId = 1) =>
     app.request(`http://valence/arr/radarr/api/v3/movie?apikey=${SEERR_KEY}`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         title: 'Arrival',
-        qualityProfileId: 1,
-        profileId: 1,
+        qualityProfileId,
+        profileId: qualityProfileId,
         titleSlug: '329865',
         minimumAvailability: 'released',
         tmdbId: 329865,
@@ -142,6 +176,24 @@ describe('arrEmulationOf', () => {
       }),
     ]);
     expect(await response.json()).toMatchObject({ id: 329865, monitored: true });
+  });
+
+  it('holds what Overseerr sends to the quality profiles its account may choose', async () => {
+    const { sent, addArrival } = await build(SEERR.id, [
+      { ...REMUX, accountIds: ['somebody-else'] },
+    ]);
+    const response = await addArrival(arrIdOf(REMUX.id));
+
+    expect(response.status).toBe(403);
+    expect(sent).toEqual([]);
+  });
+
+  it('asks with a quality profile its account may choose', async () => {
+    const { sent, addArrival } = await build(SEERR.id, [REMUX]);
+    const response = await addArrival(arrIdOf(REMUX.id));
+
+    expect(response.status).toBe(201);
+    expect(sent).toEqual([expect.objectContaining({ profileId: REMUX.id })]);
   });
 
   it('turns a film away until an account to ask as has been chosen', async () => {

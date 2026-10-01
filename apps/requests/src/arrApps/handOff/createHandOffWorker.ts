@@ -41,6 +41,8 @@ type CreateHandOffWorkerOptions = {
 
 type HandedOff = { request: MediaRequestRecord; items: RequestItemRecord[] };
 
+type AppTrouble = { problem: Said; problemCode: ProblemCode | null };
+
 const WATCH_EVERY_MS = 60_000;
 
 const SETTLED = new Set<RequestItemRecord['state']>(['filed', 'available']);
@@ -76,6 +78,10 @@ const doneBytesOf = (record: ArrQueueRecord): number | null =>
  * albums move from wanted to downloading to filed with the events the server already acts on — a
  * filed one tells the server which folder to read, as Valence's own filing does — while the app
  * alone searches, downloads and imports.
+ *
+ * An app that cannot be reached is asked once a round: its other requests are given the same
+ * problem without waiting on it again, so one app that is down does not hold up every request
+ * behind it.
  *
  * @param requests - Where requests are kept.
  * @param items - Where what each waits for is kept.
@@ -254,6 +260,7 @@ const createHandOffWorker = ({
     handedOff: HandedOff,
     handOff: Fulfilment,
     queueOf: (app: ArrAppRecord, caller: Pick<ArrCaller, 'read'>) => Promise<ArrQueueRecord[]>,
+    down: Map<string, AppTrouble>,
   ) => {
     const { request } = handedOff;
     const app = await apps.find(handOff.appId);
@@ -315,11 +322,16 @@ const createHandOffWorker = ({
         await requests.update(request.id, { handOffId: null, updatedAt: at() });
       }
 
-      await trouble(
-        request,
-        saying('requests.arrApps.handOff.nameSaidProblem', { name: app.name, problem: error.said }),
-        error.problemCode,
-      );
+      const problem = saying('requests.arrApps.handOff.nameSaidProblem', {
+        name: app.name,
+        problem: error.said,
+      });
+
+      if (error.problemCode === 'ArrAppUnreachable') {
+        down.set(app.id, { problem, problemCode: error.problemCode });
+      }
+
+      await trouble(request, problem, error.problemCode);
     }
   };
 
@@ -328,6 +340,7 @@ const createHandOffWorker = ({
       const [kept, all] = await Promise.all([requests.list(), items.list()]);
       const isWatching = now().getTime() - lastWatchedAt >= watchEveryMs;
       const queues = new Map<string, Promise<ArrQueueRecord[]>>();
+      const down = new Map<string, AppTrouble>();
 
       const queueOf = (app: ArrAppRecord, caller: Pick<ArrCaller, 'read'>) => {
         const known = queues.get(app.id) ?? readArrQueue(caller);
@@ -352,10 +365,18 @@ const createHandOffWorker = ({
           continue;
         }
 
+        const isDown = down.get(handOff.appId);
+
+        if (isDown !== undefined) {
+          await trouble(request, isDown.problem, isDown.problemCode);
+          continue;
+        }
+
         await handOver(
           { request, items: all.filter((item) => item.requestId === request.id) },
           handOff,
           queueOf,
+          down,
         );
       }
     },

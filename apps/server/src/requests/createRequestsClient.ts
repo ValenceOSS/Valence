@@ -537,8 +537,11 @@ const createRequestsClient = ({
     fulfilRequest: (id: string): Promise<RequestsAnswer<MediaRequest>> =>
       call(`${withRequest(id)}/fulfil`, readRequest, { method: 'POST' }),
 
-    requestArrived: (id: string, mediaId: string): Promise<RequestsAnswer<MediaRequest>> =>
-      call(`${withRequest(id)}/arrived`, readRequest, { method: 'POST', body: { mediaId } }),
+    requestArrived: (id: string, mediaId: string): Promise<RequestsAnswer<MediaRequestArrived>> =>
+      call(`${withRequest(id)}/arrived`, (body) => MediaRequestArrivedSchema.parse(body), {
+        method: 'POST',
+        body: { mediaId },
+      }),
 
     requestArrivedInLibrary: (
       id: string,

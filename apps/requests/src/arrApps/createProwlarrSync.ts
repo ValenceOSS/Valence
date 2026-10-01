@@ -45,6 +45,9 @@ const syncedOf = (app: ArrAppRecord, listed: ProwlarrIndexer): Synced => ({
  * Prowlarr's, made, changed or removed as Prowlarr's are, while indexers made by hand are never
  * touched and one Valence switched off for failing stays off until it is tested again.
  *
+ * Work on one Prowlarr is done a piece at a time, so the hourly sync and an administrator's import
+ * cannot both read the indexers before either has added any and each add the same one.
+ *
  * @param indexers - Where indexers are kept.
  * @param connect - How to ask Prowlarr.
  * @param now - The clock.
@@ -54,8 +57,34 @@ const createProwlarrSync = ({
   indexers,
   connect,
   now = () => new Date(),
-}: CreateProwlarrSyncOptions) => ({
-  sync: async (app: ArrAppRecord): Promise<ProwlarrImport> => {
+}: CreateProwlarrSyncOptions) => {
+  const running = new Map<string, Promise<void>>();
+
+  /**
+   * Does a piece of work on a Prowlarr once whatever is already being done on it has finished.
+   *
+   * @param appId - The Prowlarr.
+   * @param work - What to do.
+   * @returns What the work came to.
+   */
+  const inTurn = <T>(appId: string, work: () => Promise<T>): Promise<T> => {
+    const next = (running.get(appId) ?? Promise.resolve()).then(work, work);
+    const settled = next.then(
+      () => undefined,
+      () => undefined,
+    );
+
+    running.set(appId, settled);
+    void settled.then(() => {
+      if (running.get(appId) === settled) {
+        running.delete(appId);
+      }
+    });
+
+    return next;
+  };
+
+  const sync = async (app: ArrAppRecord): Promise<ProwlarrImport> => {
     const listed = (await connect(app).read('/indexer', ProwlarrIndexersSchema)).filter(
       (one) => one.protocol === 'torrent' || one.protocol === 'usenet',
     );
@@ -120,9 +149,9 @@ const createProwlarrSync = ({
     }
 
     return done;
-  },
+  };
 
-  forget: async (app: Pick<ArrAppRecord, 'id'>): Promise<number> => {
+  const forget = async (app: Pick<ArrAppRecord, 'id'>): Promise<number> => {
     const kept = (await indexers.list()).filter((record) => record.sourceAppId === app.id);
 
     for (const record of kept) {
@@ -130,8 +159,13 @@ const createProwlarrSync = ({
     }
 
     return kept.length;
-  },
-});
+  };
+
+  return {
+    sync: (app: ArrAppRecord): Promise<ProwlarrImport> => inTurn(app.id, () => sync(app)),
+    forget: (app: Pick<ArrAppRecord, 'id'>): Promise<number> => inTurn(app.id, () => forget(app)),
+  };
+};
 
 type ProwlarrSync = ReturnType<typeof createProwlarrSync>;
 

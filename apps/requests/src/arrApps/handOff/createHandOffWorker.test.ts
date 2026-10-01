@@ -50,6 +50,7 @@ const QUEUED = ArrQueuePageSchema.parse(QUEUE_PAGE).records;
  */
 const aWorker = ({
   request = aMediaRequest({ handOff: HAND_OFF }),
+  others = [],
   items = [aRequestItem()],
   apps = [RADARR],
   sees = (all: readonly RequestItemRecord[]): ItemSighting[] =>
@@ -59,6 +60,7 @@ const aWorker = ({
   now = () => new Date('2026-10-01T09:00:00.000Z'),
 }: {
   request?: MediaRequestRecord;
+  others?: MediaRequestRecord[];
   items?: RequestItemRecord[];
   apps?: ArrAppRecord[];
   sees?: (all: readonly RequestItemRecord[]) => ItemSighting[];
@@ -66,7 +68,7 @@ const aWorker = ({
   handler?: boolean;
   now?: () => Date;
 } = {}) => {
-  const requests = createMemoryRecordStore([request]);
+  const requests = createMemoryRecordStore([request, ...others]);
   const itemStore = createMemoryRecordStore(items);
   const events = createMemoryEventStore();
   const log = createMemoryRequestLogStore();
@@ -297,6 +299,42 @@ describe('createHandOffWorker', () => {
     await worker.step();
 
     expect(await requests.find(id)).toMatchObject({ handOffId: 12, problem: null });
+  });
+
+  it('asks an app that cannot be reached once a round, giving its other requests the same problem', async () => {
+    const second = aMediaRequest({ id: crypto.randomUUID(), handOff: HAND_OFF });
+    const { worker, requests, placing } = aWorker({
+      others: [second],
+      place: () =>
+        Promise.reject(
+          new ArrAppFailure(sayVerbatim('Radarr could not be reached'), 'ArrAppUnreachable'),
+        ),
+    });
+
+    await worker.step();
+
+    expect(placing).toHaveBeenCalledTimes(1);
+    expect(await requests.find(second.id)).toMatchObject({
+      problem: { message: 'Radarr could not take it: Radarr could not be reached' },
+      problemCode: 'ArrAppUnreachable',
+    });
+
+    await worker.step();
+
+    expect(placing).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps asking an app about its other requests where it refused only one', async () => {
+    const second = aMediaRequest({ id: crypto.randomUUID(), handOff: HAND_OFF });
+    const { worker, placing } = aWorker({
+      others: [second],
+      place: () =>
+        Promise.reject(new ArrAppFailure(sayVerbatim('Radarr answered with HTTP 400'), null, 400)),
+    });
+
+    await worker.step();
+
+    expect(placing).toHaveBeenCalledTimes(2);
   });
 
   it('hands over again a film the app no longer knows', async () => {

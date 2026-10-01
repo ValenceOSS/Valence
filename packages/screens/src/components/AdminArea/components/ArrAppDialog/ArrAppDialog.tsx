@@ -1,6 +1,6 @@
 import { sayAgainIfAny } from '@ValenceI18n/sayAgainIfAny';
 import { notify } from '@ValenceUI/notify';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DialogCompanion } from '@ValenceUI/DialogCompanion';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { DialogFooter } from '@ValenceUI/DialogFooter';
@@ -27,6 +27,9 @@ const KINDS = ARR_APP_KINDS.map((kind) => ({ id: kind, label: ARR_APP_NAMES[kind
  * its API key, and where its library is as it sees it and as Valence does, which can be tried
  * before it is saved — a key is never shown back, and leaving it empty keeps the one it has.
  *
+ * Only the latest try for the app showing is told: one still answering when another app is opened,
+ * or when it is tried again, says nothing, so no app is shown another's version.
+ *
  * @param isOpen - Whether the dialog is showing.
  * @param app - The app being changed, or null to connect one.
  * @param onClose - Called when it is dismissed.
@@ -40,12 +43,21 @@ const ArrAppDialog = ({ isOpen, app, onClose, onSaved }: ArrAppDialogProps) => {
   const [isTrying, setIsTrying] = useState(false);
   const [verdict, setVerdict] = useState<TryVerdict>(null);
   const [version, setVersion] = useState<string | null>(null);
+  const latestTry = useRef<object | null>(null);
+  const showing = useRef(app);
+
+  useEffect(() => {
+    showing.current = app;
+  }, [app]);
 
   if (shownFor !== app) {
     setShownFor(app);
     setForm(arrAppFormFor(app, ARR_APP_NAMES));
     setProblem(null);
     setVerdict(null);
+    setVersion(null);
+    setIsWorking(false);
+    setIsTrying(false);
   }
 
   const change = (next: Partial<ArrAppForm>) => {
@@ -73,8 +85,17 @@ const ArrAppDialog = ({ isOpen, app, onClose, onSaved }: ArrAppDialogProps) => {
     setIsTrying(true);
     setVerdict(null);
 
+    const thisTry = {};
+    const isLatest = () => latestTry.current === thisTry && showing.current === app;
+
+    latestTry.current = thisTry;
+
     void tryArrApp(draft, app?.id)
       .then(({ value, refusal }) => {
+        if (!isLatest()) {
+          return;
+        }
+
         setVerdict(value?.isWorking === true ? 'working' : 'failing');
         setVersion(value?.version ?? null);
         setProblem(
@@ -86,8 +107,10 @@ const ArrAppDialog = ({ isOpen, app, onClose, onSaved }: ArrAppDialogProps) => {
         );
       })
       .finally(() => {
-        setIsWorking(false);
-        setIsTrying(false);
+        if (isLatest()) {
+          setIsWorking(false);
+          setIsTrying(false);
+        }
       });
   };
 

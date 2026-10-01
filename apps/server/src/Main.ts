@@ -2515,7 +2515,8 @@ const LINKS_TO_ARRIVALS: Record<MediaRequestKind, (mediaId: string) => string> =
 
 /**
  * Ties a request to the item the library found it as, and tells whoever asked that it is ready —
- * in the app, and by push where they chose — and anything subscribed.
+ * in the app, and by push where they chose — and anything subscribed, where this is what made it
+ * ready rather than a scan of the library that got there first.
  *
  * @param filed - The request, as it was filed.
  * @param mediaId - The film, the series, or the album the library found.
@@ -2536,7 +2537,9 @@ const sayARequestArrived = async (
     return;
   }
 
-  await tellOfArrival(filed, mediaId, arrived.value.requestedBy);
+  if (arrived.value.newlyAvailable > 0) {
+    await tellOfArrival(filed, mediaId, arrived.value.request.requestedBy);
+  }
 };
 
 const heldEpisodes = createDatabaseHeldEpisodes(db);
