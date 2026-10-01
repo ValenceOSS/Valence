@@ -133,12 +133,15 @@ describe('the plugin broker', () => {
     const without = build([]);
 
     await expect(without.ask('library.search', ['x'])).rejects.toThrow('library');
+    await expect(without.ask('library.get', ['m1'])).rejects.toThrow('library');
     await expect(without.ask('music.findTrack', [{ title: 't', artist: 'a' }])).rejects.toThrow(
       'library',
     );
 
     const { ask, host } = build([{ kind: 'library', access: 'read' }]);
 
+    expect(await ask('library.get', ['m1'])).toEqual(A_PLUGIN_MEDIA_FOR_TEST);
+    expect(host.library.get).toHaveBeenCalledWith('m1');
     expect(await ask('library.search', ['Frieren', ['series']])).toEqual([A_PLUGIN_MEDIA_FOR_TEST]);
     expect(host.library.search).toHaveBeenCalledWith('Frieren', ['series']);
     expect(await ask('library.search', ['Frieren'])).toEqual([A_PLUGIN_MEDIA_FOR_TEST]);
@@ -282,9 +285,15 @@ describe('the plugin broker', () => {
     const reader = build([{ kind: 'playlists', access: 'read' }]);
 
     expect(await reader.ask('playlists.list', ['p1'])).toEqual([{ id: 'pl1', name: 'Mine' }]);
+    expect(await reader.ask('playlists.read', ['p1', 'pl1'])).toEqual({
+      id: 'pl1',
+      name: 'Mine',
+      entries: [{ entryId: 'e1', mediaId: 'm1' }],
+    });
     await expect(reader.ask('playlists.create', ['p1', { name: 'New' }])).rejects.toThrow(
       'not write',
     );
+    await expect(reader.ask('playlists.drop', ['p1', 'pl1', 'e1'])).rejects.toThrow('not write');
 
     const writer = build([{ kind: 'playlists', access: 'write' }]);
 
@@ -304,6 +313,8 @@ describe('the plugin broker', () => {
       description: null,
     });
     expect(writer.host.playlists.add).toHaveBeenCalledWith('p1', 'pl2', ['t1', 't2']);
+    expect(await writer.ask('playlists.drop', ['p1', 'pl2', 'e1'])).toBeNull();
+    expect(writer.host.playlists.drop).toHaveBeenCalledWith('p1', 'pl2', 'e1');
   });
 
   it('sends notifications only with the notifications permission, signed with the plugin name', async () => {

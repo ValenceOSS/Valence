@@ -1,10 +1,16 @@
-import type { CatalogueHit, MediaRef, ProgressEntry } from '@ValenceSDK/host/ValenceHost';
+import type {
+  CatalogueHit,
+  MediaRef,
+  PlaylistContents,
+  ProgressEntry,
+} from '@ValenceSDK/host/ValenceHost';
 
 type PluginHost = {
   profiles: {
     read: (profileId: string) => Promise<{ id: string; name: string; accountId: string } | null>;
   };
   library: {
+    get: (mediaId: string) => Promise<MediaRef | null>;
     search: (query: string, kinds: readonly MediaRef['kind'][]) => Promise<MediaRef[]>;
     findByExternalId: (source: keyof MediaRef['externalIds'], id: string) => Promise<MediaRef[]>;
     episodes: (seriesId: string) => Promise<MediaRef[]>;
@@ -28,6 +34,8 @@ type PluginHost = {
       playlist: { name: string; description: string | null },
     ) => Promise<{ id: string }>;
     add: (profileId: string, playlistId: string, mediaIds: readonly string[]) => Promise<void>;
+    read: (profileId: string, playlistId: string) => Promise<PlaylistContents | null>;
+    drop: (profileId: string, playlistId: string, entryId: string) => Promise<void>;
   };
   music: {
     findTrack: (track: {

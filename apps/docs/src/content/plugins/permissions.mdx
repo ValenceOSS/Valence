@@ -26,7 +26,7 @@ Opens `valence.http.fetch` to exactly these hosts. `api.spotify.com` does not co
 { "kind": "library", "access": "read" }
 ```
 
-`access` is always `read`. Opens `valence.library.search`, `valence.library.findByExternalId`, `valence.library.episodes` and `valence.music.findTrack`. A plugin can never change the library.
+`access` is always `read`. Opens `valence.library.get`, `valence.library.search`, `valence.library.findByExternalId`, `valence.library.episodes` and `valence.music.findTrack`. A plugin can never change the library.
 
 ## viewing
 
@@ -50,7 +50,7 @@ Opens `valence.http.fetch` to exactly these hosts. `api.spotify.com` does not co
 { "kind": "playlists", "access": "write" }
 ```
 
-`access` is `read` or `write`. `read` opens `valence.playlists.list`. `write` also opens `valence.playlists.create` and `valence.playlists.add`. A plugin sees and changes only the playlists of the person it is acting for.
+`access` is `read` or `write`. `read` opens `valence.playlists.list` and `valence.playlists.read`. `write` also opens `valence.playlists.create`, `valence.playlists.add` and `valence.playlists.drop`. A plugin sees and changes only the playlists of the person it is acting for.
 
 ## storage
 

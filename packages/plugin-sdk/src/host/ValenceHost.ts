@@ -10,6 +10,9 @@ type MediaRef = {
   seriesId: string | null;
   seasonNumber: number | null;
   episodeNumber: number | null;
+  durationSeconds: number | null;
+  artist: string | null;
+  album: string | null;
   externalIds: Partial<
     Record<'tmdb' | 'tvdb' | 'imdb' | 'anilist' | 'mal' | 'musicbrainz' | 'isrc', string>
   >;
@@ -21,6 +24,12 @@ type ProgressEntry = {
   durationSeconds: number;
   isFinished: boolean;
   updatedAt: string;
+};
+
+type PlaylistContents = {
+  id: string;
+  name: string;
+  entries: { entryId: string; mediaId: string | null }[];
 };
 
 type CatalogueHit = {
@@ -78,6 +87,7 @@ type ValenceHost = {
   };
   profiles: { list: () => Promise<{ id: string; name: string }[]> };
   library: {
+    get: (mediaId: string) => Promise<MediaRef | null>;
     search: (query: string, kinds?: MediaRef['kind'][]) => Promise<MediaRef[]>;
     findByExternalId: (source: keyof MediaRef['externalIds'], id: string) => Promise<MediaRef[]>;
     episodes: (seriesId: string) => Promise<MediaRef[]>;
@@ -101,6 +111,8 @@ type ValenceHost = {
       playlist: { name: string; description?: string },
     ) => Promise<{ id: string }>;
     add: (profileId: string, playlistId: string, mediaIds: string[]) => Promise<void>;
+    read: (profileId: string, playlistId: string) => Promise<PlaylistContents | null>;
+    drop: (profileId: string, playlistId: string, entryId: string) => Promise<void>;
   };
   music: {
     findTrack: (track: {
@@ -115,4 +127,12 @@ type ValenceHost = {
   };
 };
 
-export type { CatalogueHit, MediaRef, ProgressEntry, Scalar, Stored, ValenceHost };
+export type {
+  CatalogueHit,
+  MediaRef,
+  PlaylistContents,
+  ProgressEntry,
+  Scalar,
+  Stored,
+  ValenceHost,
+};

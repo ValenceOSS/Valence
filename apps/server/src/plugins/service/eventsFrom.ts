@@ -21,6 +21,8 @@ const eventsFrom = (occurrence: WebhookOccurrence, at: string): PluginEvent[] =>
           occurredAt: at,
           profileId: occurrence.data.profileId,
           mediaId: occurrence.data.item.itemId,
+          positionSeconds: null,
+          durationSeconds: occurrence.data.item.durationSeconds,
         },
       ];
     case 'playback.stopped': {
@@ -30,6 +32,8 @@ const eventsFrom = (occurrence: WebhookOccurrence, at: string): PluginEvent[] =>
         occurredAt: at,
         profileId: occurrence.data.profileId,
         mediaId: occurrence.data.item.itemId,
+        positionSeconds,
+        durationSeconds,
       };
       const finished =
         positionSeconds !== null &&
@@ -47,10 +51,21 @@ const eventsFrom = (occurrence: WebhookOccurrence, at: string): PluginEvent[] =>
           occurredAt: at,
           profileId: null,
           mediaId: occurrence.data.itemId,
+          positionSeconds: null,
+          durationSeconds: null,
         },
       ];
     case 'library.scanned':
-      return [{ topic: 'library.scanned', occurredAt: at, profileId: null, mediaId: null }];
+      return [
+        {
+          topic: 'library.scanned',
+          occurredAt: at,
+          profileId: null,
+          mediaId: null,
+          positionSeconds: null,
+          durationSeconds: null,
+        },
+      ];
     case 'requests.available':
       return [
         {
@@ -58,6 +73,8 @@ const eventsFrom = (occurrence: WebhookOccurrence, at: string): PluginEvent[] =>
           occurredAt: at,
           profileId: null,
           mediaId: occurrence.data.mediaId,
+          positionSeconds: null,
+          durationSeconds: null,
         },
       ];
     case 'webhook.test':

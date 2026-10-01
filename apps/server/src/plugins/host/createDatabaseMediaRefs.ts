@@ -1,5 +1,7 @@
 import { and, asc, eq, inArray, isNull, or } from 'drizzle-orm';
 import {
+  book,
+  bookChapter,
   library,
   mediaItem,
   musicAlbum,
@@ -8,6 +10,7 @@ import {
   musicTrackArtist,
   series,
 } from '#dialect/Schema';
+import { AUDIOBOOK_FORMATS } from '@ValenceContracts/schemas/Book';
 import { containsInsensitively } from '@ValenceDatabase/containsInsensitively';
 import { likeLiterally } from '@ValenceDatabase/likeLiterally';
 import type { MediaRef } from '@ValenceSDK/host/ValenceHost';
@@ -16,7 +19,14 @@ import type { PluginHost } from '@ValenceServer/plugins/broker/PluginHost';
 
 const MOST_FOUND = 25;
 
-const ITEM_KINDS: readonly MediaRef['kind'][] = ['film', 'episode', 'track', 'book'];
+const EVERY_KIND: readonly MediaRef['kind'][] = [
+  'film',
+  'episode',
+  'track',
+  'series',
+  'album',
+  'book',
+];
 
 /**
  * What the library holds, in the one plain shape a plugin is shown: films, series, episodes,
@@ -36,6 +46,7 @@ const createDatabaseMediaRefs = (
     seriesId: mediaItem.seriesId,
     seasonNumber: mediaItem.seasonNumber,
     episodeNumber: mediaItem.episodeNumber,
+    durationSeconds: mediaItem.durationSeconds,
     externalId: mediaItem.externalId,
     imdbId: mediaItem.imdbId,
     libraryKind: library.kind,
@@ -48,6 +59,7 @@ const createDatabaseMediaRefs = (
     seriesId: string | null;
     seasonNumber: number | null;
     episodeNumber: number | null;
+    durationSeconds: number;
     externalId: string | null;
     imdbId: string | null;
     libraryKind: string;
@@ -61,8 +73,6 @@ const createDatabaseMediaRefs = (
         return 'episode';
       case 'music':
         return 'track';
-      case 'books':
-        return 'book';
       default:
         return null;
     }
@@ -83,11 +93,52 @@ const createDatabaseMediaRefs = (
       seriesId: row.seriesId,
       seasonNumber: row.seasonNumber,
       episodeNumber: row.episodeNumber,
+      durationSeconds: row.durationSeconds > 0 ? row.durationSeconds : null,
+      artist: null,
+      album: null,
       externalIds: {
         ...(kind === 'film' && row.externalId !== null ? { tmdb: row.externalId } : {}),
         ...(row.imdbId === null ? {} : { imdb: row.imdbId }),
       },
     };
+  };
+
+  const withCredits = async (refs: MediaRef[]): Promise<MediaRef[]> => {
+    const trackIds = refs.flatMap((ref) => (ref.kind === 'track' ? [ref.id] : []));
+
+    if (trackIds.length === 0) {
+      return refs;
+    }
+
+    const [albums, artists] = await Promise.all([
+      db
+        .select({
+          mediaItemId: musicTrack.mediaItemId,
+          album: musicAlbum.title,
+          albumArtist: musicArtist.name,
+        })
+        .from(musicTrack)
+        .innerJoin(musicAlbum, eq(musicAlbum.id, musicTrack.albumId))
+        .innerJoin(musicArtist, eq(musicArtist.id, musicAlbum.artistId))
+        .where(inArray(musicTrack.mediaItemId, trackIds)),
+      db
+        .select({ mediaItemId: musicTrackArtist.mediaItemId, name: musicArtist.name })
+        .from(musicTrackArtist)
+        .innerJoin(musicArtist, eq(musicArtist.id, musicTrackArtist.artistId))
+        .where(inArray(musicTrackArtist.mediaItemId, trackIds))
+        .orderBy(asc(musicTrackArtist.position)),
+    ]);
+
+    return refs.map((ref) => {
+      const onAlbum = albums.find((row) => row.mediaItemId === ref.id);
+      const firstCredited = artists.find((row) => row.mediaItemId === ref.id);
+
+      return {
+        ...ref,
+        artist: firstCredited?.name ?? onAlbum?.albumArtist ?? null,
+        album: onAlbum?.album ?? null,
+      };
+    });
   };
 
   const items = async (where: ReturnType<typeof and>): Promise<MediaRef[]> => {
@@ -99,7 +150,7 @@ const createDatabaseMediaRefs = (
       .orderBy(asc(mediaItem.title))
       .limit(MOST_FOUND);
 
-    return rows.flatMap((row) => asItemRef(row) ?? []);
+    return withCredits(rows.flatMap((row) => asItemRef(row) ?? []));
   };
 
   const seriesRefs = async (where: ReturnType<typeof and>): Promise<MediaRef[]> => {
@@ -118,6 +169,9 @@ const createDatabaseMediaRefs = (
       seriesId: null,
       seasonNumber: null,
       episodeNumber: null,
+      durationSeconds: null,
+      artist: null,
+      album: null,
       externalIds: row.externalId === null ? {} : { tmdb: row.externalId },
     }));
   };
@@ -128,9 +182,11 @@ const createDatabaseMediaRefs = (
         id: musicAlbum.id,
         title: musicAlbum.title,
         year: musicAlbum.year,
+        artist: musicArtist.name,
         musicbrainzId: musicAlbum.musicbrainzId,
       })
       .from(musicAlbum)
+      .innerJoin(musicArtist, eq(musicArtist.id, musicAlbum.artistId))
       .where(where)
       .orderBy(asc(musicAlbum.title))
       .limit(MOST_FOUND);
@@ -143,8 +199,57 @@ const createDatabaseMediaRefs = (
       seriesId: null,
       seasonNumber: null,
       episodeNumber: null,
+      durationSeconds: null,
+      artist: row.artist,
+      album: null,
       externalIds: row.musicbrainzId === null ? {} : { musicbrainz: row.musicbrainzId },
     }));
+  };
+
+  const bookRefs = async (where: ReturnType<typeof and>): Promise<MediaRef[]> => {
+    const rows = await db
+      .select({ id: book.id, title: book.title, year: book.year })
+      .from(book)
+      .where(where)
+      .orderBy(asc(book.title))
+      .limit(MOST_FOUND);
+
+    if (rows.length === 0) {
+      return [];
+    }
+
+    const heard = await db
+      .select({ bookId: bookChapter.bookId, durationSeconds: bookChapter.durationSeconds })
+      .from(bookChapter)
+      .where(
+        and(
+          inArray(
+            bookChapter.bookId,
+            rows.map((row) => row.id),
+          ),
+          inArray(bookChapter.format, [...AUDIOBOOK_FORMATS]),
+        ),
+      );
+
+    return rows.map((row) => {
+      const runningSeconds = heard
+        .filter((track) => track.bookId === row.id)
+        .reduce((all, track) => all + (track.durationSeconds ?? 0), 0);
+
+      return {
+        id: row.id,
+        kind: 'book',
+        title: row.title,
+        year: row.year,
+        seriesId: null,
+        seasonNumber: null,
+        episodeNumber: null,
+        durationSeconds: runningSeconds > 0 ? runningSeconds : null,
+        artist: null,
+        album: null,
+        externalIds: {},
+      };
+    });
   };
 
   const libraryKindsFor = (kinds: readonly MediaRef['kind'][]): string[] =>
@@ -156,18 +261,43 @@ const createDatabaseMediaRefs = (
           return ['shows'];
         case 'track':
           return ['music'];
-        case 'book':
-          return ['books'];
         case 'series':
         case 'album':
+        case 'book':
           return [];
       }
     });
 
   return {
+    get: async (mediaId) => {
+      const [item] = await db
+        .select({ parentId: mediaItem.parentId, extraKind: mediaItem.extraKind })
+        .from(mediaItem)
+        .where(eq(mediaItem.id, mediaId))
+        .limit(1);
+
+      if (item !== undefined) {
+        if (item.extraKind !== null) {
+          return null;
+        }
+
+        const [found] = await items(eq(mediaItem.id, item.parentId ?? mediaId));
+
+        return found ?? null;
+      }
+
+      const [found] = (
+        await Promise.all([
+          seriesRefs(eq(series.id, mediaId)),
+          albumRefs(eq(musicAlbum.id, mediaId)),
+          bookRefs(eq(book.id, mediaId)),
+        ])
+      ).flat();
+
+      return found ?? null;
+    },
     search: async (query, kinds) => {
-      const wanted: readonly MediaRef['kind'][] =
-        kinds.length === 0 ? [...ITEM_KINDS, 'series', 'album'] : kinds;
+      const wanted: readonly MediaRef['kind'][] = kinds.length === 0 ? EVERY_KIND : kinds;
       const pattern = `%${likeLiterally(query)}%`;
       const itemKinds = libraryKindsFor(wanted);
       const found = await Promise.all([
@@ -184,6 +314,9 @@ const createDatabaseMediaRefs = (
           : Promise.resolve([]),
         wanted.includes('album')
           ? albumRefs(containsInsensitively(musicAlbum.title, pattern))
+          : Promise.resolve([]),
+        wanted.includes('book')
+          ? bookRefs(containsInsensitively(book.title, pattern))
           : Promise.resolve([]),
       ]);
 
@@ -249,8 +382,15 @@ const createDatabaseMediaRefs = (
           ? undefined
           : rows.find((row) => row.album.toLowerCase() === track.album?.toLowerCase());
       const chosen = onAlbum ?? rows[0];
+      const ref = chosen === undefined ? null : asItemRef(chosen);
 
-      return chosen === undefined ? null : asItemRef(chosen);
+      if (ref === null) {
+        return null;
+      }
+
+      const [credited] = await withCredits([ref]);
+
+      return credited ?? null;
     },
   };
 };

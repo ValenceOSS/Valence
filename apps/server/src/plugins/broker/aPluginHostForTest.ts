@@ -15,6 +15,7 @@ const aPluginHostForTest = (): PluginHost => ({
     ),
   },
   library: {
+    get: vi.fn(() => Promise.resolve(A_PLUGIN_MEDIA_FOR_TEST)),
     search: vi.fn(() => Promise.resolve([A_PLUGIN_MEDIA_FOR_TEST])),
     findByExternalId: vi.fn(() => Promise.resolve([A_PLUGIN_MEDIA_FOR_TEST])),
     episodes: vi.fn(() => Promise.resolve([A_PLUGIN_MEDIA_FOR_TEST])),
@@ -32,6 +33,14 @@ const aPluginHostForTest = (): PluginHost => ({
     list: vi.fn(() => Promise.resolve([{ id: 'pl1', name: 'Mine' }])),
     create: vi.fn(() => Promise.resolve({ id: 'pl2' })),
     add: vi.fn(() => Promise.resolve()),
+    read: vi.fn((_profileId: string, playlistId: string) =>
+      Promise.resolve({
+        id: playlistId,
+        name: 'Mine',
+        entries: [{ entryId: 'e1', mediaId: 'm1' }],
+      }),
+    ),
+    drop: vi.fn(() => Promise.resolve()),
   },
   music: { findTrack: vi.fn(() => Promise.resolve(null)) },
   notifications: { send: vi.fn(() => Promise.resolve()) },
