@@ -19,6 +19,7 @@ import type { ACardProps } from './ACard.types';
  * @param media - What it is.
  * @param asProgramme - Whether an episode stands for its programme here.
  * @param watched - How much of it has been seen.
+ * @param count - How many episodes of its programme are left to watch, where it stands for one.
  * @param wide - How wide to draw it, where it fills a cell of a grid.
  * @param isStill - Whether it lies flat on a still from it rather than standing on its poster.
  * @param look - Whether it is drawn as a poster with its name beneath, or as its backdrop alone with
@@ -31,6 +32,7 @@ const ACard = ({
   media,
   asProgramme,
   watched = 0,
+  count = 0,
   wide,
   isStill = false,
   look = 'poster',
@@ -70,6 +72,7 @@ const ACard = ({
           year={showId === null && !isAnEpisode ? media.year : null}
           artwork={isStill ? theStillFor(media) : theArtworkFor(media)}
           watched={showId === null ? watched : 0}
+          count={showId === null ? 0 : count}
           isStill={isStill}
           detail={detail}
           {...(wide === undefined ? {} : { wide })}

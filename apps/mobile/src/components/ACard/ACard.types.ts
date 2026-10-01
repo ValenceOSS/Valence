@@ -4,6 +4,7 @@ type ACardProps = {
   media: MediaSummary;
   asProgramme: boolean;
   watched?: number;
+  count?: number;
   wide?: number;
   isStill?: boolean;
   look?: 'poster' | 'art';

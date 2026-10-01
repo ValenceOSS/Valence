@@ -1,10 +1,13 @@
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { BrowseOrder } from '@ValenceClient/library/BrowseOrder';
+import { collapseToShows } from '@ValenceClient/library/pickFeatured';
+import { unwatchedByShow } from '@ValenceClient/library/unwatchedByShow';
+import { addedAtMs } from '@ValenceCore/functions/addedAtMs';
 
 type Arranging = {
   order: BrowseOrder;
   isHidingWatched: boolean;
-  isWatched: (item: MediaSummary) => boolean;
+  isFinished: (mediaId: string) => boolean;
 };
 
 /**
@@ -18,22 +21,69 @@ const releasedOn = (item: MediaSummary): string =>
   item.releaseDate ?? (item.year === null ? '' : `${item.year.toString()}-01-01`);
 
 /**
- * Puts a page of the library in the order somebody chose, leaving out what they have already
- * watched where they asked to. Newest first for dates, largest first for size and best first for
- * rating, since those are the ends people look for; titles run A to Z. Anything missing what it is
- * being sorted by goes to the end rather than the start, and ties keep their title order.
+ * The programme an episode belongs to, keyed as programmes are gathered everywhere else.
  *
- * @param items - What the page holds.
- * @param arranging - The order, whether to leave out what has been watched, and how to tell.
- * @returns The items to show, in that order.
+ * @param item - A film or an episode.
+ * @returns The programme, or null for a film.
+ */
+const showOf = (item: MediaSummary): string | null => item.seriesId ?? item.seriesTitle ?? null;
+
+/**
+ * When the newest episode of each programme arrived, which is when the programme last changed.
+ *
+ * @param items - Every film and episode there is.
+ * @returns The newest arrival, by programme.
+ */
+const newestByShow = (items: readonly MediaSummary[]): Map<string, number> => {
+  const newest = new Map<string, number>();
+
+  for (const item of items) {
+    const show = showOf(item);
+
+    if (show !== null) {
+      newest.set(show, Math.max(newest.get(show) ?? 0, addedAtMs(item.addedAt)));
+    }
+  }
+
+  return newest;
+};
+
+/**
+ * Puts a page of the library in the order somebody chose, one card to a programme, leaving out what
+ * they have already watched where they asked to. Newest first for dates, largest first for size and
+ * best first for rating; titles run A to Z, a programme by its own name. A programme counts as added
+ * when its newest episode was, and as watched when nothing of it is left. Anything missing what it
+ * is sorted by goes last, and ties keep their title order.
+ *
+ * @param items - Every film or episode the page holds.
+ * @param arranging - The order, whether to leave out what has been watched, and what has been.
+ * @returns The cards to show, in that order.
  */
 const arrangeForBrowsing = (
   items: readonly MediaSummary[],
-  { order, isHidingWatched, isWatched }: Arranging,
+  { order, isHidingWatched, isFinished }: Arranging,
 ): MediaSummary[] => {
-  const kept = isHidingWatched ? items.filter((item) => !isWatched(item)) : [...items];
+  const newest = newestByShow(items);
+  const left = isHidingWatched ? unwatchedByShow(items, isFinished) : null;
+  const cards = collapseToShows(items);
+  const kept =
+    left === null
+      ? cards
+      : cards.filter((card) => {
+          const show = showOf(card);
+
+          return show === null ? !isFinished(card.id) : left.get(show) !== 0;
+        });
+  const addedOn = (card: MediaSummary): number => {
+    const show = showOf(card);
+
+    return (show === null ? undefined : newest.get(show)) ?? addedAtMs(card.addedAt);
+  };
   const byTitle = (left: MediaSummary, right: MediaSummary) =>
-    left.title.localeCompare(right.title, undefined, { sensitivity: 'base', numeric: true });
+    (left.seriesTitle ?? left.title).localeCompare(right.seriesTitle ?? right.title, undefined, {
+      sensitivity: 'base',
+      numeric: true,
+    });
   const descending = (left: number | string | null, right: number | string | null) => {
     if (left === right) {
       return 0;
@@ -53,7 +103,7 @@ const arrangeForBrowsing = (
   return kept.sort((left, right) => {
     const first =
       order === 'added'
-        ? descending(left.addedAt, right.addedAt)
+        ? descending(addedOn(left), addedOn(right))
         : order === 'released'
           ? descending(releasedOn(left), releasedOn(right))
           : order === 'rating'

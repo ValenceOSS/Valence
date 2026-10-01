@@ -1,6 +1,14 @@
 import { fireEvent, render, userEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
+import { viewingQueries } from '@ValenceClient/query/viewingQueries';
+import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
+import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
+import {
+  readBrowseArrangement,
+  saveBrowseArrangement,
+} from '@ValenceClient/library/browseArrangementPreference';
+import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 import { Catalogue } from '@ValenceTv/screens/Catalogue/Catalogue';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 
@@ -24,17 +32,20 @@ const aMedia = (overrides: Partial<MediaSummary> = {}): MediaSummary => ({
   ...overrides,
 });
 
-const aCacheHolding = (kind: 'films' | 'shows', items: MediaSummary[] | null): QueryClient => {
+const aCacheHolding = (
+  kind: 'films' | 'shows',
+  items: MediaSummary[] | null,
+  progress: WatchProgress[],
+): QueryClient => {
   const cache = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity, gcTime: Infinity } },
   });
 
   if (items !== null) {
-    cache.setQueryData(
-      libraryQueries.everything([LIBRARY], { kind, order: 'title' }).queryKey,
-      items,
-    );
+    cache.setQueryData(libraryQueries.everything([LIBRARY], { kind }).queryKey, items);
   }
+
+  cache.setQueryData(viewingQueries.progress().queryKey, progress);
 
   return cache;
 };
@@ -45,9 +56,10 @@ const drawCatalogue = async (
   kind: 'films' | 'shows',
   items: MediaSummary[] | null,
   told: { onOpen?: (media: MediaSummary) => void; onFeature?: (media: MediaSummary) => void } = {},
+  progress: WatchProgress[] = [],
 ) => {
   const drawn = await render(
-    <QueryClientProvider client={aCacheHolding(kind, items)}>
+    <QueryClientProvider client={aCacheHolding(kind, items, progress)}>
       <Catalogue
         kind={kind}
         watchable={[LIBRARY]}
@@ -66,11 +78,74 @@ const drawCatalogue = async (
 };
 
 beforeEach(() => {
+  installPlatform(aFakePlatform());
   jest.spyOn(global, 'fetch').mockImplementation(() => new Promise(() => undefined));
 });
 
 afterEach(() => {
   jest.restoreAllMocks();
+  forgetPlatform();
+});
+
+const posters = (drawn: Awaited<ReturnType<typeof drawCatalogue>>, names: readonly string[]) => {
+  const every = drawn.getAllByRole('button');
+  const at = (name: string) =>
+    every.indexOf(drawn.getByRole('button', { name: new RegExp(`^${name}`) }));
+
+  return names
+    .filter((name) => drawn.queryByRole('button', { name: new RegExp(`^${name}`) }) !== null)
+    .sort((left, right) => at(left) - at(right));
+};
+
+const FIRST_IN = aMedia({
+  id: '00000000-0000-4000-8000-000000000011',
+  title: 'First In',
+  addedAt: '2026-03-01T00:00:00.000Z',
+});
+
+const LAST_IN = aMedia({
+  id: '00000000-0000-4000-8000-000000000012',
+  title: 'Last In',
+  addedAt: '2026-05-01T00:00:00.000Z',
+});
+
+const LONG_RUNNING = [
+  aMedia({
+    id: '00000000-0000-4000-8000-000000000021',
+    title: 'Pilot',
+    seriesId: 'long',
+    seriesTitle: 'Long Running',
+    seasonNumber: 1,
+    episodeNumber: 1,
+    addedAt: '2025-01-01T00:00:00.000Z',
+  }),
+  aMedia({
+    id: '00000000-0000-4000-8000-000000000022',
+    title: 'Return',
+    seriesId: 'long',
+    seriesTitle: 'Long Running',
+    seasonNumber: 2,
+    episodeNumber: 1,
+    addedAt: '2026-06-01T00:00:00.000Z',
+  }),
+];
+
+const ALREADY_OVER = aMedia({
+  id: '00000000-0000-4000-8000-000000000023',
+  title: 'Beginnings',
+  seriesId: 'over',
+  seriesTitle: 'Already Over',
+  seasonNumber: 1,
+  episodeNumber: 1,
+  addedAt: '2026-03-01T00:00:00.000Z',
+});
+
+const FINISHED = (mediaId: string): WatchProgress => ({
+  mediaId,
+  positionSeconds: 6960,
+  durationSeconds: 6960,
+  isFinished: true,
+  updatedAt: '2026-09-19T00:00:00.000Z',
 });
 
 describe('Catalogue', () => {
@@ -152,5 +227,61 @@ describe('Catalogue', () => {
     await waitFor(() => {
       expect(onFeature).toHaveBeenLastCalledWith(dune);
     });
+  });
+
+  it('puts what arrived most recently first until another order is chosen', async () => {
+    const drawn = await drawCatalogue('films', [FIRST_IN, LAST_IN]);
+
+    expect(posters(drawn, ['First In', 'Last In'])).toEqual(['Last In', 'First In']);
+  });
+
+  it('orders the page as chosen, and remembers it for that page on this television', async () => {
+    const drawn = await drawCatalogue('films', [FIRST_IN, LAST_IN]);
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Title' }));
+
+    expect(posters(drawn, ['First In', 'Last In'])).toEqual(['First In', 'Last In']);
+    expect(readBrowseArrangement('films')).toEqual({ order: 'title', isHidingWatched: false });
+    expect(readBrowseArrangement('shows')).toEqual({ order: 'added', isHidingWatched: false });
+  });
+
+  it('opens in the order this page was left in', async () => {
+    saveBrowseArrangement('films', { order: 'title', isHidingWatched: false });
+
+    const drawn = await drawCatalogue('films', [FIRST_IN, LAST_IN]);
+
+    expect(posters(drawn, ['First In', 'Last In'])).toEqual(['First In', 'Last In']);
+  });
+
+  it('puts a programme first when a new episode of it arrives', async () => {
+    const drawn = await drawCatalogue('shows', [...LONG_RUNNING, ALREADY_OVER]);
+
+    expect(posters(drawn, ['Already Over', 'Long Running'])).toEqual([
+      'Long Running',
+      'Already Over',
+    ]);
+  });
+
+  it('leaves out what has been watched while asked to, and says so when that is everything', async () => {
+    const drawn = await drawCatalogue('films', [FIRST_IN, LAST_IN], {}, [FINISHED(LAST_IN.id)]);
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Only what you have not watched' }));
+
+    expect(posters(drawn, ['First In', 'Last In'])).toEqual(['First In']);
+    expect(readBrowseArrangement('films').isHidingWatched).toBe(true);
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Only what you have not watched' }));
+
+    expect(posters(drawn, ['First In', 'Last In'])).toEqual(['Last In', 'First In']);
+  });
+
+  it('says everything has been watched rather than that there is nothing here', async () => {
+    saveBrowseArrangement('films', { order: 'added', isHidingWatched: true });
+
+    const drawn = await drawCatalogue('films', [FIRST_IN], {}, [FINISHED(FIRST_IN.id)]);
+
+    expect(drawn.getByText('You have watched everything here.')).toBeTruthy();
+    expect(drawn.queryByText('There are no films here yet.')).toBeNull();
+    expect(drawn.getByRole('button', { name: 'Only what you have not watched' })).toBeTruthy();
   });
 });

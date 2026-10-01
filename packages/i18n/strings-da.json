@@ -3895,6 +3895,11 @@
     "context": "The label, used in several places, among them the downloads panel (from `describeClientState`) and the indexers panel (from `describeIndexerState`)."
   },
   {
+    "handler": "common.onlyWhatYouHaveNotWatched",
+    "text": "Only what you have not watched",
+    "context": "The choice that leaves out what somebody has watched from a page of films or shows, on the web, the phone and the television."
+  },
+  {
     "handler": "common.onThisDevice",
     "text": "On this device",
     "context": "A heading, used in the offline app and in the choose episodes in the show dialog."
@@ -4383,6 +4388,11 @@
     "handler": "common.releaseChosen",
     "text": "Release chosen",
     "context": "Shown, used in several places, among them the requests (from `describeItemBadge`) and the requests (from `describeRequestBadge`)."
+  },
+  {
+    "handler": "common.releaseDate",
+    "text": "Release date",
+    "context": "The name of an order a page of films or shows can be sorted in, on the web, the phone and the television."
   },
   {
     "handler": "common.releases",
@@ -5828,6 +5838,11 @@
     "handler": "common.yesThatIsMine",
     "text": "Yes, that is mine",
     "context": "The label of a button, used in the sign in a television in the devices of the phone app and in the device approval."
+  },
+  {
+    "handler": "common.youHaveWatchedEverythingHere",
+    "text": "You have watched everything here.",
+    "context": "Shown on a page of films or shows, on the phone and the television, when only what somebody has not watched is shown and they have watched all of it."
   },
   {
     "handler": "common.yourAccountAsksForACode",
@@ -16312,11 +16327,6 @@
     "context": "The empty in the browse area."
   },
   {
-    "handler": "screens.browseArea.onlyWhatYouHaveNotWatched",
-    "text": "Only what you have not watched",
-    "context": "The label in the browse area."
-  },
-  {
     "handler": "screens.browseArea.orderTitle",
     "text": "Order {title}",
     "context": "The label of a option menu in the browse area. {title} is filled in by the app."
@@ -16325,11 +16335,6 @@
     "handler": "screens.browseArea.readingTitle",
     "text": "Reading {title}",
     "context": "The label of a spinner in the browse area. {title} is filled in by the app."
-  },
-  {
-    "handler": "screens.browseArea.releaseDate",
-    "text": "Release date",
-    "context": "Shown in the browse area."
   },
   {
     "handler": "screens.browseArea.titleCouldNotBeRead",

@@ -48,6 +48,34 @@ describe('ACard', () => {
     expect(onLookAtShow).toHaveBeenCalledWith(anEpisode.libraryId, expect.any(String));
   });
 
+  it('says how many episodes of its programme are left, where it stands for one', async () => {
+    const drawn = await render(
+      <ACard
+        media={anEpisode}
+        asProgramme
+        count={3}
+        onLookAt={jest.fn()}
+        onLookAtShow={jest.fn()}
+      />,
+    );
+
+    expect(drawn.getByLabelText('3 episodes left')).toBeTruthy();
+  });
+
+  it('counts nothing on an episode standing for itself', async () => {
+    const drawn = await render(
+      <ACard
+        media={anEpisode}
+        asProgramme={false}
+        count={3}
+        onLookAt={jest.fn()}
+        onLookAtShow={jest.fn()}
+      />,
+    );
+
+    expect(drawn.queryByLabelText('3 episodes left')).toBeNull();
+  });
+
   it('names an episode drawn as a still for its programme, and says which episode it is', async () => {
     const onLookAt = jest.fn();
     const drawn = await render(

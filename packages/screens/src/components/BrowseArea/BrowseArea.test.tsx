@@ -279,6 +279,50 @@ describe('BrowseArea', () => {
 });
 
 describe('how a page of the library is laid out', () => {
+  it('puts a programme first when a new episode of it arrives, drawn as its first episode', async () => {
+    const episode = (over: Partial<MediaSummary>): MediaSummary => ({
+      ...item('episode', 'Pilot'),
+      seasonNumber: 1,
+      episodeNumber: 1,
+      ...over,
+    });
+
+    fetchLibraryItems.mockReset().mockResolvedValue({
+      items: [
+        episode({
+          id: 'over-1',
+          seriesId: 'over',
+          seriesTitle: 'Already Over',
+          addedAt: '2026-03-01T00:00:00.000Z',
+        }),
+        episode({
+          id: 'long-1',
+          seriesId: 'long',
+          seriesTitle: 'Long Running',
+          addedAt: '2025-01-01T00:00:00.000Z',
+        }),
+        episode({
+          id: 'long-2',
+          title: 'Return',
+          seriesId: 'long',
+          seriesTitle: 'Long Running',
+          seasonNumber: 2,
+          addedAt: '2026-06-01T00:00:00.000Z',
+        }),
+      ],
+      total: 3,
+    });
+
+    renderInAnAddress(<BrowseArea kind="shows" onPlay={vi.fn()} onInspect={vi.fn()} />);
+
+    await vi.waitFor(() => {
+      expect(
+        screen.getAllByText(/^(Long Running|Already Over)$/).map((title) => title.textContent),
+      ).toEqual(['Long Running', 'Already Over']);
+    });
+    expect(screen.queryByText('Return')).toBeNull();
+  });
+
   it('offers to narrow the films by genre, decade and rating, and asks the libraries for it', async () => {
     const user = userEvent.setup();
 

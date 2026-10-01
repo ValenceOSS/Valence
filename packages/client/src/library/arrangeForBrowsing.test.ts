@@ -50,7 +50,7 @@ const arranged = (order: Parameters<typeof arrangeForBrowsing>[1]['order']) =>
     arrangeForBrowsing([ARRIVAL, HEAT, DUNE], {
       order,
       isHidingWatched: false,
-      isWatched: () => false,
+      isFinished: () => false,
     }),
   );
 
@@ -73,16 +73,16 @@ describe('arrangeForBrowsing', () => {
   });
 
   it('leaves out what has been watched only where asked to', () => {
-    const isWatched = (item: MediaSummary) => item.title === 'Heat';
+    const isFinished = (mediaId: string) => mediaId === HEAT.id;
 
     expect(
       titles(
-        arrangeForBrowsing([ARRIVAL, HEAT], { order: 'title', isHidingWatched: true, isWatched }),
+        arrangeForBrowsing([ARRIVAL, HEAT], { order: 'title', isHidingWatched: true, isFinished }),
       ),
     ).toEqual(['Arrival']);
     expect(
       titles(
-        arrangeForBrowsing([ARRIVAL, HEAT], { order: 'title', isHidingWatched: false, isWatched }),
+        arrangeForBrowsing([ARRIVAL, HEAT], { order: 'title', isHidingWatched: false, isFinished }),
       ),
     ).toEqual(['Arrival', 'Heat']);
   });
@@ -90,8 +90,89 @@ describe('arrangeForBrowsing', () => {
   it('leaves the list it was handed as it was', () => {
     const handed = [HEAT, ARRIVAL];
 
-    arrangeForBrowsing(handed, { order: 'title', isHidingWatched: false, isWatched: () => false });
+    arrangeForBrowsing(handed, { order: 'title', isHidingWatched: false, isFinished: () => false });
 
     expect(titles(handed)).toEqual(['Heat', 'Arrival']);
+  });
+
+  describe('programmes', () => {
+    const anEpisode = (over: Partial<MediaSummary>): MediaSummary =>
+      aFilm({ libraryId: 'shows', seasonNumber: 1, episodeNumber: 1, ...over });
+    const LONG_RUNNING = [
+      anEpisode({
+        id: 'long-1',
+        title: 'Pilot',
+        seriesId: 'long',
+        seriesTitle: 'Long Running',
+        addedAt: '2025-01-01T00:00:00.000Z',
+      }),
+      anEpisode({
+        id: 'long-2',
+        title: 'Return',
+        seriesId: 'long',
+        seriesTitle: 'Long Running',
+        seasonNumber: 2,
+        addedAt: '2026-06-01T00:00:00.000Z',
+      }),
+    ];
+    const ALREADY_OVER = [
+      anEpisode({
+        id: 'over-1',
+        title: 'Beginnings',
+        seriesId: 'over',
+        seriesTitle: 'Already Over',
+        addedAt: '2026-03-01T00:00:00.000Z',
+      }),
+    ];
+    const every = [...LONG_RUNNING, ...ALREADY_OVER];
+    const ids = (items: MediaSummary[]) => items.map((item) => item.id);
+
+    it("puts a programme by its newest episode, ahead of another's first that arrived since its own first", () => {
+      expect(
+        ids(
+          arrangeForBrowsing(every, {
+            order: 'added',
+            isHidingWatched: false,
+            isFinished: () => false,
+          }),
+        ),
+      ).toEqual(['long-1', 'over-1']);
+    });
+
+    it('draws a programme once, as its first episode, however it is sorted', () => {
+      for (const order of ['added', 'released', 'title', 'rating', 'size'] as const) {
+        expect(
+          arrangeForBrowsing(every, { order, isHidingWatched: false, isFinished: () => false })
+            .map((item) => item.id)
+            .sort(),
+        ).toEqual(['long-1', 'over-1']);
+      }
+    });
+
+    it("runs programmes A to Z by their own name rather than their first episode's", () => {
+      expect(
+        ids(
+          arrangeForBrowsing(every, {
+            order: 'title',
+            isHidingWatched: false,
+            isFinished: () => false,
+          }),
+        ),
+      ).toEqual(['over-1', 'long-1']);
+    });
+
+    it('leaves out a programme only once every episode of it has been watched', () => {
+      const arranged = (finished: readonly string[]) =>
+        ids(
+          arrangeForBrowsing(every, {
+            order: 'title',
+            isHidingWatched: true,
+            isFinished: (mediaId) => finished.includes(mediaId),
+          }),
+        );
+
+      expect(arranged(['long-1'])).toEqual(['over-1', 'long-1']);
+      expect(arranged(['long-1', 'long-2'])).toEqual(['over-1']);
+    });
   });
 });
