@@ -144,15 +144,27 @@ describe('SignedIn', () => {
     });
   });
 
-  it('forgets the pictures it kept once somebody signs out', async () => {
-    const emptyingDisk = jest.spyOn(Image, 'clearDiskCache');
-    const drawn = await render(around(<SignedIn onOut={jest.fn()} onElsewhere={jest.fn()} />));
+  it('forgets the pictures it kept before saying somebody has signed out', async () => {
+    const happened: string[] = [];
+    jest.spyOn(Image, 'clearDiskCache').mockImplementationOnce(
+      () =>
+        new Promise((emptied) => {
+          setTimeout(() => {
+            happened.push('emptied');
+            emptied(true);
+          }, 10);
+        }),
+    );
+    const onOut = jest.fn(() => {
+      happened.push('out');
+    });
+    const drawn = await render(around(<SignedIn onOut={onOut} onElsewhere={jest.fn()} />));
 
     await userEvent.press(await drawn.findByText('Account'));
     await userEvent.press(await drawn.findByText('Sign out'));
 
     await waitFor(() => {
-      expect(emptyingDisk).toHaveBeenCalled();
+      expect(happened).toEqual(['emptied', 'out']);
     });
   });
 

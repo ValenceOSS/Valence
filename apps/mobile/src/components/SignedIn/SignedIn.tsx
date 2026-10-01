@@ -360,10 +360,11 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
         shown={shown}
         onShow={onShow}
         onOut={() => {
-          void signOut().then(() => {
-            void forgetThePictures();
-            latest.get('now')?.onOut();
-          });
+          void signOut()
+            .then(forgetThePictures)
+            .then(() => {
+              latest.get('now')?.onOut();
+            });
         }}
         onElsewhere={() => {
           latest.get('now')?.onElsewhere();
