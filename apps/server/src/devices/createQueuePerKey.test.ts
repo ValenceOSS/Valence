@@ -1,58 +1,79 @@
 import { describe, expect, it } from 'vitest';
 import { createQueuePerKey } from './createQueuePerKey';
 
-const after = (ms: number): Promise<void> =>
-  new Promise((resolve) => {
-    setTimeout(resolve, ms);
+/**
+ * A promise the test settles by hand, so it decides when a piece of work finishes.
+ *
+ * @returns The promise, and how to settle it either way.
+ */
+const aDeferred = () => {
+  let resolve: () => void = () => undefined;
+  let reject: (reason: Error) => void = () => undefined;
+  const promise = new Promise<void>((settle, fail) => {
+    resolve = settle;
+    reject = fail;
   });
 
+  return { promise, resolve, reject };
+};
+
 describe('createQueuePerKey', () => {
-  it('finishes one key’s work in the order it was given, however long each piece takes', async () => {
+  it('starts one key’s next piece of work only once the one before it has finished', async () => {
     const queue = createQueuePerKey();
-    const done: string[] = [];
+    const first = aDeferred();
+    const secondDone = aDeferred();
+    const started: string[] = [];
 
-    queue('phone', async () => {
-      await after(20);
-      done.push('started');
-    });
-    queue('phone', async () => {
-      await after(1);
-      done.push('stopped');
-    });
-    await after(40);
+    queue('phone', () => {
+      started.push('started');
 
-    expect(done).toEqual(['started', 'stopped']);
+      return first.promise;
+    });
+    queue('phone', () => {
+      started.push('stopped');
+      secondDone.resolve();
+
+      return Promise.resolve();
+    });
+    await Promise.resolve();
+
+    expect(started).toEqual(['started']);
+
+    first.resolve();
+    await secondDone.promise;
+
+    expect(started).toEqual(['started', 'stopped']);
   });
 
   it('does not hold one key’s work up behind another’s', async () => {
     const queue = createQueuePerKey();
-    const done: string[] = [];
+    const phone = aDeferred();
+    const laptopDone = aDeferred();
 
-    queue('phone', async () => {
-      await after(20);
-      done.push('phone');
-    });
-    queue('laptop', async () => {
-      await after(1);
-      done.push('laptop');
-    });
-    await after(40);
+    queue('phone', () => phone.promise);
+    queue('laptop', () => {
+      laptopDone.resolve();
 
-    expect(done).toEqual(['laptop', 'phone']);
+      return Promise.resolve();
+    });
+
+    await laptopDone.promise;
+    phone.resolve();
   });
 
   it('carries on past a piece of work that fails', async () => {
     const queue = createQueuePerKey();
-    const done: string[] = [];
+    const failing = aDeferred();
+    const nextDone = aDeferred();
 
-    queue('phone', () => Promise.reject(new Error('the book had gone')));
+    queue('phone', () => failing.promise);
     queue('phone', () => {
-      done.push('stopped');
+      nextDone.resolve();
 
       return Promise.resolve();
     });
-    await after(5);
+    failing.reject(new Error('the book had gone'));
 
-    expect(done).toEqual(['stopped']);
+    await nextDone.promise;
   });
 });
