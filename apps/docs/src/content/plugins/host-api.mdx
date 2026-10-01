@@ -67,6 +67,8 @@ type PluginEvent = {
   occurredAt: string;
   profileId: string | null;
   mediaId: string | null;
+  positionSeconds: number | null;
+  durationSeconds: number | null;
 };
 ```
 
@@ -157,11 +159,12 @@ The profiles the plugin may act for: those that connected an account to it or us
 
 ### library
 
-| Method                                 | Returns               | Permission |
-| -------------------------------------- | --------------------- | ---------- |
-| `library.search(query, kinds?)`        | `Promise<MediaRef[]>` | `library`  |
-| `library.findByExternalId(source, id)` | `Promise<MediaRef[]>` | `library`  |
-| `library.episodes(seriesId)`           | `Promise<MediaRef[]>` | `library`  |
+| Method                                 | Returns                     | Permission |
+| -------------------------------------- | --------------------------- | ---------- |
+| `library.get(mediaId)`                 | `Promise<MediaRef \| null>` | `library`  |
+| `library.search(query, kinds?)`        | `Promise<MediaRef[]>`       | `library`  |
+| `library.findByExternalId(source, id)` | `Promise<MediaRef[]>`       | `library`  |
+| `library.episodes(seriesId)`           | `Promise<MediaRef[]>`       | `library`  |
 
 ```ts
 type MediaRef = {
@@ -172,11 +175,18 @@ type MediaRef = {
   seriesId: string | null;
   seasonNumber: number | null;
   episodeNumber: number | null;
+  durationSeconds: number | null;
+  artist: string | null;
+  album: string | null;
   externalIds: Partial<
     Record<'tmdb' | 'tvdb' | 'imdb' | 'anilist' | 'mal' | 'musicbrainz' | 'isrc', string>
   >;
 };
 ```
+
+`get` reads one thing by its Valence id: the id an event carries, or one a plugin kept from an earlier call. Another version of a film reads as the film, and an extra such as a trailer reads as `null`. An episode's `seriesId` reads the series, with the ids it is known by elsewhere. `get` is new in plugin API 1.1, so a plugin that calls it declares `"apiVersion": "^1.1"`.
+
+`durationSeconds` is how long a film, episode, track or audiobook runs, and `null` for anything without a running time: a series, an album or an ebook. `artist` and `album` are filled for music: a track gives the artist credited first and the album it is on, and an album gives its artist. Everything else gives `null` for both.
 
 `kinds` narrows a search to some kinds. `source` is one of the `externalIds` keys.
 
@@ -228,6 +238,18 @@ type CatalogueHit = {
 | `playlists.list(profileId)`                           | `Promise<{ id: string; name: string }[]>` | `playlists`        |
 | `playlists.create(profileId, { name, description? })` | `Promise<{ id: string }>`                 | `playlists: write` |
 | `playlists.add(profileId, playlistId, mediaIds)`      | `Promise<void>`                           | `playlists: write` |
+| `playlists.read(profileId, playlistId)`               | `Promise<PlaylistContents \| null>`       | `playlists`        |
+| `playlists.drop(profileId, playlistId, entryId)`      | `Promise<void>`                           | `playlists: write` |
+
+```ts
+type PlaylistContents = {
+  id: string;
+  name: string;
+  entries: { entryId: string; mediaId: string | null }[];
+};
+```
+
+`read` gives a playlist's entries in order, or `null` where it is not one of theirs. An entry's `mediaId` is `null` where the thing it named has left the library. `drop` takes one entry out by its `entryId`, so a playlist holding the same song twice loses only the one named. Both are new in plugin API 1.1.
 
 ### music
 
@@ -235,7 +257,7 @@ type CatalogueHit = {
 | --------------------------------------------------- | --------------------------- | ---------- |
 | `music.findTrack({ title, artist, album?, isrc? })` | `Promise<MediaRef \| null>` | `library`  |
 
-Finds a track already in the library. An `isrc` match wins; otherwise title and artist are matched loosely, the way Valence matches its own tags.
+Finds a track already in the library by its title and artist, matched loosely, the way Valence matches its own tags, and preferring the one on `album` where several match. Valence does not keep ISRCs, so `isrc` is accepted but not used to match.
 
 ### notifications
 

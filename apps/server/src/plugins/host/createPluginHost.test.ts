@@ -4,7 +4,7 @@ import { createMemoryWatchProgressService } from '@ValenceServer/progress/create
 import { aPluginHostForTest } from '@ValenceServer/plugins/broker/aPluginHostForTest';
 import { createPluginHost } from './createPluginHost';
 import type { PlaylistService } from '@ValenceServer/playlists/PlaylistService';
-import type { PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
+import type { PlaylistEntry, PlaylistSummary } from '@ValenceContracts/schemas/Playlist';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 
 const PLAYLIST: PlaylistSummary = {
@@ -23,6 +23,15 @@ const PLAYLIST: PlaylistSummary = {
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
 
+const A_SONG: NonNullable<PlaylistEntry['item']> = {
+  id: 'm1',
+  kind: 'song',
+  title: 'Running Up That Hill',
+  subtitle: 'Kate Bush',
+  durationSeconds: 300,
+  track: null,
+};
+
 const unused = () => Promise.reject(new Error('not used here'));
 
 const build = () => {
@@ -35,7 +44,19 @@ const build = () => {
 
       return Promise.resolve([PLAYLIST]);
     }),
-    read: unused,
+    read: vi.fn((_viewer: Viewer, playlistId: string) =>
+      Promise.resolve(
+        playlistId === PLAYLIST.id
+          ? {
+              playlist: PLAYLIST,
+              entries: [
+                { id: 'e1', position: 1, addedAt: PLAYLIST.updatedAt, item: A_SONG },
+                { id: 'e2', position: 2, addedAt: PLAYLIST.updatedAt, item: null },
+              ],
+            }
+          : null,
+      ),
+    ),
     create: vi.fn(() => Promise.resolve(PLAYLIST)),
     update: unused,
     remove: unused,
@@ -43,7 +64,9 @@ const build = () => {
       Promise.resolve(playlistId === PLAYLIST.id ? 2 : null),
     ),
     move: unused,
-    drop: unused,
+    drop: vi.fn((_viewer: Viewer, playlistId: string, entryId: string) =>
+      Promise.resolve(playlistId === PLAYLIST.id && entryId === 'e1'),
+    ),
     readArtwork: unused,
     saveArtwork: unused,
     dropArtwork: unused,
@@ -110,6 +133,22 @@ describe('what Valence does when a plugin asks', () => {
       'no such playlist',
     );
     await expect(host.playlists.list('gone')).rejects.toThrow('no such profile');
+  });
+
+  it('reads what a playlist holds, and drops one entry from it', async () => {
+    const { host } = build();
+
+    await expect(host.playlists.read('p1', PLAYLIST.id)).resolves.toEqual({
+      id: PLAYLIST.id,
+      name: 'Imported',
+      entries: [
+        { entryId: 'e1', mediaId: 'm1' },
+        { entryId: 'e2', mediaId: null },
+      ],
+    });
+    await expect(host.playlists.read('p1', 'not-theirs')).resolves.toBeNull();
+    await expect(host.playlists.drop('p1', PLAYLIST.id, 'e1')).resolves.toBeUndefined();
+    await expect(host.playlists.drop('p1', PLAYLIST.id, 'e9')).rejects.toThrow('no such entry');
   });
 
   it('tells the person’s account, saying which plugin it is from', async () => {

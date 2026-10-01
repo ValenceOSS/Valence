@@ -9,6 +9,9 @@ const A_PLUGIN_MEDIA_FOR_TEST: MediaRef = {
   seriesId: 's1',
   seasonNumber: 1,
   episodeNumber: 1,
+  durationSeconds: 1440,
+  artist: null,
+  album: null,
   externalIds: {},
 };
 

@@ -23,6 +23,8 @@ type PluginEvent = {
   occurredAt: string;
   profileId: string | null;
   mediaId: string | null;
+  positionSeconds: number | null;
+  durationSeconds: number | null;
 };
 
 type WebhookRequest = {

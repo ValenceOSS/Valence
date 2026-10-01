@@ -78,10 +78,16 @@ type PluginEvent = {
   occurredAt: string;
   profileId: string | null;
   mediaId: string | null;
+  positionSeconds: number | null;
+  durationSeconds: number | null;
 };
 ```
 
+On a playback event, `durationSeconds` is how long the thing is, and on `playback.stopped` and `playback.finished`, `positionSeconds` is where it stopped. `playback.finished` means Valence counts it as watched; a plugin with its own rule for what counts, such as a scrobbler's, applies it to those two. Every other event gives `null` for both.
+
 An event about a profile reaches your plugin only if that profile connected an account to it or used its page. A plugin that did not list a topic never hears of it.
+
+An event names what it is about by id alone. [`valence.library.get(event.mediaId)`](/plugins/host-api#library) reads what that is: its title, its kind and the ids it is known by elsewhere. It needs the `library` permission, and after `media.removed` it reads `null`, because the thing has gone.
 
 ## Keep it quick
 

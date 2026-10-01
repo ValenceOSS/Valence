@@ -56,6 +56,7 @@ const createPluginHost = ({
   return {
     profiles: { read: readProfile },
     library: {
+      get: media.get,
       search: media.search,
       findByExternalId: media.findByExternalId,
       episodes: media.episodes,
@@ -119,6 +120,27 @@ const createPluginHost = ({
 
         if (added === null) {
           throw new Error('There is no such playlist of theirs.');
+        }
+      },
+      read: async (profileId, playlistId) => {
+        const found = await playlists.read(await viewerFor(profileId), playlistId);
+
+        return found === null
+          ? null
+          : {
+              id: found.playlist.id,
+              name: found.playlist.name,
+              entries: found.entries.map((entry) => ({
+                entryId: entry.id,
+                mediaId: entry.item?.id ?? null,
+              })),
+            };
+      },
+      drop: async (profileId, playlistId, entryId) => {
+        const dropped = await playlists.drop(await viewerFor(profileId), playlistId, entryId);
+
+        if (!dropped) {
+          throw new Error('There is no such entry in a playlist of theirs.');
         }
       },
     },

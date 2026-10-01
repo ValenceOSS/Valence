@@ -38,9 +38,45 @@ const stoppedAt = (positionSeconds: number | null): WebhookOccurrence => ({
 });
 
 describe('eventsFrom', () => {
-  it('tells plugins who started watching what', () => {
-    expect(eventsFrom({ event: 'playback.started', data: PLAYING }, AT)).toEqual([
-      { topic: 'playback.started', occurredAt: AT, profileId: 'profile-1', mediaId: 'item-1' },
+  it('tells plugins who started watching what, and how long it is', () => {
+    expect(
+      eventsFrom(
+        {
+          event: 'playback.started',
+          data: { ...PLAYING, item: { ...AN_ITEM, durationSeconds: 1000 } },
+        },
+        AT,
+      ),
+    ).toEqual([
+      {
+        topic: 'playback.started',
+        occurredAt: AT,
+        profileId: 'profile-1',
+        mediaId: 'item-1',
+        positionSeconds: null,
+        durationSeconds: 1000,
+      },
+    ]);
+  });
+
+  it('tells plugins where someone stopped, so each can judge what counts as a play', () => {
+    expect(eventsFrom(stoppedAt(950), AT)).toEqual([
+      {
+        topic: 'playback.stopped',
+        occurredAt: AT,
+        profileId: 'profile-1',
+        mediaId: 'item-1',
+        positionSeconds: 950,
+        durationSeconds: 1000,
+      },
+      {
+        topic: 'playback.finished',
+        occurredAt: AT,
+        profileId: 'profile-1',
+        mediaId: 'item-1',
+        positionSeconds: 950,
+        durationSeconds: 1000,
+      },
     ]);
   });
 
@@ -59,7 +95,14 @@ describe('eventsFrom', () => {
 
   it('tells of arrivals without naming anybody', () => {
     expect(eventsFrom({ event: 'media.added', data: AN_ITEM }, AT)).toEqual([
-      { topic: 'media.added', occurredAt: AT, profileId: null, mediaId: 'item-1' },
+      {
+        topic: 'media.added',
+        occurredAt: AT,
+        profileId: null,
+        mediaId: 'item-1',
+        positionSeconds: null,
+        durationSeconds: null,
+      },
     ]);
   });
 

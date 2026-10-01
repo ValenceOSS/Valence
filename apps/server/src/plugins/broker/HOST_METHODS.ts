@@ -14,6 +14,7 @@ const HOST_METHODS = [
   'accounts.connection',
   'accounts.disconnect',
   'profiles.list',
+  'library.get',
   'library.search',
   'library.findByExternalId',
   'library.episodes',
@@ -25,6 +26,8 @@ const HOST_METHODS = [
   'playlists.list',
   'playlists.create',
   'playlists.add',
+  'playlists.read',
+  'playlists.drop',
   'music.findTrack',
   'notifications.send',
 ] as const;

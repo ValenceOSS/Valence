@@ -67,6 +67,7 @@ const ARGS = {
   'accounts.connection': z.tuple([Id, Id]),
   'accounts.disconnect': z.tuple([Id, Id]),
   'profiles.list': z.tuple([]),
+  'library.get': z.tuple([Id]),
   'library.search': z.tuple([z.string().min(1).max(200), z.array(MediaKind).max(6).optional()]),
   'library.findByExternalId': z.tuple([ExternalSource, z.string().min(1).max(100)]),
   'library.episodes': z.tuple([Id]),
@@ -81,6 +82,8 @@ const ARGS = {
     z.object({ name: z.string().min(1).max(100), description: z.string().max(500).optional() }),
   ]),
   'playlists.add': z.tuple([Id, Id, z.array(Id).max(500)]),
+  'playlists.read': z.tuple([Id, Id]),
+  'playlists.drop': z.tuple([Id, Id, Id]),
   'music.findTrack': z.tuple([
     z.object({
       title: z.string().min(1).max(300),
@@ -313,6 +316,13 @@ const createPluginBroker = ({
           profile === null ? [] : [{ id: profile.id, name: profile.name }],
         );
       }
+      case 'library.get': {
+        needs('library');
+
+        const [mediaId] = ARGS[method].parse(args);
+
+        return host.library.get(mediaId);
+      }
       case 'library.search': {
         needs('library');
 
@@ -407,6 +417,25 @@ const createPluginBroker = ({
 
         await actsFor(profileId, scope);
         await host.playlists.add(profileId, playlistId, mediaIds);
+
+        return null;
+      }
+      case 'playlists.read': {
+        needs('playlists');
+
+        const [profileId, playlistId] = ARGS[method].parse(args);
+
+        await actsFor(profileId, scope);
+
+        return host.playlists.read(profileId, playlistId);
+      }
+      case 'playlists.drop': {
+        needs('playlists', 'write');
+
+        const [profileId, playlistId, entryId] = ARGS[method].parse(args);
+
+        await actsFor(profileId, scope);
+        await host.playlists.drop(profileId, playlistId, entryId);
 
         return null;
       }
