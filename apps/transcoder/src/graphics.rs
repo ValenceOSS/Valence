@@ -761,7 +761,7 @@ mod tests {
         let found = weigh("AMD", Ok(card(None, Some(40.0))), &mut notes, &mut named);
 
         assert_eq!(found.and_then(|reading| reading.device_percent), Some(40.0));
-        assert!(notes.is_empty());
+        assert_eq!(notes, Vec::<String>::new());
     }
 
     fn card_named(name: &str) -> GraphicsUse {

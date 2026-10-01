@@ -445,14 +445,14 @@ mod tests {
 
     #[test]
     fn produces_no_hashes_for_audio_shorter_than_a_frame() {
-        assert!(fingerprint_samples(&[0.0; 100]).is_empty());
+        assert_eq!(fingerprint_samples(&[0.0; 100]), Vec::<u32>::new());
     }
 
     #[test]
     fn fingerprints_a_tone() {
         let hashes = fingerprint_samples(&tone(1000.0, 0.5));
 
-        assert!(!hashes.is_empty());
+        assert_ne!(hashes, Vec::<u32>::new());
     }
 
     #[test]

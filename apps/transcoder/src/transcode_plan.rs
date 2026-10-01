@@ -2622,9 +2622,12 @@ mod tests {
     /// do not take, which would fail the encode outright.
     #[test]
     fn says_nothing_to_an_encoder_that_already_cuts_where_it_is_told() {
-        assert!(forced_idr_arguments("libx264").is_empty());
-        assert!(forced_idr_arguments("h264_vaapi").is_empty());
-        assert!(forced_idr_arguments("h264_videotoolbox").is_empty());
+        assert_eq!(forced_idr_arguments("libx264"), Vec::<String>::new());
+        assert_eq!(forced_idr_arguments("h264_vaapi"), Vec::<String>::new());
+        assert_eq!(
+            forced_idr_arguments("h264_videotoolbox"),
+            Vec::<String>::new()
+        );
     }
 
     /// A copied stream keeps the keyframes it already has.
@@ -4242,7 +4245,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
 
         let args = plan(encoding("libx265")).to_rendition_args(&carry, 0, None);
 
-        assert!(pairs(&args, "-x265-params").is_empty());
+        assert_eq!(pairs(&args, "-x265-params"), Vec::<String>::new());
     }
 
     /// A source that declared nothing gets an encode that declares nothing, rather than a guess.
@@ -4250,8 +4253,8 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
     fn declares_no_colour_where_the_source_declared_none() {
         let args = plan(encoding("libx265")).to_rendition_args(&carrying(), 0, None);
 
-        assert!(pairs(&args, "-color_primaries").is_empty());
-        assert!(pairs(&args, "-color_trc").is_empty());
+        assert_eq!(pairs(&args, "-color_primaries"), Vec::<String>::new());
+        assert_eq!(pairs(&args, "-color_trc"), Vec::<String>::new());
     }
 
     /// A copied stream carries its own declarations, and these arguments would be ignored.
@@ -4267,7 +4270,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
 
         let args = plan(spec()).to_rendition_args(&carry, 0, None);
 
-        assert!(pairs(&args, "-color_trc").is_empty());
+        assert_eq!(pairs(&args, "-color_trc"), Vec::<String>::new());
     }
 
     /// The picture has to be mapped, or a file with several tracks writes whichever ffmpeg guessed.

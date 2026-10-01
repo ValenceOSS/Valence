@@ -985,7 +985,7 @@ mod tests {
 
         let probe = parse_ffprobe_output(json, Path::new("/media/film.mkv")).expect("parses");
 
-        assert!(probe.chapters.is_empty());
+        assert_eq!(probe.chapters, Vec::<crate::media::Chapter>::new());
     }
 
     #[test]
@@ -994,7 +994,7 @@ mod tests {
 
         let probe = parse_ffprobe_output(json, Path::new("/media/film.mkv")).expect("parses");
 
-        assert!(probe.chapters.is_empty());
+        assert_eq!(probe.chapters, Vec::<crate::media::Chapter>::new());
     }
 
     #[test]

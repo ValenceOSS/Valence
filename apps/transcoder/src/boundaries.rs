@@ -701,8 +701,8 @@ mod tests {
     /// A duration nothing could read is no segments, not a segment of nothing.
     #[test]
     fn describes_nothing_when_the_duration_is_unusable() {
-        assert!(equal_lengths(0.0, 4).is_empty());
-        assert!(equal_lengths(f64::NAN, 4).is_empty());
+        assert_eq!(equal_lengths(0.0, 4), Vec::<f64>::new());
+        assert_eq!(equal_lengths(f64::NAN, 4), Vec::<f64>::new());
     }
 
     /// The lengths have to add up to the film, or the seek bar lies.

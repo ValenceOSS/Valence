@@ -591,12 +591,18 @@ mod tests {
     /// Matroska writes its index where it belongs without being asked.
     #[test]
     fn says_nothing_to_the_matroska_muxer() {
-        assert!(container_arguments(Path::new("/media/x.mkv")).is_empty());
+        assert_eq!(
+            container_arguments(Path::new("/media/x.mkv")),
+            Vec::<String>::new()
+        );
     }
 
     #[test]
     fn reads_an_extension_however_it_was_capitalised() {
-        assert!(!container_arguments(Path::new("/media/x.MP4")).is_empty());
+        assert_ne!(
+            container_arguments(Path::new("/media/x.MP4")),
+            Vec::<String>::new()
+        );
     }
 
     fn asked() -> RenditionRequest {
@@ -652,7 +658,10 @@ mod tests {
     /// A wrong muxer is worse than an absent one: it would write a file the streams do not fit in.
     #[test]
     fn says_nothing_about_a_container_it_does_not_know() {
-        assert!(format_arguments(Path::new("/media/Films/X.wat")).is_empty());
+        assert_eq!(
+            format_arguments(Path::new("/media/Films/X.wat")),
+            Vec::<String>::new()
+        );
     }
 
     /// The bug this exists to stop. The working name carries none of the facts a muxer is chosen
