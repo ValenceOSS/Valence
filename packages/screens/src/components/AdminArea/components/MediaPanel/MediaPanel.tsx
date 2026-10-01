@@ -6,6 +6,7 @@ import {
 } from '@keyline-icons/react';
 import {
   Bin as BinFilledIcon,
+  Copy as CopyFilledIcon,
   Film as FilmFilledIcon,
   Image as ImageFilledIcon,
   RefreshCw as RefreshCwFilledIcon,
@@ -141,6 +142,7 @@ const describeTitle = (title: MediaTitle): string => {
  * @param onRebuildArtefacts - Called with the item whose previews and thumbnails are to be remade,
  *   answering whether the request was accepted.
  * @param onReencode - Called with the files to be re-encoded, where re-encoding is offered at all.
+ * @param onShowCopies - Called with the file whose kept copies are to be shown, where offered.
  * @param onDelete - Called with the file to delete, and whether its whole series goes with it, where
  *   deleting is offered at all, answering whether it went.
  * @param paths - Where each item's file is, by the item, where they have been read.
@@ -159,6 +161,7 @@ const MediaPanel = ({
   onChooseMoment,
   onRebuildArtefacts,
   onReencode,
+  onShowCopies,
   onDelete,
   paths = NO_PATHS,
   onOpenFolder,
@@ -376,6 +379,18 @@ const MediaPanel = ({
                 },
               },
             ]),
+        ...(onShowCopies === undefined
+          ? []
+          : [
+              {
+                id: 'kept-copies',
+                label: say('screens.adminArea.keptCopiesDialog.keptCopies'),
+                icon: <Icon of={CopyFilledIcon} size={15} />,
+                onChoose: () => {
+                  onShowCopies(item, name);
+                },
+              },
+            ]),
       ],
       ...(onDelete === undefined
         ? []
@@ -393,7 +408,7 @@ const MediaPanel = ({
             ],
           ]),
     ],
-    [onChooseMoment, onDelete, onOpenFolder, onReencode, paths, rebuilding, rebuilt],
+    [onChooseMoment, onDelete, onOpenFolder, onReencode, onShowCopies, paths, rebuilding, rebuilt],
   );
 
   const artworkAction = useCallback(

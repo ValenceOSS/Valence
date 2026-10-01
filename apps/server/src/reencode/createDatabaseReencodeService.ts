@@ -3,7 +3,8 @@ import type { Said } from '@ValenceI18n/SaidSchema';
 import { saying } from '@ValenceI18n/saying';
 import { randomUUID } from 'node:crypto';
 import { rm, stat } from 'node:fs/promises';
-import { and, asc, count, eq, inArray } from 'drizzle-orm';
+import { basename, dirname } from 'node:path';
+import { and, asc, count, eq, inArray, ne, notInArray, or } from 'drizzle-orm';
 import { estimateReencodeBytes } from '@ValenceCore/functions/estimateReencodeBytes';
 import { planReencodeSpec } from '@ValenceCore/functions/planReencodeSpec';
 import { renditionLabel } from '@ValenceCore/functions/renditionLabel';
@@ -20,6 +21,7 @@ import { MediaFactsSchema } from './MediaFacts';
 import { canWriteInto } from './canWriteInto';
 import { factsFromProbe } from './factsFromProbe';
 import { freeBytesOn } from './freeBytesOn';
+import { keptCopyPathFor } from './keptCopyPathFor';
 import { reencodePathsFor } from './reencodePathsFor';
 import { refuseReencode } from './refuseReencode';
 import { restoreOriginal } from './restoreOriginal';
@@ -31,6 +33,7 @@ import type { MediaItem } from '@ValenceContracts/schemas/MediaItem';
 import type {
   Reencode,
   ReencodeCandidate,
+  ReencodeOrigin,
   ReencodeSettings,
 } from '@ValenceContracts/schemas/Reencode';
 import type { Rendition } from '@ValenceContracts/schemas/Rendition';
@@ -74,6 +77,82 @@ type CreateDatabaseReencodeServiceOptions = {
 
 type RequestRow = typeof reencodeRequest.$inferSelect;
 
+type EncodeOutcome = 'done' | 'deferred';
+
+type WhereItGoes = {
+  directory: string;
+  output: string;
+};
+
+/**
+ * Whether a file is there at all, asked of the filesystem.
+ *
+ * @param path - The file.
+ * @returns Whether anything is at that path.
+ */
+const isThere = (path: string): Promise<boolean> =>
+  stat(path).then(
+    () => true,
+    () => false,
+  );
+
+/**
+ * Where a request's encode is written and which folder that needs to be able to write to: for a
+ * copy kept alongside, wherever its placement says, and for a replacement, the library's own
+ * Valence folder.
+ *
+ * @param subject - The film and its library.
+ * @param settings - What was asked for.
+ * @param requestId - The request.
+ * @returns The folder, and the file.
+ */
+const whereItGoes = (
+  subject: ReencodeSubject,
+  settings: ReencodeSettings,
+  requestId: string,
+): WhereItGoes => {
+  if (settings.mode === 'keep') {
+    return keptCopyPathFor({
+      libraryPath: subject.libraryPath,
+      originalPath: subject.path,
+      requestId,
+      item: subject.item,
+      settings,
+    });
+  }
+
+  const { directory, output } = reencodePathsFor(subject.libraryPath, subject.path, requestId);
+
+  return { directory, output };
+};
+
+/**
+ * What a request may carry beyond the four choices every request makes, which only a copy kept
+ * alongside uses: a replacement keeps its path, so its container and place are the original's.
+ *
+ * @param settings - What was asked for.
+ * @returns The settings, with what does not apply left out.
+ */
+const applicableTo = (settings: ReencodeSettings): ReencodeSettings => {
+  const { mode, quality, videoCodec, audio } = settings;
+  const ceiling =
+    settings.maxBitrateKbps === undefined ? {} : { maxBitrateKbps: settings.maxBitrateKbps };
+
+  if (mode !== 'keep') {
+    return { mode, quality, videoCodec, audio, ...ceiling };
+  }
+
+  return {
+    mode,
+    quality,
+    videoCodec,
+    audio,
+    ...ceiling,
+    ...(settings.container === undefined ? {} : { container: settings.container }),
+    ...(settings.placement === undefined ? {} : { placement: settings.placement }),
+  };
+};
+
 /**
  * Waits, so a poll of the media service is a poll rather than a spin.
  *
@@ -101,6 +180,9 @@ const settingsOf = (row: RequestRow): ReencodeSettings =>
     quality: row.quality,
     videoCodec: row.videoCodec,
     audio: row.audio,
+    ...(row.container === null ? {} : { container: row.container }),
+    ...(row.maxBitrateKbps === null ? {} : { maxBitrateKbps: row.maxBitrateKbps }),
+    ...(row.mode === 'keep' ? { placement: row.placement } : {}),
   });
 
 /**
@@ -120,11 +202,9 @@ const asReencode = (
     libraryId: row.libraryId,
     title: title.title,
     seriesTitle: title.seriesTitle,
-    mode: row.mode,
+    ...settingsOf(row),
     state: row.state,
-    quality: row.quality,
-    videoCodec: row.videoCodec,
-    audio: row.audio,
+    origin: row.origin,
     durationSeconds: title.durationSeconds,
     originalSizeBytes: row.originalSizeBytes,
     estimatedBytes: row.estimatedBytes,
@@ -206,6 +286,16 @@ const createDatabaseReencodeService = ({
     return new Set(rows.map((row) => row.mediaItemId));
   };
 
+  const isKeptAt = async (path: string): Promise<boolean> => {
+    const rows = await db
+      .select({ id: mediaRendition.id })
+      .from(mediaRendition)
+      .where(eq(mediaRendition.path, path))
+      .limit(1);
+
+    return rows.length > 0;
+  };
+
   const weigh = async (
     mediaIds: string[],
     settings: ReencodeSettings,
@@ -224,10 +314,14 @@ const createDatabaseReencodeService = ({
 
       subjects.set(mediaId, found);
 
-      const { directory } = reencodePathsFor(found.libraryPath, found.path, 'probe');
+      const { directory, output } = whereItGoes(found, settings, 'probe');
       const known = writable.get(directory) ?? (await canWriteInto(directory));
 
       writable.set(directory, known);
+
+      const isBeside = settings.mode === 'keep' && settings.placement === 'beside';
+      const isOccupied = isBeside && (await isThere(output));
+      const isKnown = isOccupied && (await isKeptAt(output));
 
       candidates.push({
         mediaId,
@@ -247,6 +341,8 @@ const createDatabaseReencodeService = ({
           isAlreadyUnderWay: underWay.has(mediaId),
           isBeingWatched: isBeingWatched(mediaId),
           isFolderWritable: known,
+          isAlreadyKept: isKnown,
+          takenName: isOccupied && !isKnown ? basename(output) : null,
         }),
       });
     }
@@ -313,7 +409,17 @@ const createDatabaseReencodeService = ({
     await db
       .update(reencodeRequest)
       .set({ state: 'failed', failure: reason, progress: 0, bytesPerSecond: null })
-      .where(eq(reencodeRequest.id, id));
+      .where(and(eq(reencodeRequest.id, id), ne(reencodeRequest.state, 'cancelled')));
+  };
+
+  const isStillWanted = async (id: string): Promise<boolean> => {
+    const rows = await db
+      .select({ state: reencodeRequest.state })
+      .from(reencodeRequest)
+      .where(eq(reencodeRequest.id, id))
+      .limit(1);
+
+    return rows[0]?.state === 'encoding';
   };
 
   /**
@@ -328,17 +434,26 @@ const createDatabaseReencodeService = ({
    * One at a time and oldest first, deliberately. At its peak a replacement holds the original, the
    * new file and whatever ffmpeg is still writing, so running a batch in parallel multiplies the
    * worst case by the size of the batch — and a feature for reclaiming storage must not be the
-   * thing that exhausts it.
+   * thing that exhausts it. Whatever an administrator asked for goes before anything
+   * pre-transcoding queued, since `admin` sorts before `preTranscode`.
    *
+   * @param passedOver - Requests put back this run, which wait for the next.
    * @returns The request now being worked on, or nothing where none was waiting.
    */
-  const claimTheNextOne = async (): Promise<RequestRow | undefined> => {
+  const claimTheNextOne = async (
+    passedOver: readonly string[],
+  ): Promise<RequestRow | undefined> => {
     return db.transaction(async (tx) => {
       const [next] = await tx
         .select({ id: reencodeRequest.id })
         .from(reencodeRequest)
-        .where(eq(reencodeRequest.state, 'queued'))
-        .orderBy(asc(reencodeRequest.askedAt))
+        .where(
+          and(
+            eq(reencodeRequest.state, 'queued'),
+            passedOver.length === 0 ? undefined : notInArray(reencodeRequest.id, [...passedOver]),
+          ),
+        )
+        .orderBy(asc(reencodeRequest.origin), asc(reencodeRequest.askedAt))
         .limit(1)
         .for('update', { skipLocked: true });
 
@@ -408,7 +523,7 @@ const createDatabaseReencodeService = ({
     }
   };
 
-  const encode = async (row: RequestRow, isCancelled: () => boolean): Promise<void> => {
+  const encode = async (row: RequestRow, isCancelled: () => boolean): Promise<EncodeOutcome> => {
     const found = await media.findForReencode(row.mediaItemId);
 
     if (found === null) {
@@ -417,27 +532,38 @@ const createDatabaseReencodeService = ({
         saying('server.reencode.databaseReencodeService.thatFileIsNoLongerIn'),
       );
 
-      return;
+      return 'done';
     }
 
     const paths = reencodePathsFor(found.libraryPath, found.path, row.id);
+    const output = row.mode === 'keep' ? row.workingPath : paths.output;
+    const directory = row.mode === 'keep' ? dirname(output) : paths.directory;
 
-    if (!(await canWriteInto(paths.directory))) {
+    if (!(await canWriteInto(directory))) {
       await failWith(
         row.id,
         saying('server.reencode.databaseReencodeService.valenceCannotWriteToTheFolder'),
       );
 
-      return;
+      return 'done';
     }
 
     if (isBeingWatched(row.mediaItemId)) {
+      if (row.origin === 'preTranscode') {
+        await db
+          .update(reencodeRequest)
+          .set({ state: 'queued', startedAt: null, progress: 0, bytesPerSecond: null })
+          .where(eq(reencodeRequest.id, row.id));
+
+        return 'deferred';
+      }
+
       await failWith(
         row.id,
         saying('server.reencode.databaseReencodeService.somebodyStartedWatchingItSoIt'),
       );
 
-      return;
+      return 'done';
     }
 
     const planned = planReencodeSpec({
@@ -451,24 +577,30 @@ const createDatabaseReencodeService = ({
     if (planned.kind === 'unsupported') {
       await failWith(row.id, planned.reason);
 
-      return;
+      return 'done';
     }
 
     let answer = await transcoder.requestRendition({
       ...planned.request,
       durationSeconds: found.item.durationSeconds,
-      outputPath: paths.output,
+      outputPath: output,
     });
 
     while (!answer.isReady && (answer.failure ?? null) === null) {
       if (isCancelled()) {
-        await transcoder.stopRendition(paths.output);
+        await transcoder.stopRendition(output);
         await db
           .update(reencodeRequest)
           .set({ state: 'queued', progress: 0, bytesPerSecond: null })
-          .where(eq(reencodeRequest.id, row.id));
+          .where(and(eq(reencodeRequest.id, row.id), eq(reencodeRequest.state, 'encoding')));
 
-        return;
+        return 'done';
+      }
+
+      if (!(await isStillWanted(row.id))) {
+        await transcoder.stopRendition(output).catch(() => false);
+
+        return 'done';
       }
 
       await wait(ASK_AGAIN_MS);
@@ -481,7 +613,7 @@ const createDatabaseReencodeService = ({
       answer = await transcoder.requestRendition({
         ...planned.request,
         durationSeconds: found.item.durationSeconds,
-        outputPath: paths.output,
+        outputPath: output,
       });
     }
 
@@ -493,7 +625,13 @@ const createDatabaseReencodeService = ({
           : sayVerbatim(answer.failure),
       );
 
-      return;
+      return 'done';
+    }
+
+    if (!(await isStillWanted(row.id))) {
+      await transcoder.forgetRendition(output).catch(() => false);
+
+      return 'done';
     }
 
     await db
@@ -501,14 +639,16 @@ const createDatabaseReencodeService = ({
       .set({ state: 'verifying', progress: 100, bytesPerSecond: null })
       .where(eq(reencodeRequest.id, row.id));
 
-    const facts = await readFacts(paths.output);
+    const facts = await readFacts(output);
 
     if (row.mode === 'keep') {
+      const renditionId = randomUUID();
+
       await db.insert(mediaRendition).values({
-        id: randomUUID(),
+        id: renditionId,
         mediaItemId: row.mediaItemId,
         kind: 'pinned',
-        path: paths.output,
+        path: output,
         label: renditionLabel({
           width: facts.width,
           height: facts.height,
@@ -542,6 +682,7 @@ const createDatabaseReencodeService = ({
         .update(reencodeRequest)
         .set({
           state: 'finished',
+          renditionId,
           producedBytes: facts.sizeBytes,
           encodedAt: new Date(),
           reviewedAt: new Date(),
@@ -550,12 +691,12 @@ const createDatabaseReencodeService = ({
 
       await afterChange(row.mediaItemId);
 
-      return;
+      return 'done';
     }
 
     await swapIntoPlace({
       originalPath: found.path,
-      encodePath: paths.output,
+      encodePath: output,
       asidePath: paths.aside,
     });
 
@@ -572,10 +713,13 @@ const createDatabaseReencodeService = ({
       .where(eq(reencodeRequest.id, row.id));
 
     await afterChange(row.mediaItemId);
+
+    return 'done';
   };
 
   return {
-    estimate: async (mediaIds, settings) => {
+    estimate: async (mediaIds, asked) => {
+      const settings = applicableTo(asked);
       const { candidates } = await weigh(mediaIds, settings);
       const first = candidates[0];
       const nowBytes = candidates.reduce((total, one) => total + one.sizeBytes, 0);
@@ -599,7 +743,8 @@ const createDatabaseReencodeService = ({
       };
     },
 
-    start: async (mediaIds, settings, askedBy) => {
+    start: async (mediaIds, asked, askedBy, origin: ReencodeOrigin = 'admin') => {
+      const settings = applicableTo(asked);
       const { candidates, subjects } = await weigh(mediaIds, settings);
       const started: Reencode[] = [];
       const refused = candidates
@@ -615,7 +760,7 @@ const createDatabaseReencodeService = ({
         }
 
         const id = randomUUID();
-        const paths = reencodePathsFor(found.libraryPath, found.path, id);
+        const { output } = whereItGoes(found, settings, id);
         const facts = await readFacts(found.path).catch(() => null);
 
         if (facts === null) {
@@ -642,9 +787,13 @@ const createDatabaseReencodeService = ({
           originalPath: found.path,
           originalSizeBytes: facts.sizeBytes,
           originalProbe: facts,
-          workingPath: paths.output,
+          workingPath: output,
           estimatedBytes: candidate.estimatedBytes,
           askedBy,
+          container: settings.container ?? null,
+          maxBitrateKbps: settings.maxBitrateKbps ?? null,
+          placement: settings.placement ?? 'hidden',
+          origin,
         });
 
         const [row] = await db
@@ -668,7 +817,16 @@ const createDatabaseReencodeService = ({
     },
 
     list: async () => {
-      const rows = await db.select().from(reencodeRequest).orderBy(asc(reencodeRequest.askedAt));
+      const rows = await db
+        .select()
+        .from(reencodeRequest)
+        .where(
+          or(
+            eq(reencodeRequest.origin, 'admin'),
+            inArray(reencodeRequest.state, [...REENCODES_STILL_TO_BE_WRITTEN]),
+          ),
+        )
+        .orderBy(asc(reencodeRequest.askedAt));
 
       return Promise.all(rows.map(async (row) => asReencode(row, await titleFor(row))));
     },
@@ -818,7 +976,11 @@ const createDatabaseReencodeService = ({
         .orderBy(asc(mediaRendition.createdAt));
 
       return rows.map((row): Rendition =>
-        RenditionSchema.parse({ ...row, createdAt: row.createdAt.toISOString() }),
+        RenditionSchema.parse({
+          ...row,
+          fileName: basename(row.path),
+          createdAt: row.createdAt.toISOString(),
+        }),
       );
     },
 
@@ -840,17 +1002,18 @@ const createDatabaseReencodeService = ({
       await pickUpWhereItWasLeft();
 
       const cap = await awaitingReviewCap();
+      const passedOver: string[] = [];
       let done = 0;
 
       for (;;) {
         if (isCancelled() || (await awaitingReviewCount()) >= cap) {
-          return;
+          return done;
         }
 
-        const row = await claimTheNextOne();
+        const row = await claimTheNextOne(passedOver);
 
         if (row === undefined) {
-          return;
+          return done;
         }
 
         const waiting = await db
@@ -860,9 +1023,17 @@ const createDatabaseReencodeService = ({
 
         onProgress(done, done + 1 + (waiting[0]?.counted ?? 0));
 
-        await encode(row, isCancelled).catch(async (error: Error) => {
+        const outcome = await encode(row, isCancelled).catch(async (error: Error) => {
           await failWith(row.id, sayVerbatim(error.message));
+
+          return 'done' as const;
         });
+
+        if (outcome === 'deferred') {
+          passedOver.push(row.id);
+
+          continue;
+        }
 
         done += 1;
       }

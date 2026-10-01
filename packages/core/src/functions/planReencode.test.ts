@@ -86,4 +86,29 @@ describe('planReencode', () => {
   it('carries every subtitle track, bitmap ones included', () => {
     expect(planReencode(remux, replacing).subtitleIndexes).toEqual([3, 4]);
   });
+
+  it('holds the picture under a bitrate somebody named, where it is lower than the rung', () => {
+    const plan = planReencode(remux, { ...replacing, mode: 'keep', maxBitrateKbps: 3000 });
+
+    expect(plan.video).toMatchObject({ kind: 'encode', maxBitrateKbps: 3000 });
+  });
+
+  it('carries no subtitles into a copy kept as MP4, which cannot hold them', () => {
+    expect(
+      planReencode(remux, { ...replacing, mode: 'keep', container: 'mp4' }).subtitleIndexes,
+    ).toEqual([]);
+  });
+
+  it('encodes any audio an MP4 cannot hold, and copies what it can', () => {
+    const plan = planReencode(remux, { ...replacing, mode: 'keep', container: 'mp4' });
+
+    expect(plan.audioTracks[0]).toMatchObject({ kind: 'encode', index: 1, codec: 'eac3' });
+    expect(plan.audioTracks[1]).toMatchObject({ kind: 'copy', index: 2 });
+  });
+
+  it('keeps every subtitle in a copy kept as MKV', () => {
+    expect(
+      planReencode(remux, { ...replacing, mode: 'keep', container: 'mkv' }).subtitleIndexes,
+    ).toEqual([3, 4]);
+  });
 });

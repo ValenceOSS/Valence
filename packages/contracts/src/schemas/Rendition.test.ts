@@ -42,6 +42,14 @@ describe('RenditionSchema', () => {
     expect(result.quality).toBeNull();
   });
 
+  it('names the file a rendition was written to, and nothing where an older server did not say', () => {
+    expect(RenditionSchema.parse(validRendition).fileName).toBe('');
+    expect(
+      RenditionSchema.parse({ ...validRendition, fileName: 'Arrival - 1080p H264.valence.mp4' })
+        .fileName,
+    ).toBe('Arrival - 1080p H264.valence.mp4');
+  });
+
   it('refuses a rendition with no audio at all', () => {
     expect(() => RenditionSchema.parse({ ...validRendition, audioStreams: [] })).toThrow();
   });

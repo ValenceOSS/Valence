@@ -26,6 +26,7 @@ import {
   PRUNE_JOB_HISTORY_JOB,
   PRUNE_RESOURCE_HISTORY_JOB,
   REENCODE_JOB,
+  PRE_TRANSCODE_JOB,
   scheduleTriggerKind,
 } from './JobQueue';
 import type { ScheduleTrigger } from './scheduleTrigger';
@@ -311,6 +312,18 @@ const JOB_DEFINITIONS: JobDefinition[] = [
     schedulable: false,
   },
   {
+    kind: PRE_TRANSCODE_JOB,
+    label: saying('server.jobs.jobDefinitions.preTranscodeTheLibraries'),
+    group: 'library',
+    description: saying('server.jobs.jobDefinitions.keepsACopyBesideEachFilm'),
+    needsLibrary: false,
+    destructive: false,
+    takesParts: false,
+    announcesFinish: false,
+    runsByHand: true,
+    schedulable: true,
+  },
+  {
     kind: PRUNE_RESOURCE_HISTORY_JOB,
     label: saying('server.jobs.jobDefinitions.pruneOldServerLoadHistory'),
     group: 'housekeeping',
@@ -338,6 +351,7 @@ const DEFAULT_JOB_TRIGGERS: Record<string, ScheduleTrigger[]> = {
   [PRUNE_LOGS_JOB]: [{ kind: 'daily', hour: 5, minute: 55 }],
   [PRUNE_JOB_HISTORY_JOB]: [{ kind: 'daily', hour: 6, minute: 5 }],
   [PRUNE_RESOURCE_HISTORY_JOB]: [{ kind: 'daily', hour: 6, minute: 10 }],
+  [PRE_TRANSCODE_JOB]: [{ kind: 'everyMinutes', minutes: 15 }],
   [CLEANUP_IMAGE_CACHE_JOB]: [{ kind: 'weekly', dayOfWeek: 0, hour: 6, minute: 0 }],
   [CLEANUP_ARTEFACT_CACHE_JOB]: [{ kind: 'weekly', dayOfWeek: 0, hour: 6, minute: 30 }],
 };

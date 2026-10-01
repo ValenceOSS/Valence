@@ -871,18 +871,36 @@ const reencodeRequest = pgTable(
     startedAt: timestamp('startedAt'),
     encodedAt: timestamp('encodedAt'),
     reviewedAt: timestamp('reviewedAt'),
+    container: text('container'),
+    maxBitrateKbps: integer('maxBitrateKbps'),
+    placement: text('placement').notNull().default('hidden'),
+    origin: text('origin').notNull().default('admin'),
   },
   (table) => [
     index('reencode_request_state_idx').on(table.state, table.askedAt),
     index('reencode_request_item_idx').on(table.mediaItemId),
     index('reencode_request_library_idx').on(table.libraryId),
+    index('reencode_request_origin_idx').on(table.origin, table.state),
     check('reencode_request_mode', sql`${table.mode} in ('replace', 'keep', 'audioOnly')`),
     check(
       'reencode_request_state',
       sql`${table.state} in ('queued', 'encoding', 'verifying', 'awaitingReview', 'finished', 'rejected', 'failed', 'cancelled')`,
     ),
+    check('reencode_request_container', sql`${table.container} in ('mp4', 'mkv')`),
+    check('reencode_request_placement', sql`${table.placement} in ('hidden', 'beside')`),
+    check('reencode_request_origin', sql`${table.origin} in ('admin', 'preTranscode')`),
   ],
 );
+
+const preTranscodeRefusal = pgTable('pre_transcode_refusal', {
+  mediaItemId: text('mediaItemId')
+    .primaryKey()
+    .references(() => mediaItem.id, { onDelete: 'cascade' }),
+  target: text('target').notNull(),
+  code: text('code').notNull(),
+  detail: jsonb('detail').$type<Said>().notNull(),
+  refusedAt: timestamp('refusedAt').notNull().defaultNow(),
+});
 
 const book = pgTable(
   'book',
@@ -1480,6 +1498,7 @@ export {
   mediaRendition,
   mediaSegment,
   reencodeRequest,
+  preTranscodeRefusal,
   mediaItemJob,
   jobTrigger,
   webhookSubscription,

@@ -9,7 +9,8 @@ import { DialogFooter } from '@ValenceUI/DialogFooter';
 import { DialogTitle } from '@ValenceUI/DialogTitle';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { TextField } from '@ValenceUI/TextField';
-import { REENCODE_CODECS } from '@ValenceContracts/schemas/Reencode';
+import { REENCODE_CODECS, REENCODE_CONTAINERS } from '@ValenceContracts/schemas/Reencode';
+import { readBitrate } from '@ValenceScreens/admin/readBitrate';
 import { QUALITY_STEPS } from '@ValenceContracts/schemas/QualityStep';
 import { CODEC_NAMES } from '@ValenceCore/functions/renditionLabel';
 import { describeCodecTrade } from '@ValenceCore/functions/describeCodecTrade';
@@ -24,7 +25,9 @@ import { isLargerThan } from '@ValenceScreens/components/AdminArea/components/En
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type {
   ReencodeCodec,
+  ReencodeContainer,
   ReencodeMode,
+  ReencodePlacement,
   ReencodeSettings,
 } from '@ValenceContracts/schemas/Reencode';
 import type { QualityStepId } from '@ValenceContracts/schemas/QualityStep';
@@ -45,6 +48,18 @@ const MODE_MEANINGS: Record<ReencodeMode, string> = {
 };
 
 const SECTION = 'text-xs uppercase tracking-[0.14em] text-text-muted';
+
+const AS_IT_WAS = 'original';
+
+const CONTAINER_CHOICES = [
+  { id: AS_IT_WAS, label: say('screens.reencodeDialog.asTheOriginalIs') },
+  ...REENCODE_CONTAINERS.map((container) => ({ id: container, label: container.toUpperCase() })),
+];
+
+const PLACEMENT_CHOICES: readonly { id: ReencodePlacement; label: string }[] = [
+  { id: 'hidden', label: say('screens.reencodeDialog.inValencesOwnFolder') },
+  { id: 'beside', label: say('screens.reencodeDialog.besideTheOriginal') },
+];
 
 /**
  * What a file is called on a row, which is the programme rather than the episode.
@@ -94,6 +109,9 @@ const ReencodeDialog = ({
   const [quality, setQuality] = useState<QualityStepId>('1080p');
   const [videoCodec, setVideoCodec] = useState<ReencodeCodec>('hevc');
   const [compressesAudio, setCompressesAudio] = useState(false);
+  const [container, setContainer] = useState<ReencodeContainer | null>(null);
+  const [placement, setPlacement] = useState<ReencodePlacement>('hidden');
+  const [ceiling, setCeiling] = useState('');
   const [largerThan, setLargerThan] = useState('');
   const [search, setSearch] = useState('');
   const [libraryId, setLibraryId] = useState<string | null>(null);
@@ -101,14 +119,24 @@ const ReencodeDialog = ({
   const [isConfirming, setIsConfirming] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
 
+  const ceilingRead = readBitrate(ceiling);
+  const ceilingKbps = ceilingRead.kind === 'kbps' ? ceilingRead.kbps : null;
+
   const settings = useMemo<ReencodeSettings>(
     () => ({
       mode,
       quality: mode === 'audioOnly' ? null : quality,
       videoCodec: mode === 'audioOnly' ? null : videoCodec,
       audio: mode === 'audioOnly' || compressesAudio ? 'compress' : 'keep',
+      ...(mode !== 'keep'
+        ? {}
+        : {
+            placement,
+            ...(container === null ? {} : { container }),
+            ...(ceilingKbps === null ? {} : { maxBitrateKbps: ceilingKbps }),
+          }),
     }),
-    [mode, quality, videoCodec, compressesAudio],
+    [mode, quality, videoCodec, compressesAudio, placement, container, ceilingKbps],
   );
 
   const threshold = largerThan.trim() === '' ? null : Number(largerThan);
@@ -330,6 +358,44 @@ const ReencodeDialog = ({
             </p>
           )}
 
+          {mode === 'keep' ? (
+            <div className="flex flex-col gap-2 rounded-lg border border-line bg-subtle px-3 py-2">
+              <Choice
+                label={say('screens.adminArea.preTranscodingCard.container')}
+                value={container ?? AS_IT_WAS}
+                options={CONTAINER_CHOICES}
+                onSelect={(id) => {
+                  setContainer(REENCODE_CONTAINERS.find((one) => one === id) ?? null);
+                }}
+              />
+
+              <Choice
+                label={say('screens.reencodeDialog.whereItIsKept')}
+                value={placement}
+                options={PLACEMENT_CHOICES}
+                onSelect={(id) => {
+                  setPlacement(id === 'beside' ? 'beside' : 'hidden');
+                }}
+              />
+
+              <TextField
+                label={say('screens.adminArea.preTranscodingCard.bitrateCeiling')}
+                description={say(
+                  'screens.adminArea.preTranscodingCard.inKilobitsASecondLeaveEmpty',
+                )}
+                size="sm"
+                type="number"
+                min={100}
+                placeholder={say('common.noCeiling')}
+                value={ceiling}
+                onValueChange={setCeiling}
+                {...(ceilingRead.kind === 'invalid'
+                  ? { error: say('screens.adminArea.preTranscodingCard.aWholeNumberFrom100') }
+                  : {})}
+              />
+            </div>
+          ) : null}
+
           {mode === 'audioOnly' ? null : (
             <Checkbox
               label={say('screens.reencodeDialog.compressTheLosslessAudioToo')}
@@ -416,7 +482,7 @@ const ReencodeDialog = ({
                   })
                 : `Re-encode ${acceptedCount.toString()}`,
           isLoading: isWeighing || isStarting,
-          isDisabled: acceptedCount <= 0 || room === 'willNotFit',
+          isDisabled: acceptedCount <= 0 || room === 'willNotFit' || ceilingRead.kind === 'invalid',
           onChoose: () => {
             if (mode === 'keep') {
               void start();

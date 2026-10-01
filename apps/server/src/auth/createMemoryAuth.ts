@@ -1,3 +1,4 @@
+import { PRE_TRANSCODING_DEFAULTS } from '@ValenceContracts/schemas/PreTranscoding';
 import { memoryAdapter } from 'better-auth/adapters/memory';
 import { createAuth } from './Auth';
 import type { ValenceAuth } from './Auth';
@@ -95,6 +96,7 @@ const createMemoryAuth = (
     reencodesAwaitingReviewCap: 5,
     keepsDownloadsForDays: 14,
     roundness: 'default',
+    preTranscoding: PRE_TRANSCODING_DEFAULTS,
   });
 
   const auth = createAuth({

@@ -2,6 +2,10 @@ import { z } from 'zod';
 import { PreviewQualitySchema } from '@ValenceContracts/schemas/PreviewQuality';
 import { RoundnessSchema } from '@ValenceContracts/schemas/Roundness';
 import { ReleaseTypesSchema } from '@ValenceContracts/schemas/MediaRequest';
+import {
+  PRE_TRANSCODING_DEFAULTS,
+  PreTranscodingSettingsSchema,
+} from '@ValenceContracts/schemas/PreTranscoding';
 
 const ServerSettingsSchema = z.object({
   trustedOrigins: z.array(z.string().url()),
@@ -28,6 +32,7 @@ const ServerSettingsSchema = z.object({
   requestReleaseTypes: ReleaseTypesSchema.default(['album']),
   roundness: RoundnessSchema.default('default'),
   keepsDownloadsForDays: z.number().int().nonnegative().max(3650).default(14),
+  preTranscoding: PreTranscodingSettingsSchema.default(PRE_TRANSCODING_DEFAULTS),
 });
 
 type ServerSettings = z.infer<typeof ServerSettingsSchema>;

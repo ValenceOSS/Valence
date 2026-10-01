@@ -4170,6 +4170,11 @@
     "context": "Shown, used in the stream stats in the player of the television app and in the stream stats in the video player."
   },
   {
+    "handler": "common.preTranscoding",
+    "text": "Pre-transcoding",
+    "context": "The name of the feature that makes, ahead of time, a smaller copy of each film and episode that modest devices play without the server converting it. A heading and a switch in the administration area."
+  },
+  {
     "handler": "common.previewClips",
     "text": "Preview clips",
     "context": "The label, used in the cache breakdown (from `cacheRows`) and in the admin area (from `describeLibraryPart`)."
@@ -12495,6 +12500,46 @@
     "context": "A heading in the job schedule page in the admin area."
   },
   {
+    "handler": "screens.adminArea.keptCopiesDialog.aCopyIsMadeByKeeping",
+    "text": "A copy is made by re-encoding with Keep alongside, or by pre-transcoding.",
+    "context": "The detail shown in the kept copies dialog when a film or episode has none. Keep alongside is the name of a choice in the re-encode dialog."
+  },
+  {
+    "handler": "screens.adminArea.keptCopiesDialog.aDevicePlaysTheLargestCopy",
+    "text": "A device is given the largest of these it plays as it is, before the original is converted for it. Removing a copy deletes its file.",
+    "context": "The explanation at the top of the dialog listing the copies kept alongside a film or episode."
+  },
+  {
+    "handler": "screens.adminArea.keptCopiesDialog.copiesKeptOfName",
+    "text": "Copies kept of {name}",
+    "context": "The title of the dialog listing the copies kept alongside a film or episode. {name} is the film or episode."
+  },
+  {
+    "handler": "screens.adminArea.keptCopiesDialog.keptCopies",
+    "text": "Kept copies",
+    "context": "The title of the dialog listing the copies kept alongside a film or episode, and the menu item that opens it."
+  },
+  {
+    "handler": "screens.adminArea.keptCopiesDialog.noCopiesAreKept",
+    "text": "No copies are kept of this",
+    "context": "Shown in the kept copies dialog when a film or episode has none."
+  },
+  {
+    "handler": "screens.adminArea.keptCopiesDialog.removedTheCopy",
+    "text": "Removed the copy, and its file.",
+    "context": "A notice shown after an administrator removed a copy kept alongside a film."
+  },
+  {
+    "handler": "screens.adminArea.keptCopiesDialog.thatCopyCouldNotBeRemoved",
+    "text": "That copy could not be removed.",
+    "context": "A notice shown when a copy kept alongside a film could not be removed."
+  },
+  {
+    "handler": "screens.adminArea.keptCopiesDialog.theCopiesCouldNotBeRead",
+    "text": "The copies kept of this could not be read.",
+    "context": "Shown in the kept copies dialog when the server would not list them."
+  },
+  {
     "handler": "screens.adminArea.keptTheNewEncodeAndRemoved",
     "text": "Kept the new encode and removed the original.",
     "context": "Shown in the admin area."
@@ -13463,6 +13508,161 @@
     "handler": "screens.adminArea.pluginsPanel.versionComesBackWithWhat",
     "text": "{version} comes back with what it had kept as it was when the upgrade happened. Anything it kept since the upgrade is lost.",
     "context": "The detail of the dialog confirming a plugin is rolled back to its earlier version, in the admin's plugins panel. {version} is the earlier version's number, such as 1.2.0."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.aCopyIsNeverLargerThan",
+    "text": "H.264 in MP4 plays as it is on the most devices. A copy is never larger than its original, and a file already that small is left alone.",
+    "context": "The description of the setting for what each pre-transcoded copy is."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.atAnyHourUntilEveryFile",
+    "text": "At any hour, a copy at a time, until every file has one.",
+    "context": "The description of when pre-transcoding works, when it carries on until everything is done."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.aWholeNumberFrom100",
+    "text": "A whole number from 100 to 200000.",
+    "context": "The error under the bitrate ceiling field on the pre-transcoding card when what was typed is not allowed."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.bitrateCeiling",
+    "text": "Bitrate ceiling",
+    "context": "A setting on the pre-transcoding card: the most video bitrate a copy may spend."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.container",
+    "text": "Container",
+    "context": "A choice on the pre-transcoding card: the file format each copy is written in, such as MP4 or MKV."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.copiesMade",
+    "text": "Copies made",
+    "context": "A figure on the pre-transcoding card: how many films and episodes already have a copy."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.eachCopyTakesDiskBesideIts",
+    "text": "Each copy takes disk beside its original, and Valence needs to be able to write to the library's folders.",
+    "context": "The description of the switch that turns pre-transcoding on."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.endingAt",
+    "text": "Ending at",
+    "context": "The hour pre-transcoding's quiet hours end."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.everyLibraryOfFilmsAndShows",
+    "text": "Every library of films and shows",
+    "context": "A checkbox on the pre-transcoding card: make copies in every video library rather than chosen ones."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.includingOnesAddedLater",
+    "text": "Including ones added later.",
+    "context": "The description of the checkbox for making copies in every video library."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.inKilobitsASecondLeaveEmpty",
+    "text": "In kilobits a second. Leave it empty to use the ceiling of the picture size chosen.",
+    "context": "The description of the bitrate ceiling setting on the pre-transcoding card."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.inQuietHours",
+    "text": "In quiet hours",
+    "context": "A choice in the pre-transcoding settings: make copies only between two hours of the day."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.keepsACopyOfEachFilm",
+    "text": "Keeps a copy of each film and episode beside it, at a size and in a format modest devices play as it is, so the server does not have to convert it while somebody watches. Copies are named like “Arrival (2016) - 1080p H264.valence.mp4”, and Valence never adds a file named that way to a library.",
+    "context": "The explanation at the top of the pre-transcoding card in the administration area. The quoted name is an example file name and should be kept as it is."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.makeTheNextCopyNow",
+    "text": "Make the next copy now",
+    "context": "A button on the pre-transcoding card that starts the next copy straight away, whatever the hour."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.makingACopyOfTitle",
+    "text": "Making a copy of {title}",
+    "context": "The label of the progress bar for the copy pre-transcoding is making now. {title} is the film or episode."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.onlyBetweenTheseHoursOnThe",
+    "text": "Only between these hours, on the {timezone} clock the scheduled jobs keep. What is being made stops when they end.",
+    "context": "The description of when pre-transcoding works, when it keeps to quiet hours. {timezone} is a time zone such as Europe/London."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.passedOver",
+    "text": "Passed over",
+    "context": "A figure on the pre-transcoding card: how many files pre-transcoding has stopped trying, because a copy was refused or failed twice."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.preTranscodingCarriesOn",
+    "text": "Pre-transcoding carries on.",
+    "context": "A notice shown after an administrator resumed pre-transcoding."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.preTranscodingCouldNotBeRead",
+    "text": "The pre-transcoding settings could not be read.",
+    "context": "Shown in the Encoding section of the administration area when the server would not say how pre-transcoding is set up."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.preTranscodingIsPaused",
+    "text": "Pre-transcoding is paused, and the copy being made has stopped.",
+    "context": "A notice shown after an administrator paused pre-transcoding."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.refusedOrFailedTwice",
+    "text": "Refused, or failed twice. Saving the settings tries them again.",
+    "context": "The detail under the Passed over figure on the pre-transcoding card."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.rightNow",
+    "text": "Right now",
+    "context": "A figure on the pre-transcoding card saying what pre-transcoding is doing at the moment."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.savedPreTranscoding",
+    "text": "Saved the pre-transcoding settings.",
+    "context": "A notice shown after the pre-transcoding settings were saved."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.startingAt",
+    "text": "Starting at",
+    "context": "The hour pre-transcoding's quiet hours begin."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.stillToMake",
+    "text": "Still to make",
+    "context": "A figure on the pre-transcoding card: how many films and episodes still need a copy."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.theNextCopyIsBeingMade",
+    "text": "The next copy is being made.",
+    "context": "A notice shown after an administrator asked pre-transcoding to make the next copy straight away."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.thereIsNothingToMakeA",
+    "text": "There is nothing to make a copy of, or pre-transcoding is off.",
+    "context": "A notice shown when an administrator asked pre-transcoding to make the next copy and none could be started."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.untilEverythingIsDone",
+    "text": "Until everything is done",
+    "context": "A choice in the pre-transcoding settings: make copies at any hour until every file has one."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.waitingForQuietHours",
+    "text": "Waiting for quiet hours",
+    "context": "What pre-transcoding is doing at the moment: it is outside the hours it may run in."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.whatEachCopyIs",
+    "text": "What each copy is",
+    "context": "A setting on the pre-transcoding card: the picture size, codec and container of every copy."
+  },
+  {
+    "handler": "screens.adminArea.preTranscodingCard.whenToWork",
+    "text": "When to work",
+    "context": "A setting on the pre-transcoding card: which hours copies may be made in."
   },
   {
     "handler": "screens.adminArea.processor",
@@ -19315,6 +19515,11 @@
     "context": "Shown in an empty text field until something is typed in the reencode dialog."
   },
   {
+    "handler": "screens.reencodeDialog.asTheOriginalIs",
+    "text": "As the original is",
+    "context": "A choice in the re-encode dialog: keep the copy in the same container as the original file."
+  },
+  {
     "handler": "screens.reencodeDialog.aTrueHDOrDTSHDTrack",
     "text": "A TrueHD or DTS-HD track is often a large share of a remux. Compressing it narrows 7.1 to 5.1.",
     "context": "The description of a checkbox in the reencode dialog."
@@ -19323,6 +19528,11 @@
     "handler": "screens.reencodeDialog.awaitingReviewEncodesAreAlreadyWaitingTo",
     "text": "{awaitingReview} encodes are already waiting to be judged. Review some before adding more.",
     "context": "Text shown in the reencode dialog. {awaitingReview} is filled in by the app."
+  },
+  {
+    "handler": "screens.reencodeDialog.besideTheOriginal",
+    "text": "Beside the original",
+    "context": "A choice in the re-encode dialog: keep the copy in the same folder as the original, under a name a person can read."
   },
   {
     "handler": "screens.reencodeDialog.chooseSomethingFirst",
@@ -19425,6 +19635,11 @@
     "context": "Beneath what a re-encode would cost, when the disk would not say how much room it has. {committed} is a size, such as \"12 GB\"."
   },
   {
+    "handler": "screens.reencodeDialog.inValencesOwnFolder",
+    "text": "In Valence's own folder",
+    "context": "A choice in the re-encode dialog: keep the copy in the hidden .valence folder at the top of the library."
+  },
+  {
     "handler": "screens.reencodeDialog.keepAcceptedCountAlongside",
     "text": "Keep {acceptedCount} alongside",
     "context": "Shown in the reencode dialog. {acceptedCount} is filled in by the app."
@@ -19513,6 +19728,11 @@
     "handler": "screens.reencodeDialog.whatToWorkOn",
     "text": "What to work on",
     "context": "Text shown in the reencode dialog."
+  },
+  {
+    "handler": "screens.reencodeDialog.whereItIsKept",
+    "text": "Where it is kept",
+    "context": "A choice in the re-encode dialog: which folder a copy kept alongside is written to."
   },
   {
     "handler": "screens.reencodeDialog.whichLibraryToLookIn",
@@ -21460,9 +21680,19 @@
     "context": "The label in the jobs on the server (from `jobDefinitions`)."
   },
   {
+    "handler": "server.jobs.jobDefinitions.keepsACopyBesideEachFilm",
+    "text": "Keeps a copy beside each film and episode that modest devices play without converting it, in the hours chosen under Encoding.",
+    "context": "The description of the pre-transcoding job on the jobs page. Encoding is the name of a section of the administration area."
+  },
+  {
     "handler": "server.jobs.jobDefinitions.makesTheReEncodesAnAdministrator",
     "text": "Makes the re-encodes an administrator asked for.",
     "context": "The description in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.preTranscodeTheLibraries",
+    "text": "Pre-transcode the libraries",
+    "context": "The name of a background job on the jobs page. It makes, a film at a time, a smaller copy of each film and episode that modest devices can play without the server converting it."
   },
   {
     "handler": "server.jobs.jobDefinitions.pruneOldJobHistory",
@@ -21603,6 +21833,36 @@
     "handler": "server.jobs.phase.preparing",
     "text": "preparing",
     "context": "The step a background job is on, shown beside its progress on the admin area’s jobs page: preparing."
+  },
+  {
+    "handler": "server.jobs.phase.preTranscodeNothingLeft",
+    "text": "Every file has its copy",
+    "context": "What the pre-transcoding job reports on the jobs page when nothing is left to make a copy of."
+  },
+  {
+    "handler": "server.jobs.phase.preTranscodeOff",
+    "text": "Pre-transcoding is off",
+    "context": "What the pre-transcoding job reports on the jobs page when it is turned off."
+  },
+  {
+    "handler": "server.jobs.phase.preTranscodeOutsideTheWindow",
+    "text": "Outside the hours chosen for it",
+    "context": "What the pre-transcoding job reports on the jobs page when it is outside the hours it may run in."
+  },
+  {
+    "handler": "server.jobs.phase.preTranscodePaused",
+    "text": "Pre-transcoding is paused",
+    "context": "What the pre-transcoding job reports on the jobs page when an administrator paused it."
+  },
+  {
+    "handler": "server.jobs.phase.preTranscodeQueued",
+    "text": "Queued the next copy",
+    "context": "What the pre-transcoding job reports on the jobs page when it asked for the next copy to be made."
+  },
+  {
+    "handler": "server.jobs.phase.preTranscodeUnderWay",
+    "text": "A copy is already being made",
+    "context": "What the pre-transcoding job reports on the jobs page when one copy is already being encoded."
   },
   {
     "handler": "server.jobs.phase.previews",
@@ -22040,9 +22300,19 @@
     "context": "Shown in the reencode on the server (from `createDatabaseReencodeService`)."
   },
   {
+    "handler": "server.reencode.refuseReencode.aFileOfThatNameIsAlready",
+    "text": "A file called {fileName} is already beside this one, and Valence did not make it. It is never written over.",
+    "context": "The detail in the reencode on the server (from `refuseReencode`), when the copy kept beside a film would take the name of a file already there. {fileName} is that file's name."
+  },
+  {
     "handler": "server.reencode.refuseReencode.somebodyIsWatchingThisNowReplacing",
     "text": "Somebody is watching this now. Replacing a file underneath a stream would end it.",
     "context": "The detail in the reencode on the server (from `refuseReencode`)."
+  },
+  {
+    "handler": "server.reencode.refuseReencode.thisCopyIsAlreadyKept",
+    "text": "A copy just like this one is already kept beside it.",
+    "context": "The detail in the reencode on the server (from `refuseReencode`), when the same copy has already been made."
   },
   {
     "handler": "server.reencode.refuseReencode.thisFileCarriesSubtitlesThatA",

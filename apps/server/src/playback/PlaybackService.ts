@@ -62,7 +62,11 @@ type PlaybackService = {
     subtitleStreamIndex?: number,
   ) => Promise<StartOutcome>;
   readSessionFile: (sessionId: string, name: string) => Promise<SessionFile | null>;
-  readDirectFile: (mediaId: string, range: string | null) => Promise<RangedFile | null>;
+  readDirectFile: (
+    mediaId: string,
+    range: string | null,
+    renditionId?: string | null,
+  ) => Promise<RangedFile | null>;
   trickplay: (mediaId: string) => Promise<Trickplay | null>;
   readFrame: (mediaId: string, seconds: number, width: number) => Promise<ArrayBuffer | null>;
   readPreview: (mediaId: string, range: string | null) => Promise<PreviewRead>;

@@ -32,6 +32,7 @@ import {
 import { fetchWebhooks, fetchWebhookDeliveries } from '@ValenceClient/admin/fetchWebhooks';
 import { fetchReencodes, fetchRenditions } from '@ValenceClient/admin/fetchReencodes';
 import { whenToAskAgain } from '@ValenceClient/admin/whenToAskAgain';
+import { fetchPreTranscoding } from '@ValenceClient/admin/fetchPreTranscoding';
 import { fetchEverybodysShares } from '@ValenceClient/sharing/fetchShares';
 import { readWholeLibrary } from '@ValenceClient/library/readWholeLibrary';
 import type { JobRunQuery } from '@ValenceContracts/schemas/JobRun';
@@ -525,8 +526,27 @@ const renditions = (mediaId: string | null) =>
     enabled: mediaId !== null,
   });
 
+/**
+ * The pre-transcoding settings and how far it has got, asked for again while a copy is being made
+ * so its bar moves.
+ *
+ * @returns The query.
+ */
+const preTranscoding = () =>
+  queryOptions({
+    queryKey: [...ADMIN, 'preTranscoding'],
+    queryFn: () => fetchPreTranscoding(),
+    refetchInterval: ({ state }) =>
+      whenToAskAgain(
+        state.data?.current === undefined || state.data.current === null
+          ? []
+          : [state.data.current],
+      ),
+  });
+
 const adminQueries = {
   everyFile,
+  preTranscoding,
   mediaPaths,
   reencodes,
   renditions,

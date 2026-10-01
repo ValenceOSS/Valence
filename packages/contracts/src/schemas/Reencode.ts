@@ -31,6 +31,20 @@ const REENCODE_AUDIO_CHOICES = ['keep', 'compress'] as const;
 
 const ReencodeAudioSchema = z.enum(REENCODE_AUDIO_CHOICES);
 
+const REENCODE_CONTAINERS = ['mp4', 'mkv'] as const;
+
+const ReencodeContainerSchema = z.enum(REENCODE_CONTAINERS);
+
+const REENCODE_PLACEMENTS = ['hidden', 'beside'] as const;
+
+const ReencodePlacementSchema = z.enum(REENCODE_PLACEMENTS);
+
+const REENCODE_ORIGINS = ['admin', 'preTranscode'] as const;
+
+const ReencodeOriginSchema = z.enum(REENCODE_ORIGINS);
+
+const REENCODE_MAX_BITRATE_KBPS = { min: 100, max: 200000 } as const;
+
 const REENCODE_REFUSALS = [
   'NotFound',
   'NoVideo',
@@ -41,6 +55,8 @@ const REENCODE_REFUSALS = [
   'SubtitlesWouldNotSurvive',
   'NotEnoughRoom',
   'TooManyAwaitingReview',
+  'NameIsTaken',
+  'AlreadyKept',
 ] as const;
 
 const ReencodeRefusalCodeSchema = z.enum(REENCODE_REFUSALS);
@@ -55,6 +71,14 @@ const ReencodeSettingsSchema = z.object({
   quality: QualityStepIdSchema.nullable(),
   videoCodec: ReencodeCodecSchema.nullable(),
   audio: ReencodeAudioSchema,
+  container: ReencodeContainerSchema.optional(),
+  maxBitrateKbps: z
+    .number()
+    .int()
+    .min(REENCODE_MAX_BITRATE_KBPS.min)
+    .max(REENCODE_MAX_BITRATE_KBPS.max)
+    .optional(),
+  placement: ReencodePlacementSchema.optional(),
 });
 
 const ReencodeRequestSchema = ReencodeSettingsSchema.extend({
@@ -93,6 +117,7 @@ const ReencodeSchema = ReencodeSettingsSchema.extend({
   title: z.string(),
   seriesTitle: z.string().nullable(),
   state: ReencodeStateSchema,
+  origin: ReencodeOriginSchema.default('admin'),
   durationSeconds: z.number().positive(),
   originalSizeBytes: z.number().nonnegative(),
   estimatedBytes: z.number().nonnegative().nullable(),
@@ -121,6 +146,9 @@ const ReviewSideSchema = z.enum(REVIEWABLE_SIDES);
 type ReencodeMode = z.infer<typeof ReencodeModeSchema>;
 type ReencodeState = z.infer<typeof ReencodeStateSchema>;
 type ReencodeCodec = z.infer<typeof ReencodeCodecSchema>;
+type ReencodeContainer = z.infer<typeof ReencodeContainerSchema>;
+type ReencodePlacement = z.infer<typeof ReencodePlacementSchema>;
+type ReencodeOrigin = z.infer<typeof ReencodeOriginSchema>;
 type ReencodeRefusal = z.infer<typeof ReencodeRefusalSchema>;
 type ReencodeSettings = z.infer<typeof ReencodeSettingsSchema>;
 type ReencodeCandidate = z.infer<typeof ReencodeCandidateSchema>;
@@ -133,8 +161,11 @@ export type {
   Reencode,
   ReencodeCandidate,
   ReencodeCodec,
+  ReencodeContainer,
   ReencodeEstimate,
   ReencodeMode,
+  ReencodeOrigin,
+  ReencodePlacement,
   ReencodeRefusal,
   ReencodeSettings,
   ReencodeStarted,
@@ -147,16 +178,23 @@ export {
   REENCODES_UNDER_WAY,
   REENCODE_AUDIO_CHOICES,
   REENCODE_CODECS,
+  REENCODE_CONTAINERS,
+  REENCODE_MAX_BITRATE_KBPS,
   REENCODE_MODES,
+  REENCODE_ORIGINS,
+  REENCODE_PLACEMENTS,
   REENCODE_REFUSALS,
   REENCODE_STATES,
   REVIEWABLE_SIDES,
   ReencodeAudioSchema,
   ReencodeCandidateSchema,
   ReencodeCodecSchema,
+  ReencodeContainerSchema,
   ReencodeEstimateSchema,
   ReencodeListSchema,
   ReencodeModeSchema,
+  ReencodeOriginSchema,
+  ReencodePlacementSchema,
   ReencodeRefusalCodeSchema,
   ReencodeRefusalSchema,
   ReencodeRequestSchema,

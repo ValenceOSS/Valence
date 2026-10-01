@@ -20,7 +20,8 @@ import type { ReencodeSettings } from '@ValenceContracts/schemas/Reencode';
  *
  * **Keeping alongside** is not asking for anything to get smaller — it is asking for a file some
  * device can play without work. So the test is whether it would differ from the original at all:
- * the same picture in the same codec is a second copy of what is already there.
+ * the same picture in the same codec is a second copy of what is already there, unless a ceiling
+ * somebody named holds it to fewer bits than the original spends.
  *
  * @param item - The file, as the catalogue holds it.
  * @param settings - What was chosen.
@@ -28,7 +29,9 @@ import type { ReencodeSettings } from '@ValenceContracts/schemas/Reencode';
  */
 const wouldGainNothing = (item: MediaItem, settings: ReencodeSettings): boolean => {
   if (settings.mode === 'keep') {
-    const clamps = settings.quality !== null && resolveQualityStep(item, settings.quality) !== null;
+    const clamps =
+      (settings.quality !== null && resolveQualityStep(item, settings.quality) !== null) ||
+      (settings.maxBitrateKbps !== undefined && settings.maxBitrateKbps < item.bitrateKbps);
 
     return !clamps && (settings.videoCodec === null || settings.videoCodec === item.videoCodec);
   }

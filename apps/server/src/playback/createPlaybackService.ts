@@ -110,8 +110,10 @@ type CreatePlaybackServiceOptions = {
 
 /**
  * Playback as it actually runs: negotiating what a client can take, starting a session on the media
- * service where anything needs changing, and serving the file directly where nothing does. Also
- * where a session is stopped, kept alive and asked about.
+ * service where anything needs changing, and serving the file directly where nothing does — the
+ * original, or a copy kept alongside it that the device plays as it is, which is what a copy made
+ * ahead of time is for. A copy is only ever served by its identifier among the item's own, never by
+ * a path a client names. Also where a session is stopped, kept alive and asked about.
  *
  * @param options - The library to read files from, the transcoder to run sessions on, and the
  *   settings that bound what a session may cost.
@@ -194,12 +196,19 @@ const createPlaybackService = ({
       const { plan } = chosen;
       const source = chosen.source.item;
 
-      if (chosen.isDirectPlay && chosen.source.isOriginal && audioStreamIndex === undefined) {
+      if (chosen.isDirectPlay && audioStreamIndex === undefined) {
+        const file = `${directUrlPrefix}/${mediaId}/file`;
+
         return {
           kind: 'started',
           session: {
             sessionId: `direct-${mediaId}`,
-            delivery: { kind: 'direct', url: `${directUrlPrefix}/${mediaId}/file` },
+            delivery: {
+              kind: 'direct',
+              url: chosen.source.isOriginal
+                ? file
+                : `${file}?rendition=${encodeURIComponent(chosen.source.id)}`,
+            },
             mode: describePlaybackMode(plan),
             plan,
             warnings: [],
@@ -272,10 +281,20 @@ const createPlaybackService = ({
 
     readSessionFile: async (sessionId, name) => transcoder.readSessionFile(sessionId, name),
 
-    readDirectFile: async (mediaId, range) => {
+    readDirectFile: async (mediaId, range, renditionId = null) => {
       const found = await media.findForPlayback(mediaId);
 
-      return found === null ? null : transcoder.readFile(found.path, range);
+      if (found === null) {
+        return null;
+      }
+
+      if (renditionId === null) {
+        return transcoder.readFile(found.path, range);
+      }
+
+      const kept = found.renditions?.find((one) => one.id === renditionId);
+
+      return kept === undefined ? null : transcoder.readFile(kept.path, range);
     },
 
     trickplay: async (mediaId) => {

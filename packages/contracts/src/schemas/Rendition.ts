@@ -17,6 +17,7 @@ const RenditionSchema = z.object({
   mediaItemId: z.string().uuid(),
   kind: RenditionKindSchema,
   label: z.string().min(1),
+  fileName: z.string().default(''),
   quality: QualityStepIdSchema.nullable(),
   sizeBytes: z.number().nonnegative(),
   container: ContainerSchema,

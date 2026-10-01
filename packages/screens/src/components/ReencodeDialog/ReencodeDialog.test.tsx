@@ -310,6 +310,48 @@ describe('ReencodeDialog', () => {
     });
   });
 
+  it('keeps a copy in Valence’s own folder and the original’s container unless told otherwise', async () => {
+    const onWeigh = vi.fn();
+
+    render(<ReencodeDialog {...props} onWeigh={onWeigh} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Keep alongside' }));
+    await userEvent.click(theFilm());
+
+    await waitFor(() => {
+      expect(onWeigh).toHaveBeenLastCalledWith(['item-1'], {
+        mode: 'keep',
+        quality: '1080p',
+        videoCodec: 'hevc',
+        audio: 'keep',
+        placement: 'hidden',
+      });
+    });
+  });
+
+  it('carries a bitrate ceiling typed for a copy kept alongside', async () => {
+    const onWeigh = vi.fn();
+
+    render(<ReencodeDialog {...props} onWeigh={onWeigh} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Keep alongside' }));
+    await userEvent.type(screen.getByRole('spinbutton', { name: 'Bitrate ceiling' }), '3000');
+    await userEvent.click(theFilm());
+
+    await waitFor(() => {
+      expect(onWeigh).toHaveBeenLastCalledWith(
+        ['item-1'],
+        expect.objectContaining({ mode: 'keep', maxBitrateKbps: 3000 }),
+      );
+    });
+  });
+
+  it('asks nothing about where or how a copy is kept when the original is being replaced', () => {
+    render(<ReencodeDialog {...props} />);
+
+    expect(screen.queryByRole('spinbutton', { name: 'Bitrate ceiling' })).toBeNull();
+  });
+
   it('weighs once for a burst of choosing rather than once per tick', async () => {
     const onWeigh = vi.fn();
 

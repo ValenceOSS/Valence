@@ -16,6 +16,7 @@ type MediaPanelProps = {
   onChooseMoment: (media: MediaSummary) => void;
   onRebuildArtefacts: (media: MediaSummary) => Promise<boolean>;
   onReencode?: (media: readonly MediaSummary[]) => void;
+  onShowCopies?: (media: MediaSummary, name: string) => void;
   onDelete?: (media: MediaSummary, isWholeSeries: boolean) => Promise<boolean>;
   paths?: Readonly<Record<string, string>>;
   onOpenFolder?: (path: string) => void;

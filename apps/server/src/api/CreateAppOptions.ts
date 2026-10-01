@@ -1,3 +1,4 @@
+import type { PreTranscodingService } from '@ValenceServer/preTranscoding/PreTranscodingService';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type {
   QueueControl,
@@ -148,6 +149,7 @@ type CreateAppOptions = {
   bookDevices?: BookDevices;
   reencodes?: ReencodeService;
   onReencodeQueued?: () => void;
+  preTranscoding?: PreTranscodingService;
   promoteProfile?: (request: {
     profileId: string;
     email: string;

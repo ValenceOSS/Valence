@@ -12,6 +12,7 @@ const at = (progress: number, overrides: Partial<Reencode> = {}): Reencode => ({
   seriesTitle: null,
   mode: 'replace',
   state: 'encoding',
+  origin: 'admin',
   quality: '1080p',
   videoCodec: 'hevc',
   audio: 'keep',

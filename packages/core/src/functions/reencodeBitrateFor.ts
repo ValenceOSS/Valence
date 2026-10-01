@@ -34,7 +34,7 @@ type ReencodeBitrate = {
  * @param targetCodec - The codec being encoded to.
  * @returns The ceiling and the figure to quote.
  */
-const reencodeBitrateFor = (
+const bitrateOnTheLadder = (
   item: MediaItem,
   quality: QualityStepId | null,
   targetCodec: string,
@@ -60,6 +60,32 @@ const reencodeBitrateFor = (
     capKbps,
     expectedKbps: Math.max(1, Math.min(Math.round(ceiling * efficiencyOf(targetCodec)), capKbps)),
   };
+};
+
+/**
+ * The bitrates a stored re-encode involves, held under a ceiling somebody named where they named one.
+ *
+ * @param item - The file, as the catalogue holds it.
+ * @param quality - The rung chosen, or nothing to keep the file's own picture.
+ * @param targetCodec - The codec being encoded to.
+ * @param maxBitrateKbps - A ceiling somebody named, which wins wherever it is the lower.
+ * @returns The ceiling and the figure to quote.
+ */
+const reencodeBitrateFor = (
+  item: MediaItem,
+  quality: QualityStepId | null,
+  targetCodec: string,
+  maxBitrateKbps: number | null = null,
+): ReencodeBitrate => {
+  const onTheLadder = bitrateOnTheLadder(item, quality, targetCodec);
+
+  if (maxBitrateKbps === null) {
+    return onTheLadder;
+  }
+
+  const capKbps = Math.max(1, Math.min(onTheLadder.capKbps, maxBitrateKbps));
+
+  return { capKbps, expectedKbps: Math.max(1, Math.min(onTheLadder.expectedKbps, capKbps)) };
 };
 
 export type { ReencodeBitrate };

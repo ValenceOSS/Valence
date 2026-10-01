@@ -425,6 +425,21 @@ describe('MediaPanel', () => {
     ]);
   });
 
+  it('opens the copies kept of a film from its own menu', async () => {
+    const onShowCopies = vi.fn();
+    const user = userEvent.setup();
+
+    render(<MediaPanel {...props} media={[item()]} onShowCopies={onShowCopies} />);
+
+    await user.click(screen.getByRole('button', { name: /Actions for/ }));
+    await user.click(screen.getByRole('menuitem', { name: 'Kept copies' }));
+
+    expect(onShowCopies).toHaveBeenCalledWith(
+      expect.objectContaining({ id: item().id }),
+      'Parasite',
+    );
+  });
+
   it('shows each title’s poster, and says where there is none', () => {
     render(
       <MediaPanel

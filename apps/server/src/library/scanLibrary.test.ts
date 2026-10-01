@@ -1689,3 +1689,19 @@ describe('a file holding two episodes', () => {
     });
   });
 });
+
+describe('a library holding copies Valence keeps beside its films', () => {
+  it('reads the film and never takes the copy beside it for a film of its own', async () => {
+    const { run, rows } = harness({
+      found: [
+        file('/media/films/Arrival (2016)/Arrival (2016).mkv'),
+        file('/media/films/Arrival (2016)/Arrival (2016) - 1080p H264.valence.mp4'),
+        file('/media/films/.valence/0b5c.mkv'),
+      ],
+    });
+
+    await run();
+
+    expect(rows.map((row) => row.path)).toEqual(['/media/films/Arrival (2016)/Arrival (2016).mkv']);
+  });
+});

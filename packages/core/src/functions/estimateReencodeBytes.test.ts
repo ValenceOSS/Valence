@@ -77,4 +77,12 @@ describe('estimateReencodeBytes', () => {
   it('says nothing for a file with no runtime to multiply by', () => {
     expect(estimateReencodeBytes({ ...remux, durationSeconds: 0 }, replacing)).toBeNull();
   });
+
+  it('quotes less where a bitrate ceiling somebody named is below the rung', () => {
+    const capped =
+      estimateReencodeBytes(remux, { ...replacing, mode: 'keep', maxBitrateKbps: 1000 }) ?? 0;
+    const uncapped = estimateReencodeBytes(remux, { ...replacing, mode: 'keep' }) ?? 0;
+
+    expect(capped).toBeLessThan(uncapped);
+  });
 });
