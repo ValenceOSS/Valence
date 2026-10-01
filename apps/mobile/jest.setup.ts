@@ -84,24 +84,30 @@ jest.mock('@react-native-cookies/cookies', () => ({
 }));
 
 jest.mock('expo-image', () => ({
-  Image: (props: {
-    source: { uri: string; headers?: Record<string, string> };
-    style?: StyleProp<ImageStyle>;
-    accessible?: boolean;
-    accessibilityLabel?: string;
-    onError?: () => void;
-    onLoad?: (event: { source: { width: number; height: number } }) => void;
-  }) =>
-    mockCreateElement(mockNativeImage, {
-      source: props.source,
-      style: props.style,
-      accessible: props.accessible,
-      accessibilityLabel: props.accessibilityLabel,
-      onError: props.onError,
-      onLoad: (event?: { nativeEvent?: { source?: { width: number; height: number } } }) => {
-        props.onLoad?.({ source: event?.nativeEvent?.source ?? { width: 0, height: 0 } });
-      },
-    }),
+  Image: Object.assign(
+    (props: {
+      source: { uri: string; headers?: Record<string, string> };
+      style?: StyleProp<ImageStyle>;
+      accessible?: boolean;
+      accessibilityLabel?: string;
+      onError?: () => void;
+      onLoad?: (event: { source: { width: number; height: number } }) => void;
+    }) =>
+      mockCreateElement(mockNativeImage, {
+        source: props.source,
+        style: props.style,
+        accessible: props.accessible,
+        accessibilityLabel: props.accessibilityLabel,
+        onError: props.onError,
+        onLoad: (event?: { nativeEvent?: { source?: { width: number; height: number } } }) => {
+          props.onLoad?.({ source: event?.nativeEvent?.source ?? { width: 0, height: 0 } });
+        },
+      }),
+    {
+      clearMemoryCache: jest.fn(() => Promise.resolve(true)),
+      clearDiskCache: jest.fn(() => Promise.resolve(true)),
+    },
+  ),
 }));
 
 jest.mock('expo-video', () => ({
