@@ -171,6 +171,10 @@ Re-encoding converts a media file into a smaller or more compatible one. It is t
 
 For Replace and Keep alongside you also choose a quality step (from 144p up to 4K, with a maximum bitrate for each) and a codec (H.264, HEVC or AV1). The **Compress the lossless audio too** option shrinks a TrueHD or DTS-HD track, which is often a large share of a remux, and narrows 7.1 to 5.1.
 
+Keep alongside also asks three more things. **Container format** keeps the original's container, or makes the copy an MP4 or an MKV; an MP4 copy leaves out subtitles, chapters and any audio an MP4 cannot hold is compressed, while the original keeps them all. **Where it is kept** is Valence's own `.valence` folder at the top of the library, or beside the original under a readable name such as `Arrival (2016) - 1080p H264.valence.mp4`. **Bitrate ceiling** holds the copy to fewer kilobits a second than the quality step allows. To make copies of a whole library automatically, overnight, use [Pre-transcoding](/use/pre-transcoding).
+
+Copies kept alongside are listed, and can be removed, from **Kept copies** in a title's menu in **Media**. Removing one deletes its file.
+
 ### What Valence refuses
 
 Before anything starts Valence checks each file and tells you why it will not proceed, so a Friday batch does not fail overnight.
@@ -181,6 +185,8 @@ Before anything starts Valence checks each file and tells you why it will not pr
 | Being watched               | Replacing a file under a live stream would end it.                                                                             |
 | Folder is read only         | Valence cannot write to the folder. Media is often mounted read only, which is sensible; mount it read and write to re-encode. |
 | Subtitles would not survive | An AVI or M2TS file carries subtitles its container cannot hold, and the container is never changed.                           |
+| Already kept                | A copy just like this one is already kept beside the film.                                                                     |
+| Name is taken               | A file Valence did not make already has the name a copy kept beside the film would take. It is never written over.             |
 | Already as small            | The result would match or exceed what the file is already, so it would waste a generation of quality.                          |
 | Not enough room             | The estimate does not fit in free space.                                                                                       |
 | Too many awaiting review    | The review queue is full.                                                                                                      |
