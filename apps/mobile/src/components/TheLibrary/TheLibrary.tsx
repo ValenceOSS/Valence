@@ -7,19 +7,22 @@ import {
   MusicNote as MusicNoteFilled,
 } from '@keyline-icons/react-native/fill';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { ActivityIndicator, Animated, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { byMediaId } from '@ValenceClient/playback/watchProgress';
-import { collapseToShows } from '@ValenceClient/library/pickFeatured';
+import { arrangeForBrowsing } from '@ValenceClient/library/arrangeForBrowsing';
+import {
+  readBrowseArrangement,
+  saveBrowseArrangement,
+} from '@ValenceClient/library/browseArrangementPreference';
+import { unwatchedByShow } from '@ValenceClient/library/unwatchedByShow';
 import { howToFillIt } from '@ValenceClient/library/howToFillIt';
 import { useLibraryFilters } from '@ValenceClient/library/useLibraryFilters';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { ANothingHere } from '@ValenceMobile/components/ANothingHere/ANothingHere';
-import { APoster } from '@ValenceMobile/components/APoster/APoster';
 import { APosterGrid } from '@ValenceMobile/components/APosterGrid/APosterGrid';
-import { Button } from '@ValenceMobile/components/Button/Button';
 import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRow';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { ACard } from '@ValenceMobile/components/ACard/ACard';
@@ -33,7 +36,6 @@ import { TheHome } from '@ValenceMobile/components/TheLibrary/components/TheHome
 import { TheBooks } from '@ValenceMobile/components/TheLibrary/components/TheBooks/TheBooks';
 import { TheMusic } from '@ValenceMobile/components/TheLibrary/components/TheMusic/TheMusic';
 import { TheClipBehind } from '@ValenceMobile/components/TheLibrary/components/TheClipBehind/TheClipBehind';
-import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import { useArtworkLights } from '@ValenceMobile/hooks/useArtworkLights';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { AnArrival } from '@ValenceMobile/components/AnArrival/AnArrival';
@@ -55,11 +57,9 @@ import type { VideoPlayer } from 'expo-video';
 import type { ALight } from '@ValenceMobile/components/AMoodBackground/AMoodBackground.types';
 import { EASINGS } from '@ValenceMobile/theme/EASINGS';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
-import type { ShowSummary } from '@ValenceContracts/schemas/Show';
+import type { Arrangement } from '@ValenceClient/library/browseArrangementPreference';
 import type { TheLibraryProps } from './TheLibrary.types';
 import { say } from '@ValenceI18n/say';
-
-type Cell = { kind: 'media'; media: MediaSummary } | { kind: 'programme'; programme: ShowSummary };
 
 const EVERY = 'every';
 
@@ -72,20 +72,6 @@ const UNDER_THE_BAR = 10;
 const ARRIVES = { ...SPRINGS.rise, overshootClamping: true, useNativeDriver: true } as const;
 
 const NO_LIBRARIES: readonly Library[] = [];
-
-/**
- * Keeps only what the grid reads from the programme lists — each list, and whether any is still
- * being read — so it stays the same object until one of those changes.
- *
- * @param results - The lists, as asked for.
- * @returns Each list, and whether any is still being read.
- */
-const programmesOf = (
-  results: readonly { data: ShowSummary[] | undefined; isPending: boolean }[],
-): { lists: (ShowSummary[] | undefined)[]; isPending: boolean } => ({
-  lists: results.map(({ data }) => data),
-  isPending: results.some(({ isPending }) => isPending),
-});
 
 const SEARCH = 'search';
 
@@ -107,13 +93,12 @@ const noteScrolled = (
   was[which] === isScrolled ? was : { ...was, [which]: isScrolled };
 
 /**
- * What a cell of the grid is known by.
+ * What a poster on the grid is known by.
  *
- * @param cell - The cell.
+ * @param media - The film, or the episode standing for its programme.
  * @returns Its key.
  */
-const keyOfCell = (cell: Cell): string =>
-  cell.kind === 'media' ? cell.media.id : cell.programme.id;
+const keyOfCell = (media: MediaSummary): string => media.id;
 
 const BAR_MOVES_OVER = 260;
 
@@ -153,13 +138,13 @@ const styles = StyleSheet.create({
  * page by its hero's backdrop, with the hero's clip itself blurred behind the page while it plays,
  * and the house colours elsewhere.
  *
- * Films and programmes each take the web's filters, and where there is more than one library of a
- * kind, a choice of which, and music is offered as the web offers it, from its albums, artists and
- * playlists, and books as the web offers them, what somebody is part way through first.
+ * Films and programmes each take the web's filters and order, the order remembered for each on this
+ * phone, and where there is more than one library of a kind, a choice of which, and music is offered
+ * as the web offers it, from its albums, artists and playlists, and books as the web offers them,
+ * what somebody is part way through first.
  *
- * Programmes are read as the list of programmes while nothing is filtered, which is one request,
- * and as their episodes gathered into programmes once something is, since genre and year belong to
- * the episodes.
+ * Programmes are read as their episodes gathered into programmes, as the web reads them, since genre
+ * and year belong to the episodes and a programme is ordered by when its newest one arrived.
  *
  * @param onWatch - Told to play something, and from where.
  * @param onLookAt - Told which title somebody wants to see more of.
@@ -305,6 +290,15 @@ const TheLibrary = ({
     told.current.onLookAtShow(libraryId, showId);
   }, []);
   const [chosen, setChosen] = useState(EVERY);
+  const [arrangements, setArrangements] = useState<Readonly<Record<string, Arrangement>>>({});
+  const arrangement = arrangements[part] ?? readBrowseArrangement(part);
+  const arrange = useCallback(
+    (next: Arrangement) => {
+      setArrangements((was) => ({ ...was, [part]: next }));
+      saveBrowseArrangement(part, next);
+    },
+    [part],
+  );
   const [heroic, setHeroic] = useState<string | null>(null);
   const [clip, setClip] = useState<VideoPlayer | null>(null);
   const backdrop = useArtworkLights(part === 'home' ? heroic : null);
@@ -352,35 +346,25 @@ const TheLibrary = ({
       kind: part === 'shows' ? 'shows' : 'films',
       ...filters.asked,
     }),
-    enabled: reading.length > 0 && (part === 'films' || isFiltered),
+    enabled: reading.length > 0 && (part === 'films' || part === 'shows'),
   });
-  const programmeLists = useQueries({
-    queries: reading.map((libraryId) => ({
-      ...libraryQueries.shows(libraryId),
-      enabled: part === 'shows' && !isFiltered,
-    })),
-    combine: programmesOf,
-  });
-
-  const cells = useMemo(
-    (): readonly Cell[] =>
-      part === 'home'
-        ? []
-        : part === 'shows' && !isFiltered
-          ? programmeLists.lists
-              .flatMap((list) => list ?? [])
-              .sort((left, right) => left.title.localeCompare(right.title))
-              .map((programme) => ({ kind: 'programme', programme }))
-          : (part === 'shows'
-              ? collapseToShows(everything.data ?? [])
-              : (everything.data ?? [])
-            ).map((media) => ({ kind: 'media', media })),
-    [part, isFiltered, programmeLists.lists, everything.data],
+  const isFinished = useCallback(
+    (mediaId: string) => howFar.get(mediaId)?.isFinished === true,
+    [howFar],
   );
-  const isWaiting =
-    part === 'shows' && !isFiltered
-      ? programmeLists.isPending
-      : everything.isPending && everything.fetchStatus !== 'idle';
+  const cells = useMemo(
+    (): readonly MediaSummary[] =>
+      part === 'films' || part === 'shows'
+        ? arrangeForBrowsing(everything.data ?? [], { ...arrangement, isFinished })
+        : [],
+    [part, everything.data, arrangement, isFinished],
+  );
+  const left = useMemo(
+    () => (part === 'shows' ? unwatchedByShow(everything.data ?? [], isFinished) : null),
+    [part, everything.data, isFinished],
+  );
+  const hasAnything = (everything.data ?? []).length > 0;
+  const isWaiting = everything.isPending && everything.fetchStatus !== 'idle';
 
   /**
    * Draws a part of the library over its lights: on the home page, the colours of the hero's
@@ -590,13 +574,20 @@ const TheLibrary = ({
                 selected={filters.selected}
                 onChange={filters.change}
                 onClear={filters.clear}
+                arrangement={arrangement}
+                onArrange={arrange}
               />
             )}
 
             {isWaiting ? <ActivityIndicator color={colours.textMuted} /> : null}
 
             {!drawsItsOwn && !isWaiting && cells.length === 0 ? (
-              isFiltered ? (
+              hasAnything ? (
+                <ANothingHere
+                  of={part === 'films' ? Film : Monitor}
+                  title={say('common.youHaveWatchedEverythingHere')}
+                />
+              ) : isFiltered ? (
                 <ANothingHere
                   of={SearchX}
                   title={say('phone.theLibrary.nothingMatchesThose')}
@@ -630,47 +621,31 @@ const TheLibrary = ({
       filters.clear,
       colours.textMuted,
       cells.length,
+      hasAnything,
       isFiltered,
       part,
+      arrangement,
+      arrange,
     ],
   );
 
   const drawn = useCallback(
-    (cell: Cell, wide: number) => {
-      if (cell.kind === 'programme') {
-        return (
-          <Button
-            tone="bare"
-            label={cell.programme.title}
-            onPress={() => {
-              lookAtShow(cell.programme.libraryId, cell.programme.id);
-            }}
-          >
-            <APoster
-              title={cell.programme.title}
-              year={cell.programme.year ?? null}
-              artwork={onThisServer(`/api/media/${cell.programme.coverMediaId}/image/poster`)}
-              count={cell.programme.unwatchedCount ?? 0}
-              wide={wide}
-            />
-          </Button>
-        );
-      }
-
-      const known = howFar.get(cell.media.id);
+    (media: MediaSummary, wide: number) => {
+      const known = howFar.get(media.id);
 
       return (
         <ACard
-          media={cell.media}
+          media={media}
           asProgramme={part === 'shows'}
           watched={known === undefined ? 0 : watchedFraction(known)}
+          count={left?.get(media.seriesId ?? media.seriesTitle ?? '') ?? 0}
           wide={wide}
           onLookAt={lookAt}
           onLookAtShow={lookAtShow}
         />
       );
     },
-    [howFar, part, lookAt, lookAtShow],
+    [howFar, part, left, lookAt, lookAtShow],
   );
 
   const slides = useMemo(() => {

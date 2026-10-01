@@ -291,6 +291,7 @@ describe('SignedIn', () => {
 
     const intoTheFirstEpisode = async () => {
       jest.mocked(fetchLibraries).mockResolvedValue([SHOWS]);
+      jest.mocked(fetchLibraryItems).mockResolvedValue({ items: THREE, total: THREE.length });
       jest.mocked(fetchShows).mockResolvedValue([
         {
           id: 'severance',

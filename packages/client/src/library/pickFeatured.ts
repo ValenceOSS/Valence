@@ -21,7 +21,7 @@ const isEarlier = (candidate: MediaSummary, against: MediaSummary): boolean => {
  * @param items - The files as the server listed them.
  * @returns One entry per film and per programme.
  */
-const collapseToShows = (items: MediaSummary[]): MediaSummary[] => {
+const collapseToShows = (items: readonly MediaSummary[]): MediaSummary[] => {
   const shows = new Map<string, MediaSummary>();
   const featured: MediaSummary[] = [];
 

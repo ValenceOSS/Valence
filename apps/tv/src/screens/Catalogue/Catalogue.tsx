@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -9,10 +9,16 @@ import {
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
-import { collapseToShows } from '@ValenceClient/library/pickFeatured';
+import { arrangeForBrowsing } from '@ValenceClient/library/arrangeForBrowsing';
+import {
+  readBrowseArrangement,
+  saveBrowseArrangement,
+} from '@ValenceClient/library/browseArrangementPreference';
 import { unwatchedByShow } from '@ValenceClient/library/unwatchedByShow';
+import type { Arrangement } from '@ValenceClient/library/browseArrangementPreference';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { MediaCard } from '@ValenceTv/components/MediaCard/MediaCard';
+import { ArrangementRow } from '@ValenceTv/screens/Catalogue/components/ArrangementRow/ArrangementRow';
 import { useProgress } from '@ValenceTv/library/useProgress';
 import { useRoomToFill } from '@ValenceTv/layout/useRoomToFill';
 import { useHandOff } from '@ValenceTv/navigation/useHandOff';
@@ -28,12 +34,14 @@ const RESTS_AFTER_MS = 600;
 const TITLES = { films: say('common.films'), shows: say('common.shows') } as const;
 
 /**
- * Every film, or every programme, as a wall of posters in alphabetical order, as the web's Films and
- * Shows pages have them.
+ * Every film, or every programme, as a wall of posters in the order chosen above it, as the web's
+ * Films and Shows pages have them.
  *
  * A programme is one poster however many episodes it has, and a film somebody is part-way through
- * says how far. The page is lit by its first poster once it arrives, and then by the poster the
- * remote rests on, once it has rested there a moment rather than at every step. The posters are sized so six fill the width of the screen between its margins.
+ * says how far. The order, and whether what has been watched is left out, are remembered for each
+ * page on this television. The page is lit by its first poster once it arrives, and then by the
+ * poster the remote rests on, once it has rested there a moment rather than at every step. The
+ * posters are sized so six fill the width of the screen between its margins.
  *
  * @param kind - Films or shows.
  * @param watchable - The libraries holding something to watch.
@@ -66,8 +74,16 @@ const CataloguePage = ({ kind, watchable, onOpen, onFeature, upTo }: CataloguePr
     [onFeature],
   );
   const { progress } = useProgress();
+  const [arrangement, setArrangement] = useState(() => readBrowseArrangement(kind));
+  const arrange = useCallback(
+    (next: Arrangement) => {
+      setArrangement(next);
+      saveBrowseArrangement(kind, next);
+    },
+    [kind],
+  );
   const everything = useQuery({
-    ...libraryQueries.everything(watchable, { kind, order: 'title' }),
+    ...libraryQueries.everything(watchable, { kind }),
     enabled: watchable.length > 0,
   });
 
@@ -78,19 +94,17 @@ const CataloguePage = ({ kind, watchable, onOpen, onFeature, upTo }: CataloguePr
   );
   const upToBar = useHandOff('up', upTo);
 
+  const isFinished = useCallback(
+    (mediaId: string) => progress.get(mediaId)?.isFinished === true,
+    [progress],
+  );
   const items = useMemo(
-    () => (kind === 'shows' ? collapseToShows(everything.data ?? []) : (everything.data ?? [])),
-    [everything.data, kind],
+    () => arrangeForBrowsing(everything.data ?? [], { ...arrangement, isFinished }),
+    [everything.data, arrangement, isFinished],
   );
   const unwatched = useMemo(
-    () =>
-      kind === 'shows'
-        ? unwatchedByShow(
-            everything.data ?? [],
-            (mediaId) => progress.get(mediaId)?.isFinished === true,
-          )
-        : null,
-    [everything.data, kind, progress],
+    () => (kind === 'shows' ? unwatchedByShow(everything.data ?? [], isFinished) : null),
+    [everything.data, kind, isFinished],
   );
 
   const first = items[0];
@@ -111,7 +125,7 @@ const CataloguePage = ({ kind, watchable, onOpen, onFeature, upTo }: CataloguePr
     );
   }
 
-  if (items.length === 0) {
+  if ((everything.data ?? []).length === 0) {
     return (
       <View style={styles.waiting}>
         <Text style={styles.empty}>
@@ -134,8 +148,22 @@ const CataloguePage = ({ kind, watchable, onOpen, onFeature, upTo }: CataloguePr
           contentContainerStyle={styles.inside}
           columnWrapperStyle={styles.row}
           showsVerticalScrollIndicator={false}
-          ListHeaderComponent={<Text style={styles.title}>{TITLES[kind]}</Text>}
-          renderItem={({ item, index }) => {
+          ListHeaderComponent={
+            <>
+              <Text style={styles.title}>{TITLES[kind]}</Text>
+
+              <ArrangementRow
+                arrangement={arrangement}
+                onArrange={arrange}
+                onFocus={upToBar.arrive}
+              />
+
+              {items.length === 0 ? (
+                <Text style={styles.empty}>{say('common.youHaveWatchedEverythingHere')}</Text>
+              ) : null}
+            </>
+          }
+          renderItem={({ item }) => {
             const watched = progress.get(item.id);
 
             return (
@@ -151,12 +179,7 @@ const CataloguePage = ({ kind, watchable, onOpen, onFeature, upTo }: CataloguePr
                 onPress={onOpen}
                 onFocus={() => {
                   restOn(item);
-
-                  if (index < ACROSS) {
-                    upToBar.arrive();
-                  } else {
-                    upToBar.leave();
-                  }
+                  upToBar.leave();
                 }}
                 {...(watched === undefined || kind === 'shows'
                   ? {}

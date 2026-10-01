@@ -5,9 +5,9 @@ import { BrowseOrderSchema } from '@ValenceClient/library/BrowseOrder';
 import {
   readBrowseArrangement,
   saveBrowseArrangement,
-} from '@ValenceScreens/library/browseArrangementPreference';
-import type { Arrangement } from '@ValenceScreens/library/browseArrangementPreference';
-import type { BrowseOrder } from '@ValenceClient/library/BrowseOrder';
+} from '@ValenceClient/library/browseArrangementPreference';
+import type { Arrangement } from '@ValenceClient/library/browseArrangementPreference';
+import { nameBrowseOrder } from '@ValenceClient/library/nameBrowseOrder';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -79,15 +79,8 @@ const PAGES: Record<
   },
 };
 
-const BROWSE_ORDERS: readonly BrowseOrder[] = ['added', 'released', 'title', 'rating', 'size'];
+const NOTHING_FINISHED = () => false;
 
-const ORDER_NAMES: Record<BrowseOrder, string> = {
-  added: say('common.recentlyAdded'),
-  released: say('screens.browseArea.releaseDate'),
-  title: say('common.title'),
-  rating: say('common.rating'),
-  size: say('common.size'),
-};
 /**
  * A page of the library asked one question — the films, the programmes, what arrived recently, what
  * has been kept — drawn as a grid across every library rather than one at a time.
@@ -193,14 +186,11 @@ const BrowseArea = ({
     () =>
       !isFilterable
         ? items
-        : arrangeForBrowsing(items, {
+        : arrangeForBrowsing(found.data ?? [], {
             ...arrangement,
-            isWatched: (item) =>
-              kind === 'shows'
-                ? unwatched?.get(item.seriesId ?? item.seriesTitle ?? '') === 0
-                : isFinished?.(item.id) === true,
+            isFinished: isFinished ?? NOTHING_FINISHED,
           }),
-    [isFilterable, items, arrangement, kind, unwatched, isFinished],
+    [isFilterable, items, found.data, arrangement, isFinished],
   );
 
   const arrange = (next: Arrangement) => {
@@ -258,13 +248,16 @@ const BrowseArea = ({
             trigger={
               <>
                 <Icon of={SortIcon} size={16} />
-                {ORDER_NAMES[arrangement.order]}
+                {nameBrowseOrder(arrangement.order)}
               </>
             }
             groups={[
               {
                 name: say('common.order'),
-                options: BROWSE_ORDERS.map((order) => ({ id: order, label: ORDER_NAMES[order] })),
+                options: BrowseOrderSchema.options.map((order) => ({
+                  id: order,
+                  label: nameBrowseOrder(order),
+                })),
                 selectedId: arrangement.order,
                 onSelect: (id) => {
                   const chosen = BrowseOrderSchema.safeParse(id);
@@ -278,7 +271,7 @@ const BrowseArea = ({
                 name: say('common.show'),
                 options: [
                   { id: 'everything', label: say('common.everything') },
-                  { id: 'unwatched', label: say('screens.browseArea.onlyWhatYouHaveNotWatched') },
+                  { id: 'unwatched', label: say('common.onlyWhatYouHaveNotWatched') },
                 ],
                 selectedId: arrangement.isHidingWatched ? 'unwatched' : 'everything',
                 onSelect: (id) => {
