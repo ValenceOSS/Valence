@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import {
   MediaRequestArrivalSchema,
+  MediaRequestArrivalsSchema,
   MediaRequestDraftSchema,
   MediaRequestPickSchema,
   MediaRequestRefusalSchema,
@@ -127,6 +128,14 @@ const createRequestRoutes = ({ service, log, worker }: CreateRequestRoutesOption
     return arrival === null
       ? context.json(refuse('error.requests.sayWhichItemItBecame'), 400)
       : answer(await service.arrived(context.req.param('id'), arrival.mediaId));
+  });
+
+  routes.post('/requests/:id/arrivals', async (context) => {
+    const arrivals = await readBody(context.req.raw, MediaRequestArrivalsSchema);
+
+    return arrivals === null
+      ? context.json(refuse('error.requests.sayWhichItemItBecame'), 400)
+      : answer(await service.arrivedInLibrary(context.req.param('id'), arrivals));
   });
 
   routes.put('/requests/:id/catalogue', async (context) => {

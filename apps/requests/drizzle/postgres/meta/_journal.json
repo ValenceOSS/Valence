@@ -176,6 +176,13 @@
       "when": 1790778023997,
       "tag": "0024_messages_carry_their_code",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1790867306199,
+      "tag": "0025_connected_apps",
+      "breakpoints": true
     }
   ]
 }

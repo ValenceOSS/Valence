@@ -1,3 +1,4 @@
+import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import type { ArtworkChoices, ArtworkKind } from '@ValenceContracts/schemas/ArtworkChoice';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type {
@@ -70,6 +71,7 @@ type UpdateLibraryInput = {
   takesRequests?: boolean;
   requestProfileId?: string | null;
   requestPath?: string | null;
+  fulfilment?: Fulfilment | null;
 };
 
 type Correction = {

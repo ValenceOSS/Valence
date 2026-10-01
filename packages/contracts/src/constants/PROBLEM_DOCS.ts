@@ -10,6 +10,8 @@ const PROBLEM_DOCS: Readonly<Partial<Record<ProblemCode, `/${string}#${string}`>
   RequestsSecretRefused: '/install/requesting#the-requests-service-refuses-the-secret',
   DownloadClientUnreachable: '/install/requesting#a-download-client-cannot-be-reached',
   DownloadClientLoginRefused: '/install/requesting#a-download-client-refuses-its-login',
+  ArrAppUnreachable: '/install/requesting#a-connected-app-cannot-be-reached',
+  ArrAppKeyRefused: '/install/requesting#a-connected-app-refuses-its-key',
 };
 
 export { PROBLEM_DOCS };

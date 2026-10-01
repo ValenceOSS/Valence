@@ -1,0 +1,1 @@
+ALTER TABLE `library` ADD `requestFulfilment` json;

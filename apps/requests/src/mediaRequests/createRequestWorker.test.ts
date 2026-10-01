@@ -64,6 +64,7 @@ type HarnessOptions = {
   reports?: IndexerSearchReport[];
   reportsInTurn?: IndexerSearchReport[][];
   rules?: GiveUpRules;
+  handOff?: { step: () => Promise<void> };
 };
 
 /**
@@ -98,6 +99,7 @@ const aWorker = ({
   ],
   reportsInTurn,
   rules = GIVE_UP_DEFAULTS,
+  handOff,
 }: HarnessOptions = {}) => {
   const requestStore = createMemoryRecordStore(requests);
   const itemStore = createMemoryRecordStore(items);
@@ -164,6 +166,7 @@ const aWorker = ({
     fileMusic: filedMusic,
     now: () => AT,
     giveUpRules: () => Promise.resolve(rules),
+    ...(handOff === undefined ? {} : { handOff }),
     schedule: (run, afterMs) => {
       const entry = { run, afterMs };
 
@@ -1723,6 +1726,43 @@ describe('createRequestWorker', () => {
       expect(await series.worker.pick(SEVERANCE.id, aRelease('Severance.S02E01.WEB'))).toEqual({
         refused: 'That release holds no episode this request is waiting for',
       });
+    });
+  });
+
+  describe('handing off', () => {
+    const HANDED_OFF = aMediaRequest({
+      handOff: {
+        appId: '3f0e8a52-7b1c-4d2e-9f3a-5b6c7d8e9f01',
+        rootFolderPath: '/movies',
+        qualityProfileId: 4,
+        metadataProfileId: null,
+        searchesOnAdd: true,
+      },
+    });
+
+    it('never searches for, sends or follows a request handed to a connected app, and runs the hand-off', async () => {
+      const step = vi.fn(() => Promise.resolve());
+      const { worker, searched, send, items } = aWorker({
+        requests: [HANDED_OFF],
+        items: [aRequestItem({ state: 'downloading' })],
+        handOff: { step },
+      });
+
+      await worker.tick();
+
+      expect(step).toHaveBeenCalledTimes(1);
+      expect(searched).toEqual([]);
+      expect(send).not.toHaveBeenCalled();
+      expect(await theItem(items)).toMatchObject({ state: 'downloading' });
+    });
+
+    it('will not take a release picked by hand for one', async () => {
+      const { worker, send } = aWorker({ requests: [HANDED_OFF] });
+
+      expect(await worker.pick(HANDED_OFF.id, aRelease(WEB))).toEqual({
+        refused: 'It is handed to a connected app, which picks its own releases.',
+      });
+      expect(send).not.toHaveBeenCalled();
     });
   });
 

@@ -1,0 +1,1 @@
+ALTER TABLE "library" ADD COLUMN "requestFulfilment" jsonb;

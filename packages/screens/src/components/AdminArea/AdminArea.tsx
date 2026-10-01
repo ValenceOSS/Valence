@@ -139,6 +139,8 @@ import { useTravelDirection } from '@ValenceUI/useTravelDirection';
 import { ADMIN_PANELS } from '@ValenceScreens/components/AdminArea/adminSections';
 import { requestsQueries } from '@ValenceClient/query/requestsQueries';
 import { RequestsPanel } from './components/RequestsPanel/RequestsPanel';
+import { ArrAppsPanel } from './components/ArrAppsPanel/ArrAppsPanel';
+import { SeerrCard } from './components/SeerrCard/SeerrCard';
 import { IndexersPanel } from './components/IndexersPanel/IndexersPanel';
 import { MediaRequestsPanel } from '@ValenceScreens/components/AdminArea/components/MediaRequestsPanel/MediaRequestsPanel';
 import { ProfilesPanel } from '@ValenceScreens/components/AdminArea/components/ProfilesPanel/ProfilesPanel';
@@ -225,6 +227,7 @@ const AdminArea = ({
   const askedRequests = useQuery(requestsQueries.availability());
   const hasRequests = askedRequests.data?.isEnabled ?? false;
   const askedRequestsOverview = useQuery(requestsQueries.overview(hasRequests));
+  const askedArrApps = useQuery(requestsQueries.arrApps(hasRequests));
   const askedRecentFailures = useQuery(adminQueries.recentFailures());
 
   const overview = askedOverview.data ?? null;
@@ -1012,6 +1015,7 @@ const AdminArea = ({
             <LibrariesPanel
               libraries={libraries}
               profiles={askedProfiles.data ?? []}
+              arrApps={askedArrApps.data ?? []}
               progress={scanProgress}
               working={monitor?.queue.jobs ?? []}
               isScanningAll={isScanningAll}
@@ -1180,7 +1184,13 @@ const AdminArea = ({
           {hasRequests ? (
             <>
               <TabPanel value="requests" travel={travel}>
-                <RequestsPanel />
+                <div className="flex flex-col gap-5">
+                  <RequestsPanel />
+
+                  <ArrAppsPanel />
+
+                  <SeerrCard origin={window.location.origin} />
+                </div>
               </TabPanel>
 
               <TabPanel value="indexers" travel={travel}>

@@ -67,6 +67,8 @@ import type {
   FollowedRequest,
   MediaRequest,
   MediaRequestAdded,
+  MediaRequestArrivals,
+  MediaRequestArrived,
   MediaRequestDraft,
   MediaRequestRevision,
   MissingSearch,
@@ -77,11 +79,28 @@ import {
   FollowedRequestSchema,
   BlockedReleaseSchema,
   MediaRequestAddedSchema,
+  MediaRequestArrivedSchema,
   MediaRequestSchema,
   MissingSearchSchema,
   RequestLogEntrySchema,
 } from '@ValenceContracts/schemas/MediaRequest';
 import type { RequestsStatus } from '@ValenceContracts/schemas/Requests';
+import {
+  ArrAppChoicesSchema,
+  ArrAppSchema,
+  ArrAppTestSchema,
+  ArrQueueSchema,
+  ProwlarrImportSchema,
+} from '@ValenceContracts/schemas/ArrApp';
+import type {
+  ArrApp,
+  ArrAppChange,
+  ArrAppChoices,
+  ArrAppDraft,
+  ArrAppTest,
+  ArrQueue,
+  ProwlarrImport,
+} from '@ValenceContracts/schemas/ArrApp';
 
 type RequestsReading =
   | { kind: 'answered'; status: RequestsStatus }
@@ -221,6 +240,8 @@ const createRequestsClient = ({
   const withProfile = (id: string) => `/api/profiles/${encodeURIComponent(id)}`;
 
   const withRequest = (id: string) => `/api/requests/${encodeURIComponent(id)}`;
+
+  const withArrApp = (id: string) => `/api/arr-apps/${encodeURIComponent(id)}`;
 
   const readRequest = (body: JsonValue) => MediaRequestSchema.parse(body);
 
@@ -518,6 +539,56 @@ const createRequestsClient = ({
 
     requestArrived: (id: string, mediaId: string): Promise<RequestsAnswer<MediaRequest>> =>
       call(`${withRequest(id)}/arrived`, readRequest, { method: 'POST', body: { mediaId } }),
+
+    requestArrivedInLibrary: (
+      id: string,
+      arrivals: MediaRequestArrivals,
+    ): Promise<RequestsAnswer<MediaRequestArrived>> =>
+      call(`${withRequest(id)}/arrivals`, (body) => MediaRequestArrivedSchema.parse(body), {
+        method: 'POST',
+        body: arrivals,
+      }),
+
+    listArrApps: (): Promise<RequestsAnswer<ArrApp[]>> =>
+      call('/api/arr-apps', (body) => z.array(ArrAppSchema).parse(body)),
+
+    addArrApp: (draft: ArrAppDraft): Promise<RequestsAnswer<ArrApp>> =>
+      call('/api/arr-apps', (body) => ArrAppSchema.parse(body), { method: 'POST', body: draft }),
+
+    changeArrApp: (id: string, change: ArrAppChange): Promise<RequestsAnswer<ArrApp>> =>
+      call(withArrApp(id), (body) => ArrAppSchema.parse(body), { method: 'PATCH', body: change }),
+
+    removeArrApp: (id: string): Promise<RequestsAnswer<null>> =>
+      call(withArrApp(id), () => null, { method: 'DELETE' }),
+
+    testArrApp: (id: string): Promise<RequestsAnswer<ArrAppTest>> =>
+      call(`${withArrApp(id)}/test`, (body) => ArrAppTestSchema.parse(body), {
+        method: 'POST',
+        waitMs: CLIENT_TIMEOUT_MS,
+      }),
+
+    tryArrApp: (draft: ArrAppDraft, id?: string): Promise<RequestsAnswer<ArrAppTest>> =>
+      call(
+        id === undefined ? '/api/arr-apps/try' : `${withArrApp(id)}/try`,
+        (body) => ArrAppTestSchema.parse(body),
+        { method: 'POST', body: draft, waitMs: CLIENT_TIMEOUT_MS },
+      ),
+
+    arrAppChoices: (id: string): Promise<RequestsAnswer<ArrAppChoices>> =>
+      call(`${withArrApp(id)}/choices`, (body) => ArrAppChoicesSchema.parse(body), {
+        waitMs: CLIENT_TIMEOUT_MS,
+      }),
+
+    importArrIndexers: (id: string): Promise<RequestsAnswer<ProwlarrImport>> =>
+      call(`${withArrApp(id)}/import-indexers`, (body) => ProwlarrImportSchema.parse(body), {
+        method: 'POST',
+        waitMs: CLIENT_TIMEOUT_MS,
+      }),
+
+    arrQueue: (): Promise<RequestsAnswer<ArrQueue>> =>
+      call('/api/arr-apps/queue', (body) => ArrQueueSchema.parse(body), {
+        waitMs: CLIENT_TIMEOUT_MS,
+      }),
 
     updateRequestCatalogue: (
       id: string,

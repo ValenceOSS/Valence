@@ -1,4 +1,5 @@
 import { checkServerVersion } from '@ValenceDatabase/checkServerVersion';
+import { SEERR_DEFAULTS } from '@ValenceContracts/schemas/SeerrLink';
 import { databaseConnectionOf } from '@ValenceDatabase/databaseConnectionOf';
 import { checkDialect } from '@ValenceDatabase/checkDialect';
 import { followUpReading } from '@ValenceServer/library/followUpReading';
@@ -106,6 +107,8 @@ import { catalogueForRequest } from '@ValenceServer/requests/catalogueForRequest
 import { createExpiringCache } from '@ValenceServer/library/createExpiringCache';
 import { createDatabaseRequestedAlbumStore } from '@ValenceServer/requests/albums/createDatabaseRequestedAlbumStore';
 import { tieRequestedAlbum } from '@ValenceServer/requests/albums/tieRequestedAlbum';
+import { createDatabaseHeldEpisodes } from '@ValenceServer/requests/arrivals/createDatabaseHeldEpisodes';
+import { matchArrivals } from '@ValenceServer/requests/arrivals/matchArrivals';
 import { createDatabaseCatalogueLookup } from '@ValenceServer/requests/catalogue/createDatabaseCatalogueLookup';
 import { findOnMusicBrainz } from '@ValenceServer/requests/deezer/findOnMusicBrainz';
 import { readDeezerCharts } from '@ValenceServer/requests/deezer/readDeezerCharts';
@@ -375,6 +378,7 @@ const settings = createDatabaseSettingsStore({
     keepsDownloadsForDays: 14,
     roundness: 'default',
     preTranscoding: PRE_TRANSCODING_DEFAULTS,
+    seerr: SEERR_DEFAULTS,
   },
 });
 
@@ -1496,6 +1500,7 @@ const jobs = createJobQueue({
               });
             },
           });
+          await matchArrivedRequests();
         });
       },
       [SCAN_REQUEST_FOLDER_JOB]: async (jobId, payload) => {
@@ -1536,6 +1541,7 @@ const jobs = createJobQueue({
 
           if (request === null) {
             jobs.reportProgress(jobId, sayingCount('server.jobs.phase.added', result.added), 1, 1);
+            await matchArrivedRequests();
 
             return;
           }
@@ -1570,11 +1576,13 @@ const jobs = createJobQueue({
               'requests',
               `${filed.title} was filed, but reading ${filed.folder} did not find it as the catalogue’s ${catalogueId}`,
             );
+            await matchArrivedRequests();
 
             return;
           }
 
           await sayARequestArrived({ ...request, title: filed.title }, mediaId);
+          await matchArrivedRequests();
         });
       },
       [REFRESH_REQUESTS_JOB]: async (jobId) => {
@@ -2528,8 +2536,56 @@ const sayARequestArrived = async (
     return;
   }
 
-  const { requestedBy } = arrived.value;
+  await tellOfArrival(filed, mediaId, arrived.value.requestedBy);
+};
 
+const heldEpisodes = createDatabaseHeldEpisodes(db);
+
+const arrivalLookup = createDatabaseCatalogueLookup(db);
+
+/**
+ * Looks in the libraries for everything requested and still awaited, and marks what is there now
+ * as arrived — so whatever a connected app imported, somebody put there by hand or another server
+ * brought over arrives as surely as what Valence filed itself — telling whoever asked only of
+ * what had not arrived before.
+ */
+const matchArrivedRequests = async (): Promise<void> => {
+  if (requestsClient === null) {
+    return;
+  }
+
+  const listed = await requestsClient.listRequests();
+
+  if (listed.kind !== 'answered') {
+    return;
+  }
+
+  for (const { request, arrivals } of await matchArrivals({
+    requests: listed.value,
+    lookup: arrivalLookup,
+    heldEpisodes,
+  })) {
+    const arrived = await requestsClient.requestArrivedInLibrary(request.id, arrivals);
+
+    if (arrived.kind === 'answered' && arrived.value.newlyAvailable > 0) {
+      await tellOfArrival(request, arrivals.mediaId, arrived.value.request.requestedBy);
+    }
+  }
+};
+
+/**
+ * Tells whoever asked for something that it is ready — in the app, and by push where they chose —
+ * and anything subscribed.
+ *
+ * @param filed - The request.
+ * @param mediaId - The film, the series, or the album the library found.
+ * @param requestedBy - Who asked.
+ */
+const tellOfArrival = async (
+  filed: { kind: MediaRequestKind; title: string },
+  mediaId: string,
+  requestedBy: { id: string; name: string },
+): Promise<void> => {
   log.info('requests', `${filed.title} is in the library, as ${requestedBy.name} asked`);
   realtime.publish('requests', { changed: true }, { kind: 'everyone' });
 
@@ -3360,6 +3416,7 @@ const app = createApp({
   searchMusicCatalogue: (query, kind) => searchMusicCatalogue(musicWeb, query, kind),
   discovery,
   searchCatalogue: (query, kind) => catalogueProvider.search?.(query, kind) ?? Promise.resolve([]),
+  seriesOfTvdbId: (tvdbId) => catalogueProvider.seriesOfTvdbId?.(tvdbId) ?? Promise.resolve(null),
 });
 
 const seededRoles = await seedDefaultRoles({

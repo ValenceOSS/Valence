@@ -1,4 +1,5 @@
 import {
+  arrApp,
   blocklistedRelease,
   downloadClient,
   indexer,
@@ -13,6 +14,7 @@ import {
 } from '@ValenceRequests/db/postgres/Schema';
 
 const REQUESTS_SCHEMA = {
+  arrApp,
   blocklistedRelease,
   downloadClient,
   indexer,

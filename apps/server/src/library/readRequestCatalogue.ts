@@ -28,6 +28,7 @@ const RequestDetailSchema = z.object({
         .default([]),
     })
     .optional(),
+  external_ids: z.object({ tvdb_id: z.number().int().positive().nullish() }).optional(),
   alternative_titles: z
     .object({
       titles: z.array(z.object({ title: z.string() })).default([]),
@@ -73,7 +74,8 @@ const calendarDateOf = (date: string | null | undefined): string | null =>
  * Reads what a catalogue says about a film or series into what a request needs of it: its title
  * and the others it goes by in the Latin alphabet, which is what release names are written in; its
  * year; how long it runs; for a film the first day it was out in cinemas, digitally and on disc
- * anywhere; and for a series each episode and the day it aired, and whether it has ended.
+ * anywhere; and for a series each episode and the day it aired, whether it has ended, and its TVDB
+ * id, which is how Sonarr knows it.
  *
  * @param detail - The catalogue's record of the film or series.
  * @param seasons - For a series, the catalogue's record of each season.
@@ -145,6 +147,7 @@ const readRequestCatalogue = (
     isEnded: found.status !== undefined && ENDED.has(found.status),
     artist: null,
     albums: [],
+    tvdbId: found.external_ids?.tvdb_id ?? null,
   };
 };
 

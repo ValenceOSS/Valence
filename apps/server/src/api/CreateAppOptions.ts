@@ -195,6 +195,7 @@ type CreateAppOptions = {
   controlQueue?: QueueControl | null;
   searchCatalogue?: (query: string, kind: 'tv' | 'movie') => Promise<CatalogueMatch[]>;
   describeForRequest?: (tmdbId: number, kind: VideoRequestKind) => Promise<RequestCatalogue | null>;
+  seriesOfTvdbId?: (tvdbId: number) => Promise<number | null>;
   describeMusicForRequest?: (
     musicBrainzId: string,
     kind: MusicRequestKind,

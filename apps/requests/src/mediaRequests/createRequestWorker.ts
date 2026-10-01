@@ -100,6 +100,7 @@ type CreateRequestWorkerOptions = {
   giveUpRules?: () => Promise<GiveUpRules>;
   settlesForMs?: number;
   print?: (line: string) => void;
+  handOff?: { step: () => Promise<void> };
 };
 
 type Found = { request: MediaRequestRecord; items: RequestItemRecord[] };
@@ -254,6 +255,9 @@ const groupedByDownload = (
  * A release sent by hand for a library of films or series is filed too once it has finished,
  * named from what the release's own name says it is.
  *
+ * A request whose library hands it to a connected app is left to that app entirely: it is never
+ * searched for, sent or filed here, and the hand-off follows it with every round instead.
+ *
  * @param requests - Where requests are kept.
  * @param items - Where what each waits for is kept.
  * @param blocked - Releases that failed a request before.
@@ -276,6 +280,7 @@ const groupedByDownload = (
  * @param giveUpRules - When a download is given up on and the next best release tried.
  * @param settlesForMs - How long a download runs before it is judged on how fast it is going.
  * @param print - Where to write what happened.
+ * @param handOff - What follows the requests handed to connected apps, run with every round.
  * @returns The worker.
  */
 const createRequestWorker = ({
@@ -302,6 +307,7 @@ const createRequestWorker = ({
   giveUpRules = () => Promise.resolve(GIVE_UP_DEFAULTS),
   settlesForMs = SETTLES_FOR_MS,
   print = () => undefined,
+  handOff = { step: () => Promise.resolve() },
 }: CreateRequestWorkerOptions) => {
   let working: Promise<void> = Promise.resolve();
   let isRunning = false;
@@ -344,7 +350,7 @@ const createRequestWorker = ({
     const [kept, waiting] = await Promise.all([requests.list(), items.list()]);
 
     return kept
-      .filter((request) => request.approval === 'approved')
+      .filter((request) => request.approval === 'approved' && request.handOff === null)
       .map((request) => ({
         request,
         items: waiting.filter((item) => item.requestId === request.id),
@@ -1087,6 +1093,7 @@ const createRequestWorker = ({
       }
 
       await fileSentByHand();
+      await handOff.step();
 
       for (const found of await searchedByItself()) {
         const unsearched = found.items.filter(
@@ -1449,6 +1456,12 @@ const createRequestWorker = ({
 
         if (found === null) {
           return null;
+        }
+
+        if (found.request.handOff !== null) {
+          return {
+            refused: saying('requests.mediaRequests.requestWorker.itIsHandedToAConnectedApp'),
+          };
         }
 
         const judged = judgeForRequest({

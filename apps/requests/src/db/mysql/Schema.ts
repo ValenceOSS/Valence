@@ -10,6 +10,8 @@ import {
   varchar,
 } from 'drizzle-orm/mysql-core';
 import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
+import { ARR_APP_KINDS } from '@ValenceContracts/schemas/ArrApp';
+import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import {
   DEFAULT_DOWNLOAD_CATEGORIES,
   DOWNLOAD_CLIENT_KINDS,
@@ -85,6 +87,8 @@ const indexer = requestsSchema('indexer', {
   lastProblemCode: varchar('last_problem_code', { length: 64 }).$type<ProblemCode>(),
   lastFailedAt: moment('last_failed_at'),
   turnedOffBecause: jsonColumn('turned_off_because').$type<Said>(),
+  sourceAppId: char('source_app_id', { length: 36 }),
+  sourceIndexerId: int('source_indexer_id'),
   createdAt: momentNow('created_at').notNull(),
   updatedAt: momentNow('updated_at').notNull(),
 });
@@ -120,6 +124,24 @@ const downloadClient = requestsSchema('download_client', {
   localPath: mediumtext('local_path').notNull().default(EMPTY_TEXT),
   priority: int('priority').notNull().default(25),
   isEnabled: boolean('is_enabled').notNull().default(true),
+  createdAt: momentNow('created_at').notNull(),
+  updatedAt: momentNow('updated_at').notNull(),
+});
+
+const arrApp = requestsSchema('arr_app', {
+  id: char('id', { length: 36 }).primaryKey(),
+  name: mediumtext('name').notNull(),
+  kind: varchar('kind', { length: 32, enum: ARR_APP_KINDS }).notNull(),
+  url: mediumtext('url').notNull(),
+  apiKey: mediumtext('api_key').notNull().default(EMPTY_TEXT),
+  remotePath: mediumtext('remote_path').notNull().default(EMPTY_TEXT),
+  localPath: mediumtext('local_path').notNull().default(EMPTY_TEXT),
+  isEnabled: boolean('is_enabled').notNull().default(true),
+  isWorking: boolean('is_working'),
+  version: mediumtext('version'),
+  lastCheckedAt: moment('last_checked_at'),
+  lastProblem: jsonColumn('last_problem').$type<Said>(),
+  lastProblemCode: varchar('last_problem_code', { length: 64 }).$type<ProblemCode>(),
   createdAt: momentNow('created_at').notNull(),
   updatedAt: momentNow('updated_at').notNull(),
 });
@@ -226,6 +248,7 @@ const mediaRequest = requestsSchema(
     id: char('id', { length: 36 }).primaryKey(),
     kind: varchar('kind', { length: 32, enum: MEDIA_REQUEST_KINDS }).notNull(),
     tmdbId: int('tmdb_id'),
+    tvdbId: int('tvdb_id'),
     musicBrainzId: varchar('music_brainz_id', { length: 64 }),
     openLibraryId: int('open_library_id'),
     title: mediumtext('title').notNull(),
@@ -254,6 +277,8 @@ const mediaRequest = requestsSchema(
       .default(jsonDefault({ theatrical: null, digital: null, physical: null })),
     isEnded: boolean('is_ended').notNull().default(false),
     mediaId: varchar('media_id', { length: 64 }),
+    handOff: jsonColumn('hand_off').$type<Fulfilment>(),
+    handOffId: int('hand_off_id'),
     problem: jsonColumn('problem').$type<Said>(),
     problemCode: varchar('problem_code', { length: 64 }).$type<ProblemCode>(),
     catalogueCheckedAt: momentNow('catalogue_checked_at').notNull(),
@@ -349,6 +374,7 @@ const requestLog = requestsSchema(
 );
 
 export {
+  arrApp,
   requestLog,
   blocklistedRelease,
   mediaRequest,

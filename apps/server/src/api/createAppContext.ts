@@ -51,6 +51,7 @@ import { standTitles } from '@ValenceServer/requests/catalogue/standTitles';
 import type { UnstoodTitle } from '@ValenceServer/requests/catalogue/UnstoodTitle';
 import type { PluginHost } from '@ValenceServer/plugins/broker/PluginHost';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
+import { arrKindOf } from '@ValenceContracts/functions/arrKindOf';
 import { isForLibrary, profilesOnOffer } from '@ValenceContracts/functions/profilesOnOffer';
 import type { QualityProfile } from '@ValenceContracts/schemas/QualityProfile';
 import { libraryKindOf } from '@ValenceContracts/functions/libraryKindOf';
@@ -1222,6 +1223,7 @@ const createAppContext = (options: CreateAppOptions) => {
         requestedBy: { id: account.id, name: account.name },
         isApproved: await asker.holds('requests.autoApprove'),
         catalogue,
+        handOff: arrKindOf(chosen.kind) === null ? null : (chosen.fulfilment ?? null),
       },
     };
   };

@@ -73,6 +73,8 @@ const AN_INDEXER = {
   lastProblemCode: null,
   lastFailedAt: null,
   turnedOffBecause: null,
+  sourceAppId: null,
+  sourceIndexerId: null,
   createdAt: '2026-09-19T00:00:00.000Z',
   updatedAt: '2026-09-19T00:00:00.000Z',
 };
@@ -625,6 +627,118 @@ describe('the catalogue and fetching releases, through the server', () => {
       expect((await off.ask(path, method, body)).status).toBe(404);
     },
   );
+});
+
+describe('connected apps, through the server', () => {
+  const APP = {
+    id: '3f0e8a52-7b1c-4d2e-9f3a-5b6c7d8e9f01',
+    name: 'Radarr',
+    kind: 'radarr',
+    url: 'http://radarr:7878',
+    hasApiKey: true,
+    remotePath: '',
+    localPath: '',
+    isEnabled: true,
+    isWorking: null,
+    version: null,
+    lastCheckedAt: null,
+    lastProblem: null,
+    lastProblemCode: null,
+    createdAt: '2026-09-30T00:00:00.000Z',
+    updatedAt: '2026-09-30T00:00:00.000Z',
+  };
+
+  const DRAFT = { name: 'Radarr', kind: 'radarr', url: 'http://radarr:7878', apiKey: 'k' };
+
+  /**
+   * The requests service as it answers questions about connected apps when everything goes well.
+   */
+  const aWillingKeeper = (url: string, init: { method?: string }): Response => {
+    const method = init.method ?? 'GET';
+
+    if (method === 'DELETE') {
+      return new Response(null, { status: 204 });
+    }
+
+    if (url.endsWith('/test') || url.endsWith('/try')) {
+      return Response.json({ isWorking: true, problem: null, problemCode: null, version: '5.14' });
+    }
+
+    if (url.endsWith('/choices')) {
+      return Response.json({ rootFolders: [], qualityProfiles: [], metadataProfiles: [] });
+    }
+
+    if (url.endsWith('/queue')) {
+      return Response.json({ apps: [], items: [] });
+    }
+
+    if (url.endsWith('/import-indexers')) {
+      return Response.json({ added: 1, updated: 0, removed: 0, unchanged: 0 });
+    }
+
+    if (url.endsWith('/api/arr-apps')) {
+      return method === 'POST' ? Response.json(APP, { status: 201 }) : Response.json([APP]);
+    }
+
+    return Response.json(APP);
+  };
+
+  const ROUTES = [
+    ['GET', '/api/admin/requests/arr-apps', undefined, 200],
+    ['POST', '/api/admin/requests/arr-apps', DRAFT, 201],
+    ['POST', '/api/admin/requests/arr-apps/try', DRAFT, 200],
+    ['GET', '/api/admin/requests/arr-apps/queue', undefined, 200],
+    ['PATCH', `/api/admin/requests/arr-apps/${APP.id}`, { name: 'Films' }, 200],
+    ['POST', `/api/admin/requests/arr-apps/${APP.id}/test`, undefined, 200],
+    ['POST', `/api/admin/requests/arr-apps/${APP.id}/try`, DRAFT, 200],
+    ['GET', `/api/admin/requests/arr-apps/${APP.id}/choices`, undefined, 200],
+    ['POST', `/api/admin/requests/arr-apps/${APP.id}/import-indexers`, undefined, 200],
+    ['DELETE', `/api/admin/requests/arr-apps/${APP.id}`, undefined, 204],
+  ] as const;
+
+  it.each(ROUTES)(
+    'answers %s %s for whoever manages requesting',
+    async (method, path, body, status) => {
+      const { ask } = await build({
+        isOn: true,
+        granted: ['requests.manage'],
+        service: aWillingKeeper,
+      });
+
+      expect((await ask(path, method, body)).status).toBe(status);
+    },
+  );
+
+  it('lets whoever edits libraries read the apps and their choices, and nothing more', async () => {
+    const { ask } = await build({ isOn: true, granted: ['library.edit'], service: aWillingKeeper });
+
+    expect((await ask('/api/admin/requests/arr-apps')).status).toBe(200);
+    expect((await ask(`/api/admin/requests/arr-apps/${APP.id}/choices`)).status).toBe(200);
+    expect((await ask('/api/admin/requests/arr-apps', 'POST', DRAFT)).status).toBe(403);
+  });
+
+  it('hands a library’s requests only to an app of the kind it holds', async () => {
+    const fulfilment = {
+      appId: APP.id,
+      rootFolderPath: '/movies',
+      qualityProfileId: 4,
+      metadataProfileId: null,
+      searchesOnAdd: true,
+    };
+    const { ask } = await build({
+      isOn: true,
+      isAdministrator: true,
+      service: aWillingKeeper,
+      libraries: [FILMS, MUSIC],
+    });
+    const change = (id: string, given: object | null) =>
+      ask(`/api/libraries/${id}`, 'PATCH', { defaultAudioLanguage: null, fulfilment: given });
+
+    expect(await (await change(FILMS.id, fulfilment)).json()).toMatchObject({ fulfilment });
+    expect((await change(MUSIC.id, fulfilment)).status).toBe(400);
+    expect((await change(FILMS.id, { ...fulfilment, appId: MUSIC.id })).status).toBe(400);
+    expect(await (await change(FILMS.id, null)).json()).toMatchObject({ fulfilment: null });
+  });
 });
 
 describe('download clients and the queue, through the server', () => {
@@ -1228,6 +1342,28 @@ describe('requests for films and series, through the server', () => {
       event: 'requests.approved',
       data: { title: 'Dune', approvedBy: null },
     });
+  });
+
+  it('hands a film to the connected app its library names, and keeps a book Valence’s own', async () => {
+    const fulfilment = {
+      appId: '3f0e8a52-7b1c-4d2e-9f3a-5b6c7d8e9f01',
+      rootFolderPath: '/movies',
+      qualityProfileId: 4,
+      metadataProfileId: null,
+      searchesOnAdd: true,
+    };
+    const { ask } = await build({
+      isOn: true,
+      granted: ['requests.ask'],
+      service: aWillingKeeper,
+      describeForRequest: () => Promise.resolve(DUNE),
+      libraries: [{ ...FILMS, fulfilment }],
+    });
+
+    sent.length = 0;
+    await ask('/api/requests/media', 'POST', { kind: 'film', tmdbId: 438631 });
+
+    expect(JSON.parse(bodySentTo('/api/requests'))).toMatchObject({ handOff: fulfilment });
   });
 
   it('refuses to ask for what the catalogue does not know, or where there is no library for it', async () => {

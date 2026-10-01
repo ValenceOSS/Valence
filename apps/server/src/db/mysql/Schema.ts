@@ -16,6 +16,7 @@ import {
 } from 'drizzle-orm/mysql-core';
 import type { AnyMySqlColumn } from 'drizzle-orm/mysql-core';
 import type { Said } from '@ValenceI18n/SaidSchema';
+import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import type { Avatar } from '@ValenceContracts/schemas/ViewerProfile';
 import { hashOf } from '@ValenceDatabase/mysql/columns/hashOf';
 import { identifier } from '@ValenceDatabase/mysql/columns/identifier';
@@ -185,6 +186,7 @@ const library = mysqlTable('library', {
   takesRequests: boolean('takesRequests').notNull().default(true),
   requestProfileId: identifier('requestProfileId'),
   requestPath: mediumtext('requestPath'),
+  requestFulfilment: jsonColumn('requestFulfilment').$type<Fulfilment>(),
 });
 
 const viewerProfile = mysqlTable(

@@ -6,6 +6,7 @@ import {
   PRE_TRANSCODING_DEFAULTS,
   PreTranscodingSettingsSchema,
 } from '@ValenceContracts/schemas/PreTranscoding';
+import { SEERR_DEFAULTS, SeerrSettingsSchema } from '@ValenceContracts/schemas/SeerrLink';
 
 const ServerSettingsSchema = z.object({
   trustedOrigins: z.array(z.string().url()),
@@ -33,6 +34,7 @@ const ServerSettingsSchema = z.object({
   roundness: RoundnessSchema.default('default'),
   keepsDownloadsForDays: z.number().int().nonnegative().max(3650).default(14),
   preTranscoding: PreTranscodingSettingsSchema.default(PRE_TRANSCODING_DEFAULTS),
+  seerr: SeerrSettingsSchema.default(SEERR_DEFAULTS),
 });
 
 type ServerSettings = z.infer<typeof ServerSettingsSchema>;

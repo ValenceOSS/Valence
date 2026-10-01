@@ -135,6 +135,7 @@ type MetadataProvider = {
     externalId: string,
     kind: 'tv' | 'movie',
   ) => Promise<RequestCatalogue | null>;
+  seriesOfTvdbId?: (tvdbId: number) => Promise<number | null>;
   forgetAnswers?: () => void;
 };
 

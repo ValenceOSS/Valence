@@ -164,6 +164,8 @@ const createIndexerService = ({
       lastProblemCode: record.lastProblemCode,
       lastFailedAt: record.lastFailedAt,
       turnedOffBecause: record.turnedOffBecause,
+      sourceAppId: record.sourceAppId,
+      sourceIndexerId: record.sourceIndexerId,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     };
@@ -273,6 +275,8 @@ const createIndexerService = ({
           lastProblemCode: null,
           lastFailedAt: null,
           turnedOffBecause: null,
+          sourceAppId: null,
+          sourceIndexerId: null,
           createdAt: at,
           updatedAt: at,
         }),
@@ -365,6 +369,8 @@ const createIndexerService = ({
         lastProblemCode: null,
         lastFailedAt: null,
         turnedOffBecause: null,
+        sourceAppId: kept?.sourceAppId ?? null,
+        sourceIndexerId: kept?.sourceIndexerId ?? null,
         createdAt: now().toISOString(),
         updatedAt: now().toISOString(),
       };

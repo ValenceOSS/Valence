@@ -104,6 +104,128 @@ describe('createRequestsClient', () => {
     });
   });
 
+  describe('connected apps', () => {
+    const AN_APP = {
+      id: '3f0e8a52-7b1c-4d2e-9f3a-5b6c7d8e9f01',
+      name: 'Radarr',
+      kind: 'radarr',
+      url: 'http://radarr:7878',
+      hasApiKey: true,
+      remotePath: '',
+      localPath: '',
+      isEnabled: true,
+      isWorking: true,
+      version: '5.14.0.9383',
+      lastCheckedAt: '2026-10-01T00:00:00.000Z',
+      lastProblem: null,
+      lastProblemCode: null,
+      createdAt: '2026-09-30T00:00:00.000Z',
+      updatedAt: '2026-09-30T00:00:00.000Z',
+    };
+
+    const A_TEST = { isWorking: true, problem: null, problemCode: null, version: '5.14.0.9383' };
+
+    const A_DRAFT = { name: 'Radarr', kind: 'radarr' as const, url: 'http://radarr:7878' };
+
+    /**
+     * A client over a service that answers the one way, and what it was asked.
+     */
+    const aClient = (status: number, body: object | null) => {
+      const fetch = vi.fn<
+        (url: string, init: { method?: string; body?: string }) => Promise<Response>
+      >(() =>
+        Promise.resolve(new Response(body === null ? null : JSON.stringify(body), { status })),
+      );
+
+      return {
+        fetch,
+        client: createRequestsClient({ address: 'http://requests:8421', secret: A_SECRET, fetch }),
+        asked: () => fetch.mock.calls.map(([url, init]) => [init.method, url]),
+      };
+    };
+
+    it('lists, adds, changes and removes apps', async () => {
+      const listing = aClient(200, [AN_APP]);
+      const adding = aClient(201, AN_APP);
+      const removing = aClient(204, null);
+
+      expect(await listing.client.listArrApps()).toEqual({ kind: 'answered', value: [AN_APP] });
+      expect(await adding.client.addArrApp(A_DRAFT)).toEqual({ kind: 'answered', value: AN_APP });
+      expect(await adding.client.changeArrApp(AN_APP.id, { name: 'Films' })).toEqual({
+        kind: 'answered',
+        value: AN_APP,
+      });
+      expect(await removing.client.removeArrApp(AN_APP.id)).toEqual({
+        kind: 'answered',
+        value: null,
+      });
+      expect(adding.asked()).toEqual([
+        ['POST', 'http://requests:8421/api/arr-apps'],
+        ['PATCH', `http://requests:8421/api/arr-apps/${AN_APP.id}`],
+      ]);
+      expect(removing.asked()).toEqual([
+        ['DELETE', `http://requests:8421/api/arr-apps/${AN_APP.id}`],
+      ]);
+    });
+
+    it('tests and tries apps', async () => {
+      const { client, asked } = aClient(200, A_TEST);
+
+      expect(await client.testArrApp(AN_APP.id)).toEqual({ kind: 'answered', value: A_TEST });
+      expect(await client.tryArrApp(A_DRAFT)).toEqual({ kind: 'answered', value: A_TEST });
+      expect(await client.tryArrApp(A_DRAFT, AN_APP.id)).toEqual({
+        kind: 'answered',
+        value: A_TEST,
+      });
+      expect(asked()).toEqual([
+        ['POST', `http://requests:8421/api/arr-apps/${AN_APP.id}/test`],
+        ['POST', 'http://requests:8421/api/arr-apps/try'],
+        ['POST', `http://requests:8421/api/arr-apps/${AN_APP.id}/try`],
+      ]);
+    });
+
+    it('reads an app’s choices, the queues, and brings Prowlarr’s indexers in', async () => {
+      const choices = {
+        rootFolders: [],
+        qualityProfiles: [{ id: 4, name: 'HD' }],
+        metadataProfiles: [],
+      };
+      const queue = { apps: [], items: [] };
+      const imported = { added: 1, updated: 2, removed: 3, unchanged: 4 };
+
+      expect(await aClient(200, choices).client.arrAppChoices(AN_APP.id)).toEqual({
+        kind: 'answered',
+        value: choices,
+      });
+      expect(await aClient(200, queue).client.arrQueue()).toEqual({
+        kind: 'answered',
+        value: queue,
+      });
+      expect(await aClient(200, imported).client.importArrIndexers(AN_APP.id)).toEqual({
+        kind: 'answered',
+        value: imported,
+      });
+    });
+
+    it('tells the service what the library now holds of a request', async () => {
+      const { client, fetch } = aClient(400, { error: 'No', code: null, values: {} });
+
+      expect(
+        await client.requestArrivedInLibrary(AN_APP.id, {
+          mediaId: 'dune',
+          episodes: null,
+          albums: null,
+        }),
+      ).toMatchObject({ kind: 'refused', status: 400 });
+      expect(fetch.mock.calls[0]?.[0]).toBe(
+        `http://requests:8421/api/requests/${AN_APP.id}/arrivals`,
+      );
+      expect(fetch.mock.calls[0]?.[1].body).toBe(
+        '{"mediaId":"dune","episodes":null,"albums":null}',
+      );
+    });
+  });
+
   describe('indexers and searching', () => {
     const AN_INDEXER = {
       id: '0f8fad5b-d9cb-469f-a165-70867728950e',
@@ -129,6 +251,8 @@ describe('createRequestsClient', () => {
       lastProblemCode: null,
       lastFailedAt: null,
       turnedOffBecause: null,
+      sourceAppId: null,
+      sourceIndexerId: null,
       createdAt: '2026-09-19T00:00:00.000Z',
       updatedAt: '2026-09-19T00:00:00.000Z',
     };

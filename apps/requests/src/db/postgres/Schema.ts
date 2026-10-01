@@ -10,6 +10,8 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import type { ProblemCode } from '@ValenceContracts/schemas/ProblemCode';
+import { ARR_APP_KINDS } from '@ValenceContracts/schemas/ArrApp';
+import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import {
   DEFAULT_DOWNLOAD_CATEGORIES,
@@ -80,6 +82,8 @@ const indexer = requestsSchema.table('indexer', {
   lastProblemCode: text('last_problem_code').$type<ProblemCode>(),
   lastFailedAt: timestamp('last_failed_at', { withTimezone: true }),
   turnedOffBecause: jsonb('turned_off_because').$type<Said>(),
+  sourceAppId: uuid('source_app_id'),
+  sourceIndexerId: integer('source_indexer_id'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -112,6 +116,24 @@ const downloadClient = requestsSchema.table('download_client', {
   localPath: text('local_path').notNull().default(''),
   priority: integer('priority').notNull().default(25),
   isEnabled: boolean('is_enabled').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+const arrApp = requestsSchema.table('arr_app', {
+  id: uuid('id').primaryKey(),
+  name: text('name').notNull(),
+  kind: text('kind', { enum: ARR_APP_KINDS }).notNull(),
+  url: text('url').notNull(),
+  apiKey: text('api_key').notNull().default(''),
+  remotePath: text('remote_path').notNull().default(''),
+  localPath: text('local_path').notNull().default(''),
+  isEnabled: boolean('is_enabled').notNull().default(true),
+  isWorking: boolean('is_working'),
+  version: text('version'),
+  lastCheckedAt: timestamp('last_checked_at', { withTimezone: true }),
+  lastProblem: jsonb('last_problem').$type<Said>(),
+  lastProblemCode: text('last_problem_code').$type<ProblemCode>(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -195,6 +217,7 @@ const mediaRequest = requestsSchema.table(
     id: uuid('id').primaryKey(),
     kind: text('kind', { enum: MEDIA_REQUEST_KINDS }).notNull(),
     tmdbId: integer('tmdb_id'),
+    tvdbId: integer('tvdb_id'),
     musicBrainzId: text('music_brainz_id'),
     openLibraryId: integer('open_library_id'),
     title: text('title').notNull(),
@@ -221,6 +244,8 @@ const mediaRequest = requestsSchema.table(
       .default({ theatrical: null, digital: null, physical: null }),
     isEnded: boolean('is_ended').notNull().default(false),
     mediaId: text('media_id'),
+    handOff: jsonb('hand_off').$type<Fulfilment>(),
+    handOffId: integer('hand_off_id'),
     problem: jsonb('problem').$type<Said>(),
     problemCode: text('problem_code').$type<ProblemCode>(),
     catalogueCheckedAt: timestamp('catalogue_checked_at', { withTimezone: true })
@@ -297,6 +322,7 @@ const requestLog = requestsSchema.table('request_log', {
 });
 
 export {
+  arrApp,
   requestLog,
   blocklistedRelease,
   mediaRequest,

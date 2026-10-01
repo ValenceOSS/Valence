@@ -1,4 +1,5 @@
 import { PRE_TRANSCODING_DEFAULTS } from '@ValenceContracts/schemas/PreTranscoding';
+import { SEERR_DEFAULTS } from '@ValenceContracts/schemas/SeerrLink';
 import { describe, expect, it } from 'vitest';
 import { createMemoryJobScheduleService } from './createMemoryJobScheduleService';
 import { createMemorySettingsStore } from '@ValenceServer/settings/createMemorySettingsStore';
@@ -32,6 +33,7 @@ const SETTINGS: ServerSettings = {
   roundness: 'default',
   keepsDownloadsForDays: 14,
   preTranscoding: PRE_TRANSCODING_DEFAULTS,
+  seerr: SEERR_DEFAULTS,
 };
 
 const build = (seededJobTriggerKinds: string[] = []) => ({

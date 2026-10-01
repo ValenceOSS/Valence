@@ -14,6 +14,7 @@ describe('aScratchDatabase', () => {
       z.object({ rows: z.array(z.object({ table_name: z.string() })) }).parse(tables).rows,
     ).toEqual([
       { table_name: '__migrations' },
+      { table_name: 'arr_app' },
       { table_name: 'blocklisted_release' },
       { table_name: 'download' },
       { table_name: 'download_client' },

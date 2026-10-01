@@ -189,6 +189,7 @@ const LIBRARY_COLUMNS = {
   takesRequests: library.takesRequests,
   requestProfileId: library.requestProfileId,
   requestPath: library.requestPath,
+  requestFulfilment: library.requestFulfilment,
 };
 
 /**
@@ -1031,6 +1032,7 @@ const createDatabaseLibraryService = ({
         takesRequests: row.takesRequests,
         requestProfileId: row.requestProfileId,
         requestPath: row.requestPath,
+        fulfilment: row.requestFulfilment,
       })) satisfies Library[];
     },
 
@@ -1060,6 +1062,7 @@ const createDatabaseLibraryService = ({
         takesRequests: true,
         requestProfileId: null,
         requestPath: null,
+        fulfilment: null,
       };
     },
 
@@ -1080,6 +1083,7 @@ const createDatabaseLibraryService = ({
             ? {}
             : { requestProfileId: input.requestProfileId }),
           ...(input.requestPath === undefined ? {} : { requestPath: input.requestPath }),
+          ...(input.fulfilment === undefined ? {} : { requestFulfilment: input.fulfilment }),
         })
         .where(eq(library.id, libraryId));
 
@@ -1119,6 +1123,7 @@ const createDatabaseLibraryService = ({
         takesRequests: row.takesRequests,
         requestProfileId: row.requestProfileId,
         requestPath: row.requestPath,
+        fulfilment: row.requestFulfilment,
       };
     },
 

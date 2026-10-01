@@ -27,6 +27,8 @@ const AN_INDEXER: IndexerRecord = {
   lastProblemCode: null,
   lastFailedAt: null,
   turnedOffBecause: null,
+  sourceAppId: null,
+  sourceIndexerId: null,
   createdAt: '2026-09-19T00:00:00.000Z',
   updatedAt: '2026-09-19T00:00:00.000Z',
 };

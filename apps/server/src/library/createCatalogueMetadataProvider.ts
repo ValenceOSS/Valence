@@ -1125,7 +1125,7 @@ const createCatalogueMetadataProvider = ({
 
       const detail = await request(`/${kind}/${externalId}`, key, {
         append_to_response:
-          kind === 'movie' ? 'release_dates,alternative_titles' : 'alternative_titles',
+          kind === 'movie' ? 'release_dates,alternative_titles' : 'alternative_titles,external_ids',
       });
       const listed =
         kind === 'movie'
@@ -1140,6 +1140,20 @@ const createCatalogueMetadataProvider = ({
       );
 
       return readRequestCatalogue(detail, seasons, (path) => imageUrl(imageBaseUrl, path, 'w342'));
+    },
+
+    seriesOfTvdbId: async (tvdbId) => {
+      const key = await readApiKey();
+
+      if (key === null || key === '') {
+        return null;
+      }
+
+      const found = FindResponseSchema.safeParse(
+        await request(`/find/${tvdbId.toString()}`, key, { external_source: 'tvdb_id' }),
+      );
+
+      return found.success ? (found.data.tv_results[0]?.id ?? null) : null;
     },
 
     describeNextEpisode: async (externalId) => {

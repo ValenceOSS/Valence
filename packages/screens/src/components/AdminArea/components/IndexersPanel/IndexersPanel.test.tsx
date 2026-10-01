@@ -7,6 +7,7 @@ import { IndexersPanel } from './IndexersPanel';
 import type { Indexer } from '@ValenceContracts/schemas/Indexer';
 import type * as Indexers from '@ValenceClient/requests/fetchIndexers';
 import type * as Definitions from '@ValenceClient/requests/fetchDefinitions';
+import type * as Apps from '@ValenceClient/requests/fetchArrApps';
 
 const fetchIndexers = vi.fn<typeof Indexers.fetchIndexers>();
 const fetchCatalogue = vi.fn<typeof Definitions.fetchCatalogue>();
@@ -16,6 +17,33 @@ vi.mock('@ValenceClient/requests/fetchDefinitions', () => ({
   refreshCatalogue: vi.fn(),
   fetchDefinition: () => new Promise(() => undefined),
 }));
+const fetchArrApps = vi.fn<typeof Apps.fetchArrApps>();
+const importArrIndexers = vi.fn<typeof Apps.importArrIndexers>();
+
+vi.mock('@ValenceClient/requests/fetchArrApps', () => ({
+  fetchArrApps: () => fetchArrApps(),
+  importArrIndexers: (id: string) => importArrIndexers(id),
+  fetchArrQueue: vi.fn(),
+  fetchArrAppChoices: vi.fn(),
+}));
+
+const PROWLARR = {
+  id: '5a1d2c3b-4e5f-4a6b-8c7d-9e0f1a2b3c4d',
+  name: 'Prowlarr',
+  kind: 'prowlarr' as const,
+  url: 'http://prowlarr:9696',
+  hasApiKey: true,
+  remotePath: '',
+  localPath: '',
+  isEnabled: true,
+  isWorking: true,
+  version: null,
+  lastCheckedAt: null,
+  lastProblem: null,
+  lastProblemCode: null,
+  createdAt: '2026-09-30T00:00:00.000Z',
+  updatedAt: '2026-09-30T00:00:00.000Z',
+};
 const changeIndexer = vi.fn<typeof Indexers.changeIndexer>();
 const removeIndexer = vi.fn<typeof Indexers.removeIndexer>();
 const testIndexer = vi.fn<typeof Indexers.testIndexer>();
@@ -53,6 +81,8 @@ const anIndexer = (overrides: Partial<Indexer> = {}): Indexer => ({
   lastProblemCode: null,
   lastFailedAt: null,
   turnedOffBecause: null,
+  sourceAppId: null,
+  sourceIndexerId: null,
   removesWhenDone: null,
   seedSeconds: null,
   seedRatio: null,
@@ -87,6 +117,11 @@ beforeEach(() => {
     problem: null,
   });
   fetchIndexers.mockReset().mockResolvedValue([anIndexer()]);
+  fetchArrApps.mockReset().mockResolvedValue([]);
+  importArrIndexers.mockReset().mockResolvedValue({
+    value: { added: 2, updated: 0, removed: 1, unchanged: 0 },
+    refusal: null,
+  });
   changeIndexer.mockReset().mockResolvedValue({ value: anIndexer(), refusal: null });
   removeIndexer.mockReset().mockResolvedValue(null);
   testIndexer.mockReset().mockResolvedValue({
@@ -96,6 +131,43 @@ beforeEach(() => {
 });
 
 describe('IndexersPanel', () => {
+  it('brings in a connected Prowlarr’s indexers, and says which came from it', async () => {
+    const user = userEvent.setup();
+
+    fetchArrApps.mockResolvedValue([PROWLARR]);
+    fetchIndexers.mockResolvedValue([anIndexer({ sourceAppId: PROWLARR.id, sourceIndexerId: 1 })]);
+
+    renderInAnAddress(<IndexersPanel />);
+
+    expect(await screen.findByText('From Prowlarr')).toBeInTheDocument();
+
+    await user.click(await screen.findByRole('button', { name: 'Import from Prowlarr' }));
+
+    await waitFor(() => {
+      expect(importArrIndexers).toHaveBeenCalledWith(PROWLARR.id);
+    });
+  });
+
+  it('says why a Prowlarr’s indexers could not be brought in', async () => {
+    const user = userEvent.setup();
+
+    fetchArrApps.mockResolvedValue([PROWLARR]);
+    importArrIndexers.mockResolvedValue({ value: null, refusal: { message: 'Unreachable.' } });
+
+    renderInAnAddress(<IndexersPanel />);
+
+    await user.click(await screen.findByRole('button', { name: 'Import from Prowlarr' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Prowlarr: Unreachable.');
+  });
+
+  it('offers no import where no Prowlarr is connected', async () => {
+    renderInAnAddress(<IndexersPanel />);
+
+    expect(await screen.findByText('Jackett')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Import from Prowlarr' })).not.toBeInTheDocument();
+  });
+
   it('lists each indexer, how it is and what it can search', async () => {
     renderInAnAddress(<IndexersPanel />);
 

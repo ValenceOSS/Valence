@@ -1,3 +1,4 @@
+import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
 import { SaidSchema } from '@ValenceI18n/SaidSchema';
 import { readFromServerOrAbsent } from '@ValenceClient/query/readFromServerOrAbsent';
 import { z } from 'zod';
@@ -62,6 +63,7 @@ type UpdateLibraryInput = {
   takesRequests?: boolean;
   requestProfileId?: string | null;
   requestPath?: string | null;
+  fulfilment?: Fulfilment | null;
 };
 
 /**

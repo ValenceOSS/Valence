@@ -96,6 +96,10 @@ const updateLibraryRoute = createRoute({
       description: 'The library was updated',
       content: { 'application/json': { schema: Library } },
     },
+    400: {
+      description: 'The connected app chosen cannot fulfil requests for this library',
+      content: { 'application/json': { schema: RefusalSchema } },
+    },
     401: {
       description: 'Not signed in',
       content: { 'application/json': { schema: RefusalSchema } },

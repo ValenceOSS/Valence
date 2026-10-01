@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { isBookRequest } from '@ValenceContracts/functions/isBookRequest';
 import { isMusicRequest } from '@ValenceContracts/functions/isMusicRequest';
 import {
+  MediaRequestArrivalsSchema,
   MediaRequestChangeSchema,
   MediaRequestDraftSchema,
   RELEASE_TYPES,
@@ -17,6 +18,8 @@ import { syncItems } from '@ValenceRequests/mediaRequests/syncItems';
 import type {
   FollowedRequest,
   MediaRequest,
+  MediaRequestArrivals,
+  MediaRequestArrived,
   MediaRequestChange,
   MediaRequestDraft,
   RequestCatalogue,
@@ -28,7 +31,10 @@ import type {
   MediaRequestRecord,
   MediaRequestStore,
 } from '@ValenceRequests/mediaRequests/MediaRequestRecord';
-import type { RequestItemStore } from '@ValenceRequests/mediaRequests/RequestItemRecord';
+import type {
+  RequestItemRecord,
+  RequestItemStore,
+} from '@ValenceRequests/mediaRequests/RequestItemRecord';
 import type { ProfileService } from '@ValenceRequests/profiles/createProfileService';
 
 type CreateRequestServiceOptions = {
@@ -40,6 +46,13 @@ type CreateRequestServiceOptions = {
 };
 
 type Added = { request: MediaRequest; isNew: boolean };
+
+const IN_FLIGHT = new Set<RequestItemRecord['state']>([
+  'searching',
+  'chosen',
+  'downloading',
+  'filing',
+]);
 
 /**
  * Seasons asked for by two requests for the same series: every season where either asked for every
@@ -69,7 +82,8 @@ const bothReleaseTypes = (kept: ReleaseType[] | null, asked: ReleaseType[]): Rel
  * Keeps the requests for films and series and what each waits for: making one, or adding to one
  * already made for the same title; approving and refusing; changing what it asks for; bringing it up
  * to date with the catalogue; trying again what failed; and marking it arrived once the server has
- * found it in the library.
+ * found it in the library, whether filed by Valence, imported by a connected app or put there by
+ * hand.
  *
  * Whatever changes what there is to fetch is said, so whatever fetches can get on with it.
  *
@@ -337,6 +351,53 @@ const createRequestService = ({
       }
 
       return changed(id, { mediaId });
+    },
+
+    arrivedInLibrary: async (
+      id: string,
+      asked: MediaRequestArrivals,
+    ): Promise<MediaRequestArrived | null> => {
+      const arrivals = MediaRequestArrivalsSchema.parse(asked);
+      const record = await requests.find(id);
+
+      if (record === null) {
+        return null;
+      }
+
+      const isHeld = (item: RequestItemRecord): boolean => {
+        if (item.musicBrainzId !== null) {
+          return (arrivals.albums ?? []).includes(item.musicBrainzId);
+        }
+
+        return item.season === null
+          ? arrivals.episodes === null
+          : (arrivals.episodes ?? []).some(
+              (held) => held.season === item.season && held.episode === item.episode,
+            );
+      };
+      const arriving = (await itemsOf(id)).filter(
+        (item) =>
+          item.state !== 'available' &&
+          (record.handOff !== null || !IN_FLIGHT.has(item.state)) &&
+          isHeld(item),
+      );
+      const at = now().toISOString();
+
+      for (const item of arriving) {
+        await items.update(item.id, {
+          state: 'available',
+          problem: null,
+          problemCode: null,
+          updatedAt: at,
+        });
+      }
+
+      const shownNow =
+        arriving.length === 0 && record.mediaId !== null
+          ? await shown(record)
+          : await changed(id, { mediaId: arrivals.mediaId });
+
+      return shownNow === null ? null : { request: shownNow, newlyAvailable: arriving.length };
     },
 
     remove: async (id: string): Promise<boolean> => {

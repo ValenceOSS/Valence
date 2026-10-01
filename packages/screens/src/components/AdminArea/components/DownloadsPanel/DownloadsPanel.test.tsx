@@ -10,6 +10,7 @@ import type { DownloadQueue, QueuedDownload } from '@ValenceContracts/schemas/Do
 import type { Library } from '@ValenceContracts/schemas/Library';
 import type * as Clients from '@ValenceClient/requests/fetchDownloadClients';
 import type * as Queue from '@ValenceClient/requests/fetchDownloadQueue';
+import type * as Apps from '@ValenceClient/requests/fetchArrApps';
 
 const fetchDownloadClients = vi.fn<typeof Clients.fetchDownloadClients>();
 const changeDownloadClient = vi.fn<typeof Clients.changeDownloadClient>();
@@ -22,6 +23,14 @@ const resumeQueuedDownload = vi.fn<typeof Queue.resumeQueuedDownload>();
 const removeQueuedDownload = vi.fn<typeof Queue.removeQueuedDownload>();
 const fileQueuedDownload = vi.fn<typeof Queue.fileQueuedDownload>();
 const fetchLibraries = vi.fn<() => Promise<Library[]>>();
+const fetchArrApps = vi.fn<typeof Apps.fetchArrApps>();
+const fetchArrQueue = vi.fn<typeof Apps.fetchArrQueue>();
+
+vi.mock('@ValenceClient/requests/fetchArrApps', () => ({
+  fetchArrApps: () => fetchArrApps(),
+  fetchArrQueue: () => fetchArrQueue(),
+  fetchArrAppChoices: vi.fn(),
+}));
 
 vi.mock('@ValenceClient/library/fetchLibrary', async (actual) => ({
   ...(await actual<object>()),
@@ -165,6 +174,8 @@ beforeEach(() => {
     },
   ]);
   heard.onQueue = null;
+  fetchArrApps.mockReset().mockResolvedValue([]);
+  fetchArrQueue.mockReset().mockResolvedValue({ apps: [], items: [] });
   stopWatching.mockReset();
   fetchDownloadClients.mockReset().mockResolvedValue([CLIENT, NZBGET]);
   fetchDownloadQueue.mockReset().mockResolvedValue(QUEUE);
@@ -188,6 +199,63 @@ const choose = async (user: ReturnType<typeof userEvent.setup>, row: string, ite
 };
 
 describe('DownloadsPanel', () => {
+  it('shows what the connected apps are downloading, once there are any', async () => {
+    const user = userEvent.setup();
+    const appId = '3f0e8a52-7b1c-4d2e-9f3a-5b6c7d8e9f01';
+
+    fetchArrApps.mockResolvedValue([
+      {
+        id: appId,
+        name: 'Films app',
+        kind: 'radarr',
+        url: 'http://radarr:7878',
+        hasApiKey: true,
+        remotePath: '',
+        localPath: '',
+        isEnabled: true,
+        isWorking: true,
+        version: null,
+        lastCheckedAt: null,
+        lastProblem: null,
+        lastProblemCode: null,
+        createdAt: '2026-09-30T00:00:00.000Z',
+        updatedAt: '2026-09-30T00:00:00.000Z',
+      },
+    ]);
+    fetchArrQueue.mockResolvedValue({
+      apps: [{ id: appId, name: 'Films app', kind: 'radarr', problem: null, problemCode: null }],
+      items: [
+        {
+          id: 5,
+          appId,
+          title: 'Arrival.2016.2160p',
+          status: 'downloading',
+          progress: 0.25,
+          sizeBytes: 4000,
+          leftBytes: 3000,
+          secondsLeft: 60,
+          downloadClient: 'qBittorrent',
+          problem: null,
+        },
+      ],
+    });
+
+    renderInAnAddress(<DownloadsPanel />);
+
+    expect(fetchArrQueue).not.toHaveBeenCalled();
+
+    await user.click(await screen.findByRole('tab', { name: 'Connected apps' }));
+
+    expect(await screen.findByText('Arrival.2016.2160p')).toBeInTheDocument();
+  });
+
+  it('offers no tab for apps where none fetch anything', async () => {
+    renderInAnAddress(<DownloadsPanel />);
+
+    expect(await screen.findByText('Dune')).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Connected apps' })).not.toBeInTheDocument();
+  });
+
   it('shows the queue, and how fast everything is going altogether', async () => {
     renderInAnAddress(<DownloadsPanel />);
 

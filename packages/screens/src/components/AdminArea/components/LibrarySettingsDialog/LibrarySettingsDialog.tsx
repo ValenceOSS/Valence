@@ -12,7 +12,11 @@ import { TextField } from '@ValenceUI/TextField';
 import { useHeldWhileClosing } from '@ValenceUI/Dialog.useHeldWhileClosing';
 import { readLanguage, LANGUAGE_NAMES } from '@ValenceCore/functions/describeTrack';
 import { updateLibrary } from '@ValenceClient/library/fetchLibrary';
+import { arrKindOf } from '@ValenceContracts/functions/arrKindOf';
 import type { Library } from '@ValenceContracts/schemas/Library';
+import { FulfilmentFields } from './components/FulfilmentFields/FulfilmentFields';
+import { VALENCE, fulfilmentFormOf, readFulfilmentForm } from './readFulfilmentForm';
+import type { FulfilmentForm } from './readFulfilmentForm';
 import type { LibrarySettingsDialogProps } from './LibrarySettingsDialog.types';
 import { say } from '@ValenceI18n/say';
 
@@ -71,6 +75,7 @@ const buildLanguageOptions = (): LanguageOption[] => {
  * @param library - The library being changed, or null when the dialog is closed.
  * @param isOpen - Whether the dialog is showing.
  * @param profiles - The quality profiles one of them may be judged by, where requesting is on.
+ * @param arrApps - The connected apps its requests may be handed to, where requesting is on.
  * @param onClose - Called when it is dismissed.
  * @param onUpdated - Called with the library once its settings have been written.
  * @param onRegenerate - Called with the library whose previews are to be remade.
@@ -79,6 +84,7 @@ const LibrarySettingsDialog = ({
   library: requested,
   isOpen,
   profiles = [],
+  arrApps = [],
   onClose,
   onUpdated,
   onRegenerate,
@@ -91,6 +97,7 @@ const LibrarySettingsDialog = ({
   const [takesRequests, setTakesRequests] = useState(library?.takesRequests ?? true);
   const [requestProfileId, setRequestProfileId] = useState(library?.requestProfileId ?? THE_BEST);
   const [requestPath, setRequestPath] = useState(library?.requestPath ?? '');
+  const [fulfilment, setFulfilment] = useState<FulfilmentForm>(() => fulfilmentFormOf(library));
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<{ saved: Library; label: string } | null>(null);
@@ -101,6 +108,7 @@ const LibrarySettingsDialog = ({
     setTakesRequests(library?.takesRequests ?? true);
     setRequestProfileId(library?.requestProfileId ?? THE_BEST);
     setRequestPath(library?.requestPath ?? '');
+    setFulfilment(fulfilmentFormOf(library));
     setError(null);
     setConfirming(null);
   };
@@ -125,6 +133,14 @@ const LibrarySettingsDialog = ({
       return;
     }
 
+    const handedTo = readFulfilmentForm(fulfilment, arrKindOf(library.kind));
+
+    if (handedTo.problem !== null) {
+      setError(handedTo.problem);
+
+      return;
+    }
+
     setIsSaving(true);
     setError(null);
 
@@ -137,6 +153,7 @@ const LibrarySettingsDialog = ({
         takesRequests,
         requestProfileId: requestProfileId === THE_BEST ? null : requestProfileId,
         requestPath: requestPath.trim() === '' ? null : requestPath.trim(),
+        fulfilment: handedTo.fulfilment,
       });
 
       if (changed && library.itemCount > 0) {
@@ -172,6 +189,9 @@ const LibrarySettingsDialog = ({
     return null;
   }
 
+  const arrKind = arrKindOf(library.kind);
+  const canHandOff = arrApps.some((app) => app.kind === arrKind);
+  const isHandedOff = arrKind !== null && fulfilment.appId !== VALENCE;
   const selectedLabel = languageOptions.find((option) => option.id === selected)?.label ?? selected;
   const atOnceLabel = AT_ONCE_OPTIONS.find((option) => option.id === atOnce)?.label ?? atOnce;
   const profileLabel =
@@ -270,7 +290,19 @@ const LibrarySettingsDialog = ({
                 }}
               />
 
-              {!takesRequests ? null : (
+              {!takesRequests || arrKind === null || (!canHandOff && !isHandedOff) ? null : (
+                <FulfilmentFields
+                  kind={arrKind}
+                  apps={arrApps}
+                  form={fulfilment}
+                  onChange={(next) => {
+                    setFulfilment((current) => ({ ...current, ...next }));
+                    setError(null);
+                  }}
+                />
+              )}
+
+              {!takesRequests || isHandedOff ? null : (
                 <>
                   <OptionMenu
                     label={say('screens.adminArea.librarySettingsDialog.qualityProfileForRequests')}

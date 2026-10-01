@@ -69,6 +69,7 @@ const LibrariesPanel = ({
   isUnreachable = false,
   libraries,
   profiles = [],
+  arrApps = [],
   progress,
   working,
   isScanningAll,
@@ -497,6 +498,7 @@ const LibrariesPanel = ({
       <LibrarySettingsDialog
         key={settingsLibraryId ?? 'none'}
         profiles={profiles}
+        arrApps={arrApps}
         library={libraries.find((entry) => entry.id === settingsLibraryId) ?? null}
         isOpen={settingsLibraryId !== null}
         onClose={() => {
