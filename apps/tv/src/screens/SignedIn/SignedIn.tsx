@@ -48,6 +48,7 @@ import { RequestsPage } from '@ValenceTv/screens/RequestsPage/RequestsPage';
 import { PluginPage } from '@ValenceTv/screens/PluginPage/PluginPage';
 import { Search } from '@ValenceTv/screens/Search/Search';
 import { ShowPage } from '@ValenceTv/screens/ShowPage/ShowPage';
+import { PersonPage } from '@ValenceTv/screens/PersonPage/PersonPage';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { Book } from '@ValenceContracts/schemas/Book';
 import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
@@ -318,6 +319,13 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
   const openFilm = useCallback(
     (mediaId: string) => {
       open({ kind: 'film', mediaId, mood: artworkUrl(mediaId, 'backdrop') });
+    },
+    [open],
+  );
+
+  const openPerson = useCallback(
+    (personId: number) => {
+      open({ kind: 'person', personId, mood: null });
     },
     [open],
   );
@@ -629,7 +637,13 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
 
       {top?.kind === 'film' ? (
         <View style={styles.over}>
-          <FilmPage key={top.mediaId} mediaId={top.mediaId} viewerId={user.id} onPlay={play} />
+          <FilmPage
+            key={top.mediaId}
+            mediaId={top.mediaId}
+            viewerId={user.id}
+            onPlay={play}
+            onOpenPerson={openPerson}
+          />
         </View>
       ) : null}
 
@@ -641,7 +655,14 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
             showId={top.showId}
             viewerId={user.id}
             onPlay={play}
+            onOpenPerson={openPerson}
           />
+        </View>
+      ) : null}
+
+      {top?.kind === 'person' ? (
+        <View style={styles.over}>
+          <PersonPage key={top.personId} personId={top.personId} onOpen={openTitle} />
         </View>
       ) : null}
 

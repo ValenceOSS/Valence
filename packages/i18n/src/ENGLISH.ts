@@ -513,6 +513,7 @@ const ENGLISH = {
   'common.bitrate': 'Bitrate',
   'common.book': 'Book',
   'common.books': 'Books',
+  'common.bornBornOn': 'Born {bornOn}',
   'common.brightness': 'Brightness',
   'common.bringTitleBack': 'Bring {title} back',
   'common.browser': 'Browser',
@@ -1905,7 +1906,6 @@ const ENGLISH = {
   'phone.anAskable.anythingAlreadyDownloadedForItIs':
     'Anything already downloaded for it is deleted.',
   'phone.anAskable.theSeasons.andAnyStillToCome': 'And any still to come',
-  'phone.aPerson.bornBornOn': 'Born {bornOn}',
   'phone.aPlaylist.thatPlaylistCouldNotBeRead': 'That playlist could not be read.',
   'phone.aPluginPage.readingThePage': 'Reading the page',
   'phone.aPluginPage.thisPageCouldNotBeRead': 'This page could not be read from the plugin.',

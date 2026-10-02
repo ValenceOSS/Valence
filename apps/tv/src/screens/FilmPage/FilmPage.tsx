@@ -1,7 +1,15 @@
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { Check, EyeOff, Plus, RotateCcw, Star } from '@keyline-icons/react-native';
+import {
+  Check,
+  ChevronsUpDown,
+  EyeOff,
+  Film,
+  Plus,
+  RotateCcw,
+  Star,
+} from '@keyline-icons/react-native';
 import { Play } from '@keyline-icons/react-native/fill';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
@@ -11,6 +19,7 @@ import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useHidden } from '@ValenceClient/library/useHidden';
 import { useRate } from '@ValenceClient/library/useRate';
 import { useStars } from '@ValenceClient/library/useStars';
+import { theVersionsOf } from '@ValenceClient/library/theVersionsOf';
 import { useConfirmHiding } from '@ValenceNative/library/useConfirmHiding';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
@@ -18,6 +27,8 @@ import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { ActionRow } from '@ValenceTv/components/ActionRow/ActionRow';
 import { PluginPanels } from '@ValenceTv/components/PluginPanels/PluginPanels';
 import { StarChoice } from '@ValenceTv/components/StarChoice/StarChoice';
+import { CastRow } from '@ValenceTv/components/CastRow/CastRow';
+import { ChoicePanel } from '@ValenceTv/components/ChoicePanel/ChoicePanel';
 import { TitleSpread } from '@ValenceTv/components/TitleSpread/TitleSpread';
 import { joinFacts } from '@ValenceTv/library/joinFacts';
 import { useProgress } from '@ValenceTv/library/useProgress';
@@ -32,28 +43,32 @@ const STARRING = 4;
 /**
  * A film's own page: everything about it beside its picture, and what can be done with it — carry on
  * from where this viewer left off, or start again, keep it on their list, give it stars from the panel
- * down the right, which Menu closes, or hide it, once asked.
+ * down the right, which Menu closes, or hide it, once asked. Where the library holds other cuts of it
+ * the one to play is chosen from the same panel, and a trailer kept beside it plays in the player.
+ * Beneath are the cast, each opening their own page.
  *
  * @param mediaId - The film.
  * @param viewerId - Who is watching, whose list it goes on.
  * @param onPlay - Told to play it, and from where.
+ * @param onOpenPerson - Told whose page to open, from the cast.
  */
-const FilmPage = ({ mediaId, viewerId, onPlay }: FilmPageProps) => {
+const FilmPage = ({ mediaId, viewerId, onPlay, onOpenPerson }: FilmPageProps) => {
   const { progress } = useProgress();
   const favourites = useFavourites(viewerId);
   const hiding = useHidden(viewerId);
   const rate = useRate(viewerId);
   const stars = useStars(viewerId, { mediaId });
-  const [isRating, setIsRating] = useState(false);
+  const [panel, setPanel] = useState<'rating' | 'version' | null>(null);
+  const [chosenVersion, setChosenVersion] = useState<string | null>(null);
   const detail = useQuery(libraryQueries.detail(mediaId));
 
   useConfirmHiding(hiding);
   useMenuButton(
-    isRating
-      ? () => {
-          setIsRating(false);
-        }
-      : null,
+    panel === null
+      ? null
+      : () => {
+          setPanel(null);
+        },
     true,
   );
   const film = detail.data ?? null;
@@ -70,9 +85,15 @@ const FilmPage = ({ mediaId, viewerId, onPlay }: FilmPageProps) => {
     );
   }
 
-  const resume = resumeFor(progress, film.id);
-  const watched = progress.get(film.id);
-  const summary = summariseDetail(film);
+  const versions = film.versions ?? [];
+  const offered = theVersionsOf(film.id, versions);
+  const playing = versions.find((one) => one.id === chosenVersion) ?? null;
+  const summary = playing ?? summariseDetail(film);
+  const resume = resumeFor(progress, summary.id);
+  const watched = progress.get(summary.id);
+  const trailer =
+    (film.extras ?? []).find((extra) => extra.extraKind === 'trailer' && extra.id !== film.id) ??
+    null;
   const starring = (film.metadata.cast ?? []).slice(0, STARRING).map((member) => member.name);
   const genres = film.metadata.genres ?? [];
 
@@ -96,7 +117,12 @@ const FilmPage = ({ mediaId, viewerId, onPlay }: FilmPageProps) => {
           : [say('common.starringValue', { value: starring.join(', ') })]),
         ...(genres.length === 0 ? [] : [genres.join(', ')]),
       ]}
-      below={<PluginPanels on="title" subjectId={film.id} />}
+      below={
+        <>
+          <CastRow cast={film.metadata.cast ?? []} onOpen={onOpenPerson} />
+          <PluginPanels on="title" subjectId={film.id} />
+        </>
+      }
     >
       <ActionRow
         label={
@@ -124,6 +150,27 @@ const FilmPage = ({ mediaId, viewerId, onPlay }: FilmPageProps) => {
         />
       )}
 
+      {versions.length === 0 ? null : (
+        <ActionRow
+          label={say('common.whichVersionToPlay')}
+          detail={offered.find((one) => one.id === summary.id)?.label ?? say('common.original')}
+          icon={ChevronsUpDown}
+          onPress={() => {
+            setPanel('version');
+          }}
+        />
+      )}
+
+      {trailer === null ? null : (
+        <ActionRow
+          label={say('common.trailer')}
+          icon={Film}
+          onPress={() => {
+            onPlay(trailer, 0);
+          }}
+        />
+      )}
+
       <ActionRow
         label={
           favourites.isKept(film.id)
@@ -141,7 +188,7 @@ const FilmPage = ({ mediaId, viewerId, onPlay }: FilmPageProps) => {
         {...(stars === null ? {} : { detail: sayCount('common.count.stars', stars) })}
         icon={Star}
         onPress={() => {
-          setIsRating(true);
+          setPanel('rating');
         }}
       />
 
@@ -159,13 +206,24 @@ const FilmPage = ({ mediaId, viewerId, onPlay }: FilmPageProps) => {
     <View style={styles.page}>
       {page}
 
-      {isRating ? (
+      {panel === 'rating' ? (
         <StarChoice
           title={film.title}
           given={stars}
           onChoose={(chosen) => {
             rate({ mediaId: film.id }, chosen);
-            setIsRating(false);
+            setPanel(null);
+          }}
+        />
+      ) : null}
+
+      {panel === 'version' ? (
+        <ChoicePanel
+          title={say('common.whichVersionToPlay')}
+          choices={offered.map((one) => ({ ...one, isCurrent: one.id === summary.id }))}
+          onChoose={(id) => {
+            setChosenVersion(id === film.id ? null : id);
+            setPanel(null);
           }}
         />
       ) : null}

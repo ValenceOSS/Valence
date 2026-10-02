@@ -1950,6 +1950,11 @@
     "context": "The label, used in several places, among them the library of the phone app and the search of the phone app."
   },
   {
+    "handler": "common.bornBornOn",
+    "text": "Born {bornOn}",
+    "context": "When somebody in a cast was born, on the phone and the television. {bornOn} is the date."
+  },
+  {
     "handler": "common.brightness",
     "text": "Brightness",
     "context": "The label, used in several places, among them the meadow in the variants and the pixel in the variants."
@@ -8208,11 +8213,6 @@
     "handler": "phone.anAskable.theSeasons.andAnyStillToCome",
     "text": "And any still to come",
     "context": "Text shown in the seasons in the askable of the phone app."
-  },
-  {
-    "handler": "phone.aPerson.bornBornOn",
-    "text": "Born {bornOn}",
-    "context": "Shown in the person of the phone app. {bornOn} is filled in by the app."
   },
   {
     "handler": "phone.aPlaylist.thatPlaylistCouldNotBeRead",

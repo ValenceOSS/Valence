@@ -119,7 +119,13 @@ const aCacheHolding = (show: ShowDetail | null, progress: WatchProgress[] = []):
 const drawShow = (cache: QueryClient, onPlay = jest.fn()) =>
   render(
     <QueryClientProvider client={cache}>
-      <ShowPage libraryId={LIBRARY} showId={SHOW} viewerId={VIEWER} onPlay={onPlay} />
+      <ShowPage
+        libraryId={LIBRARY}
+        showId={SHOW}
+        viewerId={VIEWER}
+        onPlay={onPlay}
+        onOpenPerson={jest.fn()}
+      />
     </QueryClientProvider>,
   );
 

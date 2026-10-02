@@ -7,6 +7,7 @@ import { setRating } from '@ValenceClient/library/fetchRatings';
 import { setHidden } from '@ValenceClient/library/fetchHidden';
 import { Alert } from 'react-native';
 import { MediaDetailSchema } from '@ValenceContracts/schemas/Library';
+import { summariseDetail } from '@ValenceClient/library/summariseDetail';
 import { FilmPage } from '@ValenceTv/screens/FilmPage/FilmPage';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 
@@ -28,6 +29,10 @@ jest.mock('@ValenceClient/library/fetchHidden', () => ({
 const FILM = '00000000-0000-4000-8000-000000000001';
 
 const VIEWER = '00000000-0000-4000-8000-0000000000ff';
+
+const DIRECTORS = '00000000-0000-4000-8000-000000000002';
+
+const TRAILER = '00000000-0000-4000-8000-000000000003';
 
 const ARRIVAL = MediaDetailSchema.parse({
   id: FILM,
@@ -68,17 +73,19 @@ const aCacheHolding = ({
   progress = [],
   kept = [],
   isFound = true,
+  film = ARRIVAL,
 }: {
   progress?: WatchProgress[];
   kept?: string[];
   isFound?: boolean;
+  film?: typeof ARRIVAL;
 }): QueryClient => {
   const cache = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity, gcTime: Infinity } },
   });
 
   if (isFound) {
-    cache.setQueryData(libraryQueries.detail(FILM).queryKey, ARRIVAL);
+    cache.setQueryData(libraryQueries.detail(FILM).queryKey, film);
   }
 
   cache.setQueryData(viewingQueries.progress().queryKey, progress);
@@ -89,10 +96,10 @@ const aCacheHolding = ({
   return cache;
 };
 
-const drawFilm = (cache: QueryClient, onPlay = jest.fn()) =>
+const drawFilm = (cache: QueryClient, onPlay = jest.fn(), onOpenPerson = jest.fn()) =>
   render(
     <QueryClientProvider client={cache}>
-      <FilmPage mediaId={FILM} viewerId={VIEWER} onPlay={onPlay} />
+      <FilmPage mediaId={FILM} viewerId={VIEWER} onPlay={onPlay} onOpenPerson={onOpenPerson} />
     </QueryClientProvider>,
   );
 
@@ -207,5 +214,57 @@ describe('FilmPage', () => {
     await waitFor(() => {
       expect(setHidden).toHaveBeenCalledWith({ kind: 'item', subjectId: FILM }, true);
     });
+  });
+
+  it('plays the cut chosen from the panel, and the trailer kept beside it', async () => {
+    const directors = {
+      ...summariseDetail(ARRIVAL),
+      id: DIRECTORS,
+      versionLabel: "Director's Cut",
+    };
+    const trailer = { ...summariseDetail(ARRIVAL), id: TRAILER, extraKind: 'trailer' as const };
+    const onPlay = jest.fn();
+    const drawn = await drawFilm(
+      aCacheHolding({ film: { ...ARRIVAL, versions: [directors], extras: [trailer] } }),
+      onPlay,
+    );
+
+    await userEvent.press(drawn.getByRole('button', { name: /^Which version to play/ }));
+    await userEvent.press(drawn.getByRole('button', { name: "Director's Cut" }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Play' }));
+
+    expect(onPlay).toHaveBeenLastCalledWith(expect.objectContaining({ id: DIRECTORS }), 0);
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Trailer' }));
+
+    expect(onPlay).toHaveBeenLastCalledWith(expect.objectContaining({ id: TRAILER }), 0);
+  });
+
+  it('offers no version choice or trailer where the library holds neither', async () => {
+    const drawn = await drawFilm(aCacheHolding({}));
+
+    expect(drawn.queryByRole('button', { name: /^Which version to play/ })).toBeNull();
+    expect(drawn.queryByRole('button', { name: 'Trailer' })).toBeNull();
+  });
+
+  it('opens the page of somebody in the cast', async () => {
+    const onOpenPerson = jest.fn();
+    const drawn = await drawFilm(
+      aCacheHolding({
+        film: {
+          ...ARRIVAL,
+          metadata: {
+            ...ARRIVAL.metadata,
+            cast: [{ personId: 9273, name: 'Amy Adams', role: 'Louise', imageUrl: null }],
+          },
+        },
+      }),
+      jest.fn(),
+      onOpenPerson,
+    );
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Amy Adams, Louise' }));
+
+    expect(onOpenPerson).toHaveBeenCalledWith(9273);
   });
 });

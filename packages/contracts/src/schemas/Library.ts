@@ -158,6 +158,7 @@ const LibraryFacetsSchema = z.object({
   maxRating: z.number().nonnegative(),
 });
 
+export type CastMember = z.infer<typeof CastMemberSchema>;
 export type LibraryFacets = z.infer<typeof LibraryFacetsSchema>;
 export type LibraryKind = z.infer<typeof LibraryKindSchema>;
 export type ExtraKind = z.infer<typeof ExtraKindSchema>;

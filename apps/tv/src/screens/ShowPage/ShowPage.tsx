@@ -22,6 +22,7 @@ import { TabBar } from '@ValenceTv/components/TabBar/TabBar';
 import { TitleSpread } from '@ValenceTv/components/TitleSpread/TitleSpread';
 import { PluginPanels } from '@ValenceTv/components/PluginPanels/PluginPanels';
 import { StarChoice } from '@ValenceTv/components/StarChoice/StarChoice';
+import { CastRow } from '@ValenceTv/components/CastRow/CastRow';
 import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
 import { useConfirmHiding } from '@ValenceNative/library/useConfirmHiding';
 import { joinFacts } from '@ValenceTv/library/joinFacts';
@@ -67,9 +68,10 @@ const overviewOf = (show: ShowDetail, episode: MediaSummary): string | null =>
  * @param libraryId - The library the programme is in.
  * @param showId - The programme.
  * @param viewerId - Who is watching, whose stars and hiding they are.
+ * @param onOpenPerson - Told whose page to open, from the cast.
  * @param onPlay - Told to play an episode, and from where.
  */
-const ShowPage = ({ libraryId, showId, viewerId, onPlay }: ShowPageProps) => {
+const ShowPage = ({ libraryId, showId, viewerId, onOpenPerson, onPlay }: ShowPageProps) => {
   const { progress } = useProgress();
   const asked = useQuery(libraryQueries.show(libraryId, showId));
   const show = asked.data ?? null;
@@ -211,6 +213,8 @@ const ShowPage = ({ libraryId, showId, viewerId, onPlay }: ShowPageProps) => {
               );
             }}
           />
+
+          <CastRow cast={cover.data?.metadata.cast ?? []} onOpen={onOpenPerson} />
 
           <PluginPanels on="series" subjectId={showId} />
         </View>
