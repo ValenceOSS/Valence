@@ -19,6 +19,8 @@ import type { PanelCardProps } from './PanelCard.types';
  *   brings its own inner spacing.
  * @param isHighlighted - Whether the block is ringed in the accent, to say it is the one that is new
  *   or needs looking at.
+ * @param isCompact - Whether the heading is drawn smaller, for a block one of many in a tight grid,
+ *   as the figures at the top of the overview are.
  * @param className - Extra classes for the caller's own layout.
  */
 const PanelCard = ({
@@ -28,6 +30,7 @@ const PanelCard = ({
   children,
   isFlush = false,
   isHighlighted = false,
+  isCompact = false,
   className,
 }: PanelCardProps) => (
   <section
@@ -37,9 +40,21 @@ const PanelCard = ({
       className,
     )}
   >
-    <header className="flex flex-col gap-2 px-3 py-1">
-      <div className="flex min-h-10 flex-wrap items-center justify-between gap-2">
-        <h3 className="text-xs uppercase tracking-[0.16em] text-text-muted">{title}</h3>
+    <header className={cn('flex flex-col gap-2', isCompact ? 'px-2.5 py-0.5' : 'px-3 py-1')}>
+      <div
+        className={cn(
+          'flex flex-wrap items-center justify-between gap-2',
+          isCompact ? 'min-h-7' : 'min-h-10',
+        )}
+      >
+        <h3
+          className={cn(
+            'uppercase text-text-muted',
+            isCompact ? 'text-[0.6875rem] tracking-[0.14em]' : 'text-xs tracking-[0.16em]',
+          )}
+        >
+          {title}
+        </h3>
 
         {actions === undefined ? null : (
           <div className="ml-auto flex shrink-0 flex-wrap items-center gap-2">{actions}</div>

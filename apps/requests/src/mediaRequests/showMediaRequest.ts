@@ -45,6 +45,7 @@ const showMediaRequest = (
     record.kind === 'film' || record.kind === 'album'
       ? (items.find((item) => item.season === null)?.airDate ?? null)
       : null,
+  releaseDates: record.releaseDates,
   items: items
     .toSorted(
       (left, right) =>

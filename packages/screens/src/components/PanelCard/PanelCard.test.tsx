@@ -82,6 +82,25 @@ describe('PanelCard', () => {
     expect(container.firstElementChild).toHaveClass('ring-1', 'ring-accent/40');
   });
 
+  it('draws its heading smaller only when asked to be compact', () => {
+    const { rerender } = render(
+      <PanelCard title="Friday">
+        <p>Two episodes.</p>
+      </PanelCard>,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Friday' })).toHaveClass('text-xs');
+
+    rerender(
+      <PanelCard title="Friday" isCompact>
+        <p>Two episodes.</p>
+      </PanelCard>,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Friday' })).toHaveClass('text-[0.6875rem]');
+    expect(screen.getByRole('heading', { name: 'Friday' }).parentElement).toHaveClass('min-h-7');
+  });
+
   it('sets a display name so devtools can identify it', () => {
     expect(PanelCard.displayName).toBe('PanelCard');
   });

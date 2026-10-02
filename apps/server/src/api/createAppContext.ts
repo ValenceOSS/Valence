@@ -29,7 +29,7 @@ import { createPhoneHandBacks } from '@ValenceServer/phone/createPhoneHandBacks'
 import { checkAccountAction } from '@ValenceServer/auth/checkAccountAction';
 import type { AccountActionRefusal } from '@ValenceServer/auth/checkAccountAction';
 import type { RoleChangeRefusal } from '@ValenceServer/auth/checkRoleChange';
-import { ADMINISTRATOR } from '@ValenceContracts/schemas/Permission';
+import { ADMINISTRATOR, SEES_EVERY_REQUEST } from '@ValenceContracts/schemas/Permission';
 import { createMemoryPermissionService } from '@ValenceServer/auth/createMemoryPermissionService';
 import { createBetterAuthApiKeyService } from '@ValenceServer/auth/createBetterAuthApiKeyService';
 import { createMemoryWebhookStore } from '@ValenceServer/webhooks/createMemoryWebhookStore';
@@ -979,12 +979,6 @@ const createAppContext = (options: CreateAppOptions) => {
   const APPROVERS: readonly Permission[] = ['requests.approve', 'requests.manage'];
 
   const ASKERS: readonly Permission[] = ['requests.ask', 'requests.askMusic'];
-
-  const SEES_EVERY_REQUEST: readonly Permission[] = [
-    'requests.viewAll',
-    'requests.approve',
-    'requests.manage',
-  ];
 
   /**
    * The quality profiles somebody may ask with, and the one they are given no say over.

@@ -1,4 +1,6 @@
 import type { Fulfilment } from '@ValenceContracts/schemas/ArrApp';
+import type { CatalogueArtwork } from '@ValenceServer/calendar/CatalogueArtwork';
+import type { CatalogueTitleRef } from '@ValenceServer/calendar/CatalogueTitleRef';
 import type { ArtworkChoices, ArtworkKind } from '@ValenceContracts/schemas/ArtworkChoice';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type {
@@ -13,6 +15,7 @@ import type { Person } from '@ValenceContracts/schemas/Person';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
 import type { MediaFileDeletion } from '@ValenceServer/library/deleteMediaFile';
+import type { CalendarEpisode } from '@ValenceServer/calendar/CalendarEpisode';
 
 type MediaDeletion = MediaFileDeletion | { kind: 'absent' };
 
@@ -55,6 +58,11 @@ type AgeExceptionEntry = AgeSubject & {
 type ShowService = {
   listShows: (viewer: Viewer, libraryId: string) => Promise<ShowSummary[] | null>;
   comingUp: (viewer: Viewer) => Promise<ComingUp['shows']>;
+  releaseCalendar: (viewer: Viewer, from: string, to: string) => Promise<CalendarEpisode[]>;
+  airingStills: (catalogueIds: readonly string[]) => Promise<ReadonlyMap<string, string>>;
+  catalogueArtwork: (
+    titles: readonly CatalogueTitleRef[],
+  ) => Promise<ReadonlyMap<string, CatalogueArtwork>>;
   getShow: (viewer: Viewer, libraryId: string, showId: string) => Promise<ShowDetail | null>;
 };
 

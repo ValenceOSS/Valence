@@ -1,3 +1,4 @@
+import { describeFailure } from '@ValenceServer/logging/describeFailure';
 import { sayVerbatim } from '@ValenceI18n/sayVerbatim';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import { saying } from '@ValenceI18n/saying';
@@ -76,8 +77,10 @@ import type {
 } from '@ValenceServer/music/scanMusicLibrary';
 import { readEveryEpisode } from '@ValenceServer/library/readEveryEpisode';
 import { groupIntoShows, buildShowDetail } from './groupIntoShows';
+import { episodeEntryId } from '@ValenceServer/calendar/episodeEntryId';
+import { catalogueTitleKey } from '@ValenceServer/calendar/catalogueTitleKey';
 import { createExpiringCache } from './createExpiringCache';
-import { resolveNextEpisode, resolveSeriesShape } from './MetadataProvider';
+import { resolveAiringSeason, resolveNextEpisode, resolveSeriesShape } from './MetadataProvider';
 import { nextEpisodeOf } from '@ValenceServer/library/nextEpisodeOf';
 import { regeneratePreviews } from './regeneratePreviews';
 import { generateTrickplay } from './generateTrickplay';
@@ -108,9 +111,11 @@ import type {
 } from '@ValenceContracts/schemas/Library';
 import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 import type { MediaFileSystem, ScanPhase, ScannedItem } from './scanLibrary';
-import type { MetadataProvider, SeriesShape } from './MetadataProvider';
+import type { AiringSeason, MetadataProvider, SeriesShape } from './MetadataProvider';
+import type { CatalogueArtwork } from '@ValenceServer/calendar/CatalogueArtwork';
+import type { CatalogueTitleRef } from '@ValenceServer/calendar/CatalogueTitleRef';
 import type { NextEpisode } from '@ValenceServer/library/nextEpisodeOf';
-import type { ShowDetail } from '@ValenceContracts/schemas/Show';
+import type { ShowDetail, ShowSummary } from '@ValenceContracts/schemas/Show';
 import type { Transcoder } from '@ValenceServer/transcoder/TranscoderClient';
 import type { Viewer } from '@ValenceServer/visibility/Viewer';
 import { librariesVisibleToViewer } from '@ValenceServer/visibility/librariesVisibleToViewer';
@@ -327,6 +332,8 @@ const createDatabaseLibraryService = ({
   const shapes = createExpiringCache<SeriesShape | null>(SERIES_SHAPE_LIVES_FOR_MS);
 
   const nextEpisodes = createExpiringCache<NextEpisode | null>(SERIES_SHAPE_LIVES_FOR_MS);
+  const airingSeasons = createExpiringCache<AiringSeason | null>(SERIES_SHAPE_LIVES_FOR_MS);
+  const artworks = createExpiringCache<CatalogueArtwork>(SERIES_SHAPE_LIVES_FOR_MS);
 
   /**
    * What a programme is made of — its seasons and their episodes — as the catalogue has it.
@@ -999,6 +1006,161 @@ const createDatabaseLibraryService = ({
             failed: row.lastScanFailed,
           },
         };
+
+  /**
+   * Every show the viewer may see, with the catalogue's identifier for it, which is what is asked
+   * about when its episodes air.
+   *
+   * @param viewer - Who is asking.
+   * @returns The shows the catalogue knows.
+   */
+  const showsInTheCatalogue = async (
+    viewer: Viewer,
+  ): Promise<{ show: ShowSummary; externalId: string }[]> => {
+    const held = (await service.list(viewer)).filter((entry) => entry.kind === 'shows');
+
+    const shows = (
+      await Promise.all(held.map(async (entry) => service.listShows(viewer, entry.id)))
+    ).flatMap((listed) => listed ?? []);
+
+    if (shows.length === 0) {
+      return [];
+    }
+
+    const covers = await db
+      .select({ id: mediaItem.id, externalId: mediaItem.externalId })
+      .from(mediaItem)
+      .where(
+        inArray(
+          mediaItem.id,
+          shows.map((show) => show.coverMediaId),
+        ),
+      );
+
+    const externalIds = new Map(covers.map((cover) => [cover.id, cover.externalId]));
+
+    return shows.flatMap((show) => {
+      const externalId = externalIds.get(show.coverMediaId) ?? null;
+
+      return externalId === null || externalId === '' ? [] : [{ show, externalId }];
+    });
+  };
+
+  /**
+   * Names one episode of one series, so the episodes held can be looked up as they are listed.
+   *
+   * @param seriesId - The series.
+   * @param seasonNumber - The season.
+   * @param episodeNumber - The episode.
+   * @returns The name.
+   */
+  const heldKey = (seriesId: string, seasonNumber: number, episodeNumber: number): string =>
+    `${seriesId}:${seasonNumber.toString()}:${episodeNumber.toString()}`;
+
+  /**
+   * Which episodes of some series are on disk, counting a file that holds two episodes as both.
+   *
+   * @param seriesIds - The series to look in.
+   * @returns Each episode held, named by heldKey.
+   */
+  const episodesHeldOf = async (seriesIds: readonly string[]): Promise<Set<string>> => {
+    if (seriesIds.length === 0) {
+      return new Set();
+    }
+
+    const rows = await db
+      .select({
+        seriesId: mediaItem.seriesId,
+        seasonNumber: mediaItem.seasonNumber,
+        episodeNumber: mediaItem.episodeNumber,
+        episodeNumberEnd: mediaItem.episodeNumberEnd,
+      })
+      .from(mediaItem)
+      .where(inArray(mediaItem.seriesId, [...new Set(seriesIds)]));
+
+    return new Set(
+      rows.flatMap((row) => {
+        if (row.seriesId === null || row.seasonNumber === null || row.episodeNumber === null) {
+          return [];
+        }
+
+        const last = Math.max(row.episodeNumber, row.episodeNumberEnd ?? row.episodeNumber);
+
+        return Array.from({ length: last - row.episodeNumber + 1 }, (_, offset) =>
+          heldKey(row.seriesId ?? '', row.seasonNumber ?? 0, (row.episodeNumber ?? 0) + offset),
+        );
+      }),
+    );
+  };
+
+  /**
+   * The season a series in the catalogue is airing, with its episodes' days and stills, asked of
+   * the providers once and then kept for a while, since the release calendar asks for every series
+   * at once and a season's dates seldom move.
+   *
+   * @param externalId - The series' id in the catalogue.
+   * @returns The season, or null where no provider knows of one.
+   */
+  const airingSeasonOf = async (externalId: string): Promise<AiringSeason | null> => {
+    const known = airingSeasons.get(externalId);
+
+    if (known !== undefined) {
+      return known;
+    }
+
+    const season = await resolveAiringSeason(providers ?? [], externalId, (provider, reason) => {
+      onProblem?.(provider, reason);
+    });
+
+    airingSeasons.set(externalId, season);
+
+    return season;
+  };
+
+  /**
+   * The catalogue's backdrop and logo for a title, for something asked for that the library does not
+   * yet hold, taken from the first provider that knows the title and kept for a while.
+   *
+   * @param title - The title.
+   * @returns Its pictures, each null where no provider has one.
+   */
+  const catalogueArtworkOf = async (title: CatalogueTitleRef): Promise<CatalogueArtwork> => {
+    const key = catalogueTitleKey(title);
+    const known = artworks.get(key);
+
+    if (known !== undefined) {
+      return known;
+    }
+
+    const found: CatalogueArtwork = { backdropUrl: null, logoUrl: null };
+
+    for (const provider of providers ?? []) {
+      try {
+        const [described, logo] = await Promise.all([
+          found.backdropUrl === null && provider.describeTitle !== undefined
+            ? provider.describeTitle(title.externalId, title.kind)
+            : Promise.resolve(null),
+          found.logoUrl === null && provider.readLogoUrl !== undefined
+            ? provider.readLogoUrl({ externalId: title.externalId, isSeries: title.kind === 'tv' })
+            : Promise.resolve(null),
+        ]);
+
+        found.backdropUrl = found.backdropUrl ?? described?.backdropUrl ?? null;
+        found.logoUrl = found.logoUrl ?? logo;
+      } catch (error) {
+        onProblem?.(
+          provider.name,
+          error instanceof Error
+            ? sayVerbatim(describeFailure(error))
+            : saying('server.library.metadataProvider.providerFailed'),
+        );
+      }
+    }
+
+    artworks.set(key, found);
+
+    return found;
+  };
 
   const service: DatabaseLibraryService = {
     list: async (viewer) => {
@@ -2292,37 +2454,10 @@ const createDatabaseLibraryService = ({
     },
 
     comingUp: async (viewer) => {
-      const held = (await service.list(viewer)).filter((entry) => entry.kind === 'shows');
-
-      const shows = (
-        await Promise.all(held.map(async (entry) => service.listShows(viewer, entry.id)))
-      ).flatMap((listed) => listed ?? []);
-
-      if (shows.length === 0) {
-        return [];
-      }
-
-      const covers = await db
-        .select({ id: mediaItem.id, externalId: mediaItem.externalId })
-        .from(mediaItem)
-        .where(
-          inArray(
-            mediaItem.id,
-            shows.map((show) => show.coverMediaId),
-          ),
-        );
-
-      const externalIds = new Map(covers.map((cover) => [cover.id, cover.externalId]));
       const today = new Date().toISOString().slice(0, 10);
 
       const upcoming = await Promise.all(
-        shows.map(async (show) => {
-          const externalId = externalIds.get(show.coverMediaId) ?? null;
-
-          if (externalId === null || externalId === '') {
-            return [];
-          }
-
+        (await showsInTheCatalogue(viewer)).map(async ({ show, externalId }) => {
           const known = nextEpisodes.get(externalId);
 
           const next =
@@ -2346,6 +2481,78 @@ const createDatabaseLibraryService = ({
             left.show.title.localeCompare(right.show.title),
         )
         .slice(0, COMING_UP_SHOWN);
+    },
+
+    releaseCalendar: async (viewer, from, to) => {
+      const airing = await Promise.all(
+        (await showsInTheCatalogue(viewer)).map(async ({ show, externalId }) => {
+          const season = await airingSeasonOf(externalId);
+
+          return season === null
+            ? []
+            : season.episodes
+                .filter((episode) => episode.airDate >= from && episode.airDate <= to)
+                .map((episode) => ({
+                  show,
+                  externalId,
+                  seasonNumber: season.seasonNumber,
+                  episode,
+                }));
+        }),
+      );
+
+      const due = airing.flat();
+      const held = await episodesHeldOf(
+        due.flatMap(({ show }) => (show.seriesId === null ? [] : [show.seriesId])),
+      );
+
+      return due.map(({ show, externalId, seasonNumber, episode }) => ({
+        show,
+        externalId,
+        seasonNumber,
+        episodeNumber: episode.episodeNumber,
+        title: episode.title,
+        airDate: episode.airDate,
+        stillUrl: episode.stillUrl ?? null,
+        isHeld:
+          show.seriesId !== null &&
+          held.has(heldKey(show.seriesId, seasonNumber, episode.episodeNumber)),
+      }));
+    },
+
+    airingStills: async (catalogueIds) => {
+      const seasons = await Promise.all(
+        [...new Set(catalogueIds)].map(async (catalogueId) => ({
+          catalogueId,
+          season: await airingSeasonOf(catalogueId),
+        })),
+      );
+
+      return new Map(
+        seasons.flatMap(({ catalogueId, season }) =>
+          season === null
+            ? []
+            : season.episodes.flatMap((episode) =>
+                episode.stillUrl === null
+                  ? []
+                  : [
+                      [
+                        episodeEntryId(catalogueId, season.seasonNumber, episode.episodeNumber),
+                        episode.stillUrl,
+                      ] as const,
+                    ],
+              ),
+        ),
+      );
+    },
+
+    catalogueArtwork: async (titles) => {
+      const wanted = new Map(titles.map((title) => [catalogueTitleKey(title), title]));
+      const found = await Promise.all(
+        [...wanted].map(async ([key, title]) => [key, await catalogueArtworkOf(title)] as const),
+      );
+
+      return new Map(found);
     },
 
     getShow: async (viewer, libraryId, showId) => {

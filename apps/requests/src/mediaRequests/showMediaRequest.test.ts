@@ -24,4 +24,12 @@ describe('showMediaRequest', () => {
         .releaseDate,
     ).toBeNull();
   });
+
+  it('says each of a film’s release days, for a calendar to show', () => {
+    expect(showMediaRequest(aMediaRequest(), [aRequestItem()]).releaseDates).toEqual({
+      theatrical: '2021-10-22',
+      digital: '2021-12-03',
+      physical: '2022-01-11',
+    });
+  });
 });

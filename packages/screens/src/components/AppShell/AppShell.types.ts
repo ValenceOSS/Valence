@@ -3,7 +3,15 @@ import type { NavBarChoices } from '@ValenceUI/NavBar.types';
 import type { ReactNode } from 'react';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 
-const BROWSE_SECTIONS = ['home', 'shows', 'films', 'music', 'read', 'requests'] as const;
+const BROWSE_SECTIONS = [
+  'home',
+  'shows',
+  'films',
+  'music',
+  'read',
+  'requests',
+  'calendar',
+] as const;
 
 type ShellSection =
   | 'home'
@@ -14,6 +22,7 @@ type ShellSection =
   | 'read'
   | 'music'
   | 'requests'
+  | 'calendar'
   | 'search'
   | 'account';
 

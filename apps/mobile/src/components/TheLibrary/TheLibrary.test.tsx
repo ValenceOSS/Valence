@@ -171,6 +171,28 @@ describe('TheLibrary', () => {
     expect(onScan).toHaveBeenCalled();
   });
 
+  it('opens the release calendar from the bar where it is offered', async () => {
+    jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
+    jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [], total: 0 });
+    const onCalendar = jest.fn();
+
+    const drawn = await theLibrary({ onCalendar });
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Calendar' }));
+
+    expect(onCalendar).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves the release calendar out of the bar where it is not offered', async () => {
+    jest.mocked(fetchLibraries).mockResolvedValue([aLibrary('one', 'Films')]);
+    jest.mocked(fetchLibraryItems).mockResolvedValue({ items: [], total: 0 });
+
+    const drawn = await theLibrary();
+
+    expect(drawn.getByRole('button', { name: 'Sign in a television' })).toBeTruthy();
+    expect(drawn.queryByRole('button', { name: 'Calendar' })).toBeNull();
+  });
+
   it('opens on home, drawing what the libraries hold without asking which', async () => {
     jest
       .mocked(fetchLibraries)

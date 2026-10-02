@@ -88,6 +88,12 @@ const MyPermissionsSchema = z.object({
 });
 
 type Permission = (typeof PERMISSIONS)[number];
+
+const SEES_EVERY_REQUEST: readonly Permission[] = [
+  'requests.viewAll',
+  'requests.approve',
+  'requests.manage',
+];
 type PermissionGrant = z.infer<typeof PermissionGrantSchema>;
 type PluginNode = z.infer<typeof PluginNodeSchema>;
 type GrantedPermission = z.infer<typeof GrantedPermissionSchema>;
@@ -103,6 +109,7 @@ export {
   RoleSchema,
   MyPermissionsSchema,
   ADMINISTRATOR,
+  SEES_EVERY_REQUEST,
 };
 
 export type { GrantedPermission, MyPermissions, Permission, PermissionGrant, PluginNode, Role };

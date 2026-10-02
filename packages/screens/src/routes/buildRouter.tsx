@@ -66,6 +66,11 @@ const RequestsPage = lazyRouteComponent(
   'RequestsPage',
 );
 
+const CalendarPage = lazyRouteComponent(
+  async () => import('@ValenceScreens/components/CalendarPage/CalendarPage'),
+  'CalendarPage',
+);
+
 const AdminPage = lazyRouteComponent(
   async () => import('@ValenceScreens/components/AdminPage/AdminPage'),
   'AdminPage',
@@ -222,6 +227,12 @@ const buildRouter = (title = say('common.valence')) => {
       getParentRoute: () => shell,
       path: '/requests',
       component: RequestsPage,
+      ...carries,
+    }),
+    createRoute({
+      getParentRoute: () => shell,
+      path: '/calendar',
+      component: CalendarPage,
       ...carries,
     }),
     createRoute({

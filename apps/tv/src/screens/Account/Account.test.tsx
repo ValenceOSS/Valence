@@ -59,6 +59,7 @@ const drawAccount = (
   told: {
     onChangeServer?: () => void;
     onRequests?: () => void;
+    onCalendar?: () => void;
     onOpenPluginPage?: (page: { pluginId: string; pageId: string }) => void;
   } = {},
 ) =>
@@ -68,6 +69,7 @@ const drawAccount = (
         user={USER}
         onChangeServer={told.onChangeServer ?? jest.fn()}
         onRequests={told.onRequests ?? jest.fn()}
+        onCalendar={told.onCalendar ?? jest.fn()}
         onOpenRequest={jest.fn()}
         onOpenPluginPage={told.onOpenPluginPage ?? jest.fn()}
         onOpenNamed={jest.fn()}
@@ -102,6 +104,25 @@ describe('Account', () => {
     const mayNot = await drawAccount(aCache({ mayRequest: false }));
 
     expect(mayNot.queryByRole('button', { name: 'All requests' })).toBeNull();
+  });
+
+  it('offers the release calendar only to somebody who may ask for things', async () => {
+    const may = await drawAccount(aCache({ mayRequest: true }));
+
+    expect(may.getByRole('button', { name: 'Calendar' })).toBeTruthy();
+
+    const mayNot = await drawAccount(aCache({ mayRequest: false }));
+
+    expect(mayNot.queryByRole('button', { name: 'Calendar' })).toBeNull();
+  });
+
+  it('says when somebody wants the release calendar', async () => {
+    const onCalendar = jest.fn();
+    const drawn = await drawAccount(aCache({ mayRequest: true }), { onCalendar });
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Calendar' }));
+
+    expect(onCalendar).toHaveBeenCalledTimes(1);
   });
 
   it('says when somebody wants every request or another server', async () => {

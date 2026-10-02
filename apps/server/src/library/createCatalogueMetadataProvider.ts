@@ -1,4 +1,5 @@
 import { wait } from '@ValenceCore/functions/wait';
+import { CATALOGUE_IMAGES } from '@ValenceServer/images/CATALOGUE_IMAGES';
 import { z } from 'zod';
 import { createExpiringCache } from './createExpiringCache';
 import { CAST_STORED } from '@ValenceContracts/schemas/Person';
@@ -35,7 +36,7 @@ const DEFAULT_BASE_URL = 'https://api.themoviedb.org/3';
  */
 const isAccessToken = (key: string): boolean => key.split('.').length === 3 && key.startsWith('ey');
 
-const DEFAULT_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
+const DEFAULT_IMAGE_BASE_URL = CATALOGUE_IMAGES;
 
 const RETRIES = 3;
 
@@ -168,6 +169,14 @@ const DetailResponseSchema = z.object({
   status: z.string().optional(),
   imdb_id: z.string().nullish(),
   next_episode_to_air: z
+    .object({
+      air_date: z.string().nullish(),
+      season_number: z.number().int(),
+      episode_number: z.number().int(),
+      name: z.string().optional(),
+    })
+    .nullish(),
+  last_episode_to_air: z
     .object({
       air_date: z.string().nullish(),
       season_number: z.number().int(),
@@ -1181,6 +1190,50 @@ const createCatalogueMetadataProvider = ({
                   })
                 : next.name,
             airDate: next.air_date,
+          };
+    },
+
+    describeAiringSeason: async (externalId) => {
+      const key = await readApiKey();
+
+      if (key === null || key === '') {
+        return null;
+      }
+
+      const detail = DetailResponseSchema.safeParse(await request(`/tv/${externalId}`, key, {}));
+      const marker = detail.success
+        ? (detail.data.next_episode_to_air ?? detail.data.last_episode_to_air ?? null)
+        : null;
+
+      if (marker === null || marker.season_number < 1) {
+        return null;
+      }
+
+      const listed = SeasonResponseSchema.safeParse(
+        await request(`/tv/${externalId}/season/${marker.season_number.toString()}`, key, {}),
+      );
+
+      return !listed.success
+        ? null
+        : {
+            seasonNumber: marker.season_number,
+            episodes: listed.data.episodes.flatMap((episode) =>
+              episode.air_date === undefined || episode.air_date === null || episode.air_date === ''
+                ? []
+                : [
+                    {
+                      episodeNumber: episode.episode_number,
+                      title:
+                        episode.name === undefined || episode.name === ''
+                          ? say('server.library.catalogueMetadataProvider.episodeEpisodeNumber', {
+                              episode_number: episode.episode_number.toString(),
+                            })
+                          : episode.name,
+                      airDate: episode.air_date,
+                      stillUrl: imageUrl(imageBaseUrl, episode.still_path, 'w780'),
+                    },
+                  ],
+            ),
           };
     },
 

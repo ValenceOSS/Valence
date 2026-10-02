@@ -23,7 +23,9 @@ describe('findResetAccount', () => {
 
       const ada = { userId: 'u1', email: 'ada@example.com' };
 
-      await db.insert(viewerProfile).values({ id: 'p1', userId: 'u1', name: 'Ada', colour: 'blue' });
+      await db
+        .insert(viewerProfile)
+        .values({ id: 'p1', userId: 'u1', name: 'Ada', colour: 'blue' });
 
       expect(await findResetAccount(db, { identifier: 'Ada' })).toEqual(ada);
       expect(await findResetAccount(db, { identifier: ' ADA@example.com ' })).toEqual(ada);

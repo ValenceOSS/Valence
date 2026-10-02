@@ -12,6 +12,7 @@ const SECTIONS = [
   'read',
   'music',
   'requests',
+  'calendar',
   'search',
   'account',
 ] as const;
@@ -36,6 +37,8 @@ type Place = {
   listen: string | null;
   asking: string | null;
   requestsView: string | null;
+  calendarView: string | null;
+  calendarDay: string | null;
 };
 
 const HOME: Place = {
@@ -56,6 +59,8 @@ const HOME: Place = {
   listen: null,
   asking: null,
   requestsView: null,
+  calendarView: null,
+  calendarDay: null,
 };
 
 /**
@@ -98,6 +103,8 @@ const placeIn = (pathname: string, query: Record<string, string>): Place => {
     listen: first === 'music' ? (said.listen ?? null) : null,
     asking: said.ask ?? null,
     requestsView: first === 'requests' ? (said.view ?? null) : null,
+    calendarView: first === 'calendar' ? (said.view ?? null) : null,
+    calendarDay: first === 'calendar' ? (said.on ?? null) : null,
   };
 };
 
@@ -192,6 +199,14 @@ const writeLocation = (place: Place): string => {
 
   if (place.requestsView !== null && place.section === 'requests') {
     query.set('view', place.requestsView);
+  }
+
+  if (place.calendarView !== null && place.section === 'calendar') {
+    query.set('view', place.calendarView);
+  }
+
+  if (place.calendarDay !== null && place.section === 'calendar') {
+    query.set('on', place.calendarDay);
   }
 
   if (place.party !== null && place.section === 'music') {

@@ -665,6 +665,9 @@ const createMemoryLibraryService = (
   readPerson: (personId) => Promise.resolve(state.people?.[personId] ?? null),
 
   comingUp: () => Promise.resolve([]),
+  releaseCalendar: () => Promise.resolve([]),
+  airingStills: () => Promise.resolve(new Map()),
+  catalogueArtwork: () => Promise.resolve(new Map()),
 
   listShows: (viewer, libraryId) =>
     Promise.resolve(
