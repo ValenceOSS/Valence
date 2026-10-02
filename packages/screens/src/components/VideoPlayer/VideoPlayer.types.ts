@@ -1,25 +1,6 @@
 import type { ReactNode } from 'react';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
-import type { SequencedCommand } from '@ValenceContracts/schemas/WatchParty';
-
-type PartyPlayback = {
-  id: string;
-  command: SequencedCommand | null;
-  meConnectionId: string | null;
-  referenceSeconds: number | null;
-  jitterMs: number;
-  isPlaying: boolean;
-  isHeld: boolean;
-  waitingFor: readonly string[];
-  members: number;
-  onReport: (where: {
-    positionSeconds: number;
-    bufferedAheadSeconds: number;
-    isWatching: boolean;
-    isReady: boolean;
-  }) => void;
-  onCommand: (command: { kind: 'play' | 'pause' | 'seek'; atSeconds: number }) => void;
-};
+import type { PartyPlayback } from '@ValenceClient/party/PartyPlayback';
 
 type VideoPlayerProps = {
   media: Pick<MediaSummary, 'id' | 'title' | 'durationSeconds'> &
@@ -55,4 +36,4 @@ type VideoPlayerProps = {
 
 type PlayerState = 'starting' | 'playing' | 'failed';
 
-export type { PartyPlayback, PlayerState, VideoPlayerProps };
+export type { PlayerState, VideoPlayerProps };

@@ -92,9 +92,8 @@ import { StreamStats } from './components/StreamStats/StreamStats';
 import { cn } from '@ValenceUI/cn';
 import { Toaster } from '@ValenceUI/Toaster';
 import { notify } from '@ValenceUI/notify';
-import { correctDrift } from '@ValenceCore/functions/correctDrift';
-import { whatToReport } from '@ValenceCore/functions/whatToReport';
-import { describeCommand } from '@ValenceClient/party/describeCommand';
+import { useFollowTheRoom } from '@ValenceClient/party/useFollowTheRoom';
+import type { RoomPlayer } from '@ValenceClient/party/RoomPlayer';
 import type { Trickplay } from '@ValenceClient/playback/fetchTrickplay';
 import type { PoppedOut } from '@ValenceScreens/playback/popOutWithCaptions';
 import type { CastState } from '@ValenceScreens/playback/castPlayback.types';
@@ -158,14 +157,6 @@ const CLEAR_OF_THE_EDGE = 24;
 const FINISHED_WITHIN_SECONDS = 90;
 
 const HEALTH_INTERVAL_MILLISECONDS = 500;
-
-const PARTY_REPORT_EVERY_MS = 1000;
-
-const CATCH_UP_BEYOND_SECONDS = 2;
-
-const HAVE_METADATA = 1;
-
-const LINE_UP_BEYOND_SECONDS = 0.05;
 
 const MOST_FRAME_SKEW_SECONDS = 30;
 
@@ -349,80 +340,52 @@ const VideoPlayer = ({
   const [isBuffering, setIsBuffering] = useState(false);
   const [isSayingSo, setIsSayingSo] = useState(false);
 
-  const appliedSequenceRef = useRef(-1);
-  const hasCaughtUpRef = useRef(false);
-  const partyRef = useRef(party);
-  const stateRef = useRef<PlayerState>('starting');
-  const lastGoodPositionRef = useRef(0);
   const frameSkewRef = useRef(0);
 
-  useEffect(() => {
-    const reference = party?.referenceSeconds ?? null;
+  const sayWhatTheRoomDid = useCallback((said: string) => {
+    notify.say(said, { where: PLAYER_TOASTS, id: PARTY_NOTICE });
+  }, []);
+
+  const sayItWillNotStart = useCallback(() => {
+    notify.say(say('screens.videoPlayer.yourBrowserWillNotStartThis'), {
+      where: PLAYER_TOASTS,
+      id: PARTY_NOTICE,
+    });
+  }, []);
+
+  const theElement = useCallback((): RoomPlayer | null => {
     const element = videoRef.current;
 
-    if (
-      party === undefined ||
-      reference === null ||
-      element === null ||
-      hasCaughtUpRef.current ||
-      element.readyState < HAVE_METADATA
-    ) {
-      return;
-    }
+    return element === null
+      ? null
+      : {
+          readyState: () => element.readyState,
+          currentSeconds: () => element.currentTime,
+          frameSkewSeconds: () => frameSkewRef.current,
+          bufferedAheadSeconds: () => bufferedAhead(element),
+          isPaused: () => element.paused,
+          isSeeking: () => element.seeking,
+          seekTo: (seconds) => {
+            element.currentTime = seconds;
+          },
+          play: () => element.play(),
+          pause: () => {
+            element.pause();
+          },
+          setRate: (rate) => {
+            element.preservesPitch = true;
+            element.playbackRate = rate;
+          },
+        };
+  }, []);
 
-    hasCaughtUpRef.current = true;
-
-    if (
-      Math.abs(reference - element.currentTime - frameSkewRef.current) > CATCH_UP_BEYOND_SECONDS
-    ) {
-      element.currentTime = reference - frameSkewRef.current;
-    }
-  }, [party, party?.referenceSeconds, party?.meConnectionId]);
-
-  useEffect(() => {
-    const command = party?.command ?? null;
-    const element = videoRef.current;
-
-    if (command === null || element === null || command.sequence <= appliedSequenceRef.current) {
-      return;
-    }
-
-    appliedSequenceRef.current = command.sequence;
-    const said = describeCommand(command, party?.meConnectionId ?? null);
-
-    if (said !== null) {
-      notify.say(said, { where: PLAYER_TOASTS, id: PARTY_NOTICE });
-    }
-
-    if (command.command.kind !== 'changeWhatIsPlaying') {
-      element.currentTime = command.command.atSeconds;
-    }
-  }, [party?.command, party?.meConnectionId]);
-
-  useEffect(() => {
-    const element = videoRef.current;
-
-    if (party === undefined || element === null || state !== 'playing') {
-      return;
-    }
-
-    const shouldRun = party.isPlaying && !party.isHeld;
-
-    if (shouldRun && element.paused) {
-      element.play().catch(() => {
-        notify.say(say('screens.videoPlayer.yourBrowserWillNotStartThis'), {
-          where: PLAYER_TOASTS,
-          id: PARTY_NOTICE,
-        });
-      });
-
-      return;
-    }
-
-    if (!shouldRun && !element.paused) {
-      element.pause();
-    }
-  }, [party, party?.isPlaying, party?.isHeld, state]);
+  const room = useFollowTheRoom({
+    party,
+    playerOf: theElement,
+    isSessionPlaying: state === 'playing',
+    onSaid: sayWhatTheRoomDid,
+    onCannotStart: sayItWillNotStart,
+  });
 
   const hasStalled = state === 'playing' && (isBuffering || party?.isHeld === true);
 
@@ -441,93 +404,6 @@ const VideoPlayer = ({
       clearTimeout(says);
     };
   }, [hasStalled]);
-
-  const isInAParty = party !== undefined;
-
-  useEffect(() => {
-    partyRef.current = party;
-    stateRef.current = state;
-  });
-
-  useEffect(() => {
-    if (!isInAParty) {
-      return;
-    }
-
-    const timer = setInterval(() => {
-      const element = videoRef.current;
-      const held = partyRef.current;
-
-      if (element === null || held === undefined) {
-        return;
-      }
-
-      const ahead = bufferedAhead(element);
-
-      const said = whatToReport({
-        isSessionPlaying: stateRef.current === 'playing',
-        frameSkewSeconds: frameSkewRef.current,
-        readyState: element.readyState,
-        currentSeconds: element.currentTime,
-        lastGoodSeconds: lastGoodPositionRef.current,
-        bufferedAheadSeconds: ahead,
-        isPaused: element.paused,
-      });
-
-      lastGoodPositionRef.current = said.positionSeconds;
-
-      held.onReport({ ...said, bufferedAheadSeconds: ahead });
-    }, PARTY_REPORT_EVERY_MS);
-
-    return () => {
-      clearInterval(timer);
-    };
-  }, [isInAParty]);
-
-  useEffect(() => {
-    const reference = party?.referenceSeconds ?? null;
-
-    if (party === undefined || reference === null) {
-      return;
-    }
-
-    const element = videoRef.current;
-
-    if (element === null || (element.paused && !party.isHeld)) {
-      return;
-    }
-
-    const showing = element.currentTime + frameSkewRef.current;
-
-    if (party.isHeld && element.paused) {
-      if (Math.abs(reference - showing) > LINE_UP_BEYOND_SECONDS) {
-        element.currentTime = reference - frameSkewRef.current;
-      }
-
-      return;
-    }
-
-    const corrected = correctDrift({
-      behindByMs: (reference - showing) * 1000,
-      jitterMs: party.jitterMs,
-      isSeeking: element.seeking,
-      isStalled: bufferedAhead(element) <= 0,
-    });
-
-    if (corrected.kind === 'snap') {
-      element.currentTime = reference - frameSkewRef.current;
-      element.playbackRate = 1;
-
-      return;
-    }
-
-    if (element.paused) {
-      return;
-    }
-
-    element.preservesPitch = true;
-    element.playbackRate = corrected.kind === 'rate' ? corrected.rate : 1;
-  }, [party, party?.referenceSeconds]);
 
   useEffect(() => {
     if (partyNotice !== null) {
@@ -852,7 +728,7 @@ const VideoPlayer = ({
     setIsPlaying(false);
     setPosition(request.startSeconds);
     setReportedDuration(0);
-    lastGoodPositionRef.current = request.startSeconds;
+    room.rememberWhere(request.startSeconds);
 
     const controller = new AbortController();
     const isAbandoned = () => controller.signal.aborted;
