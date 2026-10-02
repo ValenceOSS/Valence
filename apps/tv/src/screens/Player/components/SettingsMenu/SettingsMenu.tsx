@@ -15,13 +15,14 @@ const WIDTH = 720;
  * how fast it plays — with what it is set to now on the right. Choosing a row opens its choices in
  * the same place; Menu closes the panel without changing anything.
  *
+ * @param title - What the settings are of, where they are not the player's own.
  * @param settings - The settings there are, each with what it is set to now.
  * @param onOpen - Told which setting was chosen, to show its choices.
  */
-const SettingsMenu = ({ settings, onOpen }: SettingsMenuProps) => (
+const SettingsMenu = ({ title = say('common.settings'), settings, onOpen }: SettingsMenuProps) => (
   <TVFocusGuideView style={styles.panel} trapFocusLeft trapFocusRight trapFocusUp trapFocusDown>
     <FadeIn>
-      <Text style={styles.title}>{say('common.settings')}</Text>
+      <Text style={styles.title}>{title}</Text>
 
       <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
         {settings.map((setting, at) => (

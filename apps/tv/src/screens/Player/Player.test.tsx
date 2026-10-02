@@ -868,6 +868,61 @@ describe('Player', () => {
       expect(drawn.getByText('Please enjoy each fact equally.')).toBeTruthy();
     });
 
+    it('move the subtitles later against the picture when asked', async () => {
+      const { drawn } = await draw({
+        tracks: [aTrackOfWords('en', 'English')],
+        cues: { en: [aCue(20, 25, 'Please enjoy each fact equally.')] },
+      });
+
+      await tell('timeUpdate', { currentTime: 20.25 });
+      await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Subtitles, Off' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'English' }));
+
+      expect(drawn.getByText('Please enjoy each fact equally.')).toBeTruthy();
+
+      await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Subtitle timing, In time' }));
+      await userEvent.press(drawn.getByRole('button', { name: '+0.50s' }));
+
+      expect(drawn.queryByText('Please enjoy each fact equally.')).toBeNull();
+      expect(drawn.getByRole('button', { name: 'Subtitle timing, +0.50s' })).toBeTruthy();
+    });
+
+    it('draw the subtitles as this television is set to, chosen a part at a time', async () => {
+      const { drawn } = await draw({
+        tracks: [aTrackOfWords('en', 'English')],
+        cues: { en: [aCue(20, 25, 'Please enjoy each fact equally.')] },
+      });
+
+      await tell('timeUpdate', { currentTime: 22 });
+      await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Subtitles, Off' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'English' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Caption settings, 100%' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Text colour, White' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Yellow' }));
+
+      expect(drawn.getByRole('button', { name: 'Text colour, Yellow' })).toBeTruthy();
+      expect(drawn.getByText('Please enjoy each fact equally.').parent).toHaveStyle({
+        color: 'rgba(255, 255, 0, 1)',
+      });
+
+      await menu();
+
+      expect(drawn.getByRole('button', { name: 'Caption settings, 100%' })).toBeTruthy();
+    });
+
+    it('offer no timing or caption settings while no subtitles are read', async () => {
+      const { drawn } = await draw({ tracks: [aTrackOfWords('en', 'English')] });
+
+      await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
+
+      expect(drawn.queryByRole('button', { name: /^Subtitle timing/ })).toBeNull();
+      expect(drawn.queryByRole('button', { name: /^Caption settings/ })).toBeNull();
+    });
+
     it('start on forced subtitles in the language being spoken', async () => {
       const { drawn } = await draw({
         tracks: [aTrackOfWords('forced', 'English (forced)', { isForced: true, language: 'eng' })],

@@ -1,3 +1,4 @@
+import { DEFAULT_CAPTION_STYLE } from '@ValenceClient/playback/captionStyle';
 import { act, render, userEvent } from '@testing-library/react-native';
 import { Animated } from 'react-native';
 import { useVideoPlayer } from 'expo-video';
@@ -41,6 +42,7 @@ const Playing = ({
       segments={segments}
       cues={[]}
       subtitleOffset={0}
+      captionStyle={DEFAULT_CAPTION_STYLE}
       areControlsDrawn={areControlsDrawn}
       controls={controls()}
     />

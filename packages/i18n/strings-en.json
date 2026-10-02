@@ -1925,6 +1925,11 @@
     "context": "The label of a colour choice, used in the sketch studio in the face editor and in the caption settings in the video player."
   },
   {
+    "handler": "common.backgroundOpacity",
+    "text": "Background opacity",
+    "context": "A caption setting, in the web player and on the phone and the television."
+  },
+  {
     "handler": "common.backupCode",
     "text": "Backup code",
     "context": "Shown, used in the ask for the code of the phone app and in the two factor challenge."
@@ -2023,6 +2028,11 @@
     "handler": "common.cast",
     "text": "Cast",
     "context": "The title of a shelf, used in several places, among them the cast of the phone app and the admin area (from `describeLibraryPart`)."
+  },
+  {
+    "handler": "common.casual",
+    "text": "Casual",
+    "context": "A caption setting, in the web player and on the phone and the television."
   },
   {
     "handler": "common.categories",
@@ -4085,6 +4095,11 @@
     "context": "Shown, used in the cardigann in the requests service (from `createCategoryMap`) and in the library (from `nameSeason`)."
   },
   {
+    "handler": "common.outline",
+    "text": "Outline",
+    "context": "A caption setting, in the web player and on the phone and the television."
+  },
+  {
     "handler": "common.overseerr",
     "text": "Overseerr",
     "context": "The name of the request app Overseerr, which a setup can be brought in from."
@@ -4163,6 +4178,11 @@
     "handler": "common.people",
     "text": "People",
     "context": "The label, used in several places, among them the webhook in the schemas and the admin area (from `adminSections`)."
+  },
+  {
+    "handler": "common.percent",
+    "text": "{value}%",
+    "context": "A percentage, such as a caption’s size or how see-through its background is. {value} is the number."
   },
   {
     "handler": "common.percentDone",
@@ -4393,6 +4413,11 @@
     "handler": "common.radius",
     "text": "Radius",
     "context": "The label, used in several places, among them the bricks in the variants and the caustics in the variants."
+  },
+  {
+    "handler": "common.raised",
+    "text": "Raised",
+    "context": "A caption setting, in the web player and on the phone and the television."
   },
   {
     "handler": "common.rating",
@@ -4665,6 +4690,11 @@
     "context": "The label, used in the installed plugin card in the plugins panel and in the status (from `describeJobStatus`)."
   },
   {
+    "handler": "common.sans",
+    "text": "Sans",
+    "context": "A caption setting, in the web player and on the phone and the television."
+  },
+  {
     "handler": "common.saturation",
     "text": "Saturation",
     "context": "The label, used in several places, among them the galaxy in the variants and the meadow in the variants."
@@ -4773,6 +4803,11 @@
     "handler": "common.series",
     "text": "Series",
     "context": "Shown, used in several places, among them the feature in the featured of the phone app and the hero of the television app."
+  },
+  {
+    "handler": "common.serif",
+    "text": "Serif",
+    "context": "A caption setting, in the web player and on the phone and the television."
   },
   {
     "handler": "common.server",
@@ -5173,6 +5208,11 @@
     "handler": "common.testingName",
     "text": "Testing {name}",
     "context": "The label of a spinner, used in the download clients table in the downloads panel and in the indexers panel in the admin area. {name} is filled in by the app."
+  },
+  {
+    "handler": "common.textColour",
+    "text": "Text colour",
+    "context": "A caption setting, in the web player and on the phone and the television."
   },
   {
     "handler": "common.thatBackupCodeIsNotValid",
@@ -8068,6 +8108,21 @@
     "handler": "error.webhook.noSuchSubscriptionOrItIs",
     "text": "No such subscription, or it is turned off.",
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveWebhook`)."
+  },
+  {
+    "handler": "native.captionTextStyle.chalkboardSE",
+    "text": "Chalkboard SE",
+    "context": "The name of a font installed on Apple phones and televisions, which captions are drawn in. It is the font’s own name, asked for by the system, and is not translated."
+  },
+  {
+    "handler": "native.captionTextStyle.georgia",
+    "text": "Georgia",
+    "context": "The name of a font installed on Apple phones and televisions, which captions are drawn in. It is the font’s own name, asked for by the system, and is not translated."
+  },
+  {
+    "handler": "native.captionTextStyle.menlo",
+    "text": "Menlo",
+    "context": "The name of a font installed on Apple phones and televisions, which captions are drawn in. It is the font’s own name, asked for by the system, and is not translated."
   },
   {
     "handler": "phone.aBook.aChapterToHear.listenFromTitle",
@@ -23340,11 +23395,6 @@
     "context": "The label of a button in the video player."
   },
   {
-    "handler": "screens.videoPlayer.captionSettings.backgroundOpacity",
-    "text": "Background opacity",
-    "context": "The label of a caption field in the caption settings in the video player."
-  },
-  {
     "handler": "screens.videoPlayer.captionSettings.captionBackgroundColour",
     "text": "Caption background colour",
     "context": "The label of a swatch row in the caption settings in the video player."
@@ -23385,19 +23435,9 @@
     "context": "The label of a swatch row in the caption settings in the video player."
   },
   {
-    "handler": "screens.videoPlayer.captionSettings.casual",
-    "text": "Casual",
-    "context": "The label in the caption settings in the video player."
-  },
-  {
     "handler": "screens.videoPlayer.captionSettings.heavy",
     "text": "Heavy",
     "context": "Shown in the caption settings in the video player."
-  },
-  {
-    "handler": "screens.videoPlayer.captionSettings.outline",
-    "text": "Outline",
-    "context": "The label in the caption settings in the video player."
   },
   {
     "handler": "screens.videoPlayer.captionSettings.outlineThickness",
@@ -23405,29 +23445,9 @@
     "context": "The label of a caption field in the caption settings in the video player."
   },
   {
-    "handler": "screens.videoPlayer.captionSettings.raised",
-    "text": "Raised",
-    "context": "The label in the caption settings in the video player."
-  },
-  {
     "handler": "screens.videoPlayer.captionSettings.resetToDefaults",
     "text": "Reset to defaults",
     "context": "The label of a button in the caption settings in the video player."
-  },
-  {
-    "handler": "screens.videoPlayer.captionSettings.sans",
-    "text": "Sans",
-    "context": "The label in the caption settings in the video player."
-  },
-  {
-    "handler": "screens.videoPlayer.captionSettings.serif",
-    "text": "Serif",
-    "context": "The label in the caption settings in the video player."
-  },
-  {
-    "handler": "screens.videoPlayer.captionSettings.textColour",
-    "text": "Text colour",
-    "context": "The label of a caption field in the caption settings in the video player."
   },
   {
     "handler": "screens.videoPlayer.captionSettings.theQuickBrownFox",

@@ -1,3 +1,4 @@
+import { DEFAULT_CAPTION_STYLE } from '@ValenceClient/playback/captionStyle';
 import { MediaDetailSchema } from '@ValenceContracts/schemas/Library';
 import { AudioStreamSchema } from '@ValenceContracts/schemas/MediaItem';
 import { thePhonesProfile } from '@ValenceMobile/playback/thePhonesProfile';
@@ -63,6 +64,8 @@ const asking = {
   onRate: jest.fn(),
   subtitleOffset: 0,
   onSubtitleOffset: jest.fn(),
+  captionStyle: DEFAULT_CAPTION_STYLE,
+  onCaptionStyle: jest.fn(),
 };
 
 describe('theChoicesOn', () => {
@@ -203,5 +206,35 @@ describe('theChoicesOn', () => {
     });
 
     expect(sets.map((set) => set.heading)).toEqual(['Subtitles', 'Audio', 'Quality', 'Speed']);
+  });
+
+  it('offers how the lines look while a track is read, and hands back the whole style', () => {
+    const onCaptionStyle = jest.fn();
+    const sets = theChoicesOn({
+      ...asking,
+      streams: [],
+      chosenSubtitle: 'one',
+      subtitles: [aTrack('one', 'English')],
+      onCaptionStyle,
+    });
+    const size = sets.find((set) => set.heading === 'Size');
+
+    expect(sets.map((set) => set.heading)).toEqual(
+      expect.arrayContaining(['Font', 'Text colour', 'Background', 'Edge']),
+    );
+
+    size?.onChoose('150');
+
+    expect(onCaptionStyle).toHaveBeenCalledWith({ ...DEFAULT_CAPTION_STYLE, fontScale: 150 });
+  });
+
+  it('offers nothing about how lines look while none is read', () => {
+    const sets = theChoicesOn({
+      ...asking,
+      streams: [],
+      subtitles: [aTrack('one', 'English')],
+    });
+
+    expect(sets.find((set) => set.heading === 'Size')).toBeUndefined();
   });
 });

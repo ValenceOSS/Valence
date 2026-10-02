@@ -51,6 +51,11 @@ import type { StreamReading } from '@ValenceTv/screens/Player/components/StreamS
 import type { PlayerProps } from './Player.types';
 import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
 import { placeOfEpisode } from '@ValenceTv/library/placeOfEpisode';
+import { captionChoices } from '@ValenceClient/playback/captionChoices';
+import type { CaptionChoiceSet } from '@ValenceClient/playback/captionChoices';
+import { useCaptionStyle } from '@ValenceClient/playback/useCaptionStyle';
+import { SUBTITLE_NUDGES } from '@ValenceClient/playback/SUBTITLE_NUDGES';
+import { describeSubtitleOffset } from '@ValenceClient/playback/describeSubtitleOffset';
 import { say } from '@ValenceI18n/say';
 
 const HIDES_AFTER_MS = 5000;
@@ -198,8 +203,19 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
   const [startFrom, setStartFrom] = useState(startSeconds);
   const [chosenSubtitles, setChosenSubtitles] = useState<string | null>(null);
   const [menu, setMenu] = useState<
-    'settings' | 'subtitles' | 'audio' | 'quality' | 'speed' | 'episodes' | null
+    | 'settings'
+    | 'subtitles'
+    | 'audio'
+    | 'quality'
+    | 'speed'
+    | 'episodes'
+    | 'timing'
+    | 'captions'
+    | `caption:${CaptionChoiceSet['id']}`
+    | null
   >(null);
+  const [subtitleOffset, setSubtitleOffset] = useState(0);
+  const captions = useCaptionStyle();
   const [speed, setSpeed] = useState(1);
   const [isShowingStats, setIsShowingStats] = useState(false);
   const [reading, setReading] = useState<StreamReading>(NOTHING_READ);
@@ -548,11 +564,15 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
   useMenuButton(
     menu === 'settings'
       ? closeMenu
-      : menu !== null
-        ? backToSettings
-        : isShowing && isPlaying
-          ? putControlsAway
-          : onLeave,
+      : menu?.startsWith('caption:') === true
+        ? () => {
+            setMenu('captions');
+          }
+        : menu !== null
+          ? backToSettings
+          : isShowing && isPlaying
+            ? putControlsAway
+            : onLeave,
   );
 
   const goNext = useCallback(
@@ -615,7 +635,12 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
       />
 
       {subtitles === SUBTITLES_OFF ? null : (
-        <SubtitleLine cues={cues.data ?? []} position={position} isLifted={isShowing} />
+        <SubtitleLine
+          cues={cues.data ?? []}
+          position={position - subtitleOffset}
+          isLifted={isShowing}
+          captionStyle={captions.style}
+        />
       )}
 
       {session.kind === 'starting' ? (
@@ -732,6 +757,20 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
               label: say('common.subtitles'),
               value: textTracks.find((track) => track.id === subtitles)?.label ?? say('common.off'),
             },
+            ...(subtitles === SUBTITLES_OFF
+              ? []
+              : [
+                  {
+                    id: 'timing',
+                    label: say('common.subtitleTiming'),
+                    value: describeSubtitleOffset(subtitleOffset),
+                  },
+                  {
+                    id: 'captions',
+                    label: say('common.captionSettings'),
+                    value: say('common.percent', { value: captions.style.fontScale.toString() }),
+                  },
+                ]),
             { id: 'speed', label: say('common.speed'), value: speedLabelOf(speed) },
             ...(episodes.length < 2 || summary === null
               ? []
@@ -761,13 +800,63 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
               id === 'audio' ||
               id === 'subtitles' ||
               id === 'speed' ||
-              id === 'episodes'
+              id === 'episodes' ||
+              id === 'timing' ||
+              id === 'captions'
             ) {
               setMenu(id);
             }
           }}
         />
       ) : null}
+
+      {menu === 'timing' ? (
+        <TrackMenu
+          title={say('common.subtitleTiming')}
+          chosen={subtitleOffset.toString()}
+          choices={SUBTITLE_NUDGES.map((nudge) => ({
+            id: nudge.toString(),
+            label: describeSubtitleOffset(nudge),
+          }))}
+          onChoose={(id) => {
+            setSubtitleOffset(Number(id));
+            backToSettings();
+          }}
+        />
+      ) : null}
+
+      {menu === 'captions' ? (
+        <SettingsMenu
+          title={say('common.captionSettings')}
+          settings={captionChoices(captions.style).map((set) => ({
+            id: set.id,
+            label: set.heading,
+            value: set.choices.find((choice) => choice.id === set.chosen)?.label ?? set.chosen,
+          }))}
+          onOpen={(id) => {
+            const set = captionChoices(captions.style).find((one) => one.id === id);
+
+            if (set !== undefined) {
+              setMenu(`caption:${set.id}`);
+            }
+          }}
+        />
+      ) : null}
+
+      {captionChoices(captions.style)
+        .filter((set) => menu === `caption:${set.id}`)
+        .map((set) => (
+          <TrackMenu
+            key={set.id}
+            title={set.heading}
+            chosen={set.chosen}
+            choices={set.choices}
+            onChoose={(id) => {
+              captions.change(set.choose(id));
+              setMenu('captions');
+            }}
+          />
+        ))}
 
       {menu === 'episodes' ? (
         <TrackMenu

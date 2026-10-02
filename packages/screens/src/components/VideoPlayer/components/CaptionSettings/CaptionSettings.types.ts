@@ -1,4 +1,4 @@
-import type { CaptionStyle } from '@ValenceScreens/playback/captionStyle';
+import type { CaptionStyle } from '@ValenceClient/playback/captionStyle';
 
 type CaptionSettingsProps = {
   style: CaptionStyle;

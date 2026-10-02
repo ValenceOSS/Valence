@@ -130,7 +130,9 @@ and each app's Jest runs its tests, with React and React Native resolved to that
 app's own copies, so every test in it runs against the phone's React Native and
 the television’s. TypeScript checks it on its own and through each app, against
 the React Native pnpm installs for it as a peer, since the two apps pin
-different versions and a file can be typed against only one.
+different versions and a file can be typed against only one. For the same reason what it hands an app is typed in its own plain terms — a style as an object of
+numbers and strings, never React Native's `TextStyle` — since each app's React Native describes
+those types a little differently and one version's will not fit another's.
 
 The dependency rules still apply: extraction must not create a
 cycle. If extracting would create one, the shared thing belongs further up the

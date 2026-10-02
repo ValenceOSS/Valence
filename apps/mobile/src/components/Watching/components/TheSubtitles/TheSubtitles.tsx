@@ -1,17 +1,13 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { captionTextStyle } from '@ValenceNative/playback/captionTextStyle';
 import { theCueAt } from '@ValenceMobile/components/Watching/theCueAt';
 import type { TheSubtitlesProps } from './TheSubtitles.types';
 
-const OVER_THE_PICTURE = '#ffffff';
-
-const BEHIND_THE_WORDS = 'rgba(0, 0, 0, 0.55)';
+const READS_AT = 19;
 
 const styles = StyleSheet.create({
   line: {
-    backgroundColor: BEHIND_THE_WORDS,
     borderRadius: 6,
-    color: OVER_THE_PICTURE,
-    fontSize: 19,
     fontWeight: '500',
     overflow: 'hidden',
     paddingHorizontal: 8,
@@ -41,8 +37,14 @@ const styles = StyleSheet.create({
  * @param cues - Every line in the track being read.
  * @param atSeconds - Where the film has got to.
  * @param isClearOfTheControls - Whether the controls are up and the lines should sit above them.
+ * @param captionStyle - How somebody likes the lines drawn on this phone.
  */
-const TheSubtitles = ({ cues, atSeconds, isClearOfTheControls }: TheSubtitlesProps) => {
+const TheSubtitles = ({
+  cues,
+  atSeconds,
+  isClearOfTheControls,
+  captionStyle,
+}: TheSubtitlesProps) => {
   const showing = theCueAt(cues, atSeconds);
 
   if (showing.length === 0) {
@@ -60,6 +62,7 @@ const TheSubtitles = ({ cues, atSeconds, isClearOfTheControls }: TheSubtitlesPro
             key={`${cue.from.toString()}-${cue.to.toString()}`}
             style={[
               styles.line,
+              captionTextStyle(captionStyle, READS_AT),
               cue.spans[0]?.colour === null ? null : { color: cue.spans[0]?.colour },
             ]}
           >

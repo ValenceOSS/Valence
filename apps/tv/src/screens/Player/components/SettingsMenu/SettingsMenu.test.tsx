@@ -8,6 +8,15 @@ const SETTINGS = [
 ] as const;
 
 describe('SettingsMenu', () => {
+  it('names what the settings are of, where they are not the player’s own', async () => {
+    const drawn = await render(
+      <SettingsMenu title="Caption style" settings={SETTINGS} onOpen={jest.fn()} />,
+    );
+
+    expect(drawn.getByText('Caption style')).toBeTruthy();
+    expect(drawn.queryByText('Settings')).toBeNull();
+  });
+
   it('lists each setting with what it is set to now', async () => {
     const drawn = await render(<SettingsMenu settings={SETTINGS} onOpen={jest.fn()} />);
 

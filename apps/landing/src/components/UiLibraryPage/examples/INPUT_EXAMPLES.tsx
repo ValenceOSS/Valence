@@ -1,5 +1,5 @@
 import { Search } from '@keyline-icons/react';
-import { CAPTION_COLOURS } from '@ValenceUI/captionColours';
+import { CAPTION_COLOURS } from '@ValenceCore/tokens/CAPTION_COLOURS';
 import { Checkbox } from '@ValenceUI/Checkbox';
 import { ChoiceList } from '@ValenceUI/ChoiceList';
 import { ColourPicker } from '@ValenceUI/ColourPicker';

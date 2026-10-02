@@ -15,6 +15,7 @@ import type { TheMovingPartsProps } from './TheMovingParts.types';
  * @param segments - The film's marked stretches, to offer skipping.
  * @param cues - The lines of the track being read.
  * @param subtitleOffset - How far the lines are moved against the film.
+ * @param captionStyle - How this phone draws the lines.
  * @param areControlsDrawn - Whether the controls are drawn.
  * @param controls - What the controls are told, apart from where the film is.
  */
@@ -23,6 +24,7 @@ const TheMovingParts = ({
   segments,
   cues,
   subtitleOffset,
+  captionStyle,
   areControlsDrawn,
   controls,
 }: TheMovingPartsProps) => {
@@ -48,6 +50,7 @@ const TheMovingParts = ({
       <TheSubtitles
         cues={cues}
         atSeconds={ticking.currentTime - subtitleOffset}
+        captionStyle={captionStyle}
         isClearOfTheControls={areControlsDrawn}
       />
 

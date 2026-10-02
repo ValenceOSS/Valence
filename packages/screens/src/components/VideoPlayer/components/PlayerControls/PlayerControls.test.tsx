@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { DEFAULT_CAPTION_STYLE } from '@ValenceScreens/playback/captionStyle';
+import { DEFAULT_CAPTION_STYLE } from '@ValenceClient/playback/captionStyle';
 import { PlayerControls } from './PlayerControls';
 import type { PlayerControlsProps } from './PlayerControls.types';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';

@@ -48,6 +48,7 @@ import { TheChoices } from '@ValenceMobile/components/Watching/components/TheCho
 import { TheNotice } from '@ValenceMobile/components/Watching/components/TheNotice/TheNotice';
 import { TheMovingParts } from '@ValenceMobile/components/Watching/components/TheMovingParts/TheMovingParts';
 import { useTheSubtitles } from '@ValenceMobile/components/Watching/useTheSubtitles';
+import { useCaptionStyle } from '@ValenceClient/playback/useCaptionStyle';
 import { howBigToDrawIt } from '@ValenceMobile/components/Watching/howBigToDrawIt';
 import { usePinchToFill } from '@ValenceMobile/components/Watching/usePinchToFill';
 import { theChoicesOn } from '@ValenceMobile/components/Watching/theChoicesOn';
@@ -217,6 +218,7 @@ const Watching = ({
   });
   const [rate, setRate] = useState(1);
   const [subtitleOffset, setSubtitleOffset] = useState(0);
+  const captions = useCaptionStyle();
   const [asking, setAsking] = useState<{
     from: number;
     audioStreamIndex?: number;
@@ -614,6 +616,8 @@ const Watching = ({
         onRate: setRate,
         subtitleOffset,
         onSubtitleOffset: setSubtitleOffset,
+        captionStyle: captions.style,
+        onCaptionStyle: captions.change,
       }),
     [
       isKept,
@@ -626,6 +630,8 @@ const Watching = ({
       askAgain,
       rate,
       subtitleOffset,
+      captions.style,
+      captions.change,
     ],
   );
 
@@ -691,6 +697,7 @@ const Watching = ({
         segments={marked.data ?? NO_SEGMENTS}
         cues={cues}
         subtitleOffset={subtitleOffset}
+        captionStyle={captions.style}
         areControlsDrawn={areControlsDrawn}
         controls={{
           fade,

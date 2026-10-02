@@ -1,7 +1,7 @@
 import type { CastState } from '@ValenceScreens/playback/castPlayback.types';
 import type { ReactNode } from 'react';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
-import type { CaptionStyle } from '@ValenceScreens/playback/captionStyle';
+import type { CaptionStyle } from '@ValenceClient/playback/captionStyle';
 import type { SubtitleTrack } from '@ValenceClient/playback/fetchSubtitles';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
 import type { QualityStepId } from '@ValenceContracts/schemas/QualityStep';

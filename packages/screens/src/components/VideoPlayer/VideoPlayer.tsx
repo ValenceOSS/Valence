@@ -64,7 +64,7 @@ import {
   readCaptionStyle,
   saveCaptionStyle,
   DEFAULT_CAPTION_STYLE,
-} from '@ValenceScreens/playback/captionStyle';
+} from '@ValenceClient/playback/captionStyle';
 import {
   readQualityPreference,
   saveQualityPreference,
