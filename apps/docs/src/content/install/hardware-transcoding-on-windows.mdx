@@ -108,6 +108,8 @@ Lay `compose.native-transcoder.yaml` over `compose.yaml`. It comes with each rel
 docker compose -f compose.yaml -f compose.native-transcoder.yaml up -d
 ```
 
+This relies on Docker Desktop, which carries `host.docker.internal` through to the PC's own `127.0.0.1`.
+
 To avoid typing both files each time, put them in `.env`. On Windows they are separated by `;`:
 
 ```ini
