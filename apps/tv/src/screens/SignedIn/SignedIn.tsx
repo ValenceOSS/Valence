@@ -577,6 +577,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
                         onRequests={openRequests}
                         onOpenRequest={openRequest}
                         onOpenPluginPage={openPluginPage}
+                        onOpenNamed={openByMediaId}
                         upTo={items.get('account') ?? null}
                       />
                     ) : (

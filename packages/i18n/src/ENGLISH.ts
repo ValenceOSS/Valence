@@ -6591,6 +6591,7 @@ const ENGLISH = {
   'tv.account.yourDevices.nameThisTelevision': '{name} · This television',
   'tv.account.yourDevices.noOtherDevices':
     'This television is the only place this account is signed in.',
+  'tv.account.yourNotifications.titleUnread': '{title} · New',
   'tv.account.yourRequests.yourRequests': 'Your requests',
   'tv.arrivalBanner.pressPlayToWatch': 'Press {play} to watch',
   'tv.askPage.request1Season': 'Request 1 season',

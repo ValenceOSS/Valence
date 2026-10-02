@@ -26100,6 +26100,11 @@
     "context": "On the television account page, under the devices heading, when no other device is signed in."
   },
   {
+    "handler": "tv.account.yourNotifications.titleUnread",
+    "text": "{title} · New",
+    "context": "On the television account page, a notification that has not been read yet. {title} is the notification’s own title."
+  },
+  {
     "handler": "tv.account.yourRequests.yourRequests",
     "text": "Your requests",
     "context": "Text shown in the your requests in the account of the television app."

@@ -70,6 +70,7 @@ const drawAccount = (
         onRequests={told.onRequests ?? jest.fn()}
         onOpenRequest={jest.fn()}
         onOpenPluginPage={told.onOpenPluginPage ?? jest.fn()}
+        onOpenNamed={jest.fn()}
         upTo={null}
       />
     </QueryClientProvider>,
