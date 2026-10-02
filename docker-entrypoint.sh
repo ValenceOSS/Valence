@@ -8,6 +8,15 @@ set -e
 # not from a process walk. If either dies, the whole container dies so the
 # orchestrator restarts both together rather than leaving an API that cannot
 # play anything.
+#
+# Except where the transcoder runs somewhere else: natively on a Mac or a
+# Windows PC, which is the only way it reaches the hardware there (VAL-338).
+# Then this container is the server alone, and TRANSCODER_URL says where the
+# other half is.
+
+if [ "${VALENCE_EXTERNAL_TRANSCODER:-}" = "1" ]; then
+  exec node apps/server/dist/Main.js
+fi
 
 valence-transcoder serve &
 TRANSCODER_PID=$!

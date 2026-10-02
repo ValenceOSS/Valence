@@ -27,6 +27,7 @@ pub mod keyframe_index;
 pub mod keyframes;
 pub mod media;
 pub mod monitor;
+pub mod path_map;
 pub mod pci_names;
 pub mod playlist;
 pub mod preview;

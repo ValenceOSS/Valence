@@ -8,6 +8,7 @@ use tokio::process::Command;
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FrameRequest {
+    #[serde(deserialize_with = "crate::path_map::deserialize")]
     pub input_path: String,
     /// Where in the file to look, in seconds.
     pub at_seconds: u32,

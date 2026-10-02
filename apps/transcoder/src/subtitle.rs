@@ -34,6 +34,7 @@ const READS_AT_ONCE: usize = 2;
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SubtitleRequest {
+    #[serde(deserialize_with = "crate::path_map::deserialize")]
     pub input_path: String,
     /// The stream to take, as ffprobe numbered it.
     pub stream_index: u32,

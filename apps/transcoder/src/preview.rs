@@ -175,6 +175,7 @@ pub fn preview_encoder(
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PreviewRequest {
+    #[serde(deserialize_with = "crate::path_map::deserialize")]
     pub input_path: String,
     /// How many times the library holding this file has been reset.
     ///
