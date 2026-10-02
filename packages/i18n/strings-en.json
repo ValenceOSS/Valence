@@ -2875,6 +2875,11 @@
     "context": "The label, used in the artists of the phone app and in the artists view in the music page."
   },
   {
+    "handler": "common.everyOtherDeviceWillHaveToSignIn",
+    "text": "Every other device will have to sign in again.",
+    "context": "A message in an alert in the devices in the account of the phone and television apps."
+  },
+  {
     "handler": "common.everySeason",
     "text": "Every season",
     "context": "The label of a toggle, used in several places, among them the seasons in the askable of the phone app and the downloads (from `waysToDownloadAProgramme`)."
@@ -4850,6 +4855,11 @@
     "context": "Shown, used in several places, among them the webhook in the schemas and the device list in the account area."
   },
   {
+    "handler": "common.signedInWhen",
+    "text": "Signed in {signedInAt}",
+    "context": "Shown in the devices in the account of the phone and television apps. {signedInAt} is filled in by the app."
+  },
+  {
     "handler": "common.signInATelevision",
     "text": "Sign in a television",
     "context": "The title of a group, used in several places, among them the sign in a television in the devices of the phone app and the library of the phone app."
@@ -4878,6 +4888,16 @@
     "handler": "common.signOutEverywhereElse2",
     "text": "Sign out everywhere else?",
     "context": "A message in an alert, used in the devices in the account of the phone app and in the device list in the account area."
+  },
+  {
+    "handler": "common.signOutNamed",
+    "text": "Sign out {name}",
+    "context": "The label of a button in the devices in the account of the phone and television apps. {name} is filled in by the app."
+  },
+  {
+    "handler": "common.signOutNamedAsk",
+    "text": "Sign out {name}?",
+    "context": "A message in an alert in the devices in the account of the phone and television apps. {name} is filled in by the app."
   },
   {
     "handler": "common.signThemOut",
@@ -5858,6 +5878,11 @@
     "handler": "common.whoCanUseIt",
     "text": "Who can use it",
     "context": "The title of a section, used in the profile editor in the admin area and in the profiles panel in the admin area."
+  },
+  {
+    "handler": "common.whoeverIsUsingItWillHaveToSignIn",
+    "text": "Whoever is using it will have to sign in again.",
+    "context": "A message in an alert in the devices in the account of the phone and television apps."
   },
   {
     "handler": "common.whoIsWatching",
@@ -8485,34 +8510,9 @@
     "context": "The label in the account panels in the account of the phone app."
   },
   {
-    "handler": "phone.theAccount.theDevices.everyOtherDeviceWillHaveTo",
-    "text": "Every other device will have to sign in again.",
-    "context": "A message in an alert in the devices in the account of the phone app."
-  },
-  {
     "handler": "phone.theAccount.theDevices.nameThisPhone",
     "text": "{name} · This phone",
     "context": "Shown in the devices in the account of the phone app. {name} is filled in by the app."
-  },
-  {
-    "handler": "phone.theAccount.theDevices.signedInSignedInAt",
-    "text": "Signed in {signedInAt}",
-    "context": "Shown in the devices in the account of the phone app. {signedInAt} is filled in by the app."
-  },
-  {
-    "handler": "phone.theAccount.theDevices.signOutName",
-    "text": "Sign out {name}",
-    "context": "The label of a button in the devices in the account of the phone app. {name} is filled in by the app."
-  },
-  {
-    "handler": "phone.theAccount.theDevices.signOutName2",
-    "text": "Sign out {name}?",
-    "context": "A message in an alert in the devices in the account of the phone app. {name} is filled in by the app."
-  },
-  {
-    "handler": "phone.theAccount.theDevices.whoeverIsUsingItWillHave",
-    "text": "Whoever is using it will have to sign in again.",
-    "context": "A message in an alert in the devices in the account of the phone app."
   },
   {
     "handler": "phone.theAccount.theHidden.nothingHidden",
@@ -26088,6 +26088,16 @@
     "handler": "tv.account.watchingOnThisValence",
     "text": "Watching on this Valence",
     "context": "Shown under the profile's name on the television app's account screen, where the server's address is not known."
+  },
+  {
+    "handler": "tv.account.yourDevices.nameThisTelevision",
+    "text": "{name} · This television",
+    "context": "On the television account page, the device you are using, in the list of everywhere this account is signed in. {name} is what the device is called."
+  },
+  {
+    "handler": "tv.account.yourDevices.noOtherDevices",
+    "text": "This television is the only place this account is signed in.",
+    "context": "On the television account page, under the devices heading, when no other device is signed in."
   },
   {
     "handler": "tv.account.yourRequests.yourRequests",

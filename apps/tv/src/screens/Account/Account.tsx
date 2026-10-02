@@ -10,6 +10,7 @@ import { signOutHere } from '@ValenceTv/session/signOutHere';
 import { YourRequests } from '@ValenceTv/screens/Account/components/YourRequests/YourRequests';
 import { ThemeChoice } from '@ValenceTv/screens/Account/components/ThemeChoice/ThemeChoice';
 import { PluginPages } from '@ValenceTv/screens/Account/components/PluginPages/PluginPages';
+import { YourDevices } from '@ValenceTv/screens/Account/components/YourDevices/YourDevices';
 import { Face } from '@ValenceTv/components/Face/Face';
 import { useHandOff } from '@ValenceTv/navigation/useHandOff';
 import { theServersOrigin } from '@ValenceTv/platform/theServersOrigin';
@@ -23,9 +24,9 @@ import { say } from '@ValenceI18n/say';
  * may ask for things, the way to see what has been asked for, with a row of their own latest
  * requests beneath, each saying where it has got to. The buttons catch the remote
  * across the whole width of the page, so pressing up from anywhere along that row reaches them.
- * Beneath them are the pages plugins on this server add to an account, each opening on its own, and
- * any themes those plugins offer. Its foot names this build and the server's, as the
- * desktop app's account dialog does.
+ * Beneath them are the pages plugins on this server add to an account, each opening on its own,
+ * everywhere the account is signed in, and any themes those plugins offer. Its foot names this
+ * build and the server's, as the desktop app's account dialog does.
  *
  * @param user - Who is signed in.
  * @param onChangeServer - Told when somebody wants a different Valence.
@@ -96,6 +97,8 @@ const AccountPage = ({
       {mayRequest ? <YourRequests onOpen={onOpenRequest} onFocus={upToBar.leave} /> : null}
 
       <PluginPages onOpen={onOpenPluginPage} onFocus={upToBar.leave} />
+
+      <YourDevices onFocus={upToBar.leave} />
 
       <ThemeChoice onFocus={upToBar.leave} />
 

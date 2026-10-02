@@ -39,8 +39,8 @@ const TheDevices = () => {
 
   const end = (deviceId: string, name: string) => {
     Alert.alert(
-      say('phone.theAccount.theDevices.signOutName2', { name }),
-      say('phone.theAccount.theDevices.whoeverIsUsingItWillHave'),
+      say('common.signOutNamedAsk', { name }),
+      say('common.whoeverIsUsingItWillHaveToSignIn'),
       [
         { text: say('common.keepIt'), style: 'cancel' },
         {
@@ -57,7 +57,7 @@ const TheDevices = () => {
   const endTheRest = () => {
     Alert.alert(
       say('common.signOutEverywhereElse2'),
-      say('phone.theAccount.theDevices.everyOtherDeviceWillHaveTo'),
+      say('common.everyOtherDeviceWillHaveToSignIn'),
       [
         { text: say('common.keepThem'), style: 'cancel' },
         {
@@ -102,7 +102,7 @@ const TheDevices = () => {
                     device.address,
                     signedIn === null
                       ? null
-                      : say('phone.theAccount.theDevices.signedInSignedInAt', {
+                      : say('common.signedInWhen', {
                           signedInAt: signedIn,
                         }),
                   ]
@@ -114,7 +114,7 @@ const TheDevices = () => {
               {device.isCurrent ? null : (
                 <Button
                   tone="quiet"
-                  label={say('phone.theAccount.theDevices.signOutName', {
+                  label={say('common.signOutNamed', {
                     name: sayAgain(device.name),
                   })}
                   onPress={() => {
