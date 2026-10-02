@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import { TranscodeReuseSchema } from '@ValenceContracts/schemas/TranscodeReuse';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
+import { ToneMappingSchema } from '@ValenceContracts/schemas/ToneMapping';
 
 type HttpResponse = {
   ok: boolean;
@@ -113,7 +114,7 @@ const CapabilitiesSchema = z.object({
       }),
     )
     .default([]),
-  toneMapping: z.enum(['zscale', 'libplacebo', 'unavailable']).default('unavailable'),
+  toneMapping: ToneMappingSchema.default('unavailable'),
   canBurnTextSubtitles: z.boolean().default(false),
   canBurnImageSubtitles: z.boolean().default(false),
   concurrentRenders: z.number().int().nonnegative().default(0),
@@ -297,6 +298,8 @@ type SessionSpec = {
     | { kind: 'encode'; encoder: string; channels: number; maxBitrateKbps: number };
   sourceSize?: [number, number];
   sourceVideoCodec?: string;
+  sourceRange?: string;
+  sourceRangeBase?: string;
   container?: 'fmp4' | 'mpegts';
 };
 

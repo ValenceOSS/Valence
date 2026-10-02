@@ -465,8 +465,9 @@ pub struct Capabilities {
 /// Chooses a tone mapping route from the filters a build actually has.
 ///
 /// `libplacebo` is preferred where it runs: it does the whole conversion in one
-/// filter and handles more source formats. `zscale` is the widely available
-/// fallback. A build with neither cannot tone map at all, which callers must
+/// filter and handles more source formats, on the graphics card. `tonemapx` is next, the same
+/// BT.2390 curve on the processor, which Valence's own build carries. `zscale` is the widely
+/// available fallback, and the darkest of the three (VAL-344). A build with neither cannot tone map at all, which callers must
 /// surface rather than quietly producing a washed out picture.
 ///
 /// `runs_libplacebo` is asked rather than assumed. The filter opens a Vulkan
@@ -478,6 +479,10 @@ pub fn select_tone_mapping(filters: &[String], runs_libplacebo: bool) -> ToneMap
 
     if has("libplacebo") && runs_libplacebo {
         return ToneMapping::Libplacebo;
+    }
+
+    if has("tonemapx") {
+        return ToneMapping::Tonemapx;
     }
 
     if has("zscale") && has("tonemap") {
@@ -812,7 +817,9 @@ async fn verified_tone_maps(ffmpeg: &str, filters: &[String], device: &str) -> V
 
         let name = crate::transcode_plan::filter_name(mapper);
 
-        if !filters.iter().any(|filter| filter == name) {
+        if !crate::transcode_plan::filter_names(mapper)
+            .all(|needed| filters.iter().any(|filter| filter == needed))
+        {
             continue;
         }
 
@@ -1963,6 +1970,24 @@ reported anything else would either reprobe forever or never"
             "tonemap".to_owned(),
             "libplacebo".to_owned(),
         ];
+
+        assert_eq!(select_tone_mapping(&filters, true), ToneMapping::Libplacebo);
+    }
+
+    #[test]
+    fn prefers_tonemapx_to_zscale() {
+        let filters = vec![
+            "zscale".to_owned(),
+            "tonemap".to_owned(),
+            "tonemapx".to_owned(),
+        ];
+
+        assert_eq!(select_tone_mapping(&filters, false), ToneMapping::Tonemapx);
+    }
+
+    #[test]
+    fn prefers_libplacebo_to_tonemapx_where_it_runs() {
+        let filters = vec!["tonemapx".to_owned(), "libplacebo".to_owned()];
 
         assert_eq!(select_tone_mapping(&filters, true), ToneMapping::Libplacebo);
     }

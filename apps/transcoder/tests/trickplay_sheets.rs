@@ -431,6 +431,7 @@ async fn draws_the_sheets_in_software_when_the_device_will_not_take_the_file() {
             bit_depth: Some(8),
             frames_per_second: Some(25.0),
             range: VideoRange::Sdr,
+            range_base: VideoRange::Sdr,
         },
         Some(HardwareAccel::Vaapi),
     )

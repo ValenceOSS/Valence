@@ -33,6 +33,7 @@ import type { RealtimeClient } from '@ValenceClient/realtime/createRealtimeClien
 import type { ScanJob } from '@ValenceClient/library/fetchLibrary';
 import type { LibraryPart } from '@ValenceContracts/schemas/LibraryPart';
 import { say } from '@ValenceI18n/say';
+import { ToneMappingSchema } from '@ValenceContracts/schemas/ToneMapping';
 
 const AdminUserSchema = z.object({
   id: z.string(),
@@ -68,7 +69,7 @@ const AdminOverviewSchema = z.object({
     ffmpegSupported: z.boolean().default(true),
     hardwareAccels: z.array(z.string()),
     concurrentRenders: z.number().int().nonnegative().default(0),
-    toneMapping: z.enum(['zscale', 'libplacebo', 'unavailable']).default('unavailable'),
+    toneMapping: ToneMappingSchema.default('unavailable'),
     hardwareToneMaps: z.array(z.string()).default([]),
     chains: z
       .array(

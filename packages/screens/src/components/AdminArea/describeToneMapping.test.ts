@@ -15,6 +15,7 @@ describe('describeToneMapping', () => {
   it('says which software mapper does the work where the card does none', () => {
     expect(describeToneMapping('libplacebo', []).label).toBe('libplacebo, in software');
     expect(describeToneMapping('zscale', []).label).toBe('zscale, in software');
+    expect(describeToneMapping('tonemapx', []).label).toBe('tonemapx, in software');
   });
 
   it('never reads as working where nothing can convert at all', () => {
@@ -22,6 +23,7 @@ describe('describeToneMapping', () => {
 
     expect(mapper.label).toBe('None');
     expect(mapper.detail).toContain('washed out');
+    expect(mapper.detail).toContain('tonemapx');
   });
 
   it('says what a card with no software behind it cannot cover', () => {

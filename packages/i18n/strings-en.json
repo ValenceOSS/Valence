@@ -7140,7 +7140,7 @@
   },
   {
     "handler": "core.planToSessionSpec.thisServerCannotToneMapSourceRange",
-    "text": "This server cannot tone map {sourceRange} to SDR, so the stream keeps its original range instead of being converted. A client that colour manages will show it correctly; one that does not will show it washed out. Its FFmpeg build is missing the zscale or libplacebo filter.",
+    "text": "This server cannot tone map {sourceRange} to SDR, so the stream keeps its original range instead of being converted. A client that colour manages will show it correctly; one that does not will show it washed out. Its FFmpeg build has none of the tonemapx, libplacebo or zscale filters.",
     "context": "Shown in the app (from `planToSessionSpec`). {sourceRange} is filled in by the app."
   },
   {
@@ -12655,7 +12655,7 @@
   },
   {
     "handler": "screens.adminArea.describeToneMapping.thisBuildHasNeitherLibplaceboNor",
-    "text": "This build has neither libplacebo nor zscale and the card proved nothing, so an HDR film is passed through as it is and looks washed out on a screen that cannot show it.",
+    "text": "This build has none of tonemapx, libplacebo or zscale and the card proved nothing, so an HDR film is passed through as it is and looks washed out on a screen that cannot show it.",
     "context": "The detail in the admin area (from `describeToneMapping`)."
   },
   {

@@ -7,6 +7,7 @@ type ToneMapper = {
 };
 
 const SOFTWARE = {
+  tonemapx: 'tonemapx',
   libplacebo: 'libplacebo',
   zscale: 'zscale',
   unavailable: '',

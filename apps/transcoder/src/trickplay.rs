@@ -22,7 +22,9 @@ use crate::integrity::decodes;
 use crate::media::VideoRange;
 use crate::render_registry::{Claim, RenderRegistry};
 use crate::steps_aside::steps_aside;
-use crate::transcode_plan::{tone_map_format, HardwareAccel, HardwarePipeline};
+use crate::transcode_plan::{
+    tone_map_filter, tone_map_format, HardwareAccel, HardwarePipeline, ToneMapping,
+};
 
 /// Written only when every sheet is on disk.
 ///
@@ -261,6 +263,9 @@ pub struct SheetSource {
     /// library had washed-out thumbnails under its scrub bar while its preview
     /// clip beside them was converted properly.
     pub range: VideoRange,
+    /// The range beneath a Dolby Vision layer, and the range itself for everything else, which
+    /// decides whether a device's own tone mapper can take it.
+    pub range_base: VideoRange,
 }
 
 /// What a render is drawn with, and what the machine proved it can do.
@@ -392,6 +397,7 @@ fn extract_filters(
     source: SheetSource,
     onto_the_device: Option<(HardwareAccel, HardwarePipeline, &str)>,
     draws_on_the_device: bool,
+    tone_mapping: ToneMapping,
 ) -> Vec<String> {
     let decodes_every_frame =
         onto_the_device.is_some_and(|(_, pipeline, _)| !pipeline.skips_unreferenced_frames);
@@ -409,47 +415,54 @@ fn extract_filters(
 
     filters.push(format!("fps=1/{}", request.interval_seconds));
 
-    match onto_the_device {
-        Some((_, pipeline, _)) => {
-            let mut carried = None;
+    if let Some((accel, pipeline, _)) = onto_the_device {
+        let mut carried = None;
 
-            if source.range != VideoRange::Sdr {
-                if let Some(mapper) = pipeline.tone_map {
-                    filters.push(mapper.to_owned());
-                    carried = tone_map_format(mapper);
-                }
-            }
-
-            if let Some(mapping) = pipeline.maps_onto_device {
-                filters.push(mapping.to_owned());
-            }
-
-            filters.push(format!(
-                "{scaler}=w={width}:h={height}{narrowing}",
-                scaler = pipeline.scaler,
-                width = request.tile_width,
-                height = tile_height,
-                narrowing = if draws_on_the_device {
-                    pipeline
-                        .narrows_to_eight_bit
-                        .map_or_else(String::new, |option| format!(":{option}"))
-                } else {
-                    String::new()
-                },
-            ));
-
-            if !draws_on_the_device {
-                filters.push(format!(
-                    "hwdownload,format={}",
-                    carried.unwrap_or_else(|| pipeline.download_format_for(source.bit_depth))
-                ));
+        if source.range != VideoRange::Sdr {
+            if let Some(mapper) = accel.tone_map_for(source.range, source.range_base) {
+                carried = tone_map_format(&mapper).map(str::to_owned);
+                filters.push(mapper.into_owned());
             }
         }
-        None => filters.push(format!(
+
+        if let Some(mapping) = pipeline.maps_onto_device {
+            filters.push(mapping.to_owned());
+        }
+
+        filters.push(format!(
+            "{scaler}=w={width}:h={height}{narrowing}",
+            scaler = pipeline.scaler,
+            width = request.tile_width,
+            height = tile_height,
+            narrowing = if draws_on_the_device {
+                pipeline
+                    .narrows_to_eight_bit
+                    .map_or_else(String::new, |option| format!(":{option}"))
+            } else {
+                String::new()
+            },
+        ));
+
+        if !draws_on_the_device {
+            filters.push(format!(
+                "hwdownload,format={}",
+                carried
+                    .as_deref()
+                    .unwrap_or_else(|| pipeline.download_format_for(source.bit_depth))
+            ));
+        }
+    } else {
+        if source.range != VideoRange::Sdr {
+            if let Some(converter) = tone_map_filter(tone_mapping) {
+                filters.push(converter.to_owned());
+            }
+        }
+
+        filters.push(format!(
             "scale={width}:{height}",
             width = request.tile_width,
             height = tile_height,
-        )),
+        ));
     }
 
     filters
@@ -513,6 +526,7 @@ pub fn extract_arguments(
     on_device: Option<(HardwareAccel, &str)>,
     encoder: &SheetEncoder,
     directory: &Path,
+    tone_mapping: ToneMapping,
 ) -> Vec<String> {
     let onto_the_device = on_device
         .and_then(|(found, device)| found.pipeline().map(|pipeline| (found, pipeline, device)));
@@ -524,6 +538,7 @@ pub fn extract_arguments(
         source,
         onto_the_device,
         draws_on_the_device,
+        tone_mapping,
     );
 
     let mut arguments = vec![
@@ -646,6 +661,7 @@ async fn draw_sheets(
             accel.map(|found| (found, device)),
             &drawn_by,
             directory,
+            capabilities.tone_mapping,
         ))
         .kill_on_drop(true)
         .output()
@@ -1058,7 +1074,7 @@ mod tests {
     use super::{
         build_index, extract_arguments, format_timestamp, quality_arguments, sheet_encoder,
         thumbnail_count, tile_arguments, tile_height_for, Capabilities, HardwareAccel,
-        SheetEncoder, SheetSource, TrickplayRegistry, TrickplayRequest, VideoRange,
+        SheetEncoder, SheetSource, ToneMapping, TrickplayRegistry, TrickplayRequest, VideoRange,
     };
     use crate::capability::VerifiedEncoder;
     use std::path::Path;
@@ -1103,6 +1119,7 @@ otherwise start a second one"
             bit_depth: Some(8),
             frames_per_second: Some(23.976),
             range,
+            range_base: range,
         }
     }
 
@@ -1114,6 +1131,7 @@ otherwise start a second one"
             Some((HardwareAccel::Qsv, "/dev/dri/renderD128")),
             &SheetEncoder::Hardware("mjpeg_qsv".to_owned()),
             Path::new("/cache"),
+            ToneMapping::Tonemapx,
         )
     }
 
@@ -1125,6 +1143,7 @@ otherwise start a second one"
             None,
             &SheetEncoder::Software,
             Path::new("/cache"),
+            ToneMapping::Tonemapx,
         )
     }
 
@@ -1166,6 +1185,7 @@ otherwise start a second one"
             Some((HardwareAccel::Nvenc, "")),
             &SheetEncoder::Software,
             Path::new("/cache"),
+            ToneMapping::Tonemapx,
         )
     }
 
@@ -1385,6 +1405,51 @@ otherwise start a second one"
         assert!(arguments.iter().any(|argument| argument == "-sn"));
     }
 
+    /// Sheets drawn by the processor were never converted, so an HDR film's thumbnails came out
+    /// washed out wherever its card could not convert it (VAL-344).
+    #[test]
+    fn converts_an_hdr_film_drawn_by_the_processor() {
+        let arguments = extract_arguments(
+            &request(),
+            180,
+            source_of(VideoRange::Hdr10),
+            None,
+            &SheetEncoder::Software,
+            Path::new("/cache"),
+            ToneMapping::Tonemapx,
+        );
+
+        let chain = arguments
+            .windows(2)
+            .find(|pair| pair[0] == "-vf")
+            .map(|pair| pair[1].clone())
+            .expect("a filter chain");
+
+        assert!(chain.contains("tonemapx="), "{chain}");
+        assert!(
+            chain.find("tonemapx") < chain.find("scale="),
+            "converted before it is resampled: {chain}"
+        );
+    }
+
+    /// An SDR film is not converted, whoever draws it.
+    #[test]
+    fn leaves_an_sdr_film_drawn_by_the_processor_alone() {
+        let arguments = extract_arguments(
+            &request(),
+            180,
+            source_of(VideoRange::Sdr),
+            None,
+            &SheetEncoder::Software,
+            Path::new("/cache"),
+            ToneMapping::Tonemapx,
+        );
+
+        assert!(!arguments
+            .iter()
+            .any(|argument| argument.contains("tonemapx")));
+    }
+
     /// Sheets were never converted at all, so every HDR film in a library had
     /// washed-out thumbnails under a scrub bar while its clip was converted
     /// properly a few pixels away.
@@ -1397,6 +1462,7 @@ otherwise start a second one"
             Some((HardwareAccel::Vaapi, "/dev/dri/renderD128")),
             &SheetEncoder::Hardware("mjpeg_vaapi".to_owned()),
             Path::new("/cache"),
+            ToneMapping::Tonemapx,
         );
         let chain = arguments
             .windows(2)
@@ -1406,7 +1472,7 @@ otherwise start a second one"
 
         assert_eq!(
             chain,
-            "setpts=N/23.976/TB,fps=1/10,tonemap_vaapi=format=nv12:p=bt709:t=bt709:m=bt709,scale_vaapi=w=320:h=180:format=nv12"
+            "setpts=N/23.976/TB,fps=1/10,procamp_vaapi=b=16,tonemap_vaapi=format=nv12:p=bt709:t=bt709:m=bt709,scale_vaapi=w=320:h=180:format=nv12"
         );
     }
 
@@ -1421,6 +1487,7 @@ otherwise start a second one"
             Some((HardwareAccel::Qsv, "/dev/dri/renderD128")),
             &SheetEncoder::Hardware("mjpeg_qsv".to_owned()),
             Path::new("/cache"),
+            ToneMapping::Tonemapx,
         );
         let chain = arguments
             .windows(2)
@@ -1441,6 +1508,7 @@ otherwise start a second one"
             Some((HardwareAccel::Nvenc, "")),
             &SheetEncoder::Software,
             Path::new("/cache"),
+            ToneMapping::Tonemapx,
         );
         let chain = arguments
             .windows(2)
@@ -1549,6 +1617,7 @@ otherwise start a second one"
             Some((HardwareAccel::Vaapi, "/dev/dri/renderD128")),
             &SheetEncoder::Hardware("mjpeg_vaapi".to_owned()),
             Path::new("/cache"),
+            ToneMapping::Tonemapx,
         );
 
         assert!(arguments
@@ -1683,6 +1752,7 @@ otherwise start a second one"
             Some((HardwareAccel::Vaapi, "/dev/dri/renderD128")),
             &SheetEncoder::Hardware("mjpeg_vaapi".to_owned()),
             Path::new("/cache"),
+            ToneMapping::Tonemapx,
         ))
         .ends_with("scale_vaapi=w=320:h=180:format=nv12"));
     }
@@ -1700,6 +1770,7 @@ otherwise start a second one"
             Some((HardwareAccel::Nvenc, "")),
             &SheetEncoder::Software,
             Path::new("/cache"),
+            ToneMapping::Tonemapx,
         );
         let chain = arguments
             .windows(2)
@@ -1732,6 +1803,7 @@ otherwise start a second one"
             Some((HardwareAccel::Nvenc, "")),
             &SheetEncoder::Software,
             Path::new("/cache"),
+            ToneMapping::Tonemapx,
         );
         let chain = arguments
             .windows(2)
@@ -1762,6 +1834,7 @@ otherwise start a second one"
             Some((HardwareAccel::Vaapi, "")),
             &SheetEncoder::Software,
             Path::new("/cache"),
+            ToneMapping::Tonemapx,
         );
         let chain = arguments
             .windows(2)
