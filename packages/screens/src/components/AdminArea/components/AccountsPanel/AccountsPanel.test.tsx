@@ -316,6 +316,58 @@ describe('AccountsPanel', () => {
       expect(screen.getByRole('button', { name: 'Add' })).toBeDisabled();
     });
 
+    it('says how long the password must be, and will not take one a character short', async () => {
+      const user = userEvent.setup();
+      renderInAnAddress(<AccountsPanel />);
+
+      await openInvite(user);
+      await user.type(screen.getByLabelText('Name'), 'Alex');
+      await user.type(screen.getByLabelText('Address'), 'alex@valence.local');
+      await user.type(screen.getByLabelText('Password'), '123456789');
+
+      expect(screen.getByText('At least 10 characters.')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Add' })).toBeDisabled();
+
+      await user.type(screen.getByLabelText('Password'), '0');
+
+      expect(screen.getByRole('button', { name: 'Add' })).toBeEnabled();
+    });
+
+    it('asks once however many times Add is pressed while it is asking', async () => {
+      let answer: (refusal: null) => void = () => undefined;
+
+      accountMocks.inviteAccount.mockReturnValue(
+        new Promise<null>((resolve) => {
+          answer = resolve;
+        }),
+      );
+
+      const user = userEvent.setup();
+      renderInAnAddress(<AccountsPanel />);
+
+      await openInvite(user);
+      await user.type(screen.getByLabelText('Name'), 'Alex');
+      await user.type(screen.getByLabelText('Address'), 'alex@valence.local');
+      await user.type(screen.getByLabelText('Password'), 'a-long-enough-password');
+
+      const add = screen.getByRole('button', { name: 'Add' });
+
+      await user.click(add);
+
+      expect(add).toBeDisabled();
+      expect(add).toHaveAttribute('aria-busy', 'true');
+
+      await user.click(add);
+
+      expect(accountMocks.inviteAccount).toHaveBeenCalledTimes(1);
+
+      answer(null);
+
+      await waitFor(() => {
+        expect(notify.worked).toHaveBeenCalledWith('Added Alex.');
+      });
+    });
+
     it('adds somebody', async () => {
       const user = userEvent.setup();
       renderInAnAddress(<AccountsPanel />);

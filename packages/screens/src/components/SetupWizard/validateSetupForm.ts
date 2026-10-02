@@ -1,7 +1,6 @@
 import type { SetupFormErrors } from './SetupWizard.types';
 import { say } from '@ValenceI18n/say';
-
-const MINIMUM_PASSWORD_LENGTH = 10;
+import { MINIMUM_PASSWORD_LENGTH } from '@ValenceContracts/constants/MINIMUM_PASSWORD_LENGTH';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

@@ -490,6 +490,8 @@ const ENGLISH = {
   'common.aTelevisionIsAskingToSign':
     'A television is asking to sign in as you. Only say yes if it is the one in front of you.',
   'common.aTitleOrWhoAsked': 'A title, or who asked',
+  'common.atLeastCountCharacters.one': 'At least {count} character.',
+  'common.atLeastCountCharacters.other': 'At least {count} characters.',
   'common.audio': 'Audio',
   'common.audiobook': 'Audiobook',
   'common.audioOnly': 'Audio only',
@@ -1655,6 +1657,8 @@ const ENGLISH = {
   'error.common.thatTrackCouldNotBeRead': 'That track could not be read.',
   'error.common.thatWouldLeaveNobodyAbleTo':
     'That would leave nobody able to administer this server.',
+  'error.common.theAccountCouldNotBeMade':
+    "The account could not be made. The server's log says why.",
   'error.common.theCatalogueDoesNotKnowThat':
     'The catalogue does not know that, or cannot be asked just now.',
   'error.common.theFileCouldNotBeDeleted': 'The file could not be deleted.',
@@ -5203,7 +5207,6 @@ const ENGLISH = {
   'screens.session.useSignOut.youAreStillSignedInThe':
     'You are still signed in. The server would not end the session.',
   'screens.sessionCard.deviceIcon.chrome': 'Chrome',
-  'screens.setupWizard.atLeast10Characters': 'At least 10 characters.',
   'screens.setupWizard.cookiesWillNotBeMarkedSecure':
     'Cookies will not be marked secure, so Valence works over plain HTTP on your network.',
   'screens.setupWizard.createTheAdministratorAccountAndConfirm':

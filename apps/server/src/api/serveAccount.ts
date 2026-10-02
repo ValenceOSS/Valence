@@ -197,16 +197,20 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
 
     const invited = await inviteAccount?.(context.req.valid('json'));
 
-    if (invited === undefined || invited === null) {
+    if (invited === undefined || invited.kind === 'failed') {
+      return context.json(refuse('error.common.theAccountCouldNotBeMade'), 500);
+    }
+
+    if (invited.kind === 'taken') {
       return context.json(refuse('error.account.thatAddressIsAlreadyInUse'), 400);
     }
 
     return context.json(
       {
-        id: invited.id,
-        name: invited.name,
-        email: invited.email,
-        createdAt: invited.createdAt,
+        id: invited.account.id,
+        name: invited.account.name,
+        email: invited.account.email,
+        createdAt: invited.account.createdAt,
         isBanned: false,
         banReason: null,
         position: null,

@@ -1,4 +1,5 @@
 import type { PreTranscodingService } from '@ValenceServer/preTranscoding/PreTranscodingService';
+import type { AccountCreation } from '@ValenceServer/auth/createAccount';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type {
   QueueControl,
@@ -100,7 +101,7 @@ type CreateAppOptions = {
     name: string;
     email: string;
     password: string;
-  }) => Promise<{ id: string; name: string; email: string; createdAt: string } | null>;
+  }) => Promise<AccountCreation>;
   editAccount?: (
     userId: string,
     changes: { name?: string; email?: string },
@@ -155,7 +156,10 @@ type CreateAppOptions = {
     email: string;
     password: string;
   }) => Promise<
-    { kind: 'promoted'; profile: ViewerProfile } | { kind: 'taken' } | { kind: 'missing' }
+    | { kind: 'promoted'; profile: ViewerProfile }
+    | { kind: 'taken' }
+    | { kind: 'missing' }
+    | { kind: 'failed' }
   >;
   listUsers?: () => Promise<
     { id: string; name: string; email: string; role: string | null; createdAt: string }[]

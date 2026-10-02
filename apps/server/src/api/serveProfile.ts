@@ -120,6 +120,10 @@ const serveProfile = (app: OpenAPIHono, context: AppContext): void => {
 
     const outcome = await promoteProfile({ profileId, email, password });
 
+    if (outcome.kind === 'failed') {
+      return context.json(refuse('error.common.theAccountCouldNotBeMade'), 500);
+    }
+
     if (outcome.kind === 'taken') {
       return context.json(refuse('error.profile.thatAddressAlreadyHasAnAccount'), 409);
     }

@@ -46,7 +46,10 @@ const build = (
     email: string;
     password: string;
   }) => Promise<
-    { kind: 'promoted'; profile: ViewerProfile } | { kind: 'taken' } | { kind: 'missing' }
+    | { kind: 'promoted'; profile: ViewerProfile }
+    | { kind: 'taken' }
+    | { kind: 'missing' }
+    | { kind: 'failed' }
   >,
 ) => {
   const { auth, settings, store } = createMemoryAuth();
@@ -525,6 +528,15 @@ describe('giving a profile an account of its own', () => {
     const cookie = await asAdmin(context);
 
     expect((await promote(context, cookie)).status).toBe(409);
+  });
+
+  it('does not blame the address when the account could not be made for another reason', async () => {
+    const context = build(() => Promise.resolve({ kind: 'failed' }));
+    const cookie = await asAdmin(context);
+    const response = await promote(context, cookie);
+
+    expect(response.status).toBe(500);
+    expect(await response.text()).not.toContain('already has an account');
   });
 
   it('has nothing to promote when the profile has gone', async () => {

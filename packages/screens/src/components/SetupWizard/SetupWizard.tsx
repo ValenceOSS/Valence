@@ -7,6 +7,8 @@ import { TextField } from '@ValenceUI/TextField';
 import { validateSetupForm, parseOrigins } from './validateSetupForm';
 import type { SetupFormErrors, SetupWizardProps } from './SetupWizard.types';
 import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
+import { MINIMUM_PASSWORD_LENGTH } from '@ValenceContracts/constants/MINIMUM_PASSWORD_LENGTH';
 
 /**
  * Walks whoever opened Valence first through making it theirs: the administrator account, what the
@@ -103,7 +105,7 @@ const SetupWizard = ({ status, onComplete }: SetupWizardProps) => {
           value={password}
           onValueChange={setPassword}
           autoComplete="new-password"
-          description={say('screens.setupWizard.atLeast10Characters')}
+          description={sayCount('common.atLeastCountCharacters', MINIMUM_PASSWORD_LENGTH)}
           {...(errors.password === undefined ? {} : { error: errors.password })}
         />
       </section>

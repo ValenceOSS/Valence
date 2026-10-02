@@ -58,6 +58,7 @@ import { traceJobs } from '@ValenceServer/logging/traceJobs';
 import { createPresenceService } from '@ValenceServer/presence/PresenceService';
 import { readSessionOnce } from '@ValenceServer/auth/readSessionOnce';
 import { createAuth } from '@ValenceServer/auth/Auth';
+import { createAccount } from '@ValenceServer/auth/createAccount';
 import { trustedOriginsFor } from '@ValenceServer/auth/trustedOriginsFor';
 import type { RealtimeSession } from '@ValenceServer/realtime/createRealtimeHandler';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
@@ -3185,15 +3186,19 @@ const app = createApp({
       return { kind: 'missing' };
     }
 
-    const created = await auth.api
-      .signUpEmail({ body: { email, password, name: found.name } })
-      .catch(() => null);
+    const created = await createAccount(auth, { email, password, name: found.name });
 
-    if (created === null) {
+    if (created.kind === 'failed') {
+      log.error('auth', `a profile could not be given an account — ${created.reason}`);
+
+      return { kind: 'failed' };
+    }
+
+    if (created.kind === 'taken') {
       return { kind: 'taken' };
     }
 
-    await profileService.moveTo(profileId, created.user.id);
+    await profileService.moveTo(profileId, created.account.id);
 
     return {
       kind: 'promoted',
@@ -3294,28 +3299,14 @@ const app = createApp({
 
     return found?.reason ?? null;
   },
-  inviteAccount: async ({ name, email, password }) => {
-    const created = await auth.api
-      .signUpEmail({ body: { name, email, password }, asResponse: true })
-      .catch(() => null);
+  inviteAccount: async (request) => {
+    const outcome = await createAccount(auth, request);
 
-    if (created === null || !created.ok) {
-      return null;
+    if (outcome.kind === 'failed') {
+      log.error('auth', `an account could not be added — ${outcome.reason}`);
     }
 
-    const [found] = await db
-      .select({ id: user.id, name: user.name, email: user.email, createdAt: user.createdAt })
-      .from(user)
-      .where(eq(user.email, email))
-      .limit(1);
-
-    if (found === undefined) {
-      return null;
-    }
-
-    await giveDefaultRole(found.id);
-
-    return { ...found, createdAt: found.createdAt.toISOString() };
+    return outcome;
   },
   editAccount: async (userId, changes) => {
     const [found] = await db.select({ id: user.id }).from(user).where(eq(user.id, userId)).limit(1);

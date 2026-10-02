@@ -64,6 +64,7 @@ import { describeCeiling } from '@ValenceContracts/schemas/LibraryAccess';
 import { AGE_CHOICES } from '@ValenceScreens/components/AdminArea/ageChoices';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
+import { MINIMUM_PASSWORD_LENGTH } from '@ValenceContracts/constants/MINIMUM_PASSWORD_LENGTH';
 
 type Asked = { kind: 'ban' | 'remove'; account: Account };
 
@@ -124,6 +125,7 @@ const AccountsPanel = () => {
   const [inviteEmail, setInviteEmail] = useState('');
   const [invitePassword, setInvitePassword] = useState('');
   const [isInviting, setIsInviting] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
   const [search, setSearch] = useState('');
   const [asking, setAsking] = useState<Asked | null>(null);
   const [draftName, setDraftName] = useState('');
@@ -587,6 +589,7 @@ const AccountsPanel = () => {
             type="password"
             value={invitePassword}
             onValueChange={setInvitePassword}
+            description={sayCount('common.atLeastCountCharacters', MINIMUM_PASSWORD_LENGTH)}
           />
 
           <p className="text-center font-body text-xs text-text-muted">
@@ -609,6 +612,7 @@ const AccountsPanel = () => {
           confirm={{
             label: say('common.add'),
             onChoose: () => {
+              setIsAdding(true);
               void act(
                 () =>
                   inviteAccount({
@@ -618,6 +622,8 @@ const AccountsPanel = () => {
                   }),
                 say('screens.adminArea.accountsPanel.addedInviteName', { inviteName }),
               ).then((isAdded) => {
+                setIsAdding(false);
+
                 if (!isAdded) {
                   return;
                 }
@@ -628,7 +634,11 @@ const AccountsPanel = () => {
                 setIsInviting(false);
               });
             },
-            isDisabled: inviteName === '' || inviteEmail === '' || invitePassword.length < 8,
+            isLoading: isAdding,
+            isDisabled:
+              inviteName === '' ||
+              inviteEmail === '' ||
+              invitePassword.length < MINIMUM_PASSWORD_LENGTH,
           }}
         />
       </DialogCompanion>
@@ -804,12 +814,16 @@ const AccountsPanel = () => {
                           type="password"
                           value={draftPassword}
                           onValueChange={setDraftPassword}
+                          description={sayCount(
+                            'common.atLeastCountCharacters',
+                            MINIMUM_PASSWORD_LENGTH,
+                          )}
                           className="min-w-48 flex-1"
                         />
 
                         <Button
                           variant="secondary"
-                          disabled={draftPassword.length < 8}
+                          disabled={draftPassword.length < MINIMUM_PASSWORD_LENGTH}
                           onClick={() => {
                             setConfirmingPasswordReset(true);
                           }}

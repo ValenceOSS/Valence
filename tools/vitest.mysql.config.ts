@@ -6,6 +6,8 @@ import { findEngineTests } from './vitest/findEngineTests';
 
 const MYSQL_CONDITIONS = ['mysql', ...defaultServerConditions];
 
+const NODE_MYSQL_CONDITIONS = MYSQL_CONDITIONS.filter((condition) => condition !== 'module');
+
 const PACKAGES = ['packages/database', 'apps/server', 'apps/requests'];
 
 const REPOSITORY = fileURLToPath(new URL('..', import.meta.url));
@@ -30,7 +32,7 @@ const engineProject = async (name: string): Promise<TestProjectInlineConfigurati
     ...loaded?.config,
     root,
     resolve: { ...loaded?.config.resolve, conditions: MYSQL_CONDITIONS },
-    ssr: { resolve: { conditions: MYSQL_CONDITIONS } },
+    ssr: { resolve: { conditions: NODE_MYSQL_CONDITIONS } },
     test: {
       ...loaded?.config.test,
       name,
