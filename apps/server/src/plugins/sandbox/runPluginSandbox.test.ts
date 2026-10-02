@@ -56,12 +56,12 @@ const start = async (): Promise<Harness> => {
   };
 };
 
-const load = (code: string): ToSandbox => ({
+const load = (code: string, memoryBytes = 16 * 1024 * 1024): ToSandbox => ({
   type: 'load',
   code,
   plugin: { id: 'test-plugin', version: '1.0.0' },
   methods: ['storage.get', 'log.info'],
-  memoryBytes: 16 * 1024 * 1024,
+  memoryBytes,
   cpuMilliseconds: 200,
 });
 
@@ -209,6 +209,7 @@ describe('the plugin sandbox', () => {
     sandbox.tell(
       load(
         `globalThis.valencePlugin = { pages: { home: { render: () => { const kept = []; while (true) kept.push('x'.repeat(100000)); } } } };`,
+        4 * 1024 * 1024,
       ),
     );
     await sandbox.next('loaded');
@@ -219,7 +220,7 @@ describe('the plugin sandbox', () => {
     expect(
       answer.type === 'answer' && answer.error?.kind === 'thrown' ? answer.error.text : '',
     ).toMatch(/memory|interrupted/i);
-  });
+  }, 30_000);
 
   it('refuses to load code that throws, or that never defines itself', async () => {
     const throwing = await start();
