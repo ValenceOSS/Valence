@@ -379,7 +379,7 @@ const VideoPlayer = ({
         };
   }, []);
 
-  const room = useFollowTheRoom({
+  const { rememberWhere } = useFollowTheRoom({
     party,
     playerOf: theElement,
     isSessionPlaying: state === 'playing',
@@ -728,7 +728,7 @@ const VideoPlayer = ({
     setIsPlaying(false);
     setPosition(request.startSeconds);
     setReportedDuration(0);
-    room.rememberWhere(request.startSeconds);
+    rememberWhere(request.startSeconds);
 
     const controller = new AbortController();
     const isAbandoned = () => controller.signal.aborted;
@@ -892,7 +892,7 @@ const VideoPlayer = ({
         void stopPlaybackSession(startedId, clientId);
       }
     };
-  }, [request, start, reportPresenceHeartbeat, deviceProfile, media.id, keptSource]);
+  }, [request, start, reportPresenceHeartbeat, deviceProfile, media.id, keptSource, rememberWhere]);
 
   useEffect(
     () =>
