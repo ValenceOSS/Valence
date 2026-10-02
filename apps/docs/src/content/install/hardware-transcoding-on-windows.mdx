@@ -40,13 +40,26 @@ The server names files the way its container sees them: `/media/Films/…`, and 
 
 Use the same folders as `MEDIA_PATH` and `DOWNLOADS_PATH` in your `.env`. The transcoder refuses any file that is not in one of these folders, and says which folder is missing, so a path that is wrong shows up in its log rather than as a film that will not play.
 
+## Give it a secret
+
+The transcoder listens only on this PC, but anything running on the PC can reach it there, including every container Docker Desktop runs, not only Valence's. Without a secret it reads your media folders and starts and deletes work for whatever asks. With one, it answers only Valence. Make one in PowerShell:
+
+```powershell
+$bytes = New-Object byte[] 32
+[Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
+-join ($bytes | ForEach-Object { '{0:x2}' -f $_ })
+```
+
+It goes in two places, and they must match: `start.cmd` below, as `VALENCE_TRANSCODER_SECRET`, and Valence's `.env`, as `TRANSCODER_SECRET`, in [Point Valence at it](#point-valence-at-it). The transcoder refuses every request that does not carry it, and will not start with a secret shorter than 32 characters.
+
 ## Its settings
 
-The transcoder's settings live in a small file beside it. Create `start.cmd` in the `valence-transcoder` folder with this in it, changing the folders to your own:
+The transcoder's settings live in a small file beside it. Create `start.cmd` in the `valence-transcoder` folder with this in it, changing the folders to your own and pasting in your secret:
 
 ```bat
 @echo off
 set VALENCE_TRANSCODER_ADDR=127.0.0.1:8422
+set VALENCE_TRANSCODER_SECRET=paste-the-generated-secret-here
 set VALENCE_PATH_MAP=/media=D:\Media;/downloads=D:\Downloads
 set VALENCE_MEDIA_ROOTS=D:\Media;D:\Downloads
 set VALENCE_WRITE_ROOTS=D:\Media
@@ -55,14 +68,15 @@ set VALENCE_ARTEFACT_DIR=%~dp0artefacts
 "%~dp0valence-transcoder.exe" serve >> "%~dp0transcoder.log" 2>&1
 ```
 
-| Setting                   | What it does                                                                                                                                                                            |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `VALENCE_TRANSCODER_ADDR` | Where it listens. `127.0.0.1` keeps it on this PC, and containers still reach it through `host.docker.internal`. It has no sign-in of its own, so do not make it listen anywhere wider. |
-| `VALENCE_PATH_MAP`        | Where the server's paths are on this PC, as above.                                                                                                                                      |
-| `VALENCE_MEDIA_ROOTS`     | The folders it may read, separated by `;`. The same folders as the right-hand side of the map.                                                                                          |
-| `VALENCE_WRITE_ROOTS`     | The folders it may write finished re-encodes into. Leave the line out if you do not use [pre-transcoding](/use/pre-transcoding).                                                        |
-| `VALENCE_TRANSCODE_DIR`   | Scratch space for video segments while someone is watching. The fastest disk you have.                                                                                                  |
-| `VALENCE_ARTEFACT_DIR`    | Rendered previews and thumbnail sheets. Kept, so the library is not rendered again.                                                                                                     |
+| Setting                     | What it does                                                                                                                                                                              |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VALENCE_TRANSCODER_ADDR`   | Where it listens. `127.0.0.1` keeps it on this PC, and containers still reach it through `host.docker.internal`. Keep it there: the secret guards it, but nothing else needs to reach it. |
+| `VALENCE_TRANSCODER_SECRET` | The secret Valence presents, as above. The same as `TRANSCODER_SECRET` in `.env`.                                                                                                         |
+| `VALENCE_PATH_MAP`          | Where the server's paths are on this PC, as above.                                                                                                                                        |
+| `VALENCE_MEDIA_ROOTS`       | The folders it may read, separated by `;`. The same folders as the right-hand side of the map.                                                                                            |
+| `VALENCE_WRITE_ROOTS`       | The folders it may write finished re-encodes into. Leave the line out if you do not use [pre-transcoding](/use/pre-transcoding).                                                          |
+| `VALENCE_TRANSCODE_DIR`     | Scratch space for video segments while someone is watching. The fastest disk you have.                                                                                                    |
+| `VALENCE_ARTEFACT_DIR`      | Rendered previews and thumbnail sheets. Kept, so the library is not rendered again.                                                                                                       |
 
 `%~dp0` is the folder `start.cmd` is in, so everything it writes stays in the `valence-transcoder` folder, including its log, `transcoder.log`.
 
@@ -110,9 +124,10 @@ docker compose -f compose.yaml -f compose.native-transcoder.yaml up -d
 
 This relies on Docker Desktop, which carries `host.docker.internal` through to the PC's own `127.0.0.1`.
 
-To avoid typing both files each time, put them in `.env`. On Windows they are separated by `;`:
+Put the secret in `.env`, the same one as `start.cmd`'s, and to avoid typing both files each time, put them there too. On Windows they are separated by `;`:
 
 ```ini
+TRANSCODER_SECRET=paste-the-generated-secret-here
 COMPOSE_FILE=compose.yaml;compose.native-transcoder.yaml
 ```
 
@@ -128,11 +143,12 @@ On an Intel or AMD machine, HDR films are converted to SDR on the processor for 
 
 ## Troubleshooting
 
-| Symptom                                                                 | Cause and fix                                                                                                                                                  |
-| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Nothing plays, and the admin area says the media service is unreachable | The transcoder is not running. **Task Scheduler** shows the task's last result, and `transcoder.log` says why it stopped.                                      |
-| The log says a path `is in none of the folders VALENCE_PATH_MAP maps`   | The server sent a file from a folder the map does not have. Add the folder, matching `MEDIA_PATH` or `DOWNLOADS_PATH`.                                         |
-| The log cannot open files on a network share                            | The task has no access to shares. Register it with your password, as above.                                                                                    |
-| Windows says it protected your PC when the transcoder starts            | The files are still marked as downloaded. Run the `Unblock-File` line above.                                                                                   |
-| Settings says Software only                                             | The transcoder could not open the card. Run the `capabilities` check above, update the graphics driver, and read the log.                                      |
-| A machine with two cards uses the wrong one                             | QuickSync always opens the Intel card and AMF the AMD one. To use NVIDIA on a machine that also has Intel graphics, choose **NVENC** in Hardware acceleration. |
+| Symptom                                                                             | Cause and fix                                                                                                                                                                  |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Nothing plays, and the admin area says the media service is unreachable             | The transcoder is not running. **Task Scheduler** shows the task's last result, and `transcoder.log` says why it stopped.                                                      |
+| The admin area says the media service is unreachable, but the transcoder is running | The secrets differ, and the log says it `refused` a request `without the shared secret`. Make `VALENCE_TRANSCODER_SECRET` and `TRANSCODER_SECRET` the same, then restart both. |
+| The log says a path `is in none of the folders VALENCE_PATH_MAP maps`               | The server sent a file from a folder the map does not have. Add the folder, matching `MEDIA_PATH` or `DOWNLOADS_PATH`.                                                         |
+| The log cannot open files on a network share                                        | The task has no access to shares. Register it with your password, as above.                                                                                                    |
+| Windows says it protected your PC when the transcoder starts                        | The files are still marked as downloaded. Run the `Unblock-File` line above.                                                                                                   |
+| Settings says Software only                                                         | The transcoder could not open the card. Run the `capabilities` check above, update the graphics driver, and read the log.                                                      |
+| A machine with two cards uses the wrong one                                         | QuickSync always opens the Intel card and AMF the AMD one. To use NVIDIA on a machine that also has Intel graphics, choose **NVENC** in Hardware acceleration.                 |

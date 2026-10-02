@@ -9,7 +9,7 @@ use tracing_subscriber::util::SubscriberInitExt as _;
 use valence_transcoder::monitor::JournalLayer;
 use valence_transcoder::router::{create_router, AppState};
 use valence_transcoder::session::{SessionConfig, SessionRegistry};
-use valence_transcoder::{capability, path_map, probe};
+use valence_transcoder::{capability, path_map, probe, shared_secret};
 
 const DEFAULT_FFMPEG: &str = "ffmpeg";
 const DEFAULT_FFPROBE: &str = "ffprobe";
@@ -243,6 +243,27 @@ async fn report_durability(
     );
 }
 
+/// Reads the secret every caller must present, where one is set.
+///
+/// A secret too short to guard anything stops the service starting, as a bad
+/// path map does, since running unguarded when the operator meant to guard it
+/// is worse than not running.
+fn read_secret() -> Option<String> {
+    match shared_secret::parse(&setting(shared_secret::VARIABLE, "")) {
+        Ok(secret) => {
+            if secret.is_some() {
+                tracing::info!(target: "service", "every caller must present the shared secret");
+            }
+
+            secret
+        }
+        Err(reason) => {
+            eprintln!("{reason}");
+            std::process::exit(1);
+        }
+    }
+}
+
 async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
     let journal = valence_transcoder::monitor::Journal::new();
 
@@ -273,6 +294,8 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
         }
     }
 
+    let secret = read_secret();
+
     let state = AppState {
         registry: registry.clone(),
         ffprobe,
@@ -298,7 +321,7 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
 
     spawn_width_keeper(state.queue.clone(), registry.clone(), ffmpeg.clone());
 
-    let router = create_router(state);
+    let router = shared_secret::require(create_router(state), secret);
 
     spawn_reaper(registry.clone());
     spawn_sweeper(registry.clone());

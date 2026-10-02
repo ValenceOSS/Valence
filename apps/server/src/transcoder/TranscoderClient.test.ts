@@ -175,6 +175,69 @@ describe('createTranscoderClient', () => {
     expect(calls[0]).not.toContain('unix:');
   });
 
+  it('presents its secret on every request and every stream, where one is set', async () => {
+    const sent: (Record<string, string> | undefined)[] = [];
+    const secret = 'a'.repeat(32);
+
+    const client = createTranscoderClient({
+      baseUrl: 'http://127.0.0.1:8477',
+      secret,
+      fetchImpl: (_url, init) => {
+        sent.push(init?.headers);
+
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          headers: { get: () => null },
+          json: () => Promise.resolve({ status: 'ok' }),
+          arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+        });
+      },
+      streamFetchImpl: (_url, init) => {
+        sent.push(init?.headers);
+
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          headers: { get: () => 'video/mp2t' },
+          body: new Blob([new Uint8Array(8)]).stream(),
+        });
+      },
+    });
+
+    await client.isReachable();
+    await client.readSessionFile('session-1', 'segment-0.ts');
+
+    expect(sent).toHaveLength(2);
+    expect(sent).toEqual([
+      { authorization: `Bearer ${secret}` },
+      expect.objectContaining({ authorization: `Bearer ${secret}` }),
+    ]);
+  });
+
+  it('sends no authorization where no secret is set', async () => {
+    const sent: (Record<string, string> | undefined)[] = [];
+
+    const client = createTranscoderClient({
+      baseUrl: 'http://127.0.0.1:8477',
+      fetchImpl: (_url, init) => {
+        sent.push(init?.headers);
+
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          headers: { get: () => null },
+          json: () => Promise.resolve({ status: 'ok' }),
+          arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+        });
+      },
+    });
+
+    await client.isReachable();
+
+    expect(sent).toEqual([undefined]);
+  });
+
   it('reports an unreachable service rather than throwing', async () => {
     const client = createTranscoderClient({
       baseUrl: 'unix:/run/valence-transcoder.sock',
