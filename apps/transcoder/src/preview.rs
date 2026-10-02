@@ -175,6 +175,7 @@ pub fn preview_encoder(
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PreviewRequest {
+    #[serde(deserialize_with = "crate::path_map::deserialize")]
     pub input_path: String,
     /// How many times the library holding this file has been reset.
     ///
@@ -1003,6 +1004,7 @@ mod tests {
 
     /// The frames come down where the filters are, and are told what to come
     /// down as. Left to ffmpeg the graph does not configure at all on QSV.
+    #[cfg(unix)]
     #[test]
     fn decodes_on_the_device_and_brings_the_frames_down() {
         for range in [VideoRange::Sdr, VideoRange::Hdr10] {

@@ -34,6 +34,7 @@ const ListeningPartyPanel = ({ player: given }: ListeningPartyPanelProps) => {
     return (
       <PartyPanel
         party={listening.party}
+        durationSeconds={state.durationSeconds}
         meConnectionId={watchParty.meConnectionId}
         people={household}
         invitation={listeningInvitationTo(listening.party.id, window.location.origin)}

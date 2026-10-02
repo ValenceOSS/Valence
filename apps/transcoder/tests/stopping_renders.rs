@@ -6,6 +6,7 @@
 //! an ffmpeg that is deliberately slow, so there is a render to stop.
 
 #![allow(clippy::expect_used, clippy::unwrap_used)]
+#![cfg(unix)]
 
 use std::path::{Path, PathBuf};
 use std::time::Duration;

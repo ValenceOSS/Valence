@@ -1,9 +1,13 @@
+import type { Avatar, ProfileColour } from '@ValenceContracts/schemas/ViewerProfile';
 import type { WatchParty } from '@ValenceContracts/schemas/WatchParty';
 
 type Askable = {
   id: string;
   name: string;
   accountId?: string;
+  colour?: ProfileColour;
+  avatar?: Avatar;
+  updatedAt?: string;
 };
 
 /**
@@ -13,7 +17,10 @@ type Askable = {
  * @param people - Everybody with an account here.
  * @returns Those not in it, in the order given.
  */
-const whoCanBeAsked = (party: WatchParty, people: readonly Askable[]): readonly Askable[] =>
+const whoCanBeAsked = <Person extends Askable>(
+  party: WatchParty,
+  people: readonly Person[],
+): readonly Person[] =>
   people.filter(
     (person) =>
       !party.members.some(

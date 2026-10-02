@@ -1,0 +1,35 @@
+# Valence with its transcoder running natively on this machine rather than in the container. Laid
+# over compose.yaml rather than instead of it:
+#
+#   docker compose -f compose.yaml -f compose.native-transcoder.yaml up -d
+#
+# This is how a Mac or a Windows PC transcodes in hardware. A container on a Mac has no way to
+# VideoToolbox, and one under Docker Desktop on Windows reaches only NVIDIA's encoder, so the
+# transcoder runs on the machine itself and everything else stays in Docker, unchanged. The transcoder
+# is installed and kept running separately; the docs pages "Hardware transcoding on a Mac" and
+# "Hardware transcoding on Windows" cover both.
+#
+# The transcoder listens on 127.0.0.1 only, and Docker Desktop still reaches it from a container at
+# host.docker.internal: Desktop answers that name itself and carries the connection to the host's
+# own loopback (measured on 4.86). Anything else on the machine can reach it there too, so it is
+# given a secret: TRANSCODER_SECRET in .env, the same as the transcoder's VALENCE_TRANSCODER_SECRET,
+# which the server and the requests service present on every call. That makes this overlay a
+# Docker Desktop one. Docker Engine on Linux maps the name to the
+# bridge instead, which a listener on 127.0.0.1 never hears, and Linux has no need of it anyway:
+# there the GPU goes into the container.
+
+services:
+  valence:
+    environment:
+      VALENCE_EXTERNAL_TRANSCODER: '1'
+      TRANSCODER_URL: http://host.docker.internal:${TRANSCODER_PORT:-8422}
+      TRANSCODER_SECRET: ${TRANSCODER_SECRET:-}
+    # The transcoder brought the GPU; the server does not need it. A device that does not exist on
+    # this machine would stop the container starting at all.
+    devices: !reset []
+    group_add: !reset []
+
+  requests:
+    environment:
+      TRANSCODER_URL: http://host.docker.internal:${TRANSCODER_PORT:-8422}
+      TRANSCODER_SECRET: ${TRANSCODER_SECRET:-}

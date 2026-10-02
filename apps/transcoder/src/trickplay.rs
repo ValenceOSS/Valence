@@ -48,6 +48,7 @@ const RECIPE: u32 = 1;
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TrickplayRequest {
+    #[serde(deserialize_with = "crate::path_map::deserialize")]
     pub input_path: String,
     /// How many times the library holding this file has been reset.
     ///
@@ -1143,6 +1144,7 @@ otherwise start a second one"
 
     /// QSV does not refuse the option, it hangs the GPU — which resets the
     /// device and takes down whatever else on the machine was using it.
+    #[cfg(unix)]
     #[test]
     fn does_not_ask_a_decoder_on_the_device_to_skip_frames() {
         let arguments = on_qsv();
@@ -1314,6 +1316,7 @@ otherwise start a second one"
 
     /// Decoded on the device, and brought down for the filters that draw the
     /// sheet. Left to ffmpeg the graph will not configure at all on QSV.
+    #[cfg(unix)]
     #[test]
     fn decodes_on_the_device_and_brings_the_frames_down() {
         let arguments = on_qsv();

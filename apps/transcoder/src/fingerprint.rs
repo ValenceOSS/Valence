@@ -62,6 +62,7 @@ const MAX_FREQUENCY: f32 = 4000.0;
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FingerprintRequest {
+    #[serde(deserialize_with = "crate::path_map::deserialize")]
     pub input_path: String,
     /// Where in the file to start listening.
     #[serde(default)]

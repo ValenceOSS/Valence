@@ -97,14 +97,16 @@ Use this sparingly. The computed version is normally right, and a forced one ski
 
 Its jobs run in this order.
 
-| Job           | What it does                                                                                                                                              |
-| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `verify`      | Checks out the tag and runs `pnpm lint`, `pnpm typecheck`, `pnpm db:check` and `pnpm test`                                                                |
-| `verify-rust` | In a `debian:bookworm-slim` container with Valence's FFmpeg, runs `cargo fmt --all --check`, `cargo clippy --all-targets -- -D warnings` and `cargo test` |
-| `image`       | Builds and pushes two images, in parallel: `valence` (from `Dockerfile`) and `valence-requests` (from `apps/requests/Dockerfile`)                         |
-| `artefacts`   | Runs `pnpm build` and packs `compose.yaml`, `env.example` (the `.env.example`) and `valence-web.tar.gz` (the built web client)                            |
-| `publish`     | Replaces the release notes with GitHub's generated ones and uploads the artefacts                                                                         |
-| `announce`    | Posts to Discord                                                                                                                                          |
+| Job                  | What it does                                                                                                                                                                                                  |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `verify`             | Checks out the tag and runs `pnpm lint`, `pnpm typecheck`, `pnpm db:check` and `pnpm test`                                                                                                                    |
+| `verify-rust`        | In a `debian:bookworm-slim` container with Valence's FFmpeg, runs `cargo fmt --all --check`, `cargo clippy --all-targets -- -D warnings` and `cargo test`                                                     |
+| `image`              | Builds and pushes two images, in parallel: `valence` (from `Dockerfile`) and `valence-requests` (from `apps/requests/Dockerfile`)                                                                             |
+| `artefacts`          | Runs `pnpm build` and packs `compose.yaml`, `compose.native-transcoder.yaml`, `env.example` (the `.env.example`) and `valence-web.tar.gz` (the built web client)                                              |
+| `transcoder-mac`     | On a macOS runner, builds the transcoder for Apple silicon and Intel and packs each with valence-ffmpeg's portable build as `valence-transcoder-macos-arm64.tar.gz` and `valence-transcoder-macos-x64.tar.gz` |
+| `transcoder-windows` | On a Windows runner, builds the transcoder and packs it with valence-ffmpeg's portable build as `valence-transcoder-windows-x64.zip`                                                                          |
+| `publish`            | Replaces the release notes with GitHub's generated ones and uploads the artefacts                                                                                                                             |
+| `announce`           | Posts to Discord                                                                                                                                                                                              |
 
 `verify-rust` matters because pull requests only run the Rust tests when they touch the transcoder. A release is the moment they must run for everything. The `image` and `artefacts` jobs only start once both verify jobs pass, so a failing test stops the release before any image is pushed.
 

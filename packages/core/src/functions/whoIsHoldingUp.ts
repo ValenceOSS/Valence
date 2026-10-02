@@ -70,4 +70,4 @@ const whoIsHoldingUp = (
 
 export type { Watcher };
 
-export { whoIsHoldingUp };
+export { whoIsHoldingUp, TOGETHER_WITHIN_SECONDS };

@@ -34,6 +34,7 @@ const READS_AT_ONCE: usize = 2;
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SubtitleRequest {
+    #[serde(deserialize_with = "crate::path_map::deserialize")]
     pub input_path: String,
     /// The stream to take, as ffprobe numbered it.
     pub stream_index: u32,
@@ -498,12 +499,16 @@ mod tests {
         let arguments =
             extract_all_arguments(Path::new("/media/film.mkv"), &[2, 3], Path::new("/kept"));
 
-        assert!(arguments
-            .iter()
-            .any(|argument| argument == "/kept/2.vtt.partial"));
-        assert!(arguments
-            .iter()
-            .any(|argument| argument == "/kept/3.vtt.partial"));
+        assert!(arguments.iter().any(|argument| *argument
+            == Path::new("/kept")
+                .join("2.vtt.partial")
+                .display()
+                .to_string()));
+        assert!(arguments.iter().any(|argument| *argument
+            == Path::new("/kept")
+                .join("3.vtt.partial")
+                .display()
+                .to_string()));
     }
 
     #[test]

@@ -3,6 +3,7 @@ import type { Askable } from '@ValenceClient/party/whoCanBeAsked';
 
 type PartyPanelProps = {
   party: WatchParty;
+  durationSeconds?: number;
   meConnectionId: string | null;
   waitingFor?: readonly string[];
   onSetRole?: (connectionId: string, role: PartyRole) => void;

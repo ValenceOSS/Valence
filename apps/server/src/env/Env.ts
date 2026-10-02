@@ -33,6 +33,11 @@ const EnvSchema = z.object({
     .default('false')
     .transform((value) => value === 'true'),
   TRANSCODER_URL: z.string().min(1).default('unix:/run/valence-transcoder.sock'),
+  TRANSCODER_SECRET: z
+    .string()
+    .trim()
+    .pipe(z.union([z.literal(''), z.string().min(32)]))
+    .default(''),
   REQUESTS_URL: z
     .string()
     .default('')

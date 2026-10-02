@@ -210,6 +210,9 @@
         "./packages/ui/src/components/SidebarGroup/SidebarGroup.types.ts"
       ],
       "@ValenceUI/Slider": ["./packages/ui/src/components/Slider/Slider.tsx"],
+      "@ValenceUI/SharedTimeline": [
+        "./packages/ui/src/components/SharedTimeline/SharedTimeline.tsx"
+      ],
       "@ValenceUI/SlidingMark": ["./packages/ui/src/components/SlidingMark/SlidingMark.tsx"],
       "@ValenceUI/SlidingMark.types": [
         "./packages/ui/src/components/SlidingMark/SlidingMark.types.ts"
@@ -284,6 +287,7 @@
       "@ValenceUI/windowBarHeight": ["./packages/ui/src/functions/windowBarHeight.ts"],
       "@ValenceUI/useSlidingHighlight": ["./packages/ui/src/functions/useSlidingHighlight.ts"],
       "@ValenceUI/useFitWidth": ["./packages/ui/src/functions/useFitWidth.ts"],
+      "@ValenceUI/placeFaces": ["./packages/ui/src/functions/placeFaces.ts"],
       "@ValenceWeb/*": ["./apps/web/src/*"]
     }
   }

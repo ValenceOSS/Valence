@@ -118,6 +118,7 @@ const WatchPage = () => {
         renderPartyMenu={({ isHidden, onOpenChange }) => (
           <PartyMenu
             party={filmParty}
+            durationSeconds={playing.durationSeconds}
             meConnectionId={watchParty.meConnectionId}
             waitingFor={watchParty.waitingFor}
             isHidden={isHidden}

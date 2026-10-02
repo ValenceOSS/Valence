@@ -379,7 +379,7 @@ jobs:
     container:
       image: debian:bookworm-slim
     env:
-      VALENCE_FFMPEG_VERSION: 8.1.2-5.3
+      VALENCE_FFMPEG_VERSION: 8.1.2-5.4
       VALENCE_FFMPEG_SUITE: bookworm
       VALENCE_FFMPEG: /usr/lib/valence-ffmpeg/ffmpeg
       VALENCE_FFPROBE: /usr/lib/valence-ffmpeg/ffprobe
@@ -424,6 +424,33 @@ jobs:
       # The corpus is deliberately not generated here. The suites that need one look for it and skip
       # when it is absent, and building it is the three minutes that belongs in media-pipeline.yml.
       - run: cargo test
+
+  # The transcoder also runs natively on Windows, where it reaches the GPU through Direct3D 11 rather
+  # than through /dev/dri (VAL-338). The Linux job cannot see a Windows-only compile error, a path
+  # that splits on the drive's colon, or a test that assumes a forward slash, so it is linted and its
+  # unit tests run here too, on the same pull requests as the Linux job. The suites that drive a real
+  # FFmpeg stay on Linux: there is no Valence FFmpeg for this runner to fetch from a package.
+  transcoder-windows:
+    name: Transcoder on Windows
+    runs-on: windows-latest
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - run: cargo clippy -p valence-transcoder --all-targets -- -D warnings
+
+      - run: cargo test -p valence-transcoder --lib --bins --test path_map_requests
 
   # The Rust job builds on Linux, where the desktop app's native module holds nothing but a helper.
   # Its Windows Hello code only compiles on Windows, so it is linted and built there, on the pull

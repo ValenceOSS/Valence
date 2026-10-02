@@ -118,7 +118,7 @@ The media folder is mounted `:ro` by default, which is how a media server should
 
 The requests service is the exception in the stack: it mounts the library writable, because filing what it downloads into the library is its whole purpose. It is optional, and it is the only service that does.
 
-The media service reads only the directories in `VALENCE_MEDIA_ROOTS` and writes finished encodes only into those in `VALENCE_WRITE_ROOTS`. With no write roots every encode is refused. It has no authentication of its own, which is why it listens on a socket inside the container and should never be exposed on a network you do not control.
+The media service reads only the directories in `VALENCE_MEDIA_ROOTS` and writes finished encodes only into those in `VALENCE_WRITE_ROOTS`. With no write roots every encode is refused. It has no authentication of its own, which is why it listens on a socket inside the container and should never be exposed on a network you do not control. Running natively on a Mac or Windows, it listens on `127.0.0.1` for the same reason, and with `VALENCE_PATH_MAP` set it also refuses any file outside the folders the map names.
 
 ## Webhooks
 

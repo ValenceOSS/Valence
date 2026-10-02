@@ -9,23 +9,144 @@ import {
   Headphones as HeadphonesIcon,
   UserPlus as UserPlusIcon,
 } from '@keyline-icons/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Badge } from '@ValenceUI/Badge';
 import { Button } from '@ValenceUI/Button';
 import { Callout } from '@ValenceUI/Callout';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/PanelCardAction';
+import { SharedTimeline } from '@ValenceUI/SharedTimeline';
 import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
+import { whereTheRoomIs } from '@ValenceCore/functions/whereTheRoomIs';
+import { formatDuration } from '@ValenceCore/functions/formatDuration';
+import { TOGETHER_WITHIN_SECONDS } from '@ValenceCore/functions/whoIsHoldingUp';
+import { FaceCircle } from '@ValenceScreens/components/FaceCircle/FaceCircle';
+import { PROFILE_COLOURS, profileAvatarUrl } from '@ValenceContracts/schemas/ViewerProfile';
 import { describeDrift } from '@ValenceClient/party/describeDrift';
 import { ROLE_NAMES } from '@ValenceClient/party/ROLE_NAMES';
 import { PARTY_WORDS } from '@ValenceClient/party/PARTY_WORDS';
+import { secondsBehind } from '@ValenceClient/party/secondsBehind';
 import { whoCanBeAsked } from '@ValenceClient/party/whoCanBeAsked';
+import type { Askable } from '@ValenceClient/party/whoCanBeAsked';
+import type { PartyMember } from '@ValenceContracts/schemas/WatchParty';
 import type { PartyPanelProps } from './PartyPanel.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 
 const ICONS = { watch: EyeIcon, listen: HeadphonesIcon } as const;
+
+const TICK_MS = 1000;
+
+const NO_FACE = { kind: 'initial', font: 'gilroy' } as const;
+
+/**
+ * Whether the party is together, and if not who is out of step: the badge over its timeline.
+ *
+ * Out of step means further from whoever keeps time than the room tolerates before it waits for
+ * them, so the badge and the room's own judgement agree. Only somebody actually watching counts.
+ *
+ * @param members - Everybody in the party.
+ * @param reference - Whoever is keeping time.
+ * @returns What the badge says, and whether it is a warning.
+ */
+const describeTogetherness = (
+  members: readonly PartyMember[],
+  reference: PartyMember,
+): { text: string; isTogether: boolean } => {
+  const apart = members.filter(
+    (member) =>
+      member.isWatching && Math.abs(secondsBehind(member, reference)) >= TOGETHER_WITHIN_SECONDS,
+  );
+  const [only] = apart;
+
+  if (only === undefined) {
+    return { text: say('screens.partyPanel.inSync'), isTogether: true };
+  }
+
+  if (apart.length > 1) {
+    return {
+      text: sayCount('screens.partyPanel.countOutOfStep', apart.length),
+      isTogether: false,
+    };
+  }
+
+  const behind = secondsBehind(only, reference);
+  const seconds = Math.abs(behind).toFixed(1);
+
+  return {
+    text:
+      behind > 0
+        ? say('screens.partyPanel.nameIsSecondsBehind', { name: only.name, seconds })
+        : say('screens.partyPanel.nameIsSecondsAhead', { name: only.name, seconds }),
+    isTogether: false,
+  };
+};
+
+/**
+ * Somebody's face as their profile draws it, or their initial where the party knows of no profile.
+ *
+ * @param member - Whose face.
+ * @param people - Everybody with an account here, which is where a face is read from.
+ * @returns The face.
+ */
+const faceOf = (member: PartyMember, people: readonly Askable[]) => {
+  const person = people.find((someone) => someone.id === member.profileId);
+
+  return (
+    <FaceCircle
+      name={member.name}
+      colour={person?.colour ?? PROFILE_COLOURS[0]}
+      avatar={person?.avatar ?? NO_FACE}
+      source={
+        person?.updatedAt === undefined
+          ? ''
+          : profileAvatarUrl({ id: person.id, updatedAt: person.updatedAt })
+      }
+      className="size-7 text-xs"
+    />
+  );
+};
+
+/**
+ * The instant to carry the party's reports forward to, moving on a second at a time while the
+ * party plays.
+ *
+ * Measured from the newest report rather than from this machine's clock, because the reports are
+ * stamped by the server's and the two need not agree; what has passed here since is added on.
+ *
+ * @param members - Everybody in the party, whose reports are the starting point.
+ * @param isPlaying - Whether time is passing in the party at all.
+ * @returns The instant, on the clock the reports were stamped with.
+ */
+const usePartyClock = (members: readonly PartyMember[], isPlaying: boolean): number => {
+  const newest = Math.max(0, ...members.map((member) => member.reportedAtMs));
+  const [now, setNow] = useState(() => Date.now());
+  const [since, setSince] = useState(() => ({ newest, atMs: now }));
+
+  useEffect(() => {
+    const atMs = Date.now();
+
+    setSince({ newest, atMs });
+    setNow(atMs);
+  }, [newest]);
+
+  useEffect(() => {
+    if (!isPlaying) {
+      return undefined;
+    }
+
+    const ticking = setInterval(() => {
+      setNow(Date.now());
+    }, TICK_MS);
+
+    return () => {
+      clearInterval(ticking);
+    };
+  }, [isPlaying]);
+
+  return since.newest === newest ? newest + Math.max(0, now - since.atMs) : newest;
+};
 
 /**
  * Who is in the party, what they are doing, and — for whoever is running it — the controls for
@@ -39,6 +160,8 @@ const ICONS = { watch: EyeIcon, listen: HeadphonesIcon } as const;
  * the message regardless, which is the part that matters.
  *
  * @param party - The party as the server last described it.
+ * @param durationSeconds - How long the title is, which the timeline is drawn against; without it
+ *   there is no timeline.
  * @param meConnectionId - Which member this tab is, so it can be marked.
  * @param waitingFor - Whoever the room is waiting for before it can play.
  * @param onSetRole - Called to change somebody's role.
@@ -54,6 +177,7 @@ const ICONS = { watch: EyeIcon, listen: HeadphonesIcon } as const;
  */
 const PartyPanel = ({
   party,
+  durationSeconds,
   meConnectionId,
   waitingFor = [],
   onSetRole,
@@ -74,6 +198,9 @@ const PartyPanel = ({
   const watching = party.members.filter((member) => member.isWatching).length;
   const words = PARTY_WORDS[party.kind];
   const mayAsk = me?.role === 'host' || me?.role === 'coHost';
+  const atMs = usePartyClock(party.members, party.isPlaying);
+  const together =
+    timekeeper === undefined ? null : describeTogetherness(party.members, timekeeper);
 
   const elsewhere = whoCanBeAsked(party, people);
 
@@ -90,6 +217,49 @@ const PartyPanel = ({
           )
         }
       >
+        {timekeeper === undefined ||
+        durationSeconds === undefined ||
+        durationSeconds <= 0 ? null : (
+          <div className="border-b border-[var(--surface-line)] px-4 pb-3 pt-6">
+            <SharedTimeline
+              label={say('screens.partyPanel.whereEverybodyIs')}
+              durationSeconds={durationSeconds}
+              inSyncSeconds={TOGETHER_WITHIN_SECONDS}
+              filledSeconds={whereTheRoomIs(timekeeper, atMs)}
+              elapsed={formatDuration(Math.min(whereTheRoomIs(timekeeper, atMs), durationSeconds))}
+              total={formatDuration(durationSeconds)}
+              {...(together === null
+                ? {}
+                : {
+                    status: (
+                      <Badge size="sm" tone={together.isTogether ? 'success' : 'warning'}>
+                        {together.text}
+                      </Badge>
+                    ),
+                  })}
+              people={party.members.map((member) => {
+                const position = formatDuration(
+                  Math.min(whereTheRoomIs(member, atMs), durationSeconds),
+                );
+                const drift = describeDrift(member, timekeeper);
+
+                return {
+                  id: member.connectionId,
+                  atSeconds: whereTheRoomIs(member, atMs),
+                  face: faceOf(member, people),
+                  label:
+                    drift === null
+                      ? say('screens.partyPanel.nameAtPosition', { name: member.name, position })
+                      : say('screens.partyPanel.nameAtPositionDrift', {
+                          name: member.name,
+                          position,
+                          drift,
+                        }),
+                };
+              })}
+            />
+          </div>
+        )}
         {!party.isHeld || waitingFor.length === 0 ? null : (
           <div className="border-b border-[var(--surface-line)] p-3">
             <Callout

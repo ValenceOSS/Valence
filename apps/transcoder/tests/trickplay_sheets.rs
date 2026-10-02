@@ -5,6 +5,7 @@
 //! browser can draw.
 
 #![allow(clippy::expect_used, clippy::unwrap_used)]
+#![cfg(unix)]
 
 use std::path::PathBuf;
 use std::process::Command;

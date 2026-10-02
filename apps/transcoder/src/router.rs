@@ -144,13 +144,16 @@ impl AppState {
     /// request arriving is exactly what must not happen.
     ///
     /// A parent component anywhere in the path is refused outright rather than resolved, because a
-    /// prefix test on a path holding `..` proves nothing about where the file lands.
+    /// prefix test on a path holding `..` proves nothing about where the file lands. A drive letter
+    /// is not one: every Windows path starts with one, and refusing it refused every write there.
     #[must_use]
     pub fn is_writable(&self, path: &Path) -> bool {
-        if path
-            .components()
-            .any(|component| !matches!(component, Component::Normal(_) | Component::RootDir))
-        {
+        if path.components().any(|component| {
+            !matches!(
+                component,
+                Component::Normal(_) | Component::RootDir | Component::Prefix(_)
+            )
+        }) {
             return false;
         }
 
@@ -160,11 +163,13 @@ impl AppState {
 
 #[derive(Debug, Deserialize)]
 pub struct ProbeRequest {
+    #[serde(deserialize_with = "crate::path_map::deserialize")]
     pub path: String,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct FileQuery {
+    #[serde(deserialize_with = "crate::path_map::deserialize")]
     pub path: String,
 }
 
@@ -174,6 +179,7 @@ pub struct FileQuery {
 /// same way as a word: with the service's own error rather than the extractor's.
 #[derive(Debug, Deserialize)]
 pub struct AudioQuery {
+    #[serde(deserialize_with = "crate::path_map::deserialize")]
     pub path: String,
     pub kbps: String,
 }
@@ -1627,6 +1633,7 @@ async fn start_subtitle(
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RenditionPath {
+    #[serde(deserialize_with = "crate::path_map::deserialize")]
     pub output_path: String,
 }
 
@@ -2441,6 +2448,17 @@ mod tests {
     #[test]
     fn refuses_a_relative_path_that_could_mean_anywhere() {
         assert!(!writing_to(&["/media"]).is_writable(Path::new("media/Films/X/a.mkv")));
+    }
+
+    /// Every Windows path starts with a drive, which is a component of its own.
+    #[cfg(windows)]
+    #[test]
+    fn writes_into_a_root_on_a_windows_drive() {
+        assert!(
+            writing_to(&[r"D:\Media"]).is_writable(Path::new(r"D:\Media\Films\X\.valence\a.mkv"))
+        );
+        assert!(!writing_to(&[r"D:\Media"]).is_writable(Path::new(r"D:\Media\..\Windows\a.mkv")));
+        assert!(!writing_to(&[r"D:\Media"]).is_writable(Path::new(r"C:\Media\a.mkv")));
     }
 
     #[test]

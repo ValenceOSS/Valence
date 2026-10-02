@@ -5229,6 +5229,14 @@ const ENGLISH = {
   'screens.pageReader.twoPages': 'Two',
   'screens.pageReader.width': 'Width',
   'screens.partOfCollections.partOf': 'Part of',
+  'screens.partyPanel.countOutOfStep.one': '{count} out of step',
+  'screens.partyPanel.countOutOfStep.other': '{count} out of step',
+  'screens.partyPanel.inSync': 'In sync',
+  'screens.partyPanel.nameAtPosition': '{name}, at {position}',
+  'screens.partyPanel.nameAtPositionDrift': '{name}, at {position}, {drift}',
+  'screens.partyPanel.nameIsSecondsAhead': '{name} is {seconds}s ahead',
+  'screens.partyPanel.nameIsSecondsBehind': '{name} is {seconds}s behind',
+  'screens.partyPanel.whereEverybodyIs': 'Where everybody is',
   'screens.passkeys.isPasskeySupported.passkeysAreAddedFromValenceIn':
     'Passkeys are added from Valence in your browser.',
   'screens.passkeys.isPasskeySupported.passkeysAreNotAvailableHere':

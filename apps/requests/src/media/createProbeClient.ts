@@ -19,9 +19,14 @@ const PROBE_TIMEOUT_MS = 30_000;
  *
  * @param address - Where the transcoder is, or empty where there is none.
  * @param fetcher - How to make the request.
+ * @param secret - What the transcoder asks every caller to present, or empty where it asks nothing.
  * @returns A function that probes one file.
  */
-const createProbeClient = (address: string, fetcher: typeof fetch = fetch): ProbeClient => {
+const createProbeClient = (
+  address: string,
+  fetcher: typeof fetch = fetch,
+  secret = '',
+): ProbeClient => {
   if (address === '') {
     return () => Promise.resolve(null);
   }
@@ -30,7 +35,10 @@ const createProbeClient = (address: string, fetcher: typeof fetch = fetch): Prob
     try {
       const answer = await fetcher(`${address}/probe`, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: {
+          'content-type': 'application/json',
+          ...(secret === '' ? {} : { authorization: `Bearer ${secret}` }),
+        },
         body: JSON.stringify({ path }),
         signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
       });

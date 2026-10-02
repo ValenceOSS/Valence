@@ -394,6 +394,7 @@ type StreamFetchLike = (url: string, init?: HttpRequestInit) => Promise<Streamed
 
 type CreateTranscoderClientOptions = {
   baseUrl: string;
+  secret?: string;
   fetchImpl?: FetchLike;
   streamFetchImpl?: StreamFetchLike;
 };
@@ -483,6 +484,7 @@ class TranscoderError extends Error {
  */
 const createTranscoderClient = ({
   baseUrl,
+  secret = '',
   fetchImpl,
   streamFetchImpl,
 }: CreateTranscoderClientOptions): TranscoderWithQueueControl => {
@@ -490,10 +492,27 @@ const createTranscoderClient = ({
   const origin = socketPath === null ? baseUrl : 'http://transcoder.local';
   const wsOrigin = origin.replace(/^http/, 'ws');
   const wsDispatcher = socketPath === null ? undefined : new Agent({ connect: { socketPath } });
-  const call2 = fetchImpl ?? (socketPath === null ? httpFetch : createSocketFetch(socketPath));
+  const presenting: Record<string, string> =
+    secret === '' ? {} : { authorization: `Bearer ${secret}` };
 
-  const callSlowly =
-    fetchImpl ?? (socketPath === null ? httpFetch : createSocketFetch(socketPath, NO_TIMEOUT));
+  /**
+   * Sends the shared secret with every request a fetcher makes, so no call can leave it off, and
+   * leaves the fetcher as it was where there is no secret to send.
+   */
+  const presentingTheSecret = <TResponse>(
+    fetcher: (url: string, init?: HttpRequestInit) => Promise<TResponse>,
+  ): ((url: string, init?: HttpRequestInit) => Promise<TResponse>) =>
+    secret === ''
+      ? fetcher
+      : (url, init) => fetcher(url, { ...init, headers: { ...init?.headers, ...presenting } });
+
+  const call2 = presentingTheSecret(
+    fetchImpl ?? (socketPath === null ? httpFetch : createSocketFetch(socketPath)),
+  );
+
+  const callSlowly = presentingTheSecret(
+    fetchImpl ?? (socketPath === null ? httpFetch : createSocketFetch(socketPath, NO_TIMEOUT)),
+  );
   const call = async (path: string, init?: HttpRequestInit): Promise<HttpResponse> => {
     const response = await call2(`${origin}${path}`, init);
 
@@ -504,7 +523,7 @@ const createTranscoderClient = ({
     return response;
   };
 
-  const streamFrom = streamFetchImpl ?? createStreamFetch(socketPath);
+  const streamFrom = presentingTheSecret(streamFetchImpl ?? createStreamFetch(socketPath));
 
   /**
    * Wraps an open WebSocket so callers see only what the monitor relay needs, never the raw socket.
@@ -536,10 +555,10 @@ const createTranscoderClient = ({
       let socket: UndiciWebSocket;
 
       try {
-        socket = new UndiciWebSocket(
-          `${wsOrigin}/monitor/stream`,
-          wsDispatcher === undefined ? undefined : { dispatcher: wsDispatcher },
-        );
+        socket = new UndiciWebSocket(`${wsOrigin}/monitor/stream`, {
+          headers: presenting,
+          ...(wsDispatcher === undefined ? {} : { dispatcher: wsDispatcher }),
+        });
       } catch {
         resolve(null);
 

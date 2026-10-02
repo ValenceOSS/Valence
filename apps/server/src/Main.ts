@@ -896,7 +896,10 @@ const bookService = createDatabaseBookService(db, env.IMAGE_CACHE_DIR, {
   picture: (url) => musicWeb.bytes(url),
 });
 
-const transcoder = createTranscoderClient({ baseUrl: env.TRANSCODER_URL });
+const transcoder = createTranscoderClient({
+  baseUrl: env.TRANSCODER_URL,
+  secret: env.TRANSCODER_SECRET,
+});
 
 const musicArtworkDir = join(env.IMAGE_CACHE_DIR, 'music');
 

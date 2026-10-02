@@ -22,15 +22,15 @@ You therefore need no drivers inside the container for Intel or AMD. You need th
 
 The Settings page offers these backends. The **Where it works** column is what the options themselves say, and **Container support** is what the repository configures.
 
-| Backend      | Hardware                            | Where it works               | Container support in the shipped compose file           |
-| ------------ | ----------------------------------- | ---------------------------- | ------------------------------------------------------- |
-| VAAPI        | Intel and AMD                       | Linux                        | Yes. Passed through with `/dev/dri`.                    |
-| QuickSync    | Intel                               | Linux                        | Yes. Passed through with `/dev/dri`.                    |
-| AMD          | AMD, through VAAPI in the container | Linux                        | Yes through VAAPI, using the bundled `radeonsi` driver. |
-| NVENC        | NVIDIA                              | Linux with the NVIDIA driver | Not configured. See [NVIDIA](#nvidia).                  |
-| AMF          | AMD, needs the proprietary driver   | Depends on the host          | Not configured. Use VAAPI on Linux.                     |
-| VideoToolbox | Apple                               | macOS, running natively      | Not reachable from inside a container.                  |
-| RKMPP        | Rockchip                            | Rockchip boards              | Not configured.                                         |
+| Backend      | Hardware                            | Where it works                                     | Container support in the shipped compose file                                                                                                                                   |
+| ------------ | ----------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| VAAPI        | Intel and AMD                       | Linux                                              | Yes. Passed through with `/dev/dri`.                                                                                                                                            |
+| QuickSync    | Intel                               | Linux, and Windows natively                        | Yes on Linux. Passed through with `/dev/dri`. On Windows the transcoder runs natively instead: see [Hardware transcoding on Windows](/install/hardware-transcoding-on-windows). |
+| AMD          | AMD, through VAAPI in the container | Linux                                              | Yes through VAAPI, using the bundled `radeonsi` driver.                                                                                                                         |
+| NVENC        | NVIDIA                              | Linux with the NVIDIA driver, and Windows natively | Not configured. See [NVIDIA](#nvidia), or [Hardware transcoding on Windows](/install/hardware-transcoding-on-windows).                                                          |
+| AMF          | AMD, needs the proprietary driver   | Windows natively                                   | Not configured. Use VAAPI on Linux. On Windows the transcoder runs natively: see [Hardware transcoding on Windows](/install/hardware-transcoding-on-windows).                   |
+| VideoToolbox | Apple                               | macOS, running natively                            | Not reachable from inside a container. The transcoder runs natively instead: see [Hardware transcoding on a Mac](/install/hardware-transcoding-on-a-mac).                       |
+| RKMPP        | Rockchip                            | Rockchip boards                                    | Not configured.                                                                                                                                                                 |
 
 Several of these support AV1 encoding. Which codecs your card can encode depends on the card.
 
@@ -68,7 +68,7 @@ environment:
 
 ### If there is no GPU
 
-**Delete both `devices` and `group_add`.** A device that is not there stops the container from starting at all, and the failure does not say why. This applies to virtual machines, most cloud servers, and Docker Desktop on macOS and Windows.
+**Delete both `devices` and `group_add`.** A device that is not there stops the container from starting at all, and the failure does not say why. This applies to virtual machines, most cloud servers, and Docker Desktop. With the transcoder running natively, `compose.native-transcoder.yaml` removes them for you: see [Hardware transcoding on a Mac](/install/hardware-transcoding-on-a-mac) and [Hardware transcoding on Windows](/install/hardware-transcoding-on-windows).
 
 ## NVIDIA
 

@@ -20982,6 +20982,46 @@
     "context": "The heading above the collections a film or programme belongs to, on its page; each collection is a button below it."
   },
   {
+    "handler": "screens.partyPanel.countOutOfStep.one",
+    "text": "{count} out of step",
+    "context": "A badge on a watch or listening party when people in it are at different points. {count} is how many."
+  },
+  {
+    "handler": "screens.partyPanel.countOutOfStep.other",
+    "text": "{count} out of step",
+    "context": "A badge on a watch or listening party when people in it are at different points. {count} is how many."
+  },
+  {
+    "handler": "screens.partyPanel.inSync",
+    "text": "In sync",
+    "context": "A badge on a watch or listening party when everybody in it is at the same point."
+  },
+  {
+    "handler": "screens.partyPanel.nameAtPosition",
+    "text": "{name}, at {position}",
+    "context": "The tooltip on a member's face on a party's timeline. {name} is who, {position} is where they are, as a clock such as 1:07:20."
+  },
+  {
+    "handler": "screens.partyPanel.nameAtPositionDrift",
+    "text": "{name}, at {position}, {drift}",
+    "context": "The tooltip on a member's face on a party's timeline when they are out of step. {name} is who, {position} is where they are as a clock, {drift} is how far behind or ahead, such as \"4.0s behind\"."
+  },
+  {
+    "handler": "screens.partyPanel.nameIsSecondsAhead",
+    "text": "{name} is {seconds}s ahead",
+    "context": "A badge on a watch or listening party when one member has got out of step ahead. {name} is who, {seconds} is how far, to one decimal place."
+  },
+  {
+    "handler": "screens.partyPanel.nameIsSecondsBehind",
+    "text": "{name} is {seconds}s behind",
+    "context": "A badge on a watch or listening party when one member has fallen out of step behind. {name} is who, {seconds} is how far, to one decimal place."
+  },
+  {
+    "handler": "screens.partyPanel.whereEverybodyIs",
+    "text": "Where everybody is",
+    "context": "Read by assistive technology: the bar in a watch or listening party showing each member's face at the point they have reached."
+  },
+  {
     "handler": "screens.passkeys.isPasskeySupported.passkeysAreAddedFromValenceIn",
     "text": "Passkeys are added from Valence in your browser.",
     "context": "Shown in the passkeys (from `isPasskeySupported`)."

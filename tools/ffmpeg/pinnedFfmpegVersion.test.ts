@@ -5,7 +5,7 @@ import { pinnedFfmpegVersion } from './pinnedFfmpegVersion';
 
 const ROOT = join(import.meta.dirname, '..', '..');
 
-const CI_VERSION = /^\s*VALENCE_FFMPEG_VERSION:\s*(?<version>\S+)\s*$/mu;
+const CI_VERSIONS = /^\s*VALENCE_FFMPEG_VERSION:\s*(?<version>\S+)\s*$/gmu;
 
 describe('pinnedFfmpegVersion', () => {
   it('reads the version the image is pinned to', () => {
@@ -27,10 +27,17 @@ describe('pinnedFfmpegVersion', () => {
     );
   });
 
-  it('agrees with the version CI installs', () => {
-    const dockerfile = readFileSync(join(ROOT, 'Dockerfile'), 'utf8');
-    const workflow = readFileSync(join(ROOT, '.github', 'workflows', 'media-pipeline.yml'), 'utf8');
+  it.each(['media-pipeline.yml', 'release.yml'])(
+    'agrees with every version %s installs',
+    (name) => {
+      const dockerfile = readFileSync(join(ROOT, 'Dockerfile'), 'utf8');
+      const workflow = readFileSync(join(ROOT, '.github', 'workflows', name), 'utf8');
+      const versions = [...workflow.matchAll(CI_VERSIONS)].map(
+        (found) => found.groups?.['version'],
+      );
 
-    expect(CI_VERSION.exec(workflow)?.groups?.['version']).toBe(pinnedFfmpegVersion(dockerfile));
-  });
+      expect(versions.length).toBeGreaterThan(0);
+      expect(new Set(versions)).toEqual(new Set([pinnedFfmpegVersion(dockerfile)]));
+    },
+  );
 });

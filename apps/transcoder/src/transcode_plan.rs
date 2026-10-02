@@ -18,6 +18,27 @@ pub enum HardwareAccel {
     Rkmpp,
 }
 
+/// Which side of the line a machine is on, as far as a hardware pipeline cares.
+///
+/// The backends split along this line and no other. On Windows, `QSV` and `AMF` sit on Direct3D 11,
+/// which every vendor's driver there provides; everywhere else `QSV` sits on `VAAPI` and `AMF` has
+/// no pipeline at all. Passed in rather than read inside, so a test on a Mac can ask what a Windows
+/// machine would run (VAL-338).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Platform {
+    Unix,
+    Windows,
+}
+
+impl Platform {
+    /// The platform this binary was built for.
+    pub const CURRENT: Self = if cfg!(windows) {
+        Self::Windows
+    } else {
+        Self::Unix
+    };
+}
+
 impl HardwareAccel {
     /// What an operator calls this backend, for a line somebody has to read.
     ///
@@ -301,6 +322,7 @@ pub enum Track {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionSpec {
+    #[serde(deserialize_with = "crate::path_map::deserialize")]
     pub input_path: String,
     pub start_seconds: u32,
     pub segment_seconds: u32,
@@ -590,6 +612,22 @@ tonemap=tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv",
 /// filter rather than a filename.
 #[must_use]
 pub fn escape_filter_path(path: &str) -> String {
+    escape_filter_path_on(Platform::CURRENT, path)
+}
+
+/// Escapes a path for use inside the `subtitles` filter, on a platform.
+///
+/// On Windows every path has a colon after its drive letter and a backslash between its folders,
+/// and both would have to survive two rounds of escaping. Windows takes forward slashes as readily
+/// as backslashes, so they are turned round first and only the drive's colon is left to escape,
+/// which is what Jellyfin does with the same filter.
+#[must_use]
+pub fn escape_filter_path_on(platform: Platform, path: &str) -> String {
+    let path = match platform {
+        Platform::Windows => path.replace('\\', "/"),
+        Platform::Unix => path.to_owned(),
+    };
+
     path.replace('\\', "\\\\")
         .replace(':', "\\:")
         .replace('\'', "\\'")
@@ -740,7 +778,7 @@ fn composited_graph(
         return None;
     };
 
-    let overlay = format!("{}=eof_action=pass:repeatlast=0", pipeline.overlay);
+    let overlay = format!("{}=eof_action=pass:repeatlast=0", pipeline.overlay?);
     let format = pipeline.overlay_format;
     let upload = pipeline.overlay_upload;
 
@@ -1080,7 +1118,10 @@ pub struct HardwarePipeline {
     /// which is what these filters are for. Only `overlay_videotoolbox` is not
     /// upstream — it comes from a patch flux-ffmpeg carries, so a stock build
     /// will not have it and the probe will say so.
-    pub overlay: &'static str,
+    ///
+    /// `None` where the backend has no compositor at all, which is `AMF`: Direct3D 11 frames have
+    /// no overlay filter, so a subtitle comes down to be drawn and goes back up.
+    pub overlay: Option<&'static str>,
     /// The pixel format the overlay has to be in before it is uploaded.
     ///
     /// Not the same everywhere: `overlay_cuda` composites in `yuva420p` and
@@ -1213,12 +1254,29 @@ impl HardwarePipeline {
 }
 
 impl HardwareAccel {
-    /// The pipeline this backend can run end to end, if it can run one.
+    /// The pipeline this backend can run end to end on this machine, if it can run one.
+    #[must_use]
+    pub fn pipeline(self) -> Option<HardwarePipeline> {
+        self.pipeline_on(Platform::CURRENT)
+    }
+
+    /// The pipeline this backend can run end to end on a platform, if it can run one.
     ///
-    /// `Amf` has none: its `-hwaccel` here is `d3d11va`, which is Windows only,
-    /// and AMD on Linux goes through `VAAPI` instead: AMF
-    /// there wants the closed `amdgpu-pro` driver. It keeps working exactly as
-    /// before, on the software filter chain.
+    /// `Amf` has one on Windows only. Its `-hwaccel` is `d3d11va`, which is Windows only, and AMD
+    /// on Linux goes through `VAAPI` instead: AMF there wants the closed `amdgpu-pro` driver.
+    ///
+    /// On Windows, `QSV` and `AMF` both decode on Direct3D 11, as Jellyfin's "Prefer OS native DXVA
+    /// decoders" does by default. `QSV` maps those frames onto a `QSV` device derived from the same
+    /// adapter, exactly as it maps `VAAPI` surfaces on Linux, and `AMF` scales them with `vpp_amf`,
+    /// which takes Direct3D 11 frames and hands the encoder `AMF` surfaces. `h264_amf` takes those
+    /// or Direct3D 11 frames as readily as system memory, and is marked as encoding from the
+    /// device so a chain that ends on the card is never handed a system-memory format after it,
+    /// which is what puts a software scaler behind the upload. **No Windows machine
+    /// has run either.** They are here on the same terms as `Rkmpp` below: the build ships the
+    /// filters, a wrong value aborts the transcode and software takes over, and the rejection is
+    /// reported. Neither has a tone mapper of its own yet: `vpp_qsv`'s `tonemap` and `vpp_amf`'s
+    /// colour conversion would both have to run after the mapping rather than before it, which is
+    /// where [`device_chain`] puts one, so HDR is converted in software on both.
     ///
     /// `Rkmpp` decodes to `drm_prime` and scales with `scale_rkrga`, the RGA 2D
     /// block that `--enable-rkrga` is in the build for. **No Rockchip board has
@@ -1232,103 +1290,16 @@ impl HardwareAccel {
     /// guessed, and a wrong one fails loudly: the transcode aborts, software
     /// takes over, and the rejection is reported. See VAL-103.
     #[must_use]
-    pub fn pipeline(self) -> Option<HardwarePipeline> {
-        match self {
-            Self::VideoToolbox => Some(HardwarePipeline {
-                output_format: "videotoolbox_vld",
-                scaler: "scale_vt",
-                download_format: "nv12",
-                wide_download_format: "p010le",
-                overlay: "overlay_videotoolbox",
-                overlay_format: "bgra",
-                overlay_upload: "hwupload",
-                decodes_with: "videotoolbox",
-                decoded_format: "videotoolbox_vld",
-                maps_onto_device: None,
-                tone_map: Some(
-                    "tonemap_videotoolbox=format=nv12:p=bt709:t=bt709:m=bt709:tonemap=bt2390",
-                ),
-                encodes_from_device: false,
-                narrows_to_eight_bit: None,
-                upload: "hwupload",
-                takes_device_frames: false,
-                skips_unreferenced_frames: false,
-            }),
-            Self::Nvenc => Some(HardwarePipeline {
-                output_format: "cuda",
-                scaler: "scale_cuda",
-                download_format: "nv12",
-                wide_download_format: "p010le",
-                overlay: "overlay_cuda",
-                overlay_format: "yuva420p",
-                overlay_upload: "hwupload=derive_device=cuda",
-                decodes_with: "cuda",
-                decoded_format: "cuda",
-                maps_onto_device: None,
-                tone_map: Some(
-                    "tonemap_cuda=format=yuv420p:p=bt709:t=bt709:m=bt709:tonemap=bt2390",
-                ),
-                encodes_from_device: false,
-                narrows_to_eight_bit: Some("format=nv12"),
-                upload: "hwupload",
-                takes_device_frames: true,
-                skips_unreferenced_frames: true,
-            }),
-            Self::Qsv => Some(HardwarePipeline {
-                output_format: "qsv",
-                scaler: "vpp_qsv",
-                download_format: "nv12",
-                wide_download_format: "p010le",
-                overlay: "overlay_qsv",
-                overlay_format: "bgra",
-                overlay_upload: "hwupload=derive_device=qsv:extra_hw_frames=64",
-                decodes_with: "vaapi",
-                decoded_format: "vaapi",
-                maps_onto_device: Some("hwmap=derive_device=qsv,format=qsv"),
-                tone_map: Some("tonemap_vaapi=format=nv12:p=bt709:t=bt709:m=bt709"),
-                encodes_from_device: true,
-                narrows_to_eight_bit: Some("format=nv12"),
-                upload: "hwupload=extra_hw_frames=64",
-                takes_device_frames: true,
-                skips_unreferenced_frames: false,
-            }),
-            Self::Vaapi => Some(HardwarePipeline {
-                output_format: "vaapi",
-                scaler: "scale_vaapi",
-                download_format: "nv12",
-                wide_download_format: "p010le",
-                overlay: "overlay_vaapi",
-                overlay_format: "bgra",
-                overlay_upload: "hwupload=derive_device=vaapi",
-                decodes_with: "vaapi",
-                decoded_format: "vaapi",
-                maps_onto_device: None,
-                tone_map: Some("tonemap_vaapi=format=nv12:p=bt709:t=bt709:m=bt709"),
-                encodes_from_device: true,
-                narrows_to_eight_bit: Some("format=nv12"),
-                upload: "hwupload",
-                takes_device_frames: true,
-                skips_unreferenced_frames: false,
-            }),
-            Self::Rkmpp => Some(HardwarePipeline {
-                output_format: "drm_prime",
-                scaler: "scale_rkrga",
-                download_format: "nv12",
-                wide_download_format: "p010le",
-                overlay: "overlay_rkrga",
-                overlay_format: "bgra",
-                overlay_upload: "hwupload=derive_device=rkmpp",
-                decodes_with: "rkmpp",
-                decoded_format: "drm_prime",
-                maps_onto_device: None,
-                tone_map: None,
-                encodes_from_device: false,
-                narrows_to_eight_bit: Some("format=nv12"),
-                upload: "hwupload",
-                takes_device_frames: false,
-                skips_unreferenced_frames: false,
-            }),
-            Self::None | Self::Amf => None,
+    pub fn pipeline_on(self, platform: Platform) -> Option<HardwarePipeline> {
+        match (self, platform) {
+            (Self::VideoToolbox, _) => Some(VIDEOTOOLBOX),
+            (Self::Nvenc, _) => Some(NVENC),
+            (Self::Qsv, Platform::Windows) => Some(QSV_ON_WINDOWS),
+            (Self::Qsv, Platform::Unix) => Some(QSV_ON_LINUX),
+            (Self::Vaapi, _) => Some(VAAPI),
+            (Self::Amf, Platform::Windows) => Some(AMF_ON_WINDOWS),
+            (Self::Rkmpp, _) => Some(RKMPP),
+            (Self::None, _) | (Self::Amf, Platform::Unix) => None,
         }
     }
 
@@ -1359,22 +1330,47 @@ impl HardwareAccel {
         matches!(self, Self::Vaapi)
     }
 
-    /// The device arguments this backend needs before the input.
+    /// The device arguments this backend needs before the input, on this machine.
+    #[must_use]
+    pub fn device_arguments(self, device: &str) -> Vec<String> {
+        self.device_arguments_on(Platform::CURRENT, device)
+    }
+
+    /// The device arguments this backend needs before the input, on a platform.
     ///
     /// `VAAPI` has to be pointed at a render node. `QSV` on Linux is a layer
     /// over `VAAPI`, so its device is derived from one rather than opened
     /// separately — that shared pool is what lets decode, scale and encode
     /// pass frames without copying. `NVENC` and `VideoToolbox` find their own.
+    ///
+    /// On Windows the same holds with Direct3D 11 in place of `VAAPI`, and the render node means
+    /// nothing. The adapter is chosen by vendor instead, so a machine with an Intel iGPU beside an
+    /// NVIDIA card opens the Intel one for `QSV` and an AMD machine the AMD one for `AMF`, whatever
+    /// order Windows lists them in.
     #[must_use]
-    pub fn device_arguments(self, device: &str) -> Vec<String> {
-        match self {
-            Self::Vaapi => vec![
+    pub fn device_arguments_on(self, platform: Platform, device: &str) -> Vec<String> {
+        match (self, platform) {
+            (Self::Qsv, Platform::Windows) => vec![
+                "-init_hw_device".to_owned(),
+                format!("d3d11va=dx:,vendor_id={INTEL}"),
+                "-init_hw_device".to_owned(),
+                "qsv=qs@dx".to_owned(),
+                "-filter_hw_device".to_owned(),
+                "qs".to_owned(),
+            ],
+            (Self::Amf, Platform::Windows) => vec![
+                "-init_hw_device".to_owned(),
+                format!("d3d11va=dx:,vendor_id={AMD}"),
+                "-filter_hw_device".to_owned(),
+                "dx".to_owned(),
+            ],
+            (Self::Vaapi, _) => vec![
                 "-init_hw_device".to_owned(),
                 format!("vaapi=va:{device}"),
                 "-filter_hw_device".to_owned(),
                 "va".to_owned(),
             ],
-            Self::Qsv => vec![
+            (Self::Qsv, Platform::Unix) => vec![
                 "-init_hw_device".to_owned(),
                 format!("vaapi=va:{device},driver=iHD"),
                 "-init_hw_device".to_owned(),
@@ -1407,6 +1403,13 @@ impl HardwareAccel {
     /// looking exactly like a card that could not do it.
     #[must_use]
     pub fn filter_device_arguments(self, device: &str) -> Vec<String> {
+        self.filter_device_arguments_on(Platform::CURRENT, device)
+    }
+
+    /// The device arguments a filter graph needs when its frames start in software, on a
+    /// platform. See [`Self::filter_device_arguments`].
+    #[must_use]
+    pub fn filter_device_arguments_on(self, platform: Platform, device: &str) -> Vec<String> {
         match self {
             Self::VideoToolbox => vec![
                 "-init_hw_device".to_owned(),
@@ -1420,10 +1423,156 @@ impl HardwareAccel {
                 "-filter_hw_device".to_owned(),
                 "cu".to_owned(),
             ],
-            _ => self.device_arguments(device),
+            _ => self.device_arguments_on(platform, device),
         }
     }
 }
+
+/// The pipeline for `VideoToolbox` on a Mac.
+const VIDEOTOOLBOX: HardwarePipeline = HardwarePipeline {
+    output_format: "videotoolbox_vld",
+    scaler: "scale_vt",
+    download_format: "nv12",
+    wide_download_format: "p010le",
+    overlay: Some("overlay_videotoolbox"),
+    overlay_format: "bgra",
+    overlay_upload: "hwupload",
+    decodes_with: "videotoolbox",
+    decoded_format: "videotoolbox_vld",
+    maps_onto_device: None,
+    tone_map: Some("tonemap_videotoolbox=format=nv12:p=bt709:t=bt709:m=bt709:tonemap=bt2390"),
+    encodes_from_device: false,
+    narrows_to_eight_bit: None,
+    upload: "hwupload",
+    takes_device_frames: false,
+    skips_unreferenced_frames: false,
+};
+
+/// The pipeline for `NVENC` on an NVIDIA card, on Linux and Windows alike.
+const NVENC: HardwarePipeline = HardwarePipeline {
+    output_format: "cuda",
+    scaler: "scale_cuda",
+    download_format: "nv12",
+    wide_download_format: "p010le",
+    overlay: Some("overlay_cuda"),
+    overlay_format: "yuva420p",
+    overlay_upload: "hwupload=derive_device=cuda",
+    decodes_with: "cuda",
+    decoded_format: "cuda",
+    maps_onto_device: None,
+    tone_map: Some("tonemap_cuda=format=yuv420p:p=bt709:t=bt709:m=bt709:tonemap=bt2390"),
+    encodes_from_device: false,
+    narrows_to_eight_bit: Some("format=nv12"),
+    upload: "hwupload",
+    takes_device_frames: true,
+    skips_unreferenced_frames: true,
+};
+
+/// The pipeline for `QSV` on Windows, over Direct3D 11.
+const QSV_ON_WINDOWS: HardwarePipeline = HardwarePipeline {
+    output_format: "qsv",
+    scaler: "vpp_qsv",
+    download_format: "nv12",
+    wide_download_format: "p010le",
+    overlay: Some("overlay_qsv"),
+    overlay_format: "bgra",
+    overlay_upload: "hwupload=derive_device=qsv:extra_hw_frames=64",
+    decodes_with: "d3d11va",
+    decoded_format: "d3d11",
+    maps_onto_device: Some("hwmap=derive_device=qsv,format=qsv"),
+    tone_map: None,
+    encodes_from_device: true,
+    narrows_to_eight_bit: Some("format=nv12"),
+    upload: "hwupload=extra_hw_frames=64",
+    takes_device_frames: true,
+    skips_unreferenced_frames: false,
+};
+
+/// The pipeline for `QSV` on Linux, over `VAAPI`.
+const QSV_ON_LINUX: HardwarePipeline = HardwarePipeline {
+    output_format: "qsv",
+    scaler: "vpp_qsv",
+    download_format: "nv12",
+    wide_download_format: "p010le",
+    overlay: Some("overlay_qsv"),
+    overlay_format: "bgra",
+    overlay_upload: "hwupload=derive_device=qsv:extra_hw_frames=64",
+    decodes_with: "vaapi",
+    decoded_format: "vaapi",
+    maps_onto_device: Some("hwmap=derive_device=qsv,format=qsv"),
+    tone_map: Some("tonemap_vaapi=format=nv12:p=bt709:t=bt709:m=bt709"),
+    encodes_from_device: true,
+    narrows_to_eight_bit: Some("format=nv12"),
+    upload: "hwupload=extra_hw_frames=64",
+    takes_device_frames: true,
+    skips_unreferenced_frames: false,
+};
+
+/// The pipeline for `VAAPI` on Intel and AMD under Linux.
+const VAAPI: HardwarePipeline = HardwarePipeline {
+    output_format: "vaapi",
+    scaler: "scale_vaapi",
+    download_format: "nv12",
+    wide_download_format: "p010le",
+    overlay: Some("overlay_vaapi"),
+    overlay_format: "bgra",
+    overlay_upload: "hwupload=derive_device=vaapi",
+    decodes_with: "vaapi",
+    decoded_format: "vaapi",
+    maps_onto_device: None,
+    tone_map: Some("tonemap_vaapi=format=nv12:p=bt709:t=bt709:m=bt709"),
+    encodes_from_device: true,
+    narrows_to_eight_bit: Some("format=nv12"),
+    upload: "hwupload",
+    takes_device_frames: true,
+    skips_unreferenced_frames: false,
+};
+
+/// The pipeline for `AMF` on an AMD card under Windows, over Direct3D 11.
+const AMF_ON_WINDOWS: HardwarePipeline = HardwarePipeline {
+    output_format: "d3d11",
+    scaler: "vpp_amf",
+    download_format: "nv12",
+    wide_download_format: "p010le",
+    overlay: None,
+    overlay_format: "bgra",
+    overlay_upload: "hwupload",
+    decodes_with: "d3d11va",
+    decoded_format: "d3d11",
+    maps_onto_device: None,
+    tone_map: None,
+    encodes_from_device: true,
+    narrows_to_eight_bit: Some("format=nv12"),
+    upload: "hwupload",
+    takes_device_frames: true,
+    skips_unreferenced_frames: false,
+};
+
+/// The pipeline for `RKMPP` on a Rockchip board.
+const RKMPP: HardwarePipeline = HardwarePipeline {
+    output_format: "drm_prime",
+    scaler: "scale_rkrga",
+    download_format: "nv12",
+    wide_download_format: "p010le",
+    overlay: Some("overlay_rkrga"),
+    overlay_format: "bgra",
+    overlay_upload: "hwupload=derive_device=rkmpp",
+    decodes_with: "rkmpp",
+    decoded_format: "drm_prime",
+    maps_onto_device: None,
+    tone_map: None,
+    encodes_from_device: false,
+    narrows_to_eight_bit: Some("format=nv12"),
+    upload: "hwupload",
+    takes_device_frames: false,
+    skips_unreferenced_frames: false,
+};
+
+/// The PCI vendor Direct3D 11 is asked for when `QSV` needs an adapter.
+const INTEL: &str = "0x8086";
+
+/// The PCI vendor Direct3D 11 is asked for when `AMF` needs an adapter.
+const AMD: &str = "0x1002";
 
 /// How hard each encoder family is asked to work, on its own scale.
 ///
@@ -2446,9 +2595,9 @@ mod tests {
         composited_graph, filter_name, fitted_size, force_key_frames_argument,
         forced_idr_arguments, frame_route, keeps_frames_on_the_gpu, rate_control_arguments,
         software_equivalent, takes_ten_bit, tone_map_format, AudioAction, AudioCarry,
-        DeviceFilters, FrameRoute, HardwareAccel, SegmentContainer, SegmentStart, SessionSpec,
-        SubtitleAction, ToneMapping, Track, TrackCarry, TranscodePlan, VideoAction, DEFAULT_DEVICE,
-        TEXT_OVERLAY_FPS,
+        DeviceFilters, FrameRoute, HardwareAccel, Platform, SegmentContainer, SegmentStart,
+        SessionSpec, SubtitleAction, ToneMapping, Track, TrackCarry, TranscodePlan, VideoAction,
+        DEFAULT_DEVICE, TEXT_OVERLAY_FPS,
     };
     use crate::media::ColourMetadata;
 
@@ -2873,6 +3022,7 @@ mod tests {
     /// "VPP tone mapping" turns on. Without it every HDR film came off the
     /// device to be converted and went back up, and that round trip is where
     /// 2160p previews were failing.
+    #[cfg(unix)]
     #[test]
     fn converts_hdr_on_the_device_on_qsv_rather_than_coming_down_for_it() {
         let spec = SessionSpec {
@@ -2932,6 +3082,7 @@ mod tests {
     }
 
     /// A backend that keeps its frames still says so.
+    #[cfg(unix)]
     #[test]
     fn still_decodes_on_the_device_where_the_chain_can_take_its_frames() {
         let spec = on_gpu(HardwareAccel::Qsv);
@@ -3844,6 +3995,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
         assert!(keeps_frames_on_the_gpu_of(&on_gpu(HardwareAccel::Rkmpp)));
     }
 
+    #[cfg(unix)]
     #[test]
     fn leaves_backends_with_no_pipeline_alone() {
         for accel in [HardwareAccel::Amf, HardwareAccel::None] {
@@ -3952,6 +4104,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
     /// The QSV decoders hang an Intel iGPU, and Jellyfin never uses them: its
     /// "Prefer OS native DXVA or VA-API hardware decoders" is on by default,
     /// which is QSV encoding on top of VA-API decoding. This asks for the same.
+    #[cfg(unix)]
     #[test]
     fn decodes_on_vaapi_where_the_encoder_is_qsv() {
         let args = plan(on_gpu(HardwareAccel::Qsv)).to_ffmpeg_args();
@@ -4032,6 +4185,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
     /// The driver is named, as Jellyfin names it. QSV does not exist on i965
     /// at all, so a machine that would resolve to it should say so when the
     /// device is opened rather than somewhere further down the chain.
+    #[cfg(unix)]
     #[test]
     fn derives_the_qsv_device_from_a_vaapi_one() {
         let args = plan(on_gpu(HardwareAccel::Qsv)).to_ffmpeg_args();
@@ -4045,6 +4199,114 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
         assert!(args
             .windows(2)
             .any(|pair| pair == ["-filter_hw_device", "qs"]));
+    }
+
+    /// On Windows `QSV` sits on Direct3D 11, and the adapter is chosen by vendor rather than by a
+    /// render node that does not exist there.
+    #[test]
+    fn derives_the_qsv_device_from_an_intel_direct3d_one_on_windows() {
+        let args = HardwareAccel::Qsv.device_arguments_on(Platform::Windows, DEFAULT_DEVICE);
+
+        assert_eq!(
+            args,
+            [
+                "-init_hw_device",
+                "d3d11va=dx:,vendor_id=0x8086",
+                "-init_hw_device",
+                "qsv=qs@dx",
+                "-filter_hw_device",
+                "qs"
+            ]
+        );
+    }
+
+    #[test]
+    fn decodes_qsv_on_direct3d_and_maps_it_on_windows() {
+        let pipeline = HardwareAccel::Qsv
+            .pipeline_on(Platform::Windows)
+            .expect("qsv has a pipeline on windows");
+
+        assert_eq!(pipeline.decodes_with, "d3d11va");
+        assert_eq!(pipeline.decoded_format, "d3d11");
+        assert_eq!(
+            pipeline.maps_onto_device,
+            Some("hwmap=derive_device=qsv,format=qsv")
+        );
+        assert_eq!(pipeline.scaler, "vpp_qsv");
+    }
+
+    /// `tonemap_vaapi` is a Linux filter, and on Windows nothing has taken its place yet.
+    #[test]
+    fn converts_hdr_in_software_for_qsv_on_windows() {
+        let pipeline = HardwareAccel::Qsv
+            .pipeline_on(Platform::Windows)
+            .expect("qsv has a pipeline on windows");
+
+        assert_eq!(pipeline.tone_map, None);
+    }
+
+    #[test]
+    fn opens_the_amd_adapter_for_amf_on_windows() {
+        let args = HardwareAccel::Amf.device_arguments_on(Platform::Windows, DEFAULT_DEVICE);
+
+        assert_eq!(
+            args,
+            [
+                "-init_hw_device",
+                "d3d11va=dx:,vendor_id=0x1002",
+                "-filter_hw_device",
+                "dx"
+            ]
+        );
+    }
+
+    /// AMF had no pipeline anywhere, and every frame went down to the processor and back.
+    #[test]
+    fn keeps_amf_frames_on_the_card_on_windows() {
+        let pipeline = HardwareAccel::Amf
+            .pipeline_on(Platform::Windows)
+            .expect("amf has a pipeline on windows");
+
+        assert_eq!(pipeline.decodes_with, "d3d11va");
+        assert_eq!(pipeline.scaler, "vpp_amf");
+        assert!(pipeline.encodes_from_device);
+    }
+
+    /// Direct3D 11 frames have no compositor, so a subtitle is drawn in software.
+    #[test]
+    fn gives_amf_no_compositor() {
+        let pipeline = HardwareAccel::Amf
+            .pipeline_on(Platform::Windows)
+            .expect("amf has a pipeline on windows");
+
+        assert_eq!(pipeline.overlay, None);
+    }
+
+    /// AMD on Linux goes through `VAAPI`; `AMF` there wants the closed driver.
+    #[test]
+    fn gives_amf_no_pipeline_off_windows() {
+        assert_eq!(HardwareAccel::Amf.pipeline_on(Platform::Unix), None);
+        assert_eq!(
+            HardwareAccel::Amf.device_arguments_on(Platform::Unix, DEFAULT_DEVICE),
+            Vec::<String>::new()
+        );
+    }
+
+    #[test]
+    fn keeps_qsv_on_vaapi_off_windows() {
+        let pipeline = HardwareAccel::Qsv
+            .pipeline_on(Platform::Unix)
+            .expect("qsv has a pipeline on linux");
+
+        assert_eq!(pipeline.decodes_with, "vaapi");
+    }
+
+    #[test]
+    fn leaves_nvenc_the_same_on_windows() {
+        assert_eq!(
+            HardwareAccel::Nvenc.pipeline_on(Platform::Windows),
+            HardwareAccel::Nvenc.pipeline_on(Platform::Unix)
+        );
     }
 
     #[test]
@@ -4797,6 +5059,26 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
             "subtitles must be drawn at output size: {chain}"
         );
         assert!(chain.contains("si=2"));
+    }
+
+    #[test]
+    fn escapes_a_windows_path_with_forward_slashes() {
+        use super::{escape_filter_path_on, Platform};
+
+        assert_eq!(
+            escape_filter_path_on(Platform::Windows, r"D:\Media\Films\film.mkv"),
+            "D\\:/Media/Films/film.mkv"
+        );
+    }
+
+    #[test]
+    fn keeps_a_backslash_that_is_part_of_a_unix_name() {
+        use super::{escape_filter_path_on, Platform};
+
+        assert_eq!(
+            escape_filter_path_on(Platform::Unix, r"/media/a\b.mkv"),
+            r"/media/a\\b.mkv"
+        );
     }
 
     #[test]
