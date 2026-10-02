@@ -3,7 +3,7 @@ import { mkdtemp, readdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { asc, eq } from 'drizzle-orm';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { nullsLast } from '@ValenceDatabase/nullsLast';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
 import { library, mediaItem, mediaRendition, reencodeRequest } from '#dialect/Schema';
@@ -286,7 +286,22 @@ const aRequest = (id: string, state: string, askedAt: Date) => ({
   askedAt,
 });
 
+/**
+ * Moves the clock on a second each time the service says it has taken a request up, so requests it
+ * takes up in turn are never started within the same millisecond and their order can be read back.
+ *
+ * @returns A progress listener to hand the service.
+ */
+const aTickingProgress = () =>
+  vi.fn<(processed: number, total: number) => void>(() => {
+    vi.setSystemTime(Date.now() + 1000);
+  });
+
 describe('createDatabaseReencodeService', { timeout: STARTING_POSTGRES_MS }, () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('hands back each request it queues, as it was stored', async () => {
     const { service } = await aReencoder((libraryPath) => ({
       item: REMUX,
@@ -317,8 +332,9 @@ describe('createDatabaseReencodeService', { timeout: STARTING_POSTGRES_MS }, () 
         aRequest('judged', 'finished', new Date(500)),
       ]);
 
-    const onProgress = vi.fn<(processed: number, total: number) => void>();
+    const onProgress = aTickingProgress();
 
+    vi.useFakeTimers({ toFake: ['Date'], shouldAdvanceTime: true });
     await service.work(onProgress, () => false);
 
     expect(onProblem).toHaveBeenCalledWith(
@@ -443,10 +459,8 @@ describe('createDatabaseReencodeService', { timeout: STARTING_POSTGRES_MS }, () 
       .insert(reencodeRequest)
       .values({ ...aRequest('asked', 'queued', new Date(5000)), mediaItemId: FILM_ID });
 
-    await service.work(
-      () => undefined,
-      () => false,
-    );
+    vi.useFakeTimers({ toFake: ['Date'], shouldAdvanceTime: true });
+    await service.work(aTickingProgress(), () => false);
 
     const rows = await db
       .select({ id: reencodeRequest.id, origin: reencodeRequest.origin })

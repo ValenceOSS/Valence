@@ -11,6 +11,8 @@ import type { MediaFacts } from './MetadataProvider';
 import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
+vi.mock('@ValenceCore/functions/wait', () => ({ wait: () => Promise.resolve() }));
+
 const probe: MediaProbe = {
   container: 'mkv',
   durationSeconds: 7200,
