@@ -191,6 +191,17 @@ where
 #[cfg(test)]
 mod tests {
     use super::PathMap;
+    use std::path::PathBuf;
+
+    fn on_host(folder: &str, rest: &[&str]) -> String {
+        let mut path = PathBuf::from(folder);
+
+        for part in rest {
+            path.push(part);
+        }
+
+        path.to_string_lossy().into_owned()
+    }
 
     fn map(value: &str) -> PathMap {
         PathMap::parse(value)
@@ -204,7 +215,10 @@ mod tests {
 
         assert_eq!(
             map.to_host("/media/Films/A Film (2020)/film.mkv"),
-            Ok("/Volumes/Media/Films/A Film (2020)/film.mkv".to_owned())
+            Ok(on_host(
+                "/Volumes/Media",
+                &["Films", "A Film (2020)", "film.mkv"]
+            ))
         );
     }
 
@@ -229,11 +243,11 @@ mod tests {
 
         assert_eq!(
             map.to_host("/media/films/film.mkv"),
-            Ok("/Volumes/Films/film.mkv".to_owned())
+            Ok(on_host("/Volumes/Films", &["film.mkv"]))
         );
         assert_eq!(
             map.to_host("/media/shows/episode.mkv"),
-            Ok("/Volumes/Media/shows/episode.mkv".to_owned())
+            Ok(on_host("/Volumes/Media", &["shows", "episode.mkv"]))
         );
     }
 
@@ -243,7 +257,10 @@ mod tests {
 
         assert_eq!(
             map.to_host("/downloads/complete/film.mkv"),
-            Ok("/Users/someone/Downloads/complete/film.mkv".to_owned())
+            Ok(on_host(
+                "/Users/someone/Downloads",
+                &["complete", "film.mkv"]
+            ))
         );
     }
 
@@ -253,7 +270,7 @@ mod tests {
 
         assert_eq!(
             map.to_host("/media/film.mkv"),
-            Ok("/Volumes/Media/film.mkv".to_owned())
+            Ok(on_host("/Volumes/Media", &["film.mkv"]))
         );
     }
 
@@ -261,7 +278,7 @@ mod tests {
     fn maps_the_root_when_asked_to() {
         assert_eq!(
             map("/=/Volumes/Root").to_host("/media/film.mkv"),
-            Ok("/Volumes/Root/media/film.mkv".to_owned())
+            Ok(on_host("/Volumes/Root", &["media", "film.mkv"]))
         );
     }
 
@@ -290,6 +307,29 @@ mod tests {
             map("/media=/Volumes/Media;/downloads=/Downloads").describe(),
             "/downloads is /Downloads, /media is /Volumes/Media"
         );
+    }
+
+    /// A Windows folder on the right of the map, where a colon and backslashes are part of the
+    /// path rather than separators.
+    #[cfg(windows)]
+    #[test]
+    fn translates_into_a_windows_folder() {
+        let map = map(r"/media=D:\Media;/downloads=D:\Downloads");
+
+        assert_eq!(
+            map.to_host("/media/Films/film.mkv"),
+            Ok(r"D:\Media\Films\film.mkv".to_owned())
+        );
+    }
+
+    /// A drive letter in the server's path is not a folder name on Windows, and would replace the
+    /// mapped folder outright when it was joined on.
+    #[cfg(windows)]
+    #[test]
+    fn refuses_a_drive_letter_inside_the_path() {
+        assert!(map(r"/media=D:\Media")
+            .to_host("/media/C:/Windows/film.mkv")
+            .is_err());
     }
 
     #[test]

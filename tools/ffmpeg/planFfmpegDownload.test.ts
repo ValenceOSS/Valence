@@ -50,8 +50,24 @@ describe('planFfmpegDownload', () => {
     expect(plan).toMatchObject({ kind: 'unsupported' });
   });
 
-  it('says why Windows has nothing to fetch', () => {
+  it('takes the portable zip on Windows', () => {
     const plan = planFfmpegDownload({ platform: 'win32', arch: 'x64', version: VERSION });
+
+    expect(plan).toStrictEqual({
+      kind: 'zip',
+      fileName: `valence-ffmpeg_${VERSION}_portable_win64-gpl.zip`,
+      url: `https://github.com/ValenceOSS/valence-ffmpeg/releases/download/v${VERSION}/valence-ffmpeg_${VERSION}_portable_win64-gpl.zip`,
+    });
+  });
+
+  it('says why Windows on Arm has nothing to fetch', () => {
+    const plan = planFfmpegDownload({ platform: 'win32', arch: 'arm64', version: VERSION });
+
+    expect(plan).toMatchObject({ kind: 'unsupported' });
+  });
+
+  it('says why a system it does not build for has nothing to fetch', () => {
+    const plan = planFfmpegDownload({ platform: 'freebsd', arch: 'x64', version: VERSION });
 
     expect(plan).toMatchObject({ kind: 'unsupported' });
   });

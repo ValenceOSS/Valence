@@ -22,7 +22,6 @@ use valence_transcoder::subtitle::SubtitleRequest;
 use valence_transcoder::trickplay::TrickplayRequest;
 
 const FILM: &str = "/media/Films/film.mkv";
-const ON_THE_HOST: &str = "/Volumes/Media/Films/film.mkv";
 const SPEC: &str = r#"{
     "inputPath": "/media/Films/film.mkv",
     "startSeconds": 0,
@@ -31,6 +30,16 @@ const SPEC: &str = r#"{
     "video": {"kind": "copy"},
     "audio": {"kind": "copy"}
 }"#;
+
+fn on_the_host(rest: &[&str]) -> String {
+    let mut path = std::path::PathBuf::from("/Volumes/Media");
+
+    for part in rest {
+        path.push(part);
+    }
+
+    path.to_string_lossy().into_owned()
+}
 
 fn installed() {
     path_map::install(
@@ -87,7 +96,7 @@ fn translates_every_field_that_names_a_file() {
         ("download input", download.spec.input_path.as_str()),
         ("rendition input", rendition.spec.input_path.as_str()),
     ] {
-        assert_eq!(translated, ON_THE_HOST, "{field}");
+        assert_eq!(translated, on_the_host(&["Films", "film.mkv"]), "{field}");
     }
 
     for (field, translated) in [
@@ -95,7 +104,8 @@ fn translates_every_field_that_names_a_file() {
         ("stopped rendition", stopped.output_path.as_str()),
     ] {
         assert_eq!(
-            translated, "/Volumes/Media/Films/.valence/film.mkv",
+            translated,
+            on_the_host(&["Films", ".valence", "film.mkv"]),
             "{field}"
         );
     }

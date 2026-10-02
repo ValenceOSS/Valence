@@ -10,6 +10,12 @@ use tokio::process::Command;
 #[cfg(unix)]
 const POLITENESS: i32 = 10;
 
+/// The same request on Windows, which has priority classes rather than a scale.
+///
+/// Below Normal is the one step down, and the class Jellyfin runs its thumbnail passes in there.
+#[cfg(windows)]
+const BELOW_NORMAL_PRIORITY_CLASS: u32 = 0x0000_4000;
+
 /// Asks a render to give way to anything a viewer is waiting on.
 ///
 /// A scan draws clips and thumbnails for hours, and it does that while people
@@ -46,6 +52,11 @@ pub fn steps_aside(command: &mut Command) -> &mut Command {
                 Ok(())
             });
         }
+    }
+
+    #[cfg(windows)]
+    {
+        command.creation_flags(BELOW_NORMAL_PRIORITY_CLASS);
     }
 
     command

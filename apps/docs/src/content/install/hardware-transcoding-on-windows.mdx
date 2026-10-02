@@ -1,0 +1,136 @@
+---
+title: Hardware transcoding on Windows
+description: Run Valence's transcoder natively on Windows so it can use Intel QuickSync, AMD AMF or NVIDIA NVENC, with everything else in Docker as usual.
+order: 5
+---
+
+On Windows, Valence runs as the usual Docker stack under Docker Desktop, but a container there reaches very little of the graphics card. Docker Desktop runs containers inside WSL 2, which offers no `/dev/dri` for Intel or AMD, and only NVIDIA's driver passes its encoder through.
+
+So on Windows the transcoder, the one part of Valence that needs the hardware, runs natively, and everything else stays in Docker. Running natively, it reaches Intel QuickSync, AMD AMF and NVIDIA NVENC through the same drivers every Windows application uses. The server reaches it at `host.docker.internal`, and nothing else about the stack changes.
+
+It needs a 64-bit Windows 10 or 11 PC with a current graphics driver from Intel, AMD or NVIDIA, and the [Docker Compose](/install/docker-compose) stack set up first.
+
+## Install the transcoder
+
+Each release carries the transcoder for Windows, packed with the FFmpeg build it was checked against. In PowerShell, download it and unpack it into your user folder:
+
+```powershell
+Invoke-WebRequest https://github.com/ValenceOSS/Valence/releases/latest/download/valence-transcoder-windows-x64.zip -OutFile "$env:TEMP\valence-transcoder.zip"
+Expand-Archive "$env:TEMP\valence-transcoder.zip" -DestinationPath $env:USERPROFILE -Force
+Get-ChildItem "$env:USERPROFILE\valence-transcoder" | Unblock-File
+```
+
+That leaves a `valence-transcoder` folder in your user folder, holding `valence-transcoder.exe`, `ffmpeg.exe` and `ffprobe.exe`. It needs nothing else installed. `Unblock-File` stops Windows treating the files as downloaded from the internet, which would otherwise make SmartScreen stop them, since they are not signed.
+
+Check that it can see the hardware:
+
+```powershell
+& "$env:USERPROFILE\valence-transcoder\valence-transcoder.exe" capabilities | Select-String "_qsv|_amf|_nvenc"
+```
+
+It should list the encoders for your card: `h264_qsv` and `hevc_qsv` on Intel, `h264_amf` and `hevc_amf` on AMD, `h264_nvenc` and `hevc_nvenc` on NVIDIA. Keep the transcoder on the same version as the Valence image: when you update one, update the other.
+
+## Tell it where your files are
+
+The server names files the way its container sees them: `/media/Films/…`, and `/downloads/…` if you use requesting. The transcoder runs on Windows, where those same files are wherever `MEDIA_PATH` and `DOWNLOADS_PATH` point. `VALENCE_PATH_MAP` tells it which is which, as pairs of `container=windows` separated by `;`:
+
+```text
+/media=D:\Media;/downloads=D:\Downloads
+```
+
+Use the same folders as `MEDIA_PATH` and `DOWNLOADS_PATH` in your `.env`. The transcoder refuses any file that is not in one of these folders, and says which folder is missing, so a path that is wrong shows up in its log rather than as a film that will not play.
+
+## Its settings
+
+The transcoder's settings live in a small file beside it. Create `start.cmd` in the `valence-transcoder` folder with this in it, changing the folders to your own:
+
+```bat
+@echo off
+set VALENCE_TRANSCODER_ADDR=127.0.0.1:8422
+set VALENCE_PATH_MAP=/media=D:\Media;/downloads=D:\Downloads
+set VALENCE_MEDIA_ROOTS=D:\Media;D:\Downloads
+set VALENCE_WRITE_ROOTS=D:\Media
+set VALENCE_TRANSCODE_DIR=%~dp0transcodes
+set VALENCE_ARTEFACT_DIR=%~dp0artefacts
+"%~dp0valence-transcoder.exe" serve >> "%~dp0transcoder.log" 2>&1
+```
+
+| Setting                   | What it does                                                                                                                                                                            |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VALENCE_TRANSCODER_ADDR` | Where it listens. `127.0.0.1` keeps it on this PC, and containers still reach it through `host.docker.internal`. It has no sign-in of its own, so do not make it listen anywhere wider. |
+| `VALENCE_PATH_MAP`        | Where the server's paths are on this PC, as above.                                                                                                                                      |
+| `VALENCE_MEDIA_ROOTS`     | The folders it may read, separated by `;`. The same folders as the right-hand side of the map.                                                                                          |
+| `VALENCE_WRITE_ROOTS`     | The folders it may write finished re-encodes into. Leave the line out if you do not use [pre-transcoding](/use/pre-transcoding).                                                        |
+| `VALENCE_TRANSCODE_DIR`   | Scratch space for video segments while someone is watching. The fastest disk you have.                                                                                                  |
+| `VALENCE_ARTEFACT_DIR`    | Rendered previews and thumbnail sheets. Kept, so the library is not rendered again.                                                                                                     |
+
+`%~dp0` is the folder `start.cmd` is in, so everything it writes stays in the `valence-transcoder` folder, including its log, `transcoder.log`.
+
+## Keep it running
+
+The transcoder has to be running whenever Valence is, including after a restart. A scheduled task does that. In PowerShell opened with **Run as administrator**, this registers one that starts the transcoder when you sign in, without a window, and restarts it if it stops:
+
+```powershell
+$folder = "$env:USERPROFILE\valence-transcoder"
+$action = New-ScheduledTaskAction -Execute "cmd.exe" -Argument "/c `"$folder\start.cmd`""
+$trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+$settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+$principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType S4U
+Register-ScheduledTask -TaskName "Valence transcoder" -Action $action -Trigger $trigger -Settings $settings -Principal $principal
+Start-ScheduledTask -TaskName "Valence transcoder"
+```
+
+The task runs when you sign in, which is also when Docker Desktop starts. If the PC is a server that nobody sits at, set Windows to sign in automatically so both start after a power cut.
+
+To change a setting later, edit `start.cmd`, then restart the task:
+
+```powershell
+Stop-ScheduledTask -TaskName "Valence transcoder"
+Start-ScheduledTask -TaskName "Valence transcoder"
+```
+
+### A library on a network share
+
+A task registered as above signs in without your password, and Windows then gives it no access to network shares. If your library is on a NAS share rather than a drive in the PC, register the task with your password instead, by replacing the last two lines with:
+
+```powershell
+Register-ScheduledTask -TaskName "Valence transcoder" -Action $action -Trigger $trigger -Settings $settings -User $env:USERNAME -Password (Read-Host "Your Windows password")
+Start-ScheduledTask -TaskName "Valence transcoder"
+```
+
+Use the share's full address in the map and the roots, such as `\\nas\media`, rather than a drive letter, because a mapped drive belongs to your own sign-in and the task cannot see it.
+
+## Point Valence at it
+
+Lay `compose.native-transcoder.yaml` over `compose.yaml`. It comes with each release beside `compose.yaml`, and it is in the repository. It tells the server and the requests service where the transcoder is, stops the container starting its own, and takes away the `/dev/dri` mapping, which does not exist under Docker Desktop:
+
+```powershell
+docker compose -f compose.yaml -f compose.native-transcoder.yaml up -d
+```
+
+To avoid typing both files each time, put them in `.env`. On Windows they are separated by `;`:
+
+```ini
+COMPOSE_FILE=compose.yaml;compose.native-transcoder.yaml
+```
+
+If something else on the PC already uses port 8422, choose another in `start.cmd`'s `VALENCE_TRANSCODER_ADDR` and set `TRANSCODER_PORT` to the same number in `.env`.
+
+## Check that it works
+
+1. Open **Settings** and find the **Hardware acceleration** card. With **Automatic** selected it should name `QSV`, `AMF` or `NVENC`.
+2. Play something that needs a transcode and open **Sessions**. The session names its mode, and `transcoder.log` names the encoder, such as `h264_qsv`.
+3. Restart the PC, sign in, and play it again. The transcoder should have come back on its own.
+
+On an Intel or AMD machine, HDR films are converted to SDR on the processor for now, while the picture is still encoded on the card. On NVIDIA they are converted on the card, as on Linux, once the startup check has proved `tonemap_cuda` runs.
+
+## Troubleshooting
+
+| Symptom                                                                 | Cause and fix                                                                                                                                                  |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Nothing plays, and the admin area says the media service is unreachable | The transcoder is not running. **Task Scheduler** shows the task's last result, and `transcoder.log` says why it stopped.                                      |
+| The log says a path `is in none of the folders VALENCE_PATH_MAP maps`   | The server sent a file from a folder the map does not have. Add the folder, matching `MEDIA_PATH` or `DOWNLOADS_PATH`.                                         |
+| The log cannot open files on a network share                            | The task has no access to shares. Register it with your password, as above.                                                                                    |
+| Windows says it protected your PC when the transcoder starts            | The files are still marked as downloaded. Run the `Unblock-File` line above.                                                                                   |
+| Settings says Software only                                             | The transcoder could not open the card. Run the `capabilities` check above, update the graphics driver, and read the log.                                      |
+| A machine with two cards uses the wrong one                             | QuickSync always opens the Intel card and AMF the AMD one. To use NVIDIA on a machine that also has Intel graphics, choose **NVENC** in Hardware acceleration. |

@@ -297,6 +297,46 @@ jobs:
           path: release/
           if-no-files-found: error
 
+  # The transcoder for Windows, which runs natively there for the same reason as on a Mac: inside
+  # Docker Desktop only NVIDIA's encoder is reachable, and natively QSV, AMF and NVENC all are
+  # (VAL-338). One folder holding the transcoder and valence-ffmpeg's portable build, which it
+  # finds beside itself as ffmpeg.exe and ffprobe.exe.
+  transcoder-windows:
+    name: Transcoder for Windows
+    needs: [verify, verify-rust, image, artefacts]
+    runs-on: windows-latest
+    env:
+      VALENCE_FFMPEG_VERSION: 8.1.2-5.3
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - run: cargo build --release -p valence-transcoder
+
+      - name: Pack it with its FFmpeg
+        run: |
+          folder=pack/valence-transcoder
+          mkdir -p "$folder" release
+          cp target/release/valence-transcoder.exe "$folder/"
+          curl -fsSL -o ffmpeg.zip \
+            "https://github.com/ValenceOSS/valence-ffmpeg/releases/download/v${VALENCE_FFMPEG_VERSION}/valence-ffmpeg_${VALENCE_FFMPEG_VERSION}_portable_win64-gpl.zip"
+          unzip -j ffmpeg.zip ffmpeg.exe ffprobe.exe -d "$folder"
+          "$folder/valence-transcoder.exe"
+          "$folder/ffmpeg.exe" -version | head -1
+          (cd pack && 7z a -tzip ../release/valence-transcoder-windows-x64.zip valence-transcoder)
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: valence-transcoder-windows
+          path: release/
+          if-no-files-found: error
+
   # The desktop app's installers, built by the workflow that owns that and attached below. A job that
   # calls a workflow rather than a step, so its artefacts are this run's like any other job's.
   #
@@ -313,7 +353,7 @@ jobs:
 
   publish:
     name: Publish the release
-    needs: [image, artefacts, transcoder-mac, desktop]
+    needs: [image, artefacts, transcoder-mac, transcoder-windows, desktop]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -335,6 +375,11 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           name: valence-transcoder-mac
+          path: release
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: valence-transcoder-windows
           path: release
 
       # The release already exists: release-please created it and tagged it. What it cannot write
@@ -394,7 +439,7 @@ jobs:
 
           desktop="$(links '\.(dmg|exe|msi|AppImage|deb|rpm)$')"
           mobile="$(links '\.(apk|aab|ipa)$')"
-          transcoder="$(links '^valence-transcoder-macos-')"
+          transcoder="$(links '^valence-transcoder-(macos|windows)-')"
           docker="\`docker pull $image:$version\`"
 
           jq -n \
@@ -415,7 +460,7 @@ jobs:
                 fields: ([
                   (if $desktop == "" then empty else {name: "Desktop", value: $desktop} end),
                   (if $mobile == "" then empty else {name: "Mobile", value: $mobile} end),
-                  (if $transcoder == "" then empty else {name: "Transcoder for Mac", value: $transcoder} end),
+                  (if $transcoder == "" then empty else {name: "Native transcoder", value: $transcoder} end),
                   {name: "Docker", value: $docker}
                 ])
               }]
