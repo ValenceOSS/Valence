@@ -5,7 +5,7 @@ import { NothingHere } from '@ValenceUI/NothingHere';
 import { useShell } from '@ValenceClient/shell/useShell';
 import { PartyPanel } from '@ValenceScreens/components/PartyPanel/PartyPanel';
 import { listeningInvitationTo } from '@ValenceClient/party/listeningInvitationTo';
-import { useListeningParty } from '@ValenceScreens/music/listeningParty';
+import { useListeningParty } from '@ValenceClient/party/listeningParty';
 import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import { usePlace } from '@ValenceScreens/navigation/usePlace';

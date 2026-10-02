@@ -38,7 +38,7 @@ import { MusicMiniPlayer } from '@ValenceScreens/components/MusicMiniPlayer/Musi
 import { setMusicImmersive, useMusicImmersive } from '@ValenceScreens/music/musicImmersive';
 import { keepBarRoom } from '@ValenceScreens/music/keepBarRoom';
 import { setMusicPanel, useMusicPanel } from '@ValenceScreens/music/musicPanel';
-import { useListeningParty } from '@ValenceScreens/music/listeningParty';
+import { useListeningParty } from '@ValenceClient/party/listeningParty';
 import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
 import { useMusicNavigation } from '@ValenceScreens/music/useMusicNavigation';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';

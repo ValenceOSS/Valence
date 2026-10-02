@@ -5,7 +5,7 @@ import { aShell } from '@ValenceClient/testing/aShell';
 import { aFakeMusicPlayer } from '@ValenceClient/testing/aFakeMusicPlayer';
 import { aTrack } from '@ValenceClient/testing/aTrack';
 import { renderInAShell } from '@ValenceScreens/testing/renderInAShell';
-import { setListeningParty } from '@ValenceScreens/music/listeningParty';
+import { setListeningParty } from '@ValenceClient/party/listeningParty';
 import { ListeningPartyPanel } from './ListeningPartyPanel';
 import type { WatchParty } from '@ValenceContracts/schemas/WatchParty';
 

@@ -1,9 +1,8 @@
-import { act, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { aShell } from '@ValenceClient/testing/aShell';
 import { aFakeMusicPlayer } from '@ValenceClient/testing/aFakeMusicPlayer';
 import { aTrack } from '@ValenceClient/testing/aTrack';
-import { renderHookInAnAddress } from '@ValenceScreens/testing/renderHookInAnAddress';
 import { readListeningParty, setListeningParty } from './listeningParty';
 import { useListenAlong } from './useListenAlong';
 import type { PartyMember, WatchParty } from '@ValenceContracts/schemas/WatchParty';
@@ -79,7 +78,6 @@ beforeEach(() => {
 
 afterEach(() => {
   setListeningParty(null);
-  window.history.pushState({}, '', '/');
 });
 
 describe('useListenAlong', () => {
@@ -88,8 +86,8 @@ describe('useListenAlong', () => {
       const { player } = playing(null);
       const party = inParty('sam', aParty({ mediaId: TWO.id }), { referenceSeconds: 42 });
 
-      renderHookInAnAddress(() => {
-        useListenAlong(party, player);
+      renderHook(() => {
+        useListenAlong(party, null, player);
       });
 
       await waitFor(() => {
@@ -105,8 +103,8 @@ describe('useListenAlong', () => {
     it('stops when the host stops', () => {
       const { player } = playing(ONE);
 
-      renderHookInAnAddress(() => {
-        useListenAlong(inParty('sam', aParty({ isPlaying: false })), player);
+      renderHook(() => {
+        useListenAlong(inParty('sam', aParty({ isPlaying: false })), null, player);
       });
 
       expect(player.pause).toHaveBeenCalled();
@@ -124,8 +122,8 @@ describe('useListenAlong', () => {
         },
       });
 
-      renderHookInAnAddress(() => {
-        useListenAlong(party, player);
+      renderHook(() => {
+        useListenAlong(party, null, player);
       });
 
       expect(player.seek).toHaveBeenCalledWith(90);
@@ -134,8 +132,8 @@ describe('useListenAlong', () => {
     it('catches up with the host after drifting away from them', () => {
       const { player } = playing(ONE, { positionSeconds: 50 });
 
-      renderHookInAnAddress(() => {
-        useListenAlong(inParty('sam', aParty(), { referenceSeconds: 100 }), player);
+      renderHook(() => {
+        useListenAlong(inParty('sam', aParty(), { referenceSeconds: 100 }), null, player);
       });
 
       expect(player.seek).toHaveBeenCalledWith(100);
@@ -144,8 +142,8 @@ describe('useListenAlong', () => {
     it('leaves a listener a moment behind alone', () => {
       const { player } = playing(ONE, { positionSeconds: 99 });
 
-      renderHookInAnAddress(() => {
-        useListenAlong(inParty('sam', aParty(), { referenceSeconds: 100 }), player);
+      renderHook(() => {
+        useListenAlong(inParty('sam', aParty(), { referenceSeconds: 100 }), null, player);
       });
 
       expect(player.seek).not.toHaveBeenCalled();
@@ -157,8 +155,8 @@ describe('useListenAlong', () => {
       const { player } = playing(TWO);
       const party = inParty('dan', aParty());
 
-      renderHookInAnAddress(() => {
-        useListenAlong(party, player);
+      renderHook(() => {
+        useListenAlong(party, null, player);
       });
 
       expect(party.send).toHaveBeenCalledWith({ kind: 'changeWhatIsPlaying', mediaId: TWO.id });
@@ -168,8 +166,8 @@ describe('useListenAlong', () => {
       const { player, set } = playing(ONE);
       const party = inParty('dan', aParty());
 
-      renderHookInAnAddress(() => {
-        useListenAlong(party, player);
+      renderHook(() => {
+        useListenAlong(party, null, player);
       });
 
       act(() => {
@@ -184,8 +182,8 @@ describe('useListenAlong', () => {
       const { player, set } = playing(ONE, { positionSeconds: 10 });
       const party = inParty('dan', aParty());
 
-      renderHookInAnAddress(() => {
-        useListenAlong(party, player, () => at);
+      renderHook(() => {
+        useListenAlong(party, null, player, () => at);
       });
 
       at = 500;
@@ -202,8 +200,8 @@ describe('useListenAlong', () => {
       const { player, set } = playing(ONE, { positionSeconds: 10 });
       const party = inParty('dan', aParty());
 
-      renderHookInAnAddress(() => {
-        useListenAlong(party, player, () => at);
+      renderHook(() => {
+        useListenAlong(party, null, player, () => at);
       });
 
       at = 1000;
@@ -220,8 +218,8 @@ describe('useListenAlong', () => {
     const { player } = playing(ONE, { positionSeconds: 33 });
     const party = inParty('sam', aParty());
 
-    renderHookInAnAddress(() => {
-      useListenAlong(party, player);
+    renderHook(() => {
+      useListenAlong(party, null, player);
     });
 
     expect(party.report).toHaveBeenCalledWith({
@@ -232,29 +230,27 @@ describe('useListenAlong', () => {
     });
   });
 
-  it('joins the party an invitation into the music section names', () => {
-    window.history.pushState({}, '', '/music?party=p9');
-
+  it('joins the party an invitation names', () => {
     const party = inParty('sam', null);
 
-    renderHookInAnAddress(() => {
-      useListenAlong(party, playing(null).player);
+    renderHook(() => {
+      useListenAlong(party, 'p9', playing(null).player);
     });
 
     expect(party.join).toHaveBeenCalledWith('p9');
   });
 
   it('tells the rest of the window which listening party it is in', () => {
-    renderHookInAnAddress(() => {
-      useListenAlong(inParty('sam', aParty()), playing(ONE).player);
+    renderHook(() => {
+      useListenAlong(inParty('sam', aParty()), null, playing(ONE).player);
     });
 
     expect(readListeningParty()).toMatchObject({ hostName: 'Dan', mayChoose: false });
   });
 
   it('is in no listening party while watching a film together', () => {
-    renderHookInAnAddress(() => {
-      useListenAlong(inParty('sam', aParty({ kind: 'watch' })), playing(ONE).player);
+    renderHook(() => {
+      useListenAlong(inParty('sam', aParty({ kind: 'watch' })), null, playing(ONE).player);
     });
 
     expect(readListeningParty()).toBeNull();

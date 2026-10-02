@@ -38,7 +38,7 @@ import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 import type { StartOverride } from '@ValenceClient/shell/shell.types';
 import { useMusicRemote } from '@ValenceClient/music/useMusicRemote';
 import { useAudiobookRemote } from '@ValenceClient/books/useAudiobookRemote';
-import { useListenAlong } from '@ValenceScreens/music/useListenAlong';
+import { useListenAlong } from '@ValenceClient/party/useListenAlong';
 import { signedInOnThisPage } from '@ValenceScreens/phone/signedInOnThisPage';
 import type { SignedInProps } from './SignedIn.types';
 import { say } from '@ValenceI18n/say';
@@ -242,7 +242,7 @@ const SignedIn = ({ title }: SignedInProps) => {
 
   useMusicRemote();
   useAudiobookRemote();
-  useListenAlong(watchParty);
+  useListenAlong(watchParty, place.playing === null ? place.party : null);
 
   useEffect(() => {
     if (place.playing === null) {
