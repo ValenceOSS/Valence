@@ -131,10 +131,10 @@ impl PathMap {
         let mut translated = host.clone();
 
         for part in rest.split('/').filter(|part| !part.is_empty()) {
-            if !matches!(
-                Path::new(part).components().next(),
-                Some(Component::Normal(_))
-            ) {
+            if !Path::new(part)
+                .components()
+                .all(|component| matches!(component, Component::Normal(_)))
+            {
                 return Err(format!("{path} climbs out of its folder, and is refused"));
             }
 
@@ -329,6 +329,16 @@ mod tests {
     fn refuses_a_drive_letter_inside_the_path() {
         assert!(map(r"/media=D:\Media")
             .to_host("/media/C:/Windows/film.mkv")
+            .is_err());
+    }
+
+    /// A backslash separates folders on Windows, so a name the server sent with one in it can hide
+    /// a climb behind a first folder that looks harmless.
+    #[cfg(windows)]
+    #[test]
+    fn refuses_a_climb_hidden_behind_a_backslash() {
+        assert!(map(r"/media=D:\Media")
+            .to_host(r"/media/Films\..\..\secret.txt")
             .is_err());
     }
 
