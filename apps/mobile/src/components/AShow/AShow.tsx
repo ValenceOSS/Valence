@@ -35,7 +35,7 @@ import { SegmentedRow } from '@ValenceMobile/components/SegmentedRow/SegmentedRo
 import { TheStars } from '@ValenceMobile/components/TheStars/TheStars';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { AShareSheet } from '@ValenceMobile/components/AShareSheet/AShareSheet';
-import { useConfirmHiding } from '@ValenceMobile/hooks/useConfirmHiding';
+import { useConfirmHiding } from '@ValenceNative/library/useConfirmHiding';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { ANothingHere } from '@ValenceMobile/components/ANothingHere/ANothingHere';
 import type { ShareSubject } from '@ValenceClient/sharing/newShareFor.types';

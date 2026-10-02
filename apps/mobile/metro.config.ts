@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { getDefaultConfig } from 'expo/metro-config';
 import type { MetroConfig } from 'expo/metro-config';
 
-const ONE_COPY = ['react', '@tanstack/react-query'] as const;
+const ONE_COPY = ['react', 'react-native', '@tanstack/react-query'] as const;
 
 const FROM_THE_PHONE = join(import.meta.dirname, 'package.json');
 
@@ -49,8 +49,9 @@ const isShared = (moduleName: string): boolean =>
   ONE_COPY.some((name) => moduleName === name || moduleName.startsWith(`${name}/`));
 
 /**
- * Resolves React and React Query from the phone's own copies wherever they are imported, so the
- * workspace packages, which pnpm links against the web's React, share the phone's instead.
+ * Resolves React, React Native and React Query from the phone's own copies wherever they are
+ * imported, so the workspace packages, which pnpm links against the web's React or none at all,
+ * share the phone's instead — the native code it shares with the television included.
  *
  * @param context - Metro's resolution context.
  * @param moduleName - What was imported.

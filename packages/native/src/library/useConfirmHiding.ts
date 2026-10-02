@@ -7,7 +7,8 @@ import type { Hiding } from '@ValenceClient/library/useHidden';
 import { say } from '@ValenceI18n/say';
 
 /**
- * Asks, in the system's own alert, before something is hidden, whenever something is waiting to be.
+ * Asks, in the system's own alert on a phone or a television, before something is hidden, whenever
+ * something is waiting to be.
  *
  * @param hiding - What the viewer is hiding, and the answers to give it.
  * @param onHidden - Told once something has been hidden, so a page showing it can close.

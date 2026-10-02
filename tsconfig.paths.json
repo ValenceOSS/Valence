@@ -12,6 +12,7 @@
       "@ValenceUI/PageCurl": ["./packages/ui/src/components/PageCurl/PageCurl.tsx"],
       "@ValenceUI/Orb.types": ["./packages/ui/src/components/Orb/Orb.types.ts"],
       "@ValenceClient/*": ["./packages/client/src/*"],
+    "@ValenceNative/*": ["./packages/native/src/*"],
       "@ValenceContracts/*": ["./packages/contracts/src/*"],
       "@ValenceCore/*": ["./packages/core/src/*"],
       "@ValenceDatabase/*": ["./packages/database/src/*"],
