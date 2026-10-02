@@ -42,6 +42,8 @@ const ENGLISH = {
     'Hold API keys for use outside the browser',
   'client.admin.describePermission.installAndManagePlugins': 'Install and manage plugins',
   'client.admin.describePermission.inviteSomebody': 'Invite somebody',
+  'client.admin.describePermission.linkThisServerWithOthers':
+    'Link this server with other Valence servers',
   'client.admin.describePermission.manageAccounts': 'Manage accounts',
   'client.admin.describePermission.manageOtherPeoplesProfiles': 'Manage other people’s profiles',
   'client.admin.describePermission.manageRoles': 'Manage roles',
@@ -105,6 +107,8 @@ const ENGLISH = {
     'Install plugins from the catalogue or a file, choose what they may do, change their settings and remove them.',
   'client.admin.describePermissionDetail.inviteSomebodyNewToSignIn':
     'Invite somebody new to sign in and hold an account.',
+  'client.admin.describePermissionDetail.linkThisServerWithOthers':
+    'Make and use invites to link this server with another Valence, approve or refuse a server asking to link, and unlink. Linking alone shares nothing.',
   'client.admin.describePermissionDetail.pauseSomebodyElsesStreamFromWhere':
     'Pause somebody else’s stream from where they are watching.',
   'client.admin.describePermissionDetail.pointValenceAtANewFolder':
@@ -807,7 +811,12 @@ const ENGLISH = {
   'common.likedSongs': 'Liked songs',
   'common.likedSongs2': 'Liked Songs',
   'common.likeTitle': 'Like {title}',
+  'common.linkedServers': 'Linked servers',
   'common.links': 'Links',
+  'common.linkState.awaitingThem': 'Waiting for them',
+  'common.linkState.awaitingUs': 'Asking to link',
+  'common.linkState.linked': 'Linked',
+  'common.linkState.unlinkedByThem': 'They unlinked',
   'common.linkTo': 'Link to',
   'common.linux': 'Linux',
   'common.list.andAlso': '{first}; {rest}',
@@ -1310,6 +1319,7 @@ const ENGLISH = {
   'common.thisDevice': 'This device',
   'common.thisItem': 'This item',
   'common.thisLinkNoLongerWorks': 'This link no longer works.',
+  'common.thisServer': 'This server',
   'common.thoseChangesWereNotSaved': 'Those changes were not saved.',
   'common.thoseCouldNotBeRead': 'Those could not be read.',
   'common.threeDays': 'Three days',
@@ -1406,6 +1416,7 @@ const ENGLISH = {
   'common.why': 'Why',
   'common.wide': 'Wide',
   'common.windows': 'Windows',
+  'common.withdraw': 'Withdraw',
   'common.withdrawIt': 'Withdraw it',
   'common.withdrawTheLinkToTitle': 'Withdraw the link to {title}',
   'common.withdrawThisLink': 'Withdraw this link?',
@@ -2108,7 +2119,6 @@ const ENGLISH = {
   'phone.theAccount.theShares.linksYouHaveHandedOutShare':
     'Links you have handed out. Share something from its own page, and it will be here.',
   'phone.theAccount.theShares.openedShare': 'Opened {share}',
-  'phone.theAccount.theShares.withdraw': 'Withdraw',
   'phone.theAccount.theShares.withdrawTheLinkToTitle': 'Withdraw the link to {title}?',
   'phone.theAccount.theShares.youHaveNotSharedAnythingYet': 'You have not shared anything yet.',
   'phone.theBadges.shortenedForAPhone.atmos': 'Atmos',
@@ -3522,6 +3532,39 @@ const ENGLISH = {
     'Whichever profile names this library',
   'screens.adminArea.librarySettingsDialog.whoFulfilsRequests': 'Who fetches what is asked for',
   'screens.adminArea.librarySettingsDialog.yourBrowser': 'Your browser',
+  'screens.adminArea.linkedServersPanel.anInviteLinksOneServer':
+    'An invite links one other Valence with this one. It works once, for a day, and you approve the server that uses it before they are linked.',
+  'screens.adminArea.linkedServersPanel.askedNameToLink':
+    'Asked {name} to link. You are linked once their admin approves.',
+  'screens.adminArea.linkedServersPanel.checkAgain': 'Check again',
+  'screens.adminArea.linkedServersPanel.copyItNowItIsNotShownAgain':
+    'Copy it now. It is not shown again.',
+  'screens.adminArea.linkedServersPanel.fingerprint': 'Fingerprint',
+  'screens.adminArea.linkedServersPanel.howOtherServersSeeThisOne':
+    'How other Valence servers see this one. Another admin checks an invite against its fingerprint.',
+  'screens.adminArea.linkedServersPanel.inviteAServer': 'Invite a server',
+  'screens.adminArea.linkedServersPanel.lastHeardFromWhen': 'Last heard from {when}',
+  'screens.adminArea.linkedServersPanel.link': 'Link',
+  'screens.adminArea.linkedServersPanel.linkedServersCouldNotBeRead':
+    'Linked servers could not be read.',
+  'screens.adminArea.linkedServersPanel.linkedWithName': 'Linked with {name}.',
+  'screens.adminArea.linkedServersPanel.linkToAServer': 'Link to a server',
+  'screens.adminArea.linkedServersPanel.makeAnInvite': 'Make an invite',
+  'screens.adminArea.linkedServersPanel.neitherServerReachesTheOther':
+    'Neither server reaches the other until they link again with a new invite.',
+  'screens.adminArea.linkedServersPanel.noServersAreLinkedYet': 'No servers are linked yet.',
+  'screens.adminArea.linkedServersPanel.pasteAnInvite':
+    'Paste an invite another Valence’s admin made. They approve this server before you are linked.',
+  'screens.adminArea.linkedServersPanel.readingLinkedServers': 'Reading linked servers',
+  'screens.adminArea.linkedServersPanel.runsOutWhen': 'Runs out {when}',
+  'screens.adminArea.linkedServersPanel.savedThisServer': 'Saved how other servers see this one.',
+  'screens.adminArea.linkedServersPanel.theInvite': 'The invite',
+  'screens.adminArea.linkedServersPanel.theirInvite': 'Their invite',
+  'screens.adminArea.linkedServersPanel.unlink': 'Unlink',
+  'screens.adminArea.linkedServersPanel.unlinkedName': 'Unlinked {name}.',
+  'screens.adminArea.linkedServersPanel.unlinkNameAsk': 'Unlink {name}?',
+  'screens.adminArea.linkedServersPanel.whereOtherServersReachIt': 'Where other servers reach it',
+  'screens.adminArea.linkedServersPanel.withdrawTheInvite': 'Withdraw the invite made {when}',
   'screens.adminArea.matchPicker.choosingHereCorrectsEveryEpisodeOf':
     'Choosing here corrects every episode of this series, and every scan after it.',
   'screens.adminArea.matchPicker.choosingHereCorrectsThisFilmAnd':
@@ -4875,7 +4918,6 @@ const ENGLISH = {
     '{value} of {count} answered. {value2}',
   'screens.jobHistory.describeRunSubject.aLibraryThatHasBeenRemoved':
     'A library that has been removed',
-  'screens.jobHistory.describeRunSubject.thisServer': 'This server',
   'screens.jobRunner.describeCountdown.dueNow': 'Due now',
   'screens.jobRunner.describeCountdown.inValueDValue2H': 'in {value}d {value2}h',
   'screens.jobRunner.describeCountdown.inValueHValue2M': 'in {value}h {value2}m',

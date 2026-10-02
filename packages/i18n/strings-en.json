@@ -165,6 +165,11 @@
     "context": "Shown in the admin (from `describePermission`)."
   },
   {
+    "handler": "client.admin.describePermission.linkThisServerWithOthers",
+    "text": "Link this server with other Valence servers",
+    "context": "The short name of the permission to link servers, in the roles editor."
+  },
+  {
     "handler": "client.admin.describePermission.manageAccounts",
     "text": "Manage accounts",
     "context": "Shown in the admin (from `describePermission`)."
@@ -363,6 +368,11 @@
     "handler": "client.admin.describePermissionDetail.inviteSomebodyNewToSignIn",
     "text": "Invite somebody new to sign in and hold an account.",
     "context": "Shown in the admin (from `describePermissionDetail`)."
+  },
+  {
+    "handler": "client.admin.describePermissionDetail.linkThisServerWithOthers",
+    "text": "Make and use invites to link this server with another Valence, approve or refuse a server asking to link, and unlink. Linking alone shares nothing.",
+    "context": "What the permission to link servers allows, in the roles editor."
   },
   {
     "handler": "client.admin.describePermissionDetail.pauseSomebodyElsesStreamFromWhere",
@@ -3395,9 +3405,34 @@
     "context": "Shown, used in several places, among them the now playing of the television app and the immersive music. {title} is filled in by the app."
   },
   {
+    "handler": "common.linkedServers",
+    "text": "Linked servers",
+    "context": "The admin area section for linking this Valence with other Valence servers."
+  },
+  {
     "handler": "common.links",
     "text": "Links",
     "context": "The label, used in the account area (from `accountPanels`) and in the admin area (from `adminSections`)."
+  },
+  {
+    "handler": "common.linkState.awaitingThem",
+    "text": "Waiting for them",
+    "context": "A linked server whose admin has not yet approved the request this server sent."
+  },
+  {
+    "handler": "common.linkState.awaitingUs",
+    "text": "Asking to link",
+    "context": "A server that asked to link with this one, waiting for this server's admin."
+  },
+  {
+    "handler": "common.linkState.linked",
+    "text": "Linked",
+    "context": "A server linked with this one, both admins having agreed."
+  },
+  {
+    "handler": "common.linkState.unlinkedByThem",
+    "text": "They unlinked",
+    "context": "A server whose admin unlinked it from this one."
   },
   {
     "handler": "common.linkTo",
@@ -5769,6 +5804,11 @@
     "context": "Shown, used in several places, among them the app on the server (from `serveShare`) and the sharing on the server (from `createShareGate`)."
   },
   {
+    "handler": "common.thisServer",
+    "text": "This server",
+    "context": "Shown in the job history (from `describeRunSubject`)."
+  },
+  {
     "handler": "common.thoseChangesWereNotSaved",
     "text": "Those changes were not saved.",
     "context": "Shown, used in the profile in the account of the phone app and in the account dialog."
@@ -6247,6 +6287,11 @@
     "handler": "common.windows",
     "text": "Windows",
     "context": "The name, used in the platform of the desktop app (from `describeThisDesktop`) and in the playback (from `detectClientLabel`)."
+  },
+  {
+    "handler": "common.withdraw",
+    "text": "Withdraw",
+    "context": "The label of a button in the shares in the account of the phone app."
   },
   {
     "handler": "common.withdrawIt",
@@ -9022,11 +9067,6 @@
     "handler": "phone.theAccount.theShares.openedShare",
     "text": "Opened {share}",
     "context": "Shown in the shares in the account of the phone app. {share} is filled in by the app."
-  },
-  {
-    "handler": "phone.theAccount.theShares.withdraw",
-    "text": "Withdraw",
-    "context": "The label of a button in the shares in the account of the phone app."
   },
   {
     "handler": "phone.theAccount.theShares.withdrawTheLinkToTitle",
@@ -14167,6 +14207,136 @@
     "handler": "screens.adminArea.librarySettingsDialog.yourBrowser",
     "text": "Your browser",
     "context": "The detail in the library settings dialog in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.anInviteLinksOneServer",
+    "text": "An invite links one other Valence with this one. It works once, for a day, and you approve the server that uses it before they are linked.",
+    "context": "Explains invites to link servers."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.askedNameToLink",
+    "text": "Asked {name} to link. You are linked once their admin approves.",
+    "context": "Toast after using an invite, waiting for the other server's admin."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.checkAgain",
+    "text": "Check again",
+    "context": "Button asking a server whether its admin has answered a request to link."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.copyItNowItIsNotShownAgain",
+    "text": "Copy it now. It is not shown again.",
+    "context": "Shown under a freshly made invite to link servers."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.fingerprint",
+    "text": "Fingerprint",
+    "context": "Label of a server's key fingerprint, read out to check an invite."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.howOtherServersSeeThisOne",
+    "text": "How other Valence servers see this one. Another admin checks an invite against its fingerprint.",
+    "context": "Explains the card with this server's name, colour, address and fingerprint."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.inviteAServer",
+    "text": "Invite a server",
+    "context": "Card title: making an invite for another Valence's admin."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.lastHeardFromWhen",
+    "text": "Last heard from {when}",
+    "context": "When a linked server last answered, as a relative time."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.link",
+    "text": "Link",
+    "context": "Button that uses a pasted invite to link with another server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.linkedServersCouldNotBeRead",
+    "text": "Linked servers could not be read.",
+    "context": "Shown when the linked servers page could not be read from the server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.linkedWithName",
+    "text": "Linked with {name}.",
+    "context": "Toast when two servers become linked."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.linkToAServer",
+    "text": "Link to a server",
+    "context": "Card title: using an invite another Valence's admin made."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.makeAnInvite",
+    "text": "Make an invite",
+    "context": "Button that makes an invite to link another server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.neitherServerReachesTheOther",
+    "text": "Neither server reaches the other until they link again with a new invite.",
+    "context": "Detail of the confirmation before unlinking a server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.noServersAreLinkedYet",
+    "text": "No servers are linked yet.",
+    "context": "Empty state of the list of linked servers."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.pasteAnInvite",
+    "text": "Paste an invite another Valence’s admin made. They approve this server before you are linked.",
+    "context": "Explains using an invite to link servers."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.readingLinkedServers",
+    "text": "Reading linked servers",
+    "context": "Accessible label while linked servers load."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.runsOutWhen",
+    "text": "Runs out {when}",
+    "context": "When an open invite to link servers stops working, as a relative time."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.savedThisServer",
+    "text": "Saved how other servers see this one.",
+    "context": "Toast after saving this server's name, colour or address for linking."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.theInvite",
+    "text": "The invite",
+    "context": "Accessible label of the box showing a freshly made invite."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.theirInvite",
+    "text": "Their invite",
+    "context": "Label of the field an invite from another server is pasted into."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.unlink",
+    "text": "Unlink",
+    "context": "Button and confirmation ending a link with another server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.unlinkedName",
+    "text": "Unlinked {name}.",
+    "context": "Toast after unlinking a server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.unlinkNameAsk",
+    "text": "Unlink {name}?",
+    "context": "Title of the confirmation before unlinking a server."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.whereOtherServersReachIt",
+    "text": "Where other servers reach it",
+    "context": "Label of the field holding the public address of this server for linking."
+  },
+  {
+    "handler": "screens.adminArea.linkedServersPanel.withdrawTheInvite",
+    "text": "Withdraw the invite made {when}",
+    "context": "Accessible label of the button withdrawing an open invite."
   },
   {
     "handler": "screens.adminArea.matchPicker.choosingHereCorrectsEveryEpisodeOf",
@@ -19414,11 +19584,6 @@
     "handler": "screens.jobHistory.describeRunSubject.aLibraryThatHasBeenRemoved",
     "text": "A library that has been removed",
     "context": "The name in the job history (from `describeRunSubject`)."
-  },
-  {
-    "handler": "screens.jobHistory.describeRunSubject.thisServer",
-    "text": "This server",
-    "context": "Shown in the job history (from `describeRunSubject`)."
   },
   {
     "handler": "screens.jobRunner.describeCountdown.dueNow",

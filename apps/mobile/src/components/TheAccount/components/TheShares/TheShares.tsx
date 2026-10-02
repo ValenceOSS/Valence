@@ -50,7 +50,7 @@ const TheShares = () => {
       [
         { text: say('common.keepIt'), style: 'cancel' },
         {
-          text: say('phone.theAccount.theShares.withdraw'),
+          text: say('common.withdraw'),
           style: 'destructive',
           onPress: () => {
             void revokeShare(share.id).then(async (isWithdrawn) => {
@@ -105,7 +105,7 @@ const TheShares = () => {
                       withdraw(share);
                     }}
                   >
-                    {say('phone.theAccount.theShares.withdraw')}
+                    {say('common.withdraw')}
                   </Button>
                 ) : null}
               </View>
