@@ -3885,6 +3885,11 @@
     "context": "Text shown, used in the reencode dialog and in the command palette."
   },
   {
+    "handler": "common.nothingMatchesThose",
+    "text": "Nothing matches those",
+    "context": "When filters leave nothing in a page of the library, on the phone and the television."
+  },
+  {
     "handler": "common.nothingToWatchYet",
     "text": "Nothing to watch yet",
     "context": "The title of a nothing here, used in the home in the library of the phone app and in the library browser."
@@ -8853,11 +8858,6 @@
     "handler": "phone.theLibrary.findADownload",
     "text": "Find a download",
     "context": "Shown in an empty text field until something is typed in the library of the phone app."
-  },
-  {
-    "handler": "phone.theLibrary.nothingMatchesThose",
-    "text": "Nothing matches those",
-    "context": "The title of a nothing here in the library of the phone app."
   },
   {
     "handler": "phone.theLibrary.theBooks.carryOnListeningToTitle",
