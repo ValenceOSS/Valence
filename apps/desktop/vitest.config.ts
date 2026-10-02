@@ -9,6 +9,7 @@ export default defineConfig({
     globals: true,
     testTimeout: 15_000,
     setupFiles: ['./vitest.setup.ts'],
+    sequence: { hooks: 'list' },
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
     coverage: {
       reporter: ['text', 'json-summary'],
