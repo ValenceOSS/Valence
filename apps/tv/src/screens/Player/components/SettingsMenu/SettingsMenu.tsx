@@ -1,13 +1,11 @@
-import { ScrollView, StyleSheet, Text, TVFocusGuideView, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { ChevronRight } from '@keyline-icons/react-native';
-import { FadeIn } from '@ValenceTv/components/FadeIn/FadeIn';
+import { PlayerPanel } from '@ValenceTv/screens/Player/components/PlayerPanel/PlayerPanel';
 import { Focusable } from '@ValenceTv/components/Focusable/Focusable';
 import { Icon } from '@ValenceTv/components/Icon/Icon';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { SettingsMenuProps } from './SettingsMenu.types';
 import { say } from '@ValenceI18n/say';
-
-const WIDTH = 720;
 
 /**
  * The player's settings, gathered in one panel down the right of the picture as the web's player
@@ -20,63 +18,39 @@ const WIDTH = 720;
  * @param onOpen - Told which setting was chosen, to show its choices.
  */
 const SettingsMenu = ({ title = say('common.settings'), settings, onOpen }: SettingsMenuProps) => (
-  <TVFocusGuideView style={styles.panel} trapFocusLeft trapFocusRight trapFocusUp trapFocusDown>
-    <FadeIn>
-      <Text style={styles.title}>{title}</Text>
+  <PlayerPanel title={title}>
+    {settings.map((setting, at) => (
+      <Focusable
+        key={setting.id}
+        label={`${setting.label}, ${setting.value}`}
+        scale={1}
+        hasPreferredFocus={at === 0}
+        onPress={() => {
+          onOpen(setting.id);
+        }}
+      >
+        {(isFocused) => {
+          const ink = isFocused ? tokens.colours.onWhite : tokens.colours.text;
+          const quiet = isFocused ? tokens.colours.onWhite : tokens.colours.muted;
 
-      <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
-        {settings.map((setting, at) => (
-          <Focusable
-            key={setting.id}
-            label={`${setting.label}, ${setting.value}`}
-            scale={1}
-            hasPreferredFocus={at === 0}
-            onPress={() => {
-              onOpen(setting.id);
-            }}
-          >
-            {(isFocused) => {
-              const ink = isFocused ? tokens.colours.onWhite : tokens.colours.text;
-              const quiet = isFocused ? tokens.colours.onWhite : tokens.colours.muted;
-
-              return (
-                <View style={[styles.row, isFocused && styles.focused]}>
-                  <Text style={[styles.label, { color: ink }]}>{setting.label}</Text>
-                  <Text numberOfLines={1} style={[styles.value, { color: quiet }]}>
-                    {setting.value}
-                  </Text>
-                  <Icon of={ChevronRight} size={26} colour={quiet} />
-                </View>
-              );
-            }}
-          </Focusable>
-        ))}
-      </ScrollView>
-    </FadeIn>
-  </TVFocusGuideView>
+          return (
+            <View style={[styles.row, isFocused && styles.focused]}>
+              <Text style={[styles.label, { color: ink }]}>{setting.label}</Text>
+              <Text numberOfLines={1} style={[styles.value, { color: quiet }]}>
+                {setting.value}
+              </Text>
+              <Icon of={ChevronRight} size={26} colour={quiet} />
+            </View>
+          );
+        }}
+      </Focusable>
+    ))}
+  </PlayerPanel>
 );
 
 SettingsMenu.displayName = 'SettingsMenu';
 
 const styles = StyleSheet.create({
-  panel: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    width: WIDTH,
-    paddingTop: tokens.space.xl,
-    paddingHorizontal: tokens.space.lg,
-    backgroundColor: 'rgba(12,12,12,0.92)',
-  },
-  title: {
-    color: tokens.colours.text,
-    fontSize: tokens.type.heading,
-    fontWeight: '700',
-    marginBottom: tokens.space.md,
-    paddingHorizontal: tokens.space.md,
-  },
-  list: { gap: tokens.space.xs, paddingBottom: tokens.space.xl },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -21,7 +21,7 @@ const aNotice = (id: string, title: string, link: string | null, isRead = false)
   readAt: isRead ? new Date().toISOString() : null,
 });
 
-const drawWith = (notifications: Notification[], onOpen = jest.fn()) => {
+const drawWith = (notifications: Notification[], onOpen = jest.fn(), onJoin = jest.fn()) => {
   const cache = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity, gcTime: Infinity } },
   });
@@ -30,7 +30,7 @@ const drawWith = (notifications: Notification[], onOpen = jest.fn()) => {
 
   return render(
     <QueryClientProvider client={cache}>
-      <YourNotifications onOpen={onOpen} onFocus={jest.fn()} />
+      <YourNotifications onOpen={onOpen} onJoin={onJoin} onFocus={jest.fn()} />
     </QueryClientProvider>,
   );
 };
@@ -73,6 +73,27 @@ describe('YourNotifications', () => {
 
     expect(onOpen).toHaveBeenCalledWith({ kind: 'film', mediaId: 'dune' });
     expect(markNotificationsRead).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000001');
+  });
+
+  it('joins the watch party an invitation asks them into', async () => {
+    const onOpen = jest.fn();
+    const onJoin = jest.fn();
+    const drawn = await drawWith(
+      [
+        aNotice(
+          '00000000-0000-4000-8000-000000000003',
+          'Jo asked you to watch Dune',
+          '/watch/dune?party=p-1',
+        ),
+      ],
+      onOpen,
+      onJoin,
+    );
+
+    await userEvent.press(drawn.getByText('Jo asked you to watch Dune · New'));
+
+    expect(onJoin).toHaveBeenCalledWith({ kind: 'watch', partyId: 'p-1', mediaId: 'dune' });
+    expect(onOpen).not.toHaveBeenCalled();
   });
 
   it('opens nothing for a notice that names nothing to watch', async () => {

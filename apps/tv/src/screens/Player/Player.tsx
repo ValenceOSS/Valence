@@ -44,6 +44,12 @@ import { SettingsMenu } from '@ValenceTv/screens/Player/components/SettingsMenu/
 import { StreamStats } from '@ValenceTv/screens/Player/components/StreamStats/StreamStats';
 import { TrackMenu } from '@ValenceTv/screens/Player/components/TrackMenu/TrackMenu';
 import { UpNext } from '@ValenceTv/screens/Player/components/UpNext/UpNext';
+import { PartyMenu } from '@ValenceTv/screens/Player/components/PartyMenu/PartyMenu';
+import { roomPlayerOfExpo } from '@ValenceNative/party/roomPlayerOfExpo';
+import { useFollowTheRoom } from '@ValenceClient/party/useFollowTheRoom';
+import { usePartyPlayback } from '@ValenceClient/party/usePartyPlayback';
+import { sessionQueries } from '@ValenceClient/query/sessionQueries';
+import { sayCount } from '@ValenceI18n/sayCount';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { HWEvent } from 'react-native';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
@@ -90,6 +96,13 @@ const NOTHING_READ: StreamReading = {
 const UP_NEXT_BEFORE_END = 30;
 
 const REFUSED_SIGN_IN = '-1013';
+
+const SAID_FOR_MS = 4000;
+
+/**
+ * Nothing, for a player that cannot refuse to start the way a browser can.
+ */
+const NEVER_REFUSES = () => undefined;
 
 /**
  * How a playing speed is said: normal at its own pace, and otherwise as a multiple.
@@ -148,8 +161,13 @@ const whyItWillNotPlay = (message: string): string =>
  * @param carriedOn - How many episodes have followed on their own before this one.
  * @param onLeave - Told when the title ends with nothing after it, or somebody gives up on it.
  * @param onNext - Told to play the next episode, and how many will then have followed on untouched.
+ * @param watchParty - The watch party this television holds. Where it is watching this, the film is
+ * kept in step with the room — Play/Pause, skipping and scrubbing go to the room rather than straight
+ * to the player, and what the others did is said over the picture — and the party is reached from
+ * the settings, to start one, see who is in it, or leave. A party wanting its password asks for it
+ * over the film.
  */
-const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerProps) => {
+const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext, watchParty }: PlayerProps) => {
   const cache = useQueryClient();
   const detail = useQuery(libraryQueries.detail(mediaId));
   const watching = useQuery(profileQueries.watching());
@@ -211,6 +229,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
     | 'episodes'
     | 'timing'
     | 'captions'
+    | 'party'
     | `caption:${CaptionChoiceSet['id']}`
     | null
   >(null);
@@ -230,6 +249,8 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
   const [isUpNextAway, setIsUpNextAway] = useState(false);
   const [hasEnded, setHasEnded] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
+  const [status, setStatus] = useState('idle');
+  const [heard, setHeard] = useState<string | null>(null);
 
   const player = useVideoPlayer(null, (made) => {
     made.timeUpdateEventInterval = 0.5;
@@ -262,8 +283,10 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
       player.addListener('playToEnd', () => {
         setHasEnded(true);
       }),
-      player.addListener('statusChange', ({ status, error }) => {
-        if (status === 'error' && !isSwitching.current) {
+      player.addListener('statusChange', ({ status: now, error }) => {
+        setStatus(now);
+
+        if (now === 'error' && !isSwitching.current) {
           setFailure(
             error?.message === undefined
               ? say('tv.player.thisCouldNotBePlayedNoReason')
@@ -279,6 +302,54 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
       }
     };
   }, [player]);
+
+  const partyPlayback = usePartyPlayback(watchParty);
+  const party = partyPlayback ?? undefined;
+  const playerOf = useCallback(() => roomPlayerOfExpo(player), [player]);
+  const inStep = useFollowTheRoom({
+    party,
+    playerOf,
+    isSessionPlaying: session.kind === 'ready' && status === 'readyToPlay',
+    onSaid: setHeard,
+    onCannotStart: NEVER_REFUSES,
+  });
+  const everyone = useQuery({
+    ...sessionQueries.everyone(),
+    enabled: (watchParty?.party ?? null) !== null,
+  });
+  const household = useMemo(
+    () => (everyone.data ?? []).map((person) => ({ id: person.id, name: person.name })),
+    [everyone.data],
+  );
+  const { rememberWhere } = inStep;
+  const isInAParty = party !== undefined;
+
+  useEffect(() => {
+    if (heard === null) {
+      return;
+    }
+
+    const gone = setTimeout(() => {
+      setHeard(null);
+    }, SAID_FOR_MS);
+
+    return () => {
+      clearTimeout(gone);
+    };
+  }, [heard]);
+
+  const moveTo = useCallback(
+    (seconds: number) => {
+      if (party !== undefined) {
+        party.onCommand({ kind: 'seek', atSeconds: Math.max(0, seconds) });
+
+        return;
+      }
+
+      moveTheVideoTo(player, seconds);
+    },
+    [party, player],
+  );
 
   const title = detail.data?.metadata.seriesTitle ?? detail.data?.title ?? '';
   const episodeLine =
@@ -314,14 +385,17 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
       .then(() => {
         isSwitching.current = false;
         setFailure(null);
+        rememberWhere(startFrom);
 
         if (startFrom > 0) {
           player.currentTime = startFrom;
         }
 
-        player.play();
+        if (!isInAParty) {
+          player.play();
+        }
       });
-  }, [session, isDescribed, player, startFrom, title, episodeLine]);
+  }, [session, isDescribed, player, startFrom, title, episodeLine, rememberWhere, isInAParty]);
 
   useEffect(() => {
     if (session.kind !== 'ready') {
@@ -372,20 +446,29 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
   }, []);
 
   const toggle = useCallback(() => {
+    if (party !== undefined) {
+      party.onCommand({
+        kind: party.isPlaying ? 'pause' : 'play',
+        atSeconds: at.current.position,
+      });
+
+      return;
+    }
+
     if (at.current.isPlaying) {
       player.pause();
     } else {
       player.play();
     }
-  }, [player]);
+  }, [party, player]);
 
   const seekBy = useCallback(
     (seconds: number) => {
       const length = at.current.duration > 0 ? at.current.duration : Number.MAX_SAFE_INTEGER;
 
-      moveTheVideoTo(player, Math.min(Math.max(0, at.current.position + seconds), length));
+      moveTo(Math.min(Math.max(0, at.current.position + seconds), length));
     },
-    [player],
+    [moveTo],
   );
 
   useRemoteControlled({
@@ -396,14 +479,20 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
     isPlaying,
     read: () => ({ position: at.current.position, duration: at.current.duration }),
     onPause: () => {
-      player.pause();
+      if (party === undefined) {
+        player.pause();
+      } else {
+        party.onCommand({ kind: 'pause', atSeconds: at.current.position });
+      }
     },
     onResume: () => {
-      player.play();
+      if (party === undefined) {
+        player.play();
+      } else {
+        party.onCommand({ kind: 'play', atSeconds: at.current.position });
+      }
     },
-    onSeek: (seconds) => {
-      moveTheVideoTo(player, seconds);
-    },
+    onSeek: moveTo,
     onStop: onLeave,
   });
 
@@ -561,18 +650,24 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
     setIsShowing(false);
   }, []);
 
+  const isAskedForAPassword = watchParty !== undefined && watchParty.passwordWanted !== null;
+
   useMenuButton(
-    menu === 'settings'
-      ? closeMenu
-      : menu?.startsWith('caption:') === true
-        ? () => {
-            setMenu('captions');
-          }
-        : menu !== null
-          ? backToSettings
-          : isShowing && isPlaying
-            ? putControlsAway
-            : onLeave,
+    isAskedForAPassword
+      ? () => {
+          watchParty.stopAsking();
+        }
+      : menu === 'settings'
+        ? closeMenu
+        : menu?.startsWith('caption:') === true
+          ? () => {
+              setMenu('captions');
+            }
+          : menu !== null
+            ? backToSettings
+            : isShowing && isPlaying
+              ? putControlsAway
+              : onLeave,
   );
 
   const goNext = useCallback(
@@ -666,7 +761,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
           }}
           onScrubPress={() => {
             if (scrubAt !== null) {
-              moveTheVideoTo(player, scrubAt);
+              moveTo(scrubAt);
               setScrubAt(null);
             }
 
@@ -700,7 +795,7 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
             size="md"
             hasPreferredFocus={!isShowing}
             onPress={() => {
-              moveTheVideoTo(player, skippable.endSeconds);
+              moveTo(skippable.endSeconds);
               touch();
             }}
           />
@@ -781,6 +876,21 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
                     value: placeOfEpisode(summary),
                   },
                 ]),
+            ...(watchParty === undefined
+              ? []
+              : [
+                  {
+                    id: 'party',
+                    label: say('common.partyMenu.watchParty'),
+                    value:
+                      watchParty.party?.kind === 'watch'
+                        ? sayCount(
+                            'common.partyPanel.countWatching',
+                            watchParty.party.members.filter((member) => member.isWatching).length,
+                          )
+                        : say('common.off'),
+                  },
+                ]),
             {
               id: 'stats',
               label: say('common.statsForNerds'),
@@ -802,13 +912,29 @@ const Player = ({ mediaId, startSeconds, carriedOn, onLeave, onNext }: PlayerPro
               id === 'speed' ||
               id === 'episodes' ||
               id === 'timing' ||
-              id === 'captions'
+              id === 'captions' ||
+              id === 'party'
             ) {
               setMenu(id);
             }
           }}
         />
       ) : null}
+
+      {watchParty !== undefined && (menu === 'party' || isAskedForAPassword) ? (
+        <PartyMenu
+          watchParty={watchParty}
+          mediaId={mediaId}
+          people={household}
+          onLeave={closeMenu}
+        />
+      ) : null}
+
+      {heard === null && (watchParty?.notice ?? null) === null ? null : (
+        <View style={styles.said} pointerEvents="none">
+          <Text style={styles.saying}>{heard ?? watchParty?.notice}</Text>
+        </View>
+      )}
 
       {menu === 'timing' ? (
         <TrackMenu
@@ -986,6 +1112,16 @@ const styles = StyleSheet.create({
   },
   problem: { color: tokens.colours.text, fontSize: tokens.type.body, maxWidth: 1200 },
   skip: { position: 'absolute', right: tokens.space.edge, bottom: tokens.space.xl * 3 },
+  said: {
+    position: 'absolute',
+    top: tokens.space.xl,
+    alignSelf: 'center',
+    paddingHorizontal: tokens.space.lg,
+    paddingVertical: tokens.space.sm,
+    borderRadius: tokens.radii.lg,
+    backgroundColor: 'rgba(12,12,12,0.88)',
+  },
+  saying: { color: tokens.colours.text, fontSize: tokens.type.body, fontWeight: '600' },
 });
 
 export { Player };

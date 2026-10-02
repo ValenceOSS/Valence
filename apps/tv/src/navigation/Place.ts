@@ -11,6 +11,6 @@ type Place =
   | { kind: 'nowPlaying'; mood: string | null }
   | { kind: 'book'; bookId: string; mood: string | null }
   | { kind: 'listening'; mood: string | null }
-  | { kind: 'play'; mediaId: string; startSeconds: number; carriedOn: number };
+  | { kind: 'play'; mediaId: string; startSeconds: number; carriedOn: number; invitedTo?: string };
 
 export type { Place };

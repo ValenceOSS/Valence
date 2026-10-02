@@ -9,6 +9,9 @@ import { playbackQueries } from '@ValenceClient/query/playbackQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { MediaDetailSchema } from '@ValenceContracts/schemas/Library';
 import { Player } from '@ValenceTv/screens/Player/Player';
+import { aWatchParty } from '@ValenceClient/testing/aWatchParty';
+import { aWatchPartyStateWith } from '@ValenceClient/testing/aWatchPartyStateWith';
+import type { WatchPartyState } from '@ValenceClient/party/useWatchParty';
 import { aFakeVideoPlayer as mockAFakeVideoPlayer } from '@ValenceTv/testing/aFakeVideoPlayer';
 import type { SubtitleCue } from '@ValenceClient/playback/fetchSubtitleCues';
 import type { SubtitleTrack } from '@ValenceClient/playback/fetchSubtitles';
@@ -44,6 +47,10 @@ const mockControlled: { current: Controlled | null } = { current: null };
 const mockRemote = new Set<Heard>();
 
 const mockReport = jest.fn<Promise<boolean>, [string, object]>(() => Promise.resolve(true));
+
+jest.mock('@ValenceClient/session/auth', () => ({
+  fetchSession: () => new Promise(() => undefined),
+}));
 
 jest.mock('expo-video', () => ({
   useVideoPlayer: () => mockVideo.current,
@@ -257,6 +264,7 @@ type Setup = {
   cues?: Record<string, SubtitleCue[]>;
   show?: ShowDetail | null;
   viewer?: ViewerProfile;
+  watchParty?: WatchPartyState;
 };
 
 const draw = async (setup: Setup = {}) => {
@@ -292,6 +300,7 @@ const draw = async (setup: Setup = {}) => {
         carriedOn={setup.carriedOn ?? 0}
         onLeave={onLeave}
         onNext={onNext}
+        {...(setup.watchParty === undefined ? {} : { watchParty: setup.watchParty })}
       />
     </QueryClientProvider>
   );
@@ -593,6 +602,82 @@ describe('Player', () => {
       expect(mockVideo.current.pause).toHaveBeenCalledTimes(1);
       expect(mockVideo.current.play).toHaveBeenCalledTimes(2);
       expect(mockVideo.current.currentTime).toBe(321);
+    });
+  });
+
+  describe('in a watch party', () => {
+    it('leaves starting to the room rather than playing on its own', async () => {
+      await draw({ watchParty: aWatchPartyStateWith(jest.fn, { party: aWatchParty() }) });
+
+      expect(mockVideo.current.replaceAsync).toHaveBeenCalled();
+      expect(mockVideo.current.play).not.toHaveBeenCalled();
+    });
+
+    it('asks the room to pause and to move, rather than doing either itself', async () => {
+      const watchParty = aWatchPartyStateWith(jest.fn, { party: aWatchParty() });
+      const { drawn } = await draw({ watchParty });
+
+      await tell('sourceLoad', { duration: 3000 });
+      await tell('timeUpdate', { currentTime: 100 });
+      await userEvent.press(drawn.getByRole('button', { name: 'Play' }));
+
+      expect(watchParty.send).toHaveBeenCalledWith({ kind: 'pause', atSeconds: 100 });
+
+      const [back] = drawn.getAllByRole('button', { name: '10s' });
+
+      if (back === undefined) {
+        throw new Error('The skip buttons were not drawn.');
+      }
+
+      await userEvent.press(back);
+
+      expect(watchParty.send).toHaveBeenCalledWith({ kind: 'seek', atSeconds: 90 });
+      expect(mockVideo.current.currentTime).toBe(0);
+
+      mockControlled.current?.onResume();
+
+      expect(watchParty.send).toHaveBeenCalledWith({ kind: 'play', atSeconds: 100 });
+    });
+
+    it('starts a party from the settings, around what is playing', async () => {
+      const watchParty = aWatchPartyStateWith(jest.fn);
+      const { drawn } = await draw({ watchParty });
+
+      await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Watch party, Off' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Start a watch party' }));
+
+      expect(watchParty.open).toHaveBeenCalledWith(MEDIA_ID);
+    });
+
+    it('asks for the password a party wants, and Menu gives up on it', async () => {
+      const watchParty = aWatchPartyStateWith(jest.fn, {
+        passwordWanted: { partyId: 'p-9', wasWrong: false },
+      });
+      const { drawn } = await draw({ watchParty });
+
+      expect(drawn.getByText('This watch party has a password')).toBeTruthy();
+
+      await menu();
+
+      expect(watchParty.stopAsking).toHaveBeenCalled();
+    });
+
+    it('says what somebody else in the room did', async () => {
+      const { drawn } = await draw({
+        watchParty: aWatchPartyStateWith(jest.fn, {
+          party: aWatchParty(),
+          command: {
+            sequence: 1,
+            atMs: 1,
+            byName: 'Jo',
+            byConnectionId: 'them',
+            command: { kind: 'pause', atSeconds: 40 },
+          },
+        }),
+      });
+
+      expect(drawn.getByText('Jo paused')).toBeTruthy();
     });
   });
 

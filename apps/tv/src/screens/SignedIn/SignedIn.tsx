@@ -7,6 +7,11 @@ import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { useFreshFromTheSocket } from '@ValenceClient/query/useFreshFromTheSocket';
 import { getRealtimeClient } from '@ValenceClient/realtime/getRealtimeClient';
 import { watchPresence } from '@ValenceClient/presence/watchPresence';
+import { useWatchParty } from '@ValenceClient/party/useWatchParty';
+import { PARTY_NOTICE_LINGERS_MS } from '@ValenceClient/party/PARTY_NOTICE_LINGERS_MS';
+import { resumeFor } from '@ValenceClient/playback/resumeFor';
+import { useProgress } from '@ValenceTv/library/useProgress';
+import type { PartyInvitation } from '@ValenceClient/party/readPartyInvitation';
 import { onPresenceEvent } from '@ValenceClient/presence/presenceEvents';
 import { useMusicRemote } from '@ValenceClient/music/useMusicRemote';
 import { useAudiobookRemote } from '@ValenceClient/books/useAudiobookRemote';
@@ -43,7 +48,7 @@ import { Listening } from '@ValenceTv/screens/Listening/Listening';
 import { Music } from '@ValenceTv/screens/Music/Music';
 import { MusicCollection } from '@ValenceTv/screens/MusicCollection/MusicCollection';
 import { NowPlaying } from '@ValenceTv/screens/NowPlaying/NowPlaying';
-import { Player } from '@ValenceTv/screens/Player/Player';
+import { PlayingTogether } from '@ValenceTv/screens/SignedIn/components/PlayingTogether/PlayingTogether';
 import { RequestsPage } from '@ValenceTv/screens/RequestsPage/RequestsPage';
 import { PluginPage } from '@ValenceTv/screens/PluginPage/PluginPage';
 import { Search } from '@ValenceTv/screens/Search/Search';
@@ -146,6 +151,11 @@ const bookMoodOf = (book: Book): string | null => (book.hasCover ? bookCoverUrl(
  * for the remote to open it from wherever somebody has got to, and Play/Pause on the remote plays
  * and pauses whichever it is. Opened from one of the parts, it opens over the music or books part,
  * so going back from it lands there rather than where it was opened from.
+ *
+ * The watch party this television may be in is held here rather than in the player, since an
+ * invitation arrives with the notifications and a party outlives any one film being opened. Choosing
+ * an invitation opens the film it is watching, joined, and somebody put out of a party is told so
+ * for a moment.
  *
  * When something this viewer asked for arrives, a banner slides in to say so, and Play/Pause opens
  * it; nothing is announced over the player.
@@ -272,6 +282,39 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
   const back = useCallback(() => {
     setOpened((was) => was.slice(0, -1));
   }, []);
+
+  const watchParty = useWatchParty(getRealtimeClient());
+  const { notice: partyNotice, forgetNotice: forgetPartyNotice } = watchParty;
+  const { progress } = useProgress();
+
+  useEffect(() => {
+    if (partyNotice === null) {
+      return;
+    }
+
+    const goes = setTimeout(() => {
+      forgetPartyNotice();
+    }, PARTY_NOTICE_LINGERS_MS);
+
+    return () => {
+      clearTimeout(goes);
+    };
+  }, [partyNotice, forgetPartyNotice]);
+
+  const join = useCallback(
+    (invitation: PartyInvitation) => {
+      if (invitation.kind === 'watch') {
+        open({
+          kind: 'play',
+          mediaId: invitation.mediaId,
+          startSeconds: resumeFor(progress, invitation.mediaId) ?? 0,
+          carriedOn: 0,
+          invitedTo: invitation.partyId,
+        });
+      }
+    },
+    [open, progress],
+  );
 
   useEffect(
     () =>
@@ -586,6 +629,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
                         onOpenRequest={openRequest}
                         onOpenPluginPage={openPluginPage}
                         onOpenNamed={openByMediaId}
+                        onJoin={join}
                         upTo={items.get('account') ?? null}
                       />
                     ) : (
@@ -727,8 +771,10 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
 
       {top?.kind === 'play' ? (
         <View style={[styles.over, styles.dark]}>
-          <Player
+          <PlayingTogether
             key={`${top.mediaId}:${top.startSeconds.toString()}`}
+            watchParty={watchParty}
+            invitedTo={top.invitedTo ?? null}
             mediaId={top.mediaId}
             startSeconds={top.startSeconds}
             carriedOn={top.carriedOn}

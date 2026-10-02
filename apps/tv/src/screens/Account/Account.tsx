@@ -37,6 +37,7 @@ import { say } from '@ValenceI18n/say';
  * @param onOpenRequest - Told which of their own requests somebody chose from the row of them.
  * @param onOpenPluginPage - Told which plugin page somebody chose.
  * @param onOpenNamed - Told which film or programme a chosen notification or viewing names.
+ * @param onJoin - Told which party a chosen invitation asks them into.
  * @param upTo - The face in the bar this page belongs under, which pressing up from the top goes to.
  */
 const AccountPage = ({
@@ -46,6 +47,7 @@ const AccountPage = ({
   onOpenRequest,
   onOpenPluginPage,
   onOpenNamed,
+  onJoin,
   upTo,
 }: AccountProps) => {
   const upToBar = useHandOff('up', upTo);
@@ -99,7 +101,7 @@ const AccountPage = ({
         </View>
       </TVFocusGuideView>
 
-      <YourNotifications onOpen={onOpenNamed} onFocus={upToBar.leave} />
+      <YourNotifications onOpen={onOpenNamed} onJoin={onJoin} onFocus={upToBar.leave} />
 
       {mayRequest ? <YourRequests onOpen={onOpenRequest} onFocus={upToBar.leave} /> : null}
 

@@ -5,6 +5,7 @@ import { markNotificationsRead } from '@ValenceClient/notifications/fetchNotific
 import { notificationQueries } from '@ValenceClient/query/notificationQueries';
 import { Button } from '@ValenceTv/components/Button/Button';
 import { readArrivalLink } from '@ValenceTv/notifications/readArrivalLink';
+import { readPartyInvitation } from '@ValenceClient/party/readPartyInvitation';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { Notification } from '@ValenceContracts/schemas/Notification';
 import type { YourNotificationsProps } from './YourNotifications.types';
@@ -28,13 +29,14 @@ const detailOf = (notice: Notification, now: Date): string =>
  * What this account has been told lately, on its account page, so a notice that came while nobody
  * was looking — or that went by on a banner — can still be read from the sofa. The newest come
  * first, unread ones marked, and choosing one that names a film or a programme opens it, reading it
- * as it does. Nothing is drawn where there has been nothing to tell. The list catches the remote
+ * as it does, and choosing an invitation joins the party it asks them into. Nothing is drawn where there has been nothing to tell. The list catches the remote
  * across the whole width of the page.
  *
  * @param onOpen - Told which film or programme a chosen notice names.
+ * @param onJoin - Told which party a chosen invitation asks them into.
  * @param onFocus - Told when the remote comes onto the list.
  */
-const YourNotifications = ({ onOpen, onFocus }: YourNotificationsProps) => {
+const YourNotifications = ({ onOpen, onJoin, onFocus }: YourNotificationsProps) => {
   const cache = useQueryClient();
   const inbox = useQuery(notificationQueries.inbox());
   const notices = (inbox.data?.notifications ?? []).slice(0, AT_MOST);
@@ -49,9 +51,16 @@ const YourNotifications = ({ onOpen, onFocus }: YourNotificationsProps) => {
 
   const choose = (notice: Notification) => {
     const named = readArrivalLink(notice.link);
+    const invitation = readPartyInvitation(notice.link);
 
     if (notice.readAt === null) {
       void markNotificationsRead(notice.id).then(reread);
+    }
+
+    if (invitation !== null) {
+      onJoin(invitation);
+
+      return;
     }
 
     if (named !== null) {
