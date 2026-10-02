@@ -85,7 +85,7 @@ fn ffprobe_reads_a_generated_playlist_as_a_film() {
         return;
     }
 
-    let directory = std::env::temp_dir().join(format!("valence-playlist-{}", std::process::id()));
+    let directory = common::scratch(format!("valence-playlist-{}", std::process::id()));
     std::fs::create_dir_all(&directory).expect("made a directory");
 
     let lengths = segment_a_film(&directory);

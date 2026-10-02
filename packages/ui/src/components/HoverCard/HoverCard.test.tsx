@@ -18,9 +18,7 @@ describe('HoverCard', () => {
 
     await user.hover(screen.getByText('VideoToolbox'));
 
-    expect(
-      await screen.findByText('Encoded on the graphics card', {}, { timeout: 3000 }),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('Encoded on the graphics card')).toBeInTheDocument();
   });
 
   it('stands on the flat surface every floating panel shares', async () => {
@@ -30,9 +28,9 @@ describe('HoverCard', () => {
 
     await user.hover(screen.getByText('VideoToolbox'));
 
-    const card = (
-      await screen.findByText('Encoded on the graphics card', {}, { timeout: 3000 })
-    ).closest('[data-slot="hover-card-content"]');
+    const card = (await screen.findByText('Encoded on the graphics card')).closest(
+      '[data-slot="hover-card-content"]',
+    );
 
     expect(card).toHaveClass('valence-float');
     expect(card?.className).not.toContain('valence-glass');

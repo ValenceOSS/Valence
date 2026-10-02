@@ -324,7 +324,7 @@ fn a_composited_burn_in_names_its_own_streams() {
         return;
     }
 
-    let output = std::env::temp_dir().join("valence-image-subtitle-route");
+    let output = common::scratch("valence-image-subtitle-route");
     std::fs::create_dir_all(&output).expect("creates the output directory");
 
     for path in bitmap_fixtures() {
@@ -372,7 +372,7 @@ fn a_software_burn_in_actually_encodes() {
 
     for path in bitmap_fixtures() {
         let name = name_of(&path);
-        let output = std::env::temp_dir().join(format!("valence-burn-in-{name}"));
+        let output = common::scratch(format!("valence-burn-in-{name}"));
 
         let _ = std::fs::remove_dir_all(&output);
         std::fs::create_dir_all(&output).expect("creates the output directory");
@@ -454,7 +454,7 @@ fn a_software_burn_in_draws_the_subtitle() {
         return;
     }
 
-    let output = std::env::temp_dir().join("valence-burn-in-frames");
+    let output = common::scratch("valence-burn-in-frames");
 
     for path in bitmap_fixtures() {
         let name = name_of(&path);

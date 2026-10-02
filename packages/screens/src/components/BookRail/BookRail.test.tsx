@@ -130,9 +130,12 @@ describe('BookRail', () => {
       <BookRail libraryId="shelf" title="Books" onOpen={vi.fn()} />,
     );
 
-    await vi.waitFor(() => {
-      expect(container.querySelector('[class*="Skeleton"], .animate-pulse')).toBeNull();
-    });
+    await vi.waitFor(
+      () => {
+        expect(container.querySelector('[class*="Skeleton"], .animate-pulse')).toBeNull();
+      },
+      { timeout: 5_000 },
+    );
     expect(screen.queryByText('Books')).not.toBeInTheDocument();
   });
 

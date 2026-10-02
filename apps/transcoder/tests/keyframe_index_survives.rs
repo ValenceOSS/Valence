@@ -12,6 +12,8 @@ use std::path::PathBuf;
 use valence_transcoder::keyframe_index;
 use valence_transcoder::keyframes::{Cut, Keyframes};
 
+mod common;
+
 fn a_film() -> Keyframes {
     Keyframes {
         cuts: (0..10)
@@ -26,7 +28,7 @@ fn a_film() -> Keyframes {
 }
 
 fn scratch(name: &str) -> PathBuf {
-    let root = std::env::temp_dir().join(format!("valence-keyframe-index-{name}"));
+    let root = common::scratch(format!("valence-keyframe-index-{name}"));
 
     let _ = std::fs::remove_dir_all(&root);
     std::fs::create_dir_all(&root).expect("the scratch directory is made");

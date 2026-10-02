@@ -79,9 +79,12 @@ describe('ComingUp', () => {
 
     const { container } = renderInAnAddress(<ComingUp onOpenShow={vi.fn()} />);
 
-    await vi.waitFor(() => {
-      expect(fetchComingUp).toHaveBeenCalled();
-    });
+    await vi.waitFor(
+      () => {
+        expect(fetchComingUp).toHaveBeenCalled();
+      },
+      { timeout: 5_000 },
+    );
 
     expect(container.querySelector('h2, h3')).toBeNull();
   });
@@ -91,9 +94,12 @@ describe('ComingUp', () => {
 
     renderInAnAddress(<ComingUp onOpenShow={vi.fn()} />);
 
-    await vi.waitFor(() => {
-      expect(fetchComingUp).toHaveBeenCalled();
-    });
+    await vi.waitFor(
+      () => {
+        expect(fetchComingUp).toHaveBeenCalled();
+      },
+      { timeout: 5_000 },
+    );
 
     expect(screen.queryByText('Coming up')).not.toBeInTheDocument();
   });

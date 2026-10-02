@@ -1,5 +1,8 @@
-import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
+import { cleanup } from '@testing-library/react-native';
+import { installPlatform } from '@ValenceClient/platform/installPlatform';
+import { letUnmountingFinish } from '@ValenceCore/testing/letUnmountingFinish';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
+import { releaseQueryTimers } from '@ValenceClient/testing/releaseQueryTimers';
 import { forgetTheFakePlayer } from '@ValenceMobile/testing/theFakePlayer';
 import { View } from 'react-native';
 
@@ -14,11 +17,14 @@ if ('prototype' in View && typeof View.prototype === 'object') {
   });
 }
 
+releaseQueryTimers();
+
 beforeEach(() => {
   installPlatform(aFakePlatform());
   forgetTheFakePlayer();
 });
 
-afterEach(() => {
-  forgetPlatform();
+afterEach(async () => {
+  await cleanup();
+  await letUnmountingFinish();
 });

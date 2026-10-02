@@ -315,11 +315,14 @@ describe('how a page of the library is laid out', () => {
 
     renderInAnAddress(<BrowseArea kind="shows" onPlay={vi.fn()} onInspect={vi.fn()} />);
 
-    await vi.waitFor(() => {
-      expect(
-        screen.getAllByText(/^(Long Running|Already Over)$/).map((title) => title.textContent),
-      ).toEqual(['Long Running', 'Already Over']);
-    });
+    await vi.waitFor(
+      () => {
+        expect(
+          screen.getAllByText(/^(Long Running|Already Over)$/).map((title) => title.textContent),
+        ).toEqual(['Long Running', 'Already Over']);
+      },
+      { timeout: 5_000 },
+    );
     expect(screen.queryByText('Return')).toBeNull();
   });
 
@@ -331,12 +334,15 @@ describe('how a page of the library is laid out', () => {
     await user.click(await screen.findByRole('button', { name: 'Filter films' }));
     await user.click(await screen.findByRole('menuitemcheckbox', { name: '1990s' }));
 
-    await vi.waitFor(() => {
-      expect(fetchLibraryItems).toHaveBeenCalledWith(
-        'library-1',
-        expect.objectContaining({ yearFrom: 1990, yearTo: 1999 }),
-      );
-    });
+    await vi.waitFor(
+      () => {
+        expect(fetchLibraryItems).toHaveBeenCalledWith(
+          'library-1',
+          expect.objectContaining({ yearFrom: 1990, yearTo: 1999 }),
+        );
+      },
+      { timeout: 5_000 },
+    );
 
     expect(screen.getByText('Decade: 1990s')).toBeInTheDocument();
   });

@@ -8,6 +8,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
+    sequence: { hooks: 'list' },
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
     testTimeout: 20_000,
     coverage: {

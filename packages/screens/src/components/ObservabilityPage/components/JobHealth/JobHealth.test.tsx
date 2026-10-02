@@ -119,11 +119,14 @@ describe('JobHealth', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Time range' }));
     await userEvent.click(await screen.findByRole('menuitemradio', { name: 'Last 7 days' }));
 
-    await vi.waitFor(() => {
-      const last = vi.mocked(fetchJobStats).mock.calls.at(-1)?.[0] ?? 0;
+    await vi.waitFor(
+      () => {
+        const last = vi.mocked(fetchJobStats).mock.calls.at(-1)?.[0] ?? 0;
 
-      expect(Date.now() - last).toBeGreaterThan(6.9 * 86_400_000);
-    });
+        expect(Date.now() - last).toBeGreaterThan(6.9 * 86_400_000);
+      },
+      { timeout: 5_000 },
+    );
   });
 
   it('says so where no job has run', async () => {

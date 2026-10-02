@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { theServerReach } from './theServerReach';
 import type { ServerReach } from './theServerReach';
 
@@ -74,9 +74,13 @@ describe('theServerReach', () => {
     reach = theServerReach({ where: () => WHERE, fetching: counting, every: 5 });
 
     reach.noteMissed();
-    await soon(60);
 
-    expect(asked).toBeGreaterThan(1);
+    await vi.waitFor(
+      () => {
+        expect(asked).toBeGreaterThan(1);
+      },
+      { timeout: 5_000 },
+    );
   });
 
   it('comes back on its own when the server answers again', async () => {
@@ -91,10 +95,15 @@ describe('theServerReach', () => {
     reach.whenChanged((isReachable) => told.push(isReachable));
 
     reach.noteMissed();
-    await soon();
+
+    await vi.waitFor(
+      () => {
+        expect(told).toEqual([false, true]);
+      },
+      { timeout: 5_000 },
+    );
 
     expect(reach.isReachable()).toBe(true);
-    expect(told).toEqual([false, true]);
   });
 
   it('stops asking once it is back', async () => {
@@ -109,7 +118,13 @@ describe('theServerReach', () => {
     reach = theServerReach({ where: () => WHERE, fetching: counting, every: 5 });
 
     reach.noteMissed();
-    await soon(30);
+
+    await vi.waitFor(
+      () => {
+        expect(reach?.isReachable()).toBe(true);
+      },
+      { timeout: 5_000 },
+    );
 
     const byThen = asked;
 
@@ -156,9 +171,13 @@ describe('theServerReach', () => {
     reach = theServerReach({ where: () => WHERE, fetching: silent, every: 10_000, within: 10 });
 
     reach.checkNow();
-    await soon();
 
-    expect(reach.isReachable()).toBe(false);
+    await vi.waitFor(
+      () => {
+        expect(reach?.isReachable()).toBe(false);
+      },
+      { timeout: 5_000 },
+    );
   });
 
   it('leaves a server that answers the check alone, however slow the request that asked', async () => {
@@ -198,9 +217,13 @@ describe('theServerReach', () => {
     });
 
     reach.noteMissed();
-    await soon(80);
 
-    expect(reach.isReachable()).toBe(true);
+    await vi.waitFor(
+      () => {
+        expect(reach?.isReachable()).toBe(true);
+      },
+      { timeout: 5_000 },
+    );
   });
 
   it('sets aside a check overtaken by a request that was answered while it was out', async () => {

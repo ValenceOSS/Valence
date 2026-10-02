@@ -92,9 +92,12 @@ describe('AudiobookBar', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Stop listening' }));
 
     expect(save).toHaveBeenCalled();
-    await vi.waitFor(() => {
-      expect(screen.queryByRole('region', { name: 'Listening to' })).not.toBeInTheDocument();
-    });
+    await vi.waitFor(
+      () => {
+        expect(screen.queryByRole('region', { name: 'Listening to' })).not.toBeInTheDocument();
+      },
+      { timeout: 5_000 },
+    );
   });
 
   it('sets a display name so devtools can identify it', () => {

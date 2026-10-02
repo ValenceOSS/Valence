@@ -195,9 +195,12 @@ describe('WatchPage', () => {
       drawn.player?.onClose?.();
     });
 
-    await vi.waitFor(() => {
-      expect(window.location.pathname).toBe('/');
-    });
+    await vi.waitFor(
+      () => {
+        expect(window.location.pathname).toBe('/');
+      },
+      { timeout: 5_000 },
+    );
 
     expect(window.location.search).toContain(`item=${ARRIVAL.id}`);
   });

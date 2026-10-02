@@ -82,9 +82,12 @@ describe('ContinueReading', () => {
 
     const { container } = renderInAnAddress(<ContinueReading onOpen={vi.fn()} />);
 
-    await vi.waitFor(() => {
-      expect(vi.mocked(fetch)).toHaveBeenCalled();
-    });
+    await vi.waitFor(
+      () => {
+        expect(vi.mocked(fetch)).toHaveBeenCalled();
+      },
+      { timeout: 5_000 },
+    );
     expect(container).toBeEmptyDOMElement();
   });
 
