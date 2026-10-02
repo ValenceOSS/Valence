@@ -22,6 +22,7 @@ import { SERVER_COMMANDS } from '@ValenceLanding/content/downloads/SERVER_COMMAN
 import { detectPlatform } from '@ValenceLanding/content/downloads/detectPlatform';
 import { downloadChoicesFor } from '@ValenceLanding/content/downloads/downloadChoicesFor';
 import { latestRelease } from '@ValenceLanding/content/downloads/latestRelease';
+import { nativeTranscoderFor } from '@ValenceLanding/content/downloads/nativeTranscoderFor';
 import { CopyableCommands } from './components/CopyableCommands/CopyableCommands';
 import { DownloadCard } from './components/DownloadCard/DownloadCard';
 import { DownloadRow } from './components/DownloadRow/DownloadRow';
@@ -44,12 +45,14 @@ const HEADING = 'font-mono text-xs uppercase tracking-[0.14em] text-text-muted';
 /**
  * Where to get Valence: the latest release and what is new in it, then a card each for the desktop
  * app — the visitor's own computer first and every other one beneath it — the few commands that
- * start a server, and what there is for a phone. A visitor on a phone is shown the phone first.
+ * start a server, with how to transcode in hardware on a Mac or Windows, and what there is for a
+ * phone. A visitor on a phone is shown the phone first.
  */
 const DownloadSection = () => {
   const prefersReducedMotion = useReducedMotionConfig();
   const [platform] = useState(() => detectPlatform(navigator));
   const { lead, others } = downloadChoicesFor(LATEST, platform);
+  const nativeTranscoder = nativeTranscoderFor(platform);
   const isOnAPhone = platform === 'iphone' || platform === 'android';
   const intel = platform === 'mac' ? others.find((choice) => choice.id === 'macIntel') : undefined;
   const LeadGlyph = lead === null ? null : LEAD_GLYPHS[lead.id];
@@ -210,6 +213,12 @@ const DownloadSection = () => {
                 Set it up with an AI assistant
                 <IconArrowRight size={14} />
               </TextLink>
+              {nativeTranscoder === null ? null : (
+                <TextLink href={nativeTranscoder.url} className={DOC_LINK}>
+                  {nativeTranscoder.label}
+                  <IconArrowRight size={14} />
+                </TextLink>
+              )}
             </span>
           </DownloadCard>
 

@@ -58,6 +58,36 @@ describe('DownloadSection', () => {
     ).toBeInTheDocument();
   });
 
+  it('tells a Mac how to transcode in hardware, beside the server commands', () => {
+    onA('Mozilla/5.0 (Macintosh; Intel Mac OS X 15_6)');
+
+    render(<DownloadSection />);
+
+    expect(screen.getByRole('link', { name: 'Hardware transcoding on a Mac' })).toHaveAttribute(
+      'href',
+      'https://docs.getvalence.app/install/hardware-transcoding-on-a-mac',
+    );
+  });
+
+  it('tells Windows the same, with its own page', () => {
+    onA('Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
+
+    render(<DownloadSection />);
+
+    expect(screen.getByRole('link', { name: 'Hardware transcoding on Windows' })).toHaveAttribute(
+      'href',
+      'https://docs.getvalence.app/install/hardware-transcoding-on-windows',
+    );
+  });
+
+  it('says nothing about it on Linux, where the GPU goes into the container', () => {
+    onA('Mozilla/5.0 (X11; Linux x86_64)');
+
+    render(<DownloadSection />);
+
+    expect(screen.queryByRole('link', { name: /Hardware transcoding/u })).not.toBeInTheDocument();
+  });
+
   it('sets each place to get it in a card of its own, headed by the picture', () => {
     onA('Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
 
