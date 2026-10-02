@@ -1,3 +1,4 @@
+import { fetchLinking } from '@ValenceClient/admin/fetchLinking';
 import { fetchAlbums } from '@ValenceClient/music/fetchMusic';
 import { fetchBooks } from '@ValenceClient/books/fetchBooks';
 import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
@@ -338,6 +339,17 @@ const webhooks = () =>
   });
 
 /**
+ * This server's identity, its open invites, and the servers it is linked with.
+ *
+ * @returns The query.
+ */
+const linking = () =>
+  queryOptions({
+    queryKey: [...ADMIN, 'linking'],
+    queryFn: () => fetchLinking(),
+  });
+
+/**
  * What happened the last times one was called.
  *
  * @param webhookId - Which webhook, or null where none is open.
@@ -604,6 +616,7 @@ const adminQueries = {
   accountPermissions,
   accountSessions,
   webhooks,
+  linking,
   deliveries,
   albums,
   books,

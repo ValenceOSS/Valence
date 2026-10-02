@@ -51,6 +51,7 @@ const LABELS: Record<Permission, string> = {
   'server.monitor': say('client.admin.describePermission.seeWhatTheServerIsDoing'),
   'server.webhooks': say('client.admin.describePermission.haveTheServerCallOutWhen'),
   'server.plugins': say('client.admin.describePermission.installAndManagePlugins'),
+  'server.links': say('client.admin.describePermission.linkThisServerWithOthers'),
 };
 
 /**
