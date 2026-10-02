@@ -467,6 +467,25 @@ const share = mysqlTable(
   ],
 );
 
+const calendarFeed = mysqlTable(
+  'calendar_feed',
+  {
+    id: identifier('id').primaryKey(),
+    tokenHash: varchar('tokenHash', { length: 255 }).notNull(),
+    sealedToken: mediumtext('sealedToken').notNull(),
+    accountId: identifier('accountId')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    profileId: identifier('profileId').references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    createdAt: momentNow('createdAt').notNull(),
+    lastReadAt: moment('lastReadAt'),
+  },
+  (table) => [
+    uniqueIndex('calendar_feed_token_idx').on(table.tokenHash),
+    index('calendar_feed_account_idx').on(table.accountId),
+  ],
+);
+
 const logRecord = mysqlTable(
   'log_record',
   {
@@ -1608,6 +1627,7 @@ const authSchema = {
 const valenceSchema = { userProfile, viewerProfile, serverSetting, library, mediaItem };
 
 export {
+  calendarFeed,
   pluginInstallation,
   pluginStorage,
   pluginPrevious,

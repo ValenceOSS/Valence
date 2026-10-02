@@ -16,6 +16,12 @@ import type { CalendarEntry } from '@ValenceContracts/schemas/ReleaseCalendar';
 
 jest.mock('@ValenceClient/calendar/fetchReleaseCalendar');
 jest.mock('@ValenceClient/library/findAShow');
+jest.mock('@ValenceClient/calendar/fetchCalendarFeed', () => ({
+  fetchCalendarFeed: () => Promise.resolve(null),
+}));
+jest.mock('@ValenceClient/calendar/ensureCalendarFeed', () => ({
+  ensureCalendarFeed: () => Promise.resolve(null),
+}));
 
 const TODAY = localDayOf();
 
@@ -103,6 +109,29 @@ describe('TheCalendar', () => {
     await userEvent.press(drawn.getByRole('button', { name: 'Go to a day' }));
 
     expect(drawn.getByText('Go to a day')).toBeTruthy();
+  });
+
+  it('opens a sheet to add the calendar to a calendar app from beside its title', async () => {
+    const drawn = await drawCalendar();
+
+    expect(drawn.queryByText('Add to Calendar')).toBeNull();
+
+    await userEvent.press(await drawn.findByRole('button', { name: 'Add to Calendar' }));
+
+    expect(await drawn.findByText('Add to Calendar')).toBeTruthy();
+  });
+
+  it('opens a show the lookup failed for as its series, rather than doing nothing', async () => {
+    jest.mocked(fetchReleaseCalendar).mockResolvedValue([AN_EPISODE]);
+    jest.mocked(findAShow).mockRejectedValue(new Error('offline'));
+    const onOpen = jest.fn();
+    const drawn = await drawCalendar(onOpen);
+
+    await userEvent.press(await drawn.findByRole('button', { name: /^A Show,/ }));
+
+    await waitFor(() => {
+      expect(onOpen).toHaveBeenCalledWith({ kind: 'series', seriesId: 'series-1' });
+    });
   });
 
   it('lists what comes out over the next two months, by day', async () => {

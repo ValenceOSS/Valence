@@ -6,6 +6,7 @@ import { serveAbout } from '@ValenceServer/api/serveAbout';
 import { serveSetup } from '@ValenceServer/api/serveSetup';
 import { serveLibrary } from '@ValenceServer/api/serveLibrary';
 import { serveCalendar } from '@ValenceServer/api/serveCalendar';
+import { serveCalendarFeed } from '@ValenceServer/api/serveCalendarFeed';
 import { serveFiles } from '@ValenceServer/api/serveFiles';
 import { serveFolder } from '@ValenceServer/api/serveFolder';
 import { serveUpload } from '@ValenceServer/api/serveUpload';
@@ -65,6 +66,7 @@ const createApp = (options: CreateAppOptions) => {
   serveSetup(app, context);
   serveLibrary(app, context);
   serveCalendar(app, context);
+  serveCalendarFeed(app, context);
   serveFiles(app, context);
   serveFolder(app, context);
   serveUpload(app, context);

@@ -493,6 +493,25 @@ const share = pgTable(
   ],
 );
 
+const calendarFeed = pgTable(
+  'calendar_feed',
+  {
+    id: text('id').primaryKey(),
+    tokenHash: text('tokenHash').notNull(),
+    sealedToken: text('sealedToken').notNull(),
+    accountId: text('accountId')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    profileId: text('profileId').references(() => viewerProfile.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    lastReadAt: timestamp('lastReadAt'),
+  },
+  (table) => [
+    uniqueIndex('calendar_feed_token_idx').on(table.tokenHash),
+    index('calendar_feed_account_idx').on(table.accountId),
+  ],
+);
+
 const logRecord = pgTable(
   'log_record',
   {
@@ -1625,6 +1644,7 @@ const authSchema = {
 const valenceSchema = { userProfile, viewerProfile, serverSetting, library, mediaItem };
 
 export {
+  calendarFeed,
   pluginInstallation,
   pluginStorage,
   pluginPrevious,

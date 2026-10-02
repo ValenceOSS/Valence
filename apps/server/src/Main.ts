@@ -168,6 +168,7 @@ import { createDatabaseFavouriteService } from '@ValenceServer/favourites/create
 import { createDatabaseRatingService } from '@ValenceServer/ratings/createDatabaseRatingService';
 import { getCookie } from 'hono/cookie';
 import { createDatabaseShareService } from '@ValenceServer/sharing/createDatabaseShareService';
+import { createDatabaseCalendarFeedService } from '@ValenceServer/calendarFeed/createDatabaseCalendarFeedService';
 import { guestAtTheDoor } from '@ValenceServer/sharing/guestAtTheDoor';
 import { SHARE_COOKIE } from '@ValenceServer/sharing/createShareGate';
 import { createShareSessions } from '@ValenceServer/sharing/createShareSessions';
@@ -3289,6 +3290,10 @@ const app = createApp({
   hiding: createDatabaseHiddenService(db),
   ratings: createDatabaseRatingService(db),
   shares: shareService,
+  calendarFeeds: createDatabaseCalendarFeedService(
+    db,
+    sealingKeyFrom(env.BETTER_AUTH_SECRET, 'valence-calendar-feeds'),
+  ),
   shareSessions: createShareSessions(),
   playbackSessions: createPlaybackSessions(),
   email: emailService,

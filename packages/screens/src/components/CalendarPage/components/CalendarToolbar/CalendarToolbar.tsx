@@ -9,6 +9,7 @@ import { FilterMenu } from '@ValenceUI/FilterMenu';
 import { Icon } from '@ValenceUI/Icon';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { CALENDAR_VIEWS } from '@ValenceScreens/calendar/CALENDAR_VIEWS';
+import { CalendarSubscribe } from '@ValenceScreens/components/CalendarSubscribe/CalendarSubscribe';
 import { CalendarDayPicker } from '@ValenceScreens/components/CalendarPage/components/CalendarDayPicker/CalendarDayPicker';
 import { say } from '@ValenceI18n/say';
 import type { CalendarToolbarProps } from './CalendarToolbar.types';
@@ -21,8 +22,8 @@ const VIEW_NAMES = {
 
 /**
  * The bar across the top of the release calendar: which month or week it shows, the buttons that
- * turn it, the one that turns it to any day or back to today, the choice of view, and what to narrow
- * it to.
+ * turn it, the one that turns it to any day or back to today, the choice of view, the way to add it
+ * to a calendar app, and what to narrow it to.
  *
  * The upcoming list always starts today, so it has nothing to turn.
  *
@@ -95,6 +96,8 @@ const CalendarToolbar = ({
         onView(CALENDAR_VIEWS.find((known) => known === id) ?? 'month');
       }}
     />
+
+    <CalendarSubscribe />
 
     <FilterMenu
       label={say('screens.calendarPage.narrowTheCalendar')}
