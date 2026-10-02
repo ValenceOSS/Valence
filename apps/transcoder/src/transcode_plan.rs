@@ -1268,7 +1268,10 @@ impl HardwareAccel {
     /// On Windows, `QSV` and `AMF` both decode on Direct3D 11, as Jellyfin's "Prefer OS native DXVA
     /// decoders" does by default. `QSV` maps those frames onto a `QSV` device derived from the same
     /// adapter, exactly as it maps `VAAPI` surfaces on Linux, and `AMF` scales them with `vpp_amf`,
-    /// which takes Direct3D 11 frames and hands the encoder `AMF` surfaces. **No Windows machine
+    /// which takes Direct3D 11 frames and hands the encoder `AMF` surfaces. `h264_amf` takes those
+    /// or Direct3D 11 frames as readily as system memory, and is marked as encoding from the
+    /// device so a chain that ends on the card is never handed a system-memory format after it,
+    /// which is what puts a software scaler behind the upload. **No Windows machine
     /// has run either.** They are here on the same terms as `Rkmpp` below: the build ships the
     /// filters, a wrong value aborts the transcode and software takes over, and the rejection is
     /// reported. Neither has a tone mapper of its own yet: `vpp_qsv`'s `tonemap` and `vpp_amf`'s
@@ -1538,7 +1541,7 @@ const AMF_ON_WINDOWS: HardwarePipeline = HardwarePipeline {
     decoded_format: "d3d11",
     maps_onto_device: None,
     tone_map: None,
-    encodes_from_device: false,
+    encodes_from_device: true,
     narrows_to_eight_bit: Some("format=nv12"),
     upload: "hwupload",
     takes_device_frames: true,
@@ -4266,7 +4269,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
 
         assert_eq!(pipeline.decodes_with, "d3d11va");
         assert_eq!(pipeline.scaler, "vpp_amf");
-        assert!(!pipeline.encodes_from_device);
+        assert!(pipeline.encodes_from_device);
     }
 
     /// Direct3D 11 frames have no compositor, so a subtitle is drawn in software.
