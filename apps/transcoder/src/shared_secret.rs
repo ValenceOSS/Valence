@@ -28,16 +28,21 @@ pub const SHORTEST: usize = 32;
 
 /// Reads the secret from its setting.
 ///
+/// Only a setting that is empty means no secret. One of nothing but spaces was
+/// still set by somebody meaning to guard the service, and reading it as unset
+/// would leave the service open while they believed it closed.
+///
 /// # Errors
 ///
-/// Refuses a secret shorter than [`SHORTEST`], so a placeholder or a typo is
-/// caught at startup rather than guarding the service with something guessable.
+/// Refuses a secret shorter than [`SHORTEST`] once its spaces are trimmed, so
+/// a placeholder, a typo or a blank is caught at startup rather than guarding
+/// the service with something guessable or with nothing.
 pub fn parse(raw: &str) -> Result<Option<String>, String> {
-    let secret = raw.trim();
-
-    if secret.is_empty() {
+    if raw.is_empty() {
         return Ok(None);
     }
+
+    let secret = raw.trim();
 
     if secret.chars().count() < SHORTEST {
         return Err(format!(
@@ -191,7 +196,11 @@ mod tests {
     #[test]
     fn reads_an_empty_setting_as_no_secret() {
         assert_eq!(parse(""), Ok(None));
-        assert_eq!(parse("  "), Ok(None));
+    }
+
+    #[test]
+    fn refuses_a_secret_of_nothing_but_spaces() {
+        assert!(parse("  ").is_err());
     }
 
     #[test]
