@@ -635,7 +635,13 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
 
       {top?.kind === 'show' ? (
         <View style={styles.over}>
-          <ShowPage key={top.showId} libraryId={top.libraryId} showId={top.showId} onPlay={play} />
+          <ShowPage
+            key={top.showId}
+            libraryId={top.libraryId}
+            showId={top.showId}
+            viewerId={user.id}
+            onPlay={play}
+          />
         </View>
       ) : null}
 

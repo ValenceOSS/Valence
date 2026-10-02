@@ -623,6 +623,8 @@ const ENGLISH = {
   'common.count.seconds.other': '{count} seconds',
   'common.count.songs.one': '{count} song',
   'common.count.songs.other': '{count} songs',
+  'common.count.stars.one': '{count} star',
+  'common.count.stars.other': '{count} stars',
   'common.count.things.one': '{count} thing',
   'common.count.things.other': '{count} things',
   'common.count.times.one': '{count} time',
@@ -2092,8 +2094,6 @@ const ENGLISH = {
   'phone.theStars.householdAverageFromCountRatings.one': 'Household {average} from {count} rating',
   'phone.theStars.householdAverageFromCountRatings.other':
     'Household {average} from {count} ratings',
-  'phone.theStars.n1Star': '1 star',
-  'phone.theStars.starsStars': '{stars} stars',
   'phone.theWayIn.aWallFace.signInAsName': 'Sign in as {name}',
   'phone.theWayIn.itMayBeRestartingValenceTries':
     'It may be restarting. Valence tries again every few seconds, or pull down to try now.',
@@ -6683,6 +6683,8 @@ const ENGLISH = {
   'tv.player.upNext.stay': 'Stay',
   'tv.pluginPage.plugin': 'Plugin',
   'tv.pluginPage.thisPageCouldNotBeRead': 'This page could not be read.',
+  'tv.rating.rateIt': 'Rate it',
+  'tv.rating.takeTheRatingBack': 'Take my rating back',
   'tv.requestsPage.findSomethingInSearchAndRequest':
     'Find something in Search, and request it from its page.',
   'tv.requestsPage.nothingHasBeenAskedForYet': 'Nothing has been asked for yet.',

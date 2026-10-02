@@ -1,13 +1,16 @@
 import { useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { CircleCheck, RotateCcw } from '@keyline-icons/react-native';
+import { CircleCheck, EyeOff, RotateCcw, Star } from '@keyline-icons/react-native';
 import { Play } from '@keyline-icons/react-native/fill';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
 import { pickUpFrom } from '@ValenceClient/library/pickUpFrom';
 import { qualityBadges } from '@ValenceClient/library/qualityBadges';
+import { useHidden } from '@ValenceClient/library/useHidden';
+import { useRate } from '@ValenceClient/library/useRate';
+import { useStars } from '@ValenceClient/library/useStars';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { markWatched } from '@ValenceClient/playback/markWatched';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
@@ -18,6 +21,9 @@ import { EpisodeCard } from '@ValenceTv/components/EpisodeCard/EpisodeCard';
 import { TabBar } from '@ValenceTv/components/TabBar/TabBar';
 import { TitleSpread } from '@ValenceTv/components/TitleSpread/TitleSpread';
 import { PluginPanels } from '@ValenceTv/components/PluginPanels/PluginPanels';
+import { StarChoice } from '@ValenceTv/components/StarChoice/StarChoice';
+import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
+import { useConfirmHiding } from '@ValenceNative/library/useConfirmHiding';
 import { joinFacts } from '@ValenceTv/library/joinFacts';
 import { useProgress } from '@ValenceTv/library/useProgress';
 import { tokens } from '@ValenceTv/theme/tokens';
@@ -67,16 +73,33 @@ const overviewOf = (show: ShowDetail, episode: MediaSummary): string | null =>
  * A programme's own page: everything about it beside its picture, the episode this viewer would
  * carry on with and what happens in it, the ways to watch — carry on, or start from the first — and
  * beneath, its seasons, landing on one showing its episodes. Each season's row starts from its
- * first episode, rather than wherever the last season's was left.
+ * first episode, rather than wherever the last season's was left. The programme can be given stars
+ * from the panel down the right, which Menu closes, or hidden, once asked.
  *
  * @param libraryId - The library the programme is in.
  * @param showId - The programme.
+ * @param viewerId - Who is watching, whose stars and hiding they are.
  * @param onPlay - Told to play an episode, and from where.
  */
-const ShowPage = ({ libraryId, showId, onPlay }: ShowPageProps) => {
+const ShowPage = ({ libraryId, showId, viewerId, onPlay }: ShowPageProps) => {
   const { progress } = useProgress();
   const asked = useQuery(libraryQueries.show(libraryId, showId));
   const show = asked.data ?? null;
+  const seriesId = show?.seriesId ?? null;
+  const hiding = useHidden(viewerId);
+  const rate = useRate(viewerId);
+  const stars = useStars(viewerId, { seriesId: seriesId ?? '' });
+  const [isRating, setIsRating] = useState(false);
+
+  useConfirmHiding(hiding);
+  useMenuButton(
+    isRating
+      ? () => {
+          setIsRating(false);
+        }
+      : null,
+    true,
+  );
   const cover = useQuery(libraryQueries.detail(show?.coverMediaId ?? null));
   const [chosen, setChosen] = useState<string | null>(null);
   const cache = useQueryClient();
@@ -137,7 +160,7 @@ const ShowPage = ({ libraryId, showId, onPlay }: ShowPageProps) => {
       .catch(() => null);
   };
 
-  return (
+  const page = (
     <TitleSpread
       mediaId={show.coverMediaId}
       name={show.title}
@@ -251,13 +274,57 @@ const ShowPage = ({ libraryId, showId, onPlay }: ShowPageProps) => {
           }}
         />
       )}
+
+      {seriesId === null ? null : (
+        <ActionRow
+          label={stars === null ? say('tv.rating.rateIt') : say('common.yourRating')}
+          {...(stars === null ? {} : { detail: sayCount('common.count.stars', stars) })}
+          icon={Star}
+          onPress={() => {
+            setIsRating(true);
+          }}
+        />
+      )}
+
+      {seriesId === null ? null : (
+        <ActionRow
+          label={say('common.hide')}
+          icon={EyeOff}
+          onPress={() => {
+            hiding.ask({
+              id: show.coverMediaId,
+              title: show.title,
+              seriesId,
+              seriesTitle: show.title,
+            });
+          }}
+        />
+      )}
     </TitleSpread>
+  );
+
+  return (
+    <View style={styles.page}>
+      {page}
+
+      {isRating && seriesId !== null ? (
+        <StarChoice
+          title={show.title}
+          given={stars}
+          onChoose={(chosen) => {
+            rate({ seriesId }, chosen);
+            setIsRating(false);
+          }}
+        />
+      ) : null}
+    </View>
   );
 };
 
 ShowPage.displayName = 'ShowPage';
 
 const styles = StyleSheet.create({
+  page: { flex: 1 },
   waiting: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   problem: { color: tokens.colours.muted, fontSize: tokens.type.body },
   below: { gap: tokens.space.sm, paddingBottom: tokens.space.xl },

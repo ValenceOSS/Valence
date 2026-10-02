@@ -1,29 +1,38 @@
+import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { Check, Plus, RotateCcw } from '@keyline-icons/react-native';
+import { Check, EyeOff, Plus, RotateCcw, Star } from '@keyline-icons/react-native';
 import { Play } from '@keyline-icons/react-native/fill';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { qualityBadges } from '@ValenceClient/library/qualityBadges';
 import { summariseDetail } from '@ValenceClient/library/summariseDetail';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
+import { useHidden } from '@ValenceClient/library/useHidden';
+import { useRate } from '@ValenceClient/library/useRate';
+import { useStars } from '@ValenceClient/library/useStars';
+import { useConfirmHiding } from '@ValenceNative/library/useConfirmHiding';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { ActionRow } from '@ValenceTv/components/ActionRow/ActionRow';
 import { PluginPanels } from '@ValenceTv/components/PluginPanels/PluginPanels';
+import { StarChoice } from '@ValenceTv/components/StarChoice/StarChoice';
 import { TitleSpread } from '@ValenceTv/components/TitleSpread/TitleSpread';
 import { joinFacts } from '@ValenceTv/library/joinFacts';
 import { useProgress } from '@ValenceTv/library/useProgress';
+import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { FilmPageProps } from './FilmPage.types';
 import { say } from '@ValenceI18n/say';
+import { sayCount } from '@ValenceI18n/sayCount';
 
 const STARRING = 4;
 
 /**
  * A film's own page: everything about it beside its picture, and what can be done with it — carry on
- * from where this viewer left off, or start again, and keep it on their list.
+ * from where this viewer left off, or start again, keep it on their list, give it stars from the panel
+ * down the right, which Menu closes, or hide it, once asked.
  *
  * @param mediaId - The film.
  * @param viewerId - Who is watching, whose list it goes on.
@@ -32,7 +41,21 @@ const STARRING = 4;
 const FilmPage = ({ mediaId, viewerId, onPlay }: FilmPageProps) => {
   const { progress } = useProgress();
   const favourites = useFavourites(viewerId);
+  const hiding = useHidden(viewerId);
+  const rate = useRate(viewerId);
+  const stars = useStars(viewerId, { mediaId });
+  const [isRating, setIsRating] = useState(false);
   const detail = useQuery(libraryQueries.detail(mediaId));
+
+  useConfirmHiding(hiding);
+  useMenuButton(
+    isRating
+      ? () => {
+          setIsRating(false);
+        }
+      : null,
+    true,
+  );
   const film = detail.data ?? null;
 
   if (film === null) {
@@ -53,7 +76,7 @@ const FilmPage = ({ mediaId, viewerId, onPlay }: FilmPageProps) => {
   const starring = (film.metadata.cast ?? []).slice(0, STARRING).map((member) => member.name);
   const genres = film.metadata.genres ?? [];
 
-  return (
+  const page = (
     <TitleSpread
       mediaId={film.id}
       name={film.title}
@@ -112,13 +135,48 @@ const FilmPage = ({ mediaId, viewerId, onPlay }: FilmPageProps) => {
           favourites.toggle(film.id);
         }}
       />
+
+      <ActionRow
+        label={stars === null ? say('tv.rating.rateIt') : say('common.yourRating')}
+        {...(stars === null ? {} : { detail: sayCount('common.count.stars', stars) })}
+        icon={Star}
+        onPress={() => {
+          setIsRating(true);
+        }}
+      />
+
+      <ActionRow
+        label={say('common.hide')}
+        icon={EyeOff}
+        onPress={() => {
+          hiding.ask(summary);
+        }}
+      />
     </TitleSpread>
+  );
+
+  return (
+    <View style={styles.page}>
+      {page}
+
+      {isRating ? (
+        <StarChoice
+          title={film.title}
+          given={stars}
+          onChoose={(chosen) => {
+            rate({ mediaId: film.id }, chosen);
+            setIsRating(false);
+          }}
+        />
+      ) : null}
+    </View>
   );
 };
 
 FilmPage.displayName = 'FilmPage';
 
 const styles = StyleSheet.create({
+  page: { flex: 1 },
   waiting: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   problem: { color: tokens.colours.muted, fontSize: tokens.type.body },
 });

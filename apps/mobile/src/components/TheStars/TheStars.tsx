@@ -49,11 +49,7 @@ const TheStars = ({ subject }: TheStarsProps) => {
           <Button
             key={stars}
             tone="bare"
-            label={
-              stars === 1
-                ? say('phone.theStars.n1Star')
-                : say('phone.theStars.starsStars', { stars: stars.toString() })
-            }
+            label={sayCount('common.count.stars', stars)}
             isChosen={given === stars}
             onPress={() => {
               rate(subject, given === stars ? null : stars);

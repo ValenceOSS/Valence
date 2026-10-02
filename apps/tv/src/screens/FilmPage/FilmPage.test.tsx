@@ -3,6 +3,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { setFavourite } from '@ValenceClient/library/fetchFavourites';
+import { setRating } from '@ValenceClient/library/fetchRatings';
+import { setHidden } from '@ValenceClient/library/fetchHidden';
+import { Alert } from 'react-native';
 import { MediaDetailSchema } from '@ValenceContracts/schemas/Library';
 import { FilmPage } from '@ValenceTv/screens/FilmPage/FilmPage';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
@@ -10,6 +13,16 @@ import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 jest.mock('@ValenceClient/library/fetchFavourites', () => ({
   ...jest.requireActual<object>('@ValenceClient/library/fetchFavourites'),
   setFavourite: jest.fn(() => Promise.resolve(true)),
+}));
+
+jest.mock('@ValenceClient/library/fetchRatings', () => ({
+  ...jest.requireActual<object>('@ValenceClient/library/fetchRatings'),
+  setRating: jest.fn(() => Promise.resolve(true)),
+}));
+
+jest.mock('@ValenceClient/library/fetchHidden', () => ({
+  ...jest.requireActual<object>('@ValenceClient/library/fetchHidden'),
+  setHidden: jest.fn(() => Promise.resolve(true)),
 }));
 
 const FILM = '00000000-0000-4000-8000-000000000001';
@@ -70,6 +83,8 @@ const aCacheHolding = ({
 
   cache.setQueryData(viewingQueries.progress().queryKey, progress);
   cache.setQueryData(viewingQueries.favourites(VIEWER).queryKey, kept);
+  cache.setQueryData(viewingQueries.ratings(VIEWER).queryKey, []);
+  cache.setQueryData(viewingQueries.hidden(VIEWER).queryKey, []);
 
   return cache;
 };
@@ -84,6 +99,8 @@ const drawFilm = (cache: QueryClient, onPlay = jest.fn()) =>
 beforeEach(() => {
   jest.spyOn(global, 'fetch').mockImplementation(() => new Promise(() => undefined));
   jest.mocked(setFavourite).mockClear();
+  jest.mocked(setRating).mockClear();
+  jest.mocked(setHidden).mockClear();
 });
 
 afterEach(() => {
@@ -151,6 +168,44 @@ describe('FilmPage', () => {
 
     await waitFor(() => {
       expect(setFavourite).toHaveBeenCalledWith(FILM, false);
+    });
+  });
+
+  it('gives the film stars from the panel, and says how many afterwards', async () => {
+    const drawn = await drawFilm(aCacheHolding({}));
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Rate it' }));
+    await userEvent.press(drawn.getByRole('button', { name: '4 stars' }));
+
+    await waitFor(() => {
+      expect(setRating).toHaveBeenCalledWith({ mediaId: FILM }, 4);
+    });
+    expect(drawn.queryByRole('button', { name: '5 stars' })).toBeNull();
+    expect(await drawn.findByRole('button', { name: 'Your rating, 4 stars' })).toBeTruthy();
+  });
+
+  it('hides the film only once somebody says so', async () => {
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+
+    const drawn = await drawFilm(aCacheHolding({}));
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Hide' }));
+
+    await waitFor(() => {
+      expect(Alert.alert).toHaveBeenCalledWith(
+        'Hide Arrival?',
+        expect.any(String),
+        expect.any(Array),
+      );
+    });
+    expect(setHidden).not.toHaveBeenCalled();
+
+    const buttons = jest.mocked(Alert.alert).mock.calls.at(-1)?.[2] ?? [];
+
+    buttons.find((button) => button.text === 'Hide it')?.onPress?.();
+
+    await waitFor(() => {
+      expect(setHidden).toHaveBeenCalledWith({ kind: 'item', subjectId: FILM }, true);
     });
   });
 });

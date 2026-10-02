@@ -12,6 +12,7 @@ import { ThemeChoice } from '@ValenceTv/screens/Account/components/ThemeChoice/T
 import { PluginPages } from '@ValenceTv/screens/Account/components/PluginPages/PluginPages';
 import { YourDevices } from '@ValenceTv/screens/Account/components/YourDevices/YourDevices';
 import { YourNotifications } from '@ValenceTv/screens/Account/components/YourNotifications/YourNotifications';
+import { YourHistory } from '@ValenceTv/screens/Account/components/YourHistory/YourHistory';
 import { Face } from '@ValenceTv/components/Face/Face';
 import { useHandOff } from '@ValenceTv/navigation/useHandOff';
 import { theServersOrigin } from '@ValenceTv/platform/theServersOrigin';
@@ -25,17 +26,17 @@ import { say } from '@ValenceI18n/say';
  * may ask for things, the way to see what has been asked for, with a row of their own latest
  * requests beneath, each saying where it has got to, after what the account has lately been told.
  * The buttons catch the remote across the whole width of the page, so pressing up from anywhere
- * along that row reaches them.
- * Beneath them are the pages plugins on this server add to an account, each opening on its own,
- * everywhere the account is signed in, and any themes those plugins offer. Its foot names this
- * build and the server's, as the desktop app's account dialog does.
+ * along that row reaches them. Beneath them are what this viewer has lately watched, the pages
+ * plugins on this server add to an account, each opening on its own, everywhere the account is
+ * signed in, and any themes those plugins offer. Its foot names this build and the server's, as
+ * the desktop app's account dialog does.
  *
  * @param user - Who is signed in.
  * @param onChangeServer - Told when somebody wants a different Valence.
  * @param onRequests - Told when somebody wants to see what has been asked for.
  * @param onOpenRequest - Told which of their own requests somebody chose from the row of them.
  * @param onOpenPluginPage - Told which plugin page somebody chose.
- * @param onOpenNamed - Told which film or programme a chosen notification names.
+ * @param onOpenNamed - Told which film or programme a chosen notification or viewing names.
  * @param upTo - The face in the bar this page belongs under, which pressing up from the top goes to.
  */
 const AccountPage = ({
@@ -101,6 +102,8 @@ const AccountPage = ({
       <YourNotifications onOpen={onOpenNamed} onFocus={upToBar.leave} />
 
       {mayRequest ? <YourRequests onOpen={onOpenRequest} onFocus={upToBar.leave} /> : null}
+
+      <YourHistory onOpen={onOpenNamed} onFocus={upToBar.leave} />
 
       <PluginPages onOpen={onOpenPluginPage} onFocus={upToBar.leave} />
 

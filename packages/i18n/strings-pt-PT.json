@@ -2495,6 +2495,16 @@
     "context": "How many songs, such as in a notification about what arrived in the library. {count} is the number."
   },
   {
+    "handler": "common.count.stars.one",
+    "text": "{count} star",
+    "context": "How many stars a rating gives, on the phone and the television. {count} is how many."
+  },
+  {
+    "handler": "common.count.stars.other",
+    "text": "{count} stars",
+    "context": "How many stars a rating gives, on the phone and the television. {count} is how many."
+  },
+  {
     "handler": "common.count.things.one",
     "text": "{count} thing",
     "context": "How many things a playlist holds, where it can hold songs, videos and more."
@@ -8968,16 +8978,6 @@
     "handler": "phone.theStars.householdAverageFromCountRatings.other",
     "text": "Household {average} from {count} ratings",
     "context": "Text shown in the stars of the phone app. {average} is filled in by the app; {count} is a number."
-  },
-  {
-    "handler": "phone.theStars.n1Star",
-    "text": "1 star",
-    "context": "Shown in the stars of the phone app."
-  },
-  {
-    "handler": "phone.theStars.starsStars",
-    "text": "{stars} stars",
-    "context": "Shown in the stars of the phone app. {stars} is filled in by the app."
   },
   {
     "handler": "phone.theWayIn.aWallFace.signInAsName",
@@ -26538,6 +26538,16 @@
     "handler": "tv.pluginPage.thisPageCouldNotBeRead",
     "text": "This page could not be read.",
     "context": "Text shown in the plugin page of the television app."
+  },
+  {
+    "handler": "tv.rating.rateIt",
+    "text": "Rate it",
+    "context": "On the television, the button on a film or programme page that opens the choice of stars, before it has been rated."
+  },
+  {
+    "handler": "tv.rating.takeTheRatingBack",
+    "text": "Take my rating back",
+    "context": "On the television, the last choice in the list of stars, which removes the rating given."
   },
   {
     "handler": "tv.requestsPage.findSomethingInSearchAndRequest",
