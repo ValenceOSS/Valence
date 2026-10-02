@@ -89,6 +89,90 @@ describe('PartyPanel', () => {
     expect(screen.getByText('Keeping time')).toBeInTheDocument();
   });
 
+  it('draws nobody on a timeline until it knows how long the title is', () => {
+    render(<PartyPanel party={party()} meConnectionId="dan" />);
+
+    expect(screen.queryByRole('group', { name: 'Where everybody is' })).not.toBeInTheDocument();
+  });
+
+  it('puts everybody on one timeline, each saying who they are and where', () => {
+    render(<PartyPanel party={party()} meConnectionId="dan" durationSeconds={6000} />);
+
+    expect(screen.getByRole('group', { name: 'Where everybody is' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Dan, at 1:40' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Sam, at 1:40' })).toBeInTheDocument();
+    expect(screen.getByText('1:40:00')).toBeInTheDocument();
+  });
+
+  it('says the party is in sync when everybody is together', () => {
+    render(<PartyPanel party={party()} meConnectionId="dan" durationSeconds={6000} />);
+
+    expect(screen.getByText('In sync')).toBeInTheDocument();
+  });
+
+  it('names the one person out of step, and how far', () => {
+    const drifted = party({
+      members: [member(), member({ connectionId: 'sam', name: 'Sam', positionSeconds: 94 })],
+    });
+
+    render(<PartyPanel party={drifted} meConnectionId="dan" durationSeconds={6000} />);
+
+    expect(screen.getByText('Sam is 6.0s behind')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Sam, at 1:34, 6.0s behind' })).toBeInTheDocument();
+  });
+
+  it('counts them when several are out of step', () => {
+    const drifted = party({
+      members: [
+        member(),
+        member({ connectionId: 'sam', name: 'Sam', positionSeconds: 94 }),
+        member({ connectionId: 'ruth', name: 'Ruth', positionSeconds: 110 }),
+      ],
+    });
+
+    render(<PartyPanel party={drifted} meConnectionId="dan" durationSeconds={6000} />);
+
+    expect(screen.getByText('2 out of step')).toBeInTheDocument();
+  });
+
+  it('does not count somebody who is not watching as out of step', () => {
+    const paused = party({
+      members: [
+        member(),
+        member({ connectionId: 'sam', name: 'Sam', positionSeconds: 10, isWatching: false }),
+      ],
+    });
+
+    render(<PartyPanel party={paused} meConnectionId="dan" durationSeconds={6000} />);
+
+    expect(screen.getByText('In sync')).toBeInTheDocument();
+  });
+
+  it('draws a member with a profile by that profile', () => {
+    const withProfile = party({
+      members: [member({ profileId: '3f1a6c2e-8b4d-4e2f-9a7b-1c2d3e4f5a6b' })],
+    });
+
+    render(
+      <PartyPanel
+        party={withProfile}
+        meConnectionId="dan"
+        durationSeconds={6000}
+        people={[
+          {
+            id: '3f1a6c2e-8b4d-4e2f-9a7b-1c2d3e4f5a6b',
+            name: 'Dan',
+            colour: '#3a8ee8',
+            avatar: { kind: 'initial', font: 'gilroy' },
+            updatedAt: '2026-10-02T00:00:00.000Z',
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByRole('img', { name: 'Dan, at 1:40' })).toHaveTextContent('D');
+  });
+
   it('says how far out somebody has drifted', () => {
     const drifted = party({
       members: [member(), member({ connectionId: 'sam', name: 'Sam', positionSeconds: 96 })],
