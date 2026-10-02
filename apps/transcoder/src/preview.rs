@@ -49,7 +49,7 @@ const COMPLETE_MARKER: &str = ".complete";
 /// simply never read. Previews and sheets carry their own numbers, because
 /// changing how a clip is encoded is no reason to spend minutes a film redrawing
 /// thumbnails.
-const RECIPE: u32 = 2;
+const RECIPE: u32 = 3;
 
 /// How long a preview runs.
 ///

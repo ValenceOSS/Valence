@@ -468,6 +468,29 @@ impl SessionSpec {
             hasher.update(format!("{:?}", self.track).as_bytes());
         }
     }
+
+    /// Hashes how a session converts HDR, where it does.
+    ///
+    /// The filters a tone map runs, and the kind of HDR they are told the source
+    /// is, both change the picture without changing anything else hashed here.
+    /// Without this, segments made by an older recipe, or for a source taken to
+    /// be another kind of HDR, would be handed back as these. A session that does
+    /// not convert hashes nothing more, so its segments keep their address.
+    fn hash_tone_mapping(&self, hasher: &mut Sha256) {
+        if !matches!(
+            self.video,
+            VideoAction::Encode {
+                tone_map: Some(_),
+                ..
+            }
+        ) {
+            return;
+        }
+
+        hasher.update(TONE_MAP_RECIPE.to_be_bytes());
+        hasher.update(format!("{:?}", self.source_range).as_bytes());
+        hasher.update(format!("{:?}", self.source_range_base).as_bytes());
+    }
 }
 
 impl SubtitleAction {
@@ -493,6 +516,16 @@ impl SubtitleAction {
     }
 }
 
+/// Which recipe converted a session's HDR to SDR.
+///
+/// Part of a converting session's address, so a change to the tone mapping
+/// filters gives every such session new segments rather than serving the ones
+/// an older recipe made for ever.
+///
+/// **Raise this whenever the way HDR is converted changes.** Sessions that do
+/// not convert are not addressed by it, so their segments are kept.
+const TONE_MAP_RECIPE: u32 = 1;
+
 impl SessionSpec {
     /// A stable identifier for the output this specification produces.
     ///
@@ -514,6 +547,7 @@ impl SessionSpec {
         hasher.update(format!("{:?}", self.source_size).as_bytes());
         hasher.update(format!("{:?}", self.container).as_bytes());
         self.hash_track(&mut hasher);
+        self.hash_tone_mapping(&mut hasher);
 
         let digest = hasher.finalize();
         let mut id = String::with_capacity(32);
@@ -550,6 +584,7 @@ impl SessionSpec {
         hasher.update(format!("{:?}", self.source_size).as_bytes());
         hasher.update(format!("{:?}", self.container).as_bytes());
         self.hash_track(&mut hasher);
+        self.hash_tone_mapping(&mut hasher);
 
         let digest = hasher.finalize();
         let mut id = String::with_capacity(32);
@@ -5568,6 +5603,46 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
         };
 
         assert_ne!(spec().session_id(), other.session_id());
+    }
+
+    /// A converting session told its source is another kind of HDR may run other
+    /// filters, so it must not join, or be served the segments of, the first.
+    #[test]
+    fn addresses_a_converting_session_by_the_kind_of_hdr_it_converts() {
+        let hdr10 = SessionSpec {
+            video: VideoAction::Encode {
+                encoder: "libx264".to_owned(),
+                max_bitrate_kbps: 8000,
+                max_width: 1280,
+                max_height: 720,
+                tone_map: Some(ToneMapping::Tonemapx),
+                deinterlace: false,
+                square_pixels: false,
+            },
+            ..spec()
+        };
+        let hlg = SessionSpec {
+            source_range: Some(VideoRange::Hlg),
+            source_range_base: Some(VideoRange::Hlg),
+            ..hdr10.clone()
+        };
+
+        assert_ne!(hdr10.session_id(), hlg.session_id());
+        assert_ne!(hdr10.plan_id(), hlg.plan_id());
+    }
+
+    /// A session that converts nothing keeps its address, whatever it is told
+    /// about the source, so its segments already on disk are still found.
+    #[test]
+    fn leaves_the_address_of_a_session_that_converts_nothing_alone() {
+        let told = SessionSpec {
+            source_range: Some(VideoRange::Hlg),
+            source_range_base: Some(VideoRange::Hlg),
+            ..spec()
+        };
+
+        assert_eq!(spec().session_id(), told.session_id());
+        assert_eq!(spec().plan_id(), told.plan_id());
     }
 
     #[test]
