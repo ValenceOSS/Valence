@@ -320,7 +320,9 @@ jobs:
         with:
           ref: ${{ inputs.tag || github.ref_name }}
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
+        with:
+          toolchain: stable
 
       - run: cargo build --release -p valence-transcoder
 
@@ -330,7 +332,7 @@ jobs:
           mkdir -p "$folder" release
           cp target/release/valence-transcoder.exe "$folder/"
           curl -fsSL -o ffmpeg.zip \
-            "https://github.com/ValenceOSS/valence-ffmpeg/releases/download/v${VALENCE_FFMPEG_VERSION}/valence-ffmpeg_${VALENCE_FFMPEG_VERSION}_portable_win64-gpl.zip"
+            "https://github.com/ValenceOSS/valence-ffmpeg/releases/download/v${VALENCE_FFMPEG_VERSION}/valence-ffmpeg_${VALENCE_FFMPEG_VERSION}_portable_win64-clang-gpl.zip"
           unzip -j ffmpeg.zip ffmpeg.exe ffprobe.exe -d "$folder"
           "$folder/valence-transcoder.exe"
           "$folder/ffmpeg.exe" -version | head -1

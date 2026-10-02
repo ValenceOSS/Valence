@@ -83,7 +83,7 @@ const planFfmpegDownload = ({
       };
     }
 
-    const fileName = `valence-ffmpeg_${version}_portable_win64-gpl.zip`;
+    const fileName = `valence-ffmpeg_${version}_portable_win64-clang-gpl.zip`;
 
     return { kind: 'zip', url: `${RELEASES}/v${version}/${fileName}`, fileName };
   }

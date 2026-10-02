@@ -55,8 +55,8 @@ describe('planFfmpegDownload', () => {
 
     expect(plan).toStrictEqual({
       kind: 'zip',
-      fileName: `valence-ffmpeg_${VERSION}_portable_win64-gpl.zip`,
-      url: `https://github.com/ValenceOSS/valence-ffmpeg/releases/download/v${VERSION}/valence-ffmpeg_${VERSION}_portable_win64-gpl.zip`,
+      fileName: `valence-ffmpeg_${VERSION}_portable_win64-clang-gpl.zip`,
+      url: `https://github.com/ValenceOSS/valence-ffmpeg/releases/download/v${VERSION}/valence-ffmpeg_${VERSION}_portable_win64-clang-gpl.zip`,
     });
   });
 
