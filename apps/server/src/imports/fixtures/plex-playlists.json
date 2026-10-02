@@ -1,0 +1,23 @@
+{
+  "MediaContainer": {
+    "size": 2,
+    "totalSize": 2,
+    "Metadata": [
+      {
+        "ratingKey": "801",
+        "type": "playlist",
+        "title": "Late night",
+        "playlistType": "video",
+        "smart": false,
+        "leafCount": 2
+      },
+      {
+        "ratingKey": "802",
+        "type": "playlist",
+        "title": "Holiday",
+        "playlistType": "photo",
+        "smart": false
+      }
+    ]
+  }
+}

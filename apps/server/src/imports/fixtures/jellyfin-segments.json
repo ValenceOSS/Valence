@@ -1,0 +1,27 @@
+{
+  "Items": [
+    {
+      "Id": "seg-1",
+      "ItemId": "item-wire-101",
+      "Type": "Intro",
+      "StartTicks": 300000000,
+      "EndTicks": 900000000
+    },
+    {
+      "Id": "seg-2",
+      "ItemId": "item-wire-101",
+      "Type": "Outro",
+      "StartTicks": 35000000000,
+      "EndTicks": 37200000000
+    },
+    {
+      "Id": "seg-3",
+      "ItemId": "item-wire-101",
+      "Type": "Commercial",
+      "StartTicks": 1,
+      "EndTicks": 2
+    }
+  ],
+  "TotalRecordCount": 3,
+  "StartIndex": 0
+}

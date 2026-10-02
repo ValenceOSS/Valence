@@ -101,6 +101,12 @@ import type {
   ArrQueue,
   ProwlarrImport,
 } from '@ValenceContracts/schemas/ArrApp';
+import { ArrImportAppliedSchema, ArrImportPlanSchema } from '@ValenceContracts/schemas/ArrImport';
+import type {
+  ArrImportApplied,
+  ArrImportOrder,
+  ArrImportPlan,
+} from '@ValenceContracts/schemas/ArrImport';
 
 type RequestsReading =
   | { kind: 'answered'; status: RequestsStatus }
@@ -591,6 +597,20 @@ const createRequestsClient = ({
     arrQueue: (): Promise<RequestsAnswer<ArrQueue>> =>
       call('/api/arr-apps/queue', (body) => ArrQueueSchema.parse(body), {
         waitMs: CLIENT_TIMEOUT_MS,
+      }),
+
+    planArrImport: (order: ArrImportOrder): Promise<RequestsAnswer<ArrImportPlan>> =>
+      call('/api/imports/arr/plan', (body) => ArrImportPlanSchema.parse(body), {
+        method: 'POST',
+        body: order,
+        waitMs: REFRESH_TIMEOUT_MS,
+      }),
+
+    applyArrImport: (order: ArrImportOrder): Promise<RequestsAnswer<ArrImportApplied>> =>
+      call('/api/imports/arr/apply', (body) => ArrImportAppliedSchema.parse(body), {
+        method: 'POST',
+        body: order,
+        waitMs: REFRESH_TIMEOUT_MS,
       }),
 
     updateRequestCatalogue: (

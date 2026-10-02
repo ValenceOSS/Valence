@@ -1,0 +1,134 @@
+{
+  "GET /api/v3/system/status": {
+    "appName": "Sonarr",
+    "instanceName": "Sonarr",
+    "version": "4.0.9.2244",
+    "urlBase": ""
+  },
+  "GET /api/v3/downloadclient": [
+    {
+      "enable": true,
+      "protocol": "usenet",
+      "priority": 1,
+      "name": "SABnzbd",
+      "fields": [
+        { "order": 0, "name": "host", "value": "sabnzbd" },
+        { "order": 1, "name": "port", "value": 8080 },
+        { "order": 2, "name": "useSsl", "value": false },
+        { "order": 3, "name": "urlBase", "value": "/sabnzbd" },
+        { "order": 4, "name": "apiKey", "value": "********" },
+        { "order": 7, "name": "tvCategory", "value": "tv" }
+      ],
+      "implementationName": "SABnzbd",
+      "implementation": "Sabnzbd",
+      "configContract": "SabnzbdSettings",
+      "tags": [],
+      "id": 1
+    }
+  ],
+  "GET /api/v3/remotepathmapping": [],
+  "GET /api/v3/indexer": [
+    {
+      "protocol": "usenet",
+      "priority": 25,
+      "name": "NZBgeek",
+      "fields": [
+        { "order": 0, "name": "baseUrl", "value": "https://api.nzbgeek.info/" },
+        { "order": 1, "name": "apiPath", "value": "/api" },
+        { "order": 2, "name": "apiKey", "value": "********" },
+        { "order": 3, "name": "categories", "value": [5030, 5040] }
+      ],
+      "implementationName": "Newznab",
+      "implementation": "Newznab",
+      "tags": [],
+      "id": 1
+    }
+  ],
+  "GET /api/v3/qualityprofile": [
+    {
+      "name": "WEB-1080p",
+      "upgradeAllowed": true,
+      "cutoff": 1001,
+      "items": [
+        {
+          "name": "WEB 1080p",
+          "items": [
+            {
+              "quality": { "id": 3, "name": "WEBDL-1080p", "source": "web", "resolution": 1080 },
+              "items": [],
+              "allowed": true
+            },
+            {
+              "quality": {
+                "id": 15,
+                "name": "WEBRip-1080p",
+                "source": "webRip",
+                "resolution": 1080
+              },
+              "items": [],
+              "allowed": true
+            }
+          ],
+          "allowed": true,
+          "id": 1001
+        }
+      ],
+      "minFormatScore": 10,
+      "cutoffFormatScore": 10000,
+      "minUpgradeFormatScore": 1,
+      "formatItems": [{ "format": 1, "name": "Not English", "score": -10000 }],
+      "id": 7
+    }
+  ],
+  "GET /api/v3/customformat": [
+    {
+      "id": 1,
+      "name": "Not English",
+      "specifications": [
+        {
+          "name": "Not English",
+          "implementation": "LanguageSpecification",
+          "negate": true,
+          "required": false,
+          "fields": [{ "order": 0, "name": "value", "value": 1 }]
+        }
+      ]
+    }
+  ],
+  "GET /api/v3/releaseprofile": [
+    {
+      "name": "",
+      "enabled": true,
+      "required": [],
+      "ignored": ["dubbed"],
+      "indexerId": 0,
+      "tags": [],
+      "id": 1
+    }
+  ],
+  "GET /api/v3/rootfolder": [{ "path": "/tv", "accessible": true, "id": 1 }],
+  "GET /api/v3/series": [
+    {
+      "title": "Severance",
+      "seasons": [
+        {
+          "seasonNumber": 1,
+          "monitored": true,
+          "statistics": { "episodeFileCount": 9, "episodeCount": 9 }
+        },
+        {
+          "seasonNumber": 2,
+          "monitored": true,
+          "statistics": { "episodeFileCount": 3, "episodeCount": 10 }
+        }
+      ],
+      "path": "/tv/Severance",
+      "rootFolderPath": "/tv/",
+      "qualityProfileId": 7,
+      "monitored": true,
+      "tvdbId": 371980,
+      "tmdbId": 95396,
+      "id": 1
+    }
+  ]
+}

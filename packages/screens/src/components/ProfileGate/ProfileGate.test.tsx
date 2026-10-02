@@ -5,7 +5,7 @@ import { renderInAnAddress } from '@ValenceScreens/testing/renderInAnAddress';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProfileGate } from './ProfileGate';
-import { authenticateWithPasskey, signInWithEmail } from '@ValenceClient/session/auth';
+import { authenticateWithPasskey, signInWithUsernameOrEmail } from '@ValenceClient/session/auth';
 import { isPasskeySupported } from '@ValenceScreens/passkeys/isPasskeySupported';
 import { chosenTheme } from '@ValenceClient/shell/theme';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
@@ -28,7 +28,7 @@ const many = (count: number): ViewerProfile[] =>
 
 vi.mock('@ValenceClient/session/auth', () => ({
   authenticateWithPasskey: vi.fn(),
-  signInWithEmail: vi.fn(),
+  signInWithUsernameOrEmail: vi.fn(),
   signOut: vi.fn().mockResolvedValue(true),
 }));
 
@@ -37,7 +37,7 @@ vi.mock('@ValenceScreens/passkeys/isPasskeySupported', () => ({
 }));
 
 const passkeyMock = vi.mocked(authenticateWithPasskey);
-const signInWithEmailMock = vi.mocked(signInWithEmail);
+const signInWithUsernameOrEmailMock = vi.mocked(signInWithUsernameOrEmail);
 const passkeySupportedMock = vi.mocked(isPasskeySupported);
 
 const fetchMock = vi.fn();
@@ -95,8 +95,8 @@ beforeEach(() => {
   window.history.replaceState({}, '', '/');
   vi.useFakeTimers({ shouldAdvanceTime: true });
   fetchMock.mockReset();
-  signInWithEmailMock.mockReset();
-  signInWithEmailMock.mockResolvedValue({ kind: 'signedIn' });
+  signInWithUsernameOrEmailMock.mockReset();
+  signInWithUsernameOrEmailMock.mockResolvedValue({ kind: 'signedIn' });
   serverWith(HOUSEHOLD);
   vi.stubGlobal('fetch', fetchMock);
 });
@@ -149,14 +149,14 @@ describe('ProfileGate', () => {
   });
 
   describe('a server that does not show who lives here', () => {
-    it('asks for an address instead of a wall of faces', async () => {
+    it('asks for a username or an address instead of a wall of faces', async () => {
       serverWith('refused');
 
       renderInAnAddress(<ProfileGate onSignedIn={vi.fn()} />);
 
       await arrive();
 
-      expect(screen.getByLabelText('Email')).toBeInTheDocument();
+      expect(screen.getByLabelText('Username or email')).toBeInTheDocument();
       expect(screen.getByLabelText('Password')).toBeInTheDocument();
       expect(screen.queryByText('Who is watching?')).not.toBeInTheDocument();
     });
@@ -181,12 +181,30 @@ describe('ProfileGate', () => {
 
       await arrive();
 
-      await actor.type(screen.getByLabelText('Email'), 'operator@valence.test');
+      await actor.type(screen.getByLabelText('Username or email'), 'operator@valence.test');
       await actor.type(screen.getByLabelText('Password'), 'a-password');
       await actor.click(screen.getByRole('button', { name: /Login/ }));
 
       await waitFor(() => {
         expect(onSignedIn).toHaveBeenCalled();
+      });
+    });
+
+    it('signs in with a username just the same', async () => {
+      const actor = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+
+      serverWith('refused');
+
+      renderInAnAddress(<ProfileGate onSignedIn={vi.fn()} />);
+
+      await arrive();
+
+      await actor.type(screen.getByLabelText('Username or email'), 'operator');
+      await actor.type(screen.getByLabelText('Password'), 'a-password');
+      await actor.click(screen.getByRole('button', { name: /Login/ }));
+
+      await waitFor(() => {
+        expect(signInWithUsernameOrEmailMock).toHaveBeenCalledWith('operator', 'a-password');
       });
     });
   });

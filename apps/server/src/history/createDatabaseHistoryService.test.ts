@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { watchHistory } from '#dialect/Schema';
 import { aHousehold } from '@ValenceServer/testing/aHousehold';
 import { createDatabaseHistoryService } from './createDatabaseHistoryService';
 
@@ -84,5 +85,28 @@ describe('createDatabaseHistoryService', { timeout: STARTING_POSTGRES_MS }, () =
     await expect(history.prune(LATER)).resolves.toBe(1);
     await expect(history.forgetAll('sam')).resolves.toBe(1);
     await expect(history.forgetAll('pat')).resolves.toBe(1);
+  });
+
+  it('keeps every imported viewing however old, so history brought across survives the prune', async () => {
+    const { db } = await aHousehold();
+    const history = createDatabaseHistoryService(db);
+
+    await db.insert(watchHistory).values({
+      id: 'imported',
+      profileId: 'sam',
+      mediaItemId: 'film',
+      startedAt: EVENING,
+      lastWatchedAt: EVENING,
+      secondsWatched: 600,
+      isFinished: true,
+      importedFrom: 'jellyfin',
+      importKey: 'jellyfin:sam:film:1',
+    });
+    await history.record('pat', 'film', { at: EVENING, secondsWatched: 600, isFinished: false });
+
+    await expect(history.prune(NEXT_DAY)).resolves.toBe(1);
+    expect((await history.list({ kind: 'server' }, 'sam')).map((one) => one.id)).toEqual([
+      'imported',
+    ]);
   });
 });

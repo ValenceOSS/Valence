@@ -1,6 +1,6 @@
 ---
 title: First run
-description: Create the first administrator, confirm how the server is reached, add a library, sign in and meet the profile picker.
+description: Walk through the setup wizard, from the administrator to libraries and importing from another server, then sign in and meet the profile picker.
 order: 1
 ---
 
@@ -23,51 +23,89 @@ Open Valence at the address you will normally use to reach it, not at `localhost
 
 Until an account exists, every page of the web app resolves to the wizard, titled **Set up Valence**. Whoever gets there first becomes the administrator, so complete it yourself before sharing the address with anyone.
 
-### The administrator
+The wizard is a series of short steps, listed down the left (or as a bar of segments on a phone) with the steps already done ticked. **Back** moves to the step before until your account is made; after that the earlier steps are fixed.
 
-| Field    | What it needs                                                          |
-| -------- | ---------------------------------------------------------------------- |
-| Name     | Any name. It becomes the name of the account and of its first profile. |
-| Email    | A valid address. You sign in with it.                                  |
-| Password | At least 10 characters.                                                |
+| Step                       | What it asks                                                                                  | Can be skipped |
+| -------------------------- | --------------------------------------------------------------------------------------------- | -------------- |
+| Welcome                    | Nothing. It says what setup will do.                                                          |                |
+| Your account               | Name, username, email (optional) and password.                                                | No             |
+| How Valence is reached     | The trusted addresses and whether Valence is served over HTTPS. This step makes the account.  | No             |
+| Your profile               | How you appear: display name, face, colour, theme, movement, and the still-watching question. | Saved as is    |
+| Your household             | The household's name and picture, the other people who watch on your account, and a passkey.  | Partly         |
+| Titles and artwork         | A free catalogue key from The Movie Database.                                                 | Yes            |
+| Libraries                  | The folders Valence reads, each scanned as soon as it is added.                               | Yes            |
+| Import from another server | Jellyfin, Emby or Plex, or only your requesting apps, or start fresh.                         | Yes            |
+| Done                       | Nothing. It sums up what was set up and takes you into Valence.                               |                |
 
-The wizard checks these as you type, and the server checks them again, so a short password is refused either way.
+### Your account
 
-### Access
+| Field            | What it needs                                                                                                                                                   |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Name             | Any name. It becomes the name of the account and of its first profile.                                                                                          |
+| Username         | 3 to 30 letters, digits, dots and underscores. You sign in with it (see [Usernames](/use/accounts-and-roles#usernames)).                                        |
+| Email (optional) | Only used to send you a password reset link. Leave it empty and you sign in with your username; without one, a forgotten password is reset from the admin area. |
+| Password         | At least 10 characters, typed twice.                                                                                                                            |
 
-The **Access** section decides which addresses may sign in and how the session cookie is marked.
+The wizard checks these as you go, and the server checks them again.
 
-| Field                             | Meaning                                                                                                                                                                                                                                          |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Trusted origins                   | A comma separated list of full URLs, such as `http://192.168.1.40:8420`. Every address you use to reach Valence must appear here. The wizard fills in the address it was loaded from, plus the development client on port 5173 of the same host. |
-| This server is reached over HTTPS | Ticked automatically when you loaded the wizard over HTTPS. It marks the session cookie as secure.                                                                                                                                               |
+### How Valence is reached
 
-The HTTPS checkbox has a real consequence in both directions, and the wizard says so beneath it:
+This step decides which addresses may sign in and how the session cookie is marked.
 
-- Ticked: secure cookies are used, and sign-in will not work over plain HTTP.
-- Unticked: cookies are not marked secure, so Valence works over plain HTTP on your network.
+- **Trusted origins.** Every address you use to reach Valence must be listed. The wizard starts with the addresses it detected, marks the one this browser used, offers any you removed as suggestions, and lets you add more one at a time. An entry is cut down to its origin, so `https://watch.example.com/path` becomes `https://watch.example.com`.
+- **This server is reached over HTTPS.** On automatically when you loaded the wizard over HTTPS. It marks the session cookie as secure, so sign-in will not work over plain HTTP. If you switch it on while this page was opened over plain HTTP, the wizard warns you.
 
-Tick it only if the address people type starts with `https://`. If you run Valence behind a reverse proxy that terminates TLS, see [Reverse proxy](/install/reverse-proxy) for the settings that go with it.
+Tick HTTPS only if the address people type starts with `https://`. If you run Valence behind a reverse proxy that terminates TLS, see [Reverse proxy](/install/reverse-proxy).
 
-Press **Finish setup** when everything is filled in.
+Press **Create my account**. The account is made, made the administrator, and signed in, and the wizard carries on.
+
+### Your profile and your household
+
+**Your profile** is the same editor as the Profile panel of your account, so what you choose here is what you will find there later. **Your household** names the household and gives it a picture (the same name and picture the way in shows), adds a profile for each other person who watches on your account, and offers a passkey for this device. Because these are done here, the household setup that normally follows a first sign-in is not shown again.
+
+### Titles and artwork
+
+Titles, artwork, years and ratings come from The Movie Database. **Get a free key** opens the page where you make one; paste it and press **Save and continue**. If the server was started with a key in its environment, the step says one is already set.
+
+### Libraries
+
+**Add a library** opens the same dialog the admin area uses: a name, a type and a path on the machine running Valence, with **Browse** to walk the server's own folders. Each library is scanned as soon as it is added, and the scan's progress is shown beside it. Scans carry on while you continue. If you are moving from another server you can skip this: the import makes libraries from the old server's, or puts its folders into the libraries you added here.
+
+### Import from another server
+
+Choose one of:
+
+- **Start fresh** finishes with nothing imported.
+- **From Jellyfin, Emby or Plex** runs the whole import inside the wizard: connect the server, choose who comes over, say where each of its folders goes (a library you already added, a new library made and scanned for it, or left out), check the dry run, and follow the import as it runs. See [Moving from Jellyfin, Emby or Plex](/use/migrating).
+- **Import only my requesting apps** brings Radarr, Sonarr, Lidarr, Prowlarr, Overseerr or Jellyseerr across. See [Importing Radarr, Sonarr and the rest](/install/migrating-arr-setup).
+
+Both imports are also in the admin area under **Import**, so they can be run later, or again.
+
+### Done
+
+The last step welcomes you by your household's name and lists what was set up and what was left for later. If the HTTPS choice needs Valence started again, it says so here. **Start watching** opens Valence.
+
+### Leaving partway
+
+Once your account exists the server counts as set up, but the rest of the wizard is not lost. Reload, or come back later and sign in as the administrator, and the wizard picks up again at **Your profile** until you reach the end.
 
 ### What the wizard does behind the scenes
 
-The web app sends a single request to `POST /api/setup` with the administrator, the trusted origins and the cookie mode. The server does the following, in order:
+**Create my account** sends a single request to `POST /api/setup` with the administrator (name, username, password and any email), the trusted origins and the cookie mode. The server does the following, in order:
 
-1. Counts existing users. If there is already one, it refuses with a `409` and creates nothing. The wizard then tells you the server is already set up and asks you to reload to sign in. This is what stops the endpoint being replayed to claim a second administrator.
-2. Creates the account through the sign-up flow with the name, email and password you gave.
+1. Counts existing users. If there is already one, it refuses with a `409` and creates nothing. This is what stops the endpoint being replayed to claim a second administrator.
+2. Creates the account through the sign-up flow. Without an email the account is given a placeholder address that is never shown, emailed or accepted at sign-in.
 3. Promotes that account to administrator and records it as the owner of the server.
-4. Stores the trusted origins and the cookie mode in the server settings, along with the time setup completed.
-5. Answers with `isComplete` and a `restartRequired` flag.
+4. Stores the trusted origins and the cookie mode in the server settings, with the time setup completed, and notes that the rest of the wizard is still to come.
+5. Signs the administrator in and answers with `isComplete`, `isSignedIn` and a `restartRequired` flag.
 
-`restartRequired` is true when the cookie mode you chose differs from what the server was already using. If you see it, restart the server container so that the new mode takes effect. See [Updating](/install/updating) for the usual restart commands.
+`restartRequired` is true when the cookie mode you chose differs from what the server was already using; restart the server container so that the new mode takes effect. See [Updating](/install/updating). The last step of the wizard calls `POST /api/setup/finish`, which an administrator alone may call, so the remaining steps stop being shown.
 
-If the administrator cannot be created (for example because the email is not acceptable), the server answers with a `400` and the wizard shows "Setup could not be completed. Check the details and try again." Nothing is stored in that case, so you can correct the form and try again.
+If the administrator cannot be created, the server answers with a `400` and the wizard says so. Nothing is stored in that case, so you can correct the form and try again.
 
 <Callout title="Setup happens once">
-  Once any account exists, `GET /api/setup/status` reports setup as complete and the wizard never
-  appears again. Trusted origins and the cookie mode can afterwards be reviewed in the admin
+  Once any account exists, `GET /api/setup/status` reports setup as complete and nobody else is
+  offered the wizard. Trusted origins and the cookie mode can afterwards be reviewed in the admin
   Settings panel, described in [Settings](/use/settings).
 </Callout>
 
@@ -93,7 +131,7 @@ Right after setup the wall has one face, the administrator. Pick it and sign in 
 
 ## Setting up the household
 
-The first time somebody signs in to a fresh household, Valence walks them through three short steps before showing the home page. Nothing is recorded as finished until the last step, so closing the tab halfway simply offers it again.
+The administrator sets their household up inside the setup wizard. Anybody else, the first time they sign in to a fresh household, Valence walks them through three short steps before showing the home page. Nothing is recorded as finished until the last step, so closing the tab halfway simply offers it again.
 
 1. **Name.** What the household is called. It is shared by everybody who watches on this server.
 2. **Picture.** A photograph for the household, or carry on without one. JPEG, PNG, WebP, AVIF and GIF are accepted.
@@ -103,7 +141,7 @@ A short welcome screen follows, and after it a tour of the main sections (Home, 
 
 ## Adding your first library
 
-A new server has nothing to play until it has at least one library. Open the admin area from your account menu, or go straight to `/admin`, and choose **Libraries** under **Content**. On a fresh server the page opens with a checklist called **Get Valence set up**:
+If you added libraries in the setup wizard, they are already being read. Otherwise, a new server has nothing to play until it has at least one library. Open the admin area from your account menu, or go straight to `/admin`, and choose **Libraries** under **Content**. On a fresh server the page opens with a checklist called **Get Valence set up**:
 
 1. **Add a library.** A library is a folder of one kind of media: films, shows, music or books.
 2. **Add a metadata key.** Titles, artwork, years and ratings come from The Movie Database. A free key takes a minute to get: sign in there, open Settings, then API. The **Get a free key** button opens the right page, and **Enter it in Settings** takes you to the field.

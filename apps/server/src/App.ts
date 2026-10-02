@@ -20,6 +20,8 @@ import { serveHousehold } from '@ValenceServer/api/serveHousehold';
 import { serveRole } from '@ValenceServer/api/serveRole';
 import { serveLibraryAccess } from '@ValenceServer/api/serveLibraryAccess';
 import { serveAccount } from '@ValenceServer/api/serveAccount';
+import { serveSetupLinks } from '@ValenceServer/api/serveSetupLinks';
+import { servePasswordReset } from '@ValenceServer/api/servePasswordReset';
 import { serveRequests } from '@ValenceServer/api/serveRequests';
 import { serveSamples } from '@ValenceServer/api/serveSamples';
 import { servePermission } from '@ValenceServer/api/servePermission';
@@ -33,13 +35,16 @@ import { serveShare } from '@ValenceServer/api/serveShare';
 import { serveRating } from '@ValenceServer/api/serveRating';
 import { serveSegment } from '@ValenceServer/api/serveSegment';
 import { serveBook } from '@ValenceServer/api/serveBook';
+import { serveCollections } from '@ValenceServer/api/serveCollections';
 import { serveImage } from '@ValenceServer/api/serveImage';
 import { serveSubtitle } from '@ValenceServer/api/serveSubtitle';
 import { servePresence } from '@ValenceServer/api/servePresence';
 import { servePhone } from '@ValenceServer/api/servePhone';
 import { serveReference } from '@ValenceServer/api/serveReference';
 import { servePlugins } from '@ValenceServer/api/servePlugins';
+import { serveImports } from '@ValenceServer/imports/serveImports';
 import { serveArrEmulation } from '@ValenceServer/arrEmulation/serveArrEmulation';
+import { serveArrImport } from '@ValenceServer/api/serveArrImport';
 import type { CreateAppOptions } from '@ValenceServer/api/CreateAppOptions';
 
 /**
@@ -71,7 +76,9 @@ const createApp = (options: CreateAppOptions) => {
   serveHousehold(app, context);
   serveRole(app, context);
   serveLibraryAccess(app, context);
+  serveSetupLinks(app, context);
   serveAccount(app, context);
+  servePasswordReset(app, context);
   serveRequests(app, context);
   serveSamples(app, context);
   servePermission(app, context);
@@ -85,6 +92,7 @@ const createApp = (options: CreateAppOptions) => {
   serveRating(app, context);
   serveSegment(app, context);
   serveBook(app, context);
+  serveCollections(app, context);
   serveCorrections(app, context);
   serveImage(app, context);
   serveSubtitle(app, context);
@@ -92,6 +100,8 @@ const createApp = (options: CreateAppOptions) => {
   servePhone(app, context);
   servePlugins(app, context);
   serveArrEmulation(app, context, options);
+  serveArrImport(app, context, options);
+  serveImports(app, context, options);
   serveReference(app, context);
 
   return app;

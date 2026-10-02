@@ -1,0 +1,36 @@
+{
+  "Items": [
+    {
+      "Name": "The Wire",
+      "Id": "item-wire",
+      "Type": "Series",
+      "ProviderIds": { "Tmdb": "1438", "Tvdb": "79126", "Imdb": "tt0306414" },
+      "ProductionYear": 2002
+    },
+    {
+      "Name": "The Target",
+      "Id": "item-wire-101",
+      "Type": "Episode",
+      "Path": "/data/tv/The Wire/Season 01/S01E01.mkv",
+      "ProviderIds": { "Tvdb": "349232" },
+      "SeriesId": "item-wire",
+      "IndexNumber": 1,
+      "ParentIndexNumber": 1,
+      "RunTimeTicks": 37200000000,
+      "DateCreated": "2024-02-01T00:00:00.0000000Z"
+    },
+    {
+      "Name": "The Detail",
+      "Id": "item-wire-102",
+      "Type": "Episode",
+      "Path": "/data/tv/The Wire/Season 01/S01E02.mkv",
+      "ProviderIds": {},
+      "SeriesId": "item-wire",
+      "IndexNumber": 2,
+      "ParentIndexNumber": 1,
+      "RunTimeTicks": 36000000000
+    }
+  ],
+  "TotalRecordCount": 3,
+  "StartIndex": 0
+}

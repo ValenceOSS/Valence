@@ -1,0 +1,90 @@
+{
+  "GET /api/v3/system/status": {
+    "appName": "Radarr",
+    "instanceName": "Radarr 4K",
+    "version": "4.7.5.7809",
+    "urlBase": ""
+  },
+  "GET /api/v3/downloadclient": [
+    {
+      "enable": true,
+      "protocol": "torrent",
+      "priority": 1,
+      "name": "qBittorrent",
+      "fields": [
+        { "order": 0, "name": "host", "value": "qbittorrent" },
+        { "order": 1, "name": "port", "value": 8080 },
+        { "order": 2, "name": "useSsl", "value": false },
+        { "order": 3, "name": "urlBase" },
+        { "order": 4, "name": "username", "value": "admin" },
+        { "order": 5, "name": "password", "value": "hunter2" },
+        { "order": 6, "name": "movieCategory", "value": "radarr4k" }
+      ],
+      "implementationName": "qBittorrent",
+      "implementation": "QBittorrent",
+      "configContract": "QBittorrentSettings",
+      "tags": [],
+      "id": 1
+    }
+  ],
+  "GET /api/v3/remotepathmapping": [],
+  "GET /api/v3/indexer": [
+    {
+      "protocol": "usenet",
+      "priority": 25,
+      "name": "NZBgeek",
+      "fields": [
+        { "order": 0, "name": "baseUrl", "value": "https://api.nzbgeek.info" },
+        { "order": 1, "name": "apiPath", "value": "/api" },
+        { "order": 2, "name": "apiKey", "value": "geek-key" },
+        { "order": 3, "name": "categories", "value": [2045] }
+      ],
+      "implementationName": "Newznab",
+      "implementation": "Newznab",
+      "tags": [],
+      "id": 1
+    }
+  ],
+  "GET /api/v3/qualityprofile": [
+    {
+      "name": "Ultra-HD",
+      "upgradeAllowed": false,
+      "cutoff": 31,
+      "items": [
+        {
+          "quality": { "id": 19, "name": "Bluray-2160p", "source": "bluray", "resolution": 2160 },
+          "items": [],
+          "allowed": true
+        },
+        {
+          "quality": {
+            "id": 31,
+            "name": "Remux-2160p",
+            "source": "bluray",
+            "resolution": 2160,
+            "modifier": "remux"
+          },
+          "items": [],
+          "allowed": true
+        }
+      ],
+      "minFormatScore": 0,
+      "formatItems": [],
+      "id": 5
+    }
+  ],
+  "GET /api/v3/customformat": [],
+  "GET /api/v3/rootfolder": [{ "path": "/movies4k", "accessible": true, "id": 1 }],
+  "GET /api/v3/movie": [
+    {
+      "title": "Oppenheimer",
+      "year": 2023,
+      "path": "/movies4k/Oppenheimer (2023)",
+      "qualityProfileId": 5,
+      "hasFile": false,
+      "monitored": true,
+      "tmdbId": 872585,
+      "id": 1
+    }
+  ]
+}

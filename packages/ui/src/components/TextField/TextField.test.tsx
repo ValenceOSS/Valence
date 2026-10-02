@@ -220,4 +220,80 @@ describe('the sizes a field comes in', () => {
 
     expect(container.querySelector('input')).toHaveAttribute('autocomplete', 'email');
   });
+
+  it('puts the description under the field when told to, still linked to the input', () => {
+    render(
+      <TextField
+        label="Username"
+        value=""
+        onValueChange={vi.fn()}
+        description="Letters and numbers"
+        descriptionPlacement="below"
+      />,
+    );
+
+    const input = screen.getByLabelText('Username');
+    const note = screen.getByText('Letters and numbers');
+
+    expect(input).toHaveAccessibleDescription('Letters and numbers');
+    expect(input.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('keeps the description above the field by default', () => {
+    render(
+      <TextField
+        label="Username"
+        value=""
+        onValueChange={vi.fn()}
+        description="Letters and numbers"
+      />,
+    );
+
+    const input = screen.getByLabelText('Username');
+    const note = screen.getByText('Letters and numbers');
+
+    expect(input.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+  });
+
+  it("puts the error in the description's place under the field, and describes the input by it", () => {
+    render(
+      <TextField
+        label="Username"
+        value="a"
+        onValueChange={vi.fn()}
+        description="Letters and numbers"
+        descriptionPlacement="below"
+        error="That one is taken"
+      />,
+    );
+
+    const input = screen.getByLabelText('Username');
+
+    expect(screen.getByRole('alert')).toHaveTextContent('That one is taken');
+    expect(screen.queryByText('Letters and numbers')).toBeNull();
+    expect(input).toHaveAccessibleDescription('That one is taken');
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+  });
+
+  it('describes the input by an error under it even with no description', () => {
+    render(
+      <TextField
+        label="Username"
+        value="a"
+        onValueChange={vi.fn()}
+        descriptionPlacement="below"
+        error="That one is taken"
+      />,
+    );
+
+    expect(screen.getByLabelText('Username')).toHaveAccessibleDescription('That one is taken');
+  });
+
+  it('describes the input by nothing when below with neither description nor error', () => {
+    render(
+      <TextField label="Username" value="" onValueChange={vi.fn()} descriptionPlacement="below" />,
+    );
+
+    expect(screen.getByLabelText('Username')).not.toHaveAttribute('aria-describedby');
+  });
 });

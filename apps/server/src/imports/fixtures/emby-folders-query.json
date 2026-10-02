@@ -1,0 +1,13 @@
+{
+  "Items": [
+    {
+      "Name": "Movies",
+      "Locations": ["D:\\Media\\Movies"],
+      "CollectionType": "movies",
+      "ItemId": "3",
+      "Id": "3",
+      "Guid": "g-3"
+    }
+  ],
+  "TotalRecordCount": 1
+}

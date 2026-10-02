@@ -186,6 +186,22 @@ const INPUT_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
         />
       ),
     },
+    {
+      title: 'Tiles',
+      render: () => (
+        <ChoiceList
+          look="tiles"
+          label="Import from"
+          choices={[
+            { id: 'jellyfin', title: 'Jellyfin', detail: 'Needs an API key.' },
+            { id: 'emby', title: 'Emby', detail: 'Needs an API key.' },
+            { id: 'plex', title: 'Plex', detail: 'Needs a Plex token.' },
+          ]}
+          value="jellyfin"
+          onChoose={nothing}
+        />
+      ),
+    },
   ],
   SwatchRow: [
     {

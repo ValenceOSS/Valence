@@ -59,6 +59,7 @@ import { catalogueForRequest } from '@ValenceServer/requests/catalogueForRequest
 import { workOf } from '@ValenceServer/requests/workOf';
 import type { RequestsOverview } from '@ValenceContracts/schemas/Requests';
 import { NO_DISCOVERY } from '@ValenceServer/requests/catalogue/NO_DISCOVERY';
+import { NO_EMAIL } from '@ValenceServer/email/NO_EMAIL';
 import type { LibraryKind } from '@ValenceContracts/schemas/Library';
 import type { CatalogueStanding } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { GrantedPermission, Permission } from '@ValenceContracts/schemas/Permission';
@@ -217,6 +218,7 @@ const createAppContext = (options: CreateAppOptions) => {
     books,
     streamBookFile,
     music,
+    collections,
     videoDevices,
     bookDevices,
     reencodes,
@@ -262,8 +264,9 @@ const createAppContext = (options: CreateAppOptions) => {
     removeAccount,
     isAccountBanned,
     readBanReason,
-    inviteAccount,
     editAccount,
+    setupLinks,
+    createAccountWithoutPassword,
     resetAccountPassword,
     listAccountSessions,
     endAccountSessions,
@@ -277,6 +280,8 @@ const createAppContext = (options: CreateAppOptions) => {
     events,
     sayALinkWasWithdrawn,
     plugins: startPlugins,
+    email = NO_EMAIL,
+    requestPasswordReset = () => Promise.resolve(),
   } = options;
 
   /**
@@ -1418,6 +1423,7 @@ const createAppContext = (options: CreateAppOptions) => {
     books,
     streamBookFile,
     music,
+    collections,
     videoDevices,
     bookDevices,
     reencodes,
@@ -1462,8 +1468,9 @@ const createAppContext = (options: CreateAppOptions) => {
     removeAccount,
     isAccountBanned,
     readBanReason,
-    inviteAccount,
     editAccount,
+    setupLinks,
+    createAccountWithoutPassword,
     resetAccountPassword,
     listAccountSessions,
     endAccountSessions,
@@ -1476,6 +1483,8 @@ const createAppContext = (options: CreateAppOptions) => {
     resourceHistory,
     events,
     sayALinkWasWithdrawn,
+    email,
+    requestPasswordReset,
     SHARE_JOINER,
     tooBigToRead,
     GUEST_REMEMBERED_FOR_SECONDS,

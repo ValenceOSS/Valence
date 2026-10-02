@@ -1,0 +1,27 @@
+{
+  "Items": [
+    {
+      "Name": "Blue Lines",
+      "Id": "item-album",
+      "Type": "MusicAlbum",
+      "ProviderIds": {
+        "MusicBrainzAlbum": "2c0a3d1e-aaaa-4bbb-8ccc-000000000001",
+        "MusicBrainzReleaseGroup": "9f9f9f9f-aaaa-4bbb-8ccc-000000000002"
+      },
+      "ProductionYear": 1991
+    },
+    {
+      "Name": "Unfinished Sympathy",
+      "Id": "item-track",
+      "Type": "Audio",
+      "Path": "/data/music/Massive Attack/Blue Lines/03.flac",
+      "ProviderIds": { "musicbrainzalbum": "2c0a3d1e-aaaa-4bbb-8ccc-000000000001" },
+      "AlbumId": "item-album",
+      "IndexNumber": 3,
+      "ParentIndexNumber": 1,
+      "RunTimeTicks": 3080000000
+    }
+  ],
+  "TotalRecordCount": 2,
+  "StartIndex": 0
+}

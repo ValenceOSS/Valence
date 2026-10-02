@@ -5,13 +5,18 @@ import { PanelCardAction } from '@ValenceScreens/components/PanelCardAction/Pane
 import { Icon } from '@ValenceUI/Icon';
 import {
   ChevronsUpDown as ChevronsUpDownIcon,
+  Copy as CopyIcon,
   MoreHorizontal as MoreHorizontalIcon,
   Plus as PlusIcon,
+  RefreshCw as RefreshCwIcon,
   TriangleAlert as TriangleAlertIcon,
+  Users as UsersIcon,
 } from '@keyline-icons/react';
 import {
   Bin as BinFilledIcon,
   CircleX as CircleXFilledIcon,
+  Link as LinkFilledIcon,
+  Mail as MailFilledIcon,
   UserCheck as UserCheckFilledIcon,
 } from '@keyline-icons/react/fill';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -37,7 +42,6 @@ import { assignRole, removeRole } from '@ValenceClient/admin/fetchRoles';
 import {
   banAccount,
   editAccount,
-  inviteAccount,
   removeAccount,
   resetAccountPassword,
   setAccountAvatar,
@@ -45,6 +49,23 @@ import {
   unbanAccount,
 } from '@ValenceClient/admin/fetchAccounts';
 import { endAccountSessions } from '@ValenceClient/admin/fetchAccountSessions';
+import { issueSetupLink } from '@ValenceClient/admin/issueSetupLink';
+import { emailSetupLink } from '@ValenceClient/admin/emailSetupLink';
+import { revokeSetupLink } from '@ValenceClient/admin/revokeSetupLink';
+import { accountHandleOf } from '@ValenceClient/accounts/accountHandleOf';
+import { notify } from '@ValenceUI/notify';
+import { NothingHere } from '@ValenceUI/NothingHere';
+import { SegmentedRow } from '@ValenceUI/SegmentedRow';
+import { Skeleton } from '@ValenceUI/Skeleton';
+import { describeSince } from '@ValenceScreens/components/AdminArea/describeSince';
+import { DEFAULT_SETUP_LINK_LIFETIME } from '@ValenceContracts/schemas/SetupLink';
+import type { IssuedSetupLink } from '@ValenceContracts/schemas/SetupLink';
+import { accountStandingOf } from './accountStandingOf';
+import { AccountStanding } from './components/AccountStanding/AccountStanding';
+import { AddAccountDialog } from './components/AddAccountDialog/AddAccountDialog';
+import { BanDialog } from './components/BanDialog/BanDialog';
+import { SetupLinkSection } from './components/SetupLinkSection/SetupLinkSection';
+import { UsernameField } from '@ValenceScreens/components/UsernameField/UsernameField';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CouldNotRead } from '@ValenceUI/CouldNotRead';
 import { adminQueries } from '@ValenceClient/query/adminQueries';
@@ -68,13 +89,37 @@ import { MINIMUM_PASSWORD_LENGTH } from '@ValenceContracts/constants/MINIMUM_PAS
 
 type Asked = { kind: 'ban' | 'remove'; account: Account };
 
+type Showing = 'everyone' | 'waiting' | 'banned';
+
+const SHOWINGS: readonly Showing[] = ['everyone', 'waiting', 'banned'];
+
+const SKELETON_ROWS = 4;
+
+const NO_LINKS: ReadonlyMap<string, IssuedSetupLink> = new Map();
+
+/**
+ * Which part of the list an account belongs in, beyond everyone.
+ *
+ * @param account - The account.
+ * @returns The part, or null for one in ordinary use.
+ */
+const bucketOf = (account: Account): Showing | null => {
+  const standing = accountStandingOf(account);
+
+  if (standing === 'banned') {
+    return 'banned';
+  }
+
+  return standing === 'active' ? null : 'waiting';
+};
+
 const NO_ACCOUNTS: Account[] = [];
 
 const NO_ROLES: Role[] = [];
 
 const NO_SHELVES: LibraryReach[] = [];
 
-const EDIT_TABS = ['display', 'security', 'devices', 'roles', 'libraries'] as const;
+const EDIT_TABS = ['profile', 'signIn', 'devices', 'roles', 'libraries'] as const;
 
 type EditTab = (typeof EDIT_TABS)[number];
 
@@ -111,24 +156,25 @@ const avatarsEqual = (first: Avatar, second: Avatar): boolean => {
 };
 
 /**
- * Who is on this server and everything about their account: their name and address, their roles, the
- * libraries they may see, their picture, their password, and where they are signed in. Permissions
- * live on roles now rather than one account at a time, so this dialog no longer offers exceptions —
- * a role covers that well enough that a second, per-account system for the same thing was only ever
- * more to get wrong.
+ * Who is on this server and everything about their account: who is waiting to set theirs up, who is
+ * banned and who signed in lately, at a glance; adding somebody with no more than a name and handing
+ * them a setup link; and, in the editor, their name, username and address, their setup link and
+ * password, where they are signed in, their roles and the libraries they may see.
+ *
+ * A setup link can only be shown when it is made, since the server keeps no more than a hash of it,
+ * so the links made here are held for as long as the page is open and offered again to copy.
  */
 const AccountsPanel = () => {
   const [accountId, setAccountId] = useState<string | null>(null);
-  const [editTab, setEditTab] = useState<EditTab>('display');
+  const [editTab, setEditTab] = useState<EditTab>('profile');
   const [refusal, setRefusal] = useState<Refusal>(null);
-  const [inviteName, setInviteName] = useState('');
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [invitePassword, setInvitePassword] = useState('');
-  const [isInviting, setIsInviting] = useState(false);
-  const [isAdding, setIsAdding] = useState(false);
+  const [isAddingAccount, setIsAddingAccount] = useState(false);
   const [search, setSearch] = useState('');
+  const [showing, setShowing] = useState<Showing>('everyone');
   const [asking, setAsking] = useState<Asked | null>(null);
+  const [held, setHeld] = useState<ReadonlyMap<string, IssuedSetupLink>>(NO_LINKS);
   const [draftName, setDraftName] = useState('');
+  const [draftUsername, setDraftUsername] = useState('');
   const [draftEmail, setDraftEmail] = useState('');
   const [draftRoleIds, setDraftRoleIds] = useState<ReadonlySet<string>>(new Set());
   const [draftLibraryAccess, setDraftLibraryAccess] = useState<LibraryReach[]>([]);
@@ -146,15 +192,17 @@ const AccountsPanel = () => {
 
   const cache = useQueryClient();
 
-  const askedAccounts = useQuery(adminQueries.accounts());
+  const askedAccounts = useQuery(adminQueries.accountList());
   const askedRoles = useQuery(adminQueries.roles());
 
-  const accounts = askedAccounts.data ?? NO_ACCOUNTS;
+  const accounts = askedAccounts.data?.accounts ?? NO_ACCOUNTS;
+  const canEmailSetupLinks = askedAccounts.data?.canEmailSetupLinks ?? false;
   const roles = askedRoles.data ?? NO_ROLES;
-  const held = useQuery(adminQueries.accountPermissions(accountId)).data ?? null;
+  const heldPermissions = useQuery(adminQueries.accountPermissions(accountId)).data ?? null;
   const shelves = useQuery(adminQueries.libraryAccess(accountId)).data ?? NO_SHELVES;
 
   const picked = accounts.find((account) => account.id === accountId) ?? null;
+  const [now] = useState(() => Date.now());
 
   const reload = useCallback(async () => {
     await Promise.all([
@@ -180,8 +228,78 @@ const AccountsPanel = () => {
     [reload],
   );
 
+  const hold = useCallback((userId: string, link: IssuedSetupLink | null) => {
+    setHeld((current) => {
+      const next = new Map(current);
+
+      if (link === null) {
+        next.delete(userId);
+      } else {
+        next.set(userId, link);
+      }
+
+      return next;
+    });
+  }, []);
+
+  const openEditor = useCallback((userId: string, tab: EditTab = 'profile') => {
+    setAccountId(userId);
+    setEditTab(tab);
+    setRefusal(null);
+  }, []);
+
+  const copyLink = useCallback((link: IssuedSetupLink) => {
+    void navigator.clipboard.writeText(link.url).then(
+      () => {
+        notify.worked(say('screens.adminArea.accountsPanel.copiedTheSetupLink'));
+      },
+      () => {
+        notify.failed(say('screens.adminArea.accountsPanel.theLinkCouldNotBeCopied'));
+      },
+    );
+  }, []);
+
+  const makeLink = useCallback(
+    async (account: Account) => {
+      const made = await issueSetupLink(account.id, DEFAULT_SETUP_LINK_LIFETIME);
+
+      if (made.kind === 'refused') {
+        tellOutcome('', made.refusal?.message ?? null);
+
+        return;
+      }
+
+      hold(account.id, made.value);
+      openEditor(account.id, 'signIn');
+      await reload();
+    },
+    [hold, openEditor, reload],
+  );
+
+  const emailLink = useCallback(
+    async (account: Account) => {
+      const link = held.get(account.id);
+      const sent = await emailSetupLink(
+        account.id,
+        link === undefined ? { lifetimeDays: DEFAULT_SETUP_LINK_LIFETIME } : { held: link },
+      );
+
+      if (sent.kind === 'answered') {
+        hold(account.id, sent.value);
+      }
+
+      tellOutcome(
+        say('screens.addAccountDialog.sentTheLinkToEmail', { email: account.email ?? '' }),
+        sent.kind === 'refused' ? (sent.refusal?.message ?? null) : null,
+      );
+      await reload();
+    },
+    [held, hold, reload],
+  );
+
   useEffect(() => {
     setDraftName(picked?.name ?? '');
+    setDraftUsername(picked?.username ?? '');
     setDraftEmail(picked?.email ?? '');
     setDraftFace({
       avatar: picked?.face?.avatar ?? { kind: 'initial', font: 'gilroy' },
@@ -191,8 +309,8 @@ const AccountsPanel = () => {
   }, [picked]);
 
   useEffect(() => {
-    setDraftRoleIds(new Set((held?.roles ?? []).map((role) => role.id)));
-  }, [accountId, held]);
+    setDraftRoleIds(new Set((heldPermissions?.roles ?? []).map((role) => role.id)));
+  }, [accountId, heldPermissions]);
 
   useEffect(() => {
     setDraftLibraryAccess(shelves);
@@ -201,14 +319,18 @@ const AccountsPanel = () => {
   const travel = useTravelDirection([...EDIT_TABS], editTab);
 
   const currentRoleIds = useMemo(
-    () => new Set((held?.roles ?? []).map((role) => role.id)),
-    [held?.roles],
+    () => new Set((heldPermissions?.roles ?? []).map((role) => role.id)),
+    [heldPermissions?.roles],
   );
+
+  const usernameChange = draftUsername.trim();
+  const emailChange = draftEmail.trim();
 
   const hasUnsavedChanges =
     picked !== null &&
     (draftName !== picked.name ||
-      draftEmail !== picked.email ||
+      usernameChange !== (picked.username ?? '') ||
+      emailChange !== (picked.email ?? '') ||
       draftFace.photo !== null ||
       !avatarsEqual(draftFace.avatar, picked.face?.avatar ?? { kind: 'initial', font: 'gilroy' }) ||
       draftFace.colour !== (picked.face?.colour ?? PROFILE_COLOURS[0]) ||
@@ -230,14 +352,18 @@ const AccountsPanel = () => {
       return;
     }
 
-    const patch: { name?: string; email?: string } = {};
+    const patch: { name?: string; username?: string; email?: string | null } = {};
 
     if (draftName !== picked.name) {
       patch.name = draftName;
     }
 
-    if (draftEmail !== picked.email) {
-      patch.email = draftEmail;
+    if (usernameChange !== '' && usernameChange !== (picked.username ?? '')) {
+      patch.username = usernameChange;
+    }
+
+    if (emailChange !== (picked.email ?? '')) {
+      patch.email = emailChange === '' ? null : emailChange;
     }
 
     if (Object.keys(patch).length > 0) {
@@ -353,7 +479,8 @@ const AccountsPanel = () => {
     picked,
     accountId,
     draftName,
-    draftEmail,
+    usernameChange,
+    emailChange,
     draftFace,
     draftRoleIds,
     currentRoleIds,
@@ -368,19 +495,30 @@ const AccountsPanel = () => {
     );
   };
 
+  const counts = useMemo(
+    () => ({
+      everyone: accounts.length,
+      waiting: accounts.filter((account) => bucketOf(account) === 'waiting').length,
+      banned: accounts.filter((account) => bucketOf(account) === 'banned').length,
+    }),
+    [accounts],
+  );
+
   const shown = useMemo(() => {
     const looking = search.trim().toLowerCase();
 
     return accounts
+      .filter((account) => showing === 'everyone' || bucketOf(account) === showing)
       .filter(
         (account) =>
           account.name.toLowerCase().includes(looking) ||
-          account.email.toLowerCase().includes(looking),
+          (account.username ?? '').toLowerCase().includes(looking) ||
+          (account.email ?? '').toLowerCase().includes(looking),
       )
       .sort((first, second) =>
         first.name.localeCompare(second.name, undefined, { sensitivity: 'base' }),
       );
-  }, [accounts, search]);
+  }, [accounts, search, showing]);
 
   const roleColours = useMemo(() => new Map(roles.map((role) => [role.name, role.color])), [roles]);
 
@@ -391,20 +529,30 @@ const AccountsPanel = () => {
         header: say('common.account'),
         accessorFn: (account) => account.name,
         cell: ({ row }) => (
-          <span className="flex min-w-0 items-center gap-3">
+          <Button
+            variant="bare"
+            size="none"
+            label={say('common.editName', { name: row.original.name })}
+            hasTooltip={false}
+            className="flex min-w-0 items-center gap-3 text-left"
+            onClick={() => {
+              openEditor(row.original.id);
+            }}
+          >
             <AccountFace account={row.original} />
 
             <span className="flex min-w-0 flex-col">
               <span className="truncate font-medium text-text">{row.original.name}</span>
               <span className="truncate text-xs text-text-muted">
-                {row.original.isBanned && row.original.banReason !== null
-                  ? say('screens.adminArea.accountsPanel.bannedBanReason', {
-                      banReason: row.original.banReason,
-                    })
-                  : row.original.email}
+                {row.original.email === null || row.original.username === null
+                  ? accountHandleOf(row.original)
+                  : say('screens.adminArea.accountsPanel.handleAndEmail', {
+                      handle: accountHandleOf({ username: row.original.username }),
+                      email: row.original.email,
+                    })}
               </span>
             </span>
-          </span>
+          </Button>
         ),
       },
       {
@@ -429,221 +577,252 @@ const AccountsPanel = () => {
       {
         id: 'state',
         header: say('common.state'),
-        accessorFn: (account) =>
-          account.isBanned
-            ? say('screens.adminArea.accountsPanel.banned2')
-            : say('screens.adminArea.accountsPanel.allowed'),
-        cell: ({ row }) =>
-          row.original.isBanned ? (
-            <Badge size="sm" tone="solid">
-              {say('screens.adminArea.accountsPanel.banned')}
-            </Badge>
-          ) : (
-            <span className="text-xs text-text-muted">
-              {say('screens.adminArea.accountsPanel.allowed')}
-            </span>
-          ),
+        accessorFn: (account) => accountStandingOf(account),
+        cell: ({ row }) => <AccountStanding account={row.original} now={now} />,
+      },
+      {
+        id: 'signedIn',
+        header: say('screens.adminArea.accountsPanel.lastSignedIn'),
+        accessorFn: (account) => account.lastSignedInAt ?? '',
+        cell: ({ row }) => (
+          <span className="text-xs text-text-muted">
+            {describeSince(row.original.lastSignedInAt, now)}
+          </span>
+        ),
       },
       {
         id: 'act',
         header: '',
         enableSorting: false,
-        cell: ({ row }) => (
-          <span className="flex justify-end">
-            <ActionMenu
-              label={say('common.actionsForName', { name: row.original.name })}
-              trigger={<Icon of={MoreHorizontalIcon} size={16} />}
-              groups={[
-                {
-                  items: [
-                    {
-                      id: 'edit',
-                      label: say('screens.adminArea.accountsPanel.editAccount'),
-                      icon: <Icon of={UserCheckFilledIcon} size={15} />,
-                      onChoose: () => {
-                        setAccountId(row.original.id);
-                        setEditTab('display');
-                        setRefusal(null);
-                      },
-                    },
-                    {
-                      id: 'ban',
-                      label: row.original.isBanned
-                        ? say('screens.adminArea.accountsPanel.letBackIn')
-                        : say('screens.adminArea.accountsPanel.ban'),
-                      icon: <Icon of={CircleXFilledIcon} size={15} />,
-                      onChoose: () => {
-                        if (row.original.isBanned) {
-                          void act(
-                            () => unbanAccount(row.original.id),
-                            say('screens.adminArea.accountsPanel.accountUnbanned'),
-                          );
+        cell: ({ row }) => {
+          const account = row.original;
+          const link = held.get(account.id) ?? null;
+          const standing = accountStandingOf(account);
+          const isWaiting =
+            standing === 'waiting' || standing === 'expired' || standing === 'cannotSignIn';
 
-                          return;
-                        }
+          return (
+            <span className="flex items-center justify-end gap-1">
+              {!isWaiting ? null : link === null ? (
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => {
+                    void makeLink(account);
+                  }}
+                >
+                  {say('screens.setupLinkSection.newLink')}
+                  <Icon of={RefreshCwIcon} size={14} />
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => {
+                    copyLink(link);
+                  }}
+                >
+                  {say('screens.adminArea.accountsPanel.copyLink')}
+                  <Icon of={CopyIcon} size={14} />
+                </Button>
+              )}
 
-                        setAsking({ kind: 'ban', account: row.original });
+              <ActionMenu
+                label={say('common.actionsForName', { name: account.name })}
+                trigger={<Icon of={MoreHorizontalIcon} size={16} />}
+                groups={[
+                  {
+                    items: [
+                      {
+                        id: 'edit',
+                        label: say('screens.adminArea.accountsPanel.editAccount'),
+                        icon: <Icon of={UserCheckFilledIcon} size={15} />,
+                        onChoose: () => {
+                          openEditor(account.id);
+                        },
                       },
-                    },
-                  ],
-                },
-                {
-                  items: [
-                    {
-                      id: 'remove',
-                      label: say('screens.adminArea.accountsPanel.deleteAccount'),
-                      icon: <Icon of={BinFilledIcon} size={15} />,
-                      isDestructive: true,
-                      onChoose: () => {
-                        setAsking({ kind: 'remove', account: row.original });
+                    ],
+                  },
+                  {
+                    items: [
+                      ...(link === null
+                        ? []
+                        : [
+                            {
+                              id: 'copy',
+                              label: say('screens.adminArea.accountsPanel.copyLink'),
+                              icon: <Icon of={CopyIcon} size={15} />,
+                              onChoose: () => {
+                                copyLink(link);
+                              },
+                            },
+                          ]),
+                      {
+                        id: 'link',
+                        label: isWaiting
+                          ? say('screens.setupLinkSection.newLink')
+                          : say('screens.adminArea.accountsPanel.sendASetupLink'),
+                        icon: <Icon of={LinkFilledIcon} size={15} />,
+                        onChoose: () => {
+                          void makeLink(account);
+                        },
                       },
-                    },
-                  ],
-                },
-              ]}
-            />
-          </span>
-        ),
+                      ...(!canEmailSetupLinks || account.email === null
+                        ? []
+                        : [
+                            {
+                              id: 'email',
+                              label: say('screens.setupLinkHandover.sendByEmail'),
+                              icon: <Icon of={MailFilledIcon} size={15} />,
+                              onChoose: () => {
+                                void emailLink(account);
+                              },
+                            },
+                          ]),
+                      ...(account.setup.state !== 'waiting'
+                        ? []
+                        : [
+                            {
+                              id: 'revoke',
+                              label: say('screens.setupLinkSection.revokeLink'),
+                              icon: <Icon of={CircleXFilledIcon} size={15} />,
+                              onChoose: () => {
+                                hold(account.id, null);
+                                void act(
+                                  () => revokeSetupLink(account.id),
+                                  say('screens.setupLinkSection.theLinkNoLongerWorks'),
+                                );
+                              },
+                            },
+                          ]),
+                    ],
+                  },
+                  {
+                    items: [
+                      {
+                        id: 'ban',
+                        label: account.isBanned
+                          ? say('screens.adminArea.accountsPanel.letBackIn')
+                          : say('screens.adminArea.accountsPanel.ban'),
+                        icon: <Icon of={CircleXFilledIcon} size={15} />,
+                        onChoose: () => {
+                          if (account.isBanned) {
+                            void act(
+                              () => unbanAccount(account.id),
+                              say('screens.adminArea.accountsPanel.accountUnbanned'),
+                            );
+
+                            return;
+                          }
+
+                          setAsking({ kind: 'ban', account });
+                        },
+                      },
+                      {
+                        id: 'remove',
+                        label: say('screens.adminArea.accountsPanel.deleteAccount'),
+                        icon: <Icon of={BinFilledIcon} size={15} />,
+                        isDestructive: true,
+                        onChoose: () => {
+                          setAsking({ kind: 'remove', account });
+                        },
+                      },
+                    ],
+                  },
+                ]}
+              />
+            </span>
+          );
+        },
       },
     ],
-    [act, roleColours],
+    [
+      act,
+      roleColours,
+      held,
+      now,
+      canEmailSetupLinks,
+      openEditor,
+      makeLink,
+      emailLink,
+      copyLink,
+      hold,
+    ],
   );
 
-  const confirm = () => {
-    if (asking === null) {
-      return;
-    }
-
-    const { kind, account } = asking;
-
-    setAsking(null);
-
-    void act(
-      () =>
-        kind === 'ban'
-          ? banAccount(account.id, say('screens.adminArea.accountsPanel.bannedFromTheAdminArea'))
-          : removeAccount(account.id),
-      kind === 'ban'
-        ? say('screens.adminArea.accountsPanel.bannedName', { name: account.name })
-        : say('common.deletedName', { name: account.name }),
-    );
-  };
+  const pickedLink = picked === null ? null : (held.get(picked.id) ?? null);
 
   return (
     <div className="flex flex-col gap-4">
       <ConfirmDialog
-        title={
-          asking?.kind === 'remove'
-            ? say('screens.adminArea.accountsPanel.deleteThisAccount')
-            : say('screens.adminArea.accountsPanel.banThisAccount')
-        }
+        title={say('screens.adminArea.accountsPanel.deleteThisAccount')}
         detail={
-          asking === null
-            ? ''
-            : asking.kind === 'remove'
-              ? say('screens.adminArea.accountsPanel.nameGoesAndSoDoesEvery', {
-                  name: asking.account.name,
-                })
-              : say('screens.adminArea.accountsPanel.nameWillBeSignedOutAnd', {
-                  name: asking.account.name,
-                })
-        }
-        confirmLabel={
           asking?.kind === 'remove'
-            ? say('screens.adminArea.accountsPanel.deleteAccount')
-            : say('screens.adminArea.accountsPanel.ban')
+            ? say('screens.adminArea.accountsPanel.nameGoesAndSoDoesEvery', {
+                name: asking.account.name,
+              })
+            : ''
         }
+        confirmLabel={say('screens.adminArea.accountsPanel.deleteAccount')}
         isDestructive
-        isOpen={asking !== null}
+        isOpen={asking?.kind === 'remove'}
         onClose={() => {
           setAsking(null);
         }}
-        onConfirm={confirm}
+        onConfirm={() => {
+          if (asking === null) {
+            return;
+          }
+
+          const { account } = asking;
+
+          setAsking(null);
+          void act(
+            () => removeAccount(account.id),
+            say('common.deletedName', { name: account.name }),
+          );
+        }}
       />
 
-      <DialogCompanion
-        label={say('screens.adminArea.accountsPanel.addUser')}
-        isOpen={isInviting}
+      <BanDialog
+        name={asking?.kind === 'ban' ? asking.account.name : null}
         onClose={() => {
-          setIsInviting(false);
+          setAsking(null);
         }}
-      >
-        <DialogTitle
-          size="compact"
-          title={say('screens.adminArea.accountsPanel.addUser')}
-          detail={say('screens.adminArea.accountsPanel.theyArriveAbleToWatchAnd')}
-        />
+        onBan={(reason) => {
+          if (asking === null) {
+            return;
+          }
 
-        <DialogContent className="flex flex-col gap-4">
-          <TextField label={say('common.name')} value={inviteName} onValueChange={setInviteName} />
+          const { account } = asking;
 
-          <TextField
-            label={say('common.address')}
-            type="email"
-            value={inviteEmail}
-            onValueChange={setInviteEmail}
-          />
+          setAsking(null);
+          void act(
+            () => banAccount(account.id, reason),
+            say('screens.adminArea.accountsPanel.bannedName', { name: account.name }),
+          );
+        }}
+      />
 
-          <TextField
-            label={say('common.password')}
-            type="password"
-            value={invitePassword}
-            onValueChange={setInvitePassword}
-            description={sayCount('common.atLeastCountCharacters', MINIMUM_PASSWORD_LENGTH)}
-          />
+      <AddAccountDialog
+        isOpen={isAddingAccount}
+        canEmailSetupLinks={canEmailSetupLinks}
+        onClose={() => {
+          setIsAddingAccount(false);
+        }}
+        onAdded={(added) => {
+          if (added.setupLink !== null) {
+            hold(added.account.id, added.setupLink);
+          }
 
-          <p className="text-center font-body text-xs text-text-muted">
-            {say('screens.adminArea.accountsPanel.valenceCannotSendEmailSoTell')}
-          </p>
+          void reload();
+        }}
+        onEdit={(userId) => {
+          openEditor(userId);
+        }}
+      />
 
-          {refusal === null ? null : (
-            <p role="alert" className="text-sm text-danger">
-              {refusal.message}
-            </p>
-          )}
-        </DialogContent>
-
-        <DialogFooter
-          dismiss={{
-            onChoose: () => {
-              setIsInviting(false);
-            },
-          }}
-          confirm={{
-            label: say('common.add'),
-            onChoose: () => {
-              setIsAdding(true);
-              void act(
-                () =>
-                  inviteAccount({
-                    name: inviteName,
-                    email: inviteEmail,
-                    password: invitePassword,
-                  }),
-                say('screens.adminArea.accountsPanel.addedInviteName', { inviteName }),
-              ).then((isAdded) => {
-                setIsAdding(false);
-
-                if (!isAdded) {
-                  return;
-                }
-
-                setInviteName('');
-                setInviteEmail('');
-                setInvitePassword('');
-                setIsInviting(false);
-              });
-            },
-            isLoading: isAdding,
-            isDisabled:
-              inviteName === '' ||
-              inviteEmail === '' ||
-              invitePassword.length < MINIMUM_PASSWORD_LENGTH,
-          }}
-        />
-      </DialogCompanion>
-
-      {refusal === null || picked !== null || isInviting ? null : (
+      {refusal === null || picked !== null ? null : (
         <p
           role="alert"
           className="flex items-start gap-3 rounded-lg border border-danger/40 bg-danger/10 p-4 text-sm text-text"
@@ -659,7 +838,7 @@ const AccountsPanel = () => {
         actions={
           <>
             <TextField
-              label={say('common.findSomebody')}
+              label={say('screens.adminArea.accountsPanel.findSomebodyByNameOrUsername')}
               isLabelHidden
               size="sm"
               type="search"
@@ -672,10 +851,10 @@ const AccountsPanel = () => {
             <PanelCardAction
               icon={PlusIcon}
               onClick={() => {
-                setIsInviting(true);
+                setIsAddingAccount(true);
               }}
             >
-              {say('screens.adminArea.accountsPanel.addUser')}
+              {say('screens.addAccountDialog.addAnAccount')}
             </PanelCardAction>
           </>
         }
@@ -689,19 +868,82 @@ const AccountsPanel = () => {
               void askedRoles.refetch();
             }}
           />
-        ) : (
-          <DataTable
-            label={say('common.accounts')}
-            columns={columns}
-            rows={shown}
-            pageSize={10}
-            height="fills"
-            emptyMessage={
-              accounts.length === 0
-                ? say('screens.adminArea.accountsPanel.nobodyHasAnAccountYet')
-                : say('common.nobodyHereMatchesThat')
+        ) : askedAccounts.isPending ? (
+          <div
+            className="flex flex-col gap-3 p-5"
+            aria-busy
+            aria-label={say('screens.adminArea.accountsPanel.readingTheAccounts')}
+          >
+            {Array.from({ length: SKELETON_ROWS }, (_, at) => (
+              <div key={at} className="flex items-center gap-3">
+                <Skeleton shape="round" className="size-8" />
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="ml-auto h-4 w-20" />
+              </div>
+            ))}
+          </div>
+        ) : accounts.length === 0 ? (
+          <NothingHere
+            of={UsersIcon}
+            title={say('screens.adminArea.accountsPanel.nobodyHasAnAccountYet')}
+            action={
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setIsAddingAccount(true);
+                }}
+              >
+                <Icon of={PlusIcon} size={15} />
+                {say('screens.addAccountDialog.addAnAccount')}
+              </Button>
             }
           />
+        ) : (
+          <div className="flex flex-col">
+            {counts.waiting === 0 && counts.banned === 0 ? null : (
+              <div className="px-3 pt-3 sm:px-5">
+                <SegmentedRow
+                  label={say('screens.adminArea.accountsPanel.whoToShow')}
+                  size="sm"
+                  value={showing}
+                  items={SHOWINGS.map((one) => ({
+                    id: one,
+                    label:
+                      one === 'everyone'
+                        ? say('screens.adminArea.accountsPanel.everyoneCount', {
+                            count: counts.everyone,
+                          })
+                        : one === 'waiting'
+                          ? say('screens.adminArea.accountsPanel.waitingForSetupCount', {
+                              count: counts.waiting,
+                            })
+                          : say('screens.adminArea.accountsPanel.bannedCount', {
+                              count: counts.banned,
+                            }),
+                    isAbsent: counts[one] === 0,
+                  }))}
+                  onSelect={(id) => {
+                    const chosen = SHOWINGS.find((one) => one === id);
+
+                    if (chosen !== undefined) {
+                      setShowing(chosen);
+                    }
+                  }}
+                />
+              </div>
+            )}
+
+            <DataTable
+              label={say('common.accounts')}
+              columns={columns}
+              rows={shown}
+              getRowId={(account) => account.id}
+              pageSize={10}
+              height="fills"
+              emptyMessage={say('common.nobodyHereMatchesThat')}
+            />
+          </div>
         )}
       </PanelCard>
 
@@ -727,7 +969,7 @@ const AccountsPanel = () => {
             <DialogTitle
               size="compact"
               title={say('common.editName', { name: picked.name })}
-              detail={say('screens.adminArea.accountsPanel.changesToTheirNamePictureRoles')}
+              detail={<AccountStanding account={picked} now={now} hasDetail={false} />}
               below={
                 <TabRow
                   label={say('screens.adminArea.accountsPanel.whatToChangeAboutThisAccount')}
@@ -737,8 +979,8 @@ const AccountsPanel = () => {
                   groups={[
                     {
                       items: [
-                        { id: 'display', label: say('common.display') },
-                        { id: 'security', label: say('common.security') },
+                        { id: 'profile', label: say('common.profile') },
+                        { id: 'signIn', label: say('screens.adminArea.settingsPanel.signingIn') },
                         { id: 'devices', label: say('common.devices') },
                         { id: 'roles', label: say('common.roles') },
                         { id: 'libraries', label: say('common.libraries') },
@@ -765,9 +1007,9 @@ const AccountsPanel = () => {
                 </p>
               )}
 
-              <TabPanel value="display" travel={travel}>
+              <TabPanel value="profile" travel={travel}>
                 <div className="flex flex-col gap-5">
-                  <div className="flex flex-wrap items-end gap-3">
+                  <div className="flex flex-wrap items-start gap-3">
                     <TextField
                       label={say('common.name')}
                       value={draftName}
@@ -775,14 +1017,22 @@ const AccountsPanel = () => {
                       className="min-w-48 flex-1"
                     />
 
-                    <TextField
-                      label={say('common.address')}
-                      type="email"
-                      value={draftEmail}
-                      onValueChange={setDraftEmail}
+                    <UsernameField
+                      value={draftUsername}
+                      onValueChange={setDraftUsername}
+                      userId={accountId}
+                      current={picked.username}
                       className="min-w-48 flex-1"
                     />
                   </div>
+
+                  <TextField
+                    label={say('screens.addAccountDialog.emailOptional')}
+                    type="email"
+                    value={draftEmail}
+                    onValueChange={setDraftEmail}
+                    description={say('screens.adminArea.accountsPanel.leaveItEmptyForNoAddress')}
+                  />
 
                   <AccountAvatarPicker
                     accountId={accountId}
@@ -795,61 +1045,107 @@ const AccountsPanel = () => {
                 </div>
               </TabPanel>
 
-              <TabPanel value="security" travel={travel}>
-                {!maySecureAccounts ? (
-                  <p className="text-sm text-text-muted">
-                    {say('screens.adminArea.accountsPanel.youDoNotHoldThePermission')}
-                  </p>
-                ) : (
-                  <div className="flex flex-col gap-6">
-                    <FormField
-                      label={say('screens.adminArea.accountsPanel.resetPassword')}
-                      description={say(
-                        'screens.adminArea.accountsPanel.endsEverySessionThisAccountHolds2',
-                      )}
-                    >
-                      <div className="flex flex-wrap items-end gap-3">
-                        <TextField
-                          label={say('screens.adminArea.accountsPanel.newPassword')}
-                          type="password"
-                          value={draftPassword}
-                          onValueChange={setDraftPassword}
-                          description={sayCount(
-                            'common.atLeastCountCharacters',
-                            MINIMUM_PASSWORD_LENGTH,
-                          )}
-                          className="min-w-48 flex-1"
-                        />
+              <TabPanel value="signIn" travel={travel}>
+                <div className="flex flex-col gap-6">
+                  <SetupLinkSection
+                    account={picked}
+                    held={pickedLink}
+                    canEmail={canEmailSetupLinks}
+                    onHeld={(link) => {
+                      hold(picked.id, link);
+                    }}
+                    onChanged={reload}
+                  />
 
+                  {!maySecureAccounts ? (
+                    <p className="text-sm text-text-muted">
+                      {say('screens.adminArea.accountsPanel.youDoNotHoldThePermission')}
+                    </p>
+                  ) : (
+                    <>
+                      <FormField
+                        label={say('screens.adminArea.accountsPanel.setAPassword')}
+                        description={say(
+                          'screens.adminArea.accountsPanel.endsEverySessionThisAccountHolds2',
+                        )}
+                      >
+                        <div className="flex flex-wrap items-end gap-3">
+                          <TextField
+                            label={say('screens.adminArea.accountsPanel.newPassword')}
+                            type="password"
+                            value={draftPassword}
+                            onValueChange={setDraftPassword}
+                            autoComplete="new-password"
+                            description={sayCount(
+                              'common.atLeastCountCharacters',
+                              MINIMUM_PASSWORD_LENGTH,
+                            )}
+                            className="min-w-48 flex-1"
+                          />
+
+                          <Button
+                            variant="secondary"
+                            disabled={draftPassword.length < MINIMUM_PASSWORD_LENGTH}
+                            onClick={() => {
+                              setConfirmingPasswordReset(true);
+                            }}
+                          >
+                            {say('screens.adminArea.accountsPanel.setPassword')}
+                          </Button>
+                        </div>
+                      </FormField>
+
+                      <FormField
+                        label={say('screens.adminArea.accountsPanel.signOutEverywhere')}
+                        description={say(
+                          'screens.adminArea.accountsPanel.endsEverySessionThisAccountHolds',
+                        )}
+                      >
                         <Button
-                          variant="secondary"
-                          disabled={draftPassword.length < MINIMUM_PASSWORD_LENGTH}
+                          variant="danger"
                           onClick={() => {
-                            setConfirmingPasswordReset(true);
+                            setConfirmingSignOutEverywhere(true);
                           }}
                         >
-                          {say('screens.adminArea.accountsPanel.resetPassword')}
+                          {say('screens.adminArea.accountsPanel.signOutEverywhere')}
                         </Button>
-                      </div>
-                    </FormField>
+                      </FormField>
+                    </>
+                  )}
 
-                    <FormField
-                      label={say('screens.adminArea.accountsPanel.signOutEverywhere')}
-                      description={say(
-                        'screens.adminArea.accountsPanel.endsEverySessionThisAccountHolds',
-                      )}
+                  <FormField
+                    label={say('screens.adminArea.accountsPanel.ban')}
+                    description={
+                      picked.isBanned
+                        ? say('screens.adminArea.accountsPanel.bannedBanReason', {
+                            banReason:
+                              picked.banReason ??
+                              say('screens.adminArea.accountsPanel.bannedFromTheAdminArea'),
+                          })
+                        : say('screens.adminArea.accountsPanel.aBanSignsThemOutAndKeepsThemOut')
+                    }
+                  >
+                    <Button
+                      variant={picked.isBanned ? 'secondary' : 'danger'}
+                      onClick={() => {
+                        if (picked.isBanned) {
+                          void act(
+                            () => unbanAccount(picked.id),
+                            say('screens.adminArea.accountsPanel.accountUnbanned'),
+                          );
+
+                          return;
+                        }
+
+                        setAsking({ kind: 'ban', account: picked });
+                      }}
                     >
-                      <Button
-                        variant="danger"
-                        onClick={() => {
-                          setConfirmingSignOutEverywhere(true);
-                        }}
-                      >
-                        {say('screens.adminArea.accountsPanel.signOutEverywhere')}
-                      </Button>
-                    </FormField>
-                  </div>
-                )}
+                      {picked.isBanned
+                        ? say('screens.adminArea.accountsPanel.letBackIn')
+                        : say('screens.adminArea.accountsPanel.ban')}
+                    </Button>
+                  </FormField>
+                </div>
               </TabPanel>
 
               <TabPanel value="devices" travel={travel}>
@@ -1036,7 +1332,7 @@ const AccountsPanel = () => {
                 onChoose: () => {
                   void saveChanges();
                 },
-                isDisabled: draftName === '' || !hasUnsavedChanges,
+                isDisabled: draftName.trim() === '' || !hasUnsavedChanges,
               }}
             />
           </Tabs>

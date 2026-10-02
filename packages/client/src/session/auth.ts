@@ -5,6 +5,7 @@ import {
   adminClient,
   deviceAuthorizationClient,
   twoFactorClient,
+  usernameClient,
 } from 'better-auth/client/plugins';
 import { passkeyClient } from '@better-auth/passkey/client';
 import { writeCurrentProfile } from '@ValenceClient/profiles/currentProfile';
@@ -18,6 +19,7 @@ import type { PasskeyRequestOptions } from '@ValenceContracts/schemas/PasskeyReq
 import type { SessionUser } from '@ValenceContracts/schemas/Session';
 import type { Passkey } from '@ValenceContracts/schemas/Passkey';
 import { say } from '@ValenceI18n/say';
+import { realEmailOf } from '@ValenceContracts/functions/realEmailOf';
 
 type RegisterOutcome =
   | { kind: 'registered' }
@@ -86,7 +88,13 @@ const buildClient = () =>
     baseURL: AUTH_BASE,
     basePath: '/api/auth',
     fetchOptions: { customFetchImpl: askTheServer },
-    plugins: [adminClient(), twoFactorClient(), passkeyClient(), deviceAuthorizationClient()],
+    plugins: [
+      adminClient(),
+      twoFactorClient(),
+      passkeyClient(),
+      deviceAuthorizationClient(),
+      usernameClient(),
+    ],
   });
 
 const client = buildClient();
@@ -137,7 +145,8 @@ const fetchSession = async (): Promise<SessionUser | null> => {
   return {
     id: data.user.id,
     name: data.user.name,
-    email: data.user.email,
+    email: realEmailOf(data.user.email),
+    username: data.user.displayUsername ?? data.user.username ?? null,
     emailVerified: data.user.emailVerified,
     image: data.user.image,
     role: data.user.role,
@@ -146,30 +155,40 @@ const fetchSession = async (): Promise<SessionUser | null> => {
 };
 
 /**
- * Signs in with an address and a password, which is the way in for a server that does not show who
- * lives here.
+ * Signs in with a username or an address, and a password, which is the way in for a server that does
+ * not show who lives here.
  *
  * The face wall is the ordinary way in and this is the other one: where the server keeps its
- * profiles to itself, there is nothing to pick from, so somebody types who they are instead. It
- * answers in the same three ways picking a face does, so the screen can treat them alike — including
- * a second factor, which better-auth asks for by redirecting rather than by refusing.
+ * profiles to itself, there is nothing to pick from, so somebody types who they are instead. What
+ * they typed is an address when it has an @ in it and a username otherwise, and is sent to the
+ * matching endpoint. It answers in the same three ways picking a face does, so the screen can treat
+ * them alike — including a second factor, which better-auth asks for by redirecting rather than by
+ * refusing.
  *
- * @param email - The address on the account.
+ * @param identifier - The username or the address on the account.
  * @param password - Its password.
  * @returns Whether it worked, whether a code is wanted next, and why not where it did not.
  */
-const signInWithEmail = async (
-  email: string,
+const signInWithUsernameOrEmail = async (
+  identifier: string,
   password: string,
 ): Promise<{ kind: 'signedIn' } | { kind: 'needsCode' } | { kind: 'refused'; reason: string }> => {
-  const answer = await client.signIn.email({ email, password }).catch(() => null);
+  const named = identifier.trim();
+  const answer = await (
+    named.includes('@')
+      ? client.signIn.email({ email: named, password })
+      : client.signIn.username({ username: named, password })
+  ).catch(() => null);
 
   if (answer === null) {
     return { kind: 'refused', reason: say('common.valenceCouldNotBeReached') };
   }
 
   if (answer.error !== null) {
-    return { kind: 'refused', reason: say('client.session.auth.thatAddressAndPasswordWereNot') };
+    return {
+      kind: 'refused',
+      reason: say('client.session.auth.thatUsernameOrAddressAndPassword'),
+    };
   }
 
   return TwoFactorRedirectSchema.safeParse(answer.data).success
@@ -741,7 +760,7 @@ export type {
 
 export {
   fetchSession,
-  signInWithEmail,
+  signInWithUsernameOrEmail,
   signOut,
   registerPasskey,
   isThisSessionConfirmed,

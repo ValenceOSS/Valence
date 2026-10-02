@@ -1,0 +1,9 @@
+{
+  "LocalAddress": "http://192.168.1.11:8096",
+  "LocalAddresses": ["http://192.168.1.11:8096"],
+  "WanAddress": "",
+  "RemoteAddresses": [],
+  "ServerName": "Lounge",
+  "Version": "4.8.10.0",
+  "Id": "e1e2e3"
+}

@@ -5,6 +5,7 @@ import { useArtworkLights } from '@ValenceScreens/music/useArtworkLights';
 import { Logo } from '@ValenceUI/Logo';
 import { TelevisionHandoff } from '@ValenceScreens/components/TelevisionHandoff/TelevisionHandoff';
 import { WayInBackground } from '@ValenceScreens/components/WayInBackground/WayInBackground';
+import { ForgotPassword } from '@ValenceScreens/components/ForgotPassword/ForgotPassword';
 import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
@@ -40,7 +41,7 @@ import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace';
 import { TwoFactorChallenge } from '@ValenceScreens/components/TwoFactorChallenge/TwoFactorChallenge';
 import { isPasskeySupported } from '@ValenceScreens/passkeys/isPasskeySupported';
-import { authenticateWithPasskey, signInWithEmail } from '@ValenceClient/session/auth';
+import { authenticateWithPasskey, signInWithUsernameOrEmail } from '@ValenceClient/session/auth';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 import { PasskeyFirst } from './components/PasskeyFirst/PasskeyFirst';
 import type { ProfileGateProps } from './ProfileGate.types';
@@ -136,7 +137,7 @@ const ProfileGate = ({
   const pictureLights = useArtworkLights(
     chosen !== null && chosen.avatar.kind === 'photo' ? profileAvatarUrl(chosen) : null,
   );
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [problem, setProblem] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -301,7 +302,7 @@ const ProfileGate = ({
     setIsSubmitting(true);
     setProblem(null);
 
-    settle(await signInWithEmail(email, password));
+    settle(await signInWithUsernameOrEmail(identifier, password));
   };
 
   /**
@@ -454,12 +455,12 @@ const ProfileGate = ({
               }}
             >
               <TextField
-                label={say('common.email')}
-                type="email"
+                label={say('screens.forgotPassword.usernameOrEmail')}
+                type="text"
                 size="lg"
 
-                value={email}
-                onValueChange={setEmail}
+                value={identifier}
+                onValueChange={setIdentifier}
                 autoComplete="username"
               />
 
@@ -479,7 +480,7 @@ const ProfileGate = ({
                 variant="confirm"
                 size="lg"
                 isLoading={isSubmitting}
-                disabled={email === '' || password === ''}
+                disabled={identifier.trim() === '' || password === ''}
               >
                 {say('common.login')}
                 <Icon of={ChevronRightIcon} size={18} />
@@ -500,6 +501,8 @@ const ProfileGate = ({
               )}
             </motion.form>
           )}
+
+          {needsCode ? null : <ForgotPassword initialIdentifier={identifier} />}
         </div>
       ) : everyone === null ? (
         <Spinner label={say('screens.profileGate.readingWhoIsHere')} size="lg" />
@@ -701,6 +704,8 @@ const ProfileGate = ({
                   )}
                 </motion.form>
               )}
+
+              {needsCode ? null : <ForgotPassword />}
 
               <motion.div
                 initial={{ opacity: 0 }}

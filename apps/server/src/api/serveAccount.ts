@@ -18,6 +18,10 @@ import {
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
+import { realEmailOf } from '@ValenceContracts/functions/realEmailOf';
+import { DEFAULT_SETUP_LINK_LIFETIME } from '@ValenceContracts/schemas/SetupLink';
+import { linkOriginOf } from '@ValenceServer/accounts/setupLinks/linkOriginOf';
+import type { SetupStanding } from '@ValenceServer/accounts/setupLinks/SetupLinkService';
 
 /**
  * Registers the account endpoints.
@@ -36,8 +40,12 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     removeAccount,
     isAccountBanned,
     readBanReason,
-    inviteAccount,
     editAccount,
+    setupLinks,
+    createAccountWithoutPassword,
+    email,
+    settings,
+    trustedOrigins,
     resetAccountPassword,
     listAccountSessions,
     endAccountSessions,
@@ -52,22 +60,27 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     readActor,
   } = context;
 
-  app.openapi(listAccountsRoute, async (context) => {
-    if (!(await requires(context.req.raw.headers, 'account.manage'))) {
-      return context.json(refuse('common.thatIsForAdministrators'), 403);
-    }
-
+  /**
+   * Describes every account as the admin pages show it, with what each holds and where it stands.
+   *
+   * @returns The accounts.
+   */
+  const describeAccounts = async () => {
     const listed = (await listUsers?.()) ?? [];
+    const standings =
+      (await setupLinks?.statesOf(listed.map((one) => one.id))) ?? new Map<string, SetupStanding>();
 
-    const accounts = await Promise.all(
+    return Promise.all(
       listed.map(async (account) => {
         const held = await permissions.rolesFor(account.id);
         const resolved = await permissions.resolve(account.id);
+        const standing = standings.get(account.id);
 
         return {
           id: account.id,
           name: account.name,
-          email: account.email,
+          username: account.username ?? null,
+          email: realEmailOf(account.email),
           createdAt: account.createdAt,
           isBanned: (await isAccountBanned?.(account.id)) ?? false,
           banReason: (await readBanReason?.(account.id)) ?? null,
@@ -76,11 +89,29 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
           face: (await households?.read(account.id, account.name)) ?? null,
           profile: ((await profiles?.list(account.id)) ?? [])[0] ?? null,
           roles: held.map((role) => role.name),
+          canSignIn: account.canSignIn ?? true,
+          lastSignedInAt: account.lastSignedInAt ?? null,
+          setup: {
+            state: standing?.state ?? 'none',
+            expiresAt: standing?.expiresAt?.toISOString() ?? null,
+          },
         };
       }),
     );
+  };
 
-    return context.json({ accounts }, 200);
+  app.openapi(listAccountsRoute, async (context) => {
+    if (!(await requires(context.req.raw.headers, 'account.manage'))) {
+      return context.json(refuse('common.thatIsForAdministrators'), 403);
+    }
+
+    return context.json(
+      {
+        accounts: await describeAccounts(),
+        canEmailSetupLinks: await email.isOn('setupLinks'),
+      },
+      200,
+    );
   });
 
   app.openapi(banAccountRoute, async (context) => {
@@ -191,32 +222,73 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
   });
 
   app.openapi(inviteAccountRoute, async (context) => {
-    if (!(await requires(context.req.raw.headers, 'account.invite'))) {
+    const actor = await readActor(context.req.raw.headers);
+
+    if (actor === null || !actor.permissions.has('account.invite')) {
       return context.json(refuse('common.thatIsForAdministrators'), 403);
     }
 
-    const invited = await inviteAccount?.(context.req.valid('json'));
-
-    if (invited === undefined || invited.kind === 'failed') {
+    if (createAccountWithoutPassword === undefined || setupLinks === undefined) {
       return context.json(refuse('error.common.theAccountCouldNotBeMade'), 500);
     }
 
-    if (invited.kind === 'taken') {
-      return context.json(refuse('error.account.thatAddressIsAlreadyInUse'), 400);
+    const body = context.req.valid('json');
+
+    if (body.email !== undefined && realEmailOf(body.email) === null) {
+      return context.json(refuse('error.account.thatAddressCannotBeUsed'), 400);
+    }
+
+    const made = await createAccountWithoutPassword({
+      name: body.name,
+      ...(body.username === undefined ? {} : { username: body.username }),
+      ...(body.email === undefined ? {} : { email: body.email }),
+      by: actor.id,
+    });
+
+    if (made.kind === 'taken') {
+      return context.json(
+        refuse(
+          made.field === 'username'
+            ? 'error.account.thatUsernameIsAlreadyInUse'
+            : 'error.account.thatAddressIsAlreadyInUse',
+        ),
+        400,
+      );
+    }
+
+    if (made.kind === 'failed') {
+      return context.json(refuse('error.common.theAccountCouldNotBeMade'), 500);
+    }
+
+    const setupLink =
+      body.password === undefined
+        ? await setupLinks.issue(made.userId, {
+            lifetimeDays: body.lifetimeDays ?? DEFAULT_SETUP_LINK_LIFETIME,
+            by: actor.id,
+            origin: linkOriginOf(
+              context.req.raw.headers,
+              await (trustedOrigins?.() ?? settings.read().then((read) => read.trustedOrigins)),
+            ),
+          })
+        : null;
+
+    if (body.password !== undefined) {
+      await resetAccountPassword?.(made.userId, body.password);
+    }
+
+    const account = (await describeAccounts()).find((one) => one.id === made.userId);
+
+    if (account === undefined) {
+      return context.json(refuse('error.common.theAccountCouldNotBeMade'), 500);
     }
 
     return context.json(
       {
-        id: invited.account.id,
-        name: invited.account.name,
-        email: invited.account.email,
-        createdAt: invited.account.createdAt,
-        isBanned: false,
-        banReason: null,
-        position: null,
-        isAdministrator: false,
-        face: null,
-        roles: [],
+        account,
+        setupLink:
+          setupLink === null
+            ? null
+            : { url: setupLink.url, expiresAt: setupLink.expiresAt.toISOString() },
       },
       201,
     );
@@ -249,8 +321,14 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
     }
 
     const body = context.req.valid('json');
+
+    if (body.email !== undefined && body.email !== null && realEmailOf(body.email) === null) {
+      return context.json(refuse('error.account.thatAddressCannotBeUsed'), 400);
+    }
+
     const changed = await editAccount?.(userId, {
       ...(body.name === undefined ? {} : { name: body.name }),
+      ...(body.username === undefined ? {} : { username: body.username }),
       ...(body.email === undefined ? {} : { email: body.email }),
     });
 
@@ -260,6 +338,10 @@ const serveAccount = (app: OpenAPIHono, context: AppContext): void => {
 
     if (changed === 'taken') {
       return context.json(refuse('error.account.thatAddressIsAlreadyInUse'), 400);
+    }
+
+    if (changed === 'usernameTaken') {
+      return context.json(refuse('error.account.thatUsernameIsAlreadyInUse'), 400);
     }
 
     return context.body(null, 204);

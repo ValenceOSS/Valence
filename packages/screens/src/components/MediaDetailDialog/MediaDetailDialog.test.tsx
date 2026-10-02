@@ -31,13 +31,25 @@ vi.mock('@ValenceClient/downloads/fetchDownloads', () => ({
   fetchHoldings: vi.fn(() => Promise.resolve([])),
 }));
 
-const permissions = vi.hoisted(() => ({ mayOverride: false }));
+const permissions = vi.hoisted(() => ({ mayOverride: false, mayEditLibraries: false }));
 
 vi.mock('@ValenceClient/session/useWhatIMayDo', () => ({
   useWhatIMayDo: () => ({
-    may: (permission: string) => permission === 'media.override' && permissions.mayOverride,
+    may: (permission: string) =>
+      (permission === 'media.override' && permissions.mayOverride) ||
+      (permission === 'library.edit' && permissions.mayEditLibraries),
     mayAdminister: false,
   }),
+}));
+
+const collectionsMock = vi.hoisted(() => vi.fn());
+
+vi.mock('@ValenceClient/collections/fetchCollections', () => ({
+  fetchCollections: collectionsMock,
+  fetchCollection: vi.fn(),
+  addToCollection: vi.fn(),
+  createCollection: vi.fn(),
+  updateCollection: vi.fn(),
 }));
 
 const scrubs = vi.hoisted(() => ({ areBuilt: true }));
@@ -119,11 +131,14 @@ beforeEach(() => {
   detailMock.mockResolvedValue(detail());
   downloadsMock.mockReset();
   downloadsMock.mockResolvedValue([]);
+  collectionsMock.mockReset();
+  collectionsMock.mockResolvedValue([]);
 });
 
 afterEach(() => {
   motion.isReduced = false;
   permissions.mayOverride = false;
+  permissions.mayEditLibraries = false;
   scrubs.areBuilt = true;
 });
 
@@ -150,6 +165,53 @@ const pressAction = async (label: string): Promise<void> => {
     await userEvent.setup().click(shown);
   }
 };
+
+describe('collections', () => {
+  const SAGA = {
+    id: '00000000-0000-4000-8000-00000000c011',
+    name: 'Saga',
+    description: null,
+    isOrdered: true,
+    hasOwnArtwork: false,
+    entryCount: 2,
+    coverMediaIds: [],
+    updatedAt: '2026-10-02T00:00:00.000Z',
+  };
+
+  it('names the collections a film is part of', async () => {
+    collectionsMock.mockResolvedValue([SAGA]);
+
+    renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+    expect(await screen.findByRole('button', { name: 'Saga' })).toBeInTheDocument();
+    expect(collectionsMock).toHaveBeenCalledWith({ containing: { mediaItemId: summary.id } });
+  });
+
+  it('offers to add it to a collection to somebody who may edit the libraries', async () => {
+    permissions.mayEditLibraries = true;
+
+    renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+    await openTheMenu();
+    await userEvent
+      .setup()
+      .click(await screen.findByRole('menuitem', { name: 'Add to a collection' }));
+
+    expect(
+      await screen.findByRole('dialog', { name: `Add ${summary.title} to a collection` }),
+    ).toBeInTheDocument();
+  });
+
+  it('offers nobody else a way to add it to one', async () => {
+    renderInAnAddress(<MediaDetailDialog media={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+    await screen.findByRole('heading', { name: 'Arrival' });
+    await openTheMenu();
+    await screen.findByRole('menuitem', { name: /Download/ });
+
+    expect(screen.queryByRole('menuitem', { name: 'Add to a collection' })).not.toBeInTheDocument();
+  });
+});
 
 describe('choosing where the preview is cut from', () => {
   it('offers it to somebody allowed to correct media', async () => {

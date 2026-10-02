@@ -1,0 +1,59 @@
+[
+  {
+    "Name": "Pat",
+    "ServerId": "f1e2d3c4b5a6",
+    "Id": "6d2b1a3e-0000-4000-8000-000000000001",
+    "PrimaryImageTag": "tag-pat",
+    "HasPassword": true,
+    "HasConfiguredPassword": true,
+    "LastLoginDate": "2026-09-30T20:00:00.0000000Z",
+    "Configuration": {
+      "AudioLanguagePreference": "eng",
+      "SubtitleLanguagePreference": "eng",
+      "SubtitleMode": "Default"
+    },
+    "Policy": {
+      "IsAdministrator": true,
+      "IsHidden": false,
+      "IsDisabled": false,
+      "EnableAllFolders": true,
+      "EnabledFolders": [],
+      "BlockedTags": [],
+      "BlockUnratedItems": [],
+      "AuthenticationProviderId": "Jellyfin.Server.Implementations.Users.DefaultAuthenticationProvider",
+      "PasswordResetProviderId": "Jellyfin.Server.Implementations.Users.DefaultPasswordResetProvider"
+    }
+  },
+  {
+    "Name": "Sam",
+    "ServerId": "f1e2d3c4b5a6",
+    "Id": "6d2b1a3e-0000-4000-8000-000000000002",
+    "HasPassword": true,
+    "Policy": {
+      "IsAdministrator": false,
+      "IsHidden": true,
+      "IsDisabled": false,
+      "EnableAllFolders": false,
+      "EnabledFolders": ["lib-films"],
+      "MaxParentalRating": 13,
+      "BlockUnratedItems": ["Movie"],
+      "AuthenticationProviderId": "x",
+      "PasswordResetProviderId": "y"
+    }
+  },
+  {
+    "Name": "Old Lodger",
+    "ServerId": "f1e2d3c4b5a6",
+    "Id": "6d2b1a3e-0000-4000-8000-000000000003",
+    "HasPassword": false,
+    "Policy": {
+      "IsAdministrator": false,
+      "IsHidden": true,
+      "IsDisabled": true,
+      "EnableAllFolders": true,
+      "BlockedMediaFolders": ["lib-music"],
+      "AuthenticationProviderId": "x",
+      "PasswordResetProviderId": "y"
+    }
+  }
+]

@@ -126,6 +126,14 @@ const REENCODE_JOB = 'library.reencode';
 
 const PRE_TRANSCODE_JOB = 'library.preTranscode';
 
+const IMPORT_PLAN_JOB = 'import.plan';
+
+const IMPORT_RUN_JOB = 'import.run';
+
+const ImportJobSchema = z.object({
+  runId: z.string().uuid(),
+});
+
 /**
  * Names the queue a library-scoped kind's schedule fires on, which is a queue of its own rather than
  * the job's, since one schedule has to fan out across every library.
@@ -226,6 +234,9 @@ export {
   PRUNE_RESOURCE_HISTORY_JOB,
   REENCODE_JOB,
   PRE_TRANSCODE_JOB,
+  IMPORT_PLAN_JOB,
+  IMPORT_RUN_JOB,
+  ImportJobSchema,
   DeliverWebhookJobSchema,
   RUN_PLUGIN_SCHEDULE_JOB,
   RunPluginScheduleJobSchema,

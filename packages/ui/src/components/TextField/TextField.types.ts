@@ -8,6 +8,7 @@ type TextFieldProps = {
   onValueChange: (value: string) => void;
   type?: TextFieldType;
   description?: string;
+  descriptionPlacement?: 'above' | 'below';
   error?: string;
   placeholder?: string;
   required?: boolean;

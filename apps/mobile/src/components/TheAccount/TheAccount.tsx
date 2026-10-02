@@ -1,3 +1,4 @@
+import { accountHandleOf } from '@ValenceClient/accounts/accountHandleOf';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Alert, StyleSheet, View } from 'react-native';
@@ -67,7 +68,7 @@ const TheAccount = ({ onOut, onElsewhere, header, onScrolled, shown, onShow }: T
       {header ?? <Words size="title">{say('common.account')}</Words>}
 
       {who.data === null || who.data === undefined ? null : (
-        <Words tone="muted">{who.data.email}</Words>
+        <Words tone="muted">{accountHandleOf(who.data)}</Words>
       )}
 
       {shown === undefined ? (

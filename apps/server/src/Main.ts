@@ -1,5 +1,7 @@
+import { z } from '@hono/zod-openapi';
 import { checkServerVersion } from '@ValenceDatabase/checkServerVersion';
 import { SEERR_DEFAULTS } from '@ValenceContracts/schemas/SeerrLink';
+import { EMAIL_DEFAULTS } from '@ValenceContracts/schemas/EmailSettings';
 import { databaseConnectionOf } from '@ValenceDatabase/databaseConnectionOf';
 import { checkDialect } from '@ValenceDatabase/checkDialect';
 import { followUpReading } from '@ValenceServer/library/followUpReading';
@@ -22,13 +24,12 @@ import {
   unlink,
   utimes,
 } from 'node:fs/promises';
-import { z } from 'zod';
 import { serve } from '@hono/node-server';
 import { createNodeWebSocket } from '@hono/node-ws';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { isAppAddress } from '@ValenceServer/web/isAppAddress';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { and, count, eq, gt, isNull, lt, lte, sql } from 'drizzle-orm';
+import { and, asc, count, eq, gt, isNotNull, isNull, lt, lte, sql } from 'drizzle-orm';
 import { countAffected } from '@ValenceDatabase/countAffected';
 import { insertUnlessPresent } from '@ValenceDatabase/insertUnlessPresent';
 import { createApp } from './App';
@@ -59,6 +60,10 @@ import { createPresenceService } from '@ValenceServer/presence/PresenceService';
 import { readSessionOnce } from '@ValenceServer/auth/readSessionOnce';
 import { createAuth } from '@ValenceServer/auth/Auth';
 import { createAccount } from '@ValenceServer/auth/createAccount';
+import { createAccountWithoutPassword } from '@ValenceServer/accounts/createAccountWithoutPassword';
+import type { AccountWithoutPasswordRequest } from '@ValenceServer/accounts/createAccountWithoutPassword';
+import { createDatabaseSetupLinkService } from '@ValenceServer/accounts/setupLinks/createDatabaseSetupLinkService';
+import { placeholderEmailOf } from '@ValenceServer/accounts/placeholderEmailOf';
 import { trustedOriginsFor } from '@ValenceServer/auth/trustedOriginsFor';
 import type { RealtimeSession } from '@ValenceServer/realtime/createRealtimeHandler';
 import { asTheServer } from '@ValenceServer/visibility/asTheServer';
@@ -75,6 +80,8 @@ import { dropPrivatePlaylistsOf } from '@ValenceServer/playlists/dropPrivatePlay
 import {
   user,
   account,
+  accountActivity,
+  passkey,
   library,
   mediaItem,
   mediaRendition,
@@ -91,7 +98,13 @@ import {
   apikey,
 } from '#dialect/Schema';
 import { readEnv } from '@ValenceServer/env/Env';
+import { readImportedAccounts } from '@ValenceServer/arrImport/readImportedAccounts';
 import { createDatabaseSettingsStore } from '@ValenceServer/settings/createDatabaseSettingsStore';
+import { createEmailService } from '@ValenceServer/email/createEmailService';
+import { createDatabaseEmailSendStore } from '@ValenceServer/email/createDatabaseEmailSendStore';
+import { emailPasswordReset } from '@ValenceServer/email/emailPasswordReset';
+import { createPasswordResetRequests } from '@ValenceServer/passwordReset/createPasswordResetRequests';
+import { findResetAccount } from '@ValenceServer/passwordReset/findResetAccount';
 import { createDatabaseLibraryService } from '@ValenceServer/library/createDatabaseLibraryService';
 import { mediaKindOf } from '@ValenceServer/library/mediaKindOf';
 import { describeQuality } from '@ValenceServer/library/describeQuality';
@@ -173,6 +186,10 @@ import { createEmbeddedSubtitleService } from '@ValenceServer/subtitles/createEm
 import { createLayeredSubtitleService } from '@ValenceServer/subtitles/createLayeredSubtitleService';
 import { createPlaybackService } from '@ValenceServer/playback/createPlaybackService';
 import { createJobQueue } from '@ValenceServer/jobs/createJobQueue';
+import { createImportService } from '@ValenceServer/imports/createImportService';
+import { createDatabaseImportStore } from '@ValenceServer/imports/createDatabaseImportStore';
+import { createAdministratorGrant } from '@ValenceServer/imports/createAdministratorGrant';
+import { createImportedAccountBan } from '@ValenceServer/imports/createImportedAccountBan';
 import type { FinishedJob } from '@ValenceServer/jobs/createJobQueue';
 import {
   READ_CERTIFICATES_AGAIN_JOB,
@@ -212,6 +229,9 @@ import {
   PRUNE_RESOURCE_HISTORY_JOB,
   REENCODE_JOB,
   PRE_TRANSCODE_JOB,
+  IMPORT_PLAN_JOB,
+  IMPORT_RUN_JOB,
+  ImportJobSchema,
   DeliverWebhookJobSchema,
   scheduleTriggerKind,
   RUN_PLUGIN_SCHEDULE_JOB,
@@ -269,6 +289,7 @@ import { createAlbumCorrections } from '@ValenceServer/music/web/createAlbumCorr
 import { createArtistStories } from '@ValenceServer/music/web/createArtistStories';
 import { createMusicFileSystem } from '@ValenceServer/music/createMusicFileSystem';
 import { createDatabasePlaylistService } from '@ValenceServer/playlists/createDatabasePlaylistService';
+import { createDatabaseCollectionService } from '@ValenceServer/collections/createDatabaseCollectionService';
 import type { MusicServices } from '@ValenceServer/music/MusicServices';
 import { sweepArtefactCache } from '@ValenceServer/maintenance/sweepArtefactCache';
 import { AudioStreamSchema, MediaItemSchema } from '@ValenceContracts/schemas/MediaItem';
@@ -295,6 +316,7 @@ import { createDatabaseWorkLock } from '@ValenceServer/jobs/createDatabaseWorkLo
 import { createLibraryWorkRunner } from '@ValenceServer/jobs/createLibraryWorkRunner';
 import { seedDefaultJobTriggers } from '@ValenceServer/jobs/seedDefaultJobTriggers';
 import { seedDefaultRoles } from '@ValenceServer/auth/seedDefaultRoles';
+import { giveAccountsUsernames } from '@ValenceServer/auth/giveAccountsUsernames';
 import { ADMINISTRATOR_ROLE_NAME, DEFAULT_ROLE_NAME } from '@ValenceCore/functions/defaultRoles';
 import { createDatabaseHistoryService } from '@ValenceServer/history/createDatabaseHistoryService';
 import { createDatabaseSignInStore } from '@ValenceServer/accounts/createDatabaseSignInStore';
@@ -357,6 +379,7 @@ const settings = createDatabaseSettingsStore({
     trustedOrigins: env.TRUSTED_ORIGINS,
     cookieSecure: env.COOKIE_SECURE,
     setupCompletedAt: null,
+    setupFlow: 'finished',
     catalogueApiKey: env.CATALOGUE_API_KEY,
     hardwareAccel: '',
     previewQuality: 'high',
@@ -380,6 +403,7 @@ const settings = createDatabaseSettingsStore({
     roundness: 'default',
     preTranscoding: PRE_TRANSCODING_DEFAULTS,
     seerr: SEERR_DEFAULTS,
+    email: EMAIL_DEFAULTS,
   },
 });
 
@@ -431,6 +455,26 @@ const persisted = await settings.read();
 
 const shareService = createDatabaseShareService(db);
 
+/**
+ * Gives every account without a username one, oldest first, so it can sign in by one.
+ *
+ * @returns How many accounts were given a username.
+ */
+const nameEveryAccount = () =>
+  giveAccountsUsernames({
+    accounts: () =>
+      db
+        .select({ id: user.id, name: user.name, email: user.email, username: user.username })
+        .from(user)
+        .orderBy(asc(user.createdAt)),
+    assign: async (accountId, username) => {
+      await db
+        .update(user)
+        .set({ username, displayUsername: username })
+        .where(and(eq(user.id, accountId), isNull(user.username)));
+    },
+  });
+
 const auth = createAuth({
   env,
   database: drizzleAdapter(db, { provider: AUTH_PROVIDER, schema }),
@@ -442,6 +486,7 @@ const auth = createAuth({
       target: userProfile.userId,
     });
     await giveDefaultRole(userId);
+    await nameEveryAccount();
 
     const [made] = await db
       .select({ name: user.name })
@@ -469,10 +514,9 @@ const auth = createAuth({
       lastSignInAt: await signInStore.lastSignInAt(userId),
     });
   },
-  onPasswordResetRequested: (email, url) => {
+  onPasswordResetRequested: async (email, url, name) => {
     log.info('auth', `password reset for ${email}: ${url}`);
-
-    return Promise.resolve();
+    await emailPasswordReset(emailService, { to: email, name, url, at: Date.now() });
   },
 });
 
@@ -550,6 +594,22 @@ const log = createLogger({
   ambient: () => logScope.current(),
   onRecord: (record) => {
     realtime.publish('logs', asJsonLog(record), { kind: 'everyone' });
+  },
+});
+
+const emailService = createEmailService({
+  settings,
+  sends: createDatabaseEmailSendStore(db),
+  environment: { smtpUrl: env.SMTP_URL, smtpFrom: env.SMTP_FROM },
+  log,
+});
+
+const requestPasswordReset = createPasswordResetRequests({
+  findAccount: (identifier) => findResetAccount(db, identifier),
+  request: async (email, redirectTo) => {
+    await auth.api.requestPasswordReset({ body: { email, redirectTo } }).catch((error) => {
+      log.warn('auth', `password reset could not be asked for: ${String(error)}`);
+    });
   },
 });
 
@@ -1442,7 +1502,11 @@ const jobEventLog = createJobEventLog(
 
 const jobs = createJobQueue({
   db,
-  perKind: { [PREPARE_DOWNLOAD_JOB]: { atOnce: 16, retries: 0 } },
+  perKind: {
+    [PREPARE_DOWNLOAD_JOB]: { atOnce: 16, retries: 0 },
+    [IMPORT_PLAN_JOB]: { atOnce: 1, retries: 0 },
+    [IMPORT_RUN_JOB]: { atOnce: 1, retries: 0 },
+  },
   handlers: traceJobs(
     {
       [SCAN_LIBRARY_JOB]: async (jobId, payload) => {
@@ -1897,6 +1961,28 @@ const jobs = createJobQueue({
           `certificates: read ${looked.toString()} again in ${region}, ${rated.toString()} of them certificated here`,
         );
       },
+      [IMPORT_PLAN_JOB]: async (jobId, payload) => {
+        const parsed = ImportJobSchema.safeParse(payload);
+
+        if (!parsed.success) {
+          log.error('jobs', 'job queue: an import plan carried data Valence could not read.');
+
+          return;
+        }
+
+        await importService.runPlanJob(jobId, parsed.data.runId);
+      },
+      [IMPORT_RUN_JOB]: async (jobId, payload) => {
+        const parsed = ImportJobSchema.safeParse(payload);
+
+        if (!parsed.success) {
+          log.error('jobs', 'job queue: an import carried data Valence could not read.');
+
+          return;
+        }
+
+        await importService.runImportJob(jobId, parsed.data.runId);
+      },
       [PRUNE_HISTORY_JOB]: async () => {
         const forgotten = await historyService.prune(
           new Date(Date.now() - HISTORY_KEPT_FOR_DAYS * 86_400_000),
@@ -2325,6 +2411,15 @@ const libraryService = createDatabaseLibraryService({
   },
   onDeparted: (libraryId, items) => {
     remember(departures, libraryId, items);
+  },
+});
+
+const collectionService = createDatabaseCollectionService({
+  db,
+  library: libraryService,
+  artworkDirectory: join(env.PROFILE_IMAGE_DIR, '..', 'collections'),
+  onChanged: () => {
+    realtime.publish('media', { event: 'collections' }, { kind: 'everyone' });
   },
 });
 
@@ -3095,7 +3190,61 @@ const startPlugins = (
   return started;
 };
 
+const setupLinks = createDatabaseSetupLinkService({ db, address: env.BETTER_AUTH_URL });
+
+/**
+ * Makes an account nobody can sign in to until its setup link is used.
+ *
+ * @param request - Its name, any username or address known, and who is adding it.
+ * @returns What happened.
+ */
+const addAccountWithoutPassword = (request: AccountWithoutPasswordRequest) =>
+  createAccountWithoutPassword(
+    {
+      auth,
+      db,
+      onMade: (userId, by) => {
+        log.info('auth', `accounts: added ${userId} for ${by ?? 'nobody'}, waiting for setup`);
+      },
+    },
+    request,
+  );
+
+const importService = createImportService({
+  db,
+  store: createDatabaseImportStore(db),
+  library: libraryService,
+  profiles: profileService,
+  favourites: createDatabaseFavouriteService(db),
+  ratings: createDatabaseRatingService(db),
+  playlists: musicServices.playlists,
+  segments: segmentService,
+  collections: collectionService,
+  createAccountWithoutPassword: addAccountWithoutPassword,
+  setupLinks,
+  email: emailService,
+  grantAdministrator: createAdministratorGrant(db, permissions),
+  banAccount: createImportedAccountBan(db),
+  tmdbOfTvdb: (tvdbId) => catalogueProvider.seriesOfTvdbId?.(tvdbId) ?? Promise.resolve(null),
+  regions: async () => [(await settings.read()).certificationRegion, 'US', 'GB'],
+  fetch,
+  jobs,
+  recordIssue: (jobRunId, path, reason) => {
+    void jobHistory.recordIssue({ jobRunId, path, reason }).catch(() => {});
+  },
+  requestsReach: () =>
+    requestsClient === null
+      ? 'off'
+      : requests?.overview().isReachable === true
+        ? 'reachable'
+        : 'unreachable',
+  log: (message) => {
+    log.warn('jobs', message);
+  },
+});
+
 const app = createApp({
+  imports: importService,
   plugins: startPlugins,
   auth,
   settings,
@@ -3139,6 +3288,8 @@ const app = createApp({
   shares: shareService,
   shareSessions: createShareSessions(),
   playbackSessions: createPlaybackSessions(),
+  email: emailService,
+  requestPasswordReset,
   sayALinkWasWithdrawn: async ({ accountId, title, byName }) => {
     await notifyHousehold({
       store: notifications,
@@ -3165,6 +3316,7 @@ const app = createApp({
   splashscreen,
   books: bookService,
   music: musicServices,
+  collections: collectionService,
   videoDevices,
   bookDevices,
   streamBookFile: (path, range) => transcoder.readFile(path, range),
@@ -3216,12 +3368,33 @@ const app = createApp({
         id: user.id,
         name: user.name,
         email: user.email,
+        username: user.username,
+        displayUsername: user.displayUsername,
         role: user.role,
         createdAt: user.createdAt,
+        lastSignedInAt: accountActivity.lastSignInAt,
       })
-      .from(user);
+      .from(user)
+      .leftJoin(accountActivity, eq(accountActivity.userId, user.id));
+    const withPasswords = new Set(
+      (
+        await db
+          .select({ userId: account.userId })
+          .from(account)
+          .where(and(eq(account.providerId, 'credential'), isNotNull(account.password)))
+      ).map((row) => row.userId),
+    );
+    const withPasskeys = new Set(
+      (await db.select({ userId: passkey.userId }).from(passkey)).map((row) => row.userId),
+    );
 
-    return rows.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }));
+    return rows.map(({ displayUsername, ...row }) => ({
+      ...row,
+      username: displayUsername ?? row.username,
+      createdAt: row.createdAt.toISOString(),
+      lastSignedInAt: row.lastSignedInAt?.toISOString() ?? null,
+      canSignIn: withPasswords.has(row.id) || withPasskeys.has(row.id),
+    }));
   },
   permissions,
   banAccount: async (userId, reason) => {
@@ -3299,15 +3472,8 @@ const app = createApp({
 
     return found?.reason ?? null;
   },
-  inviteAccount: async (request) => {
-    const outcome = await createAccount(auth, request);
-
-    if (outcome.kind === 'failed') {
-      log.error('auth', `an account could not be added — ${outcome.reason}`);
-    }
-
-    return outcome;
-  },
+  setupLinks,
+  createAccountWithoutPassword: addAccountWithoutPassword,
   editAccount: async (userId, changes) => {
     const [found] = await db.select({ id: user.id }).from(user).where(eq(user.id, userId)).limit(1);
 
@@ -3315,11 +3481,14 @@ const app = createApp({
       return 'missing';
     }
 
-    if (changes.email !== undefined) {
+    const email =
+      changes.email === null ? placeholderEmailOf(userId) : changes.email?.toLowerCase();
+
+    if (email !== undefined) {
       const [taken] = await db
         .select({ id: user.id })
         .from(user)
-        .where(eq(user.email, changes.email))
+        .where(eq(user.email, email))
         .limit(1);
 
       if (taken !== undefined && taken.id !== userId) {
@@ -3327,7 +3496,28 @@ const app = createApp({
       }
     }
 
-    await db.update(user).set(changes).where(eq(user.id, userId));
+    if (changes.username !== undefined) {
+      const [taken] = await db
+        .select({ id: user.id })
+        .from(user)
+        .where(eq(user.username, changes.username.toLowerCase()))
+        .limit(1);
+
+      if (taken !== undefined && taken.id !== userId) {
+        return 'usernameTaken';
+      }
+    }
+
+    await db
+      .update(user)
+      .set({
+        ...(changes.name === undefined ? {} : { name: changes.name }),
+        ...(email === undefined ? {} : { email }),
+        ...(changes.username === undefined
+          ? {}
+          : { username: changes.username.toLowerCase(), displayUsername: changes.username }),
+      })
+      .where(eq(user.id, userId));
 
     return 'changed';
   },
@@ -3338,12 +3528,25 @@ const app = createApp({
       return false;
     }
 
-    const hashed = await (await auth.$context).password.hash(password);
+    const authContext = await auth.$context;
+    const hashed = await authContext.password.hash(password);
+    const credential = await authContext.internalAdapter.findCredentialAccount(userId);
 
-    await db
-      .update(account)
-      .set({ password: hashed })
-      .where(and(eq(account.userId, userId), eq(account.providerId, 'credential')));
+    if (credential === null) {
+      await authContext.internalAdapter.linkAccount({
+        userId,
+        providerId: 'credential',
+        accountId: userId,
+        password: hashed,
+      });
+    } else {
+      await db
+        .update(account)
+        .set({ password: hashed })
+        .where(and(eq(account.userId, userId), eq(account.providerId, 'credential')));
+    }
+
+    await setupLinks.revoke(userId);
     await db.delete(session).where(eq(session.userId, userId));
 
     return true;
@@ -3411,6 +3614,7 @@ const app = createApp({
   discovery,
   searchCatalogue: (query, kind) => catalogueProvider.search?.(query, kind) ?? Promise.resolve([]),
   seriesOfTvdbId: (tvdbId) => catalogueProvider.seriesOfTvdbId?.(tvdbId) ?? Promise.resolve(null),
+  importedAccounts: () => readImportedAccounts(db),
 });
 
 const seededRoles = await seedDefaultRoles({
@@ -3432,6 +3636,12 @@ if (seededRoles.administratorsCarried > 0 || seededRoles.membersAssigned > 0) {
     'server',
     `roles: carried ${seededRoles.administratorsCarried.toString()} administrator(s) and gave ${seededRoles.membersAssigned.toString()} account(s) the default role`,
   );
+}
+
+const namedAccounts = await nameEveryAccount();
+
+if (namedAccounts > 0) {
+  log.info('server', `accounts: gave ${namedAccounts.toString()} account(s) a username`);
 }
 
 const seededKinds = await seedDefaultJobTriggers({ schedules, settings });

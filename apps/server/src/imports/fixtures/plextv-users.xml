@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MediaContainer friendlyName="myPlex" identifier="com.plexapp.plugins.myplex" machineIdentifier="x" totalSize="2" size="2">
+  <User id="4444" title="Friend Fran" username="fran" email="fran@example.test" recommendationsPlaylistId="" thumb="https://plex.tv/users/fran/avatar" protected="0" home="0" allowTuners="0" allowSync="1" allowCameraUpload="0" allowChannels="0" allowSubtitleAdmin="0" filterAll="" filterMovies="contentRating=G%2CPG%2CPG-13" filterMusic="" filterPhotos="" filterTelevision="contentRating!=TV-MA" restricted="0">
+    <Server id="77" serverId="9" machineIdentifier="abc123machine" name="Shed" lastSeenAt="1" numLibraries="1" allLibraries="0" owned="1" pending="0"/>
+  </User>
+  <User id="5555" title="Elsewhere" username="far" email="far@example.test" thumb="" home="0" restricted="0">
+    <Server id="78" serverId="10" machineIdentifier="other-machine" name="Other" allLibraries="1" owned="0" pending="0"/>
+  </User>
+</MediaContainer>

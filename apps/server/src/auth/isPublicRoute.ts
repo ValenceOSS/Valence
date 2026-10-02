@@ -14,6 +14,9 @@ const PUBLIC_ROUTES: readonly PublicRoute[] = [
   { method: 'POST', path: /^\/api\/profiles\/[^/]+\/sign-in$/ },
   { method: 'POST', path: /^\/api\/phone\/exchange$/ },
   { method: 'GET', path: /^\/api\/share\/[^/]+$/ },
+  { method: 'POST', path: /^\/api\/password-reset$/ },
+  { method: 'GET', path: /^\/api\/setup-links\/[A-Za-z0-9_-]{32,128}$/ },
+  { method: 'POST', path: /^\/api\/setup-links\/[A-Za-z0-9_-]{32,128}$/ },
   { method: 'GET', path: /^\/api\/openapi\.json$/ },
   { method: 'GET', path: /^\/api\/reference$/ },
   {
@@ -51,6 +54,9 @@ const FACE_ROUTES: readonly PublicRoute[] = [
  * Connecting an account to a plugin is open too, because a phone opens it in the system browser,
  * which has no session: the connect address answers only to the one-use ticket a signed-in person
  * was handed, and the callback only to the browser that started it.
+ *
+ * So is asking for a password reset link, which is for somebody who cannot sign in: it answers the
+ * same whether or not an account exists, and asks at most once a minute for any one.
  *
  * So is a plugin's webhook, which an outside service calls with no session of anybody's: the
  * address answers only to the secret it holds, which is that install's alone.

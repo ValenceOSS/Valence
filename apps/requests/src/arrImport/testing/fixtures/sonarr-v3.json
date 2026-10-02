@@ -1,0 +1,230 @@
+{
+  "GET /api/v3/system/status": {
+    "appName": "Sonarr",
+    "instanceName": "Sonarr",
+    "version": "3.0.10.1567",
+    "urlBase": ""
+  },
+  "GET /api/v3/downloadclient": [
+    {
+      "enable": true,
+      "protocol": "torrent",
+      "priority": 1,
+      "name": "Transmission",
+      "fields": [
+        { "order": 0, "name": "host", "value": "transmission" },
+        { "order": 1, "name": "port", "value": 9091 },
+        { "order": 2, "name": "useSsl", "value": false },
+        { "order": 3, "name": "urlBase", "value": "/transmission/" },
+        { "order": 4, "name": "username", "value": "sonarr" },
+        { "order": 5, "name": "password", "value": "s3cret" },
+        { "order": 6, "name": "tvCategory", "value": "tv-sonarr" },
+        { "order": 7, "name": "tvDirectory" }
+      ],
+      "implementationName": "Transmission",
+      "implementation": "Transmission",
+      "configContract": "TransmissionSettings",
+      "tags": [],
+      "id": 1
+    },
+    {
+      "enable": true,
+      "protocol": "torrent",
+      "priority": 3,
+      "name": "qBittorrent",
+      "fields": [
+        { "order": 0, "name": "host", "value": "qbittorrent" },
+        { "order": 1, "name": "port", "value": 8080 },
+        { "order": 2, "name": "useSsl", "value": false },
+        { "order": 4, "name": "username", "value": "admin" },
+        { "order": 5, "name": "password", "value": "hunter2" },
+        { "order": 6, "name": "tvCategory", "value": "tv-sonarr" }
+      ],
+      "implementationName": "qBittorrent",
+      "implementation": "QBittorrent",
+      "configContract": "QBittorrentSettings",
+      "tags": [],
+      "id": 2
+    }
+  ],
+  "GET /api/v3/remotepathmapping": [],
+  "GET /api/v3/indexer": [
+    {
+      "protocol": "torrent",
+      "priority": 25,
+      "name": "EZTV (Jackett)",
+      "fields": [
+        {
+          "order": 0,
+          "name": "baseUrl",
+          "value": "http://jackett:9117/api/v2.0/indexers/eztv/results/torznab/"
+        },
+        { "order": 1, "name": "apiPath", "value": "/api" },
+        { "order": 2, "name": "apiKey", "value": "jackett-key" },
+        { "order": 3, "name": "categories", "value": [5030, 5040] },
+        { "order": 4, "name": "animeCategories", "value": [5070] },
+        { "order": 5, "name": "seedCriteria.seedRatio", "value": 1.5 },
+        { "order": 6, "name": "seedCriteria.seedTime", "value": 4320 }
+      ],
+      "implementationName": "Torznab",
+      "implementation": "Torznab",
+      "tags": [],
+      "id": 1
+    }
+  ],
+  "GET /api/v3/qualityprofile": [
+    {
+      "name": "HD - 720p/1080p",
+      "upgradeAllowed": true,
+      "cutoff": 3,
+      "items": [
+        {
+          "quality": { "id": 4, "name": "HDTV-720p", "source": "television", "resolution": 720 },
+          "items": [],
+          "allowed": true
+        },
+        {
+          "quality": { "id": 5, "name": "WEBDL-720p", "source": "web", "resolution": 720 },
+          "items": [],
+          "allowed": true
+        },
+        {
+          "quality": { "id": 6, "name": "Bluray-720p", "source": "bluray", "resolution": 720 },
+          "items": [],
+          "allowed": true
+        },
+        {
+          "quality": { "id": 9, "name": "HDTV-1080p", "source": "television", "resolution": 1080 },
+          "items": [],
+          "allowed": true
+        },
+        {
+          "quality": { "id": 3, "name": "WEBDL-1080p", "source": "web", "resolution": 1080 },
+          "items": [],
+          "allowed": true
+        },
+        {
+          "quality": { "id": 7, "name": "Bluray-1080p", "source": "bluray", "resolution": 1080 },
+          "items": [],
+          "allowed": true
+        },
+        {
+          "quality": {
+            "id": 20,
+            "name": "Bluray-1080p Remux",
+            "source": "blurayRaw",
+            "resolution": 1080
+          },
+          "items": [],
+          "allowed": false
+        }
+      ],
+      "id": 6
+    }
+  ],
+  "GET /api/v3/releaseprofile": [
+    {
+      "name": "Preferred",
+      "enabled": true,
+      "required": "",
+      "ignored": "CAM, TS",
+      "preferred": [
+        { "key": "/\\b(amzn|amazon)\\b/i", "value": 100 },
+        { "key": "REPACK", "value": 5 },
+        { "key": "x265", "value": -50 }
+      ],
+      "includePreferredWhenRenaming": false,
+      "indexerId": 0,
+      "tags": [],
+      "id": 1
+    },
+    {
+      "name": "Anime only",
+      "enabled": true,
+      "required": ["anime"],
+      "ignored": [],
+      "preferred": [],
+      "indexerId": 0,
+      "tags": [3],
+      "id": 2
+    },
+    {
+      "name": "Switched off",
+      "enabled": false,
+      "required": ["never"],
+      "ignored": [],
+      "preferred": [],
+      "indexerId": 0,
+      "tags": [],
+      "id": 3
+    }
+  ],
+  "GET /api/v3/rootfolder": [
+    { "path": "/tv", "freeSpace": 1099511627776, "unmappedFolders": [], "id": 1 }
+  ],
+  "GET /api/v3/series": [
+    {
+      "title": "Severance",
+      "sortTitle": "severance",
+      "status": "continuing",
+      "seasons": [
+        {
+          "seasonNumber": 0,
+          "monitored": false,
+          "statistics": { "episodeFileCount": 0, "episodeCount": 0, "totalEpisodeCount": 2 }
+        },
+        {
+          "seasonNumber": 1,
+          "monitored": true,
+          "statistics": { "episodeFileCount": 9, "episodeCount": 9, "totalEpisodeCount": 9 }
+        },
+        {
+          "seasonNumber": 2,
+          "monitored": true,
+          "statistics": { "episodeFileCount": 3, "episodeCount": 10, "totalEpisodeCount": 10 }
+        }
+      ],
+      "year": 2022,
+      "path": "/tv/Severance",
+      "qualityProfileId": 6,
+      "languageProfileId": 1,
+      "seasonFolder": true,
+      "monitored": true,
+      "tvdbId": 371980,
+      "tvRageId": 0,
+      "tvMazeId": 44933,
+      "seriesType": "standard",
+      "tags": [],
+      "id": 1
+    },
+    {
+      "title": "Fawlty Towers",
+      "seasons": [
+        {
+          "seasonNumber": 1,
+          "monitored": true,
+          "statistics": { "episodeFileCount": 6, "episodeCount": 6 }
+        },
+        {
+          "seasonNumber": 2,
+          "monitored": true,
+          "statistics": { "episodeFileCount": 6, "episodeCount": 6 }
+        }
+      ],
+      "path": "/tv/Fawlty Towers",
+      "qualityProfileId": 6,
+      "monitored": true,
+      "tvdbId": 75932,
+      "id": 2
+    },
+    {
+      "title": "Not Watched Any More",
+      "seasons": [{ "seasonNumber": 1, "monitored": false }],
+      "path": "/tv/Not Watched Any More",
+      "qualityProfileId": 6,
+      "monitored": false,
+      "tvdbId": 99999,
+      "id": 3
+    }
+  ]
+}

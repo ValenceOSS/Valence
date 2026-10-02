@@ -57,4 +57,64 @@ describe('ChoiceList', () => {
 
     expect(onChoose).not.toHaveBeenCalled();
   });
+
+  describe('as tiles', () => {
+    it('still reads out as radio buttons, with the picked one checked', () => {
+      render(
+        <ChoiceList label="Size" choices={SIZES} value="1080p" onChoose={vi.fn()} look="tiles" />,
+      );
+
+      expect(screen.getByRole('radiogroup', { name: 'Size' })).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: /1080p/ })).toHaveAttribute('aria-checked', 'true');
+      expect(screen.getByRole('radio', { name: /Original/ })).toHaveAttribute(
+        'aria-checked',
+        'false',
+      );
+    });
+
+    it('shows what each one is about, and leaves out what tiles do not carry', () => {
+      render(
+        <ChoiceList label="Size" choices={SIZES} value={null} onChoose={vi.fn()} look="tiles" />,
+      );
+
+      expect(screen.getByText('Exactly what is on the server.')).toBeInTheDocument();
+      expect(screen.queryByText('20 GB')).toBeNull();
+      expect(screen.queryByText('Converted')).toBeNull();
+    });
+
+    it('says which tile was pressed', async () => {
+      const onChoose = vi.fn();
+
+      render(
+        <ChoiceList label="Size" choices={SIZES} value="1080p" onChoose={onChoose} look="tiles" />,
+      );
+      await userEvent.setup().click(screen.getByRole('radio', { name: /Original/ }));
+
+      expect(onChoose).toHaveBeenCalledWith('original');
+    });
+
+    it('does not let a tile that cannot be taken be picked', async () => {
+      const onChoose = vi.fn();
+
+      render(
+        <ChoiceList
+          label="Size"
+          choices={[...SIZES, { id: '720p', title: '720p', isDisabled: true }]}
+          value="original"
+          onChoose={onChoose}
+          look="tiles"
+          className="mt-4"
+        />,
+      );
+
+      const disabled = screen.getByRole('radio', { name: /720p/ });
+
+      expect(disabled).toBeDisabled();
+      expect(screen.getByRole('radiogroup')).toHaveClass('mt-4');
+
+      await userEvent.click(disabled);
+
+      expect(onChoose).not.toHaveBeenCalled();
+    });
+  });
 });

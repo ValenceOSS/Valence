@@ -7,6 +7,7 @@ import { AppShell } from '@ValenceScreens/components/AppShell/AppShell';
 import { ShowDialog } from '@ValenceScreens/components/ShowDialog/ShowDialog';
 import { MediaDetailDialog } from '@ValenceScreens/components/MediaDetailDialog/MediaDetailDialog';
 import { PersonDialog } from '@ValenceScreens/components/PersonDialog/PersonDialog';
+import { CollectionDialog } from '@ValenceScreens/components/CollectionDialog/CollectionDialog';
 import { AccountDialog } from '@ValenceScreens/components/AccountDialog/AccountDialog';
 import { DownloadsDialog } from '@ValenceScreens/components/DownloadsDialog/DownloadsDialog';
 import { ShareDialog } from '@ValenceScreens/components/ShareDialog/ShareDialog';
@@ -631,6 +632,28 @@ const ValenceShell = () => {
 
           if (series !== '') {
             go({ person: null, show: series });
+          }
+        }}
+      />
+
+      <CollectionDialog
+        collectionId={place.collection}
+        onClose={() => {
+          go({ collection: null });
+        }}
+        onPlay={(media, startSeconds) => {
+          setStartOverride({ mediaId: media.id, seconds: Math.floor(startSeconds) });
+          go({ collection: null, inspecting: null, playing: media.id });
+        }}
+        onInspect={(media) => {
+          rememberItems([media]);
+          go({ collection: null, inspecting: media.id });
+        }}
+        onOpenShow={(media) => {
+          const series = media.seriesId ?? showSlug(media.seriesTitle ?? '');
+
+          if (series !== '') {
+            go({ collection: null, show: series });
           }
         }}
       />

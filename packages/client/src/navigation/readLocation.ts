@@ -24,6 +24,7 @@ type Place = {
   inspecting: string | null;
   book: string | null;
   show: string | null;
+  collection: string | null;
   person: number | null;
   shareToken: string | null;
   playing: string | null;
@@ -43,6 +44,7 @@ const HOME: Place = {
   inspecting: null,
   book: null,
   show: null,
+  collection: null,
   person: null,
   shareToken: null,
   playing: null,
@@ -84,6 +86,7 @@ const placeIn = (pathname: string, query: Record<string, string>): Place => {
     inspecting: first === 'media' && second !== '' ? second : (said.item ?? null),
     book: said.book ?? null,
     show: said.show ?? null,
+    collection: said.collection ?? null,
     person: said.person ?? null,
     shareToken: first === 'share' && second !== '' ? decodeURIComponent(second) : null,
     playing: first === 'watch' && second !== '' ? second : null,
@@ -145,6 +148,10 @@ const writeLocation = (place: Place): string => {
 
   if (place.show !== null) {
     query.set('show', place.show);
+  }
+
+  if (place.collection !== null) {
+    query.set('collection', place.collection);
   }
 
   if (place.person !== null) {

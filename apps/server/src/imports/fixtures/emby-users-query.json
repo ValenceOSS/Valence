@@ -1,0 +1,39 @@
+{
+  "Items": [
+    {
+      "Name": "Robin",
+      "ServerId": "e1e2e3",
+      "Id": "1001",
+      "Prefix": "R",
+      "DateCreated": "2020-01-01T00:00:00.0000000Z",
+      "ConnectLinkType": "LinkedUser",
+      "PrimaryImageTag": "abc",
+      "Policy": {
+        "IsAdministrator": true,
+        "IsHidden": false,
+        "IsDisabled": false,
+        "EnableAllFolders": true,
+        "EnabledFolders": [],
+        "BlockedTags": [],
+        "IncludeTags": [],
+        "IsTagBlockingModeInclusive": false,
+        "SimultaneousStreamLimit": 0
+      }
+    },
+    {
+      "Name": "Kit",
+      "ServerId": "e1e2e3",
+      "Id": "1002",
+      "Policy": {
+        "IsAdministrator": false,
+        "IsHidden": false,
+        "IsDisabled": false,
+        "EnableAllFolders": false,
+        "EnabledFolders": ["3"],
+        "MaxParentalRating": 5,
+        "BlockUnratedItems": []
+      }
+    }
+  ],
+  "TotalRecordCount": 2
+}

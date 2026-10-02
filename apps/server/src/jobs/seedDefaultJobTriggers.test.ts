@@ -1,5 +1,6 @@
 import { PRE_TRANSCODING_DEFAULTS } from '@ValenceContracts/schemas/PreTranscoding';
 import { SEERR_DEFAULTS } from '@ValenceContracts/schemas/SeerrLink';
+import { EMAIL_DEFAULTS } from '@ValenceContracts/schemas/EmailSettings';
 import { describe, expect, it } from 'vitest';
 import { createMemoryJobScheduleService } from './createMemoryJobScheduleService';
 import { createMemorySettingsStore } from '@ValenceServer/settings/createMemorySettingsStore';
@@ -11,6 +12,7 @@ const SETTINGS: ServerSettings = {
   trustedOrigins: [],
   cookieSecure: false,
   setupCompletedAt: null,
+  setupFlow: 'finished',
   catalogueApiKey: '',
   hardwareAccel: '',
   previewQuality: 'high' as const,
@@ -34,6 +36,7 @@ const SETTINGS: ServerSettings = {
   keepsDownloadsForDays: 14,
   preTranscoding: PRE_TRANSCODING_DEFAULTS,
   seerr: SEERR_DEFAULTS,
+  email: EMAIL_DEFAULTS,
 };
 
 const build = (seededJobTriggerKinds: string[] = []) => ({

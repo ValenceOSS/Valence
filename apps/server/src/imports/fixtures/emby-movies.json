@@ -1,0 +1,14 @@
+{
+  "Items": [
+    {
+      "Name": "Alien",
+      "Id": "501",
+      "Type": "Movie",
+      "Path": "D:\\Media\\Movies\\Alien (1979)\\Alien.mkv",
+      "ProviderIds": { "Tmdb": "348", "Imdb": "tt0078748" },
+      "ProductionYear": 1979,
+      "RunTimeTicks": 70020000000
+    }
+  ],
+  "TotalRecordCount": 1
+}

@@ -8,7 +8,7 @@ import { TabPanel } from '@ValenceUI/TabPanel';
 import { HiddenPanel } from '@ValenceScreens/components/AccountArea/components/HiddenPanel/HiddenPanel';
 import { PanelCard } from '@ValenceScreens/components/PanelCard/PanelCard';
 import { staggerVariants } from '@ValenceUI/animations/reveal';
-import { ProfileSettings } from '@ValenceScreens/components/AccountArea/components/ProfileSettings/ProfileSettings';
+import { ProfileSettings } from '@ValenceScreens/components/ProfileSettings/ProfileSettings';
 import { TwoFactorSetup } from '@ValenceScreens/components/TwoFactorSetup/TwoFactorSetup';
 import { PasskeySetup } from '@ValenceScreens/components/PasskeySetup/PasskeySetup';
 import { DeviceList } from '@ValenceScreens/components/AccountArea/components/DeviceList/DeviceList';

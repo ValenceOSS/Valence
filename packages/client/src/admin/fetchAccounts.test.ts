@@ -5,6 +5,10 @@ import {
   unbanAccount,
   removeAccount,
   inviteAccount,
+  editAccount,
+  resetAccountPassword,
+  setAccountPhoto,
+  setAccountAvatar,
 } from './fetchAccounts';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
 
@@ -113,15 +117,28 @@ describe('acting on an account', () => {
     ['lifting a ban', () => unbanAccount('user-1'), '/api/admin/accounts/user-1/ban', 'DELETE'],
     ['deleting an account', () => removeAccount('user-1'), '/api/admin/accounts/user-1', 'DELETE'],
     [
-      'inviting somebody',
-      () =>
-        inviteAccount({
-          name: 'Dan',
-          email: 'dan@valence.local',
-          password: 'a-long-enough-password',
-        }),
-      '/api/admin/accounts',
-      'POST',
+      'changing an account',
+      () => editAccount('user-1', { username: 'marques', email: null }),
+      '/api/admin/accounts/user-1',
+      'PATCH',
+    ],
+    [
+      'setting a password',
+      () => resetAccountPassword('user-1', 'a-long-enough-password'),
+      '/api/admin/accounts/user-1/password',
+      'PUT',
+    ],
+    [
+      'giving a picture',
+      () => setAccountPhoto('user-1', new File(['face'], 'face.png', { type: 'image/png' })),
+      '/api/admin/accounts/user-1/photo',
+      'PUT',
+    ],
+    [
+      'changing a face',
+      () => setAccountAvatar('user-1', { colour: '#3a8ee8' }),
+      '/api/admin/accounts/user-1/avatar',
+      'PATCH',
     ],
   ];
 
@@ -162,13 +179,61 @@ describe('acting on an account', () => {
     });
   }
 
-  it('sends the password with an invitation, since Valence cannot post a link', async () => {
-    answering({});
+  it('adds somebody and hands back the account with its setup link', async () => {
+    answering(
+      {
+        account: ACCOUNT,
+        setupLink: {
+          url: 'http://valence.local/welcome/abc',
+          expiresAt: '2026-10-09T00:00:00.000Z',
+        },
+      },
+      true,
+      201,
+    );
 
-    await inviteAccount({ name: 'Dan', email: 'dan@valence.local', password: 'a-long-password' });
+    const outcome = await inviteAccount({ name: 'Dan', lifetimeDays: 30 });
 
-    const [, init] = fetchMock.mock.calls.at(-1) ?? [];
+    expect(outcome).toMatchObject({
+      kind: 'added',
+      added: {
+        account: { id: 'user-1', username: null },
+        setupLink: { url: 'http://valence.local/welcome/abc' },
+      },
+    });
 
-    expect(init?.body).toContain('a-long-password');
+    const [url, init] = fetchMock.mock.calls.at(-1) ?? [];
+
+    expect(url).toBe('/api/admin/accounts');
+    expect(init?.body).toBe(JSON.stringify({ name: 'Dan', lifetimeDays: 30 }));
+  });
+
+  it('passes on the reason an addition was refused', async () => {
+    answering({ error: 'That username is already in use.' }, false, 400);
+
+    await expect(inviteAccount({ name: 'Dan', username: 'dan' })).resolves.toEqual({
+      kind: 'refused',
+      refusal: { message: 'That username is already in use.' },
+    });
+  });
+
+  it('says so when an addition is answered with something else', async () => {
+    answering({ account: { id: 'user-1' } }, true, 201);
+
+    const outcome = await inviteAccount({ name: 'Dan' });
+
+    expect(outcome.kind).toBe('refused');
+    expect(outcome.kind === 'refused' ? outcome.refusal?.message : '').toContain(
+      'could not be done',
+    );
+  });
+
+  it('says the server could not be reached when adding somebody', async () => {
+    unreachable();
+
+    await expect(inviteAccount({ name: 'Dan' })).resolves.toEqual({
+      kind: 'refused',
+      refusal: { message: 'The server could not be reached.' },
+    });
   });
 });

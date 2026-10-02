@@ -1,0 +1,30 @@
+{
+  "MediaContainer": {
+    "size": 2,
+    "totalSize": 2,
+    "Metadata": [
+      {
+        "historyKey": "/status/sessions/history/9001",
+        "key": "/library/metadata/101",
+        "ratingKey": "101",
+        "librarySectionID": "1",
+        "title": "Heat",
+        "type": "movie",
+        "viewedAt": 1709586000,
+        "accountID": 1,
+        "deviceID": 4
+      },
+      {
+        "historyKey": "/status/sessions/history/9000",
+        "key": "/library/metadata/101",
+        "ratingKey": "101",
+        "librarySectionID": "1",
+        "title": "Heat",
+        "type": "movie",
+        "viewedAt": 1700000000,
+        "accountID": 1,
+        "deviceID": 4
+      }
+    ]
+  }
+}

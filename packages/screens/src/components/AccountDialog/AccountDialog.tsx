@@ -1,3 +1,4 @@
+import { accountHandleOf } from '@ValenceClient/accounts/accountHandleOf';
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Icon } from '@ValenceUI/Icon';
@@ -21,30 +22,14 @@ import { pluginQueries } from '@ValenceClient/query/pluginQueries';
 import { usePluginWithdrawn } from '@ValenceClient/plugins/usePluginWithdrawn';
 import { saidWhenWithdrawn } from '@ValenceClient/plugins/saidWhenWithdrawn';
 import { ProfileFace } from '@ValenceScreens/components/ProfileFace/ProfileFace';
-import { saveProfile, uploadProfilePhoto } from '@ValenceClient/profiles/fetchProfiles';
+import { draftOfProfile } from '@ValenceScreens/profiles/draftOfProfile';
+import { saveProfileDraft } from '@ValenceScreens/profiles/saveProfileDraft';
 import { useSignOut } from '@ValenceScreens/session/useSignOut';
 import { useShell } from '@ValenceClient/shell/useShell';
 import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
-import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
-import type { ProfileDraft } from '@ValenceScreens/components/AccountArea/components/ProfileSettings/ProfileSettings.types';
+import type { ProfileDraft } from '@ValenceScreens/components/ProfileSettings/ProfileSettings.types';
 import type { AccountDialogProps } from './AccountDialog.types';
 import { say } from '@ValenceI18n/say';
-
-/**
- * Reads a profile as a draft of itself, which is what every control in the dialog changes until
- * somebody presses Save.
- *
- * @param profile - The profile as the server holds it.
- * @returns The same thing, with nothing uploaded yet.
- */
-const draftOf = (profile: ViewerProfile): ProfileDraft => ({
-  name: profile.name,
-  colour: profile.colour,
-  avatar: profile.avatar,
-  askStillWatchingAfter: profile.askStillWatchingAfter,
-  showsWhatIamWatching: profile.showsWhatIamWatching,
-  photo: null,
-});
 
 /**
  * Somebody's own account, raised over whatever they were looking at rather than taking them
@@ -82,7 +67,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    setDraft(profile === null ? null : draftOf(profile));
+    setDraft(profile === null ? null : draftOfProfile(profile));
   }, [profile]);
 
   const isChanged =
@@ -102,18 +87,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
 
     setIsSaving(true);
 
-    const sent = draft.photo === null || (await uploadProfilePhoto(profile.id, draft.photo));
-
-    const saved =
-      sent &&
-      (await saveProfile(
-        profile.id,
-        draft.name.trim() === '' ? profile.name : draft.name.trim(),
-        draft.colour,
-        draft.avatar,
-        draft.askStillWatchingAfter,
-        draft.showsWhatIamWatching,
-      ));
+    const saved = await saveProfileDraft(profile, draft);
 
     setIsSaving(false);
 
@@ -162,7 +136,7 @@ const AccountDialog = ({ panel, onPanel, onClose }: AccountDialogProps) => {
         <DialogTitle
           size="compact"
           title={profile?.name ?? user.name}
-          detail={user.email}
+          detail={accountHandleOf(user)}
           icon={
             profile === null ? (
               <span className="size-6 shrink-0 rounded-full bg-subtle" />

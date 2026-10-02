@@ -7,14 +7,43 @@ import { notify } from '@ValenceUI/notify';
 import type { Account } from '@ValenceClient/admin/fetchAccounts';
 
 const accountMocks = vi.hoisted(() => ({
-  fetchAccounts: vi.fn(),
+  fetchAccounts: vi.fn<() => Promise<Account[]>>(),
   inviteAccount: vi.fn(),
+  editAccount: vi.fn(),
   banAccount: vi.fn(),
   unbanAccount: vi.fn(),
   removeAccount: vi.fn(),
 }));
 
 vi.mock('@ValenceClient/admin/fetchAccounts', () => accountMocks);
+
+const linkMocks = vi.hoisted(() => ({
+  canEmailSetupLinks: false,
+  issueSetupLink: vi.fn(),
+  emailSetupLink: vi.fn(),
+  revokeSetupLink: vi.fn(),
+}));
+
+vi.mock('@ValenceClient/admin/fetchAccountList', () => ({
+  fetchAccountList: async () => ({
+    accounts: await accountMocks.fetchAccounts(),
+    canEmailSetupLinks: linkMocks.canEmailSetupLinks,
+  }),
+}));
+vi.mock('@ValenceClient/admin/issueSetupLink', () => ({
+  issueSetupLink: linkMocks.issueSetupLink,
+}));
+vi.mock('@ValenceClient/admin/emailSetupLink', () => ({
+  emailSetupLink: linkMocks.emailSetupLink,
+}));
+vi.mock('@ValenceClient/admin/revokeSetupLink', () => ({
+  revokeSetupLink: linkMocks.revokeSetupLink,
+}));
+vi.mock('@ValenceClient/admin/isUsernameAvailable', () => ({
+  isUsernameAvailable: () => Promise.resolve(true),
+}));
+
+const LINK = { url: 'https://valence.example/welcome/abc', expiresAt: '2099-01-01T00:00:00.000Z' };
 vi.mock('@ValenceUI/notify', () => ({
   notify: { worked: vi.fn(), failed: vi.fn() },
 }));
@@ -43,7 +72,11 @@ const SHOWS = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
 const account = (overrides: Partial<Account> = {}): Account => ({
   id: 'usr_1',
   name: 'Dan',
+  username: 'dan',
   email: 'dan@valence.local',
+  canSignIn: true,
+  lastSignedInAt: null,
+  setup: { state: 'none', expiresAt: null },
   createdAt: '',
   isBanned: false,
   banReason: null,
@@ -100,7 +133,7 @@ const confirm = async (
  * Opens the dialog that adds somebody.
  */
 const openInvite = async (user: ReturnType<typeof userEvent.setup>) => {
-  await user.click(await screen.findByRole('button', { name: /Add user/ }));
+  await user.click(await screen.findByRole('button', { name: /Add account/ }));
 };
 
 /**
@@ -137,10 +170,21 @@ describe('AccountsPanel', () => {
     }
 
     accountMocks.fetchAccounts.mockResolvedValue(ACCOUNTS);
-    accountMocks.inviteAccount.mockResolvedValue(null);
+    accountMocks.inviteAccount.mockResolvedValue({
+      kind: 'added',
+      added: {
+        account: account({ id: 'usr_3', name: 'Alex', canSignIn: false }),
+        setupLink: LINK,
+      },
+    });
+    linkMocks.canEmailSetupLinks = false;
+    linkMocks.issueSetupLink.mockReset().mockResolvedValue({ kind: 'answered', value: LINK });
+    linkMocks.emailSetupLink.mockReset().mockResolvedValue({ kind: 'answered', value: LINK });
+    linkMocks.revokeSetupLink.mockReset().mockResolvedValue(null);
     accountMocks.banAccount.mockResolvedValue(null);
     accountMocks.unbanAccount.mockResolvedValue(null);
     accountMocks.removeAccount.mockResolvedValue(null);
+    accountMocks.editAccount.mockResolvedValue(null);
 
     mocks.fetchPermissionCatalogue.mockResolvedValue(['jobs.run', 'jobs.runDestructive']);
     mocks.fetchRoles.mockResolvedValue([ADMINISTRATOR, MEMBER]);
@@ -163,15 +207,15 @@ describe('AccountsPanel', () => {
   it('lists everybody with an account', async () => {
     renderInAnAddress(<AccountsPanel />);
 
-    expect(await screen.findByText('dan@valence.local')).toBeInTheDocument();
-    expect(screen.getByText('sam@valence.local')).toBeInTheDocument();
+    expect(await screen.findByText('@dan · dan@valence.local')).toBeInTheDocument();
+    expect(screen.getByText('@dan · sam@valence.local')).toBeInTheDocument();
   });
 
   it('lists them alphabetically by name to begin with, whatever order the server sent', async () => {
     accountMocks.fetchAccounts.mockResolvedValue([
-      account({ id: 'usr_z', name: 'Zed', email: 'zed@valence.local' }),
-      account({ id: 'usr_a', name: 'Ada', email: 'ada@valence.local' }),
-      account({ id: 'usr_m', name: 'moss', email: 'moss@valence.local' }),
+      account({ id: 'usr_z', name: 'Zed', username: null, email: 'zed@valence.local' }),
+      account({ id: 'usr_a', name: 'Ada', username: null, email: 'ada@valence.local' }),
+      account({ id: 'usr_m', name: 'moss', username: null, email: 'moss@valence.local' }),
     ]);
 
     renderInAnAddress(<AccountsPanel />);
@@ -194,7 +238,7 @@ describe('AccountsPanel', () => {
   it('asks the server for nobody until somebody is picked', async () => {
     renderInAnAddress(<AccountsPanel />);
 
-    await screen.findByText('dan@valence.local');
+    await screen.findByText('@dan · dan@valence.local');
 
     expect(mocks.fetchAccountPermissions).not.toHaveBeenCalled();
   });
@@ -295,7 +339,7 @@ describe('AccountsPanel', () => {
   });
 
   describe('adding somebody', () => {
-    it('will not add until every field is filled', async () => {
+    it('will not add without a name', async () => {
       const user = userEvent.setup();
       renderInAnAddress(<AccountsPanel />);
 
@@ -304,40 +348,24 @@ describe('AccountsPanel', () => {
       expect(screen.getByRole('button', { name: 'Add' })).toBeDisabled();
     });
 
-    it('will not accept a password too short to be one', async () => {
+    it('adds somebody with only a name and hands over their setup link', async () => {
       const user = userEvent.setup();
       renderInAnAddress(<AccountsPanel />);
 
       await openInvite(user);
       await user.type(screen.getByLabelText('Name'), 'Alex');
-      await user.type(screen.getByLabelText('Address'), 'alex@valence.local');
-      await user.type(screen.getByLabelText('Password'), 'short');
+      await user.click(screen.getByRole('button', { name: 'Add' }));
 
-      expect(screen.getByRole('button', { name: 'Add' })).toBeDisabled();
-    });
-
-    it('says how long the password must be, and will not take one a character short', async () => {
-      const user = userEvent.setup();
-      renderInAnAddress(<AccountsPanel />);
-
-      await openInvite(user);
-      await user.type(screen.getByLabelText('Name'), 'Alex');
-      await user.type(screen.getByLabelText('Address'), 'alex@valence.local');
-      await user.type(screen.getByLabelText('Password'), '123456789');
-
-      expect(screen.getByText('At least 10 characters.')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Add' })).toBeDisabled();
-
-      await user.type(screen.getByLabelText('Password'), '0');
-
-      expect(screen.getByRole('button', { name: 'Add' })).toBeEnabled();
+      expect(accountMocks.inviteAccount).toHaveBeenCalledWith({ name: 'Alex', lifetimeDays: 7 });
+      expect(await screen.findByText(LINK.url)).toBeInTheDocument();
+      expect(notify.worked).toHaveBeenCalledWith('Added Alex.');
     });
 
     it('asks once however many times Add is pressed while it is asking', async () => {
-      let answer: (refusal: null) => void = () => undefined;
+      let answer: (outcome: object) => void = () => undefined;
 
       accountMocks.inviteAccount.mockReturnValue(
-        new Promise<null>((resolve) => {
+        new Promise((resolve) => {
           answer = resolve;
         }),
       );
@@ -347,85 +375,144 @@ describe('AccountsPanel', () => {
 
       await openInvite(user);
       await user.type(screen.getByLabelText('Name'), 'Alex');
-      await user.type(screen.getByLabelText('Address'), 'alex@valence.local');
-      await user.type(screen.getByLabelText('Password'), 'a-long-enough-password');
 
       const add = screen.getByRole('button', { name: 'Add' });
 
       await user.click(add);
 
-      expect(add).toBeDisabled();
       expect(add).toHaveAttribute('aria-busy', 'true');
 
       await user.click(add);
 
       expect(accountMocks.inviteAccount).toHaveBeenCalledTimes(1);
 
-      answer(null);
+      answer({ kind: 'refused', refusal: { message: 'That address is already in use.' } });
 
-      await waitFor(() => {
-        expect(notify.worked).toHaveBeenCalledWith('Added Alex.');
-      });
+      expect(await screen.findByText('That address is already in use.')).toBeInTheDocument();
     });
 
-    it('adds somebody', async () => {
+    it('keeps the link it just made to copy again from the list', async () => {
       const user = userEvent.setup();
+
+      accountMocks.fetchAccounts.mockResolvedValue([
+        ...ACCOUNTS,
+        account({
+          id: 'usr_3',
+          name: 'Alex',
+          username: 'alex',
+          email: null,
+          canSignIn: false,
+          setup: { state: 'waiting', expiresAt: LINK.expiresAt },
+        }),
+      ]);
+
       renderInAnAddress(<AccountsPanel />);
 
       await openInvite(user);
       await user.type(screen.getByLabelText('Name'), 'Alex');
-      await user.type(screen.getByLabelText('Address'), 'alex@valence.local');
-      await user.type(screen.getByLabelText('Password'), 'a-long-enough-password');
       await user.click(screen.getByRole('button', { name: 'Add' }));
+      await user.click(await screen.findByRole('button', { name: 'Done' }));
 
-      expect(accountMocks.inviteAccount).toHaveBeenCalledWith({
-        name: 'Alex',
-        email: 'alex@valence.local',
-        password: 'a-long-enough-password',
-      });
+      expect(await screen.findByRole('button', { name: /Copy link/ })).toBeInTheDocument();
+    });
+  });
+
+  describe('setup links', () => {
+    const WAITING = account({
+      id: 'usr_3',
+      name: 'Alex',
+      username: 'alex',
+      email: null,
+      canSignIn: false,
+      setup: { state: 'waiting', expiresAt: LINK.expiresAt },
     });
 
-    it('says so once they are added', async () => {
-      accountMocks.inviteAccount.mockResolvedValue(null);
+    it('says who is waiting for setup, and never shows a placeholder address', async () => {
+      accountMocks.fetchAccounts.mockResolvedValue([...ACCOUNTS, WAITING]);
+
+      renderInAnAddress(<AccountsPanel />);
+
+      expect(await screen.findByText('Waiting for setup')).toBeInTheDocument();
+      expect(screen.getByText('@alex')).toBeInTheDocument();
+      expect(screen.queryByText(/no-email/)).not.toBeInTheDocument();
+    });
+
+    it('shows only those waiting when asked', async () => {
+      accountMocks.fetchAccounts.mockResolvedValue([...ACCOUNTS, WAITING]);
 
       const user = userEvent.setup();
       renderInAnAddress(<AccountsPanel />);
 
-      await openInvite(user);
-      await user.type(screen.getByLabelText('Name'), 'Alex');
-      await user.type(screen.getByLabelText('Address'), 'alex@valence.local');
-      await user.type(screen.getByLabelText('Password'), 'a-long-enough-password');
-      await user.click(screen.getByRole('button', { name: 'Add' }));
+      await user.click(await screen.findByRole('button', { name: 'Waiting for setup (1)' }));
 
-      await waitFor(() => {
-        expect(notify.worked).toHaveBeenCalledWith('Added Alex.');
-      });
+      expect(screen.getByText('Alex')).toBeInTheDocument();
+      expect(screen.queryByText('Sam')).not.toBeInTheDocument();
     });
 
-    it('says the password has to be handed over, since Valence cannot send it', async () => {
-      const user = userEvent.setup();
-      renderInAnAddress(<AccountsPanel />);
-
-      await openInvite(user);
-
-      expect(screen.getByText(/tell them this password yourself/)).toBeInTheDocument();
-    });
-
-    it('explains a refusal', async () => {
-      accountMocks.inviteAccount.mockResolvedValue({
-        message: 'That address is already in use.',
-      });
+    it('offers a new link where the old one is not held, and shows it in the editor', async () => {
+      accountMocks.fetchAccounts.mockResolvedValue([
+        account({ ...WAITING, setup: { state: 'expired', expiresAt: '2026-01-01T00:00:00.000Z' } }),
+      ]);
 
       const user = userEvent.setup();
       renderInAnAddress(<AccountsPanel />);
 
-      await openInvite(user);
-      await user.type(screen.getByLabelText('Name'), 'Alex');
-      await user.type(screen.getByLabelText('Address'), 'dan@valence.local');
-      await user.type(screen.getByLabelText('Password'), 'a-long-enough-password');
-      await user.click(screen.getByRole('button', { name: 'Add' }));
+      expect(await screen.findByText('Link expired')).toBeInTheDocument();
 
-      expect(await screen.findByRole('alert')).toHaveTextContent('already in use');
+      await user.click(screen.getByRole('button', { name: /New link/ }));
+
+      expect(linkMocks.issueSetupLink).toHaveBeenCalledWith('usr_3', 7);
+      expect(await screen.findByText(LINK.url)).toBeInTheDocument();
+    });
+
+    it('offers an account in use a link to choose a new password', async () => {
+      const user = userEvent.setup();
+      renderInAnAddress(<AccountsPanel />);
+
+      await choose(user, 'Dan', /Send a setup link/);
+
+      expect(linkMocks.issueSetupLink).toHaveBeenCalledWith('usr_1', 7);
+    });
+
+    it('emails a link only where the server sends them and the account has an address', async () => {
+      linkMocks.canEmailSetupLinks = true;
+      accountMocks.fetchAccounts.mockResolvedValue([...ACCOUNTS, WAITING]);
+
+      const user = userEvent.setup();
+      renderInAnAddress(<AccountsPanel />);
+
+      await choose(user, 'Dan', /Send by email/);
+
+      expect(linkMocks.emailSetupLink).toHaveBeenCalledWith('usr_1', { lifetimeDays: 7 });
+
+      await user.click(await screen.findByRole('button', { name: 'Actions for Alex' }));
+
+      expect(screen.queryByRole('menuitem', { name: /Send by email/ })).not.toBeInTheDocument();
+    });
+  });
+
+  it('shows when each account last signed in', async () => {
+    accountMocks.fetchAccounts.mockResolvedValue([account({ lastSignedInAt: null })]);
+
+    renderInAnAddress(<AccountsPanel />);
+
+    expect(await screen.findByText('never')).toBeInTheDocument();
+  });
+
+  it('changes a username from the editor', async () => {
+    const user = userEvent.setup();
+    renderInAnAddress(<AccountsPanel />);
+
+    await choose(user, 'Dan', /Edit account/);
+
+    const field = await screen.findByLabelText('Username');
+
+    await user.clear(field);
+    await user.type(field, 'daniel');
+    await save(user);
+
+    await waitFor(() => {
+      expect(accountMocks.editAccount).toHaveBeenCalledWith('usr_1', { username: 'daniel' });
     });
   });
 

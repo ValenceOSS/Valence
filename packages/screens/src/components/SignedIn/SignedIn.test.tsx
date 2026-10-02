@@ -67,12 +67,23 @@ const HOUSEHOLD = {
   updatedAt: '2026-09-18T00:00:00.000Z',
 };
 
-const serverWith = (session: object | null, isOnboarded = true) => {
+const serverWith = (
+  session: object | null,
+  isOnboarded = true,
+  {
+    isFlowOpen = false,
+    isAdministrator = true,
+  }: { isFlowOpen?: boolean; isAdministrator?: boolean } = {},
+) => {
   fetchMock.mockImplementation((asked: string) => {
     const input = new URL(asked, 'http://localhost:3000').pathname;
 
     if (input === '/api/setup/status') {
-      return Promise.resolve(ok(SETUP));
+      return Promise.resolve(ok({ ...SETUP, isFlowOpen }));
+    }
+
+    if (input === '/api/account/permissions') {
+      return Promise.resolve(ok({ permissions: [], isAdministrator }));
     }
 
     if (input === '/api/account/onboarding') {
@@ -149,6 +160,35 @@ describe('SignedIn', () => {
     ).toBeInTheDocument();
 
     expect(screen.queryByRole('navigation', { name: 'Sections' })).not.toBeInTheDocument();
+  });
+
+  it('shows an administrator who left first-run setup the rest of it, from their profile', async () => {
+    serverWith({ user: OPERATOR }, true, { isFlowOpen: true, isAdministrator: true });
+
+    renderTheApp();
+
+    expect(await screen.findByRole('heading', { name: 'Your profile' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Set up Valence' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'Sections' })).not.toBeInTheDocument();
+  });
+
+  it('lets somebody who is not an administrator in while setup is still open', async () => {
+    serverWith({ user: OPERATOR }, true, { isFlowOpen: true, isAdministrator: false });
+
+    renderTheApp();
+
+    expect(await screen.findByRole('navigation', { name: 'Sections' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Your profile' })).not.toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith('/api/account/permissions', expect.anything());
+  });
+
+  it('lets an administrator in once setup has been finished', async () => {
+    serverWith({ user: OPERATOR }, true, { isFlowOpen: false, isAdministrator: true });
+
+    renderTheApp();
+
+    expect(await screen.findByRole('navigation', { name: 'Sections' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Your profile' })).not.toBeInTheDocument();
   });
 
   it('asks again after a reload, because finishing is what the server was told', async () => {

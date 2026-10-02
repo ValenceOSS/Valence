@@ -32,6 +32,8 @@ const user = pgTable('user', {
   banned: boolean('banned').default(false),
   banReason: text('banReason'),
   banExpires: timestamp('banExpires'),
+  username: text('username').unique(),
+  displayUsername: text('displayUsername'),
 });
 
 const accountActivity = pgTable('account_activity', {
@@ -218,6 +220,8 @@ const watchHistory = pgTable(
     lastWatchedAt: timestamp('lastWatchedAt').notNull().defaultNow(),
     secondsWatched: real('secondsWatched').notNull().default(0),
     isFinished: boolean('isFinished').notNull().default(false),
+    importedFrom: text('importedFrom'),
+    importKey: text('importKey').unique(),
   },
   (table) => [
     index('watch_history_recent_idx').on(table.profileId, table.lastWatchedAt),
@@ -1466,6 +1470,146 @@ const pluginProfile = pgTable(
   (table) => [primaryKey({ columns: [table.pluginId, table.profileId] })],
 );
 
+const collection = pgTable('collection', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  artworkPath: text('artworkPath'),
+  isOrdered: boolean('isOrdered').notNull().default(false),
+  createdBy: text('createdBy').references(() => user.id, { onDelete: 'set null' }),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+});
+
+const collectionEntry = pgTable(
+  'collection_entry',
+  {
+    id: text('id').primaryKey(),
+    collectionId: text('collectionId')
+      .notNull()
+      .references(() => collection.id, { onDelete: 'cascade' }),
+    mediaItemId: text('mediaItemId').references(() => mediaItem.id, { onDelete: 'cascade' }),
+    seriesId: text('seriesId').references(() => series.id, { onDelete: 'cascade' }),
+    position: doublePrecision('position').notNull(),
+    addedAt: timestamp('addedAt').notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('collection_entry_item_idx')
+      .on(table.collectionId, table.mediaItemId)
+      .where(sql`${table.mediaItemId} is not null`),
+    uniqueIndex('collection_entry_series_idx')
+      .on(table.collectionId, table.seriesId)
+      .where(sql`${table.seriesId} is not null`),
+    index('collection_entry_order_idx').on(table.collectionId, table.position),
+    index('collection_entry_media_item_idx').on(table.mediaItemId),
+    index('collection_entry_series_id_idx').on(table.seriesId),
+    check(
+      'collection_entry_one_subject',
+      sql`num_nonnulls(${table.mediaItemId}, ${table.seriesId}) = 1`,
+    ),
+  ],
+);
+
+const accountSetupLink = pgTable(
+  'account_setup_link',
+  {
+    id: text('id').primaryKey(),
+    userId: text('userId')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    tokenHash: text('tokenHash').notNull().unique(),
+    expiresAt: timestamp('expiresAt').notNull(),
+    usedAt: timestamp('usedAt'),
+    revokedAt: timestamp('revokedAt'),
+    createdBy: text('createdBy').references(() => user.id, { onDelete: 'set null' }),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+  },
+  (table) => [index('account_setup_link_user_idx').on(table.userId)],
+);
+
+const emailSend = pgTable(
+  'email_send',
+  {
+    id: text('id').primaryKey(),
+    kind: text('kind').notNull(),
+    recipient: text('recipient').notNull(),
+    idempotencyKey: text('idempotencyKey').notNull().unique(),
+    state: text('state').notNull(),
+    failure: jsonb('failure').$type<Said>(),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+  },
+  (table) => [
+    index('email_send_recent_idx').on(table.createdAt),
+    check('email_send_state', sql`${table.state} in ('sent', 'failed')`),
+  ],
+);
+
+const importSource = pgTable(
+  'import_source',
+  {
+    id: text('id').primaryKey(),
+    kind: text('kind').notNull(),
+    name: text('name').notNull(),
+    url: text('url').notNull(),
+    token: text('token').notNull(),
+    details: jsonb('details').notNull().default({}),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+  },
+  (table) => [
+    check(
+      'import_source_kind',
+      sql`${table.kind} in ('jellyfin', 'emby', 'plex', 'radarr', 'sonarr', 'lidarr', 'prowlarr', 'overseerr', 'jellyseerr')`,
+    ),
+  ],
+);
+
+const importRun = pgTable(
+  'import_run',
+  {
+    id: text('id').primaryKey(),
+    sourceId: text('sourceId')
+      .notNull()
+      .references(() => importSource.id, { onDelete: 'cascade' }),
+    state: text('state').notNull().default('planning'),
+    options: jsonb('options').notNull().default({}),
+    cursor: jsonb('cursor'),
+    report: jsonb('report'),
+    failure: jsonb('failure').$type<Said>(),
+    jobId: text('jobId'),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    startedAt: timestamp('startedAt'),
+    finishedAt: timestamp('finishedAt'),
+  },
+  (table) => [
+    index('import_run_source_idx').on(table.sourceId, table.createdAt),
+    index('import_run_state_idx').on(table.state),
+    check(
+      'import_run_state',
+      sql`${table.state} in ('planning', 'planned', 'importing', 'completed', 'failed', 'cancelled')`,
+    ),
+  ],
+);
+
+const importLink = pgTable(
+  'import_link',
+  {
+    id: text('id').primaryKey(),
+    sourceId: text('sourceId')
+      .notNull()
+      .references(() => importSource.id, { onDelete: 'cascade' }),
+    kind: text('kind').notNull(),
+    sourceKey: text('sourceKey').notNull(),
+    valenceId: text('valenceId').notNull(),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('import_link_key_idx').on(table.sourceId, table.kind, table.sourceKey),
+    index('import_link_valence_idx').on(table.kind, table.valenceId),
+  ],
+);
+
 const authSchema = {
   user,
   session,
@@ -1553,4 +1697,11 @@ export {
   favouriteArtist,
   playlist,
   playlistEntry,
+  collection,
+  collectionEntry,
+  accountSetupLink,
+  emailSend,
+  importSource,
+  importRun,
+  importLink,
 };

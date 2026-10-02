@@ -92,6 +92,11 @@ services:
       # nothing fetches posters, descriptions or cast.
       CATALOGUE_API_KEY: ${CATALOGUE_API_KEY:-}
 
+      # Optional: email for password resets and setup links. Usually set in
+      # Settings → Email instead; these override what is saved there.
+      SMTP_URL: ${SMTP_URL:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+
       # Optional: requesting. Leave both empty and Valence shows nothing about
       # it. To switch it on, start the stack with the requests profile
       # (`docker compose --profile requests up -d`, or COMPOSE_PROFILES=requests

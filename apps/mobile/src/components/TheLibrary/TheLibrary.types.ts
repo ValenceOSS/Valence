@@ -10,6 +10,7 @@ type TheLibraryProps = {
   onAlbum: (albumId: string) => void;
   onArtist: (artistId: string) => void;
   onPlaylist: (playlistId: string) => void;
+  onCollection: (collectionId: string) => void;
   onLiked: () => void;
   onAllAlbums: () => void;
   onAllArtists: () => void;

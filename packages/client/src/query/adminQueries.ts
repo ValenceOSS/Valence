@@ -17,6 +17,7 @@ import { fetchLogFacets } from '@ValenceClient/admin/fetchLogFacets';
 import { fetchLogHistogram } from '@ValenceClient/admin/fetchLogHistogram';
 import { fetchLogs } from '@ValenceClient/admin/fetchLogs';
 import { fetchAccounts } from '@ValenceClient/admin/fetchAccounts';
+import { fetchAccountList } from '@ValenceClient/admin/fetchAccountList';
 import { fetchAccountSessions } from '@ValenceClient/admin/fetchAccountSessions';
 import { fetchFolders } from '@ValenceClient/admin/fetchFolders';
 import { searchFolders } from '@ValenceClient/admin/searchFolders';
@@ -33,6 +34,7 @@ import { fetchWebhooks, fetchWebhookDeliveries } from '@ValenceClient/admin/fetc
 import { fetchReencodes, fetchRenditions } from '@ValenceClient/admin/fetchReencodes';
 import { whenToAskAgain } from '@ValenceClient/admin/whenToAskAgain';
 import { fetchPreTranscoding } from '@ValenceClient/admin/fetchPreTranscoding';
+import { fetchEmailSetup } from '@ValenceClient/admin/fetchEmailSetup';
 import { fetchEverybodysShares } from '@ValenceClient/sharing/fetchShares';
 import { readWholeLibrary } from '@ValenceClient/library/readWholeLibrary';
 import type { JobRunQuery } from '@ValenceContracts/schemas/JobRun';
@@ -263,6 +265,17 @@ const accounts = () =>
   queryOptions({
     queryKey: [...ADMIN, 'accounts'],
     queryFn: () => fetchAccounts(),
+  });
+
+/**
+ * The accounts on this server, with whether their setup links can be sent by email.
+ *
+ * @returns The query.
+ */
+const accountList = () =>
+  queryOptions({
+    queryKey: [...ADMIN, 'accounts', 'list'],
+    queryFn: () => fetchAccountList(),
   });
 
 /**
@@ -544,7 +557,19 @@ const preTranscoding = () =>
       ),
   });
 
+/**
+ * How Valence sends email, and the emails it has tried lately.
+ *
+ * @returns The query.
+ */
+const emailSetup = () =>
+  queryOptions({
+    queryKey: [...ADMIN, 'email'],
+    queryFn: () => fetchEmailSetup(),
+  });
+
 const adminQueries = {
+  emailSetup,
   everyFile,
   preTranscoding,
   mediaPaths,
@@ -573,6 +598,7 @@ const adminQueries = {
   resourceHistory,
   schedules,
   accounts,
+  accountList,
   roles,
   permissions,
   accountPermissions,

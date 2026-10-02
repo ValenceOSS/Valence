@@ -102,6 +102,27 @@ const WHAT_DELETION_REMOVES: readonly OwnedThing[] = [
     rule: 'grantsAccess',
   },
   {
+    table: 'account_setup_link',
+    column: 'userId',
+    owner: 'account',
+    fate: 'goesWithIt',
+    rule: 'grantsAccess',
+  },
+  {
+    table: 'account_setup_link',
+    column: 'createdBy',
+    owner: 'account',
+    fate: 'outlivesIt',
+    rule: 'saysWhoDecided',
+  },
+  {
+    table: 'collection',
+    column: 'createdBy',
+    owner: 'account',
+    fate: 'outlivesIt',
+    rule: 'saysWhoDecided',
+  },
+  {
     table: 'account_activity',
     column: 'userId',
     owner: 'account',

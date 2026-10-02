@@ -14,6 +14,7 @@ type ChoiceListProps = {
   choices: readonly Choice[];
   value: string | null;
   onChoose: (id: string) => void;
+  look?: 'rows' | 'tiles';
   className?: string;
 };
 
