@@ -1925,6 +1925,11 @@
     "context": "The label of a colour choice, used in the sketch studio in the face editor and in the caption settings in the video player."
   },
   {
+    "handler": "common.backgroundOpacity",
+    "text": "Background opacity",
+    "context": "A caption setting, in the web player and on the phone and the television."
+  },
+  {
     "handler": "common.backupCode",
     "text": "Backup code",
     "context": "Shown, used in the ask for the code of the phone app and in the two factor challenge."
@@ -1943,6 +1948,11 @@
     "handler": "common.books",
     "text": "Books",
     "context": "The label, used in several places, among them the library of the phone app and the search of the phone app."
+  },
+  {
+    "handler": "common.bornBornOn",
+    "text": "Born {bornOn}",
+    "context": "When somebody in a cast was born, on the phone and the television. {bornOn} is the date."
   },
   {
     "handler": "common.brightness",
@@ -2023,6 +2033,11 @@
     "handler": "common.cast",
     "text": "Cast",
     "context": "The title of a shelf, used in several places, among them the cast of the phone app and the admin area (from `describeLibraryPart`)."
+  },
+  {
+    "handler": "common.casual",
+    "text": "Casual",
+    "context": "A caption setting, in the web player and on the phone and the television."
   },
   {
     "handler": "common.categories",
@@ -2495,6 +2510,16 @@
     "context": "How many songs, such as in a notification about what arrived in the library. {count} is the number."
   },
   {
+    "handler": "common.count.stars.one",
+    "text": "{count} star",
+    "context": "How many stars a rating gives, on the phone and the television. {count} is how many."
+  },
+  {
+    "handler": "common.count.stars.other",
+    "text": "{count} stars",
+    "context": "How many stars a rating gives, on the phone and the television. {count} is how many."
+  },
+  {
     "handler": "common.count.things.one",
     "text": "{count} thing",
     "context": "How many things a playlist holds, where it can hold songs, videos and more."
@@ -2875,6 +2900,11 @@
     "context": "The label, used in the artists of the phone app and in the artists view in the music page."
   },
   {
+    "handler": "common.everyOtherDeviceWillHaveToSignIn",
+    "text": "Every other device will have to sign in again.",
+    "context": "A message in an alert in the devices in the account of the phone and television apps."
+  },
+  {
     "handler": "common.everySeason",
     "text": "Every season",
     "context": "The label of a toggle, used in several places, among them the seasons in the askable of the phone app and the downloads (from `waysToDownloadAProgramme`)."
@@ -3018,6 +3048,11 @@
     "handler": "common.forgetTitle",
     "text": "Forget {title}?",
     "context": "A message in an alert in the downloads of the phone app. {title} is filled in by the app."
+  },
+  {
+    "handler": "common.forgotYourPassword",
+    "text": "Forgot your password?",
+    "context": "A button on the sign-in screen, on the web and on the phone."
   },
   {
     "handler": "common.foundOnYourNetwork",
@@ -3250,6 +3285,11 @@
     "context": "The label, used in the admin area (from `adminSections`) and in the observability page."
   },
   {
+    "handler": "common.joiningTheWatchParty",
+    "text": "Joining the watch party",
+    "context": "The label of a splash screen in the watch page."
+  },
+  {
     "handler": "common.justThisEpisode",
     "text": "Just this episode",
     "context": "The label, used in the share sheet of the phone app and in the share dialog."
@@ -3398,6 +3438,36 @@
     "handler": "common.listeningParty",
     "text": "Listening party",
     "context": "Shown, used in the music page and in the now playing bar."
+  },
+  {
+    "handler": "common.listeningPartyPanel.everybodyHearsWhatYouPlayWhere",
+    "text": "Everybody hears what you play, where you are in it. Each of them keeps their own volume.",
+    "context": "Shown in the listening party panel in the music page."
+  },
+  {
+    "handler": "common.listeningPartyPanel.leaveItBeforeStartingAParty",
+    "text": "Leave it before starting a party to listen together.",
+    "context": "The detail of a nothing here in the listening party panel in the music page."
+  },
+  {
+    "handler": "common.listeningPartyPanel.listenTogether",
+    "text": "Listen together",
+    "context": "The title of a nothing here in the listening party panel in the music page."
+  },
+  {
+    "handler": "common.listeningPartyPanel.playSomethingThenStartAParty",
+    "text": "Play something, then start a party and send the link to anybody with an account here.",
+    "context": "Shown in the listening party panel in the music page."
+  },
+  {
+    "handler": "common.listeningPartyPanel.startAListeningParty",
+    "text": "Start a listening party",
+    "context": "The label of a button in the listening party panel in the music page."
+  },
+  {
+    "handler": "common.listeningPartyPanel.youAreInAWatchParty",
+    "text": "You are in a watch party",
+    "context": "The title of a nothing here in the listening party panel in the music page."
   },
   {
     "handler": "common.live",
@@ -3855,6 +3925,11 @@
     "context": "Text shown, used in the reencode dialog and in the command palette."
   },
   {
+    "handler": "common.nothingMatchesThose",
+    "text": "Nothing matches those",
+    "context": "When filters leave nothing in a page of the library, on the phone and the television."
+  },
+  {
     "handler": "common.nothingToWatchYet",
     "text": "Nothing to watch yet",
     "context": "The title of a nothing here, used in the home in the library of the phone app and in the library browser."
@@ -4065,6 +4140,11 @@
     "context": "Shown, used in the cardigann in the requests service (from `createCategoryMap`) and in the library (from `nameSeason`)."
   },
   {
+    "handler": "common.outline",
+    "text": "Outline",
+    "context": "A caption setting, in the web player and on the phone and the television."
+  },
+  {
     "handler": "common.overseerr",
     "text": "Overseerr",
     "context": "The name of the request app Overseerr, which a setup can be brought in from."
@@ -4098,6 +4178,240 @@
     "handler": "common.partlyHere",
     "text": "Partly here",
     "context": "Shown, used in the ask page of the television app and in the season standing names in the requests."
+  },
+  {
+    "handler": "common.partyMenu.startAWatchParty",
+    "text": "Start a watch party",
+    "context": "The label of a button in the party menu."
+  },
+  {
+    "handler": "common.partyMenu.watchParty",
+    "text": "Watch party",
+    "context": "The heading of a popover panel in the party menu."
+  },
+  {
+    "handler": "common.partyMenu.watchPartyWatchingWatching",
+    "text": "Watch party · {watching} watching",
+    "context": "Shown in the party menu. {watching} is filled in by the app."
+  },
+  {
+    "handler": "common.partyMenu.watchThisWithOtherPeopleHere",
+    "text": "Watch this with other people here, in step. You get a link to send them, and whatever anybody plays, pauses or skips happens for everybody.",
+    "context": "Text shown in the party menu."
+  },
+  {
+    "handler": "common.partyPanel.aPasswordAsksAnybodyOpeningThe",
+    "text": "A password asks anybody opening the link for it, for a link that may travel further than you meant.",
+    "context": "Shown in the party panel."
+  },
+  { "handler": "common.partyPanel.ask", "text": "Ask", "context": "Shown in the party panel." },
+  {
+    "handler": "common.partyPanel.askAlong",
+    "text": "Ask along",
+    "context": "The title of a panel card in the party panel."
+  },
+  { "handler": "common.partyPanel.asked", "text": "Asked", "context": "Shown in the party panel." },
+  {
+    "handler": "common.partyPanel.askNameAlong",
+    "text": "Ask {name} along",
+    "context": "The label of a button in the party panel. {name} is filled in by the app."
+  },
+  {
+    "handler": "common.partyPanel.askSomebodyAlongTheyAreTold",
+    "text": "Ask somebody along. They are told wherever they asked to be told things, and the message carries this same link.",
+    "context": "Text shown in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.closeTheParty",
+    "text": "Close the party panel",
+    "context": "Closes the watch party panel over the player, for somebody who cannot see the cross."
+  },
+  {
+    "handler": "common.partyPanel.coHost",
+    "text": "Co-host",
+    "context": "A badge beside a party member who may run the party alongside its host."
+  },
+  {
+    "handler": "common.partyPanel.controls",
+    "text": "Controls",
+    "context": "The title of a panel card in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.countListening.one",
+    "text": "{count} listening",
+    "context": "The title of a listening party's panel: how many of its members are listening. {count} is the number."
+  },
+  {
+    "handler": "common.partyPanel.countListening.other",
+    "text": "{count} listening",
+    "context": "The title of a listening party's panel: how many of its members are listening. {count} is the number."
+  },
+  {
+    "handler": "common.partyPanel.countWatching.one",
+    "text": "{count} watching",
+    "context": "The title of a watch party's panel: how many of its members are watching. {count} is the number."
+  },
+  {
+    "handler": "common.partyPanel.countWatching.other",
+    "text": "{count} watching",
+    "context": "The title of a watch party's panel: how many of its members are watching. {count} is the number."
+  },
+  {
+    "handler": "common.partyPanel.everyoneCanPlayAndPause",
+    "text": "Everyone can play and pause",
+    "context": "The label of a switch in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.everyoneCanSkipAround",
+    "text": "Everyone can skip around",
+    "context": "The label of a switch in the party panel."
+  },
+  { "handler": "common.partyPanel.guest", "text": "Guest", "context": "Shown in the party panel." },
+  { "handler": "common.partyPanel.host", "text": "Host", "context": "Shown in the party panel." },
+  {
+    "handler": "common.partyPanel.invite",
+    "text": "Invite",
+    "context": "The title of a panel card in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.keepingTime",
+    "text": "Keeping time",
+    "context": "Text shown in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.leave",
+    "text": "Leave",
+    "context": "Text shown in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.listening",
+    "text": "Listening",
+    "context": "Shown in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.makeACoHost",
+    "text": "Make a co-host",
+    "context": "Shown in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.makeAGuest",
+    "text": "Make a guest",
+    "context": "Shown in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.nameYou",
+    "text": "{name} (you)",
+    "context": "A member of a watch or listening party, marked as the person reading the list."
+  },
+  {
+    "handler": "common.partyPanel.noPassword",
+    "text": "No password",
+    "context": "Shown in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.notListening",
+    "text": "Not listening",
+    "context": "Shown in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.notWatching",
+    "text": "Not watching",
+    "context": "Shown in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.partyPassword",
+    "text": "Party password",
+    "context": "The label of a text field in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.removeNameFromTheParty",
+    "text": "Remove {name} from the party",
+    "context": "The label of a button in the party panel. {name} is filled in by the app."
+  },
+  {
+    "handler": "common.partyPanel.secondsAhead",
+    "text": "{seconds}s ahead",
+    "context": "How far a member of a watch party is ahead of whoever keeps time."
+  },
+  {
+    "handler": "common.partyPanel.secondsBehind",
+    "text": "{seconds}s behind",
+    "context": "How far a member of a watch party is behind whoever keeps time."
+  },
+  {
+    "handler": "common.partyPanel.sendThisToListenAlong",
+    "text": "Send this to anybody with an account here. It puts them in this party, listening along.",
+    "context": "Explains the invitation link of a listening party."
+  },
+  {
+    "handler": "common.partyPanel.sendThisToWatchAlong",
+    "text": "Send this to anybody with an account here. It puts them in this party, watching this.",
+    "context": "Explains the invitation link of a watch party."
+  },
+  {
+    "handler": "common.partyPanel.set",
+    "text": "Set",
+    "context": "The label of a button in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.setANewOne",
+    "text": "Set a new one",
+    "context": "Shown in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.shareTheInvitation",
+    "text": "Share the invitation",
+    "context": "Opens the system's share sheet with the link that puts somebody in this party."
+  },
+  {
+    "handler": "common.partyPanel.skippingIsTheDisruptiveOneA",
+    "text": "Skipping is the disruptive one — a stray scrub throws everybody across the film, which is why it can be withheld while pausing stays shared.",
+    "context": "Text shown in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.thisPartyHasAPasswordAnybody",
+    "text": "This party has a password. Anybody opening the link is asked for it.",
+    "context": "Shown in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.waitingForNameToCatchUp",
+    "text": "Waiting for {name} to catch up",
+    "context": "A warning in a watch or listening party while it is held for one person whose player is behind. {name} is that person's name."
+  },
+  {
+    "handler": "common.partyPanel.waitingForPeopleToCatchUp.one",
+    "text": "Waiting for {count} person to catch up",
+    "context": "In a watch party, how many people the others are waiting for before playing on. Only shown for two or more; one person is named instead."
+  },
+  {
+    "handler": "common.partyPanel.waitingForPeopleToCatchUp.other",
+    "text": "Waiting for {count} people to catch up",
+    "context": "In a watch party, how many people the others are waiting for before playing on. Only shown for two or more; one person is named instead."
+  },
+  {
+    "handler": "common.partyPasswordDialog.join",
+    "text": "Join",
+    "context": "The label in the party password dialog."
+  },
+  {
+    "handler": "common.partyPasswordDialog.thatIsNotThePasswordFor",
+    "text": "That is not the password for this party.",
+    "context": "An error shown in the party password dialog."
+  },
+  {
+    "handler": "common.partyPasswordDialog.thisWatchPartyHasAPassword",
+    "text": "This watch party has a password",
+    "context": "The title of a dialog title in the party password dialog."
+  },
+  {
+    "handler": "common.partyPasswordDialog.watchPartyPassword",
+    "text": "Watch party password",
+    "context": "The label of a dialog in the party password dialog."
+  },
+  {
+    "handler": "common.partyPasswordDialog.whoeverInvitedYouSetOneAsk",
+    "text": "Whoever invited you set one. Ask them for it if you have not been told.",
+    "context": "Text shown in the party password dialog."
   },
   {
     "handler": "common.passkeyName",
@@ -4143,6 +4457,11 @@
     "handler": "common.people",
     "text": "People",
     "context": "The label, used in several places, among them the webhook in the schemas and the admin area (from `adminSections`)."
+  },
+  {
+    "handler": "common.percent",
+    "text": "{value}%",
+    "context": "A percentage, such as a caption’s size or how see-through its background is. {value} is the number."
   },
   {
     "handler": "common.percentDone",
@@ -4373,6 +4692,11 @@
     "handler": "common.radius",
     "text": "Radius",
     "context": "The label, used in several places, among them the bricks in the variants and the caustics in the variants."
+  },
+  {
+    "handler": "common.raised",
+    "text": "Raised",
+    "context": "A caption setting, in the web player and on the phone and the television."
   },
   {
     "handler": "common.rating",
@@ -4645,6 +4969,11 @@
     "context": "The label, used in the installed plugin card in the plugins panel and in the status (from `describeJobStatus`)."
   },
   {
+    "handler": "common.sans",
+    "text": "Sans",
+    "context": "A caption setting, in the web player and on the phone and the television."
+  },
+  {
     "handler": "common.saturation",
     "text": "Saturation",
     "context": "The label, used in several places, among them the galaxy in the variants and the meadow in the variants."
@@ -4755,6 +5084,11 @@
     "context": "Shown, used in several places, among them the feature in the featured of the phone app and the hero of the television app."
   },
   {
+    "handler": "common.serif",
+    "text": "Serif",
+    "context": "A caption setting, in the web player and on the phone and the television."
+  },
+  {
     "handler": "common.server",
     "text": "Server",
     "context": "Shown, used in the admin (from `groupPermissions`) and in the admin page."
@@ -4845,6 +5179,11 @@
     "context": "Shown, used in several places, among them the webhook in the schemas and the device list in the account area."
   },
   {
+    "handler": "common.signedInWhen",
+    "text": "Signed in {signedInAt}",
+    "context": "Shown in the devices in the account of the phone and television apps. {signedInAt} is filled in by the app."
+  },
+  {
     "handler": "common.signInATelevision",
     "text": "Sign in a television",
     "context": "The title of a group, used in several places, among them the sign in a television in the devices of the phone app and the library of the phone app."
@@ -4873,6 +5212,16 @@
     "handler": "common.signOutEverywhereElse2",
     "text": "Sign out everywhere else?",
     "context": "A message in an alert, used in the devices in the account of the phone app and in the device list in the account area."
+  },
+  {
+    "handler": "common.signOutNamed",
+    "text": "Sign out {name}",
+    "context": "The label of a button in the devices in the account of the phone and television apps. {name} is filled in by the app."
+  },
+  {
+    "handler": "common.signOutNamedAsk",
+    "text": "Sign out {name}?",
+    "context": "A message in an alert in the devices in the account of the phone and television apps. {name} is filled in by the app."
   },
   {
     "handler": "common.signThemOut",
@@ -5138,6 +5487,11 @@
     "handler": "common.testingName",
     "text": "Testing {name}",
     "context": "The label of a spinner, used in the download clients table in the downloads panel and in the indexers panel in the admin area. {name} is filled in by the app."
+  },
+  {
+    "handler": "common.textColour",
+    "text": "Text colour",
+    "context": "A caption setting, in the web player and on the phone and the television."
   },
   {
     "handler": "common.thatBackupCodeIsNotValid",
@@ -5853,6 +6207,11 @@
     "handler": "common.whoCanUseIt",
     "text": "Who can use it",
     "context": "The title of a section, used in the profile editor in the admin area and in the profiles panel in the admin area."
+  },
+  {
+    "handler": "common.whoeverIsUsingItWillHaveToSignIn",
+    "text": "Whoever is using it will have to sign in again.",
+    "context": "A message in an alert in the devices in the account of the phone and television apps."
   },
   {
     "handler": "common.whoIsWatching",
@@ -8030,6 +8389,21 @@
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveWebhook`)."
   },
   {
+    "handler": "native.captionTextStyle.chalkboardSE",
+    "text": "Chalkboard SE",
+    "context": "The name of a font installed on Apple phones and televisions, which captions are drawn in. It is the font’s own name, asked for by the system, and is not translated."
+  },
+  {
+    "handler": "native.captionTextStyle.georgia",
+    "text": "Georgia",
+    "context": "The name of a font installed on Apple phones and televisions, which captions are drawn in. It is the font’s own name, asked for by the system, and is not translated."
+  },
+  {
+    "handler": "native.captionTextStyle.menlo",
+    "text": "Menlo",
+    "context": "The name of a font installed on Apple phones and televisions, which captions are drawn in. It is the font’s own name, asked for by the system, and is not translated."
+  },
+  {
     "handler": "phone.aBook.aChapterToHear.listenFromTitle",
     "text": "Listen from {title}",
     "context": "The label of a button in the chapter to hear in the book of the phone app. {title} is filled in by the app."
@@ -8108,11 +8482,6 @@
     "handler": "phone.anAskable.theSeasons.andAnyStillToCome",
     "text": "And any still to come",
     "context": "Text shown in the seasons in the askable of the phone app."
-  },
-  {
-    "handler": "phone.aPerson.bornBornOn",
-    "text": "Born {bornOn}",
-    "context": "Shown in the person of the phone app. {bornOn} is filled in by the app."
   },
   {
     "handler": "phone.aPlaylist.thatPlaylistCouldNotBeRead",
@@ -8360,6 +8729,11 @@
     "context": "Text shown in the ask for the code of the phone app."
   },
   {
+    "handler": "phone.askForThePassword.aLinkIsOnItsWay",
+    "text": "If {name} has an email address on their account, a link to choose a new password is on its way to it. It works once, for an hour.",
+    "context": "On the phone, after somebody who picked their face asks for a password reset link. {name} is the name on the face."
+  },
+  {
     "handler": "phone.aSoundSwitch.turnTheSoundOff",
     "text": "Turn the sound off",
     "context": "Shown in the sound switch of the phone app."
@@ -8475,34 +8849,9 @@
     "context": "The label in the account panels in the account of the phone app."
   },
   {
-    "handler": "phone.theAccount.theDevices.everyOtherDeviceWillHaveTo",
-    "text": "Every other device will have to sign in again.",
-    "context": "A message in an alert in the devices in the account of the phone app."
-  },
-  {
     "handler": "phone.theAccount.theDevices.nameThisPhone",
     "text": "{name} · This phone",
     "context": "Shown in the devices in the account of the phone app. {name} is filled in by the app."
-  },
-  {
-    "handler": "phone.theAccount.theDevices.signedInSignedInAt",
-    "text": "Signed in {signedInAt}",
-    "context": "Shown in the devices in the account of the phone app. {signedInAt} is filled in by the app."
-  },
-  {
-    "handler": "phone.theAccount.theDevices.signOutName",
-    "text": "Sign out {name}",
-    "context": "The label of a button in the devices in the account of the phone app. {name} is filled in by the app."
-  },
-  {
-    "handler": "phone.theAccount.theDevices.signOutName2",
-    "text": "Sign out {name}?",
-    "context": "A message in an alert in the devices in the account of the phone app. {name} is filled in by the app."
-  },
-  {
-    "handler": "phone.theAccount.theDevices.whoeverIsUsingItWillHave",
-    "text": "Whoever is using it will have to sign in again.",
-    "context": "A message in an alert in the devices in the account of the phone app."
   },
   {
     "handler": "phone.theAccount.theHidden.nothingHidden",
@@ -8780,11 +9129,6 @@
     "context": "Shown in an empty text field until something is typed in the library of the phone app."
   },
   {
-    "handler": "phone.theLibrary.nothingMatchesThose",
-    "text": "Nothing matches those",
-    "context": "The title of a nothing here in the library of the phone app."
-  },
-  {
     "handler": "phone.theLibrary.theBooks.carryOnListeningToTitle",
     "text": "Carry on listening to {title}",
     "context": "The label of a button in the books in the library of the phone app. {title} is filled in by the app."
@@ -8958,16 +9302,6 @@
     "handler": "phone.theStars.householdAverageFromCountRatings.other",
     "text": "Household {average} from {count} ratings",
     "context": "Text shown in the stars of the phone app. {average} is filled in by the app; {count} is a number."
-  },
-  {
-    "handler": "phone.theStars.n1Star",
-    "text": "1 star",
-    "context": "Shown in the stars of the phone app."
-  },
-  {
-    "handler": "phone.theStars.starsStars",
-    "text": "{stars} stars",
-    "context": "Shown in the stars of the phone app. {stars} is filled in by the app."
   },
   {
     "handler": "phone.theWayIn.aWallFace.signInAsName",
@@ -17987,11 +18321,6 @@
     "context": "The label of a button in the folder link. {folder} is filled in by the app."
   },
   {
-    "handler": "screens.forgotPassword.forgotYourPassword",
-    "text": "Forgot your password?",
-    "context": "A button on the sign-in screen."
-  },
-  {
     "handler": "screens.forgotPassword.ifAnAccountAnswersToThat",
     "text": "If an account answers to that, a link to choose a new password is on its way. It works once, for an hour. No email? Whoever runs this server can find the link in its log.",
     "context": "Shown after asking for a password reset link."
@@ -19593,36 +19922,6 @@
     "context": "Shown where your liked songs could not be read from the server, followed by a sentence about why and a button to try again."
   },
   {
-    "handler": "screens.musicPage.listeningPartyPanel.everybodyHearsWhatYouPlayWhere",
-    "text": "Everybody hears what you play, where you are in it. Each of them keeps their own volume.",
-    "context": "Shown in the listening party panel in the music page."
-  },
-  {
-    "handler": "screens.musicPage.listeningPartyPanel.leaveItBeforeStartingAParty",
-    "text": "Leave it before starting a party to listen together.",
-    "context": "The detail of a nothing here in the listening party panel in the music page."
-  },
-  {
-    "handler": "screens.musicPage.listeningPartyPanel.listenTogether",
-    "text": "Listen together",
-    "context": "The title of a nothing here in the listening party panel in the music page."
-  },
-  {
-    "handler": "screens.musicPage.listeningPartyPanel.playSomethingThenStartAParty",
-    "text": "Play something, then start a party and send the link to anybody with an account here.",
-    "context": "Shown in the listening party panel in the music page."
-  },
-  {
-    "handler": "screens.musicPage.listeningPartyPanel.startAListeningParty",
-    "text": "Start a listening party",
-    "context": "The label of a button in the listening party panel in the music page."
-  },
-  {
-    "handler": "screens.musicPage.listeningPartyPanel.youAreInAWatchParty",
-    "text": "You are in a watch party",
-    "context": "The title of a nothing here in the listening party panel in the music page."
-  },
-  {
     "handler": "screens.musicPage.musicHome.readingYourMusic",
     "text": "Reading your music",
     "context": "The label of a skeleton in the music home in the music page."
@@ -20683,72 +20982,6 @@
     "context": "The heading above the collections a film or programme belongs to, on its page; each collection is a button below it."
   },
   {
-    "handler": "screens.partyMenu.startAWatchParty",
-    "text": "Start a watch party",
-    "context": "The label of a button in the party menu."
-  },
-  {
-    "handler": "screens.partyMenu.watchParty",
-    "text": "Watch party",
-    "context": "The heading of a popover panel in the party menu."
-  },
-  {
-    "handler": "screens.partyMenu.watchPartyWatchingWatching",
-    "text": "Watch party · {watching} watching",
-    "context": "Shown in the party menu. {watching} is filled in by the app."
-  },
-  {
-    "handler": "screens.partyMenu.watchThisWithOtherPeopleHere",
-    "text": "Watch this with other people here, in step. You get a link to send them, and whatever anybody plays, pauses or skips happens for everybody.",
-    "context": "Text shown in the party menu."
-  },
-  {
-    "handler": "screens.partyPanel.aPasswordAsksAnybodyOpeningThe",
-    "text": "A password asks anybody opening the link for it, for a link that may travel further than you meant.",
-    "context": "Shown in the party panel."
-  },
-  { "handler": "screens.partyPanel.ask", "text": "Ask", "context": "Shown in the party panel." },
-  {
-    "handler": "screens.partyPanel.askAlong",
-    "text": "Ask along",
-    "context": "The title of a panel card in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.asked",
-    "text": "Asked",
-    "context": "Shown in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.askNameAlong",
-    "text": "Ask {name} along",
-    "context": "The label of a button in the party panel. {name} is filled in by the app."
-  },
-  {
-    "handler": "screens.partyPanel.askSomebodyAlongTheyAreTold",
-    "text": "Ask somebody along. They are told wherever they asked to be told things, and the message carries this same link.",
-    "context": "Text shown in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.coHost",
-    "text": "Co-host",
-    "context": "A badge beside a party member who may run the party alongside its host."
-  },
-  {
-    "handler": "screens.partyPanel.controls",
-    "text": "Controls",
-    "context": "The title of a panel card in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.countListening.one",
-    "text": "{count} listening",
-    "context": "The title of a listening party's panel: how many of its members are listening. {count} is the number."
-  },
-  {
-    "handler": "screens.partyPanel.countListening.other",
-    "text": "{count} listening",
-    "context": "The title of a listening party's panel: how many of its members are listening. {count} is the number."
-  },
-  {
     "handler": "screens.partyPanel.countOutOfStep.one",
     "text": "{count} out of step",
     "context": "A badge on a watch or listening party when people in it are at different points. {count} is how many."
@@ -20759,65 +20992,9 @@
     "context": "A badge on a watch or listening party when people in it are at different points. {count} is how many."
   },
   {
-    "handler": "screens.partyPanel.countWatching.one",
-    "text": "{count} watching",
-    "context": "The title of a watch party's panel: how many of its members are watching. {count} is the number."
-  },
-  {
-    "handler": "screens.partyPanel.countWatching.other",
-    "text": "{count} watching",
-    "context": "The title of a watch party's panel: how many of its members are watching. {count} is the number."
-  },
-  {
-    "handler": "screens.partyPanel.everyoneCanPlayAndPause",
-    "text": "Everyone can play and pause",
-    "context": "The label of a switch in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.everyoneCanSkipAround",
-    "text": "Everyone can skip around",
-    "context": "The label of a switch in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.guest",
-    "text": "Guest",
-    "context": "Shown in the party panel."
-  },
-  { "handler": "screens.partyPanel.host", "text": "Host", "context": "Shown in the party panel." },
-  {
     "handler": "screens.partyPanel.inSync",
     "text": "In sync",
     "context": "A badge on a watch or listening party when everybody in it is at the same point."
-  },
-  {
-    "handler": "screens.partyPanel.invite",
-    "text": "Invite",
-    "context": "The title of a panel card in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.keepingTime",
-    "text": "Keeping time",
-    "context": "Text shown in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.leave",
-    "text": "Leave",
-    "context": "Text shown in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.listening",
-    "text": "Listening",
-    "context": "Shown in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.makeACoHost",
-    "text": "Make a co-host",
-    "context": "Shown in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.makeAGuest",
-    "text": "Make a guest",
-    "context": "Shown in the party panel."
   },
   {
     "handler": "screens.partyPanel.nameAtPosition",
@@ -20840,114 +21017,9 @@
     "context": "A badge on a watch or listening party when one member has fallen out of step behind. {name} is who, {seconds} is how far, to one decimal place."
   },
   {
-    "handler": "screens.partyPanel.noPassword",
-    "text": "No password",
-    "context": "Shown in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.notListening",
-    "text": "Not listening",
-    "context": "Shown in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.notWatching",
-    "text": "Not watching",
-    "context": "Shown in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.partyPassword",
-    "text": "Party password",
-    "context": "The label of a text field in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.removeNameFromTheParty",
-    "text": "Remove {name} from the party",
-    "context": "The label of a button in the party panel. {name} is filled in by the app."
-  },
-  {
-    "handler": "screens.partyPanel.secondsAhead",
-    "text": "{seconds}s ahead",
-    "context": "Shown beside a member of a watch or listening party who has got ahead of whoever keeps time. {seconds} is how far, to one decimal place."
-  },
-  {
-    "handler": "screens.partyPanel.secondsBehind",
-    "text": "{seconds}s behind",
-    "context": "Shown beside a member of a watch or listening party who has fallen behind whoever keeps time. {seconds} is how far, to one decimal place."
-  },
-  {
-    "handler": "screens.partyPanel.sendThisToListenAlong",
-    "text": "Send this to anybody with an account here. It puts them in this party, listening along.",
-    "context": "Explains the invitation link of a listening party."
-  },
-  {
-    "handler": "screens.partyPanel.sendThisToWatchAlong",
-    "text": "Send this to anybody with an account here. It puts them in this party, watching this.",
-    "context": "Explains the invitation link of a watch party."
-  },
-  {
-    "handler": "screens.partyPanel.set",
-    "text": "Set",
-    "context": "The label of a button in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.setANewOne",
-    "text": "Set a new one",
-    "context": "Shown in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.skippingIsTheDisruptiveOneA",
-    "text": "Skipping is the disruptive one — a stray scrub throws everybody across the film, which is why it can be withheld while pausing stays shared.",
-    "context": "Text shown in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.thisPartyHasAPasswordAnybody",
-    "text": "This party has a password. Anybody opening the link is asked for it.",
-    "context": "Shown in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.waitingForNameToCatchUp",
-    "text": "Waiting for {name} to catch up",
-    "context": "A warning in a watch or listening party while it is held for one person whose player is behind. {name} is that person's name."
-  },
-  {
-    "handler": "screens.partyPanel.waitingForPeopleToCatchUp.one",
-    "text": "Waiting for {count} person to catch up",
-    "context": "In a watch party, how many people the others are waiting for before playing on. Only shown for two or more; one person is named instead."
-  },
-  {
-    "handler": "screens.partyPanel.waitingForPeopleToCatchUp.other",
-    "text": "Waiting for {count} people to catch up",
-    "context": "In a watch party, how many people the others are waiting for before playing on. Only shown for two or more; one person is named instead."
-  },
-  {
     "handler": "screens.partyPanel.whereEverybodyIs",
     "text": "Where everybody is",
     "context": "Read by assistive technology: the bar in a watch or listening party showing each member's face at the point they have reached."
-  },
-  {
-    "handler": "screens.partyPasswordDialog.join",
-    "text": "Join",
-    "context": "The label in the party password dialog."
-  },
-  {
-    "handler": "screens.partyPasswordDialog.thatIsNotThePasswordFor",
-    "text": "That is not the password for this party.",
-    "context": "An error shown in the party password dialog."
-  },
-  {
-    "handler": "screens.partyPasswordDialog.thisWatchPartyHasAPassword",
-    "text": "This watch party has a password",
-    "context": "The title of a dialog title in the party password dialog."
-  },
-  {
-    "handler": "screens.partyPasswordDialog.watchPartyPassword",
-    "text": "Watch party password",
-    "context": "The label of a dialog in the party password dialog."
-  },
-  {
-    "handler": "screens.partyPasswordDialog.whoeverInvitedYouSetOneAsk",
-    "text": "Whoever invited you set one. Ask them for it if you have not been told.",
-    "context": "Text shown in the party password dialog."
   },
   {
     "handler": "screens.passkeys.isPasskeySupported.passkeysAreAddedFromValenceIn",
@@ -23385,11 +23457,6 @@
     "context": "The label of a button in the video player."
   },
   {
-    "handler": "screens.videoPlayer.captionSettings.backgroundOpacity",
-    "text": "Background opacity",
-    "context": "The label of a caption field in the caption settings in the video player."
-  },
-  {
     "handler": "screens.videoPlayer.captionSettings.captionBackgroundColour",
     "text": "Caption background colour",
     "context": "The label of a swatch row in the caption settings in the video player."
@@ -23430,19 +23497,9 @@
     "context": "The label of a swatch row in the caption settings in the video player."
   },
   {
-    "handler": "screens.videoPlayer.captionSettings.casual",
-    "text": "Casual",
-    "context": "The label in the caption settings in the video player."
-  },
-  {
     "handler": "screens.videoPlayer.captionSettings.heavy",
     "text": "Heavy",
     "context": "Shown in the caption settings in the video player."
-  },
-  {
-    "handler": "screens.videoPlayer.captionSettings.outline",
-    "text": "Outline",
-    "context": "The label in the caption settings in the video player."
   },
   {
     "handler": "screens.videoPlayer.captionSettings.outlineThickness",
@@ -23450,29 +23507,9 @@
     "context": "The label of a caption field in the caption settings in the video player."
   },
   {
-    "handler": "screens.videoPlayer.captionSettings.raised",
-    "text": "Raised",
-    "context": "The label in the caption settings in the video player."
-  },
-  {
     "handler": "screens.videoPlayer.captionSettings.resetToDefaults",
     "text": "Reset to defaults",
     "context": "The label of a button in the caption settings in the video player."
-  },
-  {
-    "handler": "screens.videoPlayer.captionSettings.sans",
-    "text": "Sans",
-    "context": "The label in the caption settings in the video player."
-  },
-  {
-    "handler": "screens.videoPlayer.captionSettings.serif",
-    "text": "Serif",
-    "context": "The label in the caption settings in the video player."
-  },
-  {
-    "handler": "screens.videoPlayer.captionSettings.textColour",
-    "text": "Text colour",
-    "context": "The label of a caption field in the caption settings in the video player."
   },
   {
     "handler": "screens.videoPlayer.captionSettings.theQuickBrownFox",
@@ -23748,11 +23785,6 @@
     "handler": "screens.videoRemoteBar.openTheRemoteForLabel",
     "text": "Open the remote for {label}",
     "context": "The label of a button in the video remote bar. {label} is filled in by the app."
-  },
-  {
-    "handler": "screens.watchPage.joiningTheWatchParty",
-    "text": "Joining the watch party",
-    "context": "The label of a splash screen in the watch page."
   },
   {
     "handler": "screens.webhookFields.webhookPanes.where",
@@ -26135,6 +26167,21 @@
     "context": "Shown under the profile's name on the television app's account screen, where the server's address is not known."
   },
   {
+    "handler": "tv.account.yourDevices.nameThisTelevision",
+    "text": "{name} · This television",
+    "context": "On the television account page, the device you are using, in the list of everywhere this account is signed in. {name} is what the device is called."
+  },
+  {
+    "handler": "tv.account.yourDevices.noOtherDevices",
+    "text": "This television is the only place this account is signed in.",
+    "context": "On the television account page, under the devices heading, when no other device is signed in."
+  },
+  {
+    "handler": "tv.account.yourNotifications.titleUnread",
+    "text": "{title} · New",
+    "context": "On the television account page, a notification that has not been read yet. {title} is the notification’s own title."
+  },
+  {
     "handler": "tv.account.yourRequests.yourRequests",
     "text": "Your requests",
     "context": "Text shown in the your requests in the account of the television app."
@@ -26425,6 +26472,11 @@
     "context": "Shown in the phone sign in of the television app."
   },
   {
+    "handler": "tv.placeOfEpisode.sValueEValue2",
+    "text": "S{value}: E{value2}",
+    "context": "An episode’s place in its programme on the television, on its programme’s page and in the player. {value} is the season; {value2} is the episode’s number."
+  },
+  {
     "handler": "tv.platform.installTvPlatform.aTelevisionIsSignedInFrom",
     "text": "A television is signed in from a phone.",
     "context": "Shown in the platform of the television app (from `installTvPlatform`)."
@@ -26570,6 +26622,16 @@
     "context": "Text shown in the plugin page of the television app."
   },
   {
+    "handler": "tv.rating.rateIt",
+    "text": "Rate it",
+    "context": "On the television, the button on a film or programme page that opens the choice of stars, before it has been rated."
+  },
+  {
+    "handler": "tv.rating.takeTheRatingBack",
+    "text": "Take my rating back",
+    "context": "On the television, the last choice in the list of stars, which removes the rating given."
+  },
+  {
     "handler": "tv.requestsPage.findSomethingInSearchAndRequest",
     "text": "Find something in Search, and request it from its page.",
     "context": "Text shown in the requests page of the television app."
@@ -26648,11 +26710,6 @@
     "handler": "tv.showPage.resumeEpisodeFromStartSeconds",
     "text": "Resume {episode} from {startSeconds}",
     "context": "Shown in the show page of the television app. {episode} is filled in by the app; {startSeconds} is filled in by the app."
-  },
-  {
-    "handler": "tv.showPage.sValueEValue2",
-    "text": "S{value}: E{value2}",
-    "context": "Shown in the show page of the television app. {value} is filled in by the app; {value2} is filled in by the app."
   },
   {
     "handler": "tv.showPage.thisProgrammeCouldNotBeFound",

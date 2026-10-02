@@ -1,13 +1,16 @@
 import { useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { CircleCheck, RotateCcw } from '@keyline-icons/react-native';
+import { CircleCheck, EyeOff, RotateCcw, Star } from '@keyline-icons/react-native';
 import { Play } from '@keyline-icons/react-native/fill';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { artworkUrl } from '@ValenceClient/library/artworkUrl';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
 import { pickUpFrom } from '@ValenceClient/library/pickUpFrom';
 import { qualityBadges } from '@ValenceClient/library/qualityBadges';
+import { useHidden } from '@ValenceClient/library/useHidden';
+import { useRate } from '@ValenceClient/library/useRate';
+import { useStars } from '@ValenceClient/library/useStars';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { markWatched } from '@ValenceClient/playback/markWatched';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
@@ -18,13 +21,17 @@ import { EpisodeCard } from '@ValenceTv/components/EpisodeCard/EpisodeCard';
 import { TabBar } from '@ValenceTv/components/TabBar/TabBar';
 import { TitleSpread } from '@ValenceTv/components/TitleSpread/TitleSpread';
 import { PluginPanels } from '@ValenceTv/components/PluginPanels/PluginPanels';
+import { StarChoice } from '@ValenceTv/components/StarChoice/StarChoice';
+import { CastRow } from '@ValenceTv/components/CastRow/CastRow';
+import { useMenuButton } from '@ValenceTv/navigation/useMenuButton';
+import { useConfirmHiding } from '@ValenceNative/library/useConfirmHiding';
 import { joinFacts } from '@ValenceTv/library/joinFacts';
 import { useProgress } from '@ValenceTv/library/useProgress';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ShowDetail } from '@ValenceContracts/schemas/Show';
 import type { ShowPageProps } from './ShowPage.types';
-import { describeEpisodeNumbers } from '@ValenceCore/functions/describeEpisodeNumbers';
+import { placeOfEpisode } from '@ValenceTv/library/placeOfEpisode';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 
@@ -38,18 +45,6 @@ const STARRING = 4;
  */
 const seasonKey = (seasonNumber: number | null): string =>
   seasonNumber === null ? 'other' : seasonNumber.toString();
-
-/**
- * An episode's place in its programme, as the television's apps write it: "S1: E3".
- *
- * @param episode - The episode.
- * @returns Its season and number.
- */
-const placeOf = (episode: MediaSummary): string =>
-  say('tv.showPage.sValueEValue2', {
-    value: (episode.seasonNumber ?? 1).toString(),
-    value2: describeEpisodeNumbers(episode.episodeNumber ?? 1, episode.episodeNumberEnd),
-  });
 
 /**
  * What the catalogue says happens in an episode, where it says anything.
@@ -67,16 +62,34 @@ const overviewOf = (show: ShowDetail, episode: MediaSummary): string | null =>
  * A programme's own page: everything about it beside its picture, the episode this viewer would
  * carry on with and what happens in it, the ways to watch — carry on, or start from the first — and
  * beneath, its seasons, landing on one showing its episodes. Each season's row starts from its
- * first episode, rather than wherever the last season's was left.
+ * first episode, rather than wherever the last season's was left. The programme can be given stars
+ * from the panel down the right, which Menu closes, or hidden, once asked.
  *
  * @param libraryId - The library the programme is in.
  * @param showId - The programme.
+ * @param viewerId - Who is watching, whose stars and hiding they are.
+ * @param onOpenPerson - Told whose page to open, from the cast.
  * @param onPlay - Told to play an episode, and from where.
  */
-const ShowPage = ({ libraryId, showId, onPlay }: ShowPageProps) => {
+const ShowPage = ({ libraryId, showId, viewerId, onOpenPerson, onPlay }: ShowPageProps) => {
   const { progress } = useProgress();
   const asked = useQuery(libraryQueries.show(libraryId, showId));
   const show = asked.data ?? null;
+  const seriesId = show?.seriesId ?? null;
+  const hiding = useHidden(viewerId);
+  const rate = useRate(viewerId);
+  const stars = useStars(viewerId, { seriesId: seriesId ?? '' });
+  const [isRating, setIsRating] = useState(false);
+
+  useConfirmHiding(hiding);
+  useMenuButton(
+    isRating
+      ? () => {
+          setIsRating(false);
+        }
+      : null,
+    true,
+  );
   const cover = useQuery(libraryQueries.detail(show?.coverMediaId ?? null));
   const [chosen, setChosen] = useState<string | null>(null);
   const cache = useQueryClient();
@@ -137,7 +150,7 @@ const ShowPage = ({ libraryId, showId, onPlay }: ShowPageProps) => {
       .catch(() => null);
   };
 
-  return (
+  const page = (
     <TitleSpread
       mediaId={show.coverMediaId}
       name={show.title}
@@ -150,7 +163,9 @@ const ShowPage = ({ libraryId, showId, onPlay }: ShowPageProps) => {
       ])}
       badges={cover.data === undefined || cover.data === null ? [] : qualityBadges(cover.data)}
       tagline={
-        carryingOn === null ? null : `${placeOf(carryingOn.episode)} · ${carryingOn.episode.title}`
+        carryingOn === null
+          ? null
+          : `${placeOfEpisode(carryingOn.episode)} · ${carryingOn.episode.title}`
       }
       overview={
         show.overview ?? (carryingOn === null ? null : overviewOf(show, carryingOn.episode))
@@ -199,6 +214,8 @@ const ShowPage = ({ libraryId, showId, onPlay }: ShowPageProps) => {
             }}
           />
 
+          <CastRow cast={cover.data?.metadata.cast ?? []} onOpen={onOpenPerson} />
+
           <PluginPanels on="series" subjectId={showId} />
         </View>
       }
@@ -208,10 +225,10 @@ const ShowPage = ({ libraryId, showId, onPlay }: ShowPageProps) => {
           label={
             carryingOn.isResuming
               ? say('tv.showPage.resumeEpisodeFromStartSeconds', {
-                  episode: placeOf(carryingOn.episode),
+                  episode: placeOfEpisode(carryingOn.episode),
                   startSeconds: formatDuration(carryingOn.startSeconds),
                 })
-              : say('tv.showPage.playEpisode', { episode: placeOf(carryingOn.episode) })
+              : say('tv.showPage.playEpisode', { episode: placeOfEpisode(carryingOn.episode) })
           }
           icon={Play}
           hasPreferredFocus
@@ -251,13 +268,57 @@ const ShowPage = ({ libraryId, showId, onPlay }: ShowPageProps) => {
           }}
         />
       )}
+
+      {seriesId === null ? null : (
+        <ActionRow
+          label={stars === null ? say('tv.rating.rateIt') : say('common.yourRating')}
+          {...(stars === null ? {} : { detail: sayCount('common.count.stars', stars) })}
+          icon={Star}
+          onPress={() => {
+            setIsRating(true);
+          }}
+        />
+      )}
+
+      {seriesId === null ? null : (
+        <ActionRow
+          label={say('common.hide')}
+          icon={EyeOff}
+          onPress={() => {
+            hiding.ask({
+              id: show.coverMediaId,
+              title: show.title,
+              seriesId,
+              seriesTitle: show.title,
+            });
+          }}
+        />
+      )}
     </TitleSpread>
+  );
+
+  return (
+    <View style={styles.page}>
+      {page}
+
+      {isRating && seriesId !== null ? (
+        <StarChoice
+          title={show.title}
+          given={stars}
+          onChoose={(chosen) => {
+            rate({ seriesId }, chosen);
+            setIsRating(false);
+          }}
+        />
+      ) : null}
+    </View>
   );
 };
 
 ShowPage.displayName = 'ShowPage';
 
 const styles = StyleSheet.create({
+  page: { flex: 1 },
   waiting: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   problem: { color: tokens.colours.muted, fontSize: tokens.type.body },
   below: { gap: tokens.space.sm, paddingBottom: tokens.space.xl },

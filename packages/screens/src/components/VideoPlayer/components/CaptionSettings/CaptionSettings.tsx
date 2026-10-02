@@ -4,17 +4,17 @@ import { Button } from '@ValenceUI/Button';
 import { SegmentedRow } from '@ValenceUI/SegmentedRow';
 import { Slider } from '@ValenceUI/Slider';
 import { SwatchRow } from '@ValenceUI/SwatchRow';
-import { CAPTION_COLOURS } from '@ValenceUI/captionColours';
+import { CAPTION_COLOURS } from '@ValenceCore/tokens/CAPTION_COLOURS';
 import { CaptionField } from './components/CaptionField/CaptionField';
 import { toCueDeclarations } from '@ValenceScreens/playback/captionStyle';
 import type { CaptionSettingsProps } from './CaptionSettings.types';
 import { say } from '@ValenceI18n/say';
 
 const FONTS = [
-  { id: 'sans', label: say('screens.videoPlayer.captionSettings.sans') },
-  { id: 'serif', label: say('screens.videoPlayer.captionSettings.serif') },
+  { id: 'sans', label: say('common.sans') },
+  { id: 'serif', label: say('common.serif') },
   { id: 'mono', label: say('common.mono') },
-  { id: 'casual', label: say('screens.videoPlayer.captionSettings.casual') },
+  { id: 'casual', label: say('common.casual') },
 ] as const;
 
 const OUTLINE_NAMES = [
@@ -26,9 +26,9 @@ const OUTLINE_NAMES = [
 
 const EDGES = [
   { id: 'none', label: say('common.none') },
-  { id: 'outline', label: say('screens.videoPlayer.captionSettings.outline') },
+  { id: 'outline', label: say('common.outline') },
   { id: 'shadow', label: say('common.shadow') },
-  { id: 'raised', label: say('screens.videoPlayer.captionSettings.raised') },
+  { id: 'raised', label: say('common.raised') },
 ] as const;
 
 /**
@@ -94,10 +94,7 @@ const CaptionSettings = ({ style, onChange, onReset }: CaptionSettingsProps) => 
         />
       </CaptionField>
 
-      <CaptionField
-        label={say('screens.videoPlayer.captionSettings.textColour')}
-        value={colourName(style.color)}
-      >
+      <CaptionField label={say('common.textColour')} value={colourName(style.color)}>
         <SwatchRow
           label={say('screens.videoPlayer.captionSettings.captionTextColour')}
           swatches={CAPTION_COLOURS}
@@ -120,7 +117,7 @@ const CaptionSettings = ({ style, onChange, onReset }: CaptionSettingsProps) => 
       </CaptionField>
 
       <CaptionField
-        label={say('screens.videoPlayer.captionSettings.backgroundOpacity')}
+        label={say('common.backgroundOpacity')}
         value={`${Math.round(style.backgroundOpacity * 100).toString()}%`}
       >
         <Slider

@@ -7,6 +7,12 @@ import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { useFreshFromTheSocket } from '@ValenceClient/query/useFreshFromTheSocket';
 import { getRealtimeClient } from '@ValenceClient/realtime/getRealtimeClient';
 import { watchPresence } from '@ValenceClient/presence/watchPresence';
+import { useWatchParty } from '@ValenceClient/party/useWatchParty';
+import { useListenAlong } from '@ValenceClient/party/useListenAlong';
+import { PARTY_NOTICE_LINGERS_MS } from '@ValenceClient/party/PARTY_NOTICE_LINGERS_MS';
+import { resumeFor } from '@ValenceClient/playback/resumeFor';
+import { useProgress } from '@ValenceTv/library/useProgress';
+import type { PartyInvitation } from '@ValenceClient/party/readPartyInvitation';
 import { onPresenceEvent } from '@ValenceClient/presence/presenceEvents';
 import { useMusicRemote } from '@ValenceClient/music/useMusicRemote';
 import { useAudiobookRemote } from '@ValenceClient/books/useAudiobookRemote';
@@ -43,11 +49,12 @@ import { Listening } from '@ValenceTv/screens/Listening/Listening';
 import { Music } from '@ValenceTv/screens/Music/Music';
 import { MusicCollection } from '@ValenceTv/screens/MusicCollection/MusicCollection';
 import { NowPlaying } from '@ValenceTv/screens/NowPlaying/NowPlaying';
-import { Player } from '@ValenceTv/screens/Player/Player';
+import { PlayingTogether } from '@ValenceTv/screens/SignedIn/components/PlayingTogether/PlayingTogether';
 import { RequestsPage } from '@ValenceTv/screens/RequestsPage/RequestsPage';
 import { PluginPage } from '@ValenceTv/screens/PluginPage/PluginPage';
 import { Search } from '@ValenceTv/screens/Search/Search';
 import { ShowPage } from '@ValenceTv/screens/ShowPage/ShowPage';
+import { PersonPage } from '@ValenceTv/screens/PersonPage/PersonPage';
 import { tokens } from '@ValenceTv/theme/tokens';
 import type { Book } from '@ValenceContracts/schemas/Book';
 import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
@@ -145,6 +152,12 @@ const bookMoodOf = (book: Book): string | null => (book.hasCover ? bookCoverUrl(
  * for the remote to open it from wherever somebody has got to, and Play/Pause on the remote plays
  * and pauses whichever it is. Opened from one of the parts, it opens over the music or books part,
  * so going back from it lands there rather than where it was opened from.
+ *
+ * The watch party this television may be in is held here rather than in the player, since an
+ * invitation arrives with the notifications and a party outlives any one film being opened. Choosing
+ * an invitation opens the film it is watching, joined, or joins a listening party and opens what is
+ * playing once the host's song arrives, the music kept in step with theirs from then on; somebody put out of a party is told so
+ * for a moment.
  *
  * When something this viewer asked for arrives, a banner slides in to say so, and Play/Pause opens
  * it; nothing is announced over the player.
@@ -272,6 +285,27 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     setOpened((was) => was.slice(0, -1));
   }, []);
 
+  const watchParty = useWatchParty(getRealtimeClient());
+  const [listenInvitation, setListenInvitation] = useState<string | null>(null);
+
+  useListenAlong(watchParty, listenInvitation);
+  const { notice: partyNotice, forgetNotice: forgetPartyNotice } = watchParty;
+  const { progress } = useProgress();
+
+  useEffect(() => {
+    if (partyNotice === null) {
+      return;
+    }
+
+    const goes = setTimeout(() => {
+      forgetPartyNotice();
+    }, PARTY_NOTICE_LINGERS_MS);
+
+    return () => {
+      clearTimeout(goes);
+    };
+  }, [partyNotice, forgetPartyNotice]);
+
   useEffect(
     () =>
       onPresenceEvent((event) => {
@@ -318,6 +352,13 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
   const openFilm = useCallback(
     (mediaId: string) => {
       open({ kind: 'film', mediaId, mood: artworkUrl(mediaId, 'backdrop') });
+    },
+    [open],
+  );
+
+  const openPerson = useCallback(
+    (personId: number) => {
+      open({ kind: 'person', personId, mood: null });
     },
     [open],
   );
@@ -458,6 +499,35 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     setOpened((was) => was.filter((place) => place.kind !== 'nowPlaying'));
   }, []);
 
+  const [isWaitingToHear, setIsWaitingToHear] = useState(false);
+
+  useEffect(() => {
+    if (isWaitingToHear && heard === 'music') {
+      setIsWaitingToHear(false);
+      openNowPlaying();
+    }
+  }, [isWaitingToHear, heard, openNowPlaying]);
+
+  const join = useCallback(
+    (invitation: PartyInvitation) => {
+      if (invitation.kind === 'listen') {
+        setListenInvitation(invitation.partyId);
+        setIsWaitingToHear(true);
+
+        return;
+      }
+
+      open({
+        kind: 'play',
+        mediaId: invitation.mediaId,
+        startSeconds: resumeFor(progress, invitation.mediaId) ?? 0,
+        carriedOn: 0,
+        invitedTo: invitation.partyId,
+      });
+    },
+    [open, progress],
+  );
+
   const featureBooks = useCallback((path: string | null) => {
     setMoods((was) => ({ ...was, books: path }));
   }, []);
@@ -577,6 +647,8 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
                         onRequests={openRequests}
                         onOpenRequest={openRequest}
                         onOpenPluginPage={openPluginPage}
+                        onOpenNamed={openByMediaId}
+                        onJoin={join}
                         upTo={items.get('account') ?? null}
                       />
                     ) : (
@@ -628,13 +700,32 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
 
       {top?.kind === 'film' ? (
         <View style={styles.over}>
-          <FilmPage key={top.mediaId} mediaId={top.mediaId} viewerId={user.id} onPlay={play} />
+          <FilmPage
+            key={top.mediaId}
+            mediaId={top.mediaId}
+            viewerId={user.id}
+            onPlay={play}
+            onOpenPerson={openPerson}
+          />
         </View>
       ) : null}
 
       {top?.kind === 'show' ? (
         <View style={styles.over}>
-          <ShowPage key={top.showId} libraryId={top.libraryId} showId={top.showId} onPlay={play} />
+          <ShowPage
+            key={top.showId}
+            libraryId={top.libraryId}
+            showId={top.showId}
+            viewerId={user.id}
+            onPlay={play}
+            onOpenPerson={openPerson}
+          />
+        </View>
+      ) : null}
+
+      {top?.kind === 'person' ? (
+        <View style={styles.over}>
+          <PersonPage key={top.personId} personId={top.personId} onOpen={openTitle} />
         </View>
       ) : null}
 
@@ -664,7 +755,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
 
       {top?.kind === 'nowPlaying' ? (
         <View style={styles.over}>
-          <NowPlaying onEmpty={closeNowPlaying} onBack={back} />
+          <NowPlaying onEmpty={closeNowPlaying} onBack={back} watchParty={watchParty} />
         </View>
       ) : null}
 
@@ -699,8 +790,10 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
 
       {top?.kind === 'play' ? (
         <View style={[styles.over, styles.dark]}>
-          <Player
+          <PlayingTogether
             key={`${top.mediaId}:${top.startSeconds.toString()}`}
+            watchParty={watchParty}
+            invitedTo={top.invitedTo ?? null}
             mediaId={top.mediaId}
             startSeconds={top.startSeconds}
             carriedOn={top.carriedOn}

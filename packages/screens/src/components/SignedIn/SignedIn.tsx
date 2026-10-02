@@ -15,6 +15,7 @@ import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { useWatchParty } from '@ValenceClient/party/useWatchParty';
+import { PARTY_NOTICE_LINGERS_MS } from '@ValenceClient/party/PARTY_NOTICE_LINGERS_MS';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { householdQueries } from '@ValenceClient/query/householdQueries';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
@@ -37,13 +38,11 @@ import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
 import type { StartOverride } from '@ValenceClient/shell/shell.types';
 import { useMusicRemote } from '@ValenceClient/music/useMusicRemote';
 import { useAudiobookRemote } from '@ValenceClient/books/useAudiobookRemote';
-import { useListenAlong } from '@ValenceScreens/music/useListenAlong';
+import { useListenAlong } from '@ValenceClient/party/useListenAlong';
 import { signedInOnThisPage } from '@ValenceScreens/phone/signedInOnThisPage';
 import type { SignedInProps } from './SignedIn.types';
 import { say } from '@ValenceI18n/say';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
-
-const PARTY_NOTICE_LINGERS_MS = 6000;
 
 const MARK_FLIES_MS = 300;
 
@@ -243,7 +242,7 @@ const SignedIn = ({ title }: SignedInProps) => {
 
   useMusicRemote();
   useAudiobookRemote();
-  useListenAlong(watchParty);
+  useListenAlong(watchParty, place.playing === null ? place.party : null);
 
   useEffect(() => {
     if (place.playing === null) {

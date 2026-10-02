@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { aMigratedDatabase } from '#dialect/aMigratedDatabase';
-import { user } from '#dialect/Schema';
+import { user, viewerProfile } from '#dialect/Schema';
 import { findResetAccount } from './findResetAccount';
 
 const STARTING_DATABASE_MS = 60_000;
 
 describe('findResetAccount', () => {
   it(
-    'finds an account by its username or its address, ignoring case, and nothing else',
+    'finds an account by its username, its address or a face of its own, and nothing else',
     async () => {
       const db = await aMigratedDatabase();
 
@@ -23,10 +23,14 @@ describe('findResetAccount', () => {
 
       const ada = { userId: 'u1', email: 'ada@example.com' };
 
-      expect(await findResetAccount(db, 'Ada')).toEqual(ada);
-      expect(await findResetAccount(db, ' ADA@example.com ')).toEqual(ada);
-      expect(await findResetAccount(db, 'grace')).toBeNull();
-      expect(await findResetAccount(db, '  ')).toBeNull();
+      await db.insert(viewerProfile).values({ id: 'p1', userId: 'u1', name: 'Ada', colour: 'blue' });
+
+      expect(await findResetAccount(db, { identifier: 'Ada' })).toEqual(ada);
+      expect(await findResetAccount(db, { identifier: ' ADA@example.com ' })).toEqual(ada);
+      expect(await findResetAccount(db, { identifier: 'grace' })).toBeNull();
+      expect(await findResetAccount(db, { identifier: '  ' })).toBeNull();
+      expect(await findResetAccount(db, { profileId: 'p1' })).toEqual(ada);
+      expect(await findResetAccount(db, { profileId: 'p2' })).toBeNull();
     },
     STARTING_DATABASE_MS,
   );

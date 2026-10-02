@@ -28,16 +28,16 @@ const PartyPasswordDialog = ({ isOpen, wasWrong, onJoin, onClose }: PartyPasswor
 
   return (
     <Dialog
-      label={say('screens.partyPasswordDialog.watchPartyPassword')}
+      label={say('common.partyPasswordDialog.watchPartyPassword')}
       isOpen={isOpen}
       onClose={onClose}
     >
       <DialogContent>
-        <DialogTitle title={say('screens.partyPasswordDialog.thisWatchPartyHasAPassword')} />
+        <DialogTitle title={say('common.partyPasswordDialog.thisWatchPartyHasAPassword')} />
 
         <div className="flex flex-col gap-4 pt-2">
           <p className="text-sm leading-relaxed text-text-muted">
-            {say('screens.partyPasswordDialog.whoeverInvitedYouSetOneAsk')}
+            {say('common.partyPasswordDialog.whoeverInvitedYouSetOneAsk')}
           </p>
 
           <TextField
@@ -47,7 +47,7 @@ const PartyPasswordDialog = ({ isOpen, wasWrong, onJoin, onClose }: PartyPasswor
             hasFocusOnMount
             autoComplete="off"
             {...(wasWrong
-              ? { error: say('screens.partyPasswordDialog.thatIsNotThePasswordFor') }
+              ? { error: say('common.partyPasswordDialog.thatIsNotThePasswordFor') }
               : {})}
             onValueChange={setPassword}
           />
@@ -57,7 +57,7 @@ const PartyPasswordDialog = ({ isOpen, wasWrong, onJoin, onClose }: PartyPasswor
       <DialogFooter
         dismiss={{ label: say('common.notNow'), onChoose: onClose }}
         confirm={{
-          label: say('screens.partyPasswordDialog.join'),
+          label: say('common.partyPasswordDialog.join'),
           onChoose: () => {
             onJoin(password);
           },

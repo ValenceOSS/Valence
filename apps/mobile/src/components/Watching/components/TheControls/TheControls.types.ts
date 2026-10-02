@@ -17,6 +17,7 @@ type TheControlsProps = {
   onClose: () => void;
   onSettings: () => void;
   onEpisodes?: (() => void) | undefined;
+  onParty?: (() => void) | undefined;
 };
 
 export type { TheControlsProps };

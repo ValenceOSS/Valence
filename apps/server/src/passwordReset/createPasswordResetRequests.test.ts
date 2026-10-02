@@ -4,14 +4,14 @@ import { createPasswordResetRequests } from './createPasswordResetRequests';
 const ADA = { userId: 'u1', email: 'ada@example.com' };
 
 describe('createPasswordResetRequests', () => {
-  it('asks for a reset for the account found, by what was typed, trimmed', async () => {
+  it('asks for a reset for the account found, by who they say they are', async () => {
     const findAccount = vi.fn(() => Promise.resolve(ADA));
     const request = vi.fn(() => Promise.resolve());
     const ask = createPasswordResetRequests({ findAccount, request });
 
-    await ask('  ada  ', 'https://valence.example/reset-password');
+    await ask({ identifier: 'ada' }, 'https://valence.example/reset-password');
 
-    expect(findAccount).toHaveBeenCalledWith('ada');
+    expect(findAccount).toHaveBeenCalledWith({ identifier: 'ada' });
     expect(request).toHaveBeenCalledWith(
       'ada@example.com',
       'https://valence.example/reset-password',
@@ -25,7 +25,7 @@ describe('createPasswordResetRequests', () => {
       request,
     });
 
-    await ask('nobody', 'https://valence.example/reset-password');
+    await ask({ identifier: 'nobody' }, 'https://valence.example/reset-password');
 
     expect(request).not.toHaveBeenCalled();
   });
@@ -39,14 +39,14 @@ describe('createPasswordResetRequests', () => {
       now: () => at,
     });
 
-    await ask('ada', '/r');
+    await ask({ identifier: 'ada' }, '/r');
     at = 30_000;
-    await ask('ada@example.com', '/r');
+    await ask({ profileId: 'p1' }, '/r');
 
     expect(request).toHaveBeenCalledTimes(1);
 
     at = 61_000;
-    await ask('ada', '/r');
+    await ask({ identifier: 'ada' }, '/r');
 
     expect(request).toHaveBeenCalledTimes(2);
   });

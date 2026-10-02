@@ -12,6 +12,7 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
 import { Words } from '@ValenceMobile/components/Words/Words';
 import { whereANotificationLeads } from '@ValenceMobile/components/TheNotifications/whereANotificationLeads';
+import { readPartyInvitation } from '@ValenceClient/party/readPartyInvitation';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { ANothingHere } from '@ValenceMobile/components/ANothingHere/ANothingHere';
 import type { TheNotificationsProps } from './TheNotifications.types';
@@ -32,9 +33,10 @@ const styles = StyleSheet.create({
  * be marked read at once, or, asked first, cleared.
  *
  * @param onOpen - Told to open the page a notification is about.
+ * @param onJoin - Told to join the watch or listening party a notification asks them into.
  * @param onBack - Told somebody is done with them.
  */
-const TheNotifications = ({ onOpen, onBack }: TheNotificationsProps) => {
+const TheNotifications = ({ onOpen, onJoin, onBack }: TheNotificationsProps) => {
   const cache = useQueryClient();
   const colours = useTheColours();
   const inbox = useQuery(notificationQueries.inbox());
@@ -90,6 +92,7 @@ const TheNotifications = ({ onOpen, onBack }: TheNotificationsProps) => {
 
       {notifications.map((notification) => {
         const leads = whereANotificationLeads(notification.link);
+        const invitation = readPartyInvitation(notification.link);
         const isUnread = notification.readAt === null;
 
         return (
@@ -100,6 +103,12 @@ const TheNotifications = ({ onOpen, onBack }: TheNotificationsProps) => {
             onPress={() => {
               if (isUnread) {
                 void markNotificationsRead(notification.id).then(reread);
+              }
+
+              if (invitation !== null) {
+                onJoin(invitation);
+
+                return;
               }
 
               if (leads !== null) {

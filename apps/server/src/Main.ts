@@ -605,7 +605,7 @@ const emailService = createEmailService({
 });
 
 const requestPasswordReset = createPasswordResetRequests({
-  findAccount: (identifier) => findResetAccount(db, identifier),
+  findAccount: (ask) => findResetAccount(db, ask),
   request: async (email, redirectTo) => {
     await auth.api.requestPasswordReset({ body: { email, redirectTo } }).catch((error) => {
       log.warn('auth', `password reset could not be asked for: ${String(error)}`);

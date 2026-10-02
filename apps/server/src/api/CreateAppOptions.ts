@@ -1,3 +1,4 @@
+import type { PasswordResetAsk } from '@ValenceContracts/schemas/PasswordResetRequest';
 import type { ImportService } from '@ValenceServer/imports/createImportService';
 import type { ImportedAccount } from '@ValenceServer/arrImport/ImportedAccount';
 import type { PreTranscodingService } from '@ValenceServer/preTranscoding/PreTranscodingService';
@@ -233,7 +234,7 @@ type CreateAppOptions = {
   plugins?: (requests: PluginHost['requests']) => PluginService;
   imports?: ImportService;
   email?: EmailService;
-  requestPasswordReset?: (identifier: string, redirectTo: string) => Promise<void>;
+  requestPasswordReset?: (ask: PasswordResetAsk, redirectTo: string) => Promise<void>;
   sayALinkWasWithdrawn?: (told: {
     accountId: string;
     title: string;

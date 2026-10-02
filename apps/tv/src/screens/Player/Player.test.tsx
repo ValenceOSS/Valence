@@ -9,6 +9,9 @@ import { playbackQueries } from '@ValenceClient/query/playbackQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { MediaDetailSchema } from '@ValenceContracts/schemas/Library';
 import { Player } from '@ValenceTv/screens/Player/Player';
+import { aWatchParty } from '@ValenceClient/testing/aWatchParty';
+import { aWatchPartyStateWith } from '@ValenceClient/testing/aWatchPartyStateWith';
+import type { WatchPartyState } from '@ValenceClient/party/useWatchParty';
 import { aFakeVideoPlayer as mockAFakeVideoPlayer } from '@ValenceTv/testing/aFakeVideoPlayer';
 import type { SubtitleCue } from '@ValenceClient/playback/fetchSubtitleCues';
 import type { SubtitleTrack } from '@ValenceClient/playback/fetchSubtitles';
@@ -44,6 +47,10 @@ const mockControlled: { current: Controlled | null } = { current: null };
 const mockRemote = new Set<Heard>();
 
 const mockReport = jest.fn<Promise<boolean>, [string, object]>(() => Promise.resolve(true));
+
+jest.mock('@ValenceClient/session/auth', () => ({
+  fetchSession: () => new Promise(() => undefined),
+}));
 
 jest.mock('expo-video', () => ({
   useVideoPlayer: () => mockVideo.current,
@@ -257,6 +264,7 @@ type Setup = {
   cues?: Record<string, SubtitleCue[]>;
   show?: ShowDetail | null;
   viewer?: ViewerProfile;
+  watchParty?: WatchPartyState;
 };
 
 const draw = async (setup: Setup = {}) => {
@@ -292,6 +300,7 @@ const draw = async (setup: Setup = {}) => {
         carriedOn={setup.carriedOn ?? 0}
         onLeave={onLeave}
         onNext={onNext}
+        {...(setup.watchParty === undefined ? {} : { watchParty: setup.watchParty })}
       />
     </QueryClientProvider>
   );
@@ -596,6 +605,82 @@ describe('Player', () => {
     });
   });
 
+  describe('in a watch party', () => {
+    it('leaves starting to the room rather than playing on its own', async () => {
+      await draw({ watchParty: aWatchPartyStateWith(jest.fn, { party: aWatchParty() }) });
+
+      expect(mockVideo.current.replaceAsync).toHaveBeenCalled();
+      expect(mockVideo.current.play).not.toHaveBeenCalled();
+    });
+
+    it('asks the room to pause and to move, rather than doing either itself', async () => {
+      const watchParty = aWatchPartyStateWith(jest.fn, { party: aWatchParty() });
+      const { drawn } = await draw({ watchParty });
+
+      await tell('sourceLoad', { duration: 3000 });
+      await tell('timeUpdate', { currentTime: 100 });
+      await userEvent.press(drawn.getByRole('button', { name: 'Play' }));
+
+      expect(watchParty.send).toHaveBeenCalledWith({ kind: 'pause', atSeconds: 100 });
+
+      const [back] = drawn.getAllByRole('button', { name: '10s' });
+
+      if (back === undefined) {
+        throw new Error('The skip buttons were not drawn.');
+      }
+
+      await userEvent.press(back);
+
+      expect(watchParty.send).toHaveBeenCalledWith({ kind: 'seek', atSeconds: 90 });
+      expect(mockVideo.current.currentTime).toBe(0);
+
+      mockControlled.current?.onResume();
+
+      expect(watchParty.send).toHaveBeenCalledWith({ kind: 'play', atSeconds: 100 });
+    });
+
+    it('starts a party from the settings, around what is playing', async () => {
+      const watchParty = aWatchPartyStateWith(jest.fn);
+      const { drawn } = await draw({ watchParty });
+
+      await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Watch party, Off' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Start a watch party' }));
+
+      expect(watchParty.open).toHaveBeenCalledWith(MEDIA_ID, 'watch');
+    });
+
+    it('asks for the password a party wants, and Menu gives up on it', async () => {
+      const watchParty = aWatchPartyStateWith(jest.fn, {
+        passwordWanted: { partyId: 'p-9', wasWrong: false },
+      });
+      const { drawn } = await draw({ watchParty });
+
+      expect(drawn.getByText('This watch party has a password')).toBeTruthy();
+
+      await menu();
+
+      expect(watchParty.stopAsking).toHaveBeenCalled();
+    });
+
+    it('says what somebody else in the room did', async () => {
+      const { drawn } = await draw({
+        watchParty: aWatchPartyStateWith(jest.fn, {
+          party: aWatchParty(),
+          command: {
+            sequence: 1,
+            atMs: 1,
+            byName: 'Jo',
+            byConnectionId: 'them',
+            command: { kind: 'pause', atSeconds: 40 },
+          },
+        }),
+      });
+
+      expect(drawn.getByText('Jo paused')).toBeTruthy();
+    });
+  });
+
   describe('Menu', () => {
     it('leaves while paused', async () => {
       const { onLeave } = await draw();
@@ -617,6 +702,35 @@ describe('Player', () => {
       await menu();
 
       expect(onLeave).toHaveBeenCalledTimes(1);
+    });
+
+    it('lists the programme’s episodes in the settings, playing the one chosen', async () => {
+      const { drawn, onNext } = await draw({ show: SHOW });
+
+      await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Episodes, S1: E2' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'S1: E3, In Perpetuity' }));
+
+      expect(onNext).toHaveBeenCalledWith(NEXT_EPISODE, 0);
+    });
+
+    it('closes the episodes without playing anything on choosing the one playing', async () => {
+      const { drawn, onNext } = await draw({ show: SHOW });
+
+      await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Episodes, S1: E2' }));
+      await userEvent.press(drawn.getByRole('button', { name: /^S1: E2/ }));
+
+      expect(onNext).not.toHaveBeenCalled();
+      expect(drawn.queryByRole('button', { name: 'S1: E3, In Perpetuity' })).toBeNull();
+    });
+
+    it('offers no episodes for a film', async () => {
+      const { drawn } = await draw({ detail: FILM });
+
+      await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
+
+      expect(drawn.queryByRole('button', { name: /^Episodes/ })).toBeNull();
     });
 
     it('closes the settings, and steps back to them from a choice', async () => {
@@ -837,6 +951,61 @@ describe('Player', () => {
       await userEvent.press(drawn.getByRole('button', { name: 'English' }));
 
       expect(drawn.getByText('Please enjoy each fact equally.')).toBeTruthy();
+    });
+
+    it('move the subtitles later against the picture when asked', async () => {
+      const { drawn } = await draw({
+        tracks: [aTrackOfWords('en', 'English')],
+        cues: { en: [aCue(20, 25, 'Please enjoy each fact equally.')] },
+      });
+
+      await tell('timeUpdate', { currentTime: 20.25 });
+      await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Subtitles, Off' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'English' }));
+
+      expect(drawn.getByText('Please enjoy each fact equally.')).toBeTruthy();
+
+      await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Subtitle timing, In time' }));
+      await userEvent.press(drawn.getByRole('button', { name: '+0.50s' }));
+
+      expect(drawn.queryByText('Please enjoy each fact equally.')).toBeNull();
+      expect(drawn.getByRole('button', { name: 'Subtitle timing, +0.50s' })).toBeTruthy();
+    });
+
+    it('draw the subtitles as this television is set to, chosen a part at a time', async () => {
+      const { drawn } = await draw({
+        tracks: [aTrackOfWords('en', 'English')],
+        cues: { en: [aCue(20, 25, 'Please enjoy each fact equally.')] },
+      });
+
+      await tell('timeUpdate', { currentTime: 22 });
+      await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Subtitles, Off' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'English' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Caption settings, 100%' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Text colour, White' }));
+      await userEvent.press(drawn.getByRole('button', { name: 'Yellow' }));
+
+      expect(drawn.getByRole('button', { name: 'Text colour, Yellow' })).toBeTruthy();
+      expect(drawn.getByText('Please enjoy each fact equally.').parent).toHaveStyle({
+        color: 'rgba(255, 255, 0, 1)',
+      });
+
+      await menu();
+
+      expect(drawn.getByRole('button', { name: 'Caption settings, 100%' })).toBeTruthy();
+    });
+
+    it('offer no timing or caption settings while no subtitles are read', async () => {
+      const { drawn } = await draw({ tracks: [aTrackOfWords('en', 'English')] });
+
+      await userEvent.press(drawn.getByRole('button', { name: 'Settings' }));
+
+      expect(drawn.queryByRole('button', { name: /^Subtitle timing/ })).toBeNull();
+      expect(drawn.queryByRole('button', { name: /^Caption settings/ })).toBeNull();
     });
 
     it('start on forced subtitles in the language being spoken', async () => {

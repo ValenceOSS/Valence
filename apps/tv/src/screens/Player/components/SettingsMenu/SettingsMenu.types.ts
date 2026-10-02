@@ -5,6 +5,7 @@ type Setting = {
 };
 
 type SettingsMenuProps = {
+  title?: string;
   settings: readonly Setting[];
   onOpen: (id: string) => void;
 };

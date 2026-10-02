@@ -23,7 +23,8 @@ import { cn } from '@ValenceUI/cn';
 import { fadeVariants, spring, stillTransition } from '@ValenceUI/animations/reveal';
 import { formatDuration } from '@ValenceCore/functions/formatDuration';
 import { BarButton } from '@ValenceScreens/components/BarButton/BarButton';
-import { useListeningParty } from '@ValenceScreens/music/listeningParty';
+import { useListeningParty } from '@ValenceClient/party/listeningParty';
+import { listenerControls } from '@ValenceClient/party/listenerControls';
 import { shuffleModeOf } from '@ValenceClient/music/shuffleModeOf';
 import type { Variants } from 'motion/react';
 import type { MusicTransportProps } from './MusicTransport.types';
@@ -86,24 +87,17 @@ const MusicTransport = ({
   const isOrdered = queue?.isOrdered === true;
   const repeat = queue?.repeat ?? 'off';
   const shuffling = shuffleModeOf(queue);
-  const isFollowing = listening !== null && !listening.mayChoose;
-  const mayJoinIn = isFollowing && !shown.isPlaying && listening.party.isPlaying;
-  const mayPlayPause = !isIdle && (!isFollowing || listening.mayPlayPause || mayJoinIn);
-  const maySeek = !isIdle && (!isFollowing || listening.maySeek);
+  const controls = listenerControls(listening, shown, player);
+  const { isFollowing } = controls;
+  const mayPlayPause = !isIdle && controls.mayPlayPause;
+  const maySeek = !isIdle && controls.maySeek;
   const iconSize = isImmersive ? 24 : 20;
   const [scrubbedTo, setScrubbedTo] = useState<number | null>(null);
   const position = scrubbedTo ?? shown.positionSeconds;
 
   const seek = (value: number) => {
     setScrubbedTo(null);
-
-    if (isFollowing) {
-      listening.send({ kind: 'seek', atSeconds: value });
-
-      return;
-    }
-
-    player.seek(value);
+    controls.seek(value);
   };
 
   const scrubber = (
@@ -172,22 +166,7 @@ const MusicTransport = ({
         label={shown.isPlaying ? say('common.pause') : say('common.play')}
         className={cn('relative', isImmersive ? 'size-14' : 'size-8')}
         disabled={!mayPlayPause}
-        onClick={() => {
-          if (isFollowing && !mayJoinIn) {
-            listening.send({
-              kind: shown.isPlaying ? 'pause' : 'play',
-              atSeconds: shown.positionSeconds,
-            });
-
-            return;
-          }
-
-          if (shown.isPlaying) {
-            player.pause();
-          } else {
-            player.resume();
-          }
-        }}
+        onClick={controls.playPause}
       >
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.span

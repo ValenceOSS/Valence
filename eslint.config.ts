@@ -218,6 +218,7 @@ export default tseslint.config(
       'apps/desktop/src/**/*.{ts,tsx}',
       'apps/mobile/src/**/*.{ts,tsx}',
       'apps/tv/src/**/*.{ts,tsx}',
+      'packages/native/src/**/*.{ts,tsx}',
     ],
     rules: {
       'valence/no-hard-coded-strings': 'error',
@@ -305,6 +306,29 @@ export default tseslint.config(
               group: ['@ValenceUI/*'],
               message:
                 'The application does not draw. A component belongs to a client, and a shape both need belongs to @ValenceContracts.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['packages/native/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            ...SHARED_IMPORT_BANS,
+            {
+              group: ['@ValenceMobile/*', '@ValenceTv/*'],
+              message:
+                'What the phone and the television share cannot reach into either of them. Anything one needs to do differently is passed in.',
+            },
+            {
+              group: ['@ValenceWeb/*', '@ValenceScreens/*', '@ValenceUI/*'],
+              message:
+                'The shared native code runs on a phone or a television, never in a browser, so it cannot use what draws the web.',
             },
           ],
         },

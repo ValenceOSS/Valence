@@ -7,8 +7,8 @@ import { aFakeMusicPlayer } from '@ValenceClient/testing/aFakeMusicPlayer';
 import { aTrack } from '@ValenceClient/testing/aTrack';
 import { setMusicPanel } from '@ValenceScreens/music/musicPanel';
 import { setMusicImmersive } from '@ValenceScreens/music/musicImmersive';
-import { setListeningParty } from '@ValenceScreens/music/listeningParty';
-import type { ListeningParty } from '@ValenceScreens/music/listeningParty';
+import { setListeningParty } from '@ValenceClient/party/listeningParty';
+import type { ListeningParty } from '@ValenceClient/party/listeningParty';
 import { NowPlayingBar } from './NowPlayingBar';
 
 const favourites = vi.hoisted(() => ({ fetchFavourites: vi.fn(), setFavourite: vi.fn() }));

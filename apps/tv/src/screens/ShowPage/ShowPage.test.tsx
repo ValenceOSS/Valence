@@ -3,10 +3,23 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { markWatched } from '@ValenceClient/playback/markWatched';
+import { setRating } from '@ValenceClient/library/fetchRatings';
+import { setHidden } from '@ValenceClient/library/fetchHidden';
+import { Alert } from 'react-native';
 import { ShowPage } from '@ValenceTv/screens/ShowPage/ShowPage';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { ShowDetail } from '@ValenceContracts/schemas/Show';
 import type { WatchProgress } from '@ValenceContracts/schemas/WatchProgress';
+
+jest.mock('@ValenceClient/library/fetchRatings', () => ({
+  ...jest.requireActual<object>('@ValenceClient/library/fetchRatings'),
+  setRating: jest.fn(() => Promise.resolve(true)),
+}));
+
+jest.mock('@ValenceClient/library/fetchHidden', () => ({
+  ...jest.requireActual<object>('@ValenceClient/library/fetchHidden'),
+  setHidden: jest.fn(() => Promise.resolve(true)),
+}));
 
 jest.mock('@ValenceClient/playback/markWatched', () => ({
   markWatched: jest.fn().mockResolvedValue(undefined),
@@ -15,6 +28,10 @@ jest.mock('@ValenceClient/playback/markWatched', () => ({
 const LIBRARY = '00000000-0000-4000-8000-0000000000aa';
 
 const SHOW = 'severance';
+
+const VIEWER = '00000000-0000-4000-8000-0000000000ff';
+
+const SERIES = '00000000-0000-4000-8000-0000000000ee';
 
 const anEpisode = (season: number, episode: number, title: string): MediaSummary => ({
   id: `00000000-0000-4000-8000-0000000${season.toString()}${episode.toString().padStart(4, '0')}`,
@@ -93,6 +110,8 @@ const aCacheHolding = (show: ShowDetail | null, progress: WatchProgress[] = []):
   }
 
   cache.setQueryData(viewingQueries.progress().queryKey, progress);
+  cache.setQueryData(viewingQueries.ratings(VIEWER).queryKey, []);
+  cache.setQueryData(viewingQueries.hidden(VIEWER).queryKey, []);
 
   return cache;
 };
@@ -100,7 +119,13 @@ const aCacheHolding = (show: ShowDetail | null, progress: WatchProgress[] = []):
 const drawShow = (cache: QueryClient, onPlay = jest.fn()) =>
   render(
     <QueryClientProvider client={cache}>
-      <ShowPage libraryId={LIBRARY} showId={SHOW} onPlay={onPlay} />
+      <ShowPage
+        libraryId={LIBRARY}
+        showId={SHOW}
+        viewerId={VIEWER}
+        onPlay={onPlay}
+        onOpenPerson={jest.fn()}
+      />
     </QueryClientProvider>,
   );
 
@@ -224,5 +249,38 @@ describe('ShowPage', () => {
     await userEvent.longPress(drawn.getByRole('button', { name: 'Half Loop' }));
 
     expect(markWatched).toHaveBeenLastCalledWith([HALF_LOOP], true);
+  });
+
+  it('offers no stars or hiding for a programme the catalogue has not matched', async () => {
+    const drawn = await drawShow(aCacheHolding(SEVERANCE));
+
+    expect(drawn.queryByRole('button', { name: 'Rate it' })).toBeNull();
+    expect(drawn.queryByRole('button', { name: 'Hide' })).toBeNull();
+  });
+
+  it('gives the whole programme stars', async () => {
+    const drawn = await drawShow(aCacheHolding({ ...SEVERANCE, seriesId: SERIES }));
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Rate it' }));
+    await userEvent.press(drawn.getByRole('button', { name: '5 stars' }));
+
+    expect(setRating).toHaveBeenCalledWith({ seriesId: SERIES }, 5);
+    expect(await drawn.findByRole('button', { name: 'Your rating, 5 stars' })).toBeTruthy();
+  });
+
+  it('hides the whole programme once somebody says so', async () => {
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+
+    const drawn = await drawShow(aCacheHolding({ ...SEVERANCE, seriesId: SERIES }));
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Hide' }));
+
+    const buttons = jest.mocked(Alert.alert).mock.calls.at(-1)?.[2] ?? [];
+
+    expect(jest.mocked(Alert.alert).mock.calls.at(-1)?.[0]).toBe('Hide Severance?');
+
+    buttons.find((button) => button.text === 'Hide it')?.onPress?.();
+
+    expect(setHidden).toHaveBeenCalledWith({ kind: 'series', subjectId: SERIES }, true);
   });
 });

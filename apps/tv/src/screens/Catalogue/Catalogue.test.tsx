@@ -55,11 +55,19 @@ const LAID_OUT = { nativeEvent: { layout: { x: 0, y: 0, width: 1920, height: 108
 const drawCatalogue = async (
   kind: 'films' | 'shows',
   items: MediaSummary[] | null,
-  told: { onOpen?: (media: MediaSummary) => void; onFeature?: (media: MediaSummary) => void } = {},
+  told: {
+    onOpen?: (media: MediaSummary) => void;
+    onFeature?: (media: MediaSummary) => void;
+    prepare?: (cache: QueryClient) => void;
+  } = {},
   progress: WatchProgress[] = [],
 ) => {
+  const cache = aCacheHolding(kind, items, progress);
+
+  told.prepare?.(cache);
+
   const drawn = await render(
-    <QueryClientProvider client={aCacheHolding(kind, items, progress)}>
+    <QueryClientProvider client={cache}>
       <Catalogue
         kind={kind}
         watchable={[LIBRARY]}
@@ -283,5 +291,36 @@ describe('Catalogue', () => {
     expect(drawn.getByText('You have watched everything here.')).toBeTruthy();
     expect(drawn.queryByText('There are no films here yet.')).toBeNull();
     expect(drawn.getByRole('button', { name: 'Only what you have not watched' })).toBeTruthy();
+  });
+
+  it('narrows the wall by a genre chosen from the panel, and says where nothing is left', async () => {
+    const drawn = await drawCatalogue('films', [FIRST_IN, LAST_IN], {
+      prepare: (cache) => {
+        cache.setQueryData(libraryQueries.facets().queryKey, {
+          genres: ['Drama', 'Comedy'],
+          decades: [],
+          maxRating: 0,
+        });
+        cache.setQueryData(
+          libraryQueries.everything([LIBRARY], { kind: 'films', genre: 'Drama' }).queryKey,
+          [LAST_IN],
+        );
+        cache.setQueryData(
+          libraryQueries.everything([LIBRARY], { kind: 'films', genre: 'Comedy' }).queryKey,
+          [],
+        );
+      },
+    });
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Filters' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Genre, Any' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Drama' }));
+
+    expect(posters(drawn, ['First In', 'Last In'])).toEqual(['Last In']);
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Genre, Drama' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Comedy' }));
+
+    expect(drawn.getByText('Nothing matches those')).toBeTruthy();
   });
 });

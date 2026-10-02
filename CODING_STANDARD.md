@@ -113,8 +113,26 @@ Where shared code lives:
 | ---------------------------------------- | ------------------------------------- |
 | Any two workspace members                | `packages/contracts` (types, schemas) |
 | Any two UI surfaces                      | `packages/ui`                         |
+| The phone and the television             | `packages/native`                     |
 | Server-only helpers used by two services | `packages/core`                       |
 | Plugin-facing anything                   | `packages/plugin-sdk`                 |
+
+`packages/native` holds what `apps/mobile` and `apps/tv` both need and
+`packages/client` cannot hold because it touches React Native: hooks, the
+system's own alerts and the native glue around a behaviour both clients share.
+It does not hold screens or components. A phone is driven by touch and a
+television by its remote, so what each draws, and how focus moves through it,
+stays in its own app. It never imports either app, nor anything that draws the
+web (`@ValenceScreens/*`, `@ValenceUI/*`, `@ValenceWeb/*`); ESLint says so.
+
+It ships as source and is never built on its own. Each app's Metro bundles it
+and each app's Jest runs its tests, with React and React Native resolved to that
+app's own copies, so every test in it runs against the phone's React Native and
+the television’s. TypeScript checks it on its own and through each app, against
+the React Native pnpm installs for it as a peer, since the two apps pin
+different versions and a file can be typed against only one. For the same reason what it hands an app is typed in its own plain terms — a style as an object of
+numbers and strings, never React Native's `TextStyle` — since each app's React Native describes
+those types a little differently and one version's will not fit another's.
 
 The dependency rules still apply: extraction must not create a
 cycle. If extracting would create one, the shared thing belongs further up the
@@ -147,6 +165,7 @@ component importing its own co-located types is not crossing a boundary.
 | `@ValenceCore/*`      | `packages/core/src/*`                          |
 | `@ValenceSDK/*`       | `packages/plugin-sdk/src/*`                    |
 | `@ValenceI18n/*`      | `packages/i18n/src/*`                          |
+| `@ValenceNative/*`    | `packages/native/src/*`                        |
 
 ### How `@ValenceUI/Button` resolves without index files
 

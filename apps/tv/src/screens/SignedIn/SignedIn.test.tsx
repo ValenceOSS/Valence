@@ -18,6 +18,7 @@ import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
 import type { Tab } from '@ValenceTv/navigation/Tab';
+import type { RealtimeClient } from '@ValenceClient/realtime/createRealtimeClient';
 
 const mockStandIn = (name: string, presses: Record<string, () => void> = {}) =>
   mockCreateElement(
@@ -101,13 +102,22 @@ jest.mock('@ValenceClient/query/useFreshFromTheSocket', () => ({
   useFreshFromTheSocket: () => undefined,
 }));
 
-jest.mock('@ValenceClient/realtime/getRealtimeClient', () => ({ getRealtimeClient: () => null }));
+jest.mock('@ValenceClient/realtime/getRealtimeClient', () => ({
+  getRealtimeClient: () =>
+    jest
+      .requireActual<{ aDormantRealtimeClient: () => RealtimeClient }>(
+        '@ValenceClient/realtime/aDormantRealtimeClient',
+      )
+      .aDormantRealtimeClient(),
+}));
 
 jest.mock('@ValenceClient/presence/watchPresence', () => ({
   watchPresence: () => () => undefined,
 }));
 
 jest.mock('@ValenceClient/music/useMusicRemote', () => ({ useMusicRemote: () => undefined }));
+
+jest.mock('@ValenceClient/party/useListenAlong', () => ({ useListenAlong: () => undefined }));
 
 jest.mock('@ValenceClient/music/theMusicPlayer', () => ({ theMusicPlayer: () => mockMusic }));
 

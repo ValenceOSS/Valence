@@ -1,5 +1,5 @@
 import type { PartyRole, WatchParty } from '@ValenceContracts/schemas/WatchParty';
-import type { Askable } from '@ValenceScreens/components/PartyPanel/PartyPanel.types';
+import type { Askable } from '@ValenceClient/party/whoCanBeAsked';
 
 type PartyMenuProps = {
   party: WatchParty | null;

@@ -11,7 +11,7 @@ import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
 import { Toggle } from '@ValenceMobile/components/Toggle/Toggle';
 import { Words } from '@ValenceMobile/components/Words/Words';
-import { useConfirmHiding } from '@ValenceMobile/hooks/useConfirmHiding';
+import { useConfirmHiding } from '@ValenceNative/library/useConfirmHiding';
 import { useTheColours } from '@ValenceMobile/theme/useTheColours';
 import { say } from '@ValenceI18n/say';
 

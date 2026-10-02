@@ -1,13 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { PasswordResetAsk } from '@ValenceContracts/schemas/PasswordResetRequest';
 import { ForgotPassword } from './ForgotPassword';
 
-const askForPasswordReset = vi.fn<(identifier: string, redirectTo: string) => Promise<boolean>>();
+const askForPasswordReset = vi.fn<(ask: PasswordResetAsk, redirectTo: string) => Promise<boolean>>();
 
 vi.mock('@ValenceClient/session/askForPasswordReset', () => ({
-  askForPasswordReset: (identifier: string, redirectTo: string) =>
-    askForPasswordReset(identifier, redirectTo),
+  askForPasswordReset: (ask: PasswordResetAsk, redirectTo: string) =>
+    askForPasswordReset(ask, redirectTo),
 }));
 
 beforeEach(() => {
@@ -26,7 +27,7 @@ describe('ForgotPassword', () => {
       await screen.findByText(/a link to choose a new password is on its way/),
     ).toBeInTheDocument();
     expect(askForPasswordReset).toHaveBeenCalledWith(
-      'ada',
+      { identifier: 'ada' },
       `${window.location.origin}/reset-password`,
     );
   });

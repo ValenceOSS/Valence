@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { startQueue } from '@ValenceClient/music/playQueue';
 import { aFakeMusicPlayer } from '@ValenceClient/testing/aFakeMusicPlayer';
 import { aTrack } from '@ValenceClient/testing/aTrack';
-import { setListeningParty } from '@ValenceScreens/music/listeningParty';
+import { setListeningParty } from '@ValenceClient/party/listeningParty';
 import { MusicTransport } from './MusicTransport';
 import type { WhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 

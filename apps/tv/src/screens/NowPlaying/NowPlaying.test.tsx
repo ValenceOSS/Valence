@@ -5,6 +5,10 @@ import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { aTrack } from '@ValenceClient/testing/aTrack';
 import { NowPlaying } from '@ValenceTv/screens/NowPlaying/NowPlaying';
+import { setListeningParty } from '@ValenceClient/party/listeningParty';
+import { aWatchParty } from '@ValenceClient/testing/aWatchParty';
+import { aWatchPartyStateWith } from '@ValenceClient/testing/aWatchPartyStateWith';
+import type { WatchPartyState } from '@ValenceClient/party/useWatchParty';
 import { aFakeMusicPlayer } from '@ValenceTv/testing/aFakeMusicPlayer';
 import type { MusicPlayer, MusicPlayerState } from '@ValenceClient/music/createMusicPlayer';
 import type { PlayQueue } from '@ValenceClient/music/playQueue';
@@ -27,6 +31,10 @@ jest.mock('@ValenceClient/music/theMusicPlayer', () => ({
 
     return mockHeld.player;
   },
+}));
+
+jest.mock('@ValenceClient/session/auth', () => ({
+  fetchSession: () => new Promise(() => undefined),
 }));
 
 jest.mock('@ValenceTv/navigation/useMenuButton', () => ({
@@ -87,7 +95,12 @@ const WORDS: Lyrics = {
 };
 
 const draw = (
-  seed: { lyrics?: Lyrics | null; liked?: string[]; devices?: MusicDevice[] } = {},
+  seed: {
+    lyrics?: Lyrics | null;
+    liked?: string[];
+    devices?: MusicDevice[];
+    watchParty?: WatchPartyState;
+  } = {},
   onEmpty = jest.fn(),
   onBack = jest.fn(),
 ) => {
@@ -101,7 +114,11 @@ const draw = (
 
   return render(
     <QueryClientProvider client={cache}>
-      <NowPlaying onEmpty={onEmpty} onBack={onBack} />
+      <NowPlaying
+        onEmpty={onEmpty}
+        onBack={onBack}
+        {...(seed.watchParty === undefined ? {} : { watchParty: seed.watchParty })}
+      />
     </QueryClientProvider>,
   );
 };
@@ -117,6 +134,50 @@ describe('NowPlaying', () => {
   beforeEach(() => {
     global.fetch = jest.fn(() => new Promise<Response>(() => undefined));
     mockMenu.back = null;
+  });
+
+  afterEach(() => {
+    setListeningParty(null);
+  });
+
+  it('hands the song to the host of somebody else’s listening party', async () => {
+    const { player } = aPlayer({
+      current: SONG,
+      queue: QUEUE,
+      isPlaying: true,
+      positionSeconds: 40,
+    });
+    const send = jest.fn();
+
+    setListeningParty({
+      party: aWatchParty({ kind: 'listen' }),
+      hostName: 'Dan',
+      mayChoose: false,
+      mayPlayPause: true,
+      maySeek: false,
+      send,
+    });
+
+    const drawn = await draw();
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Next' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Pause' }));
+
+    expect(player.next).not.toHaveBeenCalled();
+    expect(player.toggle).not.toHaveBeenCalled();
+    expect(send).toHaveBeenCalledWith({ kind: 'pause', atSeconds: 40 });
+  });
+
+  it('opens the listening party beside the other ways to send the music elsewhere', async () => {
+    aPlayer({ current: SONG, queue: QUEUE });
+    const watchParty = aWatchPartyStateWith(jest.fn);
+
+    const drawn = await draw({ watchParty });
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Listening party' }));
+    await userEvent.press(drawn.getByRole('button', { name: 'Start a listening party' }));
+
+    expect(watchParty.open).toHaveBeenCalledWith(SONG.id, 'listen');
   });
 
   it('shows the song, who sings it, the album and how it is being heard', async () => {
@@ -156,7 +217,7 @@ describe('NowPlaying', () => {
 
     await userEvent.press(skipBack);
 
-    expect(player.toggle).toHaveBeenCalledTimes(1);
+    expect(player.resume).toHaveBeenCalledTimes(1);
     expect(player.next).toHaveBeenCalledTimes(1);
     expect(player.cycleShuffle).toHaveBeenCalledTimes(1);
     expect(player.cycleRepeat).toHaveBeenCalledTimes(1);

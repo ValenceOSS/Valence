@@ -20,10 +20,11 @@ reference, not a substitute for reading it.
    capability for TypeScript to use — see the standard for their limits.
 2. **No duplication across modules.** Needed twice means extracted and shared.
 3. **No `../` imports.** Use `@ValenceUI/*`, `@ValenceClient/*`, `@ValenceContracts/*`,
-   `@ValenceCore/*`, `@ValenceSDK/*`, `@ValenceDatabase/*`, `@ValenceI18n/*`. The one
-   exception is `#dialect/*` inside `apps/server`, `apps/requests` and
-   `packages/database`, a package subpath import resolved by build condition to the
-   package's postgres folder, or its mysql folder under the `mysql` condition.
+   `@ValenceCore/*`, `@ValenceSDK/*`, `@ValenceDatabase/*`, `@ValenceI18n/*`,
+   `@ValenceNative/*`. The one exception is `#dialect/*` inside `apps/server`,
+   `apps/requests` and `packages/database`, a package subpath import resolved by
+   build condition to the package's postgres folder, or its mysql folder under
+   the `mysql` condition.
 4. **No `index.ts` / `index.tsx`.** No barrel files, ever.
 5. **`export { ComponentName }`** — named exports only, no default exports and
    no module objects. One member per file, filename matches the member. Set
@@ -71,20 +72,20 @@ standalone functions. snake_case for Rust modules.
 
 ## Stack
 
-| Layer         | Choice                                                          |
-| ------------- | --------------------------------------------------------------- |
-| API contract  | Hono + `@hono/zod-openapi`                                      |
-| API reference | Scalar, served at `/api/reference`                              |
-| Auth          | better-auth                                                     |
-| Data          | Postgres, MySQL or MariaDB + Drizzle; jobs in-house             |
-| Plugins       | Process-per-plugin, brokered                                    |
-| Media         | Rust + FFmpeg child process                                     |
-| UI            | Radix + Tailwind + CVA + Motion                                 |
-| Desktop       | Electron, a window onto the server                              |
-| Phone         | Expo + React Native, no admin                                   |
-| Lint          | oxlint + ESLint + husky                                         |
-| Realtime      | One WebSocket, viewer + admin feeds                             |
-| Web state     | TanStack Query + TanStack Router                                |
+| Layer         | Choice                                              |
+| ------------- | --------------------------------------------------- |
+| API contract  | Hono + `@hono/zod-openapi`                          |
+| API reference | Scalar, served at `/api/reference`                  |
+| Auth          | better-auth                                         |
+| Data          | Postgres, MySQL or MariaDB + Drizzle; jobs in-house |
+| Plugins       | Process-per-plugin, brokered                        |
+| Media         | Rust + FFmpeg child process                         |
+| UI            | Radix + Tailwind + CVA + Motion                     |
+| Desktop       | Electron, a window onto the server                  |
+| Phone         | Expo + React Native, no admin                       |
+| Lint          | oxlint + ESLint + husky                             |
+| Realtime      | One WebSocket, viewer + admin feeds                 |
+| Web state     | TanStack Query + TanStack Router                    |
 
 **Not used:** the shadcn registry (its conventions are adopted, its generated code
 is not), Redis, SQLite, MongoDB, pg-boss, tRPC as a primary API, barrel files.
@@ -94,12 +95,14 @@ is not), Redis, SQLite, MongoDB, pg-boss, tRPC as a primary API, barrel files.
 The application is `packages/client` and `packages/screens`; a client is a host
 that runs it.
 
-| Directory          | What it holds                                                   |
-| ------------------ | --------------------------------------------------------------- |
-| `packages/client`  | What Valence is: readers, queries, realtime, session, sharing   |
-| `packages/screens` | What Valence looks like: every screen, and the routes onto them |
-| `apps/web`         | What a browser is: entry, platform, socket, service worker      |
-| `apps/mobile`      | What a phone is: entry, platform, and the screens it draws      |
+| Directory          | What it holds                                                     |
+| ------------------ | ----------------------------------------------------------------- |
+| `packages/client`  | What Valence is: readers, queries, realtime, session, sharing     |
+| `packages/screens` | What Valence looks like: every screen, and the routes onto them   |
+| `apps/web`         | What a browser is: entry, platform, socket, service worker        |
+| `apps/mobile`      | What a phone is: entry, platform, and the screens it draws        |
+| `apps/tv`          | What a television is: entry, platform, and the screens it draws   |
+| `packages/native`  | What the phone and the television share that touches React Native |
 
 - **Neither package may import `@ValenceWeb/*`.** ESLint says so. Neither reaches
   into a client. `packages/client` may not import `@ValenceUI/*` either — it does
@@ -107,6 +110,10 @@ that runs it.
 - **Anything either needs from a client is a port on `Platform`** — today a
   device store, what to call this client, which client this is, and opening a
   socket. A host installs them with `installPlatform` before anything else runs.
+- **What the phone and the television both need goes in `packages/native`** when
+  it touches React Native (an alert, a native hook), and in `packages/client`
+  when it does not. It holds behaviour, never screens: touch and a remote draw
+  differently. It cannot import either app or anything that draws the web.
 - **A host is eight source files.** If something you are adding to `apps/web`
   is not the entry point, a platform port or a browser API, it belongs in a
   package.

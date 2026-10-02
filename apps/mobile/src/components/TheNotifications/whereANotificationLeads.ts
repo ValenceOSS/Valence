@@ -6,7 +6,7 @@ const A_BOOK = /[?&]book=([^&#]+)/u;
 
 /**
  * Where a notification's link leads on a phone, read from the web address the server wrote for
- * it: a title's page, a programme's or a book's. Music and watch parties lead nowhere on a phone yet.
+ * it: a title's page, a programme's or a book's. An invitation into a party is read for itself.
  *
  * @param link - The link the notification carries.
  * @returns The page it leads to, or null.

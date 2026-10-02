@@ -8,6 +8,8 @@ describe('ArrangementRow', () => {
         arrangement={{ order: 'added', isHidingWatched: false }}
         onArrange={jest.fn()}
         onFocus={jest.fn()}
+        isFiltered={false}
+        onFilters={jest.fn()}
       />,
     );
 
@@ -23,6 +25,8 @@ describe('ArrangementRow', () => {
         arrangement={{ order: 'added', isHidingWatched: true }}
         onArrange={onArrange}
         onFocus={jest.fn()}
+        isFiltered={false}
+        onFilters={jest.fn()}
       />,
     );
 
@@ -38,6 +42,8 @@ describe('ArrangementRow', () => {
         arrangement={{ order: 'size', isHidingWatched: true }}
         onArrange={onArrange}
         onFocus={jest.fn()}
+        isFiltered={false}
+        onFilters={jest.fn()}
       />,
     );
 
@@ -53,6 +59,8 @@ describe('ArrangementRow', () => {
         arrangement={{ order: 'added', isHidingWatched: false }}
         onArrange={jest.fn()}
         onFocus={onFocus}
+        isFiltered={false}
+        onFilters={jest.fn()}
       />,
     );
 
@@ -60,5 +68,22 @@ describe('ArrangementRow', () => {
     await fireEvent(drawn.getByRole('button', { name: 'Only what you have not watched' }), 'focus');
 
     expect(onFocus).toHaveBeenCalledTimes(2);
+  });
+
+  it('opens the filters, lit while any is set', async () => {
+    const onFilters = jest.fn();
+    const drawn = await render(
+      <ArrangementRow
+        arrangement={{ order: 'added', isHidingWatched: false }}
+        onArrange={jest.fn()}
+        onFocus={jest.fn()}
+        isFiltered
+        onFilters={onFilters}
+      />,
+    );
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Filters' }));
+
+    expect(onFilters).toHaveBeenCalled();
   });
 });

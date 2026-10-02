@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { fetchTracks } from '@ValenceClient/music/fetchMusic';
-import { usePlace } from '@ValenceScreens/navigation/usePlace';
-import { listeningPartyFrom } from './listeningPartyFrom';
-import { readListeningParty, setListeningParty } from './listeningParty';
+import { listeningPartyFrom } from '@ValenceClient/party/listeningPartyFrom';
+import { readListeningParty, setListeningParty } from '@ValenceClient/party/listeningParty';
 import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
 import type { WatchPartyState } from '@ValenceClient/party/useWatchParty';
@@ -15,7 +14,7 @@ const DRIFT_SECONDS = 2;
 const JUMP_SECONDS = 2.5;
 
 /**
- * Keeps this window's music in step with the listening party it is in.
+ * Keeps this client's music in step with the listening party it is in.
  *
  * Whoever may choose what plays — the host, and anybody they made a co-host — is simply listened
  * to: the song they move on to, their pausing and their skipping about are sent to the party as
@@ -26,19 +25,20 @@ const JUMP_SECONDS = 2.5;
  * Everybody says where they have got to every couple of seconds, which is what the party measures
  * drift by and what shows the host who is actually listening.
  *
- * An address carrying a party joins it, so an invitation opened into the music section lands in the
- * party rather than beside it.
+ * An invitation into a listening party joins it, so one opened into the music lands in the party
+ * rather than beside it.
  *
- * @param watchParty - The party this window is in, whatever kind, and how to act on it.
- * @param player - The player to keep in step, which is the window's own unless a test says otherwise.
+ * @param watchParty - The party this client is in, whatever kind, and how to act on it.
+ * @param invitedTo - The listening party this client was invited to, or nothing.
+ * @param player - The player to keep in step, which is the client's own unless a test says otherwise.
  * @param now - The clock, for telling a skip from time passing.
  */
 const useListenAlong = (
   watchParty: WatchPartyState,
+  invitedTo: string | null,
   player: MusicPlayer = theMusicPlayer(),
   now: () => number = Date.now,
 ): void => {
-  const { place } = usePlace();
   const { state } = useMusicPlayer(player);
   const { party, meConnectionId, send, join, report, command, referenceSeconds } = watchParty;
 
@@ -84,19 +84,13 @@ const useListenAlong = (
   );
 
   useEffect(() => {
-    const wanted = place.party;
-
-    if (wanted === null || place.playing !== null || partyId === wanted) {
+    if (invitedTo === null || partyId === invitedTo || joinedRef.current === invitedTo) {
       return;
     }
 
-    if (joinedRef.current === wanted) {
-      return;
-    }
-
-    joinedRef.current = wanted;
-    join(wanted);
-  }, [place.party, place.playing, partyId, join]);
+    joinedRef.current = invitedTo;
+    join(invitedTo);
+  }, [invitedTo, partyId, join]);
 
   useEffect(() => {
     if (command === null || partySong === null || command.sequence <= appliedRef.current) {

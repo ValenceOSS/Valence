@@ -8,7 +8,7 @@ import { qualityStepDetail } from '@ValenceClient/playback/qualityStepDetail';
 import type { DeviceProfile } from '@ValenceContracts/schemas/DeviceProfile';
 import { SUBTITLES_OFF } from '@ValenceClient/playback/fetchSubtitles';
 import { PLAYBACK_RATES } from '@ValenceClient/playback/PLAYBACK_RATES';
-import { SUBTITLE_STEP_SECONDS } from '@ValenceClient/playback/SUBTITLE_STEP_SECONDS';
+import { SUBTITLE_NUDGES } from '@ValenceClient/playback/SUBTITLE_NUDGES';
 import { describePlaybackRate } from '@ValenceClient/playback/describePlaybackRate';
 import { describeSubtitleOffset } from '@ValenceClient/playback/describeSubtitleOffset';
 import type { SubtitleTrack } from '@ValenceClient/playback/fetchSubtitles';
@@ -16,17 +16,12 @@ import type { AudioStream } from '@ValenceContracts/schemas/MediaItem';
 import type { MediaDetail } from '@ValenceContracts/schemas/Library';
 import { QualityPreferenceSchema } from '@ValenceClient/playback/qualityPreference';
 import type { QualityPreference } from '@ValenceClient/playback/qualityPreference';
+import { captionChoices } from '@ValenceClient/playback/captionChoices';
+import type { CaptionStyle } from '@ValenceClient/playback/captionStyle';
 import type { ASetOfChoices } from '@ValenceMobile/components/Watching/components/TheChoices/TheChoices.types';
 import { say } from '@ValenceI18n/say';
 
 const AS_SENT = 'original';
-
-const FURTHEST_NUDGE = 6;
-
-const NUDGES = Array.from(
-  { length: FURTHEST_NUDGE * 2 + 1 },
-  (_, at) => (at - FURTHEST_NUDGE) * SUBTITLE_STEP_SECONDS,
-);
 
 type WhatThereIsToChoose = {
   streams: readonly AudioStream[];
@@ -43,6 +38,8 @@ type WhatThereIsToChoose = {
   onRate: (rate: number) => void;
   subtitleOffset: number;
   onSubtitleOffset: (seconds: number) => void;
+  captionStyle: CaptionStyle;
+  onCaptionStyle: (style: CaptionStyle) => void;
 };
 
 /**
@@ -67,6 +64,8 @@ type WhatThereIsToChoose = {
  * @param chosenQuality - What was asked for, or the file as it is.
  * @param onAudio - Told which soundtrack they want.
  * @param onQuality - Told how much of their connection to spend.
+ * @param captionStyle - How the lines are drawn, whose parts are offered while a track is read.
+ * @param onCaptionStyle - Told the whole style whenever one part of it changes.
  * @returns The sets to show, in the order they should be read.
  */
 const theChoicesOn = ({
@@ -84,6 +83,8 @@ const theChoicesOn = ({
   onRate,
   subtitleOffset,
   onSubtitleOffset,
+  captionStyle,
+  onCaptionStyle,
 }: WhatThereIsToChoose): ASetOfChoices[] => {
   const sets: ASetOfChoices[] = [];
 
@@ -107,7 +108,7 @@ const theChoicesOn = ({
     sets.push({
       heading: say('common.subtitleTiming'),
       chosen: subtitleOffset.toString(),
-      choices: NUDGES.map((nudge) => ({
+      choices: SUBTITLE_NUDGES.map((nudge) => ({
         id: nudge.toString(),
         label: describeSubtitleOffset(nudge),
       })),
@@ -115,6 +116,17 @@ const theChoicesOn = ({
         onSubtitleOffset(Number(id));
       },
     });
+
+    for (const set of captionChoices(captionStyle)) {
+      sets.push({
+        heading: set.heading,
+        chosen: set.chosen,
+        choices: set.choices,
+        onChoose: (id) => {
+          onCaptionStyle(set.choose(id));
+        },
+      });
+    }
   }
 
   if (streams.length > 1) {

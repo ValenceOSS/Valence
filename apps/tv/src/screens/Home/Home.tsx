@@ -9,6 +9,7 @@ import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { Hero } from '@ValenceTv/components/Hero/Hero';
 import { Shelf } from '@ValenceTv/components/Shelf/Shelf';
 import { CollectionShelves } from '@ValenceTv/components/CollectionShelves/CollectionShelves';
+import { FavouritesShelf } from '@ValenceTv/components/FavouritesShelf/FavouritesShelf';
 import { useProgress } from '@ValenceTv/library/useProgress';
 import { useRoomToFill } from '@ValenceTv/layout/useRoomToFill';
 import { putOnTheTopShelf } from '@ValenceTv/platform/putOnTheTopShelf';
@@ -195,7 +196,17 @@ const HomePage = ({
                 onOpen={rail.id === RESUMING ? resume : onOpen}
               />
 
-              {at === 0 ? <CollectionShelves progress={progress} onOpen={onOpen} /> : null}
+              {at === 0 ? (
+                <>
+                  <FavouritesShelf
+                    viewerId={viewerId}
+                    watchable={watchable}
+                    progress={progress}
+                    onOpen={onOpen}
+                  />
+                  <CollectionShelves progress={progress} onOpen={onOpen} />
+                </>
+              ) : null}
             </Fragment>
           ))}
 

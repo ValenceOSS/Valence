@@ -8,16 +8,24 @@ import type { ArrangementRowProps } from './ArrangementRow.types';
 import { say } from '@ValenceI18n/say';
 
 /**
- * The web's order and its choice to leave out what has been watched, as a row of pills above a
- * wall of posters: one for each order, the chosen one white, and one that leaves out what has been
- * watched while it is on. It catches the remote across the whole width, so Up reaches it from any
+ * The web's order, its filters and its choice to leave out what has been watched, as a row of pills
+ * above a wall of posters: one for each order, the chosen one white, one that opens the filters, lit
+ * while any is set, and one that leaves out what has been watched while it is on. It catches the remote across the whole width, so Up reaches it from any
  * poster on the top row.
  *
  * @param arrangement - The order chosen, and whether what has been watched is left out.
  * @param onArrange - Told the arrangement chosen now.
  * @param onFocus - Told when the remote lands on any of its pills.
+ * @param isFiltered - Whether any filter narrows the wall, which lights its pill.
+ * @param onFilters - Told to open the filters.
  */
-const ArrangementRow = ({ arrangement, onArrange, onFocus }: ArrangementRowProps) => (
+const ArrangementRow = ({
+  arrangement,
+  onArrange,
+  onFocus,
+  isFiltered,
+  onFilters,
+}: ArrangementRowProps) => (
   <TVFocusGuideView autoFocus style={styles.row}>
     <View style={styles.orders}>
       {BrowseOrderSchema.options.map((order) => (
@@ -35,17 +43,29 @@ const ArrangementRow = ({ arrangement, onArrange, onFocus }: ArrangementRowProps
       ))}
     </View>
 
-    <Button
-      label={say('common.onlyWhatYouHaveNotWatched')}
-      variant={arrangement.isHidingWatched ? 'primary' : 'soft'}
-      size="md"
-      isPill
-      {...(arrangement.isHidingWatched ? { icon: Check } : {})}
-      onFocus={onFocus}
-      onPress={() => {
-        onArrange({ ...arrangement, isHidingWatched: !arrangement.isHidingWatched });
-      }}
-    />
+    <View style={styles.orders}>
+      <Button
+        label={say('common.filters')}
+        variant={isFiltered ? 'primary' : 'soft'}
+        size="md"
+        isPill
+        {...(isFiltered ? { icon: Check } : {})}
+        onFocus={onFocus}
+        onPress={onFilters}
+      />
+
+      <Button
+        label={say('common.onlyWhatYouHaveNotWatched')}
+        variant={arrangement.isHidingWatched ? 'primary' : 'soft'}
+        size="md"
+        isPill
+        {...(arrangement.isHidingWatched ? { icon: Check } : {})}
+        onFocus={onFocus}
+        onPress={() => {
+          onArrange({ ...arrangement, isHidingWatched: !arrangement.isHidingWatched });
+        }}
+      />
+    </View>
   </TVFocusGuideView>
 );
 

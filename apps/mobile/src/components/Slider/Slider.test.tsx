@@ -84,4 +84,12 @@ describe('Slider', () => {
 
     expect(drawn.getByLabelText('Seek through Arrival')).toBeTruthy();
   });
+
+  it('says it cannot be moved while it is fixed', async () => {
+    const drawn = await render(aSlider({ isDisabled: true }));
+
+    expect(drawn.getByRole('adjustable').props.accessibilityState).toMatchObject({
+      disabled: true,
+    });
+  });
 });

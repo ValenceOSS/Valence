@@ -41,7 +41,7 @@ import { Words } from '@ValenceMobile/components/Words/Words';
 import { AShareSheet } from '@ValenceMobile/components/AShareSheet/AShareSheet';
 import { howLongItRuns } from '@ValenceMobile/components/ATitle/howLongItRuns';
 import { askWhichVersion } from '@ValenceMobile/components/ATitle/askWhichVersion';
-import { useConfirmHiding } from '@ValenceMobile/hooks/useConfirmHiding';
+import { useConfirmHiding } from '@ValenceNative/library/useConfirmHiding';
 import { askToKeepOnThisPhone } from '@ValenceMobile/downloads/askToKeepOnThisPhone';
 import { useTheProgrammeOfEpisode } from '@ValenceMobile/hooks/useTheProgrammeOfEpisode';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';

@@ -8,12 +8,10 @@ import { HOME, writeLocation } from '@ValenceClient/navigation/readLocation';
  * opened. Built from the writer the address bar uses, so it reads back as the party it names.
  *
  * @param partyId - The party being joined.
- * @param origin - Where this instance is reached, for a test that has no window.
+ * @param origin - Where this instance is reached from wherever the invitation is going.
  * @returns The address to send.
  */
-const listeningInvitationTo = (
-  partyId: string,
-  origin = typeof window === 'undefined' ? '' : window.location.origin,
-): string => `${origin}${writeLocation({ ...HOME, section: 'music', party: partyId })}`;
+const listeningInvitationTo = (partyId: string, origin: string): string =>
+  `${origin}${writeLocation({ ...HOME, section: 'music', party: partyId })}`;
 
 export { listeningInvitationTo };

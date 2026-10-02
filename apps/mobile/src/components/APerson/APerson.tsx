@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
-import { formatCalendarDate } from '@ValenceCore/functions/formatCalendarDate';
+import { describeBirthLine } from '@ValenceClient/people/describeBirthLine';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { ACard } from '@ValenceMobile/components/ACard/ACard';
 import { AShelf } from '@ValenceMobile/components/AShelf/AShelf';
@@ -78,17 +78,8 @@ const APerson = ({ personId, onLookAt, onLookAtShow, onBack }: APersonProps) => 
 
         <Words size="title">{who?.name ?? say('common.somebody')}</Words>
 
-        {who === null || (who.bornOn === null && who.bornIn === null) ? null : (
-          <Words tone="muted">
-            {[
-              who.bornOn === null
-                ? null
-                : say('phone.aPerson.bornBornOn', { bornOn: formatCalendarDate(who.bornOn) }),
-              who.bornIn,
-            ]
-              .filter((part) => part !== null)
-              .join(' · ')}
-          </Words>
+        {who === null || describeBirthLine(who) === null ? null : (
+          <Words tone="muted">{describeBirthLine(who)}</Words>
         )}
       </View>
 
