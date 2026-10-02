@@ -267,7 +267,7 @@ const requestWorker = createRequestWorker({
   events,
   log: requestLog,
   print: log,
-  probe: createProbeClient(env.TRANSCODER_URL),
+  probe: createProbeClient(env.TRANSCODER_URL, fetch, env.TRANSCODER_SECRET),
   handOff,
 });
 

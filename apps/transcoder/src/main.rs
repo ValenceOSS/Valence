@@ -9,7 +9,7 @@ use tracing_subscriber::util::SubscriberInitExt as _;
 use valence_transcoder::monitor::JournalLayer;
 use valence_transcoder::router::{create_router, AppState};
 use valence_transcoder::session::{SessionConfig, SessionRegistry};
-use valence_transcoder::{capability, path_map, probe};
+use valence_transcoder::{capability, path_map, probe, shared_secret};
 
 const DEFAULT_FFMPEG: &str = "ffmpeg";
 const DEFAULT_FFPROBE: &str = "ffprobe";
@@ -35,8 +35,8 @@ fn from_env(variable: &str) -> Option<String> {
 /// Which `FFmpeg` tool to run: the one configured, else the one packaged beside this binary, else
 /// whichever is on the `PATH`.
 ///
-/// Beside this binary because that is how the native transcoder is shipped for a Mac (VAL-338): one
-/// folder holding all three. A launchd job starts with almost no `PATH`, so without this the
+/// Beside this binary because that is how the native transcoder is shipped for a Mac and for
+/// Windows (VAL-338): one folder holding all three, as `ffmpeg.exe` and `ffprobe.exe` on Windows. A launchd job starts with almost no `PATH`, so without this the
 /// operator would have to write out where `ffmpeg` is, in a file they were told to copy unchanged.
 /// The image sets both variables and keeps nothing beside the binary, so it is not affected.
 fn chosen_tool(
@@ -49,11 +49,21 @@ fn chosen_tool(
         .filter(|value| !value.trim().is_empty())
         .or_else(|| {
             beside
-                .map(|folder| folder.join(name))
+                .map(|folder| folder.join(format!("{name}{}", env::consts::EXE_SUFFIX)))
                 .filter(|path| path.is_file())
                 .map(|path| path.display().to_string())
         })
         .unwrap_or_else(|| name.to_owned())
+}
+
+/// The folders a roots setting lists.
+///
+/// Separated the way the system separates its own `PATH`: `:` on Linux and macOS, `;` on Windows,
+/// where a colon is part of every path and splitting on it turned `D:\Media` into `D` and `\Media`.
+fn roots(variable: &str) -> Vec<PathBuf> {
+    env::var_os(variable)
+        .map(|value| env::split_paths(&value).collect())
+        .unwrap_or_default()
 }
 
 /// The folder this binary was started from.
@@ -233,6 +243,27 @@ async fn report_durability(
     );
 }
 
+/// Reads the secret every caller must present, where one is set.
+///
+/// A secret too short to guard anything stops the service starting, as a bad
+/// path map does, since running unguarded when the operator meant to guard it
+/// is worse than not running.
+fn read_secret() -> Option<String> {
+    match shared_secret::parse(&setting(shared_secret::VARIABLE, "")) {
+        Ok(secret) => {
+            if secret.is_some() {
+                tracing::info!(target: "service", "every caller must present the shared secret");
+            }
+
+            secret
+        }
+        Err(reason) => {
+            eprintln!("{reason}");
+            std::process::exit(1);
+        }
+    }
+}
+
 async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
     let journal = valence_transcoder::monitor::Journal::new();
 
@@ -263,6 +294,8 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
         }
     }
 
+    let secret = read_secret();
+
     let state = AppState {
         registry: registry.clone(),
         ffprobe,
@@ -275,12 +308,8 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
         queue: valence_transcoder::queue::WorkQueue::new(chosen_background_jobs().unwrap_or(1))
             .with_lane("fingerprint", fingerprint_jobs()),
         renditions: valence_transcoder::progress_registry::ProgressRegistry::new(),
-        media_roots: env::var("VALENCE_MEDIA_ROOTS")
-            .map(|value| value.split(':').map(PathBuf::from).collect())
-            .unwrap_or_default(),
-        write_roots: env::var("VALENCE_WRITE_ROOTS")
-            .map(|value| value.split(':').map(PathBuf::from).collect())
-            .unwrap_or_default(),
+        media_roots: roots("VALENCE_MEDIA_ROOTS"),
+        write_roots: roots("VALENCE_WRITE_ROOTS"),
     };
 
     state.monitor.watch_graphics();
@@ -292,7 +321,7 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
 
     spawn_width_keeper(state.queue.clone(), registry.clone(), ffmpeg.clone());
 
-    let router = create_router(state);
+    let router = shared_secret::require(create_router(state), secret);
 
     spawn_reaper(registry.clone());
     spawn_sweeper(registry.clone());
@@ -310,6 +339,13 @@ async fn serve(registry: SessionRegistry, ffmpeg: String, ffprobe: String) {
                 }
             }
         }
+        #[cfg(not(unix))]
+        ListenTarget::Socket(socket) => {
+            eprintln!("cannot listen on {socket}: this system has no unix sockets");
+            eprintln!("set VALENCE_TRANSCODER_ADDR to an address such as 127.0.0.1:8422");
+            return;
+        }
+        #[cfg(unix)]
         ListenTarget::Socket(socket) => {
             if let Err(error) = tokio::fs::remove_file(&socket).await {
                 if error.kind() != std::io::ErrorKind::NotFound {
@@ -561,7 +597,7 @@ mod tests {
     #[test]
     fn runs_the_tool_packaged_beside_the_binary_when_none_is_configured() {
         let folder = folder("packaged");
-        let packaged = folder.join("ffmpeg");
+        let packaged = folder.join(format!("ffmpeg{}", std::env::consts::EXE_SUFFIX));
         std::fs::write(&packaged, b"").expect("a packaged ffmpeg");
 
         assert_eq!(

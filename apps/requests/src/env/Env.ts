@@ -23,6 +23,11 @@ const EnvSchema = z.object({
     .string()
     .default('')
     .transform((value) => value.trim().replace(/\/+$/, '')),
+  TRANSCODER_SECRET: z
+    .string()
+    .trim()
+    .pipe(z.union([z.literal(''), z.string().min(32)]))
+    .default(''),
 });
 
 type Env = z.infer<typeof EnvSchema>;

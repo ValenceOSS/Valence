@@ -499,12 +499,16 @@ mod tests {
         let arguments =
             extract_all_arguments(Path::new("/media/film.mkv"), &[2, 3], Path::new("/kept"));
 
-        assert!(arguments
-            .iter()
-            .any(|argument| argument == "/kept/2.vtt.partial"));
-        assert!(arguments
-            .iter()
-            .any(|argument| argument == "/kept/3.vtt.partial"));
+        assert!(arguments.iter().any(|argument| *argument
+            == Path::new("/kept")
+                .join("2.vtt.partial")
+                .display()
+                .to_string()));
+        assert!(arguments.iter().any(|argument| *argument
+            == Path::new("/kept")
+                .join("3.vtt.partial")
+                .display()
+                .to_string()));
     }
 
     #[test]

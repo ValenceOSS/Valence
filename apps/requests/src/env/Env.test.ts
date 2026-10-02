@@ -22,6 +22,17 @@ describe('readEnv', () => {
     expect(() => readEnv({ REQUESTS_SECRET: 'short' })).toThrow();
   });
 
+  it('presents the transcoder nothing unless given a secret it shares', () => {
+    expect(readEnv({ REQUESTS_SECRET: A_SECRET }).TRANSCODER_SECRET).toBe('');
+    expect(
+      readEnv({ REQUESTS_SECRET: A_SECRET, TRANSCODER_SECRET: A_SECRET }).TRANSCODER_SECRET,
+    ).toBe(A_SECRET);
+  });
+
+  it('refuses a transcoder secret too short to guard anything', () => {
+    expect(() => readEnv({ REQUESTS_SECRET: A_SECRET, TRANSCODER_SECRET: 'short' })).toThrow();
+  });
+
   it('drops a trailing slash from where the VPN answers', () => {
     expect(readEnv({ REQUESTS_SECRET: A_SECRET, VPN_URL: ' http://gluetun:8000/ ' }).VPN_URL).toBe(
       'http://gluetun:8000',

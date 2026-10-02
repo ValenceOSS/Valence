@@ -59,6 +59,15 @@ describe('readEnv', () => {
     expect(env.REQUESTS_SECRET).toBe('');
   });
 
+  it('asks the transcoder for nothing unless given a secret it shares', () => {
+    expect(readEnv({}).TRANSCODER_SECRET).toBe('');
+    expect(readEnv({ TRANSCODER_SECRET: 'a'.repeat(32) }).TRANSCODER_SECRET).toBe('a'.repeat(32));
+  });
+
+  it('refuses a transcoder secret too short to guard anything', () => {
+    expect(() => readEnv({ TRANSCODER_SECRET: 'short' })).toThrow();
+  });
+
   it('announces itself on the network unless told not to', () => {
     expect(readEnv({}).ANNOUNCE_ON_NETWORK).toBe(true);
     expect(readEnv({ ANNOUNCE_ON_NETWORK: 'false' }).ANNOUNCE_ON_NETWORK).toBe(false);

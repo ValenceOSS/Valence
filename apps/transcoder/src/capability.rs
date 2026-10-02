@@ -572,7 +572,13 @@ pub fn parse_listed_encoders(output: &str) -> Vec<String> {
 /// Checked against the build rather than assumed, because which of these exist
 /// depends on how `FFmpeg` was compiled and on its version: `scale_vt` arrived
 /// in 7.0, and some builds ship `scale_npp` in place of `scale_cuda`.
-pub const HARDWARE_SCALERS: [&str; 4] = ["scale_vt", "scale_cuda", "vpp_qsv", "scale_vaapi"];
+pub const HARDWARE_SCALERS: [&str; 5] = [
+    "scale_vt",
+    "scale_cuda",
+    "vpp_qsv",
+    "scale_vaapi",
+    "vpp_amf",
+];
 
 /// The smallest picture the encoders Valence drives are known to accept.
 ///
@@ -829,12 +835,15 @@ async fn verified_tone_maps(ffmpeg: &str, filters: &[String], device: &str) -> V
 /// backend composites, and the two drawn together. Anything less proves the
 /// filter opens rather than that it draws, and opening was never the part that
 /// failed.
+///
+/// `None` for a backend with no compositor, which has nothing to prove.
 #[must_use]
 pub fn overlay_probe_arguments(
     accel: HardwareAccel,
     pipeline: &crate::transcode_plan::HardwarePipeline,
     device: &str,
-) -> Vec<String> {
+) -> Option<Vec<String>> {
+    let overlay = pipeline.overlay?;
     let (width, height) = PROBE_SIZE;
     let mut arguments = vec![
         "-hide_banner".to_owned(),
@@ -862,7 +871,6 @@ pub fn overlay_probe_arguments(
             upload = pipeline.upload,
             overlay_format = pipeline.overlay_format,
             overlay_upload = pipeline.overlay_upload,
-            overlay = pipeline.overlay,
         ),
         "-map".to_owned(),
         "[v]".to_owned(),
@@ -871,7 +879,7 @@ pub fn overlay_probe_arguments(
         "-".to_owned(),
     ]);
 
-    arguments
+    Some(arguments)
 }
 
 /// Runs a one frame composite to prove a compositor works.
@@ -892,8 +900,12 @@ async fn verify_overlay(
     pipeline: &crate::transcode_plan::HardwarePipeline,
     device: &str,
 ) -> bool {
+    let Some(arguments) = overlay_probe_arguments(accel, pipeline, device) else {
+        return false;
+    };
+
     let Ok(outcome) = Command::new(ffmpeg)
-        .args(overlay_probe_arguments(accel, pipeline, device))
+        .args(arguments)
         .kill_on_drop(true)
         .output()
         .await
@@ -923,7 +935,9 @@ async fn verified_overlays(ffmpeg: &str, filters: &[String], device: &str) -> Ve
             continue;
         };
 
-        let name = pipeline.overlay;
+        let Some(name) = pipeline.overlay else {
+            continue;
+        };
 
         if !filters.iter().any(|filter| filter == name) {
             continue;
@@ -1141,7 +1155,7 @@ pub async fn device_filters_for(ffmpeg: &str, device: &str, accel: HardwareAccel
         overlay: capabilities
             .hardware_overlays
             .iter()
-            .any(|found| found == pipeline.overlay),
+            .any(|found| pipeline.overlay.is_some_and(|overlay| found == overlay)),
         tone_map: pipeline.tone_map.is_some_and(|mapper| {
             let name = crate::transcode_plan::filter_name(mapper);
 
@@ -1491,7 +1505,8 @@ mod tests {
             .pipeline()
             .expect("vaapi has a hardware pipeline");
 
-        let arguments = overlay_probe_arguments(HardwareAccel::Vaapi, &pipeline, DEFAULT_DEVICE);
+        let arguments = overlay_probe_arguments(HardwareAccel::Vaapi, &pipeline, DEFAULT_DEVICE)
+            .expect("vaapi composites");
 
         let chain = arguments
             .windows(2)
@@ -1509,7 +1524,8 @@ mod tests {
         for accel in [HardwareAccel::Vaapi, HardwareAccel::Nvenc] {
             let pipeline = accel.pipeline().expect("the backend has a pipeline");
 
-            let arguments = overlay_probe_arguments(accel, &pipeline, DEFAULT_DEVICE);
+            let arguments = overlay_probe_arguments(accel, &pipeline, DEFAULT_DEVICE)
+                .expect("the backend composites");
 
             let chain = arguments
                 .windows(2)
@@ -1546,7 +1562,8 @@ mod tests {
             .pipeline()
             .expect("vaapi has a hardware pipeline");
 
-        let arguments = overlay_probe_arguments(HardwareAccel::Vaapi, &pipeline, DEFAULT_DEVICE);
+        let arguments = overlay_probe_arguments(HardwareAccel::Vaapi, &pipeline, DEFAULT_DEVICE)
+            .expect("vaapi composites");
 
         assert_eq!(
             arguments.iter().filter(|one| *one == "-i").count(),

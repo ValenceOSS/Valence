@@ -39,6 +39,7 @@ pub mod rendition;
 pub mod router;
 pub mod session;
 pub mod session_sweep;
+pub mod shared_secret;
 pub mod source_address;
 pub mod split_session;
 pub mod steps_aside;

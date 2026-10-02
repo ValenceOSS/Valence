@@ -27,6 +27,24 @@ describe('createProbeClient', () => {
     });
   });
 
+  it('presents the transcoder its secret where one is set', async () => {
+    const fetcher = vi.fn<typeof fetch>(() => Promise.resolve(Response.json(FOUND)));
+
+    await createProbeClient('http://valence:8420', fetcher, 'a'.repeat(32))('/media/film.mkv');
+
+    expect(fetcher.mock.calls[0]?.[1]?.headers).toMatchObject({
+      authorization: `Bearer ${'a'.repeat(32)}`,
+    });
+  });
+
+  it('sends no authorization where no secret is set', async () => {
+    const fetcher = vi.fn<typeof fetch>(() => Promise.resolve(Response.json(FOUND)));
+
+    await createProbeClient('http://valence:8420', fetcher)('/media/film.mkv');
+
+    expect(fetcher.mock.calls[0]?.[1]?.headers).not.toHaveProperty('authorization');
+  });
+
   it('asks nothing at all where no transcoder is set up', async () => {
     const fetcher = vi.fn<typeof fetch>();
 

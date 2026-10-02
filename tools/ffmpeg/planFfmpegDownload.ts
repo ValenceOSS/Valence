@@ -14,6 +14,7 @@ const MAC_TARGETS: Record<string, string> = {
 
 type FfmpegDownload =
   | { kind: 'tarball'; url: string; fileName: string }
+  | { kind: 'zip'; url: string; fileName: string }
   | { kind: 'deb'; url: string; fileName: string }
   | { kind: 'unsupported'; message: string };
 
@@ -26,9 +27,10 @@ type PlanFfmpegDownloadOptions = {
 /**
  * Chooses which release artefact this machine needs, or says why there is not one.
  *
- * macOS takes the portable tarball and Linux the deb, because those are the two the fork builds.
- * The asymmetry is not an oversight: a Mac cannot use a deb at all, and it is the platform that
- * most needs its own build, since VideoToolbox cannot be reached from inside a container.
+ * macOS takes the portable tarball, Windows the portable zip and Linux the deb, because those are
+ * what the fork builds. The asymmetry is not an oversight: neither a Mac nor a Windows PC can use a
+ * deb at all, and they are the platforms that most need a build of their own, since neither one's
+ * video hardware can be fully reached from inside a container.
  *
  * Both Mac architectures are published. The Intel one is cross-compiled on an Apple silicon runner
  * and was measured on a 2015 MacBook Pro before being offered — the patched VideoToolbox filters
@@ -73,10 +75,23 @@ const planFfmpegDownload = ({
     return { kind: 'deb', url: `${RELEASES}/v${version}/${fileName}`, fileName };
   }
 
+  if (platform === 'win32') {
+    if (arch !== 'x64') {
+      return {
+        kind: 'unsupported',
+        message: `valence-ffmpeg publishes x64 for Windows, and this machine is ${arch}.`,
+      };
+    }
+
+    const fileName = `valence-ffmpeg_${version}_portable_win64-clang-gpl.zip`;
+
+    return { kind: 'zip', url: `${RELEASES}/v${version}/${fileName}`, fileName };
+  }
+
   return {
     kind: 'unsupported',
     message: [
-      `valence-ffmpeg publishes Linux and macOS builds, and this machine is ${platform}.`,
+      `valence-ffmpeg publishes Linux, macOS and Windows builds, and this machine is ${platform}.`,
       'Run Valence in the container, which carries the build already.',
     ].join('\n'),
   };

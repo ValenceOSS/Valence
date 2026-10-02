@@ -107,7 +107,7 @@ if (!response.ok) {
 
 writeFileSync(archive, Buffer.from(await response.arrayBuffer()));
 
-if (plan.kind === 'tarball') {
+if (plan.kind === 'tarball' || plan.kind === 'zip') {
   run('tar', ['-xf', plan.fileName], INSTALL_DIR);
 } else {
   unpackDeb(archive);
@@ -119,9 +119,11 @@ const packaged = join(INSTALL_DIR, 'usr', 'lib', 'valence-ffmpeg');
 
 const prefix = existsSync(packaged) ? packaged : INSTALL_DIR;
 
-const ffmpeg = join(prefix, 'ffmpeg');
+const executable = process.platform === 'win32' ? '.exe' : '';
 
-const ffprobe = join(prefix, 'ffprobe');
+const ffmpeg = join(prefix, `ffmpeg${executable}`);
+
+const ffprobe = join(prefix, `ffprobe${executable}`);
 
 if (!existsSync(ffmpeg) || !existsSync(ffprobe)) {
   process.stderr.write(`The archive unpacked without an ffmpeg and ffprobe in ${prefix}.\n`);
