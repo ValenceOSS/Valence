@@ -1,4 +1,4 @@
-import { isValidElement, useRef, useState } from 'react';
+import { isValidElement, useEffect, useRef, useState } from 'react';
 import { Check as CheckIcon, Copy as CopyIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
 import { Icon } from '@ValenceUI/Icon';
@@ -14,6 +14,14 @@ const COPIED_FOR_MILLISECONDS = 1600;
 const DocCode = ({ children }: HTMLAttributes<HTMLPreElement>) => {
   const block = useRef<HTMLPreElement>(null);
   const [isCopied, setIsCopied] = useState(false);
+  const resetting = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      window.clearTimeout(resetting.current ?? undefined);
+    },
+    [],
+  );
   const language = isValidElement<{ className?: string }>(children)
     ? /language-(?<name>[\w-]+)/u.exec(children.props.className ?? '')?.groups?.name
     : undefined;
@@ -21,7 +29,8 @@ const DocCode = ({ children }: HTMLAttributes<HTMLPreElement>) => {
   const copy = () => {
     void navigator.clipboard.writeText(block.current?.textContent ?? '').then(() => {
       setIsCopied(true);
-      window.setTimeout(() => {
+      window.clearTimeout(resetting.current ?? undefined);
+      resetting.current = window.setTimeout(() => {
         setIsCopied(false);
       }, COPIED_FOR_MILLISECONDS);
     });

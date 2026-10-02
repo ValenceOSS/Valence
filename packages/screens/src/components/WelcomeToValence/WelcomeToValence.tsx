@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { ChevronRight as ChevronRightIcon } from '@keyline-icons/react';
 import { Button } from '@ValenceUI/Button';
@@ -36,6 +36,14 @@ const WORDS_CLEAR_MS = 260;
 const WelcomeToValence = ({ name, household, onFinished, children }: WelcomeToValenceProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
   const [isLeaving, setIsLeaving] = useState(false);
+  const leaving = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      clearTimeout(leaving.current ?? undefined);
+    },
+    [],
+  );
 
   const move = prefersReducedMotion === true ? stillTransition : liquidSpring;
 
@@ -88,7 +96,10 @@ const WelcomeToValence = ({ name, household, onFinished, children }: WelcomeToVa
           onClick={() => {
             setIsLeaving(true);
 
-            setTimeout(onFinished, prefersReducedMotion === true ? 0 : WORDS_CLEAR_MS);
+            leaving.current = setTimeout(
+              onFinished,
+              prefersReducedMotion === true ? 0 : WORDS_CLEAR_MS,
+            );
           }}
         >
           {say('screens.welcomeToValence.startWatching')}

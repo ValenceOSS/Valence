@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { IconCheckFilled, IconCopyFilled } from '@tabler/icons-react';
 import { Button } from '@ValenceUI/Button';
 import type { CopyableCommandsProps } from './CopyableCommands.types';
@@ -13,11 +13,20 @@ const COPIED_FOR_MILLISECONDS = 1600;
  */
 const CopyableCommands = ({ commands, label }: CopyableCommandsProps) => {
   const [isCopied, setIsCopied] = useState(false);
+  const resetting = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      window.clearTimeout(resetting.current ?? undefined);
+    },
+    [],
+  );
 
   const copy = () => {
     void navigator.clipboard.writeText(commands).then(() => {
       setIsCopied(true);
-      window.setTimeout(() => {
+      window.clearTimeout(resetting.current ?? undefined);
+      resetting.current = window.setTimeout(() => {
         setIsCopied(false);
       }, COPIED_FOR_MILLISECONDS);
     });
