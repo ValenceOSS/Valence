@@ -13,6 +13,8 @@
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::OnceLock;
+use std::time::Duration;
 
 /// Gives each half-written fixture a name nothing else will pick up.
 static BUILDING: AtomicU64 = AtomicU64::new(0);
@@ -22,12 +24,53 @@ static BUILDING: AtomicU64 = AtomicU64::new(0);
 /// Test binaries used to name their directories the same way whichever process ran them, and most
 /// clear theirs before they start. Two runs at once on one machine, from two checkouts pushing at
 /// the same time, then emptied each other's directories under the tests running in them.
+///
+/// The first call in a process also clears away what earlier runs left: a run cannot tidy its own
+/// directory as it ends, so without this every run left one behind. Only directories nothing has
+/// touched for [`ABANDONED_AFTER`] go, so a run still going on the same machine keeps its own.
 pub fn scratch(name: impl AsRef<Path>) -> PathBuf {
-    let own = std::env::temp_dir().join(format!("valence-test-{}", std::process::id()));
+    PRUNED.get_or_init(clear_abandoned_scratch);
+
+    let own = std::env::temp_dir().join(format!("{SCRATCH_PREFIX}{}", std::process::id()));
 
     std::fs::create_dir_all(&own).ok();
 
     own.join(name)
+}
+
+/// What every run's own directory is named with, before its process id.
+const SCRATCH_PREFIX: &str = "valence-test-";
+
+/// How long a run's directory goes untouched before it counts as left behind. Far longer than
+/// any run lasts, so a run still going is never mistaken for one that has finished.
+const ABANDONED_AFTER: Duration = Duration::from_secs(6 * 60 * 60);
+
+/// Whether this process has cleared away what earlier runs left.
+static PRUNED: OnceLock<()> = OnceLock::new();
+
+/// Removes the directories earlier runs left in the system's temporary directory.
+fn clear_abandoned_scratch() {
+    let Ok(entries) = std::fs::read_dir(std::env::temp_dir()) else {
+        return;
+    };
+
+    for entry in entries.flatten() {
+        let name = entry.file_name();
+        let is_a_run = name
+            .to_str()
+            .and_then(|name| name.strip_prefix(SCRATCH_PREFIX))
+            .is_some_and(|pid| !pid.is_empty() && pid.chars().all(|c| c.is_ascii_digit()));
+        let is_abandoned = entry
+            .metadata()
+            .and_then(|meta| meta.modified())
+            .ok()
+            .and_then(|modified| modified.elapsed().ok())
+            .is_some_and(|age| age > ABANDONED_AFTER);
+
+        if is_a_run && is_abandoned {
+            std::fs::remove_dir_all(entry.path()).ok();
+        }
+    }
 }
 
 /// The `FFmpeg` to drive, which is the one Valence ships wherever it has been pointed at.
