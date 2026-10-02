@@ -19,27 +19,13 @@ import { Switch } from '@ValenceUI/Switch';
 import { TextField } from '@ValenceUI/TextField';
 import { describeDrift } from '@ValenceClient/party/describeDrift';
 import { ROLE_NAMES } from '@ValenceClient/party/ROLE_NAMES';
+import { PARTY_WORDS } from '@ValenceClient/party/PARTY_WORDS';
 import { whoCanBeAsked } from '@ValenceClient/party/whoCanBeAsked';
 import type { PartyPanelProps } from './PartyPanel.types';
 import { say } from '@ValenceI18n/say';
 import { sayCount } from '@ValenceI18n/sayCount';
 
-const WORDS = {
-  watch: {
-    doing: 'common.partyPanel.countWatching',
-    isDoing: say('common.watching'),
-    notDoing: say('common.partyPanel.notWatching'),
-    invitation: say('common.partyPanel.sendThisToWatchAlong'),
-    icon: EyeIcon,
-  },
-  listen: {
-    doing: 'common.partyPanel.countListening',
-    isDoing: say('common.partyPanel.listening'),
-    notDoing: say('common.partyPanel.notListening'),
-    invitation: say('common.partyPanel.sendThisToListenAlong'),
-    icon: HeadphonesIcon,
-  },
-} as const;
+const ICONS = { watch: EyeIcon, listen: HeadphonesIcon } as const;
 
 /**
  * Who is in the party, what they are doing, and — for whoever is running it — the controls for
@@ -86,7 +72,7 @@ const PartyPanel = ({
   const me = party.members.find((member) => member.connectionId === meConnectionId);
   const timekeeper = party.members.find((member) => member.connectionId === party.timekeeperId);
   const watching = party.members.filter((member) => member.isWatching).length;
-  const words = WORDS[party.kind];
+  const words = PARTY_WORDS[party.kind];
   const mayAsk = me?.role === 'host' || me?.role === 'coHost';
 
   const elsewhere = whoCanBeAsked(party, people);
@@ -143,7 +129,7 @@ const PartyPanel = ({
 
                 {member.isWatching ? (
                   <span className="flex items-center gap-1 text-xs text-text-muted">
-                    <Icon of={words.icon} size={13} />
+                    <Icon of={ICONS[party.kind]} size={13} />
                     {words.isDoing}
                   </span>
                 ) : (

@@ -52,7 +52,7 @@ import { useCaptionStyle } from '@ValenceClient/playback/useCaptionStyle';
 import { howBigToDrawIt } from '@ValenceMobile/components/Watching/howBigToDrawIt';
 import { usePinchToFill } from '@ValenceMobile/components/Watching/usePinchToFill';
 import { theChoicesOn } from '@ValenceMobile/components/Watching/theChoicesOn';
-import { TheParty } from '@ValenceMobile/components/Watching/components/TheParty/TheParty';
+import { APartyPanel } from '@ValenceMobile/components/APartyPanel/APartyPanel';
 import { roomPlayerOfExpo } from '@ValenceNative/party/roomPlayerOfExpo';
 import { useFollowTheRoom } from '@ValenceClient/party/useFollowTheRoom';
 import { usePartyPlayback } from '@ValenceClient/party/usePartyPlayback';
@@ -840,7 +840,8 @@ const Watching = ({
       {isChoosing ? <TheChoices sets={settings} onClose={stopChoosing} /> : null}
 
       {watchParty !== undefined && !isKept && (isPartying || watchParty.passwordWanted !== null) ? (
-        <TheParty
+        <APartyPanel
+          kind="watch"
           watchParty={watchParty}
           mediaId={mediaId}
           people={household}

@@ -1,13 +1,13 @@
 import { render, userEvent } from '@testing-library/react-native';
 import { Text } from 'react-native';
-import { TheSidePanel } from './TheSidePanel';
+import { ASidePanel } from './ASidePanel';
 
-describe('TheSidePanel', () => {
+describe('ASidePanel', () => {
   it('draws what it holds under its title', async () => {
     const drawn = await render(
-      <TheSidePanel title="Settings" closeLabel="Close" onClose={jest.fn()}>
+      <ASidePanel title="Settings" closeLabel="Close" onClose={jest.fn()}>
         <Text>Inside</Text>
-      </TheSidePanel>,
+      </ASidePanel>,
     );
 
     expect(drawn.getByText('Settings')).toBeTruthy();
@@ -17,9 +17,9 @@ describe('TheSidePanel', () => {
   it('closes from its cross, or from the film beside it', async () => {
     const onClose = jest.fn();
     const drawn = await render(
-      <TheSidePanel title="Settings" closeLabel="Close" onClose={onClose}>
+      <ASidePanel title="Settings" closeLabel="Close" onClose={onClose}>
         <Text>Inside</Text>
-      </TheSidePanel>,
+      </ASidePanel>,
     );
 
     for (const way of drawn.getAllByLabelText('Close')) {

@@ -20,11 +20,18 @@ const styles = StyleSheet.create({
  * it, drawn again as the song moves without drawing the rest of the player again.
  *
  * @param title - The song's name, for the bar's label.
+ * @param onSeek - Told where they scrubbed to.
+ * @param isFixed - Whether the song is somebody else's to move, as a listening party's host's is.
  * @param children - What sits between the two times.
  */
-const ThePlaceInTheSong = ({ title, children }: ThePlaceInTheSongProps) => {
+const ThePlaceInTheSong = ({
+  title,
+  onSeek,
+  isFixed = false,
+  children,
+}: ThePlaceInTheSongProps) => {
   const colours = useTheColours();
-  const { player, state } = useTheMusic();
+  const { state } = useTheMusic();
   const position = useWhereTheSongIs();
 
   return (
@@ -36,9 +43,8 @@ const ThePlaceInTheSong = ({ title, children }: ThePlaceInTheSongProps) => {
         colour={colours.text}
         restColour={withAlpha(colours.text, 0.2)}
         aheadColour={withAlpha(colours.text, 0.35)}
-        onScrubbed={(to) => {
-          player.seek(to);
-        }}
+        onScrubbed={onSeek}
+        isDisabled={isFixed}
       />
       <View style={styles.times}>
         <View style={styles.time}>

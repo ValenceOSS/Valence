@@ -24,6 +24,7 @@ import {
   getRealtimeClient,
 } from '@ValenceClient/realtime/getRealtimeClient';
 import { useWatchParty } from '@ValenceClient/party/useWatchParty';
+import { useListenAlong } from '@ValenceClient/party/useListenAlong';
 import { PARTY_NOTICE_LINGERS_MS } from '@ValenceClient/party/PARTY_NOTICE_LINGERS_MS';
 import type { PartyInvitation } from '@ValenceClient/party/readPartyInvitation';
 import { useFreshFromTheSocket } from '@ValenceClient/query/useFreshFromTheSocket';
@@ -137,7 +138,8 @@ const styles = StyleSheet.create({
  *
  * The watch party this phone may be in is held here rather than in the player, since an invitation
  * arrives with the notifications and a party outlives any one film being opened. Following one opens
- * the film it is watching, joined, and somebody put out of a party is told so for a moment.
+ * the film it is watching, joined, or the music player for a listening party, whose music is kept
+ * in step with the host's from then on; somebody put out of a party is told so for a moment.
  *
  * Waits for the session before drawing any of it, because every request they make depends on being
  * signed in and a library drawn first would ask a question it cannot have the answer to.
@@ -176,6 +178,9 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
     invitedTo?: string;
   } | null>(null);
   const watchParty = useWatchParty(getRealtimeClient());
+  const [listenInvitation, setListenInvitation] = useState<string | null>(null);
+
+  useListenAlong(watchParty, listenInvitation);
   const { notice: partyNotice, forgetNotice: forgetPartyNotice } = watchParty;
 
   useEffect(() => {
@@ -318,14 +323,19 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   };
 
   const join = (invitation: PartyInvitation) => {
-    if (invitation.kind === 'watch') {
-      setCarriedOn(0);
-      setWatching({
-        mediaId: invitation.mediaId,
-        startSeconds: resumeFor(byMediaId(watched.data ?? []), invitation.mediaId) ?? 0,
-        invitedTo: invitation.partyId,
-      });
+    if (invitation.kind === 'listen') {
+      setListenInvitation(invitation.partyId);
+      open({ kind: 'playing' });
+
+      return;
     }
+
+    setCarriedOn(0);
+    setWatching({
+      mediaId: invitation.mediaId,
+      startSeconds: resumeFor(byMediaId(watched.data ?? []), invitation.mediaId) ?? 0,
+      invitedTo: invitation.partyId,
+    });
   };
 
   const stopWatchingIt = () => {
@@ -612,7 +622,14 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
           />
         );
       case 'playing':
-        return <TheMusicPlayer onArtist={toArtist} onAlbum={toAlbum} onBack={back} />;
+        return (
+          <TheMusicPlayer
+            onArtist={toArtist}
+            onAlbum={toAlbum}
+            onBack={back}
+            watchParty={watchParty}
+          />
+        );
       case 'listening':
         return <TheListeningPlayer onBack={back} />;
     }

@@ -580,7 +580,7 @@ describe('Watching', () => {
     await userEvent.press(drawn.getByLabelText('Watch party'));
     await userEvent.press(drawn.getByLabelText('Start a watch party'));
 
-    expect(watchParty.open).toHaveBeenCalledWith('a-film');
+    expect(watchParty.open).toHaveBeenCalledWith('a-film', 'watch');
   });
 
   it('offers no watch party for a copy kept on the phone', async () => {

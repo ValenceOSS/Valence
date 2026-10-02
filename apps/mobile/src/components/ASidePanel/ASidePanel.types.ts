@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
 
-type TheSidePanelProps = {
+type ASidePanelProps = {
   title: string;
   closeLabel: string;
   onClose: () => void;
   children: ReactNode;
 };
 
-export type { TheSidePanelProps };
+export type { ASidePanelProps };

@@ -13,6 +13,7 @@ const HELD_TRACK = 7;
 const A_STEP = 10;
 
 const styles = StyleSheet.create({
+  disabled: { opacity: 0.5 },
   filled: { bottom: 0, left: 0, position: 'absolute', top: 0 },
   room: { justifyContent: 'center', paddingVertical: 14 },
   thumb: { borderRadius: THUMB, height: THUMB, position: 'absolute', width: THUMB },
@@ -43,6 +44,7 @@ const styles = StyleSheet.create({
  * @param aheadColour - What has arrived but not been watched.
  * @param onScrubbing - Told where their thumb is, as it moves.
  * @param onScrubbed - Told where they let go.
+ * @param isDisabled - Whether it can be moved, which a song somebody else is in charge of cannot.
  */
 const Slider = ({
   label,
@@ -54,6 +56,7 @@ const Slider = ({
   aheadColour,
   onScrubbing,
   onScrubbed,
+  isDisabled = false,
 }: SliderProps) => {
   const [width, setWidth] = useState(0);
   const [scrubbingTo, setScrubbingTo] = useState<number | null>(null);
@@ -95,8 +98,10 @@ const Slider = ({
 
   return (
     <View
-      style={styles.room}
+      style={[styles.room, isDisabled && styles.disabled]}
+      pointerEvents={isDisabled ? 'none' : 'auto'}
       accessible
+      accessibilityState={{ disabled: isDisabled }}
       accessibilityRole="adjustable"
       accessibilityLabel={label}
       accessibilityValue={{ min: 0, max: Math.round(furthest), now: Math.round(showing) }}

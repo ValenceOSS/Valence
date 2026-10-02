@@ -8,6 +8,7 @@ type SliderProps = {
   aheadColour: string;
   onScrubbing?: (to: number) => void;
   onScrubbed: (to: number) => void;
+  isDisabled?: boolean;
 };
 
 export type { SliderProps };

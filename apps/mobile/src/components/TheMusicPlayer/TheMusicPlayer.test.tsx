@@ -4,10 +4,17 @@ import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { aTrack } from '@ValenceClient/testing/aTrack';
 import { thePhonesMusicPlayer } from '@ValenceMobile/music/thePhonesMusicPlayer';
+import { aWatchParty } from '@ValenceClient/testing/aWatchParty';
+import { aWatchPartyStateWith } from '@ValenceClient/testing/aWatchPartyStateWith';
+import { setListeningParty } from '@ValenceClient/party/listeningParty';
 import { TheMusicPlayer } from './TheMusicPlayer';
 
 beforeEach(() => {
   installPlatform(aFakePlatform());
+});
+
+afterEach(() => {
+  setListeningParty(null);
 });
 
 const aPlayer = (onArtist = jest.fn(), onAlbum = jest.fn()) => (
@@ -60,5 +67,55 @@ describe('TheMusicPlayer', () => {
     expect(drawn.getByRole('button', { name: 'Shuffle' }).props.accessibilityState).toMatchObject({
       selected: false,
     });
+  });
+
+  it('hands the song to the host of somebody else’s listening party', async () => {
+    await act(() => {
+      thePhonesMusicPlayer().stop();
+      thePhonesMusicPlayer().play([aTrack(1), aTrack(2)], 0, { isOrdered: true });
+    });
+    const send = jest.fn();
+
+    await act(() => {
+      setListeningParty({
+        party: aWatchParty({ kind: 'listen', isPlaying: false }),
+        hostName: 'Dan',
+        mayChoose: false,
+        mayPlayPause: true,
+        maySeek: false,
+        send,
+      });
+    });
+    const drawn = await render(aPlayer(), { wrapper: CacheScope });
+
+    expect(drawn.getByRole('button', { name: 'Next' }).props.accessibilityState).toMatchObject({
+      disabled: true,
+    });
+
+    await userEvent.press(drawn.getByRole('button', { name: /^(Play|Pause)$/u }));
+
+    expect(send).toHaveBeenCalledWith(expect.objectContaining({ kind: 'play' }));
+  });
+
+  it('opens the listening party beside the other ways to send the music elsewhere', async () => {
+    await act(() => {
+      thePhonesMusicPlayer().stop();
+      thePhonesMusicPlayer().play([aTrack(1)], 0);
+    });
+    const watchParty = aWatchPartyStateWith(jest.fn);
+    const drawn = await render(
+      <TheMusicPlayer
+        onArtist={jest.fn()}
+        onAlbum={jest.fn()}
+        onBack={jest.fn()}
+        watchParty={watchParty}
+      />,
+      { wrapper: CacheScope },
+    );
+
+    await userEvent.press(drawn.getByRole('button', { name: 'Listening party' }));
+    await userEvent.press(drawn.getByLabelText('Start a listening party'));
+
+    expect(watchParty.open).toHaveBeenCalledWith(aTrack(1).id, 'listen');
   });
 });

@@ -15,7 +15,9 @@ describe('ThePlaceInTheSong', () => {
     await act(() => {
       thePhonesMusicPlayer().play([aTrack(1), aTrack(2)], 0);
     });
-    const drawn = await render(<ThePlaceInTheSong title="Track 1" />, { wrapper: CacheScope });
+    const drawn = await render(<ThePlaceInTheSong title="Track 1" onSeek={jest.fn()} />, {
+      wrapper: CacheScope,
+    });
 
     await act(() => {
       thePhonesMusicPlayer().seek(75);

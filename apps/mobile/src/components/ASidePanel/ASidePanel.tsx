@@ -3,9 +3,9 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
-import { SIDE_PANEL } from '@ValenceMobile/components/Watching/SIDE_PANEL';
+import { SIDE_PANEL } from '@ValenceMobile/components/ASidePanel/SIDE_PANEL';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
-import type { TheSidePanelProps } from './TheSidePanel.types';
+import type { ASidePanelProps } from './ASidePanel.types';
 
 const styles = StyleSheet.create({
   behind: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
  * @param onClose - Told they are done with it.
  * @param children - What is in it.
  */
-const TheSidePanel = ({ title, closeLabel, onClose, children }: TheSidePanelProps) => {
+const ASidePanel = ({ title, closeLabel, onClose, children }: ASidePanelProps) => {
   const room = useSafeAreaInsets();
 
   return (
@@ -66,6 +66,6 @@ const TheSidePanel = ({ title, closeLabel, onClose, children }: TheSidePanelProp
   );
 };
 
-TheSidePanel.displayName = 'TheSidePanel';
+ASidePanel.displayName = 'ASidePanel';
 
-export { TheSidePanel };
+export { ASidePanel };

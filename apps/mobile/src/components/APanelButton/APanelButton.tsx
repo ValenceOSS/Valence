@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { Button } from '@ValenceMobile/components/Button/Button';
-import { SIDE_PANEL } from '@ValenceMobile/components/Watching/SIDE_PANEL';
+import { SIDE_PANEL } from '@ValenceMobile/components/ASidePanel/SIDE_PANEL';
 import { FONTS } from '@ValenceMobile/theme/FONTS';
 import type { APanelButtonProps } from './APanelButton.types';
 

@@ -5,7 +5,7 @@ import { aPartyMember } from '@ValenceClient/testing/aPartyMember';
 import { aWatchParty } from '@ValenceClient/testing/aWatchParty';
 import { aWatchPartyStateWith } from '@ValenceClient/testing/aWatchPartyStateWith';
 import { Share } from 'react-native';
-import { TheParty } from './TheParty';
+import { APartyPanel } from './APartyPanel';
 
 const HOSTING = aWatchParty({
   isHeld: true,
@@ -26,21 +26,28 @@ beforeEach(() => {
   installPlatform(aFakePlatform({ serverAddress: () => 'https://valence.home' }));
 });
 
-describe('TheParty', () => {
+describe('APartyPanel', () => {
   it('starts a party around what is playing, where there is none', async () => {
     const watchParty = aWatchPartyStateWith(jest.fn);
     const drawn = await render(
-      <TheParty watchParty={watchParty} mediaId="a-film" people={[]} onClose={jest.fn()} />,
+      <APartyPanel
+        kind="watch"
+        watchParty={watchParty}
+        mediaId="a-film"
+        people={[]}
+        onClose={jest.fn()}
+      />,
     );
 
     await userEvent.press(drawn.getByLabelText('Start a watch party'));
 
-    expect(watchParty.open).toHaveBeenCalledWith('a-film');
+    expect(watchParty.open).toHaveBeenCalledWith('a-film', 'watch');
   });
 
   it('says who is in it, who is behind, and who the room waits for', async () => {
     const drawn = await render(
-      <TheParty
+      <APartyPanel
+        kind="watch"
         watchParty={aWatchPartyStateWith(jest.fn, { party: HOSTING, waitingFor: ['Jo'] })}
         mediaId="film-1"
         people={[]}
@@ -56,7 +63,13 @@ describe('TheParty', () => {
   it('lets whoever runs it make somebody a co-host, or put them out', async () => {
     const watchParty = aWatchPartyStateWith(jest.fn, { party: HOSTING });
     const drawn = await render(
-      <TheParty watchParty={watchParty} mediaId="film-1" people={[]} onClose={jest.fn()} />,
+      <APartyPanel
+        kind="watch"
+        watchParty={watchParty}
+        mediaId="film-1"
+        people={[]}
+        onClose={jest.fn()}
+      />,
     );
 
     await userEvent.press(drawn.getByText('Make a co-host'));
@@ -67,10 +80,13 @@ describe('TheParty', () => {
   });
 
   it('shares an invitation to this server, and asks the household along', async () => {
-    const share = jest.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' });
+    const share = jest
+      .spyOn(Share, 'share')
+      .mockResolvedValue({ action: 'sharedAction', activityType: undefined });
     const watchParty = aWatchPartyStateWith(jest.fn, { party: HOSTING });
     const drawn = await render(
-      <TheParty
+      <APartyPanel
+        kind="watch"
         watchParty={watchParty}
         mediaId="film-1"
         people={[
@@ -96,7 +112,13 @@ describe('TheParty', () => {
       passwordWanted: { partyId: 'p-9', wasWrong: false },
     });
     const drawn = await render(
-      <TheParty watchParty={watchParty} mediaId="film-1" people={[]} onClose={jest.fn()} />,
+      <APartyPanel
+        kind="watch"
+        watchParty={watchParty}
+        mediaId="film-1"
+        people={[]}
+        onClose={jest.fn()}
+      />,
     );
 
     await userEvent.type(drawn.getByLabelText('Watch party password'), 'popcorn');
@@ -109,12 +131,91 @@ describe('TheParty', () => {
     const onClose = jest.fn();
     const watchParty = aWatchPartyStateWith(jest.fn, { party: HOSTING });
     const drawn = await render(
-      <TheParty watchParty={watchParty} mediaId="film-1" people={[]} onClose={onClose} />,
+      <APartyPanel
+        kind="watch"
+        watchParty={watchParty}
+        mediaId="film-1"
+        people={[]}
+        onClose={onClose}
+      />,
     );
 
     await userEvent.press(drawn.getByLabelText('Leave'));
 
     expect(watchParty.leave).toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('starts a listening party around the song playing, once there is one', async () => {
+    const watchParty = aWatchPartyStateWith(jest.fn);
+    const silent = await render(
+      <APartyPanel
+        kind="listen"
+        watchParty={watchParty}
+        mediaId={null}
+        people={[]}
+        onClose={jest.fn()}
+      />,
+    );
+
+    expect(
+      silent.getByText(
+        'Play something, then start a party and send the link to anybody with an account here.',
+      ),
+    ).toBeTruthy();
+
+    const playing = await render(
+      <APartyPanel
+        kind="listen"
+        watchParty={watchParty}
+        mediaId="song-1"
+        people={[]}
+        onClose={jest.fn()}
+      />,
+    );
+
+    await userEvent.press(playing.getByLabelText('Start a listening party'));
+
+    expect(watchParty.open).toHaveBeenCalledWith('song-1', 'listen');
+  });
+
+  it('shares an invitation into the music, and says who is listening', async () => {
+    const share = jest
+      .spyOn(Share, 'share')
+      .mockResolvedValue({ action: 'sharedAction', activityType: undefined });
+    const drawn = await render(
+      <APartyPanel
+        kind="listen"
+        watchParty={aWatchPartyStateWith(jest.fn, {
+          party: aWatchParty({ kind: 'listen', members: [aPartyMember()] }),
+        })}
+        mediaId="song-1"
+        people={[]}
+        onClose={jest.fn()}
+      />,
+    );
+
+    expect(drawn.getByText('1 listening')).toBeTruthy();
+
+    await userEvent.press(drawn.getByLabelText('Share the invitation'));
+
+    expect(share).toHaveBeenCalledWith(
+      expect.objectContaining({ url: 'https://valence.home/music?party=p-1' }),
+    );
+  });
+
+  it('offers no listening party to somebody already watching one', async () => {
+    const drawn = await render(
+      <APartyPanel
+        kind="listen"
+        watchParty={aWatchPartyStateWith(jest.fn, { party: aWatchParty() })}
+        mediaId="song-1"
+        people={[]}
+        onClose={jest.fn()}
+      />,
+    );
+
+    expect(drawn.getByText('You are in a watch party')).toBeTruthy();
+    expect(drawn.queryByLabelText('Start a listening party')).toBeNull();
   });
 });

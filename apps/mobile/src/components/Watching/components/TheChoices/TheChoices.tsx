@@ -3,8 +3,8 @@ import { memo } from 'react';
 import { Text, View } from 'react-native';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { Icon } from '@ValenceMobile/components/Icon/Icon';
-import { SIDE_PANEL } from '@ValenceMobile/components/Watching/SIDE_PANEL';
-import { TheSidePanel } from '@ValenceMobile/components/Watching/components/TheSidePanel/TheSidePanel';
+import { SIDE_PANEL } from '@ValenceMobile/components/ASidePanel/SIDE_PANEL';
+import { ASidePanel } from '@ValenceMobile/components/ASidePanel/ASidePanel';
 import type { TheChoicesProps } from './TheChoices.types';
 import { say } from '@ValenceI18n/say';
 
@@ -21,7 +21,7 @@ const styles = SIDE_PANEL.styles;
  * @param onClose - Told they are done choosing.
  */
 const TheChoicesPanel = ({ sets, onClose }: TheChoicesProps) => (
-  <TheSidePanel
+  <ASidePanel
     title={say('common.settings')}
     closeLabel={say('phone.watching.theChoices.closeTheSettings')}
     onClose={onClose}
@@ -64,7 +64,7 @@ const TheChoicesPanel = ({ sets, onClose }: TheChoicesProps) => (
         ))}
       </View>
     ))}
-  </TheSidePanel>
+  </ASidePanel>
 );
 
 const TheChoices = memo(TheChoicesPanel);

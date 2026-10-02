@@ -6,6 +6,7 @@ import {
   MusicNote,
   Repeat,
   Repeat1,
+  Users,
 } from '@keyline-icons/react-native';
 import {
   Heart as HeartFilled,
@@ -14,7 +15,7 @@ import {
   SkipBack as SkipBackFilled,
   SkipForward as SkipForwardFilled,
 } from '@keyline-icons/react-native/fill';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { Alert, Animated, PanResponder, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { ARemotePicture } from '@ValenceMobile/components/ARemotePicture/ARemotePicture';
 import { albumArtworkUrl } from '@ValenceClient/music/fetchMusic';
@@ -23,6 +24,11 @@ import { whatTheFileHolds } from '@ValenceClient/music/whatTheFileHolds';
 import { useWhatIsPlaying } from '@ValenceClient/music/useWhatIsPlaying';
 import { useFavourites } from '@ValenceClient/library/useFavourites';
 import { useWatchingProfile } from '@ValenceClient/profiles/useWatchingProfile';
+import { useListeningParty } from '@ValenceClient/party/listeningParty';
+import { listenerControls } from '@ValenceClient/party/listenerControls';
+import { sessionQueries } from '@ValenceClient/query/sessionQueries';
+import { useQuery } from '@tanstack/react-query';
+import { APartyPanel } from '@ValenceMobile/components/APartyPanel/APartyPanel';
 import { ALitCircle } from '@ValenceMobile/components/ALitCircle/ALitCircle';
 import { ADevicesSheet } from '@ValenceMobile/components/ADevicesSheet/ADevicesSheet';
 import { AirPlayButton } from '@ValenceMobile/components/AirPlayButton/AirPlayButton';
@@ -100,6 +106,7 @@ const styles = StyleSheet.create({
   reach: { padding: 10 },
   said: { flex: 1, gap: 2 },
   top: { flex: 1, gap: 20 },
+  whole: { flex: 1 },
 });
 
 /**
@@ -121,17 +128,39 @@ const styles = StyleSheet.create({
  * to the other slides the one leaving away towards its button and brings the other in from the
  * side of its own, fading between them — only fading, for somebody who has asked for less movement.
  *
+ * In somebody else's listening party the song and where it has got to are the host's: skipping,
+ * shuffling and repeating are put away, and pausing and moving through the song are handed to them
+ * unless they have let everybody. The party is opened from beside the other ways to send the music
+ * elsewhere, to start one around the song playing, see who is listening, or leave.
+ *
  * @param onArtist - Told to open an artist.
  * @param onAlbum - Told to open an album.
  * @param onBack - Told somebody is done with it.
+ * @param watchParty - The party this phone holds, through which a listening party is had.
  */
-const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
+const TheMusicPlayer = ({ onArtist, onAlbum, onBack, watchParty }: TheMusicPlayerProps) => {
   const colours = useTheColours();
   const { width } = useWindowDimensions();
   const { player, state } = useTheMusic();
   const whatIsPlaying = useWhatIsPlaying(state);
   const isPlaying = whatIsPlaying?.isPlaying ?? state.isPlaying;
   const [isChoosingDevice, setIsChoosingDevice] = useState(false);
+  const [isPartying, setIsPartying] = useState(false);
+  const listening = useListeningParty();
+  const controls = listenerControls(
+    listening,
+    { isPlaying, positionSeconds: state.positionSeconds },
+    player,
+  );
+  const { isFollowing } = controls;
+  const everyone = useQuery({
+    ...sessionQueries.everyone(),
+    enabled: (watchParty?.party ?? null) !== null,
+  });
+  const household = useMemo(
+    () => (everyone.data ?? []).map((person) => ({ id: person.id, name: person.name })),
+    [everyone.data],
+  );
   const favourites = useFavourites(useWatchingProfile());
   const [beside, setBeside] = useState<'nothing' | 'queue' | 'lyrics'>('nothing');
   const [topHigh, setTopHigh] = useState(0);
@@ -208,8 +237,8 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
     latest.set('now', {
       at,
       page: width * (isPlaying ? 1 : RESTING),
-      hasBefore: before !== null,
-      hasAfter: after !== null,
+      hasBefore: before !== null && !isFollowing,
+      hasAfter: after !== null && !isFollowing,
       turn: (towards) => {
         const now = player.read().queue;
 
@@ -318,12 +347,7 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
     () => swapping.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
     [swapping],
   );
-  const seek = useCallback(
-    (to: number) => {
-      player.seek(to);
-    },
-    [player],
-  );
+  const { seek } = controls;
 
   if (besideShown !== beside) {
     if (besideShown !== 'nothing' && beside !== 'nothing') {
@@ -493,252 +517,297 @@ const TheMusicPlayer = ({ onArtist, onAlbum, onBack }: TheMusicPlayerProps) => {
   );
 
   return (
-    <Screen onBack={onBack} goesBackDown behind={<AMoodBackground palette={lights} />}>
-      <View
-        style={styles.top}
-        onLayout={({ nativeEvent }) => {
-          setTopHigh(nativeEvent.layout.height);
-        }}
-      >
-        {isFolded ? (
-          <>
-            <View style={styles.head}>
-              <Button
-                tone="bare"
-                label={say('phone.theMusicPlayer.showTheCover')}
-                onPress={() => {
-                  setBeside('nothing');
-                }}
-              >
-                <View style={{ height: SMALL, width: SMALL }} />
-              </Button>
-              {naming}
-              {liking}
-            </View>
-            <Animated.View style={[styles.beside, { opacity: besideComesIn }]}>
-              {[...(besideLeaving === null ? [] : [besideLeaving]), besideShown].map((which) => {
-                const isLeaving = which === besideLeaving;
+    <View style={styles.whole}>
+      <Screen onBack={onBack} goesBackDown behind={<AMoodBackground palette={lights} />}>
+        <View
+          style={styles.top}
+          onLayout={({ nativeEvent }) => {
+            setTopHigh(nativeEvent.layout.height);
+          }}
+        >
+          {isFolded ? (
+            <>
+              <View style={styles.head}>
+                <Button
+                  tone="bare"
+                  label={say('phone.theMusicPlayer.showTheCover')}
+                  onPress={() => {
+                    setBeside('nothing');
+                  }}
+                >
+                  <View style={{ height: SMALL, width: SMALL }} />
+                </Button>
+                {naming}
+                {liking}
+              </View>
+              <Animated.View style={[styles.beside, { opacity: besideComesIn }]}>
+                {[...(besideLeaving === null ? [] : [besideLeaving]), besideShown].map((which) => {
+                  const isLeaving = which === besideLeaving;
 
-                return (
+                  return (
+                    <Animated.View
+                      key={which}
+                      pointerEvents={isLeaving ? 'none' : 'auto'}
+                      style={[
+                        isLeaving ? StyleSheet.absoluteFill : styles.beside,
+                        {
+                          opacity: isLeaving ? switchedAway : switching,
+                          transform: [{ translateX: isLeaving ? switchLeaves : switchArrives }],
+                        },
+                      ]}
+                    >
+                      {which === 'queue' ? (
+                        <TheUpNext />
+                      ) : (
+                        <TheLyrics trackId={track.id} onSeek={seek} />
+                      )}
+                    </Animated.View>
+                  );
+                })}
+              </Animated.View>
+            </>
+          ) : (
+            <>
+              <View {...turning.panHandlers}>
+                <Button
+                  tone="bare"
+                  label={say('common.openTitle', { title: track.album.title })}
+                  onPress={() => {
+                    onAlbum(track.album.id);
+                  }}
+                >
+                  <View style={{ height: side }} />
+                </Button>
+              </View>
+              <View style={styles.head}>
+                {naming}
+                {liking}
+              </View>
+            </>
+          )}
+
+          {topHigh === 0 ? null : (
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.cover,
+                {
+                  transform: [{ translateX: coverAcross }, { scale: coverScale }],
+                },
+              ]}
+            >
+              <Animated.View style={{ transform: [{ scale: breathing }] }}>
+                {leaving === null || !isFolded ? null : (
                   <Animated.View
-                    key={which}
-                    pointerEvents={isLeaving ? 'none' : 'auto'}
+                    key="leaving"
+                    style={[StyleSheet.absoluteFill, { opacity: swappedAway }]}
+                  >
+                    {drawCover(leaving.cover)}
+                  </Animated.View>
+                )}
+                {isFolded || before === null ? null : (
+                  <Animated.View
+                    key={`at-${before.place.toString()}`}
                     style={[
-                      isLeaving ? StyleSheet.absoluteFill : styles.beside,
-                      {
-                        opacity: isLeaving ? switchedAway : switching,
-                        transform: [{ translateX: isLeaving ? switchLeaves : switchArrives }],
-                      },
+                      StyleSheet.absoluteFill,
+                      { transform: [{ translateX: slides.before }] },
                     ]}
                   >
-                    {which === 'queue' ? (
-                      <TheUpNext />
-                    ) : (
-                      <TheLyrics trackId={track.id} onSeek={seek} />
-                    )}
+                    {drawCover(before.cover)}
                   </Animated.View>
-                );
-              })}
+                )}
+                <Animated.View
+                  key={`at-${at.toString()}`}
+                  style={
+                    isFolded
+                      ? { opacity: swapping }
+                      : { transform: [{ translateX: slides.current }] }
+                  }
+                >
+                  {drawCover(cover)}
+                </Animated.View>
+                {isFolded || after === null ? null : (
+                  <Animated.View
+                    key={`at-${after.place.toString()}`}
+                    style={[StyleSheet.absoluteFill, { transform: [{ translateX: slides.after }] }]}
+                  >
+                    {drawCover(after.cover)}
+                  </Animated.View>
+                )}
+              </Animated.View>
             </Animated.View>
-          </>
-        ) : (
-          <>
-            <View {...turning.panHandlers}>
+          )}
+        </View>
+
+        <View style={styles.foot}>
+          <ThePlaceInTheSong title={track.title} onSeek={seek} isFixed={!controls.maySeek}>
+            {sounds === null ? null : (
               <Button
                 tone="bare"
-                label={say('common.openTitle', { title: track.album.title })}
+                label={say('phone.theMusicPlayer.soundsWhatItIs', { sounds })}
                 onPress={() => {
-                  onAlbum(track.album.id);
+                  Alert.alert(sounds, whatTheFileHolds(track));
                 }}
               >
-                <View style={{ height: side }} />
+                <View style={[styles.badge, { borderColor: withAlpha(colours.text, 0.35) }]}>
+                  <Words size="small" tone="muted">
+                    {sounds}
+                  </Words>
+                </View>
               </Button>
-            </View>
-            <View style={styles.head}>
-              {naming}
-              {liking}
-            </View>
-          </>
-        )}
+            )}
+          </ThePlaceInTheSong>
 
-        {topHigh === 0 ? null : (
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              styles.cover,
-              {
-                transform: [{ translateX: coverAcross }, { scale: coverScale }],
-              },
-            ]}
-          >
-            <Animated.View style={{ transform: [{ scale: breathing }] }}>
-              {leaving === null || !isFolded ? null : (
-                <Animated.View
-                  key="leaving"
-                  style={[StyleSheet.absoluteFill, { opacity: swappedAway }]}
-                >
-                  {drawCover(leaving.cover)}
-                </Animated.View>
-              )}
-              {isFolded || before === null ? null : (
-                <Animated.View
-                  key={`at-${before.place.toString()}`}
-                  style={[StyleSheet.absoluteFill, { transform: [{ translateX: slides.before }] }]}
-                >
-                  {drawCover(before.cover)}
-                </Animated.View>
-              )}
-              <Animated.View
-                key={`at-${at.toString()}`}
-                style={
-                  isFolded ? { opacity: swapping } : { transform: [{ translateX: slides.current }] }
-                }
-              >
-                {drawCover(cover)}
-              </Animated.View>
-              {isFolded || after === null ? null : (
-                <Animated.View
-                  key={`at-${after.place.toString()}`}
-                  style={[StyleSheet.absoluteFill, { transform: [{ translateX: slides.after }] }]}
-                >
-                  {drawCover(after.cover)}
-                </Animated.View>
-              )}
-            </Animated.View>
-          </Animated.View>
-        )}
-      </View>
-
-      <View style={styles.foot}>
-        <ThePlaceInTheSong title={track.title}>
-          {sounds === null ? null : (
+          <View style={styles.controls}>
             <Button
               tone="bare"
-              label={say('phone.theMusicPlayer.soundsWhatItIs', { sounds })}
-              onPress={() => {
-                Alert.alert(sounds, whatTheFileHolds(track));
-              }}
+              label={SHUFFLE_LABELS[shuffling]}
+              isChosen={shuffling !== 'off'}
+              isDisabled={isFollowing}
+              onPress={() => player.cycleShuffle()}
             >
-              <View style={[styles.badge, { borderColor: withAlpha(colours.text, 0.35) }]}>
-                <Words size="small" tone="muted">
-                  {sounds}
-                </Words>
+              <AShuffleMark mode={shuffling} size={20} />
+            </Button>
+
+            <Button
+              tone="bare"
+              label={say('common.previous')}
+              isDisabled={isFollowing}
+              onPress={() => player.previous()}
+            >
+              <View style={styles.reach}>
+                <Icon of={SkipBackFilled} size={32} colour={colours.text} />
               </View>
             </Button>
+
+            <Button
+              tone="bare"
+              label={isPlaying ? say('common.pause') : say('common.play')}
+              isDisabled={!controls.mayPlayPause}
+              onPress={controls.playPause}
+            >
+              <View style={styles.reach}>
+                <Icon of={isPlaying ? PauseFilled : PlayFilled} size={52} colour={colours.text} />
+              </View>
+            </Button>
+
+            <Button
+              tone="bare"
+              label={say('common.next')}
+              isDisabled={isFollowing}
+              onPress={() => player.next()}
+            >
+              <View style={styles.reach}>
+                <Icon of={SkipForwardFilled} size={32} colour={colours.text} />
+              </View>
+            </Button>
+
+            <Button
+              tone="bare"
+              label={
+                repeat === 'off'
+                  ? say('common.repeatEverything')
+                  : repeat === 'all'
+                    ? say('common.repeatThisSong')
+                    : say('common.stopRepeating')
+              }
+              isChosen={repeat !== 'off'}
+              isDisabled={isFollowing}
+              onPress={() => player.cycleRepeat()}
+            >
+              <ALitCircle
+                of={repeat === 'one' ? Repeat1 : Repeat}
+                size={20}
+                isLit={repeat !== 'off'}
+              />
+            </Button>
+          </View>
+
+          <AVolumeSlider />
+
+          <View style={styles.extras}>
+            <Button
+              tone="bare"
+              label={say('common.words')}
+              isChosen={beside === 'lyrics'}
+              onPress={() => {
+                setBeside((was) => (was === 'lyrics' ? 'nothing' : 'lyrics'));
+              }}
+            >
+              <ALitCircle of={Mic} size={20} isLit={beside === 'lyrics'} />
+            </Button>
+
+            <AirPlayButton />
+
+            <Button
+              tone="bare"
+              label={
+                state.remote === null
+                  ? say('common.playOnAnotherDevice')
+                  : say('common.playingOnLabel', { label: state.remote.label })
+              }
+              isChosen={state.remote !== null}
+              onPress={() => {
+                setIsChoosingDevice(true);
+              }}
+            >
+              <ALitCircle of={Cast} size={20} isLit={state.remote !== null} />
+            </Button>
+
+            {watchParty === undefined ? null : (
+              <Button
+                tone="bare"
+                label={say('common.listeningParty')}
+                isChosen={listening !== null}
+                onPress={() => {
+                  setIsPartying(true);
+                }}
+              >
+                <ALitCircle of={Users} size={20} isLit={listening !== null} />
+              </Button>
+            )}
+
+            <Button
+              tone="bare"
+              label={say('common.upNext')}
+              isChosen={beside === 'queue'}
+              onPress={() => {
+                setBeside((was) => (was === 'queue' ? 'nothing' : 'queue'));
+              }}
+            >
+              <ALitCircle of={ListMusic} size={20} isLit={beside === 'queue'} />
+            </Button>
+          </View>
+
+          {state.remote === null ? null : (
+            <Words size="small" tone="muted" isCentred>
+              {say('common.playingOnLabel', { label: state.remote.label })}
+            </Words>
           )}
-        </ThePlaceInTheSong>
 
-        <View style={styles.controls}>
-          <Button
-            tone="bare"
-            label={SHUFFLE_LABELS[shuffling]}
-            isChosen={shuffling !== 'off'}
-            onPress={() => player.cycleShuffle()}
-          >
-            <AShuffleMark mode={shuffling} size={20} />
-          </Button>
+          {state.problem === null ? null : <Words tone="danger">{state.problem}</Words>}
 
-          <Button tone="bare" label={say('common.previous')} onPress={() => player.previous()}>
-            <View style={styles.reach}>
-              <Icon of={SkipBackFilled} size={32} colour={colours.text} />
-            </View>
-          </Button>
-
-          <Button
-            tone="bare"
-            label={isPlaying ? say('common.pause') : say('common.play')}
-            onPress={() => player.toggle()}
-          >
-            <View style={styles.reach}>
-              <Icon of={isPlaying ? PauseFilled : PlayFilled} size={52} colour={colours.text} />
-            </View>
-          </Button>
-
-          <Button tone="bare" label={say('common.next')} onPress={() => player.next()}>
-            <View style={styles.reach}>
-              <Icon of={SkipForwardFilled} size={32} colour={colours.text} />
-            </View>
-          </Button>
-
-          <Button
-            tone="bare"
-            label={
-              repeat === 'off'
-                ? say('common.repeatEverything')
-                : repeat === 'all'
-                  ? say('common.repeatThisSong')
-                  : say('common.stopRepeating')
-            }
-            isChosen={repeat !== 'off'}
-            onPress={() => player.cycleRepeat()}
-          >
-            <ALitCircle
-              of={repeat === 'one' ? Repeat1 : Repeat}
-              size={20}
-              isLit={repeat !== 'off'}
-            />
-          </Button>
+          <ADevicesSheet
+            isOpen={isChoosingDevice}
+            onClose={() => {
+              setIsChoosingDevice(false);
+            }}
+          />
         </View>
+      </Screen>
 
-        <AVolumeSlider />
-
-        <View style={styles.extras}>
-          <Button
-            tone="bare"
-            label={say('common.words')}
-            isChosen={beside === 'lyrics'}
-            onPress={() => {
-              setBeside((was) => (was === 'lyrics' ? 'nothing' : 'lyrics'));
-            }}
-          >
-            <ALitCircle of={Mic} size={20} isLit={beside === 'lyrics'} />
-          </Button>
-
-          <AirPlayButton />
-
-          <Button
-            tone="bare"
-            label={
-              state.remote === null
-                ? say('common.playOnAnotherDevice')
-                : say('common.playingOnLabel', { label: state.remote.label })
-            }
-            isChosen={state.remote !== null}
-            onPress={() => {
-              setIsChoosingDevice(true);
-            }}
-          >
-            <ALitCircle of={Cast} size={20} isLit={state.remote !== null} />
-          </Button>
-
-          <Button
-            tone="bare"
-            label={say('common.upNext')}
-            isChosen={beside === 'queue'}
-            onPress={() => {
-              setBeside((was) => (was === 'queue' ? 'nothing' : 'queue'));
-            }}
-          >
-            <ALitCircle of={ListMusic} size={20} isLit={beside === 'queue'} />
-          </Button>
-        </View>
-
-        {state.remote === null ? null : (
-          <Words size="small" tone="muted" isCentred>
-            {say('common.playingOnLabel', { label: state.remote.label })}
-          </Words>
-        )}
-
-        {state.problem === null ? null : <Words tone="danger">{state.problem}</Words>}
-
-        <ADevicesSheet
-          isOpen={isChoosingDevice}
+      {watchParty !== undefined && isPartying ? (
+        <APartyPanel
+          kind="listen"
+          watchParty={watchParty}
+          mediaId={track.id}
+          people={household}
           onClose={() => {
-            setIsChoosingDevice(false);
+            setIsPartying(false);
           }}
         />
-      </View>
-    </Screen>
+      ) : null}
+    </View>
   );
 };
 

@@ -1,11 +1,13 @@
 import type { WatchPartyState } from '@ValenceClient/party/useWatchParty';
 import type { Askable } from '@ValenceClient/party/whoCanBeAsked';
+import type { PartyKind } from '@ValenceContracts/schemas/WatchParty';
 
-type ThePartyProps = {
+type APartyPanelProps = {
+  kind: PartyKind;
   watchParty: WatchPartyState;
-  mediaId: string;
+  mediaId: string | null;
   people: readonly Askable[];
   onClose: () => void;
 };
 
-export type { ThePartyProps };
+export type { APartyPanelProps };
