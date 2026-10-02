@@ -160,11 +160,13 @@ impl AppState {
 
 #[derive(Debug, Deserialize)]
 pub struct ProbeRequest {
+    #[serde(deserialize_with = "crate::path_map::deserialize")]
     pub path: String,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct FileQuery {
+    #[serde(deserialize_with = "crate::path_map::deserialize")]
     pub path: String,
 }
 
@@ -174,6 +176,7 @@ pub struct FileQuery {
 /// same way as a word: with the service's own error rather than the extractor's.
 #[derive(Debug, Deserialize)]
 pub struct AudioQuery {
+    #[serde(deserialize_with = "crate::path_map::deserialize")]
     pub path: String,
     pub kbps: String,
 }
@@ -1627,6 +1630,7 @@ async fn start_subtitle(
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RenditionPath {
+    #[serde(deserialize_with = "crate::path_map::deserialize")]
     pub output_path: String,
 }
 

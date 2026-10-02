@@ -1,0 +1,154 @@
+---
+title: Hardware transcoding on a Mac
+description: Run Valence's transcoder natively on a Mac so it can use VideoToolbox, with everything else in Docker as usual, and keep it running with launchd.
+order: 5
+---
+
+On a Mac, Valence runs as the usual Docker stack, but a container on a Mac cannot reach the Mac's video hardware. Docker Desktop and every other container runtime on macOS give a container no GPU, and Apple's video encoder and decoder are reachable only through VideoToolbox, a macOS framework that a Linux container has no way to call.
+
+So on a Mac the transcoder, the one part of Valence that needs the hardware, runs natively, and everything else stays in Docker. The server reaches it at `host.docker.internal`, and nothing else about the stack changes.
+
+This works on Apple silicon and on Intel Macs. It needs the [Docker Compose](/install/docker-compose) stack set up first.
+
+## Install the transcoder
+
+Each release carries the transcoder for both kinds of Mac, packed with the FFmpeg build it was checked against. Download the one for your Mac and unpack it into your home folder. It needs nothing else installed.
+
+On Apple silicon:
+
+```bash
+curl -fsSL https://github.com/ValenceOSS/Valence/releases/latest/download/valence-transcoder-macos-arm64.tar.gz | tar -xz -C ~
+```
+
+On an Intel Mac:
+
+```bash
+curl -fsSL https://github.com/ValenceOSS/Valence/releases/latest/download/valence-transcoder-macos-x64.tar.gz | tar -xz -C ~
+```
+
+Both leave a `valence-transcoder` folder in your home folder, holding the transcoder, `ffmpeg` and `ffprobe`. Download it with `curl` as above rather than with a browser. A browser marks the files as downloaded from the internet, and macOS then refuses to run them because they are not signed.
+
+Check that it can see the hardware:
+
+```bash
+~/valence-transcoder/valence-transcoder capabilities | grep videotoolbox
+```
+
+It should list `h264_videotoolbox` and `hevc_videotoolbox`. Keep the transcoder on the same version as the Valence image: when you update one, update the other.
+
+## Tell it where your files are
+
+The server names files the way its container sees them: `/media/Films/…`, and `/downloads/…` if you use requesting. The transcoder runs on the Mac, where those same files are wherever `MEDIA_PATH` and `DOWNLOADS_PATH` point. `VALENCE_PATH_MAP` tells it which is which, as pairs of `container=mac` separated by `;`:
+
+```text
+/media=/Volumes/Media;/downloads=/Users/you/Downloads
+```
+
+Use the same folders as `MEDIA_PATH` and `DOWNLOADS_PATH` in your `.env`. The transcoder refuses any file that is not in one of these folders, and says which folder is missing, so a path that is wrong shows up in its log rather than as a film that will not play.
+
+## Keep it running
+
+The transcoder has to be running whenever Valence is, including after a restart. launchd, the Mac's own service manager, does that. This writes a launchd agent that starts the transcoder when you log in and restarts it if it stops. Change the `VALENCE_PATH_MAP`, `VALENCE_MEDIA_ROOTS` and `VALENCE_WRITE_ROOTS` lines to your own folders first:
+
+```bash
+mkdir -p ~/Library/LaunchAgents
+cat > ~/Library/LaunchAgents/app.getvalence.transcoder.plist <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>app.getvalence.transcoder</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>$HOME/valence-transcoder/valence-transcoder</string>
+    <string>serve</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>VALENCE_TRANSCODER_ADDR</key>
+    <string>127.0.0.1:8422</string>
+    <key>VALENCE_PATH_MAP</key>
+    <string>/media=/Volumes/Media;/downloads=$HOME/Downloads</string>
+    <key>VALENCE_MEDIA_ROOTS</key>
+    <string>/Volumes/Media:$HOME/Downloads</string>
+    <key>VALENCE_WRITE_ROOTS</key>
+    <string>/Volumes/Media</string>
+    <key>VALENCE_TRANSCODE_DIR</key>
+    <string>$HOME/valence-transcoder/transcodes</string>
+    <key>VALENCE_ARTEFACT_DIR</key>
+    <string>$HOME/valence-transcoder/artefacts</string>
+  </dict>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>StandardErrorPath</key>
+  <string>$HOME/valence-transcoder/transcoder.log</string>
+</dict>
+</plist>
+EOF
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/app.getvalence.transcoder.plist
+```
+
+What each setting does:
+
+| Setting                   | What it does                                                                                                                                                                             |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VALENCE_TRANSCODER_ADDR` | Where it listens. `127.0.0.1` keeps it on this Mac, and containers still reach it through `host.docker.internal`. It has no sign-in of its own, so do not make it listen anywhere wider. |
+| `VALENCE_PATH_MAP`        | Where the server's paths are on this Mac, as above.                                                                                                                                      |
+| `VALENCE_MEDIA_ROOTS`     | The folders it may read, separated by `:`. The same folders as the right-hand side of the map.                                                                                           |
+| `VALENCE_WRITE_ROOTS`     | The folders it may write finished re-encodes into. Leave it out if you do not use [pre-transcoding](/use/pre-transcoding).                                                               |
+| `VALENCE_TRANSCODE_DIR`   | Scratch space for video segments while someone is watching. The fastest disk you have.                                                                                                   |
+| `VALENCE_ARTEFACT_DIR`    | Rendered previews and thumbnail sheets. Kept, so the library is not rendered again.                                                                                                      |
+
+A launchd agent runs while you are logged in, which is also when Docker Desktop runs. If the Mac is a server that nobody sits at, turn on automatic login so both start after a power cut.
+
+To change a setting later, edit the file, then unload it and load it again:
+
+```bash
+launchctl bootout gui/$(id -u)/app.getvalence.transcoder
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/app.getvalence.transcoder.plist
+```
+
+### Folders macOS protects
+
+macOS asks before a program reads your Downloads, Documents and Desktop folders, external drives and network shares. A program started by launchd has nowhere to show that question, so the answer is no, and the transcoder's log says `Operation not permitted`. If your library or downloads are in one of those places, open **System Settings**, then **Privacy & Security**, then **Full Disk Access**, add `valence-transcoder` from your `valence-transcoder` folder, and restart it as above.
+
+## Point Valence at it
+
+Lay `compose.native-transcoder.yaml` over `compose.yaml`. It comes with each release beside `compose.yaml`, and it is in the repository. It tells the server and the requests service where the transcoder is, stops the container starting its own, and takes away the `/dev/dri` mapping, which does not exist on a Mac:
+
+```bash
+docker compose -f compose.yaml -f compose.native-transcoder.yaml up -d
+```
+
+To avoid typing both files each time, put them in `.env`:
+
+```ini
+COMPOSE_FILE=compose.yaml:compose.native-transcoder.yaml
+```
+
+If something else on the Mac already uses port 8422, choose another in the agent's `VALENCE_TRANSCODER_ADDR` and set `TRANSCODER_PORT` to the same number in `.env`.
+
+## Check that it works
+
+1. Open **Settings** and find the **Hardware acceleration** card. With **Automatic** selected it should name `VideoToolbox`.
+2. Play something that needs a transcode and open **Sessions**. The session names its mode, and the transcoder's log names `h264_videotoolbox` or `hevc_videotoolbox` as the encoder.
+3. Restart the Mac, log in, and play it again. The transcoder should have come back on its own.
+
+The transcoder writes to `~/valence-transcoder/transcoder.log`. Read it when anything here does not work:
+
+```bash
+tail -f ~/valence-transcoder/transcoder.log
+```
+
+## Troubleshooting
+
+| Symptom                                                                 | Cause and fix                                                                                                                                             |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Nothing plays, and the admin area says the media service is unreachable | The transcoder is not running. `launchctl print gui/$(id -u)/app.getvalence.transcoder` says whether launchd started it, and the log says why it stopped. |
+| The log says a path `is in none of the folders VALENCE_PATH_MAP maps`   | The server sent a file from a folder the map does not have. Add the folder, matching `MEDIA_PATH` or `DOWNLOADS_PATH`.                                    |
+| The log says `Operation not permitted`                                  | macOS is protecting the folder. Give `valence-transcoder` Full Disk Access, as above.                                                                     |
+| macOS says the transcoder cannot be opened                              | It was downloaded with a browser. Download it again with `curl`, or run `xattr -dr com.apple.quarantine ~/valence-transcoder`.                            |
+| Settings says Software only                                             | The transcoder could not open VideoToolbox. Run the `capabilities` check above, and read the log.                                                         |

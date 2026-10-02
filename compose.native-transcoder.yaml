@@ -1,0 +1,31 @@
+# Valence with its transcoder running natively on this machine rather than in the container. Laid
+# over compose.yaml rather than instead of it:
+#
+#   docker compose -f compose.yaml -f compose.native-transcoder.yaml up -d
+#
+# This is how a Mac transcodes in hardware. A container on a Mac has no way to VideoToolbox, so the
+# transcoder runs on the Mac itself and everything else stays in Docker, unchanged. The transcoder is
+# installed and kept running separately; the docs page "Hardware transcoding on a Mac" covers both.
+#
+# The transcoder listens on 127.0.0.1 only, and Docker Desktop still reaches it from a container at
+# host.docker.internal. It has no sign-in of its own, so it should not listen anywhere wider.
+
+services:
+  valence:
+    environment:
+      VALENCE_EXTERNAL_TRANSCODER: '1'
+      TRANSCODER_URL: http://host.docker.internal:${TRANSCODER_PORT:-8422}
+    # Docker Desktop names the host itself. This says it again for Docker on Linux, where nothing
+    # does, and costs nothing where it was already known.
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    # The transcoder brought the GPU; the server does not need it. A device that does not exist on
+    # this machine would stop the container starting at all.
+    devices: !reset []
+    group_add: !reset []
+
+  requests:
+    environment:
+      TRANSCODER_URL: http://host.docker.internal:${TRANSCODER_PORT:-8422}
+    extra_hosts:
+      - host.docker.internal:host-gateway

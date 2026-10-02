@@ -63,6 +63,7 @@ pub struct RenditionRequest {
     /// Supplied by the caller rather than derived from a hash, because this one is not a cache: it
     /// has a place in somebody's library and a name a person will read. The caller is responsible
     /// for it being somewhere the service is allowed to write.
+    #[serde(deserialize_with = "crate::path_map::deserialize")]
     pub output_path: String,
     /// Where a sample starts, in seconds.
     #[serde(default)]

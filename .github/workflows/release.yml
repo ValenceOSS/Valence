@@ -237,6 +237,7 @@ jobs:
         run: |
           mkdir -p release
           cp compose.yaml release/compose.yaml
+          cp compose.native-transcoder.yaml release/compose.native-transcoder.yaml
           cp .env.example release/env.example
           tar -czf release/valence-web.tar.gz -C apps/web dist
 
@@ -245,6 +246,56 @@ jobs:
           name: release-artefacts
           path: release/
           if-no-files-found: warn
+
+  # The transcoder for a Mac, which runs natively there because a container on a Mac cannot reach
+  # VideoToolbox (VAL-338). Everything else a Mac runs is the image above. One folder per
+  # architecture, holding the transcoder and the FFmpeg it was verified against, which it finds
+  # beside itself.
+  #
+  # Both architectures on one Apple silicon runner: Intel is a cross-compile, and macOS runners cost
+  # ten times a Linux one. The FFmpeg is valence-ffmpeg's portable build, statically linked, so the
+  # folder needs nothing else installed.
+  transcoder-mac:
+    name: Transcoder for macOS
+    needs: [verify, verify-rust, image, artefacts]
+    runs-on: macos-latest
+    env:
+      VALENCE_FFMPEG_VERSION: 8.1.2-5.3
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin, x86_64-apple-darwin
+
+      - name: Build both architectures
+        run: |
+          cargo build --release -p valence-transcoder --target aarch64-apple-darwin
+          cargo build --release -p valence-transcoder --target x86_64-apple-darwin
+
+      - name: Pack each with its FFmpeg
+        run: |
+          mkdir -p release
+          for pair in arm64:aarch64-apple-darwin:macarm64 x64:x86_64-apple-darwin:mac64; do
+            IFS=: read -r arch target build <<< "$pair"
+            folder="pack-$arch/valence-transcoder"
+            mkdir -p "$folder"
+            cp "target/$target/release/valence-transcoder" "$folder/"
+            curl -fsSL \
+              "https://github.com/ValenceOSS/valence-ffmpeg/releases/download/v${VALENCE_FFMPEG_VERSION}/valence-ffmpeg_${VALENCE_FFMPEG_VERSION}_portable_${build}-gpl.tar.xz" \
+              | tar -xJ -C "$folder"
+            tar -czf "release/valence-transcoder-macos-$arch.tar.gz" -C "pack-$arch" valence-transcoder
+          done
+          "pack-arm64/valence-transcoder/valence-transcoder"
+          "pack-arm64/valence-transcoder/ffmpeg" -version | head -1
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: valence-transcoder-mac
+          path: release/
+          if-no-files-found: error
 
   # The desktop app's installers, built by the workflow that owns that and attached below. A job that
   # calls a workflow rather than a step, so its artefacts are this run's like any other job's.
@@ -262,7 +313,7 @@ jobs:
 
   publish:
     name: Publish the release
-    needs: [image, artefacts, desktop]
+    needs: [image, artefacts, transcoder-mac, desktop]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -279,6 +330,11 @@ jobs:
         with:
           pattern: valence-desktop-*
           merge-multiple: true
+          path: release
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: valence-transcoder-mac
           path: release
 
       # The release already exists: release-please created it and tagged it. What it cannot write
@@ -338,6 +394,7 @@ jobs:
 
           desktop="$(links '\.(dmg|exe|msi|AppImage|deb|rpm)$')"
           mobile="$(links '\.(apk|aab|ipa)$')"
+          transcoder="$(links '^valence-transcoder-macos-')"
           docker="\`docker pull $image:$version\`"
 
           jq -n \
@@ -346,6 +403,7 @@ jobs:
             --arg changelog_url "$changelog_url" \
             --arg desktop "$desktop" \
             --arg mobile "$mobile" \
+            --arg transcoder "$transcoder" \
             --arg docker "$docker" '
             {
               username: "Valence",
@@ -357,6 +415,7 @@ jobs:
                 fields: ([
                   (if $desktop == "" then empty else {name: "Desktop", value: $desktop} end),
                   (if $mobile == "" then empty else {name: "Mobile", value: $mobile} end),
+                  (if $transcoder == "" then empty else {name: "Transcoder for Mac", value: $transcoder} end),
                   {name: "Docker", value: $docker}
                 ])
               }]

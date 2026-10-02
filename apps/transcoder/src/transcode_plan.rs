@@ -301,6 +301,7 @@ pub enum Track {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionSpec {
+    #[serde(deserialize_with = "crate::path_map::deserialize")]
     pub input_path: String,
     pub start_seconds: u32,
     pub segment_seconds: u32,
