@@ -26,7 +26,7 @@ fn has_ffmpeg() -> bool {
 }
 
 fn directory() -> PathBuf {
-    let path = std::env::temp_dir().join("valence-integrity");
+    let path = common::scratch("valence-integrity");
 
     std::fs::create_dir_all(&path).expect("creates the fixture directory");
 

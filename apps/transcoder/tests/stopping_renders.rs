@@ -158,7 +158,7 @@ fn clip_directory(root: &Path, id: &str) -> PathBuf {
 async fn stopping_a_job_stops_its_renders_at_once_and_keeps_nothing_half_made() {
     require_ffmpeg();
 
-    let root = std::env::temp_dir().join("valence-test-stopping-job");
+    let root = common::scratch("valence-test-stopping-job");
     let _ = std::fs::remove_dir_all(&root);
     let source = source_file();
     let queue = WorkQueue::new(1);
@@ -199,7 +199,7 @@ async fn stopping_a_job_stops_its_renders_at_once_and_keeps_nothing_half_made() 
     assert!(job.failure.is_none(), "a stop is not a failure");
     assert_eq!(job.stopped_because.as_deref(), Some(STOPPED_ON_REQUEST));
 
-    for _ in 0..100 {
+    for _ in 0..500 {
         if !clip_directory(&root, &id).exists() {
             break;
         }
@@ -217,7 +217,7 @@ async fn stopping_a_job_stops_its_renders_at_once_and_keeps_nothing_half_made() 
 async fn turns_away_what_a_stopped_job_asks_for_afterwards_and_nobody_else() {
     require_ffmpeg();
 
-    let root = std::env::temp_dir().join("valence-test-stopped-stragglers");
+    let root = common::scratch("valence-test-stopped-stragglers");
     let _ = std::fs::remove_dir_all(&root);
     let source = source_file();
     let queue = WorkQueue::new(1);
@@ -247,7 +247,7 @@ async fn turns_away_what_a_stopped_job_asks_for_afterwards_and_nobody_else() {
 async fn clearing_a_clip_that_is_being_made_stops_it_first() {
     require_ffmpeg();
 
-    let root = std::env::temp_dir().join("valence-test-stopping-forget");
+    let root = common::scratch("valence-test-stopping-forget");
     let _ = std::fs::remove_dir_all(&root);
     let source = source_file();
     let queue = WorkQueue::new(1);

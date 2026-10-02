@@ -103,7 +103,7 @@ fn long_source() -> PathBuf {
 }
 
 fn cache_root(name: &str) -> PathBuf {
-    std::env::temp_dir().join(format!("valence-test-reuse-{name}"))
+    common::scratch(format!("valence-test-reuse-{name}"))
 }
 
 /// A registry with a cache directory nothing else writes into.

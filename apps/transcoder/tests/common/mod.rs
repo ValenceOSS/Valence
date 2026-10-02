@@ -17,6 +17,19 @@ use std::sync::atomic::{AtomicU64, Ordering};
 /// Gives each half-written fixture a name nothing else will pick up.
 static BUILDING: AtomicU64 = AtomicU64::new(0);
 
+/// A directory under the system's temporary one that only this process writes into.
+///
+/// Test binaries used to name their directories the same way whichever process ran them, and most
+/// clear theirs before they start. Two runs at once on one machine, from two checkouts pushing at
+/// the same time, then emptied each other's directories under the tests running in them.
+pub fn scratch(name: impl AsRef<Path>) -> PathBuf {
+    let own = std::env::temp_dir().join(format!("valence-test-{}", std::process::id()));
+
+    std::fs::create_dir_all(&own).ok();
+
+    own.join(name)
+}
+
 /// The `FFmpeg` to drive, which is the one Valence ships wherever it has been pointed at.
 ///
 /// Never the bare name where a variable was set: a container carrying Valence's own build has no

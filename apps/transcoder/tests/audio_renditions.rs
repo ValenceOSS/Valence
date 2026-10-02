@@ -88,7 +88,7 @@ fn silent_film() -> PathBuf {
 }
 
 fn root(name: &str) -> PathBuf {
-    let path = std::env::temp_dir().join(format!("valence-test-audio-{name}"));
+    let path = common::scratch(format!("valence-test-audio-{name}"));
 
     std::fs::remove_dir_all(&path).ok();
 

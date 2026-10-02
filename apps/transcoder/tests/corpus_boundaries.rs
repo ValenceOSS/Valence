@@ -302,7 +302,7 @@ fn predicts_the_segments_ffmpeg_actually_writes() {
         return;
     }
 
-    let scratch = std::env::temp_dir().join(format!("valence-corpus-{}", std::process::id()));
+    let scratch = common::scratch(format!("valence-corpus-{}", std::process::id()));
     let mut disagreements: Vec<String> = Vec::new();
 
     for path in fixtures {
@@ -425,7 +425,7 @@ fn starts_a_run_at_the_segment_it_was_aimed_at() {
         return;
     }
 
-    let scratch = std::env::temp_dir().join(format!("valence-seek-{}", std::process::id()));
+    let scratch = common::scratch(format!("valence-seek-{}", std::process::id()));
     let mut wrong: Vec<String> = Vec::new();
 
     for path in fixtures {

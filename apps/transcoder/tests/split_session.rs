@@ -62,7 +62,7 @@ fn source() -> PathBuf {
 }
 
 fn cache_root(name: &str) -> PathBuf {
-    std::env::temp_dir().join(format!("valence-test-split-{name}"))
+    common::scratch(format!("valence-test-split-{name}"))
 }
 
 fn registry(name: &str, split_audio: bool) -> SessionRegistry {
@@ -179,7 +179,7 @@ async fn streams_in(app: &axum::Router, id: &str, init: &str, segment: &str) -> 
     let mut bytes = fetch(app, id, init).await;
     bytes.extend(fetch(app, id, segment).await);
 
-    let path = std::env::temp_dir().join(format!("valence-split-{id}-{segment}.mp4"));
+    let path = common::scratch(format!("valence-split-{id}-{segment}.mp4"));
     std::fs::write(&path, bytes).expect("writes the joined segment");
 
     let output = Command::new(ffprobe())

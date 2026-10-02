@@ -150,7 +150,7 @@ async fn call(app: &axum::Router, message: Request<Body>) -> (StatusCode, Vec<u8
 /// is the regression test for VAL-104.
 #[tokio::test]
 async fn asking_twice_at_once_renders_one_clip_rather_than_two() {
-    let root = std::env::temp_dir().join("valence-test-preview-concurrent");
+    let root = common::scratch("valence-test-preview-concurrent");
     let _ = std::fs::remove_dir_all(&root);
 
     let source = source_file();

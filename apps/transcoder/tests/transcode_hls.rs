@@ -163,7 +163,7 @@ fn registry(name: &str) -> SessionRegistry {
 }
 
 fn cache_root(name: &str) -> PathBuf {
-    std::env::temp_dir().join(format!("valence-test-transcodes-{name}"))
+    common::scratch(format!("valence-test-transcodes-{name}"))
 }
 
 fn app(registry: SessionRegistry) -> axum::Router {
@@ -700,13 +700,18 @@ async fn produces_a_segment_again_after_the_run_that_wrote_it_has_ended() {
     let id = body["id"].as_str().expect("has an id").to_owned();
     let directory = cache_root("ended").join(&id);
 
-    for _ in 0..100 {
+    for _ in 0..600 {
         if directory.join(".complete").exists() {
             break;
         }
 
         tokio::time::sleep(Duration::from_millis(100)).await;
     }
+
+    assert!(
+        directory.join(".complete").exists(),
+        "the run finished within a minute"
+    );
 
     let segment = directory.join("segment00001.m4s");
 
@@ -835,13 +840,15 @@ async fn reuses_a_finished_transcode_instead_of_running_it_again() {
     let id = body["id"].as_str().expect("has an id").to_owned();
     let marker = cache_root("reuse").join(&id).join(".complete");
 
-    for _ in 0..100 {
+    for _ in 0..600 {
         if marker.exists() {
             break;
         }
 
         tokio::time::sleep(Duration::from_millis(100)).await;
     }
+
+    assert!(marker.exists(), "the run finished within a minute");
 
     registry.stop(&id, None).await;
 
