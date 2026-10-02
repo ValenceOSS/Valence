@@ -20,6 +20,7 @@ const watched = {
       mediaItemId: '9c858901-8a57-4791-81fe-4c455b099bc9',
       title: 'Arrival',
       seriesTitle: null,
+      seriesId: null,
       startedAt: '2026-08-10T20:00:00.000Z',
       lastWatchedAt: '2026-08-10T22:00:00.000Z',
       secondsWatched: 7_200,

@@ -12,6 +12,7 @@ type Row = {
   mediaItemId: string;
   title: string | null;
   seriesTitle: string | null;
+  seriesId: string | null;
   startedAt: Date;
   lastWatchedAt: Date;
   secondsWatched: number;
@@ -30,6 +31,7 @@ const shown = (row: Row): Viewing => ({
   mediaItemId: row.mediaItemId,
   title: row.title,
   seriesTitle: row.seriesTitle,
+  seriesId: row.seriesId,
   startedAt: row.startedAt.toISOString(),
   lastWatchedAt: row.lastWatchedAt.toISOString(),
   secondsWatched: row.secondsWatched,
@@ -54,7 +56,9 @@ const createDatabaseHistoryService = (db: AnyValenceDatabase): HistoryService =>
   const readViewing = async (id: string): Promise<Viewing | null> => {
     const [row] = await db.select().from(watchHistory).where(eq(watchHistory.id, id));
 
-    return row === undefined ? null : shown({ ...row, title: null, seriesTitle: null });
+    return row === undefined
+      ? null
+      : shown({ ...row, title: null, seriesTitle: null, seriesId: null });
   };
 
   return {
@@ -126,6 +130,7 @@ const createDatabaseHistoryService = (db: AnyValenceDatabase): HistoryService =>
           mediaItemId: watchHistory.mediaItemId,
           title: mediaItem.title,
           seriesTitle: mediaItem.seriesTitle,
+          seriesId: mediaItem.seriesId,
           startedAt: watchHistory.startedAt,
           lastWatchedAt: watchHistory.lastWatchedAt,
           secondsWatched: watchHistory.secondsWatched,

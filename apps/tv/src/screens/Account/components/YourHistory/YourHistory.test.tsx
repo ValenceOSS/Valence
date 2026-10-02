@@ -14,6 +14,7 @@ const aViewing = (
   mediaItemId: `media-${id}`,
   title,
   seriesTitle,
+  seriesId: seriesTitle === null ? null : `series-${id}`,
   startedAt: new Date().toISOString(),
   lastWatchedAt: new Date().toISOString(),
   secondsWatched: 600,
@@ -41,7 +42,7 @@ describe('YourHistory', () => {
     expect(drawn.queryByText('Watch history')).toBeNull();
   });
 
-  it('names a film, and an episode by its programme, opening each', async () => {
+  it('names a film, and an episode by its programme, opening each, a programme by its series', async () => {
     const onOpen = jest.fn();
     const drawn = await drawWith(
       [aViewing('1', 'Arrival', null, true), aViewing('2', 'Half Loop', 'Severance')],
@@ -52,11 +53,15 @@ describe('YourHistory', () => {
 
     await userEvent.press(drawn.getByText('Arrival'));
 
-    expect(onOpen).toHaveBeenLastCalledWith({ kind: 'film', mediaId: 'media-1' });
+    expect(onOpen).toHaveBeenLastCalledWith({ kind: 'film', mediaId: 'media-1', seriesId: null });
 
     await userEvent.press(drawn.getByText('Severance — Half Loop'));
 
-    expect(onOpen).toHaveBeenLastCalledWith({ kind: 'show', mediaId: 'media-2' });
+    expect(onOpen).toHaveBeenLastCalledWith({
+      kind: 'show',
+      mediaId: 'media-2',
+      seriesId: 'series-2',
+    });
   });
 
   it('sets a display name so devtools can identify it', () => {

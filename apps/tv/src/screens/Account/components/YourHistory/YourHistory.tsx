@@ -61,6 +61,7 @@ const YourHistory = ({ onOpen, onFocus }: YourHistoryProps) => {
               onOpen({
                 kind: viewing.seriesTitle === null ? 'film' : 'show',
                 mediaId: viewing.mediaItemId,
+                seriesId: viewing.seriesId,
               });
             }}
           />

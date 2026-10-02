@@ -196,7 +196,7 @@ const FilmPage = ({ mediaId, viewerId, onPlay, onOpenPerson }: FilmPageProps) =>
         label={say('common.hide')}
         icon={EyeOff}
         onPress={() => {
-          hiding.ask(summary);
+          hiding.ask(summariseDetail(film));
         }}
       />
     </TitleSpread>

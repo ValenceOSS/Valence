@@ -67,13 +67,18 @@ const someRows = (overrides: Partial<Rows> = {}): Rows => ({
   ...overrides,
 });
 
-const aCache = (): QueryClient => {
+const aCache = (favourites: readonly string[] = []): QueryClient => {
   const cache = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity, gcTime: Infinity } },
   });
 
   cache.setQueryData(libraryQueries.across([LIBRARY], { search: '', limit: 40 }).queryKey, [DUNE]);
   cache.setQueryData(viewingQueries.progress().queryKey, [HALFWAY]);
+  cache.setQueryData(viewingQueries.favourites('viewer').queryKey, [...favourites]);
+  cache.setQueryData(
+    libraryQueries.across([LIBRARY], { ids: [...favourites], limit: favourites.length }).queryKey,
+    favourites.length === 0 ? [] : [DUNE],
+  );
 
   return cache;
 };
@@ -83,10 +88,11 @@ const drawHome = async (
     onOpen?: (media: MediaSummary) => void;
     onPlay?: (media: MediaSummary, startSeconds: number) => void;
     isHeldBack?: boolean;
+    favourites?: readonly string[];
   } = {},
 ) => {
   const drawn = await render(
-    <QueryClientProvider client={aCache()}>
+    <QueryClientProvider client={aCache(told.favourites)}>
       <Home
         viewerId="viewer"
         watchable={[LIBRARY]}
@@ -141,6 +147,15 @@ describe('Home', () => {
     const drawn = await drawHome();
 
     expect(drawn.getByText('There is nothing to watch here yet.')).toBeTruthy();
+  });
+
+  it('still shelves what this viewer kept where the other shelves came back empty', async () => {
+    jest.mocked(useHomeRows).mockReturnValue(someRows({ rails: [] }));
+
+    const drawn = await drawHome({ favourites: [DUNE.id] });
+
+    expect(drawn.queryByText('There is nothing to watch here yet.')).toBeNull();
+    expect(await drawn.findByText('Favourites')).toBeTruthy();
   });
 
   it('features titles across the top above a shelf for each row', async () => {

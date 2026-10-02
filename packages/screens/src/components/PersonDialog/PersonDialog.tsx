@@ -167,7 +167,7 @@ const PersonDialog = ({
 
           {couldNotRead ? (
             <CouldNotRead
-              said={say('screens.personDialog.anythingAboutThemCouldNotBeRead')}
+              said={say('common.anythingAboutThemCouldNotBeRead')}
               isTryingAgain={asked.isFetching || theirs.isFetching}
               onTryAgain={() => {
                 void asked.refetch();

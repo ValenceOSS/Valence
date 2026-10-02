@@ -9,7 +9,11 @@ type AccountProps = {
   onRequests: () => void;
   onOpenRequest: (request: MediaRequest) => void;
   onOpenPluginPage: (page: { pluginId: string; pageId: string }) => void;
-  onOpenNamed: (wanted: { kind: 'film' | 'show'; mediaId: string }) => void;
+  onOpenNamed: (wanted: {
+    kind: 'film' | 'show';
+    mediaId: string;
+    seriesId?: string | null;
+  }) => void;
   onJoin: (invitation: PartyInvitation) => void;
   upTo: View | null;
 };
