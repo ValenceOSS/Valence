@@ -13,9 +13,9 @@ const servePasswordReset = (app: OpenAPIHono, context: AppContext): void => {
   const { requestPasswordReset } = context;
 
   app.openapi(requestPasswordResetRoute, async (context) => {
-    const { identifier, redirectTo } = context.req.valid('json');
+    const { redirectTo, ...ask } = context.req.valid('json');
 
-    await requestPasswordReset(identifier, redirectTo);
+    await requestPasswordReset(ask, redirectTo);
 
     return context.json({ requested: true } as const, 202);
   });

@@ -3,10 +3,12 @@ import { CacheScope } from '@ValenceClient/testing/CacheScope';
 import { forgetPlatform, installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { signInAsProfile } from '@ValenceClient/profiles/fetchEveryone';
+import { askForPasswordReset } from '@ValenceClient/session/askForPasswordReset';
 import { AskForThePassword } from './AskForThePassword';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 
 jest.mock('@ValenceClient/profiles/fetchEveryone', () => ({ signInAsProfile: jest.fn() }));
+jest.mock('@ValenceClient/session/askForPasswordReset', () => ({ askForPasswordReset: jest.fn() }));
 
 const A_FACE: ViewerProfile = {
   id: '176acd29-9b53-4193-831d-291bc7a9d4eb',
@@ -22,6 +24,7 @@ const A_FACE: ViewerProfile = {
 beforeEach(() => {
   installPlatform(aFakePlatform({ serverAddress: () => 'http://one.local:8420' }));
   jest.mocked(signInAsProfile).mockReset();
+  jest.mocked(askForPasswordReset).mockReset();
 });
 
 afterEach(() => {
@@ -130,5 +133,36 @@ describe('AskForThePassword', () => {
     );
 
     expect(drawn.getByRole('button', { name: 'Use a passkey instead' })).toBeTruthy();
+  });
+
+  it('asks for a reset link for the face that was picked, back to the reset page on its server', async () => {
+    jest.mocked(askForPasswordReset).mockResolvedValue(true);
+
+    const drawn = await render(
+      <AskForThePassword profile={A_FACE} onIn={jest.fn()} onBack={jest.fn()} />,
+      { wrapper: CacheScope },
+    );
+
+    await userEvent.press(drawn.getByText('Forgot your password?'));
+
+    expect(await drawn.findByText(/If Dan has an email address on their account/)).toBeTruthy();
+    expect(askForPasswordReset).toHaveBeenCalledWith(
+      { profileId: A_FACE.id },
+      'http://one.local:8420/reset-password',
+    );
+  });
+
+  it('says so when the link could not be asked for', async () => {
+    jest.mocked(askForPasswordReset).mockResolvedValue(false);
+
+    const drawn = await render(
+      <AskForThePassword profile={A_FACE} onIn={jest.fn()} onBack={jest.fn()} />,
+      { wrapper: CacheScope },
+    );
+
+    await userEvent.press(drawn.getByText('Forgot your password?'));
+
+    expect(await drawn.findByText('That could not be done.')).toBeTruthy();
+    expect(drawn.getByText('Forgot your password?')).toBeTruthy();
   });
 });

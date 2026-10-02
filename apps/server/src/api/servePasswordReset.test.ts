@@ -1,3 +1,4 @@
+import type { PasswordResetAsk } from '@ValenceContracts/schemas/PasswordResetRequest';
 import { describe, expect, it, vi } from 'vitest';
 import { createApp } from '@ValenceServer/App';
 import { createMemoryAuth } from '@ValenceServer/auth/createMemoryAuth';
@@ -17,7 +18,9 @@ const BASE = 'http://localhost:8420';
  * @param requestPasswordReset - What asking does.
  * @returns The app.
  */
-const build = (requestPasswordReset: (identifier: string, redirectTo: string) => Promise<void>) => {
+const build = (
+  requestPasswordReset: (ask: PasswordResetAsk, redirectTo: string) => Promise<void>,
+) => {
   const { auth, settings } = createMemoryAuth();
 
   return createApp({
@@ -48,7 +51,21 @@ describe('asking for a password reset over HTTP', () => {
 
     expect(answer.status).toBe(202);
     expect(await answer.json()).toEqual({ requested: true });
-    expect(requestPasswordReset).toHaveBeenCalledWith('ada', `${BASE}/reset-password`);
+    expect(requestPasswordReset).toHaveBeenCalledWith({ identifier: 'ada' }, `${BASE}/reset-password`);
+  });
+
+  it('takes the face somebody picked, for a phone that signs in by face', async () => {
+    const requestPasswordReset = vi.fn(() => Promise.resolve());
+    const app = build(requestPasswordReset);
+    const profileId = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
+    const answer = await app.request(`${BASE}/api/password-reset`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ profileId, redirectTo: `${BASE}/reset-password` }),
+    });
+
+    expect(answer.status).toBe(202);
+    expect(requestPasswordReset).toHaveBeenCalledWith({ profileId }, `${BASE}/reset-password`);
   });
 
   it('refuses a request with nothing to go on', async () => {

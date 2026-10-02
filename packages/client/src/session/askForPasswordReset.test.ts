@@ -13,7 +13,7 @@ describe('askForPasswordReset', () => {
 
     vi.stubGlobal('fetch', fetching);
 
-    await expect(askForPasswordReset('ada', 'https://v.example/reset-password')).resolves.toBe(
+    await expect(askForPasswordReset({ identifier: 'ada' }, 'https://v.example/reset-password')).resolves.toBe(
       true,
     );
     expect(fetching).toHaveBeenCalledWith(
@@ -28,10 +28,10 @@ describe('askForPasswordReset', () => {
   it('says no where the server could not be reached or refused', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
 
-    await expect(askForPasswordReset('ada', '/r')).resolves.toBe(false);
+    await expect(askForPasswordReset({ identifier: 'ada' }, '/r')).resolves.toBe(false);
 
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{}', { status: 400 })));
 
-    await expect(askForPasswordReset('ada', '/r')).resolves.toBe(false);
+    await expect(askForPasswordReset({ identifier: 'ada' }, '/r')).resolves.toBe(false);
   });
 });

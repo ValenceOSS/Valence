@@ -3,7 +3,9 @@ import { Play as PlayFilled } from '@keyline-icons/react-native/fill';
 import { useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { platformInUse } from '@ValenceClient/platform/installPlatform';
 import { signInAsProfile } from '@ValenceClient/profiles/fetchEveryone';
+import { askForPasswordReset } from '@ValenceClient/session/askForPasswordReset';
 import { ACarriedMark } from '@ValenceMobile/components/ACarriedMark/ACarriedMark';
 import { AFace } from '@ValenceMobile/components/AFace/AFace';
 import { ARising } from '@ValenceMobile/components/ARising/ARising';
@@ -21,6 +23,8 @@ import { say } from '@ValenceI18n/say';
 const NAMED_AFTER = 100;
 
 const MARK_HIGH = 40;
+
+const RESET_PAGE = '/reset-password';
 
 const styles = StyleSheet.create({
   asking: { alignSelf: 'stretch', gap: 14 },
@@ -59,6 +63,7 @@ const AskForThePassword = ({
   const [refusal, setRefusal] = useState<string | null>(null);
   const [isTrying, setIsTrying] = useState(false);
   const [wantsCode, setWantsCode] = useState(false);
+  const [reset, setReset] = useState<'idle' | 'asking' | 'sent' | 'failed'>('idle');
 
   const tryIt = async () => {
     setIsTrying(true);
@@ -81,6 +86,25 @@ const AskForThePassword = ({
     }
 
     setRefusal(outcome.reason);
+  };
+
+  const askForAReset = async () => {
+    const server = platformInUse().serverAddress();
+
+    if (server === null) {
+      setReset('failed');
+
+      return;
+    }
+
+    setReset('asking');
+
+    const isTaken = await askForPasswordReset(
+      { profileId: profile.id },
+      new URL(RESET_PAGE, server).toString(),
+    );
+
+    setReset(isTaken ? 'sent' : 'failed');
   };
 
   const goIn = () => {
@@ -166,6 +190,26 @@ const AskForThePassword = ({
                 onIn={goIn}
                 profileId={profile.id}
               />
+
+              {reset === 'sent' ? (
+                <Words tone="muted">
+                  {say('phone.askForThePassword.aLinkIsOnItsWay', { name: profile.name })}
+                </Words>
+              ) : (
+                <Button
+                  tone="ghost"
+                  isBusy={reset === 'asking'}
+                  onPress={() => {
+                    void askForAReset();
+                  }}
+                >
+                  {say('common.forgotYourPassword')}
+                </Button>
+              )}
+
+              {reset === 'failed' ? (
+                <Words tone="danger">{say('error.common.thatCouldNotBeDone')}</Words>
+              ) : null}
 
               <Button tone="ghost" icon={ChevronLeft} onPress={leave}>
                 {say('common.somebodyElse')}

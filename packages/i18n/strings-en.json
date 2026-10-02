@@ -3020,6 +3020,11 @@
     "context": "A message in an alert in the downloads of the phone app. {title} is filled in by the app."
   },
   {
+    "handler": "common.forgotYourPassword",
+    "text": "Forgot your password?",
+    "context": "A button on the sign-in screen, on the web and on the phone."
+  },
+  {
     "handler": "common.foundOnYourNetwork",
     "text": "Found on your network",
     "context": "Text shown, used in the where is your valence of the phone app and in the connect to server."
@@ -8358,6 +8363,11 @@
     "handler": "phone.askForTheCode.oneMoreStep",
     "text": "One more step",
     "context": "Text shown in the ask for the code of the phone app."
+  },
+  {
+    "handler": "phone.askForThePassword.aLinkIsOnItsWay",
+    "text": "If {name} has an email address on their account, a link to choose a new password is on its way to it. It works once, for an hour.",
+    "context": "On the phone, after somebody who picked their face asks for a password reset link. {name} is the name on the face."
   },
   {
     "handler": "phone.aSoundSwitch.turnTheSoundOff",
@@ -17985,11 +17995,6 @@
     "handler": "screens.folderLink.openFolderInFiles",
     "text": "Open {folder} in Files",
     "context": "The label of a button in the folder link. {folder} is filled in by the app."
-  },
-  {
-    "handler": "screens.forgotPassword.forgotYourPassword",
-    "text": "Forgot your password?",
-    "context": "A button on the sign-in screen."
   },
   {
     "handler": "screens.forgotPassword.ifAnAccountAnswersToThat",

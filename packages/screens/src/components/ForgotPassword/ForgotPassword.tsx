@@ -34,7 +34,7 @@ const ForgotPassword = ({ initialIdentifier = '' }: ForgotPasswordProps) => {
     setIsAsking(true);
 
     const isTaken = await askForPasswordReset(
-      identifier.trim(),
+      { identifier: identifier.trim() },
       new URL(RESET_PAGE, window.location.origin).toString(),
     );
 
@@ -52,7 +52,7 @@ const ForgotPassword = ({ initialIdentifier = '' }: ForgotPasswordProps) => {
           setIsOpen(true);
         }}
       >
-        {say('screens.forgotPassword.forgotYourPassword')}
+        {say('common.forgotYourPassword')}
       </Button>
 
       <Dialog

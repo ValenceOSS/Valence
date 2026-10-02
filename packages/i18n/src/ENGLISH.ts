@@ -731,6 +731,7 @@ const ENGLISH = {
   'common.forgetEverything': 'Forget everything',
   'common.forgetName': 'Forget {name}',
   'common.forgetTitle': 'Forget {title}?',
+  'common.forgotYourPassword': 'Forgot your password?',
   'common.foundOnYourNetwork': 'Found on your network',
   'common.fromPluginName': 'From {pluginName}',
   'common.fromWikipedia': 'From Wikipedia',
@@ -1941,6 +1942,8 @@ const ENGLISH = {
   'phone.aShow.playSeasonEpisode': 'Play S{season} E{episode}',
   'phone.aShow.thatProgrammeCouldNotBeRead': 'That programme could not be read.',
   'phone.askForTheCode.oneMoreStep': 'One more step',
+  'phone.askForThePassword.aLinkIsOnItsWay':
+    'If {name} has an email address on their account, a link to choose a new password is on its way to it. It works once, for an hour.',
   'phone.aSoundSwitch.turnTheSoundOff': 'Turn the sound off',
   'phone.aSoundSwitch.turnTheSoundOn': 'Turn the sound on',
   'phone.aTextReader.theBookText.followTheLink': 'Follow the link',
@@ -4499,7 +4502,6 @@ const ENGLISH = {
     '{name} needs a name and a picture, and a remote is a poor way to give it either. Open this on your phone and this television will carry on by itself.',
   'screens.finishOnAnotherDevice.waitingForYouToFinish': 'Waiting for you to finish',
   'screens.folderLink.openFolderInFiles': 'Open {folder} in Files',
-  'screens.forgotPassword.forgotYourPassword': 'Forgot your password?',
   'screens.forgotPassword.ifAnAccountAnswersToThat':
     'If an account answers to that, a link to choose a new password is on its way. It works once, for an hour. No email? Whoever runs this server can find the link in its log.',
   'screens.forgotPassword.resetYourPassword': 'Reset your password',
