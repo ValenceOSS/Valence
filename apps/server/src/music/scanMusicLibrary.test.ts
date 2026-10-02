@@ -364,6 +364,68 @@ describe('scanMusicLibrary', () => {
     expect(onProblem).toHaveBeenCalledWith('/music/broken.mp3', expect.anything());
   });
 
+  it('says why the reader could not read a track, in its own words', async () => {
+    const onProblem = vi.fn();
+    const { store } = memoryStore();
+
+    await scanMusicLibrary({
+      libraryId: 'lib',
+      root: '/music',
+      store,
+      artwork: keptArtwork(),
+      files: filesWith(
+        [fileAt('/music/odd.mp3')],
+        {},
+        {
+          readTags: () => Promise.reject(new Error('Unexpected end of the ID3 tag')),
+        },
+      ),
+      onProblem,
+    });
+
+    expect(onProblem).toHaveBeenCalledWith(
+      '/music/odd.mp3',
+      expect.objectContaining({
+        code: 'server.music.couldNotReadTrackBecause',
+        values: { reason: 'Unexpected end of the ID3 tag' },
+      }),
+    );
+  });
+
+  it('skips a track it could not keep, saying why, and keeps the rest', async () => {
+    const onProblem = vi.fn();
+    const { store, tracks } = memoryStore();
+    const one = `${ALBUM}/01. Look To Windward.flac`;
+    const two = `${ALBUM}/02. Emergence.flac`;
+    const keepTrack = store.keepTrack;
+
+    store.keepTrack = vi.fn((row: TrackRow) =>
+      row.path === one ? Promise.reject(new Error('No values to set')) : keepTrack(row),
+    );
+
+    const result = await scanMusicLibrary({
+      libraryId: 'lib',
+      root: '/music',
+      store,
+      artwork: keptArtwork(),
+      files: filesWith([fileAt(one), fileAt(two)], {
+        [one]: tagsFor(),
+        [two]: tagsFor({ title: 'Emergence', trackNumber: 2 }),
+      }),
+      onProblem,
+    });
+
+    expect(result).toMatchObject({ added: 1, failed: 1 });
+    expect(tracks.map((track) => track.title)).toEqual(['Emergence']);
+    expect(onProblem).toHaveBeenCalledWith(
+      one,
+      expect.objectContaining({
+        code: 'server.music.couldNotKeepTrack',
+        values: { reason: 'No values to set' },
+      }),
+    );
+  });
+
   it('keeps an album’s cover from inside its first track, once', async () => {
     const { store } = memoryStore();
     const artwork = keptArtwork();

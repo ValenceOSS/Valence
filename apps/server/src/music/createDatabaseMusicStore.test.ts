@@ -52,6 +52,23 @@ describe('createDatabaseMusicStore', { timeout: STARTING_POSTGRES_MS }, () => {
     ).resolves.toEqual({ id: album.id, hasArtwork: false, isCorrected: false });
   });
 
+  it('finds an album again from a track that says nothing more about it', async () => {
+    const { store, artist, album } = await aStoreWithAnAlbum();
+
+    await expect(
+      store.keepAlbum({
+        libraryId: 'music',
+        artistId: artist.id,
+        title: 'Hey What',
+        year: null,
+        genres: [],
+        isCompilation: false,
+        musicbrainzId: null,
+        releaseGroupMusicbrainzId: null,
+      }),
+    ).resolves.toEqual({ id: album.id, hasArtwork: false, isCorrected: false });
+  });
+
   it('keeps a song scanned twice as one, as the second scan found it', async () => {
     const { db, store, artist, album } = await aStoreWithAnAlbum();
     const song = aTrackRow({ albumId: album.id, path: '/music/a.flac', artistIds: [artist.id] });

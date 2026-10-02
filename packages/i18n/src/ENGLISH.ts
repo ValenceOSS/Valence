@@ -1837,6 +1837,22 @@ const ENGLISH = {
     'That is past the end — the file runs {durationSeconds} seconds.',
   'error.library.thatPathIsNotAReadable': 'That path is not a readable directory.',
   'error.libraryAccess.noSuchThingToMakeAn': 'No such thing to make an exception of.',
+  'error.linking.alreadyLinked':
+    'This server is already linked with that one, or is waiting on it.',
+  'error.linking.noSuchInvite': 'There is no such open invite.',
+  'error.linking.noSuchServer': 'There is no such linked server.',
+  'error.linking.notSignedByALinkedServer': 'That was not signed by a server this one knows.',
+  'error.linking.notTheServerThatMadeTheInvite':
+    'The server at that address is not the one that made the invite.',
+  'error.linking.thatInviteHasBeenUsed':
+    'That invite has been used, withdrawn or has run out. Ask for a new one.',
+  'error.linking.thatInviteIsFromThisServer':
+    'That invite is from this server. Use it on the other one.',
+  'error.linking.thatIsNotAnInvite': 'That is not an invite from another Valence.',
+  'error.linking.thatServerCouldNotBeReached':
+    'That server could not be reached. Check its address can be reached from this one.',
+  'error.linking.thisAccountMayNotLinkServers':
+    'This account may not link this server with others.',
   'error.listening.noSuchTrackInThatBook': 'No such track in that book.',
   'error.listening.noSuchTrackToListenTo': 'No such track to listen to.',
   'error.music.chooseAProfileFirst': 'Choose a profile first.',
@@ -6315,7 +6331,9 @@ const ENGLISH = {
   'server.main.titleIsReadyToKeep': '{title} is ready to keep',
   'server.main.titleWhichYouAskedForIs': '{title}, which you asked for, is in the library now.',
   'server.main.transcoderDidNotAnswer': '{address} did not answer a health check.',
+  'server.music.couldNotKeepTrack': 'That file was read, but could not be kept: {reason}',
   'server.music.couldNotReadTrack': 'That file could not be read as a track.',
+  'server.music.couldNotReadTrackBecause': 'That file could not be read as a track: {reason}',
   'server.music.musicDevices.anAdministrator': 'An administrator',
   'server.notifications.digestBody': '{counts} — {names}',
   'server.notifications.notifyHousehold.theHouseholdCouldNotBeTold':

@@ -7914,6 +7914,56 @@
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveLibraryAccess`)."
   },
   {
+    "handler": "error.linking.alreadyLinked",
+    "text": "This server is already linked with that one, or is waiting on it.",
+    "context": "Refusal when two servers are already linked or a request between them is pending."
+  },
+  {
+    "handler": "error.linking.noSuchInvite",
+    "text": "There is no such open invite.",
+    "context": "Refusal when an invite to withdraw does not exist or is already used."
+  },
+  {
+    "handler": "error.linking.noSuchServer",
+    "text": "There is no such linked server.",
+    "context": "Refusal when a linked server asked about does not exist."
+  },
+  {
+    "handler": "error.linking.notSignedByALinkedServer",
+    "text": "That was not signed by a server this one knows.",
+    "context": "Refusal to another server whose signed request could not be verified."
+  },
+  {
+    "handler": "error.linking.notTheServerThatMadeTheInvite",
+    "text": "The server at that address is not the one that made the invite.",
+    "context": "Refusal when the key of the server answering does not match the invite's fingerprint."
+  },
+  {
+    "handler": "error.linking.thatInviteHasBeenUsed",
+    "text": "That invite has been used, withdrawn or has run out. Ask for a new one.",
+    "context": "Refusal when an invite to link servers can no longer be used."
+  },
+  {
+    "handler": "error.linking.thatInviteIsFromThisServer",
+    "text": "That invite is from this server. Use it on the other one.",
+    "context": "Refusal when an admin pastes their own server's invite into it."
+  },
+  {
+    "handler": "error.linking.thatIsNotAnInvite",
+    "text": "That is not an invite from another Valence.",
+    "context": "Refusal when what was pasted as an invite to link servers is not one."
+  },
+  {
+    "handler": "error.linking.thatServerCouldNotBeReached",
+    "text": "That server could not be reached. Check its address can be reached from this one.",
+    "context": "Refusal when the server an invite names does not answer."
+  },
+  {
+    "handler": "error.linking.thisAccountMayNotLinkServers",
+    "text": "This account may not link this server with others.",
+    "context": "Refusal when somebody without the right to link servers asks to."
+  },
+  {
     "handler": "error.listening.noSuchTrackInThatBook",
     "text": "No such track in that book.",
     "context": "An error the server answers with (HTTP 404) in the books on the server (from `registerListeningRoutes`)."
@@ -25112,9 +25162,19 @@
     "context": "The reason in the main on the server. {address} is filled in by the app."
   },
   {
+    "handler": "server.music.couldNotKeepTrack",
+    "text": "That file was read, but could not be kept: {reason}",
+    "context": "Why a music file was skipped while scanning when saving it failed, with the database's own reason. Shown with the scan's issues on the admin area's jobs page."
+  },
+  {
     "handler": "server.music.couldNotReadTrack",
     "text": "That file could not be read as a track.",
     "context": "Why a music file was skipped while scanning a music library. Shown with the scan's issues on the admin area's jobs page."
+  },
+  {
+    "handler": "server.music.couldNotReadTrackBecause",
+    "text": "That file could not be read as a track: {reason}",
+    "context": "Why a music file was skipped while scanning, with the reader's own reason. Shown with the scan's issues on the admin area's jobs page."
   },
   {
     "handler": "server.music.musicDevices.anAdministrator",
