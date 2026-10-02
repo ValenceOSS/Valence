@@ -1196,7 +1196,10 @@ mod tests {
             .map(|pair| pair[1].clone())
             .expect("a filter chain");
 
-        assert!(chain.starts_with("tonemap_vaapi"), "{chain}");
+        assert!(
+            chain.starts_with("procamp_vaapi=b=16,tonemap_vaapi"),
+            "{chain}"
+        );
         assert!(!chain.contains("hwdownload"), "{chain}");
         assert!(!chain.contains("zscale"), "{chain}");
     }

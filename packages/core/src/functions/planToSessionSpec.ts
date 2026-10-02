@@ -1,11 +1,10 @@
 import { saying } from '@ValenceI18n/saying';
 import type { Said } from '@ValenceI18n/SaidSchema';
 import type { PlaybackPlan } from '@ValenceContracts/schemas/PlaybackPlan';
+import type { ToneMapping } from '@ValenceContracts/schemas/ToneMapping';
 import { selectEncoder } from '@ValenceCore/functions/selectEncoder';
 import type { Capabilities } from '@ValenceCore/functions/selectEncoder';
 import type { SegmentContainer } from './segmentContainerFor';
-
-type ToneMapping = 'zscale' | 'libplacebo' | 'unavailable';
 
 type SessionSpec = {
   inputPath: string;

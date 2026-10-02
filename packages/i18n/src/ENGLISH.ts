@@ -1561,7 +1561,7 @@ const ENGLISH = {
   'core.planToSessionSpec.cannotBurnTextSubtitles':
     'This server cannot burn in text subtitles, so they will not appear. Its FFmpeg build is missing the subtitles filter.',
   'core.planToSessionSpec.thisServerCannotToneMapSourceRange':
-    'This server cannot tone map {sourceRange} to SDR, so the stream keeps its original range instead of being converted. A client that colour manages will show it correctly; one that does not will show it washed out. Its FFmpeg build is missing the zscale or libplacebo filter.',
+    'This server cannot tone map {sourceRange} to SDR, so the stream keeps its original range instead of being converted. A client that colour manages will show it correctly; one that does not will show it washed out. Its FFmpeg build has none of the tonemapx, libplacebo or zscale filters.',
   'core.planToSessionSpec.thisServerHasNoWorkingEncoder':
     'This server has no working encoder for {targetCodec}.',
   'core.track.quad': 'Quad',
@@ -3044,7 +3044,7 @@ const ENGLISH = {
   'screens.adminArea.describeToneMapping.theCardProvedNoToneMapper':
     'The card proved no tone mapper of its own, so every HDR film converted for an SDR screen costs the processor {software} on top of the encode.',
   'screens.adminArea.describeToneMapping.thisBuildHasNeitherLibplaceboNor':
-    'This build has neither libplacebo nor zscale and the card proved nothing, so an HDR film is passed through as it is and looks washed out on a screen that cannot show it.',
+    'This build has none of tonemapx, libplacebo or zscale and the card proved nothing, so an HDR film is passed through as it is and looks washed out on a screen that cannot show it.',
   'screens.adminArea.describeToneMapping.valueOnTheDevice': '{value} on the device',
   'screens.adminArea.downloadClientDialog.addClient': 'Add client',
   'screens.adminArea.downloadClientDialog.asTheClientSeesIt': 'As the client sees it',

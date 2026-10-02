@@ -209,6 +209,16 @@ describe('planToSessionSpec', () => {
     expect(outcome).toMatchObject({ kind: 'ok', spec: { video: { toneMap: 'zscale' } } });
   });
 
+  it('asks for tonemapx where that is what the media service has', () => {
+    const outcome = build(
+      { ...directPlay, video: transcodeVideo },
+      { ...capabilities, toneMapping: 'tonemapx' },
+      'HDR10',
+    );
+
+    expect(outcome).toMatchObject({ kind: 'ok', spec: { video: { toneMap: 'tonemapx' } } });
+  });
+
   it('does not tone map an SDR source', () => {
     const outcome = build({ ...directPlay, video: transcodeVideo }, capabilities, 'SDR');
 

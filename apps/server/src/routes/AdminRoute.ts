@@ -36,6 +36,7 @@ import {
 } from '@ValenceContracts/schemas/ResourceSample';
 import { SessionMessageSchema } from '@ValenceContracts/schemas/SessionMessage';
 import { ScanAccepted } from './LibraryRoute';
+import { ToneMappingSchema } from '@ValenceContracts/schemas/ToneMapping';
 
 const AdminError = RefusalSchema.openapi('AdminError');
 
@@ -80,7 +81,7 @@ const AdminOverviewSchema = z
       ffmpegSupported: z.boolean().default(true),
       hardwareAccels: z.array(z.string()),
       concurrentRenders: z.number().int().nonnegative().default(0),
-      toneMapping: z.enum(['zscale', 'libplacebo', 'unavailable']).default('unavailable'),
+      toneMapping: ToneMappingSchema.default('unavailable'),
       hardwareToneMaps: z.array(z.string()).default([]),
       chains: z
         .array(

@@ -1,3 +1,4 @@
+import type { ToneMapping } from '@ValenceContracts/schemas/ToneMapping';
 import { chainRunsHere } from '@ValenceCore/functions/chainRunsHere';
 import type { VerifiedChain } from '@ValenceCore/functions/chainRunsHere';
 
@@ -6,8 +7,6 @@ type VerifiedEncoder = {
   encoder: string;
   accel: string;
 };
-
-type ToneMapping = 'zscale' | 'libplacebo' | 'unavailable';
 
 type Capabilities = {
   encoders: VerifiedEncoder[];

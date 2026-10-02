@@ -1406,7 +1406,7 @@ otherwise start a second one"
 
         assert_eq!(
             chain,
-            "setpts=N/23.976/TB,fps=1/10,tonemap_vaapi=format=nv12:p=bt709:t=bt709:m=bt709,scale_vaapi=w=320:h=180:format=nv12"
+            "setpts=N/23.976/TB,fps=1/10,procamp_vaapi=b=16,tonemap_vaapi=format=nv12:p=bt709:t=bt709:m=bt709,scale_vaapi=w=320:h=180:format=nv12"
         );
     }
 

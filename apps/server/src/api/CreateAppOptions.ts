@@ -69,6 +69,7 @@ import type { ReencodeService } from '@ValenceServer/reencode/ReencodeService';
 import type { PluginService } from '@ValenceServer/plugins/service/createPluginService';
 import type { PluginHost } from '@ValenceServer/plugins/broker/PluginHost';
 import type { EmailService } from '@ValenceServer/email/EmailService';
+import type { ToneMapping } from '@ValenceContracts/schemas/ToneMapping';
 
 type ArtefactCount = { count: number; bytes: number };
 
@@ -186,7 +187,7 @@ type CreateAppOptions = {
     ffmpegSupported?: boolean;
     hardwareAccels: string[];
     concurrentRenders?: number;
-    toneMapping?: 'zscale' | 'libplacebo' | 'unavailable';
+    toneMapping?: ToneMapping;
     hardwareToneMaps?: string[];
     chains?: {
       accel: string;

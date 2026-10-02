@@ -137,7 +137,11 @@ pub const INIT_SEGMENT_NAME: &str = "init.mp4";
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ToneMapping {
-    /// `zscale` plus `tonemap`. The usual route, needs libzimg.
+    /// Jellyfin's `tonemapx`, carried by Valence's own build: BT.2390 in one filter, with SIMD on
+    /// x86 and Arm. Preferred to `zscale` because `tonemap`'s Hable curve darkens midtones and
+    /// `zscale` drops the HDR metadata on the way in. See VAL-344.
+    Tonemapx,
+    /// `zscale` plus `tonemap`. The fallback for a build without `tonemapx`, needs libzimg.
     Zscale,
     /// `libplacebo`, which does the whole conversion in one filter.
     Libplacebo,
@@ -591,15 +595,25 @@ impl SessionSpec {
 /// BT.709, tone maps in linear light, then re-encodes the BT.709 curve. Each
 /// step matters: skipping the linearisation is what produces the washed out
 /// picture people recognise as "HDR played wrong".
+///
+/// `tonemapx` and `libplacebo` are both told BT.2390 with the spec's knee of 0.5 rather than
+/// the 1.0 both default to, which starts the highlights rolling off at about 88 nits rather than
+/// 36. `tonemapx` is also given a fixed 1000-nit peak, as Jellyfin gives it, so a file's own
+/// `MaxCLL` cannot darken it. Measured against the shipped build, that puts 20, 50 and 100 nits
+/// where BT.2408 says they belong and diffuse white at 0.79 of SDR white, where Hable left it at
+/// 0.51. See VAL-344.
 #[must_use]
 pub fn tone_map_filter(method: ToneMapping) -> Option<&'static str> {
     match method {
+        ToneMapping::Tonemapx => Some(
+            "tonemapx=tonemap=bt2390:param=0.5:peak=100:desat=0:t=bt709:m=bt709:p=bt709:format=yuv420p",
+        ),
         ToneMapping::Zscale => Some(
             "zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,\
 tonemap=tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv",
         ),
         ToneMapping::Libplacebo => Some(
-            "libplacebo=tonemapping=bt.2390:colorspace=bt709:color_primaries=bt709:color_trc=bt709",
+            "libplacebo=tonemapping=bt.2390:tonemapping_param=0.5:peak_detect=1:colorspace=bt709:color_primaries=bt709:color_trc=bt709",
         ),
         ToneMapping::Unavailable => None,
     }
@@ -819,9 +833,22 @@ pub struct DeviceFilters {
 /// A build either has a filter or it does not, and what it has is the name —
 /// so a probe compares names while a chain carries options. An expression is
 /// `name=options`, so the name is everything before the first `=`.
+///
+/// A short chain is named for its last filter, which is the one doing the work: Intel's tone
+/// mapper is `procamp_vaapi` lifting the signal and then `tonemap_vaapi`, and it is
+/// `tonemap_vaapi` an operator looks for on the admin page.
 #[must_use]
 pub fn filter_name(expression: &str) -> &str {
-    expression.split('=').next().unwrap_or(expression)
+    filter_names(expression).last().unwrap_or(expression)
+}
+
+/// Every filter an expression names, in order.
+///
+/// A build has to have all of them for the chain to run, so presence is asked of each.
+pub fn filter_names(expression: &str) -> impl Iterator<Item = &str> {
+    expression
+        .split(',')
+        .map(|filter| filter.split('=').next().unwrap_or(filter))
 }
 
 /// The pixel format a tone map expression leaves its frames in.
@@ -1440,7 +1467,7 @@ const VIDEOTOOLBOX: HardwarePipeline = HardwarePipeline {
     decodes_with: "videotoolbox",
     decoded_format: "videotoolbox_vld",
     maps_onto_device: None,
-    tone_map: Some("tonemap_videotoolbox=format=nv12:p=bt709:t=bt709:m=bt709:tonemap=bt2390"),
+    tone_map: Some("tonemap_videotoolbox=format=nv12:p=bt709:t=bt709:m=bt709:tonemap=bt2390:param=0.5:peak=100"),
     encodes_from_device: false,
     narrows_to_eight_bit: None,
     upload: "hwupload",
@@ -1460,7 +1487,9 @@ const NVENC: HardwarePipeline = HardwarePipeline {
     decodes_with: "cuda",
     decoded_format: "cuda",
     maps_onto_device: None,
-    tone_map: Some("tonemap_cuda=format=yuv420p:p=bt709:t=bt709:m=bt709:tonemap=bt2390"),
+    tone_map: Some(
+        "tonemap_cuda=format=yuv420p:p=bt709:t=bt709:m=bt709:tonemap=bt2390:param=0.5:peak=100",
+    ),
     encodes_from_device: false,
     narrows_to_eight_bit: Some("format=nv12"),
     upload: "hwupload",
@@ -1500,7 +1529,7 @@ const QSV_ON_LINUX: HardwarePipeline = HardwarePipeline {
     decodes_with: "vaapi",
     decoded_format: "vaapi",
     maps_onto_device: Some("hwmap=derive_device=qsv,format=qsv"),
-    tone_map: Some("tonemap_vaapi=format=nv12:p=bt709:t=bt709:m=bt709"),
+    tone_map: Some(INTEL_TONE_MAP),
     encodes_from_device: true,
     narrows_to_eight_bit: Some("format=nv12"),
     upload: "hwupload=extra_hw_frames=64",
@@ -1520,7 +1549,7 @@ const VAAPI: HardwarePipeline = HardwarePipeline {
     decodes_with: "vaapi",
     decoded_format: "vaapi",
     maps_onto_device: None,
-    tone_map: Some("tonemap_vaapi=format=nv12:p=bt709:t=bt709:m=bt709"),
+    tone_map: Some(INTEL_TONE_MAP),
     encodes_from_device: true,
     narrows_to_eight_bit: Some("format=nv12"),
     upload: "hwupload",
@@ -1567,6 +1596,15 @@ const RKMPP: HardwarePipeline = HardwarePipeline {
     takes_device_frames: false,
     skips_unreferenced_frames: false,
 };
+
+/// Intel's tone mapper, with the lift Jellyfin settled on in front of it.
+///
+/// VPP's tone map has no curve to tune and comes out dark: Jellyfin's own users said "way too
+/// dark" (jellyfin#6624), and its answer was a brightness of 16 applied before the tone map
+/// (jellyfin#9642), which it ships as the default and calls the recommended value. Before rather
+/// than after, because lifting the SDR result afterwards greyed the blacks where lifting the PQ
+/// signal first keeps the shadows' detail. See VAL-344.
+const INTEL_TONE_MAP: &str = "procamp_vaapi=b=16,tonemap_vaapi=format=nv12:p=bt709:t=bt709:m=bt709";
 
 /// The PCI vendor Direct3D 11 is asked for when `QSV` needs an adapter.
 const INTEL: &str = "0x8086";
@@ -2592,7 +2630,7 @@ impl TranscodePlan {
 #[cfg(test)]
 mod tests {
     use super::{
-        composited_graph, filter_name, fitted_size, force_key_frames_argument,
+        composited_graph, filter_name, filter_names, fitted_size, force_key_frames_argument,
         forced_idr_arguments, frame_route, keeps_frames_on_the_gpu, rate_control_arguments,
         software_equivalent, takes_ten_bit, tone_map_format, AudioAction, AudioCarry,
         DeviceFilters, FrameRoute, HardwareAccel, Platform, SegmentContainer, SegmentStart,
@@ -3047,7 +3085,10 @@ mod tests {
             .and_then(|at| args.get(at + 1))
             .expect("a filter chain");
 
-        assert!(filters.starts_with("tonemap_vaapi"), "{filters}");
+        assert!(
+            filters.starts_with("procamp_vaapi=b=16,tonemap_vaapi"),
+            "{filters}"
+        );
         assert!(!filters.contains("hwdownload"), "{filters}");
         assert!(!filters.contains("zscale"), "{filters}");
         assert!(
@@ -3168,7 +3209,7 @@ subtitles='/media/film.mkv':si=2,hwupload"
 
         assert_eq!(
             chain,
-            "tonemap_vaapi=format=nv12:p=bt709:t=bt709:m=bt709,scale_vaapi=w=1280:h=532:format=nv12"
+            "procamp_vaapi=b=16,tonemap_vaapi=format=nv12:p=bt709:t=bt709:m=bt709,scale_vaapi=w=1280:h=532:format=nv12"
         );
         assert!(
             !chain.contains("zscale") && !chain.contains("hwdownload"),
@@ -3208,7 +3249,7 @@ subtitles='/media/film.mkv':si=2,hwupload"
 
         assert_eq!(
             chain,
-            "tonemap_videotoolbox=format=nv12:p=bt709:t=bt709:m=bt709:tonemap=bt2390,\
+            "tonemap_videotoolbox=format=nv12:p=bt709:t=bt709:m=bt709:tonemap=bt2390:param=0.5:peak=100,\
              scale_vt=w=1280:h=532"
         );
     }
@@ -3351,7 +3392,7 @@ subtitles='/media/film.mkv':si=2,hwupload"
 
         assert!(
             graph.starts_with(
-                "[0:v]tonemap_vaapi=format=nv12:p=bt709:t=bt709:m=bt709,\
+                "[0:v]procamp_vaapi=b=16,tonemap_vaapi=format=nv12:p=bt709:t=bt709:m=bt709,\
 scale_vaapi=w=1280:h=532:format=nv12[base];"
             ),
             "{graph}"
@@ -3367,6 +3408,51 @@ scale_vaapi=w=1280:h=532:format=nv12[base];"
             "tonemap_vaapi"
         );
         assert_eq!(filter_name("hwupload"), "hwupload");
+    }
+
+    /// Intel's tone mapper is a lift and then the map, and it is the map an operator looks for.
+    #[test]
+    fn names_a_chain_for_the_filter_doing_the_work() {
+        assert_eq!(
+            filter_name("procamp_vaapi=b=16,tonemap_vaapi=format=nv12"),
+            "tonemap_vaapi"
+        );
+        assert_eq!(
+            filter_names("procamp_vaapi=b=16,tonemap_vaapi=format=nv12").collect::<Vec<_>>(),
+            ["procamp_vaapi", "tonemap_vaapi"]
+        );
+    }
+
+    /// Jellyfin's lift, before the map rather than after it (VAL-344).
+    #[test]
+    fn lifts_intels_signal_before_its_tone_map() {
+        for accel in [HardwareAccel::Vaapi, HardwareAccel::Qsv] {
+            let mapper = accel
+                .pipeline_on(Platform::Unix)
+                .and_then(|pipeline| pipeline.tone_map)
+                .expect("intel tone maps on the device");
+
+            assert!(
+                mapper.starts_with("procamp_vaapi=b=16,tonemap_vaapi="),
+                "{mapper}"
+            );
+        }
+    }
+
+    /// A fixed 1000-nit peak and the spec's knee, rather than the file's `MaxCLL` and a knee that
+    /// starts rolling off at 36 nits (VAL-344).
+    #[test]
+    fn fixes_the_peak_and_knee_of_the_bt2390_mappers() {
+        for accel in [HardwareAccel::Nvenc, HardwareAccel::VideoToolbox] {
+            let mapper = accel
+                .pipeline_on(Platform::Unix)
+                .and_then(|pipeline| pipeline.tone_map)
+                .expect("the backend tone maps on the device");
+
+            assert!(mapper.contains(":tonemap=bt2390:"), "{mapper}");
+            assert!(mapper.contains(":param=0.5"), "{mapper}");
+            assert!(mapper.contains(":peak=100"), "{mapper}");
+        }
     }
 
     #[test]
