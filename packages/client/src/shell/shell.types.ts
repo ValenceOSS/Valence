@@ -15,7 +15,7 @@ type Shell = {
   title: string;
   user: SessionUser;
   watcher: ViewerProfile | null;
-  household: readonly { id: string; name: string }[];
+  household: readonly ViewerProfile[];
   known: ReadonlyMap<string, MediaSummary>;
   rememberItems: (items: MediaSummary[]) => void;
   progress: ReadonlyMap<string, WatchProgress>;

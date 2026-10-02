@@ -1,13 +1,18 @@
 import type { PartyRole, WatchParty } from '@ValenceContracts/schemas/WatchParty';
+import type { Avatar, ProfileColour } from '@ValenceContracts/schemas/ViewerProfile';
 
 type Askable = {
   id: string;
   name: string;
   accountId?: string;
+  colour?: ProfileColour;
+  avatar?: Avatar;
+  updatedAt?: string;
 };
 
 type PartyPanelProps = {
   party: WatchParty;
+  durationSeconds?: number;
   meConnectionId: string | null;
   waitingFor?: readonly string[];
   onSetRole?: (connectionId: string, role: PartyRole) => void;

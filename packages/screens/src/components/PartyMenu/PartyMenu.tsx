@@ -15,6 +15,7 @@ import { say } from '@ValenceI18n/say';
  * hung over the picture, which is what it was — a party is one of the controls, not a second screen.
  *
  * @param party - The party as the server last described it, or null while there is none.
+ * @param durationSeconds - How long the film is, which the party's timeline is drawn against.
  * @param meConnectionId - Which member this tab is.
  * @param waitingFor - Whoever the room is waiting for before it can play.
  * @param invitation - The address that puts somebody else in this party.
@@ -33,6 +34,7 @@ import { say } from '@ValenceI18n/say';
  */
 const PartyMenu = ({
   party,
+  durationSeconds,
   meConnectionId,
   waitingFor = [],
   invitation,
@@ -103,6 +105,7 @@ const PartyMenu = ({
           party={party}
           meConnectionId={meConnectionId}
           waitingFor={waitingFor}
+          {...(durationSeconds === undefined ? {} : { durationSeconds })}
           {...(invitation === undefined ? {} : { invitation })}
           {...(onLeave === undefined ? {} : { onLeave })}
           {...(onSetRole === undefined ? {} : { onSetRole })}

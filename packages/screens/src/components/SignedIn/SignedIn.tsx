@@ -40,6 +40,7 @@ import { useListenAlong } from '@ValenceScreens/music/useListenAlong';
 import { signedInOnThisPage } from '@ValenceScreens/phone/signedInOnThisPage';
 import type { SignedInProps } from './SignedIn.types';
 import { say } from '@ValenceI18n/say';
+import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
 
 const PARTY_NOTICE_LINGERS_MS = 6000;
 
@@ -48,6 +49,8 @@ const MARK_FLIES_MS = 300;
 const MARKS_PLACE = 'valence-mark';
 
 const ASKS_AGAIN_MS = 4000;
+
+const NOBODY: readonly ViewerProfile[] = [];
 
 const PHONE_SIGN_IN = '/phone-sign-in';
 
@@ -172,10 +175,7 @@ const SignedIn = ({ title }: SignedInProps) => {
     enabled: watchParty.party !== null,
   });
 
-  const household = useMemo(
-    () => (everyone.data ?? []).map((person) => ({ id: person.id, name: person.name })),
-    [everyone.data],
-  );
+  const household = everyone.data ?? NOBODY;
 
   const rememberItems = useCallback((items: MediaSummary[]) => {
     setKnown((current) => {

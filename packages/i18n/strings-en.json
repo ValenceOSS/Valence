@@ -19174,6 +19174,16 @@
     "context": "The title of a listening party's panel: how many of its members are listening. {count} is the number."
   },
   {
+    "handler": "screens.partyPanel.countOutOfStep.one",
+    "text": "{count} out of step",
+    "context": "A badge on a watch or listening party when people in it are at different points. {count} is how many."
+  },
+  {
+    "handler": "screens.partyPanel.countOutOfStep.other",
+    "text": "{count} out of step",
+    "context": "A badge on a watch or listening party when people in it are at different points. {count} is how many."
+  },
+  {
     "handler": "screens.partyPanel.countWatching.one",
     "text": "{count} watching",
     "context": "The title of a watch party's panel: how many of its members are watching. {count} is the number."
@@ -19199,6 +19209,11 @@
     "context": "Shown in the party panel."
   },
   { "handler": "screens.partyPanel.host", "text": "Host", "context": "Shown in the party panel." },
+  {
+    "handler": "screens.partyPanel.inSync",
+    "text": "In sync",
+    "context": "A badge on a watch or listening party when everybody in it is at the same point."
+  },
   {
     "handler": "screens.partyPanel.invite",
     "text": "Invite",
@@ -19230,6 +19245,26 @@
     "context": "Shown in the party panel."
   },
   {
+    "handler": "screens.partyPanel.nameAtPosition",
+    "text": "{name}, at {position}",
+    "context": "The tooltip on a member's face on a party's timeline. {name} is who, {position} is where they are, as a clock such as 1:07:20."
+  },
+  {
+    "handler": "screens.partyPanel.nameAtPositionDrift",
+    "text": "{name}, at {position}, {drift}",
+    "context": "The tooltip on a member's face on a party's timeline when they are out of step. {name} is who, {position} is where they are as a clock, {drift} is how far behind or ahead, such as \"4.0s behind\"."
+  },
+  {
+    "handler": "screens.partyPanel.nameIsSecondsAhead",
+    "text": "{name} is {seconds}s ahead",
+    "context": "A badge on a watch or listening party when one member has got out of step ahead. {name} is who, {seconds} is how far, to one decimal place."
+  },
+  {
+    "handler": "screens.partyPanel.nameIsSecondsBehind",
+    "text": "{name} is {seconds}s behind",
+    "context": "A badge on a watch or listening party when one member has fallen out of step behind. {name} is who, {seconds} is how far, to one decimal place."
+  },
+  {
     "handler": "screens.partyPanel.noPassword",
     "text": "No password",
     "context": "Shown in the party panel."
@@ -19253,6 +19288,16 @@
     "handler": "screens.partyPanel.removeNameFromTheParty",
     "text": "Remove {name} from the party",
     "context": "The label of a button in the party panel. {name} is filled in by the app."
+  },
+  {
+    "handler": "screens.partyPanel.secondsAhead",
+    "text": "{seconds}s ahead",
+    "context": "Shown beside a member of a watch or listening party who has got ahead of whoever keeps time. {seconds} is how far, to one decimal place."
+  },
+  {
+    "handler": "screens.partyPanel.secondsBehind",
+    "text": "{seconds}s behind",
+    "context": "Shown beside a member of a watch or listening party who has fallen behind whoever keeps time. {seconds} is how far, to one decimal place."
   },
   {
     "handler": "screens.partyPanel.sendThisToListenAlong",
@@ -19298,6 +19343,11 @@
     "handler": "screens.partyPanel.waitingForPeopleToCatchUp.other",
     "text": "Waiting for {count} people to catch up",
     "context": "In a watch party, how many people the others are waiting for before playing on. Only shown for two or more; one person is named instead."
+  },
+  {
+    "handler": "screens.partyPanel.whereEverybodyIs",
+    "text": "Where everybody is",
+    "context": "Read by assistive technology: the bar in a watch or listening party showing each member's face at the point they have reached."
   },
   {
     "handler": "screens.partyPasswordDialog.join",

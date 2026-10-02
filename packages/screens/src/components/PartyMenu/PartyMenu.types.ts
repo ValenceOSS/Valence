@@ -3,6 +3,7 @@ import type { Askable } from '@ValenceScreens/components/PartyPanel/PartyPanel.t
 
 type PartyMenuProps = {
   party: WatchParty | null;
+  durationSeconds?: number;
   meConnectionId: string | null;
   waitingFor?: readonly string[];
   invitation?: string;
