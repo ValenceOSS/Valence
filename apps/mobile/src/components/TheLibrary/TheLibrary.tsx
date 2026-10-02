@@ -1,4 +1,4 @@
-import { Film, Inbox, Monitor, ScanQrCode, SearchX } from '@keyline-icons/react-native';
+import { Calendar, Film, Inbox, Monitor, ScanQrCode, SearchX } from '@keyline-icons/react-native';
 import {
   Film as FilmFilled,
   Home as HomeFilled,
@@ -151,6 +151,7 @@ const styles = StyleSheet.create({
  * @param onLookAtShow - Told which programme, in which library.
  * @param onNotifications - Told somebody wants to see what the server has told them.
  * @param onScan - Told somebody wants to scan a television's code to sign it in.
+ * @param onCalendar - Told somebody wants to see what comes out when, where requesting is on.
  * @param onRequested - Told somebody wants to see what has been asked for, where they may ask.
  * @param onAlbum - Told to open an album.
  * @param onArtist - Told to open an artist.
@@ -174,6 +175,7 @@ const TheLibrary = ({
   onLookAtShow,
   onNotifications,
   onScan,
+  onCalendar,
   onRequested,
   onAlbum,
   onArtist,
@@ -444,6 +446,9 @@ const TheLibrary = ({
           <View style={styles.aside}>
             {onRequested === undefined ? null : (
               <AGlassCircle of={Inbox} label={say('common.requested')} onPress={onRequested} />
+            )}
+            {onCalendar === undefined ? null : (
+              <AGlassCircle of={Calendar} label={say('common.calendar')} onPress={onCalendar} />
             )}
             <AGlassCircle
               of={ScanQrCode}

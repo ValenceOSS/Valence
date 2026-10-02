@@ -23,7 +23,7 @@ import { say } from '@ValenceI18n/say';
 /**
  * Who is watching on this television and which Valence it is, with the two ways out: signing out,
  * so somebody else can pick their face, and moving to another server altogether — and, where they
- * may ask for things, the way to see what has been asked for, with a row of their own latest
+ * may ask for things, the way to see what has been asked for, and the release calendar, with a row of their own latest
  * requests beneath, each saying where it has got to, after what the account has lately been told.
  * The buttons catch the remote across the whole width of the page, so pressing up from anywhere
  * along that row reaches them. Beneath them are what this viewer has lately watched, the pages
@@ -34,6 +34,7 @@ import { say } from '@ValenceI18n/say';
  * @param user - Who is signed in.
  * @param onChangeServer - Told when somebody wants a different Valence.
  * @param onRequests - Told when somebody wants to see what has been asked for.
+ * @param onCalendar - Told when somebody wants to see what comes out when.
  * @param onOpenRequest - Told which of their own requests somebody chose from the row of them.
  * @param onOpenPluginPage - Told which plugin page somebody chose.
  * @param onOpenNamed - Told which film or programme a chosen notification or viewing names.
@@ -44,6 +45,7 @@ const AccountPage = ({
   user,
   onChangeServer,
   onRequests,
+  onCalendar,
   onOpenRequest,
   onOpenPluginPage,
   onOpenNamed,
@@ -83,6 +85,15 @@ const AccountPage = ({
               });
             }}
           />
+          {mayRequest ? (
+            <Button
+              label={say('common.calendar')}
+              variant="secondary"
+              isWide
+              onFocus={upToBar.leave}
+              onPress={onCalendar}
+            />
+          ) : null}
           {mayRequest ? (
             <Button
               label={say('tv.account.allRequests')}

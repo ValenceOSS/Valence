@@ -85,6 +85,7 @@ const aRequest = (overrides: Partial<MediaRequest>): MediaRequest => ({
   seasons: null,
   releaseTypes: null,
   releaseDate: null,
+  releaseDates: { theatrical: null, digital: null, physical: null },
   items: [],
   mediaId: null,
   createdAt: '2026-09-19T00:00:00.000Z',

@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { resolveMetadata, resolveNextEpisode, resolveSeriesShape } from './MetadataProvider';
+import {
+  resolveAiringSeason,
+  resolveMetadata,
+  resolveNextEpisode,
+  resolveSeriesShape,
+} from './MetadataProvider';
 import { createFilenameMetadataProvider } from './createFilenameMetadataProvider';
 import type { MediaFacts, MetadataProvider } from './MetadataProvider';
 import type { MediaProbe } from '@ValenceServer/transcoder/TranscoderClient';
@@ -148,6 +153,55 @@ describe('resolveSeriesShape', () => {
 
   it('has no shape when nothing could describe the series', async () => {
     await expect(resolveSeriesShape([named('filenames')], '5')).resolves.toBeNull();
+  });
+});
+
+describe('resolveAiringSeason', () => {
+  const SEASON = {
+    seasonNumber: 2,
+    episodes: [{ episodeNumber: 4, title: 'Four', airDate: '2026-10-01', stillUrl: null }],
+  };
+
+  const named = (
+    name: string,
+    describeAiringSeason?: MetadataProvider['describeAiringSeason'],
+  ) => ({
+    name,
+    describe: () => Promise.resolve(null),
+    ...(describeAiringSeason === undefined ? {} : { describeAiringSeason }),
+  });
+
+  it('takes the first season a provider knows of, passing over those that know none', async () => {
+    await expect(
+      resolveAiringSeason(
+        [
+          named('filename'),
+          named('quiet', () => Promise.resolve(null)),
+          named('catalogue', () => Promise.resolve(SEASON)),
+        ],
+        '5',
+      ),
+    ).resolves.toEqual(SEASON);
+  });
+
+  it('carries on past a provider that fails, and says which', async () => {
+    const onProblem = vi.fn();
+
+    await expect(
+      resolveAiringSeason(
+        [
+          named('broken', () => Promise.reject(new Error('down'))),
+          named('catalogue', () => Promise.resolve(SEASON)),
+        ],
+        '5',
+        onProblem,
+      ),
+    ).resolves.toEqual(SEASON);
+    expect(onProblem).toHaveBeenCalledWith('broken', expect.anything());
+  });
+
+  it('knows of none where no provider does', async () => {
+    await expect(resolveAiringSeason([named('filename')], '5')).resolves.toBeNull();
   });
 });
 

@@ -51,6 +51,8 @@ import { MusicCollection } from '@ValenceTv/screens/MusicCollection/MusicCollect
 import { NowPlaying } from '@ValenceTv/screens/NowPlaying/NowPlaying';
 import { PlayingTogether } from '@ValenceTv/screens/SignedIn/components/PlayingTogether/PlayingTogether';
 import { RequestsPage } from '@ValenceTv/screens/RequestsPage/RequestsPage';
+import { CalendarPage } from '@ValenceTv/screens/CalendarPage/CalendarPage';
+import { findAShow } from '@ValenceClient/library/findAShow';
 import { PluginPage } from '@ValenceTv/screens/PluginPage/PluginPage';
 import { Search } from '@ValenceTv/screens/Search/Search';
 import { ShowPage } from '@ValenceTv/screens/ShowPage/ShowPage';
@@ -60,6 +62,7 @@ import type { Book } from '@ValenceContracts/schemas/Book';
 import type { CatalogueTitle } from '@ValenceContracts/schemas/CatalogueTitle';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaRequest } from '@ValenceContracts/schemas/MediaRequest';
+import type { CalendarEntry } from '@ValenceContracts/schemas/ReleaseCalendar';
 import { profileAvatarUrl } from '@ValenceContracts/schemas/ViewerProfile';
 import type { Place } from '@ValenceTv/navigation/Place';
 import type { Tab } from '@ValenceTv/navigation/Tab';
@@ -367,6 +370,10 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
     open({ kind: 'requests', mood: null });
   }, [open]);
 
+  const openCalendar = useCallback(() => {
+    open({ kind: 'calendar', mood: null });
+  }, [open]);
+
   const openPluginPage = useCallback(
     (page: { pluginId: string; pageId: string }) => {
       open({ kind: 'pluginPage', pluginId: page.pluginId, pageId: page.pageId, mood: null });
@@ -421,6 +428,31 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
       open({ kind: 'ask', titleKind: title.kind, id: title.id, mood: null });
     },
     [open, openByMediaId],
+  );
+
+  const openCalendarEntry = useCallback(
+    (entry: CalendarEntry) => {
+      const { opens } = entry;
+
+      switch (opens.kind) {
+        case 'item':
+          openFilm(opens.mediaId);
+          break;
+        case 'asking':
+          if (opens.requestKind === 'film' || opens.requestKind === 'series') {
+            open({ kind: 'ask', titleKind: opens.requestKind, id: opens.catalogueId, mood: null });
+          }
+          break;
+        case 'show':
+          void findAShow(cache, opens.showId).then((show) => {
+            if (show !== null) {
+              open({ kind: 'show', libraryId: show.libraryId, showId: show.id, mood: null });
+            }
+          });
+          break;
+      }
+    },
+    [cache, open, openFilm],
   );
 
   const watchArrival = useCallback(() => {
@@ -645,6 +677,7 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
                         user={user}
                         onChangeServer={onChangeServer}
                         onRequests={openRequests}
+                        onCalendar={openCalendar}
                         onOpenRequest={openRequest}
                         onOpenPluginPage={openPluginPage}
                         onOpenNamed={openByMediaId}
@@ -768,6 +801,12 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
       {top?.kind === 'listening' ? (
         <View style={styles.over}>
           <Listening onEmpty={closeListening} onBack={back} />
+        </View>
+      ) : null}
+
+      {top?.kind === 'calendar' ? (
+        <View style={styles.over}>
+          <CalendarPage onOpen={openCalendarEntry} onLight={lightTheTop} />
         </View>
       ) : null}
 

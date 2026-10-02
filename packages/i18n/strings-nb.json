@@ -650,6 +650,31 @@
     "context": "Shown in the books (from `listenLabel`)."
   },
   {
+    "handler": "client.calendar.describeCalendarEntry.inCinemas",
+    "text": "In cinemas",
+    "context": "The line under a film's title on the release calendar, on the day it opens in cinemas."
+  },
+  {
+    "handler": "client.calendar.describeCalendarEntry.onDisc",
+    "text": "On disc",
+    "context": "The line under a film's title on the release calendar, on the day it comes out on DVD or Blu-ray."
+  },
+  {
+    "handler": "client.calendar.describeCalendarEntry.sSeasonNumberEEpisodeNumberTitle",
+    "text": "S{seasonNumber} E{episodeNumber} · {title}",
+    "context": "The line under a show's name on the release calendar, saying which episode airs that day. {seasonNumber} and {episodeNumber} are numbers, {title} is the episode's title."
+  },
+  {
+    "handler": "client.calendar.describeCalendarEntry.toBuyOrRent",
+    "text": "To buy or rent",
+    "context": "The line under a film's title on the release calendar, on the day it comes out to buy or rent online."
+  },
+  {
+    "handler": "client.calendar.describeCalendarState.notInTheLibrary",
+    "text": "Not in the library",
+    "context": "The badge on a release calendar entry for an episode of a show in the library that has aired but is not on disk, and that nobody has requested."
+  },
+  {
     "handler": "client.downloads.useFetchWhatThisDeviceAsked.itIsReadyToWatchOffline",
     "text": "It is ready to watch offline.",
     "context": "The body in the use fetch what this device asked in the downloads."
@@ -1985,6 +2010,16 @@
     "context": "One way of laying out a collection's titles: oldest first, by the year each came out."
   },
   {
+    "handler": "common.calendar",
+    "text": "Calendar",
+    "context": "The name of the release calendar: the section in the navigation, and its page, showing when films and episodes come out."
+  },
+  {
+    "handler": "common.calendarViews",
+    "text": "Calendar views",
+    "context": "The name, read by assistive technology, of the control that switches the release calendar between its views, on the web or a phone."
+  },
+  {
     "handler": "common.cameraDistance",
     "text": "Camera distance",
     "context": "The label, used in several places, among them the cloud in the variants and the galaxy in the variants."
@@ -2885,6 +2920,11 @@
     "context": "The title, used in several places, among them the person of the phone app and the show of the phone app."
   },
   {
+    "handler": "common.episodesAndRequestsAppearHere",
+    "text": "Episodes of shows in your library, and films and shows you have asked for, appear here once they have a date.",
+    "context": "The release calendar, on the web or a phone or a television, beneath the title saying nothing comes out on the days shown."
+  },
+  {
     "handler": "common.events",
     "text": "Events",
     "context": "The label, used in the webhook fields (from `webhookPanes`) and in the log explorer in the observability page."
@@ -3103,6 +3143,11 @@
     "handler": "common.goBack",
     "text": "Go back",
     "context": "The label of a button, used in the player of the television app and in the kept player page."
+  },
+  {
+    "handler": "common.goToADay",
+    "text": "Go to a day",
+    "context": "The release calendar's way to turn it to any day: on the web the name, read by assistive technology and shown on hover, of the button that opens a month to pick from; on a phone the title of the sheet that does the same."
   },
   {
     "handler": "common.goToAlbum",
@@ -3575,6 +3620,11 @@
     "context": "A sound track's channels, in the player's sound menu: one channel."
   },
   {
+    "handler": "common.month",
+    "text": "Month",
+    "context": "The choice that shows the release calendar a month at a time."
+  },
+  {
     "handler": "common.more",
     "text": "More",
     "context": "The label of a button, used in the person of the phone app and in the playlist of the phone app."
@@ -3840,6 +3890,11 @@
     "context": "Shown, used in several places, among them the definitions in the requests service (from `createDefinitionCatalogue`) and the media requests in the requests service (from `createRequestWorker`)."
   },
   {
+    "handler": "common.noReleases",
+    "text": "No releases",
+    "context": "A day on the release calendar, on the web's month or week view or the phone's month, with nothing released on it."
+  },
+  {
     "handler": "common.normal",
     "text": "Normal",
     "context": "Shown, used in several places, among them the text reader in the reader of the phone app and the player of the television app."
@@ -3883,6 +3938,11 @@
     "handler": "common.nothingChosen",
     "text": "Nothing chosen",
     "context": "Shown, used in the select block in the plugin surface of the phone app and in the plugin block in the plugin surface of the television app."
+  },
+  {
+    "handler": "common.nothingComesOutOnTheseDays",
+    "text": "Nothing comes out on these days",
+    "context": "The release calendar, on the web or a phone or a television, when nothing the viewer can see is released on the days shown."
   },
   {
     "handler": "common.nothingHereMatchesThat",
@@ -5834,6 +5894,16 @@
     "context": "The label of a embedded video, used in the media detail dialog and in the show dialog. {title} is filled in by the app."
   },
   {
+    "handler": "common.today",
+    "text": "Today",
+    "context": "The name of today, above what is happening on it on the release calendar, and the button that brings the calendar back to it."
+  },
+  {
+    "handler": "common.tomorrow",
+    "text": "Tomorrow",
+    "context": "The name of tomorrow, above what is happening on it on the release calendar."
+  },
+  {
     "handler": "common.took",
     "text": "Took",
     "context": "Shown, used in the background jobs in the admin area and in the job trace dialog in the observability page."
@@ -5942,6 +6012,11 @@
     "handler": "common.upAFolder",
     "text": "Up a folder",
     "context": "The label of a button, used in the files panel in the admin area and in the folder browser in the admin area."
+  },
+  {
+    "handler": "common.upcoming",
+    "text": "Upcoming",
+    "context": "The choice that shows the release calendar as a list of what is coming, starting today."
   },
   {
     "handler": "common.updateToVersion",
@@ -6122,6 +6197,11 @@
     "handler": "common.webhooks",
     "text": "Webhooks",
     "context": "The label, used in the admin area (from `adminSections`) and in the webhooks panel in the admin area."
+  },
+  {
+    "handler": "common.week",
+    "text": "Week",
+    "context": "The choice that shows the release calendar a week at a time."
   },
   {
     "handler": "common.weekly",
@@ -17429,6 +17509,41 @@
     "handler": "screens.cacheBreakdown.cacheRows.transcodeSessions",
     "text": "Transcode sessions",
     "context": "The label in the cache breakdown (from `cacheRows`)."
+  },
+  {
+    "handler": "screens.calendar.describeCalendarFilters.libraryOrRequests",
+    "text": "Library or requests",
+    "context": "The heading, in the release calendar's filter menu, over the choice between showing what is already in the library and what has been requested."
+  },
+  {
+    "handler": "screens.calendar.describeCalendarFilters.whoseRequests",
+    "text": "Whose requests",
+    "context": "The heading, in the release calendar's filter menu, over the choice to show everybody's requests rather than only the viewer's own. Only offered to people who may see everybody's."
+  },
+  {
+    "handler": "screens.calendarPage.calendarMonth.countMore.one",
+    "text": "{count} more",
+    "context": "A day on the release calendar's month view with more on it than fits; pressing it opens that day's week. {count} is always 1."
+  },
+  {
+    "handler": "screens.calendarPage.calendarMonth.countMore.other",
+    "text": "{count} more things",
+    "context": "A day on the release calendar's month view with more on it than fits; pressing it opens that day's week. {count} is a number above 1."
+  },
+  {
+    "handler": "screens.calendarPage.narrowTheCalendar",
+    "text": "Narrow the calendar",
+    "context": "The name of the release calendar's filter menu."
+  },
+  {
+    "handler": "screens.calendarPage.readingTheCalendar",
+    "text": "Reading the calendar",
+    "context": "The release calendar's loading indicator, read by assistive technology."
+  },
+  {
+    "handler": "screens.calendarPage.theCalendarCouldNotBeRead",
+    "text": "The calendar could not be read",
+    "context": "The release calendar, when the server could not be asked what comes out."
   },
   {
     "handler": "screens.collectionDialog.addFilmsAndProgrammesFromTheir",

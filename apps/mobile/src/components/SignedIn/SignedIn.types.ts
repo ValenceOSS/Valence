@@ -20,6 +20,7 @@ type APage =
   | { kind: 'asking'; about: CatalogueBrowseKind; id: string }
   | { kind: 'browsing'; browsing: CatalogueBrowse; title: string }
   | { kind: 'notifications' }
+  | { kind: 'calendar' }
   | { kind: 'album'; albumId: string }
   | { kind: 'artist'; artistId: string }
   | { kind: 'playlist'; playlistId: string }

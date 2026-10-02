@@ -402,6 +402,36 @@ describe('the places the bar offers', () => {
     expect(offered()).toEqual(['Home']);
   });
 
+  it('offers Discover and the calendar only to somebody who may ask for things', () => {
+    const asking = (): string[] =>
+      ['Discover', 'Calendar'].filter(
+        (name) =>
+          within(screen.getByRole('navigation', { name: 'Sections' })).queryByRole('button', {
+            name,
+          }) !== null,
+      );
+    const { props, view } = draw();
+
+    expect(asking()).toEqual([]);
+
+    view.rerender(<AppShell {...props} mayRequest />);
+
+    expect(asking()).toEqual(['Discover', 'Calendar']);
+  });
+
+  it('goes to the calendar from the bar', async () => {
+    const user = userEvent.setup();
+    const { props } = draw({ mayRequest: true });
+
+    await user.click(
+      within(screen.getByRole('navigation', { name: 'Sections' })).getByRole('button', {
+        name: 'Calendar',
+      }),
+    );
+
+    expect(props.onSectionChange).toHaveBeenCalledWith('calendar');
+  });
+
   it('fills the sheet in well before the page reaches the bar, so no hero shows through it', () => {
     Object.defineProperty(window, 'scrollY', { value: 32, configurable: true });
 

@@ -112,11 +112,17 @@ type SeriesShape = {
   overview?: string | null;
 };
 
+type AiringSeason = {
+  seasonNumber: number;
+  episodes: { episodeNumber: number; title: string; airDate: string; stillUrl: string | null }[];
+};
+
 type MetadataProvider = {
   name: string;
   describe: (facts: MediaFacts) => Promise<Metadata | null>;
   describeSeries?: (externalId: string) => Promise<SeriesShape | null>;
   describeNextEpisode?: (externalId: string) => Promise<NextEpisode | null>;
+  describeAiringSeason?: (externalId: string) => Promise<AiringSeason | null>;
   readLogoUrl?: (options: { externalId: string; isSeries: boolean }) => Promise<string | null>;
   readArtworkOptions?: (options: {
     externalId: string;
@@ -160,6 +166,44 @@ const resolveNextEpisode = async (
 
     try {
       const found = await provider.describeNextEpisode(externalId);
+
+      if (found !== null) {
+        return found;
+      }
+    } catch (error) {
+      onProblem?.(
+        provider.name,
+        error instanceof Error
+          ? sayVerbatim(describeFailure(error))
+          : saying('server.library.metadataProvider.providerFailed'),
+      );
+    }
+  }
+
+  return null;
+};
+
+/**
+ * Asks each metadata provider in turn for the dated episodes of the season a series is airing, or
+ * has just finished, taking the first that knows.
+ *
+ * @param providers - The providers to ask, in order of preference.
+ * @param externalId - The catalogue's identifier for the programme.
+ * @param onProblem - Told when a provider fails, so a request can carry on without it.
+ * @returns The season, or null where the series is not airing or nobody knows.
+ */
+const resolveAiringSeason = async (
+  providers: MetadataProvider[],
+  externalId: string,
+  onProblem?: (provider: string, reason: Said) => void,
+): Promise<AiringSeason | null> => {
+  for (const provider of providers) {
+    if (provider.describeAiringSeason === undefined) {
+      continue;
+    }
+
+    try {
+      const found = await provider.describeAiringSeason(externalId);
 
       if (found !== null) {
         return found;
@@ -253,6 +297,7 @@ const resolveMetadata = async (
 };
 
 export type {
+  AiringSeason,
   CastMember,
   CatalogueBrowsing,
   CatalogueDescription,
@@ -265,4 +310,4 @@ export type {
   SeriesShape,
 };
 
-export { resolveMetadata, resolveNextEpisode, resolveSeriesShape };
+export { resolveAiringSeason, resolveMetadata, resolveNextEpisode, resolveSeriesShape };

@@ -1,6 +1,7 @@
 import { Icon } from '@ValenceUI/Icon';
 import {
   BookOpen as BookOpenIcon,
+  Calendar as CalendarIcon,
   CircleUser as CircleUserIcon,
   Compass as CompassIcon,
   Film as FilmIcon,
@@ -14,6 +15,7 @@ import {
 import {
   Bell as BellFilledIcon,
   BookOpen as BookOpenFilledIcon,
+  Calendar as CalendarFilledIcon,
   CircleUser as CircleUserFilledIcon,
   Compass as CompassFilledIcon,
   Dice5 as Dice5FilledIcon,
@@ -110,6 +112,7 @@ const SECTION_ICONS: Record<ShellSection, ReactNode> = {
   read: <Icon of={BookOpenIcon} size={18} />,
   music: <Icon of={MusicNoteIcon} size={18} />,
   requests: <Icon of={CompassIcon} size={18} />,
+  calendar: <Icon of={CalendarIcon} size={18} />,
   search: <Icon of={SearchIcon} size={18} />,
   account: <Icon of={CircleUserIcon} size={18} />,
 };
@@ -123,6 +126,7 @@ const ACTIVE_SECTION_ICONS: Record<ShellSection, ReactNode> = {
   read: <Icon of={BookOpenFilledIcon} size={18} />,
   music: <Icon of={MusicNoteFilledIcon} size={18} />,
   requests: <Icon of={CompassFilledIcon} size={18} />,
+  calendar: <Icon of={CalendarFilledIcon} size={18} />,
   search: <Icon of={SearchFilledIcon} size={18} />,
   account: <Icon of={CircleUserFilledIcon} size={18} />,
 };
@@ -136,6 +140,7 @@ const SECTION_GESTURES: Record<ShellSection, IconGesture> = {
   read: 'settle',
   music: 'settle',
   requests: 'settle',
+  calendar: 'settle',
   search: 'settle',
   account: 'settle',
 };
@@ -149,6 +154,7 @@ const SECTION_LABELS: Record<ShellSection, string> = {
   read: say('common.books'),
   music: say('common.music'),
   requests: say('common.discover'),
+  calendar: say('common.calendar'),
   search: say('common.search'),
   account: say('common.account'),
 };
@@ -189,8 +195,8 @@ const SECTION_LABELS: Record<ShellSection, string> = {
  *   in the bar is offered only where there is something to find there — an empty library is not a
  *   place to go — and every place is offered until the answer arrives, rather than places
  *   appearing one by one as it does.
- * @param mayRequest - Whether this viewer may ask for things, which is when Discover is offered at
- *   all.
+ * @param mayRequest - Whether this viewer may ask for things, which is when Discover and the release
+ *   calendar are offered at all.
  * @param onOpenFavourites - Told to show what this viewer has kept, from the account menu.
  * @param onOpenMyRequests - Told to show what this viewer has asked for, from the account menu.
  * @param notifications - The bell and what is behind it.
@@ -295,7 +301,7 @@ const AppShell = ({
   const places = BROWSE_SECTIONS.filter(
     (id) =>
       (stocked === undefined || !STOCKED_ONLY.has(id) || stocked.includes(id)) &&
-      (id !== 'requests' || mayRequest),
+      ((id !== 'requests' && id !== 'calendar') || mayRequest),
   );
 
   const items: NavBarItem[] = places.map((id) => {
