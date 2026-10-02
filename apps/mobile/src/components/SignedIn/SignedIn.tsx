@@ -1,7 +1,7 @@
 import { CircleUser, Download, Home, Search } from '@keyline-icons/react-native';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
@@ -139,7 +139,8 @@ const styles = StyleSheet.create({
  * The watch party this phone may be in is held here rather than in the player, since an invitation
  * arrives with the notifications and a party outlives any one film being opened. Following one opens
  * the film it is watching, joined, or the music player for a listening party, whose music is kept
- * in step with the host's from then on; somebody put out of a party is told so for a moment.
+ * in step with the host's from then on; somebody put out of a party is told so — over the player
+ * where one is open, and otherwise in an alert, so it is not missed.
  *
  * Waits for the session before drawing any of it, because every request they make depends on being
  * signed in and a library drawn first would ask a question it cannot have the answer to.
@@ -199,6 +200,17 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
   const [carriedOn, setCarriedOn] = useState(0);
   const [watchingHeld, setWatchingHeld] = useState<HeldFile | null>(null);
   const [askingAbout, setAskingAbout] = useState<MediaSummary | null>(null);
+  const isPlayerUp = useRef(false);
+
+  useEffect(() => {
+    isPlayerUp.current = watching !== null || watchingHeld !== null;
+  });
+
+  useEffect(() => {
+    if (partyNotice !== null && !isPlayerUp.current) {
+      Alert.alert(say('common.partyMenu.watchParty'), partyNotice);
+    }
+  }, [partyNotice]);
   const [part, setPart] = useState('home');
   const [searchSide, setSearchSide] = useState('discover');
   const side = part === 'search' || part === 'downloads' || part === 'account' ? part : 'home';

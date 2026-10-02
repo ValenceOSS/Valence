@@ -72,7 +72,7 @@ const WatchPage = () => {
     });
   }, [place.playing]);
 
-  const partyPlayback = usePartyPlayback(watchParty);
+  const partyPlayback = usePartyPlayback(watchParty, playing?.id ?? null);
   const found = playing === null ? undefined : progress.get(playing.id);
   const startAt =
     playing !== null && startOverride?.mediaId === playing.id

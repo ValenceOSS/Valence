@@ -85,11 +85,15 @@ describe('Slider', () => {
     expect(drawn.getByLabelText('Seek through Arrival')).toBeTruthy();
   });
 
-  it('says it cannot be moved while it is fixed', async () => {
-    const drawn = await render(aSlider({ isDisabled: true }));
+  it('says it cannot be moved while it is fixed, and is not moved by an assistive action', async () => {
+    const onScrubbed = jest.fn();
+    const drawn = await render(aSlider({ isDisabled: true, onScrubbed }));
+    const line = drawn.getByRole('adjustable');
 
-    expect(drawn.getByRole('adjustable').props.accessibilityState).toMatchObject({
-      disabled: true,
-    });
+    expect(line.props.accessibilityState).toMatchObject({ disabled: true });
+
+    await fireEvent(line, 'accessibilityAction', { nativeEvent: { actionName: 'increment' } });
+
+    expect(onScrubbed).not.toHaveBeenCalled();
   });
 });

@@ -39,7 +39,7 @@ const ASidePanel = ({ title, closeLabel, onClose, children }: ASidePanelProps) =
 
   return (
     <View style={styles.behind}>
-      <Button tone="bare" label={closeLabel} onPress={onClose}>
+      <Button tone="bare" fills label={closeLabel} onPress={onClose}>
         <View style={styles.behind} />
       </Button>
 

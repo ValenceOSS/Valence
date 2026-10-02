@@ -44,11 +44,12 @@ const INVITATION_SIZE = 240;
  */
 const PartyPanel = ({ kind, watchParty, mediaId, people, onLeave }: PartyPanelProps) => {
   const [password, setPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [asked, setAsked] = useState<readonly string[]>([]);
   const [passwordsSet, setPasswordsSet] = useState(0);
   const setTheParty = (to: string | null) => {
     watchParty.setPassword(to);
-    setPassword('');
+    setNewPassword('');
     setPasswordsSet((was) => was + 1);
   };
   const { meConnectionId, waitingFor, passwordWanted } = watchParty;
@@ -258,11 +259,11 @@ const PartyPanel = ({ kind, watchParty, mediaId, people, onLeave }: PartyPanelPr
           <TextField
             key={passwordsSet}
             label={say('common.partyPanel.partyPassword')}
-            value={password}
-            onChange={setPassword}
+            value={newPassword}
+            onChange={setNewPassword}
             onSubmit={() => {
-              if (password.length > 0) {
-                setTheParty(password);
+              if (newPassword.length > 0) {
+                setTheParty(newPassword);
               }
             }}
             isSecret
@@ -275,9 +276,9 @@ const PartyPanel = ({ kind, watchParty, mediaId, people, onLeave }: PartyPanelPr
           <ActionRow
             label={say('common.partyPanel.set')}
             icon={KeyRound}
-            isDisabled={password.length === 0}
+            isDisabled={newPassword.length === 0}
             onPress={() => {
-              setTheParty(password);
+              setTheParty(newPassword);
             }}
           />
           {party.hasPassword ? (

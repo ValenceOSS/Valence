@@ -105,8 +105,12 @@ const Slider = ({
       accessibilityRole="adjustable"
       accessibilityLabel={label}
       accessibilityValue={{ min: 0, max: Math.round(furthest), now: Math.round(showing) }}
-      accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+      accessibilityActions={isDisabled ? [] : [{ name: 'increment' }, { name: 'decrement' }]}
       onAccessibilityAction={({ nativeEvent }) => {
+        if (isDisabled) {
+          return;
+        }
+
         const step = nativeEvent.actionName === 'increment' ? A_STEP : -A_STEP;
 
         onScrubbed(Math.min(Math.max(value + step, 0), furthest));

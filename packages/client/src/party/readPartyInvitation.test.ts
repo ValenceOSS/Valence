@@ -25,4 +25,8 @@ describe('readPartyInvitation', () => {
     expect(readPartyInvitation('/watch/film-1')).toBeNull();
     expect(readPartyInvitation(null)).toBeNull();
   });
+
+  it('reads a badly escaped link as no invitation rather than failing', () => {
+    expect(readPartyInvitation('/watch/film-1?party=%E0%A4')).toBeNull();
+  });
 });

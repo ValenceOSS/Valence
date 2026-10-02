@@ -545,7 +545,7 @@ describe('Watching', () => {
     jest.mocked(startPlaybackSession).mockResolvedValue(started({ kind: 'direct', url: '/file' }));
 
     theFakePlayer.currentTime = 100;
-    const watchParty = aWatchPartyStateWith(jest.fn, { party: aWatchParty() });
+    const watchParty = aWatchPartyStateWith(jest.fn, { party: aWatchParty({ mediaId: 'a-film' }) });
 
     const drawn = await render(
       around(<Watching mediaId="a-film" onDone={jest.fn()} watchParty={watchParty} />),
