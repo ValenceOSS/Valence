@@ -3019,6 +3019,7 @@ mod tests {
     /// "VPP tone mapping" turns on. Without it every HDR film came off the
     /// device to be converted and went back up, and that round trip is where
     /// 2160p previews were failing.
+    #[cfg(unix)]
     #[test]
     fn converts_hdr_on_the_device_on_qsv_rather_than_coming_down_for_it() {
         let spec = SessionSpec {
@@ -3078,6 +3079,7 @@ mod tests {
     }
 
     /// A backend that keeps its frames still says so.
+    #[cfg(unix)]
     #[test]
     fn still_decodes_on_the_device_where_the_chain_can_take_its_frames() {
         let spec = on_gpu(HardwareAccel::Qsv);
@@ -3990,6 +3992,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
         assert!(keeps_frames_on_the_gpu_of(&on_gpu(HardwareAccel::Rkmpp)));
     }
 
+    #[cfg(unix)]
     #[test]
     fn leaves_backends_with_no_pipeline_alone() {
         for accel in [HardwareAccel::Amf, HardwareAccel::None] {
@@ -4098,6 +4101,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
     /// The QSV decoders hang an Intel iGPU, and Jellyfin never uses them: its
     /// "Prefer OS native DXVA or VA-API hardware decoders" is on by default,
     /// which is QSV encoding on top of VA-API decoding. This asks for the same.
+    #[cfg(unix)]
     #[test]
     fn decodes_on_vaapi_where_the_encoder_is_qsv() {
         let args = plan(on_gpu(HardwareAccel::Qsv)).to_ffmpeg_args();
@@ -4178,6 +4182,7 @@ format=bgra,hwupload=derive_device=vaapi[sub]"
     /// The driver is named, as Jellyfin names it. QSV does not exist on i965
     /// at all, so a machine that would resolve to it should say so when the
     /// device is opened rather than somewhere further down the chain.
+    #[cfg(unix)]
     #[test]
     fn derives_the_qsv_device_from_a_vaapi_one() {
         let args = plan(on_gpu(HardwareAccel::Qsv)).to_ffmpeg_args();

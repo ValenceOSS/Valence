@@ -270,7 +270,7 @@ mod tests {
 
         assert_eq!(
             map.to_host("/media/film.mkv"),
-            Ok(on_host("/Volumes/Media", &["film.mkv"]))
+            Ok(on_host("/Volumes/Media/", &["film.mkv"]))
         );
     }
 
