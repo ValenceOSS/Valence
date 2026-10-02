@@ -1,3 +1,7 @@
+import { createLinkService } from '@ValenceServer/linking/createLinkService';
+import { createMemoryLinkStore } from '@ValenceServer/linking/createMemoryLinkStore';
+import { createPeerClient } from '@ValenceServer/linking/createPeerClient';
+import { linkSettingsOf } from '@ValenceServer/linking/linkSettingsOf';
 import { bodyOf } from '@ValenceI18n/bodyOf';
 import { refuseWith } from '@ValenceI18n/refuseWith';
 import type { RefusalBody } from '@ValenceI18n/RefusalBody';
@@ -255,6 +259,13 @@ const createAppContext = (options: CreateAppOptions) => {
     history,
     apiKeys = createBetterAuthApiKeyService(auth),
     webhooks = createMemoryWebhookStore(),
+    linking = createLinkService({
+      store: createMemoryLinkStore(),
+      settings: linkSettingsOf(settings),
+      address: 'http://localhost:8420',
+      defaultName: say('common.valence'),
+      peers: createPeerClient(),
+    }),
     notifications = createMemoryNotificationStore(),
     readPushPublicKey = () => Promise.resolve(''),
     queueWebhookDelivery = () => Promise.resolve(),
@@ -1463,6 +1474,7 @@ const createAppContext = (options: CreateAppOptions) => {
     notifications,
     readPushPublicKey,
     queueWebhookDelivery,
+    linking,
     banAccount,
     unbanAccount,
     removeAccount,

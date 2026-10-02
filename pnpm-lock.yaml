@@ -580,6 +580,9 @@ importers:
       hono:
         specifier: ^4.13.7
         version: 4.13.7
+      jose:
+        specifier: ^6.2.8
+        version: 6.2.8
       mupdf:
         specifier: ^1.28.1
         version: 1.28.1

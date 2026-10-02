@@ -3,6 +3,7 @@ import type { ImportService } from '@ValenceServer/imports/createImportService';
 import type { ImportedAccount } from '@ValenceServer/arrImport/ImportedAccount';
 import type { PreTranscodingService } from '@ValenceServer/preTranscoding/PreTranscodingService';
 import type { SetupLinkService } from '@ValenceServer/accounts/setupLinks/SetupLinkService';
+import type { LinkService } from '@ValenceServer/linking/LinkService';
 import type {
   AccountWithoutPasswordOutcome,
   AccountWithoutPasswordRequest,
@@ -112,6 +113,7 @@ type CreateAppOptions = {
     changes: { name?: string; email?: string | null; username?: string },
   ) => Promise<'changed' | 'missing' | 'taken' | 'usernameTaken'>;
   setupLinks?: SetupLinkService;
+  linking?: LinkService;
   createAccountWithoutPassword?: (
     request: AccountWithoutPasswordRequest,
   ) => Promise<AccountWithoutPasswordOutcome>;

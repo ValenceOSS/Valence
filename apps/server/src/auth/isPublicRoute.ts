@@ -17,6 +17,10 @@ const PUBLIC_ROUTES: readonly PublicRoute[] = [
   { method: 'POST', path: /^\/api\/password-reset$/ },
   { method: 'GET', path: /^\/api\/setup-links\/[A-Za-z0-9_-]{32,128}$/ },
   { method: 'POST', path: /^\/api\/setup-links\/[A-Za-z0-9_-]{32,128}$/ },
+  { method: 'GET', path: /^\/api\/federation\/v1\/server$/ },
+  { method: 'POST', path: /^\/api\/federation\/v1\/pair$/ },
+  { method: 'GET', path: /^\/api\/federation\/v1\/pair\/[0-9a-f-]{36}$/ },
+  { method: 'POST', path: /^\/api\/federation\/v1\/unlink$/ },
   { method: 'GET', path: /^\/api\/openapi\.json$/ },
   { method: 'GET', path: /^\/api\/reference$/ },
   {

@@ -1263,6 +1263,42 @@ const webhookDelivery = pgTable(
   ],
 );
 
+const linkInvite = pgTable(
+  'link_invite',
+  {
+    id: text('id').primaryKey(),
+    codeHash: text('codeHash').notNull(),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    expiresAt: timestamp('expiresAt').notNull(),
+    usedAt: timestamp('usedAt'),
+  },
+  (table) => [uniqueIndex('link_invite_code_idx').on(table.codeHash)],
+);
+
+const linkedServer = pgTable(
+  'linked_server',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    colour: text('colour').notNull(),
+    address: text('address').notNull(),
+    publicKey: jsonb('publicKey').notNull(),
+    fingerprint: text('fingerprint').notNull(),
+    state: text('state').notNull(),
+    theirPairingId: text('theirPairingId'),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    linkedAt: timestamp('linkedAt'),
+    lastSeenAt: timestamp('lastSeenAt'),
+  },
+  (table) => [
+    uniqueIndex('linked_server_fingerprint_idx').on(table.fingerprint),
+    check(
+      'linked_server_state',
+      sql`${table.state} in ('awaitingThem', 'awaitingUs', 'linked', 'refused', 'unlinkedByThem')`,
+    ),
+  ],
+);
+
 const notification = pgTable(
   'notification',
   {
@@ -1649,6 +1685,8 @@ export {
   jobTrigger,
   webhookSubscription,
   webhookDelivery,
+  linkInvite,
+  linkedServer,
   notification,
   notificationPreference,
   pushSubscription,

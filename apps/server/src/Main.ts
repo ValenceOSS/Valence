@@ -2,6 +2,7 @@ import { z } from '@hono/zod-openapi';
 import { checkServerVersion } from '@ValenceDatabase/checkServerVersion';
 import { SEERR_DEFAULTS } from '@ValenceContracts/schemas/SeerrLink';
 import { EMAIL_DEFAULTS } from '@ValenceContracts/schemas/EmailSettings';
+import { LINK_SETTINGS_DEFAULTS } from '@ValenceServer/linking/LinkSettings';
 import { databaseConnectionOf } from '@ValenceDatabase/databaseConnectionOf';
 import { checkDialect } from '@ValenceDatabase/checkDialect';
 import { followUpReading } from '@ValenceServer/library/followUpReading';
@@ -100,6 +101,10 @@ import {
 import { readEnv } from '@ValenceServer/env/Env';
 import { readImportedAccounts } from '@ValenceServer/arrImport/readImportedAccounts';
 import { createDatabaseSettingsStore } from '@ValenceServer/settings/createDatabaseSettingsStore';
+import { createLinkService } from '@ValenceServer/linking/createLinkService';
+import { createDatabaseLinkStore } from '@ValenceServer/linking/createDatabaseLinkStore';
+import { createPeerClient } from '@ValenceServer/linking/createPeerClient';
+import { linkSettingsOf } from '@ValenceServer/linking/linkSettingsOf';
 import { createEmailService } from '@ValenceServer/email/createEmailService';
 import { createDatabaseEmailSendStore } from '@ValenceServer/email/createDatabaseEmailSendStore';
 import { emailPasswordReset } from '@ValenceServer/email/emailPasswordReset';
@@ -404,6 +409,7 @@ const settings = createDatabaseSettingsStore({
     preTranscoding: PRE_TRANSCODING_DEFAULTS,
     seerr: SEERR_DEFAULTS,
     email: EMAIL_DEFAULTS,
+    linking: LINK_SETTINGS_DEFAULTS,
   },
 });
 
@@ -3275,6 +3281,13 @@ const app = createApp({
   progress: createDatabaseWatchProgressService(db),
   history: historyService,
   webhooks: webhookSubscriptions,
+  linking: createLinkService({
+    store: createDatabaseLinkStore(db),
+    settings: linkSettingsOf(settings),
+    address: env.BETTER_AUTH_URL,
+    defaultName: say('common.valence'),
+    peers: createPeerClient(),
+  }),
   queueWebhookDelivery,
   notifications,
   events,

@@ -1245,6 +1245,42 @@ const webhookDelivery = mysqlTable(
   ],
 );
 
+const linkInvite = mysqlTable(
+  'link_invite',
+  {
+    id: identifier('id').primaryKey(),
+    codeHash: varchar('codeHash', { length: 255 }).notNull(),
+    createdAt: momentNow('createdAt').notNull(),
+    expiresAt: moment('expiresAt').notNull(),
+    usedAt: moment('usedAt'),
+  },
+  (table) => [uniqueIndex('link_invite_code_idx').on(table.codeHash)],
+);
+
+const linkedServer = mysqlTable(
+  'linked_server',
+  {
+    id: identifier('id').primaryKey(),
+    name: mediumtext('name').notNull(),
+    colour: varchar('colour', { length: 16 }).notNull(),
+    address: mediumtext('address').notNull(),
+    publicKey: jsonColumn('publicKey').notNull(),
+    fingerprint: varchar('fingerprint', { length: 64 }).notNull(),
+    state: varchar('state', { length: 32 }).notNull(),
+    theirPairingId: identifier('theirPairingId'),
+    createdAt: momentNow('createdAt').notNull(),
+    linkedAt: moment('linkedAt'),
+    lastSeenAt: moment('lastSeenAt'),
+  },
+  (table) => [
+    uniqueIndex('linked_server_fingerprint_idx').on(table.fingerprint),
+    check(
+      'linked_server_state',
+      sql`${table.state} in ('awaitingThem', 'awaitingUs', 'linked', 'refused', 'unlinkedByThem')`,
+    ),
+  ],
+);
+
 const notification = mysqlTable(
   'notification',
   {
@@ -1632,6 +1668,8 @@ export {
   jobTrigger,
   webhookSubscription,
   webhookDelivery,
+  linkInvite,
+  linkedServer,
   notification,
   notificationPreference,
   pushSubscription,

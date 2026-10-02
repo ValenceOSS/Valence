@@ -50,6 +50,7 @@
     "drizzle-orm": "^0.45.2",
     "fflate": "^0.8.3",
     "hono": "^4.13.7",
+    "jose": "^6.2.8",
     "mupdf": "^1.28.1",
     "music-metadata": "^11.15.0",
     "mysql2": "^3.24.5",

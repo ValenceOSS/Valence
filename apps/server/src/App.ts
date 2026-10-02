@@ -21,6 +21,7 @@ import { serveRole } from '@ValenceServer/api/serveRole';
 import { serveLibraryAccess } from '@ValenceServer/api/serveLibraryAccess';
 import { serveAccount } from '@ValenceServer/api/serveAccount';
 import { serveSetupLinks } from '@ValenceServer/api/serveSetupLinks';
+import { serveLinking } from '@ValenceServer/api/serveLinking';
 import { servePasswordReset } from '@ValenceServer/api/servePasswordReset';
 import { serveRequests } from '@ValenceServer/api/serveRequests';
 import { serveSamples } from '@ValenceServer/api/serveSamples';
@@ -77,6 +78,7 @@ const createApp = (options: CreateAppOptions) => {
   serveRole(app, context);
   serveLibraryAccess(app, context);
   serveSetupLinks(app, context);
+  serveLinking(app, context);
   serveAccount(app, context);
   servePasswordReset(app, context);
   serveRequests(app, context);

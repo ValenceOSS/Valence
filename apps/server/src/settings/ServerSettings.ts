@@ -8,6 +8,7 @@ import {
 } from '@ValenceContracts/schemas/PreTranscoding';
 import { SEERR_DEFAULTS, SeerrSettingsSchema } from '@ValenceContracts/schemas/SeerrLink';
 import { EMAIL_DEFAULTS, EmailSettingsSchema } from '@ValenceContracts/schemas/EmailSettings';
+import { LINK_SETTINGS_DEFAULTS, LinkSettingsSchema } from '@ValenceServer/linking/LinkSettings';
 
 const ServerSettingsSchema = z.object({
   trustedOrigins: z.array(z.string().url()),
@@ -38,6 +39,7 @@ const ServerSettingsSchema = z.object({
   preTranscoding: PreTranscodingSettingsSchema.default(PRE_TRANSCODING_DEFAULTS),
   seerr: SeerrSettingsSchema.default(SEERR_DEFAULTS),
   email: EmailSettingsSchema.default(EMAIL_DEFAULTS),
+  linking: LinkSettingsSchema.default(LINK_SETTINGS_DEFAULTS),
 });
 
 type ServerSettings = z.infer<typeof ServerSettingsSchema>;
