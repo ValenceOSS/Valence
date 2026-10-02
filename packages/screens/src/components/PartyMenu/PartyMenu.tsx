@@ -69,10 +69,10 @@ const PartyMenu = ({
       tone="default"
       label={
         party === null
-          ? say('screens.partyMenu.watchParty')
-          : say('screens.partyMenu.watchPartyWatchingWatching', { watching: watching.toString() })
+          ? say('common.partyMenu.watchParty')
+          : say('common.partyMenu.watchPartyWatchingWatching', { watching: watching.toString() })
       }
-      heading={say('screens.partyMenu.watchParty')}
+      heading={say('common.partyMenu.watchParty')}
       isDisabled={isDisabled}
       isOpen={isOpen}
       onOpenChange={show}
@@ -84,7 +84,7 @@ const PartyMenu = ({
       {party === null ? (
         <div className="flex w-72 max-w-full flex-col gap-3 text-text">
           <p className="text-xs leading-relaxed text-text-muted">
-            {say('screens.partyMenu.watchThisWithOtherPeopleHere')}
+            {say('common.partyMenu.watchThisWithOtherPeopleHere')}
           </p>
 
           <Button
@@ -95,7 +95,7 @@ const PartyMenu = ({
               onOpen?.();
             }}
           >
-            {say('screens.partyMenu.startAWatchParty')}
+            {say('common.partyMenu.startAWatchParty')}
           </Button>
         </div>
       ) : (

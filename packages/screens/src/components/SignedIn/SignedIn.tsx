@@ -15,6 +15,7 @@ import { sessionQueries } from '@ValenceClient/query/sessionQueries';
 import { viewingQueries } from '@ValenceClient/query/viewingQueries';
 import { libraryQueries } from '@ValenceClient/query/libraryQueries';
 import { useWatchParty } from '@ValenceClient/party/useWatchParty';
+import { PARTY_NOTICE_LINGERS_MS } from '@ValenceClient/party/PARTY_NOTICE_LINGERS_MS';
 import { profileQueries } from '@ValenceClient/query/profileQueries';
 import { householdQueries } from '@ValenceClient/query/householdQueries';
 import { platformInUse } from '@ValenceClient/platform/installPlatform';
@@ -41,8 +42,6 @@ import { useListenAlong } from '@ValenceScreens/music/useListenAlong';
 import { signedInOnThisPage } from '@ValenceScreens/phone/signedInOnThisPage';
 import type { SignedInProps } from './SignedIn.types';
 import { say } from '@ValenceI18n/say';
-
-const PARTY_NOTICE_LINGERS_MS = 6000;
 
 const MARK_FLIES_MS = 300;
 

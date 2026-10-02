@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion, useReducedMotionConfig } from 'motion/react';
 import { SplashScreen } from '@ValenceUI/SplashScreen';
 import { VideoPlayer } from '@ValenceScreens/components/VideoPlayer/VideoPlayer';
 import { PartyMenu } from '@ValenceScreens/components/PartyMenu/PartyMenu';
 import { PartyPasswordDialog } from '@ValenceScreens/components/PartyPasswordDialog/PartyPasswordDialog';
-import { whereToBegin, WAIT_FOR_THE_ROOM_MS } from '@ValenceClient/party/whereToBegin';
-import { invitationTo } from '@ValenceScreens/party/invitationTo';
+import { useWhereToBegin } from '@ValenceClient/party/useWhereToBegin';
+import { usePartyPlayback } from '@ValenceClient/party/usePartyPlayback';
+import { invitationTo } from '@ValenceClient/party/invitationTo';
 import { countCarriedOn } from '@ValenceClient/playback/countCarriedOn';
 import { decideWhatFollows } from '@ValenceClient/playback/decideWhatFollows';
 import { nextEpisode } from '@ValenceClient/library/pickFeatured';
@@ -44,12 +45,9 @@ const WatchPage = () => {
   const filmParty = watchParty.party?.kind === 'watch' ? watchParty.party : null;
   const prefersReducedMotion = useReducedMotionConfig();
 
-  const [hasWaitedForTheRoom, setHasWaitedForTheRoom] = useState(false);
-  const [begun, setBegun] = useState<{ mediaId: string; atSeconds: number } | null>(null);
   const markedAtRef = useRef(0);
   const carriedOnRef = useRef(0);
   const carriedOnToRef = useRef<string | null>(null);
-  const joinedRef = useRef<string | null>(null);
 
   const playing = place.playing === null ? null : (known.get(place.playing) ?? null);
   const seasonMates = useSeasonMates(playing, [...known.values()]);
@@ -74,59 +72,21 @@ const WatchPage = () => {
     });
   }, [place.playing]);
 
-  useEffect(() => {
-    if (place.party === null || joinedRef.current === place.party) {
-      return;
-    }
-
-    joinedRef.current = place.party;
-    watchParty.join(place.party);
-  }, [place.party, watchParty]);
-
-  useEffect(() => {
-    if (place.party === null) {
-      setHasWaitedForTheRoom(false);
-
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setHasWaitedForTheRoom(true);
-    }, WAIT_FOR_THE_ROOM_MS);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [place.party]);
-
-  const partyPlayback = useMemo(
-    () =>
-      filmParty === null
-        ? null
-        : {
-            command: watchParty.command,
-            meConnectionId: watchParty.meConnectionId,
-            referenceSeconds: watchParty.referenceSeconds,
-            jitterMs: watchParty.jitterMs,
-            isPlaying: filmParty.isPlaying,
-            isHeld: filmParty.isHeld,
-            waitingFor: watchParty.waitingFor,
-            id: filmParty.id,
-            members: filmParty.members.length,
-            onReport: watchParty.report,
-            onCommand: watchParty.send,
-          },
-    [
-      filmParty,
-      watchParty.command,
-      watchParty.meConnectionId,
-      watchParty.referenceSeconds,
-      watchParty.jitterMs,
-      watchParty.waitingFor,
-      watchParty.report,
-      watchParty.send,
-    ],
-  );
+  const partyPlayback = usePartyPlayback(watchParty);
+  const found = playing === null ? undefined : progress.get(playing.id);
+  const startAt =
+    playing !== null && startOverride?.mediaId === playing.id
+      ? startOverride.seconds
+      : found === undefined || found.isFinished
+        ? 0
+        : Math.floor(found.positionSeconds);
+  const beginning = useWhereToBegin({
+    watchParty,
+    invitedTo: place.party,
+    mediaId: playing?.id ?? null,
+    resumeSeconds: startAt,
+    isReady: isProgressReady || (playing !== null && startOverride?.mediaId === playing.id),
+  });
 
   if (playing === null) {
     return <SplashScreen name={title} label={say('common.loadingTitle', { title })} />;
@@ -136,33 +96,8 @@ const WatchPage = () => {
     return <SplashScreen name={title} label={say('common.loadingTitle', { title })} />;
   }
 
-  const found = progress.get(playing.id);
-
-  const startAt =
-    startOverride?.mediaId === playing.id
-      ? startOverride.seconds
-      : found === undefined || found.isFinished
-        ? 0
-        : Math.floor(found.positionSeconds);
-
-  const beginning =
-    begun !== null && begun.mediaId === playing.id
-      ? { kind: 'begin' as const, atSeconds: begun.atSeconds }
-      : whereToBegin({
-          invitedTo: place.party,
-          joined: filmParty?.id ?? null,
-          roomSeconds: watchParty.referenceSeconds,
-          resumeSeconds: startAt,
-          isBeingAsked: watchParty.passwordWanted !== null,
-          hasWaitedLongEnough: hasWaitedForTheRoom,
-        });
-
   if (beginning.kind === 'wait') {
-    return <SplashScreen name={title} label={say('screens.watchPage.joiningTheWatchParty')} />;
-  }
-
-  if (begun === null || begun.mediaId !== playing.id || begun.atSeconds !== beginning.atSeconds) {
-    setBegun({ mediaId: playing.id, atSeconds: beginning.atSeconds });
+    return <SplashScreen name={title} label={say('common.joiningTheWatchParty')} />;
   }
 
   return (
@@ -202,7 +137,9 @@ const WatchPage = () => {
             }}
             {...(filmParty === null
               ? {}
-              : { invitation: invitationTo(filmParty.id, filmParty.mediaId) })}
+              : {
+                  invitation: invitationTo(filmParty.id, filmParty.mediaId, window.location.origin),
+                })}
             onCopyInvitation={async (invitation) => {
               await navigator.clipboard.writeText(invitation);
             }}

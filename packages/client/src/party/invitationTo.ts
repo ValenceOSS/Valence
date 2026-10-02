@@ -13,13 +13,10 @@ import { HOME, writeLocation } from '@ValenceClient/navigation/readLocation';
  *
  * @param partyId - The party being joined.
  * @param mediaId - What the party is watching.
- * @param origin - Where this instance is reached, for a test that has no window.
+ * @param origin - Where this instance is reached from wherever the invitation is going.
  * @returns The address to send.
  */
-const invitationTo = (
-  partyId: string,
-  mediaId: string,
-  origin = typeof window === 'undefined' ? '' : window.location.origin,
-): string => `${origin}${writeLocation({ ...HOME, playing: mediaId, party: partyId })}`;
+const invitationTo = (partyId: string, mediaId: string, origin: string): string =>
+  `${origin}${writeLocation({ ...HOME, playing: mediaId, party: partyId })}`;
 
 export { invitationTo };

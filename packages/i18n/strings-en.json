@@ -3285,6 +3285,11 @@
     "context": "The label, used in the admin area (from `adminSections`) and in the observability page."
   },
   {
+    "handler": "common.joiningTheWatchParty",
+    "text": "Joining the watch party",
+    "context": "The label of a splash screen in the watch page."
+  },
+  {
     "handler": "common.justThisEpisode",
     "text": "Just this episode",
     "context": "The label, used in the share sheet of the phone app and in the share dialog."
@@ -3433,6 +3438,36 @@
     "handler": "common.listeningParty",
     "text": "Listening party",
     "context": "Shown, used in the music page and in the now playing bar."
+  },
+  {
+    "handler": "common.listeningPartyPanel.everybodyHearsWhatYouPlayWhere",
+    "text": "Everybody hears what you play, where you are in it. Each of them keeps their own volume.",
+    "context": "Shown in the listening party panel in the music page."
+  },
+  {
+    "handler": "common.listeningPartyPanel.leaveItBeforeStartingAParty",
+    "text": "Leave it before starting a party to listen together.",
+    "context": "The detail of a nothing here in the listening party panel in the music page."
+  },
+  {
+    "handler": "common.listeningPartyPanel.listenTogether",
+    "text": "Listen together",
+    "context": "The title of a nothing here in the listening party panel in the music page."
+  },
+  {
+    "handler": "common.listeningPartyPanel.playSomethingThenStartAParty",
+    "text": "Play something, then start a party and send the link to anybody with an account here.",
+    "context": "Shown in the listening party panel in the music page."
+  },
+  {
+    "handler": "common.listeningPartyPanel.startAListeningParty",
+    "text": "Start a listening party",
+    "context": "The label of a button in the listening party panel in the music page."
+  },
+  {
+    "handler": "common.listeningPartyPanel.youAreInAWatchParty",
+    "text": "You are in a watch party",
+    "context": "The title of a nothing here in the listening party panel in the music page."
   },
   {
     "handler": "common.live",
@@ -4143,6 +4178,240 @@
     "handler": "common.partlyHere",
     "text": "Partly here",
     "context": "Shown, used in the ask page of the television app and in the season standing names in the requests."
+  },
+  {
+    "handler": "common.partyMenu.startAWatchParty",
+    "text": "Start a watch party",
+    "context": "The label of a button in the party menu."
+  },
+  {
+    "handler": "common.partyMenu.watchParty",
+    "text": "Watch party",
+    "context": "The heading of a popover panel in the party menu."
+  },
+  {
+    "handler": "common.partyMenu.watchPartyWatchingWatching",
+    "text": "Watch party · {watching} watching",
+    "context": "Shown in the party menu. {watching} is filled in by the app."
+  },
+  {
+    "handler": "common.partyMenu.watchThisWithOtherPeopleHere",
+    "text": "Watch this with other people here, in step. You get a link to send them, and whatever anybody plays, pauses or skips happens for everybody.",
+    "context": "Text shown in the party menu."
+  },
+  {
+    "handler": "common.partyPanel.aPasswordAsksAnybodyOpeningThe",
+    "text": "A password asks anybody opening the link for it, for a link that may travel further than you meant.",
+    "context": "Shown in the party panel."
+  },
+  { "handler": "common.partyPanel.ask", "text": "Ask", "context": "Shown in the party panel." },
+  {
+    "handler": "common.partyPanel.askAlong",
+    "text": "Ask along",
+    "context": "The title of a panel card in the party panel."
+  },
+  { "handler": "common.partyPanel.asked", "text": "Asked", "context": "Shown in the party panel." },
+  {
+    "handler": "common.partyPanel.askNameAlong",
+    "text": "Ask {name} along",
+    "context": "The label of a button in the party panel. {name} is filled in by the app."
+  },
+  {
+    "handler": "common.partyPanel.askSomebodyAlongTheyAreTold",
+    "text": "Ask somebody along. They are told wherever they asked to be told things, and the message carries this same link.",
+    "context": "Text shown in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.closeTheParty",
+    "text": "Close the party panel",
+    "context": "Closes the watch party panel over the player, for somebody who cannot see the cross."
+  },
+  {
+    "handler": "common.partyPanel.coHost",
+    "text": "Co-host",
+    "context": "A badge beside a party member who may run the party alongside its host."
+  },
+  {
+    "handler": "common.partyPanel.controls",
+    "text": "Controls",
+    "context": "The title of a panel card in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.countListening.one",
+    "text": "{count} listening",
+    "context": "The title of a listening party's panel: how many of its members are listening. {count} is the number."
+  },
+  {
+    "handler": "common.partyPanel.countListening.other",
+    "text": "{count} listening",
+    "context": "The title of a listening party's panel: how many of its members are listening. {count} is the number."
+  },
+  {
+    "handler": "common.partyPanel.countWatching.one",
+    "text": "{count} watching",
+    "context": "The title of a watch party's panel: how many of its members are watching. {count} is the number."
+  },
+  {
+    "handler": "common.partyPanel.countWatching.other",
+    "text": "{count} watching",
+    "context": "The title of a watch party's panel: how many of its members are watching. {count} is the number."
+  },
+  {
+    "handler": "common.partyPanel.everyoneCanPlayAndPause",
+    "text": "Everyone can play and pause",
+    "context": "The label of a switch in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.everyoneCanSkipAround",
+    "text": "Everyone can skip around",
+    "context": "The label of a switch in the party panel."
+  },
+  { "handler": "common.partyPanel.guest", "text": "Guest", "context": "Shown in the party panel." },
+  { "handler": "common.partyPanel.host", "text": "Host", "context": "Shown in the party panel." },
+  {
+    "handler": "common.partyPanel.invite",
+    "text": "Invite",
+    "context": "The title of a panel card in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.keepingTime",
+    "text": "Keeping time",
+    "context": "Text shown in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.leave",
+    "text": "Leave",
+    "context": "Text shown in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.listening",
+    "text": "Listening",
+    "context": "Shown in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.makeACoHost",
+    "text": "Make a co-host",
+    "context": "Shown in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.makeAGuest",
+    "text": "Make a guest",
+    "context": "Shown in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.nameYou",
+    "text": "{name} (you)",
+    "context": "A member of a watch or listening party, marked as the person reading the list."
+  },
+  {
+    "handler": "common.partyPanel.noPassword",
+    "text": "No password",
+    "context": "Shown in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.notListening",
+    "text": "Not listening",
+    "context": "Shown in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.notWatching",
+    "text": "Not watching",
+    "context": "Shown in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.partyPassword",
+    "text": "Party password",
+    "context": "The label of a text field in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.removeNameFromTheParty",
+    "text": "Remove {name} from the party",
+    "context": "The label of a button in the party panel. {name} is filled in by the app."
+  },
+  {
+    "handler": "common.partyPanel.secondsAhead",
+    "text": "{seconds}s ahead",
+    "context": "How far a member of a watch party is ahead of whoever keeps time."
+  },
+  {
+    "handler": "common.partyPanel.secondsBehind",
+    "text": "{seconds}s behind",
+    "context": "How far a member of a watch party is behind whoever keeps time."
+  },
+  {
+    "handler": "common.partyPanel.sendThisToListenAlong",
+    "text": "Send this to anybody with an account here. It puts them in this party, listening along.",
+    "context": "Explains the invitation link of a listening party."
+  },
+  {
+    "handler": "common.partyPanel.sendThisToWatchAlong",
+    "text": "Send this to anybody with an account here. It puts them in this party, watching this.",
+    "context": "Explains the invitation link of a watch party."
+  },
+  {
+    "handler": "common.partyPanel.set",
+    "text": "Set",
+    "context": "The label of a button in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.setANewOne",
+    "text": "Set a new one",
+    "context": "Shown in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.shareTheInvitation",
+    "text": "Share the invitation",
+    "context": "Opens the system's share sheet with the link that puts somebody in this party."
+  },
+  {
+    "handler": "common.partyPanel.skippingIsTheDisruptiveOneA",
+    "text": "Skipping is the disruptive one — a stray scrub throws everybody across the film, which is why it can be withheld while pausing stays shared.",
+    "context": "Text shown in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.thisPartyHasAPasswordAnybody",
+    "text": "This party has a password. Anybody opening the link is asked for it.",
+    "context": "Shown in the party panel."
+  },
+  {
+    "handler": "common.partyPanel.waitingForNameToCatchUp",
+    "text": "Waiting for {name} to catch up",
+    "context": "A warning in a watch or listening party while it is held for one person whose player is behind. {name} is that person's name."
+  },
+  {
+    "handler": "common.partyPanel.waitingForPeopleToCatchUp.one",
+    "text": "Waiting for {count} person to catch up",
+    "context": "In a watch party, how many people the others are waiting for before playing on. Only shown for two or more; one person is named instead."
+  },
+  {
+    "handler": "common.partyPanel.waitingForPeopleToCatchUp.other",
+    "text": "Waiting for {count} people to catch up",
+    "context": "In a watch party, how many people the others are waiting for before playing on. Only shown for two or more; one person is named instead."
+  },
+  {
+    "handler": "common.partyPasswordDialog.join",
+    "text": "Join",
+    "context": "The label in the party password dialog."
+  },
+  {
+    "handler": "common.partyPasswordDialog.thatIsNotThePasswordFor",
+    "text": "That is not the password for this party.",
+    "context": "An error shown in the party password dialog."
+  },
+  {
+    "handler": "common.partyPasswordDialog.thisWatchPartyHasAPassword",
+    "text": "This watch party has a password",
+    "context": "The title of a dialog title in the party password dialog."
+  },
+  {
+    "handler": "common.partyPasswordDialog.watchPartyPassword",
+    "text": "Watch party password",
+    "context": "The label of a dialog in the party password dialog."
+  },
+  {
+    "handler": "common.partyPasswordDialog.whoeverInvitedYouSetOneAsk",
+    "text": "Whoever invited you set one. Ask them for it if you have not been told.",
+    "context": "Text shown in the party password dialog."
   },
   {
     "handler": "common.passkeyName",
@@ -19653,36 +19922,6 @@
     "context": "Shown where your liked songs could not be read from the server, followed by a sentence about why and a button to try again."
   },
   {
-    "handler": "screens.musicPage.listeningPartyPanel.everybodyHearsWhatYouPlayWhere",
-    "text": "Everybody hears what you play, where you are in it. Each of them keeps their own volume.",
-    "context": "Shown in the listening party panel in the music page."
-  },
-  {
-    "handler": "screens.musicPage.listeningPartyPanel.leaveItBeforeStartingAParty",
-    "text": "Leave it before starting a party to listen together.",
-    "context": "The detail of a nothing here in the listening party panel in the music page."
-  },
-  {
-    "handler": "screens.musicPage.listeningPartyPanel.listenTogether",
-    "text": "Listen together",
-    "context": "The title of a nothing here in the listening party panel in the music page."
-  },
-  {
-    "handler": "screens.musicPage.listeningPartyPanel.playSomethingThenStartAParty",
-    "text": "Play something, then start a party and send the link to anybody with an account here.",
-    "context": "Shown in the listening party panel in the music page."
-  },
-  {
-    "handler": "screens.musicPage.listeningPartyPanel.startAListeningParty",
-    "text": "Start a listening party",
-    "context": "The label of a button in the listening party panel in the music page."
-  },
-  {
-    "handler": "screens.musicPage.listeningPartyPanel.youAreInAWatchParty",
-    "text": "You are in a watch party",
-    "context": "The title of a nothing here in the listening party panel in the music page."
-  },
-  {
     "handler": "screens.musicPage.musicHome.readingYourMusic",
     "text": "Reading your music",
     "context": "The label of a skeleton in the music home in the music page."
@@ -20741,223 +20980,6 @@
     "handler": "screens.partOfCollections.partOf",
     "text": "Part of",
     "context": "The heading above the collections a film or programme belongs to, on its page; each collection is a button below it."
-  },
-  {
-    "handler": "screens.partyMenu.startAWatchParty",
-    "text": "Start a watch party",
-    "context": "The label of a button in the party menu."
-  },
-  {
-    "handler": "screens.partyMenu.watchParty",
-    "text": "Watch party",
-    "context": "The heading of a popover panel in the party menu."
-  },
-  {
-    "handler": "screens.partyMenu.watchPartyWatchingWatching",
-    "text": "Watch party · {watching} watching",
-    "context": "Shown in the party menu. {watching} is filled in by the app."
-  },
-  {
-    "handler": "screens.partyMenu.watchThisWithOtherPeopleHere",
-    "text": "Watch this with other people here, in step. You get a link to send them, and whatever anybody plays, pauses or skips happens for everybody.",
-    "context": "Text shown in the party menu."
-  },
-  {
-    "handler": "screens.partyPanel.aPasswordAsksAnybodyOpeningThe",
-    "text": "A password asks anybody opening the link for it, for a link that may travel further than you meant.",
-    "context": "Shown in the party panel."
-  },
-  { "handler": "screens.partyPanel.ask", "text": "Ask", "context": "Shown in the party panel." },
-  {
-    "handler": "screens.partyPanel.askAlong",
-    "text": "Ask along",
-    "context": "The title of a panel card in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.asked",
-    "text": "Asked",
-    "context": "Shown in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.askNameAlong",
-    "text": "Ask {name} along",
-    "context": "The label of a button in the party panel. {name} is filled in by the app."
-  },
-  {
-    "handler": "screens.partyPanel.askSomebodyAlongTheyAreTold",
-    "text": "Ask somebody along. They are told wherever they asked to be told things, and the message carries this same link.",
-    "context": "Text shown in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.coHost",
-    "text": "Co-host",
-    "context": "A badge beside a party member who may run the party alongside its host."
-  },
-  {
-    "handler": "screens.partyPanel.controls",
-    "text": "Controls",
-    "context": "The title of a panel card in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.countListening.one",
-    "text": "{count} listening",
-    "context": "The title of a listening party's panel: how many of its members are listening. {count} is the number."
-  },
-  {
-    "handler": "screens.partyPanel.countListening.other",
-    "text": "{count} listening",
-    "context": "The title of a listening party's panel: how many of its members are listening. {count} is the number."
-  },
-  {
-    "handler": "screens.partyPanel.countWatching.one",
-    "text": "{count} watching",
-    "context": "The title of a watch party's panel: how many of its members are watching. {count} is the number."
-  },
-  {
-    "handler": "screens.partyPanel.countWatching.other",
-    "text": "{count} watching",
-    "context": "The title of a watch party's panel: how many of its members are watching. {count} is the number."
-  },
-  {
-    "handler": "screens.partyPanel.everyoneCanPlayAndPause",
-    "text": "Everyone can play and pause",
-    "context": "The label of a switch in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.everyoneCanSkipAround",
-    "text": "Everyone can skip around",
-    "context": "The label of a switch in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.guest",
-    "text": "Guest",
-    "context": "Shown in the party panel."
-  },
-  { "handler": "screens.partyPanel.host", "text": "Host", "context": "Shown in the party panel." },
-  {
-    "handler": "screens.partyPanel.invite",
-    "text": "Invite",
-    "context": "The title of a panel card in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.keepingTime",
-    "text": "Keeping time",
-    "context": "Text shown in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.leave",
-    "text": "Leave",
-    "context": "Text shown in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.listening",
-    "text": "Listening",
-    "context": "Shown in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.makeACoHost",
-    "text": "Make a co-host",
-    "context": "Shown in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.makeAGuest",
-    "text": "Make a guest",
-    "context": "Shown in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.noPassword",
-    "text": "No password",
-    "context": "Shown in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.notListening",
-    "text": "Not listening",
-    "context": "Shown in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.notWatching",
-    "text": "Not watching",
-    "context": "Shown in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.partyPassword",
-    "text": "Party password",
-    "context": "The label of a text field in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.removeNameFromTheParty",
-    "text": "Remove {name} from the party",
-    "context": "The label of a button in the party panel. {name} is filled in by the app."
-  },
-  {
-    "handler": "screens.partyPanel.sendThisToListenAlong",
-    "text": "Send this to anybody with an account here. It puts them in this party, listening along.",
-    "context": "Explains the invitation link of a listening party."
-  },
-  {
-    "handler": "screens.partyPanel.sendThisToWatchAlong",
-    "text": "Send this to anybody with an account here. It puts them in this party, watching this.",
-    "context": "Explains the invitation link of a watch party."
-  },
-  {
-    "handler": "screens.partyPanel.set",
-    "text": "Set",
-    "context": "The label of a button in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.setANewOne",
-    "text": "Set a new one",
-    "context": "Shown in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.skippingIsTheDisruptiveOneA",
-    "text": "Skipping is the disruptive one — a stray scrub throws everybody across the film, which is why it can be withheld while pausing stays shared.",
-    "context": "Text shown in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.thisPartyHasAPasswordAnybody",
-    "text": "This party has a password. Anybody opening the link is asked for it.",
-    "context": "Shown in the party panel."
-  },
-  {
-    "handler": "screens.partyPanel.waitingForNameToCatchUp",
-    "text": "Waiting for {name} to catch up",
-    "context": "A warning in a watch or listening party while it is held for one person whose player is behind. {name} is that person's name."
-  },
-  {
-    "handler": "screens.partyPanel.waitingForPeopleToCatchUp.one",
-    "text": "Waiting for {count} person to catch up",
-    "context": "In a watch party, how many people the others are waiting for before playing on. Only shown for two or more; one person is named instead."
-  },
-  {
-    "handler": "screens.partyPanel.waitingForPeopleToCatchUp.other",
-    "text": "Waiting for {count} people to catch up",
-    "context": "In a watch party, how many people the others are waiting for before playing on. Only shown for two or more; one person is named instead."
-  },
-  {
-    "handler": "screens.partyPasswordDialog.join",
-    "text": "Join",
-    "context": "The label in the party password dialog."
-  },
-  {
-    "handler": "screens.partyPasswordDialog.thatIsNotThePasswordFor",
-    "text": "That is not the password for this party.",
-    "context": "An error shown in the party password dialog."
-  },
-  {
-    "handler": "screens.partyPasswordDialog.thisWatchPartyHasAPassword",
-    "text": "This watch party has a password",
-    "context": "The title of a dialog title in the party password dialog."
-  },
-  {
-    "handler": "screens.partyPasswordDialog.watchPartyPassword",
-    "text": "Watch party password",
-    "context": "The label of a dialog in the party password dialog."
-  },
-  {
-    "handler": "screens.partyPasswordDialog.whoeverInvitedYouSetOneAsk",
-    "text": "Whoever invited you set one. Ask them for it if you have not been told.",
-    "context": "Text shown in the party password dialog."
   },
   {
     "handler": "screens.passkeys.isPasskeySupported.passkeysAreAddedFromValenceIn",
@@ -23723,11 +23745,6 @@
     "handler": "screens.videoRemoteBar.openTheRemoteForLabel",
     "text": "Open the remote for {label}",
     "context": "The label of a button in the video remote bar. {label} is filled in by the app."
-  },
-  {
-    "handler": "screens.watchPage.joiningTheWatchParty",
-    "text": "Joining the watch party",
-    "context": "The label of a splash screen in the watch page."
   },
   {
     "handler": "screens.webhookFields.webhookPanes.where",

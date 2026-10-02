@@ -4,7 +4,7 @@ import { Icon } from '@ValenceUI/Icon';
 import { NothingHere } from '@ValenceUI/NothingHere';
 import { useShell } from '@ValenceClient/shell/useShell';
 import { PartyPanel } from '@ValenceScreens/components/PartyPanel/PartyPanel';
-import { listeningInvitationTo } from '@ValenceScreens/party/listeningInvitationTo';
+import { listeningInvitationTo } from '@ValenceClient/party/listeningInvitationTo';
 import { useListeningParty } from '@ValenceScreens/music/listeningParty';
 import { theMusicPlayer } from '@ValenceClient/music/theMusicPlayer';
 import { useMusicPlayer } from '@ValenceClient/music/useMusicPlayer';
@@ -36,7 +36,7 @@ const ListeningPartyPanel = ({ player: given }: ListeningPartyPanelProps) => {
         party={listening.party}
         meConnectionId={watchParty.meConnectionId}
         people={household}
-        invitation={listeningInvitationTo(listening.party.id)}
+        invitation={listeningInvitationTo(listening.party.id, window.location.origin)}
         onCopyInvitation={async (invitation) => {
           await navigator.clipboard.writeText(invitation);
         }}
@@ -57,8 +57,8 @@ const ListeningPartyPanel = ({ player: given }: ListeningPartyPanelProps) => {
     return (
       <NothingHere
         of={UsersIcon}
-        title={say('screens.musicPage.listeningPartyPanel.youAreInAWatchParty')}
-        detail={say('screens.musicPage.listeningPartyPanel.leaveItBeforeStartingAParty')}
+        title={say('common.listeningPartyPanel.youAreInAWatchParty')}
+        detail={say('common.listeningPartyPanel.leaveItBeforeStartingAParty')}
       />
     );
   }
@@ -68,11 +68,11 @@ const ListeningPartyPanel = ({ player: given }: ListeningPartyPanelProps) => {
   return (
     <NothingHere
       of={HeadphonesIcon}
-      title={say('screens.musicPage.listeningPartyPanel.listenTogether')}
+      title={say('common.listeningPartyPanel.listenTogether')}
       detail={
         song === null
-          ? say('screens.musicPage.listeningPartyPanel.playSomethingThenStartAParty')
-          : say('screens.musicPage.listeningPartyPanel.everybodyHearsWhatYouPlayWhere')
+          ? say('common.listeningPartyPanel.playSomethingThenStartAParty')
+          : say('common.listeningPartyPanel.everybodyHearsWhatYouPlayWhere')
       }
       action={
         <Button
@@ -86,7 +86,7 @@ const ListeningPartyPanel = ({ player: given }: ListeningPartyPanelProps) => {
           }}
         >
           <Icon of={UsersIcon} size={16} />
-          {say('screens.musicPage.listeningPartyPanel.startAListeningParty')}
+          {say('common.listeningPartyPanel.startAListeningParty')}
         </Button>
       }
     />

@@ -1,10 +1,5 @@
 import type { PartyRole, WatchParty } from '@ValenceContracts/schemas/WatchParty';
-
-type Askable = {
-  id: string;
-  name: string;
-  accountId?: string;
-};
+import type { Askable } from '@ValenceClient/party/whoCanBeAsked';
 
 type PartyPanelProps = {
   party: WatchParty;
@@ -21,4 +16,4 @@ type PartyPanelProps = {
   onCopyInvitation?: (invitation: string) => Promise<void>;
 };
 
-export type { PartyPanelProps, Askable };
+export type { PartyPanelProps };
