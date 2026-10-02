@@ -1,9 +1,10 @@
+use std::borrow::Cow;
 use std::fmt::Write as _;
 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
-use crate::media::ColourMetadata;
+use crate::media::{ColourMetadata, VideoRange};
 
 /// A hardware acceleration backend the host may offer.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -380,6 +381,19 @@ pub struct SessionSpec {
     /// here, where the segments are made.
     #[serde(default)]
     pub track: Track,
+    /// What kind of HDR the source is, where it is being converted to SDR.
+    ///
+    /// Asked because the device tone mappers do not all take every kind: Intel's VPP converts
+    /// HDR10 alone, and a fixed peak switches off Dolby Vision's per-scene brightness. Absent
+    /// means HDR10, which is what every session was taken to be before this was sent. See
+    /// [`HardwareAccel::tone_map_for`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_range: Option<VideoRange>,
+    /// The range beneath a Dolby Vision layer, which is what a decoder that ignores the layer
+    /// sees: HDR10 for profile 8.1, nothing beneath it for profile 5. The same as
+    /// [`Self::source_range`] for everything else.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_range_base: Option<VideoRange>,
 }
 
 impl SessionSpec {
@@ -922,12 +936,15 @@ pub fn tone_map_format(expression: &str) -> Option<&str> {
 pub fn on_device_tone_map_filter(
     spec: &SessionSpec,
     filters: DeviceFilters,
-) -> Option<&'static str> {
+) -> Option<Cow<'static, str>> {
     if !filters.tone_map {
         return None;
     }
 
-    spec.hardware_accel.pipeline()?.tone_map
+    let range = spec.source_range.unwrap_or(VideoRange::Hdr10);
+
+    spec.hardware_accel
+        .tone_map_for(range, spec.source_range_base.unwrap_or(range))
 }
 
 /// Whether HDR can be converted without the frames coming down.
@@ -952,7 +969,7 @@ fn on_device_tone_map(spec: &SessionSpec, filters: DeviceFilters) -> bool {
 #[must_use]
 fn device_chain(
     pipeline: HardwarePipeline,
-    tone_map: Option<&'static str>,
+    tone_map: Option<&str>,
     width: u32,
     height: u32,
     narrow: bool,
@@ -1330,6 +1347,47 @@ impl HardwareAccel {
         }
     }
 
+    /// The tone map this backend runs on its own frames for a source of this kind, if it runs
+    /// one at all for it.
+    #[must_use]
+    pub fn tone_map_for(self, range: VideoRange, base: VideoRange) -> Option<Cow<'static, str>> {
+        self.tone_map_on(Platform::CURRENT, range, base)
+    }
+
+    /// The tone map this backend runs for a source of this kind on a platform.
+    ///
+    /// Intel's VPP converts HDR10 alone. It warns "Only support HDR10" and runs anyway on HLG
+    /// and on Dolby Vision profile 5, which have nothing HDR10 underneath, and the picture
+    /// comes out wrong rather than refused. Jellyfin sends VPP only HDR10, HDR10+ and Dolby
+    /// Vision on an HDR10 base, and so does this: anything else comes down to the software
+    /// tone mapper.
+    ///
+    /// The BT.2390 mappers are given a fixed peak so a file's own `MaxCLL` cannot darken them,
+    /// and a fixed peak is also what switches off Dolby Vision's per-scene L1 brightness, which
+    /// is better than any fixed number where it is there. So a Dolby Vision source is given the
+    /// same mapper without its peak. See VAL-344.
+    #[must_use]
+    pub fn tone_map_on(
+        self,
+        platform: Platform,
+        range: VideoRange,
+        base: VideoRange,
+    ) -> Option<Cow<'static, str>> {
+        let mapper = self.pipeline_on(platform)?.tone_map?;
+
+        if matches!(self, Self::Vaapi | Self::Qsv)
+            && !matches!(base, VideoRange::Hdr10 | VideoRange::Hdr10Plus)
+        {
+            return None;
+        }
+
+        if range == VideoRange::DolbyVision && mapper.contains(FIXED_PEAK) {
+            return Some(Cow::Owned(mapper.replace(FIXED_PEAK, "")));
+        }
+
+        Some(Cow::Borrowed(mapper))
+    }
+
     /// Whether a probe of this backend has to open a device first.
     ///
     /// Only VAAPI. It cannot open an encoder without one, which is the whole
@@ -1596,6 +1654,9 @@ const RKMPP: HardwarePipeline = HardwarePipeline {
     takes_device_frames: false,
     skips_unreferenced_frames: false,
 };
+
+/// The fixed peak the BT.2390 mappers are given: 1000 nits, in tens of nits.
+const FIXED_PEAK: &str = ":peak=100";
 
 /// Intel's tone mapper, with the lift Jellyfin settled on in front of it.
 ///
@@ -2054,7 +2115,9 @@ impl TranscodePlan {
 
                     let scale = device_chain(
                         pipeline,
-                        tone_map.and(on_device_tone_map_filter(&self.spec, self.device_filters)),
+                        tone_map
+                            .and(on_device_tone_map_filter(&self.spec, self.device_filters))
+                            .as_deref(),
                         width,
                         height,
                         !takes_ten_bit(encoder),
@@ -2637,7 +2700,7 @@ mod tests {
         SessionSpec, SubtitleAction, ToneMapping, Track, TrackCarry, TranscodePlan, VideoAction,
         DEFAULT_DEVICE, TEXT_OVERLAY_FPS,
     };
-    use crate::media::ColourMetadata;
+    use crate::media::{ColourMetadata, VideoRange};
 
     /// A build with a scaler and no compositor, as the existing routes assume.
     const SCALER_ONLY: DeviceFilters = DeviceFilters {
@@ -2667,6 +2730,8 @@ mod tests {
             container: SegmentContainer::Fmp4,
             source_video_codec: None,
             track: Track::Both,
+            source_range: None,
+            source_range_base: None,
         }
     }
 
@@ -3421,6 +3486,80 @@ scale_vaapi=w=1280:h=532:format=nv12[base];"
             filter_names("procamp_vaapi=b=16,tonemap_vaapi=format=nv12").collect::<Vec<_>>(),
             ["procamp_vaapi", "tonemap_vaapi"]
         );
+    }
+
+    /// Intel's VPP converts HDR10 alone, so HLG and a Dolby Vision layer with nothing beneath it
+    /// go to the software tone mapper, as Jellyfin sends them (VAL-344).
+    #[test]
+    fn keeps_what_vpp_cannot_convert_off_intels_tone_mapper() {
+        for accel in [HardwareAccel::Vaapi, HardwareAccel::Qsv] {
+            for (range, base) in [
+                (VideoRange::Hlg, VideoRange::Hlg),
+                (VideoRange::DolbyVision, VideoRange::DolbyVision),
+                (VideoRange::DolbyVision, VideoRange::Hlg),
+            ] {
+                assert_eq!(
+                    accel.tone_map_on(Platform::Unix, range, base),
+                    None,
+                    "{accel:?} {range:?} on {base:?}"
+                );
+            }
+
+            for (range, base) in [
+                (VideoRange::Hdr10, VideoRange::Hdr10),
+                (VideoRange::Hdr10Plus, VideoRange::Hdr10Plus),
+                (VideoRange::DolbyVision, VideoRange::Hdr10),
+            ] {
+                assert!(
+                    accel.tone_map_on(Platform::Unix, range, base).is_some(),
+                    "{accel:?} {range:?} on {base:?}"
+                );
+            }
+        }
+    }
+
+    /// A fixed peak switches off Dolby Vision's per-scene brightness, so a Dolby Vision source
+    /// keeps the knee and loses the peak.
+    #[test]
+    fn leaves_dolby_vision_its_own_peak() {
+        for accel in [HardwareAccel::Nvenc, HardwareAccel::VideoToolbox] {
+            let dolby_vision = accel
+                .tone_map_on(Platform::Unix, VideoRange::DolbyVision, VideoRange::Hdr10)
+                .expect("the backend tone maps dolby vision");
+            let hdr10 = accel
+                .tone_map_on(Platform::Unix, VideoRange::Hdr10, VideoRange::Hdr10)
+                .expect("the backend tone maps hdr10");
+
+            assert!(!dolby_vision.contains("peak="), "{dolby_vision}");
+            assert!(dolby_vision.contains(":param=0.5"), "{dolby_vision}");
+            assert!(hdr10.contains(":peak=100"), "{hdr10}");
+        }
+    }
+
+    /// A session told its source is HLG converts in software on Intel, not on VPP.
+    #[cfg(unix)]
+    #[test]
+    fn converts_hlg_in_software_on_intel() {
+        let hdr10 = SessionSpec {
+            video: VideoAction::Encode {
+                encoder: "h264_vaapi".to_owned(),
+                max_bitrate_kbps: 8000,
+                max_width: 1280,
+                max_height: 720,
+                tone_map: Some(ToneMapping::Tonemapx),
+                deinterlace: false,
+                square_pixels: false,
+            },
+            ..on_gpu(HardwareAccel::Vaapi)
+        };
+        let hlg = SessionSpec {
+            source_range: Some(VideoRange::Hlg),
+            source_range_base: Some(VideoRange::Hlg),
+            ..hdr10.clone()
+        };
+
+        assert_eq!(frame_route(&hdr10, FULL), FrameRoute::OnDevice);
+        assert_eq!(frame_route(&hlg, FULL), FrameRoute::InSoftware);
     }
 
     /// Jellyfin's lift, before the map rather than after it (VAL-344).

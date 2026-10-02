@@ -37,12 +37,15 @@ type SessionSpec = {
   sourceSize?: [number, number];
   container: SegmentContainer;
   sourceVideoCodec?: string;
+  sourceRange?: string;
+  sourceRangeBase?: string;
 };
 
 type PlanToSessionSpecOptions = {
   plan: PlaybackPlan;
   inputPath: string;
   sourceRange: string;
+  sourceRangeBase?: string | null;
   sourceSize?: [number, number];
   imageSubtitleIndexes?: number[];
   subtitleIndexes?: number[];
@@ -117,6 +120,7 @@ const planToSessionSpec = ({
   plan,
   inputPath,
   sourceRange,
+  sourceRangeBase = null,
   sourceSize,
   capabilities,
   forcedAccel = '',
@@ -231,6 +235,9 @@ const planToSessionSpec = ({
       subtitles,
       ...(sourceSize === undefined ? {} : { sourceSize }),
       ...(audioStreamIndex === undefined ? {} : { audioStreamIndex }),
+      ...(mapping.toneMap === undefined
+        ? {}
+        : { sourceRange, ...(sourceRangeBase === null ? {} : { sourceRangeBase }) }),
       video: {
         kind: 'encode',
         encoder: chosen.encoder,

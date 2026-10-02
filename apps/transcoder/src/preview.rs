@@ -11,6 +11,7 @@
 //! megabytes, and it can be played by any number of browsers at once because
 //! nothing is running behind it.
 
+use std::borrow::Cow;
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
@@ -367,6 +368,9 @@ pub type OnDevice<'a> = Option<(HardwareAccel, &'a str)>;
 pub struct Source {
     /// Whether it needs converting to something a browser draws.
     pub range: VideoRange,
+    /// The range beneath a Dolby Vision layer, and the range itself for everything else, which
+    /// decides whether a device's own tone mapper can take it.
+    pub range_base: VideoRange,
     /// What its frames come down as, which a ten-bit film answers differently.
     pub bit_depth: Option<u8>,
     /// How big the picture is, where the caller knows.
@@ -413,19 +417,34 @@ fn stays_on_the_device(
     onto_the_device: Option<(HardwareAccel, HardwarePipeline, &str)>,
     source: Source,
     request: &PreviewRequest,
-) -> Option<(HardwarePipeline, (u32, u32))> {
-    let (_, pipeline, _) = onto_the_device?;
+) -> Option<OnTheCard> {
+    let (accel, pipeline, _) = onto_the_device?;
     let (width, height) = source.size?;
 
     if !pipeline.takes_device_frames {
         return None;
     }
 
-    if source.range != VideoRange::Sdr && pipeline.tone_map.is_none() {
-        return None;
-    }
+    let mapper = if source.range == VideoRange::Sdr {
+        None
+    } else {
+        Some(accel.tone_map_for(source.range, source.range_base)?)
+    };
 
-    Some((pipeline, fitted_to(request.width(), (width, height))))
+    Some(OnTheCard {
+        pipeline,
+        tone_map: mapper,
+        size: fitted_to(request.width(), (width, height)),
+    })
+}
+
+/// How a clip is cut without its frames leaving the device.
+struct OnTheCard {
+    pipeline: HardwarePipeline,
+    /// The converter the device runs on this source, where it is HDR.
+    tone_map: Option<Cow<'static, str>>,
+    /// The size the clip is drawn at.
+    size: (u32, u32),
 }
 
 /// The exact size a clip is drawn at, keeping the shape of the picture.
@@ -458,13 +477,14 @@ fn preview_filters(
     let encodes_from_device =
         onto_the_device.is_some_and(|(_, pipeline, _)| pipeline.encodes_from_device);
 
-    if let Some((pipeline, (width, height))) =
-        stays_on_the_device(onto_the_device, source, request).filter(|_| source.bars.is_none())
+    if let Some(OnTheCard {
+        pipeline,
+        tone_map,
+        size: (width, height),
+    }) = stays_on_the_device(onto_the_device, source, request).filter(|_| source.bars.is_none())
     {
-        if source.range != VideoRange::Sdr {
-            if let Some(mapper) = pipeline.tone_map {
-                filters.push(mapper.to_owned());
-            }
+        if let Some(mapper) = tone_map {
+            filters.push(mapper.into_owned());
         }
 
         if let Some(mapping) = pipeline.maps_onto_device {
@@ -985,6 +1005,7 @@ mod tests {
             600,
             Source {
                 range: VideoRange::Sdr,
+                range_base: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: None,
                 bars: None,
@@ -1013,6 +1034,7 @@ mod tests {
                 600,
                 Source {
                     range,
+                    range_base: range,
                     bit_depth: Some(8),
                     size: None,
                     bars: None,
@@ -1058,6 +1080,7 @@ mod tests {
             600,
             Source {
                 range: VideoRange::Sdr,
+                range_base: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: Some((1920, 1080)),
                 bars: Some(Bars {
@@ -1090,6 +1113,7 @@ mod tests {
             600,
             Source {
                 range: VideoRange::Sdr,
+                range_base: VideoRange::Sdr,
                 bit_depth: Some(10),
                 size: None,
                 bars: None,
@@ -1120,6 +1144,7 @@ mod tests {
             600,
             Source {
                 range: VideoRange::Sdr,
+                range_base: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: None,
                 bars: None,
@@ -1149,6 +1174,7 @@ mod tests {
             600,
             Source {
                 range: VideoRange::Sdr,
+                range_base: VideoRange::Sdr,
                 bit_depth: Some(10),
                 size: Some((3840, 1600)),
                 bars: None,
@@ -1180,6 +1206,7 @@ mod tests {
             600,
             Source {
                 range: VideoRange::Hdr10,
+                range_base: VideoRange::Hdr10,
                 bit_depth: Some(10),
                 size: Some((3840, 2160)),
                 bars: None,
@@ -1204,6 +1231,36 @@ mod tests {
         assert!(!chain.contains("zscale"), "{chain}");
     }
 
+    /// Intel's VPP converts HDR10 alone, so an HLG clip comes down to the software tone mapper.
+    #[test]
+    fn brings_an_hlg_clip_down_to_be_converted_on_intel() {
+        let arguments = preview_arguments(
+            &request(),
+            600,
+            Source {
+                range: VideoRange::Hlg,
+                range_base: VideoRange::Hlg,
+                bit_depth: Some(10),
+                size: Some((3840, 2160)),
+                bars: None,
+            },
+            ToneMapping::Tonemapx,
+            &PreviewEncoder::Hardware("h264_vaapi".to_owned()),
+            Some((HardwareAccel::Vaapi, "/dev/dri/renderD128")),
+            Path::new("/cache/preview.mp4"),
+        );
+
+        let chain = arguments
+            .windows(2)
+            .find(|pair| pair[0] == "-vf")
+            .map(|pair| pair[1].clone())
+            .expect("a filter chain");
+
+        assert!(chain.starts_with("hwdownload"), "{chain}");
+        assert!(chain.contains("tonemapx="), "{chain}");
+        assert!(!chain.contains("tonemap_vaapi"), "{chain}");
+    }
+
     /// `h264_nvenc` takes CUDA frames, so an HDR clip never leaves the card.
     ///
     /// It used to come down to be tone mapped on the processor and go back up
@@ -1216,6 +1273,7 @@ mod tests {
             600,
             Source {
                 range: VideoRange::Hdr10,
+                range_base: VideoRange::Hdr10,
                 bit_depth: Some(10),
                 size: Some((3840, 1608)),
                 bars: None,
@@ -1246,6 +1304,7 @@ mod tests {
             600,
             Source {
                 range: VideoRange::Sdr,
+                range_base: VideoRange::Sdr,
                 bit_depth: Some(10),
                 size: Some((1920, 1080)),
                 bars: None,
@@ -1276,6 +1335,7 @@ mod tests {
             600,
             Source {
                 range: VideoRange::Sdr,
+                range_base: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: Some((1920, 800)),
                 bars: None,
@@ -1303,6 +1363,7 @@ mod tests {
             600,
             Source {
                 range: VideoRange::Sdr,
+                range_base: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: None,
                 bars: None,
@@ -1344,6 +1405,7 @@ mod tests {
             600,
             Source {
                 range: VideoRange::Sdr,
+                range_base: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: None,
                 bars: None,
@@ -1367,6 +1429,7 @@ mod tests {
             600,
             Source {
                 range: VideoRange::Sdr,
+                range_base: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: None,
                 bars: None,
@@ -1394,6 +1457,7 @@ mod tests {
                 600,
                 Source {
                     range: VideoRange::Sdr,
+                    range_base: VideoRange::Sdr,
                     bit_depth: Some(8),
                     size: None,
                     bars: None,
@@ -1424,6 +1488,7 @@ mod tests {
             600,
             Source {
                 range: VideoRange::Sdr,
+                range_base: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: None,
                 bars: None,
@@ -1448,6 +1513,7 @@ mod tests {
             600,
             Source {
                 range: VideoRange::Sdr,
+                range_base: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: None,
                 bars: None,
@@ -1470,6 +1536,7 @@ mod tests {
             600,
             Source {
                 range: VideoRange::Sdr,
+                range_base: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: None,
                 bars: None,
@@ -1493,6 +1560,7 @@ mod tests {
             600,
             Source {
                 range: VideoRange::Hdr10,
+                range_base: VideoRange::Hdr10,
                 bit_depth: Some(8),
                 size: None,
                 bars: None,
@@ -1522,6 +1590,7 @@ mod tests {
             600,
             Source {
                 range: VideoRange::Sdr,
+                range_base: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: None,
                 bars: None,
@@ -1617,6 +1686,7 @@ mod tests {
             600,
             Source {
                 range: VideoRange::Sdr,
+                range_base: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: None,
                 bars: None,
@@ -1642,6 +1712,7 @@ mod tests {
             600,
             Source {
                 range: VideoRange::Sdr,
+                range_base: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: None,
                 bars: None,
@@ -1685,6 +1756,7 @@ mod tests {
             600,
             Source {
                 range: VideoRange::Sdr,
+                range_base: VideoRange::Sdr,
                 bit_depth: Some(8),
                 size: None,
                 bars: None,

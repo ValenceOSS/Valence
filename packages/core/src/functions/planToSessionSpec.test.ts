@@ -219,6 +219,37 @@ describe('planToSessionSpec', () => {
     expect(outcome).toMatchObject({ kind: 'ok', spec: { video: { toneMap: 'tonemapx' } } });
   });
 
+  it('says what kind of HDR it is converting, so the media service can pick a converter that takes it', () => {
+    const outcome = planToSessionSpec({
+      plan: { ...directPlay, video: transcodeVideo },
+      inputPath: '/media/film.mkv',
+      sourceRange: 'DolbyVision',
+      sourceRangeBase: 'HDR10',
+      capabilities,
+      startSeconds: 0,
+      segmentSeconds: 4,
+      container: 'fmp4',
+    });
+
+    expect(outcome).toMatchObject({
+      kind: 'ok',
+      spec: { sourceRange: 'DolbyVision', sourceRangeBase: 'HDR10' },
+    });
+  });
+
+  it('leaves the base out where the server does not know it', () => {
+    const outcome = build({ ...directPlay, video: transcodeVideo }, capabilities, 'HLG');
+
+    expect(outcome.kind === 'ok' && outcome.spec).toMatchObject({ sourceRange: 'HLG' });
+    expect(outcome.kind === 'ok' && 'sourceRangeBase' in outcome.spec).toBe(false);
+  });
+
+  it('says nothing about the range of a source it is not converting', () => {
+    const outcome = build({ ...directPlay, video: transcodeVideo }, capabilities, 'SDR');
+
+    expect(outcome.kind === 'ok' && 'sourceRange' in outcome.spec).toBe(false);
+  });
+
   it('does not tone map an SDR source', () => {
     const outcome = build({ ...directPlay, video: transcodeVideo }, capabilities, 'SDR');
 

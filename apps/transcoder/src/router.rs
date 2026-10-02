@@ -1127,6 +1127,7 @@ async fn start_preview(
     };
 
     let range = video.range;
+    let range_base = video.range_base;
     let bit_depth = video.bit_depth;
     let size = Some((video.width, video.height));
     let capabilities = detect_capabilities(&config.ffmpeg, &config.device).await;
@@ -1149,6 +1150,7 @@ async fn start_preview(
                     &path,
                     crate::preview::Source {
                         range,
+                        range_base,
                         bit_depth,
                         size,
                         bars: None,
@@ -1185,6 +1187,7 @@ async fn start_preview(
                 &request,
                 crate::preview::Source {
                     range,
+                    range_base,
                     bit_depth,
                     size,
                     bars: None,
@@ -1990,12 +1993,28 @@ fn draw_in_the_background(
     });
 }
 
+/// What a probed file is, as far as drawing its thumbnails cares.
+fn sheet_source(video: &crate::media::VideoStream, duration_seconds: f64) -> SheetSource {
+    SheetSource {
+        width: video.width,
+        height: video.height,
+        range: video.range,
+        range_base: video.range_base,
+        frames_per_second: video.frame_rate,
+        bit_depth: video.bit_depth,
+        duration_seconds,
+    }
+}
+
 /// The graphics chip to draw sheets on, where one will draw them from a file
-/// of this depth.
+/// of this depth and range.
+///
+/// An HDR film stays on the device only where the device's own tone mapper takes it. Intel's VPP
+/// converts HDR10 alone, so anything else is drawn by the processor, which converts it.
 fn sheet_accel(
     capabilities: &Capabilities,
     asked: Option<HardwareAccel>,
-    bit_depth: Option<u8>,
+    source: &SheetSource,
 ) -> Option<HardwareAccel> {
     capabilities
         .encoder_for("h264", asked)
@@ -2005,8 +2024,14 @@ fn sheet_accel(
                 &capabilities.chains,
                 *found,
                 crate::chains::ChainShape::Sheet,
-                bit_depth,
+                source.bit_depth,
             )
+        })
+        .filter(|found| {
+            source.range == crate::media::VideoRange::Sdr
+                || found
+                    .tone_map_for(source.range, source.range_base)
+                    .is_some()
         })
 }
 
@@ -2038,16 +2063,9 @@ async fn start_trickplay(
 
     let config = state.registry.config();
     let capabilities = detect_capabilities(&config.ffmpeg, &config.device).await;
-    let accel = sheet_accel(&capabilities, request.hardware_accel, video.bit_depth);
+    let source = sheet_source(video, probe.duration_seconds);
 
-    let source = SheetSource {
-        width: video.width,
-        height: video.height,
-        range: video.range,
-        frames_per_second: video.frame_rate,
-        bit_depth: video.bit_depth,
-        duration_seconds: probe.duration_seconds,
-    };
+    let accel = sheet_accel(&capabilities, request.hardware_accel, &source);
 
     if !request.wait {
         let id = request.id();

@@ -196,6 +196,8 @@ mod tests {
             container: SegmentContainer::Fmp4,
             source_video_codec: None,
             track: Track::Both,
+            source_range: None,
+            source_range_base: None,
         }
     }
 

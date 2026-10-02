@@ -221,6 +221,7 @@ const createPlaybackService = ({
         plan,
         inputPath: chosen.source.path,
         sourceRange: source.videoRange,
+        sourceRangeBase: source.videoRangeBase ?? null,
         sourceSize: [source.width, source.height],
         sourceVideoCodec: source.videoCodec,
         sourceBitDepth: source.videoBitDepth,

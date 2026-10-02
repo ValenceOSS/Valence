@@ -298,6 +298,8 @@ type SessionSpec = {
     | { kind: 'encode'; encoder: string; channels: number; maxBitrateKbps: number };
   sourceSize?: [number, number];
   sourceVideoCodec?: string;
+  sourceRange?: string;
+  sourceRangeBase?: string;
   container?: 'fmp4' | 'mpegts';
 };
 
