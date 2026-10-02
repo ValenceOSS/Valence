@@ -1,3 +1,4 @@
+import { localDayOf } from '@ValenceCore/functions/localDayOf';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fetchReleaseCalendar } from './fetchReleaseCalendar';
 
@@ -20,5 +21,6 @@ describe('fetchReleaseCalendar', () => {
 
     await expect(fetchReleaseCalendar('2026-10-01', '2026-10-31', 'everyone')).resolves.toEqual([]);
     expect(asked[0]).toContain('/api/calendar?from=2026-10-01&to=2026-10-31&who=everyone');
+    expect(asked[0]).toContain(`&today=${localDayOf()}`);
   });
 });

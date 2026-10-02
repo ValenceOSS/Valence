@@ -53,6 +53,7 @@ import { PlayingTogether } from '@ValenceTv/screens/SignedIn/components/PlayingT
 import { RequestsPage } from '@ValenceTv/screens/RequestsPage/RequestsPage';
 import { CalendarPage } from '@ValenceTv/screens/CalendarPage/CalendarPage';
 import { findAShow } from '@ValenceClient/library/findAShow';
+import { calendarQueries } from '@ValenceClient/query/calendarQueries';
 import { PluginPage } from '@ValenceTv/screens/PluginPage/PluginPage';
 import { Search } from '@ValenceTv/screens/Search/Search';
 import { ShowPage } from '@ValenceTv/screens/ShowPage/ShowPage';
@@ -444,11 +445,19 @@ const SignedIn = ({ user, onChangeServer, isArriving, onFaceAt, onMarkAt }: Sign
           }
           break;
         case 'show':
-          void findAShow(cache, opens.showId).then((show) => {
-            if (show !== null) {
+          void findAShow(cache, opens.showId)
+            .then((show) => {
+              if (show === null) {
+                void cache.invalidateQueries({ queryKey: calendarQueries.key });
+
+                return;
+              }
+
               open({ kind: 'show', libraryId: show.libraryId, showId: show.id, mood: null });
-            }
-          });
+            })
+            .catch(() => {
+              void cache.invalidateQueries({ queryKey: calendarQueries.key });
+            });
           break;
       }
     },

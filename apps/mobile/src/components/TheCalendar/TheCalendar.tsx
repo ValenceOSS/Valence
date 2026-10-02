@@ -74,13 +74,15 @@ const TheCalendar = ({ onOpen, onBack }: TheCalendarProps) => {
         }
         break;
       case 'show':
-        void findAShow(cache, opens.showId).then((show) => {
-          onOpen(
-            show === null
-              ? pageInTheLibrary('series', opens.showId)
-              : { kind: 'show', libraryId: show.libraryId, showId: show.id },
-          );
-        });
+        void findAShow(cache, opens.showId)
+          .catch(() => null)
+          .then((show) => {
+            onOpen(
+              show === null
+                ? pageInTheLibrary('series', opens.showId)
+                : { kind: 'show', libraryId: show.libraryId, showId: show.id },
+            );
+          });
         break;
     }
   };

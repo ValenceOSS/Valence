@@ -51,6 +51,7 @@ const ReleaseCalendarQuerySchema = z
     from: CalendarDateSchema,
     to: CalendarDateSchema,
     who: z.enum(CALENDAR_AUDIENCES).default('mine'),
+    today: CalendarDateSchema.optional(),
   })
   .refine(({ from, to }) => from <= to, { path: ['to'] })
   .refine(

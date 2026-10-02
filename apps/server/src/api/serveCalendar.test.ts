@@ -220,6 +220,17 @@ describe('GET /api/calendar', () => {
     );
   });
 
+  it('decides whether an episode has aired by the viewer’s own day', async () => {
+    const { read } = await build({ episodes: [EPISODE] });
+
+    expect((await read('from=2026-10-01&to=2026-10-31&today=2026-10-07')).entries[0]?.state).toBe(
+      'notOutYet',
+    );
+    expect((await read('from=2026-10-01&to=2026-10-31&today=2026-10-09')).entries[0]?.state).toBe(
+      'notHeld',
+    );
+  });
+
   it('shows somebody only their own requests, even when they ask for everybody’s', async () => {
     const { read } = await build({
       granted: ['requests.ask'],

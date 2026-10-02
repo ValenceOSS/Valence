@@ -106,8 +106,8 @@ const serveCalendar = (app: OpenAPIHono, context: AppContext): void => {
       return context.json(refuse('error.common.nobodyIsSignedIn'), 401);
     }
 
-    const { from, to, who } = context.req.valid('query');
-    const today = new Date().toISOString().slice(0, 10);
+    const { from, to, who, today: theirToday } = context.req.valid('query');
+    const today = theirToday ?? new Date().toISOString().slice(0, 10);
 
     const [episodes, requests] = await Promise.all([
       library.releaseCalendar(viewer, from, to),
