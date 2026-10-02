@@ -1,3 +1,4 @@
+import { z } from '@hono/zod-openapi';
 import { checkServerVersion } from '@ValenceDatabase/checkServerVersion';
 import { SEERR_DEFAULTS } from '@ValenceContracts/schemas/SeerrLink';
 import { databaseConnectionOf } from '@ValenceDatabase/databaseConnectionOf';
@@ -22,7 +23,6 @@ import {
   unlink,
   utimes,
 } from 'node:fs/promises';
-import { z } from 'zod';
 import { serve } from '@hono/node-server';
 import { createNodeWebSocket } from '@hono/node-ws';
 import { serveStatic } from '@hono/node-server/serve-static';
