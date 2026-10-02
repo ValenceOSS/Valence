@@ -91,6 +91,17 @@ const A_SHOW = {
   seriesId: null,
 };
 
+const A_COLLECTION = {
+  id: '00000000-0000-4000-8000-00000000c011',
+  name: 'Saga',
+  description: null,
+  isOrdered: true,
+  hasOwnArtwork: false,
+  entryCount: 0,
+  coverMediaIds: [],
+  updatedAt: '2026-10-02T00:00:00.000Z',
+};
+
 const ok = (body: object | null) =>
   new Response(JSON.stringify(body), {
     status: 200,
@@ -123,6 +134,10 @@ beforeEach(() => {
 
     if (input.startsWith('/api/notifications')) {
       return Promise.resolve(ok({ notifications: [A_NOTICE], unread: 1 }));
+    }
+
+    if (input === `/api/collections/${A_COLLECTION.id}`) {
+      return Promise.resolve(ok({ collection: A_COLLECTION, entries: [] }));
     }
 
     if (input.endsWith('/shows')) {
@@ -323,6 +338,22 @@ describe('ValenceShell', () => {
 
     await waitFor(() => {
       expect(window.location.search).not.toContain('show=');
+    });
+  });
+
+  it('opens the collection the address names, and takes it out again when closed', async () => {
+    const actor = userEvent.setup();
+
+    window.history.replaceState(null, '', `/?collection=${A_COLLECTION.id}`);
+
+    renderTheApp();
+
+    const dialog = await screen.findByRole('dialog', { name: 'Saga' });
+
+    await actor.click(within(dialog).getByRole('button', { name: /Close/ }));
+
+    await waitFor(() => {
+      expect(window.location.search).not.toContain('collection=');
     });
   });
 

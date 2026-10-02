@@ -17,6 +17,19 @@ describe('readEnv', () => {
     expect(() => readEnv({ VALENCE_PLUGIN_CATALOGUE_URL: 'not a url' })).toThrow();
   });
 
+  it('leaves email to the settings unless SMTP_URL and SMTP_FROM are given', () => {
+    expect(readEnv({})).toMatchObject({ SMTP_URL: '', SMTP_FROM: '' });
+    expect(
+      readEnv({
+        SMTP_URL: 'smtps://resend:key@smtp.resend.com:465',
+        SMTP_FROM: 'Valence <v@example.com>',
+      }),
+    ).toMatchObject({
+      SMTP_URL: 'smtps://resend:key@smtp.resend.com:465',
+      SMTP_FROM: 'Valence <v@example.com>',
+    });
+  });
+
   it('coerces the port from a string', () => {
     expect(readEnv({ PORT: '9000' }).PORT).toBe(9000);
   });

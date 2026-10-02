@@ -21,6 +21,11 @@ const SharePage = lazyRouteComponent(
   'SharePage',
 );
 
+const WelcomePage = lazyRouteComponent(
+  async () => import('@ValenceScreens/components/WelcomePage/WelcomePage'),
+  'WelcomePage',
+);
+
 const WatchPage = lazyRouteComponent(
   async () => import('@ValenceScreens/components/WatchPage/WatchPage'),
   'WatchPage',
@@ -76,6 +81,11 @@ const PhoneSignIn = lazyRouteComponent(
   'PhoneSignIn',
 );
 
+const ResetPasswordPage = lazyRouteComponent(
+  async () => import('@ValenceScreens/components/ResetPasswordPage/ResetPasswordPage'),
+  'ResetPasswordPage',
+);
+
 const BROWSABLE = ['/shows', '/films', '/new', '/favourites'] as const;
 
 const ADMIN_DEFAULT_PANEL = 'overview';
@@ -84,6 +94,11 @@ const adminSearch = z.object({
   job: z.string().optional(),
   folder: z.string().optional(),
   ...ObservabilitySearchSchema.shape,
+});
+
+const resetSearch = z.object({
+  token: z.string().optional().catch(undefined),
+  error: z.string().optional().catch(undefined),
 });
 
 const phoneSearch = z.object({
@@ -97,10 +112,10 @@ const phoneSearch = z.object({
  *
  * Three layers, because three things have different lifetimes. The root decides which application
  * this is — the ordinary one or the small offline one — and then whether this server has been set up
- * at all. Inside it, everything but a share link is behind the way in, and that
- * layer holds what the pages share — who is watching, what has been seen, the watch party. Inside
- * that again, the sections sit in the chrome, so moving between them changes the page and leaves the
- * dock, the dialogs and the player alone.
+ * at all. Inside it, everything but a share link, a reset link and a setup link is behind the way
+ * in, and that layer holds what the pages share — who is watching, what has been seen, the watch
+ * party. Inside that again, the sections sit in the chrome, so moving between them changes the page
+ * and leaves the dock, the dialogs and the player alone.
  *
  * Everything but the home page is loaded when it is first asked for, so an account that never opens
  * the admin page never downloads it. A page that throws draws its own apology rather than taking the
@@ -119,6 +134,19 @@ const buildRouter = (title = say('common.valence')) => {
     path: '/share/$token',
     component: () => <SharePage name={title} />,
     ...carries,
+  });
+
+  const reset = createRoute({
+    getParentRoute: () => root,
+    path: '/reset-password',
+    component: () => <ResetPasswordPage name={title} />,
+    validateSearch: resetSearch,
+  });
+
+  const welcome = createRoute({
+    getParentRoute: () => root,
+    path: '/welcome/$token',
+    component: () => <WelcomePage name={title} />,
   });
 
   const signedIn = createRoute({
@@ -211,6 +239,8 @@ const buildRouter = (title = say('common.valence')) => {
   return createRouter({
     routeTree: root.addChildren([
       share,
+      welcome,
+      reset,
       signedIn.addChildren([
         watch,
         kept,

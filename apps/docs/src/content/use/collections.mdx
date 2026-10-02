@@ -1,0 +1,70 @@
+---
+title: Collections
+description: Group films and whole series that belong together, such as a saga, a box set or a director's work, and show them as one shelf to everybody who can watch them.
+order: 16
+---
+
+A collection groups films and whole series that belong together: a saga, a box set, a franchise, the work of one director. Collections belong to the server rather than to one profile, so everybody sees the same ones. Importing from Jellyfin, Emby or Plex fills them from the box sets and collections you already have there.
+
+## What viewers see
+
+- **Home.** The home page has a **Collections** shelf. Each collection stands like a poster: the artwork somebody gave it, or a grid of the posters of what is in it.
+- **A collection's page.** Choosing a collection opens its page, with its cover, its name, its description and everything in it as posters. A collection whose order matters opens in its own order, and any collection can be laid out **By year** (oldest first) or **By name** instead.
+- **Part of.** The page of a film or a series names every collection it belongs to under **Part of**, so somebody who finished the second film can find the third.
+- **The phone and the television.** The phone app shows the same shelf and the same pages. The television app shows a shelf for each collection, named after it, beneath the first row of its home page. Both only show collections; changing them is done from a browser.
+
+A collection only ever shows what the person looking may watch. Anything in a library they cannot reach, above their age ceiling, or that they hid themselves is left out as though it were not there, and a series counts as there while any one of its episodes is. A collection with nothing left in it for that person is not shown to them at all.
+
+## Who can change them
+
+Anybody with the **Change a library’s settings** permission (`library.edit`) can make, change and delete collections. That includes Administrators and the default **Manager** role. Everybody who can watch can see them.
+
+People who can change collections also see the empty ones, so a collection made a moment ago does not vanish before anything is added to it.
+
+## Making a collection
+
+1. Open the page of a film or a series.
+2. Open the menu of actions beside **Play** and choose **Add to a collection**.
+3. Choose **New collection**, give it a name and, if you like, a description.
+4. Turn on **The order matters** for a saga watched in the order it was made. Leave it off for a body of work that can be watched in any order.
+5. Press **Make it**. The title you started from is the first thing in it.
+
+Once there are collections, **New collection** also sits beside the heading of the **Collections** shelf on the home page, for making an empty one.
+
+## Adding and removing titles
+
+- To add a film or a series, open its page, choose **Add to a collection**, pick the collection and press **Add**. A collection it is already in is shown but cannot be picked. Adding an episode adds its whole series.
+- To take something out, open the collection and press **Remove** under it. The film or series stays in the library.
+
+## Ordering
+
+When **The order matters** is on and the collection is laid out in its own order, each title has **Earlier** and **Later** under it to move it one place. The order is kept for everybody. Turning the switch off keeps the order you set, so turning it on again brings it back.
+
+## Artwork
+
+A collection's cover is made from the posters of what is in it: the first poster alone, or four in a grid once it holds four with posters. To give it artwork of its own, open the collection and press **Choose artwork**. JPEG, PNG, WebP, AVIF and GIF pictures up to 10 MB and 4096 pixels on a side are accepted. To go back to the posters, open the collection's menu and choose **Use the posters in it**.
+
+## Renaming and deleting
+
+Open the collection's menu to **Edit details** (its name, description and whether the order matters) or to **Delete collection**. Deleting asks first, and leaves every film and series that was in it where it is.
+
+When a film or a series is deleted from the library, it leaves every collection it was in.
+
+## The API
+
+Collections are read and changed through `/api/collections`, described in the [API reference](/api) under **Collections**:
+
+| Method and path                                                | What it does                                                                                                                                                                              |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/collections`                                         | The collections holding something you may see. `?mediaId=` or `?seriesId=` narrows it to those holding one title; `?withEmpty=true` adds the empty ones for somebody with `library.edit`. |
+| `POST /api/collections`                                        | Make a collection, optionally with `entries` in it already.                                                                                                                               |
+| `GET /api/collections/{collectionId}`                          | One collection and its entries, leaving out anything you may not see.                                                                                                                     |
+| `PATCH /api/collections/{collectionId}`                        | Change its `name`, `description` or `isOrdered`.                                                                                                                                          |
+| `DELETE /api/collections/{collectionId}`                       | Delete it.                                                                                                                                                                                |
+| `POST /api/collections/{collectionId}/entries`                 | Add `entries` to the end, skipping any already in it.                                                                                                                                     |
+| `PUT /api/collections/{collectionId}/entries`                  | Replace everything in it with `entries`, in that order.                                                                                                                                   |
+| `PATCH /api/collections/{collectionId}/entries/{entryId}`      | Move an entry to just after `afterEntryId`, or to the top with `null`.                                                                                                                    |
+| `DELETE /api/collections/{collectionId}/entries/{entryId}`     | Take an entry out.                                                                                                                                                                        |
+| `GET`, `PUT`, `DELETE /api/collections/{collectionId}/artwork` | Read, set or remove its own artwork. A `PUT` sends the picture as the body.                                                                                                               |
+
+Each entry is either `{ "mediaItemId": "…" }` for a film or `{ "seriesId": "…" }` for a whole series. Everything that changes a collection needs `library.edit`, and every change is announced on the realtime `media` topic so open pages read it again.

@@ -1405,11 +1405,6 @@
     "context": "The reason in the session (from `auth`)."
   },
   {
-    "handler": "client.session.auth.thatAddressAndPasswordWereNot",
-    "text": "That address and password were not accepted.",
-    "context": "The reason in the session (from `auth`)."
-  },
-  {
     "handler": "client.session.auth.thatCodeWasNotAccepted",
     "text": "That code was not accepted.",
     "context": "The reason in the session (from `auth`)."
@@ -1418,6 +1413,11 @@
     "handler": "client.session.auth.thatPasskeyWasNotAccepted",
     "text": "That passkey was not accepted.",
     "context": "Shown in the session (from `auth`)."
+  },
+  {
+    "handler": "client.session.auth.thatUsernameOrAddressAndPassword",
+    "text": "That username or address and password weren’t right.",
+    "context": "Shown on the sign-in screen when the username or email address and the password typed in were not accepted."
   },
   {
     "handler": "client.session.auth.tooManyTriesWaitAMinute",
@@ -1443,6 +1443,11 @@
     "handler": "client.session.readServerAddress.thatDoesNotLookLikeA",
     "text": "That does not look like a web address.",
     "context": "The problem in the session (from `readServerAddress`)."
+  },
+  {
+    "handler": "client.session.resetPassword.thatLinkHasExpired",
+    "text": "That link has expired or was already used. Ask for a new one.",
+    "context": "Shown on the page a password reset link opens, when the link no longer works."
   },
   {
     "handler": "client.sharing.saidOpened.openedOf1Time",
@@ -1640,6 +1645,11 @@
     "context": "The detail of a nothing here, used in the playlist of the phone app and in the playlist view in the music page."
   },
   {
+    "handler": "common.addToACollection",
+    "text": "Add to a collection",
+    "context": "An action on the page about a film or a programme, for somebody who may edit libraries: put it into a collection."
+  },
+  {
     "handler": "common.addToPlaylist",
     "text": "Add to playlist",
     "context": "The label of a button, used in several places, among them the album of the phone app and the music of the phone app (from `askWhichPlaylist`)."
@@ -1775,6 +1785,11 @@
     "context": "A message in an alert, used in several places, among them the plugins of the phone app (from `askBeforeActing`) and the plugins of the television app (from `askToConfirmOnTv`)."
   },
   {
+    "handler": "common.arrangeIt",
+    "text": "Arrange it",
+    "context": "The name of the choice of how a collection's titles are laid out: in its own order, by year or by name."
+  },
+  {
     "handler": "common.artist",
     "text": "Artist",
     "context": "Shown, used in several places, among them the artist of the phone app and the music of the television app (from `artistItem`)."
@@ -1848,6 +1863,11 @@
     "handler": "common.atLeastCountCharacters.other",
     "text": "At least {count} characters.",
     "context": "The hint beneath a password field, in the setup wizard and when adding an account or resetting its password in the admin area. {count} is the shortest a password may be."
+  },
+  {
+    "handler": "common.atUsername",
+    "text": "@{username}",
+    "context": "An account's username, shown beneath its name. {username} is the username."
   },
   {
     "handler": "common.audio",
@@ -1943,6 +1963,16 @@
     "handler": "common.byAuthor",
     "text": "By {author}",
     "context": "Text shown, used in the catalogue entry row in the plugins panel and in the installed plugin card in the plugins panel. {author} is filled in by the app."
+  },
+  {
+    "handler": "common.byName",
+    "text": "By name",
+    "context": "One way of laying out a collection's titles: alphabetically by name."
+  },
+  {
+    "handler": "common.byYear",
+    "text": "By year",
+    "context": "One way of laying out a collection's titles: oldest first, by the year each came out."
   },
   {
     "handler": "common.cameraDistance",
@@ -2108,6 +2138,16 @@
     "handler": "common.clumping",
     "text": "Clumping",
     "context": "The label, used in the cloud in the variants and in the galaxy in the variants."
+  },
+  {
+    "handler": "common.collection",
+    "text": "Collection",
+    "context": "Shown above a collection's name on its page; a collection groups films and programmes that belong together, such as a saga or a box set."
+  },
+  {
+    "handler": "common.collections",
+    "text": "Collections",
+    "context": "The heading of the row of collections on the home page, and the name of the list of them when adding a title to one. A collection groups films and programmes that belong together."
   },
   {
     "handler": "common.colour",
@@ -2345,6 +2385,16 @@
     "context": "How many things a library holds, in the list of libraries."
   },
   {
+    "handler": "common.count.libraries.one",
+    "text": "{count} library",
+    "context": "How many libraries there are, wherever a count of them is shown. {count} is how many."
+  },
+  {
+    "handler": "common.count.libraries.other",
+    "text": "{count} libraries",
+    "context": "How many libraries there are, wherever a count of them is shown. {count} is how many."
+  },
+  {
     "handler": "common.count.minutes.one",
     "text": "{count} minute",
     "context": "A length of time in whole minutes, such as how long ago a release was posted."
@@ -2523,6 +2573,11 @@
     "handler": "common.countEpisodesLeft.other",
     "text": "{count} episodes left",
     "context": "Read aloud by screen readers as the name, used in the poster of the phone app and in the media card of the television app. {count} is a number."
+  },
+  {
+    "handler": "common.countTitlesInOrder",
+    "text": "{count}, in order",
+    "context": "Under a collection's name when the order of its titles matters. {count} is how many titles it holds, such as '3 titles'."
   },
   {
     "handler": "common.coverOnItsOwn",
@@ -3165,9 +3220,19 @@
     "context": "Shown, used in several places, among them the service on the server (from `createPluginService`) and the requests (from `describeRequestBadge`)."
   },
   {
+    "handler": "common.itsOwnOrder",
+    "text": "Its own order",
+    "context": "One way of laying out a collection's titles: in the order whoever made it placed them."
+  },
+  {
     "handler": "common.itWillNotBeFetchedAnd",
     "text": "It will not be fetched, and whatever it had started downloading is deleted. You can request it again whenever you like.",
     "context": "The detail of a confirm dialog, used in the askable dialog and in the requests list in the requests page."
+  },
+  {
+    "handler": "common.jellyseerr",
+    "text": "Jellyseerr",
+    "context": "The name of the request app Jellyseerr (now Seerr), which a setup can be brought in from."
   },
   {
     "handler": "common.job",
@@ -3575,6 +3640,11 @@
     "context": "The label, used in the webhooks panel in the admin area and in the api key panel."
   },
   {
+    "handler": "common.newCollection",
+    "text": "New collection",
+    "context": "A button, and the title of the dialog it opens, for making a new collection of films and programmes."
+  },
+  {
     "handler": "common.newestFirst",
     "text": "Newest first",
     "context": "The label, used in the job history in the observability page and in the log explorer in the observability page."
@@ -3753,6 +3823,11 @@
     "handler": "common.nothingInThisBookYetScanning",
     "text": "Nothing in this book yet. Scanning the library again may find it.",
     "context": "Text shown, used in the book of the phone app and in the reader of the phone app."
+  },
+  {
+    "handler": "common.nothingInThisCollectionYet",
+    "text": "Nothing in this collection yet",
+    "context": "Shown on the page of a collection that holds nothing."
   },
   {
     "handler": "common.nothingInThisPlaylistYet",
@@ -3988,6 +4063,11 @@
     "handler": "common.otherChoice",
     "text": "Other",
     "context": "Shown, used in the cardigann in the requests service (from `createCategoryMap`) and in the library (from `nameSeason`)."
+  },
+  {
+    "handler": "common.overseerr",
+    "text": "Overseerr",
+    "context": "The name of the request app Overseerr, which a setup can be brought in from."
   },
   {
     "handler": "common.page",
@@ -4945,6 +5025,11 @@
     "context": "The label, used in several places, among them the library (from `describeTitleDetails`) and the media requests panel in the admin area."
   },
   {
+    "handler": "common.stepNumberOfTotal",
+    "text": "Step {number} of {total}",
+    "context": "A progress line in a flow of several steps, such as first-run setup or the import wizard. {number} is the step showing and {total} how many there are."
+  },
+  {
     "handler": "common.stillWatching",
     "text": "Still watching",
     "context": "The label of a button, used in several places, among them the still watching of the phone app and the profile in the account of the phone app."
@@ -5308,6 +5393,11 @@
     "handler": "common.thingsYouHaveTakenOutOf",
     "text": "Things you have taken out of your own browsing. Anything here can be brought back.",
     "context": "Text shown, used in the hidden in the account of the phone app and in the hidden panel in the account area."
+  },
+  {
+    "handler": "common.thisCollectionCouldNotBeRead",
+    "text": "This collection could not be read.",
+    "context": "Shown on a collection's page when it could not be read from the server."
   },
   {
     "handler": "common.thisDevice",
@@ -6925,9 +7015,29 @@
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveAccount`)."
   },
   {
+    "handler": "error.account.setupLinksAreNotSentByEmail",
+    "text": "This server doesn’t send setup links by email. Turn it on in the email settings first.",
+    "context": "An error the server answers with (HTTP 400) when an administrator asks to email a setup link while emailing them is off."
+  },
+  {
+    "handler": "error.account.thatAccountHasNoAddress",
+    "text": "That account has no email address to send it to.",
+    "context": "An error the server answers with (HTTP 400) when an administrator asks to email a setup link to an account without an email address."
+  },
+  {
+    "handler": "error.account.thatAddressCannotBeUsed",
+    "text": "That address can’t be used.",
+    "context": "An error the server answers with (HTTP 400) when somebody tries to sign in with, or change an account to, the hidden placeholder address an account without an email address holds."
+  },
+  {
     "handler": "error.account.thatAddressIsAlreadyInUse",
     "text": "That address is already in use.",
     "context": "An error the server answers with (HTTP 400) in the app on the server (from `serveAccount`)."
+  },
+  {
+    "handler": "error.account.thatUsernameIsAlreadyInUse",
+    "text": "That username is already in use.",
+    "context": "An error the server answers with (HTTP 400) when adding an account, editing one, or setting one up with a username somebody else holds."
   },
   {
     "handler": "error.admin.noSuchJobIsWaiting",
@@ -7020,6 +7130,11 @@
     "context": "An error the server answers with (HTTP 400) in the connected apps in the requests service (from `createArrAppRoutes`)."
   },
   {
+    "handler": "error.arrImport.thatIsNotASetupToBringIn",
+    "text": "That is not a setup to bring in.",
+    "context": "An error the requests service answers with (HTTP 400) when asked to bring in a Radarr, Sonarr, Lidarr, Prowlarr or Overseerr setup in a shape it cannot read (from `createArrImportRoutes`)."
+  },
+  {
     "handler": "error.book.noCoverForThatBook",
     "text": "No cover for that book.",
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveBook`)."
@@ -7048,6 +7163,21 @@
     "handler": "error.book.thatIsNotInThisBook",
     "text": "That is not in this book.",
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveBook`)."
+  },
+  {
+    "handler": "error.collections.noSuchCollection",
+    "text": "No such collection.",
+    "context": "An error the server answers with (HTTP 404) for collections (from `serveCollections`)."
+  },
+  {
+    "handler": "error.collections.thatCollectionHasNoArtworkOf",
+    "text": "That collection has no artwork of its own.",
+    "context": "An error the server answers with (HTTP 404) when a collection's own artwork is asked for (from `serveCollections`)."
+  },
+  {
+    "handler": "error.collections.thatEntryIsNotInThatCollection",
+    "text": "That entry is not in that collection.",
+    "context": "An error the server answers with (HTTP 404) when an entry of a collection is moved or taken out (from `serveCollections`)."
   },
   {
     "handler": "error.common.nobodyIsSignedIn",
@@ -7323,6 +7453,26 @@
     "handler": "error.image.thatArtworkCouldNotBeRead",
     "text": "That artwork could not be read.",
     "context": "An error the server answers with (HTTP 404) in the app on the server (from `serveImage`)."
+  },
+  {
+    "handler": "error.imports.noSuchImport",
+    "text": "There is no such import.",
+    "context": "An error the server answers with (HTTP 404) when an import run asked for does not exist (from `registerImportRoutes`)."
+  },
+  {
+    "handler": "error.imports.noSuchSource",
+    "text": "There is no such server to import from.",
+    "context": "An error the server answers with (HTTP 404) when a Jellyfin, Emby or Plex server connected for importing does not exist (from `registerImportRoutes`)."
+  },
+  {
+    "handler": "error.imports.thatImportIsNotReadyToRun",
+    "text": "That import has not been planned yet, or is already running.",
+    "context": "An error the server answers with (HTTP 409) when an import is started before its dry run finished (from `registerImportRoutes`)."
+  },
+  {
+    "handler": "error.imports.thisServerCannotImport",
+    "text": "This server can't import from Jellyfin, Emby or Plex.",
+    "context": "An error the server answers with (HTTP 503) when it was started without an importer (from `registerImportRoutes`)."
   },
   {
     "handler": "error.indexers.noSuchDefinition",
@@ -7773,6 +7923,21 @@
     "handler": "error.setup.theAdministratorAccountCouldNotBe",
     "text": "The administrator account could not be created.",
     "context": "An error the server answers with (HTTP 400) in the app on the server (from `serveSetup`)."
+  },
+  {
+    "handler": "error.setupLink.chooseAUsernameToSignInWith",
+    "text": "Choose a username to sign in with.",
+    "context": "An error the server answers with (HTTP 400) when somebody setting their account up leaves the username empty."
+  },
+  {
+    "handler": "error.setupLink.thatAccountAlreadyHasAPassword",
+    "text": "This account already has a password.",
+    "context": "An error the server answers with (HTTP 400) when somebody who just set their account up asks to add a first password but already has one."
+  },
+  {
+    "handler": "error.setupLink.thatLinkNoLongerWorks",
+    "text": "This setup link no longer works. It may have been used, replaced or run out. Ask whoever runs this server for a new one.",
+    "context": "Shown on the account setup page, and answered by the server (HTTP 404), when its link is unknown, used, revoked or out of date."
   },
   {
     "handler": "error.share.noSuchLink",
@@ -8985,6 +9150,81 @@
     "context": "A request's problem, shown in the requests admin (from `createHandOffWorker`)."
   },
   {
+    "handler": "requests.arrImport.aLeastFormatScoreWasLeftOut",
+    "text": "The minimum custom format score of {score} was left out.",
+    "context": "Shown beside a quality profile brought in from Radarr/Sonarr (from `profileOf`). {score} is a number."
+  },
+  {
+    "handler": "requests.arrImport.customFormatNameWasApproximated",
+    "text": "The custom format {name} could only be approximated with words.",
+    "context": "Shown beside a quality profile brought in from Radarr/Sonarr (from `profileOf`). {name} is the custom format's name; Valence profiles prefer or ban words."
+  },
+  {
+    "handler": "requests.arrImport.customFormatNameWasLeftOut",
+    "text": "The custom format {name} judges more than release names, so it was left out.",
+    "context": "Shown beside a quality profile brought in from Radarr/Sonarr (from `profileOf`). {name} is the custom format's name."
+  },
+  {
+    "handler": "requests.arrImport.everyResolutionIsTakenFromEverySource",
+    "text": "Valence takes every allowed resolution from every allowed source, which allows a little more than before.",
+    "context": "Shown beside a quality profile brought in from Radarr/Sonarr (from `profileOf`). A source is Blu-ray, WEB-DL and so on."
+  },
+  {
+    "handler": "requests.arrImport.itListsNoHost",
+    "text": "It lists no host to reach it at.",
+    "context": "Shown beside a download client that is not brought in from Radarr/Sonarr/Lidarr because its settings name no host (from `plannedClientsOf`)."
+  },
+  {
+    "handler": "requests.arrImport.libraryCouldNotBeHandedToApp",
+    "text": "{library} could not be handed to {app}, so it was left as it was.",
+    "context": "Shown after bringing in a Radarr/Sonarr/Lidarr setup (from `createArrImportService`). {library} is a Valence library, {app} the Radarr, Sonarr or Lidarr it was to send its requests to."
+  },
+  {
+    "handler": "requests.arrImport.nameCouldNotBeAddedProblem",
+    "text": "{name} could not be added: {problem}",
+    "context": "Shown after bringing in a Radarr/Sonarr setup (from `createArrImportService`). {name} is an indexer, {problem} why Valence refused it."
+  },
+  {
+    "handler": "requests.arrImport.nameCouldNotBeReadProblem",
+    "text": "{name} could not be read: {problem}",
+    "context": "Shown after bringing in a Radarr/Sonarr/Lidarr/Prowlarr/Overseerr setup (from `createArrImportService`). {name} is the app, {problem} why it could not be read."
+  },
+  {
+    "handler": "requests.arrImport.noQualityMatchedSoValencesDefaultsHold",
+    "text": "No quality it allows matches one of Valence’s, so Valence’s defaults hold.",
+    "context": "Shown beside a quality profile brought in from Radarr/Sonarr/Lidarr (from `profileOf`)."
+  },
+  {
+    "handler": "requests.arrImport.onlyTheFirstFiftyWordsWereKept",
+    "text": "Only the first 50 words of each kind were kept.",
+    "context": "Shown beside a quality profile brought in from Radarr/Sonarr (from `profileOf`). Kinds are preferred, required and banned words."
+  },
+  {
+    "handler": "requests.arrImport.releaseProfileNameHoldsForTaggedOnly",
+    "text": "The release profile {name} only holds for tagged series, so it was left out.",
+    "context": "Shown beside a quality profile brought in from Sonarr (from `profileOf`). {name} is the release profile's name."
+  },
+  {
+    "handler": "requests.arrImport.someCategoriesKeepValencesOwn",
+    "text": "Some kinds keep Valence’s own category, because the apps’ categories clash or use characters Valence does not allow.",
+    "context": "Shown beside a download client brought in from Radarr/Sonarr/Lidarr (from `plannedClientsOf`). A category is the label a download is filed under in the client."
+  },
+  {
+    "handler": "requests.arrImport.valenceCannotUseClientYet",
+    "text": "Valence cannot use {client} yet.",
+    "context": "Shown beside a download client that is not brought in from Radarr/Sonarr/Lidarr (from `plannedClientsOf`). {client} is the kind of client, such as Deluge."
+  },
+  {
+    "handler": "requests.arrImport.valenceCannotUseIndexerYet",
+    "text": "Valence cannot use {indexer} indexers yet.",
+    "context": "Shown beside an indexer that is not brought in from Radarr/Sonarr/Lidarr (from `plannedIndexersOf`). {indexer} is the kind of indexer, such as Nyaa."
+  },
+  {
+    "handler": "requests.arrImport.valenceHasNoMatchForQualities",
+    "text": "Valence has nothing to match {qualities}, so they were left out.",
+    "context": "Shown beside a quality profile brought in from Radarr/Sonarr/Lidarr (from `profileOf`). {qualities} lists quality names such as BR-DISK and Raw-HD."
+  },
+  {
     "handler": "requests.cardigann.cardigannIndexer.downloadUriQueryKey",
     "text": ".DownloadUri.Query.{key}",
     "context": "Shown in the cardigann in the requests service (from `createCardigannIndexer`). {key} is filled in by the app."
@@ -10120,6 +10360,81 @@
     "context": "Shown where where this account is signed in could not be read from the server, followed by a sentence about why and a button to try again."
   },
   {
+    "handler": "screens.accountStanding.active",
+    "text": "Active",
+    "context": "The standing of an account in the admin accounts list: it can be signed in to and is not banned."
+  },
+  {
+    "handler": "screens.accountStanding.cannotSignInYet",
+    "text": "Can’t sign in yet",
+    "context": "The standing of an account in the admin accounts list: it has no password, no passkey and no setup link that works, so nobody can sign in to it."
+  },
+  {
+    "handler": "screens.accountStanding.linkExpired",
+    "text": "Link expired",
+    "context": "The standing of an account in the admin accounts list: its owner never used their setup link before it ran out."
+  },
+  {
+    "handler": "screens.accountStanding.waitingForSetup",
+    "text": "Waiting for setup",
+    "context": "The standing of an account in the admin accounts list: it was added and its owner has not yet used their setup link."
+  },
+  {
+    "handler": "screens.addAccountDialog.addAnAccount",
+    "text": "Add account",
+    "context": "The button and dialog title for adding an account to the server, in the admin area's accounts page."
+  },
+  {
+    "handler": "screens.addAccountDialog.emailOptional",
+    "text": "Email (optional)",
+    "context": "The label of an account's email address field in the admin area, which may be left empty."
+  },
+  {
+    "handler": "screens.addAccountDialog.giveThemAPassword",
+    "text": "Give them a password",
+    "context": "One of two ways an administrator can let a new account sign in: typing a password to hand over."
+  },
+  {
+    "handler": "screens.addAccountDialog.giveThisToNameToSetUp",
+    "text": "Give this to {name}. They open it to choose how they sign in.",
+    "context": "Beneath the title of the dialog showing a new account's setup link. {name} is the account's name."
+  },
+  {
+    "handler": "screens.addAccountDialog.howTheySignIn",
+    "text": "How they sign in",
+    "context": "Heading of the choice, when adding an account, between sending a setup link and giving a password."
+  },
+  {
+    "handler": "screens.addAccountDialog.onlyANameIsNeeded",
+    "text": "Only a name is needed. Anything you leave out, they choose when they set up.",
+    "context": "Beneath the title of the dialog for adding an account in the admin area."
+  },
+  {
+    "handler": "screens.addAccountDialog.sendThemASetupLink",
+    "text": "Send them a setup link",
+    "context": "One of two ways an administrator can let a new account sign in: a link the person opens to choose their own password or passkey."
+  },
+  {
+    "handler": "screens.addAccountDialog.sentTheLinkToEmail",
+    "text": "Sent the setup link to {email}.",
+    "context": "Said once a setup link has been emailed. {email} is the address it went to."
+  },
+  {
+    "handler": "screens.addAccountDialog.thatIsNotAnEmailAddress",
+    "text": "That isn’t an email address.",
+    "context": "Shown under the email field when adding or editing an account, when what was typed is not an address."
+  },
+  {
+    "handler": "screens.addAccountDialog.theirSetupLink",
+    "text": "Their setup link",
+    "context": "Title of the dialog showing a new account's setup link, after it was added."
+  },
+  {
+    "handler": "screens.addAccountDialog.theyStartWithTheDefaultRole",
+    "text": "They start with the default role. Set their roles and libraries in the account editor.",
+    "context": "A note at the foot of the dialog for adding an account."
+  },
+  {
     "handler": "screens.addLibraryDialog.libraryPresets.anime",
     "text": "Anime",
     "context": "Shown in the library presets in the add library dialog."
@@ -10143,6 +10458,41 @@
     "handler": "screens.addLibraryDialog.validateAddLibraryForm.sayWhatKindOfLibraryThis",
     "text": "Say what kind of library this is.",
     "context": "Shown in the add library dialog (from `validateAddLibraryForm`)."
+  },
+  {
+    "handler": "screens.addToCollectionDialog.addTitleToACollection",
+    "text": "Add {title} to a collection",
+    "context": "The title of the dialog for putting a film or programme into a collection. {title} is what the film or programme is called."
+  },
+  {
+    "handler": "screens.addToCollectionDialog.alreadyInIt",
+    "text": "Already in it",
+    "context": "A note beside a collection the film or programme being added is already part of, which cannot be chosen again."
+  },
+  {
+    "handler": "screens.addToCollectionDialog.readingTheCollections",
+    "text": "Reading the collections",
+    "context": "Said while the collections are being read, in the dialog for putting a title into one."
+  },
+  {
+    "handler": "screens.addToCollectionDialog.thatCouldNotBeAdded",
+    "text": "That could not be added to the collection.",
+    "context": "Shown when putting a film or programme into a collection failed."
+  },
+  {
+    "handler": "screens.addToCollectionDialog.thereAreNoCollectionsYet",
+    "text": "There are no collections yet. Make a new one for it.",
+    "context": "Shown in the dialog for putting a title into a collection when the server has none yet; the button to make one is beside it."
+  },
+  {
+    "handler": "screens.addToCollectionDialog.titleIsInANewCollection",
+    "text": "{title} is in a new collection.",
+    "context": "Confirms a new collection was made holding a film or programme. {title} is what it is called."
+  },
+  {
+    "handler": "screens.addToCollectionDialog.titleIsNowInName",
+    "text": "{title} is now in {name}.",
+    "context": "Confirms a film or programme was put into a collection. {title} is the film or programme, {name} the collection."
   },
   {
     "handler": "screens.admin.describeLogLevel.debug",
@@ -10250,6 +10600,11 @@
     "context": "The label in the admin area (from `accelerationOptions`)."
   },
   {
+    "handler": "screens.adminArea.accountsPanel.aBanSignsThemOutAndKeepsThemOut",
+    "text": "A ban signs them out everywhere and keeps them out until you let them back in.",
+    "context": "Beneath the Ban button on the signing-in tab of the account editor."
+  },
+  {
     "handler": "screens.adminArea.accountsPanel.accountUnbanned",
     "text": "Account unbanned.",
     "context": "A short message shown once something is done in the accounts panel in the admin area."
@@ -10310,6 +10665,11 @@
     "context": "Shown in the accounts panel in the admin area. {banReason} is filled in by the app."
   },
   {
+    "handler": "screens.adminArea.accountsPanel.bannedCount",
+    "text": "Banned ({count})",
+    "context": "A choice in the filter above the accounts list, showing only banned accounts. {count} is how many there are."
+  },
+  {
     "handler": "screens.adminArea.accountsPanel.bannedFromTheAdminArea",
     "text": "Banned from the admin area",
     "context": "Shown in the accounts panel in the admin area."
@@ -10333,6 +10693,16 @@
     "handler": "screens.adminArea.accountsPanel.changesToTheirNamePictureRoles",
     "text": "Changes to their name, picture, roles and libraries apply when you save. Resetting their password and ending sessions happen right away.",
     "context": "The detail of a dialog title in the accounts panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.accountsPanel.copiedTheSetupLink",
+    "text": "Copied the setup link.",
+    "context": "Said once a setup link has been copied from the accounts list."
+  },
+  {
+    "handler": "screens.adminArea.accountsPanel.copyLink",
+    "text": "Copy link",
+    "context": "Copies an account's setup link, in the accounts list."
   },
   {
     "handler": "screens.adminArea.accountsPanel.deleteAccount",
@@ -10360,6 +10730,11 @@
     "context": "The description of a form field in the accounts panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.accountsPanel.everyoneCount",
+    "text": "Everyone ({count})",
+    "context": "A choice in the filter above the accounts list, showing every account. {count} is how many there are."
+  },
+  {
     "handler": "screens.adminArea.accountsPanel.everySessionItHoldsWillBe",
     "text": "Every session it holds will be ended. Its password is unchanged.",
     "context": "The detail of a confirm dialog in the accounts panel in the admin area."
@@ -10370,9 +10745,29 @@
     "context": "The detail of a confirm dialog in the accounts panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.accountsPanel.findSomebodyByNameOrUsername",
+    "text": "Find somebody by name, username or email",
+    "context": "The hidden label of the search box above the accounts list."
+  },
+  {
+    "handler": "screens.adminArea.accountsPanel.handleAndEmail",
+    "text": "{handle} · {email}",
+    "context": "The line under an account's name in the accounts list. {handle} is its username, such as @ada, and {email} its email address."
+  },
+  {
     "handler": "screens.adminArea.accountsPanel.keepNameFromName2",
     "text": "Keep {name} from {name2}",
     "context": "Shown in the accounts panel in the admin area. {name} is filled in by the app; {name2} is filled in by the app."
+  },
+  {
+    "handler": "screens.adminArea.accountsPanel.lastSignedIn",
+    "text": "Last signed in",
+    "context": "Heading of the column in the accounts list saying when each account last signed in."
+  },
+  {
+    "handler": "screens.adminArea.accountsPanel.leaveItEmptyForNoAddress",
+    "text": "Leave it empty for an account without an email address.",
+    "context": "Beneath the email field in the account editor."
   },
   {
     "handler": "screens.adminArea.accountsPanel.letBackIn",
@@ -10420,6 +10815,11 @@
     "context": "A short message shown once something is done in the accounts panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.accountsPanel.readingTheAccounts",
+    "text": "Reading the accounts",
+    "context": "Read aloud by screen readers while the accounts list is loading."
+  },
+  {
     "handler": "screens.adminArea.accountsPanel.resetPassword",
     "text": "Reset password",
     "context": "The confirm label of a confirm dialog in the accounts panel in the admin area."
@@ -10428,6 +10828,21 @@
     "handler": "screens.adminArea.accountsPanel.resetThisAccountsPassword",
     "text": "Reset this account's password?",
     "context": "The title of a confirm dialog in the accounts panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.accountsPanel.sendASetupLink",
+    "text": "Send a setup link",
+    "context": "In an account's menu in the accounts list, for an account already in use: makes a link its owner opens to choose a new password or a passkey."
+  },
+  {
+    "handler": "screens.adminArea.accountsPanel.setAPassword",
+    "text": "Set a password",
+    "context": "Heading of the section of the account editor where an administrator types a new password for the account directly."
+  },
+  {
+    "handler": "screens.adminArea.accountsPanel.setPassword",
+    "text": "Set password",
+    "context": "The button that sets the password typed in the account editor."
   },
   {
     "handler": "screens.adminArea.accountsPanel.signedThemOutEverywhere",
@@ -10450,6 +10865,11 @@
     "context": "Shown where the accounts could not be read from the server, followed by a sentence about why and a button to try again."
   },
   {
+    "handler": "screens.adminArea.accountsPanel.theLinkCouldNotBeCopied",
+    "text": "The link couldn’t be copied.",
+    "context": "Said when copying a setup link to the clipboard failed."
+  },
+  {
     "handler": "screens.adminArea.accountsPanel.thereAreNoRolesYet",
     "text": "There are no roles yet.",
     "context": "Text shown in the accounts panel in the admin area."
@@ -10470,6 +10890,11 @@
     "context": "Text shown in the accounts panel in the admin area."
   },
   {
+    "handler": "screens.adminArea.accountsPanel.waitingForSetupCount",
+    "text": "Waiting for setup ({count})",
+    "context": "A choice in the filter above the accounts list, showing accounts that have not been set up yet, including those whose link ran out. {count} is how many there are."
+  },
+  {
     "handler": "screens.adminArea.accountsPanel.whatTheyMaySeeAndHow",
     "text": "What they may see, and how old it may be. Everything, until you say otherwise.",
     "context": "The description of a form field in the accounts panel in the admin area."
@@ -10483,6 +10908,11 @@
     "handler": "screens.adminArea.accountsPanel.whetherNameHoldsName2",
     "text": "Whether {name} holds {name2}",
     "context": "The label of a switch in the accounts panel in the admin area. {name} is filled in by the app; {name2} is filled in by the app."
+  },
+  {
+    "handler": "screens.adminArea.accountsPanel.whoToShow",
+    "text": "Who to show",
+    "context": "Read aloud by screen readers for the filter above the accounts list."
   },
   {
     "handler": "screens.adminArea.accountsPanel.youDoNotHoldThePermission",
@@ -10613,6 +11043,11 @@
     "handler": "screens.adminArea.adminSections.content",
     "text": "Content",
     "context": "The label in the admin area (from `adminSections`)."
+  },
+  {
+    "handler": "screens.adminArea.adminSections.import",
+    "text": "Import",
+    "context": "The admin sidebar entry for importing everything from Jellyfin, Emby or Plex."
   },
   {
     "handler": "screens.adminArea.adminSections.overview",
@@ -10823,6 +11258,16 @@
     "handler": "screens.adminArea.arrAppDialog.whereTheRequestsServiceReachesIt",
     "text": "Where the requests service reaches it, with any URL base it is set to.",
     "context": "Shown in the admin area: the description under a connected app's address."
+  },
+  {
+    "handler": "screens.adminArea.arrAppsPanel.bringInASetup",
+    "text": "Import a setup",
+    "context": "A button and dialog title in the connected apps card of the admin requests area, which brings a whole Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrAppsPanel`)."
+  },
+  {
+    "handler": "screens.adminArea.arrAppsPanel.bringInASetupDetail",
+    "text": "Bring the download clients, indexers, quality profiles and waiting requests of Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr into Valence. Nothing in them is changed.",
+    "context": "The explanation under the title of the dialog that brings a Radarr/Sonarr setup into Valence (from `ArrImportDialog`)."
   },
   {
     "handler": "screens.adminArea.arrAppsPanel.connectedApps",
@@ -12058,6 +12503,196 @@
     "handler": "screens.adminArea.downloadsPanel.whatToShowAboutDownloads",
     "text": "What to show about downloads",
     "context": "The label of a tab row in the downloads panel in the admin area."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.aPasswordIsSavedLeaveIt",
+    "text": "A password is saved. Leave the field empty to keep it, or type a new one to replace it.",
+    "context": "Shown in the admin Settings, on the Email card, under signing in to the mail server."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.aPortFrom1To65535",
+    "text": "A port from 1 to 65535.",
+    "context": "Shown in the admin Settings, on the Email card, when the port typed is not one."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.emailPasswordResetLinks",
+    "text": "Email password reset links",
+    "context": "Shown in the admin Settings, on the Email card: a switch."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.emailSetupLinks",
+    "text": "Email setup links",
+    "context": "Shown in the admin Settings, on the Email card: a switch for emailing the link a new account is set up with."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.forResendTheUsernameIs",
+    "text": "For Resend, the username is resend and the password is an API key.",
+    "context": "Shown in the admin Settings, on the Email card, under signing in to the mail server. \"resend\" is a literal username and Resend is a product name."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.howToSetUpEmail",
+    "text": "How to set up email",
+    "context": "Shown in the admin Settings, on the Email card: a link to the documentation."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.mailServer",
+    "text": "Mail server",
+    "context": "Shown in the admin Settings, on the Email card: the SMTP server's host name."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.nothingIsEmailedWhileThisIs",
+    "text": "Nothing is emailed while this is off. Links can still be copied, and reset links are written to the server log.",
+    "context": "Shown in the admin Settings, on the Email card."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.onceEmailIsOnTheAddresses",
+    "text": "Once email is on, the addresses Valence sends to and everything each email says go to the mail provider you set up here.",
+    "context": "Shown in the admin Settings, on the Email card: a plain statement of what leaves the server."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.port",
+    "text": "Port",
+    "context": "Shown in the admin Settings, on the Email card: the mail server's network port."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.readingTheEmailSettings",
+    "text": "Reading the email settings…",
+    "context": "Shown in the admin Settings, on the Email card, while it loads."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.recentEmails.failedBecause",
+    "text": "Failed: {reason}",
+    "context": "Shown under Recent emails on the admin Email card. {reason} is why, often in the mail server's own words."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.recentEmails.noReasonGiven",
+    "text": "no reason was given",
+    "context": "Shown under Recent emails on the admin Email card, filling {reason} in \"Failed: {reason}\"."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.recentEmails.nothingHasBeenSentYet",
+    "text": "Nothing has been sent yet.",
+    "context": "Shown under Recent emails on the admin Email card, when there are none."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.recentEmails.passwordReset",
+    "text": "Password reset",
+    "context": "Shown under Recent emails on the admin Email card: what kind of email it was."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.recentEmails.recentEmails",
+    "text": "Recent emails",
+    "context": "Shown under Recent emails on the admin Email card: its heading."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.recentEmails.sent",
+    "text": "Sent",
+    "context": "Shown under Recent emails on the admin Email card: the email was handed to the mail server."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.recentEmails.setupLink",
+    "text": "Setup link",
+    "context": "Shown under Recent emails on the admin Email card: what kind of email it was."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.recentEmails.testEmail",
+    "text": "Test email",
+    "context": "Shown under Recent emails on the admin Email card: what kind of email it was."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.savedLeaveEmptyToKeep",
+    "text": "Saved; leave empty to keep it",
+    "context": "Shown in the admin Settings, on the Email card: the placeholder in the password field once one is saved."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.savedTheEmailSettings",
+    "text": "Saved the email settings.",
+    "context": "Shown in the admin Settings, on the Email card: a toast."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.sendAs",
+    "text": "Send as",
+    "context": "Shown in the admin Settings, on the Email card: the name and address emails come from."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.sendATestTo",
+    "text": "Send a test to",
+    "context": "Shown in the admin Settings, on the Email card: the label of the address a test email goes to."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.sendByEmailAppearsBesideCopy",
+    "text": "Send by email appears beside Copy link when you add an account with an address.",
+    "context": "Shown in the admin Settings, on the Email card. \"Send by email\" and \"Copy link\" are the names of buttons on the Accounts page."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.sendEmail",
+    "text": "Send email",
+    "context": "Shown in the admin Settings, on the Email card: the switch that turns email on."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.sendPasswordResetLinksAndSetup",
+    "text": "Send password reset links and setup links by email, through any mail server you have an account with.",
+    "context": "Shown in the admin Settings, on the Email card: what the card is for."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.sendTestEmail",
+    "text": "Send test email",
+    "context": "Shown in the admin Settings, on the Email card: a button."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.sentCheckTheInboxOf",
+    "text": "Sent. Check the inbox of {to}.",
+    "context": "Shown in the admin Settings, on the Email card, after a test email went. {to} is the address."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.setByTheEnvironment",
+    "text": "Set by the environment",
+    "context": "Shown in the admin Settings, on the Email card: a note's title when SMTP_URL is set."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.smtpUrlIsSetSoTheMail",
+    "text": "SMTP_URL is set, so the mail server and sender come from the server's environment and are changed there. The switches below still apply.",
+    "context": "Shown in the admin Settings, on the Email card. SMTP_URL is an environment variable's name."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.starttls",
+    "text": "STARTTLS",
+    "context": "Shown in the admin Settings, on the Email card: a choice of how the connection to the mail server is encrypted. A protocol name, usually left as it is."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.theAddressMustBeOneYour",
+    "text": "The address must be one your mail provider lets you send from, usually on a domain you verified with them.",
+    "context": "Shown in the admin Settings, on the Email card."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.theEmailSettingsCouldNotBe",
+    "text": "The email settings could not be read.",
+    "context": "Shown in the admin Settings, on the Email card, when loading failed."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.theSmtpServerOfYourEmail",
+    "text": "The SMTP server of your email provider, its port, and how the connection is encrypted.",
+    "context": "Shown in the admin Settings, on the Email card."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.tls",
+    "text": "TLS",
+    "context": "Shown in the admin Settings, on the Email card: a choice of how the connection to the mail server is encrypted. A protocol name, usually left as it is."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.toWhoeverAsksOnTheSign",
+    "text": "To whoever asks on the sign-in screen, when their account has an address.",
+    "context": "Shown in the admin Settings, on the Email card, describing the password reset switch."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.useResend",
+    "text": "Use Resend",
+    "context": "Shown in the admin Settings, on the Email card: a button that fills in Resend's mail server. Resend is a product name."
+  },
+  {
+    "handler": "screens.adminArea.emailCard.whatLeavesTheServer",
+    "text": "What leaves the server",
+    "context": "Shown in the admin Settings, on the Email card: a note's title."
   },
   {
     "handler": "screens.adminArea.encodingPanel.alreadyDone",
@@ -16271,6 +16906,16 @@
     "context": "The label of a bar button in the audiobook bar."
   },
   {
+    "handler": "screens.banDialog.keepItShorter",
+    "text": "Keep it to 200 characters.",
+    "context": "Shown under a ban's reason when it is too long."
+  },
+  {
+    "handler": "screens.banDialog.whatTheyAreTold",
+    "text": "What they are told",
+    "context": "The label of a ban's reason, which the banned person is shown when they next try to sign in."
+  },
+  {
     "handler": "screens.bookDialog.aBook",
     "text": "A book",
     "context": "Shown in the book dialog."
@@ -16452,6 +17097,76 @@
     "context": "The label in the cache breakdown (from `cacheRows`)."
   },
   {
+    "handler": "screens.collectionDialog.addFilmsAndProgrammesFromTheir",
+    "text": "Add films and programmes to it from their own pages.",
+    "context": "Shown on an empty collection's page to somebody who may change it."
+  },
+  {
+    "handler": "screens.collectionDialog.chooseArtwork",
+    "text": "Choose artwork",
+    "context": "A button on a collection's page for giving it a picture of its own instead of the posters of what is in it."
+  },
+  {
+    "handler": "screens.collectionDialog.deleteCollection",
+    "text": "Delete collection",
+    "context": "An action in the menu on a collection's page; what was in it stays in the library."
+  },
+  {
+    "handler": "screens.collectionDialog.earlier",
+    "text": "Earlier",
+    "context": "A small button under a title in a collection whose order matters: move it one place earlier."
+  },
+  {
+    "handler": "screens.collectionDialog.later",
+    "text": "Later",
+    "context": "A small button under a title in a collection whose order matters: move it one place later."
+  },
+  {
+    "handler": "screens.collectionDialog.nameHasNewArtwork",
+    "text": "{name} has new artwork.",
+    "context": "Confirms a collection was given a picture of its own. {name} is the collection."
+  },
+  {
+    "handler": "screens.collectionDialog.thatCollectionCouldNotBeDeleted",
+    "text": "That collection could not be deleted.",
+    "context": "Shown when deleting a collection failed."
+  },
+  {
+    "handler": "screens.collectionDialog.theFilmsAndProgrammesInIt",
+    "text": "The films and programmes in it stay in the library.",
+    "context": "The detail of the question asked before a collection is deleted."
+  },
+  {
+    "handler": "screens.collectionDialog.useThePostersInIt",
+    "text": "Use the posters in it",
+    "context": "An action in the menu on a collection's page that takes away its own artwork, so its cover is made of the posters of what is in it again."
+  },
+  {
+    "handler": "screens.collectionEditDialog.aCollectionNeedsAName",
+    "text": "A collection needs a name.",
+    "context": "Shown when somebody tries to make or save a collection with no name."
+  },
+  {
+    "handler": "screens.collectionEditDialog.editCollection",
+    "text": "Edit collection",
+    "context": "The title of the dialog for changing a collection's name, description and whether its order matters."
+  },
+  {
+    "handler": "screens.collectionEditDialog.forASagaWatchedInOrder",
+    "text": "For a saga watched in the order it was made, rather than a body of work in any order.",
+    "context": "Explains the switch saying a collection's order matters."
+  },
+  {
+    "handler": "screens.collectionEditDialog.thatCollectionCouldNotBeMade",
+    "text": "That collection could not be made.",
+    "context": "Shown when making a new collection failed."
+  },
+  {
+    "handler": "screens.collectionEditDialog.whatTheseHaveInCommon",
+    "text": "What these have in common",
+    "context": "The placeholder in the description field of a collection."
+  },
+  {
     "handler": "screens.colourChoice.anyColourForLabel",
     "text": "Any colour for {label}",
     "context": "Shown in the colour choice. {label} is filled in by the app."
@@ -16525,6 +17240,31 @@
     "handler": "screens.definitionSettingsFields.describeOptionLabel.descending",
     "text": "Descending",
     "context": "Shown in the definition settings fields (from `describeOptionLabel`)."
+  },
+  {
+    "handler": "screens.describeLinkLife.linkHasRunOut",
+    "text": "Link has run out",
+    "context": "Under an account's standing in the accounts list, when its setup link is past its date."
+  },
+  {
+    "handler": "screens.describeLinkLife.linkWorksForDays.one",
+    "text": "Link works for {count} more day",
+    "context": "Under an account's standing in the accounts list: how long its setup link keeps working. {count} is a number of days."
+  },
+  {
+    "handler": "screens.describeLinkLife.linkWorksForDays.other",
+    "text": "Link works for {count} more days",
+    "context": "Under an account's standing in the accounts list: how long its setup link keeps working. {count} is a number of days."
+  },
+  {
+    "handler": "screens.describeLinkLife.linkWorksForHours.one",
+    "text": "Link works for {count} more hour",
+    "context": "Under an account's standing in the accounts list: how long its setup link keeps working, on its last day. {count} is a number of hours."
+  },
+  {
+    "handler": "screens.describeLinkLife.linkWorksForHours.other",
+    "text": "Link works for {count} more hours",
+    "context": "Under an account's standing in the accounts list: how long its setup link keeps working, on its last day. {count} is a number of hours."
   },
   {
     "handler": "screens.deviceApproval.aTelevisionShowedYouACode",
@@ -17247,6 +17987,36 @@
     "context": "The label of a button in the folder link. {folder} is filled in by the app."
   },
   {
+    "handler": "screens.forgotPassword.forgotYourPassword",
+    "text": "Forgot your password?",
+    "context": "A button on the sign-in screen."
+  },
+  {
+    "handler": "screens.forgotPassword.ifAnAccountAnswersToThat",
+    "text": "If an account answers to that, a link to choose a new password is on its way. It works once, for an hour. No email? Whoever runs this server can find the link in its log.",
+    "context": "Shown after asking for a password reset link."
+  },
+  {
+    "handler": "screens.forgotPassword.resetYourPassword",
+    "text": "Reset your password",
+    "context": "The title of the forgotten password dialog, and of the page a reset link opens."
+  },
+  {
+    "handler": "screens.forgotPassword.sendMeALink",
+    "text": "Send me a link",
+    "context": "A button in the forgotten password dialog."
+  },
+  {
+    "handler": "screens.forgotPassword.typeYourUsernameOrTheEmail",
+    "text": "Type your username or the email address on your account, and Valence sends a link to choose a new password.",
+    "context": "In the forgotten password dialog."
+  },
+  {
+    "handler": "screens.forgotPassword.usernameOrEmail",
+    "text": "Username or email",
+    "context": "The field in the forgotten password dialog."
+  },
+  {
     "handler": "screens.giveUpRulesList.metadataWaitChoices.fifteenMinutes",
     "text": "Fifteen minutes",
     "context": "The label in the give up rules list (from `metadataWaitChoices`)."
@@ -17405,6 +18175,801 @@
     "handler": "screens.immersiveMusic.titleImmersive",
     "text": "{title}, immersive",
     "context": "Read aloud by screen readers as the name in the immersive music. {title} is filled in by the app."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.addAMapping",
+    "text": "Add a mapping",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A button adding a row that maps a folder as the apps see it to the same folder as Valence sees it."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.addAnotherApp",
+    "text": "Add another app",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A menu for adding a second app of a kind, such as a Radarr for 4K."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.alreadyInValence",
+    "text": "Already in Valence",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A badge on something Valence already has, which is left as it is."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.apiKeyForItem",
+    "text": "API key for {item}",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A field label. {item} is a download client or indexer, such as SABnzbd."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.appsConnectedKept",
+    "text": "Apps connected: {added} new, {kept} already connected",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). {added} and {kept} are numbers."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.appsRead",
+    "text": "Apps read",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A section heading."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.askingForWhatWasWaitedFor",
+    "text": "Asking for what was being waited for",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A progress bar label."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.bringItIn",
+    "text": "Import it",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A button that brings the setup into Valence."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.checkingRequesting",
+    "text": "Checking whether requesting is on",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A spinner label."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.clientsAddedKept",
+    "text": "Download clients: {added} added, {kept} already in Valence",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). {added} and {kept} are numbers."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.detailFromApps",
+    "text": "{detail}, from {apps}",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). {detail} is an address; {apps} lists the apps it came from."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.filledByAppFrom",
+    "text": "Filled by {app} from {folders}",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). {app} is a Radarr, Sonarr or Lidarr; {folders} its root folders."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.folderAsTheAppsSeeIt",
+    "text": "Folder as the apps see it",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A field label for a path such as /movies."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.fromApps",
+    "text": "From {apps}",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). {apps} lists the apps something came from."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.giveAtLeastOneApp",
+    "text": "Give at least one app’s address and API key.",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). Shown when nothing was filled in."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.giveNameAnAddressAndAKey",
+    "text": "Give {name} both an address and an API key, or leave both empty.",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). {name} is an app such as Sonarr."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.handOffExplained",
+    "text": "{app} keeps doing the downloading while it keeps running, and Valence passes each request to it. This is the default.",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). {app} is a Radarr, Sonarr or Lidarr."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.handToApp",
+    "text": "Hand requests to {app}",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A choice. {app} is a Radarr, Sonarr or Lidarr."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.howToSwitchRequestingOn",
+    "text": "How to switch requesting on",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A link to the docs."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.indexersAddedKept",
+    "text": "Indexers: {added} added, {kept} already in Valence",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). {added} and {kept} are numbers."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.indexersThroughProwlarr.one",
+    "text": "{count} indexer through {name}",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). {name} is the Prowlarr."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.indexersThroughProwlarr.other",
+    "text": "{count} indexers through {name}",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). {name} is the Prowlarr."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.itCouldNotBeAskedFor",
+    "text": "It could not be asked for.",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). Shown beside a title that could not be requested."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.itCouldNotBeBroughtIn",
+    "text": "The setup could not be brought in.",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). Shown when bringing it in failed without a reason."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.leaveAsItIs",
+    "text": "Leave as it is",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A choice for a library."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.leaveExplained",
+    "text": "The library stays as it is: nothing about who fulfils its requests changes.",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`)."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.mapFoldersExplained",
+    "text": "Radarr, Sonarr and Lidarr often see your media at other paths than Valence does. Map each folder as they write it to the same folder as Valence sees it, so their root folders find the right library.",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`)."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.matchedByNameOnly",
+    "text": "Matched by its folder’s name only",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A badge on a library matched by guessing; adding a path mapping makes it certain."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.monitoredArtists.one",
+    "text": "{count} monitored artist still missing tracks",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`)."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.monitoredArtists.other",
+    "text": "{count} monitored artists still missing tracks",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`)."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.monitoredFilms.one",
+    "text": "{count} monitored film with no file yet",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`)."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.monitoredFilms.other",
+    "text": "{count} monitored films with no file yet",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`)."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.monitoredSeries.one",
+    "text": "{count} monitored series still missing episodes",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`)."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.monitoredSeries.other",
+    "text": "{count} monitored series still missing episodes",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`)."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.nameAddress",
+    "text": "{name} address",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A field label. {name} is an app such as Radarr."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.nameApiKey",
+    "text": "{name} API key",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A field label. {name} is an app such as Radarr."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.noLibraryHoldsTheseFolders",
+    "text": "No library holds these folders. Add a path mapping so Valence can find theirs.",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`)."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.notBroughtAcross",
+    "text": "Not imported",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A badge on something Valence cannot bring in."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.nothingHere",
+    "text": "Nothing to bring in here.",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`)."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.overseerrFindsTheRest",
+    "text": "Give Overseerr or Jellyseerr, and Valence finds the Radarr and Sonarr it sends to, with their keys. Leave any app you do not run empty.",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`)."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.passwordForItem",
+    "text": "Password for {item}",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A field label. {item} is a download client such as qBittorrent."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.passwordsAndKeys",
+    "text": "Passwords and keys",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A section heading."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.pathFromApp",
+    "text": "{path}, from {app}",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). {path} is a folder; {app} the app that has it."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.profilesAddedKept",
+    "text": "Quality profiles: {added} added, {kept} already in Valence",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). {added} and {kept} are numbers."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.qualityProfiles",
+    "text": "Quality profiles",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A section heading."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.readItAgain",
+    "text": "Read it again",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A button that reads the setup again with what was changed."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.readTheSetup",
+    "text": "Read the setup",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A button that reads the apps and says what would be brought in, without changing anything."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.removeThisMapping",
+    "text": "Remove this mapping",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A button."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.requestingIsNotSwitchedOn",
+    "text": "Requesting is not switched on",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A callout title."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.requestsMadeAlready.one",
+    "text": "{count} request made, {already} asked for already",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). {already} is a number."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.requestsMadeAlready.other",
+    "text": "{count} requests made, {already} asked for already",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). {already} is a number."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.sameFolderAsValenceSeesIt",
+    "text": "Same folder as Valence sees it",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A field label for a path such as /media/Films."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.skipThis",
+    "text": "Skip this",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A button going on without bringing anything in."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.someThingsCouldNotBeDone",
+    "text": "Some things could not be done",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A callout title."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.switchOnTheRequestsProfile",
+    "text": "Importing from Radarr, Sonarr and the rest needs the requests service. Start Valence with the requests profile in your Docker Compose file, then come back.",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`)."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.takeOverExplained",
+    "text": "Valence’s own downloader takes over, with the download clients and indexers brought in. Switch {app} off afterwards so the two do not both download.",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). {app} is a Radarr, Sonarr or Lidarr."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.takeOverWithProfileExplained",
+    "text": "Valence’s own downloader takes over, judging releases by {profile}. Switch {app} off afterwards so the two do not both download.",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). {profile} is a quality profile; {app} a Radarr, Sonarr or Lidarr."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.theseAppsShowSecretsMasked",
+    "text": "Newer versions of these apps show passwords and keys only masked, so type these in again. Anything left empty can be filled in later.",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`)."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.titleProblem",
+    "text": "{title}: {problem}",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). {title} is a film, series or artist; {problem} why it could not be asked for."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.titlesWithNoId.one",
+    "text": "{count} title has no id Valence can ask for it by",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`)."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.titlesWithNoId.other",
+    "text": "{count} titles have no id Valence can ask for them by",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`)."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.urlFoundThrough",
+    "text": "{url}, found through {through}",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). {url} is an address; {through} the Overseerr or Jellyseerr that named it."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.valenceDownloads",
+    "text": "Valence downloads",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A choice for a library."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.valenceOnlyReadsFromTheseApps",
+    "text": "Valence only reads from these apps and never changes them, so they keep working as before.",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`)."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.waitingRequests.one",
+    "text": "{count} Overseerr or Jellyseerr request still waiting",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`)."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.waitingRequests.other",
+    "text": "{count} Overseerr or Jellyseerr requests still waiting",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`)."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.whatIsBroughtAcross",
+    "text": "What is imported from them",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A link to the docs."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.whatWasBeingWaitedFor",
+    "text": "What was being waited for",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A section heading."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.whereTheirFoldersAre",
+    "text": "Where their folders are",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A section heading."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.whichRequestApp",
+    "text": "Which request app",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). The label of a switch between Overseerr and Jellyseerr."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.whoFulfilsLibrary",
+    "text": "Who fulfils {library}",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). The label of a choice. {library} is a Valence library."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.willBeAdded",
+    "text": "Will be added",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A badge on something Valence will add."
+  },
+  {
+    "handler": "screens.importWizard.arrImportStep.yourApps",
+    "text": "Your apps",
+    "context": "In the step that brings a Radarr, Sonarr, Lidarr, Prowlarr and Overseerr or Jellyseerr setup into Valence (from `ArrImportStep`). A section heading."
+  },
+  {
+    "handler": "screens.importWizard.handOutTheLinks",
+    "text": "Hand out the setup links",
+    "context": "The heading of the import wizard's last step, which lists each new person's setup link."
+  },
+  {
+    "handler": "screens.importWizard.importing",
+    "text": "Importing",
+    "context": "The heading of the import wizard's step that follows the import as it runs."
+  },
+  {
+    "handler": "screens.importWizard.importReportView.andCountMore.one",
+    "text": "And {count} more.",
+    "context": "Below the list of unmatched items in the import report, when it is cut short. {count} is how many more."
+  },
+  {
+    "handler": "screens.importWizard.importReportView.andCountMore.other",
+    "text": "And {count} more.",
+    "context": "Below the list of unmatched items in the import report, when it is cut short. {count} is how many more."
+  },
+  {
+    "handler": "screens.importWizard.importReportView.couldNotBeBroughtAcross",
+    "text": "Could not be imported",
+    "context": "A badge on a person in the import report whose account could not be made."
+  },
+  {
+    "handler": "screens.importWizard.importReportView.librariesUpToAge",
+    "text": "{libraries}, nothing rated above {age}",
+    "context": "What a person may see, in the import report. {libraries} is 'Every library' or a count; {age} an age."
+  },
+  {
+    "handler": "screens.importWizard.importReportView.markers",
+    "text": "Checked for markers",
+    "context": "A tile in the import report: how many films and episodes are checked for intro and credits markers."
+  },
+  {
+    "handler": "screens.importWizard.importReportView.matched",
+    "text": "Matched",
+    "context": "A tile in the import report: how many items on the old server were found in Valence."
+  },
+  {
+    "handler": "screens.importWizard.importReportView.matchedOfItems",
+    "text": "{matched} of {items}",
+    "context": "The value of the Matched tile in the import report."
+  },
+  {
+    "handler": "screens.importWizard.importReportView.notMatched",
+    "text": "Not matched",
+    "context": "The heading over items the import could not find in Valence."
+  },
+  {
+    "handler": "screens.importWizard.importReportView.plays",
+    "text": "Plays",
+    "context": "A tile in the import report: how many viewings come across with their dates."
+  },
+  {
+    "handler": "screens.importWizard.importReportView.titleYear",
+    "text": "{title} ({year})",
+    "context": "An unmatched item in the import report. {title} is its title and {year} its year."
+  },
+  {
+    "handler": "screens.importWizard.importReportView.watchedResumesPlaysFavouritesRatingsPlaylists",
+    "text": "Watched {watched}, in progress {resumes}, plays {plays}, favourites {favourites}, ratings {ratings}, playlists {playlists}",
+    "context": "What one person gets, in the import report. Each gap is a number."
+  },
+  {
+    "handler": "screens.importWizard.importReportView.whatComesAcross",
+    "text": "What is imported",
+    "context": "Read out over the tiles of the import report."
+  },
+  {
+    "handler": "screens.importWizard.importReportView.whatStaysBehind",
+    "text": "What stays behind",
+    "context": "The heading over what an import cannot bring across, in its report."
+  },
+  {
+    "handler": "screens.importWizard.importReportView.whatWasWritten",
+    "text": "What was written",
+    "context": "Read out over the tiles of what an import actually wrote."
+  },
+  {
+    "handler": "screens.importWizard.importStep.carryingOnPicksUpWhereItStopped",
+    "text": "Carrying on picks up where it stopped. Nothing is imported twice.",
+    "context": "Under a stopped or failed import."
+  },
+  {
+    "handler": "screens.importWizard.importStep.carryOn",
+    "text": "Carry on",
+    "context": "The button that starts a stopped or failed import again from where it got to."
+  },
+  {
+    "handler": "screens.importWizard.importStep.theImportStopped",
+    "text": "The import stopped.",
+    "context": "Shown when an import was stopped."
+  },
+  {
+    "handler": "screens.importWizard.librariesFirst",
+    "text": "Libraries first",
+    "context": "The heading of the import wizard's step that makes and scans libraries before anything is matched."
+  },
+  {
+    "handler": "screens.importWizard.librariesStep.comesInto",
+    "text": "Comes into",
+    "context": "In the import wizard, beside a folder of the old server: which Valence library it comes into."
+  },
+  {
+    "handler": "screens.importWizard.librariesStep.leaveItOut",
+    "text": "Leave it out",
+    "context": "In the import wizard, the choice not to bring a folder of the old server across."
+  },
+  {
+    "handler": "screens.importWizard.librariesStep.makeAndScanTheseLibraries",
+    "text": "Make and scan these libraries",
+    "context": "The button in the import wizard that makes a Valence library for each chosen folder and scans it."
+  },
+  {
+    "handler": "screens.importWizard.librariesStep.makeAndScanThisLibrary",
+    "text": "A new library, made and scanned now",
+    "context": "In the import wizard, the choice that makes a new Valence library for a folder of the old server and scans it."
+  },
+  {
+    "handler": "screens.importWizard.librariesStep.readingTheLibraries",
+    "text": "Reading the libraries",
+    "context": "Shown while the import wizard reads the old server's libraries."
+  },
+  {
+    "handler": "screens.importWizard.librariesStep.sourcePathBecomesValencePath",
+    "text": "{sourcePath} → {valencePath}",
+    "context": "A folder on the old server and where it is in Valence, in the import wizard."
+  },
+  {
+    "handler": "screens.importWizard.librariesStep.valenceHasNoLibraryLikeThis",
+    "text": "Valence has no library like this, so it stays behind.",
+    "context": "Beside a library of the old server Valence cannot hold, such as photos."
+  },
+  {
+    "handler": "screens.importWizard.librariesStep.waitForTheScansToFinish",
+    "text": "Wait for the scans to finish, so the films and episodes are there to be matched.",
+    "context": "Under the scans in the import wizard, while they run."
+  },
+  {
+    "handler": "screens.importWizard.librariesStep.whereAreTheFolders",
+    "text": "Where are the folders?",
+    "context": "The heading over the folder mappings in the import wizard."
+  },
+  {
+    "handler": "screens.importWizard.libraryNameFor.nameNumber",
+    "text": "{name} {number}",
+    "context": "The name of a library made for one of several folders of a library on the old server. {name} is the library's name, {number} which folder."
+  },
+  {
+    "handler": "screens.importWizard.pathMappings.addAFolder",
+    "text": "Add a folder",
+    "context": "The button that adds a folder mapping in the import wizard."
+  },
+  {
+    "handler": "screens.importWizard.pathMappings.inValence",
+    "text": "In Valence",
+    "context": "The label of where a folder is as Valence sees it, in the import wizard."
+  },
+  {
+    "handler": "screens.importWizard.pathMappings.onSource",
+    "text": "On {source}",
+    "context": "The label of a folder as the old server sees it. {source} is the old server's name."
+  },
+  {
+    "handler": "screens.importWizard.pathMappings.removeThisPair",
+    "text": "Remove this folder",
+    "context": "The button that removes a folder mapping in the import wizard."
+  },
+  {
+    "handler": "screens.importWizard.pathMappings.saveAndLookAgain",
+    "text": "Save and look again",
+    "context": "The button that saves the folder mappings and places the libraries again."
+  },
+  {
+    "handler": "screens.importWizard.pathMappings.sourceAndValenceMaySeeTheSameFiles",
+    "text": "{source} and Valence may see the same files at different paths. Where they differ, say where each of {source}'s folders is in Valence.",
+    "context": "Above the folder mappings in the import wizard. {source} is the old server's name."
+  },
+  {
+    "handler": "screens.importWizard.pathMappings.sourceFolderExample",
+    "text": "/data/movies",
+    "context": "An example folder on the old server, shown as a placeholder."
+  },
+  {
+    "handler": "screens.importWizard.pathMappings.valenceFolderExample",
+    "text": "/media/movies",
+    "context": "An example folder in Valence, shown as a placeholder."
+  },
+  {
+    "handler": "screens.importWizard.peopleStep.disabled",
+    "text": "Disabled",
+    "context": "A badge on a person who was disabled on the old server."
+  },
+  {
+    "handler": "screens.importWizard.peopleStep.everybodyOnSource",
+    "text": "Everybody on {source}",
+    "context": "The heading over the people in the import wizard. {source} is the old server's name."
+  },
+  {
+    "handler": "screens.importWizard.peopleStep.noneOfThem",
+    "text": "None of them",
+    "context": "The choice for when the administrator is not one of the old server's people."
+  },
+  {
+    "handler": "screens.importWizard.peopleStep.plexWillNotShareTheirWatching",
+    "text": "Plex will not share their watching with Valence, so their account and the plays the server remembers come across, but not where they stopped or their ratings.",
+    "context": "Beside a Plex person whose watching cannot be read."
+  },
+  {
+    "handler": "screens.importWizard.peopleStep.readingWhoIsOnIt",
+    "text": "Reading who is on it",
+    "context": "Shown while the import wizard reads the old server's people."
+  },
+  {
+    "handler": "screens.importWizard.peopleStep.theirPin",
+    "text": "Their PIN",
+    "context": "The label of a Plex Home member's PIN in the import wizard."
+  },
+  {
+    "handler": "screens.importWizard.peopleStep.usePin",
+    "text": "Use PIN",
+    "context": "The button that tries a Plex Home member's PIN."
+  },
+  {
+    "handler": "screens.importWizard.peopleStep.whichOfThemIsYou",
+    "text": "Which of them is you?",
+    "context": "The label of the choice of the administrator's own person on the old server."
+  },
+  {
+    "handler": "screens.importWizard.peopleStep.withoutTheirPinTheyAreLeftOut",
+    "text": "Without their PIN they are left out. It is not kept.",
+    "context": "Under a Plex Home member's PIN field."
+  },
+  {
+    "handler": "screens.importWizard.peopleStep.yourOwnAccountIsUsedForYou",
+    "text": "Your own account gets your watching, rather than a new account being made for you.",
+    "context": "Under the choice of the administrator's own person in the import wizard."
+  },
+  {
+    "handler": "screens.importWizard.planStep.importEverything",
+    "text": "Import everything",
+    "context": "The button that starts the import after its dry run."
+  },
+  {
+    "handler": "screens.importWizard.planStep.nothingHasBeenWrittenYet",
+    "text": "Nothing has been written yet. This is what importing everything would do.",
+    "context": "Above the dry-run report."
+  },
+  {
+    "handler": "screens.importWizard.planStep.planAgain",
+    "text": "Plan again",
+    "context": "The button that runs the import's dry run again."
+  },
+  {
+    "handler": "screens.importWizard.planStep.readingEverythingWritingNothing",
+    "text": "Reading everything on {source} and writing nothing.",
+    "context": "Shown while the dry run runs. {source} is the old server's name."
+  },
+  {
+    "handler": "screens.importWizard.planStep.startingTheDryRun",
+    "text": "Starting the dry run",
+    "context": "Shown while the dry run is asked for."
+  },
+  {
+    "handler": "screens.importWizard.planStep.theDryRunStopped",
+    "text": "The dry run stopped.",
+    "context": "Shown when the dry run was stopped."
+  },
+  {
+    "handler": "screens.importWizard.readingWhatIsConnected",
+    "text": "Reading what is connected",
+    "context": "Shown while the import wizard reads the servers already connected."
+  },
+  {
+    "handler": "screens.importWizard.requestingToo",
+    "text": "Requesting too",
+    "context": "The heading of the import wizard's step for Sonarr, Radarr, Prowlarr and Overseerr."
+  },
+  {
+    "handler": "screens.importWizard.runProgress.gettingReady",
+    "text": "Getting ready",
+    "context": "The phase of an import before it has said what it is doing."
+  },
+  {
+    "handler": "screens.importWizard.runProgress.processedOfTotal",
+    "text": "{processed} of {total}",
+    "context": "How far an import's phase has got. Each gap is a number."
+  },
+  {
+    "handler": "screens.importWizard.scanFollower.scanned",
+    "text": "Scanned",
+    "context": "Beside a library the import wizard made, once its scan finished."
+  },
+  {
+    "handler": "screens.importWizard.scanFollower.scanningName",
+    "text": "Scanning {name}",
+    "context": "The label of a library's scan in the import wizard. {name} is the library."
+  },
+  {
+    "handler": "screens.importWizard.scanFollower.theScanFailed",
+    "text": "The scan failed",
+    "context": "Beside a library the import wizard made, when its scan failed."
+  },
+  {
+    "handler": "screens.importWizard.setupLinksStep.makingTheLinks",
+    "text": "Making the links",
+    "context": "Shown while the import wizard makes setup links."
+  },
+  {
+    "handler": "screens.importWizard.setupLinksStep.nobodyNewWasAdded",
+    "text": "Nobody new was added, so there are no links to hand out.",
+    "context": "Shown when an import made no accounts."
+  },
+  {
+    "handler": "screens.importWizard.setupLinksStep.passwordsCannotBeCopied",
+    "text": "Passwords cannot be copied from another server, so each new person signs in the first time with their own link and chooses a password there.",
+    "context": "Above the setup links at the end of the import wizard."
+  },
+  {
+    "handler": "screens.importWizard.setupLinksStep.sentNamesLink",
+    "text": "Sent {name} their link.",
+    "context": "Shown once a setup link was emailed. {name} is the person."
+  },
+  {
+    "handler": "screens.importWizard.setupLinksStep.signingInTheFirstTime",
+    "text": "Signing in the first time",
+    "context": "The heading over the setup links at the end of the import wizard."
+  },
+  {
+    "handler": "screens.importWizard.sourceStep.carryOn",
+    "text": "Carry on with this one",
+    "context": "The button that goes on with a server connected before, in the import wizard."
+  },
+  {
+    "handler": "screens.importWizard.sourceStep.connect",
+    "text": "Connect and check",
+    "context": "The button that connects the old server and reads it to check the key."
+  },
+  {
+    "handler": "screens.importWizard.sourceStep.connectedBefore",
+    "text": "Connected before",
+    "context": "The heading over servers connected for importing before."
+  },
+  {
+    "handler": "screens.importWizard.sourceStep.emby",
+    "text": "Emby",
+    "context": "The name of the Emby media server, a product name."
+  },
+  {
+    "handler": "screens.importWizard.sourceStep.jellyfin",
+    "text": "Jellyfin",
+    "context": "The name of the Jellyfin media server, a product name."
+  },
+  {
+    "handler": "screens.importWizard.sourceStep.mediaBrowserAddressExample",
+    "text": "http://192.168.1.10:8096",
+    "context": "An example Jellyfin or Emby address, shown as a placeholder."
+  },
+  {
+    "handler": "screens.importWizard.sourceStep.nameAtAddress",
+    "text": "{name} at {address}",
+    "context": "A server connected for importing. {name} is its name, {address} where it answers."
+  },
+  {
+    "handler": "screens.importWizard.sourceStep.plex",
+    "text": "Plex",
+    "context": "The name of the Plex media server, a product name."
+  },
+  {
+    "handler": "screens.importWizard.sourceStep.plexAddressExample",
+    "text": "http://192.168.1.10:32400",
+    "context": "An example Plex address, shown as a placeholder."
+  },
+  {
+    "handler": "screens.importWizard.sourceStep.plexToken",
+    "text": "Plex token",
+    "context": "The label of the Plex token field in the import wizard."
+  },
+  {
+    "handler": "screens.importWizard.sourceStep.signsInWithAnApiKey",
+    "text": "People, watching and libraries, read with an API key.",
+    "context": "In the import wizard, under a kind of server to import from. Jellyfin and Emby."
+  },
+  {
+    "handler": "screens.importWizard.sourceStep.signsInWithAPlexToken",
+    "text": "People, watching and libraries, read with a Plex token.",
+    "context": "In the import wizard, under a kind of server to import from. Plex."
+  },
+  {
+    "handler": "screens.importWizard.sourceStep.theAddressValenceCanReachItOn",
+    "text": "The address Valence can reach it on, with its port. A local address is fine.",
+    "context": "Under the address field in the import wizard."
+  },
+  {
+    "handler": "screens.importWizard.sourceStep.whereIsEverythingNow",
+    "text": "Where is everything now?",
+    "context": "The heading over the choice of Jellyfin, Emby or Plex in the import wizard."
+  },
+  {
+    "handler": "screens.importWizard.sourceStep.whereToFindAJellyfinKey",
+    "text": "In Jellyfin, open Dashboard, then API Keys, and add a key called Valence. It needs no other setting.",
+    "context": "Under the API key field when Jellyfin is chosen."
+  },
+  {
+    "handler": "screens.importWizard.sourceStep.whereToFindAnEmbyKey",
+    "text": "In Emby, open Settings, then API Keys under Advanced, and add a key called Valence.",
+    "context": "Under the API key field when Emby is chosen."
+  },
+  {
+    "handler": "screens.importWizard.sourceStep.whereToFindAPlexToken",
+    "text": "Signed in to Plex as the server's owner, open any film's menu, choose Get Info, then View XML, and copy the value after X-Plex-Token= in the address.",
+    "context": "Under the token field when Plex is chosen."
+  },
+  {
+    "handler": "screens.importWizard.whatWillComeAcross",
+    "text": "What will be imported",
+    "context": "The heading of the import wizard's dry-run step."
+  },
+  {
+    "handler": "screens.importWizard.whereIsEverythingComingFrom",
+    "text": "Where is everything coming from?",
+    "context": "The heading of the import wizard's first step."
+  },
+  {
+    "handler": "screens.importWizard.whoComesAcross",
+    "text": "Who to import",
+    "context": "The heading of the import wizard's people step."
   },
   {
     "handler": "screens.indexerDialog.definitionSettingsFields.keptTypeANewOneTo",
@@ -17680,6 +19245,11 @@
     "handler": "screens.libraryBrowser.thisServerHasNoFilmsOr",
     "text": "This server has no films or programmes yet.",
     "context": "The detail of a nothing here in the library browser."
+  },
+  {
+    "handler": "screens.lifetimeChoice.linkWorksFor",
+    "text": "Link works for",
+    "context": "Heading of the choice of how many days a setup link keeps working: 1, 7 or 30."
   },
   {
     "handler": "screens.logDetailDialog.happened",
@@ -19106,6 +20676,11 @@
     "handler": "screens.pageReader.width",
     "text": "Width",
     "context": "The label in the page reader."
+  },
+  {
+    "handler": "screens.partOfCollections.partOf",
+    "text": "Part of",
+    "context": "The heading above the collections a film or programme belongs to, on its page; each collection is a button below it."
   },
   {
     "handler": "screens.partyMenu.startAWatchParty",
@@ -20735,6 +22310,26 @@
     "context": "The label in the requests panel (from `describeRequestsVpn`)."
   },
   {
+    "handler": "screens.resetPasswordPage.setThePassword",
+    "text": "Set the password",
+    "context": "The button on the page a password reset link opens."
+  },
+  {
+    "handler": "screens.resetPasswordPage.theTwoPasswordsAreNotThe",
+    "text": "The two passwords are not the same.",
+    "context": "On the page a password reset link opens."
+  },
+  {
+    "handler": "screens.resetPasswordPage.typeItAgain",
+    "text": "Type it again",
+    "context": "On the page a password reset link opens: the field that repeats the new password."
+  },
+  {
+    "handler": "screens.resetPasswordPage.yourPasswordIsChanged",
+    "text": "Your password is changed. Sign in with it now.",
+    "context": "On the page a password reset link opens, once it worked."
+  },
+  {
     "handler": "screens.rolesPanel.colorSwatchPicker.noColour",
     "text": "No colour",
     "context": "The label of a button in the color swatch picker in the roles panel."
@@ -20870,24 +22465,384 @@
     "context": "Shown in the session card (from `deviceIcon`)."
   },
   {
+    "handler": "screens.setupLinkHandover.aCodeThatOpensNamesSetupLink",
+    "text": "A code that opens {name}’s setup link",
+    "context": "Describes the scannable code of a setup link, read aloud by screen readers. {name} is the account's name."
+  },
+  {
+    "handler": "screens.setupLinkHandover.sendByEmail",
+    "text": "Send by email",
+    "context": "Emails an account its setup link, beside where the link is shown or in the account's menu."
+  },
+  {
+    "handler": "screens.setupLinkHandover.setupLinkForName",
+    "text": "Setup link for {name}",
+    "context": "Above a setup link, where it can be copied. {name} is the account's name."
+  },
+  {
+    "handler": "screens.setupLinkHandover.worksOnceUntilValenceKeepsNoCopy",
+    "text": "Works once, until {until}. Valence keeps no copy of it, so hand it over now.",
+    "context": "Beneath a setup link. {until} is the date and time it stops working."
+  },
+  {
+    "handler": "screens.setupLinkSection.aLinkToChooseANewPasswordWorksUntil",
+    "text": "A link to choose a new password or a passkey works until {until}.",
+    "context": "On the account editor's signing-in tab, for an account in use with a setup link out. {until} is when it stops working."
+  },
+  {
+    "handler": "screens.setupLinkSection.madeANewLink",
+    "text": "Made a new setup link. The old one no longer works.",
+    "context": "Said once a new setup link has been made for an account."
+  },
+  {
+    "handler": "screens.setupLinkSection.makeASetupLink",
+    "text": "Make a setup link",
+    "context": "The button on the account editor's signing-in tab that makes a setup link for an account without one."
+  },
+  {
+    "handler": "screens.setupLinkSection.newLink",
+    "text": "New link",
+    "context": "Makes a new setup link for an account, replacing the one it had, in the accounts list and the account editor."
+  },
+  {
+    "handler": "screens.setupLinkSection.revokeLink",
+    "text": "Revoke link",
+    "context": "Stops an account's setup link working, in the accounts list and the account editor."
+  },
+  {
+    "handler": "screens.setupLinkSection.revokeThisLink",
+    "text": "Revoke this setup link?",
+    "context": "Title of the question asked before stopping an account's setup link working."
+  },
+  {
+    "handler": "screens.setupLinkSection.sendThemALinkToChooseANewPassword",
+    "text": "Send them a link to choose a new password or a passkey. Every session they hold ends when they use it.",
+    "context": "On the account editor's signing-in tab, for an account in use: a setup link works as a friendlier password reset."
+  },
+  {
+    "handler": "screens.setupLinkSection.theirLinkRanOutMakeANewOne",
+    "text": "Their link ran out before they used it. Make a new one.",
+    "context": "On the account editor's signing-in tab, when the account's setup link expired unused."
+  },
+  {
+    "handler": "screens.setupLinkSection.theLinkNoLongerWorks",
+    "text": "The setup link no longer works.",
+    "context": "Said once an account's setup link has been revoked."
+  },
+  {
+    "handler": "screens.setupLinkSection.theLinkStopsWorkingAtOnce",
+    "text": "The link stops working at once. {name} can’t use it to set up until you make a new one.",
+    "context": "The question asked before stopping an account's setup link working. {name} is the account's name."
+  },
+  {
+    "handler": "screens.setupLinkSection.theyHaveNoWayToSignInYet",
+    "text": "They have no password or passkey yet. Make a setup link for them to choose one.",
+    "context": "On the account editor's signing-in tab, for an account nobody can sign in to and that has no working link."
+  },
+  {
+    "handler": "screens.setupLinkSection.valenceKeepsNoCopyMakeANewOne",
+    "text": "Valence keeps no copy of a link once it is shown. To hand it over again, make a new one.",
+    "context": "On the account editor's signing-in tab, when a link is out but was made before this page was opened."
+  },
+  {
+    "handler": "screens.setupLinkSection.waitingForNameToSetUpUntil",
+    "text": "Waiting for {name} to set up. Their link works until {until}.",
+    "context": "On the account editor's signing-in tab. {name} is the account's name and {until} when its setup link stops working."
+  },
+  {
+    "handler": "screens.setupWizard.accessStep.addAnotherAddress",
+    "text": "Add another address",
+    "context": "On the first-run setup page: the label of the field for typing another trusted address."
+  },
+  {
+    "handler": "screens.setupWizard.accessStep.createMyAccount",
+    "text": "Create my account",
+    "context": "On the first-run setup page: the button that makes the administrator account and saves the access settings."
+  },
+  {
+    "handler": "screens.setupWizard.accessStep.howValenceIsReached",
+    "text": "How Valence is reached",
+    "context": "On the first-run setup page: the heading of the step about the addresses Valence is opened on and HTTPS, and its name in the list of steps."
+  },
+  {
+    "handler": "screens.setupWizard.accessStep.originExample",
+    "text": "https://valence.example.com",
+    "context": "On the first-run setup page: an example address in the empty field for another trusted address."
+  },
+  {
+    "handler": "screens.setupWizard.accessStep.signingInHereStopsWorking",
+    "text": "With HTTPS on, signing in from this address stops working once Valence starts again. Leave it off unless Valence is behind HTTPS.",
+    "context": "On the first-run setup page: the warning shown when HTTPS is switched on but this page was opened without it."
+  },
+  {
+    "handler": "screens.setupWizard.accessStep.stopTrustingOrigin",
+    "text": "Stop trusting {origin}",
+    "context": "On the first-run setup page: the label of the button that removes a trusted address. {origin} is the address."
+  },
+  {
+    "handler": "screens.setupWizard.accessStep.suggested",
+    "text": "Suggested:",
+    "context": "On the first-run setup page: shown before addresses Valence suggests trusting, each a button that adds it."
+  },
+  {
+    "handler": "screens.setupWizard.accessStep.thisBrowser",
+    "text": "This browser",
+    "context": "On the first-run setup page: a badge on the trusted address this browser reached Valence on."
+  },
+  {
+    "handler": "screens.setupWizard.accessStep.thisBrowserReachedItOverPlainHttp",
+    "text": "This browser reached Valence over plain HTTP",
+    "context": "On the first-run setup page: a warning shown when HTTPS is switched on but this page was opened without it."
+  },
+  {
+    "handler": "screens.setupWizard.accessStep.valenceOnlyAcceptsSignInsFrom",
+    "text": "Valence only accepts sign-ins from addresses it trusts. Add every address it is opened on: its local address, a domain name, or a reverse proxy in front of it.",
+    "context": "On the first-run setup page: the explanation at the top of the access step."
+  },
+  {
+    "handler": "screens.setupWizard.accountStep.onlyForAPasswordResetLink",
+    "text": "Only used to send you a link if you forget your password.",
+    "context": "On the first-run setup page: under the optional email field of the administrator account."
+  },
+  {
+    "handler": "screens.setupWizard.accountStep.thisIsTheAdministrator",
+    "text": "This is the administrator: the one account that can change everything on this server. You can add everybody else afterwards.",
+    "context": "On the first-run setup page: the explanation at the top of the account step."
+  },
+  {
+    "handler": "screens.setupWizard.addLibrariesStep.addAnother",
+    "text": "Add another library",
+    "context": "On the first-run setup page: the button that adds a library once there is one."
+  },
+  {
+    "handler": "screens.setupWizard.addLibrariesStep.aLibraryIsAFolderOfOneKind",
+    "text": "A library is a folder of one kind of thing: films, series, music or books. Add each one and Valence starts reading it straight away.",
+    "context": "On the first-run setup page: the explanation at the top of the libraries step."
+  },
+  {
+    "handler": "screens.setupWizard.addLibrariesStep.comingFromAnotherServer",
+    "text": "Moving from Jellyfin, Emby or Plex? You can skip this: the next step makes libraries from theirs.",
+    "context": "On the first-run setup page: under the empty list of libraries."
+  },
+  {
+    "handler": "screens.setupWizard.addLibrariesStep.readingCarriesOn",
+    "text": "Reading carries on in the background while you go on.",
+    "context": "On the first-run setup page: under the libraries being scanned."
+  },
+  {
+    "handler": "screens.setupWizard.addLibrariesStep.yourLibraries",
+    "text": "Your libraries",
+    "context": "On the first-run setup page: the heading of the libraries step."
+  },
+  {
+    "handler": "screens.setupWizard.catalogueStep.aKeyIsAlreadySet",
+    "text": "A catalogue key is already set",
+    "context": "On the first-run setup page: when the server was started with a catalogue key."
+  },
+  {
+    "handler": "screens.setupWizard.catalogueStep.checkingForAKey",
+    "text": "Checking for a key",
+    "context": "On the first-run setup page: while finding out whether a catalogue key is already set."
+  },
+  {
+    "handler": "screens.setupWizard.catalogueStep.getAFreeKeyFromTmdb",
+    "text": "{link} from The Movie Database, then paste its API key above. It takes a minute.",
+    "context": "On the first-run setup page: the first instruction for getting a catalogue key. {link} is a link reading \"Get a free key\"."
+  },
+  {
+    "handler": "screens.setupWizard.catalogueStep.itCanBeChangedInSettings",
+    "text": "Titles will be looked up with it. It can be changed in Settings.",
+    "context": "On the first-run setup page: under \"A catalogue key is already set\"."
+  },
+  {
+    "handler": "screens.setupWizard.catalogueStep.saveAndContinue",
+    "text": "Save and continue",
+    "context": "On the first-run setup page: the button that saves the catalogue key and goes on."
+  },
+  {
+    "handler": "screens.setupWizard.catalogueStep.titlesAndArtwork",
+    "text": "Titles and artwork",
+    "context": "On the first-run setup page: the heading of the step that asks for a metadata catalogue key, and its name in the list of steps."
+  },
+  {
+    "handler": "screens.setupWizard.catalogueStep.valenceLooksTitlesUpInTmdb",
+    "text": "Valence looks titles, artwork, years and ratings up in The Movie Database. Without a key a library is a list of file names, so it is best added before the first one is read.",
+    "context": "On the first-run setup page: the explanation at the top of the catalogue key step."
+  },
+  {
     "handler": "screens.setupWizard.cookiesWillNotBeMarkedSecure",
     "text": "Cookies will not be marked secure, so Valence works over plain HTTP on your network.",
     "context": "Shown in the setup wizard."
   },
   {
-    "handler": "screens.setupWizard.createTheAdministratorAccountAndConfirm",
-    "text": "Create the administrator account and confirm how this server is reached.",
-    "context": "Text shown in the setup wizard."
+    "handler": "screens.setupWizard.doneStep.aCatalogueKeyIsSet",
+    "text": "A catalogue key for titles and artwork",
+    "context": "On the first-run setup page: in the summary at the end, when a metadata catalogue key is set."
   },
   {
-    "handler": "screens.setupWizard.detectedDetectedOriginAddEveryAddressYou",
-    "text": "Detected {detectedOrigin}. Add every address you use to reach Valence, separated by commas.",
-    "context": "The description of a text field in the setup wizard. {detectedOrigin} is filled in by the app."
+    "handler": "screens.setupWizard.doneStep.countTrustedAddresses.one",
+    "text": "{count} trusted address",
+    "context": "On the first-run setup page: in the summary at the end. {count} is how many addresses Valence trusts."
   },
   {
-    "handler": "screens.setupWizard.finishSetup",
-    "text": "Finish setup",
-    "context": "The label of a button in the setup wizard."
+    "handler": "screens.setupWizard.doneStep.countTrustedAddresses.other",
+    "text": "{count} trusted addresses",
+    "context": "On the first-run setup page: in the summary at the end. {count} is how many addresses Valence trusts."
+  },
+  {
+    "handler": "screens.setupWizard.doneStep.hereIsWhatWasSetUp",
+    "text": "Here is what was set up. Anything left for later is a click away in Settings.",
+    "context": "On the first-run setup page: the explanation at the top of the last step."
+  },
+  {
+    "handler": "screens.setupWizard.doneStep.importedFromYourOldServer",
+    "text": "Imported from your old server",
+    "context": "On the first-run setup page: in the summary at the end, after importing from Jellyfin, Emby or Plex."
+  },
+  {
+    "handler": "screens.setupWizard.doneStep.noCatalogueKeyYet",
+    "text": "No catalogue key yet: add one in Settings when you are ready",
+    "context": "On the first-run setup page: in the summary at the end, when the catalogue key step was skipped."
+  },
+  {
+    "handler": "screens.setupWizard.doneStep.noLibrariesYet",
+    "text": "No libraries yet: add them in Settings",
+    "context": "On the first-run setup page: in the summary at the end, when no library was added."
+  },
+  {
+    "handler": "screens.setupWizard.doneStep.openValence",
+    "text": "Open Valence",
+    "context": "On the first-run setup page: the button that finishes setup and opens the app."
+  },
+  {
+    "handler": "screens.setupWizard.doneStep.startedFresh",
+    "text": "Started fresh, with nothing imported",
+    "context": "On the first-run setup page: in the summary at the end, when nothing was imported."
+  },
+  {
+    "handler": "screens.setupWizard.doneStep.startValenceAgain",
+    "text": "Start Valence again",
+    "context": "On the first-run setup page: a warning title at the end, when the HTTPS setting needs a restart."
+  },
+  {
+    "handler": "screens.setupWizard.doneStep.theHttpsChoiceHoldsOnceItStartsAgain",
+    "text": "The HTTPS setting takes hold the next time Valence starts. Restart it once you are done here, then sign in again.",
+    "context": "On the first-run setup page: the warning at the end, when the HTTPS setting needs a restart."
+  },
+  {
+    "handler": "screens.setupWizard.doneStep.valenceIsReady",
+    "text": "Valence is ready",
+    "context": "On the first-run setup page: the heading of the last step."
+  },
+  {
+    "handler": "screens.setupWizard.doneStep.yourAccountUsername",
+    "text": "Your account, {username}",
+    "context": "On the first-run setup page: in the summary at the end. {username} is the administrator username just made."
+  },
+  {
+    "handler": "screens.setupWizard.doneStep.yourRequestingAppsAreConnected",
+    "text": "Your requesting apps are connected",
+    "context": "On the first-run setup page: in the summary at the end, after bringing Radarr, Sonarr and the like across."
+  },
+  {
+    "handler": "screens.setupWizard.householdStep.addSomebody",
+    "text": "Add somebody",
+    "context": "On the first-run setup page: the label of the field for adding a profile to the household."
+  },
+  {
+    "handler": "screens.setupWizard.householdStep.eachPersonGetsAProfile",
+    "text": "Everybody who watches on this account gets a profile of their own, with their own history and where they got to. Add them now or later.",
+    "context": "On the first-run setup page: under the heading over the household's profiles."
+  },
+  {
+    "handler": "screens.setupWizard.householdStep.readingTheHousehold",
+    "text": "Reading the household",
+    "context": "On the first-run setup page: while the household is read."
+  },
+  {
+    "handler": "screens.setupWizard.householdStep.thatPersonCouldNotBeAdded",
+    "text": "That person could not be added. Try again.",
+    "context": "On the first-run setup page: when adding a profile failed."
+  },
+  {
+    "handler": "screens.setupWizard.householdStep.theirName",
+    "text": "Their name",
+    "context": "On the first-run setup page: the placeholder in the field for adding a profile."
+  },
+  {
+    "handler": "screens.setupWizard.householdStep.whoWatchesHereHeading",
+    "text": "People on this account",
+    "context": "On the first-run setup page: the heading over the household's profiles."
+  },
+  {
+    "handler": "screens.setupWizard.importStep.chooseAgain",
+    "text": "Choose again",
+    "context": "On the first-run setup page: goes back from importing to the choice of what to bring across."
+  },
+  {
+    "handler": "screens.setupWizard.importStep.comingFromAnotherServer",
+    "text": "Coming from another server? Import its people, libraries, watching, playlists and collections, or start with nothing.",
+    "context": "On the first-run setup page: the explanation at the top of the bring-across step."
+  },
+  {
+    "handler": "screens.setupWizard.importStep.finishWithoutImporting",
+    "text": "Finish without importing",
+    "context": "On the first-run setup page: the button that leaves the import and goes on to the end of setup."
+  },
+  {
+    "handler": "screens.setupWizard.importStep.fromJellyfinEmbyOrPlex",
+    "text": "From Jellyfin, Emby or Plex",
+    "context": "On the first-run setup page: the choice, and then the heading, for importing from another media server."
+  },
+  {
+    "handler": "screens.setupWizard.importStep.nothingOnTheOldServerChanges",
+    "text": "Connect it, choose who and what to import, and follow the import as it runs. Nothing on the old server is changed.",
+    "context": "On the first-run setup page: the explanation above the import from another media server."
+  },
+  {
+    "handler": "screens.setupWizard.importStep.nothingToImport",
+    "text": "Nothing to import. It can be done later from Settings.",
+    "context": "On the first-run setup page: under the \"Start fresh\" choice."
+  },
+  {
+    "handler": "screens.setupWizard.importStep.onlyMyRequestingApps",
+    "text": "Import only my requesting apps",
+    "context": "On the first-run setup page: the choice that brings only Radarr, Sonarr and the like across."
+  },
+  {
+    "handler": "screens.setupWizard.importStep.peopleWatchingAndLibraries",
+    "text": "People, what they have watched, favourites, playlists and libraries.",
+    "context": "On the first-run setup page: under the choice to import from Jellyfin, Emby or Plex."
+  },
+  {
+    "handler": "screens.setupWizard.importStep.radarrSonarrLidarrProwlarrAndSeerr",
+    "text": "Radarr, Sonarr, Lidarr, Prowlarr, Overseerr or Jellyseerr.",
+    "context": "On the first-run setup page: what bringing the requesting apps across covers."
+  },
+  {
+    "handler": "screens.setupWizard.importStep.startFresh",
+    "text": "Start fresh",
+    "context": "On the first-run setup page: the choice, and button, that skips importing."
+  },
+  {
+    "handler": "screens.setupWizard.importStep.yourRequestingApps",
+    "text": "Your requesting apps",
+    "context": "On the first-run setup page: the heading for bringing Radarr, Sonarr and the like across."
+  },
+  {
+    "handler": "screens.setupWizard.profileStep.howYouAppearHere",
+    "text": "How you appear to everybody here, and how Valence looks and moves for you. The same settings live in your account afterwards.",
+    "context": "On the first-run setup page: the explanation at the top of the profile step."
+  },
+  {
+    "handler": "screens.setupWizard.profileStep.readingYourProfile",
+    "text": "Reading your profile",
+    "context": "On the first-run setup page: while the profile is read."
+  },
+  {
+    "handler": "screens.setupWizard.profileStep.yourProfile",
+    "text": "Your profile",
+    "context": "On the first-run setup page: the heading of the step that edits the administrator's own profile, and its name in the list of steps."
   },
   {
     "handler": "screens.setupWizard.secureCookiesWillBeUsedLogin",
@@ -20905,9 +22860,69 @@
     "context": "A heading in the setup wizard."
   },
   {
-    "handler": "screens.setupWizard.thisServerHasAlreadyBeenSet",
-    "text": "This server has already been set up. Reload the page to sign in.",
-    "context": "Shown in the setup wizard."
+    "handler": "screens.setupWizard.skipForNow",
+    "text": "Skip for now",
+    "context": "On the first-run setup page: the button that leaves an optional step for later."
+  },
+  {
+    "handler": "screens.setupWizard.steps.addressesAndHttps",
+    "text": "Addresses and HTTPS",
+    "context": "On the first-run setup page: the line under the access step in the list of steps."
+  },
+  {
+    "handler": "screens.setupWizard.steps.aFreeCatalogueKey",
+    "text": "A free catalogue key",
+    "context": "On the first-run setup page: the line under the catalogue step in the list of steps."
+  },
+  {
+    "handler": "screens.setupWizard.steps.howYouAppear",
+    "text": "How you appear",
+    "context": "On the first-run setup page: the line under the profile step in the list of steps."
+  },
+  {
+    "handler": "screens.setupWizard.steps.ifYouAreMovingIn",
+    "text": "If you are moving in",
+    "context": "On the first-run setup page: the line under the bring-across step in the list of steps."
+  },
+  {
+    "handler": "screens.setupWizard.steps.importFromAnotherServer",
+    "text": "Import from another server",
+    "context": "On the first-run setup page: the heading of the optional import step, and its name in the list of steps."
+  },
+  {
+    "handler": "screens.setupWizard.steps.intoValence",
+    "text": "Into Valence",
+    "context": "On the first-run setup page: the line under the last step in the list of steps."
+  },
+  {
+    "handler": "screens.setupWizard.steps.theAdministrator",
+    "text": "The administrator",
+    "context": "On the first-run setup page: the line under the account step in the list of steps."
+  },
+  {
+    "handler": "screens.setupWizard.steps.welcome",
+    "text": "Welcome",
+    "context": "On the first-run setup page: the name of the first step in the list of steps."
+  },
+  {
+    "handler": "screens.setupWizard.steps.whatSetupDoes",
+    "text": "What setup does",
+    "context": "On the first-run setup page: the line under the first step in the list of steps."
+  },
+  {
+    "handler": "screens.setupWizard.steps.whereYourMediaIs",
+    "text": "Where your media is",
+    "context": "On the first-run setup page: the line under the libraries step in the list of steps."
+  },
+  {
+    "handler": "screens.setupWizard.steps.whoWatchesHere",
+    "text": "Who watches here",
+    "context": "On the first-run setup page: the line under the household step in the list of steps."
+  },
+  {
+    "handler": "screens.setupWizard.steps.yourHousehold",
+    "text": "Your household",
+    "context": "On the first-run setup page: the name of the household step in the list of steps."
   },
   {
     "handler": "screens.setupWizard.thisServerIsReachedOverHTTPS",
@@ -20943,6 +22958,16 @@
     "handler": "screens.setupWizard.validateSetupForm.useAtLeastMINIMUMPASSWORDLENGTH",
     "text": "Use at least {MINIMUM_PASSWORD_LENGTH} characters.",
     "context": "Shown in the setup wizard (from `validateSetupForm`). {MINIMUM_PASSWORD_LENGTH} is filled in by the app."
+  },
+  {
+    "handler": "screens.setupWizard.welcomeStep.makeYourAccount",
+    "text": "Make your account",
+    "context": "On the first-run setup page: the button on the first step that goes on to making the administrator account."
+  },
+  {
+    "handler": "screens.setupWizard.welcomeStep.nobodyHasAnAccountHereYet",
+    "text": "Nobody has an account on this server yet. Make yours, say where Valence is reached and where your media is, and import everything from Jellyfin, Emby or Plex if you are moving. All of it can be changed later.",
+    "context": "On the first-run setup page: under the heading of the first step."
   },
   {
     "handler": "screens.shareArea.askWhoeverSentItForA",
@@ -21288,6 +23313,21 @@
     "handler": "screens.twoFactorSetup.twoFactorSetupQRCode",
     "text": "Two-factor setup QR code",
     "context": "The label of a qr code in the two factor setup."
+  },
+  {
+    "handler": "screens.usernameField.lettersDigitsDotsAndUnderscores",
+    "text": "{least} to {most} letters, digits, dots and underscores.",
+    "context": "The rule for a username, beneath the username field. {least} and {most} are the shortest and longest it may be."
+  },
+  {
+    "handler": "screens.usernameField.thatUsernameIsFree",
+    "text": "That username is free.",
+    "context": "Beneath the username field once the server says nobody else holds it."
+  },
+  {
+    "handler": "screens.usernameField.usernameOptional",
+    "text": "Username (optional)",
+    "context": "The label of the username field when adding an account, where one is made up if it is left empty."
   },
   {
     "handler": "screens.videoPlayer.bringItBack",
@@ -21740,6 +23780,71 @@
     "context": "The label of a segmented row in the webhook filter list in the webhooks panel. {title} is filled in by the app."
   },
   {
+    "handler": "screens.welcomePage.anAddressLetsYouResetYourPassword",
+    "text": "With an address, you can reset your password yourself if you forget it.",
+    "context": "Beneath the optional email field on the account setup page."
+  },
+  {
+    "handler": "screens.welcomePage.chooseANewPasswordOrAPasskey",
+    "text": "Choose a new password, or make a passkey. Every other device you were signed in on is signed out.",
+    "context": "On the setup page a setup link opens, for an account already in use: the link works as a password reset."
+  },
+  {
+    "handler": "screens.welcomePage.chooseHowYouSignIn",
+    "text": "You have an account on {server}. Choose how you sign in.",
+    "context": "On the account setup page a setup link opens. {server} is what this Valence is called."
+  },
+  {
+    "handler": "screens.welcomePage.readingYourLink",
+    "text": "Reading your setup link",
+    "context": "Read aloud while the account setup page loads."
+  },
+  {
+    "handler": "screens.welcomePage.tryThePasskeyAgain",
+    "text": "Try the passkey again",
+    "context": "Button on the account setup page after making a passkey failed."
+  },
+  {
+    "handler": "screens.welcomePage.useAPasswordInstead",
+    "text": "Use a password instead",
+    "context": "On the account setup page, switches back from making a passkey to choosing a password."
+  },
+  {
+    "handler": "screens.welcomePage.useThisPasswordInstead",
+    "text": "Use this password instead",
+    "context": "Button on the account setup page that sets a password after making a passkey failed."
+  },
+  {
+    "handler": "screens.welcomePage.yourAccountIsSetUpTryThePasskeyAgain",
+    "text": "Your account is set up and you’re signed in. Try the passkey again, or choose a password to sign in with instead.",
+    "context": "On the account setup page when making a passkey failed: the account is set up, but has nothing to sign in with yet."
+  },
+  {
+    "handler": "screens.welcomePage.yourDeviceWillAskToMakeAPasskey",
+    "text": "When you finish, your device asks to make a passkey for this account.",
+    "context": "On the account setup page once somebody chose a passkey rather than a password."
+  },
+  {
+    "handler": "screens.welcomePage.yourPasskeyWasNotMade",
+    "text": "Your passkey wasn’t made",
+    "context": "Title on the account setup page when making a passkey was cancelled or failed after the account was set up."
+  },
+  {
+    "handler": "screens.welcomePage.yourPasswordIsSetSignInWithIt",
+    "text": "Your password is set. Sign in with it, and the code from your authenticator app.",
+    "context": "On the account setup page, once an account with two-step sign-in has its new password: it is not signed in by the link."
+  },
+  {
+    "handler": "screens.welcomePage.yourUsernameIsUsername",
+    "text": "Your username is {username}.",
+    "context": "On the account setup page for an account already in use, whose username stays as it is. {username} is the username."
+  },
+  {
+    "handler": "screens.welcomePage.youSignInWithThisOrYourEmail",
+    "text": "You sign in with this, or with your email address if you give one.",
+    "context": "Beneath the username field on the account setup page."
+  },
+  {
     "handler": "screens.welcomeTour.skipTour",
     "text": "Skip tour",
     "context": "The label in the welcome tour."
@@ -21883,6 +23988,11 @@
     "handler": "server.arrEmulation.whateverTheLibraryUses",
     "text": "Whatever the library uses",
     "context": "The first quality profile Valence offers Overseerr or Jellyseerr, which leaves the choice to the library a request is filed into (from `LIBRARY_DEFAULT_PROFILE`)."
+  },
+  {
+    "handler": "server.arrImport.libraryCouldNotBeChanged",
+    "text": "{library} could not be changed to hand its requests over as chosen.",
+    "context": "Shown after bringing in a Radarr/Sonarr/Lidarr setup (from `serveArrImport`). {library} is a Valence library."
   },
   {
     "handler": "server.auth.describeSignInAttempt.somebodyWhoGaveNoAddress",
@@ -22030,6 +24140,101 @@
     "context": "The name in the downloads on the server (from `keepingProfile`)."
   },
   {
+    "handler": "server.email.composeLinkEmail.chooseANewPassword",
+    "text": "Choose a new password",
+    "context": "In an email Valence sends with a password reset link: the button."
+  },
+  {
+    "handler": "server.email.composeLinkEmail.helloName",
+    "text": "Hello {name},",
+    "context": "In an email Valence sends: the greeting. {name} is the account's name."
+  },
+  {
+    "handler": "server.email.composeLinkEmail.ifYouDidNotAsk",
+    "text": "If you did not ask for this, ignore this email. Your password stays as it is.",
+    "context": "In an email Valence sends with a password reset link."
+  },
+  {
+    "handler": "server.email.composeLinkEmail.resetYourPasswordOn",
+    "text": "Reset your password on {server}",
+    "context": "In an email Valence sends: the subject. {server} is the server's name or address."
+  },
+  {
+    "handler": "server.email.composeLinkEmail.serverMadeYouAnAccount",
+    "text": "{server} has made you an account on Valence. Open the link to choose your password and sign in.",
+    "context": "In an email Valence sends with a setup link. {server} is the server's name or address."
+  },
+  {
+    "handler": "server.email.composeLinkEmail.setUpYourAccount",
+    "text": "Set up your account",
+    "context": "In an email Valence sends with a setup link: the button."
+  },
+  {
+    "handler": "server.email.composeLinkEmail.somebodyAskedToReset",
+    "text": "Somebody asked to reset the password of your account on {server}. Open the link to choose a new one.",
+    "context": "In an email Valence sends with a password reset link. {server} is the server's name or address."
+  },
+  {
+    "handler": "server.email.composeLinkEmail.theLinkWorksOnceUntil",
+    "text": "The link works once, until {expiresAt}.",
+    "context": "In an email Valence sends with a link. {expiresAt} is a date and time."
+  },
+  {
+    "handler": "server.email.composeLinkEmail.welcomeName",
+    "text": "Welcome, {name}",
+    "context": "In an email Valence sends with a setup link: the heading. {name} is the new account's name."
+  },
+  {
+    "handler": "server.email.composeLinkEmail.yourAccountOn",
+    "text": "Your account on {server}",
+    "context": "In an email Valence sends with a setup link: the subject. {server} is the server's name or address."
+  },
+  {
+    "handler": "server.email.composeTestEmail.emailFromValenceWorks",
+    "text": "Email from Valence works",
+    "context": "In an email Valence sends to test it: the subject and heading."
+  },
+  {
+    "handler": "server.email.composeTestEmail.thisIsTheTest",
+    "text": "This is the test sent from Settings on {server}. If you can read it, Valence can send email.",
+    "context": "In an email Valence sends to test it. {server} is the server's name or address."
+  },
+  {
+    "handler": "server.email.createEmailService.thereIsNoMailServer",
+    "text": "There is no mail server or sending address set up yet.",
+    "context": "Why an email could not be sent, shown to an administrator."
+  },
+  {
+    "handler": "server.email.describeSendFailure.couldNotReachTheMailServer",
+    "text": "Valence could not reach the mail server at {host}. Check its address, port and encryption.",
+    "context": "Why an email could not be sent, shown to an administrator. {host} is the mail server's host name."
+  },
+  {
+    "handler": "server.email.describeSendFailure.theEmailCouldNotBeSent",
+    "text": "The mail server did not take the email.",
+    "context": "Why an email could not be sent, shown to an administrator, when the mail server gave no reason."
+  },
+  {
+    "handler": "server.email.describeSendFailure.theMailServerAnswered",
+    "text": "The mail server refused the email: {answer}",
+    "context": "Why an email could not be sent, shown to an administrator. {answer} is the mail server's own reply."
+  },
+  {
+    "handler": "server.email.describeSendFailure.theMailServerRefusedTheSignIn",
+    "text": "The mail server at {host} refused the username or password.",
+    "context": "Why an email could not be sent, shown to an administrator. {host} is the mail server's host name."
+  },
+  {
+    "handler": "server.email.renderEmail.ifTheButtonDoesNotWork",
+    "text": "If the button does not work, copy this address into your browser:",
+    "context": "In an email Valence sends, above the link written out in full."
+  },
+  {
+    "handler": "server.email.renderEmail.sentByValenceAt",
+    "text": "Sent by Valence at {server}.",
+    "context": "In an email Valence sends: the last line. {server} is the server's name or address."
+  },
+  {
     "handler": "server.events.webhookEventBus.anEventCouldNotBePublished",
     "text": "An event could not be published.",
     "context": "Shown in the events on the server (from `createWebhookEventBus`)."
@@ -22055,9 +24260,234 @@
     "context": "Shown in the images on the server (from `createImageCache`). {megabytes} is filled in by the app."
   },
   {
+    "handler": "server.imports.bringPersonAcross.accountsCannotBeMadeHere",
+    "text": "This server cannot make accounts, so they were not imported.",
+    "context": "A problem recorded against an import job when the account maker is unavailable (from `bringPersonAcross`)."
+  },
+  {
+    "handler": "server.imports.bringPersonAcross.disabledOnSource",
+    "text": "Disabled on {source} before it was imported.",
+    "context": "The reason stored on an imported account that was disabled on the old server, shown to administrators. {source} is the old server's name."
+  },
+  {
+    "handler": "server.imports.bringPersonAcross.theirAccountCouldNotBeMade",
+    "text": "Their account could not be made.",
+    "context": "A problem recorded against an import job for one person (from `bringPersonAcross`)."
+  },
+  {
+    "handler": "server.imports.bringPersonAcross.theirPictureCouldNotBeKept",
+    "text": "Their picture could not be kept, so they have their initial instead.",
+    "context": "A problem recorded against an import job when a person's avatar from the old server was refused (from `bringPersonAcross`)."
+  },
+  {
+    "handler": "server.imports.importService.somethingWentWrongReadingTheSource",
+    "text": "Something went wrong reading the other server. Check its address and key, then try again.",
+    "context": "Why an import could not go on, when the failure was not one Valence recognised (from `createImportService`)."
+  },
+  {
+    "handler": "server.imports.importService.thatLibraryIsNotInValence",
+    "text": "That library is not in Valence. Choose another.",
+    "context": "An error when a folder of the old server is put into a library that no longer exists."
+  },
+  {
+    "handler": "server.imports.importService.valenceCannotSeeAFolderAtPath",
+    "text": "Valence cannot see a folder at {path}. Check the folder is mounted into Valence, or change where it maps to.",
+    "context": "Why a library could not be made during an import. {path} is the folder as Valence sees it."
+  },
+  {
+    "handler": "server.imports.matchSourceItem.moreThanOneMatches",
+    "text": "More than one thing in Valence has this title, so it was left alone rather than guessed.",
+    "context": "Why an item from the old server was not matched, in the import's dry-run report (from `matchSourceItem`)."
+  },
+  {
+    "handler": "server.imports.matchSourceItem.nothingMatches",
+    "text": "Nothing in Valence has the same catalogue id, file or title. Scan its library, then plan again.",
+    "context": "Why an item from the old server was not matched, in the import's dry-run report (from `matchSourceItem`)."
+  },
+  {
+    "handler": "server.imports.matchSourceItem.valenceKeepsNothingLikeIt",
+    "text": "Valence keeps nothing like this.",
+    "context": "Why an item from the old server was not matched, in the import's dry-run report (from `matchSourceItem`)."
+  },
+  {
+    "handler": "server.imports.mediaBrowserReader.thereIsNobodyOnIt",
+    "text": "The other server has no accounts to read with.",
+    "context": "Why a Jellyfin or Emby server could not be read during an import (from `createMediaBrowserReader`)."
+  },
+  {
+    "handler": "server.imports.mediaBrowserReader.thisLooksLikeEmby",
+    "text": "This looks like an Emby server. Choose Emby instead.",
+    "context": "Shown when somebody chose Jellyfin but the address answers as Emby (from `createMediaBrowserReader`)."
+  },
+  {
+    "handler": "server.imports.mediaBrowserReader.thisLooksLikeJellyfin",
+    "text": "This looks like a Jellyfin server. Choose Jellyfin instead.",
+    "context": "Shown when somebody chose Emby but the address answers as Jellyfin (from `createMediaBrowserReader`)."
+  },
+  {
+    "handler": "server.imports.planImport.collectionsAreOff",
+    "text": "Collections cannot be built on this server, so they stay behind.",
+    "context": "In the import's dry-run report, under what is not brought across (from `planImport`)."
+  },
+  {
+    "handler": "server.imports.planImport.favouriteProgrammesStayBehind.one",
+    "text": "{count} favourite programme stays behind, because Valence keeps favourites for each film, episode and song.",
+    "context": "In the import's dry-run report, under what is not brought across. {count} is how many."
+  },
+  {
+    "handler": "server.imports.planImport.favouriteProgrammesStayBehind.other",
+    "text": "{count} favourite programmes stay behind, because Valence keeps favourites for each film, episode and song.",
+    "context": "In the import's dry-run report, under what is not brought across. {count} is how many."
+  },
+  {
+    "handler": "server.imports.planImport.languagePreferencesStayBehind",
+    "text": "Subtitle and audio language choices stay behind, because Valence keeps them on each device.",
+    "context": "In the import's dry-run report, under what is not brought across (from `planImport`)."
+  },
+  {
+    "handler": "server.imports.planImport.likesStayBehind",
+    "text": "Likes and dislikes stay behind. Ratings come across as stars.",
+    "context": "In the import's dry-run report for Jellyfin or Emby, under what is not brought across (from `planImport`)."
+  },
+  {
+    "handler": "server.imports.planImport.passwordsStayBehind",
+    "text": "Passwords cannot be copied, so each new account signs in the first time with a setup link.",
+    "context": "In the import's dry-run report, under what is not brought across (from `planImport`)."
+  },
+  {
+    "handler": "server.imports.planImport.playCountsAreSpreadOnSource",
+    "text": "{source} keeps only how often something was played and when last, so earlier plays are dated evenly back to when it arrived.",
+    "context": "In the import's dry-run report for Jellyfin or Emby. {source} is the old server's name."
+  },
+  {
+    "handler": "server.imports.planImport.plexWatchlistsStayBehind",
+    "text": "Plex watchlists live on plex.tv rather than on the server, so they stay behind.",
+    "context": "In the import's dry-run report for Plex, under what is not brought across (from `planImport`)."
+  },
+  {
+    "handler": "server.imports.progress.bringingEachPersonsWatchingAcross",
+    "text": "Importing each person's watching",
+    "context": "The phase an import job is in, shown with its progress."
+  },
+  {
+    "handler": "server.imports.progress.bringingIntroAndCreditsMarkersAcross",
+    "text": "Importing intro and credits markers",
+    "context": "The phase an import job is in, shown with its progress."
+  },
+  {
+    "handler": "server.imports.progress.bringingTheAccountsAcross",
+    "text": "Importing the accounts",
+    "context": "The phase an import job is in, shown with its progress."
+  },
+  {
+    "handler": "server.imports.progress.bringingThePlaylistsAcross",
+    "text": "Importing the playlists",
+    "context": "The phase an import job is in, shown with its progress."
+  },
+  {
+    "handler": "server.imports.progress.buildingTheCollections",
+    "text": "Building the collections",
+    "context": "The phase an import job is in, shown with its progress."
+  },
+  {
+    "handler": "server.imports.progress.matchingWhatIsOnSource",
+    "text": "Matching what is on {source}",
+    "context": "The phase an import job is in, shown with its progress. {source} is the old server's name."
+  },
+  {
+    "handler": "server.imports.progress.readingCollectionsAndPlaylists",
+    "text": "Reading collections and playlists",
+    "context": "The phase an import's dry run is in, shown with its progress."
+  },
+  {
+    "handler": "server.imports.progress.readingTheLibrariesOnSource",
+    "text": "Reading the libraries on {source}",
+    "context": "The phase an import's dry run is in, shown with its progress. {source} is the old server's name."
+  },
+  {
+    "handler": "server.imports.progress.readingWhatEachPersonWatched",
+    "text": "Reading what each person watched",
+    "context": "The phase an import's dry run is in, shown with its progress."
+  },
+  {
+    "handler": "server.imports.progress.settingWhatEachPersonMaySee",
+    "text": "Setting what each person may see",
+    "context": "The phase an import job is in, shown with its progress."
+  },
+  {
+    "handler": "server.imports.resolvePlexHomeToken.plexDidNotLetValenceIn",
+    "text": "Plex did not let Valence in as them.",
+    "context": "Why a Plex Home member's watching cannot be read (from `resolvePlexHomeToken`)."
+  },
+  {
+    "handler": "server.imports.resolvePlexHomeToken.thatPinWasNotRight",
+    "text": "That PIN was not right.",
+    "context": "Shown when the PIN typed for a Plex Home member was refused by plex.tv."
+  },
+  {
+    "handler": "server.imports.resolvePlexHomeToken.thisServerIsNotSharedWithThem",
+    "text": "This Plex server is not shared with them.",
+    "context": "Why a Plex Home member's watching cannot be read (from `resolvePlexHomeToken`)."
+  },
+  {
+    "handler": "server.imports.runImport.itsMarkersCouldNotBeRead",
+    "text": "Its intro and credits markers could not be read.",
+    "context": "A problem recorded against an import job for one item (from `runImport`)."
+  },
+  {
+    "handler": "server.imports.runImport.thePlaylistCouldNotBeMade",
+    "text": "The playlist could not be made.",
+    "context": "A problem recorded against an import job for one playlist (from `runImport`)."
+  },
+  {
+    "handler": "server.imports.skipReasonOf.theirPinWasNotGiven",
+    "text": "Their Plex PIN was not given, so they were left out.",
+    "context": "Why a person is left out of an import, in its dry-run report."
+  },
+  {
+    "handler": "server.imports.skipReasonOf.youLeftThemOut",
+    "text": "You chose to leave them out.",
+    "context": "Why a person is left out of an import, in its dry-run report."
+  },
+  {
+    "handler": "server.imports.sourceCaller.nameAnsweredPathInAShapeValenceCannotRead",
+    "text": "{name} answered {path} in a shape Valence cannot read.",
+    "context": "Why an import could not read the old server. {name} is Jellyfin, Emby, Plex or plex.tv; {path} the address asked."
+  },
+  {
+    "handler": "server.imports.sourceCaller.nameAnsweredStatusAtPath",
+    "text": "{name} answered {status} at {path}.",
+    "context": "Why an import could not read the old server. {name} is Jellyfin, Emby, Plex or plex.tv; {status} an HTTP status; {path} the address asked."
+  },
+  {
+    "handler": "server.imports.sourceCaller.nameCouldNotBeReached",
+    "text": "{name} could not be reached. Check the address, and that Valence can reach it on your network.",
+    "context": "Why an import could not read the old server. {name} is Jellyfin, Emby, Plex or plex.tv."
+  },
+  {
+    "handler": "server.imports.sourceCaller.nameDidNotAnswerInTime",
+    "text": "{name} did not answer in time.",
+    "context": "Why an import could not read the old server. {name} is Jellyfin, Emby, Plex or plex.tv."
+  },
+  {
+    "handler": "server.imports.sourceCaller.nameRefusedTheKey",
+    "text": "{name} refused the key. Check you copied all of it.",
+    "context": "Why an import could not read the old server. {name} is Jellyfin, Emby, Plex or plex.tv."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.bringEverythingAcross",
+    "text": "Import from Jellyfin, Emby or Plex",
+    "context": "The label of the import job in the jobs list on the server."
+  },
+  {
     "handler": "server.jobs.jobDefinitions.bringRequestsUpToDateWith",
     "text": "Bring requests up to date with the catalogue",
     "context": "The label in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.bringsPeopleWatchingAndLibrariesAcross",
+    "text": "Imports people, their watching, collections and playlists from Jellyfin, Emby or Plex.",
+    "context": "The description of the import job in the jobs list on the server."
   },
   {
     "handler": "server.jobs.jobDefinitions.checkCatalogueConnectivity",
@@ -22215,6 +24645,11 @@
     "context": "The description in the jobs on the server (from `jobDefinitions`)."
   },
   {
+    "handler": "server.jobs.jobDefinitions.planAnImport",
+    "text": "Plan an import",
+    "context": "The label of the import's dry-run job in the jobs list on the server."
+  },
+  {
     "handler": "server.jobs.jobDefinitions.preTranscodeTheLibraries",
     "text": "Pre-transcode the libraries",
     "context": "The name of a background job on the jobs page. It makes, a film at a time, a smaller copy of each film and episode that modest devices can play without the server converting it."
@@ -22243,6 +24678,11 @@
     "handler": "server.jobs.jobDefinitions.pruneOldWebhookDeliveries",
     "text": "Prune old webhook deliveries",
     "context": "The label in the jobs on the server (from `jobDefinitions`)."
+  },
+  {
+    "handler": "server.jobs.jobDefinitions.readsJellyfinEmbyOrPlexWithoutWriting",
+    "text": "Reads Jellyfin, Emby or Plex and reports what an import would bring, writing nothing.",
+    "context": "The description of the import's dry-run job in the jobs list on the server."
   },
   {
     "handler": "server.jobs.jobDefinitions.rendersPreviewClipsForItemsWithout",

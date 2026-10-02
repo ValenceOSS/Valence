@@ -48,15 +48,17 @@ Give people the least they need. The Member role, which is what everybody gets b
 
 Accounts and sessions are handled by [better-auth](https://www.better-auth.com). The relevant properties are:
 
-| Property           | Value                                                                                           |
-| :----------------- | :---------------------------------------------------------------------------------------------- |
-| Sign-in            | Email and password, with a minimum password length of 10, plus optional two-factor and passkeys |
-| Session lifetime   | 30 days, refreshed once a day of use                                                            |
-| Cookie attributes  | `httpOnly`, `SameSite=Lax`, and `Secure` when `COOKIE_SECURE` is true                           |
-| Sealing            | Cookies are sealed with `BETTER_AUTH_SECRET`                                                    |
-| Origin check       | Sign-in and sign-out require an `Origin` header that matches a trusted origin                   |
-| Cross-origin reads | Only from trusted origins, with credentials allowed, and never from a wildcard                  |
-| Response headers   | `Referrer-Policy: no-referrer` and `X-Robots-Tag: noindex, nofollow` on every response          |
+| Property           | Value                                                                                                                                                                                                                                         |
+| :----------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sign-in            | A username or an email address and a password, with a minimum password length of 10, plus optional two-factor and passkeys                                                                                                                    |
+| Password resets    | One hour, used once; asked for at most once a minute per account, emailed only when [email](/use/email) is on, and always written to the server log                                                                                           |
+| Setup links        | A 256-bit random token, stored only as its SHA-256; works once, for 1, 7 or 30 days as the administrator chooses; revoked by a new one. An account without an address holds a placeholder that is never shown, emailed or accepted at sign-in |
+| Session lifetime   | 30 days, refreshed once a day of use                                                                                                                                                                                                          |
+| Cookie attributes  | `httpOnly`, `SameSite=Lax`, and `Secure` when `COOKIE_SECURE` is true                                                                                                                                                                         |
+| Sealing            | Cookies are sealed with `BETTER_AUTH_SECRET`                                                                                                                                                                                                  |
+| Origin check       | Sign-in and sign-out require an `Origin` header that matches a trusted origin                                                                                                                                                                 |
+| Cross-origin reads | Only from trusted origins, with credentials allowed, and never from a wildcard                                                                                                                                                                |
+| Response headers   | `Referrer-Policy: no-referrer` and `X-Robots-Tag: noindex, nofollow` on every response                                                                                                                                                        |
 
 Set `COOKIE_SECURE=true` whenever the instance is reached over HTTPS, which is the recommended state and the default in the compose file. Secure cookies are never sent over plain HTTP, so on a plain HTTP test system it must be `false`, or sign-in appears to work and then does not hold.
 

@@ -1,0 +1,21 @@
+{
+  "Items": [
+    {
+      "Name": "The Detail",
+      "Id": "item-wire-102",
+      "Type": "Episode",
+      "UserData": {
+        "PlaybackPositionTicks": 12000000000,
+        "PlayedPercentage": 33.3,
+        "PlayCount": 0,
+        "IsFavorite": false,
+        "Played": false,
+        "LastPlayedDate": "2026-04-02T20:30:00.0000000Z",
+        "Key": "k",
+        "ItemId": "item-wire-102"
+      }
+    }
+  ],
+  "TotalRecordCount": 1,
+  "StartIndex": 0
+}

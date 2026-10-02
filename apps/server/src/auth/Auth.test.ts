@@ -116,6 +116,32 @@ describe('createAuth', () => {
     expect(response.status).toBe(200);
   });
 
+  it('signs an existing user in by username, whatever case it is typed in', async () => {
+    const { auth } = createMemoryAuth();
+    await auth.handler(post('/api/auth/sign-up/email', { ...credentials, username: 'Viewer' }));
+
+    const response = await auth.handler(
+      post('/api/auth/sign-in/username', { username: 'VIEWER', password: credentials.password }),
+    );
+
+    expect(response.status).toBe(200);
+  });
+
+  it('refuses a username somebody already holds', async () => {
+    const { auth } = createMemoryAuth();
+    await auth.handler(post('/api/auth/sign-up/email', { ...credentials, username: 'viewer' }));
+
+    const response = await auth.handler(
+      post('/api/auth/sign-up/email', {
+        ...credentials,
+        email: 'another@valence.test',
+        username: 'viewer',
+      }),
+    );
+
+    expect(response.status).toBeGreaterThanOrEqual(400);
+  });
+
   it('rejects a wrong password', async () => {
     const { auth } = createMemoryAuth();
     await auth.handler(post('/api/auth/sign-up/email', credentials));

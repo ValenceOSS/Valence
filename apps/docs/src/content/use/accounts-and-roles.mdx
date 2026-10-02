@@ -4,7 +4,7 @@ description: Add people to your server, give them roles, limit what they can see
 order: 4
 ---
 
-Valence separates three things that are easy to blur together. An **account** is a sign-in: an address and a password (or a passkey). A **profile** is a face on the couch: a name, a picture and its own watch history. A **role** is a named bundle of permissions that decides what an account may do on the server. One account can carry several profiles, and one account can hold several roles.
+Valence separates three things that are easy to blur together. An **account** is a sign-in: a username or an email address, and a password (or a passkey). A **profile** is a face on the couch: a name, a picture and its own watch history. A **role** is a named bundle of permissions that decides what an account may do on the server. One account can carry several profiles, and one account can hold several roles.
 
 This page covers the People section of the admin area, and the account settings every signed-in person gets for themselves. If you have not created your first administrator yet, start with [First run](/use/first-run).
 
@@ -12,10 +12,10 @@ This page covers the People section of the admin area, and the account settings 
 
 Open the admin area from the account menu. Under the **People** heading there are two panels.
 
-| Panel    | What it is for                                                                                                                           |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Accounts | Adding, editing, banning and deleting accounts; resetting passwords; ending sessions; choosing roles and library access for each person. |
-| Roles    | Creating roles, choosing the permissions each one grants, and seeing who holds it.                                                       |
+| Panel    | What it is for                                                                                                                                      |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Accounts | Adding people, handing out setup links, editing, banning and deleting accounts; ending sessions; choosing roles and library access for each person. |
+| Roles    | Creating roles, choosing the permissions each one grants, and seeing who holds it.                                                                  |
 
 Everything on these panels is gated by a permission, so somebody with a narrower role sees fewer panels. The permissions involved are listed later on this page.
 
@@ -23,37 +23,57 @@ Everything on these panels is gated by a permission, so somebody with a narrower
 
 ## Accounts
 
+### Usernames
+
+Every account has a **username**, and people sign in with it or with their email address, whichever they type. An email address is optional: an account can have a username and nothing else.
+
+A username is 3 to 30 letters, digits, dots and underscores, and no two accounts share one, whatever the case. When you add somebody without choosing one, Valence makes one from their address or their name, and they may change it when they set their account up. Accounts made before usernames existed were given one the same way, the first time the server started, so everybody can sign in with one.
+
 ### Adding a person
 
-Valence cannot send email, so there is no emailed invitation. You add a person and hand them a password yourself.
+You need no more than a name. Anything else you leave out, the person chooses for themselves.
 
-1. Open **Accounts** and choose **Add user**.
-2. Enter a **Name**, an **Address** (their email address, which is what they sign in with) and a **Password**.
-3. Confirm. The new account appears in the list.
-4. Tell the person the password. They can change it afterwards in their own account settings.
+1. Open **Accounts** and choose **Add account**.
+2. Enter a **Name**. A **Username** and an **Email** are optional; the username is checked as you type.
+3. Under **How they sign in**, choose **Send them a setup link** and how long it works for: **1 day**, **7 days** or **30 days**. Or choose **Give them a password** and type one, at least ten characters.
+4. Choose **Add**.
+
+With a setup link, Valence shows the link and a code to scan with a phone. **Copy link** copies it, and **Send by email** emails it when [email](/use/email) is set up to send setup links and the account has an address. Hand it over however suits you. Choose **Edit account** to go straight on to roles and libraries.
 
 A new account is given the default role, **Member**, so it can watch, share and request. If you would rather somebody start narrower, give them the **Restricted** role instead and remove Member (see [Roles](#roles)).
 
-<Callout title="Use a long password" tone="quiet">
-  Sign-up requires at least ten characters. Use the same length when you set a password for somebody
-  else, and ask them to change it the first time they sign in.
+### Setup links
+
+A setup link is the way into an account nobody has set up yet. Whoever opens it is welcomed by name and asked for what was left blank: a username (filled in with the one Valence chose), an email address if the account has none, and a password, or a passkey on a device that can make one. **Finish** signs them in.
+
+- **Until it is used, nobody can sign in to the account.** It has no password and no passkey, and the placeholder Valence keeps behind an account without an address is never shown, emailed or accepted at sign-in.
+- **It works once**, and stops working when it runs out, when you revoke it, or when you make a new one.
+- **Valence keeps no copy of it**, only a fingerprint, so it is shown once, when it is made. The Accounts page keeps the links you make while it is open, under **Copy link**. After that, **New link** makes another and the old one stops working.
+- The Accounts list says where each account stands: **Waiting for setup** with how long its link has left, **Link expired** when it ran out unused, and **Can't sign in yet** for an account with no password, no passkey and no working link. The filter above the list shows just those accounts.
+
+A setup link also works for an account already in use, as a friendlier password reset: choose **Send a setup link** from its actions menu, or **Make a setup link** on its **Signing in** tab. The person keeps their username and address, chooses a new password or makes a passkey, and every session the account held ends. You never learn the password. An account with two-step sign in is not signed in by the link; its owner signs in as usual with the new password and their code.
+
+<Callout title="Prefer a link to a password" tone="quiet">
+  A setup link means you never know the password, and a link that leaks after it has been used is
+  worthless. If you do hand out a password, it must be at least ten characters; ask the person to
+  change it the first time they sign in.
 </Callout>
 
 ### Editing an account
 
-Choose the actions menu on a row, then **Edit account**. The editor has five tabs. Changes to the name, picture, roles and libraries apply when you save. Resetting a password and ending sessions happen at once.
+Choose a name in the list, or the actions menu on a row and then **Edit account**. The editor has five tabs. Changes to the name, username, address, picture, roles and libraries apply when you save. Everything on the Signing in tab happens at once.
 
-| Tab       | What you can do                                                                                      |
-| --------- | ---------------------------------------------------------------------------------------------------- |
-| Display   | Change the name and address, and set the account's picture.                                          |
-| Security  | Reset the password, or sign the account out everywhere.                                              |
-| Devices   | See every place the account is signed in, with an address and when each session started and expires. |
-| Roles     | Switch each role on or off for this account.                                                         |
-| Libraries | Choose which libraries the account may see, and how old the content in each may be.                  |
+| Tab        | What you can do                                                                                          |
+| ---------- | -------------------------------------------------------------------------------------------------------- |
+| Profile    | Change the name, username and address, and set the account's picture. Leave the address empty for none.  |
+| Signing in | Make, email or revoke a setup link; set a password; sign the account out everywhere; ban or let back in. |
+| Devices    | See every place the account is signed in, with an address and when each session started and expires.     |
+| Roles      | Switch each role on or off for this account.                                                             |
+| Libraries  | Choose which libraries the account may see, and how old the content in each may be.                      |
 
-### Resetting a password and ending sessions
+### Setting a password and ending sessions
 
-On the **Security** tab, **Reset password** sets a new password directly and ends every session the account holds, so the person has to sign in again with the new one. **Sign out everywhere** ends every session without touching the password. Use it when a phone goes missing or somebody is shown the door but should keep their account.
+On the **Signing in** tab, **Set a password** sets a new password directly and ends every session the account holds, so the person has to sign in again with the new one. A setup link (above) does the same without you knowing the password. **Sign out everywhere** ends every session without touching the password. Use it when a phone goes missing or somebody is shown the door but should keep their account.
 
 Both need the `account.security` permission. Valence asks you to confirm each before it acts.
 
@@ -61,10 +81,10 @@ Both need the `account.security` permission. Valence asks you to confirm each be
 
 The actions menu offers **Ban** and **Delete account**.
 
-- **Ban** signs the person out and refuses them entry until you choose **Let back in**. Nothing they own is touched, which makes it the right tool for a pause.
+- **Ban** asks what to tell the person, then signs them out and refuses them entry until you choose **Let back in**. The reason shows under **Banned** in the list. Nothing they own is touched, which makes it the right tool for a pause.
 - **Delete account** removes the account, every profile on it and everything those profiles were watching. The person's API keys and share links are revoked at once, so anything using one stops working. Playlists they shared with the household stay, marked as belonging to a removed profile. Nothing leaves your libraries. This cannot be undone.
 
-Banning needs `account.ban`. Deleting and editing need `account.manage`.
+Banning needs `account.ban`. Deleting and editing need `account.manage`. Adding an account needs `account.invite`, and making a setup link for one needs `account.invite` or `account.security`.
 
 ### Who may act on whom
 
@@ -137,12 +157,12 @@ Permissions are the only thing a role contains. These are all of them.
 | `requests.viewAll`     | See everybody's requests.                                                                                     |
 | `requests.approve`     | Approve or refuse other people's requests.                                                                    |
 | `requests.manage`      | Set up indexers, download clients and quality profiles.                                                       |
-| `account.invite`       | Add a new account.                                                                                            |
+| `account.invite`       | Add a new account and hand out its setup link.                                                                |
 | `account.manage`       | List, rename and remove accounts.                                                                             |
 | `account.ban`          | Ban and unban accounts.                                                                                       |
 | `account.roles`        | Create roles and choose what they grant.                                                                      |
 | `account.profiles`     | Add, rename or remove another account's profiles.                                                             |
-| `account.security`     | Reset passwords, end sessions and see where an account is signed in.                                          |
+| `account.security`     | Set passwords, send setup links as resets, end sessions and see where an account is signed in.                |
 | `account.keys`         | Hold API keys.                                                                                                |
 | `server.settings`      | Change server-wide settings.                                                                                  |
 | `server.backup`        | Start a backup or restore one.                                                                                |

@@ -8,6 +8,7 @@ import { FinishOnAnotherDevice } from '@ValenceScreens/components/FinishOnAnothe
 import { HouseholdOnboarding } from '@ValenceScreens/components/HouseholdOnboarding/HouseholdOnboarding';
 import { WelcomeTourHost } from '@ValenceScreens/components/WelcomeTourHost/WelcomeTourHost';
 import { ProfileGate } from '@ValenceScreens/components/ProfileGate/ProfileGate';
+import { SetupWizard } from '@ValenceScreens/components/SetupWizard/SetupWizard';
 import { SplashScreen } from '@ValenceUI/SplashScreen';
 import { shellContext } from '@ValenceClient/shell/shellContext';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
@@ -58,6 +59,9 @@ const HANDED_ON = ['/device', PHONE_SIGN_IN];
  * and the watch party they may be in. Held here rather than in each page, because the player, the
  * dialogs and the grids all read the same answers and must agree about them.
  *
+ * An administrator who made their account in first-run setup and left before finishing it is shown
+ * the rest of it first, rather than an empty home.
+ *
  * Signing in lands on the home page, but for the pages another device opened to be signed in
  * through — a television's code, the phone app's sheet — which stay where they are, since what they
  * are for happens after. The phone's sheet is noted as signed in here, leads with a passkey, and
@@ -103,9 +107,25 @@ const SignedIn = ({ title }: SignedInProps) => {
 
   const unfinished = setUp === null || setUp.isOnboarded ? null : setUp.household;
 
+  const serverSetup = useQuery({ ...sessionQueries.setup(), enabled: user !== null });
+
+  const mine = useQuery({
+    ...sessionQueries.permissions(),
+    enabled: user !== null && serverSetup.data?.isFlowOpen === true,
+  });
+
+  const isFinishingSetup =
+    serverSetup.data?.isFlowOpen === true && mine.data?.isAdministrator === true;
+
   const watched = useQuery({ ...viewingQueries.progress(), enabled: user !== null });
 
-  const isWaiting = session.isPending || isPageReading || (user !== null && settingUp.isPending);
+  const isWaiting =
+    session.isPending ||
+    isPageReading ||
+    (user !== null &&
+      (settingUp.isPending ||
+        serverSetup.isPending ||
+        (serverSetup.data?.isFlowOpen === true && mine.isPending)));
 
   const [phase, setPhase] = useState<'holding' | 'fading' | 'gone'>('holding');
 
@@ -374,7 +394,15 @@ const SignedIn = ({ title }: SignedInProps) => {
     <LayoutGroup>
       {shell !== null ? (
         <shellContext.Provider value={shell}>
-          {unfinished === null ? (
+          {isFinishingSetup && serverSetup.data !== undefined ? (
+            <SetupWizard
+              status={serverSetup.data}
+              startsAt="profile"
+              onComplete={() => {
+                void refresh();
+              }}
+            />
+          ) : unfinished === null ? (
             <>
               <Outlet />
 

@@ -23,6 +23,7 @@ import { allowRealtimeClientToStart } from '@ValenceClient/realtime/getRealtimeC
 import { useFreshFromTheSocket } from '@ValenceClient/query/useFreshFromTheSocket';
 import { AnAskable } from '@ValenceMobile/components/AnAskable/AnAskable';
 import { APerson } from '@ValenceMobile/components/APerson/APerson';
+import { ACollection } from '@ValenceMobile/components/ACollection/ACollection';
 import { AShow } from '@ValenceMobile/components/AShow/AShow';
 import { ATitle } from '@ValenceMobile/components/ATitle/ATitle';
 import { Screen } from '@ValenceMobile/components/Screen/Screen';
@@ -462,6 +463,15 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
             onBack={back}
           />
         );
+      case 'collection':
+        return (
+          <ACollection
+            collectionId={page.collectionId}
+            onLookAt={lookAt}
+            onLookAtShow={lookAtShow}
+            onBack={back}
+          />
+        );
       case 'person':
         return (
           <APerson
@@ -595,6 +605,9 @@ const SignedIn = ({ onOut, onElsewhere, onFaceAt, isFaceArriving = false }: Sign
           onArtist={toArtist}
           onPlaylist={(playlistId) => {
             open({ kind: 'playlist', playlistId });
+          }}
+          onCollection={(collectionId) => {
+            open({ kind: 'collection', collectionId });
           }}
           onLiked={() => {
             open({ kind: 'liked' });

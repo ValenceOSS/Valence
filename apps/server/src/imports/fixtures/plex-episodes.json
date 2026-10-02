@@ -1,0 +1,23 @@
+{
+  "MediaContainer": {
+    "size": 1,
+    "totalSize": 1,
+    "Metadata": [
+      {
+        "ratingKey": "301",
+        "type": "episode",
+        "title": "The Target",
+        "grandparentRatingKey": "201",
+        "parentRatingKey": "250",
+        "grandparentTitle": "The Wire",
+        "parentIndex": 1,
+        "index": 1,
+        "duration": 3720000,
+        "viewCount": 1,
+        "lastViewedAt": 1711999200,
+        "Guid": [{ "id": "tvdb://349232" }],
+        "Media": [{ "Part": [{ "file": "/media/tv/The Wire/S01E01.mkv" }] }]
+      }
+    ]
+  }
+}

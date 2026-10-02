@@ -13,6 +13,7 @@ import { Switch } from '@ValenceUI/Switch';
 import { TabRow } from '@ValenceUI/TabRow';
 import { Tabs } from '@ValenceUI/Tabs';
 import { Well } from '@ValenceUI/Well';
+import { StepperDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/StepperDemo';
 import { SidebarGroupDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/SidebarGroupDemo';
 import { TabsDemo } from '@ValenceLanding/components/UiLibraryPage/examples/demos/TabsDemo';
 import type { UiExample } from './UiExample.types';
@@ -169,6 +170,12 @@ const LAYOUT_EXAMPLES: Readonly<Record<string, readonly UiExample[]>> = {
     {
       title: 'Five pages',
       render: () => <PageDots count={5} selectedIndex={1} onSelect={nothing} label="Featured" />,
+    },
+  ],
+  Stepper: [
+    {
+      title: 'Moving through a flow',
+      render: () => <StepperDemo />,
     },
   ],
   Tabs: [

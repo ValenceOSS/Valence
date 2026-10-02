@@ -221,6 +221,8 @@
       ],
       "@ValenceUI/StatTile": ["./packages/ui/src/components/StatTile/StatTile.tsx"],
       "@ValenceUI/StatTile.types": ["./packages/ui/src/components/StatTile/StatTile.types.ts"],
+      "@ValenceUI/Stepper": ["./packages/ui/src/components/Stepper/Stepper.tsx"],
+      "@ValenceUI/Stepper.types": ["./packages/ui/src/components/Stepper/Stepper.types.ts"],
       "@ValenceUI/SwatchRow": ["./packages/ui/src/components/SwatchRow/SwatchRow.tsx"],
       "@ValenceUI/Switch": ["./packages/ui/src/components/Switch/Switch.tsx"],
       "@ValenceUI/Switch.types": ["./packages/ui/src/components/Switch/Switch.types.ts"],

@@ -26,6 +26,10 @@ const SIGNED_IN = '00000000-0000-4000-8000-000000000001';
 const account = (overrides: Partial<Account> = {}): Account => ({
   id: 'usr_1',
   name: 'Somebody',
+  username: null,
+  canSignIn: true,
+  lastSignedInAt: null,
+  setup: { state: 'none', expiresAt: null },
   email: 'somebody@valence.local',
   createdAt: '',
   isBanned: false,

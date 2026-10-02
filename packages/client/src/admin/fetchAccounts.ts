@@ -1,10 +1,20 @@
 import { readFromServer } from '@ValenceClient/query/readFromServer';
 import { readRefusal } from './readRefusal';
 import type { Refusal } from './readRefusal';
-import { AccountListSchema } from '@ValenceContracts/schemas/Account';
+import { AccountListSchema, AccountSchema } from '@ValenceContracts/schemas/Account';
 import type { Account } from '@ValenceContracts/schemas/Account';
 import type { Avatar, ProfileColour } from '@ValenceContracts/schemas/ViewerProfile';
+import { IssuedSetupLinkSchema } from '@ValenceContracts/schemas/SetupLink';
+import type { SetupLinkLifetime } from '@ValenceContracts/schemas/SetupLink';
+import { z } from 'zod';
 import { say } from '@ValenceI18n/say';
+
+const AddedAccountSchema = z.object({
+  account: AccountSchema,
+  setupLink: IssuedSetupLinkSchema.nullable(),
+});
+
+type AddedAccount = z.infer<typeof AddedAccountSchema>;
 
 /**
  * Everybody with an account on this server, with what each may do and whether they are banned. What
@@ -70,16 +80,19 @@ const removeAccount = async (userId: string): Promise<Refusal> => {
 };
 
 /**
- * Invites somebody to this server, creating their account and the means for them to set a password.
+ * Adds an account. With no password it is given a setup link for its owner to choose their own,
+ * which comes back with it; anything else left out is left for its owner too.
  *
- * @param request - Who is being invited and what they may do.
- * @returns The account, or why it was refused.
+ * @param request - Its name, and any username, address, password and link lifetime.
+ * @returns The account and its link, or why it was refused.
  */
 const inviteAccount = async (request: {
   name: string;
-  email: string;
-  password: string;
-}): Promise<Refusal> => {
+  username?: string;
+  email?: string;
+  password?: string;
+  lifetimeDays?: SetupLinkLifetime;
+}): Promise<{ kind: 'added'; added: AddedAccount } | { kind: 'refused'; refusal: Refusal }> => {
   const response = await fetch('/api/admin/accounts', {
     method: 'POST',
     credentials: 'same-origin',
@@ -87,14 +100,27 @@ const inviteAccount = async (request: {
     body: JSON.stringify(request),
   }).catch(() => null);
 
-  return response === null
-    ? { message: say('common.theServerCouldNotBeReached') }
-    : readRefusal(response);
+  if (response === null) {
+    return { kind: 'refused', refusal: { message: say('common.theServerCouldNotBeReached') } };
+  }
+
+  if (!response.ok) {
+    return { kind: 'refused', refusal: await readRefusal(response) };
+  }
+
+  const read = AddedAccountSchema.safeParse(await response.json().catch(() => null));
+
+  return read.success
+    ? { kind: 'added', added: read.data }
+    : {
+        kind: 'refused',
+        refusal: { message: say('client.admin.readRefusal.thatCouldNotBeDoneTry') },
+      };
 };
 
 /**
- * Changes an account's name or address. Takes only what changed rather than the whole account, so an
- * administrator editing one field does not have to resend the other.
+ * Changes an account's name, username or address. Takes only what changed rather than the whole
+ * account, so an administrator editing one field does not have to resend the others.
  *
  * @param userId - The account to change.
  * @param changes - What to change about it.
@@ -102,7 +128,7 @@ const inviteAccount = async (request: {
  */
 const editAccount = async (
   userId: string,
-  changes: { name?: string; email?: string },
+  changes: { name?: string; username?: string; email?: string | null },
 ): Promise<Refusal> => {
   const response = await fetch(`/api/admin/accounts/${userId}`, {
     method: 'PATCH',
@@ -191,4 +217,4 @@ export {
   setAccountPhoto,
   setAccountAvatar,
 };
-export type { Account };
+export type { Account, AddedAccount };

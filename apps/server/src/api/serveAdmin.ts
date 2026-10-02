@@ -39,6 +39,7 @@ import {
   READ_CERTIFICATES_AGAIN_JOB,
 } from '@ValenceServer/jobs/JobQueue';
 import { listeningFor } from '@ValenceServer/music/listeningFor';
+import { registerEmailRoutes } from '@ValenceServer/email/registerEmailRoutes';
 import type { AppContext } from '@ValenceServer/api/AppContext';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { refuse } from '@ValenceI18n/refuse';
@@ -80,7 +81,10 @@ const serveAdmin = (app: OpenAPIHono, context: AppContext): void => {
     resourceHistory,
     within,
     requires,
+    email,
   } = context;
+
+  registerEmailRoutes(app, { email, requires });
 
   app.openapi(searchCatalogueRoute, async (context) => {
     if (!(await requires(context.req.raw.headers, 'media.override'))) {

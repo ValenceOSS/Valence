@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { JsonValueSchema } from '@ValenceContracts/schemas/JsonValue';
 import type { JsonValue } from '@ValenceContracts/schemas/JsonValue';
-import type { ArrAppKind } from '@ValenceContracts/schemas/ArrApp';
+import type { ArrImportSourceKind } from '@ValenceContracts/schemas/ArrImport';
 import { ArrAppFailure } from '@ValenceRequests/arrApps/ArrAppFailure';
 import type { ArrAppRecord } from '@ValenceRequests/arrApps/ArrAppRecord';
 import { saying } from '@ValenceI18n/saying';
@@ -26,11 +26,15 @@ type ArrAsking = {
   body?: JsonValue;
 };
 
-const API_ROOTS: Readonly<Record<ArrAppKind, string>> = {
+type ArrCalled = Pick<ArrAppRecord, 'name' | 'url' | 'apiKey'> & { kind: ArrImportSourceKind };
+
+const API_ROOTS: Readonly<Record<ArrImportSourceKind, string>> = {
   radarr: '/api/v3',
   sonarr: '/api/v3',
   lidarr: '/api/v1',
   prowlarr: '/api/v1',
+  overseerr: '/api/v1',
+  jellyseerr: '/api/v1',
 };
 
 const WAIT_SECONDS = 20;
@@ -59,20 +63,17 @@ const complaintIn = (body: JsonValue): string | null => {
 };
 
 /**
- * Asks Radarr, Sonarr, Lidarr or Prowlarr something through its own API with the key it was given,
- * reading every answer through a schema, and turning an app that cannot be reached, refuses its key
- * or answers in a shape that cannot be read into a failure that says so in words.
+ * Asks Radarr, Sonarr, Lidarr, Prowlarr, Overseerr or Jellyseerr something through its own API with
+ * the key it was given, reading every answer through a schema, and turning an app that cannot be
+ * reached, refuses its key or answers in a shape that cannot be read into a failure that says so in
+ * words.
  *
  * @param fetch - How to ask.
  * @param app - The app: what it is called, which kind it is, where it answers and its key.
  * @param waitSeconds - How long to wait for an answer.
  * @returns How to read from it and send to it.
  */
-const createArrCaller = (
-  fetch: ArrFetch,
-  app: Pick<ArrAppRecord, 'name' | 'kind' | 'url' | 'apiKey'>,
-  waitSeconds = WAIT_SECONDS,
-) => {
+const createArrCaller = (fetch: ArrFetch, app: ArrCalled, waitSeconds = WAIT_SECONDS) => {
   const { name } = app;
 
   const ask = async <Value>(
@@ -176,6 +177,6 @@ const createArrCaller = (
 
 type ArrCaller = ReturnType<typeof createArrCaller>;
 
-export type { ArrCaller, ArrFetch };
+export type { ArrCaller, ArrFetch, ArrReader };
 
 export { createArrCaller };

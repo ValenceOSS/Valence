@@ -54,6 +54,8 @@ import { createArrCaller } from '@ValenceRequests/arrApps/createArrCaller';
 import { createDatabaseArrAppStore } from '@ValenceRequests/arrApps/createDatabaseArrAppStore';
 import { createProwlarrSync } from '@ValenceRequests/arrApps/createProwlarrSync';
 import { createHandOffWorker } from '@ValenceRequests/arrApps/handOff/createHandOffWorker';
+import { createArrImportRoutes } from '@ValenceRequests/arrImport/createArrImportRoutes';
+import { createArrImportService } from '@ValenceRequests/arrImport/createArrImportService';
 import type { ArrAppRecord } from '@ValenceRequests/arrApps/ArrAppRecord';
 import { z } from 'zod';
 
@@ -231,10 +233,15 @@ const arrAppStore = createDatabaseArrAppStore(db);
  */
 const connectArr = (app: ArrAppRecord) => createArrCaller(fetch, app);
 
+const prowlarrSync = createProwlarrSync({
+  indexers: createDatabaseIndexerStore(db),
+  connect: connectArr,
+});
+
 const arrApps = createArrAppService({
   store: arrAppStore,
   connect: connectArr,
-  prowlarr: createProwlarrSync({ indexers: createDatabaseIndexerStore(db), connect: connectArr }),
+  prowlarr: prowlarrSync,
 });
 
 const handOff = createHandOffWorker({
@@ -331,6 +338,16 @@ const app = createApp({
     createProfileRoutes(profiles),
     createRequestRoutes({ service: mediaRequests, log: requestLog, worker: requestWorker }),
     createArrAppRoutes({ apps: arrApps }),
+    createArrImportRoutes({
+      imports: createArrImportService({
+        connect: (source) => createArrCaller(fetch, source),
+        clients: downloadClients,
+        indexers,
+        profiles,
+        apps: arrApps,
+        prowlarr: prowlarrSync,
+      }),
+    }),
   ],
   secret: env.REQUESTS_SECRET,
   version: env.VALENCE_VERSION,

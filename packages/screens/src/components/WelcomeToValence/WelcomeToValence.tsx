@@ -31,8 +31,9 @@ const WORDS_CLEAR_MS = 260;
  * @param name - What this instance is called.
  * @param household - What they have just decided to call the household.
  * @param onFinished - Told when they are ready for the library to take over.
+ * @param children - Anything worth saying before they go on, such as what setting up did.
  */
-const WelcomeToValence = ({ name, household, onFinished }: WelcomeToValenceProps) => {
+const WelcomeToValence = ({ name, household, onFinished, children }: WelcomeToValenceProps) => {
   const prefersReducedMotion = useReducedMotionConfig();
   const [isLeaving, setIsLeaving] = useState(false);
 
@@ -73,7 +74,13 @@ const WelcomeToValence = ({ name, household, onFinished }: WelcomeToValenceProps
         </p>
       </motion.div>
 
-      <motion.div {...rises(0.6)}>
+      {children === undefined ? null : (
+        <motion.div {...rises(0.5)} className="w-full max-w-md text-left">
+          {children}
+        </motion.div>
+      )}
+
+      <motion.div {...rises(children === undefined ? 0.6 : 0.75)}>
         <Button
           variant="glossy"
           size="lg"

@@ -7,6 +7,7 @@ import { aShell } from '@ValenceClient/testing/aShell';
 import { LibraryBrowser } from './LibraryBrowser';
 import type { ReactElement } from 'react';
 import type { Library, MediaSummary } from '@ValenceContracts/schemas/Library';
+import type { Collection } from '@ValenceContracts/schemas/Collection';
 
 const RECENTLY = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
@@ -27,6 +28,16 @@ vi.mock('@ValenceClient/library/fetchLibrary', () => ({
 }));
 
 vi.mock('@ValenceClient/library/fetchFacets', () => ({ fetchFacets: fetchFacetsMock }));
+
+const fetchCollectionsMock = vi.hoisted(() =>
+  vi.fn<() => Promise<Collection[]>>(() => Promise.resolve([])),
+);
+
+vi.mock('@ValenceClient/collections/fetchCollections', () => ({
+  fetchCollections: fetchCollectionsMock,
+  fetchCollection: vi.fn(),
+  collectionArtworkUrl: vi.fn(() => null),
+}));
 
 const films: Library = {
   id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
@@ -167,6 +178,32 @@ describe('LibraryBrowser', () => {
     expect(
       within(rail).queryByRole('button', { name: /, Recently added$/ }),
     ).not.toBeInTheDocument();
+  });
+
+  it('shows the collections on the front page, and opens the one chosen', async () => {
+    const actor = userEvent.setup();
+
+    fetchCollectionsMock.mockResolvedValueOnce([
+      {
+        id: '00000000-0000-4000-8000-00000000c011',
+        name: 'Saga',
+        description: null,
+        isOrdered: true,
+        hasOwnArtwork: false,
+        entryCount: 3,
+        coverMediaIds: [],
+        updatedAt: RECENTLY,
+      },
+    ]);
+    draw(<LibraryBrowser onPlay={vi.fn()} />);
+
+    const rail = await screen.findByRole('region', { name: 'Collections' });
+
+    await actor.click(within(rail).getByRole('button', { name: /Saga/ }));
+
+    await waitFor(() => {
+      expect(window.location.search).toContain('collection=00000000-0000-4000-8000-00000000c011');
+    });
   });
 
   it('does not count the library at somebody, since nobody asked', async () => {

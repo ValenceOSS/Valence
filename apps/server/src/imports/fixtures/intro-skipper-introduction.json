@@ -1,0 +1,8 @@
+{
+  "EpisodeId": "item-wire-101",
+  "Valid": true,
+  "IntroStart": 31.5,
+  "IntroEnd": 91.0,
+  "ShowSkipPromptAt": 26.5,
+  "HideSkipPromptAt": 41.5
+}

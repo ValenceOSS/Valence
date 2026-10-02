@@ -6,6 +6,7 @@ import {
   CircleCheck as CircleCheckIcon,
   Download as DownloadIcon,
   Info as InfoIcon,
+  Layers as LayersIcon,
   Link as LinkIcon,
   Tape as TapeIcon,
   X as XIcon,
@@ -19,6 +20,9 @@ import { useReducedMotionConfig } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
 import { nameSeason } from '@ValenceClient/library/nameSeason';
 import { Dialog } from '@ValenceUI/Dialog';
+import { PartOfCollections } from '@ValenceScreens/components/PartOfCollections/PartOfCollections';
+import { AddToCollectionDialog } from '@ValenceScreens/components/AddToCollectionDialog/AddToCollectionDialog';
+import { useWhatIMayDo } from '@ValenceClient/session/useWhatIMayDo';
 import { PluginPanels } from '@ValenceScreens/components/PluginPanels/PluginPanels';
 import { DialogContent } from '@ValenceUI/DialogContent';
 import { ActionBar } from '@ValenceUI/ActionBar';
@@ -97,6 +101,8 @@ const ShowDialog = ({
   const [isChoosing, setIsChoosing] = useState(false);
   const onThisDevice = new Set(useHeldFiles().map((file) => file.mediaId));
   const [isWatchingTrailer, setIsWatchingTrailer] = useState(false);
+  const [isCollecting, setIsCollecting] = useState(false);
+  const { may } = useWhatIMayDo();
   const topRef = useRef<HTMLDivElement>(null);
   const { mark: pastTheArtwork, hasPassed: hasScrolledPast } = useHasScrolledPast();
   const prefersReducedMotion = useReducedMotionConfig();
@@ -388,6 +394,14 @@ const ShowDialog = ({
             )}
           </DialogSection>
 
+          <PartOfCollections
+            subject={
+              show === null || (shown.seriesId ?? null) === null
+                ? null
+                : { seriesId: shown.seriesId ?? '' }
+            }
+          />
+
           {(shown.seriesId ?? null) === null ? null : (
             <PluginPanels on="series" subjectId={shown.seriesId ?? ''} />
           )}
@@ -485,6 +499,18 @@ const ShowDialog = ({
                     })),
                   },
                 ]),
+            ...(!may('library.edit') || (shown.seriesId ?? null) === null
+              ? []
+              : [
+                  {
+                    id: 'collection',
+                    label: say('common.addToACollection'),
+                    icon: <Icon of={LayersIcon} size={18} />,
+                    onChoose: () => {
+                      setIsCollecting(true);
+                    },
+                  },
+                ]),
             ...(onShare === undefined || (shown.seriesId ?? null) === null
               ? []
               : [
@@ -516,6 +542,18 @@ const ShowDialog = ({
         media={null}
         onClose={() => {
           setDownloading(null);
+        }}
+      />
+
+      <AddToCollectionDialog
+        subject={
+          isCollecting && show !== null && (shown.seriesId ?? null) !== null
+            ? { seriesId: shown.seriesId ?? '' }
+            : null
+        }
+        title={shown.title}
+        onClose={() => {
+          setIsCollecting(false);
         }}
       />
 

@@ -1,0 +1,27 @@
+{
+  "Items": [
+    {
+      "Name": "Heat",
+      "Id": "item-heat",
+      "Type": "Movie",
+      "MediaType": "Video",
+      "Path": "/data/movies/Heat (1995)/Heat.mkv",
+      "ProviderIds": { "Tmdb": "949", "Imdb": "tt0113277" },
+      "ProductionYear": 1995,
+      "RunTimeTicks": 102000000000,
+      "DateCreated": "2024-01-02T00:00:00.0000000Z"
+    },
+    {
+      "Name": "A Home Movie",
+      "Id": "item-home",
+      "Type": "Movie",
+      "MediaType": "Video",
+      "Path": "/data/movies/home.mkv",
+      "ProviderIds": {},
+      "ProductionYear": 2019,
+      "RunTimeTicks": 6000000000
+    }
+  ],
+  "TotalRecordCount": 2,
+  "StartIndex": 0
+}

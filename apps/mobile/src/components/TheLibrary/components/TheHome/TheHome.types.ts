@@ -9,6 +9,7 @@ type TheHomeProps = {
   onWatch: (mediaId: string, startSeconds: number) => void;
   onLookAt: (mediaId: string) => void;
   onLookAtShow: (libraryId: string, showId: string) => void;
+  onLookAtCollection: (collectionId: string) => void;
   onShowing: (media: MediaSummary | null) => void;
   onClip: (player: VideoPlayer | null) => void;
   onScrolled?: (isScrolled: boolean) => void;

@@ -1,0 +1,12 @@
+{
+  "Items": [
+    {
+      "Name": "Massive Attack",
+      "Id": "artist-1",
+      "Type": "MusicArtist",
+      "ProviderIds": { "MusicBrainzArtist": "10adbe5e-a2c0-4bf3-8249-2b4cbf6e6ca8" }
+    }
+  ],
+  "TotalRecordCount": 1,
+  "StartIndex": 0
+}

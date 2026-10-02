@@ -4,6 +4,11 @@ import { RefusalSchema } from '@ValenceContracts/schemas/Refusal';
 import { AvatarSchema, ProfileColourSchema } from '@ValenceContracts/schemas/ViewerProfile';
 import { AccountSchema } from '@ValenceContracts/schemas/Account';
 import { MINIMUM_PASSWORD_LENGTH } from '@ValenceContracts/constants/MINIMUM_PASSWORD_LENGTH';
+import {
+  IssuedSetupLinkSchema,
+  SetupLinkLifetimeSchema,
+  UsernameSchema,
+} from '@ValenceContracts/schemas/SetupLink';
 
 const Account = AccountSchema.openapi('Account');
 
@@ -17,7 +22,11 @@ const listAccountsRoute = createRoute({
   responses: {
     200: {
       description: 'Every account, with what it holds',
-      content: { 'application/json': { schema: z.object({ accounts: z.array(Account) }) } },
+      content: {
+        'application/json': {
+          schema: z.object({ accounts: z.array(Account), canEmailSetupLinks: z.boolean() }),
+        },
+      },
     },
     403: {
       description: 'Not permitted',
@@ -100,15 +109,17 @@ const inviteAccountRoute = createRoute({
   method: 'post',
   path: '/api/admin/accounts',
   tags: ['Accounts'],
-  summary: 'Add an account, with a password to hand over',
+  summary: 'Add an account, with a setup link for its owner or a password to hand over',
   request: {
     body: {
       content: {
         'application/json': {
           schema: z.object({
-            name: z.string().min(1).max(100),
-            email: z.string().email(),
-            password: z.string().min(MINIMUM_PASSWORD_LENGTH).max(200),
+            name: z.string().trim().min(1).max(100),
+            username: UsernameSchema.optional(),
+            email: z.string().trim().email().optional(),
+            password: z.string().min(MINIMUM_PASSWORD_LENGTH).max(200).optional(),
+            lifetimeDays: SetupLinkLifetimeSchema.optional(),
           }),
         },
       },
@@ -116,11 +127,19 @@ const inviteAccountRoute = createRoute({
   },
   responses: {
     201: {
-      description: 'The account was created and given the default role',
-      content: { 'application/json': { schema: Account } },
+      description:
+        'The account was created and given the default role, with its setup link when no password was given',
+      content: {
+        'application/json': {
+          schema: z.object({
+            account: Account,
+            setupLink: IssuedSetupLinkSchema.openapi('SetupLink').nullable(),
+          }),
+        },
+      },
     },
     400: {
-      description: 'That address is already in use',
+      description: 'That username or address is already in use',
       content: { 'application/json': { schema: AccountError } },
     },
     500: {
@@ -138,15 +157,16 @@ const editAccountRoute = createRoute({
   method: 'patch',
   path: '/api/admin/accounts/{userId}',
   tags: ['Accounts'],
-  summary: 'Change an account’s name or address',
+  summary: 'Change an account’s name, username or address',
   request: {
     params: z.object({ userId: z.string().min(1) }),
     body: {
       content: {
         'application/json': {
           schema: z.object({
-            name: z.string().min(1).max(100).optional(),
-            email: z.string().email().optional(),
+            name: z.string().trim().min(1).max(100).optional(),
+            username: UsernameSchema.optional(),
+            email: z.string().trim().email().nullable().optional(),
           }),
         },
       },

@@ -1,0 +1,683 @@
+{
+  "GET /api/v3/system/status": {
+    "appName": "Radarr",
+    "instanceName": "Radarr",
+    "version": "5.14.0.9383",
+    "buildTime": "2024-10-28T13:23:23Z",
+    "isDebug": false,
+    "isProduction": true,
+    "isAdmin": false,
+    "isUserInteractive": true,
+    "startupPath": "/app/radarr/bin",
+    "appData": "/config",
+    "osName": "alpine",
+    "osVersion": "3.20.3",
+    "isDocker": true,
+    "branch": "master",
+    "databaseType": "sqLite",
+    "authentication": "forms",
+    "urlBase": ""
+  },
+  "GET /api/v3/downloadclient": [
+    {
+      "enable": true,
+      "protocol": "torrent",
+      "priority": 1,
+      "removeCompletedDownloads": true,
+      "removeFailedDownloads": true,
+      "name": "qBittorrent",
+      "fields": [
+        {
+          "order": 0,
+          "name": "host",
+          "label": "Host",
+          "value": "qbittorrent",
+          "type": "textbox",
+          "advanced": false,
+          "privacy": "normal",
+          "isFloat": false
+        },
+        {
+          "order": 1,
+          "name": "port",
+          "label": "Port",
+          "value": 8080,
+          "type": "number",
+          "advanced": false,
+          "privacy": "normal",
+          "isFloat": false
+        },
+        {
+          "order": 2,
+          "name": "useSsl",
+          "label": "Use SSL",
+          "value": false,
+          "type": "checkbox",
+          "advanced": false,
+          "privacy": "normal",
+          "isFloat": false
+        },
+        {
+          "order": 3,
+          "name": "urlBase",
+          "label": "URL Base",
+          "type": "textbox",
+          "advanced": true,
+          "privacy": "normal",
+          "isFloat": false
+        },
+        {
+          "order": 4,
+          "name": "username",
+          "label": "Username",
+          "value": "admin",
+          "type": "textbox",
+          "advanced": false,
+          "privacy": "userName",
+          "isFloat": false
+        },
+        {
+          "order": 5,
+          "name": "password",
+          "label": "Password",
+          "value": "********",
+          "type": "password",
+          "advanced": false,
+          "privacy": "password",
+          "isFloat": false
+        },
+        {
+          "order": 6,
+          "name": "movieCategory",
+          "label": "Category",
+          "value": "radarr",
+          "type": "textbox",
+          "advanced": false,
+          "privacy": "normal",
+          "isFloat": false
+        },
+        {
+          "order": 7,
+          "name": "movieImportedCategory",
+          "label": "Post-Import Category",
+          "type": "textbox",
+          "advanced": true,
+          "privacy": "normal",
+          "isFloat": false
+        },
+        {
+          "order": 8,
+          "name": "recentMoviePriority",
+          "label": "Recent Priority",
+          "value": 0,
+          "type": "select",
+          "advanced": false,
+          "privacy": "normal",
+          "isFloat": false
+        },
+        {
+          "order": 9,
+          "name": "initialState",
+          "label": "Initial State",
+          "value": 0,
+          "type": "select",
+          "advanced": false,
+          "privacy": "normal",
+          "isFloat": false
+        }
+      ],
+      "implementationName": "qBittorrent",
+      "implementation": "QBittorrent",
+      "configContract": "QBittorrentSettings",
+      "infoLink": "https://wiki.servarr.com/radarr/supported#qbittorrent",
+      "tags": [],
+      "id": 1
+    },
+    {
+      "enable": true,
+      "protocol": "usenet",
+      "priority": 2,
+      "removeCompletedDownloads": true,
+      "removeFailedDownloads": true,
+      "name": "SABnzbd",
+      "fields": [
+        {
+          "order": 0,
+          "name": "host",
+          "label": "Host",
+          "value": "sabnzbd",
+          "type": "textbox",
+          "advanced": false,
+          "privacy": "normal"
+        },
+        {
+          "order": 1,
+          "name": "port",
+          "label": "Port",
+          "value": 8080,
+          "type": "number",
+          "advanced": false,
+          "privacy": "normal"
+        },
+        {
+          "order": 2,
+          "name": "useSsl",
+          "label": "Use SSL",
+          "value": false,
+          "type": "checkbox",
+          "advanced": false,
+          "privacy": "normal"
+        },
+        {
+          "order": 3,
+          "name": "urlBase",
+          "label": "URL Base",
+          "value": "/sabnzbd",
+          "type": "textbox",
+          "advanced": true,
+          "privacy": "normal"
+        },
+        {
+          "order": 4,
+          "name": "apiKey",
+          "label": "API Key",
+          "value": "********",
+          "type": "textbox",
+          "advanced": false,
+          "privacy": "apiKey"
+        },
+        {
+          "order": 5,
+          "name": "username",
+          "label": "Username",
+          "type": "textbox",
+          "advanced": false,
+          "privacy": "userName"
+        },
+        {
+          "order": 6,
+          "name": "password",
+          "label": "Password",
+          "type": "password",
+          "advanced": false,
+          "privacy": "password"
+        },
+        {
+          "order": 7,
+          "name": "movieCategory",
+          "label": "Category",
+          "value": "movies",
+          "type": "textbox",
+          "advanced": false,
+          "privacy": "normal"
+        }
+      ],
+      "implementationName": "SABnzbd",
+      "implementation": "Sabnzbd",
+      "configContract": "SabnzbdSettings",
+      "infoLink": "https://wiki.servarr.com/radarr/supported#sabnzbd",
+      "tags": [],
+      "id": 2
+    },
+    {
+      "enable": false,
+      "protocol": "torrent",
+      "priority": 5,
+      "removeCompletedDownloads": true,
+      "removeFailedDownloads": true,
+      "name": "Deluge",
+      "fields": [
+        {
+          "order": 0,
+          "name": "host",
+          "label": "Host",
+          "value": "deluge",
+          "type": "textbox",
+          "advanced": false,
+          "privacy": "normal"
+        },
+        {
+          "order": 1,
+          "name": "port",
+          "label": "Port",
+          "value": 8112,
+          "type": "number",
+          "advanced": false,
+          "privacy": "normal"
+        },
+        {
+          "order": 2,
+          "name": "password",
+          "label": "Password",
+          "value": "********",
+          "type": "password",
+          "advanced": false,
+          "privacy": "password"
+        },
+        {
+          "order": 3,
+          "name": "movieCategory",
+          "label": "Category",
+          "value": "radarr",
+          "type": "textbox",
+          "advanced": false,
+          "privacy": "normal"
+        }
+      ],
+      "implementationName": "Deluge",
+      "implementation": "Deluge",
+      "configContract": "DelugeSettings",
+      "infoLink": "https://wiki.servarr.com/radarr/supported#deluge",
+      "tags": [],
+      "id": 3
+    }
+  ],
+  "GET /api/v3/remotepathmapping": [
+    { "host": "qbittorrent", "remotePath": "/downloads/", "localPath": "/data/downloads/", "id": 1 }
+  ],
+  "GET /api/v3/indexer": [
+    {
+      "enableRss": true,
+      "enableAutomaticSearch": true,
+      "enableInteractiveSearch": true,
+      "supportsRss": true,
+      "supportsSearch": true,
+      "protocol": "torrent",
+      "priority": 25,
+      "downloadClientId": 0,
+      "name": "1337x (Prowlarr)",
+      "fields": [
+        {
+          "order": 0,
+          "name": "baseUrl",
+          "label": "URL",
+          "value": "http://prowlarr:9696/1/",
+          "type": "textbox",
+          "privacy": "normal"
+        },
+        {
+          "order": 1,
+          "name": "apiPath",
+          "label": "API Path",
+          "value": "/api",
+          "type": "textbox",
+          "privacy": "normal"
+        },
+        {
+          "order": 2,
+          "name": "apiKey",
+          "label": "API Key",
+          "value": "********",
+          "type": "textbox",
+          "privacy": "apiKey"
+        },
+        {
+          "order": 3,
+          "name": "categories",
+          "label": "Categories",
+          "value": [2000, 2040],
+          "type": "select",
+          "privacy": "normal"
+        },
+        {
+          "order": 4,
+          "name": "minimumSeeders",
+          "label": "Minimum Seeders",
+          "value": 1,
+          "type": "number",
+          "privacy": "normal"
+        },
+        {
+          "order": 5,
+          "name": "seedCriteria.seedRatio",
+          "label": "Seed Ratio",
+          "type": "textbox",
+          "privacy": "normal"
+        }
+      ],
+      "implementationName": "Torznab",
+      "implementation": "Torznab",
+      "configContract": "TorznabSettings",
+      "tags": [],
+      "id": 1
+    },
+    {
+      "enableRss": true,
+      "enableAutomaticSearch": true,
+      "enableInteractiveSearch": true,
+      "supportsRss": true,
+      "supportsSearch": true,
+      "protocol": "usenet",
+      "priority": 10,
+      "downloadClientId": 0,
+      "name": "NZBgeek",
+      "fields": [
+        {
+          "order": 0,
+          "name": "baseUrl",
+          "label": "URL",
+          "value": "https://api.nzbgeek.info",
+          "type": "textbox",
+          "privacy": "normal"
+        },
+        {
+          "order": 1,
+          "name": "apiPath",
+          "label": "API Path",
+          "value": "/api",
+          "type": "textbox",
+          "privacy": "normal"
+        },
+        {
+          "order": 2,
+          "name": "apiKey",
+          "label": "API Key",
+          "value": "********",
+          "type": "textbox",
+          "privacy": "apiKey"
+        },
+        {
+          "order": 3,
+          "name": "categories",
+          "label": "Categories",
+          "value": [2000, 2030, 2040, 2045],
+          "type": "select",
+          "privacy": "normal"
+        }
+      ],
+      "implementationName": "Newznab",
+      "implementation": "Newznab",
+      "configContract": "NewznabSettings",
+      "tags": [],
+      "id": 2
+    },
+    {
+      "enableRss": true,
+      "enableAutomaticSearch": true,
+      "enableInteractiveSearch": true,
+      "protocol": "torrent",
+      "priority": 25,
+      "name": "PassThePopcorn",
+      "fields": [
+        {
+          "order": 0,
+          "name": "baseUrl",
+          "label": "URL",
+          "value": "https://passthepopcorn.me",
+          "type": "textbox",
+          "privacy": "normal"
+        },
+        {
+          "order": 1,
+          "name": "aPIUser",
+          "label": "API User",
+          "value": "me",
+          "type": "textbox",
+          "privacy": "userName"
+        },
+        {
+          "order": 2,
+          "name": "aPIKey",
+          "label": "API Key",
+          "value": "********",
+          "type": "textbox",
+          "privacy": "apiKey"
+        }
+      ],
+      "implementationName": "PassThePopcorn",
+      "implementation": "PassThePopcorn",
+      "configContract": "PassThePopcornSettings",
+      "tags": [],
+      "id": 3
+    }
+  ],
+  "GET /api/v3/qualityprofile": [
+    {
+      "name": "Any",
+      "upgradeAllowed": false,
+      "cutoff": 1,
+      "items": [
+        {
+          "quality": {
+            "id": 1,
+            "name": "SDTV",
+            "source": "tv",
+            "resolution": 480,
+            "modifier": "none"
+          },
+          "items": [],
+          "allowed": true
+        }
+      ],
+      "minFormatScore": 0,
+      "cutoffFormatScore": 0,
+      "minUpgradeFormatScore": 1,
+      "formatItems": [],
+      "language": { "id": 1, "name": "English" },
+      "id": 1
+    },
+    {
+      "name": "HD-1080p",
+      "upgradeAllowed": true,
+      "cutoff": 7,
+      "items": [
+        {
+          "quality": {
+            "id": 1,
+            "name": "SDTV",
+            "source": "tv",
+            "resolution": 480,
+            "modifier": "none"
+          },
+          "items": [],
+          "allowed": false
+        },
+        {
+          "quality": {
+            "id": 9,
+            "name": "HDTV-1080p",
+            "source": "tv",
+            "resolution": 1080,
+            "modifier": "none"
+          },
+          "items": [],
+          "allowed": true
+        },
+        {
+          "name": "WEB 1080p",
+          "items": [
+            {
+              "quality": {
+                "id": 3,
+                "name": "WEBDL-1080p",
+                "source": "webdl",
+                "resolution": 1080,
+                "modifier": "none"
+              },
+              "items": [],
+              "allowed": true
+            },
+            {
+              "quality": {
+                "id": 15,
+                "name": "WEBRip-1080p",
+                "source": "webrip",
+                "resolution": 1080,
+                "modifier": "none"
+              },
+              "items": [],
+              "allowed": true
+            }
+          ],
+          "allowed": true,
+          "id": 1003
+        },
+        {
+          "quality": {
+            "id": 7,
+            "name": "Bluray-1080p",
+            "source": "bluray",
+            "resolution": 1080,
+            "modifier": "none"
+          },
+          "items": [],
+          "allowed": true
+        },
+        {
+          "quality": {
+            "id": 30,
+            "name": "Remux-1080p",
+            "source": "bluray",
+            "resolution": 1080,
+            "modifier": "remux"
+          },
+          "items": [],
+          "allowed": false
+        },
+        {
+          "quality": {
+            "id": 22,
+            "name": "BR-DISK",
+            "source": "bluray",
+            "resolution": 1080,
+            "modifier": "brdisk"
+          },
+          "items": [],
+          "allowed": true
+        }
+      ],
+      "minFormatScore": 0,
+      "cutoffFormatScore": 0,
+      "minUpgradeFormatScore": 1,
+      "formatItems": [
+        { "format": 1, "name": "x265", "score": -10000 },
+        { "format": 2, "name": "HDR", "score": 100 },
+        { "format": 3, "name": "Repack", "score": 5 },
+        { "format": 4, "name": "Unscored", "score": 0 }
+      ],
+      "language": { "id": 1, "name": "English" },
+      "id": 4
+    }
+  ],
+  "GET /api/v3/customformat": [
+    {
+      "id": 1,
+      "name": "x265",
+      "includeCustomFormatWhenRenaming": false,
+      "specifications": [
+        {
+          "name": "x265",
+          "implementation": "ReleaseTitleSpecification",
+          "implementationName": "Release Title",
+          "negate": false,
+          "required": false,
+          "fields": [
+            {
+              "order": 0,
+              "name": "value",
+              "label": "Regular Expression",
+              "value": "[xh][ ._-]?265|\\bHEVC(\\b|\\d)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "HDR",
+      "includeCustomFormatWhenRenaming": false,
+      "specifications": [
+        {
+          "name": "HDR",
+          "implementation": "ReleaseTitleSpecification",
+          "negate": false,
+          "required": false,
+          "fields": [{ "order": 0, "name": "value", "value": "\\bHDR(\\b|\\d)" }]
+        },
+        {
+          "name": "2160p",
+          "implementation": "ResolutionSpecification",
+          "negate": false,
+          "required": true,
+          "fields": [{ "order": 0, "name": "value", "value": 2160 }]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Repack",
+      "includeCustomFormatWhenRenaming": false,
+      "specifications": [
+        {
+          "name": "Repack",
+          "implementation": "ReleaseTitleSpecification",
+          "negate": false,
+          "required": false,
+          "fields": [{ "order": 0, "name": "value", "value": "\\bRepack\\b" }]
+        }
+      ]
+    }
+  ],
+  "GET /api/v3/releaseprofile": [
+    {
+      "name": "No 3D",
+      "enabled": true,
+      "required": [],
+      "ignored": ["3D"],
+      "indexerId": 0,
+      "tags": [],
+      "id": 1
+    }
+  ],
+  "GET /api/v3/rootfolder": [
+    {
+      "path": "/movies",
+      "accessible": true,
+      "freeSpace": 1099511627776,
+      "unmappedFolders": [],
+      "id": 1
+    }
+  ],
+  "GET /api/v3/movie": [
+    {
+      "title": "Dune: Part Two",
+      "sortTitle": "dune part two",
+      "status": "released",
+      "year": 2024,
+      "path": "/movies/Dune Part Two (2024)",
+      "qualityProfileId": 4,
+      "hasFile": false,
+      "movieFileId": 0,
+      "monitored": true,
+      "minimumAvailability": "released",
+      "tmdbId": 693134,
+      "imdbId": "tt15239678",
+      "rootFolderPath": "/movies/",
+      "tags": [],
+      "id": 1
+    },
+    {
+      "title": "Dune",
+      "year": 2021,
+      "path": "/movies/Dune (2021)",
+      "qualityProfileId": 4,
+      "hasFile": true,
+      "movieFileId": 3,
+      "monitored": true,
+      "tmdbId": 438631,
+      "rootFolderPath": "/movies/",
+      "id": 2
+    },
+    {
+      "title": "Cats",
+      "year": 2019,
+      "path": "/movies/Cats (2019)",
+      "qualityProfileId": 4,
+      "hasFile": false,
+      "monitored": false,
+      "tmdbId": 536869,
+      "rootFolderPath": "/movies/",
+      "id": 3
+    }
+  ]
+}

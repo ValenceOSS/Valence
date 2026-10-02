@@ -1,0 +1,12 @@
+{
+  "Name": "Alien",
+  "Id": "501",
+  "Type": "Movie",
+  "RunTimeTicks": 70020000000,
+  "Chapters": [
+    { "StartPositionTicks": 0, "Name": "Chapter 1", "MarkerType": "Chapter" },
+    { "StartPositionTicks": 200000000, "Name": "Intro", "MarkerType": "IntroStart" },
+    { "StartPositionTicks": 800000000, "Name": "Intro End", "MarkerType": "IntroEnd" },
+    { "StartPositionTicks": 67000000000, "Name": "Credits", "MarkerType": "CreditsStart" }
+  ]
+}

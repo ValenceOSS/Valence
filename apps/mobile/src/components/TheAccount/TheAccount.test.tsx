@@ -57,6 +57,16 @@ describe('TheAccount', () => {
     expect(onOut).toHaveBeenCalled();
   });
 
+  it('names the account by its username where it has one, rather than its address', async () => {
+    jest.mocked(fetchSession).mockResolvedValue(aSessionUser({ username: 'dan' }));
+    const drawn = await render(<TheAccount onOut={jest.fn()} onElsewhere={jest.fn()} />, {
+      wrapper: CacheScope,
+    });
+
+    expect(await drawn.findByText('@dan')).toBeTruthy();
+    expect(drawn.queryByText('dan@example.com')).toBeNull();
+  });
+
   it('draws a plugin’s page where its tab is the one shown', async () => {
     jest
       .mocked(fetchPluginSurface)

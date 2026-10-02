@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Fragment, memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
@@ -8,6 +8,7 @@ import { pickFeatured } from '@ValenceClient/library/pickFeatured';
 import { resumeFor } from '@ValenceClient/playback/resumeFor';
 import { Hero } from '@ValenceTv/components/Hero/Hero';
 import { Shelf } from '@ValenceTv/components/Shelf/Shelf';
+import { CollectionShelves } from '@ValenceTv/components/CollectionShelves/CollectionShelves';
 import { useProgress } from '@ValenceTv/library/useProgress';
 import { useRoomToFill } from '@ValenceTv/layout/useRoomToFill';
 import { putOnTheTopShelf } from '@ValenceTv/platform/putOnTheTopShelf';
@@ -30,7 +31,7 @@ const HEARS_SCROLL_EVERY_MS = 250;
  * The front page: a handful of titles taking turns across the whole screen, and beneath them the
  * same shelves the web's front page has — what this viewer is part-way through, what is new, what
  * is well thought of, then a shelf for every genre — asked for a few at a time as the remote moves
- * down towards them.
+ * down towards them. Beneath the first shelf sits one for each collection on the server.
  *
  * Its shelf of what has just arrived is handed to the television too, for the row it shows above
  * Valence on the Home screen.
@@ -184,15 +185,18 @@ const HomePage = ({
           )}
 
           {home.rails.map((rail, at) => (
-            <Shelf
-              key={rail.id}
-              title={rail.title}
-              items={rail.items}
-              progress={progress}
-              areEpisodes={rail.id === RESUMING}
-              isUrgent={at === 0}
-              onOpen={rail.id === RESUMING ? resume : onOpen}
-            />
+            <Fragment key={rail.id}>
+              <Shelf
+                title={rail.title}
+                items={rail.items}
+                progress={progress}
+                areEpisodes={rail.id === RESUMING}
+                isUrgent={at === 0}
+                onOpen={rail.id === RESUMING ? resume : onOpen}
+              />
+
+              {at === 0 ? <CollectionShelves progress={progress} onOpen={onOpen} /> : null}
+            </Fragment>
           ))}
 
           {isReadingMore ? (

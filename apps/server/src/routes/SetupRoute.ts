@@ -4,12 +4,14 @@ import {
   SetupRequestSchema,
   SetupResultSchema,
   SetupErrorSchema,
+  SetupFlowFinishedSchema,
 } from '@ValenceContracts/schemas/Setup';
 
 const StatusResponse = SetupStatusSchema.openapi('SetupStatus');
 const SetupRequest = SetupRequestSchema.openapi('SetupRequest');
 const SetupResult = SetupResultSchema.openapi('SetupResult');
 const SetupError = SetupErrorSchema.openapi('SetupError');
+const SetupFlowFinished = SetupFlowFinishedSchema.openapi('SetupFlowFinished');
 
 const setupStatusRoute = createRoute({
   method: 'get',
@@ -48,4 +50,21 @@ const setupCompleteRoute = createRoute({
   },
 });
 
-export { setupStatusRoute, setupCompleteRoute };
+const setupFlowFinishRoute = createRoute({
+  method: 'post',
+  path: '/api/setup/finish',
+  tags: ['Setup'],
+  summary: 'Close the first-run steps that follow making the administrator',
+  responses: {
+    200: {
+      description: 'The remaining setup steps are no longer shown',
+      content: { 'application/json': { schema: SetupFlowFinished } },
+    },
+    403: {
+      description: 'Not an administrator',
+      content: { 'application/json': { schema: SetupError } },
+    },
+  },
+});
+
+export { setupStatusRoute, setupCompleteRoute, setupFlowFinishRoute };

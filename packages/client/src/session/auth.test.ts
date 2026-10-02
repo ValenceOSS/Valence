@@ -4,7 +4,10 @@ import { forgetPlatform, installPlatform } from '@ValenceClient/platform/install
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { readCurrentProfile, writeCurrentProfile } from '@ValenceClient/profiles/currentProfile';
 import {
+  answerDeviceRequest,
   askWhetherTheDeviceMayIn,
+  readDeviceRequest,
+  startDeviceGrant,
   authenticateWithPasskey,
   confirmItIsYou,
   isThisSessionConfirmed,
@@ -15,7 +18,7 @@ import {
   listPasskeys,
   registerPasskey,
   renamePasskey,
-  signInWithEmail,
+  signInWithUsernameOrEmail,
   signOut,
   verifyBackupCode,
   verifyTotp,
@@ -81,21 +84,36 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('signInWithEmail', () => {
+describe('signInWithUsernameOrEmail', () => {
   it('signs in through better-auth, for a server that does not show who lives here', async () => {
     fetchMock.mockResolvedValue(said({ user: AN_ACCOUNT }));
 
-    await expect(signInWithEmail('operator@valence.test', 'a-password')).resolves.toStrictEqual({
+    await expect(
+      signInWithUsernameOrEmail('operator@valence.test', 'a-password'),
+    ).resolves.toStrictEqual({
       kind: 'signedIn',
     });
 
     expect(asked()).toBe('/api/auth/sign-in/email');
   });
 
+  it('signs in by username where what was typed has no @ in it', async () => {
+    fetchMock.mockResolvedValue(said({ user: AN_ACCOUNT }));
+
+    await expect(signInWithUsernameOrEmail(' Operator ', 'a-password')).resolves.toStrictEqual({
+      kind: 'signedIn',
+    });
+
+    expect(asked()).toBe('/api/auth/sign-in/username');
+    expect(sentWith(0)).toMatchObject({ username: 'Operator' });
+  });
+
   it('asks for a code where the account has a second factor', async () => {
     fetchMock.mockResolvedValue(said({ twoFactorRedirect: true }));
 
-    await expect(signInWithEmail('operator@valence.test', 'a-password')).resolves.toStrictEqual({
+    await expect(
+      signInWithUsernameOrEmail('operator@valence.test', 'a-password'),
+    ).resolves.toStrictEqual({
       kind: 'needsCode',
     });
   });
@@ -103,7 +121,7 @@ describe('signInWithEmail', () => {
   it('says so where the address and password were not accepted', async () => {
     fetchMock.mockResolvedValue(said({ message: 'Invalid credentials' }, 401));
 
-    const outcome = await signInWithEmail('operator@valence.test', 'wrong');
+    const outcome = await signInWithUsernameOrEmail('operator@valence.test', 'wrong');
 
     expect(outcome.kind).toBe('refused');
   });
@@ -111,7 +129,7 @@ describe('signInWithEmail', () => {
   it('does not throw where Valence could not be reached', async () => {
     fetchMock.mockRejectedValue(new Error('offline'));
 
-    const outcome = await signInWithEmail('operator@valence.test', 'a-password');
+    const outcome = await signInWithUsernameOrEmail('operator@valence.test', 'a-password');
 
     expect(outcome).toStrictEqual({ kind: 'refused', reason: 'Valence could not be reached.' });
   });
@@ -129,6 +147,22 @@ describe('fetchSession', () => {
     });
 
     expect(asked()).toBe('/api/auth/get-session');
+  });
+
+  it('carries the username, and never the placeholder an account without an address holds', async () => {
+    fetchMock.mockResolvedValue(
+      said({
+        user: {
+          ...AN_ACCOUNT,
+          email: `${AN_ACCOUNT.id}@no-email.invalid`,
+          username: 'operator',
+          displayUsername: 'Operator',
+        },
+        session: { id: 'session-1' },
+      }),
+    );
+
+    await expect(fetchSession()).resolves.toMatchObject({ email: null, username: 'Operator' });
   });
 
   it('answers with nobody where nobody is signed in', async () => {
@@ -581,5 +615,92 @@ describe('askWhetherTheDeviceMayIn', () => {
     fetchMock.mockResolvedValue(said({ error: 'access_denied' }, 400));
 
     expect(await askWhetherTheDeviceMayIn('the-long-secret-one')).toEqual({ kind: 'refused' });
+  });
+});
+
+describe('the television’s other half', () => {
+  it('starts a grant and hands back the codes to show', async () => {
+    fetchMock.mockResolvedValue(
+      said({
+        device_code: 'the-long-secret-one',
+        user_code: 'ABCD-EFGH',
+        verification_uri: 'http://valence.test/device',
+        verification_uri_complete: 'http://valence.test/device?user_code=ABCD-EFGH',
+        interval: 5,
+        expires_in: 900,
+      }),
+    );
+
+    await expect(startDeviceGrant()).resolves.toEqual({
+      deviceCode: 'the-long-secret-one',
+      userCode: 'ABCD-EFGH',
+      verificationUri: 'http://valence.test/device',
+      verificationUriComplete: 'http://valence.test/device?user_code=ABCD-EFGH',
+      intervalSeconds: 5,
+      expiresInSeconds: 900,
+    });
+    expect(asked()).toBe('/api/auth/device/code');
+  });
+
+  it('has no grant where the server would not start one', async () => {
+    fetchMock.mockResolvedValue(said({ error: 'invalid_client' }, 400));
+
+    await expect(startDeviceGrant()).resolves.toBeNull();
+  });
+
+  it('says a grant has run out, and that a code it does not know was not accepted', async () => {
+    fetchMock.mockResolvedValueOnce(said({ error: 'expired_token' }, 400));
+    fetchMock.mockResolvedValueOnce(said({ error: 'invalid_grant' }, 400));
+    fetchMock.mockResolvedValueOnce(said({ error: 'something_else' }, 400));
+
+    expect(await askWhetherTheDeviceMayIn('one')).toEqual({ kind: 'expired' });
+    expect(await askWhetherTheDeviceMayIn('one')).toEqual({ kind: 'expired' });
+    expect(await askWhetherTheDeviceMayIn('one')).toMatchObject({ kind: 'failed' });
+  });
+
+  it('reads what a typed code is asking for, and nothing for a code that means nothing', async () => {
+    fetchMock.mockResolvedValueOnce(said({ user_code: 'ABCD-EFGH', status: 'pending' }));
+    fetchMock.mockResolvedValueOnce(said({ user_code: 'ABCD-EFGH', status: 'lost' }));
+    fetchMock.mockResolvedValueOnce(said({ error: 'invalid_request' }, 400));
+
+    await expect(readDeviceRequest('ABCD-EFGH')).resolves.toEqual({
+      userCode: 'ABCD-EFGH',
+      status: 'pending',
+    });
+    expect(asked()).toBe('/api/auth/device');
+    await expect(readDeviceRequest('ABCD-EFGH')).resolves.toBeNull();
+    await expect(readDeviceRequest('ABCD-EFGH')).resolves.toBeNull();
+  });
+
+  it('lets a television in or turns it away, and says when that was not recorded', async () => {
+    fetchMock.mockResolvedValueOnce(said({ success: true }));
+    fetchMock.mockResolvedValueOnce(said({ success: true }));
+    fetchMock.mockResolvedValueOnce(said({ error: 'invalid_request' }, 400));
+
+    await expect(answerDeviceRequest('ABCD-EFGH', true)).resolves.toBe(true);
+    expect(asked(0)).toBe('/api/auth/device/approve');
+    await expect(answerDeviceRequest('ABCD-EFGH', false)).resolves.toBe(true);
+    expect(asked(1)).toBe('/api/auth/device/deny');
+    await expect(answerDeviceRequest('ABCD-EFGH', true)).resolves.toBe(false);
+  });
+});
+
+describe('where Valence cannot be reached', () => {
+  beforeEach(() => {
+    fetchMock.mockRejectedValue(new Error('offline'));
+  });
+
+  it('does not throw at whoever was confirming it is them', async () => {
+    await expect(confirmItIsYou('a-password')).resolves.toMatchObject({ kind: 'failed' });
+  });
+
+  it('does not throw at a television waiting to be let in', async () => {
+    await expect(startDeviceGrant()).resolves.toBeNull();
+    await expect(askWhetherTheDeviceMayIn('one')).resolves.toMatchObject({ kind: 'failed' });
+  });
+
+  it('does not throw at the phone letting a television in', async () => {
+    await expect(readDeviceRequest('ABCD-EFGH')).resolves.toBeNull();
+    await expect(answerDeviceRequest('ABCD-EFGH', true)).resolves.toBe(false);
   });
 });

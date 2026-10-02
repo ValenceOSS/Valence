@@ -1,0 +1,10 @@
+{
+  "MediaContainer": {
+    "size": 2,
+    "totalSize": 2,
+    "Metadata": [
+      { "ratingKey": "101", "type": "movie", "title": "Heat", "playlistItemID": 1 },
+      { "ratingKey": "301", "type": "episode", "title": "The Target", "playlistItemID": 2 }
+    ]
+  }
+}

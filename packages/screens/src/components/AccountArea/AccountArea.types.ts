@@ -1,6 +1,6 @@
 import type { SessionUser } from '@ValenceContracts/schemas/Session';
 import type { ViewerProfile } from '@ValenceContracts/schemas/ViewerProfile';
-import type { ProfileDraft } from '@ValenceScreens/components/AccountArea/components/ProfileSettings/ProfileSettings.types';
+import type { ProfileDraft } from '@ValenceScreens/components/ProfileSettings/ProfileSettings.types';
 
 type PluginAccountPage = {
   id: string;

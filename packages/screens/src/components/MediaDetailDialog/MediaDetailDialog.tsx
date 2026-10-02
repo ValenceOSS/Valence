@@ -9,6 +9,7 @@ import {
   EyeOff as EyeOffIcon,
   Film as FilmIcon,
   Info as InfoIcon,
+  Layers as LayersIcon,
   Share as ShareIcon,
   Tape as TapeIcon,
   UserCheck as UserCheckIcon,
@@ -63,6 +64,9 @@ import { EXTRA_KIND_LABELS } from '@ValenceContracts/schemas/Library';
 import { KeepHeart } from '@ValenceScreens/components/KeepHeart/KeepHeart';
 import { DialogSection } from '@ValenceScreens/components/DialogSection/DialogSection';
 import { SeasonMate } from './components/SeasonMate/SeasonMate';
+import { PartOfCollections } from '@ValenceScreens/components/PartOfCollections/PartOfCollections';
+import { AddToCollectionDialog } from '@ValenceScreens/components/AddToCollectionDialog/AddToCollectionDialog';
+import { subjectOfMedia } from '@ValenceClient/collections/subjectOfMedia';
 import type { MediaSummary } from '@ValenceContracts/schemas/Library';
 import type { MediaDetailDialogProps } from './MediaDetailDialog.types';
 import { say } from '@ValenceI18n/say';
@@ -126,6 +130,7 @@ const MediaDetailDialog = ({
   const [isDownloading, setIsDownloading] = useState(false);
   const [isWatchingTrailer, setIsWatchingTrailer] = useState(false);
   const [isChoosingMoment, setIsChoosingMoment] = useState(false);
+  const [isCollecting, setIsCollecting] = useState(false);
   const { may } = useWhatIMayDo();
   const hasScrubPreviews = useHasScrubPreviews(media?.id ?? null, may('media.override'));
   const cache = useQueryClient();
@@ -356,6 +361,8 @@ const MediaDetailDialog = ({
               revenue={metadata?.revenue}
               rottenTomatoes={metadata?.rottenTomatoes}
             />
+
+            <PartOfCollections subject={media === null ? null : subjectOfMedia(shown)} />
 
             <PluginPanels on="title" subjectId={shown.id} />
 
@@ -606,6 +613,18 @@ const MediaDetailDialog = ({
                     },
                   },
                 ]),
+            ...(may('library.edit')
+              ? [
+                  {
+                    id: 'collection',
+                    label: say('common.addToACollection'),
+                    icon: <Icon of={LayersIcon} size={18} />,
+                    onChoose: () => {
+                      setIsCollecting(true);
+                    },
+                  },
+                ]
+              : []),
             ...(may('media.override') && hasScrubPreviews
               ? [
                   {
@@ -646,6 +665,14 @@ const MediaDetailDialog = ({
           )}
         </DialogContent>
       </Dialog>
+
+      <AddToCollectionDialog
+        subject={isCollecting && media !== null ? subjectOfMedia(shown) : null}
+        title={shown.seriesTitle ?? shown.title}
+        onClose={() => {
+          setIsCollecting(false);
+        }}
+      />
 
       <PreviewMomentPicker
         mediaId={shown.id}

@@ -30,6 +30,26 @@ vi.mock('@ValenceClient/downloads/fetchDownloads', async () => ({
   fetchSeriesDownloadOffer: vi.fn().mockResolvedValue(null),
 }));
 
+const collectionsMock = vi.hoisted(() => vi.fn());
+
+vi.mock('@ValenceClient/collections/fetchCollections', () => ({
+  fetchCollections: collectionsMock,
+  fetchCollection: vi.fn(),
+  addToCollection: vi.fn(),
+  createCollection: vi.fn(),
+  updateCollection: vi.fn(),
+}));
+
+const permissions = vi.hoisted(() => ({ mayEditLibraries: false }));
+
+vi.mock('@ValenceClient/session/useWhatIMayDo', () => ({
+  useWhatIMayDo: () => ({
+    may: (permission: string) => permission === 'library.edit' && permissions.mayEditLibraries,
+    mayAdminister: false,
+    isLoading: false,
+  }),
+}));
+
 vi.mock('@ValenceScreens/components/MediaPreview/MediaPreview', () => ({
   MediaPreview: () => <div data-testid="preview" />,
 }));
@@ -80,10 +100,13 @@ const detail = (seasons: { seasonNumber: number; episodes: number[] }[]): ShowDe
 
 beforeEach(() => {
   fetchShowMock.mockReset();
+  collectionsMock.mockReset();
+  collectionsMock.mockResolvedValue([]);
 });
 
 afterEach(() => {
   motion.isReduced = false;
+  permissions.mayEditLibraries = false;
 });
 
 describe('ShowDialog', () => {
@@ -118,6 +141,64 @@ describe('ShowDialog', () => {
     await screen.findByRole('button', { name: /Play Episode 1/ });
 
     expect(screen.queryByRole('button', { name: 'Share' })).not.toBeInTheDocument();
+  });
+
+  describe('collections', () => {
+    const programme = { ...summary, seriesId: '5d3e2c1b-0a9f-4e8d-9c7b-6a5f4e3d2c1b' };
+
+    it('names the collections the programme is part of', async () => {
+      fetchShowMock.mockResolvedValue(detail([{ seasonNumber: 1, episodes: [1] }]));
+      collectionsMock.mockResolvedValue([
+        {
+          id: '00000000-0000-4000-8000-00000000c011',
+          name: 'Box set',
+          description: null,
+          isOrdered: false,
+          hasOwnArtwork: false,
+          entryCount: 1,
+          coverMediaIds: [],
+          updatedAt: '2026-10-02T00:00:00.000Z',
+        },
+      ]);
+
+      renderInAnAddress(<ShowDialog show={programme} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+      expect(await screen.findByRole('button', { name: 'Box set' })).toBeInTheDocument();
+      expect(collectionsMock).toHaveBeenCalledWith({
+        containing: { seriesId: programme.seriesId },
+      });
+    });
+
+    it('offers to add it to a collection to somebody who may edit the libraries', async () => {
+      permissions.mayEditLibraries = true;
+      fetchShowMock.mockResolvedValue(detail([{ seasonNumber: 1, episodes: [1] }]));
+
+      renderInAnAddress(<ShowDialog show={programme} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+      const [menu] = await screen.findAllByRole('button', {
+        name: 'More to do with this programme',
+      });
+
+      if (menu !== undefined) {
+        await userEvent.click(menu);
+      }
+
+      await userEvent.click(await screen.findByRole('menuitem', { name: 'Add to a collection' }));
+
+      expect(
+        await screen.findByRole('dialog', { name: 'Add A Sign of Affection to a collection' }),
+      ).toBeInTheDocument();
+    });
+
+    it('asks after no collection for a programme it has no series for', async () => {
+      fetchShowMock.mockResolvedValue(detail([{ seasonNumber: 1, episodes: [1] }]));
+
+      renderInAnAddress(<ShowDialog show={summary} onClose={vi.fn()} onPlay={vi.fn()} />);
+
+      await screen.findByRole('button', { name: /Play Episode 1/ });
+
+      expect(collectionsMock).not.toHaveBeenCalled();
+    });
   });
 
   describe('marking episodes watched', () => {

@@ -16,6 +16,7 @@ type APage =
   | { kind: 'show'; libraryId: string; showId: string }
   | { kind: 'series'; seriesId: string }
   | { kind: 'person'; personId: number }
+  | { kind: 'collection'; collectionId: string }
   | { kind: 'asking'; about: CatalogueBrowseKind; id: string }
   | { kind: 'browsing'; browsing: CatalogueBrowse; title: string }
   | { kind: 'notifications' }

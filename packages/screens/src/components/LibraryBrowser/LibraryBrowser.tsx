@@ -9,6 +9,7 @@ import { freshFlags } from '@ValenceClient/library/freshFlags';
 import { BackToTop } from '@ValenceUI/BackToTop';
 import { Rail } from '@ValenceUI/Rail';
 import { ComingUp } from '@ValenceScreens/components/ComingUp/ComingUp';
+import { CollectionShelf } from '@ValenceScreens/components/CollectionShelf/CollectionShelf';
 import { RevealItem } from '@ValenceUI/RevealItem';
 import { SplashScreen } from '@ValenceUI/SplashScreen';
 import { Spinner } from '@ValenceUI/Spinner';
@@ -352,6 +353,14 @@ const LibraryBrowser = ({
               ) : (
                 <div className="flex flex-col gap-10">
                   {isHome && onShow !== undefined ? <ComingUp onOpenShow={onShow} /> : null}
+
+                  {isHome ? (
+                    <CollectionShelf
+                      onOpen={(collectionId) => {
+                        go({ collection: collectionId });
+                      }}
+                    />
+                  ) : null}
 
                   {rails.map(({ showOf, ...rail }) => (
                     <Rail

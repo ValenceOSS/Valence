@@ -5,6 +5,7 @@ import { createElement } from 'react';
 import { musicQueries } from '@ValenceClient/query/musicQueries';
 import { aFakeSocket as aSocket } from '@ValenceClient/testing/aFakeSocket';
 import { pluginQueries } from '@ValenceClient/query/pluginQueries';
+import { collectionQueries } from '@ValenceClient/query/collectionQueries';
 import { useFreshFromTheSocket } from './useFreshFromTheSocket';
 import type { RealtimeEvent } from '@ValenceContracts/schemas/Realtime';
 import type { ReactNode } from 'react';
@@ -59,6 +60,16 @@ describe('useFreshFromTheSocket', () => {
 
     expect(invalidate).toHaveBeenCalledWith({ queryKey: musicQueries.key });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: musicQueries.playlistsKey });
+  });
+
+  it('throws away the collections, so a collection changed elsewhere shows up', () => {
+    const invalidate = vi.spyOn(cache, 'invalidateQueries').mockResolvedValue(undefined);
+    const socket = aSocket();
+
+    listening(socket);
+    socket.say('media', ANYTHING);
+
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: collectionQueries.key });
   });
 
   it('throws away the inbox, the session and the admin page for their own news', () => {

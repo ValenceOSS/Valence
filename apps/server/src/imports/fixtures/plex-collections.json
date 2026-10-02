@@ -1,0 +1,17 @@
+{
+  "MediaContainer": {
+    "size": 1,
+    "totalSize": 1,
+    "Metadata": [
+      {
+        "ratingKey": "901",
+        "type": "collection",
+        "title": "Michael Mann",
+        "summary": "His films.",
+        "smart": false,
+        "childCount": 1,
+        "subtype": "movie"
+      }
+    ]
+  }
+}

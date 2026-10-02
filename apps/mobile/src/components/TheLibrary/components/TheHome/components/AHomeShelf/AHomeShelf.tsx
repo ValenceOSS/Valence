@@ -4,6 +4,7 @@ import { watchedFraction } from '@ValenceContracts/schemas/WatchProgress';
 import { ACard } from '@ValenceMobile/components/ACard/ACard';
 import { APoster } from '@ValenceMobile/components/APoster/APoster';
 import { AShelf } from '@ValenceMobile/components/AShelf/AShelf';
+import { ACollectionShelf } from '@ValenceMobile/components/ACollectionShelf/ACollectionShelf';
 import { Button } from '@ValenceMobile/components/Button/Button';
 import { onThisServer } from '@ValenceMobile/platform/onThisServer';
 import type { AHomeShelfProps } from './AHomeShelf.types';
@@ -12,27 +13,33 @@ import { say } from '@ValenceI18n/say';
 const RESUMING = 'resume';
 
 /**
- * One shelf of the home page: what is coming up, or one of its rows of titles, drawn again only
- * when what it holds changes rather than whenever the page around it does.
+ * One shelf of the home page: what is coming up, the collections, or one of its rows of titles,
+ * drawn again only when what it holds changes rather than whenever the page around it does.
  *
  * @param shelf - Which shelf.
  * @param upcoming - What is coming up, for the shelf of it.
+ * @param collections - The collections, for the shelf of them.
  * @param progress - How far through each title somebody is.
  * @param today - Today, as a date, to say when an episode airs against.
  * @param onLookAt - Told to open a title.
  * @param onLookAtShow - Told to open a programme.
+ * @param onLookAtCollection - Told to open a collection.
  * @param flagOf - What is new about a title, where anything is.
  */
 const AHomeShelfDrawn = ({
   shelf,
   upcoming,
+  collections,
   progress,
   today,
   onLookAt,
   flagOf,
   onLookAtShow,
+  onLookAtCollection,
 }: AHomeShelfProps) =>
-  shelf.kind === 'comingUp' ? (
+  shelf.kind === 'collections' ? (
+    <ACollectionShelf collections={collections} onLookAtCollection={onLookAtCollection} />
+  ) : shelf.kind === 'comingUp' ? (
     <AShelf title={say('common.comingUp')}>
       {upcoming.map(({ show, episode }) => (
         <Button

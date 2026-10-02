@@ -42,15 +42,33 @@ const fetchGiveUpRules = vi.hoisted(() => vi.fn());
 vi.mock('@ValenceClient/requests/fetchGiveUpRules', () => ({ fetchGiveUpRules }));
 
 const fetchProfiles = vi.hoisted(() => vi.fn());
+const fetchProfilesOnOffer = vi.hoisted(() => vi.fn());
 
-vi.mock('@ValenceClient/requests/fetchProfiles', () => ({ fetchProfiles }));
+vi.mock('@ValenceClient/requests/fetchProfiles', () => ({ fetchProfiles, fetchProfilesOnOffer }));
+
+const fetchSeerrLink = vi.hoisted(() => vi.fn());
+
+vi.mock('@ValenceClient/requests/fetchSeerrLink', () => ({ fetchSeerrLink }));
+
+const askables = vi.hoisted(() => ({
+  fetchAskable: vi.fn(),
+  fetchCatalogueBrowse: vi.fn(),
+  fetchCatalogueGenres: vi.fn(),
+  fetchDiscover: vi.fn(),
+  fetchRequestProgress: vi.fn(),
+  searchAskable: vi.fn(),
+}));
+
+vi.mock('@ValenceClient/requests/fetchAskable', () => askables);
 
 const fetchMediaRequests = vi.hoisted(() => vi.fn());
 const fetchMediaRequestReleases = vi.hoisted(() => vi.fn());
 const fetchMediaRequestLog = vi.hoisted(() => vi.fn());
 const fetchSeriesSeasons = vi.hoisted(() => vi.fn());
+const fetchRequestBlocklist = vi.hoisted(() => vi.fn());
 
 vi.mock('@ValenceClient/requests/fetchMediaRequests', () => ({
+  fetchRequestBlocklist,
   fetchMediaRequests,
   fetchMediaRequestReleases,
   fetchMediaRequestLog,
@@ -232,5 +250,51 @@ describe('requestsQueries', () => {
 
   it('keeps the link to Overseerr and Jellyseerr among the requests', () => {
     expect(requestsQueries.seerrLink().queryKey).toEqual(['requests', 'seerrLink']);
+  });
+
+  it('asks for what may be asked for, found, browsed and followed, each only once it can be', async () => {
+    const cache = aCache();
+    const browsing = { kind: 'film', list: 'popular', studio: null } as const;
+
+    fetchProfilesOnOffer.mockResolvedValue([]);
+    fetchRequestBlocklist.mockResolvedValue([]);
+    fetchSeerrLink.mockResolvedValue({ isLinked: false });
+    askables.fetchDiscover.mockResolvedValue({ shelves: [] });
+    askables.fetchCatalogueBrowse.mockResolvedValue({ page: 1, hasMore: true, titles: [] });
+    askables.fetchCatalogueGenres.mockResolvedValue([]);
+    askables.searchAskable.mockResolvedValue([]);
+    askables.fetchAskable.mockResolvedValue({ id: '1' });
+    askables.fetchRequestProgress.mockResolvedValue([]);
+
+    await cache.fetchQuery(requestsQueries.profilesOnOffer('film'));
+    await cache.fetchQuery(requestsQueries.requestBlocklist('req'));
+    await cache.fetchQuery(requestsQueries.seerrLink());
+    await cache.fetchQuery(requestsQueries.discover());
+    await cache.fetchQuery(requestsQueries.catalogueGenres('film'));
+    await cache.fetchQuery(requestsQueries.askableSearch('dune', 'film'));
+    await cache.fetchQuery(requestsQueries.askable('film', '1'));
+    await cache.fetchQuery(requestsQueries.requestProgress());
+
+    const browse = requestsQueries.catalogueBrowse(browsing, true, { genre: '18' });
+
+    await cache.fetchInfiniteQuery(browse);
+
+    expect(fetchProfilesOnOffer).toHaveBeenCalledWith('film');
+    expect(fetchRequestBlocklist).toHaveBeenCalledWith('req');
+    expect(fetchSeerrLink).toHaveBeenCalledOnce();
+    expect(askables.fetchDiscover).toHaveBeenCalledOnce();
+    expect(askables.fetchCatalogueGenres).toHaveBeenCalledWith('film');
+    expect(askables.searchAskable).toHaveBeenCalledWith('dune', 'film');
+    expect(askables.fetchAskable).toHaveBeenCalledWith('film', '1');
+    expect(askables.fetchRequestProgress).toHaveBeenCalledOnce();
+    expect(askables.fetchCatalogueBrowse).toHaveBeenCalledWith(browsing, 1, { genre: '18' });
+    expect(browse.getNextPageParam({ page: 1, hasMore: true, titles: [] }, [], 1, [])).toBe(2);
+    expect(
+      browse.getNextPageParam({ page: 3, hasMore: false, titles: [] }, [], 3, []),
+    ).toBeUndefined();
+    expect(requestsQueries.profilesOnOffer('film', false).enabled).toBe(false);
+    expect(requestsQueries.requestBlocklist(null).enabled).toBe(false);
+    expect(requestsQueries.askableSearch(' ', 'film').enabled).toBe(false);
+    expect(requestsQueries.askable('film', null).enabled).toBe(false);
   });
 });

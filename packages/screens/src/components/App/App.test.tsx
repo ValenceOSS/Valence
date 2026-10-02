@@ -1,4 +1,5 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
+import { focusManager } from '@tanstack/react-query';
 import { renderTheApp } from '@ValenceScreens/testing/renderTheApp';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -507,6 +508,32 @@ describe('App routing', () => {
     serverState({ setup: setupComplete, session: { user }, ...aLibraryWithArrival });
 
     expect(await screen.findByRole('heading', { name: 'Set up Valence' })).toBeInTheDocument();
+  });
+
+  it('keeps setup on screen when the server reports itself set up partway through', async () => {
+    serverState({ setup: { ...setupComplete, isComplete: false }, session: null });
+    renderTheApp();
+
+    await screen.findByRole('heading', { name: 'Set up Valence' });
+
+    serverState({ setup: setupComplete, session: { user }, ...aLibraryWithArrival });
+
+    act(() => {
+      focusManager.setFocused(false);
+      focusManager.setFocused(true);
+    });
+
+    await waitFor(() => {
+      expect(
+        fetchMock.mock.calls.filter(([asked]) => asked === '/api/setup/status').length,
+      ).toBeGreaterThan(1);
+    });
+    await arrive();
+
+    expect(screen.getByRole('heading', { name: 'Set up Valence' })).toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'Sections' })).not.toBeInTheDocument();
+
+    focusManager.setFocused(undefined);
   });
 
   it('closes an item that was opened for a look', async () => {

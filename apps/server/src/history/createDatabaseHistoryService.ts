@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { and, desc, eq, lt } from 'drizzle-orm';
+import { and, desc, eq, isNull, lt } from 'drizzle-orm';
 import { countAffected } from '@ValenceDatabase/countAffected';
 import { watchHistory, mediaItem } from '#dialect/Schema';
 import { decideViewing } from './decideViewing';
@@ -150,7 +150,9 @@ const createDatabaseHistoryService = (db: AnyValenceDatabase): HistoryService =>
     },
 
     prune: async (before) => {
-      const gone = await db.delete(watchHistory).where(lt(watchHistory.lastWatchedAt, before));
+      const gone = await db
+        .delete(watchHistory)
+        .where(and(lt(watchHistory.lastWatchedAt, before), isNull(watchHistory.importedFrom)));
 
       return countAffected(gone);
     },

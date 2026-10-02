@@ -1,0 +1,19 @@
+{
+  "MediaContainer": {
+    "size": 1,
+    "totalSize": 1,
+    "Metadata": [
+      {
+        "ratingKey": "201",
+        "type": "show",
+        "title": "The Wire",
+        "year": 2002,
+        "guid": "plex://show/5d9c086c46115600200aa2fe",
+        "Guid": [{ "id": "tvdb://79126" }],
+        "leafCount": 60,
+        "viewedLeafCount": 1,
+        "userRating": 10
+      }
+    ]
+  }
+}

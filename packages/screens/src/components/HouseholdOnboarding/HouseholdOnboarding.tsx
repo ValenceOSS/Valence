@@ -2,10 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'motion/react';
 import { Button } from '@ValenceUI/Button';
-import { FilePicker } from '@ValenceUI/FilePicker';
 import { GlassPanel } from '@ValenceUI/GlassPanel';
-import { Icon } from '@ValenceUI/Icon';
-import { Image as ImageIcon, Key as KeyIcon } from '@keyline-icons/react';
 import { Logo } from '@ValenceUI/Logo';
 import { PageDots } from '@ValenceUI/PageDots';
 import { TabPanel } from '@ValenceUI/TabPanel';
@@ -13,16 +10,11 @@ import { Tabs } from '@ValenceUI/Tabs';
 import { TextField } from '@ValenceUI/TextField';
 import { useTravelDirection } from '@ValenceUI/useTravelDirection';
 import { sessionQueries } from '@ValenceClient/query/sessionQueries';
-import { registerPasskey } from '@ValenceClient/session/auth';
-import {
-  finishOnboarding,
-  saveHousehold,
-  uploadHouseholdPhoto,
-} from '@ValenceClient/household/fetchHousehold';
-import { HouseholdFace } from '@ValenceScreens/components/HouseholdFace/HouseholdFace';
+import { finishOnboarding, saveHousehold } from '@ValenceClient/household/fetchHousehold';
 import { WayInBackground } from '@ValenceScreens/components/WayInBackground/WayInBackground';
+import { HouseholdPicturePicker } from '@ValenceScreens/components/HouseholdPicturePicker/HouseholdPicturePicker';
+import { PasskeyOffer } from '@ValenceScreens/components/PasskeyOffer/PasskeyOffer';
 import { WelcomeToValence } from '@ValenceScreens/components/WelcomeToValence/WelcomeToValence';
-import { describePasskeyUnavailability } from '@ValenceScreens/passkeys/isPasskeySupported';
 import { whatIsWrongWithTheName } from './whatIsWrongWithTheName';
 import type { HouseholdOnboardingProps } from './HouseholdOnboarding.types';
 import { say } from '@ValenceI18n/say';
@@ -34,8 +26,6 @@ const LABELS = [
   say('common.picture'),
   say('screens.householdOnboarding.passkey'),
 ];
-
-const PICTURE_TYPES = 'image/jpeg,image/png,image/webp,image/avif,image/gif';
 
 const SAYS = {
   name: say('screens.householdOnboarding.everybodyWhoWatchesHereSharesThis'),
@@ -67,12 +57,9 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
   const [wrong, setWrong] = useState<string | null>(null);
   const [picture, setPicture] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [passkeyName, setPasskeyName] = useState(say('common.thisDevice'));
-  const [hasPasskey, setHasPasskey] = useState(false);
   const [isWelcoming, setIsWelcoming] = useState(false);
 
   const asking = useQuery(sessionQueries.wayIn());
-  const noPasskeys = describePasskeyUnavailability();
 
   const travel = useTravelDirection([...STEPS], step);
   const at = STEPS.indexOf(step);
@@ -99,44 +86,6 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
     }
 
     setStep('picture');
-  };
-
-  const keepThePicture = async (chosen: File): Promise<void> => {
-    setIsSaving(true);
-
-    const said = await uploadHouseholdPhoto(chosen);
-
-    setIsSaving(false);
-    setWrong(said);
-
-    if (said === null) {
-      setPicture(chosen);
-    }
-  };
-
-  const keepAPasskey = async (): Promise<void> => {
-    setIsSaving(true);
-
-    const outcome = await registerPasskey(
-      passkeyName.trim() === '' ? say('common.thisDevice') : passkeyName,
-    );
-
-    setIsSaving(false);
-
-    if (outcome.kind === 'registered') {
-      setHasPasskey(true);
-      setWrong(null);
-
-      return;
-    }
-
-    setWrong(
-      outcome.kind === 'cancelled'
-        ? null
-        : outcome.kind === 'unconfirmed'
-          ? say('screens.householdOnboarding.youSignedInAWhileAgo')
-          : outcome.reason,
-    );
   };
 
   const finish = async (): Promise<void> => {
@@ -216,31 +165,12 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
 
           <TabPanel value="picture" travel={travel}>
             <div className="flex flex-col items-center gap-5">
-              <HouseholdFace household={household} pending={picture} className="size-24 text-3xl" />
-
-              {wrong === null ? null : (
-                <p role="alert" className="text-center text-sm text-danger">
-                  {wrong}
-                </p>
-              )}
-
-              <FilePicker
-                label={say('common.chooseAPicture')}
-                accept={PICTURE_TYPES}
-                variant="secondary"
-                size="lg"
-                isLoading={isSaving}
-                isActive={picture !== null}
+              <HouseholdPicturePicker
+                household={household}
+                picture={picture}
                 className="w-full"
-                onPick={(chosen) => {
-                  void keepThePicture(chosen);
-                }}
-              >
-                <Icon of={ImageIcon} size={18} />
-                {picture === null
-                  ? say('common.chooseAPicture')
-                  : say('screens.householdOnboarding.pickAnother')}
-              </FilePicker>
+                onPicked={setPicture}
+              />
 
               <Button
                 variant="glossy"
@@ -258,38 +188,7 @@ const HouseholdOnboarding = ({ household, onDone }: HouseholdOnboardingProps) =>
 
           <TabPanel value="passkey" travel={travel}>
             <div className="flex flex-col gap-5">
-              {noPasskeys !== null ? (
-                <p className="text-center text-sm text-text-muted">{noPasskeys}</p>
-              ) : hasPasskey ? (
-                <p className="text-center text-sm text-text">
-                  {say('screens.householdOnboarding.thatIsSetYouCanSign')}
-                </p>
-              ) : (
-                <>
-                  <TextField
-                    label={say('common.passkeyName')}
-                    value={passkeyName}
-                    onValueChange={setPasskeyName}
-                    description={say(
-                      'screens.householdOnboarding.somethingYouWillRecogniseLaterSuch',
-                    )}
-                    {...(wrong === null ? {} : { error: wrong })}
-                  />
-
-                  <Button
-                    variant="secondary"
-                    size="lg"
-                    className="w-full"
-                    isLoading={isSaving}
-                    onClick={() => {
-                      void keepAPasskey();
-                    }}
-                  >
-                    <Icon of={KeyIcon} size={18} />
-                    {say('common.addAPasskey')}
-                  </Button>
-                </>
-              )}
+              <PasskeyOffer />
 
               <Button
                 variant="glossy"

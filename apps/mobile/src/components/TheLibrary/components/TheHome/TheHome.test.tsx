@@ -3,7 +3,13 @@ import { Text } from 'react-native';
 import { installPlatform } from '@ValenceClient/platform/installPlatform';
 import { aFakePlatform } from '@ValenceClient/testing/aFakePlatform';
 import { CacheScope } from '@ValenceClient/testing/CacheScope';
+import { fetchCollections } from '@ValenceClient/collections/fetchCollections';
 import { TheHome } from './TheHome';
+
+jest.mock('@ValenceClient/collections/fetchCollections', () => ({
+  ...jest.requireActual<object>('@ValenceClient/collections/fetchCollections'),
+  fetchCollections: jest.fn(),
+}));
 
 const aHome = (librariesAre: 'reading' | 'missing' | 'there') => (
   <TheHome
@@ -13,6 +19,7 @@ const aHome = (librariesAre: 'reading' | 'missing' | 'there') => (
     onWatch={jest.fn()}
     onLookAt={jest.fn()}
     onLookAtShow={jest.fn()}
+    onLookAtCollection={jest.fn()}
     onShowing={jest.fn()}
     onClip={jest.fn()}
   />
@@ -20,6 +27,7 @@ const aHome = (librariesAre: 'reading' | 'missing' | 'there') => (
 
 beforeEach(() => {
   installPlatform(aFakePlatform());
+  jest.mocked(fetchCollections).mockResolvedValue([]);
 });
 
 describe('TheHome', () => {
@@ -27,6 +35,26 @@ describe('TheHome', () => {
     const drawn = await render(aHome('missing'), { wrapper: CacheScope });
 
     expect(await drawn.findByText('No libraries yet')).toBeTruthy();
+  });
+
+  it('puts the collections on a shelf of their own', async () => {
+    jest.mocked(fetchCollections).mockResolvedValue([
+      {
+        id: '3fa85f64-5717-4562-b3fc-2c963f66c011',
+        name: 'Saga',
+        description: null,
+        isOrdered: true,
+        hasOwnArtwork: false,
+        entryCount: 2,
+        coverMediaIds: [],
+        updatedAt: '2026-10-02T00:00:00.000Z',
+      },
+    ]);
+
+    const drawn = await render(aHome('there'), { wrapper: CacheScope });
+
+    expect(await drawn.findByText('Collections')).toBeTruthy();
+    expect(drawn.getByRole('button', { name: 'Saga' })).toBeTruthy();
   });
 
   it('calls nothing empty while the libraries are still being read', async () => {
@@ -45,6 +73,7 @@ describe('TheHome', () => {
         onWatch={jest.fn()}
         onLookAt={jest.fn()}
         onLookAtShow={jest.fn()}
+        onLookAtCollection={jest.fn()}
         onShowing={jest.fn()}
         onClip={jest.fn()}
         onScrolled={onScrolled}
