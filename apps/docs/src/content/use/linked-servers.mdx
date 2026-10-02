@@ -1,0 +1,71 @@
+---
+title: Linked servers
+description: Pair your Valence with a friend's, so the two servers know and trust each other before anything is shared between them.
+order: 18
+---
+
+Linking pairs two Valence servers run by different people. Once linked, each server knows the other by a key it holds, not just by its address, and every call one makes to the other is signed. This release builds the pairing itself. Sharing libraries and watching across servers build on it, and nothing in a library reaches the other server yet.
+
+Linking needs the `server.links` permission. Only the default Administrator role has it. See [Accounts and roles](/use/accounts-and-roles).
+
+The **Linked servers** panel is in the admin area.
+
+## This server
+
+The first card says how other servers see yours: a name, a colour, the address they reach it at, and its fingerprint.
+
+- **Name and colour.** Shown on the other server wherever your server appears. Change them and press **Save**.
+- **Where other servers reach it.** The address the other server calls. It has to be reachable from there, so a `localhost` address only works for two servers on the same machine. Behind a reverse proxy, use the public `https://` address.
+- **Fingerprint.** A short code worked out from this server's key. It never changes unless the key does, and it is how an admin checks they are linking with the server they think they are.
+
+The key is made the first time the server starts and is kept in its settings. Nothing about it is sent anywhere until you link.
+
+## Linking two servers
+
+Linking takes one admin on each side.
+
+1. On the first server, press **Make an invite** under **Invite a server**. Copy the invite. It is shown once, works once and runs out after a day.
+2. Send it to the other admin however you like.
+3. On the second server, paste it under **Link to a server** and press **Link**. The second server reaches the first, checks that the server answering has the fingerprint written in the invite, and asks to link.
+4. Back on the first server, the request appears in the list as **Asking to link**, with the other server's name and fingerprint. Check the fingerprint with the other admin, then approve it, or refuse it.
+5. The second server shows **Waiting for them** until it hears the answer. It checks on its own every so often while the panel is open, and **Check again** asks at once.
+
+Withdraw an invite you no longer want from the list of open invites. Somebody holding it can no longer use it.
+
+<Callout title="Check the fingerprint" tone="warning">
+  An invite is only as private as the way you sent it. Approving the request is what links the
+  servers, so compare the fingerprint shown in the request with the one on the other server's own
+  panel before you approve.
+</Callout>
+
+## Where a link stands
+
+| Standing         | Meaning                                                                       |
+| ---------------- | ----------------------------------------------------------------------------- |
+| Waiting for them | This server used their invite and is waiting for their admin to approve it.   |
+| Asking to link   | Another server used one of your invites. Approve or refuse it.                |
+| Linked           | Both servers trust each other.                                                |
+| Refused          | One side refused the request. Forget it, and link again with a new invite.    |
+| They unlinked    | The other server unlinked. Forget it, and link again with a new invite later. |
+
+Each linked server also shows when it was last heard from.
+
+## Unlinking
+
+Press **Unlink** on a linked server and confirm. Both sides stop trusting each other at once: this server tells the other one, and refuses anything it signs from then on. If the other server cannot be reached, it is unlinked here anyway and finds out the next time it calls. Neither server reaches the other again until they link with a new invite.
+
+## When it does not work
+
+| Message                                                         | What to do                                                                                                  |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| That server could not be reached.                               | The address in the invite has to be reachable from this server. Check its **Where other servers reach it**. |
+| The server at that address is not the one that made the invite. | Something else answered at that address. Check with the other admin before trying again.                    |
+| That invite has been used, withdrawn or has run out.            | Ask for a new one.                                                                                          |
+| That invite is from this server.                                | Paste it on the other server instead.                                                                       |
+
+## Security notes
+
+- Each server has an Ed25519 key. Calls between servers carry a token signed with it that lasts a minute and is accepted once.
+- Invite codes are stored only as a hash.
+- Servers talk to each other at `/api/federation/v1`. Those routes need no account, since the other server has none, but every one except the server's public identity and the pairing request needs a token from a linked server.
+- Two servers on the internet need to reach each other over HTTPS. See [Reverse proxy](/install/reverse-proxy) and [Security](/reference/security).
